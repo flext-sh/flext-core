@@ -40,7 +40,10 @@ def _test_handler(
     return cast(
         "_TestDecorator",
         h.handler(
-            command=command, priority=priority, timeout=timeout, middleware=middleware,
+            command=command,
+            priority=priority,
+            timeout=timeout,
+            middleware=middleware,
         ),
     )
 

@@ -37,7 +37,8 @@ def test_run_detect_failure(tmp_path: Path) -> None:
     ) as mock_detector_class:
         mock_detector = Mock()
         mock_detector.detect.return_value = Mock(
-            is_success=False, error="Detection failed",
+            is_success=False,
+            error="Detection failed",
         )
         mock_detector_class.return_value = mock_detector
         result = workspace_main._run_detect(args)
@@ -86,7 +87,8 @@ def test_run_orchestrate_success() -> None:
     ) as mock_orch_class:
         mock_orch = Mock()
         mock_orch.orchestrate.return_value = Mock(
-            is_success=True, value=[Mock(exit_code=0), Mock(exit_code=0)],
+            is_success=True,
+            value=[Mock(exit_code=0), Mock(exit_code=0)],
         )
         mock_orch_class.return_value = mock_orch
         result = workspace_main._run_orchestrate(args)
@@ -116,7 +118,8 @@ def test_run_orchestrate_with_failures() -> None:
     ) as mock_orch_class:
         mock_orch = Mock()
         mock_orch.orchestrate.return_value = Mock(
-            is_success=True, value=[Mock(exit_code=0), Mock(exit_code=1)],
+            is_success=True,
+            value=[Mock(exit_code=0), Mock(exit_code=1)],
         )
         mock_orch_class.return_value = mock_orch
         result = workspace_main._run_orchestrate(args)
@@ -135,7 +138,8 @@ def test_run_orchestrate_failure() -> None:
     ) as mock_orch_class:
         mock_orch = Mock()
         mock_orch.orchestrate.return_value = Mock(
-            is_success=False, error="Orchestration failed",
+            is_success=False,
+            error="Orchestration failed",
         )
         mock_orch_class.return_value = mock_orch
         result = workspace_main._run_orchestrate(args)
@@ -152,7 +156,9 @@ def test_run_migrate_success(tmp_path: Path) -> None:
     ) as mock_migrator_class:
         mock_migrator = Mock()
         mock_migrator.migrate.return_value = Mock(
-            is_success=True, is_failure=False, value=[Mock(errors=[], changes=[])],
+            is_success=True,
+            is_failure=False,
+            value=[Mock(errors=[], changes=[])],
         )
         mock_migrator_class.return_value = mock_migrator
         result = workspace_main._run_migrate(args)
@@ -169,7 +175,9 @@ def test_run_migrate_failure(tmp_path: Path) -> None:
     ) as mock_migrator_class:
         mock_migrator = Mock()
         mock_migrator.migrate.return_value = Mock(
-            is_success=False, is_failure=True, error="Migration failed",
+            is_success=False,
+            is_failure=True,
+            error="Migration failed",
         )
         mock_migrator_class.return_value = mock_migrator
         result = workspace_main._run_migrate(args)

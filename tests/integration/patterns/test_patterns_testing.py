@@ -330,13 +330,12 @@ class SuiteBuilder:
 
     def build(self) -> FixtureSuiteDict:
         """Build the test suite configuration."""
-        result = FixtureSuiteDict({
+        return FixtureSuiteDict({
             "suite_name": self.name,
             "scenario_count": len(self._scenarios),
             "tags": self._tags,
             "setup_data": self._setup_data,
         })
-        return result
 
 
 class FixtureBuilder:
@@ -572,12 +571,12 @@ class TestAdvancedPatterns:
         """Demonstrate parametrized test builder."""
         param_builder = ParameterizedTestBuilder("email_validation")
         _ = param_builder.add_success_cases([
-            {"email": "test@example.com", "input": "valid_email_1"},
-            {"email": "user@domain.org", "input": "valid_email_2"},
+            FixtureCaseDict({"email": "test@example.com", "input": "valid_email_1"}),
+            FixtureCaseDict({"email": "user@domain.org", "input": "valid_email_2"}),
         ])
         _ = param_builder.add_failure_cases([
-            {"email": "invalid-email", "input": "invalid_email_1"},
-            {"email": "@domain.com", "input": "invalid_email_2"},
+            FixtureCaseDict({"email": "invalid-email", "input": "invalid_email_1"}),
+            FixtureCaseDict({"email": "@domain.com", "input": "invalid_email_2"}),
         ])
         params = param_builder.build_pytest_params()
         test_ids = param_builder.build_test_ids()
@@ -593,7 +592,8 @@ class TestAdvancedPatterns:
             """Check if all items in a list are strings."""
             if not isinstance(x, list):
                 return False
-            return all(isinstance(item, str) for item in x)
+            values: list[object] = x
+            return all(isinstance(item, str) for item in values)
 
         AssertionBuilder(test_data).is_not_none().has_length(3).contains(
             "banana",
@@ -612,7 +612,8 @@ class TestAdvancedPatterns:
                 if isinstance(numbers, list) and all(
                     isinstance(n, int) for n in numbers
                 ):
-                    return sum(numbers)
+                    typed_numbers: list[int] = numbers
+                    return sum(typed_numbers)
             return 0
 
         def assert_result(result: object, original_data: object) -> None:
@@ -620,7 +621,8 @@ class TestAdvancedPatterns:
             if isinstance(original_data, dict) and "numbers" in original_data:
                 numbers = original_data["numbers"]
                 if isinstance(numbers, list):
-                    assert len(numbers) == 5
+                    typed_numbers: list[object] = numbers
+                    assert len(typed_numbers) == 5
 
         @arrange_act_assert(arrange_data, act_on_data, assert_result)
         def test_sum_calculation() -> None:
@@ -716,7 +718,8 @@ class TestRealWorldScenarios:
                 """Check if status is success."""
                 if not isinstance(x, dict):
                     return False
-                return x.get("status") == "success"
+                payload: dict[str, object] = x
+                return payload.get("status") == "success"
 
             def check_correlation_id(x: object) -> bool:
                 """Check if correlation_id exists."""
@@ -728,7 +731,8 @@ class TestRealWorldScenarios:
                 """Check if method is valid HTTP method."""
                 if not isinstance(x, dict):
                     return False
-                method = x.get("method")
+                payload: dict[str, object] = x
+                method = payload.get("method")
                 return isinstance(method, str) and method in {
                     "GET",
                     "POST",

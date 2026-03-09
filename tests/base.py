@@ -14,8 +14,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable
-from dataclasses import dataclass, field
 from typing import override
+
+from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import (
     FlextConstants,
@@ -42,24 +43,38 @@ class TestsFlextServiceBase(FlextTestsServiceBase[T]):
     - All generic service functionality comes from FlextTestsServiceBase
     """
 
-    @dataclass(frozen=True, slots=True)
-    class HandlerTestCase:
+    class HandlerTestCase(BaseModel):
         """Factory for handler test case configurations."""
 
-        handler_id: str
-        handler_name: str | None = None
-        handler_type: FlextConstants.Cqrs.HandlerType = (
-            FlextConstants.Cqrs.HandlerType.COMMAND
+        model_config = ConfigDict(frozen=True)
+
+        handler_id: str = Field(description="Unique handler identifier for test case")
+        handler_name: str | None = Field(
+            default=None, description="Optional display name for handler"
         )
-        expected_result: FlextTypes.Container | None = None
-        should_fail: bool = False
-        error_message: str | None = None
-        description: str = field(default="", compare=False)
+        handler_type: FlextConstants.Cqrs.HandlerType = Field(
+            default=FlextConstants.Cqrs.HandlerType.COMMAND,
+            description="Handler type used for test case configuration",
+        )
+        expected_result: FlextTypes.Container | None = Field(
+            default=None,
+            description="Expected handler result when execution succeeds",
+        )
+        should_fail: bool = Field(
+            default=False, description="Whether test case expects failure"
+        )
+        error_message: str | None = Field(
+            default=None, description="Expected error message for failures"
+        )
+        description: str = Field(
+            default="", description="Human-readable test case description"
+        )
 
         def create_handler(
             self,
             process_fn: Callable[
-                [FlextTypes.Container], FlextResult[FlextTypes.Container],
+                [FlextTypes.Container],
+                FlextResult[FlextTypes.Container],
             ]
             | None = None,
         ) -> FlextHandlers[FlextTypes.Container, FlextTypes.Container]:
@@ -127,7 +142,8 @@ class TestsFlextServiceBase(FlextTestsServiceBase[T]):
             handler_name: str | None = None,
             handler_type: FlextConstants.Cqrs.HandlerType = FlextConstants.Cqrs.HandlerType.COMMAND,
             process_fn: Callable[
-                [FlextTypes.Container], FlextResult[FlextTypes.Container],
+                [FlextTypes.Container],
+                FlextResult[FlextTypes.Container],
             ]
             | None = None,
         ) -> FlextHandlers[FlextTypes.Container, FlextTypes.Container]:
@@ -164,7 +180,8 @@ class TestsFlextServiceBase(FlextTestsServiceBase[T]):
 
                 @override
                 def handle(
-                    self, message: FlextTypes.Container,
+                    self,
+                    message: FlextTypes.Container,
                 ) -> FlextResult[FlextTypes.Container]:
                     """Handle message with proper error handling."""
                     try:
@@ -206,7 +223,8 @@ class TestsFlextServiceBase(FlextTestsServiceBase[T]):
                 return FlextResult[FlextTypes.Container].ok(result_value)
 
             return TestsFlextServiceBase.Handlers.create_test_handler(
-                handler_id, process_fn=always_succeed,
+                handler_id,
+                process_fn=always_succeed,
             )
 
         @staticmethod
@@ -237,7 +255,8 @@ class TestsFlextServiceBase(FlextTestsServiceBase[T]):
                 return FlextResult[FlextTypes.Container].fail(error_message)
 
             return TestsFlextServiceBase.Handlers.create_test_handler(
-                handler_id, process_fn=always_fail,
+                handler_id,
+                process_fn=always_fail,
             )
 
         @staticmethod
@@ -272,7 +291,8 @@ class TestsFlextServiceBase(FlextTestsServiceBase[T]):
                     )
 
             return TestsFlextServiceBase.Handlers.create_test_handler(
-                handler_id, process_fn=transform,
+                handler_id,
+                process_fn=transform,
             )
 
 

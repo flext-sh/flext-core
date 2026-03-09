@@ -160,7 +160,9 @@ class FlextInfraPytestDiagExtractor:
         return True
 
     def extract(
-        self, junit_path: Path, log_path: Path,
+        self,
+        junit_path: Path,
+        log_path: Path,
     ) -> r[m.Infra.Core.PytestDiagnostics]:
         """Extract diagnostics from JUnit XML and pytest log.
 

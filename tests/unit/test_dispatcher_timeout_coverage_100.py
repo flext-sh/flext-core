@@ -88,7 +88,9 @@ class TestTimeoutEnforcerInitialization:
     """Test TimeoutEnforcer initialization."""
 
     @pytest.mark.parametrize(
-        "scenario", TimeoutEnforcerScenarios.INIT_SCENARIOS, ids=lambda s: s.name,
+        "scenario",
+        TimeoutEnforcerScenarios.INIT_SCENARIOS,
+        ids=lambda s: s.name,
     )
     def test_initialization(self, scenario: TimeoutEnforcerScenario) -> None:
         """Test TimeoutEnforcer initialization with various scenarios."""

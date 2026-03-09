@@ -42,7 +42,9 @@ class TestFlextInfraWorkflowSyncer:
         workflow_file = tmp_path / "source.yml"
         workflow_file.write_text("name: CI")
         syncer = FlextInfraWorkflowSyncer(
-            selector=Mock(), json_io=Mock(), templates=Mock(),
+            selector=Mock(),
+            json_io=Mock(),
+            templates=Mock(),
         )
         result = syncer.resolve_source_workflow(tmp_path, workflow_file)
         assert result.is_success
@@ -53,7 +55,9 @@ class TestFlextInfraWorkflowSyncer:
         workflow_file = tmp_path / "source.yml"
         workflow_file.write_text("name: CI")
         syncer = FlextInfraWorkflowSyncer(
-            selector=Mock(), json_io=Mock(), templates=Mock(),
+            selector=Mock(),
+            json_io=Mock(),
+            templates=Mock(),
         )
         result = syncer.resolve_source_workflow(tmp_path, Path("source.yml"))
         assert result.is_success
@@ -62,7 +66,9 @@ class TestFlextInfraWorkflowSyncer:
     def test_resolve_source_workflow_not_found(self, tmp_path: Path) -> None:
         """Test handling of missing source workflow file."""
         syncer = FlextInfraWorkflowSyncer(
-            selector=Mock(), json_io=Mock(), templates=Mock(),
+            selector=Mock(),
+            json_io=Mock(),
+            templates=Mock(),
         )
         result = syncer.resolve_source_workflow(tmp_path, Path("nonexistent.yml"))
         assert result.is_failure
@@ -80,7 +86,9 @@ class TestFlextInfraWorkflowSyncer:
         workflows_dir.mkdir(parents=True)
         (workflows_dir / "ci.yml").write_text("name: CI")
         syncer = FlextInfraWorkflowSyncer(
-            selector=Mock(), json_io=Mock(), templates=Mock(),
+            selector=Mock(),
+            json_io=Mock(),
+            templates=Mock(),
         )
         result = syncer.resolve_source_workflow(tmp_path)
         assert result.is_success
@@ -88,7 +96,9 @@ class TestFlextInfraWorkflowSyncer:
     def test_resolve_default_source_missing(self, tmp_path: Path) -> None:
         """Test resolving default source when missing."""
         syncer = FlextInfraWorkflowSyncer(
-            selector=Mock(), json_io=Mock(), templates=Mock(),
+            selector=Mock(),
+            json_io=Mock(),
+            templates=Mock(),
         )
         result = syncer.resolve_source_workflow(tmp_path)
         assert result.is_failure
@@ -104,7 +114,9 @@ class TestRenderTemplate:
         template = tmp_path / "ci.yml"
         template.write_text("name: CI\n")
         syncer = FlextInfraWorkflowSyncer(
-            selector=Mock(), json_io=Mock(), templates=mock_templates,
+            selector=Mock(),
+            json_io=Mock(),
+            templates=mock_templates,
         )
         result = syncer.render_template(template)
         assert result.is_success
@@ -118,7 +130,9 @@ class TestRenderTemplate:
         template = tmp_path / "ci.yml"
         template.write_text(header + "name: CI\n")
         syncer = FlextInfraWorkflowSyncer(
-            selector=Mock(), json_io=Mock(), templates=mock_templates,
+            selector=Mock(),
+            json_io=Mock(),
+            templates=mock_templates,
         )
         result = syncer.render_template(template)
         assert result.is_success
@@ -127,7 +141,9 @@ class TestRenderTemplate:
     def test_read_failure(self, tmp_path: Path) -> None:
         """Test render when file read fails."""
         syncer = FlextInfraWorkflowSyncer(
-            selector=Mock(), json_io=Mock(), templates=Mock(),
+            selector=Mock(),
+            json_io=Mock(),
+            templates=Mock(),
         )
         result = syncer.render_template(tmp_path / "nonexistent.yml")
         assert result.is_failure
@@ -143,7 +159,9 @@ class TestSyncProject:
         workflows_dir.mkdir(parents=True)
         (workflows_dir / "ci.yml").write_text("old content")
         syncer = FlextInfraWorkflowSyncer(
-            selector=Mock(), json_io=Mock(), templates=Mock(),
+            selector=Mock(),
+            json_io=Mock(),
+            templates=Mock(),
         )
         result = syncer.sync_project(
             project_name="proj",
@@ -164,10 +182,14 @@ class TestSyncProject:
         workflows_dir.mkdir(parents=True)
         (workflows_dir / "ci.yml").write_text("same content")
         syncer = FlextInfraWorkflowSyncer(
-            selector=Mock(), json_io=Mock(), templates=Mock(),
+            selector=Mock(),
+            json_io=Mock(),
+            templates=Mock(),
         )
         result = syncer.sync_project(
-            project_name="proj", project_root=project, rendered_template="same content",
+            project_name="proj",
+            project_root=project,
+            rendered_template="same content",
         )
         assert result.is_success
         assert result.value[0].action == "noop"
@@ -177,7 +199,9 @@ class TestSyncProject:
         project = tmp_path / "proj"
         project.mkdir()
         syncer = FlextInfraWorkflowSyncer(
-            selector=Mock(), json_io=Mock(), templates=Mock(),
+            selector=Mock(),
+            json_io=Mock(),
+            templates=Mock(),
         )
         result = syncer.sync_project(
             project_name="proj",
@@ -194,7 +218,9 @@ class TestSyncProject:
         project = tmp_path / "proj"
         project.mkdir()
         syncer = FlextInfraWorkflowSyncer(
-            selector=Mock(), json_io=Mock(), templates=Mock(),
+            selector=Mock(),
+            json_io=Mock(),
+            templates=Mock(),
         )
         result = syncer.sync_project(
             project_name="proj",
@@ -214,7 +240,9 @@ class TestSyncProject:
         (workflows_dir / "ci.yml").write_text("content")
         (workflows_dir / "extra.yml").write_text("old")
         syncer = FlextInfraWorkflowSyncer(
-            selector=Mock(), json_io=Mock(), templates=Mock(),
+            selector=Mock(),
+            json_io=Mock(),
+            templates=Mock(),
         )
         result = syncer.sync_project(
             project_name="proj",
@@ -235,7 +263,9 @@ class TestSyncProject:
         workflows_dir.mkdir(parents=True)
         (workflows_dir / "ci.yml").write_text("content")
         syncer = FlextInfraWorkflowSyncer(
-            selector=Mock(), json_io=Mock(), templates=Mock(),
+            selector=Mock(),
+            json_io=Mock(),
+            templates=Mock(),
         )
         result = syncer.sync_project(
             project_name="proj",
@@ -254,7 +284,9 @@ class TestSyncProject:
         workflows_dir.mkdir(parents=True)
         (workflows_dir / "ci.yml").write_text("old content")
         syncer = FlextInfraWorkflowSyncer(
-            selector=Mock(), json_io=Mock(), templates=Mock(),
+            selector=Mock(),
+            json_io=Mock(),
+            templates=Mock(),
         )
         result = syncer.sync_project(
             project_name="proj",
@@ -272,7 +304,9 @@ class TestSyncProject:
         workflows_dir = project / ".github" / "workflows"
         workflows_dir.mkdir(parents=True)
         syncer = FlextInfraWorkflowSyncer(
-            selector=Mock(), json_io=Mock(), templates=Mock(),
+            selector=Mock(),
+            json_io=Mock(),
+            templates=Mock(),
         )
         with patch.object(Path, "write_text", side_effect=OSError("Permission denied")):
             result = syncer.sync_project(
@@ -305,7 +339,9 @@ class TestSyncWorkspace:
         proj.path.mkdir()
         mock_selector.resolve_projects.return_value = r[list[Mock]].ok([proj])
         syncer = FlextInfraWorkflowSyncer(
-            selector=mock_selector, json_io=mock_json, templates=mock_templates,
+            selector=mock_selector,
+            json_io=mock_json,
+            templates=mock_templates,
         )
         result = syncer.sync_workspace(tmp_path, apply=True)
         assert result.is_success
@@ -313,7 +349,9 @@ class TestSyncWorkspace:
     def test_source_resolution_failure(self, tmp_path: Path) -> None:
         """Test workspace sync with source resolution failure."""
         syncer = FlextInfraWorkflowSyncer(
-            selector=Mock(), json_io=Mock(), templates=Mock(),
+            selector=Mock(),
+            json_io=Mock(),
+            templates=Mock(),
         )
         result = syncer.sync_workspace(tmp_path)
         assert result.is_failure
@@ -327,13 +365,19 @@ class TestSyncWorkspace:
         mock_templates = Mock()
         mock_templates.GENERATED_SHELL_HEADER = "# GENERATED by {source}\n"
         syncer = FlextInfraWorkflowSyncer(
-            selector=Mock(), json_io=Mock(), templates=mock_templates,
+            selector=Mock(),
+            json_io=Mock(),
+            templates=mock_templates,
         )
         object.__setattr__(
-            syncer, "render_template", Mock(return_value=r[str].fail("render error")),
+            syncer,
+            "render_template",
+            Mock(return_value=r[str].fail("render error")),
         )
         object.__setattr__(
-            syncer, "resolve_source_workflow", Mock(return_value=r[Path].ok(ci)),
+            syncer,
+            "resolve_source_workflow",
+            Mock(return_value=r[Path].ok(ci)),
         )
         result = syncer.sync_workspace(tmp_path)
         assert result.is_failure
@@ -348,7 +392,9 @@ class TestSyncWorkspace:
         mock_templates = Mock()
         mock_templates.GENERATED_SHELL_HEADER = "# GENERATED by {source}\n"
         syncer = FlextInfraWorkflowSyncer(
-            selector=mock_selector, json_io=Mock(), templates=mock_templates,
+            selector=mock_selector,
+            json_io=Mock(),
+            templates=mock_templates,
         )
         result = syncer.sync_workspace(tmp_path)
         assert result.is_failure
@@ -364,7 +410,9 @@ class TestSyncWorkspace:
         (workflows_dir / "ci.yml").write_text("name: CI\n")
         mock_selector.resolve_projects.return_value = r[list[Mock]].ok([])
         syncer = FlextInfraWorkflowSyncer(
-            selector=mock_selector, json_io=mock_json, templates=mock_templates,
+            selector=mock_selector,
+            json_io=mock_json,
+            templates=mock_templates,
         )
         report = tmp_path / "report.json"
         result = syncer.sync_workspace(tmp_path, report_path=report)
@@ -379,7 +427,9 @@ class TestWriteReport:
         """Test report writing with operations."""
         mock_json = Mock()
         syncer = FlextInfraWorkflowSyncer(
-            selector=Mock(), json_io=mock_json, templates=Mock(),
+            selector=Mock(),
+            json_io=mock_json,
+            templates=Mock(),
         )
         ops = [
             SyncOperation(project="p1", path="ci.yml", action="create", reason="new"),
@@ -398,7 +448,9 @@ class TestWriteReport:
         """Test report writing in dry-run mode."""
         mock_json = Mock()
         syncer = FlextInfraWorkflowSyncer(
-            selector=Mock(), json_io=mock_json, templates=Mock(),
+            selector=Mock(),
+            json_io=mock_json,
+            templates=Mock(),
         )
         report_path = tmp_path / "report.json"
         syncer._write_report(report_path, apply=False, operations=[])

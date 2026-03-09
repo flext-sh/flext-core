@@ -73,7 +73,10 @@ class FlextInfraUtilitiesIo:
 
         """
         return FlextInfraJsonService().write(
-            path, payload, sort_keys=sort_keys, ensure_ascii=ensure_ascii,
+            path,
+            payload,
+            sort_keys=sort_keys,
+            ensure_ascii=ensure_ascii,
         )
 
     @staticmethod
@@ -91,7 +94,10 @@ class FlextInfraUtilitiesIo:
     ) -> r[str]:
         """Serialize a JSON-compatible value via canonical infra JSON service."""
         return FlextInfraJsonService().serialize(
-            data, sort_keys=sort_keys, ensure_ascii=ensure_ascii, indent=indent,
+            data,
+            sort_keys=sort_keys,
+            ensure_ascii=ensure_ascii,
+            indent=indent,
         )
 
 

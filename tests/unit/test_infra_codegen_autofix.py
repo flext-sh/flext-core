@@ -38,7 +38,10 @@ def _derive_prefix_static(project_root: Path) -> str:
 
 
 def _create_project(
-    tmp_path: Path, name: str, pkg_name: str, files: dict[str, str],
+    tmp_path: Path,
+    name: str,
+    pkg_name: str,
+    files: dict[str, str],
 ) -> Path:
     """Scaffold a minimal project with given source files."""
     project = tmp_path / name
@@ -75,7 +78,8 @@ def fixer(tmp_path: Path) -> FlextInfraCodegenFixer:
 
 @patch(_PATCH_TARGET, side_effect=_derive_prefix_static)
 def test_standalone_typevar_detected_as_fixable(
-    _mock_prefix: object, tmp_path: Path,
+    _mock_prefix: object,
+    tmp_path: Path,
 ) -> None:
     """A standalone TypeVar not used by any class is detected as fixable."""
     project = _create_project(
@@ -114,7 +118,8 @@ def test_in_context_typevar_not_flagged(_mock_prefix: object, tmp_path: Path) ->
 
 @patch(_PATCH_TARGET, side_effect=_derive_prefix_static)
 def test_standalone_final_detected_as_fixable(
-    _mock_prefix: object, tmp_path: Path,
+    _mock_prefix: object,
+    tmp_path: Path,
 ) -> None:
     """A standalone Final constant is detected as fixable (NS-001)."""
     project = _create_project(
@@ -136,7 +141,8 @@ def test_standalone_final_detected_as_fixable(
 
 @patch(_PATCH_TARGET, side_effect=_derive_prefix_static)
 def test_standalone_typealias_detected_as_fixable(
-    _mock_prefix: object, tmp_path: Path,
+    _mock_prefix: object,
+    tmp_path: Path,
 ) -> None:
     """A standalone TypeAlias is detected as fixable (NS-002)."""
     project = _create_project(
@@ -206,7 +212,8 @@ def test_flexcore_excluded_from_run(_mock_prefix: object, tmp_path: Path) -> Non
 
 @patch(_PATCH_TARGET, side_effect=_derive_prefix_static)
 def test_project_without_src_returns_empty(
-    _mock_prefix: object, tmp_path: Path,
+    _mock_prefix: object,
+    tmp_path: Path,
 ) -> None:
     """A project without src/ directory returns empty violations."""
     project = tmp_path / "no-src-proj"
@@ -224,7 +231,8 @@ def test_project_without_src_returns_empty(
 
 @patch(_PATCH_TARGET, side_effect=_derive_prefix_static)
 def test_files_modified_tracks_affected_files(
-    _mock_prefix: object, tmp_path: Path,
+    _mock_prefix: object,
+    tmp_path: Path,
 ) -> None:
     """files_modified includes both source and target files."""
     project = _create_project(

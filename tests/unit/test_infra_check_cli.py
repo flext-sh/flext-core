@@ -35,7 +35,9 @@ def test_run_cli_run_returns_zero_for_pass(monkeypatch: MonkeyPatch) -> None:
         return r[list[SimpleNamespace]].ok([SimpleNamespace(passed=True)])
 
     _ = monkeypatch.setattr(
-        FlextInfraWorkspaceChecker, "run_projects", _fake_run_projects,
+        FlextInfraWorkspaceChecker,
+        "run_projects",
+        _fake_run_projects,
     )
     exit_code = run_cli(["run", "--gates", "lint,type", "--project", "flext-core"])
     assert exit_code == 0
@@ -56,7 +58,9 @@ def test_run_cli_run_returns_one_for_fail(monkeypatch: MonkeyPatch) -> None:
         return r[list[SimpleNamespace]].ok([SimpleNamespace(passed=False)])
 
     _ = monkeypatch.setattr(
-        FlextInfraWorkspaceChecker, "run_projects", _fake_run_projects,
+        FlextInfraWorkspaceChecker,
+        "run_projects",
+        _fake_run_projects,
     )
     exit_code = run_cli(["run", "--gates", "lint", "--project", "flext-core"])
     assert exit_code == 1
@@ -77,7 +81,9 @@ def test_run_cli_run_returns_two_for_error(monkeypatch: MonkeyPatch) -> None:
         return r[list[SimpleNamespace]].fail("test error")
 
     _ = monkeypatch.setattr(
-        FlextInfraWorkspaceChecker, "run_projects", _fake_run_projects,
+        FlextInfraWorkspaceChecker,
+        "run_projects",
+        _fake_run_projects,
     )
     exit_code = run_cli(["run", "--gates", "lint", "--project", "flext-core"])
     assert exit_code == 2
@@ -100,7 +106,9 @@ def test_run_cli_with_multiple_projects(monkeypatch: MonkeyPatch) -> None:
         return r[list[SimpleNamespace]].ok([SimpleNamespace(passed=True)])
 
     _ = monkeypatch.setattr(
-        FlextInfraWorkspaceChecker, "run_projects", _fake_run_projects,
+        FlextInfraWorkspaceChecker,
+        "run_projects",
+        _fake_run_projects,
     )
     exit_code = run_cli([
         "run",
@@ -133,7 +141,9 @@ def test_run_cli_with_fail_fast_flag(monkeypatch: MonkeyPatch) -> None:
         return r[list[SimpleNamespace]].ok([SimpleNamespace(passed=True)])
 
     _ = monkeypatch.setattr(
-        FlextInfraWorkspaceChecker, "run_projects", _fake_run_projects,
+        FlextInfraWorkspaceChecker,
+        "run_projects",
+        _fake_run_projects,
     )
     exit_code = run_cli([
         "run",

@@ -58,22 +58,26 @@ class TestAutomatedFlextSettings:
         ids=lambda case: case["description"],
     )
     def test_automated_settings_comprehensive_scenarios(
-        self, test_scenario: m.Tests.AutomatedTestScenario,
+        self,
+        test_scenario: m.Tests.AutomatedTestScenario,
     ) -> None:
         """Comprehensive test scenarios for settings functionality."""
         try:
             instance = fixture_factory.create_test_settings_instance()
             result = self._execute_settings_operation(instance, test_scenario.input)
-            if test_scenario.expected_success: $$$
+            if test_scenario.expected_success:
+                assert result.is_success, f"Expected success but got failure: {result}"
         except Exception as e:
-            if not test_scenario.expected_success: $$$
+            if not test_scenario.expected_success:
+                assert True, f"Expected failure and got exception: {e}"
 
     def test_automated_settings_type_safety(self) -> None:
         """Test type safety compliance for settings."""
         instance = fixture_factory.create_test_settings_instance()
         result = self._execute_settings_operation(instance, {"type_safe": True})
         _ = assertion_helpers.assert_flext_result_success(
-            result, "FlextSettings type safety test",
+            result,
+            "FlextSettings type safety test",
         )
 
     def test_automated_settings_error_handling(self) -> None:
@@ -97,12 +101,14 @@ class TestAutomatedFlextSettings:
 
         def operation() -> object:
             return self._execute_settings_operation(
-                instance, {"performance_test": True},
+                instance,
+                {"performance_test": True},
             )
 
         result = test_framework.execute_with_timeout(operation, timeout_seconds=1.0)
         _ = assertion_helpers.assert_flext_result_success(
-            result, "FlextSettings performance test exceeded timeout",
+            result,
+            "FlextSettings performance test exceeded timeout",
         )
 
     def test_automated_settings_resource_management(self) -> None:
@@ -110,18 +116,22 @@ class TestAutomatedFlextSettings:
         instance = fixture_factory.create_test_settings_instance()
         result = self._execute_settings_operation(instance, {"resource_test": True})
         _ = assertion_helpers.assert_flext_result_success(
-            result, "FlextSettings resource test",
+            result,
+            "FlextSettings resource test",
         )
         instance_obj: object = instance
         if hasattr(instance_obj, "cleanup"):
             cleanup_result = getattr(instance_obj, "cleanup")()
             if cleanup_result:
                 _ = assertion_helpers.assert_flext_result_success(
-                    cleanup_result, "FlextSettings cleanup failed",
+                    cleanup_result,
+                    "FlextSettings cleanup failed",
                 )
 
     def _execute_settings_operation(
-        self, instance: object, input_data: Mapping[str, t.ContainerValue],
+        self,
+        instance: object,
+        input_data: Mapping[str, t.ContainerValue],
     ) -> r[bool]:
         """Execute a test operation on settings instance.
 

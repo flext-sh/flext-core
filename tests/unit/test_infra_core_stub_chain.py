@@ -17,7 +17,8 @@ class TestFlextInfraStubSupplyChain:
     is_internal = getattr(FlextInfraStubSupplyChain, "_is_internal")
     stub_exists = getattr(FlextInfraStubSupplyChain, "_stub_exists")
     discover_stub_projects = getattr(
-        FlextInfraStubSupplyChain, "_discover_stub_projects",
+        FlextInfraStubSupplyChain,
+        "_discover_stub_projects",
     )
 
     def test_init_creates_service_instance(self) -> None:
@@ -63,7 +64,9 @@ class TestFlextInfraStubSupplyChain:
         py_file.write_text("import missing_module")
         with patch.object(chain, "_run_mypy_hints", return_value=[]):
             with patch.object(
-                chain, "_run_pyrefly_missing", return_value=["missing_module"],
+                chain,
+                "_run_pyrefly_missing",
+                return_value=["missing_module"],
             ):
                 result = chain.analyze(project_dir, workspace_root)
                 assert result.is_success
@@ -76,7 +79,9 @@ class TestFlextInfraStubSupplyChain:
         project_dir.mkdir(parents=True)
         with patch.object(chain, "_run_mypy_hints", return_value=[]):
             with patch.object(
-                chain, "_run_pyrefly_missing", return_value=["flext_test"],
+                chain,
+                "_run_pyrefly_missing",
+                return_value=["flext_test"],
             ):
                 result = chain.analyze(project_dir, workspace_root)
                 assert result.is_success
@@ -215,7 +220,8 @@ class TestFlextInfraStubSupplyChain:
             type(runner),
             "run",
             return_value=Mock(
-                is_success=True, value=Mock(stdout="note: hint: `types-requests`"),
+                is_success=True,
+                value=Mock(stdout="note: hint: `types-requests`"),
             ),
         ):
             hints = chain._run_mypy_hints(project_dir)
@@ -247,7 +253,8 @@ class TestFlextInfraStubSupplyChain:
             assert "requests" in imports
 
     def test_run_pyrefly_missing_with_failed_run_returns_empty(
-        self, tmp_path: Path,
+        self,
+        tmp_path: Path,
     ) -> None:
         """Test _run_pyrefly_missing returns empty on failed run."""
         chain = FlextInfraStubSupplyChain()
@@ -346,7 +353,9 @@ class TestFlextInfraStubSupplyChain:
         project_dir = tmp_path / "project"
         project_dir.mkdir()
         with patch.object(
-            chain, "_run_mypy_hints", side_effect=ValueError("test error"),
+            chain,
+            "_run_mypy_hints",
+            side_effect=ValueError("test error"),
         ):
             result = chain.analyze(project_dir, tmp_path)
             assert result.is_failure

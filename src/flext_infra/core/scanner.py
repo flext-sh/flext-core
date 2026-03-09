@@ -29,7 +29,9 @@ class FlextInfraTextPatternScanner:
 
     @staticmethod
     def _collect_files(
-        root: Path, includes: list[str], excludes: list[str],
+        root: Path,
+        includes: list[str],
+        excludes: list[str],
     ) -> list[Path]:
         """Collect files matching include/exclude globs."""
         selected: list[Path] = []
@@ -50,7 +52,8 @@ class FlextInfraTextPatternScanner:
         for file_path in files:
             try:
                 text = file_path.read_text(
-                    encoding=c.Infra.Encoding.DEFAULT, errors=c.Infra.Toml.IGNORE,
+                    encoding=c.Infra.Encoding.DEFAULT,
+                    errors=c.Infra.Toml.IGNORE,
                 )
             except OSError:
                 continue

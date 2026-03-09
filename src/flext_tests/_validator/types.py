@@ -109,7 +109,7 @@ class FlextValidatorTypes:
         if u.Tests.Validator.is_approved("TYPE-001", file_path, approved):
             return []
         violations: list[m.Tests.Validator.Violation] = []
-        pattern = re.compile("#\\s*type:\\s*ignore")
+        pattern = re.compile(r"#\s*type:\s*ignore")
         for i, line in enumerate(lines, start=1):
             is_real = u.Tests.Validator.is_real_comment(line, pattern)
             if pattern.search(line) and is_real:

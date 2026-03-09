@@ -47,7 +47,10 @@ class TestFlextInfraReleaseOrchestrator:
         """Test run_release with invalid phase name."""
         orchestrator = FlextInfraReleaseOrchestrator()
         result = orchestrator.run_release(
-            root=workspace_root, version="1.0.0", tag="v1.0.0", phases=["invalid_phase"],
+            root=workspace_root,
+            version="1.0.0",
+            tag="v1.0.0",
+            phases=["invalid_phase"],
         )
         assert result.is_failure
 
@@ -59,7 +62,10 @@ class TestFlextInfraReleaseOrchestrator:
             return_value=r[bool].ok(True),
         ):
             result = orchestrator.run_release(
-                root=workspace_root, version="1.0.0", tag="v1.0.0", phases=[],
+                root=workspace_root,
+                version="1.0.0",
+                tag="v1.0.0",
+                phases=[],
             )
         assert result.is_success
 
@@ -165,7 +171,8 @@ class TestFlextInfraReleaseOrchestrator:
         assert result.is_success
 
     def test_run_release_phase_failure_stops_execution(
-        self, workspace_root: Path,
+        self,
+        workspace_root: Path,
     ) -> None:
         """Test that phase failure stops further execution."""
         orchestrator = FlextInfraReleaseOrchestrator()
@@ -300,7 +307,10 @@ class TestFlextInfraReleaseOrchestrator:
             mock_vs_inst.parse_semver.return_value = r[str].ok("1.0.0")
             mock_vs_inst.replace_project_version.return_value = None
             result = orchestrator.phase_version(
-                workspace_root, "1.0.0", [], dry_run=False,
+                workspace_root,
+                "1.0.0",
+                [],
+                dry_run=False,
             )
             assert result.is_success
 
@@ -324,7 +334,10 @@ class TestFlextInfraReleaseOrchestrator:
             mock_vs_inst = mock_vs.return_value
             mock_vs_inst.parse_semver.return_value = r[str].ok("1.0.0")
             result = orchestrator.phase_version(
-                workspace_root, "1.0.0", [], dev_suffix=True,
+                workspace_root,
+                "1.0.0",
+                [],
+                dev_suffix=True,
             )
             assert result.is_success
 
@@ -337,7 +350,10 @@ class TestFlextInfraReleaseOrchestrator:
             mock_vs_inst = mock_vs.return_value
             mock_vs_inst.parse_semver.return_value = r[str].ok("1.0.0")
             result = orchestrator.phase_version(
-                workspace_root, "1.0.0", [], dry_run=True,
+                workspace_root,
+                "1.0.0",
+                [],
+                dry_run=True,
             )
             assert result.is_success
 
@@ -381,7 +397,9 @@ class TestFlextInfraReleaseOrchestrator:
             ) as mock_runner_cls:
                 mock_runner = mock_runner_cls.return_value
                 output_model = FlextInfraModels.Infra.Core.CommandOutput(
-                    exit_code=1, stdout="error", stderr="",
+                    exit_code=1,
+                    stdout="error",
+                    stderr="",
                 )
                 mock_runner.run_raw.return_value = r[
                     FlextInfraModels.Infra.Core.CommandOutput
@@ -402,7 +420,11 @@ class TestFlextInfraReleaseOrchestrator:
                 return_value=r[bool].ok(True),
             ):
                 result = orchestrator.phase_publish(
-                    workspace_root, "1.0.0", "v1.0.0", [], dry_run=True,
+                    workspace_root,
+                    "1.0.0",
+                    "v1.0.0",
+                    [],
+                    dry_run=True,
                 )
                 assert result.is_success
 
@@ -422,7 +444,11 @@ class TestFlextInfraReleaseOrchestrator:
                     "flext_infra.release.orchestrator.FlextInfraReleaseOrchestrator._update_changelog",
                 ) as mock_changelog:
                     result = orchestrator.phase_publish(
-                        workspace_root, "1.0.0", "v1.0.0", [], dry_run=True,
+                        workspace_root,
+                        "1.0.0",
+                        "v1.0.0",
+                        [],
+                        dry_run=True,
                     )
                     assert result.is_success
                     mock_changelog.assert_not_called()
@@ -448,7 +474,11 @@ class TestFlextInfraReleaseOrchestrator:
                         return_value=r[bool].ok(True),
                     ):
                         result = orchestrator.phase_publish(
-                            workspace_root, "1.0.0", "v1.0.0", [], dry_run=False,
+                            workspace_root,
+                            "1.0.0",
+                            "v1.0.0",
+                            [],
+                            dry_run=False,
                         )
                         assert result.is_success
 
@@ -522,7 +552,9 @@ class TestFlextInfraReleaseOrchestrator:
         ) as mock_runner_cls:
             mock_runner = mock_runner_cls.return_value
             output_model = FlextInfraModels.Infra.Core.CommandOutput(
-                exit_code=0, stdout="build ok", stderr="",
+                exit_code=0,
+                stdout="build ok",
+                stderr="",
             )
             mock_runner.run_raw.return_value = r[
                 FlextInfraModels.Infra.Core.CommandOutput
@@ -560,7 +592,11 @@ class TestFlextInfraReleaseOrchestrator:
                     mock_sel_inst = mock_sel.return_value
                     mock_sel_inst.resolve_projects.return_value = r[list[str]].ok([])
                     result = orchestrator._generate_notes(
-                        workspace_root, "1.0.0", "v1.0.0", [], notes_path,
+                        workspace_root,
+                        "1.0.0",
+                        "v1.0.0",
+                        [],
+                        notes_path,
                     )
                     assert result.is_success
                     assert notes_path.exists()
@@ -583,10 +619,15 @@ class TestFlextInfraReleaseOrchestrator:
                     mock_sel_inst = mock_sel.return_value
                     mock_sel_inst.resolve_projects.return_value = r[list[str]].ok([])
                     with patch(
-                        "pathlib.Path.write_text", side_effect=OSError("write failed"),
+                        "pathlib.Path.write_text",
+                        side_effect=OSError("write failed"),
                     ):
                         result = orchestrator._generate_notes(
-                            workspace_root, "1.0.0", "v1.0.0", [], notes_path,
+                            workspace_root,
+                            "1.0.0",
+                            "v1.0.0",
+                            [],
+                            notes_path,
                         )
                         assert result.is_failure
 
@@ -653,7 +694,10 @@ class TestFlextInfraReleaseOrchestrator:
         notes_path = workspace_root / "notes.md"
         notes_path.write_text("# Release v1.0.0\n")
         result = orchestrator._update_changelog(
-            workspace_root, "1.0.0", "v1.0.0", notes_path,
+            workspace_root,
+            "1.0.0",
+            "v1.0.0",
+            notes_path,
         )
         assert result.is_success
         changelog = workspace_root / "docs" / "CHANGELOG.md"
@@ -668,7 +712,10 @@ class TestFlextInfraReleaseOrchestrator:
         notes_path = workspace_root / "notes.md"
         notes_path.write_text("# Release v1.0.0\n")
         result = orchestrator._update_changelog(
-            workspace_root, "1.0.0", "v1.0.0", notes_path,
+            workspace_root,
+            "1.0.0",
+            "v1.0.0",
+            notes_path,
         )
         assert result.is_success
         content = changelog.read_text()
@@ -681,7 +728,10 @@ class TestFlextInfraReleaseOrchestrator:
         notes_path.write_text("# Release v1.0.0\n")
         with patch("pathlib.Path.write_text", side_effect=OSError("write failed")):
             result = orchestrator._update_changelog(
-                workspace_root, "1.0.0", "v1.0.0", notes_path,
+                workspace_root,
+                "1.0.0",
+                "v1.0.0",
+                notes_path,
             )
             assert result.is_failure
 
@@ -740,7 +790,10 @@ class TestFlextInfraReleaseOrchestrator:
                 return_value=r[bool].ok(True),
             ):
                 result = orchestrator._bump_next_dev(
-                    workspace_root, "1.0.0", [], "minor",
+                    workspace_root,
+                    "1.0.0",
+                    [],
+                    "minor",
                 )
                 assert result.is_success
 
@@ -767,7 +820,10 @@ class TestFlextInfraReleaseOrchestrator:
             mock_versioning.parse_semver.return_value = r[str].ok("1.0.0")
             mock_versioning.replace_project_version.return_value = None
             result = orchestrator.phase_version(
-                workspace_root, "1.0.0", [], dry_run=False,
+                workspace_root,
+                "1.0.0",
+                [],
+                dry_run=False,
             )
             assert result.is_success
 
@@ -780,7 +836,10 @@ class TestFlextInfraReleaseOrchestrator:
             mock_versioning = mock_versioning_cls.return_value
             mock_versioning.parse_semver.return_value = r[str].ok("1.0.0")
             result = orchestrator.phase_version(
-                workspace_root, "1.0.0", [], dry_run=False,
+                workspace_root,
+                "1.0.0",
+                [],
+                dry_run=False,
             )
             assert result.is_success
 
@@ -806,7 +865,11 @@ class TestFlextInfraReleaseOrchestrator:
         ) as mock_notes:
             mock_notes.return_value = r[bool].fail("notes generation failed")
             result = orchestrator.phase_publish(
-                workspace_root, "1.0.0", "v1.0.0", [], dry_run=False,
+                workspace_root,
+                "1.0.0",
+                "v1.0.0",
+                [],
+                dry_run=False,
             )
             assert result.is_failure
 
@@ -824,7 +887,11 @@ class TestFlextInfraReleaseOrchestrator:
                 mock_notes.return_value = r[bool].ok(True)
                 mock_changelog.return_value = r[bool].fail("changelog update failed")
                 result = orchestrator.phase_publish(
-                    workspace_root, "1.0.0", "v1.0.0", [], dry_run=False,
+                    workspace_root,
+                    "1.0.0",
+                    "v1.0.0",
+                    [],
+                    dry_run=False,
                 )
                 assert result.is_failure
 
@@ -846,7 +913,11 @@ class TestFlextInfraReleaseOrchestrator:
                     mock_changelog.return_value = r[bool].ok(True)
                     mock_tag.return_value = r[bool].fail("tag creation failed")
                     result = orchestrator.phase_publish(
-                        workspace_root, "1.0.0", "v1.0.0", [], dry_run=False,
+                        workspace_root,
+                        "1.0.0",
+                        "v1.0.0",
+                        [],
+                        dry_run=False,
                     )
                     assert result.is_failure
 
@@ -925,13 +996,16 @@ class TestFlextInfraReleaseOrchestrator:
                     r[bool].fail("project branch failed"),
                 ]
                 mock_project = SimpleNamespace(
-                    name="proj1", path=workspace_root / "proj1",
+                    name="proj1",
+                    path=workspace_root / "proj1",
                 )
                 mock_selector.resolve_projects.return_value = r[list[str]].ok([
                     mock_project,
                 ])
                 result = orchestrator._create_branches(
-                    workspace_root, "1.0.0", ["proj1"],
+                    workspace_root,
+                    "1.0.0",
+                    ["proj1"],
                 )
                 assert result.is_failure
 
@@ -985,7 +1059,10 @@ class TestFlextInfraReleaseOrchestrator:
         notes_path = workspace_root / "RELEASE_NOTES.md"
         notes_path.write_text("# Release v1.0.0\n\nChanges here.\n")
         result = orchestrator._update_changelog(
-            workspace_root, "1.0.0", "v1.0.0", notes_path,
+            workspace_root,
+            "1.0.0",
+            "v1.0.0",
+            notes_path,
         )
         assert result.is_success
         changelog = workspace_root / "docs" / "CHANGELOG.md"

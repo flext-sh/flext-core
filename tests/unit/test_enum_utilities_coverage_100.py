@@ -171,7 +171,10 @@ class EnumScenarios:
             expected=Status.INACTIVE,
         ),
         ParseOrDefaultScenario(
-            name="none", value=None, default=Status.PENDING, expected=Status.PENDING,
+            name="none",
+            value=None,
+            default=Status.PENDING,
+            expected=Status.PENDING,
         ),
         ParseOrDefaultScenario(
             name="invalid_string",
@@ -251,7 +254,8 @@ class TestuEnumParse:
         result = u.Enum.parse(Status, scenario.value)
         if scenario.expected_success:
             expected_status_cast: t.ContainerValue = cast(
-                "t.ContainerValue", scenario.expected_status,
+                "t.ContainerValue",
+                scenario.expected_status,
             )
             result_typed: r[t.ContainerValue] = cast("r[t.ContainerValue]", result)
             expected_typed: t.ContainerValue = expected_status_cast
@@ -269,7 +273,9 @@ class TestuEnumParseOrDefault:
     """Test FlextUtilitiesEnum.parse_or_default."""
 
     @pytest.mark.parametrize(
-        "scenario", EnumScenarios.PARSE_OR_DEFAULT, ids=lambda s: s.name,
+        "scenario",
+        EnumScenarios.PARSE_OR_DEFAULT,
+        ids=lambda s: s.name,
     )
     def test_parse_or_default(self, scenario: ParseOrDefaultScenario) -> None:
         """Test parse_or_default with various scenarios."""
@@ -281,7 +287,9 @@ class TestuEnumCoerceValidator:
     """Test FlextUtilitiesEnum.coerce_validator."""
 
     @pytest.mark.parametrize(
-        "scenario", EnumScenarios.COERCE_VALIDATOR, ids=lambda s: s.name,
+        "scenario",
+        EnumScenarios.COERCE_VALIDATOR,
+        ids=lambda s: s.name,
     )
     def test_coerce_validator(self, scenario: CoerceValidatorScenario) -> None:
         """Test coerce_validator with various scenarios."""

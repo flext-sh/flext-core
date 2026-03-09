@@ -144,7 +144,10 @@ def get_dep_paths(doc: TOMLDocument, *, is_root: bool = False) -> list[str]:
 
 
 def sync_one(
-    pyproject_path: Path, *, dry_run: bool = False, is_root: bool = False,
+    pyproject_path: Path,
+    *,
+    dry_run: bool = False,
+    is_root: bool = False,
 ) -> r[bool]:
     """Synchronize pyright and mypy paths for single pyproject.toml."""
     if not pyproject_path.exists():
@@ -209,14 +212,18 @@ def sync_one(
 
 
 def sync_extra_paths(
-    *, dry_run: bool = False, project_dirs: list[Path] | None = None,
+    *,
+    dry_run: bool = False,
+    project_dirs: list[Path] | None = None,
 ) -> r[int]:
     """Synchronize extraPaths and mypy_path across projects."""
     if project_dirs:
         for project_dir in project_dirs:
             pyproject = project_dir / c.Infra.Files.PYPROJECT_FILENAME
             sync_result = sync_one(
-                pyproject, dry_run=dry_run, is_root=project_dir == ROOT,
+                pyproject,
+                dry_run=dry_run,
+                is_root=project_dir == ROOT,
             )
             if sync_result.is_failure:
                 return r[int].fail(sync_result.error or f"sync failed for {pyproject}")
@@ -238,7 +245,9 @@ def main() -> int:
     """Execute extra paths synchronization from command line."""
     parser = argparse.ArgumentParser()
     _ = parser.add_argument(
-        "--dry-run", action="store_true", help="Print would-be changes only",
+        "--dry-run",
+        action="store_true",
+        help="Print would-be changes only",
     )
     _ = parser.add_argument(
         "--project",

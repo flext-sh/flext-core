@@ -37,7 +37,8 @@ class FlextInfraNamespaceValidator:
             return True
         if isinstance(annotation, ast.Subscript):
             return FlextInfraNamespaceValidator._annotation_contains(
-                annotation.value, name,
+                annotation.value,
+                name,
             )
         return False
 
@@ -100,7 +101,10 @@ class FlextInfraNamespaceValidator:
         return FlextInfraNamespaceValidator._derive_prefix(project_root)
 
     def validate(
-        self, project_root: Path, *, scan_tests: bool = False,
+        self,
+        project_root: Path,
+        *,
+        scan_tests: bool = False,
     ) -> r[m.Infra.Core.ValidationReport]:
         """Validate namespace rules 0-2 for all discovered Python files.
 
@@ -132,7 +136,9 @@ class FlextInfraNamespaceValidator:
             )
             return r[m.Infra.Core.ValidationReport].ok(
                 m.Infra.Core.ValidationReport(
-                    passed=passed, violations=violations, summary=summary,
+                    passed=passed,
+                    violations=violations,
+                    summary=summary,
                 ),
             )
         except (OSError, TypeError, ValueError, RuntimeError) as exc:
@@ -204,7 +210,8 @@ class FlextInfraNamespaceValidator:
         else:
             for node in tree.body:
                 if isinstance(node, ast.AnnAssign) and self._annotation_contains(
-                    node.annotation, "Final",
+                    node.annotation,
+                    "Final",
                 ):
                     target_name = self._get_target_name(node.target)
                     if target_name and (not target_name.startswith("_")):
@@ -263,7 +270,8 @@ class FlextInfraNamespaceValidator:
                     if isinstance(inner, ast.ClassDef):
                         for base in inner.bases:
                             if self._base_contains(
-                                base, "BaseModel",
+                                base,
+                                "BaseModel",
                             ) or self._base_contains(base, "Protocol"):
                                 seq += 1
                                 violations.append(
@@ -280,7 +288,8 @@ class FlextInfraNamespaceValidator:
                             f"[NS-002-{seq:03d}] {filepath}:{node.lineno} — TypeVar '{target_name}' belongs in typings.py",
                         )
                 if isinstance(node, ast.AnnAssign) and self._annotation_contains(
-                    node.annotation, "TypeAlias",
+                    node.annotation,
+                    "TypeAlias",
                 ):
                     target_name = self._get_target_name(node.target)
                     seq += 1
@@ -345,7 +354,8 @@ class FlextInfraNamespaceValidator:
         if isinstance(node, ast.TypeAlias):
             return filepath.name == "typings.py"
         if isinstance(node, ast.AnnAssign) and self._annotation_contains(
-            node.annotation, "TypeAlias",
+            node.annotation,
+            "TypeAlias",
         ):
             return filepath.name == "typings.py"
         if (

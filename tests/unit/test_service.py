@@ -126,10 +126,16 @@ class ServiceScenarios:
     SCENARIOS: ClassVar[list[ServiceScenario]] = [
         ServiceScenario("basic_user_service", ServiceScenarioType.BASIC_USER, True),
         ServiceScenario(
-            "complex_valid", ServiceScenarioType.COMPLEX_VALID, True, {"name": "test"},
+            "complex_valid",
+            ServiceScenarioType.COMPLEX_VALID,
+            True,
+            {"name": "test"},
         ),
         ServiceScenario(
-            "complex_invalid", ServiceScenarioType.COMPLEX_INVALID, False, {"name": ""},
+            "complex_invalid",
+            ServiceScenarioType.COMPLEX_INVALID,
+            False,
+            {"name": ""},
         ),
         ServiceScenario("failing_service", ServiceScenarioType.FAILING, False),
         ServiceScenario(
@@ -157,7 +163,9 @@ class ServiceScenarios:
             enabled_val = kwargs_raw.get("enabled", True)
             enabled = bool(enabled_val) if enabled_val is not None else True
             return ComplexService.model_construct(
-                name=name, amount=amount, enabled=enabled,
+                name=name,
+                amount=amount,
+                enabled=enabled,
             )
         if scenario.scenario_type == ServiceScenarioType.FAILING:
             return FailingService()
@@ -211,7 +219,9 @@ class TestsCore:
         assert "user_id" in data
 
     @pytest.mark.parametrize(
-        "scenario", ServiceScenarios.SCENARIOS, ids=lambda s: s.name,
+        "scenario",
+        ServiceScenarios.SCENARIOS,
+        ids=lambda s: s.name,
     )
     def test_is_valid_scenarios(self, scenario: ServiceScenario) -> None:
         """Test is_valid with various service scenarios."""
@@ -260,7 +270,8 @@ class TestsCore:
         service = ComplexService.model_construct(name="", amount=-1, enabled=False)
         validation_result = (
             FlextTestsUtilities.Tests.GenericHelpers.validate_model_attributes(
-                service, required_attrs=["name"],
+                service,
+                required_attrs=["name"],
             )
         )
         _ = u.Tests.Result.assert_success(validation_result)

@@ -46,7 +46,9 @@ class FlextInfraRefactorImportModernizerRule(FlextInfraRefactorRule):
 
     @override
     def apply(
-        self, tree: cst.Module, _file_path: Path | None = None,
+        self,
+        tree: cst.Module,
+        _file_path: Path | None = None,
     ) -> tuple[cst.Module, list[str]]:
         """Apply import modernizer or lazy-import hoisting based on fix action."""
         fix_action = (
@@ -86,7 +88,9 @@ class FlextInfraRefactorImportModernizerRule(FlextInfraRefactorRule):
         return alias.name.attr.value
 
     def _collect_blocked_aliases(
-        self, tree: cst.Module, runtime_aliases: set[str],
+        self,
+        tree: cst.Module,
+        runtime_aliases: set[str],
     ) -> set[str]:
         blocked_aliases: set[str] = set()
         for stmt in tree.body:
@@ -138,7 +142,9 @@ class FlextInfraRefactorImportModernizerRule(FlextInfraRefactorRule):
         return blocked_aliases
 
     def _collect_function_shadowed_aliases(
-        self, tree: cst.Module, runtime_aliases: set[str],
+        self,
+        tree: cst.Module,
+        runtime_aliases: set[str],
     ) -> set[str]:
         shadowed_aliases: set[str] = set()
 

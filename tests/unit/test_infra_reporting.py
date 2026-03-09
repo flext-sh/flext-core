@@ -21,7 +21,9 @@ class TestFlextInfraReportingService:
         return FlextInfraReportingService()
 
     def test_get_report_dir_project_scope(
-        self, service: FlextInfraReportingService, tmp_path: Path,
+        self,
+        service: FlextInfraReportingService,
+        tmp_path: Path,
     ) -> None:
         """Test getting project-level report directory."""
         result = service.get_report_dir(tmp_path, "project", "check")
@@ -31,7 +33,9 @@ class TestFlextInfraReportingService:
         assert "workspace" not in str(result)
 
     def test_get_report_dir_workspace_scope(
-        self, service: FlextInfraReportingService, tmp_path: Path,
+        self,
+        service: FlextInfraReportingService,
+        tmp_path: Path,
     ) -> None:
         """Test getting workspace-level report directory."""
         result = service.get_report_dir(tmp_path, "workspace", "validate")
@@ -41,7 +45,9 @@ class TestFlextInfraReportingService:
         assert "workspace" in str(result)
 
     def test_get_report_dir_with_string_root(
-        self, service: FlextInfraReportingService, tmp_path: Path,
+        self,
+        service: FlextInfraReportingService,
+        tmp_path: Path,
     ) -> None:
         """Test getting report directory with string root path."""
         result = service.get_report_dir(str(tmp_path), "project", "test")
@@ -49,7 +55,9 @@ class TestFlextInfraReportingService:
         assert result.name == "test"
 
     def test_get_report_path_project_scope(
-        self, service: FlextInfraReportingService, tmp_path: Path,
+        self,
+        service: FlextInfraReportingService,
+        tmp_path: Path,
     ) -> None:
         """Test getting project-level report file path."""
         result = service.get_report_path(tmp_path, "project", "check", "report.json")
@@ -59,11 +67,16 @@ class TestFlextInfraReportingService:
         assert "check" in str(result)
 
     def test_get_report_path_workspace_scope(
-        self, service: FlextInfraReportingService, tmp_path: Path,
+        self,
+        service: FlextInfraReportingService,
+        tmp_path: Path,
     ) -> None:
         """Test getting workspace-level report file path."""
         result = service.get_report_path(
-            tmp_path, "workspace", "validate", "summary.log",
+            tmp_path,
+            "workspace",
+            "validate",
+            "summary.log",
         )
         assert isinstance(result, Path)
         assert result.name == "summary.log"
@@ -72,17 +85,24 @@ class TestFlextInfraReportingService:
         assert "validate" in str(result)
 
     def test_get_report_path_with_string_root(
-        self, service: FlextInfraReportingService, tmp_path: Path,
+        self,
+        service: FlextInfraReportingService,
+        tmp_path: Path,
     ) -> None:
         """Test getting report file path with string root."""
         result = service.get_report_path(
-            str(tmp_path), "project", "test", "results.xml",
+            str(tmp_path),
+            "project",
+            "test",
+            "results.xml",
         )
         assert isinstance(result, Path)
         assert result.name == "results.xml"
 
     def test_ensure_report_dir_creates_directory(
-        self, service: FlextInfraReportingService, tmp_path: Path,
+        self,
+        service: FlextInfraReportingService,
+        tmp_path: Path,
     ) -> None:
         """Test ensuring report directory creates it if missing."""
         result = service.ensure_report_dir(tmp_path, "project", "check")
@@ -92,7 +112,9 @@ class TestFlextInfraReportingService:
         assert report_dir.is_dir()
 
     def test_ensure_report_dir_idempotent(
-        self, service: FlextInfraReportingService, tmp_path: Path,
+        self,
+        service: FlextInfraReportingService,
+        tmp_path: Path,
     ) -> None:
         """Test ensuring report directory is idempotent."""
         result1 = service.ensure_report_dir(tmp_path, "project", "check")
@@ -102,7 +124,9 @@ class TestFlextInfraReportingService:
         assert result1.value == result2.value
 
     def test_ensure_report_dir_workspace_scope(
-        self, service: FlextInfraReportingService, tmp_path: Path,
+        self,
+        service: FlextInfraReportingService,
+        tmp_path: Path,
     ) -> None:
         """Test ensuring workspace-level report directory."""
         result = service.ensure_report_dir(tmp_path, "workspace", "validate")
@@ -112,7 +136,9 @@ class TestFlextInfraReportingService:
         assert "workspace" in str(report_dir)
 
     def test_ensure_report_dir_permission_error(
-        self, service: FlextInfraReportingService, tmp_path: Path,
+        self,
+        service: FlextInfraReportingService,
+        tmp_path: Path,
     ) -> None:
         """Test handling permission errors when creating directory."""
         readonly_dir = tmp_path / "readonly"
@@ -125,7 +151,9 @@ class TestFlextInfraReportingService:
             readonly_dir.chmod(493)
 
     def test_get_report_dir_returns_path(
-        self, service: FlextInfraReportingService, tmp_path: Path,
+        self,
+        service: FlextInfraReportingService,
+        tmp_path: Path,
     ) -> None:
         """Test that get_report_dir returns Path type."""
         result = service.get_report_dir(tmp_path, "project", "check")
@@ -133,7 +161,9 @@ class TestFlextInfraReportingService:
         assert result.is_absolute()
 
     def test_get_report_path_returns_path(
-        self, service: FlextInfraReportingService, tmp_path: Path,
+        self,
+        service: FlextInfraReportingService,
+        tmp_path: Path,
     ) -> None:
         """Test that get_report_path returns Path type."""
         result = service.get_report_path(tmp_path, "project", "check", "report.json")
@@ -141,7 +171,8 @@ class TestFlextInfraReportingService:
         assert result.is_absolute()
 
     def test_execute_returns_empty_path(
-        self, service: FlextInfraReportingService,
+        self,
+        service: FlextInfraReportingService,
     ) -> None:
         """Test execute method returns empty Path."""
         result = service.execute()
@@ -149,7 +180,9 @@ class TestFlextInfraReportingService:
         assert result.value == Path()
 
     def test_create_latest_symlink_success(
-        self, service: FlextInfraReportingService, tmp_path: Path,
+        self,
+        service: FlextInfraReportingService,
+        tmp_path: Path,
     ) -> None:
         """Test creating a latest symlink."""
         report_dir = tmp_path / ".reports" / "tests"
@@ -163,7 +196,9 @@ class TestFlextInfraReportingService:
         assert link.resolve().name == run_id
 
     def test_create_latest_symlink_update_existing(
-        self, service: FlextInfraReportingService, tmp_path: Path,
+        self,
+        service: FlextInfraReportingService,
+        tmp_path: Path,
     ) -> None:
         """Test updating an existing latest symlink."""
         report_dir = tmp_path / ".reports" / "tests"
@@ -179,7 +214,9 @@ class TestFlextInfraReportingService:
         assert link.resolve().name == run_id_2
 
     def test_create_latest_symlink_oserror(
-        self, service: FlextInfraReportingService, tmp_path: Path,
+        self,
+        service: FlextInfraReportingService,
+        tmp_path: Path,
     ) -> None:
         """Test handling OSError when creating symlink."""
         readonly_dir = tmp_path / "readonly"

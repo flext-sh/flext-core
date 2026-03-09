@@ -32,7 +32,9 @@ class FlextInfraRefactorSymbolPropagator(cst.CSTTransformer):
 
     @override
     def leave_ImportFrom(
-        self, original_node: cst.ImportFrom, updated_node: cst.ImportFrom,
+        self,
+        original_node: cst.ImportFrom,
+        updated_node: cst.ImportFrom,
     ) -> cst.ImportFrom:
         module_name = self._module_name_from_expr(original_node.module)
         next_node = updated_node
@@ -46,7 +48,8 @@ class FlextInfraRefactorSymbolPropagator(cst.CSTTransformer):
             )
             module_name = self._module_renames[module_name]
         if module_name not in self._target_modules or isinstance(
-            next_node.names, cst.ImportStar,
+            next_node.names,
+            cst.ImportStar,
         ):
             return next_node
         next_aliases: list[cst.ImportAlias] = []
@@ -77,13 +80,17 @@ class FlextInfraRefactorSymbolPropagator(cst.CSTTransformer):
 
     @override
     def leave_Name(
-        self, original_node: cst.Name, updated_node: cst.Name,
+        self,
+        original_node: cst.Name,
+        updated_node: cst.Name,
     ) -> cst.BaseExpression:
         rename_to = self._local_name_renames.get(original_node.value)
         if rename_to is None:
             return updated_node
         qualified_names = self.get_metadata(
-            QualifiedNameProvider, original_node, default=set(),
+            QualifiedNameProvider,
+            original_node,
+            default=set(),
         )
         if not qualified_names:
             return updated_node

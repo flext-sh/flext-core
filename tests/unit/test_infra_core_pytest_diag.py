@@ -117,7 +117,8 @@ class TestFlextInfraPytestDiagExtractor:
         assert len(slow_entries) > 0
 
     def test_extract_with_invalid_junit_xml_uses_log_fallback(
-        self, tmp_path: Path,
+        self,
+        tmp_path: Path,
     ) -> None:
         """Test extract falls back to log when XML is invalid."""
         extractor = FlextInfraPytestDiagExtractor()
@@ -129,7 +130,8 @@ class TestFlextInfraPytestDiagExtractor:
         assert result.is_success
 
     def test_extract_with_missing_log_file_handles_gracefully(
-        self, tmp_path: Path,
+        self,
+        tmp_path: Path,
     ) -> None:
         """Test extract handles missing log file."""
         extractor = FlextInfraPytestDiagExtractor()
@@ -147,7 +149,9 @@ class TestFlextInfraPytestDiagExtractor:
         junit_xml = tmp_path / "junit.xml"
         log_path = tmp_path / "log.txt"
         with patch.object(
-            extractor, "_parse_xml", side_effect=ValueError("test error"),
+            extractor,
+            "_parse_xml",
+            side_effect=ValueError("test error"),
         ):
             result = extractor.extract(junit_xml, log_path)
             assert result.is_failure
@@ -156,7 +160,8 @@ class TestFlextInfraPytestDiagExtractor:
         """Test _parse_xml returns False for missing file."""
         diag = pytest_diag._DiagResult()
         result = FlextInfraPytestDiagExtractor._parse_xml(
-            tmp_path / "missing.xml", diag,
+            tmp_path / "missing.xml",
+            diag,
         )
         assert result is False
 

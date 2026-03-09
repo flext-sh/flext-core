@@ -37,7 +37,9 @@ class FlextInfraProjectSelector(s[list[m.Infra.Workspace.ProjectInfo]]):
         return r[list[m.Infra.Workspace.ProjectInfo]].ok([])
 
     def resolve_projects(
-        self, workspace_root: Path, names: list[str],
+        self,
+        workspace_root: Path,
+        names: list[str],
     ) -> r[list[m.Infra.Workspace.ProjectInfo]]:
         """Resolve project names into ProjectInfo structures.
 

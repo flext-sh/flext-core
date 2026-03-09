@@ -95,9 +95,7 @@ class FlextInfraRefactorPydanticCentralizerAnalysis:
     def _is_model_like_base_name(base_name: str) -> bool:
         if base_name in FlextInfraRefactorPydanticCentralizerAnalysis._MODEL_BASES:
             return True
-        if base_name.startswith("FlextModels."):
-            return True
-        return False
+        return bool(base_name.startswith("FlextModels."))
 
     @staticmethod
     def is_top_level_model_class(node: ast.stmt) -> bool:

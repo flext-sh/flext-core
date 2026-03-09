@@ -36,7 +36,9 @@ class TestFlextInfraPrManager:
         }
         mock_runner.capture.return_value = r[str].ok(json.dumps([pr_data]))
         manager = FlextInfraPrManager(
-            runner=mock_runner, git=mock_git, versioning=mock_versioning,
+            runner=mock_runner,
+            git=mock_git,
+            versioning=mock_versioning,
         )
         result = manager.open_pr_for_head(tmp_path, "feature/new-endpoint")
         assert result.is_success
@@ -49,7 +51,9 @@ class TestFlextInfraPrManager:
         mock_versioning = Mock()
         mock_runner.capture.return_value = r[str].ok("[]")
         manager = FlextInfraPrManager(
-            runner=mock_runner, git=mock_git, versioning=mock_versioning,
+            runner=mock_runner,
+            git=mock_git,
+            versioning=mock_versioning,
         )
         result = manager.open_pr_for_head(tmp_path, "feature/nonexistent")
         assert result.is_success
@@ -62,7 +66,9 @@ class TestFlextInfraPrManager:
         mock_versioning = Mock()
         mock_runner.capture.return_value = r[str].ok("invalid json")
         manager = FlextInfraPrManager(
-            runner=mock_runner, git=mock_git, versioning=mock_versioning,
+            runner=mock_runner,
+            git=mock_git,
+            versioning=mock_versioning,
         )
         result = manager.open_pr_for_head(tmp_path, "feature/test")
         assert result.is_failure
@@ -75,7 +81,9 @@ class TestFlextInfraPrManager:
         mock_versioning = Mock()
         mock_runner.capture.return_value = r[str].fail("gh command failed")
         manager = FlextInfraPrManager(
-            runner=mock_runner, git=mock_git, versioning=mock_versioning,
+            runner=mock_runner,
+            git=mock_git,
+            versioning=mock_versioning,
         )
         result = manager.open_pr_for_head(tmp_path, "feature/test")
         assert result.is_failure
@@ -181,7 +189,12 @@ class TestCreate:
         ]
         manager = FlextInfraPrManager(runner=mock_runner, git=Mock(), versioning=Mock())
         result = manager.create(
-            tmp_path, "main", "feature", "title", "body", draft=True,
+            tmp_path,
+            "main",
+            "feature",
+            "title",
+            "body",
+            draft=True,
         )
         assert result.is_success
         call_args = mock_runner.capture.call_args_list[1]
@@ -294,7 +307,9 @@ class TestMerge:
         mock_versioning.release_tag_from_branch.return_value = r[str].ok("v1.0.0")
         mock_runner.run.side_effect = [r[bool].ok(True), r[bool].ok(True)]
         manager = FlextInfraPrManager(
-            runner=mock_runner, git=Mock(), versioning=mock_versioning,
+            runner=mock_runner,
+            git=Mock(),
+            versioning=mock_versioning,
         )
         (tmp_path / ".github" / "workflows").mkdir(parents=True)
         (tmp_path / ".github" / "workflows" / "release.yml").write_text("name: Release")
@@ -325,7 +340,11 @@ class TestMerge:
         mock_runner.run.return_value = r[bool].ok(True)
         manager = FlextInfraPrManager(runner=mock_runner, git=Mock(), versioning=Mock())
         result = manager.merge(
-            tmp_path, "42", "feature", method="rebase", release_on_merge=False,
+            tmp_path,
+            "42",
+            "feature",
+            method="rebase",
+            release_on_merge=False,
         )
         assert result.is_success
         call_args = mock_runner.run.call_args_list[0][0][0]
@@ -367,7 +386,9 @@ class TestTriggerRelease:
         mock_versioning = Mock()
         mock_versioning.release_tag_from_branch.return_value = r[str].fail("no tag")
         manager = FlextInfraPrManager(
-            runner=Mock(), git=Mock(), versioning=mock_versioning,
+            runner=Mock(),
+            git=Mock(),
+            versioning=mock_versioning,
         )
         (tmp_path / ".github" / "workflows").mkdir(parents=True)
         (tmp_path / ".github" / "workflows" / "release.yml").write_text("name: R")
@@ -382,7 +403,9 @@ class TestTriggerRelease:
         mock_versioning.release_tag_from_branch.return_value = r[str].ok("v1.0.0")
         mock_runner.run.return_value = r[bool].ok(True)
         manager = FlextInfraPrManager(
-            runner=mock_runner, git=Mock(), versioning=mock_versioning,
+            runner=mock_runner,
+            git=Mock(),
+            versioning=mock_versioning,
         )
         (tmp_path / ".github" / "workflows").mkdir(parents=True)
         (tmp_path / ".github" / "workflows" / "release.yml").write_text("name: R")
@@ -397,7 +420,9 @@ class TestTriggerRelease:
         mock_versioning.release_tag_from_branch.return_value = r[str].ok("v1.0.0")
         mock_runner.run.side_effect = [r[bool].fail("not found"), r[bool].ok(True)]
         manager = FlextInfraPrManager(
-            runner=mock_runner, git=Mock(), versioning=mock_versioning,
+            runner=mock_runner,
+            git=Mock(),
+            versioning=mock_versioning,
         )
         (tmp_path / ".github" / "workflows").mkdir(parents=True)
         (tmp_path / ".github" / "workflows" / "release.yml").write_text("name: R")
@@ -415,7 +440,9 @@ class TestTriggerRelease:
             r[bool].fail("dispatch failed"),
         ]
         manager = FlextInfraPrManager(
-            runner=mock_runner, git=Mock(), versioning=mock_versioning,
+            runner=mock_runner,
+            git=Mock(),
+            versioning=mock_versioning,
         )
         (tmp_path / ".github" / "workflows").mkdir(parents=True)
         (tmp_path / ".github" / "workflows" / "release.yml").write_text("name: R")

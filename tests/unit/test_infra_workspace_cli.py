@@ -19,7 +19,10 @@ from flext_infra.workspace.migrator import FlextInfraProjectMigrator
 def test_workspace_cli_migrate_command(monkeypatch: MonkeyPatch) -> None:
 
     def _fake_migrate(
-        self: FlextInfraProjectMigrator, *, workspace_root: Path, dry_run: bool,
+        self: FlextInfraProjectMigrator,
+        *,
+        workspace_root: Path,
+        dry_run: bool,
     ) -> r[list[m.Infra.Workspace.MigrationResult]]:
         del self, workspace_root
         assert dry_run is True
@@ -46,7 +49,10 @@ def test_workspace_cli_migrate_output_contains_summary(
 ) -> None:
 
     def _fake_migrate(
-        self: FlextInfraProjectMigrator, *, workspace_root: Path, dry_run: bool,
+        self: FlextInfraProjectMigrator,
+        *,
+        workspace_root: Path,
+        dry_run: bool,
     ) -> r[list[m.Infra.Workspace.MigrationResult]]:
         del self, workspace_root, dry_run
         return r[list[m.Infra.Workspace.MigrationResult]].ok([

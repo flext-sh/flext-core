@@ -64,7 +64,9 @@ def test_execute_and_register_handler_failure_paths(
             return r[m.Handler.RegistrationResult].fail("dispatcher-fail")
 
     setattr(
-        registry, "_dispatcher", cast("p.CommandBus", cast("object", _FailDispatcher())),
+        registry,
+        "_dispatcher",
+        cast("p.CommandBus", cast("object", _FailDispatcher())),
     )
     reg_result = registry.register_handler(_as_registry_handler(_Handler()))
     assert reg_result.is_failure
@@ -74,15 +76,21 @@ def test_execute_and_register_handler_failure_paths(
         def register_handler(self, *_args: object) -> r[m.Handler.RegistrationResult]:
             return r[m.Handler.RegistrationResult].ok(
                 m.Handler.RegistrationResult(
-                    handler_name="h", status="active", mode="command",
+                    handler_name="h",
+                    status="active",
+                    mode="command",
                 ),
             )
 
     setattr(
-        registry, "_dispatcher", cast("p.CommandBus", cast("object", _OkDispatcher())),
+        registry,
+        "_dispatcher",
+        cast("p.CommandBus", cast("object", _OkDispatcher())),
     )
     monkeypatch.setattr(
-        FlextRegistry, "_create_registration_details", lambda *_args: None,
+        FlextRegistry,
+        "_create_registration_details",
+        lambda *_args: None,
     )
     fallback = registry.register_handler(_as_registry_handler(_Handler()))
     assert fallback.is_success
@@ -170,12 +178,16 @@ def test_get_plugin_and_register_metadata_and_list_items_exception(
     registry = FlextRegistry()
     registry._registered_keys.add("cat::name")
     monkeypatch.setattr(
-        registry.container, "get", lambda _key: r[t.JsonValue].fail("missing"),
+        registry.container,
+        "get",
+        lambda _key: r[t.JsonValue].fail("missing"),
     )
     missing = registry.get_plugin("cat", "name")
     assert missing.is_failure
     metadata_result = registry.register(
-        "svc", "service", metadata=m.Metadata(attributes={"k": "v"}),
+        "svc",
+        "service",
+        metadata=m.Metadata(attributes={"k": "v"}),
     )
     assert metadata_result.is_success
     monkeypatch.setattr(

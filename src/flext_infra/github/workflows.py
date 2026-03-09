@@ -66,7 +66,9 @@ class FlextInfraWorkflowSyncer:
         return r[str].ok(header + body)
 
     def resolve_source_workflow(
-        self, workspace_root: Path, source_workflow: Path | None = None,
+        self,
+        workspace_root: Path,
+        source_workflow: Path | None = None,
     ) -> r[Path]:
         """Resolve the source workflow file path.
 
@@ -123,7 +125,8 @@ class FlextInfraWorkflowSyncer:
                 if current != rendered_template:
                     if apply:
                         _ = destination.write_text(
-                            rendered_template, encoding=c.Infra.Encoding.DEFAULT,
+                            rendered_template,
+                            encoding=c.Infra.Encoding.DEFAULT,
                         )
                     operations.append(
                         SyncOperation(
@@ -146,7 +149,8 @@ class FlextInfraWorkflowSyncer:
                 if apply:
                     workflows_dir.mkdir(parents=True, exist_ok=True)
                     _ = destination.write_text(
-                        rendered_template, encoding=c.Infra.Encoding.DEFAULT,
+                        rendered_template,
+                        encoding=c.Infra.Encoding.DEFAULT,
                     )
                 operations.append(
                     SyncOperation(
@@ -230,7 +234,11 @@ class FlextInfraWorkflowSyncer:
         return r[list[SyncOperation]].ok(all_operations)
 
     def _write_report(
-        self, report_path: Path, *, apply: bool, operations: list[SyncOperation],
+        self,
+        report_path: Path,
+        *,
+        apply: bool,
+        operations: list[SyncOperation],
     ) -> None:
         """Write a JSON report of sync operations."""
         by_action: MutableMapping[str, int] = {}

@@ -294,7 +294,11 @@ class EnsureRuffConfigPhase:
     """Ensure standard Ruff configuration with extend and known-first-party."""
 
     def apply(
-        self, doc: tomlkit.TOMLDocument, *, path: Path, workspace_root: Path,
+        self,
+        doc: tomlkit.TOMLDocument,
+        *,
+        path: Path,
+        workspace_root: Path,
     ) -> list[str]:
         changes: list[str] = []
         tool = toml_get(doc, c.Infra.Toml.TOOL)
@@ -303,7 +307,8 @@ class EnsureRuffConfigPhase:
             doc[c.Infra.Toml.TOOL] = tool
         ruff = ensure_table(tool, c.Infra.Toml.RUFF)
         _target_shared, expected_extend = find_ruff_shared_path(
-            path.parent, workspace_root,
+            path.parent,
+            workspace_root,
         )
         if unwrap_item(toml_get(ruff, c.Infra.Toml.EXTEND)) != expected_extend:
             ruff[c.Infra.Toml.EXTEND] = expected_extend
@@ -506,7 +511,9 @@ class FlextInfraRuntimeDevDependencyDetector:
             help="Run only for this project (directory name).",
         )
         _ = parser.add_argument(
-            "--projects", metavar="NAMES", help="Comma-separated list of project names.",
+            "--projects",
+            metavar="NAMES",
+            help="Comma-separated list of project names.",
         )
         _ = parser.add_argument(
             "--no-pip-check",
@@ -514,7 +521,9 @@ class FlextInfraRuntimeDevDependencyDetector:
             help="Skip pip check (workspace-level).",
         )
         _ = parser.add_argument(
-            "--dry-run", action="store_true", help="Do not write report files.",
+            "--dry-run",
+            action="store_true",
+            help="Do not write report files.",
         )
         _ = parser.add_argument(
             "--json",
@@ -529,10 +538,15 @@ class FlextInfraRuntimeDevDependencyDetector:
             help="Write report to this path (default: .reports/dependencies/detect-runtime-dev-latest.json).",
         )
         _ = parser.add_argument(
-            "-q", "--quiet", action="store_true", help="Minimal output (summary only).",
+            "-q",
+            "--quiet",
+            action="store_true",
+            help="Minimal output (summary only).",
         )
         _ = parser.add_argument(
-            "--no-fail", action="store_true", help="Always exit 0 (report only).",
+            "--no-fail",
+            action="store_true",
+            help="Always exit 0 (report only).",
         )
         _ = parser.add_argument(
             "--typings",
@@ -572,7 +586,8 @@ class FlextInfraRuntimeDevDependencyDetector:
         parser = self._parser(limits_default)
         args = parser.parse_args(argv)
         projects_result = self._deps.discover_projects(
-            root, projects_filter=self._project_filter(args),
+            root,
+            projects_filter=self._project_filter(args),
         )
         if projects_result.is_failure:
             return r[int].fail(projects_result.error or "project discovery failed")
@@ -582,7 +597,8 @@ class FlextInfraRuntimeDevDependencyDetector:
             return r[int].ok(2)
         if not (venv_bin / c.Infra.Toml.DEPTRY).exists():
             logger.error(
-                "deps_deptry_missing", path=str(venv_bin / c.Infra.Toml.DEPTRY),
+                "deps_deptry_missing",
+                path=str(venv_bin / c.Infra.Toml.DEPTRY),
             )
             return r[int].ok(3)
         apply_typings = bool(args.apply_typings)
@@ -606,7 +622,8 @@ class FlextInfraRuntimeDevDependencyDetector:
                     else None
                 )
                 report_model.dependency_limits = ddm.DependencyLimitsInfo(
-                    python_version=python_version, limits_path=str(limits_path),
+                    python_version=python_version,
+                    limits_path=str(limits_path),
                 )
         for project_path in projects:
             project_name = project_path.name
@@ -624,7 +641,9 @@ class FlextInfraRuntimeDevDependencyDetector:
                 if not args.quiet:
                     logger.info("deps_typings_detect_running", project=project_name)
                 typings_result = self._deps.get_required_typings(
-                    project_path, venv_bin, limits_path=limits_path,
+                    project_path,
+                    venv_bin,
+                    limits_path=limits_path,
                 )
                 if typings_result.is_failure:
                     return r[int].fail(
@@ -676,7 +695,8 @@ class FlextInfraRuntimeDevDependencyDetector:
             pip_value: tuple[list[str], int] = pip_result.value
             pip_lines, pip_exit = pip_value
             report_model.pip_check = ddm.PipCheckReport(
-                ok=pip_exit == 0, lines=pip_lines,
+                ok=pip_exit == 0,
+                lines=pip_lines,
             )
         report_payload = report_model.model_dump()
         if args.json_stdout:
@@ -686,7 +706,9 @@ class FlextInfraRuntimeDevDependencyDetector:
             out_path = Path(args.output)
         elif not args.dry_run:
             report_dir = self._reporting.get_report_dir(
-                root, c.Infra.Toml.PROJECT, c.Infra.Toml.DEPENDENCIES,
+                root,
+                c.Infra.Toml.PROJECT,
+                c.Infra.Toml.DEPENDENCIES,
             )
             try:
                 report_dir.mkdir(parents=True, exist_ok=True)

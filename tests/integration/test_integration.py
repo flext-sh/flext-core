@@ -49,7 +49,9 @@ class TestLibraryIntegration:
     @pytest.mark.integration
     @pytest.mark.core
     def test_all_exports_work(
-        self, clean_container: FlextContainer, sample_data: dict[str, t.ContainerValue],
+        self,
+        clean_container: FlextContainer,
+        sample_data: dict[str, t.ContainerValue],
     ) -> None:
         """Test comprehensive integration of core library exports.
 
@@ -101,7 +103,9 @@ class TestLibraryIntegration:
             return process_result.unwrap_or("")
 
         register_result = clean_container.register(
-            "result_factory", create_result, kind="factory",
+            "result_factory",
+            create_result,
+            kind="factory",
         )
         assert register_result is clean_container
         factory_result = clean_container.get("result_factory")

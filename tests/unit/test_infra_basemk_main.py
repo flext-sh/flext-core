@@ -96,7 +96,8 @@ def test_basemk_main_output_to_stdout() -> None:
 
 
 def test_basemk_main_with_generation_failure(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Test main() handles generation failure."""
 
@@ -120,7 +121,8 @@ def test_basemk_main_calls_sys_exit() -> None:
 
 
 def test_basemk_main_with_write_failure(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Test main() handles write failure gracefully."""
     output_file = tmp_path / "base.mk"

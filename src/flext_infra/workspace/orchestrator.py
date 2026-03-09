@@ -83,12 +83,18 @@ class FlextInfraOrchestratorService(s[list[m.Infra.Core.CommandOutput]]):
                 if skipped:
                     results.append(
                         m.Infra.Core.CommandOutput(
-                            stdout="", stderr="", exit_code=0, duration=0.0,
+                            stdout="",
+                            stderr="",
+                            exit_code=0,
+                            duration=0.0,
                         ),
                     )
                     continue
                 output_result = self._run_project(
-                    project, verb, idx, make_args=list(make_args),
+                    project,
+                    verb,
+                    idx,
+                    make_args=list(make_args),
                 )
                 if output_result.is_failure:
                     failed += 1
@@ -121,7 +127,12 @@ class FlextInfraOrchestratorService(s[list[m.Infra.Core.CommandOutput]]):
             )
 
     def _run_project(
-        self, project: str, verb: str, _index: int, *, make_args: list[str],
+        self,
+        project: str,
+        verb: str,
+        _index: int,
+        *,
+        make_args: list[str],
     ) -> r[m.Infra.Core.CommandOutput]:
         """Execute make verb for a single project.
 
@@ -136,7 +147,10 @@ class FlextInfraOrchestratorService(s[list[m.Infra.Core.CommandOutput]]):
 
         """
         log_path = self._reporting.get_report_path(
-            Path.cwd(), c.Infra.ReportKeys.WORKSPACE, verb, f"{project}.log",
+            Path.cwd(),
+            c.Infra.ReportKeys.WORKSPACE,
+            verb,
+            f"{project}.log",
         )
         log_path.parent.mkdir(parents=True, exist_ok=True)
         started = time.monotonic()

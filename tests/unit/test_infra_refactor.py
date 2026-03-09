@@ -702,7 +702,8 @@ def test_violation_analysis_counts_massive_patterns(tmp_path: Path) -> None:
     )
     config_path = tmp_path / "config.yml"
     config_path.write_text(
-        'refactor_engine:\n  project_scan_dirs: ["src"]\n', encoding="utf-8",
+        'refactor_engine:\n  project_scan_dirs: ["src"]\n',
+        encoding="utf-8",
     )
     project_root = tmp_path / "project"
     src_dir = project_root / "src"
@@ -726,7 +727,8 @@ def test_violation_analysis_counts_massive_patterns(tmp_path: Path) -> None:
 
 
 def test_main_analyze_violations_is_read_only(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     rules_dir = tmp_path / "rules"
     rules_dir.mkdir(parents=True)
@@ -737,7 +739,8 @@ def test_main_analyze_violations_is_read_only(
     )
     config_path = tmp_path / "config.yml"
     config_path.write_text(
-        'refactor_engine:\n  project_scan_dirs: ["src"]\n', encoding="utf-8",
+        'refactor_engine:\n  project_scan_dirs: ["src"]\n',
+        encoding="utf-8",
     )
     src_dir = tmp_path / "src"
     src_dir.mkdir(parents=True)
@@ -763,7 +766,8 @@ def test_main_analyze_violations_is_read_only(
 
 
 def test_main_analyze_violations_writes_json_report(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     rules_dir = tmp_path / "rules"
     rules_dir.mkdir(parents=True)
@@ -774,7 +778,8 @@ def test_main_analyze_violations_writes_json_report(
     )
     config_path = tmp_path / "config.yml"
     config_path.write_text(
-        'refactor_engine:\n  project_scan_dirs: ["src"]\n', encoding="utf-8",
+        'refactor_engine:\n  project_scan_dirs: ["src"]\n',
+        encoding="utf-8",
     )
     src_dir = tmp_path / "src"
     src_dir.mkdir(parents=True)
@@ -846,7 +851,10 @@ class EngineSafetyStub(FlextInfraRefactorSafetyManager):
 
     @override
     def create_pre_transformation_stash(
-        self, workspace_root: Path, *, label: str = "flext-refactor-pre-transform",
+        self,
+        workspace_root: Path,
+        *,
+        label: str = "flext-refactor-pre-transform",
     ) -> r[str]:
         _ = workspace_root
         _ = label
@@ -893,7 +901,9 @@ class EngineSafetyStub(FlextInfraRefactorSafetyManager):
 
     @override
     def rollback(
-        self, workspace_root: Path | str, stash_ref: str = "",
+        self,
+        workspace_root: Path | str,
+        stash_ref: str = "",
     ) -> r[bool] | None:
         _ = stash_ref
         self.calls.append("rollback")

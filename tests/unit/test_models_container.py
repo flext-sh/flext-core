@@ -27,7 +27,9 @@ _expected_validation_errors: tuple[type[Exception], ...] = (ValidationError, Typ
 
 
 def _service_reg_with_metadata(
-    name: str, service: str, metadata: object,
+    name: str,
+    service: str,
+    metadata: object,
 ) -> m.ServiceRegistration:
     """Create ServiceRegistration with arbitrary metadata for validation testing."""
     return m.ServiceRegistration.model_validate({
@@ -38,7 +40,9 @@ def _service_reg_with_metadata(
 
 
 def _factory_reg_with_metadata(
-    name: str, factory: Callable[[], t.Scalar], metadata: object,
+    name: str,
+    factory: Callable[[], t.Scalar],
+    metadata: object,
 ) -> m.FactoryRegistration:
     """Create FactoryRegistration with arbitrary metadata for validation testing."""
     return m.FactoryRegistration.model_validate({
@@ -107,12 +111,16 @@ class TestFlextModelsContainer:
         ),
     )
     def test_service_registration_metadata_validation(
-        self, metadata_value: object, should_pass: bool,
+        self,
+        metadata_value: object,
+        should_pass: bool,
     ) -> None:
         """Test ServiceRegistration metadata validation with various types."""
         if should_pass:
             registration = _service_reg_with_metadata(
-                "test_service", "test_value", metadata_value,
+                "test_service",
+                "test_value",
+                metadata_value,
             )
             assert registration.metadata is not None
             assert hasattr(registration.metadata, "attributes")
@@ -154,7 +162,9 @@ class TestFlextModelsContainer:
         ),
     )
     def test_factory_registration_metadata_validation(
-        self, metadata_value: object, should_pass: bool,
+        self,
+        metadata_value: object,
+        should_pass: bool,
     ) -> None:
         """Test FactoryRegistration metadata validation with various types."""
 
@@ -163,7 +173,9 @@ class TestFlextModelsContainer:
 
         if should_pass:
             registration = _factory_reg_with_metadata(
-                "test_factory", factory, metadata_value,
+                "test_factory",
+                factory,
+                metadata_value,
             )
             assert registration.metadata is not None
             assert hasattr(registration.metadata, "attributes")
@@ -214,30 +226,45 @@ class TestFlextModelsContainer:
         ids=lambda x: f"config_{len(x)}_fields",
     )
     def test_container_config_creation(
-        self, config_dict: dict[str, t.ContainerValue],
+        self,
+        config_dict: dict[str, t.ContainerValue],
     ) -> None:
         """Test ContainerConfig creation with various configurations."""
         config = m.ContainerConfig.model_validate(config_dict)
         assert config.enable_singleton is u.Mapper.get(
-            config_dict, "enable_singleton", default=True,
+            config_dict,
+            "enable_singleton",
+            default=True,
         )
         assert config.enable_factory_caching is u.Mapper.get(
-            config_dict, "enable_factory_caching", default=True,
+            config_dict,
+            "enable_factory_caching",
+            default=True,
         )
         assert config.max_services == u.Mapper.get(
-            config_dict, "max_services", default=1000,
+            config_dict,
+            "max_services",
+            default=1000,
         )
         assert config.max_factories == u.Mapper.get(
-            config_dict, "max_factories", default=500,
+            config_dict,
+            "max_factories",
+            default=500,
         )
         assert config.enable_auto_registration is u.Mapper.get(
-            config_dict, "enable_auto_registration", default=False,
+            config_dict,
+            "enable_auto_registration",
+            default=False,
         )
         assert config.enable_lifecycle_hooks is u.Mapper.get(
-            config_dict, "enable_lifecycle_hooks", default=True,
+            config_dict,
+            "enable_lifecycle_hooks",
+            default=True,
         )
         assert config.lazy_loading is u.Mapper.get(
-            config_dict, "lazy_loading", default=True,
+            config_dict,
+            "lazy_loading",
+            default=True,
         )
 
     def test_container_config_defaults(self) -> None:
@@ -273,7 +300,9 @@ class TestFlextModelsContainer:
     def test_service_registration_metadata_none_handling(self) -> None:
         """Test ServiceRegistration handles None metadata correctly."""
         registration = m.ServiceRegistration(
-            name="test", service="value", metadata=None,
+            name="test",
+            service="value",
+            metadata=None,
         )
         assert registration.metadata is not None
         metadata_dump = registration.metadata.model_dump()
@@ -286,7 +315,9 @@ class TestFlextModelsContainer:
             return "value"
 
         registration = m.FactoryRegistration(
-            name="test", factory=factory, metadata=None,
+            name="test",
+            factory=factory,
+            metadata=None,
         )
         assert registration.metadata is not None
         metadata_dump = registration.metadata.model_dump()
@@ -336,14 +367,17 @@ class TestFlextUtilitiesModelNormalizeToMetadata:
     def test_normalize_to_metadata_invalid_type(self) -> None:
         """Test normalize_to_metadata with invalid type raises TypeError."""
         with pytest.raises(
-            TypeError, match=r"metadata must be None, dict, or.*Metadata",
+            TypeError,
+            match=r"metadata must be None, dict, or.*Metadata",
         ):
             u.Model.normalize_to_metadata("invalid_string")
         with pytest.raises(
-            TypeError, match=r"metadata must be None, dict, or.*Metadata",
+            TypeError,
+            match=r"metadata must be None, dict, or.*Metadata",
         ):
             u.Model.normalize_to_metadata(123)
         with pytest.raises(
-            TypeError, match=r"metadata must be None, dict, or.*Metadata",
+            TypeError,
+            match=r"metadata must be None, dict, or.*Metadata",
         ):
             _normalize_metadata_obj([1, 2, 3])

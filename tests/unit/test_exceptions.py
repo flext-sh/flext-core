@@ -91,10 +91,14 @@ class ExceptionScenarios:
 
     BASE_SCENARIOS: ClassVar[list[ExceptionScenario]] = [
         ExceptionScenario(
-            "base_error_init", ExceptionScenarioType.BASE_ERROR, e.BaseError,
+            "base_error_init",
+            ExceptionScenarioType.BASE_ERROR,
+            e.BaseError,
         ),
         ExceptionScenario(
-            "base_error_with_code", ExceptionScenarioType.WITH_CODE, e.BaseError,
+            "base_error_with_code",
+            ExceptionScenarioType.WITH_CODE,
+            e.BaseError,
         ),
         ExceptionScenario(
             "base_error_with_correlation",
@@ -102,7 +106,9 @@ class ExceptionScenarios:
             e.BaseError,
         ),
         ExceptionScenario(
-            "base_error_with_metadata", ExceptionScenarioType.WITH_METADATA, e.BaseError,
+            "base_error_with_metadata",
+            ExceptionScenarioType.WITH_METADATA,
+            e.BaseError,
         ),
         ExceptionScenario(
             "base_error_with_kwargs",
@@ -110,7 +116,9 @@ class ExceptionScenarios:
             e.BaseError,
         ),
         ExceptionScenario(
-            "base_error_to_dict", ExceptionScenarioType.TO_DICT, e.BaseError,
+            "base_error_to_dict",
+            ExceptionScenarioType.TO_DICT,
+            e.BaseError,
         ),
         ExceptionScenario(
             "base_error_str_repr",
@@ -120,7 +128,9 @@ class ExceptionScenarios:
     ]
     SPECIFIC_TYPE_SCENARIOS: ClassVar[list[ExceptionScenario]] = [
         ExceptionScenario(
-            "validation_error", ExceptionScenarioType.SPECIFIC_TYPE, e.ValidationError,
+            "validation_error",
+            ExceptionScenarioType.SPECIFIC_TYPE,
+            e.ValidationError,
         ),
         ExceptionScenario(
             "configuration_error",
@@ -128,10 +138,14 @@ class ExceptionScenarios:
             e.ConfigurationError,
         ),
         ExceptionScenario(
-            "connection_error", ExceptionScenarioType.SPECIFIC_TYPE, e.ConnectionError,
+            "connection_error",
+            ExceptionScenarioType.SPECIFIC_TYPE,
+            e.ConnectionError,
         ),
         ExceptionScenario(
-            "timeout_error", ExceptionScenarioType.SPECIFIC_TYPE, e.TimeoutError,
+            "timeout_error",
+            ExceptionScenarioType.SPECIFIC_TYPE,
+            e.TimeoutError,
         ),
         ExceptionScenario(
             "authentication_error",
@@ -144,13 +158,19 @@ class ExceptionScenarios:
             e.AuthorizationError,
         ),
         ExceptionScenario(
-            "not_found_error", ExceptionScenarioType.SPECIFIC_TYPE, e.NotFoundError,
+            "not_found_error",
+            ExceptionScenarioType.SPECIFIC_TYPE,
+            e.NotFoundError,
         ),
         ExceptionScenario(
-            "conflict_error", ExceptionScenarioType.SPECIFIC_TYPE, e.ConflictError,
+            "conflict_error",
+            ExceptionScenarioType.SPECIFIC_TYPE,
+            e.ConflictError,
         ),
         ExceptionScenario(
-            "rate_limit_error", ExceptionScenarioType.SPECIFIC_TYPE, e.RateLimitError,
+            "rate_limit_error",
+            ExceptionScenarioType.SPECIFIC_TYPE,
+            e.RateLimitError,
         ),
         ExceptionScenario(
             "circuit_breaker_error",
@@ -158,10 +178,14 @@ class ExceptionScenarios:
             e.CircuitBreakerError,
         ),
         ExceptionScenario(
-            "type_error", ExceptionScenarioType.SPECIFIC_TYPE, e.TypeError,
+            "type_error",
+            ExceptionScenarioType.SPECIFIC_TYPE,
+            e.TypeError,
         ),
         ExceptionScenario(
-            "operation_error", ExceptionScenarioType.SPECIFIC_TYPE, e.OperationError,
+            "operation_error",
+            ExceptionScenarioType.SPECIFIC_TYPE,
+            e.OperationError,
         ),
     ]
     FACTORY_SCENARIOS: ClassVar[list[ExceptionScenario]] = [
@@ -250,7 +274,8 @@ class ExceptionScenarios:
             "OperationError",
         ),
         ExceptionScenario(
-            "create_error_invalid", ExceptionScenarioType.FACTORY_INVALID,
+            "create_error_invalid",
+            ExceptionScenarioType.FACTORY_INVALID,
         ),
         ExceptionScenario(
             "exception_raising",
@@ -282,7 +307,9 @@ class ExceptionScenarios:
             e.ConnectionError,
         ),
         ExceptionTypeScenario(
-            "instantiate_timeout", ExceptionTypeScenarioType.TIMEOUT, e.TimeoutError,
+            "instantiate_timeout",
+            ExceptionTypeScenarioType.TIMEOUT,
+            e.TimeoutError,
         ),
         ExceptionTypeScenario(
             "instantiate_authentication",
@@ -300,7 +327,9 @@ class ExceptionScenarios:
             e.NotFoundError,
         ),
         ExceptionTypeScenario(
-            "instantiate_conflict", ExceptionTypeScenarioType.CONFLICT, e.ConflictError,
+            "instantiate_conflict",
+            ExceptionTypeScenarioType.CONFLICT,
+            e.ConflictError,
         ),
         ExceptionTypeScenario(
             "instantiate_rate_limit",
@@ -313,7 +342,9 @@ class ExceptionScenarios:
             e.CircuitBreakerError,
         ),
         ExceptionTypeScenario(
-            "instantiate_type_error", ExceptionTypeScenarioType.TYPE_ERROR, e.TypeError,
+            "instantiate_type_error",
+            ExceptionTypeScenarioType.TYPE_ERROR,
+            e.TypeError,
         ),
         ExceptionTypeScenario(
             "instantiate_operation",
@@ -327,7 +358,9 @@ class Teste:
     """Comprehensive test suite for e using FlextTestsUtilities."""
 
     @pytest.mark.parametrize(
-        "scenario", ExceptionScenarios.BASE_SCENARIOS, ids=lambda s: s.name,
+        "scenario",
+        ExceptionScenarios.BASE_SCENARIOS,
+        ids=lambda s: s.name,
     )
     def test_base_exception_scenarios(self, scenario: ExceptionScenario) -> None:
         """Test base exception creation and behavior."""
@@ -369,20 +402,25 @@ class Teste:
             assert str(error2) == "[TEST_001] Test error"
 
     @pytest.mark.parametrize(
-        "scenario", ExceptionScenarios.SPECIFIC_TYPE_SCENARIOS, ids=lambda s: s.name,
+        "scenario",
+        ExceptionScenarios.SPECIFIC_TYPE_SCENARIOS,
+        ids=lambda s: s.name,
     )
     def test_specific_exception_types(self, scenario: ExceptionScenario) -> None:
         """Test specific exception type instantiation."""
         assert scenario.exception_type is not None
         if scenario.exception_type == e.ValidationError:
             error: e.BaseError = e.ValidationError(
-                "Invalid email", field="email", error_code="VAL_EMAIL",
+                "Invalid email",
+                field="email",
+                error_code="VAL_EMAIL",
             )
             assert error.message == "Invalid email"
             assert error.error_code == "VAL_EMAIL"
         elif scenario.exception_type == e.ConfigurationError:
             config_error: e.ConfigurationError = e.ConfigurationError(
-                "Missing config", config_key="database.host",
+                "Missing config",
+                config_key="database.host",
             )
             assert (
                 config_error.message == "Missing config"
@@ -390,7 +428,9 @@ class Teste:
             )
         elif scenario.exception_type == e.ConnectionError:
             conn_error: e.ConnectionError = e.ConnectionError(
-                "Connection failed", host=FlextConstants.Network.LOCALHOST, port=5432,
+                "Connection failed",
+                host=FlextConstants.Network.LOCALHOST,
+                port=5432,
             )
             assert (
                 conn_error.message == "Connection failed"
@@ -398,7 +438,9 @@ class Teste:
             )
         elif scenario.exception_type == e.TimeoutError:
             timeout_error: e.TimeoutError = e.TimeoutError(
-                "Operation timeout", timeout_seconds=30.0, operation="database_query",
+                "Operation timeout",
+                timeout_seconds=30.0,
+                operation="database_query",
             )
             assert (
                 timeout_error.message == "Operation timeout"
@@ -407,7 +449,9 @@ class Teste:
             )
         elif scenario.exception_type == e.AuthenticationError:
             auth_error: e.AuthenticationError = e.AuthenticationError(
-                "Invalid credentials", user_id="testuser", auth_method="password",
+                "Invalid credentials",
+                user_id="testuser",
+                auth_method="password",
             )
             assert (
                 auth_error.message == "Invalid credentials"
@@ -426,7 +470,9 @@ class Teste:
             )
         elif scenario.exception_type == e.NotFoundError:
             not_found_error: e.NotFoundError = e.NotFoundError(
-                "Resource not found", resource_type="User", resource_id="123",
+                "Resource not found",
+                resource_type="User",
+                resource_id="123",
             )
             assert (
                 not_found_error.message == "Resource not found"
@@ -444,7 +490,9 @@ class Teste:
             )
         elif scenario.exception_type == e.RateLimitError:
             rate_limit_error: e.RateLimitError = e.RateLimitError(
-                "Rate limit exceeded", limit=100, window_seconds=60,
+                "Rate limit exceeded",
+                limit=100,
+                window_seconds=60,
             )
             assert (
                 rate_limit_error.message == "Rate limit exceeded"
@@ -452,7 +500,9 @@ class Teste:
             )
         elif scenario.exception_type == e.CircuitBreakerError:
             circuit_error: e.CircuitBreakerError = e.CircuitBreakerError(
-                "Circuit breaker open", service_name="payment_service", failure_count=5,
+                "Circuit breaker open",
+                service_name="payment_service",
+                failure_count=5,
             )
             assert (
                 circuit_error.message == "Circuit breaker open"
@@ -460,14 +510,18 @@ class Teste:
             )
         elif scenario.exception_type == e.TypeError:
             type_error: e.TypeError = e.TypeError(
-                "Invalid type", expected_type=str, actual_type=int,
+                "Invalid type",
+                expected_type=str,
+                actual_type=int,
             )
             assert (
                 type_error.message == "Invalid type" and type_error.expected_type is str
             )
         elif scenario.exception_type == e.OperationError:
             op_error: e.OperationError = e.OperationError(
-                "Operation failed", operation="backup", reason="disk_full",
+                "Operation failed",
+                operation="backup",
+                reason="disk_full",
             )
             assert (
                 op_error.message == "Operation failed"
@@ -475,7 +529,9 @@ class Teste:
             )
 
     @pytest.mark.parametrize(
-        "scenario", ExceptionScenarios.FACTORY_SCENARIOS, ids=lambda s: s.name,
+        "scenario",
+        ExceptionScenarios.FACTORY_SCENARIOS,
+        ids=lambda s: s.name,
     )
     def test_factory_methods(self, scenario: ExceptionScenario) -> None:
         """Test exception factory methods."""
@@ -503,7 +559,9 @@ class Teste:
             assert isinstance(exc_op_info.value.__cause__, e.ConfigurationError)
 
     @pytest.mark.parametrize(
-        "scenario", ExceptionScenarios.TYPE_SCENARIOS, ids=lambda s: s.name,
+        "scenario",
+        ExceptionScenarios.TYPE_SCENARIOS,
+        ids=lambda s: s.name,
     )
     def test_exception_type_scenarios(self, scenario: ExceptionTypeScenario) -> None:
         """Test comprehensive exception type instantiation."""
@@ -515,7 +573,8 @@ class Teste:
         )
         assert exc.error_code == f"{scenario.scenario_type.upper()}_ERROR"
         exc = scenario.exception_class(
-            f"{scenario.scenario_type} error", metadata={"test": "data"},
+            f"{scenario.scenario_type} error",
+            metadata={"test": "data"},
         )
         assert "test" in exc.metadata.attributes
         assert exc.metadata.attributes["test"] == "data"
@@ -624,7 +683,9 @@ class Teste:
             for k, v in context_raw.items()
         }
         error = e.ValidationError(
-            "Validation failed", field="test_field", context=context,
+            "Validation failed",
+            field="test_field",
+            context=context,
         )
         assert error.metadata is not None
         assert "key1" in error.metadata.attributes
@@ -641,7 +702,10 @@ class Teste:
         ids=["config_context", "connection_context", "auth_context", "authz_context"],
     )
     def test_exception_with_context(
-        self, error_class: type[e.BaseError], msg: str, context_key: str,
+        self,
+        error_class: type[e.BaseError],
+        msg: str,
+        context_key: str,
     ) -> None:
         """Test exception classes with context metadata."""
         context = {context_key: "value1"}
@@ -663,7 +727,10 @@ class Teste:
             for k, v in context_raw.items()
         }
         error = e.NotFoundError(
-            "Not found", resource_type="User", resource_id="123", context=context,
+            "Not found",
+            resource_type="User",
+            resource_id="123",
+            context=context,
         )
         assert error.metadata is not None
         assert "key1" in error.metadata.attributes
@@ -673,7 +740,10 @@ class Teste:
         """Test ConflictError with context - tests line 624."""
         context = {"key1": "value1"}
         error = e.ConflictError(
-            "Conflict", resource_type="User", resource_id="123", context=context,
+            "Conflict",
+            resource_type="User",
+            resource_id="123",
+            context=context,
         )
         assert error.metadata is not None
         assert "key1" in error.metadata.attributes
@@ -682,7 +752,10 @@ class Teste:
         """Test ConflictError with context - tests line 624."""
         context = {"key1": "value1"}
         error = e.ConflictError(
-            "Conflict", resource_type="User", resource_id="123", context=context,
+            "Conflict",
+            resource_type="User",
+            resource_id="123",
+            context=context,
         )
         assert error.metadata is not None
         assert "key1" in error.metadata.attributes
@@ -690,7 +763,10 @@ class Teste:
     def test_conflict_error_build_context_with_extra_kwargs(self) -> None:
         """Test ConflictError with extra_kwargs - tests line 625."""
         error = e.ConflictError(
-            "Conflict", custom="value", resource_type="User", resource_id="123",
+            "Conflict",
+            custom="value",
+            resource_type="User",
+            resource_id="123",
         )
         assert error.metadata is not None
         assert "custom" in error.metadata.attributes
@@ -699,7 +775,10 @@ class Teste:
         """Test RateLimitError with context - tests line 624."""
         context = {"key1": "value1"}
         error = e.RateLimitError(
-            "Rate limit", limit=100, window_seconds=60, context=context,
+            "Rate limit",
+            limit=100,
+            window_seconds=60,
+            context=context,
         )
         assert error.metadata is not None
         assert "key1" in error.metadata.attributes
@@ -708,7 +787,9 @@ class Teste:
         """Test CircuitBreakerError with context - tests line 659."""
         context = {"key1": "value1"}
         error = e.CircuitBreakerError(
-            "Circuit open", service="test_service", context=context,
+            "Circuit open",
+            service="test_service",
+            context=context,
         )
         assert error.metadata is not None
         assert "key1" in error.metadata.attributes
@@ -717,7 +798,10 @@ class Teste:
         """Test TypeError with context - tests line 701."""
         context = {"key1": "value1"}
         error = e.TypeError(
-            "Type error", expected_type=str, actual_type=int, context=context,
+            "Type error",
+            expected_type=str,
+            actual_type=int,
+            context=context,
         )
         assert error.metadata is not None
         assert "key1" in error.metadata.attributes
@@ -726,7 +810,9 @@ class Teste:
         """Test OperationError with context - tests lines 757-761."""
         context = {"key1": "value1"}
         error = e.OperationError(
-            "Operation failed", operation="test_op", context=context,
+            "Operation failed",
+            operation="test_op",
+            context=context,
         )
         assert error.metadata is not None
         assert "key1" in error.metadata.attributes
@@ -754,16 +840,23 @@ class Teste:
             k: cast("t.MetadataAttributeValue", v) for k, v in extra_kwargs_raw.items()
         }
         result = e.TypeError._normalize_type(
-            None, type_map, extra_kwargs, "expected_type",
+            None,
+            type_map,
+            extra_kwargs,
+            "expected_type",
         )
         assert result is str
         assert "expected_type" not in extra_kwargs
         extra_kwargs_type_raw = {"expected_type": int}
         extra_kwargs_type: dict[str, t.MetadataValue] = cast(
-            "dict[str, t.MetadataAttributeValue]", extra_kwargs_type_raw,
+            "dict[str, t.MetadataAttributeValue]",
+            extra_kwargs_type_raw,
         )
         result = e.TypeError._normalize_type(
-            None, type_map, extra_kwargs_type, "expected_type",
+            None,
+            type_map,
+            extra_kwargs_type,
+            "expected_type",
         )
         assert result is int
         assert "expected_type" not in extra_kwargs_type
@@ -780,7 +873,10 @@ class Teste:
         """Test TypeError._build_type_context."""
         context = {"key1": "value1"}
         type_context = e.TypeError._build_type_context(
-            str, int, context, {"custom": "value"},
+            str,
+            int,
+            context,
+            {"custom": "value"},
         )
         assert "key1" in type_context
         assert "expected_type" in type_context
@@ -828,7 +924,10 @@ class Teste:
     def test_type_error_build_type_context_with_extra_kwargs(self) -> None:
         """Test TypeError._build_type_context with extra_kwargs."""
         type_context = e.TypeError._build_type_context(
-            None, None, None, {"custom": "value"},
+            None,
+            None,
+            None,
+            {"custom": "value"},
         )
         assert "expected_type" not in type_context
         assert "actual_type" not in type_context
@@ -899,7 +998,9 @@ class Teste:
     def test_create_with_metadata_dict(self) -> None:
         """Test create with metadata as dict - tests lines 1372-1375."""
         error = e.create(
-            "Test message", field="test_field", metadata={"key1": "value1"},
+            "Test message",
+            field="test_field",
+            metadata={"key1": "value1"},
         )
         assert isinstance(error, e.ValidationError)
         assert error.metadata is not None
@@ -955,7 +1056,9 @@ class Teste:
     def test_create_with_correlation_id(self) -> None:
         """Test create with correlation_id - tests lines 1365-1366."""
         error = e.create(
-            "Test message", field="test_field", correlation_id="test-correlation-id",
+            "Test message",
+            field="test_field",
+            correlation_id="test-correlation-id",
         )
         assert isinstance(error, e.ValidationError)
         assert error.correlation_id == "test-correlation-id"
@@ -963,7 +1066,10 @@ class Teste:
     def test_create_error_by_type_with_error_code(self) -> None:
         """Test _create_error_by_type with error_code - tests lines 1322-1323."""
         error = e._create_error_by_type(
-            "validation", "Test message", error_code="CUSTOM_ERROR", context=None,
+            "validation",
+            "Test message",
+            error_code="CUSTOM_ERROR",
+            context=None,
         )
         assert isinstance(error, e.ValidationError)
         assert error.error_code == "CUSTOM_ERROR"
@@ -972,7 +1078,10 @@ class Teste:
         """Test _create_error_by_type with context - tests lines 1320-1321."""
         context = {"key1": "value1"}
         error = e._create_error_by_type(
-            "validation", "Test message", error_code=None, context=context,
+            "validation",
+            "Test message",
+            error_code=None,
+            context=context,
         )
         assert isinstance(error, e.ValidationError)
         assert error.metadata is not None
@@ -981,7 +1090,10 @@ class Teste:
     def test_create_error_by_type_base_error(self) -> None:
         """Test _create_error_by_type returns BaseError for None type - tests lines 1346-1350."""
         error = e._create_error_by_type(
-            None, "Test message", error_code=None, context=None,
+            None,
+            "Test message",
+            error_code=None,
+            context=None,
         )
         assert isinstance(error, e.BaseError)
         assert error.message == "Test message"
@@ -989,7 +1101,10 @@ class Teste:
     def test_create_error_by_type_invalid_type(self) -> None:
         """Test _create_error_by_type with invalid type - tests line 1346."""
         error = e._create_error_by_type(
-            "invalid", "Test message", error_code=None, context=None,
+            "invalid",
+            "Test message",
+            error_code=None,
+            context=None,
         )
         assert isinstance(error, e.BaseError)
         assert error.message == "Test message"
@@ -997,7 +1112,9 @@ class Teste:
     def test_attribute_access_error_with_extra_kwargs(self) -> None:
         """Test AttributeAccessError with extra_kwargs - tests line 918."""
         error = e.AttributeAccessError(
-            "Attribute error", attribute_name="test_attr", custom_key="custom_value",
+            "Attribute error",
+            attribute_name="test_attr",
+            custom_key="custom_value",
         )
         assert error.metadata is not None
         assert "custom_key" in error.metadata.attributes
@@ -1230,7 +1347,9 @@ class Teste:
         """Test create_error instance method (__call__) - tests lines 1453-1456."""
         error_factory = e()
         error = error_factory(
-            "Test message", error_code="TEST_ERROR", field="test_field",
+            "Test message",
+            error_code="TEST_ERROR",
+            field="test_field",
         )
         assert isinstance(error, e.ValidationError)
         assert error.error_code == "TEST_ERROR"
@@ -1276,7 +1395,10 @@ class Teste:
         """Test create_error instance method normalization loop - tests lines 1454-1455."""
         error_factory = e()
         error = error_factory.create(
-            "Test message", obj=str(object()), lst=[1, 2, 3], dct={"key": "value"},
+            "Test message",
+            obj=str(object()),
+            lst=[1, 2, 3],
+            dct={"key": "value"},
         )
         assert isinstance(error, e.BaseError)
         assert error.metadata is not None

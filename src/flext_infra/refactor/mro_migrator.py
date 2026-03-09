@@ -32,7 +32,8 @@ class FlextInfraRefactorMROMigrationTransformer:
 
     @staticmethod
     def migrate_file(
-        *, scan_result: m.Infra.Refactor.MROScanReport,
+        *,
+        scan_result: m.Infra.Refactor.MROScanReport,
     ) -> tuple[str, m.Infra.Refactor.MROFileMigration, dict[str, str]]:
         """Transform a candidate file and return code plus symbol map."""
         source = Path(scan_result.file).read_text(encoding=c.Infra.Encoding.DEFAULT)
@@ -42,7 +43,8 @@ class FlextInfraRefactorMROMigrationTransformer:
         retained_module_body: list[cst.CSTNode] = []
         for stmt in module.body:
             moved = FlextInfraRefactorMROMigrationTransformer._extract_moved_statement(
-                statement=stmt, candidate_symbols=candidate_symbols,
+                statement=stmt,
+                candidate_symbols=candidate_symbols,
             )
             if moved is None:
                 retained_module_body.append(stmt)
@@ -121,7 +123,9 @@ class FlextInfraRefactorMROMigrationTransformer:
 
     @staticmethod
     def _extract_moved_statement(
-        *, statement: cst.CSTNode, candidate_symbols: set[str],
+        *,
+        statement: cst.CSTNode,
+        candidate_symbols: set[str],
     ) -> tuple[str, cst.CSTNode] | None:
         if isinstance(statement, cst.ClassDef):
             symbol = statement.name.value
@@ -228,7 +232,8 @@ class FlextInfraRefactorMROMigrationTransformer:
         ordered_symbols: list[str],
     ) -> tuple[cst.ClassDef, dict[str, str]]:
         class_template = cst.ClassDef(
-            name=cst.Name(class_name), body=cst.IndentedBlock(body=()),
+            name=cst.Name(class_name),
+            body=cst.IndentedBlock(body=()),
         )
         class_body: list[cst.BaseStatement] = []
         symbol_map: dict[str, str] = {}
@@ -303,7 +308,8 @@ class FlextInfraRefactorMROMigrationTransformer:
                 return cst.SimpleStatementLine(
                     body=[
                         statement.with_changes(
-                            target=cst.Name(target_name), value=replacement_value,
+                            target=cst.Name(target_name),
+                            value=replacement_value,
                         ),
                     ],
                 )

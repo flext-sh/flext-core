@@ -95,7 +95,8 @@ class TestFlextTestsDomains:
     def test_api_response_data_success_with_data(self) -> None:
         """Test api_response_data with success status and data."""
         response = FlextTestsDomains.api_response_data(
-            status="success", include_data=True,
+            status="success",
+            include_data=True,
         )
         assert response["status"] == "success"
         assert response["data"] == {"test": "data"}
@@ -150,7 +151,8 @@ class TestFlextTestsDomains:
     def test_create_service_custom(self) -> None:
         """Test create_service with custom parameters."""
         service = FlextTestsDomains.create_service(
-            "database", custom_field="custom_value",
+            "database",
+            custom_field="custom_value",
         )
         assert service["type"] == "database"
         assert service["name"] == "test_database_service"

@@ -58,15 +58,18 @@ class TestAutomatedFlextHandlers:
         ids=lambda case: case["description"],
     )
     def test_automated_handlers_comprehensive_scenarios(
-        self, test_scenario: m.Tests.AutomatedTestScenario,
+        self,
+        test_scenario: m.Tests.AutomatedTestScenario,
     ) -> None:
         """Comprehensive test scenarios for handlers functionality."""
         try:
             instance = fixture_factory.create_test_handlers_instance()
             result = self._execute_handlers_operation(instance, test_scenario.input)
-            if test_scenario.expected_success: $$$
+            if test_scenario.expected_success:
+                assert result.is_success, f"Expected success but got failure: {result}"
         except Exception as e:
-            if not test_scenario.expected_success: $$$
+            if not test_scenario.expected_success:
+                assert True, f"Expected failure and got exception: {e}"
 
     def test_automated_handlers_type_safety(self) -> None:
         """Test type safety compliance for handlers."""
@@ -95,7 +98,8 @@ class TestAutomatedFlextHandlers:
 
         def operation() -> r[t.ContainerValue]:
             return self._execute_handlers_operation(
-                instance, {"performance_test": True},
+                instance,
+                {"performance_test": True},
             )
 
         start = time.perf_counter()
@@ -103,7 +107,8 @@ class TestAutomatedFlextHandlers:
         elapsed = time.perf_counter() - start
         assert elapsed < 1.0
         _ = assertion_helpers.assert_flext_result_success(
-            result, "h performance test exceeded timeout",
+            result,
+            "h performance test exceeded timeout",
         )
 
     def test_automated_handlers_resource_management(self) -> None:
@@ -116,7 +121,8 @@ class TestAutomatedFlextHandlers:
             cleanup_result = cleanup()
             if cleanup_result:
                 _ = assertion_helpers.assert_flext_result_success(
-                    cast("r[t.ContainerValue]", cleanup_result), "h cleanup failed",
+                    cast("r[t.ContainerValue]", cleanup_result),
+                    "h cleanup failed",
                 )
 
     def _execute_handlers_operation(

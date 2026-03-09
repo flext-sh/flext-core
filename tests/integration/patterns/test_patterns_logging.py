@@ -185,7 +185,8 @@ class TestFlextLogger:
         assert hasattr(base_logger, "debug")
         result = base_logger.info("Base logger test message")
         assertion_helpers.assert_flext_result_success(
-            result, "Base logger should log successfully",
+            result,
+            "Base logger should log successfully",
         )
 
     def test_get_base_logger_with_level(self) -> None:
@@ -203,7 +204,8 @@ class TestFlextLogger:
         assert hasattr(base_logger, "debug")
         result = base_logger.info("Level logger test message")
         assertion_helpers.assert_flext_result_success(
-            result, "Level logger should log successfully",
+            result,
+            "Level logger should log successfully",
         )
 
     def test_bind_context(self) -> None:
@@ -222,7 +224,8 @@ class TestFlextLogger:
         assert hasattr(bound_logger, "debug")
         result = bound_logger.info("Test message with bound context")
         success = assertion_helpers.assert_flext_result_success(
-            result, "Bound logger should work for logging",
+            result,
+            "Bound logger should work for logging",
         )
         assert success is True
 
@@ -241,7 +244,8 @@ class TestFlextLogger:
         assert hasattr(logger, "debug")
         result = logger.info("Compatibility test message")
         success = assertion_helpers.assert_flext_result_success(
-            result, "Logger should work with standard patterns",
+            result,
+            "Logger should work with standard patterns",
         )
         assert success is True
 
@@ -260,7 +264,8 @@ class TestFlextLogger:
         assert hasattr(logger, "debug")
         result = logger.info("Module-level logger test message")
         success = assertion_helpers.assert_flext_result_success(
-            result, "Module-level logger should work",
+            result,
+            "Module-level logger should work",
         )
         assert success is True
 
@@ -307,7 +312,9 @@ class TestFlextLoggerUsage:
         result_info = logger.info("User action", user_id="123", action="login")
         assert result_info.is_success, "Info logging with context should succeed"
         result_error = logger.error(
-            "Operation failed", error_code="E001", duration_ms=150.5,
+            "Operation failed",
+            error_code="E001",
+            duration_ms=150.5,
         )
         assert result_error.is_success, "Error logging with context should succeed"
 
@@ -349,7 +356,8 @@ class TestFlextLoggerUsage:
         ]
         for i, result in enumerate(results):
             success = assertion_helpers.assert_flext_result_success(
-                result, f"Log entry {i + 1} should succeed",
+                result,
+                f"Log entry {i + 1} should succeed",
             )
             assert success is True
 
@@ -369,7 +377,8 @@ class TestFlextLoggerUsage:
         assert hasattr(perf_logger, "debug")
         result = perf_logger.info("Performance test message")
         success = assertion_helpers.assert_flext_result_success(
-            result, "Performance logging should succeed",
+            result,
+            "Performance logging should succeed",
         )
         assert success is True
         result2 = perf_logger.debug("Performance debug message")
@@ -413,7 +422,8 @@ class TestFlextLoggerIntegration:
         result_start = bound_logger.info("Starting user registration")
         assert result_start.is_success, "Initial log should succeed"
         validation_logger = bound_logger.bind(
-            step="validation", user_email="test@example.com",
+            step="validation",
+            user_email="test@example.com",
         )
         result_debug_val = validation_logger.debug("Validating user input")
         assert result_debug_val.is_success, "Validation debug log should succeed"
@@ -423,7 +433,8 @@ class TestFlextLoggerIntegration:
         result_debug_db = database_logger.debug("Saving user to database")
         assert result_debug_db.is_success, "Database debug log should succeed"
         result_info_db = database_logger.info(
-            "User saved successfully", user_id="user-456",
+            "User saved successfully",
+            user_id="user-456",
         )
         assert result_info_db.is_success, "Database info log should succeed"
         result_complete = bound_logger.info("User registration completed")
@@ -452,7 +463,8 @@ class TestFlextLoggerIntegration:
                 user_id="user-123",
             )
             success = assertion_helpers.assert_flext_result_success(
-                result, "Exception logging should succeed",
+                result,
+                "Exception logging should succeed",
             )
             assert success is True
 
@@ -483,6 +495,7 @@ class TestFlextLoggerIntegration:
             success=True,
         )
         success = assertion_helpers.assert_flext_result_success(
-            result, "Logging should succeed",
+            result,
+            "Logging should succeed",
         )
         assert success is True

@@ -32,7 +32,9 @@ class FlextInfraRefactorClassReconstructor(cst.CSTTransformer):
 
     @override
     def leave_ClassDef(
-        self, original_node: cst.ClassDef, updated_node: cst.ClassDef,
+        self,
+        original_node: cst.ClassDef,
+        updated_node: cst.ClassDef,
     ) -> cst.ClassDef:
         """Sort methods in every contiguous method block of a class body."""
         if not isinstance(updated_node.body, cst.IndentedBlock):
@@ -50,7 +52,8 @@ class FlextInfraRefactorClassReconstructor(cst.CSTTransformer):
                 continue
             block_end = block_start
             while block_end < len(body) and isinstance(
-                body[block_end], cst.FunctionDef,
+                body[block_end],
+                cst.FunctionDef,
             ):
                 block_end += 1
             method_indices = list(range(block_start, block_end))
@@ -87,7 +90,10 @@ class FlextInfraRefactorClassReconstructor(cst.CSTTransformer):
                 decorators.append(dec.decorator.attr.value)
         category = self._categorize(name, decorators)
         return m.Infra.Refactor.MethodInfo(
-            name=name, category=category, node=node, decorators=decorators,
+            name=name,
+            category=category,
+            node=node,
+            decorators=decorators,
         )
 
     def _categorize(self, name: str, decorators: list[str]) -> str:
@@ -114,7 +120,8 @@ class FlextInfraRefactorClassReconstructor(cst.CSTTransformer):
             self._on_change(message)
 
     def _sort_methods(
-        self, methods: list[m.Infra.Refactor.MethodInfo],
+        self,
+        methods: list[m.Infra.Refactor.MethodInfo],
     ) -> list[m.Infra.Refactor.MethodInfo]:
 
         def matches_rule(

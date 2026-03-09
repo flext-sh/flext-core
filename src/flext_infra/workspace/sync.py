@@ -120,7 +120,9 @@ class FlextInfraSyncService(s[m.Infra.Workspace.SyncResult]):
                     changed = 0
                     effective_root = canonical_root or self._canonical_root
                     basemk_result = self._sync_basemk(
-                        resolved, config, canonical_root=effective_root,
+                        resolved,
+                        config,
+                        canonical_root=effective_root,
                     )
                     if basemk_result.is_failure:
                         return r[m.Infra.Workspace.SyncResult].fail(
@@ -128,7 +130,8 @@ class FlextInfraSyncService(s[m.Infra.Workspace.SyncResult]):
                         )
                     changed += 1 if basemk_result.value else 0
                     gitignore_result = self._ensure_gitignore_entries(
-                        resolved, c.Infra.Workspace.REQUIRED_GITIGNORE_ENTRIES,
+                        resolved,
+                        c.Infra.Workspace.REQUIRED_GITIGNORE_ENTRIES,
                     )
                     if gitignore_result.is_failure:
                         return r[m.Infra.Workspace.SyncResult].fail(
@@ -137,7 +140,9 @@ class FlextInfraSyncService(s[m.Infra.Workspace.SyncResult]):
                     changed += 1 if gitignore_result.value else 0
                     return r[m.Infra.Workspace.SyncResult].ok(
                         m.Infra.Workspace.SyncResult(
-                            files_changed=changed, source=resolved, target=resolved,
+                            files_changed=changed,
+                            source=resolved,
+                            target=resolved,
                         ),
                     )
                 finally:
@@ -148,7 +153,9 @@ class FlextInfraSyncService(s[m.Infra.Workspace.SyncResult]):
             )
 
     def _ensure_gitignore_entries(
-        self, project_root: Path, required: list[str],
+        self,
+        project_root: Path,
+        required: list[str],
     ) -> r[bool]:
         """Idempotently add missing .gitignore entries.
 
@@ -230,10 +237,16 @@ def main() -> int:
     """CLI entry point for workspace sync."""
     parser = argparse.ArgumentParser(description="Workspace base.mk sync")
     _ = parser.add_argument(
-        "--project-root", type=Path, default=Path(), help="Project root directory",
+        "--project-root",
+        type=Path,
+        default=Path(),
+        help="Project root directory",
     )
     _ = parser.add_argument(
-        "--canonical-root", type=Path, default=None, help="Canonical workspace root",
+        "--canonical-root",
+        type=Path,
+        default=None,
+        help="Canonical workspace root",
     )
     args = parser.parse_args()
     service = FlextInfraSyncService(canonical_root=args.canonical_root)

@@ -16,7 +16,10 @@ def _read_fixture(name: str) -> str:
 
 
 def _make_project_with_module(
-    tmp_path: Path, *, module_source: str, module_name: str,
+    tmp_path: Path,
+    *,
+    module_source: str,
+    module_name: str,
 ) -> Path:
     project_root = tmp_path / "project"
     package_dir = project_root / "src" / "flext_test"
@@ -99,7 +102,9 @@ class TestFlextInfraNamespaceValidator:
         validator = FlextInfraNamespaceValidator()
         module_source = "from __future__ import annotations\n\nclass FlextTestConstants(Constants):\n    class Limits:\n        MAX_RETRIES = 3\n"
         root = _make_project_with_module(
-            tmp_path, module_source=module_source, module_name="constants.py",
+            tmp_path,
+            module_source=module_source,
+            module_name="constants.py",
         )
         result = validator.validate(root)
         assert result.is_success
@@ -160,7 +165,9 @@ class TestFlextInfraNamespaceValidator:
         validator = FlextInfraNamespaceValidator()
         module_source = 'from __future__ import annotations\nfrom typing import TypeVar\n\nT = TypeVar("T")\n\nclass FlextTestTypes(Types):\n    pass\n'
         root = _make_project_with_module(
-            tmp_path, module_source=module_source, module_name="typings.py",
+            tmp_path,
+            module_source=module_source,
+            module_name="typings.py",
         )
         result = validator.validate(root)
         assert result.is_success
@@ -227,13 +234,16 @@ class TestFlextInfraNamespaceValidator:
         package_dir = project_root / "src" / "flext_test"
         package_dir.mkdir(parents=True)
         _ = (package_dir / "__init__.py").write_text(
-            _read_fixture("rule0_no_class.py"), encoding="utf-8",
+            _read_fixture("rule0_no_class.py"),
+            encoding="utf-8",
         )
         _ = (package_dir / "test_rule.py").write_text(
-            _read_fixture("rule0_no_class.py"), encoding="utf-8",
+            _read_fixture("rule0_no_class.py"),
+            encoding="utf-8",
         )
         _ = (package_dir / "_private.py").write_text(
-            _read_fixture("rule0_no_class.py"), encoding="utf-8",
+            _read_fixture("rule0_no_class.py"),
+            encoding="utf-8",
         )
         result = validator.validate(project_root)
         assert result.is_success
@@ -264,6 +274,4 @@ class TestFlextInfraNamespaceValidator:
         assert result.is_success
         assert result.value.violations
         first = result.value.violations[0]
-        assert (
-            re.search(r"^\[NS-\d{3}-\d{3}\] .+\.py:\d+ — .+$", first) is not None
-        )
+        assert re.search(r"^\[NS-\d{3}-\d{3}\] .+\.py:\d+ — .+$", first) is not None

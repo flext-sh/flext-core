@@ -17,12 +17,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Sequence
-from dataclasses import dataclass
 from enum import StrEnum
 from typing import Any, ClassVar, cast
 
 import pytest
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import FlextRuntime, m, r, t
 from flext_tests import u
@@ -47,153 +46,224 @@ class FixturePriority(StrEnum):
     CRITICAL = "critical"
 
 
-@dataclass(frozen=True, slots=True)
-class ParseSequenceScenario:
+class ParseSequenceScenario(BaseModel):
     """Parse sequence test scenario."""
 
-    name: str
-    enum_cls: type[StrEnum]
-    values: list[str | StrEnum]
-    expected_success: bool
-    expected_count: int | None = None
-    error_contains: str | None = None
+    model_config = ConfigDict(frozen=True)
+    name: str = Field(description="Parse sequence scenario name")
+    enum_cls: type[StrEnum] = Field(description="Enum class under test")
+    values: list[str | StrEnum] = Field(description="Input values to parse")
+    expected_success: bool = Field(description="Whether parsing should succeed")
+    expected_count: int | None = Field(
+        default=None, description="Expected parsed values count"
+    )
+    error_contains: str | None = Field(
+        default=None, description="Expected error message fragment"
+    )
 
 
-@dataclass(frozen=True, slots=True)
-class CoerceListScenario:
+class CoerceListScenario(BaseModel):
     """Coerce list validator test scenario."""
 
-    name: str
-    enum_cls: type[StrEnum]
-    value: t.ContainerValue
-    expected_success: bool
-    expected_count: int | None = None
-    error_type: type[Exception] | None = None
-    error_contains: str | None = None
+    model_config = ConfigDict(frozen=True)
+    name: str = Field(description="Coerce list scenario name")
+    enum_cls: type[StrEnum] = Field(description="Enum class for coercion")
+    value: t.ContainerValue = Field(description="Input value to coerce")
+    expected_success: bool = Field(description="Whether coercion should succeed")
+    expected_count: int | None = Field(
+        default=None, description="Expected result count"
+    )
+    error_type: type[Exception] | None = Field(
+        default=None, description="Expected exception type"
+    )
+    error_contains: str | None = Field(
+        default=None, description="Expected error message fragment"
+    )
 
 
-@dataclass(frozen=True, slots=True)
-class ParseMappingScenario:
+class ParseMappingScenario(BaseModel):
     """Parse mapping test scenario."""
 
-    name: str
-    enum_cls: type[StrEnum]
-    mapping: dict[str, str | StrEnum]
-    expected_success: bool
-    expected_keys: list[str] | None = None
-    error_contains: str | None = None
+    model_config = ConfigDict(frozen=True)
+    name: str = Field(description="Parse mapping scenario name")
+    enum_cls: type[StrEnum] = Field(description="Enum class under test")
+    mapping: dict[str, str | StrEnum] = Field(description="Input mapping values")
+    expected_success: bool = Field(description="Whether parsing should succeed")
+    expected_keys: list[str] | None = Field(
+        default=None, description="Expected output keys"
+    )
+    error_contains: str | None = Field(
+        default=None, description="Expected error message fragment"
+    )
 
 
-@dataclass(frozen=True, slots=True)
-class CoerceDictScenario:
+class CoerceDictScenario(BaseModel):
     """Coerce dict validator test scenario."""
 
-    name: str
-    enum_cls: type[StrEnum]
-    value: t.ContainerValue
-    expected_success: bool
-    expected_keys: list[str] | None = None
-    error_type: type[Exception] | None = None
-    error_contains: str | None = None
+    model_config = ConfigDict(frozen=True)
+    name: str = Field(description="Coerce dict scenario name")
+    enum_cls: type[StrEnum] = Field(description="Enum class for coercion")
+    value: t.ContainerValue = Field(description="Input value to coerce")
+    expected_success: bool = Field(description="Whether coercion should succeed")
+    expected_keys: list[str] | None = Field(
+        default=None, description="Expected output keys"
+    )
+    error_type: type[Exception] | None = Field(
+        default=None, description="Expected exception type"
+    )
+    error_contains: str | None = Field(
+        default=None, description="Expected error message fragment"
+    )
 
 
-@dataclass(frozen=True, slots=True)
-class MapScenario:
+class MapScenario(BaseModel):
     """Map method test scenario."""
 
-    name: str
-    items: list[Any] | tuple[Any, ...] | dict[str, Any] | set[Any] | frozenset[Any]
-    mapper: Callable[[Any], Any]
+    model_config = ConfigDict(frozen=True)
+    name: str = Field(description="Map scenario name")
+    items: list[Any] | tuple[Any, ...] | dict[str, Any] | set[Any] | frozenset[Any] = (
+        Field(
+            description="Collection input for map operation",
+        )
+    )
+    mapper: Callable[[Any], Any] = Field(description="Mapper callable under test")
     expected_result: (
         list[Any] | tuple[Any, ...] | dict[str, Any] | set[Any] | frozenset[Any]
+    ) = Field(description="Expected mapped output")
+    default_error: str = Field(
+        default="Operation failed", description="Default error message"
     )
-    default_error: str = "Operation failed"
-    expected_failure: bool = False
-    error_contains: str | None = None
+    expected_failure: bool = Field(default=False, description="Whether map should fail")
+    error_contains: str | None = Field(
+        default=None, description="Expected error message fragment"
+    )
 
 
-@dataclass(frozen=True, slots=True)
-class FindScenario:
+class FindScenario(BaseModel):
     """Find method test scenario."""
 
-    name: str
-    items: list[Any] | tuple[Any, ...] | dict[str, Any]
-    predicate: Callable[[Any], bool]
-    expected_result: object
-    return_key: bool = False
+    model_config = ConfigDict(frozen=True)
+    name: str = Field(description="Find scenario name")
+    items: list[Any] | tuple[Any, ...] | dict[str, Any] = Field(
+        description="Input items for find"
+    )
+    predicate: Callable[[Any], bool] = Field(
+        description="Predicate callable under test"
+    )
+    expected_result: object = Field(description="Expected found value")
+    return_key: bool = Field(
+        default=False, description="Whether to return dictionary key"
+    )
 
 
-@dataclass(frozen=True, slots=True)
-class FilterScenario:
+class FilterScenario(BaseModel):
     """Filter method test scenario."""
 
-    name: str
-    items: list[Any] | tuple[Any, ...] | dict[str, Any]
-    predicate: Callable[[Any], bool]
-    expected_result: list[Any] | tuple[Any, ...] | dict[str, Any]
-    mapper: Callable[[Any], Any] | None = None
+    model_config = ConfigDict(frozen=True)
+    name: str = Field(description="Filter scenario name")
+    items: list[Any] | tuple[Any, ...] | dict[str, Any] = Field(
+        description="Input items for filter"
+    )
+    predicate: Callable[[Any], bool] = Field(
+        description="Predicate callable under test"
+    )
+    expected_result: list[Any] | tuple[Any, ...] | dict[str, Any] = Field(
+        description="Expected filtered output",
+    )
+    mapper: Callable[[Any], Any] | None = Field(
+        default=None, description="Optional mapping callable"
+    )
 
 
-@dataclass(frozen=True, slots=True)
-class CountScenario:
+class CountScenario(BaseModel):
     """Count method test scenario."""
 
-    name: str
-    items: Sequence[Any]
-    expected_count: int
-    predicate: Callable[[Any], bool] | None = None
+    model_config = ConfigDict(frozen=True)
+    name: str = Field(description="Count scenario name")
+    items: Sequence[Any] = Field(description="Input items for count")
+    expected_count: int = Field(description="Expected item count")
+    predicate: Callable[[Any], bool] | None = Field(
+        default=None, description="Optional predicate filter"
+    )
 
 
-@dataclass(frozen=True, slots=True)
-class ProcessScenario:
+class ProcessScenario(BaseModel):
     """Process method test scenario."""
 
-    name: str
-    items: Sequence[Any]
-    processor: Callable[[Any], Any]
-    expected_result: object
-    on_error: str = "collect"
-    predicate: Callable[[Any], bool] | None = None
-    filter_keys: set[str] | None = None
-    exclude_keys: set[str] | None = None
-    expected_failure: bool = False
-    error_contains: str | None = None
+    model_config = ConfigDict(frozen=True)
+    name: str = Field(description="Process scenario name")
+    items: Sequence[Any] = Field(description="Input items for process")
+    processor: Callable[[Any], Any] = Field(description="Processor callable under test")
+    expected_result: object = Field(description="Expected processing result")
+    on_error: str = Field(default="collect", description="Error handling mode")
+    predicate: Callable[[Any], bool] | None = Field(
+        default=None, description="Optional predicate filter"
+    )
+    filter_keys: set[str] | None = Field(
+        default=None, description="Keys to include when processing mappings"
+    )
+    exclude_keys: set[str] | None = Field(
+        default=None, description="Keys to exclude when processing mappings"
+    )
+    expected_failure: bool = Field(
+        default=False, description="Whether processing should fail"
+    )
+    error_contains: str | None = Field(
+        default=None, description="Expected error message fragment"
+    )
 
 
-@dataclass(frozen=True, slots=True)
-class GroupScenario:
+class GroupScenario(BaseModel):
     """Group method test scenario."""
 
-    name: str
-    items: list[str] | tuple[str, ...]
-    key: Callable[[str], int | str]
-    expected_result: dict[int | str, list[str]]
+    model_config = ConfigDict(frozen=True)
+    name: str = Field(description="Group scenario name")
+    items: list[str] | tuple[str, ...] = Field(description="Input items for group")
+    key: Callable[[str], int | str] = Field(description="Grouping key callable")
+    expected_result: dict[int | str, list[str]] = Field(
+        description="Expected grouped output"
+    )
 
 
-@dataclass(frozen=True, slots=True)
-class ChunkScenario:
+class ChunkScenario(BaseModel):
     """Chunk method test scenario."""
 
-    name: str
-    items: list[t.ContainerValue] | tuple[t.ContainerValue, ...]
-    size: int
-    expected_result: list[list[t.ContainerValue]]
+    model_config = ConfigDict(frozen=True)
+    name: str = Field(description="Chunk scenario name")
+    items: list[t.ContainerValue] | tuple[t.ContainerValue, ...] = Field(
+        description="Input items for chunking",
+    )
+    size: int = Field(description="Chunk size")
+    expected_result: list[list[t.ContainerValue]] = Field(
+        description="Expected chunked output"
+    )
 
 
-@dataclass(frozen=True, slots=True)
-class BatchScenario:
+class BatchScenario(BaseModel):
     """Batch method test scenario."""
 
-    name: str
-    items: list[t.ContainerValue]
-    operation: Callable[[object], object]
-    expected_result: object
-    size: int = 100
-    on_error: str = "collect"
-    pre_validate: Callable[[object], bool] | None = None
-    flatten: bool = False
-    expected_failure: bool = False
-    error_contains: str | None = None
+    model_config = ConfigDict(frozen=True)
+    name: str = Field(description="Batch scenario name")
+    items: list[t.ContainerValue] = Field(description="Input items for batch")
+    operation: Callable[[object], object] = Field(
+        description="Batch operation callable"
+    )
+    expected_result: object = Field(description="Expected batch result")
+    size: int = Field(default=100, description="Batch size")
+    on_error: str = Field(default="collect", description="Error handling mode")
+    pre_validate: Callable[[object], bool] | None = Field(
+        default=None,
+        description="Optional pre-validation callable",
+    )
+    flatten: bool = Field(
+        default=False, description="Whether to flatten nested results"
+    )
+    expected_failure: bool = Field(
+        default=False, description="Whether batch should fail"
+    )
+    error_contains: str | None = Field(
+        default=None, description="Expected error message fragment"
+    )
 
 
 class CollectionUtilitiesScenarios:
@@ -639,7 +709,8 @@ class TestuCollectionParseSequence:
     def test_parse_sequence_error_message_format(self) -> None:
         """Test parse_sequence error message format."""
         result = u.Collection.parse_sequence(
-            FixtureStatus, ["active", "invalid1", "invalid2"],
+            FixtureStatus,
+            ["active", "invalid1", "invalid2"],
         )
         _ = assertion_helpers.assert_flext_result_failure(result)
         assert result.error is not None
@@ -651,7 +722,9 @@ class TestuCollectionCoerceListValidator:
     """Real tests for u.Collection.coerce_list_validator."""
 
     @pytest.mark.parametrize(
-        "scenario", CollectionUtilitiesScenarios.COERCE_LIST_CASES, ids=lambda s: s.name,
+        "scenario",
+        CollectionUtilitiesScenarios.COERCE_LIST_CASES,
+        ids=lambda s: s.name,
     )
     def test_coerce_list_validator(self, scenario: CoerceListScenario) -> None:
         """Test coerce_list_validator with various scenarios."""
@@ -665,7 +738,8 @@ class TestuCollectionCoerceListValidator:
                 assert isinstance(val, scenario.enum_cls)
         else:
             with pytest.raises(
-                scenario.error_type or Exception, match=scenario.error_contains or "",
+                scenario.error_type or Exception,
+                match=scenario.error_contains or "",
             ):
                 _ = validator(scenario.value)
 
@@ -713,7 +787,8 @@ class TestuCollectionParseMapping:
     def test_parse_mapping_with_custom_enum(self) -> None:
         """Test parse_mapping with custom enum class."""
         result = u.Collection.parse_mapping(
-            FixturePriority, {"task1": "low", "task2": "medium", "task3": "high"},
+            FixturePriority,
+            {"task1": "low", "task2": "medium", "task3": "high"},
         )
         _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value is not None
@@ -723,7 +798,8 @@ class TestuCollectionParseMapping:
     def test_parse_mapping_error_message_format(self) -> None:
         """Test parse_mapping error message format."""
         result = u.Collection.parse_mapping(
-            FixtureStatus, {"user1": "active", "user2": "invalid1", "user3": "invalid2"},
+            FixtureStatus,
+            {"user1": "active", "user2": "invalid1", "user3": "invalid2"},
         )
         _ = assertion_helpers.assert_flext_result_failure(result)
         assert result.error is not None
@@ -735,7 +811,9 @@ class TestuCollectionCoerceDictValidator:
     """Real tests for u.Collection.coerce_dict_validator."""
 
     @pytest.mark.parametrize(
-        "scenario", CollectionUtilitiesScenarios.COERCE_DICT_CASES, ids=lambda s: s.name,
+        "scenario",
+        CollectionUtilitiesScenarios.COERCE_DICT_CASES,
+        ids=lambda s: s.name,
     )
     def test_coerce_dict_validator(self, scenario: CoerceDictScenario) -> None:
         """Test coerce_dict_validator with various scenarios."""
@@ -749,7 +827,8 @@ class TestuCollectionCoerceDictValidator:
                 assert isinstance(val, scenario.enum_cls)
         else:
             with pytest.raises(
-                scenario.error_type or Exception, match=scenario.error_contains or "",
+                scenario.error_type or Exception,
+                match=scenario.error_contains or "",
             ):
                 _ = validator(scenario.value)
 
@@ -779,7 +858,9 @@ class TestuCollectionMap:
     """Real tests for u.Collection.map."""
 
     @pytest.mark.parametrize(
-        "scenario", CollectionUtilitiesScenarios.MAP_CASES, ids=lambda s: s.name,
+        "scenario",
+        CollectionUtilitiesScenarios.MAP_CASES,
+        ids=lambda s: s.name,
     )
     def test_map(self, scenario: MapScenario) -> None:
         """Test map with various scenarios."""
@@ -793,7 +874,9 @@ class TestuCollectionFind:
     """Real tests for u.Collection.find."""
 
     @pytest.mark.parametrize(
-        "scenario", CollectionUtilitiesScenarios.FIND_CASES, ids=lambda s: s.name,
+        "scenario",
+        CollectionUtilitiesScenarios.FIND_CASES,
+        ids=lambda s: s.name,
     )
     def test_find(self, scenario: FindScenario) -> None:
         """Test find with various scenarios."""
@@ -809,12 +892,16 @@ class TestuCollectionFilter:
     """Real tests for u.Collection.filter."""
 
     @pytest.mark.parametrize(
-        "scenario", CollectionUtilitiesScenarios.FILTER_CASES, ids=lambda s: s.name,
+        "scenario",
+        CollectionUtilitiesScenarios.FILTER_CASES,
+        ids=lambda s: s.name,
     )
     def test_filter(self, scenario: FilterScenario) -> None:
         """Test filter with various scenarios."""
         result = u.Collection.filter(
-            scenario.items, scenario.predicate, mapper=scenario.mapper,
+            scenario.items,
+            scenario.predicate,
+            mapper=scenario.mapper,
         )
         assert result == scenario.expected_result
 
@@ -823,7 +910,9 @@ class TestuCollectionCount:
     """Real tests for u.Collection.count."""
 
     @pytest.mark.parametrize(
-        "scenario", CollectionUtilitiesScenarios.COUNT_CASES, ids=lambda s: s.name,
+        "scenario",
+        CollectionUtilitiesScenarios.COUNT_CASES,
+        ids=lambda s: s.name,
     )
     def test_count(self, scenario: CountScenario) -> None:
         """Test count with various scenarios."""
@@ -835,7 +924,9 @@ class TestuCollectionProcess:
     """Real tests for u.Collection.process."""
 
     @pytest.mark.parametrize(
-        "scenario", CollectionUtilitiesScenarios.PROCESS_CASES, ids=lambda s: s.name,
+        "scenario",
+        CollectionUtilitiesScenarios.PROCESS_CASES,
+        ids=lambda s: s.name,
     )
     def test_process(self, scenario: ProcessScenario) -> None:
         """Test process with various scenarios."""
@@ -860,7 +951,9 @@ class TestuCollectionGroup:
     """Real tests for u.Collection.group."""
 
     @pytest.mark.parametrize(
-        "scenario", CollectionUtilitiesScenarios.GROUP_CASES, ids=lambda s: s.name,
+        "scenario",
+        CollectionUtilitiesScenarios.GROUP_CASES,
+        ids=lambda s: s.name,
     )
     def test_group(self, scenario: GroupScenario) -> None:
         """Test group with various scenarios."""
@@ -872,7 +965,9 @@ class TestuCollectionChunk:
     """Real tests for u.Collection.chunk."""
 
     @pytest.mark.parametrize(
-        "scenario", CollectionUtilitiesScenarios.CHUNK_CASES, ids=lambda s: s.name,
+        "scenario",
+        CollectionUtilitiesScenarios.CHUNK_CASES,
+        ids=lambda s: s.name,
     )
     def test_chunk(self, scenario: ChunkScenario) -> None:
         """Test chunk with various scenarios."""

@@ -165,7 +165,7 @@ class TestFlextInfraDocFixer:
             items=items,
         )
         assert len(report.items) == 2
-        assert report.items[0].file == "file1.md"
+        assert report.items[0].model_dump().get("file") == "file1.md"
 
     def test_process_file_with_markdown_links(
         self,

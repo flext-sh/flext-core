@@ -65,7 +65,7 @@ class FlextValidatorBypass:
         if u.Tests.Validator.is_approved("BYPASS-001", file_path, approved):
             return []
         violations: list[m.Tests.Validator.Violation] = []
-        pattern = re.compile("#\\s*noqa", re.IGNORECASE)
+        pattern = re.compile(r"#\s*noqa", re.IGNORECASE)
         for i, line in enumerate(lines, start=1):
             is_real = u.Tests.Validator.is_real_comment(line, pattern)
             if pattern.search(line) and is_real:
@@ -87,7 +87,7 @@ class FlextValidatorBypass:
         if any(re.search(pattern, file_str) for pattern in patterns):
             return []
         violations: list[m.Tests.Validator.Violation] = []
-        pattern = re.compile("#\\s*pragma:\\s*no\\s*cover", re.IGNORECASE)
+        pattern = re.compile(r"#\s*pragma:\s*no\s*cover", re.IGNORECASE)
         for i, line in enumerate(lines, start=1):
             is_real = u.Tests.Validator.is_real_comment(line, pattern)
             if pattern.search(line) and is_real:

@@ -48,7 +48,9 @@ class FlextInfraRefactorClassNestingTransformer(cst.CSTTransformer):
 
     @override
     def leave_ClassDef(
-        self, original_node: cst.ClassDef, updated_node: cst.ClassDef,
+        self,
+        original_node: cst.ClassDef,
+        updated_node: cst.ClassDef,
     ) -> cst.ClassDef | cst.RemovalSentinel:
         is_top_level_class = self._class_depth == 1
         self._class_depth -= 1
@@ -63,7 +65,8 @@ class FlextInfraRefactorClassNestingTransformer(cst.CSTTransformer):
             if not policy.enable_class_nesting:
                 return updated_node
             if not FlextInfraRefactorTransformerPolicyUtilities.target_allowed(
-                policy=policy, target_namespace=target_namespace,
+                policy=policy,
+                target_namespace=target_namespace,
             ):
                 return updated_node
         self._collected_nested[target_namespace].append(updated_node)
@@ -71,7 +74,9 @@ class FlextInfraRefactorClassNestingTransformer(cst.CSTTransformer):
 
     @override
     def leave_Module(
-        self, original_node: cst.Module, updated_node: cst.Module,
+        self,
+        original_node: cst.Module,
+        updated_node: cst.Module,
     ) -> cst.Module:
         _ = original_node
         if not self._collected_nested:
@@ -106,7 +111,8 @@ class FlextInfraRefactorClassNestingTransformer(cst.CSTTransformer):
             if not isinstance(namespace_class, cst.ClassDef):
                 continue
             classes_to_insert = self._deduplicated_nested(
-                namespace_class=namespace_class, nested_classes=nested_classes,
+                namespace_class=namespace_class,
+                nested_classes=nested_classes,
             )
             if not classes_to_insert:
                 continue
@@ -120,7 +126,8 @@ class FlextInfraRefactorClassNestingTransformer(cst.CSTTransformer):
         return updated_node.with_changes(body=tuple(module_body))
 
     def _policy_for_symbol(
-        self, symbol_name: str,
+        self,
+        symbol_name: str,
     ) -> m.Infra.Refactor.ClassNestingPolicy | None:
         return FlextInfraRefactorTransformerPolicyUtilities.policy_for_symbol(
             policy_context=self._policy_context,
@@ -144,13 +151,16 @@ class FlextInfraRefactorClassNestingTransformer(cst.CSTTransformer):
             if operation == "merge" and (not policy.allow_existing_namespace_merge):
                 return False
             if not FlextInfraRefactorTransformerPolicyUtilities.target_allowed(
-                policy=policy, target_namespace=target_namespace,
+                policy=policy,
+                target_namespace=target_namespace,
             ):
                 return False
         return True
 
     def _namespace_index(
-        self, module_body: Sequence[cst.CSTNode], namespace: str,
+        self,
+        module_body: Sequence[cst.CSTNode],
+        namespace: str,
     ) -> int | None:
         if namespace not in self._existing_namespaces:
             return None
@@ -165,7 +175,10 @@ class FlextInfraRefactorClassNestingTransformer(cst.CSTTransformer):
         )
 
     def _deduplicated_nested(
-        self, *, namespace_class: cst.ClassDef, nested_classes: list[cst.ClassDef],
+        self,
+        *,
+        namespace_class: cst.ClassDef,
+        nested_classes: list[cst.ClassDef],
     ) -> list[cst.ClassDef]:
         existing_nested_names = {
             statement.name.value
@@ -179,7 +192,9 @@ class FlextInfraRefactorClassNestingTransformer(cst.CSTTransformer):
         ]
 
     def _merged_namespace_body(
-        self, namespace_class: cst.ClassDef, classes_to_insert: list[cst.ClassDef],
+        self,
+        namespace_class: cst.ClassDef,
+        classes_to_insert: list[cst.ClassDef],
     ) -> list[cst.BaseStatement]:
         namespace_body: list[cst.BaseStatement] = []
         for statement in namespace_class.body.body:

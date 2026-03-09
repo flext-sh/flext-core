@@ -136,13 +136,15 @@ class TestContext100Coverage:
         context.set("global_key", "global_value").value
         context.set("user_key", "user_value", scope="user").value
         global_result = context.get(
-            "global_key", scope=FlextConstants.Context.SCOPE_GLOBAL,
+            "global_key",
+            scope=FlextConstants.Context.SCOPE_GLOBAL,
         )
         assert global_result.is_success
         user_result = context.get("user_key", scope="user")
         assert user_result.is_success
         wrong_result = context.get(
-            "user_key", scope=FlextConstants.Context.SCOPE_GLOBAL,
+            "user_key",
+            scope=FlextConstants.Context.SCOPE_GLOBAL,
         )
         assert wrong_result.is_failure
 
@@ -150,13 +152,16 @@ class TestContext100Coverage:
         """Test set with different scope."""
         context = FlextContext()
         result1 = context.set(
-            "global_key", "global_value", scope=FlextConstants.Context.SCOPE_GLOBAL,
+            "global_key",
+            "global_value",
+            scope=FlextConstants.Context.SCOPE_GLOBAL,
         )
         assert result1.is_success
         result2 = context.set("user_key", "user_value", scope="user")
         assert result2.is_success
         global_result = context.get(
-            "global_key", scope=FlextConstants.Context.SCOPE_GLOBAL,
+            "global_key",
+            scope=FlextConstants.Context.SCOPE_GLOBAL,
         )
         user_result = context.get("user_key", scope="user")
         assert global_result.is_success
@@ -363,7 +368,8 @@ class TestContext100Coverage:
     def test_context_scope_data_validate_data_with_none(self) -> None:
         """Test ContextScopeData._validate_data with None."""
         scope_data = FlextModelsContext.ContextScopeData(
-            scope_name="global", data={},
+            scope_name="global",
+            data={},
         )
         assert isinstance(scope_data.data, dict)
         assert scope_data.data == {}
@@ -385,7 +391,8 @@ class TestContext100Coverage:
     def test_context_scope_data_validate_metadata_with_none(self) -> None:
         """Test ContextScopeData._validate_metadata with None."""
         scope_data = FlextModelsContext.ContextScopeData(
-            scope_name="global", metadata={},
+            scope_name="global",
+            metadata={},
         )
         assert isinstance(scope_data.metadata, dict)
         assert scope_data.metadata == {}

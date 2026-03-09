@@ -82,7 +82,10 @@ class RegistryScenarios:
 
     HANDLER_REGISTRATION: ClassVar[list[RegistryTestCase]] = [
         RegistryTestCase(
-            "single_handler_success", RegistryOperationType.REGISTER_HANDLER, 1, True,
+            "single_handler_success",
+            RegistryOperationType.REGISTER_HANDLER,
+            1,
+            True,
         ),
         RegistryTestCase(
             "idempotent_registration",
@@ -111,7 +114,10 @@ class RegistryScenarios:
             True,
         ),
         RegistryTestCase(
-            "empty_handlers_list", RegistryOperationType.REGISTER_HANDLERS, 0, True,
+            "empty_handlers_list",
+            RegistryOperationType.REGISTER_HANDLERS,
+            0,
+            True,
         ),
         RegistryTestCase(
             "duplicate_handlers",
@@ -231,7 +237,10 @@ class RegistryScenarios:
             True,
         ),
         RegistryTestCase(
-            "resolve_binding_key", RegistryOperationType.RESOLVE_BINDING_KEY, 1, True,
+            "resolve_binding_key",
+            RegistryOperationType.RESOLVE_BINDING_KEY,
+            1,
+            True,
         ),
     ]
     ERROR_SCENARIOS: ClassVar[list[RegistryTestCase]] = [
@@ -243,7 +252,10 @@ class RegistryScenarios:
             "Handler must expose message_type",
         ),
         RegistryTestCase(
-            "dispatcher_integration", RegistryOperationType.ERROR_HANDLING, 1, True,
+            "dispatcher_integration",
+            RegistryOperationType.ERROR_HANDLING,
+            1,
+            True,
         ),
     ]
 
@@ -269,7 +281,8 @@ class RegistryScenarios:
     ) -> dict[type[t.ContainerValue], p.Handler[t.ContainerValue, t.ContainerValue]]:
         """Create test function map using str message type."""
         result: dict[
-            type[t.ContainerValue], p.Handler[t.ContainerValue, t.ContainerValue],
+            type[t.ContainerValue],
+            p.Handler[t.ContainerValue, t.ContainerValue],
         ] = {}
         for idx, handler in enumerate(handlers):
             result[str if idx == 0 else int] = handler
@@ -280,7 +293,9 @@ class TestFlextRegistry:
     """Refactored registry test suite using FlextTestsUtilities."""
 
     @pytest.mark.parametrize(
-        "test_case", RegistryScenarios.HANDLER_REGISTRATION, ids=lambda c: c.name,
+        "test_case",
+        RegistryScenarios.HANDLER_REGISTRATION,
+        ids=lambda c: c.name,
     )
     def test_handler_registration(self, test_case: RegistryTestCase) -> None:
         """Test handler registration with various scenarios."""
@@ -303,11 +318,14 @@ class TestFlextRegistry:
             _ = u.Tests.Result.assert_failure(result)
             if test_case.error_pattern:
                 u.Tests.Result.assert_failure_with_error(
-                    result, test_case.error_pattern,
+                    result,
+                    test_case.error_pattern,
                 )
 
     @pytest.mark.parametrize(
-        "test_case", RegistryScenarios.BATCH_REGISTRATION, ids=lambda c: c.name,
+        "test_case",
+        RegistryScenarios.BATCH_REGISTRATION,
+        ids=lambda c: c.name,
     )
     def test_batch_registration(self, test_case: RegistryTestCase) -> None:
         """Test batch handler registration."""
@@ -326,7 +344,9 @@ class TestFlextRegistry:
         assert isinstance(result.value, FlextRegistry.Summary)
 
     @pytest.mark.parametrize(
-        "test_case", RegistryScenarios.BINDING_REGISTRATION, ids=lambda c: c.name,
+        "test_case",
+        RegistryScenarios.BINDING_REGISTRATION,
+        ids=lambda c: c.name,
     )
     def test_binding_registration(self, test_case: RegistryTestCase) -> None:
         """Test handler registration in batch mode."""
@@ -345,7 +365,9 @@ class TestFlextRegistry:
         assert result.value is not None
 
     @pytest.mark.parametrize(
-        "test_case", RegistryScenarios.FUNCTION_MAP_SCENARIOS, ids=lambda c: c.name,
+        "test_case",
+        RegistryScenarios.FUNCTION_MAP_SCENARIOS,
+        ids=lambda c: c.name,
     )
     def test_function_map_registration(self, test_case: RegistryTestCase) -> None:
         """Test function-based handler registration."""
@@ -364,7 +386,9 @@ class TestFlextRegistry:
         assert result.value is not None
 
     @pytest.mark.parametrize(
-        "test_case", RegistryScenarios.SUMMARY_SCENARIOS, ids=lambda c: c.name,
+        "test_case",
+        RegistryScenarios.SUMMARY_SCENARIOS,
+        ids=lambda c: c.name,
     )
     def test_summary_management(self, test_case: RegistryTestCase) -> None:
         """Test registry summary creation and properties."""
@@ -386,7 +410,9 @@ class TestFlextRegistry:
         assert summary.is_failure == (not test_case.should_succeed)
 
     @pytest.mark.parametrize(
-        "test_case", RegistryScenarios.KEY_RESOLUTION, ids=lambda c: c.name,
+        "test_case",
+        RegistryScenarios.KEY_RESOLUTION,
+        ids=lambda c: c.name,
     )
     def test_key_resolution(self, test_case: RegistryTestCase) -> None:
         """Test handler key resolution."""
@@ -400,7 +426,9 @@ class TestFlextRegistry:
             assert isinstance(key, str) and len(key) > 0
 
     @pytest.mark.parametrize(
-        "test_case", RegistryScenarios.ERROR_SCENARIOS, ids=lambda c: c.name,
+        "test_case",
+        RegistryScenarios.ERROR_SCENARIOS,
+        ids=lambda c: c.name,
     )
     def test_error_handling(self, test_case: RegistryTestCase) -> None:
         """Test error handling scenarios."""
@@ -414,7 +442,8 @@ class TestFlextRegistry:
             )
             _ = u.Tests.Result.assert_failure(result)
             u.Tests.Result.assert_failure_with_error(
-                result, "Handler must expose message_type",
+                result,
+                "Handler must expose message_type",
             )
         else:
             handler = ConcreteTestHandler()
@@ -447,7 +476,9 @@ class TestFlextRegistry:
         ids=["command", "query", "invalid", "none"],
     )
     def test_safe_handler_mode_extraction(
-        self, mode: str | None, expected: str,
+        self,
+        mode: str | None,
+        expected: str,
     ) -> None:
         """Test safe handler mode extraction."""
         registry = FlextTestsUtilities.Tests.RegistryHelpers.create_test_registry()

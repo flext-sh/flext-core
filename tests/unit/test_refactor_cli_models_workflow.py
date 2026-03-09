@@ -49,7 +49,8 @@ def test_ultrawork_models_cli_runs_dry_run_copy(tmp_path: Path) -> None:
     module_dir = project / "src" / "sample_pkg"
     module_dir.mkdir(parents=True)
     (project / "pyproject.toml").write_text(
-        "[project]\nname='sample'\n", encoding="utf-8",
+        "[project]\nname='sample'\n",
+        encoding="utf-8",
     )
     (project / "Makefile").write_text("all:\n\t@true\n", encoding="utf-8")
     (module_dir / "service.py").write_text(
@@ -86,7 +87,8 @@ def test_namespace_enforce_cli_fails_on_manual_protocol_violation(
     module_dir = project / "src" / "sample_pkg"
     module_dir.mkdir(parents=True)
     (project / "pyproject.toml").write_text(
-        "[project]\nname='sample'\n", encoding="utf-8",
+        "[project]\nname='sample'\n",
+        encoding="utf-8",
     )
     (project / "Makefile").write_text("all:\n\t@true\n", encoding="utf-8")
     (module_dir / "service.py").write_text(

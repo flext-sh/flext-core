@@ -97,10 +97,12 @@ class FlextInfraSkillValidator:
                     f"scan_targets must be a mapping: {rules_path}",
                 )
             include_globs = _normalize_string_list(
-                scan_targets.get("include", ["**/*.py"]), "scan_targets.include",
+                scan_targets.get("include", ["**/*.py"]),
+                "scan_targets.include",
             ) or ["**/*"]
             exclude_globs = _normalize_string_list(
-                scan_targets.get(c.Infra.Toml.EXCLUDE, []), "scan_targets.exclude",
+                scan_targets.get(c.Infra.Toml.EXCLUDE, []),
+                "scan_targets.exclude",
             )
             rules_list = rules.get(c.Infra.ReportKeys.RULES, []) or []
             if not isinstance(rules_list, list):
@@ -128,7 +130,10 @@ class FlextInfraSkillValidator:
                         violations.append(f"[{rule_id}] {count} ast-grep matches")
                 elif rule_type == "custom":
                     count = self._run_custom_count(
-                        rule_obj, skills_dir / skill_name, root, mode,
+                        rule_obj,
+                        skills_dir / skill_name,
+                        root,
+                        mode,
                     )
                     counts[group] = counts.get(group, 0) + count
                     if count > 0:
@@ -145,7 +150,8 @@ class FlextInfraSkillValidator:
                         root,
                         str(
                             baseline_obj.get(
-                                c.Infra.ReportKeys.FILE, c.Infra.Core.BASELINE_DEFAULT,
+                                c.Infra.ReportKeys.FILE,
+                                c.Infra.Core.BASELINE_DEFAULT,
                             ),
                         ),
                         skill_name,
@@ -173,7 +179,9 @@ class FlextInfraSkillValidator:
             )
             return r[m.Infra.Core.ValidationReport].ok(
                 m.Infra.Core.ValidationReport(
-                    passed=passed, violations=violations, summary=summary,
+                    passed=passed,
+                    violations=violations,
+                    summary=summary,
                 ),
             )
         except (OSError, TypeError, ValueError, RuntimeError) as exc:
@@ -211,7 +219,9 @@ class FlextInfraSkillValidator:
             cmd.extend(["--globs", f"!{pat}"])
         cmd.append(str(project_path))
         result_wrapper = self._runner.run_raw(
-            cmd, cwd=project_path, timeout=c.Infra.Timeouts.DEFAULT,
+            cmd,
+            cwd=project_path,
+            timeout=c.Infra.Timeouts.DEFAULT,
         )
         if result_wrapper.is_failure:
             return 0
@@ -253,7 +263,9 @@ class FlextInfraSkillValidator:
         if bool(rule.get("pass_mode")):
             cmd.extend(["--mode", mode])
         result_wrapper = self._runner.run_raw(
-            cmd, cwd=project_path, timeout=c.Infra.Timeouts.DEFAULT,
+            cmd,
+            cwd=project_path,
+            timeout=c.Infra.Timeouts.DEFAULT,
         )
         if result_wrapper.is_failure:
             return 0

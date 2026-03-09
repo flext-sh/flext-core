@@ -33,7 +33,9 @@ class NestedClassPropagationTransformer(cst.CSTTransformer):
 
     @override
     def leave_ImportFrom(
-        self, original_node: cst.ImportFrom, updated_node: cst.ImportFrom,
+        self,
+        original_node: cst.ImportFrom,
+        updated_node: cst.ImportFrom,
     ) -> cst.ImportFrom:
         _ = original_node
         if isinstance(updated_node.names, cst.ImportStar):
@@ -69,7 +71,9 @@ class NestedClassPropagationTransformer(cst.CSTTransformer):
 
     @override
     def leave_Name(
-        self, original_node: cst.Name, updated_node: cst.Name,
+        self,
+        original_node: cst.Name,
+        updated_node: cst.Name,
     ) -> cst.BaseExpression:
         rename_to = self._name_renames.get(original_node.value)
         if rename_to is None:
@@ -84,13 +88,16 @@ class NestedClassPropagationTransformer(cst.CSTTransformer):
 
     @override
     def leave_Attribute(
-        self, original_node: cst.Attribute, updated_node: cst.Attribute,
+        self,
+        original_node: cst.Attribute,
+        updated_node: cst.Attribute,
     ) -> cst.BaseExpression:
         rename_to = self._class_renames.get(original_node.attr.value)
         if rename_to is None:
             return updated_node
         if not self._should_propagate(
-            original_node.attr.value, "propagate_attribute_references",
+            original_node.attr.value,
+            "propagate_attribute_references",
         ):
             return updated_node
         if self._blocked_by_prefix(original_node.attr.value):
@@ -133,7 +140,9 @@ class NestedClassPropagationTransformer(cst.CSTTransformer):
         return expr
 
     def _attribute_from_base(
-        self, base: cst.BaseExpression, dotted_parts: list[str],
+        self,
+        base: cst.BaseExpression,
+        dotted_parts: list[str],
     ) -> cst.BaseExpression:
         expr: cst.BaseExpression = base
         for part in dotted_parts:
@@ -170,7 +179,8 @@ class NestedClassPropagationTransformer(cst.CSTTransformer):
         return any(symbol_name.startswith(prefix) for prefix in blocked_prefixes)
 
     def _policy_for_symbol(
-        self, symbol_name: str,
+        self,
+        symbol_name: str,
     ) -> m.Infra.Refactor.ClassNestingPolicy | None:
         return FlextInfraRefactorTransformerPolicyUtilities.policy_for_symbol(
             policy_context=self._policy_context,

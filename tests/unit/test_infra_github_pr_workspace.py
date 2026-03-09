@@ -38,7 +38,10 @@ class TestFlextInfraPrWorkspaceManager:
         mock_git = _make_git_mock()
         mock_git.has_changes.return_value = r[bool].ok(True)
         manager = FlextInfraPrWorkspaceManager(
-            runner=Mock(), git=mock_git, selector=Mock(), reporting=Mock(),
+            runner=Mock(),
+            git=mock_git,
+            selector=Mock(),
+            reporting=Mock(),
         )
         result = manager.has_changes(tmp_path)
         assert result.is_success
@@ -49,7 +52,10 @@ class TestFlextInfraPrWorkspaceManager:
         mock_git = _make_git_mock()
         mock_git.has_changes.return_value = r[bool].ok(False)
         manager = FlextInfraPrWorkspaceManager(
-            runner=Mock(), git=mock_git, selector=Mock(), reporting=Mock(),
+            runner=Mock(),
+            git=mock_git,
+            selector=Mock(),
+            reporting=Mock(),
         )
         result = manager.has_changes(tmp_path)
         assert result.is_success
@@ -60,7 +66,10 @@ class TestFlextInfraPrWorkspaceManager:
         mock_git = _make_git_mock()
         mock_git.has_changes.return_value = r[bool].fail("not a git repository")
         manager = FlextInfraPrWorkspaceManager(
-            runner=Mock(), git=mock_git, selector=Mock(), reporting=Mock(),
+            runner=Mock(),
+            git=mock_git,
+            selector=Mock(),
+            reporting=Mock(),
         )
         result = manager.has_changes(tmp_path)
         assert result.is_failure
@@ -71,7 +80,10 @@ class TestFlextInfraPrWorkspaceManager:
         mock_git = _make_git_mock()
         mock_git.checkout.return_value = r[bool].ok(True)
         manager = FlextInfraPrWorkspaceManager(
-            runner=Mock(), git=mock_git, selector=Mock(), reporting=Mock(),
+            runner=Mock(),
+            git=mock_git,
+            selector=Mock(),
+            reporting=Mock(),
         )
         result = manager.checkout_branch(tmp_path, "feature/test")
         assert result.is_success
@@ -81,7 +93,10 @@ class TestFlextInfraPrWorkspaceManager:
         """Test checkout with empty branch is a no-op."""
         mock_git = _make_git_mock()
         manager = FlextInfraPrWorkspaceManager(
-            runner=Mock(), git=mock_git, selector=Mock(), reporting=Mock(),
+            runner=Mock(),
+            git=mock_git,
+            selector=Mock(),
+            reporting=Mock(),
         )
         result = manager.checkout_branch(tmp_path, "")
         assert result.is_success
@@ -93,7 +108,10 @@ class TestFlextInfraPrWorkspaceManager:
         mock_git = _make_git_mock()
         mock_git.checkout.return_value = r[bool].ok(True)
         manager = FlextInfraPrWorkspaceManager(
-            runner=Mock(), git=mock_git, selector=Mock(), reporting=Mock(),
+            runner=Mock(),
+            git=mock_git,
+            selector=Mock(),
+            reporting=Mock(),
         )
         result = manager.checkout_branch(tmp_path, "feature")
         assert result.is_success
@@ -104,7 +122,10 @@ class TestFlextInfraPrWorkspaceManager:
         mock_git = _make_git_mock()
         mock_git.checkout.return_value = r[bool].fail("checkout failed")
         manager = FlextInfraPrWorkspaceManager(
-            runner=Mock(), git=mock_git, selector=Mock(), reporting=Mock(),
+            runner=Mock(),
+            git=mock_git,
+            selector=Mock(),
+            reporting=Mock(),
         )
         result = manager.checkout_branch(tmp_path, "feature")
         assert result.is_failure
@@ -126,7 +147,10 @@ class TestCheckpoint:
         mock_git = _make_git_mock()
         mock_git.has_changes.return_value = r[bool].ok(False)
         manager = FlextInfraPrWorkspaceManager(
-            runner=Mock(), git=mock_git, selector=Mock(), reporting=Mock(),
+            runner=Mock(),
+            git=mock_git,
+            selector=Mock(),
+            reporting=Mock(),
         )
         result = manager.checkpoint(tmp_path, "feature")
         assert result.is_success
@@ -138,7 +162,10 @@ class TestCheckpoint:
         mock_git = _make_git_mock()
         mock_git.has_changes.return_value = r[bool].fail("git error")
         manager = FlextInfraPrWorkspaceManager(
-            runner=Mock(), git=mock_git, selector=Mock(), reporting=Mock(),
+            runner=Mock(),
+            git=mock_git,
+            selector=Mock(),
+            reporting=Mock(),
         )
         result = manager.checkpoint(tmp_path, "feature")
         assert result.is_failure
@@ -233,7 +260,10 @@ class TestOrchestrate:
             reporting=mock_reporting,
         )
         result = manager.orchestrate(
-            tmp_path, include_root=False, checkpoint=False, branch="",
+            tmp_path,
+            include_root=False,
+            checkpoint=False,
+            branch="",
         )
         assert result.is_success
         assert result.value.fail == 0
@@ -272,7 +302,11 @@ class TestOrchestrate:
             reporting=mock_reporting,
         )
         result = manager.orchestrate(
-            tmp_path, include_root=False, fail_fast=True, checkpoint=False, branch="",
+            tmp_path,
+            include_root=False,
+            fail_fast=True,
+            checkpoint=False,
+            branch="",
         )
         assert result.is_success
         assert result.value.fail >= 1
@@ -292,7 +326,10 @@ class TestOrchestrate:
             reporting=mock_reporting,
         )
         result = manager.orchestrate(
-            tmp_path, include_root=True, checkpoint=False, branch="",
+            tmp_path,
+            include_root=True,
+            checkpoint=False,
+            branch="",
         )
         assert result.is_success
         assert result.value.total == 1
@@ -316,7 +353,10 @@ class TestOrchestrate:
             reporting=mock_reporting,
         )
         result = manager.orchestrate(
-            tmp_path, include_root=False, checkpoint=True, branch="test-branch",
+            tmp_path,
+            include_root=False,
+            checkpoint=True,
+            branch="test-branch",
         )
         assert result.is_success
         mock_git.has_changes.assert_called()
@@ -339,7 +379,11 @@ class TestOrchestrate:
             reporting=mock_reporting,
         )
         result = manager.orchestrate(
-            tmp_path, include_root=False, fail_fast=True, checkpoint=False, branch="",
+            tmp_path,
+            include_root=False,
+            fail_fast=True,
+            checkpoint=False,
+            branch="",
         )
         assert result.is_success
         assert result.value.fail == 1
@@ -365,10 +409,12 @@ class TestStaticMethods:
     def test_build_root_command(self, tmp_path: Path) -> None:
         """Test root command building."""
         build_root_command = getattr(
-            FlextInfraPrWorkspaceManager, "_build_root_command",
+            FlextInfraPrWorkspaceManager,
+            "_build_root_command",
         )
         cmd = build_root_command(
-            tmp_path, {"action": "create", "head": "feature", "title": "Test"},
+            tmp_path,
+            {"action": "create", "head": "feature", "title": "Test"},
         )
         assert "python" in cmd
         assert "--action" in cmd
@@ -381,7 +427,8 @@ class TestStaticMethods:
     def test_build_subproject_command(self, tmp_path: Path) -> None:
         """Test subproject command building."""
         build_subproject_command = getattr(
-            FlextInfraPrWorkspaceManager, "_build_subproject_command",
+            FlextInfraPrWorkspaceManager,
+            "_build_subproject_command",
         )
         cmd = build_subproject_command(tmp_path, {"action": "status", "head": "feat"})
         assert "make" in cmd
@@ -393,7 +440,8 @@ class TestStaticMethods:
     def test_build_root_command_defaults(self, tmp_path: Path) -> None:
         """Test root command with default values."""
         build_root_command = getattr(
-            FlextInfraPrWorkspaceManager, "_build_root_command",
+            FlextInfraPrWorkspaceManager,
+            "_build_root_command",
         )
         cmd = build_root_command(tmp_path, {})
         assert "--action" in cmd
@@ -402,7 +450,8 @@ class TestStaticMethods:
     def test_build_subproject_command_no_optional(self, tmp_path: Path) -> None:
         """Test subproject command without optional keys."""
         build_subproject_command = getattr(
-            FlextInfraPrWorkspaceManager, "_build_subproject_command",
+            FlextInfraPrWorkspaceManager,
+            "_build_subproject_command",
         )
         cmd = build_subproject_command(tmp_path, {})
         assert "make" in cmd

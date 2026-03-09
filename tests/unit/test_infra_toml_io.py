@@ -23,7 +23,8 @@ class TestFlextInfraTomlService:
         """Test reading an existing TOML file."""
         toml_file = tmp_path / "test.toml"
         toml_file.write_text(
-            '[section]\nkey = "value"\nnumber = 42\n', encoding="utf-8",
+            '[section]\nkey = "value"\nnumber = 42\n',
+            encoding="utf-8",
         )
         service = FlextInfraTomlService()
         result = service.read(toml_file)

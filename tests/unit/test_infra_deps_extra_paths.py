@@ -570,7 +570,8 @@ def test_sync_one_with_pyrefly_changes(tmp_path: Path) -> None:
 
 
 def test_sync_one_write_failure(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Test sync_one handles write failures."""
     pyproject = tmp_path / "pyproject.toml"
@@ -614,7 +615,8 @@ def test_sync_extra_paths_with_project_dirs(tmp_path: Path) -> None:
 
 
 def test_main_cli_with_project_arg(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Test main() CLI with --project argument."""
     project = tmp_path / "project"

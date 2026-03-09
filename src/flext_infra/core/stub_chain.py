@@ -62,7 +62,9 @@ class FlextInfraStubSupplyChain:
         return False
 
     def analyze(
-        self, project_dir: Path, workspace_root: Path,
+        self,
+        project_dir: Path,
+        workspace_root: Path,
     ) -> r[m.Infra.Core.StubAnalysisReport]:
         """Analyze a project for missing stubs and type packages.
 
@@ -101,7 +103,9 @@ class FlextInfraStubSupplyChain:
             )
 
     def validate(
-        self, workspace_root: Path, project_dirs: list[Path] | None = None,
+        self,
+        workspace_root: Path,
+        project_dirs: list[Path] | None = None,
     ) -> r[m.Infra.Core.ValidationReport]:
         """Validate stub supply chain across projects.
 
@@ -137,7 +141,9 @@ class FlextInfraStubSupplyChain:
             summary = f"stub chain: {len(projects)} projects, {len(violations)} issues"
             return r[m.Infra.Core.ValidationReport].ok(
                 m.Infra.Core.ValidationReport(
-                    passed=passed, violations=violations, summary=summary,
+                    passed=passed,
+                    violations=violations,
+                    summary=summary,
                 ),
             )
         except (OSError, TypeError, ValueError) as exc:

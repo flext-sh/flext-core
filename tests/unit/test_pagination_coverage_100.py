@@ -16,11 +16,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping
-from dataclasses import dataclass
 from typing import ClassVar
 
 import pytest
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import t
 from flext_tests import u
@@ -29,52 +28,58 @@ from flext_tests import u
 def _extract_pagination_config_obj(config: object) -> Mapping[str, int]:
     """Call extract_pagination_config with arbitrary object for testing."""
     fn: Callable[[object], Mapping[str, int]] = getattr(
-        u.Pagination, "extract_pagination_config",
+        u.Pagination,
+        "extract_pagination_config",
     )
     return fn(config)
 
 
-@dataclass(frozen=True, slots=True)
-class ExtractPageParamsScenario:
+class ExtractPageParamsScenario(BaseModel):
     """Extract page params test scenario."""
 
-    name: str
-    query_params: dict[str, str]
-    default_page: int
-    default_page_size: int
-    max_page_size: int
-    expected_success: bool
-    expected_page: int | None
-    expected_page_size: int | None
-    expected_error: str | None
+    model_config = ConfigDict(frozen=True)
+
+    name: str = Field(description="Extract page params scenario name")
+    query_params: dict[str, str] = Field(description="Input query parameters")
+    default_page: int = Field(description="Default page value")
+    default_page_size: int = Field(description="Default page size value")
+    max_page_size: int = Field(description="Maximum allowed page size")
+    expected_success: bool = Field(description="Expected operation success")
+    expected_page: int | None = Field(description="Expected resolved page")
+    expected_page_size: int | None = Field(description="Expected resolved page size")
+    expected_error: str | None = Field(description="Expected error message")
 
 
-@dataclass(frozen=True, slots=True)
-class ValidatePaginationParamsScenario:
+class ValidatePaginationParamsScenario(BaseModel):
     """Validate pagination params test scenario."""
 
-    name: str
-    page: int
-    page_size: int | None
-    max_page_size: int
-    expected_success: bool
-    expected_page_size: int | None
-    expected_error: str | None
+    model_config = ConfigDict(frozen=True)
+
+    name: str = Field(description="Validate pagination scenario name")
+    page: int = Field(description="Input page number")
+    page_size: int | None = Field(description="Input page size")
+    max_page_size: int = Field(description="Maximum allowed page size")
+    expected_success: bool = Field(description="Expected validation success")
+    expected_page_size: int | None = Field(description="Expected validated page size")
+    expected_error: str | None = Field(description="Expected validation error")
 
 
-@dataclass(frozen=True, slots=True)
-class PreparePaginationDataScenario:
+class PreparePaginationDataScenario(BaseModel):
     """Prepare pagination data test scenario."""
 
-    name: str
-    data: list[t.ContainerValue] | None
-    total: int | None
-    page: int
-    page_size: int
-    expected_success: bool
-    expected_total: int | None
-    expected_total_pages: int | None
-    expected_error: str | None
+    model_config = ConfigDict(frozen=True)
+
+    name: str = Field(description="Prepare pagination data scenario name")
+    data: list[t.ContainerValue] | None = Field(description="Input page data")
+    total: int | None = Field(description="Input total count")
+    page: int = Field(description="Requested page")
+    page_size: int = Field(description="Requested page size")
+    expected_success: bool = Field(description="Expected preparation success")
+    expected_total: int | None = Field(description="Expected total in output")
+    expected_total_pages: int | None = Field(
+        description="Expected total pages in output"
+    )
+    expected_error: str | None = Field(description="Expected preparation error")
 
 
 class PaginationScenarios:
@@ -326,7 +331,8 @@ class TestuPaginationExtractPageParams:
             assert page_size == scenario.expected_page_size
         else:
             u.Tests.Result.assert_failure_with_error(
-                result, expected_error=scenario.expected_error,
+                result,
+                expected_error=scenario.expected_error,
             )
 
 
@@ -335,7 +341,8 @@ class TestuPaginationValidatePaginationParams:
 
     @pytest.mark.parametrize("scenario", PaginationScenarios.VALIDATE_PAGINATION_PARAMS)
     def test_validate_pagination_params(
-        self, scenario: ValidatePaginationParamsScenario,
+        self,
+        scenario: ValidatePaginationParamsScenario,
     ) -> None:
         """Test validate_pagination_params with various scenarios."""
         result = u.Pagination.validate_pagination_params(
@@ -350,7 +357,8 @@ class TestuPaginationValidatePaginationParams:
             assert params["page_size"] == scenario.expected_page_size
         else:
             u.Tests.Result.assert_failure_with_error(
-                result, expected_error=scenario.expected_error,
+                result,
+                expected_error=scenario.expected_error,
             )
 
 
@@ -359,7 +367,8 @@ class TestuPaginationPreparePaginationData:
 
     @pytest.mark.parametrize("scenario", PaginationScenarios.PREPARE_PAGINATION_DATA)
     def test_prepare_pagination_data(
-        self, scenario: PreparePaginationDataScenario,
+        self,
+        scenario: PreparePaginationDataScenario,
     ) -> None:
         """Test prepare_pagination_data with various scenarios."""
         result = u.Pagination.prepare_pagination_data(
@@ -386,7 +395,8 @@ class TestuPaginationPreparePaginationData:
                 assert pagination["has_prev"] == (scenario.page > 1)
         else:
             u.Tests.Result.assert_failure_with_error(
-                result, expected_error=scenario.expected_error,
+                result,
+                expected_error=scenario.expected_error,
             )
 
 
@@ -407,7 +417,8 @@ class TestuPaginationBuildPaginationResponse:
             },
         }
         result = u.Pagination.build_pagination_response(
-            pagination_data, message="Success",
+            pagination_data,
+            message="Success",
         )
         _ = u.Tests.Result.assert_success(result)
         response = result.value
@@ -440,7 +451,8 @@ class TestuPaginationBuildPaginationResponse:
         pagination_data: dict[str, t.ContainerValue] = {"pagination": {}}
         result = u.Pagination.build_pagination_response(pagination_data)
         u.Tests.Result.assert_failure_with_error(
-            result, expected_error="Invalid pagination data structure",
+            result,
+            expected_error="Invalid pagination data structure",
         )
 
     def test_build_pagination_response_missing_pagination(self) -> None:
@@ -448,7 +460,8 @@ class TestuPaginationBuildPaginationResponse:
         pagination_data: dict[str, t.ContainerValue] = {"data": []}
         result = u.Pagination.build_pagination_response(pagination_data)
         u.Tests.Result.assert_failure_with_error(
-            result, expected_error="Invalid pagination data structure",
+            result,
+            expected_error="Invalid pagination data structure",
         )
 
     def test_build_pagination_response_with_non_sequence_data(self) -> None:

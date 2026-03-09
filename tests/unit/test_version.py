@@ -42,7 +42,9 @@ class TestFlextVersion:
         )
         if len(version_info) >= 2 and isinstance(version_info[1], int):
             tm.that(
-                version_info[1], gt=-1, msg="Minor version must be non-negative integer",
+                version_info[1],
+                gt=-1,
+                msg="Minor version must be non-negative integer",
             )
 
     @pytest.mark.parametrize(
@@ -56,7 +58,11 @@ class TestFlextVersion:
         ],
     )
     def test_is_version_at_least(
-        self, major: int, minor: int, patch: int, expected: bool | None,
+        self,
+        major: int,
+        minor: int,
+        patch: int,
+        expected: bool | None,
     ) -> None:
         """Test is_version_at_least with various version combinations."""
         result = FlextVersion.is_version_at_least(major, minor, patch)
@@ -101,7 +107,9 @@ class TestFlextVersion:
             "url",
         ]
         tm.that(
-            info, has=required_keys, msg="Package info must contain all required keys",
+            info,
+            has=required_keys,
+            msg="Package info must contain all required keys",
         )
         for key in required_keys:
             tm.that(
@@ -120,10 +128,18 @@ class TestFlextVersion:
     def test_module_level_exports(self) -> None:
         """Test module-level version exports are valid."""
         tm.that(
-            __version__, is_=str, none=False, empty=False, match="^\\d+\\.\\d+\\.\\d+",
+            __version__,
+            is_=str,
+            none=False,
+            empty=False,
+            match="^\\d+\\.\\d+\\.\\d+",
         )
         tm.that(
-            __version_info__, is_=(tuple, list), none=False, empty=False, len=(1, 10),
+            __version_info__,
+            is_=(tuple, list),
+            none=False,
+            empty=False,
+            len=(1, 10),
         )
         tm.that(
             __version__,

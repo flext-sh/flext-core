@@ -75,7 +75,9 @@ class GivenWhenThenBuilder:
         self._priority = "normal"
 
     def given(
-        self, _description: str, **kwargs: t.ContainerValue,
+        self,
+        _description: str,
+        **kwargs: t.ContainerValue,
     ) -> GivenWhenThenBuilder:
         """Given method.
 
@@ -87,7 +89,9 @@ class GivenWhenThenBuilder:
         return self
 
     def when(
-        self, _description: str, **kwargs: t.ContainerValue,
+        self,
+        _description: str,
+        **kwargs: t.ContainerValue,
     ) -> GivenWhenThenBuilder:
         """When method.
 
@@ -99,7 +103,9 @@ class GivenWhenThenBuilder:
         return self
 
     def then(
-        self, _description: str, **kwargs: t.ContainerValue,
+        self,
+        _description: str,
+        **kwargs: t.ContainerValue,
     ) -> GivenWhenThenBuilder:
         """Then method.
 
@@ -148,7 +154,9 @@ class GivenWhenThenBuilder:
 
         given_mapped = u.Mapper.transform_values(
             u.Mapper.map_dict_keys(
-                self._given, {k: str(k) for k in self._given}, keep_unmapped=True,
+                self._given,
+                {k: str(k) for k in self._given},
+                keep_unmapped=True,
             ).value,
             convert_dict_value,
         )
@@ -157,7 +165,9 @@ class GivenWhenThenBuilder:
         }
         when_mapped = u.Mapper.transform_values(
             u.Mapper.map_dict_keys(
-                self._when, {k: str(k) for k in self._when}, keep_unmapped=True,
+                self._when,
+                {k: str(k) for k in self._when},
+                keep_unmapped=True,
             ).value,
             convert_dict_value,
         )
@@ -166,7 +176,9 @@ class GivenWhenThenBuilder:
         }
         then_mapped = u.Mapper.transform_values(
             u.Mapper.map_dict_keys(
-                self._then, {k: str(k) for k in self._then}, keep_unmapped=True,
+                self._then,
+                {k: str(k) for k in self._then},
+                keep_unmapped=True,
             ).value,
             convert_dict_value,
         )
@@ -276,7 +288,8 @@ class ParameterizedTestBuilder:
         self._failure_cases: list[m.Tests.FixtureCaseDict] = []
 
     def add_case(
-        self, **kwargs: str | int | bool | list[str],
+        self,
+        **kwargs: str | int | bool | list[str],
     ) -> ParameterizedTestBuilder:
         """add_case method.
 
@@ -288,7 +301,8 @@ class ParameterizedTestBuilder:
         return self
 
     def add_success_cases(
-        self, cases: list[m.Tests.FixtureCaseDict],
+        self,
+        cases: list[m.Tests.FixtureCaseDict],
     ) -> ParameterizedTestBuilder:
         """add_success_cases method.
 
@@ -300,7 +314,8 @@ class ParameterizedTestBuilder:
         return self
 
     def add_failure_cases(
-        self, cases: list[m.Tests.FixtureCaseDict],
+        self,
+        cases: list[m.Tests.FixtureCaseDict],
     ) -> ParameterizedTestBuilder:
         """add_failure_cases method.
 

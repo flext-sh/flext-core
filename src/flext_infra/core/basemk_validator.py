@@ -69,7 +69,9 @@ class FlextInfraBaseMkValidator:
             )
             return r[m.Infra.Core.ValidationReport].ok(
                 m.Infra.Core.ValidationReport(
-                    passed=passed, violations=mismatched, summary=summary,
+                    passed=passed,
+                    violations=mismatched,
+                    summary=summary,
                 ),
             )
         except OSError as exc:

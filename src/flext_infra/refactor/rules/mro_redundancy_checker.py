@@ -16,7 +16,9 @@ class FlextInfraRefactorMRORedundancyChecker(FlextInfraRefactorRule):
 
     @override
     def apply(
-        self, tree: cst.Module, _file_path: Path | None = None,
+        self,
+        tree: cst.Module,
+        _file_path: Path | None = None,
     ) -> tuple[cst.Module, list[str]]:
         """Apply MRO redeclaration cleanup transformer."""
         transformer = FlextInfraRefactorMRORemover()

@@ -79,7 +79,8 @@ class FlextInfraPrWorkspaceManager:
 
     @staticmethod
     def _build_subproject_command(
-        repo_root: Path, pr_args: Mapping[str, str],
+        repo_root: Path,
+        pr_args: Mapping[str, str],
     ) -> list[str]:
         command = [
             c.Infra.Cli.MAKE,
@@ -190,7 +191,9 @@ class FlextInfraPrWorkspaceManager:
             if checkpoint:
                 self.checkpoint(repo_root, branch)
             run_result: r[m.Infra.Github.PrExecutionResult] = self.run_pr(
-                repo_root, workspace_root, effective_args,
+                repo_root,
+                workspace_root,
+                effective_args,
             )
             if run_result.is_success:
                 pr_data = run_result.value
@@ -217,7 +220,10 @@ class FlextInfraPrWorkspaceManager:
         )
 
     def run_pr(
-        self, repo_root: Path, workspace_root: Path, pr_args: Mapping[str, str],
+        self,
+        repo_root: Path,
+        workspace_root: Path,
+        pr_args: Mapping[str, str],
     ) -> r[m.Infra.Github.PrExecutionResult]:
         """Execute a PR operation on a single repository.
 
@@ -232,7 +238,9 @@ class FlextInfraPrWorkspaceManager:
         """
         display = self._repo_display_name(repo_root, workspace_root)
         report_dir = self._reporting.get_report_dir(
-            workspace_root, c.Infra.ReportKeys.WORKSPACE, c.Infra.Cli.GhCmd.PR,
+            workspace_root,
+            c.Infra.ReportKeys.WORKSPACE,
+            c.Infra.Cli.GhCmd.PR,
         )
         with contextlib.suppress(OSError):
             report_dir.mkdir(parents=True, exist_ok=True)

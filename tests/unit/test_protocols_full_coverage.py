@@ -91,7 +91,8 @@ def test_implements_decorator_helper_methods_and_static_wrappers() -> None:
     obj = _Decorated()
     implements = cast("Callable[[type], bool]", getattr(obj, "implements_protocol"))
     get_protocols = cast(
-        "Callable[[], tuple[type, ...]]", getattr(_Decorated, "get_protocols"),
+        "Callable[[], tuple[type, ...]]",
+        getattr(_Decorated, "get_protocols"),
     )
     assert implements(_NamedProtocol) is True
     assert get_protocols() == (_NamedProtocol,)
@@ -128,7 +129,8 @@ def test_protocol_base_name_methods_and_runtime_check_branch() -> None:
     runtime_obj = _OnlyRuntime()
     assert (
         p.check_implements_protocol(
-            cast("t.ContainerValue", runtime_obj), _NamedProtocol,
+            cast("t.ContainerValue", runtime_obj),
+            _NamedProtocol,
         )
         is True
     )
@@ -140,10 +142,12 @@ def test_protocol_base_name_methods_and_runtime_check_branch() -> None:
         app_name: str = "x"
 
     model_name_getter = cast(
-        "Callable[[], str]", getattr(_DefaultModelName(), "_protocol_name"),
+        "Callable[[], str]",
+        getattr(_DefaultModelName(), "_protocol_name"),
     )
     settings_name_getter = cast(
-        "Callable[[], str]", getattr(_DefaultSettingsName(), "_protocol_name"),
+        "Callable[[], str]",
+        getattr(_DefaultSettingsName(), "_protocol_name"),
     )
     assert model_name_getter() == "_DefaultModelName"
     assert settings_name_getter() == "_DefaultSettingsName"

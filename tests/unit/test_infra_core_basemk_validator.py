@@ -13,7 +13,8 @@ class TestFlextInfraBaseMkValidator:
     """Test suite for FlextInfraBaseMkValidator."""
 
     def test_validate_with_missing_root_basemk_returns_failure(
-        self, tmp_path: Path,
+        self,
+        tmp_path: Path,
     ) -> None:
         """Test that missing root base.mk returns failure result."""
         validator = FlextInfraBaseMkValidator()
@@ -24,7 +25,8 @@ class TestFlextInfraBaseMkValidator:
         assert "missing root base.mk" in result.value.summary
 
     def test_validate_with_matching_basemk_returns_success(
-        self, tmp_path: Path,
+        self,
+        tmp_path: Path,
     ) -> None:
         """Test that matching base.mk files return success result."""
         validator = FlextInfraBaseMkValidator()
@@ -40,7 +42,8 @@ class TestFlextInfraBaseMkValidator:
         assert isinstance(result.value, m.Infra.Core.ValidationReport)
 
     def test_validate_with_mismatched_basemk_returns_failure(
-        self, tmp_path: Path,
+        self,
+        tmp_path: Path,
     ) -> None:
         """Test that mismatched base.mk files return failure result."""
         validator = FlextInfraBaseMkValidator()
@@ -67,7 +70,9 @@ class TestFlextInfraBaseMkValidator:
             type(
                 r[m.Infra.Core.ValidationReport].ok(
                     m.Infra.Core.ValidationReport(
-                        passed=True, violations=[], summary="",
+                        passed=True,
+                        violations=[],
+                        summary="",
                     ),
                 ),
             ),
@@ -89,7 +94,8 @@ class TestFlextInfraBaseMkValidator:
         assert result.value.passed
 
     def test_validate_with_no_vendored_basemk_returns_success(
-        self, tmp_path: Path,
+        self,
+        tmp_path: Path,
     ) -> None:
         """Test that validate succeeds when no vendored base.mk exists."""
         validator = FlextInfraBaseMkValidator()
@@ -170,7 +176,8 @@ class TestFlextInfraBaseMkValidator:
         assert hash1 != hash2
 
     def test_validate_with_empty_workspace_returns_success(
-        self, tmp_path: Path,
+        self,
+        tmp_path: Path,
     ) -> None:
         """Test validate with empty workspace."""
         validator = FlextInfraBaseMkValidator()
@@ -182,7 +189,8 @@ class TestFlextInfraBaseMkValidator:
         assert result.value.passed
 
     def test_validate_with_project_without_pyproject_skips(
-        self, tmp_path: Path,
+        self,
+        tmp_path: Path,
     ) -> None:
         """Test validate skips projects without pyproject.toml."""
         validator = FlextInfraBaseMkValidator()

@@ -57,7 +57,9 @@ def _run_lint(argv: list[str]) -> int:
     args = parser.parse_args(argv)
     linter = FlextInfraWorkflowLinter()
     lint_result: r[m.Infra.Github.WorkflowLintResult] = linter.lint(
-        root=args.root.resolve(), report_path=args.report, strict=args.strict,
+        root=args.root.resolve(),
+        report_path=args.report,
+        strict=args.strict,
     )
     if lint_result.is_failure:
         output.error(lint_result.error or "lint failed")

@@ -117,7 +117,9 @@ class TestLoggerServiceViaDI:
             return FlextLogger.create_module_logger("service_logger")
 
         returned_container = container.register(
-            "custom_logger", create_custom_logger, kind="factory",
+            "custom_logger",
+            create_custom_logger,
+            kind="factory",
         )
         assert returned_container is container
         assert container.has_service("custom_logger")
@@ -151,7 +153,8 @@ class TestContextServiceViaDI:
         assert isinstance(context_result.value, FlextContext)
         custom_context = FlextContext()
         returned_container = container.register(
-            "custom_context", cast("t.ContainerValue", custom_context),
+            "custom_context",
+            cast("t.ContainerValue", custom_context),
         )
         assert returned_container is container
         assert container.has_service("custom_context")
@@ -168,7 +171,8 @@ class TestServicesIntegrationViaDI:
         """Test all services accessible via single service runtime."""
         custom_context = FlextContext.create()
         runtime = s._create_runtime(
-            config_overrides={"app_name": "integrated_app"}, context=custom_context,
+            config_overrides={"app_name": "integrated_app"},
+            context=custom_context,
         )
         assert runtime.config is not None
         assert isinstance(runtime.config, FlextSettings)
@@ -219,7 +223,8 @@ class TestServicesIntegrationViaDI:
         }
         services = services_raw
         di_container = FlextRuntime.DependencyIntegration.create_container(
-            config=m.ConfigMap(root={"app_name": "injected"}), services=services,
+            config=m.ConfigMap(root={"app_name": "injected"}),
+            services=services,
         )
         module = ModuleType("services_injection_module")
 

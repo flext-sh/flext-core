@@ -113,7 +113,8 @@ class TestFlextTestsBuilders:
         builder.with_validation_fields(count=3)
         data = _as_builder_dict(builder.build())
         validation_fields = cast(
-            "dict[str, t.ContainerValue]", data["validation_fields"],
+            "dict[str, t.ContainerValue]",
+            data["validation_fields"],
         )
         valid_emails = cast("list[str]", validation_fields["valid_emails"])
         assert len(valid_emails) == 3
@@ -432,7 +433,8 @@ class TestFlextTestsBuilders:
         """Test batch() creates batch of scenarios."""
         builder = tb()
         builder.batch(
-            "cases", [("valid", "test@example.com"), ("invalid", "not-email")],
+            "cases",
+            [("valid", "test@example.com"), ("invalid", "not-email")],
         )
         data = _as_builder_dict(builder.build())
         cases = cast("list[t.ContainerValue]", data["cases"])
@@ -642,7 +644,8 @@ class TestFlextTestsBuilders:
     def test_batch_parametrized_delegates_to_tu(self) -> None:
         """Test tb.Tests.Batch.parametrized() delegates to tu.Tests.GenericHelpers."""
         cases = tb.Tests.Batch.parametrized(
-            success_values=[1, 2, 3], failure_errors=["error1", "error2"],
+            success_values=[1, 2, 3],
+            failure_errors=["error1", "error2"],
         )
         assert len(cases) > 0
         assert all(isinstance(c, tuple) and len(c) == 2 for c in cases)

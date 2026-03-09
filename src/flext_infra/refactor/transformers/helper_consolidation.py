@@ -65,13 +65,16 @@ class HelperConsolidationTransformer(cst.CSTTransformer):
             return updated_node
         return updated_node.with_changes(
             func=cst.Attribute(
-                value=cst.Name(target_namespace), attr=cst.Name(helper_name),
+                value=cst.Name(target_namespace),
+                attr=cst.Name(helper_name),
             ),
         )
 
     @override
     def leave_ClassDef(
-        self, original_node: cst.ClassDef, updated_node: cst.ClassDef,
+        self,
+        original_node: cst.ClassDef,
+        updated_node: cst.ClassDef,
     ) -> cst.ClassDef:
         _ = original_node
         self._scope_depth -= 1
@@ -79,7 +82,9 @@ class HelperConsolidationTransformer(cst.CSTTransformer):
 
     @override
     def leave_FunctionDef(
-        self, original_node: cst.FunctionDef, updated_node: cst.FunctionDef,
+        self,
+        original_node: cst.FunctionDef,
+        updated_node: cst.FunctionDef,
     ) -> cst.FunctionDef | cst.RemovalSentinel:
         is_top_level_function = self._scope_depth == 1
         self._scope_depth -= 1
@@ -98,7 +103,9 @@ class HelperConsolidationTransformer(cst.CSTTransformer):
 
     @override
     def leave_Module(
-        self, original_node: cst.Module, updated_node: cst.Module,
+        self,
+        original_node: cst.Module,
+        updated_node: cst.Module,
     ) -> cst.Module:
         _ = original_node
         if not self._collected_helpers:
@@ -183,7 +190,8 @@ class HelperConsolidationTransformer(cst.CSTTransformer):
         if not policy.allow_helper_call_rewrite:
             return False
         return FlextInfraRefactorTransformerPolicyUtilities.target_allowed(
-            policy=policy, target_namespace=target_namespace,
+            policy=policy,
+            target_namespace=target_namespace,
         )
 
     def _is_helper_move_allowed(self, helper_name: str, target_namespace: str) -> bool:
@@ -193,7 +201,8 @@ class HelperConsolidationTransformer(cst.CSTTransformer):
         if not policy.enable_helper_consolidation:
             return False
         return FlextInfraRefactorTransformerPolicyUtilities.target_allowed(
-            policy=policy, target_namespace=target_namespace,
+            policy=policy,
+            target_namespace=target_namespace,
         )
 
     def _signature_allowed(self, function_node: cst.FunctionDef) -> bool:
@@ -232,7 +241,8 @@ class HelperConsolidationTransformer(cst.CSTTransformer):
         return True
 
     def _policy_for_helper(
-        self, helper_name: str,
+        self,
+        helper_name: str,
     ) -> m.Infra.Refactor.ClassNestingPolicy | None:
         return FlextInfraRefactorTransformerPolicyUtilities.policy_for_symbol(
             policy_context=self._policy_context,

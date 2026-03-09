@@ -78,7 +78,8 @@ def test_inject_sets_missing_dependency_from_container(
             return r[object].ok("dep")
 
     monkeypatch.setattr(
-        "flext_core.decorators.FlextContainer.create", lambda: _Container(),
+        "flext_core.decorators.FlextContainer.create",
+        lambda: _Container(),
     )
 
     @d.inject(dep="service.dep")
@@ -94,7 +95,8 @@ def test_log_operation_track_perf_exception_adds_duration(
     fake_logger = _FakeLogger()
 
     def _resolve_logger(
-        _args: tuple[object, ...], _func: Callable[..., object],
+        _args: tuple[object, ...],
+        _func: Callable[..., object],
     ) -> _FakeLogger:
         return fake_logger
 
@@ -105,7 +107,8 @@ def test_log_operation_track_perf_exception_adds_duration(
         return None
 
     monkeypatch.setattr(
-        "flext_core.decorators.FlextDecorators._resolve_logger", _resolve_logger,
+        "flext_core.decorators.FlextDecorators._resolve_logger",
+        _resolve_logger,
     )
     monkeypatch.setattr(
         "flext_core.decorators.FlextDecorators._bind_operation_context",
@@ -137,19 +140,22 @@ def test_retry_unreachable_timeouterror_path(monkeypatch: pytest.MonkeyPatch) ->
         return None
 
     def _resolve_logger(
-        _args: tuple[object, ...], _func: Callable[..., object],
+        _args: tuple[object, ...],
+        _func: Callable[..., object],
     ) -> _FakeLogger:
         return _FakeLogger()
 
     monkeypatch.setattr(
-        "flext_core.decorators.FlextDecorators._execute_retry_loop", _execute_retry_loop,
+        "flext_core.decorators.FlextDecorators._execute_retry_loop",
+        _execute_retry_loop,
     )
     monkeypatch.setattr(
         "flext_core.decorators.FlextDecorators._handle_retry_exhaustion",
         _handle_retry_exhaustion,
     )
     monkeypatch.setattr(
-        "flext_core.decorators.FlextDecorators._resolve_logger", _resolve_logger,
+        "flext_core.decorators.FlextDecorators._resolve_logger",
+        _resolve_logger,
     )
 
     @d.retry(max_attempts=1, error_code="X")
@@ -187,17 +193,25 @@ def test_execute_retry_loop_covers_default_linear_and_never_ran(
         raise ValueError(msg)
 
     cfg = m.RetryConfiguration(
-        max_attempts=2, initial_delay_seconds=0.01, exponential_backoff=False,
+        max_attempts=2,
+        initial_delay_seconds=0.01,
+        exponential_backoff=False,
     )
     result_exc = d._execute_retry_loop(
-        flaky, (), {}, cast("Any", fake_logger), retry_config=cfg,
+        flaky,
+        (),
+        {},
+        cast("Any", fake_logger),
+        retry_config=cfg,
     )
     assert isinstance(result_exc, Exception)
     assert calls["n"] == 2
     monkeypatch.setattr(
         "flext_core.decorators.m.RetryConfiguration",
         lambda: SimpleNamespace(
-            max_retries=0, initial_delay_seconds=0.1, exponential_backoff=False,
+            max_retries=0,
+            initial_delay_seconds=0.1,
+            exponential_backoff=False,
         ),
     )
     result_none = d._execute_retry_loop(
@@ -223,7 +237,11 @@ def test_handle_retry_exhaustion_falsey_exception_reaches_timeout_error() -> Non
 
     with pytest.raises(e.TimeoutError):
         d._handle_retry_exhaustion(
-            FalseyError("x"), fn, 2, None, cast("Any", fake_logger),
+            FalseyError("x"),
+            fn,
+            2,
+            None,
+            cast("Any", fake_logger),
         )
 
 
@@ -257,7 +275,9 @@ def test_clear_operation_scope_and_handle_log_result_paths(
 
     monkeypatch.setattr("flext_core.decorators.FlextLogger.clear_scope", _clear_scope)
     d._clear_operation_scope(
-        logger=cast("Any", fake_logger), function_name="fn", operation="op",
+        logger=cast("Any", fake_logger),
+        function_name="fn",
+        operation="op",
     )
     d._handle_log_result(
         result=r[bool].fail("x", error_code="E1"),
@@ -293,7 +313,8 @@ def test_handle_log_result_without_fallback_logger_and_non_dict_like_extra(
         return False
 
     monkeypatch.setattr(
-        "flext_core.decorators.FlextRuntime.is_dict_like", _is_dict_like,
+        "flext_core.decorators.FlextRuntime.is_dict_like",
+        _is_dict_like,
     )
     d._handle_log_result(
         result=r[bool].fail("x", error_code="E"),
@@ -339,7 +360,9 @@ def test_combined_with_and_without_railway_uses_injection(
         return dep + 1
 
     @d.combined(
-        inject_deps={"dep": "answer.service"}, operation_name="rw", use_railway=True,
+        inject_deps={"dep": "answer.service"},
+        operation_name="rw",
+        use_railway=True,
     )
     def fn_railway(*, dep: int = 0) -> int:
         return dep + 2
@@ -373,7 +396,8 @@ def test_with_correlation_with_context_track_operation_and_factory(
     assert ensure_calls == [1]
 
     def _resolve_logger(
-        _args: tuple[object, ...], _func: Callable[..., object],
+        _args: tuple[object, ...],
+        _func: Callable[..., object],
     ) -> _FakeLogger:
         return fake_logger
 
@@ -390,10 +414,12 @@ def test_with_correlation_with_context_track_operation_and_factory(
         return None
 
     monkeypatch.setattr(
-        "flext_core.decorators.FlextDecorators._resolve_logger", _resolve_logger,
+        "flext_core.decorators.FlextDecorators._resolve_logger",
+        _resolve_logger,
     )
     monkeypatch.setattr(
-        "flext_core.decorators.FlextLogger.bind_global_context", _bind_global_context,
+        "flext_core.decorators.FlextLogger.bind_global_context",
+        _bind_global_context,
     )
     monkeypatch.setattr(
         "flext_core.decorators.FlextLogger.unbind_global_context",
@@ -433,7 +459,8 @@ def test_track_performance_success_and_failure_paths(
     fake_logger = _FakeLogger()
 
     def _resolve_logger(
-        _args: tuple[object, ...], _func: Callable[..., object],
+        _args: tuple[object, ...],
+        _func: Callable[..., object],
     ) -> _FakeLogger:
         return fake_logger
 
@@ -444,7 +471,8 @@ def test_track_performance_success_and_failure_paths(
         return None
 
     monkeypatch.setattr(
-        "flext_core.decorators.FlextDecorators._resolve_logger", _resolve_logger,
+        "flext_core.decorators.FlextDecorators._resolve_logger",
+        _resolve_logger,
     )
     monkeypatch.setattr(
         "flext_core.decorators.FlextDecorators._bind_operation_context",
@@ -487,7 +515,8 @@ def test_railway_and_retry_additional_paths(monkeypatch: pytest.MonkeyPatch) -> 
     fake_logger = _FakeLogger()
 
     def _resolve_logger(
-        _args: tuple[object, ...], _func: Callable[..., object],
+        _args: tuple[object, ...],
+        _func: Callable[..., object],
     ) -> _FakeLogger:
         return fake_logger
 
@@ -495,10 +524,12 @@ def test_railway_and_retry_additional_paths(monkeypatch: pytest.MonkeyPatch) -> 
         return "done"
 
     monkeypatch.setattr(
-        "flext_core.decorators.FlextDecorators._resolve_logger", _resolve_logger,
+        "flext_core.decorators.FlextDecorators._resolve_logger",
+        _resolve_logger,
     )
     monkeypatch.setattr(
-        "flext_core.decorators.FlextDecorators._execute_retry_loop", _execute_retry_loop,
+        "flext_core.decorators.FlextDecorators._execute_retry_loop",
+        _execute_retry_loop,
     )
 
     @d.retry(max_attempts=1)
@@ -525,10 +556,16 @@ def test_execute_retry_exponential_and_handle_exhaustion_raise_last_exception(
         raise KeyError(msg)
 
     cfg = m.RetryConfiguration(
-        max_attempts=2, initial_delay_seconds=0.01, exponential_backoff=True,
+        max_attempts=2,
+        initial_delay_seconds=0.01,
+        exponential_backoff=True,
     )
     result = d._execute_retry_loop(
-        always_fails, (), {}, cast("Any", fake_logger), retry_config=cfg,
+        always_fails,
+        (),
+        {},
+        cast("Any", fake_logger),
+        retry_config=cfg,
     )
     assert isinstance(result, Exception)
     assert calls["n"] == 2
@@ -538,7 +575,11 @@ def test_execute_retry_exponential_and_handle_exhaustion_raise_last_exception(
 
     with pytest.raises(ValueError, match="last"):
         d._handle_retry_exhaustion(
-            ValueError("last"), fn, 2, "ERR", cast("Any", fake_logger),
+            ValueError("last"),
+            fn,
+            2,
+            "ERR",
+            cast("Any", fake_logger),
         )
 
 

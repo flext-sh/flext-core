@@ -25,7 +25,8 @@ def test_models_settings_branch_paths() -> None:
         FlextModelsConfig.RetryConfiguration(retry_on_status_codes=[9999])
     with pytest.raises(ValueError, match="max_delay_seconds"):
         FlextModelsConfig.RetryConfiguration(
-            initial_delay_seconds=2.0, max_delay_seconds=1.0,
+            initial_delay_seconds=2.0,
+            max_delay_seconds=1.0,
         )
     with pytest.raises(TypeError, match="Validator must be callable"):
         FlextModelsConfig.ValidationConfiguration(custom_validators=[1])

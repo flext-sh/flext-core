@@ -191,7 +191,8 @@ def test_async_log_writer_paths() -> None:
     )
     continue_writer.stream = stream
     continue_writer.queue = cast(
-        "queue.Queue[str | None]", cast("object", EmptyThenSentinelQueue()),
+        "queue.Queue[str | None]",
+        cast("object", EmptyThenSentinelQueue()),
     )
     continue_writer.stop_event = runtime_module.threading.Event()
     continue_writer._worker()
@@ -318,14 +319,20 @@ def test_dependency_registration_duplicate_guards() -> None:
     FlextRuntime.DependencyIntegration.register_factory(container, "factory", lambda: 1)
     with pytest.raises(ValueError, match="already registered"):
         FlextRuntime.DependencyIntegration.register_factory(
-            container, "factory", lambda: 2,
+            container,
+            "factory",
+            lambda: 2,
         )
     FlextRuntime.DependencyIntegration.register_resource(
-        container, "resource", lambda: 1,
+        container,
+        "resource",
+        lambda: 1,
     )
     with pytest.raises(ValueError, match="already registered"):
         FlextRuntime.DependencyIntegration.register_resource(
-            container, "resource", lambda: 2,
+            container,
+            "resource",
+            lambda: 2,
         )
 
 
@@ -349,7 +356,9 @@ def test_configure_structlog_edge_paths(monkeypatch: pytest.MonkeyPatch) -> None
                 return object()
 
             self.contextvars = type(
-                "Ctx", (), {"merge_contextvars": staticmethod(_merge_contextvars)},
+                "Ctx",
+                (),
+                {"merge_contextvars": staticmethod(_merge_contextvars)},
             )
             self.processors = type(
                 "Processors",
@@ -362,7 +371,9 @@ def test_configure_structlog_edge_paths(monkeypatch: pytest.MonkeyPatch) -> None
                 },
             )
             self.dev = type(
-                "Dev", (), {"ConsoleRenderer": staticmethod(_console_renderer)},
+                "Dev",
+                (),
+                {"ConsoleRenderer": staticmethod(_console_renderer)},
             )
 
         def reset_defaults(self) -> None:
@@ -462,7 +473,8 @@ def test_reconfigure_and_reset_state_paths() -> None:
 
     dummy = DummyWriter()
     FlextRuntime._async_writer = cast(
-        "FlextRuntime._AsyncLogWriter", cast("object", dummy),
+        "FlextRuntime._AsyncLogWriter",
+        cast("object", dummy),
     )
     FlextRuntime._structlog_configured = True
     FlextRuntime.reconfigure_structlog(log_level=logging.DEBUG, console_renderer=True)
@@ -493,7 +505,9 @@ def test_runtime_result_all_missed_branches() -> None:
 
     success: FlextRuntime.RuntimeResult[int] = FlextRuntime.RuntimeResult[int].ok(1)
     failure: FlextRuntime.RuntimeResult[int] = FlextRuntime.RuntimeResult[int].fail(
-        "e", error_code="E1", error_data=m.ConfigMap(root={"x": 1}),
+        "e",
+        error_code="E1",
+        error_data=m.ConfigMap(root={"x": 1}),
     )
     assert success.result is success
     assert success.unwrap_or(9) == 1
@@ -535,13 +549,15 @@ def test_runtime_result_all_missed_branches() -> None:
             return None
 
     none_success: FlextRuntime.RuntimeResult[int | None] = NoneValueResult(
-        value=1, is_success=True,
+        value=1,
+        is_success=True,
     )
     flowed = none_success.flow_through(_ok_plus_one)
     assert flowed is none_success
     assert success._protocol_name() == "RuntimeResult"
     with pytest.raises(
-        ValueError, match="Cannot create success result with None value",
+        ValueError,
+        match="Cannot create success result with None value",
     ):
         FlextRuntime.RuntimeResult[int | None].ok(None)
     none_error: FlextRuntime.RuntimeResult[int] = FlextRuntime.RuntimeResult[int].fail(
@@ -585,7 +601,8 @@ def test_model_support_and_hash_compare_paths() -> None:
     assert FlextRuntime.compare_value_objects_by_value("a", "a") is True
     assert (
         FlextRuntime.compare_value_objects_by_value(
-            cast("t.ContainerValue", object()), 1,
+            cast("t.ContainerValue", object()),
+            1,
         )
         is False
     )
@@ -619,7 +636,8 @@ def test_model_support_and_hash_compare_paths() -> None:
     assert isinstance(FlextRuntime.hash_value_object_by_value({"a": 1}), int)
     assert isinstance(FlextRuntime.hash_value_object_by_value([1, 2]), int)
     assert isinstance(
-        FlextRuntime.hash_value_object_by_value(MappingProxyType({"a": 1})), int,
+        FlextRuntime.hash_value_object_by_value(MappingProxyType({"a": 1})),
+        int,
     )
     assert isinstance(FlextRuntime.hash_value_object_by_value((1, 2)), int)
     assert isinstance(FlextRuntime.hash_value_object_by_value(datetime.now(UTC)), int)
@@ -634,7 +652,9 @@ def test_config_bridge_and_trace_context_and_http_validation() -> None:
     level = FlextRuntime.get_log_level_from_config()
     assert isinstance(level, int)
     trace_from_scalar = FlextRuntime.ensure_trace_context(
-        1, include_correlation_id=True, include_timestamp=True,
+        1,
+        include_correlation_id=True,
+        include_timestamp=True,
     )
     assert {"trace_id", "span_id", "correlation_id", "timestamp"}.issubset(
         trace_from_scalar,
@@ -743,7 +763,9 @@ def test_configure_structlog_print_logger_factory_fallback(
                 return object()
 
             self.contextvars = type(
-                "Ctx", (), {"merge_contextvars": staticmethod(_merge_contextvars)},
+                "Ctx",
+                (),
+                {"merge_contextvars": staticmethod(_merge_contextvars)},
             )
             self.processors = type(
                 "Processors",
@@ -756,7 +778,9 @@ def test_configure_structlog_print_logger_factory_fallback(
                 },
             )
             self.dev = type(
-                "Dev", (), {"ConsoleRenderer": staticmethod(_console_renderer)},
+                "Dev",
+                (),
+                {"ConsoleRenderer": staticmethod(_console_renderer)},
             )
 
         @override
@@ -829,7 +853,8 @@ def test_dependency_integration_and_wiring_paths() -> None:
     assert di.resource() == {"ok": True}
     provider = runtime_module.providers.Configuration()
     FlextRuntime.DependencyIntegration.bind_configuration_provider(
-        provider, m.ConfigMap(root={"api": {"url": "x"}}),
+        provider,
+        m.ConfigMap(root={"api": {"url": "x"}}),
     )
     assert provider.api.url() == "x"
 
@@ -847,7 +872,9 @@ def test_runtime_result_remaining_paths() -> None:
 
     success: FlextRuntime.RuntimeResult[int] = FlextRuntime.RuntimeResult[int].ok(3)
     failure: FlextRuntime.RuntimeResult[int] = FlextRuntime.RuntimeResult[int].fail(
-        "err", error_code="E2", error_data=m.ConfigMap(root={"k": "v"}),
+        "err",
+        error_code="E2",
+        error_data=m.ConfigMap(root={"k": "v"}),
     )
     assert failure.error_code == "E2"
     assert failure.error_data is not None
@@ -902,13 +929,19 @@ def test_runtime_integration_tracking_paths(monkeypatch: pytest.MonkeyPatch) -> 
     monkeypatch.setattr(runtime_module, "structlog", fake_structlog)
     FlextRuntime.Integration.track_service_resolution("svc", resolved=True)
     FlextRuntime.Integration.track_service_resolution(
-        "svc", resolved=False, error_message="x",
+        "svc",
+        resolved=False,
+        error_message="x",
     )
     FlextRuntime.Integration.track_domain_event(
-        "evt", aggregate_id="agg", event_data=m.ConfigMap(root={"k": "v"}),
+        "evt",
+        aggregate_id="agg",
+        event_data=m.ConfigMap(root={"k": "v"}),
     )
     FlextRuntime.Integration.setup_service_infrastructure(
-        service_name="svc", service_version="1.0.0", enable_context_correlation=True,
+        service_name="svc",
+        service_version="1.0.0",
+        enable_context_correlation=True,
     )
     assert len(events) == 4
 

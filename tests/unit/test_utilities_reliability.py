@@ -91,7 +91,8 @@ class TestFlextUtilitiesReliability:
         ) -> Callable[[], r[str]]:
             """Create timeout operation for given scenario."""
             scenarios: Mapping[
-                TestFlextUtilitiesReliability.TimeoutScenario, Callable[[], r[str]],
+                TestFlextUtilitiesReliability.TimeoutScenario,
+                Callable[[], r[str]],
             ] = {
                 TestFlextUtilitiesReliability.TimeoutScenario.SUCCESS: lambda: r[
                     str
@@ -108,7 +109,8 @@ class TestFlextUtilitiesReliability:
 
         @staticmethod
         def create_retry_operation(
-            success_after: int, success_value: int = 42,
+            success_after: int,
+            success_value: int = 42,
         ) -> tuple[Callable[[], r[int]], list[int]]:
             """Create retry operation that succeeds after N attempts."""
             attempts: list[int] = []
@@ -127,7 +129,8 @@ class TestFlextUtilitiesReliability:
         ) -> dict[str, t.ContainerValue]:
             """Create delay configuration for given type."""
             configs: Mapping[
-                TestFlextUtilitiesReliability.DelayConfig, dict[str, t.ContainerValue],
+                TestFlextUtilitiesReliability.DelayConfig,
+                dict[str, t.ContainerValue],
             ] = {
                 TestFlextUtilitiesReliability.DelayConfig.EXPONENTIAL: {
                     "initial_delay_seconds": 0.1,
@@ -195,7 +198,8 @@ class TestFlextUtilitiesReliability:
         result = u.Reliability.with_timeout(operation, timeout)
         if expected_success:
             u.Tests.Result.assert_success_with_value(
-                result, self.Constants.SUCCESS_STRING,
+                result,
+                self.Constants.SUCCESS_STRING,
             )
         else:
             assert error_pattern is not None
@@ -212,7 +216,9 @@ class TestFlextUtilitiesReliability:
         """Test retry succeeds after initial failure."""
         op, attempts = self.Factories.create_retry_operation(success_after=2)
         result: r[int] = u.Reliability.retry(
-            op, max_attempts=self.Constants.MAX_ATTEMPTS_VALID, delay_seconds=0.0,
+            op,
+            max_attempts=self.Constants.MAX_ATTEMPTS_VALID,
+            delay_seconds=0.0,
         )
         u.Tests.Result.assert_success_with_value(result, self.Constants.SUCCESS_VALUE)
         assert len(attempts) == 2
@@ -261,7 +267,8 @@ class TestFlextUtilitiesReliability:
         """Test controlled retries with should_retry_func and cleanup."""
         op, should_retry, attempts, cleanups = (
             self.Factories.create_controlled_retry_operation(
-                success_after=2, constants=self._constants,
+                success_after=2,
+                constants=self._constants,
             )
         )
         result = u.Reliability.with_retry(

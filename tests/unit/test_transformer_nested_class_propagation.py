@@ -11,7 +11,8 @@ _nested_class_propagation = importlib.import_module(
     "flext_infra.refactor.transformers.nested_class_propagation",
 )
 NestedClassPropagationTransformer = getattr(
-    _nested_class_propagation, "NestedClassPropagationTransformer",
+    _nested_class_propagation,
+    "NestedClassPropagationTransformer",
 )
 
 

@@ -20,7 +20,9 @@ def test_service_request_timeout_validator_branches() -> None:
     assert u.Conversion.to_str(1) == "1"
     with pytest.raises(ValueError, match="greater than 0"):
         FlextModelsService.DomainServiceExecutionRequest(
-            service_name="svc", method_name="op", timeout_seconds=0,
+            service_name="svc",
+            method_name="op",
+            timeout_seconds=0,
         )
     with pytest.raises(ValueError, match="less than or equal"):
         FlextModelsService.DomainServiceExecutionRequest(
@@ -34,7 +36,9 @@ def test_service_request_timeout_post_validator_messages() -> None:
     """Timeout validation is handled by Field constraints (gt, le)."""
     with pytest.raises(ValueError, match="greater than"):
         FlextModelsService.DomainServiceExecutionRequest(
-            service_name="svc", method_name="op", timeout_seconds=-1.0,
+            service_name="svc",
+            method_name="op",
+            timeout_seconds=-1.0,
         )
     with pytest.raises(ValueError, match="less than or equal"):
         FlextModelsService.DomainServiceExecutionRequest(
@@ -43,6 +47,8 @@ def test_service_request_timeout_post_validator_messages() -> None:
             timeout_seconds=c.Performance.MAX_TIMEOUT_SECONDS + 10.0,
         )
     req = FlextModelsService.DomainServiceExecutionRequest(
-        service_name="svc", method_name="op", timeout_seconds=1.0,
+        service_name="svc",
+        method_name="op",
+        timeout_seconds=1.0,
     )
     assert req.timeout_seconds == pytest.approx(1.0)

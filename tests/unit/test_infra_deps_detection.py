@@ -310,7 +310,9 @@ class TestRunPipCheck:
         venv_bin.mkdir(parents=True)
         (venv_bin / "pip").write_text("")
         cmd_out = Mock(
-            exit_code=1, stdout="pkg1 has requirement\npkg2 conflict\n", stderr="",
+            exit_code=1,
+            stdout="pkg1 has requirement\npkg2 conflict\n",
+            stderr="",
         )
         service.runner.run_raw.return_value = r[Mock].ok(cmd_out)
         result = service.run_pip_check(tmp_path, venv_bin)
@@ -608,7 +610,9 @@ class TestGetCurrentTypingsFromPyproject:
         service = FlextInfraDependencyDetectionService()
         service.toml = Mock()
         service.toml.read.return_value = r[dict[str, t.Any]].ok({
-            "project": {"optional-dependencies": {"typings": {"types-pyyaml": ">=6.0"}}},
+            "project": {
+                "optional-dependencies": {"typings": {"types-pyyaml": ">=6.0"}}
+            },
         })
         result = service.get_current_typings_from_pyproject(tmp_path)
         assert "types-pyyaml" in result
@@ -792,13 +796,16 @@ class TestDetectionUncoveredLines:
         """Test module_to_types_package with custom limits (line 481)."""
         service = FlextInfraDependencyDetectionService()
         limits = {
-            "typing_libraries": {"module_to_package": {"custom_module": "types-custom"}},
+            "typing_libraries": {
+                "module_to_package": {"custom_module": "types-custom"}
+            },
         }
         result = service.module_to_types_package("custom_module", limits)
         assert result == "types-custom"
 
     def test_get_current_typings_from_pyproject_with_no_data(
-        self, tmp_path: Path,
+        self,
+        tmp_path: Path,
     ) -> None:
         """Test get_current_typings_from_pyproject with no data (line 511)."""
         service = FlextInfraDependencyDetectionService()
@@ -873,7 +880,8 @@ def test_discover_projects_wrapper(tmp_path: Path) -> None:
         result = detection.discover_projects(tmp_path)
         assert result.is_success
         mock_service.discover_projects.assert_called_once_with(
-            tmp_path, projects_filter=None,
+            tmp_path,
+            projects_filter=None,
         )
 
 

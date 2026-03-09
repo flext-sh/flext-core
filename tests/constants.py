@@ -13,9 +13,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from enum import StrEnum
 from typing import Final, Literal
+
+from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import m
 from flext_infra import FlextInfraConstants
@@ -157,7 +158,12 @@ class TestsFlextConstants(FlextTestsConstants, FlextInfraConstants):
                 NEGATE = "negate"
 
             type OperationLiteral = Literal[
-                "get_email", "send_email", "get_status", "double", "square", "negate",
+                "get_email",
+                "send_email",
+                "get_status",
+                "double",
+                "square",
+                "negate",
             ]
             OP_GET_EMAIL: Final[str] = Operation.GET_EMAIL
             OP_SEND_EMAIL: Final[str] = Operation.SEND_EMAIL
@@ -319,72 +325,157 @@ class TestsFlextConstants(FlextTestsConstants, FlextInfraConstants):
         class Fixtures:
             """Test fixture dataclasses for flext-core tests."""
 
-            @dataclass(frozen=True, slots=True)
-            class Identifiers:
+            class Identifiers(BaseModel):
                 """Test identifiers and IDs."""
 
-                user_id: str = "test_user_123"
-                session_id: str = "test_session_123"
-                service_name: str = "test_service"
-                operation_id: str = "test_operation"
-                request_id: str = "test-request-456"
-                correlation_id: str = "test-corr-123"
+                model_config = ConfigDict(frozen=True)
 
-            @dataclass(frozen=True, slots=True)
-            class Names:
+                user_id: str = Field(
+                    default="test_user_123", description="Default test user identifier"
+                )
+                session_id: str = Field(
+                    default="test_session_123",
+                    description="Default test session identifier",
+                )
+                service_name: str = Field(
+                    default="test_service", description="Default test service name"
+                )
+                operation_id: str = Field(
+                    default="test_operation",
+                    description="Default test operation identifier",
+                )
+                request_id: str = Field(
+                    default="test-request-456",
+                    description="Default test request identifier",
+                )
+                correlation_id: str = Field(
+                    default="test-corr-123",
+                    description="Default test correlation identifier",
+                )
+
+            class Names(BaseModel):
                 """Test module and component names."""
 
-                module_name: str = "test_module"
-                handler_name: str = "test_handler"
-                chain_name: str = "test_chain"
-                command_type: str = "test_command"
-                query_type: str = "test_query"
-                logger_name: str = "test_logger"
-                app_name: str = "test-app"
-                validation_app: str = "validation-test"
-                source_service: str = "test_service"
+                model_config = ConfigDict(frozen=True)
 
-            @dataclass(frozen=True, slots=True)
-            class ErrorData:
+                module_name: str = Field(
+                    default="test_module", description="Default test module name"
+                )
+                handler_name: str = Field(
+                    default="test_handler", description="Default test handler name"
+                )
+                chain_name: str = Field(
+                    default="test_chain", description="Default test chain name"
+                )
+                command_type: str = Field(
+                    default="test_command", description="Default test command type"
+                )
+                query_type: str = Field(
+                    default="test_query", description="Default test query type"
+                )
+                logger_name: str = Field(
+                    default="test_logger", description="Default test logger name"
+                )
+                app_name: str = Field(
+                    default="test-app", description="Default test application name"
+                )
+                validation_app: str = Field(
+                    default="validation-test",
+                    description="Default validation test application name",
+                )
+                source_service: str = Field(
+                    default="test_service", description="Default source service name"
+                )
+
+            class ErrorData(BaseModel):
                 """Test error codes and messages."""
 
-                error_code: str = "TEST_ERROR_001"
-                validation_error: str = "test_error"
-                operation_error: str = "Op failed"
-                config_error: str = "Config failed"
-                timeout_error: str = "Operation timeout"
+                model_config = ConfigDict(frozen=True)
 
-            @dataclass(frozen=True, slots=True)
-            class Data:
+                error_code: str = Field(
+                    default="TEST_ERROR_001", description="Default test error code"
+                )
+                validation_error: str = Field(
+                    default="test_error", description="Default validation error message"
+                )
+                operation_error: str = Field(
+                    default="Op failed", description="Default operation error message"
+                )
+                config_error: str = Field(
+                    default="Config failed",
+                    description="Default configuration error message",
+                )
+                timeout_error: str = Field(
+                    default="Operation timeout",
+                    description="Default timeout error message",
+                )
+
+            class Data(BaseModel):
                 """Test field names and data values."""
 
-                field_name: str = "test_field"
-                config_key: str = "test_key"
-                username: str = "test_user"
-                email: str = "test@example.com"
-                password: str = "test_pass"
-                string_value: str = "test_value"
-                input_data: str = "test_input"
-                request_data: str = "test_request"
-                result_data: str = "test_result"
-                message: str = "test_message"
+                model_config = ConfigDict(frozen=True)
 
-            @dataclass(frozen=True, slots=True)
-            class PatternData:
+                field_name: str = Field(
+                    default="test_field", description="Default test field name"
+                )
+                config_key: str = Field(
+                    default="test_key", description="Default test config key"
+                )
+                username: str = Field(
+                    default="test_user", description="Default test username"
+                )
+                email: str = Field(
+                    default="test@example.com", description="Default test email"
+                )
+                password: str = Field(
+                    default="test_pass", description="Default test password"
+                )
+                string_value: str = Field(
+                    default="test_value", description="Default test string value"
+                )
+                input_data: str = Field(
+                    default="test_input", description="Default test input data"
+                )
+                request_data: str = Field(
+                    default="test_request", description="Default test request data"
+                )
+                result_data: str = Field(
+                    default="test_result", description="Default test result data"
+                )
+                message: str = Field(
+                    default="test_message", description="Default test message"
+                )
+
+            class PatternData(BaseModel):
                 """Test patterns and formats."""
 
-                slug_input: str = "Test_String"
-                slug_expected: str = "test_string"
-                uuid_format: str = "550e8400-e29b-41d4-a716-446655440000"
+                model_config = ConfigDict(frozen=True)
 
-            @dataclass(frozen=True, slots=True)
-            class NumericValues:
+                slug_input: str = Field(
+                    default="Test_String",
+                    description="Input value for slug conversion tests",
+                )
+                slug_expected: str = Field(
+                    default="test_string", description="Expected slug conversion output"
+                )
+                uuid_format: str = Field(
+                    default="550e8400-e29b-41d4-a716-446655440000",
+                    description="Sample UUID format for tests",
+                )
+
+            class NumericValues(BaseModel):
                 """Test port and numeric values."""
 
-                port: int = 8080
-                timeout: int = 30
-                retry_count: int = 3
-                batch_size: int = 100
+                model_config = ConfigDict(frozen=True)
+
+                port: int = Field(default=8080, description="Default test port")
+                timeout: int = Field(
+                    default=30, description="Default timeout in seconds"
+                )
+                retry_count: int = Field(default=3, description="Default retry count")
+                batch_size: int = Field(
+                    default=100, description="Default test batch size"
+                )
 
     Strings = Tests.Strings
     Delimiters = Tests.Delimiters

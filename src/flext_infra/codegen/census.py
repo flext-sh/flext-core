@@ -47,7 +47,9 @@ class FlextInfraCodegenCensus(s[list[m.Infra.Codegen.CensusReport]]):
             return None
         rule = match.group("rule")
         fixable = FlextInfraCodegenCensus._is_fixable(
-            rule=rule, module=match.group("module"), message=match.group("message"),
+            rule=rule,
+            module=match.group("module"),
+            message=match.group("message"),
         )
         return m.Infra.Codegen.CensusViolation(
             module=match.group("module"),
@@ -63,7 +65,10 @@ class FlextInfraCodegenCensus(s[list[m.Infra.Codegen.CensusReport]]):
         return r[list[m.Infra.Codegen.CensusReport]].ok(self.run())
 
     def run(
-        self, workspace_root: Path | None = None, *, output_format: str = "json",
+        self,
+        workspace_root: Path | None = None,
+        *,
+        output_format: str = "json",
     ) -> list[m.Infra.Codegen.CensusReport]:
         """Run census on all projects in workspace.
 
@@ -89,7 +94,8 @@ class FlextInfraCodegenCensus(s[list[m.Infra.Codegen.CensusReport]]):
         return reports
 
     def _census_project(
-        self, project: p.Infra.ProjectInfo,
+        self,
+        project: p.Infra.ProjectInfo,
     ) -> m.Infra.Codegen.CensusReport:
         """Run census on a single project."""
         validator = FlextInfraNamespaceValidator()

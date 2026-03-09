@@ -59,22 +59,26 @@ class TestAutomatedFlextContainer:
         ids=lambda case: case["description"],
     )
     def test_automated_container_comprehensive_scenarios(
-        self, test_scenario: m.Tests.AutomatedTestScenario,
+        self,
+        test_scenario: m.Tests.AutomatedTestScenario,
     ) -> None:
         """Comprehensive test scenarios for container functionality."""
         try:
             instance = fixture_factory.create_test_container_instance()
             result = self._execute_container_operation(instance, test_scenario.input)
-            if test_scenario.expected_success: $$$
+            if test_scenario.expected_success:
+                assert result.is_success, f"Expected success but got failure: {result}"
         except Exception as e:
-            if not test_scenario.expected_success: $$$
+            if not test_scenario.expected_success:
+                assert True, f"Expected failure and got exception: {e}"
 
     def test_automated_container_type_safety(self) -> None:
         """Test type safety compliance for container."""
         instance = fixture_factory.create_test_container_instance()
         result = self._execute_container_operation(instance, {"type_safe": True})
         _ = assertion_helpers.assert_flext_result_success(
-            result, "FlextContainer type safety test",
+            result,
+            "FlextContainer type safety test",
         )
 
     def test_automated_container_error_handling(self) -> None:
@@ -98,12 +102,14 @@ class TestAutomatedFlextContainer:
 
         def operation() -> object:
             return self._execute_container_operation(
-                instance, {"performance_test": True},
+                instance,
+                {"performance_test": True},
             )
 
         result = test_framework.execute_with_timeout(operation, timeout_seconds=1.0)
         _ = assertion_helpers.assert_flext_result_success(
-            result, "FlextContainer performance test exceeded timeout",
+            result,
+            "FlextContainer performance test exceeded timeout",
         )
 
     def test_automated_container_resource_management(self) -> None:
@@ -111,7 +117,8 @@ class TestAutomatedFlextContainer:
         instance = fixture_factory.create_test_container_instance()
         result = self._execute_container_operation(instance, {"resource_test": True})
         _ = assertion_helpers.assert_flext_result_success(
-            result, "FlextContainer resource test",
+            result,
+            "FlextContainer resource test",
         )
         cleanup = getattr(instance, "cleanup", None)
         if callable(cleanup):
@@ -123,7 +130,9 @@ class TestAutomatedFlextContainer:
                 )
 
     def _execute_container_operation(
-        self, instance: object, input_data: Mapping[str, t.ContainerValue],
+        self,
+        instance: object,
+        input_data: Mapping[str, t.ContainerValue],
     ) -> r[t.ContainerValue]:
         """Execute a test operation on container instance.
 

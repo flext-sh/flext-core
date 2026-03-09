@@ -332,7 +332,8 @@ class TestQueries:
     def test_query_creation(self) -> None:
         """Test creating a query."""
         query = GetUserQuery(
-            filters=m.Dict(root={"user_id": "USER-001"}), query_type="get_user",
+            filters=m.Dict(root={"user_id": "USER-001"}),
+            query_type="get_user",
         )
         assert query.filters["user_id"] == "USER-001"
         assert query.query_id is not None
@@ -349,7 +350,9 @@ class TestQueries:
     def test_query_with_filters(self) -> None:
         """Test query with filtering."""
         query = SearchProductsQuery(
-            keyword="laptop", category="electronics", min_price=500.0,
+            keyword="laptop",
+            category="electronics",
+            min_price=500.0,
         )
         assert query.keyword == "laptop"
         assert query.category == "electronics"
@@ -432,7 +435,12 @@ class TestMetadata:
     def test_metadata_with_various_types(self) -> None:
         """Test metadata with different attribute types."""
         metadata = m.Metadata(
-            attributes={"string": "value", "number": 42, "float": math.pi, "bool": True},
+            attributes={
+                "string": "value",
+                "number": 42,
+                "float": math.pi,
+                "bool": True,
+            },
         )
         assert metadata.attributes["string"] == "value"
         assert metadata.attributes["number"] == 42
@@ -522,7 +530,9 @@ class TestModelSerialization:
             body: str
 
         cmd = SendEmailCommand(
-            recipient="user@example.com", subject="Test", body="Message body",
+            recipient="user@example.com",
+            subject="Test",
+            body="Message body",
         )
         dumped = cmd.model_dump()
         assert dumped["recipient"] == "user@example.com"

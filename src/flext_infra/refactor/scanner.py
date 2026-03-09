@@ -24,7 +24,9 @@ class TopLevelClassCollector(cst.CSTVisitor):
         is_top_level = self._depth == 0
         self.classes.append(
             m.Infra.Refactor.ClassOccurrence(
-                name=node.name.value, line=0, is_top_level=is_top_level,
+                name=node.name.value,
+                line=0,
+                is_top_level=is_top_level,
             ),
         )
         self._depth += 1
@@ -152,7 +154,8 @@ class FlextInfraRefactorLooseClassScanner:
             return r[Path].fail(str(exc))
 
     def _scan_file_with_libcst(
-        self, file_path: Path,
+        self,
+        file_path: Path,
     ) -> r[list[m.Infra.Refactor.ClassOccurrence]]:
         try:
             src = file_path.read_text(encoding=c.Infra.Encoding.DEFAULT)

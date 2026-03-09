@@ -15,7 +15,9 @@ class FlextInfraRefactorEnsureFutureAnnotationsRule(FlextInfraRefactorRule):
 
     @override
     def apply(
-        self, tree: cst.Module, _file_path: Path | None = None,
+        self,
+        tree: cst.Module,
+        _file_path: Path | None = None,
     ) -> tuple[cst.Module, list[str]]:
         """Ensure future annotations import exists after docstring/header."""
         changes: list[str] = []

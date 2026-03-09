@@ -148,7 +148,8 @@ class FlextInfraInternalDependencySyncService:
                     "missing flext-repo-map.toml for standalone dependency resolution and unable to infer GitHub owner from remote.origin.url",
                 )
             repo_map = self.synthesized_repo_map(
-                owner, {dep_path.name for dep_path in deps.values()},
+                owner,
+                {dep_path.name for dep_path in deps.values()},
             )
             logger.warning("sync_deps_synthesized_repo_map", owner=owner)
         else:
@@ -297,7 +298,8 @@ class FlextInfraInternalDependencySyncService:
         if env_workspace_root is not None:
             return (True, env_workspace_root)
         superproject = self.git.run(
-            ["rev-parse", "--show-superproject-working-tree"], cwd=project_root,
+            ["rev-parse", "--show-superproject-working-tree"],
+            cwd=project_root,
         )
         if superproject.is_success:
             value = superproject.value.strip()
@@ -321,7 +323,8 @@ class FlextInfraInternalDependencySyncService:
             if not repo_url:
                 continue
             mapping[repo_name] = m.Infra.Github.RepoUrls(
-                ssh_url=repo_url, https_url=self.ssh_to_https(repo_url),
+                ssh_url=repo_url,
+                https_url=self.ssh_to_https(repo_url),
             )
         return mapping
 
@@ -344,7 +347,8 @@ class FlextInfraInternalDependencySyncService:
             https_url = str(values.get("https_url", self.ssh_to_https(ssh_url)))
             if ssh_url:
                 result[repo_name] = m.Infra.Github.RepoUrls(
-                    ssh_url=ssh_url, https_url=https_url,
+                    ssh_url=ssh_url,
+                    https_url=https_url,
                 )
         return r[Mapping[str, m.Infra.Github.RepoUrls]].ok(result)
 
@@ -366,14 +370,17 @@ class FlextInfraInternalDependencySyncService:
         return c.Infra.Git.MAIN
 
     def synthesized_repo_map(
-        self, owner: str, repo_names: set[str],
+        self,
+        owner: str,
+        repo_names: set[str],
     ) -> Mapping[str, m.Infra.Github.RepoUrls]:
         """Build default repository URL mapping from owner and repo set."""
         result: MutableMapping[str, m.Infra.Github.RepoUrls] = {}
         for repo_name in sorted(repo_names):
             ssh_url = f"git@github.com:{owner}/{repo_name}.git"
             result[repo_name] = m.Infra.Github.RepoUrls(
-                ssh_url=ssh_url, https_url=self.ssh_to_https(ssh_url),
+                ssh_url=ssh_url,
+                https_url=self.ssh_to_https(ssh_url),
             )
         return result
 

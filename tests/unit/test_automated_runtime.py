@@ -58,7 +58,8 @@ class TestAutomatedFlextRuntime:
         ids=lambda case: case["description"],
     )
     def test_automated_runtime_comprehensive_scenarios(
-        self, test_scenario: m.Tests.AutomatedTestScenario,
+        self,
+        test_scenario: m.Tests.AutomatedTestScenario,
     ) -> None:
         """Comprehensive test scenarios for runtime functionality."""
         try:
@@ -85,7 +86,8 @@ class TestAutomatedFlextRuntime:
         instance = fixture_factory.create_test_runtime_instance()
         result = self._execute_runtime_operation(instance, {"type_safe": True})
         _ = assertion_helpers.assert_flext_result_success(
-            result, "FlextRuntime type safety test",
+            result,
+            "FlextRuntime type safety test",
         )
 
     def test_automated_runtime_error_handling(self) -> None:
@@ -112,7 +114,8 @@ class TestAutomatedFlextRuntime:
 
         result = test_framework.execute_with_timeout(operation, timeout_seconds=1.0)
         _ = assertion_helpers.assert_flext_result_success(
-            result, "FlextRuntime performance test exceeded timeout",
+            result,
+            "FlextRuntime performance test exceeded timeout",
         )
 
     def test_automated_runtime_resource_management(self) -> None:
@@ -120,18 +123,22 @@ class TestAutomatedFlextRuntime:
         instance = fixture_factory.create_test_runtime_instance()
         result = self._execute_runtime_operation(instance, {"resource_test": True})
         _ = assertion_helpers.assert_flext_result_success(
-            result, "FlextRuntime resource test",
+            result,
+            "FlextRuntime resource test",
         )
         instance_obj: object = instance
         if hasattr(instance_obj, "cleanup"):
             cleanup_result = getattr(instance_obj, "cleanup")()
             if cleanup_result:
                 _ = assertion_helpers.assert_flext_result_success(
-                    cleanup_result, "FlextRuntime cleanup failed",
+                    cleanup_result,
+                    "FlextRuntime cleanup failed",
                 )
 
     def _execute_runtime_operation(
-        self, instance: object, input_data: Mapping[str, t.ContainerValue],
+        self,
+        instance: object,
+        input_data: Mapping[str, t.ContainerValue],
     ) -> r[bool]:
         """Execute a test operation on runtime instance.
 

@@ -109,7 +109,11 @@ class FlextInfraReportingService(s[Path]):
         return (base / verb).resolve()
 
     def get_report_path(
-        self, root: Path | str, scope: str, verb: str, filename: str,
+        self,
+        root: Path | str,
+        scope: str,
+        verb: str,
+        filename: str,
     ) -> Path:
         """Build a standardized report file path (no I/O).
 

@@ -79,7 +79,8 @@ class TestAutomatedFlextRegistry:
         ids=lambda case: case["description"],
     )
     def test_automated_registry_comprehensive_scenarios(
-        self, test_scenario: m.Tests.AutomatedTestScenario,
+        self,
+        test_scenario: m.Tests.AutomatedTestScenario,
     ) -> None:
         """Comprehensive test scenarios for registry functionality."""
         try:
@@ -106,7 +107,8 @@ class TestAutomatedFlextRegistry:
         instance = fixture_factory.create_test_registry_instance()
         result = self._execute_registry_operation(instance, {"type_safe": True})
         _ = assertion_helpers.assert_flext_result_success(
-            result, "FlextRegistry type safety test",
+            result,
+            "FlextRegistry type safety test",
         )
 
     def test_automated_registry_error_handling(self) -> None:
@@ -130,12 +132,14 @@ class TestAutomatedFlextRegistry:
 
         def operation() -> object:
             return self._execute_registry_operation(
-                instance, {"performance_test": True},
+                instance,
+                {"performance_test": True},
             )
 
         result = test_framework.execute_with_timeout(operation, timeout_seconds=1.0)
         _ = assertion_helpers.assert_flext_result_success(
-            result, "FlextRegistry performance test exceeded timeout",
+            result,
+            "FlextRegistry performance test exceeded timeout",
         )
 
     def test_automated_registry_resource_management(self) -> None:
@@ -143,17 +147,21 @@ class TestAutomatedFlextRegistry:
         instance = fixture_factory.create_test_registry_instance()
         result = self._execute_registry_operation(instance, {"resource_test": True})
         _ = assertion_helpers.assert_flext_result_success(
-            result, "FlextRegistry resource test",
+            result,
+            "FlextRegistry resource test",
         )
         if isinstance(instance, _CleanupCapable):
             cleanup_result = instance.cleanup()
             if cleanup_result:
                 _ = assertion_helpers.assert_flext_result_success(
-                    cleanup_result, "FlextRegistry cleanup failed",
+                    cleanup_result,
+                    "FlextRegistry cleanup failed",
                 )
 
     def _execute_registry_operation(
-        self, instance: object, input_data: Mapping[str, t.ContainerValue],
+        self,
+        instance: object,
+        input_data: Mapping[str, t.ContainerValue],
     ) -> r[bool]:
         """Execute a test operation on registry instance.
 

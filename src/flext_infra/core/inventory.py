@@ -28,7 +28,10 @@ class FlextInfraInventoryService:
         self._json = FlextInfraJsonService()
 
     def generate(
-        self, workspace_root: Path, *, output_dir: Path | None = None,
+        self,
+        workspace_root: Path,
+        *,
+        output_dir: Path | None = None,
     ) -> r[m.Infra.Core.InventoryReport]:
         """Build and write scripts inventory reports.
 
@@ -91,7 +94,8 @@ class FlextInfraInventoryService:
                 )
             written.append(str(external_path))
             result = m.Infra.Core.InventoryReport(
-                total_scripts=len(scripts), reports_written=written,
+                total_scripts=len(scripts),
+                reports_written=written,
             )
             return r[m.Infra.Core.InventoryReport].ok(result)
         except (OSError, TypeError, ValueError) as exc:

@@ -18,7 +18,8 @@ from ._models import _Model
 def _is_type_obj(value: object, type_spec: str | type | tuple[type, ...]) -> bool:
     """Call is_type with arbitrary object for negative-case testing."""
     fn: Callable[[object, str | type | tuple[type, ...]], bool] = getattr(
-        u.Guards, "is_type",
+        u.Guards,
+        "is_type",
     )
     return fn(value, type_spec)
 
@@ -262,7 +263,8 @@ def test_guards_bool_shortcut_and_issubclass_typeerror(
     original_issubclass = builtins.issubclass
 
     def _fake_issubclass(
-        cls: type[object], classinfo: type[object] | tuple[type[object], ...],
+        cls: type[object],
+        classinfo: type[object] | tuple[type[object], ...],
     ) -> bool:
         if cls is _SomeType and classinfo is BaseModel:
             msg = "boom"
@@ -305,7 +307,8 @@ def test_guards_handler_type_issubclass_typeerror_branch_direct() -> None:
         pass
 
     def _explode(
-        cls: type[object], classinfo: type[object] | tuple[type[object], ...],
+        cls: type[object],
+        classinfo: type[object] | tuple[type[object], ...],
     ) -> bool:
         if cls is _Candidate and classinfo is BaseModel:
             msg = "boom"
@@ -325,7 +328,8 @@ def test_guards_bool_identity_branch_via_isinstance_fallback(
     original_isinstance = builtins.isinstance
 
     def _patched_isinstance(
-        obj: object, classinfo: type[object] | tuple[type[object], ...],
+        obj: object,
+        classinfo: type[object] | tuple[type[object], ...],
     ) -> bool:
         if obj is True and classinfo == (str, int, float, bool, type(None), datetime):
             return False
@@ -350,7 +354,8 @@ def test_guards_issubclass_typeerror_when_class_not_treated_as_callable(
         return original_callable(value)
 
     def _patched_issubclass(
-        cls: type[object], classinfo: type[object] | tuple[type[object], ...],
+        cls: type[object],
+        classinfo: type[object] | tuple[type[object], ...],
     ) -> bool:
         if cls is _Candidate and classinfo is BaseModel:
             msg = "boom"

@@ -192,7 +192,8 @@ class TestResolveRef:
         """Test ref resolution from GITHUB_HEAD_REF env var."""
         service = FlextInfraInternalDependencySyncService()
         with patch.dict(
-            "os.environ", {"GITHUB_ACTIONS": "true", "GITHUB_HEAD_REF": "feature/test"},
+            "os.environ",
+            {"GITHUB_ACTIONS": "true", "GITHUB_HEAD_REF": "feature/test"},
         ):
             result = service.resolve_ref(Path("/fake"))
         assert result == "feature/test"
@@ -256,7 +257,8 @@ class TestIsRelativeTo:
         """Test path is not relative to parent."""
         other = Path("/completely/different")
         assert not FlextInfraInternalDependencySyncService.is_relative_to(
-            other, tmp_path,
+            other,
+            tmp_path,
         )
 
 
@@ -360,7 +362,8 @@ class TestIsWorkspaceMode:
         mock_git.run.return_value = r[str].ok(str(tmp_path))
         service.git = mock_git
         with patch.dict(
-            "os.environ", {"FLEXT_STANDALONE": "", "FLEXT_WORKSPACE_ROOT": ""},
+            "os.environ",
+            {"FLEXT_STANDALONE": "", "FLEXT_WORKSPACE_ROOT": ""},
         ):
             is_ws, root = service.is_workspace_mode(tmp_path / "sub")
         assert is_ws is True
@@ -376,7 +379,8 @@ class TestIsWorkspaceMode:
         mock_git.run.return_value = r[str].ok("")
         service.git = mock_git
         with patch.dict(
-            "os.environ", {"FLEXT_STANDALONE": "", "FLEXT_WORKSPACE_ROOT": ""},
+            "os.environ",
+            {"FLEXT_STANDALONE": "", "FLEXT_WORKSPACE_ROOT": ""},
         ):
             is_ws, root = service.is_workspace_mode(project)
         assert is_ws is True
@@ -391,7 +395,8 @@ class TestIsWorkspaceMode:
         mock_git.run.return_value = r[str].ok("")
         service.git = mock_git
         with patch.dict(
-            "os.environ", {"FLEXT_STANDALONE": "", "FLEXT_WORKSPACE_ROOT": ""},
+            "os.environ",
+            {"FLEXT_STANDALONE": "", "FLEXT_WORKSPACE_ROOT": ""},
         ):
             is_ws, root = service.is_workspace_mode(project)
         assert is_ws is False
@@ -532,7 +537,9 @@ class TestEnsureCheckout:
         service.git = mock_git
         dep_path = tmp_path / "dep"
         result = service.ensure_checkout(
-            dep_path, "https://github.com/flext-sh/flext.git", "main",
+            dep_path,
+            "https://github.com/flext-sh/flext.git",
+            "main",
         )
         assert result.is_success
 
@@ -544,7 +551,9 @@ class TestEnsureCheckout:
         service.git = mock_git
         dep_path = tmp_path / "dep"
         result = service.ensure_checkout(
-            dep_path, "https://github.com/flext-sh/flext.git", "main",
+            dep_path,
+            "https://github.com/flext-sh/flext.git",
+            "main",
         )
         assert result.is_failure
 
@@ -560,7 +569,9 @@ class TestEnsureCheckout:
         dep_path.mkdir(parents=True)
         (dep_path / ".git").mkdir()
         result = service.ensure_checkout(
-            dep_path, "https://github.com/flext-sh/flext.git", "main",
+            dep_path,
+            "https://github.com/flext-sh/flext.git",
+            "main",
         )
         assert result.is_success
 
@@ -576,7 +587,9 @@ class TestEnsureCheckout:
         service = FlextInfraInternalDependencySyncService()
         dep_path = tmp_path / "dep"
         result = service.ensure_checkout(
-            dep_path, "https://github.com/flext-sh/flext.git", "invalid@ref!",
+            dep_path,
+            "https://github.com/flext-sh/flext.git",
+            "invalid@ref!",
         )
         assert result.is_failure
 
@@ -590,7 +603,9 @@ class TestEnsureCheckout:
         dep_path.mkdir(parents=True)
         (dep_path / ".git").mkdir()
         result = service.ensure_checkout(
-            dep_path, "https://github.com/flext-sh/flext.git", "main",
+            dep_path,
+            "https://github.com/flext-sh/flext.git",
+            "main",
         )
         assert result.is_failure
 
@@ -605,7 +620,9 @@ class TestEnsureCheckout:
         dep_path.mkdir(parents=True)
         (dep_path / ".git").mkdir()
         result = service.ensure_checkout(
-            dep_path, "https://github.com/flext-sh/flext.git", "main",
+            dep_path,
+            "https://github.com/flext-sh/flext.git",
+            "main",
         )
         assert result.is_failure
 
@@ -620,7 +637,9 @@ class TestEnsureCheckout:
         other.mkdir()
         dep_path.symlink_to(other)
         result = service.ensure_checkout(
-            dep_path, "https://github.com/flext-sh/flext.git", "main",
+            dep_path,
+            "https://github.com/flext-sh/flext.git",
+            "main",
         )
         assert result.is_success
 
@@ -634,7 +653,9 @@ class TestEnsureCheckout:
         dep_path.mkdir()
         (dep_path / "somefile").write_text("old")
         result = service.ensure_checkout(
-            dep_path, "https://github.com/flext-sh/flext.git", "main",
+            dep_path,
+            "https://github.com/flext-sh/flext.git",
+            "main",
         )
         assert result.is_success
 
@@ -823,7 +844,8 @@ class TestSync:
         mock_git.run.return_value = r[str].ok("")
         service.git = mock_git
         with patch.dict(
-            "os.environ", {"FLEXT_STANDALONE": "", "FLEXT_WORKSPACE_ROOT": ""},
+            "os.environ",
+            {"FLEXT_STANDALONE": "", "FLEXT_WORKSPACE_ROOT": ""},
         ):
             result = service.sync(project)
         assert result.is_success
@@ -839,7 +861,9 @@ class TestSync:
             r[dict[str, object]].ok({
                 "tool": {
                     "poetry": {
-                        "dependencies": {"flext-api": {"path": ".flext-deps/flext-api"}},
+                        "dependencies": {
+                            "flext-api": {"path": ".flext-deps/flext-api"}
+                        },
                     },
                 },
                 "project": dict[str, object](),
@@ -852,7 +876,8 @@ class TestSync:
         service.git = mock_git
         (project / "flext-repo-map.toml").write_text("")
         with patch.dict(
-            "os.environ", {"FLEXT_STANDALONE": "", "FLEXT_WORKSPACE_ROOT": ""},
+            "os.environ",
+            {"FLEXT_STANDALONE": "", "FLEXT_WORKSPACE_ROOT": ""},
         ):
             result = service.sync(project)
         assert result.is_failure
@@ -897,7 +922,8 @@ class TestValidateGitRefEdgeCases:
     """Test edge cases for git ref validation."""
 
     @pytest.mark.parametrize(
-        "ref", ["feature/my-branch", "v1.0.0", "release/2.0", "fix/issue-123"],
+        "ref",
+        ["feature/my-branch", "v1.0.0", "release/2.0", "fix/issue-123"],
     )
     def test_valid_refs(self, ref: str) -> None:
         """Test various valid git ref formats."""
@@ -961,7 +987,8 @@ class TestEnsureSymlinkEdgeCases:
         target = tmp_path / "target"
         with patch("pathlib.Path.symlink_to", side_effect=OSError("Permission denied")):
             result = FlextInfraInternalDependencySyncService.ensure_symlink(
-                target, source,
+                target,
+                source,
             )
             assert result.is_failure
             assert isinstance(result.error, str)
@@ -980,7 +1007,9 @@ class TestEnsureCheckoutEdgeCases:
         (dep_path / "file.txt").write_text("content")
         with patch("shutil.rmtree", side_effect=OSError("Permission denied")):
             result = service.ensure_checkout(
-                dep_path, "https://github.com/test/repo.git", "main",
+                dep_path,
+                "https://github.com/test/repo.git",
+                "main",
             )
             assert result.is_failure
             assert isinstance(result.error, str)
@@ -1110,7 +1139,9 @@ class TestSyncMethodEdgeCases:
         )
         service = FlextInfraInternalDependencySyncService()
         with patch.object(
-            service, "ensure_symlink", return_value=r[bool].fail("symlink failed"),
+            service,
+            "ensure_symlink",
+            return_value=r[bool].fail("symlink failed"),
         ):
             with patch.dict("os.environ", {"FLEXT_WORKSPACE_ROOT": str(workspace)}):
                 result = service.sync(project)
@@ -1128,7 +1159,9 @@ class TestSyncMethodEdgeCases:
         )
         service = FlextInfraInternalDependencySyncService()
         with patch.object(
-            service, "ensure_checkout", return_value=r[bool].fail("checkout failed"),
+            service,
+            "ensure_checkout",
+            return_value=r[bool].fail("checkout failed"),
         ):
             result = service.sync(tmp_path)
             assert result.is_failure
@@ -1154,7 +1187,8 @@ class TestSyncMethodEdgeCases:
         assert len(result.value) == 0
 
     def test_collect_internal_deps_with_invalid_pep621_regex(
-        self, tmp_path: Path,
+        self,
+        tmp_path: Path,
     ) -> None:
         """Test _collect_internal_deps skips invalid PEP621 regex (line 316)."""
         pyproject = tmp_path / "pyproject.toml"

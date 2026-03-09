@@ -16,7 +16,9 @@ def test_utilities_reliability_branches() -> None:
     assert r[int].ok(1).is_success
     assert isinstance(m.ConfigMap.model_validate({"k": 1}), m.ConfigMap)
     fail: r[Never] = u.Reliability.retry(
-        lambda: r.fail("e"), max_attempts=1, delay_seconds=0.0,
+        lambda: r.fail("e"),
+        max_attempts=1,
+        delay_seconds=0.0,
     )
     assert fail.is_failure
     delay_default = u.Reliability.calculate_delay(0, None)
@@ -45,7 +47,10 @@ def test_utilities_reliability_uncovered_retry_compose_and_sequence_paths(
         raise ValueError(msg)
 
     failed: r[Never] = u.Reliability.retry(
-        _raise_once, max_attempts=2, delay_seconds=0.01, retry_on=(ValueError,),
+        _raise_once,
+        max_attempts=2,
+        delay_seconds=0.01,
+        retry_on=(ValueError,),
     )
     assert failed.is_failure
     assert len(sleep_calls) == 1
@@ -62,6 +67,7 @@ def test_utilities_reliability_compose_returns_non_result_directly(
         staticmethod(lambda *_args, **_kwargs: r[int].ok(7)),
     )
     piped = reliability_module.FlextUtilitiesReliability.compose(
-        lambda value: value, mode="pipe",
+        lambda value: value,
+        mode="pipe",
     )
     assert piped("x") == 7

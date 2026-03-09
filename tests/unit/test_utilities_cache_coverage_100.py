@@ -18,11 +18,10 @@ from __future__ import annotations
 import math
 from collections import UserDict
 from collections.abc import Sequence
-from dataclasses import dataclass
 from typing import ClassVar, cast, override
 
 import pytest
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import t, u
 from flext_tests import tm
@@ -31,34 +30,45 @@ from ..test_utils import assertion_helpers
 from ._models import CacheTestModel, NestedModel
 
 
-@dataclass(frozen=True, slots=True)
-class NormalizeComponentScenario:
+class NormalizeComponentScenario(BaseModel):
     """Normalize component test scenario."""
 
-    name: str
-    component: t.ContainerValue | BaseModel
-    expected_type: type
-    expected_value: object | None = None
+    model_config = ConfigDict(frozen=True)
+
+    name: str = Field(description="Normalize scenario name")
+    component: t.ContainerValue | BaseModel = Field(
+        description="Input component to normalize",
+    )
+    expected_type: type = Field(description="Expected normalized value type")
+    expected_value: object | None = Field(
+        default=None,
+        description="Optional expected normalized value",
+    )
 
 
-@dataclass(frozen=True, slots=True)
-class SortKeyScenario:
+class SortKeyScenario(BaseModel):
     """Sort key test scenario."""
 
-    name: str
-    key: t.SortableObjectType
-    expected_tuple: tuple[int, str]
+    model_config = ConfigDict(frozen=True)
+
+    name: str = Field(description="Sort key scenario name")
+    key: t.SortableObjectType = Field(description="Input key for sort normalization")
+    expected_tuple: tuple[int, str] = Field(description="Expected sort tuple")
 
 
-@dataclass(frozen=True, slots=True)
-class ClearCacheScenario:
+class ClearCacheScenario(BaseModel):
     """Clear cache test scenario."""
 
-    name: str
-    obj: object
-    has_cache_attr: bool
-    expected_success: bool
-    cache_attr_name: str | None = None
+    model_config = ConfigDict(frozen=True)
+
+    name: str = Field(description="Cache clear scenario name")
+    obj: object = Field(description="Object under cache clear test")
+    has_cache_attr: bool = Field(description="Whether object exposes cache attribute")
+    expected_success: bool = Field(description="Expected clear operation success flag")
+    cache_attr_name: str | None = Field(
+        default=None,
+        description="Optional cache attribute name",
+    )
 
 
 class CacheScenarios:

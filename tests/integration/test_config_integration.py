@@ -266,7 +266,8 @@ class TestFlextSettingsSingletonIntegration:
             assert json.loads(json_file.read_text(encoding="utf-8")) == json_config
             env_file = temp_directory / ".env"
             env_file.write_text(
-                "FLEXT_APP_NAME=from-env\nFLEXT_HOST=env-host\n", encoding="utf-8",
+                "FLEXT_APP_NAME=from-env\nFLEXT_HOST=env-host\n",
+                encoding="utf-8",
             )
             assert env_file.exists()
             assert "FLEXT_APP_NAME=from-env" in env_file.read_text(encoding="utf-8")
@@ -378,7 +379,8 @@ class TestFlextSettingsSingletonIntegration:
             )
             assert config_explicit.trace is False
             config_no_debug = FlextSettings(
-                log_level=FlextConstants.Settings.LogLevel.WARNING, debug=False,
+                log_level=FlextConstants.Settings.LogLevel.WARNING,
+                debug=False,
             )
             assert (
                 config_no_debug.effective_log_level

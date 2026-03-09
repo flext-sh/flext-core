@@ -192,7 +192,10 @@ class TestCensusReportModel:
 
     def test_empty_report(self) -> None:
         report = FlextInfraModels.Infra.Codegen.CensusReport(
-            project="test-project", violations=[], total=0, fixable=0,
+            project="test-project",
+            violations=[],
+            total=0,
+            fixable=0,
         )
         assert report.project == "test-project"
         assert report.total == 0
@@ -202,13 +205,25 @@ class TestCensusReportModel:
     def test_report_with_mixed_violations(self) -> None:
         violations = [
             FlextInfraModels.Infra.Codegen.CensusViolation(
-                module="src/a.py", rule="NS-000", line=1, message="m1", fixable=False,
+                module="src/a.py",
+                rule="NS-000",
+                line=1,
+                message="m1",
+                fixable=False,
             ),
             FlextInfraModels.Infra.Codegen.CensusViolation(
-                module="src/b.py", rule="NS-001", line=2, message="m2", fixable=True,
+                module="src/b.py",
+                rule="NS-001",
+                line=2,
+                message="m2",
+                fixable=True,
             ),
             FlextInfraModels.Infra.Codegen.CensusViolation(
-                module="src/c.py", rule="NS-002", line=3, message="m3", fixable=True,
+                module="src/c.py",
+                rule="NS-002",
+                line=3,
+                message="m3",
+                fixable=True,
             ),
         ]
         report = FlextInfraModels.Infra.Codegen.CensusReport(

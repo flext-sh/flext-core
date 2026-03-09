@@ -43,14 +43,17 @@ class TestDataFactory:
 
     @staticmethod
     def create_entity_data(
-        unique_id: str, name: str, **kwargs: t.ContainerValue,
+        unique_id: str,
+        name: str,
+        **kwargs: t.ContainerValue,
     ) -> t.ConfigurationMapping:
         """Create standardized entity test data."""
         return {"unique_id": unique_id, "name": name, **kwargs}
 
     @staticmethod
     def create_value_object_data(
-        value: t.ContainerValue, **kwargs: t.ContainerValue,
+        value: t.ContainerValue,
+        **kwargs: t.ContainerValue,
     ) -> t.ConfigurationMapping:
         """Create standardized value object test data."""
         return {"value": value, **kwargs}
@@ -112,7 +115,9 @@ class AssertionHelpers:
 
     @staticmethod
     def assert_entity_properties(
-        entity: m.Entity, expected_props: t.ConfigurationMapping, context: str = "",
+        entity: m.Entity,
+        expected_props: t.ConfigurationMapping,
+        context: str = "",
     ) -> None:
         """Assert entity has expected properties."""
         for prop, expected_value in expected_props.items():
@@ -133,14 +138,17 @@ class AssertionHelpers:
             result = operation_func()
             if test_case.expected_success:
                 actual_result = AssertionHelpers.assert_flext_result_success(
-                    result, f"{context} - {test_case.description}",
+                    result,
+                    f"{context} - {test_case.description}",
                 )
                 assert actual_result == test_case.expected_result, (
                     f"{context}: Expected {test_case.expected_result}, got {actual_result}"
                 )
                 return actual_result
             return AssertionHelpers.assert_flext_result_failure(
-                result, f"{context} - {test_case.description}", test_case.error_contains,
+                result,
+                f"{context} - {test_case.description}",
+                test_case.error_contains,
             )
         except Exception as e:
             if not test_case.expected_success:
@@ -153,7 +161,8 @@ class TestFixtureFactory:
 
     @staticmethod
     def create_test_entity(
-        unique_id: str = "test-123", name: str = "Test Entity",
+        unique_id: str = "test-123",
+        name: str = "Test Entity",
     ) -> TestsFlextModels.Tests.UtilityEntityModel:
         """Create test entity fixture."""
         return TestsFlextModels.Tests.UtilityEntityModel(

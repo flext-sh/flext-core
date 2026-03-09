@@ -197,7 +197,9 @@ class TestFlextInfraDocBuilder:
         """Test _write_reports creates both JSON and markdown files."""
         report_dir = tmp_path / "reports"
         report_dir.mkdir(parents=True, exist_ok=True)
-        scope = m.Infra.Docs.FlextInfraDocScope(name="test", path=tmp_path, report_dir=report_dir)
+        scope = m.Infra.Docs.FlextInfraDocScope(
+            name="test", path=tmp_path, report_dir=report_dir
+        )
         report = m.Infra.Docs.DocsPhaseReport(
             phase="build",
             scope="test",

@@ -20,7 +20,10 @@ class _DuckDumpError:
 
 class _ContainerOK:
     def register(
-        self, _name: str, _instance: t.JsonValue, **kwargs: t.MetadataValue,
+        self,
+        _name: str,
+        _instance: t.JsonValue,
+        **kwargs: t.MetadataValue,
     ) -> r[bool]:
         return r[bool].ok(True)
 
@@ -30,7 +33,10 @@ class _ContainerOK:
 
 class _ContainerFail:
     def register(
-        self, _name: str, _instance: t.JsonValue, **kwargs: t.MetadataValue,
+        self,
+        _name: str,
+        _instance: t.JsonValue,
+        **kwargs: t.MetadataValue,
     ) -> r[bool]:
         return r[bool].fail("reg fail")
 
@@ -40,7 +46,10 @@ class _ContainerFail:
 
 class _ContainerRaise:
     def register(
-        self, _name: str, _instance: t.JsonValue, **kwargs: t.MetadataValue,
+        self,
+        _name: str,
+        _instance: t.JsonValue,
+        **kwargs: t.MetadataValue,
     ) -> r[bool]:
         msg = "reg ex"
         raise RuntimeError(msg)
@@ -51,7 +60,8 @@ class _ContainerRaise:
 
 
 def test_resolve_env_file_and_log_level(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
 ) -> None:
     existing = tmp_path / "custom.env"
     existing.write_text("A=1\n", encoding="utf-8")
@@ -77,7 +87,8 @@ def test_resolve_env_file_and_log_level(
 
 def test_private_getters_exception_paths() -> None:
     assert u.Configuration._try_get_from_model_dump(
-        cast("p.HasModelDump", cast("object", _DumpErrorModel())), "missing",
+        cast("p.HasModelDump", cast("object", _DumpErrorModel())),
+        "missing",
     ) == (False, None)
     assert u.Configuration._try_get_from_duck_model_dump(_DuckDumpError(), "value") == (
         False,

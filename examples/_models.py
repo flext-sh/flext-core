@@ -6,6 +6,7 @@ from pydantic import BaseModel, ConfigDict
 
 from flext_core import m, r, t
 
+
 class _ProtocolHandler(BaseModel):
     model_config = ConfigDict(frozen=False)
 

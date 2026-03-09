@@ -24,7 +24,9 @@ class FlextInfraNamespaceEnforcer:
         self._workspace_root = workspace_root.resolve()
 
     def enforce(
-        self, *, apply_changes: bool = False,
+        self,
+        *,
+        apply_changes: bool = False,
     ) -> NamespaceEnforcementModels.WorkspaceEnforcementReport:
         """Run namespace enforcement across all projects in the workspace."""
         project_roots = u.Infra.Refactor.discover_project_roots(

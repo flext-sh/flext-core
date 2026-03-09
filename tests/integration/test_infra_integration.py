@@ -119,7 +119,8 @@ class TestWorkspaceDetectionOrchestrationFlow:
 
     @pytest.mark.integration
     def test_workspace_detector_and_orchestrator_share_state(
-        self, tmp_path: Path,
+        self,
+        tmp_path: Path,
     ) -> None:
         """Test that FlextInfraWorkspaceDetector and orchestrator share state.
 
@@ -175,7 +176,9 @@ class TestBaseMkGenerationFlow:
     @pytest.mark.integration
     @patch("flext_infra.subprocess.FlextInfraCommandRunner.run")
     def test_basemk_generator_with_mocked_subprocess(
-        self, mock_run: MagicMock, tmp_path: Path,
+        self,
+        mock_run: MagicMock,
+        tmp_path: Path,
     ) -> None:
         """Test BaseMk generator with mocked subprocess calls.
 
@@ -414,7 +417,8 @@ class TestIntegrationWithMocking:
     @pytest.mark.integration
     @patch("flext_infra.git.FlextInfraGitService.current_branch")
     def test_git_service_with_mocked_subprocess(
-        self, mock_current_branch: MagicMock,
+        self,
+        mock_current_branch: MagicMock,
     ) -> None:
         """Test git service integration with mocked subprocess.
 

@@ -96,7 +96,8 @@ class TestFlextUtilitiesArgs:
 
         @staticmethod
         def get_parse_kwargs_scenarios() -> Mapping[
-            str, TestFlextUtilitiesArgs.ParseKwargsScenario,
+            str,
+            TestFlextUtilitiesArgs.ParseKwargsScenario,
         ]:
             """Get parse kwargs test scenarios."""
             status_enum = TestFlextUtilitiesArgs.StatusEnum
@@ -146,7 +147,8 @@ class TestFlextUtilitiesArgs:
 
         @staticmethod
         def get_validated_scenarios() -> Mapping[
-            str, TestFlextUtilitiesArgs.ValidatedScenario,
+            str,
+            TestFlextUtilitiesArgs.ValidatedScenario,
         ]:
             """Get validated decorator test scenarios."""
             status_enum = TestFlextUtilitiesArgs.StatusEnum
@@ -188,7 +190,8 @@ class TestFlextUtilitiesArgs:
 
         @staticmethod
         def create_validated_function() -> Callable[
-            [TestFlextUtilitiesArgs.StatusEnum], str,
+            [TestFlextUtilitiesArgs.StatusEnum],
+            str,
         ]:
             """Create validated function for testing."""
 
@@ -200,7 +203,8 @@ class TestFlextUtilitiesArgs:
 
         @staticmethod
         def create_validated_with_result_function() -> Callable[
-            [TestFlextUtilitiesArgs.StatusEnum], r[str],
+            [TestFlextUtilitiesArgs.StatusEnum],
+            r[str],
         ]:
             """Create validated_with_result function for testing."""
 
@@ -209,7 +213,8 @@ class TestFlextUtilitiesArgs:
                 return r.ok(status.value)
 
             return cast(
-                "Callable[[TestFlextUtilitiesArgs.StatusEnum], r[str]]", process,
+                "Callable[[TestFlextUtilitiesArgs.StatusEnum], r[str]]",
+                process,
             )
 
     class TestValidated:
@@ -308,7 +313,8 @@ class TestFlextUtilitiesArgs:
             )
             result = process(status_val)
             u.Tests.Result.assert_failure_with_error(
-                result, expected_error=errors.INTERNAL_ERROR,
+                result,
+                expected_error=errors.INTERNAL_ERROR,
             )
 
     class TestParseKwargs:
@@ -342,7 +348,8 @@ class TestFlextUtilitiesArgs:
             scenario = scenarios["invalid_enum_value"]
             result = u.Args.parse_kwargs(scenario.kwargs, scenario.enum_fields)
             u.Tests.Result.assert_failure_with_error(
-                result, expected_error=scenario.expected_error,
+                result,
+                expected_error=scenario.expected_error,
             )
 
     class TestGetEnumParams:
@@ -430,7 +437,8 @@ class TestFlextUtilitiesArgs:
 
             def process(
                 status: Annotated[
-                    Annotated[TestFlextUtilitiesArgs.StatusEnum, "meta1"], "meta2",
+                    Annotated[TestFlextUtilitiesArgs.StatusEnum, "meta1"],
+                    "meta2",
                 ],
             ) -> bool:
                 return True
@@ -445,7 +453,8 @@ class TestFlextUtilitiesArgs:
 
             def process(
                 status: Annotated[
-                    Annotated[TestFlextUtilitiesArgs.StatusEnum, "meta1"], "meta2",
+                    Annotated[TestFlextUtilitiesArgs.StatusEnum, "meta1"],
+                    "meta2",
                 ],
             ) -> bool:
                 return True

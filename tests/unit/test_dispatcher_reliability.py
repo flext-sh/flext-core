@@ -63,7 +63,9 @@ def test_rate_limiter_jitter_application() -> None:
     jittered = limiter._apply_jitter(2.0)
     assert jittered >= 0.0
     limiter_zero = RateLimiterManager(
-        max_requests=1, window_seconds=1.0, jitter_factor=0.0,
+        max_requests=1,
+        window_seconds=1.0,
+        jitter_factor=0.0,
     )
     assert limiter_zero._apply_jitter(0.5) == pytest.approx(0.5)
 

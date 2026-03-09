@@ -85,13 +85,17 @@ class TestFlextTypings:
     """Unified test suite for t and type system using FlextTestsUtilities."""
 
     @pytest.mark.parametrize(
-        "test_case", TypeScenarios.CORE_TYPEVARS, ids=lambda c: c.name,
+        "test_case",
+        TypeScenarios.CORE_TYPEVARS,
+        ids=lambda c: c.name,
     )
     def test_core_typevars(self, test_case: TypeVarTestCase) -> None:
         """Test core TypeVar definitions are properly exported."""
         if test_case.expected_not_none:
             tm.that(
-                test_case.type_var, none=False, msg=f"{test_case.name} must not be None",
+                test_case.type_var,
+                none=False,
+                msg=f"{test_case.name} must not be None",
             )
             tm.that(
                 TypeScenarios.is_typevar(test_case.type_var),
@@ -100,13 +104,17 @@ class TestFlextTypings:
             )
 
     @pytest.mark.parametrize(
-        "test_case", TypeScenarios.COVARIANT_TYPEVARS, ids=lambda c: c.name,
+        "test_case",
+        TypeScenarios.COVARIANT_TYPEVARS,
+        ids=lambda c: c.name,
     )
     def test_covariant_typevars(self, test_case: TypeVarTestCase) -> None:
         """Test covariant TypeVar definitions are properly exported."""
         if test_case.expected_not_none:
             tm.that(
-                test_case.type_var, none=False, msg=f"{test_case.name} must not be None",
+                test_case.type_var,
+                none=False,
+                msg=f"{test_case.name} must not be None",
             )
             tm.that(
                 TypeScenarios.is_typevar(test_case.type_var),
@@ -120,13 +128,17 @@ class TestFlextTypings:
             )
 
     @pytest.mark.parametrize(
-        "test_case", TypeScenarios.CONTRAVARIANT_TYPEVARS, ids=lambda c: c.name,
+        "test_case",
+        TypeScenarios.CONTRAVARIANT_TYPEVARS,
+        ids=lambda c: c.name,
     )
     def test_contravariant_typevars(self, test_case: TypeVarTestCase) -> None:
         """Test contravariant TypeVar definitions are properly exported."""
         if test_case.expected_not_none:
             tm.that(
-                test_case.type_var, none=False, msg=f"{test_case.name} must not be None",
+                test_case.type_var,
+                none=False,
+                msg=f"{test_case.name} must not be None",
             )
             tm.that(
                 TypeScenarios.is_typevar(test_case.type_var),
@@ -140,7 +152,9 @@ class TestFlextTypings:
             )
 
     @pytest.mark.parametrize(
-        "test_case", TypeScenarios.CQRS_ALIASES, ids=lambda c: c.name,
+        "test_case",
+        TypeScenarios.CQRS_ALIASES,
+        ids=lambda c: c.name,
     )
     def test_cqrs_aliases(self, test_case: TypeVarTestCase) -> None:
         """Test CQRS type aliases are properly defined."""
@@ -157,13 +171,17 @@ class TestFlextTypings:
             )
 
     @pytest.mark.parametrize(
-        "test_case", TypeScenarios.PARAMSPEC_ITEMS, ids=lambda c: c.name,
+        "test_case",
+        TypeScenarios.PARAMSPEC_ITEMS,
+        ids=lambda c: c.name,
     )
     def test_paramspec(self, test_case: TypeVarTestCase) -> None:
         """Test ParamSpec is properly defined and exported."""
         if test_case.expected_not_none:
             tm.that(
-                test_case.type_var, none=False, msg=f"{test_case.name} must not be None",
+                test_case.type_var,
+                none=False,
+                msg=f"{test_case.name} must not be None",
             )
             tm.that(
                 isinstance(test_case.type_var, ParamSpec),
@@ -211,7 +229,9 @@ class TestFlextTypings:
         for alias in cqrs_aliases:
             tm.that(alias, none=False, msg="CQRS alias must not be None")
             tm.that(
-                alias, eq=t.ContainerValue, msg="CQRS alias must equal t.ContainerValue",
+                alias,
+                eq=t.ContainerValue,
+                msg="CQRS alias must equal t.ContainerValue",
             )
 
     def test_hostname_validation_success(self) -> None:

@@ -60,7 +60,8 @@ def test_checker_logger_and_safe_type_hints_fallback() -> None:
     logger = checker.logger
     assert hasattr(logger, "info")
     hints = u.Checker._get_type_hints_safe(
-        cast("t.HandlerCallable", _UnknownHintHandler.handle), _UnknownHintHandler,
+        cast("t.HandlerCallable", _UnknownHintHandler.handle),
+        _UnknownHintHandler,
     )
     assert hints == {"message": MissingType, "return": type(None)}
 
@@ -68,15 +69,21 @@ def test_checker_logger_and_safe_type_hints_fallback() -> None:
 def test_extract_message_type_from_parameter_branches() -> None:
     param = inspect.Parameter("message", inspect.Parameter.POSITIONAL_OR_KEYWORD)
     none_hint = u.Checker._extract_message_type_from_parameter(
-        param, cast("dict[str, t.ContainerValue]", {"message": None}), "message",
+        param,
+        cast("dict[str, t.ContainerValue]", {"message": None}),
+        "message",
     )
     assert none_hint.is_failure
     str_hint = u.Checker._extract_message_type_from_parameter(
-        param, {"message": "abc"}, "message",
+        param,
+        {"message": "abc"},
+        "message",
     )
     assert str_hint.is_success and str_hint.value == "abc"
     generic_hint = u.Checker._extract_message_type_from_parameter(
-        param, {"message": str(list[int])}, "message",
+        param,
+        {"message": str(list[int])},
+        "message",
     )
     assert generic_hint.is_success and generic_hint.value == str(list[int])
 
@@ -129,10 +136,14 @@ def test_object_dict_and_type_error_fallback_paths() -> None:
 
 def test_extract_message_type_annotation_and_dict_subclass_paths() -> None:
     param_typed = inspect.Parameter(
-        "message", inspect.Parameter.POSITIONAL_OR_KEYWORD, annotation=list[int],
+        "message",
+        inspect.Parameter.POSITIONAL_OR_KEYWORD,
+        annotation=list[int],
     )
     typed_hint = u.Checker._extract_message_type_from_parameter(
-        param_typed, {}, "message",
+        param_typed,
+        {},
+        "message",
     )
     assert typed_hint.is_success and typed_hint.value == str(list[int])
     param_empty = inspect.Parameter(
@@ -141,21 +152,31 @@ def test_extract_message_type_annotation_and_dict_subclass_paths() -> None:
         annotation=inspect.Signature.empty,
     )
     empty_hint = u.Checker._extract_message_type_from_parameter(
-        param_empty, {}, "message",
+        param_empty,
+        {},
+        "message",
     )
     assert empty_hint.is_failure
     param_str = inspect.Parameter(
-        "message", inspect.Parameter.POSITIONAL_OR_KEYWORD, annotation="MyType",
+        "message",
+        inspect.Parameter.POSITIONAL_OR_KEYWORD,
+        annotation="MyType",
     )
     string_hint = u.Checker._extract_message_type_from_parameter(
-        param_str, {}, "message",
+        param_str,
+        {},
+        "message",
     )
     assert string_hint.is_success and string_hint.value == "MyType"
     param_type = inspect.Parameter(
-        "message", inspect.Parameter.POSITIONAL_OR_KEYWORD, annotation=int,
+        "message",
+        inspect.Parameter.POSITIONAL_OR_KEYWORD,
+        annotation=int,
     )
     type_hint = u.Checker._extract_message_type_from_parameter(
-        param_type, {}, "message",
+        param_type,
+        {},
+        "message",
     )
     assert type_hint.is_success and type_hint.value is int
 

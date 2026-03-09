@@ -149,7 +149,8 @@ class TestResultTransformations:
         r_no_data: FlextResult[int] = FlextResult[int].fail("error")
         assert r_no_data.error_data is None
         r_with_data: FlextResult[int] = FlextResult[int].fail(
-            "error", error_data=m.ConfigMap(root={"detail": "info"}),
+            "error",
+            error_data=m.ConfigMap(root={"detail": "info"}),
         )
         assert isinstance(r_with_data.error_data, m.ConfigMap)
         assert r_with_data.error_data["detail"] == "info"

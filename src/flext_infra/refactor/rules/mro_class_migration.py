@@ -19,7 +19,9 @@ class FlextInfraRefactorMROClassMigrationRule(FlextInfraRefactorRule):
 
     @override
     def apply(
-        self, tree: cst.Module, _file_path: Path | None = None,
+        self,
+        tree: cst.Module,
+        _file_path: Path | None = None,
     ) -> tuple[cst.Module, list[str]]:
         if _file_path is None:
             return (tree, [])
@@ -42,7 +44,8 @@ class FlextInfraRefactorMROClassMigrationRule(FlextInfraRefactorRule):
                 continue
             candidates.append(
                 m.Infra.Refactor.MROSymbolCandidate(
-                    symbol=stmt.target.id, line=stmt.lineno,
+                    symbol=stmt.target.id,
+                    line=stmt.lineno,
                 ),
             )
         if len(candidates) == 0:

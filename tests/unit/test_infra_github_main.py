@@ -23,10 +23,15 @@ main = github_main.main
 
 
 def _orchestration_result(
-    *, fail: int = 0, total: int = 1,
+    *,
+    fail: int = 0,
+    total: int = 1,
 ) -> m.Infra.Github.PrOrchestrationResult:
     return m.Infra.Github.PrOrchestrationResult(
-        total=total, success=max(total - fail, 0), fail=fail, results=[],
+        total=total,
+        success=max(total - fail, 0),
+        fail=fail,
+        results=[],
     )
 
 
@@ -486,10 +491,16 @@ class TestMain:
                 mock_syncer_class.return_value = mock_syncer
                 ops = [
                     SyncOperation(
-                        project="p1", path="ci.yml", action="create", reason="new",
+                        project="p1",
+                        path="ci.yml",
+                        action="create",
+                        reason="new",
                     ),
                     SyncOperation(
-                        project="p2", path="ci.yml", action="update", reason="changed",
+                        project="p2",
+                        path="ci.yml",
+                        action="update",
+                        reason="changed",
                     ),
                 ]
                 mock_syncer.sync_workspace.return_value = r[list[SyncOperation]].ok(ops)

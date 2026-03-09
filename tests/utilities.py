@@ -86,7 +86,9 @@ class TestsFlextUtilities(FlextTestsUtilities, FlextInfraUtilities):
                 """String-like object that raises on split()."""
 
                 def split(
-                    self, *_args: t.ContainerValue, **_kwargs: t.ContainerValue,
+                    self,
+                    *_args: t.ContainerValue,
+                    **_kwargs: t.ContainerValue,
                 ) -> list[str]:
                     """Raise error on split attempt."""
                     msg = "Bad split"
@@ -191,12 +193,15 @@ class TestsFlextUtilities(FlextTestsUtilities, FlextInfraUtilities):
 
                 """
                 _ = assertion_helpers.assert_flext_result_failure(
-                    result, description, error_contains=expected_error,
+                    result,
+                    description,
+                    error_contains=expected_error,
                 )
 
             @staticmethod
             def assert_success(
-                result: FlextResult[t.ContainerValue], description: str = "",
+                result: FlextResult[t.ContainerValue],
+                description: str = "",
             ) -> None:
                 """Assert that result is a success.
 

@@ -110,7 +110,8 @@ def test_parser_safe_length_and_parse_delimited_error_paths(
 
     monkeypatch.setattr(parser, "_safe_text_length", _raise_type_error_value)
     split_failure = parser.parse_delimited(
-        cast("str", cast("object", _SplitRaises())), ",",
+        cast("str", cast("object", _SplitRaises())),
+        ",",
     )
     assert split_failure.is_failure
 
@@ -237,12 +238,16 @@ def test_parser_parse_helpers_and_primitive_coercion_branches(
     assert primitive_float is not None and primitive_float.is_success
     assert primitive_str is not None and primitive_str.is_success
     monkeypatch.setattr(
-        u.Parser.__mro__[1], "_coerce_to_float", staticmethod(_raise_value_error_float),
+        u.Parser.__mro__[1],
+        "_coerce_to_float",
+        staticmethod(_raise_value_error_float),
     )
     failed_float = parser._parse_try_primitive("x", float, 1.2, None, "field: ")
     assert failed_float is not None and failed_float.is_failure
     monkeypatch.setattr(
-        u.Parser.__mro__[1], "_coerce_to_bool", staticmethod(_raise_type_error_bool),
+        u.Parser.__mro__[1],
+        "_coerce_to_bool",
+        staticmethod(_raise_type_error_bool),
     )
     failed_bool = parser._parse_try_primitive("x", bool, True, None, "field: ")
     assert failed_bool is not None and failed_bool.is_failure
@@ -282,7 +287,8 @@ def test_parser_convert_and_norm_branches(monkeypatch: pytest.MonkeyPatch) -> No
     assert parser._convert_to_str(None, default="d") == "d"
     assert (
         parser._convert_to_str(
-            cast("t.ContainerValue", cast("object", _BadStr())), default="d",
+            cast("t.ContainerValue", cast("object", _BadStr())),
+            default="d",
         )
         == "d"
     )
@@ -293,7 +299,8 @@ def test_parser_convert_and_norm_branches(monkeypatch: pytest.MonkeyPatch) -> No
     )
     assert (
         parser.conv_str(
-            cast("t.ContainerValue", cast("object", _BadConv())), default="d",
+            cast("t.ContainerValue", cast("object", _BadConv())),
+            default="d",
         )
         == "d"
     )
@@ -321,7 +328,9 @@ def test_parser_convert_and_norm_branches(monkeypatch: pytest.MonkeyPatch) -> No
 def test_parser_success_and_edge_paths_cover_major_branches() -> None:
     parser = u.Parser()
     opts = m.CollectionsParseOptions(
-        strip=True, remove_empty=True, validator=lambda value: len(value) > 1,
+        strip=True,
+        remove_empty=True,
+        validator=lambda value: len(value) > 1,
     )
     processed = parser.parse_delimited(" a, b, cc ,, ddd ", ",", options=opts)
     assert processed.is_success
@@ -382,12 +391,16 @@ def test_parser_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> None:
     )
     assert enum_by_member_value is not None and enum_by_member_value.is_success
     monkeypatch.setattr(
-        u.Parser.__mro__[1], "_coerce_to_int", staticmethod(_raise_value_error_int),
+        u.Parser.__mro__[1],
+        "_coerce_to_int",
+        staticmethod(_raise_value_error_int),
     )
     failed_int = parser._parse_try_primitive("x", int, 1, None, "field: ")
     assert failed_int is not None and failed_int.is_failure
     monkeypatch.setattr(
-        u.Parser.__mro__[1], "_coerce_to_str", staticmethod(_raise_type_error_str),
+        u.Parser.__mro__[1],
+        "_coerce_to_str",
+        staticmethod(_raise_type_error_str),
     )
     failed_str = parser._parse_try_primitive("x", str, "d", None, "field: ")
     assert failed_str is not None and failed_str.is_failure

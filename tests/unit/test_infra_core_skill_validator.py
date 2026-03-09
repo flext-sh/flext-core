@@ -43,7 +43,8 @@ class TestSafeLoadYaml:
         assert result == {}
 
     def test_safe_load_yaml_with_non_dict_raises_type_error(
-        self, tmp_path: Path,
+        self,
+        tmp_path: Path,
     ) -> None:
         """Test loading YAML with non-dict content raises TypeError."""
         yaml_file = tmp_path / "list.yml"
@@ -270,7 +271,8 @@ class TestFlextInfraSkillValidator:
         assert count == 0
 
     def test_run_ast_grep_count_with_nonexistent_rule_file(
-        self, tmp_path: Path,
+        self,
+        tmp_path: Path,
     ) -> None:
         """Test _run_ast_grep_count with nonexistent rule file."""
         validator = FlextInfraSkillValidator()
@@ -445,7 +447,9 @@ class TestFlextInfraSkillValidator:
         """Test _render_template with absolute path."""
         template = "/absolute/path/{skill}/file.json"
         result = FlextInfraSkillValidator._render_template(
-            tmp_path, template, "my-skill",
+            tmp_path,
+            template,
+            "my-skill",
         )
         assert result == Path("/absolute/path/my-skill/file.json")
 
@@ -453,7 +457,9 @@ class TestFlextInfraSkillValidator:
         """Test _render_template with relative path."""
         template = ".reports/{skill}/report.json"
         result = FlextInfraSkillValidator._render_template(
-            tmp_path, template, "my-skill",
+            tmp_path,
+            template,
+            "my-skill",
         )
         assert "my-skill" in str(result)
         assert "report.json" in str(result)
@@ -581,7 +587,11 @@ class TestFlextInfraSkillValidator:
         include_globs = ["**/*.py"]
         exclude_globs: list[str] = []
         count = validator._run_ast_grep_count(
-            rule, skill_dir, project_path, include_globs, exclude_globs,
+            rule,
+            skill_dir,
+            project_path,
+            include_globs,
+            exclude_globs,
         )
         assert isinstance(count, int)
         assert count >= 0
@@ -601,7 +611,11 @@ class TestFlextInfraSkillValidator:
         include_globs: list[str] = []
         exclude_globs = ["**/test_*.py"]
         count = validator._run_ast_grep_count(
-            rule, skill_dir, project_path, include_globs, exclude_globs,
+            rule,
+            skill_dir,
+            project_path,
+            include_globs,
+            exclude_globs,
         )
         assert isinstance(count, int)
         assert count >= 0
@@ -681,7 +695,8 @@ class TestFlextInfraSkillValidatorBaselineComparison:
         assert baseline_file.exists()
 
     def test_validate_skill_with_baseline_per_group_strategy(
-        self, tmp_path: Path,
+        self,
+        tmp_path: Path,
     ) -> None:
         """Test baseline comparison with per-group strategy (lines 186-189)."""
         skill_dir = tmp_path / "test_skill"
@@ -768,7 +783,8 @@ class TestFlextInfraSkillValidatorUncoveredLines:
                 assert result.value.passed
 
     def test_validate_baseline_comparison_per_group_strategy(
-        self, tmp_path: Path,
+        self,
+        tmp_path: Path,
     ) -> None:
         """Test baseline comparison with per-group strategy (lines 186-189)."""
         validator = FlextInfraSkillValidator()

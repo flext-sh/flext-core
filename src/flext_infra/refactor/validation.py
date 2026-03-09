@@ -28,7 +28,9 @@ class PostCheckGate:
         """Initialize gate."""
 
     def validate(
-        self, result: m.Infra.Refactor.Result, expected: Mapping[str, t.ContainerValue],
+        self,
+        result: m.Infra.Refactor.Result,
+        expected: Mapping[str, t.ContainerValue],
     ) -> tuple[bool, list[str]]:
         """Validate a refactor result against expected post-checks and gates."""
         errors: list[str] = []
@@ -79,7 +81,10 @@ class PostCheckGate:
         return unresolved
 
     def _validate_mro(
-        self, file_path: Path, class_name: str, expected_bases: Sequence[str],
+        self,
+        file_path: Path,
+        class_name: str,
+        expected_bases: Sequence[str],
     ) -> list[str]:
         try:
             source = file_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
@@ -120,7 +125,8 @@ class FlextInfraRefactorRuleDefinitionValidator:
     """Validate individual refactor rule definitions for correctness."""
 
     def validate_rule_definition(
-        self, rule_def: Mapping[str, t.ContainerValue],
+        self,
+        rule_def: Mapping[str, t.ContainerValue],
     ) -> str | None:
         """Validate a rule definition and return error message if invalid."""
         rule_id = str(rule_def.get(c.Infra.ReportKeys.ID, c.Infra.Defaults.UNKNOWN))
@@ -245,7 +251,8 @@ class FlextInfraRefactorCliSupport:
 
     @staticmethod
     def write_impact_map(
-        results: list[m.Infra.Refactor.Result], output_path: Path,
+        results: list[m.Infra.Refactor.Result],
+        output_path: Path,
     ) -> bool:
         """Write impact map to a JSON file."""
         impact_map = FlextInfraRefactorCliSupport.build_impact_map(results)
@@ -395,11 +402,13 @@ class FlextInfraRefactorCliSupport:
             files_to_analyze: list[Path] = []
             if args.project:
                 files_to_analyze = engine.collect_project_files(
-                    args.project, pattern=args.pattern,
+                    args.project,
+                    pattern=args.pattern,
                 )
             elif args.workspace_root:
                 files_to_analyze = engine.collect_workspace_files(
-                    args.workspace_root, pattern=args.pattern,
+                    args.workspace_root,
+                    pattern=args.pattern,
                 )
             elif args.file:
                 if not args.file.exists():
@@ -425,11 +434,15 @@ class FlextInfraRefactorCliSupport:
         results: list[m.Infra.Refactor.Result] = []
         if args.project:
             results = engine.refactor_project(
-                args.project, dry_run=args.dry_run, pattern=args.pattern,
+                args.project,
+                dry_run=args.dry_run,
+                pattern=args.pattern,
             )
         elif args.workspace_root:
             results = engine.refactor_workspace(
-                args.workspace_root, dry_run=args.dry_run, pattern=args.pattern,
+                args.workspace_root,
+                dry_run=args.dry_run,
+                pattern=args.pattern,
             )
         elif args.file:
             if not args.file.exists():
@@ -441,7 +454,9 @@ class FlextInfraRefactorCliSupport:
             if args.show_diff and result_single.modified:
                 refactored_code = result_single.refactored_code or original_code
                 FlextInfraRefactorCliSupport.print_diff(
-                    original_code, refactored_code, args.file,
+                    original_code,
+                    refactored_code,
+                    args.file,
                 )
         elif args.files:
             existing_files = [item for item in args.files if item.exists()]
@@ -452,7 +467,8 @@ class FlextInfraRefactorCliSupport:
         FlextInfraRefactorCliSupport.print_summary(results, dry_run=args.dry_run)
         if args.impact_map_output is not None:
             _ = FlextInfraRefactorCliSupport.write_impact_map(
-                results, args.impact_map_output,
+                results,
+                args.impact_map_output,
             )
         failed = sum(1 for item in results if not item.success)
         return 0 if failed == 0 else 1

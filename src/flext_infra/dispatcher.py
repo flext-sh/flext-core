@@ -37,10 +37,12 @@ class FlextInfraDispatcher(s[bool]):
 
         command_type: str = "flext_infra.check"
         action: str = Field(
-            default="validate", description="Check action (validate, fix, report)",
+            default="validate",
+            description="Check action (validate, fix, report)",
         )
         args: list[str] = Field(
-            default_factory=list, description="Additional arguments for check operation",
+            default_factory=list,
+            description="Additional arguments for check operation",
         )
 
     class BaseMkCommand(BaseInfraCommand):
@@ -48,7 +50,8 @@ class FlextInfraDispatcher(s[bool]):
 
         command_type: str = "flext_infra.basemk"
         action: str = Field(
-            default="generate", description="BaseMk action (generate, validate, sync)",
+            default="generate",
+            description="BaseMk action (generate, validate, sync)",
         )
         args: list[str] = Field(
             default_factory=list,
@@ -73,7 +76,8 @@ class FlextInfraDispatcher(s[bool]):
 
         command_type: str = "flext_infra.release"
         action: str = Field(
-            default="plan", description="Release action (plan, execute, validate)",
+            default="plan",
+            description="Release action (plan, execute, validate)",
         )
         args: list[str] = Field(
             default_factory=list,
@@ -89,7 +93,8 @@ class FlextInfraDispatcher(s[bool]):
             description="Docs action (audit, generate, validate, build)",
         )
         args: list[str] = Field(
-            default_factory=list, description="Additional arguments for docs operation",
+            default_factory=list,
+            description="Additional arguments for docs operation",
         )
 
     class GithubCommand(BaseInfraCommand):
@@ -97,7 +102,8 @@ class FlextInfraDispatcher(s[bool]):
 
         command_type: str = "flext_infra.github"
         action: str = Field(
-            default="lint", description="GitHub action (lint, sync, pr-manage)",
+            default="lint",
+            description="GitHub action (lint, sync, pr-manage)",
         )
         args: list[str] = Field(
             default_factory=list,
@@ -113,7 +119,8 @@ class FlextInfraDispatcher(s[bool]):
             description="Core action (validate, diagnose, inventory)",
         )
         args: list[str] = Field(
-            default_factory=list, description="Additional arguments for core operation",
+            default_factory=list,
+            description="Additional arguments for core operation",
         )
 
     class DepsCommand(BaseInfraCommand):
@@ -121,10 +128,12 @@ class FlextInfraDispatcher(s[bool]):
 
         command_type: str = "flext_infra.deps"
         action: str = Field(
-            default="detect", description="Deps action (detect, sync, modernize)",
+            default="detect",
+            description="Deps action (detect, sync, modernize)",
         )
         args: list[str] = Field(
-            default_factory=list, description="Additional arguments for deps operation",
+            default_factory=list,
+            description="Additional arguments for deps operation",
         )
 
     @classmethod
@@ -141,7 +150,9 @@ class FlextInfraDispatcher(s[bool]):
             """Callable handler with message_type attribute for dispatcher routing."""
 
             def __init__(
-                self, message_type_value: str, command_cls: type[BaseInfraCommand],
+                self,
+                message_type_value: str,
+                command_cls: type[BaseInfraCommand],
             ) -> None:
                 self.message_type = message_type_value
                 self._command_cls = command_cls
@@ -159,7 +170,8 @@ class FlextInfraDispatcher(s[bool]):
         check_handler = CommandHandler("flext_infra.check", cls.CheckCommand)
         basemk_handler = CommandHandler("flext_infra.basemk", cls.BaseMkCommand)
         workspace_handler = CommandHandler(
-            "flext_infra.workspace", cls.WorkspaceCommand,
+            "flext_infra.workspace",
+            cls.WorkspaceCommand,
         )
         release_handler = CommandHandler("flext_infra.release", cls.ReleaseCommand)
         docs_handler = CommandHandler("flext_infra.docs", cls.DocsCommand)

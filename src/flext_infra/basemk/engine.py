@@ -23,7 +23,8 @@ class _TemplateRenderer(Protocol):
 
 
 def _render_template(
-    template: _TemplateRenderer, context: Mapping[str, t.ContainerValue],
+    template: _TemplateRenderer,
+    context: Mapping[str, t.ContainerValue],
 ) -> str:
     return template.render(**context)
 

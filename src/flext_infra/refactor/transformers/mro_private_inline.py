@@ -16,7 +16,9 @@ class FlextInfraRefactorMROPrivateInlineTransformer(cst.CSTTransformer):
 
     @override
     def leave_Name(
-        self, original_node: cst.Name, updated_node: cst.Name,
+        self,
+        original_node: cst.Name,
+        updated_node: cst.Name,
     ) -> cst.BaseExpression:
         if original_node.value in self.replacement_values:
             return self.replacement_values[original_node.value]

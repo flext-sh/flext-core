@@ -15,7 +15,8 @@ def test_namespace_enforcer_creates_missing_facades_and_rewrites_imports(
     pkg = project / "src" / "sample_pkg"
     pkg.mkdir(parents=True)
     _ = (project / "pyproject.toml").write_text(
-        "[project]\nname='sample'\n", encoding="utf-8",
+        "[project]\nname='sample'\n",
+        encoding="utf-8",
     )
     _ = (project / "Makefile").write_text("all:\n\t@true\n", encoding="utf-8")
     _ = (pkg / "__init__.py").write_text("", encoding="utf-8")
@@ -52,7 +53,8 @@ def test_namespace_enforcer_detects_manual_typings_and_compat_aliases(
     pkg = project / "src" / "sample_pkg"
     pkg.mkdir(parents=True)
     _ = (project / "pyproject.toml").write_text(
-        "[project]\nname='sample'\n", encoding="utf-8",
+        "[project]\nname='sample'\n",
+        encoding="utf-8",
     )
     _ = (project / "Makefile").write_text("all:\n\t@true\n", encoding="utf-8")
     _ = (pkg / "__init__.py").write_text("", encoding="utf-8")
@@ -80,7 +82,8 @@ def test_namespace_enforcer_detects_manual_protocol_outside_canonical_files(
     pkg = project / "src" / "sample_pkg"
     pkg.mkdir(parents=True)
     _ = (project / "pyproject.toml").write_text(
-        "[project]\nname='sample'\n", encoding="utf-8",
+        "[project]\nname='sample'\n",
+        encoding="utf-8",
     )
     _ = (project / "Makefile").write_text("all:\n\t@true\n", encoding="utf-8")
     _ = (pkg / "__init__.py").write_text("", encoding="utf-8")
@@ -112,7 +115,8 @@ def test_namespace_enforcer_detects_internal_private_imports(tmp_path: Path) -> 
     pkg = project / "src" / "sample_pkg"
     pkg.mkdir(parents=True)
     _ = (project / "pyproject.toml").write_text(
-        "[project]\nname='sample'\n", encoding="utf-8",
+        "[project]\nname='sample'\n",
+        encoding="utf-8",
     )
     _ = (project / "Makefile").write_text("all:\n\t@true\n", encoding="utf-8")
     _ = (pkg / "__init__.py").write_text("", encoding="utf-8")
@@ -142,7 +146,8 @@ def test_namespace_enforcer_apply_moves_manual_protocol_to_protocols_file(
     pkg = project / "src" / "sample_pkg"
     pkg.mkdir(parents=True)
     _ = (project / "pyproject.toml").write_text(
-        "[project]\nname='sample'\n", encoding="utf-8",
+        "[project]\nname='sample'\n",
+        encoding="utf-8",
     )
     _ = (project / "Makefile").write_text("all:\n\t@true\n", encoding="utf-8")
     _ = (pkg / "__init__.py").write_text("", encoding="utf-8")

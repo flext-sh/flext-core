@@ -18,7 +18,9 @@ class FlextInfraRefactorImportBypassRemover(cst.CSTTransformer):
 
     @override
     def leave_Try(
-        self, original_node: cst.Try, updated_node: cst.Try,
+        self,
+        original_node: cst.Try,
+        updated_node: cst.Try,
     ) -> cst.BaseStatement:
         del original_node
         if len(updated_node.body.body) != 1:

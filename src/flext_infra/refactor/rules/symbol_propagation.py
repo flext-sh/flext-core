@@ -22,7 +22,9 @@ class FlextInfraRefactorSymbolPropagationRule(FlextInfraRefactorRule):
 
     @override
     def apply(
-        self, tree: cst.Module, _file_path: Path | None = None,
+        self,
+        tree: cst.Module,
+        _file_path: Path | None = None,
     ) -> tuple[cst.Module, list[str]]:
         target_modules_raw = self.config.get("target_modules", [])
         module_renames_raw = self.config.get("module_renames", {})
@@ -69,19 +71,25 @@ class FlextInfraRefactorSignaturePropagator(cst.CSTTransformer):
 
     @override
     def leave_Call(
-        self, original_node: cst.Call, updated_node: cst.Call,
+        self,
+        original_node: cst.Call,
+        updated_node: cst.Call,
     ) -> cst.BaseExpression:
         qualified_names = {
             item.name
             for item in self.get_metadata(
-                QualifiedNameProvider, original_node.func, default=set(),
+                QualifiedNameProvider,
+                original_node.func,
+                default=set(),
             )
         }
         simple_name = self._simple_callable_name(original_node.func)
         result_call = updated_node
         for migration in self._migrations:
             if not self._matches_migration(
-                migration, qualified_names=qualified_names, simple_name=simple_name,
+                migration,
+                qualified_names=qualified_names,
+                simple_name=simple_name,
             ):
                 continue
             migration_id = str(migration.id)
@@ -116,7 +124,8 @@ class FlextInfraRefactorSignaturePropagator(cst.CSTTransformer):
                     continue
                 next_args.append(
                     cst.Arg(
-                        value=self._literal_expr(value_literal), keyword=cst.Name(key),
+                        value=self._literal_expr(value_literal),
+                        keyword=cst.Name(key),
                     ),
                 )
                 changed = True
@@ -128,7 +137,8 @@ class FlextInfraRefactorSignaturePropagator(cst.CSTTransformer):
         return result_call
 
     def _add_keywords(
-        self, migration: m.Infra.Refactor.RuleConfigs.SignatureMigration,
+        self,
+        migration: m.Infra.Refactor.RuleConfigs.SignatureMigration,
     ) -> Mapping[str, str]:
         return migration.add_keywords
 
@@ -138,7 +148,8 @@ class FlextInfraRefactorSignaturePropagator(cst.CSTTransformer):
         return arg.keyword.value
 
     def _keyword_renames(
-        self, migration: m.Infra.Refactor.RuleConfigs.SignatureMigration,
+        self,
+        migration: m.Infra.Refactor.RuleConfigs.SignatureMigration,
     ) -> Mapping[str, str]:
         return migration.keyword_renames
 
@@ -170,7 +181,9 @@ class FlextInfraRefactorSignaturePropagator(cst.CSTTransformer):
         if target_qualified and qualified_names.intersection(target_qualified):
             return True
         return bool(
-            simple_name is not None and target_simple and (simple_name in target_simple),
+            simple_name is not None
+            and target_simple
+            and (simple_name in target_simple),
         )
 
     def _record_change(self, message: str) -> None:
@@ -179,7 +192,8 @@ class FlextInfraRefactorSignaturePropagator(cst.CSTTransformer):
             self._on_change(message)
 
     def _remove_keywords(
-        self, migration: m.Infra.Refactor.RuleConfigs.SignatureMigration,
+        self,
+        migration: m.Infra.Refactor.RuleConfigs.SignatureMigration,
     ) -> set[str]:
         return set(migration.remove_keywords)
 
@@ -196,7 +210,9 @@ class FlextInfraRefactorSignaturePropagationRule(FlextInfraRefactorRule):
 
     @override
     def apply(
-        self, tree: cst.Module, _file_path: Path | None = None,
+        self,
+        tree: cst.Module,
+        _file_path: Path | None = None,
     ) -> tuple[cst.Module, list[str]]:
         migrations_raw = self.config.get("signature_migrations", [])
         try:

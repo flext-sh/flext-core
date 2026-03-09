@@ -11,13 +11,20 @@ from libcst.metadata import MetadataWrapper
 from pydantic import TypeAdapter, ValidationError
 
 from flext_infra import c, m, t, u
+from flext_infra.refactor.rule import FlextInfraRefactorRule
+from flext_infra.refactor.transformers.class_reconstructor import (
+    FlextInfraRefactorClassReconstructor,
+)
 from flext_infra.refactor.transformers.nested_class_propagation import (
     NestedClassPropagationTransformer,
 )
 
 
 class PreCheckGate:
+    """Gate that validates class nesting entries against a YAML policy matrix."""
+
     def __init__(self, policy_path: Path | None = None) -> None:
+        """Initialize with optional custom policy path."""
         self._policy_path = policy_path or Path(__file__).with_name(
             "class-policy-v2.yml"
         )
@@ -30,6 +37,7 @@ class PreCheckGate:
         self,
         entry: t.Infra.StrMap,
     ) -> tuple[bool, t.Infra.StrMap | None]:
+        """Validate a single class-nesting entry against the loaded policy."""
         source_symbol = entry.get(c.Infra.ReportKeys.LOOSE_NAME, "")
         helper_symbol = entry.get("helper_name", "")
         symbol = source_symbol or helper_symbol
@@ -151,8 +159,11 @@ class PreCheckGate:
 
 
 class FlextInfraRefactorClassNestingReconstructor:
+    """Reconstruct class nesting by applying rename mappings and propagation."""
+
     @staticmethod
     def class_rename_mappings(entries: list[t.Infra.StrMap]) -> dict[str, str]:
+        """Build a mapping of loose class names to their nested target names."""
         mappings: dict[str, str] = {}
         for entry in entries:
             loose_name = entry.get(c.Infra.ReportKeys.LOOSE_NAME)
@@ -175,6 +186,7 @@ class FlextInfraRefactorClassNestingReconstructor:
         policy_context: t.Infra.PolicyContext,
         class_families: t.Infra.ClassFamilyMap,
     ) -> cst.Module:
+        """Apply nested class propagation transforms using the given rename mappings."""
         transformer = NestedClassPropagationTransformer(
             class_renames=mappings,
             policy_context=policy_context,
@@ -187,12 +199,6 @@ class FlextInfraRefactorClassNestingReconstructor:
                 f"Applied NestedClassPropagationTransformer ({len(mappings)} renames)",
             )
         return updated_tree
-
-
-from flext_infra.refactor.rule import FlextInfraRefactorRule
-from flext_infra.refactor.transformers.class_reconstructor import (
-    FlextInfraRefactorClassReconstructor,
-)
 
 
 class FlextInfraRefactorClassReconstructorRule(FlextInfraRefactorRule):

@@ -563,7 +563,8 @@ class TestCoreMainFlow:
         with patch.object(sys, "argv", ["prog", "basemk-validate", "--root", "."]):
             with patch("flext_infra.core.__main__.FlextRuntime"):
                 with patch(
-                    "flext_infra.core.__main__._run_basemk_validate", return_value=0,
+                    "flext_infra.core.__main__._run_basemk_validate",
+                    return_value=0,
                 ) as mock_handler:
                     result = main()
                     assert result == 0
@@ -574,7 +575,8 @@ class TestCoreMainFlow:
         with patch.object(sys, "argv", ["prog", "inventory", "--root", "."]):
             with patch("flext_infra.core.__main__.FlextRuntime"):
                 with patch(
-                    "flext_infra.core.__main__._run_inventory", return_value=0,
+                    "flext_infra.core.__main__._run_inventory",
+                    return_value=0,
                 ) as mock_handler:
                     result = main()
                     assert result == 0
@@ -589,7 +591,8 @@ class TestCoreMainFlow:
         ):
             with patch("flext_infra.core.__main__.FlextRuntime"):
                 with patch(
-                    "flext_infra.core.__main__._run_pytest_diag", return_value=0,
+                    "flext_infra.core.__main__._run_pytest_diag",
+                    return_value=0,
                 ) as mock_handler:
                     result = main()
                     assert result == 0
@@ -604,7 +607,8 @@ class TestCoreMainFlow:
         ):
             with patch("flext_infra.core.__main__.FlextRuntime"):
                 with patch(
-                    "flext_infra.core.__main__._run_scan", return_value=0,
+                    "flext_infra.core.__main__._run_scan",
+                    return_value=0,
                 ) as mock_handler:
                     result = main()
                     assert result == 0
@@ -619,7 +623,8 @@ class TestCoreMainFlow:
         ):
             with patch("flext_infra.core.__main__.FlextRuntime"):
                 with patch(
-                    "flext_infra.core.__main__._run_skill_validate", return_value=0,
+                    "flext_infra.core.__main__._run_skill_validate",
+                    return_value=0,
                 ) as mock_handler:
                     result = main()
                     assert result == 0
@@ -630,7 +635,8 @@ class TestCoreMainFlow:
         with patch.object(sys, "argv", ["prog", "stub-validate", "--root", "."]):
             with patch("flext_infra.core.__main__.FlextRuntime"):
                 with patch(
-                    "flext_infra.core.__main__._run_stub_validate", return_value=0,
+                    "flext_infra.core.__main__._run_stub_validate",
+                    return_value=0,
                 ) as mock_handler:
                     result = main()
                     assert result == 0

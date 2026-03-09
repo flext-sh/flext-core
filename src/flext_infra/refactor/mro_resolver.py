@@ -18,7 +18,10 @@ TYPE_CANDIDATE_PATTERN = re.compile(r"^_?[A-Za-z][A-Za-z0-9_]*$")
 
 
 def _new_symbol_candidate(
-    *, symbol: str, line: int, kind: str = "constant",
+    *,
+    symbol: str,
+    line: int,
+    kind: str = "constant",
 ) -> m.Infra.Refactor.MROSymbolCandidate:
     return m.Infra.Refactor.MROSymbolCandidate(
         symbol=symbol,
@@ -47,7 +50,12 @@ def _new_scan_report(
 
 
 def _new_import_rewrite(
-    *, module: str, import_name: str, as_name: str | None, symbol: str, facade_name: str,
+    *,
+    module: str,
+    import_name: str,
+    as_name: str | None,
+    symbol: str,
+    facade_name: str,
 ) -> m.Infra.Refactor.MROImportRewrite:
     return m.Infra.Refactor.MROImportRewrite(
         module=module,
@@ -59,7 +67,9 @@ def _new_import_rewrite(
 
 
 def _new_rewrite_result(
-    *, file: str, replacements: int,
+    *,
+    file: str,
+    replacements: int,
 ) -> m.Infra.Refactor.MRORewriteResult:
     return m.Infra.Refactor.MRORewriteResult(file=file, replacements=replacements)
 
@@ -73,7 +83,8 @@ class FlextInfraRefactorMROResolver:
         *,
         family_classes: Mapping[t.Infra.FacadeFamily, type],
         expected_base_chains: Mapping[
-            t.Infra.FacadeFamily, Sequence[t.Infra.ExpectedBase],
+            t.Infra.FacadeFamily,
+            Sequence[t.Infra.ExpectedBase],
         ],
     ) -> tuple[m.Infra.Refactor.FamilyMROResolution, ...]:
         """Resolve and validate MRO for all facade families."""
@@ -102,7 +113,8 @@ class FlextInfraRefactorMROResolver:
             family_chains=classification.family_chains,
         )
         return cls.resolve(
-            family_classes=family_classes, expected_base_chains=expected_base_chains,
+            family_classes=family_classes,
+            expected_base_chains=expected_base_chains,
         )
 
     @classmethod
@@ -115,11 +127,14 @@ class FlextInfraRefactorMROResolver:
     ) -> m.Infra.Refactor.FamilyMROResolution:
         expected_names = cls._normalize_expected_chain(expected_chain=expected_chain)
         cls._validate_base_policy(
-            family=family, facade_class=facade_class, expected_names=expected_names,
+            family=family,
+            facade_class=facade_class,
+            expected_names=expected_names,
         )
         resolved_mro = tuple(entry.__name__ for entry in inspect.getmro(facade_class))
         accessible_namespaces = cls._collect_accessible_namespaces(
-            family=family, facade_class=facade_class,
+            family=family,
+            facade_class=facade_class,
         )
         cls._validate_expected_accessibility(
             family=family,
@@ -135,7 +150,9 @@ class FlextInfraRefactorMROResolver:
 
     @classmethod
     def _normalize_classifier_chains(
-        cls, *, family_chains: Mapping[str, Sequence[str]],
+        cls,
+        *,
+        family_chains: Mapping[str, Sequence[str]],
     ) -> dict[t.Infra.FacadeFamily, tuple[str, ...]]:
         normalized: dict[t.Infra.FacadeFamily, tuple[str, ...]] = {}
         for family in ("c", "t", "p", "m", "u"):
@@ -148,7 +165,9 @@ class FlextInfraRefactorMROResolver:
 
     @classmethod
     def _normalize_expected_chain(
-        cls, *, expected_chain: Sequence[t.Infra.ExpectedBase],
+        cls,
+        *,
+        expected_chain: Sequence[t.Infra.ExpectedBase],
     ) -> tuple[str, ...]:
         expected_names: list[str] = []
         for base in expected_chain:
@@ -199,7 +218,8 @@ class FlextInfraRefactorMROResolver:
         missing_namespaces: list[str] = []
         for base_name in expected_names:
             namespace = cls._namespace_from_class_name(
-                class_name=base_name, family=family,
+                class_name=base_name,
+                family=family,
             )
             if namespace is None:
                 continue
@@ -212,14 +232,18 @@ class FlextInfraRefactorMROResolver:
 
     @classmethod
     def _collect_accessible_namespaces(
-        cls, *, family: t.Infra.FacadeFamily, facade_class: type,
+        cls,
+        *,
+        family: t.Infra.FacadeFamily,
+        facade_class: type,
     ) -> tuple[str, ...]:
         namespace_order: list[str] = []
         for current in inspect.getmro(facade_class):
             if current is object:
                 continue
             class_namespace = cls._namespace_from_class_name(
-                class_name=current.__name__, family=family,
+                class_name=current.__name__,
+                family=family,
             )
             if class_namespace is not None:
                 cls._append_unique(namespace_order, class_namespace)
@@ -233,7 +257,10 @@ class FlextInfraRefactorMROResolver:
 
     @classmethod
     def _namespace_from_class_name(
-        cls, *, class_name: str, family: t.Infra.FacadeFamily,
+        cls,
+        *,
+        class_name: str,
+        family: t.Infra.FacadeFamily,
     ) -> str | None:
         suffix = c.Infra.Refactor.FAMILY_SUFFIXES[family]
         if not class_name.endswith(suffix):
@@ -255,7 +282,10 @@ class FlextInfraRefactorMROMigrationScanner:
 
     @classmethod
     def scan_workspace(
-        cls, *, workspace_root: Path, target: str,
+        cls,
+        *,
+        workspace_root: Path,
+        target: str,
     ) -> tuple[list[m.Infra.Refactor.MROScanReport], int]:
         """Scan workspace and return candidate files with counts."""
         if target not in c.Infra.Refactor.MRO_TARGETS:
@@ -301,7 +331,8 @@ class FlextInfraRefactorMROMigrationScanner:
         candidates: list[m.Infra.Refactor.MROSymbolCandidate] = []
         for stmt in tree.body:
             candidate = cls._candidate_from_statement(
-                stmt=stmt, target_spec=target_spec,
+                stmt=stmt,
+                target_spec=target_spec,
             )
             if candidate is not None:
                 candidates.append(candidate)
@@ -315,7 +346,9 @@ class FlextInfraRefactorMROMigrationScanner:
 
     @staticmethod
     def _candidate_from_statement(
-        *, stmt: ast.stmt, target_spec: m.Infra.Refactor.MROTargetSpec,
+        *,
+        stmt: ast.stmt,
+        target_spec: m.Infra.Refactor.MROTargetSpec,
     ) -> m.Infra.Refactor.MROSymbolCandidate | None:
         if target_spec.family_alias == "t":
             return (
@@ -419,7 +452,9 @@ class FlextInfraRefactorMROMigrationScanner:
 
     @staticmethod
     def _iter_target_files(
-        *, project_root: Path, target_spec: m.Infra.Refactor.MROTargetSpec,
+        *,
+        project_root: Path,
+        target_spec: m.Infra.Refactor.MROTargetSpec,
     ) -> list[Path]:
         ref_c: type[c.Infra.Refactor] = c.Infra.Refactor
         candidates: set[Path] = set()
@@ -438,12 +473,15 @@ class FlextInfraRefactorMROMigrationScanner:
     @staticmethod
     def _module_path(*, file_path: Path, project_root: Path) -> str:
         return u.Infra.Refactor.module_path(
-            file_path=file_path, project_root=project_root,
+            file_path=file_path,
+            project_root=project_root,
         )
 
     @staticmethod
     def _facade_class_name(
-        *, tree: ast.Module, target_spec: m.Infra.Refactor.MROTargetSpec,
+        *,
+        tree: ast.Module,
+        target_spec: m.Infra.Refactor.MROTargetSpec,
     ) -> str:
         for stmt in tree.body:
             if not isinstance(stmt, ast.Assign):
@@ -470,7 +508,8 @@ class FlextInfraRefactorMROMigrationScanner:
 
     @staticmethod
     def _typing_candidate_from_statement(
-        *, stmt: ast.stmt,
+        *,
+        stmt: ast.stmt,
     ) -> m.Infra.Refactor.MROSymbolCandidate | None:
         if isinstance(stmt, ast.TypeAlias):
             symbol = stmt.name.id
@@ -515,7 +554,8 @@ class FlextInfraRefactorMROMigrationScanner:
 
     @staticmethod
     def _protocol_candidate_from_statement(
-        *, stmt: ast.stmt,
+        *,
+        stmt: ast.stmt,
     ) -> m.Infra.Refactor.MROSymbolCandidate | None:
         if not isinstance(stmt, ast.ClassDef):
             return None
@@ -645,7 +685,8 @@ class FlextInfraRefactorMROImportRewriter:
                 kept_names: list[ast.alias] = []
                 for alias in stmt.names:
                     default_facade_alias = module_facade_aliases.get(
-                        module_name, c.Infra.Refactor.DEFAULT_FACADE_ALIAS,
+                        module_name,
+                        c.Infra.Refactor.DEFAULT_FACADE_ALIAS,
                     )
                     if alias.name == default_facade_alias:
                         facade_local_name = default_facade_alias
@@ -675,7 +716,8 @@ class FlextInfraRefactorMROImportRewriter:
                         as_name=None,
                         symbol=new_symbol,
                         facade_name=module_facade_alias.get(
-                            module_name, default_facade_alias,
+                            module_name,
+                            default_facade_alias,
                         ),
                     )
                     facade_import = _new_import_rewrite(
@@ -690,7 +732,8 @@ class FlextInfraRefactorMROImportRewriter:
                         ),
                         symbol="",
                         facade_name=module_facade_alias.get(
-                            module_name, default_facade_alias,
+                            module_name,
+                            default_facade_alias,
                         ),
                     )
                     facade_key = f"{facade_import.module}:{facade_import.import_name}:{facade_import.as_name or ''}"

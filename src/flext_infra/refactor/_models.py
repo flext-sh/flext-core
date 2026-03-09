@@ -390,7 +390,8 @@ class FlextInfraRefactorModels(
         family_alias: str = Field(min_length=1, description="Family alias letter")
         file_names: frozenset[str] = Field(description="File name patterns")
         package_directory: str = Field(
-            min_length=1, description="Package directory name",
+            min_length=1,
+            description="Package directory name",
         )
         class_suffix: str = Field(min_length=1, description="Class suffix")
 
@@ -417,10 +418,14 @@ class FlextInfraRefactorModels(
         """Mutable statistics for centralizer parse failures."""
 
         parse_syntax_errors: int = Field(
-            default=0, ge=0, description="Syntax error count",
+            default=0,
+            ge=0,
+            description="Syntax error count",
         )
         parse_encoding_errors: int = Field(
-            default=0, ge=0, description="Encoding error count",
+            default=0,
+            ge=0,
+            description="Encoding error count",
         )
         parse_io_errors: int = Field(default=0, ge=0, description="I/O error count")
 

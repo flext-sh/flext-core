@@ -74,7 +74,10 @@ class FlextInfraRefactorSafetyManager:
         return self._git.is_repo(workspace_root)
 
     def create_pre_transformation_stash(
-        self, workspace_root: Path, *, label: str = "flext-refactor-pre-transform",
+        self,
+        workspace_root: Path,
+        *,
+        label: str = "flext-refactor-pre-transform",
     ) -> r[str]:
         """Stash uncommitted changes and return the stash reference."""
         self._last_workspace_root = workspace_root
@@ -87,7 +90,9 @@ class FlextInfraRefactorSafetyManager:
             return r[str].ok("")
         stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
         push = self._git.stash_push(
-            workspace_root, f"{label}:{stamp}", include_untracked=True,
+            workspace_root,
+            f"{label}:{stamp}",
+            include_untracked=True,
         )
         if push.is_failure:
             return r[str].fail(push.error or "git stash push failed")
@@ -103,7 +108,9 @@ class FlextInfraRefactorSafetyManager:
     def rollback(self, workspace_root: str, /) -> None: ...
 
     def rollback(
-        self, workspace_root: Path | str, stash_ref: str = "",
+        self,
+        workspace_root: Path | str,
+        stash_ref: str = "",
     ) -> r[bool] | None:
         """Restore previously stashed state, resolving workspace from context."""
         if isinstance(workspace_root, Path):

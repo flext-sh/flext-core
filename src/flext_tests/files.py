@@ -1248,10 +1248,10 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             if deep_result is not None:
                 return deep_result
         content1 = (
-            re.sub("\\s+", "", content1_raw) if params.ignore_ws else content1_raw
+            re.sub(r"\s+", "", content1_raw) if params.ignore_ws else content1_raw
         )
         content2 = (
-            re.sub("\\s+", "", content2_raw) if params.ignore_ws else content2_raw
+            re.sub(r"\s+", "", content2_raw) if params.ignore_ws else content2_raw
         )
         if params.ignore_case:
             content1 = content1.lower()

@@ -249,7 +249,10 @@ class LifecycleService(FlextService[str]):
         return r[str].ok("shutdown")
 
     def set_failure_mode(
-        self, *, fail_init: bool = False, fail_shutdown: bool = False,
+        self,
+        *,
+        fail_init: bool = False,
+        fail_shutdown: bool = False,
     ) -> None:
         """Set failure modes for testing.
 
@@ -320,7 +323,8 @@ class TestFlextServiceIntegration:
 
     @pytest.mark.integration
     def test_user_service_with_custom_data(
-        self, clean_container: FlextContainer,
+        self,
+        clean_container: FlextContainer,
     ) -> None:
         """Test user service with custom user data.
 
@@ -360,7 +364,8 @@ class TestFlextServiceIntegration:
 
     @pytest.mark.integration
     def test_notification_service_execution(
-        self, clean_container: FlextContainer,
+        self,
+        clean_container: FlextContainer,
     ) -> None:
         """Test notification service execution.
 
@@ -391,7 +396,8 @@ class TestFlextServiceIntegration:
 
     @pytest.mark.integration
     def test_notification_service_failure_mode(
-        self, clean_container: FlextContainer,
+        self,
+        clean_container: FlextContainer,
     ) -> None:
         """Test notification service failure mode.
 
@@ -421,7 +427,9 @@ class TestFlextServiceIntegration:
 
     @pytest.mark.integration
     def test_lifecycle_service_initialization(
-        self, clean_container: FlextContainer, temp_directory: str,
+        self,
+        clean_container: FlextContainer,
+        temp_directory: str,
     ) -> None:
         """Test lifecycle service initialization with config.
 
@@ -432,7 +440,9 @@ class TestFlextServiceIntegration:
         """
         lifecycle_service = LifecycleService()
         service_config = _build_service_config(
-            name="test_service", version="1.0.0", temp_dir=str(temp_directory),
+            name="test_service",
+            version="1.0.0",
+            temp_dir=str(temp_directory),
         )
         result = lifecycle_service.initialize(service_config)
         _ = assertion_helpers.assert_flext_result_success(result)
@@ -443,7 +453,9 @@ class TestFlextServiceIntegration:
 
     @pytest.mark.integration
     def test_lifecycle_service_health_check(
-        self, clean_container: FlextContainer, temp_directory: str,
+        self,
+        clean_container: FlextContainer,
+        temp_directory: str,
     ) -> None:
         """Test lifecycle service health check.
 
@@ -454,7 +466,9 @@ class TestFlextServiceIntegration:
         """
         lifecycle_service = LifecycleService()
         service_config = _build_service_config(
-            name="test_service", version="1.0.0", temp_dir=str(temp_directory),
+            name="test_service",
+            version="1.0.0",
+            temp_dir=str(temp_directory),
         )
         health_before = lifecycle_service.health_check()
         _ = lifecycle_service.initialize(service_config)
@@ -464,7 +478,9 @@ class TestFlextServiceIntegration:
 
     @pytest.mark.integration
     def test_lifecycle_service_shutdown(
-        self, clean_container: FlextContainer, temp_directory: str,
+        self,
+        clean_container: FlextContainer,
+        temp_directory: str,
     ) -> None:
         """Test lifecycle service shutdown.
 
@@ -475,7 +491,9 @@ class TestFlextServiceIntegration:
         """
         lifecycle_service = LifecycleService()
         service_config = _build_service_config(
-            name="test_service", version="1.0.0", temp_dir=str(temp_directory),
+            name="test_service",
+            version="1.0.0",
+            temp_dir=str(temp_directory),
         )
         _ = lifecycle_service.initialize(service_config)
         result = lifecycle_service.shutdown()
@@ -486,7 +504,9 @@ class TestFlextServiceIntegration:
 
     @pytest.mark.integration
     def test_lifecycle_service_failure_modes(
-        self, clean_container: FlextContainer, temp_directory: str,
+        self,
+        clean_container: FlextContainer,
+        temp_directory: str,
     ) -> None:
         """Test lifecycle service failure modes.
 
@@ -497,7 +517,9 @@ class TestFlextServiceIntegration:
         """
         lifecycle_service = LifecycleService()
         service_config = _build_service_config(
-            name="test_service", version="1.0.0", temp_dir=str(temp_directory),
+            name="test_service",
+            version="1.0.0",
+            temp_dir=str(temp_directory),
         )
         lifecycle_service.set_failure_mode(fail_init=True)
         init_result = lifecycle_service.initialize(service_config)
@@ -511,7 +533,8 @@ class TestFlextServiceIntegration:
 
     @pytest.mark.integration
     def test_service_dependency_injection(
-        self, clean_container: FlextContainer,
+        self,
+        clean_container: FlextContainer,
     ) -> None:
         """Test dependency injection patterns with real services.
 
@@ -535,10 +558,12 @@ class TestFlextServiceIntegration:
         _ = clean_container.register("user_service", user_service)
         _ = clean_container.register("notification_service", notification_service)
         user_service_result = clean_container.get(
-            "user_service", type_cls=UserQueryService,
+            "user_service",
+            type_cls=UserQueryService,
         )
         notification_service_result = clean_container.get(
-            "notification_service", type_cls=NotificationService,
+            "notification_service",
+            type_cls=NotificationService,
         )
         assert user_service_result.is_success
         assert notification_service_result.is_success

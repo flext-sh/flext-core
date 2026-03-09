@@ -18,7 +18,9 @@ class FlextInfraRefactorMRORemover(cst.CSTTransformer):
 
     @override
     def leave_ClassDef(
-        self, original_node: cst.ClassDef, updated_node: cst.ClassDef,
+        self,
+        original_node: cst.ClassDef,
+        updated_node: cst.ClassDef,
     ) -> cst.ClassDef:
         del original_node
         if not isinstance(updated_node.body, cst.IndentedBlock):
