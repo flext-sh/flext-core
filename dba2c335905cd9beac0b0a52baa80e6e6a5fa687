@@ -1,0 +1,23 @@
+src/flext_infra/refactor/analysis.py
+  fbac937d7e2ef73a 518-519
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.8",
+  "base_commit_sha": "dba2c335905cd9beac0b0a52baa80e6e6a5fa687",
+  "prompts": {
+    "fbac937d7e2ef73a": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_33050c9eaffecq35vWD3eAr6mv",
+        "model": "anthropic/claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 19,
+      "total_deletions": 18,
+      "accepted_lines": 5,
+      "overriden_lines": 3
+    }
+  }
+}
