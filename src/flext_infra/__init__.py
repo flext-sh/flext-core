@@ -31,6 +31,9 @@ if TYPE_CHECKING:
     from flext_infra._utilities.subprocess import (
         FlextInfraUtilitiesSubprocess as FlextInfraUtilitiesSubprocess,
     )
+    from flext_infra._utilities.templates import (
+        FlextInfraUtilitiesTemplates as FlextInfraTemplateEngine,
+    )
     from flext_infra._utilities.toml import (
         FlextInfraUtilitiesToml as FlextInfraUtilitiesToml,
     )
@@ -57,7 +60,6 @@ if TYPE_CHECKING:
     from flext_infra.release import FlextInfraReleaseOrchestrator
     from flext_infra.reporting import FlextInfraReportingService
     from flext_infra.selection import FlextInfraProjectSelector
-    from flext_infra.templates import FlextInfraTemplateEngine
     from flext_infra.typings import FlextInfraTypes, FlextInfraTypes as t
     from flext_infra.utilities import FlextInfraUtilities, FlextInfraUtilities as u
     from flext_infra.versioning import FlextInfraVersioningService
@@ -136,7 +138,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "flext_infra.core.stub_chain",
         "FlextInfraStubSupplyChain",
     ),
-    "FlextInfraTemplateEngine": ("flext_infra.templates", "FlextInfraTemplateEngine"),
+    "FlextInfraTemplateEngine": (
+        "flext_infra._utilities.templates",
+        "FlextInfraUtilitiesTemplates",
+    ),
     "FlextInfraTextPatternScanner": (
         "flext_infra.core.scanner",
         "FlextInfraTextPatternScanner",

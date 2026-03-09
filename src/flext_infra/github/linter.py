@@ -56,7 +56,7 @@ class FlextInfraWorkflowLinter:
                 reason="actionlint not installed",
             )
             if report_path is not None:
-                self._json.write(report_path, payload_skipped, sort_keys=True)
+                self._json.write_json(report_path, payload_skipped, sort_keys=True)
             return r[m.Infra.Github.WorkflowLintResult].ok(payload_skipped)
         result: r[m.Infra.Core.CommandOutput] = self._runner.run([actionlint], cwd=root)
         if result.is_success:
@@ -74,7 +74,7 @@ class FlextInfraWorkflowLinter:
                 detail=result.error or "",
             )
         if report_path is not None:
-            self._json.write(report_path, payload, sort_keys=True)
+            self._json.write_json(report_path, payload, sort_keys=True)
         if payload.status == "fail" and strict:
             return r[m.Infra.Github.WorkflowLintResult].fail(
                 result.error or "actionlint found issues",

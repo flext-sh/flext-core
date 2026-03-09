@@ -1,12 +1,15 @@
-"""Lazy-init __init__.py generator (PEP 562).
+"""Lazy-init ``__init__.py`` generator (PEP 562).
 
-Reads existing ``__init__.py`` files, extracts ``__all__`` and import mappings,
-and generates clean lazy-loading versions using ``flext_core.lazy``.
+Auto-discovers exports from sibling ``.py`` files and generates clean
+lazy-loading ``__init__.py`` files using ``flext_core.lazy``.
 
-Handles two cases:
+The generator **never** reads existing ``__init__.py`` content for exports
+or import mappings.  It discovers everything by scanning sibling ``.py``
+files' ``__all__`` and AST definitions.  You can DELETE every
+``__init__.py`` and regenerate them perfectly from scratch.
 
-1. Files with existing ``_LAZY_IMPORTS``: parses the dict and regenerates cleanly.
-2. Files without ``_LAZY_IMPORTS``: derives mappings from import statements.
+Processes directories bottom-up (deepest first) so child packages are
+generated before parents, and parent packages can include child exports.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -24,13 +27,18 @@ from typing import override
 from flext_core import r, s
 from flext_infra import FlextInfraUtilitiesSubprocess, c, output, u
 
+# ---------------------------------------------------------------------------
+# Service class
+# ---------------------------------------------------------------------------
+
 
 class FlextInfraCodegenLazyInit(s[int]):
     """Generates ``__init__.py`` with PEP 562 lazy imports.
 
-    This service scans ``__init__.py`` files under ``src/`` directories in a
-    workspace, extracts ``__all__`` and import mappings, and rewrites them
-    using ``flext_core.lazy`` utilities.
+    Scans sibling ``.py`` files in each package directory, discovers their
+    exports via ``__all__`` or AST scanning, and generates clean lazy-loading
+    ``__init__.py`` files.  Processes bottom-up so child packages are
+    generated before parents.
     """
 
     def __init__(self, workspace_root: Path) -> None:
@@ -43,133 +51,223 @@ class FlextInfraCodegenLazyInit(s[int]):
         """Execute the lazy-init generation process."""
         return r[int].ok(self.run(check_only=False))
 
-    def run(self, *, check_only: bool = False, scan_tests: bool = True) -> int:
-        """Process all ``__init__.py`` files in the workspace.
+    def run(self, *, check_only: bool = False) -> int:
+        """Process all package directories in the workspace.
 
-        Scans ``src/``, ``tests/``, ``examples/``, and ``scripts/`` directories
-        for ``__init__.py`` files that declare ``__all__`` and generates PEP 562
-        lazy-import versions.
+        Discovers package directories under ``src/``, ``tests/``,
+        ``examples/``, and ``scripts/``, processes them bottom-up
+        (deepest first), and generates PEP 562 lazy-import
+        ``__init__.py`` files.
 
         Args:
-            check_only: If True, only report unmapped exports without writing.
-            scan_tests: Deprecated — all directories are always scanned.
+            check_only: If True, only report without writing.
 
-        Returns the number of files that had unmapped exports (0 = perfect).
+        Returns the number of errors (0 = perfect).
 
         """
-        patterns = list(c.Infra.Codegen.ALL_SCAN_PATTERNS)
-        init_files: list[Path] = []
-        for pattern in patterns:
-            init_files.extend(
-                p
-                for p in sorted(self._root.rglob(pattern))
-                if not any(
-                    part.startswith(".") or part in {"vendor", "node_modules", ".venv"}
-                    for part in p.parts
-                )
-            )
-        total = ok = errors = unmapped_count = 0
-        for path in init_files:
+        pkg_dirs = self._find_package_dirs()
+        total = ok = errors = 0
+        # Bottom-up: child exports computed before parents consume them
+        dir_exports: dict[str, dict[str, tuple[str, str]]] = {}
+
+        for pkg_dir in pkg_dirs:
             total += 1
-            result = self._process_file(path, check_only=check_only)
+            result, exports = self._process_directory(
+                pkg_dir,
+                check_only=check_only,
+                dir_exports=dir_exports,
+            )
+            if exports:
+                dir_exports[str(pkg_dir)] = exports
             if result is None:
                 continue
             if result < 0:
                 errors += 1
-            elif result > 0:
-                unmapped_count += 1
-                ok += 1
             else:
                 ok += 1
-        output.info(
-            f"Lazy-init summary: {ok} generated, {errors} errors, {unmapped_count} with unmapped exports ({total} files scanned)",
-        )
-        return unmapped_count
 
-    def _process_file(self, path: Path, *, check_only: bool = False) -> int | None:
-        """Process a single __init__.py.
+        output.info(
+            f"Lazy-init summary: {ok} generated, {errors} errors"
+            f" ({total} dirs scanned)",
+        )
+        return errors
+
+    def _find_package_dirs(self) -> list[Path]:
+        """Find all package directories that need ``__init__.py``.
+
+        Scans ``src/``, ``tests/``, ``examples/``, ``scripts/`` for
+        directories containing ``.py`` files besides ``__init__.py``.
 
         Returns:
-            None if skipped, 0 if OK, >0 if unmapped exports, <0 on error.
+            Sorted by depth (deepest first) for bottom-up processing.
 
         """
-        try:
-            content = path.read_text(encoding=c.Infra.Encoding.DEFAULT)
-        except Exception as exc:
-            output.error(f"reading {path}: {exc}")
-            return -1
-        try:
-            tree = ast.parse(content)
-        except Exception as exc:
-            output.error(f"parsing {path}: {exc}")
-            return -1
-        docstring_source = _extract_docstring_source(tree, content)
-        has_all, exports = _extract_exports(tree)
-        if not has_all or not exports:
-            return None
-        current_pkg = _infer_package(path)
-        inline_constants = _extract_inline_constants(tree)
-        exports_set = set(exports)
-        inline_constants = {
-            k: v for k, v in inline_constants.items() if k in exports_set
-        }
-        existing_lazy = _parse_existing_lazy_imports(tree)
-        lazy_map = existing_lazy or _derive_lazy_map(tree, current_pkg)
-        filtered = {k: v for k, v in lazy_map.items() if k in exports_set}
+        root_dirs = ("src", "tests", "examples", "scripts")
+        pkg_dirs: set[Path] = set()
+        for root_name in root_dirs:
+            root = self._root / root_name
+            if not root.is_dir():
+                continue
+            for py_file in root.rglob("*.py"):
+                if any(
+                    part.startswith(".") or part in {"vendor", "node_modules", ".venv"}
+                    for part in py_file.parts
+                ):
+                    continue
+                parent = py_file.parent
+                if _dir_has_py_files(parent):
+                    pkg_dirs.add(parent)
+        return sorted(pkg_dirs, key=lambda p: len(p.parts), reverse=True)
+
+    def _process_directory(
+        self,
+        pkg_dir: Path,
+        *,
+        check_only: bool,
+        dir_exports: Mapping[str, dict[str, tuple[str, str]]],
+    ) -> tuple[int | None, dict[str, tuple[str, str]]]:
+        """Process a single directory to generate its ``__init__.py``.
+
+        Args:
+            pkg_dir: Directory to process.
+            check_only: If True, count exports without writing.
+            dir_exports: Pre-computed exports from child directories.
+
+        Returns:
+            ``(result_code, exports_dict)``.
+            result_code is ``None`` if skipped, ``0`` if OK, ``<0`` on error.
+
+        """
+        init_path = pkg_dir / "__init__.py"
+        current_pkg = _infer_package(init_path)
+        if not current_pkg:
+            return (None, {})
+
+        # 1. Read ONLY docstring from existing __init__.py
+        docstring = _read_existing_docstring(init_path)
+
+        # 2. Build lazy map from sibling .py files
+        lazy_map = _build_sibling_export_index(pkg_dir, current_pkg)
+
+        # 3. Add exports from child subdirectories (already computed)
+        _merge_child_exports(pkg_dir, lazy_map, dir_exports)
+
+        # 4. Handle __version__.py
+        inline_constants, version_lazy = _extract_version_exports(
+            pkg_dir,
+            current_pkg,
+        )
+        lazy_map.update(version_lazy)
+
+        # 5. Handle single-letter aliases via ALIAS_TO_SUFFIX
+        _resolve_aliases(lazy_map)
+
+        # 6. Remove infrastructure names (eagerly imported, not lazy)
+        for infra_name in ("cleanup_submodule_namespace", "lazy_getattr"):
+            lazy_map.pop(infra_name, None)
+
+        # 7. Remove inline constants from lazy map (inlined directly)
         for k in inline_constants:
-            filtered.pop(k, None)
-        pkg_dir = path.parent
-        _resolve_unmapped(exports_set, filtered, current_pkg, pkg_dir)
-        for k in inline_constants:
-            filtered.pop(k, None)
+            lazy_map.pop(k, None)
+
+        # 8. Build final exports list
+        exports = sorted(set(lazy_map) | set(inline_constants))
+        if not exports:
+            return (None, dict(lazy_map))
+
         if check_only:
-            n_mapped = len(filtered) + len(inline_constants)
-            return len(exports_set) - n_mapped
-        generated = _generate_file(
-            docstring_source,
+            return (0, dict(lazy_map))
+
+        # 9. Generate the __init__.py file
+        return self._write_init(
+            init_path,
+            docstring,
             exports,
-            filtered,
+            lazy_map,
             inline_constants,
             current_pkg,
         )
-        u.write_file(path, generated, encoding=c.Infra.Encoding.DEFAULT)
-        _run_ruff_fix(path)
-        n_mapped = len(filtered) + len(inline_constants)
-        n_missing = len(exports_set) - n_mapped
-        msg = f"  OK: {path.relative_to(self._root)} — {len(exports)} exports, {n_mapped} mapped"
-        if n_missing > 0:
-            still_unmapped = sorted(exports_set - set(filtered) - set(inline_constants))
-            msg += f", {n_missing} UNMAPPED: {still_unmapped}"
-        output.info(msg)
-        return n_missing
+
+    def _write_init(
+        self,
+        init_path: Path,
+        docstring: str,
+        exports: list[str],
+        lazy_map: dict[str, tuple[str, str]],
+        inline_constants: dict[str, str],
+        current_pkg: str,
+    ) -> tuple[int, dict[str, tuple[str, str]]]:
+        """Write the generated ``__init__.py`` and run ruff fix."""
+        try:
+            generated = _generate_file(
+                docstring,
+                exports,
+                lazy_map,
+                inline_constants,
+                current_pkg,
+            )
+            u.write_file(init_path, generated, encoding=c.Infra.Encoding.DEFAULT)
+            _run_ruff_fix(init_path)
+        except (OSError, ValueError) as exc:
+            output.error(f"generating {init_path}: {exc}")
+            return (-1, dict(lazy_map))
+
+        rel_path = (
+            init_path.relative_to(self._root)
+            if self._root in init_path.parents
+            else init_path
+        )
+        output.info(f"  OK: {rel_path} — {len(exports)} exports")
+        return (0, dict(lazy_map))
+
+
+# ---------------------------------------------------------------------------
+# Directory / package helpers
+# ---------------------------------------------------------------------------
+
+
+def _dir_has_py_files(pkg_dir: Path) -> bool:
+    """Return True if directory has ``.py`` files besides ``__init__.py``."""
+    return any(
+        f.name != "__init__.py" and f.suffix == ".py"
+        for f in pkg_dir.iterdir()
+        if f.is_file()
+    )
 
 
 def _infer_package(path: Path) -> str:
-    """Infer the package name from a ``src/<pkg>/__init__.py`` path."""
+    """Infer dotted package name from a path under ``src/``, ``tests/``, etc."""
     abs_path = str(path.absolute())
-    src_idx = abs_path.rfind("/src/")
-    if src_idx != -1:
-        rel = abs_path[src_idx + 5 :]
-        pkg_parts = rel.split("/")[:-1]
-        return ".".join(pkg_parts)
+    for root_dir in ("/src/", "/tests/", "/examples/", "/scripts/"):
+        idx = abs_path.rfind(root_dir)
+        if idx != -1:
+            rel = abs_path[idx + len(root_dir) :]
+            pkg_parts = rel.split("/")[:-1]
+            if root_dir == "/src/":
+                return ".".join(pkg_parts)
+            root_name = root_dir.strip("/")
+            return ".".join([root_name, *pkg_parts]) if pkg_parts else root_name
     return ""
 
 
-def _resolve_module(raw_module: str, level: int, current_pkg: str) -> str:
-    """Resolve a potentially relative import to an absolute module path."""
-    if level == 0:
-        return raw_module
-    if not current_pkg:
-        return raw_module
-    parts = current_pkg.split(".")
-    base = parts[: len(parts) - level + 1]
-    if not base:
-        return raw_module
-    return ".".join(base) + ("." + raw_module if raw_module else "")
+# ---------------------------------------------------------------------------
+# Source-file scanning (the core of auto-discovery)
+# ---------------------------------------------------------------------------
 
 
-def _extract_docstring_source(tree: ast.Module, content: str) -> str:
-    """Extract the raw docstring source preserving original formatting."""
+def _read_existing_docstring(init_path: Path) -> str:
+    """Read ONLY the docstring from an existing ``__init__.py``.
+
+    This is the **only** thing we read from existing ``__init__.py`` files.
+    Everything else is auto-discovered from sibling ``.py`` source files.
+    """
+    if not init_path.exists():
+        return ""
+    try:
+        content = init_path.read_text(encoding="utf-8")
+        tree = ast.parse(content)
+    except (OSError, SyntaxError):
+        return ""
     if (
         tree.body
         and isinstance(tree.body[0], ast.Expr)
@@ -179,6 +277,46 @@ def _extract_docstring_source(tree: ast.Module, content: str) -> str:
         ds = tree.body[0]
         return "\n".join(content.splitlines()[ds.lineno - 1 : ds.end_lineno])
     return ""
+
+
+def _build_sibling_export_index(
+    pkg_dir: Path,
+    current_pkg: str,
+) -> dict[str, tuple[str, str]]:
+    """Scan sibling ``.py`` files for exports.
+
+    For each non-private, non-dunder sibling ``.py`` file:
+
+    1. If it has ``__all__`` → use those names.
+    2. If no ``__all__`` → scan AST for public classes/functions/assignments.
+
+    Returns ``{export_name: (module_path, attr_name)}``.
+    """
+    index: dict[str, tuple[str, str]] = {}
+    for py_file in sorted(pkg_dir.glob("*.py")):
+        if py_file.name in {"__init__.py", "__main__.py", "__version__.py"}:
+            continue
+        if py_file.name.startswith("_"):
+            continue
+
+        mod_stem = py_file.stem
+        mod_path = f"{current_pkg}.{mod_stem}" if current_pkg else mod_stem
+        try:
+            content = py_file.read_text(encoding="utf-8")
+            sibling_tree = ast.parse(content)
+        except (SyntaxError, OSError) as exc:
+            output.warning(f"skipping {py_file.name}: {exc}")
+            continue
+
+        # Prefer __all__ when available
+        has_all, all_exports = _extract_exports(sibling_tree)
+        if has_all and all_exports:
+            for name in all_exports:
+                index[name] = (mod_path, name)
+        else:
+            _scan_ast_public_defs(sibling_tree, mod_path, index)
+
+    return index
 
 
 def _extract_exports(tree: ast.Module) -> tuple[bool, list[str]]:
@@ -200,6 +338,27 @@ def _extract_exports(tree: ast.Module) -> tuple[bool, list[str]]:
     return (has_all, exports)
 
 
+def _scan_ast_public_defs(
+    tree: ast.Module,
+    mod_path: str,
+    index: dict[str, tuple[str, str]],
+) -> None:
+    """Scan AST for public classes, functions, and assignments."""
+    for node in ast.iter_child_nodes(tree):
+        names: list[str] = []
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            names.append(node.name)
+        elif isinstance(node, ast.Assign):
+            names.extend(
+                target.id for target in node.targets if isinstance(target, ast.Name)
+            )
+        elif isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name):
+            names.append(node.target.id)
+        for name in names:
+            if not name.startswith("_"):
+                index[name] = (mod_path, name)
+
+
 def _extract_inline_constants(tree: ast.Module) -> dict[str, str]:
     """Extract inline constant assignments like ``__version__ = '1.0.0'``."""
     constants: dict[str, str] = {}
@@ -215,116 +374,114 @@ def _extract_inline_constants(tree: ast.Module) -> dict[str, str]:
     return constants
 
 
-def _parse_existing_lazy_imports(tree: ast.Module) -> dict[str, tuple[str, str]]:
-    """Parse an existing ``_LAZY_IMPORTS`` dict literal from the AST.
+# ---------------------------------------------------------------------------
+# Child-directory export merging (bottom-up)
+# ---------------------------------------------------------------------------
 
-    Handles both ``_LAZY_IMPORTS = {...}`` and
-    ``_LAZY_IMPORTS: dict[str, tuple[str, str]] = {...}``.
+
+def _should_bubble_up(name: str) -> bool:
+    """Check if an export should bubble up to the parent package.
+
+    Filters out private names, entry points, and ALL_CAPS utility constants.
     """
-    result: dict[str, tuple[str, str]] = {}
-    lazy_import_pair_size = 2
-
-    def _extract(d: ast.expr) -> None:
-        if not isinstance(d, ast.Dict):
-            return
-        for key, val in zip(d.keys, d.values, strict=False):
-            if (
-                isinstance(key, ast.Constant)
-                and isinstance(val, ast.Tuple)
-                and (len(val.elts) == lazy_import_pair_size)
-                and isinstance(val.elts[0], ast.Constant)
-                and isinstance(val.elts[1], ast.Constant)
-            ):
-                result[str(key.value)] = (
-                    str(val.elts[0].value),
-                    str(val.elts[1].value),
-                )
-
-    for node in tree.body:
-        if isinstance(node, ast.Assign):
-            for target in node.targets:
-                if isinstance(target, ast.Name) and target.id == "_LAZY_IMPORTS":
-                    _extract(node.value)
-        elif (
-            isinstance(node, ast.AnnAssign)
-            and isinstance(node.target, ast.Name)
-            and (node.target.id == "_LAZY_IMPORTS")
-            and (node.value is not None)
-        ):
-            _extract(node.value)
-    return result
+    if name.startswith("_"):
+        return False
+    if name == "main":
+        return False
+    # Skip ALL_CAPS constants (e.g., BLUE, BOLD, SYM_ARROW)
+    return not name.isupper()
 
 
-def _derive_lazy_map(tree: ast.Module, current_pkg: str) -> dict[str, tuple[str, str]]:
-    """Derive lazy import mappings from import statements in the AST."""
-    lazy_map: dict[str, tuple[str, str]] = {}
-    for node in ast.walk(tree):
-        if isinstance(node, ast.ImportFrom):
-            raw_module = node.module or ""
-            if raw_module in c.Infra.Codegen.SKIP_MODULES:
-                continue
-            module_path = _resolve_module(raw_module, node.level, current_pkg)
-            if module_path == current_pkg:
-                continue
-            for alias in node.names:
-                name = alias.name
-                asname = alias.asname or name
-                lazy_map[asname] = (module_path, name)
-        elif isinstance(node, ast.Import):
-            for alias in node.names:
-                name = alias.name
-                asname = alias.asname or name
-                if name in c.Infra.Codegen.SKIP_STDLIB:
-                    continue
-                lazy_map[asname] = (name, "")
-    for node in tree.body:
-        if isinstance(node, ast.Assign) and isinstance(node.value, ast.Name):
-            rhs = node.value.id
-            if rhs in lazy_map:
-                mod, attr = lazy_map[rhs]
-                for target in node.targets:
-                    if isinstance(target, ast.Name):
-                        lazy_map[target.id] = (mod, attr)
-    for a_name, suffix in c.Infra.Codegen.ALIAS_TO_SUFFIX.items():
-        if a_name not in lazy_map:
-            continue
-        alias_mod, alias_attr = lazy_map[a_name]
-        if alias_attr == a_name:
-            for name, (mod, _) in lazy_map.items():
-                if mod == alias_mod and name.endswith(suffix) and (len(name) > 1):
-                    lazy_map[a_name] = (mod, name)
-                    break
-    return lazy_map
-
-
-def _resolve_unmapped(
-    exports_set: set[str],
-    filtered: dict[str, tuple[str, str]],
-    current_pkg: str,
+def _merge_child_exports(
     pkg_dir: Path,
+    lazy_map: dict[str, tuple[str, str]],
+    dir_exports: Mapping[str, dict[str, tuple[str, str]]],
 ) -> None:
-    """Resolve unmapped single-letter aliases and ``__version__``."""
-    unmapped = exports_set - set(filtered)
-    if not unmapped:
-        return
-    for alias in sorted(unmapped):
-        if alias in c.Infra.Codegen.ALIAS_TO_SUFFIX:
-            suffix = c.Infra.Codegen.ALIAS_TO_SUFFIX[alias]
-            for name, (mod, _) in filtered.items():
-                if name.endswith(suffix) and len(name) > 1:
-                    filtered[alias] = (mod, name)
-                    break
-        elif alias == "__version__" and current_pkg:
-            ver_file = pkg_dir / "__version__.py"
-            if ver_file.exists():
-                filtered["__version__"] = (f"{current_pkg}.__version__", "__version__")
-        elif alias == "__version_info__" and current_pkg:
-            ver_file = pkg_dir / "__version__.py"
-            if ver_file.exists():
-                filtered["__version_info__"] = (
-                    f"{current_pkg}.__version__",
-                    "__version_info__",
-                )
+    """Merge child subdirectory exports into parent's lazy map.
+
+    For each immediate subdirectory that has computed exports,
+    add their exports to the parent.  Sibling file exports take
+    precedence over child exports (already in ``lazy_map``).
+    """
+    for subdir in sorted(pkg_dir.iterdir()):
+        if not subdir.is_dir() or subdir.name.startswith("."):
+            continue
+        subdir_key = str(subdir)
+        if subdir_key not in dir_exports:
+            continue
+        sub_exports = dir_exports[subdir_key]
+        for name, (mod, attr) in sub_exports.items():
+            if not _should_bubble_up(name):
+                continue
+            # Sibling file exports take precedence
+            if name not in lazy_map:
+                lazy_map[name] = (mod, attr)
+
+
+# ---------------------------------------------------------------------------
+# Version and alias resolution
+# ---------------------------------------------------------------------------
+
+
+def _extract_version_exports(
+    pkg_dir: Path,
+    current_pkg: str,
+) -> tuple[dict[str, str], dict[str, tuple[str, str]]]:
+    """Extract version-related exports from ``__version__.py``.
+
+    Returns:
+        ``(inline_constants, lazy_entries)``.
+        ``inline_constants``: String constants to inline (``__version__``).
+        ``lazy_entries``: Non-string dunder constants for lazy loading
+        (``__version_info__``).
+
+    """
+    ver_file = pkg_dir / "__version__.py"
+    if not ver_file.exists():
+        return ({}, {})
+    try:
+        content = ver_file.read_text(encoding="utf-8")
+        tree = ast.parse(content)
+    except (SyntaxError, OSError):
+        return ({}, {})
+
+    inline = _extract_inline_constants(tree)
+    ver_mod = f"{current_pkg}.__version__" if current_pkg else "__version__"
+
+    lazy: dict[str, tuple[str, str]] = {}
+    for node in tree.body:
+        if isinstance(node, ast.Assign) and len(node.targets) == 1:
+            target = node.targets[0]
+            if (
+                isinstance(target, ast.Name)
+                and target.id.startswith("__")
+                and target.id.endswith("__")
+                and target.id not in inline
+            ):
+                lazy[target.id] = (ver_mod, target.id)
+
+    return (inline, lazy)
+
+
+def _resolve_aliases(lazy_map: dict[str, tuple[str, str]]) -> None:
+    """Resolve single-letter aliases from ``ALIAS_TO_SUFFIX`` mapping.
+
+    For each alias (``c``, ``m``, ``t``, ``u``, ``p``, ``r``, ``d``,
+    ``e``, ``h``, ``s``, ``x``), find a class in the lazy_map whose name
+    ends with the corresponding suffix and create a mapping.
+    """
+    for alias, suffix in c.Infra.Codegen.ALIAS_TO_SUFFIX.items():
+        if alias in lazy_map:
+            continue
+        for name, (mod, _attr) in list(lazy_map.items()):
+            if name.endswith(suffix) and len(name) > 1:
+                lazy_map[alias] = (mod, name)
+                break
+
+
+# ---------------------------------------------------------------------------
+# Code generation
+# ---------------------------------------------------------------------------
 
 
 def _generate_type_checking(groups: Mapping[str, list[tuple[str, str]]]) -> list[str]:
@@ -379,15 +536,21 @@ def _generate_file(
     for export_name in sorted(filtered):
         mod, attr = filtered[export_name]
         groups[mod].append((export_name, attr))
+
     out: list[str] = [c.Infra.Codegen.AUTOGEN_HEADER]
     if docstring_source:
         out.extend([docstring_source, ""])
+
     if current_pkg == c.Infra.Packages.CORE_UNDERSCORE:
-        lazy_import = "from flext_core._utilities.lazy import cleanup_submodule_namespace, lazy_getattr"
+        lazy_import = (
+            "from flext_core._utilities.lazy import"
+            " cleanup_submodule_namespace, lazy_getattr"
+        )
     else:
         lazy_import = (
             "from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr"
         )
+
     out.extend([
         "from __future__ import annotations",
         "",
@@ -415,7 +578,7 @@ def _generate_file(
     out.extend(f'    "{exp}",' for exp in sorted(exports))
     out.extend(["]", "", ""])
     out.extend([
-        "def __getattr__(name: str) -> Any:  # noqa: ANN401  # JUSTIFIED: Ruff (any-type) with PEP 562 dynamic module exports — https://docs.astral.sh/ruff/rules/any-type/",
+        "def __getattr__(name: str) -> Any:",
         '    """Lazy-load module attributes on first access (PEP 562)."""',
         "    return lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)",
         "",
@@ -429,6 +592,11 @@ def _generate_file(
         "",
     ])
     return "\n".join(out)
+
+
+# ---------------------------------------------------------------------------
+# Post-generation cleanup
+# ---------------------------------------------------------------------------
 
 
 def _run_ruff_fix(path: Path) -> None:

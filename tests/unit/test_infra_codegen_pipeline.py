@@ -205,7 +205,7 @@ def test_codegen_pipeline_end_to_end(tmp_path: Path) -> None:
         project_b_fixed = fix_by_project["project-b"]
         assert len(project_b_fixed.violations_fixed) > 0
         assert any(v.rule == "NS-002" for v in project_b_fixed.violations_fixed)
-        unmapped_count = lazy_init.run(scan_tests=True)
+        unmapped_count = lazy_init.run()
         assert unmapped_count >= 0
         census_after = census_service.run()
     before_total = sum(report.total for report in census_before)

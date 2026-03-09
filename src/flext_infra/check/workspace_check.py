@@ -295,7 +295,7 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
         )
         sarif_path = report_base / "check-report.sarif"
         sarif_payload = self.generate_sarif_report(results, resolved_gates)
-        json_write_result = self._json.write(sarif_path, sarif_payload)
+        json_write_result = self._json.write_json(sarif_path, sarif_payload)
         if json_write_result.is_failure:
             return r[list[m.Infra.Check.ProjectResult]].fail(
                 json_write_result.error or "failed to write sarif report",
@@ -374,7 +374,14 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
         for gate in gates:
             runner = runners.get(gate)
             if runner:
-                result.gates[gate] = runner()
+                execution = runner()
+                result.gates[gate] = execution
+                output.gate_result(
+                    gate,
+                    len(execution.issues),
+                    execution.result.passed,
+                    execution.result.duration,
+                )
         return result
 
     def _collect_markdown_files(self, project_dir: Path) -> list[Path]:

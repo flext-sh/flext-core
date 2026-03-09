@@ -59,7 +59,7 @@ def test_handle_lazy_init_check_mode(tmp_path: Path) -> None:
         mock_gen_class.return_value = mock_gen
         result = codegen_main._handle_lazy_init(args)
         assert result == 0
-        mock_gen.run.assert_called_once_with(check_only=True, scan_tests=False)
+        mock_gen.run.assert_called_once_with(check_only=True)
 
 
 def test_handle_lazy_init_enforce_mode(tmp_path: Path) -> None:
@@ -75,7 +75,7 @@ def test_handle_lazy_init_enforce_mode(tmp_path: Path) -> None:
         mock_gen_class.return_value = mock_gen
         result = codegen_main._handle_lazy_init(args)
         assert result == 0
-        mock_gen.run.assert_called_once_with(check_only=False, scan_tests=False)
+        mock_gen.run.assert_called_once_with(check_only=False)
 
 
 def test_main_lazy_init_command(tmp_path: Path) -> None:
