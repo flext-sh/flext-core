@@ -15,11 +15,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from enum import StrEnum
 from typing import ClassVar
 
 import pytest
+from pydantic import BaseModel, ConfigDict, Field
 
 from flext_tests import t, u
 
@@ -40,36 +40,46 @@ class Priority(StrEnum):
     HIGH = "high"
 
 
-@dataclass(frozen=True, slots=True)
-class ParseSequenceScenario:
+class ParseSequenceScenario(BaseModel):
     """Parse sequence test scenario."""
 
-    name: str
-    values: list[str | Status]
-    expected_success: bool
-    expected_count: int | None
-    expected_error: str | None
+    model_config = ConfigDict(frozen=True)
+    name: str = Field(description="Parse sequence scenario name")
+    values: list[str | Status] = Field(description="Input sequence values")
+    expected_success: bool = Field(description="Whether parsing should succeed")
+    expected_count: int | None = Field(
+        default=None, description="Expected parsed item count"
+    )
+    expected_error: str | None = Field(
+        default=None, description="Expected error message fragment"
+    )
 
 
-@dataclass(frozen=True, slots=True)
-class CoerceListValidatorScenario:
+class CoerceListValidatorScenario(BaseModel):
     """Coerce list validator test scenario."""
 
-    name: str
-    value: t.ContainerValue
-    expected_success: bool
-    expected_error: str | None
+    model_config = ConfigDict(frozen=True)
+    name: str = Field(description="Coerce list scenario name")
+    value: t.ContainerValue = Field(description="Input value for list coercion")
+    expected_success: bool = Field(description="Whether coercion should succeed")
+    expected_error: str | None = Field(
+        default=None, description="Expected error message fragment"
+    )
 
 
-@dataclass(frozen=True, slots=True)
-class ParseMappingScenario:
+class ParseMappingScenario(BaseModel):
     """Parse mapping test scenario."""
 
-    name: str
-    mapping: dict[str, str | Status]
-    expected_success: bool
-    expected_count: int | None
-    expected_error: str | None
+    model_config = ConfigDict(frozen=True)
+    name: str = Field(description="Parse mapping scenario name")
+    mapping: dict[str, str | Status] = Field(description="Input mapping values")
+    expected_success: bool = Field(description="Whether parsing should succeed")
+    expected_count: int | None = Field(
+        default=None, description="Expected parsed entry count"
+    )
+    expected_error: str | None = Field(
+        default=None, description="Expected error message fragment"
+    )
 
 
 class CollectionScenarios:

@@ -18,25 +18,34 @@ from __future__ import annotations
 import json
 import os
 import threading
-from dataclasses import dataclass, field
 from pathlib import Path
 
 import pytest
 import yaml
+from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import FlextConstants, FlextContainer, FlextLogger, FlextSettings, t
 
 
-@dataclass(frozen=True, slots=True)
-class ConfigTestCase:
+class ConfigTestCase(BaseModel):
     """Factory for configuration test cases."""
 
-    test_name: str
-    config_data: dict[str, t.ContainerValue]
-    expected_values: dict[str, t.ContainerValue] = field(default_factory=dict)
-    file_format: str = "json"
-    env_vars: dict[str, str] = field(default_factory=dict)
-    description: str = field(default="", compare=False)
+    model_config = ConfigDict(frozen=True)
+
+    test_name: str = Field(description="Configuration test case name")
+    config_data: dict[str, t.ContainerValue] = Field(
+        description="Input configuration payload",
+    )
+    expected_values: dict[str, t.ContainerValue] = Field(
+        default_factory=dict,
+        description="Expected effective values",
+    )
+    file_format: str = Field(default="json", description="Configuration file format")
+    env_vars: dict[str, str] = Field(
+        default_factory=dict,
+        description="Environment variable overrides",
+    )
+    description: str = Field(default="", description="Human-readable test description")
 
     def create_temp_file(self, temp_dir: Path) -> Path:
         """Create temporary config file."""
@@ -53,13 +62,19 @@ class ConfigTestCase:
         return file_path
 
 
-@dataclass(frozen=True, slots=True)
-class ThreadSafetyTest:
+class ThreadSafetyTest(BaseModel):
     """Factory for thread safety test configurations."""
 
-    thread_count: int = 5
-    operations_per_thread: int = 10
-    description: str = field(default="", compare=False)
+    model_config = ConfigDict(frozen=True)
+
+    thread_count: int = Field(default=5, description="Number of concurrent threads")
+    operations_per_thread: int = Field(
+        default=10,
+        description="Operations per thread",
+    )
+    description: str = Field(
+        default="", description="Thread safety scenario description"
+    )
 
 
 class ConfigTestFactories:

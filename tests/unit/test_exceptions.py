@@ -22,11 +22,11 @@ from __future__ import annotations
 
 import time
 from collections.abc import Iterator, Mapping
-from dataclasses import dataclass
 from enum import StrEnum
 from typing import ClassVar, cast, override
 
 import pytest
+from pydantic import ConfigDict, Field
 
 from flext_core import FlextConstants, FlextRuntime, c, e, m, t
 from flext_tests import u
@@ -66,24 +66,38 @@ class ExceptionTypeScenarioType(StrEnum):
     OPERATION = "operation"
 
 
-@dataclass(frozen=True, slots=True)
-class ExceptionScenario:
+class ExceptionScenario(m.Value):
     """Exception test scenario definition."""
 
-    name: str
-    scenario_type: ExceptionScenarioType
-    exception_type: type[e.BaseError] | None = None
-    should_raise: bool = False
-    error_factory_type: str | None = None
+    model_config = ConfigDict(frozen=True)
+
+    name: str = Field(description="Exception scenario name")
+    scenario_type: ExceptionScenarioType = Field(description="Exception scenario type")
+    exception_type: type[e.BaseError] | None = Field(
+        default=None,
+        description="Exception class for the scenario",
+    )
+    should_raise: bool = Field(
+        default=False, description="Whether scenario should raise"
+    )
+    error_factory_type: str | None = Field(
+        default=None,
+        description="Factory type name for create() tests",
+    )
 
 
-@dataclass(frozen=True, slots=True)
-class ExceptionTypeScenario:
+class ExceptionTypeScenario(m.Value):
     """Exception type instantiation test scenario."""
 
-    name: str
-    scenario_type: ExceptionTypeScenarioType
-    exception_class: type[e.BaseError]
+    model_config = ConfigDict(frozen=True)
+
+    name: str = Field(description="Exception type scenario name")
+    scenario_type: ExceptionTypeScenarioType = Field(
+        description="Exception type scenario category",
+    )
+    exception_class: type[e.BaseError] = Field(
+        description="Exception class to instantiate",
+    )
 
 
 class ExceptionScenarios:

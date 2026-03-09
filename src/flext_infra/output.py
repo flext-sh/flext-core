@@ -15,14 +15,14 @@ from __future__ import annotations
 import sys
 from typing import Final, TextIO
 
+from flext_infra import u
+
 
 def _should_use_color(stream: TextIO | None = None) -> bool:
     """Detect whether ANSI colors should be used on the given stream.
 
     Delegates to ``u.Infra.Terminal.should_use_color()``.
     """
-    from flext_infra import u
-
     return u.Infra.Terminal.should_use_color(stream)
 
 
@@ -31,8 +31,6 @@ def _should_use_unicode() -> bool:
 
     Delegates to ``u.Infra.Terminal.should_use_unicode()``.
     """
-    from flext_infra import u
-
     return u.Infra.Terminal.should_use_unicode()
 
 

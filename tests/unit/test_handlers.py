@@ -15,11 +15,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass
 from typing import ClassVar, override
 
 import pytest
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import FlextExceptions, FlextResult, c, h, m, t, x
 from flext_tests import FlextTestsUtilities, u
@@ -53,27 +52,33 @@ class FailingTestHandler(h[str, str]):
         return FlextResult[str].fail(f"Handler failed for: {message}")
 
 
-@dataclass(frozen=True, slots=True)
-class HandlerConfigScenario:
+class HandlerConfigScenario(BaseModel):
     """Handler configuration test scenario."""
 
-    name: str
-    handler_id: str
-    handler_name: str
-    handler_type: str | None = None
-    handler_mode: str | None = None
-    command_timeout: int | None = None
-    max_command_retries: int | None = None
-    metadata: dict[str, t.ContainerValue] | None = None
+    model_config = ConfigDict(frozen=True)
+    name: str = Field(description="Handler config scenario name")
+    handler_id: str = Field(description="Handler identifier")
+    handler_name: str = Field(description="Handler display name")
+    handler_type: str | None = Field(default=None, description="Handler type name")
+    handler_mode: str | None = Field(default=None, description="Handler mode name")
+    command_timeout: int | None = Field(
+        default=None, description="Command timeout in seconds"
+    )
+    max_command_retries: int | None = Field(
+        default=None, description="Maximum retry count"
+    )
+    metadata: dict[str, t.ContainerValue] | None = Field(
+        default=None, description="Handler metadata payload"
+    )
 
 
-@dataclass(frozen=True, slots=True)
-class HandlerTypeScenario:
+class HandlerTypeScenario(BaseModel):
     """Handler type test scenario."""
 
-    name: str
-    handler_type: c.Cqrs.HandlerType
-    handler_mode: c.Cqrs.HandlerType
+    model_config = ConfigDict(frozen=True)
+    name: str = Field(description="Handler type scenario name")
+    handler_type: c.Cqrs.HandlerType = Field(description="Configured handler type")
+    handler_mode: c.Cqrs.HandlerType = Field(description="Configured handler mode")
 
 
 class HandlerScenarios:
@@ -592,10 +597,9 @@ class TestFlextHandlers:
     def test_handlers_dataclass_message_validation(self) -> None:
         """Test dataclass message validation."""
 
-        @dataclass
-        class DataClassMessage:
-            value: str
-            number: int
+        class DataClassMessage(BaseModel):
+            value: str = Field(description="Message value")
+            number: int = Field(description="Message number")
 
         config = FlextTestsUtilities.Tests.HandlerHelpers.create_handler_config(
             "test_dataclass_message",

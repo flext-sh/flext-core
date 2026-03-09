@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from collections import UserDict, UserList
 from collections.abc import Callable, ItemsView, Iterator, Mapping, Sequence
-from dataclasses import dataclass
 from pathlib import Path
 from typing import cast, override
 
@@ -23,14 +22,12 @@ class _PortModel(BaseModel):
 
 def _at_obj(items: object, index: int | str, *, default: object = None) -> object:
     """Call Mapper.at with arbitrary object for error-path testing."""
-    fn: Callable[[object, int | str], object] = getattr(u.Mapper, "at")
-    return fn(items, index, default=default)
+    return u.Mapper.at(items, index, default)
 
 
 def _extract_field_obj(item: object, field_name: str) -> object:
     """Call _extract_field_value with arbitrary object for testing."""
-    fn: Callable[[object, str], object] = getattr(u.Mapper, "_extract_field_value")
-    return fn(item, field_name)
+    return u.Mapper._extract_field_value(item, field_name)
 
 
 def _build_flags_obj(
@@ -38,19 +35,14 @@ def _build_flags_obj(
     flag_mapping: Mapping[str, str],
 ) -> r[Mapping[str, bool]]:
     """Call build_flags_dict with arbitrary object for error-path testing."""
-    fn: Callable[[object, Mapping[str, str]], r[Mapping[str, bool]]] = getattr(
-        u.Mapper,
-        "build_flags_dict",
-    )
-    return fn(active_flags, flag_mapping)
+    return u.Mapper.build_flags_dict(active_flags, flag_mapping)
 
 
-@dataclass
-class AttrObject:
+class AttrObject(BaseModel):
     """AttrObject class."""
 
-    name: str = "name"
-    value: int = 1
+    name: str = Field(default="name", description="Attribute object name")
+    value: int = Field(default=1, description="Attribute object value")
 
 
 class BadString:
