@@ -399,7 +399,7 @@ class FlextContainer(p.DI):
         """
         origin = getattr(type_cls, "__origin__", None)
         check_type: type[object] = origin if origin is not None else type_cls
-        return isinstance(value, check_type) or check_type in type(value).__mro__
+        return isinstance(value, check_type)
 
     @staticmethod
     def _is_registerable_service(value: object) -> TypeGuard[t.RegisterableService]:
