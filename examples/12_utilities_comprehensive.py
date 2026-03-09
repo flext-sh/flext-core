@@ -58,11 +58,14 @@ class UtilitiesService(FlextService[m.ConfigMap]):
     def _demonstrate_collection_operations() -> None:
         """Show collection operation utilities."""
         print("\n=== Collection Operations ===")
-        u.parse_sequence(c.Cqrs.HandlerType, ["validation", "id_generation"]).map(
+        parse_result = u.parse_sequence(
+            c.Cqrs.HandlerType, ["validation", "id_generation"]
+        ).map(
             lambda parsed_enums: print(
                 f"✅ Enum sequence parsing: {[e.value for e in parsed_enums]}"
             )
         )
+        assert parse_result.is_success
 
     @staticmethod
     def _demonstrate_conversions() -> None:
@@ -71,9 +74,10 @@ class UtilitiesService(FlextService[m.ConfigMap]):
         number_str = str(TEST_DATA["number_str"])
         float_str = str(TEST_DATA["float_str"])
         parser = u.Parser()
-        parser.parse_delimited("a,b,c", ",").map(
+        delimited_result = parser.parse_delimited("a,b,c", ",").map(
             lambda parsed: print(f"✅ Delimited parsing: {parsed}")
         )
+        assert delimited_result.is_success
         print(f"✅ String to int concept: '{number_str}' → int")
         print(f"✅ String to float concept: '{float_str}' → float")
         print("✅ Safe conversion with error handling available")
@@ -118,12 +122,14 @@ class UtilitiesService(FlextService[m.ConfigMap]):
         print("\n=== String Parsing ===")
         parser = u.Parser()
         options = m.CollectionsParseOptions(strip=True, remove_empty=True)
-        parser.parse_delimited("a, b, c", ",", options=options).map(
+        delimited_result = parser.parse_delimited("a, b, c", ",", options=options).map(
             lambda parsed: print(f"✅ Delimited parsing: {parsed}")
         )
-        parser.split_on_char_with_escape(
+        assert delimited_result.is_success
+        split_result = parser.split_on_char_with_escape(
             "cn=REDACTED_LDAP_BIND_PASSWORD\\,dc=com", ",", "\\"
         ).map(lambda split: print(f"✅ Escaped split: {split}"))
+        assert split_result.is_success
 
     @staticmethod
     def _demonstrate_type_checking() -> None:
@@ -249,7 +255,8 @@ def main() -> None:
         print(f"\n❌ Failed: {error}")
         return FlextResult[None].ok(value=None)
 
-    result.map(handle_success).lash(handle_error)
+    chain_result = result.map(handle_success).lash(handle_error)
+    assert chain_result.is_success
     print("\n" + "=" * 60)
     print("🎯 Utility Categories: Validation, ID Generation, Conversion")
     print("🎯 Advanced Features: Caching, Reliability, Composition")

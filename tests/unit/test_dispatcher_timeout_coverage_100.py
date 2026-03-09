@@ -16,6 +16,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
+from concurrent.futures import Future
 from typing import ClassVar
 
 import pytest
@@ -215,8 +216,12 @@ class TestTimeoutEnforcerEdgeCases:
         """Test executor can submit and execute tasks."""
         enforcer = TimeoutEnforcer(use_timeout_executor=True, executor_workers=2)
         executor = enforcer.ensure_executor()
-        futures = [executor.submit(lambda x: x * 2, i) for i in range(5)]
-        results = [f.result() for f in futures]
+
+        def double(value: int) -> int:
+            return value * 2
+
+        futures: list[Future[int]] = [executor.submit(double, i) for i in range(5)]
+        results: list[int] = [future.result() for future in futures]
         assert results == [0, 2, 4, 6, 8]
 
     def test_executor_concurrent_execution(self) -> None:
@@ -232,7 +237,7 @@ class TestTimeoutEnforcerEdgeCases:
         futures = [executor.submit(slow_task, 0.1) for _ in range(3)]
         results = [f.result() for f in futures]
         elapsed = time.time() - start
-        assert all(r == pytest.approx(0.1) for r in results)
+        assert all(abs(r - 0.1) < 1e-09 for r in results)
         assert elapsed < 0.5
 
 

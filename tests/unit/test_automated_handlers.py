@@ -7,6 +7,7 @@ type-system-architecture.md rules with real functionality testing.
 from __future__ import annotations
 
 import time
+from collections.abc import Mapping
 from typing import cast
 
 import pytest
@@ -128,7 +129,7 @@ class TestAutomatedFlextHandlers:
     def _execute_handlers_operation(
         self,
         instance: type[h[t.ContainerValue, t.ContainerValue]],
-        input_data: dict[str, t.ContainerValue],
+        input_data: Mapping[str, t.ContainerValue],
     ) -> r[t.ContainerValue]:
         """Execute a test operation on handlers instance.
 

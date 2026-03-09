@@ -12,13 +12,14 @@ import tempfile
 import threading
 from collections.abc import Callable, Generator
 from pathlib import Path
-from typing import TypeVar, cast
+from typing import TypeVar
 
 import pytest
 from pydantic import ConfigDict
 
 from flext_core import FlextContainer, FlextContext, FlextResult, FlextSettings, m, r, t
-from tests.helpers.scenarios import (
+
+from .helpers.scenarios import (
     ParserScenario,
     ParserScenarios,
     ReliabilityScenario,
@@ -26,7 +27,7 @@ from tests.helpers.scenarios import (
     ValidationScenario,
     ValidationScenarios,
 )
-from tests.test_utils import assertion_helpers
+from .test_utils import assertion_helpers
 
 T = TypeVar("T")
 TestResult = FlextResult[T]
@@ -219,10 +220,10 @@ class FlextScenarioRunner:
     """
 
     @staticmethod
-    def execute_validation_scenario(
-        validator_func: Callable[..., FlextResult[object]],
+    def execute_validation_scenario[TResult](
+        validator_func: Callable[..., FlextResult[TResult]],
         scenario: ValidationScenario,
-    ) -> FlextResult[object]:
+    ) -> FlextResult[TResult]:
         """Execute validation scenario and return result.
 
         Args:
@@ -240,13 +241,13 @@ class FlextScenarioRunner:
                 result = validator_func(scenario.input_value)
             return result
         except Exception as e:
-            return FlextResult.fail(str(e))
+            return FlextResult[TResult].fail(str(e))
 
     @staticmethod
-    def execute_parser_scenario(
-        parser_func: Callable[[str], FlextResult[object]],
+    def execute_parser_scenario[TResult](
+        parser_func: Callable[[str], FlextResult[TResult]],
         scenario: ParserScenario,
-    ) -> FlextResult[object]:
+    ) -> FlextResult[TResult]:
         """Execute parser scenario and return result.
 
         Args:
@@ -260,7 +261,7 @@ class FlextScenarioRunner:
         try:
             return parser_func(scenario.input_data)
         except Exception as e:
-            return FlextResult.fail(str(e))
+            return FlextResult[TResult].fail(str(e))
 
     @staticmethod
     def assert_scenario_result(
@@ -446,8 +447,6 @@ class FunctionalExternalService:
         """
         try:
             self.call_count += 1
-            if not isinstance(input_data, str):
-                return r[str].fail(f"Invalid input type: {type(input_data)}")
             processed = f"processed_{input_data}"
             self.processed_items.append(processed)
             return r[str].ok(processed)
@@ -478,7 +477,7 @@ def clean_container() -> FlextContainer:
 
 
 @pytest.fixture(autouse=True)
-def _reset_global_container() -> Generator[None]:
+def reset_global_container() -> Generator[None]:
     """Reset the global FlextContainer and FlextSettings instances after each test.
 
     This fixture ensures test isolation by clearing the global singletons
@@ -486,7 +485,7 @@ def _reset_global_container() -> Generator[None]:
     due to shared global state.
     """
     yield
-    FlextContainer._global_instance = cast("FlextContainer | None", None)
+    FlextContainer._global_instance = None
     FlextSettings.reset_for_testing()
 
 

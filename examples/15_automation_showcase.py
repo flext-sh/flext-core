@@ -327,7 +327,8 @@ class AutomationService(s[m.ConfigMap]):
         config = load_config() if fail_attempt.is_failure else fail_attempt.value
         config_count = len(config.root)
         print(f"✅ Config loaded: {config_count} settings")
-        load_config()
+        cached_config = load_config()
+        assert cached_config.root
         print("✅ Second config access used cached version (no file loading)")
 
     @staticmethod

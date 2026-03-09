@@ -37,7 +37,15 @@ def _copy_workspace_for_dry_run(workspace: Path) -> Path:
     def _ignore(_dir: str, names: list[str]) -> set[str]:
         ignored: set[str] = set()
         for name in names:
-            if name in {".git", ".beads", "__pycache__"}:
+            if name in {
+                ".git",
+                ".beads",
+                ".venv",
+                ".mypy_cache",
+                ".pytest_cache",
+                ".ruff_cache",
+                "__pycache__",
+            }:
                 ignored.add(name)
                 continue
             if name.endswith(".sock"):

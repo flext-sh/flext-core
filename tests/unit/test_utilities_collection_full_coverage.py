@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 from collections import UserDict
-from collections.abc import Callable, Iterator, Mapping
+from collections.abc import Iterator, Mapping
 from enum import StrEnum
-from typing import Never, cast, override
+from typing import cast, override
 
 import pytest
 
@@ -73,12 +73,25 @@ def test_find_mapping_no_match_and_merge_error_paths() -> None:
 
 
 def test_batch_fail_collect_flatten_and_progress() -> None:
+    def _success_list(_item: int) -> r[t.ContainerValue]:
+        return r[t.ContainerValue].ok([1, 2])
+
+    def _failure_result(_item: int) -> r[Never]:
+        return r.fail("err")
+
+    def _hard_failure(_item: int) -> r[Never]:
+        return r.fail("hard")
+
+    def _raise_value_error(_item: int) -> t.ContainerValue:
+        msg = "x"
+        raise ValueError(msg)
+
+    def _identity(item: int) -> t.ContainerValue:
+        return item
+
     flattened = u.Collection.batch(
         [1],
-        cast(
-            "Callable[[int], r[Never]]",
-            lambda _item: cast("r[Never]", r[list[int]].ok([1, 2])),
-        ),
+        _success_list,
         flatten=True,
     )
     assert flattened.is_success
@@ -86,27 +99,24 @@ def test_batch_fail_collect_flatten_and_progress() -> None:
     assert flat_value.results == [1, 2]
     collected = u.Collection.batch(
         [1],
-        cast(
-            "Callable[[int], r[Never]]",
-            lambda _item: cast("r[Never]", r[int].fail("err")),
-        ),
+        _failure_result,
         on_error="collect",
     )
     assert collected.is_success
     collected_value = collected.value
     assert len(collected_value.errors) == 1
     assert "err" in collected_value.errors[0][1]
-    failed = u.Collection.batch([1], lambda _item: r[int].fail("hard"), on_error="fail")
+    failed = u.Collection.batch([1], _hard_failure, on_error="fail")
     assert failed.is_failure
     failed_exc = u.Collection.batch(
         [1],
-        lambda _item: (_ for _ in ()).throw(ValueError("x")),
+        _raise_value_error,
     )
     assert failed_exc.is_failure
     progress_calls: list[tuple[int, int]] = []
     ok = u.Collection.batch(
         [1, 2],
-        lambda item: item,
+        _identity,
         progress=lambda processed, total: progress_calls.append((processed, total)),
     )
     assert ok.is_success
@@ -114,12 +124,12 @@ def test_batch_fail_collect_flatten_and_progress() -> None:
 
 
 def test_process_outer_exception_and_coercion_branches() -> None:
-    processed: r[list[object]] = u.Collection.process(
-        cast("list[object]", _BadSequence()),
+    processed: r[list[t.ContainerValue]] = u.Collection.process(
+        cast("list[t.ContainerValue]", _BadSequence()),
         lambda x: x,
     )
     assert processed.is_failure
-    assert u.Collection._coerce_value_to_float(1.5) == pytest.approx(1.5)
+    assert u.Collection._coerce_value_to_float(1.5) == 1.5
     assert u.Collection._coerce_value_to_bool(True) is True
     enum_dict = u.Collection.coerce_dict_to_enum(_Color)({"a": _Color.RED})
     assert enum_dict["a"] is _Color.RED
@@ -158,7 +168,7 @@ def test_collection_batch_failure_error_capture_and_parse_sequence_outer_error()
     assert failed.is_failure
 
     class _ExplodingMeta(type):
-        def __call__(cls, _value: object) -> object:
+        def __call__(cls, _value: t.ContainerValue) -> t.ContainerValue:
             msg = "parse exploded"
             raise ValueError(msg)
 

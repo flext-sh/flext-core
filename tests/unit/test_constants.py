@@ -147,6 +147,14 @@ class ConstantsScenarios:
         (c.Logging.DEFAULT_LEVEL, str),
         (c.Platform.FLEXT_API_PORT, int),
     ]
+    TYPE_CHECK_IDS: ClassVar[list[str]] = [
+        "name_str",
+        "network_min_port_int",
+        "network_max_port_int",
+        "validation_min_name_length_int",
+        "logging_default_level_str",
+        "platform_flext_api_port_int",
+    ]
     REQUIRED_CATEGORIES: ClassVar[list[str]] = [
         "Network",
         "Validation",
@@ -222,10 +230,7 @@ class TestFlextConstants:
     @pytest.mark.parametrize(
         ("value", "expected_type"),
         ConstantsScenarios.TYPE_CHECKS,
-        ids=[
-            f"{type(value).__name__}_{expected_type.__name__}"
-            for value, expected_type in ConstantsScenarios.TYPE_CHECKS
-        ],
+        ids=ConstantsScenarios.TYPE_CHECK_IDS,
     )
     def test_type_safety_constant_types(
         self,

@@ -17,8 +17,8 @@ import operator
 from pydantic import BaseModel, Field
 
 from flext_core import m, t, u
-from tests.test_utils import assertion_helpers
 
+from ..test_utils import assertion_helpers
 from ._models import ComplexModel
 
 
@@ -304,10 +304,10 @@ class TestuMapperBuild:
 
     def test_build_pipeline(self) -> None:
         """Test build pipeline."""
-        ops: dict[str, t.ContainerValue] | None = {
+        ops: t.ConfigurationMapping | None = {
             "ensure": "list",
-            "map": _double,
-            "filter": _greater_than_two,
+            "map": _DOUBLE_OP,
+            "filter": _GT_TWO_OP,
         }
         res = u.Mapper.build([1, 2, 3, 4], ops=ops)
         assert res == [6, 8]
@@ -315,11 +315,11 @@ class TestuMapperBuild:
     def test_build_all_ops(self) -> None:
         """Test all build operations."""
         input_data = [1, 2, 1, 3, 4]
-        ops: dict[str, t.ContainerValue] = {
+        ops: t.ConfigurationMapping = {
             "ensure": "list",
-            "filter": _greater_than_two,
-            "map": _times_ten,
-            "process": _plus_five,
+            "filter": _GT_TWO_OP,
+            "map": _TIMES_TEN_OP,
+            "process": _PLUS_FIVE_OP,
             "sort": True,
             "unique": True,
             "slice": (0, 2),
@@ -329,19 +329,19 @@ class TestuMapperBuild:
 
     def test_build_normalize(self) -> None:
         """Test build normalize."""
-        ops: dict[str, t.ContainerValue] | None = {"normalize": "lower"}
+        ops: t.ConfigurationMapping | None = {"normalize": "lower"}
         res = u.Mapper.build(["A", "b"], ops=ops)
         assert res == ["a", "b"]
 
     def test_build_group(self) -> None:
         """Test build group - keys are converted to strings for ConfigurationDict."""
-        ops: dict[str, t.ContainerValue] | None = {"group": _group_len}
+        ops: t.ConfigurationMapping | None = {"group": _GROUP_LEN_OP}
         res = u.Mapper.build(["cat", "dog", "ant"], ops=ops)
         assert res == {"3": ["cat", "dog", "ant"]}
 
     def test_build_chunk(self) -> None:
         """Test build chunk."""
-        ops: dict[str, t.ContainerValue] | None = {"chunk": 2}
+        ops: t.ConfigurationMapping | None = {"chunk": 2}
         res = u.Mapper.build([1, 2, 3, 4], ops=ops)
         assert res == [[1, 2], [3, 4]]
 
@@ -387,10 +387,10 @@ class TestuMapperAdvanced:
 
     def test_convert_exception(self) -> None:
         """Test build convert exception handling."""
-        ops: dict[str, t.ContainerValue] | None = {"convert": "int"}
+        ops: t.ConfigurationMapping | None = {"convert": "int"}
         res = u.Mapper.build("invalid", ops=ops)
         assert res == 0
-        ops_default: dict[str, t.ContainerValue] | None = {
+        ops_default: t.ConfigurationMapping | None = {
             "convert": "int",
             "convert_default": 10,
         }
@@ -400,7 +400,7 @@ class TestuMapperAdvanced:
     def test_transform_options(self) -> None:
         """Test build transform options."""
         data: dict[str, str | None] = {"a": "UPPER", "b": None, "c": ""}
-        ops: dict[str, t.ContainerValue] | None = {
+        ops: t.ConfigurationMapping | None = {
             "transform": {"normalize": True, "strip_none": True, "strip_empty": True},
         }
         res = u.Mapper.build(data, ops=ops)
@@ -409,12 +409,12 @@ class TestuMapperAdvanced:
     def test_build_sort_complex(self) -> None:
         """Test build sort with callable and string."""
         data: list[dict[str, t.ContainerValue]] = [{"a": 2}, {"a": 1}]
-        ops_sort: dict[str, t.ContainerValue] | None = {"sort": "a"}
+        ops_sort: t.ConfigurationMapping | None = {"sort": "a"}
         res = u.Mapper.build(data, ops=ops_sort)
         assert isinstance(res, list) and len(res) > 0
         assert isinstance(res[0], dict) and res[0].get("a") == 1
-        ops_getter: dict[str, t.ContainerValue] | None = {
-            "sort": _get_key_a,
+        ops_getter: t.ConfigurationMapping | None = {
+            "sort": _GET_KEY_A_OP,
         }
         res = u.Mapper.build(data, ops=ops_getter)
         assert isinstance(res, list) and len(res) > 0

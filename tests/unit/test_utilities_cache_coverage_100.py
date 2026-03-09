@@ -36,7 +36,8 @@ class NormalizeComponentScenario(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     name: str = Field(description="Normalize scenario name")
-    component: t.ContainerValue | BaseModel = Field(
+    component: object = Field(
+        default=None,
         description="Input component to normalize",
     )
     expected_type: type = Field(description="Expected normalized value type")
@@ -217,7 +218,9 @@ class TestuCacheNormalizeComponent:
     )
     def test_normalize_component(self, scenario: NormalizeComponentScenario) -> None:
         """Test normalize_component with various scenarios."""
-        result = u.Cache.normalize_component(scenario.component)
+        result = u.Cache.normalize_component(
+            cast("t.ContainerValue", scenario.component)
+        )
         assert isinstance(result, scenario.expected_type)
         if scenario.expected_value is not None:
             assert result == scenario.expected_value

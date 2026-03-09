@@ -7,7 +7,6 @@ type-system-architecture.md rules with real functionality testing.
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import cast
 
 import pytest
 
@@ -121,10 +120,7 @@ class TestAutomatedFlextContext:
         if callable(cleanup_fn):
             cleanup_result = cleanup_fn()
             if isinstance(cleanup_result, r):
-                _ = assertion_helpers.assert_flext_result_success(
-                    cleanup_result,
-                    "FlextContext cleanup failed",
-                )
+                assert cleanup_result.is_success, "FlextContext cleanup failed"
 
     def _execute_context_operation(
         self,
@@ -141,11 +137,11 @@ class TestAutomatedFlextContext:
                 value = instance.get("test_key")
                 return r[object].ok(value)
             if input_data.get("validate"):
-                result = instance.validate()
-                return (
-                    cast("r[object]", result)
-                    if isinstance(result, r)
-                    else r[object].ok(result)
+                validation_result = instance.validate()
+                if validation_result.is_success:
+                    return r[object].ok(validation_result.value)
+                return r[object].fail(
+                    validation_result.error or "Context validation failed"
                 )
             if input_data.get("performance_test"):
                 instance.set("perf_test", "data")
@@ -156,11 +152,9 @@ class TestAutomatedFlextContext:
                 cloned.set("cloned_key", "cloned_value")
                 return r[object].ok("resource_test_ok")
             result = instance.validate()
-            return (
-                cast("r[object]", result)
-                if isinstance(result, r)
-                else r[object].ok(result)
-            )
+            if result.is_success:
+                return r[object].ok(result.value)
+            return r[object].fail(result.error or "Context validation failed")
         except Exception as e:
             return r[object].fail(f"FlextContext operation failed: {e}")
 

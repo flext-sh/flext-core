@@ -8,6 +8,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 from flext_infra import FlextInfraPathResolver
 
 
@@ -62,7 +64,6 @@ class TestFlextInfraPathResolver:
         result = resolver.workspace_root_from_file(test_file)
         assert result.is_failure
         assert isinstance(result.error, str)
-        assert isinstance(result.error, str)
         assert "workspace root not found" in result.error
 
     def test_workspace_root_from_directory_file(self, tmp_path: Path) -> None:
@@ -103,18 +104,40 @@ class TestFlextInfraPathResolver:
         )
         assert result.is_failure
 
-    def test_workspace_root_with_invalid_type(self) -> None:
-        """Test workspace_root handles TypeError gracefully."""
+    def test_workspace_root_with_resolve_type_error(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
         resolver = FlextInfraPathResolver()
-        result = resolver.workspace_root(None)
+
+        def _raise_type_error(self: Path, strict: bool | None = None) -> Path:
+            _ = self
+            _ = strict
+            msg = "invalid path type"
+            raise TypeError(msg)
+
+        monkeypatch.setattr(Path, "resolve", _raise_type_error)
+
+        result = resolver.workspace_root(".")
         assert result.is_failure
         assert isinstance(result.error, str)
         assert "failed to resolve" in result.error.lower()
 
-    def test_workspace_root_from_file_with_invalid_type(self) -> None:
-        """Test workspace_root_from_file handles TypeError gracefully."""
+    def test_workspace_root_from_file_with_resolve_type_error(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
         resolver = FlextInfraPathResolver()
-        result = resolver.workspace_root_from_file(None)
+
+        def _raise_type_error(self: Path, strict: bool | None = None) -> Path:
+            _ = self
+            _ = strict
+            msg = "invalid path type"
+            raise TypeError(msg)
+
+        monkeypatch.setattr(Path, "resolve", _raise_type_error)
+
+        result = resolver.workspace_root_from_file(__file__)
         assert result.is_failure
         assert isinstance(result.error, str)
         assert "failed to resolve" in result.error.lower()

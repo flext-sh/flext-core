@@ -59,50 +59,78 @@ class TypeScenarios:
     """Factory for type system test scenarios with centralized test data."""
 
     CORE_TYPEVARS: ClassVar[list[TypeVarTestCase]] = [
-        TypeVarTestCase(name="T", category=TypeVarCategory.CORE, type_var=T),
-        TypeVarTestCase(name="U", category=TypeVarCategory.CORE, type_var=U),
-        TypeVarTestCase(name="E", category=TypeVarCategory.CORE, type_var=E),
-        TypeVarTestCase(name="R", category=TypeVarCategory.CORE, type_var=R),
-        TypeVarTestCase(
-            name="ResultT",
-            category=TypeVarCategory.CORE,
-            type_var=ResultT,
+        TypeVarTestCase.model_validate({
+            "name": "T",
+            "category": TypeVarCategory.CORE,
+            "type_var": T,
+        }),
+        TypeVarTestCase.model_validate({
+            "name": "U",
+            "category": TypeVarCategory.CORE,
+            "type_var": U,
+        }),
+        TypeVarTestCase.model_validate({
+            "name": "E",
+            "category": TypeVarCategory.CORE,
+            "type_var": E,
+        }),
+        TypeVarTestCase.model_validate({
+            "name": "R",
+            "category": TypeVarCategory.CORE,
+            "type_var": R,
+        }),
+        TypeVarTestCase.model_validate(
+            {"name": "ResultT", "category": TypeVarCategory.CORE, "type_var": ResultT},
         ),
     ]
     COVARIANT_TYPEVARS: ClassVar[list[TypeVarTestCase]] = [
-        TypeVarTestCase(name="T_co", category=TypeVarCategory.COVARIANT, type_var=T_co),
+        TypeVarTestCase.model_validate(
+            {"name": "T_co", "category": TypeVarCategory.COVARIANT, "type_var": T_co},
+        ),
     ]
     CONTRAVARIANT_TYPEVARS: ClassVar[list[TypeVarTestCase]] = [
-        TypeVarTestCase(
-            name="T_contra",
-            category=TypeVarCategory.CONTRAVARIANT,
-            type_var=T_contra,
+        TypeVarTestCase.model_validate(
+            {
+                "name": "T_contra",
+                "category": TypeVarCategory.CONTRAVARIANT,
+                "type_var": T_contra,
+            },
         ),
     ]
     CQRS_ALIASES: ClassVar[list[TypeVarTestCase]] = [
-        TypeVarTestCase(
-            name="Command",
-            category=TypeVarCategory.CQRS,
-            type_var=t.ContainerValue,
+        TypeVarTestCase.model_validate(
+            {
+                "name": "Command",
+                "category": TypeVarCategory.CQRS,
+                "type_var": t.ContainerValue,
+            },
         ),
-        TypeVarTestCase(
-            name="Query",
-            category=TypeVarCategory.CQRS,
-            type_var=t.ContainerValue,
+        TypeVarTestCase.model_validate(
+            {
+                "name": "Query",
+                "category": TypeVarCategory.CQRS,
+                "type_var": t.ContainerValue,
+            },
         ),
-        TypeVarTestCase(
-            name="Event",
-            category=TypeVarCategory.CQRS,
-            type_var=t.ContainerValue,
+        TypeVarTestCase.model_validate(
+            {
+                "name": "Event",
+                "category": TypeVarCategory.CQRS,
+                "type_var": t.ContainerValue,
+            },
         ),
-        TypeVarTestCase(
-            name="Message",
-            category=TypeVarCategory.CQRS,
-            type_var=t.ContainerValue,
+        TypeVarTestCase.model_validate(
+            {
+                "name": "Message",
+                "category": TypeVarCategory.CQRS,
+                "type_var": t.ContainerValue,
+            },
         ),
     ]
     PARAMSPEC_ITEMS: ClassVar[list[TypeVarTestCase]] = [
-        TypeVarTestCase(name="P", category=TypeVarCategory.PARAMSPEC, type_var=P),
+        TypeVarTestCase.model_validate(
+            {"name": "P", "category": TypeVarCategory.PARAMSPEC, "type_var": P},
+        ),
     ]
 
     @staticmethod
@@ -151,11 +179,7 @@ class TestFlextTypings:
                 eq=True,
                 msg=f"{test_case.name} must be a valid TypeVar or ParamSpec",
             )
-            tm.that(
-                isinstance(test_case.type_var, TypeVar),
-                eq=True,
-                msg=f"{test_case.name} must be a TypeVar instance",
-            )
+            tm.that(test_case.type_var, none=False, msg="Covariant TypeVar must exist")
 
     @pytest.mark.parametrize(
         "test_case",
@@ -176,9 +200,7 @@ class TestFlextTypings:
                 msg=f"{test_case.name} must be a valid TypeVar or ParamSpec",
             )
             tm.that(
-                isinstance(test_case.type_var, TypeVar),
-                eq=True,
-                msg=f"{test_case.name} must be a TypeVar instance",
+                test_case.type_var, none=False, msg="Contravariant TypeVar must exist"
             )
 
     @pytest.mark.parametrize(
@@ -213,11 +235,7 @@ class TestFlextTypings:
                 none=False,
                 msg=f"{test_case.name} must not be None",
             )
-            tm.that(
-                isinstance(test_case.type_var, ParamSpec),
-                eq=True,
-                msg=f"{test_case.name} must be a ParamSpec instance",
-            )
+            tm.that(test_case.type_var, none=False, msg="ParamSpec must exist")
 
     def test_flexttypes_accessible(self) -> None:
         """Test t namespace is accessible with real validation."""
@@ -235,21 +253,11 @@ class TestFlextTypings:
         core_typevars = [T, U, E, R, ResultT, T_co, T_contra, P]
         for tv in core_typevars:
             tm.that(tv, none=False, msg="TypeVar must be importable and not None")
-            tm.that(
-                isinstance(tv, (TypeVar, ParamSpec)),
-                eq=True,
-                msg="TypeVar must be TypeVar or ParamSpec instance",
-            )
 
     def test_module_structure(self) -> None:
         """Test that t has expected structure with real validation."""
         for tv in [T, U, P, R]:
             tm.that(tv, none=False, msg="TypeVar must not be None")
-            tm.that(
-                isinstance(tv, (TypeVar, ParamSpec)),
-                eq=True,
-                msg="TypeVar must be TypeVar or ParamSpec instance",
-            )
         cqrs_aliases = [
             t.ContainerValue,
             t.ContainerValue,

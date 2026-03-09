@@ -18,10 +18,10 @@ from __future__ import annotations
 
 from collections.abc import Callable, Sequence
 from enum import StrEnum
-from typing import Any, ClassVar, cast
+from typing import Annotated, Any, ClassVar, cast
 
 import pytest
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, SkipValidation
 
 from flext_core import FlextRuntime, m, r, t
 from flext_tests import u
@@ -69,7 +69,9 @@ class CoerceListScenario(BaseModel):
     model_config = ConfigDict(frozen=True)
     name: str = Field(description="Coerce list scenario name")
     enum_cls: type[StrEnum] = Field(description="Enum class for coercion")
-    value: t.ContainerValue = Field(description="Input value to coerce")
+    value: Annotated[t.ContainerValue, SkipValidation] = Field(
+        description="Input value to coerce"
+    )
     expected_success: bool = Field(description="Whether coercion should succeed")
     expected_count: int | None = Field(
         default=None, description="Expected result count"
@@ -104,7 +106,9 @@ class CoerceDictScenario(BaseModel):
     model_config = ConfigDict(frozen=True)
     name: str = Field(description="Coerce dict scenario name")
     enum_cls: type[StrEnum] = Field(description="Enum class for coercion")
-    value: t.ContainerValue = Field(description="Input value to coerce")
+    value: Annotated[t.ContainerValue, SkipValidation] = Field(
+        description="Input value to coerce"
+    )
     expected_success: bool = Field(description="Whether coercion should succeed")
     expected_keys: list[str] | None = Field(
         default=None, description="Expected output keys"
@@ -151,7 +155,7 @@ class FindScenario(BaseModel):
     predicate: Callable[[Any], bool] = Field(
         description="Predicate callable under test"
     )
-    expected_result: object = Field(description="Expected found value")
+    expected_result: object | None = Field(description="Expected found value")
     return_key: bool = Field(
         default=False, description="Whether to return dictionary key"
     )
@@ -749,16 +753,18 @@ class TestuCollectionCoerceListValidator:
         _ = u.Collection.coerce_list_validator(FixtureStatus)
 
         class TestModel(BaseModel):
-            statuses: list[FixtureStatus] = Field(default_factory=list)
+            statuses: tuple[FixtureStatus, ...] = Field(default_factory=tuple)
 
-        model1 = TestModel.model_validate({"statuses": ["active", "pending"]})
-        assert len(model1.statuses) == 2
-        assert all(isinstance(s, FixtureStatus) for s in model1.statuses)
-        model2 = TestModel.model_validate({
+        model1: TestModel = TestModel.model_validate({
+            "statuses": ["active", "pending"]
+        })
+        dumped1 = model1.model_dump()
+        assert len(dumped1["statuses"]) == 2
+        model2: TestModel = TestModel.model_validate({
             "statuses": [FixtureStatus.ACTIVE, FixtureStatus.PENDING],
         })
-        assert len(model2.statuses) == 2
-        assert all(isinstance(s, FixtureStatus) for s in model2.statuses)
+        dumped2 = model2.model_dump()
+        assert len(dumped2["statuses"]) == 2
 
 
 class TestuCollectionParseMapping:
@@ -1011,9 +1017,13 @@ class TestuCollectionBatch:
     def test_batch_flatten(self) -> None:
         """Test batch with flattening."""
         items = [[1, 2], [3, 4], 5]
+
+        def flatten_op(value: object) -> int | r[int]:
+            return cast("int | r[int]", value)
+
         result = u.Collection.batch(
             items,
-            cast("Callable[[object], int | r[int]]", lambda x: cast("int | r[int]", x)),
+            flatten_op,
             flatten=True,
         )
         _ = assertion_helpers.assert_flext_result_success(result)

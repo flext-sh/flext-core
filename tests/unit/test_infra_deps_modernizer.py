@@ -131,7 +131,7 @@ class TestUnwrapItem:
     def test_unwrap_item_with_nested_item(self) -> None:
         """Test unwrapping nested Item."""
         doc = tomlkit.document()
-        doc["key"] = tomlkit.item("value")
+        doc["key"] = "value"
         item = doc["key"]
         result = _unwrap_item(item)
         assert result == "value"
@@ -162,9 +162,7 @@ class TestAsStringList:
 
     def test_as_string_list_with_tomlkit_array(self) -> None:
         """Test converting tomlkit array."""
-        arr = tomlkit.array()
-        arr.append("item1")
-        arr.append("item2")
+        arr = ["item1", "item2"]
         result = _as_string_list(arr)
         assert result == ["item1", "item2"]
 
@@ -246,7 +244,7 @@ class TestReadDoc:
         toml_file = tmp_path / "test.toml"
         doc = tomlkit.document()
         doc["key"] = "value"
-        toml_file.write_text(tomlkit.dumps(doc))
+        toml_file.write_text('key = "value"\n')
         result = _read_doc(toml_file)
         assert result is not None
         assert result["key"] == "value"
@@ -638,7 +636,7 @@ class TestFlextInfraPyprojectModernizer:
         pyproject = tmp_path / "pyproject.toml"
         doc = tomlkit.document()
         doc["project"] = {"name": "test"}
-        pyproject.write_text(tomlkit.dumps(doc))
+        pyproject.write_text('[project]\nname = "test"\n')
         modernizer = FlextInfraPyprojectModernizer(root=tmp_path)
         changes = modernizer.process_file(
             pyproject,
@@ -666,7 +664,7 @@ class TestFlextInfraPyprojectModernizer:
         pyproject = tmp_path / "pyproject.toml"
         doc = tomlkit.document()
         doc["project"] = {"name": "test"}
-        original_content = tomlkit.dumps(doc)
+        original_content = '[project]\nname = "test"\n'
         pyproject.write_text(original_content)
         modernizer = FlextInfraPyprojectModernizer(root=tmp_path)
         modernizer.process_file(
@@ -682,7 +680,7 @@ class TestFlextInfraPyprojectModernizer:
         pyproject = tmp_path / "pyproject.toml"
         doc = tomlkit.document()
         doc["project"] = {"name": "test"}
-        pyproject.write_text(tomlkit.dumps(doc))
+        pyproject.write_text('[project]\nname = "test"\n')
         modernizer = FlextInfraPyprojectModernizer(root=tmp_path)
         changes = modernizer.process_file(
             pyproject,
@@ -700,7 +698,9 @@ class TestFlextInfraPyprojectModernizer:
         doc["tool"] = {
             "poetry": {"group": {"empty": {"dependencies": tomlkit.table()}}},
         }
-        pyproject.write_text(tomlkit.dumps(doc))
+        pyproject.write_text(
+            '[project]\nname = "test"\n[tool.poetry.group.empty.dependencies]\n'
+        )
         modernizer = FlextInfraPyprojectModernizer(root=tmp_path)
         changes = modernizer.process_file(
             pyproject,
@@ -715,7 +715,7 @@ class TestFlextInfraPyprojectModernizer:
         pyproject = tmp_path / "pyproject.toml"
         doc = tomlkit.document()
         doc["project"] = {"name": "test"}
-        pyproject.write_text(tomlkit.dumps(doc))
+        pyproject.write_text('[project]\nname = "test"\n')
         args = argparse.Namespace(
             dry_run=False,
             audit=True,
@@ -734,7 +734,7 @@ class TestFlextInfraPyprojectModernizer:
         pyproject = tmp_path / "pyproject.toml"
         doc = tomlkit.document()
         doc["project"] = {"name": "test"}
-        pyproject.write_text(tomlkit.dumps(doc))
+        pyproject.write_text('[project]\nname = "test"\n')
         args = argparse.Namespace(
             dry_run=False,
             audit=False,
@@ -904,7 +904,9 @@ class TestModernizerEdgeCases:
 
 def test_unwrap_item_with_item() -> None:
     """Test _unwrap_item with tomlkit Item."""
-    item = tomlkit.item("test_value")
+    doc = tomlkit.document()
+    doc["value"] = "test_value"
+    item = doc["value"]
     result = _unwrap_item(item)
     assert result == "test_value"
 
@@ -917,7 +919,9 @@ def test_unwrap_item_with_none() -> None:
 
 def test_as_string_list_with_item() -> None:
     """Test _as_string_list with tomlkit Item."""
-    item = tomlkit.item(["a", "b", "c"])
+    doc = tomlkit.document()
+    doc["items"] = ["a", "b", "c"]
+    item = doc["items"]
     result = _as_string_list(item)
     assert result == ["a", "b", "c"]
 
@@ -1132,7 +1136,7 @@ class TestModernizerUncoveredLines:
     def test_as_string_list_with_item_unwrap_returns_none(self) -> None:
         """Test _as_string_list when Item.unwrap returns non-iterable (line 91)."""
         doc = tomlkit.document()
-        doc["items"] = tomlkit.item(42)
+        doc["items"] = 42
         item = doc["items"]
         result = _as_string_list(item)
         assert result == []
@@ -1221,7 +1225,7 @@ class TestModernizerUncoveredLines:
         project = doc["project"]
         assert isinstance(project, MutableMapping)
         project["name"] = "test"
-        pyproject.write_text(tomlkit.dumps(doc))
+        pyproject.write_text('[project]\nname = "test"\n')
         modernizer = FlextInfraPyprojectModernizer(tmp_path)
         args = argparse.Namespace(
             project=None,
@@ -1247,11 +1251,11 @@ class TestEnsurePyrightConfigPhase:
         doc = tomlkit.document()
         phase = EnsurePyrightConfigPhase()
         changes = phase.apply(doc, is_root=True)
-        tool = doc.get("tool")
+        tool = _unwrap_item(doc["tool"])
         assert isinstance(tool, MutableMapping)
-        pyright = tool.get("pyright")
+        pyright = _unwrap_item(tool["pyright"])
         assert isinstance(pyright, MutableMapping)
-        envs = _unwrap_item(pyright.get("executionEnvironments"))
+        envs = _unwrap_item(pyright["executionEnvironments"])
         assert isinstance(envs, list)
         assert envs == [
             {"root": "src", "reportPrivateUsage": "error"},
@@ -1267,11 +1271,11 @@ class TestEnsurePyrightConfigPhase:
         doc = tomlkit.document()
         phase = EnsurePyrightConfigPhase()
         changes = phase.apply(doc, is_root=False)
-        tool = doc.get("tool")
+        tool = _unwrap_item(doc["tool"])
         assert isinstance(tool, MutableMapping)
-        pyright = tool.get("pyright")
+        pyright = _unwrap_item(tool["pyright"])
         assert isinstance(pyright, MutableMapping)
-        envs = _unwrap_item(pyright.get("executionEnvironments"))
+        envs = _unwrap_item(pyright["executionEnvironments"])
         assert isinstance(envs, list)
         assert envs == [
             {"root": "src", "reportPrivateUsage": "error"},

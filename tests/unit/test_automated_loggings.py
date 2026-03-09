@@ -144,19 +144,31 @@ class TestAutomatedFlextLoggings:
             if callable(process):
                 result = process(dict(input_data))
                 if isinstance(result, r):
-                    return result
+                    if result.is_success:
+                        return r[t.ContainerValue].ok(True)
+                    return r[t.ContainerValue].fail(
+                        result.error or "FlextLoggings process failed"
+                    )
                 return r[t.ContainerValue].ok(cast("t.ContainerValue", result))
             execute = getattr(instance, "execute", None)
             if callable(execute):
                 result = execute(dict(input_data))
                 if isinstance(result, r):
-                    return result
+                    if result.is_success:
+                        return r[t.ContainerValue].ok(True)
+                    return r[t.ContainerValue].fail(
+                        result.error or "FlextLoggings execute failed"
+                    )
                 return r[t.ContainerValue].ok(cast("t.ContainerValue", result))
             handle = getattr(instance, "handle", None)
             if callable(handle):
                 result = handle(dict(input_data))
                 if isinstance(result, r):
-                    return result
+                    if result.is_success:
+                        return r[t.ContainerValue].ok(True)
+                    return r[t.ContainerValue].fail(
+                        result.error or "FlextLoggings handle failed"
+                    )
                 return r[t.ContainerValue].ok(cast("t.ContainerValue", result))
             return r[t.ContainerValue].ok(cast("t.ContainerValue", instance))
         except Exception as e:

@@ -814,21 +814,26 @@ class TestRealWorldScenarios:
             ).assert_all()
 
     @given(
-        st.fixed_dictionaries({
-            "database_url": st.text(),
-            "debug": st.booleans(),
-            "timeout_seconds": st.integers(min_value=1, max_value=300),
-            "environment": st.sampled_from(
-                ["development", "staging", "production"],
-            ),
-        }),
+        database_url=st.text(),
+        debug=st.booleans(),
+        timeout_seconds=st.integers(min_value=1, max_value=300),
+        environment=st.sampled_from(["development", "staging", "production"]),
     )
     @settings()
     def test_configuration_validation_comprehensive(
         self,
-        config: dict[str, FlextTypes.Container],
+        database_url: str,
+        debug: bool,
+        timeout_seconds: int,
+        environment: str,
     ) -> None:
         """Comprehensive configuration validation testing."""
+        config: dict[str, FlextTypes.Container] = {
+            "database_url": database_url,
+            "debug": debug,
+            "timeout_seconds": timeout_seconds,
+            "environment": environment,
+        }
         required_fields = ["database_url", "debug", "timeout_seconds"]
         for field in required_fields:
             assert field in config, f"Missing required field: {field}"

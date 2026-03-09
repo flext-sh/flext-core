@@ -21,6 +21,35 @@ TestCaseMap: TypeAlias = Mapping[str, t.Tests.ContainerValue]
 
 InputPayloadMap: TypeAlias = dict[str, t.Tests.ContainerValue]
 
+__all__ = [
+    "BadConfigForTest",
+    "CacheTestModel",
+    "ComplexModel",
+    "ConfigModelForTest",
+    "InputPayloadMap",
+    "InvalidModelForTest",
+    "NestedModel",
+    "SampleModel",
+    "SingletonClassForTest",
+    "TestCaseMap",
+    "_BadCopyModel",
+    "_BrokenDumpModel",
+    "_Cfg",
+    "_DumpErrorModel",
+    "_ErrorsModel",
+    "_FakeConfig",
+    "_FrozenEntity",
+    "_GoodModel",
+    "_Model",
+    "_MsgWithCommandId",
+    "_MsgWithMessageId",
+    "_Opts",
+    "_PlainErrorModel",
+    "_SampleEntity",
+    "_SvcModel",
+    "_TargetModel",
+]
+
 
 class _MsgWithCommandId(BaseModel):
     command_id: str = "cmd-1"
@@ -45,9 +74,18 @@ class _BrokenDumpModel(BaseModel):
     value: int = 1
 
     @override
-    def __getattribute__(self, name: str) -> t.ContainerValue:
+    def __getattribute__(
+        self, name: str
+    ) -> t.ContainerValue | t.Tests.Matcher.PredicateSpec:
         if name == "model_dump":
-            return lambda *args, **kwargs: [1]
+
+            def _broken_dump(
+                value: t.Tests.TestContainerValue,
+            ) -> bool:
+                _ = value
+                return True
+
+            return _broken_dump
         return super().__getattribute__(name)
 
 

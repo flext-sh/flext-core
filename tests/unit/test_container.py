@@ -35,7 +35,7 @@ from flext_tests import c, m, t, tm, u
 class ServiceScenario(BaseModel):
     """Test scenario for service registration and retrieval."""
 
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
     name: str = Field(description="Service scenario name")
     service: t.RegisterableService = Field(description="Service value to register")
     description: str = Field(default="", description="Scenario description")
@@ -44,7 +44,7 @@ class ServiceScenario(BaseModel):
 class TypedRetrievalScenario(BaseModel):
     """Test scenario for typed service retrieval."""
 
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
     name: str = Field(description="Typed retrieval scenario name")
     service: t.RegisterableService = Field(description="Registered service value")
     expected_type: type = Field(description="Expected service type")

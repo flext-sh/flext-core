@@ -7,7 +7,7 @@ from typing import Never
 import pytest
 
 import flext_core._utilities.reliability as reliability_module
-from flext_core import c, m, r, u
+from flext_core import c, m, r, t, u
 
 
 def test_utilities_reliability_branches() -> None:
@@ -15,7 +15,7 @@ def test_utilities_reliability_branches() -> None:
     assert isinstance(m.Categories(), m.Categories)
     assert r[int].ok(1).is_success
     assert isinstance(m.ConfigMap.model_validate({"k": 1}), m.ConfigMap)
-    fail: r[Never] = u.Reliability.retry(
+    fail: r[t.ContainerValue] = u.Reliability.retry(
         lambda: r.fail("e"),
         max_attempts=1,
         delay_seconds=0.0,
@@ -23,12 +23,11 @@ def test_utilities_reliability_branches() -> None:
     assert fail.is_failure
     delay_default = u.Reliability.calculate_delay(0, None)
     assert isinstance(delay_default, float)
-    with_cleanup = u.Reliability.with_retry(
+    assert u.Reliability.with_retry(
         lambda: (_ for _ in ()).throw(ValueError("x")),
         max_attempts=2,
         cleanup_func=lambda: None,
-    )
-    assert with_cleanup.is_failure
+    ).is_failure
     assert u.Reliability.pipe("x").is_success
     assert callable(u.Reliability.compose(lambda x: x, mode="pipe"))
 
@@ -37,9 +36,13 @@ def test_utilities_reliability_uncovered_retry_compose_and_sequence_paths(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     sleep_calls: list[float] = []
+
+    def _record_sleep(seconds: float) -> None:
+        sleep_calls.append(seconds)
+
     monkeypatch.setattr(
         "flext_core._utilities.reliability.time.sleep",
-        lambda seconds: sleep_calls.append(seconds),
+        _record_sleep,
     )
 
     def _raise_once() -> r[Never]:
@@ -61,10 +64,14 @@ def test_utilities_reliability_uncovered_retry_compose_and_sequence_paths(
 def test_utilities_reliability_compose_returns_non_result_directly(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+
+    def _always_ok(*_args: t.ContainerValue, **_kwargs: t.ContainerValue) -> r[int]:
+        return r[int].ok(7)
+
     monkeypatch.setattr(
         reliability_module.FlextUtilitiesReliability,
         "pipe",
-        staticmethod(lambda *_args, **_kwargs: r[int].ok(7)),
+        staticmethod(_always_ok),
     )
     piped = reliability_module.FlextUtilitiesReliability.compose(
         lambda value: value,

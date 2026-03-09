@@ -433,7 +433,6 @@ class TestExceptionFactory:
     @pytest.mark.parametrize(
         ("message", "kwargs", "expected_type"),
         ExceptionScenarios.FACTORY_CREATION,
-        ids=[message for message, _, _ in ExceptionScenarios.FACTORY_CREATION],
     )
     def test_create_error_auto_detection(
         self,

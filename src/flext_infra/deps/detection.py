@@ -88,13 +88,35 @@ class FlextInfraDependencyDetectionService:
             val = item.get(c.Infra.Toml.MODULE)
             return str(val) if val is not None else None
 
+        missing: list[str] = []
+        unused: list[str] = []
+        transitive: list[str] = []
+        dev_in_runtime: list[str] = []
+
+        for item in classified.dep001:
+            name = _module_name(item)
+            if name is not None:
+                missing.append(name)
+        for item in classified.dep002:
+            name = _module_name(item)
+            if name is not None:
+                unused.append(name)
+        for item in classified.dep003:
+            name = _module_name(item)
+            if name is not None:
+                transitive.append(name)
+        for item in classified.dep004:
+            name = _module_name(item)
+            if name is not None:
+                dev_in_runtime.append(name)
+
         return dm.ProjectDependencyReport(
             project=project_name,
             deptry=dm.DeptryReport(
-                missing=[_module_name(item) for item in classified.dep001],
-                unused=[_module_name(item) for item in classified.dep002],
-                transitive=[_module_name(item) for item in classified.dep003],
-                dev_in_runtime=[_module_name(item) for item in classified.dep004],
+                missing=missing,
+                unused=unused,
+                transitive=transitive,
+                dev_in_runtime=dev_in_runtime,
                 raw_count=len(deptry_issues),
             ),
         )

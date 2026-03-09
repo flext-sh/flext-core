@@ -7,12 +7,34 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import cast
-
 import pytest
 
 from flext_core import r
 from flext_tests import c, m, t, tm
+
+
+def _is_string(value: t.Tests.TestContainerValue) -> bool:
+    return isinstance(value, str)
+
+
+def _is_string_or_bytes(value: t.Tests.TestContainerValue) -> bool:
+    return isinstance(value, str | bytes)
+
+
+def _is_positive(value: t.Tests.TestContainerValue) -> bool:
+    return isinstance(value, int) and value > 0
+
+
+def _is_negative(value: t.Tests.TestContainerValue) -> bool:
+    return isinstance(value, int) and value < 0
+
+
+def _greater_than_zero(value: t.Tests.TestContainerValue) -> bool:
+    return isinstance(value, int) and value > 0
+
+
+def _greater_than_two(value: t.Tests.TestContainerValue) -> bool:
+    return isinstance(value, int) and value > 2
 
 
 class TestFlextTestsMatchers:
@@ -168,7 +190,7 @@ class TestFlextTestsMatchers:
         result = r[str].ok("test")
         value = tm.ok(
             result,
-            where=cast("t.Tests.ContainerValue", lambda x: isinstance(x, str)),
+            where=_is_string,
         )
         assert value == "test"
 
@@ -177,7 +199,7 @@ class TestFlextTestsMatchers:
         result = r[str].ok("test")
         value = tm.ok(
             result,
-            where=cast("t.Tests.ContainerValue", lambda x: isinstance(x, str | bytes)),
+            where=_is_string_or_bytes,
         )
         assert value == "test"
 
@@ -213,36 +235,40 @@ class TestFlextTestsMatchers:
 
     def test_ok_with_deep_parameter(self) -> None:
         """Test tm.ok() with deep parameter."""
-        data: dict[str, t.ContainerValue] = {"user": {"name": "John", "age": 30}}
-        result = r[dict[str, t.ContainerValue]].ok(data)
+        data: dict[str, t.Tests.TestContainerValue] = {
+            "user": {"name": "John", "age": 30}
+        }
+        result = r[t.Tests.ContainerValue].ok(data)
         value = tm.ok(result, deep={"user.name": "John"})
         assert value == data
 
     def test_ok_with_deep_predicate_parameter(self) -> None:
         """Test tm.ok() with deep predicate parameter."""
-        data: dict[str, t.ContainerValue] = {"user": {"email": "test@example.com"}}
-        result = r[dict[str, t.ContainerValue]].ok(data)
+        data: dict[str, t.Tests.TestContainerValue] = {
+            "user": {"email": "test@example.com"}
+        }
+        result = r[t.Tests.ContainerValue].ok(data)
         value = tm.ok(result, deep={"user.email": "test@example.com"})
         assert value == data
 
     def test_ok_with_path_parameter(self) -> None:
         """Test tm.ok() with path parameter."""
-        data: dict[str, t.ContainerValue] = {"user": {"name": "John"}}
-        result = r[dict[str, t.ContainerValue]].ok(data)
+        data: dict[str, t.Tests.TestContainerValue] = {"user": {"name": "John"}}
+        result = r[t.Tests.ContainerValue].ok(data)
         value = tm.ok(result, path="user.name", eq="John")
         assert value == "John"
 
     def test_ok_with_where_parameter(self) -> None:
         """Test tm.ok() with where parameter."""
         result = r[int].ok(42)
-        value = tm.ok(result, where=cast("t.Tests.ContainerValue", lambda x: x > 0))
+        value = tm.ok(result, where=_is_positive)
         assert value == 42
 
     def test_ok_with_where_parameter_fails(self) -> None:
         """Test tm.ok() with where parameter fails when predicate returns False."""
         result = r[int].ok(42)
         with pytest.raises(AssertionError):
-            tm.ok(result, where=cast("t.Tests.ContainerValue", lambda x: x < 0))
+            tm.ok(result, where=_is_negative)
 
     def test_ok_with_starts_parameter(self) -> None:
         """Test tm.ok() with starts parameter."""
@@ -411,7 +437,7 @@ class TestFlextTestsMatchers:
 
     def test_that_with_all_predicate_parameter(self) -> None:
         """Test tm.that() with all_ predicate parameter."""
-        tm.that([1, 2, 3], all_=lambda x: x > 0)
+        tm.that([1, 2, 3], all_=_greater_than_zero)
 
     def test_that_with_any_type_parameter(self) -> None:
         """Test tm.that() with any_ type parameter."""
@@ -419,7 +445,7 @@ class TestFlextTestsMatchers:
 
     def test_that_with_any_predicate_parameter(self) -> None:
         """Test tm.that() with any_ predicate parameter."""
-        tm.that([1, 2, 3], any_=lambda x: x > 2)
+        tm.that([1, 2, 3], any_=_greater_than_two)
 
     def test_that_with_sorted_parameter(self) -> None:
         """Test tm.that() with sorted parameter."""
@@ -511,7 +537,7 @@ class TestFlextTestsMatchers:
 
     def test_that_with_where_parameter(self) -> None:
         """Test tm.that() with where parameter."""
-        tm.that(42, where=lambda x: x > 0)
+        tm.that(42, where=_is_positive)
 
     def test_that_with_all_alias_parameter(self) -> None:
         """Test tm.that() with all alias parameter (accepts both all_ and all)."""

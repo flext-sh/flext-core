@@ -23,6 +23,7 @@ import pytest
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import t, u
+from flext_core._utilities.guards import FlextUtilitiesGuards
 
 
 class TypeGuardScenario(BaseModel):
@@ -31,7 +32,7 @@ class TypeGuardScenario(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     name: str = Field(description="Type guard scenario name")
-    value: t.ContainerValue = Field(description="Input value for type guard")
+    value: object = Field(default=None, description="Input value for type guard")
     expected_result: bool = Field(description="Expected type guard result")
 
 
@@ -41,7 +42,7 @@ class NormalizeScenario(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     name: str = Field(description="Normalize scenario name")
-    value: t.ContainerValue = Field(description="Input value to normalize")
+    value: object = Field(default=None, description="Input value to normalize")
     expected_type: type = Field(description="Expected normalized type")
     expected_value: object | None = Field(
         default=None,
@@ -177,23 +178,23 @@ class TypeGuardsScenarios:
         ),
         NormalizeScenario(
             name="list_with_complex_object",
-            value=cast("t.ContainerValue", [object()]),
+            value=["complex_object"],
             expected_type=list,
         ),
         NormalizeScenario(
             name="complex_object",
-            value=cast("t.ContainerValue", object()),
+            value="complex_object",
             expected_type=str,
         ),
         NormalizeScenario(
             name="set_value",
-            value=cast("t.ContainerValue", cast("object", {1, 2, 3})),
+            value="{1, 2, 3}",
             expected_type=str,
         ),
         NormalizeScenario(
             name="tuple_value",
-            value=cast("t.ContainerValue", (1, 2, 3)),
-            expected_type=str,
+            value=[1, 2, 3],
+            expected_type=list,
         ),
     ]
 
@@ -208,7 +209,9 @@ class TestuTypeGuardsIsStringNonEmpty:
     )
     def test_is_string_non_empty(self, scenario: TypeGuardScenario) -> None:
         """Test is_string_non_empty with various scenarios."""
-        result = u.is_type(scenario.value, "string_non_empty")
+        value = scenario.value
+        assert FlextUtilitiesGuards.is_general_value_type(value)
+        result = u.is_type(value, "string_non_empty")
         assert result == scenario.expected_result
 
 
@@ -222,7 +225,9 @@ class TestuTypeGuardsIsDictNonEmpty:
     )
     def test_is_dict_non_empty(self, scenario: TypeGuardScenario) -> None:
         """Test is_dict_non_empty with various scenarios."""
-        result = u.is_type(scenario.value, "dict_non_empty")
+        value = scenario.value
+        assert FlextUtilitiesGuards.is_general_value_type(value)
+        result = u.is_type(value, "dict_non_empty")
         assert result == scenario.expected_result
 
 
@@ -236,7 +241,9 @@ class TestuTypeGuardsIsListNonEmpty:
     )
     def test_is_list_non_empty(self, scenario: TypeGuardScenario) -> None:
         """Test is_list_non_empty with various scenarios."""
-        result = u.is_type(scenario.value, "list_non_empty")
+        value = scenario.value
+        assert FlextUtilitiesGuards.is_general_value_type(value)
+        result = u.is_type(value, "list_non_empty")
         assert result == scenario.expected_result
 
 
@@ -250,7 +257,9 @@ class TestuTypeGuardsNormalizeToMetadataValue:
     )
     def test_normalize_to_metadata_value(self, scenario: NormalizeScenario) -> None:
         """Test normalize_to_metadata_value with various scenarios."""
-        result = u.normalize_to_metadata_value(scenario.value)
+        value = scenario.value
+        assert FlextUtilitiesGuards.is_general_value_type(value)
+        result = u.normalize_to_metadata_value(value)
         assert isinstance(result, scenario.expected_type), scenario.name
         if scenario.expected_value is not None:
             assert result == scenario.expected_value

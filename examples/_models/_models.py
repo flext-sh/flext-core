@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+from typing import override
+
 from pydantic import BaseModel, ConfigDict, Field
-from typings import override
 
 from flext_core import m, r, t
 

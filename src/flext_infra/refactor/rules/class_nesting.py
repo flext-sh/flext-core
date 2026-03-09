@@ -7,10 +7,12 @@ from pathlib import Path
 import libcst as cst
 
 from flext_infra import c, m, t, u
-from flext_infra.refactor.rules.class_reconstructor import (
-    FlextInfraRefactorClassNestingReconstructor,
-    PreCheckGate,
-)
+
+# Deferred imports to break circular dependency:
+# from flext_infra.refactor.rules.class_reconstructor import (
+#     FlextInfraRefactorClassNestingReconstructor,
+#     PreCheckGate,
+# )
 from flext_infra.refactor.transformers.class_nesting import (
     FlextInfraRefactorClassNestingTransformer,
 )
@@ -29,6 +31,8 @@ class ClassNestingRefactorRule:
             "class-nesting-mappings.yml",
         )
         self._policy_path = Path(__file__).with_name("class-policy-v2.yml")
+        from flext_infra.refactor.rules.class_reconstructor import PreCheckGate
+
         self._pre_check_gate = PreCheckGate()
         self._post_check_gate = PostCheckGate()
         self._cached_config: t.Infra.RuleConfig | None = None
@@ -71,6 +75,10 @@ class ClassNestingRefactorRule:
                 file_path,
                 confidence_threshold,
             )
+            from flext_infra.refactor.rules.class_reconstructor import (
+                FlextInfraRefactorClassNestingReconstructor,
+            )
+
             class_renames = (
                 FlextInfraRefactorClassNestingReconstructor.class_rename_mappings(
                     scope_entries,

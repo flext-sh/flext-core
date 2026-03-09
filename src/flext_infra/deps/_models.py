@@ -8,6 +8,10 @@ from flext_core import FlextModels
 from flext_infra.typings import t
 
 
+def _empty_issue_list() -> list[t.Dict]:
+    return []
+
+
 class FlextInfraDepsModels:
     """Models for dependency detection and modernization reporting."""
 
@@ -41,18 +45,18 @@ class FlextInfraDependencyDetectionModels:
     class DeptryIssueGroups(FlextModels.ArbitraryTypesModel):
         """Deptry issue grouping model by error code (DEP001-DEP004)."""
 
-        dep001: list[t.Infra.IssueMap] = Field(default_factory=list)
-        dep002: list[t.Infra.IssueMap] = Field(default_factory=list)
-        dep003: list[t.Infra.IssueMap] = Field(default_factory=list)
-        dep004: list[t.Infra.IssueMap] = Field(default_factory=list)
+        dep001: list[t.Dict] = Field(default_factory=_empty_issue_list)
+        dep002: list[t.Dict] = Field(default_factory=_empty_issue_list)
+        dep003: list[t.Dict] = Field(default_factory=_empty_issue_list)
+        dep004: list[t.Dict] = Field(default_factory=_empty_issue_list)
 
     class DeptryReport(FlextModels.ArbitraryTypesModel):
         """Deptry analysis report with categorized issue modules."""
 
-        missing: list[str | None] = Field(default_factory=list)
-        unused: list[str | None] = Field(default_factory=list)
-        transitive: list[str | None] = Field(default_factory=list)
-        dev_in_runtime: list[str | None] = Field(default_factory=list)
+        missing: list[str] = Field(default_factory=list)
+        unused: list[str] = Field(default_factory=list)
+        transitive: list[str] = Field(default_factory=list)
+        dev_in_runtime: list[str] = Field(default_factory=list)
         raw_count: int = Field(default=0, ge=0)
 
     class ProjectDependencyReport(FlextModels.ArbitraryTypesModel):

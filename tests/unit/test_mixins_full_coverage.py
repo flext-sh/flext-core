@@ -276,14 +276,17 @@ def test_mixins_context_logging_and_cqrs_paths(monkeypatch: pytest.MonkeyPatch) 
     assert result_metrics.is_success
     monkeypatch.delattr(x.CQRS.ContextStack, "_stack", raising=False)
     cs = x.CQRS.ContextStack()
-    cs.push_context({"handler_name": "h", "handler_mode": "query"})
-    cs.push_context({"x": "y"})
+    result_push1 = cs.push_context({"handler_name": "h", "handler_mode": "query"})
+    assert result_push1.is_success
+    result_push2 = cs.push_context({"x": "y"})
+    assert result_push2.is_success
     result_pop = cs.pop_context()
     assert result_pop.is_success
     result_pop2 = cs.pop_context()
     assert result_pop2.is_success
     assert cs.current_context() is None
-    cs.push_context({"handler_name": "h2", "handler_mode": "command"})
+    result_push3 = cs.push_context({"handler_name": "h2", "handler_mode": "command"})
+    assert result_push3.is_success
     assert cs.current_context() is not None
 
 

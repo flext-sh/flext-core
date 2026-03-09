@@ -21,7 +21,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import operator
-from typing import cast, override
+from typing import override
 
 import pytest
 from pydantic import BaseModel, ConfigDict, Field
@@ -34,8 +34,9 @@ from flext_core import (
     FlextService,
     FlextSettings,
     m,
+    t,
 )
-from tests.test_utils import assertion_helpers
+from .test_utils import assertion_helpers
 
 from ._models import EmailResponse
 
@@ -92,14 +93,13 @@ class RailwayTestCase(BaseModel):
     def execute_v1_pipeline(self) -> FlextResult[str | User | EmailResponse]:
         """Execute V1 railway pipeline for this test case."""
         if not self.user_ids:
-            return FlextResult.fail("No user IDs provided")
+            return FlextResult[str | User | EmailResponse].fail("No user IDs provided")
         user_result: FlextResult[User] = _make(
             GetUserService,
             user_id=self.user_ids[0],
         ).execute()
-        result: FlextResult[User | str | EmailResponse] = cast(
-            "FlextResult[User | str | EmailResponse]",
-            user_result,
+        result: FlextResult[User | str | EmailResponse] = user_result.map(
+            lambda user: user,
         )
         for op in self.operations:
             if op == "get_email":
@@ -114,7 +114,7 @@ class RailwayTestCase(BaseModel):
                         subject="Test",
                     ).execute(),
                 )
-                result = cast("FlextResult[User | str | EmailResponse]", email_result)
+                result = email_result.map(lambda response: response)
             elif op == "get_status":
                 result = result.map(
                     lambda response: (
@@ -131,9 +131,7 @@ class RailwayTestCase(BaseModel):
             msg = "No user IDs provided"
             raise FlextExceptions.BaseError(msg)
         user_result = _service_result(_make(GetUserService, user_id=self.user_ids[0]))
-        user: User | str = (
-            user_result if isinstance(user_result, (User, str)) else str(user_result)
-        )
+        user: User | str = user_result
         for op in self.operations:
             if op == "get_email":
                 user = user.email if isinstance(user, User) else str(user)
@@ -216,7 +214,7 @@ class GetUserService(FlextService[User]):
     def execute(self) -> FlextResult[User]:
         """Get user by ID."""
         if self.user_id in {"invalid", ""}:
-            return FlextResult.fail("User not found")
+            return FlextResult[User].fail("User not found")
         return FlextResult.ok(
             User(
                 unique_id=self.user_id,
@@ -236,7 +234,7 @@ class SendEmailService(FlextService[EmailResponse]):
     def execute(self) -> FlextResult[EmailResponse]:
         """Send email."""
         if "@" not in self.to:
-            return FlextResult.fail("Invalid email address")
+            return FlextResult[EmailResponse].fail("Invalid email address")
         return FlextResult.ok(EmailResponse(status="sent", message_id=f"msg-{self.to}"))
 
 
@@ -249,9 +247,9 @@ class ValidationService(FlextService[m.ConfigMap]):
     def execute(self) -> FlextResult[m.ConfigMap]:
         """Validate value."""
         if self.value < 0:
-            return FlextResult.fail("Value must be positive")
+            return FlextResult[m.ConfigMap].fail("Value must be positive")
         if self.value > 100:
-            return FlextResult.fail("Value must be <= 100")
+            return FlextResult[m.ConfigMap].fail("Value must be <= 100")
         return FlextResult.ok(m.ConfigMap(root={"valid": True, "value": self.value}))
 
 
@@ -278,17 +276,21 @@ class MultiOperationService(FlextService[m.ConfigMap]):
                     m.ConfigMap(root={"operation": "negate", "result": -self.value}),
                 )
             case _:
-                return FlextResult.fail(f"Unknown operation: {self.operation}")
+                return FlextResult[m.ConfigMap].fail(
+                    f"Unknown operation: {self.operation}"
+                )
 
 
 def _service_result[T_Value](service: FlextService[T_Value]) -> T_Value:
-    result_attr = getattr(service, "result")
-    if callable(result_attr):
-        return cast("T_Value", result_attr())
-    return cast("T_Value", result_attr)
+    return service.result()
 
 
-def _make[T](cls: type[T], **kwargs: object) -> T:
+def _value_lt_100(data: m.ConfigMap) -> bool:
+    value = data.get("value")
+    return isinstance(value, int) and value < 100
+
+
+def _make[T](cls: type[T], **kwargs: t.ContainerValue) -> T:
     """Create a FlextService subclass — all fields must have defaults."""
     instance = cls()
     for key, value in kwargs.items():
@@ -449,16 +451,7 @@ class TestPattern5MonadicComposition:
 
     def test_monadic_filter(self) -> None:
         """Monadic: filter validates predicate."""
-        result = (
-            _make(ValidationService, value=50)
-            .execute()
-            .filter(
-                lambda data: (
-                    isinstance(data.get("value"), int)
-                    and cast("int", data.get("value")) < 100
-                ),
-            )
-        )
+        result = _make(ValidationService, value=50).execute().filter(_value_lt_100)
         _ = assertion_helpers.assert_flext_result_success(result)
 
     def test_monadic_complex_pipeline(self) -> None:

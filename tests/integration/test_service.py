@@ -29,6 +29,14 @@ class UserServiceEntity(BaseModel):
     active: bool = Field(default=True, description="Whether user is active")
 
 
+def _empty_user_map() -> dict[str, UserServiceEntity]:
+    return {}
+
+
+def _empty_notifications() -> list[str]:
+    return []
+
+
 class UserQueryService(FlextService[bool]):
     """Real user query service using FlextService.
 
@@ -43,7 +51,7 @@ class UserQueryService(FlextService[bool]):
     - This pattern separates status from data retrieval
     """
 
-    _users: dict[str, UserServiceEntity] = PrivateAttr(default_factory=lambda: {})
+    _users: dict[str, UserServiceEntity] = PrivateAttr(default_factory=_empty_user_map)
     _should_fail: bool = PrivateAttr(default=False)
     _call_count: int = PrivateAttr(default_factory=lambda: 0)
 
@@ -118,7 +126,7 @@ class UserQueryService(FlextService[bool]):
 class NotificationService(FlextService[str]):
     """Real notification service using FlextService."""
 
-    _sent_notifications: list[str] = PrivateAttr(default_factory=lambda: [])
+    _sent_notifications: list[str] = PrivateAttr(default_factory=_empty_notifications)
     _call_count: int = PrivateAttr(default_factory=lambda: 0)
     _should_fail: bool = PrivateAttr(default=False)
 

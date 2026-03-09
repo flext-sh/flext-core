@@ -121,7 +121,7 @@ class TestPhase2FinalCoveragePush:
         )
         assert config.app_name == "complete_test"
         assert config.max_retry_attempts == 5
-        assert config.timeout_seconds == 60.0
+        assert abs(config.timeout_seconds - 60.0) < 1e-09
 
     def test_config_json_serialization(self) -> None:
         """Test config JSON serialization and deserialization."""

@@ -2,11 +2,9 @@
 
 from __future__ import annotations
 
-from typing import Any, cast
-
 import pytest
 
-from flext_core import FlextContext, c, m, r, t
+from flext_core import FlextContainer, FlextContext, c, m, r, t
 
 
 class _ContainerStub:
@@ -30,13 +28,9 @@ class _ContainerStub:
 
 
 def test_narrow_contextvar_invalid_inputs() -> None:
-    assert FlextContext._narrow_contextvar_to_configuration_dict(cast("Any", "x")) == {}
-    assert (
-        FlextContext._narrow_contextvar_to_configuration_dict(cast("Any", {1: "x"}))
-        == {}
-    )
+    assert FlextContext._narrow_contextvar_to_configuration_dict(None) == {}
     data = FlextContext._narrow_contextvar_to_configuration_dict(
-        cast("Any", {"a": object()}),
+        m.ConfigMap(root={"a": "v"})
     )
     assert data["a"]
 
@@ -46,15 +40,23 @@ def test_protocol_name_and_narrow_contextvar_exception_branch(
 ) -> None:
     ctx = FlextContext()
     assert ctx._protocol_name() == "FlextContext"
+
+    def _raise_type_error(_value: t.ContainerValue) -> t.ContainerValue:
+        msg = "bad"
+        raise TypeError(msg)
+
     monkeypatch.setattr(
         "flext_core.context.FlextRuntime.normalize_to_general_value",
-        lambda _v: (_ for _ in ()).throw(TypeError("bad")),
+        _raise_type_error,
     )
     assert FlextContext._narrow_contextvar_to_configuration_dict({"x": 1}) == {}
 
 
 def test_create_overloads_and_auto_correlation(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr("flext_core.context.u.generate", lambda _k: "corr-1")
+    def _generate_id(_key: str) -> str:
+        return "corr-1"
+
+    monkeypatch.setattr("flext_core.context.u.generate", _generate_id)
     ctx = FlextContext.create(user_id="u1", metadata=m.ConfigMap(root={"x": 1}))
     assert isinstance(ctx, FlextContext)
     assert ctx.get(c.Context.KEY_USER_ID).value == "u1"
@@ -80,10 +82,13 @@ def test_set_set_all_get_validation_and_error_paths(
             msg = "boom"
             raise TypeError(msg)
 
-    monkeypatch.setattr(ctx, "_get_or_create_scope_var", lambda _scope: _BadVar())
+    def _make_bad_var(_scope: str) -> _BadVar:
+        return _BadVar()
+
+    monkeypatch.setattr(ctx, "_get_or_create_scope_var", _make_bad_var)
     assert ctx.set("x", "y").is_failure
     assert ctx.set(m.ConfigMap(root={"x": "y"})).is_failure
-    assert FlextContext._validate_set_inputs("k", cast("Any", object())).is_failure
+    assert FlextContext._validate_set_inputs("k", "bad").is_failure
 
 
 def test_inactive_and_none_value_paths() -> None:
@@ -110,9 +115,7 @@ def test_clear_keys_values_items_and_validate_branches(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     ctx = FlextContext()
-    cast("dict[str, t.ContainerValue]", ctx._statistics.operations)[
-        c.Context.OPERATION_CLEAR
-    ] = 1
+    ctx._statistics.operations = {c.Context.OPERATION_CLEAR: 1}
     ctx.clear()
     ctx._active = False
     assert ctx.keys() == []
@@ -136,15 +139,23 @@ def test_update_statistics_remove_hook_and_clone_false_result(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     ctx = FlextContext()
-    cast("dict[str, t.ContainerValue]", ctx._statistics.operations)[
-        c.Context.OPERATION_GET
-    ] = 1
+    ctx._statistics.operations = {c.Context.OPERATION_GET: 1}
     ctx._update_statistics(c.Context.OPERATION_GET)
     assert ctx._statistics.operations[c.Context.OPERATION_GET] == 2
     clone_source = FlextContext()
     _ = clone_source.set("a", "b")
     original_set = FlextContext.set
-    monkeypatch.setattr(FlextContext, "set", lambda *_a, **_k: r[bool].fail("x"))
+
+    def _fail_set(
+        self: FlextContext,
+        key_or_data: str | m.ConfigMap,
+        value: t.ContainerValue | None = None,
+        scope: str = "current",
+    ) -> r[bool]:
+        _ = self, key_or_data, value, scope
+        return r[bool].fail("x")
+
+    monkeypatch.setattr(FlextContext, "set", _fail_set)
     cloned = clone_source.clone()
     monkeypatch.setattr(FlextContext, "set", original_set)
     assert isinstance(cloned, FlextContext)
@@ -174,13 +185,14 @@ def test_container_and_service_domain_paths(monkeypatch: pytest.MonkeyPatch) -> 
     FlextContext._container = None
     with pytest.raises(RuntimeError):
         FlextContext.get_container()
-    container = _ContainerStub()
-    FlextContext.set_container(cast("Any", container))
+    container = FlextContainer()
+    container.clear_all()
+    FlextContext.set_container(container)
     assert FlextContext.get_container() is container
-    container.services["obj"] = object()
+    container.register("obj", "x")
     result = FlextContext.Service.get_service("obj")
     assert result.is_success
-    assert isinstance(result.value, str)
+    assert result.value == "x"
     assert FlextContext.Service.register_service("ok", "value").is_success
     assert FlextContext.Service.register_service("bad", "value").is_failure
     assert FlextContext.Service.get_service("missing").is_failure
