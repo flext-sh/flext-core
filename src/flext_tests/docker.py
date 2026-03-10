@@ -162,15 +162,12 @@ class FlextTestsDocker:
             compose_path = Path(compose_file)
             if not compose_path.is_absolute():
                 compose_path = self.workspace_root / compose_file
-            if docker is None:
-                return r[str].fail("python_on_whales is not available")
-            docker_client = docker
-            original_files = docker_client.client_config.compose_files
+            original_files = docker.client_config.compose_files
             try:
-                docker_client.client_config.compose_files = [str(compose_path)]
-                docker_client.compose.down(volumes=True, remove_orphans=True)
+                docker.client_config.compose_files = [str(compose_path)]
+                docker.compose.down(volumes=True, remove_orphans=True)
             finally:
-                docker_client.client_config.compose_files = original_files
+                docker.client_config.compose_files = original_files
             return r[str].ok("Compose down successful")
         except (AttributeError, OSError, RuntimeError, TypeError, ValueError) as exc:
             self.logger.warning("Compose down failed", error=str(exc))
@@ -188,21 +185,16 @@ class FlextTestsDocker:
             compose_path = Path(compose_file)
             if not compose_path.is_absolute():
                 compose_path = self.workspace_root / compose_file
-            if docker is None:
-                return r[str].fail("python_on_whales is not available")
-            docker_client = docker
-            original_files = docker_client.client_config.compose_files
+            original_files = docker.client_config.compose_files
             try:
-                docker_client.client_config.compose_files = [str(compose_path)]
+                docker.client_config.compose_files = [str(compose_path)]
                 if force_recreate:
                     with contextlib.suppress(Exception):
-                        docker_client.compose.down(remove_orphans=True, volumes=True)
+                        docker.compose.down(remove_orphans=True, volumes=True)
                 services = [service] if service else []
-                docker_client.compose.up(
-                    services=services, detach=True, remove_orphans=True
-                )
+                docker.compose.up(services=services, detach=True, remove_orphans=True)
             finally:
-                docker_client.client_config.compose_files = original_files
+                docker.client_config.compose_files = original_files
             return r[str].ok("Compose up successful")
         except (AttributeError, OSError, RuntimeError, TypeError, ValueError) as exc:
             self.logger.exception("Compose up failed")
