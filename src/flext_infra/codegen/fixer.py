@@ -619,6 +619,7 @@ class FlextInfraCodegenFixer(s[list[m.Infra.Codegen.AutoFixResult]]):
     def _prune_stale_all_assignment(*, path: Path) -> bool:
         try:
             source = path.read_text(encoding=c.Infra.Encoding.DEFAULT)
+            # NOTE: source text needed below - cannot delegate to u.Infra.parse_module_ast
             tree = ast.parse(source)
         except (OSError, UnicodeDecodeError, SyntaxError):
             return False

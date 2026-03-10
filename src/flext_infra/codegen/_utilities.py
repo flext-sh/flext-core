@@ -21,7 +21,7 @@ from pathlib import Path
 from pydantic import TypeAdapter, ValidationError
 
 from flext_core import t
-from flext_infra import c
+from flext_infra import c, u
 from flext_infra.codegen._models import FlextInfraCodegenModels
 from flext_infra.codegen.census import FlextInfraCodegenCensus
 
@@ -709,10 +709,8 @@ class FlextInfraUtilitiesCodegen:
             )
             if not constants_file.is_file():
                 continue
-            try:
-                source = constants_file.read_text(encoding=c.Infra.Encoding.DEFAULT)
-                tree = ast.parse(source)
-            except (OSError, UnicodeDecodeError, SyntaxError):
+            tree = u.Infra.parse_module_ast(constants_file)
+            if tree is None:
                 continue
             for node in tree.body:
                 if isinstance(node, ast.Assign) and len(node.targets) == 1:
@@ -984,11 +982,9 @@ class FlextInfraUtilitiesCodegen:
             file_path = (workspace_root / rel_path).resolve()
             if not file_path.is_file():
                 continue
-            try:
-                source = file_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
-                tree = ast.parse(source)
-            except (OSError, UnicodeDecodeError, SyntaxError) as exc:
-                parse_errors.append(f"{rel_path}:{exc}")
+            tree = u.Infra.parse_module_ast(file_path)
+            if tree is None:
+                parse_errors.append(f"{rel_path}:parse failed")
                 continue
             invalid_import_from.extend(
                 f"{rel_path}:{node.lineno}"

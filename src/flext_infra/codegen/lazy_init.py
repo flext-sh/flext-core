@@ -25,6 +25,7 @@ from pathlib import Path
 from typing import override
 
 from flext_core import r, s
+from flext_infra import u
 from flext_infra._utilities.output import output
 from flext_infra._utilities.subprocess import FlextInfraUtilitiesSubprocess
 from flext_infra.constants import FlextInfraConstants as c
@@ -110,7 +111,14 @@ class FlextInfraCodegenLazyInit(s[int]):
             root = self._root / root_name
             if not root.is_dir():
                 continue
-            for py_file in root.rglob("*.py"):
+            files_result = u.Infra.iter_python_files(
+                workspace_root=self._root,
+                project_roots=[self._root],
+                src_dirs=frozenset({root_name}),
+            )
+            if files_result.is_failure:
+                continue
+            for py_file in files_result.value:
                 if any(
                     part.startswith(".") or part in {"vendor", "node_modules", ".venv"}
                     for part in py_file.parts
@@ -275,6 +283,7 @@ def _read_existing_docstring(init_path: Path) -> str:
         return ""
     try:
         content = init_path.read_text(encoding="utf-8")
+        # NOTE: source text needed below - cannot delegate to u.Infra.parse_module_ast
         tree = ast.parse(content)
     except (OSError, SyntaxError):
         return ""
@@ -313,11 +322,9 @@ def _build_sibling_export_index(
 
         mod_stem = py_file.stem
         mod_path = f"{current_pkg}.{mod_stem}" if current_pkg else mod_stem
-        try:
-            content = py_file.read_text(encoding="utf-8")
-            sibling_tree = ast.parse(content)
-        except (SyntaxError, OSError) as exc:
-            output.warning(f"skipping {py_file.name}: {exc}")
+        sibling_tree = u.Infra.parse_module_ast(py_file)
+        if sibling_tree is None:
+            output.warning(f"skipping {py_file.name}: parse failed")
             continue
 
         # Prefer __all__ when available
@@ -451,10 +458,8 @@ def _extract_version_exports(
     ver_file = pkg_dir / "__version__.py"
     if not ver_file.exists():
         return ({}, {})
-    try:
-        content = ver_file.read_text(encoding="utf-8")
-        tree = ast.parse(content)
-    except (SyntaxError, OSError):
+    tree = u.Infra.parse_module_ast(ver_file)
+    if tree is None:
         return ({}, {})
 
     inline = _extract_inline_constants(tree)

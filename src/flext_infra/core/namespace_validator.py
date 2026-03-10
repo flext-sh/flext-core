@@ -13,7 +13,7 @@ import ast
 from pathlib import Path
 
 from flext_core import r
-from flext_infra import c, m
+from flext_infra import c, m, u
 
 __all__ = ["FlextInfraNamespaceValidator"]
 
@@ -376,8 +376,4 @@ class FlextInfraNamespaceValidator:
 
     def _parse_file(self, path: Path) -> ast.Module | None:
         """Parse a Python file into an AST, returning None on failure."""
-        try:
-            source = path.read_text(encoding=c.Infra.Encoding.DEFAULT)
-            return ast.parse(source, filename=str(path))
-        except (SyntaxError, UnicodeDecodeError):
-            return None
+        return u.Infra.parse_module_ast(path)
