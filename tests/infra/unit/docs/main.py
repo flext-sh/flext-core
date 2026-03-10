@@ -180,7 +180,8 @@ class TestRunFix:
 
         monkeypatch.setattr(FlextInfraDocFixer, "fix", mock_fix)
         monkeypatch.setattr(
-            "flext_infra.docs.__main__.output",
+            docs_main,
+            "output",
             type("O", (), {"error": staticmethod(lambda *a: None)})(),
         )
         tm.that(_run_fix(_fix_args()), eq=1)

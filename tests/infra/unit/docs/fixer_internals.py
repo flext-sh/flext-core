@@ -127,34 +127,22 @@ class TestFixerMaybeFixLink:
 
 
 class TestFixerToc:
-    """Tests for _anchorize, _build_toc, _update_toc."""
-
-    @pytest.fixture
-    def fixer(self) -> FlextInfraDocFixer:
-        """Create fixer instance."""
-        return FlextInfraDocFixer()
-
     def test_anchorize_converts_to_slug(self, fixer: FlextInfraDocFixer) -> None:
-        """Test _anchorize converts heading to anchor slug."""
         tm.that(fixer._anchorize("Hello World"), eq="hello-world")
         tm.that(fixer._anchorize("Test-Case"), eq="test-case")
         tm.that(fixer._anchorize("  Spaces  "), eq="spaces")
 
     def test_anchorize_removes_special_chars(self, fixer: FlextInfraDocFixer) -> None:
-        """Test _anchorize removes special characters."""
         tm.that(fixer._anchorize("Hello! World?"), eq="hello-world")
         tm.that(fixer._anchorize("Test@#$%"), eq="test")
 
     def test_anchorize_empty_string(self, fixer: FlextInfraDocFixer) -> None:
-        """Test _anchorize with empty string."""
         tm.that(fixer._anchorize(""), eq="")
 
     def test_anchorize_with_special_chars_only(self, fixer: FlextInfraDocFixer) -> None:
-        """Test _anchorize returns empty string for heading with only special chars."""
         tm.that(fixer._anchorize("!!!"), eq="")
 
     def test_build_toc_from_headings(self, fixer: FlextInfraDocFixer) -> None:
-        """Test _build_toc generates TOC from headings."""
         toc = fixer._build_toc(
             "# Main\n\n## Section 1\n\n### Subsection\n\n## Section 2\n"
         )
@@ -163,20 +151,17 @@ class TestFixerToc:
         tm.that("Section 1" in toc, eq=True)
 
     def test_build_toc_no_headings(self, fixer: FlextInfraDocFixer) -> None:
-        """Test _build_toc with no headings."""
         tm.that(
             "No sections found" in fixer._build_toc("# Main\n\nNo sections here.\n"),
             eq=True,
         )
 
     def test_build_toc_skips_empty_anchors(self, fixer: FlextInfraDocFixer) -> None:
-        """Test _build_toc skips headings that produce empty anchors."""
         toc = fixer._build_toc("## !!!\n\n## Valid Section\n")
         tm.that("Valid Section" in toc, eq=True)
         tm.that("!!!" not in toc, eq=True)
 
     def test_update_toc_replaces_existing(self, fixer: FlextInfraDocFixer) -> None:
-        """Test _update_toc replaces existing TOC."""
         updated, changed = fixer._update_toc(
             "# Main\n\n<!-- TOC START -->\nOld TOC\n<!-- TOC END -->\n\n## Section\n"
         )
@@ -184,23 +169,18 @@ class TestFixerToc:
         tm.that("Old TOC" not in updated, eq=True)
 
     def test_update_toc_inserts_new(self, fixer: FlextInfraDocFixer) -> None:
-        """Test _update_toc inserts new TOC."""
         updated, changed = fixer._update_toc("# Main\n\n## Section\n")
         tm.that(changed, eq=1)
         tm.that("<!-- TOC START -->" in updated, eq=True)
 
     def test_update_toc_without_h1_heading(self, fixer: FlextInfraDocFixer) -> None:
-        """Test _update_toc prepends TOC when no h1 heading exists."""
         updated, changed = fixer._update_toc("## Section 1\n\nContent here.")
         tm.that(changed, eq=1)
         tm.that("<!-- TOC START -->" in updated, eq=True)
 
 
 class TestFixerScope:
-    """Tests for _fix_scope."""
-
     def test_fix_scope_with_markdown_files(self, tmp_path: Path) -> None:
-        """Test _fix_scope processes markdown files."""
         fixer = FlextInfraDocFixer()
         docs_dir = tmp_path / "docs"
         docs_dir.mkdir(parents=True, exist_ok=True)
