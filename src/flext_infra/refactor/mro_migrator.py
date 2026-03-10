@@ -38,6 +38,7 @@ class FlextInfraRefactorMROMigrationTransformer:
     ) -> tuple[str, m.Infra.Refactor.MROFileMigration, dict[str, str]]:
         """Transform a candidate file and return code plus symbol map."""
         source = Path(scan_result.file).read_text(encoding=c.Infra.Encoding.DEFAULT)
+        # given source text is returned and compared after rewrites
         module = cst.parse_module(source)
         candidate_symbols = {candidate.symbol for candidate in scan_result.candidates}
         moved_statements: list[tuple[str, cst.CSTNode]] = []

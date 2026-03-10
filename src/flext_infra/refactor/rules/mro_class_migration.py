@@ -29,6 +29,7 @@ class FlextInfraRefactorMROClassMigrationRule(FlextInfraRefactorRule):
             return (tree, [])
         source = tree.code
         try:
+            # given source is in-memory CST output, parse from string is required
             module_ast = ast.parse(source)
         except SyntaxError:
             return (tree, [])
@@ -64,6 +65,7 @@ class FlextInfraRefactorMROClassMigrationRule(FlextInfraRefactorRule):
         )
         if len(migration.moved_symbols) == 0 or updated_source == source:
             return (tree, [])
+        # given updated_source is in-memory transformed text, parse from string is required
         updated_module = cst.parse_module(updated_source)
         syms = ", ".join(migration.moved_symbols)
         return (updated_module, [f"migrated constants into facade class: {syms}"])

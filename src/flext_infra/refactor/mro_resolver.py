@@ -319,10 +319,8 @@ class FlextInfraRefactorMROMigrationScanner:
         target_spec: m.Infra.Refactor.MROTargetSpec,
     ) -> m.Infra.Refactor.MROScanReport | None:
         """Scan a constants module for module-level Final constants."""
-        try:
-            source = file_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
-            tree = ast.parse(source)
-        except (OSError, SyntaxError):
+        tree = u.Infra.parse_module_ast(file_path)
+        if tree is None:
             return None
         constants_class = cls._facade_class_name(tree=tree, target_spec=target_spec)
         if not constants_class:
@@ -666,6 +664,7 @@ class FlextInfraRefactorMROImportRewriter:
         """Rewrite one file according to moved constant symbol mappings."""
         try:
             source = file_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
+            # NOTE: source text needed below for rendered-diff/write decisions.
             tree = ast.parse(source)
         except (OSError, SyntaxError):
             return None

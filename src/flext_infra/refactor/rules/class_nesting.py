@@ -51,6 +51,7 @@ class ClassNestingRefactorRule:
                     refactored_code=None,
                 )
             source = file_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
+            # given source is rewritten and compared later in this method
             tree = cst.parse_module(source)
             mappings = self._load_config()
             confidence_threshold = self._confidence_threshold(mappings)

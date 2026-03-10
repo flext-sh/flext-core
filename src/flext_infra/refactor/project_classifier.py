@@ -7,7 +7,7 @@ import re
 import tomllib
 from pathlib import Path
 
-from flext_infra import c, m
+from flext_infra import c, m, u
 
 
 class ProjectClassifier:
@@ -114,9 +114,8 @@ class ProjectClassifier:
         file_path: Path,
         suffix: str,
     ) -> tuple[set[str], set[str]]:
-        try:
-            tree = ast.parse(file_path.read_text(encoding=c.Infra.Encoding.DEFAULT))
-        except (OSError, SyntaxError, UnicodeDecodeError):
+        tree = u.Infra.parse_module_ast(file_path)
+        if tree is None:
             return (set(), set())
         base_names: set[str] = set()
         class_names: set[str] = set()

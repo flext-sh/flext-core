@@ -325,6 +325,7 @@ class FlextInfraRefactorPydanticCentralizerAnalysis:
         file_path: Path,
     ) -> tuple[list[m.Infra.Refactor.ClassMove], list[m.Infra.Refactor.AliasMove]]:
         source = file_path.read_text(encoding="utf-8")
+        # given source text is needed for ast.get_source_segment below
         tree = ast.parse(source)
         lines = source.splitlines()
         class_moves: list[m.Infra.Refactor.ClassMove] = []
@@ -406,6 +407,7 @@ class FlextInfraRefactorPydanticCentralizerAnalysis:
     def scan_file_violations(file_path: Path) -> tuple[int, int]:
         try:
             source = file_path.read_text(encoding="utf-8")
+            # given source text is reused for dict-like alias detection
             tree = ast.parse(source)
         except (SyntaxError, UnicodeDecodeError, OSError):
             return (0, 0)
@@ -661,7 +663,6 @@ class FlextInfraRefactorViolationAnalyzer:
                 continue
             helper_analysis = cls._analyze_file_helpers(
                 file_path=file_path,
-                content=content,
             )
             helper_suggestions.extend(helper_analysis.suggestions)
             helper_totals.update(helper_analysis.totals)
@@ -713,14 +714,12 @@ class FlextInfraRefactorViolationAnalyzer:
         cls,
         *,
         file_path: Path,
-        content: str,
     ) -> m.Infra.Refactor.HelperFileAnalysis:
         suggestions: list[m.Infra.Refactor.HelperClassification] = []
         totals: Counter[str] = Counter()
         manual_review: list[m.Infra.Refactor.HelperClassification] = []
-        try:
-            module = cst.parse_module(content)
-        except cst.ParserSyntaxError:
+        module = u.Infra.parse_module_cst(file_path)
+        if module is None:
             return m.Infra.Refactor.HelperFileAnalysis(
                 suggestions=suggestions,
                 totals=dict(totals),

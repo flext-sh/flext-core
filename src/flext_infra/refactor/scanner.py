@@ -171,20 +171,18 @@ class FlextInfraRefactorLooseClassScanner:
         self,
         file_path: Path,
     ) -> RListClassOccurrence:
-        try:
-            src = file_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
-            tree = cst.parse_module(src)
-            col = TopLevelClassCollector()
-            tree.visit(col)
-            out: RListClassOccurrence = r[list[m.Infra.Refactor.ClassOccurrence]].ok(
-                col.classes,
+        tree = u.Infra.parse_module_cst(file_path)
+        if tree is None:
+            out: RListClassOccurrence = r[list[m.Infra.Refactor.ClassOccurrence]].fail(
+                f"{file_path}: parse_failed"
             )
             return out
-        except (OSError, UnicodeDecodeError, cst.ParserSyntaxError) as exc:
-            out2: RListClassOccurrence = r[list[m.Infra.Refactor.ClassOccurrence]].fail(
-                f"{file_path}: {exc}"
-            )
-            return out2
+        col = TopLevelClassCollector()
+        tree.visit(col)
+        out2: RListClassOccurrence = r[list[m.Infra.Refactor.ClassOccurrence]].ok(
+            col.classes,
+        )
+        return out2
 
     def _scan_with_ast_grep(self, project_root: Path) -> RDictPathGrep:
         cmd = [

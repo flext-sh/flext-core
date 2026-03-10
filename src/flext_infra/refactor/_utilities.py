@@ -421,6 +421,7 @@ class FlextInfraUtilitiesRefactor:
         if not normalized_import:
             return source
         try:
+            # given input is in-memory source text, parse from string is required
             module = cst.parse_module(source)
             parsed_stmt = cst.parse_statement(f"{normalized_import}\n")
         except cst.ParserSyntaxError:
@@ -485,10 +486,8 @@ class FlextInfraUtilitiesRefactor:
         py_file: Path,
     ) -> dict[str, list[tuple[str, str, str]]]:
         """Internal: extract all public methods from classes using stdlib ast."""
-        try:
-            source = py_file.read_text(encoding=c.Infra.Encoding.DEFAULT)
-            tree = ast.parse(source)
-        except (SyntaxError, UnicodeDecodeError, OSError):
+        tree = flext_infra.u.Infra.parse_module_ast(py_file)
+        if tree is None:
             return {}
         result: dict[str, list[tuple[str, str, str]]] = {}
         for node in ast.iter_child_nodes(tree):
@@ -538,10 +537,8 @@ class FlextInfraUtilitiesRefactor:
 
         Inspects ``staticmethod(...)`` assignments in the facade class.
         """
-        try:
-            source = facade_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
-            tree = ast.parse(source)
-        except (SyntaxError, UnicodeDecodeError, OSError):
+        tree = flext_infra.u.Infra.parse_module_ast(facade_path)
+        if tree is None:
             return {}
 
         alias_map: dict[str, tuple[str, str]] = {}
@@ -585,10 +582,8 @@ class FlextInfraUtilitiesRefactor:
 
         E.g. ``{"Conversion": "FlextUtilitiesConversion", ...}``.
         """
-        try:
-            source = facade_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
-            tree = ast.parse(source)
-        except (SyntaxError, UnicodeDecodeError, OSError):
+        tree = flext_infra.u.Infra.parse_module_ast(facade_path)
+        if tree is None:
             return {}
 
         name_map: dict[str, str] = {}

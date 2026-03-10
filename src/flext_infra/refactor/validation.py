@@ -67,11 +67,9 @@ class PostCheckGate:
         return check_name in checks
 
     def _validate_imports(self, file_path: Path) -> list[str]:
-        try:
-            source = file_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
-            tree = ast.parse(source)
-        except (OSError, UnicodeDecodeError, SyntaxError) as exc:
-            return [f"parse_error:{file_path}:{exc}"]
+        tree = u.Infra.parse_module_ast(file_path)
+        if tree is None:
+            return [f"parse_error:{file_path}:parse_failed"]
         unresolved: list[str] = [
             f"line_{node.lineno}:invalid_import_from"
             for node in ast.walk(tree)
@@ -87,11 +85,9 @@ class PostCheckGate:
         class_name: str,
         expected_bases: Sequence[str],
     ) -> list[str]:
-        try:
-            source = file_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
-            tree = ast.parse(source)
-        except (OSError, UnicodeDecodeError, SyntaxError) as exc:
-            return [f"mro_parse_error:{file_path}:{exc}"]
+        tree = u.Infra.parse_module_ast(file_path)
+        if tree is None:
+            return [f"mro_parse_error:{file_path}:parse_failed"]
         for node in ast.walk(tree):
             if isinstance(node, ast.ClassDef) and node.name == class_name:
                 actual = [self._base_name(base) for base in node.bases]
