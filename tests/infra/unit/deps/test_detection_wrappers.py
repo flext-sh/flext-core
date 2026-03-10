@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from flext_core import r, t
+from flext_core import r
 from flext_infra.deps import detection
 from flext_infra.deps.detection import (
     build_project_report,
@@ -14,6 +14,7 @@ from flext_infra.deps.detection import (
     module_to_types_package,
 )
 from flext_tests import tm
+from tests.infra.typings import t
 
 
 class _StubService:

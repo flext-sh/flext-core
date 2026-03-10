@@ -3,9 +3,10 @@ from __future__ import annotations
 import types
 from pathlib import Path
 
-from flext_core import r, t
+from flext_core import r
 from flext_infra.deps.internal_sync import FlextInfraInternalDependencySyncService
 from flext_tests import tm
+from tests.infra.typings import t
 from tests.infra import h
 
 

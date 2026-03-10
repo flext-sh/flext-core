@@ -10,7 +10,7 @@ import sys
 
 import pytest
 
-from flext_core import r, t
+from flext_core import r
 from flext_infra import m
 from flext_infra.docs.__main__ import main
 from flext_infra.docs.auditor import FlextInfraDocAuditor
@@ -19,6 +19,7 @@ from flext_infra.docs.fixer import FlextInfraDocFixer
 from flext_infra.docs.generator import FlextInfraDocGenerator
 from flext_infra.docs.validator import FlextInfraDocValidator
 from flext_tests import tm
+from tests.infra.typings import t
 
 
 def _ok_empty(

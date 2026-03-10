@@ -7,10 +7,12 @@ from pathlib import Path
 
 import pytest
 
-from flext_core import r, t
+from flext_core import r
 from flext_infra.github import pr as pr_module
 from flext_infra.github.pr import _parse_args, _selector, main
 from flext_tests import tm
+from tests.infra.helpers import h
+from tests.infra.typings import t
 from tests.infra.unit.github._stubs import StubPrManager, StubUtilities
 
 _DEFAULTS: dict[str, t.ContainerValue] = {
@@ -31,7 +33,7 @@ _DEFAULTS: dict[str, t.ContainerValue] = {
 
 
 def _args(**overrides: t.ContainerValue) -> argparse.Namespace:
-    return argparse.Namespace(**{**_DEFAULTS, **overrides})
+    return h.ns(**{**_DEFAULTS, **overrides})
 
 
 class TestMainFunction:

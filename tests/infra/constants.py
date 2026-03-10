@@ -11,11 +11,10 @@ from __future__ import annotations
 
 from typing import Final
 
-from flext_infra import FlextInfraConstants
-from flext_tests import FlextTestsConstants
+from tests import TestsFlextConstants
 
 
-class FlextInfraTestConstants(FlextTestsConstants):
+class FlextInfraTestConstants(TestsFlextConstants):
     """Constants for FLEXT infra tests - extends FlextTestsConstants.
 
     Architecture layer: Layer 0 foundation constants with infra test extensions.
@@ -23,7 +22,7 @@ class FlextInfraTestConstants(FlextTestsConstants):
     All base constants from FlextTestsConstants are available through inheritance.
     """
 
-    class Infra(FlextInfraConstants.Infra):
+    class Infra(TestsFlextConstants.Infra):
         """Infra-specific test constants namespace.
 
         All infra-specific test constants are organized under this namespace.

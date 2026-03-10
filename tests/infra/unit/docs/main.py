@@ -10,13 +10,15 @@ import argparse
 
 import pytest
 
-from flext_core import r, t
-from flext_infra import m
+from flext_core import r
 from flext_infra.docs import __main__ as docs_main
 from flext_infra.docs.__main__ import _run_audit, _run_fix
 from flext_infra.docs.auditor import FlextInfraDocAuditor
 from flext_infra.docs.fixer import FlextInfraDocFixer
 from flext_tests import tm
+from tests.infra.helpers import h
+from tests.infra.models import m
+from tests.infra.typings import t
 
 
 def _audit_args(**overrides: t.ContainerValue) -> argparse.Namespace:
@@ -29,7 +31,7 @@ def _audit_args(**overrides: t.ContainerValue) -> argparse.Namespace:
         "strict": 1,
     }
     defaults.update(overrides)
-    return argparse.Namespace(**defaults)
+    return h.ns(**defaults)
 
 
 def _fix_args(**overrides: t.ContainerValue) -> argparse.Namespace:
@@ -41,7 +43,7 @@ def _fix_args(**overrides: t.ContainerValue) -> argparse.Namespace:
         "apply": False,
     }
     defaults.update(overrides)
-    return argparse.Namespace(**defaults)
+    return h.ns(**defaults)
 
 
 def _ok(val: list[m.Infra.Docs.DocsPhaseReport]):

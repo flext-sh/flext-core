@@ -5,10 +5,11 @@ from pathlib import Path
 
 import pytest
 
-from flext_core import r, t
+from flext_core import r
 from flext_infra import m
 from flext_infra.deps import path_sync as path_sync_module
 from flext_tests import tm
+from tests.infra.typings import t
 from tests.infra.helpers import FlextInfraTestHelpers
 
 

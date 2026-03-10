@@ -13,9 +13,10 @@ from types import SimpleNamespace
 from _pytest.monkeypatch import MonkeyPatch
 
 import flext_infra.release.__main__ as _main_mod
-from flext_core import r, t
+from flext_core import r
 from flext_infra.release.__main__ import main
 from flext_tests import tm
+from tests.infra.typings import t
 
 
 def _patch_main_deps(

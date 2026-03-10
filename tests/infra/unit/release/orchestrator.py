@@ -10,9 +10,10 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from flext_core import r, t
+from flext_core import r
 from flext_infra.release.orchestrator import FlextInfraReleaseOrchestrator
 from flext_tests import tm
+from tests.infra.typings import t
 from tests.infra import h
 
 if TYPE_CHECKING:

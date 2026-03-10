@@ -4,12 +4,13 @@ from collections.abc import Mapping
 from pathlib import Path
 from typing import override
 
-from flext_core import r, t
+from flext_core import r
 from flext_infra import m as im
 from flext_infra.basemk.generator import FlextInfraBaseMkGenerator
 from flext_infra.workspace.migrator import FlextInfraProjectMigrator
 from flext_tests import tm
 from tests.infra import h
+from tests.infra.typings import t
 
 
 class _StubDiscovery:

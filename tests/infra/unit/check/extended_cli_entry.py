@@ -17,7 +17,7 @@ import pytest
 import flext_infra.check.__main__ as check_main_mod
 import flext_infra.check.fix_pyrefly_config as fix_pyrefly_mod
 import flext_infra.check.workspace_check as ws_mod
-from flext_core import r, t
+from flext_core import r
 from flext_infra import m
 from flext_infra.check.services import (
     _GateExecution,
@@ -25,6 +25,7 @@ from flext_infra.check.services import (
     run_cli,
 )
 from flext_tests import tm
+from tests.infra.typings import t
 
 
 def _fake_checker_cls(

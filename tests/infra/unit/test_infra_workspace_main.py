@@ -6,13 +6,13 @@ from pathlib import Path
 import pytest
 
 from flext_core import r
-from flext_infra import m
 from flext_infra.workspace import __main__ as workspace_main
 from flext_infra.workspace.detector import FlextInfraWorkspaceDetector, WorkspaceMode
 from flext_infra.workspace.migrator import FlextInfraProjectMigrator
 from flext_infra.workspace.orchestrator import FlextInfraOrchestratorService
 from flext_infra.workspace.sync import FlextInfraSyncService
 from flext_tests import tm
+from tests.infra.models import m
 
 _MR, _CO = m.Infra.Workspace.MigrationResult, m.Infra.Core.CommandOutput
 

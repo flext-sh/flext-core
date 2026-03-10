@@ -11,9 +11,10 @@ from pathlib import Path
 
 import pytest
 
-from flext_core import r, t
+from flext_core import r
 from flext_infra.check.services import FlextInfraConfigFixer
 from flext_tests import tm
+from tests.infra.typings import t
 
 
 def _fake_find(

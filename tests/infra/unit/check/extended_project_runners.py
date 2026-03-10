@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pytest
 
-from flext_core import r, t
+from flext_core import r
 from flext_infra import m
 from flext_infra.check.services import (
     FlextInfraWorkspaceChecker,
@@ -18,6 +18,7 @@ from flext_infra.check.services import (
     _GateExecution,
 )
 from flext_tests import tm
+from tests.infra.typings import t
 
 
 def _make_gate_exec(

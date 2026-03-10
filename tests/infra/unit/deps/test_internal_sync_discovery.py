@@ -3,16 +3,17 @@ from __future__ import annotations
 import types
 from pathlib import Path
 
-from flext_core import r, t
+from flext_core import r
 from flext_infra.deps.internal_sync import FlextInfraInternalDependencySyncService
 from flext_tests import tm
+from tests.infra.typings import t
 
 
 def _set_toml_stub(
     service: FlextInfraInternalDependencySyncService,
     value: t.ContainerValue,
 ) -> None:
-    service.toml = types.SimpleNamespace(read_plain=lambda _path: value)
+    service.toml = types.SimpleNamespace(read_plain=lambda _path: value)  # type: ignore[assignment]
 
 
 def _set_toml_sequence(
@@ -26,7 +27,7 @@ def _set_toml_sequence(
         state["index"] += 1
         return item
 
-    service.toml = types.SimpleNamespace(read_plain=_next)
+    service.toml = types.SimpleNamespace(read_plain=_next)  # type: ignore[assignment]
 
 
 class TestParseGitmodules:

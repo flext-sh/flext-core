@@ -12,9 +12,10 @@ from pathlib import Path
 
 import pytest
 
-from flext_core import r, t
+from flext_core import r
 from flext_infra.workspace.detector import FlextInfraWorkspaceDetector, WorkspaceMode
 from flext_tests import tm
+from tests.infra.typings import t
 
 
 @pytest.fixture

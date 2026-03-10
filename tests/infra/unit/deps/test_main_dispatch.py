@@ -11,10 +11,10 @@ from types import ModuleType, SimpleNamespace
 
 import pytest
 
-from flext_core import t
 from flext_infra.deps import __main__ as main_mod
 from flext_infra.deps.__main__ import _SUBCOMMANDS, main
 from flext_tests import tm
+from tests.infra.typings import t
 
 _NO_STRUCTLOG = SimpleNamespace(ensure_structlog_configured=lambda: None)
 

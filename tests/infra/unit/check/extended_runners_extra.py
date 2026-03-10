@@ -13,9 +13,9 @@ from types import SimpleNamespace
 
 import pytest
 
-from flext_core import t
 from flext_infra.check.services import FlextInfraWorkspaceChecker
 from flext_tests import tm
+from tests.infra.typings import t
 from tests.infra import h
 
 

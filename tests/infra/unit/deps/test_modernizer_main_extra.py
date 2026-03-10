@@ -9,9 +9,9 @@ import pytest
 import tomlkit
 
 import flext_infra.deps.modernizer as modernizer_module
-from flext_core import t
 from flext_infra.deps.modernizer import FlextInfraPyprojectModernizer
 from flext_tests import tm
+from tests.infra.typings import t
 
 
 def _modernizer_args(**overrides: t.ContainerValue | None) -> argparse.Namespace:

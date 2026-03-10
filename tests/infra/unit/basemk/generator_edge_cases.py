@@ -14,10 +14,10 @@ from pathlib import Path
 
 import pytest
 
-from flext_core import t
 from flext_infra import m as im
 from flext_infra.basemk.generator import FlextInfraBaseMkGenerator
 from flext_tests import tm
+from tests.infra.typings import t
 
 
 def test_generator_write_handles_file_permission_error(tmp_path: Path) -> None:

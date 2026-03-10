@@ -5,9 +5,10 @@ from types import SimpleNamespace
 
 import pytest
 
-from flext_core import r, t
+from flext_core import r
 from flext_infra.deps.detection import FlextInfraDependencyDetectionService
 from flext_tests import tm
+from tests.infra.typings import t
 
 
 class _StubToml:

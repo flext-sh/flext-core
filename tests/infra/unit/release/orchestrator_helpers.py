@@ -8,10 +8,10 @@ from typing import TYPE_CHECKING
 import pytest
 
 from flext_core import r
-from flext_infra import FlextInfraModels
 from flext_infra.release import orchestrator as _orch_mod
 from flext_infra.release.orchestrator import FlextInfraReleaseOrchestrator
 from flext_tests import tm
+from tests.infra.models import m as _m
 from tests.infra.unit.release._stubs import (
     FakeSelection,
     FakeSubprocess,
@@ -24,7 +24,6 @@ if TYPE_CHECKING:
 
     from _pytest.monkeypatch import MonkeyPatch
 
-_m = FlextInfraModels
 _CLS = FlextInfraReleaseOrchestrator
 
 

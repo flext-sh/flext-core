@@ -11,11 +11,10 @@ from __future__ import annotations
 
 from typing import Protocol, runtime_checkable
 
-from flext_infra import FlextInfraProtocols
-from flext_tests import FlextTestsProtocols
+from tests import TestsFlextProtocols
 
 
-class FlextInfraTestProtocols(FlextTestsProtocols):
+class FlextInfraTestProtocols(TestsFlextProtocols):
     """Protocol definitions for FLEXT infra tests - extends FlextTestsProtocols.
 
     Architecture: Extends FlextTestsProtocols with infra-specific protocol definitions.
@@ -23,7 +22,7 @@ class FlextInfraTestProtocols(FlextTestsProtocols):
     Protocols cannot import models - only other protocols and types.
     """
 
-    class Infra(FlextInfraProtocols.Infra):
+    class Infra(TestsFlextProtocols.Infra):
         """Infra-specific protocol definitions."""
 
         class Tests:

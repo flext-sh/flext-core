@@ -10,9 +10,9 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
-from flext_core import t
 from flext_infra import m
 from flext_infra.check.services import (
+from tests.infra.typings import t
     _CheckIssue,
     _GateExecution,
     _ProjectResult,

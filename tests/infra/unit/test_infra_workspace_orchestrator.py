@@ -13,10 +13,11 @@ from pathlib import Path
 
 import pytest
 
-from flext_core import r, t
+from flext_core import r
 from flext_infra import m
 from flext_infra.workspace.orchestrator import FlextInfraOrchestratorService
 from flext_tests import tm
+from tests.infra.typings import t
 
 _CO = m.Infra.Core.CommandOutput
 

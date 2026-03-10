@@ -10,9 +10,9 @@ from pathlib import Path
 
 import pytest
 
-from flext_core import t
 from flext_infra.workspace.migrator import FlextInfraProjectMigrator
 from flext_tests import tm
+from tests.infra.typings import t
 from tests.infra.unit.test_infra_workspace_migrator import (
     _build_migrator,
     _project,

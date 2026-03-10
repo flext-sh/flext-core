@@ -11,7 +11,8 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
-from flext_core import r, t
+from flext_core import r
+from tests.infra.typings import t
 
 
 class StubPrManager:

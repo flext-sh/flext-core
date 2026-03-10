@@ -7,10 +7,11 @@ from pathlib import Path
 import pytest
 import tomlkit
 
-from flext_core import r, t
+from flext_core import r
 from flext_infra.deps import extra_paths
 from flext_infra.deps.extra_paths import main, sync_extra_paths, sync_one
 from flext_tests import tm
+from tests.infra.typings import t
 
 from ...helpers import h
 

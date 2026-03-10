@@ -11,11 +11,12 @@ from pathlib import Path
 
 import pytest
 
-from flext_core import r, t
+from flext_core import r
 from flext_infra import m
 from flext_infra.docs.auditor import FlextInfraDocAuditor, main
 from flext_infra.docs.shared import FlextInfraDocsShared
 from flext_tests import tm
+from tests.infra.typings import t
 
 
 class TestAuditorScopeFailure:

@@ -10,10 +10,11 @@ from pathlib import Path
 
 import pytest
 
-from flext_core import r, t
+from flext_core import r
 from flext_infra.github import pr_workspace as pw_mod
 from flext_infra.github.pr_workspace import FlextInfraPrWorkspaceManager
 from flext_tests import tm
+from tests.infra.typings import t
 from tests.infra.unit.github._stubs import StubProjectInfo, StubReporting, StubRunner
 
 
