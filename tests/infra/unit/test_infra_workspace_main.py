@@ -64,7 +64,10 @@ class TestRunSync:
 
 def _orch_args(projects: list[str] | None = None) -> argparse.Namespace:
     return _ns(
-        projects=projects or ["p-a", "p-b"], verb="check", fail_fast=False, make_arg=[]
+        projects=["p-a", "p-b"] if projects is None else projects,
+        verb="check",
+        fail_fast=False,
+        make_arg=[],
     )
 
 
@@ -125,41 +128,47 @@ class TestRunMigrate:
             return r[list[_MR]].ok(data)
 
         monkeypatch.setattr(FlextInfraProjectMigrator, "migrate", _migrate)
-        args = _ns(workspace_root=tmp_path, dry_run=False)
-        tm.that(workspace_main._run_migrate(args), eq=1)
+        tm.that(
+            workspace_main._run_migrate(_ns(workspace_root=tmp_path, dry_run=False)),
+            eq=1,
+        )
+
+
+@pytest.fixture
+def mp(monkeypatch: pytest.MonkeyPatch) -> pytest.MonkeyPatch:
+    return monkeypatch
 
 
 def _noop(_args: argparse.Namespace) -> int:
     return 0
 
 
+def _capture(mp: pytest.MonkeyPatch) -> list[argparse.Namespace]:
+    captured: list[argparse.Namespace] = []
+
+    def _cap(args: argparse.Namespace) -> int:
+        captured.append(args)
+        return 0
+
+    mp.setattr(workspace_main, "_run_orchestrate", _cap)
+    return captured
+
+
 class TestMainCli:
-    def test_detect_command(
-        self,
-        tmp_path: Path,
-        monkeypatch: pytest.MonkeyPatch,
-    ) -> None:
-        monkeypatch.setattr(workspace_main, "_run_detect", _noop)
+    def test_detect(self, tmp_path: Path, mp: pytest.MonkeyPatch) -> None:
+        mp.setattr(workspace_main, "_run_detect", _noop)
         tm.that(workspace_main.main(["detect", "--project-root", str(tmp_path)]), eq=0)
 
-    def test_sync_command(
-        self,
-        tmp_path: Path,
-        monkeypatch: pytest.MonkeyPatch,
-    ) -> None:
-        monkeypatch.setattr(workspace_main, "_run_sync", _noop)
+    def test_sync(self, tmp_path: Path, mp: pytest.MonkeyPatch) -> None:
+        mp.setattr(workspace_main, "_run_sync", _noop)
         tm.that(workspace_main.main(["sync", "--project-root", str(tmp_path)]), eq=0)
 
-    def test_orchestrate_command(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        monkeypatch.setattr(workspace_main, "_run_orchestrate", _noop)
+    def test_orchestrate(self, mp: pytest.MonkeyPatch) -> None:
+        mp.setattr(workspace_main, "_run_orchestrate", _noop)
         tm.that(workspace_main.main(["orchestrate", "--verb", "check", "p-a"]), eq=0)
 
-    def test_migrate_command(
-        self,
-        tmp_path: Path,
-        monkeypatch: pytest.MonkeyPatch,
-    ) -> None:
-        monkeypatch.setattr(workspace_main, "_run_migrate", _noop)
+    def test_migrate(self, tmp_path: Path, mp: pytest.MonkeyPatch) -> None:
+        mp.setattr(workspace_main, "_run_migrate", _noop)
         tm.that(
             workspace_main.main(["migrate", "--workspace-root", str(tmp_path)]), eq=0
         )
@@ -167,25 +176,13 @@ class TestMainCli:
     def test_no_command(self) -> None:
         tm.that(workspace_main.main([]), eq=1)
 
-    def test_orchestrate_with_fail_fast(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        captured: list[argparse.Namespace] = []
-
-        def _cap(args: argparse.Namespace) -> int:
-            captured.append(args)
-            return 0
-
-        monkeypatch.setattr(workspace_main, "_run_orchestrate", _cap)
+    def test_fail_fast(self, mp: pytest.MonkeyPatch) -> None:
+        captured = _capture(mp)
         workspace_main.main(["orchestrate", "--verb", "check", "--fail-fast", "p-a"])
         tm.that(captured[0].fail_fast, eq=True)
 
-    def test_orchestrate_with_make_args(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        captured: list[argparse.Namespace] = []
-
-        def _cap(args: argparse.Namespace) -> int:
-            captured.append(args)
-            return 0
-
-        monkeypatch.setattr(workspace_main, "_run_orchestrate", _cap)
+    def test_make_args(self, mp: pytest.MonkeyPatch) -> None:
+        captured = _capture(mp)
         workspace_main.main([
             "orchestrate",
             "--verb",
