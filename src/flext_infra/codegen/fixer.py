@@ -791,20 +791,18 @@ class FlextInfraCodegenFixer(s[list[m.Infra.Codegen.AutoFixResult]]):
         files_modified: set[str],
     ) -> None:
         """Fix Rule 1 — move loose Final constants to constants.py."""
-        tree_result = u.Infra.parse_module_ast(source_file)
-        if tree_result.is_failure:
+        tree = u.Infra.parse_module_ast(source_file)
+        if tree is None:
             return
-        tree = tree_result.value
         finals = FlextInfraCodegenTransforms.find_standalone_finals(tree)
         if not finals:
             return
         target_path = pkg_dir / "constants.py"
         if not target_path.exists():
             return
-        target_tree_result = u.Infra.parse_module_ast(target_path)
-        if target_tree_result.is_failure:
+        target_tree = u.Infra.parse_module_ast(target_path)
+        if target_tree is None:
             return
-        target_tree = target_tree_result.value
         nodes_to_move: list[ast.AnnAssign] = []
         for node in finals:
             target_name = ""
@@ -893,10 +891,9 @@ class FlextInfraCodegenFixer(s[list[m.Infra.Codegen.AutoFixResult]]):
         files_modified: set[str],
     ) -> None:
         """Fix Rule 2 — move loose TypeVars/TypeAliases to typings.py."""
-        tree_result = u.Infra.parse_module_ast(source_file)
-        if tree_result.is_failure:
+        tree = u.Infra.parse_module_ast(source_file)
+        if tree is None:
             return
-        tree = tree_result.value
         typevars = FlextInfraCodegenTransforms.find_standalone_typevars(tree)
         typealiases = FlextInfraCodegenTransforms.find_standalone_typealiases(tree)
         if not typevars and not typealiases:
@@ -904,10 +901,9 @@ class FlextInfraCodegenFixer(s[list[m.Infra.Codegen.AutoFixResult]]):
         target_path = pkg_dir / "typings.py"
         if not target_path.exists():
             return
-        target_tree_result = u.Infra.parse_module_ast(target_path)
-        if target_tree_result.is_failure:
+        target_tree = u.Infra.parse_module_ast(target_path)
+        if target_tree is None:
             return
-        target_tree = target_tree_result.value
         nodes_to_move: list[ast.stmt] = []
         for tv_node in typevars:
             target_name = ""

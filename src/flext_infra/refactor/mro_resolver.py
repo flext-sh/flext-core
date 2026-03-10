@@ -801,7 +801,10 @@ class FlextInfraRefactorMROImportRewriter:
 
     @staticmethod
     def _iter_workspace_python_files(*, workspace_root: Path) -> list[Path]:
-        return u.Infra.iter_python_files(workspace_root=workspace_root)
+        result = u.Infra.iter_python_files(workspace_root=workspace_root)
+        if result.is_failure:
+            return []
+        return result.value
 
     @staticmethod
     def _import_insertion_index(*, module: ast.Module) -> int:

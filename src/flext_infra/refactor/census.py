@@ -78,9 +78,15 @@ class FlextInfraRefactorCensus:
         # 4. Scanning & Visitors
         output.progress(4, 5, "scan-files", "libcst")
         pf = target.package_dir.replace("/", ".").replace("\\", ".")
+        files_result = u.Infra.iter_python_files(workspace_root=root)
+        if files_result.is_failure:
+            return r[m.Infra.Refactor.CensusReport].fail(
+                f"Failed to discover files: {files_result.error}"
+            )
+        all_files: list[Path] = files_result.value
         files = [
             f
-            for f in u.Infra.iter_python_files(workspace_root=root)
+            for f in all_files
             if pf not in f.as_posix() and "__pycache__" not in f.as_posix()
         ]
 

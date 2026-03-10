@@ -17,10 +17,10 @@ from collections import Counter, defaultdict
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 
-import flext_infra
 import libcst as cst
 from pydantic import BaseModel, TypeAdapter, ValidationError
 
+import flext_infra
 from flext_core import r
 from flext_infra import c, m, t
 from flext_infra._utilities.io import FlextInfraUtilitiesIo
