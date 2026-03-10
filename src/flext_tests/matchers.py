@@ -58,7 +58,7 @@ import warnings
 from collections.abc import Iterator, Mapping, MutableMapping, Sequence, Sized
 from contextlib import contextmanager
 from pathlib import Path
-from typing import TypeGuard
+from typing import TypeGuard, overload
 
 from pydantic import BaseModel, RootModel, TypeAdapter, ValidationError
 
@@ -394,7 +394,19 @@ class FlextTestsMatchers:
         return err
 
     @staticmethod
+    @overload
+    def ok[TResult](
+        result: r[TResult],
+    ) -> TResult: ...
+
+    @staticmethod
+    @overload
     def ok[TResult: t.Tests.ContainerValue](
+        result: r[TResult], **kwargs: t.Tests.Matcher.MatcherKwargValue
+    ) -> TResult | t.Tests.ContainerValue: ...
+
+    @staticmethod
+    def ok[TResult](
         result: r[TResult], **kwargs: t.Tests.Matcher.MatcherKwargValue
     ) -> TResult | t.Tests.ContainerValue:
         """Enhanced assertion for FlextResult success with optional value validation.
