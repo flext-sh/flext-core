@@ -20,7 +20,7 @@ _NO_STRUCTLOG = SimpleNamespace(ensure_structlog_configured=lambda: None)
 
 def _fake_module(return_value: object = 0) -> ModuleType:
     mod = ModuleType("fake_subcommand")
-    mod.main = lambda: return_value  # type: ignore[attr-defined]
+    setattr(mod, "main", lambda: return_value)  # noqa: B010
     return mod
 
 
@@ -35,25 +35,26 @@ def _patch_dispatch(mp: pytest.MonkeyPatch, argv: list[str], ret: object = 0) ->
     mp.setattr(sys, "argv", argv)
     mp.setattr(main_mod, "FlextRuntime", _NO_STRUCTLOG)
     mp.setattr(
-        "flext_infra.deps.__main__.importlib.import_module",
-        _stub_import(_fake_module(ret)),
+        main_mod,
+        "importlib",
+        SimpleNamespace(
+            import_module=_stub_import(_fake_module(ret)),
+        ),
     )
 
 
 class TestMainSubcommandDispatch:
-    """Test main function subcommand dispatching."""
-
     @pytest.mark.parametrize("name", list(_SUBCOMMANDS.keys()))
     def test_dispatch_each_subcommand(
-        self, monkeypatch: pytest.MonkeyPatch, name: str
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        name: str,
     ) -> None:
         _patch_dispatch(monkeypatch, ["prog", name])
         tm.that(main(), eq=0)
 
 
 class TestMainReturnValues:
-    """Test main function return value handling (extended)."""
-
     @pytest.mark.parametrize(
         ("return_val", "expected"),
         [(0, 0), (None, 0), (False, 0), (42, 42), (True, 1), ("0", 0)],
@@ -65,14 +66,11 @@ class TestMainReturnValues:
         return_val: object,
         expected: int,
     ) -> None:
-        """Test main normalizes subcommand return values."""
         _patch_dispatch(monkeypatch, ["prog", "detect"], return_val)
         tm.that(main(), eq=expected)
 
 
 class TestMainModuleImport:
-    """Test main function module importing."""
-
     @pytest.mark.parametrize(
         ("subcommand", "expected_module"),
         [
@@ -87,7 +85,6 @@ class TestMainModuleImport:
         subcommand: str,
         expected_module: str,
     ) -> None:
-        """Test main imports the correct module for each subcommand."""
         monkeypatch.setattr(sys, "argv", ["prog", subcommand])
         monkeypatch.setattr(main_mod, "FlextRuntime", _NO_STRUCTLOG)
         imported: list[str] = []
@@ -98,27 +95,26 @@ class TestMainModuleImport:
             return fake
 
         monkeypatch.setattr(
-            "flext_infra.deps.__main__.importlib.import_module",
-            tracking_import,
+            main_mod,
+            "importlib",
+            SimpleNamespace(
+                import_module=tracking_import,
+            ),
         )
         main()
         tm.that(imported[0], eq=expected_module)
 
 
 class TestMainSysArgvModification:
-    """Test main function sys.argv modification."""
-
     def test_modifies_sys_argv_for_subcommand(
         self,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        """Test main modifies sys.argv for subcommand."""
         _patch_dispatch(monkeypatch, ["prog", "detect", "--arg1", "value1"])
         main()
         tm.that("detect" in sys.argv[0], eq=True)
 
     def test_passes_remaining_args(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        """Test main passes remaining arguments to subcommand."""
         _patch_dispatch(monkeypatch, ["prog", "detect", "-q", "--no-fail"])
         main()
         tm.that("-q" in sys.argv, eq=True)
@@ -126,13 +122,10 @@ class TestMainSysArgvModification:
 
 
 class TestMainStructlogConfiguration:
-    """Test main function structlog configuration."""
-
     def test_ensures_structlog_configured(
         self,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        """Test main ensures structlog is configured."""
         called: list[bool] = []
         monkeypatch.setattr(sys, "argv", ["prog", "detect"])
         monkeypatch.setattr(
@@ -143,8 +136,11 @@ class TestMainStructlogConfiguration:
             ),
         )
         monkeypatch.setattr(
-            "flext_infra.deps.__main__.importlib.import_module",
-            _stub_import(_fake_module(0)),
+            main_mod,
+            "importlib",
+            SimpleNamespace(
+                import_module=_stub_import(_fake_module(0)),
+            ),
         )
         main()
         tm.that(len(called), eq=1)
@@ -153,7 +149,6 @@ class TestMainStructlogConfiguration:
         self,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        """Test main ensures structlog is configured before dispatch."""
         order: list[str] = []
         monkeypatch.setattr(sys, "argv", ["prog", "detect"])
         monkeypatch.setattr(
@@ -169,8 +164,11 @@ class TestMainStructlogConfiguration:
             return _fake_module(0)
 
         monkeypatch.setattr(
-            "flext_infra.deps.__main__.importlib.import_module",
-            tracking_import,
+            main_mod,
+            "importlib",
+            SimpleNamespace(
+                import_module=tracking_import,
+            ),
         )
         main()
         tm.that(order[0], eq="ensure")
@@ -178,13 +176,10 @@ class TestMainStructlogConfiguration:
 
 
 class TestMainExceptionHandling:
-    """Test main function exception handling."""
-
     def test_subcommand_exception_propagates(
         self,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        """Test main propagates subcommand exceptions."""
         monkeypatch.setattr(sys, "argv", ["prog", "detect"])
         monkeypatch.setattr(main_mod, "FlextRuntime", _NO_STRUCTLOG)
         error_mod = ModuleType("error_mod")
@@ -193,10 +188,13 @@ class TestMainExceptionHandling:
             msg = "Test error"
             raise RuntimeError(msg)
 
-        error_mod.main = raise_error  # type: ignore[attr-defined]
+        setattr(error_mod, "main", raise_error)  # noqa: B010
         monkeypatch.setattr(
-            "flext_infra.deps.__main__.importlib.import_module",
-            _stub_import(error_mod),
+            main_mod,
+            "importlib",
+            SimpleNamespace(
+                import_module=_stub_import(error_mod),
+            ),
         )
         with pytest.raises(RuntimeError, match="Test error"):
             main()
