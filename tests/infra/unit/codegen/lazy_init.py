@@ -70,7 +70,7 @@ class TestFlextInfraCodegenLazyInit:
         generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
         result = generator.execute()
         tm.ok(result)
-        tm.that(result.value, is_type=int)
+        tm.that(result.value, is_=int)
 
     def test_generate_from_sibling_files(self, tmp_path: Path) -> None:
         """Test that generator discovers exports from sibling .py files."""
