@@ -16,6 +16,7 @@ import pytest
 
 from flext_core import r
 from flext_infra import FlextInfraModels
+from flext_infra.release import orchestrator as _orch_mod
 from flext_infra.release.orchestrator import FlextInfraReleaseOrchestrator
 from flext_tests import tm
 from tests.infra.unit.release._stubs import (
@@ -32,7 +33,6 @@ if TYPE_CHECKING:
     from _pytest.monkeypatch import MonkeyPatch
 
 _m = FlextInfraModels
-_U_PATH = "flext_infra.release.orchestrator.u"
 
 
 @pytest.fixture
@@ -62,7 +62,8 @@ class TestVersionFiles:
         mock_project = SimpleNamespace(name="proj1", path=proj_dir)
         fake_sel._resolve_result = r[list[SimpleNamespace]].ok([mock_project])
         monkeypatch.setattr(
-            "flext_infra.release.orchestrator.FlextInfraUtilitiesSelection",
+            _orch_mod,
+            "FlextInfraUtilitiesSelection",
             lambda *a, **kw: fake_sel,
         )
         orchestrator = FlextInfraReleaseOrchestrator()

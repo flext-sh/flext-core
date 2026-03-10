@@ -13,6 +13,7 @@ import pytest
 
 from flext_core import r
 from flext_infra import m
+from flext_infra._utilities.subprocess import FlextInfraUtilitiesSubprocess
 from flext_infra.check.services import (
     FlextInfraWorkspaceChecker,
     _GateExecution,

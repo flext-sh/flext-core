@@ -13,18 +13,16 @@ from types import SimpleNamespace
 
 import pytest
 
+import flext_infra.check.__main__ as check_main_mod
+import flext_infra.check.fix_pyrefly_config as fix_pyrefly_mod
+import flext_infra.check.workspace_check as ws_mod
 from flext_core import r
 from flext_infra import m
-from flext_infra.check.__main__ import main as check_main
-from flext_infra.check.fix_pyrefly_config import main as fix_pyrefly_main
 from flext_infra.check.services import (
-    FlextInfraConfigFixer,
-    FlextInfraWorkspaceChecker,
     _GateExecution,
     _ProjectResult,
     run_cli,
 )
-from flext_infra.check.workspace_check import main as workspace_check_main
 from flext_tests import tm
 
 from ._stubs import Spy
@@ -75,31 +73,34 @@ class TestWorkspaceCheckCLI:
     """Test workspace_check CLI entry point."""
 
     def test_no_projects_error(self) -> None:
-        tm.that(workspace_check_main([]), eq=1)
+        tm.that(ws_mod.main([]), eq=1)
 
     def test_with_projects_success(self, monkeypatch: pytest.MonkeyPatch) -> None:
         ok_result = r[list[SimpleNamespace]].ok([SimpleNamespace(passed=True)])
         monkeypatch.setattr(
-            "flext_infra.check.workspace_check.FlextInfraWorkspaceChecker",
+            ws_mod,
+            "FlextInfraWorkspaceChecker",
             _fake_checker_cls(["lint"], ok_result),
         )
-        tm.that(workspace_check_main(["p1", "--gates", "lint"]), eq=0)
+        tm.that(ws_mod.main(["p1", "--gates", "lint"]), eq=0)
 
     def test_with_projects_failure(self, monkeypatch: pytest.MonkeyPatch) -> None:
         ok_result = r[list[SimpleNamespace]].ok([SimpleNamespace(passed=False)])
         monkeypatch.setattr(
-            "flext_infra.check.workspace_check.FlextInfraWorkspaceChecker",
+            ws_mod,
+            "FlextInfraWorkspaceChecker",
             _fake_checker_cls(["lint"], ok_result),
         )
-        tm.that(workspace_check_main(["p1", "--gates", "lint"]), eq=1)
+        tm.that(ws_mod.main(["p1", "--gates", "lint"]), eq=1)
 
     def test_run_projects_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         fail_result = r[list[SimpleNamespace]].fail("error")
         monkeypatch.setattr(
-            "flext_infra.check.workspace_check.FlextInfraWorkspaceChecker",
+            ws_mod,
+            "FlextInfraWorkspaceChecker",
             _fake_checker_cls(["lint"], fail_result),
         )
-        tm.that(workspace_check_main(["p1", "--gates", "lint"]), eq=2)
+        tm.that(ws_mod.main(["p1", "--gates", "lint"]), eq=2)
 
 
 class TestFixPyrelfyCLI:
@@ -107,17 +108,19 @@ class TestFixPyrelfyCLI:
 
     def test_success(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(
-            "flext_infra.check.fix_pyrefly_config.FlextInfraConfigFixer",
+            fix_pyrefly_mod,
+            "FlextInfraConfigFixer",
             _fake_fixer_cls(r[list[str]].ok([])),
         )
-        tm.that(fix_pyrefly_main([]), eq=0)
+        tm.that(fix_pyrefly_mod.main([]), eq=0)
 
     def test_failure(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(
-            "flext_infra.check.fix_pyrefly_config.FlextInfraConfigFixer",
+            fix_pyrefly_mod,
+            "FlextInfraConfigFixer",
             _fake_fixer_cls(r[list[str]].fail("error")),
         )
-        tm.that(fix_pyrefly_main([]), eq=1)
+        tm.that(fix_pyrefly_mod.main([]), eq=1)
 
 
 class TestCheckMainEntryPoint:
@@ -125,19 +128,25 @@ class TestCheckMainEntryPoint:
 
     def test_calls_run_cli(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(
-            "flext_infra.check.__main__.FlextRuntime.ensure_structlog_configured",
-            lambda: None,
+            check_main_mod,
+            "FlextRuntime",
+            type(
+                "_FR", (), {"ensure_structlog_configured": staticmethod(lambda: None)}
+            ),
         )
-        monkeypatch.setattr("flext_infra.check.__main__.run_cli", lambda _args: 0)
-        tm.that(check_main(), eq=0)
+        monkeypatch.setattr(check_main_mod, "run_cli", lambda _args: 0)
+        tm.that(check_main_mod.main(), eq=0)
 
     def test_returns_exit_code(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(
-            "flext_infra.check.__main__.FlextRuntime.ensure_structlog_configured",
-            lambda: None,
+            check_main_mod,
+            "FlextRuntime",
+            type(
+                "_FR", (), {"ensure_structlog_configured": staticmethod(lambda: None)}
+            ),
         )
-        monkeypatch.setattr("flext_infra.check.__main__.run_cli", lambda _args: 42)
-        tm.that(check_main(), eq=42)
+        monkeypatch.setattr(check_main_mod, "run_cli", lambda _args: 42)
+        tm.that(check_main_mod.main(), eq=42)
 
 
 class TestRunCLIExtended:
@@ -145,14 +154,16 @@ class TestRunCLIExtended:
 
     def test_fix_pyrefly_config_success(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(
-            "flext_infra.check.workspace_check.FlextInfraConfigFixer",
+            ws_mod,
+            "FlextInfraConfigFixer",
             _fake_fixer_cls(r[list[str]].ok([])),
         )
         tm.that(run_cli(["fix-pyrefly-config"]), eq=0)
 
     def test_fix_pyrefly_config_failure(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(
-            "flext_infra.check.workspace_check.FlextInfraConfigFixer",
+            ws_mod,
+            "FlextInfraConfigFixer",
             _fake_fixer_cls(r[list[str]].fail("error")),
         )
         tm.that(run_cli(["fix-pyrefly-config"]), eq=1)
@@ -168,7 +179,8 @@ class TestRunCLIExtended:
         project = _ProjectResult(project="p", gates={"lint": gate_exec})
         ok_result = r[list[_ProjectResult]].ok([project])
         monkeypatch.setattr(
-            "flext_infra.check.workspace_check.FlextInfraWorkspaceChecker",
+            ws_mod,
+            "FlextInfraWorkspaceChecker",
             _fake_checker_cls(["lint"], ok_result),
         )
         monkeypatch.setattr("pathlib.Path.cwd", lambda: tmp_path)
