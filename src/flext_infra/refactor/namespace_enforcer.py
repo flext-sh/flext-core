@@ -116,7 +116,7 @@ class FlextInfraNamespaceEnforcer:
         loose_objects: list[nem.NamespaceLooseObjectViolation] = []
         for py_file in py_files:
             loose_objects.extend(
-                da.LooseObjectDetector.scan_file(
+                da.LooseObjectDetector.detect_file(
                     file_path=py_file,
                     project_name=project_name,
                     parse_failures=parse_failures,
@@ -125,7 +125,7 @@ class FlextInfraNamespaceEnforcer:
         import_violations: list[nem.NamespaceImportAliasViolation] = []
         for py_file in py_files:
             import_violations.extend(
-                da.ImportAliasDetector.scan_file(
+                da.ImportAliasDetector.detect_file(
                     file_path=py_file,
                     parse_failures=parse_failures,
                 ),
@@ -137,7 +137,7 @@ class FlextInfraNamespaceEnforcer:
             import_violations = []
             for py_file in py_files:
                 import_violations.extend(
-                    da.ImportAliasDetector.scan_file(
+                    da.ImportAliasDetector.detect_file(
                         file_path=py_file,
                         parse_failures=parse_failures,
                     ),
@@ -149,7 +149,7 @@ class FlextInfraNamespaceEnforcer:
         internal_import_violations: list[nem.NamespaceInternalImportViolation] = []
         for py_file in py_files:
             internal_import_violations.extend(
-                da.InternalImportDetector.scan_file(
+                da.InternalImportDetector.detect_file(
                     file_path=py_file,
                     parse_failures=parse_failures,
                 ),
@@ -157,7 +157,7 @@ class FlextInfraNamespaceEnforcer:
         runtime_alias_violations: list[nem.NamespaceRuntimeAliasViolation] = []
         for py_file in py_files:
             runtime_alias_violations.extend(
-                da.RuntimeAliasDetector.scan_file(
+                da.RuntimeAliasDetector.detect_file(
                     file_path=py_file,
                     project_name=project_name,
                     parse_failures=parse_failures,
@@ -170,7 +170,7 @@ class FlextInfraNamespaceEnforcer:
             runtime_alias_violations = []
             for py_file in py_files:
                 runtime_alias_violations.extend(
-                    da.RuntimeAliasDetector.scan_file(
+                    da.RuntimeAliasDetector.detect_file(
                         file_path=py_file,
                         project_name=project_name,
                         parse_failures=parse_failures,
@@ -179,7 +179,7 @@ class FlextInfraNamespaceEnforcer:
         future_violations: list[nem.NamespaceFutureAnnotationsViolation] = []
         for py_file in py_files:
             future_violations.extend(
-                da.FutureAnnotationsDetector.scan_file(
+                da.FutureAnnotationsDetector.detect_file(
                     file_path=py_file,
                     parse_failures=parse_failures,
                 ),
@@ -191,7 +191,7 @@ class FlextInfraNamespaceEnforcer:
             future_violations = []
             for py_file in py_files:
                 future_violations.extend(
-                    da.FutureAnnotationsDetector.scan_file(
+                    da.FutureAnnotationsDetector.detect_file(
                         file_path=py_file,
                         parse_failures=parse_failures,
                     ),
@@ -199,7 +199,7 @@ class FlextInfraNamespaceEnforcer:
         manual_protocol_violations: list[nem.NamespaceManualProtocolViolation] = []
         for py_file in py_files:
             manual_protocol_violations.extend(
-                da.ManualProtocolDetector.scan_file(
+                da.ManualProtocolDetector.detect_file(
                     file_path=py_file,
                     parse_failures=parse_failures,
                 ),
@@ -213,7 +213,7 @@ class FlextInfraNamespaceEnforcer:
             manual_protocol_violations = []
             for py_file in py_files:
                 manual_protocol_violations.extend(
-                    da.ManualProtocolDetector.scan_file(
+                    da.ManualProtocolDetector.detect_file(
                         file_path=py_file,
                         parse_failures=parse_failures,
                     ),
@@ -221,7 +221,7 @@ class FlextInfraNamespaceEnforcer:
         manual_typing_violations: list[nem.NamespaceManualTypingAliasViolation] = []
         for py_file in py_files:
             manual_typing_violations.extend(
-                da.ManualTypingAliasDetector.scan_file(
+                da.ManualTypingAliasDetector.detect_file(
                     file_path=py_file,
                     parse_failures=parse_failures,
                 ),
@@ -235,7 +235,7 @@ class FlextInfraNamespaceEnforcer:
             manual_typing_violations = []
             for py_file in py_files:
                 manual_typing_violations.extend(
-                    da.ManualTypingAliasDetector.scan_file(
+                    da.ManualTypingAliasDetector.detect_file(
                         file_path=py_file,
                         parse_failures=parse_failures,
                     ),
@@ -245,7 +245,7 @@ class FlextInfraNamespaceEnforcer:
         ] = []
         for py_file in py_files:
             compatibility_alias_violations.extend(
-                da.CompatibilityAliasDetector.scan_file(
+                da.CompatibilityAliasDetector.detect_file(
                     file_path=py_file,
                     parse_failures=parse_failures,
                 ),
@@ -258,7 +258,7 @@ class FlextInfraNamespaceEnforcer:
             compatibility_alias_violations = []
             for py_file in py_files:
                 compatibility_alias_violations.extend(
-                    da.CompatibilityAliasDetector.scan_file(
+                    da.CompatibilityAliasDetector.detect_file(
                         file_path=py_file,
                         parse_failures=parse_failures,
                     ),
