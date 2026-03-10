@@ -177,7 +177,8 @@ class TestRunValidate:
 
         monkeypatch.setattr(FlextInfraDocValidator, "validate", mock_val)
         monkeypatch.setattr(
-            "flext_infra.docs.__main__.output",
+            docs_main,
+            "output",
             type("O", (), {"error": staticmethod(lambda *a: None)})(),
         )
         tm.that(_run_validate(_val_args()), eq=1)

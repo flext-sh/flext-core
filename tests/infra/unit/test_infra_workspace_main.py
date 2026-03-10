@@ -62,79 +62,71 @@ class TestRunSync:
         tm.that(workspace_main._run_sync(args), eq=1)
 
 
+def _orch_args(projects: list[str] | None = None) -> argparse.Namespace:
+    return _ns(
+        projects=projects or ["p-a", "p-b"], verb="check", fail_fast=False, make_arg=[]
+    )
+
+
 class TestRunOrchestrate:
     def test_success(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        outputs = [_cmd_out(0), _cmd_out(0)]
-
         def _orch(self: FlextInfraOrchestratorService, **kw: object) -> r[list[_CO]]:
-            return r[list[_CO]].ok(outputs)
+            return r[list[_CO]].ok([_cmd_out(0), _cmd_out(0)])
 
         monkeypatch.setattr(FlextInfraOrchestratorService, "orchestrate", _orch)
-        args = _ns(projects=["p-a", "p-b"], verb="check", fail_fast=False, make_arg=[])
-        tm.that(workspace_main._run_orchestrate(args), eq=0)
+        tm.that(workspace_main._run_orchestrate(_orch_args()), eq=0)
 
     def test_no_projects(self) -> None:
-        args = _ns(projects=[], verb="check", fail_fast=False, make_arg=[])
-        tm.that(workspace_main._run_orchestrate(args), eq=1)
+        tm.that(workspace_main._run_orchestrate(_orch_args([])), eq=1)
 
     def test_with_failures(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        outputs = [_cmd_out(0), _cmd_out(1)]
-
         def _orch(self: FlextInfraOrchestratorService, **kw: object) -> r[list[_CO]]:
-            return r[list[_CO]].ok(outputs)
+            return r[list[_CO]].ok([_cmd_out(0), _cmd_out(1)])
 
         monkeypatch.setattr(FlextInfraOrchestratorService, "orchestrate", _orch)
-        args = _ns(projects=["p-a", "p-b"], verb="check", fail_fast=False, make_arg=[])
-        tm.that(workspace_main._run_orchestrate(args), eq=1)
+        tm.that(workspace_main._run_orchestrate(_orch_args()), eq=1)
 
     def test_orchestration_failure(self, monkeypatch: pytest.MonkeyPatch) -> None:
         def _orch(self: FlextInfraOrchestratorService, **kw: object) -> r[list[_CO]]:
             return r[list[_CO]].fail("Orchestration failed")
 
         monkeypatch.setattr(FlextInfraOrchestratorService, "orchestrate", _orch)
-        args = _ns(projects=["p-a"], verb="check", fail_fast=False, make_arg=[])
-        tm.that(workspace_main._run_orchestrate(args), eq=1)
+        tm.that(workspace_main._run_orchestrate(_orch_args(["p-a"])), eq=1)
 
 
 class TestRunMigrate:
     def test_success(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-        migration = _MR(project="test", errors=[], changes=[])
-
         def _migrate(self: FlextInfraProjectMigrator, **kw: object) -> r[list[_MR]]:
-            return r[list[_MR]].ok([migration])
+            return r[list[_MR]].ok([_MR(project="test", errors=[], changes=[])])
 
         monkeypatch.setattr(FlextInfraProjectMigrator, "migrate", _migrate)
-        tm.that(
-            workspace_main._run_migrate(_ns(workspace_root=tmp_path, dry_run=False)),
-            eq=0,
-        )
+        args = _ns(workspace_root=tmp_path, dry_run=False)
+        tm.that(workspace_main._run_migrate(args), eq=0)
 
     def test_failure(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         def _migrate(self: FlextInfraProjectMigrator, **kw: object) -> r[list[_MR]]:
             return r[list[_MR]].fail("Migration failed")
 
         monkeypatch.setattr(FlextInfraProjectMigrator, "migrate", _migrate)
-        tm.that(
-            workspace_main._run_migrate(_ns(workspace_root=tmp_path, dry_run=False)),
-            eq=1,
-        )
+        args = _ns(workspace_root=tmp_path, dry_run=False)
+        tm.that(workspace_main._run_migrate(args), eq=1)
 
     def test_with_project_errors(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        migrations = [
+        data = [
             _MR(project="p1", errors=["Error 1"], changes=[]),
             _MR(project="p2", errors=[], changes=[]),
         ]
 
         def _migrate(self: FlextInfraProjectMigrator, **kw: object) -> r[list[_MR]]:
-            return r[list[_MR]].ok(migrations)
+            return r[list[_MR]].ok(data)
 
         monkeypatch.setattr(FlextInfraProjectMigrator, "migrate", _migrate)
-        tm.that(
-            workspace_main._run_migrate(_ns(workspace_root=tmp_path, dry_run=False)),
-            eq=1,
-        )
+        args = _ns(workspace_root=tmp_path, dry_run=False)
+        tm.that(workspace_main._run_migrate(args), eq=1)
 
 
 def _noop(_args: argparse.Namespace) -> int:
