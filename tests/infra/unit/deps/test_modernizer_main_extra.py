@@ -77,7 +77,7 @@ class TestModernizerUncoveredLines:
             return []
 
         monkeypatch.setattr(modernizer, "find_pyproject_files", _find_files)
-        monkeypatch.setattr(modernizer_module, "_read_doc", _read_doc)
+        monkeypatch.setattr(modernizer_module, "read_doc", _read_doc)
         monkeypatch.setattr(modernizer, "process_file", _process_file)
         tm.that(modernizer.run(args), eq=0)
 

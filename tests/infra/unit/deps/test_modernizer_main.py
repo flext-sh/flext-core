@@ -102,7 +102,7 @@ class TestModernizerRunAndMain:
             return doc
 
         monkeypatch.setattr(modernizer, "find_pyproject_files", _find_files)
-        monkeypatch.setattr(modernizer_module, "_read_doc", _read_doc)
+        monkeypatch.setattr(modernizer_module, "read_doc", _read_doc)
         tm.that(modernizer.run(args) in {0, 1}, eq=True)
 
     def test_run_with_poetry_check(
@@ -127,7 +127,7 @@ class TestModernizerRunAndMain:
             return 0
 
         monkeypatch.setattr(modernizer, "find_pyproject_files", _find_files)
-        monkeypatch.setattr(modernizer_module, "_read_doc", _read_doc)
+        monkeypatch.setattr(modernizer_module, "read_doc", _read_doc)
         monkeypatch.setattr(modernizer, "_run_poetry_check", _check)
         tm.that(modernizer.run(args), eq=0)
 

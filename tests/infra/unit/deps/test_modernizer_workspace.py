@@ -63,15 +63,15 @@ class TestWorkspaceRoot:
 class TestParser:
     """Tests CLI parser helper."""
 
-    def testparser_args(self) -> None:
-        parser = parser()
-        tm.that(parser.parse_args(["--audit"]).audit, eq=True)
-        tm.that(parser.parse_args(["--dry-run"]).dry_run, eq=True)
-        tm.that(parser.parse_args(["--skip-comments"]).skip_comments, eq=True)
-        tm.that(parser.parse_args(["--skip-check"]).skip_check, eq=True)
+    def test_parser_args(self) -> None:
+        p = parser()
+        tm.that(p.parse_args(["--audit"]).audit, eq=True)
+        tm.that(p.parse_args(["--dry-run"]).dry_run, eq=True)
+        tm.that(p.parse_args(["--skip-comments"]).skip_comments, eq=True)
+        tm.that(p.parse_args(["--skip-check"]).skip_check, eq=True)
 
 
-def testworkspace_root_doc_construction() -> None:
+def test_workspace_root_doc_construction() -> None:
     doc = tomlkit.document()
     doc["project"] = {"name": "test"}
     tm.that("project" in doc, eq=True)

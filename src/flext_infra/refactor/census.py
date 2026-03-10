@@ -369,14 +369,16 @@ class FlextInfraRefactorCensus:
 
     @staticmethod
     def _identify_project(file_path: Path, project_roots: list[Path]) -> str:
-        """Identify project name for a file path."""
+        """Identify project name for a file path (most-specific root wins)."""
+        best: Path | None = None
         for root in project_roots:
             try:
                 file_path.relative_to(root)
-                return root.name
             except ValueError:
                 continue
-        return c.Infra.Defaults.UNKNOWN
+            if best is None or len(root.parts) > len(best.parts):
+                best = root
+        return best.name if best else c.Infra.Defaults.UNKNOWN
 
     @staticmethod
     def _scan_file(
