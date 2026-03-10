@@ -12,6 +12,7 @@ from types import SimpleNamespace
 
 from _pytest.monkeypatch import MonkeyPatch
 
+import flext_infra.release.__main__ as _main_mod  # noqa: F811
 from flext_core import r
 from flext_infra.release.__main__ import main
 from flext_tests import tm
@@ -62,12 +63,11 @@ def _patch_main_deps(
             if error_calls is not None:
                 error_calls.append(msg)
 
-    mod = "flext_infra.release.__main__"
-    monkeypatch.setattr(f"{mod}.FlextRuntime", _Rt)
-    monkeypatch.setattr(f"{mod}.FlextInfraUtilitiesPaths", _Ps)
-    monkeypatch.setattr(f"{mod}.FlextInfraUtilitiesVersioning", _Vs)
-    monkeypatch.setattr(f"{mod}.FlextInfraReleaseOrchestrator", _Or)
-    monkeypatch.setattr(f"{mod}.output", _Out)
+    monkeypatch.setattr(_main_mod, "FlextRuntime", _Rt)
+    monkeypatch.setattr(_main_mod, "FlextInfraUtilitiesPaths", _Ps)
+    monkeypatch.setattr(_main_mod, "FlextInfraUtilitiesVersioning", _Vs)
+    monkeypatch.setattr(_main_mod, "FlextInfraReleaseOrchestrator", _Or)
+    monkeypatch.setattr(_main_mod, "output", _Out)
 
 
 def _argv(tmp_path: Path, *extra: str) -> list[str]:
@@ -122,9 +122,7 @@ class TestReleaseMainFlow:
 
         errors: list[str] = []
         _patch_main_deps(monkeypatch, tmp_path, error_calls=errors)
-        monkeypatch.setattr(
-            "flext_infra.release.__main__.FlextInfraUtilitiesVersioning", _FailVs
-        )
+        monkeypatch.setattr(_main_mod, "FlextInfraUtilitiesVersioning", _FailVs)
         tm.that(main(), eq=1)
         tm.that(len(errors), eq=1)
 

@@ -54,7 +54,8 @@ class TestIterMarkdownFiles:
         (docs_dir / "a.md").write_text("# A")
         files = FlextInfraDocsShared.iter_markdown_files(tmp_path)
         tm.that(len(files) >= 2, eq=True)
-        tm.that(files, eq=sorted(files))
+        str_files = [str(f) for f in files]
+        tm.that(str_files, eq=sorted(str_files))
 
     def test_no_docs_dir(self, tmp_path: Path) -> None:
         """Test iter_markdown_files when docs dir doesn't exist."""

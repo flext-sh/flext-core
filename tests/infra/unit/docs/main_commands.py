@@ -12,6 +12,7 @@ from types import SimpleNamespace
 import pytest
 
 from flext_core import r
+from flext_infra.docs import __main__ as docs_main
 from flext_infra.docs.__main__ import _run_build, _run_generate, _run_validate
 from flext_infra.docs.builder import FlextInfraDocBuilder
 from flext_infra.docs.generator import FlextInfraDocGenerator
@@ -93,7 +94,8 @@ class TestRunBuild:
 
         monkeypatch.setattr(FlextInfraDocBuilder, "build", mock_build)
         monkeypatch.setattr(
-            "flext_infra.docs.__main__.output",
+            docs_main,
+            "output",
             type("O", (), {"error": staticmethod(lambda *a: None)})(),
         )
         tm.that(_run_build(_build_args()), eq=1)
@@ -119,7 +121,8 @@ class TestRunGenerate:
 
         monkeypatch.setattr(FlextInfraDocGenerator, "generate", mock_gen)
         monkeypatch.setattr(
-            "flext_infra.docs.__main__.output",
+            docs_main,
+            "output",
             type("O", (), {"error": staticmethod(lambda *a: None)})(),
         )
         tm.that(_run_generate(_gen_args()), eq=1)

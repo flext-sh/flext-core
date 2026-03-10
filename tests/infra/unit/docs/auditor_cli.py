@@ -38,7 +38,7 @@ class TestAuditorScopeFailure:
 
 
 class TestAuditorMainCli:
-    """Tests for auditor main() CLI entry point (no unittest.mock)."""
+    """Tests for auditor main() CLI entry point."""
 
     def test_main_with_failure_result(
         self,

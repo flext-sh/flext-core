@@ -31,8 +31,8 @@ class TestFlextInfraDocScope:
             report_dir=rd,
         )
         tm.that(scope.name, eq="test-project")
-        tm.that(scope.path, eq=tmp_path)
-        tm.that(scope.report_dir, eq=rd)
+        tm.that(str(scope.path), eq=str(tmp_path))
+        tm.that(str(scope.report_dir), eq=str(rd))
 
     def test_scope_name_required(self, tmp_path: Path) -> None:
         """Test FlextInfraDocScope requires name."""

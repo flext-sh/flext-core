@@ -205,7 +205,9 @@ class StubSyncer:
     """Stub for FlextInfraWorkflowSyncer used in CLI tests."""
 
     def __init__(self, sync_returns: object | None = None) -> None:
-        self._sync_returns = sync_returns or r[list[object]].ok([])
+        self._sync_returns = (
+            sync_returns if sync_returns is not None else r[list[object]].ok([])
+        )
         self.sync_workspace_calls: list[dict[str, object]] = []
 
     def sync_workspace(self, **kwargs: object) -> object:
@@ -217,7 +219,9 @@ class StubLinter:
     """Stub for FlextInfraWorkflowLinter used in CLI tests."""
 
     def __init__(self, lint_returns: object | None = None) -> None:
-        self._lint_returns = lint_returns or r[bool].ok(True)
+        self._lint_returns = (
+            lint_returns if lint_returns is not None else r[bool].ok(True)
+        )
         self.lint_calls: list[dict[str, object]] = []
 
     def lint(self, **kwargs: object) -> object:
@@ -229,7 +233,9 @@ class StubWorkspaceManager:
     """Stub for FlextInfraPrWorkspaceManager used in CLI tests."""
 
     def __init__(self, orchestrate_returns: object | None = None) -> None:
-        self._orchestrate_returns = orchestrate_returns or r[bool].ok(True)
+        self._orchestrate_returns = (
+            orchestrate_returns if orchestrate_returns is not None else r[bool].ok(True)
+        )
         self.orchestrate_calls: list[dict[str, object]] = []
 
     def orchestrate(self, **kwargs: object) -> object:

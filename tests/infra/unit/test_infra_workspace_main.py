@@ -1,10 +1,4 @@
-"""Tests for workspace CLI entry point (__main__.py).
-
-Uses real argparse.Namespace and monkeypatch instead of unittest.mock.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
+"""Tests for workspace CLI entry point (__main__.py)."""
 
 from __future__ import annotations
 
@@ -143,41 +137,37 @@ class TestRunMigrate:
         )
 
 
+def _noop(_args: argparse.Namespace) -> int:
+    return 0
+
+
 class TestMainCli:
     def test_detect_command(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        def _run(_args: argparse.Namespace) -> int:
-            return 0
-
-        monkeypatch.setattr(workspace_main, "_run_detect", _run)
+        monkeypatch.setattr(workspace_main, "_run_detect", _noop)
         tm.that(workspace_main.main(["detect", "--project-root", str(tmp_path)]), eq=0)
 
     def test_sync_command(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        def _run(_args: argparse.Namespace) -> int:
-            return 0
-
-        monkeypatch.setattr(workspace_main, "_run_sync", _run)
+        monkeypatch.setattr(workspace_main, "_run_sync", _noop)
         tm.that(workspace_main.main(["sync", "--project-root", str(tmp_path)]), eq=0)
 
     def test_orchestrate_command(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        def _run(_args: argparse.Namespace) -> int:
-            return 0
-
-        monkeypatch.setattr(workspace_main, "_run_orchestrate", _run)
-        tm.that(
-            workspace_main.main(["orchestrate", "--verb", "check", "p-a", "p-b"]), eq=0
-        )
+        monkeypatch.setattr(workspace_main, "_run_orchestrate", _noop)
+        tm.that(workspace_main.main(["orchestrate", "--verb", "check", "p-a"]), eq=0)
 
     def test_migrate_command(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        def _run(_args: argparse.Namespace) -> int:
-            return 0
-
-        monkeypatch.setattr(workspace_main, "_run_migrate", _run)
+        monkeypatch.setattr(workspace_main, "_run_migrate", _noop)
         tm.that(
             workspace_main.main(["migrate", "--workspace-root", str(tmp_path)]), eq=0
         )
@@ -188,23 +178,23 @@ class TestMainCli:
     def test_orchestrate_with_fail_fast(self, monkeypatch: pytest.MonkeyPatch) -> None:
         captured: list[argparse.Namespace] = []
 
-        def _run(args: argparse.Namespace) -> int:
+        def _cap(args: argparse.Namespace) -> int:
             captured.append(args)
             return 0
 
-        monkeypatch.setattr(workspace_main, "_run_orchestrate", _run)
+        monkeypatch.setattr(workspace_main, "_run_orchestrate", _cap)
         workspace_main.main(["orchestrate", "--verb", "check", "--fail-fast", "p-a"])
         tm.that(captured[0].fail_fast, eq=True)
 
     def test_orchestrate_with_make_args(self, monkeypatch: pytest.MonkeyPatch) -> None:
         captured: list[argparse.Namespace] = []
 
-        def _run(args: argparse.Namespace) -> int:
+        def _cap(args: argparse.Namespace) -> int:
             captured.append(args)
             return 0
 
-        monkeypatch.setattr(workspace_main, "_run_orchestrate", _run)
-        argv = [
+        monkeypatch.setattr(workspace_main, "_run_orchestrate", _cap)
+        workspace_main.main([
             "orchestrate",
             "--verb",
             "check",
@@ -213,8 +203,7 @@ class TestMainCli:
             "--make-arg",
             "PARALLEL=4",
             "p-a",
-        ]
-        workspace_main.main(argv)
+        ])
         tm.that(captured[0].make_arg, has="VERBOSE=1")
         tm.that(captured[0].make_arg, has="PARALLEL=4")
 

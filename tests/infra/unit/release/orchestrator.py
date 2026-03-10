@@ -1,8 +1,5 @@
 """Tests for FlextInfraReleaseOrchestrator run_release and execute.
 
-Tests release orchestration top-level methods using monkeypatch
-and tmp_path fixtures for isolated test environments.
-
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
@@ -22,6 +19,16 @@ if TYPE_CHECKING:
 
     from _pytest.monkeypatch import MonkeyPatch
 
+_CLS = FlextInfraReleaseOrchestrator
+
+
+def _stub_branches(mp: MonkeyPatch) -> None:
+    mp.setattr(_CLS, "_create_branches", lambda *a, **kw: r[bool].ok(True))
+
+
+def _stub_dispatch(mp: MonkeyPatch) -> None:
+    mp.setattr(_CLS, "_dispatch_phase", lambda *a, **kw: r[bool].ok(True))
+
 
 @pytest.fixture
 def workspace_root(tmp_path: Path) -> Path:
@@ -38,12 +45,10 @@ class TestReleaseOrchestratorExecute:
     """Tests for execute() and run_release() top-level."""
 
     def test_execute_returns_ok(self) -> None:
-        orchestrator = FlextInfraReleaseOrchestrator()
-        tm.ok(orchestrator.execute(), eq=True)
+        tm.ok(_CLS().execute(), eq=True)
 
     def test_run_release_invalid_phase(self, workspace_root: Path) -> None:
-        orchestrator = FlextInfraReleaseOrchestrator()
-        result = orchestrator.run_release(
+        result = _CLS().run_release(
             root=workspace_root,
             version="1.0.0",
             tag="v1.0.0",
@@ -54,13 +59,8 @@ class TestReleaseOrchestratorExecute:
     def test_run_release_empty_phases(
         self, workspace_root: Path, monkeypatch: MonkeyPatch
     ) -> None:
-        orchestrator = FlextInfraReleaseOrchestrator()
-        monkeypatch.setattr(
-            FlextInfraReleaseOrchestrator,
-            "_create_branches",
-            lambda *a, **kw: r[bool].ok(True),
-        )
-        result = orchestrator.run_release(
+        _stub_branches(monkeypatch)
+        result = _CLS().run_release(
             root=workspace_root, version="1.0.0", tag="v1.0.0", phases=[]
         )
         tm.ok(result)
@@ -68,18 +68,9 @@ class TestReleaseOrchestratorExecute:
     def test_run_release_with_project_filter(
         self, workspace_root: Path, monkeypatch: MonkeyPatch
     ) -> None:
-        orchestrator = FlextInfraReleaseOrchestrator()
-        monkeypatch.setattr(
-            FlextInfraReleaseOrchestrator,
-            "_create_branches",
-            lambda *a, **kw: r[bool].ok(True),
-        )
-        monkeypatch.setattr(
-            FlextInfraReleaseOrchestrator,
-            "_dispatch_phase",
-            lambda *a, **kw: r[bool].ok(True),
-        )
-        result = orchestrator.run_release(
+        _stub_branches(monkeypatch)
+        _stub_dispatch(monkeypatch)
+        result = _CLS().run_release(
             root=workspace_root,
             version="1.0.0",
             tag="v1.0.0",
@@ -91,13 +82,8 @@ class TestReleaseOrchestratorExecute:
     def test_run_release_dry_run(
         self, workspace_root: Path, monkeypatch: MonkeyPatch
     ) -> None:
-        orchestrator = FlextInfraReleaseOrchestrator()
-        monkeypatch.setattr(
-            FlextInfraReleaseOrchestrator,
-            "_dispatch_phase",
-            lambda *a, **kw: r[bool].ok(True),
-        )
-        result = orchestrator.run_release(
+        _stub_dispatch(monkeypatch)
+        result = _CLS().run_release(
             root=workspace_root,
             version="1.0.0",
             tag="v1.0.0",
@@ -109,18 +95,9 @@ class TestReleaseOrchestratorExecute:
     def test_run_release_with_push(
         self, workspace_root: Path, monkeypatch: MonkeyPatch
     ) -> None:
-        orchestrator = FlextInfraReleaseOrchestrator()
-        monkeypatch.setattr(
-            FlextInfraReleaseOrchestrator,
-            "_create_branches",
-            lambda *a, **kw: r[bool].ok(True),
-        )
-        monkeypatch.setattr(
-            FlextInfraReleaseOrchestrator,
-            "_dispatch_phase",
-            lambda *a, **kw: r[bool].ok(True),
-        )
-        result = orchestrator.run_release(
+        _stub_branches(monkeypatch)
+        _stub_dispatch(monkeypatch)
+        result = _CLS().run_release(
             root=workspace_root,
             version="1.0.0",
             tag="v1.0.0",
@@ -132,18 +109,9 @@ class TestReleaseOrchestratorExecute:
     def test_run_release_with_dev_suffix(
         self, workspace_root: Path, monkeypatch: MonkeyPatch
     ) -> None:
-        orchestrator = FlextInfraReleaseOrchestrator()
-        monkeypatch.setattr(
-            FlextInfraReleaseOrchestrator,
-            "_create_branches",
-            lambda *a, **kw: r[bool].ok(True),
-        )
-        monkeypatch.setattr(
-            FlextInfraReleaseOrchestrator,
-            "_dispatch_phase",
-            lambda *a, **kw: r[bool].ok(True),
-        )
-        result = orchestrator.run_release(
+        _stub_branches(monkeypatch)
+        _stub_dispatch(monkeypatch)
+        result = _CLS().run_release(
             root=workspace_root,
             version="1.0.0-dev",
             tag="v1.0.0-dev",
@@ -155,23 +123,10 @@ class TestReleaseOrchestratorExecute:
     def test_run_release_next_dev(
         self, workspace_root: Path, monkeypatch: MonkeyPatch
     ) -> None:
-        orchestrator = FlextInfraReleaseOrchestrator()
-        monkeypatch.setattr(
-            FlextInfraReleaseOrchestrator,
-            "_create_branches",
-            lambda *a, **kw: r[bool].ok(True),
-        )
-        monkeypatch.setattr(
-            FlextInfraReleaseOrchestrator,
-            "_dispatch_phase",
-            lambda *a, **kw: r[bool].ok(True),
-        )
-        monkeypatch.setattr(
-            FlextInfraReleaseOrchestrator,
-            "_bump_next_dev",
-            lambda *a, **kw: r[bool].ok(True),
-        )
-        result = orchestrator.run_release(
+        _stub_branches(monkeypatch)
+        _stub_dispatch(monkeypatch)
+        monkeypatch.setattr(_CLS, "_bump_next_dev", lambda *a, **kw: r[bool].ok(True))
+        result = _CLS().run_release(
             root=workspace_root,
             version="1.0.0",
             tag="v1.0.0",
@@ -186,23 +141,21 @@ class TestReleaseOrchestratorExecute:
     ) -> None:
         call_count = 0
 
-        def fake_dispatch(phase: str, *args: str, **kwargs: str) -> r[bool]:
+        def fake_dispatch(
+            _self: FlextInfraReleaseOrchestrator,
+            phase: str,
+            *args: str,
+            **kwargs: str,
+        ) -> r[bool]:
             nonlocal call_count
             call_count += 1
             if phase == "validate":
                 return r[bool].fail("validation failed")
             return r[bool].ok(True)
 
-        orchestrator = FlextInfraReleaseOrchestrator()
-        monkeypatch.setattr(
-            FlextInfraReleaseOrchestrator,
-            "_create_branches",
-            lambda *a, **kw: r[bool].ok(True),
-        )
-        monkeypatch.setattr(
-            FlextInfraReleaseOrchestrator, "_dispatch_phase", fake_dispatch
-        )
-        result = orchestrator.run_release(
+        _stub_branches(monkeypatch)
+        monkeypatch.setattr(_CLS, "_dispatch_phase", fake_dispatch)
+        result = _CLS().run_release(
             root=workspace_root,
             version="1.0.0",
             tag="v1.0.0",
@@ -214,13 +167,8 @@ class TestReleaseOrchestratorExecute:
     def test_run_release_create_branches_disabled(
         self, workspace_root: Path, monkeypatch: MonkeyPatch
     ) -> None:
-        orchestrator = FlextInfraReleaseOrchestrator()
-        monkeypatch.setattr(
-            FlextInfraReleaseOrchestrator,
-            "_dispatch_phase",
-            lambda *a, **kw: r[bool].ok(True),
-        )
-        result = orchestrator.run_release(
+        _stub_dispatch(monkeypatch)
+        result = _CLS().run_release(
             root=workspace_root,
             version="1.0.0",
             tag="v1.0.0",
