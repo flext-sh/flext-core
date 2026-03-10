@@ -30,7 +30,7 @@ from pathlib import Path
 from typing import override
 
 from flext_core import FlextLogger, r, s
-from flext_infra import FlextInfraUtilitiesDiscovery, c
+from flext_infra import c, u
 
 logger = FlextLogger.create_module_logger(__name__)
 
@@ -107,15 +107,13 @@ class FlextInfraPythonVersionEnforcer(s[int]):
             list[Path]: List of project paths.
 
         """
-        discovery = FlextInfraUtilitiesDiscovery()
-        result = discovery.discover_projects(workspace_root)
+        result = u.Infra.discover_projects(workspace_root)
         if result.is_failure:
             return []
-        projects = result.unwrap()
         return [
-            p.path
-            for p in projects
-            if (p.path / c.Infra.Files.PYPROJECT_FILENAME).exists()
+            project.path
+            for project in result.value
+            if (project.path / c.Infra.Files.PYPROJECT_FILENAME).exists()
         ]
 
     def _ensure_python_version_file(self, project: Path, required_minor: int) -> bool:

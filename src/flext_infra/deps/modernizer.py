@@ -87,12 +87,13 @@ class FlextInfraPyprojectModernizer:
 
     def find_pyproject_files(self) -> list[Path]:
         """Find all workspace pyproject.toml files."""
-        files: list[Path] = []
-        for path in self.root.rglob(c.Infra.Files.PYPROJECT_FILENAME):
-            if any(part in c.Infra.Deps.SKIP_DIRS for part in path.parts):
-                continue
-            files.append(path)
-        return sorted(files)
+        result = u.Infra.find_all_pyproject_files(
+            self.root,
+            skip_dirs=c.Infra.Deps.SKIP_DIRS,
+        )
+        if result.is_failure:
+            return []
+        return sorted(result.value)
 
     def process_file(
         self,
