@@ -73,12 +73,9 @@ class TestScannerCore:
         scanner = FlextInfraTextPatternScanner()
         tm.fail(scanner.scan(tmp_path / "nope", pattern="x", includes=["*.txt"]))
 
-    def test_scan_empty_includes(self, tmp_path: Path) -> None:
-        """Empty includes list returns failure."""
+    def test_scan_invalid_inputs(self, tmp_path: Path) -> None:
+        """Empty includes and invalid match_mode return failure."""
         tm.fail(FlextInfraTextPatternScanner().scan(tmp_path, pattern="x", includes=[]))
-
-    def test_scan_invalid_match_mode(self, tmp_path: Path) -> None:
-        """Invalid match_mode returns failure."""
         tm.fail(
             FlextInfraTextPatternScanner().scan(
                 tmp_path,
