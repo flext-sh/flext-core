@@ -384,6 +384,11 @@ class FlextInfraCodegenFixer(s[list[m.Infra.Codegen.AutoFixResult]]):
                 violations_skipped=[],
                 files_modified=[],
             )
+        checkpoint_result = u.Infra.create_checkpoint(
+            self._workspace_root,
+            label=f"codegen-fix:{project_path.name}",
+        )
+        stash_ref = checkpoint_result.value if checkpoint_result.is_success else ""
         report = self._apply_project_mro_migrations(
             project_path=project_path,
             files_modified=files_modified,
@@ -406,8 +411,12 @@ class FlextInfraCodegenFixer(s[list[m.Infra.Codegen.AutoFixResult]]):
             project_path=project_path,
             files_modified=files_modified,
         )
-        self._cleanup_stale_all_entries(files_modified=files_modified)
-        self._normalize_rewritten_python_files(files_modified=files_modified)
+        try:
+            self._cleanup_stale_all_entries(files_modified=files_modified)
+            self._normalize_rewritten_python_files(files_modified=files_modified)
+        except (OSError, UnicodeDecodeError):
+            _ = u.Infra.rollback_to_checkpoint(self._workspace_root, stash_ref)
+            raise
         return m.Infra.Codegen.AutoFixResult(
             project=project_path.name,
             violations_fixed=violations_fixed,
