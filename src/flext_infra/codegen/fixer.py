@@ -22,8 +22,12 @@ from typing import override
 
 from flext_core import r, s
 from flext_infra import FlextInfraUtilitiesDiscovery, c, m, u
+from flext_infra.codegen.lazy_init import FlextInfraCodegenLazyInit
 from flext_infra.codegen.transforms import FlextInfraCodegenTransforms
 from flext_infra.core.namespace_validator import FlextInfraNamespaceValidator
+from flext_infra.refactor.migrate_to_class_mro import (
+    FlextInfraRefactorMigrateToClassMRO,
+)
 
 
 class FlextInfraCodegenFixer(s[list[m.Infra.Codegen.AutoFixResult]]):
@@ -399,12 +403,70 @@ class FlextInfraCodegenFixer(s[list[m.Infra.Codegen.AutoFixResult]]):
                 violations_skipped=violations_skipped,
                 files_modified=files_modified,
             )
+        self._apply_project_mro_migrations(
+            project_path=project_path,
+            files_modified=files_modified,
+        )
         return m.Infra.Codegen.AutoFixResult(
             project=project_path.name,
             violations_fixed=violations_fixed,
             violations_skipped=violations_skipped,
             files_modified=sorted(files_modified),
         )
+
+    def _apply_project_mro_migrations(
+        self,
+        *,
+        project_path: Path,
+        files_modified: set[str],
+    ) -> None:
+        service = FlextInfraRefactorMigrateToClassMRO(workspace_root=project_path)
+        report = service.run(target="all", apply_changes=True)
+        files_modified.update(migration.file for migration in report.migrations)
+        files_modified.update(rewrite.file for rewrite in report.rewrites)
+        self._normalize_rewritten_python_files(files_modified=files_modified)
+        self._run_lazy_propagation(
+            project_path=project_path,
+            files_modified=files_modified,
+        )
+
+    def _normalize_rewritten_python_files(self, *, files_modified: set[str]) -> None:
+        for file_path in sorted(files_modified):
+            path = Path(file_path)
+            if not path.exists() or path.suffix != c.Infra.Extensions.PYTHON:
+                continue
+            FlextInfraCodegenTransforms.run_ruff_fix(path)
+
+    def _run_lazy_propagation(
+        self,
+        *,
+        project_path: Path,
+        files_modified: set[str],
+    ) -> None:
+        before_snapshot = self._snapshot_init_files(project_path=project_path)
+        _ = FlextInfraCodegenLazyInit(workspace_root=project_path).run(check_only=False)
+        after_snapshot = self._snapshot_init_files(project_path=project_path)
+        for path_str, updated in after_snapshot.items():
+            previous = before_snapshot.get(path_str)
+            if previous == updated:
+                continue
+            files_modified.add(path_str)
+
+    @staticmethod
+    def _snapshot_init_files(*, project_path: Path) -> dict[str, str]:
+        snapshot: dict[str, str] = {}
+        for root_name in c.Infra.Refactor.MRO_SCAN_DIRECTORIES:
+            root = project_path / root_name
+            if not root.is_dir():
+                continue
+            for init_file in sorted(root.rglob(c.Infra.Files.INIT_PY)):
+                try:
+                    snapshot[str(init_file)] = init_file.read_text(
+                        encoding=c.Infra.Encoding.DEFAULT,
+                    )
+                except OSError:
+                    continue
+        return snapshot
 
     def run(self) -> list[m.Infra.Codegen.AutoFixResult]:
         """Run auto-fix on all projects in workspace.

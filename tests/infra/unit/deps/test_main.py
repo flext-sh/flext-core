@@ -1,15 +1,50 @@
-"""Tests for flext_infra.deps.__main__ subcommand dispatch."""
+"""Tests for flext_infra.deps.__main__ subcommand dispatch.
+
+Validates subcommand mapping, help/error paths, and return-value
+normalization using real imports and pytest monkeypatch.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
 import importlib
 import sys
+from types import ModuleType, SimpleNamespace
 
 import pytest
 
 from flext_infra.deps import __main__ as deps_main
 from flext_infra.deps.__main__ import _SUBCOMMANDS, main
 from flext_tests import tm
+
+_NO_STRUCTLOG = SimpleNamespace(ensure_structlog_configured=lambda: None)
+
+
+def _fake_module(return_value: object = 0) -> ModuleType:
+    """Create a real ModuleType with a main() returning *return_value*."""
+    mod = ModuleType("fake_subcommand")
+    setattr(mod, "main", lambda: return_value)
+    return mod
+
+
+def _stub_import(mod: ModuleType) -> object:
+    def _import(name: str) -> ModuleType:
+        return mod
+
+    return _import
+
+
+def _patch_dispatch(mp: pytest.MonkeyPatch, argv: list[str], ret: object = 0) -> None:
+    """Patch sys.argv, FlextRuntime, and importlib for dispatch tests."""
+    mp.setattr(sys, "argv", argv)
+    mp.setattr(deps_main, "FlextRuntime", _NO_STRUCTLOG)
+    mp.setattr(
+        deps_main,
+        "importlib",
+        SimpleNamespace(import_module=_stub_import(_fake_module(ret))),
+    )
 
 
 class TestSubcommandMapping:
@@ -89,17 +124,6 @@ class TestMainReturnValues:
         expected: int,
     ) -> None:
         """Test main normalizes subcommand return values."""
-        monkeypatch.setattr(sys, "argv", ["prog", "detect"])
-
-        class FakeModule:
-            @staticmethod
-            def main() -> object:
-                return return_val
-
-        monkeypatch.setattr(
-            deps_main.importlib,
-            "import_module",
-            lambda _: FakeModule(),
-        )
+        _patch_dispatch(monkeypatch, ["prog", "detect"], return_val)
         result = main()
         tm.that(result, eq=expected)

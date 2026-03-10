@@ -1,6 +1,6 @@
 """Tests for workspace checker runners — pyright, bandit, markdown, go, ruff.
 
-Uses monkeypatch to inject controlled subprocess output instead of unittest.mock.
+Uses monkeypatch to inject controlled subprocess output.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT

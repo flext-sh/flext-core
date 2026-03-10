@@ -1,7 +1,7 @@
 """Shared stubs and fixtures for release orchestrator tests.
 
-Provides fake service classes and workspace creation helpers to replace
-unittest.mock with real, lightweight test doubles.
+Provides fake service classes and workspace creation helpers using
+real, lightweight test doubles.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT

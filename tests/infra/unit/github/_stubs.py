@@ -1,6 +1,6 @@
 """Lightweight test doubles for github test modules.
 
-Replaces unittest.mock.Mock with typed, configurable stub classes
+Replaces generic mock objects with typed, configurable stub classes
 that satisfy flext_infra protocol contracts.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.

@@ -1,7 +1,6 @@
 """Shared stubs and spy helpers for check tests.
 
-Provides lightweight test doubles to replace unittest.mock.patch
-with monkeypatch-based substitution.
+Provides lightweight test doubles with monkeypatch-based substitution.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT

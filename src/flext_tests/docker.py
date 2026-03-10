@@ -18,47 +18,23 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import contextlib
-import importlib
 import json
 import socket
 import time
 from collections.abc import Mapping, Sequence
 from pathlib import Path
-from typing import ClassVar, Protocol
+from typing import ClassVar
 
 from docker import DockerClient as DockerSDKClient, from_env as docker_from_env
 from docker.errors import DockerException, NotFound
 from docker.models.containers import Container
 from pydantic import TypeAdapter, ValidationError
+from python_on_whales import DockerClient as WhalesDockerClient
 
 from flext_core import FlextLogger, r
 from flext_tests import c, m
 
-try:
-    whales_module = importlib.import_module("python_on_whales")
-    _whales_docker = whales_module.docker
-except (AttributeError, ModuleNotFoundError):
-    _whales_docker = None
-
-
-class _WhalesClientConfigProtocol(Protocol):
-    compose_files: list[str]
-
-
-class _WhalesComposeProtocol(Protocol):
-    def down(self, *, remove_orphans: bool, volumes: bool) -> None: ...
-
-    def up(
-        self, *, services: Sequence[str], detach: bool, remove_orphans: bool
-    ) -> None: ...
-
-
-class _WhalesDockerClientProtocol(Protocol):
-    client_config: _WhalesClientConfigProtocol
-    compose: _WhalesComposeProtocol
-
-
-docker: _WhalesDockerClientProtocol | None = _whales_docker
+docker: WhalesDockerClient = WhalesDockerClient(client_type="docker")
 logger: FlextLogger = FlextLogger(__name__)
 _HOST_BINDINGS_ADAPTER = TypeAdapter(list[dict[str, str]])
 
