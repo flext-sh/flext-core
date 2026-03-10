@@ -134,9 +134,8 @@ class FlextInfraRefactorLooseClassScanner:
             return out
         file_list: list[Path] = [
             fp
-            for fp in sorted(src.rglob(c.Infra.Extensions.PYTHON_GLOB))
-            if "__pycache__" not in fp.parts
-            and (not (fp.name.startswith("__") and fp.name != c.Infra.Files.INIT_PY))
+            for fp in u.Infra.iter_directory_python_files(src)
+            if not (fp.name.startswith("__") and fp.name != c.Infra.Files.INIT_PY)
         ]
         out2: RListPath = r[list[Path]].ok(file_list)
         return out2

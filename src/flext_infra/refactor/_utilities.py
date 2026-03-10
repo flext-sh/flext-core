@@ -22,7 +22,7 @@ from pydantic import BaseModel, TypeAdapter, ValidationError
 
 import flext_infra
 from flext_core import r
-from flext_infra import c, m, t
+from flext_infra import c, m, t, u
 from flext_infra._utilities.io import FlextInfraUtilitiesIo
 from flext_infra._utilities.subprocess import FlextInfraUtilitiesSubprocess
 from flext_infra._utilities.yaml import FlextInfraUtilitiesYaml
@@ -420,9 +420,10 @@ class FlextInfraUtilitiesRefactor:
         normalized_import = import_stmt.strip()
         if not normalized_import:
             return source
+        module = u.Infra.parse_cst_from_source(source)
+        if module is None:
+            return source
         try:
-            # given input is in-memory source text, parse from string is required
-            module = cst.parse_module(source)
             parsed_stmt = cst.parse_statement(f"{normalized_import}\n")
         except cst.ParserSyntaxError:
             return source

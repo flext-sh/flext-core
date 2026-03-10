@@ -326,7 +326,9 @@ class FlextInfraRefactorPydanticCentralizerAnalysis:
     ) -> tuple[list[m.Infra.Refactor.ClassMove], list[m.Infra.Refactor.AliasMove]]:
         source = file_path.read_text(encoding="utf-8")
         # given source text is needed for ast.get_source_segment below
-        tree = ast.parse(source)
+        tree = u.Infra.parse_ast_from_source(source)
+        if tree is None:
+            raise SyntaxError("Failed to parse source")
         lines = source.splitlines()
         class_moves: list[m.Infra.Refactor.ClassMove] = []
         alias_moves: list[m.Infra.Refactor.AliasMove] = []
@@ -407,9 +409,11 @@ class FlextInfraRefactorPydanticCentralizerAnalysis:
     def scan_file_violations(file_path: Path) -> tuple[int, int]:
         try:
             source = file_path.read_text(encoding="utf-8")
-            # given source text is reused for dict-like alias detection
-            tree = ast.parse(source)
-        except (SyntaxError, UnicodeDecodeError, OSError):
+        except (UnicodeDecodeError, OSError):
+            return (0, 0)
+        # given source text is reused for dict-like alias detection
+        tree = u.Infra.parse_ast_from_source(source)
+        if tree is None:
             return (0, 0)
         model_class_count = 0
         dict_alias_count = 0

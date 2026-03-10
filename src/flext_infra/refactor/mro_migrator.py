@@ -6,7 +6,7 @@ from pathlib import Path
 
 import libcst as cst
 
-from flext_infra import c, m
+from flext_infra import c, m, u
 from flext_infra.refactor.transformers.mro_private_inline import (
     FlextInfraRefactorMROPrivateInlineTransformer,
     FlextInfraRefactorMROQualifiedReferenceTransformer,
@@ -38,8 +38,18 @@ class FlextInfraRefactorMROMigrationTransformer:
     ) -> tuple[str, m.Infra.Refactor.MROFileMigration, dict[str, str]]:
         """Transform a candidate file and return code plus symbol map."""
         source = Path(scan_result.file).read_text(encoding=c.Infra.Encoding.DEFAULT)
-        # given source text is returned and compared after rewrites
-        module = cst.parse_module(source)
+        module = u.Infra.parse_cst_from_source(source)
+        if module is None:
+            return (
+                source,
+                _new_file_migration(
+                    file=scan_result.file,
+                    module=scan_result.module,
+                    moved_symbols=(),
+                    created_classes=(),
+                ),
+                {},
+            )
         candidate_symbols = {candidate.symbol for candidate in scan_result.candidates}
         moved_statements: list[tuple[str, cst.CSTNode]] = []
         retained_module_body: list[cst.CSTNode] = []

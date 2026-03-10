@@ -619,9 +619,11 @@ class FlextInfraCodegenFixer(s[list[m.Infra.Codegen.AutoFixResult]]):
     def _prune_stale_all_assignment(*, path: Path) -> bool:
         try:
             source = path.read_text(encoding=c.Infra.Encoding.DEFAULT)
-            # NOTE: source text needed below - cannot delegate to u.Infra.parse_module_ast
-            tree = ast.parse(source)
-        except (OSError, UnicodeDecodeError, SyntaxError):
+        except (OSError, UnicodeDecodeError):
+            return False
+        # NOTE: source text needed below - cannot delegate to u.Infra.parse_module_ast
+        tree = u.Infra.parse_ast_from_source(source)
+        if tree is None:
             return False
         assignment: ast.Assign | None = None
         exports: list[str] = []
@@ -726,7 +728,10 @@ class FlextInfraCodegenFixer(s[list[m.Infra.Codegen.AutoFixResult]]):
             root = project_path / root_name
             if not root.is_dir():
                 continue
-            for init_file in sorted(root.rglob(c.Infra.Files.INIT_PY)):
+            for init_file in u.Infra.iter_directory_python_files(
+                root,
+                pattern=c.Infra.Files.INIT_PY,
+            ):
                 try:
                     snapshot[str(init_file)] = init_file.read_text(
                         encoding=c.Infra.Encoding.DEFAULT,

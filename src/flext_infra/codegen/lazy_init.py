@@ -283,9 +283,11 @@ def _read_existing_docstring(init_path: Path) -> str:
         return ""
     try:
         content = init_path.read_text(encoding="utf-8")
-        # NOTE: source text needed below - cannot delegate to u.Infra.parse_module_ast
-        tree = ast.parse(content)
-    except (OSError, SyntaxError):
+    except OSError:
+        return ""
+    # NOTE: source text needed below - cannot delegate to u.Infra.parse_module_ast
+    tree = u.Infra.parse_ast_from_source(content)
+    if tree is None:
         return ""
     if (
         tree.body

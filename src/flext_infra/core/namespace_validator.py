@@ -320,7 +320,7 @@ class FlextInfraNamespaceValidator:
                 continue
             result.extend(
                 py_file
-                for py_file in sorted(base_dir.rglob(c.Infra.Extensions.PYTHON_GLOB))
+                for py_file in u.Infra.iter_directory_python_files(base_dir)
                 if not self._is_exempt_file(py_file)
             )
         return sorted(result)

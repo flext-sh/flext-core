@@ -8,7 +8,7 @@ from typing import override
 
 import libcst as cst
 
-from flext_infra import c, m
+from flext_infra import c, m, u
 from flext_infra.refactor.mro_migrator import FlextInfraRefactorMROMigrationTransformer
 from flext_infra.refactor.mro_resolver import CONSTANT_PATTERN
 from flext_infra.refactor.rule import FlextInfraRefactorRule
@@ -28,10 +28,9 @@ class FlextInfraRefactorMROClassMigrationRule(FlextInfraRefactorRule):
         if _file_path.name != c.Infra.Refactor.CONSTANTS_FILE_GLOB:
             return (tree, [])
         source = tree.code
-        try:
-            # given source is in-memory CST output, parse from string is required
-            module_ast = ast.parse(source)
-        except SyntaxError:
+        # given source is in-memory CST output, parse from string is required
+        module_ast = u.Infra.parse_ast_from_source(source)
+        if module_ast is None:
             return (tree, [])
         candidates: list[m.Infra.Refactor.MROSymbolCandidate] = []
         for stmt in module_ast.body:

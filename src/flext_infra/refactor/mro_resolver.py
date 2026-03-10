@@ -460,7 +460,7 @@ class FlextInfraRefactorMROMigrationScanner:
             root: Path = project_root / directory_name
             if not root.is_dir():
                 continue
-            for file_path in root.rglob(c.Infra.Extensions.PYTHON_GLOB):
+            for file_path in u.Infra.iter_directory_python_files(root):
                 if file_path.name in target_spec.file_names:
                     candidates.add(file_path)
                     continue
@@ -664,9 +664,11 @@ class FlextInfraRefactorMROImportRewriter:
         """Rewrite one file according to moved constant symbol mappings."""
         try:
             source = file_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
-            # NOTE: source text needed below for rendered-diff/write decisions.
-            tree = ast.parse(source)
-        except (OSError, SyntaxError):
+        except OSError:
+            return None
+        # NOTE: source text needed below for rendered-diff/write decisions.
+        tree = u.Infra.parse_ast_from_source(source)
+        if tree is None:
             return None
         imported_symbols: dict[str, m.Infra.Refactor.MROImportRewrite] = {}
         module_aliases: dict[str, str] = {}

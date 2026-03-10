@@ -220,8 +220,16 @@ class FlextInfraRefactorEngine:
                     source = file_rule_result.refactored_code
                     file_rule_modified = True
                 all_changes.extend(file_rule_result.changes)
-            # given source may be transformed in-memory above, parse from string here
-            tree = cst.parse_module(source)
+            tree = u.Infra.parse_cst_from_source(source)
+            if tree is None:
+                return m.Infra.Refactor.Result(
+                    file_path=file_path,
+                    success=False,
+                    modified=False,
+                    error="parse_failed",
+                    changes=[],
+                    refactored_code=None,
+                )
             for rule in self.rules:
                 if rule.enabled:
                     tree, changes = rule.apply(tree, file_path)
