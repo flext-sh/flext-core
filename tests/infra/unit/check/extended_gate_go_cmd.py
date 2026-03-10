@@ -16,6 +16,7 @@ from flext_infra import m
 from flext_infra._utilities.subprocess import FlextInfraUtilitiesSubprocess
 from flext_infra.check.services import FlextInfraWorkspaceChecker
 from flext_tests import tm
+from tests.infra import h
 
 
 class TestWorkspaceCheckerRunGo:
@@ -23,8 +24,7 @@ class TestWorkspaceCheckerRunGo:
 
     def test_run_go_no_go_mod(self, tmp_path: Path) -> None:
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
-        proj_dir = tmp_path / "p1"
-        proj_dir.mkdir()
+        proj_dir = h.mk_project(tmp_path, "p1")
         result = checker._run_go(proj_dir)
         tm.that(result.result.passed, eq=True)
         tm.that(len(result.issues), eq=0)
@@ -35,8 +35,7 @@ class TestWorkspaceCheckerRunGo:
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
-        proj_dir = tmp_path / "p1"
-        proj_dir.mkdir()
+        proj_dir = h.mk_project(tmp_path, "p1")
         (proj_dir / "go.mod").write_text("module test")
         call_count = [0]
 
@@ -45,12 +44,8 @@ class TestWorkspaceCheckerRunGo:
         ) -> SimpleNamespace:
             call_count[0] += 1
             if call_count[0] == 1:
-                return SimpleNamespace(
-                    stdout="main.go:10:5: error message",
-                    stderr="",
-                    returncode=1,
-                )
-            return SimpleNamespace(stdout="", stderr="", returncode=0)
+                return h.stub_run(stdout="main.go:10:5: error message", returncode=1)
+            return h.stub_run()
 
         monkeypatch.setattr(checker, "_run", _fake_run)
         result = checker._run_go(proj_dir)
@@ -62,8 +57,7 @@ class TestWorkspaceCheckerRunGo:
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
-        proj_dir = tmp_path / "p1"
-        proj_dir.mkdir()
+        proj_dir = h.mk_project(tmp_path, "p1")
         (proj_dir / "go.mod").write_text("module test")
         (proj_dir / "main.go").write_text("package main")
         call_count = [0]
@@ -73,8 +67,8 @@ class TestWorkspaceCheckerRunGo:
         ) -> SimpleNamespace:
             call_count[0] += 1
             if call_count[0] == 1:
-                return SimpleNamespace(stdout="", stderr="", returncode=0)
-            return SimpleNamespace(stdout="main.go", stderr="", returncode=1)
+                return h.stub_run()
+            return h.stub_run(stdout="main.go", returncode=1)
 
         monkeypatch.setattr(checker, "_run", _fake_run)
         result = checker._run_go(proj_dir)
@@ -87,8 +81,7 @@ class TestWorkspaceCheckerRunGo:
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
-        proj_dir = tmp_path / "p1"
-        proj_dir.mkdir()
+        proj_dir = h.mk_project(tmp_path, "p1")
         (proj_dir / "go.mod").write_text("module test")
         call_count = [0]
 
@@ -97,12 +90,8 @@ class TestWorkspaceCheckerRunGo:
         ) -> SimpleNamespace:
             call_count[0] += 1
             if call_count[0] == 1:
-                return SimpleNamespace(
-                    stdout="",
-                    stderr="go vet failed",
-                    returncode=1,
-                )
-            return SimpleNamespace(stdout="", stderr="", returncode=0)
+                return h.stub_run(stderr="go vet failed", returncode=1)
+            return h.stub_run()
 
         monkeypatch.setattr(checker, "_run", _fake_run)
         result = checker._run_go(proj_dir)
@@ -159,8 +148,7 @@ class TestWorkspaceCheckerCollectMarkdownFiles:
 
     def test_collect_markdown_files_finds_files(self, tmp_path: Path) -> None:
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
-        proj_dir = tmp_path / "p1"
-        proj_dir.mkdir()
+        proj_dir = h.mk_project(tmp_path, "p1")
         (proj_dir / "README.md").write_text("# Test")
         (proj_dir / "docs").mkdir()
         (proj_dir / "docs" / "guide.md").write_text("# Guide")
@@ -169,10 +157,8 @@ class TestWorkspaceCheckerCollectMarkdownFiles:
 
     def test_collect_markdown_files_excludes_dirs(self, tmp_path: Path) -> None:
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
-        proj_dir = tmp_path / "p1"
-        proj_dir.mkdir()
+        proj_dir = h.mk_project(tmp_path, "p1", with_git=True)
         (proj_dir / "README.md").write_text("# Test")
-        (proj_dir / ".git").mkdir()
         (proj_dir / ".git" / "README.md").write_text("# Git")
         files = checker._collect_markdown_files(proj_dir)
         tm.that(len(files), eq=1)

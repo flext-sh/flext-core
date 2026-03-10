@@ -14,13 +14,13 @@ import pytest
 from flext_core import t
 from flext_infra.check.services import FlextInfraWorkspaceChecker
 from flext_tests import tm
+from tests.infra import h
 
 
 class TestWorkspaceCheckerRunBandit:
     def test_run_bandit_no_src_dir(self, tmp_path: Path) -> None:
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
-        proj_dir = tmp_path / "p1"
-        proj_dir.mkdir()
+        proj_dir = h.mk_project(tmp_path, "p1")
         result = checker._run_bandit(proj_dir)
         tm.that(result.result.passed, eq=True)
         tm.that(len(result.issues), eq=0)
@@ -31,9 +31,7 @@ class TestWorkspaceCheckerRunBandit:
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
-        proj_dir = tmp_path / "p1"
-        proj_dir.mkdir()
-        (proj_dir / "src").mkdir()
+        proj_dir = h.mk_project(tmp_path, "p1", with_src=True)
         json_output = (
             '{"results": [{"filename": "a.py", "line_number": 1,'
             ' "test_id": "B101", "issue_text": "Assert used",'
@@ -42,11 +40,7 @@ class TestWorkspaceCheckerRunBandit:
         monkeypatch.setattr(
             checker,
             "_run",
-            lambda *_a, **_kw: SimpleNamespace(
-                stdout=json_output,
-                stderr="",
-                returncode=1,
-            ),
+            lambda *_a, **_kw: h.stub_run(stdout=json_output, returncode=1),
         )
         result = checker._run_bandit(proj_dir)
         tm.that(result.result.passed, eq=False)
@@ -58,17 +52,11 @@ class TestWorkspaceCheckerRunBandit:
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
-        proj_dir = tmp_path / "p1"
-        proj_dir.mkdir()
-        (proj_dir / "src").mkdir()
+        proj_dir = h.mk_project(tmp_path, "p1", with_src=True)
         monkeypatch.setattr(
             checker,
             "_run",
-            lambda *_a, **_kw: SimpleNamespace(
-                stdout="invalid json",
-                stderr="",
-                returncode=1,
-            ),
+            lambda *_a, **_kw: h.stub_run(stdout="invalid json", returncode=1),
         )
         result = checker._run_bandit(proj_dir)
         tm.that(result.result.passed, eq=False)
@@ -77,8 +65,7 @@ class TestWorkspaceCheckerRunBandit:
 class TestWorkspaceCheckerRunMarkdown:
     def test_run_markdown_no_files(self, tmp_path: Path) -> None:
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
-        proj_dir = tmp_path / "p1"
-        proj_dir.mkdir()
+        proj_dir = h.mk_project(tmp_path, "p1")
         result = checker._run_markdown(proj_dir)
         tm.that(result.result.passed, eq=True)
         tm.that(len(result.issues), eq=0)
@@ -89,15 +76,13 @@ class TestWorkspaceCheckerRunMarkdown:
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
-        proj_dir = tmp_path / "p1"
-        proj_dir.mkdir()
+        proj_dir = h.mk_project(tmp_path, "p1")
         (proj_dir / "README.md").write_text("# Test")
         monkeypatch.setattr(
             checker,
             "_run",
-            lambda *_a, **_kw: SimpleNamespace(
+            lambda *_a, **_kw: h.stub_run(
                 stdout="README.md:1:1 error MD001 Heading level",
-                stderr="",
                 returncode=1,
             ),
         )
@@ -111,8 +96,7 @@ class TestWorkspaceCheckerRunMarkdown:
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
-        proj_dir = tmp_path / "p1"
-        proj_dir.mkdir()
+        proj_dir = h.mk_project(tmp_path, "p1")
         (proj_dir / "README.md").write_text("# Test")
         (proj_dir / ".markdownlint.json").write_text("{}")
         captured_args: list[list[str]] = []
@@ -121,7 +105,7 @@ class TestWorkspaceCheckerRunMarkdown:
             cmd: list[str], *_a: t.ContainerValue, **_kw: t.ContainerValue
         ) -> SimpleNamespace:
             captured_args.append(cmd)
-            return SimpleNamespace(stdout="", stderr="", returncode=0)
+            return h.stub_run()
 
         monkeypatch.setattr(checker, "_run", _fake_run)
         checker._run_markdown(proj_dir)
@@ -133,17 +117,12 @@ class TestWorkspaceCheckerRunMarkdown:
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
-        proj_dir = tmp_path / "p1"
-        proj_dir.mkdir()
+        proj_dir = h.mk_project(tmp_path, "p1")
         (proj_dir / "README.md").write_text("# Test")
         monkeypatch.setattr(
             checker,
             "_run",
-            lambda *_a, **_kw: SimpleNamespace(
-                stdout="",
-                stderr="markdownlint failed",
-                returncode=1,
-            ),
+            lambda *_a, **_kw: h.stub_run(stderr="markdownlint failed", returncode=1),
         )
         result = checker._run_markdown(proj_dir)
         tm.that(result.result.passed, eq=False)

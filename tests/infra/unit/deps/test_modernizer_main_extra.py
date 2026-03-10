@@ -14,6 +14,20 @@ from flext_infra.deps.modernizer import FlextInfraPyprojectModernizer
 from flext_tests import tm
 
 
+def _modernizer_args(**overrides: t.ContainerValue | None) -> argparse.Namespace:
+    """Create standard modernizer args namespace with defaults."""
+    defaults: dict[str, t.ContainerValue | None] = {
+        "project": None,
+        "dry_run": True,
+        "verbose": False,
+        "audit": False,
+        "skip_comments": False,
+        "skip_check": True,
+    }
+    defaults.update(overrides)
+    return argparse.Namespace(**defaults)
+
+
 class TestModernizerEdgeCases:
     """Tests edge-case run behavior."""
 
@@ -21,41 +35,17 @@ class TestModernizerEdgeCases:
         pyproject = tmp_path / "pyproject.toml"
         pyproject.write_text("")
         modernizer = FlextInfraPyprojectModernizer(tmp_path)
-        args = argparse.Namespace(
-            project=None,
-            dry_run=True,
-            verbose=False,
-            audit=False,
-            skip_comments=False,
-            skip_check=True,
-        )
-        tm.that(modernizer.run(args) in {0, 1, 2}, eq=True)
+        tm.that(modernizer.run(_modernizer_args()) in {0, 1, 2}, eq=True)
 
     def test_modernizer_with_invalid_toml(self, tmp_path: Path) -> None:
         pyproject = tmp_path / "pyproject.toml"
         pyproject.write_text("[invalid toml {")
         modernizer = FlextInfraPyprojectModernizer(tmp_path)
-        args = argparse.Namespace(
-            project=None,
-            dry_run=True,
-            verbose=False,
-            audit=False,
-            skip_comments=False,
-            skip_check=True,
-        )
-        tm.that(modernizer.run(args) in {0, 1, 2}, eq=True)
+        tm.that(modernizer.run(_modernizer_args()) in {0, 1, 2}, eq=True)
 
     def test_modernizer_with_missing_pyproject(self, tmp_path: Path) -> None:
         modernizer = FlextInfraPyprojectModernizer(tmp_path)
-        args = argparse.Namespace(
-            project=None,
-            dry_run=True,
-            verbose=False,
-            audit=False,
-            skip_comments=False,
-            skip_check=True,
-        )
-        tm.that(modernizer.run(args) in {0, 1, 2}, eq=True)
+        tm.that(modernizer.run(_modernizer_args()) in {0, 1, 2}, eq=True)
 
 
 class TestModernizerUncoveredLines:
@@ -63,15 +53,7 @@ class TestModernizerUncoveredLines:
 
     def test_run_with_missing_root_pyproject(self, tmp_path: Path) -> None:
         modernizer = FlextInfraPyprojectModernizer(tmp_path)
-        args = argparse.Namespace(
-            project=None,
-            dry_run=True,
-            verbose=False,
-            audit=False,
-            skip_comments=False,
-            skip_check=True,
-        )
-        tm.that(modernizer.run(args), eq=2)
+        tm.that(modernizer.run(_modernizer_args()), eq=2)
 
     def test_run_with_no_changes(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
@@ -81,14 +63,7 @@ class TestModernizerUncoveredLines:
         doc = tomlkit.document()
         doc["project"] = {"name": "test"}
         modernizer = FlextInfraPyprojectModernizer(tmp_path)
-        args = argparse.Namespace(
-            project=None,
-            dry_run=True,
-            verbose=False,
-            audit=False,
-            skip_comments=False,
-            skip_check=True,
-        )
+        args = _modernizer_args()
 
         def _find_files() -> list[Path]:
             return [pyproject]

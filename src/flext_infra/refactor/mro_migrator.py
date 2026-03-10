@@ -153,6 +153,8 @@ class FlextInfraRefactorMROMigrationTransformer:
             if not isinstance(assign_target, cst.Name):
                 return None
             symbol = assign_target.value
+        elif isinstance(first_stmt, cst.TypeAlias):
+            symbol = first_stmt.name.value
         else:
             return None
         if symbol not in candidate_symbols:
@@ -409,9 +411,14 @@ class FlextInfraRefactorMROMigrationTransformer:
                 )
                 not in existing_names
             ]
+            existing_body: list[cst.BaseStatement] = [
+                item
+                for item in statement.body.body
+                if isinstance(item, cst.BaseStatement)
+            ]
             updated_core = statement.with_changes(
                 body=statement.body.with_changes(
-                    body=(*statement.body.body, *appended_lines),
+                    body=(*existing_body, *appended_lines),
                 ),
             )
             merged = [*class_body]
@@ -438,6 +445,8 @@ class FlextInfraRefactorMROMigrationTransformer:
             return statement.name.value
         if isinstance(statement, cst.SimpleStatementLine) and len(statement.body) == 1:
             base_statement = statement.body[0]
+            if isinstance(base_statement, cst.TypeAlias):
+                return base_statement.name.value
             if isinstance(base_statement, cst.AnnAssign) and isinstance(
                 base_statement.target,
                 cst.Name,

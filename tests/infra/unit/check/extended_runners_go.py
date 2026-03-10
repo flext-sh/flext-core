@@ -14,6 +14,7 @@ import pytest
 from flext_core import t
 from flext_infra.check.services import FlextInfraWorkspaceChecker
 from flext_tests import tm
+from tests.infra import h
 
 
 def _stub_run_seq(results: list[SimpleNamespace]) -> t.ContainerValue:
@@ -30,8 +31,7 @@ def _stub_run_seq(results: list[SimpleNamespace]) -> t.ContainerValue:
 class TestRunGo:
     def test_run_go_no_go_mod(self, tmp_path: Path) -> None:
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
-        proj_dir = tmp_path / "p1"
-        proj_dir.mkdir()
+        proj_dir = h.mk_project(tmp_path, "p1")
         result = checker._run_go(proj_dir)
         tm.that(result.result.passed, eq=True)
         tm.that(len(result.issues), eq=0)
@@ -42,15 +42,10 @@ class TestRunGo:
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
-        proj_dir = tmp_path / "p1"
-        proj_dir.mkdir()
+        proj_dir = h.mk_project(tmp_path, "p1")
         (proj_dir / "go.mod").write_text("module test")
-        vet = SimpleNamespace(
-            stdout="main.go:10:5: error message",
-            stderr="",
-            returncode=1,
-        )
-        fmt = SimpleNamespace(stdout="", stderr="", returncode=0)
+        vet = h.stub_run(stdout="main.go:10:5: error message", returncode=1)
+        fmt = h.stub_run()
         monkeypatch.setattr(checker, "_run", _stub_run_seq([vet, fmt]))
         result = checker._run_go(proj_dir)
         tm.that(result.result.passed, eq=False)
@@ -61,12 +56,11 @@ class TestRunGo:
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
-        proj_dir = tmp_path / "p1"
-        proj_dir.mkdir()
+        proj_dir = h.mk_project(tmp_path, "p1")
         (proj_dir / "go.mod").write_text("module test")
         (proj_dir / "main.go").write_text("package main")
-        vet = SimpleNamespace(stdout="", stderr="", returncode=0)
-        fmt = SimpleNamespace(stdout="main.go", stderr="", returncode=1)
+        vet = h.stub_run()
+        fmt = h.stub_run(stdout="main.go", returncode=1)
         monkeypatch.setattr(checker, "_run", _stub_run_seq([vet, fmt]))
         result = checker._run_go(proj_dir)
         tm.that(result.result.passed, eq=False)
@@ -78,16 +72,11 @@ class TestRunGo:
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
-        proj_dir = tmp_path / "p1"
-        proj_dir.mkdir()
+        proj_dir = h.mk_project(tmp_path, "p1")
         (proj_dir / "go.mod").write_text("module test\n")
         (proj_dir / "main.go").write_text("package main\n")
-        vet = SimpleNamespace(stdout="", stderr="", returncode=0)
-        fmt = SimpleNamespace(
-            stdout="src/file.go\n\nsrc/other.go\n",
-            stderr="",
-            returncode=1,
-        )
+        vet = h.stub_run()
+        fmt = h.stub_run(stdout="src/file.go\n\nsrc/other.go\n", returncode=1)
         monkeypatch.setattr(checker, "_run", _stub_run_seq([vet, fmt]))
         result = checker._run_go(proj_dir)
         tm.that(result.result.passed, eq=False)

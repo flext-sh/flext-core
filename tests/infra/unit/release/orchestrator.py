@@ -13,6 +13,7 @@ import pytest
 from flext_core import r, t
 from flext_infra.release.orchestrator import FlextInfraReleaseOrchestrator
 from flext_tests import tm
+from tests.infra import h
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -45,10 +46,7 @@ def _stub_dispatch(mp: MonkeyPatch) -> None:
 @pytest.fixture
 def workspace_root(tmp_path: Path) -> Path:
     """Create workspace root with pyproject.toml."""
-    root = tmp_path / "workspace"
-    root.mkdir()
-    (root / ".git").mkdir()
-    (root / "Makefile").touch()
+    root = h.workspace(tmp_path / "workspace")
     (root / "pyproject.toml").write_text('version = "0.1.0"\n', encoding="utf-8")
     return root
 

@@ -18,6 +18,7 @@ from flext_infra import m
 from flext_infra._utilities.subprocess import FlextInfraUtilitiesSubprocess
 from flext_infra.check.services import FlextInfraWorkspaceChecker
 from flext_tests import tm
+from tests.infra import h
 
 
 def _stub_run(result: SimpleNamespace) -> t.ContainerValue:
@@ -36,13 +37,12 @@ class TestRunRuffLint:
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
-        proj_dir = tmp_path / "p1"
-        proj_dir.mkdir()
+        proj_dir = h.mk_project(tmp_path, "p1")
         json_output = '[{"filename": "a.py", "location": {"row": 1, "column": 0}, "code": "E001", "message": "Error"}]'
         monkeypatch.setattr(
             checker,
             "_run",
-            _stub_run(SimpleNamespace(stdout=json_output, stderr="", returncode=1)),
+            _stub_run(h.stub_run(stdout=json_output, returncode=1)),
         )
         result = checker._run_ruff_lint(proj_dir)
         tm.that(result.result.passed, eq=False)
@@ -52,12 +52,11 @@ class TestRunRuffLint:
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
-        proj_dir = tmp_path / "p1"
-        proj_dir.mkdir()
+        proj_dir = h.mk_project(tmp_path, "p1")
         monkeypatch.setattr(
             checker,
             "_run",
-            _stub_run(SimpleNamespace(stdout="invalid json", stderr="", returncode=1)),
+            _stub_run(h.stub_run(stdout="invalid json", returncode=1)),
         )
         result = checker._run_ruff_lint(proj_dir)
         tm.that(result.result.passed, eq=False)
@@ -70,14 +69,11 @@ class TestRunRuffFormat:
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
-        proj_dir = tmp_path / "p1"
-        proj_dir.mkdir()
+        proj_dir = h.mk_project(tmp_path, "p1")
         monkeypatch.setattr(
             checker,
             "_run",
-            _stub_run(
-                SimpleNamespace(stdout="  --> a.py:1:1", stderr="", returncode=1)
-            ),
+            _stub_run(h.stub_run(stdout="  --> a.py:1:1", returncode=1)),
         )
         result = checker._run_ruff_format(proj_dir)
         tm.that(result.result.passed, eq=False)
@@ -87,12 +83,11 @@ class TestRunRuffFormat:
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
-        proj_dir = tmp_path / "p1"
-        proj_dir.mkdir()
+        proj_dir = h.mk_project(tmp_path, "p1")
         monkeypatch.setattr(
             checker,
             "_run",
-            _stub_run(SimpleNamespace(stdout="a.py", stderr="", returncode=1)),
+            _stub_run(h.stub_run(stdout="a.py", returncode=1)),
         )
         result = checker._run_ruff_format(proj_dir)
         tm.that(result.result.passed, eq=False)
@@ -102,15 +97,13 @@ class TestRunRuffFormat:
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
-        proj_dir = tmp_path / "p1"
-        proj_dir.mkdir()
+        proj_dir = h.mk_project(tmp_path, "p1")
         monkeypatch.setattr(
             checker,
             "_run",
             _stub_run(
-                SimpleNamespace(
+                h.stub_run(
                     stdout="--> src/file.py:1:1\n--> src/file.py:1:1\n--> src/other.py:1:1\n",
-                    stderr="",
                     returncode=1,
                 )
             ),
@@ -127,11 +120,7 @@ class TestRunRuffFormat:
         monkeypatch.setattr(
             checker,
             "_run",
-            _stub_run(
-                SimpleNamespace(
-                    returncode=1, stdout="file1.py\n\nfile2.py\n", stderr=""
-                )
-            ),
+            _stub_run(h.stub_run(stdout="file1.py\n\nfile2.py\n", returncode=1)),
         )
         result = checker._run_ruff_format(tmp_path)
         tm.that(len(result.issues) >= 1, eq=True)
@@ -178,8 +167,7 @@ class TestCollectMarkdownFiles:
 
     def test_collect_markdown_files_finds_files(self, tmp_path: Path) -> None:
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
-        proj_dir = tmp_path / "p1"
-        proj_dir.mkdir()
+        proj_dir = h.mk_project(tmp_path, "p1")
         (proj_dir / "README.md").write_text("# Test")
         (proj_dir / "docs").mkdir()
         (proj_dir / "docs" / "guide.md").write_text("# Guide")
@@ -188,10 +176,8 @@ class TestCollectMarkdownFiles:
 
     def test_collect_markdown_files_excludes_dirs(self, tmp_path: Path) -> None:
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
-        proj_dir = tmp_path / "p1"
-        proj_dir.mkdir()
+        proj_dir = h.mk_project(tmp_path, "p1", with_git=True)
         (proj_dir / "README.md").write_text("# Test")
-        (proj_dir / ".git").mkdir()
         (proj_dir / ".git" / "README.md").write_text("# Git")
         files = checker._collect_markdown_files(proj_dir)
         tm.that(len(files), eq=1)
