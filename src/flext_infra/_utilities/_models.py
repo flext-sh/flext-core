@@ -32,7 +32,7 @@ class FlextInfraUtilitiesModels:
         """Result of scanning a single file."""
 
         file_path: Path = Field(description="Path to the scanned file")
-        violations: list[FlextInfraUtilitiesModels.ScanViolation] = Field(
+        violations: list[ScanViolation] = Field(
             default_factory=list, description="Violations found in the file"
         )
         detector_name: str = Field(
