@@ -14,9 +14,9 @@ from pathlib import Path
 
 import pytest
 
-from flext_infra import m as im
 from flext_infra.basemk.generator import FlextInfraBaseMkGenerator
 from flext_tests import tm
+from tests.infra.models import m as im
 from tests.infra.typings import t
 
 

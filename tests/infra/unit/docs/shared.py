@@ -10,10 +10,10 @@ from pathlib import Path
 
 import pytest
 
-from flext_infra import m
 from flext_infra.constants import c
 from flext_infra.docs.shared import FlextInfraDocsShared
 from flext_tests import tm
+from tests.infra.models import m
 from tests.infra.typings import t
 
 _OUT = c.Infra.Docs.DEFAULT_DOCS_OUTPUT_DIR

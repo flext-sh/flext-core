@@ -54,11 +54,11 @@ class_nesting:
     confidence: high
     reason: top_level_class_in_private_directory
   - loose_name: Metadata
-    current_file: flext-core/src/flext_core/_runtime_metadata.py
-    target_namespace: FlextRuntimeMetadata
+    current_file: flext-core/src/flext_core/_models/base.py
+    target_namespace: FlextModelFoundation
     target_name: Metadata
-    confidence: low
-    reason: top_level_class_without_namespace_prefix
+    confidence: high
+    reason: nested_class_inside_FlextModelFoundation
   - loose_name: _Predicate
     current_file: flext-core/src/flext_core/_utilities/collection.py
     target_namespace: FlextUtilities

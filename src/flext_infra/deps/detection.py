@@ -12,7 +12,7 @@ from flext_infra import (
     FlextInfraUtilitiesPatterns,
     FlextInfraUtilitiesSelection,
     FlextInfraUtilitiesSubprocess,
-    FlextInfraUtilitiesToml,
+    FlextInfraUtilitiesTomlParse,
     c,
     m,
     p,
@@ -54,7 +54,7 @@ class FlextInfraDependencyDetectionService:
     def __init__(self) -> None:
         """Initialize the dependency detection service with selector, toml, and runner."""
         self.selector = FlextInfraUtilitiesSelection()
-        self.toml = FlextInfraUtilitiesToml()
+        self.toml: p.Infra.TomlReader = FlextInfraUtilitiesTomlParse()
         self.runner: p.Infra.CommandRunner = FlextInfraUtilitiesSubprocess()
 
     @staticmethod

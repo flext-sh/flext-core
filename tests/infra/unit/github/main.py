@@ -8,11 +8,11 @@ from pathlib import Path
 import pytest
 
 from flext_core import r
-from flext_infra import m
 from flext_infra.github import __main__ as github_main
 from flext_infra.github.workflows import SyncOperation
-from tests.infra.unit.github._stubs import (
+from tests.infra.models import m
 from tests.infra.typings import t
+from tests.infra.unit.github._stubs import (
     StubLinter,
     StubSyncer,
 )

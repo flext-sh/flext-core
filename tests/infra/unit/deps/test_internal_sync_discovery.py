@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import types
+from collections.abc import Callable
 from pathlib import Path
 
 from flext_core import r
@@ -9,11 +9,25 @@ from flext_tests import tm
 from tests.infra.typings import t
 
 
+class _TomlReaderStub:
+    """Test stub satisfying p.Infra.TomlReader protocol."""
+
+    def __init__(
+        self,
+        fn: Callable[[Path], r[dict[str, t.ContainerValue]]],
+    ) -> None:
+        self._fn = fn
+
+    def read_plain(self, path: Path) -> r[dict[str, t.ContainerValue]]:
+        """Delegate to the callable provided at construction."""
+        return self._fn(path)
+
+
 def _set_toml_stub(
     service: FlextInfraInternalDependencySyncService,
     value: t.ContainerValue,
 ) -> None:
-    service.toml = types.SimpleNamespace(read_plain=lambda _path: value)  # type: ignore[assignment]
+    service.toml = _TomlReaderStub(fn=lambda _path: value)
 
 
 def _set_toml_sequence(
@@ -27,7 +41,7 @@ def _set_toml_sequence(
         state["index"] += 1
         return item
 
-    service.toml = types.SimpleNamespace(read_plain=_next)  # type: ignore[assignment]
+    service.toml = _TomlReaderStub(fn=_next)
 
 
 class TestParseGitmodules:

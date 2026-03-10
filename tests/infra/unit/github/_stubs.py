@@ -15,8 +15,8 @@ from pathlib import Path
 from pydantic import Field
 
 from flext_core import FlextModels, r
-from tests.infra.unit.github._stubs_extra import (
 from tests.infra.typings import t
+from tests.infra.unit.github._stubs_extra import (
     StubLinter,
     StubPrManager,
     StubSyncer,

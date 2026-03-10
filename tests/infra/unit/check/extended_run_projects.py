@@ -10,7 +10,6 @@ from pathlib import Path
 
 import pytest
 
-from flext_infra import m
 from flext_infra.check.services import (
     FlextInfraWorkspaceChecker,
     _CheckIssue,
@@ -18,6 +17,7 @@ from flext_infra.check.services import (
     _ProjectResult,
 )
 from flext_tests import tm
+from tests.infra.models import m
 from tests.infra.typings import t
 
 

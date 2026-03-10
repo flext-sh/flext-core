@@ -7,8 +7,8 @@ from flext_core import r
 from flext_infra.deps import internal_sync
 from flext_infra.deps.internal_sync import FlextInfraInternalDependencySyncService
 from flext_tests import tm
-from tests.infra.typings import t
 from tests.infra import h
+from tests.infra.typings import t
 
 
 def _set_toml_stub(

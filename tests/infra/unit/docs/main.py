@@ -7,6 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import argparse
+from collections.abc import Callable
 
 import pytest
 
@@ -46,7 +47,9 @@ def _fix_args(**overrides: t.ContainerValue) -> argparse.Namespace:
     return h.ns(**defaults)
 
 
-def _ok(val: list[m.Infra.Docs.DocsPhaseReport]):
+def _ok(
+    val: list[m.Infra.Docs.DocsPhaseReport],
+) -> Callable[..., r[list[m.Infra.Docs.DocsPhaseReport]]]:
     def _fn(
         _self: t.ContainerValue,
         *_a: t.ContainerValue,
@@ -58,7 +61,7 @@ def _ok(val: list[m.Infra.Docs.DocsPhaseReport]):
     return _fn
 
 
-def _fail_report(err: str):
+def _fail_report(err: str) -> Callable[..., r[list[m.Infra.Docs.DocsPhaseReport]]]:
     def _fn(
         _self: t.ContainerValue,
         *_a: t.ContainerValue,
@@ -70,7 +73,7 @@ def _fail_report(err: str):
     return _fn
 
 
-def _ok_list(val: list[t.ContainerValue]):
+def _ok_list(val: list[t.ContainerValue]) -> Callable[..., r[list[t.ContainerValue]]]:
     def _fn(
         _self: t.ContainerValue,
         *_a: t.ContainerValue,
@@ -82,7 +85,7 @@ def _ok_list(val: list[t.ContainerValue]):
     return _fn
 
 
-def _fail_list(err: str):
+def _fail_list(err: str) -> Callable[..., r[list[t.ContainerValue]]]:
     def _fn(
         _self: t.ContainerValue,
         *_a: t.ContainerValue,
@@ -99,7 +102,7 @@ _SILENT = type("O", (), {"error": staticmethod(lambda *a: None)})()
 
 def _capturing(
     captured: dict[str, t.ContainerValue],
-):
+) -> Callable[..., r[list[m.Infra.Docs.DocsPhaseReport]]]:
     def _fn(
         _self: t.ContainerValue,
         *_a: t.ContainerValue,

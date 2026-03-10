@@ -13,8 +13,8 @@ import pytest
 
 from flext_infra.check.services import FlextInfraWorkspaceChecker
 from flext_tests import tm
-from tests.infra.typings import t
 from tests.infra import h
+from tests.infra.typings import t
 
 
 def _stub_run(result: SimpleNamespace) -> t.ContainerValue:

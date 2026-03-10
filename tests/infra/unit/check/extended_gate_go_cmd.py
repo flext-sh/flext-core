@@ -12,12 +12,12 @@ from types import SimpleNamespace
 import pytest
 
 from flext_core import r
-from flext_infra import m
 from flext_infra._utilities.subprocess import FlextInfraUtilitiesSubprocess
 from flext_infra.check.services import FlextInfraWorkspaceChecker
 from flext_tests import tm
-from tests.infra.typings import t
 from tests.infra import h
+from tests.infra.models import m
+from tests.infra.typings import t
 
 
 class TestWorkspaceCheckerRunGo:

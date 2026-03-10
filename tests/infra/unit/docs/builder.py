@@ -10,9 +10,9 @@ from pathlib import Path
 
 import pytest
 
-from flext_infra import m
 from flext_infra.docs.builder import FlextInfraDocBuilder
 from flext_tests import tm
+from tests.infra.models import m
 
 
 class TestBuilderCore:

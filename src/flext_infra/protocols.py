@@ -142,6 +142,14 @@ class FlextInfraProtocols(FlextProtocols):
                 ...
 
         @runtime_checkable
+        class TomlReader(Protocol):
+            """Contract for TOML file readers used by dependency services."""
+
+            def read_plain(self, path: Path) -> r[dict[str, t.ContainerValue]]:
+                """Read and parse a TOML file as a plain dict with r error handling."""
+                ...
+
+        @runtime_checkable
         class CommandRunner(Protocol):
             """Contract for command execution services."""
 

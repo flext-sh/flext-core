@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from flext_infra import m
+from tests.infra.models import m
 
 try:
     from flext_infra.refactor import (

@@ -190,9 +190,9 @@ policy_matrix:
         - lsp_diagnostics_clean
 runtime_whitelist:
   - transform_id: runtime_metadata_class_nesting
-    source_module_pattern: _runtime_metadata.py
-    source_symbol: Metadata
-    target_namespace: FlextRuntimeMetadata
+    source_module_pattern: _models/base.py
+    source_symbol: FlextModelFoundation.Metadata
+    target_namespace: FlextModelFoundation
     target_name: Metadata
     rewrite_scope: workspace
   - transform_id: runtime_lazy_metadata_normalization
@@ -443,37 +443,34 @@ rules:
           expected: *id003
     rewrite_scope: file
   - project_kind: core
-    facade_family: t
-    module_family: _runtime
+    facade_family: m
+    module_family: _models
     source_symbol: Metadata
-    target_facade_class: FlextRuntimeMetadata
-    target_namespace_path: FlextRuntimeMetadata.Metadata
-    expected_base_chain: &id005
-      - FlextTypes
+    target_facade_class: FlextModelFoundation
+    target_namespace_path: FlextModelFoundation.Metadata
+    expected_base_chain: *id003
     forbidden_targets:
-      - FlextModels
       - FlextUtilities
       - FlextDispatcher
       - FlextDecorators
-      - m.*
       - u.*
       - d.*
       - dispatcher.*
-    confidence: 0.5
+    confidence: 0.9
     pre_checks:
       - type: source_symbol_is_class
         params:
           symbol: Metadata
       - type: target_facade_exists
         params:
-          facade: FlextRuntimeMetadata
+          facade: FlextModelFoundation
     post_checks:
       - type: imports_resolve
         params:
           scope: file
       - type: mro_valid
         params:
-          expected: *id005
+          expected: *id003
     rewrite_scope: file
   - project_kind: core
     facade_family: u

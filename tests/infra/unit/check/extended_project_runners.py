@@ -11,13 +11,13 @@ from pathlib import Path
 import pytest
 
 from flext_core import r
-from flext_infra import m
 from flext_infra.check.services import (
     FlextInfraWorkspaceChecker,
     _CheckIssue,
     _GateExecution,
 )
 from flext_tests import tm
+from tests.infra.models import m
 from tests.infra.typings import t
 
 

@@ -12,11 +12,10 @@ from types import SimpleNamespace
 import pytest
 
 from flext_core import r
-from flext_infra import m
 from flext_infra.docs.builder import FlextInfraDocBuilder
 from flext_infra.docs.shared import FlextInfraDocsShared
 from flext_tests import tm
-from tests.infra.typings import t
+from tests.infra import m, t
 
 
 class TestBuilderScope:

@@ -57,7 +57,7 @@ def test_runtime_family_blocks_non_runtime_target() -> None:
     gate = PreCheckGate(policy_path=_policy_path())
     ok, violation = gate.validate_entry({
         "loose_name": "Metadata",
-        "current_file": "flext-core/src/flext_core/_runtime_metadata.py",
+        "current_file": "flext-core/src/flext_core/_runtime.py",
         "target_namespace": "FlextDispatcher",
     })
     assert not ok
