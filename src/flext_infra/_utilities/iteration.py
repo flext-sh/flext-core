@@ -56,6 +56,36 @@ class FlextInfraUtilitiesIteration:
         return roots
 
     @staticmethod
+    def iter_directory_python_files(
+        directory: Path,
+        *,
+        pattern: str | None = None,
+        skip_pycache: bool = True,
+    ) -> list[Path]:
+        """Iterate Python files in a single directory tree.
+
+        Scoped to one directory (project src, subdirectory, etc.) — unlike
+        ``iter_python_files`` which discovers across the whole workspace.
+
+        Args:
+            directory: Root directory to scan.
+            pattern: Glob pattern (defaults to ``c.Infra.Extensions.PYTHON_GLOB``).
+            skip_pycache: Exclude ``__pycache__`` paths (default True).
+
+        Returns:
+            Sorted list of matching file paths. Empty list if directory
+            does not exist.
+
+        """
+        if not directory.is_dir():
+            return []
+        effective_pattern = pattern or c.Infra.Extensions.PYTHON_GLOB
+        files = sorted(directory.rglob(effective_pattern))
+        if skip_pycache:
+            return [f for f in files if "__pycache__" not in f.parts]
+        return files
+
+    @staticmethod
     def iter_python_files(
         workspace_root: Path,
         *,

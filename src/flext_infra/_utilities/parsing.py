@@ -41,6 +41,44 @@ class FlextInfraUtilitiesParsing:
             return None
 
     @staticmethod
+    def parse_ast_from_source(source: str) -> ast.Module | None:
+        """Parse a source string into an AST module, returning None on error.
+
+        Use when the caller already has source text (e.g. for rewriting,
+        ``ast.get_source_segment``, or in-memory transformations).
+
+        Args:
+            source: Python source code string.
+
+        Returns:
+            Parsed AST module, or None on syntax error.
+
+        """
+        try:
+            return ast.parse(source)
+        except SyntaxError:
+            return None
+
+    @staticmethod
+    def parse_cst_from_source(source: str) -> cst.Module | None:
+        """Parse a source string into a CST module, returning None on error.
+
+        Use when the caller already has source text (e.g. for CST
+        transformations or in-memory rewrites).
+
+        Args:
+            source: Python source code string.
+
+        Returns:
+            Parsed CST module, or None on parse error.
+
+        """
+        try:
+            return cst.parse_module(source)
+        except cst.ParserSyntaxError:
+            return None
+
+    @staticmethod
     def parse_module_cst(file_path: Path) -> cst.Module | None:
         """Parse a Python file into a CST module, returning None on error.
 
