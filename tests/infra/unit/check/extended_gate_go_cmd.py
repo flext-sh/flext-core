@@ -14,10 +14,7 @@ import pytest
 from flext_core import r
 from flext_infra import m
 from flext_infra._utilities.subprocess import FlextInfraUtilitiesSubprocess
-from flext_infra.check.services import (
-    FlextInfraWorkspaceChecker,
-    _GateExecution,
-)
+from flext_infra.check.services import FlextInfraWorkspaceChecker
 from flext_tests import tm
 
 
@@ -116,12 +113,17 @@ class TestWorkspaceCheckerRunCommand:
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
-        monkeypatch.setattr(
-            "flext_infra.check.workspace_check.FlextInfraUtilitiesSubprocess.run_raw",
-            lambda *_a, **_kw: r[m.Infra.Core.CommandOutput].ok(
+
+        def _fake_run(
+            _self: FlextInfraUtilitiesSubprocess,
+            _cmd: list[str],
+            **_kw: object,
+        ) -> r[m.Infra.Core.CommandOutput]:
+            return r[m.Infra.Core.CommandOutput].ok(
                 m.Infra.Core.CommandOutput(stdout="output", stderr="", exit_code=0),
-            ),
-        )
+            )
+
+        monkeypatch.setattr(FlextInfraUtilitiesSubprocess, "run_raw", _fake_run)
         result = checker._run(["echo", "test"], tmp_path)
         tm.that(result.stdout, eq="output")
         tm.that(result.exit_code, eq=0)
@@ -132,12 +134,15 @@ class TestWorkspaceCheckerRunCommand:
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
-        monkeypatch.setattr(
-            "flext_infra.check.workspace_check.FlextInfraUtilitiesSubprocess.run_raw",
-            lambda *_a, **_kw: r[m.Infra.Core.CommandOutput].fail(
-                "execution failed",
-            ),
-        )
+
+        def _fake_run(
+            _self: FlextInfraUtilitiesSubprocess,
+            _cmd: list[str],
+            **_kw: object,
+        ) -> r[m.Infra.Core.CommandOutput]:
+            return r[m.Infra.Core.CommandOutput].fail("execution failed")
+
+        monkeypatch.setattr(FlextInfraUtilitiesSubprocess, "run_raw", _fake_run)
         result = checker._run(["false"], tmp_path)
         tm.that(result.exit_code, eq=1)
         tm.that("execution failed" in result.stderr, eq=True)
