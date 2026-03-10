@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from flext_infra import m
+from flext_infra import m, u
 from flext_infra.refactor.analysis import FlextInfraRefactorPydanticCentralizerAnalysis
 
 
@@ -147,7 +147,26 @@ class FlextInfraRefactorPydanticCentralizer:
         skipped_nonpackage_apply = 0
         skipped_non_necessary_apply = 0
         failure_stats = m.Infra.Refactor.CentralizerFailureStats()
-        for file_path in workspace_root.rglob("*.py"):
+        files_result = u.Infra.iter_python_files(workspace_root=workspace_root)
+        if files_result.is_failure:
+            return {
+                "scanned_files": scanned_files,
+                "touched_files": touched_files,
+                "moved_classes": moved_classes,
+                "moved_aliases": moved_aliases,
+                "normalized_files": normalized_files,
+                "detected_model_violations": detected_model_violations,
+                "detected_alias_violations": detected_alias_violations,
+                "created_model_files": created_model_files,
+                "created_typings_files": created_typings_files,
+                "skipped_nonpackage_apply": skipped_nonpackage_apply,
+                "skipped_non_necessary_apply": skipped_non_necessary_apply,
+                "parse_syntax_errors": failure_stats.parse_syntax_errors,
+                "parse_encoding_errors": failure_stats.parse_encoding_errors,
+                "parse_io_errors": failure_stats.parse_io_errors + 1,
+            }
+        python_files = files_result.value
+        for file_path in python_files:
             if not FlextInfraRefactorPydanticCentralizer._is_target_python(file_path):
                 continue
             if FlextInfraRefactorPydanticCentralizer._is_allowed_model_path(file_path):
@@ -230,7 +249,7 @@ class FlextInfraRefactorPydanticCentralizer:
                 _ = dest_path.write_text(updated_dest, encoding="utf-8")
                 _ = file_path.write_text(updated_source, encoding="utf-8")
         if normalize_remaining:
-            for file_path in workspace_root.rglob("*.py"):
+            for file_path in python_files:
                 if not FlextInfraRefactorPydanticCentralizer._is_target_python(
                     file_path,
                 ):
