@@ -590,6 +590,7 @@ quote-style = "double"
 [tool.pyright]
 extraPaths = [
   "src",
+  "tests",
 ]
 pythonPlatform = "Linux"
 pythonVersion = "3.13"
