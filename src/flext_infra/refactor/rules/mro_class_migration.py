@@ -64,8 +64,9 @@ class FlextInfraRefactorMROClassMigrationRule(FlextInfraRefactorRule):
         )
         if len(migration.moved_symbols) == 0 or updated_source == source:
             return (tree, [])
-        # given updated_source is in-memory transformed text, parse from string is required
-        updated_module = cst.parse_module(updated_source)
+        updated_module = u.Infra.parse_cst_from_source(updated_source)
+        if updated_module is None:
+            return (tree, [])
         syms = ", ".join(migration.moved_symbols)
         return (updated_module, [f"migrated constants into facade class: {syms}"])
 
