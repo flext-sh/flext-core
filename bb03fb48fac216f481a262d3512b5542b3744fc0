@@ -1,0 +1,25 @@
+src/flext_infra/_utilities/parsing.py
+  4f7f6a9888793a29 44-80
+src/flext_infra/_utilities/iteration.py
+  4f7f6a9888793a29 59-87
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.10",
+  "base_commit_sha": "bb03fb48fac216f481a262d3512b5542b3744fc0",
+  "prompts": {
+    "4f7f6a9888793a29": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_326eb33a2ffeNpM4c4IIRzESUI",
+        "model": "anthropic/claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 68,
+      "total_deletions": 0,
+      "accepted_lines": 68,
+      "overriden_lines": 0
+    }
+  }
+}
