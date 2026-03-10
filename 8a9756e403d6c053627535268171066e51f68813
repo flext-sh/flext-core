@@ -1,0 +1,38 @@
+src/flext_infra/refactor/census.py
+  c963d31991094136 39-40,155-157
+src/flext_infra/refactor/__main__.py
+  062e1d6123b982b8 16
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.10",
+  "base_commit_sha": "8a9756e403d6c053627535268171066e51f68813",
+  "prompts": {
+    "062e1d6123b982b8": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_32751270effeJHFurujNEpgd8N",
+        "model": "anthropic/claude-haiku-4-5"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 4,
+      "total_deletions": 6,
+      "accepted_lines": 1,
+      "overriden_lines": 1
+    },
+    "c963d31991094136": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_32797ed69ffeitiORv0NMoXDt9",
+        "model": "anthropic/claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 5,
+      "total_deletions": 4,
+      "accepted_lines": 5,
+      "overriden_lines": 0
+    }
+  }
+}
