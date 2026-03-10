@@ -44,18 +44,6 @@ class FlextInfraUtilitiesDiscovery:
     def discover_projects(
         workspace_root: Path,
     ) -> r[list[m.Infra.Workspace.ProjectInfo]]:
-        """Discover all subprojects in the workspace.
-
-        Scans the workspace root for directories that are Git repositories
-        with Makefile and pyproject.toml/go.mod markers.
-
-        Args:
-            workspace_root: The root directory of the workspace.
-
-        Returns:
-            r with list of discovered ProjectInfo models.
-
-        """
         try:
             projects: list[m.Infra.Workspace.ProjectInfo] = []
             submodules = FlextInfraUtilitiesDiscovery._submodule_names(workspace_root)
@@ -92,23 +80,97 @@ class FlextInfraUtilitiesDiscovery:
             )
 
     @staticmethod
+    def discover_project_roots(
+        workspace_root: Path,
+        *,
+        scan_dirs: frozenset[str] | None = None,
+    ) -> list[Path]:
+        roots: list[Path] = []
+        effective_scan_dirs = scan_dirs or c.Infra.Refactor.MRO_SCAN_DIRECTORIES
+
+        def _looks_like_project(path: Path) -> bool:
+            if (
+                not path.is_dir()
+                or not (path / c.Infra.Files.MAKEFILE_FILENAME).exists()
+            ):
+                return False
+            if (
+                not (path / c.Infra.Files.PYPROJECT_FILENAME).exists()
+                and not (path / c.Infra.Files.GO_MOD).exists()
+            ):
+                return False
+            return any((path / dir_name).is_dir() for dir_name in effective_scan_dirs)
+
+        if _looks_like_project(workspace_root):
+            roots.append(workspace_root)
+        roots.extend(
+            [
+                entry
+                for entry in sorted(
+                    workspace_root.iterdir(), key=lambda item: item.name
+                )
+                if entry.is_dir()
+                and (not entry.name.startswith("."))
+                and _looks_like_project(entry)
+            ],
+        )
+        if (
+            len(roots) == 0
+            and (workspace_root / c.Infra.Paths.DEFAULT_SRC_DIR).is_dir()
+        ):
+            return [workspace_root]
+        return roots
+
+    @staticmethod
+    def iter_python_files(
+        workspace_root: Path,
+        *,
+        project_roots: list[Path] | None = None,
+        include_tests: bool = True,
+        include_examples: bool = True,
+        include_scripts: bool = True,
+        src_dirs: frozenset[str] | None = None,
+    ) -> r[list[Path]]:
+        try:
+            roots = (
+                project_roots
+                or FlextInfraUtilitiesDiscovery.discover_project_roots(
+                    workspace_root=workspace_root,
+                )
+            )
+            selected_dirs = src_dirs or frozenset(
+                {
+                    c.Infra.Paths.DEFAULT_SRC_DIR,
+                    c.Infra.Directories.TESTS,
+                    c.Infra.Directories.EXAMPLES,
+                    c.Infra.Directories.SCRIPTS,
+                },
+            )
+            include_flags = {
+                c.Infra.Paths.DEFAULT_SRC_DIR: True,
+                c.Infra.Directories.TESTS: include_tests,
+                c.Infra.Directories.EXAMPLES: include_examples,
+                c.Infra.Directories.SCRIPTS: include_scripts,
+            }
+            files: list[Path] = []
+            for project_root in roots:
+                for dir_name, enabled in include_flags.items():
+                    if (not enabled) or (dir_name not in selected_dirs):
+                        continue
+                    directory = project_root / dir_name
+                    if directory.is_dir():
+                        files.extend(directory.rglob(c.Infra.Extensions.PYTHON_GLOB))
+            return r[list[Path]].ok(sorted(set(files)))
+        except OSError as exc:
+            return r[list[Path]].fail(f"python file iteration failed: {exc}")
+
+    @staticmethod
     def find_all_pyproject_files(
         workspace_root: Path,
         *,
         skip_dirs: frozenset[str] | None = None,
         project_paths: list[Path] | None = None,
     ) -> r[list[Path]]:
-        """Find every pyproject.toml under workspace_root recursively.
-
-        Args:
-            workspace_root: Root of the workspace tree.
-            skip_dirs: Directory names to exclude from traversal.
-            project_paths: If given, only return files for these project dirs.
-
-        Returns:
-            r with sorted list of pyproject.toml paths.
-
-        """
         try:
             if project_paths:
                 selected: list[Path] = []

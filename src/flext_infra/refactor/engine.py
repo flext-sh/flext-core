@@ -89,30 +89,47 @@ class FlextInfraRefactorEngine:
         runner: Callable[[type], int] = FlextInfraRefactorCliSupport.run_cli
         sys.exit(runner(cls))
 
-    def collect_project_files(
+    def collect_workspace_files(
         self,
-        project_path: Path,
+        workspace_root: Path,
         *,
         pattern: str = c.Infra.Extensions.PYTHON_GLOB,
     ) -> list[Path]:
-        """Collect project files that match current engine scope filters."""
-        scan_dirs = self.rule_loader.extract_project_scan_dirs(self.config)
-        candidate_roots = [project_path / rel_dir for rel_dir in scan_dirs]
-        existing_roots = [root for root in candidate_roots if root.exists()]
-        if not existing_roots:
-            dirs = ", ".join(scan_dirs)
-            output.error(f"No configured scan directories in {project_path}: {dirs}")
-            return []
+        """Collect all candidate files under workspace projects."""
+        root = workspace_root.resolve()
+        scan_dirs = frozenset(self.rule_loader.extract_project_scan_dirs(self.config))
+        project_paths = u.Infra.discover_project_roots(
+            workspace_root=root,
+            scan_dirs=scan_dirs or None,
+        )
         ignore_items, extension_items = self.rule_loader.extract_engine_file_filters(
             self.config,
         )
         ignore_patterns = {str(item) for item in ignore_items}
         allowed_extensions = {str(item) for item in extension_items}
-        files: list[Path] = []
-        for root_dir in existing_roots:
-            for py_file in root_dir.rglob(pattern):
-                relative_path = py_file.relative_to(project_path)
+        all_files: list[Path] = []
+        for project in project_paths:
+            iter_result = u.Infra.iter_python_files(
+                workspace_root=root,
+                project_roots=[project],
+                include_tests=c.Infra.Directories.TESTS in scan_dirs,
+                include_examples=c.Infra.Directories.EXAMPLES in scan_dirs,
+                include_scripts=c.Infra.Directories.SCRIPTS in scan_dirs,
+                src_dirs=scan_dirs or None,
+            )
+            if iter_result.is_failure:
+                output.error(
+                    iter_result.error or f"File iteration failed for {project}"
+                )
+                continue
+            for py_file in iter_result.value:
+                relative_path = py_file.relative_to(project)
                 relative_path_str = str(relative_path)
+                if not (
+                    fnmatch.fnmatch(relative_path_str, pattern)
+                    or fnmatch.fnmatch(py_file.name, pattern)
+                ):
+                    continue
                 if allowed_extensions and py_file.suffix not in allowed_extensions:
                     continue
                 if py_file.name in ignore_patterns:
@@ -124,21 +141,7 @@ class FlextInfraRefactorEngine:
                     for ignore_pattern in ignore_patterns
                 ):
                     continue
-                files.append(py_file)
-        return files
-
-    def collect_workspace_files(
-        self,
-        workspace_root: Path,
-        *,
-        pattern: str = c.Infra.Extensions.PYTHON_GLOB,
-    ) -> list[Path]:
-        """Collect all candidate files under workspace projects."""
-        root = workspace_root.resolve()
-        project_paths = self.rule_loader.discover_workspace_projects(root)
-        all_files: list[Path] = []
-        for project in project_paths:
-            all_files.extend(self.collect_project_files(project, pattern=pattern))
+                all_files.append(py_file)
         return all_files
 
     def list_rules(self) -> list[dict[str, str | bool]]:
@@ -307,7 +310,53 @@ class FlextInfraRefactorEngine:
                     ),
                 ]
             stash_ref = stash_result.value
-        files = self.collect_project_files(project_path, pattern=pattern)
+        scan_dirs = frozenset(self.rule_loader.extract_project_scan_dirs(self.config))
+        iter_result = u.Infra.iter_python_files(
+            workspace_root=project_path,
+            project_roots=[project_path],
+            include_tests=c.Infra.Directories.TESTS in scan_dirs,
+            include_examples=c.Infra.Directories.EXAMPLES in scan_dirs,
+            include_scripts=c.Infra.Directories.SCRIPTS in scan_dirs,
+            src_dirs=scan_dirs or None,
+        )
+        if iter_result.is_failure:
+            error_msg = iter_result.error or f"File iteration failed for {project_path}"
+            output.error(error_msg)
+            return [
+                m.Infra.Refactor.Result(
+                    file_path=project_path,
+                    success=False,
+                    modified=False,
+                    error=error_msg,
+                    changes=[],
+                    refactored_code=None,
+                ),
+            ]
+        ignore_items, extension_items = self.rule_loader.extract_engine_file_filters(
+            self.config,
+        )
+        ignore_patterns = {str(item) for item in ignore_items}
+        allowed_extensions = {str(item) for item in extension_items}
+        files = [
+            file_path
+            for file_path in iter_result.value
+            if (
+                fnmatch.fnmatch(str(file_path.relative_to(project_path)), pattern)
+                or fnmatch.fnmatch(file_path.name, pattern)
+            )
+            and (not allowed_extensions or file_path.suffix in allowed_extensions)
+            and file_path.name not in ignore_patterns
+            and not any(
+                part in ignore_patterns
+                for part in file_path.relative_to(project_path).parts
+            )
+            and not any(
+                fnmatch.fnmatch(
+                    str(file_path.relative_to(project_path)), ignore_pattern
+                )
+                for ignore_pattern in ignore_patterns
+            )
+        ]
         output.info(f"Found {len(files)} files to process")
         results = self.refactor_files(files, dry_run=dry_run)
         if apply_safety and (not dry_run):
@@ -358,7 +407,11 @@ class FlextInfraRefactorEngine:
         if not root.exists() or not root.is_dir():
             output.error(f"Invalid workspace root: {workspace_root}")
             return []
-        project_paths = self.rule_loader.discover_workspace_projects(root)
+        scan_dirs = frozenset(self.rule_loader.extract_project_scan_dirs(self.config))
+        project_paths = u.Infra.discover_project_roots(
+            workspace_root=root,
+            scan_dirs=scan_dirs or None,
+        )
         if not project_paths:
             output.error(
                 f"No projects discovered under workspace root: {workspace_root}",

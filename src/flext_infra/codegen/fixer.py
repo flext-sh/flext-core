@@ -324,8 +324,8 @@ class FlextInfraCodegenFixer(s[list[m.Infra.Codegen.AutoFixResult]]):
         target_path.write_text(target_result, encoding=encoding)
 
         # 7. Normalize with ruff
-        FlextInfraCodegenTransforms.run_ruff_fix(source_path)
-        FlextInfraCodegenTransforms.run_ruff_fix(target_path)
+        u.Infra.run_ruff_fix(source_path)
+        u.Infra.run_ruff_fix(target_path)
 
     # ------------------------------------------------------------------
     # File system helpers
@@ -504,9 +504,14 @@ class FlextInfraCodegenFixer(s[list[m.Infra.Codegen.AutoFixResult]]):
         project_path: Path,
         files_modified: set[str],
     ) -> None:
-        py_files = NamespaceEnforcementRewriter.collect_python_files(
-            project_root=project_path,
+        py_files_result = u.Infra.iter_python_files(
+            workspace_root=project_path,
+            project_roots=[project_path],
+            src_dirs=frozenset(c.Infra.Refactor.MRO_SCAN_DIRECTORIES),
         )
+        if py_files_result.is_failure:
+            return
+        py_files = py_files_result.value
         src_files = [
             file_path
             for file_path in py_files
@@ -687,7 +692,7 @@ class FlextInfraCodegenFixer(s[list[m.Infra.Codegen.AutoFixResult]]):
             path = Path(file_path)
             if not path.exists() or path.suffix != c.Infra.Extensions.PYTHON:
                 continue
-            FlextInfraCodegenTransforms.run_ruff_fix(path)
+            u.Infra.run_ruff_fix(path)
 
     def _run_lazy_propagation(
         self,
@@ -786,18 +791,20 @@ class FlextInfraCodegenFixer(s[list[m.Infra.Codegen.AutoFixResult]]):
         files_modified: set[str],
     ) -> None:
         """Fix Rule 1 — move loose Final constants to constants.py."""
-        tree = FlextInfraCodegenTransforms.parse_module(source_file)
-        if tree is None:
+        tree_result = u.Infra.parse_module_ast(source_file)
+        if tree_result.is_failure:
             return
+        tree = tree_result.value
         finals = FlextInfraCodegenTransforms.find_standalone_finals(tree)
         if not finals:
             return
         target_path = pkg_dir / "constants.py"
         if not target_path.exists():
             return
-        target_tree = FlextInfraCodegenTransforms.parse_module(target_path)
-        if target_tree is None:
+        target_tree_result = u.Infra.parse_module_ast(target_path)
+        if target_tree_result.is_failure:
             return
+        target_tree = target_tree_result.value
         nodes_to_move: list[ast.AnnAssign] = []
         for node in finals:
             target_name = ""
@@ -886,9 +893,10 @@ class FlextInfraCodegenFixer(s[list[m.Infra.Codegen.AutoFixResult]]):
         files_modified: set[str],
     ) -> None:
         """Fix Rule 2 — move loose TypeVars/TypeAliases to typings.py."""
-        tree = FlextInfraCodegenTransforms.parse_module(source_file)
-        if tree is None:
+        tree_result = u.Infra.parse_module_ast(source_file)
+        if tree_result.is_failure:
             return
+        tree = tree_result.value
         typevars = FlextInfraCodegenTransforms.find_standalone_typevars(tree)
         typealiases = FlextInfraCodegenTransforms.find_standalone_typealiases(tree)
         if not typevars and not typealiases:
@@ -896,9 +904,10 @@ class FlextInfraCodegenFixer(s[list[m.Infra.Codegen.AutoFixResult]]):
         target_path = pkg_dir / "typings.py"
         if not target_path.exists():
             return
-        target_tree = FlextInfraCodegenTransforms.parse_module(target_path)
-        if target_tree is None:
+        target_tree_result = u.Infra.parse_module_ast(target_path)
+        if target_tree_result.is_failure:
             return
+        target_tree = target_tree_result.value
         nodes_to_move: list[ast.stmt] = []
         for tv_node in typevars:
             target_name = ""

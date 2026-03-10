@@ -121,12 +121,16 @@ class FlextInfraDependencyDetectionService:
             ),
         )
 
-    def discover_projects(
+    def discover_project_paths(
         self,
         workspace_root: Path,
         projects_filter: list[str] | None = None,
     ) -> r[list[Path]]:
-        """Discover projects with pyproject.toml in workspace."""
+        """Discover project paths with pyproject.toml in workspace.
+
+        Returns only the Path objects, filtered to those with pyproject.toml.
+        For full ProjectInfo metadata, use u.Infra.discover_projects().
+        """
         names = projects_filter or []
         result = self.selector.resolve_projects(workspace_root, names)
         if result.is_failure:
@@ -406,12 +410,14 @@ class FlextInfraDependencyDetectionService:
 _service = FlextInfraDependencyDetectionService()
 
 
-def discover_projects(
+def discover_project_paths(
     workspace_root: Path,
     projects_filter: list[str] | None = None,
 ) -> r[list[Path]]:
-    """Discover projects with pyproject.toml in workspace."""
-    return _service.discover_projects(workspace_root, projects_filter=projects_filter)
+    """Discover project paths with pyproject.toml in workspace."""
+    return _service.discover_project_paths(
+        workspace_root, projects_filter=projects_filter
+    )
 
 
 def run_deptry(
@@ -501,7 +507,7 @@ __all__ = [
     "FlextInfraDependencyDetectionService",
     "build_project_report",
     "classify_issues",
-    "discover_projects",
+    "discover_project_paths",
     "dm",
     "get_current_typings_from_pyproject",
     "get_required_typings",

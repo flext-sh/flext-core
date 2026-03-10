@@ -136,7 +136,7 @@ class FlextInfraCodegenScaffolder(s[list[m.Infra.Codegen.ScaffoldResult]]):
                 docstring=docstring,
             )
             u.write_file(filepath, content, encoding=c.Infra.Encoding.DEFAULT)
-            FlextInfraCodegenTransforms.run_ruff_fix(filepath)
+            u.Infra.run_ruff_fix(filepath)
             files_created.append(str(filepath))
 
 

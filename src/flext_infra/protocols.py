@@ -226,6 +226,14 @@ class FlextInfraProtocols(FlextProtocols):
                 """Run a command and return success/failure."""
                 ...
 
+        @runtime_checkable
+        class Scanner(Protocol):
+            """Protocol for file scanners that detect violations."""
+
+            def scan_file(self, *, file_path: Path) -> m.Infra.Utilities.ScanResult:
+                """Scan a single file and return scan result."""
+                ...
+
 
 p = FlextInfraProtocols
 __all__ = ["FlextInfraProtocols", "p"]

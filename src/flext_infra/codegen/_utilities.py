@@ -10,7 +10,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import ast
-import contextlib
 import json
 import shutil
 import subprocess
@@ -23,7 +22,6 @@ from pydantic import TypeAdapter, ValidationError
 
 from flext_core import t
 from flext_infra import c
-from flext_infra._utilities.subprocess import FlextInfraUtilitiesSubprocess
 from flext_infra.codegen._models import FlextInfraCodegenModels
 from flext_infra.codegen.census import FlextInfraCodegenCensus
 
@@ -428,24 +426,6 @@ class FlextInfraUtilitiesCodegen:
             "",
         ])
         return "\n".join(out)
-
-    @staticmethod
-    def run_ruff_fix(path: Path) -> None:
-        """Run ``ruff --fix`` on the given file to auto-fix lint issues.
-
-        Args:
-            path: Path to the file to fix.
-
-        """
-        with contextlib.suppress(FileNotFoundError):
-            runner = FlextInfraUtilitiesSubprocess()
-            runner.run_checked([
-                c.Infra.Cli.RUFF,
-                c.Infra.Cli.RuffCmd.CHECK,
-                "--fix",
-                "--quiet",
-                str(path),
-            ])
 
     @staticmethod
     def quality_gate_load_before_payload(

@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
 from pathlib import Path
 from typing import TypeAlias, overload
 
 from flext_core import r
 from flext_infra import FlextInfraUtilitiesSubprocess, c, m, p, u
+from flext_infra._utilities.safety import FlextInfraUtilitiesSafety
 
 RBool: TypeAlias = r[bool]
 RStr: TypeAlias = r[str]
@@ -38,10 +38,15 @@ class FlextInfraRefactorSafetyManager:
         self._emergency_stop_reason = ""
         self._last_workspace_root: Path | None = None
 
-    def create_checkpoint(self, project_root: Path) -> RStr:
+    def create_checkpoint(
+        self,
+        project_root: Path,
+        *,
+        label: str = "flext-safety-checkpoint",
+    ) -> RStr:
         """Stash current state and return the stash reference."""
         self._last_workspace_root = project_root
-        return self.create_pre_transformation_stash(project_root)
+        return FlextInfraUtilitiesSafety.create_checkpoint(project_root, label=label)
 
     def validate_transform(self, files_changed: list[Path]) -> RBool:
         """Run semantic validation after a transformation batch."""
@@ -88,31 +93,7 @@ class FlextInfraRefactorSafetyManager:
     ) -> RStr:
         """Stash uncommitted changes and return the stash reference."""
         self._last_workspace_root = workspace_root
-        if not self.is_git_repository(workspace_root):
-            out: RStr = r[str].ok("")
-            return out
-        has = u.Infra.git_has_changes(workspace_root)
-        if has.is_failure:
-            out2: RStr = r[str].fail(has.error or "git status failed")
-            return out2
-        if not has.value:
-            out3: RStr = r[str].ok("")
-            return out3
-        stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
-        push = u.Infra.git_run_checked(
-            ["stash", "push", "-m", f"{label}:{stamp}", "--include-untracked"],
-            cwd=workspace_root,
-        )
-        if push.is_failure:
-            out4: RStr = r[str].fail(push.error or "git stash push failed")
-            return out4
-        ref = u.Infra.git_run(["stash", "list"], cwd=workspace_root)
-        if ref.is_failure:
-            out5: RStr = r[str].fail(ref.error or "git stash list failed")
-            return out5
-        stash_ref_str: str = ref.value
-        out6: RStr = r[str].ok(stash_ref_str.strip())
-        return out6
+        return FlextInfraUtilitiesSafety.create_checkpoint(workspace_root, label=label)
 
     @overload
     def rollback(self, workspace_root: Path, stash_ref: str = "") -> RBool: ...
@@ -231,14 +212,9 @@ class FlextInfraRefactorSafetyManager:
         return files_changed[0].parent if files_changed else None
 
     def _rollback_to_stash(self, workspace_root: Path, stash_ref: str) -> RBool:
-        if not self.is_git_repository(workspace_root):
-            out: RBool = r[bool].ok(True)
-            return out
-        cmd = ["stash", "pop"]
-        if stash_ref:
-            cmd.append(stash_ref)
-        out2: RBool = u.Infra.git_run_checked(cmd, cwd=workspace_root)
-        return out2
+        return FlextInfraUtilitiesSafety.rollback_to_checkpoint(
+            workspace_root, stash_ref
+        )
 
 
 __all__ = ["FlextInfraRefactorSafetyManager"]

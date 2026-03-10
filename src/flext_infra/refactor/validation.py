@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import ast
 import difflib
+import fnmatch
 import json
 import re
 import sys
@@ -401,10 +402,55 @@ class FlextInfraRefactorCliSupport:
         if args.analyze_violations:
             files_to_analyze: list[Path] = []
             if args.project:
-                files_to_analyze = engine.collect_project_files(
-                    args.project,
-                    pattern=args.pattern,
+                scan_dirs = frozenset(
+                    engine.rule_loader.extract_project_scan_dirs(engine.config),
                 )
+                iter_result = u.Infra.iter_python_files(
+                    workspace_root=args.project,
+                    project_roots=[args.project],
+                    include_tests=c.Infra.Directories.TESTS in scan_dirs,
+                    include_examples=c.Infra.Directories.EXAMPLES in scan_dirs,
+                    include_scripts=c.Infra.Directories.SCRIPTS in scan_dirs,
+                    src_dirs=scan_dirs or None,
+                )
+                if iter_result.is_failure:
+                    FlextInfraRefactorCliSupport.error(
+                        iter_result.error
+                        or f"File iteration failed for project: {args.project}"
+                    )
+                    return 1
+                ignore_items, extension_items = (
+                    engine.rule_loader.extract_engine_file_filters(
+                        engine.config,
+                    )
+                )
+                ignore_patterns = {str(item) for item in ignore_items}
+                allowed_extensions = {str(item) for item in extension_items}
+                files_to_analyze = [
+                    file_path
+                    for file_path in iter_result.value
+                    if (
+                        fnmatch.fnmatch(
+                            str(file_path.relative_to(args.project)), args.pattern
+                        )
+                        or fnmatch.fnmatch(file_path.name, args.pattern)
+                    )
+                    and (
+                        not allowed_extensions or file_path.suffix in allowed_extensions
+                    )
+                    and file_path.name not in ignore_patterns
+                    and not any(
+                        part in ignore_patterns
+                        for part in file_path.relative_to(args.project).parts
+                    )
+                    and not any(
+                        fnmatch.fnmatch(
+                            str(file_path.relative_to(args.project)),
+                            ignore_pattern,
+                        )
+                        for ignore_pattern in ignore_patterns
+                    )
+                ]
             elif args.workspace_root:
                 files_to_analyze = engine.collect_workspace_files(
                     args.workspace_root,

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from flext_infra import m, u
+from flext_infra import c, m, u
 from flext_infra.refactor import _models_namespace_enforcer as nem
 from flext_infra.refactor.dependency_analyzer import (
     FlextInfraRefactorDependencyAnalyzerFacade,
@@ -107,9 +107,12 @@ class FlextInfraNamespaceEnforcer:
                 project_name=project_name,
                 parse_failures=parse_failures,
             )
-        py_files = NamespaceEnforcementRewriter.collect_python_files(
-            project_root=project_root,
+        py_files_result = u.Infra.iter_python_files(
+            workspace_root=project_root,
+            project_roots=[project_root],
+            src_dirs=frozenset(c.Infra.Refactor.MRO_SCAN_DIRECTORIES),
         )
+        py_files = [] if py_files_result.is_failure else py_files_result.value
         loose_objects: list[nem.NamespaceLooseObjectViolation] = []
         for py_file in py_files:
             loose_objects.extend(

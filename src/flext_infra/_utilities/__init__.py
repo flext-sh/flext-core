@@ -18,6 +18,7 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
     from flext_infra._utilities.discovery import FlextInfraUtilitiesDiscovery
+    from flext_infra._utilities.formatting import FlextInfraUtilitiesFormatting
     from flext_infra._utilities.git import FlextInfraUtilitiesGit
     from flext_infra._utilities.io import FlextInfraUtilitiesIo
     from flext_infra._utilities.output import (
@@ -25,9 +26,12 @@ if TYPE_CHECKING:
         OutputBackend,
         output,
     )
+    from flext_infra._utilities.parsing import FlextInfraUtilitiesParsing
     from flext_infra._utilities.paths import FlextInfraUtilitiesPaths
     from flext_infra._utilities.patterns import FlextInfraUtilitiesPatterns
     from flext_infra._utilities.reporting import FlextInfraUtilitiesReporting
+    from flext_infra._utilities.safety import FlextInfraUtilitiesSafety
+    from flext_infra._utilities.scanning import FlextInfraUtilitiesScanning
     from flext_infra._utilities.selection import FlextInfraUtilitiesSelection
     from flext_infra._utilities.subprocess import FlextInfraUtilitiesSubprocess
     from flext_infra._utilities.templates import FlextInfraUtilitiesTemplates
@@ -55,11 +59,19 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "flext_infra._utilities.discovery",
         "FlextInfraUtilitiesDiscovery",
     ),
+    "FlextInfraUtilitiesFormatting": (
+        "flext_infra._utilities.formatting",
+        "FlextInfraUtilitiesFormatting",
+    ),
     "FlextInfraUtilitiesGit": ("flext_infra._utilities.git", "FlextInfraUtilitiesGit"),
     "FlextInfraUtilitiesIo": ("flext_infra._utilities.io", "FlextInfraUtilitiesIo"),
     "FlextInfraUtilitiesOutput": (
         "flext_infra._utilities.output",
         "FlextInfraUtilitiesOutput",
+    ),
+    "FlextInfraUtilitiesParsing": (
+        "flext_infra._utilities.parsing",
+        "FlextInfraUtilitiesParsing",
     ),
     "FlextInfraUtilitiesPaths": (
         "flext_infra._utilities.paths",
@@ -72,6 +84,14 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextInfraUtilitiesReporting": (
         "flext_infra._utilities.reporting",
         "FlextInfraUtilitiesReporting",
+    ),
+    "FlextInfraUtilitiesSafety": (
+        "flext_infra._utilities.safety",
+        "FlextInfraUtilitiesSafety",
+    ),
+    "FlextInfraUtilitiesScanning": (
+        "flext_infra._utilities.scanning",
+        "FlextInfraUtilitiesScanning",
     ),
     "FlextInfraUtilitiesSelection": (
         "flext_infra._utilities.selection",
@@ -124,12 +144,16 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
 
 __all__ = [
     "FlextInfraUtilitiesDiscovery",
+    "FlextInfraUtilitiesFormatting",
     "FlextInfraUtilitiesGit",
     "FlextInfraUtilitiesIo",
     "FlextInfraUtilitiesOutput",
+    "FlextInfraUtilitiesParsing",
     "FlextInfraUtilitiesPaths",
     "FlextInfraUtilitiesPatterns",
     "FlextInfraUtilitiesReporting",
+    "FlextInfraUtilitiesSafety",
+    "FlextInfraUtilitiesScanning",
     "FlextInfraUtilitiesSelection",
     "FlextInfraUtilitiesSubprocess",
     "FlextInfraUtilitiesTemplates",

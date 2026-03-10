@@ -11,10 +11,16 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import sys
+from collections.abc import Mapping
+from pathlib import Path
 from typing import Final, TextIO
+
+from pydantic import BaseModel
 
 from flext_infra._utilities.terminal import FlextInfraUtilitiesTerminal
 from flext_infra.constants import FlextInfraConstants as c
+
+MetricValue = str | int | float | bool | Path | None
 
 
 class OutputBackend:
@@ -164,6 +170,24 @@ class OutputBackend:
         )
         self.write(f"    {sym} {gate:<10} {count_str}  ({elapsed:.2f}s)")
 
+    def metrics(
+        self,
+        *instances: BaseModel | Mapping[str, MetricValue],
+        **kwargs: MetricValue,
+    ) -> None:
+        """Write key-value metrics for machine-readable output."""
+        for item in instances:
+            iterable = item.items() if isinstance(item, Mapping) else item
+            for key, value in iterable:
+                if isinstance(value, str | int | float | bool | Path) or value is None:
+                    self.stream.write(f"{key}={value}\n")
+
+        for key, value in kwargs.items():
+            if isinstance(value, str | int | float | bool | Path) or value is None:
+                self.stream.write(f"{key}={value}\n")
+
+        self.stream.flush()
+
 
 _backend: Final[OutputBackend] = OutputBackend()
 
@@ -173,6 +197,11 @@ class FlextInfraUtilitiesOutput:
 
     All methods are ``@staticmethod`` — exposed via ``u.Infra.info()`` etc.
     """
+
+    @staticmethod
+    def write(message: str) -> None:
+        """Write raw message."""
+        _backend.write(message)
 
     @staticmethod
     def info(message: str) -> None:
@@ -225,6 +254,14 @@ class FlextInfraUtilitiesOutput:
     def gate_result(gate: str, count: int, passed: bool, elapsed: float) -> None:
         """Write per-gate result during check execution."""
         _backend.gate_result(gate, count, passed, elapsed)
+
+    @staticmethod
+    def metrics(
+        *instances: BaseModel | Mapping[str, MetricValue],
+        **kwargs: MetricValue,
+    ) -> None:
+        """Write key-value metrics for machine readable stdout."""
+        _backend.metrics(*instances, **kwargs)
 
 
 output: Final[FlextInfraUtilitiesOutput] = FlextInfraUtilitiesOutput()

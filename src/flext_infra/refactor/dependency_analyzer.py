@@ -12,7 +12,9 @@ import libcst as cst
 from pydantic import TypeAdapter, ValidationError
 
 from flext_core import r
-from flext_infra import c, m, u
+from flext_infra import c, m
+from flext_infra._utilities.discovery import FlextInfraUtilitiesDiscovery
+from flext_infra._utilities.subprocess import FlextInfraUtilitiesSubprocess
 from flext_infra.refactor import _models_namespace_enforcer as nem
 
 
@@ -177,14 +179,17 @@ class DependencyAnalyzer:
         if grep_files.is_success and grep_files.value:
             path_set: set[Path] = grep_files.value
             return sorted(path_set)
-        return sorted(self._iter_python_files(project.src_path))
-
-    def _iter_python_files(self, src_path: Path) -> list[Path]:
-        return [
-            fp
-            for fp in src_path.rglob(c.Infra.Extensions.PYTHON_GLOB)
-            if "__pycache__" not in fp.parts
-        ]
+        files_result = FlextInfraUtilitiesDiscovery.iter_python_files(
+            workspace_root=self._workspace_root,
+            project_roots=[project.path],
+            include_tests=False,
+            include_examples=False,
+            include_scripts=False,
+            src_dirs=frozenset({"src"}),
+        )
+        if files_result.is_success:
+            return files_result.value
+        return []
 
     def _scan_import_files_with_ast_grep(self, src_path: Path) -> r[set[Path]]:
         files: set[Path] = set()
@@ -215,7 +220,7 @@ class DependencyAnalyzer:
             "--json",
             str(src_path),
         ]
-        capture = u.Infra.capture_output(cmd)
+        capture = FlextInfraUtilitiesSubprocess.capture(cmd)
         if capture.is_failure:
             return r[list[m.Infra.Refactor.AstGrepMatchEnvelope]].fail(
                 capture.error or "capture failed",
@@ -694,7 +699,11 @@ class CyclicImportDetector:
         parse_failures: list[nem.NamespaceParseFailureViolation] | None = None,
     ) -> list[nem.NamespaceCyclicImportViolation]:
         """Scan a project for cyclic import dependencies."""
-        scan_dirs = cls._scan_directories(project_root=project_root)
+        scan_dirs = [
+            project_root / directory_name
+            for directory_name in c.Infra.Refactor.MRO_SCAN_DIRECTORIES
+            if (project_root / directory_name).is_dir()
+        ]
         if len(scan_dirs) == 0:
             return []
         graph: dict[str, set[str]] = {}
@@ -758,14 +767,6 @@ class CyclicImportDetector:
                     ),
                 )
         return violations
-
-    @staticmethod
-    def _scan_directories(*, project_root: Path) -> list[Path]:
-        return [
-            project_root / directory_name
-            for directory_name in c.Infra.Refactor.MRO_SCAN_DIRECTORIES
-            if (project_root / directory_name).is_dir()
-        ]
 
     @staticmethod
     def _discover_package_roots(*, scan_dirs: list[Path]) -> set[str]:

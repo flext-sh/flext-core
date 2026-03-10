@@ -12,8 +12,6 @@ from __future__ import annotations
 import ast
 from pathlib import Path
 
-from flext_infra import FlextInfraUtilitiesSubprocess, c
-
 
 class FlextInfraCodegenTransforms:
     """Utility helpers for AST-based code transformations."""
@@ -236,27 +234,6 @@ class FlextInfraCodegenTransforms:
             if isinstance(stmt, ast.TypeAlias) and stmt.name.id == name:
                 return True
         return False
-
-    @staticmethod
-    def parse_module(path: Path) -> ast.Module | None:
-        """Parse a Python module from disk and return None on syntax error."""
-        try:
-            source = path.read_text(encoding=c.Infra.Encoding.DEFAULT)
-            return ast.parse(source)
-        except (OSError, UnicodeDecodeError, SyntaxError):
-            return None
-
-    @staticmethod
-    def run_ruff_fix(path: Path) -> None:
-        """Run ruff check --fix and ruff format on a file."""
-        runner = FlextInfraUtilitiesSubprocess()
-        runner.run_checked([
-            c.Infra.Cli.RUFF,
-            c.Infra.Cli.RuffCmd.CHECK,
-            "--fix",
-            str(path),
-        ])
-        runner.run_checked([c.Infra.Cli.RUFF, c.Infra.Cli.RuffCmd.FORMAT, str(path)])
 
     @staticmethod
     def unparse_and_format(tree: ast.Module, path: Path) -> str:

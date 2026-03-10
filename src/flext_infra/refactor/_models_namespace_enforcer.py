@@ -404,6 +404,23 @@ class NamespaceWorkspaceEnforcementReport(FlextModels.ArbitraryTypesModel):
             "total_files_scanned": total_files_scanned,
         })
 
+    @property
+    def has_violations(self) -> bool:
+        """Check if any violations exist across the workspace."""
+        return (
+            self.total_facades_missing > 0
+            or self.total_loose_objects > 0
+            or self.total_import_violations > 0
+            or self.total_internal_import_violations > 0
+            or self.total_manual_protocol_violations > 0
+            or self.total_cyclic_imports > 0
+            or self.total_runtime_alias_violations > 0
+            or self.total_future_violations > 0
+            or self.total_manual_typing_violations > 0
+            or self.total_compatibility_alias_violations > 0
+            or self.total_parse_failures > 0
+        )
+
 
 class FlextInfraNamespaceEnforcerModels:
     class NamespaceEnforcementModels:

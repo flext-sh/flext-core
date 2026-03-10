@@ -659,19 +659,5 @@ class NamespaceEnforcementRewriter:
                     encoding=c.Infra.Encoding.DEFAULT,
                 )
 
-    @staticmethod
-    def collect_python_files(*, project_root: Path) -> list[Path]:
-        """Collect all Python files under the project source and test dirs."""
-        files: list[Path] = []
-        for dir_name in c.Infra.Refactor.MRO_SCAN_DIRECTORIES:
-            scan_dir = project_root / dir_name
-            if not scan_dir.is_dir():
-                continue
-            for py_file in sorted(scan_dir.rglob(c.Infra.Extensions.PYTHON_GLOB)):
-                if "__pycache__" in py_file.parts:
-                    continue
-                files.append(py_file)
-        return files
-
 
 __all__ = ["NamespaceEnforcementRewriter"]

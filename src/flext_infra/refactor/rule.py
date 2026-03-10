@@ -48,26 +48,6 @@ class FlextInfraRefactorRuleLoader:
         scope = self._resolve_engine_config(config)
         return list(scope.project_scan_dirs)
 
-    @staticmethod
-    def discover_workspace_projects(workspace_root: Path) -> list[Path]:
-        """Discover projects within a workspace by locating pyproject.toml files."""
-        projects: list[Path] = []
-        root_has_pyproject = (
-            workspace_root / c.Infra.Files.PYPROJECT_FILENAME
-        ).exists()
-        root_has_makefile = (workspace_root / c.Infra.Files.MAKEFILE_FILENAME).exists()
-        if root_has_pyproject and root_has_makefile:
-            projects.append(workspace_root)
-        for entry in sorted(workspace_root.iterdir(), key=lambda item: item.name):
-            if not entry.is_dir() or entry.name.startswith("."):
-                continue
-            if not (entry / c.Infra.Files.PYPROJECT_FILENAME).exists():
-                continue
-            if not (entry / c.Infra.Files.MAKEFILE_FILENAME).exists():
-                continue
-            projects.append(entry)
-        return projects
-
     def load_rules(
         self,
         rule_filters: list[str],

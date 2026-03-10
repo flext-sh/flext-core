@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core import FlextModels
+from flext_infra._utilities._models import FlextInfraUtilitiesModels
 from flext_infra.basemk._models import FlextInfraBasemkModels
 from flext_infra.check._models import FlextInfraCheckModels
 from flext_infra.codegen._models import FlextInfraCodegenModels
@@ -77,6 +78,11 @@ class FlextInfraModels(FlextModels):
 
         class Refactor(FlextInfraRefactorModels):
             """Refactor domain models via MRO."""
+
+        # -- Shared utilities domain (via MRO) ------------------------------------
+
+        class Utilities(FlextInfraUtilitiesModels):
+            """Shared utilities domain models via MRO."""
 
 
 m = FlextInfraModels

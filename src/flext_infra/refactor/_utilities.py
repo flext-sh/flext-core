@@ -9,20 +9,23 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import argparse
 import ast
+import shutil
+import tempfile
+from collections import Counter, defaultdict
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 
+import flext_infra
 import libcst as cst
-from pydantic import TypeAdapter, ValidationError
+from pydantic import BaseModel, TypeAdapter, ValidationError
 
 from flext_core import r
+from flext_infra import c, m, t
 from flext_infra._utilities.io import FlextInfraUtilitiesIo
 from flext_infra._utilities.subprocess import FlextInfraUtilitiesSubprocess
 from flext_infra._utilities.yaml import FlextInfraUtilitiesYaml
-from flext_infra.constants import FlextInfraConstants as c
-from flext_infra.models import FlextInfraModels as m
-from flext_infra.typings import FlextInfraTypes as t
 
 
 class FlextInfraUtilitiesRefactor:
@@ -39,6 +42,75 @@ class FlextInfraUtilitiesRefactor:
     def capture_output(cmd: Sequence[str]) -> r[str]:
         """Run *cmd* and return stripped stdout as ``r[str]``."""
         return FlextInfraUtilitiesSubprocess().capture(cmd)
+
+    @staticmethod
+    def copy_workspace_for_dry_run(workspace: Path) -> Path:
+        """Create an ephemeral deep-copy of a workspace for isolated dry-run analysis."""
+        temp_root = Path(tempfile.mkdtemp(prefix="flext-refactor-dryrun-"))
+        workspace_copy = temp_root / "workspace"
+
+        def _ignore(_dir: str, names: list[str]) -> set[str]:
+            ignored: set[str] = set()
+            for name in names:
+                if name in {
+                    ".git",
+                    ".beads",
+                    ".venv",
+                    ".mypy_cache",
+                    ".pytest_cache",
+                    ".ruff_cache",
+                    "__pycache__",
+                }:
+                    ignored.add(name)
+                    continue
+                if name.endswith(".sock"):
+                    ignored.add(name)
+            return ignored
+
+        _ = shutil.copytree(workspace, workspace_copy, ignore=_ignore)
+        source_venv_cfg = workspace / ".venv" / "pyvenv.cfg"
+        if source_venv_cfg.exists():
+            target_venv = workspace_copy / ".venv"
+            target_venv.mkdir(parents=True, exist_ok=True)
+            _ = shutil.copy2(source_venv_cfg, target_venv / "pyvenv.cfg")
+        return workspace_copy
+
+    @staticmethod
+    def create_refactor_parser(
+        prog: str, description: str, *, include_apply: bool = True
+    ) -> argparse.ArgumentParser:
+        """Create a standard argparse.ArgumentParser with common CLI flags."""
+        parser = argparse.ArgumentParser(prog=prog, description=description)
+        _ = parser.add_argument(
+            "--workspace",
+            type=Path,
+            default=Path.cwd(),
+            help="Workspace root directory (default: cwd)",
+        )
+        if include_apply:
+            mode = parser.add_mutually_exclusive_group(required=False)
+            _ = mode.add_argument(
+                "--dry-run", action="store_true", help="Plan/Scan only"
+            )
+            _ = mode.add_argument("--apply", action="store_true", help="Apply changes")
+            _ = parser.add_argument(
+                "--dry-run-copy-workspace",
+                action="store_true",
+                help="Run dry-run against a temporary full workspace copy",
+            )
+        return parser
+
+    @staticmethod
+    def resolve_workspace_args(args: argparse.Namespace) -> tuple[Path, bool]:
+        """Resolve workspace Path and apply_changes boolean honoring dry-run and workspace copy."""
+        workspace_path: Path = args.workspace.resolve()
+        apply_changes: bool = bool(getattr(args, "apply", False))
+        if getattr(args, "dry_run_copy_workspace", False):
+            workspace_path = FlextInfraUtilitiesRefactor.copy_workspace_for_dry_run(
+                workspace_path
+            )
+            apply_changes = False
+        return workspace_path, apply_changes
 
     @staticmethod
     def dotted_name(expr: cst.BaseExpression) -> str:
@@ -101,87 +173,6 @@ class FlextInfraUtilitiesRefactor:
         if isinstance(asname.name, cst.Name):
             return asname.name.value
         return None
-
-    @staticmethod
-    def discover_project_roots(*, workspace_root: Path) -> list[Path]:
-        """Discover project roots under a workspace."""
-        roots: list[Path] = []
-
-        def _looks_like_project(path: Path) -> bool:
-            if not path.is_dir():
-                return False
-            if not (path / c.Infra.Files.MAKEFILE_FILENAME).exists():
-                return False
-            has_pyproject = (path / c.Infra.Files.PYPROJECT_FILENAME).exists()
-            has_gomod = (path / c.Infra.Files.GO_MOD).exists()
-            if not has_pyproject and (not has_gomod):
-                return False
-            return any(
-                (path / dir_name).is_dir()
-                for dir_name in c.Infra.Refactor.MRO_SCAN_DIRECTORIES
-            )
-
-        if _looks_like_project(workspace_root):
-            roots.append(workspace_root)
-
-        for entry in sorted(workspace_root.iterdir(), key=lambda item: item.name):
-            if not entry.is_dir() or entry.name.startswith("."):
-                continue
-            if not _looks_like_project(entry):
-                continue
-            roots.append(entry)
-        if (
-            len(roots) == 0
-            and (workspace_root / c.Infra.Paths.DEFAULT_SRC_DIR).is_dir()
-        ):
-            roots = [workspace_root]
-        return roots
-
-    @staticmethod
-    def iter_python_files(
-        *,
-        workspace_root: Path,
-        include_tests: bool = True,
-        include_examples: bool = True,
-        include_scripts: bool = True,
-    ) -> list[Path]:
-        """Iterate Python files across all projects in a workspace.
-
-        Args:
-            workspace_root: Top-level workspace directory.
-            include_tests: Whether to include files under ``tests/``.
-
-        Returns:
-            Sorted list of ``.py`` file paths.
-
-        """
-        roots = FlextInfraUtilitiesRefactor.discover_project_roots(
-            workspace_root=workspace_root,
-        )
-        files: list[Path] = []
-        for project_root in roots:
-            src_dir = project_root / c.Infra.Paths.DEFAULT_SRC_DIR
-            if src_dir.is_dir():
-                files.extend(sorted(src_dir.rglob(c.Infra.Extensions.PYTHON_GLOB)))
-            if include_examples:
-                examples_dir = project_root / c.Infra.Directories.EXAMPLES
-                if examples_dir.is_dir():
-                    files.extend(
-                        sorted(examples_dir.rglob(c.Infra.Extensions.PYTHON_GLOB)),
-                    )
-            if include_scripts:
-                scripts_dir = project_root / c.Infra.Directories.SCRIPTS
-                if scripts_dir.is_dir():
-                    files.extend(
-                        sorted(scripts_dir.rglob(c.Infra.Extensions.PYTHON_GLOB)),
-                    )
-            if include_tests:
-                tests_dir = project_root / c.Infra.Directories.TESTS
-                if tests_dir.is_dir():
-                    files.extend(
-                        sorted(tests_dir.rglob(c.Infra.Extensions.PYTHON_GLOB)),
-                    )
-        return files
 
     @staticmethod
     def module_path(*, file_path: Path, project_root: Path) -> str:
@@ -457,15 +448,6 @@ class FlextInfraUtilitiesRefactor:
     # ── Generic AST introspection ─────────────────────────────────────
 
     @staticmethod
-    def parse_cst_safe(file_path: Path) -> cst.Module | None:
-        """Parse a Python file into a CST module, returning None on error."""
-        try:
-            source = file_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
-            return cst.parse_module(source)
-        except (OSError, UnicodeDecodeError, cst.ParserSyntaxError):
-            return None
-
-    @staticmethod
     def extract_public_methods_from_dir(
         package_dir: Path,
     ) -> dict[str, list[tuple[str, str, str]]]:
@@ -635,10 +617,104 @@ class FlextInfraUtilitiesRefactor:
                 best = root
         return best.name if best else c.Infra.Defaults.UNKNOWN
 
-
+    @staticmethod
+    def build_mro_target(
+        family: str,
+        core_project: str = c.Infra.Refactor.Census.CORE_PROJECT,
+    ) -> m.Infra.Refactor.MROFamilyTarget:
+        """Create a generic target config object from a family code."""
+        if family not in c.Infra.Refactor.MRO_FAMILIES:
+            msg = f"Invalid MRO family {family}"
+            raise ValueError(msg)
+        sf = c.Infra.Refactor.FAMILY_SUFFIXES[family]
+        return m.Infra.Refactor.MROFamilyTarget(
+            family=family,
+            class_suffix=sf,
+            package_dir=c.Infra.Refactor.MRO_FAMILY_PACKAGE_DIRS[family],
+            facade_module=c.Infra.Refactor.MRO_FAMILY_FACADE_MODULES[family],
+            facade_class_prefix=f"Flext{sf}",
+            core_project=core_project,
+        )
 
     @staticmethod
-    def export_pydantic_json(model_payload: t.Any, export_path: Path) -> None:
+    def aggregate_usage_metrics(
+        methods: dict[str, list[m.Infra.Refactor.CensusMethodInfo]],
+        records: list[m.Infra.Refactor.CensusUsageRecord],
+        files_scanned: int,
+        parse_errors: int,
+    ) -> m.Infra.Refactor.CensusReport:
+        """Pivot raw AST method visit occurrences into a structured usage report."""
+        cnt: Counter[tuple[str, str, str]] = Counter()
+        pcnt: Counter[tuple[str, str, str, str]] = Counter()
+
+        for rec in records:
+            cnt[rec.class_name, rec.method_name, rec.access_mode] += 1
+            pcnt[rec.project, rec.class_name, rec.method_name, rec.access_mode] += 1
+
+        cls_sums: list[m.Infra.Refactor.CensusClassSummary] = []
+        unused = 0
+        for cls, items in sorted(methods.items()):
+            m_list: list[m.Infra.Refactor.CensusMethodSummary] = []
+            for m_info in items:
+                af = cnt.get(
+                    (cls, m_info.name, c.Infra.Refactor.Census.MODE_ALIAS_FLAT), 0
+                )
+                an = cnt.get(
+                    (cls, m_info.name, c.Infra.Refactor.Census.MODE_ALIAS_NS), 0
+                )
+                dr = cnt.get((cls, m_info.name, c.Infra.Refactor.Census.MODE_DIRECT), 0)
+                tot = af + an + dr
+                if tot == 0:
+                    unused += 1
+                m_list.append(
+                    m.Infra.Refactor.CensusMethodSummary(
+                        name=m_info.name,
+                        method_type=m_info.method_type,
+                        alias_flat=af,
+                        alias_namespaced=an,
+                        direct=dr,
+                        total=tot,
+                    )
+                )
+            cls_sums.append(
+                m.Infra.Refactor.CensusClassSummary(
+                    class_name=cls,
+                    source_file=items[0].source_file if items else "",
+                    methods=m_list,
+                )
+            )
+
+        pj_sums: dict[str, list[m.Infra.Refactor.CensusProjectMethodUsage]] = (
+            defaultdict(list)
+        )
+        for (pj, cls, mx, mo), co in sorted(pcnt.items()):
+            pj_sums[pj].append(
+                m.Infra.Refactor.CensusProjectMethodUsage(
+                    class_name=cls,
+                    method_name=mx,
+                    access_mode=mo,
+                    count=co,
+                )
+            )
+
+        return m.Infra.Refactor.CensusReport(
+            classes=cls_sums,
+            projects=[
+                m.Infra.Refactor.CensusProjectSummary(
+                    project_name=p, usages=us, total=sum(u.count for u in us)
+                )
+                for p, us in sorted(pj_sums.items())
+            ],
+            total_classes=len(methods),
+            total_methods=sum(len(v) for v in methods.values()),
+            total_usages=len(records),
+            total_unused=unused,
+            files_scanned=files_scanned,
+            parse_errors=parse_errors,
+        )
+
+    @staticmethod
+    def export_pydantic_json(model_payload: BaseModel, export_path: Path) -> None:
         """Serialize any Pydantic model payload to a JSON file."""
         # Fallback to pure path string write since model_dump_json takes care of formatting
         export_path.write_text(
@@ -652,13 +728,12 @@ class FlextInfraUtilitiesRefactor:
         *visitors: cst.CSTVisitor,
     ) -> cst.Module | None:
         """Parse CST and sequentially apply an arbitrary number of visitors."""
-        tree = FlextInfraUtilitiesRefactor.parse_cst_safe(file_path)
+        tree = flext_infra.u.Infra.parse_module_cst(file_path)
         if not tree:
             return None
         for visitor in visitors:
             tree.visit(visitor)
         return tree
-
 
 
 __all__ = ["FlextInfraUtilitiesRefactor"]

@@ -724,7 +724,7 @@ class FlextInfraRuntimeDevDependencyDetector:
         limits_default = Path(__file__).resolve().parent / "dependency_limits.toml"
         parser = self._parser(limits_default)
         args = parser.parse_args(argv)
-        projects_result = self._deps.discover_projects(
+        projects_result = self._deps.discover_project_paths(
             root,
             projects_filter=self._project_filter(args),
         )
