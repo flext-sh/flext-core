@@ -299,6 +299,22 @@ class FlextInfraRefactorConstants:
         PROTECTED: ClassVar[str] = "protected"
         PRIVATE: ClassVar[str] = "private"
 
+    class Census:
+        """Constants for the utilities usage census module."""
+
+        MODE_ALIAS_FLAT: ClassVar[str] = "alias_flat"
+        "Usage via u.method_name (flat alias)."
+        MODE_ALIAS_NS: ClassVar[str] = "alias_namespaced"
+        "Usage via u.ClassName.method_name (namespaced)."
+        MODE_DIRECT: ClassVar[str] = "direct"
+        "Usage via FlextUtilitiesXxx.method_name (direct)."
+        CORE_PROJECT: ClassVar[str] = "flext-core"
+        "Core project directory name."
+        UTILITIES_PACKAGE: ClassVar[str] = "flext_core/_utilities"
+        "Relative package path for _utilities."
+        FACADE_MODULE: ClassVar[str] = "flext_core/utilities.py"
+        "Relative path to the FlextUtilities facade."
+
     PROJECT_KIND_VALUES: ClassVar[frozenset[str]] = frozenset({
         "core",
         "domain",

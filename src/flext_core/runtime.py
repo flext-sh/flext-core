@@ -183,8 +183,6 @@ class FlextRuntime:
         and writing them to the destination stream in a background thread.
         """
 
-        _writer_logger: p.Log.StructlogLogger | None = None
-
         def __init__(self, stream: typing.TextIO) -> None:
             super().__init__()
             self.stream = stream
@@ -543,12 +541,16 @@ class FlextRuntime:
                 return True
             if isinstance(type_hint, type) and issubclass(type_hint, Sequence):
                 return True
-            type_name = getattr(type_hint, "__name__", None)
-            return bool(
-                type_name is not None
-                and type_name
-                in {"StringList", "IntList", "FloatList", "BoolList", "List"}
-            )
+            if not isinstance(type_hint, str):
+                return False
+            type_hint_name = type_hint
+            return type_hint_name in {
+                "StringList",
+                "IntList",
+                "FloatList",
+                "BoolList",
+                "List",
+            }
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError):
             return False
 

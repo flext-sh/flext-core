@@ -9,6 +9,7 @@ import libcst as cst
 from flext_infra import c, m
 from flext_infra.refactor.transformers.mro_private_inline import (
     FlextInfraRefactorMROPrivateInlineTransformer,
+    FlextInfraRefactorMROQualifiedReferenceTransformer,
 )
 
 
@@ -113,6 +114,21 @@ class FlextInfraRefactorMROMigrationTransformer:
             replacement_values=replacement_values,
         )
         updated_module = updated_module.visit(inline_transformer)
+        facade_alias = scan_result.facade_alias or class_name
+        qualified_renames: dict[str, cst.BaseExpression] = {}
+        for symbol, target_path in symbol_map.items():
+            if symbol.startswith("_") or "." not in target_path:
+                continue
+            parts = target_path.split(".")
+            current: cst.BaseExpression = cst.Name(facade_alias)
+            for part in parts:
+                current = cst.Attribute(value=current, attr=cst.Name(part))
+            qualified_renames[symbol] = current
+        if len(qualified_renames) > 0:
+            qualified_transformer = FlextInfraRefactorMROQualifiedReferenceTransformer(
+                renames=qualified_renames,
+            )
+            updated_module = updated_module.visit(qualified_transformer)
         migration = _new_file_migration(
             file=scan_result.file,
             module=scan_result.module,
@@ -201,7 +217,7 @@ class FlextInfraRefactorMROMigrationTransformer:
             use_core_namespace = is_types_facade and isinstance(
                 moved_statement, cst.TypeAlias
             )
-            map_target = f"_Core.{target}" if use_core_namespace else target
+            map_target = f"Core.{target}" if use_core_namespace else target
             if map_target in added_targets:
                 continue
             added_targets.add(map_target)
@@ -228,21 +244,36 @@ class FlextInfraRefactorMROMigrationTransformer:
         ]
         final_nodes: list[cst.CSTNode] = [*cleaned_body]
         if len(moved_core_lines) > 0:
-            merged_body, inserted_core = (
-                FlextInfraRefactorMROMigrationTransformer._merge_core_class(
-                    class_body=final_nodes,
-                    moved_core_lines=moved_core_lines,
-                )
+            has_existing_core = any(
+                isinstance(s, cst.ClassDef) and s.name.value == "Core"
+                for s in final_nodes
             )
-            final_nodes = merged_body
-            if inserted_core and (
-                not FlextInfraRefactorMROMigrationTransformer._has_core_alias(
-                    class_body=final_nodes,
+            if has_existing_core:
+                merged_body, _ = (
+                    FlextInfraRefactorMROMigrationTransformer._merge_core_class(
+                        class_body=final_nodes,
+                        moved_core_lines=moved_core_lines,
+                        target_class_name="Core",
+                    )
                 )
-            ):
-                final_nodes.append(
-                    FlextInfraRefactorMROMigrationTransformer._core_alias_statement(),
+                final_nodes = merged_body
+            else:
+                merged_body, inserted_core = (
+                    FlextInfraRefactorMROMigrationTransformer._merge_core_class(
+                        class_body=final_nodes,
+                        moved_core_lines=moved_core_lines,
+                        target_class_name="_Core",
+                    )
                 )
+                final_nodes = merged_body
+                if inserted_core and (
+                    not FlextInfraRefactorMROMigrationTransformer._has_core_alias(
+                        class_body=final_nodes,
+                    )
+                ):
+                    final_nodes.append(
+                        FlextInfraRefactorMROMigrationTransformer._core_alias_statement(),
+                    )
         final_nodes.extend(moved_lines)
         final_body = [
             statement
@@ -281,7 +312,7 @@ class FlextInfraRefactorMROMigrationTransformer:
             use_core_namespace = is_types_facade and isinstance(
                 statement, cst.TypeAlias
             )
-            symbol_map[symbol] = f"_Core.{target}" if use_core_namespace else target
+            symbol_map[symbol] = f"Core.{target}" if use_core_namespace else target
             moved_node = FlextInfraRefactorMROMigrationTransformer._retarget_statement(
                 statement=statement,
                 target_name=target,
@@ -359,7 +390,9 @@ class FlextInfraRefactorMROMigrationTransformer:
                 return statement
             return statement.with_changes(name=cst.Name(target_name))
         if isinstance(statement, cst.TypeAlias):
-            return statement.with_changes(name=cst.Name(target_name))
+            return cst.SimpleStatementLine(
+                body=[statement.with_changes(name=cst.Name(target_name))],
+            )
         if isinstance(statement, cst.AnnAssign):
             if replacement_value is not None:
                 return cst.SimpleStatementLine(
@@ -391,10 +424,12 @@ class FlextInfraRefactorMROMigrationTransformer:
         *,
         class_body: list[cst.CSTNode],
         moved_core_lines: list[cst.CSTNode],
+        target_class_name: str = "_Core",
     ) -> tuple[list[cst.CSTNode], bool]:
         for index, statement in enumerate(class_body):
             if not (
-                isinstance(statement, cst.ClassDef) and statement.name.value == "_Core"
+                isinstance(statement, cst.ClassDef)
+                and statement.name.value == target_class_name
             ):
                 continue
             existing_names = {
@@ -427,7 +462,7 @@ class FlextInfraRefactorMROMigrationTransformer:
         merged_body = [
             *class_body,
             cst.ClassDef(
-                name=cst.Name("_Core"),
+                name=cst.Name(target_class_name),
                 body=cst.IndentedBlock(
                     body=tuple(
                         item
@@ -435,6 +470,7 @@ class FlextInfraRefactorMROMigrationTransformer:
                         if isinstance(item, cst.BaseStatement)
                     ),
                 ),
+                leading_lines=(cst.EmptyLine(),),
             ),
         ]
         return (merged_body, True)
@@ -475,6 +511,8 @@ class FlextInfraRefactorMROMigrationTransformer:
     @staticmethod
     def _has_core_alias(*, class_body: list[cst.CSTNode]) -> bool:
         for statement in class_body:
+            if isinstance(statement, cst.ClassDef) and statement.name.value == "Core":
+                return True
             alias = FlextInfraRefactorMROMigrationTransformer._extract_alias_assignment(
                 statement=statement,
             )

@@ -8,15 +8,15 @@ from flext_infra import m
 from flext_infra.check.fix_pyrefly_config import FlextInfraConfigFixer
 from flext_infra.check.workspace_check import FlextInfraWorkspaceChecker, run_cli
 
-_CheckIssue: TypeAlias = m.Infra.Check.Issue
-_GateExecution: TypeAlias = m.Infra.Check.GateExecution
-_ProjectResult: TypeAlias = m.Infra.Check.ProjectResult
+CheckIssue: TypeAlias = m.Infra.Check.Issue
+GateExecution: TypeAlias = m.Infra.Check.GateExecution
+ProjectResult: TypeAlias = m.Infra.Check.ProjectResult
 
 __all__ = [
+    "CheckIssue",
     "FlextInfraConfigFixer",
     "FlextInfraWorkspaceChecker",
-    "_CheckIssue",
-    "_GateExecution",
-    "_ProjectResult",
+    "GateExecution",
+    "ProjectResult",
     "run_cli",
 ]

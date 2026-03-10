@@ -1,6 +1,6 @@
 """Tests for flext_infra output formatting — status, summary, messages, headers, progress.
 
-Tests _OutputBackend formatting methods for status, summary, error/warning/info messages,
+Tests OutputBackend formatting methods for status, summary, error/warning/info messages,
 headers, and progress indicators.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -12,7 +12,7 @@ from __future__ import annotations
 import io
 import re
 
-from flext_infra._utilities.output import _OutputBackend
+from flext_infra._utilities.output import OutputBackend
 from flext_tests import tm
 
 ANSI_RE = re.compile(r"\033\[\d+m")
@@ -27,14 +27,14 @@ def _make_backend(
     use_color: bool = False,
     use_unicode: bool = False,
     stream: io.StringIO | None = None,
-) -> _OutputBackend:
+) -> OutputBackend:
     """Create a backend with test-friendly settings."""
     buf = stream or io.StringIO()
-    return _OutputBackend(use_color=use_color, use_unicode=use_unicode, stream=buf)
+    return OutputBackend(use_color=use_color, use_unicode=use_unicode, stream=buf)
 
 
 class TestInfraOutputStatus:
-    """Tests for output status formatting using _OutputBackend directly."""
+    """Tests for output status formatting using OutputBackend directly."""
 
     def test_success_status_contains_ok(self) -> None:
         buf = io.StringIO()

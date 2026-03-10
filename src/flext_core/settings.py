@@ -16,7 +16,6 @@ from __future__ import annotations
 import os
 import threading
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
-from pathlib import Path
 from typing import ClassVar, Self
 
 from pydantic import (
@@ -30,20 +29,6 @@ from pydantic import (
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from flext_core import FlextRuntime, T_Namespace, T_Settings, __version__, c, p, t, u
-
-
-def _resolve_env_file() -> str | None:
-    """Resolve .env file path (typed wrapper avoiding has-type on u.resolve_env_file)."""
-    custom = os.environ.get(c.Platform.ENV_FILE_ENV_VAR)
-    if custom:
-        custom_path = Path(custom)
-        if custom_path.exists():
-            return str(custom_path.resolve())
-        return custom
-    default_path = Path.cwd() / c.Platform.ENV_FILE_DEFAULT
-    if default_path.exists():
-        return str(default_path.resolve())
-    return c.Platform.ENV_FILE_DEFAULT
 
 
 class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelMeta):
@@ -68,40 +53,16 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
 
     _instances: ClassVar[MutableMapping[type[Self], Self]] = {}
     _lock: ClassVar[threading.RLock] = threading.RLock()
+
     model_config = SettingsConfigDict(
         env_prefix=c.Platform.ENV_PREFIX,
         env_nested_delimiter=c.Platform.ENV_NESTED_DELIMITER,
-        env_file=_resolve_env_file(),
+        env_file=u.resolve_env_file(),
         env_file_encoding=c.Utilities.DEFAULT_ENCODING,
         case_sensitive=False,
         extra=c.ModelConfig.EXTRA_IGNORE,
         validate_assignment=True,
     )
-
-    @staticmethod
-    def resolve_env_file() -> str | None:
-        """Resolve .env file path from FLEXT_ENV_FILE environment variable.
-
-        This method is the PUBLIC API for all namespace configs to use.
-        It ensures all FLEXT ecosystem configs use the same .env resolution logic.
-
-        Precedence (highest to lowest):
-        1. FLEXT_ENV_FILE environment variable (custom path)
-        2. Default .env file from current directory
-
-        Returns:
-            str | None: Path to .env file or None if not found
-
-        Example:
-            # In namespace config classes (e.g., FlextLdapSettings)
-            model_config = SettingsConfigDict(
-                env_prefix="FLEXT_LDAP_",
-                env_file=FlextSettings.resolve_env_file(),
-                ...
-            )
-
-        """
-        return u.resolve_env_file()
 
     app_name: str = Field(default="flext", description="Application name")
     version: str = Field(default=__version__, description="Application version")
@@ -261,11 +222,6 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
             instance = instance.model_copy(update=overrides, deep=True)
         return instance
 
-    @classmethod
-    def materialize(cls, *, overrides: t.ConfigurationMapping | None = None) -> Self:
-        """Backward-compatible alias for global settings materialization."""
-        return cls.get_global(overrides=overrides)
-
     def apply_override(
         self, key: str, value: t.Scalar | Sequence[t.Scalar] | Mapping[str, t.Scalar]
     ) -> bool:
@@ -363,7 +319,7 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
             return pydantic_private[name]
         namespace = name.lower()
         if namespace in {"core", "root", "settings"}:
-            return FlextSettings.get_instance()
+            return FlextSettings.get_global()
         namespace_key = namespace
         config_class = self._namespace_registry.get(namespace_key)
         if config_class is None:
@@ -408,16 +364,6 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
         if all_overrides:
             return base.model_copy(update=all_overrides)
         return base
-
-    @classmethod
-    def get_global_instance(cls) -> Self:
-        """Return the singleton settings instance."""
-        return cls.get_global()
-
-    @classmethod
-    def get_instance(cls) -> Self:
-        """Backward-compatible alias for singleton settings access."""
-        return cls.get_global()
 
     @classmethod
     def get_namespace_config(cls, namespace: str) -> type[BaseSettings] | None:
@@ -485,11 +431,6 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
         """Reset the global singleton instance for testing."""
         cls._instances.clear()
         cls._context_overrides.clear()
-
-    @classmethod
-    def reset_global_instance(cls) -> None:
-        """Reset singleton settings state for test/runtime reinitialization."""
-        cls.reset_for_testing()
 
     @staticmethod
     def auto_register(namespace: str) -> Callable[[type[T_Settings]], type[T_Settings]]:

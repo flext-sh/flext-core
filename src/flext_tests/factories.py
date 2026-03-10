@@ -23,11 +23,12 @@ import builtins
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from typing import Never, override
 
-from pydantic import BaseModel
+from pydantic import BaseModel, TypeAdapter, ValidationError
 
 from flext_core import r
-from flext_core.typings import TValue
 from flext_tests import FlextTestsUtilityBase as s, c, m, t, u
+
+_TEST_CONTAINER_LIST_ADAPTER = TypeAdapter(list[t.ContainerValue])
 
 
 def _to_payload_value(value: t.ContainerValue) -> t.Tests.ContainerValue:
@@ -47,7 +48,13 @@ def _to_guard_input(value: t.Tests.ContainerValue) -> t.ContainerValue:
         return {str(k): _to_guard_input(_to_payload_value(v)) for k, v in value.items()}
     if isinstance(value, bytes):
         return str(value)
-    return [_to_guard_input(_to_payload_value(item)) for item in value]
+    if isinstance(value, Sequence) and (not isinstance(value, str | bytes)):
+        try:
+            sequence_values = _TEST_CONTAINER_LIST_ADAPTER.validate_python(value)
+        except ValidationError:
+            return []
+        return [_to_guard_input(_to_payload_value(item)) for item in sequence_values]
+    return str(value)
 
 
 class FlextTestsFactories(s[t.Tests.ContainerValue]):

@@ -19,7 +19,7 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_core import FlextService, T, r
+from flext_core import FlextService, r, t
 
 
 class FlextTestsServiceBase[T]:
@@ -73,7 +73,7 @@ class FlextTestsServiceBase[T]:
         return result.value
 
 
-class FlextTestsUtilityBase(FlextService[T]):
+class FlextTestsUtilityBase[TValue: t.ContainerValue](FlextService[TValue]):
     """Base class for FLEXT test utility classes (factories, builders, validators).
 
     Architecture: Extends FlextService for service functionality.
@@ -85,9 +85,9 @@ class FlextTestsUtilityBase(FlextService[T]):
     """
 
     @override
-    def execute(self) -> r[T]:
+    def execute(self) -> r[TValue]:
         """Default utility execution — subclasses should override with specific logic."""
-        return r[T].fail(f"{type(self).__name__} must implement execute()")
+        return r[TValue].fail(f"{type(self).__name__} must implement execute()")
 
 
 s = FlextTestsServiceBase

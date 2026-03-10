@@ -1504,5 +1504,5 @@ class FlextExceptions:
 
 
 e = FlextExceptions
-_Metadata = m.Metadata
-__all__ = ["FlextExceptions", "_Metadata", "e"]
+Metadata = m.Metadata
+__all__ = ["FlextExceptions", "Metadata", "e"]

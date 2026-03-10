@@ -37,20 +37,22 @@ dedupe_specs = FlextInfraUtilitiesTomlParse.dedupe_specs
 dep_name = FlextInfraUtilitiesTomlParse.dep_name
 project_dev_groups = FlextInfraUtilitiesTomlParse.project_dev_groups
 
-_array = array
-_as_string_list = as_string_list
-_canonical_dev_dependencies = FlextInfraUtilitiesTomlParse.canonical_dev_dependencies
-_dedupe_specs = FlextInfraUtilitiesTomlParse.dedupe_specs
-_dep_name = FlextInfraUtilitiesTomlParse.dep_name
-_ensure_table = ensure_table
-_project_dev_groups = FlextInfraUtilitiesTomlParse.project_dev_groups
-_read_doc = read_doc
-_table_string_keys = table_string_keys
-_toml_get = toml_get
-_unwrap_item = unwrap_item
+array_parser = array
+as_string_list_parser = as_string_list
+canonical_dev_dependencies_parser = (
+    FlextInfraUtilitiesTomlParse.canonical_dev_dependencies
+)
+dedupe_specs_parser = FlextInfraUtilitiesTomlParse.dedupe_specs
+dep_name_parser = FlextInfraUtilitiesTomlParse.dep_name
+ensure_table_parser = ensure_table
+project_dev_groups_parser = FlextInfraUtilitiesTomlParse.project_dev_groups
+read_doc_parser = read_doc
+table_string_keys_parser = table_string_keys
+toml_get_parser = toml_get
+unwrap_item_parser = unwrap_item
 
 
-def _workspace_root(start: Path) -> Path:
+def workspace_root(start: Path) -> Path:
     """Detect workspace root by searching for .gitmodules or .git with pyproject.toml."""
     current = start.resolve()
     for parent in (current, *current.parents):
@@ -66,7 +68,7 @@ def _workspace_root(start: Path) -> Path:
     return start.resolve().parents[4]
 
 
-ROOT = _workspace_root(Path(__file__))
+ROOT = workspace_root(Path(__file__))
 
 
 class FlextInfraPyprojectModernizer:
@@ -101,7 +103,7 @@ class FlextInfraPyprojectModernizer:
         skip_comments: bool,
     ) -> list[str]:
         """Process one pyproject.toml file and collect changes."""
-        doc = _read_doc(path)
+        doc = read_doc_parser(path)
         if doc is None:
             return ["invalid TOML"]
         is_root = path.parent.resolve() == self.root.resolve()
@@ -119,7 +121,7 @@ class FlextInfraPyprojectModernizer:
                     group = poetry[c.Infra.Toml.GROUP]
                 if isinstance(group, Table):
                     empty_groups: list[str] = []
-                    for name in _table_string_keys(group):
+                    for name in table_string_keys_parser(group):
                         group_item: object | None = None
                         if name in group:
                             group_item = group[name]
@@ -166,10 +168,10 @@ class FlextInfraPyprojectModernizer:
         """Run pyproject modernization for the workspace."""
         dry_run = bool(args.dry_run or args.audit)
         files = self.find_pyproject_files()
-        root_doc = _read_doc(self.root / c.Infra.Files.PYPROJECT_FILENAME)
+        root_doc = read_doc_parser(self.root / c.Infra.Files.PYPROJECT_FILENAME)
         if root_doc is None:
             return 2
-        canonical_dev = _canonical_dev_dependencies(root_doc)
+        canonical_dev = canonical_dev_dependencies_parser(root_doc)
         violations: dict[str, list[str]] = {}
         total = 0
         for file_path in files:
@@ -216,7 +218,8 @@ class FlextInfraPyprojectModernizer:
         return 1 if has_warning else 0
 
 
-def _parser() -> argparse.ArgumentParser:
+def parser() -> argparse.ArgumentParser:
+    """Create CLI parser for pyproject modernizer options."""
     parser = argparse.ArgumentParser(description="Modernize workspace pyproject files")
     _ = parser.add_argument("--audit", action="store_true")
     _ = parser.add_argument("--dry-run", action="store_true")
@@ -227,8 +230,8 @@ def _parser() -> argparse.ArgumentParser:
 
 def main() -> int:
     """Run the pyproject modernizer CLI."""
-    parser = _parser()
-    args = parser.parse_args()
+    parser_model = parser()
+    args = parser_model.parse_args()
     return FlextInfraPyprojectModernizer().run(args)
 
 
@@ -243,16 +246,16 @@ __all__ = [
     "EnsurePytestConfigPhase",
     "FlextInfraPyprojectModernizer",
     "InjectCommentsPhase",
-    "_array",
-    "_as_string_list",
-    "_canonical_dev_dependencies",
-    "_dedupe_specs",
-    "_dep_name",
-    "_ensure_table",
-    "_parser",
-    "_project_dev_groups",
-    "_read_doc",
-    "_unwrap_item",
-    "_workspace_root",
+    "array_parser",
+    "as_string_list_parser",
+    "canonical_dev_dependencies_parser",
+    "dedupe_specs_parser",
+    "dep_name_parser",
+    "ensure_table_parser",
     "main",
+    "parser",
+    "project_dev_groups_parser",
+    "read_doc_parser",
+    "unwrap_item_parser",
+    "workspace_root",
 ]

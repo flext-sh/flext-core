@@ -12,7 +12,7 @@ from __future__ import annotations
 import io
 
 from flext_infra import u
-from flext_infra._utilities.output import _OutputBackend
+from flext_infra._utilities.output import OutputBackend
 from flext_tests import tm
 
 
@@ -21,10 +21,10 @@ def _make_backend(
     use_color: bool = False,
     use_unicode: bool = False,
     stream: io.StringIO | None = None,
-) -> _OutputBackend:
+) -> OutputBackend:
     """Create a backend with test-friendly settings."""
     buf = stream or io.StringIO()
-    return _OutputBackend(use_color=use_color, use_unicode=use_unicode, stream=buf)
+    return OutputBackend(use_color=use_color, use_unicode=use_unicode, stream=buf)
 
 
 class TestInfraOutputNoColor:

@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 from typing import override
 
-from flext_core import FlextSettings, c
+from flext_core import FlextSettings, c, u
 
 from .shared import Examples
 
@@ -66,7 +66,7 @@ class Ex02FlextSettings(Examples):
         self.check("_reset_instance.recreates_singleton", third is not first)
         FlextSettings.reset_for_testing()
         fourth = FlextSettings.get_global()
-        self.check("reset_global_instance.recreates_global", fourth is not third)
+        self.check("reset_for_testing.recreates_global", fourth is not third)
         getattr(self._TestConfig, "_reset_instance")()
         test_a = self._TestConfig()
         test_b = self._TestConfig()
@@ -178,7 +178,7 @@ class Ex02FlextSettings(Examples):
         env_path.write_text("FLEXT_APP_NAME=from_env_file\n", encoding="utf-8")
         previous = self._set_env(c.Platform.ENV_FILE_ENV_VAR, str(env_path))
         try:
-            resolved = FlextSettings.resolve_env_file()
+            resolved = u.resolve_env_file()
             self.check("resolve_env_file.custom_path", resolved)
             auto = FlextSettings.AutoConfig(
                 config_class=self._TestConfig,

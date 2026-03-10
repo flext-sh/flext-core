@@ -128,22 +128,22 @@ class FlextValidatorTests:
     @classmethod
     def _is_patch_decorator(cls, decorator: ast.expr) -> bool:
         """Check if decorator is @patch or @patch.object, etc."""
-        if type(decorator) is ast.Name and decorator.id == "patch":
+        if isinstance(decorator, ast.Name) and decorator.id == "patch":
             return True
-        if type(decorator) is ast.Call:
-            if type(decorator.func) is ast.Name and decorator.func.id == "patch":
+        if isinstance(decorator, ast.Call):
+            if isinstance(decorator.func, ast.Name) and decorator.func.id == "patch":
                 return True
-            if type(decorator.func) is ast.Attribute:
+            if isinstance(decorator.func, ast.Attribute):
                 if (
-                    type(decorator.func.value) is ast.Name
+                    isinstance(decorator.func.value, ast.Name)
                     and decorator.func.value.id == "patch"
                 ):
                     return True
                 if decorator.func.attr == "patch":
                     return True
         return (
-            type(decorator) is ast.Attribute
-            and type(decorator.value) is ast.Name
+            isinstance(decorator, ast.Attribute)
+            and isinstance(decorator.value, ast.Name)
             and (decorator.value.id == "patch")
         )
 

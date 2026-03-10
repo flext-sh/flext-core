@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-import types
 from pathlib import Path
+
+import pytest
 
 from flext_core import r
 from flext_infra.deps.internal_sync import FlextInfraInternalDependencySyncService
@@ -10,22 +11,32 @@ from tests.infra import h
 from tests.infra.typings import t
 
 
-def _set_toml_stub(
-    service: FlextInfraInternalDependencySyncService,
-    values: list[t.ContainerValue],
-) -> None:
-    state = {"index": 0}
+class _TomlStub:
+    """Typed stub implementing TomlReader protocol for testing."""
 
-    def _read(_path: Path) -> t.ContainerValue:
-        item = values[state["index"]]
-        state["index"] += 1
+    def __init__(self, values: list[r[dict[str, t.ContainerValue]]]) -> None:
+        self._values = values
+        self._index = 0
+
+    def read_plain(self, path: Path) -> r[dict[str, t.ContainerValue]]:
+        """Return next pre-configured result."""
+        _ = path
+        item = self._values[self._index]
+        self._index += 1
         return item
 
-    service.toml = types.SimpleNamespace(read_plain=_read)
+
+def _set_toml_stub(
+    service: FlextInfraInternalDependencySyncService,
+    values: list[r[dict[str, t.ContainerValue]]],
+) -> None:
+    service.toml = _TomlStub(values)
 
 
 class TestSyncMethodEdgeCasesMore:
-    def test_sync_checkout_failure(self, tmp_path: Path, monkeypatch) -> None:
+    def test_sync_checkout_failure(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         (tmp_path / "pyproject.toml").write_text(
             '[tool.poetry.dependencies]\nflext-core = { path = "../flext-core" }\n'
         )

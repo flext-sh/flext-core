@@ -37,7 +37,7 @@ from flext_core._models.base import FlextModelFoundation
 from flext_core._models.service import FlextModelsService
 
 
-class FlextService[TDomainResult = t.ContainerValue](
+class FlextService[TDomainResult: t.ContainerValue = t.ContainerValue](
     FlextModelFoundation.ArbitraryTypesModel, FlextMixins, ABC
 ):
     """Base class for domain services in FLEXT applications.
@@ -112,8 +112,7 @@ class FlextService[TDomainResult = t.ContainerValue](
             self._execution_result = self.execute()
         execution_result: r[TDomainResult] = self._execution_result
         if execution_result.is_success:
-            result_value: TDomainResult = execution_result.unwrap()
-            return result_value
+            return execution_result.value
         raise FlextExceptions.BaseError(
             execution_result.error or "Service execution failed"
         )

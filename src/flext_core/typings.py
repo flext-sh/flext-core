@@ -27,20 +27,25 @@ from pydantic import BaseModel, ConfigDict, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from structlog.typing import BindableLogger
 
+DictValueT = TypeVar("DictValueT")
+E = TypeVar("E")
+EnumT = TypeVar("EnumT", bound=StrEnum)
+MessageT_contra = TypeVar("MessageT_contra", contravariant=True)
+P = ParamSpec("P")
+R = TypeVar("R")
+ResultT = TypeVar("ResultT")
 T = TypeVar("T")
 T_co = TypeVar("T_co", covariant=True)
 T_contra = TypeVar("T_contra", contravariant=True)
-E = TypeVar("E")
-U = TypeVar("U")
-R = TypeVar("R")
-DictValueT = TypeVar("DictValueT")
-P = ParamSpec("P")
-MessageT_contra = TypeVar("MessageT_contra", contravariant=True)
-ResultT = TypeVar("ResultT")
 T_Model = TypeVar("T_Model", bound=BaseModel)
 T_Namespace = TypeVar("T_Namespace")
 T_Settings = TypeVar("T_Settings", bound=BaseSettings)
+TK = TypeVar("TK")
 TModel = TypeVar("TModel", bound=BaseModel)
+TV = TypeVar("TV")
+TValue = TypeVar("TValue")
+type RegistryBindingKey = str | type[object]
+U = TypeVar("U")
 
 
 class FlextTypes:
@@ -105,7 +110,6 @@ class FlextTypes:
     type IncEx = set[str] | Mapping[str, set[str] | bool]
     type TYPE_CHECKING = bool
     type Dict = Mapping[str, ContainerValue]
-    # Return type for PEP 562 __getattr__ on packages; avoids Any/object.
     type ModuleExport = (
         type | ModuleType | Callable[..., ContainerValue] | ContainerValue
     )
@@ -141,18 +145,3 @@ __all__ = [
     "T_contra",
     "U",
 ]
-
-
-TK = TypeVar("TK")
-
-
-TV = TypeVar("TV")
-
-
-EnumT = TypeVar("EnumT", bound=StrEnum)
-
-
-type RegistryBindingKey = str | type[object]
-
-
-TValue = TypeVar("TValue")

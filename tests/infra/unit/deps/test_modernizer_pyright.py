@@ -6,7 +6,7 @@ from collections.abc import MutableMapping
 
 import tomlkit
 
-from flext_infra.deps.modernizer import EnsurePyrightConfigPhase, _unwrap_item
+from flext_infra.deps.modernizer import EnsurePyrightConfigPhase, unwrap_item
 from flext_infra.deps.tool_config import FlextInfraToolConfigDocument, load_tool_config
 from flext_tests import tm
 
@@ -26,15 +26,15 @@ class TestEnsurePyrightConfigPhase:
     def test_apply_root_sets_execution_environments(self) -> None:
         doc = tomlkit.document()
         changes = EnsurePyrightConfigPhase(_test_tool_config()).apply(doc, is_root=True)
-        tool = _unwrap_item(doc["tool"])
+        tool = unwrap_item(doc["tool"])
         tm.that(isinstance(tool, MutableMapping), eq=True)
         if not isinstance(tool, MutableMapping):
             return
-        pyright = _unwrap_item(tool["pyright"])
+        pyright = unwrap_item(tool["pyright"])
         tm.that(isinstance(pyright, MutableMapping), eq=True)
         if not isinstance(pyright, MutableMapping):
             return
-        envs = _unwrap_item(pyright["executionEnvironments"])
+        envs = unwrap_item(pyright["executionEnvironments"])
         tm.that(isinstance(envs, list), eq=True)
         tm.that(
             envs,
@@ -54,15 +54,15 @@ class TestEnsurePyrightConfigPhase:
         changes = EnsurePyrightConfigPhase(_test_tool_config()).apply(
             doc, is_root=False
         )
-        tool = _unwrap_item(doc["tool"])
+        tool = unwrap_item(doc["tool"])
         tm.that(isinstance(tool, MutableMapping), eq=True)
         if not isinstance(tool, MutableMapping):
             return
-        pyright = _unwrap_item(tool["pyright"])
+        pyright = unwrap_item(tool["pyright"])
         tm.that(isinstance(pyright, MutableMapping), eq=True)
         if not isinstance(pyright, MutableMapping):
             return
-        envs = _unwrap_item(pyright["executionEnvironments"])
+        envs = unwrap_item(pyright["executionEnvironments"])
         tm.that(isinstance(envs, list), eq=True)
         tm.that(
             envs,

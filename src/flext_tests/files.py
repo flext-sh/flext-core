@@ -1471,9 +1471,16 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                 str(k): self._to_config_map_value(self._to_payload_value(v))
                 for k, v in value.items()
             }
-        return [
-            self._to_config_map_value(self._to_payload_value(item)) for item in value
-        ]
+        if isinstance(value, Sequence) and (not isinstance(value, str | bytes)):
+            try:
+                sequence_value = _OBJECT_LIST_ADAPTER.validate_python(value)
+            except ValidationError:
+                return []
+            return [
+                self._to_config_map_value(self._to_payload_value(item))
+                for item in sequence_value
+            ]
+        return str(value)
 
     def _to_payload_value(self, value: object) -> t.Tests.ContainerValue:
         if value is None or isinstance(value, t.Primitives | bytes | BaseModel):

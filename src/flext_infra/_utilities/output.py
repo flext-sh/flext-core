@@ -1,6 +1,6 @@
 """Terminal output utility with ANSI color detection and structured formatting.
 
-Static facade delegates to a module-level ``_OutputBackend`` singleton.
+Static facade delegates to a module-level ``OutputBackend`` singleton.
 All output is written to sys.stderr to preserve stdout for machine-readable
 content.
 
@@ -17,7 +17,7 @@ from flext_infra._utilities.terminal import FlextInfraUtilitiesTerminal
 from flext_infra.constants import FlextInfraConstants as c
 
 
-class _OutputBackend:
+class OutputBackend:
     """Private output backend with instance state for color/unicode/stream.
 
     All formatting methods live here as instance methods. Tests create
@@ -165,7 +165,7 @@ class _OutputBackend:
         self.write(f"    {sym} {gate:<10} {count_str}  ({elapsed:.2f}s)")
 
 
-_backend: Final[_OutputBackend] = _OutputBackend()
+_backend: Final[OutputBackend] = OutputBackend()
 
 
 class FlextInfraUtilitiesOutput:
@@ -231,6 +231,6 @@ output: Final[FlextInfraUtilitiesOutput] = FlextInfraUtilitiesOutput()
 "Module-level singleton for direct use: ``from flext_infra import output``"
 __all__ = [
     "FlextInfraUtilitiesOutput",
-    "_OutputBackend",
+    "OutputBackend",
     "output",
 ]

@@ -8,6 +8,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from pathlib import Path
 
 import pytest
@@ -22,7 +23,7 @@ _ROOT = "# root content"
 def _workspace(
     base: Path,
     root: str,
-    projects: dict[str, str | None],
+    projects: Mapping[str, str | None],
 ) -> Path:
     """Build workspace: root base.mk + project dirs with optional vendored copy.
 
@@ -178,7 +179,9 @@ class TestBaseMkValidatorEdgeCases:
 class TestBaseMkValidatorSha256:
     """Hash computation: determinism, length, collision resistance."""
 
-    _sha = FlextInfraBaseMkValidator._sha256
+    @staticmethod
+    def _sha(path: Path) -> str:
+        return FlextInfraBaseMkValidator._sha256(path)
 
     def test_hash_is_64char_hex(self, tmp_path: Path) -> None:
         f = tf.create_in("content", "test.txt", tmp_path)

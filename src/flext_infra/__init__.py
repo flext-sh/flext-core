@@ -57,7 +57,7 @@ if TYPE_CHECKING:
     from flext_infra._utilities.yaml import FlextInfraUtilitiesYaml
     from flext_infra.basemk.engine import FlextInfraBaseMkTemplateEngine
     from flext_infra.basemk.generator import FlextInfraBaseMkGenerator
-    from flext_infra.check.services import FlextInfraConfigFixer, _ProjectResult as r
+    from flext_infra.check.services import FlextInfraConfigFixer, ProjectResult as r
     from flext_infra.check.workspace_check import (
         FlextInfraWorkspaceChecker,
         build_parser,
@@ -772,7 +772,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "path_dep_paths": ("flext_infra.deps.extra_paths", "path_dep_paths"),
     "path_dep_paths_pep621": ("flext_infra.deps.extra_paths", "path_dep_paths_pep621"),
     "path_dep_paths_poetry": ("flext_infra.deps.extra_paths", "path_dep_paths_poetry"),
-    "r": ("flext_infra.check.services", "_ProjectResult"),
+    "r": ("flext_infra.check.services", "ProjectResult"),
     "read_doc": ("flext_infra._utilities.toml", "read_doc"),
     "render_namespace_enforcement_report": (
         "flext_infra.refactor.output",

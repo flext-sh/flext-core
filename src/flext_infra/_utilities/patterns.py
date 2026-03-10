@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
-from typing import ClassVar
+from typing import ClassVar, TypeGuard
 
 
 class FlextInfraUtilitiesPatterns:
@@ -66,6 +66,10 @@ class FlextInfraUtilitiesPatterns:
     """Match inline code spans for stripping before analysis."""
 
     @staticmethod
+    def _is_compiled_pattern(value: object) -> TypeGuard[re.Pattern[str]]:
+        return isinstance(value, re.Pattern)
+
+    @staticmethod
     def matches(pattern_name: str, text: str) -> bool:
         """Check if a pattern matches text.
 
@@ -81,11 +85,10 @@ class FlextInfraUtilitiesPatterns:
             True
 
         """
-        pattern_obj = getattr(FlextInfraUtilitiesPatterns, pattern_name, None)
-        if pattern_obj is None or not isinstance(pattern_obj, re.Pattern):
+        pattern_obj: object = getattr(FlextInfraUtilitiesPatterns, pattern_name, None)
+        if not FlextInfraUtilitiesPatterns._is_compiled_pattern(pattern_obj):
             return False
-        pattern: re.Pattern[str] = pattern_obj
-        return pattern.search(text) is not None
+        return pattern_obj.search(text) is not None
 
 
 __all__ = ["FlextInfraUtilitiesPatterns"]

@@ -85,7 +85,7 @@ if TYPE_CHECKING:
         FlextDispatcher,
         HandleProtocol,
     )
-    from flext_core.exceptions import FlextExceptions, _Metadata, e
+    from flext_core.exceptions import FlextExceptions, Metadata, e
     from flext_core.handlers import FlextHandlers, h
     from flext_core.loggings import FlextLogger
     from flext_core.mixins import FlextMixins, x
@@ -221,7 +221,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "T_contra": ("flext_core.typings", "T_contra"),
     "TimeoutEnforcer": ("flext_core._dispatcher.timeout", "TimeoutEnforcer"),
     "U": ("flext_core.typings", "U"),
-    "_Metadata": ("flext_core.exceptions", "_Metadata"),
+    "Metadata": ("flext_core.exceptions", "Metadata"),
     "__all__": ("flext_core.__version__", "__all__"),
     "__author__": ("flext_core.__version__", "__author__"),
     "__author_email__": ("flext_core.__version__", "__author_email__"),
@@ -302,6 +302,7 @@ __all__ = [
     "FlextUtilitiesText",
     "HandleProtocol",
     "MessageT_contra",
+    "Metadata",
     "P",
     "R",
     "RateLimiterManager",
@@ -316,7 +317,6 @@ __all__ = [
     "T_contra",
     "TimeoutEnforcer",
     "U",
-    "_Metadata",
     "__all__",
     "__author__",
     "__author_email__",

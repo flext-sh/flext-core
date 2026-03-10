@@ -439,5 +439,99 @@ class FlextInfraRefactorModels(
         source: str = Field(description="Raw source text")
         tree: ast.Module = Field(description="Parsed AST module node")
 
+    # -- Census Models ---------------------------------------------------------
+
+    class CensusMethodInfo(FlextModels.ArbitraryTypesModel):
+        """A public method extracted from a _utilities class."""
+
+        model_config = ConfigDict(frozen=True)
+
+        name: str = Field(min_length=1, description="Method name")
+        method_type: str = Field(description="Method kind: static, class, instance")
+        source_file: str = Field(description="Source filename")
+
+    class CensusUsageRecord(FlextModels.ArbitraryTypesModel):
+        """A single method usage found via CST analysis."""
+
+        model_config = ConfigDict(frozen=True)
+
+        class_name: str = Field(min_length=1, description="Utilities class name")
+        method_name: str = Field(min_length=1, description="Method name")
+        access_mode: str = Field(
+            description="Access mode: alias_flat, alias_namespaced, direct"
+        )
+        file_path: str = Field(description="Source file path")
+        project: str = Field(description="Project name")
+
+    class CensusMethodSummary(FlextModels.ArbitraryTypesModel):
+        """Aggregated usage counts for a single method."""
+
+        model_config = ConfigDict(frozen=True)
+
+        name: str = Field(min_length=1, description="Method name")
+        method_type: str = Field(description="Method kind")
+        alias_flat: int = Field(ge=0, description="u.method count")
+        alias_namespaced: int = Field(ge=0, description="u.Class.method count")
+        direct: int = Field(ge=0, description="Direct class.method count")
+        total: int = Field(ge=0, description="Total usages")
+
+    class CensusClassSummary(FlextModels.ArbitraryTypesModel):
+        """Aggregated census for one _utilities class."""
+
+        model_config = ConfigDict(frozen=True)
+
+        class_name: str = Field(min_length=1, description="Utilities class name")
+        source_file: str = Field(description="Source filename")
+        methods: list[FlextInfraRefactorModels.CensusMethodSummary] = Field(
+            default_factory=lambda: list[
+                FlextInfraRefactorModels.CensusMethodSummary
+            ](),
+            description="Method summaries",
+        )
+
+    class CensusProjectMethodUsage(FlextModels.ArbitraryTypesModel):
+        """Usage of a method within a specific project."""
+
+        model_config = ConfigDict(frozen=True)
+
+        class_name: str = Field(min_length=1, description="Utilities class name")
+        method_name: str = Field(min_length=1, description="Method name")
+        access_mode: str = Field(description="Access mode")
+        count: int = Field(ge=0, description="Usage count")
+
+    class CensusProjectSummary(FlextModels.ArbitraryTypesModel):
+        """Usage breakdown for one project."""
+
+        model_config = ConfigDict(frozen=True)
+
+        project_name: str = Field(min_length=1, description="Project directory name")
+        usages: list[FlextInfraRefactorModels.CensusProjectMethodUsage] = Field(
+            default_factory=lambda: list[
+                FlextInfraRefactorModels.CensusProjectMethodUsage
+            ](),
+            description="Per-method usages",
+        )
+        total: int = Field(ge=0, description="Total usages in project")
+
+    class CensusReport(FlextModels.ArbitraryTypesModel):
+        """Full census report for _utilities method usage."""
+
+        classes: list[FlextInfraRefactorModels.CensusClassSummary] = Field(
+            default_factory=lambda: list[FlextInfraRefactorModels.CensusClassSummary](),
+            description="Per-class summaries",
+        )
+        projects: list[FlextInfraRefactorModels.CensusProjectSummary] = Field(
+            default_factory=lambda: list[
+                FlextInfraRefactorModels.CensusProjectSummary
+            ](),
+            description="Per-project breakdowns",
+        )
+        total_classes: int = Field(ge=0, description="Number of utility classes")
+        total_methods: int = Field(ge=0, description="Number of public methods")
+        total_usages: int = Field(ge=0, description="Total usage records")
+        total_unused: int = Field(ge=0, description="Methods with zero usages")
+        files_scanned: int = Field(ge=0, description="Files scanned")
+        parse_errors: int = Field(ge=0, description="Files that failed to parse")
+
 
 __all__ = ["FlextInfraRefactorModels"]

@@ -493,7 +493,7 @@ class TestFlextSettingsPydantic:
 
     def test_resolve_env_file(self) -> None:
         """Test resolve_env_file method for 100% coverage."""
-        result = FlextSettings.resolve_env_file()
+        result = u.resolve_env_file()
         assert isinstance(result, str)
 
     def test_reset_instance(self) -> None:

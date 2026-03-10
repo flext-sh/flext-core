@@ -94,12 +94,18 @@ class FlextTestsBuilders:
                 return {}
         if isinstance(value, bytes):
             return str(value)
-        return [
-            FlextTestsBuilders._to_guard_input(
-                FlextTestsBuilders._to_payload_value(item)
-            )
-            for item in value
-        ]
+        if isinstance(value, Sequence) and (not isinstance(value, str | bytes)):
+            try:
+                sequence_values = _TEST_CONTAINER_LIST_ADAPTER.validate_python(value)
+                return [
+                    FlextTestsBuilders._to_guard_input(
+                        FlextTestsBuilders._to_payload_value(item)
+                    )
+                    for item in sequence_values
+                ]
+            except ValidationError:
+                return []
+        return str(value)
 
     @staticmethod
     def _to_payload_value(value: object) -> t.Tests.ContainerValue:
