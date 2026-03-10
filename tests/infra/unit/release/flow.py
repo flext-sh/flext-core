@@ -12,7 +12,7 @@ from types import SimpleNamespace
 
 from _pytest.monkeypatch import MonkeyPatch
 
-import flext_infra.release.__main__ as _main_mod  # noqa: F811
+import flext_infra.release.__main__ as _main_mod
 from flext_core import r
 from flext_infra.release.__main__ import main
 from flext_tests import tm

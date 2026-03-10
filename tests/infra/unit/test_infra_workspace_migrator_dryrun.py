@@ -9,11 +9,9 @@ from __future__ import annotations
 from pathlib import Path
 
 from flext_tests import tm
-
 from tests.infra.unit.test_infra_workspace_migrator import (
     _build_migrator,
     _project,
-    _write_project,
 )
 
 

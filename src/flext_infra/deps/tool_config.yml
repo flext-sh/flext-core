@@ -1,375 +1,381 @@
 tools:
   ruff:
     exclude:
-      - ".git"
-      - ".mypy_cache"
-      - ".pytest_cache"
-      - ".ruff_cache"
-      - ".venv"
-      - "__pycache__"
-      - "archive"
-      - "backup"
-      - "build"
-      - "dist"
-      - "htmlcov"
-      - "temp-backup"
-      - "typings"
-      - "vendor"
-      - "venv"
+      - .git
+      - .mypy_cache
+      - .pytest_cache
+      - .ruff_cache
+      - .venv
+      - __pycache__
+      - archive
+      - backup
+      - build
+      - dist
+      - htmlcov
+      - temp-backup
+      - typings
+      - vendor
+      - venv
     fix: true
     line-length: 88
     preview: true
     respect-gitignore: true
     show-fixes: true
     src:
-      - "src"
-    target-version: "py313"
+      - src
+    target-version: py313
     format:
       docstring-code-format: true
-      indent-style: "space"
-      line-ending: "lf"
-      quote-style: "double"
+      indent-style: space
+      line-ending: lf
+      quote-style: double
     lint:
       select:
-        - "ALL"
+        - ALL
       ignore:
-        - "B009" # get-attr-with-constant
-        - "B010" # set-attr-with-constant
-        - "B017" # assert-raises-exception
-        - "BLE001" # blind-except - utility functions return FlextResult, catching all exceptions
-        - "C901" # complex-structure
-        - "COM812"
-        - "CPY001"
-        - "D203" # incorrect-blank-line-before-class - conflicting with D211 (blank line before class)
-        - "D213" # multi-line-summary-second-line - conflicting with D212 (summary line position)
-        - "D401" # non-imperative-mood - too opinionated in multilingual codebase
-        - "D417"
-        - "ANN202" # missing-return-type-private-function - nested functions in methods
-        - "DOC201"
-        - "DOC202"
-        - "DOC402"
-        - "DOC501"
-        - "DOC502"
-        - "E501" # line-too-long
-        - "ERA001" # commented-out-code - False positives on legitimate comments
-        - "FBT003"
-        - "G004" # logging-f-string
-        - "N805" # invalid-first-argument-name-for-method - false positives on @overload functions
-        - "N813"
-        - "N816" # mixed-case-variable-in-global - false positives in certain patterns
-        - "PIE790" # unecessary ... notation - false positives in certain patterns
-        - "PLR0904" # too-many-public-methods - sometimes necessary in certain classes
-        - "PLR0911" # too-many-return-statements - Many returns allowed in some processors/validators
-        - "PLR0912" # too-many-branches - High complexity acceptable in orchestrators
-        - "PLR0913" # too-many-arguments - Too many arguments in function definition (sometimes necessary)
-        - "PLR0914" # too-many-local-variables - Many local variables in complex functions
-        - "PLR0915" # too-many-statements - Many statements in some builder functions
-        - "PLR0917" # too-many-positional-arguments - Sometimes necessary for flexibility
-        - "PLR1702" # too-many-nested-blocks - Complex algorithms require nesting
-        - "PLR6301" # no-self-use
-        - "PLW2901" # outer-for-loop-variable-overwritten - Intentional in batch processing
-        - "PLW0108" # unnecessary-lambda - lambdas in Validator definitions are clearer than alternatives
-        - "PLW3201" # snake_case name in method definition - Allow snake_case method names for PEP8
-        - "PYI042" # type-alias-without-annotation - Allow short aliases (r, t, c, m, u, p, etc.) for FLEXT pattern
-        - "Q000"
-        - "S608"
-        - "RUF001" # ambiguous-unicode-character-docstring - false positives when using certain images
-        - "RUF002" # ambiguous-unicode-character-docstring - false positives when using certain images
-        - "RUF003" # ambiguous-unicode-character-comment
-        - "RUF005" # unpacking-operator - disabled to avoid pyrefly conflicts
-        - "TC001" # typing-only-first-party-import - Pydantic requirement
-        - "TC002" # typing-only-third-party-import - Pydantic requirement
-        - "TC003" # typing-only-standard-library-import - Pydantic requirement
-        - "TRY003"
-        - "TRY300" # try-consider-else
-        - "TRY301" # raise-within-try - Abstract raise
-        # UP007 ENABLED - Python 3.13+ supports X | Y natively without __future__ imports
-        - "UP040" # type aliases may break inside classes
-        - "W293"
+        - B009
+        - B010
+        - B017
+        - BLE001
+        - C901
+        - COM812
+        - CPY001
+        - D203
+        - D213
+        - D401
+        - D417
+        - ANN202
+        - DOC201
+        - DOC202
+        - DOC402
+        - DOC501
+        - DOC502
+        - E501
+        - ERA001
+        - FBT003
+        - G004
+        - N805
+        - N813
+        - N816
+        - PIE790
+        - PLR0904
+        - PLR0911
+        - PLR0912
+        - PLR0913
+        - PLR0914
+        - PLR0915
+        - PLR0917
+        - PLR1702
+        - PLR6301
+        - PLW2901
+        - PLW0108
+        - PLW3201
+        - PYI042
+        - Q000
+        - S608
+        - RUF001
+        - RUF002
+        - RUF003
+        - RUF005
+        - TC001
+        - TC002
+        - TC003
+        - TRY003
+        - TRY300
+        - TRY301
+        - UP040
+        - W293
       isort:
         combine-as-imports: true
         force-single-line: false
         split-on-trailing-comma: true
       per-file-ignores:
-        "**/.vulture_whitelist.py":
-          - "ALL"
-        "**/*_pb2*.py":
-          - "ALL"
-        "**/*dispatcher*": [] # BLE001 intentionally disabled for framework dispatcher code
-        "**/*docs*":
-          - "INP001"
-          - "S404" # subprocess import - docs scripts need subprocess for generation
-          - "S603" # subprocess calls - docs scripts need subprocess for generation
-          - "T201" # print - docs scripts demonstrate output
-        "**/*examples*":
-          - "ANN401" # any-type - examples can legitimately use object for flexibility
-          - "C901" # complex-structure - demonstration functions intentionally comprehensive
-          - "D103" # missing-docstring-in-public-function - demo functions are self-documenting via name
-          - "EXE001" # shebang - examples are meant to be executable
-          - "FBT001" # boolean-type-hint-positional-argument - examples use simple boolean args
-          - "FBT002" # boolean-default-value-positional-argument - examples use boolean defaults
-          - "FIX002" # line-contains-todo - examples may have legitimate TODOs
-          - "INP001"
-          - "N999" # Invalid module name (examples use numbered prefixes)
-          - "PLR2004" # magic numbers in examples
-          - "S105" # hardcoded-password-string - false positives in error code constants
-          - "S106" # hardcoded-password-func-arg
-          - "S112" # try-except-continue - examples may skip invalid items without logging
-          - "S404" # subprocess import - examples may demonstrate subprocess usage
-          - "S603" # subprocess calls - examples demonstrate command execution patterns
-          - "T201" # print - examples demonstrate output
-          - "TID252" # relative-imports
-        "**/*exceptions*":
-          - "A001" # variable-is-ambiguous - Allow ambiguous variable names in exceptions
-          - "S105" # hardcoded-password-string - false positives in error code constants
-          - "SLF001" # private-member-access - Allow private member access in exception classes
-        "**/*handlers*": [] # BLE001 intentionally disabled for framework handler execution
-        "**/*instrumentation*":
-          - "C901" # complex-structure - instrumentation setup functions are inherently complex
-          - "FBT001" # boolean-type-hint-positional-argument - required by framework callbacks
-          - "SLF001" # private-member-access - framework instrumentation patterns
-        "**/*loggings*":
-          - "PLW0603" # global-statement - necessary for lazy config loading to avoid circular imports
-          - "PLR0904" # too-many-public-methods - foundational logging class legitimately needs many public methods for its API
-        "**/*middleware*":
-          - "ANN401" # any-type - intentional to avoid circular imports between flext-auth/flext-api/flext-web
-          - "FBT001" # boolean-type-hint-positional-argument - middleware configuration pattern
-          - "FBT002" # boolean-default-value-positional-argument - middleware configuration pattern
-          - "PLC2801" # unnecessary-dunder-call - object.__setattr__ required for Pydantic extra="forbid"
-          - "S107" # hardcoded-password-default - "Bearer" is HTTP protocol keyword, not password
-        "**/*models*":
-          - "ANN401" # any-type - Pydantic 2 models legitimately use object in dict[str, object]
-          - "F821" # undefined-name - DomainEvent forward references in string literals for Pydantic
-          - "FBT001" # Boolean positional argument - required by Pydantic field serializers
-          - "PLC2701" # private-member-access - necessary for Pydantic model inheritance
-          - "PLR0206" # property-with-parameters - Pydantic @computed_field + @property is valid pattern
-          - "PLW0603" # global-statement - necessary for lazy config loading to avoid circular imports
-        "**/*oracle*":
-          - "DTZ007" # call-datetime-strptime-without-zone - timezone handled explicitly in code
-        "**/*result*":
-          - "PLC2701" # private-member-access - necessary for Pydantic model inheritance in result models
-          - "SLF001" # private-member-access - FlextResult accesses _exception on same-class instances
-        "**/*runtime*": [] # BLE001 intentionally disabled for runtime operations
-        "**/*scripts*":
-          - "EXE001"
-          - "FIX002" # line-contains-todo - scripts may have legitimate TODOs
-          - "INP001"
-          - "PLR0911"
-          - "PLR0912"
-          - "PLR0915"
-          - "PLR2004"
-          - "PLW2901" # redefined-loop-name - scripts may reassign loop variables
-          - "S105" # hardcoded-password-string - false positives in scripts
-          - "S107" # hardcoded-password-default
-          - "S404" # suspicious-subprocess-import - scripts need subprocess for automation
-          - "S603" # subprocess-without-shell-equals-true - scripts need subprocess calls
-          - "T201" # print
-          - "TID252" # relative-imports
-        "**/*service*":
-          - "N815" # mixedCase-variable-in-class-scope - SARIF spec mandates camelCase field names
-          - "S404" # subprocess import for controlled test execution
-          - "S603" # subprocess calls for controlled testing operations
-          - "SLF001" # private member access within class hierarchy
-          - "PLC2801" # object.__setattr__ - necessary for Pydantic frozen models and session management
-        "**/*subprocess_utils*":
-          - "S404" # suspicious-subprocess-import - controlled subprocess usage for quality checks
-          - "S603" # subprocess-without-shell-equals-true - safe subprocess calls with controlled input
-        "**/*tests*":
-          - "ARG001" # Unused function argument (helper functions for testing)
-          - "ARG002" # Unused method argument (test fixtures)
-          - "ARG004" # Unused static method argument (test helpers)
-          - "ARG005" # Unused lambda argument (test lambdas)
-          - "B009" # get-attr-with-constant - needed for dynamic module attributes in tests
-          - "B010" # set-attr-with-constant - needed for dynamic module attributes in tests
-          - "B018" # Useless attribute access (test assertions)
-          - "B903" # Dataclass suggestion (test classes don't need dataclass)
-          - "C901" # Function too complex (test helper functions can be complex)
-          - "F822" # Undefined name in __all__ (test exports may vary)
-          - "D102" # Missing docstring in public method - test methods don't need docstrings
-          - "D103" # Missing docstring in public function - test functions don't need docstrings
-          - "EM102" # F-string in exception (test error messages)
-          - "FBT001" # Boolean positional argument - acceptable in tests
-          - "FBT003"
-          - "FURB118" # operator usage (test readability more important)
-          - "INP001" # Allow implicit namespace packages in tests
-          - "N818" # Exception naming (custom test exceptions)
-          - "N999" # Invalid module name (project root uses 'flext-auth' for package distribution)
-          - "PLC0206" # dict iteration (test data structures)
-          - "PLC1901" # comparison-to-membership (test simplicity)
-          - "PLC2701" # Private imports (testing internal implementation)
-          - "PLC2801" # object.__setattr__ - necessary for testing Pydantic frozen models
-          - "PLR0904" # too-many-public-methods - test helpers and test classes can have many methods
-          - "PLR0913" # too-many-arguments - test functions can have many parameters for flexibility
-          - "PLR0914" # too-many-local-variables - test helper functions can have many local variables
-          - "PLR0917" # too-many-positional-arguments - test setup can require many positional args
-          - "PLR6301"
-          - "PLR0912"
-          - "PLR0915"
-          - "PLR1704" # Redefined-while-unused (test setup/teardown)
-          - "PLR2004" # Magic values (test values are self-documenting)
-          - "PLW2901" # Loop variable overwritten (test iterations)
-          - "PLW1641" # Missing __hash__ (test objects don't need hashing)
-          - "PT011"
-          - "PT018" # Assertion should be broken down - acceptable in tests for clarity
-          - "PT019" # Fixture without value - fixtures are used in function body
-          - "RUF029" # without (testing signatures)
-          - "S101" # Assert usage (pytest standard pattern)
-          - "S103"
-          - "S104"
-          - "S105"
-          - "S106"
-          - "S107"
-          - "S108" # Probable insecure usage of temp file - acceptable in tests
-          - "S110" # try-except-pass - acceptable in test cleanup code where exceptions are intentionally ignored
-          - "S112"
-          - "S311"
-          - "S404" # subprocess-without-shell-equals-true - tests may need subprocess
-          - "S603"
-          - "S608"
-          - "SIM105" # Use contextlib.suppress - tests may prefer explicit try/except
-          - "SIM117" # Nested with statements (test readability)
-          - "SLF001" # Private member access (testing internal implementation)
-          - "TD002" # TODO author (not needed in tests)
-          - "TD003"
-          - "TID252"
-          - "TRY003"
-          - "TRY004" # Prefer TypeError - test flexibility over strict exception types
-        "**/*typings*":
-          - "ANN401"
-        "**/*utilities*":
-          - "C901" # complex-structure - utility methods may be intentionally complex
-          - "PLW1510"
-          - "S404"
-          - "S603"
-        "**/__init__.py":
-          - "D107" # missing-docstring-in-init - __init__ methods in stubs don't need docstrings
-          - "F822" # undefined-name - lazy imports define names at runtime via __getattr__
-          - "N999" # invalid-module-name - project root uses 'flext-auth' for package distribution
-          - "RUF067" # __init__-module-should-only-contain-docstrings-and-re-exports - re-exports of aliases (c, m, r, t, u, p, d, e, h, s, x) are standard FLEXT pattern
-        "**/_utilities/parser.py":
-          - "ARG004" # unused-static-method-argument - overload implementations may not use all parameters
-          - "FBT001" # boolean-type-hint-positional-argument - required by type-generic conversion overloads
-        "**/config.py":
-          - "ANN401" # any-type - examples can legitimately use object for Pydantic 2 models
-          - "FBT001" # Boolean positional argument - required by Pydantic field serializers
-          - "SLF001" # private-member-access - necessary for config synchronization across modules
-        "**/constants.py":
-          - "S105" # hardcoded-password-string - false positives in error messages and descriptions
-        "**/container.py":
-          - "ANN401" # any-type - factory_wrapper *_args/**kwargs intentionally typed as Any for DI flexibility
-          - "SLF001" # private-member-access - accesses _namespace_registry on own class for config bootstrap
-        "**/context.py": [] # BLE001 intentionally disabled for context result patterns
-        "**/file_tools.py":
-          - "D102" # missing-docstring-in-public-method - file operation methods are self-describing
-        "**/managers.py":
-          - "S105" # hardcoded-password-string - false positives in event names (not passwords)
-        "**/models.py":
-          - "S102" # exec - necessary for dynamic command wrapper generation
-          - "PLC2801" # object.__setattr__ - necessary for Pydantic frozen models
-        "**/output.py":
-          - "FBT001" # boolean-type-hint-positional-argument - status() result flag is an essential positional boolean
-        "**/plugins/*.py":
-          - "FBT001" # boolean-type-hint-positional-argument - plugin configs use booleans
-          - "FBT002" # boolean-default-value-positional-argument - plugin configs use boolean defaults
-          - "S404" # subprocess import - plugins execute external tools
-          - "S603" # subprocess calls - plugins run external commands
-          - "S607" # start-process-with-partial-path - plugins run installed commands
-          - "TID252" # relative-imports - plugins may use relative imports
-        "**/providers/*.py":
-          - "S106" # hardcoded-password-func-arg - false positives in token_type parameters
-          - "S107" # hardcoded-password-default - false positives in token_type defaults
-        "**/services/prompts.py":
-          - "D102" # missing-docstring-in-public-method - prompt methods are self-describing
-          - "D107" # missing-docstring-in-init - Pydantic model init
-        "**/settings.py":
-          - "ANN401" # any-type - __new__ **_kwargs: Any required to match BaseSettings interface
-        "**/singer/*.py":
-          - "S404" # subprocess import for CLI execution of Singer taps/targets
-          - "S603" # subprocess calls for Singer CLI commands with validated input
-        "**/subprocess.py":
-          - "S404" # Command runner abstraction: only place subprocess is allowed (AGENTS.md §3).
-          - "S603" # Command runner abstraction: only place subprocess is allowed (AGENTS.md §3).
-        "**/tools/*.py":
-          - "FBT001" # boolean-type-hint-positional-argument - CLI tools use boolean flags
-          - "FBT002" # boolean-default-value-positional-argument - CLI tools use boolean defaults
-          - "N802" # invalid-function-name - libcst visitor methods require CamelCase (visit_ClassDef, etc.)
-          - "S404" # subprocess import - quality tools need subprocess for external tools
-          - "S603" # subprocess calls - quality tools run external linters
-          - "S607" # start-process-with-partial-path - quality tools run installed commands
-          - "T201" # print - CLI runners output to console
-        "**/tools/**/*.py":
-          - "FBT001" # boolean-type-hint-positional-argument - CLI tools use boolean flags
-          - "FBT002" # boolean-default-value-positional-argument - CLI tools use boolean defaults
-          - "N802" # invalid-function-name - libcst visitor methods require CamelCase (visit_ClassDef, etc.)
-          - "S404" # subprocess import - quality tools need subprocess for external tools
-          - "S603" # subprocess calls - quality tools run external linters
-          - "S607" # start-process-with-partial-path - quality tools run installed commands
-          - "T201" # print - CLI runners output to console
-        "**/typings.py":
-          - "RUF036" # none-not-at-end-of-union - None is correctly positioned at end of unions in FLEXT patterns
-
+        '**/.vulture_whitelist.py':
+          - ALL
+        '**/*_pb2*.py':
+          - ALL
+        '**/*dispatcher*': []
+        '**/*docs*':
+          - INP001
+          - S404
+          - S603
+          - T201
+        '**/*examples*':
+          - ANN401
+          - C901
+          - D103
+          - EXE001
+          - FBT001
+          - FBT002
+          - FIX002
+          - INP001
+          - N999
+          - PLR2004
+          - S105
+          - S106
+          - S112
+          - S404
+          - S603
+          - T201
+          - TID252
+        '**/*exceptions*':
+          - A001
+          - S105
+          - SLF001
+        '**/*handlers*': []
+        '**/*instrumentation*':
+          - C901
+          - FBT001
+          - SLF001
+        '**/*loggings*':
+          - PLW0603
+          - PLR0904
+        '**/*middleware*':
+          - ANN401
+          - FBT001
+          - FBT002
+          - PLC2801
+          - S107
+        '**/*models*':
+          - ANN401
+          - F821
+          - FBT001
+          - PLC2701
+          - PLR0206
+          - PLW0603
+        '**/*oracle*':
+          - DTZ007
+        '**/*result*':
+          - PLC2701
+          - SLF001
+        '**/*runtime*': []
+        '**/*scripts*':
+          - EXE001
+          - FIX002
+          - INP001
+          - PLR0911
+          - PLR0912
+          - PLR0915
+          - PLR2004
+          - PLW2901
+          - S105
+          - S107
+          - S404
+          - S603
+          - T201
+          - TID252
+        '**/*service*':
+          - N815
+          - S404
+          - S603
+          - SLF001
+          - PLC2801
+        '**/*subprocess_utils*':
+          - S404
+          - S603
+        '**/*tests*':
+          - ANN001
+          - ANN002
+          - ANN003
+          - ANN401
+          - ARG001
+          - ARG002
+          - ARG003
+          - ARG004
+          - ARG005
+          - B009
+          - B010
+          - B018
+          - B903
+          - C901
+          - D100
+          - D101
+          - D102
+          - D103
+          - D104
+          - D107
+          - EM102
+          - F822
+          - FBT001
+          - FBT002
+          - FBT003
+          - FURB118
+          - INP001
+          - N818
+          - N999
+          - PLC0206
+          - PLC1901
+          - PLC2701
+          - PLC2801
+          - PLR0904
+          - PLR0912
+          - PLR0913
+          - PLR0914
+          - PLR0915
+          - PLR0917
+          - PLR1704
+          - PLR2004
+          - PLR6301
+          - PLW1641
+          - PLW2901
+          - PT011
+          - PT018
+          - PT019
+          - PYI063
+          - RUF012
+          - RUF029
+          - S101
+          - S103
+          - S104
+          - S105
+          - S106
+          - S107
+          - S108
+          - S110
+          - S112
+          - S311
+          - S404
+          - S603
+          - S607
+          - S608
+          - SIM105
+          - SIM117
+          - SLF001
+          - TD002
+          - TD003
+          - TID252
+          - TRY003
+          - TRY004
+        '**/*typings*':
+          - ANN401
+        '**/*utilities*':
+          - C901
+          - PLW1510
+          - S404
+          - S603
+        '**/__init__.py':
+          - ANN401
+          - D107
+          - F822
+          - N999
+          - RUF067
+        '**/_utilities/parser.py':
+          - ARG004
+          - FBT001
+        '**/config.py':
+          - ANN401
+          - FBT001
+          - SLF001
+        '**/constants.py':
+          - S105
+        '**/container.py':
+          - ANN401
+          - SLF001
+        '**/context.py': []
+        '**/file_tools.py':
+          - D102
+        '**/managers.py':
+          - S105
+        '**/models.py':
+          - S102
+          - PLC2801
+        '**/output.py':
+          - FBT001
+        '**/plugins/*.py':
+          - FBT001
+          - FBT002
+          - S404
+          - S603
+          - S607
+          - TID252
+        '**/providers/*.py':
+          - S106
+          - S107
+        '**/services/prompts.py':
+          - D102
+          - D107
+        '**/settings.py':
+          - ANN401
+        '**/singer/*.py':
+          - S404
+          - S603
+        '**/subprocess.py':
+          - S404
+          - S603
+        '**/tools/*.py':
+          - FBT001
+          - FBT002
+          - N802
+          - S404
+          - S603
+          - S607
+          - T201
+        '**/tools/**/*.py':
+          - FBT001
+          - FBT002
+          - N802
+          - S404
+          - S603
+          - S607
+          - T201
+        '**/typings.py':
+          - RUF036
   mypy:
     plugins:
-      - "pydantic.mypy"
+      - pydantic.mypy
     disabled-error-codes:
-      - "prop-decorator"
+      - prop-decorator
     boolean-settings:
       ignore_missing_imports: true
       namespace_packages: true
       explicit_package_bases: true
-
   pydantic-mypy:
     init_forbid_extra: true
     init_typed: true
     warn_required_dynamic_aliases: true
-
   pyright:
     strict-settings:
-      pythonVersion: "3.13"
-      pythonPlatform: "Linux"
-      typeCheckingMode: "strict"
-
+      pythonVersion: '3.13'
+      pythonPlatform: Linux
+      typeCheckingMode: strict
   pyrefly:
     strict-errors:
-      - "deprecated"
-      - "redundant-cast"
-      - "implicit-abstract-class"
-      - "implicit-any"
-      - "implicitly-defined-attribute"
-      - "missing-override-decorator"
-      - "missing-source"
-      - "not-required-key-access"
-      - "open-unpacking"
-      - "protocol-implicitly-defined-attribute"
-      - "unannotated-attribute"
-      - "unannotated-parameter"
-      - "unannotated-return"
+      - deprecated
+      - redundant-cast
+      - implicit-abstract-class
+      - implicit-any
+      - implicitly-defined-attribute
+      - missing-override-decorator
+      - missing-source
+      - not-required-key-access
+      - open-unpacking
+      - protocol-implicitly-defined-attribute
+      - unannotated-attribute
+      - unannotated-parameter
+      - unannotated-return
     disabled-errors:
-      - "bad-override"
-
+      - bad-override
   pytest:
     standard-markers:
-      - "unit: unit tests"
-      - "integration: integration tests"
-      - "performance: performance and benchmark tests"
-      - "slow: slow-running tests"
-      - "docker: tests requiring Docker"
-      - "e2e: end-to-end integration tests"
-      - "edge_cases: edge case tests"
-      - "stress: stress tests"
-      - "resilience: resilience tests"
+      - 'unit: unit tests'
+      - 'integration: integration tests'
+      - 'performance: performance and benchmark tests'
+      - 'slow: slow-running tests'
+      - 'docker: tests requiring Docker'
+      - 'e2e: end-to-end integration tests'
+      - 'edge_cases: edge case tests'
+      - 'stress: stress tests'
+      - 'resilience: resilience tests'
     standard-addopts:
-      - "--strict-markers"
-
+      - --strict-markers
   tomlsort:
     all: true
     in_place: true
     sort_first:
-      - "project"
-      - "build-system"
-      - "tool"
-      - "dependency-groups"
-
+      - project
+      - build-system
+      - tool
+      - dependency-groups
   yamlfix:
     line_length: 88
     preserve_quotes: true

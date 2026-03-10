@@ -9,11 +9,9 @@ from flext_core import r
 from flext_infra import m
 from flext_infra.github import __main__ as github_main
 from flext_infra.github.workflows import SyncOperation
-
 from tests.infra.unit.github._stubs import (
     StubLinter,
     StubSyncer,
-    StubWorkspaceManager,
 )
 
 run_lint = getattr(github_main, "_run_lint")
@@ -24,15 +22,19 @@ main = github_main.main
 
 
 def _orchestration_result(
-    *, fail: int = 0, total: int = 1,
+    *,
+    fail: int = 0,
+    total: int = 1,
 ) -> m.Infra.Github.PrOrchestrationResult:
     return m.Infra.Github.PrOrchestrationResult(
-        total=total, success=max(total - fail, 0), fail=fail, results=(),
+        total=total,
+        success=max(total - fail, 0),
+        fail=fail,
+        results=(),
     )
 
 
 class TestRunWorkflows:
-
     def test_success(self, tmp_path: Path, monkeypatch: object) -> None:
         syncer = StubSyncer(sync_returns=r[list[SyncOperation]].ok([]))
         monkeypatch.setattr(github_main, "FlextInfraWorkflowSyncer", lambda: syncer)
@@ -64,11 +66,12 @@ class TestRunWorkflows:
 
 
 class TestRunLint:
-
     def _lint_ok(self) -> StubLinter:
-        return StubLinter(lint_returns=r[m.Infra.Github.WorkflowLintResult].ok(
-            m.Infra.Github.WorkflowLintResult.model_validate({"status": "ok"}),
-        ))
+        return StubLinter(
+            lint_returns=r[m.Infra.Github.WorkflowLintResult].ok(
+                m.Infra.Github.WorkflowLintResult.model_validate({"status": "ok"}),
+            )
+        )
 
     def test_success(self, tmp_path: Path, monkeypatch: object) -> None:
         linter = self._lint_ok()
@@ -95,7 +98,6 @@ class TestRunLint:
 
 
 class TestRunPr:
-
     def test_delegates_to_pr_main(self, monkeypatch: object) -> None:
         monkeypatch.setattr(github_main, "pr_main", lambda: 0)
         assert run_pr(["--repo-root", "/tmp", "--action", "status"]) == 0

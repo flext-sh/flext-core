@@ -394,7 +394,7 @@ class TestuCacheClearObjectCache:
         class TestObject:
             """Test object with dict cache."""
 
-            _cache: dict[str, str] = {}  # noqa: RUF012  # Test double; per-test isolation
+            _cache: dict[str, str] = {}  # Test double; per-test isolation
 
             def __init__(self) -> None:
                 self._cache = {"key1": "value1", "key2": "value2"}
@@ -440,9 +440,9 @@ class TestuCacheClearObjectCache:
         class TestObject:
             """Test object with multiple cache attributes."""
 
-            _cache: dict[str, int] = {}  # noqa: RUF012  # Test double
+            _cache: dict[str, int] = {}  # Test double
             _cached_value: str | None = "value"
-            _cached_at: dict[str, int] = {}  # noqa: RUF012  # Test double
+            _cached_at: dict[str, int] = {}  # Test double
 
             def __init__(self) -> None:
                 self._cache = {"a": 1}
@@ -560,7 +560,7 @@ class TestuCacheClearObjectCache:
         class ModelWithCache:
             model_config: ClassVar[dict[str, str]] = {"extra": "allow"}
             name: str
-            _cache: dict[str, str] = {}  # noqa: RUF012  # Test double; cleared by clear_object_cache
+            _cache: dict[str, str] = {}  # Test double; cleared by clear_object_cache
 
             def __init__(self, name: str = "") -> None:
                 self.name = name

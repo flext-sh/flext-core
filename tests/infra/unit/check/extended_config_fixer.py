@@ -9,10 +9,8 @@ from __future__ import annotations
 from collections.abc import Sequence
 from pathlib import Path
 
-import pytest
 import tomlkit
 
-from flext_core import r
 from flext_infra.check.services import FlextInfraConfigFixer
 from flext_tests import tm
 

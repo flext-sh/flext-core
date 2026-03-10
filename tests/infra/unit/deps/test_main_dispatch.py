@@ -20,7 +20,7 @@ _NO_STRUCTLOG = SimpleNamespace(ensure_structlog_configured=lambda: None)
 
 def _fake_module(return_value: object = 0) -> ModuleType:
     mod = ModuleType("fake_subcommand")
-    setattr(mod, "main", lambda: return_value)  # noqa: B010
+    setattr(mod, "main", lambda: return_value)
     return mod
 
 
@@ -172,7 +172,7 @@ class TestMainExceptionHandling:
             msg = "Test error"
             raise RuntimeError(msg)
 
-        setattr(error_mod, "main", raise_error)  # noqa: B010
+        setattr(error_mod, "main", raise_error)
         monkeypatch.setattr(
             main_mod,
             "importlib",

@@ -10,10 +10,8 @@ from pathlib import Path
 
 import pytest
 
-from flext_infra import m as im
 from flext_infra.workspace.migrator import FlextInfraProjectMigrator
 from flext_tests import tm
-
 from tests.infra.unit.test_infra_workspace_migrator import (
     _build_migrator,
     _project,
@@ -38,7 +36,8 @@ class TestMigratorInternalMakefile:
         migrator = _build_migrator(proj, "base")
 
         def _read_fail(*_a: object, **_kw: object) -> str:
-            raise OSError("Read failed")
+            msg = "Read failed"
+            raise OSError(msg)
 
         monkeypatch.setattr(Path, "read_text", _read_fail)
         tm.fail(migrator._migrate_makefile(tmp_path, dry_run=False), has="read failed")
@@ -64,7 +63,8 @@ class TestMigratorInternalPyproject:
         migrator = _build_migrator(proj, "base")
 
         def _write_fail(*_a: object, **_kw: object) -> None:
-            raise OSError("Write failed")
+            msg = "Write failed"
+            raise OSError(msg)
 
         monkeypatch.setattr(Path, "write_text", _write_fail)
         result = migrator._migrate_pyproject(

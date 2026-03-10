@@ -18,9 +18,18 @@ if TYPE_CHECKING:
 
 # Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
-    "TestInfraContainerFunctions": ("tests.infra.unit.container.test_infra_container", "TestInfraContainerFunctions"),
-    "TestInfraMroPattern": ("tests.infra.unit.container.test_infra_container", "TestInfraMroPattern"),
-    "TestInfraServiceRetrieval": ("tests.infra.unit.container.test_infra_container", "TestInfraServiceRetrieval"),
+    "TestInfraContainerFunctions": (
+        "tests.infra.unit.container.test_infra_container",
+        "TestInfraContainerFunctions",
+    ),
+    "TestInfraMroPattern": (
+        "tests.infra.unit.container.test_infra_container",
+        "TestInfraMroPattern",
+    ),
+    "TestInfraServiceRetrieval": (
+        "tests.infra.unit.container.test_infra_container",
+        "TestInfraServiceRetrieval",
+    ),
 }
 
 __all__ = [

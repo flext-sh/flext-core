@@ -82,21 +82,54 @@ if TYPE_CHECKING:
 # Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "ConsolidateGroupsPhase": ("flext_infra.deps.modernizer", "ConsolidateGroupsPhase"),
-    "EnsurePyreflyConfigPhase": ("flext_infra.deps.modernizer", "EnsurePyreflyConfigPhase"),
-    "EnsurePyrightConfigPhase": ("flext_infra.deps.modernizer", "EnsurePyrightConfigPhase"),
-    "EnsurePytestConfigPhase": ("flext_infra.deps.modernizer", "EnsurePytestConfigPhase"),
-    "FlextInfraDependencyDetectionModels": ("flext_infra.deps.detection", "FlextInfraDependencyDetectionModels"),
-    "FlextInfraDependencyDetectionService": ("flext_infra.deps.detection", "FlextInfraDependencyDetectionService"),
-    "FlextInfraDependencyDetectorModels": ("flext_infra.deps.detector", "FlextInfraDependencyDetectorModels"),
-    "FlextInfraInternalDependencySyncService": ("flext_infra.deps.internal_sync", "FlextInfraInternalDependencySyncService"),
-    "FlextInfraPyprojectModernizer": ("flext_infra.deps.modernizer", "FlextInfraPyprojectModernizer"),
-    "FlextInfraRuntimeDevDependencyDetector": ("flext_infra.deps.detector", "FlextInfraRuntimeDevDependencyDetector"),
-    "FlextInfraToolConfigDocument": ("flext_infra.deps.tool_config", "FlextInfraToolConfigDocument"),
+    "EnsurePyreflyConfigPhase": (
+        "flext_infra.deps.modernizer",
+        "EnsurePyreflyConfigPhase",
+    ),
+    "EnsurePyrightConfigPhase": (
+        "flext_infra.deps.modernizer",
+        "EnsurePyrightConfigPhase",
+    ),
+    "EnsurePytestConfigPhase": (
+        "flext_infra.deps.modernizer",
+        "EnsurePytestConfigPhase",
+    ),
+    "FlextInfraDependencyDetectionModels": (
+        "flext_infra.deps.detection",
+        "FlextInfraDependencyDetectionModels",
+    ),
+    "FlextInfraDependencyDetectionService": (
+        "flext_infra.deps.detection",
+        "FlextInfraDependencyDetectionService",
+    ),
+    "FlextInfraDependencyDetectorModels": (
+        "flext_infra.deps.detector",
+        "FlextInfraDependencyDetectorModels",
+    ),
+    "FlextInfraInternalDependencySyncService": (
+        "flext_infra.deps.internal_sync",
+        "FlextInfraInternalDependencySyncService",
+    ),
+    "FlextInfraPyprojectModernizer": (
+        "flext_infra.deps.modernizer",
+        "FlextInfraPyprojectModernizer",
+    ),
+    "FlextInfraRuntimeDevDependencyDetector": (
+        "flext_infra.deps.detector",
+        "FlextInfraRuntimeDevDependencyDetector",
+    ),
+    "FlextInfraToolConfigDocument": (
+        "flext_infra.deps.tool_config",
+        "FlextInfraToolConfigDocument",
+    ),
     "InjectCommentsPhase": ("flext_infra.deps.modernizer", "InjectCommentsPhase"),
     "ROOT": ("flext_infra.deps.extra_paths", "ROOT"),
     "_array": ("flext_infra.deps.modernizer", "_array"),
     "_as_string_list": ("flext_infra.deps.modernizer", "_as_string_list"),
-    "_canonical_dev_dependencies": ("flext_infra.deps.modernizer", "_canonical_dev_dependencies"),
+    "_canonical_dev_dependencies": (
+        "flext_infra.deps.modernizer",
+        "_canonical_dev_dependencies",
+    ),
     "_dedupe_specs": ("flext_infra.deps.modernizer", "_dedupe_specs"),
     "_dep_name": ("flext_infra.deps.modernizer", "_dep_name"),
     "_ensure_table": ("flext_infra.deps.modernizer", "_ensure_table"),
@@ -112,14 +145,20 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "discover_projects": ("flext_infra.deps.detection", "discover_projects"),
     "dm": ("flext_infra.deps.detection", "dm"),
     "extract_dep_name": ("flext_infra.deps.path_sync", "extract_dep_name"),
-    "get_current_typings_from_pyproject": ("flext_infra.deps.detection", "get_current_typings_from_pyproject"),
+    "get_current_typings_from_pyproject": (
+        "flext_infra.deps.detection",
+        "get_current_typings_from_pyproject",
+    ),
     "get_dep_paths": ("flext_infra.deps.extra_paths", "get_dep_paths"),
     "get_required_typings": ("flext_infra.deps.detection", "get_required_typings"),
     "load_dependency_limits": ("flext_infra.deps.detection", "load_dependency_limits"),
     "load_tool_config": ("flext_infra.deps.tool_config", "load_tool_config"),
     "m": ("flext_infra.deps.detection", "FlextInfraDependencyDetectionModels"),
     "main": ("flext_infra.deps.path_sync", "main"),
-    "module_to_types_package": ("flext_infra.deps.detection", "module_to_types_package"),
+    "module_to_types_package": (
+        "flext_infra.deps.detection",
+        "module_to_types_package",
+    ),
     "path_dep_paths": ("flext_infra.deps.extra_paths", "path_dep_paths"),
     "path_dep_paths_pep621": ("flext_infra.deps.extra_paths", "path_dep_paths_pep621"),
     "path_dep_paths_poetry": ("flext_infra.deps.extra_paths", "path_dep_paths_poetry"),

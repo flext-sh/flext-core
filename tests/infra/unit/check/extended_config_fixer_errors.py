@@ -98,7 +98,8 @@ class TestProcessFileReadError:
 
         def _raise(_self: Path, encoding: str = "utf-8") -> str:
             del encoding
-            raise OSError("read error")
+            msg = "read error"
+            raise OSError(msg)
 
         monkeypatch.setattr(Path, "read_text", _raise)
         tm.fail(fixer.process_file(tmp_path / "pyproject.toml"), has="read error")
@@ -137,7 +138,8 @@ class TestProcessFileReadError:
 
         def _raise_on_write(self_path: Path, data: str, **kw: str) -> None:
             if self_path == pyproject:
-                raise OSError("write error")
+                msg = "write error"
+                raise OSError(msg)
             original_write(self_path, data, **kw)
 
         monkeypatch.setattr(FlextInfraConfigFixer, "_fix_search_paths_tk", _fake_fix)

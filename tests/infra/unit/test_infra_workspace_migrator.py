@@ -10,8 +10,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
-
 from flext_core import r
 from flext_infra import m as im
 from flext_infra.workspace.migrator import FlextInfraProjectMigrator

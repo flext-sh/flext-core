@@ -10,7 +10,6 @@ from pathlib import Path
 
 import pytest
 
-from flext_core import r
 from flext_infra import m
 from flext_infra.check.services import (
     FlextInfraWorkspaceChecker,

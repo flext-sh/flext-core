@@ -10,19 +10,13 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from types import SimpleNamespace
-from typing import TYPE_CHECKING
 
-from flext_core import r
 from flext_infra import m
 from flext_infra.check.services import (
     _CheckIssue,
     _GateExecution,
     _ProjectResult,
 )
-
-if TYPE_CHECKING:
-    from collections.abc import Callable, Sequence
-    from pathlib import Path
 
 
 class Spy:

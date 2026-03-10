@@ -24,10 +24,22 @@ if TYPE_CHECKING:
 
 # Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
-    "PerformanceBenchmark": ("tests.benchmark.test_container_performance", "PerformanceBenchmark"),
-    "TestContainerMemory": ("tests.benchmark.test_container_memory", "TestContainerMemory"),
-    "TestContainerPerformance": ("tests.benchmark.test_container_performance", "TestContainerPerformance"),
-    "TestPerformanceBenchmarks": ("tests.benchmark.test_refactor_nesting_performance", "TestPerformanceBenchmarks"),
+    "PerformanceBenchmark": (
+        "tests.benchmark.test_container_performance",
+        "PerformanceBenchmark",
+    ),
+    "TestContainerMemory": (
+        "tests.benchmark.test_container_memory",
+        "TestContainerMemory",
+    ),
+    "TestContainerPerformance": (
+        "tests.benchmark.test_container_performance",
+        "TestContainerPerformance",
+    ),
+    "TestPerformanceBenchmarks": (
+        "tests.benchmark.test_refactor_nesting_performance",
+        "TestPerformanceBenchmarks",
+    ),
     "get_memory_usage": ("tests.benchmark.test_container_memory", "get_memory_usage"),
 }
 

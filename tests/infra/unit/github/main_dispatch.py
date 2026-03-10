@@ -7,7 +7,6 @@ from pathlib import Path
 from flext_core import r
 from flext_infra import m
 from flext_infra.github import __main__ as github_main
-
 from tests.infra.unit.github._stubs import StubWorkspaceManager
 
 run_pr_workspace = getattr(github_main, "_run_pr_workspace")

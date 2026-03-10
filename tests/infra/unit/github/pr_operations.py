@@ -51,7 +51,9 @@ class TestChecks:
 class TestMerge:
     def test_merge_success(self, tmp_path: Path) -> None:
         runner = StubRunner(run_returns=[r[bool].ok(True)])
-        result = _mgr(runner=runner).merge(tmp_path, "42", "feature", release_on_merge=False)
+        result = _mgr(runner=runner).merge(
+            tmp_path, "42", "feature", release_on_merge=False
+        )
         tm.ok(result)
         tm.that(result.value["status"], eq="merged")
 
@@ -60,10 +62,16 @@ class TestMerge:
         tm.fail(_mgr(runner=runner).merge(tmp_path, "42", "feature"))
 
     def test_merge_not_mergeable_retry(self, tmp_path: Path) -> None:
-        runner = StubRunner(run_returns=[
-            r[bool].fail("not mergeable"), r[bool].ok(True), r[bool].ok(True),
-        ])
-        tm.ok(_mgr(runner=runner).merge(tmp_path, "42", "feature", release_on_merge=False))
+        runner = StubRunner(
+            run_returns=[
+                r[bool].fail("not mergeable"),
+                r[bool].ok(True),
+                r[bool].ok(True),
+            ]
+        )
+        tm.ok(
+            _mgr(runner=runner).merge(tmp_path, "42", "feature", release_on_merge=False)
+        )
 
     def test_merge_selector_same_as_head_no_pr(self, tmp_path: Path) -> None:
         runner = StubRunner(capture_returns=[r[str].ok("[]")])
@@ -76,14 +84,24 @@ class TestMerge:
         runner = StubRunner(run_returns=[r[bool].ok(True), r[bool].ok(True)])
         (tmp_path / ".github" / "workflows").mkdir(parents=True)
         (tmp_path / ".github" / "workflows" / "release.yml").write_text("name: Release")
-        tm.ok(_mgr(runner=runner, versioning=versioning).merge(
-            tmp_path, "42", "release/1.0", release_on_merge=True,
-        ))
+        tm.ok(
+            _mgr(runner=runner, versioning=versioning).merge(
+                tmp_path,
+                "42",
+                "release/1.0",
+                release_on_merge=True,
+            )
+        )
 
     def test_merge_auto_and_delete_branch(self, tmp_path: Path) -> None:
         runner = StubRunner(run_returns=[r[bool].ok(True)])
         result = _mgr(runner=runner).merge(
-            tmp_path, "42", "feature", auto=True, delete_branch=True, release_on_merge=False,
+            tmp_path,
+            "42",
+            "feature",
+            auto=True,
+            delete_branch=True,
+            release_on_merge=False,
         )
         tm.ok(result)
         tm.that(runner.run_calls[0], contains="--auto")
@@ -92,7 +110,11 @@ class TestMerge:
     def test_merge_rebase_method(self, tmp_path: Path) -> None:
         runner = StubRunner(run_returns=[r[bool].ok(True)])
         result = _mgr(runner=runner).merge(
-            tmp_path, "42", "feature", method="rebase", release_on_merge=False,
+            tmp_path,
+            "42",
+            "feature",
+            method="rebase",
+            release_on_merge=False,
         )
         tm.ok(result)
         tm.that(runner.run_calls[0], contains="--rebase")
@@ -121,7 +143,9 @@ class TestTriggerRelease:
     def test_no_release_tag(self, tmp_path: Path) -> None:
         self._release_setup(tmp_path)
         versioning = StubVersioning(release_tag_returns=r[str].fail("no tag"))
-        result = _mgr(versioning=versioning)._trigger_release_if_needed(tmp_path, "feature")
+        result = _mgr(versioning=versioning)._trigger_release_if_needed(
+            tmp_path, "feature"
+        )
         tm.ok(result)
         tm.that(result.value["status"], eq="no-release-tag")
 
@@ -130,7 +154,8 @@ class TestTriggerRelease:
         versioning = StubVersioning(release_tag_returns=r[str].ok("v1.0.0"))
         runner = StubRunner(run_returns=[r[bool].ok(True)])
         result = _mgr(runner=runner, versioning=versioning)._trigger_release_if_needed(
-            tmp_path, "release/1.0",
+            tmp_path,
+            "release/1.0",
         )
         tm.ok(result)
         tm.that(result.value["status"], eq="release-exists")
@@ -140,7 +165,8 @@ class TestTriggerRelease:
         versioning = StubVersioning(release_tag_returns=r[str].ok("v1.0.0"))
         runner = StubRunner(run_returns=[r[bool].fail("not found"), r[bool].ok(True)])
         result = _mgr(runner=runner, versioning=versioning)._trigger_release_if_needed(
-            tmp_path, "release/1.0",
+            tmp_path,
+            "release/1.0",
         )
         tm.ok(result)
         tm.that(result.value["status"], eq="release-dispatched")
@@ -152,7 +178,8 @@ class TestTriggerRelease:
             run_returns=[r[bool].fail("not found"), r[bool].fail("dispatch failed")],
         )
         result = _mgr(runner=runner, versioning=versioning)._trigger_release_if_needed(
-            tmp_path, "release/1.0",
+            tmp_path,
+            "release/1.0",
         )
         tm.ok(result)
         tm.that(result.value["status"], eq="release-dispatch-failed")
