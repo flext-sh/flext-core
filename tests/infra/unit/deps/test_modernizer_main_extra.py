@@ -9,6 +9,7 @@ import pytest
 import tomlkit
 
 import flext_infra.deps.modernizer as modernizer_module
+from flext_core import t
 from flext_infra.deps.modernizer import FlextInfraPyprojectModernizer
 from flext_tests import tm
 
@@ -95,7 +96,9 @@ class TestModernizerUncoveredLines:
         def _read_doc(_path: Path) -> tomlkit.TOMLDocument:
             return doc
 
-        def _process_file(*_args: object, **_kwargs: object) -> list[str]:
+        def _process_file(
+            *_args: t.ContainerValue, **_kwargs: t.ContainerValue
+        ) -> list[str]:
             return []
 
         monkeypatch.setattr(modernizer, "find_pyproject_files", _find_files)

@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pytest
 
-from flext_core import r
+from flext_core import r, t
 from flext_infra import m
 from flext_infra.docs.fixer import FlextInfraDocFixer
 from flext_infra.docs.shared import FlextInfraDocsShared
@@ -137,8 +137,10 @@ class TestFixerCore:
     ) -> None:
         """Test fix returns failure when scope building fails."""
 
-        def mock_build_scopes(*args: object, **kwargs: object) -> r[list[object]]:
-            return r[list[object]].fail("Scope error")
+        def mock_build_scopes(
+            *args: t.ContainerValue, **kwargs: t.ContainerValue
+        ) -> r[list[t.ContainerValue]]:
+            return r[list[t.ContainerValue]].fail("Scope error")
 
         monkeypatch.setattr(FlextInfraDocsShared, "build_scopes", mock_build_scopes)
         result = fixer.fix(tmp_path)

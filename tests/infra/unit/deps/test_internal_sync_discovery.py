@@ -3,25 +3,25 @@ from __future__ import annotations
 import types
 from pathlib import Path
 
-from flext_core import r
+from flext_core import r, t
 from flext_infra.deps.internal_sync import FlextInfraInternalDependencySyncService
 from flext_tests import tm
 
 
 def _set_toml_stub(
     service: FlextInfraInternalDependencySyncService,
-    value: object,
+    value: t.ContainerValue,
 ) -> None:
     service.toml = types.SimpleNamespace(read_plain=lambda _path: value)
 
 
 def _set_toml_sequence(
     service: FlextInfraInternalDependencySyncService,
-    values: list[object],
+    values: list[t.ContainerValue],
 ) -> None:
     state = {"index": 0}
 
-    def _next(_path: Path) -> object:
+    def _next(_path: Path) -> t.ContainerValue:
         item = values[state["index"]]
         state["index"] += 1
         return item
@@ -64,7 +64,7 @@ class TestParseRepoMap:
         service = FlextInfraInternalDependencySyncService()
         _set_toml_stub(
             service,
-            r[dict[str, object]].ok({
+            r[dict[str, t.ContainerValue]].ok({
                 "repo": {
                     "flext-core": {
                         "ssh_url": "git@github.com:flext-sh/flext-core.git",
@@ -79,30 +79,36 @@ class TestParseRepoMap:
 
     def test_parse_repo_map_read_failure(self) -> None:
         service = FlextInfraInternalDependencySyncService()
-        _set_toml_stub(service, r[dict[str, object]].fail("file not found"))
+        _set_toml_stub(service, r[dict[str, t.ContainerValue]].fail("file not found"))
         tm.fail(service.parse_repo_map(Path("/fake/map.toml")))
 
     def test_parse_repo_map_no_repo_section(self) -> None:
         service = FlextInfraInternalDependencySyncService()
-        _set_toml_stub(service, r[dict[str, object]].ok({"other": "data"}))
+        _set_toml_stub(service, r[dict[str, t.ContainerValue]].ok({"other": "data"}))
         tm.ok(service.parse_repo_map(Path("/fake/map.toml")), eq={})
 
     def test_parse_repo_map_non_dict_repo(self) -> None:
         service = FlextInfraInternalDependencySyncService()
-        _set_toml_stub(service, r[dict[str, object]].ok({"repo": "not-a-dict"}))
+        _set_toml_stub(
+            service, r[dict[str, t.ContainerValue]].ok({"repo": "not-a-dict"})
+        )
         tm.ok(service.parse_repo_map(Path("/fake/map.toml")), eq={})
 
     def test_parse_repo_map_non_dict_values(self) -> None:
         service = FlextInfraInternalDependencySyncService()
         _set_toml_stub(
-            service, r[dict[str, object]].ok({"repo": {"flext-core": "string-value"}})
+            service,
+            r[dict[str, t.ContainerValue]].ok({"repo": {"flext-core": "string-value"}}),
         )
         tm.ok(service.parse_repo_map(Path("/fake/map.toml")), eq={})
 
     def test_parse_repo_map_no_ssh_url(self) -> None:
         service = FlextInfraInternalDependencySyncService()
         _set_toml_stub(
-            service, r[dict[str, object]].ok({"repo": {"flext-core": {"other": "val"}}})
+            service,
+            r[dict[str, t.ContainerValue]].ok({
+                "repo": {"flext-core": {"other": "val"}}
+            }),
         )
         tm.ok(service.parse_repo_map(Path("/fake/map.toml")), eq={})
 
@@ -110,7 +116,7 @@ class TestParseRepoMap:
         service = FlextInfraInternalDependencySyncService()
         _set_toml_stub(
             service,
-            r[dict[str, object]].ok({
+            r[dict[str, t.ContainerValue]].ok({
                 "repo": {
                     "flext-core": {"ssh_url": "git@github.com:flext-sh/flext-core.git"}
                 }
@@ -132,7 +138,7 @@ class TestCollectInternalDeps:
         service = FlextInfraInternalDependencySyncService()
         _set_toml_stub(
             service,
-            r[dict[str, object]].ok({
+            r[dict[str, t.ContainerValue]].ok({
                 "tool": {
                     "poetry": {
                         "dependencies": {
@@ -153,7 +159,7 @@ class TestCollectInternalDeps:
         service = FlextInfraInternalDependencySyncService()
         _set_toml_stub(
             service,
-            r[dict[str, object]].ok({
+            r[dict[str, t.ContainerValue]].ok({
                 "tool": {},
                 "project": {
                     "dependencies": [
@@ -170,7 +176,7 @@ class TestCollectInternalDeps:
 
     def test_read_failure(self, tmp_path: Path) -> None:
         service = FlextInfraInternalDependencySyncService()
-        _set_toml_stub(service, r[dict[str, object]].fail("parse error"))
+        _set_toml_stub(service, r[dict[str, t.ContainerValue]].fail("parse error"))
         (tmp_path / "pyproject.toml").write_text("")
         tm.fail(service.collect_internal_deps(tmp_path))
 
@@ -179,8 +185,8 @@ class TestCollectInternalDeps:
         _set_toml_sequence(
             service,
             [
-                r[dict[str, object]].ok({"project": {}}),
-                r[dict[str, object]].ok({
+                r[dict[str, t.ContainerValue]].ok({"project": {}}),
+                r[dict[str, t.ContainerValue]].ok({
                     "tool": {"poetry": {"dependencies": "not-a-dict"}},
                     "project": {"dependencies": "not-a-list"},
                 }),

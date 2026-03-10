@@ -15,6 +15,7 @@ from types import ModuleType, SimpleNamespace
 
 import pytest
 
+from flext_core import t
 from flext_infra.deps import __main__ as deps_main
 from flext_infra.deps.__main__ import _SUBCOMMANDS, main
 from flext_tests import tm
@@ -22,21 +23,23 @@ from flext_tests import tm
 _NO_STRUCTLOG = SimpleNamespace(ensure_structlog_configured=lambda: None)
 
 
-def _fake_module(return_value: object = 0) -> ModuleType:
+def _fake_module(return_value: t.ContainerValue = 0) -> ModuleType:
     """Create a real ModuleType with a main() returning *return_value*."""
     mod = ModuleType("fake_subcommand")
     setattr(mod, "main", lambda: return_value)
     return mod
 
 
-def _stub_import(mod: ModuleType) -> object:
+def _stub_import(mod: ModuleType) -> t.ContainerValue:
     def _import(name: str) -> ModuleType:
         return mod
 
     return _import
 
 
-def _patch_dispatch(mp: pytest.MonkeyPatch, argv: list[str], ret: object = 0) -> None:
+def _patch_dispatch(
+    mp: pytest.MonkeyPatch, argv: list[str], ret: t.ContainerValue = 0
+) -> None:
     """Patch sys.argv, FlextRuntime, and importlib for dispatch tests."""
     mp.setattr(sys, "argv", argv)
     mp.setattr(deps_main, "FlextRuntime", _NO_STRUCTLOG)
@@ -120,7 +123,7 @@ class TestMainReturnValues:
     def test_return_value_normalization(
         self,
         monkeypatch: pytest.MonkeyPatch,
-        return_val: object,
+        return_val: t.ContainerValue,
         expected: int,
     ) -> None:
         """Test main normalizes subcommand return values."""

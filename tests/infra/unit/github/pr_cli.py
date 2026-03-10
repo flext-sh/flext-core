@@ -7,13 +7,13 @@ from pathlib import Path
 
 import pytest
 
-from flext_core import r
+from flext_core import r, t
 from flext_infra.github import pr as pr_module
 from flext_infra.github.pr import _parse_args, _selector, main
 from flext_tests import tm
 from tests.infra.unit.github._stubs import StubPrManager, StubUtilities
 
-_DEFAULTS: dict[str, object] = {
+_DEFAULTS: dict[str, t.ContainerValue] = {
     "action": "status",
     "repo_root": Path("/tmp/test"),
     "base": "main",
@@ -30,7 +30,7 @@ _DEFAULTS: dict[str, object] = {
 }
 
 
-def _args(**overrides: object) -> argparse.Namespace:
+def _args(**overrides: t.ContainerValue) -> argparse.Namespace:
     return argparse.Namespace(**{**_DEFAULTS, **overrides})
 
 
@@ -50,25 +50,29 @@ class TestMainFunction:
 
     def test_status_success(self, monkeypatch: pytest.MonkeyPatch) -> None:
         mgr = StubPrManager(
-            status_returns=[r[dict[str, object]].ok({"status": "open"})]
+            status_returns=[r[dict[str, t.ContainerValue]].ok({"status": "open"})]
         )
         self._setup(monkeypatch, _args(action="status"), mgr)
         tm.that(main(), eq=0)
 
     def test_status_failure(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        mgr = StubPrManager(status_returns=[r[dict[str, object]].fail("error")])
+        mgr = StubPrManager(
+            status_returns=[r[dict[str, t.ContainerValue]].fail("error")]
+        )
         self._setup(monkeypatch, _args(action="status"), mgr)
         tm.that(main(), eq=1)
 
     def test_create_success(self, monkeypatch: pytest.MonkeyPatch) -> None:
         mgr = StubPrManager(
-            create_returns=[r[dict[str, object]].ok({"status": "created"})]
+            create_returns=[r[dict[str, t.ContainerValue]].ok({"status": "created"})]
         )
         self._setup(monkeypatch, _args(action="create"), mgr)
         tm.that(main(), eq=0)
 
     def test_create_failure(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        mgr = StubPrManager(create_returns=[r[dict[str, object]].fail("create failed")])
+        mgr = StubPrManager(
+            create_returns=[r[dict[str, t.ContainerValue]].fail("create failed")]
+        )
         self._setup(monkeypatch, _args(action="create"), mgr)
         tm.that(main(), eq=1)
 
@@ -84,13 +88,17 @@ class TestMainFunction:
 
     def test_checks_success(self, monkeypatch: pytest.MonkeyPatch) -> None:
         mgr = StubPrManager(
-            checks_returns=[r[dict[str, object]].ok({"status": "checks-passed"})]
+            checks_returns=[
+                r[dict[str, t.ContainerValue]].ok({"status": "checks-passed"})
+            ]
         )
         self._setup(monkeypatch, _args(action="checks", number="42"), mgr)
         tm.that(main(), eq=0)
 
     def test_checks_failure(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        mgr = StubPrManager(checks_returns=[r[dict[str, object]].fail("checks failed")])
+        mgr = StubPrManager(
+            checks_returns=[r[dict[str, t.ContainerValue]].fail("checks failed")]
+        )
         self._setup(
             monkeypatch, _args(action="checks", number="42", checks_strict=1), mgr
         )
@@ -98,13 +106,15 @@ class TestMainFunction:
 
     def test_merge_success(self, monkeypatch: pytest.MonkeyPatch) -> None:
         mgr = StubPrManager(
-            merge_returns=[r[dict[str, object]].ok({"status": "merged"})]
+            merge_returns=[r[dict[str, t.ContainerValue]].ok({"status": "merged"})]
         )
         self._setup(monkeypatch, _args(action="merge", number="42"), mgr)
         tm.that(main(), eq=0)
 
     def test_merge_failure(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        mgr = StubPrManager(merge_returns=[r[dict[str, object]].fail("merge failed")])
+        mgr = StubPrManager(
+            merge_returns=[r[dict[str, t.ContainerValue]].fail("merge failed")]
+        )
         self._setup(monkeypatch, _args(action="merge", number="42"), mgr)
         tm.that(main(), eq=1)
 
@@ -128,63 +138,58 @@ class TestParseArgs:
     def test_defaults(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr("sys.argv", ["prog"])
         args = _parse_args()
-        tm.that(args.action, eq="status")
-        tm.that(args.base, eq="main")
-        tm.that(args.head, eq="")
-        tm.that(args.number, eq="")
-        tm.that(args.title, eq="")
-        tm.that(args.body, eq="")
-        tm.that(args.draft, eq=0)
-        tm.that(args.merge_method, eq="squash")
-        tm.that(args.auto, eq=0)
-        tm.that(args.delete_branch, eq=0)
-        tm.that(args.checks_strict, eq=0)
-        tm.that(args.release_on_merge, eq=1)
+        expected_defaults = {
+            "action": "status",
+            "base": "main",
+            "head": "",
+            "number": "",
+            "title": "",
+            "body": "",
+            "draft": 0,
+            "merge_method": "squash",
+            "auto": 0,
+            "delete_branch": 0,
+            "checks_strict": 0,
+            "release_on_merge": 1,
+        }
+        for attr, expected in expected_defaults.items():
+            tm.that(getattr(args, attr), eq=expected)
 
     def test_custom_values(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(
             "sys.argv",
             [
                 "prog",
-                "--action",
-                "create",
-                "--base",
-                "develop",
-                "--head",
-                "feature/test",
-                "--number",
-                "42",
-                "--title",
-                "Test PR",
-                "--body",
-                "Test body",
-                "--draft",
-                "1",
-                "--merge-method",
-                "rebase",
-                "--auto",
-                "1",
-                "--delete-branch",
-                "1",
-                "--checks-strict",
-                "1",
-                "--release-on-merge",
-                "0",
+                *["--action", "create", "--base", "develop", "--head", "feature/test"],
+                *["--number", "42", "--title", "Test PR", "--body", "Test body"],
+                *["--draft", "1", "--merge-method", "rebase", "--auto", "1"],
+                *[
+                    "--delete-branch",
+                    "1",
+                    "--checks-strict",
+                    "1",
+                    "--release-on-merge",
+                    "0",
+                ],
             ],
         )
         args = _parse_args()
-        tm.that(args.action, eq="create")
-        tm.that(args.base, eq="develop")
-        tm.that(args.head, eq="feature/test")
-        tm.that(args.number, eq="42")
-        tm.that(args.title, eq="Test PR")
-        tm.that(args.body, eq="Test body")
-        tm.that(args.draft, eq=1)
-        tm.that(args.merge_method, eq="rebase")
-        tm.that(args.auto, eq=1)
-        tm.that(args.delete_branch, eq=1)
-        tm.that(args.checks_strict, eq=1)
-        tm.that(args.release_on_merge, eq=0)
+        expected_values = {
+            "action": "create",
+            "base": "develop",
+            "head": "feature/test",
+            "number": "42",
+            "title": "Test PR",
+            "body": "Test body",
+            "draft": 1,
+            "merge_method": "rebase",
+            "auto": 1,
+            "delete_branch": 1,
+            "checks_strict": 1,
+            "release_on_merge": 0,
+        }
+        for attr, expected in expected_values.items():
+            tm.that(getattr(args, attr), eq=expected)
 
 
 class TestSelectorFunction:

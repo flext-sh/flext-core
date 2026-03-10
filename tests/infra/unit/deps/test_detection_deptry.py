@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 
+from flext_core import t
 from flext_infra import m
 from flext_infra.deps.detection import FlextInfraDependencyDetectionService
 from flext_tests import tm
@@ -12,7 +13,7 @@ from flext_tests import tm
 
 class _FakeResult:
     def __init__(
-        self, success: bool, value: object = None, error: str | None = None
+        self, success: bool, value: t.ContainerValue = None, error: str | None = None
     ) -> None:
         self.is_success = success
         self.is_failure = not success
@@ -24,7 +25,9 @@ class _StubRunner:
     def __init__(self, result: _FakeResult) -> None:
         self._result = result
 
-    def run_raw(self, *args: object, **kwargs: object) -> _FakeResult:
+    def run_raw(
+        self, *args: t.ContainerValue, **kwargs: t.ContainerValue
+    ) -> _FakeResult:
         _ = args
         _ = kwargs
         return self._result

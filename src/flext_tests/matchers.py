@@ -401,7 +401,7 @@ class FlextTestsMatchers:
 
     @staticmethod
     @overload
-    def ok[TResult: t.Tests.ContainerValue](
+    def ok[TResult](
         result: r[TResult], **kwargs: t.Tests.Matcher.MatcherKwargValue
     ) -> TResult | t.Tests.ContainerValue: ...
 

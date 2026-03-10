@@ -3,7 +3,7 @@ from __future__ import annotations
 import types
 from pathlib import Path
 
-from flext_core import r
+from flext_core import r, t
 from flext_infra.deps.internal_sync import FlextInfraInternalDependencySyncService
 from flext_tests import tm
 from tests.infra import h
@@ -11,11 +11,11 @@ from tests.infra import h
 
 def _set_toml_sequence(
     service: FlextInfraInternalDependencySyncService,
-    values: list[object],
+    values: list[t.ContainerValue],
 ) -> None:
     state = {"index": 0}
 
-    def _next(_path: Path) -> object:
+    def _next(_path: Path) -> t.ContainerValue:
         item = values[state["index"]]
         state["index"] += 1
         return item
@@ -27,7 +27,7 @@ class TestCollectInternalDepsEdgeCases:
     def test_collect_internal_deps_variants(self, tmp_path: Path) -> None:
         (tmp_path / "pyproject.toml").write_text("x")
 
-        def _collect(value: object):
+        def _collect(value: t.ContainerValue):
             service = FlextInfraInternalDependencySyncService()
             _set_toml_sequence(service, [value])
             result = service.collect_internal_deps(tmp_path)
@@ -35,7 +35,7 @@ class TestCollectInternalDepsEdgeCases:
             return result
 
         one_result = _collect(
-            r[dict[str, object]].ok({
+            r[dict[str, t.ContainerValue]].ok({
                 "tool": {
                     "poetry": {
                         "dependencies": {"flext-core": {"path": "../flext-core"}}
@@ -45,13 +45,13 @@ class TestCollectInternalDepsEdgeCases:
             })
         )
         two_result = _collect(
-            r[dict[str, object]].ok({
+            r[dict[str, t.ContainerValue]].ok({
                 "tool": {},
                 "project": {"dependencies": ["flext-core @ file:../flext-core"]},
             })
         )
         three_result = _collect(
-            r[dict[str, object]].ok({
+            r[dict[str, t.ContainerValue]].ok({
                 "tool": {
                     "poetry": {
                         "dependencies": {"external-lib": {"path": "some/nested/path"}}
@@ -61,19 +61,19 @@ class TestCollectInternalDepsEdgeCases:
             })
         )
         four_result = _collect(
-            r[dict[str, object]].ok({
+            r[dict[str, t.ContainerValue]].ok({
                 "tool": {"poetry": {"dependencies": {"flext-core": {"path": 123}}}},
                 "project": {},
             })
         )
         five_result = _collect(
-            r[dict[str, object]].ok({
+            r[dict[str, t.ContainerValue]].ok({
                 "tool": {},
                 "project": {"dependencies": ["flext-core @"]},
             })
         )
         six_result = _collect(
-            r[dict[str, object]].ok({
+            r[dict[str, t.ContainerValue]].ok({
                 "tool": {},
                 "project": {"dependencies": ["flext-core @ file:///external/path"]},
             })

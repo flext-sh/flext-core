@@ -292,4 +292,6 @@ class FlextTestsDomains:
         ]
 
 
-__all__ = ["FlextTestsDomains"]
+td = FlextTestsDomains
+
+__all__ = ["FlextTestsDomains", "td"]

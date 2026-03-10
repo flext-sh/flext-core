@@ -35,10 +35,10 @@ class FlextInfraRefactorMROReferenceRewriter(ast.NodeTransformer):
             return node
         self.replacements += 1
         return ast.copy_location(
-            ast.Attribute(
-                value=ast.Name(id=imported.facade_name, ctx=ast.Load()),
-                attr=imported.symbol,
-                ctx=node.ctx,
+            self._qualified_attribute(
+                root_name=imported.facade_name,
+                qualified_symbol=imported.symbol,
+                final_ctx=node.ctx,
             ),
             node,
         )
@@ -63,13 +63,30 @@ class FlextInfraRefactorMROReferenceRewriter(ast.NodeTransformer):
             return rewritten
         self.replacements += 1
         return ast.copy_location(
-            ast.Attribute(
-                value=ast.Name(id=rewritten.value.id, ctx=ast.Load()),
-                attr=new_symbol,
-                ctx=rewritten.ctx,
+            self._qualified_attribute(
+                root_name=rewritten.value.id,
+                qualified_symbol=new_symbol,
+                final_ctx=rewritten.ctx,
             ),
             rewritten,
         )
+
+    @staticmethod
+    def _qualified_attribute(
+        *,
+        root_name: str,
+        qualified_symbol: str,
+        final_ctx: ast.expr_context,
+    ) -> ast.expr:
+        parts = [part for part in qualified_symbol.split(".") if len(part) > 0]
+        if len(parts) == 0:
+            return ast.Name(id=root_name, ctx=final_ctx)
+        current: ast.expr = ast.Name(id=root_name, ctx=ast.Load())
+        last_index = len(parts) - 1
+        for index, part in enumerate(parts):
+            ctx: ast.expr_context = final_ctx if index == last_index else ast.Load()
+            current = ast.Attribute(value=current, attr=part, ctx=ctx)
+        return current
 
 
 __all__ = ["FlextInfraRefactorMROReferenceRewriter"]

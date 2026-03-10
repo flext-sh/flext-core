@@ -13,7 +13,7 @@ from pathlib import Path
 
 import pytest
 
-from flext_core import r
+from flext_core import r, t
 from flext_infra import m
 from flext_infra.workspace.orchestrator import FlextInfraOrchestratorService
 from flext_tests import tm
@@ -25,7 +25,7 @@ def _cmd_out(exit_code: int = 0) -> _CO:
     return _CO(stdout="", stderr="", exit_code=exit_code, duration=0.0)
 
 
-def _stub_runner_ok(exit_code: int = 0) -> object:
+def _stub_runner_ok(exit_code: int = 0) -> t.ContainerValue:
     """Create a runner stub that returns ok with given exit code."""
 
     class _Runner:
@@ -35,14 +35,14 @@ def _stub_runner_ok(exit_code: int = 0) -> object:
             output_file: Path,
             cwd: Path | None = None,
             timeout: int | None = None,
-            env: object = None,
+            env: t.ContainerValue = None,
         ) -> r[int]:
             return r[int].ok(exit_code)
 
     return _Runner()
 
 
-def _stub_runner_fail(error: str) -> object:
+def _stub_runner_fail(error: str) -> t.ContainerValue:
     """Create a runner stub that returns failure."""
 
     class _Runner:
@@ -52,14 +52,14 @@ def _stub_runner_fail(error: str) -> object:
             output_file: Path,
             cwd: Path | None = None,
             timeout: int | None = None,
-            env: object = None,
+            env: t.ContainerValue = None,
         ) -> r[int]:
             return r[int].fail(error)
 
     return _Runner()
 
 
-def _stub_runner_raise(error: str) -> object:
+def _stub_runner_raise(error: str) -> t.ContainerValue:
     """Create a runner stub that raises OSError."""
 
     class _Runner:
@@ -69,7 +69,7 @@ def _stub_runner_raise(error: str) -> object:
             output_file: Path,
             cwd: Path | None = None,
             timeout: int | None = None,
-            env: object = None,
+            env: t.ContainerValue = None,
         ) -> r[int]:
             raise OSError(error)
 
@@ -155,7 +155,7 @@ class TestOrchestratorRunProject:
         call_count = [0]
 
         def _run_project(
-            self: object,
+            self: t.ContainerValue,
             project: str,
             verb: str,
             idx: int,

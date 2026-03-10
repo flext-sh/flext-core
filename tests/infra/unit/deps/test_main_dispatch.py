@@ -11,6 +11,7 @@ from types import ModuleType, SimpleNamespace
 
 import pytest
 
+from flext_core import t
 from flext_infra.deps import __main__ as main_mod
 from flext_infra.deps.__main__ import _SUBCOMMANDS, main
 from flext_tests import tm
@@ -18,20 +19,22 @@ from flext_tests import tm
 _NO_STRUCTLOG = SimpleNamespace(ensure_structlog_configured=lambda: None)
 
 
-def _fake_module(return_value: object = 0) -> ModuleType:
+def _fake_module(return_value: t.ContainerValue = 0) -> ModuleType:
     mod = ModuleType("fake_subcommand")
     setattr(mod, "main", lambda: return_value)
     return mod
 
 
-def _stub_import(mod: ModuleType) -> object:
+def _stub_import(mod: ModuleType) -> t.ContainerValue:
     def _import(name: str) -> ModuleType:
         return mod
 
     return _import
 
 
-def _patch_dispatch(mp: pytest.MonkeyPatch, argv: list[str], ret: object = 0) -> None:
+def _patch_dispatch(
+    mp: pytest.MonkeyPatch, argv: list[str], ret: t.ContainerValue = 0
+) -> None:
     mp.setattr(sys, "argv", argv)
     mp.setattr(main_mod, "FlextRuntime", _NO_STRUCTLOG)
     mp.setattr(

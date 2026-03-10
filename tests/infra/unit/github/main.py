@@ -5,7 +5,9 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from flext_core import r
+import pytest
+
+from flext_core import r, t
 from flext_infra import m
 from flext_infra.github import __main__ as github_main
 from flext_infra.github.workflows import SyncOperation
@@ -35,29 +37,33 @@ def _orchestration_result(
 
 
 class TestRunWorkflows:
-    def test_success(self, tmp_path: Path, monkeypatch: object) -> None:
+    def test_success(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         syncer = StubSyncer(sync_returns=r[list[SyncOperation]].ok([]))
         monkeypatch.setattr(github_main, "FlextInfraWorkflowSyncer", lambda: syncer)
         assert run_workflows(["--workspace-root", str(tmp_path)]) == 0
 
-    def test_failure(self, tmp_path: Path, monkeypatch: object) -> None:
+    def test_failure(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         syncer = StubSyncer(sync_returns=r[list[SyncOperation]].fail("sync failed"))
         monkeypatch.setattr(github_main, "FlextInfraWorkflowSyncer", lambda: syncer)
         assert run_workflows(["--workspace-root", str(tmp_path)]) == 1
 
-    def test_with_apply_flag(self, tmp_path: Path, monkeypatch: object) -> None:
+    def test_with_apply_flag(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         syncer = StubSyncer(sync_returns=r[list[SyncOperation]].ok([]))
         monkeypatch.setattr(github_main, "FlextInfraWorkflowSyncer", lambda: syncer)
         run_workflows(["--workspace-root", str(tmp_path), "--apply"])
         assert syncer.sync_workspace_calls[0]["apply"] is True
 
-    def test_with_prune_flag(self, tmp_path: Path, monkeypatch: object) -> None:
+    def test_with_prune_flag(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         syncer = StubSyncer(sync_returns=r[list[SyncOperation]].ok([]))
         monkeypatch.setattr(github_main, "FlextInfraWorkflowSyncer", lambda: syncer)
         run_workflows(["--workspace-root", str(tmp_path), "--prune"])
         assert syncer.sync_workspace_calls[0]["prune"] is True
 
-    def test_with_report(self, tmp_path: Path, monkeypatch: object) -> None:
+    def test_with_report(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         syncer = StubSyncer(sync_returns=r[list[SyncOperation]].ok([]))
         monkeypatch.setattr(github_main, "FlextInfraWorkflowSyncer", lambda: syncer)
         report = tmp_path / "report.json"
@@ -73,24 +79,26 @@ class TestRunLint:
             )
         )
 
-    def test_success(self, tmp_path: Path, monkeypatch: object) -> None:
+    def test_success(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         linter = self._lint_ok()
         monkeypatch.setattr(github_main, "FlextInfraWorkflowLinter", lambda: linter)
         assert run_lint(["--root", str(tmp_path)]) == 0
 
-    def test_failure(self, tmp_path: Path, monkeypatch: object) -> None:
-        linter = StubLinter(lint_returns=r[object].fail("lint failed"))
+    def test_failure(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        linter = StubLinter(lint_returns=r[t.ContainerValue].fail("lint failed"))
         monkeypatch.setattr(github_main, "FlextInfraWorkflowLinter", lambda: linter)
         assert run_lint(["--root", str(tmp_path)]) == 1
 
-    def test_with_report(self, tmp_path: Path, monkeypatch: object) -> None:
+    def test_with_report(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         linter = self._lint_ok()
         monkeypatch.setattr(github_main, "FlextInfraWorkflowLinter", lambda: linter)
         report = tmp_path / "report.json"
         run_lint(["--root", str(tmp_path), "--report", str(report)])
         assert linter.lint_calls[0]["report_path"] == report
 
-    def test_with_strict_flag(self, tmp_path: Path, monkeypatch: object) -> None:
+    def test_with_strict_flag(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         linter = self._lint_ok()
         monkeypatch.setattr(github_main, "FlextInfraWorkflowLinter", lambda: linter)
         run_lint(["--root", str(tmp_path), "--strict"])
@@ -98,11 +106,11 @@ class TestRunLint:
 
 
 class TestRunPr:
-    def test_delegates_to_pr_main(self, monkeypatch: object) -> None:
+    def test_delegates_to_pr_main(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(github_main, "pr_main", lambda: 0)
         assert run_pr(["--repo-root", "/tmp", "--action", "status"]) == 0
 
-    def test_sets_sys_argv(self, monkeypatch: object) -> None:
+    def test_sets_sys_argv(self, monkeypatch: pytest.MonkeyPatch) -> None:
         original = sys.argv.copy()
         try:
             monkeypatch.setattr(github_main, "pr_main", lambda: 0)

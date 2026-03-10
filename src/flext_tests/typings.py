@@ -10,6 +10,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
+from datetime import datetime
+from pathlib import Path
 from typing import Literal, TypeAliasType, TypeGuard
 
 from pydantic import BaseModel, InstanceOf
@@ -20,6 +22,8 @@ type _TestContainerValue = (
     t.Primitives
     | None
     | bytes
+    | datetime
+    | Path
     | BaseModel
     | Sequence[_TestContainerValue]
     | Mapping[str, _TestContainerValue]

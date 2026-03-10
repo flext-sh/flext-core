@@ -12,7 +12,7 @@ import pytest
 from _pytest.capture import CaptureFixture
 from jinja2 import TemplateError
 
-from flext_core import r
+from flext_core import r, t
 from flext_infra import m as im
 from flext_infra.basemk.__main__ import main as basemk_main
 from flext_infra.basemk.engine import FlextInfraBaseMkTemplateEngine
@@ -139,7 +139,9 @@ def test_basemk_engine_render_all_handles_template_error(
 ) -> None:
     """Test engine.render_all() handles TemplateError gracefully."""
 
-    def mock_get_template(*args: object, **kwargs: object) -> object:
+    def mock_get_template(
+        *args: t.ContainerValue, **kwargs: t.ContainerValue
+    ) -> t.ContainerValue:
         msg = "Template not found"
         raise TemplateError(msg)
 

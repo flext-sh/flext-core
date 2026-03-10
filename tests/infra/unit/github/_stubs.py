@@ -14,7 +14,14 @@ from pathlib import Path
 
 from pydantic import Field
 
-from flext_core import FlextModels, r
+from flext_core import FlextModels, r, t
+from tests.infra.unit.github._stubs_extra import (
+    StubLinter,
+    StubPrManager,
+    StubSyncer,
+    StubUtilities,
+    StubWorkspaceManager,
+)
 
 
 class StubCommandOutput(FlextModels.ArbitraryTypesModel):
@@ -30,10 +37,10 @@ class StubRunner:
 
     def __init__(
         self,
-        run_returns: Sequence[object] | None = None,
-        capture_returns: Sequence[object] | None = None,
-        run_checked_returns: Sequence[object] | None = None,
-        run_to_file_returns: Sequence[object] | None = None,
+        run_returns: Sequence[t.ContainerValue] | None = None,
+        capture_returns: Sequence[t.ContainerValue] | None = None,
+        run_checked_returns: Sequence[t.ContainerValue] | None = None,
+        run_to_file_returns: Sequence[t.ContainerValue] | None = None,
     ) -> None:
         self._run_returns = list(run_returns or [])
         self._capture_returns = list(capture_returns or [])
@@ -44,7 +51,7 @@ class StubRunner:
         self.run_checked_calls: list[list[str]] = []
         self.run_to_file_calls: list[list[str]] = []
 
-    def _pop(self, returns: list[object]) -> object:
+    def _pop(self, returns: list[t.ContainerValue]) -> t.ContainerValue:
         if not returns:
             return r[bool].fail("no return value configured")
         return returns[0] if len(returns) == 1 else returns.pop(0)
@@ -55,7 +62,7 @@ class StubRunner:
         cwd: Path | None = None,
         timeout: int | None = None,
         env: Mapping[str, str] | None = None,
-    ) -> object:
+    ) -> t.ContainerValue:
         self.run_calls.append(list(cmd))
         return self._pop(self._run_returns)
 
@@ -65,7 +72,7 @@ class StubRunner:
         cwd: Path | None = None,
         timeout: int | None = None,
         env: Mapping[str, str] | None = None,
-    ) -> object:
+    ) -> t.ContainerValue:
         self.capture_calls.append(list(cmd))
         return self._pop(self._capture_returns)
 
@@ -75,7 +82,7 @@ class StubRunner:
         cwd: Path | None = None,
         timeout: int | None = None,
         env: Mapping[str, str] | None = None,
-    ) -> object:
+    ) -> t.ContainerValue:
         self.run_checked_calls.append(list(cmd))
         return self._pop(self._run_checked_returns)
 
@@ -86,7 +93,7 @@ class StubRunner:
         cwd: Path | None = None,
         timeout: int | None = None,
         env: Mapping[str, str] | None = None,
-    ) -> object:
+    ) -> t.ContainerValue:
         self.run_to_file_calls.append(list(cmd))
         return self._pop(self._run_to_file_returns)
 
@@ -96,7 +103,7 @@ class StubRunner:
         cwd: Path | None = None,
         timeout: int | None = None,
         env: Mapping[str, str] | None = None,
-    ) -> object:
+    ) -> t.ContainerValue:
         return self.run(cmd, cwd=cwd, timeout=timeout, env=env)
 
 
@@ -105,9 +112,11 @@ class StubJsonIo:
 
     def __init__(self, write_returns: r[bool] | None = None) -> None:
         self.write_json_returns = write_returns or r[bool].ok(True)
-        self.write_json_calls: list[tuple[Path, object]] = []
+        self.write_json_calls: list[tuple[Path, t.ContainerValue]] = []
 
-    def write_json(self, path: Path, data: object, **kwargs: object) -> r[bool]:
+    def write_json(
+        self, path: Path, data: t.ContainerValue, **kwargs: t.ContainerValue
+    ) -> r[bool]:
         self.write_json_calls.append((path, data))
         return self.write_json_returns
 
@@ -127,10 +136,14 @@ class StubSelector:
 
     def __init__(self, resolve_returns: object | None = None) -> None:
         self._resolve_returns = (
-            resolve_returns if resolve_returns is not None else r[list[object]].ok([])
+            resolve_returns
+            if resolve_returns is not None
+            else r[list[t.ContainerValue]].ok([])
         )
 
-    def resolve_projects(self, *args: object, **kwargs: object) -> object:
+    def resolve_projects(
+        self, *args: t.ContainerValue, **kwargs: t.ContainerValue
+    ) -> t.ContainerValue:
         return self._resolve_returns
 
 
@@ -140,7 +153,9 @@ class StubReporting:
     def __init__(self, report_dir: Path | None = None) -> None:
         self._report_dir = report_dir or Path("/tmp/reports")
 
-    def get_report_dir(self, *_args: object, **_kwargs: object) -> Path:
+    def get_report_dir(
+        self, *_args: t.ContainerValue, **_kwargs: t.ContainerValue
+    ) -> Path:
         return self._report_dir
 
 
@@ -156,120 +171,6 @@ class StubProjectInfo:
     def __init__(self, name: str = "test-project", path: Path | None = None) -> None:
         self.name = name
         self.path = path or Path("/tmp/test-project")
-
-
-class StubPrManager:
-    """Stub for FlextInfraPrManager used in CLI tests."""
-
-    def __init__(
-        self,
-        status_returns: Sequence[object] | None = None,
-        create_returns: Sequence[object] | None = None,
-        view_returns: Sequence[object] | None = None,
-        checks_returns: Sequence[object] | None = None,
-        merge_returns: Sequence[object] | None = None,
-        close_returns: Sequence[object] | None = None,
-    ) -> None:
-        self._status = list(status_returns or [])
-        self._create = list(create_returns or [])
-        self._view = list(view_returns or [])
-        self._checks = list(checks_returns or [])
-        self._merge = list(merge_returns or [])
-        self._close = list(close_returns or [])
-
-    def _pop(self, returns: list[object]) -> object:
-        if not returns:
-            return r[bool].fail("no return configured")
-        return returns[0] if len(returns) == 1 else returns.pop(0)
-
-    def status(self, *_a: object, **_kw: object) -> object:
-        return self._pop(self._status)
-
-    def create(self, *_a: object, **_kw: object) -> object:
-        return self._pop(self._create)
-
-    def view(self, *_a: object, **_kw: object) -> object:
-        return self._pop(self._view)
-
-    def checks(self, *_a: object, **_kw: object) -> object:
-        return self._pop(self._checks)
-
-    def merge(self, *_a: object, **_kw: object) -> object:
-        return self._pop(self._merge)
-
-    def close(self, *_a: object, **_kw: object) -> object:
-        return self._pop(self._close)
-
-
-class StubSyncer:
-    """Stub for FlextInfraWorkflowSyncer used in CLI tests."""
-
-    def __init__(self, sync_returns: object | None = None) -> None:
-        self._sync_returns = (
-            sync_returns if sync_returns is not None else r[list[object]].ok([])
-        )
-        self.sync_workspace_calls: list[dict[str, object]] = []
-
-    def sync_workspace(self, **kwargs: object) -> object:
-        self.sync_workspace_calls.append(kwargs)
-        return self._sync_returns
-
-
-class StubLinter:
-    """Stub for FlextInfraWorkflowLinter used in CLI tests."""
-
-    def __init__(self, lint_returns: object | None = None) -> None:
-        self._lint_returns = (
-            lint_returns if lint_returns is not None else r[bool].ok(True)
-        )
-        self.lint_calls: list[dict[str, object]] = []
-
-    def lint(self, **kwargs: object) -> object:
-        self.lint_calls.append(kwargs)
-        return self._lint_returns
-
-
-class StubWorkspaceManager:
-    """Stub for FlextInfraPrWorkspaceManager used in CLI tests."""
-
-    def __init__(self, orchestrate_returns: object | None = None) -> None:
-        self._orchestrate_returns = (
-            orchestrate_returns if orchestrate_returns is not None else r[bool].ok(True)
-        )
-        self.orchestrate_calls: list[dict[str, object]] = []
-
-    def orchestrate(self, **kwargs: object) -> object:
-        self.orchestrate_calls.append(kwargs)
-        return self._orchestrate_returns
-
-
-class StubUtilities:
-    """Stub for u (FlextInfraUtilities) used in CLI tests."""
-
-    class Infra:
-        """Stub for u.Infra namespace."""
-
-        _git_branch_returns: object = None
-
-        @classmethod
-        def git_current_branch(cls, *_a: object, **_kw: object) -> object:
-            return cls._git_branch_returns or r[str].ok("feature")
-
-        @classmethod
-        def git_has_changes(cls, *_a: object, **_kw: object) -> object:
-            return r[bool].ok(True)
-
-        @classmethod
-        def git_checkout(cls, *_a: object, **_kw: object) -> object:
-            return r[bool].ok(True)
-
-        @classmethod
-        def git_add(cls, *_a: object, **_kw: object) -> object:
-            return r[bool].ok(True)
-
-        @classmethod
-        def git_commit(cls, *_a: object, **_kw: object) -> object:
-            return r[bool].ok(True)
 
 
 __all__ = [

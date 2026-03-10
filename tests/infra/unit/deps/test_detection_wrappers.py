@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from flext_core import r
+from flext_core import r, t
 from flext_infra.deps import detection
 from flext_infra.deps.detection import (
     build_project_report,
@@ -18,7 +18,7 @@ from flext_tests import tm
 
 class _StubService:
     def __init__(self) -> None:
-        self.called: dict[str, tuple[object, ...]] = {}
+        self.called: dict[str, tuple[t.ContainerValue, ...]] = {}
 
     def discover_projects(
         self, workspace_root: Path, projects_filter: list[str] | None = None

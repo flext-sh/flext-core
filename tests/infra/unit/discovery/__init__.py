@@ -13,6 +13,8 @@ if TYPE_CHECKING:
     from tests.infra.unit.discovery.test_infra_discovery import (
         TestFlextInfraDiscoveryService,
         TestFlextInfraDiscoveryService as s,
+    )
+    from tests.infra.unit.discovery.test_infra_discovery_edge_cases import (
         TestFlextInfraDiscoveryServiceUncoveredLines,
     )
 
@@ -23,7 +25,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "TestFlextInfraDiscoveryService",
     ),
     "TestFlextInfraDiscoveryServiceUncoveredLines": (
-        "tests.infra.unit.discovery.test_infra_discovery",
+        "tests.infra.unit.discovery.test_infra_discovery_edge_cases",
         "TestFlextInfraDiscoveryServiceUncoveredLines",
     ),
     "s": (

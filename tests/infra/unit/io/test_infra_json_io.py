@@ -11,8 +11,8 @@ from pathlib import Path
 import pytest
 
 from flext_infra import FlextInfraUtilitiesIo
-from tests.unit._models import SampleModel
 from flext_tests import tm
+from tests.unit._models import SampleModel
 
 
 class TestFlextInfraJsonService:

@@ -23,6 +23,7 @@ from collections.abc import (
     Sized,
 )
 from contextlib import contextmanager
+from datetime import datetime
 from pathlib import Path
 from re import Pattern
 from typing import Protocol, override
@@ -34,7 +35,6 @@ from flext_core import (
     FlextRegistry,
     FlextSettings,
     FlextUtilities,
-    T,
     r,
     t as core_t,
 )
@@ -69,7 +69,9 @@ def _to_payload(value: object) -> t.Tests.ContainerValue:
         ContainerValue suitable for test assertions
 
     """
-    if value is None or isinstance(value, t.Primitives | bytes | BaseModel):
+    if value is None or isinstance(
+        value, t.Primitives | bytes | datetime | Path | BaseModel
+    ):
         return value
     if isinstance(value, Mapping):
         try:
@@ -98,6 +100,10 @@ def _to_config_map_value(value: t.Tests.ContainerValue) -> core_t.ContainerValue
         return value
     if isinstance(value, bytes):
         return value.decode(errors="ignore")
+    if isinstance(value, datetime):
+        return value
+    if isinstance(value, Path):
+        return str(value)
     if isinstance(value, Mapping):
         return {str(k): _to_config_map_value(v) for k, v in value.items()}
     return [_to_config_map_value(item) for item in value]
@@ -523,69 +529,49 @@ class FlextTestsUtilities(FlextUtilities):
                 return c.Tests.Factory.SUCCESS_MESSAGE
 
         class ResultHelpers:
-            """Result helpers for test creation and assertions."""
+            """Result helpers — delegates to Tests.Result (compat).
+
+            .. deprecated::
+                Use ``u.Tests.Result`` directly. This namespace exists only
+                for backward-compatibility.
+            """
 
             @staticmethod
             def assert_failure_with_error[T](
-                result: r[T], expected_error: str | None = None
+                result: r[T] | p.Result[T], expected_error: str | None = None
             ) -> None:
-                """Assert result is failure with expected error (compat)."""
+                """Delegate to Result.assert_failure_with_error."""
                 FlextTestsUtilities.Tests.Result.assert_failure_with_error(
                     result, expected_error
                 )
 
             @staticmethod
             def assert_result_failure_with_error[T](
-                result: r[T], expected_error: str
+                result: r[T] | p.Result[T], expected_error: str
             ) -> None:
-                """Assert result failure with error (compat alias).
-
-                Args:
-                    result: FlextResult to check
-                    expected_error: Expected error substring
-
-                Raises:
-                    AssertionError: If result is not failure or error mismatch
-
-                """
-                FlextTestsUtilities.Tests.Result.assert_failure_with_error(
+                """Delegate to Result.assert_result_failure_with_error."""
+                FlextTestsUtilities.Tests.Result.assert_result_failure_with_error(
                     result, expected_error
                 )
 
             @staticmethod
-            def assert_success_with_value[T](result: r[T], expected_value: T) -> None:
-                """Assert result is success with expected value (compat)."""
+            def assert_success_with_value[T](
+                result: r[T] | p.Result[T], expected_value: T
+            ) -> None:
+                """Delegate to Result.assert_success_with_value."""
                 FlextTestsUtilities.Tests.Result.assert_success_with_value(
                     result, expected_value
                 )
 
             @staticmethod
             def create_failure_result(error: str) -> r[str]:
-                """Create a failure result with the given error.
-
-                Args:
-                    error: Error message for the failure result
-
-                Returns:
-                    FlextResult[TEntity]: Result containing created entity or error
-                    FlextResult with failure and error
-
-                """
-                return r[str].fail(error)
+                """Delegate to Result.create_failure_result."""
+                return FlextTestsUtilities.Tests.Result.create_failure_result(error)
 
             @staticmethod
             def create_success_result[T](value: T) -> r[T]:
-                """Create a success result with the given value.
-
-                Args:
-                    value: Value for the success result
-
-                Returns:
-                    FlextResult[TEntity]: Result containing created entity or error
-                    FlextResult with success and value
-
-                """
-                return r[T].ok(value)
+                """Delegate to Result.create_success_result."""
+                return FlextTestsUtilities.Tests.Result.create_success_result(value)
 
         class GenericHelpers:
             """Generic helpers for test data creation."""
@@ -1313,35 +1299,22 @@ class FlextTestsUtilities(FlextUtilities):
                 return _to_payload(current)
 
         class Assertions:
-            """Common assertion helpers for tests."""
+            """Common assertion helpers — delegates to Tests.Result (compat).
+
+            .. deprecated::
+                Use ``u.Tests.Result`` directly for assert_result_failure /
+                assert_result_success. Only ``assert_result_matches_expected``
+                is unique to this namespace.
+            """
 
             @staticmethod
-            def assert_result_failure(
-                result: r[T], expected_error: str | None = None
+            def assert_result_failure[TResult](
+                result: r[TResult], expected_error: str | None = None
             ) -> str:
-                """Assert result is failure and optionally check error message.
-
-                Args:
-                    result: FlextResult to check
-                    expected_error: Optional expected error substring
-
-                Returns:
-                    FlextResult[TEntity]: Result containing created entity or error
-                    The error message
-
-                Raises:
-                    AssertionError: If result is not failure or error doesn't match
-
-                """
-                assert result.is_failure, (
-                    f"Expected failure, got success: {result.value}"
+                """Delegate to Result.assert_failure."""
+                return FlextTestsUtilities.Tests.Result.assert_failure(
+                    result, expected_error
                 )
-                error = result.error or ""
-                if expected_error is not None:
-                    assert expected_error in error, (
-                        f"Expected error '{expected_error}' not in '{error}'"
-                    )
-                return error
 
             @staticmethod
             def assert_result_matches_expected(
@@ -1365,24 +1338,9 @@ class FlextTestsUtilities(FlextUtilities):
                 )
 
             @staticmethod
-            def assert_result_success(result: r[T]) -> T:
-                """Assert result is success and return value.
-
-                Args:
-                    result: FlextResult to check
-
-                Returns:
-                    FlextResult[TEntity]: Result containing created entity or error
-                    The success value
-
-                Raises:
-                    AssertionError: If result is not successful
-
-                """
-                assert result.is_success, (
-                    f"Expected success, got failure: {result.error}"
-                )
-                return result.value
+            def assert_result_success[TResult](result: r[TResult]) -> TResult:
+                """Delegate to Result.assert_success."""
+                return FlextTestsUtilities.Tests.Result.assert_success(result)
 
         class Files:
             """File utilities for test file operations.

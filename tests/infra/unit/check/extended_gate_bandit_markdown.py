@@ -11,6 +11,7 @@ from types import SimpleNamespace
 
 import pytest
 
+from flext_core import t
 from flext_infra.check.services import FlextInfraWorkspaceChecker
 from flext_tests import tm
 
@@ -116,7 +117,9 @@ class TestWorkspaceCheckerRunMarkdown:
         (proj_dir / ".markdownlint.json").write_text("{}")
         captured_args: list[list[str]] = []
 
-        def _fake_run(cmd: list[str], *_a: object, **_kw: object) -> SimpleNamespace:
+        def _fake_run(
+            cmd: list[str], *_a: t.ContainerValue, **_kw: t.ContainerValue
+        ) -> SimpleNamespace:
             captured_args.append(cmd)
             return SimpleNamespace(stdout="", stderr="", returncode=0)
 

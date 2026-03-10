@@ -13,7 +13,7 @@ from types import SimpleNamespace
 from _pytest.monkeypatch import MonkeyPatch
 
 import flext_infra.release.__main__ as _main_mod
-from flext_core import r
+from flext_core import r, t
 from flext_infra.release.__main__ import main
 from flext_tests import tm
 
@@ -52,7 +52,7 @@ def _patch_main_deps(
             return r[str].ok("1.1.0")
 
     class _Or:
-        def run_release(self, **kwargs: object) -> r[bool]:
+        def run_release(self, **kwargs: t.ContainerValue) -> r[bool]:
             if capture is not None:
                 capture.append(SimpleNamespace(**kwargs))
             return release_result if release_result is not None else r[bool].ok(True)

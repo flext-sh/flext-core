@@ -10,15 +10,16 @@ from pathlib import Path
 
 import pytest
 
+from flext_core import t
 from flext_infra import m as im
 from flext_infra.workspace.migrator import FlextInfraProjectMigrator
 from flext_tests import tm
+from tests.infra import h
 from tests.infra.unit.test_infra_workspace_migrator import (
     _build_migrator,
     _project,
     _StubDiscovery,
     _StubGenerator,
-    _write_project,
 )
 
 
@@ -42,7 +43,7 @@ class TestMigratorWriteFailures:
         _root, proj = _setup_basic(tmp_path)
         migrator = _build_migrator(proj, "base")
 
-        def _write_fail(_self: Path, _data: str, **_kw: object) -> int:
+        def _write_fail(_self: Path, _data: str, **_kw: t.ContainerValue) -> int:
             msg = "Write failed"
             raise OSError(msg)
 
@@ -68,7 +69,7 @@ class TestMigratorWriteFailures:
         (root / ".gitignore").write_text("", encoding="utf-8")
         migrator = _build_migrator(_project(root), "new content")
 
-        def _write_fail(_self: Path, _data: str, **_kw: object) -> int:
+        def _write_fail(_self: Path, _data: str, **_kw: t.ContainerValue) -> int:
             msg = "Write failed"
             raise OSError(msg)
 
@@ -87,11 +88,11 @@ class TestMigratorWriteFailures:
     ) -> None:
         root = tmp_path / "project-a"
         root.mkdir(parents=True)
-        _write_project(root)
+        h.write_project(root)
         migrator = _build_migrator(_project(root), "base")
         original_write = Path.write_text
 
-        def _selective_write(self: Path, data: str, **kwargs: object) -> int:
+        def _selective_write(self: Path, data: str, **kwargs: t.ContainerValue) -> int:
             if "Makefile" in str(self):
                 msg = "Makefile write failed"
                 raise OSError(msg)
@@ -114,7 +115,7 @@ class TestMigratorWriteFailures:
         migrator = _build_migrator(proj, "base")
         original_write = Path.write_text
 
-        def _selective_write(self: Path, data: str, **kwargs: object) -> int:
+        def _selective_write(self: Path, data: str, **kwargs: t.ContainerValue) -> int:
             if "pyproject.toml" in str(self):
                 msg = "pyproject write failed"
                 raise OSError(msg)
@@ -145,7 +146,7 @@ class TestMigratorReadFailures:
         migrator = _build_migrator(_project(root), "base")
         original_read = Path.read_text
 
-        def _selective_read(self: Path, **kwargs: object) -> str:
+        def _selective_read(self: Path, **kwargs: t.ContainerValue) -> str:
             if ".gitignore" in str(self):
                 msg = ".gitignore read failed"
                 raise OSError(msg)
@@ -162,7 +163,7 @@ class TestMigratorReadFailures:
     def test_basemk_generation_failure(self, tmp_path: Path) -> None:
         root = tmp_path / "project-a"
         root.mkdir(parents=True)
-        _write_project(root)
+        h.write_project(root)
         proj = _project(root)
         migrator = FlextInfraProjectMigrator()
         migrator._discovery = _StubDiscovery([proj])

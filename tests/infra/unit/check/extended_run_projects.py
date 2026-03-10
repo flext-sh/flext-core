@@ -10,6 +10,7 @@ from pathlib import Path
 
 import pytest
 
+from flext_core import t
 from flext_infra import m
 from flext_infra.check.services import (
     FlextInfraWorkspaceChecker,
@@ -104,7 +105,9 @@ class TestRunProjectsBehavior:
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
         call_count = [0]
 
-        def _fake_check(*_a: object, **_kw: object) -> _ProjectResult:
+        def _fake_check(
+            *_a: t.ContainerValue, **_kw: t.ContainerValue
+        ) -> _ProjectResult:
             call_count[0] += 1
             return _ProjectResult(
                 project="p",

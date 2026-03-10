@@ -11,8 +11,8 @@ from pathlib import Path
 
 from flext_core import r
 from flext_infra.github.pr import FlextInfraPrManager
-from tests.infra.unit.github._stubs import StubRunner, StubVersioning
 from flext_tests import tm
+from tests.infra.unit.github._stubs import StubRunner, StubVersioning
 
 
 def _mgr(

@@ -13,14 +13,15 @@ from types import SimpleNamespace
 
 import pytest
 
+from flext_core import t
 from flext_infra.check.services import FlextInfraWorkspaceChecker
 from flext_tests import tm
 
 
-def _stub_run(result: SimpleNamespace) -> object:
+def _stub_run(result: SimpleNamespace) -> t.ContainerValue:
     """Create a stub _run method returning a fixed result."""
 
-    def _run(_cmd: list[str], _cwd: Path, **_kw: object) -> SimpleNamespace:
+    def _run(_cmd: list[str], _cwd: Path, **_kw: t.ContainerValue) -> SimpleNamespace:
         return result
 
     return _run

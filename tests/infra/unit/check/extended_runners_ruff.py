@@ -13,17 +13,17 @@ from types import SimpleNamespace
 
 import pytest
 
-from flext_core import r
+from flext_core import r, t
 from flext_infra import m
 from flext_infra._utilities.subprocess import FlextInfraUtilitiesSubprocess
 from flext_infra.check.services import FlextInfraWorkspaceChecker
 from flext_tests import tm
 
 
-def _stub_run(result: SimpleNamespace) -> object:
+def _stub_run(result: SimpleNamespace) -> t.ContainerValue:
     """Create a stub _run method returning a fixed result."""
 
-    def _run(_cmd: list[str], _cwd: Path, **_kw: object) -> SimpleNamespace:
+    def _run(_cmd: list[str], _cwd: Path, **_kw: t.ContainerValue) -> SimpleNamespace:
         return result
 
     return _run
@@ -146,7 +146,7 @@ class TestRunCommand:
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
 
         def _fake_run_raw(
-            _self: object, _cmd: list[str], **_kw: object
+            _self: t.ContainerValue, _cmd: list[str], **_kw: t.ContainerValue
         ) -> r[m.Infra.Core.CommandOutput]:
             return r[m.Infra.Core.CommandOutput].ok(
                 m.Infra.Core.CommandOutput(stdout="output", stderr="", exit_code=0)
@@ -163,7 +163,7 @@ class TestRunCommand:
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
 
         def _fake_run_raw(
-            _self: object, _cmd: list[str], **_kw: object
+            _self: t.ContainerValue, _cmd: list[str], **_kw: t.ContainerValue
         ) -> r[m.Infra.Core.CommandOutput]:
             return r[m.Infra.Core.CommandOutput].fail("execution failed")
 

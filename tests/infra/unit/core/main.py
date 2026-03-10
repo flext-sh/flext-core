@@ -13,6 +13,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+from flext_core import t
 from flext_infra.core.__main__ import (
     _run_basemk_validate,
     _run_inventory,
@@ -23,7 +24,7 @@ from flext_tests import tm
 _CWD = "/home/marlonsc/flext/flext-core"
 
 
-def _ns(**kwargs: object) -> argparse.Namespace:
+def _ns(**kwargs: t.ContainerValue) -> argparse.Namespace:
     """Create a simple namespace from keyword arguments."""
     return argparse.Namespace(**kwargs)
 

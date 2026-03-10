@@ -12,7 +12,7 @@ from pathlib import Path
 
 import pytest
 
-from flext_core import r
+from flext_core import r, t
 from flext_infra.workspace.detector import FlextInfraWorkspaceDetector, WorkspaceMode
 from flext_tests import tm
 
@@ -31,7 +31,7 @@ def _setup_project_with_git(tmp_path: Path) -> Path:
     return project_root
 
 
-def _git_run_ok(value: str) -> object:
+def _git_run_ok(value: str) -> t.ContainerValue:
     """Return a git_run replacement that returns ok(value)."""
 
     def _fn(_cmd: list[str], cwd: Path | None = None) -> r[str]:
@@ -40,7 +40,7 @@ def _git_run_ok(value: str) -> object:
     return _fn
 
 
-def _git_run_fail(error: str) -> object:
+def _git_run_fail(error: str) -> t.ContainerValue:
     """Return a git_run replacement that returns fail(error)."""
 
     def _fn(_cmd: list[str], cwd: Path | None = None) -> r[str]:

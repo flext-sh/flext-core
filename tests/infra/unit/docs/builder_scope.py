@@ -11,7 +11,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from flext_core import r
+from flext_core import r, t
 from flext_infra import m
 from flext_infra.docs.builder import FlextInfraDocBuilder
 from flext_infra.docs.shared import FlextInfraDocsShared
@@ -83,7 +83,7 @@ class TestBuilderScope:
         )
         mock_output = SimpleNamespace(exit_code=0, stdout="Build successful", stderr="")
         mock_runner = SimpleNamespace(
-            run_raw=lambda *a, **kw: r[object].ok(mock_output)
+            run_raw=lambda *a, **kw: r[t.ContainerValue].ok(mock_output)
         )
         monkeypatch.setattr(builder, "_runner", mock_runner)
         report = builder._run_mkdocs(scope)
@@ -118,8 +118,10 @@ class TestBuilderScope:
     ) -> None:
         """Test build returns failure when scope building fails."""
 
-        def mock_build_scopes(*args: object, **kwargs: object) -> r[list[object]]:
-            return r[list[object]].fail("Scope error")
+        def mock_build_scopes(
+            *args: t.ContainerValue, **kwargs: t.ContainerValue
+        ) -> r[list[t.ContainerValue]]:
+            return r[list[t.ContainerValue]].fail("Scope error")
 
         monkeypatch.setattr(FlextInfraDocsShared, "build_scopes", mock_build_scopes)
         result = builder.build(tmp_path)

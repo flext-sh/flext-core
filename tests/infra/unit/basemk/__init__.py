@@ -32,16 +32,18 @@ if TYPE_CHECKING:
         test_generator_generate_with_none_config_uses_default,
         test_generator_initializes_with_custom_engine,
         test_generator_initializes_with_default_engine,
+        test_generator_write_creates_parent_directories,
+        test_generator_write_fails_without_output_or_stream,
+        test_generator_write_to_file,
+        test_generator_write_to_stream,
+    )
+    from tests.infra.unit.basemk.generator_edge_cases import (
         test_generator_normalize_config_with_basemk_config,
         test_generator_normalize_config_with_dict,
         test_generator_normalize_config_with_invalid_dict,
         test_generator_normalize_config_with_none,
         test_generator_validate_generated_output_handles_oserror,
-        test_generator_write_creates_parent_directories,
-        test_generator_write_fails_without_output_or_stream,
         test_generator_write_handles_file_permission_error,
-        test_generator_write_to_file,
-        test_generator_write_to_stream,
         test_generator_write_to_stream_handles_oserror,
     )
     from tests.infra.unit.basemk.init import TestFlextInfraBaseMk
@@ -177,19 +179,19 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "test_generator_initializes_with_default_engine",
     ),
     "test_generator_normalize_config_with_basemk_config": (
-        "tests.infra.unit.basemk.generator",
+        "tests.infra.unit.basemk.generator_edge_cases",
         "test_generator_normalize_config_with_basemk_config",
     ),
     "test_generator_normalize_config_with_dict": (
-        "tests.infra.unit.basemk.generator",
+        "tests.infra.unit.basemk.generator_edge_cases",
         "test_generator_normalize_config_with_dict",
     ),
     "test_generator_normalize_config_with_invalid_dict": (
-        "tests.infra.unit.basemk.generator",
+        "tests.infra.unit.basemk.generator_edge_cases",
         "test_generator_normalize_config_with_invalid_dict",
     ),
     "test_generator_normalize_config_with_none": (
-        "tests.infra.unit.basemk.generator",
+        "tests.infra.unit.basemk.generator_edge_cases",
         "test_generator_normalize_config_with_none",
     ),
     "test_generator_renders_with_config_override": (
@@ -197,7 +199,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "test_generator_renders_with_config_override",
     ),
     "test_generator_validate_generated_output_handles_oserror": (
-        "tests.infra.unit.basemk.generator",
+        "tests.infra.unit.basemk.generator_edge_cases",
         "test_generator_validate_generated_output_handles_oserror",
     ),
     "test_generator_write_creates_parent_directories": (
@@ -209,7 +211,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "test_generator_write_fails_without_output_or_stream",
     ),
     "test_generator_write_handles_file_permission_error": (
-        "tests.infra.unit.basemk.generator",
+        "tests.infra.unit.basemk.generator_edge_cases",
         "test_generator_write_handles_file_permission_error",
     ),
     "test_generator_write_saves_output_file": (
@@ -225,7 +227,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "test_generator_write_to_stream",
     ),
     "test_generator_write_to_stream_handles_oserror": (
-        "tests.infra.unit.basemk.generator",
+        "tests.infra.unit.basemk.generator_edge_cases",
         "test_generator_write_to_stream_handles_oserror",
     ),
     "test_render_all_generates_large_makefile": (

@@ -9,17 +9,17 @@ from pathlib import Path
 
 import pytest
 
-from flext_core import r
+from flext_core import r, t
 from flext_infra.workspace.sync import FlextInfraSyncService, main
 from flext_tests import tm
 
 _S = FlextInfraSyncService
 
 
-def _stub_gen(content: str, *, fail: bool = False) -> object:
+def _stub_gen(content: str, *, fail: bool = False) -> t.ContainerValue:
     class _Gen:
         @staticmethod
-        def generate(*args: object, **kwargs: object) -> r[str]:
+        def generate(*args: t.ContainerValue, **kwargs: t.ContainerValue) -> r[str]:
             return r[str].fail(content) if fail else r[str].ok(content)
 
     return _Gen()
@@ -87,7 +87,7 @@ class TestSyncFailures:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        def _open(*_a: object, **_kw: object) -> None:
+        def _open(*_a: t.ContainerValue, **_kw: t.ContainerValue) -> None:
             msg = "Write failed"
             raise OSError(msg)
 
@@ -101,7 +101,7 @@ class TestSyncFailures:
     ) -> None:
         s = _S()
 
-        def _ensure(*_a: object, **_kw: object) -> r[bool]:
+        def _ensure(*_a: t.ContainerValue, **_kw: t.ContainerValue) -> r[bool]:
             return r[bool].fail(".gitignore sync failed")
 
         monkeypatch.setattr(s, "_ensure_gitignore_entries", _ensure)
@@ -119,7 +119,7 @@ class TestSyncInternals:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        def _temp(*_a: object, **_kw: object) -> None:
+        def _temp(*_a: t.ContainerValue, **_kw: t.ContainerValue) -> None:
             msg = "Temp file failed"
             raise OSError(msg)
 
@@ -184,7 +184,7 @@ class TestSyncGitignore:
     ) -> None:
         (tmp_path / ".gitignore").write_text("*.pyc\n", encoding="utf-8")
 
-        def _open(*_a: object, **_kw: object) -> None:
+        def _open(*_a: t.ContainerValue, **_kw: t.ContainerValue) -> None:
             msg = "Write failed"
             raise OSError(msg)
 

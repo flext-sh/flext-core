@@ -5,17 +5,17 @@ from types import SimpleNamespace
 
 import pytest
 
-from flext_core import r
+from flext_core import r, t
 from flext_infra.deps.detection import FlextInfraDependencyDetectionService
 from flext_tests import tm
 
 
 class _StubToml:
-    def __init__(self, values: list[object]) -> None:
+    def __init__(self, values: list[t.ContainerValue]) -> None:
         self._values = values
         self._idx = 0
 
-    def read_plain(self, path: Path) -> object:
+    def read_plain(self, path: Path) -> t.ContainerValue:
         _ = path
         value = self._values[self._idx]
         if self._idx < len(self._values) - 1:
@@ -24,13 +24,13 @@ class _StubToml:
 
 
 class _StubRunner:
-    def __init__(self, result: object) -> None:
+    def __init__(self, result: t.ContainerValue) -> None:
         self._result = result
         self.last_kwargs: dict[str, str | int | Path | dict[str, str]] = {}
 
     def run_raw(
-        self, *args: object, **kwargs: str | int | Path | dict[str, str]
-    ) -> object:
+        self, *args: t.ContainerValue, **kwargs: str | int | Path | dict[str, str]
+    ) -> t.ContainerValue:
         _ = args
         self.last_kwargs = kwargs
         return self._result

@@ -10,7 +10,7 @@ import sys
 
 import pytest
 
-from flext_core import r
+from flext_core import r, t
 from flext_infra import m
 from flext_infra.docs.__main__ import main
 from flext_infra.docs.auditor import FlextInfraDocAuditor
@@ -21,11 +21,15 @@ from flext_infra.docs.validator import FlextInfraDocValidator
 from flext_tests import tm
 
 
-def _ok_empty(*a: object, **kw: object) -> r[list[object]]:
-    return r[list[object]].ok([])
+def _ok_empty(
+    *a: t.ContainerValue, **kw: t.ContainerValue
+) -> r[list[t.ContainerValue]]:
+    return r[list[t.ContainerValue]].ok([])
 
 
-def _ok_audit(*a: object, **kw: object) -> r[list[m.Infra.Docs.DocsPhaseReport]]:
+def _ok_audit(
+    *a: t.ContainerValue, **kw: t.ContainerValue
+) -> r[list[m.Infra.Docs.DocsPhaseReport]]:
     return r[list[m.Infra.Docs.DocsPhaseReport]].ok([])
 
 
@@ -98,74 +102,76 @@ class TestMainRouting:
         tm.that(exc_info.value.code, eq=0)
 
 
-def _capture_audit(store: dict[str, object]) -> object:
-    def _fn(*a: object, **kw: object) -> r[list[m.Infra.Docs.DocsPhaseReport]]:
+def _capture_audit(store: dict[str, t.ContainerValue]) -> t.ContainerValue:
+    def _fn(
+        *a: t.ContainerValue, **kw: t.ContainerValue
+    ) -> r[list[m.Infra.Docs.DocsPhaseReport]]:
         store.update(kw)
         return r[list[m.Infra.Docs.DocsPhaseReport]].ok([])
 
     return _fn
 
 
-def _capture_simple(store: dict[str, object]) -> object:
-    def _fn(*a: object, **kw: object) -> r[list[object]]:
+def _capture_simple(store: dict[str, t.ContainerValue]) -> t.ContainerValue:
+    def _fn(*a: t.ContainerValue, **kw: t.ContainerValue) -> r[list[t.ContainerValue]]:
         store.update(kw)
-        return r[list[object]].ok([])
+        return r[list[t.ContainerValue]].ok([])
 
     return _fn
 
 
 class TestMainWithFlags:
     def test_audit_custom_root(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        kw: dict[str, object] = {}
+        kw: dict[str, t.ContainerValue] = {}
         monkeypatch.setattr(sys, "argv", ["prog", "audit", "--root", "/custom/path"])
         monkeypatch.setattr(FlextInfraDocAuditor, "audit", _capture_audit(kw))
         main()
         tm.that(str(kw.get("root", "")).endswith("custom/path"), eq=True)
 
     def test_audit_project_filter(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        kw: dict[str, object] = {}
+        kw: dict[str, t.ContainerValue] = {}
         monkeypatch.setattr(sys, "argv", ["prog", "audit", "--project", "test-proj"])
         monkeypatch.setattr(FlextInfraDocAuditor, "audit", _capture_audit(kw))
         main()
         tm.that(kw.get("project"), eq="test-proj")
 
     def test_audit_strict_flag(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        kw: dict[str, object] = {}
+        kw: dict[str, t.ContainerValue] = {}
         monkeypatch.setattr(sys, "argv", ["prog", "audit", "--strict", "0"])
         monkeypatch.setattr(FlextInfraDocAuditor, "audit", _capture_audit(kw))
         main()
         tm.that(kw.get("strict"), eq=False)
 
     def test_fix_apply_flag(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        kw: dict[str, object] = {}
+        kw: dict[str, t.ContainerValue] = {}
         monkeypatch.setattr(sys, "argv", ["prog", "fix", "--apply"])
         monkeypatch.setattr(FlextInfraDocFixer, "fix", _capture_simple(kw))
         main()
         tm.that(kw.get("apply"), eq=True)
 
     def test_generate_apply_flag(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        kw: dict[str, object] = {}
+        kw: dict[str, t.ContainerValue] = {}
         monkeypatch.setattr(sys, "argv", ["prog", "generate", "--apply"])
         monkeypatch.setattr(FlextInfraDocGenerator, "generate", _capture_simple(kw))
         main()
         tm.that(kw.get("apply"), eq=True)
 
     def test_validate_apply_flag(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        kw: dict[str, object] = {}
+        kw: dict[str, t.ContainerValue] = {}
         monkeypatch.setattr(sys, "argv", ["prog", "validate", "--apply"])
         monkeypatch.setattr(FlextInfraDocValidator, "validate", _capture_simple(kw))
         main()
         tm.that(kw.get("apply"), eq=True)
 
     def test_audit_check_parameter(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        kw: dict[str, object] = {}
+        kw: dict[str, t.ContainerValue] = {}
         monkeypatch.setattr(sys, "argv", ["prog", "audit", "--check", "links"])
         monkeypatch.setattr(FlextInfraDocAuditor, "audit", _capture_audit(kw))
         main()
         tm.that(kw.get("check"), eq="links")
 
     def test_validate_check_parameter(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        kw: dict[str, object] = {}
+        kw: dict[str, t.ContainerValue] = {}
         monkeypatch.setattr(sys, "argv", ["prog", "validate", "--check", "links"])
         monkeypatch.setattr(FlextInfraDocValidator, "validate", _capture_simple(kw))
         main()

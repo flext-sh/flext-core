@@ -3,7 +3,7 @@ from __future__ import annotations
 import types
 from pathlib import Path
 
-from flext_core import r
+from flext_core import r, t
 from flext_infra.deps.internal_sync import FlextInfraInternalDependencySyncService
 from flext_tests import tm
 from tests.infra import h
@@ -11,11 +11,11 @@ from tests.infra import h
 
 def _set_toml_stub(
     service: FlextInfraInternalDependencySyncService,
-    values: list[object],
+    values: list[t.ContainerValue],
 ) -> None:
     state = {"index": 0}
 
-    def _read(_path: Path) -> object:
+    def _read(_path: Path) -> t.ContainerValue:
         item = values[state["index"]]
         state["index"] += 1
         return item
@@ -35,7 +35,7 @@ class TestSyncMethodEdgeCasesMore:
         _set_toml_stub(
             service,
             [
-                r[dict[str, object]].ok({
+                r[dict[str, t.ContainerValue]].ok({
                     "tool": {
                         "poetry": {
                             "dependencies": {"flext-core": {"path": "../flext-core"}}
@@ -43,7 +43,7 @@ class TestSyncMethodEdgeCasesMore:
                     },
                     "project": {},
                 }),
-                r[dict[str, object]].ok({
+                r[dict[str, t.ContainerValue]].ok({
                     "repo": {
                         "flext-core": {
                             "ssh_url": "git@github.com:flext-sh/flext-core.git",
@@ -65,7 +65,7 @@ class TestSyncMethodEdgeCasesMore:
         service = FlextInfraInternalDependencySyncService()
         _set_toml_stub(
             service,
-            [r[dict[str, object]].ok({"project": {"name": "test"}})],
+            [r[dict[str, t.ContainerValue]].ok({"project": {"name": "test"}})],
         )
         tm.ok(service.sync(tmp_path), eq=0)
         tm.that(h is not None, eq=True)

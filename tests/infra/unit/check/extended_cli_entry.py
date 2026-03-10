@@ -8,6 +8,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -16,7 +17,7 @@ import pytest
 import flext_infra.check.__main__ as check_main_mod
 import flext_infra.check.fix_pyrefly_config as fix_pyrefly_mod
 import flext_infra.check.workspace_check as ws_mod
-from flext_core import r
+from flext_core import r, t
 from flext_infra import m
 from flext_infra.check.services import (
     _GateExecution,
@@ -25,18 +26,14 @@ from flext_infra.check.services import (
 )
 from flext_tests import tm
 
-from ._stubs import Spy
-
 
 def _fake_checker_cls(
     parse_result: list[str],
     run_result: r[list[SimpleNamespace]] | r[list[_ProjectResult]],
 ) -> type:
-    """Build a fake FlextInfraWorkspaceChecker class."""
-
     class _Fake:
-        def __init__(self, **_kw: object) -> None:
-            self._run_spy = Spy()
+        def __init__(self, **_kw: t.ContainerValue) -> None:
+            _ = _kw
 
         @staticmethod
         def parse_gate_csv(_gates: str) -> list[str]:
@@ -46,9 +43,9 @@ def _fake_checker_cls(
             self,
             projects: list[str] | None = None,
             gates: list[str] | None = None,
-            **kw: object,
+            **kw: t.ContainerValue,
         ) -> r[list[SimpleNamespace]] | r[list[_ProjectResult]]:
-            self._run_spy(**kw)
+            _ = projects, gates, kw
             return run_result
 
     return _Fake
@@ -57,22 +54,20 @@ def _fake_checker_cls(
 def _fake_fixer_cls(
     run_result: r[list[str]],
 ) -> type:
-    """Build a fake FlextInfraConfigFixer class."""
-
     class _Fake:
-        def __init__(self, **_kw: object) -> None:
-            self._run_spy = Spy()
+        def __init__(self, **_kw: t.ContainerValue) -> None:
+            _ = _kw
 
-        def run(self, _projects: list[str] | None = None, **kw: object) -> r[list[str]]:
-            self._run_spy(**kw)
+        def run(
+            self, _projects: list[str] | None = None, **kw: t.ContainerValue
+        ) -> r[list[str]]:
+            _ = _projects, kw
             return run_result
 
     return _Fake
 
 
 class TestWorkspaceCheckCLI:
-    """Test workspace_check CLI entry point."""
-
     def test_no_projects_error(self) -> None:
         tm.that(ws_mod.main([]), eq=1)
 
@@ -105,8 +100,6 @@ class TestWorkspaceCheckCLI:
 
 
 class TestFixPyrelfyCLI:
-    """Test fix_pyrefly_config CLI entry point."""
-
     def test_success(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(
             fix_pyrefly_mod,
@@ -124,12 +117,12 @@ class TestFixPyrelfyCLI:
         tm.that(fix_pyrefly_mod.main([]), eq=1)
 
 
-def _fake_run_cli_zero(argv: list[str] | None = None) -> int:
-    return 0
+def _const_cli_result(code: int) -> Callable[[list[str] | None], int]:
+    return lambda argv=None: code
 
 
-def _fake_run_cli_42(argv: list[str] | None = None) -> int:
-    return 42
+_fake_run_cli_zero = _const_cli_result(0)
+_fake_run_cli_42 = _const_cli_result(42)
 
 
 class _FakeRuntime:
@@ -139,8 +132,6 @@ class _FakeRuntime:
 
 
 class TestCheckMainEntryPoint:
-    """Test check __main__ entry point."""
-
     def test_calls_run_cli(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(check_main_mod, "FlextRuntime", _FakeRuntime)
         monkeypatch.setattr(check_main_mod, "run_cli", _fake_run_cli_zero)
@@ -153,8 +144,6 @@ class TestCheckMainEntryPoint:
 
 
 class TestRunCLIExtended:
-    """Extended run_cli tests (fix-pyrefly-config, no command, reports dir)."""
-
     def test_fix_pyrefly_config_success(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(
             ws_mod,

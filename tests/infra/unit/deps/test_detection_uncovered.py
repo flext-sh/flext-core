@@ -6,16 +6,18 @@ from types import SimpleNamespace
 
 import pytest
 
-from flext_core import r
+from flext_core import r, t
 from flext_infra.deps.detection import FlextInfraDependencyDetectionService
 from flext_tests import tm
 
 
 class _StubRunner:
-    def __init__(self, result: object) -> None:
+    def __init__(self, result: t.ContainerValue) -> None:
         self._result = result
 
-    def run_raw(self, *args: object, **kwargs: object) -> object:
+    def run_raw(
+        self, *args: t.ContainerValue, **kwargs: t.ContainerValue
+    ) -> t.ContainerValue:
         _ = args
         _ = kwargs
         return self._result
@@ -67,7 +69,7 @@ class TestDetectionUncoveredLines:
             def __init__(self) -> None:
                 self._i = 0
 
-            def read_plain(self, path: Path) -> object:
+            def read_plain(self, path: Path) -> t.ContainerValue:
                 _ = path
                 self._i += 1
                 if self._i == 1:

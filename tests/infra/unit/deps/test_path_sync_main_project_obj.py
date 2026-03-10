@@ -11,7 +11,7 @@ from flext_core import r
 from flext_infra import m
 from flext_infra.deps import path_sync as path_sync_module
 from flext_tests import tm
-from tests.infra.helpers import FlextInfraTestHelpers
+from tests.infra import h
 
 
 class _OutputNoop:
@@ -75,4 +75,4 @@ def test_main_project_obj_not_dict_second_loop(
 
 
 def test_helpers_alias_is_reachable_project_obj() -> None:
-    tm.that(hasattr(FlextInfraTestHelpers, "assert_ok"), eq=True)
+    tm.that(hasattr(h, "assert_ok"), eq=True)

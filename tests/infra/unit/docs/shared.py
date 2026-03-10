@@ -10,6 +10,7 @@ from pathlib import Path
 
 import pytest
 
+from flext_core import t
 from flext_infra import m
 from flext_infra.constants import c
 from flext_infra.docs.shared import FlextInfraDocsShared
@@ -65,7 +66,7 @@ class TestBuildScopes:
         project: str | None = None,
         projects: str | None = None,
         output_dir: str = _OUT,
-    ) -> object:
+    ) -> t.ContainerValue:
         return FlextInfraDocsShared.build_scopes(
             root=root,
             project=project,

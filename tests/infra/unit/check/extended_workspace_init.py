@@ -10,6 +10,7 @@ from pathlib import Path
 
 import pytest
 
+from flext_core import t
 from flext_infra.check.services import (
     FlextInfraWorkspaceChecker,
     _CheckIssue,
@@ -105,7 +106,9 @@ class TestWorkspaceCheckerInitOSError:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        def _raise_oserror(*_args: object, **_kwargs: object) -> None:
+        def _raise_oserror(
+            *_args: t.ContainerValue, **_kwargs: t.ContainerValue
+        ) -> None:
             msg = "Permission denied"
             raise OSError(msg)
 

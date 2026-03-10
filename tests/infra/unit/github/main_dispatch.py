@@ -4,7 +4,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from flext_core import r
+import pytest
+
+from flext_core import r, t
 from flext_infra import m
 from flext_infra.github import __main__ as github_main
 from tests.infra.unit.github._stubs import StubWorkspaceManager
@@ -22,10 +24,10 @@ def _orch(*, fail: int = 0, total: int = 1) -> m.Infra.Github.PrOrchestrationRes
 
 
 class TestRunPrWorkspace:
-    def _stub(self, **kw: object) -> StubWorkspaceManager:
+    def _stub(self, **kw: t.ContainerValue) -> StubWorkspaceManager:
         return StubWorkspaceManager(**kw)
 
-    def test_success(self, tmp_path: Path, monkeypatch: object) -> None:
+    def test_success(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         mgr = self._stub(
             orchestrate_returns=r[m.Infra.Github.PrOrchestrationResult].ok(
                 _orch(fail=0),
@@ -34,7 +36,7 @@ class TestRunPrWorkspace:
         monkeypatch.setattr(github_main, "FlextInfraPrWorkspaceManager", lambda: mgr)
         assert run_pr_workspace(["--workspace-root", str(tmp_path)]) == 0
 
-    def test_failure(self, tmp_path: Path, monkeypatch: object) -> None:
+    def test_failure(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         mgr = self._stub(
             orchestrate_returns=r[m.Infra.Github.PrOrchestrationResult].fail(
                 "orchestration failed",
@@ -43,7 +45,9 @@ class TestRunPrWorkspace:
         monkeypatch.setattr(github_main, "FlextInfraPrWorkspaceManager", lambda: mgr)
         assert run_pr_workspace(["--workspace-root", str(tmp_path)]) == 1
 
-    def test_with_failures(self, tmp_path: Path, monkeypatch: object) -> None:
+    def test_with_failures(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         mgr = self._stub(
             orchestrate_returns=r[m.Infra.Github.PrOrchestrationResult].ok(
                 _orch(fail=2, total=2),
@@ -52,7 +56,9 @@ class TestRunPrWorkspace:
         monkeypatch.setattr(github_main, "FlextInfraPrWorkspaceManager", lambda: mgr)
         assert run_pr_workspace(["--workspace-root", str(tmp_path)]) == 1
 
-    def test_with_projects(self, tmp_path: Path, monkeypatch: object) -> None:
+    def test_with_projects(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         mgr = self._stub(
             orchestrate_returns=r[m.Infra.Github.PrOrchestrationResult].ok(
                 _orch(fail=0, total=2),
@@ -63,7 +69,7 @@ class TestRunPrWorkspace:
         assert run_pr_workspace(argv) == 0
         assert mgr.orchestrate_calls[0]["projects"] == ["p1", "p2"]
 
-    def test_with_branch(self, tmp_path: Path, monkeypatch: object) -> None:
+    def test_with_branch(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         mgr = self._stub(
             orchestrate_returns=r[m.Infra.Github.PrOrchestrationResult].ok(
                 _orch(fail=0),
@@ -78,7 +84,9 @@ class TestRunPrWorkspace:
         ])
         assert mgr.orchestrate_calls[0]["branch"] == "feature/test"
 
-    def test_with_checkpoint(self, tmp_path: Path, monkeypatch: object) -> None:
+    def test_with_checkpoint(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         mgr = self._stub(
             orchestrate_returns=r[m.Infra.Github.PrOrchestrationResult].ok(
                 _orch(fail=0),
@@ -88,7 +96,9 @@ class TestRunPrWorkspace:
         run_pr_workspace(["--workspace-root", str(tmp_path), "--checkpoint", "1"])
         assert mgr.orchestrate_calls[0]["checkpoint"] is True
 
-    def test_with_fail_fast(self, tmp_path: Path, monkeypatch: object) -> None:
+    def test_with_fail_fast(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         mgr = self._stub(
             orchestrate_returns=r[m.Infra.Github.PrOrchestrationResult].ok(
                 _orch(fail=0),
@@ -98,7 +108,9 @@ class TestRunPrWorkspace:
         run_pr_workspace(["--workspace-root", str(tmp_path), "--fail-fast", "1"])
         assert mgr.orchestrate_calls[0]["fail_fast"] is True
 
-    def test_with_pr_args(self, tmp_path: Path, monkeypatch: object) -> None:
+    def test_with_pr_args(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         mgr = self._stub(
             orchestrate_returns=r[m.Infra.Github.PrOrchestrationResult].ok(
                 _orch(fail=0),

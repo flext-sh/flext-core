@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from flext_core import r
+from flext_core import r, t
 from flext_infra.deps.path_sync import rewrite_dep_paths
 from flext_tests import tm
 
@@ -70,7 +70,9 @@ class TestRewriteDepPaths:
             '[project]\ndependencies = ["flext-core @ file://.flext-deps/flext-core"]\n',
         )
 
-        def fail_write(_self: object, _path: Path, _doc: object) -> r[bool]:
+        def fail_write(
+            _self: t.ContainerValue, _path: Path, _doc: t.ContainerValue
+        ) -> r[bool]:
             return r[bool].fail("write failed")
 
         monkeypatch.setattr(

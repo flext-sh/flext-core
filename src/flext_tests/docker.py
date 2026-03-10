@@ -363,4 +363,6 @@ class FlextTestsDocker:
             self.logger.warning("Failed to save dirty state", error=str(exc))
 
 
-__all__ = ["FlextTestsDocker"]
+tk = FlextTestsDocker
+
+__all__ = ["FlextTestsDocker", "tk"]

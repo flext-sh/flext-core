@@ -3,7 +3,7 @@ from __future__ import annotations
 import types
 from pathlib import Path
 
-from flext_core import r
+from flext_core import r, t
 from flext_infra.deps import internal_sync
 from flext_infra.deps.internal_sync import FlextInfraInternalDependencySyncService
 from flext_tests import tm
@@ -12,11 +12,11 @@ from tests.infra import h
 
 def _set_toml_stub(
     service: FlextInfraInternalDependencySyncService,
-    values: list[object],
+    values: list[t.ContainerValue],
 ) -> None:
     state = {"index": 0}
 
-    def _read(_path: Path) -> object:
+    def _read(_path: Path) -> t.ContainerValue:
         item = values[state["index"]]
         state["index"] += 1
         return item
@@ -27,13 +27,15 @@ def _set_toml_stub(
 class TestSync:
     def test_sync_no_deps(self, tmp_path: Path) -> None:
         service = FlextInfraInternalDependencySyncService()
-        _set_toml_stub(service, [r[dict[str, object]].ok({"tool": {}, "project": {}})])
+        _set_toml_stub(
+            service, [r[dict[str, t.ContainerValue]].ok({"tool": {}, "project": {}})]
+        )
         (tmp_path / "pyproject.toml").write_text("")
         tm.ok(service.sync(tmp_path), eq=0)
 
     def test_sync_collect_failure(self, tmp_path: Path) -> None:
         service = FlextInfraInternalDependencySyncService()
-        _set_toml_stub(service, [r[dict[str, object]].fail("read error")])
+        _set_toml_stub(service, [r[dict[str, t.ContainerValue]].fail("read error")])
         (tmp_path / "pyproject.toml").write_text("")
         tm.fail(service.sync(tmp_path))
 
@@ -51,7 +53,7 @@ class TestSync:
         _set_toml_stub(
             service,
             [
-                r[dict[str, object]].ok({
+                r[dict[str, t.ContainerValue]].ok({
                     "tool": {
                         "poetry": {
                             "dependencies": {
@@ -79,7 +81,7 @@ class TestSync:
         _set_toml_stub(
             service,
             [
-                r[dict[str, object]].ok({
+                r[dict[str, t.ContainerValue]].ok({
                     "tool": {
                         "poetry": {
                             "dependencies": {
@@ -89,7 +91,7 @@ class TestSync:
                     },
                     "project": {},
                 }),
-                r[dict[str, object]].ok({"repo": {}}),
+                r[dict[str, t.ContainerValue]].ok({"repo": {}}),
             ],
         )
         monkeypatch.setenv("FLEXT_STANDALONE", "")

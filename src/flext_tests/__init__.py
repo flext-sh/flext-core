@@ -31,11 +31,11 @@ if TYPE_CHECKING:
     from flext_tests._validator.settings import FlextValidatorSettings
     from flext_tests._validator.tests import FlextValidatorTests
     from flext_tests._validator.types import FlextValidatorTypes
-    from flext_tests.base import FlextTestsServiceBase, FlextTestsUtilityBase, s
+    from flext_tests.base import FlextTestsServiceBase, FlextTestsUtilityBase, s, ts
     from flext_tests.builders import FlextTestsBuilders, tb
     from flext_tests.constants import FlextTestsConstants, c, tc
-    from flext_tests.docker import FlextTestsDocker
-    from flext_tests.domains import FlextTestsDomains
+    from flext_tests.docker import FlextTestsDocker, tk
+    from flext_tests.domains import FlextTestsDomains, td
     from flext_tests.factories import FlextTestsFactories, tt
     from flext_tests.files import FlextTestsFiles, tf
     from flext_tests.matchers import FlextTestsMatchers, tm
@@ -81,6 +81,9 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "t": ("flext_tests.typings", "t"),
     "tb": ("flext_tests.builders", "tb"),
     "tc": ("flext_tests.constants", "tc"),
+    "ts": ("flext_tests.base", "tc"),
+    "tk": ("flext_tests.docker", "tc"),
+    "td": ("flext_tests.domain", "tc"),
     "tf": ("flext_tests.files", "tf"),
     "tm": ("flext_tests.matchers", "tm"),
     "tt": ("flext_tests.factories", "tt"),
@@ -118,8 +121,11 @@ __all__ = [
     "t",
     "tb",
     "tc",
+    "td",
     "tf",
+    "tk",
     "tm",
+    "ts",
     "tt",
     "tv",
     "u",

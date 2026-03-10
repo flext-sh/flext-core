@@ -10,6 +10,7 @@ from pathlib import Path
 
 import pytest
 
+from flext_core import t
 from flext_infra import m
 from flext_infra.check.services import (
     FlextInfraWorkspaceChecker,
@@ -71,15 +72,17 @@ class TestCheckProjectRunners:
         (tmp_path / "src" / "test.py").touch()
         call_log: list[str] = []
 
-        def _fake_lint(*_a: object) -> _GateExecution:
+        def _fake_lint(*_a: t.ContainerValue) -> _GateExecution:
             call_log.append("lint")
             return _make_gate_exec(gate="lint", passed=True)
 
-        def _fake_format(*_a: object) -> _GateExecution:
+        def _fake_format(*_a: t.ContainerValue) -> _GateExecution:
             call_log.append("format")
             return _make_gate_exec(gate="format", passed=True)
 
-        def _fake_pyrefly(*_a: object, **_kw: object) -> _GateExecution:
+        def _fake_pyrefly(
+            *_a: t.ContainerValue, **_kw: t.ContainerValue
+        ) -> _GateExecution:
             call_log.append("pyrefly")
             return _make_gate_exec(gate="pyrefly", passed=True)
 

@@ -25,9 +25,11 @@ from flext_infra import FlextInfraUtilitiesDiscovery, c, m, u
 from flext_infra.codegen.lazy_init import FlextInfraCodegenLazyInit
 from flext_infra.codegen.transforms import FlextInfraCodegenTransforms
 from flext_infra.core.namespace_validator import FlextInfraNamespaceValidator
+from flext_infra.refactor.engine import FlextInfraRefactorEngine
 from flext_infra.refactor.migrate_to_class_mro import (
     FlextInfraRefactorMigrateToClassMRO,
 )
+from flext_infra.refactor.namespace_rewriter import NamespaceEnforcementRewriter
 
 
 class FlextInfraCodegenFixer(s[list[m.Infra.Codegen.AutoFixResult]]):
@@ -391,6 +393,19 @@ class FlextInfraCodegenFixer(s[list[m.Infra.Codegen.AutoFixResult]]):
             violations_fixed=violations_fixed,
             violations_skipped=violations_skipped,
         )
+        self._apply_refactor_engine_pass(
+            project_path=project_path,
+            files_modified=files_modified,
+            violations_skipped=violations_skipped,
+        )
+        self._apply_namespace_enforcement_pass(
+            project_path=project_path,
+            files_modified=files_modified,
+        )
+        self._run_lazy_propagation(
+            project_path=project_path,
+            files_modified=files_modified,
+        )
         self._cleanup_stale_all_entries(files_modified=files_modified)
         self._normalize_rewritten_python_files(files_modified=files_modified)
         return m.Infra.Codegen.AutoFixResult(
@@ -410,11 +425,106 @@ class FlextInfraCodegenFixer(s[list[m.Infra.Codegen.AutoFixResult]]):
         report = service.run(target="all", apply_changes=True)
         files_modified.update(migration.file for migration in report.migrations)
         files_modified.update(rewrite.file for rewrite in report.rewrites)
-        self._run_lazy_propagation(
-            project_path=project_path,
-            files_modified=files_modified,
-        )
         return report
+
+    def _apply_refactor_engine_pass(
+        self,
+        *,
+        project_path: Path,
+        files_modified: set[str],
+        violations_skipped: list[m.Infra.Codegen.CensusViolation],
+    ) -> None:
+        engine = FlextInfraRefactorEngine()
+        config_result = engine.load_config()
+        if config_result.is_failure:
+            message = config_result.error or "Failed to load refactor engine config"
+            violations_skipped.append(
+                m.Infra.Codegen.CensusViolation(
+                    module=str(project_path),
+                    rule="NS-ENGINE",
+                    line=1,
+                    message=message,
+                    fixable=False,
+                ),
+            )
+            return
+        engine.set_rule_filters(
+            [
+                "modernize-constants-import",
+                "modernize-models-import",
+                "modernize-result-import",
+                "ban-lazy-imports",
+                "ensure-future-annotations",
+                "remove-compatibility-aliases",
+                "remove-wrapper-functions",
+                "remove-deprecated-classes",
+                "remove-import-bypasses",
+                "fix-container-invariance-annotations",
+                "remove-validated-redundant-casts",
+            ],
+        )
+        rules_result = engine.load_rules()
+        if rules_result.is_failure:
+            message = rules_result.error or "Failed to load filtered refactor rules"
+            violations_skipped.append(
+                m.Infra.Codegen.CensusViolation(
+                    module=str(project_path),
+                    rule="NS-ENGINE",
+                    line=1,
+                    message=message,
+                    fixable=False,
+                ),
+            )
+            return
+        results = engine.refactor_project(
+            project_path,
+            dry_run=False,
+            apply_safety=False,
+        )
+        files_modified.update(
+            str(result.file_path)
+            for result in results
+            if result.success and result.modified
+        )
+        violations_skipped.extend(
+            m.Infra.Codegen.CensusViolation(
+                module=str(result.file_path),
+                rule="NS-ENGINE",
+                line=1,
+                message=result.error or "Refactor engine pass failed",
+                fixable=False,
+            )
+            for result in results
+            if not result.success
+        )
+
+    def _apply_namespace_enforcement_pass(
+        self,
+        *,
+        project_path: Path,
+        files_modified: set[str],
+    ) -> None:
+        py_files = NamespaceEnforcementRewriter.collect_python_files(
+            project_root=project_path,
+        )
+        src_files = [
+            file_path
+            for file_path in py_files
+            if c.Infra.Paths.DEFAULT_SRC_DIR in file_path.parts
+        ]
+        before_snapshot = self._snapshot_files(file_paths=src_files)
+        NamespaceEnforcementRewriter.rewrite_import_alias_violations(py_files=src_files)
+        NamespaceEnforcementRewriter.rewrite_runtime_alias_violations(
+            py_files=src_files
+        )
+        NamespaceEnforcementRewriter.rewrite_missing_future_annotations(
+            py_files=src_files
+        )
+        changed_paths = self._detect_changed_files(
+            before_snapshot=before_snapshot,
+            file_paths=src_files,
+        )
+        files_modified.update(changed_paths)
 
     @staticmethod
     def _record_mro_migration_result(
@@ -609,6 +719,36 @@ class FlextInfraCodegenFixer(s[list[m.Infra.Codegen.AutoFixResult]]):
                 except OSError:
                     continue
         return snapshot
+
+    @staticmethod
+    def _snapshot_files(*, file_paths: Sequence[Path]) -> dict[str, str]:
+        snapshot: dict[str, str] = {}
+        for file_path in file_paths:
+            try:
+                snapshot[str(file_path)] = file_path.read_text(
+                    encoding=c.Infra.Encoding.DEFAULT,
+                )
+            except OSError:
+                continue
+        return snapshot
+
+    @staticmethod
+    def _detect_changed_files(
+        *,
+        before_snapshot: dict[str, str],
+        file_paths: Sequence[Path],
+    ) -> set[str]:
+        changed: set[str] = set()
+        for file_path in file_paths:
+            path_key = str(file_path)
+            previous = before_snapshot.get(path_key)
+            try:
+                current = file_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
+            except OSError:
+                continue
+            if previous != current:
+                changed.add(path_key)
+        return changed
 
     def run(self) -> list[m.Infra.Codegen.AutoFixResult]:
         """Run auto-fix on all projects in workspace.

@@ -11,14 +11,15 @@ from types import SimpleNamespace
 
 import pytest
 
+from flext_core import t
 from flext_infra.check.services import FlextInfraWorkspaceChecker
 from flext_tests import tm
 
 
-def _stub_run_seq(results: list[SimpleNamespace]) -> object:
+def _stub_run_seq(results: list[SimpleNamespace]) -> t.ContainerValue:
     idx = [0]
 
-    def _run(_cmd: list[str], _cwd: Path, **_kw: object) -> SimpleNamespace:
+    def _run(_cmd: list[str], _cwd: Path, **_kw: t.ContainerValue) -> SimpleNamespace:
         i = idx[0]
         idx[0] += 1
         return results[i] if i < len(results) else results[-1]

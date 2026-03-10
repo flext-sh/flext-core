@@ -1,53 +1,51 @@
-"""Tests for FlextWorkspaceMigrator — core migration scenarios.
-
-Uses real service instances with typed stubs and monkeypatch.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
-
 from __future__ import annotations
 
+from collections.abc import Mapping
 from pathlib import Path
+from typing import override
 
-from flext_core import r
+from flext_core import r, t
 from flext_infra import m as im
+from flext_infra.basemk.generator import FlextInfraBaseMkGenerator
 from flext_infra.workspace.migrator import FlextInfraProjectMigrator
 from flext_tests import tm
+from tests.infra import h
 
 
 class _StubDiscovery:
     """Typed stub for discovery service."""
 
-    def __init__(self, projects: list[im.Infra.Workspace.ProjectInfo]) -> None:
-        self._projects = projects
-
-    def discover_projects(
-        self, workspace_root: Path
-    ) -> r[list[im.Infra.Workspace.ProjectInfo]]:
-        return r[list[im.Infra.Workspace.ProjectInfo]].ok(self._projects)
-
-
-class _StubDiscoveryFail:
-    """Typed stub for discovery service that fails."""
-
-    def __init__(self, error: str) -> None:
+    def __init__(
+        self,
+        projects: list[im.Infra.Workspace.ProjectInfo] | None = None,
+        *,
+        error: str = "",
+    ) -> None:
+        self._projects = projects or []
         self._error = error
 
     def discover_projects(
         self, workspace_root: Path
     ) -> r[list[im.Infra.Workspace.ProjectInfo]]:
-        return r[list[im.Infra.Workspace.ProjectInfo]].fail(self._error)
+        _ = workspace_root
+        if self._error:
+            return r[list[im.Infra.Workspace.ProjectInfo]].fail(self._error)
+        return r[list[im.Infra.Workspace.ProjectInfo]].ok(self._projects)
 
 
-class _StubGenerator:
+class _StubGenerator(FlextInfraBaseMkGenerator):
     """Typed stub for base.mk generator."""
 
     def __init__(self, content: str = "", *, fail: str = "") -> None:
+        super().__init__()
         self._content = content
         self._fail = fail
 
-    def generate(self, *args: object, **kwargs: object) -> r[str]:
+    @override
+    def generate(
+        self,
+        config: im.Infra.Basemk.BaseMkConfig | Mapping[str, t.Scalar] | None = None,
+    ) -> r[str]:
         if self._fail:
             return r[str].fail(self._fail)
         return r[str].ok(self._content)
@@ -66,24 +64,6 @@ def _project(
     })
 
 
-def _write_project(project_root: Path) -> None:
-    (project_root / ".git").mkdir(parents=True, exist_ok=True)
-    _ = (project_root / "base.mk").write_text("OLD_BASE\n", encoding="utf-8")
-    _ = (project_root / "Makefile").write_text(
-        'python "$(WORKSPACE_ROOT)/scripts/check/fix_pyrefly_config.py" "$(PROJECT_NAME)"\n'
-        'python "$(WORKSPACE_ROOT)/scripts/check/workspace_check.py" --gates lint "$(PROJECT_NAME)"\n',
-        encoding="utf-8",
-    )
-    _ = (project_root / "pyproject.toml").write_text(
-        '[project]\nname = "project-a"\nversion = "0.1.0"\ndependencies = ["requests>=2"]\n',
-        encoding="utf-8",
-    )
-    _ = (project_root / ".gitignore").write_text(
-        "!scripts/\n!scripts/**\n*.pyc\n",
-        encoding="utf-8",
-    )
-
-
 def _build_migrator(
     project: im.Infra.Workspace.ProjectInfo,
     base_mk: str,
@@ -97,7 +77,7 @@ def _build_migrator(
 def test_migrator_dry_run_reports_changes_without_writes(tmp_path: Path) -> None:
     project_root = tmp_path / "project-a"
     project_root.mkdir(parents=True)
-    _write_project(project_root)
+    h.write_project(project_root)
     migrator = _build_migrator(_project(project_root), "NEW_BASE\n")
     result = migrator.migrate(workspace_root=tmp_path, dry_run=True)
     migrations = tm.ok(result)
@@ -108,7 +88,7 @@ def test_migrator_dry_run_reports_changes_without_writes(tmp_path: Path) -> None
 def test_migrator_apply_updates_project_files(tmp_path: Path) -> None:
     project_root = tmp_path / "project-a"
     project_root.mkdir(parents=True)
-    _write_project(project_root)
+    h.write_project(project_root)
     migrator = _build_migrator(_project(project_root), "NEW_BASE\n")
     result = migrator.migrate(workspace_root=tmp_path, dry_run=False)
     migrations = tm.ok(result)
@@ -123,8 +103,8 @@ def test_migrator_handles_missing_pyproject_gracefully(tmp_path: Path) -> None:
     project_root = tmp_path / "project-a"
     project_root.mkdir(parents=True)
     (project_root / ".git").mkdir(parents=True, exist_ok=True)
-    _ = (project_root / "base.mk").write_text("OLD_BASE\n", encoding="utf-8")
-    _ = (project_root / "Makefile").write_text("", encoding="utf-8")
+    (project_root / "base.mk").write_text("OLD_BASE\n", encoding="utf-8")
+    (project_root / "Makefile").write_text("", encoding="utf-8")
     migrator = _build_migrator(_project(project_root), "NEW_BASE\n")
     result = migrator.migrate(workspace_root=tmp_path, dry_run=False)
     tm.ok(result)
@@ -134,7 +114,7 @@ def test_migrator_handles_missing_pyproject_gracefully(tmp_path: Path) -> None:
 def test_migrator_preserves_custom_makefile_content(tmp_path: Path) -> None:
     project_root = tmp_path / "project-a"
     project_root.mkdir(parents=True)
-    _write_project(project_root)
+    h.write_project(project_root)
     custom = "# Custom rule\ncustom-target:\n\t@echo 'custom'\n"
     (project_root / "Makefile").write_text(custom, encoding="utf-8")
     migrator = _build_migrator(_project(project_root), "NEW_BASE\n")
@@ -157,7 +137,7 @@ def test_migrator_workspace_root_not_exists(tmp_path: Path) -> None:
 
 def test_migrator_discovery_failure(tmp_path: Path) -> None:
     migrator = FlextInfraProjectMigrator()
-    migrator._discovery = _StubDiscoveryFail("Discovery failed")
+    migrator._discovery = _StubDiscovery(error="Discovery failed")
     result = migrator.migrate(workspace_root=tmp_path, dry_run=False)
     tm.fail(result, has="Discovery failed")
 

@@ -11,7 +11,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from flext_core import r
+from flext_core import r, t
 from flext_infra import m
 from flext_infra._utilities.subprocess import FlextInfraUtilitiesSubprocess
 from flext_infra.check.services import FlextInfraWorkspaceChecker
@@ -40,7 +40,9 @@ class TestWorkspaceCheckerRunGo:
         (proj_dir / "go.mod").write_text("module test")
         call_count = [0]
 
-        def _fake_run(*_a: object, **_kw: object) -> SimpleNamespace:
+        def _fake_run(
+            *_a: t.ContainerValue, **_kw: t.ContainerValue
+        ) -> SimpleNamespace:
             call_count[0] += 1
             if call_count[0] == 1:
                 return SimpleNamespace(
@@ -66,7 +68,9 @@ class TestWorkspaceCheckerRunGo:
         (proj_dir / "main.go").write_text("package main")
         call_count = [0]
 
-        def _fake_run(*_a: object, **_kw: object) -> SimpleNamespace:
+        def _fake_run(
+            *_a: t.ContainerValue, **_kw: t.ContainerValue
+        ) -> SimpleNamespace:
             call_count[0] += 1
             if call_count[0] == 1:
                 return SimpleNamespace(stdout="", stderr="", returncode=0)
@@ -88,7 +92,9 @@ class TestWorkspaceCheckerRunGo:
         (proj_dir / "go.mod").write_text("module test")
         call_count = [0]
 
-        def _fake_run(*_a: object, **_kw: object) -> SimpleNamespace:
+        def _fake_run(
+            *_a: t.ContainerValue, **_kw: t.ContainerValue
+        ) -> SimpleNamespace:
             call_count[0] += 1
             if call_count[0] == 1:
                 return SimpleNamespace(
@@ -117,7 +123,7 @@ class TestWorkspaceCheckerRunCommand:
         def _fake_run(
             _self: FlextInfraUtilitiesSubprocess,
             _cmd: list[str],
-            **_kw: object,
+            **_kw: t.ContainerValue,
         ) -> r[m.Infra.Core.CommandOutput]:
             return r[m.Infra.Core.CommandOutput].ok(
                 m.Infra.Core.CommandOutput(stdout="output", stderr="", exit_code=0),
@@ -138,7 +144,7 @@ class TestWorkspaceCheckerRunCommand:
         def _fake_run(
             _self: FlextInfraUtilitiesSubprocess,
             _cmd: list[str],
-            **_kw: object,
+            **_kw: t.ContainerValue,
         ) -> r[m.Infra.Core.CommandOutput]:
             return r[m.Infra.Core.CommandOutput].fail("execution failed")
 

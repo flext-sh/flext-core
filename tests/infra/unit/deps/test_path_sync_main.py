@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from flext_core import r
+from flext_core import r, t
 from flext_infra import m
 from flext_infra.deps import path_sync as path_sync_module
 from flext_tests import tm
@@ -140,7 +140,9 @@ class TestMain:
         )
         calls = {"n": 0}
 
-        def rewrite_stub(*args: object, **kwargs: object) -> r[list[str]]:
+        def rewrite_stub(
+            *args: t.ContainerValue, **kwargs: t.ContainerValue
+        ) -> r[list[str]]:
             calls["n"] += 1
             if calls["n"] == 1:
                 return r[list[str]].ok([])

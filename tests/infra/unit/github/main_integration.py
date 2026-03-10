@@ -5,6 +5,8 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
+import pytest
+
 from flext_core import r
 from flext_infra import m
 from flext_infra.github import __main__ as github_main
@@ -44,7 +46,9 @@ class TestMain:
         finally:
             sys.argv = original
 
-    def test_workflows_subcommand(self, tmp_path: Path, monkeypatch: object) -> None:
+    def test_workflows_subcommand(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         syncer = StubSyncer(sync_returns=r[list[SyncOperation]].ok([]))
         monkeypatch.setattr(github_main, "FlextInfraWorkflowSyncer", lambda: syncer)
         original = sys.argv.copy()
@@ -54,7 +58,9 @@ class TestMain:
         finally:
             sys.argv = original
 
-    def test_lint_subcommand(self, tmp_path: Path, monkeypatch: object) -> None:
+    def test_lint_subcommand(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         linter = StubLinter(
             lint_returns=r[m.Infra.Github.WorkflowLintResult].ok(
                 m.Infra.Github.WorkflowLintResult.model_validate({"status": "ok"}),
@@ -68,7 +74,9 @@ class TestMain:
         finally:
             sys.argv = original
 
-    def test_pr_subcommand(self, tmp_path: Path, monkeypatch: object) -> None:
+    def test_pr_subcommand(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         monkeypatch.setattr(github_main, "pr_main", lambda: 0)
         original = sys.argv.copy()
         try:
@@ -87,7 +95,7 @@ class TestMain:
     def test_pr_workspace_subcommand(
         self,
         tmp_path: Path,
-        monkeypatch: object,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         mgr = StubWorkspaceManager(
             orchestrate_returns=r[m.Infra.Github.PrOrchestrationResult].ok(
@@ -118,7 +126,7 @@ class TestMain:
     def test_ensures_structlog_configured(
         self,
         tmp_path: Path,
-        monkeypatch: object,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         called: list[bool] = []
         monkeypatch.setattr(
@@ -151,7 +159,7 @@ class TestMain:
     def test_workflows_iterates_operations(
         self,
         tmp_path: Path,
-        monkeypatch: object,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         ops = [
             SyncOperation(project="p1", path="ci.yml", action="create", reason="new"),
