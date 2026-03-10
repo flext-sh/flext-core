@@ -1,0 +1,50 @@
+src/flext_infra/refactor/transformers/mro_private_inline.py
+  430c178e991c8a5e 28-83,85-86
+tests/infra/unit/deps/test_modernizer_pyright.py
+  26342c190c645fb0 9,29,33,37,57,61,65
+tests/infra/unit/io/test_infra_output_edge_cases.py
+  26342c190c645fb0 15,24,27
+tests/infra/unit/io/test_infra_output_formatting.py
+  26342c190c645fb0 3,15,30,33,37
+src/flext_infra/refactor/mro_migrator.py
+  430c178e991c8a5e 12,117-131,220,247-249,251-257,259-266,268-276,315,393-394,427,432,465,473,514-515
+tests/infra/unit/core/basemk_validator.py
+  26342c190c645fb0 182-184
+tests/infra/unit/deps/test_modernizer_helpers.py
+  26342c190c645fb0 8-15,40-41,44-45,47,54-55,58,60,162,166
+tests/infra/unit/deps/test_modernizer_workspace.py
+  26342c190c645fb0 9,16,19,24-25,27,30,32,37
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.10",
+  "base_commit_sha": "432ece1ea99d857a87eda0b16cab4e18dbadc77c",
+  "prompts": {
+    "26342c190c645fb0": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_32b93086affe4NCtph0WfSOLV7",
+        "model": "kimi-for-coding/k2p5"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 71,
+      "total_deletions": 69,
+      "accepted_lines": 59,
+      "overriden_lines": 0
+    },
+    "430c178e991c8a5e": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_32bb233fcffe6tmNFlQtHhjOuT",
+        "model": "anthropic/claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 120,
+      "total_deletions": 23,
+      "accepted_lines": 111,
+      "overriden_lines": 0
+    }
+  }
+}
