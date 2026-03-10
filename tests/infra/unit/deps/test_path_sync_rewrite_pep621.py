@@ -4,6 +4,8 @@ import tomlkit
 from tomlkit.toml_document import TOMLDocument
 
 from flext_infra.deps.path_sync import _rewrite_pep621
+from tests.infra.helpers import FlextInfraTestHelpers
+
 from flext_tests import tm
 
 
@@ -151,4 +153,4 @@ def test_rewrite_pep621_invalid_path_dep_regex() -> None:
 
 
 def test_helpers_alias_is_reachable_pep621() -> None:
-    tm.that(callable(h.assert_file_exists), eq=True)
+    tm.that(callable(FlextInfraTestHelpers.assert_file_exists), eq=True)

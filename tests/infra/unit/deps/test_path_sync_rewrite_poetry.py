@@ -6,6 +6,8 @@ import tomlkit
 from tomlkit.toml_document import TOMLDocument
 
 from flext_infra.deps.path_sync import _rewrite_poetry
+from tests.infra.helpers import FlextInfraTestHelpers
+
 from flext_tests import tm
 
 
@@ -113,4 +115,4 @@ def test_rewrite_poetry_no_poetry_table() -> None:
 
 
 def test_helpers_alias_is_reachable_poetry() -> None:
-    tm.that(hasattr(h, "assert_dir_exists"), eq=True)
+    tm.that(hasattr(FlextInfraTestHelpers, "assert_dir_exists"), eq=True)

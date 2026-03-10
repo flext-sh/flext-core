@@ -9,6 +9,7 @@ from flext_core import r
 from flext_infra import m
 from flext_infra.deps import path_sync as path_sync_module
 from flext_tests import tm
+from tests.infra.helpers import FlextInfraTestHelpers
 
 
 def _project(path: Path, name: str = "flext-core") -> m.Infra.Workspace.ProjectInfo:
@@ -151,4 +152,4 @@ class TestMain:
 
 
 def test_helpers_alias_is_reachable_main() -> None:
-    tm.that(hasattr(h, "assert_toml_valid"), eq=True)
+    tm.that(hasattr(FlextInfraTestHelpers, "assert_toml_valid"), eq=True)

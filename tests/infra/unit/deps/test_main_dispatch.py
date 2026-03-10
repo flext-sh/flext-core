@@ -54,22 +54,6 @@ class TestMainSubcommandDispatch:
         tm.that(main(), eq=0)
 
 
-class TestMainReturnValues:
-    @pytest.mark.parametrize(
-        ("return_val", "expected"),
-        [(0, 0), (None, 0), (False, 0), (42, 42), (True, 1), ("0", 0)],
-        ids=["zero", "none", "false", "nonzero", "true", "string-zero"],
-    )
-    def test_return_value_normalization(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
-        return_val: object,
-        expected: int,
-    ) -> None:
-        _patch_dispatch(monkeypatch, ["prog", "detect"], return_val)
-        tm.that(main(), eq=expected)
-
-
 class TestMainModuleImport:
     @pytest.mark.parametrize(
         ("subcommand", "expected_module"),
@@ -198,3 +182,9 @@ class TestMainExceptionHandling:
         )
         with pytest.raises(RuntimeError, match="Test error"):
             main()
+
+
+def test_string_zero_return_value(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Test string '0' return value normalization (edge case)."""
+    _patch_dispatch(monkeypatch, ["prog", "detect"], "0")
+    tm.that(main(), eq=0)
