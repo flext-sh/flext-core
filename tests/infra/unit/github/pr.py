@@ -12,6 +12,7 @@ from pathlib import Path
 from flext_core import r
 from flext_infra.github.pr import FlextInfraPrManager
 from tests.infra.unit.github._stubs import StubRunner, StubVersioning
+from flext_tests import tm
 
 
 def _mgr(
@@ -39,25 +40,25 @@ class TestFlextInfraPrManager:
         }
         runner = StubRunner(capture_returns=[r[str].ok(json.dumps([pr_data]))])
         result = _mgr(runner=runner).open_pr_for_head(tmp_path, "feature/new")
-        assert result.is_success
+        tm.ok(result)
         assert result.value["number"] == 42
 
     def test_open_pr_for_head_not_found(self, tmp_path: Path) -> None:
         runner = StubRunner(capture_returns=[r[str].ok("[]")])
         result = _mgr(runner=runner).open_pr_for_head(tmp_path, "feature/x")
-        assert result.is_success
+        tm.ok(result)
         assert result.value == {}
 
     def test_open_pr_for_head_json_error(self, tmp_path: Path) -> None:
         runner = StubRunner(capture_returns=[r[str].ok("invalid json")])
         result = _mgr(runner=runner).open_pr_for_head(tmp_path, "feature/test")
-        assert result.is_failure
+        tm.fail(result)
         assert result.error
 
     def test_open_pr_for_head_command_failure(self, tmp_path: Path) -> None:
         runner = StubRunner(capture_returns=[r[str].fail("gh command failed")])
         result = _mgr(runner=runner).open_pr_for_head(tmp_path, "feature/test")
-        assert result.is_failure
+        tm.fail(result)
         assert result.error
 
     def test_default_initialization(self) -> None:
@@ -67,7 +68,7 @@ class TestFlextInfraPrManager:
     def test_open_pr_for_head_non_dict_first(self, tmp_path: Path) -> None:
         runner = StubRunner(capture_returns=[r[str].ok(json.dumps(["not-a-dict"]))])
         result = _mgr(runner=runner).open_pr_for_head(tmp_path, "head")
-        assert result.is_success
+        tm.ok(result)
         assert result.value == {}
 
 
@@ -84,20 +85,20 @@ class TestStatus:
         }
         runner = StubRunner(capture_returns=[r[str].ok(json.dumps([pr_data]))])
         result = _mgr(runner=runner).status(tmp_path, "main", "feature")
-        assert result.is_success
+        tm.ok(result)
         assert result.value["status"] == "open"
         assert result.value["pr_number"] == 10
 
     def test_status_no_pr(self, tmp_path: Path) -> None:
         runner = StubRunner(capture_returns=[r[str].ok("[]")])
         result = _mgr(runner=runner).status(tmp_path, "main", "feature")
-        assert result.is_success
+        tm.ok(result)
         assert result.value["status"] == "no-open-pr"
 
     def test_status_failure(self, tmp_path: Path) -> None:
         runner = StubRunner(capture_returns=[r[str].fail("gh error")])
         result = _mgr(runner=runner).status(tmp_path, "main", "feature")
-        assert result.is_failure
+        tm.fail(result)
 
 
 class TestCreate:
@@ -117,7 +118,7 @@ class TestCreate:
             "title",
             "body",
         )
-        assert result.is_success
+        tm.ok(result)
         assert result.value["status"] == "created"
 
     def test_create_already_open(self, tmp_path: Path) -> None:
@@ -130,7 +131,7 @@ class TestCreate:
             "title",
             "body",
         )
-        assert result.is_success
+        tm.ok(result)
         assert result.value["status"] == "already-open"
 
     def test_create_failure(self, tmp_path: Path) -> None:
@@ -147,7 +148,7 @@ class TestCreate:
             "title",
             "body",
         )
-        assert result.is_failure
+        tm.fail(result)
 
     def test_create_with_draft(self, tmp_path: Path) -> None:
         runner = StubRunner(
@@ -164,7 +165,7 @@ class TestCreate:
             "body",
             draft=True,
         )
-        assert result.is_success
+        tm.ok(result)
         assert "--draft" in runner.capture_calls[1]
 
     def test_create_check_existing_failure(self, tmp_path: Path) -> None:
@@ -176,4 +177,4 @@ class TestCreate:
             "title",
             "body",
         )
-        assert result.is_failure
+        tm.fail(result)

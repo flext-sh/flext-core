@@ -12,6 +12,7 @@ from _pytest.monkeypatch import MonkeyPatch
 
 from flext_core import r
 from flext_infra import FlextInfraUtilitiesDiscovery, m
+from flext_tests import tm
 
 
 class TestFlextInfraDiscoveryService:
@@ -54,7 +55,7 @@ class TestFlextInfraDiscoveryService:
     ) -> None:
         """Test discovering projects in a valid workspace."""
         result = service.discover_projects(workspace_with_projects)
-        assert result.is_success
+        tm.ok(result)
         projects = result.value
         assert len(projects) == 2
         assert projects[0].name == "project1"
@@ -70,7 +71,7 @@ class TestFlextInfraDiscoveryService:
     ) -> None:
         """Test discovering projects in an empty workspace."""
         result = service.discover_projects(tmp_path)
-        assert result.is_success
+        tm.ok(result)
         assert result.value == []
 
     def test_discover_projects_nonexistent_path(
@@ -80,7 +81,7 @@ class TestFlextInfraDiscoveryService:
         """Test discovering projects with nonexistent path."""
         nonexistent = Path("/nonexistent/path/to/workspace")
         result = service.discover_projects(nonexistent)
-        assert result.is_failure
+        tm.fail(result)
         assert isinstance(result.error, str)
         assert isinstance(result.error, str)
         assert "discovery failed" in result.error
@@ -98,7 +99,7 @@ class TestFlextInfraDiscoveryService:
         (tmp_path / "project2" / "subdir").mkdir()
         (tmp_path / "project2" / "subdir" / "pyproject.toml").touch()
         result = service.find_all_pyproject_files(tmp_path)
-        assert result.is_success
+        tm.ok(result)
         files = result.value
         assert len(files) == 3
         assert all(f.name == "pyproject.toml" for f in files)
@@ -117,7 +118,7 @@ class TestFlextInfraDiscoveryService:
             tmp_path,
             skip_dirs=frozenset({"skip_me"}),
         )
-        assert result.is_success
+        tm.ok(result)
         files = result.value
         assert len(files) == 1
         assert "skip_me" not in str(files[0])
@@ -135,7 +136,7 @@ class TestFlextInfraDiscoveryService:
         (proj1 / "pyproject.toml").touch()
         (proj2 / "pyproject.toml").touch()
         result = service.find_all_pyproject_files(tmp_path, project_paths=[proj1])
-        assert result.is_success
+        tm.ok(result)
         files = result.value
         assert len(files) == 1
         assert files[0].parent == proj1
@@ -148,7 +149,7 @@ class TestFlextInfraDiscoveryService:
         """Test that result is properly typed FlextResult."""
         result = service.discover_projects(workspace_with_projects)
         assert isinstance(result, type(r[list[m.Infra.Workspace.ProjectInfo]].ok([])))
-        assert result.is_success
+        tm.ok(result)
         projects: list[m.Infra.Workspace.ProjectInfo] = result.value
         for item in projects:
             assert isinstance(item, m.Infra.Workspace.ProjectInfo)
@@ -160,7 +161,7 @@ class TestFlextInfraDiscoveryService:
     ) -> None:
         """Test discover_projects returns empty list for empty workspace."""
         result = service.discover_projects(tmp_path)
-        assert result.is_success
+        tm.ok(result)
         assert result.value == []
 
 
@@ -176,7 +177,7 @@ class TestFlextInfraDiscoveryServiceUncoveredLines:
         (non_git_dir / "Makefile").touch()
         (non_git_dir / "pyproject.toml").touch()
         result = service.discover_projects(workspace_root)
-        assert result.is_success
+        tm.ok(result)
         assert len(result.value) == 0
 
     def test_find_all_pyproject_files_with_nonexistent_path(self) -> None:
@@ -184,7 +185,7 @@ class TestFlextInfraDiscoveryServiceUncoveredLines:
         service = FlextInfraUtilitiesDiscovery()
         nonexistent = Path("/nonexistent/path/to/workspace")
         result = service.find_all_pyproject_files(nonexistent)
-        assert result.is_success
+        tm.ok(result)
         assert result.value == []
 
     def test_find_all_pyproject_files_with_permission_error(
@@ -195,7 +196,7 @@ class TestFlextInfraDiscoveryServiceUncoveredLines:
         service = FlextInfraUtilitiesDiscovery()
         (tmp_path / "pyproject.toml").touch()
         result = service.find_all_pyproject_files(tmp_path)
-        assert result.is_success
+        tm.ok(result)
         assert len(result.value) >= 1
 
     def test_discover_projects_skips_no_pyproject_no_gomod(
@@ -210,7 +211,7 @@ class TestFlextInfraDiscoveryServiceUncoveredLines:
         (proj / ".git").mkdir()
         (proj / "Makefile").touch()
         result = service.discover_projects(workspace_root)
-        assert result.is_success
+        tm.ok(result)
         assert len(result.value) == 0
 
     def test_find_all_pyproject_files_oserror_on_rglob(
@@ -227,7 +228,7 @@ class TestFlextInfraDiscoveryServiceUncoveredLines:
 
         monkeypatch.setattr(Path, "rglob", mock_rglob)
         result = service.find_all_pyproject_files(tmp_path)
-        assert result.is_failure
+        tm.fail(result)
         assert isinstance(result.error, str)
         assert "pyproject file scan failed" in result.error
 

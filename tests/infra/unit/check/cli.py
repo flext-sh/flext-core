@@ -13,11 +13,12 @@ from _pytest.monkeypatch import MonkeyPatch
 
 from flext_core import r
 from flext_infra.check.services import FlextInfraWorkspaceChecker, run_cli
+from flext_tests import tm
 
 
 def test_resolve_gates_maps_type_alias() -> None:
     result = FlextInfraWorkspaceChecker.resolve_gates(["lint", "type", "lint"])
-    assert result.is_success
+    tm.ok(result)
     assert result.value == ["lint", "pyrefly"]
 
 

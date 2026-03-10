@@ -10,6 +10,7 @@ from pathlib import Path
 import pytest
 
 from flext_infra import FlextInfraUtilitiesReporting
+from flext_tests import tm
 
 
 class TestFlextInfraReportingService:
@@ -106,7 +107,7 @@ class TestFlextInfraReportingService:
     ) -> None:
         """Test ensuring report directory creates it if missing."""
         result = service.ensure_report_dir(tmp_path, "project", "check")
-        assert result.is_success
+        tm.ok(result)
         report_dir = result.value
         assert report_dir.exists()
         assert report_dir.is_dir()
@@ -119,8 +120,8 @@ class TestFlextInfraReportingService:
         """Test ensuring report directory is idempotent."""
         result1 = service.ensure_report_dir(tmp_path, "project", "check")
         result2 = service.ensure_report_dir(tmp_path, "project", "check")
-        assert result1.is_success
-        assert result2.is_success
+        tm.ok(result1)
+        tm.ok(result2)
         assert result1.value == result2.value
 
     def test_ensure_report_dir_workspace_scope(
@@ -130,7 +131,7 @@ class TestFlextInfraReportingService:
     ) -> None:
         """Test ensuring workspace-level report directory."""
         result = service.ensure_report_dir(tmp_path, "workspace", "validate")
-        assert result.is_success
+        tm.ok(result)
         report_dir = result.value
         assert report_dir.exists()
         assert "workspace" in str(report_dir)
@@ -146,7 +147,7 @@ class TestFlextInfraReportingService:
         readonly_dir.chmod(292)
         try:
             result = service.ensure_report_dir(readonly_dir, "project", "check")
-            assert result.is_failure
+            tm.fail(result)
         finally:
             readonly_dir.chmod(493)
 
@@ -180,7 +181,7 @@ class TestFlextInfraReportingService:
         report_dir.mkdir(parents=True)
         run_id = "run-2025-01-01"
         result = service.create_latest_symlink(report_dir, run_id)
-        assert result.is_success
+        tm.ok(result)
         link = result.value
         assert link.name == "latest"
         assert link.is_symlink()
@@ -197,9 +198,9 @@ class TestFlextInfraReportingService:
         run_id_1 = "run-2025-01-01"
         run_id_2 = "run-2025-01-02"
         result1 = service.create_latest_symlink(report_dir, run_id_1)
-        assert result1.is_success
+        tm.ok(result1)
         result2 = service.create_latest_symlink(report_dir, run_id_2)
-        assert result2.is_success
+        tm.ok(result2)
         link = result2.value
         assert link.is_symlink()
         assert link.resolve().name == run_id_2
@@ -215,7 +216,7 @@ class TestFlextInfraReportingService:
         readonly_dir.chmod(292)
         try:
             result = service.create_latest_symlink(readonly_dir, "run-id")
-            assert result.is_failure
+            tm.fail(result)
             assert result.error is not None and "symlink" in result.error.lower()
         finally:
             readonly_dir.chmod(493)

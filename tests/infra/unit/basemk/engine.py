@@ -17,6 +17,7 @@ from flext_infra import m as im
 from flext_infra.basemk.__main__ import main as basemk_main
 from flext_infra.basemk.engine import FlextInfraBaseMkTemplateEngine
 from flext_infra.basemk.generator import FlextInfraBaseMkGenerator
+from flext_tests import tm
 
 
 class _InvalidTemplateEngine:
@@ -27,14 +28,14 @@ class _InvalidTemplateEngine:
 
 def test_render_all_generates_large_makefile() -> None:
     result = FlextInfraBaseMkTemplateEngine().render_all()
-    assert result.is_success
+    tm.ok(result)
     content = result.value
     assert len(content.splitlines()) > 400
 
 
 def test_render_all_has_no_scripts_path_references() -> None:
     result = FlextInfraBaseMkTemplateEngine().render_all()
-    assert result.is_success
+    tm.ok(result)
     assert "scripts/" not in result.value
 
 
@@ -60,7 +61,7 @@ def test_generator_renders_with_config_override() -> None:
         test_command="pytest",
     )
     result = FlextInfraBaseMkGenerator().generate(config)
-    assert result.is_success
+    tm.ok(result)
     assert "PROJECT_NAME ?= sample-project" in result.value
 
 
@@ -68,7 +69,7 @@ def test_generator_fails_for_invalid_make_syntax() -> None:
     result = FlextInfraBaseMkGenerator(
         template_engine=_InvalidTemplateEngine(),
     ).generate()
-    assert result.is_failure
+    tm.fail(result)
     assert result.error is not None
     assert "validation failed" in result.error
 
@@ -77,7 +78,7 @@ def test_generator_write_saves_output_file(tmp_path: Path) -> None:
     output_path = tmp_path / "base.mk"
     content = "all:\n\t@true\n"
     result = FlextInfraBaseMkGenerator().write(content, output=output_path)
-    assert result.is_success
+    tm.ok(result)
     assert output_path.read_text(encoding="utf-8") == content
 
 
@@ -102,7 +103,7 @@ def test_basemk_engine_render_all_returns_string() -> None:
     """Test engine.render_all() returns string."""
     engine = FlextInfraBaseMkTemplateEngine()
     result = engine.render_all()
-    assert result.is_success
+    tm.ok(result)
     assert isinstance(result.value, str) and len(result.value) > 0
 
 
@@ -120,7 +121,7 @@ def test_basemk_engine_render_all_with_valid_config() -> None:
     )
     engine = FlextInfraBaseMkTemplateEngine()
     result = engine.render_all(config=config)
-    assert result.is_success
+    tm.ok(result)
     assert "PROJECT_NAME ?= test-project" in result.value
 
 
@@ -128,7 +129,7 @@ def test_basemk_engine_execute_calls_render_all() -> None:
     """Test engine.execute() calls render_all()."""
     engine = FlextInfraBaseMkTemplateEngine()
     result = engine.execute()
-    assert result.is_success
+    tm.ok(result)
     assert isinstance(result.value, str)
     assert len(result.value) > 0
 
@@ -145,7 +146,7 @@ def test_basemk_engine_render_all_handles_template_error(
     engine = FlextInfraBaseMkTemplateEngine()
     monkeypatch.setattr(engine._environment, "get_template", mock_get_template)
     result = engine.render_all()
-    assert result.is_failure
+    tm.fail(result)
     assert isinstance(result.error, str)
     assert isinstance(result.error, str)
     assert "template render failed" in result.error

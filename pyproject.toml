@@ -49,6 +49,7 @@ dependencies = [
   "structlog>=25.4",
   "tomlkit>=0.13",
   "wrapt>=1.17",
+  "rope (>=1.14.0,<2.0.0)",
 ]
 # [MANAGED] consolidated development dependencies
 # [AUTO] merged from dev/docs/security/test/typings

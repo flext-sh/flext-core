@@ -382,31 +382,17 @@ class FlextInfraCodegenFixer(s[list[m.Infra.Codegen.AutoFixResult]]):
                 violations_skipped=[],
                 files_modified=[],
             )
-        for py_file in sorted(src_dir.rglob(c.Infra.Extensions.PYTHON_GLOB)):
-            if py_file.name in {c.Infra.Files.INIT_PY, "conftest.py", "__main__.py"}:
-                continue
-            if py_file.name.startswith(("test_", "_")):
-                continue
-            if py_file.name in {"constants.py", "typings.py"}:
-                continue
-            self._fix_rule1(
-                source_file=py_file,
-                pkg_dir=pkg_dir,
-                violations_fixed=violations_fixed,
-                violations_skipped=violations_skipped,
-                files_modified=files_modified,
-            )
-            self._fix_rule2(
-                source_file=py_file,
-                pkg_dir=pkg_dir,
-                violations_fixed=violations_fixed,
-                violations_skipped=violations_skipped,
-                files_modified=files_modified,
-            )
-        self._apply_project_mro_migrations(
+        report = self._apply_project_mro_migrations(
             project_path=project_path,
             files_modified=files_modified,
         )
+        self._record_mro_migration_result(
+            report=report,
+            violations_fixed=violations_fixed,
+            violations_skipped=violations_skipped,
+        )
+        self._cleanup_stale_all_entries(files_modified=files_modified)
+        self._normalize_rewritten_python_files(files_modified=files_modified)
         return m.Infra.Codegen.AutoFixResult(
             project=project_path.name,
             violations_fixed=violations_fixed,
@@ -419,16 +405,172 @@ class FlextInfraCodegenFixer(s[list[m.Infra.Codegen.AutoFixResult]]):
         *,
         project_path: Path,
         files_modified: set[str],
-    ) -> None:
+    ) -> m.Infra.Refactor.MROMigrationReport:
         service = FlextInfraRefactorMigrateToClassMRO(workspace_root=project_path)
         report = service.run(target="all", apply_changes=True)
         files_modified.update(migration.file for migration in report.migrations)
         files_modified.update(rewrite.file for rewrite in report.rewrites)
-        self._normalize_rewritten_python_files(files_modified=files_modified)
         self._run_lazy_propagation(
             project_path=project_path,
             files_modified=files_modified,
         )
+        return report
+
+    @staticmethod
+    def _record_mro_migration_result(
+        *,
+        report: m.Infra.Refactor.MROMigrationReport,
+        violations_fixed: list[m.Infra.Codegen.CensusViolation],
+        violations_skipped: list[m.Infra.Codegen.CensusViolation],
+    ) -> None:
+        for migration in report.migrations:
+            violations_fixed.extend(
+                m.Infra.Codegen.CensusViolation(
+                    module=migration.file,
+                    rule="NS-MRO",
+                    line=1,
+                    message=(
+                        "Moved symbol "
+                        f"'{moved_symbol}' into namespace class via MRO migration"
+                    ),
+                    fixable=True,
+                )
+                for moved_symbol in migration.moved_symbols
+            )
+        if report.remaining_violations > 0:
+            violations_skipped.append(
+                m.Infra.Codegen.CensusViolation(
+                    module=report.workspace,
+                    rule="NS-MRO",
+                    line=1,
+                    message=(
+                        "MRO migration finished with "
+                        f"{report.remaining_violations} remaining violations"
+                    ),
+                    fixable=False,
+                ),
+            )
+        if report.mro_failures > 0:
+            violations_skipped.append(
+                m.Infra.Codegen.CensusViolation(
+                    module=report.workspace,
+                    rule="NS-MRO",
+                    line=1,
+                    message=f"MRO validation reported {report.mro_failures} failures",
+                    fixable=False,
+                ),
+            )
+        violations_skipped.extend(
+            m.Infra.Codegen.CensusViolation(
+                module=report.workspace,
+                rule="NS-MRO",
+                line=1,
+                message=warning,
+                fixable=False,
+            )
+            for warning in report.warnings
+        )
+        violations_skipped.extend(
+            m.Infra.Codegen.CensusViolation(
+                module=report.workspace,
+                rule="NS-MRO",
+                line=1,
+                message=error,
+                fixable=False,
+            )
+            for error in report.errors
+        )
+
+    def _cleanup_stale_all_entries(self, *, files_modified: set[str]) -> None:
+        for file_path in sorted(files_modified):
+            path = Path(file_path)
+            if not path.exists() or path.suffix != c.Infra.Extensions.PYTHON:
+                continue
+            if path.name == c.Infra.Files.INIT_PY:
+                continue
+            if self._prune_stale_all_assignment(path=path):
+                files_modified.add(str(path))
+
+    @staticmethod
+    def _prune_stale_all_assignment(*, path: Path) -> bool:
+        try:
+            source = path.read_text(encoding=c.Infra.Encoding.DEFAULT)
+            tree = ast.parse(source)
+        except (OSError, UnicodeDecodeError, SyntaxError):
+            return False
+        assignment: ast.Assign | None = None
+        exports: list[str] = []
+        for stmt in tree.body:
+            if not isinstance(stmt, ast.Assign) or len(stmt.targets) != 1:
+                continue
+            target = stmt.targets[0]
+            if not isinstance(target, ast.Name) or target.id != "__all__":
+                continue
+            if not isinstance(stmt.value, (ast.List, ast.Tuple)):
+                continue
+            names: list[str] = []
+            is_literal_list = True
+            for element in stmt.value.elts:
+                if isinstance(element, ast.Constant) and isinstance(element.value, str):
+                    names.append(element.value)
+                    continue
+                is_literal_list = False
+                break
+            if not is_literal_list:
+                continue
+            assignment = stmt
+            exports = names
+            break
+        if assignment is None or len(exports) == 0:
+            return False
+        available: set[str] = set()
+        for stmt in tree.body:
+            if isinstance(stmt, ast.ClassDef):
+                available.add(stmt.name)
+                continue
+            if isinstance(stmt, ast.FunctionDef):
+                available.add(stmt.name)
+                continue
+            if isinstance(stmt, ast.AsyncFunctionDef):
+                available.add(stmt.name)
+                continue
+            if isinstance(stmt, ast.Import):
+                for alias in stmt.names:
+                    imported = alias.asname or alias.name
+                    available.add(imported.split(".")[0])
+                continue
+            if isinstance(stmt, ast.ImportFrom):
+                for alias in stmt.names:
+                    imported = alias.asname or alias.name
+                    if imported != "*":
+                        available.add(imported)
+                continue
+            found_name = FlextInfraCodegenTransforms.get_node_name(stmt)
+            if found_name:
+                available.add(found_name)
+        filtered = [
+            name for name in exports if name in available or name.startswith("__")
+        ]
+        if filtered == exports:
+            return False
+        block = "__all__ = [\n" + "\n".join(f'    "{name}",' for name in filtered)
+        if len(filtered) == 0:
+            block = "__all__ = []"
+        else:
+            block += "\n]"
+        lines = source.splitlines()
+        if assignment.lineno <= 0 or assignment.end_lineno is None:
+            return False
+        start = assignment.lineno - 1
+        end = assignment.end_lineno
+        updated_lines = [*lines[:start], block, *lines[end:]]
+        updated = "\n".join(updated_lines)
+        if source.endswith("\n"):
+            updated += "\n"
+        if updated == source:
+            return False
+        path.write_text(updated, encoding=c.Infra.Encoding.DEFAULT)
+        return True
 
     def _normalize_rewritten_python_files(self, *, files_modified: set[str]) -> None:
         for file_path in sorted(files_modified):

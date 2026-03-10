@@ -12,6 +12,7 @@ import pytest
 
 from flext_infra import FlextInfraUtilitiesIo
 from tests.unit._models import SampleModel
+from flext_tests import tm
 
 
 class TestFlextInfraJsonService:
@@ -23,7 +24,7 @@ class TestFlextInfraJsonService:
         json_file.write_text('{"key": "value", "number": 42}', encoding="utf-8")
         service = FlextInfraUtilitiesIo()
         result = service.read_json(json_file)
-        assert result.is_success
+        tm.ok(result)
         assert result.value["key"] == "value"
         assert result.value["number"] == 42
 
@@ -32,7 +33,7 @@ class TestFlextInfraJsonService:
         json_file = tmp_path / "missing.json"
         service = FlextInfraUtilitiesIo()
         result = service.read_json(json_file)
-        assert result.is_success
+        tm.ok(result)
         assert result.value == {}
 
     def test_read_invalid_json(self, tmp_path: Path) -> None:
@@ -41,7 +42,7 @@ class TestFlextInfraJsonService:
         json_file.write_text("{invalid json}", encoding="utf-8")
         service = FlextInfraUtilitiesIo()
         result = service.read_json(json_file)
-        assert result.is_failure
+        tm.fail(result)
         assert isinstance(result.error, str)
         assert isinstance(result.error, str)
         assert "JSON read error" in result.error
@@ -52,7 +53,7 @@ class TestFlextInfraJsonService:
         json_file.write_text("[1, 2, 3]", encoding="utf-8")
         service = FlextInfraUtilitiesIo()
         result = service.read_json(json_file)
-        assert result.is_failure
+        tm.fail(result)
         assert isinstance(result.error, str)
         assert "must be object" in result.error
 
@@ -62,7 +63,7 @@ class TestFlextInfraJsonService:
         service = FlextInfraUtilitiesIo()
         payload: dict[str, str | int] = {"key": "value", "number": 42}
         result = service.write_json(json_file, payload)
-        assert result.is_success
+        tm.ok(result)
         assert json_file.exists()
         content = json_file.read_text(encoding="utf-8")
         assert "key" in content
@@ -74,7 +75,7 @@ class TestFlextInfraJsonService:
         service = FlextInfraUtilitiesIo()
         model = SampleModel(name="test", value=123)
         result = service.write_json(json_file, model)
-        assert result.is_success
+        tm.ok(result)
         assert json_file.exists()
 
     def test_write_creates_parent_directories(self, tmp_path: Path) -> None:
@@ -83,7 +84,7 @@ class TestFlextInfraJsonService:
         service = FlextInfraUtilitiesIo()
         payload = {"key": "value"}
         result = service.write_json(json_file, payload)
-        assert result.is_success
+        tm.ok(result)
         assert json_file.exists()
 
     def test_write_with_sorted_keys(self, tmp_path: Path) -> None:
@@ -92,7 +93,7 @@ class TestFlextInfraJsonService:
         service = FlextInfraUtilitiesIo()
         payload = {"z": 1, "a": 2, "m": 3}
         result = service.write_json(json_file, payload, sort_keys=True)
-        assert result.is_success
+        tm.ok(result)
         content = json_file.read_text(encoding="utf-8")
         assert content.index('"a"') < content.index('"z"')
 
@@ -102,7 +103,7 @@ class TestFlextInfraJsonService:
         service = FlextInfraUtilitiesIo()
         payload = {"text": "café"}
         result = service.write_json(json_file, payload, ensure_ascii=True)
-        assert result.is_success
+        tm.ok(result)
         content = json_file.read_text(encoding="utf-8")
         assert "\\u" in content
 
@@ -114,7 +115,7 @@ class TestFlextInfraJsonService:
         service = FlextInfraUtilitiesIo()
         try:
             result = service.write_json(json_file, {"key": "value"})
-            assert result.is_failure
+            tm.fail(result)
         finally:
             json_file.chmod(420)
 
@@ -123,7 +124,7 @@ class TestFlextInfraJsonService:
         json_file = tmp_path / "test.json"
         service = FlextInfraUtilitiesIo()
         result = service.write_json(json_file, {"key": "value"})
-        assert result.is_success
+        tm.ok(result)
         assert result.value is True
 
     def test_removed_direct_api_methods_raise_attribute_error(self) -> None:
