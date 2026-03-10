@@ -38,16 +38,17 @@ def _fake_checker_cls(
         def __init__(self, **_kw: object) -> None:
             self._run_spy = Spy()
 
-        def parse_gate_csv(self, _gates: str) -> list[str]:
+        @staticmethod
+        def parse_gate_csv(_gates: str) -> list[str]:
             return parse_result
 
         def run_projects(
             self,
-            _projects: list[str],
-            _gates: list[str],
-            **_kw: object,
+            projects: list[str] | None = None,
+            gates: list[str] | None = None,
+            **kw: object,
         ) -> r[list[SimpleNamespace]] | r[list[_ProjectResult]]:
-            self._run_spy(*_projects, **_kw)
+            self._run_spy(**kw)
             return run_result
 
     return _Fake
@@ -123,29 +124,31 @@ class TestFixPyrelfyCLI:
         tm.that(fix_pyrefly_mod.main([]), eq=1)
 
 
+def _fake_run_cli_zero(argv: list[str] | None = None) -> int:
+    return 0
+
+
+def _fake_run_cli_42(argv: list[str] | None = None) -> int:
+    return 42
+
+
+class _FakeRuntime:
+    @staticmethod
+    def ensure_structlog_configured() -> None:
+        pass
+
+
 class TestCheckMainEntryPoint:
     """Test check __main__ entry point."""
 
     def test_calls_run_cli(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        monkeypatch.setattr(
-            check_main_mod,
-            "FlextRuntime",
-            type(
-                "_FR", (), {"ensure_structlog_configured": staticmethod(lambda: None)}
-            ),
-        )
-        monkeypatch.setattr(check_main_mod, "run_cli", lambda _args: 0)
+        monkeypatch.setattr(check_main_mod, "FlextRuntime", _FakeRuntime)
+        monkeypatch.setattr(check_main_mod, "run_cli", _fake_run_cli_zero)
         tm.that(check_main_mod.main(), eq=0)
 
     def test_returns_exit_code(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        monkeypatch.setattr(
-            check_main_mod,
-            "FlextRuntime",
-            type(
-                "_FR", (), {"ensure_structlog_configured": staticmethod(lambda: None)}
-            ),
-        )
-        monkeypatch.setattr(check_main_mod, "run_cli", lambda _args: 42)
+        monkeypatch.setattr(check_main_mod, "FlextRuntime", _FakeRuntime)
+        monkeypatch.setattr(check_main_mod, "run_cli", _fake_run_cli_42)
         tm.that(check_main_mod.main(), eq=42)
 
 

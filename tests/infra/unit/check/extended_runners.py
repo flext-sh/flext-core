@@ -1,6 +1,4 @@
-"""Tests for workspace checker runner methods — pyrefly, mypy, pyright, bandit, etc.
-
-Uses monkeypatch to inject controlled subprocess output instead of unittest.mock.
+"""Tests for workspace checker runner methods (pyrefly, mypy).
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -13,42 +11,13 @@ from types import SimpleNamespace
 
 import pytest
 
-from flext_infra.check.services import (
-    FlextInfraWorkspaceChecker,
-    _GateExecution,
-)
+from flext_infra.check.services import FlextInfraWorkspaceChecker
 from flext_tests import tm
 
 
-def _stub_run(
-    result: SimpleNamespace,
-) -> object:
-    """Create a stub _run method returning a fixed result."""
-
-    def _run(
-        _cmd: list[str],
-        _cwd: Path,
-        **_kw: object,
-    ) -> SimpleNamespace:
+def _stub_run(result: SimpleNamespace) -> object:
+    def _run(_cmd: list[str], _cwd: Path, **_kw: object) -> SimpleNamespace:
         return result
-
-    return _run
-
-
-def _stub_run_sequence(
-    results: list[SimpleNamespace],
-) -> object:
-    """Create a stub _run method returning results in sequence."""
-    call_idx = [0]
-
-    def _run(
-        _cmd: list[str],
-        _cwd: Path,
-        **_kw: object,
-    ) -> SimpleNamespace:
-        idx = call_idx[0]
-        call_idx[0] += 1
-        return results[idx] if idx < len(results) else results[-1]
 
     return _run
 

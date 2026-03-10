@@ -1,6 +1,4 @@
-"""Tests for workspace checker error reporting and integration-level scenarios.
-
-Uses monkeypatch to inject controlled behavior instead of unittest.mock.
+"""Tests for workspace checker error reporting and integration scenarios.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -13,11 +11,8 @@ from types import SimpleNamespace
 
 import pytest
 
-from flext_infra import m
 from flext_infra.check.services import (
     FlextInfraWorkspaceChecker,
-    _CheckIssue,
-    _GateExecution,
     _ProjectResult,
 )
 from flext_tests import tm
