@@ -56,66 +56,21 @@ if TYPE_CHECKING:
 
 # Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
-    "FlextInfraRefactorAliasRemover": (
-        "flext_infra.refactor.transformers.alias_remover",
-        "FlextInfraRefactorAliasRemover",
-    ),
-    "FlextInfraRefactorClassNestingTransformer": (
-        "flext_infra.refactor.transformers.class_nesting",
-        "FlextInfraRefactorClassNestingTransformer",
-    ),
-    "FlextInfraRefactorClassReconstructor": (
-        "flext_infra.refactor.transformers.class_reconstructor",
-        "FlextInfraRefactorClassReconstructor",
-    ),
-    "FlextInfraRefactorDeprecatedRemover": (
-        "flext_infra.refactor.transformers.deprecated_remover",
-        "FlextInfraRefactorDeprecatedRemover",
-    ),
-    "FlextInfraRefactorImportBypassRemover": (
-        "flext_infra.refactor.transformers.import_bypass_remover",
-        "FlextInfraRefactorImportBypassRemover",
-    ),
-    "FlextInfraRefactorImportModernizer": (
-        "flext_infra.refactor.transformers.import_modernizer",
-        "FlextInfraRefactorImportModernizer",
-    ),
-    "FlextInfraRefactorLazyImportFixer": (
-        "flext_infra.refactor.transformers.lazy_import_fixer",
-        "FlextInfraRefactorLazyImportFixer",
-    ),
-    "FlextInfraRefactorMROPrivateInlineTransformer": (
-        "flext_infra.refactor.transformers.mro_private_inline",
-        "FlextInfraRefactorMROPrivateInlineTransformer",
-    ),
-    "FlextInfraRefactorMROReferenceRewriter": (
-        "flext_infra.refactor.transformers.mro_reference_rewriter",
-        "FlextInfraRefactorMROReferenceRewriter",
-    ),
-    "FlextInfraRefactorMRORemover": (
-        "flext_infra.refactor.transformers.mro_remover",
-        "FlextInfraRefactorMRORemover",
-    ),
-    "FlextInfraRefactorSymbolPropagator": (
-        "flext_infra.refactor.transformers.symbol_propagator",
-        "FlextInfraRefactorSymbolPropagator",
-    ),
-    "FlextInfraRefactorTransformerPolicyUtilities": (
-        "flext_infra.refactor.transformers.policy",
-        "FlextInfraRefactorTransformerPolicyUtilities",
-    ),
-    "HelperConsolidationTransformer": (
-        "flext_infra.refactor.transformers.helper_consolidation",
-        "HelperConsolidationTransformer",
-    ),
-    "NestedClassPropagationTransformer": (
-        "flext_infra.refactor.transformers.nested_class_propagation",
-        "NestedClassPropagationTransformer",
-    ),
-    "u": (
-        "flext_infra.refactor.transformers.policy",
-        "FlextInfraRefactorTransformerPolicyUtilities",
-    ),
+    "FlextInfraRefactorAliasRemover": ("flext_infra.refactor.transformers.alias_remover", "FlextInfraRefactorAliasRemover"),
+    "FlextInfraRefactorClassNestingTransformer": ("flext_infra.refactor.transformers.class_nesting", "FlextInfraRefactorClassNestingTransformer"),
+    "FlextInfraRefactorClassReconstructor": ("flext_infra.refactor.transformers.class_reconstructor", "FlextInfraRefactorClassReconstructor"),
+    "FlextInfraRefactorDeprecatedRemover": ("flext_infra.refactor.transformers.deprecated_remover", "FlextInfraRefactorDeprecatedRemover"),
+    "FlextInfraRefactorImportBypassRemover": ("flext_infra.refactor.transformers.import_bypass_remover", "FlextInfraRefactorImportBypassRemover"),
+    "FlextInfraRefactorImportModernizer": ("flext_infra.refactor.transformers.import_modernizer", "FlextInfraRefactorImportModernizer"),
+    "FlextInfraRefactorLazyImportFixer": ("flext_infra.refactor.transformers.lazy_import_fixer", "FlextInfraRefactorLazyImportFixer"),
+    "FlextInfraRefactorMROPrivateInlineTransformer": ("flext_infra.refactor.transformers.mro_private_inline", "FlextInfraRefactorMROPrivateInlineTransformer"),
+    "FlextInfraRefactorMROReferenceRewriter": ("flext_infra.refactor.transformers.mro_reference_rewriter", "FlextInfraRefactorMROReferenceRewriter"),
+    "FlextInfraRefactorMRORemover": ("flext_infra.refactor.transformers.mro_remover", "FlextInfraRefactorMRORemover"),
+    "FlextInfraRefactorSymbolPropagator": ("flext_infra.refactor.transformers.symbol_propagator", "FlextInfraRefactorSymbolPropagator"),
+    "FlextInfraRefactorTransformerPolicyUtilities": ("flext_infra.refactor.transformers.policy", "FlextInfraRefactorTransformerPolicyUtilities"),
+    "HelperConsolidationTransformer": ("flext_infra.refactor.transformers.helper_consolidation", "HelperConsolidationTransformer"),
+    "NestedClassPropagationTransformer": ("flext_infra.refactor.transformers.nested_class_propagation", "NestedClassPropagationTransformer"),
+    "u": ("flext_infra.refactor.transformers.policy", "FlextInfraRefactorTransformerPolicyUtilities"),
 }
 
 __all__ = [

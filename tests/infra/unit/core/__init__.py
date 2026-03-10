@@ -28,8 +28,6 @@ if TYPE_CHECKING:
         TestMainScan,
     )
     from tests.infra.unit.core.pytest_diag import (
-        TestDiagResult,
-        TestDiagResult as r,
         TestPytestDiagExtractorCore,
         TestPytestDiagLogParsing,
         TestPytestDiagParseXml,
@@ -38,14 +36,12 @@ if TYPE_CHECKING:
         TestScannerCore,
         TestScannerHelpers,
         TestScannerMultiFile,
-        TestScannerValidation,
     )
     from tests.infra.unit.core.skill_validator import (
         TestNormalizeStringList,
         TestSafeLoadYaml,
         TestSkillValidatorAstGrepCount,
         TestSkillValidatorCore,
-        TestSkillValidatorCustomCount,
         TestSkillValidatorRenderTemplate,
     )
     from tests.infra.unit.core.stub_chain import (
@@ -59,95 +55,34 @@ if TYPE_CHECKING:
 
 # Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
-    "TestBaseMkValidatorCore": (
-        "tests.infra.unit.core.basemk_validator",
-        "TestBaseMkValidatorCore",
-    ),
-    "TestBaseMkValidatorEdgeCases": (
-        "tests.infra.unit.core.basemk_validator",
-        "TestBaseMkValidatorEdgeCases",
-    ),
-    "TestBaseMkValidatorSha256": (
-        "tests.infra.unit.core.basemk_validator",
-        "TestBaseMkValidatorSha256",
-    ),
+    "TestBaseMkValidatorCore": ("tests.infra.unit.core.basemk_validator", "TestBaseMkValidatorCore"),
+    "TestBaseMkValidatorEdgeCases": ("tests.infra.unit.core.basemk_validator", "TestBaseMkValidatorEdgeCases"),
+    "TestBaseMkValidatorSha256": ("tests.infra.unit.core.basemk_validator", "TestBaseMkValidatorSha256"),
     "TestCoreModuleInit": ("tests.infra.unit.core.init", "TestCoreModuleInit"),
-    "TestDiagResult": ("tests.infra.unit.core.pytest_diag", "TestDiagResult"),
-    "TestInventoryServiceCore": (
-        "tests.infra.unit.core.inventory",
-        "TestInventoryServiceCore",
-    ),
-    "TestInventoryServiceReports": (
-        "tests.infra.unit.core.inventory",
-        "TestInventoryServiceReports",
-    ),
-    "TestInventoryServiceScripts": (
-        "tests.infra.unit.core.inventory",
-        "TestInventoryServiceScripts",
-    ),
+    "TestInventoryServiceCore": ("tests.infra.unit.core.inventory", "TestInventoryServiceCore"),
+    "TestInventoryServiceReports": ("tests.infra.unit.core.inventory", "TestInventoryServiceReports"),
+    "TestInventoryServiceScripts": ("tests.infra.unit.core.inventory", "TestInventoryServiceScripts"),
     "TestMainBaseMkValidate": ("tests.infra.unit.core.main", "TestMainBaseMkValidate"),
     "TestMainCliRouting": ("tests.infra.unit.core.main", "TestMainCliRouting"),
     "TestMainInventory": ("tests.infra.unit.core.main", "TestMainInventory"),
     "TestMainScan": ("tests.infra.unit.core.main", "TestMainScan"),
-    "TestNormalizeStringList": (
-        "tests.infra.unit.core.skill_validator",
-        "TestNormalizeStringList",
-    ),
-    "TestPytestDiagExtractorCore": (
-        "tests.infra.unit.core.pytest_diag",
-        "TestPytestDiagExtractorCore",
-    ),
-    "TestPytestDiagLogParsing": (
-        "tests.infra.unit.core.pytest_diag",
-        "TestPytestDiagLogParsing",
-    ),
-    "TestPytestDiagParseXml": (
-        "tests.infra.unit.core.pytest_diag",
-        "TestPytestDiagParseXml",
-    ),
+    "TestNormalizeStringList": ("tests.infra.unit.core.skill_validator", "TestNormalizeStringList"),
+    "TestPytestDiagExtractorCore": ("tests.infra.unit.core.pytest_diag", "TestPytestDiagExtractorCore"),
+    "TestPytestDiagLogParsing": ("tests.infra.unit.core.pytest_diag", "TestPytestDiagLogParsing"),
+    "TestPytestDiagParseXml": ("tests.infra.unit.core.pytest_diag", "TestPytestDiagParseXml"),
     "TestSafeLoadYaml": ("tests.infra.unit.core.skill_validator", "TestSafeLoadYaml"),
     "TestScannerCore": ("tests.infra.unit.core.scanner", "TestScannerCore"),
     "TestScannerHelpers": ("tests.infra.unit.core.scanner", "TestScannerHelpers"),
     "TestScannerMultiFile": ("tests.infra.unit.core.scanner", "TestScannerMultiFile"),
-    "TestScannerValidation": ("tests.infra.unit.core.scanner", "TestScannerValidation"),
-    "TestSkillValidatorAstGrepCount": (
-        "tests.infra.unit.core.skill_validator",
-        "TestSkillValidatorAstGrepCount",
-    ),
-    "TestSkillValidatorCore": (
-        "tests.infra.unit.core.skill_validator",
-        "TestSkillValidatorCore",
-    ),
-    "TestSkillValidatorCustomCount": (
-        "tests.infra.unit.core.skill_validator",
-        "TestSkillValidatorCustomCount",
-    ),
-    "TestSkillValidatorRenderTemplate": (
-        "tests.infra.unit.core.skill_validator",
-        "TestSkillValidatorRenderTemplate",
-    ),
-    "TestStubChainAnalyze": (
-        "tests.infra.unit.core.stub_chain",
-        "TestStubChainAnalyze",
-    ),
+    "TestSkillValidatorAstGrepCount": ("tests.infra.unit.core.skill_validator", "TestSkillValidatorAstGrepCount"),
+    "TestSkillValidatorCore": ("tests.infra.unit.core.skill_validator", "TestSkillValidatorCore"),
+    "TestSkillValidatorRenderTemplate": ("tests.infra.unit.core.skill_validator", "TestSkillValidatorRenderTemplate"),
+    "TestStubChainAnalyze": ("tests.infra.unit.core.stub_chain", "TestStubChainAnalyze"),
     "TestStubChainCore": ("tests.infra.unit.core.stub_chain", "TestStubChainCore"),
-    "TestStubChainDiscoverProjects": (
-        "tests.infra.unit.core.stub_chain",
-        "TestStubChainDiscoverProjects",
-    ),
-    "TestStubChainIsInternal": (
-        "tests.infra.unit.core.stub_chain",
-        "TestStubChainIsInternal",
-    ),
-    "TestStubChainStubExists": (
-        "tests.infra.unit.core.stub_chain",
-        "TestStubChainStubExists",
-    ),
-    "TestStubChainValidate": (
-        "tests.infra.unit.core.stub_chain",
-        "TestStubChainValidate",
-    ),
-    "r": ("tests.infra.unit.core.pytest_diag", "TestDiagResult"),
+    "TestStubChainDiscoverProjects": ("tests.infra.unit.core.stub_chain", "TestStubChainDiscoverProjects"),
+    "TestStubChainIsInternal": ("tests.infra.unit.core.stub_chain", "TestStubChainIsInternal"),
+    "TestStubChainStubExists": ("tests.infra.unit.core.stub_chain", "TestStubChainStubExists"),
+    "TestStubChainValidate": ("tests.infra.unit.core.stub_chain", "TestStubChainValidate"),
 }
 
 __all__ = [
@@ -155,7 +90,6 @@ __all__ = [
     "TestBaseMkValidatorEdgeCases",
     "TestBaseMkValidatorSha256",
     "TestCoreModuleInit",
-    "TestDiagResult",
     "TestInventoryServiceCore",
     "TestInventoryServiceReports",
     "TestInventoryServiceScripts",
@@ -171,10 +105,8 @@ __all__ = [
     "TestScannerCore",
     "TestScannerHelpers",
     "TestScannerMultiFile",
-    "TestScannerValidation",
     "TestSkillValidatorAstGrepCount",
     "TestSkillValidatorCore",
-    "TestSkillValidatorCustomCount",
     "TestSkillValidatorRenderTemplate",
     "TestStubChainAnalyze",
     "TestStubChainCore",
@@ -182,7 +114,6 @@ __all__ = [
     "TestStubChainIsInternal",
     "TestStubChainStubExists",
     "TestStubChainValidate",
-    "r",
 ]
 
 
