@@ -144,6 +144,24 @@ class FlextInfraRefactorConstants:
         "u": "*utilities.py",
     }
     "Facade family letter → file glob mapping."
+    MRO_FAMILIES: ClassVar[frozenset[str]] = frozenset({"c", "t", "p", "m", "u"})
+    "All MRO families."
+    MRO_FAMILY_PACKAGE_DIRS: ClassVar[Mapping[str, str]] = {
+        "c": "flext_core/constants.py",
+        "t": "flext_core/typings.py",
+        "p": "flext_core/protocols.py",
+        "m": "flext_core/_models",
+        "u": "flext_core/_utilities",
+    }
+    "Family letter → relative package dir/file."
+    MRO_FAMILY_FACADE_MODULES: ClassVar[Mapping[str, str]] = {
+        "c": "flext_core/constants.py",
+        "t": "flext_core/typings.py",
+        "p": "flext_core/protocols.py",
+        "m": "flext_core/models.py",
+        "u": "flext_core/utilities.py",
+    }
+    "Family letter → facade module path."
     DOMAIN_PACKAGES: ClassVar[frozenset[str]] = frozenset({
         "flext-ldap",
         "flext-ldif",
@@ -300,7 +318,7 @@ class FlextInfraRefactorConstants:
         PRIVATE: ClassVar[str] = "private"
 
     class Census:
-        """Constants for the utilities usage census module."""
+        """Constants for the usage census module."""
 
         MODE_ALIAS_FLAT: ClassVar[str] = "alias_flat"
         "Usage via u.method_name (flat alias)."
@@ -314,6 +332,8 @@ class FlextInfraRefactorConstants:
         "Relative package path for _utilities."
         FACADE_MODULE: ClassVar[str] = "flext_core/utilities.py"
         "Relative path to the FlextUtilities facade."
+        DEFAULT_FAMILY: ClassVar[str] = "u"
+        "Default census family."
 
     PROJECT_KIND_VALUES: ClassVar[frozenset[str]] = frozenset({
         "core",

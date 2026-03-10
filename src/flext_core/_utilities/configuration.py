@@ -829,5 +829,73 @@ class FlextUtilitiesConfiguration:
         except (TypeError, ValueError, AttributeError) as e:
             return r[bool].fail(f"Configuration class validation failed: {e!s}")
 
+    @staticmethod
+    def resolve_effective_log_level(
+        *,
+        trace: bool,
+        debug: bool,
+        log_level: c.Settings.LogLevel,
+    ) -> c.Settings.LogLevel:
+        """Resolve effective log level based on debug/trace flags.
+
+        Pure function extracted from FlextSettings.effective_log_level computed field.
+
+        Args:
+            trace: Whether trace mode is enabled.
+            debug: Whether debug mode is enabled.
+            log_level: Base log level when neither flag is active.
+
+        Returns:
+            Resolved log level: DEBUG if trace, INFO if debug, else log_level.
+
+        """
+        if trace:
+            return c.Settings.LogLevel.DEBUG
+        if debug:
+            return c.Settings.LogLevel.INFO
+        return log_level
+
+    @staticmethod
+    def normalize_env_log_level() -> None:
+        """Normalize FLEXT_LOG_LEVEL environment variable to uppercase.
+
+        Ensures case-insensitive env var values are uppercased before
+        Pydantic reads them (Pydantic enums are case-sensitive).
+        """
+        log_level = os.environ.get("FLEXT_LOG_LEVEL")
+        if log_level and log_level.islower():
+            os.environ["FLEXT_LOG_LEVEL"] = log_level.upper()
+
+    @staticmethod
+    def validate_database_url_scheme(url: str) -> None:
+        """Validate database URL has a supported scheme.
+
+        Args:
+            url: Database URL to validate.
+
+        Raises:
+            ValueError: If URL scheme is not postgresql://, mysql://, or sqlite://.
+
+        """
+        if url and not url.startswith(("postgresql://", "mysql://", "sqlite://")):
+            msg = "Invalid database URL scheme"
+            raise ValueError(msg)
+
+    @staticmethod
+    def validate_trace_requires_debug(*, trace: bool, debug: bool) -> None:
+        """Validate that trace mode requires debug mode.
+
+        Args:
+            trace: Whether trace mode is enabled.
+            debug: Whether debug mode is enabled.
+
+        Raises:
+            ValueError: If trace is True but debug is False.
+
+        """
+        if trace and not debug:
+            msg = "Trace mode requires debug mode"
+            raise ValueError(msg)
+
 
 __all__ = ["FlextUtilitiesConfiguration"]

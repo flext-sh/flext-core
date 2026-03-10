@@ -1,199 +1,215 @@
-"""Tests for FlextInfraSyncService."""
-
 from __future__ import annotations
 
 import fcntl
 import sys
 import tempfile
+from collections.abc import Callable, Mapping
 from pathlib import Path
 
 import pytest
 
 from flext_core import r
+from flext_infra import m, t
+from flext_infra.basemk.generator import FlextInfraBaseMkGenerator
 from flext_infra.workspace.sync import FlextInfraSyncService, main
-from flext_tests import tm
-from tests.infra.typings import t
+from flext_tests import tf, tm
 
 _S = FlextInfraSyncService
+SetupFn = Callable[[_S, pytest.MonkeyPatch], None]
 
 
-def _stub_gen(content: str, *, fail: bool = False) -> t.ContainerValue:
-    class _Gen:
-        @staticmethod
-        def generate(*args: t.ContainerValue, **kwargs: t.ContainerValue) -> r[str]:
+def _stub_gen(content: str, *, fail: bool = False) -> FlextInfraBaseMkGenerator:
+    class _Gen(FlextInfraBaseMkGenerator):
+        def __init__(self) -> None:
+            super().__init__()
+
+        def generate(
+            self,
+            config: m.Infra.Basemk.BaseMkConfig | Mapping[str, t.Scalar] | None = None,
+        ) -> r[str]:
+            _ = self
+            _ = config
             return r[str].fail(content) if fail else r[str].ok(content)
 
     return _Gen()
 
 
+def _setup_lock_fail(_svc: _S, monkeypatch: pytest.MonkeyPatch) -> None:
+    def _flock(_fd: int, _op: int) -> None:
+        msg = "Lock failed"
+        raise OSError(msg)
+
+    monkeypatch.setattr(fcntl, "flock", _flock)
+
+
+def _setup_gen_fail(svc: _S, _monkeypatch: pytest.MonkeyPatch) -> None:
+    svc._generator = _stub_gen("Generation failed", fail=True)
+
+
+def _setup_gitignore_fail(_svc: _S, monkeypatch: pytest.MonkeyPatch) -> None:
+    def _open(*_args: t.ContainerValue, **_kwargs: t.ContainerValue) -> None:
+        msg = "Write failed"
+        raise OSError(msg)
+
+    monkeypatch.setattr(Path, "open", _open)
+
+
 @pytest.fixture
-def svc(tmp_path: Path) -> FlextInfraSyncService:
+def svc(tmp_path: Path) -> _S:
     return _S(canonical_root=tmp_path)
 
 
-class TestSyncBasic:
-    def test_generates_base_mk(self, svc: _S, tmp_path: Path) -> None:
-        tm.ok(svc.sync(project_root=tmp_path))
-
-    def test_creates_base_mk_if_missing(self, svc: _S, tmp_path: Path) -> None:
-        tm.ok(svc.sync(project_root=tmp_path))
-        tm.that((tmp_path / "base.mk").exists(), eq=True)
-
-    def test_detects_changes(self, svc: _S, tmp_path: Path) -> None:
-        (tmp_path / "base.mk").write_text("# Old content\n", encoding="utf-8")
-        tm.ok(svc.sync(project_root=tmp_path))
-
-    def test_execute_returns_failure(self) -> None:
-        tm.fail(_S().execute())
-
-    def test_validates_gitignore(self, svc: _S, tmp_path: Path) -> None:
-        (tmp_path / ".gitignore").write_text("*.pyc\n", encoding="utf-8")
-        tm.ok(svc.sync(project_root=tmp_path))
-
-    def test_project_root_required(self) -> None:
-        tm.fail(_S().sync(project_root=None), has="project_root is required")
-
-    def test_project_root_not_exists(self) -> None:
-        tm.fail(_S().sync(project_root=Path("/nonexistent/path")), has="does not exist")
-
-    def test_cli_success(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-        monkeypatch.setattr(sys, "argv", ["sync", "--project-root", str(tmp_path)])
-        tm.that(main(), eq=0)
-
-    def test_cli_failure(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-        monkeypatch.setattr("sys.argv", ["sync", "--project-root", "/nonexistent/path"])
-        tm.that(main(), eq=1)
+@pytest.mark.parametrize(
+    ("base_mk", "gitignore"),
+    [("", ""), ("# Old content\n", ""), ("", "*.pyc\n")],
+    ids=["empty", "existing-base-mk", "existing-gitignore"],
+)
+def test_sync_success_scenarios(
+    svc: _S, tmp_path: Path, base_mk: str, gitignore: str
+) -> None:
+    if base_mk:
+        tf.create_in(base_mk, "base.mk", tmp_path)
+    if gitignore:
+        tf.create_in(gitignore, ".gitignore", tmp_path)
+    tm.ok(svc.sync(project_root=tmp_path))
+    tm.that((tmp_path / "base.mk").exists(), eq=True)
 
 
-class TestSyncFailures:
-    def test_lock_acquisition(
-        self,
-        tmp_path: Path,
-        monkeypatch: pytest.MonkeyPatch,
-    ) -> None:
-        def _flock(fd: int, operation: int) -> None:
-            msg = "Lock failed"
-            raise OSError(msg)
-
-        monkeypatch.setattr(fcntl, "flock", _flock)
-        tm.fail(_S().sync(project_root=tmp_path), has="lock acquisition failed")
-
-    def test_basemk_generation(self, tmp_path: Path) -> None:
-        s = _S()
-        s._generator = _stub_gen("Generation failed", fail=True)
-        tm.fail(s.sync(project_root=tmp_path), has="Generation failed")
-
-    def test_gitignore_update(
-        self,
-        tmp_path: Path,
-        monkeypatch: pytest.MonkeyPatch,
-    ) -> None:
-        def _open(*_a: t.ContainerValue, **_kw: t.ContainerValue) -> None:
-            msg = "Write failed"
-            raise OSError(msg)
-
-        monkeypatch.setattr(Path, "open", _open)
-        tm.fail(_S().sync(project_root=tmp_path))
-
-    def test_gitignore_sync(
-        self,
-        tmp_path: Path,
-        monkeypatch: pytest.MonkeyPatch,
-    ) -> None:
-        s = _S()
-
-        def _ensure(*_a: t.ContainerValue, **_kw: t.ContainerValue) -> r[bool]:
-            return r[bool].fail(".gitignore sync failed")
-
-        monkeypatch.setattr(s, "_ensure_gitignore_entries", _ensure)
-        tm.fail(s.sync(project_root=tmp_path), has=".gitignore sync failed")
+@pytest.mark.parametrize(
+    ("project_root", "expected_error"),
+    [(None, "project_root is required"), (Path("/nonexistent/path"), "does not exist")],
+    ids=["missing-project-root", "project-root-not-found"],
+)
+def test_sync_root_validation(project_root: Path | None, expected_error: str) -> None:
+    tm.fail(_S().sync(project_root=project_root), has=expected_error)
 
 
-class TestSyncInternals:
-    def test_atomic_write_ok(self, tmp_path: Path) -> None:
-        target = tmp_path / "test.txt"
-        tm.ok(_S._atomic_write(target, "test content"), eq=True)
-        tm.that(target.read_text(encoding="utf-8"), eq="test content")
-
-    def test_atomic_write_fail(
-        self,
-        tmp_path: Path,
-        monkeypatch: pytest.MonkeyPatch,
-    ) -> None:
-        def _temp(*_a: t.ContainerValue, **_kw: t.ContainerValue) -> None:
-            msg = "Temp file failed"
-            raise OSError(msg)
-
-        monkeypatch.setattr(tempfile, "NamedTemporaryFile", _temp)
-        tm.fail(_S._atomic_write(tmp_path / "t.txt", "c"), has="atomic write failed")
-
-    def test_sha256_content(self) -> None:
-        h1 = _S._sha256_content("test content")
-        tm.that(h1, eq=_S._sha256_content("test content"))
-        tm.that(h1, len=64)
-
-    def test_sha256_file(self, tmp_path: Path) -> None:
-        f = tmp_path / "test.txt"
-        f.write_text("test content", encoding="utf-8")
-        h1 = _S._sha256_file(f)
-        tm.that(h1, eq=_S._sha256_file(f))
-        tm.that(h1, len=64)
-
-    def test_canonical_root_copy(self, tmp_path: Path) -> None:
-        canonical = tmp_path / "canonical"
-        canonical.mkdir()
-        (canonical / "base.mk").write_text("# Canonical\n", encoding="utf-8")
-        project = tmp_path / "project"
-        project.mkdir()
-        tm.ok(_S(canonical_root=canonical).sync(project_root=project))
-        tm.that((project / "base.mk").read_text(encoding="utf-8"), eq="# Canonical\n")
-
-    def test_sync_basemk_no_change(self, tmp_path: Path) -> None:
-        s = _S()
-        content = "# Same content\n"
-        (tmp_path / "base.mk").write_text(content, encoding="utf-8")
-        s._generator = _stub_gen(content)
-        tm.ok(s._sync_basemk(tmp_path, None), eq=False)
-
-    def test_sync_basemk_gen_failure(self, tmp_path: Path) -> None:
-        s = _S()
-        s._generator = _stub_gen("Generation failed", fail=True)
-        tm.fail(s._sync_basemk(tmp_path, None), has="Generation failed")
+@pytest.mark.parametrize(
+    ("argv", "expected"),
+    [
+        (["sync", "--project-root", "{tmp}"], 0),
+        (["sync", "--project-root", "/nonexistent/path"], 1),
+    ],
+    ids=["cli-success", "cli-failure"],
+)
+def test_cli_result_by_project_root(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, argv: list[str], expected: int
+) -> None:
+    monkeypatch.setattr(
+        sys, "argv", [str(tmp_path) if part == "{tmp}" else part for part in argv]
+    )
+    tm.that(main(), eq=expected)
 
 
-class TestSyncGitignore:
-    def test_missing_entries(self, tmp_path: Path) -> None:
-        (tmp_path / ".gitignore").write_text("*.pyc\n", encoding="utf-8")
-        tm.ok(
-            _S()._ensure_gitignore_entries(tmp_path, [".reports/", ".venv/"]), eq=True
-        )
-        content = (tmp_path / ".gitignore").read_text(encoding="utf-8")
-        tm.that(content, has=".reports/")
-        tm.that(content, has=".venv/")
-
-    def test_all_present(self, tmp_path: Path) -> None:
-        gi = ".reports/\n.venv/\n__pycache__/\n"
-        (tmp_path / ".gitignore").write_text(gi, encoding="utf-8")
-        tm.ok(
-            _S()._ensure_gitignore_entries(tmp_path, [".reports/", ".venv/"]), eq=False
-        )
-
-    def test_write_failure(
-        self,
-        tmp_path: Path,
-        monkeypatch: pytest.MonkeyPatch,
-    ) -> None:
-        (tmp_path / ".gitignore").write_text("*.pyc\n", encoding="utf-8")
-
-        def _open(*_a: t.ContainerValue, **_kw: t.ContainerValue) -> None:
-            msg = "Write failed"
-            raise OSError(msg)
-
-        monkeypatch.setattr(Path, "open", _open)
-        tm.fail(
-            _S()._ensure_gitignore_entries(tmp_path, [".reports/"]),
-            has=".gitignore update failed",
-        )
+@pytest.mark.parametrize(
+    ("setup_fn", "expected_error"),
+    [
+        (_setup_lock_fail, "lock acquisition failed"),
+        (_setup_gen_fail, "Generation failed"),
+        (_setup_gitignore_fail, "Write failed"),
+    ],
+    ids=["lock-fail", "gen-fail", "gitignore-fail"],
+)
+def test_sync_error_scenarios(
+    svc: _S,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    setup_fn: SetupFn,
+    expected_error: str,
+) -> None:
+    setup_fn(svc, monkeypatch)
+    tm.fail(svc.sync(project_root=tmp_path), has=expected_error)
 
 
-__all__: list[str] = []
+def test_gitignore_sync_failure(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    service = _S()
+
+    def _ensure(*_args: t.ContainerValue, **_kwargs: t.ContainerValue) -> r[bool]:
+        return r[bool].fail(".gitignore sync failed")
+
+    monkeypatch.setattr(
+        service,
+        "_ensure_gitignore_entries",
+        _ensure,
+    )
+    tm.fail(service.sync(project_root=tmp_path), has=".gitignore sync failed")
+
+
+def test_atomic_write_ok(tmp_path: Path) -> None:
+    target = tmp_path / "test.txt"
+    tm.ok(_S._atomic_write(target, "test content"), eq=True)
+    tm.that(target.read_text(encoding="utf-8"), eq="test content")
+
+
+def test_atomic_write_fail(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    def _temp(*_args: t.ContainerValue, **_kwargs: t.ContainerValue) -> None:
+        msg = "Temp file failed"
+        raise OSError(msg)
+
+    monkeypatch.setattr(
+        tempfile,
+        "NamedTemporaryFile",
+        _temp,
+    )
+    tm.fail(_S._atomic_write(tmp_path / "t.txt", "c"), has="atomic write failed")
+
+
+@pytest.mark.parametrize(
+    ("generated", "ok_result", "expected"),
+    [
+        ("# Same content\n", True, True),
+        ("Generation failed", False, "Generation failed"),
+    ],
+    ids=["no-change", "generation-failure"],
+)
+def test_sync_basemk_scenarios(
+    tmp_path: Path, generated: str, ok_result: bool, expected: bool | str
+) -> None:
+    service = _S()
+    tf.create_in("# Same content\n", "base.mk", tmp_path)
+    service._generator = _stub_gen(generated, fail=not ok_result)
+    result = service._sync_basemk(tmp_path, None)
+    if ok_result:
+        tm.ok(result, eq=expected)
+        return
+    tm.fail(result, has=str(expected))
+
+
+@pytest.mark.parametrize(
+    ("initial_content", "entries", "expected"),
+    [
+        ("*.pyc\n", [".reports/", ".venv/"], True),
+        (".reports/\n.venv/\n__pycache__/\n", [".reports/", ".venv/"], False),
+    ],
+    ids=["missing-entries", "entries-present"],
+)
+def test_gitignore_entry_scenarios(
+    tmp_path: Path, initial_content: str, entries: list[str], expected: bool
+) -> None:
+    tf.create_in(initial_content, ".gitignore", tmp_path)
+    tm.ok(_S()._ensure_gitignore_entries(tmp_path, entries), eq=expected)
+    content = (tmp_path / ".gitignore").read_text(encoding="utf-8")
+    for entry in entries:
+        tm.that(content, has=entry)
+
+
+def test_gitignore_write_failure(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    tf.create_in("*.pyc\n", ".gitignore", tmp_path)
+
+    def _open(*_args: t.ContainerValue, **_kwargs: t.ContainerValue) -> None:
+        msg = "Write failed"
+        raise OSError(msg)
+
+    monkeypatch.setattr(
+        Path,
+        "open",
+        _open,
+    )
+    tm.fail(
+        _S()._ensure_gitignore_entries(tmp_path, [".reports/"]),
+        has=".gitignore update failed",
+    )

@@ -174,6 +174,18 @@ class FlextUtilities:
     validate_config_class = staticmethod(
         FlextUtilitiesConfiguration.validate_config_class
     )
+    normalize_env_log_level = staticmethod(
+        FlextUtilitiesConfiguration.normalize_env_log_level
+    )
+    resolve_effective_log_level = staticmethod(
+        FlextUtilitiesConfiguration.resolve_effective_log_level
+    )
+    validate_database_url_scheme = staticmethod(
+        FlextUtilitiesConfiguration.validate_database_url_scheme
+    )
+    validate_trace_requires_debug = staticmethod(
+        FlextUtilitiesConfiguration.validate_trace_requires_debug
+    )
     clone_container = staticmethod(FlextUtilitiesContext.clone_container)
     clone_runtime = staticmethod(FlextUtilitiesContext.clone_runtime)
     create_datetime_proxy = staticmethod(FlextUtilitiesContext.create_datetime_proxy)
@@ -337,6 +349,7 @@ class FlextUtilities:
     format_app_id = staticmethod(FlextUtilitiesText.format_app_id)
     safe_string = staticmethod(FlextUtilitiesText.safe_string)
     truncate_text = staticmethod(FlextUtilitiesText.truncate_text)
+    normalize_alnum = staticmethod(FlextUtilitiesText.normalize_alnum)
     parse = staticmethod(FlextUtilitiesParser.parse)
     convert = staticmethod(FlextUtilitiesParser.convert)
     conv_str = staticmethod(FlextUtilitiesParser.conv_str)

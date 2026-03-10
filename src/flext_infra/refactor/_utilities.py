@@ -9,6 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import ast
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 
@@ -20,6 +21,7 @@ from flext_infra._utilities.io import FlextInfraUtilitiesIo
 from flext_infra._utilities.subprocess import FlextInfraUtilitiesSubprocess
 from flext_infra._utilities.yaml import FlextInfraUtilitiesYaml
 from flext_infra.constants import FlextInfraConstants as c
+from flext_infra.models import FlextInfraModels as m
 from flext_infra.typings import FlextInfraTypes as t
 
 
@@ -451,6 +453,212 @@ class FlextInfraUtilitiesRefactor:
             break
         new_body = [*module.body[:insert_idx], parsed_stmt, *module.body[insert_idx:]]
         return module.with_changes(body=new_body).code
+
+    # ── Generic AST introspection ─────────────────────────────────────
+
+    @staticmethod
+    def parse_cst_safe(file_path: Path) -> cst.Module | None:
+        """Parse a Python file into a CST module, returning None on error."""
+        try:
+            source = file_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
+            return cst.parse_module(source)
+        except (OSError, UnicodeDecodeError, cst.ParserSyntaxError):
+            return None
+
+    @staticmethod
+    def extract_public_methods_from_dir(
+        package_dir: Path,
+    ) -> dict[str, list[tuple[str, str, str]]]:
+        """Extract public methods from all .py files in a package directory.
+
+        Returns:
+            ``{class_name: [(method_name, method_type, source_file), ...]}``.
+
+        """
+        result: dict[str, list[tuple[str, str, str]]] = {}
+        for py_file in sorted(package_dir.glob(c.Infra.Extensions.PYTHON_GLOB)):
+            if py_file.name == c.Infra.Files.INIT_PY:
+                continue
+            result.update(
+                FlextInfraUtilitiesRefactor._extract_classes_ast(py_file),
+            )
+        return result
+
+    @staticmethod
+    def extract_public_methods_from_file(
+        file_path: Path,
+    ) -> dict[str, list[tuple[str, str, str]]]:
+        """Extract public methods from a single .py file.
+
+        Returns:
+            ``{class_name: [(method_name, method_type, source_file), ...]}``.
+
+        """
+        if not file_path.exists():
+            return {}
+        return FlextInfraUtilitiesRefactor._extract_classes_ast(file_path)
+
+    @staticmethod
+    def _extract_classes_ast(
+        py_file: Path,
+    ) -> dict[str, list[tuple[str, str, str]]]:
+        """Internal: extract all public methods from classes using stdlib ast."""
+        try:
+            source = py_file.read_text(encoding=c.Infra.Encoding.DEFAULT)
+            tree = ast.parse(source)
+        except (SyntaxError, UnicodeDecodeError, OSError):
+            return {}
+        result: dict[str, list[tuple[str, str, str]]] = {}
+        for node in ast.iter_child_nodes(tree):
+            if not isinstance(node, ast.ClassDef):
+                continue
+            methods: list[tuple[str, str, str]] = []
+            for item in ast.iter_child_nodes(node):
+                if isinstance(item, ast.FunctionDef) and not item.name.startswith("_"):
+                    decs = [
+                        d.id
+                        if isinstance(d, ast.Name)
+                        else (d.attr if isinstance(d, ast.Attribute) else "")
+                        for d in item.decorator_list
+                    ]
+                    mtype = (
+                        "static"
+                        if "staticmethod" in decs
+                        else "class"
+                        if "classmethod" in decs
+                        else "instance"
+                    )
+                    entry = (item.name, mtype, py_file.name)
+                    if not any(e[0] == item.name for e in methods):
+                        methods.append(entry)
+                elif isinstance(item, ast.ClassDef) and not item.name.startswith("_"):
+                    for inner in ast.iter_child_nodes(item):
+                        if isinstance(
+                            inner, ast.FunctionDef
+                        ) and not inner.name.startswith("_"):
+                            entry = (
+                                f"{item.name}.{inner.name}",
+                                "static",
+                                py_file.name,
+                            )
+                            if not any(e[0] == entry[0] for e in methods):
+                                methods.append(entry)
+            if methods:
+                result[node.name] = methods
+        return result
+
+    @staticmethod
+    def build_facade_alias_map(
+        facade_path: Path,
+        facade_class_name: str,
+    ) -> dict[str, tuple[str, str]]:
+        """Parse a facade class to build flat alias → (class, method) map.
+
+        Inspects ``staticmethod(...)`` assignments in the facade class.
+        """
+        try:
+            source = facade_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
+            tree = ast.parse(source)
+        except (SyntaxError, UnicodeDecodeError, OSError):
+            return {}
+
+        alias_map: dict[str, tuple[str, str]] = {}
+        for node in ast.iter_child_nodes(tree):
+            if not (isinstance(node, ast.ClassDef) and node.name == facade_class_name):
+                continue
+            for item in ast.iter_child_nodes(node):
+                if not isinstance(item, ast.Assign):
+                    continue
+                for target in item.targets:
+                    if not isinstance(target, ast.Name) or not isinstance(
+                        item.value, ast.Call
+                    ):
+                        continue
+                    call = item.value
+                    if not (
+                        isinstance(call.func, ast.Name)
+                        and call.func.id == "staticmethod"
+                        and call.args
+                    ):
+                        continue
+                    arg = call.args[0]
+                    if isinstance(arg, ast.Attribute):
+                        if isinstance(arg.value, ast.Name):
+                            alias_map[target.id] = (arg.value.id, arg.attr)
+                        elif isinstance(arg.value, ast.Attribute) and isinstance(
+                            arg.value.value, ast.Name
+                        ):
+                            alias_map[target.id] = (
+                                arg.value.value.id,
+                                f"{arg.value.attr}.{arg.attr}",
+                            )
+        return alias_map
+
+    @staticmethod
+    def build_facade_inner_class_map(
+        facade_path: Path,
+        facade_class_name: str,
+    ) -> dict[str, str]:
+        """Map inner class names → base class names in a facade.
+
+        E.g. ``{"Conversion": "FlextUtilitiesConversion", ...}``.
+        """
+        try:
+            source = facade_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
+            tree = ast.parse(source)
+        except (SyntaxError, UnicodeDecodeError, OSError):
+            return {}
+
+        name_map: dict[str, str] = {}
+        for node in ast.iter_child_nodes(tree):
+            if isinstance(node, ast.ClassDef) and node.name == facade_class_name:
+                for item in ast.iter_child_nodes(node):
+                    if isinstance(item, ast.ClassDef):
+                        for base in item.bases:
+                            if isinstance(base, ast.Name):
+                                name_map[item.name] = base.id
+        return name_map
+
+    @staticmethod
+    def identify_project_by_roots(
+        file_path: Path,
+        project_roots: list[Path],
+    ) -> str:
+        """Identify project name for a file path (most-specific root wins)."""
+        best: Path | None = None
+        for root in project_roots:
+            try:
+                file_path.relative_to(root)
+            except ValueError:
+                continue
+            if best is None or len(root.parts) > len(best.parts):
+                best = root
+        return best.name if best else c.Infra.Defaults.UNKNOWN
+
+
+
+    @staticmethod
+    def export_pydantic_json(model_payload: t.Any, export_path: Path) -> None:
+        """Serialize any Pydantic model payload to a JSON file."""
+        # Fallback to pure path string write since model_dump_json takes care of formatting
+        export_path.write_text(
+            model_payload.model_dump_json(indent=2),
+            encoding=c.Infra.Encoding.DEFAULT,
+        )
+
+    @staticmethod
+    def scan_cst_with_visitors(
+        file_path: Path,
+        *visitors: cst.CSTVisitor,
+    ) -> cst.Module | None:
+        """Parse CST and sequentially apply an arbitrary number of visitors."""
+        tree = FlextInfraUtilitiesRefactor.parse_cst_safe(file_path)
+        if not tree:
+            return None
+        for visitor in visitors:
+            tree.visit(visitor)
+        return tree
+
 
 
 __all__ = ["FlextInfraUtilitiesRefactor"]

@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
-from flext_infra import c
+from operator import itemgetter
+
+from flext_infra import c, m
 from flext_infra.refactor import _models_namespace_enforcer as nem
 
 
@@ -150,4 +152,89 @@ def render_namespace_enforcement_report(
     return "\n".join(lines) + "\n"
 
 
-__all__ = ["render_namespace_enforcement_report"]
+def render_census_report(report: m.Infra.Refactor.CensusReport) -> str:
+    """Render a human-readable census report."""
+    sep = "=" * 110
+    lines: list[str] = [
+        sep,
+        "FLEXT MRO Family Method Usage Census",
+        "Engine: libcst + stdlib ast | Infrastructure: flext_infra",
+        sep,
+        (
+            f"\nClasses: {report.total_classes} | Methods: {report.total_methods}"
+            f" | Usages: {report.total_usages} | Unused: {report.total_unused}"
+            f" | Files: {report.files_scanned} | Parse errors: {report.parse_errors}"
+        ),
+        "",
+        f"{'CLASS':<40} {'METHOD':<30} {'flat':<8} {'NS':<8} {'Direct':<8} {'Total':<8}",
+        sep,
+    ]
+
+    grand_af = grand_an = grand_dr = 0
+    for cs in report.classes:
+        for ms in cs.methods:
+            grand_af += ms.alias_flat
+            grand_an += ms.alias_namespaced
+            grand_dr += ms.direct
+            marker = "  " if ms.total > 0 else "⚠️"
+            lines.append(
+                f"{marker} {cs.class_name:<38} {ms.name:<30}"
+                f" {ms.alias_flat:<8} {ms.alias_namespaced:<8}"
+                f" {ms.direct:<8} {ms.total:<8}"
+            )
+        lines.append("-" * 110)
+
+    grand_total = grand_af + grand_an + grand_dr
+    lines.append(
+        f"\n{'GRAND TOTAL':<71} {grand_af:<8} {grand_an:<8} {grand_dr:<8} {grand_total:<8}"
+    )
+
+    lines.extend([f"\n\n{sep}", "PER-PROJECT BREAKDOWN", sep])
+    for ps in report.projects:
+        alias_total = sum(
+            pu.count
+            for pu in ps.usages
+            if pu.access_mode != c.Infra.Refactor.Census.MODE_DIRECT
+        )
+        direct_total = sum(
+            pu.count
+            for pu in ps.usages
+            if pu.access_mode == c.Infra.Refactor.Census.MODE_DIRECT
+        )
+        lines.append(
+            f"\n📦 {ps.project_name}"
+            f" (alias: {alias_total}, direct: {direct_total}, total: {ps.total})"
+        )
+        lines.extend(
+            f"  {pu.class_name}.{pu.method_name}: {pu.access_mode}={pu.count}"
+            for pu in ps.usages
+        )
+
+    lines.extend([f"\n\n{sep}", "UNUSED PUBLIC METHODS", sep])
+    current_cls = ""
+    for cs in report.classes:
+        unused = [ms for ms in cs.methods if ms.total == 0]
+        if unused:
+            if cs.class_name != current_cls:
+                lines.append(f"\n  {cs.class_name} ({cs.source_file}):")
+                current_cls = cs.class_name
+            lines.extend(f"    - {ms.name}" for ms in unused)
+    lines.append(f"\n  Total unused: {report.total_unused}/{report.total_methods}")
+
+    lines.extend([f"\n\n{sep}", "TOP 20 MOST USED METHODS", sep])
+    all_methods = [
+        (cs.class_name, ms.name, ms.total) for cs in report.classes for ms in cs.methods
+    ]
+    lines.extend(
+        f"  {total:>5}x  {cls}.{method}"
+        for cls, method, total in sorted(
+            all_methods,
+            key=itemgetter(2),
+            reverse=True,
+        )[:20]
+    )
+
+    return "\n".join(lines)
+
+
+__all__ = ["render_census_report", "render_namespace_enforcement_report"]

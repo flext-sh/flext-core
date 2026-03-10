@@ -94,5 +94,25 @@ class FlextUtilitiesText:
         truncated = text[: max_length - len(suffix)] + suffix
         return r[str].ok(truncated)
 
+    @staticmethod
+    def normalize_alnum(text: str) -> str:
+        """Strip non-alphanumeric characters and lowercase the result.
+
+        Useful for fuzzy namespace matching where hyphens, underscores,
+        and other punctuation should be ignored.
+
+        Args:
+            text: Text to normalize.
+
+        Returns:
+            Lowercase string with only alphanumeric characters.
+
+        Example:
+            >>> u.Text.normalize_alnum("flext-ldap")
+            'flextldap'
+
+        """
+        return "".join(ch for ch in text.lower() if ch.isalnum())
+
 
 __all__ = ["FlextUtilitiesText"]

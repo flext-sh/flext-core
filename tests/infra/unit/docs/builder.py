@@ -15,13 +15,13 @@ from flext_tests import tm
 from tests.infra.models import m
 
 
+@pytest.fixture
+def builder() -> FlextInfraDocBuilder:
+    return FlextInfraDocBuilder()
+
+
 class TestBuilderCore:
     """Core build invocation tests."""
-
-    @pytest.fixture
-    def builder(self) -> FlextInfraDocBuilder:
-        """Create builder instance."""
-        return FlextInfraDocBuilder()
 
     def test_build_returns_flext_result(
         self, builder: FlextInfraDocBuilder, tmp_path: Path
@@ -54,38 +54,37 @@ class TestBuilderCore:
         """Test BuildReport is frozen (immutable)."""
         tm.that(m.Infra.Docs.DocsPhaseReport.model_config.get("frozen"), eq=True)
 
-    def test_build_with_project_filter(
-        self, builder: FlextInfraDocBuilder, tmp_path: Path
+    @pytest.mark.parametrize(
+        "kwargs",
+        [
+            {"project": "test-project"},
+            {"projects": "proj1,proj2"},
+            {"output_dir": "custom_output"},
+        ],
+    )
+    def test_build_with_option_variants(
+        self,
+        builder: FlextInfraDocBuilder,
+        tmp_path: Path,
+        kwargs: dict[str, str],
     ) -> None:
-        """Test build with single project filter."""
-        result = builder.build(tmp_path, project="test-project")
+        params = dict(kwargs)
+        if "output_dir" in params:
+            params["output_dir"] = str(tmp_path / params["output_dir"])
+        result = builder.build(tmp_path, **params)
         tm.that(result.is_success or result.is_failure, eq=True)
 
-    def test_build_with_projects_filter(
-        self, builder: FlextInfraDocBuilder, tmp_path: Path
-    ) -> None:
-        """Test build with multiple projects filter."""
-        result = builder.build(tmp_path, projects="proj1,proj2")
-        tm.that(result.is_success or result.is_failure, eq=True)
-
-    def test_build_with_custom_output_dir(
-        self, builder: FlextInfraDocBuilder, tmp_path: Path
-    ) -> None:
-        """Test build with custom output directory."""
-        result = builder.build(tmp_path, output_dir=str(tmp_path / "custom_output"))
-        tm.that(result.is_success or result.is_failure, eq=True)
-
-    def test_build_report_result_field_values(self) -> None:
+    @pytest.mark.parametrize("status", ["OK", "FAIL", "SKIP"])
+    def test_build_report_result_field_values(self, status: str) -> None:
         """Test BuildReport result field accepts valid values."""
-        for status in ["OK", "FAIL", "SKIP"]:
-            report = m.Infra.Docs.DocsPhaseReport(
-                phase="build",
-                scope="test",
-                result=status,
-                reason="Test reason",
-                site_dir="/tmp/site",
-            )
-            tm.that(report.result, eq=status)
+        report = m.Infra.Docs.DocsPhaseReport(
+            phase="build",
+            scope="test",
+            result=status,
+            reason="Test reason",
+            site_dir="/tmp/site",
+        )
+        tm.that(report.result, eq=status)
 
     def test_build_report_site_dir_field(self) -> None:
         """Test BuildReport site_dir field."""

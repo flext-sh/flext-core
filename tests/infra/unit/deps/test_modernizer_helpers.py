@@ -1,193 +1,201 @@
-"""Helper coverage tests for deps modernizer."""
-
 from __future__ import annotations
 
+import pytest
 import tomlkit
+from tomlkit.toml_document import TOMLDocument
 
 from flext_infra.deps.modernizer import (
-    array,
-    as_string_list,
+    array_parser as array,
+    as_string_list_parser as as_string_list,
     canonical_dev_dependencies,
     dedupe_specs,
     dep_name,
-    ensure_table,
+    ensure_table_parser as ensure_table,
     project_dev_groups,
-    unwrap_item,
+    unwrap_item_parser as unwrap_item,
 )
-from flext_tests import tm
+from flext_tests import tb, tm
 
 
-class TestDepName:
-    """Tests dependency name normalization."""
-
-    def test_dep_name_variants(self) -> None:
-        tm.that(dep_name("requests"), eq="requests")
-        tm.that(dep_name("requests>=2.0"), eq="requests")
-        tm.that(
-            dep_name("requests @ git+https://github.com/psf/requests.git"),
-            eq="requests",
-        )
-        tm.that(dep_name("my_package"), eq="my-package")
-        tm.that(dep_name("  requests  "), eq="requests")
-        tm.that(dep_name(""), eq="")
-        tm.that(dep_name("Django>=3.0,<4.0"), eq="django")
+@pytest.fixture
+def doc() -> TOMLDocument:
+    return tomlkit.document()
 
 
-class TestDedupeSpecs:
-    """Tests dependency spec deduplication."""
-
-    def test_dedupe_specs_paths(self) -> None:
-        tm.that(dedupe_specs(["requests>=2.0", "django>=3.0"]), length=2)
-        deduped = dedupe_specs(["requests>=2.0", "requests>=2.1", "django>=3.0"])
-        tm.that(deduped, length=2)
-        tm.that([dep_name(spec) for spec in deduped], contains="requests")
-        tm.that(dedupe_specs([]), eq=[])
-        sorted_specs = dedupe_specs(["zebra>=1.0", "apple>=1.0"])
-        tm.that(dep_name(sorted_specs[0]) < dep_name(sorted_specs[1]), eq=True)
-        tm.that(dedupe_specs(["Requests>=2.0", "requests>=2.1"]), length=1)
-
-
-class TestUnwrapItem:
-    """Tests tomlkit item unwrapping."""
-
-    def test_unwrap_item_variants(self) -> None:
-        tm.that(unwrap_item("test"), eq="test")
-        tm.that(unwrap_item(None), eq=None)
-        doc = tomlkit.document()
-        doc["key"] = "value"
-        tm.that(unwrap_item(doc["key"]), eq="value")
-        mapping = {"key": "value"}
-        tm.that(unwrap_item(mapping), eq=mapping)
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [
+        ("requests", "requests"),
+        ("requests>=2.0", "requests"),
+        ("requests @ git+https://github.com/psf/requests.git", "requests"),
+        ("my_package", "my-package"),
+        ("  requests  ", "requests"),
+        ("", ""),
+        ("Django>=3.0,<4.0", "django"),
+    ],
+)
+def test_dep_name(raw: str, expected: str) -> None:
+    tm.that(dep_name(raw), eq=expected)
 
 
-class TestAsStringList:
-    """Tests conversion to string list."""
-
-    def test_as_string_list_variants(self) -> None:
-        tm.that(as_string_list(["a", "b", "c"]), eq=["a", "b", "c"])
-        tm.that(as_string_list(None), eq=[])
-        tm.that(as_string_list("test"), eq=[])
-        tm.that(as_string_list({"key": "value"}), eq=[])
-        tm.that(as_string_list(["item1", "item2"]), eq=["item1", "item2"])
-        doc = tomlkit.document()
-        doc["items"] = ["a", "b"]
-        tm.that(as_string_list(doc["items"]), eq=["a", "b"])
-        tm.that(as_string_list(42), eq=[])
-        doc["value"] = 42
-        tm.that(as_string_list(doc["value"]), eq=[])
-
-
-class TestArray:
-    """Tests array creation helper."""
-
-    def test_array_builds_items(self) -> None:
-        tm.that(len(array(["a", "b", "c"])), eq=3)
-        tm.that(len(array([])), eq=0)
-        tm.that(len(array(["single"])), eq=1)
-
-
-class TestEnsureTable:
-    """Tests table creation helper."""
-
-    def test_ensure_table_paths(self) -> None:
-        parent = tomlkit.table()
-        _ = ensure_table(parent, "new_key")
-        tm.that("new_key" in parent, eq=True)
-        existing = tomlkit.table()
-        parent["existing"] = existing
-        tm.that(ensure_table(parent, "existing") is existing, eq=True)
-        parent["key"] = "string_value"
-        tm.that("key" in parent, eq=True)
+@pytest.mark.parametrize(
+    ("specs", "expected_length", "expected_names", "check_sorted"),
+    [
+        (["requests>=2.0", "django>=3.0"], 2, ["requests", "django"], False),
+        (["requests>=2.0", "requests>=2.1", "django>=3.0"], 2, ["requests"], False),
+        ([], 0, [], False),
+        (["zebra>=1.0", "apple>=1.0"], 2, [], True),
+        (["Requests>=2.0", "requests>=2.1"], 1, ["requests"], False),
+    ],
+)
+def test_dedupe_specs(
+    specs: list[str],
+    expected_length: int,
+    expected_names: list[str],
+    check_sorted: bool,
+) -> None:
+    deduped = dedupe_specs(specs)
+    tm.that(deduped, length=expected_length)
+    names = [dep_name(spec) for spec in deduped]
+    for expected_name in expected_names:
+        tm.that(names, has=expected_name)
+    if check_sorted and len(deduped) > 1:
+        assert dep_name(deduped[0]) < dep_name(deduped[1])
 
 
-class TestProjectDevGroups:
-    """Tests extraction of project dev groups."""
-
-    def test_project_dev_groups(self) -> None:
-        doc = tomlkit.document()
-        doc["project"] = {
-            "optional-dependencies": {
-                "dev": ["pytest"],
-                "docs": ["sphinx"],
-                "security": ["bandit"],
-                "test": ["coverage"],
-                "typings": ["mypy"],
-            },
-        }
-        result = project_dev_groups(doc)
-        tm.that(result["dev"], eq=["pytest"])
-        tm.that(result["docs"], eq=["sphinx"])
-        tm.that(result["security"], eq=["bandit"])
-        tm.that(result["test"], eq=["coverage"])
-        tm.that(result["typings"], eq=["mypy"])
-        tm.that(project_dev_groups(tomlkit.document()), eq={})
-        doc2 = tomlkit.document()
-        doc2["project"] = {"name": "test"}
-        tm.that(project_dev_groups(doc2), eq={})
-        doc3 = tomlkit.document()
-        doc3["project"] = {"optional-dependencies": {"dev": ["pytest"]}}
-        partial = project_dev_groups(doc3)
-        tm.that(partial["dev"], eq=["pytest"])
-        tm.that(partial["docs"], eq=[])
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        ("test", "test"),
+        (None, None),
+        ({"key": "value"}, {"key": "value"}),
+    ],
+)
+def test_unwrap_item(
+    value: str | dict[str, str] | None, expected: str | dict[str, str] | None
+) -> None:
+    tm.that(unwrap_item(value), eq=expected)
 
 
-class TestCanonicalDevDependencies:
-    """Tests canonical dev dependency aggregation."""
-
-    def test_canonical_dev_dependencies(self) -> None:
-        doc = tomlkit.document()
-        doc["project"] = {
-            "optional-dependencies": {
-                "dev": ["pytest"],
-                "docs": ["sphinx"],
-                "security": ["bandit"],
-                "test": ["coverage"],
-                "typings": ["mypy"],
-            },
-        }
-        result = canonical_dev_dependencies(doc)
-        tm.that(result, length=5)
-        tm.that(any("pytest" in item for item in result), eq=True)
-        tm.that(canonical_dev_dependencies(tomlkit.document()), eq=[])
-        doc2 = tomlkit.document()
-        doc2["project"] = {
-            "optional-dependencies": {"dev": ["pytest>=7.0"], "test": ["pytest>=6.0"]}
-        }
-        tm.that(canonical_dev_dependencies(doc2), length=1)
+def test_unwrap_item_toml_item(doc: TOMLDocument) -> None:
+    doc["key"] = "value"
+    tm.that(unwrap_item(doc["key"]), eq="value")
 
 
-def test_unwrap_item_with_item() -> None:
-    doc = tomlkit.document()
-    doc["value"] = "test_value"
-    tm.that(unwrap_item(doc["value"]), eq="test_value")
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        (["a", "b", "c"], ["a", "b", "c"]),
+        (None, []),
+        ("test", []),
+        ({"key": "value"}, []),
+        (42, []),
+    ],
+)
+def test_as_string_list(
+    value: list[str] | str | dict[str, str] | int | None, expected: list[str]
+) -> None:
+    tm.that(as_string_list(value), eq=expected)
 
 
-def test_unwrap_item_with_none() -> None:
-    tm.that(unwrap_item(None), eq=None)
+def test_as_string_list_toml_item(doc: TOMLDocument) -> None:
+    doc["items"] = ["a", "b"]
+    tm.that(as_string_list(doc["items"]), eq=["a", "b"])
+    doc["value"] = 42
+    tm.that(as_string_list(doc["value"]), eq=[])
 
 
-def test_as_string_list_with_item() -> None:
-    doc = tomlkit.document()
-    doc["items"] = ["a", "b", "c"]
-    tm.that(as_string_list(doc["items"]), eq=["a", "b", "c"])
+@pytest.mark.parametrize(
+    ("items", "expected"),
+    [(["a", "b", "c"], 3), ([], 0), (["single"], 1)],
+)
+def test_array(items: list[str], expected: int) -> None:
+    tm.that(len(array(items)), eq=expected)
 
 
-def test_as_string_list_with_string() -> None:
-    tm.that(as_string_list("string"), eq=[])
-
-
-def test_as_string_list_with_mapping() -> None:
-    tm.that(as_string_list({"key": "value"}), eq=[])
-
-
-def test_as_string_list_with_item_unwrap_returns_none() -> None:
-    doc = tomlkit.document()
-    doc["items"] = 42
-    tm.that(as_string_list(doc["items"]), eq=[])
-
-
-def test_ensure_table_with_non_table_value_uncovered() -> None:
+@pytest.mark.parametrize(
+    "mode",
+    ["new", "existing", "replace-non-table"],
+)
+def test_ensure_table(mode: str) -> None:
     parent = tomlkit.table()
-    parent["key"] = "string_value"
+    if mode == "existing":
+        existing = tomlkit.table()
+        parent["key"] = existing
+        ensured = ensure_table(parent, "key")
+        assert ensured is existing
+        return
+    if mode == "replace-non-table":
+        parent["key"] = "string_value"
+        _ = ensure_table(parent, "key")
+        tm.that("key" in parent, eq=True)
+        return
     _ = ensure_table(parent, "key")
     tm.that("key" in parent, eq=True)
+
+
+def _doc_with_optional_deps(optional_deps: dict[str, list[str]]) -> TOMLDocument:
+    doc = tomlkit.document()
+    doc["project"] = tb().add("optional-dependencies", optional_deps).build()
+    return doc
+
+
+@pytest.mark.parametrize(
+    ("optional_deps", "expected_dev", "expected_docs"),
+    [
+        (
+            {
+                "dev": ["pytest"],
+                "docs": ["sphinx"],
+                "security": ["bandit"],
+                "test": ["coverage"],
+                "typings": ["mypy"],
+            },
+            ["pytest"],
+            ["sphinx"],
+        ),
+        ({"dev": ["pytest"]}, ["pytest"], []),
+        ({}, [], []),
+    ],
+)
+def test_project_dev_groups(
+    optional_deps: dict[str, list[str]],
+    expected_dev: list[str],
+    expected_docs: list[str],
+) -> None:
+    groups = project_dev_groups(_doc_with_optional_deps(optional_deps))
+    tm.that(groups.get("dev", []), eq=expected_dev)
+    tm.that(groups.get("docs", []), eq=expected_docs)
+
+
+def test_project_dev_groups_missing_sections(doc: TOMLDocument) -> None:
+    tm.that(project_dev_groups(doc), eq={})
+    doc["project"] = {"name": "test"}
+    tm.that(project_dev_groups(doc), eq={})
+
+
+@pytest.mark.parametrize(
+    ("optional_deps", "expected_length", "expect_pytest"),
+    [
+        (
+            {
+                "dev": ["pytest"],
+                "docs": ["sphinx"],
+                "security": ["bandit"],
+                "test": ["coverage"],
+                "typings": ["mypy"],
+            },
+            5,
+            True,
+        ),
+        ({}, 0, False),
+        ({"dev": ["pytest>=7.0"], "test": ["pytest>=6.0"]}, 1, True),
+    ],
+)
+def test_canonical_dev_dependencies(
+    optional_deps: dict[str, list[str]], expected_length: int, expect_pytest: bool
+) -> None:
+    result = canonical_dev_dependencies(_doc_with_optional_deps(optional_deps))
+    tm.that(result, length=expected_length)
+    if expect_pytest:
+        assert any("pytest" in item for item in result)

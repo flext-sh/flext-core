@@ -13,7 +13,7 @@ import pytest
 from flext_core import r
 from flext_infra.docs.fixer import FlextInfraDocFixer
 from flext_infra.docs.shared import FlextInfraDocsShared
-from flext_tests import tm
+from flext_tests import tf, tm
 from tests.infra.models import m
 from tests.infra.typings import t
 
@@ -68,40 +68,28 @@ class TestFixerCore:
         """Test FixItem is frozen (immutable)."""
         tm.that(m.Infra.Docs.DocsPhaseItem.model_config.get("frozen"), eq=True)
 
-    def test_fix_with_project_filter(
-        self, fixer: FlextInfraDocFixer, tmp_path: Path
+    @pytest.mark.parametrize(
+        "kwargs",
+        [
+            {"project": "test-project"},
+            {"projects": "proj1,proj2"},
+            {"apply": False},
+            {"apply": True},
+            {"output_dir": "custom_output"},
+        ],
+    )
+    def test_fix_with_option_variants(
+        self,
+        fixer: FlextInfraDocFixer,
+        tmp_path: Path,
+        kwargs: dict[str, t.ContainerValue],
     ) -> None:
-        """Test fix with single project filter."""
-        result = fixer.fix(tmp_path, project="test-project")
-        tm.that(result.is_success or result.is_failure, eq=True)
-
-    def test_fix_with_projects_filter(
-        self, fixer: FlextInfraDocFixer, tmp_path: Path
-    ) -> None:
-        """Test fix with multiple projects filter."""
-        result = fixer.fix(tmp_path, projects="proj1,proj2")
-        tm.that(result.is_success or result.is_failure, eq=True)
-
-    def test_fix_with_apply_false_dry_run(
-        self, fixer: FlextInfraDocFixer, tmp_path: Path
-    ) -> None:
-        """Test fix with apply=False (dry-run mode)."""
-        result = fixer.fix(tmp_path, apply=False)
-        tm.that(result.is_success or result.is_failure, eq=True)
-
-    def test_fix_with_apply_true_writes_changes(
-        self, fixer: FlextInfraDocFixer, tmp_path: Path
-    ) -> None:
-        """Test fix with apply=True writes changes."""
-        (tmp_path / "README.md").write_text("# Test\n\nSome content here.\n")
-        result = fixer.fix(tmp_path, apply=True)
-        tm.that(result.is_success or result.is_failure, eq=True)
-
-    def test_fix_with_custom_output_dir(
-        self, fixer: FlextInfraDocFixer, tmp_path: Path
-    ) -> None:
-        """Test fix with custom output directory."""
-        result = fixer.fix(tmp_path, output_dir=str(tmp_path / "custom_output"))
+        params: dict[str, t.ContainerValue] = dict(kwargs)
+        if params.get("apply") is True:
+            _ = tf.create_in("# Test\n\nSome content here.\n", "README.md", tmp_path)
+        if "output_dir" in params:
+            params["output_dir"] = str(tmp_path / str(params["output_dir"]))
+        result = fixer.fix(tmp_path, **params)
         tm.that(result.is_success or result.is_failure, eq=True)
 
     def test_fix_report_changed_files_count(self) -> None:
@@ -111,12 +99,19 @@ class TestFixerCore:
         )
         tm.that(report.changed_files, eq=5)
 
-    def test_fix_report_applied_field(self) -> None:
+    @pytest.mark.parametrize(
+        ("changed_files", "applied"),
+        [(0, False), (5, True)],
+    )
+    def test_fix_report_applied_field(self, changed_files: int, applied: bool) -> None:
         """Test FixReport applied field."""
         report = m.Infra.Docs.DocsPhaseReport(
-            phase="fix", scope="test", changed_files=0, applied=False
+            phase="fix",
+            scope="test",
+            changed_files=changed_files,
+            applied=applied,
         )
-        tm.that(report.applied, eq=False)
+        tm.that(report.applied, eq=applied)
 
     def test_fix_report_items_list(self) -> None:
         """Test FixReport items list."""

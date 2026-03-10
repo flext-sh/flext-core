@@ -538,7 +538,7 @@ class FlextContainer(p.DI):
             if type_cls is not None:
                 service_for_check: object = service
                 if not self._is_instance_of(service_for_check, type_cls):
-                    return r[T].fail(
+                    return r[t.RegisterableService].fail(
                         f"Service '{name}' is not of type {(type_cls.__name__ if hasattr(type_cls, '__name__') else 'Unknown')}"
                     )
                 typed_service: T = service_for_check
@@ -560,7 +560,9 @@ class FlextContainer(p.DI):
                 if type_cls is not None:
                     resolved_for_check: object = resolved
                     if not self._is_instance_of(resolved_for_check, type_cls):
-                        return r[T].fail(f"Factory '{name}' returned wrong type")
+                        return r[t.RegisterableService].fail(
+                            f"Factory '{name}' returned wrong type"
+                        )
                     typed_resolved: T = resolved_for_check
                     return r[T].ok(typed_resolved)
                 return r[t.RegisterableService].ok(resolved)
@@ -580,7 +582,9 @@ class FlextContainer(p.DI):
                 if type_cls is not None:
                     resource_for_check: object = resolved
                     if not self._is_instance_of(resource_for_check, type_cls):
-                        return r[T].fail(f"Resource '{name}' returned wrong type")
+                        return r[t.RegisterableService].fail(
+                            f"Resource '{name}' returned wrong type"
+                        )
                     typed_resource: T = resource_for_check
                     return r[T].ok(typed_resource)
                 return r[t.RegisterableService].ok(resolved)

@@ -116,21 +116,15 @@ def _capturing(
 
 
 class TestRunAudit:
-    def test_success_no_failures(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        report = m.Infra.Docs.DocsPhaseReport(
-            phase="audit",
-            scope="root",
-            items=[],
-            checks=["links"],
-            strict=True,
-            passed=True,
-        )
-
-        monkeypatch.setattr(FlextInfraDocAuditor, "audit", _ok([report]))
-        tm.that(_run_audit(_audit_args()), eq=0)
-
-    def test_run_audit_success_with_failures(
-        self, monkeypatch: pytest.MonkeyPatch
+    @pytest.mark.parametrize(
+        ("passed", "expected"),
+        [(True, 0), (False, 1)],
+    )
+    def test_run_audit_report_exit_code(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        passed: bool,
+        expected: int,
     ) -> None:
         report = m.Infra.Docs.DocsPhaseReport(
             phase="audit",
@@ -138,44 +132,36 @@ class TestRunAudit:
             items=[],
             checks=["links"],
             strict=True,
-            passed=False,
+            passed=passed,
         )
-
         monkeypatch.setattr(FlextInfraDocAuditor, "audit", _ok([report]))
-        tm.that(_run_audit(_audit_args()), eq=1)
+        tm.that(_run_audit(_audit_args()), eq=expected)
 
     def test_run_audit_failure(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(FlextInfraDocAuditor, "audit", _fail_report("audit error"))
         monkeypatch.setattr(docs_main, "output", _SILENT)
         tm.that(_run_audit(_audit_args()), eq=1)
 
-    def test_run_audit_with_project_filter(
-        self, monkeypatch: pytest.MonkeyPatch
+    @pytest.mark.parametrize(
+        ("kwargs", "field", "expected"),
+        [
+            ({"project": "test-project"}, "project", "test-project"),
+            ({"projects": "proj1,proj2"}, "projects", "proj1,proj2"),
+            ({"check": "links"}, "check", "links"),
+            ({"strict": 0}, "strict", False),
+        ],
+    )
+    def test_run_audit_forwards_arguments(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        kwargs: dict[str, t.ContainerValue],
+        field: str,
+        expected: t.ContainerValue,
     ) -> None:
         captured_kwargs: dict[str, t.ContainerValue] = {}
         monkeypatch.setattr(FlextInfraDocAuditor, "audit", _capturing(captured_kwargs))
-        _run_audit(_audit_args(project="test-project"))
-        tm.that(captured_kwargs.get("project"), eq="test-project")
-
-    def test_run_audit_with_projects_filter(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
-        captured_kwargs: dict[str, t.ContainerValue] = {}
-        monkeypatch.setattr(FlextInfraDocAuditor, "audit", _capturing(captured_kwargs))
-        _run_audit(_audit_args(projects="proj1,proj2"))
-        tm.that(captured_kwargs.get("projects"), eq="proj1,proj2")
-
-    def test_run_audit_with_check_links(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        captured_kwargs: dict[str, t.ContainerValue] = {}
-        monkeypatch.setattr(FlextInfraDocAuditor, "audit", _capturing(captured_kwargs))
-        _run_audit(_audit_args(check="links"))
-        tm.that(captured_kwargs.get("check"), eq="links")
-
-    def test_run_audit_strict_mode(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        captured_kwargs: dict[str, t.ContainerValue] = {}
-        monkeypatch.setattr(FlextInfraDocAuditor, "audit", _capturing(captured_kwargs))
-        _run_audit(_audit_args(strict=0))
-        tm.that(captured_kwargs.get("strict"), eq=False)
+        _run_audit(_audit_args(**kwargs))
+        tm.that(captured_kwargs.get(field), eq=expected)
 
 
 class TestRunFix:
@@ -188,7 +174,13 @@ class TestRunFix:
         monkeypatch.setattr(docs_main, "output", _SILENT)
         tm.that(_run_fix(_fix_args()), eq=1)
 
-    def test_run_fix_with_apply_flag(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    @pytest.mark.parametrize(("apply", "expected"), [(True, True), (False, False)])
+    def test_run_fix_forwards_apply_flag(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        apply: bool,
+        expected: bool,
+    ) -> None:
         captured_kwargs: dict[str, t.ContainerValue] = {}
 
         def mock_fix(
@@ -201,5 +193,5 @@ class TestRunFix:
             return r[list[t.ContainerValue]].ok([])
 
         monkeypatch.setattr(FlextInfraDocFixer, "fix", mock_fix)
-        _run_fix(_fix_args(apply=True))
-        tm.that(captured_kwargs.get("apply"), eq=True)
+        _run_fix(_fix_args(apply=apply))
+        tm.that(captured_kwargs.get("apply"), eq=expected)

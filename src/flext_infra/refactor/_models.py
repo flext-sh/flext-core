@@ -439,6 +439,33 @@ class FlextInfraRefactorModels(
         source: str = Field(description="Raw source text")
         tree: ast.Module = Field(description="Parsed AST module node")
 
+    # -- MRO Generic Models ----------------------------------------------------
+
+    class MROFamilyTarget(FlextModels.ArbitraryTypesModel):
+        """Parametrized target for an MRO family scan or operations.
+
+        Defines which MRO family to scan (e.g. utilities, constants, models).
+        """
+
+        model_config = ConfigDict(frozen=True)
+
+        family: str = Field(min_length=1, description="Family alias letter (c/t/p/m/u)")
+        class_suffix: str = Field(description="Class name suffix (e.g. 'Utilities')")
+        package_dir: str = Field(
+            description="Relative path to _xxx package dir (e.g. 'flext_core/_utilities')",
+        )
+        facade_module: str = Field(
+            description="Relative path to facade (e.g. 'flext_core/utilities.py')",
+        )
+        facade_class_prefix: str = Field(
+            default="Flext",
+            description="Class name prefix for facade (e.g. 'Flext')",
+        )
+        core_project: str = Field(
+            default="flext-core",
+            description="Core project directory name",
+        )
+
     # -- Census Models ---------------------------------------------------------
 
     class CensusMethodInfo(FlextModels.ArbitraryTypesModel):

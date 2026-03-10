@@ -13,7 +13,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import os
 import threading
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from typing import ClassVar, Self
@@ -183,11 +182,11 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
     @property
     def effective_log_level(self) -> c.Settings.LogLevel:
         """Get effective log level based on debug/trace flags."""
-        if self.trace:
-            return c.Settings.LogLevel.DEBUG
-        if self.debug:
-            return c.Settings.LogLevel.INFO
-        return self.log_level
+        return u.Configuration.resolve_effective_log_level(
+            trace=self.trace,
+            debug=self.debug,
+            log_level=self.log_level,
+        )
 
     @classmethod
     def _reset_instance(cls) -> None:
@@ -208,9 +207,7 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
     @classmethod
     def get_global(cls, *, overrides: t.ConfigurationMapping | None = None) -> Self:
         """Get global settings, optionally materialized with overrides."""
-        log_level = os.environ.get("FLEXT_LOG_LEVEL")
-        if log_level and log_level.islower():
-            os.environ["FLEXT_LOG_LEVEL"] = log_level.upper()
+        u.Configuration.normalize_env_log_level()
         if overrides is None:
             return cls()
         if cls is FlextSettings:
@@ -226,6 +223,8 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
         self, key: str, value: t.Scalar | Sequence[t.Scalar] | Mapping[str, t.Scalar]
     ) -> bool:
         """Validate and apply a configuration override.
+
+        Checks field existence in model_fields before applying via setattr.
 
         Args:
             key: Configuration key to override
@@ -256,18 +255,12 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
         return provider
 
     @model_validator(mode="after")
-    def validate_configuration(self) -> Self:
+    def _validate_configuration(self) -> Self:
         """Validate configuration.
 
         Business Rule: Validates configuration consistency after model initialization.
-        Checks database URL scheme validity and ensures trace mode requires debug mode.
-        Raises ValueError if configuration is invalid, preventing invalid configurations
-        from being used in production systems.
-
-        Audit Implication: Configuration validation ensures audit trail completeness by
-        preventing invalid configurations from being used. All configurations are validated
-        before being used in production systems. Used by Pydantic v2 model_validator for
-        cross-field validation.
+        Delegates to ``u.Configuration`` validation utilities for database URL scheme
+        and trace/debug consistency checks.
 
         Returns:
             Self: Validated configuration instance
@@ -276,14 +269,11 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
             ValueError: If configuration is invalid
 
         """
-        if self.database_url and (
-            not self.database_url.startswith(("postgresql://", "mysql://", "sqlite://"))
-        ):
-            msg = "Invalid database URL scheme"
-            raise ValueError(msg)
-        if self.trace and (not self.debug):
-            msg = "Trace mode requires debug mode"
-            raise ValueError(msg)
+        u.Configuration.validate_database_url_scheme(self.database_url)
+        u.Configuration.validate_trace_requires_debug(
+            trace=self.trace,
+            debug=self.debug,
+        )
         return self
 
     class AutoConfig(BaseModel):
@@ -323,10 +313,10 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
         namespace_key = namespace
         config_class = self._namespace_registry.get(namespace_key)
         if config_class is None:
-            normalized = "".join(ch for ch in namespace if ch.isalnum())
+            normalized = u.Text.normalize_alnum(namespace)
             if normalized:
                 for key, value in self._namespace_registry.items():
-                    key_normalized = "".join(ch for ch in key.lower() if ch.isalnum())
+                    key_normalized = u.Text.normalize_alnum(key)
                     if normalized == key_normalized or normalized.startswith(
                         key_normalized
                     ):
@@ -367,7 +357,7 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
 
     @classmethod
     def get_namespace_config(cls, namespace: str) -> type[BaseSettings] | None:
-        """Backward-compatible namespace registry lookup."""
+        """Internal namespace registry lookup."""
         return cls._namespace_registry.get(namespace)
 
     @classmethod
@@ -429,7 +419,7 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
     @classmethod
     def reset_for_testing(cls) -> None:
         """Reset the global singleton instance for testing."""
-        cls._instances.clear()
+        cls._reset_instance()
         cls._context_overrides.clear()
 
     @staticmethod

@@ -8,8 +8,12 @@ import sys
 import tempfile
 from pathlib import Path
 
+from flext_infra import output, u
+
+from .census import FlextInfraRefactorCensus
 from .migrate_to_class_mro import FlextInfraRefactorMigrateToClassMRO
 from .namespace_enforcer import FlextInfraNamespaceEnforcer
+from .output import render_census_report
 from .pydantic_centralizer import FlextInfraRefactorPydanticCentralizer
 
 
@@ -24,8 +28,11 @@ def main() -> int:
         return _run_namespace_enforce(argv=argv[1:])
     if len(argv) > 0 and argv[0] in {"ultrawork-models", "ultrawork"}:
         return _run_ultrawork_models(argv=argv[1:])
+    if len(argv) > 0 and argv[0] in {"census", "utilities-census"}:
+        return _run_census(argv=argv[1:])
     _ = sys.stderr.write(
-        "Usage: python -m flext_infra.refactor [centralize-pydantic|migrate-mro|namespace-enforce|ultrawork-models] ...\n",
+        "Usage: python -m flext_infra.refactor"
+        " [centralize-pydantic|migrate-mro|namespace-enforce|ultrawork-models|census] ...\n",
     )
     return 2
 
@@ -319,6 +326,58 @@ def _run_ultrawork_models(*, argv: list[str]) -> int:
         for error in mro_report.errors:
             _ = sys.stderr.write(f"ERROR: {error}\n")
         return 1
+    return 0
+
+
+def _run_census(*, argv: list[str]) -> int:
+    parser = argparse.ArgumentParser(
+        prog="flext_infra refactor census",
+        description="Run AST/CST census of MRO family method usage across workspace projects",
+    )
+    _ = parser.add_argument(
+        "--workspace",
+        type=Path,
+        default=Path.cwd(),
+        help="Workspace root directory (default: cwd)",
+    )
+    _ = parser.add_argument(
+        "--family",
+        type=str,
+        default="u",
+        choices=sorted({"c", "t", "p", "m", "u"}),
+        help="MRO family to census (default: u). Options: c, t, p, m, u",
+    )
+    _ = parser.add_argument(
+        "--json-output",
+        type=Path,
+        default=None,
+        help="Path to write JSON report (optional)",
+    )
+    args = parser.parse_args(argv)
+    workspace_path = args.workspace.resolve()
+    census = FlextInfraRefactorCensus()
+
+    target = u.Infra.build_family_target(args.family)
+    result = census.run(workspace_path, target=target)
+    if result.is_failure:
+        output.error(f"Census failed: {result.error}")
+        return 1
+    report = result.value
+    _ = sys.stdout.write(render_census_report(report))
+    _ = sys.stdout.write("\n")
+    if args.json_output:
+        json_path = Path(args.json_output).resolve()
+        u.Infra.export_pydantic_json(report, json_path)
+        output.info(f"JSON report exported to: {json_path}")
+    _ = sys.stdout.write(f"family={args.family}\n")
+    _ = sys.stdout.write(f"total_classes={report.total_classes}\n")
+    _ = sys.stdout.write(f"total_methods={report.total_methods}\n")
+    _ = sys.stdout.write(f"total_usages={report.total_usages}\n")
+    _ = sys.stdout.write(f"total_unused={report.total_unused}\n")
+    _ = sys.stdout.write(f"files_scanned={report.files_scanned}\n")
+    _ = sys.stdout.write(f"parse_errors={report.parse_errors}\n")
+    _ = sys.stdout.write(f"projects={len(report.projects)}\n")
+    _ = sys.stdout.write(f"workspace={workspace_path}\n")
     return 0
 
 

@@ -11,7 +11,7 @@ from pathlib import Path
 import pytest
 
 from flext_infra.docs.fixer import FlextInfraDocFixer
-from flext_tests import tm
+from flext_tests import tf, tm
 from tests.infra.models import m
 
 
@@ -21,136 +21,125 @@ def fixer() -> FlextInfraDocFixer:
 
 
 class TestFixerProcessFile:
-    def test_process_file_with_markdown_links(
+    @pytest.mark.parametrize(
+        ("name", "content", "apply"),
+        [
+            ("test.md", "# Test\n\n[Link](missing.md)\n", False),
+            ("test.md", "# Test\n\n## Section\n", True),
+            ("test.md", "# Test\n\nNo broken links or TOC needed.", False),
+        ],
+    )
+    def test_process_file_variants(
+        self,
+        fixer: FlextInfraDocFixer,
+        tmp_path: Path,
+        name: str,
+        content: str,
+        apply: bool,
+    ) -> None:
+        md_file = tf.create_in(content, name, tmp_path)
+        item = fixer._process_file(md_file, apply=apply)
+        tm.that(item.file, eq=str(md_file))
+
+    def test_process_file_with_fixable_links(
         self,
         fixer: FlextInfraDocFixer,
         tmp_path: Path,
     ) -> None:
-        md_file = tmp_path / "test.md"
-        md_file.write_text("# Test\n\n[Link](missing.md)\n")
-        item = fixer._process_file(md_file, apply=False)
-        tm.that(item.file, eq=str(md_file))
-
-    def test_process_file_with_apply_true(
-        self, fixer: FlextInfraDocFixer, tmp_path: Path
-    ) -> None:
-        """Test _process_file with apply=True writes changes."""
-        md_file = tmp_path / "test.md"
-        md_file.write_text("# Test\n\n## Section\n")
-        item = fixer._process_file(md_file, apply=True)
-        tm.that(item.file, eq=str(md_file))
-
-    def test_process_file_with_no_fixes_needed(
-        self, fixer: FlextInfraDocFixer, tmp_path: Path
-    ) -> None:
-        """Test _process_file with content that needs no fixes."""
-        md_file = tmp_path / "test.md"
-        md_file.write_text("# Test\n\nNo broken links or TOC needed.")
-        item = fixer._process_file(md_file, apply=False)
-        tm.that("test.md" in item.file, eq=True)
-        tm.that(item.links, eq=0)
-
-    def test_process_file_with_fixable_links(
-        self, fixer: FlextInfraDocFixer, tmp_path: Path
-    ) -> None:
-        """Test _process_file counts fixed links correctly."""
-        md_file = tmp_path / "test.md"
-        md_file.write_text("# Test\n\n[Link](target.md)\n")
-        (tmp_path / "target.md").write_text("# Target")
+        md_file = tf.create_in("# Test\n\n[Link](target.md)\n", "test.md", tmp_path)
+        _ = tf.create_in("# Target", "target.md", tmp_path)
         item = fixer._process_file(md_file, apply=False)
         tm.that("test.md" in item.file, eq=True)
 
     def test_fix_markdown_with_link_fix(
-        self, fixer: FlextInfraDocFixer, tmp_path: Path
+        self,
+        fixer: FlextInfraDocFixer,
+        tmp_path: Path,
     ) -> None:
-        """Test fix_markdown increments link_count when link is fixed."""
-        md_file = tmp_path / "README.md"
-        (tmp_path / "target.md").touch()
-        md_file.write_text("# Test\n\nSee [link](target) for details.\n")
+        _ = tf.create_in("", "target.md", tmp_path)
+        md_file = tf.create_in(
+            "# Test\n\nSee [link](target) for details.\n",
+            "README.md",
+            tmp_path,
+        )
         item = fixer._process_file(md_file, apply=False)
         tm.that(item.links, eq=1)
 
 
 class TestFixerMaybeFixLink:
-    def test_external_urls(
+    @pytest.mark.parametrize(
+        "link",
+        [
+            "http://example.com",
+            "https://example.com",
+            "mailto:test@example.com",
+            "#section",
+            "",
+        ],
+    )
+    def test_unchanged_links_return_none(
         self,
         fixer: FlextInfraDocFixer,
         tmp_path: Path,
+        link: str,
     ) -> None:
-        md_file = tmp_path / "test.md"
-        tm.that(fixer._maybe_fix_link(md_file, "http://example.com"), eq=None)
-        tm.that(fixer._maybe_fix_link(md_file, "https://example.com"), eq=None)
-        tm.that(fixer._maybe_fix_link(md_file, "mailto:test@example.com"), eq=None)
-
-    def test_maybe_fix_link_fragment_only(
-        self, fixer: FlextInfraDocFixer, tmp_path: Path
-    ) -> None:
-        """Test _maybe_fix_link returns None for fragment-only links."""
-        tm.that(fixer._maybe_fix_link(tmp_path / "test.md", "#section"), eq=None)
+        _ = tf.create_in("# Test", "README.md", tmp_path)
+        tm.that(fixer._maybe_fix_link(tmp_path / "README.md", link), eq=None)
 
     def test_maybe_fix_link_existing_file(
         self, fixer: FlextInfraDocFixer, tmp_path: Path
     ) -> None:
-        """Test _maybe_fix_link returns None for existing files."""
-        (tmp_path / "existing.md").write_text("# Existing")
+        _ = tf.create_in("# Existing", "existing.md", tmp_path)
         tm.that(fixer._maybe_fix_link(tmp_path / "test.md", "existing.md"), eq=None)
 
     def test_maybe_fix_link_adds_md_extension(
-        self, fixer: FlextInfraDocFixer, tmp_path: Path
+        self,
+        fixer: FlextInfraDocFixer,
+        tmp_path: Path,
     ) -> None:
-        """Test _maybe_fix_link adds .md extension when needed."""
-        (tmp_path / "missing.md").write_text("# Missing")
+        _ = tf.create_in("# Missing", "missing.md", tmp_path)
         tm.that(fixer._maybe_fix_link(tmp_path / "test.md", "missing"), eq="missing.md")
 
-    def test_maybe_fix_link_empty_base(
-        self, fixer: FlextInfraDocFixer, tmp_path: Path
-    ) -> None:
-        """Test _maybe_fix_link returns None for empty base."""
-        tm.that(fixer._maybe_fix_link(tmp_path / "test.md", "#section"), eq=None)
-
-    def test_maybe_fix_link_with_empty_string(
-        self, fixer: FlextInfraDocFixer, tmp_path: Path
-    ) -> None:
-        """Test _maybe_fix_link returns None for empty string."""
-        (tmp_path / "README.md").touch()
-        tm.that(fixer._maybe_fix_link(tmp_path / "README.md", ""), eq=None)
-
     def test_maybe_fix_link_with_existing_target(
-        self, fixer: FlextInfraDocFixer, tmp_path: Path
+        self,
+        fixer: FlextInfraDocFixer,
+        tmp_path: Path,
     ) -> None:
-        """Test _maybe_fix_link returns fixed link when .md suffix exists."""
-        md_file = tmp_path / "docs" / "foo.md"
-        md_file.parent.mkdir(parents=True)
-        md_file.touch()
-        (tmp_path / "docs" / "bar.md").touch()
+        docs_dir = tmp_path / "docs"
+        docs_dir.mkdir(parents=True)
+        md_file = tf.create_in("", "foo.md", docs_dir)
+        _ = tf.create_in("", "bar.md", docs_dir)
         tm.that(fixer._maybe_fix_link(md_file, "bar"), eq="bar.md")
 
 
 class TestFixerToc:
-    def test_anchorize_converts_to_slug(self, fixer: FlextInfraDocFixer) -> None:
-        tm.that(fixer._anchorize("Hello World"), eq="hello-world")
-        tm.that(fixer._anchorize("Test-Case"), eq="test-case")
-        tm.that(fixer._anchorize("  Spaces  "), eq="spaces")
+    @pytest.mark.parametrize(
+        ("title", "expected"),
+        [
+            ("Hello World", "hello-world"),
+            ("Test-Case", "test-case"),
+            ("  Spaces  ", "spaces"),
+            ("Hello! World?", "hello-world"),
+            ("Test@#$%", "test"),
+            ("", ""),
+            ("!!!", ""),
+        ],
+    )
+    def test_anchorize_cases(
+        self,
+        fixer: FlextInfraDocFixer,
+        title: str,
+        expected: str,
+    ) -> None:
+        tm.that(fixer._anchorize(title), eq=expected)
 
-    def test_anchorize_removes_special_chars(self, fixer: FlextInfraDocFixer) -> None:
-        tm.that(fixer._anchorize("Hello! World?"), eq="hello-world")
-        tm.that(fixer._anchorize("Test@#$%"), eq="test")
-
-    def test_anchorize_empty_string(self, fixer: FlextInfraDocFixer) -> None:
-        tm.that(fixer._anchorize(""), eq="")
-
-    def test_anchorize_with_special_chars_only(self, fixer: FlextInfraDocFixer) -> None:
-        tm.that(fixer._anchorize("!!!"), eq="")
-
-    def test_build_toc_from_headings(self, fixer: FlextInfraDocFixer) -> None:
+    def test_build_toc_variants(self, fixer: FlextInfraDocFixer) -> None:
         toc = fixer._build_toc(
             "# Main\n\n## Section 1\n\n### Subsection\n\n## Section 2\n"
         )
         tm.that("<!-- TOC START -->" in toc, eq=True)
         tm.that("<!-- TOC END -->" in toc, eq=True)
         tm.that("Section 1" in toc, eq=True)
-
-    def test_build_toc_no_headings(self, fixer: FlextInfraDocFixer) -> None:
         tm.that(
             "No sections found" in fixer._build_toc("# Main\n\nNo sections here.\n"),
             eq=True,
@@ -161,20 +150,16 @@ class TestFixerToc:
         tm.that("Valid Section" in toc, eq=True)
         tm.that("!!!" not in toc, eq=True)
 
-    def test_update_toc_replaces_existing(self, fixer: FlextInfraDocFixer) -> None:
-        updated, changed = fixer._update_toc(
-            "# Main\n\n<!-- TOC START -->\nOld TOC\n<!-- TOC END -->\n\n## Section\n"
-        )
-        tm.that(changed, eq=1)
-        tm.that("Old TOC" not in updated, eq=True)
-
-    def test_update_toc_inserts_new(self, fixer: FlextInfraDocFixer) -> None:
-        updated, changed = fixer._update_toc("# Main\n\n## Section\n")
-        tm.that(changed, eq=1)
-        tm.that("<!-- TOC START -->" in updated, eq=True)
-
-    def test_update_toc_without_h1_heading(self, fixer: FlextInfraDocFixer) -> None:
-        updated, changed = fixer._update_toc("## Section 1\n\nContent here.")
+    @pytest.mark.parametrize(
+        "content",
+        [
+            "# Main\n\n<!-- TOC START -->\nOld TOC\n<!-- TOC END -->\n\n## Section\n",
+            "# Main\n\n## Section\n",
+            "## Section 1\n\nContent here.",
+        ],
+    )
+    def test_update_toc_paths(self, fixer: FlextInfraDocFixer, content: str) -> None:
+        updated, changed = fixer._update_toc(content)
         tm.that(changed, eq=1)
         tm.that("<!-- TOC START -->" in updated, eq=True)
 
@@ -184,9 +169,11 @@ class TestFixerScope:
         fixer = FlextInfraDocFixer()
         docs_dir = tmp_path / "docs"
         docs_dir.mkdir(parents=True, exist_ok=True)
-        (docs_dir / "README.md").write_text("# Test\n\n## Section\n")
+        _ = tf.create_in("# Test\n\n## Section\n", "README.md", docs_dir)
         scope = m.Infra.Docs.FlextInfraDocScope(
-            name="test", path=tmp_path, report_dir=tmp_path / "reports"
+            name="test",
+            path=tmp_path,
+            report_dir=tmp_path / "reports",
         )
         report = fixer._fix_scope(scope, apply=False)
         tm.that(report.scope, eq="test")
