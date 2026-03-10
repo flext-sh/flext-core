@@ -21,6 +21,7 @@ if TYPE_CHECKING:
     from flext_infra._utilities.formatting import FlextInfraUtilitiesFormatting
     from flext_infra._utilities.git import FlextInfraUtilitiesGit
     from flext_infra._utilities.io import FlextInfraUtilitiesIo
+    from flext_infra._utilities.iteration import FlextInfraUtilitiesIteration
     from flext_infra._utilities.output import (
         FlextInfraUtilitiesOutput,
         OutputBackend,
@@ -65,6 +66,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     ),
     "FlextInfraUtilitiesGit": ("flext_infra._utilities.git", "FlextInfraUtilitiesGit"),
     "FlextInfraUtilitiesIo": ("flext_infra._utilities.io", "FlextInfraUtilitiesIo"),
+    "FlextInfraUtilitiesIteration": (
+        "flext_infra._utilities.iteration",
+        "FlextInfraUtilitiesIteration",
+    ),
     "FlextInfraUtilitiesOutput": (
         "flext_infra._utilities.output",
         "FlextInfraUtilitiesOutput",
@@ -147,6 +152,7 @@ __all__ = [
     "FlextInfraUtilitiesFormatting",
     "FlextInfraUtilitiesGit",
     "FlextInfraUtilitiesIo",
+    "FlextInfraUtilitiesIteration",
     "FlextInfraUtilitiesOutput",
     "FlextInfraUtilitiesParsing",
     "FlextInfraUtilitiesPaths",

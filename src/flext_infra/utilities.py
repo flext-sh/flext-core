@@ -14,6 +14,7 @@ from flext_infra._utilities.discovery import FlextInfraUtilitiesDiscovery
 from flext_infra._utilities.formatting import FlextInfraUtilitiesFormatting
 from flext_infra._utilities.git import FlextInfraUtilitiesGit
 from flext_infra._utilities.io import FlextInfraUtilitiesIo
+from flext_infra._utilities.iteration import FlextInfraUtilitiesIteration
 from flext_infra._utilities.output import FlextInfraUtilitiesOutput
 from flext_infra._utilities.parsing import FlextInfraUtilitiesParsing
 from flext_infra._utilities.paths import FlextInfraUtilitiesPaths
@@ -52,6 +53,7 @@ class FlextInfraUtilities(FlextUtilities):
         FlextInfraUtilitiesFormatting,
         FlextInfraUtilitiesGit,
         FlextInfraUtilitiesIo,
+        FlextInfraUtilitiesIteration,
         FlextInfraUtilitiesOutput,
         FlextInfraUtilitiesParsing,
         FlextInfraUtilitiesPaths,

@@ -73,22 +73,20 @@ class FlextInfraRefactorCensus:
 
         flat = u.Infra.build_facade_alias_map(facade, target.facade_class_prefix)
         inner = u.Infra.build_facade_inner_class_map(facade, target.facade_class_prefix)
-        roots = u.Infra.discover_project_roots(workspace_root=root)
 
         # 4. Scanning & Visitors
         output.progress(4, 5, "scan-files", "libcst")
-        pf = target.package_dir.replace("/", ".").replace("\\", ".")
-        files_result = u.Infra.iter_python_files(workspace_root=root)
+        files_result = u.Infra.iter_workspace_python_modules(
+            root,
+            exclude_packages=frozenset({target.core_project}),
+        )
         if files_result.is_failure:
             return r[m.Infra.Refactor.CensusReport].fail(
                 f"Failed to discover files: {files_result.error}"
             )
-        all_files: list[Path] = files_result.value
-        files = [
-            f
-            for f in all_files
-            if pf not in f.as_posix() and "__pycache__" not in f.as_posix()
-        ]
+        modules = files_result.value
+        files = [file_path for _, file_path in modules]
+        roots = [project_root for project_root, _ in modules]
 
         recs: list[m.Infra.Refactor.CensusUsageRecord] = []
         errs = usage = 0

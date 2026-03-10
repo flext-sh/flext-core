@@ -12,17 +12,13 @@ import re
 from pathlib import Path
 
 from flext_core import r
+from flext_infra._utilities.iteration import FlextInfraUtilitiesIteration
 from flext_infra.constants import FlextInfraConstants as c
 from flext_infra.models import FlextInfraModels as m
+from flext_infra.refactor._utilities import FlextInfraUtilitiesRefactor
 
 
 class FlextInfraUtilitiesDiscovery:
-    """Static discovery utilities for workspace project scanning.
-
-    All methods are ``@staticmethod`` — no instantiation required.
-    Exposed via ``u.Infra.discover_projects()`` through MRO.
-    """
-
     @staticmethod
     def _is_git_project(path: Path) -> bool:
         """Check if a directory is a Git repository."""
@@ -122,47 +118,44 @@ class FlextInfraUtilitiesDiscovery:
         return roots
 
     @staticmethod
-    def iter_python_files(
+    def iter_workspace_python_modules(
         workspace_root: Path,
         *,
-        project_roots: list[Path] | None = None,
+        exclude_packages: frozenset[str] | None = None,
         include_tests: bool = True,
-        include_examples: bool = True,
-        include_scripts: bool = True,
-        src_dirs: frozenset[str] | None = None,
-    ) -> r[list[Path]]:
-        try:
-            roots = (
-                project_roots
-                or FlextInfraUtilitiesDiscovery.discover_project_roots(
-                    workspace_root=workspace_root,
-                )
+    ) -> r[list[tuple[Path, Path]]]:
+        """Iterate workspace Python files with project root association.
+
+        Returns list of (project_root, python_file) tuples.
+        """
+        project_roots = FlextInfraUtilitiesDiscovery.discover_project_roots(
+            workspace_root
+        )
+        files_result = FlextInfraUtilitiesIteration.iter_python_files(
+            workspace_root,
+            project_roots=project_roots,
+            include_tests=include_tests,
+        )
+        if files_result.is_failure:
+            return r[list[tuple[Path, Path]]].fail(files_result.error)
+
+        excluded = exclude_packages or frozenset()
+        root_by_name = {root.name: root for root in project_roots}
+        modules: list[tuple[Path, Path]] = []
+        for file_path in files_result.value:
+            if "__pycache__" in file_path.parts:
+                continue
+            project_name = FlextInfraUtilitiesRefactor.identify_project_by_roots(
+                file_path,
+                project_roots,
             )
-            selected_dirs = src_dirs or frozenset(
-                {
-                    c.Infra.Paths.DEFAULT_SRC_DIR,
-                    c.Infra.Directories.TESTS,
-                    c.Infra.Directories.EXAMPLES,
-                    c.Infra.Directories.SCRIPTS,
-                },
-            )
-            include_flags = {
-                c.Infra.Paths.DEFAULT_SRC_DIR: True,
-                c.Infra.Directories.TESTS: include_tests,
-                c.Infra.Directories.EXAMPLES: include_examples,
-                c.Infra.Directories.SCRIPTS: include_scripts,
-            }
-            files: list[Path] = []
-            for project_root in roots:
-                for dir_name, enabled in include_flags.items():
-                    if (not enabled) or (dir_name not in selected_dirs):
-                        continue
-                    directory = project_root / dir_name
-                    if directory.is_dir():
-                        files.extend(directory.rglob(c.Infra.Extensions.PYTHON_GLOB))
-            return r[list[Path]].ok(sorted(set(files)))
-        except OSError as exc:
-            return r[list[Path]].fail(f"python file iteration failed: {exc}")
+            if project_name in excluded:
+                continue
+            project_root = root_by_name.get(project_name)
+            if project_root is None:
+                continue
+            modules.append((project_root, file_path))
+        return r[list[tuple[Path, Path]]].ok(modules)
 
     @staticmethod
     def find_all_pyproject_files(
