@@ -159,7 +159,7 @@ class FlextInfraOrchestratorService(s[list[m.Infra.Core.CommandOutput]]):
             log_path,
             env={"NO_COLOR": "1", **os.environ},
         )
-        proc_value = proc_result.value if proc_result.is_success else None
+        proc_value = proc_result.value_or(None)
         return_code: int = proc_value if isinstance(proc_value, int) else 1
         stderr = "" if proc_result.is_success else proc_result.error or ""
         elapsed = time.monotonic() - started

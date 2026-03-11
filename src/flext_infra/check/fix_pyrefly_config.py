@@ -244,7 +244,7 @@ class FlextInfraConfigFixer(s[list[str]]):
         if workspace_root is not None:
             return workspace_root.resolve()
         result = self._path_resolver.workspace_root()
-        return result.value if result.is_success else Path.cwd().resolve()
+         return result.value_or(Path.cwd().resolve())
 
 
 def main(argv: list[str] | None = None) -> int:

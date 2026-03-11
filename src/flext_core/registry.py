@@ -227,11 +227,7 @@ class FlextRegistry(s[bool]):
             default=c.Cqrs.HandlerType.COMMAND,
             case_insensitive=True,
         )
-        return (
-            parse_result.value
-            if parse_result.is_success
-            else c.Cqrs.HandlerType.COMMAND
-        )
+        return parse_result.value_or(c.Cqrs.HandlerType.COMMAND)
 
     @staticmethod
     def _safe_get_status(value: c.Cqrs.RegistrationStatus | str) -> c.Cqrs.CommonStatus:
@@ -246,11 +242,7 @@ class FlextRegistry(s[bool]):
             default=c.Cqrs.CommonStatus.RUNNING,
             case_insensitive=True,
         )
-        return (
-            parse_result.value
-            if parse_result.is_success
-            else c.Cqrs.CommonStatus.RUNNING
-        )
+        return parse_result.value_or(c.Cqrs.CommonStatus.RUNNING)
 
     @staticmethod
     def _to_dispatcher_handler(
@@ -262,7 +254,7 @@ class FlextRegistry(s[bool]):
         def _dispatch_wrapper(*args: t.ContainerValue) -> t.ContainerValue | None:
             if args:
                 result = handler_ref.handle(args[0])
-                return result.value if result.is_success else None
+                return result.value_or(None)
             return None
 
         message_type_attr = getattr(handler_for_dispatch, "message_type", None)

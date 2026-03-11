@@ -15,10 +15,25 @@ from flext_core import r
 from flext_infra._utilities.iteration import FlextInfraUtilitiesIteration
 from flext_infra.constants import FlextInfraConstants as c
 from flext_infra.models import FlextInfraModels as m
-from flext_infra.refactor._utilities import FlextInfraUtilitiesRefactor
 
 
 class FlextInfraUtilitiesDiscovery:
+    @staticmethod
+    def _identify_project_by_roots(
+        file_path: Path,
+        project_roots: list[Path],
+    ) -> str:
+        """Identify project name for a file path (most-specific root wins)."""
+        best: Path | None = None
+        for root in project_roots:
+            try:
+                file_path.relative_to(root)
+            except ValueError:
+                continue
+            if best is None or len(root.parts) > len(best.parts):
+                best = root
+        return best.name if best else c.Infra.Defaults.UNKNOWN
+
     @staticmethod
     def _is_git_project(path: Path) -> bool:
         """Check if a directory is a Git repository."""
@@ -145,7 +160,7 @@ class FlextInfraUtilitiesDiscovery:
         for file_path in files_result.value:
             if "__pycache__" in file_path.parts:
                 continue
-            project_name = FlextInfraUtilitiesRefactor.identify_project_by_roots(
+            project_name = FlextInfraUtilitiesDiscovery._identify_project_by_roots(
                 file_path,
                 project_roots,
             )

@@ -16,11 +16,7 @@ from flext_infra.deps.path_sync import extract_dep_name
 
 _resolver = FlextInfraUtilitiesPaths()
 _root_result = _resolver.workspace_root_from_file(__file__)
-ROOT = (
-    _root_result.value
-    if _root_result.is_success
-    else Path(__file__).resolve().parents[4]
-)
+ROOT = _root_result.value_or(Path(__file__).resolve().parents[4])
 
 
 class FlextInfraExtraPathsManager:

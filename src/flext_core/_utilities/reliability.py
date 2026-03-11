@@ -190,7 +190,7 @@ class FlextUtilitiesReliability:
                 value: t.ContainerValue,
             ) -> t.ContainerValue | r[t.ContainerValue]:
                 result = FlextUtilitiesReliability.pipe(value, *funcs)
-                return result.value if result.is_success else result
+                return result.value_or(result)
 
             return piped
         if mode == "chain":
