@@ -15,7 +15,12 @@ class EnsureCoverageConfigPhase:
     def __init__(self, tool_config: FlextInfraToolConfigDocument) -> None:
         self._tool_config = tool_config
 
-    def apply(self, doc: tomlkit.TOMLDocument) -> list[str]:
+    def apply(
+        self,
+        doc: tomlkit.TOMLDocument,
+        *,
+        project_kind: str = "core",
+    ) -> list[str]:
         changes: list[str] = []
         tool: object | None = None
         if c.Infra.Toml.TOOL in doc:
@@ -24,21 +29,24 @@ class EnsureCoverageConfigPhase:
             tool = tomlkit.table()
             doc[c.Infra.Toml.TOOL] = tool
 
-        coverage_tbl = u.Infra.ensure_table(tool, c.Infra.Toml.COVERAGE)
+        coverage_tbl = u.Infra.ensure_table(tool, "coverage")
         report_tbl = u.Infra.ensure_table(coverage_tbl, "report")
 
-        # Get coverage config from tool_config
         cov_config = self._tool_config.tools.coverage
+        fail_under_map: dict[str, int] = {
+            "core": cov_config.fail_under.core,
+            "domain": cov_config.fail_under.domain,
+            "platform": cov_config.fail_under.platform,
+            "integration": cov_config.fail_under.integration,
+            "app": cov_config.fail_under.app,
+        }
+        fail_under = fail_under_map.get(project_kind, cov_config.fail_under.core)
 
-        # Set fail_under (using core threshold as default for now)
         current_fail_under = u.Infra.unwrap_item(u.Infra.get(report_tbl, "fail_under"))
-        if current_fail_under != cov_config.fail_under_core:
-            report_tbl["fail_under"] = cov_config.fail_under_core
-            changes.append(
-                f"tool.coverage.report.fail_under set to {cov_config.fail_under_core}"
-            )
+        if current_fail_under != fail_under:
+            report_tbl["fail_under"] = fail_under
+            changes.append(f"tool.coverage.report.fail_under set to {fail_under}")
 
-        # Set show_missing
         current_show_missing = u.Infra.unwrap_item(
             u.Infra.get(report_tbl, "show_missing")
         )
@@ -46,7 +54,6 @@ class EnsureCoverageConfigPhase:
             report_tbl["show_missing"] = True
             changes.append("tool.coverage.report.show_missing set to true")
 
-        # Set skip_covered
         current_skip_covered = u.Infra.unwrap_item(
             u.Infra.get(report_tbl, "skip_covered")
         )
@@ -54,7 +61,6 @@ class EnsureCoverageConfigPhase:
             report_tbl["skip_covered"] = False
             changes.append("tool.coverage.report.skip_covered set to false")
 
-        # Set precision
         current_precision = u.Infra.unwrap_item(u.Infra.get(report_tbl, "precision"))
         if current_precision != cov_config.precision:
             report_tbl["precision"] = cov_config.precision
