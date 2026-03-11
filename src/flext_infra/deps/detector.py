@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import argparse
-import typing
 from pathlib import Path
 
 from flext_core import FlextLogger, r
@@ -118,7 +117,7 @@ def main() -> int:
     if result.is_failure:
         logger.error("deps_detector_failed", error=result.error or "unknown error")
         return 1
-    return typing.cast("int", result.value)
+    return result.value
 
 
 if __name__ == "__main__":

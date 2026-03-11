@@ -12,7 +12,7 @@ from tomlkit.toml_document import TOMLDocument
 
 from flext_core import r
 from flext_infra import FlextInfraUtilitiesPaths, FlextInfraUtilitiesToml, c, output, t
-from flext_infra.deps.path_sync import extract_dep_name
+from flext_infra.deps.path_sync import FlextInfraDependencyPathSync
 
 _resolver = FlextInfraUtilitiesPaths()
 _root_result = _resolver.workspace_root_from_file(__file__)
@@ -136,7 +136,7 @@ def get_dep_paths(doc: TOMLDocument, *, is_root: bool = False) -> list[str]:
     for path_value in raw_paths:
         if not path_value:
             continue
-        name = extract_dep_name(path_value)
+        name = FlextInfraDependencyPathSync.extract_dep_name(path_value)
         if is_root:
             resolved.append(f"{name}/src")
         else:

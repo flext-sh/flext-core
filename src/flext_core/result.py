@@ -729,7 +729,7 @@ class FlextResult[T_co = t.ContainerValue](FlextRuntime.RuntimeResult[T_co]):
 
         Satisfies BaseProtocol requirement for ResultLike protocol.
         """
-        return "FlextResult"
+        return "r"
 
 
 r = FlextResult

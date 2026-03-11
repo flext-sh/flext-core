@@ -26,7 +26,7 @@ from flext_infra.deps._phases import (
 from flext_infra.deps.tool_config import load_tool_config
 
 
-class FlextInfraDependencyModernizer:
+class FlextInfraPyprojectModernizer:
     """Modernize all workspace pyproject.toml files."""
 
     ROOT = u.Infra.resolve_workspace_root(__file__)
@@ -213,11 +213,11 @@ def main(argv: list[str] | None = None) -> int:
     _ = parser.add_argument("--skip-comments", action="store_true")
     _ = parser.add_argument("--skip-check", action="store_true")
     args = parser.parse_args(argv)
-    return FlextInfraDependencyModernizer().run(args)
+    return FlextInfraPyprojectModernizer().run(args)
 
 
 if __name__ == "__main__":
     raise SystemExit(main())
 
 
-__all__ = ["FlextInfraDependencyModernizer", "main"]
+__all__ = ["FlextInfraPyprojectModernizer", "main"]

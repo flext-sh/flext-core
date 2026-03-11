@@ -9,9 +9,7 @@ from __future__ import annotations
 import argparse
 from collections.abc import Mapping
 from pathlib import Path
-from typing import cast
 
-from pydantic import TypeAdapter
 from tomlkit.items import Item, Table
 from tomlkit.toml_document import TOMLDocument
 
@@ -32,9 +30,13 @@ logger = FlextLogger.create_module_logger(__name__)
 class FlextInfraDependencyPathSync:
     """Rewrite internal FLEXT dependency paths for workspace or standalone mode."""
 
-    _MAPPING_ADAPTER = TypeAdapter(t.Infra.ContainerDict)
-    _STRING_LIST_ADAPTER = TypeAdapter(t.Infra.Lines)
-    ROOT = FlextInfraUtilitiesPaths.resolve_workspace_root(__file__)
+    _resolver = FlextInfraUtilitiesPaths()
+    _root_result = _resolver.workspace_root_from_file(__file__)
+    ROOT: Path = (
+        _root_result.value
+        if _root_result.is_success
+        else Path(__file__).resolve().parents[4]
+    )
 
     def __init__(self) -> None:
         """Initialize the dependency path sync service with TOML service."""
@@ -113,7 +115,7 @@ class FlextInfraDependencyPathSync:
         deps_filtered: list[str] = [
             entry for entry in deps_values if isinstance(entry, str)
         ]
-        deps = self._STRING_LIST_ADAPTER.validate_python(deps_filtered)
+        deps: list[str] = deps_filtered
         changes: list[str] = []
         updated_deps: list[str] = []
         for item_raw in deps:
@@ -191,7 +193,7 @@ class FlextInfraDependencyPathSync:
         doc_result = self._toml.read_document(pyproject_path)
         if doc_result.is_failure:
             return r[list[str]].fail(doc_result.error or "failed to read TOML document")
-        doc = cast("TOMLDocument", doc_result.unwrap())
+        doc: TOMLDocument = doc_result.value
         changes = self._rewrite_pep621(
             doc,
             is_root=is_root,
@@ -242,7 +244,7 @@ class FlextInfraDependencyPathSync:
         if root_pyproject.exists():
             root_data_result = self._toml.read_document(root_pyproject)
             if root_data_result.is_success:
-                root_data = cast("TOMLDocument", root_data_result.unwrap())
+                root_data: TOMLDocument = root_data_result.value
                 root_project = self._table_get(root_data, c.Infra.Toml.PROJECT)
                 if isinstance(root_project, Mapping):
                     root_name = self._mapping_str_value(root_project, c.Infra.Toml.NAME)
@@ -264,7 +266,7 @@ class FlextInfraDependencyPathSync:
                     error=changes_result.error,
                 )
                 return 1
-            changes = cast("list[str]", changes_result.unwrap())
+            changes: list[str] = changes_result.value
             if changes:
                 prefix = "[DRY-RUN] " if args.dry_run else ""
                 u.Infra.info(f"{prefix}{root_pyproject}:")
@@ -281,12 +283,8 @@ class FlextInfraDependencyPathSync:
             )
             return 1
 
-        all_project_dirs = [
-            project.path
-            for project in cast(
-                "list[m.Infra.Workspace.ProjectInfo]", discover_result.unwrap()
-            )
-        ]
+        projects_list: list[m.Infra.Workspace.ProjectInfo] = discover_result.value
+        all_project_dirs = [project.path for project in projects_list]
         if args.projects:
             project_dirs = [self.ROOT / project for project in args.projects]
         else:
@@ -299,7 +297,7 @@ class FlextInfraDependencyPathSync:
             data_result = self._toml.read_document(pyproject)
             if data_result.is_failure:
                 continue
-            project_data = cast("TOMLDocument", data_result.unwrap())
+            project_data: TOMLDocument = data_result.value
             project_obj = self._table_get(project_data, c.Infra.Toml.PROJECT)
             if not isinstance(project_obj, Mapping):
                 continue
@@ -325,7 +323,7 @@ class FlextInfraDependencyPathSync:
                     error=changes_result.error,
                 )
                 continue
-            changes = cast("list[str]", changes_result.unwrap())
+            changes: list[str] = changes_result.value
             if changes:
                 prefix = "[DRY-RUN] " if args.dry_run else ""
                 u.Infra.info(f"{prefix}{pyproject}:")

@@ -7,14 +7,13 @@ from pathlib import Path
 import tomlkit
 from tomlkit.items import Table
 
-from flext_infra import c, u
-from flext_infra.deps.tool_config import FlextInfraToolConfigDocument
+from flext_infra import c, m, u
 
 
 class EnsureRuffConfigPhase:
     """Ensure standard Ruff configuration inline with known-first-party overlay."""
 
-    def __init__(self, tool_config: FlextInfraToolConfigDocument) -> None:
+    def __init__(self, tool_config: m.Infra.Deps.ToolConfigDocument) -> None:
         self._tool_config = tool_config
 
     def apply(

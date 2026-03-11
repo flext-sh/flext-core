@@ -7,17 +7,13 @@ from pathlib import Path
 import tomlkit
 from tomlkit.items import Table
 
-from flext_infra import c, u
-from flext_infra.deps.tool_config import (
-    FlextInfraProjectTypeOverrideConfig,
-    FlextInfraToolConfigDocument,
-)
+from flext_infra import c, m, u
 
 
 class EnsurePyrightConfigPhase:
     """Ensure standard Pyright configuration for strict type checking."""
 
-    def __init__(self, tool_config: FlextInfraToolConfigDocument) -> None:
+    def __init__(self, tool_config: m.Infra.Deps.ToolConfigDocument) -> None:
         self._tool_config = tool_config
 
     def _expected_envs(
@@ -71,10 +67,10 @@ class EnsurePyrightConfigPhase:
     def _override_for_kind(
         self,
         project_kind: str,
-    ) -> FlextInfraProjectTypeOverrideConfig | None:
+    ) -> m.Infra.Deps.ProjectTypeOverrideConfig | None:
         """Return the project-type override config for the given kind, if any."""
         overrides = self._tool_config.project_type_overrides
-        kind_map: dict[str, FlextInfraProjectTypeOverrideConfig] = {
+        kind_map: dict[str, m.Infra.Deps.ProjectTypeOverrideConfig] = {
             "core": overrides.core,
             "domain": overrides.domain,
             "platform": overrides.platform,

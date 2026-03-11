@@ -14,6 +14,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import threading
+from pathlib import Path
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from typing import ClassVar, Self
 
@@ -138,7 +139,7 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
     )
     _di_provider: t.Scalar | None = PrivateAttr(default=None)
 
-    def __new__(cls, **_kwargs: t.Scalar | None) -> Self:
+    def __new__(cls, **_kwargs: object) -> Self:
         """Create singleton instance.
 
         Note: BaseSettings.__init__ accepts **values internally.
@@ -159,7 +160,7 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
             raise TypeError(msg)
         return raw_instance
 
-    def __init__(self, **kwargs: t.Scalar | None) -> None:
+    def __init__(self, **kwargs: object) -> None:
         """Initialize config with data.
 
         Kwargs are applied as field overrides after base env/config loading
@@ -171,7 +172,38 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
                     if key in self.__class__.model_fields:
                         setattr(self, key, value)
             return
-        super().__init__()
+
+        super().__init__(
+            _case_sensitive=None,
+            _nested_model_default_partial_update=None,
+            _env_prefix=None,
+            _env_prefix_target=None,
+            _env_file=Path("."),
+            _env_file_encoding=None,
+            _env_ignore_empty=None,
+            _env_nested_delimiter=None,
+            _env_nested_max_split=None,
+            _env_parse_none_str=None,
+            _env_parse_enums=None,
+            _cli_prog_name=None,
+            _cli_parse_args=None,
+            _cli_settings_source=None,
+            _cli_parse_none_str=None,
+            _cli_hide_none_type=None,
+            _cli_avoid_json=None,
+            _cli_enforce_required=None,
+            _cli_use_class_docs_for_groups=None,
+            _cli_exit_on_error=None,
+            _cli_prefix=None,
+            _cli_flag_prefix_char=None,
+            _cli_implicit_flags=None,
+            _cli_ignore_unknown_args=None,
+            _cli_kebab_case=None,
+            _cli_shortcuts=None,
+            _secrets_dir=None,
+            _build_sources=None,
+            **kwargs,
+        )
         if kwargs:
             model_fields = self.__class__.model_fields
             for key, value in kwargs.items():
