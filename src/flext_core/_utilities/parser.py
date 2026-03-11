@@ -1427,7 +1427,7 @@ class FlextUtilitiesParser:
             return -1
         try:
             result = self._safe_text_length(text)
-        except Exception:
+        except (TypeError, ValueError, AttributeError):
             return -1
         if isinstance(result, int):
             return result
