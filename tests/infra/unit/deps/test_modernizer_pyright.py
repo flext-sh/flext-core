@@ -28,13 +28,13 @@ class TestEnsurePyrightConfigPhase:
     def test_apply_root_sets_execution_environments(self, tmp_path: Path) -> None:
         flext_core = tmp_path / "flext-core"
         flext_api = tmp_path / "flext-api"
-        _ = (flext_core / "pyproject.toml").parent.mkdir(parents=True, exist_ok=True)
-        _ = (flext_api / "pyproject.toml").parent.mkdir(parents=True, exist_ok=True)
+        (flext_core / "pyproject.toml").parent.mkdir(parents=True, exist_ok=True)
+        (flext_api / "pyproject.toml").parent.mkdir(parents=True, exist_ok=True)
         _ = (flext_core / "pyproject.toml").write_text("", encoding="utf-8")
         _ = (flext_api / "pyproject.toml").write_text("", encoding="utf-8")
-        _ = (flext_core / "src").mkdir(parents=True, exist_ok=True)
-        _ = (flext_core / "tests").mkdir(parents=True, exist_ok=True)
-        _ = (flext_api / "src").mkdir(parents=True, exist_ok=True)
+        (flext_core / "src").mkdir(parents=True, exist_ok=True)
+        (flext_core / "tests").mkdir(parents=True, exist_ok=True)
+        (flext_api / "src").mkdir(parents=True, exist_ok=True)
         doc = tomlkit.document()
         changes = EnsurePyrightConfigPhase(_test_tool_config()).apply(
             doc,

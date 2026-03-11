@@ -11,6 +11,8 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
     from flext_infra.deps._phases.consolidate_groups import ConsolidateGroupsPhase
+    from flext_infra.deps._phases.ensure_coverage import EnsureCoverageConfigPhase
+    from flext_infra.deps._phases.ensure_extra_paths import EnsureExtraPathsPhase
     from flext_infra.deps._phases.ensure_formatting import EnsureFormattingToolingPhase
     from flext_infra.deps._phases.ensure_mypy import EnsureMypyConfigPhase
     from flext_infra.deps._phases.ensure_namespace import EnsureNamespaceToolingPhase
@@ -22,8 +24,6 @@ if TYPE_CHECKING:
     from flext_infra.deps._phases.ensure_pytest import EnsurePytestConfigPhase
     from flext_infra.deps._phases.ensure_ruff import EnsureRuffConfigPhase
     from flext_infra.deps._phases.inject_comments import InjectCommentsPhase
-    from flext_infra.deps._phases.ensure_coverage import EnsureCoverageConfigPhase
-    from flext_infra.deps._phases.ensure_extra_paths import EnsureExtraPathsPhase
 
 # Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {

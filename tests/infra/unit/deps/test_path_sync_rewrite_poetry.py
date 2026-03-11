@@ -40,12 +40,20 @@ class TestRewritePoetry:
         tm.that(len(changes) > 0, eq=True)
         tool = doc["tool"]
         tm.that(isinstance(tool, MutableMapping), eq=True)
+        if not isinstance(tool, MutableMapping):
+            return
         poetry = tool["poetry"]
         tm.that(isinstance(poetry, MutableMapping), eq=True)
+        if not isinstance(poetry, MutableMapping):
+            return
         deps = poetry["dependencies"]
         tm.that(isinstance(deps, MutableMapping), eq=True)
+        if not isinstance(deps, MutableMapping):
+            return
         core = deps["flext-core"]
         tm.that(isinstance(core, MutableMapping), eq=True)
+        if not isinstance(core, MutableMapping):
+            return
         tm.that(core["path"], eq="flext-core")
 
     def test_rewrite_poetry_skip_non_path_dep(self) -> None:
@@ -79,12 +87,20 @@ class TestRewritePoetry:
         tm.that(len(changes) > 0, eq=True)
         tool = doc["tool"]
         tm.that(isinstance(tool, MutableMapping), eq=True)
+        if not isinstance(tool, MutableMapping):
+            return
         poetry = tool["poetry"]
         tm.that(isinstance(poetry, MutableMapping), eq=True)
+        if not isinstance(poetry, MutableMapping):
+            return
         deps = poetry["dependencies"]
         tm.that(isinstance(deps, MutableMapping), eq=True)
+        if not isinstance(deps, MutableMapping):
+            return
         core = deps["flext-core"]
         tm.that(isinstance(core, MutableMapping), eq=True)
+        if not isinstance(core, MutableMapping):
+            return
         tm.that(core["path"], eq="../flext-core")
 
 
@@ -93,6 +109,8 @@ def test_rewrite_poetry_with_non_dict_value() -> None:
     doc["tool"] = tomlkit.table()
     tool = doc["tool"]
     tm.that(isinstance(tool, MutableMapping), eq=True)
+    if not isinstance(tool, MutableMapping):
+        return
     poetry = tomlkit.table()
     tool["poetry"] = poetry
     deps = tomlkit.table()

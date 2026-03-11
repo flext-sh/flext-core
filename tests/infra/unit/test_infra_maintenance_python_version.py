@@ -46,9 +46,13 @@ def _proj(root: Path, name: str, *, minor: int = _MINOR) -> Path:
 
 def _svc(ws: Path) -> FlextInfraPythonVersionEnforcer:
     """Create enforcer bound to given workspace."""
-    e = FlextInfraPythonVersionEnforcer()
-    e._workspace_root_from_file = lambda file: ws
-    return e
+
+    class _TestEnforcer(FlextInfraPythonVersionEnforcer):
+        def _workspace_root_from_file(self, file: Path) -> Path:
+            _ = file
+            return ws
+
+    return _TestEnforcer()
 
 
 class TestEnforcerExecute:

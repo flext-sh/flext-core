@@ -7,11 +7,14 @@ from flext_infra.models import FlextInfraModels as m
 from flext_infra.workspace.orchestrator import FlextInfraOrchestratorService
 from flext_tests import tm
 
-_CO = m.Infra.Core.CommandOutput
 
-
-def _cmd_out(exit_code: int = 0) -> _CO:
-    return _CO(stdout="", stderr="", exit_code=exit_code, duration=0.0)
+def _cmd_out(exit_code: int = 0) -> m.Infra.Core.CommandOutput:
+    return m.Infra.Core.CommandOutput(
+        stdout="",
+        stderr="",
+        exit_code=exit_code,
+        duration=0.0,
+    )
 
 
 @pytest.fixture
@@ -54,9 +57,9 @@ class TestOrchestratorFailures:
             verb: str,
             idx: int,
             make_args: list[str],
-        ) -> r[_CO]:
+        ) -> r[m.Infra.Core.CommandOutput]:
             del self, project, verb, idx, make_args
-            return r[_CO].fail("Failed")
+            return r[m.Infra.Core.CommandOutput].fail("Failed")
 
         monkeypatch.setattr(
             FlextInfraOrchestratorService, "_run_project", _run_project_fail
@@ -77,7 +80,7 @@ class TestOrchestratorFailures:
             verb: str,
             idx: int,
             make_args: list[str],
-        ) -> r[_CO]:
+        ) -> r[m.Infra.Core.CommandOutput]:
             del self, project, verb, idx, make_args
             msg = "Runner failed"
             raise OSError(msg)
@@ -100,12 +103,12 @@ class TestOrchestratorFailures:
             verb: str,
             idx: int,
             make_args: list[str],
-        ) -> r[_CO]:
+        ) -> r[m.Infra.Core.CommandOutput]:
             del self, project, verb, idx, make_args
             call_count[0] += 1
             if call_count[0] == 1:
-                return r[_CO].fail("project execution failed")
-            return r[_CO].ok(_cmd_out(0))
+                return r[m.Infra.Core.CommandOutput].fail("project execution failed")
+            return r[m.Infra.Core.CommandOutput].ok(_cmd_out(0))
 
         monkeypatch.setattr(FlextInfraOrchestratorService, "_run_project", _run_project)
         tm.ok(

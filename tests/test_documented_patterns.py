@@ -281,7 +281,9 @@ class MultiOperationService(FlextService[m.ConfigMap]):
                 )
 
 
-def _service_result[T_Value](service: FlextService[T_Value]) -> T_Value:
+def _service_result[T_Value: t.ContainerValue](
+    service: FlextService[T_Value],
+) -> T_Value:
     return service.result
 
 
