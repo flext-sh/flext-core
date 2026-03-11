@@ -101,7 +101,9 @@ class FlextModelsContainer:
 
         @field_validator("service", mode="before")
         @classmethod
-        def validate_service_type(cls, v: object) -> object:
+        def validate_service_type(
+            cls, v: t.RegisterableService
+        ) -> t.RegisterableService:
             """Validate service is a RegisterableService type.
 
             RegisterableService includes: str, int, float, bool, datetime, None,

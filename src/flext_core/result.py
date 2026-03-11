@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Callable, Mapping, Sequence
-from typing import Self, TypeIs, cast, overload, override
+from typing import Self, TypeIs, overload, override
 
 from pydantic import BaseModel, ValidationError
 from returns.io import IO, IOFailure, IOResult, IOSuccess
@@ -105,7 +105,7 @@ class FlextResult[T_co = t.ContainerValue](FlextRuntime.RuntimeResult[T_co]):
         return FlextResult[t.ContainerValue].fail(
             source.error or default_error,
             error_code=source.error_code,
-            error_data=cast("t.ConfigurationMapping | None", source.error_data),
+            error_data=source.error_data,
             exception=source.exception,
         )
 
@@ -115,7 +115,12 @@ class FlextResult[T_co = t.ContainerValue](FlextRuntime.RuntimeResult[T_co]):
     ) -> FlextResult[U]:
         if source.is_success:
             return FlextResult[U].ok(source.value)
-        return cast("FlextResult[U]", cls._fail_like(source))
+        return FlextResult[U].fail(
+            source.error or "",
+            error_code=source.error_code,
+            error_data=source.error_data,
+            exception=source.exception,
+        )
 
     @classmethod
     def _validate_model[UModel: BaseModel](
@@ -218,17 +223,11 @@ class FlextResult[T_co = t.ContainerValue](FlextRuntime.RuntimeResult[T_co]):
         cls, io_result: IOResult[U, str] | t.ContainerValue
     ) -> FlextResult[U | IO[U]]:
         """Build result from IOResult by unwrapping value or failure message."""
-        unwrap = getattr(io_result, "unwrap", None)
-        failure = getattr(io_result, "failure", None)
-        if not callable(unwrap) or not callable(failure):
-            return FlextResult[U | IO[U]].fail("Invalid IOResult structure")
-        try:
-            io_value = cast("U | IO[U]", unwrap())
-            return FlextResult[U | IO[U]](value=io_value, is_success=True)
-        except UnwrapFailedError as exc:
-            logging.getLogger(__name__).debug("Failed to unwrap IOResult", exc_info=exc)
-            io_error = failure()
-            return FlextResult[U | IO[U]].fail(str(io_error), exception=exc)
+        if isinstance(io_result, IOSuccess):
+            return FlextResult[U | IO[U]](value=io_result.unwrap(), is_success=True)
+        if isinstance(io_result, IOFailure):
+            return FlextResult[U | IO[U]].fail(str(io_result.failure()))
+        return FlextResult[U | IO[U]].fail("Invalid IOResult structure")
 
     @classmethod
     def from_maybe[U](
@@ -320,11 +319,11 @@ class FlextResult[T_co = t.ContainerValue](FlextRuntime.RuntimeResult[T_co]):
             for item in items:
                 result = func(item)
                 if result.is_failure:
-                    return cast(
-                        "FlextResult[list[U]]",
-                        FlextResult[list[U]]._fail_like(
-                            result, default_error="Unknown error"
-                        ),
+                    return FlextResult[list[U]].fail(
+                        result.error or "Unknown error",
+                        error_code=result.error_code,
+                        error_data=result.error_data,
+                        exception=result.exception,
                     )
                 results.append(result.value)
             return FlextResult[list[U]](value=results, is_success=True)
@@ -440,7 +439,12 @@ class FlextResult[T_co = t.ContainerValue](FlextRuntime.RuntimeResult[T_co]):
         if self.is_success:
             inner_result = func(self.value)
             return FlextResult[U]._from_runtime_result(inner_result)
-        return cast("FlextResult[U]", FlextResult._fail_like(self))
+        return FlextResult[U].fail(
+            self.error or "",
+            error_code=self.error_code,
+            error_data=self.error_data,
+            exception=self.exception,
+        )
 
     @override
     def flow_through[U](
@@ -570,13 +574,12 @@ class FlextResult[T_co = t.ContainerValue](FlextRuntime.RuntimeResult[T_co]):
         """
         if self.is_failure:
             transformed_error = func(self.error or "")
-            result: FlextResult[T_co] = FlextResult[T_co].fail(
+            return FlextResult[T_co].fail(
                 transformed_error,
                 error_code=self.error_code,
-                error_data=cast("t.ConfigurationMapping | None", self.error_data),
+                error_data=self.error_data,
+                exception=self.exception,
             )
-            result._exception = self._exception
-            return result
         return self
 
     @overload
@@ -689,7 +692,12 @@ class FlextResult[T_co = t.ContainerValue](FlextRuntime.RuntimeResult[T_co]):
 
         """
         if self.is_failure:
-            return cast("FlextResult[U]", FlextResult._fail_like(self))
+            return FlextResult[U].fail(
+                self.error or "",
+                error_code=self.error_code,
+                error_data=self.error_data,
+                exception=self.exception,
+            )
         return FlextResult._validate_model(
             self.value, model, failure_prefix="Model conversion failed"
         )
