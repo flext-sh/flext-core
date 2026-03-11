@@ -302,10 +302,11 @@ class FlextContainer(p.DI):
                             if hasattr(caller_module, factory_name)
                             else None
                         )
-                        if callable(factory_func_raw):
-                            factory_func_ref: t.FactoryCallable | None = (
-                                factory_func_raw if callable(factory_func_raw) else None
-                            )
+                        if (
+                            factory_func_raw is not None
+                            and instance._is_factory_callable(factory_func_raw)
+                        ):
+                            factory_func_ref: t.FactoryCallable = factory_func_raw
 
                             def factory_wrapper(
                                 *,
