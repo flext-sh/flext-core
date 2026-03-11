@@ -728,11 +728,11 @@ class FlextDecorators:
                     == c.Reliability.BACKOFF_STRATEGY_EXPONENTIAL,
                 })
                 try:
-                    retry_args = tuple(args)
-                    retry_kwargs: Mapping[str, t.ContainerValue] = {
-                        str(key): FlextRuntime.normalize_to_general_value(value)
-                        for key, value in kwargs.items()
-                    }
+                    retry_args = tuple(m.ObjectList.model_validate(list(args)).root)
+                    retry_kwargs_map = m.ConfigMap.model_validate(dict(kwargs))
+                    retry_kwargs: Mapping[str, t.ContainerValue] = dict(
+                        retry_kwargs_map.items()
+                    )
                     retry_result = FlextDecorators._execute_retry_loop(
                         retry_func,
                         retry_args,
@@ -827,7 +827,7 @@ class FlextDecorators:
     @staticmethod
     def _execute_retry_loop(
         func: Callable[..., R],
-        args: tuple,
+        args: tuple[t.ContainerValue, ...],
         kwargs: Mapping[str, t.ContainerValue],
         logger: FlextLogger,
         *,
@@ -958,7 +958,9 @@ class FlextDecorators:
         return isinstance(logger_value, FlextLogger)
 
     @staticmethod
-    def _resolve_logger(args: tuple, func: Callable[P, R]) -> FlextLogger:
+    def _resolve_logger(
+        args: tuple[t.ContainerValue, ...], func: Callable[P, R]
+    ) -> FlextLogger:
         """Resolve logger from first argument or create module logger.
 
         Returns:

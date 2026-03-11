@@ -31,7 +31,7 @@ from flext_core import (
 from flext_core._models.containers import FlextModelsContainers
 from flext_core.typings import RegistryBindingKey
 
-type RegistrablePlugin = t.RegistrablePlugin
+type RegistrablePlugin = t.ContainerValue
 
 
 class FlextRegistry(s[bool]):
@@ -294,7 +294,7 @@ class FlextRegistry(s[bool]):
         name: str,
         *,
         scope: Literal["instance", "class"] = "instance",
-    ) -> r[t.RegisterableService | t.RegistrablePlugin]:
+    ) -> r[t.ContainerValue]:
         """Get a registered plugin by category and name.
 
         Returns:
@@ -309,17 +309,15 @@ class FlextRegistry(s[bool]):
                     for k in self._registered_keys
                     if k.startswith(f"{category}::")
                 ]
-                return r[t.RegisterableService | t.RegistrablePlugin].fail(
+                return r[t.ContainerValue].fail(
                     f"{category} '{name}' not found. Available: {available}"
                 )
             raw_result = self.container.get(key)
             return raw_result.fold(
-                on_failure=lambda e: r[
-                    t.RegisterableService | t.RegistrablePlugin
-                ].fail(f"Failed to retrieve {category} '{name}': {e}"),
-                on_success=lambda v: r[t.RegisterableService | t.RegistrablePlugin].ok(
-                    v
+                on_failure=lambda e: r[t.ContainerValue].fail(
+                    f"Failed to retrieve {category} '{name}': {e}"
                 ),
+                on_success=lambda v: r[t.ContainerValue].ok(v),
             )
         cls = type(self)
         if key not in cls._class_registered_keys:
@@ -328,12 +326,10 @@ class FlextRegistry(s[bool]):
                 for k in cls._class_registered_keys
                 if k.startswith(f"{category}::")
             ]
-            return r[t.RegisterableService | t.RegistrablePlugin].fail(
+            return r[t.ContainerValue].fail(
                 f"{category} '{name}' not found. Available: {available}"
             )
-        return r[t.RegisterableService | t.RegistrablePlugin].ok(
-            cls._class_plugin_storage[key]
-        )
+        return r[t.ContainerValue].ok(cls._class_plugin_storage[key])
 
     def list_plugins(
         self, category: str, *, scope: Literal["instance", "class"] = "instance"

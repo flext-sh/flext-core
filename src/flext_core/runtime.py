@@ -860,7 +860,7 @@ class FlextRuntime:
                 configured_container: FlextRuntime.DependencyIntegration.DynamicContainerWithConfig = di_container
                 configured_container.config = configuration_provider
             else:
-                di_container.config = configuration_provider
+                setattr(di_container, "config", configuration_provider)
             return configuration_provider
 
         @staticmethod

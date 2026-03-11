@@ -124,7 +124,7 @@ class FlextResult[T_co = t.ContainerValue](FlextRuntime.RuntimeResult[T_co]):
 
     @classmethod
     def _validate_model[UModel: BaseModel](
-        cls, data: t.ContainerValue, model: type[UModel], *, failure_prefix: str
+        cls, data: U, model: type[UModel], *, failure_prefix: str
     ) -> FlextResult[UModel]:
         try:
             return FlextResult[UModel].ok(model.model_validate(data))
@@ -356,14 +356,14 @@ class FlextResult[T_co = t.ContainerValue](FlextRuntime.RuntimeResult[T_co]):
 
     @staticmethod
     def is_failure_result(
-        value: t.ContainerValue,
+        value: FlextRuntime.RuntimeResult[t.ContainerValue] | t.ContainerValue,
     ) -> TypeIs[FlextResult[t.ContainerValue]]:
         """Return ``True`` when *value* is a failed runtime result."""
         return isinstance(value, FlextRuntime.RuntimeResult) and value.is_failure
 
     @staticmethod
     def is_success_result(
-        value: t.ContainerValue,
+        value: FlextRuntime.RuntimeResult[t.ContainerValue] | t.ContainerValue,
     ) -> TypeIs[FlextResult[t.ContainerValue]]:
         """Return ``True`` when *value* is a successful runtime result."""
         return isinstance(value, FlextRuntime.RuntimeResult) and value.is_success

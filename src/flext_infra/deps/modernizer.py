@@ -76,25 +76,25 @@ class FlextInfraPyprojectModernizer:
             if kind_result.is_success:
                 project_kind = kind_result.value
         changes: list[str] = []
-        tool: object | None = None
+        tool: Table | None = None
         if c.Infra.Toml.TOOL in doc:
             tool = doc[c.Infra.Toml.TOOL]
         if isinstance(tool, Table):
-            poetry: object | None = None
+            poetry: Table | None = None
             if c.Infra.Toml.POETRY in tool:
                 poetry = tool[c.Infra.Toml.POETRY]
             if isinstance(poetry, Table):
-                group: object | None = None
+                group: Table | None = None
                 if c.Infra.Toml.GROUP in poetry:
                     group = poetry[c.Infra.Toml.GROUP]
                 if isinstance(group, Table):
                     empty_groups: list[str] = []
                     for name in u.Infra.table_string_keys(group):
-                        group_item: object | None = None
+                        group_item: Table | None = None
                         if name in group:
                             group_item = group[name]
                         if isinstance(group_item, Table):
-                            deps: object | None = None
+                            deps: Table | None = None
                             if c.Infra.Toml.DEPENDENCIES in group_item:
                                 deps = group_item[c.Infra.Toml.DEPENDENCIES]
                             if isinstance(deps, Table) and len(deps) == 0:

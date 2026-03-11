@@ -308,8 +308,11 @@ class FlextContainer(p.DI):
                                 config_callable = getattr(factory_config, "fn", None)
                                 if callable(config_callable):
                                     raw_result = config_callable()
-                                else:
+                                elif callable(factory_func_raw):
                                     raw_result = factory_func_raw()
+                                else:
+                                    msg = f"Factory '{factory_name}' is not callable"
+                                    raise TypeError(msg)
                                 try:
                                     if not instance._is_registerable_service(
                                         raw_result
@@ -370,17 +373,26 @@ class FlextContainer(p.DI):
         )
 
     @staticmethod
-    def _is_context_protocol(value: t.ContainerValue) -> TypeGuard[p.Context]:
+    def _is_context_protocol(
+        value: t.ContainerValue | p.Context | object | None,
+    ) -> TypeGuard[p.Context]:
+        if value is None:
+            return False
         return bool(
             hasattr(value, "clone") and hasattr(value, "set") and hasattr(value, "get")
         )
 
     @staticmethod
-    def _is_factory_callable(value: t.ContainerValue) -> TypeGuard[t.FactoryCallable]:
+    def _is_factory_callable(
+        value: t.RegisterableService | t.FactoryCallable | t.ResourceCallable,
+    ) -> TypeGuard[t.FactoryCallable]:
         return callable(value)
 
     @staticmethod
-    def _is_instance_of[T](value: t.ContainerValue, type_cls: type[T]) -> TypeGuard[T]:
+    def _is_instance_of[T](
+        value: t.RegisterableService | object,
+        type_cls: type[T],
+    ) -> TypeGuard[T]:
         """Type guard to narrow object to specific type T.
 
         Uses isinstance for type narrowing with MRO support.
@@ -393,7 +405,12 @@ class FlextContainer(p.DI):
 
     @staticmethod
     def _is_registerable_service(
-        value: t.ContainerValue,
+        value: t.RegisterableService
+        | t.FactoryCallable
+        | t.ResourceCallable
+        | p.Config
+        | p.Context
+        | object,
     ) -> TypeGuard[t.RegisterableService]:
         if isinstance(value, (str, int, float, bool, type(None))):
             return True
@@ -414,7 +431,9 @@ class FlextContainer(p.DI):
         return bool(hasattr(value, "bind") and hasattr(value, "info"))
 
     @staticmethod
-    def _is_resource_callable(value: t.ContainerValue) -> TypeGuard[t.ResourceCallable]:
+    def _is_resource_callable(
+        value: t.RegisterableService | t.FactoryCallable | t.ResourceCallable,
+    ) -> TypeGuard[t.ResourceCallable]:
         return callable(value)
 
     @staticmethod
