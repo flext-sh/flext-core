@@ -1,0 +1,73 @@
+src/flext_core/container.py
+  cf8f3d04e0e6061d 308,312
+src/flext_infra/deps/_phases/ensure_formatting.py
+  cf8f3d04e0e6061d 6
+src/flext_infra/deps/_phases/ensure_coverage.py
+  cf8f3d04e0e6061d 6
+src/flext_infra/deps/_phases/ensure_pyright.py
+  4f7f6a9888793a29 94-96
+  cf8f3d04e0e6061d 8
+src/flext_infra/deps/extra_paths.py
+  c963d31991094136 250-258,260
+src/flext_infra/deps/_phases/ensure_pyrefly.py
+  cf8f3d04e0e6061d 6
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.10",
+  "base_commit_sha": "6a524f389ea897e2a1ecdd96754f43a1c1d9a639",
+  "prompts": {
+    "26c42d907a396eb3": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_326b3085effe81VUAq2rTBVhr7",
+        "model": "kimi-for-coding/k2p5"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 9,
+      "total_deletions": 0,
+      "accepted_lines": 9,
+      "overriden_lines": 0
+    },
+    "4f7f6a9888793a29": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_326eb33a2ffeNpM4c4IIRzESUI",
+        "model": "anthropic/claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 5,
+      "total_deletions": 7,
+      "accepted_lines": 3,
+      "overriden_lines": 0
+    },
+    "c963d31991094136": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_32797ed69ffeitiORv0NMoXDt9",
+        "model": "anthropic/claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 10,
+      "total_deletions": 0,
+      "accepted_lines": 10,
+      "overriden_lines": 0
+    },
+    "cf8f3d04e0e6061d": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3227c33ecffeZuK7GXWgopKXzm",
+        "model": "anthropic/claude-sonnet-4-6"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 1096,
+      "total_deletions": 5,
+      "accepted_lines": 1096,
+      "overriden_lines": 0
+    }
+  }
+}
