@@ -5,7 +5,8 @@ from __future__ import annotations
 from pathlib import Path
 
 import tomlkit
-from tomlkit.items import Table
+from tomlkit.container import Container
+from tomlkit.items import Item, Table
 
 from flext_infra import c, u
 
@@ -18,7 +19,7 @@ class EnsureNamespaceToolingPhase:
         detected = sorted(u.Infra.discover_first_party_namespaces(path.parent))
         if not detected:
             return changes
-        tool: object | None = None
+        tool: Item | Container | None = None
         if c.Infra.Toml.TOOL in doc:
             tool = doc[c.Infra.Toml.TOOL]
         if not isinstance(tool, Table):

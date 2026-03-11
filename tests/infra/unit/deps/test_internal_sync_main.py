@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import types
 from pathlib import Path
 
@@ -7,18 +8,21 @@ import pytest
 
 from flext_core import r
 from flext_infra.deps import internal_sync
-from flext_infra.deps.internal_sync import main
+from flext_infra.deps.internal_sync import FlextInfraInternalDependencySyncService, main
 from flext_tests import tm
 from tests.infra import h
 
 
 class TestMain:
     def test_main_success(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        def _parse_args(self: object) -> types.SimpleNamespace:
+        def _parse_args(self: argparse.ArgumentParser) -> types.SimpleNamespace:
             _ = self
             return types.SimpleNamespace(project_root=Path("/tmp/test"))
 
-        def _sync(self: object, _project_root: Path) -> r[int]:
+        def _sync(
+            self: FlextInfraInternalDependencySyncService,
+            _project_root: Path,
+        ) -> r[int]:
             _ = self
             _ = _project_root
             return r[int].ok(0)
@@ -36,11 +40,14 @@ class TestMain:
         tm.that(main(), eq=0)
 
     def test_main_failure(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        def _parse_args(self: object) -> types.SimpleNamespace:
+        def _parse_args(self: argparse.ArgumentParser) -> types.SimpleNamespace:
             _ = self
             return types.SimpleNamespace(project_root=Path("/tmp/test"))
 
-        def _sync(self: object, _project_root: Path) -> r[int]:
+        def _sync(
+            self: FlextInfraInternalDependencySyncService,
+            _project_root: Path,
+        ) -> r[int]:
             _ = self
             _ = _project_root
             return r[int].fail("sync failed")

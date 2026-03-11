@@ -44,7 +44,7 @@ TK = TypeVar("TK")
 TModel = TypeVar("TModel", bound=BaseModel)
 TV = TypeVar("TV")
 TValue = TypeVar("TValue")
-type RegistryBindingKey = str | type[object]
+type RegistryBindingKey = str | type
 U = TypeVar("U")
 
 
@@ -78,12 +78,14 @@ class FlextTypes:
     type ConfigurationMapping = Mapping[str, ContainerValue]
     type LazyExportType = tuple[str, str]
     type AnnotationMap = Mapping[str, LazyExportType]
-    type RegisterableService = (
-        ContainerValue | BindableLogger | Callable[..., ContainerValue]
+    RegisterableService: TypeAlias = (
+        Container | list | tuple | dict | BindableLogger | None
     )
     type FactoryCallable = Callable[[], RegisterableService]
     type ResourceCallable = Callable[[], ContainerValue]
-    type MetadataValue = Scalar | Mapping[str, Scalar | list[Scalar]] | list[Scalar]
+    MetadataValue: TypeAlias = (
+        Scalar | Mapping[str, Scalar | list[Scalar]] | list[Scalar]
+    )
     type MetadataAttributeValue = MetadataValue
     type HandlerCallable = Callable[[ContainerValue], ContainerValue]
     type HandlerLike = Callable[..., ContainerValue]

@@ -1063,7 +1063,7 @@ class FlextUtilitiesMapper:
         else:
             field_name: str = field
             for item in items_list:
-                if not FlextUtilitiesGuards.is_general_value_type(item):
+                if not isinstance(item, Mapping | BaseModel):
                     continue
                 val_raw = FlextUtilitiesMapper._extract_field_value(item, field_name)
                 if isinstance(val_raw, int | float):
@@ -1313,7 +1313,7 @@ class FlextUtilitiesMapper:
     @staticmethod
     def cast_generic[T](
         value: t.ContainerValue,
-        target_type: Callable[[object], T] | None = None,
+        target_type: Callable[[t.ContainerValue], T] | None = None,
         *,
         default: T | None = None,
     ) -> T | t.ContainerValue:
@@ -2223,7 +2223,7 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def pluck(
-        items: Sequence[Mapping[str, object]],
+        items: Sequence[Mapping[str, t.ContainerValue]],
         key: str,
         default: t.ContainerValue | None = None,
     ) -> list[t.ContainerValue]:

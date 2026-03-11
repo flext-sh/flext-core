@@ -17,11 +17,11 @@ from flext_infra import (
 from flext_infra.deps._detector_runtime import FlextInfraDependencyDetectorRuntime
 from flext_infra.deps.detection import FlextInfraDependencyDetectionService
 
-logger = FlextLogger.create_module_logger(__name__)
-
 
 class FlextInfraRuntimeDevDependencyDetector:
     """CLI tool for detecting runtime vs dev dependencies across workspace."""
+
+    log = FlextLogger.create_module_logger(__name__)
 
     def __init__(self) -> None:
         """Initialize detector runtime services."""
@@ -31,7 +31,7 @@ class FlextInfraRuntimeDevDependencyDetector:
         self.json = FlextInfraUtilitiesIo()
         self.deps = FlextInfraDependencyDetectionService()
         self.runner: p.Infra.CommandRunner = FlextInfraUtilitiesSubprocess()
-        self.log = logger
+        self.log = self.log
 
     @staticmethod
     def parser(default_limits_path: Path) -> argparse.ArgumentParser:
@@ -113,9 +113,12 @@ class FlextInfraRuntimeDevDependencyDetector:
 
 def main() -> int:
     """Entry point for dependency detector CLI."""
-    result = FlextInfraRuntimeDevDependencyDetector().run()
+    detector = FlextInfraRuntimeDevDependencyDetector()
+    result = detector.run()
     if result.is_failure:
-        logger.error("deps_detector_failed", error=result.error or "unknown error")
+        detector.log.error(
+            "deps_detector_failed", error=result.error or "unknown error"
+        )
         return 1
     return result.value
 

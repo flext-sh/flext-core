@@ -290,7 +290,7 @@ class FlextContainer(p.DI):
         if auto_register_factories:
             frame = inspect.currentframe()
             if frame and frame.f_back:
-                caller_globals: Mapping[str, object] = frame.f_back.f_globals
+                caller_globals: Mapping[str, t.ContainerValue] = frame.f_back.f_globals
                 module_name_raw = caller_globals.get("__name__", "__main__")
                 module_name = str(module_name_raw) if module_name_raw else "__main__"
                 caller_module = sys.modules.get(module_name)
@@ -305,7 +305,7 @@ class FlextContainer(p.DI):
                         if callable(factory_func_raw):
 
                             def factory_wrapper(
-                                _factory_func_ref: Callable[[], object]
+                                _factory_func_ref: Callable[[], t.ContainerValue]
                                 | None = factory_func_raw,
                                 _factory_name: str = factory_name,
                                 _factory_config: m.FactoryDecoratorConfig = factory_config,
@@ -380,17 +380,17 @@ class FlextContainer(p.DI):
         )
 
     @staticmethod
-    def _is_context_protocol(value: object) -> TypeGuard[p.Context]:
+    def _is_context_protocol(value: t.ContainerValue) -> TypeGuard[p.Context]:
         return bool(
             hasattr(value, "clone") and hasattr(value, "set") and hasattr(value, "get")
         )
 
     @staticmethod
-    def _is_factory_callable(value: object) -> TypeGuard[t.FactoryCallable]:
+    def _is_factory_callable(value: t.ContainerValue) -> TypeGuard[t.FactoryCallable]:
         return callable(value)
 
     @staticmethod
-    def _is_instance_of[T](value: object, type_cls: type[T]) -> TypeGuard[T]:
+    def _is_instance_of[T](value: t.ContainerValue, type_cls: type[T]) -> TypeGuard[T]:
         """Type guard to narrow object to specific type T.
 
         Uses isinstance for type narrowing with MRO support.
@@ -398,11 +398,13 @@ class FlextContainer(p.DI):
         extracting __origin__ before the isinstance check.
         """
         origin = getattr(type_cls, "__origin__", None)
-        check_type: type[object] = origin if origin is not None else type_cls
+        check_type: type = origin if origin is not None else type_cls
         return isinstance(value, check_type)
 
     @staticmethod
-    def _is_registerable_service(value: object) -> TypeGuard[t.RegisterableService]:
+    def _is_registerable_service(
+        value: t.ContainerValue,
+    ) -> TypeGuard[t.RegisterableService]:
         if isinstance(value, (str, int, float, bool, type(None))):
             return True
         if isinstance(value, (BaseModel, Path)):
@@ -422,11 +424,13 @@ class FlextContainer(p.DI):
         return bool(hasattr(value, "bind") and hasattr(value, "info"))
 
     @staticmethod
-    def _is_resource_callable(value: object) -> TypeGuard[t.ResourceCallable]:
+    def _is_resource_callable(value: t.ContainerValue) -> TypeGuard[t.ResourceCallable]:
         return callable(value)
 
     @staticmethod
-    def _is_object_mapping(value: object) -> TypeGuard[Mapping[object, object]]:
+    def _is_object_mapping(
+        value: t.ContainerValue,
+    ) -> TypeGuard[Mapping[t.ContainerValue, t.ContainerValue]]:
         return isinstance(value, Mapping)
 
     @staticmethod
@@ -536,7 +540,7 @@ class FlextContainer(p.DI):
                     f"Service '{name}' has unsupported runtime type"
                 )
             if type_cls is not None:
-                service_for_check: object = service
+                service_for_check: t.RegisterableService = service
                 if not self._is_instance_of(service_for_check, type_cls):
                     return r[t.RegisterableService].fail(
                         f"Service '{name}' is not of type {(type_cls.__name__ if hasattr(type_cls, '__name__') else 'Unknown')}"
@@ -558,7 +562,7 @@ class FlextContainer(p.DI):
                         f"Factory '{name}' returned unsupported runtime type"
                     )
                 if type_cls is not None:
-                    resolved_for_check: object = resolved
+                    resolved_for_check: t.RegisterableService = resolved
                     if not self._is_instance_of(resolved_for_check, type_cls):
                         return r[t.RegisterableService].fail(
                             f"Factory '{name}' returned wrong type"
@@ -580,7 +584,7 @@ class FlextContainer(p.DI):
                         f"Resource '{name}' returned unsupported runtime type"
                     )
                 if type_cls is not None:
-                    resource_for_check: object = resolved
+                    resource_for_check: t.RegisterableService = resolved
                     if not self._is_instance_of(resource_for_check, type_cls):
                         return r[t.RegisterableService].fail(
                             f"Resource '{name}' returned wrong type"

@@ -47,7 +47,7 @@ class _ProtocolIntrospection:
         registered_protocols = cls.get_class_protocols(instance.__class__)
         if protocol in registered_protocols:
             return True
-        protocol_annotations: dict[str, object] = (
+        protocol_annotations: dict[str, t.ContainerValue] = (
             protocol.__annotations__ if hasattr(protocol, "__annotations__") else {}
         )
         raw_attrs: set[t.ContainerValue] | t.ContainerValue = getattr(
@@ -114,7 +114,7 @@ class _ProtocolIntrospection:
         target_cls: type, protocol: type, class_name: str
     ) -> None:
         """Validate that a class implements all required protocol members."""
-        protocol_annotations: dict[str, object] = (
+        protocol_annotations: dict[str, t.ContainerValue] = (
             protocol.__annotations__ if hasattr(protocol, "__annotations__") else {}
         )
         raw_attrs: set[t.ContainerValue] | t.ContainerValue = getattr(
@@ -138,7 +138,7 @@ class _ProtocolIntrospection:
         }
         all_annotations: set[str] = set()
         for base in target_cls.mro():
-            base_annotations: dict[str, object] = (
+            base_annotations: dict[str, t.ContainerValue] = (
                 base.__annotations__ if hasattr(base, "__annotations__") else {}
             )
             all_annotations.update(base_annotations.keys())
@@ -1207,7 +1207,7 @@ class FlextProtocols:
             cls,
             name: str,
             bases: tuple[type, ...],
-            namespace: Mapping[str, object],
+            namespace: Mapping[str, t.ContainerValue],
             **_kwargs: t.ContainerValue,
         ) -> type:
             """Create a new class with protocol validation.
@@ -1230,7 +1230,7 @@ class FlextProtocols:
             built_cls: type = super().__new__(
                 cls, name, tuple(model_bases), dict(namespace)
             )
-            setattr(built_cls, "__protocols__", tuple(protocols))
+            built_cls.__protocols__ = tuple(protocols)
             for protocol in protocols:
                 _ProtocolIntrospection.validate_protocol_compliance(
                     built_cls, protocol, name
@@ -1398,7 +1398,7 @@ class FlextProtocols:
                 _ProtocolIntrospection.validate_protocol_compliance(
                     cls, protocol, class_name
                 )
-            setattr(cls, "__protocols__", tuple(protocols))
+            cls.__protocols__ = tuple(protocols)
 
             def _instance_implements_protocol(
                 self: FlextProtocols.BaseProtocol | t.ContainerValue,
@@ -1406,12 +1406,12 @@ class FlextProtocols:
             ) -> bool:
                 return _ProtocolIntrospection.check_implements_protocol(self, protocol)
 
-            setattr(cls, "implements_protocol", _instance_implements_protocol)
+            cls.implements_protocol = _instance_implements_protocol
 
             def _class_get_protocols(kls: type) -> tuple[type, ...]:
                 return _ProtocolIntrospection.get_class_protocols(kls)
 
-            setattr(cls, "get_protocols", classmethod(_class_get_protocols))
+            cls.get_protocols = classmethod(_class_get_protocols)
             return cls
 
         return decorator

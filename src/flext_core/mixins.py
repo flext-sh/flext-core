@@ -717,7 +717,7 @@ class FlextMixins(FlextRuntime):
         """Runtime protocol compliance validation utilities."""
 
         @staticmethod
-        def is_command_bus(obj: object) -> bool:
+        def is_command_bus(obj: t.ContainerValue) -> bool:
             """Check if *obj* satisfies ``p.CommandBus`` structurally."""
             return (
                 hasattr(obj, "dispatch")
@@ -729,7 +729,7 @@ class FlextMixins(FlextRuntime):
             )
 
         @staticmethod
-        def is_handler(obj: object) -> bool:
+        def is_handler(obj: t.ContainerValue) -> bool:
             """Check if *obj* satisfies ``p.Handler`` structurally."""
             return (
                 hasattr(obj, "handle")
@@ -739,7 +739,7 @@ class FlextMixins(FlextRuntime):
             )
 
         @staticmethod
-        def is_service(obj: object) -> bool:
+        def is_service(obj: t.ContainerValue) -> bool:
             """Check if *obj* satisfies ``p.Service`` structurally."""
             return (
                 hasattr(obj, "execute")
@@ -750,7 +750,7 @@ class FlextMixins(FlextRuntime):
             )
 
         @staticmethod
-        def validate_processor_protocol(obj: object) -> r[bool]:
+        def validate_processor_protocol(obj: t.ContainerValue) -> r[bool]:
             """Validate *obj* has ``model_dump``, ``process``, and ``validate``."""
             required_methods = ["model_dump", "process", "validate"]
             for method_name in required_methods:
@@ -765,7 +765,9 @@ class FlextMixins(FlextRuntime):
             return r[bool].ok(value=True)
 
         @staticmethod
-        def validate_protocol_compliance(obj: object, protocol_name: str) -> r[bool]:
+        def validate_protocol_compliance(
+            obj: t.ContainerValue, protocol_name: str
+        ) -> r[bool]:
             """Validate *obj* compliance with named protocol via duck-typing."""
             protocol_required_attrs: Mapping[str, Sequence[str]] = {
                 "Handler": ["handle", "can_handle"],

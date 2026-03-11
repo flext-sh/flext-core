@@ -225,13 +225,13 @@ class FlextUtilitiesParser:
                     and FlextUtilitiesParser._parse_normalize_compare(value_attr, value)
                 )
                 if name_matches or value_matches:
-                    return r.ok(member_value)
+                    return r[T].ok(member_value)
         if value in members:
-            return r.ok(members[value])
+            return r[T].ok(members[value])
         for member_instance in members.values():
             member_val = getattr(member_instance, "value", None)
             if member_val == value:
-                return r.ok(member_instance)
+                return r[T].ok(member_instance)
         target_name = target.__name__ if hasattr(target, "__name__") else "Unknown"
         return r[T].fail(f"Cannot parse '{value}' as {target_name}")
 
@@ -284,7 +284,7 @@ class FlextUtilitiesParser:
             else:
                 scalar_data[dict_key] = str(dict_value)
         try:
-            return r.ok(target.model_validate(scalar_data, strict=strict))
+            return r[TModel].ok(target.model_validate(scalar_data, strict=strict))
         except (ValidationError, TypeError, ValueError) as exc:
             return r[TModel].fail(f"Model parse failed: {exc}")
 
@@ -332,7 +332,7 @@ class FlextUtilitiesParser:
             )
         try:
             parsed_value = TypeAdapter(target).validate_python(value)
-            return r.ok(parsed_value)
+            return r[T].ok(parsed_value)
         except (ValidationError, TypeError, ValueError) as e:
             target_name = target.__name__ if hasattr(target, "__name__") else "type"
             return FlextUtilitiesParser._parse_with_default(
@@ -400,7 +400,7 @@ class FlextUtilitiesParser:
         )
         if model_result.is_success:
             validated_model = TypeAdapter(target).validate_python(model_result.value)
-            return r.ok(validated_model)
+            return r[T].ok(validated_model)
         return FlextUtilitiesParser._parse_with_default(
             default,
             default_factory,
@@ -483,9 +483,9 @@ class FlextUtilitiesParser:
     ) -> r[T]:
         """Return default or error for parse failures."""
         if default is not None:
-            return r.ok(default)
+            return r[T].ok(default)
         if default_factory is not None:
-            return r.ok(default_factory())
+            return r[T].ok(default_factory())
         return r[T].fail(error_msg)
 
     @staticmethod
@@ -890,12 +890,12 @@ class FlextUtilitiesParser:
         field_prefix = f"{field_name}: " if field_name else ""
         if value is None:
             if default is not None:
-                return r.ok(default)
+                return r[T].ok(default)
             if default_factory is not None:
-                return r.ok(default_factory())
+                return r[T].ok(default_factory())
             return r[T].fail(field_prefix or "Value is None")
         if isinstance(value, target):
-            return r.ok(value)
+            return r[T].ok(value)
         if issubclass(target, StrEnum):
             return FlextUtilitiesParser._parse_try_enum(
                 value,
@@ -926,7 +926,7 @@ class FlextUtilitiesParser:
                 validated_primitive = TypeAdapter(target).validate_python(
                     primitive_result.value
                 )
-                return r.ok(validated_primitive)
+                return r[T].ok(validated_primitive)
             return FlextUtilitiesParser._parse_with_default(
                 default,
                 default_factory,

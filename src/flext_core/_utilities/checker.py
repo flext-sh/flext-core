@@ -31,12 +31,12 @@ class FlextUtilitiesChecker:
         return FlextRuntime.get_logger(__name__)
 
     @staticmethod
-    def _is_subclass_of(candidate: object, parent: type[object]) -> bool:
+    def _is_subclass_of(candidate: t.ContainerValue, parent: type) -> bool:
         """Safe subclass check that never raises TypeError."""
         return isinstance(candidate, type) and issubclass(candidate, parent)
 
     @classmethod
-    def _is_dict_type(cls, candidate: object) -> bool:
+    def _is_dict_type(cls, candidate: t.ContainerValue) -> bool:
         """Check if candidate is ``dict`` or a subclass of ``dict``."""
         return cls._is_subclass_of(candidate, dict)
 
@@ -129,7 +129,7 @@ class FlextUtilitiesChecker:
 
         """
         message_types: list[t.MessageTypeSpecifier] = []
-        raw_bases: object = getattr(handler_class, "__orig_bases__", ())
+        raw_bases: t.ContainerValue = getattr(handler_class, "__orig_bases__", ())
         if not FlextUtilitiesGuards.is_object_tuple(raw_bases):
             return message_types
         for base in raw_bases:

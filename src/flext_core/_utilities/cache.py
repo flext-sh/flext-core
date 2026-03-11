@@ -76,7 +76,7 @@ class FlextUtilitiesCache:
         return FlextRuntime.get_logger(__name__)
 
     @staticmethod
-    def clear_object_cache(obj: object) -> r[bool]:
+    def clear_object_cache(obj: t.ContainerValue) -> r[bool]:
         """Clear cache-like attributes on an object.
 
         Business Rule: Safe Cache Invalidation
@@ -177,7 +177,7 @@ class FlextUtilitiesCache:
             return f"{command_type.__name__}_{abs(hash(encoded))}"
 
     @staticmethod
-    def has_cache_attributes(obj: object) -> bool:
+    def has_cache_attributes(obj: t.ContainerValue) -> bool:
         """Check if an object exposes any known cache-related attributes.
 
         Business Rule: Cache Detection

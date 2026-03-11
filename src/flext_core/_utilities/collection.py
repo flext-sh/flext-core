@@ -229,8 +229,7 @@ class FlextUtilitiesCollection:
                     else:
                         direct_result = str(result_raw)
                 except (TypeError, ValueError):
-                    raw_obj: object = result_raw
-                    direct_result = str(raw_obj)
+                    direct_result = str(result_raw)
                 if do_flatten and FlextUtilitiesCollection._is_general_value_list(
                     direct_result
                 ):

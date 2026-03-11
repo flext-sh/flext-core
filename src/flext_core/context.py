@@ -1063,7 +1063,7 @@ class FlextContext(FlextRuntime):
 
             """
             container: p.DI = FlextContext.get_container()
-            service_result: p.ResultLike[object] = container.get(service_name)
+            service_result: p.ResultLike[t.ContainerValue] = container.get(service_name)
             if service_result.is_success:
                 service_value = service_result.value
                 if service_value is None:

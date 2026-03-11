@@ -4,17 +4,18 @@ from pathlib import Path
 
 import pytest
 import tomlkit
+from tomlkit.toml_document import TOMLDocument
 
 from flext_core import r
 from flext_infra.deps import extra_paths
 from flext_infra.deps._constants import FlextInfraDepsConstants
-from flext_infra.deps.extra_paths import (
-    FlextInfraExtraPathsManager,
-    get_dep_paths,
-    sync_one,
-)
+from flext_infra.deps.extra_paths import FlextInfraExtraPathsManager
 from flext_tests import tm
 from tests.infra.typings import t
+
+
+def _manager() -> FlextInfraExtraPathsManager:
+    return FlextInfraExtraPathsManager()
 
 
 class TestFlextInfraExtraPathsManager:
@@ -30,12 +31,12 @@ class TestFlextInfraExtraPathsManager:
 
 class TestGetDepPaths:
     def test_get_dep_paths_empty_doc(self) -> None:
-        tm.that(get_dep_paths(tomlkit.document(), is_root=False), eq=[])
+        tm.that(_manager().get_dep_paths(tomlkit.document(), is_root=False), eq=[])
 
     def test_get_dep_paths_with_pep621_deps(self) -> None:
         doc = tomlkit.document()
         doc["project"] = {"dependencies": ["flext-core @ file:../flext-core"]}
-        paths = get_dep_paths(doc, is_root=False)
+        paths = _manager().get_dep_paths(doc, is_root=False)
         tm.that(any("flext-core" in item for item in paths), eq=True)
 
     def test_get_dep_paths_with_poetry_deps(self) -> None:
@@ -43,7 +44,7 @@ class TestGetDepPaths:
         doc["tool"] = {
             "poetry": {"dependencies": {"flext-core": {"path": "../flext-core"}}}
         }
-        paths = get_dep_paths(doc, is_root=False)
+        paths = _manager().get_dep_paths(doc, is_root=False)
         tm.that(any("flext-core" in item for item in paths), eq=True)
 
     def test_get_dep_paths_is_root_true(self) -> None:
@@ -53,7 +54,8 @@ class TestGetDepPaths:
         }
         tm.that(
             all(
-                not item.startswith("../") for item in get_dep_paths(doc, is_root=True)
+                not item.startswith("../")
+                for item in _manager().get_dep_paths(doc, is_root=True)
             ),
             eq=True,
         )
@@ -64,7 +66,10 @@ class TestGetDepPaths:
             "poetry": {"dependencies": {"flext-core": {"path": "../flext-core"}}}
         }
         tm.that(
-            all(item.startswith("../") for item in get_dep_paths(doc, is_root=False)),
+            all(
+                item.startswith("../")
+                for item in _manager().get_dep_paths(doc, is_root=False)
+            ),
             eq=True,
         )
 
@@ -74,14 +79,14 @@ class TestGetDepPaths:
         doc["tool"] = {
             "poetry": {"dependencies": {"flext-core": {"path": "../flext-core"}}}
         }
-        tm.that(len(get_dep_paths(doc, is_root=False)) >= 2, eq=True)
+        tm.that(len(_manager().get_dep_paths(doc, is_root=False)) >= 2, eq=True)
 
     def test_get_dep_paths_with_is_root_true(self) -> None:
         doc = tomlkit.document()
         project = tomlkit.table()
         project["dependencies"] = ["flext-core @ file:flext-core"]
         doc["project"] = project
-        result = get_dep_paths(doc, is_root=True)
+        result = _manager().get_dep_paths(doc, is_root=True)
         tm.that(any("flext-core/src" in item for item in result), eq=True)
 
     def test_get_dep_paths_with_is_root_false(self) -> None:
@@ -89,20 +94,20 @@ class TestGetDepPaths:
         project = tomlkit.table()
         project["dependencies"] = ["flext-core @ file:../flext-core"]
         doc["project"] = project
-        result = get_dep_paths(doc, is_root=False)
+        result = _manager().get_dep_paths(doc, is_root=False)
         tm.that(any("../flext-core/src" in item for item in result), eq=True)
 
 
 class TestSyncOne:
     def test_sync_one_missing_file(self, tmp_path: Path) -> None:
-        tm.that(sync_one(tmp_path / "nonexistent.toml").is_success, eq=False)
+        tm.that(_manager().sync_one(tmp_path / "nonexistent.toml").is_success, eq=False)
 
     def test_sync_one_no_tool_section(self, tmp_path: Path) -> None:
         pyproject = tmp_path / "pyproject.toml"
         doc = tomlkit.document()
         doc["project"] = {"name": "test"}
         pyproject.write_text(doc.as_string(), encoding="utf-8")
-        tm.that(sync_one(pyproject).is_success, eq=False)
+        tm.that(_manager().sync_one(pyproject).is_success, eq=False)
 
     def test_sync_one_no_pyright_section(self, tmp_path: Path) -> None:
         pyproject = tmp_path / "pyproject.toml"
@@ -111,7 +116,7 @@ class TestSyncOne:
         tool["other"] = tomlkit.table()
         doc["tool"] = tool
         pyproject.write_text(doc.as_string(), encoding="utf-8")
-        tm.that(sync_one(pyproject).is_success, eq=False)
+        tm.that(_manager().sync_one(pyproject).is_success, eq=False)
 
     @pytest.mark.parametrize(
         "tool_doc",
@@ -130,7 +135,7 @@ class TestSyncOne:
         doc = tomlkit.document()
         doc["tool"] = tool_doc
         pyproject.write_text(doc.as_string(), encoding="utf-8")
-        result = sync_one(pyproject, is_root="pyrefly" not in tool_doc)
+        result = _manager().sync_one(pyproject, is_root="pyrefly" not in tool_doc)
         tm.that(result.is_success, eq=True)
 
     def test_sync_one_dry_run(self, tmp_path: Path) -> None:
@@ -138,7 +143,7 @@ class TestSyncOne:
         doc = tomlkit.document()
         doc["tool"] = {"pyright": {"extraPaths": ["old"]}}
         pyproject.write_text(doc.as_string(), encoding="utf-8")
-        tm.ok(sync_one(pyproject, dry_run=True, is_root=True))
+        tm.ok(_manager().sync_one(pyproject, dry_run=True, is_root=True))
         tm.that(pyproject.read_text(encoding="utf-8"), contains="old")
 
     def test_sync_one_write_failure(
@@ -148,15 +153,17 @@ class TestSyncOne:
         pyproject.write_text("[tool.pyright]\nextraPaths = []\n", encoding="utf-8")
 
         def _broken_write(
-            *_args: t.ContainerValue,
-            **_kwargs: t.ContainerValue,
+            _self: extra_paths.FlextInfraUtilitiesToml,
+            _path: Path,
+            _doc: TOMLDocument,
         ) -> r[bool]:
+            _ = _self, _path, _doc
             return r[bool].fail("write error")
 
         monkeypatch.setattr(
             extra_paths.FlextInfraUtilitiesToml, "write_document", _broken_write
         )
-        tm.fail(sync_one(pyproject, is_root=True), has="write error")
+        tm.fail(_manager().sync_one(pyproject, is_root=True), has="write error")
 
 
 class TestConstants:

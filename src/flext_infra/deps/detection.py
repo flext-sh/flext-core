@@ -7,7 +7,7 @@ import os
 from collections.abc import Mapping, MutableMapping
 from pathlib import Path
 
-from flext_core import r
+from flext_core import FlextLogger, r
 from flext_infra import (
     FlextInfraUtilitiesPatterns,
     FlextInfraUtilitiesSelection,
@@ -19,20 +19,12 @@ from flext_infra import (
     t,
     u,
 )
-from flext_infra.deps._models import (
-    DeptryIssueGroups,
-    DeptryReport,
-    FlextInfraDepsModels,
-    ProjectDependencyReport,
-    TypingsReport,
-)
-
-dm = FlextInfraDepsModels
-FlextInfraDependencyDetectionModels = dm
 
 
 class FlextInfraDependencyDetectionService:
     """Runtime vs dev dependency detector using deptry, pip-check, and mypy stub analysis."""
+
+    _log = FlextLogger.create_module_logger(__name__)
 
     DEFAULT_MODULE_TO_TYPES_PACKAGE: Mapping[str, str] = (
         c.Infra.Deps.DEFAULT_MODULE_TO_TYPES_PACKAGE
@@ -74,9 +66,9 @@ class FlextInfraDependencyDetectionService:
     @staticmethod
     def classify_issues(
         issues: list[t.Infra.IssueMap],
-    ) -> DeptryIssueGroups:
+    ) -> m.Infra.Deps.DeptryIssueGroups:
         """Classify deptry issues by error code (DEP001-DEP004)."""
-        groups = DeptryIssueGroups()
+        groups = m.Infra.Deps.DeptryIssueGroups()
         for item in issues:
             error_obj = item.get(c.Infra.Toml.ERROR)
             if not isinstance(error_obj, Mapping):
@@ -96,7 +88,7 @@ class FlextInfraDependencyDetectionService:
         self,
         project_name: str,
         deptry_issues: list[t.Infra.IssueMap],
-    ) -> ProjectDependencyReport:
+    ) -> m.Infra.Deps.ProjectDependencyReport:
         """Build a project dependency report from classified deptry issues."""
         classified = self.classify_issues(deptry_issues)
 
@@ -126,9 +118,9 @@ class FlextInfraDependencyDetectionService:
             if name is not None:
                 dev_in_runtime.append(name)
 
-        return ProjectDependencyReport(
+        return m.Infra.Deps.ProjectDependencyReport(
             project=project_name,
-            deptry=DeptryReport(
+            deptry=m.Infra.Deps.DeptryReport(
                 missing=missing,
                 unused=unused,
                 transitive=transitive,
@@ -206,7 +198,7 @@ class FlextInfraDependencyDetectionService:
         limits_path: Path | None = None,
         *,
         include_mypy: bool = True,
-    ) -> r[TypingsReport]:
+    ) -> r[m.Infra.Deps.TypingsReport]:
         """Analyze project and generate typing stubs requirements report."""
         limits = self.load_dependency_limits(limits_path)
         exclude_set: set[str] = set()
@@ -220,7 +212,7 @@ class FlextInfraDependencyDetectionService:
         if include_mypy:
             hints_result = self.run_mypy_stub_hints(project_path, venv_bin)
             if hints_result.is_failure:
-                return r[TypingsReport].fail(
+                return r[m.Infra.Deps.TypingsReport].fail(
                     hints_result.error or "typing hint detection failed",
                 )
             typed_hints: tuple[list[str], list[str]] = hints_result.value
@@ -241,7 +233,7 @@ class FlextInfraDependencyDetectionService:
             and (python_cfg.get(c.Infra.Toml.VERSION) is not None)
             else None
         )
-        report = TypingsReport(
+        report = m.Infra.Deps.TypingsReport(
             required_packages=sorted(required_set),
             hinted=hinted,
             missing_modules=missing_modules,
@@ -251,7 +243,7 @@ class FlextInfraDependencyDetectionService:
             limits_applied=bool(limits),
             python_version=python_version,
         )
-        return r[TypingsReport].ok(report)
+        return r[m.Infra.Deps.TypingsReport].ok(report)
 
     def load_dependency_limits(
         self,
@@ -464,7 +456,7 @@ def run_pip_check(workspace_root: Path, venv_bin: Path) -> r[tuple[list[str], in
     return _service.run_pip_check(workspace_root, venv_bin)
 
 
-def classify_issues(issues: list[t.Infra.IssueMap]) -> DeptryIssueGroups:
+def classify_issues(issues: list[t.Infra.IssueMap]) -> m.Infra.Deps.DeptryIssueGroups:
     """Classify deptry issues by error code (DEP001-DEP004)."""
     return _service.classify_issues(issues)
 
@@ -472,7 +464,7 @@ def classify_issues(issues: list[t.Infra.IssueMap]) -> DeptryIssueGroups:
 def build_project_report(
     project_name: str,
     deptry_issues: list[t.Infra.IssueMap],
-) -> ProjectDependencyReport:
+) -> m.Infra.Deps.ProjectDependencyReport:
     """Build a project dependency report from classified deptry issues."""
     return _service.build_project_report(project_name, deptry_issues)
 
@@ -513,7 +505,7 @@ def get_required_typings(
     limits_path: Path | None = None,
     *,
     include_mypy: bool = True,
-) -> r[TypingsReport]:
+) -> r[m.Infra.Deps.TypingsReport]:
     """Analyze project and generate typing stubs requirements report."""
     return _service.get_required_typings(
         project_path,
@@ -524,12 +516,10 @@ def get_required_typings(
 
 
 __all__ = [
-    "FlextInfraDependencyDetectionModels",
     "FlextInfraDependencyDetectionService",
     "build_project_report",
     "classify_issues",
     "discover_project_paths",
-    "dm",
     "get_current_typings_from_pyproject",
     "get_required_typings",
     "load_dependency_limits",

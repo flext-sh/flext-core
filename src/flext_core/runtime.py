@@ -79,9 +79,9 @@ from flext_core._models.containers import FlextModelsContainers
 class _LazyMetadata:
     """Descriptor for lazy-loading Metadata class."""
 
-    def __get__(self, obj: object, objtype: type | None = None) -> type:
+    def __get__(self, obj: t.ContainerValue, objtype: type | None = None) -> type:
         metadata_cls = FlextModelFoundation.Metadata
-        setattr(objtype or FlextRuntime, "Metadata", metadata_cls)
+        (objtype or FlextRuntime).Metadata = metadata_cls
         return metadata_cls
 
 
@@ -449,7 +449,7 @@ class FlextRuntime:
         return logger
 
     @staticmethod
-    def is_base_model(obj: t.ContainerValue) -> TypeGuard[object]:
+    def is_base_model(obj: t.ContainerValue) -> TypeGuard[BaseModel]:
         """Type guard to narrow object to BaseModel (part of ContainerValue).
 
         This allows isinstance checks to narrow types for FlextRuntime methods
@@ -462,7 +462,7 @@ class FlextRuntime:
                 return False
 
     @staticmethod
-    def _has_dict_protocol(obj: object) -> bool:
+    def _has_dict_protocol(obj: t.ContainerValue) -> bool:
         if not (hasattr(obj, "keys") and hasattr(obj, "items") and hasattr(obj, "get")):
             return False
         try:
@@ -860,7 +860,7 @@ class FlextRuntime:
                 configured_container: FlextRuntime.DependencyIntegration.DynamicContainerWithConfig = di_container
                 configured_container.config = configuration_provider
             else:
-                setattr(di_container, "config", configuration_provider)
+                di_container.config = configuration_provider
             return configuration_provider
 
         @staticmethod
@@ -969,7 +969,7 @@ class FlextRuntime:
         config: t.ContainerValue | None = None,
         log_level: int | None = None,
         console_renderer: bool = True,
-        additional_processors: Sequence[object] | None = None,
+        additional_processors: Sequence[t.ContainerValue] | None = None,
         wrapper_class_factory: Callable[[], type[p.Log.StructlogLogger]] | None = None,
         logger_factory: Callable[[], p.Log.StructlogLogger] | None = None,
         cache_logger_on_first_use: bool = True,

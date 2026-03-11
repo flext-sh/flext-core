@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import tomlkit
-from tomlkit.items import Table
+from tomlkit.container import Container
+from tomlkit.items import Item, Table
 
 from flext_infra import c, u
 
@@ -13,14 +14,14 @@ class ConsolidateGroupsPhase:
 
     def apply(self, doc: tomlkit.TOMLDocument, canonical_dev: list[str]) -> list[str]:
         changes: list[str] = []
-        project: object | None = None
+        project: Item | Container | None = None
         if c.Infra.Toml.PROJECT in doc:
             project = doc[c.Infra.Toml.PROJECT]
         if not isinstance(project, Table):
             project = tomlkit.table()
             doc[c.Infra.Toml.PROJECT] = project
 
-        optional: object | None = None
+        optional: Item | Container | None = None
         if c.Infra.Toml.OPTIONAL_DEPENDENCIES in project:
             optional = project[c.Infra.Toml.OPTIONAL_DEPENDENCIES]
         if not isinstance(optional, Table):
@@ -48,14 +49,14 @@ class ConsolidateGroupsPhase:
             if old_key in optional:
                 del optional[old_key]
                 changes.append(f"project.optional-dependencies.{old_key} removed")
-        tool: object | None = None
+        tool: Item | Container | None = None
         if c.Infra.Toml.TOOL in doc:
             tool = doc[c.Infra.Toml.TOOL]
         if not isinstance(tool, Table):
             tool = tomlkit.table()
             doc[c.Infra.Toml.TOOL] = tool
         poetry = u.Infra.ensure_table(tool, c.Infra.Toml.POETRY)
-        poetry_group_raw: object | None = None
+        poetry_group_raw: Item | Container | None = None
         if c.Infra.Toml.GROUP in poetry:
             poetry_group_raw = poetry[c.Infra.Toml.GROUP]
         poetry_group = poetry_group_raw if isinstance(poetry_group_raw, Table) else None
@@ -68,12 +69,12 @@ class ConsolidateGroupsPhase:
         ):
             if poetry_group is None:
                 continue
-            old_group_table: object | None = None
+            old_group_table: Item | Container | None = None
             if old_group in poetry_group:
                 old_group_table = poetry_group[old_group]
             if not isinstance(old_group_table, Table):
                 continue
-            old_deps: object | None = None
+            old_deps: Item | Container | None = None
             if c.Infra.Toml.DEPENDENCIES in old_group_table:
                 old_deps = old_group_table[c.Infra.Toml.DEPENDENCIES]
             if isinstance(old_deps, Table):

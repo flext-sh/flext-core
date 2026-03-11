@@ -16,17 +16,16 @@ from flext_infra import (
     FlextInfraUtilitiesTomlParse,
     c,
     m,
-    output,
     p,
     t,
     u,
 )
 
-logger = FlextLogger.create_module_logger(__name__)
-
 
 class FlextInfraInternalDependencySyncService:
     """Synchronize internal FLEXT dependencies via git clone or workspace symlinks."""
+
+    log = FlextLogger.create_module_logger(__name__)
 
     def __init__(self) -> None:
         """Initialize the internal dependency sync service."""
@@ -151,7 +150,7 @@ class FlextInfraInternalDependencySyncService:
                 owner,
                 {dep_path.name for dep_path in deps.values()},
             )
-            logger.warning("sync_deps_synthesized_repo_map", owner=owner)
+            self.log.warning("sync_deps_synthesized_repo_map", owner=owner)
         else:
             parsed_map_result = self.parse_repo_map(map_file)
             if parsed_map_result.is_failure:
@@ -295,7 +294,7 @@ class FlextInfraInternalDependencySyncService:
     def is_workspace_mode(self, project_root: Path) -> tuple[bool, Path | None]:
         """Determine workspace mode and return resolved workspace root."""
         if os.getenv("FLEXT_STANDALONE") == "1":
-            output.info("Standalone mode: skipping workspace dependency sync")
+            u.Infra.info("Standalone mode: skipping workspace dependency sync")
             return (False, None)
         env_workspace_root = self.workspace_root_from_env(project_root)
         if env_workspace_root is not None:
@@ -406,11 +405,12 @@ def main() -> int:
     _ = parser.add_argument("--project-root", type=Path, required=True)
     args = parser.parse_args()
     project_root = args.project_root.resolve()
-    result = FlextInfraInternalDependencySyncService().sync(project_root)
+    service = FlextInfraInternalDependencySyncService()
+    result = service.sync(project_root)
     if result.is_success:
         return result.value
-    logger.error("sync_internal_deps_failed", error=result.error)
-    output.error(f"[sync-deps] {result.error}")
+    service.log.error("sync_internal_deps_failed", error=result.error)
+    u.Infra.error(f"[sync-deps] {result.error}")
     return 1
 
 

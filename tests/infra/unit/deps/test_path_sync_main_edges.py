@@ -6,11 +6,11 @@ from pathlib import Path
 import pytest
 
 from flext_core import r
+from flext_infra import FlextInfraUtilitiesDiscovery
 from flext_infra.deps import path_sync as path_sync_module
 from flext_infra.deps.path_sync import FlextInfraDependencyPathSync
 from flext_tests import tm
 from tests.infra.models import m
-from tests.infra.typings import t
 
 
 def _project(path: Path, name: str = "flext-core") -> m.Infra.Workspace.ProjectInfo:
@@ -32,7 +32,7 @@ class TestMainEdgeCases:
         )
 
         def _discover_none(
-            _self: object,
+            _self: FlextInfraUtilitiesDiscovery,
             _root: Path,
         ) -> r[list[m.Infra.Workspace.ProjectInfo]]:
             return r[list[m.Infra.Workspace.ProjectInfo]].ok([])
@@ -56,7 +56,7 @@ class TestMainEdgeCases:
         (project_dir / "pyproject.toml").write_text('[project]\nname = "flext-core"\n')
 
         def _discover_project(
-            _self: object,
+            _self: FlextInfraUtilitiesDiscovery,
             _root: Path,
         ) -> r[list[m.Infra.Workspace.ProjectInfo]]:
             return r[list[m.Infra.Workspace.ProjectInfo]].ok([_project(project_dir)])
@@ -69,8 +69,15 @@ class TestMainEdgeCases:
         calls = {"n": 0}
 
         def rewrite_stub(
-            *_args: t.ContainerValue, **_kwargs: t.ContainerValue
+            _self: FlextInfraDependencyPathSync,
+            _pyproject_path: Path,
+            *,
+            mode: str,
+            internal_names: set[str],
+            is_root: bool = False,
+            dry_run: bool = False,
         ) -> r[list[str]]:
+            _ = _self, _pyproject_path, mode, internal_names, is_root, dry_run
             calls["n"] += 1
             if calls["n"] == 1:
                 return r[list[str]].ok([])
@@ -92,7 +99,7 @@ class TestMainEdgeCases:
         )
 
         def _discover_none(
-            _self: object,
+            _self: FlextInfraUtilitiesDiscovery,
             _root: Path,
         ) -> r[list[m.Infra.Workspace.ProjectInfo]]:
             return r[list[m.Infra.Workspace.ProjectInfo]].ok([])
@@ -118,7 +125,7 @@ class TestMainEdgeCases:
         (project_dir / "pyproject.toml").write_text('[project]\nname = "flext-core"\n')
 
         def _discover_project(
-            _self: object,
+            _self: FlextInfraUtilitiesDiscovery,
             _root: Path,
         ) -> r[list[m.Infra.Workspace.ProjectInfo]]:
             return r[list[m.Infra.Workspace.ProjectInfo]].ok([_project(project_dir)])
@@ -130,9 +137,15 @@ class TestMainEdgeCases:
         )
 
         def _rewrite_ok(
-            *_args: t.ContainerValue,
-            **_kwargs: t.ContainerValue,
+            _self: FlextInfraDependencyPathSync,
+            _pyproject_path: Path,
+            *,
+            mode: str,
+            internal_names: set[str],
+            is_root: bool = False,
+            dry_run: bool = False,
         ) -> r[list[str]]:
+            _ = _self, _pyproject_path, mode, internal_names, is_root, dry_run
             return r[list[str]].ok([])
 
         monkeypatch.setattr(
@@ -157,7 +170,7 @@ class TestMainEdgeCases:
         monkeypatch.setattr(FlextInfraDependencyPathSync, "ROOT", tmp_path)
 
         def _discover_none(
-            _self: object,
+            _self: FlextInfraUtilitiesDiscovery,
             _root: Path,
         ) -> r[list[m.Infra.Workspace.ProjectInfo]]:
             return r[list[m.Infra.Workspace.ProjectInfo]].ok([])
@@ -182,7 +195,7 @@ class TestMainEdgeCases:
         monkeypatch.setattr(FlextInfraDependencyPathSync, "ROOT", tmp_path)
 
         def _discover_project(
-            _self: object,
+            _self: FlextInfraUtilitiesDiscovery,
             _root: Path,
         ) -> r[list[m.Infra.Workspace.ProjectInfo]]:
             return r[list[m.Infra.Workspace.ProjectInfo]].ok([_project(project_dir)])

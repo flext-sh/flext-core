@@ -170,7 +170,7 @@ class FlextUtilitiesArgs:
              def process(self, status: Status) -> "r[bool]":
                  # If status invalid → returns r.fail()
                  # If status valid → executes normally
-                 return r.ok(True)
+                 return r[bool].ok(True)
 
         """
         validated_func: Callable[P, r[V]] = validate_call(

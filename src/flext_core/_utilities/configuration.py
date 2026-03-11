@@ -226,13 +226,16 @@ class FlextUtilitiesConfiguration:
 
     @staticmethod
     def _try_get_from_duck_model_dump(
-        obj: object, parameter: str
+        obj: p.HasModelDump | t.ConfigurationMapping | t.ContainerValue,
+        parameter: str,
     ) -> tuple[bool, t.ContainerValue]:
         try:
             model_dump_attr = getattr(obj, "model_dump", None)
             if model_dump_attr is None or not callable(model_dump_attr):
                 return FlextUtilitiesConfiguration._NOT_FOUND
-            obj_dict: object = model_dump_attr()
+            obj_dict: t.ContainerValue = FlextRuntime.normalize_to_general_value(
+                model_dump_attr()
+            )
             if FlextUtilitiesGuards.is_mapping(obj_dict) and parameter in obj_dict:
                 raw_value = obj_dict[parameter]
                 if raw_value is None or isinstance(raw_value, (str, int, float, bool)):

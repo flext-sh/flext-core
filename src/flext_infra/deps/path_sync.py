@@ -7,6 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import argparse
+import sys
 from collections.abc import Mapping
 from pathlib import Path
 
@@ -16,7 +17,6 @@ from tomlkit.toml_document import TOMLDocument
 from flext_core import FlextLogger, r
 from flext_infra import (
     FlextInfraUtilitiesDiscovery,
-    FlextInfraUtilitiesPaths,
     FlextInfraUtilitiesToml,
     c,
     m,
@@ -24,30 +24,12 @@ from flext_infra import (
     u,
 )
 
-logger = FlextLogger.create_module_logger(__name__)
-
-
-class _FlextInfraOutput:
-    """Injectable output adapter for structured info messages."""
-
-    def info(self, message: str) -> None:
-        """Log an info message via the infra utilities facade."""
-        u.Infra.info(message)
-
-
-output: _FlextInfraOutput = _FlextInfraOutput()
-
 
 class FlextInfraDependencyPathSync:
     """Rewrite internal FLEXT dependency paths for workspace or standalone mode."""
 
-    _resolver = FlextInfraUtilitiesPaths()
-    _root_result = _resolver.workspace_root_from_file(__file__)
-    ROOT: Path = (
-        _root_result.value
-        if _root_result.is_success
-        else Path(__file__).resolve().parents[4]
-    )
+    ROOT = u.Infra.resolve_workspace_root(__file__)
+    _log = FlextLogger.create_module_logger(__name__)
 
     def __init__(self) -> None:
         """Initialize the dependency path sync service with TOML service."""
@@ -246,7 +228,7 @@ class FlextInfraDependencyPathSync:
 
         if mode == "auto":
             mode = self.detect_mode(self.ROOT)
-            output.info(f"[sync-dep-paths] auto-detected mode: {mode}")
+            u.Infra.info(f"[sync-dep-paths] auto-detected mode: {mode}")
 
         total_changes = 0
         internal_names: set[str] = set()
@@ -271,7 +253,7 @@ class FlextInfraDependencyPathSync:
                 dry_run=args.dry_run,
             )
             if changes_result.is_failure:
-                logger.error(
+                self._log.error(
                     "sync_dep_paths_root_failed",
                     pyproject=str(root_pyproject),
                     error=changes_result.error,
@@ -280,14 +262,14 @@ class FlextInfraDependencyPathSync:
             changes: list[str] = changes_result.value
             if changes:
                 prefix = "[DRY-RUN] " if args.dry_run else ""
-                output.info(f"{prefix}{root_pyproject}:")
+                u.Infra.info(f"{prefix}{root_pyproject}:")
                 for change in changes:
-                    output.info(change)
+                    u.Infra.info(change)
                 total_changes += len(changes)
 
         discover_result = FlextInfraUtilitiesDiscovery().discover_projects(self.ROOT)
         if discover_result.is_failure:
-            logger.error(
+            self._log.error(
                 "sync_dep_paths_discovery_failed",
                 root=str(self.ROOT),
                 error=discover_result.error,
@@ -328,27 +310,27 @@ class FlextInfraDependencyPathSync:
                 dry_run=args.dry_run,
             )
             if changes_result.is_failure:
-                logger.error(
+                self._log.error(
                     "sync_dep_paths_project_failed",
                     pyproject=str(pyproject),
                     error=changes_result.error,
                 )
-                continue
+                return 1
             project_changes: list[str] = changes_result.value
             if project_changes:
                 prefix = "[DRY-RUN] " if args.dry_run else ""
-                output.info(f"{prefix}{pyproject}:")
+                u.Infra.info(f"{prefix}{pyproject}:")
                 for change in project_changes:
-                    output.info(change)
+                    u.Infra.info(change)
                 total_changes += len(project_changes)
 
         if total_changes == 0:
-            output.info(
+            u.Infra.info(
                 "[sync-dep-paths] No changes needed - all paths already match target mode."
             )
         else:
             action = "would change" if args.dry_run else "changed"
-            output.info(f"[sync-dep-paths] {action} {total_changes} path(s).")
+            u.Infra.info(f"[sync-dep-paths] {action} {total_changes} path(s).")
         return 0
 
 
@@ -358,7 +340,7 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    sys.exit(main())
 
 
-__all__ = ["FlextInfraDependencyPathSync", "main", "output"]
+__all__ = ["FlextInfraDependencyPathSync", "main"]

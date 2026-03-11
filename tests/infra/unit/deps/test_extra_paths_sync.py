@@ -10,9 +10,8 @@ from tomlkit.toml_document import TOMLDocument
 
 from flext_core import r
 from flext_infra.deps import extra_paths
-from flext_infra.deps.extra_paths import main, sync_extra_paths, sync_one
+from flext_infra.deps.extra_paths import FlextInfraExtraPathsManager, main
 from flext_tests import tf, tm
-from tests.infra.typings import t
 
 
 @pytest.fixture
@@ -22,6 +21,10 @@ def pyright_content() -> str:
 
 def _create_pyproject(directory: Path, content: str) -> Path:
     return tf.create_in(content=content, name="pyproject.toml", directory=directory)
+
+
+def _manager() -> FlextInfraExtraPathsManager:
+    return FlextInfraExtraPathsManager()
 
 
 @pytest.mark.parametrize(
@@ -53,17 +56,19 @@ def test_sync_extra_paths_success_modes(
         )
         pyproject = _create_pyproject(project, content)
         project_dirs_arg = [project] if project_dirs else []
-        result = sync_extra_paths(dry_run=dry_run, project_dirs=project_dirs_arg)
+        result = _manager().sync_extra_paths(
+            dry_run=dry_run, project_dirs=project_dirs_arg
+        )
         tm.ok(result)
         if expect_has:
             tm.that(pyproject.read_text(encoding="utf-8"), has=expect_has)
         return
     if mode == "root":
-        monkeypatch.setattr(extra_paths, "ROOT", tmp_path)
+        monkeypatch.setattr(FlextInfraExtraPathsManager, "ROOT", tmp_path)
         _ = _create_pyproject(tmp_path, pyright_content)
-        tm.ok(sync_extra_paths())
+        tm.ok(_manager().sync_extra_paths())
         return
-    result = sync_extra_paths(
+    result = _manager().sync_extra_paths(
         dry_run=dry_run, project_dirs=[] if project_dirs == [] else None
     )
     if expect_fail:
@@ -75,8 +80,8 @@ def test_sync_extra_paths_success_modes(
 def test_sync_extra_paths_missing_root_pyproject(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setattr(extra_paths, "ROOT", tmp_path)
-    tm.fail(sync_extra_paths(), has="Missing")
+    monkeypatch.setattr(FlextInfraExtraPathsManager, "ROOT", tmp_path)
+    tm.fail(_manager().sync_extra_paths(), has="Missing")
 
 
 def test_sync_extra_paths_sync_failure(
@@ -86,13 +91,17 @@ def test_sync_extra_paths_sync_failure(
     project.mkdir()
 
     def _fail_sync(
-        *_args: t.ContainerValue,
-        **_kwargs: t.ContainerValue,
+        _self: FlextInfraExtraPathsManager,
+        _pyproject_path: Path,
+        *,
+        dry_run: bool = False,
+        is_root: bool = False,
     ) -> r[bool]:
+        _ = _self, _pyproject_path, dry_run, is_root
         return r[bool].fail("sync error")
 
-    monkeypatch.setattr(extra_paths, "sync_one", _fail_sync)
-    tm.fail(sync_extra_paths(project_dirs=[project]), has="sync error")
+    monkeypatch.setattr(FlextInfraExtraPathsManager, "sync_one", _fail_sync)
+    tm.fail(_manager().sync_extra_paths(project_dirs=[project]), has="sync error")
 
 
 @pytest.mark.parametrize(
@@ -117,7 +126,7 @@ def test_main_success_modes(
     argv: list[str],
     expected_exit: int,
 ) -> None:
-    monkeypatch.setattr(extra_paths, "ROOT", tmp_path)
+    monkeypatch.setattr(FlextInfraExtraPathsManager, "ROOT", tmp_path)
     if mode == "root":
         _ = _create_pyproject(tmp_path, pyright_content)
     if mode == "project":
@@ -142,12 +151,15 @@ def test_main_sync_failure(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(sys, "argv", ["extra_paths.py"])
 
     def _fail_sync(
-        *_args: t.ContainerValue,
-        **_kwargs: t.ContainerValue,
+        _self: FlextInfraExtraPathsManager,
+        *,
+        dry_run: bool = False,
+        project_dirs: list[Path] | None = None,
     ) -> r[int]:
+        _ = _self, dry_run, project_dirs
         return r[int].fail("sync error")
 
-    monkeypatch.setattr(extra_paths, "sync_extra_paths", _fail_sync)
+    monkeypatch.setattr(FlextInfraExtraPathsManager, "sync_extra_paths", _fail_sync)
     tm.that(main(), eq=1)
 
 
@@ -170,13 +182,15 @@ def test_sync_one_edge_cases(
 ) -> None:
     if mode == "nonexistent":
         tm.that(
-            sync_one(Path("/nonexistent/pyproject.toml"), dry_run=dry_run).is_success,
+            _manager()
+            .sync_one(Path("/nonexistent/pyproject.toml"), dry_run=dry_run)
+            .is_success,
             eq=False,
         )
         return
     if mode == "invalid":
         pyproject = _create_pyproject(tmp_path, "invalid toml {")
-        result = sync_one(pyproject, dry_run=dry_run)
+        result = _manager().sync_one(pyproject, dry_run=dry_run)
         if expect_fail:
             tm.fail(result)
             return
@@ -201,4 +215,4 @@ def test_sync_one_edge_cases(
         write_document=_write_document,
     )
     monkeypatch.setattr(extra_paths, "FlextInfraUtilitiesToml", lambda: stub)
-    tm.ok(sync_one(pyproject, is_root=True, dry_run=dry_run))
+    tm.ok(_manager().sync_one(pyproject, is_root=True, dry_run=dry_run))

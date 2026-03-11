@@ -261,7 +261,7 @@ class FlextDispatcher:
             return msg
         route_attrs = ("command_type", "query_type", "event_type")
         for attr in route_attrs:
-            attr_val: object = getattr(msg, attr, None)
+            attr_val: t.ContainerValue = getattr(msg, attr, None)
             if isinstance(attr_val, str) and attr_val:
                 return attr_val
         if isinstance(msg, type) and issubclass(msg, BaseModel):

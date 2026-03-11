@@ -202,7 +202,7 @@ class FlextRegistry(s[bool]):
 
     @staticmethod
     def _is_protocol_handler(
-        value: object,
+        value: t.ContainerValue,
     ) -> TypeGuard[p.Handler[t.ContainerValue, t.ContainerValue]]:
         return bool(
             hasattr(value, "handle")
@@ -267,13 +267,13 @@ class FlextRegistry(s[bool]):
 
         message_type_attr = getattr(handler_for_dispatch, "message_type", None)
         if message_type_attr is not None:
-            setattr(_dispatch_wrapper, "message_type", message_type_attr)
+            _dispatch_wrapper.message_type = message_type_attr
         event_type_attr = getattr(handler_for_dispatch, "event_type", None)
         if event_type_attr is not None:
-            setattr(_dispatch_wrapper, "event_type", event_type_attr)
+            _dispatch_wrapper.event_type = event_type_attr
         can_handle_attr = getattr(handler_for_dispatch, "can_handle", None)
         if can_handle_attr is not None:
-            setattr(_dispatch_wrapper, "can_handle", can_handle_attr)
+            _dispatch_wrapper.can_handle = can_handle_attr
         return _dispatch_wrapper
 
     @override

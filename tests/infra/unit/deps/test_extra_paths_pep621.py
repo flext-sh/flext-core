@@ -2,26 +2,30 @@ from __future__ import annotations
 
 import tomlkit
 
-from flext_infra.deps.extra_paths import path_dep_paths_pep621, path_dep_paths_poetry
+from flext_infra.deps.extra_paths import FlextInfraExtraPathsManager
 from flext_tests import tm
 
 from ...helpers import h
 
 
+def _manager() -> FlextInfraExtraPathsManager:
+    return FlextInfraExtraPathsManager()
+
+
 class TestPathDepPathsPep621:
     def test_pep621_empty_doc(self) -> None:
         doc = tomlkit.document()
-        tm.that(path_dep_paths_pep621(doc), eq=[])
+        tm.that(_manager().path_dep_paths_pep621(doc), eq=[])
 
     def test_pep621_no_project(self) -> None:
         doc = tomlkit.document()
         doc["other"] = tomlkit.table()
-        tm.that(path_dep_paths_pep621(doc), eq=[])
+        tm.that(_manager().path_dep_paths_pep621(doc), eq=[])
 
     def test_pep621_no_dependencies(self) -> None:
         doc = tomlkit.document()
         doc["project"] = {"name": "test"}
-        tm.that(path_dep_paths_pep621(doc), eq=[])
+        tm.that(_manager().path_dep_paths_pep621(doc), eq=[])
 
     def test_pep621_with_file_deps(self) -> None:
         doc = tomlkit.document()
@@ -31,14 +35,14 @@ class TestPathDepPathsPep621:
                 "flext-api @ file:../flext-api",
             ],
         }
-        result = path_dep_paths_pep621(doc)
+        result = _manager().path_dep_paths_pep621(doc)
         tm.that(any("flext-core" in item for item in result), eq=True)
         tm.that(any("flext-api" in item for item in result), eq=True)
 
     def test_pep621_with_relative_deps(self) -> None:
         doc = tomlkit.document()
         doc["project"] = {"dependencies": ["flext-core @ ./flext-core"]}
-        result = path_dep_paths_pep621(doc)
+        result = _manager().path_dep_paths_pep621(doc)
         tm.that(any("flext-core" in item for item in result), eq=True)
 
     def test_pep621_mixed_deps(self) -> None:
@@ -50,38 +54,38 @@ class TestPathDepPathsPep621:
                 "pydantic",
             ],
         }
-        result = path_dep_paths_pep621(doc)
+        result = _manager().path_dep_paths_pep621(doc)
         tm.that(any("flext-core" in item for item in result), eq=True)
         tm.that(len(result), eq=1)
 
     def test_pep621_with_file_prefix(self) -> None:
         doc = tomlkit.document()
         doc["project"] = {"dependencies": ["flext-core @ file://flext-core"]}
-        result = path_dep_paths_pep621(doc)
+        result = _manager().path_dep_paths_pep621(doc)
         tm.that(any("flext-core" in item for item in result), eq=True)
 
 
 class TestPathDepPathsPoetry:
     def test_poetry_empty_doc(self) -> None:
         doc = tomlkit.document()
-        tm.that(path_dep_paths_poetry(doc), eq=[])
+        tm.that(_manager().path_dep_paths_poetry(doc), eq=[])
 
     def test_poetry_no_tool(self) -> None:
         doc = tomlkit.document()
         doc["project"] = tomlkit.table()
-        tm.that(path_dep_paths_poetry(doc), eq=[])
+        tm.that(_manager().path_dep_paths_poetry(doc), eq=[])
 
     def test_poetry_no_poetry_section(self) -> None:
         doc = tomlkit.document()
         tool = tomlkit.table()
         tool["other"] = tomlkit.table()
         doc["tool"] = tool
-        tm.that(path_dep_paths_poetry(doc), eq=[])
+        tm.that(_manager().path_dep_paths_poetry(doc), eq=[])
 
     def test_poetry_no_dependencies(self) -> None:
         doc = tomlkit.document()
         doc["tool"] = {"poetry": {"name": "test"}}
-        tm.that(path_dep_paths_poetry(doc), eq=[])
+        tm.that(_manager().path_dep_paths_poetry(doc), eq=[])
 
     def test_poetry_with_path_deps(self) -> None:
         doc = tomlkit.document()
@@ -93,7 +97,7 @@ class TestPathDepPathsPoetry:
                 }
             }
         }
-        result = path_dep_paths_poetry(doc)
+        result = _manager().path_dep_paths_poetry(doc)
         tm.that(any("flext-core" in item for item in result), eq=True)
         tm.that(any("flext-api" in item for item in result), eq=True)
 
@@ -102,7 +106,7 @@ class TestPathDepPathsPoetry:
         doc["tool"] = {
             "poetry": {"dependencies": {"flext-core": {"path": "./flext-core"}}}
         }
-        result = path_dep_paths_poetry(doc)
+        result = _manager().path_dep_paths_poetry(doc)
         tm.that(any("flext-core" in item for item in result), eq=True)
 
     def test_poetry_mixed_deps(self) -> None:
@@ -116,7 +120,7 @@ class TestPathDepPathsPoetry:
                 }
             }
         }
-        result = path_dep_paths_poetry(doc)
+        result = _manager().path_dep_paths_poetry(doc)
         tm.that(any("flext-core" in item for item in result), eq=True)
         tm.that(len(result), eq=1)
 
@@ -125,7 +129,7 @@ class TestPathDepPathsPoetry:
         doc["tool"] = {
             "poetry": {"dependencies": {"flext-core": {"path": "../flext-core"}}}
         }
-        result = path_dep_paths_poetry(doc)
+        result = _manager().path_dep_paths_poetry(doc)
         tm.that(any("flext-core" in item for item in result), eq=True)
 
 

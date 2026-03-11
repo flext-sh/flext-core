@@ -215,7 +215,7 @@ class GetUserService(FlextService[User]):
         """Get user by ID."""
         if self.user_id in {"invalid", ""}:
             return r[User].fail("User not found")
-        return r.ok(
+        return r[User].ok(
             User(
                 unique_id=self.user_id,
                 name=f"User {self.user_id}",
@@ -235,7 +235,9 @@ class SendEmailService(FlextService[EmailResponse]):
         """Send email."""
         if "@" not in self.to:
             return r[EmailResponse].fail("Invalid email address")
-        return r.ok(EmailResponse(status="sent", message_id=f"msg-{self.to}"))
+        return r[EmailResponse].ok(
+            EmailResponse(status="sent", message_id=f"msg-{self.to}")
+        )
 
 
 class ValidationService(FlextService[m.ConfigMap]):
@@ -250,7 +252,7 @@ class ValidationService(FlextService[m.ConfigMap]):
             return r[m.ConfigMap].fail("Value must be positive")
         if self.value > 100:
             return r[m.ConfigMap].fail("Value must be <= 100")
-        return r.ok(m.ConfigMap(root={"valid": True, "value": self.value}))
+        return r[m.ConfigMap].ok(m.ConfigMap(root={"valid": True, "value": self.value}))
 
 
 class MultiOperationService(FlextService[m.ConfigMap]):
@@ -264,15 +266,15 @@ class MultiOperationService(FlextService[m.ConfigMap]):
         """Execute based on operation."""
         match self.operation:
             case "double":
-                return r.ok(
+                return r[m.ConfigMap].ok(
                     m.ConfigMap(root={"operation": "double", "result": self.value * 2}),
                 )
             case "square":
-                return r.ok(
+                return r[m.ConfigMap].ok(
                     m.ConfigMap(root={"operation": "square", "result": self.value**2}),
                 )
             case "negate":
-                return r.ok(
+                return r[m.ConfigMap].ok(
                     m.ConfigMap(root={"operation": "negate", "result": -self.value}),
                 )
             case _:
@@ -432,7 +434,7 @@ class TestPattern5MonadicComposition:
         pipeline = (
             _make(GetUserService, user_id="123")
             .execute()
-            .flat_map(lambda user: r.ok(user.email))
+            .flat_map(lambda user: r[str].ok(user.email))
             .flat_map(
                 lambda email: _make(
                     SendEmailService,
@@ -600,7 +602,7 @@ class TestAllPatternsIntegration:
 
             @override
             def execute(self) -> r[User]:
-                return r.ok(
+                return r[User].ok(
                     User(unique_id=self.user_id, name="Test", email="test@example.com"),
                 )
 

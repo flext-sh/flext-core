@@ -71,25 +71,37 @@ class FlextUtilitiesGuards:
         """Check if value is int."""
         return isinstance(value, int)
 
+    type _GuardInput = (
+        t.ContainerValue
+        | t.TypeHintSpecifier
+        | p.ValidatorSpec
+        | Callable[..., t.ContainerValue]
+        | None
+    )
+
     @staticmethod
     def _is_list_or_tuple(
-        value: object,
+        value: FlextUtilitiesGuards._GuardInput,
     ) -> TypeGuard[list[t.ContainerValue] | tuple[t.ContainerValue, ...]]:
         """Check if value is list or tuple."""
         return isinstance(value, (list, tuple))
 
     @staticmethod
     def _is_mapping(
-        value: object,
+        value: FlextUtilitiesGuards._GuardInput,
     ) -> TypeGuard[Mapping[str, t.ContainerValue]]:
         return isinstance(value, Mapping)
 
     @staticmethod
-    def is_object_list(value: object) -> TypeGuard[list[object]]:
+    def is_object_list(
+        value: FlextUtilitiesGuards._GuardInput,
+    ) -> TypeGuard[list[t.ContainerValue]]:
         return isinstance(value, list)
 
     @staticmethod
-    def is_object_tuple(value: object) -> TypeGuard[tuple[object, ...]]:
+    def is_object_tuple(
+        value: FlextUtilitiesGuards._GuardInput,
+    ) -> TypeGuard[tuple[t.ContainerValue, ...]]:
         return isinstance(value, tuple)
 
     @staticmethod
@@ -259,7 +271,9 @@ class FlextUtilitiesGuards:
         return False
 
     @staticmethod
-    def is_general_value_type(value: object) -> TypeGuard[t.ContainerValue]:
+    def is_general_value_type(
+        value: FlextUtilitiesGuards._GuardInput,
+    ) -> TypeGuard[t.ContainerValue]:
         """Check if value is a valid t.ContainerValue.
 
         t.ContainerValue = ScalarValue | Sequence[t.ContainerValue] | Mapping[str, t.ContainerValue]
@@ -294,7 +308,9 @@ class FlextUtilitiesGuards:
         return hasattr(value, "model_dump") or isinstance(value, Path)
 
     @staticmethod
-    def is_handler_callable(value: object) -> TypeGuard[t.HandlerCallable]:
+    def is_handler_callable(
+        value: FlextUtilitiesGuards._GuardInput,
+    ) -> TypeGuard[t.HandlerCallable]:
         """Check if value is a valid t.HandlerCallable."""
         return callable(value)
 
@@ -350,18 +366,22 @@ class FlextUtilitiesGuards:
 
     @staticmethod
     def is_mapping(
-        value: object,
+        value: FlextUtilitiesGuards._GuardInput,
     ) -> TypeGuard[Mapping[str, t.ContainerValue]]:
         """Check if value is ConfigurationMapping (Mapping[str, t.ContainerValue])."""
         return isinstance(value, Mapping)
 
     @staticmethod
-    def is_primitive(value: object) -> TypeGuard[t.Primitives]:
+    def is_primitive(
+        value: FlextUtilitiesGuards._GuardInput,
+    ) -> TypeGuard[t.Primitives]:
         """Check if value is a primitive type (str, int, float, bool)."""
         return isinstance(value, (str, int, float, bool))
 
     @staticmethod
-    def is_result_like(value: object) -> TypeGuard[p.ResultLike[t.ContainerValue]]:
+    def is_result_like(
+        value: FlextUtilitiesGuards._GuardInput,
+    ) -> TypeGuard[p.ResultLike[t.ContainerValue]]:
         """Check if value implements ResultLike protocol (has is_success, value, error).
 
         Uses try/except to avoid triggering property getters that may raise
@@ -382,7 +402,9 @@ class FlextUtilitiesGuards:
             )
 
     @staticmethod
-    def is_scalar(value: object) -> TypeGuard[t.Scalar]:
+    def is_scalar(
+        value: FlextUtilitiesGuards._GuardInput,
+    ) -> TypeGuard[t.Scalar]:
         """Check if value is a scalar type (str, int, float, bool, datetime)."""
         return isinstance(value, (str, int, float, bool, datetime))
 
@@ -411,32 +433,39 @@ class FlextUtilitiesGuards:
             raise AttributeError(msg)
         return value
 
-    _PROTOCOL_SPECS: Mapping[str, Callable[[object], bool]] = MappingProxyType({
-        "config": lambda v: (
-            hasattr(v, "app_name") and getattr(v, "app_name", None) is not None
-        ),
-        "context": lambda v: hasattr(v, "request_id") or hasattr(v, "correlation_id"),
-        "container": lambda v: (
-            hasattr(v, "register") and callable(getattr(v, "register", None))
-        ),
-        "command_bus": lambda v: (
-            hasattr(v, "dispatch") and callable(getattr(v, "dispatch", None))
-        ),
-        "handler": lambda v: (
-            hasattr(v, "handle") and callable(getattr(v, "handle", None))
-        ),
-        "logger": lambda v: all(
-            hasattr(v, a) for a in ("debug", "info", "warning", "error", "exception")
-        ),
-        "result": lambda v: all(
-            hasattr(v, a) for a in ("is_success", "is_failure", "value", "error")
-        ),
-        "service": lambda v: hasattr(v, "run") and callable(getattr(v, "run", None)),
-        "middleware": lambda v: (
-            hasattr(v, "before_dispatch")
-            and callable(getattr(v, "before_dispatch", None))
-        ),
-    })
+    _PROTOCOL_SPECS: Mapping[str, Callable[[t.ContainerValue], bool]] = (
+        MappingProxyType({
+            "config": lambda v: (
+                hasattr(v, "app_name") and getattr(v, "app_name", None) is not None
+            ),
+            "context": lambda v: (
+                hasattr(v, "request_id") or hasattr(v, "correlation_id")
+            ),
+            "container": lambda v: (
+                hasattr(v, "register") and callable(getattr(v, "register", None))
+            ),
+            "command_bus": lambda v: (
+                hasattr(v, "dispatch") and callable(getattr(v, "dispatch", None))
+            ),
+            "handler": lambda v: (
+                hasattr(v, "handle") and callable(getattr(v, "handle", None))
+            ),
+            "logger": lambda v: all(
+                hasattr(v, a)
+                for a in ("debug", "info", "warning", "error", "exception")
+            ),
+            "result": lambda v: all(
+                hasattr(v, a) for a in ("is_success", "is_failure", "value", "error")
+            ),
+            "service": lambda v: (
+                hasattr(v, "run") and callable(getattr(v, "run", None))
+            ),
+            "middleware": lambda v: (
+                hasattr(v, "before_dispatch")
+                and callable(getattr(v, "before_dispatch", None))
+            ),
+        })
+    )
     _PROTOCOL_TYPE_MAP: Mapping[type, str] = MappingProxyType({
         p.Config: "config",
         p.Context: "context",
@@ -688,7 +717,9 @@ class FlextUtilitiesGuards:
         return r[T].fail(error_message)
 
     @staticmethod
-    def _is_type_tuple(value: object) -> TypeGuard[tuple[type, ...]]:
+    def _is_type_tuple(
+        value: FlextUtilitiesGuards._GuardInput,
+    ) -> TypeGuard[tuple[type, ...]]:
         if not FlextUtilitiesGuards.is_object_tuple(value):
             return False
         return all(isinstance(item, type) for item in value)
@@ -947,7 +978,7 @@ class FlextUtilitiesGuards:
         context_name = context or "Value"
         if len(conditions) == 0:
             if bool(value):
-                return value if return_value else r.ok(value)
+                return value if return_value else r[T].ok(value)
             failure_message = error_message or f"{context_name} guard failed"
             return FlextUtilitiesGuards._guard_handle_failure(
                 failure_message, return_value=return_value, default=default
@@ -960,7 +991,7 @@ class FlextUtilitiesGuards:
                 return FlextUtilitiesGuards._guard_handle_failure(
                     condition_error, return_value=return_value, default=default
                 )
-        return value if return_value else r.ok(value)
+        return value if return_value else r[T].ok(value)
 
     @staticmethod
     def has(obj: t.ContainerValue, key: str) -> bool:
