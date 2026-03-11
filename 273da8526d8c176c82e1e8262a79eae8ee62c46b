@@ -1,0 +1,40 @@
+src/flext_infra/deps/_phases/ensure_extra_paths.py
+  d0a403e0abbf7c16 1-30
+src/flext_infra/deps/tool_config.yml
+  0e31d40591d24537 411-425
+src/flext_infra/deps/tool_config.py
+  0e31d40591d24537 343-344
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.10",
+  "base_commit_sha": "273da8526d8c176c82e1e8262a79eae8ee62c46b",
+  "prompts": {
+    "0e31d40591d24537": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_32287ce5effee6sjErucxetCOp",
+        "model": "anthropic/claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 17,
+      "total_deletions": 0,
+      "accepted_lines": 17,
+      "overriden_lines": 0
+    },
+    "d0a403e0abbf7c16": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_322881f8dfferoxcoHIkdxCUeh",
+        "model": "anthropic/claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 31,
+      "total_deletions": 0,
+      "accepted_lines": 30,
+      "overriden_lines": 0
+    }
+  }
+}
