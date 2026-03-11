@@ -742,7 +742,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         msg: str | t.ContainerValue,
         *args: t.ContainerValue,
         _return_result: Literal[True],
-        **kw: t.ContainerValue | Exception,
+        **kw: t.MetadataValue,
     ) -> r[bool]: ...
 
     @overload
@@ -751,7 +751,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         msg: str | t.ContainerValue,
         *args: t.ContainerValue,
         _return_result: Literal[False] = ...,
-        **kw: t.ContainerValue | Exception,
+        **kw: t.MetadataValue,
     ) -> None: ...
 
     @overload
@@ -759,7 +759,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         self,
         msg: str | t.ContainerValue,
         *args: t.ContainerValue,
-        **kw: t.ContainerValue | Exception,
+        **kw: t.MetadataValue,
     ) -> r[bool] | None: ...
 
     @override
@@ -767,7 +767,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         self,
         msg: str | t.ContainerValue,
         *args: t.ContainerValue,
-        **kw: t.ContainerValue | Exception,
+        **kw: t.MetadataValue,
     ) -> r[bool] | None:
         """Log critical message - Logger.Log implementation.
 
@@ -788,7 +788,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         msg: str | t.ContainerValue,
         *args: t.ContainerValue | Exception,
         _return_result: Literal[True],
-        **kw: t.ContainerValue | Exception,
+        **kw: t.MetadataValue,
     ) -> r[bool]: ...
 
     @overload
@@ -797,7 +797,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         msg: str | t.ContainerValue,
         *args: t.ContainerValue | Exception,
         _return_result: Literal[False] = ...,
-        **kw: t.ContainerValue | Exception,
+        **kw: t.MetadataValue,
     ) -> None: ...
 
     @overload
@@ -805,7 +805,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         self,
         msg: str | t.ContainerValue,
         *args: t.ContainerValue | Exception,
-        **kw: t.ContainerValue | Exception,
+        **kw: t.MetadataValue,
     ) -> r[bool] | None: ...
 
     @override
@@ -813,7 +813,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         self,
         msg: str | t.ContainerValue,
         *args: t.ContainerValue | Exception,
-        **kw: t.ContainerValue | Exception,
+        **kw: t.MetadataValue,
     ) -> r[bool] | None:
         """Log debug message - Logger.Log implementation.
 
@@ -834,7 +834,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         msg: str | t.ContainerValue,
         *args: t.ContainerValue,
         _return_result: Literal[True],
-        **kw: t.ContainerValue | Exception,
+        **kw: t.MetadataValue,
     ) -> r[bool]: ...
 
     @overload
@@ -843,7 +843,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         msg: str | t.ContainerValue,
         *args: t.ContainerValue,
         _return_result: Literal[False] = ...,
-        **kw: t.ContainerValue | Exception,
+        **kw: t.MetadataValue,
     ) -> None: ...
 
     @overload
@@ -851,7 +851,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         self,
         msg: str | t.ContainerValue,
         *args: t.ContainerValue,
-        **kw: t.ContainerValue | Exception,
+        **kw: t.MetadataValue,
     ) -> r[bool] | None: ...
 
     @override
@@ -859,7 +859,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         self,
         msg: str | t.ContainerValue,
         *args: t.ContainerValue,
-        **kw: t.ContainerValue | Exception,
+        **kw: t.MetadataValue,
     ) -> r[bool] | None:
         """Log error message - Logger.Log implementation.
 
@@ -880,7 +880,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         msg: str | t.ContainerValue,
         *args: t.ContainerValue,
         _return_result: Literal[True],
-        **kw: t.ContainerValue | Exception,
+        **kw: t.MetadataValue,
     ) -> r[bool]: ...
 
     @overload
@@ -889,7 +889,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         msg: str | t.ContainerValue,
         *args: t.ContainerValue,
         _return_result: Literal[False] = ...,
-        **kw: t.ContainerValue | Exception,
+        **kw: t.MetadataValue,
     ) -> None: ...
 
     @overload
@@ -897,7 +897,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         self,
         msg: str | t.ContainerValue,
         *args: t.ContainerValue,
-        **kw: t.ContainerValue | Exception,
+        **kw: t.MetadataValue,
     ) -> r[bool] | None: ...
 
     @override
@@ -905,7 +905,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         self,
         msg: str | t.ContainerValue,
         *args: t.ContainerValue,
-        **kw: t.ContainerValue | Exception,
+        **kw: t.MetadataValue,
     ) -> r[bool] | None:
         """Log exception with conditional stack trace (DEBUG only).
 
@@ -960,7 +960,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         msg: str | t.ContainerValue,
         *args: t.ContainerValue,
         _return_result: Literal[True],
-        **kw: t.ContainerValue | Exception,
+        **kw: t.MetadataValue,
     ) -> r[bool]: ...
 
     @overload
@@ -969,7 +969,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         msg: str | t.ContainerValue,
         *args: t.ContainerValue,
         _return_result: Literal[False] = ...,
-        **kw: t.ContainerValue | Exception,
+        **kw: t.MetadataValue,
     ) -> None: ...
 
     @overload
@@ -977,7 +977,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         self,
         msg: str | t.ContainerValue,
         *args: t.ContainerValue,
-        **kw: t.ContainerValue | Exception,
+        **kw: t.MetadataValue,
     ) -> r[bool] | None: ...
 
     @override
@@ -985,7 +985,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         self,
         msg: str | t.ContainerValue,
         *args: t.ContainerValue,
-        **kw: t.ContainerValue | Exception,
+        **kw: t.MetadataValue,
     ) -> r[bool] | None:
         """Log info message - Logger.Log implementation.
 
@@ -1007,7 +1007,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         message: str,
         *args: t.ContainerValue,
         _return_result: Literal[True],
-        **context: t.ContainerValue | Exception,
+        **context: t.MetadataValue,
     ) -> r[bool]: ...
 
     @overload
@@ -1017,7 +1017,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         message: str,
         *args: t.ContainerValue,
         _return_result: Literal[False] = ...,
-        **context: t.ContainerValue | Exception,
+        **context: t.MetadataValue,
     ) -> None: ...
 
     def log(
@@ -1025,7 +1025,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         level: str,
         message: str,
         *args: t.ContainerValue,
-        **context: t.ContainerValue | Exception,
+        **context: t.MetadataValue,
     ) -> r[bool] | None:
         """Log message with specified level - Logger.Log implementation.
 
@@ -1063,7 +1063,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         message: str,
         *args: t.ContainerValue,
         _return_result: Literal[True],
-        **kwargs: t.ContainerValue | Exception,
+        **kwargs: t.MetadataValue,
     ) -> r[bool]: ...
 
     @overload
@@ -1072,14 +1072,14 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         message: str,
         *args: t.ContainerValue,
         _return_result: Literal[False] = ...,
-        **kwargs: t.ContainerValue | Exception,
+        **kwargs: t.MetadataValue,
     ) -> None: ...
 
     def trace(
         self,
         message: str,
         *args: t.ContainerValue,
-        **kwargs: t.ContainerValue | Exception,
+        **kwargs: t.MetadataValue,
     ) -> r[bool] | None:
         """Log trace message - Logger.Log implementation."""
         try:
@@ -1113,7 +1113,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         msg: str | t.ContainerValue,
         *args: t.ContainerValue,
         _return_result: Literal[True],
-        **kw: t.ContainerValue | Exception,
+        **kw: t.MetadataValue,
     ) -> r[bool]: ...
 
     @overload
@@ -1122,7 +1122,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         msg: str | t.ContainerValue,
         *args: t.ContainerValue,
         _return_result: Literal[False] = ...,
-        **kw: t.ContainerValue | Exception,
+        **kw: t.MetadataValue,
     ) -> None: ...
 
     @overload
@@ -1130,7 +1130,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         self,
         msg: str | t.ContainerValue,
         *args: t.ContainerValue,
-        **kw: t.ContainerValue | Exception,
+        **kw: t.MetadataValue,
     ) -> r[bool] | None: ...
 
     @override
@@ -1138,7 +1138,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         self,
         msg: str | t.ContainerValue,
         *args: t.ContainerValue,
-        **kw: t.ContainerValue | Exception,
+        **kw: t.MetadataValue,
     ) -> r[bool] | None:
         """Log warning message - Logger.Log implementation.
 
@@ -1170,7 +1170,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         _level: c.Settings.LogLevel | str,
         message: str,
         *args: t.ContainerValue,
-        **context: t.ContainerValue | Exception,
+        **context: t.MetadataValue,
     ) -> r[bool] | None:
         """Internal logging method - consolidates all log level methods.
 
@@ -1208,7 +1208,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         level: c.Settings.LogLevel,
         msg: str | t.ContainerValue,
         *args: t.ContainerValue | Exception,
-        **kw: t.ContainerValue | Exception,
+        **kw: t.MetadataValue,
     ) -> r[bool] | None:
         message = str(msg)
         filtered_args: tuple[t.ContainerValue, ...] = tuple(

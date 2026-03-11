@@ -12,9 +12,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+import importlib
+from collections.abc import MutableMapping
+from typing import TYPE_CHECKING
 
-from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
+from flext_core import t
+from flext_core.lazy import cleanup_submodule_namespace
 
 if TYPE_CHECKING:
     from flext_infra.deps._phases.ensure_formatting import EnsureFormattingToolingPhase
@@ -133,9 +136,17 @@ __all__ = [
 ]
 
 
-def __getattr__(name: str) -> Any:
+def __getattr__(name: str) -> t.ContainerValue:
     """Lazy-load module attributes on first access (PEP 562)."""
-    return lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)
+    if name in _LAZY_IMPORTS:
+        module_path, attr_name = _LAZY_IMPORTS[name]
+        module = importlib.import_module(module_path)
+        value = getattr(module, attr_name)
+        module_globals: MutableMapping[str, t.ContainerValue] = globals()
+        module_globals[name] = value
+        return value
+    msg = f"module {__name__!r} has no attribute {name!r}"
+    raise AttributeError(msg)
 
 
 def __dir__() -> list[str]:

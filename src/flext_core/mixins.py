@@ -244,7 +244,7 @@ class FlextMixins(FlextRuntime):
 
     @staticmethod
     def _with_operation_context(
-        operation_name: str, **operation_data: t.ContainerValue
+        operation_name: str, **operation_data: t.MetadataValue
     ) -> None:
         """Set operation context with level-based binding (DEBUG/ERROR/normal)."""
         FlextMixins._propagate_context(operation_name)
@@ -373,7 +373,7 @@ class FlextMixins(FlextRuntime):
         finally:
             FlextMixins._clear_operation_context()
 
-    def _enrich_context(self, **context_data: t.ContainerValue) -> None:
+    def _enrich_context(self, **context_data: t.MetadataValue) -> None:
         """Log service information ONCE at initialization (not bound to context)."""
         service_context: m.ConfigMap = m.ConfigMap(
             root={
