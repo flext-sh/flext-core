@@ -5,13 +5,14 @@ from __future__ import annotations
 import tomlkit
 from tomlkit.items import Table
 
-from flext_infra import c, m, u
+from flext_infra import c, u
+from flext_infra.deps._models import ToolConfigDocument
 
 
 class EnsureMypyConfigPhase:
     """Ensure standard mypy configuration with pydantic plugin across all projects."""
 
-    def __init__(self, tool_config: m.Infra.Deps.ToolConfigDocument) -> None:
+    def __init__(self, tool_config: ToolConfigDocument) -> None:
         self._tool_config = tool_config
 
     def apply(self, doc: tomlkit.TOMLDocument) -> list[str]:

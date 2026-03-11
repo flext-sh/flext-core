@@ -323,13 +323,13 @@ class FlextInfraDependencyPathSync:
                     error=changes_result.error,
                 )
                 continue
-            changes: list[str] = changes_result.value
-            if changes:
+            project_changes: list[str] = changes_result.value
+            if project_changes:
                 prefix = "[DRY-RUN] " if args.dry_run else ""
                 u.Infra.info(f"{prefix}{pyproject}:")
-                for change in changes:
+                for change in project_changes:
                     u.Infra.info(change)
-                total_changes += len(changes)
+                total_changes += len(project_changes)
 
         if total_changes == 0:
             u.Infra.info(

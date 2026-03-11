@@ -14,8 +14,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import threading
-from pathlib import Path
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
+from pathlib import Path
 from typing import ClassVar, Self
 
 from pydantic import (
@@ -139,7 +139,7 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
     )
     _di_provider: t.Scalar | None = PrivateAttr(default=None)
 
-    def __new__(cls, **_kwargs: object) -> Self:
+    def __new__(cls, **_kwargs: t.ContainerValue) -> Self:
         """Create singleton instance.
 
         Note: BaseSettings.__init__ accepts **values internally.
@@ -160,7 +160,7 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
             raise TypeError(msg)
         return raw_instance
 
-    def __init__(self, **kwargs: object) -> None:
+    def __init__(self, **kwargs: t.ContainerValue) -> None:
         """Initialize config with data.
 
         Kwargs are applied as field overrides after base env/config loading
@@ -178,7 +178,7 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
             _nested_model_default_partial_update=None,
             _env_prefix=None,
             _env_prefix_target=None,
-            _env_file=Path("."),
+            _env_file=Path(),
             _env_file_encoding=None,
             _env_ignore_empty=None,
             _env_nested_delimiter=None,

@@ -10,11 +10,12 @@ from pydantic import ValidationError
 from yaml import YAMLError, safe_load
 
 from flext_core import r
-from flext_infra import c, m, t
+from flext_infra import c, t
+from flext_infra.deps._models import ToolConfigDocument
 
 
 @lru_cache(maxsize=1)
-def _load_tool_config_cached() -> r[m.Infra.Deps.ToolConfigDocument]:
+def _load_tool_config_cached() -> r[ToolConfigDocument]:
     """Load, validate, and cache tool_config.yml."""
     try:
         raw_text = (
@@ -26,19 +27,19 @@ def _load_tool_config_cached() -> r[m.Infra.Deps.ToolConfigDocument]:
         )
         parsed_raw: t.ContainerValue | None = safe_load(raw_text)
         if not isinstance(parsed_raw, Mapping):
-            return r[m.Infra.Deps.ToolConfigDocument].fail(
+            return r[ToolConfigDocument].fail(
                 "tool_config.yml must contain a top-level mapping",
             )
         payload: dict[str, t.ContainerValue] = dict(parsed_raw.items())
-        validated = m.Infra.Deps.ToolConfigDocument.model_validate(payload)
-        return r[m.Infra.Deps.ToolConfigDocument].ok(validated)
+        validated = ToolConfigDocument.model_validate(payload)
+        return r[ToolConfigDocument].ok(validated)
     except (FileNotFoundError, OSError, YAMLError, ValidationError, TypeError) as exc:
-        return r[m.Infra.Deps.ToolConfigDocument].fail(
+        return r[ToolConfigDocument].fail(
             f"failed to load tool_config.yml: {exc}",
         )
 
 
-def load_tool_config() -> r[m.Infra.Deps.ToolConfigDocument]:
+def load_tool_config() -> r[ToolConfigDocument]:
     """Public cached accessor for tool_config.yml."""
     return _load_tool_config_cached()
 
