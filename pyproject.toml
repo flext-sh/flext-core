@@ -170,9 +170,6 @@ cc_min = "B"
 exclude = "tests/*,examples/*"
 mi_min = "B"
 
-[tool.coverage.report]
-fail_under = 45
-
 [tool.pyrefly]
 ignore-errors-in-generated-code = true
 project-excludes = [
@@ -597,6 +594,21 @@ pythonVersion = "3.13"
 typeCheckingMode = "strict"
 
 # [MANAGED] tomlsort
+reportConstantRedefinition = "error"
+reportIncompatibleMethodOverride = "error"
+reportIncompatibleVariableOverride = "error"
+reportInconsistentConstructor = "error"
+reportMissingImports = "error"
+reportMissingModuleSource = "error"
+reportMissingTypeStubs = "warning"
+reportPrivateUsage = "warning"
+reportUnnecessaryCast = "error"
+reportUnnecessaryComparison = "warning"
+reportUnnecessaryIsInstance = "warning"
+reportUnusedClass = "error"
+reportUnusedFunction = "error"
+reportUnusedImport = "error"
+reportUnusedVariable = "error"
 
 [[tool.pyright.executionEnvironments]]
 reportPrivateUsage = "error"
@@ -652,6 +664,13 @@ python_files = [ "*_test.py", "*_tests.py", "test_*.py" ]
 # [MANAGED] ruff
 
 # [MANAGED] pyrefly
+
+[tool.coverage.report]
+fail_under = 45
+precision = 2
+show_missing = true
+skip_covered = false
+
 [dependency-groups]
 dev = [
   "types-defusedxml (>=0.7.0.20250822)",
