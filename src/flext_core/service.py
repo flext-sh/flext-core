@@ -71,7 +71,7 @@ class FlextService[TDomainResult: t.ContainerValue = t.ContainerValue](
     _execution_result: r[TDomainResult] | None = PrivateAttr(default=None)
 
     @override
-    def __init__(self) -> None:
+    def __init__(self, **data: t.ContainerValue) -> None:
         """Initialize service with configuration data.
 
         Sets up the service instance with runtime configuration.
@@ -87,7 +87,7 @@ class FlextService[TDomainResult: t.ContainerValue = t.ContainerValue](
         with FlextContext.create().Service.service_context(
             self.__class__.__name__, runtime.config.version
         ):
-            super().__init__()
+            super().__init__(**data)
         if not isinstance(runtime.context, FlextContext):
             msg = "Expected FlextContext"
             raise TypeError(msg)

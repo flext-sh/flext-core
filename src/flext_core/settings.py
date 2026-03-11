@@ -171,7 +171,7 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
                     if key in self.__class__.model_fields:
                         setattr(self, key, value)
             return
-        super().__init__()
+        super().__init__(**kwargs)
         if kwargs:
             model_fields = self.__class__.model_fields
             for key, value in kwargs.items():
