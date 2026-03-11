@@ -144,7 +144,7 @@ class FlextInfraNamespaceEnforcer:
                 )
         cyclic_imports = da.CyclicImportDetector.scan_project(
             project_root=project_root,
-            parse_failures=parse_failures,
+            _parse_failures=parse_failures,
         )
         internal_import_violations: list[nem.NamespaceInternalImportViolation] = []
         for py_file in py_files:

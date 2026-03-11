@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import types
+from collections.abc import Mapping
 from pathlib import Path
 
 from flext_core import r
@@ -28,7 +29,7 @@ class TestCollectInternalDepsEdgeCases:
     def test_collect_internal_deps_variants(self, tmp_path: Path) -> None:
         (tmp_path / "pyproject.toml").write_text("x")
 
-        def _collect(value: t.ContainerValue) -> FlextResult[Mapping[str, Path]]:
+        def _collect(value: t.ContainerValue) -> r[Mapping[str, Path]]:
             service = FlextInfraInternalDependencySyncService()
             _set_toml_sequence(service, [value])
             result = service.collect_internal_deps(tmp_path)

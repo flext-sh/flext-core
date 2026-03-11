@@ -1303,11 +1303,12 @@ class FlextUtilitiesMapper:
             return result
 
         flags_result = r[Mapping[str, bool]].create_from_callable(_build_flags)
-        if flags_result.is_failure:
-            return r[Mapping[str, bool]].fail(
-                f"Failed to build flags dict: {flags_result.error}"
-            )
-        return flags_result
+        return flags_result.fold(
+            on_failure=lambda e: r[Mapping[str, bool]].fail(
+                f"Failed to build flags dict: {e}"
+            ),
+            on_success=lambda v: flags_result,
+        )
 
     @staticmethod
     def cast_generic[T](
@@ -1370,11 +1371,12 @@ class FlextUtilitiesMapper:
             return active_keys
 
         active_keys_result = r[list[str]].create_from_callable(_collect_keys)
-        if active_keys_result.is_failure:
-            return r[list[str]].fail(
-                f"Failed to collect active keys: {active_keys_result.error}"
-            )
-        return active_keys_result
+        return active_keys_result.fold(
+            on_failure=lambda e: r[list[str]].fail(
+                f"Failed to collect active keys: {e}"
+            ),
+            on_success=lambda v: active_keys_result,
+        )
 
     @staticmethod
     def construct(
@@ -2096,11 +2098,12 @@ class FlextUtilitiesMapper:
             return result
 
         mapped_result = r[t.ConfigurationMapping].create_from_callable(_map_keys)
-        if mapped_result.is_failure:
-            return r[t.ConfigurationMapping].fail(
-                f"Failed to map dict keys: {mapped_result.error}"
-            )
-        return mapped_result
+        return mapped_result.fold(
+            on_failure=lambda e: r[t.ConfigurationMapping].fail(
+                f"Failed to map dict keys: {e}"
+            ),
+            on_success=lambda v: mapped_result,
+        )
 
     @staticmethod
     def narrow_to_general_value_type(value: t.ContainerValue) -> t.ContainerValue:
@@ -2559,11 +2562,12 @@ class FlextUtilitiesMapper:
                 to_json=to_json,
             )
         )
-        if transform_result.is_failure:
-            return r[t.ConfigurationMapping].fail(
-                f"Transform failed: {transform_result.error}"
-            )
-        return transform_result
+        return transform_result.fold(
+            on_failure=lambda e: r[t.ConfigurationMapping].fail(
+                f"Transform failed: {e}"
+            ),
+            on_success=lambda v: transform_result,
+        )
 
     @staticmethod
     def transform_values(

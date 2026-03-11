@@ -25,7 +25,7 @@ class Ex06FlextContext(Examples):
         self.check("create.instance", type(ctx).__name__)
         self.check("create.has.operation", ctx.has(c.Context.KEY_OPERATION_ID))
         self.check("create.has.user", ctx.has(c.Context.KEY_USER_ID))
-        self.check("set.success", ctx.set("k1", "v1").is_success)
+        self.check("set.success", (_ := ctx.set("k1", "v1")).is_success)
         seed = FlextContext.create()
         _ = seed.set("k2", 2)
         _ = seed.set("k3", True)
@@ -35,7 +35,7 @@ class Ex06FlextContext(Examples):
         )
         self.check("get.k1", ctx.get("k1").unwrap_or("missing"))
         self.check("has.k2", ctx.has("k2"))
-        ctx.remove("k2")
+        _ = ctx.remove("k2")
         self.check("remove.k2", ctx.has("k2"))
         self.check("keys.count", len(ctx.keys()))
         self.check("values.count", len(ctx.values()))
@@ -44,7 +44,7 @@ class Ex06FlextContext(Examples):
         self.check("merge.get", merged.get("k4").unwrap_or("missing"))
         self.check("clone.get", ctx.clone().get("k1").unwrap_or("missing"))
         self.check("validate.success", ctx.validate().is_success)
-        ctx.set_metadata("meta_key", "meta_value")
+        _ = ctx.set_metadata("meta_key", "meta_value")
         self.check("get_metadata", ctx.get_metadata("meta_key").unwrap_or("missing"))
         exported_min = ctx.export(as_dict=False)
         exported_full = ctx.export(
@@ -53,14 +53,14 @@ class Ex06FlextContext(Examples):
         self.check("export.min.type", type(exported_min).__name__)
         self.check("export.full.type", type(exported_full).__name__)
         self.check("iter_scope_vars", ",".join(sorted(ctx.iter_scope_vars().keys())))
-        ctx.clear()
+        _ = ctx.clear()
         self.check("clear.keys", len(ctx.keys()))
 
     def _exercise_container_and_service_methods(self) -> None:
         self.section("container_and_service")
         self.check("runtime.class", FlextRuntime.__name__)
         container = FlextContainer()
-        FlextContext.set_container(container)
+        _ = FlextContext.set_container(container)
         self.check("set_get_container.same", FlextContext.get_container() is container)
         try:
             msg = "boom"

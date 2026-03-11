@@ -13,6 +13,10 @@ if TYPE_CHECKING:
     from flext_infra.refactor.transformers.alias_remover import (
         FlextInfraRefactorAliasRemover,
     )
+    from flext_infra.refactor.transformers.census_visitors import (
+        CensusImportDiscoveryVisitor,
+        CensusUsageCollector,
+    )
     from flext_infra.refactor.transformers.class_nesting import (
         FlextInfraRefactorClassNestingTransformer,
     )
@@ -36,6 +40,7 @@ if TYPE_CHECKING:
     )
     from flext_infra.refactor.transformers.mro_private_inline import (
         FlextInfraRefactorMROPrivateInlineTransformer,
+        FlextInfraRefactorMROQualifiedReferenceTransformer,
     )
     from flext_infra.refactor.transformers.mro_reference_rewriter import (
         FlextInfraRefactorMROReferenceRewriter,
@@ -56,6 +61,14 @@ if TYPE_CHECKING:
 
 # Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
+    "CensusImportDiscoveryVisitor": (
+        "flext_infra.refactor.transformers.census_visitors",
+        "CensusImportDiscoveryVisitor",
+    ),
+    "CensusUsageCollector": (
+        "flext_infra.refactor.transformers.census_visitors",
+        "CensusUsageCollector",
+    ),
     "FlextInfraRefactorAliasRemover": (
         "flext_infra.refactor.transformers.alias_remover",
         "FlextInfraRefactorAliasRemover",
@@ -88,6 +101,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "flext_infra.refactor.transformers.mro_private_inline",
         "FlextInfraRefactorMROPrivateInlineTransformer",
     ),
+    "FlextInfraRefactorMROQualifiedReferenceTransformer": (
+        "flext_infra.refactor.transformers.mro_private_inline",
+        "FlextInfraRefactorMROQualifiedReferenceTransformer",
+    ),
     "FlextInfraRefactorMROReferenceRewriter": (
         "flext_infra.refactor.transformers.mro_reference_rewriter",
         "FlextInfraRefactorMROReferenceRewriter",
@@ -119,6 +136,8 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
 }
 
 __all__ = [
+    "CensusImportDiscoveryVisitor",
+    "CensusUsageCollector",
     "FlextInfraRefactorAliasRemover",
     "FlextInfraRefactorClassNestingTransformer",
     "FlextInfraRefactorClassReconstructor",
@@ -127,6 +146,7 @@ __all__ = [
     "FlextInfraRefactorImportModernizer",
     "FlextInfraRefactorLazyImportFixer",
     "FlextInfraRefactorMROPrivateInlineTransformer",
+    "FlextInfraRefactorMROQualifiedReferenceTransformer",
     "FlextInfraRefactorMROReferenceRewriter",
     "FlextInfraRefactorMRORemover",
     "FlextInfraRefactorSymbolPropagator",

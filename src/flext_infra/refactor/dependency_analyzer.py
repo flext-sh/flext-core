@@ -320,7 +320,7 @@ class NamespaceFacadeScanner:
                 family=family,
                 expected_class=expected_class,
                 suffix=suffix,
-                parse_failures=parse_failures,
+                _parse_failures=parse_failures,
             )
             results.append(
                 nem.NamespaceFacadeStatus.create(
@@ -341,7 +341,7 @@ class NamespaceFacadeScanner:
         family: str,
         expected_class: str,
         suffix: str,
-        parse_failures: list[nem.NamespaceParseFailureViolation] | None,
+        _parse_failures: list[nem.NamespaceParseFailureViolation] | None,
     ) -> tuple[str, str, int]:
         file_pattern = c.Infra.Refactor.NAMESPACE_FACADE_FILE_PATTERNS[family]
         src_dir = project_root / c.Infra.Paths.DEFAULT_SRC_DIR
@@ -402,6 +402,7 @@ class LooseObjectDetector(p.Infra.Scanner):
         self._project_name = project_name
         self._parse_failures = parse_failures
 
+    @override
     def scan_file(self, *, file_path: Path) -> m.Infra.Utilities.ScanResult:
         """Scan a file and return protocol-standardized scan output."""
         violations = type(self).scan_file_impl(
@@ -577,6 +578,7 @@ class ImportAliasDetector(p.Infra.Scanner):
         super().__init__()
         self._parse_failures = parse_failures
 
+    @override
     def scan_file(self, *, file_path: Path) -> m.Infra.Utilities.ScanResult:
         """Scan a file and return protocol-standardized scan output."""
         violations = type(self).scan_file_impl(
@@ -610,7 +612,7 @@ class ImportAliasDetector(p.Infra.Scanner):
         """Scan a file and return typed namespace violations."""
         return cls.scan_file_impl(
             file_path=file_path,
-            parse_failures=_parse_failures,
+            _parse_failures=parse_failures,
         )
 
     @classmethod
@@ -665,6 +667,7 @@ class InternalImportDetector(p.Infra.Scanner):
         super().__init__()
         self._parse_failures = parse_failures
 
+    @override
     def scan_file(self, *, file_path: Path) -> m.Infra.Utilities.ScanResult:
         """Scan a file and return protocol-standardized scan output."""
         violations = type(self).scan_file_impl(
@@ -698,7 +701,7 @@ class InternalImportDetector(p.Infra.Scanner):
         """Scan a file and return typed namespace violations."""
         return cls.scan_file_impl(
             file_path=file_path,
-            parse_failures=_parse_failures,
+            _parse_failures=parse_failures,
         )
 
     @classmethod
@@ -758,6 +761,7 @@ class ManualProtocolDetector(p.Infra.Scanner):
         super().__init__()
         self._parse_failures = parse_failures
 
+    @override
     def scan_file(self, *, file_path: Path) -> m.Infra.Utilities.ScanResult:
         """Scan a file and return protocol-standardized scan output."""
         violations = type(self).scan_file_impl(
@@ -855,7 +859,7 @@ class CyclicImportDetector:
         cls,
         *,
         project_root: Path,
-        parse_failures: list[nem.NamespaceParseFailureViolation] | None = None,
+        _parse_failures: list[nem.NamespaceParseFailureViolation] | None = None,
     ) -> list[nem.NamespaceCyclicImportViolation]:
         """Scan a project for cyclic import dependencies."""
         scan_dirs = [
@@ -975,6 +979,7 @@ class RuntimeAliasDetector(p.Infra.Scanner):
         self._project_name = project_name
         self._parse_failures = parse_failures
 
+    @override
     def scan_file(self, *, file_path: Path) -> m.Infra.Utilities.ScanResult:
         """Scan a file and return protocol-standardized scan output."""
         violations = type(self).scan_file_impl(
@@ -1084,6 +1089,7 @@ class FutureAnnotationsDetector(p.Infra.Scanner):
         super().__init__()
         self._parse_failures = parse_failures
 
+    @override
     def scan_file(self, *, file_path: Path) -> m.Infra.Utilities.ScanResult:
         """Scan a file and return protocol-standardized scan output."""
         violations = type(self).scan_file_impl(
@@ -1166,6 +1172,7 @@ class ManualTypingAliasDetector(p.Infra.Scanner):
         super().__init__()
         self._parse_failures = parse_failures
 
+    @override
     def scan_file(self, *, file_path: Path) -> m.Infra.Utilities.ScanResult:
         """Scan a file and return protocol-standardized scan output."""
         violations = type(self).scan_file_impl(
@@ -1261,6 +1268,7 @@ class CompatibilityAliasDetector(p.Infra.Scanner):
         super().__init__()
         self._parse_failures = parse_failures
 
+    @override
     def scan_file(self, *, file_path: Path) -> m.Infra.Utilities.ScanResult:
         """Scan a file and return protocol-standardized scan output."""
         violations = type(self).scan_file_impl(

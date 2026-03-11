@@ -14,6 +14,7 @@ if TYPE_CHECKING:
         FlextInfraRefactorClassNestingAnalyzer,
         FlextInfraRefactorViolationAnalyzer,
     )
+    from flext_infra.refactor.census import FlextInfraRefactorCensus
     from flext_infra.refactor.dependency_analyzer import (
         CompatibilityAliasDetector,
         CyclicImportDetector,
@@ -27,7 +28,6 @@ if TYPE_CHECKING:
         ManualTypingAliasDetector,
         NamespaceFacadeScanner,
         RuntimeAliasDetector,
-        load_python_module,
     )
     from flext_infra.refactor.engine import FlextInfraRefactorEngine
     from flext_infra.refactor.migrate_to_class_mro import (
@@ -47,7 +47,10 @@ if TYPE_CHECKING:
         NamespaceEnforcementModels as m,
     )
     from flext_infra.refactor.namespace_rewriter import NamespaceEnforcementRewriter
-    from flext_infra.refactor.output import render_namespace_enforcement_report
+    from flext_infra.refactor.output import (
+        render_census_report,
+        render_namespace_enforcement_report,
+    )
     from flext_infra.refactor.project_classifier import ProjectClassifier
     from flext_infra.refactor.pydantic_centralizer import (
         FlextInfraRefactorPydanticCentralizer,
@@ -90,6 +93,10 @@ if TYPE_CHECKING:
     from flext_infra.refactor.transformers.alias_remover import (
         FlextInfraRefactorAliasRemover,
     )
+    from flext_infra.refactor.transformers.census_visitors import (
+        CensusImportDiscoveryVisitor,
+        CensusUsageCollector,
+    )
     from flext_infra.refactor.transformers.class_nesting import (
         FlextInfraRefactorClassNestingTransformer,
     )
@@ -113,6 +120,7 @@ if TYPE_CHECKING:
     )
     from flext_infra.refactor.transformers.mro_private_inline import (
         FlextInfraRefactorMROPrivateInlineTransformer,
+        FlextInfraRefactorMROQualifiedReferenceTransformer,
     )
     from flext_infra.refactor.transformers.mro_reference_rewriter import (
         FlextInfraRefactorMROReferenceRewriter,
@@ -139,6 +147,14 @@ if TYPE_CHECKING:
 
 # Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
+    "CensusImportDiscoveryVisitor": (
+        "flext_infra.refactor.transformers.census_visitors",
+        "CensusImportDiscoveryVisitor",
+    ),
+    "CensusUsageCollector": (
+        "flext_infra.refactor.transformers.census_visitors",
+        "CensusUsageCollector",
+    ),
     "ClassNestingRefactorRule": (
         "flext_infra.refactor.rules.class_nesting",
         "ClassNestingRefactorRule",
@@ -162,6 +178,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextInfraRefactorAliasRemover": (
         "flext_infra.refactor.transformers.alias_remover",
         "FlextInfraRefactorAliasRemover",
+    ),
+    "FlextInfraRefactorCensus": (
+        "flext_infra.refactor.census",
+        "FlextInfraRefactorCensus",
     ),
     "FlextInfraRefactorClassNestingAnalyzer": (
         "flext_infra.refactor.analysis",
@@ -250,6 +270,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextInfraRefactorMROPrivateInlineTransformer": (
         "flext_infra.refactor.transformers.mro_private_inline",
         "FlextInfraRefactorMROPrivateInlineTransformer",
+    ),
+    "FlextInfraRefactorMROQualifiedReferenceTransformer": (
+        "flext_infra.refactor.transformers.mro_private_inline",
+        "FlextInfraRefactorMROQualifiedReferenceTransformer",
     ),
     "FlextInfraRefactorMRORedundancyChecker": (
         "flext_infra.refactor.rules.mro_redundancy_checker",
@@ -370,11 +394,8 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "flext_infra.refactor.dependency_analyzer",
         "RuntimeAliasDetector",
     ),
-    "load_python_module": (
-        "flext_infra.refactor.dependency_analyzer",
-        "load_python_module",
-    ),
     "m": ("flext_infra.refactor.namespace_enforcer", "NamespaceEnforcementModels"),
+    "render_census_report": ("flext_infra.refactor.output", "render_census_report"),
     "render_namespace_enforcement_report": (
         "flext_infra.refactor.output",
         "render_namespace_enforcement_report",
@@ -386,12 +407,15 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
 }
 
 __all__ = [
+    "CensusImportDiscoveryVisitor",
+    "CensusUsageCollector",
     "ClassNestingRefactorRule",
     "CompatibilityAliasDetector",
     "CyclicImportDetector",
     "DependencyAnalyzer",
     "FlextInfraNamespaceEnforcer",
     "FlextInfraRefactorAliasRemover",
+    "FlextInfraRefactorCensus",
     "FlextInfraRefactorClassNestingAnalyzer",
     "FlextInfraRefactorClassNestingReconstructor",
     "FlextInfraRefactorClassNestingTransformer",
@@ -414,6 +438,7 @@ __all__ = [
     "FlextInfraRefactorMROMigrationTransformer",
     "FlextInfraRefactorMROMigrationValidator",
     "FlextInfraRefactorMROPrivateInlineTransformer",
+    "FlextInfraRefactorMROQualifiedReferenceTransformer",
     "FlextInfraRefactorMRORedundancyChecker",
     "FlextInfraRefactorMROReferenceRewriter",
     "FlextInfraRefactorMRORemover",
@@ -446,8 +471,8 @@ __all__ = [
     "PreCheckGate",
     "ProjectClassifier",
     "RuntimeAliasDetector",
-    "load_python_module",
     "m",
+    "render_census_report",
     "render_namespace_enforcement_report",
     "u",
 ]

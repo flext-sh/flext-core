@@ -328,7 +328,8 @@ class FlextInfraRefactorPydanticCentralizerAnalysis:
         # given source text is needed for ast.get_source_segment below
         tree = u.Infra.parse_ast_from_source(source)
         if tree is None:
-            raise SyntaxError("Failed to parse source")
+            msg = "Failed to parse source"
+            raise SyntaxError(msg)
         lines = source.splitlines()
         class_moves: list[m.Infra.Refactor.ClassMove] = []
         alias_moves: list[m.Infra.Refactor.AliasMove] = []

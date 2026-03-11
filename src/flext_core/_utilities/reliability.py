@@ -321,9 +321,10 @@ class FlextUtilitiesReliability:
             )
 
         """
-        if result.is_failure:
-            return on_failure(result.error or "Unknown error")
-        return on_success(result.value)
+        return result.fold(
+            on_failure=lambda e: on_failure(e or "Unknown error"),
+            on_success=on_success,
+        )
 
     @staticmethod
     def match(
@@ -585,9 +586,10 @@ class FlextUtilitiesReliability:
             )
 
         """
-        if result.is_failure:
-            return r[U].fail(result.error or "Unknown error")
-        return func(result.value)
+        return result.fold(
+            on_failure=lambda e: r[U].fail(e or "Unknown error"),
+            on_success=func,
+        )
 
     @staticmethod
     def with_retry[TResult](

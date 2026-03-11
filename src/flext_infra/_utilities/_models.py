@@ -34,7 +34,7 @@ class FlextInfraUtilitiesModels:
 
         file_path: Path = Field(description="Path to the scanned file")
         violations: list[_ScanViolation] = Field(
-            default_factory=list, description="Violations found in the file"
+            default=[], description="Violations found in the file"
         )
         detector_name: str = Field(
             description="Name of the detector that produced this result"

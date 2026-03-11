@@ -310,9 +310,10 @@ class FlextUtilitiesParser:
     @staticmethod
     def _parse_result_error[T](result: r[T], default: str = "") -> str:
         """Extract error from result (avoids circular import with u.err)."""
-        if result.is_failure:
-            return result.error or default
-        return default
+        return result.fold(
+            on_failure=lambda e: e or default,
+            on_success=lambda _: default,
+        )
 
     @staticmethod
     def _parse_try_direct[T](

@@ -158,7 +158,7 @@ def test_context_export_serializable_and_validators() -> None:
     )
     assert check_result is None
     with pytest.raises(TypeError):
-        FlextModelsContext.ContextData.check_json_serializable(
+        _ = FlextModelsContext.ContextData.check_json_serializable(
             cast("t.ContainerValue", {"x": object()})
         )
     with pytest.raises(TypeError):
@@ -230,7 +230,7 @@ def test_context_export_statistics_validator_and_computed_fields() -> None:
     stats_model = _normalize_statistics_before(StatsModel())
     assert stats_model == {"a": 1}
     with pytest.raises(ValueError, match="Cannot normalize"):
-        _normalize_statistics_before(cast("t.ContainerValue", "x"))
+        _ = _normalize_statistics_before(cast("t.ContainerValue", "x"))
     exported = m.ContextExport(data={"k": "v"}, statistics={"sets": 1})
     assert exported.total_data_items == 1
     assert exported.has_statistics is True
@@ -248,7 +248,7 @@ def test_scope_data_validators_and_errors() -> None:
     result_scope = _normalize_to_mapping(ScopeModel())
     assert result_scope == {"a": 1}
     with pytest.raises(ValueError, match="Cannot normalize"):
-        _normalize_to_mapping(cast("t.ContainerValue", 123))
+        _ = _normalize_to_mapping(cast("t.ContainerValue", 123))
     result_none2 = _normalize_to_mapping(None)
     assert result_none2 == {}
     result_dict2 = _normalize_to_mapping({"a": 1})
@@ -256,7 +256,7 @@ def test_scope_data_validators_and_errors() -> None:
     result_scope2 = _normalize_to_mapping(ScopeModel())
     assert result_scope2 == {"a": 1}
     with pytest.raises(ValueError, match="Cannot normalize"):
-        _normalize_to_mapping(cast("t.ContainerValue", 123))
+        _ = _normalize_to_mapping(cast("t.ContainerValue", 123))
 
 
 def test_statistics_and_custom_fields_validators() -> None:
@@ -271,7 +271,7 @@ def test_statistics_and_custom_fields_validators() -> None:
     result_none1 = _normalize_to_mapping(None)
     assert result_none1 == {}
     with pytest.raises(ValueError, match="Cannot normalize"):
-        _normalize_to_mapping(cast("t.ContainerValue", "bad"))
+        _ = _normalize_to_mapping(cast("t.ContainerValue", "bad"))
     result_x2 = _normalize_to_mapping({"x": 1})
     assert result_x2 == {"x": 1}
     result_payload2 = _normalize_to_mapping(Payload())
@@ -279,7 +279,7 @@ def test_statistics_and_custom_fields_validators() -> None:
     result_none2 = _normalize_to_mapping(None)
     assert result_none2 == {}
     with pytest.raises(ValueError, match="Cannot normalize"):
-        _normalize_to_mapping(cast("t.ContainerValue", "bad"))
+        _ = _normalize_to_mapping(cast("t.ContainerValue", "bad"))
 
 
 def test_context_data_metadata_normalizer_removed() -> None:

@@ -29,12 +29,21 @@ if TYPE_CHECKING:
         __version_info__,
     )
     from flext_infra._utilities.discovery import FlextInfraUtilitiesDiscovery
+    from flext_infra._utilities.formatting import FlextInfraUtilitiesFormatting
     from flext_infra._utilities.git import FlextInfraUtilitiesGit
     from flext_infra._utilities.io import FlextInfraUtilitiesIo
-    from flext_infra._utilities.output import FlextInfraUtilitiesOutput, output
+    from flext_infra._utilities.iteration import FlextInfraUtilitiesIteration
+    from flext_infra._utilities.output import (
+        FlextInfraUtilitiesOutput,
+        OutputBackend,
+        output,
+    )
+    from flext_infra._utilities.parsing import FlextInfraUtilitiesParsing
     from flext_infra._utilities.paths import FlextInfraUtilitiesPaths
     from flext_infra._utilities.patterns import FlextInfraUtilitiesPatterns
     from flext_infra._utilities.reporting import FlextInfraUtilitiesReporting
+    from flext_infra._utilities.safety import FlextInfraUtilitiesSafety
+    from flext_infra._utilities.scanning import FlextInfraUtilitiesScanning
     from flext_infra._utilities.selection import FlextInfraUtilitiesSelection
     from flext_infra._utilities.subprocess import FlextInfraUtilitiesSubprocess
     from flext_infra._utilities.templates import FlextInfraUtilitiesTemplates
@@ -57,7 +66,13 @@ if TYPE_CHECKING:
     from flext_infra._utilities.yaml import FlextInfraUtilitiesYaml
     from flext_infra.basemk.engine import FlextInfraBaseMkTemplateEngine
     from flext_infra.basemk.generator import FlextInfraBaseMkGenerator
-    from flext_infra.check.services import FlextInfraConfigFixer, ProjectResult as r
+    from flext_infra.check.services import (
+        CheckIssue,
+        FlextInfraConfigFixer,
+        GateExecution,
+        ProjectResult,
+        ProjectResult as r,
+    )
     from flext_infra.check.workspace_check import (
         FlextInfraWorkspaceChecker,
         build_parser,
@@ -88,6 +103,7 @@ if TYPE_CHECKING:
         FlextInfraDependencyDetectionService,
         build_project_report,
         classify_issues,
+        discover_project_paths,
         dm,
         get_current_typings_from_pyproject,
         get_required_typings,
@@ -118,6 +134,17 @@ if TYPE_CHECKING:
         EnsurePytestConfigPhase,
         FlextInfraPyprojectModernizer,
         InjectCommentsPhase,
+        array_parser,
+        as_string_list_parser,
+        canonical_dev_dependencies_parser,
+        dedupe_specs_parser,
+        dep_name_parser,
+        ensure_table_parser,
+        parser,
+        project_dev_groups_parser,
+        read_doc_parser,
+        unwrap_item_parser,
+        workspace_root,
     )
     from flext_infra.deps.path_sync import (
         detect_mode,
@@ -148,6 +175,7 @@ if TYPE_CHECKING:
         FlextInfraRefactorClassNestingAnalyzer,
         FlextInfraRefactorViolationAnalyzer,
     )
+    from flext_infra.refactor.census import FlextInfraRefactorCensus
     from flext_infra.refactor.dependency_analyzer import (
         CompatibilityAliasDetector,
         CyclicImportDetector,
@@ -161,7 +189,6 @@ if TYPE_CHECKING:
         ManualTypingAliasDetector,
         NamespaceFacadeScanner,
         RuntimeAliasDetector,
-        load_python_module,
     )
     from flext_infra.refactor.engine import FlextInfraRefactorEngine
     from flext_infra.refactor.migrate_to_class_mro import (
@@ -180,7 +207,10 @@ if TYPE_CHECKING:
         NamespaceEnforcementModels,
     )
     from flext_infra.refactor.namespace_rewriter import NamespaceEnforcementRewriter
-    from flext_infra.refactor.output import render_namespace_enforcement_report
+    from flext_infra.refactor.output import (
+        render_census_report,
+        render_namespace_enforcement_report,
+    )
     from flext_infra.refactor.project_classifier import ProjectClassifier
     from flext_infra.refactor.pydantic_centralizer import (
         FlextInfraRefactorPydanticCentralizer,
@@ -223,6 +253,10 @@ if TYPE_CHECKING:
     from flext_infra.refactor.transformers.alias_remover import (
         FlextInfraRefactorAliasRemover,
     )
+    from flext_infra.refactor.transformers.census_visitors import (
+        CensusImportDiscoveryVisitor,
+        CensusUsageCollector,
+    )
     from flext_infra.refactor.transformers.class_nesting import (
         FlextInfraRefactorClassNestingTransformer,
     )
@@ -246,6 +280,7 @@ if TYPE_CHECKING:
     )
     from flext_infra.refactor.transformers.mro_private_inline import (
         FlextInfraRefactorMROPrivateInlineTransformer,
+        FlextInfraRefactorMROQualifiedReferenceTransformer,
     )
     from flext_infra.refactor.transformers.mro_reference_rewriter import (
         FlextInfraRefactorMROReferenceRewriter,
@@ -281,6 +316,15 @@ if TYPE_CHECKING:
 
 # Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
+    "CensusImportDiscoveryVisitor": (
+        "flext_infra.refactor.transformers.census_visitors",
+        "CensusImportDiscoveryVisitor",
+    ),
+    "CensusUsageCollector": (
+        "flext_infra.refactor.transformers.census_visitors",
+        "CensusUsageCollector",
+    ),
+    "CheckIssue": ("flext_infra.check.services", "CheckIssue"),
     "ClassNestingRefactorRule": (
         "flext_infra.refactor.rules.class_nesting",
         "ClassNestingRefactorRule",
@@ -414,6 +458,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "flext_infra.refactor.transformers.alias_remover",
         "FlextInfraRefactorAliasRemover",
     ),
+    "FlextInfraRefactorCensus": (
+        "flext_infra.refactor.census",
+        "FlextInfraRefactorCensus",
+    ),
     "FlextInfraRefactorClassNestingAnalyzer": (
         "flext_infra.refactor.analysis",
         "FlextInfraRefactorClassNestingAnalyzer",
@@ -501,6 +549,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextInfraRefactorMROPrivateInlineTransformer": (
         "flext_infra.refactor.transformers.mro_private_inline",
         "FlextInfraRefactorMROPrivateInlineTransformer",
+    ),
+    "FlextInfraRefactorMROQualifiedReferenceTransformer": (
+        "flext_infra.refactor.transformers.mro_private_inline",
+        "FlextInfraRefactorMROQualifiedReferenceTransformer",
     ),
     "FlextInfraRefactorMRORedundancyChecker": (
         "flext_infra.refactor.rules.mro_redundancy_checker",
@@ -598,11 +650,23 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "flext_infra._utilities.discovery",
         "FlextInfraUtilitiesDiscovery",
     ),
+    "FlextInfraUtilitiesFormatting": (
+        "flext_infra._utilities.formatting",
+        "FlextInfraUtilitiesFormatting",
+    ),
     "FlextInfraUtilitiesGit": ("flext_infra._utilities.git", "FlextInfraUtilitiesGit"),
     "FlextInfraUtilitiesIo": ("flext_infra._utilities.io", "FlextInfraUtilitiesIo"),
+    "FlextInfraUtilitiesIteration": (
+        "flext_infra._utilities.iteration",
+        "FlextInfraUtilitiesIteration",
+    ),
     "FlextInfraUtilitiesOutput": (
         "flext_infra._utilities.output",
         "FlextInfraUtilitiesOutput",
+    ),
+    "FlextInfraUtilitiesParsing": (
+        "flext_infra._utilities.parsing",
+        "FlextInfraUtilitiesParsing",
     ),
     "FlextInfraUtilitiesPaths": (
         "flext_infra._utilities.paths",
@@ -615,6 +679,14 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextInfraUtilitiesReporting": (
         "flext_infra._utilities.reporting",
         "FlextInfraUtilitiesReporting",
+    ),
+    "FlextInfraUtilitiesSafety": (
+        "flext_infra._utilities.safety",
+        "FlextInfraUtilitiesSafety",
+    ),
+    "FlextInfraUtilitiesScanning": (
+        "flext_infra._utilities.scanning",
+        "FlextInfraUtilitiesScanning",
     ),
     "FlextInfraUtilitiesSelection": (
         "flext_infra._utilities.selection",
@@ -668,6 +740,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "flext_infra.refactor.dependency_analyzer",
         "FutureAnnotationsDetector",
     ),
+    "GateExecution": ("flext_infra.check.services", "GateExecution"),
     "HelperConsolidationTransformer": (
         "flext_infra.refactor.transformers.helper_consolidation",
         "HelperConsolidationTransformer",
@@ -709,12 +782,14 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "flext_infra.refactor.transformers.nested_class_propagation",
         "NestedClassPropagationTransformer",
     ),
+    "OutputBackend": ("flext_infra._utilities.output", "OutputBackend"),
     "PostCheckGate": ("flext_infra.refactor.validation", "PostCheckGate"),
     "PreCheckGate": ("flext_infra.refactor.rules.class_reconstructor", "PreCheckGate"),
     "ProjectClassifier": (
         "flext_infra.refactor.project_classifier",
         "ProjectClassifier",
     ),
+    "ProjectResult": ("flext_infra.check.services", "ProjectResult"),
     "RuntimeAliasDetector": (
         "flext_infra.refactor.dependency_analyzer",
         "RuntimeAliasDetector",
@@ -731,17 +806,27 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "__version__": ("flext_infra.__version__", "__version__"),
     "__version_info__": ("flext_infra.__version__", "__version_info__"),
     "array": ("flext_infra._utilities.toml", "array"),
+    "array_parser": ("flext_infra.deps.modernizer", "array_parser"),
     "as_container_list": ("flext_infra._utilities.toml", "as_container_list"),
     "as_string_list": ("flext_infra._utilities.toml", "as_string_list"),
+    "as_string_list_parser": ("flext_infra.deps.modernizer", "as_string_list_parser"),
     "as_toml_mapping": ("flext_infra._utilities.toml", "as_toml_mapping"),
     "build_parser": ("flext_infra.check.workspace_check", "build_parser"),
     "build_project_report": ("flext_infra.deps.detection", "build_project_report"),
     "c": ("flext_infra.constants", "c"),
+    "canonical_dev_dependencies_parser": (
+        "flext_infra.deps.modernizer",
+        "canonical_dev_dependencies_parser",
+    ),
     "classify_issues": ("flext_infra.deps.detection", "classify_issues"),
     "ddm": ("flext_infra.deps.detector", "ddm"),
+    "dedupe_specs_parser": ("flext_infra.deps.modernizer", "dedupe_specs_parser"),
+    "dep_name_parser": ("flext_infra.deps.modernizer", "dep_name_parser"),
     "detect_mode": ("flext_infra.deps.path_sync", "detect_mode"),
+    "discover_project_paths": ("flext_infra.deps.detection", "discover_project_paths"),
     "dm": ("flext_infra.deps.detection", "dm"),
     "ensure_table": ("flext_infra._utilities.toml", "ensure_table"),
+    "ensure_table_parser": ("flext_infra.deps.modernizer", "ensure_table_parser"),
     "extract_dep_name": ("flext_infra.deps.path_sync", "extract_dep_name"),
     "get_current_typings_from_pyproject": (
         "flext_infra.deps.detection",
@@ -750,10 +835,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "get_dep_paths": ("flext_infra.deps.extra_paths", "get_dep_paths"),
     "get_required_typings": ("flext_infra.deps.detection", "get_required_typings"),
     "load_dependency_limits": ("flext_infra.deps.detection", "load_dependency_limits"),
-    "load_python_module": (
-        "flext_infra.refactor.dependency_analyzer",
-        "load_python_module",
-    ),
     "load_tool_config": ("flext_infra.deps.tool_config", "load_tool_config"),
     "logger": ("flext_infra.maintenance.python_version", "logger"),
     "m": ("flext_infra.models", "m"),
@@ -767,11 +848,18 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     ),
     "output": ("flext_infra._utilities.output", "output"),
     "p": ("flext_infra.protocols", "p"),
+    "parser": ("flext_infra.deps.modernizer", "parser"),
     "path_dep_paths": ("flext_infra.deps.extra_paths", "path_dep_paths"),
     "path_dep_paths_pep621": ("flext_infra.deps.extra_paths", "path_dep_paths_pep621"),
     "path_dep_paths_poetry": ("flext_infra.deps.extra_paths", "path_dep_paths_poetry"),
+    "project_dev_groups_parser": (
+        "flext_infra.deps.modernizer",
+        "project_dev_groups_parser",
+    ),
     "r": ("flext_infra.check.services", "ProjectResult"),
     "read_doc": ("flext_infra._utilities.toml", "read_doc"),
+    "read_doc_parser": ("flext_infra.deps.modernizer", "read_doc_parser"),
+    "render_census_report": ("flext_infra.refactor.output", "render_census_report"),
     "render_namespace_enforcement_report": (
         "flext_infra.refactor.output",
         "render_namespace_enforcement_report",
@@ -789,9 +877,14 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "toml_get": ("flext_infra._utilities.toml", "toml_get"),
     "u": ("flext_infra.utilities", "u"),
     "unwrap_item": ("flext_infra._utilities.toml", "unwrap_item"),
+    "unwrap_item_parser": ("flext_infra.deps.modernizer", "unwrap_item_parser"),
+    "workspace_root": ("flext_infra.deps.modernizer", "workspace_root"),
 }
 
 __all__ = [
+    "CensusImportDiscoveryVisitor",
+    "CensusUsageCollector",
+    "CheckIssue",
     "ClassNestingRefactorRule",
     "CompatibilityAliasDetector",
     "ConsolidateGroupsPhase",
@@ -835,6 +928,7 @@ __all__ = [
     "FlextInfraPytestDiagExtractor",
     "FlextInfraPythonVersionEnforcer",
     "FlextInfraRefactorAliasRemover",
+    "FlextInfraRefactorCensus",
     "FlextInfraRefactorClassNestingAnalyzer",
     "FlextInfraRefactorClassNestingReconstructor",
     "FlextInfraRefactorClassNestingTransformer",
@@ -857,6 +951,7 @@ __all__ = [
     "FlextInfraRefactorMROMigrationTransformer",
     "FlextInfraRefactorMROMigrationValidator",
     "FlextInfraRefactorMROPrivateInlineTransformer",
+    "FlextInfraRefactorMROQualifiedReferenceTransformer",
     "FlextInfraRefactorMRORedundancyChecker",
     "FlextInfraRefactorMROReferenceRewriter",
     "FlextInfraRefactorMRORemover",
@@ -884,12 +979,17 @@ __all__ = [
     "FlextInfraTypes",
     "FlextInfraUtilities",
     "FlextInfraUtilitiesDiscovery",
+    "FlextInfraUtilitiesFormatting",
     "FlextInfraUtilitiesGit",
     "FlextInfraUtilitiesIo",
+    "FlextInfraUtilitiesIteration",
     "FlextInfraUtilitiesOutput",
+    "FlextInfraUtilitiesParsing",
     "FlextInfraUtilitiesPaths",
     "FlextInfraUtilitiesPatterns",
     "FlextInfraUtilitiesReporting",
+    "FlextInfraUtilitiesSafety",
+    "FlextInfraUtilitiesScanning",
     "FlextInfraUtilitiesSelection",
     "FlextInfraUtilitiesSubprocess",
     "FlextInfraUtilitiesTemplates",
@@ -903,6 +1003,7 @@ __all__ = [
     "FlextInfraWorkspaceChecker",
     "FlextInfraWorkspaceDetector",
     "FutureAnnotationsDetector",
+    "GateExecution",
     "HelperConsolidationTransformer",
     "ImportAliasDetector",
     "InjectCommentsPhase",
@@ -914,9 +1015,11 @@ __all__ = [
     "NamespaceEnforcementRewriter",
     "NamespaceFacadeScanner",
     "NestedClassPropagationTransformer",
+    "OutputBackend",
     "PostCheckGate",
     "PreCheckGate",
     "ProjectClassifier",
+    "ProjectResult",
     "RuntimeAliasDetector",
     "SyncOperation",
     "WorkspaceMode",
@@ -930,23 +1033,29 @@ __all__ = [
     "__version__",
     "__version_info__",
     "array",
+    "array_parser",
     "as_container_list",
     "as_string_list",
+    "as_string_list_parser",
     "as_toml_mapping",
     "build_parser",
     "build_project_report",
     "c",
+    "canonical_dev_dependencies_parser",
     "classify_issues",
     "ddm",
+    "dedupe_specs_parser",
+    "dep_name_parser",
     "detect_mode",
+    "discover_project_paths",
     "dm",
     "ensure_table",
+    "ensure_table_parser",
     "extract_dep_name",
     "get_current_typings_from_pyproject",
     "get_dep_paths",
     "get_required_typings",
     "load_dependency_limits",
-    "load_python_module",
     "load_tool_config",
     "logger",
     "m",
@@ -954,11 +1063,15 @@ __all__ = [
     "normalize_container_value",
     "output",
     "p",
+    "parser",
     "path_dep_paths",
     "path_dep_paths_pep621",
     "path_dep_paths_poetry",
+    "project_dev_groups_parser",
     "r",
     "read_doc",
+    "read_doc_parser",
+    "render_census_report",
     "render_namespace_enforcement_report",
     "rewrite_dep_paths",
     "run_cli",
@@ -973,6 +1086,8 @@ __all__ = [
     "toml_get",
     "u",
     "unwrap_item",
+    "unwrap_item_parser",
+    "workspace_root",
 ]
 
 

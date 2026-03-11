@@ -14,6 +14,9 @@ if TYPE_CHECKING:
         TestAuditorCore,
         TestAuditorNormalize,
         auditor,
+        is_external,
+        normalize_link,
+        should_skip_target,
     )
     from tests.infra.unit.docs.auditor_budgets import TestLoadAuditBudgets
     from tests.infra.unit.docs.auditor_cli import (
@@ -28,7 +31,7 @@ if TYPE_CHECKING:
         TestAuditorForbiddenTerms,
         TestAuditorScope,
     )
-    from tests.infra.unit.docs.builder import TestBuilderCore
+    from tests.infra.unit.docs.builder import TestBuilderCore, builder
     from tests.infra.unit.docs.builder_scope import TestBuilderScope
     from tests.infra.unit.docs.fixer import TestFixerCore
     from tests.infra.unit.docs.fixer_internals import (
@@ -149,8 +152,12 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "TestWriteJson": ("tests.infra.unit.docs.shared_write", "TestWriteJson"),
     "TestWriteMarkdown": ("tests.infra.unit.docs.shared_write", "TestWriteMarkdown"),
     "auditor": ("tests.infra.unit.docs.auditor", "auditor"),
+    "builder": ("tests.infra.unit.docs.builder", "builder"),
     "fixer": ("tests.infra.unit.docs.fixer_internals", "fixer"),
     "gen": ("tests.infra.unit.docs.generator_internals", "gen"),
+    "is_external": ("tests.infra.unit.docs.auditor", "is_external"),
+    "normalize_link": ("tests.infra.unit.docs.auditor", "normalize_link"),
+    "should_skip_target": ("tests.infra.unit.docs.auditor", "should_skip_target"),
     "validator": ("tests.infra.unit.docs.validator_internals", "validator"),
 }
 
@@ -194,8 +201,12 @@ __all__ = [
     "TestWriteJson",
     "TestWriteMarkdown",
     "auditor",
+    "builder",
     "fixer",
     "gen",
+    "is_external",
+    "normalize_link",
+    "should_skip_target",
     "validator",
 ]
 

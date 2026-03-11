@@ -76,8 +76,13 @@ if TYPE_CHECKING:
         test_helpers_alias_exposed,
     )
     from tests.infra.unit.deps.test_extra_paths_sync import (
-        TestSyncExtraPaths,
-        TestSyncOneEdgeCases,
+        pyright_content,
+        test_main_success_modes,
+        test_main_sync_failure,
+        test_sync_extra_paths_missing_root_pyproject,
+        test_sync_extra_paths_success_modes,
+        test_sync_extra_paths_sync_failure,
+        test_sync_one_edge_cases,
     )
     from tests.infra.unit.deps.test_init import TestFlextInfraDeps
     from tests.infra.unit.deps.test_internal_sync_discovery import (
@@ -146,21 +151,18 @@ if TYPE_CHECKING:
         test_consolidate_groups_phase_apply_with_empty_poetry_group,
     )
     from tests.infra.unit.deps.test_modernizer_helpers import (
-        TestArray,
-        TestAsStringList,
-        TestCanonicalDevDependencies,
-        TestDedupeSpecs,
-        TestDepName,
-        TestEnsureTable,
-        TestProjectDevGroups,
-        TestUnwrapItem,
-        test_as_string_list_with_item,
-        test_as_string_list_with_item_unwrap_returns_none,
-        test_as_string_list_with_mapping,
-        test_as_string_list_with_string,
-        test_ensure_table_with_non_table_value_uncovered,
-        test_unwrap_item_with_item,
-        test_unwrap_item_with_none,
+        doc,
+        test_array,
+        test_as_string_list,
+        test_as_string_list_toml_item,
+        test_canonical_dev_dependencies,
+        test_dedupe_specs,
+        test_dep_name,
+        test_ensure_table,
+        test_project_dev_groups,
+        test_project_dev_groups_missing_sections,
+        test_unwrap_item,
+        test_unwrap_item_toml_item,
     )
     from tests.infra.unit.deps.test_modernizer_main import (
         TestFlextInfraPyprojectModernizer,
@@ -195,16 +197,10 @@ if TYPE_CHECKING:
         test_workspace_root_doc_construction,
     )
     from tests.infra.unit.deps.test_path_sync_helpers import (
-        TestExtractDepName,
-        TestExtractRequirementName,
-        TestTargetPath,
-        test_extract_requirement_name_invalid,
-        test_extract_requirement_name_simple,
-        test_extract_requirement_name_with_path_dep,
+        test_extract_dep_name,
+        test_extract_requirement_name,
         test_helpers_alias_is_reachable_helpers,
-        test_target_path_standalone,
-        test_target_path_workspace_root,
-        test_target_path_workspace_subproject,
+        test_target_path,
     )
     from tests.infra.unit.deps.test_path_sync_init import (
         TestDetectMode,
@@ -257,18 +253,9 @@ if TYPE_CHECKING:
 
 # Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
-    "TestArray": ("tests.infra.unit.deps.test_modernizer_helpers", "TestArray"),
-    "TestAsStringList": (
-        "tests.infra.unit.deps.test_modernizer_helpers",
-        "TestAsStringList",
-    ),
     "TestBuildProjectReport": (
         "tests.infra.unit.deps.test_detection_classify",
         "TestBuildProjectReport",
-    ),
-    "TestCanonicalDevDependencies": (
-        "tests.infra.unit.deps.test_modernizer_helpers",
-        "TestCanonicalDevDependencies",
     ),
     "TestClassifyIssues": (
         "tests.infra.unit.deps.test_detection_classify",
@@ -290,11 +277,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.infra.unit.deps.test_extra_paths_manager",
         "TestConstants",
     ),
-    "TestDedupeSpecs": (
-        "tests.infra.unit.deps.test_modernizer_helpers",
-        "TestDedupeSpecs",
-    ),
-    "TestDepName": ("tests.infra.unit.deps.test_modernizer_helpers", "TestDepName"),
     "TestDetectMode": ("tests.infra.unit.deps.test_path_sync_init", "TestDetectMode"),
     "TestDetectionUncoveredLines": (
         "tests.infra.unit.deps.test_detection_uncovered",
@@ -339,18 +321,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "TestEnsureSymlinkEdgeCases": (
         "tests.infra.unit.deps.test_internal_sync_update",
         "TestEnsureSymlinkEdgeCases",
-    ),
-    "TestEnsureTable": (
-        "tests.infra.unit.deps.test_modernizer_helpers",
-        "TestEnsureTable",
-    ),
-    "TestExtractDepName": (
-        "tests.infra.unit.deps.test_path_sync_helpers",
-        "TestExtractDepName",
-    ),
-    "TestExtractRequirementName": (
-        "tests.infra.unit.deps.test_path_sync_helpers",
-        "TestExtractRequirementName",
     ),
     "TestFlextInfraDependencyDetectionModels": (
         "tests.infra.unit.deps.test_detection_models",
@@ -504,10 +474,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.infra.unit.deps.test_path_sync_init",
         "TestPathSyncEdgeCases",
     ),
-    "TestProjectDevGroups": (
-        "tests.infra.unit.deps.test_modernizer_helpers",
-        "TestProjectDevGroups",
-    ),
     "TestReadDoc": ("tests.infra.unit.deps.test_modernizer_workspace", "TestReadDoc"),
     "TestResolveRef": (
         "tests.infra.unit.deps.test_internal_sync_resolve",
@@ -539,10 +505,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "TestSubcommandMapping",
     ),
     "TestSync": ("tests.infra.unit.deps.test_internal_sync_sync", "TestSync"),
-    "TestSyncExtraPaths": (
-        "tests.infra.unit.deps.test_extra_paths_sync",
-        "TestSyncExtraPaths",
-    ),
     "TestSyncMethodEdgeCases": (
         "tests.infra.unit.deps.test_internal_sync_sync_edge",
         "TestSyncMethodEdgeCases",
@@ -552,25 +514,13 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "TestSyncMethodEdgeCasesMore",
     ),
     "TestSyncOne": ("tests.infra.unit.deps.test_extra_paths_manager", "TestSyncOne"),
-    "TestSyncOneEdgeCases": (
-        "tests.infra.unit.deps.test_extra_paths_sync",
-        "TestSyncOneEdgeCases",
-    ),
     "TestSynthesizedRepoMap": (
         "tests.infra.unit.deps.test_internal_sync_resolve",
         "TestSynthesizedRepoMap",
     ),
-    "TestTargetPath": (
-        "tests.infra.unit.deps.test_path_sync_helpers",
-        "TestTargetPath",
-    ),
     "TestToInfraValue": (
         "tests.infra.unit.deps.test_detection_models",
         "TestToInfraValue",
-    ),
-    "TestUnwrapItem": (
-        "tests.infra.unit.deps.test_modernizer_helpers",
-        "TestUnwrapItem",
     ),
     "TestValidateGitRefEdgeCases": (
         "tests.infra.unit.deps.test_internal_sync_validation",
@@ -589,29 +539,31 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "TestWorkspaceRootFromParents",
     ),
     "c": ("tests.infra.unit.deps.test_extra_paths_manager", "TestConstants"),
+    "doc": ("tests.infra.unit.deps.test_modernizer_helpers", "doc"),
     "m": (
         "tests.infra.unit.deps.test_detection_models",
         "TestFlextInfraDependencyDetectionModels",
+    ),
+    "pyright_content": (
+        "tests.infra.unit.deps.test_extra_paths_sync",
+        "pyright_content",
     ),
     "s": (
         "tests.infra.unit.deps.test_detection_models",
         "TestFlextInfraDependencyDetectionService",
     ),
-    "test_as_string_list_with_item": (
+    "test_array": ("tests.infra.unit.deps.test_modernizer_helpers", "test_array"),
+    "test_as_string_list": (
         "tests.infra.unit.deps.test_modernizer_helpers",
-        "test_as_string_list_with_item",
+        "test_as_string_list",
     ),
-    "test_as_string_list_with_item_unwrap_returns_none": (
+    "test_as_string_list_toml_item": (
         "tests.infra.unit.deps.test_modernizer_helpers",
-        "test_as_string_list_with_item_unwrap_returns_none",
+        "test_as_string_list_toml_item",
     ),
-    "test_as_string_list_with_mapping": (
+    "test_canonical_dev_dependencies": (
         "tests.infra.unit.deps.test_modernizer_helpers",
-        "test_as_string_list_with_mapping",
-    ),
-    "test_as_string_list_with_string": (
-        "tests.infra.unit.deps.test_modernizer_helpers",
-        "test_as_string_list_with_string",
+        "test_canonical_dev_dependencies",
     ),
     "test_consolidate_groups_phase_apply_removes_old_groups": (
         "tests.infra.unit.deps.test_modernizer_consolidate",
@@ -621,6 +573,11 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.infra.unit.deps.test_modernizer_consolidate",
         "test_consolidate_groups_phase_apply_with_empty_poetry_group",
     ),
+    "test_dedupe_specs": (
+        "tests.infra.unit.deps.test_modernizer_helpers",
+        "test_dedupe_specs",
+    ),
+    "test_dep_name": ("tests.infra.unit.deps.test_modernizer_helpers", "test_dep_name"),
     "test_detect_mode_with_nonexistent_path": (
         "tests.infra.unit.deps.test_path_sync_init",
         "test_detect_mode_with_nonexistent_path",
@@ -661,21 +618,17 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.infra.unit.deps.test_modernizer_pytest",
         "test_ensure_pytest_config_phase_apply_python_classes",
     ),
-    "test_ensure_table_with_non_table_value_uncovered": (
+    "test_ensure_table": (
         "tests.infra.unit.deps.test_modernizer_helpers",
-        "test_ensure_table_with_non_table_value_uncovered",
+        "test_ensure_table",
     ),
-    "test_extract_requirement_name_invalid": (
+    "test_extract_dep_name": (
         "tests.infra.unit.deps.test_path_sync_helpers",
-        "test_extract_requirement_name_invalid",
+        "test_extract_dep_name",
     ),
-    "test_extract_requirement_name_simple": (
+    "test_extract_requirement_name": (
         "tests.infra.unit.deps.test_path_sync_helpers",
-        "test_extract_requirement_name_simple",
-    ),
-    "test_extract_requirement_name_with_path_dep": (
-        "tests.infra.unit.deps.test_path_sync_helpers",
-        "test_extract_requirement_name_with_path_dep",
+        "test_extract_requirement_name",
     ),
     "test_flext_infra_pyproject_modernizer_find_pyproject_files": (
         "tests.infra.unit.deps.test_modernizer_main_extra",
@@ -761,6 +714,14 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.infra.unit.deps.test_path_sync_main_project_obj",
         "test_main_project_obj_not_dict_second_loop",
     ),
+    "test_main_success_modes": (
+        "tests.infra.unit.deps.test_extra_paths_sync",
+        "test_main_success_modes",
+    ),
+    "test_main_sync_failure": (
+        "tests.infra.unit.deps.test_extra_paths_sync",
+        "test_main_sync_failure",
+    ),
     "test_main_with_changes_and_dry_run": (
         "tests.infra.unit.deps.test_path_sync_main_more",
         "test_main_with_changes_and_dry_run",
@@ -768,6 +729,14 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "test_main_with_changes_no_dry_run": (
         "tests.infra.unit.deps.test_path_sync_main_more",
         "test_main_with_changes_no_dry_run",
+    ),
+    "test_project_dev_groups": (
+        "tests.infra.unit.deps.test_modernizer_helpers",
+        "test_project_dev_groups",
+    ),
+    "test_project_dev_groups_missing_sections": (
+        "tests.infra.unit.deps.test_modernizer_helpers",
+        "test_project_dev_groups_missing_sections",
     ),
     "test_rewrite_dep_paths_dry_run": (
         "tests.infra.unit.deps.test_path_sync_rewrite_deps",
@@ -825,25 +794,33 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.infra.unit.deps.test_main_dispatch",
         "test_string_zero_return_value",
     ),
-    "test_target_path_standalone": (
-        "tests.infra.unit.deps.test_path_sync_helpers",
-        "test_target_path_standalone",
+    "test_sync_extra_paths_missing_root_pyproject": (
+        "tests.infra.unit.deps.test_extra_paths_sync",
+        "test_sync_extra_paths_missing_root_pyproject",
     ),
-    "test_target_path_workspace_root": (
-        "tests.infra.unit.deps.test_path_sync_helpers",
-        "test_target_path_workspace_root",
+    "test_sync_extra_paths_success_modes": (
+        "tests.infra.unit.deps.test_extra_paths_sync",
+        "test_sync_extra_paths_success_modes",
     ),
-    "test_target_path_workspace_subproject": (
-        "tests.infra.unit.deps.test_path_sync_helpers",
-        "test_target_path_workspace_subproject",
+    "test_sync_extra_paths_sync_failure": (
+        "tests.infra.unit.deps.test_extra_paths_sync",
+        "test_sync_extra_paths_sync_failure",
     ),
-    "test_unwrap_item_with_item": (
+    "test_sync_one_edge_cases": (
+        "tests.infra.unit.deps.test_extra_paths_sync",
+        "test_sync_one_edge_cases",
+    ),
+    "test_target_path": (
+        "tests.infra.unit.deps.test_path_sync_helpers",
+        "test_target_path",
+    ),
+    "test_unwrap_item": (
         "tests.infra.unit.deps.test_modernizer_helpers",
-        "test_unwrap_item_with_item",
+        "test_unwrap_item",
     ),
-    "test_unwrap_item_with_none": (
+    "test_unwrap_item_toml_item": (
         "tests.infra.unit.deps.test_modernizer_helpers",
-        "test_unwrap_item_with_none",
+        "test_unwrap_item_toml_item",
     ),
     "test_workspace_root_doc_construction": (
         "tests.infra.unit.deps.test_modernizer_workspace",
@@ -856,17 +833,12 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
 }
 
 __all__ = [
-    "TestArray",
-    "TestAsStringList",
     "TestBuildProjectReport",
-    "TestCanonicalDevDependencies",
     "TestClassifyIssues",
     "TestCollectInternalDeps",
     "TestCollectInternalDepsEdgeCases",
     "TestConsolidateGroupsPhase",
     "TestConstants",
-    "TestDedupeSpecs",
-    "TestDepName",
     "TestDetectMode",
     "TestDetectionUncoveredLines",
     "TestDetectorReportFlags",
@@ -879,9 +851,6 @@ __all__ = [
     "TestEnsurePytestConfigPhase",
     "TestEnsureSymlink",
     "TestEnsureSymlinkEdgeCases",
-    "TestEnsureTable",
-    "TestExtractDepName",
-    "TestExtractRequirementName",
     "TestFlextInfraDependencyDetectionModels",
     "TestFlextInfraDependencyDetectionService",
     "TestFlextInfraDependencyDetectorModels",
@@ -923,7 +892,6 @@ __all__ = [
     "TestPathDepPathsPep621",
     "TestPathDepPathsPoetry",
     "TestPathSyncEdgeCases",
-    "TestProjectDevGroups",
     "TestReadDoc",
     "TestResolveRef",
     "TestRewriteDepPaths",
@@ -934,28 +902,28 @@ __all__ = [
     "TestRunPipCheck",
     "TestSubcommandMapping",
     "TestSync",
-    "TestSyncExtraPaths",
     "TestSyncMethodEdgeCases",
     "TestSyncMethodEdgeCasesMore",
     "TestSyncOne",
-    "TestSyncOneEdgeCases",
     "TestSynthesizedRepoMap",
-    "TestTargetPath",
     "TestToInfraValue",
-    "TestUnwrapItem",
     "TestValidateGitRefEdgeCases",
     "TestWorkspaceRoot",
     "TestWorkspaceRootFromEnv",
     "TestWorkspaceRootFromParents",
     "c",
+    "doc",
     "m",
+    "pyright_content",
     "s",
-    "test_as_string_list_with_item",
-    "test_as_string_list_with_item_unwrap_returns_none",
-    "test_as_string_list_with_mapping",
-    "test_as_string_list_with_string",
+    "test_array",
+    "test_as_string_list",
+    "test_as_string_list_toml_item",
+    "test_canonical_dev_dependencies",
     "test_consolidate_groups_phase_apply_removes_old_groups",
     "test_consolidate_groups_phase_apply_with_empty_poetry_group",
+    "test_dedupe_specs",
+    "test_dep_name",
     "test_detect_mode_with_nonexistent_path",
     "test_detect_mode_with_path_object",
     "test_discover_projects_wrapper",
@@ -966,10 +934,9 @@ __all__ = [
     "test_ensure_pytest_config_phase_apply_markers",
     "test_ensure_pytest_config_phase_apply_minversion",
     "test_ensure_pytest_config_phase_apply_python_classes",
-    "test_ensure_table_with_non_table_value_uncovered",
-    "test_extract_requirement_name_invalid",
-    "test_extract_requirement_name_simple",
-    "test_extract_requirement_name_with_path_dep",
+    "test_ensure_table",
+    "test_extract_dep_name",
+    "test_extract_requirement_name",
     "test_flext_infra_pyproject_modernizer_find_pyproject_files",
     "test_flext_infra_pyproject_modernizer_process_file_invalid_toml",
     "test_get_current_typings_from_pyproject_wrapper",
@@ -991,8 +958,12 @@ __all__ = [
     "test_main_project_non_string_name",
     "test_main_project_obj_not_dict_first_loop",
     "test_main_project_obj_not_dict_second_loop",
+    "test_main_success_modes",
+    "test_main_sync_failure",
     "test_main_with_changes_and_dry_run",
     "test_main_with_changes_no_dry_run",
+    "test_project_dev_groups",
+    "test_project_dev_groups_missing_sections",
     "test_rewrite_dep_paths_dry_run",
     "test_rewrite_dep_paths_read_failure",
     "test_rewrite_dep_paths_with_internal_names",
@@ -1007,11 +978,13 @@ __all__ = [
     "test_run_mypy_stub_hints_wrapper",
     "test_run_pip_check_wrapper",
     "test_string_zero_return_value",
-    "test_target_path_standalone",
-    "test_target_path_workspace_root",
-    "test_target_path_workspace_subproject",
-    "test_unwrap_item_with_item",
-    "test_unwrap_item_with_none",
+    "test_sync_extra_paths_missing_root_pyproject",
+    "test_sync_extra_paths_success_modes",
+    "test_sync_extra_paths_sync_failure",
+    "test_sync_one_edge_cases",
+    "test_target_path",
+    "test_unwrap_item",
+    "test_unwrap_item_toml_item",
     "test_workspace_root_doc_construction",
     "test_workspace_root_fallback",
 ]

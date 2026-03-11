@@ -14,6 +14,7 @@ if TYPE_CHECKING:
         TestBaseMkValidatorCore,
         TestBaseMkValidatorEdgeCases,
         TestBaseMkValidatorSha256,
+        v,
     )
     from tests.infra.unit.core.init import TestCoreModuleInit
     from tests.infra.unit.core.inventory import (
@@ -137,6 +138,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.infra.unit.core.stub_chain",
         "TestStubChainValidate",
     ),
+    "v": ("tests.infra.unit.core.basemk_validator", "v"),
 }
 
 __all__ = [
@@ -168,6 +170,7 @@ __all__ = [
     "TestStubChainIsInternal",
     "TestStubChainStubExists",
     "TestStubChainValidate",
+    "v",
 ]
 
 

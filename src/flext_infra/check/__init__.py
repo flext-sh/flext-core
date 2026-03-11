@@ -26,12 +26,12 @@ if TYPE_CHECKING:
 
 # Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
+    "CheckIssue": ("flext_infra.check.services", "CheckIssue"),
     "FlextInfraConfigFixer": ("flext_infra.check.services", "FlextInfraConfigFixer"),
     "FlextInfraWorkspaceChecker": (
         "flext_infra.check.workspace_check",
         "FlextInfraWorkspaceChecker",
     ),
-    "CheckIssue": ("flext_infra.check.services", "CheckIssue"),
     "GateExecution": ("flext_infra.check.services", "GateExecution"),
     "ProjectResult": ("flext_infra.check.services", "ProjectResult"),
     "build_parser": ("flext_infra.check.workspace_check", "build_parser"),

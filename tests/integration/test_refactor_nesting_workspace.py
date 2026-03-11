@@ -43,7 +43,7 @@ class TestWorkspaceLevelRefactor:
         """Test that cross-project references are updated."""
         proj_a = tmp_path / "project-a" / "src" / "project_a"
         proj_a.mkdir(parents=True)
-        (proj_a / "core.py").write_text("\nclass CoreService:\n    pass\n")
+        _ = (proj_a / "core.py").write_text("\nclass CoreService:\n    pass\n")
         proj_b = tmp_path / "project-b" / "src" / "project_b"
         proj_b.mkdir(parents=True)
         _ = (proj_b / "consumer.py").write_text(
