@@ -7,6 +7,7 @@ import pytest
 
 from flext_core import r
 from flext_infra.deps import path_sync as path_sync_module
+from flext_infra.deps.path_sync import FlextInfraDependencyPathSync
 from flext_tests import tm
 from tests.infra.helpers import FlextInfraTestHelpers
 from tests.infra.models import m
@@ -33,7 +34,7 @@ class TestMain:
         (tmp_path / "pyproject.toml").write_text(
             '[project]\nname = "flext-workspace"\n'
         )
-        monkeypatch.setattr(path_sync_module, "ROOT", tmp_path)
+        monkeypatch.setattr(FlextInfraDependencyPathSync, "ROOT", tmp_path)
         monkeypatch.setattr(sys, "argv", ["prog", "--mode", "auto"])
         tm.that(path_sync_module.main(), eq=0)
 
@@ -45,7 +46,7 @@ class TestMain:
         (tmp_path / "pyproject.toml").write_text(
             '[project]\nname = "flext-workspace"\n'
         )
-        monkeypatch.setattr(path_sync_module, "ROOT", tmp_path)
+        monkeypatch.setattr(FlextInfraDependencyPathSync, "ROOT", tmp_path)
         monkeypatch.setattr(sys, "argv", ["prog", "--mode", "workspace"])
         tm.that(path_sync_module.main(), eq=0)
 
@@ -57,7 +58,7 @@ class TestMain:
         (tmp_path / "pyproject.toml").write_text(
             '[project]\nname = "flext-workspace"\n'
         )
-        monkeypatch.setattr(path_sync_module, "ROOT", tmp_path)
+        monkeypatch.setattr(FlextInfraDependencyPathSync, "ROOT", tmp_path)
         monkeypatch.setattr(sys, "argv", ["prog", "--mode", "standalone"])
         tm.that(path_sync_module.main(), eq=0)
 
@@ -67,7 +68,7 @@ class TestMain:
         (tmp_path / "pyproject.toml").write_text(
             '[project]\nname = "flext-workspace"\n'
         )
-        monkeypatch.setattr(path_sync_module, "ROOT", tmp_path)
+        monkeypatch.setattr(FlextInfraDependencyPathSync, "ROOT", tmp_path)
         monkeypatch.setattr(sys, "argv", ["prog", "--dry-run"])
         tm.that(path_sync_module.main(), eq=0)
 
@@ -82,7 +83,7 @@ class TestMain:
         project_dir = tmp_path / "flext-core"
         project_dir.mkdir()
         (project_dir / "pyproject.toml").write_text('[project]\nname = "flext-core"\n')
-        monkeypatch.setattr(path_sync_module, "ROOT", tmp_path)
+        monkeypatch.setattr(FlextInfraDependencyPathSync, "ROOT", tmp_path)
         monkeypatch.setattr(sys, "argv", ["prog", "--project", "flext-core"])
         tm.that(path_sync_module.main(), eq=0)
 
@@ -101,7 +102,7 @@ class TestMain:
         ) -> r[list[m.Infra.Workspace.ProjectInfo]]:
             return r[list[m.Infra.Workspace.ProjectInfo]].fail("discovery failed")
 
-        monkeypatch.setattr(path_sync_module, "ROOT", tmp_path)
+        monkeypatch.setattr(FlextInfraDependencyPathSync, "ROOT", tmp_path)
         monkeypatch.setattr(
             "flext_infra.FlextInfraUtilitiesDiscovery.discover_projects",
             _discover_fail,
@@ -124,11 +125,9 @@ class TestMain:
         ) -> r[list[str]]:
             return r[list[str]].fail("rewrite failed")
 
-        monkeypatch.setattr(path_sync_module, "ROOT", tmp_path)
+        monkeypatch.setattr(FlextInfraDependencyPathSync, "ROOT", tmp_path)
         monkeypatch.setattr(
-            path_sync_module,
-            "rewrite_dep_paths",
-            _rewrite_fail,
+            FlextInfraDependencyPathSync, "rewrite_dep_paths", _rewrite_fail
         )
         monkeypatch.setattr(sys, "argv", ["prog"])
         tm.that(path_sync_module.main(), eq=1)
@@ -151,7 +150,7 @@ class TestMain:
         ) -> r[list[m.Infra.Workspace.ProjectInfo]]:
             return r[list[m.Infra.Workspace.ProjectInfo]].ok([_project(project_dir)])
 
-        monkeypatch.setattr(path_sync_module, "ROOT", tmp_path)
+        monkeypatch.setattr(FlextInfraDependencyPathSync, "ROOT", tmp_path)
         monkeypatch.setattr(
             "flext_infra.FlextInfraUtilitiesDiscovery.discover_projects",
             _discover_project,
@@ -166,7 +165,9 @@ class TestMain:
                 return r[list[str]].ok([])
             return r[list[str]].fail("project rewrite failed")
 
-        monkeypatch.setattr(path_sync_module, "rewrite_dep_paths", rewrite_stub)
+        monkeypatch.setattr(
+            FlextInfraDependencyPathSync, "rewrite_dep_paths", rewrite_stub
+        )
         monkeypatch.setattr(sys, "argv", ["prog"])
         tm.that(path_sync_module.main(), eq=1)
 
