@@ -100,10 +100,11 @@ class FlextInfraDependencyPathSync:
     def _table_get(
         container: TOMLDocument | Table,
         key: str,
-    ) -> Item | t.ContainerValue | None:
+    ) -> Item | None:
         if key not in container:
             return None
-        return container[key]
+        item = container[key]
+        return item if isinstance(item, Item) else None
 
     def _rewrite_pep621(
         self,
@@ -117,14 +118,11 @@ class FlextInfraDependencyPathSync:
         if not isinstance(project_raw, Table):
             return []
         project_section: Table = project_raw
-        deps_raw = self._table_get(project_section, c.Infra.Toml.DEPENDENCIES)
-        if not isinstance(deps_raw, list):
+        deps: list[str] = u.Infra.as_string_list(
+            self._table_get(project_section, c.Infra.Toml.DEPENDENCIES)
+        )
+        if not deps:
             return []
-        deps_values: list[t.ContainerValue] = deps_raw
-        deps_filtered: list[str] = [
-            entry for entry in deps_values if isinstance(entry, str)
-        ]
-        deps: list[str] = deps_filtered
         changes: list[str] = []
         updated_deps: list[str] = []
         for item_raw in deps:

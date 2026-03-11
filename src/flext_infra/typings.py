@@ -56,6 +56,12 @@ class FlextInfraTypes(FlextTypes):
         "Mutable string-to-string mapping for accumulation patterns."
         type ContainerDict = dict[str, FlextTypes.ContainerValue]
         "Dict with string keys and container values (project reports, etc.)."
+        TomlScalar: TypeAlias = str | int | float | bool | None
+        "TOML scalar value (null, string, integer, float, boolean)."
+        type TomlValue = TomlScalar | dict[str, TomlValue] | list[TomlValue]
+        "Recursive TOML value (scalar, table, or array)."
+        TomlConfig: TypeAlias = dict[str, TomlValue]
+        "Top-level TOML document mapping."
         type ContainerReport = dict[str, ContainerDict]
         "Nested container dict (project-level reports)."
         type LazyImportEntry = tuple[str, str]

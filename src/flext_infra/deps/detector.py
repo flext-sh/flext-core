@@ -116,9 +116,9 @@ def main() -> int:
     detector = FlextInfraRuntimeDevDependencyDetector()
     result = detector.run()
     if result.is_failure:
-        detector.log.error(
-            "deps_detector_failed", error=result.error or "unknown error"
-        )
+        logger = getattr(detector, "log", None)
+        if logger is not None and hasattr(logger, "error"):
+            logger.error("deps_detector_failed", error=result.error or "unknown error")
         return 1
     return result.value
 

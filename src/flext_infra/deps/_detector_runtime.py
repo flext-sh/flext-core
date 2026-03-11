@@ -8,6 +8,8 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Protocol
 
+from pydantic import TypeAdapter
+
 from flext_core import FlextLogger, r
 from flext_infra import (
     FlextInfraUtilitiesIo,
@@ -24,7 +26,11 @@ from flext_infra.deps.detection import FlextInfraDependencyDetectionService
 class _WorkspaceReportProtocol(Protocol):
     """Protocol for workspace dependency report model contract."""
 
-    def model_dump(self) -> dict[str, t.ContainerValue]: ...
+    def model_dump(self) -> dict[str, t.JsonValue]: ...
+
+
+class _ProjectReportProtocol(Protocol):
+    def model_dump(self) -> dict[str, t.JsonValue]: ...
 
 
 class _DetectorRuntimeProtocol(Protocol):
@@ -47,18 +53,50 @@ class _DetectorRuntimeProtocol(Protocol):
 class FlextInfraDependencyDetectorRuntime:
     """Service to execute dependency detection and generate reports."""
 
+    _CONTAINER_LIST_ADAPTER: TypeAdapter[list[t.Infra.TomlValue]] = TypeAdapter(
+        list[t.Infra.TomlValue]
+    )
+
     def __init__(
         self,
         detector: _DetectorRuntimeProtocol,
         workspace_report_factory: Callable[..., _WorkspaceReportProtocol],
-        dependency_limits_factory: Callable[..., object],
-        pip_check_factory: Callable[..., object],
+        dependency_limits_factory: Callable[..., m.Infra.Deps.DependencyLimitsInfo],
+        pip_check_factory: Callable[..., m.Infra.Deps.PipCheckReport],
     ) -> None:
         """Initialize the detector runtime with required services and model factories."""
         self.detector = detector
         self.workspace_report_factory = workspace_report_factory
         self.dependency_limits_factory = dependency_limits_factory
         self.pip_check_factory = pip_check_factory
+
+    @staticmethod
+    def _deptry_from_payload(
+        report_payload: dict[str, t.JsonValue],
+    ) -> m.Infra.Deps.DeptryReport:
+        deptry_payload = report_payload.get("deptry")
+        if not isinstance(deptry_payload, dict):
+            return m.Infra.Deps.DeptryReport()
+        missing = deptry_payload.get("missing")
+        unused = deptry_payload.get("unused")
+        transitive = deptry_payload.get("transitive")
+        dev_in_runtime = deptry_payload.get("dev_in_runtime")
+        raw_count = deptry_payload.get("raw_count")
+        missing_values = missing if isinstance(missing, list) else []
+        unused_values = unused if isinstance(unused, list) else []
+        transitive_values = transitive if isinstance(transitive, list) else []
+        dev_in_runtime_values = (
+            dev_in_runtime if isinstance(dev_in_runtime, list) else []
+        )
+        return m.Infra.Deps.DeptryReport(
+            missing=[item for item in missing_values if isinstance(item, str)],
+            unused=[item for item in unused_values if isinstance(item, str)],
+            transitive=[item for item in transitive_values if isinstance(item, str)],
+            dev_in_runtime=[
+                item for item in dev_in_runtime_values if isinstance(item, str)
+            ],
+            raw_count=raw_count if isinstance(raw_count, int) else 0,
+        )
 
     def run(self, argv: list[str] | None = None) -> r[int]:
         """Execute dependency detection and generate workspace report."""
@@ -88,8 +126,8 @@ class FlextInfraDependencyDetectorRuntime:
         apply_typings = bool(args.apply_typings)
         do_typings = bool(args.typings) or apply_typings
         limits_path = Path(args.limits) if args.limits else limits_default
-        projects_report: dict[str, dict[str, t.ContainerValue]] = {}
-        dependency_limits_model: object | None = None
+        projects_report: dict[str, m.Infra.Deps.ProjectRuntimeReport] = {}
+        dependency_limits_model: m.Infra.Deps.DependencyLimitsInfo | None = None
         if do_typings:
             limits_data = self.detector.deps.load_dependency_limits(limits_path)
             if limits_data:
@@ -112,10 +150,13 @@ class FlextInfraDependencyDetectorRuntime:
             if deptry_result.is_failure:
                 return r[int].fail(deptry_result.error or "deptry run failed")
             issues, _ = deptry_result.value
-            project_payload = self.detector.deps.build_project_report(
-                project_name, issues
+            project_dependency_report: _ProjectReportProtocol = (
+                self.detector.deps.build_project_report(project_name, issues)
             )
-            projects_report[project_name] = project_payload.model_dump()
+            deptry_report = self._deptry_from_payload(
+                project_dependency_report.model_dump()
+            )
+            project_report = m.Infra.Deps.ProjectRuntimeReport(deptry=deptry_report)
             if do_typings and (project_path / c.Infra.Paths.DEFAULT_SRC_DIR).is_dir():
                 if not args.quiet:
                     self.detector.log.info(
@@ -130,18 +171,32 @@ class FlextInfraDependencyDetectorRuntime:
                     return r[int].fail(
                         typings_result.error or "typing dependency detection failed",
                     )
-                typings_report = typings_result.value
-                projects_report[project_name][c.Infra.Directories.TYPINGS] = (
-                    typings_report.model_dump()
+                typings_payload = typings_result.value.model_dump()
+                to_add_packages: list[str] = []
+                to_add_value = typings_payload.get("to_add")
+                if isinstance(to_add_value, list):
+                    parsed_values = self._CONTAINER_LIST_ADAPTER.validate_python(
+                        to_add_value
+                    )
+                    to_add_packages = [str(value_item) for value_item in parsed_values]
+                typings_report = m.Infra.Deps.TypingsReport(
+                    required_packages=[],
+                    hinted=[],
+                    missing_modules=[],
+                    current=[],
+                    to_add=[item for item in to_add_packages if item],
+                    to_remove=[],
+                    limits_applied=False,
+                    python_version=None,
                 )
-                to_add: list[str] = typings_report.to_add
-                if apply_typings and to_add and (not args.dry_run):
+                project_report.typings = typings_report
+                if apply_typings and to_add_packages and (not args.dry_run):
                     env = {
                         **os.environ,
                         "VIRTUAL_ENV": str(venv_bin.parent),
                         "PATH": f"{venv_bin}:{os.environ.get('PATH', '')}",
                     }
-                    for package in to_add:
+                    for package in to_add_packages:
                         run_res = self.detector.runner.run_raw(
                             [
                                 c.Infra.Cli.POETRY,
@@ -168,8 +223,9 @@ class FlextInfraDependencyDetectorRuntime:
                                     project=project_name,
                                     package=package,
                                 )
+            projects_report[project_name] = project_report
         pip_ok = True
-        pip_check_model: object | None = None
+        pip_check_model: m.Infra.Deps.PipCheckReport | None = None
         if not args.no_pip_check:
             if not args.quiet:
                 self.detector.log.info("deps_pip_check_running")
@@ -210,11 +266,7 @@ class FlextInfraDependencyDetectorRuntime:
                 self.detector.log.info("deps_report_written", path=str(out_path))
         total_issues = 0
         for payload in projects_report.values():
-            deptry_obj = payload.get(c.Infra.Toml.DEPTRY)
-            if isinstance(deptry_obj, dict):
-                raw_count = deptry_obj.get("raw_count", 0)
-                if isinstance(raw_count, int):
-                    total_issues += raw_count
+            total_issues += payload.deptry.raw_count
         if not args.quiet:
             self.detector.log.info(
                 "deps_summary",
@@ -230,8 +282,8 @@ class FlextInfraDependencyDetectorRuntime:
 def run_detector(
     detector: _DetectorRuntimeProtocol,
     workspace_report_factory: Callable[..., _WorkspaceReportProtocol],
-    dependency_limits_factory: Callable[..., object],
-    pip_check_factory: Callable[..., object],
+    dependency_limits_factory: Callable[..., m.Infra.Deps.DependencyLimitsInfo],
+    pip_check_factory: Callable[..., m.Infra.Deps.PipCheckReport],
     argv: list[str] | None = None,
 ) -> r[int]:
     """Execute dependency detection and generate workspace report (backward compatible)."""

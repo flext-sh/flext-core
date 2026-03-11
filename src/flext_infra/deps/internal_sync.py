@@ -197,13 +197,15 @@ class FlextInfraInternalDependencySyncService:
         data = data_result.value
         tool = data.get(c.Infra.Toml.TOOL)
         poetry = tool.get(c.Infra.Toml.POETRY) if isinstance(tool, dict) else None
-        empty_deps: dict[str, t.JsonValue] = {}
+        empty_deps: dict[str, t.Infra.InfraValue] = {}
         deps_raw = (
             poetry.get(c.Infra.Toml.DEPENDENCIES)
             if isinstance(poetry, dict)
             else empty_deps
         )
-        deps: dict[str, t.JsonValue] = deps_raw if isinstance(deps_raw, dict) else {}
+        deps: dict[str, t.Infra.InfraValue] = (
+            deps_raw if isinstance(deps_raw, dict) else {}
+        )
         result: MutableMapping[str, Path] = {}
         for dep_name, dep_value in deps.items():
             if not isinstance(dep_value, dict):

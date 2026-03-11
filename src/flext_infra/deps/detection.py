@@ -37,7 +37,9 @@ class FlextInfraDependencyDetectionService:
         self.runner: p.Infra.CommandRunner = FlextInfraUtilitiesSubprocess()
 
     @staticmethod
-    def to_infra_value(value: t.JsonValue) -> t.Infra.InfraValue | None:
+    def to_infra_value(
+        value: t.Infra.TomlValue | t.Infra.InfraValue,
+    ) -> t.Infra.InfraValue | None:
         """Convert container value to namespaced infra value."""
         if value is None or isinstance(value, (str, int, float, bool)):
             return value
@@ -157,7 +159,7 @@ class FlextInfraDependencyDetectionService:
         read_result = self.toml.read_plain(pyproject)
         if read_result.is_failure:
             return []
-        data: t.Infra.ContainerDict = read_result.value
+        data: t.Infra.TomlConfig = read_result.value
         if not data:
             return []
         names: set[str] = set()
@@ -248,14 +250,14 @@ class FlextInfraDependencyDetectionService:
     def load_dependency_limits(
         self,
         limits_path: Path | None = None,
-    ) -> Mapping[str, t.Infra.InfraValue]:
+    ) -> Mapping[str, t.Infra.TomlValue]:
         """Load dependency limits configuration from TOML file."""
         path = limits_path or Path(__file__).resolve().parent / "dependency_limits.toml"
         result = self.toml.read_plain(path)
         if result.is_failure:
             return {}
-        limits: MutableMapping[str, t.Infra.InfraValue] = {}
-        toml_data: t.Infra.ContainerDict = result.value
+        limits: MutableMapping[str, t.Infra.TomlValue] = {}
+        toml_data: t.Infra.TomlConfig = result.value
         for key, value in toml_data.items():
             converted = FlextInfraDependencyDetectionService.to_infra_value(value)
             if (converted is not None or value is None) and not isinstance(
@@ -267,7 +269,7 @@ class FlextInfraDependencyDetectionService:
     def module_to_types_package(
         self,
         module_name: str,
-        limits: Mapping[str, t.Infra.InfraValue],
+        limits: Mapping[str, t.Infra.TomlValue],
     ) -> str | None:
         """Map a module name to its corresponding types-* package."""
         root = module_name.split(".", 1)[0]
@@ -324,7 +326,7 @@ class FlextInfraDependencyDetectionService:
         if out_file.exists():
             raw = out_file.read_text(encoding=c.Infra.Encoding.DEFAULT)
             loaded_result = u.Infra.parse(raw) if raw.strip() else None
-            loaded_payload: t.JsonValue = (
+            loaded_payload: t.Infra.TomlValue = (
                 loaded_result.value
                 if loaded_result is not None and loaded_result.is_success
                 else []
@@ -334,7 +336,7 @@ class FlextInfraDependencyDetectionService:
                 for item in loaded_payload:
                     if not isinstance(item, dict):
                         continue
-                    converted_issue: dict[str, t.Infra.InfraValue] = {}
+                    converted_issue: dict[str, t.Infra.TomlValue] = {}
                     valid = True
                     for key, value in item.items():
                         converted = FlextInfraDependencyDetectionService.to_infra_value(
@@ -421,6 +423,7 @@ class FlextInfraDependencyDetectionService:
 
 _service = FlextInfraDependencyDetectionService()
 _to_infra_value = FlextInfraDependencyDetectionService.to_infra_value
+dm = m.Infra.Deps
 
 
 def discover_project_paths(
@@ -471,7 +474,7 @@ def build_project_report(
 
 def load_dependency_limits(
     limits_path: Path | None = None,
-) -> Mapping[str, t.Infra.InfraValue]:
+) -> Mapping[str, t.Infra.TomlValue]:
     """Load dependency limits configuration from TOML file."""
     return _service.load_dependency_limits(limits_path)
 
@@ -488,7 +491,7 @@ def run_mypy_stub_hints(
 
 def module_to_types_package(
     module_name: str,
-    limits: Mapping[str, t.Infra.InfraValue],
+    limits: Mapping[str, t.Infra.TomlValue],
 ) -> str | None:
     """Map a module name to its corresponding types-* package."""
     return _service.module_to_types_package(module_name, limits)
@@ -520,6 +523,7 @@ __all__ = [
     "build_project_report",
     "classify_issues",
     "discover_project_paths",
+    "dm",
     "get_current_typings_from_pyproject",
     "get_required_typings",
     "load_dependency_limits",

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import tomlkit
-from tomlkit.items import Table
+from tomlkit.items import Item, Table
 
 from flext_infra import c, u
 from flext_infra.deps._models import ToolConfigDocument
@@ -17,9 +17,11 @@ class EnsureFormattingToolingPhase:
 
     def apply(self, doc: tomlkit.TOMLDocument) -> list[str]:
         changes: list[str] = []
-        tool: object | None = None
+        tool: Item | None = None
         if c.Infra.Toml.TOOL in doc:
-            tool = doc[c.Infra.Toml.TOOL]
+            raw_tool = doc[c.Infra.Toml.TOOL]
+            if isinstance(raw_tool, Item):
+                tool = raw_tool
         if not isinstance(tool, Table):
             tool = tomlkit.table()
             doc[c.Infra.Toml.TOOL] = tool

@@ -305,16 +305,14 @@ class FlextContainer(p.DI):
                         if callable(factory_func_raw):
 
                             def factory_wrapper(
-                                _factory_func_ref: Callable[[], t.ContainerValue]
+                                _factory_func_ref: Callable[[], object]
                                 | None = factory_func_raw,
                                 _factory_name: str = factory_name,
                                 _factory_config: m.FactoryDecoratorConfig = factory_config,
-                            ) -> t.RegisterableService:
+                            ) -> object:
                                 config_callable = getattr(_factory_config, "fn", None)
                                 if callable(config_callable):
                                     raw_result = config_callable()
-                                elif getattr(_factory_config, "fn", None) is not None:
-                                    return ""
                                 elif callable(_factory_func_ref):
                                     raw_result = _factory_func_ref()
                                 else:
