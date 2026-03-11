@@ -13,9 +13,6 @@ from typing import override
 
 from flext_core import r, s, t
 from flext_tests import FlextTestsDomains
-from tests.test_utils import (
-    assertion_helpers,
-)
 
 TestDomainResult = FlextTestsDomains.TestDomainResult
 
@@ -57,7 +54,7 @@ class TestService100Coverage:
         """Test validate_business_rules."""
         service = TestService()
         result = service.validate_business_rules()
-        _ = assertion_helpers.assert_flext_result_success(result) or result.is_failure
+        assert result.is_success
 
     def test_is_valid(self) -> None:
         """Test is_valid property."""
@@ -77,14 +74,14 @@ class TestService100Coverage:
         """Test execute method."""
         service = TestService()
         result = service.execute()
-        _ = assertion_helpers.assert_flext_result_success(result)
+        assert result.is_success
         assert isinstance(result.value, str)
 
     def test_ok_method(self) -> None:
         """Test ok method."""
         service = TestService()
         result = service.ok("test")
-        _ = assertion_helpers.assert_flext_result_success(result)
+        assert result.is_success
         assert result.value == "test"
 
     def test_result_property(self) -> None:

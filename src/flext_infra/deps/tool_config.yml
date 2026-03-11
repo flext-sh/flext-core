@@ -408,3 +408,18 @@ tools:
     whitelines: 1
     section_whitelines: 1
     explicit_start: false
+
+project-type-overrides:
+  core:
+    pyright: {}
+  domain:
+    pyright:
+      reportMissingModuleSource: "warning"
+  platform:
+    pyright: {}
+  integration:
+    pyright:
+      reportMissingModuleSource: "none"
+      reportMissingTypeStubs: "none"
+  app:
+    pyright: {}

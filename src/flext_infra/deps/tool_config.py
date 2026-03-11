@@ -266,11 +266,47 @@ class FlextInfraToolConfigTools(BaseModel):
     )
 
 
+class FlextInfraProjectTypeOverrideConfig(BaseModel):
+    """Per-project-type override settings."""
+
+    model_config = ConfigDict(extra="forbid")
+    pyright: dict[str, str] = Field(
+        default_factory=dict,
+        description="Pyright override settings for this project type.",
+    )
+
+
+class FlextInfraProjectTypeOverridesConfig(BaseModel):
+    """Project-type-specific override matrix from tool_config.yml."""
+
+    model_config = ConfigDict(extra="forbid")
+    core: FlextInfraProjectTypeOverrideConfig = Field(
+        default_factory=FlextInfraProjectTypeOverrideConfig,
+    )
+    domain: FlextInfraProjectTypeOverrideConfig = Field(
+        default_factory=FlextInfraProjectTypeOverrideConfig,
+    )
+    platform: FlextInfraProjectTypeOverrideConfig = Field(
+        default_factory=FlextInfraProjectTypeOverrideConfig,
+    )
+    integration: FlextInfraProjectTypeOverrideConfig = Field(
+        default_factory=FlextInfraProjectTypeOverrideConfig,
+    )
+    app: FlextInfraProjectTypeOverrideConfig = Field(
+        default_factory=FlextInfraProjectTypeOverrideConfig,
+    )
+
+
 class FlextInfraToolConfigDocument(BaseModel):
     """Root schema for tool_config.yml."""
 
     model_config = ConfigDict(extra="forbid")
     tools: FlextInfraToolConfigTools
+    project_type_overrides: FlextInfraProjectTypeOverridesConfig = Field(
+        alias="project-type-overrides",
+        default_factory=FlextInfraProjectTypeOverridesConfig,
+        description="Per-project-type configuration overrides.",
+    )
 
 
 @lru_cache(maxsize=1)
@@ -304,6 +340,8 @@ def load_tool_config() -> r[FlextInfraToolConfigDocument]:
 
 
 __all__ = [
+    "FlextInfraProjectTypeOverrideConfig",
+    "FlextInfraProjectTypeOverridesConfig",
     "FlextInfraToolConfigDocument",
     "load_tool_config",
 ]

@@ -48,23 +48,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "u": ("tests.fixtures.namespace_validator.rule1_magic_number", "u"),
 }
 
-__all__ = [
-    "DEFAULT_TIMEOUT",
-    "MAX_RETRIES",
-    "MAX_VALUE",
-    "FlextTestConstants",
-    "FlextTestModels",
-    "FlextTestTypes",
-    "FlextTestUtilities",
-    "RandomConstants",
-    "Status",
-    "c",
-    "helper",
-    "m",
-    "t",
-    "u",
-]
-
 
 def __getattr__(name: str) -> Any:
     """Lazy-load module attributes on first access (PEP 562)."""
@@ -73,7 +56,7 @@ def __getattr__(name: str) -> Any:
 
 def __dir__() -> list[str]:
     """Return list of available attributes for dir() and autocomplete."""
-    return sorted(__all__)
+    return sorted(_LAZY_IMPORTS)
 
 
 cleanup_submodule_namespace(__name__, _LAZY_IMPORTS)

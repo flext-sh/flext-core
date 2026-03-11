@@ -63,6 +63,8 @@ class FlextInfraConstants(FlextConstants):
 
             TOOL: Final[str] = "tool"
             "Top-level [tool] section key."
+            COVERAGE: Final[str] = "coverage"
+            "Coverage tool section key."
             POETRY: Final[str] = "poetry"
             "Poetry tool subsection key."
             PROJECT: Final[str] = "project"
