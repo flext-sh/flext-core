@@ -87,7 +87,7 @@ class FlextInfraDependencyDetectionService:
         return groups
 
     @staticmethod
-    def to_toml_config(
+    def _to_toml_config(
         payload: Mapping[str, t.Infra.TomlValue | t.Infra.InfraValue],
     ) -> t.Infra.TomlConfig:
         normalized: t.Infra.TomlConfig = {}
@@ -171,7 +171,7 @@ class FlextInfraDependencyDetectionService:
         read_result = self.toml.read_plain(pyproject)
         if read_result.is_failure:
             return []
-        data = self.to_toml_config(read_result.value)
+        data = self._to_toml_config(read_result.value)
         if not data:
             return []
         names: set[str] = set()
@@ -269,7 +269,7 @@ class FlextInfraDependencyDetectionService:
         if result.is_failure:
             return {}
         limits: MutableMapping[str, t.Infra.TomlValue] = {}
-        toml_data = self.to_toml_config(result.value)
+        toml_data = self._to_toml_config(result.value)
         for key, value in toml_data.items():
             converted = FlextInfraDependencyDetectionService.to_infra_value(value)
             if (converted is not None or value is None) and not isinstance(
