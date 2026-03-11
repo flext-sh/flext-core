@@ -14,10 +14,10 @@ import pytest
 from _pytest.monkeypatch import MonkeyPatch
 
 from flext_core import r
+from flext_infra import t
 from flext_infra.basemk.__main__ import _build_config, main
 from flext_infra.basemk.generator import FlextInfraBaseMkGenerator
 from flext_tests import tm
-from tests.infra.typings import t
 
 
 def test_basemk_main_with_no_command(monkeypatch: MonkeyPatch) -> None:
@@ -113,6 +113,7 @@ def test_basemk_build_config_with_project_name() -> None:
     """Test _build_config returns config with project name."""
     result = _build_config("my-project")
     tm.that(result is not None, eq=True)
+    assert result is not None
     tm.that(result.project_name, eq="my-project")
 
 

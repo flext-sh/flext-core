@@ -11,18 +11,23 @@ from pathlib import Path
 import pytest
 
 from flext_core import r
+from flext_infra import m
 from flext_infra.github import pr_workspace as pw_mod
 from flext_infra.github.pr_workspace import FlextInfraPrWorkspaceManager
 from flext_tests import tm
-from tests.infra.models import m
-from tests.infra.unit.github._stubs import StubReporting, StubRunner, StubSelector
+
+from ._stubs import StubReporting, StubRunner, StubSelector
 
 
 class TestOrchestrate:
     def test_all_success(self, tmp_path: Path) -> None:
         runner = StubRunner(run_to_file_returns=[r[int].ok(0)])
         reporting = StubReporting(report_dir=tmp_path / "reports")
-        proj = m.Infra.Workspace.ProjectInfo(name="proj", path=tmp_path / "proj")
+        proj = m.Infra.Workspace.ProjectInfo(
+            name="proj",
+            path=tmp_path / "proj",
+            stack="python",
+        )
         proj.path.mkdir()
         selector = StubSelector(
             resolve_returns=r[list[m.Infra.Workspace.ProjectInfo]].ok([proj])
@@ -49,9 +54,13 @@ class TestOrchestrate:
     def test_fail_fast(self, tmp_path: Path) -> None:
         runner = StubRunner(run_to_file_returns=[r[int].ok(1)])
         reporting = StubReporting(report_dir=tmp_path / "reports")
-        p1 = m.Infra.Workspace.ProjectInfo(name="p1", path=tmp_path / "p1")
+        p1 = m.Infra.Workspace.ProjectInfo(
+            name="p1", path=tmp_path / "p1", stack="python"
+        )
         p1.path.mkdir()
-        p2 = m.Infra.Workspace.ProjectInfo(name="p2", path=tmp_path / "p2")
+        p2 = m.Infra.Workspace.ProjectInfo(
+            name="p2", path=tmp_path / "p2", stack="python"
+        )
         p2.path.mkdir()
         selector = StubSelector(
             resolve_returns=r[list[m.Infra.Workspace.ProjectInfo]].ok([p1, p2])
@@ -85,7 +94,11 @@ class TestOrchestrate:
     ) -> None:
         runner = StubRunner(run_to_file_returns=[r[int].ok(0)])
         reporting = StubReporting(report_dir=tmp_path / "reports")
-        proj = m.Infra.Workspace.ProjectInfo(name="proj", path=tmp_path / "proj")
+        proj = m.Infra.Workspace.ProjectInfo(
+            name="proj",
+            path=tmp_path / "proj",
+            stack="python",
+        )
         proj.path.mkdir()
         selector = StubSelector(
             resolve_returns=r[list[m.Infra.Workspace.ProjectInfo]].ok([proj])
@@ -122,7 +135,11 @@ class TestOrchestrate:
     def test_orchestrate_failure_handling(self, tmp_path: Path) -> None:
         runner = StubRunner(run_to_file_returns=[r[int].fail("command error")])
         reporting = StubReporting(report_dir=tmp_path / "reports")
-        proj = m.Infra.Workspace.ProjectInfo(name="proj", path=tmp_path / "proj")
+        proj = m.Infra.Workspace.ProjectInfo(
+            name="proj",
+            path=tmp_path / "proj",
+            stack="python",
+        )
         proj.path.mkdir()
         selector = StubSelector(
             resolve_returns=r[list[m.Infra.Workspace.ProjectInfo]].ok([proj])

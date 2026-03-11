@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import argparse
 import os
+from collections.abc import Callable
 from pathlib import Path
-from typing import TYPE_CHECKING, Protocol
+from typing import Protocol
 
 from flext_core import FlextLogger, r
 from flext_infra import (
@@ -19,36 +20,14 @@ from flext_infra import (
 )
 from flext_infra.deps.detection import FlextInfraDependencyDetectionService
 
-if TYPE_CHECKING:
-    from flext_infra.deps.detector import FlextInfraDependencyDetectorModels as _DDM
 
+class _WorkspaceReportProtocol(Protocol):
+    """Protocol for workspace dependency report model contract."""
 
-class _DetectorModelsProtocol(Protocol):
-    """Protocol for detector model namespace constructors."""
+    pip_check: object | None
+    dependency_limits: object | None
 
-    def WorkspaceDependencyReport(
-        self,
-        *,
-        workspace: str,
-        projects: dict[str, dict[str, t.ContainerValue]],
-        pip_check: _DDM.PipCheckReport | None,
-        dependency_limits: _DDM.DependencyLimitsInfo | None,
-    ) -> _DDM.WorkspaceDependencyReport:
-        """Create workspace report model instance."""
-        ...
-
-    def DependencyLimitsInfo(
-        self,
-        *,
-        python_version: str | None,
-        limits_path: str,
-    ) -> _DDM.DependencyLimitsInfo:
-        """Create dependency limits model instance."""
-        ...
-
-    def PipCheckReport(self, *, ok: bool, lines: list[str]) -> _DDM.PipCheckReport:
-        """Create pip-check report model instance."""
-        ...
+    def model_dump(self) -> dict[str, t.ContainerValue]: ...
 
 
 class _DetectorRuntimeProtocol(Protocol):
@@ -62,19 +41,17 @@ class _DetectorRuntimeProtocol(Protocol):
     log: FlextLogger
 
     @staticmethod
-    def parser(default_limits_path: Path) -> argparse.ArgumentParser:
-        """Create detector CLI parser."""
-        ...
+    def parser(default_limits_path: Path) -> argparse.ArgumentParser: ...
 
     @staticmethod
-    def project_filter(args: argparse.Namespace) -> list[str] | None:
-        """Resolve project filter list from parsed args."""
-        ...
+    def project_filter(args: argparse.Namespace) -> list[str] | None: ...
 
 
 def run_detector(
     detector: _DetectorRuntimeProtocol,
-    models: _DetectorModelsProtocol,
+    workspace_report_factory: Callable[..., _WorkspaceReportProtocol],
+    dependency_limits_factory: Callable[..., object],
+    pip_check_factory: Callable[..., object],
     argv: list[str] | None = None,
 ) -> r[int]:
     """Execute dependency detection and generate workspace report."""
@@ -105,7 +82,7 @@ def run_detector(
     do_typings = bool(args.typings) or apply_typings
     limits_path = Path(args.limits) if args.limits else limits_default
     projects_report: dict[str, dict[str, t.ContainerValue]] = {}
-    report_model = models.WorkspaceDependencyReport(
+    report_model = workspace_report_factory(
         workspace=str(root),
         projects=projects_report,
         pip_check=None,
@@ -121,7 +98,7 @@ def run_detector(
                 and python_cfg.get(c.Infra.Toml.VERSION) is not None
                 else None
             )
-            report_model.dependency_limits = models.DependencyLimitsInfo(
+            report_model.dependency_limits = dependency_limits_factory(
                 python_version=python_version,
                 limits_path=str(limits_path),
             )
@@ -194,10 +171,7 @@ def run_detector(
             return r[int].fail(pip_result.error or "pip check failed")
         pip_lines, pip_exit = pip_result.value
         pip_ok = pip_exit == 0
-        report_model.pip_check = models.PipCheckReport(
-            ok=pip_ok,
-            lines=pip_lines,
-        )
+        report_model.pip_check = pip_check_factory(ok=pip_ok, lines=pip_lines)
     report_payload = report_model.model_dump()
     if args.json_stdout:
         return r[int].ok(0)

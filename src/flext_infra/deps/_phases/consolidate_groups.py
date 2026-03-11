@@ -5,16 +5,7 @@ from __future__ import annotations
 import tomlkit
 from tomlkit.items import Table
 
-from flext_infra import c
-from flext_infra._utilities.toml import FlextInfraUtilitiesToml as _Toml
-from flext_infra._utilities.toml_parse import FlextInfraUtilitiesTomlParse as _TomlParse
-
-array = _Toml.array
-as_string_list = _Toml.as_string_list
-toml_get = _Toml.get
-ensure_table = _Toml.ensure_table
-dedupe_specs = _TomlParse.dedupe_specs
-project_dev_groups = _TomlParse.project_dev_groups
+from flext_infra import c, u
 
 
 class ConsolidateGroupsPhase:
@@ -35,8 +26,8 @@ class ConsolidateGroupsPhase:
         if not isinstance(optional, Table):
             optional = tomlkit.table()
             project[c.Infra.Toml.OPTIONAL_DEPENDENCIES] = optional
-        existing = project_dev_groups(doc)
-        merged_dev = dedupe_specs([
+        existing = u.Infra.project_dev_groups(doc)
+        merged_dev = u.Infra.dedupe_specs([
             *canonical_dev,
             *existing.get(c.Infra.Toml.DEV, []),
             *existing.get(c.Infra.Directories.DOCS, []),
@@ -44,9 +35,11 @@ class ConsolidateGroupsPhase:
             *existing.get(c.Infra.Toml.TEST, []),
             *existing.get(c.Infra.Directories.TYPINGS, []),
         ])
-        current_dev = as_string_list(toml_get(optional, c.Infra.Toml.DEV))
+        current_dev = u.Infra.as_string_list(
+            u.Infra.get(optional, c.Infra.Toml.DEV)
+        )
         if sorted(current_dev) != sorted(merged_dev):
-            optional[c.Infra.Toml.DEV] = array(sorted(merged_dev))
+            optional[c.Infra.Toml.DEV] = u.Infra.array(sorted(merged_dev))
             changes.append("project.optional-dependencies.dev consolidated")
         for old_key in (
             c.Infra.Toml.DOCS,
@@ -63,7 +56,7 @@ class ConsolidateGroupsPhase:
         if not isinstance(tool, Table):
             tool = tomlkit.table()
             doc[c.Infra.Toml.TOOL] = tool
-        poetry = ensure_table(tool, c.Infra.Toml.POETRY)
+        poetry = u.Infra.ensure_table(tool, c.Infra.Toml.POETRY)
         poetry_group_raw: object | None = None
         if c.Infra.Toml.GROUP in poetry:
             poetry_group_raw = poetry[c.Infra.Toml.GROUP]
@@ -87,8 +80,8 @@ class ConsolidateGroupsPhase:
                 old_deps = old_group_table[c.Infra.Toml.DEPENDENCIES]
             if isinstance(old_deps, Table):
                 if poetry_dev_table is None:
-                    poetry_dev_table = ensure_table(
-                        ensure_table(poetry_group, c.Infra.Toml.DEV),
+                    poetry_dev_table = u.Infra.ensure_table(
+                        u.Infra.ensure_table(poetry_group, c.Infra.Toml.DEV),
                         c.Infra.Toml.DEPENDENCIES,
                     )
                 for dep_name_raw in old_deps:
@@ -98,11 +91,13 @@ class ConsolidateGroupsPhase:
                         poetry_dev_table[dep_name] = dep_value
             del poetry_group[old_group]
             changes.append(f"tool.poetry.group.{old_group} removed")
-        deptry = ensure_table(tool, c.Infra.Toml.DEPTRY)
-        current_groups = as_string_list(
-            toml_get(deptry, "pep621_dev_dependency_groups"),
+        deptry = u.Infra.ensure_table(tool, c.Infra.Toml.DEPTRY)
+        current_groups = u.Infra.as_string_list(
+            u.Infra.get(deptry, "pep621_dev_dependency_groups"),
         )
         if current_groups != [c.Infra.Toml.DEV]:
-            deptry["pep621_dev_dependency_groups"] = array([c.Infra.Toml.DEV])
+            deptry["pep621_dev_dependency_groups"] = u.Infra.array(
+                [c.Infra.Toml.DEV]
+            )
             changes.append("tool.deptry.pep621_dev_dependency_groups set to ['dev']")
         return changes

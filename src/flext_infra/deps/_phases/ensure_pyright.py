@@ -7,15 +7,8 @@ from pathlib import Path
 import tomlkit
 from tomlkit.items import Table
 
-from flext_infra import c
-from flext_infra._utilities.toml import FlextInfraUtilitiesToml as _Toml
-from flext_infra._utilities.toml_parse import FlextInfraUtilitiesTomlParse as _TomlParse
+from flext_infra import c, u
 from flext_infra.deps.tool_config import FlextInfraToolConfigDocument
-
-ensure_table = _Toml.ensure_table
-toml_get = _Toml.get
-unwrap_item = _Toml.unwrap_item
-ensure_pyright_execution_envs = _TomlParse.ensure_pyright_execution_envs
 
 
 class EnsurePyrightConfigPhase:
@@ -86,23 +79,23 @@ class EnsurePyrightConfigPhase:
         if not isinstance(tool, Table):
             tool = tomlkit.table()
             doc[c.Infra.Toml.TOOL] = tool
-        pyright = ensure_table(tool, c.Infra.Toml.PYRIGHT)
+        pyright = u.Infra.ensure_table(tool, c.Infra.Toml.PYRIGHT)
         expected_envs = self._expected_envs(
             is_root=is_root,
             workspace_root=workspace_root,
         )
         if is_root:
             if (
-                unwrap_item(toml_get(pyright, "typeCheckingMode"))
+                u.Infra.unwrap_item(u.Infra.get(pyright, "typeCheckingMode"))
                 != c.Infra.Modes.STRICT
             ):
                 pyright["typeCheckingMode"] = c.Infra.Modes.STRICT
                 changes.append("tool.pyright.typeCheckingMode set to strict")
-            ensure_pyright_execution_envs(pyright, expected_envs, changes)
+            u.Infra.ensure_pyright_execution_envs(pyright, expected_envs, changes)
             return changes
         for key, value in self._tool_config.tools.pyright.strict_settings.items():
-            if unwrap_item(toml_get(pyright, key)) != value:
+            if u.Infra.unwrap_item(u.Infra.get(pyright, key)) != value:
                 pyright[key] = value
                 changes.append(f"tool.pyright.{key} set to {value}")
-        ensure_pyright_execution_envs(pyright, expected_envs, changes)
+        u.Infra.ensure_pyright_execution_envs(pyright, expected_envs, changes)
         return changes

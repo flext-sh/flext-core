@@ -23,9 +23,10 @@ from flext_infra import (
     FlextInfraUtilitiesTemplates,
     FlextInfraUtilitiesVersioning,
     m,
+    t,
 )
-from tests.infra.typings import t
-from tests.infra.unit.github._stubs_extra import (
+
+from ._stubs_extra import (
     StubLinter,
     StubPrManager,
     StubSyncer,

@@ -6,7 +6,8 @@ from pathlib import Path
 
 import pytest
 
-from flext_infra.refactor._utilities import FlextInfraUtilitiesRefactor
+from flext_infra._utilities.discovery import FlextInfraUtilitiesDiscovery
+from flext_infra._utilities.iteration import FlextInfraUtilitiesIteration
 from flext_infra.refactor.migrate_to_class_mro import (
     FlextInfraRefactorMigrateToClassMRO,
 )
@@ -249,8 +250,9 @@ def test_refactor_utilities_iter_python_files_includes_examples_and_scripts(
         _ = file_path.write_text(
             "from __future__ import annotations\n", encoding="utf-8"
         )
-    discovered = FlextInfraUtilitiesRefactor.iter_python_files(workspace_root=tmp_path)
-    assert set(discovered) == set(expected_paths)
+    discovered = FlextInfraUtilitiesIteration.iter_python_files(workspace_root=tmp_path)
+    assert discovered.is_success
+    assert set(discovered.value) == set(expected_paths)
 
 
 def test_discover_project_roots_without_nested_git_dirs(tmp_path: Path) -> None:
@@ -266,7 +268,7 @@ def test_discover_project_roots_without_nested_git_dirs(tmp_path: Path) -> None:
     _ = (project_root / "Makefile").write_text("all:\n\t@true\n", encoding="utf-8")
     (project_root / "src").mkdir(parents=True)
 
-    discovered = FlextInfraUtilitiesRefactor.discover_project_roots(
+    discovered = FlextInfraUtilitiesDiscovery.discover_project_roots(
         workspace_root=workspace_root,
     )
     assert discovered == [project_root]
