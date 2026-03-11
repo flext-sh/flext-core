@@ -2,13 +2,33 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from flext_infra.deps.path_sync import (
-    FlextInfraDependencyPathSync,
-    detect_mode,
-    extract_dep_name,
-    rewrite_dep_paths,
-)
+from flext_core import r
+from flext_infra.deps.path_sync import FlextInfraDependencyPathSync
 from flext_tests import tm
+
+
+def detect_mode(project_root: Path) -> str:
+    return FlextInfraDependencyPathSync.detect_mode(project_root)
+
+
+extract_dep_name = FlextInfraDependencyPathSync.extract_dep_name
+
+
+def rewrite_dep_paths(
+    pyproject_path: Path,
+    *,
+    mode: str,
+    internal_names: set[str],
+    is_root: bool = False,
+    dry_run: bool = False,
+) -> r[list[str]]:
+    return FlextInfraDependencyPathSync().rewrite_dep_paths(
+        pyproject_path,
+        mode=mode,
+        internal_names=internal_names,
+        is_root=is_root,
+        dry_run=dry_run,
+    )
 
 
 class TestFlextInfraDependencyPathSync:

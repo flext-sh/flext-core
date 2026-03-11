@@ -3,9 +3,11 @@ from __future__ import annotations
 import tomlkit
 from tomlkit.toml_document import TOMLDocument
 
-from flext_infra.deps.path_sync import _rewrite_pep621
+from flext_infra.deps.path_sync import FlextInfraDependencyPathSync
 from flext_tests import tm
-from tests.infra.helpers import FlextInfraTestHelpers
+
+_PATH_SYNC = FlextInfraDependencyPathSync()
+_rewrite_pep621 = _PATH_SYNC._rewrite_pep621
 
 
 class TestRewritePep621:
@@ -149,7 +151,3 @@ def test_rewrite_pep621_invalid_path_dep_regex() -> None:
         internal_names={"flext-core"},
     )
     tm.that(len(changes), eq=0)
-
-
-def test_helpers_alias_is_reachable_pep621() -> None:
-    tm.that(callable(FlextInfraTestHelpers.assert_file_exists), eq=True)

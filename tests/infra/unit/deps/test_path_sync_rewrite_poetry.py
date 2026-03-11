@@ -5,9 +5,11 @@ from collections.abc import MutableMapping
 import tomlkit
 from tomlkit.toml_document import TOMLDocument
 
-from flext_infra.deps.path_sync import _rewrite_poetry
+from flext_infra.deps.path_sync import FlextInfraDependencyPathSync
 from flext_tests import tm
-from tests.infra.helpers import FlextInfraTestHelpers
+
+_PATH_SYNC = FlextInfraDependencyPathSync()
+_rewrite_poetry = _PATH_SYNC._rewrite_poetry
 
 
 class TestRewritePoetry:
@@ -129,7 +131,3 @@ def test_rewrite_poetry_no_poetry_table() -> None:
     doc = tomlkit.document()
     doc["tool"] = tomlkit.table()
     tm.that(len(_rewrite_poetry(doc, is_root=False, mode="workspace")), eq=0)
-
-
-def test_helpers_alias_is_reachable_poetry() -> None:
-    tm.that(hasattr(FlextInfraTestHelpers, "assert_dir_exists"), eq=True)

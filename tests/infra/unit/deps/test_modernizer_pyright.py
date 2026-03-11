@@ -7,13 +7,13 @@ from pathlib import Path
 
 import tomlkit
 
-from flext_infra import u
+from flext_infra import m, u
 from flext_infra.deps._phases import EnsurePyrightConfigPhase
-from flext_infra.deps.tool_config import FlextInfraToolConfigDocument, load_tool_config
+from flext_infra.deps.tool_config import load_tool_config
 from flext_tests import tm
 
 
-def _test_tool_config() -> FlextInfraToolConfigDocument:
+def _test_tool_config() -> m.Infra.Deps.ToolConfigDocument:
     result = load_tool_config()
     tm.that(result.is_failure, eq=False)
     if result.is_failure:

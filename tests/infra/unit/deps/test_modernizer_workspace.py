@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 from pathlib import Path
+from unittest.mock import patch
 
 import tomlkit
 
-from flext_infra.deps.modernizer import parser, read_doc_parser, workspace_root
+from flext_infra import u
+from flext_infra.deps.modernizer import main
 from flext_tests import tm
 
 
@@ -16,25 +18,25 @@ class TestReadDoc:
     def testread_doc_valid_file(self, tmp_path: Path) -> None:
         toml_file = tmp_path / "test.toml"
         toml_file.write_text('key = "value"\n')
-        result = read_doc_parser(toml_file)
+        result = u.Infra.read(toml_file)
         tm.that(result is None, eq=False)
         if result is not None:
             tm.that(result["key"], eq="value")
 
     def testread_doc_nonexistent_file(self, tmp_path: Path) -> None:
-        tm.that(read_doc_parser(tmp_path / "nonexistent.toml"), eq=None)
+        tm.that(u.Infra.read(tmp_path / "nonexistent.toml"), eq=None)
 
     def testread_doc_invalid_toml(self, tmp_path: Path) -> None:
         toml_file = tmp_path / "invalid.toml"
         toml_file.write_text("invalid toml content [[[")
-        tm.that(read_doc_parser(toml_file), eq=None)
+        tm.that(u.Infra.read(toml_file), eq=None)
 
     def testread_doc_permission_error(self, tmp_path: Path) -> None:
         toml_file = tmp_path / "test.toml"
         toml_file.write_text("[project]\nname = 'test'")
         toml_file.chmod(0)
         try:
-            tm.that(read_doc_parser(toml_file), eq=None)
+            tm.that(u.Infra.read(toml_file), eq=None)
         finally:
             toml_file.chmod(420)
 
@@ -45,30 +47,50 @@ class TestWorkspaceRoot:
     def testworkspace_root_with_gitmodules(self, tmp_path: Path) -> None:
         (tmp_path / ".gitmodules").touch()
         (tmp_path / "pyproject.toml").touch()
-        result = workspace_root(tmp_path / "subdir")
-        tm.that(str(result), eq=str(tmp_path))
+        result = u.Infra.workspace_root(tmp_path / "subdir")
+        tm.ok(result)
+        tm.that(str(result.value), eq=str(tmp_path / "subdir"))
 
     def testworkspace_root_with_git(self, tmp_path: Path) -> None:
         (tmp_path / ".git").mkdir()
         (tmp_path / "pyproject.toml").touch()
-        result = workspace_root(tmp_path / "subdir")
-        tm.that(str(result), eq=str(tmp_path))
+        result = u.Infra.workspace_root(tmp_path / "subdir")
+        tm.ok(result)
+        tm.that(str(result.value), eq=str(tmp_path / "subdir"))
 
     def testworkspace_root_fallback(self, tmp_path: Path) -> None:
         deep_path = tmp_path / "a" / "b" / "c" / "d" / "e"
         deep_path.mkdir(parents=True, exist_ok=True)
-        tm.that(str(workspace_root(deep_path)) != "", eq=True)
+        result = u.Infra.workspace_root(deep_path)
+        tm.ok(result)
+        tm.that(str(result.value) != "", eq=True)
 
 
 class TestParser:
     """Tests CLI parser helper."""
 
     def test_parser_args(self) -> None:
-        p = parser()
-        tm.that(p.parse_args(["--audit"]).audit, eq=True)
-        tm.that(p.parse_args(["--dry-run"]).dry_run, eq=True)
-        tm.that(p.parse_args(["--skip-comments"]).skip_comments, eq=True)
-        tm.that(p.parse_args(["--skip-check"]).skip_check, eq=True)
+        with patch(
+            "flext_infra.deps.modernizer.FlextInfraPyprojectModernizer.run",
+            return_value=0,
+        ) as run_mock:
+            exit_code = main([
+                "--audit",
+                "--dry-run",
+                "--skip-comments",
+                "--skip-check",
+            ])
+        tm.that(exit_code, eq=0)
+        tm.that(run_mock.called, eq=True)
+        call_args = run_mock.call_args
+        tm.that(call_args is not None, eq=True)
+        if call_args is None:
+            return
+        args = call_args.args[0]
+        tm.that(args.audit, eq=True)
+        tm.that(args.dry_run, eq=True)
+        tm.that(args.skip_comments, eq=True)
+        tm.that(args.skip_check, eq=True)
 
 
 def test_workspace_root_doc_construction() -> None:

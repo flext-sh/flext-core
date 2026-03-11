@@ -6,11 +6,14 @@ from pathlib import Path
 import pytest
 
 from flext_core import r
+from flext_infra import m
 from flext_infra.deps import path_sync as path_sync_module
-from flext_infra.deps.path_sync import _workspace_root
+from flext_infra.deps.path_sync import FlextInfraDependencyPathSync
 from flext_tests import tm
-from tests.infra.models import m
-from tests.infra.typings import t
+
+
+def _workspace_root() -> Path:
+    return FlextInfraDependencyPathSync.ROOT
 
 
 def _project(path: Path, name: str = "flext-core") -> m.Infra.Workspace.ProjectInfo:
@@ -121,9 +124,14 @@ def test_main_no_changes_needed(monkeypatch: pytest.MonkeyPatch) -> None:
         return r[list[m.Infra.Workspace.ProjectInfo]].ok([])
 
     def _rewrite_ok(
-        *_args: t.ContainerValue,
-        **_kwargs: t.ContainerValue,
+        _pyproject_path: Path,
+        *,
+        mode: str,
+        internal_names: set[str],
+        is_root: bool = False,
+        dry_run: bool = False,
     ) -> r[list[str]]:
+        _ = mode, internal_names, is_root, dry_run
         return r[list[str]].ok([])
 
     monkeypatch.setattr(sys, "argv", ["sync-paths"])
@@ -158,9 +166,14 @@ def test_main_with_changes_and_dry_run(monkeypatch: pytest.MonkeyPatch) -> None:
         return r[list[m.Infra.Workspace.ProjectInfo]].ok([])
 
     def _rewrite_changes(
-        *_args: t.ContainerValue,
-        **_kwargs: t.ContainerValue,
+        _pyproject_path: Path,
+        *,
+        mode: str,
+        internal_names: set[str],
+        is_root: bool = False,
+        dry_run: bool = False,
     ) -> r[list[str]]:
+        _ = mode, internal_names, is_root, dry_run
         return r[list[str]].ok(["  PEP621: old -> new"])
 
     monkeypatch.setattr(sys, "argv", ["sync-paths", "--dry-run"])
@@ -184,9 +197,14 @@ def test_main_with_changes_no_dry_run(monkeypatch: pytest.MonkeyPatch) -> None:
         return r[list[m.Infra.Workspace.ProjectInfo]].ok([])
 
     def _rewrite_changes(
-        *_args: t.ContainerValue,
-        **_kwargs: t.ContainerValue,
+        _pyproject_path: Path,
+        *,
+        mode: str,
+        internal_names: set[str],
+        is_root: bool = False,
+        dry_run: bool = False,
     ) -> r[list[str]]:
+        _ = mode, internal_names, is_root, dry_run
         return r[list[str]].ok(["  PEP621: old -> new"])
 
     monkeypatch.setattr(sys, "argv", ["sync-paths"])

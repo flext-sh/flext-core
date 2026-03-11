@@ -3,12 +3,13 @@ from __future__ import annotations
 import pytest
 
 from flext_core import r
-from flext_infra.deps.path_sync import (
-    _extract_requirement_name,
-    _target_path,
-    extract_dep_name,
-)
+from flext_infra.deps.path_sync import FlextInfraDependencyPathSync
 from flext_tests import tm
+
+_PATH_SYNC = FlextInfraDependencyPathSync()
+_extract_requirement_name = FlextInfraDependencyPathSync._extract_requirement_name
+_target_path = _PATH_SYNC._target_path
+extract_dep_name = FlextInfraDependencyPathSync.extract_dep_name
 
 
 @pytest.mark.parametrize(

@@ -4,17 +4,17 @@ import pytest
 import tomlkit
 from tomlkit.toml_document import TOMLDocument
 
-from flext_infra.deps.modernizer import (
-    array_parser as array,
-    as_string_list_parser as as_string_list,
-    canonical_dev_dependencies,
-    dedupe_specs,
-    dep_name,
-    ensure_table_parser as ensure_table,
-    project_dev_groups,
-    unwrap_item_parser as unwrap_item,
-)
+from flext_infra import u
 from flext_tests import tb, tm
+
+array = u.Infra.array
+as_string_list = u.Infra.as_string_list
+canonical_dev_dependencies = u.Infra.canonical_dev_dependencies
+dedupe_specs = u.Infra.dedupe_specs
+dep_name = u.Infra.dep_name
+ensure_table = u.Infra.ensure_table
+project_dev_groups = u.Infra.project_dev_groups
+unwrap_item = u.Infra.unwrap_item
 
 
 @pytest.fixture

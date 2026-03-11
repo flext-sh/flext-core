@@ -4,10 +4,26 @@ from pathlib import Path
 
 import pytest
 
-from flext_core import r
-from flext_infra.deps.path_sync import rewrite_dep_paths
+from flext_core import r, t
+from flext_infra.deps.path_sync import FlextInfraDependencyPathSync
 from flext_tests import tm
-from tests.infra.typings import t
+
+
+def rewrite_dep_paths(
+    pyproject_path: Path,
+    *,
+    mode: str,
+    internal_names: set[str],
+    is_root: bool = False,
+    dry_run: bool = False,
+) -> r[list[str]]:
+    return FlextInfraDependencyPathSync().rewrite_dep_paths(
+        pyproject_path,
+        mode=mode,
+        internal_names=internal_names,
+        is_root=is_root,
+        dry_run=dry_run,
+    )
 
 
 class TestRewriteDepPaths:
