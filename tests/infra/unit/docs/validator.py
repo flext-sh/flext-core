@@ -83,7 +83,7 @@ class TestValidateCore:
         validator: FlextInfraDocValidator,
         tmp_path: Path,
     ) -> None:
-        """Test that validate returns FlextResult."""
+        """Test that validate returns r."""
         result = validator.validate(tmp_path)
         tm.that(result.is_success or result.is_failure, eq=True)
 

@@ -92,7 +92,7 @@ class TestMigratorWriteFailures:
         migrator = _build_migrator(_project(root), "base")
         original_write = Path.write_text
 
-        def _selective_write(self: Path, data: str, **kwargs: t.ContainerValue) -> int:
+        def _selective_write(self: Path, data: str, **kwargs: str | None) -> int:
             if "Makefile" in str(self):
                 msg = "Makefile write failed"
                 raise OSError(msg)
@@ -115,7 +115,7 @@ class TestMigratorWriteFailures:
         migrator = _build_migrator(proj, "base")
         original_write = Path.write_text
 
-        def _selective_write(self: Path, data: str, **kwargs: t.ContainerValue) -> int:
+        def _selective_write(self: Path, data: str, **kwargs: str | None) -> int:
             if "pyproject.toml" in str(self):
                 msg = "pyproject write failed"
                 raise OSError(msg)
@@ -146,7 +146,7 @@ class TestMigratorReadFailures:
         migrator = _build_migrator(_project(root), "base")
         original_read = Path.read_text
 
-        def _selective_read(self: Path, **kwargs: t.ContainerValue) -> str:
+        def _selective_read(self: Path, **kwargs: str | None) -> str:
             if ".gitignore" in str(self):
                 msg = ".gitignore read failed"
                 raise OSError(msg)

@@ -22,7 +22,6 @@ from flext_core import (
     FlextContainer,
     FlextContext,
     FlextLogger,
-    FlextResult,
     FlextRuntime,
     FlextSettings,
     c,
@@ -40,7 +39,7 @@ class FlextMixins(FlextRuntime):
 
     These mixins centralize DI container access, structured logging, and
     context management so dispatcher-executed services can stay focused on
-    domain work while still emitting `FlextResult` outcomes and metrics.
+    domain work while still emitting `r` outcomes and metrics.
 
     Properties:
     - ``container``: Lazy ``FlextContainer`` singleton lookups for DI wiring.
@@ -52,7 +51,7 @@ class FlextMixins(FlextRuntime):
     - ``track``: Context manager that records timing/err counts per operation.
     - ``_with_operation_context`` / ``_clear_operation_context``: Scoped
       context bindings used by dispatcher pipelines.
-    - Delegated ``FlextRuntime``/``FlextResult`` helpers for railway flows.
+    - Delegated ``FlextRuntime``/``r`` helpers for railway flows.
 
     Example:
         class MyService(x):
@@ -144,7 +143,7 @@ class FlextMixins(FlextRuntime):
         value: t.ContainerValue | r[t.ContainerValue],
     ) -> r[t.ContainerValue]:
         """Wrap value in r if not already wrapped. Use x.ensure_result at call sites."""
-        if isinstance(value, FlextResult):
+        if isinstance(value, r):
             return value
         return r[t.ContainerValue].ok(value)
 

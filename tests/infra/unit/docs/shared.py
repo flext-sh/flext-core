@@ -75,7 +75,7 @@ class TestBuildScopes:
         )
 
     def test_returns_flext_result(self, tmp_path: Path) -> None:
-        """Test build_scopes returns FlextResult."""
+        """Test build_scopes returns r."""
         result = self._build(tmp_path)
         tm.that(result.is_success or result.is_failure, eq=True)
 

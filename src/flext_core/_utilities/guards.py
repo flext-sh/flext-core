@@ -22,7 +22,7 @@ from typing import TypeGuard, TypeIs
 
 from pydantic import BaseModel
 
-from flext_core import FlextResult, m, p, r, t
+from flext_core import m, p, r, t
 
 
 class FlextUtilitiesGuards:
@@ -365,7 +365,7 @@ class FlextUtilitiesGuards:
         """Check if value implements ResultLike protocol (has is_success, value, error).
 
         Uses try/except to avoid triggering property getters that may raise
-        (e.g., FlextResult.value on failure raises RuntimeError, not AttributeError).
+        (e.g., r.value on failure raises RuntimeError, not AttributeError).
         """
         try:
             return (
@@ -1143,7 +1143,7 @@ class FlextUtilitiesGuards:
 def validate_pydantic_model[T: BaseModel](
     model_class: type[T], data: Mapping[str, t.ContainerValue]
 ) -> r[T]:
-    """Validate data using Pydantic v2 model and return FlextResult.
+    """Validate data using Pydantic v2 model and return r.
 
     This template function reduces boilerplate for validation + error handling
     patterns across the FLEXT ecosystem.
@@ -1153,7 +1153,7 @@ def validate_pydantic_model[T: BaseModel](
         data: Dictionary of data to validate
 
     Returns:
-        FlextResult containing validated model instance or error message
+        r containing validated model instance or error message
 
     Example:
         >>> from pydantic import BaseModel, Field
@@ -1167,9 +1167,9 @@ def validate_pydantic_model[T: BaseModel](
     """
     try:
         validated = model_class.model_validate(data)
-        return FlextResult[T].ok(validated)
+        return r[T].ok(validated)
     except Exception as e:
-        return FlextResult[T].fail(f"Validation failed: {e}")
+        return r[T].fail(f"Validation failed: {e}")
 
 
 __all__ = ["FlextUtilitiesGuards", "validate_pydantic_model"]

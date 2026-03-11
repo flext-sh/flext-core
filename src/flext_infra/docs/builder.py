@@ -1,7 +1,7 @@
 """Documentation builder service.
 
 Builds MkDocs sites for workspace projects, returning structured
-FlextResult reports.
+r reports.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -22,7 +22,7 @@ class FlextInfraDocBuilder:
     """Infrastructure service for documentation building.
 
     Runs MkDocs build for workspace projects and returns
-    structured FlextResult reports.
+    structured r reports.
     """
 
     def __init__(self) -> None:
@@ -68,7 +68,7 @@ class FlextInfraDocBuilder:
             output_dir: Report output directory.
 
         Returns:
-            FlextResult with list of BuildReport objects.
+            r with list of BuildReport objects.
 
         """
         scopes_result = FlextInfraDocsShared.build_scopes(

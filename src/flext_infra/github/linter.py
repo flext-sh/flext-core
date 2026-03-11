@@ -1,6 +1,6 @@
 """Workflow linter service for GitHub Actions validation.
 
-Wraps actionlint execution with FlextResult error handling,
+Wraps actionlint execution with r error handling,
 replacing scripts/github/lint_workflows.py with a service class.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -46,7 +46,7 @@ class FlextInfraWorkflowLinter:
             strict: If True, treat lint failures as errors.
 
         Returns:
-            FlextResult with lint status payload.
+            r with lint status payload.
 
         """
         actionlint = shutil.which("actionlint")

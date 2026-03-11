@@ -22,7 +22,7 @@ Part of the [FLEXT](https://github.com/flext-sh/flext) ecosystem.
 
 ## 🚀 Key Features
 
-- **Railway-Oriented Programming**: handling errors as values using `FlextResult[T, E]`, eliminating unexpected exceptions in business logic.
+- **Railway-Oriented Programming**: handling errors as values using `r[T, E]`, eliminating unexpected exceptions in business logic.
 - **Dependency Injection**: A lightweight, type-safe DI container (`FlextContainer`) with scoped services and bridge integration.
 - **CQRS Dispatcher**: A strictly typed `FlextDispatcher` for routing commands, queries, and events to their respective handlers.
 - **Domain-Driven Design**: Base classes (`FlextModels`, `FlextService`) and mixins for rich domain modeling.
@@ -47,7 +47,7 @@ poetry add flext-core
 
 ### Railway-Oriented Results
 
-Replace exception handling with `FlextResult` for predictable control flow.
+Replace exception handling with `r` for predictable control flow.
 
 ```python
 from flext_core import r

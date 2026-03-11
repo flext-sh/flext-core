@@ -18,7 +18,7 @@ Comprehensive reference and guidance for FLEXT-Core, the dispatcher-first founda
 
 - **Version:** 0.9.9
 - **Python:** 3.13+ (per `pyproject.toml`)
-- **Architecture:** Dispatcher-centric CQRS with `FlextResult`, `FlextContainer`, `FlextDispatcher`, and DDD primitives.
+- **Architecture:** Dispatcher-centric CQRS with `r`, `FlextContainer`, `FlextDispatcher`, and DDD primitives.
 
 ## Navigation
 
@@ -53,17 +53,17 @@ Install the package and verify imports:
 ```bash
 pip install flext-core
 python - <<'PY'
-from flext_core import FlextDispatcher, FlextResult
-print('flext-core ready', FlextDispatcher.__name__, FlextResult.__name__)
+from flext_core import FlextDispatcher, r
+print('flext-core ready', FlextDispatcher.__name__, r.__name__)
 PY
 ```
 
 ## Core Concepts
 
-1. **Railway-oriented programming (`FlextResult`)** — express success/failure without exceptions and chain operations with `map`/`flat_map`.
+1. **Railway-oriented programming (`r`)** — express success/failure without exceptions and chain operations with `map`/`flat_map`.
 1. **Dependency injection (`FlextContainer`)** — register and resolve shared collaborators explicitly; avoid implicit globals.
 1. **CQRS dispatcher (`FlextDispatcher`)** — route commands, queries, and domain events through handler registries with optional middleware.
-1. **Domain-driven design (`FlextModels`, `FlextService`)** — model entities/values and encapsulate domain services that return `FlextResult`.
+1. **Domain-driven design (`FlextModels`, `FlextService`)** — model entities/values and encapsulate domain services that return `r`.
 1. **Layered dependency-injector bridge** — isolate dependency-injector usage to the runtime/container while handlers use `provide`/`inject` only.
 
 ## Style Expectations

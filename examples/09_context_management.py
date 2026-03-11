@@ -25,7 +25,7 @@ from contextlib import contextmanager
 from datetime import datetime
 from typing import override
 
-from flext_core import FlextContext, FlextLogger, FlextResult, FlextService, c, m, r, u
+from flext_core import FlextContext, FlextLogger, FlextService, c, m, r, u
 
 
 @contextmanager
@@ -256,7 +256,7 @@ class ContextManagementService(FlextService[m.ConfigMap]):
         return r[m.ConfigMap].ok(threading_data)
 
     @override
-    def execute(self) -> FlextResult[m.ConfigMap]:
+    def execute(self) -> r[m.ConfigMap]:
         """Execute comprehensive context demonstrations using railway pattern."""
         self.logger.info("Starting context management demonstration")
         return (

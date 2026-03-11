@@ -65,7 +65,7 @@ Canonical references:
 
   - `runtime.py` wraps structlog and dependency-injector factories so higher
     layers can configure logging and DI without depending on third-party types.
-  - `result.py` delivers the railway-oriented `FlextResult`; `exceptions.py`
+  - `result.py` delivers the railway-oriented `r`; `exceptions.py`
     contains the CQRS exception hierarchy consumed by handlers.
   - `registry.py` offers the shared registration helpers reused by dispatcher,
     container, and decorators.
@@ -98,7 +98,7 @@ Canonical references:
   enforcement, then executes the registered handler with structured logging and
   optional query caching.
 - **Dependency injection** — `FlextContainer` hosts a dependency-injector
-  container. Registrations and resolutions return `FlextResult` so handler
+  container. Registrations and resolutions return `r` so handler
   wiring can surface errors without raising exceptions.
 - **Domain validation** — `FlextModels` exposes Pydantic entities, values, and
   aggregates. Domain events collected on aggregates can be published through

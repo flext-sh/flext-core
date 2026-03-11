@@ -152,7 +152,7 @@ def sync_one(
 ) -> r[bool]:
     """Synchronize pyright and mypy paths for single pyproject.toml."""
     if not pyproject_path.exists():
-        return r[bool].ok(False)
+        return r[bool].fail(f"pyproject not found: {pyproject_path}")
     toml_service = FlextInfraUtilitiesToml()
     doc_result = toml_service.read_document(pyproject_path)
     if doc_result.is_failure:
@@ -172,10 +172,10 @@ def sync_one(
     doc_dict = _doc_as_container_dict(doc)
     tool_dict = _as_container_dict(doc_dict.get(c.Infra.Toml.TOOL))
     if not tool_dict:
-        return r[bool].ok(False)
+        return r[bool].fail(f"no [tool] section in {pyproject_path}")
     pyright_dict = _as_container_dict(tool_dict.get(c.Infra.Toml.PYRIGHT))
     if not pyright_dict:
-        return r[bool].ok(False)
+        return r[bool].fail(f"no [tool.pyright] section in {pyproject_path}")
     mypy_dict = _as_container_dict(tool_dict.get(c.Infra.Toml.MYPY))
     pyrefly_dict = _as_container_dict(tool_dict.get(c.Infra.Toml.PYREFLY))
     changed = False

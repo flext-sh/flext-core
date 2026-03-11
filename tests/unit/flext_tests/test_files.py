@@ -1093,7 +1093,7 @@ class TestCreateInStatic:
         assert len(lines) >= 2
 
     def test_create_in_with_flextresult(self, tmp_path: Path) -> None:
-        """Test create_in() with FlextResult content extraction."""
+        """Test create_in() with r content extraction."""
         result = r[m.ConfigMap].ok(m.ConfigMap(root={"status": "success"}))
         path = tf.create_in(result, "result.json", tmp_path)
         assert path.exists()

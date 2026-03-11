@@ -17,7 +17,7 @@ from collections import UserDict, UserList
 from collections.abc import Callable, Iterator
 from typing import override
 
-from flext_core import FlextResult, t
+from flext_core import r, t
 from flext_infra import FlextInfraUtilities
 from flext_tests import FlextTestsUtilities
 
@@ -45,7 +45,7 @@ class TestsFlextUtilities(FlextTestsUtilities, FlextInfraUtilities):
 
             @staticmethod
             def execute_and_assert_parser_result(
-                operation: Callable[[], FlextResult[t.ContainerValue]],
+                operation: Callable[[], r[t.ContainerValue]],
                 expected_value: t.ContainerValue | None = None,
                 expected_error: str | None = None,
                 description: str = "",
@@ -53,7 +53,7 @@ class TestsFlextUtilities(FlextTestsUtilities, FlextInfraUtilities):
                 """Execute parser operation and assert result.
 
                 Args:
-                    operation: Callable that returns a FlextResult
+                    operation: Callable that returns a r
                     expected_value: Expected value on success
                     expected_error: Expected error substring on failure
                     description: Test case description for error messages
@@ -180,14 +180,14 @@ class TestsFlextUtilities(FlextTestsUtilities, FlextInfraUtilities):
 
             @staticmethod
             def assert_failure(
-                result: FlextResult[t.ContainerValue],
+                result: r[t.ContainerValue],
                 expected_error: str,
                 description: str = "",
             ) -> None:
                 """Assert that result is a failure with expected error.
 
                 Args:
-                    result: FlextResult to check
+                    result: r to check
                     expected_error: Expected error substring
                     description: Test case description for error messages
 
@@ -200,13 +200,13 @@ class TestsFlextUtilities(FlextTestsUtilities, FlextInfraUtilities):
 
             @staticmethod
             def assert_success(
-                result: FlextResult[t.ContainerValue],
+                result: r[t.ContainerValue],
                 description: str = "",
             ) -> None:
                 """Assert that result is a success.
 
                 Args:
-                    result: FlextResult to check
+                    result: r to check
                     description: Test case description for error messages
 
                 """
@@ -217,14 +217,14 @@ class TestsFlextUtilities(FlextTestsUtilities, FlextInfraUtilities):
 
             @staticmethod
             def assert_success_with_value(
-                result: FlextResult[t.ContainerValue],
+                result: r[t.ContainerValue],
                 expected_value: t.ContainerValue,
                 description: str = "",
             ) -> None:
                 """Assert result is success with specific value.
 
                 Args:
-                    result: FlextResult to check
+                    result: r to check
                     expected_value: Expected value
                     description: Test case description for error messages
 

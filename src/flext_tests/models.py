@@ -127,7 +127,7 @@ class FlextTestsModels(FlextModels):
                 )
                 as_result: bool = Field(
                     default=False,
-                    description="Wrap result in FlextResult",
+                    description="Wrap result in r",
                 )
                 # User-specific
                 model_id: str | None = Field(
@@ -317,7 +317,7 @@ class FlextTestsModels(FlextModels):
                 )
                 as_result: bool = Field(
                     default=False,
-                    description="Wrap result in FlextResult",
+                    description="Wrap result in r",
                 )
                 unique: bool = Field(
                     default=False,
@@ -365,7 +365,7 @@ class FlextTestsModels(FlextModels):
                 )
                 as_result: bool = Field(
                     default=False,
-                    description="Wrap result in FlextResult",
+                    description="Wrap result in r",
                 )
                 merge_with: Mapping[str, t.Tests.ContainerValue] | None = Field(
                     default=None,
@@ -397,7 +397,7 @@ class FlextTestsModels(FlextModels):
                 )
                 as_result: bool = Field(
                     default=False,
-                    description="Wrap result in FlextResult",
+                    description="Wrap result in r",
                 )
                 validate_fn: Callable[[object], bool] | None = Field(
                     default=None,
@@ -529,7 +529,7 @@ class FlextTestsModels(FlextModels):
                 )
                 extract_result: bool = Field(
                     default=True,
-                    description="Auto-extract FlextResult value.",
+                    description="Auto-extract r value.",
                 )
 
                 @field_validator("name", mode="before")
@@ -882,10 +882,10 @@ class FlextTestsModels(FlextModels):
                     description="Shortcut for debug config",
                 )
 
-                # FlextResult parameters
+                # r parameters
                 result: r[t.Tests.ContainerValue] | None = Field(
                     default=None,
-                    description="FlextResult to store directly",
+                    description="r to store directly",
                 )
                 result_ok: t.Tests.ContainerValue | None = Field(
                     default=None,
@@ -903,7 +903,7 @@ class FlextTestsModels(FlextModels):
                 # Batch result parameters
                 results: Sequence[r[t.Tests.ContainerValue]] | None = Field(
                     default=None,
-                    description="Sequence of FlextResult to store",
+                    description="Sequence of r to store",
                 )
                 results_ok: Sequence[t.Tests.ContainerValue] | None = Field(
                     default=None,
@@ -1181,7 +1181,7 @@ class FlextTestsModels(FlextModels):
                 )
                 unwrap: bool = Field(
                     default=False,
-                    description="Unwrap FlextResult and return value directly",
+                    description="Unwrap r and return value directly",
                 )
                 unwrap_msg: str | None = Field(
                     default=None,
@@ -1216,11 +1216,11 @@ class FlextTestsModels(FlextModels):
                 )
                 as_list_result: bool = Field(
                     default=False,
-                    description="Return as FlextResult[list[T]] with values from dict",
+                    description="Return as r[list[T]] with values from dict",
                 )
                 as_dict_result: bool = Field(
                     default=False,
-                    description="Return as FlextResult[Mapping[str, T]]",
+                    description="Return as r[Mapping[str, T]]",
                 )
 
                 @computed_field
@@ -1608,11 +1608,11 @@ class FlextTestsModels(FlextModels):
                 )
                 ok: bool | None = Field(
                     default=None,
-                    description="For FlextResult: assert success",
+                    description="For r: assert success",
                 )
                 error: str | Sequence[str] | None = Field(
                     default=None,
-                    description="For FlextResult: error contains",
+                    description="For r: error contains",
                 )
                 deep: t.Tests.Matcher.DeepSpec | None = Field(
                     default=None,
@@ -1712,7 +1712,7 @@ class FlextTestsModels(FlextModels):
                 """Chain matcher configuration for railway pattern assertions."""
 
                 result: r[TResult] = Field(
-                    description="FlextResult being chained",
+                    description="r being chained",
                 )
 
             class TestScope(FlextModelFoundation.ArbitraryTypesModel):

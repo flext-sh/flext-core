@@ -7,9 +7,12 @@ from pathlib import Path
 
 from tomlkit.items import Table
 
-from flext_infra import FlextInfraUtilitiesSubprocess, c, p, u
+from flext_core import r
+from flext_infra import FlextInfraUtilitiesSubprocess, ProjectClassifier, c, p, u
 from flext_infra.deps._phases import (
     ConsolidateGroupsPhase,
+    EnsureCoverageConfigPhase,
+    EnsureExtraPathsPhase,
     EnsureFormattingToolingPhase,
     EnsureMypyConfigPhase,
     EnsureNamespaceToolingPhase,
@@ -59,6 +62,12 @@ def workspace_root(start: Path) -> Path:
 ROOT = workspace_root(Path(__file__))
 
 
+def _classify_project(project_dir: Path) -> r[str]:
+    """Classify project kind for pyright/coverage config selection."""
+    kind = ProjectClassifier(project_dir).classify().project_kind
+    return r[str].ok(kind)
+
+
 class FlextInfraPyprojectModernizer:
     """Modernize all workspace pyproject.toml files."""
 
@@ -97,6 +106,11 @@ class FlextInfraPyprojectModernizer:
         if doc is None:
             return ["invalid TOML"]
         is_root = path.parent.resolve() == self.root.resolve()
+        project_kind = "core"
+        if not is_root:
+            kind_result = _classify_project(path.parent)
+            if kind_result.is_success:
+                project_kind = kind_result.value
         changes: list[str] = []
         tool: object | None = None
         if c.Infra.Toml.TOOL in doc:
@@ -148,6 +162,21 @@ class FlextInfraPyprojectModernizer:
                 doc,
                 is_root=is_root,
                 workspace_root=self.root,
+                project_kind=project_kind,
+            )
+        )
+        changes.extend(
+            EnsureCoverageConfigPhase(self._tool_config).apply(
+                doc,
+                project_kind=project_kind,
+            )
+        )
+        changes.extend(
+            EnsureExtraPathsPhase().apply(
+                doc,
+                path=path,
+                is_root=is_root,
+                dry_run=dry_run,
             )
         )
         rendered = doc.as_string()

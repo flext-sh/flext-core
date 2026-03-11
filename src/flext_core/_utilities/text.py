@@ -2,7 +2,7 @@
 
 The functions here intentionally return raw values and may raise on invalid
 input; dispatcher-facing wrappers in ``flext_core.utilities`` apply
-``FlextResult`` semantics when needed. Keeping this layer minimal reduces
+``r`` semantics when needed. Keeping this layer minimal reduces
 cross-layer coupling while providing deterministic normalization behaviors.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.

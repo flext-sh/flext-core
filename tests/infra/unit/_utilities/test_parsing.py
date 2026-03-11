@@ -48,7 +48,7 @@ class TestParsingModuleAst:
         file_path = tmp_path / "blocked.py"
         file_path.write_text("x = 1\n", encoding=c.Infra.Encoding.DEFAULT)
 
-        def _raise_oserror(_self: Path, _encoding: str) -> str:
+        def _raise_oserror(_self: Path, **_kwargs: str) -> str:
             msg = "permission denied"
             raise OSError(msg)
 
@@ -98,7 +98,7 @@ class TestParsingModuleCst:
         file_path = tmp_path / "blocked.py"
         file_path.write_text("x = 1\n", encoding=c.Infra.Encoding.DEFAULT)
 
-        def _raise_oserror(_self: Path, _encoding: str) -> str:
+        def _raise_oserror(_self: Path, **_kwargs: str) -> str:
             msg = "permission denied"
             raise OSError(msg)
 

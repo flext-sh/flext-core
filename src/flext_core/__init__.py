@@ -92,7 +92,7 @@ if TYPE_CHECKING:
     from flext_core.models import FlextModels, m
     from flext_core.protocols import FlextProtocols, p
     from flext_core.registry import FlextRegistry
-    from flext_core.result import FlextResult, r
+    from flext_core.result import r
     from flext_core.runtime import FlextRuntime
     from flext_core.service import FlextService, s
     from flext_core.settings import FlextSettings
@@ -156,7 +156,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextModelsService": ("flext_core._models.service", "FlextModelsService"),
     "FlextProtocols": ("flext_core.protocols", "FlextProtocols"),
     "FlextRegistry": ("flext_core.registry", "FlextRegistry"),
-    "FlextResult": ("flext_core.result", "FlextResult"),
+    "r": ("flext_core.result", "r"),
     "FlextRuntime": ("flext_core.runtime", "FlextRuntime"),
     "FlextService": ("flext_core.service", "FlextService"),
     "FlextSettings": ("flext_core.settings", "FlextSettings"),
@@ -237,7 +237,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "h": ("flext_core.handlers", "h"),
     "m": ("flext_core.models", "m"),
     "p": ("flext_core.protocols", "p"),
-    "r": ("flext_core.result", "r"),
     "s": ("flext_core.service", "s"),
     "t": ("flext_core.typings", "t"),
     "u": ("flext_core.utilities", "u"),
@@ -275,7 +274,6 @@ __all__ = [
     "FlextModelsService",
     "FlextProtocols",
     "FlextRegistry",
-    "FlextResult",
     "FlextRuntime",
     "FlextService",
     "FlextSettings",

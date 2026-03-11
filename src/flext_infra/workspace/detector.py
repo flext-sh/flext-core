@@ -60,7 +60,7 @@ class FlextInfraWorkspaceDetector(s[WorkspaceMode]):
             project_root: Path to the project directory.
 
         Returns:
-            FlextResult with WorkspaceMode.WORKSPACE if parent repo is 'flext',
+            r with WorkspaceMode.WORKSPACE if parent repo is 'flext',
             WorkspaceMode.STANDALONE otherwise.
 
         """

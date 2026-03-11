@@ -2,7 +2,7 @@
 
 Tests exercise cross-module flows using u.Infra MRO pattern, validating:
 - Output singleton consistency
-- Service FlextResult chaining
+- Service r chaining
 - Git operations via u.Infra.git_*
 - Subprocess operations via u.Infra.run_checked/capture
 - BaseMk generation flow
@@ -60,10 +60,10 @@ class TestWorkspaceDetectionOrchestrationFlow:
 
     @pytest.mark.integration
     def test_workspace_detector_returns_flext_result(self, tmp_path: Path) -> None:
-        """Test that workspace detector operations return FlextResult.
+        """Test that workspace detector operations return r.
 
         Validates:
-        - Detector methods return FlextResult
+        - Detector methods return r
         - Result typing is correct
         """
         detector = FlextInfraWorkspaceDetector()
@@ -150,14 +150,14 @@ class TestOutputSingletonConsistency:
 
 
 class TestServiceFlextResultChaining:
-    """Test service FlextResult chaining via .map()/.flat_map()."""
+    """Test service r chaining via .map()/.flat_map()."""
 
     @pytest.mark.integration
     def test_service_result_chaining_with_map(self) -> None:
         """Test chaining multiple services via .map().
 
         Validates:
-        - FlextResult.map() works with service results
+        - r.map() works with service results
         - Type is preserved through chain
         - Value is transformed correctly
         """
@@ -171,7 +171,7 @@ class TestServiceFlextResultChaining:
         """Test chaining multiple services via .flat_map().
 
         Validates:
-        - FlextResult.flat_map() works with service results
+        - r.flat_map() works with service results
         - Type is preserved through chain
         - Failures propagate correctly
         """

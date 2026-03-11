@@ -17,11 +17,11 @@ from tests.test_utils import assertion_helpers, fixture_factory
 
 
 class TestAutomatedFlextResult:
-    """Automated tests for FlextResult functionality.
+    """Automated tests for r functionality.
 
     Generated for 100% coverage with:
     - Real functionality testing (no mocks)
-    - FlextResult[T] patterns
+    - r[T] patterns
     - Type safety compliance
     - Zero circular dependencies
     """
@@ -77,7 +77,7 @@ class TestAutomatedFlextResult:
         result = self._execute_result_operation(instance, {"type_safe": True})
         _ = assertion_helpers.assert_flext_result_success(
             result,
-            "FlextResult type safety test",
+            "r type safety test",
         )
 
     def test_automated_result_error_handling(self) -> None:
@@ -105,7 +105,7 @@ class TestAutomatedFlextResult:
         result = test_framework.execute_with_timeout(operation, timeout_seconds=1.0)
         _ = assertion_helpers.assert_flext_result_success(
             result,
-            "FlextResult performance test exceeded timeout",
+            "r performance test exceeded timeout",
         )
 
     def test_automated_result_resource_management(self) -> None:
@@ -114,7 +114,7 @@ class TestAutomatedFlextResult:
         result = self._execute_result_operation(instance, {"resource_test": True})
         _ = assertion_helpers.assert_flext_result_success(
             result,
-            "FlextResult resource test",
+            "r resource test",
         )
         instance_obj: object = instance
         if hasattr(instance_obj, "cleanup"):
@@ -122,7 +122,7 @@ class TestAutomatedFlextResult:
             if cleanup_result:
                 _ = assertion_helpers.assert_flext_result_success(
                     cleanup_result,
-                    "FlextResult cleanup failed",
+                    "r cleanup failed",
                 )
 
     def _execute_result_operation(
@@ -140,7 +140,7 @@ class TestAutomatedFlextResult:
             _ = input_data
             return r[bool].ok(True)
         except Exception as e:
-            return r[bool].fail(f"FlextResult operation failed: {e}")
+            return r[bool].fail(f"r operation failed: {e}")
 
     @pytest.fixture
     def test_result_instance(self) -> object:

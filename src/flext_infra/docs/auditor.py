@@ -1,7 +1,7 @@
 """Documentation auditor service.
 
 Audits documentation for broken links and forbidden terms,
-returning structured FlextResult reports.
+returning structured r reports.
 
 Usage:
     python -m flext_infra docs audit --root flext-core
@@ -29,7 +29,7 @@ class FlextInfraDocAuditor:
     """Infrastructure service for documentation auditing.
 
     Scans markdown documentation for broken internal links and
-    forbidden terms, returning structured FlextResult reports.
+    forbidden terms, returning structured r reports.
     """
 
     @staticmethod
@@ -137,7 +137,7 @@ class FlextInfraDocAuditor:
             strict: Fail on any issues found.
 
         Returns:
-            FlextResult with list of AuditReport objects.
+            r with list of AuditReport objects.
 
         """
         scopes_result = FlextInfraDocsShared.build_scopes(

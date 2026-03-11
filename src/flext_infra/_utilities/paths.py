@@ -13,7 +13,7 @@ import os
 from pathlib import Path
 
 from flext_core import r
-from flext_infra.constants import FlextInfraConstants as c
+from flext_infra import c
 
 
 class FlextInfraUtilitiesPaths:
@@ -77,6 +77,26 @@ class FlextInfraUtilitiesPaths:
             )
         except (OSError, RuntimeError, TypeError) as exc:
             return r[Path].fail(f"failed to resolve workspace root: {exc}")
+
+    @staticmethod
+    def resolve_workspace_root(file: str | Path) -> Path:
+        """Resolve workspace root by walking up from file location to .gitmodules.
+
+        This specific resolution pattern is used by orchestration services
+        to identify the FLEXT workspace root.
+
+        Args:
+            file: Path to a file (usually __file__).
+
+        Returns:
+            Absolute path to workspace root.
+
+        """
+        here = Path(file).resolve()
+        for candidate in here.parents:
+            if (candidate / c.Infra.Files.GITMODULES).exists():
+                return candidate
+        return here.parents[4]
 
 
 __all__ = ["FlextInfraUtilitiesPaths"]

@@ -20,7 +20,7 @@ from __future__ import annotations
 
 import pytest
 
-from flext_core import FlextExceptions, FlextResult
+from flext_core import FlextExceptions, r
 
 from .helpers.factories import (
     FailingService,
@@ -112,17 +112,17 @@ class TestServiceResultProperty:
         service = ServiceTestCases.create_service(case)
         assert isinstance(service, GetUserService)
         result = service.execute()
-        assert isinstance(result, FlextResult)
+        assert isinstance(result, r)
         _ = assertion_helpers.assert_flext_result_success(result)
         user = result.value
         assert isinstance(user, User)
         assert user.user_id == case.input_value
 
     def test_v1_error_handling_with_flext_result(self) -> None:
-        """V1: Error handling via FlextResult pattern."""
+        """V1: Error handling via r pattern."""
         service = FailingService.model_construct(error_message="Test failure")
         result = service.execute()
-        assert isinstance(result, FlextResult)
+        assert isinstance(result, r)
         _ = assertion_helpers.assert_flext_result_failure(result)
         assert "Test failure" in str(result.error)
 
@@ -203,6 +203,6 @@ class TestServiceResultProperty:
         with pytest.raises(FlextExceptions.BaseError):
             FailingService.model_construct(error_message="").result
         service = FailingService.model_construct(error_message="fail")
-        assert isinstance(service.execute(), FlextResult)
+        assert isinstance(service.execute(), r)
         with pytest.raises(FlextExceptions.BaseError):
             _ = service.result

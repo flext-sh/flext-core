@@ -19,7 +19,7 @@ class RealGitService(s[bool]):
     """Real git service using flext_tests service base.
 
     Uses c.Infra.Cli.GitCmd constants for git operations and
-    r (FlextResult) for railway-oriented error handling.
+    r (r) for railway-oriented error handling.
     """
 
     git_utility: type[FlextInfraUtilitiesGit] = FlextInfraUtilitiesGit

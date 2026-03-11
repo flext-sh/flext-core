@@ -8,27 +8,27 @@ from typing import cast, override
 
 import pytest
 
-from flext_core import FlextExceptions, FlextHandlers, FlextResult, c, h, m, r, t
+from flext_core import FlextExceptions, FlextHandlers, c, h, m, r, t
 
 handlers_module = importlib.import_module("flext_core.handlers")
 
 
 class _Handler(FlextHandlers[t.JsonValue, t.JsonValue]):
     @override
-    def handle(self, message: t.JsonValue) -> FlextResult[t.JsonValue]:
+    def handle(self, message: t.JsonValue) -> r[t.JsonValue]:
         return r[t.JsonValue].ok(message)
 
 
 class _QueryHandler(_Handler):
     @override
-    def validate(self, data: t.JsonValue) -> FlextResult[bool]:
+    def validate(self, data: t.JsonValue) -> r[bool]:
         _ = data
         return r[bool].ok(True)
 
 
 class _EventHandler(_Handler):
     @override
-    def validate(self, data: t.JsonValue) -> FlextResult[bool]:
+    def validate(self, data: t.JsonValue) -> r[bool]:
         _ = data
         return r[bool].ok(True)
 

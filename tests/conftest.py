@@ -17,7 +17,7 @@ from typing import TypeVar
 import pytest
 from pydantic import ConfigDict
 
-from flext_core import FlextContainer, FlextContext, FlextResult, FlextSettings, m, r, t
+from flext_core import FlextContainer, FlextContext, FlextSettings, m, r, t
 
 from .helpers.scenarios import (
     ParserScenario,
@@ -30,14 +30,14 @@ from .helpers.scenarios import (
 from .test_utils import assertion_helpers
 
 T = TypeVar("T")
-TestResult = FlextResult[T]
+TestResult = r[T]
 
 
 class FlextTestAutomationFramework:
     """Highly automated test framework with real functionality testing.
 
     Follows strict type-system-architecture.md rules:
-    - Uses FlextResult[T] for all operations that can fail
+    - Uses r[T] for all operations that can fail
     - Tests real functionality, not mocks
     - Follows 2-level namespace maximum
     - Zero circular dependencies
@@ -45,13 +45,13 @@ class FlextTestAutomationFramework:
 
     @staticmethod
     def assert_result_success[TResult](
-        result: FlextResult[TResult],
+        result: r[TResult],
         context: str = "",
     ) -> TResult:
-        """Assert FlextResult is success and return value.
+        """Assert r is success and return value.
 
         Args:
-            result: FlextResult to check
+            result: r to check
             context: Optional context for error messages
 
         Returns:
@@ -69,14 +69,14 @@ class FlextTestAutomationFramework:
 
     @staticmethod
     def assert_result_failure[TResult](
-        result: FlextResult[TResult],
+        result: r[TResult],
         expected_error: str | None = None,
         context: str = "",
     ) -> str:
-        """Assert FlextResult is failure and optionally check error message.
+        """Assert r is failure and optionally check error message.
 
         Args:
-            result: FlextResult to check
+            result: r to check
             expected_error: Expected error substring (optional)
             context: Optional context for error messages
 
@@ -112,7 +112,7 @@ class FlextTestAutomationFramework:
             **kwargs: Additional entity fields
 
         Returns:
-            FlextResult[Entity]: Result containing created entity
+            r[Entity]: Result containing created entity
 
         """
         try:
@@ -142,7 +142,7 @@ class FlextTestAutomationFramework:
             value_type: Type of value object to create
 
         Returns:
-            FlextResult[T]: Result containing created value object
+            r[T]: Result containing created value object
 
         """
         try:
@@ -163,7 +163,7 @@ class FlextTestAutomationFramework:
             timeout_seconds: Timeout in seconds
 
         Returns:
-            FlextResult[object]: Result of execution or timeout error
+            r[object]: Result of execution or timeout error
 
         """
         result_queue: queue.Queue[tuple[bool, object]] = queue.Queue(maxsize=1)
@@ -221,9 +221,9 @@ class FlextScenarioRunner:
 
     @staticmethod
     def execute_validation_scenario[TResult](
-        validator_func: Callable[..., FlextResult[TResult]],
+        validator_func: Callable[..., r[TResult]],
         scenario: ValidationScenario,
-    ) -> FlextResult[TResult]:
+    ) -> r[TResult]:
         """Execute validation scenario and return result.
 
         Args:
@@ -231,7 +231,7 @@ class FlextScenarioRunner:
             scenario: ValidationScenario dataclass instance
 
         Returns:
-            FlextResult with validator output
+            r with validator output
 
         """
         try:
@@ -241,13 +241,13 @@ class FlextScenarioRunner:
                 result = validator_func(scenario.input_value)
             return result
         except Exception as e:
-            return FlextResult[TResult].fail(str(e))
+            return r[TResult].fail(str(e))
 
     @staticmethod
     def execute_parser_scenario[TResult](
-        parser_func: Callable[[str], FlextResult[TResult]],
+        parser_func: Callable[[str], r[TResult]],
         scenario: ParserScenario,
-    ) -> FlextResult[TResult]:
+    ) -> r[TResult]:
         """Execute parser scenario and return result.
 
         Args:
@@ -255,24 +255,24 @@ class FlextScenarioRunner:
             scenario: ParserScenario dataclass instance
 
         Returns:
-            FlextResult with parser output
+            r with parser output
 
         """
         try:
             return parser_func(scenario.input_data)
         except Exception as e:
-            return FlextResult[TResult].fail(str(e))
+            return r[TResult].fail(str(e))
 
     @staticmethod
     def assert_scenario_result(
-        result: FlextResult[object],
+        result: r[object],
         scenario: ValidationScenario | ParserScenario | ReliabilityScenario,
         context: str = "",
     ) -> None:
         """Assert scenario result matches expected outcome.
 
         Args:
-            result: FlextResult from scenario execution
+            result: r from scenario execution
             scenario: Scenario dataclass with expected values
             context: Optional context for error messages
 
@@ -302,7 +302,7 @@ class FlextScenarioRunner:
 
 
 class FlextResultAssertionHelper:
-    """Helper for common FlextResult assertions.
+    """Helper for common r assertions.
 
     Provides pattern for asserting result success/failure with
     optional error message matching.
@@ -310,14 +310,14 @@ class FlextResultAssertionHelper:
 
     @staticmethod
     def assert_success(
-        result: FlextResult[object],
+        result: r[object],
         expected_value: object = None,
         context: str = "",
     ) -> object:
         """Assert result is success.
 
         Args:
-            result: FlextResult to check
+            result: r to check
             expected_value: Optional expected value (checked if provided)
             context: Optional context for error messages
 
@@ -333,14 +333,14 @@ class FlextResultAssertionHelper:
 
     @staticmethod
     def assert_failure(
-        result: FlextResult[object],
+        result: r[object],
         expected_error: str | None = None,
         context: str = "",
     ) -> str:
         """Assert result is failure.
 
         Args:
-            result: FlextResult to check
+            result: r to check
             expected_error: Optional expected error substring
             context: Optional context for error messages
 
@@ -442,7 +442,7 @@ class FunctionalExternalService:
             input_data: String to process
 
         Returns:
-            FlextResult[str]: Processed result or failure
+            r[str]: Processed result or failure
 
         """
         try:
@@ -530,13 +530,13 @@ def temp_file(temp_dir: Path) -> Path:
 
 @pytest.fixture
 def flext_result_success() -> r[dict[str, object]]:
-    """Successful FlextResult fixture available to all FLEXT projects."""
+    """Successful r fixture available to all FLEXT projects."""
     return r[dict[str, object]].ok({"success": True})
 
 
 @pytest.fixture
 def flext_result_failure() -> r[object]:
-    """Failed FlextResult fixture available to all FLEXT projects."""
+    """Failed r fixture available to all FLEXT projects."""
     return r[object].fail("Test error")
 
 
@@ -566,7 +566,7 @@ def scenario_runner() -> FlextScenarioRunner:
 
 @pytest.fixture
 def result_assertion_helper() -> FlextResultAssertionHelper:
-    """Helper for common FlextResult assertions."""
+    """Helper for common r assertions."""
     return FlextResultAssertionHelper()
 
 

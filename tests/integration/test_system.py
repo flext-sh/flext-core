@@ -17,7 +17,7 @@ from flext_core import (
     FlextConstants,
     FlextContainer,
     FlextExceptions,
-    FlextResult,
+    r,
     t,
     u,
 )
@@ -35,7 +35,7 @@ class TestCompleteFlextSystemIntegration:
 
         Este teste abrange:
         1. Wildcard imports funcionais
-        2. Railway-oriented programming com FlextResult
+        2. Railway-oriented programming com r
         3. Sistema hierárquico de constantes
         4. Hierarquia de exceções estruturada
         5. Utilitários e funções auxiliares
@@ -55,15 +55,15 @@ class TestCompleteFlextSystemIntegration:
 
     def _validate_imports(self) -> None:
         """Validate that all main components are available."""
-        assert FlextResult is not None, "FlextResult não está disponível"
+        assert r is not None, "r não está disponível"
         assert FlextConstants is not None, "FlextConstants não está disponível"
         assert FlextExceptions is not None, "FlextExceptions não está disponível"
         assert u is not None, "u não está disponível"
         assert t is not None, "t não está disponível"
 
     def _test_railway_programming(self) -> None:
-        """Test railway-oriented programming with FlextResult."""
-        success_result = FlextResult[str].ok("dados_iniciais")
+        """Test railway-oriented programming with r."""
+        success_result = r[str].ok("dados_iniciais")
         assert success_result.is_success
         assert success_result.is_success
         assert success_result.is_failure is False
@@ -77,7 +77,7 @@ class TestCompleteFlextSystemIntegration:
         )
         assert pipeline_result.is_success is True
         assert str(pipeline_result.value) == "processado-DADOS-INICIAIS"
-        failure_result: FlextResult[str] = FlextResult[str].fail(
+        failure_result: r[str] = r[str].fail(
             "erro_de_processamento",
         )
         assert failure_result.is_success is False
@@ -85,17 +85,17 @@ class TestCompleteFlextSystemIntegration:
         assert failure_result.error == "erro_de_processamento"
         assert failure_result.unwrap_or("") == ""
 
-        def operacao_que_pode_falhar(data: object) -> FlextResult[object]:
+        def operacao_que_pode_falhar(data: object) -> r[object]:
             if isinstance(data, str) and "invalido" in data:
-                return FlextResult[object].fail("dados_invalidos")
+                return r[object].fail("dados_invalidos")
             if isinstance(data, str):
-                return FlextResult[object].ok(f"validado_{data}")
-            return FlextResult[object].fail("tipo_invalido")
+                return r[object].ok(f"validado_{data}")
+            return r[object].fail("tipo_invalido")
 
         flat_map_success = success_result.flat_map(operacao_que_pode_falhar)
         assert flat_map_success.is_success is True
         assert str(flat_map_success.value) == "validado_dados_iniciais"
-        invalid_data = FlextResult[str].ok("dados_invalido")
+        invalid_data = r[str].ok("dados_invalido")
         flat_map_failure = invalid_data.flat_map(operacao_que_pode_falhar)
         assert flat_map_failure.is_success is False
         assert flat_map_failure.error == "dados_invalidos"
@@ -168,29 +168,29 @@ class TestCompleteFlextSystemIntegration:
 
         def processar_dados_usuario(
             dados: dict[str, str],
-        ) -> FlextResult[dict[str, str]]:
+        ) -> r[dict[str, str]]:
             """Função que simula processamento completo usando todo o sistema.
 
             Returns:
-                FlextResult[dict[str, str]]: Resultado do processamento ou erro.
+                r[dict[str, str]]: Resultado do processamento ou erro.
 
             """
             if not dados:
-                return FlextResult[dict[str, str]].fail(
+                return r[dict[str, str]].fail(
                     "Dados não fornecidos",
                     error_code=FlextConstants.Errors.VALIDATION_ERROR,
                 )
             dados_processados: dict[str, str] = {}
             for key, value in dados.items():
                 if not u.Guards.is_string_non_empty(value):
-                    return FlextResult[dict[str, str]].fail(
+                    return r[dict[str, str]].fail(
                         f"Campo '{key}' não pode estar vazio",
                         error_code=FlextConstants.Errors.VALIDATION_ERROR,
                     )
                 dados_processados[key] = f"processado_{value}"
             dados_processados["processado_em"] = u.Generators.generate_iso_timestamp()
             dados_processados["processado_por"] = "sistema_flext"
-            return FlextResult[dict[str, str]].ok(dados_processados)
+            return r[dict[str, str]].ok(dados_processados)
 
         dados_teste = {"nome": "João", "email": "joao@exemplo.com"}
         resultado_processamento = processar_dados_usuario(dados_teste)
@@ -210,32 +210,32 @@ class TestCompleteFlextSystemIntegration:
 
     def _test_error_recovery(self) -> None:
         """Test error recovery scenarios."""
-        resultado_com_erro: FlextResult[str] = FlextResult[str].fail("erro_original")
+        resultado_com_erro: r[str] = r[str].fail("erro_original")
         resultado_recuperado = resultado_com_erro.lash(
-            lambda _error: FlextResult[str].ok("valor_recuperado"),
+            lambda _error: r[str].ok("valor_recuperado"),
         )
         assert resultado_recuperado.is_success is True
         assert resultado_recuperado.value == "valor_recuperado"
 
-        def operacao_1(data: object) -> FlextResult[object]:
+        def operacao_1(data: object) -> r[object]:
             if isinstance(data, str):
-                return FlextResult[object].ok(f"etapa1_{data}")
-            return FlextResult[object].fail("tipo_invalido")
+                return r[object].ok(f"etapa1_{data}")
+            return r[object].fail("tipo_invalido")
 
-        def operacao_2(data: object) -> FlextResult[object]:
+        def operacao_2(data: object) -> r[object]:
             if isinstance(data, str):
                 if "erro" in data:
-                    return FlextResult[object].fail("erro_na_etapa2")
-                return FlextResult[object].ok(f"etapa2_{data}")
-            return FlextResult[object].fail("tipo_invalido")
+                    return r[object].fail("erro_na_etapa2")
+                return r[object].ok(f"etapa2_{data}")
+            return r[object].fail("tipo_invalido")
 
-        def operacao_3(data: object) -> FlextResult[object]:
+        def operacao_3(data: object) -> r[object]:
             if isinstance(data, str):
-                return FlextResult[object].ok(f"final_{data}")
-            return FlextResult[object].fail("tipo_invalido")
+                return r[object].ok(f"final_{data}")
+            return r[object].fail("tipo_invalido")
 
         pipeline_sucesso = (
-            FlextResult[str]
+            r[str]
             .ok("dados_iniciais")
             .flat_map(operacao_1)
             .flat_map(operacao_2)
@@ -244,7 +244,7 @@ class TestCompleteFlextSystemIntegration:
         assert pipeline_sucesso.is_success is True
         assert str(pipeline_sucesso.value) == "final_etapa2_etapa1_dados_iniciais"
         pipeline_falha = (
-            FlextResult[str]
+            r[str]
             .ok("dados_com_erro")
             .flat_map(operacao_1)
             .flat_map(operacao_2)
@@ -255,13 +255,13 @@ class TestCompleteFlextSystemIntegration:
 
     def _validate_final_system(self) -> None:
         """Validate final system state."""
-        assert FlextResult is not None
+        assert r is not None
         assert FlextConstants is not None
         assert FlextExceptions is not None
         assert u is not None
         assert t is not None
         container_final = FlextContainer()
         assert container_final is not None
-        resultado_final = FlextResult[str].ok("sistema_funcionando")
+        resultado_final = r[str].ok("sistema_funcionando")
         assert resultado_final.is_success is True
         assert resultado_final.value == "sistema_funcionando"

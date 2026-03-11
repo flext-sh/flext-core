@@ -22,7 +22,6 @@ from flext_infra import (
 
 logger = FlextLogger.create_module_logger(__name__)
 _STRING_LIST_ADAPTER = TypeAdapter(list[str])
-_OBJECT_DICT_ADAPTER = TypeAdapter(dict[object, object])
 
 
 def _workspace_root() -> Path:
@@ -68,7 +67,7 @@ def _target_path(dep_name: str, *, is_root: bool, mode: str) -> str:
     return f"{c.Infra.Deps.FLEXT_DEPS_DIR}/{dep_name}"
 
 
-def _mapping_str_value(mapping: Mapping[object, object], key: str) -> str | None:
+def _mapping_str_value(mapping: Table | t.ConfigurationMapping, key: str) -> str | None:
     if key not in mapping:
         return None
     value = mapping[key]
@@ -243,10 +242,9 @@ def main() -> int:
         root_data_result = toml_service.read_document(root_pyproject)
         if root_data_result.is_success:
             root_data = root_data_result.unwrap()
-            root_project = root_data.get(c.Infra.Toml.PROJECT, None)
+            root_project = _table_get(root_data, c.Infra.Toml.PROJECT)
             if isinstance(root_project, Mapping):
-                root_project_map = _OBJECT_DICT_ADAPTER.validate_python(root_project)
-                root_name = _mapping_str_value(root_project_map, c.Infra.Toml.NAME)
+                root_name = _mapping_str_value(root_project, c.Infra.Toml.NAME)
                 if root_name is not None:
                     internal_names.add(root_name)
     if not args.projects and root_pyproject.exists():
@@ -292,11 +290,10 @@ def main() -> int:
         if data_result.is_failure:
             continue
         project_data = data_result.unwrap()
-        project_obj = project_data.get(c.Infra.Toml.PROJECT, None)
+        project_obj = _table_get(project_data, c.Infra.Toml.PROJECT)
         if not isinstance(project_obj, Mapping):
             continue
-        project_obj_map = _OBJECT_DICT_ADAPTER.validate_python(project_obj)
-        project_name = _mapping_str_value(project_obj_map, c.Infra.Toml.NAME)
+        project_name = _mapping_str_value(project_obj, c.Infra.Toml.NAME)
         if project_name is not None:
             internal_names.add(project_name)
     for project_dir in project_dirs:
@@ -307,11 +304,10 @@ def main() -> int:
         if data_result.is_failure:
             continue
         project_data = data_result.unwrap()
-        project_obj = project_data.get(c.Infra.Toml.PROJECT, None)
+        project_obj = _table_get(project_data, c.Infra.Toml.PROJECT)
         if not isinstance(project_obj, Mapping):
             continue
-        project_obj_map = _OBJECT_DICT_ADAPTER.validate_python(project_obj)
-        project_name = _mapping_str_value(project_obj_map, c.Infra.Toml.NAME)
+        project_name = _mapping_str_value(project_obj, c.Infra.Toml.NAME)
         if project_name is not None:
             internal_names.add(project_name)
     for project_dir in sorted(project_dirs):

@@ -250,7 +250,9 @@ class FlextInfraDependencyDetectionService:
         toml_data: t.Infra.ContainerDict = result.value
         for key, value in toml_data.items():
             converted = _to_infra_value(value)
-            if converted is not None or value is None:
+            if (converted is not None or value is None) and not isinstance(
+                converted, list
+            ):
                 limits[str(key)] = converted
         return limits
 

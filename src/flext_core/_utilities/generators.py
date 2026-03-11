@@ -21,7 +21,7 @@ from typing import TypeGuard
 from pydantic import BaseModel
 
 from flext_core import FlextRuntime, c, m, t
-from flext_core.result import FlextResult as r
+from flext_core.result import r
 
 
 class FlextUtilitiesGenerators:
@@ -50,7 +50,7 @@ class FlextUtilitiesGenerators:
             prefix: Custom prefix (overrides kind).
 
         Returns:
-            Actual prefix string wrapped in FlextResult.
+            Actual prefix string wrapped in r.
 
         """
         if prefix is not None:

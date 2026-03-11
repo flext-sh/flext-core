@@ -76,7 +76,7 @@ class FlextInfraStubSupplyChain:
             workspace_root: Root of the workspace for stub lookup.
 
         Returns:
-            FlextResult with analysis report dict.
+            r with analysis report dict.
 
         """
         try:
@@ -114,7 +114,7 @@ class FlextInfraStubSupplyChain:
             project_dirs: Optional specific projects; discovers all if None.
 
         Returns:
-            FlextResult with ValidationReport indicating overall status.
+            r with ValidationReport indicating overall status.
 
         """
         try:

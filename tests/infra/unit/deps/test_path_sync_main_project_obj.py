@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib
 import sys
 from pathlib import Path
 
@@ -8,10 +9,9 @@ import tomlkit
 from tomlkit.toml_document import TOMLDocument
 
 from flext_core import r
+from flext_infra import FlextInfraUtilitiesDiscovery, FlextInfraUtilitiesToml, m
 from flext_infra.deps import path_sync as path_sync_module
 from flext_tests import tm
-from tests.infra import h
-from tests.infra.models import m
 
 
 class _OutputNoop:
@@ -36,18 +36,25 @@ def test_main_project_obj_not_dict_first_loop(
     project_dir = tmp_path / "test-project"
     project_dir.mkdir()
     (project_dir / "pyproject.toml").touch()
+
+    def _mock_discover_1(
+        _self: FlextInfraUtilitiesDiscovery, _root: Path
+    ) -> r[list[m.Infra.Workspace.ProjectInfo]]:
+        return r[list[m.Infra.Workspace.ProjectInfo]].ok([_project(project_dir)])
+
+    def _mock_read_doc_1(
+        _self: FlextInfraUtilitiesToml, _path: Path
+    ) -> r[TOMLDocument]:
+        return r[TOMLDocument].ok(tomlkit.parse('[project]\nvalue = "not-a-dict"\n'))
+
     monkeypatch.setattr(sys, "argv", ["sync-paths"])
     monkeypatch.setattr(
         "flext_infra.FlextInfraUtilitiesDiscovery.discover_projects",
-        lambda _self, _root: r[list[m.Infra.Workspace.ProjectInfo]].ok([
-            _project(project_dir)
-        ]),
+        _mock_discover_1,
     )
     monkeypatch.setattr(
         "flext_infra.FlextInfraUtilitiesToml.read_document",
-        lambda _self, _path: r[TOMLDocument].ok(
-            tomlkit.parse('[project]\nvalue = "not-a-dict"\n')
-        ),
+        _mock_read_doc_1,
     )
     monkeypatch.setattr(path_sync_module, "output", _OutputNoop())
     tm.that(path_sync_module.main(), eq=0)
@@ -57,22 +64,33 @@ def test_main_project_obj_not_dict_second_loop(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+
+    def _mock_discover_2(
+        _self: FlextInfraUtilitiesDiscovery, _root: Path
+    ) -> r[list[m.Infra.Workspace.ProjectInfo]]:
+        return r[list[m.Infra.Workspace.ProjectInfo]].ok([
+            _project(tmp_path / "test-project")
+        ])
+
+    def _mock_read_doc_2(
+        _self: FlextInfraUtilitiesToml, _path: Path
+    ) -> r[TOMLDocument]:
+        return r[TOMLDocument].ok(tomlkit.parse('[project]\nvalue = "not-a-dict"\n'))
+
     monkeypatch.setattr(sys, "argv", ["sync-paths"])
     monkeypatch.setattr(
         "flext_infra.FlextInfraUtilitiesDiscovery.discover_projects",
-        lambda _self, _root: r[list[m.Infra.Workspace.ProjectInfo]].ok([
-            _project(tmp_path / "test-project")
-        ]),
+        _mock_discover_2,
     )
     monkeypatch.setattr(
         "flext_infra.FlextInfraUtilitiesToml.read_document",
-        lambda _self, _path: r[TOMLDocument].ok(
-            tomlkit.parse('[project]\nvalue = "not-a-dict"\n')
-        ),
+        _mock_read_doc_2,
     )
     monkeypatch.setattr(path_sync_module, "output", _OutputNoop())
     tm.that(path_sync_module.main(), eq=0)
 
 
 def test_helpers_alias_is_reachable_project_obj() -> None:
-    tm.that(hasattr(h, "assert_ok"), eq=True)
+    infra_helpers_module = importlib.import_module("tests.infra.helpers")
+    helper_alias = getattr(infra_helpers_module, "h", None)
+    tm.that(hasattr(helper_alias, "assert_ok"), eq=True)

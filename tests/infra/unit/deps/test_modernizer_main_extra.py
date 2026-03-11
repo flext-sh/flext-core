@@ -8,10 +8,9 @@ from pathlib import Path
 import pytest
 import tomlkit
 
-import flext_infra.deps.modernizer as modernizer_module
+from flext_infra.deps import modernizer as modernizer_module
 from flext_infra.deps.modernizer import FlextInfraPyprojectModernizer
-from flext_tests import tm
-from tests.infra.typings import t
+from flext_tests import t, tm
 
 
 def _modernizer_args(**overrides: t.ContainerValue | None) -> argparse.Namespace:
@@ -72,12 +71,16 @@ class TestModernizerUncoveredLines:
             return doc
 
         def _process_file(
-            *_args: t.ContainerValue, **_kwargs: t.ContainerValue
+            _path: Path,
+            canonical_dev: list[str],
+            dry_run: bool,
+            skip_comments: bool,
         ) -> list[str]:
+            _ = (_path, canonical_dev, dry_run, skip_comments)
             return []
 
         monkeypatch.setattr(modernizer, "find_pyproject_files", _find_files)
-        monkeypatch.setattr(modernizer_module, "read_doc", _read_doc)
+        monkeypatch.setattr(modernizer_module.u.Infra, "read", _read_doc)
         monkeypatch.setattr(modernizer, "process_file", _process_file)
         tm.that(modernizer.run(args), eq=0)
 

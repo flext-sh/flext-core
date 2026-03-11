@@ -152,7 +152,7 @@ class FlextValidatorTypes:
             approved_exceptions: Dict mapping rule IDs to list of approved file patterns
 
         Returns:
-            FlextResult with ScanResult containing all violations found
+            r with ScanResult containing all violations found
 
         """
         violations: list[m.Tests.Validator.Violation] = []

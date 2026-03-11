@@ -50,7 +50,7 @@ All documented methods exist and line numbers are accurate:
 1. **register()** - Line 315 ✅
 
    - Instance registration documented
-   - FlextResult return type correct
+   - r return type correct
    - Examples valid
 
 1. **register_factory()** - Line 389 ✅
@@ -62,7 +62,7 @@ All documented methods exist and line numbers are accurate:
 1. **get()** - Line 491 ✅
 
    - Basic retrieval documented
-   - Returns FlextResult[object]
+   - Returns r[object]
    - Untyped retrieval pattern shown
 
 1. **get_typed()** - Line 574 ✅
@@ -122,7 +122,7 @@ ______________________________________________________________________
 1. **Clear Examples**: All examples are practical and realistic
 1. **Type Safety**: v0.9.9 generic support well explained
 1. **Patterns**: Real-world patterns (initialization, testing, lifecycle)
-1. **Integration**: FlextResult integration clearly shown
+1. **Integration**: r integration clearly shown
 1. **Best Practices**: DO/DON'T sections are valuable
 
 ______________________________________________________________________
@@ -146,7 +146,7 @@ BREAKING CHANGES (Phase 4 - v0.9.9):
 
 - register[T]() now uses generic type T instead of object
 - register_factory[T]() now uses Callable[[], T] instead of Callable[[], object]
-- get_typed[T]() now returns FlextResult[T] instead of FlextResult[object]
+- get_typed[T]() now returns r[T] instead of r[object]
 
 
 Add migration guide from v0.9.8 to v0.9.9.
@@ -194,7 +194,7 @@ Registering services?
 
 Expand the anti-patterns section:
 
-- Not checking FlextResult (already documented ✅)
+- Not checking r (already documented ✅)
 - Creating multiple containers (already documented ✅)
 - **NEW**: Circular dependencies in auto_wire
 - **NEW**: Registering services too late

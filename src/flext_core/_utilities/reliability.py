@@ -240,17 +240,17 @@ class FlextUtilitiesReliability:
 
     @staticmethod
     def flow_result[T](result: r[T], *funcs: Callable[[T], r[T]]) -> r[T]:
-        """Chain multiple operations on FlextResult.
+        """Chain multiple operations on r.
 
         Applies each function in sequence, short-circuiting on failure.
         Railway-oriented programming pattern for composing result-returning operations.
 
         Args:
-            result: Initial FlextResult to chain
+            result: Initial r to chain
             *funcs: Functions that take a value and return r[T]
 
         Returns:
-            Final FlextResult after all operations or first failure
+            Final r after all operations or first failure
 
         Example:
             result = u.flow_result(
@@ -301,12 +301,12 @@ class FlextUtilitiesReliability:
     def fold_result[T, U](
         result: r[T], on_failure: Callable[[str], U], on_success: Callable[[T], U]
     ) -> U:
-        """Fold FlextResult into single value (catamorphism).
+        """Fold r into single value (catamorphism).
 
         Allows handling both success and failure cases uniformly.
 
         Args:
-            result: FlextResult to fold
+            result: r to fold
             on_failure: Handler for failure case (receives error message)
             on_success: Handler for success case (receives value)
 
@@ -549,7 +549,7 @@ class FlextUtilitiesReliability:
         Useful for logging, metrics, or other side effects.
 
         Args:
-            result: FlextResult to tap
+            result: r to tap
             func: Side effect function (return value ignored)
 
         Returns:
@@ -568,13 +568,13 @@ class FlextUtilitiesReliability:
 
     @staticmethod
     def then[T, U](result: r[T], func: Callable[[T], r[U]]) -> r[U]:
-        """Chain single operation on FlextResult (monadic bind).
+        """Chain single operation on r (monadic bind).
 
         Also known as flatMap or bind in other languages.
 
         Args:
-            result: FlextResult to chain
-            func: Function that takes value and returns new FlextResult
+            result: r to chain
+            func: Function that takes value and returns new r
 
         Returns:
             Result of applying func, or original failure

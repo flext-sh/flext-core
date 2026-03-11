@@ -26,12 +26,12 @@ Business Rules & Architecture:
    - Clears common cache attribute names (_cache, _cached, cache, etc.)
    - Supports dict.clear() for mapping caches
    - Falls back to None assignment for simple cached values
-   - Returns FlextResult for graceful error handling
+   - Returns r for graceful error handling
 
 Validation Context:
 - Python 3.13+: Uses collections.abc.Sequence/Mapping
 - Pydantic v2: Uses model_dump() for BaseModel serialization
-- FlextResult: Cache operations return FlextResult for error handling
+- r: Cache operations return r for error handling
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -65,7 +65,7 @@ class FlextUtilitiesCache:
        - Graceful fallback to string representation
 
     3. **Error Handling**:
-       - clear_object_cache returns FlextResult (railway pattern)
+       - clear_object_cache returns r (railway pattern)
        - Other methods are pure functions (no side effects)
        - No exceptions propagated to callers
     """
@@ -95,7 +95,7 @@ class FlextUtilitiesCache:
         3. Missing attributes → skip silently
 
         Error Handling:
-        - Returns FlextResult (railway pattern)
+        - Returns r (railway pattern)
         - ok(True) on success (even if no caches found)
         - fail(error_msg) on any exception
 

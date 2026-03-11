@@ -46,7 +46,7 @@ class TestFlextInfraCodegenLazyInit:
         tm.that(result, gte=0)
 
     def test_execute_method_returns_flext_result(self, tmp_path: Path) -> None:
-        """Test execute() method returns FlextResult[int]."""
+        """Test execute() method returns r[int]."""
         generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
         result = generator.execute()
         tm.ok(result)

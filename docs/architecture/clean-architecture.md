@@ -52,7 +52,7 @@ describes the dependency rules and per-layer responsibilities.
 
 ```python
 # ✅ Correct: application layer depends on domain + foundation
-from flext_core import FlextDispatcher, FlextResult
+from flext_core import FlextDispatcher, r
 
 # ❌ Forbidden: foundation pulling from application
 from flext_core import FlextDispatcher  # not allowed inside result.py
@@ -71,7 +71,7 @@ from flext_core import FlextDispatcher  # not allowed inside result.py
 
 - **L1 – Foundation & Bridge**
 
-  - `result.py` delivers the railway-oriented `FlextResult` that propagates
+  - `result.py` delivers the railway-oriented `r` that propagates
     errors without raising.
   - `exceptions.py` centralizes typed exceptions surfaced by dispatcher
     orchestration.

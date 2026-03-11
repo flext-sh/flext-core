@@ -41,13 +41,13 @@ ______________________________________________________________________
 
 These methods are correctly documented with accurate line references:
 
-1. **FlextResult.ok()** - Line 313 ✅
+1. **r.ok()** - Line 313 ✅
 
    - Documented accurately
    - Example correct
    - Source reference valid
 
-1. **FlextResult.fail()** - Line 343 ✅
+1. **r.fail()** - Line 343 ✅
 
    - Documented accurately
    - Error code and error_data parameters covered
@@ -90,7 +90,7 @@ These **production-ready methods** exist in source but are **NOT documented**:
 #### Factory Methods
 
 1. **from_exception()** - Line 1014
-   - **Purpose**: Create FlextResult from function that might raise
+   - **Purpose**: Create r from function that might raise
    - **Missing From**: All guides
    - **Impact**: HIGH - Alternative to from_callable
 
@@ -98,15 +98,15 @@ These **production-ready methods** exist in source but are **NOT documented**:
 
 1. **sequence()** - Line 1126
 
-   - **Purpose**: Convert list\[FlextResult[T]\] → FlextResult\[list[T]\]
+   - **Purpose**: Convert list\[r[T]\] → r\[list[T]\]
    - **Missing From**: Railway guide
    - **Impact**: HIGH - Essential for batch operations
    - **Example Needed**:
 
    ```python
-   results = [FlextResult.ok(1), FlextResult.ok(2), FlextResult.ok(3)]
-   combined = FlextResult.sequence(results)
-   # FlextResult[list[int]].ok([1, 2, 3])
+   results = [r.ok(1), r.ok(2), r.ok(3)]
+   combined = r.sequence(results)
+   # r[list[int]].ok([1, 2, 3])
    ```
 
 1. **collect_successes()** - Line 1144

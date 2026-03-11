@@ -97,7 +97,7 @@ class FlextModelsEntity:
                 data: Event data mapping
 
             Returns:
-                FlextResult with the created DomainEvent or error
+                r with the created DomainEvent or error
 
             """
             if not event_type:
@@ -136,7 +136,7 @@ class FlextModelsEntity:
                 events: Sequence of (event_type, data) tuples
 
             Returns:
-                FlextResult with list of created DomainEvents or error
+                r with list of created DomainEvents or error
 
             """
             if events.__class__ not in {list, tuple}:
@@ -177,7 +177,7 @@ class FlextModelsEntity:
             """Mark all uncommitted events as committed and return them.
 
             Returns:
-                FlextResult with list of committed events
+                r with list of committed events
 
             """
             events = list(self.domain_events)

@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
+from typing import override
 
 import pytest
 
@@ -48,7 +49,8 @@ def _svc(ws: Path) -> FlextInfraPythonVersionEnforcer:
     """Create enforcer bound to given workspace."""
 
     class _TestEnforcer(FlextInfraPythonVersionEnforcer):
-        def _workspace_root_from_file(self, file: Path) -> Path:
+        @override
+        def _workspace_root_from_file(self, file: str | Path) -> Path:
             _ = file
             return ws
 

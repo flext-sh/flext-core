@@ -12,7 +12,7 @@
 - [Real-World Examples](#real-world-examples)
   - [Example 1: E-Commerce Order System](#example-1-e-commerce-order-system)
   - [Example 2: User Authentication System](#example-2-user-authentication-system)
-- [Integration with FlextResult](#integration-with-flextresult)
+- [Integration with r](#integration-with-flextresult)
 - [CQRS: Command Query Responsibility Segregation](#cqrs-command-query-responsibility-segregation)
   - [Commands: Write Operations](#commands-write-operations)
   - [Queries: Read Operations](#queries-read-operations)
@@ -377,7 +377,7 @@ except ValueError as e:
 Domain events capture important state changes inside aggregates. FLEXT surfaces domain events through `FlextModels.DomainEvent` and dispatcher publishing so other bounded contexts can react without direct coupling:
 
 ```python
-from flext_core import FlextResult
+from flext_core import r
 from flext_core import FlextDispatcher
 from flext_core import h
 from flext_core import FlextModels
@@ -389,9 +389,9 @@ class InventoryAdjusted(FlextModels.DomainEvent):
 
 
 class InventoryAdjustedHandler(h[InventoryAdjusted, bool]):
-    def handle(self, message: InventoryAdjusted) -> FlextResult[bool]:
+    def handle(self, message: InventoryAdjusted) -> r[bool]:
         # Side-effect: notify downstream system or persist projection
-        return FlextResult[bool].ok(True)
+        return r[bool].ok(True)
 
 
 class Product(FlextModels.AggregateRoot):
@@ -427,7 +427,7 @@ Key points:
 ### Example 1: E-Commerce Order System
 
 ```python
-from flext_core import FlextModels, FlextResult
+from flext_core import FlextModels, r
 from decimal import Decimal
 from datetime import datetime
 from enum import Enum
@@ -507,10 +507,10 @@ class Order(FlextModels.AggregateRoot):
         if self.total.amount != calculated_total:
             raise ValueError("Order total calculation mismatch")
 
-    def add_line(self, line: OrderLine) -> FlextResult[bool]:
+    def add_line(self, line: OrderLine) -> r[bool]:
         """Add line to order."""
         if self.status != OrderStatus.PENDING:
-            return FlextResult[bool].fail(
+            return r[bool].fail(
                 "Can only modify pending orders",
                 error_code="ORDER_NOT_MODIFIABLE",
             )
@@ -520,17 +520,17 @@ class Order(FlextModels.AggregateRoot):
 
         try:
             self._validate_invariants()
-            return FlextResult[bool].ok(True)
+            return r[bool].ok(True)
         except ValueError as e:
-            return FlextResult[bool].fail(
+            return r[bool].fail(
                 str(e),
                 error_code="ORDER_INVARIANT_VIOLATION",
             )
 
-    def remove_line(self, line_id: str) -> FlextResult[bool]:
+    def remove_line(self, line_id: str) -> r[bool]:
         """Remove line from order."""
         if self.status != OrderStatus.PENDING:
-            return FlextResult[bool].fail(
+            return r[bool].fail(
                 "Can only modify pending orders",
                 error_code="ORDER_NOT_MODIFIABLE",
             )
@@ -540,36 +540,36 @@ class Order(FlextModels.AggregateRoot):
 
         try:
             self._validate_invariants()
-            return FlextResult[bool].ok(True)
+            return r[bool].ok(True)
         except ValueError as e:
-            return FlextResult[bool].fail(
+            return r[bool].fail(
                 str(e),
                 error_code="ORDER_INVARIANT_VIOLATION",
             )
 
-    def confirm(self) -> FlextResult[bool]:
+    def confirm(self) -> r[bool]:
         """Confirm order (transition to confirmed state)."""
         if self.status != OrderStatus.PENDING:
-            return FlextResult[bool].fail(
+            return r[bool].fail(
                 f"Cannot confirm order in {self.status} state",
                 error_code="INVALID_STATE_TRANSITION",
             )
 
         self.status = OrderStatus.CONFIRMED
         self.updated_at = datetime.now()
-        return FlextResult[bool].ok(True)
+        return r[bool].ok(True)
 
-    def ship(self) -> FlextResult[bool]:
+    def ship(self) -> r[bool]:
         """Ship order (transition to shipped state)."""
         if self.status != OrderStatus.CONFIRMED:
-            return FlextResult[bool].fail(
+            return r[bool].fail(
                 f"Cannot ship order in {self.status} state",
                 error_code="INVALID_STATE_TRANSITION",
             )
 
         self.status = OrderStatus.SHIPPED
         self.updated_at = datetime.now()
-        return FlextResult[bool].ok(True)
+        return r[bool].ok(True)
 
     def _recalculate_totals(self):
         """Recalculate order totals."""
@@ -648,7 +648,7 @@ if ship_result.is_success:
 ### Example 2: User Authentication System
 
 ```python
-from flext_core import FlextModels, FlextResult
+from flext_core import FlextModels, r
 from datetime import datetime, timedelta
 import re
 
@@ -690,16 +690,16 @@ class User(FlextModels.AggregateRoot):
     created_at: datetime
     last_login_at: datetime | None = None
 
-    def login(self, plain_password: str) -> FlextResult[bool]:
+    def login(self, plain_password: str) -> r[bool]:
         """Attempt to login."""
         if not self.is_active:
-            return FlextResult[bool].fail(
+            return r[bool].fail(
                 "User account is inactive",
                 error_code="USER_INACTIVE",
             )
 
         if not self.is_verified:
-            return FlextResult[bool].fail(
+            return r[bool].fail(
                 "User account is not verified",
                 error_code="USER_NOT_VERIFIED",
             )
@@ -707,35 +707,35 @@ class User(FlextModels.AggregateRoot):
         # Check password (simplified)
         password_check = Password.from_plain(plain_password)
         if password_check.hash != self.password_hash.hash:
-            return FlextResult[bool].fail(
+            return r[bool].fail(
                 "Invalid password",
                 error_code="INVALID_PASSWORD",
             )
 
         self.last_login_at = datetime.now()
-        return FlextResult[bool].ok(True)
+        return r[bool].ok(True)
 
-    def deactivate(self) -> FlextResult[bool]:
+    def deactivate(self) -> r[bool]:
         """Deactivate user account."""
         if not self.is_active:
-            return FlextResult[bool].fail(
+            return r[bool].fail(
                 "User is already deactivated",
                 error_code="ALREADY_DEACTIVATED",
             )
 
         self.is_active = False
-        return FlextResult[bool].ok(True)
+        return r[bool].ok(True)
 
-    def verify_email(self) -> FlextResult[bool]:
+    def verify_email(self) -> r[bool]:
         """Mark email as verified."""
         if self.is_verified:
-            return FlextResult[bool].fail(
+            return r[bool].fail(
                 "Email is already verified",
                 error_code="ALREADY_VERIFIED",
             )
 
         self.is_verified = True
-        return FlextResult[bool].ok(True)
+        return r[bool].ok(True)
 
 
 # Usage
@@ -762,28 +762,28 @@ login_result = user.login("securepassword")
 print(f"Login: {login_result.is_success}")  # True
 ```
 
-## Integration with FlextResult
+## Integration with r
 
-Always use `FlextResult` for operations that can fail:
+Always use `r` for operations that can fail:
 
 ```python
-from flext_core import FlextModels, FlextResult
+from flext_core import FlextModels, r
 
 
 class User(FlextModels.Entity):
     username: str
     email: str
 
-    def update_email(self, new_email: str) -> FlextResult[bool]:
+    def update_email(self, new_email: str) -> r[bool]:
         """Update user email with validation."""
         if not new_email or "@" not in new_email:
-            return FlextResult[bool].fail(
+            return r[bool].fail(
                 "Invalid email format",
                 error_code="INVALID_EMAIL",
             )
 
         self.email = new_email
-        return FlextResult[bool].ok(True)
+        return r[bool].ok(True)
 
 
 # Usage
@@ -802,10 +802,10 @@ else:
 
 ### Commands: Write Operations
 
-Commands represent requests to **change state**. They always return `FlextResult`:
+Commands represent requests to **change state**. They always return `r`:
 
 ```python
-from flext_core import FlextModels, FlextResult, FlextService
+from flext_core import FlextModels, r, FlextService
 from dataclasses import dataclass
 
 
@@ -832,11 +832,11 @@ class DeleteUserCommand:
 class UserCommandService(FlextService):
     """Handles all user write operations."""
 
-    def handle_create_user(self, cmd: CreateUserCommand) -> FlextResult[dict]:
+    def handle_create_user(self, cmd: CreateUserCommand) -> r[dict]:
         """Execute create user command."""
         # Validate business rules
         if not "@" in cmd.email:
-            return FlextResult[dict].fail("Invalid email", error_code="INVALID_EMAIL")
+            return r[dict].fail("Invalid email", error_code="INVALID_EMAIL")
 
         # Create aggregate
         user = User(id=f"user_{cmd.username}", username=cmd.username, email=cmd.email)
@@ -845,17 +845,17 @@ class UserCommandService(FlextService):
         self.add_domain_event(UserCreatedEvent(user.entity_id, user.username))
 
         # Return result
-        return FlextResult[dict].ok({
+        return r[dict].ok({
             "user_id": user.entity_id,
             "username": user.username,
         })
 
-    def handle_update_email(self, cmd: UpdateUserEmailCommand) -> FlextResult[bool]:
+    def handle_update_email(self, cmd: UpdateUserEmailCommand) -> r[bool]:
         """Execute update email command."""
         # Load aggregate
         user = self._load_user(cmd.user_id)
         if not user:
-            return FlextResult[bool].fail("User not found")
+            return r[bool].fail("User not found")
 
         # Execute business logic
         result = user.update_email(cmd.new_email)
@@ -865,15 +865,15 @@ class UserCommandService(FlextService):
         # Publish event
         self.add_domain_event(UserEmailUpdatedEvent(cmd.user_id, cmd.new_email))
 
-        return FlextResult[bool].ok(True)
+        return r[bool].ok(True)
 ```
 
 ### Queries: Read Operations
 
-Queries represent requests to **retrieve data**. They return `FlextResult`:
+Queries represent requests to **retrieve data**. They return `r`:
 
 ```python
-from flext_core import FlextService, FlextResult
+from flext_core import FlextService, r
 
 
 # Query definitions
@@ -901,24 +901,24 @@ class UserQueryService(FlextService):
         super().__init__()
         self.user_repository = user_repository
 
-    def handle_get_user(self, query: GetUserByIdQuery) -> FlextResult[dict]:
+    def handle_get_user(self, query: GetUserByIdQuery) -> r[dict]:
         """Execute get user by ID query."""
         user = self.user_repository.find_by_id(query.user_id)
         if not user:
-            return FlextResult[dict].fail(f"User {query.user_id} not found")
+            return r[dict].fail(f"User {query.user_id} not found")
 
-        return FlextResult[dict].ok({
+        return r[dict].ok({
             "id": user.entity_id,
             "username": user.username,
             "email": user.email,
             "created_at": user.created_at,
         })
 
-    def handle_list_users(self, query: ListUsersQuery) -> FlextResult[list]:
+    def handle_list_users(self, query: ListUsersQuery) -> r[list]:
         """Execute list users query with pagination."""
         users = self.user_repository.list(limit=query.limit, offset=query.offset)
 
-        return FlextResult[list].ok([
+        return r[list].ok([
             {
                 "id": u.entity_id,
                 "username": u.username,
@@ -927,15 +927,13 @@ class UserQueryService(FlextService):
             for u in users
         ])
 
-    def handle_search_users(self, query: SearchUsersQuery) -> FlextResult[list]:
+    def handle_search_users(self, query: SearchUsersQuery) -> r[list]:
         """Execute search users query."""
         users = self.user_repository.search_by_username(query.username)
         if not users:
-            return FlextResult[list].ok([])  # Empty result is still success
+            return r[list].ok([])  # Empty result is still success
 
-        return FlextResult[list].ok([
-            {"id": u.entity_id, "username": u.username} for u in users
-        ])
+        return r[list].ok([{"id": u.entity_id, "username": u.username} for u in users])
 ```
 
 ### Dispatcher: Unified Command/Query Bus
@@ -985,8 +983,8 @@ if result.is_success:
 1. **Scalability**: Scale read/write sides independently
 1. **Performance**: Optimize queries separately from commands
 1. **Testing**: Easier to test command/query logic in isolation
-1. **Type Safety**: `FlextResult[T]` ensures predictable contracts
-1. **Error Handling**: Consistent `FlextResult` return types
+1. **Type Safety**: `r[T]` ensures predictable contracts
+1. **Error Handling**: Consistent `r` return types
 
 ### When to Use CQRS
 
@@ -1042,11 +1040,11 @@ class Order:
 class ShoppingCart(FlextModels.Entity):
     items: list[CartItem]
 
-    def add_item(self, item: CartItem) -> FlextResult[bool]:
+    def add_item(self, item: CartItem) -> r[bool]:
         if len(self.items) >= 100:
-            return FlextResult[bool].fail("Cart is full")
+            return r[bool].fail("Cart is full")
         self.items.append(item)
-        return FlextResult[bool].ok(True)
+        return r[bool].ok(True)
 
 
 # ❌ WRONG - Business logic in caller
@@ -1064,7 +1062,7 @@ def add_to_cart(cart, item):
 1. **Aggregates**: Clusters of entities maintaining invariants
 1. **Ubiquitous Language**: Use domain terms in code
 1. **Invariants**: Protect business rules in entity methods
-1. **FlextResult**: Use for operations that can fail
+1. **r**: Use for operations that can fail
 
 ## Next Steps
 
@@ -1078,7 +1076,7 @@ def add_to_cart(cart, item):
 
 - Service Patterns - Domain services with FlextService
 - Dependency Injection Advanced - Service composition patterns
-- Railway-Oriented Programming - Result composition with FlextResult
+- Railway-Oriented Programming - Result composition with r
 - Error Handling Guide - Domain error handling patterns
 - Clean Architecture - Architecture patterns and layers
 - API Reference: FlextModels - Complete models API

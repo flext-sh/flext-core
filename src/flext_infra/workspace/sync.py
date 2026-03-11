@@ -101,7 +101,7 @@ class FlextInfraSyncService(s[m.Infra.Workspace.SyncResult]):
             canonical_root: Workspace root with canonical base.mk.
 
         Returns:
-            FlextResult with SyncResult on success, error message on failure.
+            r with SyncResult on success, error message on failure.
 
         """
         if project_root is None:
@@ -167,7 +167,7 @@ class FlextInfraSyncService(s[m.Infra.Workspace.SyncResult]):
             required: List of gitignore patterns that must be present.
 
         Returns:
-            FlextResult with True if file was changed, False otherwise.
+            r with True if file was changed, False otherwise.
 
         """
         gitignore = project_root / c.Infra.Files.GITIGNORE

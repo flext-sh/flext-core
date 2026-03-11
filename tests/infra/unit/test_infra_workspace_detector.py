@@ -8,6 +8,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from pathlib import Path
 
 import pytest
@@ -15,7 +16,6 @@ import pytest
 from flext_core import r
 from flext_infra.workspace.detector import FlextInfraWorkspaceDetector, WorkspaceMode
 from flext_tests import tm
-from tests.infra.typings import t
 
 
 @pytest.fixture
@@ -32,7 +32,7 @@ def _setup_project_with_git(tmp_path: Path) -> Path:
     return project_root
 
 
-def _git_run_ok(value: str) -> t.ContainerValue:
+def _git_run_ok(value: str) -> Callable[[list[str], Path | None], r[str]]:
     """Return a git_run replacement that returns ok(value)."""
 
     def _fn(_cmd: list[str], cwd: Path | None = None) -> r[str]:
@@ -41,7 +41,7 @@ def _git_run_ok(value: str) -> t.ContainerValue:
     return _fn
 
 
-def _git_run_fail(error: str) -> t.ContainerValue:
+def _git_run_fail(error: str) -> Callable[[list[str], Path | None], r[str]]:
     """Return a git_run replacement that returns fail(error)."""
 
     def _fn(_cmd: list[str], cwd: Path | None = None) -> r[str]:

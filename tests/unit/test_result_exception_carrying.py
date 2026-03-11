@@ -1,7 +1,7 @@
-"""Tests for FlextResult exception carrying and propagation.
+"""Tests for r exception carrying and propagation.
 
 Module: flext_core.result
-Scope: Exception carrying functionality in FlextResult
+Scope: Exception carrying functionality in r
 
 Tests exception carrying including:
 - fail() with optional exception parameter
@@ -95,7 +95,7 @@ class TestFailWithException:
 
 
 class TestSafeCarriesException:
-    """Test @FlextResult.safe decorator captures exceptions."""
+    """Test @r.safe decorator captures exceptions."""
 
     def test_safe_carries_exception(self) -> None:
         """Verify @safe decorator captures exception on failure."""

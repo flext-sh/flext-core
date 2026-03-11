@@ -26,7 +26,7 @@ class FlextTestsDomains:
     class TestDomainResult:
         """Simple domain result for testing services.
 
-        Implements ResultLike protocol for compatibility with FlextResult operations.
+        Implements ResultLike protocol for compatibility with r operations.
         """
 
         __test__ = False

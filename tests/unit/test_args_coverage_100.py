@@ -2,7 +2,7 @@
 
 Tests for flext_core._utilities.args.FlextUtilitiesArgs covering:
 - validated: decorator with StrEnum conversion and validation
-- validated_with_result: decorator converting ValidationError to FlextResult.fail()
+- validated_with_result: decorator converting ValidationError to r.fail()
 - parse_kwargs: parsing kwargs with enum field conversion
 - get_enum_params: extracting StrEnum parameters from function signatures
 

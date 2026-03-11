@@ -9,14 +9,14 @@ Core Philosophy:
 - UNIVERSAL: tm.that() does ALL validations (equality, type, length, containment, etc.)
 
 Core Methods (5 main methods):
-    tm.ok(result, **kw)     # Assert FlextResult success, optional validation
-    tm.fail(result, **kw)   # Assert FlextResult failure, optional validation
+    tm.ok(result, **kw)     # Assert r success, optional validation
+    tm.fail(result, **kw)   # Assert r failure, optional validation
     tm.check(result)        # Railway-pattern chained assertions
     tm.that(value, **kw)    # Universal assertion - ALL validations in ONE method
     tm.scope()              # Isolated test context (context manager)
 
 Usage Examples:
-    # FlextResult assertions
+    # r assertions
     value = tm.ok(result)                    # Assert success, return value
     tm.ok(result, eq="expected")            # Assert success and equals
     tm.fail(result, contains="error")       # Assert failure with error check
@@ -213,8 +213,8 @@ class FlextTestsMatchers:
     Short alias: tm
 
     Core Methods (5 main methods):
-        tm.ok(result, **kw)     - Assert FlextResult success, optional validation
-        tm.fail(result, **kw)   - Assert FlextResult failure, optional validation
+        tm.ok(result, **kw)     - Assert r success, optional validation
+        tm.fail(result, **kw)   - Assert r failure, optional validation
         tm.check(result)        - Railway-pattern chained assertions
         tm.that(value, **kw)    - Universal assertion - ALL validations in ONE method
         tm.scope()              - Isolated test context (context manager)
@@ -248,7 +248,7 @@ class FlextTestsMatchers:
         """Assert result is success and return unwrapped value.
 
         Args:
-            result: FlextResult to check
+            result: r to check
             msg: Optional custom error message
 
         Returns:
@@ -272,7 +272,7 @@ class FlextTestsMatchers:
     def fail[TResult](
         result: r[TResult], **kwargs: t.Tests.Matcher.MatcherKwargValue
     ) -> str:
-        r"""Enhanced assertion for FlextResult failure with optional error validation.
+        r"""Enhanced assertion for r failure with optional error validation.
 
         Examples:
             # Basic failure assertions
@@ -288,7 +288,7 @@ class FlextTestsMatchers:
             tm.fail(result, code="VALIDATION", data={"field": "email"})
 
         Args:
-            result: FlextResult to check
+            result: r to check
             error: Expected error substring (legacy parameter, use has=)
             msg: Optional custom error message
             has: Unified containment - error contains substring(s) (replaces contains)
@@ -409,7 +409,7 @@ class FlextTestsMatchers:
     def ok[TResult](
         result: r[TResult], **kwargs: t.Tests.Matcher.MatcherKwargValue
     ) -> TResult | t.Tests.ContainerValue:
-        """Enhanced assertion for FlextResult success with optional value validation.
+        """Enhanced assertion for r success with optional value validation.
 
         Uses Pydantic 2 models for parameter validation and computation.
         All parameters are validated via m.Tests.Matcher.OkParams model.
@@ -434,7 +434,7 @@ class FlextTestsMatchers:
             tm.ok(result, where=lambda x: x.status == "active")
 
         Args:
-            result: FlextResult to validate
+            result: r to validate
             **kwargs: Parameters validated via m.Tests.Matcher.OkParams model
                 - eq, ne: Equality/inequality check
                 - is_: Runtime type check against single type or tuple
@@ -755,7 +755,7 @@ class FlextTestsMatchers:
             tm.that(data, keys=["id", "name"], kv={"status": "active"})
             tm.that(config, attrs=["debug", "timeout"], attr_eq={"debug": True})
 
-            # FlextResult in tm.that() (auto-detected)
+            # r in tm.that() (auto-detected)
             tm.that(result, ok=True, eq="expected")
 
             # Deep structural matching (unlimited depth)
@@ -794,8 +794,8 @@ class FlextTestsMatchers:
             attrs: Object has attribute(s)
             methods: Object has method(s)
             attr_eq: Attribute equals (single tuple or mapping)
-            ok: For FlextResult: assert success
-            error: For FlextResult: error contains
+            ok: For r: assert success
+            error: For r: error contains
             deep: Deep structural matching specification
             where: Custom predicate function
             contains, excludes, length, length_gt, etc.: Legacy parameters (deprecated)

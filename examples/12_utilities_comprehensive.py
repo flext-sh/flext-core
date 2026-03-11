@@ -23,7 +23,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import override
 
-from flext_core import FlextConstants, FlextResult, FlextService, c, m, u
+from flext_core import FlextConstants, FlextService, c, m, r, u
 
 TEST_DATA: m.ConfigMap = m.ConfigMap(
     root={
@@ -108,12 +108,10 @@ class UtilitiesService(FlextService[m.ConfigMap]):
         """Show reliability utilities."""
         print("\n=== Reliability Patterns ===")
 
-        def operation() -> FlextResult[str]:
-            return FlextResult[str].ok("success")
+        def operation() -> r[str]:
+            return r[str].ok("success")
 
-        retry_result: FlextResult[str] = u.retry(
-            operation, max_attempts=3, delay_seconds=0.1
-        )
+        retry_result: r[str] = u.retry(operation, max_attempts=3, delay_seconds=0.1)
         print(f"✅ Retry logic: {retry_result.is_success}")
         timeout_result = u.with_timeout(operation, timeout_seconds=1.0)
         print(f"✅ Timeout handling: {timeout_result.is_success}")
@@ -170,9 +168,9 @@ class UtilitiesService(FlextService[m.ConfigMap]):
         port_value = TEST_DATA["port"]
         if isinstance(port_value, int):
             port_result = (
-                FlextResult[int].ok(port_value)
+                r[int].ok(port_value)
                 if 1 <= port_value <= 65535
-                else FlextResult[int].fail("port must be between 1 and 65535")
+                else r[int].fail("port must be between 1 and 65535")
             )
             print(f"✅ Port validation: {port_value} -> {port_result.is_success}")
         hostname = str(TEST_DATA["hostname"])
@@ -184,7 +182,7 @@ class UtilitiesService(FlextService[m.ConfigMap]):
         print(f"✅ Hostname validation: {hostname} -> {hostname_result.is_success}")
 
     @override
-    def execute(self) -> FlextResult[m.ConfigMap]:
+    def execute(self) -> r[m.ConfigMap]:
         """Execute comprehensive utilities demonstrations."""
         print("Starting utilities demonstration")
         try:
@@ -196,7 +194,7 @@ class UtilitiesService(FlextService[m.ConfigMap]):
             self._demonstrate_string_parsing()
             self._demonstrate_collection_operations()
             self._demonstrate_type_checking()
-            return FlextResult[m.ConfigMap].ok(
+            return r[m.ConfigMap].ok(
                 m.ConfigMap(
                     root={
                         "utilities_demonstrated": [
@@ -221,7 +219,7 @@ class UtilitiesService(FlextService[m.ConfigMap]):
             )
         except Exception as e:
             error_msg = f"Utilities demonstration failed: {e}"
-            return FlextResult[m.ConfigMap].fail(error_msg)
+            return r[m.ConfigMap].fail(error_msg)
 
 
 def demonstrate_utility_composition() -> None:
@@ -258,10 +256,10 @@ def main() -> None:
         print(f"\n✅ Demonstrated {categories} utility categories")
         print(f"✅ Covered {utilities_count} utility types")
 
-    def handle_error(error: str) -> FlextResult[None]:
+    def handle_error(error: str) -> r[None]:
         """Handle error result."""
         print(f"\n❌ Failed: {error}")
-        return FlextResult[None].ok(value=None)
+        return r[None].ok(value=None)
 
     chain_result = result.map(handle_success).lash(handle_error)
     if not chain_result.is_success:

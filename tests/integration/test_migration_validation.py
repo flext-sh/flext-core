@@ -5,7 +5,7 @@ to ensure correct behavior across the ecosystem.
 
 Tests verify:
 - Core API access patterns work correctly
-- FlextResult value access patterns work
+- r value access patterns work
 - HTTP primitives work correctly
 - No regressions across API surface
 - Type safety maintained
@@ -33,27 +33,27 @@ from flext_core import (
     FlextModels,
     FlextProtocols,
     FlextRegistry,
-    FlextResult,
     FlextService,
     FlextSettings,
     FlextTypes,
     FlextUtilities,
+    r,
     t,
 )
 from tests.test_utils import assertion_helpers
 
 
 class TestMigrationScenario1:
-    """Test Scenario 1: Existing Application Using FlextResult (No Changes Required)."""
+    """Test Scenario 1: Existing Application Using r (No Changes Required)."""
 
     def test_flext_result_value_access_pattern(self) -> None:
         """Verify .value access pattern works correctly."""
 
-        def process_user(user_id: str) -> FlextResult[dict[str, str]]:
+        def process_user(user_id: str) -> r[dict[str, str]]:
             if not user_id:
-                return FlextResult[dict[str, str]].fail("User ID required")
+                return r[dict[str, str]].fail("User ID required")
             user_data: dict[str, str] = {"id": user_id, "name": "Alice"}
-            return FlextResult[dict[str, str]].ok(user_data)
+            return r[dict[str, str]].ok(user_data)
 
         result = process_user("user_123")
         _ = assertion_helpers.assert_flext_result_success(result)
@@ -64,10 +64,10 @@ class TestMigrationScenario1:
     def test_flext_result_error_handling(self) -> None:
         """Verify error handling patterns continue working."""
 
-        def validate_email(email: str) -> FlextResult[str]:
+        def validate_email(email: str) -> r[str]:
             if "@" not in email:
-                return FlextResult[str].fail("Invalid email format")
-            return FlextResult[str].ok(email)
+                return r[str].fail("Invalid email format")
+            return r[str].ok(email)
 
         failure_result = validate_email("invalid")
         assert failure_result.is_failure
@@ -118,23 +118,23 @@ class TestMigrationScenario4:
                 self._logger = FlextLogger(__name__)
 
             @override
-            def execute(self, **_kwargs: object) -> FlextResult[None]:
+            def execute(self, **_kwargs: object) -> r[None]:
                 """Execute method required by FlextService abstract class."""
-                return FlextResult[None].ok(None)
+                return r[None].ok(None)
 
             def create_user(
                 self,
                 username: str,
                 email: str,
-            ) -> FlextResult[dict[str, str]]:
+            ) -> r[dict[str, str]]:
                 """Create user with validation."""
                 if not username or not email:
-                    return FlextResult[dict[str, str]].fail(
+                    return r[dict[str, str]].fail(
                         "Username and email required",
                     )
                 self._logger.info("Creating user", extra={"username": username})
                 user_data = {"username": username, "email": email}
-                return FlextResult[dict[str, str]].ok(user_data)
+                return r[dict[str, str]].ok(user_data)
 
         service = UserService()
         result = service.create_user("alice", "alice@example.com")
@@ -160,7 +160,7 @@ class TestBackwardCompatibility:
 
     def test_all_stable_apis_accessible(self) -> None:
         """Verify all guaranteed stable APIs from API_STABILITY.md are accessible."""
-        assert FlextResult is not None
+        assert r is not None
         assert FlextContainer is not None
         assert FlextModels is not None
         assert FlextService is not None
@@ -178,15 +178,15 @@ class TestBackwardCompatibility:
         assert FlextUtilities is not None
 
     def test_flext_result_all_methods(self) -> None:
-        """Verify all FlextResult methods work correctly."""
-        success = FlextResult[str].ok("test_value")
+        """Verify all r methods work correctly."""
+        success = r[str].ok("test_value")
         assert success.is_success
         assert not success.is_failure
         assert success.error is None
         assert success.value == "test_value"
         assert success.value == "test_value"
         assert success.unwrap_or("default") == "test_value"
-        failure: FlextResult[str] = FlextResult[str].fail("test_error")
+        failure: r[str] = r[str].fail("test_error")
         assert not failure.is_success
         assert failure.is_failure
         assert failure.error == "test_error"
@@ -197,7 +197,7 @@ class TestBackwardCompatibility:
 
     def test_core_apis_work_correctly(self) -> None:
         """Verify core API patterns work correctly."""
-        result = FlextResult[str].ok("test")
+        result = r[str].ok("test")
         assert result.value == "test"
         mapped = result.map(str.upper)
         assert mapped.value == "TEST"
@@ -212,7 +212,7 @@ class TestMigrationComplexity:
         """Verify application functionality works correctly."""
 
         class ApplicationExample:
-            """Example application using FlextResult and logging."""
+            """Example application using r and logging."""
 
             def __init__(self) -> None:
                 super().__init__()
@@ -222,10 +222,10 @@ class TestMigrationComplexity:
             def process_data(
                 self,
                 data: dict[str, str],
-            ) -> FlextResult[dict[str, t.ContainerValue]]:
+            ) -> r[dict[str, t.ContainerValue]]:
                 """Typical data processing method."""
                 if not data:
-                    return FlextResult[dict[str, t.ContainerValue]].fail(
+                    return r[dict[str, t.ContainerValue]].fail(
                         "Data required",
                     )
                 self.logger.info("Processing data", extra={"size": len(data)})
@@ -233,7 +233,7 @@ class TestMigrationComplexity:
                     "original": str(data),
                     "processed": True,
                 }
-                return FlextResult[dict[str, t.ContainerValue]].ok(processed)
+                return r[dict[str, t.ContainerValue]].ok(processed)
 
         app = ApplicationExample()
         result = app.process_data({"key": "value"})
@@ -242,7 +242,7 @@ class TestMigrationComplexity:
 
     def test_all_core_apis_functional(self) -> None:
         """Verify all core APIs remain functional."""
-        result = FlextResult[str].ok("test")
+        result = r[str].ok("test")
         _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value == "test"
         container = FlextContainer()

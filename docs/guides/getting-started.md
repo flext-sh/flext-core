@@ -114,7 +114,7 @@ from flext_core import FlextModels
 from flext_core import FlextProcessors
 from flext_core import p
 from flext_core import FlextRegistry
-from flext_core import FlextResult
+from flext_core import r
 from flext_core import FlextRuntime
 from flext_core import FlextService
 from flext_core import t
@@ -169,27 +169,27 @@ from flext_core import FlextModels
 from flext_core import FlextProcessors
 from flext_core import p
 from flext_core import FlextRegistry
-from flext_core import FlextResult
+from flext_core import r
 from flext_core import FlextRuntime
 from flext_core import FlextService
 from flext_core import t
 from flext_core import u
 
 
-def process_ldif_data(content: str) -> FlextResult[str, Exception]:
+def process_ldif_data(content: str) -> r[str, Exception]:
     # Parse LDIF
     parse_result = ldif.parse(content)
     if parse_result.is_failure:
-        return FlextResult.failure(parse_result.failure())
+        return r.failure(parse_result.failure())
 
     entries = parse_result.unwrap()
 
     # Process entries
     try:
         processed_data = process_entries(entries)
-        return FlextResult.success(processed_data)
+        return r.success(processed_data)
     except Exception as e:
-        return FlextResult.failure(e)
+        return r.failure(e)
 
 
 def process_entries(entries: list) -> str:
@@ -223,7 +223,7 @@ from flext_core import FlextModels
 from flext_core import FlextProcessors
 from flext_core import p
 from flext_core import FlextRegistry
-from flext_core import FlextResult
+from flext_core import r
 from flext_core import FlextRuntime
 from flext_core import FlextService
 from flext_core import t
@@ -243,13 +243,13 @@ class GetUserQuery:
 
 
 class UserService:
-    def create_user(self, cmd: CreateUserCommand) -> FlextResult[str, Exception]:
+    def create_user(self, cmd: CreateUserCommand) -> r[str, Exception]:
         # Create user logic
-        return FlextResult.success(f"User {cmd.username} created")
+        return r.success(f"User {cmd.username} created")
 
-    def get_user(self, query: GetUserQuery) -> FlextResult[str, Exception]:
+    def get_user(self, query: GetUserQuery) -> r[str, Exception]:
         # Get user logic
-        return FlextResult.success(f"User {query.user_id} data")
+        return r.success(f"User {query.user_id} data")
 
 
 # Setup dispatcher

@@ -76,7 +76,7 @@ class TestDetectionUncoveredLines:
             def __init__(self) -> None:
                 self._i = 0
 
-            def read_plain(self, path: Path) -> t.ContainerValue:
+            def read_plain(self, path: Path) -> r[dict[str, t.ContainerValue]]:
                 _ = path
                 self._i += 1
                 if self._i == 1:

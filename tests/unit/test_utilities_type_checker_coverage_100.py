@@ -25,7 +25,7 @@ from typing import TypeVar, cast, get_origin, override
 
 import pytest
 
-from flext_core import FlextResult, h, t, u
+from flext_core import h, r, t, u
 
 T = TypeVar("T")
 TMessage = TypeVar("TMessage")
@@ -43,18 +43,18 @@ class StringHandler(h[str, str]):
     """Handler for string messages."""
 
     @override
-    def handle(self, message: str) -> FlextResult[str]:
+    def handle(self, message: str) -> r[str]:
         """Handle string message."""
-        return FlextResult[str].ok(f"Processed: {message}")
+        return r[str].ok(f"Processed: {message}")
 
 
 class IntHandler(h[int, int]):
     """Handler for int messages."""
 
     @override
-    def handle(self, message: int) -> FlextResult[int]:
+    def handle(self, message: int) -> r[int]:
         """Handle int message."""
-        return FlextResult[int].ok(message * 2)
+        return r[int].ok(message * 2)
 
 
 class DictHandler(h[dict[str, t.ContainerValue], dict[str, t.ContainerValue]]):
@@ -64,9 +64,9 @@ class DictHandler(h[dict[str, t.ContainerValue], dict[str, t.ContainerValue]]):
     def handle(
         self,
         message: dict[str, t.ContainerValue],
-    ) -> FlextResult[dict[str, t.ContainerValue]]:
+    ) -> r[dict[str, t.ContainerValue]]:
         """Handle dict message."""
-        return FlextResult[dict[str, t.ContainerValue]].ok({
+        return r[dict[str, t.ContainerValue]].ok({
             "processed": True,
             **message,
         })
@@ -76,9 +76,9 @@ class ObjectHandler(h[object, object]):
     """Handler for object messages (universal)."""
 
     @override
-    def handle(self, message: object) -> FlextResult[object]:
+    def handle(self, message: object) -> r[object]:
         """Handle any message."""
-        return FlextResult[object].ok(message)
+        return r[object].ok(message)
 
 
 class ExplicitTypeHandler:

@@ -27,7 +27,7 @@ from typing import ClassVar, cast, override
 import pytest
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import FlextExceptions, FlextResult, m, p, t, u
+from flext_core import FlextExceptions, m, p, r, t, u
 
 from ..test_utils import assertion_helpers
 from .contracts.text_contract import TextUtilityContract
@@ -185,15 +185,15 @@ class UtilityScenarios:
         return CustomObject()
 
     @staticmethod
-    def create_flaky_operation() -> tuple[list[int], Callable[[], FlextResult[str]]]:
+    def create_flaky_operation() -> tuple[list[int], Callable[[], r[str]]]:
         """Create flaky operation that eventually succeeds."""
         attempt_count = [0]
 
-        def flaky_op() -> FlextResult[str]:
+        def flaky_op() -> r[str]:
             attempt_count[0] += 1
             if attempt_count[0] < 2:
-                return FlextResult[str].fail("Temporary failure")
-            return FlextResult[str].ok("success")
+                return r[str].fail("Temporary failure")
+            return r[str].ok("success")
 
         return (attempt_count, flaky_op)
 
@@ -291,7 +291,7 @@ class Testu(TextUtilityContract):
         self.assert_clean_text(raw, expected)
 
     def test_text_processor_truncate(self) -> None:
-        """Test text truncation - returns FlextResult[str]."""
+        """Test text truncation - returns r[str]."""
         result = u.Text.truncate_text("hello world", max_length=8)
         _ = assertion_helpers.assert_flext_result_success(result)
         assert len(result.value) <= 8
@@ -386,8 +386,8 @@ class Testu(TextUtilityContract):
     def test_reliability_timeout_success(self) -> None:
         """Test timeout with successful operation."""
 
-        def quick_op() -> FlextResult[str]:
-            return FlextResult[str].ok("success")
+        def quick_op() -> r[str]:
+            return r[str].ok("success")
 
         result = u.Reliability.with_timeout(quick_op, 5.0)
         _ = assertion_helpers.assert_flext_result_success(result)
@@ -396,8 +396,8 @@ class Testu(TextUtilityContract):
     def test_reliability_timeout_invalid(self) -> None:
         """Test timeout with invalid timeout value."""
 
-        def op() -> FlextResult[str]:
-            return FlextResult[str].ok("success")
+        def op() -> r[str]:
+            return r[str].ok("success")
 
         result = u.Reliability.with_timeout(op, -1.0)
         _ = assertion_helpers.assert_flext_result_failure(result)
@@ -405,17 +405,17 @@ class Testu(TextUtilityContract):
     def test_reliability_retry_first_success(self) -> None:
         """Test retry that succeeds immediately."""
 
-        def op() -> FlextResult[str]:
-            return FlextResult[str].ok("success")
+        def op() -> r[str]:
+            return r[str].ok("success")
 
-        result: FlextResult[str] = u.Reliability.retry(op, max_attempts=3)
+        result: r[str] = u.Reliability.retry(op, max_attempts=3)
         _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value == "success"
 
     def test_reliability_retry_eventual_success(self) -> None:
         """Test retry with eventual success."""
         attempt_count, flaky_op = UtilityScenarios.create_flaky_operation()
-        result: FlextResult[str] = u.Reliability.retry(
+        result: r[str] = u.Reliability.retry(
             flaky_op,
             max_attempts=3,
             delay_seconds=0.01,

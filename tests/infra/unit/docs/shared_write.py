@@ -22,7 +22,7 @@ class TestWriteJson:
     """Tests for FlextInfraDocsShared.write_json."""
 
     def test_returns_flext_result(self, tmp_path: Path) -> None:
-        """Test write_json returns FlextResult."""
+        """Test write_json returns r."""
         json_file = tmp_path / "test.json"
         result = FlextInfraDocsShared.write_json(json_file, {"key": "value"})
         tm.that(result.is_success or result.is_failure, eq=True)
@@ -92,7 +92,7 @@ class TestWriteMarkdown:
     """Tests for FlextInfraDocsShared.write_markdown."""
 
     def test_returns_flext_result(self, tmp_path: Path) -> None:
-        """Test write_markdown returns FlextResult."""
+        """Test write_markdown returns r."""
         md_file = tmp_path / "test.md"
         result = FlextInfraDocsShared.write_markdown(md_file, ["# Test", "", "Content"])
         tm.that(result.is_success or result.is_failure, eq=True)

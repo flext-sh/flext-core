@@ -4,7 +4,7 @@ Provides comprehensive file operations for testing across the FLEXT ecosystem
 with a simplified API using generalist methods with powerful optional parameters.
 
 Supports:
-- FlextResult: Automatically extracts value before serialization
+- r: Automatically extracts value before serialization
 - Pydantic models: Serializes to JSON/YAML via model_dump()
 - Lists, dicts, Mappings: Proper JSON/YAML serialization
 - Generic type loading: Load files directly into Pydantic models
@@ -73,7 +73,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
 
     Provides generalist file operations with powerful optional parameters:
     - `create()`: Create any file type with auto-detection
-    - `read()`: Read any file type with FlextResult
+    - `read()`: Read any file type with r
     - `compare()`: Compare files with multiple modes
     - `info()`: Get comprehensive file information
 
@@ -173,7 +173,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             content: Dict mapping names to content (str, bytes, dict, list, BaseModel)
             directory: Base directory (temp if None)
             ext: Default extension if not in name
-            extract_result: Auto-extract FlextResult values (default: True)
+            extract_result: Auto-extract r values (default: True)
             **kwargs: Passed to create()
 
         Yields:
@@ -346,7 +346,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
     ) -> Path:
         """Create file directly in directory - static convenience method.
 
-        Supports FlextResult, Pydantic models, lists, dicts, and raw content.
+        Supports r, Pydantic models, lists, dicts, and raw content.
 
         Args:
             content: File content (str, bytes, dict, list, BaseModel, or r[T])
@@ -358,7 +358,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             delim: CSV delimiter (default: ",")
             headers: CSV headers (default: None)
             readonly: Create as read-only (default: False)
-            extract_result: Auto-extract FlextResult value (default: True)
+            extract_result: Auto-extract r value (default: True)
 
         Returns:
             Path to created file.
@@ -370,7 +370,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             # Pydantic model
             path = tf.create_in(user_model, "user.json", output_dir)
 
-            # FlextResult
+            # r
             result = service.get_data()
             path = tf.create_in(result, "data.json", output_dir)
 
@@ -635,7 +635,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             deep: Use deep comparison for nested structures (default: True)
 
         Returns:
-            FlextResult[bool] - True if match.
+            r[bool] - True if match.
 
         Examples:
             # Content comparison
@@ -720,7 +720,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
     ) -> Path:
         r"""Create file with auto-detection or explicit format.
 
-        Supports FlextResult, Pydantic models, lists, dicts, and raw content.
+        Supports r, Pydantic models, lists, dicts, and raw content.
 
         Args:
             content: Content - type determines default format:
@@ -738,13 +738,13 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             delim: CSV delimiter (default: ",")
             headers: CSV headers (default: None)
             readonly: Create as read-only (default: False)
-            extract_result: Auto-extract FlextResult value (default: True)
+            extract_result: Auto-extract r value (default: True)
 
         Returns:
             Path to created file.
 
         Raises:
-            ValueError: If FlextResult is failure and extract_result=True
+            ValueError: If r is failure and extract_result=True
 
         Examples:
             # Text file
@@ -756,7 +756,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             # Pydantic model (auto-detected as JSON)
             path = tf().create(user_model, "user.json")
 
-            # FlextResult with auto-extraction
+            # r with auto-extraction
             result = service.get_config()  # r[dict]
             path = tf().create(result, "config.json")
 
@@ -897,7 +897,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             validate_model: Pydantic model to validate content against (default: None)
 
         Returns:
-            FlextResult[FileInfo] with info or error.
+            r[FileInfo] with info or error.
 
         Examples:
             result = tf().info(path)
@@ -1053,7 +1053,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             has_headers: CSV has headers (default: True)
 
         Returns:
-            FlextResult with content or model instance.
+            r with content or model instance.
 
         Examples:
             # Read text
@@ -1305,27 +1305,25 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         | r[BaseModel],
         extract_result: bool,
     ) -> str | bytes | m.ConfigMap | Sequence[Sequence[str]] | BaseModel:
-        """Extract actual content from FlextResult or return as-is.
+        """Extract actual content from r or return as-is.
 
         Uses u.is_type(content, "result") for type checking and u.val() for extraction.
 
         Args:
-            content: Content that may be wrapped in FlextResult
-            extract_result: Whether to extract from FlextResult
+            content: Content that may be wrapped in r
+            extract_result: Whether to extract from r
 
         Returns:
             Extracted content or original value
 
         Raises:
-            ValueError: If FlextResult is failure and extraction is enabled
+            ValueError: If r is failure and extraction is enabled
 
         """
         if extract_result and isinstance(content, r):
             if content.is_failure:
-                error_msg = content.error or "FlextResult failure"
-                raise ValueError(
-                    f"Cannot create file from failed FlextResult: {error_msg}"
-                )
+                error_msg = content.error or "r failure"
+                raise ValueError(f"Cannot create file from failed r: {error_msg}")
             return self._coerce_file_content(content.value)
         return self._coerce_file_content(content)
 

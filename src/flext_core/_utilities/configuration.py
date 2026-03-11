@@ -15,7 +15,7 @@ Business Rules & Architecture:
 
 2. **Singleton Pattern Integration** (get_singleton/set_singleton):
    - Expects classes with `get_global()` method (FlextSettings pattern)
-   - Returns FlextResult for set operations (railway-oriented error handling)
+   - Returns r for set operations (railway-oriented error handling)
    - Raises specific exceptions for get operations (fail-fast behavior)
 
 3. **Pydantic v2 Configuration** (create_settings_config):
@@ -34,7 +34,7 @@ Business Rules & Architecture:
 Validation Context:
 - Python 3.13+: Uses collections.abc.Mapping/Sequence (not typing)
 - Pydantic v2: model_dump() replaces dict(), model_fields replaces __fields__
-- FlextResult: All operations that can fail return r[T]
+- r: All operations that can fail return r[T]
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -354,7 +354,7 @@ class FlextUtilitiesConfiguration:
                 )
                 if options_result.is_failure:
                     return r[T_Model].fail(options_result.error or "Failed to get options")
-                # Use .value directly - FlextResult never returns None on success
+                # Use .value directly - r never returns None on success
                 options = options_result.value
 
         Args:
@@ -741,7 +741,7 @@ class FlextUtilitiesConfiguration:
 
         Business Rule: Railway-Oriented Singleton Mutation
         =================================================
-        Unlike get_singleton (fail-fast), this method uses FlextResult for
+        Unlike get_singleton (fail-fast), this method uses r for
         graceful error handling. Rationale:
 
         - Configuration mutation is often optional (fallback to defaults)
@@ -749,11 +749,11 @@ class FlextUtilitiesConfiguration:
         - Callers can decide how to handle failures
 
         Validation Chain:
-        1. Check get_global method exists (FlextResult.fail if not)
-        2. Check method is callable (FlextResult.fail if not)
-        3. Check instance implements HasModelDump (FlextResult.fail if not)
+        1. Check get_global method exists (r.fail if not)
+        2. Check method is callable (r.fail if not)
+        3. Check instance implements HasModelDump (r.fail if not)
         4. Delegate to set_parameter for actual mutation
-        5. set_parameter returns bool, converted to FlextResult
+        5. set_parameter returns bool, converted to r
 
         Thread Safety:
         - Singleton access is thread-safe (FlextSettings guarantees this)

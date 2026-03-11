@@ -2,7 +2,7 @@
 
 h defines the base class the dispatcher relies on for commands,
 queries, and domain events. It favors structural typing over inheritance,
-ensures validation and execution steps return ``FlextResult`` rather than
+ensures validation and execution steps return ``r`` rather than
 raising, and keeps handler metadata ready for registry/dispatcher discovery.
 
 # CQRS utilities: FlextMixins.CQRS provides MetricsTracker and ContextStack for
@@ -34,7 +34,7 @@ class FlextHandlers[MessageT_contra = t.ContainerValue, ResultT = t.ContainerVal
 
     Core Features:
     - Abstract base class for command/query/event handlers using generics
-    - Railway-oriented programming with FlextResult for error handling
+    - Railway-oriented programming with r for error handling
     - Message validation pipeline with extensible validation methods
     - Type checking for message compatibility using duck typing
     - Execution context management with tracing and correlation IDs
@@ -387,7 +387,7 @@ class FlextHandlers[MessageT_contra = t.ContainerValue, ResultT = t.ContainerVal
 
         Implements the railway-oriented programming pattern by first validating
         the input message, then executing the business logic if validation passes.
-        Uses FlextResult for consistent error handling without exceptions.
+        Uses r for consistent error handling without exceptions.
 
         Execution Pipeline:
         1. Validate input message using validate() method

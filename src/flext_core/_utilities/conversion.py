@@ -194,7 +194,7 @@ class FlextUtilitiesConversion:
             value: strict value to convert
 
         Returns:
-            FlextResult containing strict scalar value or failure
+            r containing strict scalar value or failure
 
         """
         if value is None:

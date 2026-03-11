@@ -1,7 +1,7 @@
 """Test data builders for FLEXT ecosystem tests.
 
 Provides ultra-powerful builder pattern for creating complex test data structures.
-Supports FlextResult, lists, dicts, mappings, and generic classes with fluent interface.
+Supports r, lists, dicts, mappings, and generic classes with fluent interface.
 
 Uses flext-core utilities extensively to avoid code duplication.
 Designed with minimal public methods that handle almost everything.
@@ -31,11 +31,11 @@ class FlextTestsBuilders:
     - add(): Universal method to add any data type with smart inference
     - set(): Set value at nested path
     - get(): Get value from path
-    - to_result(): Build as FlextResult
+    - to_result(): Build as r
     - build(): Build with output type control
 
     Supports:
-    - FlextResult wrapping
+    - r wrapping
     - Lists and sequences
     - Dicts and mappings
     - Pydantic models
@@ -49,7 +49,7 @@ class FlextTestsBuilders:
         # Simple usage
         dataset = tb().add("users", count=5).add("config", production=True).build()
 
-        # With FlextResult
+        # With r
         result = tb().add("data", value=42).to_result()
 
         # With model output
@@ -143,10 +143,10 @@ class FlextTestsBuilders:
         All parameters are validated using m.Tests.Builders.AddParams model.
 
         Resolution order (first match wins):
-        1. result → Store FlextResult as-is
+        1. result → Store r as-is
         2. result_ok → r[T].ok(result_ok)
         3. result_fail → r[T].fail(result_fail, error_code=result_code)
-        4. results → Store list of FlextResult
+        4. results → Store list of r
         5. results_ok → [r[T].ok(v) for v in results_ok]
         6. results_fail → [r[T].fail(e) for e in results_fail]
         7. cls → cls(*cls_args, **cls_kwargs)
@@ -171,7 +171,7 @@ class FlextTestsBuilders:
             # Direct value
             tb().add("name", "test")
 
-            # With FlextResult
+            # With r
             tb().add("result", result_ok=42)
             tb().add("error", result_fail="Failed", result_code="E001")
 
@@ -603,10 +603,10 @@ class FlextTestsBuilders:
         return new_builder
 
     def execute(self) -> r[t.Tests.Builders.BuilderDict]:
-        """Execute service - builds and returns as FlextResult.
+        """Execute service - builds and returns as r.
 
         Returns:
-            FlextResult containing built data.
+            r containing built data.
 
         """
         self._ensure_data_initialized()
@@ -862,7 +862,7 @@ class FlextTestsBuilders:
     def to_result(
         self, **kwargs: t.Tests.ContainerValue
     ) -> r[t.Tests.Builders.BuilderValue] | t.Tests.Builders.BuilderValue:
-        """Build data wrapped in FlextResult.
+        """Build data wrapped in r.
 
         Uses Pydantic 2 models for parameter validation and computation.
         All parameters are validated using m.Tests.Builders.ToResultParams model.
@@ -871,7 +871,7 @@ class FlextTestsBuilders:
             **kwargs: Result parameters (as_model, error, unwrap, etc.)
 
         Returns:
-            FlextResult containing built data or model, or unwrapped value if unwrap=True.
+            r containing built data or model, or unwrapped value if unwrap=True.
 
         Examples:
             # Success result
@@ -1211,7 +1211,7 @@ class FlextTestsBuilders:
     def _process_batch_results(
         self, data: t.Tests.Builders.BuilderDict
     ) -> t.Tests.Builders.BuilderOutputDict:
-        """Convert batch result markers to actual FlextResult objects.
+        """Convert batch result markers to actual r objects.
 
         Processes lists containing dicts with _is_result or _is_failure flags
         and converts them to r[T].ok() or r[T].fail() instances.
@@ -1220,7 +1220,7 @@ class FlextTestsBuilders:
             data: Builder data dict to process.
 
         Returns:
-            Processed data with FlextResult objects.
+            Processed data with r objects.
 
         """
         processed: dict[
@@ -1272,7 +1272,7 @@ class FlextTestsBuilders:
         """
 
         class Result:
-            """FlextResult building helpers - tb.Tests.Result.*.
+            """r building helpers - tb.Tests.Result.*.
 
             Uses r[T] directly for type-safe result creation.
             """

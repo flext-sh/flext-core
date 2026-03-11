@@ -67,7 +67,7 @@ class FlextInfraOrchestratorService(s[list[m.Infra.Core.CommandOutput]]):
             make_args: Additional arguments to pass to make.
 
         Returns:
-            FlextResult containing list of CommandOutput per project.
+            r containing list of CommandOutput per project.
 
         """
         output.header("Workspace Orchestration")

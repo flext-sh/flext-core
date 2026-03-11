@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 
 from flext_infra import c, m, u
+from flext_infra._utilities.iteration import FlextInfraUtilitiesIteration
 
 
 class TestDiscoveryProjectRoots:
@@ -60,12 +61,15 @@ class TestDiscoveryIterPythonFiles:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        def _raise_oserror(_: Path, **_kwargs: object) -> list[Path]:
+        def _raise_oserror(workspace_root: Path, **_kwargs: object) -> list[Path]:
+            del workspace_root  # Mock function doesn't use the parameter
             msg = "forced failure"
             raise OSError(msg)
 
         monkeypatch.setattr(
-            u.Infra, "_discover_project_roots", staticmethod(_raise_oserror)
+            FlextInfraUtilitiesIteration,
+            "_discover_project_roots",
+            staticmethod(_raise_oserror),
         )
 
         result = u.Infra.iter_python_files(workspace_root=tmp_path)

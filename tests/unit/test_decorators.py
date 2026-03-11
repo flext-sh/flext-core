@@ -34,7 +34,7 @@ from flext_core import (
     FlextDecorators,
     FlextExceptions,
     FlextLogger,
-    FlextResult,
+    r,
 )
 from flext_tests import u
 
@@ -383,7 +383,7 @@ class TestFlextDecorators:
                 return "success"
 
             result = successful_operation()
-            assert isinstance(result, FlextResult)
+            assert isinstance(result, r)
             u.Tests.Result.assert_success_with_value(result, "success")
         elif test_case.operation == DecoratorOperationType.RAILWAY_EXCEPTION:
 
@@ -393,7 +393,7 @@ class TestFlextDecorators:
                 raise ValueError(error_msg)
 
             result = failing_operation()
-            assert isinstance(result, FlextResult)
+            assert isinstance(result, r)
             _ = u.Tests.Result.assert_failure(result)
             assert result.error is not None
             assert "Operation failed" in result.error
@@ -487,15 +487,15 @@ class TestFlextDecorators:
                 return "success"
 
             result = operation()
-            assert isinstance(result, FlextResult)
+            assert isinstance(result, r)
             _ = u.Tests.Result.assert_success(result)
 
     def test_railway_with_existing_result(self) -> None:
-        """Test railway decorator with existing FlextResult."""
+        """Test railway decorator with existing r."""
 
         @FlextDecorators.railway()
-        def returns_result() -> FlextResult[str]:
-            return FlextResult[str].ok("already_wrapped")
+        def returns_result() -> r[str]:
+            return r[str].ok("already_wrapped")
 
         result = returns_result()
         _ = u.Tests.Result.assert_success(result)
@@ -534,7 +534,7 @@ class TestFlextDecorators:
             return "stacked_result"
 
         result = stacked_operation()
-        assert isinstance(result, FlextResult)
+        assert isinstance(result, r)
         _ = u.Tests.Result.assert_success(result)
 
     def test_integration_retry_with_railway(self) -> None:
@@ -552,7 +552,7 @@ class TestFlextDecorators:
             return "success"
 
         result = flaky_with_railway()
-        assert isinstance(result, FlextResult)
+        assert isinstance(result, r)
         _ = u.Tests.Result.assert_success(result)
         assert attempts == 2
 

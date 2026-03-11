@@ -174,17 +174,19 @@ class ServiceScenarios:
             amount = int(amount_val) if isinstance(amount_val, (int, float)) else 0
             enabled_val = kwargs_raw.get("enabled", True)
             enabled = bool(enabled_val)
-            return ComplexService.model_construct(
-                name=name,
-                amount=amount,
-                enabled=enabled,
-            )
+            complex_service = ComplexService()
+            complex_service.name = name
+            complex_service.amount = amount
+            complex_service.enabled = enabled
+            return complex_service
         if scenario.scenario_type == ServiceScenarioType.FAILING:
             return FailingService()
         if scenario.scenario_type == ServiceScenarioType.EXCEPTION:
             should_raise_val = kwargs_raw.get("should_raise", False)
             should_raise = bool(should_raise_val)
-            return ExceptionService.model_construct(should_raise=should_raise)
+            exception_service = ExceptionService()
+            exception_service.should_raise = should_raise
+            return exception_service
         error_msg = f"Unknown scenario type: {scenario.scenario_type}"
         raise ValueError(error_msg)
 
@@ -246,13 +248,15 @@ class TestsCore:
 
     def test_validate_business_rules_custom_success(self) -> None:
         """Test custom business rules validation success."""
-        service = ComplexService.model_construct(name="test")
+        service = ComplexService()
+        service.name = "test"
         result = service.validate_business_rules()
         _ = u.Tests.Result.assert_success(result)
 
     def test_validate_business_rules_custom_failure(self) -> None:
         """Test custom business rules validation failure."""
-        service = ComplexService.model_construct(name="")
+        service = ComplexService()
+        service.name = ""
         result = service.validate_business_rules()
         u.Tests.Result.assert_failure_with_error(result, "Missing value")
 
@@ -265,7 +269,10 @@ class TestsCore:
 
     def test_service_validation_using_generic_helpers(self) -> None:
         """Test service validation using generic helpers - real behavior."""
-        service = ComplexService.model_construct(name="test", amount=10, enabled=True)
+        service = ComplexService()
+        service.name = "test"
+        service.amount = 10
+        service.enabled = True
         validation_result = (
             FlextTestsUtilities.Tests.GenericHelpers.validate_model_attributes(
                 service,
@@ -277,7 +284,10 @@ class TestsCore:
 
     def test_service_validation_failure_limits(self) -> None:
         """Test service validation failure - limit cases."""
-        service = ComplexService.model_construct(name="", amount=-1, enabled=False)
+        service = ComplexService()
+        service.name = ""
+        service.amount = -1
+        service.enabled = False
         validation_result = (
             FlextTestsUtilities.Tests.GenericHelpers.validate_model_attributes(
                 service,

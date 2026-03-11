@@ -29,7 +29,7 @@ class TestGeneratorCore:
     def test_generate_returns_flext_result(
         self, gen: FlextInfraDocGenerator, tmp_path: Path
     ) -> None:
-        """Test that generate returns FlextResult."""
+        """Test that generate returns r."""
         result = gen.generate(tmp_path)
         tm.that(result.is_success or result.is_failure, eq=True)
 

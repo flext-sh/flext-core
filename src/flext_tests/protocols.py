@@ -16,7 +16,7 @@ from typing import Protocol, Self, runtime_checkable
 
 from pydantic import BaseModel
 
-from flext_core import FlextProtocols, FlextResult, T
+from flext_core import FlextProtocols, T, r
 from flext_tests import t
 
 
@@ -416,9 +416,9 @@ class FlextTestsProtocols(FlextProtocols):
                     t.Tests.ContainerValue
                     | list[t.Tests.ContainerValue]
                     | Mapping[str, t.Tests.ContainerValue]
-                    | FlextResult[t.Tests.ContainerValue]
-                    | FlextResult[list[t.Tests.ContainerValue]]
-                    | FlextResult[Mapping[str, t.Tests.ContainerValue]]
+                    | r[t.Tests.ContainerValue]
+                    | r[list[t.Tests.ContainerValue]]
+                    | r[Mapping[str, t.Tests.ContainerValue]]
                 ):
                     """Create model instance(s) with optional transformations.
 
@@ -427,7 +427,7 @@ class FlextTestsProtocols(FlextProtocols):
                         **kwargs: All parameters validated by ModelFactoryParams:
                             - count: Number of instances (returns list if > 1)
                             - as_dict: Return as dict with ID keys
-                            - as_result: Wrap in FlextResult
+                            - as_result: Wrap in r
                             - as_mapping: Map to custom keys
                             - factory: Custom factory callable
                             - transform: Post-transform function
@@ -436,7 +436,7 @@ class FlextTestsProtocols(FlextProtocols):
                             - **overrides: Override any field directly
 
                     Returns:
-                        Model instance, list, dict, or FlextResult wrapping any
+                        Model instance, list, dict, or r wrapping any
 
                     """
                     ...
@@ -446,7 +446,7 @@ class FlextTestsProtocols(FlextProtocols):
                 """Protocol for result factory operations.
 
                 Compatible with FlextTestsFactories.res() method.
-                Uses structural typing for FlextResult creation.
+                Uses structural typing for r creation.
                 All parameters validated via ResultFactoryParams with u.Model.from_kwargs().
                 """
 
@@ -458,7 +458,7 @@ class FlextTestsProtocols(FlextProtocols):
                 ) -> (
                     FlextProtocols.Result[TValue] | list[FlextProtocols.Result[TValue]]
                 ):
-                    """Create FlextResult instance(s) with full customization.
+                    """Create r instance(s) with full customization.
 
                     Args:
                         kind: Result type ('ok', 'fail', 'from_value')
@@ -474,7 +474,7 @@ class FlextTestsProtocols(FlextProtocols):
                             - transform: Transform function for values
 
                     Returns:
-                        FlextResult or list of FlextResult instances
+                        r or list of r instances
 
                     """
                     ...
@@ -492,7 +492,7 @@ class FlextTestsProtocols(FlextProtocols):
                     self,
                     source: Mapping[K, V] | t.Tests.ContainerValue = "user",
                     **kwargs: t.Tests.ContainerValue,
-                ) -> Mapping[K, V] | FlextResult[Mapping[K, V]]:
+                ) -> Mapping[K, V] | r[Mapping[K, V]]:
                     """Create typed dict from source.
 
                     Args:
@@ -501,11 +501,11 @@ class FlextTestsProtocols(FlextProtocols):
                             - count: Number of items to create
                             - key_factory: Factory for keys
                             - value_factory: Factory for values
-                            - as_result: Wrap in FlextResult
+                            - as_result: Wrap in r
                             - merge_with: Additional mapping to merge
 
                     Returns:
-                        Dict of items or FlextResult wrapping dict
+                        Dict of items or r wrapping dict
 
                     """
                     ...
@@ -514,20 +514,20 @@ class FlextTestsProtocols(FlextProtocols):
                     self,
                     source: t.Tests.ContainerValue = "user",
                     **kwargs: t.Tests.ContainerValue,
-                ) -> list[T] | FlextResult[list[T]]:
+                ) -> list[T] | r[list[T]]:
                     """Create typed list from source.
 
                     Args:
                         source: Source for items (Sequence, Callable, or ModelKind)
                         **kwargs: All parameters validated by ListFactoryParams:
                             - count: Number of items to create
-                            - as_result: Wrap in FlextResult
+                            - as_result: Wrap in r
                             - unique: Ensure uniqueness
                             - transform: Transform each item
                             - filter: Filter predicate
 
                     Returns:
-                        List of items or FlextResult wrapping list
+                        List of items or r wrapping list
 
                     """
                     ...
@@ -543,7 +543,7 @@ class FlextTestsProtocols(FlextProtocols):
 
                 def __call__[T](
                     self, type_: type[T], **kwargs: t.Tests.ContainerValue
-                ) -> T | list[T] | FlextResult[T] | FlextResult[list[T]]:
+                ) -> T | list[T] | r[T] | r[list[T]]:
                     """Create instance(s) of any type with full type safety.
 
                     Args:
@@ -552,11 +552,11 @@ class FlextTestsProtocols(FlextProtocols):
                             - args: Positional arguments for constructor
                             - kwargs: Keyword arguments for constructor
                             - count: Number of instances
-                            - as_result: Wrap in FlextResult
+                            - as_result: Wrap in r
                             - validate: Validation predicate
 
                     Returns:
-                        Instance, list, or FlextResult wrapping any
+                        Instance, list, or r wrapping any
 
                     """
                     ...
@@ -576,7 +576,7 @@ class FlextTestsProtocols(FlextProtocols):
                 Used for validation and testing operations.
                 """
 
-                def assert_fail(self, result: FlextResult[t.ContainerValue]) -> str:
+                def assert_fail(self, result: r[t.ContainerValue]) -> str:
                     """Assert result is failure and return error."""
                     ...
 
@@ -989,20 +989,20 @@ class FlextTestsProtocols(FlextProtocols):
                 def to_result[T](
                     self, **kwargs: t.Tests.ContainerValue
                 ) -> (
-                    FlextResult[T]
-                    | FlextResult[Mapping[str, t.Tests.ContainerValue]]
-                    | FlextResult[BaseModel]
-                    | FlextResult[list[T]]
-                    | FlextResult[Mapping[str, T]]
+                    r[T]
+                    | r[Mapping[str, t.Tests.ContainerValue]]
+                    | r[BaseModel]
+                    | r[list[T]]
+                    | r[Mapping[str, T]]
                     | T
                 ):
-                    """Build data wrapped in FlextResult.
+                    """Build data wrapped in r.
 
                     Args:
                         **kwargs: Result parameters (as_model, error, unwrap, etc.)
 
                     Returns:
-                        FlextResult containing built data or unwrapped value
+                        r containing built data or unwrapped value
 
                     """
                     ...

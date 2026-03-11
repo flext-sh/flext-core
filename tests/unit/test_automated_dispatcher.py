@@ -22,7 +22,7 @@ class TestAutomatedFlextDispatcher:
 
     Generated for 100% coverage with:
     - Real functionality testing (no mocks)
-    - FlextResult[T] patterns
+    - r[T] patterns
     - Type safety compliance
     - Zero circular dependencies
     """

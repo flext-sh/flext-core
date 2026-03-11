@@ -16,7 +16,7 @@
 - [Pattern 8: Custom Types](#pattern-8-custom-types)
 - [Pattern 9: Discriminated Unions for Polymorphism](#pattern-9-discriminated-unions-for-polymorphism)
 - [Pattern 10: JSON Schema Generation](#pattern-10-json-schema-generation)
-- [Integration with FlextResult](#integration-with-flextresult)
+- [Integration with r](#integration-with-flextresult)
 - [Best Practices](#best-practices)
 - [Checklists](#checklists)
   - [Model Configuration](#model-configuration)
@@ -588,12 +588,12 @@ print(json.dumps(schemas, indent=2))
 # }
 ```
 
-## Integration with FlextResult
+## Integration with r
 
-Always wrap Pydantic validation in FlextResult:
+Always wrap Pydantic validation in r:
 
 ```python
-from flext_core import FlextResult
+from flext_core import r
 from pydantic import BaseModel, ValidationError
 
 
@@ -602,13 +602,13 @@ class UserModel(BaseModel):
     password: str
 
 
-def validate_user(data: dict) -> FlextResult[UserModel]:
-    """Validate user data with FlextResult."""
+def validate_user(data: dict) -> r[UserModel]:
+    """Validate user data with r."""
     try:
         user = UserModel(**data)
-        return FlextResult[UserModel].ok(user)
+        return r[UserModel].ok(user)
     except ValidationError as e:
-        return FlextResult[UserModel].fail(
+        return r[UserModel].fail(
             f"User validation failed: {e}",
             error_code="USER_VALIDATION_ERROR",
             error_data={"errors": e.errors()},
@@ -697,7 +697,7 @@ else:
 - ✅ Use `@field_validator` for field-level validation
 - ✅ Use `@model_validator` for cross-field validation
 - ✅ Include `description` and `example` in Field()
-- ✅ Wrap Pydantic errors in FlextResult
+- ✅ Wrap Pydantic errors in r
 - ❌ Don't use exceptions for validation failures
 
 ### Serialization

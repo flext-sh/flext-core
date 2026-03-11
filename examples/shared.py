@@ -8,7 +8,7 @@ script subclasses.  Through MRO each subclass inherits:
   random value generators (fixed seed for reproducible golden-file output)
 - ``rand_person`` / ``rand_dict`` — composite random generators
 - ``Person`` / ``Handle`` — shared Pydantic models
-- ``bind_probe`` / ``bind_status`` — FlextResult probe helpers
+- ``bind_probe`` / ``bind_status`` — r probe helpers
 
 Usage (inside an ``ex_*.py`` file)::
 
@@ -36,7 +36,7 @@ from pathlib import Path
 
 from pydantic import ConfigDict
 
-from flext_core import FlextResult, m, r, t
+from flext_core import m, r, t
 
 
 class Examples:
@@ -190,7 +190,7 @@ class Examples:
         cleaned: bool = False
 
     @staticmethod
-    def bind_probe(result_obj: FlextResult[int], delta: int) -> t.ContainerValue:
+    def bind_probe(result_obj: r[int], delta: int) -> t.ContainerValue:
         """Safely attempt ``result_obj.bind(lambda n: r[int].ok(n + delta))``."""
         try:
             return result_obj.flat_map(lambda n: r[int].ok(n + delta)).unwrap_or(-1)
@@ -199,11 +199,11 @@ class Examples:
 
     @staticmethod
     def bind_status(
-        value: t.ContainerValue | FlextResult[t.ContainerValue],
+        value: t.ContainerValue | r[t.ContainerValue],
     ) -> t.ContainerValue:
-        """Return a summary ConfigMap when *value* is a ``FlextResult``."""
+        """Return a summary ConfigMap when *value* is a ``r``."""
         match value:
-            case FlextResult() as result:
+            case r() as result:
                 return m.ConfigMap(
                     root={
                         "is_success": result.is_success,

@@ -1,7 +1,7 @@
 """Documentation validator service.
 
 Validates documentation for ADR skill references and generates
-validation reports, returning structured FlextResult reports.
+validation reports, returning structured r reports.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -24,7 +24,7 @@ class FlextInfraDocValidator:
     """Infrastructure service for documentation validation.
 
     Checks ADR skill references and generates validation reports,
-    returning structured FlextResult reports.
+    returning structured r reports.
     """
 
     @staticmethod
@@ -71,7 +71,7 @@ class FlextInfraDocValidator:
             apply: Write TODOS.md if needed.
 
         Returns:
-            FlextResult with list of ValidateReport objects.
+            r with list of ValidateReport objects.
 
         """
         scopes_result: r[list[m.Infra.Docs.FlextInfraDocScope]] = (

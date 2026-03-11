@@ -8,7 +8,10 @@ import tomlkit
 from tomlkit.items import Table
 
 from flext_infra import c, u
-from flext_infra.deps.tool_config import FlextInfraToolConfigDocument
+from flext_infra.deps.tool_config import (
+    FlextInfraProjectTypeOverrideConfig,
+    FlextInfraToolConfigDocument,
+)
 
 
 class EnsurePyrightConfigPhase:
@@ -65,12 +68,28 @@ class EnsurePyrightConfigPhase:
                 })
         return expected_envs or default_envs
 
+    def _override_for_kind(
+        self,
+        project_kind: str,
+    ) -> FlextInfraProjectTypeOverrideConfig | None:
+        """Return the project-type override config for the given kind, if any."""
+        overrides = self._tool_config.project_type_overrides
+        kind_map: dict[str, FlextInfraProjectTypeOverrideConfig] = {
+            "core": overrides.core,
+            "domain": overrides.domain,
+            "platform": overrides.platform,
+            "integration": overrides.integration,
+            "app": overrides.app,
+        }
+        return kind_map.get(project_kind)
+
     def apply(
         self,
         doc: tomlkit.TOMLDocument,
         *,
         is_root: bool,
         workspace_root: Path | None = None,
+        project_kind: str = "core",
     ) -> list[str]:
         changes: list[str] = []
         tool: object | None = None
@@ -94,6 +113,18 @@ class EnsurePyrightConfigPhase:
             u.Infra.ensure_pyright_execution_envs(pyright, expected_envs, changes)
             return changes
         for key, value in self._tool_config.tools.pyright.strict_settings.items():
+            if u.Infra.unwrap_item(u.Infra.get(pyright, key)) != value:
+                pyright[key] = value
+                changes.append(f"tool.pyright.{key} set to {value}")
+        # Merge extended_settings with project_kind overrides BEFORE applying
+        # to avoid double-change noise (set to X then immediately override to Y)
+        merged_settings: dict[str, str] = {
+            **self._tool_config.tools.pyright.extended_settings,
+        }
+        override = self._override_for_kind(project_kind)
+        if override is not None:
+            merged_settings.update(override.pyright)
+        for key, value in merged_settings.items():
             if u.Infra.unwrap_item(u.Infra.get(pyright, key)) != value:
                 pyright[key] = value
                 changes.append(f"tool.pyright.{key} set to {value}")

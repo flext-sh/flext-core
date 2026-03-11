@@ -42,7 +42,7 @@ class FlextContainer(p.DI):
 
     Services and factories remain local to the container, keeping dispatcher and
     domain code free from infrastructure imports. All operations surface
-    ``r`` (FlextResult) so failures are explicit. Thread-safe initialization
+    ``r`` (r) so failures are explicit. Thread-safe initialization
     guarantees one global instance for runtime usage while allowing scoped
     containers in tests. The class satisfies ``p.Configurable`` and
     ``p.DI`` through structural typing only.
@@ -717,7 +717,7 @@ class FlextContainer(p.DI):
                 sequence, or mapping).
 
         Returns:
-            ``FlextResult`` indicating whether the registration succeeded. A
+            ``r`` indicating whether the registration succeeded. A
             failed result is returned when the name is already registered or
             when construction fails.
 

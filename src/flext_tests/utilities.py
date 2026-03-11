@@ -141,7 +141,7 @@ class FlextTestsUtilities(FlextUtilities):
                 validators: List of validator functions, each returns r[bool]
 
             Returns:
-                FlextResult[bool]: Success if all validators pass, failure from first failure
+                r[bool]: Success if all validators pass, failure from first failure
 
             """
             for validator in validators:
@@ -174,7 +174,7 @@ class FlextTestsUtilities(FlextUtilities):
                 """Assert result is failure and return error message.
 
                 Args:
-                    result: FlextResult or Result protocol to check
+                    result: r or Result protocol to check
                     expected_error: Optional expected error substring
 
                 Returns:
@@ -205,7 +205,7 @@ class FlextTestsUtilities(FlextUtilities):
                 """Assert result is failure and has expected error.
 
                 Args:
-                    result: FlextResult or Result protocol to check
+                    result: r or Result protocol to check
                     expected_error: Optional expected error substring
 
                 Raises:
@@ -226,7 +226,7 @@ class FlextTestsUtilities(FlextUtilities):
                 """Assert result failure with error (compat alias).
 
                 Args:
-                    result: FlextResult or Result protocol to check
+                    result: r or Result protocol to check
                     expected_error: Expected error substring
 
                 Raises:
@@ -244,7 +244,7 @@ class FlextTestsUtilities(FlextUtilities):
                 """Assert result is success and return unwrapped value.
 
                 Args:
-                    result: FlextResult or Result protocol to check
+                    result: r or Result protocol to check
                     error_msg: Optional custom error message
 
                 Returns:
@@ -269,7 +269,7 @@ class FlextTestsUtilities(FlextUtilities):
                 """Assert result is success and has expected value.
 
                 Args:
-                    result: FlextResult or Result protocol to check
+                    result: r or Result protocol to check
                     expected_value: Expected value
 
                 Raises:
@@ -289,8 +289,8 @@ class FlextTestsUtilities(FlextUtilities):
                     error: Error message for the failure result
 
                 Returns:
-                    FlextResult[TEntity]: Result containing created entity or error
-                    FlextResult with failure and error message
+                    r[TEntity]: Result containing created entity or error
+                    r with failure and error message
 
                 """
                 return r[str].fail(error)
@@ -303,8 +303,8 @@ class FlextTestsUtilities(FlextUtilities):
                     value: Value for the success result
 
                 Returns:
-                    FlextResult[TEntity]: Result containing created entity or error
-                    FlextResult with success and value
+                    r[TEntity]: Result containing created entity or error
+                    r with success and value
 
                 """
                 return r[T].ok(value)
@@ -355,7 +355,7 @@ class FlextTestsUtilities(FlextUtilities):
                     b: Second operand (numeric or string)
 
                 Returns:
-                    FlextResult[TEntity]: Result containing created entity or error
+                    r[TEntity]: Result containing created entity or error
                     Sum if both numeric, concatenation otherwise.
 
                 """
@@ -373,7 +373,7 @@ class FlextTestsUtilities(FlextUtilities):
                     error_message: Error message for ValueError
 
                 Returns:
-                    FlextResult[TEntity]: Result containing created entity or error
+                    r[TEntity]: Result containing created entity or error
                     Callable that raises ValueError when called.
 
                 """
@@ -387,15 +387,15 @@ class FlextTestsUtilities(FlextUtilities):
             def create_result[T](
                 value: T | None = None, *, error: str | None = None
             ) -> r[T]:
-                """Create FlextResult for tests.
+                """Create r for tests.
 
                 Args:
                     value: Value for success result
                     error: Error message for failure result
 
                 Returns:
-                    FlextResult[TEntity]: Result containing created entity or error
-                    FlextResult with value or error
+                    r[TEntity]: Result containing created entity or error
+                    r with value or error
 
                 """
                 if error is not None:
@@ -414,7 +414,7 @@ class FlextTestsUtilities(FlextUtilities):
                     **kwargs: Key-value pairs for test data
 
                 Returns:
-                    FlextResult[TEntity]: Result containing created entity or error
+                    r[TEntity]: Result containing created entity or error
                     Configuration dictionary
 
                 """
@@ -430,8 +430,8 @@ class FlextTestsUtilities(FlextUtilities):
                     validation_result: Result of business rules validation
 
                 Returns:
-                    FlextResult[TEntity]: Result containing created entity or error
-                    FlextResult with service data or error.
+                    r[TEntity]: Result containing created entity or error
+                    r with service data or error.
 
                 """
                 if validation_result.is_failure:
@@ -449,8 +449,8 @@ class FlextTestsUtilities(FlextUtilities):
                     service_type: Type of service
 
                 Returns:
-                    FlextResult[TEntity]: Result containing created entity or error
-                    FlextResult with service type data.
+                    r[TEntity]: Result containing created entity or error
+                    r with service type data.
 
                 """
                 service_data: t.Tests.ContainerValue = {"service_type": service_type}
@@ -466,8 +466,8 @@ class FlextTestsUtilities(FlextUtilities):
                     overrides: Service configuration overrides
 
                 Returns:
-                    FlextResult[TEntity]: Result containing created entity or error
-                    FlextResult with user data.
+                    r[TEntity]: Result containing created entity or error
+                    r with user data.
 
                 """
                 user_id = "default_123" if overrides.get("default") else "test_123"
@@ -486,7 +486,7 @@ class FlextTestsUtilities(FlextUtilities):
                     value: Value part of format (default: 10)
 
                 Returns:
-                    FlextResult[TEntity]: Result containing created entity or error
+                    r[TEntity]: Result containing created entity or error
                     Formatted string "name: value".
 
                 """
@@ -497,7 +497,7 @@ class FlextTestsUtilities(FlextUtilities):
                 """Generate unique ID using u.generate().
 
                 Returns:
-                    FlextResult[TEntity]: Result containing created entity or error
+                    r[TEntity]: Result containing created entity or error
                     Generated UUID string.
 
                 """
@@ -511,7 +511,7 @@ class FlextTestsUtilities(FlextUtilities):
                     length: Length of ID (default: 8)
 
                 Returns:
-                    FlextResult[TEntity]: Result containing created entity or error
+                    r[TEntity]: Result containing created entity or error
                     Generated short ID string.
 
                 """
@@ -522,7 +522,7 @@ class FlextTestsUtilities(FlextUtilities):
                 """Execute simple operation returning success message.
 
                 Returns:
-                    FlextResult[TEntity]: Result containing created entity or error
+                    r[TEntity]: Result containing created entity or error
                     Success message string from constants.
 
                 """
@@ -648,7 +648,7 @@ class FlextTestsUtilities(FlextUtilities):
                     error_codes: Optional list of error codes for failure results
 
                 Returns:
-                    FlextResult[TEntity]: Result containing created entity or error
+                    r[TEntity]: Result containing created entity or error
                     List of tuples (result, is_success, value, error)
 
                 """
@@ -687,8 +687,8 @@ class FlextTestsUtilities(FlextUtilities):
                     default_on_none: Default value to use if value is None
 
                 Returns:
-                    FlextResult[TEntity]: Result containing created entity or error
-                    FlextResult with success or failure
+                    r[TEntity]: Result containing created entity or error
+                    r with success or failure
 
                 """
                 if value is None:
@@ -711,8 +711,8 @@ class FlextTestsUtilities(FlextUtilities):
                     optional_attrs: Optional list of optional attribute names
 
                 Returns:
-                    FlextResult[TEntity]: Result containing created entity or error
-                    FlextResult with True if all required attrs exist
+                    r[TEntity]: Result containing created entity or error
+                    r with True if all required attrs exist
 
                 """
                 missing = [attr for attr in required_attrs if not hasattr(model, attr)]
@@ -728,7 +728,7 @@ class FlextTestsUtilities(FlextUtilities):
                 """Create a test registry instance.
 
                 Returns:
-                    FlextResult[TEntity]: Result containing created entity or error
+                    r[TEntity]: Result containing created entity or error
                     New FlextRegistry instance
 
                 """
@@ -846,7 +846,7 @@ class FlextTestsUtilities(FlextUtilities):
                 """Create a test context instance.
 
                 Returns:
-                    FlextResult[TEntity]: Result containing created entity or error
+                    r[TEntity]: Result containing created entity or error
                     New FlextContext instance
 
                 """
@@ -865,7 +865,7 @@ class FlextTestsUtilities(FlextUtilities):
                     return_value: Value to return from factory
 
                 Returns:
-                    FlextResult[TEntity]: Result containing created entity or error
+                    r[TEntity]: Result containing created entity or error
                     Tuple of (factory function, count getter)
 
                 """
@@ -890,7 +890,7 @@ class FlextTestsUtilities(FlextUtilities):
                     return_value: Value to return from factory
 
                 Returns:
-                    FlextResult[TEntity]: Result containing created entity or error
+                    r[TEntity]: Result containing created entity or error
                     Factory function
 
                 """
@@ -925,7 +925,7 @@ class FlextTestsUtilities(FlextUtilities):
                     metadata: Optional handler metadata
 
                 Returns:
-                    FlextResult[TEntity]: Result containing created entity or error
+                    r[TEntity]: Result containing created entity or error
                     Handler configuration model
 
                 """
@@ -955,7 +955,7 @@ class FlextTestsUtilities(FlextUtilities):
                 """Execute parser operation and assert result.
 
                 Args:
-                    operation: Callable that returns a FlextResult
+                    operation: Callable that returns a r
                     expected_value: Expected value on success
                     expected_error: Expected error substring on failure
                     description: Test case description for error messages
@@ -997,7 +997,7 @@ class FlextTestsUtilities(FlextUtilities):
                     **common_kwargs: Common parameters for all cases
 
                 Returns:
-                    FlextResult[TEntity]: Result containing created entity or error
+                    r[TEntity]: Result containing created entity or error
                     List of test case dictionaries
 
                 """
@@ -1034,7 +1034,7 @@ class FlextTestsUtilities(FlextUtilities):
                     **kwargs: Additional test case parameters
 
                 Returns:
-                    FlextResult[TEntity]: Result containing created entity or error
+                    r[TEntity]: Result containing created entity or error
                     Test case dictionary
 
                 """
@@ -1085,7 +1085,7 @@ class FlextTestsUtilities(FlextUtilities):
                     remove_ids: List of booleans for ID removal
 
                 Returns:
-                    FlextResult[list[TEntity]]: Result containing list of entities or error
+                    r[list[TEntity]]: Result containing list of entities or error
 
                 """
                 ids_removal = remove_ids or [False] * len(names)
@@ -1164,7 +1164,7 @@ class FlextTestsUtilities(FlextUtilities):
                     value_class: Value object class to instantiate
 
                 Returns:
-                    FlextResult[TEntity]: Result containing created entity or error
+                    r[TEntity]: Result containing created entity or error
                     List of created value objects
 
                 """
@@ -1189,7 +1189,7 @@ class FlextTestsUtilities(FlextUtilities):
                     **kwargs: Additional arguments
 
                 Returns:
-                    FlextResult[TEntity]: Result containing created entity or error
+                    r[TEntity]: Result containing created entity or error
                     Operation result (type depends on operation)
 
                 """
@@ -1216,7 +1216,7 @@ class FlextTestsUtilities(FlextUtilities):
                     attributes: Metadata attributes
 
                 Returns:
-                    FlextResult[TEntity]: Result containing created entity or error
+                    r[TEntity]: Result containing created entity or error
                     Metadata object with attributes as dict
 
                 """
@@ -1269,7 +1269,7 @@ class FlextTestsUtilities(FlextUtilities):
                     pattern_attr: Attribute name like "Patterns.EMAIL_REGEX"
 
                 Returns:
-                    FlextResult[TEntity]: Result containing created entity or error
+                    r[TEntity]: Result containing created entity or error
                     Compiled regex pattern
 
                 """
@@ -1288,7 +1288,7 @@ class FlextTestsUtilities(FlextUtilities):
                     path: Dot-separated path like "Utilities.MAX_TIMEOUT_SECONDS"
 
                 Returns:
-                    FlextResult[TEntity]: Result containing created entity or error
+                    r[TEntity]: Result containing created entity or error
                     The constant value at the given path
 
                 """
@@ -1358,7 +1358,7 @@ class FlextTestsUtilities(FlextUtilities):
                     chunk_size: Size of chunks to read (default: from constants)
 
                 Returns:
-                    FlextResult[TEntity]: Result containing created entity or error
+                    r[TEntity]: Result containing created entity or error
                     SHA256 hash as hex string
 
                 """
@@ -1386,7 +1386,7 @@ class FlextTestsUtilities(FlextUtilities):
                     fmt: Explicit format override ("auto" for detection)
 
                 Returns:
-                    FlextResult[TEntity]: Result containing created entity or error
+                    r[TEntity]: Result containing created entity or error
                     Detected format string
 
                 """
@@ -1414,7 +1414,7 @@ class FlextTestsUtilities(FlextUtilities):
                     fmt: Explicit format override ("auto" for detection)
 
                 Returns:
-                    FlextResult[TEntity]: Result containing created entity or error
+                    r[TEntity]: Result containing created entity or error
                     Detected format string
 
                 """
@@ -1432,7 +1432,7 @@ class FlextTestsUtilities(FlextUtilities):
                     size: Size in bytes
 
                 Returns:
-                    FlextResult[TEntity]: Result containing created entity or error
+                    r[TEntity]: Result containing created entity or error
                     Human-readable size string like "1.2 KB"
 
                 """
@@ -1455,7 +1455,7 @@ class FlextTestsUtilities(FlextUtilities):
                     has_headers: If True, skip first row (headers)
 
                 Returns:
-                    FlextResult[TEntity]: Result containing created entity or error
+                    r[TEntity]: Result containing created entity or error
                     List of rows (each row is list of strings)
 
                 """
@@ -1524,7 +1524,7 @@ class FlextTestsUtilities(FlextUtilities):
                     extra_desc: Optional extra description
 
                 Returns:
-                    FlextResult[TEntity]: Result containing created entity or error
+                    r[TEntity]: Result containing created entity or error
                     Violation model instance
 
                 """
@@ -1549,7 +1549,7 @@ class FlextTestsUtilities(FlextUtilities):
                     pattern: Pattern to search for
 
                 Returns:
-                    FlextResult[TEntity]: Result containing created entity or error
+                    r[TEntity]: Result containing created entity or error
                     Line number (1-indexed) or 1 if not found
 
                 """
@@ -1566,7 +1566,7 @@ class FlextTestsUtilities(FlextUtilities):
                     exc_type: Exception type AST node
 
                 Returns:
-                    FlextResult[TEntity]: Result containing created entity or error
+                    r[TEntity]: Result containing created entity or error
                     Set of exception names found
 
                 """
@@ -1588,7 +1588,7 @@ class FlextTestsUtilities(FlextUtilities):
                     node: Node to find parent of
 
                 Returns:
-                    FlextResult[TEntity]: Result containing created entity or error
+                    r[TEntity]: Result containing created entity or error
                     Parent node or None if not found
 
                 """
@@ -1606,7 +1606,7 @@ class FlextTestsUtilities(FlextUtilities):
                     node: AST annotation node
 
                 Returns:
-                    FlextResult[TEntity]: Result containing created entity or error
+                    r[TEntity]: Result containing created entity or error
                     True if node represents typing.Any type annotation
 
                 """
@@ -1628,7 +1628,7 @@ class FlextTestsUtilities(FlextUtilities):
                     approved: Dict mapping rule IDs to list of approved file patterns
 
                 Returns:
-                    FlextResult[TEntity]: Result containing created entity or error
+                    r[TEntity]: Result containing created entity or error
                     True if file matches any approved pattern for this rule
 
                 """
@@ -1646,7 +1646,7 @@ class FlextTestsUtilities(FlextUtilities):
                     body: AST statement list (exception handler body)
 
                 Returns:
-                    FlextResult[TEntity]: Result containing created entity or error
+                    r[TEntity]: Result containing created entity or error
                     True if body contains only pass or ellipsis (...)
 
                 """
@@ -1674,7 +1674,7 @@ class FlextTestsUtilities(FlextUtilities):
                     pattern: Compiled regex pattern to search
 
                 Returns:
-                    FlextResult[TEntity]: Result containing created entity or error
+                    r[TEntity]: Result containing created entity or error
                     True if pattern appears in real code comment (after #),
                     not inside a string literal (single/double/triple quoted)
 
@@ -1758,7 +1758,7 @@ class FlextTestsUtilities(FlextUtilities):
                     path_sep: Path separator (default: ".")
 
                 Returns:
-                    FlextResult[TEntity]: Result containing created entity or error
+                    r[TEntity]: Result containing created entity or error
                     DeepMatchResult with match status and details
 
                 Examples:
@@ -1851,7 +1851,7 @@ class FlextTestsUtilities(FlextUtilities):
                     spec: LengthSpec - exact int or (min, max) tuple
 
                 Returns:
-                    FlextResult[TEntity]: Result containing created entity or error
+                    r[TEntity]: Result containing created entity or error
                     True if length matches spec, False otherwise
 
                 Examples:

@@ -14,7 +14,7 @@ import time
 
 import pytest
 
-from flext_core import FlextConstants, FlextResult, m, t
+from flext_core import FlextConstants, m, r, t
 from tests.test_utils import assertion_helpers
 
 
@@ -29,19 +29,19 @@ class TestEnterprisePatterns:
             """Factory for creating different types of services."""
 
             @staticmethod
-            def create_service(service_type: str) -> FlextResult[dict[str, str]]:
+            def create_service(service_type: str) -> r[dict[str, str]]:
                 """Create service based on type."""
                 if service_type == "email":
-                    return FlextResult[dict[str, str]].ok({
+                    return r[dict[str, str]].ok({
                         "type": "email",
                         "provider": "smtp",
                     })
                 if service_type == "sms":
-                    return FlextResult[dict[str, str]].ok({
+                    return r[dict[str, str]].ok({
                         "type": "sms",
                         "provider": "twilio",
                     })
-                return FlextResult[dict[str, str]].fail(
+                return r[dict[str, str]].fail(
                     f"Unknown service type: {service_type}",
                 )
 
@@ -83,13 +83,13 @@ class TestEnterprisePatterns:
                 self._config["cache"] = {"enabled": enabled}
                 return self
 
-            def build(self) -> FlextResult[dict[str, t.ContainerValue]]:
+            def build(self) -> r[dict[str, t.ContainerValue]]:
                 """Build the configuration."""
                 if not self._config:
-                    return FlextResult[dict[str, t.ContainerValue]].fail(
+                    return r[dict[str, t.ContainerValue]].fail(
                         "Configuration cannot be empty",
                     )
-                return FlextResult[dict[str, t.ContainerValue]].ok(self._config.copy())
+                return r[dict[str, t.ContainerValue]].ok(self._config.copy())
 
         config_result = (
             ConfigurationBuilder()
@@ -125,17 +125,17 @@ class TestEnterprisePatterns:
                 self._data: dict[str, t.ContainerValue] = {}
                 self._query_count = 0
 
-            def save(self, entity_id: str, data: t.ContainerValue) -> FlextResult[bool]:
+            def save(self, entity_id: str, data: t.ContainerValue) -> r[bool]:
                 """Save entity to repository."""
                 self._data[entity_id] = data
-                return FlextResult[bool].ok(True)
+                return r[bool].ok(True)
 
-            def find_by_id(self, entity_id: str) -> FlextResult[t.ContainerValue]:
+            def find_by_id(self, entity_id: str) -> r[t.ContainerValue]:
                 """Find entity by ID."""
                 self._query_count += 1
                 if entity_id in self._data:
-                    return FlextResult[t.ContainerValue].ok(self._data[entity_id])
-                return FlextResult[t.ContainerValue].fail(
+                    return r[t.ContainerValue].ok(self._data[entity_id])
+                return r[t.ContainerValue].fail(
                     f"Entity not found: {entity_id}",
                 )
 
@@ -159,7 +159,7 @@ class TestEnterprisePatterns:
         assert len(repo._data) == 1000, f"Expected 1000 entities, got {len(repo._data)}"
         start_time = time.perf_counter()
         for i in range(100):
-            query_result: FlextResult[t.ContainerValue] = repo.find_by_id(f"entity_{i}")
+            query_result: r[t.ContainerValue] = repo.find_by_id(f"entity_{i}")
             assert query_result.is_success, f"Query {i} should succeed"
             entity_data = query_result.value
             assert isinstance(entity_data, dict), (
@@ -214,15 +214,15 @@ class TestEventDrivenPatterns:
                 super().__init__()
                 self.processed_events: list[m.DomainEvent] = []
 
-            def handle_user_created(self, event: UserCreatedEvent) -> FlextResult[bool]:
+            def handle_user_created(self, event: UserCreatedEvent) -> r[bool]:
                 """Handle user created event."""
                 self.processed_events.append(event)
-                return FlextResult[bool].ok(True)
+                return r[bool].ok(True)
 
-            def handle_user_updated(self, event: UserUpdatedEvent) -> FlextResult[bool]:
+            def handle_user_updated(self, event: UserUpdatedEvent) -> r[bool]:
                 """Handle user updated event."""
                 self.processed_events.append(event)
-                return FlextResult[bool].ok(True)
+                return r[bool].ok(True)
 
         handler = UserEventHandler()
         created_event = UserCreatedEvent(

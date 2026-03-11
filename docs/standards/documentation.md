@@ -144,13 +144,13 @@ One paragraph explaining what this feature does and why use it.
 
 ```python
 # ✅ CORRECT - Complete, working example
-from flext_core import FlextResult
+from flext_core import r
 
-def divide(a: float, b: float) -> FlextResult[float]:
+def divide(a: float, b: float) -> r[float]:
     """Divide two numbers safely."""
     if b == 0:
-        return FlextResult[float].fail("Division by zero")
-    return FlextResult[float].ok(a / b)
+        return r[float].fail("Division by zero")
+    return r[float].ok(a / b)
 
 result = divide(10, 2)
 if result.is_success:
@@ -164,8 +164,8 @@ else:
 **Rule**: Import ONLY what each example uses.
 
 ```python
-# ✅ CORRECT - Only FlextResult
-from flext_core import FlextResult
+# ✅ CORRECT - Only r
+from flext_core import r
 
 # ❌ WRONG - Unnecessary imports
 from flext_core import (
@@ -182,7 +182,7 @@ from flext_core import (
     FlextModels,
     p,
     FlextRegistry,
-    FlextResult,  # Only this one!
+    r,  # Only this one!
     FlextRuntime,
     FlextService,
     t,
@@ -267,12 +267,12 @@ Always use proper code fence language:
 ```markdown
 # ✅ CORRECT - Verified claim
 
-FlextResult has three methods: ok(), fail(), and unwrap().
+r has three methods: ok(), fail(), and unwrap().
 (Then show all three working)
 
 # ❌ WRONG - Unverified claim
 
-FlextResult makes your code 100% bug-free.
+r makes your code 100% bug-free.
 (This is false and unsupported)
 ```
 
@@ -528,11 +528,11 @@ Each method documented as above.
 ```markdown
 # ✅ CORRECT
 
-FlextResult[T] returns either Ok(value) or Fail(error).
+r[T] returns either Ok(value) or Fail(error).
 
 # ❌ VAGUE
 
-FlextResult is cool and handles errors.
+r is cool and handles errors.
 ```
 
 ### Be Concise
@@ -588,14 +588,14 @@ Services can be registered with the container.
 
 ```python
 # ✅ CONSISTENT - Same style across all examples
-result = FlextResult[int].ok(42)
+result = r[int].ok(42)
 if result.is_success:
     value = result.value
 
 # ❌ INCONSISTENT - Different styles
-result = FlextResult.ok(42)  # First example
-res = FlextResult[int].ok(42)  # Second example
-r = FlextResult[int].ok(42)  # Third example
+result = r.ok(42)  # First example
+res = r[int].ok(42)  # Second example
+r = r[int].ok(42)  # Third example
 ```
 
 ## Maintenance

@@ -1,6 +1,6 @@
 """Pull request lifecycle management service.
 
-Wraps GitHub CLI (gh) PR operations with FlextResult error handling.
+Wraps GitHub CLI (gh) PR operations with r error handling.
 
 Usage:
     python -m flext_infra github pr --repo-root <path> --action status
@@ -32,7 +32,7 @@ from flext_infra import (
 class FlextInfraPrManager:
     """Infrastructure service for pull request lifecycle management.
 
-    Provides FlextResult-wrapped PR operations (status, create, merge,
+    Provides r-wrapped PR operations (status, create, merge,
     view, checks, close) via the ``gh`` CLI.
     """
 
@@ -60,7 +60,7 @@ class FlextInfraPrManager:
             strict: If True, treat check failures as errors.
 
         Returns:
-            FlextResult with check status info.
+            r with check status info.
 
         """
         result = self._runner.run(
@@ -85,7 +85,7 @@ class FlextInfraPrManager:
             selector: PR number or head branch.
 
         Returns:
-            FlextResult[bool] with True on success.
+            r[bool] with True on success.
 
         """
         return self._runner.run_checked(
@@ -114,7 +114,7 @@ class FlextInfraPrManager:
             draft: Whether to create as draft.
 
         Returns:
-            FlextResult with creation status info.
+            r with creation status info.
 
         """
         existing_result: r[Mapping[str, t.Scalar]] = self.open_pr_for_head(
@@ -180,7 +180,7 @@ class FlextInfraPrManager:
             release_on_merge: Trigger release workflow on merge.
 
         Returns:
-            FlextResult with merge status info.
+            r with merge status info.
 
         """
         if selector == head:
@@ -242,7 +242,7 @@ class FlextInfraPrManager:
             head: Head branch name.
 
         Returns:
-            FlextResult with PR dict. Empty dict means no open PR found.
+            r with PR dict. Empty dict means no open PR found.
 
         """
         result = self._runner.capture(
@@ -297,7 +297,7 @@ class FlextInfraPrManager:
             head: Head branch name.
 
         Returns:
-            FlextResult with status info dict.
+            r with status info dict.
 
         """
         pr_result: r[Mapping[str, t.Scalar]] = self.open_pr_for_head(repo_root, head)
@@ -330,7 +330,7 @@ class FlextInfraPrManager:
             selector: PR number or head branch.
 
         Returns:
-            FlextResult with command output.
+            r with command output.
 
         """
         return self._runner.capture(
@@ -350,7 +350,7 @@ class FlextInfraPrManager:
             head: Head branch name.
 
         Returns:
-            FlextResult with release info or skip reason.
+            r with release info or skip reason.
 
         """
         release_yml = repo_root / ".github" / "workflows" / "release.yml"

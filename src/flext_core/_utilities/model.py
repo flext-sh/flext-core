@@ -172,7 +172,7 @@ class FlextUtilitiesModel:
     def load[T_Model: BaseModel](
         model_cls: type[T_Model], data: m.ConfigMap, *, strict: bool = False
     ) -> r[T_Model]:
-        """Load Pydantic model from mapping with FlextResult.
+        """Load Pydantic model from mapping with r.
 
         Generic replacement for: Model.model_validate(data) with error handling.
 
@@ -182,7 +182,7 @@ class FlextUtilitiesModel:
             strict: If True, enforce strict type checking during validation.
 
         Returns:
-            FlextResult containing model instance or error message.
+            r containing model instance or error message.
 
         Example:
             >>> result = u.Model.load(UserModel, {"status": "active", "name": "John"})

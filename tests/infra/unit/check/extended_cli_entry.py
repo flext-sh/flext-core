@@ -119,7 +119,11 @@ class TestFixPyrelfyCLI:
 
 
 def _const_cli_result(code: int) -> Callable[[list[str] | None], int]:
-    return lambda argv=None: code
+    def _runner(argv: list[str] | None = None) -> int:
+        _ = argv
+        return code
+
+    return _runner
 
 
 _fake_run_cli_zero = _const_cli_result(0)

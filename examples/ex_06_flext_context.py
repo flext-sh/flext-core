@@ -35,7 +35,7 @@ class Ex06FlextContext(Examples):
         )
         self.check("get.k1", ctx.get("k1").unwrap_or("missing"))
         self.check("has.k2", ctx.has("k2"))
-        _ = ctx.remove("k2")
+        ctx.remove("k2")
         self.check("remove.k2", ctx.has("k2"))
         self.check("keys.count", len(ctx.keys()))
         self.check("values.count", len(ctx.values()))
@@ -44,7 +44,7 @@ class Ex06FlextContext(Examples):
         self.check("merge.get", merged.get("k4").unwrap_or("missing"))
         self.check("clone.get", ctx.clone().get("k1").unwrap_or("missing"))
         self.check("validate.success", ctx.validate().is_success)
-        _ = ctx.set_metadata("meta_key", "meta_value")
+        ctx.set_metadata("meta_key", "meta_value")
         self.check("get_metadata", ctx.get_metadata("meta_key").unwrap_or("missing"))
         exported_min = ctx.export(as_dict=False)
         exported_full = ctx.export(
@@ -53,7 +53,7 @@ class Ex06FlextContext(Examples):
         self.check("export.min.type", type(exported_min).__name__)
         self.check("export.full.type", type(exported_full).__name__)
         self.check("iter_scope_vars", ",".join(sorted(ctx.iter_scope_vars().keys())))
-        _ = ctx.clear()
+        ctx.clear()
         self.check("clear.keys", len(ctx.keys()))
 
     def _exercise_container_and_service_methods(self) -> None:

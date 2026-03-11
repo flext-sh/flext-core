@@ -18,7 +18,7 @@
   - [Anti-Pattern 10: Creating New Containers](#anti-pattern-10-creating-new-containers)
   - [Anti-Pattern 11: Not Checking Container Results](#anti-pattern-11-not-checking-container-results)
 - [Model Anti-Patterns](#model-anti-patterns)
-  - [Anti-Pattern 12: Validation in Models Without FlextResult](#anti-pattern-12-validation-in-models-without-flextresult)
+  - [Anti-Pattern 12: Validation in Models Without r](#anti-pattern-12-validation-in-models-without-flextresult)
   - [Anti-Pattern 13: Mutable Value Objects](#anti-pattern-13-mutable-value-objects)
 - [Configuration Anti-Patterns](#configuration-anti-patterns)
   - [Anti-Pattern 14: Hardcoded Configuration](#anti-pattern-14-hardcoded-configuration)
@@ -81,20 +81,20 @@ except ValueError as e:
 - Performance cost of exception handling
 - Difficult to compose with other operations
 
-**Solution**: Use FlextResult railway pattern
+**Solution**: Use r railway pattern
 
 ```python
 # ✅ CORRECT - Railway pattern
-from flext_core import FlextResult
+from flext_core import r
 
 
-def validate_user(data: dict) -> FlextResult[User]:
-    """Returns FlextResult wrapping success or failure."""
+def validate_user(data: dict) -> r[User]:
+    """Returns r wrapping success or failure."""
     if "email" not in data:
-        return FlextResult[User].fail("Email is required")
+        return r[User].fail("Email is required")
     if len(data.get("password", "")) < 8:
-        return FlextResult[User].fail("Password too short")
-    return FlextResult[User].ok(User(**data))
+        return r[User].fail("Password too short")
+    return r[User].ok(User(**data))
 
 
 # Caller handles results
@@ -140,22 +140,22 @@ def load_config() -> dict:
 
 ```python
 # ✅ CORRECT - Explicit error handling
-from flext_core import FlextResult
+from flext_core import r
 
 
-def load_config() -> FlextResult[dict]:
+def load_config() -> r[dict]:
     """Loads config with explicit error handling."""
     try:
         with open("config.json") as f:
-            return FlextResult[dict].ok(json.load(f))
+            return r[dict].ok(json.load(f))
     except FileNotFoundError:
-        return FlextResult[dict].fail(
+        return r[dict].fail(
             "Config file not found",
             error_code="CONFIG_NOT_FOUND",
             error_data={"filename": "config.json"},
         )
     except json.JSONDecodeError as e:
-        return FlextResult[dict].fail(
+        return r[dict].fail(
             f"Invalid JSON in config: {e}",
             error_code="CONFIG_PARSE_ERROR",
         )
@@ -174,7 +174,7 @@ def load_config() -> FlextResult[dict]:
 
 ```python
 # ❌ ANTI-PATTERN - Missing context
-result = FlextResult[dict].fail("An error occurred")
+result = r[dict].fail("An error occurred")
 # No error code, no metadata - hard to debug
 ```
 
@@ -184,7 +184,7 @@ result = FlextResult[dict].fail("An error occurred")
 # ✅ CORRECT - Rich error context
 from flext_core import FlextConstants
 
-result = FlextResult[dict].fail(
+result = r[dict].fail(
     "Database connection failed after 3 retries",
     error_code=FlextConstants.Errors.DATABASE_ERROR,
     error_data={
@@ -320,7 +320,7 @@ result.py imports ← config.py
 ```python
 # config.py
 # ❌ ANTI-PATTERN - Imports from higher layer
-from flext_core import FlextResult  # config is higher than result
+from flext_core import r  # config is higher than result
 
 # result.py
 # ❌ ANTI-PATTERN - Imports from lower layer
@@ -339,7 +339,7 @@ from flext_core import FlextSettings  # result is lower than config
 ```python
 Layer 0: FlextConstants, t, p (no imports from other layers)
 Layer 0.5: FlextRuntime (imports Layer 0 only)
-Layer 1: FlextResult, FlextContainer (imports Layer 0, 0.5 only)
+Layer 1: r, FlextContainer (imports Layer 0, 0.5 only)
 Layer 2: FlextModels, FlextService (imports Layer 0-1 only)
 Layer 3: h, FlextDispatcher (imports Layer 0-2 only)
 Layer 4: FlextSettings, FlextLogger (imports all lower layers)
@@ -348,7 +348,7 @@ Layer 4: FlextSettings, FlextLogger (imports all lower layers)
 ```python
 # ✅ CORRECT - Respect hierarchy
 # config.py (Layer 4) - can import from all lower layers
-from flext_core import FlextResult
+from flext_core import r
 from flext_core import FlextConstants
 
 # result.py (Layer 1) - imports only from Layer 0
@@ -455,28 +455,28 @@ class FlextMeltano:
 class MeltanoConfig:
     """Handles configuration only."""
 
-    def load(self, path: str) -> FlextResult[dict]:
+    def load(self, path: str) -> r[dict]:
         pass
 
 
 class MeltanoValidator:
     """Handles validation only."""
 
-    def validate_config(self, config: dict) -> FlextResult[bool]:
+    def validate_config(self, config: dict) -> r[bool]:
         pass
 
 
 class MeltanoStreamManager:
     """Handles stream operations."""
 
-    def load_streams(self, config: dict) -> FlextResult[list]:
+    def load_streams(self, config: dict) -> r[list]:
         pass
 
 
 class MeltanoExecutor:
     """Handles execution (tap, target, dbt)."""
 
-    def run_tap(self, config: dict) -> FlextResult[bool]:
+    def run_tap(self, config: dict) -> r[bool]:
         pass
 ```
 
@@ -560,7 +560,7 @@ container = FlextContainer.get_global()
 logger_result = container.get("logger")
 if logger_result.is_failure:
     print(f"Logger not available: {logger_result.error}")
-    return FlextResult[bool].fail("Logger unavailable")
+    return r[bool].fail("Logger unavailable")
 
 logger = logger_result.value
 logger.info("Service started")
@@ -570,7 +570,7 @@ ______________________________________________________________________
 
 ## Model Anti-Patterns
 
-### Anti-Pattern 12: Validation in Models Without FlextResult
+### Anti-Pattern 12: Validation in Models Without r
 
 **Problem**: Models validate but don't report errors properly.
 
@@ -603,11 +603,11 @@ except ValidationError as e:
     print(f"Validation failed: {e}")
 ```
 
-**Solution**: Wrap Pydantic validation in FlextResult
+**Solution**: Wrap Pydantic validation in r
 
 ```python
-# ✅ CORRECT - FlextResult for validation
-from flext_core import FlextResult
+# ✅ CORRECT - r for validation
+from flext_core import r
 from pydantic import BaseModel, ValidationError
 
 
@@ -616,13 +616,13 @@ class User(BaseModel):
     age: int
 
 
-def create_user(data: dict) -> FlextResult[User]:
-    """Create user with FlextResult validation."""
+def create_user(data: dict) -> r[User]:
+    """Create user with r validation."""
     try:
         user = User(**data)
-        return FlextResult[User].ok(user)
+        return r[User].ok(user)
     except ValidationError as e:
-        return FlextResult[User].fail(
+        return r[User].fail(
             f"User validation failed: {e}",
             error_code="USER_VALIDATION_ERROR",
             error_data={"validation_errors": str(e)},
@@ -817,7 +817,7 @@ ______________________________________________________________________
 
 ### Error Handling
 
-- ✅ Use `FlextResult` for business logic errors
+- ✅ Use `r` for business logic errors
 - ✅ Include error codes and metadata
 - ✅ Never swallow errors silently
 - ❌ Don't use exceptions for normal errors
@@ -842,7 +842,7 @@ ______________________________________________________________________
 ### Dependency Injection
 
 - ✅ Use `FlextContainer.get_global()`
-- ✅ Check `FlextResult` before using services
+- ✅ Check `r` before using services
 - ✅ Register services during initialization
 - ❌ Don't create multiple containers
 - ❌ Don't assume service exists
@@ -850,7 +850,7 @@ ______________________________________________________________________
 ### Models
 
 - ✅ Use `FlextModels` for DDD patterns
-- ✅ Wrap validation in `FlextResult`
+- ✅ Wrap validation in `r`
 - ✅ Make value objects immutable
 - ❌ Don't mix mutable and value semantics
 - ❌ Don't validate without error handling

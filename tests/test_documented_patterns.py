@@ -30,10 +30,10 @@ from flext_core import (
     FlextContainer,
     FlextExceptions,
     FlextLogger,
-    FlextResult,
     FlextService,
     FlextSettings,
     m,
+    r,
     t,
 )
 
@@ -90,15 +90,15 @@ class RailwayTestCase(BaseModel):
         default="", description="Human-readable railway test case description"
     )
 
-    def execute_v1_pipeline(self) -> FlextResult[str | User | EmailResponse]:
+    def execute_v1_pipeline(self) -> r[str | User | EmailResponse]:
         """Execute V1 railway pipeline for this test case."""
         if not self.user_ids:
-            return FlextResult[str | User | EmailResponse].fail("No user IDs provided")
-        user_result: FlextResult[User] = _make(
+            return r[str | User | EmailResponse].fail("No user IDs provided")
+        user_result: r[User] = _make(
             GetUserService,
             user_id=self.user_ids[0],
         ).execute()
-        result: FlextResult[User | str | EmailResponse] = user_result.map(
+        result: r[User | str | EmailResponse] = user_result.map(
             lambda user: user,
         )
         for op in self.operations:
@@ -107,7 +107,7 @@ class RailwayTestCase(BaseModel):
                     lambda user: user.email if isinstance(user, User) else str(user),
                 )
             elif op == "send_email":
-                email_result: FlextResult[EmailResponse] = result.flat_map(
+                email_result: r[EmailResponse] = result.flat_map(
                     lambda email: _make(
                         SendEmailService,
                         to=str(email),
@@ -130,16 +130,16 @@ class RailwayTestCase(BaseModel):
         if not self.user_ids:
             msg = "No user IDs provided"
             raise FlextExceptions.BaseError(msg)
-        user_result = _service_result(_make(GetUserService, user_id=self.user_ids[0]))
+        user_result = _make(GetUserService, user_id=self.user_ids[0]).result
         user: User | str = user_result
         for op in self.operations:
             if op == "get_email":
                 user = user.email if isinstance(user, User) else str(user)
             elif op == "send_email":
                 email_to = str(user) if not isinstance(user, str) else user
-                response_obj: EmailResponse = _service_result(
-                    _make(SendEmailService, to=email_to, subject="Test"),
-                )
+                response_obj: EmailResponse = _make(
+                    SendEmailService, to=email_to, subject="Test"
+                ).result
                 user = response_obj.status
         return user
 
@@ -211,11 +211,11 @@ class GetUserService(FlextService[User]):
     user_id: str = ""
 
     @override
-    def execute(self) -> FlextResult[User]:
+    def execute(self) -> r[User]:
         """Get user by ID."""
         if self.user_id in {"invalid", ""}:
-            return FlextResult[User].fail("User not found")
-        return FlextResult.ok(
+            return r[User].fail("User not found")
+        return r.ok(
             User(
                 unique_id=self.user_id,
                 name=f"User {self.user_id}",
@@ -231,11 +231,11 @@ class SendEmailService(FlextService[EmailResponse]):
     subject: str = ""
 
     @override
-    def execute(self) -> FlextResult[EmailResponse]:
+    def execute(self) -> r[EmailResponse]:
         """Send email."""
         if "@" not in self.to:
-            return FlextResult[EmailResponse].fail("Invalid email address")
-        return FlextResult.ok(EmailResponse(status="sent", message_id=f"msg-{self.to}"))
+            return r[EmailResponse].fail("Invalid email address")
+        return r.ok(EmailResponse(status="sent", message_id=f"msg-{self.to}"))
 
 
 class ValidationService(FlextService[m.ConfigMap]):
@@ -244,13 +244,13 @@ class ValidationService(FlextService[m.ConfigMap]):
     value: int = 0
 
     @override
-    def execute(self) -> FlextResult[m.ConfigMap]:
+    def execute(self) -> r[m.ConfigMap]:
         """Validate value."""
         if self.value < 0:
-            return FlextResult[m.ConfigMap].fail("Value must be positive")
+            return r[m.ConfigMap].fail("Value must be positive")
         if self.value > 100:
-            return FlextResult[m.ConfigMap].fail("Value must be <= 100")
-        return FlextResult.ok(m.ConfigMap(root={"valid": True, "value": self.value}))
+            return r[m.ConfigMap].fail("Value must be <= 100")
+        return r.ok(m.ConfigMap(root={"valid": True, "value": self.value}))
 
 
 class MultiOperationService(FlextService[m.ConfigMap]):
@@ -260,31 +260,23 @@ class MultiOperationService(FlextService[m.ConfigMap]):
     value: int = 0
 
     @override
-    def execute(self) -> FlextResult[m.ConfigMap]:
+    def execute(self) -> r[m.ConfigMap]:
         """Execute based on operation."""
         match self.operation:
             case "double":
-                return FlextResult.ok(
+                return r.ok(
                     m.ConfigMap(root={"operation": "double", "result": self.value * 2}),
                 )
             case "square":
-                return FlextResult.ok(
+                return r.ok(
                     m.ConfigMap(root={"operation": "square", "result": self.value**2}),
                 )
             case "negate":
-                return FlextResult.ok(
+                return r.ok(
                     m.ConfigMap(root={"operation": "negate", "result": -self.value}),
                 )
             case _:
-                return FlextResult[m.ConfigMap].fail(
-                    f"Unknown operation: {self.operation}"
-                )
-
-
-def _service_result[T_Value: t.ContainerValue](
-    service: FlextService[T_Value],
-) -> T_Value:
-    return service.result
+                return r[m.ConfigMap].fail(f"Unknown operation: {self.operation}")
 
 
 def _value_lt_100(data: m.ConfigMap) -> bool:
@@ -344,7 +336,7 @@ class TestPattern2V2Property:
     @pytest.mark.parametrize("case", TestFactories.success_cases())
     def test_v2_property_success(self, case: ServiceTestCase) -> None:
         """V2 Property: Use .result for happy path."""
-        user = _service_result(case.create_user_service())
+        user = case.create_user_service().result
         assert isinstance(user, User)
         assert user.unique_id == case.user_id
         assert user.name == f"User {case.user_id}"
@@ -353,7 +345,7 @@ class TestPattern2V2Property:
     def test_v2_property_failure_raises(self, case: ServiceTestCase) -> None:
         """V2 Property: .result raises exception on failure."""
         with pytest.raises(FlextExceptions.BaseError) as exc_info:
-            _service_result(case.create_user_service())
+            case.create_user_service().result
         error_str = str(exc_info.value).lower()
         assert case.expected_error is not None
         assert case.expected_error in error_str
@@ -396,7 +388,7 @@ class TestPattern4RailwayV2Property:
         case: RailwayTestCase,
     ) -> None:
         """V2 Property: .execute() available for railway pattern."""
-        user_result = _service_result(_make(GetUserService, user_id="123"))
+        user_result = _make(GetUserService, user_id="123").result
         assert isinstance(user_result, User)
         assert user_result.unique_id == "123"
         result = _make(GetUserService, user_id="123").execute().map(lambda u: u.email)
@@ -440,7 +432,7 @@ class TestPattern5MonadicComposition:
         pipeline = (
             _make(GetUserService, user_id="123")
             .execute()
-            .flat_map(lambda user: FlextResult.ok(user.email))
+            .flat_map(lambda user: r.ok(user.email))
             .flat_map(
                 lambda email: _make(
                     SendEmailService,
@@ -482,7 +474,7 @@ class TestPattern6ErrorHandling:
     def test_error_handling_try_except_v2_property(self) -> None:
         """Error Handling: try/except with V2 Property."""
         try:
-            user_result = _service_result(_make(GetUserService, user_id="123"))
+            user_result = _make(GetUserService, user_id="123").result
             assert isinstance(user_result, User)
             assert user_result.unique_id == "123"
         except FlextExceptions.BaseError:
@@ -491,13 +483,13 @@ class TestPattern6ErrorHandling:
     def test_error_handling_try_except_v2_property_failure(self) -> None:
         """Error Handling: try/except catches failure."""
         with pytest.raises(FlextExceptions.BaseError) as exc_info:
-            _service_result(_make(GetUserService, user_id="invalid"))
+            _make(GetUserService, user_id="invalid").result
         assert "not found" in str(exc_info.value).lower()
 
     def test_error_handling_graceful_degradation(self) -> None:
         """Error Handling: Graceful degradation pattern."""
         try:
-            user_result = _service_result(_make(GetUserService, user_id="123"))
+            user_result = _make(GetUserService, user_id="123").result
             assert isinstance(user_result, User)
             email = user_result.email
         except FlextExceptions.BaseError:
@@ -548,16 +540,16 @@ class TestPattern8MultipleOperations:
         expected: m.ConfigMap,
     ) -> None:
         """Multiple Operations: Various operations with different inputs."""
-        result: m.ConfigMap = _service_result(
-            _make(MultiOperationService, operation=operation, value=value),
-        )
+        result: m.ConfigMap = _make(
+            MultiOperationService, operation=operation, value=value
+        ).result
         assert result["operation"] == expected["operation"]
         assert result["result"] == expected["result"]
 
     def test_multiple_operations_invalid(self) -> None:
         """Multiple Operations: Invalid operation fails."""
         with pytest.raises(FlextExceptions.BaseError) as exc_info:
-            _service_result(_make(MultiOperationService, operation="invalid", value=5))
+            _make(MultiOperationService, operation="invalid", value=5).result
         assert "Unknown operation" in str(exc_info.value)
 
     def test_multiple_operations_with_railway(self) -> None:
@@ -586,7 +578,7 @@ class TestAllPatternsIntegration:
         """All patterns work together seamlessly."""
         v1_result = _make(GetUserService, user_id="123").execute()
         assert v1_result.is_success
-        v2_user_result = _service_result(_make(GetUserService, user_id="456"))
+        v2_user_result = _make(GetUserService, user_id="456").result
         assert isinstance(v2_user_result, User)
         assert v2_user_result.unique_id == "456"
         assert isinstance(v1_result.value, User)
@@ -607,8 +599,8 @@ class TestAllPatternsIntegration:
             user_id: str = ""
 
             @override
-            def execute(self) -> FlextResult[User]:
-                return FlextResult.ok(
+            def execute(self) -> r[User]:
+                return r.ok(
                     User(unique_id=self.user_id, name="Test", email="test@example.com"),
                 )
 
@@ -619,7 +611,7 @@ class TestAllPatternsIntegration:
 
     def test_complete_real_world_scenario(self) -> None:
         """Complete scenario using multiple patterns."""
-        user = _service_result(_make(GetUserService, user_id="123"))
+        user = _make(GetUserService, user_id="123").result
         email_result = (
             _make(SendEmailService, to=user.email, subject="Welcome")
             .execute()
@@ -629,7 +621,7 @@ class TestAllPatternsIntegration:
         assert email_result.is_success
         message_id: str = email_result.value
         assert message_id.startswith("msg-")
-        calc_result: m.ConfigMap = _service_result(
-            _make(MultiOperationService, operation="double", value=10),
-        )
+        calc_result: m.ConfigMap = _make(
+            MultiOperationService, operation="double", value=10
+        ).result
         assert calc_result["result"] == 20

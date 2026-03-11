@@ -15,16 +15,14 @@ class TestFlextInfraRuntimeDevDependencyDetectorInit:
 
     def test_detector_has_required_services(self) -> None:
         detector = FlextInfraRuntimeDevDependencyDetector()
-        tm.that(hasattr(detector, "_paths"), eq=True)
-        tm.that(hasattr(detector, "_reporting"), eq=True)
-        tm.that(hasattr(detector, "_json"), eq=True)
-        tm.that(hasattr(detector, "_deps"), eq=True)
-        tm.that(hasattr(detector, "_runner"), eq=True)
+        tm.that(hasattr(detector, "paths"), eq=True)
+        tm.that(hasattr(detector, "reporting"), eq=True)
+        tm.that(hasattr(detector, "json"), eq=True)
+        tm.that(hasattr(detector, "deps"), eq=True)
+        tm.that(hasattr(detector, "runner"), eq=True)
 
     def test_parser_all_arguments(self, tmp_path: Path) -> None:
-        parser = FlextInfraRuntimeDevDependencyDetector._parser(
-            tmp_path / "limits.toml"
-        )
+        parser = FlextInfraRuntimeDevDependencyDetector.parser(tmp_path / "limits.toml")
         args = parser.parse_args([
             "--project",
             "test",
@@ -52,28 +50,22 @@ class TestFlextInfraRuntimeDevDependencyDetectorInit:
         tm.that(args.limits, eq="/custom/limits.toml")
 
     def test_project_filter_with_single_project(self, tmp_path: Path) -> None:
-        parser = FlextInfraRuntimeDevDependencyDetector._parser(
-            tmp_path / "limits.toml"
-        )
+        parser = FlextInfraRuntimeDevDependencyDetector.parser(tmp_path / "limits.toml")
         args = parser.parse_args(["--project", "test-proj"])
         tm.that(
-            FlextInfraRuntimeDevDependencyDetector._project_filter(args),
+            FlextInfraRuntimeDevDependencyDetector.project_filter(args),
             eq=["test-proj"],
         )
 
     def test_project_filter_with_multiple_projects(self, tmp_path: Path) -> None:
-        parser = FlextInfraRuntimeDevDependencyDetector._parser(
-            tmp_path / "limits.toml"
-        )
+        parser = FlextInfraRuntimeDevDependencyDetector.parser(tmp_path / "limits.toml")
         args = parser.parse_args(["--projects", "proj-a,proj-b,proj-c"])
         tm.that(
-            FlextInfraRuntimeDevDependencyDetector._project_filter(args),
+            FlextInfraRuntimeDevDependencyDetector.project_filter(args),
             eq=["proj-a", "proj-b", "proj-c"],
         )
 
     def test_project_filter_with_no_filter(self, tmp_path: Path) -> None:
-        parser = FlextInfraRuntimeDevDependencyDetector._parser(
-            tmp_path / "limits.toml"
-        )
+        parser = FlextInfraRuntimeDevDependencyDetector.parser(tmp_path / "limits.toml")
         args = parser.parse_args([])
-        tm.that(FlextInfraRuntimeDevDependencyDetector._project_filter(args), eq=None)
+        tm.that(FlextInfraRuntimeDevDependencyDetector.project_filter(args), eq=None)

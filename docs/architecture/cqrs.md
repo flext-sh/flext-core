@@ -63,7 +63,7 @@ FLEXT-Core implements CQRS through two primary components:
 - **`FlextHandlers`** (`handlers.py`) – Base class for message handlers
 - **`FlextDispatcher`** (`dispatcher.py`) – Orchestration and routing
 
-Both components follow railway-oriented programming with `FlextResult` and
+Both components follow railway-oriented programming with `r` and
 integrate with the infrastructure provided by `FlextMixins`.
 
 ```
@@ -258,7 +258,7 @@ ______________________________________________________________________
 | 1     | `FlextMixins.CQRS` for metrics    | 🔴 Pending  | Dec 2025 |
 | 2     | Dispatcher DI via FlextContainer  | 🔴 Pending  | Jan 2026 |
 | 3     | Promote mixins to default usage   | 🔴 Pending  | Feb 2026 |
-| 4     | Align with `FlextResult.and_then` | 🔴 Pending  | Mar 2026 |
+| 4     | Align with `r.and_then` | 🔴 Pending  | Mar 2026 |
 | 5     | Zero-ceremony handler scaffolding | 🔴 Pending  | Apr 2026 |
 
 ### Phase 1: FlextMixins.CQRS
@@ -429,7 +429,7 @@ ______________________________________________________________________
 | ------------------------------------------------------------------------ | ------- | ----------------------------------------------- | ---------------------------- |
 | Migrate handlers to `self.logger`, `self.track`, and `self.cqrs_metrics` | Phase 3 | Replace manual metrics/context with FlextMixins | `handlers.py`                |
 | Force dispatcher construction via container                              | Phase 2 | Once all call sites migrate                     | `dispatcher.py`              |
-| Update `_dispatcher.reliability` to use `FlextResult.and_then`           | Phase 4 | Naming parity                                   | `_dispatcher/reliability.py` |
+| Update `_dispatcher.reliability` to use `r.and_then`           | Phase 4 | Naming parity                                   | `_dispatcher/reliability.py` |
 | Scaffolding CLI for zero-ceremony handlers                               | Phase 5 | Automatic handler generation                    | CLI tools                    |
 
 ______________________________________________________________________

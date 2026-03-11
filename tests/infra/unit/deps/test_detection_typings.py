@@ -66,7 +66,7 @@ class TestLoadDependencyLimits:
             service,
             "toml",
             _StubToml([
-                r[dict[str, t.ContainerValue]].ok({"good": "val", "bad": {"x"}})
+                r[dict[str, t.ContainerValue]].ok({"good": "val", "bad": ["x"]})
             ]),
         )
         result = service.load_dependency_limits(Path("/fake/limits.toml"))

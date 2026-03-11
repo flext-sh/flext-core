@@ -14,7 +14,7 @@ from typing import override
 import pytest
 from pydantic import BaseModel, Field, PrivateAttr
 
-from flext_core import FlextContainer, FlextResult, FlextService, m, r, t
+from flext_core import FlextContainer, FlextService, m, r, t
 
 from ..conftest import FunctionalExternalService
 from ..test_utils import assertion_helpers
@@ -60,7 +60,7 @@ class UserQueryService(FlextService[bool]):
         super().__init__(**data)
 
     @override
-    def execute(self) -> FlextResult[bool]:
+    def execute(self) -> r[bool]:
         """Execute user query service.
 
         Business Rule: Returns bool to indicate service availability and readiness.
@@ -68,21 +68,21 @@ class UserQueryService(FlextService[bool]):
         a failure state. This pattern separates status checking from data retrieval.
 
         Returns:
-            FlextResult[bool]: True if service is ready, failure otherwise.
+            r[bool]: True if service is ready, failure otherwise.
 
         """
         if self._should_fail:
             return r[bool].fail("User service unavailable")
         return r[bool].ok(True)
 
-    def get_user(self, user_id: str) -> FlextResult[UserServiceEntity]:
+    def get_user(self, user_id: str) -> r[UserServiceEntity]:
         """Get user by ID.
 
         Args:
             user_id: User identifier.
 
         Returns:
-            FlextResult[UserServiceEntity]: User entity or failure.
+            r[UserServiceEntity]: User entity or failure.
 
         """
         self._call_count += 1
@@ -135,20 +135,20 @@ class NotificationService(FlextService[str]):
         super().__init__(**data)
 
     @override
-    def execute(self) -> FlextResult[str]:
+    def execute(self) -> r[str]:
         """Execute notification service."""
         if self._should_fail:
             return r[str].fail("Notification service unavailable")
         return r[str].ok("sent")
 
-    def send(self, email: str) -> FlextResult[str]:
+    def send(self, email: str) -> r[str]:
         """Send notification.
 
         Args:
             email: Email address to send notification to.
 
         Returns:
-            FlextResult[str]: Success confirmation or failure.
+            r[str]: Success confirmation or failure.
 
         """
         self._call_count += 1
@@ -211,20 +211,20 @@ class LifecycleService(FlextService[str]):
         super().__init__(**data)
 
     @override
-    def execute(self) -> FlextResult[str]:
+    def execute(self) -> r[str]:
         """Execute lifecycle service."""
         if self._initialized:
             return r[str].ok("initialized")
         return r[str].ok("ready")
 
-    def initialize(self, config: ServiceConfig) -> FlextResult[str]:
+    def initialize(self, config: ServiceConfig) -> r[str]:
         """Initialize service with config model.
 
         Args:
             config: Configuration model.
 
         Returns:
-            FlextResult[str]: Success or failure.
+            r[str]: Success or failure.
 
         """
         if self._should_fail_init:
@@ -242,11 +242,11 @@ class LifecycleService(FlextService[str]):
         """
         return self._initialized and (not self._shutdown_called)
 
-    def shutdown(self) -> FlextResult[str]:
+    def shutdown(self) -> r[str]:
         """Shutdown service.
 
         Returns:
-            FlextResult[str]: Success or failure.
+            r[str]: Success or failure.
 
         """
         if self._should_fail_shutdown:

@@ -19,7 +19,6 @@ from flext_core import (
     FlextLogger,
     FlextMixins,
     FlextRegistry,
-    FlextResult,
     FlextRuntime,
     FlextService,
     FlextSettings,
@@ -33,8 +32,8 @@ from .models import TestsFlextModels
 
 T = TypeVar("T")
 T_co = TypeVar("T_co", covariant=True)
-TestResult = FlextResult[T]
-TestResultCo = FlextResult[T_co]
+TestResult = r[T]
+TestResultCo = r[T_co]
 type StandardTestCase = TestsFlextModels.Tests.StandardTestCaseModel
 
 
@@ -83,11 +82,11 @@ class AssertionHelpers:
 
     @staticmethod
     def assert_flext_result_success[TResult](
-        result: FlextResult[TResult],
+        result: r[TResult],
         context: str = "",
         expected_type: type | None = None,
     ) -> TResult:
-        """Assert FlextResult success with optional type checking."""
+        """Assert r success with optional type checking."""
         assert result.is_success, f"{context}: Expected success, got: {result.error}"
         value = result.value
         if expected_type:
@@ -98,11 +97,11 @@ class AssertionHelpers:
 
     @staticmethod
     def assert_flext_result_failure[TResult](
-        result: FlextResult[TResult],
+        result: r[TResult],
         context: str = "",
         error_contains: str | None = None,
     ) -> str:
-        """Assert FlextResult failure with optional error checking."""
+        """Assert r failure with optional error checking."""
         assert result.is_failure, (
             f"{context}: Expected failure, got success: {result.value}"
         )
@@ -129,7 +128,7 @@ class AssertionHelpers:
 
     @staticmethod
     def assert_operation_result(
-        operation_func: Callable[[], FlextResult[t.ContainerValue]],
+        operation_func: Callable[[], r[t.ContainerValue]],
         test_case: StandardTestCase,
         context: str = "",
     ) -> t.ContainerValue:
@@ -226,9 +225,9 @@ class TestFixtureFactory:
         return FlextRegistry()
 
     @staticmethod
-    def create_test_result_instance() -> type[FlextResult[t.ContainerValue]]:
+    def create_test_result_instance() -> type[r[t.ContainerValue]]:
         """Create test result fixture."""
-        return FlextResult
+        return r
 
     @staticmethod
     def create_test_runtime_instance() -> type[FlextRuntime]:

@@ -37,7 +37,7 @@ class TestInventoryServiceCore:
         tm.ok(service.generate(tmp_path, output_dir=output_dir))
 
     def test_generate_returns_flextresult(self, tmp_path: Path) -> None:
-        """Generate returns FlextResult type."""
+        """Generate returns r type."""
         service = FlextInfraInventoryService()
         result = service.generate(tmp_path)
         tm.that(hasattr(result, "is_success"), eq=True)

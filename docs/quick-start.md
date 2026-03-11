@@ -3,7 +3,7 @@
 <!-- TOC START -->
 - [Installation](#installation)
 - [Core Concepts (2 minutes)](#core-concepts-2-minutes)
-  - [1. Railway-Oriented Programming (FlextResult[T])](#1-railway-oriented-programming-flextresultt)
+  - [1. Railway-Oriented Programming (r[T])](#1-railway-oriented-programming-flextresultt)
   - [2. Dependency Injection (FlextContainer)](#2-dependency-injection-flextcontainer)
   - [3. Domain-Driven Design (FlextModels)](#3-domain-driven-design-flextmodels)
 - [Common Use Cases (3 minutes)](#common-use-cases-3-minutes)
@@ -45,19 +45,19 @@ pip install flext-core
 
 FLEXT-Core provides three foundational patterns:
 
-### 1. Railway-Oriented Programming (FlextResult[T])
+### 1. Railway-Oriented Programming (r[T])
 
 Instead of exceptions, operations return either success or failure:
 
 ```python
-from flext_core import FlextResult
+from flext_core import r
 
 
-def validate_email(email: str) -> FlextResult[str]:
+def validate_email(email: str) -> r[str]:
     """Returns success or failure, never raises exceptions."""
     if "@" not in email:
-        return FlextResult[str].fail("Invalid email")
-    return FlextResult[str].ok(email)
+        return r[str].fail("Invalid email")
+    return r[str].ok(email)
 
 
 # Safe value extraction
@@ -122,23 +122,23 @@ print(f"Created: {user.name}")
 Chain validations together:
 
 ```python
-from flext_core import FlextResult
+from flext_core import r
 
 
-def validate_password(password: str) -> FlextResult[str]:
+def validate_password(password: str) -> r[str]:
     if len(password) < 8:
-        return FlextResult[str].fail("Password too short")
-    return FlextResult[str].ok(password)
+        return r[str].fail("Password too short")
+    return r[str].ok(password)
 
 
-def validate_username(username: str) -> FlextResult[str]:
+def validate_username(username: str) -> r[str]:
     if len(username) < 3:
-        return FlextResult[str].fail("Username too short")
-    return FlextResult[str].ok(username)
+        return r[str].fail("Username too short")
+    return r[str].ok(username)
 
 
 # Chain validations (railway pattern)
-def register_user(username: str, password: str) -> FlextResult[dict]:
+def register_user(username: str, password: str) -> r[dict]:
     return validate_username(username).flat_map(
         lambda u: validate_password(password).map(
             lambda p: {"username": u, "password": p}
@@ -158,18 +158,18 @@ else:
 ### Use Case 2: Service with Dependency Injection
 
 ```python
-from flext_core import FlextService, FlextResult, FlextContainer
+from flext_core import FlextService, r, FlextContainer
 
 
 class EmailService(FlextService):
     """Example service."""
 
-    def send_welcome_email(self, email: str) -> FlextResult[str]:
+    def send_welcome_email(self, email: str) -> r[str]:
         """Send welcome email."""
         if not email:
-            return FlextResult[str].fail("Email required")
+            return r[str].fail("Email required")
         # Send email logic here
-        return FlextResult[str].ok(f"Email sent to {email}")
+        return r[str].ok(f"Email sent to {email}")
 
 
 # Register and use
@@ -190,7 +190,7 @@ if service_result.is_success:
 
 ```python
 from pydantic import Field
-from flext_core import FlextModels, FlextService, FlextResult
+from flext_core import FlextModels, FlextService, r
 
 
 class OrderItem(m.Value):
@@ -212,19 +212,19 @@ class Order(FlextModels.Entity):
 class OrderService(FlextService):
     """Service with business logic."""
 
-    def create_order(self, customer_id: str, items: list[dict]) -> FlextResult[Order]:
+    def create_order(self, customer_id: str, items: list[dict]) -> r[Order]:
         """Create order with validation."""
         if not customer_id:
-            return FlextResult[Order].fail("Customer ID required")
+            return r[Order].fail("Customer ID required")
 
         if not items:
-            return FlextResult[Order].fail("At least one item required")
+            return r[Order].fail("At least one item required")
 
         # Create order
         order_items = [OrderItem(**item) for item in items]
         order = Order(id="ORD-001", items=order_items, customer_id=customer_id)
 
-        return FlextResult[Order].ok(order)
+        return r[Order].ok(order)
 
 
 # Use it
@@ -249,7 +249,7 @@ else:
 Route commands through the dispatcher to keep orchestration and side effects consistent:
 
 ```python
-from flext_core import FlextDispatcher, FlextRegistry, FlextResult, FlextService
+from flext_core import FlextDispatcher, FlextRegistry, r, FlextService
 
 
 class CreateUser(FlextService.Command):
@@ -259,11 +259,11 @@ class CreateUser(FlextService.Command):
 class UserService(FlextService):
     """Domain service implementing the command handler."""
 
-    def handle_create_user(self, command: CreateUser) -> FlextResult[str]:
+    def handle_create_user(self, command: CreateUser) -> r[str]:
         if not command.email:
-            return FlextResult[str].fail("Email required")
+            return r[str].fail("Email required")
         # persist user and raise domain event here
-        return FlextResult[str].ok(command.email)
+        return r[str].ok(command.email)
 
 
 registry = FlextRegistry()
@@ -281,11 +281,11 @@ if result.is_success:
 ### Pattern 1: Success/Failure Handling
 
 ```python
-# Return FlextResult instead of raising exceptions
-def operation() -> FlextResult[str]:
+# Return r instead of raising exceptions
+def operation() -> r[str]:
     if something_wrong:
-        return FlextResult[str].fail("Error message")
-    return FlextResult[str].ok("Success value")
+        return r[str].fail("Error message")
+    return r[str].ok("Success value")
 
 
 # Check result
@@ -300,7 +300,7 @@ else:
 ```python
 # Use map() to transform success values
 result = (
-    FlextResult[int]
+    r[int]
     .ok(10)
     .map(lambda x: x * 2)  # Transform to 20
     .map(lambda x: f"Result: {x}")  # Transform to "Result: 20"
@@ -310,11 +310,11 @@ result = (
 ### Pattern 3: Chain Operations
 
 ```python
-# Use flat_map() to chain operations that return FlextResult
+# Use flat_map() to chain operations that return r
 result = (
-    get_user(user_id)  # Returns FlextResult[User]
-    .flat_map(lambda user: update_profile(user))  # Returns FlextResult[User]
-    .flat_map(lambda user: send_confirmation(user))  # Returns FlextResult[str]
+    get_user(user_id)  # Returns r[User]
+    .flat_map(lambda user: update_profile(user))  # Returns r[User]
+    .flat_map(lambda user: send_confirmation(user))  # Returns r[str]
 )
 ```
 
@@ -334,7 +334,7 @@ result = operation().unwrap_or("default value")
 
 ```python
 # Both .data and .value work (backward compatibility)
-result = FlextResult[str].ok("test")
+result = r[str].ok("test")
 assert result.value == result.data == "test"
 ```
 
@@ -342,7 +342,7 @@ assert result.value == result.data == "test"
 
 ```python
 import pytest
-from flext_core import FlextResult
+from flext_core import r
 
 
 def test_validation_success():
@@ -361,7 +361,7 @@ def test_validation_failure():
 
 def test_chained_operations():
     """Test railway pattern chaining."""
-    result = FlextResult[int].ok(10).map(lambda x: x * 2).map(lambda x: x + 5)
+    result = r[int].ok(10).map(lambda x: x * 2).map(lambda x: x + 5)
     assert result.is_success
     assert result.value == 25
 ```
@@ -378,11 +378,11 @@ def test_chained_operations():
 
 ## Common Questions
 
-**Q: Do I have to use FlextResult everywhere?**
+**Q: Do I have to use r everywhere?**
 A: For business logic, yes. Railway pattern prevents error handling bugs. For external APIs, conversion at boundaries is fine.
 
 **Q: Can I use exceptions?**
-A: In infrastructure code (I/O, database), yes. But convert to FlextResult at domain layer boundaries.
+A: In infrastructure code (I/O, database), yes. But convert to r at domain layer boundaries.
 
 **Q: Is FlextContainer a service locator anti-pattern?**
 A: No - it's the foundation for dependency injection. Dependency injection is preferred, but container can bootstrap services and provide global access.
@@ -391,14 +391,14 @@ A: No - it's the foundation for dependency injection. Dependency injection is pr
 A: They're identical - both access the success value. `.data` is legacy, `.value` is current. Both work.
 
 **Q: How do I handle async operations?**
-A: FlextResult works with async/await normally:
+A: r works with async/await normally:
 
 ```python
-async def get_user_async(user_id: str) -> FlextResult[User]:
+async def get_user_async(user_id: str) -> r[User]:
     if not user_id:
-        return FlextResult[User].fail("User ID required")
+        return r[User].fail("User ID required")
     user = await fetch_from_database(user_id)
-    return FlextResult[User].ok(user)
+    return r[User].ok(user)
 
 
 # Use it
@@ -408,7 +408,7 @@ if result.is_success:
 ```
 
 **Q: Can I create custom exception types?**
-A: Yes, but prefer FlextResult for business errors. Custom exceptions for framework/infrastructure errors are fine.
+A: Yes, but prefer r for business errors. Custom exceptions for framework/infrastructure errors are fine.
 
 **Q: Where do I put my code?**
 A: Follow clean architecture layers:
@@ -440,8 +440,8 @@ make validate
 
 | Task                    | Code                                   |
 | ----------------------- | -------------------------------------- |
-| **Return Success**      | `FlextResult[T].ok(value)`             |
-| **Return Error**        | `FlextResult[T].fail("error message")` |
+| **Return Success**      | `r[T].ok(value)`             |
+| **Return Error**        | `r[T].fail("error message")` |
 | **Check Success**       | `result.is_success`                    |
 | **Extract Value**       | `result.value`                         |
 | **Get Error**           | `result.error`                         |

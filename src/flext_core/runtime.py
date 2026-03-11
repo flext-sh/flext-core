@@ -207,6 +207,8 @@ class FlextRuntime:
         @property
         def _writer_log(self) -> p.Log.StructlogLogger:
             """Logger for async log writer."""
+            if getattr(self, "_writer_logger", None) is None:
+                self._writer_logger = structlog.get_logger(__name__)
             logger = self._writer_logger
             if logger is None:
                 logger = structlog.get_logger(__name__)
@@ -540,6 +542,14 @@ class FlextRuntime:
             if type_hint in {list, tuple, str}:
                 return True
             if isinstance(type_hint, type) and issubclass(type_hint, Sequence):
+                return True
+            if isinstance(type_hint, type) and getattr(type_hint, "__name__", "") in {
+                "StringList",
+                "IntList",
+                "FloatList",
+                "BoolList",
+                "List",
+            }:
                 return True
             if not isinstance(type_hint, str):
                 return False
@@ -1205,17 +1215,17 @@ class FlextRuntime:
         """Lightweight Result implementation for Tier 0.5.
 
         This class implements p.Result without depending
-        on FlextResult, allowing runtime.py to create results that can be used
-        by higher layers. FlextResult can wrap or extend this as needed.
+        on r, allowing runtime.py to create results that can be used
+        by higher layers. r can wrap or extend this as needed.
 
         **Type Compatibility**:
         - Implements p.Result[T] protocol (structural typing)
-        - Compatible with FlextResult[T] for mypy type checking
+        - Compatible with r[T] for mypy type checking
         - Both types can be used interchangeably where p.Result[T] is expected
 
         **Mypy Recognition**:
         - RuntimeResult[T] is recognized by mypy as compatible with p.Result[T]
-        - Functions accepting p.Result[T] will accept both RuntimeResult[T] and FlextResult[T]
+        - Functions accepting p.Result[T] will accept both RuntimeResult[T] and r[T]
         - Use p.Result[T] in function signatures to accept both types
         """
 
@@ -1330,7 +1340,7 @@ class FlextRuntime:
         def result(self) -> Self:
             """Access internal result for protocol compatibility.
 
-            RuntimeResult doesn't use an internal Result wrapper like FlextResult,
+            RuntimeResult doesn't use an internal Result wrapper like r,
             so this returns self for protocol compatibility.
             """
             return self
@@ -1343,7 +1353,7 @@ class FlextRuntime:
             property always returns a valid value when is_success is True.
 
             Raises:
-                RuntimeError: If result is failure (consistent with FlextResult)
+                RuntimeError: If result is failure (consistent with r)
 
             """
             if not self._is_success:
@@ -1365,7 +1375,7 @@ class FlextRuntime:
 
             Business Rule: Creates failed RuntimeResult with error message, optional error
             code, and optional error metadata. Converts None error to empty string for
-            consistency. This matches the API of FlextResult.fail() for compatibility.
+            consistency. This matches the API of r.fail() for compatibility.
 
             Args:
                 error: Error message (None will be converted to empty string)
@@ -1390,7 +1400,7 @@ class FlextRuntime:
 
             Business Rule: Creates successful RuntimeResult wrapping value. Raises ValueError
             if value is None (None values are not allowed in success results). This enforces
-            the same invariant as FlextResult.ok() at the base class level.
+            the same invariant as r.ok() at the base class level.
 
             Args:
                 value: Value to wrap in success result (must not be None)
@@ -1552,7 +1562,7 @@ class FlextRuntime:
             """Return the protocol name for BaseProtocol compliance.
 
             Required by FlextProtocols.BaseProtocol to enable protocol introspection
-            and ensure FlextResult satisfies the ResultLike protocol.
+            and ensure r satisfies the ResultLike protocol.
             """
             return "RuntimeResult"
 

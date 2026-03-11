@@ -1,7 +1,7 @@
 """Final push to 75% coverage - simple, focused tests.
 
 Module: flext_core (coverage tests)
-Scope: FlextResult, FlextContainer, FlextExceptions, u
+Scope: r, FlextContainer, FlextExceptions, u
 
 Simple tests targeting uncovered lines.
 
@@ -19,11 +19,11 @@ from typing import ClassVar, cast
 import pytest
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import FlextContainer, FlextExceptions, FlextResult, p, u
+from flext_core import FlextContainer, FlextExceptions, p, r, u
 
 
 class ResultOperationScenario(BaseModel):
-    """FlextResult operation test scenario."""
+    """r operation test scenario."""
 
     model_config = ConfigDict(frozen=True)
 
@@ -159,14 +159,14 @@ class TestCoveragePush75Percent:
     """Simple tests targeting uncovered lines using FlextTestsUtilities."""
 
     def test_result_basic_ok(self) -> None:
-        """Test basic FlextResult ok."""
-        r = FlextResult[int].ok(42)
+        """Test basic r ok."""
+        r = r[int].ok(42)
         assert r.is_success
         assert r.value == 42
 
     def test_result_basic_fail(self) -> None:
-        """Test basic FlextResult fail."""
-        r: FlextResult[int] = FlextResult[int].fail("error")
+        """Test basic r fail."""
+        r: r[int] = r[int].fail("error")
         assert r.is_failure
         assert r.error == "error"
 
@@ -176,28 +176,28 @@ class TestCoveragePush75Percent:
         ids=lambda s: s.name,
     )
     def test_result_operations(self, scenario: ResultOperationScenario) -> None:
-        """Test FlextResult operations with various scenarios."""
+        """Test r operations with various scenarios."""
         if scenario.initial_value is not None:
-            initial_result = FlextResult[int].ok(scenario.initial_value)
-            r: FlextResult[object] = FlextResult[object](initial_result._result)
+            initial_result = r[int].ok(scenario.initial_value)
+            r: r[object] = r[object](initial_result._result)
         else:
-            initial_result = FlextResult[int].fail("error")
-            r = FlextResult[object](initial_result._result)
+            initial_result = r[int].fail("error")
+            r = r[object](initial_result._result)
         for op in scenario.operations:
             if op == "map":
                 r = r.map(lambda x: x * 2 if isinstance(x, int) else x)
             elif op == "flat_map":
 
-                def flat_map_func(x: object) -> FlextResult[object]:
+                def flat_map_func(x: object) -> r[object]:
                     if isinstance(x, int):
-                        return FlextResult[object].ok(x * 2)
-                    return FlextResult[object].ok(x)
+                        return r[object].ok(x * 2)
+                    return r[object].ok(x)
 
                 r = r.flat_map(flat_map_func)
             elif op == "flat_map_fail":
-                r = r.flat_map(lambda _: FlextResult[object].fail("error"))
+                r = r.flat_map(lambda _: r[object].fail("error"))
             elif op == "lash":
-                r = r.lash(lambda _: FlextResult[object].ok(99))
+                r = r.lash(lambda _: r[object].ok(99))
         if scenario.expected_success:
             assert r.is_success
             if scenario.expected_value is not None:
@@ -270,38 +270,38 @@ class TestCoveragePush75Percent:
 
     def test_result_value_property(self) -> None:
         """Test result .value property."""
-        r = FlextResult[str].ok("value")
+        r = r[str].ok("value")
         assert r.value == "value"
 
     def test_result_unwrap_or(self) -> None:
         """Test unwrap_or with default."""
-        r: FlextResult[int] = FlextResult[int].fail("error")
+        r: r[int] = r[int].fail("error")
         assert r.unwrap_or(42) == 42
-        r2 = FlextResult[int].ok(10)
+        r2 = r[int].ok(10)
         assert r2.unwrap_or(42) == 10
 
     def test_result_bool(self) -> None:
         """Test result as boolean."""
-        success = FlextResult[int].ok(42)
+        success = r[int].ok(42)
         assert bool(success) is True
-        failure: FlextResult[int] = FlextResult[int].fail("error")
+        failure: r[int] = r[int].fail("error")
         assert bool(failure) is False
 
     def test_result_or_operator(self) -> None:
         """Test | operator for default."""
-        r: FlextResult[int] = FlextResult[int].fail("error")
+        r: r[int] = r[int].fail("error")
         result = r | 42
         assert result == 42
 
     def test_result_repr(self) -> None:
         """Test result repr."""
-        result = FlextResult[int].ok(42)
+        result = r[int].ok(42)
         repr_str = repr(result)
         assert "r.ok" in repr_str
 
     def test_result_filter(self) -> None:
         """Test filter method."""
-        r = FlextResult[int].ok(42)
+        r = r[int].ok(42)
         r2 = r.filter(lambda x: x > 0)
         assert r2.is_success
         assert r2.value == 42
@@ -315,13 +315,13 @@ class TestCoveragePush75Percent:
             return a // b
 
         divide_func = cast("p.VariadicCallable[int]", divide)
-        divide_wrapped: p.VariadicCallable[FlextResult[int]] = FlextResult.safe(
+        divide_wrapped: p.VariadicCallable[r[int]] = r.safe(
             divide_func,
         )
-        r: FlextResult[int] = divide_wrapped(10, 2)
+        r: r[int] = divide_wrapped(10, 2)
         assert r.is_success
         assert r.value == 5
-        r2: FlextResult[int] = divide_wrapped(10, 0)
+        r2: r[int] = divide_wrapped(10, 0)
         assert r2.is_failure
 
 

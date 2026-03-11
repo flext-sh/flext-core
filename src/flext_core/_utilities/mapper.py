@@ -2539,7 +2539,7 @@ class FlextUtilitiesMapper:
             to_json: Convert to JSON-compatible values.
 
         Returns:
-            FlextResult with transformed dictionary.
+            r with transformed dictionary.
 
         Example:
             >>> result = FlextUtilitiesMapper.transform(

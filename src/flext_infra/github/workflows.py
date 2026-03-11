@@ -1,6 +1,6 @@
 """Workflow sync service for canonical GitHub workflow distribution.
 
-Wraps workflow sync operations with FlextResult error handling,
+Wraps workflow sync operations with r error handling,
 replacing scripts/github/sync_workflows.py with a service class.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -51,7 +51,7 @@ class FlextInfraWorkflowSyncer:
             template_path: Path to the template file.
 
         Returns:
-            FlextResult with the rendered template content.
+            r with the rendered template content.
 
         """
         try:
@@ -77,7 +77,7 @@ class FlextInfraWorkflowSyncer:
             source_workflow: Optional explicit source path.
 
         Returns:
-            FlextResult with the resolved source path.
+            r with the resolved source path.
 
         """
         if source_workflow is not None:
@@ -113,7 +113,7 @@ class FlextInfraWorkflowSyncer:
             prune: If True, remove non-canonical workflows.
 
         Returns:
-            FlextResult with list of sync operations.
+            r with list of sync operations.
 
         """
         operations: list[SyncOperation] = []
@@ -200,7 +200,7 @@ class FlextInfraWorkflowSyncer:
             prune: If True, remove non-canonical workflows.
 
         Returns:
-            FlextResult with all sync operations.
+            r with all sync operations.
 
         """
         source_result = self.resolve_source_workflow(workspace_root, source_workflow)

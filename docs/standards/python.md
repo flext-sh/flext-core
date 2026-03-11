@@ -44,7 +44,7 @@ FLEXT-Core enforces **zero-tolerance** quality standards. These are non-negotiab
 
 ```python
 # ✅ CORRECT
-def get_user(user_id: str) -> FlextResult[User]:
+def get_user(user_id: str) -> r[User]:
     """Get user by ID."""
     pass
 
@@ -63,7 +63,7 @@ def get_user(user_id: str):  # Missing return type
     pass
 
 
-def get_user(user_id: str) -> None:  # Wrong return type (should be FlextResult)
+def get_user(user_id: str) -> None:  # Wrong return type (should be r)
     pass
 
 
@@ -124,7 +124,7 @@ def very_long_function_name(
     parameter_one: str,
     parameter_two: int,
     parameter_three: bool,
-) -> FlextResult[dict]:
+) -> r[dict]:
     """Function with many parameters."""
     pass
 
@@ -132,7 +132,7 @@ def very_long_function_name(
 # ❌ WRONG - Exceeds 79 chars
 def very_long_function_name(
     parameter_one: str, parameter_two: int, parameter_three: bool
-) -> FlextResult[dict]:
+) -> r[dict]:
     pass
 ```
 
@@ -148,10 +148,10 @@ from typing import TypeVar
 import pydantic
 import structlog
 
-from flext_core import FlextResult, FlextContainer
+from flext_core import r, FlextContainer
 
 # ❌ WRONG - Mixed order
-from flext_core import FlextResult
+from flext_core import r
 import os
 import pydantic
 from datetime import datetime
@@ -162,7 +162,7 @@ from flext_core import FlextContainer
 
 ```python
 # ✅ CORRECT
-class FlextResult:  # PascalCase for classes
+class r:  # PascalCase for classes
     """Result monad."""
 
     def unwrap(self) -> Any:  # snake_case for methods
@@ -198,7 +198,7 @@ def create_user(
     name: str,
     email: str,
     age: int,
-) -> FlextResult[User]:
+) -> r[User]:
     """Create new user with validation.
 
     Args:
@@ -207,10 +207,10 @@ def create_user(
         age: User's age (must be >= 18).
 
     Returns:
-        FlextResult[User]: Success with created user or failure with error.
+        r[User]: Success with created user or failure with error.
 
     Raises:
-        None: Uses FlextResult for errors.
+        None: Uses r for errors.
 
     Example:
         >>> result = create_user("Alice", "alice@example.com", 25)
@@ -223,7 +223,7 @@ def create_user(
 
 
 # ❌ WRONG - Missing docstring
-def create_user(name: str, email: str, age: int) -> FlextResult[User]:
+def create_user(name: str, email: str, age: int) -> r[User]:
     pass
 
 
@@ -259,11 +259,11 @@ class User(FlextModels.Entity):
 ### Railway-Oriented Always
 
 ```python
-# ✅ CORRECT - Return FlextResult
-def validate_email(email: str) -> FlextResult[str]:
+# ✅ CORRECT - Return r
+def validate_email(email: str) -> r[str]:
     if "@" not in email:
-        return FlextResult[str].fail("Invalid email")
-    return FlextResult[str].ok(email)
+        return r[str].fail("Invalid email")
+    return r[str].ok(email)
 
 
 # ❌ WRONG - Raising exceptions
@@ -280,9 +280,9 @@ def validate_email(email: str) -> str:
 try:
     result = operation()
 except TimeoutError:
-    return FlextResult.fail("Operation timeout")
+    return r.fail("Operation timeout")
 except ValueError as e:
-    return FlextResult.fail(f"Invalid input: {e}")
+    return r.fail(f"Invalid input: {e}")
 
 # ❌ WRONG - Bare except catches everything
 try:
@@ -331,18 +331,18 @@ def test_validate():
 ```python
 # ✅ CORRECT - One conceptual assertion
 def test_result_ok_creates_success():
-    result = FlextResult[int].ok(42)
+    result = r[int].ok(42)
     assert result.is_success
 
 
 def test_result_ok_contains_value():
-    result = FlextResult[int].ok(42)
+    result = r[int].ok(42)
     assert result.value == 42
 
 
 # ❌ WRONG - Multiple concepts
 def test_result():
-    result = FlextResult[int].ok(42)
+    result = r[int].ok(42)
     assert result.is_success
     assert result.value == 42
     assert result.data == 42

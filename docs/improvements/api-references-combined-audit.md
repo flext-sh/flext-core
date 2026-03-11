@@ -33,8 +33,8 @@ ______________________________________________________________________
 
 ### foundation.md (Layers 0, 0.5, 1)
 
-- **Strengths**: Clear coverage of `FlextConstants`, `t`, `p`, `FlextResult`, `FlextContainer`, and `FlextExceptions` with minimal imports.
-- **Gaps**: Add a short example for `FlextResult.map_error`/`flat_map`, confirm constants/types examples point to active symbols, and include a one-liner showing the alias import pattern (`from flext_core import u, t, c, m, p, r, e, d, s, x, h`).
+- **Strengths**: Clear coverage of `FlextConstants`, `t`, `p`, `r`, `FlextContainer`, and `FlextExceptions` with minimal imports.
+- **Gaps**: Add a short example for `r.map_error`/`flat_map`, confirm constants/types examples point to active symbols, and include a one-liner showing the alias import pattern (`from flext_core import u, t, c, m, p, r, e, d, s, x, h`).
 
 ### domain.md (Layer 2)
 

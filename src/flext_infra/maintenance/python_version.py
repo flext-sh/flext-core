@@ -59,7 +59,7 @@ class FlextInfraPythonVersionEnforcer(s[int]):
             verbose: If True, print detailed output.
 
         Returns:
-            FlextResult[int]: Exit code (0 for success, 1 for failure).
+            r[int]: Exit code (0 for success, 1 for failure).
 
         """
         self.check_only = check_only

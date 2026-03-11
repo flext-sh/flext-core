@@ -1,7 +1,7 @@
 """Release orchestration service.
 
 Manages the full release lifecycle through composable phases: validate,
-version, build, and publish. Each phase returns FlextResult for railway-style
+version, build, and publish. Each phase returns r for railway-style
 error handling. Migrated from scripts/release/run.py.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.

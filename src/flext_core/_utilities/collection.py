@@ -880,7 +880,7 @@ class FlextUtilitiesCollection:
             mapping: Dict with string or enum values
 
         Returns:
-            FlextResult with parsed dict
+            r with parsed dict
 
         Example:
             result = u.Collection.parse_mapping(Status, {"key": "active"})
@@ -979,7 +979,7 @@ class FlextUtilitiesCollection:
             exclude_keys: Exclude items with these keys (for dict items)
 
         Returns:
-            FlextResult with list of processed results or error
+            r with list of processed results or error
 
         """
         _ = filter_keys

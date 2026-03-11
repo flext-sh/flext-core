@@ -377,7 +377,7 @@ class FlextContext(FlextRuntime):
         """Get a value from the context.
 
         Fast fail: Returns r[t.ContainerValue] - fails if key not found.
-        No fallback behavior - use FlextResult monadic operations for defaults.
+        No fallback behavior - use r monadic operations for defaults.
 
         ARCHITECTURAL NOTE: Uses Python contextvars for storage (single source of truth).
         No longer checks structlog - FlextLogger is independent.
@@ -437,7 +437,7 @@ class FlextContext(FlextRuntime):
         """Get metadata from the context.
 
         Fast fail: Returns r[t.ContainerValue] - fails if key not found.
-        No fallback behavior - use FlextResult monadic operations for defaults.
+        No fallback behavior - use r monadic operations for defaults.
 
         Args:
             key: The metadata key
@@ -1044,7 +1044,7 @@ class FlextContext(FlextRuntime):
 
         @staticmethod
         def get_service(service_name: str) -> r[t.ContainerValue]:
-            """Resolve service from global container using FlextResult.
+            """Resolve service from global container using r.
 
             Provides unified service resolution pattern across the ecosystem
             by integrating FlextContainer with FlextContext.
@@ -1077,7 +1077,7 @@ class FlextContext(FlextRuntime):
         def register_service(
             service_name: str, service: t.ContainerValue | BaseModel
         ) -> r[bool]:
-            """Register service in global container using FlextResult.
+            """Register service in global container using r.
 
             Provides unified service registration pattern across the ecosystem
             by integrating FlextContainer with FlextContext.

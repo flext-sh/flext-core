@@ -560,7 +560,7 @@ class TestModelSerialization:
 
 
 class TestModelIntegration:
-    """Test model integration with FlextResult using FlextTestsUtilities."""
+    """Test model integration with r using FlextTestsUtilities."""
 
     def test_entity_model_validation(self) -> None:
         """Test entity model validation via model_validate."""

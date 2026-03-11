@@ -1,4 +1,4 @@
-"""FlextResult (r) — exercises ALL public API methods with golden file validation."""
+"""r (r) — exercises ALL public API methods with golden file validation."""
 
 from __future__ import annotations
 
@@ -8,11 +8,11 @@ from returns.io import IOFailure, IOSuccess
 from returns.maybe import Nothing, Some
 
 from examples.shared import Examples
-from flext_core import FlextResult, e, r, t
+from flext_core import e, r, t
 
 
 class Ex01FlextResult(Examples):
-    """Golden-file tests for ``FlextResult`` / ``r`` public API."""
+    """Golden-file tests for ``r`` / ``r`` public API."""
 
     def __init__(self) -> None:
         """Initialise harness bound to this script's golden file."""
@@ -22,7 +22,7 @@ class Ex01FlextResult(Examples):
         """Exercise collection helpers and resource management wrapper."""
         self.section("collections_and_resource")
 
-        def to_even(n: int) -> FlextResult[int]:
+        def to_even(n: int) -> r[int]:
             if n % 2 == 0:
                 return r[int].ok(n)
             return r[int].fail(f"odd:{n}")

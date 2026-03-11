@@ -7,7 +7,7 @@
   - [Rationale - ADR-001](#rationale-adr-001)
   - [Alternatives Considered - ADR-001](#alternatives-considered-adr-001)
   - [Consequences - ADR-001](#consequences-adr-001)
-- [ADR-002: Railway-Oriented Programming with FlextResult](#adr-002-railway-oriented-programming-with-flextresult)
+- [ADR-002: Railway-Oriented Programming with r](#adr-002-railway-oriented-programming-with-flextresult)
   - [Problem - ADR-002](#problem-adr-002)
   - [Decision - ADR-002](#decision-adr-002)
   - [Rationale - ADR-002](#rationale-adr-002)
@@ -115,7 +115,7 @@ Implement strict 5-layer architecture with unidirectional dependencies:
 
 ______________________________________________________________________
 
-## ADR-002: Railway-Oriented Programming with FlextResult
+## ADR-002: Railway-Oriented Programming with r
 
 **Status:** ACCEPTED | **Date:** 2025-12-07
 
@@ -125,7 +125,7 @@ Need composable error handling without exceptions for explicit error flows.
 
 ### Decision - ADR-002
 
-Implement `FlextResult[T]` monad supporting both success and failure states with monadic operations (map, flat_map, filter).
+Implement `r[T]` monad supporting both success and failure states with monadic operations (map, flat_map, filter).
 
 ### Rationale - ADR-002
 
@@ -200,13 +200,13 @@ ONE public class per module with `Flext` prefix. Nested helpers allowed inside m
 
 ```python
 # ✅ CORRECT
-class FlextResult:
+class r:
     class _Implementation:  # Nested helper OK
         pass
 
 
 # ❌ FORBIDDEN
-class FlextResult:
+class r:
     pass
 
 
@@ -287,11 +287,11 @@ Layer 1 contracts example:
 
 ```python
 # GUARANTEED in 1.x
-FlextResult[T].ok(value)
-FlextResult[T].fail(error)
-FlextResult[T].value
-FlextResult[T].is_success
-FlextResult[T].value  # `.data` remains available as a legacy alias
+r[T].ok(value)
+r[T].fail(error)
+r[T].value
+r[T].is_success
+r[T].value  # `.data` remains available as a legacy alias
 ```
 
 ### Rationale - ADR-006
@@ -436,12 +436,12 @@ Use domain events (emitted from aggregates, published by infrastructure) for cro
 
 ```python
 class OrderService(FlextService):
-    def place_order(self, order: Order) -> FlextResult[Order]:
+    def place_order(self, order: Order) -> r[Order]:
         # Business logic
         order.place()
         # Emit event for subscribers
         self.add_domain_event(OrderPlacedEvent(order.entity_id))
-        return FlextResult[Order].ok(order)
+        return r[Order].ok(order)
 ```
 
 ### Rationale - ADR-010

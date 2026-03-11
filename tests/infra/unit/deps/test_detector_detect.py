@@ -25,7 +25,7 @@ class _DepsStub:
         self.deptry_failure: str | None = None
         self.typings_failure: str | None = None
 
-    def discover_projects(
+    def discover_project_paths(
         self,
         root: Path,
         *,

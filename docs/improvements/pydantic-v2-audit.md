@@ -19,7 +19,7 @@
 - [Quantitative Metrics](#quantitative-metrics)
   - [Pydantic v2 Pattern Adoption](#pydantic-v2-pattern-adoption)
   - [Pydantic v1 Legacy Code](#pydantic-v1-legacy-code)
-- [Integration with FlextResult Pattern ✅](#integration-with-flextresult-pattern)
+- [Integration with r Pattern ✅](#integration-with-flextresult-pattern)
 - [Cross-Reference Verification](#cross-reference-verification)
   - [Internal Links ✅](#internal-links)
   - [External References ✅](#external-references)
@@ -431,9 +431,9 @@ ______________________________________________________________________
 
 ______________________________________________________________________
 
-## Integration with FlextResult Pattern ✅
+## Integration with r Pattern ✅
 
-**Guide Claims**: Always wrap Pydantic validation in FlextResult
+**Guide Claims**: Always wrap Pydantic validation in r
 
 **Source Code Evidence**:
 The guide correctly shows the integration pattern. While direct examples aren't pervasive (Pydantic validation errors are typically handled at boundaries), the pattern is recommended and correct.
@@ -530,7 +530,7 @@ ______________________________________________________________________
 
 1. **Add Validation Error Handling**
 
-   - Expand FlextResult integration examples
+   - Expand r integration examples
    - Show error serialization patterns
    - Document validation error codes
 
@@ -564,7 +564,7 @@ ______________________________________________________________________
 - ✅ Custom types with validation
 - ✅ Discriminated unions
 - ✅ JSON schema generation
-- ✅ FlextResult integration
+- ✅ r integration
 
 **Could Add** (Enhancement Ideas):
 

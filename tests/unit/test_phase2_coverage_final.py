@@ -19,13 +19,13 @@ from typing import ClassVar
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import FlextResult, FlextSettings
+from flext_core import FlextSettings, r
 
 from ..test_utils import assertion_helpers
 
 
 class ResultChainingScenario(BaseModel):
-    """FlextResult chaining test scenario."""
+    """r chaining test scenario."""
 
     model_config = ConfigDict(frozen=True)
 
@@ -70,34 +70,32 @@ class TestPhase2FinalCoveragePush:
     """Strategic tests targeting remaining coverage gaps using FlextTestsUtilities."""
 
     def test_flext_result_chaining_operations(self) -> None:
-        """Test FlextResult chaining with multiple operations."""
-        result = FlextResult[str].ok("hello").map(str.upper).map(lambda x: f"{x}!")
+        """Test r chaining with multiple operations."""
+        result = r[str].ok("hello").map(str.upper).map(lambda x: f"{x}!")
         _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value == "HELLO!"
 
     def test_flext_result_flat_map_chaining(self) -> None:
-        """Test FlextResult flat_map chaining."""
+        """Test r flat_map chaining."""
 
-        def double_string(s: object) -> FlextResult[object]:
+        def double_string(s: object) -> r[object]:
             """Double the string or fail."""
             if not isinstance(s, str):
-                return FlextResult[object].fail("Not a string")
+                return r[object].fail("Not a string")
             if len(s) > 10:
-                return FlextResult[object].fail("Too long")
-            return FlextResult[object].ok(s + s)
+                return r[object].fail("Too long")
+            return r[object].ok(s + s)
 
-        result = (
-            FlextResult[str].ok("hi").flat_map(double_string).flat_map(double_string)
-        )
+        result = r[str].ok("hi").flat_map(double_string).flat_map(double_string)
         _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value == "hihihihi"
 
     def test_flext_result_error_propagation(self) -> None:
-        """Test FlextResult error propagation in chain."""
+        """Test r error propagation in chain."""
 
-        def failing_op(s: object) -> FlextResult[object]:
+        def failing_op(s: object) -> r[object]:
             """Operation that fails."""
-            return FlextResult[object].fail("operation failed")
+            return r[object].fail("operation failed")
 
         def upper_func(v: object) -> object:
             """Convert to uppercase."""
@@ -105,7 +103,7 @@ class TestPhase2FinalCoveragePush:
                 return v.upper()
             return v
 
-        result = FlextResult[str].ok("input").flat_map(failing_op).map(upper_func)
+        result = r[str].ok("input").flat_map(failing_op).map(upper_func)
         _ = assertion_helpers.assert_flext_result_failure(result)
         assert result.error == "operation failed"
 
@@ -139,41 +137,41 @@ class TestPhase2FinalCoveragePush:
         assert new_config.version == original.version
 
     def test_flext_result_unwrap_safe_operations(self) -> None:
-        """Test FlextResult unwrap and value operations."""
-        success_result = FlextResult[str].ok("success_value")
+        """Test r unwrap and value operations."""
+        success_result = r[str].ok("success_value")
         assert success_result.value == "success_value"
         assert success_result.value == "success_value"
         assert success_result.value == "success_value"
 
     def test_flext_result_is_methods(self) -> None:
-        """Test FlextResult boolean check methods."""
-        success = FlextResult[str].ok("test")
+        """Test r boolean check methods."""
+        success = r[str].ok("test")
         assert success.is_success is True
         assert success.is_failure is False
-        failure: FlextResult[str] = FlextResult[str].fail("error")
+        failure: r[str] = r[str].fail("error")
         assert failure.is_success is False
         assert failure.is_failure is True
 
     def test_flext_result_error_access(self) -> None:
-        """Test FlextResult error property access."""
-        failure: FlextResult[str] = FlextResult[str].fail("test_error")
+        """Test r error property access."""
+        failure: r[str] = r[str].fail("test_error")
         assert failure.error == "test_error"
 
     def test_flext_result_lash_operations(self) -> None:
-        """Test FlextResult lash recovery operations."""
-        failure: FlextResult[str] = FlextResult[str].fail("original_error")
+        """Test r lash recovery operations."""
+        failure: r[str] = r[str].fail("original_error")
 
-        def recover_func(error: str) -> FlextResult[str]:
+        def recover_func(error: str) -> r[str]:
             """Recovery function."""
-            return FlextResult[str].ok("recovered_value")
+            return r[str].ok("recovered_value")
 
         recovered = failure.lash(recover_func)
         assert recovered.is_success
         assert recovered.value == "recovered_value"
 
     def test_flext_result_alt_operations(self) -> None:
-        """Test FlextResult alt error transformation."""
-        failure: FlextResult[str] = FlextResult[str].fail("original_error")
+        """Test r alt error transformation."""
+        failure: r[str] = r[str].fail("original_error")
 
         def transform_error(error: str) -> str:
             """Transform error message."""

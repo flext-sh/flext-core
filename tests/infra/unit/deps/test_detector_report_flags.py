@@ -24,7 +24,7 @@ class _DepsStub:
         self._raw_count = raw_count
         self._pip_exit = pip_exit
 
-    def discover_projects(
+    def discover_project_paths(
         self,
         root: Path,
         *,

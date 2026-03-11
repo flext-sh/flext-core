@@ -2,7 +2,7 @@
 
 These helpers centralize delimiter handling, whitespace normalization, and
 escaped character parsing so dispatcher handlers and services receive
-predictable ``FlextResult`` outcomes instead of ad-hoc string handling.
+predictable ``r`` outcomes instead of ad-hoc string handling.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -30,7 +30,7 @@ class FlextUtilitiesParser:
     r"""Parse delimited and structured strings with predictable results.
 
     The parser consolidates delimiter handling, escape-aware splits, and
-    normalization routines behind ``FlextResult`` so callers can compose
+    normalization routines behind ``r`` so callers can compose
     parsing logic in dispatcher pipelines without manual error handling.
 
     Examples:
@@ -94,7 +94,7 @@ class FlextUtilitiesParser:
 
     @staticmethod
     def _coerce_to_str(value: t.ContainerValue) -> r[str]:
-        """Coerce value to string - returns FlextResult[str]."""
+        """Coerce value to string - returns r[str]."""
         return r[str].ok(str(value))
 
     @staticmethod
@@ -948,7 +948,7 @@ class FlextUtilitiesParser:
             patterns: List of (pattern, replacement) or (pattern, replacement, flags) tuples
 
         Returns:
-            FlextResult with transformed text or error
+            r with transformed text or error
 
         Example:
             >>> patterns = [
@@ -1091,7 +1091,7 @@ class FlextUtilitiesParser:
             replacement: Replacement string (default: single space)
 
         Returns:
-            FlextResult with normalized text or error
+            r with normalized text or error
 
         Example:
             >>> parser = FlextUtilitiesParser()
@@ -1165,7 +1165,7 @@ class FlextUtilitiesParser:
             options: ParseOptions object with parsing configuration
 
         Returns:
-            FlextResult with list of parsed components or error
+            r with list of parsed components or error
 
         Example:
             >>> from flext_core._models.collections import FlextModelsCollections
@@ -1262,7 +1262,7 @@ class FlextUtilitiesParser:
             escape_char: Escape character (default: backslash)
 
         Returns:
-            FlextResult with list of split components or error
+            r with list of split components or error
 
         Example:
             >>> # Parse DN with escaped commas
@@ -1327,7 +1327,7 @@ class FlextUtilitiesParser:
             escape_char: Escape character
 
         Returns:
-            FlextResult with list of split components or error
+            r with list of split components or error
 
         """
         text_len = self._get_safe_text_length(text)
@@ -1439,7 +1439,7 @@ class FlextUtilitiesParser:
         """Handle edge cases for regex pipeline application.
 
         Returns:
-            FlextResult if edge case handled, None to continue processing
+            r if edge case handled, None to continue processing
 
         """
         if text is None:

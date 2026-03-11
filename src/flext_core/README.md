@@ -28,7 +28,7 @@ FLEXT Core is a foundational framework providing core abstractions for building 
 
 This module provides the core infrastructure components used across the FLEXT ecosystem:
 
-- **Railway-oriented error handling** with `FlextResult[T]`
+- **Railway-oriented error handling** with `r[T]`
 - **Dependency injection container** with type-safe service registration
 - **CQRS implementation** with command/query dispatcher and registry
 - **Domain modeling** with entities, value objects, aggregates, and domain events
@@ -62,7 +62,7 @@ External concerns including logging, configuration, dependency injection, and co
 
 | Component         | Description                                                |
 | ----------------- | ---------------------------------------------------------- |
-| `FlextResult[T]`  | Railway-oriented error handling with monadic operations    |
+| `r[T]`  | Railway-oriented error handling with monadic operations    |
 | `FlextContainer`  | Dependency injection container with type-safe registration |
 | `FlextDispatcher` | Command/query dispatcher with reliability controls         |
 | `FlextContext`    | Hierarchical context management for tracing                |
@@ -88,7 +88,7 @@ from flext_core import x
 from flext_core import FlextModels
 from flext_core import p
 from flext_core import FlextRegistry
-from flext_core import FlextResult
+from flext_core import r
 from flext_core import FlextRuntime
 from flext_core import FlextService
 from flext_core import t
@@ -99,7 +99,7 @@ dispatcher = FlextDispatcher()
 registry = FlextRegistry()
 
 # Railway-oriented error handling
-result = FlextResult.success("operation completed")
+result = r.success("operation completed")
 if result.is_success:
     data = result.value
 ```
@@ -126,10 +126,10 @@ class User(FlextModels.Entity):
     name: str
     email: str
 
-    def validate(self) -> FlextResult[bool]:
+    def validate(self) -> r[bool]:
         if "@" not in self.email:
-            return FlextResult[bool].fail("Invalid email")
-        return FlextResult[bool].ok(True)
+            return r[bool].fail("Invalid email")
+        return r[bool].ok(True)
 ```
 
 ### Domain Events and Dispatcher Integration

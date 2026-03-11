@@ -52,7 +52,7 @@ class TestModuleAndTypingsFlow:
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         service = FlextInfraDependencyDetectionService()
-        payload = {
+        payload: dict[str, t.ContainerValue] = {
             "tool": {
                 "poetry": {
                     "group": {
@@ -69,11 +69,7 @@ class TestModuleAndTypingsFlow:
         monkeypatch.setattr(
             service,
             "toml",
-            _StubToml([
-                r[dict[str, dict[str, dict[str, dict[str, dict[str, str]]]]]].ok(
-                    payload
-                )
-            ]),
+            _StubToml([r[dict[str, t.ContainerValue]].ok(payload)]),
         )
         got = service.get_current_typings_from_pyproject(tmp_path)
         tm.that("types-pyyaml" in got, eq=True)

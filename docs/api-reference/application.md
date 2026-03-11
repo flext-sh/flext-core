@@ -58,7 +58,7 @@ user_result = dispatcher.dispatch(GetUserQuery("user-123"))
 
 ## h - CQRS Handler Base
 
-`h` provides the abstract base class for implementing command and query handlers. It supplies validation hooks, context propagation, and `FlextResult`-based error handling.
+`h` provides the abstract base class for implementing command and query handlers. It supplies validation hooks, context propagation, and `r`-based error handling.
 
 ```python
 from flext_core import h
@@ -99,7 +99,7 @@ summary = registry.register_handlers([
 **Highlights**
 
 - Batch or single registration with duplicate detection
-- Returns `FlextResult` objects describing successes and skips
+- Returns `r` objects describing successes and skips
 - Designed to pair with `FlextDispatcher` for execution
 
 ## FlextDecorators - Cross-Cutting Concerns
@@ -123,14 +123,14 @@ def handle_create_user(cmd: CreateUserCommand, logger) -> r[bool]:
 
 - Reliability decorators: `@retry`, `@timeout`, `@with_correlation`
 - Dependency injection: `@inject` to resolve services from `FlextContainer`
-- Railway pattern helper: `@railway` to wrap callables with `FlextResult`
+- Railway pattern helper: `@railway` to wrap callables with `r`
 
 ## Quick Start Checklist
 
 1. Define command/query messages and corresponding handlers inheriting `h`.
 1. Register handlers with `FlextDispatcher` or via `FlextRegistry` batch helpers.
 1. Apply `FlextDecorators` for retries, timeouts, context propagation, or DI.
-1. Dispatch messages through `FlextDispatcher.dispatch(...)` and work with `FlextResult` outputs.
+1. Dispatch messages through `FlextDispatcher.dispatch(...)` and work with `r` outputs.
 
 ## Verification Commands
 

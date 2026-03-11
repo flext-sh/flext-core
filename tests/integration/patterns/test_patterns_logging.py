@@ -19,7 +19,7 @@ EXPECTED_BULK_SIZE = 2
 
 
 def make_result_logger(name: str) -> FlextLogger.ResultAdapter:
-    """Helper to create loggers with FlextResult outputs."""
+    """Helper to create loggers with r outputs."""
     return FlextLogger(name).with_result()
 
 

@@ -28,7 +28,7 @@ class _DepsStub:
         self._project = project
         self._to_add = to_add
 
-    def discover_projects(
+    def discover_project_paths(
         self,
         root: Path,
         *,

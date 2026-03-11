@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
+from typing import override
 
 import pytest
 
@@ -33,7 +34,8 @@ def _create_workspace(root: Path, *, python_minor: int = 13) -> Path:
 
 def _make_enforcer(workspace: Path) -> FlextInfraPythonVersionEnforcer:
     class _TestEnforcer(FlextInfraPythonVersionEnforcer):
-        def _workspace_root_from_file(self, file: Path) -> Path:
+        @override
+        def _workspace_root_from_file(self, file: str | Path) -> Path:
             _ = file
             return workspace
 

@@ -104,7 +104,8 @@ def main() -> None:
             "pool_size": 10,
         }
     )
-    db_service = DatabaseService(db_config=db_config)
+    db_service = DatabaseService.model_construct()
+    setattr(db_service, "db_config", db_config)
     result = db_service.execute()
     if result.is_success:
         print(f"✅ Database query successful: {result.value}")

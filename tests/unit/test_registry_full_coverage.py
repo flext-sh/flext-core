@@ -7,17 +7,17 @@ from typing import cast, override
 
 import pytest
 
-from flext_core import FlextHandlers, FlextRegistry, FlextResult, c, h, m, p, r, t
+from flext_core import FlextHandlers, FlextRegistry, c, h, m, p, r, t
 
 
 class _Handler(FlextHandlers[t.ContainerValue, t.ContainerValue]):
     """Test handler implementation."""
 
     @override
-    def handle(self, message: t.ContainerValue) -> FlextResult[t.ContainerValue]:
+    def handle(self, message: t.ContainerValue) -> r[t.ContainerValue]:
         return r[t.ContainerValue].ok(message)
 
-    def __call__(self, message: t.ContainerValue) -> FlextResult[t.ContainerValue]:
+    def __call__(self, message: t.ContainerValue) -> r[t.ContainerValue]:
         return self.handle(message)
 
     def _protocol_name(self) -> str:

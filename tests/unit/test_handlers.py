@@ -20,7 +20,7 @@ from typing import ClassVar, override
 import pytest
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import FlextExceptions, FlextResult, c, h, m, t, x
+from flext_core import FlextExceptions, c, h, m, r, t, x
 from flext_tests import FlextTestsUtilities, u
 
 from ..test_utils import assertion_helpers
@@ -30,27 +30,27 @@ class ConcreteTestHandler(h[str, str]):
     """Concrete implementation of h for testing."""
 
     @override
-    def handle(self, message: str) -> FlextResult[str]:
+    def handle(self, message: str) -> r[str]:
         """Handle the message."""
-        return FlextResult[str].ok(f"processed_{message}")
+        return r[str].ok(f"processed_{message}")
 
 
 class ValidationTestHandler(h[object, str]):
     """Handler that accepts any object for validation testing."""
 
     @override
-    def handle(self, message: object) -> FlextResult[str]:
+    def handle(self, message: object) -> r[str]:
         """Handle the message."""
-        return FlextResult[str].ok(f"processed_{message}")
+        return r[str].ok(f"processed_{message}")
 
 
 class FailingTestHandler(h[str, str]):
     """Concrete implementation that fails for testing error handling."""
 
     @override
-    def handle(self, message: str) -> FlextResult[str]:
+    def handle(self, message: str) -> r[str]:
         """Handle the message with failure."""
-        return FlextResult[str].fail(f"Handler failed for: {message}")
+        return r[str].fail(f"Handler failed for: {message}")
 
 
 class HandlerConfigScenario(BaseModel):
@@ -192,8 +192,8 @@ class TestFlextHandlers:
 
         class IntHandler(h[int, str]):
             @override
-            def handle(self, message: int) -> FlextResult[str]:
-                return FlextResult[str].ok(f"processed_{message}")
+            def handle(self, message: int) -> r[str]:
+                return r[str].ok(f"processed_{message}")
 
         config = FlextTestsUtilities.Tests.HandlerHelpers.create_handler_config(
             "test_handler_10",
@@ -269,8 +269,8 @@ class TestFlextHandlers:
                 super().__init__(config=config)
 
             @override
-            def handle(self, message: dict[str, t.ContainerValue]) -> FlextResult[str]:
-                return FlextResult[str].ok(f"processed_{message}")
+            def handle(self, message: dict[str, t.ContainerValue]) -> r[str]:
+                return r[str].ok(f"processed_{message}")
 
         config_raw = FlextTestsUtilities.Tests.HandlerHelpers.create_handler_config(
             "test_pipeline_dict_command_id",
@@ -316,8 +316,8 @@ class TestFlextHandlers:
                 return False
 
             @override
-            def handle(self, message: str) -> FlextResult[str]:
-                return FlextResult[str].ok(f"processed_{message}")
+            def handle(self, message: str) -> r[str]:
+                return r[str].ok(f"processed_{message}")
 
         config_raw = FlextTestsUtilities.Tests.HandlerHelpers.create_handler_config(
             "test_pipeline_cannot_handle",
@@ -342,13 +342,13 @@ class TestFlextHandlers:
                 super().__init__(config=config)
 
             @override
-            def validate(self, data: object) -> FlextResult[bool]:
+            def validate(self, data: object) -> r[bool]:
                 _ = data
-                return FlextResult[bool].fail("Validation failed for test")
+                return r[bool].fail("Validation failed for test")
 
             @override
-            def handle(self, message: str) -> FlextResult[str]:
-                return FlextResult[str].ok(f"processed_{message}")
+            def handle(self, message: str) -> r[str]:
+                return r[str].ok(f"processed_{message}")
 
         config_raw = FlextTestsUtilities.Tests.HandlerHelpers.create_handler_config(
             "test_pipeline_validation_failure",
@@ -373,7 +373,7 @@ class TestFlextHandlers:
                 super().__init__(config=config)
 
             @override
-            def handle(self, message: str) -> FlextResult[str]:
+            def handle(self, message: str) -> r[str]:
                 _ = message
                 error_message = "Test exception in handler"
                 raise ValueError(error_message)
@@ -409,10 +409,10 @@ class TestFlextHandlers:
         u.Tests.Result.assert_success_with_value(result, "handled_test")
 
     def test_handlers_create_from_callable_with_flext_result(self) -> None:
-        """Test create_from_callable with function returning FlextResult."""
+        """Test create_from_callable with function returning r."""
 
         def result_handler(message: t.Scalar) -> t.Scalar:
-            return FlextResult[t.Scalar].ok(f"result_{message}").value
+            return r[t.Scalar].ok(f"result_{message}").value
 
         handler = h.create_from_callable(
             result_handler,

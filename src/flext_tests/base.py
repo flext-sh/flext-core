@@ -40,7 +40,7 @@ class FlextTestsServiceBase[T]:
         """Assert result is failure and return error message.
 
         Args:
-            result: FlextResult to check
+            result: r to check
 
         Returns:
             str: Error message from failed result
@@ -58,7 +58,7 @@ class FlextTestsServiceBase[T]:
         """Assert result is success and return unwrapped value.
 
         Args:
-            result: FlextResult to check
+            result: r to check
 
         Returns:
             TResult: Unwrapped value from successful result

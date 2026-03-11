@@ -872,7 +872,7 @@ class TestuCollectionMap:
     def test_map(self, scenario: MapScenario) -> None:
         """Test map with various scenarios."""
         if isinstance(scenario.items, (r, FlextRuntime.RuntimeResult)):
-            pytest.skip("Collection.map() does not handle FlextResult items")
+            pytest.skip("Collection.map() does not handle r items")
         result = u.Collection.map(scenario.items, scenario.mapper)
         assert result == scenario.expected_result
 

@@ -1,4 +1,4 @@
-"""Tests for FlextResult to achieve full coverage.
+"""Tests for r to achieve full coverage.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -31,7 +31,7 @@ def test_type_guards_and_protocol_name() -> None:
     fail_res: r[int] = cast("r[int]", r.fail("x"))
     assert r.is_success_result(ok_res)
     assert r.is_failure_result(fail_res)
-    assert ok_res._protocol_name() == "FlextResult"
+    assert ok_res._protocol_name() == "r"
 
 
 def test_init_fallback_and_lazy_result_property() -> None:

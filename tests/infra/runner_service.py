@@ -17,7 +17,7 @@ class RealSubprocessRunner(s[str]):
     """Real subprocess runner using flext_tests service base.
 
     Uses c.Infra.Cli constants for command validation and
-    r (FlextResult) for railway-oriented error handling.
+    r (r) for railway-oriented error handling.
     """
 
     subprocess_utility: type[FlextInfraUtilitiesSubprocess] = (

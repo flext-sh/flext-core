@@ -44,7 +44,7 @@ class TestStubChainAnalyze:
         tm.ok(result)
 
     def test_analyze_returns_flextresult(self, tmp_path: Path) -> None:
-        """Analyze returns FlextResult type."""
+        """Analyze returns r type."""
         chain = FlextInfraStubSupplyChain()
         proj = tmp_path / "project"
         proj.mkdir()
@@ -62,7 +62,7 @@ class TestStubChainValidate:
     """Validate method tests for FlextInfraStubSupplyChain."""
 
     def test_validate_workspace(self, tmp_path: Path) -> None:
-        """Workspace validation returns FlextResult."""
+        """Workspace validation returns r."""
         chain = FlextInfraStubSupplyChain()
         result = chain.validate(tmp_path)
         tm.ok(result)

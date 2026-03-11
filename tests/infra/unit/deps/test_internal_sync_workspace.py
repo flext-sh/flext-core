@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pytest
 
+import flext_infra.deps.internal_sync as _internal_sync_mod
 from flext_core import r
 from flext_infra.deps.internal_sync import FlextInfraInternalDependencySyncService
 from flext_tests import tm
@@ -115,7 +116,7 @@ class TestIsWorkspaceMode:
         ) -> r[str]:
             return r[str].ok(str(tmp_path))
 
-        monkeypatch.setattr("flext_infra.deps.internal_sync.u.Infra.git_run", _git_run)
+        monkeypatch.setattr(_internal_sync_mod.u.Infra, "git_run", _git_run)
         is_ws, root = FlextInfraInternalDependencySyncService().is_workspace_mode(
             tmp_path / "sub"
         )
@@ -137,7 +138,7 @@ class TestIsWorkspaceMode:
         ) -> r[str]:
             return r[str].ok("")
 
-        monkeypatch.setattr("flext_infra.deps.internal_sync.u.Infra.git_run", _git_run)
+        monkeypatch.setattr(_internal_sync_mod.u.Infra, "git_run", _git_run)
         is_ws, root = FlextInfraInternalDependencySyncService().is_workspace_mode(
             project
         )
@@ -158,7 +159,7 @@ class TestIsWorkspaceMode:
         ) -> r[str]:
             return r[str].ok("")
 
-        monkeypatch.setattr("flext_infra.deps.internal_sync.u.Infra.git_run", _git_run)
+        monkeypatch.setattr(_internal_sync_mod.u.Infra, "git_run", _git_run)
         is_ws, root = FlextInfraInternalDependencySyncService().is_workspace_mode(
             project
         )

@@ -8,7 +8,7 @@ Architecture:
     Integration Testing → Cross-Component Validation → Service Integration
 
     This module validates:
-    - FlextResult integration with FlextContainer dependency injection
+    - r integration with FlextContainer dependency injection
     - Type system coherence across foundation patterns
     - Service registration and retrieval workflows
     - Mock-based external service integration patterns
@@ -31,7 +31,7 @@ from __future__ import annotations
 
 import pytest
 
-from flext_core import FlextContainer, FlextResult, __version__, t, u
+from flext_core import FlextContainer, __version__, r, t, u
 from tests.test_utils import assertion_helpers
 
 from ..conftest import FunctionalExternalService
@@ -56,7 +56,7 @@ class TestLibraryIntegration:
         """Test comprehensive integration of core library exports.
 
         Validates that all primary exports work together seamlessly,
-        including FlextResult, FlextContainer, and type system integration.
+        including r, FlextContainer, and type system integration.
 
         Args:
             clean_container: Isolated container fixture
@@ -64,7 +64,7 @@ class TestLibraryIntegration:
 
         """
         test_value = str(sample_data["string"])
-        result = FlextResult[str].ok(test_value)
+        result = r[str].ok(test_value)
         _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value == test_value
         entity_id = u.generate()
@@ -85,9 +85,9 @@ class TestLibraryIntegration:
         clean_container: FlextContainer,
         mock_external_service: FunctionalExternalService,
     ) -> None:
-        """Test FlextResult integration with DI container factory pattern.
+        """Test r integration with DI container factory pattern.
 
-        Validates that FlextResult works seamlessly with dependency injection
+        Validates that r works seamlessly with dependency injection
         factory patterns for service creation and result handling.
 
         Args:
@@ -117,9 +117,9 @@ class TestLibraryIntegration:
         assert expected_result_data in mock_external_service.processed_items
 
     def test_entity_id_in_flext_result(self) -> None:
-        """Test entity ID used in FlextResult."""
+        """Test entity ID used in r."""
         entity_id = u.generate()
-        result = FlextResult[str].ok(entity_id)
+        result = r[str].ok(entity_id)
         _ = assertion_helpers.assert_flext_result_success(result)
         assert isinstance(result.value, str)
         assert len(result.value) == 36

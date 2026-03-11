@@ -29,7 +29,7 @@ class TestFixerCore:
     def test_fix_returns_flext_result(
         self, fixer: FlextInfraDocFixer, tmp_path: Path
     ) -> None:
-        """Test that fix returns FlextResult."""
+        """Test that fix returns r."""
         result = fixer.fix(tmp_path)
         tm.that(result.is_success or result.is_failure, eq=True)
 

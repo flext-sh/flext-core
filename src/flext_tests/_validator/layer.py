@@ -91,7 +91,7 @@ class FlextValidatorLayer:
             layer_hierarchy: Custom layer hierarchy (module_name -> layer_number)
 
         Returns:
-            FlextResult with ScanResult containing all violations found
+            r with ScanResult containing all violations found
 
         """
         violations: list[m.Tests.Validator.Violation] = []

@@ -17,7 +17,7 @@ from collections.abc import Callable
 
 import pytest
 
-from flext_core import FlextResult, t, u
+from flext_core import r, t, u
 
 from ...models import m
 
@@ -589,14 +589,14 @@ class TestAdvancedPatterns:
                 self.call_count = 0
                 self.states = ["processing", "completed", "error"]
 
-            def process(self, data: str) -> FlextResult[dict[str, str]]:
+            def process(self, data: str) -> r[dict[str, str]]:
                 """Process data with state transitions."""
                 self.call_count += 1
                 if self.call_count == 1:
-                    return FlextResult[dict[str, str]].ok({"status": "processing"})
+                    return r[dict[str, str]].ok({"status": "processing"})
                 if self.call_count == 2:
-                    return FlextResult[dict[str, str]].ok({"status": "completed"})
-                return FlextResult[dict[str, str]].fail("Service unavailable")
+                    return r[dict[str, str]].ok({"status": "completed"})
+                return r[dict[str, str]].fail("Service unavailable")
 
         service = ProcessingService()
         result1 = service.process("data1")

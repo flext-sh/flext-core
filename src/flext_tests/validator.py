@@ -119,7 +119,7 @@ class FlextTestsValidator(s[m.Tests.Validator.ScanResult]):
             include_tests_validation: Whether to include test pattern validation
 
         Returns:
-            FlextResult[ScanResult] with combined violations from all validators
+            r[ScanResult] with combined violations from all validators
 
         """
         all_violations: list[m.Tests.Validator.Violation] = []
@@ -176,7 +176,7 @@ class FlextTestsValidator(s[m.Tests.Validator.ScanResult]):
             approved_exceptions: Dict mapping rule IDs to approved file patterns
 
         Returns:
-            FlextResult[ScanResult] with violations found
+            r[ScanResult] with violations found
 
         """
         files = cls._discover_files(path, exclude_patterns)
@@ -205,7 +205,7 @@ class FlextTestsValidator(s[m.Tests.Validator.ScanResult]):
             approved_exceptions: Dict mapping rule IDs to approved file patterns
 
         Returns:
-            FlextResult[ScanResult] with violations found
+            r[ScanResult] with violations found
 
         """
         files = cls._discover_files(path, exclude_patterns)
@@ -231,7 +231,7 @@ class FlextTestsValidator(s[m.Tests.Validator.ScanResult]):
             layer_hierarchy: Custom layer hierarchy (module_name -> layer_number)
 
         Returns:
-            FlextResult[ScanResult] with violations found
+            r[ScanResult] with violations found
 
         """
         files = cls._discover_files(path, exclude_patterns)
@@ -257,7 +257,7 @@ class FlextTestsValidator(s[m.Tests.Validator.ScanResult]):
             approved_exceptions: Dict mapping rule IDs to approved file patterns
 
         Returns:
-            FlextResult[ScanResult] with violations found
+            r[ScanResult] with violations found
 
         """
         files = cls._discover_files(path, exclude_patterns)
@@ -283,7 +283,7 @@ class FlextTestsValidator(s[m.Tests.Validator.ScanResult]):
             approved_exceptions: Dict mapping rule IDs to approved file patterns
 
         Returns:
-            FlextResult[ScanResult] with violations found
+            r[ScanResult] with violations found
 
         """
         files = cls._discover_files(path, exclude_patterns)
@@ -309,7 +309,7 @@ class FlextTestsValidator(s[m.Tests.Validator.ScanResult]):
             approved_exceptions: Dict mapping rule IDs to approved file patterns
 
         Returns:
-            FlextResult[ScanResult] with violations found
+            r[ScanResult] with violations found
 
         """
         return FlextValidatorSettings.validate(pyproject_path, approved_exceptions)

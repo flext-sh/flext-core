@@ -142,22 +142,18 @@ class TestParseArgs:
     def test_defaults(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr("sys.argv", ["prog"])
         args = _parse_args()
-        expected_defaults = {
-            "action": "status",
-            "base": "main",
-            "head": "",
-            "number": "",
-            "title": "",
-            "body": "",
-            "draft": 0,
-            "merge_method": "squash",
-            "auto": 0,
-            "delete_branch": 0,
-            "checks_strict": 0,
-            "release_on_merge": 1,
-        }
-        for attr, expected in expected_defaults.items():
-            tm.that(getattr(args, attr), eq=expected)
+        tm.that(args.action, eq="status")
+        tm.that(args.base, eq="main")
+        tm.that(args.head, eq="")
+        tm.that(args.number, eq="")
+        tm.that(args.title, eq="")
+        tm.that(args.body, eq="")
+        tm.that(args.draft, eq=0)
+        tm.that(args.merge_method, eq="squash")
+        tm.that(args.auto, eq=0)
+        tm.that(args.delete_branch, eq=0)
+        tm.that(args.checks_strict, eq=0)
+        tm.that(args.release_on_merge, eq=1)
 
     def test_custom_values(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(
@@ -178,22 +174,18 @@ class TestParseArgs:
             ],
         )
         args = _parse_args()
-        expected_values = {
-            "action": "create",
-            "base": "develop",
-            "head": "feature/test",
-            "number": "42",
-            "title": "Test PR",
-            "body": "Test body",
-            "draft": 1,
-            "merge_method": "rebase",
-            "auto": 1,
-            "delete_branch": 1,
-            "checks_strict": 1,
-            "release_on_merge": 0,
-        }
-        for attr, expected in expected_values.items():
-            tm.that(getattr(args, attr), eq=expected)
+        tm.that(args.action, eq="create")
+        tm.that(args.base, eq="develop")
+        tm.that(args.head, eq="feature/test")
+        tm.that(args.number, eq="42")
+        tm.that(args.title, eq="Test PR")
+        tm.that(args.body, eq="Test body")
+        tm.that(args.draft, eq=1)
+        tm.that(args.merge_method, eq="rebase")
+        tm.that(args.auto, eq=1)
+        tm.that(args.delete_branch, eq=1)
+        tm.that(args.checks_strict, eq=1)
+        tm.that(args.release_on_merge, eq=0)
 
 
 class TestSelectorFunction:

@@ -295,7 +295,7 @@ class TestFlextContext:
         assert time.time() - start_time < 30.0
 
     def test_context_error_handling(self, test_context: FlextContext) -> None:
-        """Test context error handling with FlextResult pattern."""
+        """Test context error handling with r pattern."""
         context = test_context
         result = context.set("", "value")
         _ = u.Tests.Result.assert_failure(result)

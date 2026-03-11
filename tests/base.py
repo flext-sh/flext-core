@@ -22,9 +22,9 @@ from flext_core import (
     FlextConstants,
     FlextHandlers,
     FlextModels,
-    FlextResult,
     FlextTypes,
     T,
+    r,
 )
 from flext_tests import FlextTestsServiceBase
 from tests.constants import TestsFlextConstants
@@ -74,7 +74,7 @@ class TestsFlextServiceBase(FlextTestsServiceBase[T]):
             self,
             process_fn: Callable[
                 [FlextTypes.Container],
-                FlextResult[FlextTypes.Container],
+                r[FlextTypes.Container],
             ]
             | None = None,
         ) -> FlextHandlers[FlextTypes.Container, FlextTypes.Container]:
@@ -143,7 +143,7 @@ class TestsFlextServiceBase(FlextTestsServiceBase[T]):
             handler_type: FlextConstants.Cqrs.HandlerType = FlextConstants.Cqrs.HandlerType.COMMAND,
             process_fn: Callable[
                 [FlextTypes.Container],
-                FlextResult[FlextTypes.Container],
+                r[FlextTypes.Container],
             ]
             | None = None,
         ) -> FlextHandlers[FlextTypes.Container, FlextTypes.Container]:
@@ -182,16 +182,16 @@ class TestsFlextServiceBase(FlextTestsServiceBase[T]):
                 def handle(
                     self,
                     message: FlextTypes.Container,
-                ) -> FlextResult[FlextTypes.Container]:
+                ) -> r[FlextTypes.Container]:
                     """Handle message with proper error handling."""
                     try:
                         if process_fn:
                             return process_fn(message)
-                        return FlextResult[FlextTypes.Container].ok(
+                        return r[FlextTypes.Container].ok(
                             f"Handled: {message}",
                         )
                     except Exception as e:
-                        return FlextResult[FlextTypes.Container].fail(
+                        return r[FlextTypes.Container].fail(
                             f"Handler error: {e}",
                         )
 
@@ -218,9 +218,9 @@ class TestsFlextServiceBase(FlextTestsServiceBase[T]):
 
             def always_succeed(
                 _msg: FlextTypes.Container,
-            ) -> FlextResult[FlextTypes.Container]:
+            ) -> r[FlextTypes.Container]:
                 """Always return success with configured value."""
-                return FlextResult[FlextTypes.Container].ok(result_value)
+                return r[FlextTypes.Container].ok(result_value)
 
             return TestsFlextServiceBase.Handlers.create_test_handler(
                 handler_id,
@@ -250,9 +250,9 @@ class TestsFlextServiceBase(FlextTestsServiceBase[T]):
 
             def always_fail(
                 _msg: FlextTypes.Container,
-            ) -> FlextResult[FlextTypes.Container]:
+            ) -> r[FlextTypes.Container]:
                 """Always return failure with configured error."""
-                return FlextResult[FlextTypes.Container].fail(error_message)
+                return r[FlextTypes.Container].fail(error_message)
 
             return TestsFlextServiceBase.Handlers.create_test_handler(
                 handler_id,
@@ -280,13 +280,13 @@ class TestsFlextServiceBase(FlextTestsServiceBase[T]):
 
             def transform(
                 msg: FlextTypes.Container,
-            ) -> FlextResult[FlextTypes.Container]:
+            ) -> r[FlextTypes.Container]:
                 """Transform message with proper error handling."""
                 try:
                     result = transform_fn(msg)
-                    return FlextResult[FlextTypes.Container].ok(result)
+                    return r[FlextTypes.Container].ok(result)
                 except Exception as e:
-                    return FlextResult[FlextTypes.Container].fail(
+                    return r[FlextTypes.Container].fail(
                         f"Transformation failed: {e}",
                     )
 

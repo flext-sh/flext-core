@@ -1,7 +1,7 @@
 """Structured logging with context propagation and dependency injection.
 
 This module wraps ``structlog`` so dispatcher pipelines, handlers, and services
-share context-aware logging that cooperates with ``FlextResult`` outcomes and
+share context-aware logging that cooperates with ``r`` outcomes and
 dependency-injector wiring. It keeps correlation data flowing alongside CQRS
 operations without pulling higher-layer imports back into the foundation.
 
@@ -31,7 +31,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
 
     FlextLogger layers structured logging on ``structlog`` with scoped contexts,
     dependency-injector factories, performance tracking helpers, and adapters for
-    ``FlextResult`` so command/query handlers emit consistent telemetry without
+    ``r`` so command/query handlers emit consistent telemetry without
     bespoke wrappers.
     """
 
@@ -1265,7 +1265,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
                 )
 
     class ResultAdapter:
-        """Adapter ensuring FlextLogger methods return FlextResult outputs.
+        """Adapter ensuring FlextLogger methods return r outputs.
 
         Provides explicit wrapper methods for common logger operations.
         For other methods, access _base_logger directly.
@@ -1290,19 +1290,19 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         def critical(
             self, message: str, *args: t.MetadataValue, **kwargs: t.MetadataValue
         ) -> r[bool]:
-            """Log critical message returning FlextResult."""
+            """Log critical message returning r."""
             return self._log_and_wrap("critical", message, *args, **kwargs)
 
         def debug(
             self, message: str, *args: t.MetadataValue, **kwargs: t.MetadataValue
         ) -> r[bool]:
-            """Log debug message returning FlextResult."""
+            """Log debug message returning r."""
             return self._log_and_wrap("debug", message, *args, **kwargs)
 
         def error(
             self, message: str, *args: t.MetadataValue, **kwargs: t.MetadataValue
         ) -> r[bool]:
-            """Log error message returning FlextResult."""
+            """Log error message returning r."""
             return self._log_and_wrap("error", message, *args, **kwargs)
 
         def exception(
@@ -1313,7 +1313,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             exc_info: bool = True,
             **kwargs: t.MetadataValue,
         ) -> r[bool]:
-            """Log exception with traceback returning FlextResult.
+            """Log exception with traceback returning r.
 
             Note: Uses error() with exception context as FlextLogger.exception()
             is typically used in adapter context where direct exception handling
@@ -1356,19 +1356,19 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         def info(
             self, message: str, *args: t.MetadataValue, **kwargs: t.MetadataValue
         ) -> r[bool]:
-            """Log info message returning FlextResult."""
+            """Log info message returning r."""
             return self._log_and_wrap("info", message, *args, **kwargs)
 
         def trace(
             self, message: str, *args: t.MetadataValue, **kwargs: t.MetadataValue
         ) -> r[bool]:
-            """Log trace message returning FlextResult."""
+            """Log trace message returning r."""
             return self._log_and_wrap("trace", message, *args, **kwargs)
 
         def warning(
             self, message: str, *args: t.MetadataValue, **kwargs: t.MetadataValue
         ) -> r[bool]:
-            """Log warning message returning FlextResult."""
+            """Log warning message returning r."""
             return self._log_and_wrap("warning", message, *args, **kwargs)
 
         def with_result(self) -> FlextLogger.ResultAdapter:

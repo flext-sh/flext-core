@@ -6,7 +6,7 @@ from pathlib import Path
 
 import tomlkit
 
-from flext_infra.deps.modernizer import parser, read_doc, workspace_root
+from flext_infra.deps.modernizer import parser, read_doc_parser, workspace_root
 from flext_tests import tm
 
 
@@ -16,25 +16,25 @@ class TestReadDoc:
     def testread_doc_valid_file(self, tmp_path: Path) -> None:
         toml_file = tmp_path / "test.toml"
         toml_file.write_text('key = "value"\n')
-        result = read_doc(toml_file)
+        result = read_doc_parser(toml_file)
         tm.that(result is None, eq=False)
         if result is not None:
             tm.that(result["key"], eq="value")
 
     def testread_doc_nonexistent_file(self, tmp_path: Path) -> None:
-        tm.that(read_doc(tmp_path / "nonexistent.toml"), eq=None)
+        tm.that(read_doc_parser(tmp_path / "nonexistent.toml"), eq=None)
 
     def testread_doc_invalid_toml(self, tmp_path: Path) -> None:
         toml_file = tmp_path / "invalid.toml"
         toml_file.write_text("invalid toml content [[[")
-        tm.that(read_doc(toml_file), eq=None)
+        tm.that(read_doc_parser(toml_file), eq=None)
 
     def testread_doc_permission_error(self, tmp_path: Path) -> None:
         toml_file = tmp_path / "test.toml"
         toml_file.write_text("[project]\nname = 'test'")
         toml_file.chmod(0)
         try:
-            tm.that(read_doc(toml_file), eq=None)
+            tm.that(read_doc_parser(toml_file), eq=None)
         finally:
             toml_file.chmod(420)
 

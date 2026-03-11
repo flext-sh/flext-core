@@ -43,15 +43,15 @@ class FlextDecorators:
     Provides decorators that automatically handle common infrastructure
     concerns to reduce boilerplate code in services, handlers, and other
     components. All decorators are designed to integrate seamlessly with
-    FlextResult, FlextContext, FlextLogger, and FlextContainer.
+    r, FlextContext, FlextLogger, and FlextContainer.
 
     **Architecture and Integration**:
     This class provides decorator utilities that integrate seamlessly with
-    FlextResult, FlextContext, FlextLogger, and FlextContainer through
+    r, FlextContext, FlextLogger, and FlextContainer through
     structural typing. All decorators follow consistent patterns:
     - 8 static methods providing cross-cutting concern automation
     - Automatic context propagation and cleanup (defensive programming)
-    - Integration with Foundation layer (FlextResult, FlextContext)
+    - Integration with Foundation layer (r, FlextContext)
     - Integration with Infrastructure layer (FlextLogger, FlextContainer)
     - Composable decorator patterns with correct wrapper ordering
 
@@ -67,15 +67,15 @@ class FlextDecorators:
        - Defensive cleanup via context.suppress() to ensure unbinding
        - Integration with FlextLogger for context propagation
 
-    3. **@railway**: Automatic exception-to-FlextResult wrapping
-       - Converts exceptions to FlextResult.fail() automatically
+    3. **@railway**: Automatic exception-to-r wrapping
+       - Converts exceptions to r.fail() automatically
        - Preserves type safety via generic return type
-       - Integration with FlextResult for monadic error handling
+       - Integration with r for monadic error handling
 
-    4. **@railway**: Automatic railway pattern wrapping with FlextResult
-       - Converts exceptions to FlextResult.fail()
-       - Converts successful returns to FlextResult.ok()
-       - Idempotent for functions already returning FlextResult
+    4. **@railway**: Automatic railway pattern wrapping with r
+       - Converts exceptions to r.fail()
+       - Converts successful returns to r.ok()
+       - Idempotent for functions already returning r
        - Enables functional error handling without try/except
 
     5. **@retry**: Automatic retry logic with exponential/linear backoff
@@ -108,7 +108,7 @@ class FlextDecorators:
 
     **Integration Points**:
     - **FlextContainer** (Layer 1): Service resolution for @inject
-    - **FlextResult** (Layer 1): Result wrapping for @railway
+    - **r** (Layer 1): Result wrapping for @railway
     - **FlextContext** (Layer 4): Correlation ID and context management
     - **FlextLogger** (Layer 4): Structured logging and context binding
     - **e** (Layer 1): TimeoutError for @timeout
@@ -123,7 +123,7 @@ class FlextDecorators:
 
     **Decorator Composition Ordering** (Correct for Exception Propagation):
     ```
-    @railway (outermost - converts exceptions to FlextResult)
+    @railway (outermost - converts exceptions to r)
     @inject (provides dependencies)
     @log_operation (logs operations)
     @log_operation (logs operations)
@@ -259,7 +259,7 @@ class FlextDecorators:
     3. Railway pattern error handling:
         >>> @FlextDecorators.railway(error_code="BUSINESS_ERROR")
          ... def business_operation() -> m.ConfigMap:
-        ...     # All exceptions become FlextResult.fail()
+        ...     # All exceptions become r.fail()
         ...     return process_business_logic()
         >>>
         >>> result = business_operation()
@@ -269,7 +269,7 @@ class FlextDecorators:
     **Complete Integration Example**:
         >>> from flext_core import (
         ...     FlextDecorators,
-        ...     FlextResult,
+        ...     r,
         ...     FlextLogger,
         ...     FlextContainer,
         return func(*args, **kwargs)
@@ -366,7 +366,7 @@ class FlextDecorators:
 
         Example:
             ```python
-            from flext_core import FlextDecorators, FlextResult
+            from flext_core import FlextDecorators, r
 
 
             class MyService:
@@ -418,7 +418,7 @@ class FlextDecorators:
 
         Example:
             ```python
-            from flext_core import FlextDecorators, FlextResult
+            from flext_core import FlextDecorators, r
 
 
             class MyService:
@@ -593,8 +593,8 @@ class FlextDecorators:
     ) -> Callable[[Callable[P, T]], Callable[P, r[T]]]:
         """Decorator to automatically wrap function in railway pattern.
 
-        Automatically converts exceptions to FlextResult failures and
-        successful returns to FlextResult successes, eliminating manual
+        Automatically converts exceptions to r failures and
+        successful returns to r successes, eliminating manual
         try/except boilerplate.
 
         Args:
@@ -605,7 +605,7 @@ class FlextDecorators:
 
         Example:
             ```python
-            from flext_core import FlextDecorators, FlextResult
+            from flext_core import FlextDecorators, r
 
 
             from pydantic import EmailStr
@@ -614,8 +614,8 @@ class FlextDecorators:
             @FlextDecorators.railway(error_code="VALIDATION_ERROR")
             def process_user_email(email: EmailStr) -> str:
                 # Pydantic v2 EmailStr validates format natively
-                # Exception automatically becomes FlextResult.fail()
-                # Success automatically becomes FlextResult.ok()
+                # Exception automatically becomes r.fail()
+                # Success automatically becomes r.ok()
                 return email.lower()
 
 
@@ -625,7 +625,7 @@ class FlextDecorators:
             ```
 
         Note:
-            If the function already returns a FlextResult, it's returned as-is.
+            If the function already returns a r, it's returned as-is.
             Only bare values or exceptions are wrapped.
 
         """
@@ -1019,7 +1019,7 @@ class FlextDecorators:
 
         Example:
             ```python
-            from flext_core import FlextDecorators, FlextResult
+            from flext_core import FlextDecorators, r
 
 
             class OrderService:
@@ -1214,7 +1214,7 @@ class FlextDecorators:
 
         Example:
             ```python
-            from flext_core import FlextDecorators, FlextResult
+            from flext_core import FlextDecorators, r
 
 
             class UserService:
@@ -1287,7 +1287,7 @@ class FlextDecorators:
 
         Example:
             ```python
-            from flext_core import FlextDecorators, FlextResult
+            from flext_core import FlextDecorators, r
 
 
             class PaymentService:
@@ -1357,7 +1357,7 @@ class FlextDecorators:
 
         Example:
             ```python
-            from flext_core import FlextDecorators, FlextResult
+            from flext_core import FlextDecorators, r
 
 
             class OrderService:

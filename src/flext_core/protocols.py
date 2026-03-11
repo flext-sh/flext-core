@@ -273,8 +273,8 @@ class FlextProtocols:
         """Result type interface for railway-oriented programming.
 
         Used extensively for all operations that can fail. Provides
-        structural typing interface for FlextResult without circular imports.
-        Fully compatible with FlextResult and FlextRuntime usage patterns.
+        structural typing interface for r without circular imports.
+        Fully compatible with r and FlextRuntime usage patterns.
 
         Defined at root level to allow self-referencing in method signatures
         (e.g., `def map[U](...) -> FlextProtocols.Result[U]`).
@@ -416,7 +416,7 @@ class FlextProtocols:
 
     @runtime_checkable
     class ResultLike[T_co](BaseProtocol, Protocol):
-        """Result-like protocol for compatibility with FlextResult operations.
+        """Result-like protocol for compatibility with r operations.
 
         Used for type compatibility when working with result-like objects.
         """
@@ -839,7 +839,7 @@ class FlextProtocols:
         - Direct values (t.ContainerValue)
         - BaseModel instances (Pydantic models)
         - Result instances (structural typing)
-        - Objects with is_success/is_failure properties (FlextResult compatibility)
+        - Objects with is_success/is_failure properties (r compatibility)
         """
 
         def process(

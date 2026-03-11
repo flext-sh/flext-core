@@ -14,7 +14,8 @@ from itertools import count
 from typing import Any, ClassVar, override
 
 from flext_core import r, s
-from tests import c, m
+
+from .. import c, m
 
 User = m.Tests.User
 """Type alias for backward-compatible import: ``from .helpers.factories import User``."""

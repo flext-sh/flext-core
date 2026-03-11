@@ -202,7 +202,7 @@ class FlextInfraUtilitiesToml:
         """Read and parse TOML document from file.
 
         Returns None when the file does not exist or is invalid TOML.
-        Prefer ``read_document`` for FlextResult-wrapped semantics.
+        Prefer ``read_document`` for r-wrapped semantics.
         """
         if not path.exists():
             return None
@@ -221,7 +221,7 @@ class FlextInfraUtilitiesToml:
 
     @staticmethod
     def read_document(path: Path) -> r[TOMLDocument]:
-        """Read and parse a TOML document, returning FlextResult.
+        """Read and parse a TOML document, returning r.
 
         Args:
             path: Path to the TOML file.

@@ -21,7 +21,7 @@ from typing import ClassVar, cast
 import pytest
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import FlextConstants, FlextExceptions, FlextResult, c, t
+from flext_core import FlextConstants, FlextExceptions, c, r, t
 
 from ..test_utils import assertion_helpers
 
@@ -239,15 +239,15 @@ class TestFlextExceptionsHierarchy:
 
 
 class TestExceptionIntegration:
-    """Test exceptions integration with FlextResult using FlextTestsUtilities."""
+    """Test exceptions integration with r using FlextTestsUtilities."""
 
     def test_exception_to_result_conversion(self) -> None:
-        """Test converting exceptions to FlextResult."""
+        """Test converting exceptions to r."""
         try:
             error_msg = "Test error"
             raise FlextExceptions.ValidationError(error_msg, field="email")
         except FlextExceptions.ValidationError as e:
-            result = FlextResult[bool].fail(str(e))
+            result = r[bool].fail(str(e))
             _ = assertion_helpers.assert_flext_result_failure(result)
             assert result.error is not None and "Test error" in result.error
 
@@ -256,10 +256,10 @@ class TestExceptionIntegration:
 
         def validate_and_process(
             data: dict[str, t.ContainerValue],
-        ) -> FlextResult[dict[str, t.ContainerValue]]:
+        ) -> r[dict[str, t.ContainerValue]]:
             if not data.get("id"):
-                return FlextResult[dict[str, t.ContainerValue]].fail("Missing id")
-            return FlextResult[dict[str, t.ContainerValue]].ok(data)
+                return r[dict[str, t.ContainerValue]].fail("Missing id")
+            return r[dict[str, t.ContainerValue]].ok(data)
 
         assert validate_and_process({}).is_failure
         assert validate_and_process({"id": "123"}).is_success
@@ -274,7 +274,7 @@ class TestExceptionIntegration:
                 value="invalid",
             )
         except FlextExceptions.ValidationError as e:
-            result = FlextResult[bool].fail(f"Error in user creation: {e}")
+            result = r[bool].fail(f"Error in user creation: {e}")
             _ = assertion_helpers.assert_flext_result_failure(result)
             assert result.error is not None and "Validation failed" in result.error
 
@@ -393,7 +393,7 @@ class TestExceptionContext:
         """Test that exception information is preserved."""
         original_msg = "Original error message with details"
         error = FlextExceptions.ValidationError(original_msg)
-        result = FlextResult[bool].fail(str(error))
+        result = r[bool].fail(str(error))
         assert result.error is not None and (
             original_msg in result.error or "Original error" in result.error
         )

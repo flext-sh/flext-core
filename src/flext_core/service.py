@@ -43,7 +43,7 @@ class FlextService[TDomainResult: t.ContainerValue = t.ContainerValue](
     """Base class for domain services in FLEXT applications.
 
     Subclasses implement ``execute`` to run business logic and return
-    ``r`` (FlextResult) values. The base inherits :class:`FlextMixins` (which extends
+    ``r`` (r) values. The base inherits :class:`FlextMixins` (which extends
     :class:`FlextRuntime`) so services can reuse runtime automation for creating
     scoped config/context/container triples via :meth:`create_service_runtime`
     while remaining protocol compliant via structural typing.
@@ -337,7 +337,7 @@ class FlextService[TDomainResult: t.ContainerValue = t.ContainerValue](
         business rules, and result generation logic specific to each service.
 
         Business Rule: Executes the domain service business logic and returns
-        a FlextResult indicating success or failure. This method is the primary
+        a r indicating success or failure. This method is the primary
         entry point for all domain service operations in the FLEXT ecosystem.
         All business logic, domain rules, and operational workflows are executed
         through this method. The method must follow railway-oriented programming
@@ -347,7 +347,7 @@ class FlextService[TDomainResult: t.ContainerValue = t.ContainerValue](
         Audit Implication: Service execution is a critical audit event that
         represents the execution of business logic and domain operations. All
         service executions should be logged with appropriate context and
-        correlation IDs. The FlextResult return type ensures audit trail
+        correlation IDs. The r return type ensures audit trail
         completeness by tracking both successful operations (with domain results)
         and failed operations (with error details and error codes). Audit logs
         should capture service identity, execution context, input parameters,
@@ -366,7 +366,7 @@ class FlextService[TDomainResult: t.ContainerValue = t.ContainerValue](
             concerns like validation and error handling are handled by the base class.
 
         Raises:
-            None: Uses FlextResult for error handling instead of exceptions.
+            None: Uses r for error handling instead of exceptions.
 
         """
         ...

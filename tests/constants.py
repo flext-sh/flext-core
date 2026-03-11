@@ -234,7 +234,7 @@ class TestsFlextConstants(FlextTestsConstants, FlextInfraConstants):
             COMPLEX_ITEMS: Final[tuple[str, ...]] = ("a", "b")
 
         class Result:
-            """Flext-core-specific FlextResult test constants."""
+            """Flext-core-specific r test constants."""
 
             TEST_VALUE: Final[str] = "test_value"
             TEST_INT: Final[int] = 42

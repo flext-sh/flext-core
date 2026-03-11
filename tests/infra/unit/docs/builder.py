@@ -26,7 +26,7 @@ class TestBuilderCore:
     def test_build_returns_flext_result(
         self, builder: FlextInfraDocBuilder, tmp_path: Path
     ) -> None:
-        """Test that build returns FlextResult."""
+        """Test that build returns r."""
         result = builder.build(tmp_path)
         tm.that(result.is_success or result.is_failure, eq=True)
 

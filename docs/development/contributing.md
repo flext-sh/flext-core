@@ -66,7 +66,7 @@ cd flext-core
 make setup
 
 # Verify installation
-python -c "from flext_core import FlextResult; print('✅ FLEXT-Core ready')"
+python -c "from flext_core import r; print('✅ FLEXT-Core ready')"
 ```
 
 ## How to Contribute
@@ -203,7 +203,7 @@ pytest tests/unit/test_result.py --cov=src/flext_core/result.py --cov-report=ter
 
 **Best Practices:**
 
-- Use `FlextResult[T]` for all operations that can fail
+- Use `r[T]` for all operations that can fail
 - Register services with `FlextContainer.get_global()`
 - Follow DDD patterns with `FlextModels.Entity/Value/AggregateRoot`
 - Use `FlextLogger` with context propagation
@@ -332,7 +332,7 @@ from flext_core import x
 from flext_core import FlextModels
 from flext_core import p
 from flext_core import FlextRegistry
-from flext_core import FlextResult
+from flext_core import r
 from flext_core import FlextRuntime
 from flext_core import FlextService
 from flext_core import t
@@ -342,7 +342,7 @@ from flext_core import u
 from flext_core import *
 
 # ❌ Bad - Relative imports in public APIs
-from .result import FlextResult
+from .result import r
 ````
 
 ## Review Process
