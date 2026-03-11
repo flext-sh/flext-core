@@ -353,7 +353,7 @@ class ModernizerFileChanges(FlextModels.ArbitraryTypesModel):
 
 
 def _empty_issue_list() -> list[t.Dict]:
-    """Helper for empty issue lists in reports."""
+    """Return empty issue list for reports."""
     return []
 
 

@@ -303,28 +303,37 @@ class FlextContainer(p.DI):
                             else None
                         )
                         if callable(factory_func_raw):
+                            factory_func_ref: t.FactoryCallable | None = (
+                                factory_func_raw if callable(factory_func_raw) else None
+                            )
 
-                            def factory_wrapper() -> t.RegisterableService:
-                                config_callable = getattr(factory_config, "fn", None)
+                            def factory_wrapper(
+                                *,
+                                _factory_func_ref: t.FactoryCallable
+                                | None = factory_func_ref,
+                                _factory_name: str = factory_name,
+                                _factory_config: m.FactoryDecoratorConfig = factory_config,
+                            ) -> t.RegisterableService:
+                                config_callable = getattr(_factory_config, "fn", None)
                                 if callable(config_callable):
                                     raw_result = config_callable()
-                                elif callable(factory_func_raw):
-                                    raw_result = factory_func_raw()
+                                elif _factory_func_ref is not None:
+                                    raw_result = _factory_func_ref()
                                 else:
-                                    msg = f"Factory '{factory_name}' is not callable"
+                                    msg = f"Factory '{_factory_name}' is not callable"
                                     raise TypeError(msg)
                                 try:
                                     if not instance._is_registerable_service(
                                         raw_result
                                     ):
-                                        msg = f"Factory '{factory_name}' returned unsupported type: {raw_result.__class__.__name__}"
+                                        msg = f"Factory '{_factory_name}' returned unsupported type: {raw_result.__class__.__name__}"
                                         raise TypeError(msg)
                                     m.ServiceRegistration(
-                                        name=factory_name, service=raw_result
+                                        name=_factory_name, service=raw_result
                                     )
                                     return raw_result
                                 except ValidationError:
-                                    msg = f"Factory '{factory_name}' returned unsupported type: {raw_result.__class__.__name__}"
+                                    msg = f"Factory '{_factory_name}' returned unsupported type: {raw_result.__class__.__name__}"
                                     raise TypeError(msg) from None
 
                             _ = instance.register(
