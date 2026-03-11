@@ -15,7 +15,7 @@ class EnsureExtraPathsPhase:
 
     def apply(
         self,
-        doc: tomlkit.TOMLDocument,
+        _doc: tomlkit.TOMLDocument,
         *,
         path: Path,
         is_root: bool,

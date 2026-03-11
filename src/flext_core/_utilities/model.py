@@ -260,7 +260,7 @@ class FlextUtilitiesModel:
         if isinstance(value, FlextModelFoundation.Metadata):
             return m.Metadata.model_validate(value.model_dump())
         if FlextRuntime.is_dict_like(value):
-            attributes: dict[str, MetadataValue] = {}
+            attributes: dict[str, t.MetadataValue] = {}
             for key, val in value.items():
                 attributes[str(key)] = FlextRuntime.normalize_to_metadata_value(val)
             return m.Metadata.model_validate({"attributes": attributes})
