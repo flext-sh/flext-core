@@ -37,7 +37,7 @@ class FlextInfraDependencyDetectionService:
         self.runner: p.Infra.CommandRunner = FlextInfraUtilitiesSubprocess()
 
     @staticmethod
-    def to_infra_value(value: t.ContainerValue) -> t.Infra.InfraValue | None:
+    def to_infra_value(value: t.JsonValue) -> t.Infra.InfraValue | None:
         """Convert container value to namespaced infra value."""
         if value is None or isinstance(value, (str, int, float, bool)):
             return value
@@ -324,7 +324,7 @@ class FlextInfraDependencyDetectionService:
         if out_file.exists():
             raw = out_file.read_text(encoding=c.Infra.Encoding.DEFAULT)
             loaded_result = u.Infra.parse(raw) if raw.strip() else None
-            loaded_payload: t.ContainerValue = (
+            loaded_payload: t.JsonValue = (
                 loaded_result.value
                 if loaded_result is not None and loaded_result.is_success
                 else []

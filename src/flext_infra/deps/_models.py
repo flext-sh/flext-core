@@ -306,11 +306,16 @@ class PipCheckReport(FlextModels.ArbitraryTypesModel):
     lines: list[str] = Field(default_factory=list)
 
 
+class ProjectRuntimeReport(FlextModels.ArbitraryTypesModel):
+    deptry: DeptryReport
+    typings: TypingsReport | None = None
+
+
 class WorkspaceDependencyReport(FlextModels.ArbitraryTypesModel):
     """Workspace-level dependency analysis report aggregating all projects."""
 
     workspace: str
-    projects: dict[str, dict[str, t.ContainerValue]] = Field(default_factory=dict)
+    projects: dict[str, ProjectRuntimeReport] = Field(default_factory=dict)
     pip_check: PipCheckReport | None = None
     dependency_limits: DependencyLimitsInfo | None = None
 
@@ -418,6 +423,7 @@ class FlextInfraDepsModels:
     ToolConfigDocument = ToolConfigDocument
     DependencyLimitsInfo = DependencyLimitsInfo
     PipCheckReport = PipCheckReport
+    ProjectRuntimeReport = ProjectRuntimeReport
     WorkspaceDependencyReport = WorkspaceDependencyReport
     DependencyReport = DependencyReport
     ModernizerFileChanges = ModernizerFileChanges
@@ -447,6 +453,7 @@ __all__ = [
     "ProjectDependencyReport",
     "ProjectTypeOverrideConfig",
     "ProjectTypeOverridesConfig",
+    "ProjectRuntimeReport",
     "PydanticMypyConfig",
     "PyreflyConfig",
     "PyrightConfig",

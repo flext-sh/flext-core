@@ -197,15 +197,13 @@ class FlextInfraInternalDependencySyncService:
         data = data_result.value
         tool = data.get(c.Infra.Toml.TOOL)
         poetry = tool.get(c.Infra.Toml.POETRY) if isinstance(tool, dict) else None
-        empty_deps: dict[str, t.ContainerValue] = {}
+        empty_deps: dict[str, t.JsonValue] = {}
         deps_raw = (
             poetry.get(c.Infra.Toml.DEPENDENCIES)
             if isinstance(poetry, dict)
             else empty_deps
         )
-        deps: dict[str, t.ContainerValue] = (
-            deps_raw if isinstance(deps_raw, dict) else {}
-        )
+        deps: dict[str, t.JsonValue] = deps_raw if isinstance(deps_raw, dict) else {}
         result: MutableMapping[str, Path] = {}
         for dep_name, dep_value in deps.items():
             if not isinstance(dep_value, dict):
@@ -223,11 +221,13 @@ class FlextInfraInternalDependencySyncService:
             if isinstance(project_obj, dict)
             else None
         )
-        project_deps: list[t.ContainerValue] = (
-            project_deps_raw if isinstance(project_deps_raw, list) else []
+        project_deps: list[str] = (
+            [dep for dep in project_deps_raw if isinstance(dep, str)]
+            if isinstance(project_deps_raw, list)
+            else []
         )
         for dep in project_deps:
-            if not isinstance(dep, str) or " @ " not in dep:
+            if " @ " not in dep:
                 continue
             match = c.Infra.Deps.PEP621_PATH_RE.search(dep)
             if not match:
