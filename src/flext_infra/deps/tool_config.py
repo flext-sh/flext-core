@@ -144,6 +144,11 @@ class FlextInfraPyrightConfig(BaseModel):
         alias="strict-settings",
         description="Pyright strict baseline options.",
     )
+    extended_settings: dict[str, str] = Field(
+        default_factory=dict,
+        alias="extended-settings",
+        description="Pyright extended settings options.",
+    )
 
 
 class FlextInfraPyreflyConfig(BaseModel):
@@ -198,29 +203,32 @@ class FlextInfraYamlfixConfig(BaseModel):
     explicit_start: bool = Field(description="Emit explicit YAML start marker.")
 
 
+class FlextInfraCoverageFailUnderConfig(BaseModel):
+    """Coverage fail-under thresholds by layer."""
+
+    model_config = ConfigDict(extra="forbid")
+    core: int = Field(
+        description="Minimum coverage percentage required for core layer."
+    )
+    domain: int = Field(
+        description="Minimum coverage percentage required for domain layer."
+    )
+    platform: int = Field(
+        description="Minimum coverage percentage required for platform layer."
+    )
+    integration: int = Field(
+        description="Minimum coverage percentage required for integration layer."
+    )
+    app: int = Field(description="Minimum coverage percentage required for app layer.")
+
+
 class FlextInfraCoverageConfig(BaseModel):
     """Coverage baseline settings loaded from YAML."""
 
     model_config = ConfigDict(extra="forbid")
-    fail_under_core: int = Field(
-        alias="fail-under-core",
-        description="Minimum coverage percentage required for core layer.",
-    )
-    fail_under_domain: int = Field(
-        alias="fail-under-domain",
-        description="Minimum coverage percentage required for domain layer.",
-    )
-    fail_under_platform: int = Field(
-        alias="fail-under-platform",
-        description="Minimum coverage percentage required for platform layer.",
-    )
-    fail_under_integration: int = Field(
-        alias="fail-under-integration",
-        description="Minimum coverage percentage required for integration layer.",
-    )
-    fail_under_app: int = Field(
-        alias="fail-under-app",
-        description="Minimum coverage percentage required for app layer.",
+    fail_under: FlextInfraCoverageFailUnderConfig = Field(
+        alias="fail-under",
+        description="Coverage fail-under thresholds by layer.",
     )
     show_missing: bool = Field(
         default=True,
@@ -253,6 +261,9 @@ class FlextInfraToolConfigTools(BaseModel):
     pytest: FlextInfraPytestConfig
     tomlsort: FlextInfraTomlsortConfig
     yamlfix: FlextInfraYamlfixConfig
+    coverage: FlextInfraCoverageConfig = Field(
+        description="Coverage configuration with per-project-type thresholds.",
+    )
 
 
 class FlextInfraToolConfigDocument(BaseModel):
