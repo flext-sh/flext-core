@@ -20,7 +20,7 @@ from tests.test_utils import (
 TestDomainResult = FlextTestsDomains.TestDomainResult
 
 
-class TestService(s[TestDomainResult]):
+class TestService(s[str]):
     """Test service for coverage tests."""
 
     __test__ = False
@@ -30,12 +30,12 @@ class TestService(s[TestDomainResult]):
         super().__init__(**data)
 
     @override
-    def execute(self, **_kwargs: t.ContainerValue) -> r[TestDomainResult]:
+    def execute(self, **_kwargs: t.ContainerValue) -> r[str]:
         """Execute service."""
-        return self.ok(TestDomainResult("success"))
+        return self.ok("success")
 
 
-class TestServiceWithValidation(s[TestDomainResult]):
+class TestServiceWithValidation(s[str]):
     """Test service with validation."""
 
     __test__ = False
@@ -45,9 +45,9 @@ class TestServiceWithValidation(s[TestDomainResult]):
         super().__init__(**data)
 
     @override
-    def execute(self, **_kwargs: t.ContainerValue) -> r[TestDomainResult]:
+    def execute(self, **_kwargs: t.ContainerValue) -> r[str]:
         """Execute service."""
-        return self.ok(TestDomainResult("validated"))
+        return self.ok("validated")
 
 
 class TestService100Coverage:
@@ -78,20 +78,20 @@ class TestService100Coverage:
         service = TestService()
         result = service.execute()
         _ = assertion_helpers.assert_flext_result_success(result)
-        assert isinstance(result.value, TestDomainResult)
+        assert isinstance(result.value, str)
 
     def test_ok_method(self) -> None:
         """Test ok method."""
         service = TestService()
-        result = service.ok(TestDomainResult("test"))
+        result = service.ok("test")
         _ = assertion_helpers.assert_flext_result_success(result)
-        assert result.value.value == "test"
+        assert result.value == "test"
 
     def test_result_property(self) -> None:
         """Test result property."""
         service = TestService()
         result = service.result
-        assert isinstance(result, TestDomainResult)
+        assert isinstance(result, str)
 
     def test_auto_execute_false(self) -> None:
         """Test auto_execute when False."""

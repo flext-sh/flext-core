@@ -98,7 +98,6 @@ if TYPE_CHECKING:
     from flext_core.settings import FlextSettings
     from flext_core.typings import (
         FlextTypes,
-        FlextTypes as t,
         MessageT_contra,
         P,
         R,
@@ -110,6 +109,7 @@ if TYPE_CHECKING:
         T_Namespace,
         T_Settings,
         U,
+        t,
     )
     from flext_core.utilities import FlextUtilities, u, validate_pydantic_model
 
@@ -239,7 +239,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "p": ("flext_core.protocols", "p"),
     "r": ("flext_core.result", "r"),
     "s": ("flext_core.service", "s"),
-    "t": ("flext_core.typings", "FlextTypes"),
+    "t": ("flext_core.typings", "t"),
     "u": ("flext_core.utilities", "u"),
     "validate_pydantic_model": ("flext_core.utilities", "validate_pydantic_model"),
     "x": ("flext_core.mixins", "x"),

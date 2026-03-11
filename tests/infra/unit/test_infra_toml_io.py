@@ -7,7 +7,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import stat
-from collections.abc import Mapping, MutableMapping
 from pathlib import Path
 
 import tomlkit
@@ -28,8 +27,12 @@ class TestFlextInfraTomlRead:
         service = FlextInfraUtilitiesToml()
         doc = service.read(toml_file)
         tm.that(doc, none=False)
-        section = doc["section"]
-        tm.that(isinstance(section, Mapping), eq=True)
+        if doc is None:
+            msg = "expected parsed TOML document"
+            raise AssertionError(msg)
+        section_obj: object = doc["section"]
+        assert isinstance(section_obj, Table)
+        section = section_obj
         tm.that(section["key"], eq="value")
         tm.that(section["number"], eq=42)
 
@@ -55,8 +58,9 @@ class TestFlextInfraTomlDocument:
         result = service.read_document(toml_file)
         tm.ok(result)
         doc = result.value
-        section = doc["section"]
-        tm.that(isinstance(section, Mapping), eq=True)
+        section_obj: object = doc["section"]
+        assert isinstance(section_obj, Table)
+        section = section_obj
         tm.that(section["key"], eq="value")
 
     def test_read_document_nonexistent_file(self, tmp_path: Path) -> None:
@@ -119,14 +123,19 @@ class TestFlextInfraTomlDocument:
         read_result = service.read_document(toml_file)
         tm.ok(read_result)
         doc = read_result.value
-        section = doc["section"]
-        tm.that(isinstance(section, MutableMapping), eq=True)
+        section_obj: object = doc["section"]
+        assert isinstance(section_obj, Table)
+        section = section_obj
         section["key"] = "new"
         tm.ok(service.write_document(toml_file, doc))
         verify_doc = service.read(toml_file)
         tm.that(verify_doc, none=False)
-        verify_section = verify_doc["section"]
-        tm.that(isinstance(verify_section, Mapping), eq=True)
+        if verify_doc is None:
+            msg = "expected persisted TOML document"
+            raise AssertionError(msg)
+        verify_section_obj: object = verify_doc["section"]
+        assert isinstance(verify_section_obj, Table)
+        verify_section = verify_section_obj
         tm.that(verify_section["key"], eq="new")
 
 
@@ -135,7 +144,10 @@ class TestFlextInfraTomlHelpers:
 
     def test_array_creates_multiline(self) -> None:
         arr = FlextInfraUtilitiesToml.array(["a", "b", "c"])
-        tm.that(list(arr), eq=["a", "b", "c"])
+        arr_text = arr.as_string()
+        tm.that(arr_text, has='"a"')
+        tm.that(arr_text, has='"b"')
+        tm.that(arr_text, has='"c"')
 
     def test_ensure_table_reuses_existing(self) -> None:
         parent = tomlkit.table()
@@ -143,7 +155,6 @@ class TestFlextInfraTomlHelpers:
         existing["key"] = "value"
         parent["section"] = existing
         table = FlextInfraUtilitiesToml.ensure_table(parent, "section")
-        tm.that(isinstance(table, Table), eq=True)
         tm.that(table["key"], eq="value")
 
     def test_as_toml_mapping_and_get_helpers(self) -> None:

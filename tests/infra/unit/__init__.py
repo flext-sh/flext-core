@@ -118,6 +118,7 @@ if TYPE_CHECKING:
         TestProcessFileReadError,
     )
     from tests.infra.unit.check.extended_error_reporting import (
+        RunStub,
         TestErrorReporting,
         TestGoFmtEmptyLinesInOutput,
         TestMarkdownReportEmptyGates,
@@ -160,6 +161,7 @@ if TYPE_CHECKING:
         TestWorkspaceCheckerResolveGates,
     )
     from tests.infra.unit.check.extended_run_projects import (
+        CheckProjectStub,
         TestRunProjectsBehavior,
         TestRunProjectsReports,
         TestRunProjectsValidation,
@@ -173,6 +175,7 @@ if TYPE_CHECKING:
     )
     from tests.infra.unit.check.extended_runners_go import TestRunGo
     from tests.infra.unit.check.extended_runners_ruff import (
+        RunCallable,
         TestCollectMarkdownFiles,
         TestRunCommand,
         TestRunRuffFormat,
@@ -955,8 +958,7 @@ if TYPE_CHECKING:
     )
     from tests.infra.unit.test_infra_workspace_orchestrator import (
         TestOrchestratorBasic,
-        TestOrchestratorRunProject,
-        TestOrchestratorWithRunner,
+        TestOrchestratorFailures,
         orchestrator,
     )
     from tests.infra.unit.test_infra_workspace_sync import (
@@ -976,11 +978,17 @@ if TYPE_CHECKING:
 
 # Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
+    "CheckProjectStub": (
+        "tests.infra.unit.check.extended_run_projects",
+        "CheckProjectStub",
+    ),
     "EngineSafetyStub": (
         "tests.infra.unit.refactor.test_infra_refactor_safety",
         "EngineSafetyStub",
     ),
     "MockScanner": ("tests.infra.unit._utilities.test_scanning", "MockScanner"),
+    "RunCallable": ("tests.infra.unit.check.extended_runners_ruff", "RunCallable"),
+    "RunStub": ("tests.infra.unit.check.extended_error_reporting", "RunStub"),
     "SetupFn": ("tests.infra.unit.test_infra_workspace_sync", "SetupFn"),
     "TestAdrHelpers": ("tests.infra.unit.docs.validator_internals", "TestAdrHelpers"),
     "TestAllDirectoriesScanned": (
@@ -1801,13 +1809,9 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.infra.unit.test_infra_workspace_orchestrator",
         "TestOrchestratorBasic",
     ),
-    "TestOrchestratorRunProject": (
+    "TestOrchestratorFailures": (
         "tests.infra.unit.test_infra_workspace_orchestrator",
-        "TestOrchestratorRunProject",
-    ),
-    "TestOrchestratorWithRunner": (
-        "tests.infra.unit.test_infra_workspace_orchestrator",
-        "TestOrchestratorWithRunner",
+        "TestOrchestratorFailures",
     ),
     "TestOwnerFromRemoteUrl": (
         "tests.infra.unit.deps.test_internal_sync_validation",
@@ -3315,8 +3319,11 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
 }
 
 __all__ = [
+    "CheckProjectStub",
     "EngineSafetyStub",
     "MockScanner",
+    "RunCallable",
+    "RunStub",
     "SetupFn",
     "TestAdrHelpers",
     "TestAllDirectoriesScanned",
@@ -3552,8 +3559,7 @@ __all__ = [
     "TestNormalizeStringList",
     "TestOrchestrate",
     "TestOrchestratorBasic",
-    "TestOrchestratorRunProject",
-    "TestOrchestratorWithRunner",
+    "TestOrchestratorFailures",
     "TestOwnerFromRemoteUrl",
     "TestParseArgs",
     "TestParseGitmodules",

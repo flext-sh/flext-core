@@ -17,6 +17,13 @@ from typing import TYPE_CHECKING, Any
 from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
+    from flext_infra.deps._phases.ensure_formatting import EnsureFormattingToolingPhase
+    from flext_infra.deps._phases.ensure_mypy import EnsureMypyConfigPhase
+    from flext_infra.deps._phases.ensure_namespace import EnsureNamespaceToolingPhase
+    from flext_infra.deps._phases.ensure_pydantic_mypy import (
+        EnsurePydanticMypyConfigPhase,
+    )
+    from flext_infra.deps._phases.ensure_ruff import EnsureRuffConfigPhase
     from flext_infra.deps.detection import (
         FlextInfraDependencyDetectionModels,
         FlextInfraDependencyDetectionModels as m,
@@ -82,6 +89,22 @@ if TYPE_CHECKING:
 # Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "ConsolidateGroupsPhase": ("flext_infra.deps.modernizer", "ConsolidateGroupsPhase"),
+    "EnsureFormattingToolingPhase": (
+        "flext_infra.deps._phases.ensure_formatting",
+        "EnsureFormattingToolingPhase",
+    ),
+    "EnsureMypyConfigPhase": (
+        "flext_infra.deps._phases.ensure_mypy",
+        "EnsureMypyConfigPhase",
+    ),
+    "EnsureNamespaceToolingPhase": (
+        "flext_infra.deps._phases.ensure_namespace",
+        "EnsureNamespaceToolingPhase",
+    ),
+    "EnsurePydanticMypyConfigPhase": (
+        "flext_infra.deps._phases.ensure_pydantic_mypy",
+        "EnsurePydanticMypyConfigPhase",
+    ),
     "EnsurePyreflyConfigPhase": (
         "flext_infra.deps.modernizer",
         "EnsurePyreflyConfigPhase",
@@ -93,6 +116,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "EnsurePytestConfigPhase": (
         "flext_infra.deps.modernizer",
         "EnsurePytestConfigPhase",
+    ),
+    "EnsureRuffConfigPhase": (
+        "flext_infra.deps._phases.ensure_ruff",
+        "EnsureRuffConfigPhase",
     ),
     "FlextInfraDependencyDetectionModels": (
         "flext_infra.deps.detection",
@@ -177,9 +204,14 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
 __all__ = [
     "ROOT",
     "ConsolidateGroupsPhase",
+    "EnsureFormattingToolingPhase",
+    "EnsureMypyConfigPhase",
+    "EnsureNamespaceToolingPhase",
+    "EnsurePydanticMypyConfigPhase",
     "EnsurePyreflyConfigPhase",
     "EnsurePyrightConfigPhase",
     "EnsurePytestConfigPhase",
+    "EnsureRuffConfigPhase",
     "FlextInfraDependencyDetectionModels",
     "FlextInfraDependencyDetectionService",
     "FlextInfraDependencyDetectorModels",

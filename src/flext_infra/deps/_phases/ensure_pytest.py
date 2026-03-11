@@ -54,9 +54,7 @@ class EnsurePytestConfigPhase:
                 sorted(current_addopts | needed_addopts)
             )
             changes.append("tool.pytest.ini_options.addopts updated")
-        current_markers = u.Infra.as_string_list(
-            u.Infra.get(ini, c.Infra.Toml.MARKERS)
-        )
+        current_markers = u.Infra.as_string_list(u.Infra.get(ini, c.Infra.Toml.MARKERS))
         current_names = {m.split(":")[0].strip() for m in current_markers}
         added: list[str] = []
         for marker in self._tool_config.tools.pytest.standard_markers:

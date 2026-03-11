@@ -8,17 +8,7 @@ from pathlib import Path
 from tomlkit.items import Table
 
 from flext_infra import FlextInfraUtilitiesSubprocess, c, p, u
-from flext_infra._utilities.toml import (
-    array,
-    as_string_list,
-    ensure_table,
-    read_doc,
-    table_string_keys,
-    toml_get,
-    unwrap_item,
-)
-from flext_infra._utilities.toml_parse import FlextInfraUtilitiesTomlParse
-from flext_infra.deps.detector import (
+from flext_infra.deps._phases import (
     ConsolidateGroupsPhase,
     EnsureFormattingToolingPhase,
     EnsureMypyConfigPhase,
@@ -32,24 +22,22 @@ from flext_infra.deps.detector import (
 )
 from flext_infra.deps.tool_config import load_tool_config
 
-canonical_dev_dependencies = FlextInfraUtilitiesTomlParse.canonical_dev_dependencies
-dedupe_specs = FlextInfraUtilitiesTomlParse.dedupe_specs
-dep_name = FlextInfraUtilitiesTomlParse.dep_name
-project_dev_groups = FlextInfraUtilitiesTomlParse.project_dev_groups
+canonical_dev_dependencies = u.Infra.canonical_dev_dependencies
+dedupe_specs = u.Infra.dedupe_specs
+dep_name = u.Infra.dep_name
+project_dev_groups = u.Infra.project_dev_groups
 
-array_parser = array
-as_string_list_parser = as_string_list
-canonical_dev_dependencies_parser = (
-    FlextInfraUtilitiesTomlParse.canonical_dev_dependencies
-)
-dedupe_specs_parser = FlextInfraUtilitiesTomlParse.dedupe_specs
-dep_name_parser = FlextInfraUtilitiesTomlParse.dep_name
-ensure_table_parser = ensure_table
-project_dev_groups_parser = FlextInfraUtilitiesTomlParse.project_dev_groups
-read_doc_parser = read_doc
-table_string_keys_parser = table_string_keys
-toml_get_parser = toml_get
-unwrap_item_parser = unwrap_item
+array_parser = u.Infra.array
+as_string_list_parser = u.Infra.as_string_list
+canonical_dev_dependencies_parser = u.Infra.canonical_dev_dependencies
+dedupe_specs_parser = u.Infra.dedupe_specs
+dep_name_parser = u.Infra.dep_name
+ensure_table_parser = u.Infra.ensure_table
+project_dev_groups_parser = u.Infra.project_dev_groups
+read_doc_parser = u.Infra.read
+table_string_keys_parser = u.Infra.table_string_keys
+toml_get_parser = u.Infra.get
+unwrap_item_parser = u.Infra.unwrap_item
 
 
 def workspace_root(start: Path) -> Path:
@@ -105,7 +93,7 @@ class FlextInfraPyprojectModernizer:
         skip_comments: bool,
     ) -> list[str]:
         """Process one pyproject.toml file and collect changes."""
-        doc = read_doc_parser(path)
+        doc = u.Infra.read(path)
         if doc is None:
             return ["invalid TOML"]
         is_root = path.parent.resolve() == self.root.resolve()
@@ -123,7 +111,7 @@ class FlextInfraPyprojectModernizer:
                     group = poetry[c.Infra.Toml.GROUP]
                 if isinstance(group, Table):
                     empty_groups: list[str] = []
-                    for name in table_string_keys_parser(group):
+                    for name in u.Infra.table_string_keys(group):
                         group_item: object | None = None
                         if name in group:
                             group_item = group[name]
@@ -174,10 +162,10 @@ class FlextInfraPyprojectModernizer:
         """Run pyproject modernization for the workspace."""
         dry_run = bool(args.dry_run or args.audit)
         files = self.find_pyproject_files()
-        root_doc = read_doc_parser(self.root / c.Infra.Files.PYPROJECT_FILENAME)
+        root_doc = u.Infra.read(self.root / c.Infra.Files.PYPROJECT_FILENAME)
         if root_doc is None:
             return 2
-        canonical_dev = canonical_dev_dependencies_parser(root_doc)
+        canonical_dev = u.Infra.canonical_dev_dependencies(root_doc)
         violations: dict[str, list[str]] = {}
         total = 0
         for file_path in files:

@@ -76,7 +76,7 @@ def test_violation_analysis_counts_massive_patterns(tmp_path: Path) -> None:
     )
     engine = FlextInfraRefactorEngine(config_path=config_path)
     _ = engine.load_config()
-    files = engine.collect_project_files(project_root)
+    files = engine.collect_workspace_files(project_root)
     result = FlextInfraRefactorViolationAnalyzer.analyze_files(files)
     totals = result.totals
     assert "container_invariance" in totals

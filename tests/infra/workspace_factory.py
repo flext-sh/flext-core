@@ -10,10 +10,12 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
+from typing import override
 
 from pydantic import Field
 
-from flext_tests import c, m
+from flext_infra.constants import FlextInfraConstants
+from flext_tests import m
 
 
 class WorkspaceFactory(m.Tests.Factory.Config):
@@ -27,12 +29,12 @@ class WorkspaceFactory(m.Tests.Factory.Config):
     default_version: str = Field(default="0.1.0")
     encoding: str = Field(default="utf-8")
 
+    @override
     def model_post_init(self, __context: object) -> None:
         """Post-init to set defaults from c.Infra.Tests if available."""
         super().model_post_init(__context)
-        # Access c.Infra.Tests.Versions at runtime, not class definition time
         if not self.default_python:
-            self.default_python = f"^{c.Infra.Tests.Versions.PYTHON_MIN}"
+            object.__setattr__(self, "default_python", "^3.13")
 
     def create_minimal(self, tmp_path: Path, name: str = "test-proj") -> Path:
         """Create minimal project with pyproject.toml, Makefile, src/."""
@@ -115,8 +117,12 @@ class WorkspaceFactory(m.Tests.Factory.Config):
         dependency_lines.extend(f'{dep} = "*"' for dep in deps)
         dependencies = "\n".join(dependency_lines)
         # Use c.Infra.Toml constants at runtime
-        tool_poetry = f"[tool.{c.Infra.Toml.POETRY}]\n"
-        poetry_deps = f"[tool.{c.Infra.Toml.POETRY}.{c.Infra.Toml.DEPENDENCIES}]\n"
+        tool_poetry = f"[tool.{FlextInfraConstants.Infra.Toml.POETRY}]\n"
+        poetry_deps = (
+            "[tool."
+            f"{FlextInfraConstants.Infra.Toml.POETRY}."
+            f"{FlextInfraConstants.Infra.Toml.DEPENDENCIES}]\n"
+        )
         return (
             tool_poetry
             + f'name = "{name}"\n'

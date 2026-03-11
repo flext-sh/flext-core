@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from pathlib import Path
-from typing import ClassVar
+from typing import ClassVar, override
 
 from pydantic import Field
 
@@ -154,6 +154,7 @@ class StubJsonIo(FlextInfraUtilitiesIo):
         StubJsonIo.write_json_calls = []
 
     @staticmethod
+    @override
     def write_json(
         path: Path,
         payload: t.ContainerValue,
@@ -178,6 +179,7 @@ class StubVersioning(FlextInfraUtilitiesVersioning):
         )
 
     @staticmethod
+    @override
     def release_tag_from_branch(branch: str) -> r[str]:
         _ = branch
         return StubVersioning._release_tag_returns
@@ -201,6 +203,7 @@ class StubSelector(FlextInfraUtilitiesSelection):
         )
 
     @staticmethod
+    @override
     def resolve_projects(
         workspace_root: Path,
         names: list[str],
@@ -218,6 +221,7 @@ class StubReporting(FlextInfraUtilitiesReporting):
         StubReporting._report_dir = report_dir or Path("/tmp/reports")
 
     @staticmethod
+    @override
     def get_report_dir(
         root: Path | str,
         scope: str,

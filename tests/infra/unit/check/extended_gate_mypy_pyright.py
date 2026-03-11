@@ -12,7 +12,8 @@ import pytest
 
 from flext_infra.check.services import FlextInfraWorkspaceChecker
 from flext_tests import tm
-from tests.infra.models import m
+
+from ...models import m
 
 
 def _existing_dirs(_project_dir: Path) -> list[str]:

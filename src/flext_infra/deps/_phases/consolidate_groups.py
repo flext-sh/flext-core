@@ -35,9 +35,7 @@ class ConsolidateGroupsPhase:
             *existing.get(c.Infra.Toml.TEST, []),
             *existing.get(c.Infra.Directories.TYPINGS, []),
         ])
-        current_dev = u.Infra.as_string_list(
-            u.Infra.get(optional, c.Infra.Toml.DEV)
-        )
+        current_dev = u.Infra.as_string_list(u.Infra.get(optional, c.Infra.Toml.DEV))
         if sorted(current_dev) != sorted(merged_dev):
             optional[c.Infra.Toml.DEV] = u.Infra.array(sorted(merged_dev))
             changes.append("project.optional-dependencies.dev consolidated")
@@ -96,8 +94,6 @@ class ConsolidateGroupsPhase:
             u.Infra.get(deptry, "pep621_dev_dependency_groups"),
         )
         if current_groups != [c.Infra.Toml.DEV]:
-            deptry["pep621_dev_dependency_groups"] = u.Infra.array(
-                [c.Infra.Toml.DEV]
-            )
+            deptry["pep621_dev_dependency_groups"] = u.Infra.array([c.Infra.Toml.DEV])
             changes.append("tool.deptry.pep621_dev_dependency_groups set to ['dev']")
         return changes

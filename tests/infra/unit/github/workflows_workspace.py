@@ -40,7 +40,11 @@ class TestSyncWorkspace:
         wf = tmp_path / ".github" / "workflows"
         wf.mkdir(parents=True)
         (wf / "ci.yml").write_text("name: CI\n")
-        proj = m.Infra.Workspace.ProjectInfo(name="my-proj", path=tmp_path / "my-proj")
+        proj = m.Infra.Workspace.ProjectInfo(
+            name="my-proj",
+            path=tmp_path / "my-proj",
+            stack="python",
+        )
         proj.path.mkdir()
         selector = StubSelector(
             resolve_returns=r[list[m.Infra.Workspace.ProjectInfo]].ok([proj]),

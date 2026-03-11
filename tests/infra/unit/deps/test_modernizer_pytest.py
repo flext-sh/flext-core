@@ -6,7 +6,7 @@ from collections.abc import MutableMapping
 
 import tomlkit
 
-from flext_infra.deps.modernizer import EnsurePytestConfigPhase
+from flext_infra.deps._phases import EnsurePytestConfigPhase
 from flext_infra.deps.tool_config import FlextInfraToolConfigDocument, load_tool_config
 from flext_tests import tm
 

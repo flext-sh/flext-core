@@ -98,6 +98,13 @@ if TYPE_CHECKING:
     from flext_infra.core.scanner import FlextInfraTextPatternScanner
     from flext_infra.core.skill_validator import FlextInfraSkillValidator
     from flext_infra.core.stub_chain import FlextInfraStubSupplyChain
+    from flext_infra.deps._phases.ensure_formatting import EnsureFormattingToolingPhase
+    from flext_infra.deps._phases.ensure_mypy import EnsureMypyConfigPhase
+    from flext_infra.deps._phases.ensure_namespace import EnsureNamespaceToolingPhase
+    from flext_infra.deps._phases.ensure_pydantic_mypy import (
+        EnsurePydanticMypyConfigPhase,
+    )
+    from flext_infra.deps._phases.ensure_ruff import EnsureRuffConfigPhase
     from flext_infra.deps.detection import (
         FlextInfraDependencyDetectionModels,
         FlextInfraDependencyDetectionService,
@@ -342,6 +349,22 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "flext_infra.refactor.dependency_analyzer",
         "DependencyAnalyzer",
     ),
+    "EnsureFormattingToolingPhase": (
+        "flext_infra.deps._phases.ensure_formatting",
+        "EnsureFormattingToolingPhase",
+    ),
+    "EnsureMypyConfigPhase": (
+        "flext_infra.deps._phases.ensure_mypy",
+        "EnsureMypyConfigPhase",
+    ),
+    "EnsureNamespaceToolingPhase": (
+        "flext_infra.deps._phases.ensure_namespace",
+        "EnsureNamespaceToolingPhase",
+    ),
+    "EnsurePydanticMypyConfigPhase": (
+        "flext_infra.deps._phases.ensure_pydantic_mypy",
+        "EnsurePydanticMypyConfigPhase",
+    ),
     "EnsurePyreflyConfigPhase": (
         "flext_infra.deps.modernizer",
         "EnsurePyreflyConfigPhase",
@@ -353,6 +376,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "EnsurePytestConfigPhase": (
         "flext_infra.deps.modernizer",
         "EnsurePytestConfigPhase",
+    ),
+    "EnsureRuffConfigPhase": (
+        "flext_infra.deps._phases.ensure_ruff",
+        "EnsureRuffConfigPhase",
     ),
     "FlextInfraBaseMkGenerator": (
         "flext_infra.basemk.generator",
@@ -890,9 +917,14 @@ __all__ = [
     "ConsolidateGroupsPhase",
     "CyclicImportDetector",
     "DependencyAnalyzer",
+    "EnsureFormattingToolingPhase",
+    "EnsureMypyConfigPhase",
+    "EnsureNamespaceToolingPhase",
+    "EnsurePydanticMypyConfigPhase",
     "EnsurePyreflyConfigPhase",
     "EnsurePyrightConfigPhase",
     "EnsurePytestConfigPhase",
+    "EnsureRuffConfigPhase",
     "FlextInfraBaseMkGenerator",
     "FlextInfraBaseMkTemplateEngine",
     "FlextInfraBaseMkValidator",

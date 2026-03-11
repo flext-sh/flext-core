@@ -5,6 +5,7 @@ import sys
 import tempfile
 from collections.abc import Callable, Mapping
 from pathlib import Path
+from typing import override
 
 import pytest
 
@@ -23,6 +24,7 @@ def _stub_gen(content: str, *, fail: bool = False) -> FlextInfraBaseMkGenerator:
         def __init__(self) -> None:
             super().__init__()
 
+        @override
         def generate(
             self,
             config: m.Infra.Basemk.BaseMkConfig | Mapping[str, t.Scalar] | None = None,

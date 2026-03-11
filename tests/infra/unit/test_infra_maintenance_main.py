@@ -142,4 +142,4 @@ class TestMaintenanceMainEnforcer:
 
     def test_enforcer_creates_instance(self) -> None:
         enforcer = FlextInfraPythonVersionEnforcer()
-        tm.that(isinstance(enforcer, FlextInfraPythonVersionEnforcer), eq=True)
+        tm.that(type(enforcer).__name__, eq="FlextInfraPythonVersionEnforcer")

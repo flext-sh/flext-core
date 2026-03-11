@@ -148,6 +148,7 @@ if TYPE_CHECKING:
         TestProcessFileReadError,
     )
     from tests.infra.unit.check.extended_error_reporting import (
+        RunStub,
         TestErrorReporting,
         TestGoFmtEmptyLinesInOutput,
         TestMarkdownReportEmptyGates,
@@ -190,6 +191,7 @@ if TYPE_CHECKING:
         TestWorkspaceCheckerResolveGates,
     )
     from tests.infra.unit.check.extended_run_projects import (
+        CheckProjectStub,
         TestRunProjectsBehavior,
         TestRunProjectsReports,
         TestRunProjectsValidation,
@@ -203,6 +205,7 @@ if TYPE_CHECKING:
     )
     from tests.infra.unit.check.extended_runners_go import TestRunGo
     from tests.infra.unit.check.extended_runners_ruff import (
+        RunCallable,
         TestCollectMarkdownFiles,
         TestRunCommand,
         TestRunRuffFormat,
@@ -983,8 +986,7 @@ if TYPE_CHECKING:
     )
     from tests.infra.unit.test_infra_workspace_orchestrator import (
         TestOrchestratorBasic,
-        TestOrchestratorRunProject,
-        TestOrchestratorWithRunner,
+        TestOrchestratorFailures,
         orchestrator,
     )
     from tests.infra.unit.test_infra_workspace_sync import (
@@ -1013,6 +1015,10 @@ if TYPE_CHECKING:
 # Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "BrokenScenario": ("tests.infra.workspace_scenarios", "BrokenScenario"),
+    "CheckProjectStub": (
+        "tests.infra.unit.check.extended_run_projects",
+        "CheckProjectStub",
+    ),
     "DependencyScenario": ("tests.infra.scenarios", "DependencyScenario"),
     "DependencyScenarios": ("tests.infra.scenarios", "DependencyScenarios"),
     "EmptyScenario": ("tests.infra.workspace_scenarios", "EmptyScenario"),
@@ -1033,6 +1039,8 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "MockScanner": ("tests.infra.unit._utilities.test_scanning", "MockScanner"),
     "RealGitService": ("tests.infra.git_service", "RealGitService"),
     "RealSubprocessRunner": ("tests.infra.runner_service", "RealSubprocessRunner"),
+    "RunCallable": ("tests.infra.unit.check.extended_runners_ruff", "RunCallable"),
+    "RunStub": ("tests.infra.unit.check.extended_error_reporting", "RunStub"),
     "SetupFn": ("tests.infra.unit.test_infra_workspace_sync", "SetupFn"),
     "SubprocessScenario": ("tests.infra.scenarios", "SubprocessScenario"),
     "SubprocessScenarios": ("tests.infra.scenarios", "SubprocessScenarios"),
@@ -1855,13 +1863,9 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.infra.unit.test_infra_workspace_orchestrator",
         "TestOrchestratorBasic",
     ),
-    "TestOrchestratorRunProject": (
+    "TestOrchestratorFailures": (
         "tests.infra.unit.test_infra_workspace_orchestrator",
-        "TestOrchestratorRunProject",
-    ),
-    "TestOrchestratorWithRunner": (
-        "tests.infra.unit.test_infra_workspace_orchestrator",
-        "TestOrchestratorWithRunner",
+        "TestOrchestratorFailures",
     ),
     "TestOwnerFromRemoteUrl": (
         "tests.infra.unit.deps.test_internal_sync_validation",
@@ -3376,6 +3380,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
 
 __all__ = [
     "BrokenScenario",
+    "CheckProjectStub",
     "DependencyScenario",
     "DependencyScenarios",
     "EmptyScenario",
@@ -3393,6 +3398,8 @@ __all__ = [
     "MockScanner",
     "RealGitService",
     "RealSubprocessRunner",
+    "RunCallable",
+    "RunStub",
     "SetupFn",
     "SubprocessScenario",
     "SubprocessScenarios",
@@ -3630,8 +3637,7 @@ __all__ = [
     "TestNormalizeStringList",
     "TestOrchestrate",
     "TestOrchestratorBasic",
-    "TestOrchestratorRunProject",
-    "TestOrchestratorWithRunner",
+    "TestOrchestratorFailures",
     "TestOwnerFromRemoteUrl",
     "TestParseArgs",
     "TestParseGitmodules",

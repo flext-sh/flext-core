@@ -6,13 +6,13 @@ from pathlib import Path
 import pytest
 
 from flext_core import r
+from flext_infra.models import FlextInfraModels as m
 from flext_infra.workspace import __main__ as workspace_main
 from flext_infra.workspace.detector import FlextInfraWorkspaceDetector, WorkspaceMode
 from flext_infra.workspace.migrator import FlextInfraProjectMigrator
 from flext_infra.workspace.orchestrator import FlextInfraOrchestratorService
 from flext_infra.workspace.sync import FlextInfraSyncService
 from flext_tests import tm
-from tests.infra.models import m
 
 
 def _ns(**kwargs: str | float | bool | list[str] | Path | None) -> argparse.Namespace:
@@ -49,9 +49,14 @@ class TestRunDetect:
         result: r[WorkspaceMode],
         expected: int,
     ) -> None:
-        monkeypatch.setattr(
-            FlextInfraWorkspaceDetector, "detect", lambda _s, _r: result
-        )
+        def _detect_stub(
+            _self: FlextInfraWorkspaceDetector,
+            project_root: Path,
+        ) -> r[WorkspaceMode]:
+            del _self, project_root
+            return result
+
+        monkeypatch.setattr(FlextInfraWorkspaceDetector, "detect", _detect_stub)
         tm.that(workspace_main._run_detect(_ns(project_root=tmp_path)), eq=expected)
 
 
@@ -70,7 +75,15 @@ class TestRunSync:
         result: r[bool],
         expected: int,
     ) -> None:
-        monkeypatch.setattr(FlextInfraSyncService, "sync", lambda _s, **_kw: result)
+        def _sync_stub(
+            _self: FlextInfraSyncService,
+            project_root: Path,
+            canonical_root: Path | None,
+        ) -> r[bool]:
+            del _self, project_root, canonical_root
+            return result
+
+        monkeypatch.setattr(FlextInfraSyncService, "sync", _sync_stub)
         tm.that(
             workspace_main._run_sync(_ns(project_root=tmp_path, canonical_root=None)),
             eq=expected,
@@ -79,13 +92,20 @@ class TestRunSync:
 
 class TestRunOrchestrate:
     def test_success(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        def _orchestrate_success(
+            _self: FlextInfraOrchestratorService,
+            projects: list[str],
+            verb: str,
+            fail_fast: bool = False,
+            make_args: list[str] | None = None,
+        ) -> r[list[m.Infra.Core.CommandOutput]]:
+            del _self, projects, verb, fail_fast, make_args
+            return r[list[m.Infra.Core.CommandOutput]].ok([_cmd_out(0), _cmd_out(0)])
+
         monkeypatch.setattr(
             FlextInfraOrchestratorService,
             "orchestrate",
-            lambda _s, **_kw: r[list[m.Infra.Core.CommandOutput]].ok([
-                _cmd_out(0),
-                _cmd_out(0),
-            ]),
+            _orchestrate_success,
         )
         tm.that(workspace_main._run_orchestrate(_orch_args()), eq=0)
 
@@ -93,23 +113,38 @@ class TestRunOrchestrate:
         tm.that(workspace_main._run_orchestrate(_orch_args([])), eq=1)
 
     def test_with_failures(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        def _orchestrate_partial(
+            _self: FlextInfraOrchestratorService,
+            projects: list[str],
+            verb: str,
+            fail_fast: bool = False,
+            make_args: list[str] | None = None,
+        ) -> r[list[m.Infra.Core.CommandOutput]]:
+            del _self, projects, verb, fail_fast, make_args
+            return r[list[m.Infra.Core.CommandOutput]].ok([_cmd_out(0), _cmd_out(1)])
+
         monkeypatch.setattr(
             FlextInfraOrchestratorService,
             "orchestrate",
-            lambda _s, **_kw: r[list[m.Infra.Core.CommandOutput]].ok([
-                _cmd_out(0),
-                _cmd_out(1),
-            ]),
+            _orchestrate_partial,
         )
         tm.that(workspace_main._run_orchestrate(_orch_args()), eq=1)
 
     def test_orchestration_failure(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        def _orchestrate_failure(
+            _self: FlextInfraOrchestratorService,
+            projects: list[str],
+            verb: str,
+            fail_fast: bool = False,
+            make_args: list[str] | None = None,
+        ) -> r[list[m.Infra.Core.CommandOutput]]:
+            del _self, projects, verb, fail_fast, make_args
+            return r[list[m.Infra.Core.CommandOutput]].fail("Orchestration failed")
+
         monkeypatch.setattr(
             FlextInfraOrchestratorService,
             "orchestrate",
-            lambda _s, **_kw: r[list[m.Infra.Core.CommandOutput]].fail(
-                "Orchestration failed"
-            ),
+            _orchestrate_failure,
         )
         tm.that(workspace_main._run_orchestrate(_orch_args(["p-a"])), eq=1)
 
@@ -136,9 +171,15 @@ class TestRunMigrate:
         result: r[list[m.Infra.Workspace.MigrationResult]],
         expected: int,
     ) -> None:
-        monkeypatch.setattr(
-            FlextInfraProjectMigrator, "migrate", lambda _s, **_kw: result
-        )
+        def _migrate_stub(
+            _self: FlextInfraProjectMigrator,
+            workspace_root: Path,
+            dry_run: bool,
+        ) -> r[list[m.Infra.Workspace.MigrationResult]]:
+            del _self, workspace_root, dry_run
+            return result
+
+        monkeypatch.setattr(FlextInfraProjectMigrator, "migrate", _migrate_stub)
         tm.that(
             workspace_main._run_migrate(_ns(workspace_root=tmp_path, dry_run=False)),
             eq=expected,
@@ -155,10 +196,19 @@ class TestRunMigrate:
             ),
             m.Infra.Workspace.MigrationResult(project="p2", errors=[], changes=[]),
         ]
+
+        def _migrate_with_errors(
+            _self: FlextInfraProjectMigrator,
+            workspace_root: Path,
+            dry_run: bool,
+        ) -> r[list[m.Infra.Workspace.MigrationResult]]:
+            del _self, workspace_root, dry_run
+            return r[list[m.Infra.Workspace.MigrationResult]].ok(mrs)
+
         monkeypatch.setattr(
             FlextInfraProjectMigrator,
             "migrate",
-            lambda _s, **_kw: r[list[m.Infra.Workspace.MigrationResult]].ok(mrs),
+            _migrate_with_errors,
         )
         tm.that(
             workspace_main._run_migrate(_ns(workspace_root=tmp_path, dry_run=False)),

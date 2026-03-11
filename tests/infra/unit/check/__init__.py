@@ -41,6 +41,7 @@ if TYPE_CHECKING:
         TestProcessFileReadError,
     )
     from tests.infra.unit.check.extended_error_reporting import (
+        RunStub,
         TestErrorReporting,
         TestGoFmtEmptyLinesInOutput,
         TestMarkdownReportEmptyGates,
@@ -83,6 +84,7 @@ if TYPE_CHECKING:
         TestWorkspaceCheckerResolveGates,
     )
     from tests.infra.unit.check.extended_run_projects import (
+        CheckProjectStub,
         TestRunProjectsBehavior,
         TestRunProjectsReports,
         TestRunProjectsValidation,
@@ -96,6 +98,7 @@ if TYPE_CHECKING:
     )
     from tests.infra.unit.check.extended_runners_go import TestRunGo
     from tests.infra.unit.check.extended_runners_ruff import (
+        RunCallable,
         TestCollectMarkdownFiles,
         TestRunCommand,
         TestRunRuffFormat,
@@ -124,6 +127,12 @@ if TYPE_CHECKING:
 
 # Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
+    "CheckProjectStub": (
+        "tests.infra.unit.check.extended_run_projects",
+        "CheckProjectStub",
+    ),
+    "RunCallable": ("tests.infra.unit.check.extended_runners_ruff", "RunCallable"),
+    "RunStub": ("tests.infra.unit.check.extended_error_reporting", "RunStub"),
     "TestCheckIssueFormatted": (
         "tests.infra.unit.check.extended_models",
         "TestCheckIssueFormatted",
@@ -416,6 +425,9 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
 }
 
 __all__ = [
+    "CheckProjectStub",
+    "RunCallable",
+    "RunStub",
     "TestCheckIssueFormatted",
     "TestCheckMainEntryPoint",
     "TestCheckProjectRunners",

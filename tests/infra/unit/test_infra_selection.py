@@ -117,6 +117,7 @@ class TestFlextInfraUtilitiesSelection:
         """Test that result contains properly typed ProjectInfo items."""
         result = selector.resolve_projects(workspace_with_projects, [])
         projects = tm.ok(result, is_=list)
+        assert isinstance(projects, list)
         for p in projects:
             tm.that(isinstance(p, m.Infra.Workspace.ProjectInfo), eq=True)
 

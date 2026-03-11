@@ -231,6 +231,7 @@ if TYPE_CHECKING:
         TestProcessFileReadError,
     )
     from tests.infra.unit.check.extended_error_reporting import (
+        RunStub,
         TestErrorReporting,
         TestGoFmtEmptyLinesInOutput,
         TestMarkdownReportEmptyGates,
@@ -273,6 +274,7 @@ if TYPE_CHECKING:
         TestWorkspaceCheckerResolveGates,
     )
     from tests.infra.unit.check.extended_run_projects import (
+        CheckProjectStub,
         TestRunProjectsBehavior,
         TestRunProjectsReports,
         TestRunProjectsValidation,
@@ -286,6 +288,7 @@ if TYPE_CHECKING:
     )
     from tests.infra.unit.check.extended_runners_go import TestRunGo
     from tests.infra.unit.check.extended_runners_ruff import (
+        RunCallable,
         TestCollectMarkdownFiles,
         TestRunCommand,
         TestRunRuffFormat,
@@ -1065,8 +1068,7 @@ if TYPE_CHECKING:
     )
     from tests.infra.unit.test_infra_workspace_orchestrator import (
         TestOrchestratorBasic,
-        TestOrchestratorRunProject,
-        TestOrchestratorWithRunner,
+        TestOrchestratorFailures,
         orchestrator,
     )
     from tests.infra.unit.test_infra_workspace_sync import (
@@ -2162,6 +2164,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_utilities_cache_coverage_100",
         "CacheScenarios",
     ),
+    "CheckProjectStub": (
+        "tests.infra.unit.check.extended_run_projects",
+        "CheckProjectStub",
+    ),
     "CoerceListValidatorScenario": (
         "tests.unit.test_collection_utilities_coverage_100",
         "CoerceListValidatorScenario",
@@ -2406,6 +2412,8 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "RealSubprocessRunner": ("tests.infra.runner_service", "RealSubprocessRunner"),
     "ReliabilityScenario": ("tests.helpers.scenarios", "ReliabilityScenario"),
     "ReliabilityScenarios": ("tests.helpers.scenarios", "ReliabilityScenarios"),
+    "RunCallable": ("tests.infra.unit.check.extended_runners_ruff", "RunCallable"),
+    "RunStub": ("tests.infra.unit.check.extended_error_reporting", "RunStub"),
     "RuntimeCloneService": (
         "tests.unit.test_service_additional",
         "RuntimeCloneService",
@@ -3926,13 +3934,9 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.infra.unit.test_infra_workspace_orchestrator",
         "TestOrchestratorBasic",
     ),
-    "TestOrchestratorRunProject": (
+    "TestOrchestratorFailures": (
         "tests.infra.unit.test_infra_workspace_orchestrator",
-        "TestOrchestratorRunProject",
-    ),
-    "TestOrchestratorWithRunner": (
-        "tests.infra.unit.test_infra_workspace_orchestrator",
-        "TestOrchestratorWithRunner",
+        "TestOrchestratorFailures",
     ),
     "TestOutputSingletonConsistency": (
         "tests.integration.test_infra_integration",
@@ -7456,6 +7460,7 @@ __all__ = [
     "BadString",
     "BrokenScenario",
     "CacheScenarios",
+    "CheckProjectStub",
     "CoerceListValidatorScenario",
     "CoerceValidatorScenario",
     "CollectionScenarios",
@@ -7556,6 +7561,8 @@ __all__ = [
     "RealSubprocessRunner",
     "ReliabilityScenario",
     "ReliabilityScenarios",
+    "RunCallable",
+    "RunStub",
     "RuntimeCloneService",
     "SampleCommand",
     "SampleEvent",
@@ -8005,8 +8012,7 @@ __all__ = [
     "TestOkNoneGuardStillRaises",
     "TestOrchestrate",
     "TestOrchestratorBasic",
-    "TestOrchestratorRunProject",
-    "TestOrchestratorWithRunner",
+    "TestOrchestratorFailures",
     "TestOutputSingletonConsistency",
     "TestOwnerFromRemoteUrl",
     "TestParseArgs",

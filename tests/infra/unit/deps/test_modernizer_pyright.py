@@ -7,7 +7,8 @@ from pathlib import Path
 
 import tomlkit
 
-from flext_infra.deps.modernizer import EnsurePyrightConfigPhase, unwrap_item
+from flext_infra import u
+from flext_infra.deps._phases import EnsurePyrightConfigPhase
 from flext_infra.deps.tool_config import FlextInfraToolConfigDocument, load_tool_config
 from flext_tests import tm
 
@@ -40,15 +41,15 @@ class TestEnsurePyrightConfigPhase:
             is_root=True,
             workspace_root=tmp_path,
         )
-        tool = unwrap_item(doc["tool"])
+        tool = u.Infra.unwrap_item(doc["tool"])
         tm.that(isinstance(tool, MutableMapping), eq=True)
         if not isinstance(tool, MutableMapping):
             return
-        pyright = unwrap_item(tool["pyright"])
+        pyright = u.Infra.unwrap_item(tool["pyright"])
         tm.that(isinstance(pyright, MutableMapping), eq=True)
         if not isinstance(pyright, MutableMapping):
             return
-        envs = unwrap_item(pyright["executionEnvironments"])
+        envs = u.Infra.unwrap_item(pyright["executionEnvironments"])
         tm.that(isinstance(envs, list), eq=True)
         tm.that(
             envs,
@@ -69,15 +70,15 @@ class TestEnsurePyrightConfigPhase:
         changes = EnsurePyrightConfigPhase(_test_tool_config()).apply(
             doc, is_root=False
         )
-        tool = unwrap_item(doc["tool"])
+        tool = u.Infra.unwrap_item(doc["tool"])
         tm.that(isinstance(tool, MutableMapping), eq=True)
         if not isinstance(tool, MutableMapping):
             return
-        pyright = unwrap_item(tool["pyright"])
+        pyright = u.Infra.unwrap_item(tool["pyright"])
         tm.that(isinstance(pyright, MutableMapping), eq=True)
         if not isinstance(pyright, MutableMapping):
             return
-        envs = unwrap_item(pyright["executionEnvironments"])
+        envs = u.Infra.unwrap_item(pyright["executionEnvironments"])
         tm.that(isinstance(envs, list), eq=True)
         tm.that(
             envs,
