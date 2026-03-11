@@ -104,9 +104,10 @@ class PostCheckGate:
         """Check that the file compiles without syntax errors."""
         cmd = [sys.executable, "-m", "py_compile", str(file_path)]
         result = u.Infra.capture_output(cmd)
-        if result.is_failure:
-            return [f"lsp_diagnostics_clean_failed:{result.error or ''}"]
-        return []
+        return result.fold(
+            on_failure=lambda e: [f"lsp_diagnostics_clean_failed:{e or ''}"],
+            on_success=lambda _: [],
+        )
 
     def _base_name(self, base: ast.expr) -> str:
         if isinstance(base, ast.Name):

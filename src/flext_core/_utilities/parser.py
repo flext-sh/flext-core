@@ -482,9 +482,10 @@ class FlextUtilitiesParser:
         except ValidationError:
             return "unknown"
         text_length_result = r[int].create_from_callable(lambda: len(text_value))
-        if text_length_result.is_success:
-            return text_length_result.value
-        return "unknown"
+        return text_length_result.fold(
+            on_failure=lambda _: "unknown",
+            on_success=lambda v: v,
+        )
 
     @staticmethod
     def _to_json_value(value: t.ContainerValue) -> t.JsonValue:

@@ -108,13 +108,14 @@ class FlextInfraPythonVersionEnforcer(s[int]):
 
         """
         result = u.Infra.discover_projects(workspace_root)
-        if result.is_failure:
-            return []
-        return [
-            project.path
-            for project in result.value
-            if (project.path / c.Infra.Files.PYPROJECT_FILENAME).exists()
-        ]
+        return result.fold(
+            on_failure=lambda _: [],
+            on_success=lambda v: [
+                project.path
+                for project in v
+                if (project.path / c.Infra.Files.PYPROJECT_FILENAME).exists()
+            ],
+        )
 
     def _ensure_python_version_file(self, project: Path, required_minor: int) -> bool:
         """Ensure pyproject.toml requires-python matches required minor version.

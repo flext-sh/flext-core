@@ -91,9 +91,10 @@ class FlextInfraPyprojectModernizer:
             self.root,
             skip_dirs=c.Infra.Deps.SKIP_DIRS,
         )
-        if result.is_failure:
-            return []
-        return sorted(result.value)
+        return result.fold(
+            on_failure=lambda _: [],
+            on_success=lambda v: sorted(v),
+        )
 
     def process_file(
         self,

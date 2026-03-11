@@ -1307,7 +1307,7 @@ class FlextUtilitiesMapper:
             on_failure=lambda e: r[Mapping[str, bool]].fail(
                 f"Failed to build flags dict: {e}"
             ),
-            on_success=lambda v: flags_result,
+            on_success=lambda _: flags_result,
         )
 
     @staticmethod
@@ -1375,7 +1375,7 @@ class FlextUtilitiesMapper:
             on_failure=lambda e: r[list[str]].fail(
                 f"Failed to collect active keys: {e}"
             ),
-            on_success=lambda v: active_keys_result,
+            on_success=lambda _: active_keys_result,
         )
 
     @staticmethod
@@ -2102,7 +2102,7 @@ class FlextUtilitiesMapper:
             on_failure=lambda e: r[t.ConfigurationMapping].fail(
                 f"Failed to map dict keys: {e}"
             ),
-            on_success=lambda v: mapped_result,
+            on_success=lambda _: mapped_result,
         )
 
     @staticmethod
@@ -2566,7 +2566,7 @@ class FlextUtilitiesMapper:
             on_failure=lambda e: r[t.ConfigurationMapping].fail(
                 f"Transform failed: {e}"
             ),
-            on_success=lambda v: transform_result,
+            on_success=lambda _: transform_result,
         )
 
     @staticmethod

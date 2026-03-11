@@ -25,9 +25,10 @@ class FlextInfraUtilitiesSafety:
         Returns success with True when workspace is clean, False when dirty.
         """
         has_changes = FlextInfraUtilitiesGit.git_has_changes(workspace_root)
-        if has_changes.is_failure:
-            return r[bool].fail(has_changes.error or "git status failed")
-        return r[bool].ok(not has_changes.value)
+        return has_changes.fold(
+            on_failure=lambda e: r[bool].fail(e or "git status failed"),
+            on_success=lambda v: r[bool].ok(not v),
+        )
 
     @staticmethod
     def create_checkpoint(
@@ -62,9 +63,10 @@ class FlextInfraUtilitiesSafety:
         stash_list = FlextInfraUtilitiesGit.git_run(
             ["stash", "list"], cwd=workspace_root
         )
-        if stash_list.is_failure:
-            return r[str].fail(stash_list.error or "git stash list failed")
-        return r[str].ok(stash_list.value.strip())
+        return stash_list.fold(
+            on_failure=lambda e: r[str].fail(e or "git stash list failed"),
+            on_success=lambda v: r[str].ok(v.strip()),
+        )
 
     @staticmethod
     def rollback_to_checkpoint(workspace_root: Path, stash_ref: str = "") -> r[bool]:

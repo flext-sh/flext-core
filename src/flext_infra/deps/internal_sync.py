@@ -287,9 +287,10 @@ class FlextInfraInternalDependencySyncService:
         remote = u.Infra.git_run(
             ["config", "--get", "remote.origin.url"], cwd=project_root
         )
-        if remote.is_failure:
-            return None
-        return self.owner_from_remote_url(remote.value.strip())
+        return remote.fold(
+            on_failure=lambda _: None,
+            on_success=lambda v: self.owner_from_remote_url(v.strip()),
+        )
 
     def is_workspace_mode(self, project_root: Path) -> tuple[bool, Path | None]:
         """Determine workspace mode and return resolved workspace root."""

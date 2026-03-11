@@ -81,9 +81,10 @@ class FlextInfraUtilitiesGit:
             [c.Infra.Cli.GIT, c.Infra.Cli.GitCmd.STATUS, "--porcelain"],
             cwd=repo_root,
         )
-        if result.is_failure:
-            return r[bool].fail(result.error or "git status failed")
-        return r[bool].ok(bool(result.value.strip()))
+        return result.fold(
+            on_failure=lambda e: r[bool].fail(e or "git status failed"),
+            on_success=lambda v: r[bool].ok(bool(v.strip())),
+        )
 
     @staticmethod
     def git_diff_names(repo_root: Path, *, cached: bool = False) -> r[str]:

@@ -147,12 +147,15 @@ class FlextInfraPrManager:
         if draft:
             command.append("--draft")
         result: r[str] = self._runner.capture(command, cwd=repo_root)
-        if result.is_failure:
-            return r[Mapping[str, t.Scalar]].fail(result.error or "PR creation failed")
-        return r[Mapping[str, t.Scalar]].ok({
-            c.Infra.ReportKeys.STATUS: "created",
-            "pr_url": result.unwrap(),
-        })
+        return result.fold(
+            on_failure=lambda e: r[Mapping[str, t.Scalar]].fail(
+                e or "PR creation failed"
+            ),
+            on_success=lambda v: r[Mapping[str, t.Scalar]].ok({
+                c.Infra.ReportKeys.STATUS: "created",
+                "pr_url": v,
+            }),
+        )
 
     def merge(
         self,

@@ -186,9 +186,10 @@ class DependencyAnalyzer:
             include_scripts=False,
             src_dirs=frozenset({"src"}),
         )
-        if files_result.is_success:
-            return files_result.value
-        return []
+        return files_result.fold(
+            on_failure=lambda _: [],
+            on_success=lambda v: v,
+        )
 
     def _scan_import_files_with_ast_grep(self, src_path: Path) -> r[set[Path]]:
         files: set[Path] = set()

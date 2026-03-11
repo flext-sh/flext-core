@@ -106,9 +106,10 @@ class FlextInfraUtilitiesSubprocess:
             timeout=timeout,
             env=env,
         )
-        if result.is_success:
-            return r[bool].ok(True)
-        return r[bool].fail(result.error or "command failed")
+        return result.fold(
+            on_failure=lambda e: r[bool].fail(e or "command failed"),
+            on_success=lambda _: r[bool].ok(True),
+        )
 
     @staticmethod
     def capture(
@@ -124,9 +125,10 @@ class FlextInfraUtilitiesSubprocess:
             timeout=timeout,
             env=env,
         )
-        if result.is_success:
-            return r[str].ok(result.value.stdout.strip())
-        return r[str].fail(result.error or "capture failed")
+        return result.fold(
+            on_failure=lambda e: r[str].fail(e or "capture failed"),
+            on_success=lambda v: r[str].ok(v.stdout.strip()),
+        )
 
     @staticmethod
     def run_to_file(

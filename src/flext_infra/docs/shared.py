@@ -50,9 +50,10 @@ class FlextInfraDocsShared:
         result: r[list[m.Infra.Workspace.ProjectInfo]] = _discovery.discover_projects(
             root,
         )
-        if result.is_success:
-            return [p.name for p in result.value]
-        return []
+        return result.fold(
+            on_failure=lambda _: [],
+            on_success=lambda v: [p.name for p in v],
+        )
 
     @staticmethod
     def build_scopes(
