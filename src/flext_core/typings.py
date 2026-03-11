@@ -78,14 +78,12 @@ class FlextTypes:
     type ConfigurationMapping = Mapping[str, ContainerValue]
     type LazyExportType = tuple[str, str]
     type AnnotationMap = Mapping[str, LazyExportType]
-    RegisterableService: TypeAlias = (
-        Container | list | tuple | dict | BindableLogger | None
+    type RegisterableService = (
+        ContainerValue | BindableLogger | Callable[..., ContainerValue]
     )
     type FactoryCallable = Callable[[], RegisterableService]
     type ResourceCallable = Callable[[], ContainerValue]
-    MetadataValue: TypeAlias = (
-        Scalar | Mapping[str, Scalar | list[Scalar]] | list[Scalar]
-    )
+    type MetadataValue = Scalar | Mapping[str, Scalar | list[Scalar]] | list[Scalar]
     type MetadataAttributeValue = MetadataValue
     type HandlerCallable = Callable[[ContainerValue], ContainerValue]
     type HandlerLike = Callable[..., ContainerValue]

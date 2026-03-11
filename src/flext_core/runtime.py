@@ -1269,8 +1269,8 @@ class FlextRuntime:
         def __repr__(self) -> str:
             """String representation using short alias 'r' for brevity."""
             if self.is_success:
-                return f"r.ok({self.value!r})"
-            return f"r.fail({self.error!r})"
+                return f"r[T].ok({self.value!r})"
+            return f"r[T].fail({self.error!r})"
 
         def __bool__(self) -> bool:
             """Boolean conversion based on success state."""

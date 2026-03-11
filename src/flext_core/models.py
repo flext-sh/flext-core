@@ -29,6 +29,18 @@ from flext_core._models.entity import FlextModelsEntity
 from flext_core._models.generic import FlextGenericModels
 from flext_core._models.handler import FlextModelsHandler
 from flext_core._models.settings import FlextModelsConfig
+from flext_core._models.typed_containers import (
+    ConfigMapping,
+    ConfigValue,
+    HandlerInput,
+    HandlerOutput,
+    LogContext,
+)
+from flext_core._protocols.typed_protocols import (
+    SupportsConfigAccess,
+    SupportsLogging,
+    SupportsSerialization,
+)
 
 
 class FlextModels:
@@ -440,6 +452,22 @@ class FlextModels:
 
     class TimeoutConfig(FlextModelsDecorators.TimeoutConfig):
         """Timeout config — real re-export for pydantic-mypy compatibility."""
+
+    class TypedContainers:
+        """Typed containers replacing generic mapping patterns."""
+
+        ConfigValue = ConfigValue
+        ConfigMapping = ConfigMapping
+        LogContext = LogContext
+        HandlerInput = HandlerInput
+        HandlerOutput = HandlerOutput
+
+    class Protocols:
+        """Typed protocol contracts for structured integrations."""
+
+        SupportsConfigAccess = SupportsConfigAccess
+        SupportsLogging = SupportsLogging
+        SupportsSerialization = SupportsSerialization
 
     # GENERIC CONTAINERS - Replace dict aliases
     ConfigMap: TypeAlias = FlextModelsContainers.ConfigMap
