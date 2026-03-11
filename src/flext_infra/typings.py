@@ -15,7 +15,9 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from pathlib import Path
-from typing import Literal
+from typing import Literal, TypeAlias
+
+from pydantic import BaseModel
 
 from flext_core import FlextTypes
 
@@ -87,6 +89,10 @@ class FlextInfraTypes(FlextTypes):
         "Class-nesting policy matrix keyed by module family."
         type ClassFamilyMap = Mapping[str, str]
         "Mapping from symbol name to resolved module family."
+        MetricValue: TypeAlias = FlextTypes.Scalar | Path | None
+        "Output metric value: scalar (str/int/float/bool/datetime), path, or null."
+        MetricRecord: TypeAlias = BaseModel | Mapping[str, MetricValue]
+        "A single metric record: a Pydantic model or a string-keyed mapping of metric values."
 
 
 t = FlextInfraTypes
