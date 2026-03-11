@@ -338,6 +338,32 @@ tools:
       pythonVersion: '3.13'
       pythonPlatform: Linux
       typeCheckingMode: strict
+    extended-settings:
+      reportMissingImports: error
+      reportMissingModuleSource: error
+      reportMissingTypeStubs: warning
+      reportUnusedImport: error
+      reportUnusedVariable: error
+      reportUnusedClass: error
+      reportUnusedFunction: error
+      reportConstantRedefinition: error
+      reportIncompatibleMethodOverride: error
+      reportIncompatibleVariableOverride: error
+      reportInconsistentConstructor: error
+      reportUnnecessaryIsInstance: warning
+      reportUnnecessaryCast: error
+      reportUnnecessaryComparison: warning
+      reportPrivateUsage: warning
+  coverage:
+    fail-under:
+      core: 45
+      domain: 30
+      platform: 25
+      integration: 20
+      app: 15
+    show-missing: true
+    skip-covered: false
+    precision: 2
   pyrefly:
     strict-errors:
       - deprecated
