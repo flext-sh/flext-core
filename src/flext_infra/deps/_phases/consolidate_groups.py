@@ -1,0 +1,108 @@
+"""Phase: Consolidate optional-dependencies and Poetry groups into single dev group."""
+
+from __future__ import annotations
+
+import tomlkit
+from tomlkit.items import Table
+
+from flext_infra import c
+from flext_infra._utilities.toml import FlextInfraUtilitiesToml as _Toml
+from flext_infra._utilities.toml_parse import FlextInfraUtilitiesTomlParse as _TomlParse
+
+array = _Toml.array
+as_string_list = _Toml.as_string_list
+toml_get = _Toml.get
+ensure_table = _Toml.ensure_table
+dedupe_specs = _TomlParse.dedupe_specs
+project_dev_groups = _TomlParse.project_dev_groups
+
+
+class ConsolidateGroupsPhase:
+    """Consolidate optional-dependencies and Poetry groups into single dev group."""
+
+    def apply(self, doc: tomlkit.TOMLDocument, canonical_dev: list[str]) -> list[str]:
+        changes: list[str] = []
+        project: object | None = None
+        if c.Infra.Toml.PROJECT in doc:
+            project = doc[c.Infra.Toml.PROJECT]
+        if not isinstance(project, Table):
+            project = tomlkit.table()
+            doc[c.Infra.Toml.PROJECT] = project
+
+        optional: object | None = None
+        if c.Infra.Toml.OPTIONAL_DEPENDENCIES in project:
+            optional = project[c.Infra.Toml.OPTIONAL_DEPENDENCIES]
+        if not isinstance(optional, Table):
+            optional = tomlkit.table()
+            project[c.Infra.Toml.OPTIONAL_DEPENDENCIES] = optional
+        existing = project_dev_groups(doc)
+        merged_dev = dedupe_specs([
+            *canonical_dev,
+            *existing.get(c.Infra.Toml.DEV, []),
+            *existing.get(c.Infra.Directories.DOCS, []),
+            *existing.get(c.Infra.Gates.SECURITY, []),
+            *existing.get(c.Infra.Toml.TEST, []),
+            *existing.get(c.Infra.Directories.TYPINGS, []),
+        ])
+        current_dev = as_string_list(toml_get(optional, c.Infra.Toml.DEV))
+        if sorted(current_dev) != sorted(merged_dev):
+            optional[c.Infra.Toml.DEV] = array(sorted(merged_dev))
+            changes.append("project.optional-dependencies.dev consolidated")
+        for old_key in (
+            c.Infra.Toml.DOCS,
+            c.Infra.Toml.SECURITY,
+            c.Infra.Toml.TEST,
+            c.Infra.Directories.TYPINGS,
+        ):
+            if old_key in optional:
+                del optional[old_key]
+                changes.append(f"project.optional-dependencies.{old_key} removed")
+        tool: object | None = None
+        if c.Infra.Toml.TOOL in doc:
+            tool = doc[c.Infra.Toml.TOOL]
+        if not isinstance(tool, Table):
+            tool = tomlkit.table()
+            doc[c.Infra.Toml.TOOL] = tool
+        poetry = ensure_table(tool, c.Infra.Toml.POETRY)
+        poetry_group_raw: object | None = None
+        if c.Infra.Toml.GROUP in poetry:
+            poetry_group_raw = poetry[c.Infra.Toml.GROUP]
+        poetry_group = poetry_group_raw if isinstance(poetry_group_raw, Table) else None
+        poetry_dev_table: Table | None = None
+        for old_group in (
+            c.Infra.Toml.DOCS,
+            c.Infra.Toml.SECURITY,
+            c.Infra.Toml.TEST,
+            c.Infra.Directories.TYPINGS,
+        ):
+            if poetry_group is None:
+                continue
+            old_group_table: object | None = None
+            if old_group in poetry_group:
+                old_group_table = poetry_group[old_group]
+            if not isinstance(old_group_table, Table):
+                continue
+            old_deps: object | None = None
+            if c.Infra.Toml.DEPENDENCIES in old_group_table:
+                old_deps = old_group_table[c.Infra.Toml.DEPENDENCIES]
+            if isinstance(old_deps, Table):
+                if poetry_dev_table is None:
+                    poetry_dev_table = ensure_table(
+                        ensure_table(poetry_group, c.Infra.Toml.DEV),
+                        c.Infra.Toml.DEPENDENCIES,
+                    )
+                for dep_name_raw in old_deps:
+                    dep_name = dep_name_raw
+                    dep_value = old_deps[dep_name_raw]
+                    if dep_name not in poetry_dev_table:
+                        poetry_dev_table[dep_name] = dep_value
+            del poetry_group[old_group]
+            changes.append(f"tool.poetry.group.{old_group} removed")
+        deptry = ensure_table(tool, c.Infra.Toml.DEPTRY)
+        current_groups = as_string_list(
+            toml_get(deptry, "pep621_dev_dependency_groups"),
+        )
+        if current_groups != [c.Infra.Toml.DEV]:
+            deptry["pep621_dev_dependency_groups"] = array([c.Infra.Toml.DEV])
+            changes.append("tool.deptry.pep621_dev_dependency_groups set to ['dev']")
+        return changes

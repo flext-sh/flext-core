@@ -16,9 +16,8 @@ import tomlkit
 from tomlkit.items import Item, Table
 
 from flext_core import r
+from flext_infra import c, t
 from flext_infra._utilities.toml import FlextInfraUtilitiesToml
-from flext_infra.constants import FlextInfraConstants as c
-from flext_infra.typings import FlextInfraTypes as t
 
 
 class FlextInfraUtilitiesTomlParse:

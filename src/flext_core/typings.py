@@ -131,6 +131,8 @@ class FlextTypes:
         type TimestampStr = Annotated[str, Field(min_length=1)]
 
 
+t = FlextTypes
+
 __all__ = [
     "FlextTypes",
     "MessageT_contra",
@@ -144,4 +146,5 @@ __all__ = [
     "T_co",
     "T_contra",
     "U",
+    "t",
 ]
