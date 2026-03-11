@@ -1,3 +1,5 @@
+"""Tool configuration loader for flext-infra dependency management."""
+
 from __future__ import annotations
 
 from collections.abc import Mapping
