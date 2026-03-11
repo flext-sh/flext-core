@@ -27,6 +27,17 @@ from flext_infra import (
 logger = FlextLogger.create_module_logger(__name__)
 
 
+class _FlextInfraOutput:
+    """Injectable output adapter for structured info messages."""
+
+    def info(self, message: str) -> None:
+        """Log an info message via the infra utilities facade."""
+        u.Infra.info(message)
+
+
+output: _FlextInfraOutput = _FlextInfraOutput()
+
+
 class FlextInfraDependencyPathSync:
     """Rewrite internal FLEXT dependency paths for workspace or standalone mode."""
 
@@ -235,7 +246,7 @@ class FlextInfraDependencyPathSync:
 
         if mode == "auto":
             mode = self.detect_mode(self.ROOT)
-            u.Infra.info(f"[sync-dep-paths] auto-detected mode: {mode}")
+            output.info(f"[sync-dep-paths] auto-detected mode: {mode}")
 
         total_changes = 0
         internal_names: set[str] = set()
@@ -269,9 +280,9 @@ class FlextInfraDependencyPathSync:
             changes: list[str] = changes_result.value
             if changes:
                 prefix = "[DRY-RUN] " if args.dry_run else ""
-                u.Infra.info(f"{prefix}{root_pyproject}:")
+                output.info(f"{prefix}{root_pyproject}:")
                 for change in changes:
-                    u.Infra.info(change)
+                    output.info(change)
                 total_changes += len(changes)
 
         discover_result = FlextInfraUtilitiesDiscovery().discover_projects(self.ROOT)
@@ -326,18 +337,18 @@ class FlextInfraDependencyPathSync:
             project_changes: list[str] = changes_result.value
             if project_changes:
                 prefix = "[DRY-RUN] " if args.dry_run else ""
-                u.Infra.info(f"{prefix}{pyproject}:")
+                output.info(f"{prefix}{pyproject}:")
                 for change in project_changes:
-                    u.Infra.info(change)
+                    output.info(change)
                 total_changes += len(project_changes)
 
         if total_changes == 0:
-            u.Infra.info(
+            output.info(
                 "[sync-dep-paths] No changes needed - all paths already match target mode."
             )
         else:
             action = "would change" if args.dry_run else "changed"
-            u.Infra.info(f"[sync-dep-paths] {action} {total_changes} path(s).")
+            output.info(f"[sync-dep-paths] {action} {total_changes} path(s).")
         return 0
 
 
@@ -350,4 +361,4 @@ if __name__ == "__main__":
     raise SystemExit(main())
 
 
-__all__ = ["FlextInfraDependencyPathSync", "main"]
+__all__ = ["FlextInfraDependencyPathSync", "main", "output"]
