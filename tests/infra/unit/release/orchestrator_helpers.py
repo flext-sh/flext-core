@@ -12,6 +12,7 @@ from flext_infra.release import orchestrator as _orch_mod
 from flext_infra.release.orchestrator import FlextInfraReleaseOrchestrator
 from flext_tests import tm
 from tests.infra.models import m as _m
+from tests.infra.typings import t
 from tests.infra.unit.release._stubs import (
     FakeSelection,
     FakeSubprocess,
@@ -38,11 +39,19 @@ def workspace_root(tmp_path: Path) -> Path:
 
 
 def _patch_sel(mp: MonkeyPatch, sel: FakeSelection) -> None:
-    mp.setattr(_orch_mod, "FlextInfraUtilitiesSelection", lambda *a, **kw: sel)
+    def _factory(*a: t.ContainerValue, **kw: t.ContainerValue) -> FakeSelection:
+        del a, kw
+        return sel
+
+    mp.setattr(_orch_mod, "FlextInfraUtilitiesSelection", _factory)
 
 
 def _patch_sp(mp: MonkeyPatch, sp: FakeSubprocess) -> None:
-    mp.setattr(_orch_mod, "FlextInfraUtilitiesSubprocess", lambda *a, **kw: sp)
+    def _factory(*a: t.ContainerValue, **kw: t.ContainerValue) -> FakeSubprocess:
+        del a, kw
+        return sp
+
+    mp.setattr(_orch_mod, "FlextInfraUtilitiesSubprocess", _factory)
 
 
 class TestVersionFiles:
@@ -112,8 +121,17 @@ class TestGenerateNotes:
     def test_writes_file(self, workspace_root: Path, monkeypatch: MonkeyPatch) -> None:
         FakeUtilsNamespace.Infra.reset()
         monkeypatch.setattr(_orch_mod, "u", FakeUtilsNamespace)
-        monkeypatch.setattr(_CLS, "_previous_tag", lambda *a, **kw: r[str].ok(""))
-        monkeypatch.setattr(_CLS, "_collect_changes", lambda *a, **kw: r[str].ok(""))
+
+        def _previous_tag(*a: t.ContainerValue, **kw: t.ContainerValue) -> r[str]:
+            del a, kw
+            return r[str].ok("")
+
+        def _collect_changes(*a: t.ContainerValue, **kw: t.ContainerValue) -> r[str]:
+            del a, kw
+            return r[str].ok("")
+
+        monkeypatch.setattr(_CLS, "_previous_tag", _previous_tag)
+        monkeypatch.setattr(_CLS, "_collect_changes", _collect_changes)
         _patch_sel(monkeypatch, FakeSelection())
         notes_path = workspace_root / "notes.md"
         result = _CLS()._generate_notes(
@@ -149,21 +167,38 @@ class TestBumpNextDev:
     def test_bumps_version(
         self, workspace_root: Path, monkeypatch: MonkeyPatch
     ) -> None:
+        def _versioning_factory(
+            *a: t.ContainerValue, **kw: t.ContainerValue
+        ) -> FakeVersioning:
+            del a, kw
+            return FakeVersioning()
+
+        def _phase_version(*a: t.ContainerValue, **kw: t.ContainerValue) -> r[bool]:
+            del a, kw
+            return r[bool].ok(True)
+
         monkeypatch.setattr(
             _orch_mod,
             "FlextInfraUtilitiesVersioning",
-            lambda *a, **kw: FakeVersioning(),
+            _versioning_factory,
         )
-        monkeypatch.setattr(_CLS, "phase_version", lambda *a, **kw: r[bool].ok(True))
+        monkeypatch.setattr(_CLS, "phase_version", _phase_version)
         tm.ok(_CLS()._bump_next_dev(workspace_root, "1.0.0", [], "minor"))
 
     def test_bump_failure(self, workspace_root: Path, monkeypatch: MonkeyPatch) -> None:
         fake_vs = FakeVersioning()
         fake_vs._bump_result = r[str].fail("invalid bump")
+
+        def _versioning_factory(
+            *a: t.ContainerValue, **kw: t.ContainerValue
+        ) -> FakeVersioning:
+            del a, kw
+            return fake_vs
+
         monkeypatch.setattr(
             _orch_mod,
             "FlextInfraUtilitiesVersioning",
-            lambda *a, **kw: fake_vs,
+            _versioning_factory,
         )
         tm.fail(_CLS()._bump_next_dev(workspace_root, "1.0.0", [], "invalid"))
 
@@ -194,5 +229,9 @@ class TestDispatchPhase:
     def test_routes_validate(
         self, workspace_root: Path, monkeypatch: MonkeyPatch
     ) -> None:
-        monkeypatch.setattr(_CLS, "phase_validate", lambda *a, **kw: r[bool].ok(True))
+        def _phase_validate(*a: t.ContainerValue, **kw: t.ContainerValue) -> r[bool]:
+            del a, kw
+            return r[bool].ok(True)
+
+        monkeypatch.setattr(_CLS, "phase_validate", _phase_validate)
         tm.ok(self._dispatch(_CLS(), "validate", workspace_root))

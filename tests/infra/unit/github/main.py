@@ -11,7 +11,6 @@ from flext_core import r
 from flext_infra.github import __main__ as github_main
 from flext_infra.github.workflows import SyncOperation
 from tests.infra.models import m
-from tests.infra.typings import t
 from tests.infra.unit.github._stubs import (
     StubLinter,
     StubSyncer,
@@ -22,19 +21,6 @@ run_pr = getattr(github_main, "_run_pr")
 run_pr_workspace = getattr(github_main, "_run_pr_workspace")
 run_workflows = getattr(github_main, "_run_workflows")
 main = github_main.main
-
-
-def _orchestration_result(
-    *,
-    fail: int = 0,
-    total: int = 1,
-) -> m.Infra.Github.PrOrchestrationResult:
-    return m.Infra.Github.PrOrchestrationResult(
-        total=total,
-        success=max(total - fail, 0),
-        fail=fail,
-        results=(),
-    )
 
 
 class TestRunWorkflows:
@@ -86,7 +72,9 @@ class TestRunLint:
         assert run_lint(["--root", str(tmp_path)]) == 0
 
     def test_failure(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-        linter = StubLinter(lint_returns=r[t.ContainerValue].fail("lint failed"))
+        linter = StubLinter(
+            lint_returns=r[m.Infra.Github.WorkflowLintResult].fail("lint failed")
+        )
         monkeypatch.setattr(github_main, "FlextInfraWorkflowLinter", lambda: linter)
         assert run_lint(["--root", str(tmp_path)]) == 1
 

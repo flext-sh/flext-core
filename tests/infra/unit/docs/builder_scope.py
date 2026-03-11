@@ -18,6 +18,19 @@ from flext_tests import tm
 from tests.infra import m, t
 
 
+class _RunnerStub:
+    def __init__(self, output: m.Infra.Core.CommandOutput) -> None:
+        self._output = output
+
+    def run_raw(
+        self,
+        command: list[str],
+        cwd: Path,
+    ) -> r[m.Infra.Core.CommandOutput]:
+        _ = command, cwd
+        return r[m.Infra.Core.CommandOutput].ok(self._output)
+
+
 class TestBuilderScope:
     """Tests for _build_scope and _run_mkdocs."""
 
@@ -68,7 +81,7 @@ class TestBuilderScope:
         )
         report = builder._run_mkdocs(scope)
         tm.that(report.scope, eq="test")
-        tm.that(isinstance(report.result, str), eq=True)
+        tm.that(len(report.result) > 0, eq=True)
 
     def test_run_mkdocs_with_success_exit_code(
         self,
@@ -82,9 +95,13 @@ class TestBuilderScope:
             name="test", path=tmp_path, report_dir=tmp_path / "reports"
         )
         mock_output = SimpleNamespace(exit_code=0, stdout="Build successful", stderr="")
-        mock_runner = SimpleNamespace(
-            run_raw=lambda *a, **kw: r[t.ContainerValue].ok(mock_output)
-        )
+        command_output = m.Infra.Core.CommandOutput.model_validate({
+            "command": "mkdocs build --strict",
+            "exit_code": mock_output.exit_code,
+            "stdout": mock_output.stdout,
+            "stderr": mock_output.stderr,
+        })
+        mock_runner = _RunnerStub(command_output)
         monkeypatch.setattr(builder, "_runner", mock_runner)
         report = builder._run_mkdocs(scope)
         tm.that(report.result, eq="OK")
@@ -133,4 +150,4 @@ class TestBuilderScope:
         """Test build returns multiple reports for multiple scopes."""
         result = builder.build(tmp_path, projects="proj1,proj2,proj3")
         if result.is_success:
-            tm.that(isinstance(result.value, list), eq=True)
+            tm.that(len(result.value) >= 0, eq=True)

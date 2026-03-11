@@ -8,6 +8,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -21,12 +22,33 @@ from tests.infra import h
 from tests.infra.models import m
 from tests.infra.typings import t
 
+RunCallable = Callable[
+    [list[str], Path, int, dict[str, str] | None], m.Infra.Core.CommandOutput
+]
 
-def _stub_run(result: SimpleNamespace) -> t.ContainerValue:
+
+def _stub_run(result: m.Infra.Core.CommandOutput | SimpleNamespace) -> RunCallable:
     """Create a stub _run method returning a fixed result."""
 
-    def _run(_cmd: list[str], _cwd: Path, **_kw: t.ContainerValue) -> SimpleNamespace:
-        return result
+    def _as_command_output(
+        output: m.Infra.Core.CommandOutput | SimpleNamespace,
+    ) -> m.Infra.Core.CommandOutput:
+        if isinstance(output, m.Infra.Core.CommandOutput):
+            return output
+        return m.Infra.Core.CommandOutput(
+            stdout=output.stdout,
+            stderr=output.stderr,
+            exit_code=output.returncode,
+        )
+
+    def _run(
+        _cmd: list[str],
+        _cwd: Path,
+        _timeout: int = 120,
+        _env: dict[str, str] | None = None,
+    ) -> m.Infra.Core.CommandOutput:
+        del _cmd, _cwd, _timeout, _env
+        return _as_command_output(result)
 
     return _run
 

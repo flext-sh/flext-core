@@ -414,22 +414,42 @@ class FlextUtilitiesParser:
         default: float | str | bool | None,
         default_factory: Callable[[], int | float | str | bool] | None,
         field_prefix: str,
-    ) -> r[int] | r[float] | r[str] | r[bool]:
+    ) -> r[t.Primitives]:
         """Helper: Try primitive coercion."""
         if not FlextUtilitiesParser._is_primitive_type(target):
-            return r[int].fail(
+            return r[t.Primitives].fail(
                 f"{field_prefix}Target is not primitive",
                 error_code="TARGET_NOT_PRIMITIVE",
             )
         try:
             if target is int:
-                return FlextUtilitiesParser._coerce_to_int(value)
+                int_result = FlextUtilitiesParser._coerce_to_int(value)
+                return (
+                    r[t.Primitives].ok(int_result.value)
+                    if int_result.is_success
+                    else r[t.Primitives].fail(int_result.error)
+                )
             if target is float:
-                return FlextUtilitiesParser._coerce_to_float(value)
+                float_result = FlextUtilitiesParser._coerce_to_float(value)
+                return (
+                    r[t.Primitives].ok(float_result.value)
+                    if float_result.is_success
+                    else r[t.Primitives].fail(float_result.error)
+                )
             if target is str:
-                return FlextUtilitiesParser._coerce_to_str(value)
+                str_result = FlextUtilitiesParser._coerce_to_str(value)
+                return (
+                    r[t.Primitives].ok(str_result.value)
+                    if str_result.is_success
+                    else r[t.Primitives].fail(str_result.error)
+                )
             if target is bool:
-                return FlextUtilitiesParser._coerce_to_bool(value)
+                bool_result = FlextUtilitiesParser._coerce_to_bool(value)
+                return (
+                    r[t.Primitives].ok(bool_result.value)
+                    if bool_result.is_success
+                    else r[t.Primitives].fail(bool_result.error)
+                )
         except (ValueError, TypeError) as e:
             target_name = getattr(target, "__name__", "type")
             if (
@@ -437,22 +457,22 @@ class FlextUtilitiesParser:
                 and isinstance(default, int)
                 and (not isinstance(default, bool))
             ):
-                return r[int].fail(
+                return r[t.Primitives].fail(
                     f"{field_prefix}Cannot coerce {value.__class__.__name__} to {target_name}: {e}"
                 )
             if target is float and isinstance(default, float):
-                return r[float].fail(
+                return r[t.Primitives].fail(
                     f"{field_prefix}Cannot coerce {value.__class__.__name__} to {target_name}: {e}"
                 )
             if target is str and isinstance(default, str):
-                return r[str].fail(
+                return r[t.Primitives].fail(
                     f"{field_prefix}Cannot coerce {value.__class__.__name__} to {target_name}: {e}"
                 )
             if target is bool and isinstance(default, bool):
-                return r[bool].fail(
+                return r[t.Primitives].fail(
                     f"{field_prefix}Cannot coerce {value.__class__.__name__} to {target_name}: {e}"
                 )
-        return r[int].fail(
+        return r[t.Primitives].fail(
             f"{field_prefix}Unsupported primitive target: {target.__name__}",
             error_code="UNSUPPORTED_PRIMITIVE_TARGET",
         )
@@ -482,10 +502,9 @@ class FlextUtilitiesParser:
         except ValidationError:
             return "unknown"
         text_length_result = r[int].create_from_callable(lambda: len(text_value))
-        return text_length_result.fold(
-            on_failure=lambda _: "unknown",
-            on_success=lambda v: v,
-        )
+        if text_length_result.is_success:
+            return text_length_result.value
+        return "unknown"
 
     @staticmethod
     def _to_json_value(value: t.ContainerValue) -> t.JsonValue:

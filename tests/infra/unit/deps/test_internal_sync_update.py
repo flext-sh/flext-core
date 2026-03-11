@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 from flext_core import r
 from flext_infra.deps import internal_sync
 from flext_infra.deps.internal_sync import FlextInfraInternalDependencySyncService
@@ -52,13 +54,17 @@ class TestEnsureSymlinkEdgeCases:
         tm.ok(FlextInfraInternalDependencySyncService.ensure_symlink(target, source))
         tm.that(target.is_symlink(), eq=True)
 
-    def test_ensure_symlink_permission_error(self, tmp_path: Path, monkeypatch) -> None:
+    def test_ensure_symlink_permission_error(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         source = tmp_path / "source"
         source.mkdir()
         target = tmp_path / "target"
 
         def _raise_symlink_to(
-            self, target_path: Path, target_is_directory: bool = False
+            self: Path,
+            target_path: Path,
+            target_is_directory: bool = False,
         ) -> None:
             msg = "Permission denied"
             raise OSError(msg)
@@ -71,9 +77,16 @@ class TestEnsureSymlinkEdgeCases:
 
 
 class TestEnsureCheckout:
-    def test_clone_success(self, tmp_path: Path, monkeypatch) -> None:
+    def test_clone_success(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        def _git_run_checked(_cmd: list[str]) -> r[bool]:
+            return r[bool].ok(True)
+
         monkeypatch.setattr(
-            internal_sync.u.Infra, "git_run_checked", lambda _cmd: r[bool].ok(True)
+            internal_sync.u.Infra,
+            "git_run_checked",
+            _git_run_checked,
         )
         result = FlextInfraInternalDependencySyncService().ensure_checkout(
             tmp_path / "dep",
@@ -82,11 +95,16 @@ class TestEnsureCheckout:
         )
         tm.ok(result)
 
-    def test_clone_failure(self, tmp_path: Path, monkeypatch) -> None:
+    def test_clone_failure(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        def _git_run_checked(_cmd: list[str]) -> r[bool]:
+            return r[bool].fail("fatal: repo not found")
+
         monkeypatch.setattr(
             internal_sync.u.Infra,
             "git_run_checked",
-            lambda _cmd: r[bool].fail("fatal: repo not found"),
+            _git_run_checked,
         )
         result = FlextInfraInternalDependencySyncService().ensure_checkout(
             tmp_path / "dep",
@@ -95,20 +113,38 @@ class TestEnsureCheckout:
         )
         tm.fail(result)
 
-    def test_fetch_and_checkout_existing(self, tmp_path: Path, monkeypatch) -> None:
+    def test_fetch_and_checkout_existing(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         dep_path = tmp_path / "dep"
         dep_path.mkdir(parents=True)
         (dep_path / ".git").mkdir()
+
+        def _git_fetch(_a: Path, _b: str) -> r[bool]:
+            return r[bool].ok(True)
+
+        def _git_checkout(_a: Path, _b: str) -> r[bool]:
+            return r[bool].ok(True)
+
+        def _git_pull(_a: Path, remote: str, branch: str) -> r[bool]:
+            _ = remote
+            _ = branch
+            return r[bool].ok(True)
+
         monkeypatch.setattr(
-            internal_sync.u.Infra, "git_fetch", lambda _a, _b: r[bool].ok(True)
+            internal_sync.u.Infra,
+            "git_fetch",
+            _git_fetch,
         )
         monkeypatch.setattr(
-            internal_sync.u.Infra, "git_checkout", lambda _a, _b: r[bool].ok(True)
+            internal_sync.u.Infra,
+            "git_checkout",
+            _git_checkout,
         )
         monkeypatch.setattr(
             internal_sync.u.Infra,
             "git_pull",
-            lambda _a, remote, branch: r[bool].ok(True),
+            _git_pull,
         )
         tm.ok(
             FlextInfraInternalDependencySyncService().ensure_checkout(
@@ -129,14 +165,20 @@ class TestEnsureCheckout:
             )
         )
 
-    def test_fetch_failure(self, tmp_path: Path, monkeypatch) -> None:
+    def test_fetch_failure(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         dep_path = tmp_path / "dep"
         dep_path.mkdir(parents=True)
         (dep_path / ".git").mkdir()
+
+        def _git_fetch(_a: Path, _b: str) -> r[bool]:
+            return r[bool].fail("fetch failed")
+
         monkeypatch.setattr(
             internal_sync.u.Infra,
             "git_fetch",
-            lambda _a, _b: r[bool].fail("fetch failed"),
+            _git_fetch,
         )
         tm.fail(
             FlextInfraInternalDependencySyncService().ensure_checkout(
@@ -146,17 +188,28 @@ class TestEnsureCheckout:
             ),
         )
 
-    def test_checkout_failure(self, tmp_path: Path, monkeypatch) -> None:
+    def test_checkout_failure(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         dep_path = tmp_path / "dep"
         dep_path.mkdir(parents=True)
         (dep_path / ".git").mkdir()
+
+        def _git_fetch(_a: Path, _b: str) -> r[bool]:
+            return r[bool].ok(True)
+
+        def _git_checkout(_a: Path, _b: str) -> r[bool]:
+            return r[bool].fail("checkout error")
+
         monkeypatch.setattr(
-            internal_sync.u.Infra, "git_fetch", lambda _a, _b: r[bool].ok(True)
+            internal_sync.u.Infra,
+            "git_fetch",
+            _git_fetch,
         )
         monkeypatch.setattr(
             internal_sync.u.Infra,
             "git_checkout",
-            lambda _a, _b: r[bool].fail("checkout error"),
+            _git_checkout,
         )
         tm.fail(
             FlextInfraInternalDependencySyncService().ensure_checkout(
@@ -167,10 +220,15 @@ class TestEnsureCheckout:
         )
 
     def test_clone_replaces_existing_symlink_and_dir(
-        self, tmp_path: Path, monkeypatch
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
+        def _git_run_checked(_cmd: list[str]) -> r[bool]:
+            return r[bool].ok(True)
+
         monkeypatch.setattr(
-            internal_sync.u.Infra, "git_run_checked", lambda _cmd: r[bool].ok(True)
+            internal_sync.u.Infra,
+            "git_run_checked",
+            _git_run_checked,
         )
         other = tmp_path / "other"
         other.mkdir()

@@ -14,7 +14,11 @@ from flext_core import r
 from flext_infra.github import pr_workspace as pw_mod
 from flext_infra.github.pr_workspace import FlextInfraPrWorkspaceManager
 from flext_tests import tm
-from tests.infra.unit.github._stubs import StubProjectInfo, StubReporting, StubRunner
+from tests.infra.unit.github._stubs import (
+    StubReporting,
+    StubRunner,
+    StubSelector,
+)
 
 
 class TestFlextInfraPrWorkspaceManager:
@@ -22,11 +26,14 @@ class TestFlextInfraPrWorkspaceManager:
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Test detecting uncommitted changes in repository."""
-        monkeypatch.setattr(
-            pw_mod.u.Infra, "git_has_changes", lambda _root: r[bool].ok(True)
-        )
+
+        def _has_changes(root: Path) -> r[bool]:
+            _ = root
+            return r[bool].ok(True)
+
+        monkeypatch.setattr(pw_mod.u.Infra, "git_has_changes", _has_changes)
         manager = FlextInfraPrWorkspaceManager(
-            runner=StubRunner(), selector=StubProjectInfo(), reporting=StubReporting()
+            runner=StubRunner(), selector=StubSelector(), reporting=StubReporting()
         )
         result = manager.has_changes(tmp_path)
         tm.ok(result, eq=True)
@@ -35,11 +42,14 @@ class TestFlextInfraPrWorkspaceManager:
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Test when repository has no uncommitted changes."""
-        monkeypatch.setattr(
-            pw_mod.u.Infra, "git_has_changes", lambda _root: r[bool].ok(False)
-        )
+
+        def _has_changes(root: Path) -> r[bool]:
+            _ = root
+            return r[bool].ok(False)
+
+        monkeypatch.setattr(pw_mod.u.Infra, "git_has_changes", _has_changes)
         manager = FlextInfraPrWorkspaceManager(
-            runner=StubRunner(), selector=StubProjectInfo(), reporting=StubReporting()
+            runner=StubRunner(), selector=StubSelector(), reporting=StubReporting()
         )
         result = manager.has_changes(tmp_path)
         tm.ok(result, eq=False)
@@ -48,13 +58,18 @@ class TestFlextInfraPrWorkspaceManager:
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Test handling of git status command failure."""
+
+        def _has_changes(root: Path) -> r[bool]:
+            _ = root
+            return r[bool].fail("not a git repository")
+
         monkeypatch.setattr(
             pw_mod.u.Infra,
             "git_has_changes",
-            lambda _root: r[bool].fail("not a git repository"),
+            _has_changes,
         )
         manager = FlextInfraPrWorkspaceManager(
-            runner=StubRunner(), selector=StubProjectInfo(), reporting=StubReporting()
+            runner=StubRunner(), selector=StubSelector(), reporting=StubReporting()
         )
         result = manager.has_changes(tmp_path)
         tm.fail(result)
@@ -71,7 +86,7 @@ class TestFlextInfraPrWorkspaceManager:
 
         monkeypatch.setattr(pw_mod.u.Infra, "git_checkout", _checkout)
         manager = FlextInfraPrWorkspaceManager(
-            runner=StubRunner(), selector=StubProjectInfo(), reporting=StubReporting()
+            runner=StubRunner(), selector=StubSelector(), reporting=StubReporting()
         )
         result = manager.checkout_branch(tmp_path, "feature/test")
         tm.ok(result)
@@ -84,13 +99,18 @@ class TestFlextInfraPrWorkspaceManager:
     ) -> None:
         """Test checkout with empty branch is a no-op."""
         calls: list[tuple[Path, str]] = []
+
+        def _checkout(root: Path, branch: str) -> r[bool]:
+            calls.append((root, branch))
+            return r[bool].ok(True)
+
         monkeypatch.setattr(
             pw_mod.u.Infra,
             "git_checkout",
-            lambda root, branch: (calls.append((root, branch)), r[bool].ok(True))[1],
+            _checkout,
         )
         manager = FlextInfraPrWorkspaceManager(
-            runner=StubRunner(), selector=StubProjectInfo(), reporting=StubReporting()
+            runner=StubRunner(), selector=StubSelector(), reporting=StubReporting()
         )
         result = manager.checkout_branch(tmp_path, "")
         tm.ok(result, eq=True)
@@ -100,13 +120,18 @@ class TestFlextInfraPrWorkspaceManager:
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Test checkout failure propagation."""
+
+        def _checkout(root: Path, branch: str) -> r[bool]:
+            _ = root, branch
+            return r[bool].fail("checkout failed")
+
         monkeypatch.setattr(
             pw_mod.u.Infra,
             "git_checkout",
-            lambda _root, _branch: r[bool].fail("checkout failed"),
+            _checkout,
         )
         manager = FlextInfraPrWorkspaceManager(
-            runner=StubRunner(), selector=StubProjectInfo(), reporting=StubReporting()
+            runner=StubRunner(), selector=StubSelector(), reporting=StubReporting()
         )
         result = manager.checkout_branch(tmp_path, "feature")
         tm.fail(result)
@@ -123,16 +148,24 @@ class TestCheckpoint:
     def test_no_changes(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test checkpoint exits when repository has no changes."""
         git_add_calls: list[Path] = []
-        monkeypatch.setattr(
-            pw_mod.u.Infra, "git_has_changes", lambda _root: r[bool].ok(False)
-        )
+
+        def _has_changes(root: Path) -> r[bool]:
+            _ = root
+            return r[bool].ok(False)
+
+        def _git_add(root: Path, *paths: str) -> r[bool]:
+            _ = paths
+            git_add_calls.append(root)
+            return r[bool].ok(True)
+
+        monkeypatch.setattr(pw_mod.u.Infra, "git_has_changes", _has_changes)
         monkeypatch.setattr(
             pw_mod.u.Infra,
             "git_add",
-            lambda root, *_paths: (git_add_calls.append(root), r[bool].ok(True))[1],
+            _git_add,
         )
         manager = FlextInfraPrWorkspaceManager(
-            runner=StubRunner(), selector=StubProjectInfo(), reporting=StubReporting()
+            runner=StubRunner(), selector=StubSelector(), reporting=StubReporting()
         )
         result = manager.checkpoint(tmp_path, "feature")
         tm.ok(result, eq=True)
@@ -142,13 +175,18 @@ class TestCheckpoint:
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Test checkpoint failure propagation."""
+
+        def _has_changes(root: Path) -> r[bool]:
+            _ = root
+            return r[bool].fail("git error")
+
         monkeypatch.setattr(
             pw_mod.u.Infra,
             "git_has_changes",
-            lambda _root: r[bool].fail("git error"),
+            _has_changes,
         )
         manager = FlextInfraPrWorkspaceManager(
-            runner=StubRunner(), selector=StubProjectInfo(), reporting=StubReporting()
+            runner=StubRunner(), selector=StubSelector(), reporting=StubReporting()
         )
         result = manager.checkpoint(tmp_path, "feature")
         tm.fail(result)
@@ -160,7 +198,7 @@ class TestRunPr:
         runner = StubRunner(run_to_file_returns=[r[int].ok(0)])
         reporting = StubReporting(report_dir=tmp_path / "reports")
         manager = FlextInfraPrWorkspaceManager(
-            runner=runner, selector=StubProjectInfo(), reporting=reporting
+            runner=runner, selector=StubSelector(), reporting=reporting
         )
         result = manager.run_pr(tmp_path, tmp_path, {"action": "status"})
         value = tm.ok(result)
@@ -173,7 +211,7 @@ class TestRunPr:
         sub = tmp_path / "sub"
         sub.mkdir()
         manager = FlextInfraPrWorkspaceManager(
-            runner=runner, selector=StubProjectInfo(), reporting=reporting
+            runner=runner, selector=StubSelector(), reporting=reporting
         )
         result = manager.run_pr(sub, tmp_path, {"action": "status"})
         tm.ok(result)
@@ -183,7 +221,7 @@ class TestRunPr:
         runner = StubRunner(run_to_file_returns=[r[int].fail("command error")])
         reporting = StubReporting(report_dir=tmp_path / "reports")
         manager = FlextInfraPrWorkspaceManager(
-            runner=runner, selector=StubProjectInfo(), reporting=reporting
+            runner=runner, selector=StubSelector(), reporting=reporting
         )
         result = manager.run_pr(tmp_path, tmp_path, {"action": "status"})
         tm.fail(result)
@@ -193,7 +231,7 @@ class TestRunPr:
         runner = StubRunner(run_to_file_returns=[r[int].ok(1)])
         reporting = StubReporting(report_dir=tmp_path / "reports")
         manager = FlextInfraPrWorkspaceManager(
-            runner=runner, selector=StubProjectInfo(), reporting=reporting
+            runner=runner, selector=StubSelector(), reporting=reporting
         )
         result = manager.run_pr(tmp_path, tmp_path, {"action": "status"})
         value = tm.ok(result)

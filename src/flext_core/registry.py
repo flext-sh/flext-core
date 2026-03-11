@@ -313,11 +313,14 @@ class FlextRegistry(s[bool]):
                     f"{category} '{name}' not found. Available: {available}"
                 )
             raw_result = self.container.get(key)
-            if raw_result.is_failure:
-                return r[t.RegisterableService | t.RegistrablePlugin].fail(
-                    f"Failed to retrieve {category} '{name}': {raw_result.error}"
-                )
-            return r[t.RegisterableService | t.RegistrablePlugin].ok(raw_result.value)
+            return raw_result.fold(
+                on_failure=lambda e: r[
+                    t.RegisterableService | t.RegistrablePlugin
+                ].fail(f"Failed to retrieve {category} '{name}': {e}"),
+                on_success=lambda v: r[t.RegisterableService | t.RegistrablePlugin].ok(
+                    v
+                ),
+            )
         cls = type(self)
         if key not in cls._class_registered_keys:
             available = [

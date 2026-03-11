@@ -173,7 +173,7 @@ def test_codegen_pipeline_end_to_end(tmp_path: Path) -> None:
     for py_file in tmp_path.rglob("*.py"):
         source = py_file.read_text(encoding="utf-8")
         tree = ast.parse(source)
-        tm.that(isinstance(tree, ast.Module), eq=True)
+        tm.that(type(tree).__name__, eq="Module")
     tm.that(flexcore_package.joinpath("constants.py").exists(), eq=False)
 
 

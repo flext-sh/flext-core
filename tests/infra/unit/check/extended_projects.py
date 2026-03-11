@@ -11,13 +11,12 @@ from pathlib import Path
 import pytest
 
 from flext_infra.check.services import (
+    CheckIssue,
     FlextInfraWorkspaceChecker,
-    _CheckIssue,
-    _GateExecution,
+    GateExecution,
 )
 from flext_tests import tm
 from tests.infra.models import m
-from tests.infra.typings import t
 
 
 def _make_gate_exec(
@@ -25,9 +24,9 @@ def _make_gate_exec(
     project: str = "p",
     *,
     passed: bool = True,
-    issues: list[_CheckIssue] | None = None,
-) -> _GateExecution:
-    return _GateExecution(
+    issues: list[CheckIssue] | None = None,
+) -> GateExecution:
+    return GateExecution(
         result=m.Infra.Check.GateResult(gate=gate, project=project, passed=passed),
         issues=issues or [],
     )
@@ -39,10 +38,15 @@ class TestLintAndFormatPublicMethods:
     ) -> None:
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
         (tmp_path / "pyproject.toml").touch()
+
+        def _fake_lint(_project_dir: Path) -> GateExecution:
+            del _project_dir
+            return _make_gate_exec(gate="lint", passed=True)
+
         monkeypatch.setattr(
             checker,
             "_run_ruff_lint",
-            lambda *_a: _make_gate_exec(gate="lint", passed=True),
+            _fake_lint,
         )
         result = checker.lint(tmp_path)
         tm.ok(result)
@@ -53,10 +57,15 @@ class TestLintAndFormatPublicMethods:
     ) -> None:
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
         (tmp_path / "pyproject.toml").touch()
+
+        def _fake_format(_project_dir: Path) -> GateExecution:
+            del _project_dir
+            return _make_gate_exec(gate="format", passed=True)
+
         monkeypatch.setattr(
             checker,
             "_run_ruff_format",
-            lambda *_a: _make_gate_exec(gate="format", passed=True),
+            _fake_format,
         )
         result = checker.format(tmp_path)
         tm.ok(result)
@@ -72,17 +81,20 @@ class TestCheckProjectRunners:
         (tmp_path / "src" / "test.py").touch()
         call_log: list[str] = []
 
-        def _fake_lint(*_a: t.ContainerValue) -> _GateExecution:
+        def _fake_lint(_project_dir: Path) -> GateExecution:
+            del _project_dir
             call_log.append("lint")
             return _make_gate_exec(gate="lint", passed=True)
 
-        def _fake_format(*_a: t.ContainerValue) -> _GateExecution:
+        def _fake_format(_project_dir: Path) -> GateExecution:
+            del _project_dir
             call_log.append("format")
             return _make_gate_exec(gate="format", passed=True)
 
         def _fake_pyrefly(
-            *_a: t.ContainerValue, **_kw: t.ContainerValue
-        ) -> _GateExecution:
+            _project_dir: Path, _reports_dir: Path | None = None
+        ) -> GateExecution:
+            del _project_dir, _reports_dir
             call_log.append("pyrefly")
             return _make_gate_exec(gate="pyrefly", passed=True)
 

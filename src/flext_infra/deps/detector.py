@@ -302,7 +302,61 @@ class EnsurePyrightConfigPhase:
     def __init__(self, tool_config: FlextInfraToolConfigDocument) -> None:
         self._tool_config = tool_config
 
-    def apply(self, doc: tomlkit.TOMLDocument, *, is_root: bool) -> list[str]:
+    def _expected_envs(
+        self,
+        *,
+        is_root: bool,
+        workspace_root: Path | None,
+    ) -> list[dict[str, str]]:
+        default_envs: list[dict[str, str]] = [
+            {"root": c.Infra.Paths.DEFAULT_SRC_DIR, "reportPrivateUsage": "error"},
+            {"root": c.Infra.Directories.TESTS, "reportPrivateUsage": "none"},
+        ]
+        if not is_root or workspace_root is None:
+            return default_envs
+
+        expected_envs: list[dict[str, str]] = []
+        root_src = workspace_root / c.Infra.Paths.DEFAULT_SRC_DIR
+        root_tests = workspace_root / c.Infra.Directories.TESTS
+        if root_src.exists():
+            expected_envs.append({
+                "root": c.Infra.Paths.DEFAULT_SRC_DIR,
+                "reportPrivateUsage": "error",
+            })
+        if root_tests.exists():
+            expected_envs.append({
+                "root": c.Infra.Directories.TESTS,
+                "reportPrivateUsage": "none",
+            })
+
+        child_projects = sorted(
+            child
+            for child in workspace_root.iterdir()
+            if child.is_dir() and (child / c.Infra.Files.PYPROJECT_FILENAME).exists()
+        )
+        for child_project in child_projects:
+            relative_root = child_project.relative_to(workspace_root)
+            child_src = child_project / c.Infra.Paths.DEFAULT_SRC_DIR
+            child_tests = child_project / c.Infra.Directories.TESTS
+            if child_src.exists():
+                expected_envs.append({
+                    "root": (relative_root / c.Infra.Paths.DEFAULT_SRC_DIR).as_posix(),
+                    "reportPrivateUsage": "error",
+                })
+            if child_tests.exists():
+                expected_envs.append({
+                    "root": (relative_root / c.Infra.Directories.TESTS).as_posix(),
+                    "reportPrivateUsage": "none",
+                })
+        return expected_envs or default_envs
+
+    def apply(
+        self,
+        doc: tomlkit.TOMLDocument,
+        *,
+        is_root: bool,
+        workspace_root: Path | None = None,
+    ) -> list[str]:
         changes: list[str] = []
         tool: object | None = None
         if c.Infra.Toml.TOOL in doc:
@@ -311,10 +365,10 @@ class EnsurePyrightConfigPhase:
             tool = tomlkit.table()
             doc[c.Infra.Toml.TOOL] = tool
         pyright = ensure_table(tool, c.Infra.Toml.PYRIGHT)
-        expected_envs: list[dict[str, str]] = [
-            {"root": c.Infra.Paths.DEFAULT_SRC_DIR, "reportPrivateUsage": "error"},
-            {"root": c.Infra.Directories.TESTS, "reportPrivateUsage": "none"},
-        ]
+        expected_envs = self._expected_envs(
+            is_root=is_root,
+            workspace_root=workspace_root,
+        )
         if is_root:
             if (
                 unwrap_item(toml_get(pyright, "typeCheckingMode"))

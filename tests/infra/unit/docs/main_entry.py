@@ -7,6 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import sys
+from collections.abc import Callable
 
 import pytest
 
@@ -103,7 +104,9 @@ class TestMainRouting:
         tm.that(exc_info.value.code, eq=0)
 
 
-def _capture_audit(store: dict[str, t.ContainerValue]) -> t.ContainerValue:
+def _capture_audit(
+    store: dict[str, t.ContainerValue],
+) -> Callable[..., r[list[m.Infra.Docs.DocsPhaseReport]]]:
     def _fn(
         *a: t.ContainerValue, **kw: t.ContainerValue
     ) -> r[list[m.Infra.Docs.DocsPhaseReport]]:
@@ -113,7 +116,9 @@ def _capture_audit(store: dict[str, t.ContainerValue]) -> t.ContainerValue:
     return _fn
 
 
-def _capture_simple(store: dict[str, t.ContainerValue]) -> t.ContainerValue:
+def _capture_simple(
+    store: dict[str, t.ContainerValue],
+) -> Callable[..., r[list[t.ContainerValue]]]:
     def _fn(*a: t.ContainerValue, **kw: t.ContainerValue) -> r[list[t.ContainerValue]]:
         store.update(kw)
         return r[list[t.ContainerValue]].ok([])

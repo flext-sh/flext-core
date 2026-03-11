@@ -14,7 +14,6 @@ import pytest
 from flext_infra.docs.auditor import FlextInfraDocAuditor
 from flext_tests import tm
 from tests.infra.models import m
-from tests.infra.typings import t
 
 
 @pytest.fixture
@@ -77,26 +76,37 @@ class TestAuditorCore:
         tm.that(issue.severity, eq="high")
 
     @pytest.mark.parametrize(
-        "kwargs",
+        ("project", "projects", "check", "strict", "output_dir"),
         [
-            {"project": "test-project"},
-            {"projects": "proj1,proj2"},
-            {"check": "links"},
-            {"check": "forbidden-terms"},
-            {"strict": True},
-            {"output_dir": "custom_output"},
+            ("test-project", None, "all", True, ".reports/docs"),
+            (None, "proj1,proj2", "all", True, ".reports/docs"),
+            (None, None, "links", True, ".reports/docs"),
+            (None, None, "forbidden-terms", True, ".reports/docs"),
+            (None, None, "all", True, ".reports/docs"),
+            (None, None, "all", True, "custom_output"),
         ],
     )
     def test_audit_option_variants(
         self,
         auditor: FlextInfraDocAuditor,
         tmp_path: Path,
-        kwargs: dict[str, t.ContainerValue],
+        project: str | None,
+        projects: str | None,
+        check: str,
+        strict: bool,
+        output_dir: str,
     ) -> None:
-        params: dict[str, t.ContainerValue] = dict(kwargs)
-        if "output_dir" in params:
-            params["output_dir"] = str(tmp_path / str(params["output_dir"]))
-        result = auditor.audit(tmp_path, **params)
+        output_dir_value = (
+            str(tmp_path / output_dir) if output_dir == "custom_output" else output_dir
+        )
+        result = auditor.audit(
+            tmp_path,
+            project=project,
+            projects=projects,
+            output_dir=output_dir_value,
+            check=check,
+            strict=strict,
+        )
         tm.that(result.is_success or result.is_failure, eq=True)
 
     def test_report_frozen(self) -> None:
@@ -119,7 +129,7 @@ class TestAuditorNormalize:
     )
     def test_normalize_link(
         self,
-        normalize_link: m.Infra.Docs.NormalizeLinkFn,
+        normalize_link: Callable[[str], str],
         raw: str,
         expected: str,
     ) -> None:
@@ -138,7 +148,7 @@ class TestAuditorNormalize:
     )
     def test_should_skip_target(
         self,
-        should_skip_target: m.Infra.Docs.SkipTargetFn,
+        should_skip_target: Callable[[str, str], bool],
         text: str,
         target: str,
         expected: bool,
@@ -160,7 +170,7 @@ class TestAuditorNormalize:
     )
     def test_is_external(
         self,
-        is_external: m.Infra.Docs.IsExternalFn,
+        is_external: Callable[[str], bool],
         value: str,
         expected: bool,
     ) -> None:

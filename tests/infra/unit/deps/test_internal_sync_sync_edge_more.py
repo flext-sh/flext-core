@@ -65,10 +65,14 @@ class TestSyncMethodEdgeCasesMore:
                 }),
             ],
         )
+
+        def _ensure_checkout_fail(_dep: Path, _url: str, _ref: str) -> r[bool]:
+            return r[bool].fail("checkout failed")
+
         monkeypatch.setattr(
             service,
             "ensure_checkout",
-            lambda _dep, _url, _ref: r[bool].fail("checkout failed"),
+            _ensure_checkout_fail,
         )
         tm.fail(service.sync(tmp_path))
 
@@ -80,4 +84,4 @@ class TestSyncMethodEdgeCasesMore:
             [r[dict[str, t.ContainerValue]].ok({"project": {"name": "test"}})],
         )
         tm.ok(service.sync(tmp_path), eq=0)
-        tm.that(h is not None, eq=True)
+        tm.that(hasattr(h, "assert_ok"), eq=True)

@@ -14,17 +14,19 @@ from flext_core import r
 from flext_infra.github import pr_workspace as pw_mod
 from flext_infra.github.pr_workspace import FlextInfraPrWorkspaceManager
 from flext_tests import tm
-from tests.infra.typings import t
-from tests.infra.unit.github._stubs import StubProjectInfo, StubReporting, StubRunner
+from tests.infra.models import m
+from tests.infra.unit.github._stubs import StubReporting, StubRunner, StubSelector
 
 
 class TestOrchestrate:
     def test_all_success(self, tmp_path: Path) -> None:
         runner = StubRunner(run_to_file_returns=[r[int].ok(0)])
         reporting = StubReporting(report_dir=tmp_path / "reports")
-        proj = StubProjectInfo(name="proj", path=tmp_path / "proj")
+        proj = m.Infra.Workspace.ProjectInfo(name="proj", path=tmp_path / "proj")
         proj.path.mkdir()
-        selector = _StubSelector(projects=[proj])
+        selector = StubSelector(
+            resolve_returns=r[list[m.Infra.Workspace.ProjectInfo]].ok([proj])
+        )
         manager = FlextInfraPrWorkspaceManager(
             runner=runner, selector=selector, reporting=reporting
         )
@@ -35,7 +37,9 @@ class TestOrchestrate:
         tm.that(value.fail, eq=0)
 
     def test_project_resolution_failure(self, tmp_path: Path) -> None:
-        selector = _StubSelector(error="no projects")
+        selector = StubSelector(
+            resolve_returns=r[list[m.Infra.Workspace.ProjectInfo]].fail("no projects")
+        )
         manager = FlextInfraPrWorkspaceManager(
             runner=StubRunner(), selector=selector, reporting=StubReporting()
         )
@@ -45,11 +49,13 @@ class TestOrchestrate:
     def test_fail_fast(self, tmp_path: Path) -> None:
         runner = StubRunner(run_to_file_returns=[r[int].ok(1)])
         reporting = StubReporting(report_dir=tmp_path / "reports")
-        p1 = StubProjectInfo(name="p1", path=tmp_path / "p1")
+        p1 = m.Infra.Workspace.ProjectInfo(name="p1", path=tmp_path / "p1")
         p1.path.mkdir()
-        p2 = StubProjectInfo(name="p2", path=tmp_path / "p2")
+        p2 = m.Infra.Workspace.ProjectInfo(name="p2", path=tmp_path / "p2")
         p2.path.mkdir()
-        selector = _StubSelector(projects=[p1, p2])
+        selector = StubSelector(
+            resolve_returns=r[list[m.Infra.Workspace.ProjectInfo]].ok([p1, p2])
+        )
         manager = FlextInfraPrWorkspaceManager(
             runner=runner, selector=selector, reporting=reporting
         )
@@ -62,7 +68,9 @@ class TestOrchestrate:
     def test_include_root(self, tmp_path: Path) -> None:
         runner = StubRunner(run_to_file_returns=[r[int].ok(0)])
         reporting = StubReporting(report_dir=tmp_path / "reports")
-        selector = _StubSelector(projects=[])
+        selector = StubSelector(
+            resolve_returns=r[list[m.Infra.Workspace.ProjectInfo]].ok([])
+        )
         manager = FlextInfraPrWorkspaceManager(
             runner=runner, selector=selector, reporting=reporting
         )
@@ -77,19 +85,30 @@ class TestOrchestrate:
     ) -> None:
         runner = StubRunner(run_to_file_returns=[r[int].ok(0)])
         reporting = StubReporting(report_dir=tmp_path / "reports")
-        proj = StubProjectInfo(name="proj", path=tmp_path / "proj")
+        proj = m.Infra.Workspace.ProjectInfo(name="proj", path=tmp_path / "proj")
         proj.path.mkdir()
-        selector = _StubSelector(projects=[proj])
+        selector = StubSelector(
+            resolve_returns=r[list[m.Infra.Workspace.ProjectInfo]].ok([proj])
+        )
         has_changes_calls: list[Path] = []
+
+        def _has_changes(root: Path) -> r[bool]:
+            has_changes_calls.append(root)
+            return r[bool].ok(False)
+
+        def _git_checkout(root: Path, branch: str) -> r[bool]:
+            _ = root, branch
+            return r[bool].ok(True)
+
         monkeypatch.setattr(
             pw_mod.u.Infra,
             "git_has_changes",
-            lambda root: (has_changes_calls.append(root), r[bool].ok(False))[1],
+            _has_changes,
         )
         monkeypatch.setattr(
             pw_mod.u.Infra,
             "git_checkout",
-            lambda _root, _branch: r[bool].ok(True),
+            _git_checkout,
         )
         manager = FlextInfraPrWorkspaceManager(
             runner=runner, selector=selector, reporting=reporting
@@ -103,9 +122,11 @@ class TestOrchestrate:
     def test_orchestrate_failure_handling(self, tmp_path: Path) -> None:
         runner = StubRunner(run_to_file_returns=[r[int].fail("command error")])
         reporting = StubReporting(report_dir=tmp_path / "reports")
-        proj = StubProjectInfo(name="proj", path=tmp_path / "proj")
+        proj = m.Infra.Workspace.ProjectInfo(name="proj", path=tmp_path / "proj")
         proj.path.mkdir()
-        selector = _StubSelector(projects=[proj])
+        selector = StubSelector(
+            resolve_returns=r[list[m.Infra.Workspace.ProjectInfo]].ok([proj])
+        )
         manager = FlextInfraPrWorkspaceManager(
             runner=runner, selector=selector, reporting=reporting
         )
@@ -164,18 +185,3 @@ class TestStaticMethods:
         cmd = build_subproject_command(tmp_path, {})
         tm.that("make" in cmd, eq=True)
         tm.that(not [c for c in cmd if c.startswith("PR_HEAD=")], eq=True)
-
-
-class _StubSelector:
-    def __init__(
-        self, projects: list[StubProjectInfo] | None = None, *, error: str = ""
-    ) -> None:
-        self._projects = projects or []
-        self._error = error
-
-    def resolve_projects(
-        self, *_args: t.ContainerValue, **_kwargs: t.ContainerValue
-    ) -> t.ContainerValue:
-        if self._error:
-            return r[list[StubProjectInfo]].fail(self._error)
-        return r[list[StubProjectInfo]].ok(self._projects)

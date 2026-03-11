@@ -17,13 +17,6 @@ from flext_tests import tm
 from tests.infra.typings import t
 
 
-def _fake_find(
-    _s: FlextInfraConfigFixer,
-    _p: list[Path] | None = None,
-) -> r[list[Path]]:
-    return r[list[Path]].ok([])
-
-
 def _fake_process(
     _s: FlextInfraConfigFixer,
     _p: Path,

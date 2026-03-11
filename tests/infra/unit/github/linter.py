@@ -15,14 +15,18 @@ from flext_core import r
 from flext_infra.github.linter import FlextInfraWorkflowLinter
 from flext_tests import tm
 from tests.infra.models import m
-from tests.infra.unit.github._stubs import StubCommandOutput, StubJsonIo, StubRunner
+from tests.infra.unit.github._stubs import StubJsonIo, StubRunner
 
 
 def _ok_output(
     *, exit_code: int = 0, stdout: str = "", stderr: str = ""
 ) -> r[m.Infra.Core.CommandOutput]:
     return r[m.Infra.Core.CommandOutput].ok(
-        StubCommandOutput(exit_code=exit_code, stdout=stdout, stderr=stderr),
+        m.Infra.Core.CommandOutput(
+            exit_code=exit_code,
+            stdout=stdout,
+            stderr=stderr,
+        ),
     )
 
 
@@ -33,7 +37,12 @@ class TestFlextInfraWorkflowLinter:
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Test successful linting when actionlint is available."""
-        monkeypatch.setattr(shutil, "which", lambda _cmd: "/usr/bin/actionlint")
+
+        def _which(cmd: str) -> str:
+            _ = cmd
+            return "/usr/bin/actionlint"
+
+        monkeypatch.setattr(shutil, "which", _which)
         runner = StubRunner(run_returns=[_ok_output(stdout="All workflows valid")])
         json_io = StubJsonIo()
         linter = FlextInfraWorkflowLinter(runner=runner, json_io=json_io)
@@ -46,21 +55,31 @@ class TestFlextInfraWorkflowLinter:
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Test linting skipped when actionlint is not available."""
-        monkeypatch.setattr(shutil, "which", lambda _cmd: None)
+
+        def _which_none(cmd: str) -> str | None:
+            _ = cmd
+            return None
+
+        monkeypatch.setattr(shutil, "which", _which_none)
         runner = StubRunner()
         json_io = StubJsonIo()
         linter = FlextInfraWorkflowLinter(runner=runner, json_io=json_io)
         result = linter.lint(tmp_path)
         value = tm.ok(result)
         tm.that(value.status, eq="skipped")
-        tm.that(isinstance(value.reason, str), eq=True)
+        tm.that(value.reason is not None, eq=True)
         tm.that(value.reason, contains="actionlint not installed")
 
     def test_lint_with_report_path(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Test linting with JSON report output."""
-        monkeypatch.setattr(shutil, "which", lambda _cmd: "/usr/bin/actionlint")
+
+        def _which(cmd: str) -> str:
+            _ = cmd
+            return "/usr/bin/actionlint"
+
+        monkeypatch.setattr(shutil, "which", _which)
         runner = StubRunner(run_returns=[_ok_output(stdout="Valid")])
         json_io = StubJsonIo()
         report_path = tmp_path / "report.json"
@@ -73,7 +92,12 @@ class TestFlextInfraWorkflowLinter:
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Test strict mode returns failure when actionlint finds issues."""
-        monkeypatch.setattr(shutil, "which", lambda _cmd: "/usr/bin/actionlint")
+
+        def _which(cmd: str) -> str:
+            _ = cmd
+            return "/usr/bin/actionlint"
+
+        monkeypatch.setattr(shutil, "which", _which)
         runner = StubRunner(
             run_returns=[r[m.Infra.Core.CommandOutput].fail("workflow has errors")],
         )
@@ -92,7 +116,12 @@ class TestFlextInfraWorkflowLinter:
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Test linting skipped with report output."""
-        monkeypatch.setattr(shutil, "which", lambda _cmd: None)
+
+        def _which_none(cmd: str) -> str | None:
+            _ = cmd
+            return None
+
+        monkeypatch.setattr(shutil, "which", _which_none)
         runner = StubRunner()
         json_io = StubJsonIo()
         report_path = tmp_path / "report.json"

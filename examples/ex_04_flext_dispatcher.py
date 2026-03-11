@@ -12,77 +12,54 @@ from .shared import Examples
 class Ex04FlextDispatcher(Examples):
     """Golden-file tests for ``FlextDispatcher`` public API."""
 
-    class CreateUser:
+    class CreateUser(m.Command):
         """Command model for user creation."""
 
         username: str
-        command_type: str = "create_user"
-        query_type: str = ""
-        event_type: str = ""
 
-    class GetUser:
+    class GetUser(m.Query):
         """Query model for user retrieval."""
 
         username: str
-        command_type: str = ""
-        query_type: str = "get_user"
-        event_type: str = ""
 
-    class DeleteUser:
+    class DeleteUser(m.Command):
         """Command model for user deletion."""
 
         username: str
-        command_type: str = "delete_user"
-        query_type: str = ""
-        event_type: str = ""
 
-    class FailingDelete:
+    class FailingDelete(m.Command):
         """Command model that intentionally fails."""
 
         username: str
-        command_type: str = "failing_delete"
-        query_type: str = ""
-        event_type: str = ""
 
-    class AutoCommand:
+    class AutoCommand(m.Command):
         """Command routed through can_handle auto-discovery."""
 
         payload: str
-        command_type: str = "auto_command"
-        query_type: str = ""
-        event_type: str = ""
 
-    class Ping:
+    class Ping(m.Command):
         """Command handled by a callable returning plain value."""
 
         value: str
-        command_type: str = "ping"
-        query_type: str = ""
-        event_type: str = ""
 
-    class UnknownQuery:
+    class UnknownQuery(m.Query):
         """Query model with no registered handler."""
 
         payload: str
-        command_type: str = ""
-        query_type: str = "unknown_query"
-        event_type: str = ""
 
-    class UserCreated:
+    class UserCreated(m.Event):
         """Event model published to subscribers."""
 
         username: str
-        command_type: str = ""
-        query_type: str = ""
         event_type: str = "user_created"
+        aggregate_id: str = "users"
 
-    class NoSubscriberEvent:
+    class NoSubscriberEvent(m.Event):
         """Event model without registered subscribers."""
 
         marker: str
-        command_type: str = ""
-        query_type: str = ""
         event_type: str = "no_subscribers"
+        aggregate_id: str = "events"
 
     class CreateUserHandler:
         """HandleProtocol handler for CreateUser commands."""

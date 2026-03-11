@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import MutableMapping
+from pathlib import Path
 
 import tomlkit
 
@@ -23,9 +24,22 @@ def _test_tool_config() -> FlextInfraToolConfigDocument:
 class TestEnsurePyrightConfigPhase:
     """Tests pyright config phase behavior."""
 
-    def test_apply_root_sets_execution_environments(self) -> None:
+    def test_apply_root_sets_execution_environments(self, tmp_path: Path) -> None:
+        flext_core = tmp_path / "flext-core"
+        flext_api = tmp_path / "flext-api"
+        _ = (flext_core / "pyproject.toml").parent.mkdir(parents=True, exist_ok=True)
+        _ = (flext_api / "pyproject.toml").parent.mkdir(parents=True, exist_ok=True)
+        _ = (flext_core / "pyproject.toml").write_text("", encoding="utf-8")
+        _ = (flext_api / "pyproject.toml").write_text("", encoding="utf-8")
+        _ = (flext_core / "src").mkdir(parents=True, exist_ok=True)
+        _ = (flext_core / "tests").mkdir(parents=True, exist_ok=True)
+        _ = (flext_api / "src").mkdir(parents=True, exist_ok=True)
         doc = tomlkit.document()
-        changes = EnsurePyrightConfigPhase(_test_tool_config()).apply(doc, is_root=True)
+        changes = EnsurePyrightConfigPhase(_test_tool_config()).apply(
+            doc,
+            is_root=True,
+            workspace_root=tmp_path,
+        )
         tool = unwrap_item(doc["tool"])
         tm.that(isinstance(tool, MutableMapping), eq=True)
         if not isinstance(tool, MutableMapping):
@@ -39,8 +53,9 @@ class TestEnsurePyrightConfigPhase:
         tm.that(
             envs,
             eq=[
-                {"root": "src", "reportPrivateUsage": "error"},
-                {"root": "tests", "reportPrivateUsage": "none"},
+                {"root": "flext-api/src", "reportPrivateUsage": "error"},
+                {"root": "flext-core/src", "reportPrivateUsage": "error"},
+                {"root": "flext-core/tests", "reportPrivateUsage": "none"},
             ],
         )
         tm.that(

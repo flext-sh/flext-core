@@ -16,8 +16,6 @@ from flext_infra.deps.extra_paths import (
 from flext_tests import tm
 from tests.infra.typings import t
 
-from ...helpers import h
-
 
 class TestFlextInfraExtraPathsManager:
     def test_manager_initialization(self) -> None:
@@ -97,21 +95,23 @@ class TestGetDepPaths:
 
 class TestSyncOne:
     def test_sync_one_missing_file(self, tmp_path: Path) -> None:
-        tm.that(h.assert_ok(sync_one(tmp_path / "nonexistent.toml")), eq=False)
+        tm.that(sync_one(tmp_path / "nonexistent.toml").is_success, eq=False)
 
     def test_sync_one_no_tool_section(self, tmp_path: Path) -> None:
         pyproject = tmp_path / "pyproject.toml"
         doc = tomlkit.document()
         doc["project"] = {"name": "test"}
         pyproject.write_text(doc.as_string(), encoding="utf-8")
-        tm.that(h.assert_ok(sync_one(pyproject)), eq=False)
+        tm.that(sync_one(pyproject).is_success, eq=False)
 
     def test_sync_one_no_pyright_section(self, tmp_path: Path) -> None:
         pyproject = tmp_path / "pyproject.toml"
         doc = tomlkit.document()
-        doc["tool"] = {"other": {}}
+        tool = tomlkit.table()
+        tool["other"] = tomlkit.table()
+        doc["tool"] = tool
         pyproject.write_text(doc.as_string(), encoding="utf-8")
-        tm.that(h.assert_ok(sync_one(pyproject)), eq=False)
+        tm.that(sync_one(pyproject).is_success, eq=False)
 
     @pytest.mark.parametrize(
         "tool_doc",

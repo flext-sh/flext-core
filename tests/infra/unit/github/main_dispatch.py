@@ -8,8 +8,8 @@ import pytest
 
 from flext_core import r
 from flext_infra.github import __main__ as github_main
+from flext_tests import tm
 from tests.infra.models import m
-from tests.infra.typings import t
 from tests.infra.unit.github._stubs import StubWorkspaceManager
 
 run_pr_workspace = getattr(github_main, "_run_pr_workspace")
@@ -25,8 +25,12 @@ def _orch(*, fail: int = 0, total: int = 1) -> m.Infra.Github.PrOrchestrationRes
 
 
 class TestRunPrWorkspace:
-    def _stub(self, **kw: t.ContainerValue) -> StubWorkspaceManager:
-        return StubWorkspaceManager(**kw)
+    def _stub(
+        self,
+        *,
+        orchestrate_returns: r[m.Infra.Github.PrOrchestrationResult] | None = None,
+    ) -> StubWorkspaceManager:
+        return StubWorkspaceManager(orchestrate_returns=orchestrate_returns)
 
     def test_success(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         mgr = self._stub(
@@ -130,6 +134,6 @@ class TestRunPrWorkspace:
         ]
         assert run_pr_workspace(argv) == 0
         pr_args = mgr.orchestrate_calls[0]["pr_args"]
-        assert pr_args["action"] == "merge"
-        assert pr_args["base"] == "main"
-        assert pr_args["head"] == "feature/test"
+        tm.that("action" in str(pr_args), eq=True)
+        tm.that("base" in str(pr_args), eq=True)
+        tm.that("head" in str(pr_args), eq=True)

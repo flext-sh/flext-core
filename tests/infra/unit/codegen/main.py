@@ -86,7 +86,7 @@ class TestMainEntryPoint:
     def test_entry_point_returns_int(self) -> None:
         """main() returns an integer exit code."""
         result = codegen_main.main(["lazy-init"])
-        tm.that(isinstance(result, int), eq=True)
+        tm.that(type(result).__name__, eq="int")
 
     def test_entry_point_via_sys_exit(self) -> None:
         """__main__ entry point via subprocess."""

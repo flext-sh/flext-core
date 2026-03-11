@@ -7,6 +7,7 @@ from pathlib import Path
 from flext_core import r
 from flext_infra.github.pr import FlextInfraPrManager
 from flext_tests import tm
+from tests.infra.models import m
 from tests.infra.unit.github._stubs import StubRunner, StubVersioning
 
 
@@ -17,6 +18,12 @@ def _mgr(
     return FlextInfraPrManager(
         runner=runner or StubRunner(),
         versioning=versioning or StubVersioning(),
+    )
+
+
+def _ok_cmd() -> r[m.Infra.Core.CommandOutput]:
+    return r[m.Infra.Core.CommandOutput].ok(
+        m.Infra.Core.CommandOutput(exit_code=0, stdout="", stderr=""),
     )
 
 
@@ -32,25 +39,29 @@ class TestView:
 
 class TestChecks:
     def test_checks_pass(self, tmp_path: Path) -> None:
-        runner = StubRunner(run_returns=[r[bool].ok(True)])
+        runner = StubRunner(run_returns=[_ok_cmd()])
         result = _mgr(runner=runner).checks(tmp_path, "42")
         tm.ok(result)
         tm.that(result.value["status"], eq="checks-passed")
 
     def test_checks_fail_non_strict(self, tmp_path: Path) -> None:
-        runner = StubRunner(run_returns=[r[bool].fail("checks failed")])
+        runner = StubRunner(
+            run_returns=[r[m.Infra.Core.CommandOutput].fail("checks failed")]
+        )
         result = _mgr(runner=runner).checks(tmp_path, "42")
         tm.ok(result)
         tm.that(result.value["status"], eq="checks-nonblocking")
 
     def test_checks_fail_strict(self, tmp_path: Path) -> None:
-        runner = StubRunner(run_returns=[r[bool].fail("checks failed")])
+        runner = StubRunner(
+            run_returns=[r[m.Infra.Core.CommandOutput].fail("checks failed")]
+        )
         tm.fail(_mgr(runner=runner).checks(tmp_path, "42", strict=True))
 
 
 class TestMerge:
     def test_merge_success(self, tmp_path: Path) -> None:
-        runner = StubRunner(run_returns=[r[bool].ok(True)])
+        runner = StubRunner(run_returns=[_ok_cmd()])
         result = _mgr(runner=runner).merge(
             tmp_path, "42", "feature", release_on_merge=False
         )
@@ -58,15 +69,17 @@ class TestMerge:
         tm.that(result.value["status"], eq="merged")
 
     def test_merge_failure(self, tmp_path: Path) -> None:
-        runner = StubRunner(run_returns=[r[bool].fail("merge conflict")])
+        runner = StubRunner(
+            run_returns=[r[m.Infra.Core.CommandOutput].fail("merge conflict")]
+        )
         tm.fail(_mgr(runner=runner).merge(tmp_path, "42", "feature"))
 
     def test_merge_not_mergeable_retry(self, tmp_path: Path) -> None:
         runner = StubRunner(
             run_returns=[
-                r[bool].fail("not mergeable"),
-                r[bool].ok(True),
-                r[bool].ok(True),
+                r[m.Infra.Core.CommandOutput].fail("not mergeable"),
+                _ok_cmd(),
+                _ok_cmd(),
             ]
         )
         tm.ok(
@@ -81,7 +94,7 @@ class TestMerge:
 
     def test_merge_with_release(self, tmp_path: Path) -> None:
         versioning = StubVersioning(release_tag_returns=r[str].ok("v1.0.0"))
-        runner = StubRunner(run_returns=[r[bool].ok(True), r[bool].ok(True)])
+        runner = StubRunner(run_returns=[_ok_cmd(), _ok_cmd()])
         (tmp_path / ".github" / "workflows").mkdir(parents=True)
         (tmp_path / ".github" / "workflows" / "release.yml").write_text("name: Release")
         tm.ok(
@@ -94,7 +107,7 @@ class TestMerge:
         )
 
     def test_merge_auto_and_delete_branch(self, tmp_path: Path) -> None:
-        runner = StubRunner(run_returns=[r[bool].ok(True)])
+        runner = StubRunner(run_returns=[_ok_cmd()])
         result = _mgr(runner=runner).merge(
             tmp_path,
             "42",
@@ -108,7 +121,7 @@ class TestMerge:
         tm.that(runner.run_calls[0], contains="--delete-branch")
 
     def test_merge_rebase_method(self, tmp_path: Path) -> None:
-        runner = StubRunner(run_returns=[r[bool].ok(True)])
+        runner = StubRunner(run_returns=[_ok_cmd()])
         result = _mgr(runner=runner).merge(
             tmp_path,
             "42",
@@ -152,7 +165,7 @@ class TestTriggerRelease:
     def test_release_exists(self, tmp_path: Path) -> None:
         self._release_setup(tmp_path)
         versioning = StubVersioning(release_tag_returns=r[str].ok("v1.0.0"))
-        runner = StubRunner(run_returns=[r[bool].ok(True)])
+        runner = StubRunner(run_returns=[_ok_cmd()])
         result = _mgr(runner=runner, versioning=versioning)._trigger_release_if_needed(
             tmp_path,
             "release/1.0",
@@ -163,7 +176,9 @@ class TestTriggerRelease:
     def test_release_dispatched(self, tmp_path: Path) -> None:
         self._release_setup(tmp_path)
         versioning = StubVersioning(release_tag_returns=r[str].ok("v1.0.0"))
-        runner = StubRunner(run_returns=[r[bool].fail("not found"), r[bool].ok(True)])
+        runner = StubRunner(
+            run_returns=[r[m.Infra.Core.CommandOutput].fail("not found"), _ok_cmd()]
+        )
         result = _mgr(runner=runner, versioning=versioning)._trigger_release_if_needed(
             tmp_path,
             "release/1.0",
@@ -175,7 +190,10 @@ class TestTriggerRelease:
         self._release_setup(tmp_path)
         versioning = StubVersioning(release_tag_returns=r[str].ok("v1.0.0"))
         runner = StubRunner(
-            run_returns=[r[bool].fail("not found"), r[bool].fail("dispatch failed")],
+            run_returns=[
+                r[m.Infra.Core.CommandOutput].fail("not found"),
+                r[m.Infra.Core.CommandOutput].fail("dispatch failed"),
+            ],
         )
         result = _mgr(runner=runner, versioning=versioning)._trigger_release_if_needed(
             tmp_path,

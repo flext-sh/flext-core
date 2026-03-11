@@ -21,10 +21,10 @@ class _StubService:
     def __init__(self) -> None:
         self.called: dict[str, tuple[t.ContainerValue, ...]] = {}
 
-    def discover_projects(
+    def discover_project_paths(
         self, workspace_root: Path, projects_filter: list[str] | None = None
     ) -> r[list[Path]]:
-        self.called["discover_projects"] = (workspace_root, projects_filter)
+        self.called["discover_project_paths"] = (workspace_root, projects_filter)
         return r[list[Path]].ok([workspace_root])
 
     def run_deptry(
@@ -104,9 +104,9 @@ def test_discover_projects_wrapper(
 ) -> None:
     stub = _StubService()
     monkeypatch.setattr(detection, "_service", stub)
-    result = detection.discover_projects(tmp_path)
+    result = detection.discover_project_paths(tmp_path)
     tm.that(result.is_success, eq=True)
-    tm.that(stub.called["discover_projects"][1], eq=None)
+    tm.that(stub.called["discover_project_paths"][1], eq=None)
 
 
 def test_run_deptry_wrapper(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

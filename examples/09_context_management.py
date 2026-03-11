@@ -20,7 +20,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import threading
-from collections.abc import Generator, Mapping, Sequence
+from collections.abc import Generator
 from contextlib import contextmanager
 from datetime import datetime
 from typing import override
@@ -216,8 +216,8 @@ class ContextManagementService(FlextService[m.ConfigMap]):
         """Demonstrate threading and isolation concepts with context safety."""
         print("\n=== Threading Concepts ===")
         thread_count = threading.active_count()
-        active_threads: Sequence[str] = tuple(
-            thread.name for thread in threading.enumerate()
+        active_threads: tuple[str, ...] = tuple(
+            str(thread.name) for thread in threading.enumerate()
         )
 
         def thread_operation(thread_id: int) -> r[m.ConfigMap]:
@@ -251,7 +251,9 @@ class ContextManagementService(FlextService[m.ConfigMap]):
         print("✅ Context isolation per thread")
         print("✅ No shared state between threads")
         print(f"✅ Thread names: {', '.join(active_threads[:5])}")
-        return thread_results.map(lambda _: threading_data)
+        if thread_results.is_failure:
+            return r[m.ConfigMap].fail(thread_results.error or "threading failed")
+        return r[m.ConfigMap].ok(threading_data)
 
     @override
     def execute(self) -> FlextResult[m.ConfigMap]:
@@ -301,9 +303,7 @@ def main() -> None:
         features = metadata.get("context_features", ())
 
         def _seq_len(x: object) -> int:
-            if isinstance(x, Sequence) and (not isinstance(x, (str, bytes, bytearray))):
-                return len(x)
-            if isinstance(x, Mapping):
+            if isinstance(x, (list, tuple, dict)):
                 return len(x)
             return 0
 

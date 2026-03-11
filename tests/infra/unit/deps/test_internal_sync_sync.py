@@ -1,7 +1,9 @@
 from __future__ import annotations
 
-import types
+from collections.abc import Callable
 from pathlib import Path
+
+import pytest
 
 from flext_core import r
 from flext_infra.deps import internal_sync
@@ -13,16 +15,25 @@ from tests.infra.typings import t
 
 def _set_toml_stub(
     service: FlextInfraInternalDependencySyncService,
-    values: list[t.ContainerValue],
+    values: list[r[dict[str, t.ContainerValue]]],
 ) -> None:
     state = {"index": 0}
 
-    def _read(_path: Path) -> t.ContainerValue:
+    def _read(_path: Path) -> r[dict[str, t.ContainerValue]]:
         item = values[state["index"]]
         state["index"] += 1
         return item
 
-    service.toml = types.SimpleNamespace(read_plain=_read)
+    class _TomlReaderStub:
+        def __init__(
+            self, fn: Callable[[Path], r[dict[str, t.ContainerValue]]]
+        ) -> None:
+            self._fn = fn
+
+        def read_plain(self, path: Path) -> r[dict[str, t.ContainerValue]]:
+            return self._fn(path)
+
+    service.toml = _TomlReaderStub(_read)
 
 
 class TestSync:
@@ -40,7 +51,9 @@ class TestSync:
         (tmp_path / "pyproject.toml").write_text("")
         tm.fail(service.sync(tmp_path))
 
-    def test_sync_workspace_mode_symlink(self, tmp_path: Path, monkeypatch) -> None:
+    def test_sync_workspace_mode_symlink(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         workspace = tmp_path / "workspace"
         workspace.mkdir()
         (workspace / ".gitmodules").write_text(
@@ -68,12 +81,21 @@ class TestSync:
         )
         monkeypatch.setenv("FLEXT_STANDALONE", "")
         monkeypatch.setenv("FLEXT_WORKSPACE_ROOT", "")
+
+        def _git_run(_cmd: list[str], cwd: Path) -> r[str]:
+            _ = cwd
+            return r[str].ok("")
+
         monkeypatch.setattr(
-            internal_sync.u.Infra, "git_run", lambda _cmd, cwd: r[str].ok("")
+            internal_sync.u.Infra,
+            "git_run",
+            _git_run,
         )
         tm.ok(service.sync(project))
 
-    def test_sync_missing_repo_mapping(self, tmp_path: Path, monkeypatch) -> None:
+    def test_sync_missing_repo_mapping(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         project = tmp_path / "project"
         project.mkdir()
         (project / "pyproject.toml").write_text("")
@@ -97,9 +119,16 @@ class TestSync:
         )
         monkeypatch.setenv("FLEXT_STANDALONE", "")
         monkeypatch.setenv("FLEXT_WORKSPACE_ROOT", "")
+
+        def _git_run(_cmd: list[str], cwd: Path) -> r[str]:
+            _ = cwd
+            return r[str].ok("")
+
         monkeypatch.setattr(
-            internal_sync.u.Infra, "git_run", lambda _cmd, cwd: r[str].ok("")
+            internal_sync.u.Infra,
+            "git_run",
+            _git_run,
         )
         error = tm.fail(service.sync(project))
         tm.that(error, contains="missing repo mapping")
-        tm.that(h is not None, eq=True)
+        tm.that(hasattr(h, "assert_ok"), eq=True)

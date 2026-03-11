@@ -19,7 +19,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Sequence
 from typing import override
 
 from pydantic import Field
@@ -216,16 +215,10 @@ def main() -> None:
     result = service.execute()
     if result.is_success:
         data = result.value
-        root_data: dict[str, t.ContainerValue] = (
-            data.root if isinstance(data.root, dict) else {}
-        )
+        root_data: dict[str, t.ContainerValue] = data.root
         components = root_data.get("components_integrated", [])
         total = root_data.get("total_components", 0)
-        if (
-            isinstance(components, Sequence)
-            and (not isinstance(components, (str, bytes, bytearray)))
-            and isinstance(total, int)
-        ):
+        if isinstance(components, (list, tuple)) and isinstance(total, int):
             components_list = list(components)
             print(f"\n✅ Integrated {total} components")
             print(f"✅ Demonstrated {len(components_list)} integration patterns")

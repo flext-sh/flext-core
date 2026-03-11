@@ -3,6 +3,8 @@ from __future__ import annotations
 import types
 from pathlib import Path
 
+import pytest
+
 from flext_core import r
 from flext_infra.deps import internal_sync
 from flext_infra.deps.internal_sync import main
@@ -11,29 +13,47 @@ from tests.infra import h
 
 
 class TestMain:
-    def test_main_success(self, monkeypatch) -> None:
+    def test_main_success(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        def _parse_args(self: object) -> types.SimpleNamespace:
+            _ = self
+            return types.SimpleNamespace(project_root=Path("/tmp/test"))
+
+        def _sync(self: object, _project_root: Path) -> r[int]:
+            _ = self
+            _ = _project_root
+            return r[int].ok(0)
+
         monkeypatch.setattr(
             internal_sync.argparse.ArgumentParser,
             "parse_args",
-            lambda self: types.SimpleNamespace(project_root=Path("/tmp/test")),
+            _parse_args,
         )
         monkeypatch.setattr(
             internal_sync.FlextInfraInternalDependencySyncService,
             "sync",
-            lambda self, _project_root: r[int].ok(0),
+            _sync,
         )
         tm.that(main(), eq=0)
 
-    def test_main_failure(self, monkeypatch) -> None:
+    def test_main_failure(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        def _parse_args(self: object) -> types.SimpleNamespace:
+            _ = self
+            return types.SimpleNamespace(project_root=Path("/tmp/test"))
+
+        def _sync(self: object, _project_root: Path) -> r[int]:
+            _ = self
+            _ = _project_root
+            return r[int].fail("sync failed")
+
         monkeypatch.setattr(
             internal_sync.argparse.ArgumentParser,
             "parse_args",
-            lambda self: types.SimpleNamespace(project_root=Path("/tmp/test")),
+            _parse_args,
         )
         monkeypatch.setattr(
             internal_sync.FlextInfraInternalDependencySyncService,
             "sync",
-            lambda self, _project_root: r[int].fail("sync failed"),
+            _sync,
         )
         tm.that(main(), eq=1)
-        tm.that(h is not None, eq=True)
+        tm.that(hasattr(h, "assert_ok"), eq=True)

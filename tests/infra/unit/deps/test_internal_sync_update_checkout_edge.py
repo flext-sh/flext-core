@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 from flext_infra.deps import internal_sync
 from flext_infra.deps.internal_sync import FlextInfraInternalDependencySyncService
 from flext_tests import tm
@@ -9,7 +11,9 @@ from tests.infra import h
 
 
 class TestEnsureCheckoutEdgeCases:
-    def test_ensure_checkout_cleanup_failure(self, tmp_path: Path, monkeypatch) -> None:
+    def test_ensure_checkout_cleanup_failure(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         dep_path = tmp_path / "dep"
         dep_path.mkdir()
         (dep_path / "file.txt").write_text("content")
@@ -27,4 +31,4 @@ class TestEnsureCheckoutEdgeCases:
             ),
         )
         tm.that(error, contains="cleanup failed")
-        tm.that(h is not None, eq=True)
+        tm.that(hasattr(h, "assert_ok"), eq=True)

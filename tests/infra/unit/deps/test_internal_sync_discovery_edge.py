@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-import types
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from pathlib import Path
 
 from flext_core import r
@@ -13,23 +12,32 @@ from tests.infra.typings import t
 
 def _set_toml_sequence(
     service: FlextInfraInternalDependencySyncService,
-    values: list[t.ContainerValue],
+    values: list[r[dict[str, t.ContainerValue]]],
 ) -> None:
     state = {"index": 0}
 
-    def _next(_path: Path) -> t.ContainerValue:
+    def _next(_path: Path) -> r[dict[str, t.ContainerValue]]:
         item = values[state["index"]]
         state["index"] += 1
         return item
 
-    service.toml = types.SimpleNamespace(read_plain=_next)
+    class _TomlReaderStub:
+        def __init__(
+            self, fn: Callable[[Path], r[dict[str, t.ContainerValue]]]
+        ) -> None:
+            self._fn = fn
+
+        def read_plain(self, path: Path) -> r[dict[str, t.ContainerValue]]:
+            return self._fn(path)
+
+    service.toml = _TomlReaderStub(_next)
 
 
 class TestCollectInternalDepsEdgeCases:
     def test_collect_internal_deps_variants(self, tmp_path: Path) -> None:
         (tmp_path / "pyproject.toml").write_text("x")
 
-        def _collect(value: t.ContainerValue) -> r[Mapping[str, Path]]:
+        def _collect(value: r[dict[str, t.ContainerValue]]) -> r[Mapping[str, Path]]:
             service = FlextInfraInternalDependencySyncService()
             _set_toml_sequence(service, [value])
             result = service.collect_internal_deps(tmp_path)
@@ -92,4 +100,4 @@ class TestCollectInternalDepsEdgeCases:
         tm.that(len(four), eq=0)
         tm.that(len(five), eq=0)
         tm.that(len(six), eq=0)
-        tm.that(h is not None, eq=True)
+        tm.that(hasattr(h, "assert_ok"), eq=True)

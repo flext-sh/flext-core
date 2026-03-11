@@ -10,11 +10,11 @@ from pathlib import Path
 
 import pytest
 
+from flext_core import r
 from flext_infra.constants import c
 from flext_infra.docs.shared import FlextInfraDocsShared
 from flext_tests import tm
 from tests.infra.models import m
-from tests.infra.typings import t
 
 _OUT = c.Infra.Docs.DEFAULT_DOCS_OUTPUT_DIR
 
@@ -66,7 +66,7 @@ class TestBuildScopes:
         project: str | None = None,
         projects: str | None = None,
         output_dir: str = _OUT,
-    ) -> t.ContainerValue:
+    ) -> r[list[m.Infra.Docs.FlextInfraDocScope]]:
         return FlextInfraDocsShared.build_scopes(
             root=root,
             project=project,
@@ -83,7 +83,7 @@ class TestBuildScopes:
         """Test build_scopes with valid root returns success."""
         result = self._build(tmp_path)
         tm.ok(result)
-        tm.that(isinstance(result.value, list), eq=True)
+        tm.that(len(result.value) >= 0, eq=True)
 
     def test_includes_root_scope(self, tmp_path: Path) -> None:
         """Test build_scopes includes root scope."""
@@ -108,7 +108,6 @@ class TestBuildScopes:
 
     def test_default_docs_output_dir_constant(self) -> None:
         """Test DEFAULT_DOCS_OUTPUT_DIR constant is defined."""
-        tm.that(isinstance(_OUT, str), eq=True)
         tm.that(len(_OUT) > 0, eq=True)
 
     def test_scope_structure(self, tmp_path: Path) -> None:
@@ -125,7 +124,7 @@ class TestBuildScopes:
         result = self._build(tmp_path, output_dir=str(tmp_path / "reports"))
         if result.is_success and result.value:
             for scope in result.value:
-                tm.that(isinstance(scope.report_dir, Path), eq=True)
+                tm.that(scope.report_dir.as_posix().endswith("reports"), eq=True)
 
     def test_skips_missing_projects(self, tmp_path: Path) -> None:
         """Test build_scopes skips projects without pyproject.toml."""

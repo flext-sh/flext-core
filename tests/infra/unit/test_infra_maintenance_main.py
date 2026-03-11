@@ -53,7 +53,7 @@ class TestMaintenanceMainEnforcer:
             tmp_path / "ws", python_minor=sys.version_info.minor
         )
         enforcer = FlextInfraPythonVersionEnforcer()
-        enforcer._workspace_root_from_file = lambda _f: workspace
+        enforcer._workspace_root_from_file = lambda file: workspace
         result = enforcer.execute(check_only=True, verbose=False)
         tm.ok(result, eq=0)
 
@@ -62,7 +62,7 @@ class TestMaintenanceMainEnforcer:
             tmp_path / "ws", python_minor=sys.version_info.minor
         )
         enforcer = FlextInfraPythonVersionEnforcer()
-        enforcer._workspace_root_from_file = lambda _f: workspace
+        enforcer._workspace_root_from_file = lambda file: workspace
         result = enforcer.execute(check_only=False, verbose=False)
         tm.ok(result, eq=0)
 
@@ -71,7 +71,7 @@ class TestMaintenanceMainEnforcer:
             tmp_path / "ws", python_minor=sys.version_info.minor
         )
         enforcer = FlextInfraPythonVersionEnforcer()
-        enforcer._workspace_root_from_file = lambda _f: workspace
+        enforcer._workspace_root_from_file = lambda file: workspace
         result = enforcer.execute(check_only=True, verbose=True)
         tm.ok(result, eq=0)
         tm.that(enforcer.verbose, eq=True)
@@ -80,7 +80,7 @@ class TestMaintenanceMainEnforcer:
         mismatched_minor = sys.version_info.minor + 1
         workspace = _create_workspace(tmp_path / "ws", python_minor=mismatched_minor)
         enforcer = FlextInfraPythonVersionEnforcer()
-        enforcer._workspace_root_from_file = lambda _f: workspace
+        enforcer._workspace_root_from_file = lambda file: workspace
         result = enforcer.execute(check_only=True, verbose=False)
         tm.fail(result)
 
@@ -89,7 +89,7 @@ class TestMaintenanceMainEnforcer:
             tmp_path / "ws", python_minor=sys.version_info.minor
         )
         enforcer = FlextInfraPythonVersionEnforcer()
-        enforcer._workspace_root_from_file = lambda _f: workspace
+        enforcer._workspace_root_from_file = lambda file: workspace
         enforcer.execute(check_only=True, verbose=False)
         tm.that(enforcer.check_only, eq=True)
 
@@ -98,7 +98,7 @@ class TestMaintenanceMainEnforcer:
             tmp_path / "ws", python_minor=sys.version_info.minor
         )
         enforcer = FlextInfraPythonVersionEnforcer()
-        enforcer._workspace_root_from_file = lambda _f: workspace
+        enforcer._workspace_root_from_file = lambda file: workspace
         enforcer.execute(check_only=False, verbose=True)
         tm.that(enforcer.verbose, eq=True)
 
@@ -107,7 +107,7 @@ class TestMaintenanceMainEnforcer:
             tmp_path / "ws", python_minor=sys.version_info.minor
         )
         enforcer = FlextInfraPythonVersionEnforcer()
-        enforcer._workspace_root_from_file = lambda _f: workspace
+        enforcer._workspace_root_from_file = lambda file: workspace
         result = enforcer.execute(check_only=True, verbose=True)
         tm.ok(result, eq=0)
         tm.that(enforcer.check_only, eq=True)
@@ -118,7 +118,7 @@ class TestMaintenanceMainEnforcer:
             tmp_path / "ws", python_minor=sys.version_info.minor
         )
         enforcer = FlextInfraPythonVersionEnforcer()
-        enforcer._workspace_root_from_file = lambda _f: workspace
+        enforcer._workspace_root_from_file = lambda file: workspace
         result = enforcer.execute(check_only=True)
         tm.ok(result, eq=0)
 
@@ -136,7 +136,7 @@ class TestMaintenanceMainEnforcer:
             f'requires-python = ">=3.{mismatched}"\n', encoding="utf-8"
         )
         enforcer = FlextInfraPythonVersionEnforcer()
-        enforcer._workspace_root_from_file = lambda _f: workspace
+        enforcer._workspace_root_from_file = lambda file: workspace
         result = enforcer.execute(check_only=True, verbose=False)
         tm.fail(result)
 

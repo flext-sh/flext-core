@@ -27,7 +27,7 @@ def test_codegen_dir_returns_all_exports() -> None:
 
 def test_codegen_lazy_imports_work() -> None:
     """Test that lazy imports work correctly."""
-    tm.that(FlextInfraCodegenLazyInit is not None, eq=True)
+    tm.that(type(FlextInfraCodegenLazyInit).__name__, eq="type")
     tm.that(hasattr(FlextInfraCodegenLazyInit, "run"), eq=True)
 
 

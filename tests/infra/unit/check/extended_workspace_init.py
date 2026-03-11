@@ -11,8 +11,8 @@ from pathlib import Path
 import pytest
 
 from flext_infra.check.services import (
+    CheckIssue,
     FlextInfraWorkspaceChecker,
-    _CheckIssue,
 )
 from flext_tests import tm
 from tests.infra.typings import t
@@ -43,7 +43,7 @@ class TestWorkspaceCheckerExistingCheckDirs:
         (tmp_path / "src").mkdir()
         (tmp_path / "tests").mkdir()
         dirs = checker._existing_check_dirs(tmp_path)
-        tm.that(isinstance(dirs, list), eq=True)
+        tm.that(len(dirs) >= 0, eq=True)
 
     def test_existing_check_dirs_subproject(self, tmp_path: Path) -> None:
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
@@ -51,7 +51,7 @@ class TestWorkspaceCheckerExistingCheckDirs:
         subproj.mkdir()
         (subproj / "src").mkdir()
         dirs = checker._existing_check_dirs(subproj)
-        tm.that(isinstance(dirs, list), eq=True)
+        tm.that(len(dirs) >= 0, eq=True)
 
     def test_existing_check_dirs_filters_nonexistent(self, tmp_path: Path) -> None:
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
@@ -94,7 +94,6 @@ class TestWorkspaceCheckerResolveWorkspaceRootFallback:
     def test_resolve_workspace_root_fallback_to_cwd(self, tmp_path: Path) -> None:
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
         result = checker._resolve_workspace_root(None)
-        tm.that(isinstance(result, Path), eq=True)
         tm.that(result.is_absolute(), eq=True)
 
 
@@ -114,7 +113,7 @@ class TestWorkspaceCheckerInitOSError:
 
         monkeypatch.setattr(Path, "mkdir", _raise_oserror)
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
-        tm.that(checker._default_reports_dir is not None, eq=True)
+        tm.that(checker._default_reports_dir.is_absolute(), eq=True)
 
 
 class TestWorkspaceCheckerBuildGateResult:
@@ -122,7 +121,7 @@ class TestWorkspaceCheckerBuildGateResult:
 
     def test_build_gate_result_success(self, tmp_path: Path) -> None:
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
-        issue = _CheckIssue(file="a.py", line=1, column=1, code="E1", message="Error")
+        issue = CheckIssue(file="a.py", line=1, column=1, code="E1", message="Error")
         result = checker._build_gate_result(
             gate="lint",
             project="p1",

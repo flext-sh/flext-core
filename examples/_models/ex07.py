@@ -24,3 +24,7 @@ class Ex07GetUserQuery(m.Query):
     """Get user query model."""
 
     user_id: str
+
+
+class Ex07DemoPlugin(m.Value):
+    name: str

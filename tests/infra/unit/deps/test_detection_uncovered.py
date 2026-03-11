@@ -9,16 +9,17 @@ import pytest
 from flext_core import r
 from flext_infra.deps.detection import FlextInfraDependencyDetectionService
 from flext_tests import tm
+from tests.infra.models import m
 from tests.infra.typings import t
 
 
 class _StubRunner:
-    def __init__(self, result: t.ContainerValue) -> None:
+    def __init__(self, result: r[m.Infra.Core.CommandOutput]) -> None:
         self._result = result
 
     def run_raw(
         self, *args: t.ContainerValue, **kwargs: t.ContainerValue
-    ) -> t.ContainerValue:
+    ) -> r[m.Infra.Core.CommandOutput]:
         _ = args
         _ = kwargs
         return self._result
@@ -36,8 +37,10 @@ class TestDetectionUncoveredLines:
         (project / "pyproject.toml").write_text("")
         out_file = project / ".deptry-report.json"
         out_file.write_text(json.dumps(["not_a_dict", {"error": {"code": "DEP001"}}]))
-        out = SimpleNamespace(exit_code=0, stdout="", stderr="")
-        monkeypatch.setattr(service, "runner", _StubRunner(r[type(out)].ok(out)))
+        out = m.Infra.Core.CommandOutput(exit_code=0, stdout="", stderr="")
+        monkeypatch.setattr(
+            service, "runner", _StubRunner(r[m.Infra.Core.CommandOutput].ok(out))
+        )
         issues, _ = tm.ok(
             service.run_deptry(project, venv_bin, json_output_path=out_file)
         )
@@ -50,8 +53,10 @@ class TestDetectionUncoveredLines:
         venv_bin = tmp_path / "venv" / "bin"
         venv_bin.mkdir(parents=True)
         (venv_bin / "pip").write_text("")
-        out = SimpleNamespace(exit_code=0, stdout="", stderr="")
-        monkeypatch.setattr(service, "runner", _StubRunner(r[type(out)].ok(out)))
+        out = m.Infra.Core.CommandOutput(exit_code=0, stdout="", stderr="")
+        monkeypatch.setattr(
+            service, "runner", _StubRunner(r[m.Infra.Core.CommandOutput].ok(out))
+        )
         lines, exit_code = tm.ok(service.run_pip_check(tmp_path, venv_bin))
         tm.that(lines, eq=[])
         tm.that(exit_code, eq=0)
@@ -63,8 +68,10 @@ class TestDetectionUncoveredLines:
         venv_bin = tmp_path / "venv" / "bin"
         venv_bin.mkdir(parents=True)
         (venv_bin / "mypy").write_text("")
-        out = SimpleNamespace(exit_code=0, stdout="", stderr="")
-        monkeypatch.setattr(service, "runner", _StubRunner(r[type(out)].ok(out)))
+        out = m.Infra.Core.CommandOutput(exit_code=0, stdout="", stderr="")
+        monkeypatch.setattr(
+            service, "runner", _StubRunner(r[m.Infra.Core.CommandOutput].ok(out))
+        )
 
         class _Toml:
             def __init__(self) -> None:
@@ -74,10 +81,10 @@ class TestDetectionUncoveredLines:
                 _ = path
                 self._i += 1
                 if self._i == 1:
-                    return r[dict[str, dict[str, str]]].ok({
+                    return r[dict[str, t.ContainerValue]].ok({
                         "python": {"version": "3.13"}
                     })
-                return r[dict[str, str]].ok({})
+                return r[dict[str, t.ContainerValue]].ok({})
 
         monkeypatch.setattr(service, "toml", _Toml())
         report = tm.ok(service.get_required_typings(tmp_path, venv_bin))

@@ -24,3 +24,13 @@ class Ex01RunDemonstrationCommand(m.Command):
     """Result demo command model."""
 
     operation: str = "demonstration"
+
+
+class Ex01ValidPersonPayload(m.Value):
+    name: str
+    age: int
+
+
+class Ex01InvalidPersonPayload(m.Value):
+    name: str
+    age: str

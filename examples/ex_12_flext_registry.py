@@ -184,7 +184,7 @@ class Ex12FlextRegistry(Examples):
         )
         self.check("is_valid", reg_explicit.is_valid())
         self.check("service_info", reg_explicit.get_service_info())
-        self.check("result_property", reg_explicit.result is not None)
+        self.check("result_property.type", type(reg_explicit.result).__name__)
         self.check("runtime.type", type(reg_explicit.runtime).__name__)
         self.check("context.type", type(reg_explicit.context).__name__)
         self.check("config.type", type(reg_explicit.config).__name__)

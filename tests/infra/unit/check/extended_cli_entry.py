@@ -19,8 +19,8 @@ import flext_infra.check.fix_pyrefly_config as fix_pyrefly_mod
 import flext_infra.check.workspace_check as ws_mod
 from flext_core import r
 from flext_infra.check.services import (
-    _GateExecution,
-    _ProjectResult,
+    GateExecution,
+    ProjectResult,
     run_cli,
 )
 from flext_tests import tm
@@ -30,7 +30,7 @@ from tests.infra.typings import t
 
 def _fake_checker_cls(
     parse_result: list[str],
-    run_result: r[list[SimpleNamespace]] | r[list[_ProjectResult]],
+    run_result: r[list[SimpleNamespace]] | r[list[ProjectResult]],
 ) -> type:
     class _Fake:
         def __init__(self, **_kw: t.ContainerValue) -> None:
@@ -45,7 +45,7 @@ def _fake_checker_cls(
             projects: list[str] | None = None,
             gates: list[str] | None = None,
             **kw: t.ContainerValue,
-        ) -> r[list[SimpleNamespace]] | r[list[_ProjectResult]]:
+        ) -> r[list[SimpleNamespace]] | r[list[ProjectResult]]:
             _ = projects, gates, kw
             return run_result
 
@@ -168,9 +168,9 @@ class TestRunCLIExtended:
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         gate = m.Infra.Check.GateResult(gate="lint", project="p", passed=True)
-        gate_exec = _GateExecution(result=gate, issues=[])
-        project = _ProjectResult(project="p", gates={"lint": gate_exec})
-        ok_result = r[list[_ProjectResult]].ok([project])
+        gate_exec = GateExecution(result=gate, issues=[])
+        project = ProjectResult(project="p", gates={"lint": gate_exec})
+        ok_result = r[list[ProjectResult]].ok([project])
         monkeypatch.setattr(
             ws_mod,
             "FlextInfraWorkspaceChecker",

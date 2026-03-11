@@ -8,9 +8,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from flext_core import r
 from flext_infra.github.workflows import FlextInfraWorkflowSyncer, SyncOperation
 from flext_tests import tm
-from tests.infra.typings import t
 from tests.infra.unit.github._stubs import StubJsonIo, StubSelector, StubTemplates
 
 
@@ -97,13 +97,20 @@ class TestRenderTemplate:
         tm.fail(_syncer().render_template(tmp_path / "nonexistent.yml"))
 
 
-def _sync(root: Path, template: str, **kw: t.ContainerValue) -> t.ContainerValue:
+def _sync(
+    root: Path,
+    template: str,
+    *,
+    apply: bool = False,
+    prune: bool = False,
+) -> r[list[SyncOperation]]:
     """Helper to call sync_project with defaults."""
     return _syncer().sync_project(
         project_name="proj",
         project_root=root,
         rendered_template=template,
-        **kw,
+        apply=apply,
+        prune=prune,
     )
 
 

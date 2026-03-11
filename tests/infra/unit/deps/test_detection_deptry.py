@@ -54,7 +54,7 @@ class TestDiscoverProjects:
         monkeypatch.setattr(
             service, "selector", _StubSelector(_FakeResult(True, [proj]))
         )
-        result = service.discover_projects(tmp_path)
+        result = service.discover_project_paths(tmp_path)
         tm.that(result.is_success, eq=True)
         if result.is_success:
             tm.that(len(result.value), eq=1)
@@ -64,7 +64,7 @@ class TestDiscoverProjects:
         monkeypatch.setattr(
             service, "selector", _StubSelector(_FakeResult(False, error="failed"))
         )
-        tm.fail(service.discover_projects(tmp_path))
+        tm.fail(service.discover_project_paths(tmp_path))
 
     def test_filters_without_pyproject(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
@@ -77,7 +77,7 @@ class TestDiscoverProjects:
         monkeypatch.setattr(
             service, "selector", _StubSelector(_FakeResult(True, [proj]))
         )
-        result = service.discover_projects(tmp_path)
+        result = service.discover_project_paths(tmp_path)
         tm.that(result.is_success, eq=True)
         if result.is_success:
             tm.that(result.value, eq=[])

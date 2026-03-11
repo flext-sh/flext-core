@@ -156,7 +156,11 @@ class FlextInfraPyprojectModernizer:
             ),
         )
         changes.extend(
-            EnsurePyrightConfigPhase(self._tool_config).apply(doc, is_root=is_root)
+            EnsurePyrightConfigPhase(self._tool_config).apply(
+                doc,
+                is_root=is_root,
+                workspace_root=self.root,
+            )
         )
         rendered = doc.as_string()
         if not skip_comments:

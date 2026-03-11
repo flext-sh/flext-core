@@ -168,7 +168,12 @@ class FlextUtilities:
     get_singleton = staticmethod(FlextUtilitiesConfiguration.get_singleton)
     register_factory = staticmethod(FlextUtilitiesConfiguration.register_factory)
     register_singleton = staticmethod(FlextUtilitiesConfiguration.register_singleton)
-    resolve_env_file = staticmethod(FlextUtilitiesConfiguration.resolve_env_file)
+
+    @staticmethod
+    def resolve_env_file() -> str:
+        """Resolve .env file path from FLEXT_ENV_FILE environment variable."""
+        return FlextUtilitiesConfiguration.resolve_env_file()
+
     set_parameter = staticmethod(FlextUtilitiesConfiguration.set_parameter)
     set_singleton = staticmethod(FlextUtilitiesConfiguration.set_singleton)
     validate_config_class = staticmethod(

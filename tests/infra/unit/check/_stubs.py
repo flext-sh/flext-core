@@ -11,9 +11,9 @@ from __future__ import annotations
 from types import SimpleNamespace
 
 from flext_infra.check.services import (
-    _CheckIssue,
-    _GateExecution,
-    _ProjectResult,
+    CheckIssue,
+    GateExecution,
+    ProjectResult,
 )
 from tests.infra.models import m
 from tests.infra.typings import t
@@ -82,10 +82,10 @@ def make_gate_exec(
     gate: str = "lint",
     project: str = "p",
     passed: bool = True,
-    issues: list[_CheckIssue] | None = None,
-) -> _GateExecution:
+    issues: list[CheckIssue] | None = None,
+) -> GateExecution:
     """Create a _GateExecution with defaults."""
-    return _GateExecution(
+    return GateExecution(
         result=m.Infra.Check.GateResult(gate=gate, project=project, passed=passed),
         issues=issues or [],
     )
@@ -97,17 +97,17 @@ def make_issue(
     column: int = 1,
     code: str = "E1",
     message: str = "Error",
-) -> _CheckIssue:
+) -> CheckIssue:
     """Create a _CheckIssue with defaults."""
-    return _CheckIssue(file=file, line=line, column=column, code=code, message=message)
+    return CheckIssue(file=file, line=line, column=column, code=code, message=message)
 
 
 def make_project(
     name: str = "p",
-    gates: dict[str, _GateExecution] | None = None,
-) -> _ProjectResult:
+    gates: dict[str, GateExecution] | None = None,
+) -> ProjectResult:
     """Create a _ProjectResult with defaults."""
-    return _ProjectResult(
+    return ProjectResult(
         project=name,
         gates=gates or {"lint": make_gate_exec()},
     )

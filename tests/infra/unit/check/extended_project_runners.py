@@ -12,9 +12,9 @@ import pytest
 
 from flext_core import r
 from flext_infra.check.services import (
+    CheckIssue,
     FlextInfraWorkspaceChecker,
-    _CheckIssue,
-    _GateExecution,
+    GateExecution,
 )
 from flext_tests import tm
 from tests.infra.models import m
@@ -26,9 +26,9 @@ def _make_gate_exec(
     project: str = "p",
     *,
     passed: bool = True,
-    issues: list[_CheckIssue] | None = None,
-) -> _GateExecution:
-    return _GateExecution(
+    issues: list[CheckIssue] | None = None,
+) -> GateExecution:
+    return GateExecution(
         result=m.Infra.Check.GateResult(gate=gate, project=project, passed=passed),
         issues=issues or [],
     )
@@ -45,15 +45,15 @@ class TestCheckProjectRunners:
         (tmp_path / "src" / "test.py").touch()
         called: dict[str, bool] = {"lint": False, "format": False, "pyrefly": False}
 
-        def _fake_lint(_p: Path) -> _GateExecution:
+        def _fake_lint(_p: Path) -> GateExecution:
             called["lint"] = True
             return _make_gate_exec(gate="lint")
 
-        def _fake_format(_p: Path) -> _GateExecution:
+        def _fake_format(_p: Path) -> GateExecution:
             called["format"] = True
             return _make_gate_exec(gate="format")
 
-        def _fake_pyrefly(_p: Path, _r: Path | None = None) -> _GateExecution:
+        def _fake_pyrefly(_p: Path, _r: Path | None = None) -> GateExecution:
             called["pyrefly"] = True
             return _make_gate_exec(gate="pyrefly")
 
@@ -84,10 +84,15 @@ class TestJsonWriteFailure:
                 return r[bool].fail("write error")
 
         monkeypatch.setattr(checker, "_json", _FakeJson())
+
+        def _fake_lint(_project_dir: Path) -> GateExecution:
+            del _project_dir
+            return _make_gate_exec("lint", "p", passed=True)
+
         monkeypatch.setattr(
             checker,
             "_run_ruff_lint",
-            lambda *_a: _make_gate_exec("lint", "p", passed=True),
+            _fake_lint,
         )
         result = checker.run_projects(["test-project"], ["lint"])
         tm.fail(result, has="write error")
@@ -101,10 +106,15 @@ class TestLintAndFormatPublicMethods:
     ) -> None:
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
         (tmp_path / "pyproject.toml").touch()
+
+        def _fake_lint(_project_dir: Path) -> GateExecution:
+            del _project_dir
+            return _make_gate_exec("lint", "p", passed=True)
+
         monkeypatch.setattr(
             checker,
             "_run_ruff_lint",
-            lambda *_a: _make_gate_exec("lint", "p", passed=True),
+            _fake_lint,
         )
         result = checker.lint(tmp_path)
         tm.ok(result)
@@ -117,10 +127,15 @@ class TestLintAndFormatPublicMethods:
     ) -> None:
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
         (tmp_path / "pyproject.toml").touch()
+
+        def _fake_format(_project_dir: Path) -> GateExecution:
+            del _project_dir
+            return _make_gate_exec("format", "p", passed=True)
+
         monkeypatch.setattr(
             checker,
             "_run_ruff_format",
-            lambda *_a: _make_gate_exec("format", "p", passed=True),
+            _fake_format,
         )
         result = checker.format(tmp_path)
         tm.ok(result)

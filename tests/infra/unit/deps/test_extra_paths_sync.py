@@ -14,8 +14,6 @@ from flext_infra.deps.extra_paths import main, sync_extra_paths, sync_one
 from flext_tests import tf, tm
 from tests.infra.typings import t
 
-from ...helpers import h
-
 
 @pytest.fixture
 def pyright_content() -> str:
@@ -46,7 +44,7 @@ def test_sync_extra_paths_success_modes(
     expect_fail: bool,
     expect_has: str | None,
 ) -> None:
-    kwargs: dict[str, t.ContainerValue] = {"dry_run": dry_run}
+    project_dirs_arg: list[Path] | None = None
     if mode == "project":
         project = tmp_path / "proj"
         project.mkdir()
@@ -54,8 +52,8 @@ def test_sync_extra_paths_success_modes(
             "[tool.pyright]\nextraPaths = ['old']\n" if dry_run else pyright_content
         )
         pyproject = _create_pyproject(project, content)
-        kwargs["project_dirs"] = [project] if project_dirs else []
-        result = sync_extra_paths(dry_run=dry_run, project_dirs=kwargs["project_dirs"])
+        project_dirs_arg = [project] if project_dirs else []
+        result = sync_extra_paths(dry_run=dry_run, project_dirs=project_dirs_arg)
         tm.ok(result)
         if expect_has:
             tm.that(pyproject.read_text(encoding="utf-8"), has=expect_has)
@@ -172,7 +170,7 @@ def test_sync_one_edge_cases(
 ) -> None:
     if mode == "nonexistent":
         tm.that(
-            h.assert_ok(sync_one(Path("/nonexistent/pyproject.toml"), dry_run=dry_run)),
+            sync_one(Path("/nonexistent/pyproject.toml"), dry_run=dry_run).is_success,
             eq=False,
         )
         return
@@ -182,11 +180,15 @@ def test_sync_one_edge_cases(
         if expect_fail:
             tm.fail(result)
             return
-        tm.that(h.assert_ok(result), eq=expected_ok)
+        tm.that(result.is_success, eq=expected_ok)
         return
     pyproject = _create_pyproject(tmp_path, pyright_content)
     doc = tomlkit.document()
-    doc["tool"] = {"pyright": {"extraPaths": []}}
+    tool = tomlkit.table()
+    pyright = tomlkit.table()
+    pyright["extraPaths"] = tomlkit.array()
+    tool["pyright"] = pyright
+    doc["tool"] = tool
 
     def _read_document(_path: Path) -> r[TOMLDocument]:
         return r[TOMLDocument].ok(doc)

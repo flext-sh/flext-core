@@ -1090,13 +1090,15 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         except (TypeError, ValueError, AttributeError) as exc:
             error_msg = f"Invalid parameters for file read: {exc}"
             if model_cls is not None:
-                return r[TModel].fail(error_msg)
+                invalid_params_result: r[TModel] = r[TModel].fail(error_msg)
+                return invalid_params_result
             return r[str | bytes | m.ConfigMap | list[list[str]]].fail(error_msg)
         if not params.path.exists():
             if model_cls is not None:
-                return r[TModel].fail(
+                file_not_found_result: r[TModel] = r[TModel].fail(
                     c.Tests.Files.ERROR_FILE_NOT_FOUND.format(path=params.path)
                 )
+                return file_not_found_result
             return r[str | bytes | m.ConfigMap | list[list[str]]].fail(
                 c.Tests.Files.ERROR_FILE_NOT_FOUND.format(path=params.path)
             )
@@ -1128,25 +1130,37 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             return r[str | bytes | m.ConfigMap | list[list[str]]].ok(content)
         except json.JSONDecodeError as e:
             if model_cls is not None:
-                return r[TModel].fail(c.Tests.Files.ERROR_INVALID_JSON.format(error=e))
+                invalid_json_result: r[TModel] = r[TModel].fail(
+                    c.Tests.Files.ERROR_INVALID_JSON.format(error=e)
+                )
+                return invalid_json_result
             return r[str | bytes | m.ConfigMap | list[list[str]]].fail(
                 c.Tests.Files.ERROR_INVALID_JSON.format(error=e)
             )
         except _YAMLError as e:
             if model_cls is not None:
-                return r[TModel].fail(c.Tests.Files.ERROR_INVALID_YAML.format(error=e))
+                invalid_yaml_result: r[TModel] = r[TModel].fail(
+                    c.Tests.Files.ERROR_INVALID_YAML.format(error=e)
+                )
+                return invalid_yaml_result
             return r[str | bytes | m.ConfigMap | list[list[str]]].fail(
                 c.Tests.Files.ERROR_INVALID_YAML.format(error=e)
             )
         except UnicodeDecodeError as e:
             if model_cls is not None:
-                return r[TModel].fail(c.Tests.Files.ERROR_ENCODING.format(error=e))
+                invalid_encoding_result: r[TModel] = r[TModel].fail(
+                    c.Tests.Files.ERROR_ENCODING.format(error=e)
+                )
+                return invalid_encoding_result
             return r[str | bytes | m.ConfigMap | list[list[str]]].fail(
                 c.Tests.Files.ERROR_ENCODING.format(error=e)
             )
         except OSError as e:
             if model_cls is not None:
-                return r[TModel].fail(c.Tests.Files.ERROR_READ.format(error=e))
+                file_read_error_result: r[TModel] = r[TModel].fail(
+                    c.Tests.Files.ERROR_READ.format(error=e)
+                )
+                return file_read_error_result
             return r[str | bytes | m.ConfigMap | list[list[str]]].fail(
                 c.Tests.Files.ERROR_READ.format(error=e)
             )
@@ -1475,7 +1489,8 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             try:
                 sequence_value = _OBJECT_LIST_ADAPTER.validate_python(value)
             except ValidationError:
-                return []
+                empty_sequence: list[t.Tests.ContainerValue] = []
+                return empty_sequence
             return [
                 self._to_config_map_value(self._to_payload_value(item))
                 for item in sequence_value

@@ -279,7 +279,7 @@ class Order(m.AggregateRoot):
 
     model_config = m.DOMAIN_MODEL_CONFIG
     customer_id: str = Field(min_length=1)
-    items: list[OrderItem] = Field(default_factory=list)
+    items: list[OrderItem] = Field(default_factory=lambda: list[OrderItem]())
     status: c.Domain.OrderStatus = Field(default=c.Domain.OrderStatus.PENDING)
 
     @property

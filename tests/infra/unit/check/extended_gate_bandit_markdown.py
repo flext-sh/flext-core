@@ -7,14 +7,21 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
-from types import SimpleNamespace
 
 import pytest
 
 from flext_infra.check.services import FlextInfraWorkspaceChecker
 from flext_tests import tm
 from tests.infra import h
-from tests.infra.typings import t
+from tests.infra.models import m
+
+
+def _run_stub(
+    stdout: str = "", stderr: str = "", returncode: int = 0
+) -> m.Infra.Core.CommandOutput:
+    return m.Infra.Core.CommandOutput(
+        stdout=stdout, stderr=stderr, exit_code=returncode
+    )
 
 
 class TestWorkspaceCheckerRunBandit:
@@ -37,11 +44,17 @@ class TestWorkspaceCheckerRunBandit:
             ' "test_id": "B101", "issue_text": "Assert used",'
             ' "issue_severity": "MEDIUM"}]}'
         )
-        monkeypatch.setattr(
-            checker,
-            "_run",
-            lambda *_a, **_kw: h.stub_run(stdout=json_output, returncode=1),
-        )
+
+        def _fake_run(
+            _cmd: list[str],
+            _cwd: Path,
+            _timeout: int = 120,
+            _env: dict[str, str] | None = None,
+        ) -> m.Infra.Core.CommandOutput:
+            del _cmd, _cwd, _timeout, _env
+            return _run_stub(stdout=json_output, returncode=1)
+
+        monkeypatch.setattr(checker, "_run", _fake_run)
         result = checker._run_bandit(proj_dir)
         tm.that(result.result.passed, eq=False)
         tm.that(len(result.issues), eq=1)
@@ -53,11 +66,17 @@ class TestWorkspaceCheckerRunBandit:
     ) -> None:
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
         proj_dir = h.mk_project(tmp_path, "p1", with_src=True)
-        monkeypatch.setattr(
-            checker,
-            "_run",
-            lambda *_a, **_kw: h.stub_run(stdout="invalid json", returncode=1),
-        )
+
+        def _fake_run(
+            _cmd: list[str],
+            _cwd: Path,
+            _timeout: int = 120,
+            _env: dict[str, str] | None = None,
+        ) -> m.Infra.Core.CommandOutput:
+            del _cmd, _cwd, _timeout, _env
+            return _run_stub(stdout="invalid json", returncode=1)
+
+        monkeypatch.setattr(checker, "_run", _fake_run)
         result = checker._run_bandit(proj_dir)
         tm.that(result.result.passed, eq=False)
 
@@ -78,14 +97,20 @@ class TestWorkspaceCheckerRunMarkdown:
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
         proj_dir = h.mk_project(tmp_path, "p1")
         (proj_dir / "README.md").write_text("# Test")
-        monkeypatch.setattr(
-            checker,
-            "_run",
-            lambda *_a, **_kw: h.stub_run(
+
+        def _fake_run(
+            _cmd: list[str],
+            _cwd: Path,
+            _timeout: int = 120,
+            _env: dict[str, str] | None = None,
+        ) -> m.Infra.Core.CommandOutput:
+            del _cmd, _cwd, _timeout, _env
+            return _run_stub(
                 stdout="README.md:1:1 error MD001 Heading level",
                 returncode=1,
-            ),
-        )
+            )
+
+        monkeypatch.setattr(checker, "_run", _fake_run)
         result = checker._run_markdown(proj_dir)
         tm.that(result.result.passed, eq=False)
         tm.that(len(result.issues), eq=1)
@@ -102,10 +127,14 @@ class TestWorkspaceCheckerRunMarkdown:
         captured_args: list[list[str]] = []
 
         def _fake_run(
-            cmd: list[str], *_a: t.ContainerValue, **_kw: t.ContainerValue
-        ) -> SimpleNamespace:
+            cmd: list[str],
+            _cwd: Path,
+            _timeout: int = 120,
+            _env: dict[str, str] | None = None,
+        ) -> m.Infra.Core.CommandOutput:
+            del _cwd, _timeout, _env
             captured_args.append(cmd)
-            return h.stub_run()
+            return _run_stub()
 
         monkeypatch.setattr(checker, "_run", _fake_run)
         checker._run_markdown(proj_dir)
@@ -119,11 +148,17 @@ class TestWorkspaceCheckerRunMarkdown:
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
         proj_dir = h.mk_project(tmp_path, "p1")
         (proj_dir / "README.md").write_text("# Test")
-        monkeypatch.setattr(
-            checker,
-            "_run",
-            lambda *_a, **_kw: h.stub_run(stderr="markdownlint failed", returncode=1),
-        )
+
+        def _fake_run(
+            _cmd: list[str],
+            _cwd: Path,
+            _timeout: int = 120,
+            _env: dict[str, str] | None = None,
+        ) -> m.Infra.Core.CommandOutput:
+            del _cmd, _cwd, _timeout, _env
+            return _run_stub(stderr="markdownlint failed", returncode=1)
+
+        monkeypatch.setattr(checker, "_run", _fake_run)
         result = checker._run_markdown(proj_dir)
         tm.that(result.result.passed, eq=False)
         tm.that(len(result.issues), eq=1)

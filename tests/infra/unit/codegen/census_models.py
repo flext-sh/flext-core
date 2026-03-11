@@ -19,7 +19,7 @@ class TestExcludedProjects:
         tm.that("flexcore" in c.Infra.Codegen.EXCLUDED_PROJECTS, eq=True)
 
     def test_excluded_set_is_frozenset(self) -> None:
-        tm.that(isinstance(c.Infra.Codegen.EXCLUDED_PROJECTS, frozenset), eq=True)
+        tm.that(type(c.Infra.Codegen.EXCLUDED_PROJECTS).__name__, eq="frozenset")
 
 
 class TestViolationPattern:

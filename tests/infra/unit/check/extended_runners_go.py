@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -14,16 +15,41 @@ import pytest
 from flext_infra.check.services import FlextInfraWorkspaceChecker
 from flext_tests import tm
 from tests.infra import h
-from tests.infra.typings import t
+from tests.infra.models import m
+
+RunCallable = Callable[
+    [list[str], Path, int, dict[str, str] | None], m.Infra.Core.CommandOutput
+]
 
 
-def _stub_run_seq(results: list[SimpleNamespace]) -> t.ContainerValue:
+def _as_command_output(
+    result: m.Infra.Core.CommandOutput | SimpleNamespace,
+) -> m.Infra.Core.CommandOutput:
+    if isinstance(result, m.Infra.Core.CommandOutput):
+        return result
+    return m.Infra.Core.CommandOutput(
+        stdout=result.stdout,
+        stderr=result.stderr,
+        exit_code=result.returncode,
+    )
+
+
+def _stub_run_seq(
+    results: list[m.Infra.Core.CommandOutput | SimpleNamespace],
+) -> RunCallable:
     idx = [0]
 
-    def _run(_cmd: list[str], _cwd: Path, **_kw: t.ContainerValue) -> SimpleNamespace:
+    def _run(
+        _cmd: list[str],
+        _cwd: Path,
+        _timeout: int = 120,
+        _env: dict[str, str] | None = None,
+    ) -> m.Infra.Core.CommandOutput:
+        del _cmd, _cwd, _timeout, _env
         i = idx[0]
         idx[0] += 1
-        return results[i] if i < len(results) else results[-1]
+        result = results[i] if i < len(results) else results[-1]
+        return _as_command_output(result)
 
     return _run
 

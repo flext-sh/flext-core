@@ -253,7 +253,7 @@ class FlextInfraUtilitiesToml:
         try:
             path.parent.mkdir(parents=True, exist_ok=True)
             _ = path.write_text(
-                tomlkit.dumps(doc),
+                doc.as_string(),
                 encoding=c.Infra.Encoding.DEFAULT,
             )
         except OSError as exc:

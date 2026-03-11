@@ -164,33 +164,21 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
         model_result = u.load(UserModel, m.ConfigMap(root=user_data))
         if model_result.is_success:
             user = model_result.value
-            status_value = (
-                user.status.value
-                if isinstance(user.status, StatusEnum)
-                else str(user.status)
-            )
+            status_value = user.status.value
             print(f"✅ Model from dict: {user.name} ({status_value})")
         kwargs_result = u.from_kwargs(
             UserModel, name="Bob", status=StatusEnum.PENDING, age=30
         )
         if kwargs_result.is_success:
             user = kwargs_result.value
-            status_value = (
-                user.status.value
-                if isinstance(user.status, StatusEnum)
-                else str(user.status)
-            )
+            status_value = user.status.value
             print(f"✅ Model from kwargs: {user.name} ({status_value})")
         defaults: Mapping[str, t.JsonValue] = {"status": StatusEnum.PENDING, "age": 0}
         overrides: Mapping[str, t.JsonValue] = {"name": "Charlie"}
         merge_result = u.merge_defaults(UserModel, defaults, overrides)
         if merge_result.is_success:
             user = merge_result.value
-            status_value = (
-                user.status.value
-                if isinstance(user.status, StatusEnum)
-                else str(user.status)
-            )
+            status_value = user.status.value
             print(f"✅ Merged defaults: {user.name} ({status_value})")
 
     @staticmethod

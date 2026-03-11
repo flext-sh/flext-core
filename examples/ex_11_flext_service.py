@@ -77,8 +77,6 @@ class _DeclarativeService(s[str]):
     auto_execute: ClassVar[bool] = True
     _execute_count: int = PrivateAttr(default=0)
 
-    _execution_result: r[str] = PrivateAttr()
-
     def __init__(self) -> None:
         super().__init__()
         if self.auto_execute:
@@ -593,11 +591,7 @@ class Ex11FlextService(Examples):
         execute_value = service.execute().unwrap_or(fallback)
         self.check("execute.unwrap", execute_value)
         self.check("execute.unwrap.matches", execute_value == "echo:ok")
-        result_attr = service.result
-        if callable(result_attr):
-            result_value: t.ContainerValue = result_attr()
-        else:
-            result_value = result_attr
+        result_value = str(service.result)
         self.check("result.property", result_value)
         runtime_view = service.runtime
         self.check("runtime.type", type(runtime_view).__name__)
@@ -641,11 +635,7 @@ class Ex11FlextService(Examples):
         declarative = _DeclarativeService()
         self.check("auto_execute.declared", bool(declarative.auto_execute))
         self.check("auto_execute.execute_count_after_init", declarative.execution_count)
-        auto_result_attr = declarative.result
-        if callable(auto_result_attr):
-            auto_result: t.ContainerValue = auto_result_attr()
-        else:
-            auto_result = auto_result_attr
+        auto_result = str(declarative.result)
         self.check("auto_execute.result", auto_result)
         self.check(
             "auto_execute.execute_count_after_result", declarative.execution_count

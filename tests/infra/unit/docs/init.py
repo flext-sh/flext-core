@@ -31,23 +31,23 @@ class TestFlextInfraDocs:
 
     def test_lazy_import_builder(self) -> None:
         """Test lazy import of FlextInfraDocBuilder."""
-        tm.that(FlextInfraDocBuilder is not None, eq=True)
+        tm.that(docs_module.FlextInfraDocBuilder is FlextInfraDocBuilder, eq=True)
 
     def test_lazy_import_fixer(self) -> None:
         """Test lazy import of FlextInfraDocFixer."""
-        tm.that(FlextInfraDocFixer is not None, eq=True)
+        tm.that(docs_module.FlextInfraDocFixer is FlextInfraDocFixer, eq=True)
 
     def test_lazy_import_generator(self) -> None:
         """Test lazy import of FlextInfraDocGenerator."""
-        tm.that(FlextInfraDocGenerator is not None, eq=True)
+        tm.that(docs_module.FlextInfraDocGenerator is FlextInfraDocGenerator, eq=True)
 
     def test_lazy_import_validator(self) -> None:
         """Test lazy import of FlextInfraDocValidator."""
-        tm.that(FlextInfraDocValidator is not None, eq=True)
+        tm.that(docs_module.FlextInfraDocValidator is FlextInfraDocValidator, eq=True)
 
     def test_lazy_import_auditor(self) -> None:
         """Test lazy import of FlextInfraDocAuditor."""
-        tm.that(FlextInfraDocAuditor is not None, eq=True)
+        tm.that(docs_module.FlextInfraDocAuditor is FlextInfraDocAuditor, eq=True)
 
     def test_dir_returns_all_exports(self) -> None:
         """Test dir() returns all exported symbols."""

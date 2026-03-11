@@ -77,6 +77,7 @@ class TestParseViolationValid:
         tm.that(
             isinstance(result, FlextInfraModels.Infra.Codegen.CensusViolation), eq=True
         )
+        assert result is not None
         tm.that(result.rule, eq=expected_rule)
         tm.that(result.module, eq=expected_module)
         tm.that(result.line, eq=expected_line)
@@ -117,6 +118,7 @@ class TestFixabilityClassification:
             "[NS-000-001] src/file.py:1 — Structure violation",
         )
         tm.that(result is not None, eq=True)
+        assert result is not None
         tm.that(result.fixable, eq=False)
 
     def test_ns001_fixable(self) -> None:
@@ -124,6 +126,7 @@ class TestFixabilityClassification:
             "[NS-001-001] src/file.py:1 — Constant violation",
         )
         tm.that(result is not None, eq=True)
+        assert result is not None
         tm.that(result.fixable, eq=True)
 
     def test_ns002_fixable(self) -> None:
@@ -131,6 +134,7 @@ class TestFixabilityClassification:
             "[NS-002-001] src/file.py:1 — TypeVar violation",
         )
         tm.that(result is not None, eq=True)
+        assert result is not None
         tm.that(result.fixable, eq=True)
 
     def test_ns000_multiple_sub_rules_not_fixable(self) -> None:
@@ -139,6 +143,7 @@ class TestFixabilityClassification:
                 f"[NS-000-{sub}] src/x.py:1 — msg"
             )
             tm.that(result is not None, eq=True)
+            assert result is not None
             tm.that(result.fixable, eq=False)
 
 

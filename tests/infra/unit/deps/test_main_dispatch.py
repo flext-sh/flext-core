@@ -7,6 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import sys
+from collections.abc import Callable
 from types import ModuleType, SimpleNamespace
 
 import pytest
@@ -25,8 +26,9 @@ def _fake_module(return_value: t.ContainerValue = 0) -> ModuleType:
     return mod
 
 
-def _stub_import(mod: ModuleType) -> t.ContainerValue:
+def _stub_import(mod: ModuleType) -> Callable[[str], ModuleType]:
     def _import(name: str) -> ModuleType:
+        _ = name
         return mod
 
     return _import

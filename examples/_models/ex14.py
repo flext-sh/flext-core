@@ -17,3 +17,9 @@ class Ex14GetUserQuery(m.Query):
     """Get user query payload."""
 
     user_id: str
+
+
+class Ex14UserDTO(m.Value):
+    id: str
+    name: str
+    email: str

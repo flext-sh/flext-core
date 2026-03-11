@@ -94,12 +94,17 @@ class TestMain:
         (tmp_path / "pyproject.toml").write_text(
             '[project]\nname = "flext-workspace"\n'
         )
+
+        def _discover_fail(
+            _self: object,
+            _root: Path,
+        ) -> r[list[m.Infra.Workspace.ProjectInfo]]:
+            return r[list[m.Infra.Workspace.ProjectInfo]].fail("discovery failed")
+
         monkeypatch.setattr(path_sync_module, "ROOT", tmp_path)
         monkeypatch.setattr(
             "flext_infra.FlextInfraUtilitiesDiscovery.discover_projects",
-            lambda _self, _root: r[list[m.Infra.Workspace.ProjectInfo]].fail(
-                "discovery failed"
-            ),
+            _discover_fail,
         )
         monkeypatch.setattr(sys, "argv", ["prog"])
         tm.that(path_sync_module.main(), eq=1)
@@ -112,11 +117,18 @@ class TestMain:
         (tmp_path / "pyproject.toml").write_text(
             '[project]\nname = "flext-workspace"\n'
         )
+
+        def _rewrite_fail(
+            *_args: t.ContainerValue,
+            **_kwargs: t.ContainerValue,
+        ) -> r[list[str]]:
+            return r[list[str]].fail("rewrite failed")
+
         monkeypatch.setattr(path_sync_module, "ROOT", tmp_path)
         monkeypatch.setattr(
             path_sync_module,
             "rewrite_dep_paths",
-            lambda *args, **kwargs: r[list[str]].fail("rewrite failed"),
+            _rewrite_fail,
         )
         monkeypatch.setattr(sys, "argv", ["prog"])
         tm.that(path_sync_module.main(), eq=1)
@@ -132,12 +144,17 @@ class TestMain:
         project_dir = tmp_path / "flext-core"
         project_dir.mkdir()
         (project_dir / "pyproject.toml").write_text('[project]\nname = "flext-core"\n')
+
+        def _discover_project(
+            _self: object,
+            _root: Path,
+        ) -> r[list[m.Infra.Workspace.ProjectInfo]]:
+            return r[list[m.Infra.Workspace.ProjectInfo]].ok([_project(project_dir)])
+
         monkeypatch.setattr(path_sync_module, "ROOT", tmp_path)
         monkeypatch.setattr(
             "flext_infra.FlextInfraUtilitiesDiscovery.discover_projects",
-            lambda _self, _root: r[list[m.Infra.Workspace.ProjectInfo]].ok([
-                _project(project_dir)
-            ]),
+            _discover_project,
         )
         calls = {"n": 0}
 

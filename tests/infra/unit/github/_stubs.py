@@ -11,10 +11,19 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from pathlib import Path
+from typing import ClassVar
 
 from pydantic import Field
 
 from flext_core import FlextModels, r
+from flext_infra import (
+    FlextInfraUtilitiesIo,
+    FlextInfraUtilitiesReporting,
+    FlextInfraUtilitiesSelection,
+    FlextInfraUtilitiesTemplates,
+    FlextInfraUtilitiesVersioning,
+    m,
+)
 from tests.infra.typings import t
 from tests.infra.unit.github._stubs_extra import (
     StubLinter,
@@ -38,10 +47,10 @@ class StubRunner:
 
     def __init__(
         self,
-        run_returns: Sequence[t.ContainerValue] | None = None,
-        capture_returns: Sequence[t.ContainerValue] | None = None,
-        run_checked_returns: Sequence[t.ContainerValue] | None = None,
-        run_to_file_returns: Sequence[t.ContainerValue] | None = None,
+        run_returns: Sequence[r[m.Infra.Core.CommandOutput]] | None = None,
+        capture_returns: Sequence[r[str]] | None = None,
+        run_checked_returns: Sequence[r[bool]] | None = None,
+        run_to_file_returns: Sequence[r[int]] | None = None,
     ) -> None:
         self._run_returns = list(run_returns or [])
         self._capture_returns = list(capture_returns or [])
@@ -52,9 +61,30 @@ class StubRunner:
         self.run_checked_calls: list[list[str]] = []
         self.run_to_file_calls: list[list[str]] = []
 
-    def _pop(self, returns: list[t.ContainerValue]) -> t.ContainerValue:
+    @staticmethod
+    def _pop_run(
+        returns: list[r[m.Infra.Core.CommandOutput]],
+    ) -> r[m.Infra.Core.CommandOutput]:
+        if not returns:
+            return r[m.Infra.Core.CommandOutput].fail("no return value configured")
+        return returns[0] if len(returns) == 1 else returns.pop(0)
+
+    @staticmethod
+    def _pop_capture(returns: list[r[str]]) -> r[str]:
+        if not returns:
+            return r[str].fail("no return value configured")
+        return returns[0] if len(returns) == 1 else returns.pop(0)
+
+    @staticmethod
+    def _pop_checked(returns: list[r[bool]]) -> r[bool]:
         if not returns:
             return r[bool].fail("no return value configured")
+        return returns[0] if len(returns) == 1 else returns.pop(0)
+
+    @staticmethod
+    def _pop_to_file(returns: list[r[int]]) -> r[int]:
+        if not returns:
+            return r[int].fail("no return value configured")
         return returns[0] if len(returns) == 1 else returns.pop(0)
 
     def run(
@@ -63,9 +93,10 @@ class StubRunner:
         cwd: Path | None = None,
         timeout: int | None = None,
         env: Mapping[str, str] | None = None,
-    ) -> t.ContainerValue:
+    ) -> r[m.Infra.Core.CommandOutput]:
+        _ = cwd, timeout, env
         self.run_calls.append(list(cmd))
-        return self._pop(self._run_returns)
+        return self._pop_run(self._run_returns)
 
     def capture(
         self,
@@ -73,9 +104,10 @@ class StubRunner:
         cwd: Path | None = None,
         timeout: int | None = None,
         env: Mapping[str, str] | None = None,
-    ) -> t.ContainerValue:
+    ) -> r[str]:
+        _ = cwd, timeout, env
         self.capture_calls.append(list(cmd))
-        return self._pop(self._capture_returns)
+        return self._pop_capture(self._capture_returns)
 
     def run_checked(
         self,
@@ -83,9 +115,10 @@ class StubRunner:
         cwd: Path | None = None,
         timeout: int | None = None,
         env: Mapping[str, str] | None = None,
-    ) -> t.ContainerValue:
+    ) -> r[bool]:
+        _ = cwd, timeout, env
         self.run_checked_calls.append(list(cmd))
-        return self._pop(self._run_checked_returns)
+        return self._pop_checked(self._run_checked_returns)
 
     def run_to_file(
         self,
@@ -94,9 +127,10 @@ class StubRunner:
         cwd: Path | None = None,
         timeout: int | None = None,
         env: Mapping[str, str] | None = None,
-    ) -> t.ContainerValue:
+    ) -> r[int]:
+        _ = output_file, cwd, timeout, env
         self.run_to_file_calls.append(list(cmd))
-        return self._pop(self._run_to_file_returns)
+        return self._pop_to_file(self._run_to_file_returns)
 
     def run_raw(
         self,
@@ -104,74 +138,105 @@ class StubRunner:
         cwd: Path | None = None,
         timeout: int | None = None,
         env: Mapping[str, str] | None = None,
-    ) -> t.ContainerValue:
+    ) -> r[m.Infra.Core.CommandOutput]:
         return self.run(cmd, cwd=cwd, timeout=timeout, env=env)
 
 
-class StubJsonIo:
+class StubJsonIo(FlextInfraUtilitiesIo):
     """Stub for FlextInfraUtilitiesIo (json_io dependency)."""
 
+    write_json_returns: ClassVar[r[bool]] = r[bool].ok(True)
+    write_json_calls: ClassVar[list[tuple[Path, t.ContainerValue]]] = []
+
     def __init__(self, write_returns: r[bool] | None = None) -> None:
-        self.write_json_returns = write_returns or r[bool].ok(True)
-        self.write_json_calls: list[tuple[Path, t.ContainerValue]] = []
+        StubJsonIo.write_json_returns = write_returns or r[bool].ok(True)
+        StubJsonIo.write_json_calls = []
 
+    @staticmethod
     def write_json(
-        self, path: Path, data: t.ContainerValue, **kwargs: t.ContainerValue
+        path: Path,
+        payload: t.ContainerValue,
+        *,
+        sort_keys: bool = False,
+        ensure_ascii: bool = False,
+        indent: int = 2,
     ) -> r[bool]:
-        self.write_json_calls.append((path, data))
-        return self.write_json_returns
+        _ = sort_keys, ensure_ascii, indent
+        StubJsonIo.write_json_calls.append((path, payload))
+        return StubJsonIo.write_json_returns
 
 
-class StubVersioning:
+class StubVersioning(FlextInfraUtilitiesVersioning):
     """Stub for FlextInfraUtilitiesVersioning."""
 
+    _release_tag_returns: ClassVar[r[str]] = r[str].fail("no tag")
+
     def __init__(self, release_tag_returns: r[str] | None = None) -> None:
-        self._release_tag_returns = release_tag_returns or r[str].fail("no tag")
-
-    def release_tag_from_branch(self, branch: str) -> r[str]:
-        return self._release_tag_returns
-
-
-class StubSelector:
-    """Stub for FlextInfraUtilitiesSelection."""
-
-    def __init__(self, resolve_returns: object | None = None) -> None:
-        self._resolve_returns = (
-            resolve_returns
-            if resolve_returns is not None
-            else r[list[t.ContainerValue]].ok([])
+        StubVersioning._release_tag_returns = release_tag_returns or r[str].fail(
+            "no tag"
         )
 
+    @staticmethod
+    def release_tag_from_branch(branch: str) -> r[str]:
+        _ = branch
+        return StubVersioning._release_tag_returns
+
+
+class StubSelector(FlextInfraUtilitiesSelection):
+    """Stub for FlextInfraUtilitiesSelection."""
+
+    _resolve_returns: ClassVar[r[list[m.Infra.Workspace.ProjectInfo]]] = r[
+        list[m.Infra.Workspace.ProjectInfo]
+    ].ok([])
+
+    def __init__(
+        self,
+        resolve_returns: r[list[m.Infra.Workspace.ProjectInfo]] | None = None,
+    ) -> None:
+        StubSelector._resolve_returns = (
+            resolve_returns
+            if resolve_returns is not None
+            else r[list[m.Infra.Workspace.ProjectInfo]].ok([])
+        )
+
+    @staticmethod
     def resolve_projects(
-        self, *args: t.ContainerValue, **kwargs: t.ContainerValue
-    ) -> t.ContainerValue:
-        return self._resolve_returns
+        workspace_root: Path,
+        names: list[str],
+    ) -> r[list[m.Infra.Workspace.ProjectInfo]]:
+        _ = workspace_root, names
+        return StubSelector._resolve_returns
 
 
-class StubReporting:
+class StubReporting(FlextInfraUtilitiesReporting):
     """Stub for FlextInfraUtilitiesReporting."""
 
+    _report_dir: ClassVar[Path] = Path("/tmp/reports")
+
     def __init__(self, report_dir: Path | None = None) -> None:
-        self._report_dir = report_dir or Path("/tmp/reports")
+        StubReporting._report_dir = report_dir or Path("/tmp/reports")
 
+    @staticmethod
     def get_report_dir(
-        self, *_args: t.ContainerValue, **_kwargs: t.ContainerValue
+        root: Path | str,
+        scope: str,
+        verb: str,
     ) -> Path:
-        return self._report_dir
+        _ = root, scope, verb
+        return StubReporting._report_dir
 
 
-class StubTemplates:
+class StubTemplates(FlextInfraUtilitiesTemplates):
     """Stub for FlextInfraUtilitiesTemplates."""
 
-    GENERATED_SHELL_HEADER: str = "# GENERATED by {source}\n"
+    GENERATED_SHELL_HEADER: ClassVar[str] = "# GENERATED by {source}\n"
 
 
-class StubProjectInfo:
+class StubProjectInfo(m.Infra.Workspace.ProjectInfo):
     """Stub for p.Infra.ProjectInfo protocol."""
 
-    def __init__(self, name: str = "test-project", path: Path | None = None) -> None:
-        self.name = name
-        self.path = path or Path("/tmp/test-project")
+    name: str = Field(default="test-project", description="Project name")
+    path: Path = Field(default=Path("/tmp/test-project"), description="Project path")
 
 
 __all__ = [

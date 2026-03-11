@@ -42,14 +42,14 @@ class TestAllDirectoriesScanned:
         _create_init_file(tmp_path / "src" / "pkg", _VALID_INIT)
         generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
         result = generator.run(check_only=True)
-        tm.that(isinstance(result, int), eq=True)
+        tm.that(type(result).__name__, eq="int")
         tm.that(result, gte=0)
 
     def test_tests_dir_is_scanned(self, tmp_path: Path) -> None:
         _create_init_file(tmp_path / "tests" / "helpers", _VALID_TESTS_INIT)
         generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
         result = generator.run(check_only=True)
-        tm.that(isinstance(result, int), eq=True)
+        tm.that(type(result).__name__, eq="int")
         tm.that(result, gte=0)
 
     def test_tests_init_files_are_processed(self, tmp_path: Path) -> None:
@@ -108,7 +108,7 @@ class TestExcludedDirectories:
         )
         generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
         result = generator.run(check_only=True)
-        tm.that(isinstance(result, int), eq=True)
+        tm.that(type(result).__name__, eq="int")
         tm.that(result, gte=0)
 
     def test_venv_dir_excluded(self, tmp_path: Path) -> None:
@@ -119,7 +119,7 @@ class TestExcludedDirectories:
         )
         generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
         result = generator.run(check_only=True)
-        tm.that(isinstance(result, int), eq=True)
+        tm.that(type(result).__name__, eq="int")
         tm.that(result, gte=0)
 
 
@@ -141,14 +141,14 @@ class TestEdgeCases:
         (tests_dir / "conftest.py").write_text("# conftest", encoding="utf-8")
         generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
         result = generator.run(check_only=True)
-        tm.that(isinstance(result, int), eq=True)
+        tm.that(type(result).__name__, eq="int")
         tm.that(result, gte=0)
 
     def test_no_tests_dir_at_all(self, tmp_path: Path) -> None:
         _create_init_file(tmp_path / "src" / "pkg", _VALID_INIT)
         generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
         result = generator.run(check_only=True)
-        tm.that(isinstance(result, int), eq=True)
+        tm.that(type(result).__name__, eq="int")
         tm.that(result, gte=0)
 
     def test_execute_method_returns_flext_result(
@@ -159,7 +159,7 @@ class TestEdgeCases:
         generator = FlextInfraCodegenLazyInit(workspace_root=tmp_path)
         result = generator.execute()
         tm.that(result.is_success, eq=True)
-        tm.that(isinstance(result.value, int), eq=True)
+        tm.that(type(result.value).__name__, eq="int")
 
     def test_src_content_consistent_across_runs(
         self,

@@ -18,7 +18,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Sequence
 from typing import override
 
 from flext_core import FlextDispatcher, FlextRegistry, c, h, m, r, s, u
@@ -198,14 +197,8 @@ def main() -> None:
     result = service.execute()
     if result.is_success:
         data = result.value
-        patterns = (
-            data.root.get("patterns_demonstrated")
-            if isinstance(data.root, dict)
-            else None
-        )
-        if isinstance(patterns, Sequence) and (
-            not isinstance(patterns, (str, bytes, bytearray))
-        ):
+        patterns = data.root.get("patterns_demonstrated")
+        if isinstance(patterns, (list, tuple)):
             patterns_list = list(patterns)
             print(f"\n✅ Demonstrated {len(patterns_list)} patterns")
     else:

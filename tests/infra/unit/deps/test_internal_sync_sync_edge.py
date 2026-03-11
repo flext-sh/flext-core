@@ -1,7 +1,9 @@
 from __future__ import annotations
 
-import types
+from collections.abc import Callable
 from pathlib import Path
+
+import pytest
 
 from flext_core import r
 from flext_infra.deps.internal_sync import FlextInfraInternalDependencySyncService
@@ -11,16 +13,25 @@ from tests.infra.typings import t
 
 def _set_toml_stub(
     service: FlextInfraInternalDependencySyncService,
-    values: list[t.ContainerValue],
+    values: list[r[dict[str, t.ContainerValue]]],
 ) -> None:
     state = {"index": 0}
 
-    def _read(_path: Path) -> t.ContainerValue:
+    def _read(_path: Path) -> r[dict[str, t.ContainerValue]]:
         item = values[state["index"]]
         state["index"] += 1
         return item
 
-    service.toml = types.SimpleNamespace(read_plain=_read)
+    class _TomlReaderStub:
+        def __init__(
+            self, fn: Callable[[Path], r[dict[str, t.ContainerValue]]]
+        ) -> None:
+            self._fn = fn
+
+        def read_plain(self, path: Path) -> r[dict[str, t.ContainerValue]]:
+            return self._fn(path)
+
+    service.toml = _TomlReaderStub(_read)
 
 
 class TestSyncMethodEdgeCases:
@@ -55,7 +66,7 @@ class TestSyncMethodEdgeCases:
         tm.fail(service.sync(tmp_path))
 
     def test_sync_with_workspace_mode_and_gitmodules(
-        self, tmp_path: Path, monkeypatch
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         workspace = tmp_path / "workspace"
         workspace.mkdir()
@@ -82,13 +93,24 @@ class TestSyncMethodEdgeCases:
             ],
         )
         monkeypatch.setenv("FLEXT_WORKSPACE_ROOT", str(workspace))
-        monkeypatch.setattr(service, "resolve_ref", lambda _root: "main")
+
+        def _resolve_ref(_root: Path) -> str:
+            return "main"
+
+        def _ensure_checkout(_dep: Path, _url: str, _ref: str) -> r[bool]:
+            return r[bool].ok(True)
+
+        monkeypatch.setattr(service, "resolve_ref", _resolve_ref)
         monkeypatch.setattr(
-            service, "ensure_checkout", lambda _dep, _url, _ref: r[bool].ok(True)
+            service,
+            "ensure_checkout",
+            _ensure_checkout,
         )
         tm.that(service.sync(project).is_success, eq=True)
 
-    def test_sync_with_synthesized_repo_map(self, tmp_path: Path, monkeypatch) -> None:
+    def test_sync_with_synthesized_repo_map(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         (tmp_path / "pyproject.toml").write_text(
             '[tool.poetry.dependencies]\nflext-core = { path = "../flext-core" }\n'
         )
@@ -106,16 +128,28 @@ class TestSyncMethodEdgeCases:
                 })
             ],
         )
+
+        def _infer_owner(_root: Path) -> str:
+            return "flext-sh"
+
+        def _resolve_ref(_root: Path) -> str:
+            return "main"
+
+        def _ensure_checkout(_dep: Path, _url: str, _ref: str) -> r[bool]:
+            return r[bool].ok(True)
+
         monkeypatch.setattr(
-            service, "infer_owner_from_origin", lambda _root: "flext-sh"
+            service,
+            "infer_owner_from_origin",
+            _infer_owner,
         )
-        monkeypatch.setattr(service, "resolve_ref", lambda _root: "main")
-        monkeypatch.setattr(
-            service, "ensure_checkout", lambda _dep, _url, _ref: r[bool].ok(True)
-        )
+        monkeypatch.setattr(service, "resolve_ref", _resolve_ref)
+        monkeypatch.setattr(service, "ensure_checkout", _ensure_checkout)
         tm.that(service.sync(tmp_path).is_success, eq=True)
 
-    def test_sync_missing_repo_mapping(self, tmp_path: Path, monkeypatch) -> None:
+    def test_sync_missing_repo_mapping(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         (tmp_path / "pyproject.toml").write_text(
             '[tool.poetry.dependencies]\nflext-core = { path = "../flext-core" }\n'
         )
@@ -133,10 +167,16 @@ class TestSyncMethodEdgeCases:
                 })
             ],
         )
-        monkeypatch.setattr(service, "infer_owner_from_origin", lambda _root: None)
+
+        def _infer_owner(_root: Path) -> None:
+            return None
+
+        monkeypatch.setattr(service, "infer_owner_from_origin", _infer_owner)
         tm.fail(service.sync(tmp_path))
 
-    def test_sync_symlink_failure(self, tmp_path: Path, monkeypatch) -> None:
+    def test_sync_symlink_failure(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         workspace = tmp_path / "workspace"
         workspace.mkdir()
         (workspace / ".gitmodules").write_text(
@@ -163,7 +203,13 @@ class TestSyncMethodEdgeCases:
             ],
         )
         monkeypatch.setenv("FLEXT_WORKSPACE_ROOT", str(workspace))
+
+        def _ensure_symlink_fail(_dep: Path, _sib: Path) -> r[bool]:
+            return r[bool].fail("symlink failed")
+
         monkeypatch.setattr(
-            service, "ensure_symlink", lambda _dep, _sib: r[bool].fail("symlink failed")
+            service,
+            "ensure_symlink",
+            _ensure_symlink_fail,
         )
         tm.fail(service.sync(project))

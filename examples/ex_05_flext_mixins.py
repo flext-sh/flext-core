@@ -52,7 +52,7 @@ class Ex05FlextMixins(Examples):
     class HandlerBad:
         """Non-handler for negative ``is_handler`` check."""
 
-    class GoodProcessor:
+    class GoodProcessor(m.Value):
         """Processor satisfying ``p.HasModelDump`` + process + validate."""
 
         def process(self) -> bool:
@@ -63,12 +63,13 @@ class Ex05FlextMixins(Examples):
         @override
         def validate(cls, value: t.ContainerValue) -> Ex05FlextMixins.GoodProcessor:
             """Validate for Pydantic compatibility."""
-            return cls.model_validate(value)
+            del value
+            return cls()
 
         def _protocol_name(self) -> str:
             return "HasModelDump"
 
-    class BadProcessor:
+    class BadProcessor(m.Value):
         """Processor missing ``process`` for negative validation."""
 
         def _protocol_name(self) -> str:

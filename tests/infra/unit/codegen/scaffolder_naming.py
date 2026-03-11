@@ -53,7 +53,7 @@ class TestGeneratedFilesAreValidPython:
         for mod in _SRC_MODULE_FILES:
             source = (pkg / mod).read_text(encoding="utf-8")
             tree = ast.parse(source)
-            tm.that(isinstance(tree, ast.Module), eq=True)
+            tm.that(type(tree).__name__, eq="Module")
 
     def test_generated_tests_modules_parse_successfully(
         self,
@@ -67,7 +67,7 @@ class TestGeneratedFilesAreValidPython:
         for mod in _SRC_MODULE_FILES:
             source = (tests_dir / mod).read_text(encoding="utf-8")
             tree = ast.parse(source)
-            tm.that(isinstance(tree, ast.Module), eq=True)
+            tm.that(type(tree).__name__, eq="Module")
 
 
 class TestGeneratedClassNamingConvention:

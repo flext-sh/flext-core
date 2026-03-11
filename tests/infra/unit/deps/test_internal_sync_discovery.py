@@ -25,18 +25,18 @@ class _TomlReaderStub:
 
 def _set_toml_stub(
     service: FlextInfraInternalDependencySyncService,
-    value: t.ContainerValue,
+    value: r[dict[str, t.ContainerValue]],
 ) -> None:
     service.toml = _TomlReaderStub(fn=lambda _path: value)
 
 
 def _set_toml_sequence(
     service: FlextInfraInternalDependencySyncService,
-    values: list[t.ContainerValue],
+    values: list[r[dict[str, t.ContainerValue]]],
 ) -> None:
     state = {"index": 0}
 
-    def _next(_path: Path) -> t.ContainerValue:
+    def _next(_path: Path) -> r[dict[str, t.ContainerValue]]:
         item = values[state["index"]]
         state["index"] += 1
         return item

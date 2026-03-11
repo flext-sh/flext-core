@@ -22,5 +22,4 @@ class TestFlextInfraDeps:
     def test_dir_returns_all_exports(self) -> None:
         """Test dir() returns all exported symbols."""
         exports = dir(deps_mod)
-        tm.that(isinstance(exports, list), eq=True)
         tm.that(len(exports) > 0, eq=True)

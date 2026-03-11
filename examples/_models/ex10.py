@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
-from flext_core import m
+from pydantic import ConfigDict
+
+from flext_core import m, r, t
 
 
 class Ex10Message(m.Command):
@@ -39,3 +41,48 @@ class Ex10ProcessorBad(m.Value):
     def process(self) -> str:
         """Process successfully despite bad protocol metadata."""
         return "ok"
+
+
+class Ex10ContextPayload(m.Value):
+    handler_name: str
+    handler_mode: str
+
+
+class Ex10ProtocolHandler(m.Value):
+    model_config = ConfigDict(frozen=False)
+
+    def handle(self, message: t.ContainerValue) -> r[t.ContainerValue]:
+        return r[t.ContainerValue].ok(message)
+
+    def check_data(self, data: t.ContainerValue) -> r[bool]:
+        return r[bool].ok(data is not None)
+
+
+class Ex10ServiceStub(m.Value):
+    model_config = ConfigDict(frozen=False)
+
+    @property
+    def is_valid(self) -> bool:
+        return True
+
+    def execute(self) -> r[t.ContainerValue]:
+        return r[t.ContainerValue].ok(m.ConfigMap(root={"ok": True}))
+
+    def get_service_info(self) -> m.ConfigMap:
+        return m.ConfigMap(root={"service": "stub"})
+
+    def validate_business_rules(self) -> r[bool]:
+        return r[bool].ok(True)
+
+
+class Ex10CommandBusStub(m.Value):
+    model_config = ConfigDict(frozen=False)
+
+    def dispatch(self, message: t.ContainerValue) -> r[t.ContainerValue]:
+        return r[t.ContainerValue].ok(message)
+
+    def publish(self, event: t.ContainerValue) -> None:
+        del event
+
+    def register_handler(self, _handler: t.ContainerValue) -> r[bool]:
+        return r[bool].ok(True)

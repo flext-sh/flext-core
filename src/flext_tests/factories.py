@@ -52,7 +52,8 @@ def _to_guard_input(value: t.Tests.ContainerValue) -> t.ContainerValue:
         try:
             sequence_values = _TEST_CONTAINER_LIST_ADAPTER.validate_python(value)
         except ValidationError:
-            return []
+            empty_sequence: list[t.Tests.ContainerValue] = []
+            return empty_sequence
         return [_to_guard_input(_to_payload_value(item)) for item in sequence_values]
     return str(value)
 
@@ -327,7 +328,10 @@ class FlextTestsFactories(s[t.Tests.ContainerValue]):
                 validate_data["call_kwargs"] = validate_data.pop("kwargs")
             params = m.Tests.Factory.GenericFactoryParams.model_validate(validate_data)
         except (TypeError, ValueError, AttributeError) as exc:
-            return r[T].fail(f"Invalid parameters: {exc}")
+            invalid_params_result: r[T] | r[builtins.list[T]] = r[
+                builtins.list[T]
+            ].fail(f"Invalid parameters: {exc}")
+            return invalid_params_result
         args = params.args or ()
         kwargs_dict = params.call_kwargs or {}
 
@@ -362,7 +366,10 @@ class FlextTestsFactories(s[t.Tests.ContainerValue]):
             return instance
         except (TypeError, ValueError, AttributeError) as e:
             if params.as_result:
-                return r[T].fail(f"Failed to create instance: {e}")
+                create_failed_result: r[T] | r[builtins.list[T]] = r[
+                    builtins.list[T]
+                ].fail(f"Failed to create instance: {e}")
+                return create_failed_result
             raise
 
     @classmethod
@@ -691,11 +698,17 @@ class FlextTestsFactories(s[t.Tests.ContainerValue]):
                     if params.validate_fn and (
                         not params.validate_fn(new_instance_base)
                     ):
-                        return r[list[BaseModel]].fail(c.Tests.Factory.ERROR_VALIDATION)
+                        transformed_invalid_result: (
+                            r[BaseModel] | r[list[BaseModel]]
+                        ) = r[BaseModel].fail(c.Tests.Factory.ERROR_VALIDATION)
+                        return transformed_invalid_result
                     instances.append(new_instance_base)
                 else:
                     if params.validate_fn and (not params.validate_fn(new_instance)):
-                        return r[list[BaseModel]].fail(c.Tests.Factory.ERROR_VALIDATION)
+                        instance_invalid_result: r[BaseModel] | r[list[BaseModel]] = r[
+                            BaseModel
+                        ].fail(c.Tests.Factory.ERROR_VALIDATION)
+                        return instance_invalid_result
                     instances.append(new_instance)
             if params.as_dict:
                 result_dict: MutableMapping[str, BaseModel] = {}

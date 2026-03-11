@@ -15,7 +15,7 @@ class TestPathDepPathsPep621:
 
     def test_pep621_no_project(self) -> None:
         doc = tomlkit.document()
-        doc["other"] = {}
+        doc["other"] = tomlkit.table()
         tm.that(path_dep_paths_pep621(doc), eq=[])
 
     def test_pep621_no_dependencies(self) -> None:
@@ -68,12 +68,14 @@ class TestPathDepPathsPoetry:
 
     def test_poetry_no_tool(self) -> None:
         doc = tomlkit.document()
-        doc["project"] = {}
+        doc["project"] = tomlkit.table()
         tm.that(path_dep_paths_poetry(doc), eq=[])
 
     def test_poetry_no_poetry_section(self) -> None:
         doc = tomlkit.document()
-        doc["tool"] = {"other": {}}
+        tool = tomlkit.table()
+        tool["other"] = tomlkit.table()
+        doc["tool"] = tool
         tm.that(path_dep_paths_poetry(doc), eq=[])
 
     def test_poetry_no_dependencies(self) -> None:

@@ -18,6 +18,7 @@ from flext_core import r
 from flext_infra.release import orchestrator as _orch_mod
 from flext_infra.release.orchestrator import FlextInfraReleaseOrchestrator
 from flext_tests import tm
+from tests.infra.typings import t
 from tests.infra.unit.release._stubs import FakeSelection, FakeUtilsNamespace
 
 if TYPE_CHECKING:
@@ -67,10 +68,17 @@ class TestCreateBranches:
         fake_sel = FakeSelection()
         mock_project = SimpleNamespace(name="proj1", path=workspace_root / "proj1")
         fake_sel._resolve_result = r[list[SimpleNamespace]].ok([mock_project])
+
+        def _selection_factory(
+            *a: t.ContainerValue, **kw: t.ContainerValue
+        ) -> FakeSelection:
+            del a, kw
+            return fake_sel
+
         monkeypatch.setattr(
             _orch_mod,
             "FlextInfraUtilitiesSelection",
-            lambda *a, **kw: fake_sel,
+            _selection_factory,
         )
         orchestrator = FlextInfraReleaseOrchestrator()
         tm.fail(orchestrator._create_branches(workspace_root, "1.0.0", ["proj1"]))
