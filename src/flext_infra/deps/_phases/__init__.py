@@ -22,6 +22,8 @@ if TYPE_CHECKING:
     from flext_infra.deps._phases.ensure_pytest import EnsurePytestConfigPhase
     from flext_infra.deps._phases.ensure_ruff import EnsureRuffConfigPhase
     from flext_infra.deps._phases.inject_comments import InjectCommentsPhase
+    from flext_infra.deps._phases.ensure_coverage import EnsureCoverageConfigPhase
+    from flext_infra.deps._phases.ensure_extra_paths import EnsureExtraPathsPhase
 
 # Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
@@ -65,10 +67,20 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "flext_infra.deps._phases.inject_comments",
         "InjectCommentsPhase",
     ),
+    "EnsureCoverageConfigPhase": (
+        "flext_infra.deps._phases.ensure_coverage",
+        "EnsureCoverageConfigPhase",
+    ),
+    "EnsureExtraPathsPhase": (
+        "flext_infra.deps._phases.ensure_extra_paths",
+        "EnsureExtraPathsPhase",
+    ),
 }
 
 __all__ = [
     "ConsolidateGroupsPhase",
+    "EnsureCoverageConfigPhase",
+    "EnsureExtraPathsPhase",
     "EnsureFormattingToolingPhase",
     "EnsureMypyConfigPhase",
     "EnsureNamespaceToolingPhase",
