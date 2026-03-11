@@ -24,9 +24,6 @@ from flext_infra.deps.detection import FlextInfraDependencyDetectionService
 class _WorkspaceReportProtocol(Protocol):
     """Protocol for workspace dependency report model contract."""
 
-    pip_check: object | None
-    dependency_limits: object | None
-
     def model_dump(self) -> dict[str, t.ContainerValue]: ...
 
 
@@ -82,12 +79,7 @@ def run_detector(
     do_typings = bool(args.typings) or apply_typings
     limits_path = Path(args.limits) if args.limits else limits_default
     projects_report: dict[str, dict[str, t.ContainerValue]] = {}
-    report_model = workspace_report_factory(
-        workspace=str(root),
-        projects=projects_report,
-        pip_check=None,
-        dependency_limits=None,
-    )
+    dependency_limits_model: object | None = None
     if do_typings:
         limits_data = detector.deps.load_dependency_limits(limits_path)
         if limits_data:
@@ -98,7 +90,7 @@ def run_detector(
                 and python_cfg.get(c.Infra.Toml.VERSION) is not None
                 else None
             )
-            report_model.dependency_limits = dependency_limits_factory(
+            dependency_limits_model = dependency_limits_factory(
                 python_version=python_version,
                 limits_path=str(limits_path),
             )
@@ -163,6 +155,7 @@ def run_detector(
                                 package=package,
                             )
     pip_ok = True
+    pip_check_model: object | None = None
     if not args.no_pip_check:
         if not args.quiet:
             detector.log.info("deps_pip_check_running")
@@ -171,7 +164,13 @@ def run_detector(
             return r[int].fail(pip_result.error or "pip check failed")
         pip_lines, pip_exit = pip_result.value
         pip_ok = pip_exit == 0
-        report_model.pip_check = pip_check_factory(ok=pip_ok, lines=pip_lines)
+        pip_check_model = pip_check_factory(ok=pip_ok, lines=pip_lines)
+    report_model = workspace_report_factory(
+        workspace=str(root),
+        projects=projects_report,
+        pip_check=pip_check_model,
+        dependency_limits=dependency_limits_model,
+    )
     report_payload = report_model.model_dump()
     if args.json_stdout:
         return r[int].ok(0)
