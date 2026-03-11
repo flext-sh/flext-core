@@ -1477,7 +1477,7 @@ class FlextExceptions:
             for exc_type, count in cls._exception_counts.items()
         ]
         exception_counts_str = ";".join(exception_counts_list)
-        exception_counts_dict = {}
+        exception_counts_dict: dict[str, int] = {}
         for exc_type, count in cls._exception_counts.items():
             exc_name = (
                 exc_type.__qualname__
