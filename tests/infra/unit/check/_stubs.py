@@ -38,9 +38,7 @@ class Spy:
         self._return_value = return_value
         self._side_effect = list(side_effect) if side_effect else None
 
-    def __call__(
-        self, *args: t.ContainerValue, **kwargs: t.ContainerValue
-    ) -> t.ContainerValue:
+    def __call__(self, *args: object, **kwargs: object) -> object:
         self.called = True
         self.call_count += 1
         self.call_args = (args, kwargs)

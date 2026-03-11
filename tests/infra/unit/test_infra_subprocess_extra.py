@@ -12,7 +12,6 @@ import pytest
 
 from flext_infra import FlextInfraUtilitiesSubprocess, m
 from flext_tests import tm
-from tests.infra.typings import t
 
 
 class TestFlextInfraCommandRunnerExtra:
@@ -92,8 +91,8 @@ class TestFlextInfraCommandRunnerExtra:
         output_file = tmp_path / "output.txt"
 
         def mock_run(
-            *args: t.ContainerValue, **kwargs: t.ContainerValue
-        ) -> t.ContainerValue:
+            *args: object, **kwargs: object
+        ) -> object:
             msg = "Invalid argument"
             raise ValueError(msg)
 

@@ -431,11 +431,11 @@ class FlextUtilitiesReliability:
                 str.upper,
                 lambda s: s.replace(" ", "_"),
             )
-            # → r.ok("HELLO_WORLD")
+            # → r[str].ok("HELLO_WORLD")
 
         """
         if not operations:
-            return r.ok(value)
+            return r[t.ContainerValue].ok(value)
         current: t.ContainerValue = value
         for i, op in enumerate(operations):
             try:
@@ -461,7 +461,7 @@ class FlextUtilitiesReliability:
             ) as e:
                 if on_error == "stop":
                     return r[t.ContainerValue].fail(f"Pipeline step {i} failed: {e}")
-        return r.ok(current)
+        return r[t.ContainerValue].ok(current)
 
     @staticmethod
     def retry[TResult](

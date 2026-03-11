@@ -226,7 +226,7 @@ class TestFlextUtilitiesArgs:
 
             @u.Args.validated_with_result
             def process(status: TestFlextUtilitiesArgs.StatusEnum) -> r[str]:
-                return r.ok(status.value)
+                return r[str].ok(status.value)
 
             return cast(
                 "Callable[[TestFlextUtilitiesArgs.StatusEnum], r[str]]",

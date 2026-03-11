@@ -7,7 +7,6 @@ type-system-architecture.md rules with real functionality testing.
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Any
 
 import pytest
 
@@ -123,7 +122,7 @@ class TestAutomatedFlextDispatcher:
             result,
             "FlextDispatcher resource test",
         )
-        instance_obj: Any = instance
+        instance_obj: object = instance
         if hasattr(instance_obj, "cleanup"):
             cleanup_result = getattr(instance_obj, "cleanup")()
             if cleanup_result:

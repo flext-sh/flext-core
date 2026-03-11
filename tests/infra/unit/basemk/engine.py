@@ -141,7 +141,7 @@ def test_basemk_engine_render_all_handles_template_error(
     """Test engine.render_all() handles TemplateError gracefully."""
 
     def mock_get_template(
-        *args: t.ContainerValue, **kwargs: t.ContainerValue
+        *args: object, **kwargs: object
     ) -> t.ContainerValue:
         msg = "Template not found"
         raise TemplateError(msg)

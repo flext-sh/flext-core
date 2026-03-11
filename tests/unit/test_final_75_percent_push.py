@@ -297,7 +297,7 @@ class TestCoveragePush75Percent:
         """Test result repr."""
         result = r[int].ok(42)
         repr_str = repr(result)
-        assert "r.ok" in repr_str
+        assert "r[T].ok" in repr_str
 
     def test_result_filter(self) -> None:
         """Test filter method."""

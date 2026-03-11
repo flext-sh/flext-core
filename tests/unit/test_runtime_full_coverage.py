@@ -893,8 +893,8 @@ def test_runtime_result_remaining_paths() -> None:
     assert chain_failure.is_failure
     assert success | 0 == 3
     assert bool(success) is True
-    assert repr(success).startswith("r.ok(")
-    assert repr(failure).startswith("r.fail(")
+    assert repr(success).startswith("r[T].ok(")
+    assert repr(failure).startswith("r[T].fail(")
     with success as entered:
         assert entered is success
 

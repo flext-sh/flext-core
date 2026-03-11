@@ -97,9 +97,9 @@ def test_create_from_callable_and_repr() -> None:
     _ = u.Tests.Result.assert_failure(error_result)
     assert "test error" in (error_result.error or "")
     success_result = r[int].create_from_callable(lambda: 7)
-    assert repr(success_result) == "r.ok(7)"
+    assert repr(success_result) == "r[T].ok(7)"
     failure_repr: r[int] = r[int].fail("oops")
-    assert repr(failure_repr) == "r.fail('oops')"
+    assert repr(failure_repr) == "r[T].fail('oops')"
 
 
 def test_to_io_result_failure_path() -> None:

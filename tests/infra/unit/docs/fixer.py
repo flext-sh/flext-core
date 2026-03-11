@@ -143,7 +143,7 @@ class TestFixerCore:
         """Test fix returns failure when scope building fails."""
 
         def mock_build_scopes(
-            *args: t.ContainerValue, **kwargs: t.ContainerValue
+            *args: object, **kwargs: object
         ) -> r[list[t.ContainerValue]]:
             return r[list[t.ContainerValue]].fail("Scope error")
 

@@ -326,7 +326,7 @@ def test_scoped_config_context_branches(monkeypatch: pytest.MonkeyPatch) -> None
     )
     c._config = FlextSettings(app_name="base")
     c._context = FlextContext()
-    captured: dict[str, Any] = {}
+    captured: dict[str, object] = {}
 
     def _fake_create_scoped_instance(**kwargs: object) -> FlextContainer:
         captured.update(kwargs)
@@ -339,8 +339,8 @@ def test_scoped_config_context_branches(monkeypatch: pytest.MonkeyPatch) -> None
     _ = c.scoped(subproject="sub")
     assert isinstance(captured["config"], FlextSettings)
     _ = c.scoped(
-        config=cast("Any", _FalseConfig()),
-        context=cast("Any", _ContextNoClone()),
+        config=cast("object", _FalseConfig()),
+        context=cast("object", _ContextNoClone()),
     )
     assert isinstance(captured["context"], FlextContext)
 
@@ -549,7 +549,7 @@ def test_additional_register_factory_and_unregister_paths() -> None:
     )
     c.register("fac-ok", lambda: 1, kind="factory")
     c.register("fac-ok", lambda: 2, kind="factory")
-    c.register("fac-bad", cast("Any", 123), kind="factory")
+    c.register("fac-bad", cast("object", 123), kind="factory")
     assert FlextContainer._narrow_factory_result("x") == "x"
     _ = c.register("svc-remove", "v")
     _ = c.register("res-remove", lambda: "r", kind="resource")

@@ -14,7 +14,6 @@ import pytest
 from _pytest.monkeypatch import MonkeyPatch
 
 from flext_core import r
-from flext_infra import t
 from flext_infra.basemk.__main__ import _build_config, main
 from flext_infra.basemk.generator import FlextInfraBaseMkGenerator
 from flext_tests import tm
@@ -138,7 +137,7 @@ def test_basemk_main_with_generation_failure(
 ) -> None:
     """Test main() handles generation failure."""
 
-    def mock_generate(*args: t.ContainerValue, **kwargs: t.ContainerValue) -> r[str]:
+    def mock_generate(*args: object, **kwargs: object) -> r[str]:
         return r[str].fail("Generation failed")
 
     monkeypatch.setattr(FlextInfraBaseMkGenerator, "generate", mock_generate)
@@ -161,7 +160,7 @@ def test_basemk_main_with_write_failure(
     """Test main() handles write failure gracefully."""
     output_file = tmp_path / "base.mk"
 
-    def mock_write(*args: t.ContainerValue, **kwargs: t.ContainerValue) -> r[bool]:
+    def mock_write(*args: object, **kwargs: object) -> r[bool]:
         return r[bool].fail("Write failed")
 
     monkeypatch.setattr(FlextInfraBaseMkGenerator, "write", mock_write)

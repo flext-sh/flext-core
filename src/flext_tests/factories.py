@@ -361,7 +361,7 @@ class FlextTestsFactories(s[t.Tests.ContainerValue]):
         try:
             instance = _create_instance()
             if params.as_result:
-                result_instance: r[T] = r.ok(instance)
+                result_instance: r[T] = r[T].ok(instance)
                 return result_instance
             return instance
         except (TypeError, ValueError, AttributeError) as e:
@@ -741,7 +741,7 @@ class FlextTestsFactories(s[t.Tests.ContainerValue]):
                 return mapped_result_dict
             typed_instances: list[BaseModel] = list(instances)
             if params.as_result:
-                result: r[list[BaseModel]] = r.ok(typed_instances)
+                result: r[list[BaseModel]] = r[list[BaseModel]].ok(typed_instances)
                 return result
             return typed_instances
         typed_instance = instance

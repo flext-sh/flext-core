@@ -39,13 +39,13 @@ class TestResultBasics:
         """Test __repr__ format."""
         result = r[int].ok(42)
         repr_str = repr(result)
-        assert "r.ok" in repr_str
+        assert "r[T].ok" in repr_str
 
     def test_result_repr_failure(self) -> None:
         """Test __repr__ on failure."""
         result: r[int] = r[int].fail("error")
         repr_str = repr(result)
-        assert "error" in repr_str.lower() or "r.fail" in repr_str
+        assert "error" in repr_str.lower() or "r[T].fail" in repr_str
 
     def test_result_value_property(self) -> None:
         """Test .value property."""

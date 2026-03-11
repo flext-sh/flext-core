@@ -546,12 +546,12 @@ class TestrCoverage:
     def test_repr_success(self) -> None:
         """Test __repr__ for success."""
         result = r[str].ok("test")
-        assert repr(result) == "r.ok('test')"
+        assert repr(result) == "r[T].ok('test')"
 
     def test_repr_failure(self) -> None:
         """Test __repr__ for failure."""
         result: r[str] = r[str].fail("error")
-        assert repr(result) == "r.fail('error')"
+        assert repr(result) == "r[T].fail('error')"
 
     def test_error_codes_metadata(self) -> None:
         """Test error code and error data metadata."""

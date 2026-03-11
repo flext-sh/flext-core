@@ -603,14 +603,14 @@ class Testr:
         """Test __repr__ for success result."""
         result = r[str].ok("test")
         repr_str = repr(result)
-        assert "r.ok" in repr_str
+        assert "r[T].ok" in repr_str
         assert "test" in repr_str
 
     def test_repr_failure(self) -> None:
         """Test __repr__ for failure result."""
         result: r[str] = cast("r[str]", r.fail("error"))
         repr_str = repr(result)
-        assert "r.fail" in repr_str
+        assert "r[T].fail" in repr_str
         assert "error" in repr_str
 
     def test_value_property_failure(self) -> None:

@@ -32,7 +32,7 @@ class GetUserService(s[m.Tests.User]):
     @override
     def execute(self) -> r[m.Tests.User]:
         """Get user by ID."""
-        return r.ok(
+        return r[m.Tests.User].ok(
             m.Tests.User(
                 user_id=self.user_id,
                 name=f"{c.Services.DEFAULT_USER_NAME_PREFIX}{self.user_id}",

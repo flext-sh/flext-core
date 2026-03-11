@@ -24,15 +24,15 @@ if TYPE_CHECKING:
 _CLS = FlextInfraReleaseOrchestrator
 
 
-def _noop_branches(*args: t.ContainerValue, **kwargs: t.ContainerValue) -> r[bool]:
+def _noop_branches(*args: object, **kwargs: object) -> r[bool]:
     return r[bool].ok(True)
 
 
-def _noop_dispatch(*args: t.ContainerValue, **kwargs: t.ContainerValue) -> r[bool]:
+def _noop_dispatch(*args: object, **kwargs: object) -> r[bool]:
     return r[bool].ok(True)
 
 
-def _noop_bump(*args: t.ContainerValue, **kwargs: t.ContainerValue) -> r[bool]:
+def _noop_bump(*args: object, **kwargs: object) -> r[bool]:
     return r[bool].ok(True)
 
 

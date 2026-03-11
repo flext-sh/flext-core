@@ -31,7 +31,7 @@ class TestAuditorScopeFailure:
         auditor = FlextInfraDocAuditor()
 
         def mock_build_scopes(
-            *args: t.ContainerValue, **kwargs: t.ContainerValue
+            *args: object, **kwargs: object
         ) -> r[list[t.ContainerValue]]:
             return r[list[t.ContainerValue]].fail("scope build error")
 
@@ -51,7 +51,7 @@ class TestAuditorMainCli:
         """Test main() CLI entry point with audit failure."""
 
         def mock_audit(
-            *args: t.ContainerValue, **kwargs: t.ContainerValue
+            *args: object, **kwargs: object
         ) -> r[list[m.Infra.Docs.DocsPhaseReport]]:
             return r[list[m.Infra.Docs.DocsPhaseReport]].fail("audit error")
 
@@ -76,7 +76,7 @@ class TestAuditorMainCli:
         )
 
         def mock_audit(
-            *args: t.ContainerValue, **kwargs: t.ContainerValue
+            *args: object, **kwargs: object
         ) -> r[list[m.Infra.Docs.DocsPhaseReport]]:
             return r[list[m.Infra.Docs.DocsPhaseReport]].ok([failed_report])
 
@@ -101,7 +101,7 @@ class TestAuditorMainCli:
         )
 
         def mock_audit(
-            *args: t.ContainerValue, **kwargs: t.ContainerValue
+            *args: object, **kwargs: object
         ) -> r[list[m.Infra.Docs.DocsPhaseReport]]:
             return r[list[m.Infra.Docs.DocsPhaseReport]].ok([passed_report])
 
@@ -126,7 +126,7 @@ class TestAuditorMainCli:
         )
 
         def mock_audit(
-            *args: t.ContainerValue, **kwargs: t.ContainerValue
+            *args: object, **kwargs: object
         ) -> r[list[m.Infra.Docs.DocsPhaseReport]]:
             return r[list[m.Infra.Docs.DocsPhaseReport]].ok([passed_report])
 
@@ -167,7 +167,7 @@ class TestAuditorMainCli:
         )
 
         def mock_audit(
-            *args: t.ContainerValue, **kwargs: t.ContainerValue
+            *args: object, **kwargs: object
         ) -> r[list[m.Infra.Docs.DocsPhaseReport]]:
             return r[list[m.Infra.Docs.DocsPhaseReport]].ok([passed_report])
 
