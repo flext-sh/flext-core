@@ -13,22 +13,22 @@ from tests.infra.typings import t
 
 def _set_toml_stub(
     service: FlextInfraInternalDependencySyncService,
-    values: list[r[dict[str, t.ContainerValue]]],
+    values: list[r[dict[str, t.Infra.TomlValue]]],
 ) -> None:
     state = {"index": 0}
 
-    def _read(_path: Path) -> r[dict[str, t.ContainerValue]]:
+    def _read(_path: Path) -> r[dict[str, t.Infra.TomlValue]]:
         item = values[state["index"]]
         state["index"] += 1
         return item
 
     class _TomlReaderStub:
         def __init__(
-            self, fn: Callable[[Path], r[dict[str, t.ContainerValue]]]
+            self, fn: Callable[[Path], r[dict[str, t.Infra.TomlValue]]]
         ) -> None:
             self._fn = fn
 
-        def read_plain(self, path: Path) -> r[dict[str, t.ContainerValue]]:
+        def read_plain(self, path: Path) -> r[dict[str, t.Infra.TomlValue]]:
             return self._fn(path)
 
     service.toml = _TomlReaderStub(_read)
@@ -45,7 +45,7 @@ class TestSyncMethodEdgeCases:
         _set_toml_stub(
             service,
             [
-                r[dict[str, t.ContainerValue]].ok({
+                r[t.Infra.TomlConfig].ok({
                     "tool": {
                         "poetry": {
                             "dependencies": {"flext-core": {"path": "../flext-core"}}
@@ -53,7 +53,7 @@ class TestSyncMethodEdgeCases:
                     },
                     "project": {},
                 }),
-                r[dict[str, t.ContainerValue]].ok({
+                r[t.Infra.TomlConfig].ok({
                     "tool": {
                         "poetry": {
                             "dependencies": {"flext-core": {"path": "../flext-core"}}
@@ -82,7 +82,7 @@ class TestSyncMethodEdgeCases:
         _set_toml_stub(
             service,
             [
-                r[dict[str, t.ContainerValue]].ok({
+                r[t.Infra.TomlConfig].ok({
                     "tool": {
                         "poetry": {
                             "dependencies": {"flext-core": {"path": "../flext-core"}}
@@ -118,7 +118,7 @@ class TestSyncMethodEdgeCases:
         _set_toml_stub(
             service,
             [
-                r[dict[str, t.ContainerValue]].ok({
+                r[t.Infra.TomlConfig].ok({
                     "tool": {
                         "poetry": {
                             "dependencies": {"flext-core": {"path": "../flext-core"}}
@@ -157,7 +157,7 @@ class TestSyncMethodEdgeCases:
         _set_toml_stub(
             service,
             [
-                r[dict[str, t.ContainerValue]].ok({
+                r[t.Infra.TomlConfig].ok({
                     "tool": {
                         "poetry": {
                             "dependencies": {"flext-core": {"path": "../flext-core"}}
@@ -192,7 +192,7 @@ class TestSyncMethodEdgeCases:
         _set_toml_stub(
             service,
             [
-                r[dict[str, t.ContainerValue]].ok({
+                r[t.Infra.TomlConfig].ok({
                     "tool": {
                         "poetry": {
                             "dependencies": {"flext-core": {"path": "../flext-core"}}

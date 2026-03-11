@@ -20,7 +20,7 @@ from tests.infra.typings import t
 _NO_STRUCTLOG = SimpleNamespace(ensure_structlog_configured=lambda: None)
 
 
-def _fake_module(return_value: t.ContainerValue = 0) -> ModuleType:
+def _fake_module(return_value: t.Infra.TomlValue = 0) -> ModuleType:
     mod = ModuleType("fake_subcommand")
     setattr(mod, "main", lambda: return_value)
     return mod
@@ -35,7 +35,7 @@ def _stub_import(mod: ModuleType) -> Callable[[str], ModuleType]:
 
 
 def _patch_dispatch(
-    mp: pytest.MonkeyPatch, argv: list[str], ret: t.ContainerValue = 0
+    mp: pytest.MonkeyPatch, argv: list[str], ret: t.Infra.TomlValue = 0
 ) -> None:
     mp.setattr(sys, "argv", argv)
     mp.setattr(main_mod, "FlextRuntime", _NO_STRUCTLOG)

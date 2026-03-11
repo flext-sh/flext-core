@@ -12,11 +12,11 @@ from tests.infra.typings import t
 
 
 class _StubToml:
-    def __init__(self, values: list[r[dict[str, t.ContainerValue]]]) -> None:
+    def __init__(self, values: list[r[dict[str, t.Infra.TomlValue]]]) -> None:
         self._values = values
         self._idx = 0
 
-    def read_plain(self, path: Path) -> r[dict[str, t.ContainerValue]]:
+    def read_plain(self, path: Path) -> r[dict[str, t.Infra.TomlValue]]:
         _ = path
         value = self._values[self._idx]
         if self._idx < len(self._values) - 1:
@@ -30,7 +30,7 @@ class _StubRunner:
         self.last_kwargs: dict[str, str | int | Path | dict[str, str]] = {}
 
     def run_raw(
-        self, *args: t.ContainerValue, **kwargs: str | int | Path | dict[str, str]
+        self, *args: t.Infra.TomlValue, **kwargs: str | int | Path | dict[str, str]
     ) -> r[m.Infra.Core.CommandOutput]:
         _ = args
         self.last_kwargs = kwargs
@@ -43,7 +43,7 @@ class TestLoadDependencyLimits:
         monkeypatch.setattr(
             service,
             "toml",
-            _StubToml([r[dict[str, t.ContainerValue]].ok({"key": "value", "num": 42})]),
+            _StubToml([r[t.Infra.TomlConfig].ok({"key": "value", "num": 42})]),
         )
         result = service.load_dependency_limits(Path("/fake/limits.toml"))
         tm.that(result["key"], eq="value")
@@ -54,7 +54,7 @@ class TestLoadDependencyLimits:
         monkeypatch.setattr(
             service,
             "toml",
-            _StubToml([r[dict[str, t.ContainerValue]].fail("not found")]),
+            _StubToml([r[t.Infra.TomlConfig].fail("not found")]),
         )
         tm.that(service.load_dependency_limits(Path("/fake/limits.toml")), eq={})
 
@@ -66,7 +66,7 @@ class TestLoadDependencyLimits:
             service,
             "toml",
             _StubToml([
-                r[dict[str, t.ContainerValue]].ok({"good": "val", "bad": ["x"]})
+                r[t.Infra.TomlConfig].ok({"good": "val", "bad": ["x"]})
             ]),
         )
         result = service.load_dependency_limits(Path("/fake/limits.toml"))
@@ -78,7 +78,7 @@ class TestLoadDependencyLimits:
         monkeypatch.setattr(
             service,
             "toml",
-            _StubToml([r[dict[str, t.ContainerValue]].ok({"key": None})]),
+            _StubToml([r[t.Infra.TomlConfig].ok({"key": None})]),
         )
         result = service.load_dependency_limits(Path("/fake/limits.toml"))
         tm.that("key" in result, eq=True)

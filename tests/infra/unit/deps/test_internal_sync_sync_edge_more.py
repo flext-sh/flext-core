@@ -14,11 +14,11 @@ from tests.infra.typings import t
 class _TomlStub:
     """Typed stub implementing TomlReader protocol for testing."""
 
-    def __init__(self, values: list[r[dict[str, t.ContainerValue]]]) -> None:
+    def __init__(self, values: list[r[dict[str, t.Infra.TomlValue]]]) -> None:
         self._values = values
         self._index = 0
 
-    def read_plain(self, path: Path) -> r[dict[str, t.ContainerValue]]:
+    def read_plain(self, path: Path) -> r[dict[str, t.Infra.TomlValue]]:
         """Return next pre-configured result."""
         _ = path
         item = self._values[self._index]
@@ -28,7 +28,7 @@ class _TomlStub:
 
 def _set_toml_stub(
     service: FlextInfraInternalDependencySyncService,
-    values: list[r[dict[str, t.ContainerValue]]],
+    values: list[r[dict[str, t.Infra.TomlValue]]],
 ) -> None:
     service.toml = _TomlStub(values)
 
@@ -47,7 +47,7 @@ class TestSyncMethodEdgeCasesMore:
         _set_toml_stub(
             service,
             [
-                r[dict[str, t.ContainerValue]].ok({
+                r[t.Infra.TomlConfig].ok({
                     "tool": {
                         "poetry": {
                             "dependencies": {"flext-core": {"path": "../flext-core"}}
@@ -55,7 +55,7 @@ class TestSyncMethodEdgeCasesMore:
                     },
                     "project": {},
                 }),
-                r[dict[str, t.ContainerValue]].ok({
+                r[t.Infra.TomlConfig].ok({
                     "repo": {
                         "flext-core": {
                             "ssh_url": "git@github.com:flext-sh/flext-core.git",
@@ -81,7 +81,7 @@ class TestSyncMethodEdgeCasesMore:
         service = FlextInfraInternalDependencySyncService()
         _set_toml_stub(
             service,
-            [r[dict[str, t.ContainerValue]].ok({"project": {"name": "test"}})],
+            [r[t.Infra.TomlConfig].ok({"project": {"name": "test"}})],
         )
         tm.ok(service.sync(tmp_path), eq=0)
         tm.that(hasattr(h, "assert_ok"), eq=True)

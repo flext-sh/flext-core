@@ -39,12 +39,12 @@ class FlextInfraDependencyDetectionService:
     @staticmethod
     def to_infra_value(
         value: t.Infra.TomlValue | t.Infra.InfraValue,
-    ) -> t.Infra.InfraValue | None:
+    ) -> t.Infra.TomlValue | None:
         """Convert container value to namespaced infra value."""
         if value is None or isinstance(value, (str, int, float, bool)):
             return value
         if isinstance(value, list):
-            converted: list[t.Infra.InfraValue] = []
+            converted: list[t.Infra.TomlValue] = []
             for item in value:
                 converted_item = FlextInfraDependencyDetectionService.to_infra_value(
                     item
@@ -54,7 +54,7 @@ class FlextInfraDependencyDetectionService:
                 converted.append(converted_item)
             return converted
         if isinstance(value, Mapping):
-            converted_map: MutableMapping[str, t.Infra.InfraValue] = {}
+            converted_map: dict[str, t.Infra.TomlValue] = {}
             for key, item in value.items():
                 converted_item = FlextInfraDependencyDetectionService.to_infra_value(
                     item
@@ -85,6 +85,18 @@ class FlextInfraDependencyDetectionService:
             elif code == "DEP004":
                 groups.dep004.append(item)
         return groups
+
+    @staticmethod
+    def to_toml_config(
+        payload: Mapping[str, t.Infra.TomlValue | t.Infra.InfraValue],
+    ) -> t.Infra.TomlConfig:
+        normalized: t.Infra.TomlConfig = {}
+        for key, value in payload.items():
+            converted = FlextInfraDependencyDetectionService.to_infra_value(value)
+            if converted is None and value is not None:
+                continue
+            normalized[str(key)] = converted
+        return normalized
 
     def build_project_report(
         self,
@@ -159,7 +171,7 @@ class FlextInfraDependencyDetectionService:
         read_result = self.toml.read_plain(pyproject)
         if read_result.is_failure:
             return []
-        data: t.Infra.TomlConfig = read_result.value
+        data = self.to_toml_config(read_result.value)
         if not data:
             return []
         names: set[str] = set()
@@ -257,7 +269,7 @@ class FlextInfraDependencyDetectionService:
         if result.is_failure:
             return {}
         limits: MutableMapping[str, t.Infra.TomlValue] = {}
-        toml_data: t.Infra.TomlConfig = result.value
+        toml_data = self.to_toml_config(result.value)
         for key, value in toml_data.items():
             converted = FlextInfraDependencyDetectionService.to_infra_value(value)
             if (converted is not None or value is None) and not isinstance(
@@ -326,14 +338,13 @@ class FlextInfraDependencyDetectionService:
         if out_file.exists():
             raw = out_file.read_text(encoding=c.Infra.Encoding.DEFAULT)
             loaded_result = u.Infra.parse(raw) if raw.strip() else None
-            loaded_payload: t.Infra.TomlValue = (
-                loaded_result.value
-                if loaded_result is not None and loaded_result.is_success
-                else []
-            )
-            if isinstance(loaded_payload, list):
+            if (
+                loaded_result is not None
+                and loaded_result.is_success
+                and isinstance(loaded_result.value, list)
+            ):
                 normalized_issues: list[t.Infra.IssueMap] = []
-                for item in loaded_payload:
+                for item in loaded_result.value:
                     if not isinstance(item, dict):
                         continue
                     converted_issue: dict[str, t.Infra.TomlValue] = {}

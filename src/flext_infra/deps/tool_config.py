@@ -25,12 +25,12 @@ def _load_tool_config_cached() -> r[ToolConfigDocument]:
                 encoding=c.Infra.Encoding.DEFAULT,
             )
         )
-        parsed_raw: t.Infra.InfraValue | None = safe_load(raw_text)
+        parsed_raw: t.Infra.TomlValue | None = safe_load(raw_text)
         if not isinstance(parsed_raw, Mapping):
             return r[ToolConfigDocument].fail(
                 "tool_config.yml must contain a top-level mapping",
             )
-        payload: Mapping[str, t.Infra.InfraValue] = dict(parsed_raw.items())
+        payload: t.Infra.TomlConfig = dict(parsed_raw.items())
         validated = ToolConfigDocument.model_validate(payload)
         return r[ToolConfigDocument].ok(validated)
     except (FileNotFoundError, OSError, YAMLError, ValidationError, TypeError) as exc:

@@ -15,22 +15,22 @@ from tests.infra.typings import t
 
 def _set_toml_stub(
     service: FlextInfraInternalDependencySyncService,
-    values: list[r[dict[str, t.ContainerValue]]],
+    values: list[r[dict[str, t.Infra.TomlValue]]],
 ) -> None:
     state = {"index": 0}
 
-    def _read(_path: Path) -> r[dict[str, t.ContainerValue]]:
+    def _read(_path: Path) -> r[dict[str, t.Infra.TomlValue]]:
         item = values[state["index"]]
         state["index"] += 1
         return item
 
     class _TomlReaderStub:
         def __init__(
-            self, fn: Callable[[Path], r[dict[str, t.ContainerValue]]]
+            self, fn: Callable[[Path], r[dict[str, t.Infra.TomlValue]]]
         ) -> None:
             self._fn = fn
 
-        def read_plain(self, path: Path) -> r[dict[str, t.ContainerValue]]:
+        def read_plain(self, path: Path) -> r[dict[str, t.Infra.TomlValue]]:
             return self._fn(path)
 
     service.toml = _TomlReaderStub(_read)
@@ -40,14 +40,14 @@ class TestSync:
     def test_sync_no_deps(self, tmp_path: Path) -> None:
         service = FlextInfraInternalDependencySyncService()
         _set_toml_stub(
-            service, [r[dict[str, t.ContainerValue]].ok({"tool": {}, "project": {}})]
+            service, [r[t.Infra.TomlConfig].ok({"tool": {}, "project": {}})]
         )
         (tmp_path / "pyproject.toml").write_text("")
         tm.ok(service.sync(tmp_path), eq=0)
 
     def test_sync_collect_failure(self, tmp_path: Path) -> None:
         service = FlextInfraInternalDependencySyncService()
-        _set_toml_stub(service, [r[dict[str, t.ContainerValue]].fail("read error")])
+        _set_toml_stub(service, [r[t.Infra.TomlConfig].fail("read error")])
         (tmp_path / "pyproject.toml").write_text("")
         tm.fail(service.sync(tmp_path))
 
@@ -67,7 +67,7 @@ class TestSync:
         _set_toml_stub(
             service,
             [
-                r[dict[str, t.ContainerValue]].ok({
+                r[t.Infra.TomlConfig].ok({
                     "tool": {
                         "poetry": {
                             "dependencies": {
@@ -104,7 +104,7 @@ class TestSync:
         _set_toml_stub(
             service,
             [
-                r[dict[str, t.ContainerValue]].ok({
+                r[t.Infra.TomlConfig].ok({
                     "tool": {
                         "poetry": {
                             "dependencies": {
@@ -114,7 +114,7 @@ class TestSync:
                     },
                     "project": {},
                 }),
-                r[dict[str, t.ContainerValue]].ok({"repo": {}}),
+                r[t.Infra.TomlConfig].ok({"repo": {}}),
             ],
         )
         monkeypatch.setenv("FLEXT_STANDALONE", "")

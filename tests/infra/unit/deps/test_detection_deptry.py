@@ -13,7 +13,7 @@ from tests.infra.typings import t
 
 class _FakeResult:
     def __init__(
-        self, success: bool, value: t.ContainerValue = None, error: str | None = None
+        self, success: bool, value: t.Infra.TomlValue = None, error: str | None = None
     ) -> None:
         self.is_success = success
         self.is_failure = not success
@@ -26,7 +26,7 @@ class _StubRunner:
         self._result = result
 
     def run_raw(
-        self, *args: t.ContainerValue, **kwargs: t.ContainerValue
+        self, *args: t.Infra.TomlValue, **kwargs: t.Infra.TomlValue
     ) -> _FakeResult:
         _ = args
         _ = kwargs

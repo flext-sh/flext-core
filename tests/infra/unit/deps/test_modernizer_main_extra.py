@@ -13,9 +13,9 @@ from flext_infra.deps.modernizer import FlextInfraPyprojectModernizer
 from flext_tests import t, tm
 
 
-def _modernizer_args(**overrides: t.ContainerValue | None) -> argparse.Namespace:
+def _modernizer_args(**overrides: t.Infra.TomlValue | None) -> argparse.Namespace:
     """Create standard modernizer args namespace with defaults."""
-    defaults: dict[str, t.ContainerValue | None] = {
+    defaults: dict[str, t.Infra.TomlValue | None] = {
         "project": None,
         "dry_run": True,
         "verbose": False,

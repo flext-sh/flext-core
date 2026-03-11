@@ -24,7 +24,7 @@ from tests.infra.typings import t
 _NO_STRUCTLOG = SimpleNamespace(ensure_structlog_configured=lambda: None)
 
 
-def _fake_module(return_value: t.ContainerValue = 0) -> ModuleType:
+def _fake_module(return_value: t.Infra.TomlValue = 0) -> ModuleType:
     """Create a real ModuleType with a main() returning *return_value*."""
     mod = ModuleType("fake_subcommand")
     setattr(mod, "main", lambda: return_value)
@@ -40,7 +40,7 @@ def _stub_import(mod: ModuleType) -> Callable[[str], ModuleType]:
 
 
 def _patch_dispatch(
-    mp: pytest.MonkeyPatch, argv: list[str], ret: t.ContainerValue = 0
+    mp: pytest.MonkeyPatch, argv: list[str], ret: t.Infra.TomlValue = 0
 ) -> None:
     """Patch sys.argv, FlextRuntime, and importlib for dispatch tests."""
     mp.setattr(sys, "argv", argv)
@@ -125,7 +125,7 @@ class TestMainReturnValues:
     def test_return_value_normalization(
         self,
         monkeypatch: pytest.MonkeyPatch,
-        return_val: t.ContainerValue,
+        return_val: t.Infra.TomlValue,
         expected: int,
     ) -> None:
         """Test main normalizes subcommand return values."""

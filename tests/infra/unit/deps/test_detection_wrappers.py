@@ -19,7 +19,7 @@ from tests.infra.typings import t
 
 class _StubService:
     def __init__(self) -> None:
-        self.called: dict[str, tuple[t.ContainerValue, ...]] = {}
+        self.called: dict[str, tuple[t.Infra.TomlValue, ...]] = {}
 
     def discover_project_paths(
         self, workspace_root: Path, projects_filter: list[str] | None = None

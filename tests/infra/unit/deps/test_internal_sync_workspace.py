@@ -111,8 +111,8 @@ class TestIsWorkspaceMode:
         monkeypatch.setenv("FLEXT_WORKSPACE_ROOT", "")
 
         def _git_run(
-            *_args: t.ContainerValue,
-            **_kwargs: t.ContainerValue,
+            *_args: t.Infra.TomlValue,
+            **_kwargs: t.Infra.TomlValue,
         ) -> r[str]:
             return r[str].ok(str(tmp_path))
 
@@ -133,8 +133,8 @@ class TestIsWorkspaceMode:
         monkeypatch.setenv("FLEXT_WORKSPACE_ROOT", "")
 
         def _git_run(
-            *_args: t.ContainerValue,
-            **_kwargs: t.ContainerValue,
+            *_args: t.Infra.TomlValue,
+            **_kwargs: t.Infra.TomlValue,
         ) -> r[str]:
             return r[str].ok("")
 
@@ -154,8 +154,8 @@ class TestIsWorkspaceMode:
         monkeypatch.setenv("FLEXT_WORKSPACE_ROOT", "")
 
         def _git_run(
-            *_args: t.ContainerValue,
-            **_kwargs: t.ContainerValue,
+            *_args: t.Infra.TomlValue,
+            **_kwargs: t.Infra.TomlValue,
         ) -> r[str]:
             return r[str].ok("")
 
