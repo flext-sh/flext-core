@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import fnmatch
-import sys
 from collections.abc import Callable, Mapping
 from pathlib import Path
 
@@ -82,10 +81,10 @@ class FlextInfraRefactorEngine:
         return FlextInfraRefactorCliSupport.write_impact_map(results, output_path)
 
     @classmethod
-    def main(cls) -> None:
-        """Run the refactor CLI entrypoint and exit with status code."""
+    def main(cls) -> int:
+        """Run the refactor CLI entrypoint and return the status code."""
         runner: Callable[[type], int] = FlextInfraRefactorCliSupport.run_cli
-        sys.exit(runner(cls))
+        return runner(cls)
 
     def collect_workspace_files(
         self,
