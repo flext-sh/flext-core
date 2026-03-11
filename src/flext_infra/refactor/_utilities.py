@@ -20,10 +20,10 @@ from pathlib import Path
 import libcst as cst
 from pydantic import BaseModel, TypeAdapter, ValidationError
 
-import flext_infra
 from flext_core import r
-from flext_infra import c, m, t, u
+from flext_infra import c, m, t
 from flext_infra._utilities.io import FlextInfraUtilitiesIo
+from flext_infra._utilities.parsing import FlextInfraUtilitiesParsing
 from flext_infra._utilities.subprocess import FlextInfraUtilitiesSubprocess
 from flext_infra._utilities.yaml import FlextInfraUtilitiesYaml
 
@@ -420,7 +420,7 @@ class FlextInfraUtilitiesRefactor:
         normalized_import = import_stmt.strip()
         if not normalized_import:
             return source
-        module = u.Infra.parse_cst_from_source(source)
+        module = FlextInfraUtilitiesParsing.parse_cst_from_source(source)
         if module is None:
             return source
         try:
@@ -487,7 +487,7 @@ class FlextInfraUtilitiesRefactor:
         py_file: Path,
     ) -> dict[str, list[tuple[str, str, str]]]:
         """Internal: extract all public methods from classes using stdlib ast."""
-        tree = flext_infra.u.Infra.parse_module_ast(py_file)
+        tree = FlextInfraUtilitiesParsing.parse_module_ast(py_file)
         if tree is None:
             return {}
         result: dict[str, list[tuple[str, str, str]]] = {}
@@ -538,7 +538,7 @@ class FlextInfraUtilitiesRefactor:
 
         Inspects ``staticmethod(...)`` assignments in the facade class.
         """
-        tree = flext_infra.u.Infra.parse_module_ast(facade_path)
+        tree = FlextInfraUtilitiesParsing.parse_module_ast(facade_path)
         if tree is None:
             return {}
 
@@ -583,7 +583,7 @@ class FlextInfraUtilitiesRefactor:
 
         E.g. ``{"Conversion": "FlextUtilitiesConversion", ...}``.
         """
-        tree = flext_infra.u.Infra.parse_module_ast(facade_path)
+        tree = FlextInfraUtilitiesParsing.parse_module_ast(facade_path)
         if tree is None:
             return {}
 
@@ -724,7 +724,7 @@ class FlextInfraUtilitiesRefactor:
         *visitors: cst.CSTVisitor,
     ) -> cst.Module | None:
         """Parse CST and sequentially apply an arbitrary number of visitors."""
-        tree = flext_infra.u.Infra.parse_module_cst(file_path)
+        tree = FlextInfraUtilitiesParsing.parse_module_cst(file_path)
         if not tree:
             return None
         for visitor in visitors:

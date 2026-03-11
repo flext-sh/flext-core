@@ -1177,7 +1177,7 @@ class FlextTestsBuilders:
             return [
                 {
                     "success": res.is_success,
-                    "value": res.value_or(None),
+                    "value": res.value if res.is_success else None,
                 }
                 for res in results
             ]

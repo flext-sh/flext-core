@@ -405,7 +405,7 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
         if workspace_root is not None:
             return workspace_root.resolve()
         result = self._path_resolver.workspace_root()
-         return result.value_or(Path.cwd().resolve())
+        return result.value if result.is_success else Path.cwd().resolve()
 
     @staticmethod
     def _to_mapping(value: t.ContainerValue) -> dict[str, t.ContainerValue]:
@@ -884,9 +884,9 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
         )
         issues: list[m.Infra.Check.Issue] = []
         pyright_parse_result = self._json.parse(result.stdout or "{}")
-         pyright_data: dict[str, t.ContainerValue] = self._to_mapping(
-             pyright_parse_result.value_or({}),
-         )
+        pyright_data: dict[str, t.ContainerValue] = self._to_mapping(
+            pyright_parse_result.value if pyright_parse_result.is_success else {},
+        )
         try:
             raw_diagnostics: list[dict[str, t.ContainerValue]] = self._to_mapping_list(
                 pyright_data.get("generalDiagnostics", []),
@@ -994,7 +994,9 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
         )
         issues: list[m.Infra.Check.Issue] = []
         ruff_parse_result = self._json.parse(result.stdout or "[]")
-         ruff_data: t.ContainerValue = ruff_parse_result.value_or([])
+        ruff_data: t.ContainerValue = (
+            ruff_parse_result.value if ruff_parse_result.is_success else []
+        )
         try:
             if isinstance(ruff_data, list):
                 issues.extend(

@@ -1442,7 +1442,11 @@ class FlextUtilitiesMapper:
                 extracted_result = FlextUtilitiesMapper.extract(
                     source, source_field, default=field_default, required=False
                 )
-                extracted_raw = extracted_result.value_or(field_default)
+                extracted_raw = (
+                    extracted_result.value
+                    if extracted_result.is_success
+                    else field_default
+                )
                 if field_ops is not None and extracted_raw is not None:
                     if isinstance(field_ops, dict):
                         field_ops_dict: Mapping[str, t.ContainerValue] = (

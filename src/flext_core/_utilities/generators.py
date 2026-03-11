@@ -364,7 +364,9 @@ class FlextUtilitiesGenerators:
 
         """
         actual_prefix_result = FlextUtilitiesGenerators._determine_prefix(kind, prefix)
-        actual_prefix = actual_prefix_result.value_or(None)
+        actual_prefix = (
+            actual_prefix_result.value if actual_prefix_result.is_success else None
+        )
         if FlextUtilitiesGenerators._should_generate_uuid(kind, actual_prefix):
             return FlextUtilitiesGenerators._generate_id()
         if kind == "ulid":

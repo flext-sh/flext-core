@@ -380,12 +380,14 @@ class FlextInfraReleaseOrchestrator(s[bool]):
     ) -> r[bool]:
         """Generate release notes from Git history."""
         previous_result = self._previous_tag(root, tag)
-         previous = previous_result.value_or("")
-         changes_result = self._collect_changes(root, previous, tag)
-         changes = changes_result.value_or("")
-         selector = FlextInfraUtilitiesSelection()
-         projects_result = selector.resolve_projects(root, project_names)
-         project_list: list[m.Infra.Workspace.ProjectInfo] = projects_result.value_or([])
+        previous = previous_result.value if previous_result.is_success else ""
+        changes_result = self._collect_changes(root, previous, tag)
+        changes = changes_result.value if changes_result.is_success else ""
+        selector = FlextInfraUtilitiesSelection()
+        projects_result = selector.resolve_projects(root, project_names)
+        project_list: list[m.Infra.Workspace.ProjectInfo] = (
+            projects_result.value if projects_result.is_success else []
+        )
         return FlextInfraReleaseReporting.generate_notes(
             version,
             tag,

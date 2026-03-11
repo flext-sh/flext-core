@@ -56,7 +56,9 @@ class FlextInfraRefactorLooseClassScanner:
             return out
         discovered_files: list[Path] = files_result.value
         grep_result = self._scan_with_ast_grep(project_root)
-         grep_index: dict[Path, dict[str, int]] = grep_result.value_or({})
+        grep_index: dict[Path, dict[str, int]] = (
+            grep_result.value if grep_result.is_success else {}
+        )
         violations: list[m.Infra.Refactor.LooseClassViolation] = []
         targets_found = dict.fromkeys(c.Infra.Refactor.REQUIRED_CLASS_TARGETS, False)
         classes_scanned = 0
