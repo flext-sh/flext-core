@@ -425,7 +425,7 @@ def test_mixins_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> None:
             captured["value"] = value
             return self
 
-    def _container_getter(_self: object) -> _RegContainer:
+    def _container_getter(_self: _ModelService) -> _RegContainer:
         return _RegContainer()
 
     monkeypatch.setattr(

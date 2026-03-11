@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 
 from flext_infra import c, u
+from flext_infra._utilities.formatting import FlextInfraUtilitiesSubprocess
 
 
 class TestFormattingRunRuffFix:
@@ -17,7 +18,9 @@ class TestFormattingRunRuffFix:
         target.write_text("x=1\n", encoding="utf-8")
         calls: list[list[str]] = []
 
-        def _fake_run_checked(_self: object, cmd: list[str]) -> object:
+        def _fake_run_checked(
+            _self: FlextInfraUtilitiesSubprocess, cmd: list[str]
+        ) -> object:
             calls.append(cmd)
             return object()
 
@@ -49,7 +52,9 @@ class TestFormattingRunRuffFix:
         target.write_text("x=1\n", encoding="utf-8")
         calls: list[list[str]] = []
 
-        def _raise_missing(_self: object, cmd: list[str]) -> object:
+        def _raise_missing(
+            _self: FlextInfraUtilitiesSubprocess, cmd: list[str]
+        ) -> object:
             calls.append(cmd)
             msg = "ruff not found"
             raise FileNotFoundError(msg)
