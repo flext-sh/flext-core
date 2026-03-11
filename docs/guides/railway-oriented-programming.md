@@ -80,7 +80,7 @@ from flext_core import r
 result: r[str] = r[str].ok("Hello, World!")
 
 # Generic type inference
-result = r.ok("data")
+result = r[str].ok("data")
 
 # None is valid success (for void operations)
 result = r[bool].ok(True)  # Represents successful completion
@@ -140,7 +140,7 @@ if result.failed:
 if result.is_failure:
     message = result.error  # str
     code = result.error_code  # str | None
-    data = result.error_data  # dict[str, object]
+    data = result.error_data  # t.JsonDict
 ```
 
 ### Accessing Success Values
@@ -371,12 +371,12 @@ def parse_json_unsafe(text: str) -> dict:
 
 
 # Safe wrapper
-result = r.safe_call(parse_json_unsafe, '{"valid": "json"}')
+result = r[dict].safe_call(parse_json_unsafe, '{"valid": "json"}')
 assert result.is_success
 assert result.value["valid"] == "json"
 
 # With invalid input
-result = r.safe_call(parse_json_unsafe, "invalid json")
+result = r[dict].safe_call(parse_json_unsafe, "invalid json")
 assert result.is_failure
 assert "Expecting" in result.error  # JSONDecodeError message
 
@@ -386,10 +386,10 @@ def divide(a: int, b: int) -> float:
     return a / b
 
 
-result = r.safe_call(divide, 10, 0)
+result = r[float].safe_call(divide, 10, 0)
 assert result.is_failure  # Catches ZeroDivisionError
 
-result = r.safe_call(divide, 10, 2)
+result = r[float].safe_call(divide, 10, 2)
 assert result.is_success
 assert result.value == 5.0
 ```
@@ -424,7 +424,7 @@ assert result.error_code == "PARSE_ERROR"
 try:
     data = json.loads("{invalid json}")
 except json.JSONDecodeError as e:
-    result = r.from_exception(e, error_code="JSON_ERROR")
+    result = r[dict].from_exception(e, error_code="JSON_ERROR")
     assert result.is_failure
 ```
 
@@ -521,7 +521,7 @@ def create_user(user: UserRegistration) -> r[dict]:
 
 # Use the railway
 result = (
-    r
+    r[dict]
     .ok({"email": "user@example.com", "password": "secure123", "username": "john"})
     .flat_map(validate_registration)
     .flat_map(check_username_available)
@@ -539,8 +539,7 @@ else:
 ### Pattern 2: API Call with Fallbacks
 
 ```python
-from flext_core import r
-from typing import Any
+from flext_core import r, t
 
 
 def fetch_primary_data(key: str) -> r[dict]:
@@ -628,7 +627,7 @@ def execute_transaction(tx_data: dict) -> r[dict]:
 
 # Railway pattern ensures validation before execution
 result = (
-    r
+    r[dict]
     .ok({"amount": Decimal("500"), "account_id": "acc_001"})
     .flat_map(validate_transaction)
     .flat_map(check_balance)
@@ -706,7 +705,7 @@ def apply_defaults(config: dict) -> r[dict]:
 
 # Load and validate configuration
 result = (
-    r
+    r[str]
     .ok("config.json")
     .flat_map(load_config_file)
     .flat_map(validate_config_schema)
@@ -766,7 +765,7 @@ def parse_int(value: str) -> r[int]:
 
 # Recover from error with alternative
 result = (
-    r
+    r[str]
     .ok("not-a-number")
     .flat_map(parse_int)
     .lash(lambda error: r[int].ok(0))  # Use 0 as default

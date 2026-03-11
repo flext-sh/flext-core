@@ -160,15 +160,15 @@ class TestCoveragePush75Percent:
 
     def test_result_basic_ok(self) -> None:
         """Test basic r ok."""
-        r = r[int].ok(42)
-        assert r.is_success
-        assert r.value == 42
+        result = r[int].ok(42)
+        assert result.is_success
+        assert result.value == 42
 
     def test_result_basic_fail(self) -> None:
         """Test basic r fail."""
-        r: r[int] = r[int].fail("error")
-        assert r.is_failure
-        assert r.error == "error"
+        result: r[int] = r[int].fail("error")
+        assert result.is_failure
+        assert result.error == "error"
 
     @pytest.mark.parametrize(
         "scenario",
@@ -179,13 +179,13 @@ class TestCoveragePush75Percent:
         """Test r operations with various scenarios."""
         if scenario.initial_value is not None:
             initial_result = r[int].ok(scenario.initial_value)
-            r: r[object] = r[object](initial_result._result)
+            result: r[object] = r[object](initial_result._result)
         else:
             initial_result = r[int].fail("error")
-            r = r[object](initial_result._result)
+            result = r[object](initial_result._result)
         for op in scenario.operations:
             if op == "map":
-                r = r.map(lambda x: x * 2 if isinstance(x, int) else x)
+                result = result.map(lambda x: x * 2 if isinstance(x, int) else x)
             elif op == "flat_map":
 
                 def flat_map_func(x: object) -> r[object]:
@@ -193,23 +193,23 @@ class TestCoveragePush75Percent:
                         return r[object].ok(x * 2)
                     return r[object].ok(x)
 
-                r = r.flat_map(flat_map_func)
+                result = result.flat_map(flat_map_func)
             elif op == "flat_map_fail":
-                r = r.flat_map(lambda _: r[object].fail("error"))
+                result = result.flat_map(lambda _: r[object].fail("error"))
             elif op == "lash":
-                r = r.lash(lambda _: r[object].ok(99))
+                result = result.lash(lambda _: r[object].ok(99))
         if scenario.expected_success:
-            assert r.is_success
+            assert result.is_success
             if scenario.expected_value is not None:
-                assert r.value == scenario.expected_value
+                assert result.value == scenario.expected_value
         else:
-            assert r.is_failure
+            assert result.is_failure
 
     def test_container_basic(self) -> None:
         """Test basic container operations."""
         c = FlextContainer()
-        r = c.register("test", "value")
-        assert r is c
+        result = c.register("test", "value")
+        assert result is c
         r2 = c.get("test")
         assert r2.is_success
         assert r2.value == "value"
@@ -217,24 +217,24 @@ class TestCoveragePush75Percent:
     def test_container_not_found(self) -> None:
         """Test container get not found."""
         c = FlextContainer()
-        r = c.get("nonexistent")
-        assert r.is_failure
+        result = c.get("nonexistent")
+        assert result.is_failure
 
     def test_container_clear_all(self) -> None:
         """Test container clear_all."""
         c = FlextContainer()
         c.register("test", "value")
         c.clear_all()
-        r = c.get("test")
-        assert r.is_failure
+        result = c.get("test")
+        assert result.is_failure
 
     def test_container_unregister(self) -> None:
         """Test container unregister."""
         c = FlextContainer()
         c.register("test", "value")
         c.unregister("test")
-        r = c.get("test")
-        assert r.is_failure
+        result = c.get("test")
+        assert result.is_failure
 
     def test_container_register_multiple(self) -> None:
         """Test registering multiple services."""
@@ -270,13 +270,13 @@ class TestCoveragePush75Percent:
 
     def test_result_value_property(self) -> None:
         """Test result .value property."""
-        r = r[str].ok("value")
-        assert r.value == "value"
+        result = r[str].ok("value")
+        assert result.value == "value"
 
     def test_result_unwrap_or(self) -> None:
         """Test unwrap_or with default."""
-        r: r[int] = r[int].fail("error")
-        assert r.unwrap_or(42) == 42
+        result: r[int] = r[int].fail("error")
+        assert result.unwrap_or(42) == 42
         r2 = r[int].ok(10)
         assert r2.unwrap_or(42) == 10
 
@@ -289,9 +289,9 @@ class TestCoveragePush75Percent:
 
     def test_result_or_operator(self) -> None:
         """Test | operator for default."""
-        r: r[int] = r[int].fail("error")
-        result = r | 42
-        assert result == 42
+        result: r[int] = r[int].fail("error")
+        defaulted = result | 42
+        assert defaulted == 42
 
     def test_result_repr(self) -> None:
         """Test result repr."""
@@ -301,11 +301,11 @@ class TestCoveragePush75Percent:
 
     def test_result_filter(self) -> None:
         """Test filter method."""
-        r = r[int].ok(42)
-        r2 = r.filter(lambda x: x > 0)
+        result = r[int].ok(42)
+        r2 = result.filter(lambda x: x > 0)
         assert r2.is_success
         assert r2.value == 42
-        r3 = r.filter(lambda x: x > 100)
+        r3 = result.filter(lambda x: x > 100)
         assert r3.is_failure
 
     def test_result_safe_factory(self) -> None:
@@ -318,9 +318,9 @@ class TestCoveragePush75Percent:
         divide_wrapped: p.VariadicCallable[r[int]] = r.safe(
             divide_func,
         )
-        r: r[int] = divide_wrapped(10, 2)
-        assert r.is_success
-        assert r.value == 5
+        result: r[int] = divide_wrapped(10, 2)
+        assert result.is_success
+        assert result.value == 5
         r2: r[int] = divide_wrapped(10, 0)
         assert r2.is_failure
 

@@ -36,7 +36,9 @@ def _run_detect(args: argparse.Namespace) -> int:
 def _run_sync(args: argparse.Namespace) -> int:
     """Execute base.mk sync."""
     service = FlextInfraSyncService(canonical_root=args.canonical_root)
-    result = service.sync(project_root=args.project_root)
+    result = service.sync(
+        project_root=args.project_root, canonical_root=args.canonical_root
+    )
     if result.is_success:
         return 0
     u.Infra.error(result.error or "sync failed")

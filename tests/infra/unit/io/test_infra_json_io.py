@@ -38,7 +38,7 @@ class TestFlextInfraJsonService:
     ) -> None:
         json_file = tmp_path / name
         if content is not None:
-            _ = tf.create_in(content, name, tmp_path)
+            json_file.write_text(content, encoding="utf-8")
         service = FlextInfraUtilitiesIo()
         result = service.read_json(json_file)
         if should_succeed:
@@ -60,7 +60,7 @@ class TestFlextInfraJsonService:
             ),
             (("nested", "deep", "file.json"), {"key": "value"}, False, False, '"key"'),
             (("sorted.json",), {"z": 1, "a": 2, "m": 3}, True, False, '"a"'),
-            (("ascii.json",), {"text": "café"}, False, True, "\\\\u"),
+            (("ascii.json",), {"text": "café"}, False, True, "\\u"),
         ],
         ids=[
             "write-dict",

@@ -122,7 +122,7 @@ class FlextResult[T_co = t.ContainerValue](FlextRuntime.RuntimeResult[T_co]):
         cls, data: object, model: type[UModel], *, failure_prefix: str
     ) -> FlextResult[UModel]:
         try:
-            return cls.ok(model.model_validate(data))
+            return FlextResult[UModel].ok(model.model_validate(data))
         except (
             ValidationError,
             ValueError,
@@ -237,7 +237,7 @@ class FlextResult[T_co = t.ContainerValue](FlextRuntime.RuntimeResult[T_co]):
         """Build result from Maybe by mapping Nothing to failure."""
         if maybe is Nothing:
             return FlextResult[U].fail(error_message)
-        return cls.ok(maybe.unwrap())
+        return FlextResult[U].ok(maybe.unwrap())
 
     @classmethod
     def from_validation(

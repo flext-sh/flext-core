@@ -179,13 +179,13 @@ class OutputBackend:
             iterable = item.items() if isinstance(item, Mapping) else item
             for key, value in iterable:
                 if isinstance(value, str | int | float | bool | Path) or value is None:
-                    self.stream.write(f"{key}={value}\n")
+                    sys.stdout.write(f"{key}={value}\n")
 
         for key, value in kwargs.items():
             if isinstance(value, str | int | float | bool | Path) or value is None:
-                self.stream.write(f"{key}={value}\n")
+                sys.stdout.write(f"{key}={value}\n")
 
-        self.stream.flush()
+        sys.stdout.flush()
 
 
 _backend: Final[OutputBackend] = OutputBackend()

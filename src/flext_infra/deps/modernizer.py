@@ -25,62 +25,26 @@ from flext_infra.deps._phases import (
 )
 from flext_infra.deps.tool_config import load_tool_config
 
-canonical_dev_dependencies = u.Infra.canonical_dev_dependencies
-dedupe_specs = u.Infra.dedupe_specs
-dep_name = u.Infra.dep_name
-project_dev_groups = u.Infra.project_dev_groups
 
-array_parser = u.Infra.array
-as_string_list_parser = u.Infra.as_string_list
-canonical_dev_dependencies_parser = u.Infra.canonical_dev_dependencies
-dedupe_specs_parser = u.Infra.dedupe_specs
-dep_name_parser = u.Infra.dep_name
-ensure_table_parser = u.Infra.ensure_table
-project_dev_groups_parser = u.Infra.project_dev_groups
-read_doc_parser = u.Infra.read
-table_string_keys_parser = u.Infra.table_string_keys
-toml_get_parser = u.Infra.get
-unwrap_item_parser = u.Infra.unwrap_item
-
-
-def workspace_root(start: Path) -> Path:
-    """Detect workspace root by searching for .gitmodules or .git with pyproject.toml."""
-    current = start.resolve()
-    for parent in (current, *current.parents):
-        if (parent / c.Infra.Files.GITMODULES).exists() and (
-            parent / c.Infra.Files.PYPROJECT_FILENAME
-        ).exists():
-            return parent
-    for parent in (current, *current.parents):
-        if (parent / c.Infra.Git.DIR).exists() and (
-            parent / c.Infra.Files.PYPROJECT_FILENAME
-        ).exists():
-            return parent
-    return start.resolve().parents[4]
-
-
-ROOT = workspace_root(Path(__file__))
-
-
-def _classify_project(project_dir: Path) -> r[str]:
-    """Classify project kind for pyright/coverage config selection."""
-    kind = ProjectClassifier(project_dir).classify().project_kind
-    return r[str].ok(kind)
-
-
-class FlextInfraPyprojectModernizer:
+class FlextInfraDependencyModernizer:
     """Modernize all workspace pyproject.toml files."""
+
+    ROOT = u.Infra.resolve_workspace_root(__file__)
 
     def __init__(self, root: Path | None = None) -> None:
         """Initialize pyproject modernizer."""
-        super().__init__()
-        self.root = root or ROOT
+        self.root = root or self.ROOT
         self._runner: p.Infra.CommandRunner = FlextInfraUtilitiesSubprocess()
         tool_config_result = load_tool_config()
         if tool_config_result.is_failure:
             msg = tool_config_result.error or "failed to load deps tool config"
             raise ValueError(msg)
         self._tool_config = tool_config_result.value
+
+    def _classify_project(self, project_dir: Path) -> r[str]:
+        """Classify project kind for pyright/coverage config selection."""
+        kind = ProjectClassifier(project_dir).classify().project_kind
+        return r[str].ok(kind)
 
     def find_pyproject_files(self) -> list[Path]:
         """Find all workspace pyproject.toml files."""
@@ -108,7 +72,7 @@ class FlextInfraPyprojectModernizer:
         is_root = path.parent.resolve() == self.root.resolve()
         project_kind = "core"
         if not is_root:
-            kind_result = _classify_project(path.parent)
+            kind_result = self._classify_project(path.parent)
             if kind_result.is_success:
                 project_kind = kind_result.value
         changes: list[str] = []
@@ -241,44 +205,19 @@ class FlextInfraPyprojectModernizer:
         return 1 if has_warning else 0
 
 
-def parser() -> argparse.ArgumentParser:
-    """Create CLI parser for pyproject modernizer options."""
+def main(argv: list[str] | None = None) -> int:
+    """Run the pyproject modernizer CLI."""
     parser = argparse.ArgumentParser(description="Modernize workspace pyproject files")
     _ = parser.add_argument("--audit", action="store_true")
     _ = parser.add_argument("--dry-run", action="store_true")
     _ = parser.add_argument("--skip-comments", action="store_true")
     _ = parser.add_argument("--skip-check", action="store_true")
-    return parser
-
-
-def main() -> int:
-    """Run the pyproject modernizer CLI."""
-    parser_model = parser()
-    args = parser_model.parse_args()
-    return FlextInfraPyprojectModernizer().run(args)
+    args = parser.parse_args(argv)
+    return FlextInfraDependencyModernizer().run(args)
 
 
 if __name__ == "__main__":
     raise SystemExit(main())
 
 
-__all__ = [
-    "ConsolidateGroupsPhase",
-    "EnsurePyreflyConfigPhase",
-    "EnsurePyrightConfigPhase",
-    "EnsurePytestConfigPhase",
-    "FlextInfraPyprojectModernizer",
-    "InjectCommentsPhase",
-    "array_parser",
-    "as_string_list_parser",
-    "canonical_dev_dependencies_parser",
-    "dedupe_specs_parser",
-    "dep_name_parser",
-    "ensure_table_parser",
-    "main",
-    "parser",
-    "project_dev_groups_parser",
-    "read_doc_parser",
-    "unwrap_item_parser",
-    "workspace_root",
-]
+__all__ = ["FlextInfraDependencyModernizer", "main"]

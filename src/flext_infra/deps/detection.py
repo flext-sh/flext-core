@@ -19,29 +19,6 @@ from flext_infra import (
     t,
     u,
 )
-from flext_infra.deps._models import FlextInfraDependencyDetectionModels, dm
-
-
-def _to_infra_value(value: t.ContainerValue) -> t.Infra.InfraValue | None:
-    if value is None or isinstance(value, (str, int, float, bool)):
-        return value
-    if isinstance(value, list):
-        converted: list[t.Infra.InfraValue] = []
-        for item in value:
-            converted_item = _to_infra_value(item)
-            if converted_item is None and item is not None:
-                return None
-            converted.append(converted_item)
-        return converted
-    if isinstance(value, Mapping):
-        converted_map: MutableMapping[str, t.Infra.InfraValue] = {}
-        for key, item in value.items():
-            converted_item = _to_infra_value(item)
-            if converted_item is None and item is not None:
-                return None
-            converted_map[str(key)] = converted_item
-        return converted_map
-    return None
 
 
 class FlextInfraDependencyDetectionService:
@@ -58,9 +35,38 @@ class FlextInfraDependencyDetectionService:
         self.runner: p.Infra.CommandRunner = FlextInfraUtilitiesSubprocess()
 
     @staticmethod
-    def classify_issues(issues: list[t.Infra.IssueMap]) -> dm.DeptryIssueGroups:
+    def _to_infra_value(value: t.ContainerValue) -> t.Infra.InfraValue | None:
+        """Convert container value to namespaced infra value."""
+        if value is None or isinstance(value, (str, int, float, bool)):
+            return value
+        if isinstance(value, list):
+            converted: list[t.Infra.InfraValue] = []
+            for item in value:
+                converted_item = FlextInfraDependencyDetectionService._to_infra_value(
+                    item
+                )
+                if converted_item is None and item is not None:
+                    return None
+                converted.append(converted_item)
+            return converted
+        if isinstance(value, Mapping):
+            converted_map: MutableMapping[str, t.Infra.InfraValue] = {}
+            for key, item in value.items():
+                converted_item = FlextInfraDependencyDetectionService._to_infra_value(
+                    item
+                )
+                if converted_item is None and item is not None:
+                    return None
+                converted_map[str(key)] = converted_item
+            return converted_map
+        return None
+
+    @staticmethod
+    def classify_issues(
+        issues: list[t.Infra.IssueMap],
+    ) -> m.Infra.Deps.DeptryIssueGroups:
         """Classify deptry issues by error code (DEP001-DEP004)."""
-        groups = dm.DeptryIssueGroups()
+        groups = m.Infra.Deps.DeptryIssueGroups()
         for item in issues:
             error_obj = item.get(c.Infra.Toml.ERROR)
             if not isinstance(error_obj, Mapping):

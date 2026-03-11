@@ -3,9 +3,8 @@
 from __future__ import annotations
 
 import argparse
+import typing
 from pathlib import Path
-
-from pydantic import Field
 
 from flext_core import FlextLogger, r
 from flext_infra import (
@@ -15,41 +14,11 @@ from flext_infra import (
     FlextInfraUtilitiesSubprocess,
     m,
     p,
-    t,
 )
-from flext_infra.deps._detector_runtime import run_detector
+from flext_infra.deps._detector_runtime import FlextInfraDependencyDetectorRuntime
 from flext_infra.deps.detection import FlextInfraDependencyDetectionService
 
 logger = FlextLogger.create_module_logger(__name__)
-
-
-class FlextInfraDependencyDetectorModels(m):
-    """Pydantic models for dependency detector reports and configuration."""
-
-    class DependencyLimitsInfo(m.ArbitraryTypesModel):
-        """Dependency limits configuration metadata."""
-
-        python_version: str | None = None
-        limits_path: str = Field(default="")
-
-    class PipCheckReport(m.ArbitraryTypesModel):
-        """Pip check execution report with status and output lines."""
-
-        ok: bool = True
-        lines: list[str] = Field(default_factory=list)
-
-    class WorkspaceDependencyReport(m.ArbitraryTypesModel):
-        """Workspace-level dependency analysis report aggregating all projects."""
-
-        workspace: str
-        projects: dict[str, dict[str, t.ContainerValue]] = Field(default_factory=dict)
-        pip_check: FlextInfraDependencyDetectorModels.PipCheckReport | None = None
-        dependency_limits: (
-            FlextInfraDependencyDetectorModels.DependencyLimitsInfo | None
-        ) = None
-
-
-ddm = FlextInfraDependencyDetectorModels
 
 
 class FlextInfraRuntimeDevDependencyDetector:
@@ -132,18 +101,15 @@ class FlextInfraRuntimeDevDependencyDetector:
             return [name.strip() for name in args.projects.split(",") if name.strip()]
         return None
 
-    def run(
-        self: FlextInfraRuntimeDevDependencyDetector,
-        argv: list[str] | None = None,
-    ) -> r[int]:
+    def run(self, argv: list[str] | None = None) -> r[int]:
         """Execute dependency detection and generate workspace report."""
-        return run_detector(
-            self,
-            ddm.WorkspaceDependencyReport,
-            ddm.DependencyLimitsInfo,
-            ddm.PipCheckReport,
-            argv=argv,
+        runtime = FlextInfraDependencyDetectorRuntime(
+            detector=self,
+            workspace_report_factory=m.Infra.Deps.WorkspaceDependencyReport,
+            dependency_limits_factory=m.Infra.Deps.DependencyLimitsInfo,
+            pip_check_factory=m.Infra.Deps.PipCheckReport,
         )
+        return runtime.run(argv=argv)
 
 
 def main() -> int:
@@ -152,16 +118,11 @@ def main() -> int:
     if result.is_failure:
         logger.error("deps_detector_failed", error=result.error or "unknown error")
         return 1
-    return result.value
+    return typing.cast("int", result.value)
 
 
 if __name__ == "__main__":
     raise SystemExit(main())
 
 
-__all__ = [
-    "FlextInfraDependencyDetectorModels",
-    "FlextInfraRuntimeDevDependencyDetector",
-    "ddm",
-    "main",
-]
+__all__ = ["FlextInfraRuntimeDevDependencyDetector", "main"]

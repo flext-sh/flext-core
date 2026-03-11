@@ -89,7 +89,8 @@ def _run_namespace_enforce(*, argv: list[str]) -> int:
     workspace_path, apply_changes = u.Infra.resolve_workspace_args(args)
     enforcer = FlextInfraNamespaceEnforcer(workspace_root=workspace_path)
     report = enforcer.enforce(apply_changes=apply_changes)
-    output.write(FlextInfraNamespaceEnforcer.render_text(report))
+    sys.stdout.write(FlextInfraNamespaceEnforcer.render_text(report))
+    sys.stdout.flush()
     if report.has_violations:
         return 1
     return 0
@@ -122,8 +123,23 @@ def _run_ultrawork_models(*, argv: list[str]) -> int:
     output.metrics(
         {"workspace": workspace_path, "mode": "apply" if apply_changes else "dry-run"},
         centralize_summary,
-        mro_report,
-        namespace_report,
+        {
+            "mro_remaining_violations": mro_report.remaining_violations,
+            "mro_files_scanned": mro_report.files_scanned,
+            "mro_files_with_candidates": mro_report.files_with_candidates,
+            "mro_failures": mro_report.mro_failures,
+        },
+        {
+            "namespace_loose_objects": namespace_report.total_loose_objects,
+            "namespace_import_violations": namespace_report.total_import_violations,
+            "namespace_cyclic_imports": namespace_report.total_cyclic_imports,
+            "namespace_runtime_alias_violations": namespace_report.total_runtime_alias_violations,
+            "namespace_manual_protocols": namespace_report.total_manual_protocol_violations,
+            "namespace_manual_typing_aliases": namespace_report.total_manual_typing_violations,
+            "namespace_compatibility_aliases": namespace_report.total_compatibility_alias_violations,
+            "namespace_parse_failures": namespace_report.total_parse_failures,
+            "namespace_files_scanned": namespace_report.total_files_scanned,
+        },
     )
     if len(mro_report.errors) > 0:
         for error in mro_report.errors:

@@ -473,7 +473,7 @@ class FlextInfraRefactorCliSupport:
                 FlextInfraRefactorCliSupport.info(
                     f"Analysis report written: {args.analysis_output}",
                 )
-            return 0
+            sys.exit(0)
         results: list[m.Infra.Refactor.Result] = []
         if args.project:
             results = engine.refactor_project(
