@@ -12,12 +12,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import math
 import warnings
 
 import pytest
 
 from flext_core import FlextRuntime, FlextUtilities
-
 
 pytestmark = [pytest.mark.unit]
 
@@ -51,7 +51,7 @@ class TestRuntimeDeprecatedNormalizeMethods:
 
     def test_normalize_to_general_value_functional_equivalence(self) -> None:
         """Deprecated path must return same result as non-deprecated path."""
-        test_cases: list[object] = ["str", 42, 3.14, True, None, {"k": "v"}, [1, 2]]
+        test_cases: list[object] = ["str", 42, math.pi, True, None, {"k": "v"}, [1, 2]]
         for val in test_cases:
             with warnings.catch_warnings(record=True):
                 warnings.simplefilter("always")
@@ -146,7 +146,7 @@ class TestStrictContainerNormalization:
         """Scalars pass through normalize_to_container unchanged."""
         assert FlextRuntime.normalize_to_container("hello") == "hello"
         assert FlextRuntime.normalize_to_container(42) == 42
-        assert FlextRuntime.normalize_to_container(3.14) == 3.14
+        assert FlextRuntime.normalize_to_container(math.pi) == math.pi
         assert FlextRuntime.normalize_to_container(True) is True
 
     def test_normalize_to_container_none_becomes_empty_string(self) -> None:
@@ -191,4 +191,3 @@ class TestStrictContainerNormalization:
             assert len(deprecation_warnings) == 0, (
                 f"Unexpected DeprecationWarning from strict methods: {deprecation_warnings}"
             )
-

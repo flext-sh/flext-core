@@ -45,16 +45,14 @@ def _normalize_event_data(value: object) -> _ComparableConfigMap:
     if isinstance(value, dict):
         intermediate = FlextModelsContainers.ConfigMap(
             root={
-                str(k): FlextRuntime.normalize_to_metadata(v)
-                for k, v in value.items()
+                str(k): FlextRuntime.normalize_to_metadata(v) for k, v in value.items()
             }
         )
         return _ComparableConfigMap(root=intermediate.root)
     if isinstance(value, Mapping):
         intermediate = FlextModelsContainers.ConfigMap(
             root={
-                str(k): FlextRuntime.normalize_to_metadata(v)
-                for k, v in value.items()
+                str(k): FlextRuntime.normalize_to_metadata(v) for k, v in value.items()
             }
         )
         return _ComparableConfigMap(root=intermediate.root)

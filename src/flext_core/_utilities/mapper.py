@@ -32,7 +32,7 @@ class _Predicate[T](Protocol):
 
 
 # --- Mapper-local recursive types (self-contained, no t.GeneralValueType dependency) ---
-type _MappingValue = t.Container | BaseModel | list[_MappingValue] | dict[str, _MappingValue] | None
+type _MappingValue = t.Container | list[_MappingValue] | dict[str, _MappingValue] | None
 type _MapperCallable = Callable[[_MappingValue], _MappingValue]
 _ContainerTransformer: TypeAlias = _MapperCallable
 
@@ -855,39 +855,44 @@ class FlextUtilitiesMapper:
         return None
 
     @staticmethod
-    def _extract_get_value(
-        current: object, key_part: str
-    ) -> r[_MappingValue]:
+    def _extract_get_value(current: object, key_part: str) -> r[_MappingValue]:
         """Helper: Get raw value from dict/object/model.
 
         Returns:
-            r[_MappingValue]: Ok with value if found, Fail if not found.
+            r[_MappingValue]: Ok with value if found (non-None),
+                fail("found_none:...") if found but None,
+                fail("Key ... not found") if not found.
 
         """
         if isinstance(current, Mapping):
             if key_part in current:
                 raw_val = current[key_part]
-                return r[_MappingValue].ok(
-                    FlextUtilitiesMapper.narrow_to_container(raw_val)
-                )
+                narrowed = FlextUtilitiesMapper.narrow_to_container(raw_val)
+                if narrowed is None:
+                    return r[_MappingValue].fail(f"found_none:{key_part}")
+                return r[_MappingValue].ok(narrowed)
             return r[_MappingValue].fail(f"Key '{key_part}' not found in Mapping")
         if hasattr(current, key_part):
             attr_val = getattr(current, key_part)
+            if attr_val is None:
+                return r[_MappingValue].fail(f"found_none:{key_part}")
             if FlextUtilitiesGuards.is_container(attr_val):
-                return r[_MappingValue].ok(attr_val)
+                return r[_MappingValue].ok(
+                    FlextUtilitiesMapper.narrow_to_container(attr_val)
+                )
             return r[_MappingValue].ok(str(attr_val))
         if isinstance(current, BaseModel):
             model_dump_attr = current.model_dump
             if callable(model_dump_attr):
                 model_dict = model_dump_attr()
-                if FlextUtilitiesGuards.is_container(model_dict) and isinstance(
-                    model_dict, Mapping
-                ):
-                    model_dict_typed = (
-                        FlextUtilitiesMapper._narrow_to_configuration_dict(model_dict)
-                    )
-                    if key_part in model_dict_typed:
-                        return r[_MappingValue].ok(model_dict_typed[key_part])
+                if isinstance(model_dict, Mapping):
+                    if key_part in model_dict:
+                        val = FlextUtilitiesMapper.narrow_to_container(
+                            model_dict[key_part]
+                        )
+                        if val is None:
+                            return r[_MappingValue].fail(f"found_none:{key_part}")
+                        return r[_MappingValue].ok(val)
         return r[_MappingValue].fail(f"Key '{key_part}' not found")
 
     @staticmethod
@@ -897,7 +902,8 @@ class FlextUtilitiesMapper:
         """Helper: Handle array indexing with support for negative indices.
 
         Returns:
-            r[_MappingValue]: Ok with indexed value, Fail with error message.
+            r[_MappingValue]: Ok with indexed value, fail("found_none:index") if None,
+            Fail with error message if out of bounds or invalid.
 
         """
         if current.__class__ not in {list, tuple}:
@@ -910,7 +916,10 @@ class FlextUtilitiesMapper:
             if idx < 0:
                 idx = len(sequence) + idx
             if 0 <= idx < len(sequence):
-                return r[_MappingValue].ok(sequence[idx])
+                item = sequence[idx]
+                if item is None:
+                    return r[_MappingValue].fail("found_none:index")
+                return r[_MappingValue].ok(item)
             return r[_MappingValue].fail(f"Index {int(array_match)} out of range")
         except (ValueError, IndexError):
             return r[_MappingValue].fail(f"Invalid index {array_match}")
@@ -1731,6 +1740,14 @@ class FlextUtilitiesMapper:
                 current = FlextUtilitiesMapper.narrow_to_container(data)
             else:
                 current = data
+            current: object | None
+            if isinstance(data, BaseModel):
+                current = data
+            elif isinstance(data, Mapping):
+                current = FlextUtilitiesMapper.narrow_to_container(data)
+            else:
+                current = data
+            found_none_prefix = "found_none:"
             for i, part in enumerate(parts):
                 if current is None:
                     if required:
@@ -1745,36 +1762,44 @@ class FlextUtilitiesMapper:
                 key_part, array_match = FlextUtilitiesMapper._extract_parse_array_index(
                     part
                 )
-                get_result = FlextUtilitiesMapper._extract_get_value(
-                    current, key_part
-                )
+                get_result = FlextUtilitiesMapper._extract_get_value(current, key_part)
                 if get_result.is_failure:
-                    path_context = separator.join(parts[:i])
-                    if required:
-                        return r[_MappingValue].fail(
-                            f"Key '{key_part}' not found at '{path_context}'"
-                        )
-                    if default is None:
-                        return r[_MappingValue].fail(
-                            f"Key '{key_part}' not found at '{path_context}' and default is None"
-                        )
-                    return r[_MappingValue].ok(default)
-                current = get_result.value
-                if array_match:
+                    error_str = get_result.error or ""
+                    if error_str.startswith(found_none_prefix):
+                        current = None
+                    else:
+                        path_context = separator.join(parts[:i])
+                        if required:
+                            return r[_MappingValue].fail(
+                                f"Key '{key_part}' not found at '{path_context}'"
+                            )
+                        if default is None:
+                            return r[_MappingValue].fail(
+                                f"Key '{key_part}' not found at '{path_context}' and default is None"
+                            )
+                        return r[_MappingValue].ok(default)
+                else:
+                    current = get_result.value
+                if array_match and current is not None:
                     index_result = FlextUtilitiesMapper._extract_handle_array_index(
                         current, array_match
                     )
                     if index_result.is_failure:
-                        if required:
-                            return r[_MappingValue].fail(
-                                f"Array error at '{key_part}': {index_result.error}"
-                            )
-                        if default is None:
-                            return r[_MappingValue].fail(
-                                f"Array error at '{key_part}': {index_result.error} and default is None"
-                            )
-                        return r[_MappingValue].ok(default)
-                    current = index_result.value
+                        error_str = index_result.error or ""
+                        if error_str.startswith(found_none_prefix):
+                            current = None
+                        else:
+                            if required:
+                                return r[_MappingValue].fail(
+                                    f"Array error at '{key_part}': {index_result.error}"
+                                )
+                            if default is None:
+                                return r[_MappingValue].fail(
+                                    f"Array error at '{key_part}': {index_result.error} and default is None"
+                                )
+                            return r[_MappingValue].ok(default)
+                    else:
+                        current = index_result.value
             if current is None:
                 if required:
                     return r[_MappingValue].fail("Extracted value is None")
@@ -1784,7 +1809,9 @@ class FlextUtilitiesMapper:
                     )
                 return r[_MappingValue].ok(default)
             if FlextUtilitiesGuards.is_container(current):
-                return r[_MappingValue].ok(current)
+                return r[_MappingValue].ok(
+                    FlextUtilitiesMapper.narrow_to_container(current)
+                )
             return r[_MappingValue].ok(str(current))
         except (AttributeError, TypeError, ValueError, KeyError, IndexError) as e:
             return r[_MappingValue].fail(f"Extract failed: {e}")
@@ -2166,15 +2193,19 @@ class FlextUtilitiesMapper:
     ) -> _MappingValue:
         """Safely narrow any value to _MappingValue (strict container type).
 
-        Uses TypeGuard-based validation to ensure type safety.
+        Uses t.CONTAINER_TYPES for isinstance checks.
+        BaseModel instances are converted to dict mapping via model_dump().
         If value is not a valid container, returns string representation.
         """
-        if isinstance(value, (str, int, float, bool)):
-            return value
         if value is None:
             return None
-        if isinstance(value, BaseModel | Path):
+        if isinstance(value, t.CONTAINER_TYPES):
             return value
+        if isinstance(value, BaseModel):
+            return {
+                str(k): FlextUtilitiesMapper.narrow_to_container(v)
+                for k, v in value.model_dump().items()
+            }
         if isinstance(value, dict):
             return {
                 str(k): FlextUtilitiesMapper.narrow_to_container(v)

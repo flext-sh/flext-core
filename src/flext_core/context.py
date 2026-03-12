@@ -329,7 +329,9 @@ class FlextContext(FlextRuntime):
                 metadata_value: object = v
                 if hasattr(v, "items") and callable(getattr(v, "items", None)):
                     metadata_value = m.ConfigMap.model_validate(v)
-                normalized_metadata_map[k] = FlextRuntime.normalize_to_container(FlextRuntime.normalize_to_metadata(metadata_value))
+                normalized_metadata_map[k] = FlextRuntime.normalize_to_container(
+                    FlextRuntime.normalize_to_metadata(metadata_value)
+                )
             metadata_for_model = m.ConfigMap(root=normalized_metadata_map)
         statistics_mapping: m.Dict = m.Dict(
             root=dict((stats_dict_export or m.ConfigMap(root={})).items())

@@ -481,8 +481,7 @@ class FlextExceptions:
         attrs_map = e._safe_config_map(value)
         if attrs_map is not None:
             attrs = {
-                k: FlextRuntime.normalize_to_metadata(v)
-                for k, v in attrs_map.items()
+                k: FlextRuntime.normalize_to_metadata(v) for k, v in attrs_map.items()
             }
             return m.Metadata.model_validate({"attributes": attrs})
         return None

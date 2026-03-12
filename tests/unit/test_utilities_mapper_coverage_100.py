@@ -282,13 +282,13 @@ class TestuMapperConversions:
         assert u.Mapper.ensure_str_or_none(None).is_failure
 
     def test_convert_to_json_value(self) -> None:
-        """Test convert_to_json_value preserves BaseModel objects."""
+        """Test convert_to_json_value converts BaseModel objects to dict."""
         obj = SimpleObj(name="test", value=1)
         payload: dict[str, object] = {"obj": obj}
         res = u.Mapper.convert_to_json_value(payload)
         assert isinstance(res, dict)
         assert "obj" in res
-        assert isinstance(res["obj"], SimpleObj)
+        assert res["obj"] == {"name": "test", "value": 1}
 
     def test_convert_to_json_safe(self) -> None:
         obj = SimpleObj(name="test", value=1)
@@ -311,7 +311,7 @@ class TestuMapperConversions:
         d: dict[str, object] = {"a": SimpleObj(name="test", value=1)}
         res = u.Mapper.convert_to_json_value(d)
         if isinstance(res, dict):
-            assert isinstance(res["a"], SimpleObj)
+            assert res["a"] == {"name": "test", "value": 1}
         else:
             msg = "Expected dict result"
             raise AssertionError(msg)
@@ -321,7 +321,7 @@ class TestuMapperConversions:
         test_list: list[dict[str, object]] = [{"a": SimpleObj(name="test", value=1)}]
         res = u.Mapper.convert_to_json_value(test_list)
         if isinstance(res, list) and isinstance(res[0], dict):
-            assert isinstance(res[0]["a"], SimpleObj)
+            assert res[0]["a"] == {"name": "test", "value": 1}
         else:
             msg = "Expected list of dicts result"
             raise AssertionError(msg)

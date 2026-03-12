@@ -402,13 +402,8 @@ class FlextMixins(FlextRuntime):
                 "correlation_id": FlextRuntime.normalize_to_container(
                     correlation_id or ""
                 ),
-                "operation": FlextRuntime.normalize_to_container(
-                    operation_name or ""
-                ),
-                **{
-                    k: FlextRuntime.normalize_to_container(v)
-                    for k, v in extra.items()
-                },
+                "operation": FlextRuntime.normalize_to_container(operation_name or ""),
+                **{k: FlextRuntime.normalize_to_container(v) for k, v in extra.items()},
             }
         )
         log_method = (

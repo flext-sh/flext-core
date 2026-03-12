@@ -80,7 +80,8 @@ def test_structlog_proxy_context_var_default_when_key_missing(
 def test_context_data_normalize_and_json_checks() -> None:
     nested = {"a": [{"b": 1}]}
     normalized = FlextModelsContext.ContextData.normalize_to_general_value(nested)
-    assert isinstance(normalized, dict)
+    # normalize_to_general_value now delegates to normalize_to_container → m.Dict
+    assert hasattr(normalized, "root")
     check_result = FlextModelsContext.ContextData.check_json_serializable(
         cast("object", {"k": [1, "x"]})
     )
@@ -93,7 +94,8 @@ def test_context_data_normalize_and_json_checks() -> None:
     normalized_obj = FlextModelsContext.ContextData.normalize_to_general_value(
         cast("object", obj)
     )
-    assert normalized_obj is obj
+    # Unknown objects are now converted to str representation
+    assert isinstance(normalized_obj, str)
 
 
 def test_context_data_validate_dict_serializable_error_paths() -> None:

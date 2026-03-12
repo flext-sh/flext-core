@@ -18,12 +18,12 @@ import gc
 import time
 from collections.abc import Callable, Iterator, Mapping, Sequence, Sized
 from contextlib import AbstractContextManager as ContextManager, contextmanager
-from typing import ParamSpec, TypeGuard, TypeVar
+from typing import TypeGuard
 
 import pytest
 from hypothesis import HealthCheck, given, settings, strategies as st
 
-from flext_core import FlextTypes, FlextUtilities
+from flext_core import FlextTypes, FlextUtilities, P, R
 
 from ._models import (
     FixtureCaseDict,
@@ -32,19 +32,13 @@ from ._models import (
     FixtureSuiteDict,
 )
 
-P = ParamSpec("P")
-R = TypeVar("R")
-
 
 def _to_general_mapping(
     value: object | None,
 ) -> dict[str, object]:
     if not isinstance(value, dict):
         return {}
-    return {
-        str(key): item
-        for key, item in value.items()
-    }
+    return {str(key): item for key, item in value.items()}
 
 
 def _to_string_list(value: object | None) -> list[str]:

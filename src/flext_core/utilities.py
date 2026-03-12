@@ -333,7 +333,6 @@ class FlextUtilities:
     from_kwargs = staticmethod(FlextUtilitiesModel.from_kwargs)
     load = staticmethod(FlextUtilitiesModel.load)
     merge_defaults = staticmethod(FlextUtilitiesModel.merge_defaults)
-    normalize_to_metadata = staticmethod(FlextUtilitiesModel.normalize_to_metadata)
     update = staticmethod(FlextUtilitiesModel.update)
     build_pagination_response = staticmethod(
         FlextUtilitiesPagination.build_pagination_response
