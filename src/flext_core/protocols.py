@@ -52,10 +52,12 @@ class _ProtocolIntrospection:
         )
         raw_attrs_candidate = getattr(protocol, "__protocol_attrs__", "")
         raw_attrs: set[str] = set()
-        if isinstance(raw_attrs_candidate, set):
+        try:
             for attr in raw_attrs_candidate:
                 if isinstance(attr, str):
                     raw_attrs.add(attr)
+        except TypeError:
+            raw_attrs = set[str]()
         protocol_methods: set[str] = set()
         for attr in raw_attrs:
             protocol_methods.add(attr)
@@ -91,13 +93,15 @@ class _ProtocolIntrospection:
     def get_class_protocols(target_cls: type) -> tuple[type, ...]:
         """Get the protocols a class implements."""
         protocols_candidate = getattr(target_cls, "__protocols__", "")
-        if isinstance(protocols_candidate, tuple):
+        try:
             typed_protocols: list[type] = []
             for protocol_item in protocols_candidate:
                 if not isinstance(protocol_item, type):
                     return ()
                 typed_protocols.append(protocol_item)
             return tuple(typed_protocols)
+        except TypeError:
+            return ()
         return ()
 
     @staticmethod
@@ -118,10 +122,12 @@ class _ProtocolIntrospection:
         )
         raw_attrs_candidate = getattr(protocol, "__protocol_attrs__", "")
         raw_attrs: set[str] = set()
-        if isinstance(raw_attrs_candidate, set):
+        try:
             for attr in raw_attrs_candidate:
                 if isinstance(attr, str):
                     raw_attrs.add(attr)
+        except TypeError:
+            raw_attrs = set[str]()
         protocol_methods: set[str] = set()
         for attr in raw_attrs:
             protocol_methods.add(attr)

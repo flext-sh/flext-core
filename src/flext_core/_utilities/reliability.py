@@ -255,7 +255,6 @@ class FlextUtilitiesReliability:
         Example:
             result = u.flow_result(
                 r[T].ok(user),
-                r[T].ok(user),
                 validate_user,
                 enrich_profile,
                 save_to_db,
