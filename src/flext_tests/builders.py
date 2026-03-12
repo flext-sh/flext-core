@@ -863,7 +863,7 @@ class FlextTestsBuilders:
         """Build data wrapped in r.
 
         Uses Pydantic 2 models for parameter validation and computation.
-        All parameters are validated using m.Builders.ToResultParams model.
+        All parameters are validated using m.Tests.ToResultParams model.
 
         Args:
             **kwargs: Result parameters (as_model, error, unwrap, etc.)
@@ -886,7 +886,7 @@ class FlextTestsBuilders:
 
         """
         try:
-            params = m.Builders.ToResultParams.model_validate(kwargs)
+            params = m.Tests.ToResultParams.model_validate(kwargs)
         except (TypeError, ValueError, AttributeError) as exc:
             error_msg = f"Invalid to_result() parameters: {exc}"
             raise ValueError(error_msg) from exc
@@ -1151,7 +1151,7 @@ class FlextTestsBuilders:
                     c.Tests.Builders.KEY_ACTIVE: item.active,
                 }
                 for item in batch_result
-                if isinstance(item, m.User)
+                if isinstance(item, m.Tests.User)
             ]
             return users_data
         if factory == "configs":
@@ -1495,10 +1495,10 @@ class FlextTestsBuilders:
             @staticmethod
             def batch_users(
                 count: int = c.Tests.Factory.DEFAULT_BATCH_COUNT,
-            ) -> list[m.User]:
+            ) -> list[m.Tests.User]:
                 """Create batch users - DELEGATES to tt.batch()."""
                 batch_result = tt.batch("user", count=count)
-                return [item for item in batch_result if isinstance(item, m.User)]
+                return [item for item in batch_result if isinstance(item, m.Tests.User)]
 
             @staticmethod
             def config(**overrides: t.Tests.object) -> m.Config:
@@ -1536,10 +1536,10 @@ class FlextTestsBuilders:
                 )
 
             @staticmethod
-            def user(**overrides: t.Tests.object) -> m.User:
+            def user(**overrides: t.Tests.object) -> m.Tests.User:
                 """Create user - DELEGATES to tt.model()."""
                 result = tt.model("user", **overrides)
-                if isinstance(result, m.User):
+                if isinstance(result, m.Tests.User):
                     return result
                 raise TypeError(
                     f"Expected User from tt.model('user'), got {type(result).__name__}"

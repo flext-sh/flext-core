@@ -91,7 +91,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
 
     """
 
-    FileInfo: ClassVar[type[m.FileInfo]] = m.FileInfo
+    FileInfo: ClassVar[type[m.Tests.FileInfo]] = m.Tests.FileInfo
 
     @staticmethod
     def _validate_model_content[TModelRead: BaseModel](
@@ -212,14 +212,14 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                     )
                     if is_nested_sequence:
                         filename = f"{name}.csv"
-                kwargs_result = r[m.CreateKwargsParams].ok(
-                    m.CreateKwargsParams.model_validate(kwargs)
+                kwargs_result = r[m.Tests.CreateKwargsParams].ok(
+                    m.Tests.CreateKwargsParams.model_validate(kwargs)
                 )
                 if kwargs_result.is_success:
                     validated_kwargs = kwargs_result.value
                 else:
-                    default_result = r[m.CreateKwargsParams].ok(
-                        m.CreateKwargsParams.model_validate({})
+                    default_result = r[m.Tests.CreateKwargsParams].ok(
+                        m.Tests.CreateKwargsParams.model_validate({})
                     )
                     if default_result.is_success:
                         validated_kwargs = default_result.value
@@ -430,7 +430,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
 
         """
         try:
-            params = m.BatchParams.model_validate({
+            params = m.Tests.BatchParams.model_validate({
                 "files": files,
                 "directory": directory,
                 "operation": operation,
@@ -647,7 +647,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
 
         """
         try:
-            params = m.CompareParams.model_validate({
+            params = m.Tests.CompareParams.model_validate({
                 "file1": file1,
                 "file2": file2,
                 "mode": mode,
@@ -878,7 +878,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         detect_fmt: bool = True,
         parse_content: bool = False,
         validate_model: type[BaseModel] | None = None,
-    ) -> r[m.FileInfo]:
+    ) -> r[m.Tests.FileInfo]:
         """Get comprehensive file information.
 
         Args:
@@ -918,9 +918,11 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                 "validate_model": validate_model,
             })
         except (TypeError, ValueError, AttributeError) as exc:
-            return r[m.FileInfo].fail(f"Invalid parameters for file info: {exc}")
+            return r[m.Tests.FileInfo].fail(f"Invalid parameters for file info: {exc}")
         if not params.path.exists():
-            return r[m.FileInfo].ok(m.FileInfo(exists=False, path=params.path))
+            return r[m.Tests.FileInfo].ok(
+                m.Tests.FileInfo(exists=False, path=params.path)
+            )
         try:
             stat = params.path.stat()
             size = stat.st_size
@@ -962,7 +964,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             sha256 = (
                 u.Tests.Files.compute_hash(params.path) if params.compute_hash else None
             )
-            content_meta: m.ContentMeta | None = None
+            content_meta: m.Tests.ContentMeta | None = None
             if params.parse_content or params.validate_model:
                 content_meta = self._parse_content_metadata(
                     path=params.path,
@@ -970,8 +972,8 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                     fmt=fmt,
                     validate_model=params.validate_model,
                 )
-            return r[m.FileInfo].ok(
-                m.FileInfo(
+            return r[m.Tests.FileInfo].ok(
+                m.Tests.FileInfo(
                     exists=True,
                     path=params.path,
                     size=size,
@@ -990,7 +992,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                 )
             )
         except OSError as e:
-            return r[m.FileInfo].fail(c.Tests.Files.ERROR_INFO.format(error=e))
+            return r[m.Tests.FileInfo].fail(c.Tests.Files.ERROR_INFO.format(error=e))
 
     @overload
     def read(
@@ -1240,7 +1242,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             ]
         return str(value)
 
-    def _compare_content(self, params: m.CompareParams) -> r[bool]:
+    def _compare_content(self, params: m.Tests.CompareParams) -> r[bool]:
         """Compare file content with optional deep/structured comparison."""
         content1_raw = params.file1.read_text(encoding=c.Tests.Files.DEFAULT_ENCODING)
         content2_raw = params.file2.read_text(encoding=c.Tests.Files.DEFAULT_ENCODING)
@@ -1261,7 +1263,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             content2 = content2.lower()
         return r[bool].ok(content1 == content2)
 
-    def _compare_lines(self, params: m.CompareParams) -> r[bool]:
+    def _compare_lines(self, params: m.Tests.CompareParams) -> r[bool]:
         """Compare files line by line with optional normalization."""
         lines1 = params.file1.read_text(
             encoding=c.Tests.Files.DEFAULT_ENCODING
@@ -1360,7 +1362,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         text: str,
         fmt: str,
         validate_model: type[BaseModel] | None = None,
-    ) -> m.ContentMeta:
+    ) -> m.Tests.ContentMeta:
         """Parse file content and extract metadata.
 
         Uses u.load() for model validation and format-specific parsing
@@ -1434,7 +1436,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                 model_valid = False
             else:
                 model_valid = None
-        return m.ContentMeta(
+        return m.Tests.ContentMeta(
             key_count=key_count,
             item_count=item_count,
             row_count=row_count,

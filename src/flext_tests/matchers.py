@@ -264,9 +264,9 @@ class FlextTestsMatchers:
         return result.value
 
     @staticmethod
-    def check[TResult](result: r[TResult]) -> m.Chain[TResult]:
+    def check[TResult](result: r[TResult]) -> m.Tests.Chain[TResult]:
         """Start chained assertions on result (railway pattern)."""
-        return m.Chain[TResult](result=result)
+        return m.Tests.Chain[TResult](result=result)
 
     @staticmethod
     def fail[TResult](
@@ -311,11 +311,11 @@ class FlextTestsMatchers:
             ValueError: If parameter validation fails (via Pydantic model)
 
         Uses Pydantic 2 models for parameter validation and computation.
-        All parameters are validated via m.FailParams model.
+        All parameters are validated via m.Tests.FailParams model.
 
         """
         try:
-            params = m.FailParams.model_validate(kwargs)
+            params = m.Tests.FailParams.model_validate(kwargs)
         except (TypeError, ValueError, AttributeError) as exc:
             raise ValueError(f"Parameter validation failed: {exc}") from exc
         if result.is_success:
@@ -412,7 +412,7 @@ class FlextTestsMatchers:
         """Enhanced assertion for r success with optional value validation.
 
         Uses Pydantic 2 models for parameter validation and computation.
-        All parameters are validated via m.OkParams model.
+        All parameters are validated via m.Tests.OkParams model.
 
         Examples:
             # Basic success assertions
@@ -435,7 +435,7 @@ class FlextTestsMatchers:
 
         Args:
             result: r to validate
-            **kwargs: Parameters validated via m.OkParams model
+            **kwargs: Parameters validated via m.Tests.OkParams model
                 - eq, ne: Equality/inequality check
                 - is_: Runtime type check against single type or tuple
                 - none, empty: Nullability checks
@@ -458,7 +458,7 @@ class FlextTestsMatchers:
 
         """
         try:
-            params = m.OkParams.model_validate(kwargs)
+            params = m.Tests.OkParams.model_validate(kwargs)
         except (TypeError, ValueError, AttributeError) as exc:
             raise ValueError(f"Parameter validation failed: {exc}") from exc
         if not result.is_success:

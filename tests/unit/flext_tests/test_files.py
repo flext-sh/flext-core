@@ -726,7 +726,7 @@ class TestFileInfoFromModels:
 
     def test_fileinfo_import_from_models(self) -> None:
         """Test tf.FileInfo can be imported from models."""
-        info = m.FileInfo(exists=True, size=100, lines=5)
+        info = m.Tests.FileInfo(exists=True, size=100, lines=5)
         assert info.exists is True
         assert info.size == 100
         assert info.lines == 5
@@ -735,13 +735,13 @@ class TestFileInfoFromModels:
         """Test tf.FileInfo alias works for backward compatibility."""
         info = tf.FileInfo(exists=True)
         assert info.exists is True
-        info2 = m.FileInfo(exists=True)
+        info2 = m.Tests.FileInfo(exists=True)
         assert info2.exists is True
 
     def test_fileinfo_all_fields(self) -> None:
         """Test tf.FileInfo with all fields populated."""
         now = datetime.now(tz=UTC)
-        info = m.FileInfo(
+        info = m.Tests.FileInfo(
             exists=True,
             path=Path("/test/file.txt"),
             size=1024,

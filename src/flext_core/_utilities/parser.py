@@ -1507,7 +1507,9 @@ class FlextUtilitiesParser:
             )
             components = [c.strip() for c in components]
         if remove_empty:
-            self._parser_log.debug("Removing empty components", operation="parse_delimited")
+            self._parser_log.debug(
+                "Removing empty components", operation="parse_delimited"
+            )
             components = [c for c in components if c.strip()]
         if validator:
             self._parser_log.debug(

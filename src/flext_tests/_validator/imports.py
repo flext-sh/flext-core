@@ -20,7 +20,7 @@ from flext_tests import c, m, u
 class FlextValidatorImports:
     """Import validation methods for FlextTestsValidator.
 
-    Uses c.Tests.Validator for constants and m.Validator for models.
+    Uses c.Tests.Validator for constants and m.Tests.Validator for models.
     """
 
     @classmethod
@@ -30,11 +30,11 @@ class FlextValidatorImports:
         tree: ast.AST,
         lines: list[str],
         approved: Mapping[str, list[str]],
-    ) -> list[m.Validator.Violation]:
+    ) -> list[m.Tests.Violation]:
         """Detect direct technology imports."""
         if u.Tests.Validator.is_approved("IMPORT-005", file_path, approved):
             return []
-        violations: list[m.Validator.Violation] = []
+        violations: list[m.Tests.Violation] = []
         tech_imports = c.Tests.Validator.Approved.TECH_IMPORTS
         for node in ast.walk(tree):
             if isinstance(node, ast.Import):
@@ -62,11 +62,11 @@ class FlextValidatorImports:
         tree: ast.AST,
         lines: list[str],
         approved: Mapping[str, list[str]],
-    ) -> list[m.Validator.Violation]:
+    ) -> list[m.Tests.Violation]:
         """Detect try/except ImportError patterns."""
         if u.Tests.Validator.is_approved("IMPORT-003", file_path, approved):
             return []
-        violations: list[m.Validator.Violation] = []
+        violations: list[m.Tests.Violation] = []
         for node in ast.walk(tree):
             if not isinstance(node, ast.Try):
                 continue
@@ -91,11 +91,11 @@ class FlextValidatorImports:
         tree: ast.AST,
         lines: list[str],
         approved: Mapping[str, list[str]],
-    ) -> list[m.Validator.Violation]:
+    ) -> list[m.Tests.Violation]:
         """Detect imports not at module top level."""
         if u.Tests.Validator.is_approved("IMPORT-001", file_path, approved):
             return []
-        violations: list[m.Validator.Violation] = []
+        violations: list[m.Tests.Violation] = []
         for node in ast.walk(tree):
             if isinstance(node, (ast.Import, ast.ImportFrom)):
                 parent = u.Tests.Validator.get_parent(tree, node)
@@ -115,7 +115,7 @@ class FlextValidatorImports:
         tree: ast.AST,
         lines: list[str],
         approved: Mapping[str, list[str]],
-    ) -> list[m.Validator.Violation]:
+    ) -> list[m.Tests.Violation]:
         """Detect non-root imports from flext-* packages internal modules.
 
         Detects imports from internal modules (prefixed with _) like:
@@ -135,7 +135,7 @@ class FlextValidatorImports:
         internal_init_patterns = c.Tests.Validator.Approved.INTERNAL_INIT_PATTERNS
         if any(re.search(pattern, file_str) for pattern in internal_init_patterns):
             return []
-        violations: list[m.Validator.Violation] = []
+        violations: list[m.Tests.Violation] = []
         flext_packages = c.Tests.Validator.Approved.FLEXT_PACKAGES
         for node in ast.walk(tree):
             if isinstance(node, ast.ImportFrom) and node.module:
@@ -161,11 +161,11 @@ class FlextValidatorImports:
         tree: ast.AST,
         lines: list[str],
         approved: Mapping[str, list[str]],
-    ) -> list[m.Validator.Violation]:
+    ) -> list[m.Tests.Violation]:
         """Detect sys.path manipulation."""
         if u.Tests.Validator.is_approved("IMPORT-004", file_path, approved):
             return []
-        violations: list[m.Validator.Violation] = []
+        violations: list[m.Tests.Violation] = []
         for node in ast.walk(tree):
             if (
                 isinstance(node, ast.Attribute)
@@ -188,7 +188,7 @@ class FlextValidatorImports:
         _tree: ast.AST,
         _lines: list[str],
         approved: Mapping[str, list[str]],
-    ) -> list[m.Validator.Violation]:
+    ) -> list[m.Tests.Violation]:
         """Detect TYPE_CHECKING blocks in files with Pydantic field annotations.
 
         TYPE_CHECKING is permitted for type-only imports in non-Pydantic files.
@@ -205,9 +205,9 @@ class FlextValidatorImports:
     @classmethod
     def _scan_file(
         cls, file_path: Path, approved: Mapping[str, list[str]]
-    ) -> list[m.Validator.Violation]:
+    ) -> list[m.Tests.Violation]:
         """Scan a single file for import violations."""
-        violations: list[m.Validator.Violation] = []
+        violations: list[m.Tests.Violation] = []
         try:
             content = file_path.read_text(encoding="utf-8")
             tree = ast.parse(content, filename=str(file_path))
@@ -233,7 +233,7 @@ class FlextValidatorImports:
         cls,
         files: list[Path],
         approved_exceptions: Mapping[str, list[str]] | None = None,
-    ) -> r[m.Validator.ScanResult]:
+    ) -> r[m.Tests.Validator.ScanResult]:
         """Scan files for import violations.
 
         Args:
@@ -244,13 +244,13 @@ class FlextValidatorImports:
             r with ScanResult containing all violations found
 
         """
-        violations: list[m.Validator.Violation] = []
+        violations: list[m.Tests.Violation] = []
         approved = approved_exceptions or {}
         for file_path in files:
             file_violations = cls._scan_file(file_path, approved)
             violations.extend(file_violations)
-        return r[m.Validator.ScanResult].ok(
-            m.Validator.ScanResult.create(
+        return r[m.Tests.Validator.ScanResult].ok(
+            m.Tests.Validator.ScanResult.create(
                 validator_name=c.Tests.Validator.Defaults.VALIDATOR_IMPORTS,
                 files_scanned=len(files),
                 violations=violations,

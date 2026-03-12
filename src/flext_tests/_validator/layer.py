@@ -19,7 +19,7 @@ from flext_tests import c, m, u
 class FlextValidatorLayer:
     """Layer validation methods for FlextTestsValidator.
 
-    Uses c.Tests.Validator, m.Validator, u.Tests.Validator.
+    Uses c.Tests.Validator, m.Tests.Validator, u.Tests.Validator.
     """
 
     @classmethod
@@ -41,11 +41,11 @@ class FlextValidatorLayer:
         file_path: Path,
         approved: Mapping[str, list[str]],
         hierarchy: Mapping[str, int],
-    ) -> list[m.Validator.Violation]:
+    ) -> list[m.Tests.Violation]:
         """Scan a single file for layer violations."""
         if u.Tests.Validator.is_approved("LAYER-001", file_path, approved):
             return []
-        violations: list[m.Validator.Violation] = []
+        violations: list[m.Tests.Violation] = []
         current_module = file_path.stem
         current_layer = hierarchy.get(current_module)
         if current_layer is None:
@@ -82,7 +82,7 @@ class FlextValidatorLayer:
         files: list[Path],
         approved_exceptions: Mapping[str, list[str]] | None = None,
         layer_hierarchy: Mapping[str, int] | None = None,
-    ) -> r[m.Validator.ScanResult]:
+    ) -> r[m.Tests.Validator.ScanResult]:
         """Scan files for layer violations.
 
         Args:
@@ -94,14 +94,14 @@ class FlextValidatorLayer:
             r with ScanResult containing all violations found
 
         """
-        violations: list[m.Validator.Violation] = []
+        violations: list[m.Tests.Violation] = []
         approved = approved_exceptions or {}
         hierarchy = layer_hierarchy or c.Tests.Validator.LayerHierarchy.as_dict()
         for file_path in files:
             file_violations = cls._scan_file(file_path, approved, hierarchy)
             violations.extend(file_violations)
-        return r[m.Validator.ScanResult].ok(
-            m.Validator.ScanResult.create(
+        return r[m.Tests.Validator.ScanResult].ok(
+            m.Tests.Validator.ScanResult.create(
                 validator_name=c.Tests.Validator.Defaults.VALIDATOR_LAYER,
                 files_scanned=len(files),
                 violations=violations,

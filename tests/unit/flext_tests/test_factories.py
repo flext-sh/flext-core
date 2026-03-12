@@ -83,7 +83,7 @@ class TestUser:
 
     def test_user_creation_default(self) -> None:
         """Test User model creation with defaults."""
-        user = m.User(
+        user = m.Tests.User(
             id="test-123",
             name="Test User",
             email="test@example.com",
@@ -95,7 +95,7 @@ class TestUser:
 
     def test_user_creation_with_active(self) -> None:
         """Test User model creation with active flag."""
-        user = m.User(
+        user = m.Tests.User(
             id="test-123",
             name="Test User",
             email="test@example.com",
@@ -163,7 +163,7 @@ class TestFlextTestsFactoriesModernAPI:
         """Test tt.model('user') with default parameters."""
         user_result = tt.model("user")
         user = TestFactoriesHelpers.extract_model(user_result)
-        assert isinstance(user, m.User)
+        assert isinstance(user, m.Tests.User)
         assert user.id is not None
         assert user.name == "Test User"
         assert "@example.com" in user.email
@@ -178,7 +178,7 @@ class TestFlextTestsFactoriesModernAPI:
             email="custom@test.com",
         )
         user = TestFactoriesHelpers.extract_model(user_result)
-        assert isinstance(user, m.User)
+        assert isinstance(user, m.Tests.User)
         assert user.id == "custom-123"
         assert user.name == "Custom User"
         assert user.email == "custom@test.com"
@@ -187,7 +187,7 @@ class TestFlextTestsFactoriesModernAPI:
         """Test tt.model('user') with overrides."""
         user_result = tt.model("user", name="Base User", active=False)
         user = TestFactoriesHelpers.extract_model(user_result)
-        assert isinstance(user, m.User)
+        assert isinstance(user, m.Tests.User)
         assert user.name == "Base User"
         assert user.active is False
 
@@ -259,9 +259,11 @@ class TestFlextTestsFactoriesModernAPI:
         """Test tt.batch('user') with default count."""
         users_result = tt.batch("user")
         users = users_result
-        users_typed: list[m.User] = [u for u in users if isinstance(u, m.User)]
+        users_typed: list[m.Tests.User] = [
+            u for u in users if isinstance(u, m.Tests.User)
+        ]
         assert len(users_typed) == 5
-        assert all(isinstance(user, m.User) for user in users_typed)
+        assert all(isinstance(user, m.Tests.User) for user in users_typed)
         assert users_typed[0].name == "User 0"
         assert users_typed[1].name == "User 1"
 
@@ -269,9 +271,11 @@ class TestFlextTestsFactoriesModernAPI:
         """Test tt.batch('user') with custom count."""
         users_result = tt.batch("user", count=3)
         assert isinstance(users_result, list)
-        users: list[m.User] = [u for u in users_result if isinstance(u, m.User)]
+        users: list[m.Tests.User] = [
+            u for u in users_result if isinstance(u, m.Tests.User)
+        ]
         assert len(users) == 3
-        assert all(isinstance(user, m.User) for user in users)
+        assert all(isinstance(user, m.Tests.User) for user in users)
 
     def test_op_simple(self) -> None:
         """Test tt.op('simple') operation."""
@@ -432,7 +436,7 @@ class TestsFlextTestsFactoriesModel:
         """Test user model creation with defaults."""
         user_result = tt.model("user")
         user = TestFactoriesHelpers.extract_model(user_result)
-        assert isinstance(user, m.User)
+        assert isinstance(user, m.Tests.User)
         assert user.id is not None
         assert user.name == "Test User"
         assert "@example.com" in user.email
@@ -442,7 +446,7 @@ class TestsFlextTestsFactoriesModel:
         """Test user model creation with custom parameters."""
         user_result = tt.model("user", name="Custom User", email="custom@test.com")
         user = TestFactoriesHelpers.extract_model(user_result)
-        assert isinstance(user, m.User)
+        assert isinstance(user, m.Tests.User)
         assert user.name == "Custom User"
         assert user.email == "custom@test.com"
 
@@ -451,7 +455,7 @@ class TestsFlextTestsFactoriesModel:
         users = tt.model("user", count=5)
         assert isinstance(users, list)
         assert len(users) == 5
-        assert all(isinstance(user, m.User) for user in users)
+        assert all(isinstance(user, m.Tests.User) for user in users)
 
     def test_model_as_result(self) -> None:
         """Test model wrapped in r."""
@@ -459,14 +463,14 @@ class TestsFlextTestsFactoriesModel:
         assert isinstance(result, r)
         typed_result = cast("r[_BaseModel]", result)
         _ = assertion_helpers.assert_flext_result_success(typed_result)
-        assert isinstance(result.value, m.User)
+        assert isinstance(result.value, m.Tests.User)
 
     def test_model_as_dict(self) -> None:
         """Test model returned as dict."""
         users_dict = tt.model("user", count=3, as_dict=True)
         assert isinstance(users_dict, dict)
         assert len(users_dict) == 3
-        assert all(isinstance(v, m.User) for v in users_dict.values())
+        assert all(isinstance(v, m.Tests.User) for v in users_dict.values())
 
     def test_model_config(self) -> None:
         """Test config model creation."""
@@ -496,11 +500,11 @@ class TestsFlextTestsFactoriesModel:
     def test_model_with_transform(self) -> None:
         """Test model creation with transform function."""
 
-        def transform_user(value: t.Tests.TestResultValue) -> m.User:
-            if not isinstance(value, m.User):
+        def transform_user(value: t.Tests.TestResultValue) -> m.Tests.User:
+            if not isinstance(value, m.Tests.User):
                 msg = f"Expected User, got {type(value)}"
                 raise TypeError(msg)
-            return m.User(
+            return m.Tests.User(
                 id=value.id,
                 name="Transformed",
                 email=value.email,
@@ -516,14 +520,14 @@ class TestsFlextTestsFactoriesModel:
             ),
         )
         user = TestFactoriesHelpers.extract_model(user_result)
-        assert isinstance(user, m.User)
+        assert isinstance(user, m.Tests.User)
         assert user.name == "Transformed"
 
     def test_model_with_validate(self) -> None:
         """Test model creation with validation."""
 
         def validate_active_user(value: t.Tests.TestResultValue) -> bool:
-            if not isinstance(value, m.User):
+            if not isinstance(value, m.Tests.User):
                 return False
             return value.active
 
@@ -536,7 +540,7 @@ class TestsFlextTestsFactoriesModel:
             ),
         )
         user = TestFactoriesHelpers.extract_model(user_result)
-        assert isinstance(user, m.User)
+        assert isinstance(user, m.Tests.User)
         assert user.active is True
         result_raw = tt.model(
             "user",
@@ -676,12 +680,12 @@ class TestsFlextTestsFactoriesList:
         """Test list creation from model kind."""
         users_raw = tt.list("user", count=3)
         users = cast(
-            "list[m.User]",
+            "list[m.Tests.User]",
             TestFactoriesHelpers.as_payload_list(users_raw),
         )
         assert isinstance(users, list)
         assert len(users) == 3
-        assert all(isinstance(u, m.User) for u in users)
+        assert all(isinstance(u, m.Tests.User) for u in users)
 
     def test_list_from_callable(self) -> None:
         """Test list creation from callable factory."""
@@ -749,7 +753,7 @@ class TestsFlextTestsFactoriesList:
         """Test list creation wrapped in result."""
         result_raw = tt.list("user", count=3, as_result=True)
         assert isinstance(result_raw, r)
-        result = cast("r[list[m.User]]", result_raw)
+        result = cast("r[list[m.Tests.User]]", result_raw)
         assert isinstance(result, r)
         _ = assertion_helpers.assert_flext_result_success(result)
         assert len(result.value) == 3
@@ -762,12 +766,12 @@ class TestsFlextTestsFactoriesDict:
         """Test dict creation from model kind."""
         users_raw = tt.dict_factory("user", count=3)
         users = cast(
-            "dict[str, m.User]",
+            "dict[str, m.Tests.User]",
             TestFactoriesHelpers.as_payload_mapping(users_raw),
         )
         assert isinstance(users, dict)
         assert len(users) == 3
-        assert all(isinstance(u, m.User) for u in users.values())
+        assert all(isinstance(u, m.Tests.User) for u in users.values())
 
     def test_dict_with_key_factory(self) -> None:
         """Test dict creation with key factory."""
@@ -787,7 +791,7 @@ class TestsFlextTestsFactoriesDict:
             ),
         )
         users = cast(
-            "dict[str, m.User]",
+            "dict[str, m.Tests.User]",
             TestFactoriesHelpers.as_payload_mapping(users_raw),
         )
         assert set(users.keys()) == {"user_0", "user_1", "user_2"}
@@ -795,8 +799,8 @@ class TestsFlextTestsFactoriesDict:
     def test_dict_with_value_factory(self) -> None:
         """Test dict creation with value factory."""
 
-        def value_factory(key: str) -> m.User:
-            return m.User(
+        def value_factory(key: str) -> m.Tests.User:
+            return m.Tests.User(
                 id=key,
                 name=f"User {key}",
                 email=f"{key}@test.com",
@@ -811,7 +815,7 @@ class TestsFlextTestsFactoriesDict:
             ),
         )
         users = cast(
-            "dict[str, m.User]",
+            "dict[str, m.Tests.User]",
             TestFactoriesHelpers.as_payload_mapping(users_raw),
         )
         assert len(users) == 2
@@ -830,7 +834,7 @@ class TestsFlextTestsFactoriesDict:
         """Test dict creation wrapped in result."""
         result_raw = tt.dict_factory("user", count=3, as_result=True)
         assert isinstance(result_raw, r)
-        result = cast("r[dict[str, m.User]]", result_raw)
+        result = cast("r[dict[str, m.Tests.User]]", result_raw)
         assert isinstance(result, r)
         _ = assertion_helpers.assert_flext_result_success(result)
         assert len(result.value) == 3

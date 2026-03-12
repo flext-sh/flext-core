@@ -1503,7 +1503,7 @@ class FlextTestsUtilities(FlextUtilities):
                 rule_id: str,
                 lines: list[str],
                 extra_desc: str = "",
-            ) -> m.Validator.Violation:
+            ) -> m.Tests.Violation:
                 """Create a violation model using c.Tests.Validator.Rules.
 
                 Args:
@@ -1521,7 +1521,7 @@ class FlextTestsUtilities(FlextUtilities):
                 severity, desc = c.Tests.Validator.Rules.get(rule_id)
                 description = f"{desc}: {extra_desc}" if extra_desc else desc
                 line = lines[line_number - 1] if line_number <= len(lines) else ""
-                return m.Validator.Violation(
+                return m.Tests.Violation(
                     file_path=file_path,
                     line_number=line_number,
                     rule_id=rule_id,
@@ -1720,7 +1720,7 @@ class FlextTestsUtilities(FlextUtilities):
             Follows FLEXT patterns:
             - Zero code duplication - delegates to flext-core utilities
             - Uses t.Tests.Matcher.DeepSpec for type safety
-            - Returns m.DeepMatchResult for structured results
+            - Returns m.Tests.DeepMatchResult for structured results
             - Supports unlimited nesting depth via dot notation
 
             All operations delegate to FlextUtilities.extract() for
@@ -1736,7 +1736,7 @@ class FlextTestsUtilities(FlextUtilities):
                 ],
                 *,
                 path_sep: str = ".",
-            ) -> m.DeepMatchResult:
+            ) -> m.Tests.DeepMatchResult:
                 """Match object against deep specification.
 
                 Uses u.extract() for path extraction - NO code duplication.
@@ -1780,7 +1780,7 @@ class FlextTestsUtilities(FlextUtilities):
                         source_obj, path, separator=path_sep
                     )
                     if result.is_failure:
-                        return m.DeepMatchResult(
+                        return m.Tests.DeepMatchResult(
                             path=path,
                             expected=expected,
                             actual=None,
@@ -1791,7 +1791,7 @@ class FlextTestsUtilities(FlextUtilities):
                     if callable(expected):
                         actual_payload = _to_payload(actual)
                         if not expected(actual_payload):
-                            return m.DeepMatchResult(
+                            return m.Tests.DeepMatchResult(
                                 path=path,
                                 expected="<predicate>",
                                 actual=actual_payload,
@@ -1800,14 +1800,14 @@ class FlextTestsUtilities(FlextUtilities):
                             )
                     elif actual != expected:
                         actual_payload = _to_payload(actual)
-                        return m.DeepMatchResult(
+                        return m.Tests.DeepMatchResult(
                             path=path,
                             expected=expected,
                             actual=actual_payload,
                             matched=False,
                             reason="Value mismatch",
                         )
-                return m.DeepMatchResult(
+                return m.Tests.DeepMatchResult(
                     path="",
                     expected=_to_payload(obj),
                     actual=_to_payload(obj),

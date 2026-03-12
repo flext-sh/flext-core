@@ -95,7 +95,7 @@ class FlextTestsFactories(s[t.Tests.object]):
         environments: Sequence[str] | None = None,
         service_types: Sequence[str] | None = None,
         **common_overrides: t.Tests.TestResultValue,
-    ) -> list[m.User] | builtins.list[m.Config] | builtins.list[m.Service]:
+    ) -> list[m.Tests.User] | builtins.list[m.Config] | builtins.list[m.Service]:
         """Unified batch factory - creates multiple model instances.
 
         This is the preferred way to create batches of test models.
@@ -125,11 +125,11 @@ class FlextTestsFactories(s[t.Tests.object]):
         """
         _ = common_overrides
         if kind == "user":
-            result_users: builtins.list[m.User] = []
+            result_users: builtins.list[m.Tests.User] = []
             for i in range(count):
                 name = names[i % len(names)] if names else f"User {i}"
                 user_model = cls.model("user", name=name, email=f"user{i}@example.com")
-                result_users.append(m.User.model_validate(user_model))
+                result_users.append(m.Tests.User.model_validate(user_model))
             return result_users
         if kind == "config":
             envs = (
@@ -184,7 +184,7 @@ class FlextTestsFactories(s[t.Tests.object]):
             # Dict from model kind
             users = tt.dict_factory("user", count=3)
             assert len(users) == 3
-            assert all(m.User in type(u).__mro__ for u in users.values())
+            assert all(m.Tests.User in type(u).__mro__ for u in users.values())
 
             # Dict from callable
             pairs = tt.dict_factory(lambda: (f"key_{i}", i), count=3)
@@ -397,7 +397,7 @@ class FlextTestsFactories(s[t.Tests.object]):
             # List from model kind
             users = tt.list("user", count=3)
             assert len(users) == 3
-            assert all(m.User in type(u).__mro__ for u in users)
+            assert all(m.Tests.User in type(u).__mro__ for u in users)
 
             # List from callable
             numbers = tt.list(lambda: 42, count=5)
@@ -547,7 +547,7 @@ class FlextTestsFactories(s[t.Tests.object]):
             user_result = tt.model("user", as_result=True)
 
             # Create with custom factory
-            user = tt.model("user", factory=lambda: m.User(id="1", name="Test", email="test@example.com"))
+            user = tt.model("user", factory=lambda: m.Tests.User(id="1", name="Test", email="test@example.com"))
 
             # Create with transform
             user = tt.model("user", transform=lambda u: u.model_copy(update={"name": "Modified"}))
@@ -564,13 +564,15 @@ class FlextTestsFactories(s[t.Tests.object]):
         except (TypeError, ValueError, AttributeError) as exc:
             return r[t.Tests.Factory.FactoryModel].fail(f"Invalid parameters: {exc}")
 
-        def _create_single() -> m.User | m.Config | m.Service | m.Entity | m.Value:
+        def _create_single() -> (
+            m.Tests.User | m.Config | m.Service | m.Entity | m.Value
+        ):
             if params.factory:
                 factory_result = params.factory()
                 if isinstance(
                     factory_result,
                     (
-                        m.User,
+                        m.Tests.User,
                         m.Config,
                         m.Service,
                         m.Entity,
@@ -604,7 +606,7 @@ class FlextTestsFactories(s[t.Tests.object]):
                             str(k): _to_payload_value(v)
                             for k, v in merge_result.value.items()
                         }
-                return m.User.model_validate(user_data)
+                return m.Tests.User.model_validate(user_data)
             if params.kind == "config":
                 config_data: MutableMapping[str, t.Tests.object] = {
                     "service_type": params.service_type
@@ -893,7 +895,7 @@ class FlextTestsFactories(s[t.Tests.object]):
 
         """
         try:
-            params = m.ResultFactoryParams.model_validate({
+            params = m.Tests.ResultFactoryParams.model_validate({
                 "kind": kind,
                 "value": value,
                 **kwargs,
@@ -1217,7 +1219,7 @@ class FlextTestsFactories(s[t.Tests.object]):
         name: str | None = None,
         email: str | None = None,
         **overrides: t.Tests.TestResultValue,
-    ) -> m.User:
+    ) -> m.Tests.User:
         """Create a test user.
 
         Args:
@@ -1247,7 +1249,7 @@ class FlextTestsFactories(s[t.Tests.object]):
             user_data = {
                 str(k): _to_payload_value(v) for k, v in merge_result.value.items()
             }
-        return m.User.model_validate(user_data)
+        return m.Tests.User.model_validate(user_data)
 
     @override
     def execute(self) -> r[t.Tests.object]:

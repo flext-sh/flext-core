@@ -17,23 +17,23 @@ from flext_core import r, s
 
 from .. import c, m
 
-User = m.User
+User = m.Tests.User
 """Type alias for backward-compatible import: ``from .helpers.factories import User``."""
 
 ServiceTestCase = m.ServiceTestCase
 """Type alias for backward-compatible import: ``from .helpers.factories import ServiceTestCase``."""
 
 
-class GetUserService(s[m.User]):
+class GetUserService(s[m.Tests.User]):
     """Service to get a user by ID."""
 
     user_id: str
 
     @override
-    def execute(self) -> r[m.User]:
+    def execute(self) -> r[m.Tests.User]:
         """Get user by ID."""
-        return r[m.User].ok(
-            m.User(
+        return r[m.Tests.User].ok(
+            m.Tests.User(
                 user_id=self.user_id,
                 name=f"{c.Services.DEFAULT_USER_NAME_PREFIX}{self.user_id}",
                 email=f"user{self.user_id}{c.Services.DEFAULT_EMAIL_DOMAIN}",
@@ -87,7 +87,7 @@ class FailingServiceAuto(FailingService):
 
 
 class UserFactory:
-    """Factory for m.User entities using native Python patterns."""
+    """Factory for m.Tests.User entities using native Python patterns."""
 
     _counter: ClassVar[count[int]] = count(1)
     _names: ClassVar[list[str]] = [
@@ -114,13 +114,13 @@ class UserFactory:
         name: str | None = None,
         email: str | None = None,
         is_active: bool = True,
-    ) -> m.User:
-        """Build a m.User instance with optional overrides."""
+    ) -> m.Tests.User:
+        """Build a m.Tests.User instance with optional overrides."""
         n = next(cls._counter)
         actual_user_id = user_id if user_id is not None else f"user_{n:03d}"
         actual_name = name if name is not None else cls._next_name()
         actual_email = email if email is not None else f"{actual_user_id}@example.com"
-        return m.User(
+        return m.Tests.User(
             user_id=actual_user_id,
             name=actual_name,
             email=actual_email,
@@ -128,8 +128,8 @@ class UserFactory:
         )
 
     @classmethod
-    def build_batch(cls, size: int) -> list[m.User]:
-        """Build multiple m.User instances with auto-generated values."""
+    def build_batch(cls, size: int) -> list[m.Tests.User]:
+        """Build multiple m.Tests.User instances with auto-generated values."""
         return [cls.build() for _ in range(size)]
 
     @classmethod
@@ -383,9 +383,9 @@ class ServiceFactoryRegistry:
     def create_service(
         cls,
         case: m.ServiceTestCase,
-    ) -> s[m.User] | s[str]:
+    ) -> s[m.Tests.User] | s[str]:
         """Create appropriate service based on case type using pattern matching."""
-        service: s[m.User] | s[str]
+        service: s[m.Tests.User] | s[str]
         match case.service_type:
             case m.ServiceTestType.GET_USER:
                 service = GetUserServiceFactory.build(user_id=case.input_value)
@@ -478,7 +478,7 @@ class ServiceTestCases:
     @staticmethod
     def create_service(
         case: m.ServiceTestCase,
-    ) -> s[m.User] | s[str]:
+    ) -> s[m.Tests.User] | s[str]:
         """Create appropriate service based on case type."""
         return ServiceFactoryRegistry.create_service(case)
 

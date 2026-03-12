@@ -23,8 +23,8 @@ from pydantic import (
 )
 
 from flext_core import FlextModels, r, u
-from flext_core._models.base import FlextModelFoundation
 from flext_tests import c, t
+
 
 class FlextTestsModels(
     FlextModels,
@@ -46,7 +46,6 @@ class FlextTestsModels(
 
     class Tests:
         """Test-specific models namespace."""
-
 
         class ContainerInfo(FlextModels.Value):
             """Container information model."""
@@ -96,7 +95,6 @@ class FlextTestsModels(
             is_dirty: bool
             worker_id: str
             last_updated: str | None = None
-
 
         class ModelFactoryParams(FlextModels.Value):
             """Parameters for factory model() method with Pydantic 2 validation."""
@@ -191,9 +189,13 @@ class FlextTestsModels(
             @model_validator(mode="after")
             def validate_mapping(
                 self,
-            ) -> FlextTestsModels.Tests.Factory.ModelFactoryParams:
+            ) -> FlextTestsModels.Tests.ModelFactoryParams:
                 """Validate as_mapping keys if provided."""
-                if self.as_mapping and self.count > 1 and len(self.as_mapping) < self.count:
+                if (
+                    self.as_mapping
+                    and self.count > 1
+                    and len(self.as_mapping) < self.count
+                ):
                     msg = f"as_mapping must have at least {self.count} keys"
                     raise ValueError(msg)
                 return self
@@ -263,7 +265,7 @@ class FlextTestsModels(
             @model_validator(mode="after")
             def validate_kind_value(
                 self,
-            ) -> FlextTestsModels.Tests.Factory.ResultFactoryParams:
+            ) -> FlextTestsModels.Tests.ResultFactoryParams:
                 """Validate kind matches value requirements."""
                 if self.kind == "ok" and self.value is None and self.values is None:
                     # None value is allowed for ok kind
@@ -414,8 +416,6 @@ class FlextTestsModels(
             name: str = ""
             status: str = "active"
 
-        # Use module-level Entity and Value to avoid Pydantic forward reference issues
-        # Factory classes for test model creation
         class Entity(FlextModels.Entity):
             """Factory entity class for tests."""
 
@@ -446,7 +446,7 @@ class FlextTestsModels(
             permissions: int = 0
             is_readonly: bool = False
             sha256: str | None = None
-            content_meta: FlextTestsModels.Tests.Files.ContentMeta | None = None
+            content_meta: FlextTestsModels.Tests.ContentMeta | None = None
             """Optional content metadata for parsed files."""
 
         class ContentMeta(FlextModels.Value):
@@ -730,7 +730,6 @@ class FlextTestsModels(
                         return 0.0
                     return (self.succeeded / self.total) * 100.0
 
-
         Severity = c.Tests.Validator.Severity
 
         class Violation(FlextModels.Value):
@@ -764,7 +763,7 @@ class FlextTestsModels(
 
             validator_name: str
             files_scanned: int
-            violations: list[FlextTestsModels.Tests.Validator.Violation]
+            violations: list[FlextTestsModels.Tests.Violation]
             passed: bool
 
             @classmethod
@@ -772,8 +771,8 @@ class FlextTestsModels(
                 cls,
                 validator_name: str,
                 files_scanned: int,
-                violations: list[FlextTestsModels.Tests.Validator.Violation],
-            ) -> FlextTestsModels.Tests.Validator.ScanResult:
+                violations: list[FlextTestsModels.Tests.Violation],
+            ) -> FlextTestsModels.Tests.ScanResult:
                 """Create a ScanResult from violations."""
                 return cls(
                     validator_name=validator_name,

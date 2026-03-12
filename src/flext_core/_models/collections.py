@@ -218,10 +218,9 @@ class FlextModelsCollections:
             """
             if not stats_list:
                 return {}
-            result: dict[str, t.MetadataValue] = {}
+            result: dict[str, t.MetadataValue | None] = {}
             for stats in stats_list:
-                stats_dict = stats.model_dump()
-                for key, value in stats_dict.items():
+                for key, value in stats.model_dump().items():
                     if key not in result:
                         result[key] = value
                     else:
@@ -230,20 +229,13 @@ class FlextModelsCollections:
                         )
             normalized_result: dict[str, t.MetadataValue] = {}
             for key, value in result.items():
-                if value is None or value.__class__ in {
-                    str,
-                    int,
-                    float,
-                    bool,
-                    datetime,
-                }:
+                if isinstance(value, (str, int, float, bool, datetime)):
                     normalized_result[key] = value
                 elif isinstance(value, list):
-                    filtered = [
+                    filtered: list[t.Scalar] = [
                         item
                         for item in value
-                        if item is None
-                        or isinstance(item, (str, int, float, bool, datetime))
+                        if isinstance(item, (str, int, float, bool, datetime))
                     ]
                     normalized_result[key] = filtered
             return normalized_result
@@ -266,10 +258,12 @@ class FlextModelsCollections:
                 Merged rules instance
 
             """
-            merged_data: dict[str, t.MetadataValue] = {}
-            for rule in rules:
-                merged_data.update(rule.model_dump())
-            return cls(**merged_data)
+            if not rules:
+                return cls()
+            base = rules[0].model_copy()
+            for other in rules[1:]:
+                base = base.model_copy(update=other.model_dump())
+            return base
 
     class Results(FlextModelFoundation.ArbitraryTypesModel):
         """Base for results models (mutable)."""
@@ -277,24 +271,23 @@ class FlextModelsCollections:
         @classmethod
         def _concatenate_lists(
             cls, non_none: Sequence[t.MetadataValue]
-        ) -> Sequence[t.Scalar | None]:
+        ) -> Sequence[t.Scalar]:
             """Concatenate list-like values.
 
             Args:
                 non_none: List of non-None values
 
             Returns:
-                Combined list matching object's list type
+                Combined list of scalar values
 
             """
-            combined: list[t.Scalar | None] = []
+            combined: list[t.Scalar] = []
             for v in non_none:
-                if FlextRuntime.is_list_like(v) and v.__class__ not in {str, bytes}:
+                if isinstance(v, Sequence) and not isinstance(v, (str, bytes)):
                     combined.extend(
                         item
                         for item in v
-                        if item is None
-                        or isinstance(item, (str, int, float, bool, datetime))
+                        if isinstance(item, (str, int, float, bool, datetime))
                     )
             return combined
 
@@ -302,35 +295,21 @@ class FlextModelsCollections:
         def _merge_dicts(
             cls, non_none: Sequence[t.MetadataValue]
         ) -> Mapping[str, t.MetadataValue]:
-            """Merge dict-like values.
-
-            Args:
-                non_none: List of non-None values
-
-            Returns:
-                Merged dictionary matching object's dict type
-
-            """
             merged: dict[str, t.MetadataValue] = {}
             for v in non_none:
-                if FlextRuntime.is_dict_like(v):
+                if isinstance(v, Mapping):
                     for key, val in v.items():
-                        if val is None or val.__class__ in {
-                            str,
-                            int,
-                            float,
-                            bool,
-                            datetime,
-                        }:
+                        if isinstance(val, (str, int, float, bool, datetime)):
                             merged[str(key)] = val
-                        elif isinstance(val, list):
-                            filtered = [
+                        elif isinstance(val, Sequence) and not isinstance(
+                            val, (str, bytes)
+                        ):
+                            scalar_items: list[t.Scalar] = [
                                 item
                                 for item in val
-                                if item is None
-                                or isinstance(item, (str, int, float, bool, datetime))
+                                if isinstance(item, (str, int, float, bool, datetime))
                             ]
-                            merged[str(key)] = filtered
+                            merged[str(key)] = scalar_items
             return merged
 
         @classmethod
