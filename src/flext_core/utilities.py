@@ -157,6 +157,7 @@ class FlextUtilities:
     compute_accepted_message_types = staticmethod(
         FlextUtilitiesChecker.compute_accepted_message_types
     )
+    get_message_route = staticmethod(FlextUtilitiesChecker.get_message_route)
     build_options_from_kwargs = staticmethod(
         FlextUtilitiesConfiguration.build_options_from_kwargs
     )
@@ -202,6 +203,7 @@ class FlextUtilities:
     to_str = staticmethod(FlextUtilitiesConversion.to_str)
     to_str_list = staticmethod(FlextUtilitiesConversion.to_str_list)
     to_flexible_value = staticmethod(FlextUtilitiesConversion.to_flexible_value)
+    narrow = staticmethod(FlextUtilitiesConversion.narrow)
     write_file = staticmethod(FlextUtilitiesFileOps.write_file)
     write_stdout = staticmethod(FlextUtilitiesFileOps.write_stdout)
     deprecated = staticmethod(FlextUtilitiesDeprecation.deprecated)
@@ -260,11 +262,17 @@ class FlextUtilities:
     is_general_value_type = staticmethod(FlextUtilitiesGuards.is_general_value_type)
     is_handler_type = staticmethod(FlextUtilitiesGuards.is_handler_type)
     is_handler_callable = staticmethod(FlextUtilitiesGuards.is_handler_callable)
+    is_factory = staticmethod(FlextUtilitiesGuards.is_factory)
+    is_resource = staticmethod(FlextUtilitiesGuards.is_resource)
     is_list = staticmethod(FlextUtilitiesGuards.is_list)
     is_list_non_empty = staticmethod(FlextUtilitiesGuards.is_list_non_empty)
     is_protocol_implementation = staticmethod(
         FlextUtilitiesGuards.is_protocol_implementation
     )
+    is_registerable_service = staticmethod(
+        FlextUtilitiesGuards.is_registerable_service
+    )
+    is_instance_of = staticmethod(FlextUtilitiesGuards.is_instance_of)
     is_pydantic_model = staticmethod(FlextUtilitiesGuards.is_pydantic_model)
     is_string_non_empty = staticmethod(FlextUtilitiesGuards.is_string_non_empty)
     is_type = staticmethod(FlextUtilitiesGuards.is_type)
@@ -315,6 +323,7 @@ class FlextUtilities:
     process_context_data = staticmethod(FlextUtilitiesMapper.process_context_data)
     prop = staticmethod(FlextUtilitiesMapper.prop)
     take = staticmethod(FlextUtilitiesMapper.take)
+    to_dict = staticmethod(FlextUtilitiesModel.to_config_map)
     transform = staticmethod(FlextUtilitiesMapper.transform)
     transform_values = staticmethod(FlextUtilitiesMapper.transform_values)
     dump = staticmethod(FlextUtilitiesModel.dump)
@@ -375,6 +384,7 @@ class FlextUtilities:
     validate_pattern = staticmethod(FlextUtilitiesGuards.validate_pattern)
     validate_positive = staticmethod(FlextUtilitiesGuards.validate_positive)
     any_ = staticmethod(FlextUtilitiesResultHelpers.any_)
+    ensure_result = staticmethod(FlextUtilitiesResultHelpers.ensure)
     err = staticmethod(FlextUtilitiesResultHelpers.err)
 
     @staticmethod
@@ -397,6 +407,7 @@ class FlextUtilities:
 
     or_ = staticmethod(FlextUtilitiesResultHelpers.or_)
     starts = staticmethod(FlextUtilitiesResultHelpers.starts)
+    traverse = staticmethod(r.traverse)
     try_ = staticmethod(FlextUtilitiesResultHelpers.try_)
     val = staticmethod(FlextUtilitiesResultHelpers.val)
     vals = staticmethod(FlextUtilitiesResultHelpers.vals)

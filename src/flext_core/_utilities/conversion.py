@@ -334,24 +334,25 @@ class FlextUtilitiesConversion:
 
     @staticmethod
     def to_str_list_truthy(value: StrictValue) -> list[str]:
-        """Convert value to list[str] filtering out falsy values.
-
-        Converts value to list of strings while filtering out falsy
-        (empty strings, None, etc.) values for cleaner results.
-
-        Args:
-            value: Value to convert
-
-        Returns:
-            list[str]: List of truthy string values
-
-        Example:
-            >>> u.Conversion.to_str_list_truthy(["a", "", "b", None])
-            ["a", "b"]
-
-        """
+        """Convert value to list[str] filtering out falsy values."""
         result = FlextUtilitiesConversion.to_str_list_safe(value, filter_list_like=True)
         return [item for item in result if item]
+
+    @staticmethod
+    def narrow[T](value: object, type_cls: type[T]) -> T:
+        """Narrow *value* to *type_cls*, attempting coercion if needed.
+
+        Args:
+            value: Value to narrow
+            type_cls: Target type
+
+        Returns:
+            T: Value narrowed or coerced to type_cls
+
+        """
+        if isinstance(value, type_cls):
+            return value
+        return type_cls(value)  # type: ignore[call-arg]
 
 
 __all__ = ["FlextUtilitiesConversion"]

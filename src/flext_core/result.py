@@ -20,8 +20,8 @@ from returns.maybe import Maybe, Nothing, Some
 from returns.primitives.exceptions import UnwrapFailedError
 from returns.result import Failure, Result, Success
 
+import flext_core
 from flext_core import FlextRuntime, T_Model, U, t
-from flext_core.exceptions import FlextExceptions as e
 
 
 class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
@@ -50,31 +50,61 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
                 failure_value = source.failure()
             except UnwrapFailedError as exc:
                 super().__init__(
-                    value=source.unwrap(),
                     error_code=error_code,
-                    error_data=error_data,
                     is_success=True,
                 )
-                object.__setattr__(self, "_result_logger", self.logger)
-                self.logger.debug(
+                if error_data is None:
+                    object.__setattr__(self, "error_data", None)
+                else:
+                    object.__setattr__(
+                        self,
+                        "error_data",
+                        FlextRuntime
+                        .RuntimeResult[t.Container]
+                        .fail(error="", error_data=error_data)
+                        .error_data,
+                    )
+                setattr(self, "_payload", source.unwrap())
+                self.result_logger.debug(
                     "Result source is success path during initialization", exc_info=exc
                 )
                 return
             super().__init__(
                 error_code=error_code,
-                error_data=error_data,
                 error=str(failure_value),
                 is_success=False,
             )
+            if error_data is None:
+                object.__setattr__(self, "error_data", None)
+            else:
+                object.__setattr__(
+                    self,
+                    "error_data",
+                    FlextRuntime
+                    .RuntimeResult[t.Container]
+                    .fail(error="", error_data=error_data)
+                    .error_data,
+                )
             return
         object.__setattr__(self, "_result", source)
         super().__init__(
-            value=value,
             error=error,
             error_code=error_code,
-            error_data=error_data,
             is_success=is_success,
         )
+        if error_data is None:
+            object.__setattr__(self, "error_data", None)
+        else:
+            object.__setattr__(
+                self,
+                "error_data",
+                FlextRuntime
+                .RuntimeResult[t.Container]
+                .fail(error="", error_data=error_data)
+                .error_data,
+            )
+        if value is not None and is_success:
+            setattr(self, "_payload", value)
 
     @property
     def _returns_result(self) -> Result[T_co, str]:
@@ -84,15 +114,18 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
                 setattr(self, "_result", Success(self.value))
             else:
                 setattr(self, "_result", Failure(self.error or ""))
-        return self._result
+        result = self._result
+        if result is None:
+            msg = "Internal result wrapper was not initialized"
+            raise RuntimeError(msg)
+        return result
 
     @property
     @override
     def data(self) -> T_co:
         """Compatibility alias returning successful payload value."""
         warnings.warn(
-            "FlextResult.data is deprecated; use FlextResult.value. "
-            "Planned removal: v0.12.",
+            "FlextResult.data is deprecated; use FlextResult.value.",
             DeprecationWarning,
             stacklevel=2,
         )
@@ -103,7 +136,8 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
     def result(self) -> Self:
         """Protocol compatibility: return self (same as RuntimeResult)."""
         warnings.warn(
-            "FlextResult.result is deprecated; use .value or .error",
+            "FlextResult.result is deprecated; use .value or .error. "
+            "Planned removal: v0.12.",
             DeprecationWarning,
             stacklevel=2,
         )
@@ -588,7 +622,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
                 mapped_value = func(self.value)
                 return FlextResult[U](value=mapped_value, is_success=True)
             except (ValueError, TypeError, KeyError, AttributeError, RuntimeError) as e:
-                self.logger.debug("FlextResult.map callable failed", exc_info=e)
+                self.result_logger.debug("FlextResult.map callable failed", exc_info=e)
                 result = FlextResult[U](error=str(e), is_success=False)
                 setattr(result, "_exception", e)
                 return result
@@ -693,9 +727,9 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
             stacklevel=2,
         )
         if self.is_failure:
-            raise e.ValidationError(self.error or "Cannot convert failure to IO") from (
-                self._exception
-            )
+            raise flext_core.e.ValidationError(
+                self.error or "Cannot convert failure to IO"
+            ) from self._exception
         return IO(self.value)
 
     def to_io_result(self) -> IOResult[T_co, str]:
@@ -784,15 +818,6 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         if self.is_success and self.value is not None:
             return self.value
         return default
-
-    def value_or[D](self, default: D) -> T_co | D:
-        """Return success value or provided default on failure."""
-        warnings.warn(
-            "value_or() is deprecated; use unwrap_or()",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.unwrap_or(default)
 
     @override
     def _protocol_name(self) -> str:

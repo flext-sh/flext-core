@@ -14,6 +14,8 @@ import inspect
 from collections.abc import Callable, Mapping
 from typing import get_args, get_origin, get_type_hints
 
+from pydantic import BaseModel
+
 from flext_core import FlextRuntime, c, p, r, t
 from flext_core._utilities.guards import FlextUtilitiesGuards
 
@@ -321,6 +323,41 @@ class FlextUtilitiesChecker:
             if explicit_type_result.is_success:
                 message_types.append(explicit_type_result.value)
         return tuple(message_types)
+
+    @classmethod
+    def get_message_route(cls, msg: p.Routable | type[p.Routable] | str) -> str:
+        """Resolve route name strictly from Routable attributes or string.
+
+        Args:
+            msg: Message instance, type, or explicit route string.
+
+        Returns:
+            str: Resolved route name.
+
+        Raises:
+            TypeError: If message does not provide a valid route.
+
+        """
+        if isinstance(msg, str):
+            return msg
+        route_attrs = ("command_type", "query_type", "event_type")
+        for attr in route_attrs:
+            attr_val: object = getattr(msg, attr, None)
+            if isinstance(attr_val, str) and attr_val:
+                return attr_val
+        if isinstance(msg, type) and issubclass(msg, BaseModel):
+            for attr in route_attrs:
+                if attr in msg.model_fields:
+                    field_info = msg.model_fields[attr]
+                    default_val = field_info.default
+                    if (
+                        isinstance(default_val, str)
+                        and default_val
+                        and default_val != "PydanticUndefined"
+                    ):
+                        return default_val
+        msg_type_error = f"Message {msg} does not provide a valid route via command_type, query_type, or event_type"
+        raise TypeError(msg_type_error)
 
 
 __all__ = ["FlextUtilitiesChecker"]

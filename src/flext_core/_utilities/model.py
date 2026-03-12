@@ -314,5 +314,52 @@ class FlextUtilitiesModel:
         except (AttributeError, TypeError, ValueError) as e:
             return r[M].fail(f"Model update failed: {e}")
 
+    @staticmethod
+    def to_config_map(obj: BaseModel | object | None) -> m.ConfigMap:
+        """Convert BaseModel/dict to ConfigMap (None → empty ConfigMap)."""
+        if obj is None:
+            return m.ConfigMap(root={})
+        if isinstance(obj, m.ConfigMap):
+            return obj
+        if isinstance(obj, BaseModel):
+            model_dump_result = obj.model_dump()
+            try:
+                normalized_model_dump: dict[str, object] = {}
+                for key, value in model_dump_result.items():
+                    normalized_value: object
+                    if value is None:
+                        normalized_value = ""
+                    elif isinstance(value, (str, int, float, bool, type(None), BaseModel)):
+                        normalized_value = FlextRuntime.normalize_to_general_value(
+                            value
+                        )
+                    else:
+                        normalized_value = str(value)
+                    normalized_model_dump[str(key)] = normalized_value
+                return m.ConfigMap.model_validate(normalized_model_dump)
+            except (TypeError, ValueError, AttributeError):
+                return m.ConfigMap(root={"value": str(model_dump_result)})
+        if isinstance(obj, Mapping):
+            try:
+                normalized_mapping: dict[str, object] = {}
+                for key, value in obj.items():
+                    normalized_mapping_value: object = (
+                        FlextRuntime.normalize_to_general_value(value)
+                        if isinstance(
+                            value, (str, int, float, bool, type(None), BaseModel)
+                        )
+                        else str(value)
+                    )
+                    normalized_mapping[str(key)] = normalized_mapping_value
+                return m.ConfigMap.model_validate(normalized_mapping)
+            except (TypeError, ValueError, AttributeError):
+                return m.ConfigMap(root={})
+
+        # Fallback to general value normalization
+        normalized = FlextRuntime.normalize_to_general_value(obj)
+        if isinstance(normalized, Mapping):
+            return m.ConfigMap(root=dict(normalized.items()))
+        return m.ConfigMap(root={})
+
 
 __all__ = ["FlextUtilitiesModel"]

@@ -1228,17 +1228,6 @@ class FlextRuntime:
             return self.unwrap_or(default)
 
         @property
-        def data(self) -> T:
-            """Backward-compatible alias for value."""
-            warnings.warn(
-                "RuntimeResult.data is deprecated; use RuntimeResult.value. "
-                "Planned removal: v0.12.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            return self.value
-
-        @property
         def exception(self) -> BaseException | None:
             """Get the exception if one was captured."""
             return self._exception

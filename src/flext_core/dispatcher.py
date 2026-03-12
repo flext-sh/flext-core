@@ -15,7 +15,7 @@ from typing import Protocol, runtime_checkable
 
 from pydantic import BaseModel
 
-from flext_core import c, p, r
+from flext_core import c, p, r, u
 from flext_core.loggings import FlextLogger
 
 
@@ -86,7 +86,7 @@ class FlextDispatcher:
 
         """
         try:
-            route_name = self._resolve_route(message)
+            route_name = u.get_message_route(message)
         except (TypeError, ValueError) as e:
             return r[object].fail(
                 f"Dispatch failed: {e!s}", error_code=c.Errors.COMMAND_PROCESSING_FAILED
@@ -95,8 +95,8 @@ class FlextDispatcher:
         if not handler:
             msg_type = message.__class__
             for auto_h in self._auto_handlers:
-                has_can_handle = getattr(auto_h, "can_handle", None)
-                if callable(has_can_handle) and has_can_handle(msg_type):
+                accepted = u.compute_accepted_message_types(auto_h.__class__)
+                if u.Checker.can_handle_message_type(accepted, msg_type):
                     handler = auto_h
                     break
         if not handler:
@@ -115,7 +115,7 @@ class FlextDispatcher:
         expects a concrete payload type and should avoid ad-hoc narrowing logic.
         """
         return self.dispatch(message).flat_map(
-            lambda value: self._coerce_dispatch_value(value, expected_type)
+            lambda value: u.parse(value, expected_type)
         )
 
     def publish(self, event: p.Routable | list[p.Routable]) -> r[bool]:
@@ -132,15 +132,13 @@ class FlextDispatcher:
             for e in event:
                 _ = self.publish(e)
             return r[bool].ok(value=True)
-        route_name = self._resolve_route(event)
+        route_name = u.get_message_route(event)
         handlers = self._event_subscribers.get(route_name, [])
         evt_type = event.__class__
         for auto_h in self._auto_handlers:
-            has_can_handle = getattr(auto_h, "can_handle", None)
-            if (
-                callable(has_can_handle)
-                and has_can_handle(evt_type)
-                and (auto_h not in handlers)
+            accepted = u.compute_accepted_message_types(auto_h.__class__)
+            if u.Checker.can_handle_message_type(accepted, evt_type) and (
+                auto_h not in handlers
             ):
                 handlers.append(auto_h)
         if not handlers:
@@ -165,14 +163,10 @@ class FlextDispatcher:
 
         """
         route_name: str | None = None
-        has_message_type = getattr(handler, "message_type", None)
-        has_event_type = getattr(handler, "event_type", None)
-        has_can_handle = getattr(handler, "can_handle", None)
-        if has_message_type:
-            route_name = self._resolve_route(has_message_type)
-        elif has_event_type:
-            route_name = self._resolve_route(has_event_type)
-        elif callable(has_can_handle):
+        accepted = u.compute_accepted_message_types(handler.__class__)
+        if accepted:
+            route_name = u.get_message_route(accepted[0])
+        elif callable(getattr(handler, "can_handle", None)):
             self._auto_handlers.append(handler)
             self._logger.info("Registered auto-discovery handler", handler=str(handler))
             return r[bool].ok(value=True)
@@ -237,41 +231,6 @@ class FlextDispatcher:
                 error_code=c.Errors.COMMAND_PROCESSING_FAILED,
             )
 
-    @staticmethod
-    def _coerce_dispatch_value[DispatchValueT](
-        value: object, expected_type: type[DispatchValueT]
-    ) -> r[DispatchValueT]:
-        """Coerce dispatcher payload to expected type with typed result."""
-        if isinstance(value, expected_type):
-            return r[DispatchValueT].ok(value)
-        return r[DispatchValueT].fail(
-            f"Dispatch returned {type(value).__name__}; expected {expected_type.__name__}",
-            error_code=c.Errors.VALIDATION_ERROR,
-        )
-
     def _protocol_name(self) -> str:
         """Return the protocol name for introspection."""
         return "core-command-bus"
-
-    def _resolve_route(self, msg: p.Routable | type[p.Routable] | str) -> str:
-        """Resolve route name strictly from Routable attributes or string."""
-        if isinstance(msg, str):
-            return msg
-        route_attrs = ("command_type", "query_type", "event_type")
-        for attr in route_attrs:
-            attr_val: object = getattr(msg, attr, None)
-            if isinstance(attr_val, str) and attr_val:
-                return attr_val
-        if isinstance(msg, type) and issubclass(msg, BaseModel):
-            for attr in route_attrs:
-                if attr in msg.model_fields:
-                    field_info = msg.model_fields[attr]
-                    default_val = field_info.default
-                    if (
-                        isinstance(default_val, str)
-                        and default_val
-                        and default_val != "PydanticUndefined"
-                    ):
-                        return default_val
-        msg_type_error = f"Message {msg} does not provide a valid route via command_type, query_type, or event_type"
-        raise TypeError(msg_type_error)

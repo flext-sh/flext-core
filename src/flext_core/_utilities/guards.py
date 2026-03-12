@@ -236,15 +236,10 @@ class FlextUtilitiesGuards:
         return True
 
     @staticmethod
-    def is_context(obj: object) -> TypeGuard[p.Context]:
-        """Check if object satisfies the Context protocol."""
-        return (
-            hasattr(obj, "clone")
-            and callable(getattr(obj, "clone", None))
-            and hasattr(obj, "set")
-            and callable(getattr(obj, "set", None))
-            and hasattr(obj, "get")
-            and callable(getattr(obj, "get", None))
+    def is_context(value: object) -> TypeGuard[p.Context]:
+        """Check if *value* satisfies ``p.Context`` structurally."""
+        return bool(
+            hasattr(value, "get") and hasattr(value, "set") and hasattr(value, "info")
         )
 
     @staticmethod
@@ -366,8 +361,39 @@ class FlextUtilitiesGuards:
     def is_mapping(
         value: FlextUtilitiesGuards._GuardInput,
     ) -> TypeGuard[Mapping[str, object]]:
-        """Check if value is ConfigurationMapping (Mapping[str, object])."""
+        """Check if *value* is a mapping instance."""
         return isinstance(value, Mapping)
+
+    @staticmethod
+    def is_registerable(value: object) -> bool:
+        """Check if *value* can be registered in FlextContainer."""
+        if isinstance(value, (str, int, float, bool, type(None))):
+            return True
+        if isinstance(value, (BaseModel, Path)):
+            return True
+        if callable(value):
+            return True
+        if isinstance(value, Mapping):
+            return True
+        if isinstance(value, Sequence) and not isinstance(
+            value, (str, bytes, bytearray)
+        ):
+            return True
+        if FlextUtilitiesGuards.is_context(value):
+            return True
+        if hasattr(value, "__dict__"):
+            return True
+        return bool(hasattr(value, "bind") and hasattr(value, "info"))
+
+    @staticmethod
+    def is_factory(value: object) -> TypeGuard[t.FactoryCallable]:
+        """Check if *value* is a factory callable."""
+        return callable(value)
+
+    @staticmethod
+    def is_resource(value: object) -> TypeGuard[t.ResourceCallable]:
+        """Check if *value* is a resource callable."""
+        return callable(value)
 
     @staticmethod
     def is_primitive(
@@ -418,6 +444,62 @@ class FlextUtilitiesGuards:
             return False
         protocol_name = getattr(obj, "_protocol_name", None)
         return isinstance(protocol_name, str) and bool(protocol_name.strip())
+
+    @staticmethod
+    def is_registerable_service(
+        value: object,
+    ) -> TypeGuard[t.RegisterableService]:
+        """Check if value is a registerable service for DI container.
+
+        Matches logic from FlextContainer._is_registerable_service using structural typing.
+
+        Args:
+            value: Object to check
+
+        Returns:
+            TypeGuard[t.RegisterableService]: True if value can be registered in the container
+
+        """
+        # scalars/none
+        if value is None or isinstance(value, (str, int, float, bool)):
+            return True
+        # models/paths
+        if isinstance(value, (BaseModel, Path)):
+            return True
+        # callables
+        if callable(value):
+            return True
+        # mappings/sequences
+        if isinstance(value, Mapping):
+            return True
+        if isinstance(value, Sequence) and (
+            not isinstance(value, (str, bytes, bytearray))
+        ):
+            return True
+        # protocols via duck typing
+        if FlextUtilitiesGuards.is_context(value):
+            return True
+        # generic objects with dict
+        if hasattr(value, "__dict__"):
+            return True
+        # fallback for logger-like objects (bind/info)
+        return bool(hasattr(value, "bind") and hasattr(value, "info"))
+
+    @staticmethod
+    def is_instance_of[T](value: object, type_cls: type[T]) -> TypeGuard[T]:
+        """Check if value is an instance of type_cls, handling generics.
+
+        Args:
+            value: Object to check
+            type_cls: Target type/class
+
+        Returns:
+            TypeGuard[T]: True if value is an instance of type_cls
+
+        """
+        origin = getattr(type_cls, "__origin__", None)
+        check_type: type = origin if origin is not None else type_cls
+        return isinstance(value, check_type)
 
     @staticmethod
     def get_protocol_name(obj: object, default: str = "") -> str:
@@ -1088,10 +1170,18 @@ class FlextUtilitiesGuards:
             return False
         if isinstance(type_spec, tuple):
             return isinstance(value, type_spec)
-        try:
-            return isinstance(value, type_spec)
-        except TypeError:
-            return False
+        # Check if type_spec is a protocol we have specialized handlers for
+        if type_spec in FlextUtilitiesGuards._PROTOCOL_TYPE_MAP:
+            protocol_name = FlextUtilitiesGuards._PROTOCOL_TYPE_MAP[type_spec]
+            return FlextUtilitiesGuards._check_protocol(value, protocol_name)
+
+        # Handle direct type check with support for generic origins
+        check_type = (
+            getattr(type_spec, "__origin__", None) or type_spec
+            if isinstance(type_spec, type)
+            else type_spec
+        )
+        return isinstance(value, check_type)
 
     @staticmethod
     def none_(*values: object) -> bool:

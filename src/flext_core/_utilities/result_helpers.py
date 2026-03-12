@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, Sequence
 from typing import TypeVar
 
-from flext_core import p, r
+from flext_core import p, r, t
 from flext_core._utilities.collection import FlextUtilitiesCollection
 from flext_core._utilities.guards import FlextUtilitiesGuards
 
@@ -105,7 +105,7 @@ class ResultHelpers:
                 return r[list[T]].fail(
                     items.error or "Failed to extract values from result"
                 )
-            return r[list[T]].ok(list(items.value.values()))
+            return r[list[T]].ok(list(t.cast(Mapping[str, T], items.value).values()))
         if items:
             return r[list[T]].ok(list(items.values()))
         if default is not None:
@@ -115,6 +115,25 @@ class ResultHelpers:
     @staticmethod
     def vals_sequence(results: Sequence[p.Result[T]]) -> list[T]:
         return [result.value for result in results if result.is_success]
+
+    @staticmethod
+    def ensure[V](value: V | p.Result[V]) -> r[V]:
+        """Wrap value in r if not already a Result.
+
+        Generic replacement for:
+        if not isinstance(val, r): val = r.ok(val)
+        """
+        if isinstance(value, r):
+            return value
+
+        # Fallback for protocol compliance if it's a Result-like but not FlextResult
+        if hasattr(value, "is_success") and hasattr(value, "value"):
+            res = t.cast(p.Result[V], value)
+            if res.is_success:
+                return r[V].ok(res.value)
+            return r[V].fail(res.error)
+
+        return r[V].ok(t.cast(V, value))
 
 
 __all__ = ["ResultHelpers"]

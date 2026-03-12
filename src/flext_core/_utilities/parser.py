@@ -1055,7 +1055,7 @@ class FlextUtilitiesParser:
                 key = obj.__class__.__name__
         elif isinstance(obj, Mapping):
             mapping_key = self._extract_key_from_mapping(obj)
-            key = mapping_key.value_or(obj.__class__.__name__)
+            key = mapping_key.unwrap_or(obj.__class__.__name__)
         elif (attr_key := self._extract_key_from_attributes(obj)).is_success:
             key = attr_key.value
         elif hasattr(obj, "__class__"):

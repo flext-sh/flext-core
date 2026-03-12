@@ -60,90 +60,11 @@ class FlextMixins(FlextRuntime):
             ) -> r[m.ConfigMap]:
                 with self.track("process"):
                     self.logger.info("Processing", size=len(data))
-                    return self.ok({"status": "processed"})
+                    return u.ok({"status": "processed"})
 
     """
 
     _runtime: m.ServiceRuntime | None = PrivateAttr(default=None)
-
-    @staticmethod
-    def fail(
-        error: str | None,
-        error_code: str | None = None,
-        error_data: m.ConfigMap | None = None,
-    ) -> r[object]:
-        """Create failed result with error message."""
-        fail_error_data: object = (
-            {
-                str(k): FlextRuntime.normalize_to_general_value(v)
-                for k, v in error_data.root.items()
-            }
-            if error_data is not None
-            else {}
-        )
-        return r[object].fail(error, error_code=error_code, error_data=fail_error_data)
-
-    @staticmethod
-    def ok[T](value: T) -> r[T]:
-        """Create successful result wrapping value."""
-        return r[T].ok(value)
-
-    traverse = staticmethod(r.traverse)
-    accumulate_errors = staticmethod(r.accumulate_errors)
-
-    @classmethod
-    def to_dict(cls, obj: BaseModel | object | None) -> m.ConfigMap:
-        """Convert BaseModel/dict to dict (None → empty dict). Use x.to_dict at call sites."""
-        if obj is None:
-            return m.ConfigMap(root={})
-        if isinstance(obj, m.ConfigMap):
-            return obj
-        if isinstance(obj, BaseModel):
-            model_dump_result = obj.model_dump()
-            try:
-                normalized_model_dump: dict[str, object] = {}
-                for key, value in model_dump_result.items():
-                    normalized_value: object
-                    if value is None:
-                        normalized_value = ""
-                    elif isinstance(value, t.Primitives | BaseModel):
-                        normalized_value = FlextRuntime.normalize_to_general_value(
-                            value
-                        )
-                    else:
-                        normalized_value = str(value)
-                    normalized_model_dump[str(key)] = normalized_value
-                return m.ConfigMap.model_validate(normalized_model_dump)
-            except (TypeError, ValueError, AttributeError) as exc:
-                cls._get_or_create_logger().debug(
-                    "Model dump normalization fallback to string conversion",
-                    exc_info=exc,
-                )
-                return m.ConfigMap(root={"value": str(model_dump_result)})
-        try:
-            normalized_mapping: dict[str, object] = {}
-            for key, value in obj.items():
-                normalized_mapping_value: object = (
-                    FlextRuntime.normalize_to_general_value(value)
-                    if isinstance(value, t.Primitives | type(None) | BaseModel)
-                    else str(value)
-                )
-                normalized_mapping[str(key)] = normalized_mapping_value
-            return m.ConfigMap.model_validate(normalized_mapping)
-        except (TypeError, ValueError, AttributeError) as exc:
-            cls._get_or_create_logger().debug(
-                "Object-to-config-map normalization failed", exc_info=exc
-            )
-            return m.ConfigMap(root={})
-
-    @staticmethod
-    def ensure_result(
-        value: object | r[object],
-    ) -> r[object]:
-        """Wrap value in r if not already wrapped. Use x.ensure_result at call sites."""
-        if isinstance(value, r):
-            return value
-        return r[object].ok(value)
 
     _logger_cache: ClassVar[dict[str, FlextLogger]] = {}
     _cache_lock: ClassVar[threading.Lock] = threading.Lock()

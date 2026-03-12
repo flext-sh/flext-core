@@ -349,8 +349,7 @@ def test_loggings_exception_and_adapter_paths(monkeypatch: pytest.MonkeyPatch) -
         pass
 
     adapter.exception("boom", exception=_NonException("x"), x=1)
-    with pytest.warns(DeprecationWarning, match="try_unbind"):
-        logger.try_unbind("missing")
+    assert logger.unbind("missing", safe=True)
 
 
 def test_loggings_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> None:

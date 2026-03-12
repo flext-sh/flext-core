@@ -823,8 +823,8 @@ class FlextProtocols:
 
         def process[TResult](
             self,
-            command: t.Scalar,
-            next_handler: Callable[[t.Scalar], FlextProtocols.Result[TResult]],
+            command: t.Container,
+            next_handler: Callable[[t.Container], FlextProtocols.Result[TResult]],
         ) -> FlextProtocols.Result[TResult]:
             """Process command."""
             ...
@@ -947,8 +947,8 @@ class FlextProtocols:
             def critical(
                 self,
                 msg: str,
-                *args: t.Scalar,
-                **kw: t.Scalar | Exception,
+                *args: t.Container,
+                **kw: t.Container | Exception,
             ) -> r[bool] | None:
                 """Log critical message."""
                 ...
@@ -956,8 +956,8 @@ class FlextProtocols:
             def debug(
                 self,
                 msg: str,
-                *args: t.Scalar,
-                **kw: t.Scalar | Exception,
+                *args: t.Container,
+                **kw: t.Container | Exception,
             ) -> r[bool] | None:
                 """Log debug message."""
                 ...
@@ -965,8 +965,8 @@ class FlextProtocols:
             def error(
                 self,
                 msg: str,
-                *args: t.Scalar,
-                **kw: t.Scalar | Exception,
+                *args: t.Container,
+                **kw: t.Container | Exception,
             ) -> r[bool] | None:
                 """Log error message."""
                 ...
@@ -974,8 +974,8 @@ class FlextProtocols:
             def exception(
                 self,
                 msg: str,
-                *args: t.Scalar,
-                **kw: t.Scalar | Exception,
+                *args: t.Container,
+                **kw: t.Container | Exception,
             ) -> r[bool] | None:
                 """Log exception with traceback."""
                 ...
@@ -983,8 +983,8 @@ class FlextProtocols:
             def info(
                 self,
                 msg: str,
-                *args: t.Scalar,
-                **kw: t.Scalar | Exception,
+                *args: t.Container,
+                **kw: t.Container | Exception,
             ) -> r[bool] | None:
                 """Log info message."""
                 ...
@@ -992,8 +992,8 @@ class FlextProtocols:
             def warning(
                 self,
                 msg: str,
-                *args: t.Scalar,
-                **kw: t.Scalar | Exception,
+                *args: t.Container,
+                **kw: t.Container | Exception,
             ) -> r[bool] | None:
                 """Log warning message."""
                 ...
@@ -1047,7 +1047,7 @@ class FlextProtocols:
         factories, and callbacks.
         """
 
-        def __call__(self, *args: t.Scalar, **kwargs: t.Scalar) -> T_co:
+        def __call__(self, *args: t.Container, **kwargs: t.Container) -> T_co:
             """Call the function with any arguments, returning T_co."""
             ...
 

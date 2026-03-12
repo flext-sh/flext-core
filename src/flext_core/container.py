@@ -15,9 +15,8 @@ import inspect
 import sys
 import threading
 from collections.abc import Callable, Mapping, Sequence
-from pathlib import Path
 from types import ModuleType
-from typing import Literal, Self, TypeGuard, overload, override
+from typing import Literal, Self, overload, override
 
 from dependency_injector import containers as di_containers, providers as di_providers
 from pydantic import BaseModel, ValidationError
@@ -33,6 +32,7 @@ from flext_core import (
     p,
     r,
     t,
+    u,
 )
 from flext_core._decorators.discovery import FactoryDecoratorsDiscovery
 
@@ -304,7 +304,7 @@ class FlextContainer(p.DI):
                         )
                         if (
                             factory_func_raw is not None
-                            and instance._is_factory_callable(factory_func_raw)
+                            and u.is_factory(factory_func_raw)
                         ):
                             factory_func_ref: t.FactoryCallable = factory_func_raw
 
@@ -320,7 +320,7 @@ class FlextContainer(p.DI):
                                 else:
                                     raw_result = _factory_func_ref()
                                 try:
-                                    if not instance._is_registerable_service(
+                                    if not u.is_registerable_service(
                                         raw_result
                                     ):
                                         msg = f"Factory '{_factory_name}' returned unsupported type: {raw_result.__class__.__name__}"
@@ -377,80 +377,6 @@ class FlextContainer(p.DI):
             max_services=c.Container.DEFAULT_MAX_SERVICES,
             max_factories=c.Container.DEFAULT_MAX_FACTORIES,
         )
-
-    @staticmethod
-    def _is_context_protocol(
-        value: object | p.Context | None,
-    ) -> TypeGuard[p.Context]:
-        if value is None:
-            return False
-        return bool(
-            hasattr(value, "clone") and hasattr(value, "set") and hasattr(value, "get")
-        )
-
-    @staticmethod
-    def _is_factory_callable(
-        value: t.RegisterableService | t.FactoryCallable | t.ResourceCallable,
-    ) -> TypeGuard[t.FactoryCallable]:
-        return callable(value)
-
-    @staticmethod
-    def _is_instance_of[T](
-        value: t.RegisterableService | object,
-        type_cls: type[T],
-    ) -> TypeGuard[T]:
-        """Type guard to narrow object to specific type T.
-
-        Uses isinstance for type narrowing with MRO support.
-        Handles parameterized generics (e.g. dict[str, str]) by
-        extracting __origin__ before the isinstance check.
-        """
-        origin = getattr(type_cls, "__origin__", None)
-        check_type: type = origin if origin is not None else type_cls
-        return isinstance(value, check_type)
-
-    @staticmethod
-    def _is_registerable_service(
-        value: t.RegisterableService
-        | t.FactoryCallable
-        | t.ResourceCallable
-        | p.Config
-        | p.Context
-        | object,
-    ) -> TypeGuard[t.RegisterableService]:
-        if isinstance(value, (str, int, float, bool, type(None))):
-            return True
-        if isinstance(value, (BaseModel, Path)):
-            return True
-        if callable(value):
-            return True
-        if isinstance(value, Mapping):
-            return True
-        if isinstance(value, Sequence) and (
-            not isinstance(value, (str, bytes, bytearray))
-        ):
-            return True
-        if FlextContainer._is_context_protocol(value):
-            return True
-        if hasattr(value, "__dict__"):
-            return True
-        return bool(hasattr(value, "bind") and hasattr(value, "info"))
-
-    @staticmethod
-    def _is_resource_callable(
-        value: t.RegisterableService | t.FactoryCallable | t.ResourceCallable,
-    ) -> TypeGuard[t.ResourceCallable]:
-        return callable(value)
-
-    @staticmethod
-    def _is_object_mapping(
-        value: object,
-    ) -> TypeGuard[Mapping[object, object]]:
-        return isinstance(value, Mapping)
-
-    @staticmethod
-    def _narrow_factory_result(value: t.RegisterableService) -> t.RegisterableService:
-        return value
 
     @override
     def clear_all(self) -> None:
@@ -556,7 +482,7 @@ class FlextContainer(p.DI):
                 )
             if type_cls is not None:
                 service_for_check: t.RegisterableService = service
-                if not self._is_instance_of(service_for_check, type_cls):
+                if not u.is_instance_of(service_for_check, type_cls):
                     return r[t.RegisterableService].fail(
                         f"Service '{name}' is not of type {(type_cls.__name__ if hasattr(type_cls, '__name__') else 'Unknown')}"
                     )
@@ -578,7 +504,7 @@ class FlextContainer(p.DI):
                     )
                 if type_cls is not None:
                     resolved_for_check: t.RegisterableService = resolved
-                    if not self._is_instance_of(resolved_for_check, type_cls):
+                    if not u.is_instance_of(resolved_for_check, type_cls):
                         return r[t.RegisterableService].fail(
                             f"Factory '{name}' returned wrong type"
                         )
@@ -594,13 +520,13 @@ class FlextContainer(p.DI):
                     resource_registration.factory
                 )
                 resolved = resource_callable()
-                if not self._is_registerable_service(resolved):
+                if not u.is_registerable_service(resolved):
                     return r[t.RegisterableService].fail(
                         f"Resource '{name}' returned unsupported runtime type"
                     )
                 if type_cls is not None:
                     resource_for_check: t.RegisterableService = resolved
-                    if not self._is_instance_of(resource_for_check, type_cls):
+                    if not u.is_instance_of(resource_for_check, type_cls):
                         return r[t.RegisterableService].fail(
                             f"Resource '{name}' returned wrong type"
                         )
@@ -655,7 +581,7 @@ class FlextContainer(p.DI):
         if config_provider_obj is None:
             error_msg = "Bridge config provider cannot be None"
             raise TypeError(error_msg)
-        if not self._is_instance_of(config_provider_obj, di_providers.Configuration):
+        if not u.is_instance_of(config_provider_obj, di_providers.Configuration):
             error_msg = "Bridge must have config provider"
             raise TypeError(error_msg)
         config_provider = config_provider_obj
@@ -743,11 +669,11 @@ class FlextContainer(p.DI):
         """
         if not name:
             return self
-        if kind == "service" and (not self._is_registerable_service(impl)):
+        if kind == "service" and (not u.is_registerable_service(impl)):
             return self
         try:
             if kind == "service":
-                if not self._is_registerable_service(impl):
+                if not u.is_registerable_service(impl):
                     return self
                 if hasattr(self._di_services, name):
                     return self
@@ -762,7 +688,7 @@ class FlextContainer(p.DI):
                 setattr(self._di_container, name, provider)
                 return self
             if kind == "factory":
-                if not self._is_factory_callable(impl):
+                if not u.is_factory(impl):
                     return self
                 if hasattr(self._di_services, name):
                     return self
@@ -770,8 +696,8 @@ class FlextContainer(p.DI):
 
                 def normalized_factory() -> t.RegisterableService:
                     raw_result = factory_fn()
-                    narrowed = FlextContainer._narrow_factory_result(raw_result)
-                    if not self._is_registerable_service(narrowed):
+                    narrowed = u.narrow(raw_result, t.RegisterableService)
+                    if not u.is_registerable_service(narrowed):
                         msg = f"Factory '{name}' returned value that does not satisfy RegisterableService protocol. Expected object, protocol, or callable."
                         raise ValueError(msg)
                     return narrowed
@@ -789,7 +715,7 @@ class FlextContainer(p.DI):
                 setattr(self._di_bridge, name, provider)
                 setattr(self._di_container, name, provider)
                 return self
-            if not self._is_resource_callable(impl):
+            if not u.is_resource(impl):
                 return self
             if hasattr(self._di_resources, name):
                 return self
@@ -836,7 +762,7 @@ class FlextContainer(p.DI):
         if (
             not self.has_service("config")
             and self._config is not None
-            and self._is_registerable_service(self._config)
+            and u.is_registerable_service(self._config)
         ):
             _ = self.register("config", self._config)
         if not self.has_service("logger"):
@@ -844,12 +770,12 @@ class FlextContainer(p.DI):
         if (
             not self.has_service("context")
             and self._context is not None
-            and self._is_registerable_service(self._context)
+            and u.is_registerable_service(self._context)
         ):
             _ = self.register("context", self._context)
         if not self.has_service("command_bus"):
             dispatcher = FlextDispatcher()
-            if self._is_registerable_service(dispatcher):
+            if u.is_registerable_service(dispatcher):
                 _ = self.register("command_bus", dispatcher)
 
     def register_existing_providers(self) -> None:
@@ -930,13 +856,13 @@ class FlextContainer(p.DI):
             )
             if callable(clone_method):
                 candidate_context = clone_method()
-                if self._is_context_protocol(candidate_context):
+                if u.is_context(candidate_context):
                     scoped_context = candidate_context
                 else:
                     scoped_context = FlextContext()
             else:
                 scoped_context = FlextContext()
-        elif self._is_context_protocol(context):
+        elif u.is_context(context):
             scoped_context = context
         else:
             scoped_context = self.context.clone()
@@ -1004,7 +930,7 @@ class FlextContainer(p.DI):
         namespace_registry_raw = getattr(
             self._config.__class__, "_namespace_registry", None
         )
-        if not namespace_registry_raw or not self._is_object_mapping(
+        if not namespace_registry_raw or not u.is_mapping(
             namespace_registry_raw
         ):
             return
@@ -1026,7 +952,7 @@ class FlextContainer(p.DI):
             ) -> BaseModel:
                 """Factory for creating namespace config instance."""
                 result = FlextSettings.get_global().get_namespace(ns, config_cls)
-                if FlextContainer._is_instance_of(result, BaseModel):
+                if isinstance(result, BaseModel):
                     return result
                 return config_cls()
 
