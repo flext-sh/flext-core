@@ -693,11 +693,10 @@ class FlextContainer(p.DI):
 
                 def normalized_factory() -> t.RegisterableService:
                     raw_result = factory_fn()
-                    narrowed = u.narrow(raw_result, t.RegisterableService)
-                    if not u.is_registerable_service(narrowed):
+                    if not u.is_registerable_service(raw_result):
                         msg = f"Factory '{name}' returned value that does not satisfy RegisterableService protocol. Expected object, protocol, or callable."
                         raise ValueError(msg)
-                    return narrowed
+                    return raw_result
 
                 factory_reg = m.FactoryRegistration(
                     name=name, factory=normalized_factory

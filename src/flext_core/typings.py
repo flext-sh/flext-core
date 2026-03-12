@@ -20,7 +20,6 @@ from typing import (
     Annotated,
     Literal,
     ParamSpec,
-    TypeAlias,
     TypeVar,
     cast as _cast,
     override as _override,

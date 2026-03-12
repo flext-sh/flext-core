@@ -365,7 +365,7 @@ class FlextRuntime:
     @staticmethod
     def _is_scalar(value: object) -> TypeGuard[t.Scalar]:
         """Check if value is a scalar type accepted by t.Scalar."""
-        return isinstance(value, t.Scalar)
+        return isinstance(value, t.SCALAR_TYPES)
 
     @staticmethod
     def dependency_containers() -> ModuleType:
@@ -1420,7 +1420,6 @@ class FlextRuntime:
                     AttributeError,
                     RuntimeError,
                 ) as e:
-                    self.logger.debug("RuntimeResult.map callable failed", exc_info=e)
                     return FlextRuntime.RuntimeResult.fail(error=str(e))
             return FlextRuntime.RuntimeResult.fail(
                 error=self.error,
