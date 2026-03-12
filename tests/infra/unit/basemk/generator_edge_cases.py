@@ -91,7 +91,6 @@ def test_generator_write_to_stream_handles_oserror(
     gen = FlextInfraBaseMkGenerator()
 
     def mock_write(*args: object, **kwargs: object) -> None:
-    def mock_write(*args: object, **kwargs: object) -> None:
         msg = "Stream write failed"
         raise OSError(msg)
 
@@ -108,9 +107,7 @@ def test_generator_validate_generated_output_handles_oserror(
     gen = FlextInfraBaseMkGenerator()
     content = "all:\n\t@echo 'test'\n"
 
-    def mock_tempdir(
-        *args: object, **kwargs: object
-    ) -> t.ContainerValue:
+    def mock_tempdir(*args: object, **kwargs: object) -> object:
         msg = "Temp directory creation failed"
         raise OSError(msg)
 

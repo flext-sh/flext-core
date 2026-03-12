@@ -47,13 +47,15 @@ class _ProtocolIntrospection:
         registered_protocols = cls.get_class_protocols(instance.__class__)
         if protocol in registered_protocols:
             return True
-        protocol_annotations: dict[str, t.Container] = (
+        protocol_annotations: dict[str, t.GeneralValueType] = (
             protocol.__annotations__ if hasattr(protocol, "__annotations__") else {}
         )
-        raw_attrs_candidate = getattr(protocol, "__protocol_attrs__", set[str]())
+        raw_attrs_candidate = getattr(protocol, "__protocol_attrs__", "")
         raw_attrs: set[str] = set()
         if isinstance(raw_attrs_candidate, set):
-            raw_attrs = {attr for attr in raw_attrs_candidate if isinstance(attr, str)}
+            for attr in raw_attrs_candidate:
+                if isinstance(attr, str):
+                    raw_attrs.add(attr)
         protocol_methods: set[str] = set()
         for attr in raw_attrs:
             protocol_methods.add(attr)
@@ -88,7 +90,7 @@ class _ProtocolIntrospection:
     @staticmethod
     def get_class_protocols(target_cls: type) -> tuple[type, ...]:
         """Get the protocols a class implements."""
-        protocols_candidate = getattr(target_cls, "__protocols__", ())
+        protocols_candidate = getattr(target_cls, "__protocols__", "")
         if isinstance(protocols_candidate, tuple):
             typed_protocols: list[type] = []
             for protocol_item in protocols_candidate:
@@ -111,13 +113,15 @@ class _ProtocolIntrospection:
         target_cls: type, protocol: type, class_name: str
     ) -> None:
         """Validate that a class implements all required protocol members."""
-        protocol_annotations: dict[str, t.Container] = (
+        protocol_annotations: dict[str, t.GeneralValueType] = (
             protocol.__annotations__ if hasattr(protocol, "__annotations__") else {}
         )
-        raw_attrs_candidate = getattr(protocol, "__protocol_attrs__", set[str]())
+        raw_attrs_candidate = getattr(protocol, "__protocol_attrs__", "")
         raw_attrs: set[str] = set()
         if isinstance(raw_attrs_candidate, set):
-            raw_attrs = {attr for attr in raw_attrs_candidate if isinstance(attr, str)}
+            for attr in raw_attrs_candidate:
+                if isinstance(attr, str):
+                    raw_attrs.add(attr)
         protocol_methods: set[str] = set()
         for attr in raw_attrs:
             protocol_methods.add(attr)
@@ -134,7 +138,7 @@ class _ProtocolIntrospection:
         }
         all_annotations: set[str] = set()
         for base in target_cls.mro():
-            base_annotations: dict[str, t.Container] = (
+            base_annotations: dict[str, t.GeneralValueType] = (
                 base.__annotations__ if hasattr(base, "__annotations__") else {}
             )
             all_annotations.update(base_annotations.keys())

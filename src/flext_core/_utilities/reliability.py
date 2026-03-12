@@ -255,6 +255,7 @@ class FlextUtilitiesReliability:
         Example:
             result = u.flow_result(
                 r[T].ok(user),
+                r[T].ok(user),
                 validate_user,
                 enrich_profile,
                 save_to_db,
@@ -435,7 +436,7 @@ class FlextUtilitiesReliability:
 
         """
         if not operations:
-            return r[t.ContainerValue][t.ContainerValue].ok(value)
+            return r[t.ContainerValue].ok(value)
         current: t.ContainerValue = value
         for i, op in enumerate(operations):
             try:
