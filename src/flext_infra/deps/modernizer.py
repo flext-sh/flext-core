@@ -76,34 +76,27 @@ class FlextInfraPyprojectModernizer:
             if kind_result.is_success:
                 project_kind = kind_result.value
         changes: list[str] = []
-        tool: Table | None = None
-        if c.Infra.Toml.TOOL in doc:
-            tool = doc[c.Infra.Toml.TOOL]
-        if isinstance(tool, Table):
-            poetry: Table | None = None
-            if c.Infra.Toml.POETRY in tool:
-                poetry = tool[c.Infra.Toml.POETRY]
-            if isinstance(poetry, Table):
-                group: Table | None = None
-                if c.Infra.Toml.GROUP in poetry:
-                    group = poetry[c.Infra.Toml.GROUP]
-                if isinstance(group, Table):
+        tool_item = doc.get(c.Infra.Toml.TOOL, None)
+        if isinstance(tool_item, Table):
+            poetry_item = tool_item.get(c.Infra.Toml.POETRY, None)
+            if isinstance(poetry_item, Table):
+                group_item = poetry_item.get(c.Infra.Toml.GROUP, None)
+                if isinstance(group_item, Table):
                     empty_groups: list[str] = []
-                    for name in u.Infra.table_string_keys(group):
-                        group_item: Table | None = None
-                        if name in group:
-                            group_item = group[name]
-                        if isinstance(group_item, Table):
-                            deps: Table | None = None
-                            if c.Infra.Toml.DEPENDENCIES in group_item:
-                                deps = group_item[c.Infra.Toml.DEPENDENCIES]
-                            if isinstance(deps, Table) and len(deps) == 0:
+                    for name in u.Infra.table_string_keys(group_item):
+                        group_dep_item = group_item.get(name, None)
+                        if isinstance(group_dep_item, Table):
+                            deps_item = group_dep_item.get(
+                                c.Infra.Toml.DEPENDENCIES,
+                                None,
+                            )
+                            if isinstance(deps_item, Table) and len(deps_item) == 0:
                                 empty_groups.append(name)
                     for name in empty_groups:
-                        del group[name]
+                        del group_item[name]
                         changes.append(f"removed empty poetry group '{name}'")
-                    if len(group) == 0:
-                        del poetry[c.Infra.Toml.GROUP]
+                    if len(group_item) == 0:
+                        del poetry_item[c.Infra.Toml.GROUP]
                         changes.append("removed empty poetry group container")
         changes.extend(ConsolidateGroupsPhase().apply(doc, canonical_dev))
         changes.extend(EnsurePytestConfigPhase(self._tool_config).apply(doc))

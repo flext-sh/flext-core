@@ -47,17 +47,16 @@ class _ProtocolIntrospection:
         registered_protocols = cls.get_class_protocols(instance.__class__)
         if protocol in registered_protocols:
             return True
-        protocol_annotations: dict[str, t.TypeHintSpecifier] = (
+        protocol_annotations: dict[str, t.Container] = (
             protocol.__annotations__ if hasattr(protocol, "__annotations__") else {}
         )
-        raw_attrs: set[str] | t.GeneralValueType = getattr(
-            protocol, "__protocol_attrs__", set[str]()
-        )
+        raw_attrs_candidate = getattr(protocol, "__protocol_attrs__", set[str]())
+        raw_attrs: set[str] = set()
+        if isinstance(raw_attrs_candidate, set):
+            raw_attrs = {attr for attr in raw_attrs_candidate if isinstance(attr, str)}
         protocol_methods: set[str] = set()
-        if isinstance(raw_attrs, set):
-            for attr in raw_attrs:
-                if isinstance(attr, str):
-                    protocol_methods.add(attr)
+        for attr in raw_attrs:
+            protocol_methods.add(attr)
         required_members: set[str] = set(protocol_annotations.keys())
         required_members.update(protocol_methods)
         required_members = {
@@ -89,12 +88,10 @@ class _ProtocolIntrospection:
     @staticmethod
     def get_class_protocols(target_cls: type) -> tuple[type, ...]:
         """Get the protocols a class implements."""
-        protocols: tuple[type, ...] | t.GeneralValueType = getattr(
-            target_cls, "__protocols__", ()
-        )
-        if isinstance(protocols, tuple):
+        protocols_candidate = getattr(target_cls, "__protocols__", ())
+        if isinstance(protocols_candidate, tuple):
             typed_protocols: list[type] = []
-            for protocol_item in protocols:
+            for protocol_item in protocols_candidate:
                 if not isinstance(protocol_item, type):
                     return ()
                 typed_protocols.append(protocol_item)
@@ -114,17 +111,16 @@ class _ProtocolIntrospection:
         target_cls: type, protocol: type, class_name: str
     ) -> None:
         """Validate that a class implements all required protocol members."""
-        protocol_annotations: dict[str, t.TypeHintSpecifier] = (
+        protocol_annotations: dict[str, t.Container] = (
             protocol.__annotations__ if hasattr(protocol, "__annotations__") else {}
         )
-        raw_attrs: set[str] | t.GeneralValueType = getattr(
-            protocol, "__protocol_attrs__", set[str]()
-        )
+        raw_attrs_candidate = getattr(protocol, "__protocol_attrs__", set[str]())
+        raw_attrs: set[str] = set()
+        if isinstance(raw_attrs_candidate, set):
+            raw_attrs = {attr for attr in raw_attrs_candidate if isinstance(attr, str)}
         protocol_methods: set[str] = set()
-        if isinstance(raw_attrs, set):
-            for attr in raw_attrs:
-                if isinstance(attr, str):
-                    protocol_methods.add(attr)
+        for attr in raw_attrs:
+            protocol_methods.add(attr)
         required_members: set[str] = set(protocol_annotations.keys())
         if protocol_methods:
             required_members.update(protocol_methods)
@@ -138,7 +134,7 @@ class _ProtocolIntrospection:
         }
         all_annotations: set[str] = set()
         for base in target_cls.mro():
-            base_annotations: dict[str, t.TypeHintSpecifier] = (
+            base_annotations: dict[str, t.Container] = (
                 base.__annotations__ if hasattr(base, "__annotations__") else {}
             )
             all_annotations.update(base_annotations.keys())
@@ -756,7 +752,7 @@ class FlextProtocols:
             ...
 
     @runtime_checkable
-    class Registry(BaseProtocol, Protocol):
+    class Registry[MessageT, ResultT](BaseProtocol, Protocol):
         """Handler registry protocol for CQRS handler registration.
 
         Reflects real implementations like FlextRegistry which provides
@@ -782,7 +778,7 @@ class FlextProtocols:
             self,
             bindings: Mapping[
                 t.MessageTypeSpecifier,
-                FlextProtocols.Handler[t.Container, t.Container],
+                FlextProtocols.Handler[MessageT, ResultT],
             ],
         ) -> FlextProtocols.Result[BaseModel]:
             """Register message-to-handler bindings.
@@ -793,7 +789,7 @@ class FlextProtocols:
             ...
 
         def register_handler(
-            self, handler: FlextProtocols.Handler[t.Container, t.Container]
+            self, handler: FlextProtocols.Handler[MessageT, ResultT]
         ) -> FlextProtocols.Result[BaseModel]:
             """Register a handler instance.
 
@@ -804,7 +800,7 @@ class FlextProtocols:
 
         def register_handlers(
             self,
-            handlers: Sequence[FlextProtocols.Handler[t.Container, t.Container]],
+            handlers: Sequence[FlextProtocols.Handler[MessageT, ResultT]],
         ) -> FlextProtocols.Result[BaseModel]:
             """Register multiple handlers in batch.
 
@@ -831,10 +827,10 @@ class FlextProtocols:
 
         Processors can be objects with a process() method that takes data
         and returns a result (which will be normalized to Result).
-        Accepts t.ContainerValue, BaseModel, or Result for processing.
+        Accepts t.Container, BaseModel, or Result for processing.
 
         The return type is flexible to support:
-        - Direct values (t.ContainerValue)
+        - Direct values (t.Container)
         - BaseModel instances (Pydantic models)
         - Result instances (structural typing)
         - Objects with is_success/is_failure properties (r compatibility)
@@ -847,7 +843,7 @@ class FlextProtocols:
             """Process data and return result.
 
             Returns can be:
-            - Direct value (t.ContainerValue)
+            - Direct value (t.Container)
             - BaseModel instance (Pydantic model)
             - Result (structural typing compatible)
             """
@@ -1203,8 +1199,8 @@ class FlextProtocols:
             cls,
             name: str,
             bases: tuple[type, ...],
-            namespace: Mapping[str, t.Container],
-            **_kwargs: t.Container,
+            namespace: Mapping[str, t.GeneralValueType],
+            **_kwargs: t.GeneralValueType,
         ) -> type:
             """Create a new class with protocol validation.
 
@@ -1226,7 +1222,7 @@ class FlextProtocols:
             built_cls: type = super().__new__(
                 cls, name, tuple(model_bases), dict(namespace)
             )
-            built_cls.__protocols__ = tuple(protocols)
+            setattr(built_cls, "__protocols__", tuple(protocols))
             for protocol in protocols:
                 _ProtocolIntrospection.validate_protocol_compliance(
                     built_cls, protocol, name
@@ -1394,7 +1390,7 @@ class FlextProtocols:
                 _ProtocolIntrospection.validate_protocol_compliance(
                     cls, protocol, class_name
                 )
-            cls.__protocols__ = tuple(protocols)
+            setattr(cls, "__protocols__", tuple(protocols))
 
             def _instance_implements_protocol(
                 self: FlextProtocols.BaseProtocol | t.Container,
@@ -1402,12 +1398,12 @@ class FlextProtocols:
             ) -> bool:
                 return _ProtocolIntrospection.check_implements_protocol(self, protocol)
 
-            cls.implements_protocol = _instance_implements_protocol
+            setattr(cls, "implements_protocol", _instance_implements_protocol)
 
             def _class_get_protocols(kls: type) -> tuple[type, ...]:
                 return _ProtocolIntrospection.get_class_protocols(kls)
 
-            cls.get_protocols = classmethod(_class_get_protocols)
+            setattr(cls, "get_protocols", classmethod(_class_get_protocols))
             return cls
 
         return decorator

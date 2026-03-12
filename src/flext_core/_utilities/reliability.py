@@ -254,7 +254,7 @@ class FlextUtilitiesReliability:
 
         Example:
             result = u.flow_result(
-                r.ok(user),
+                r[T].ok(user),
                 validate_user,
                 enrich_profile,
                 save_to_db,
@@ -431,11 +431,11 @@ class FlextUtilitiesReliability:
                 str.upper,
                 lambda s: s.replace(" ", "_"),
             )
-            # → r[str].ok("HELLO_WORLD")
+            # → r[t.ContainerValue].ok("HELLO_WORLD")
 
         """
         if not operations:
-            return r[t.ContainerValue].ok(value)
+            return r[t.ContainerValue][t.ContainerValue].ok(value)
         current: t.ContainerValue = value
         for i, op in enumerate(operations):
             try:

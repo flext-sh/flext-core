@@ -124,7 +124,7 @@ class FlextResult[T_co = t.ContainerValue](FlextRuntime.RuntimeResult[T_co]):
 
     @classmethod
     def _validate_model[UModel: BaseModel](
-        cls, data: U, model: type[UModel], *, failure_prefix: str
+        cls, data: t.ContainerValue, model: type[UModel], *, failure_prefix: str
     ) -> FlextResult[UModel]:
         try:
             return FlextResult[UModel].ok(model.model_validate(data))
@@ -702,9 +702,23 @@ class FlextResult[T_co = t.ContainerValue](FlextRuntime.RuntimeResult[T_co]):
                 error_data=self.error_data,
                 exception=self.exception,
             )
-        return FlextResult._validate_model(
-            self.value, model, failure_prefix="Model conversion failed"
-        )
+        try:
+            return FlextResult[U].ok(model.model_validate(self.value))
+        except (
+            ValidationError,
+            ValueError,
+            TypeError,
+            AttributeError,
+            RuntimeError,
+            BaseException,
+        ) as e:
+            logging.getLogger(__name__).debug(
+                "Model conversion failed during model validation", exc_info=e
+            )
+            return FlextResult[U].fail(
+                f"Model conversion failed: {self._model_error_message(e)}",
+                exception=e,
+            )
 
     @override
     def unwrap_or[D](self, default: D) -> T_co | D:

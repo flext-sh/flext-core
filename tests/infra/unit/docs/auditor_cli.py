@@ -121,7 +121,7 @@ class TestAuditorMainCli:
             scope="test",
             items=[],
             checks=["links"],
-            strict=False,
+            strict=True,
             passed=True,
         )
 

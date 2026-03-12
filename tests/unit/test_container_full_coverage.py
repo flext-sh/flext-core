@@ -5,13 +5,13 @@ from __future__ import annotations
 import sys
 import types
 from collections.abc import Callable
-from typing import Any, ClassVar, cast
+from typing import ClassVar, cast
 
 import pytest
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings as _BaseSettings
 
-from flext_core import FlextContainer, FlextContext, FlextSettings, m
+from flext_core import FlextContainer, FlextContext, FlextSettings, m, t
 
 
 class _FalseConfig:
@@ -21,7 +21,7 @@ class _FalseConfig:
         self,
         *,
         deep: bool = False,
-        update: dict[str, Any] | None = None,
+        update: dict[str, t.ContainerValue] | None = None,
     ) -> _FalseConfig:
         return self
 
@@ -140,7 +140,7 @@ def test_create_auto_register_factories_path(monkeypatch: pytest.MonkeyPatch) ->
 
 def test_provide_property_paths() -> None:
     c = FlextContainer.create()
-    c_any: Any = c
+    c_any: FlextContainer = c
     c_any._di_bridge = _BridgeGoodProvide()
     assert c.provide("x") == "x"
     c_any._di_bridge = _BridgeBadProvide()
@@ -223,7 +223,7 @@ def test_register_existing_providers_skips_and_register_core_fallback(
     setattr(c._di_services, "fac", object())
     setattr(c._di_resources, "res", object())
     c.register_existing_providers()
-    c_any: Any = c
+    c_any: FlextContainer = c
     c_any._config = _FalseConfig()
     c_any._context = None
     monkeypatch.setattr(c, "has_service", _has_service_false)
@@ -431,7 +431,7 @@ def test_sync_config_registers_namespace_factories_and_fallbacks() -> None:
                 "beta": object(),
             }
 
-        c_any: Any = c
+        c_any: FlextContainer = c
         c_any._config = _Cfg()
         c._global_config = m.ContainerConfig(
             enable_singleton=True,
@@ -475,7 +475,7 @@ def test_register_existing_providers_full_paths_and_misc_methods() -> None:
     assert hasattr(c._di_container, "s1")
     assert hasattr(c._di_container, "f1")
     assert hasattr(c._di_container, "r1")
-    c_any: Any = c
+    c_any: FlextContainer = c
     c_any._context = FlextContext()
     c_any.has_service = _has_service_false
     c.register_core_services()
@@ -503,7 +503,7 @@ def test_create_scoped_instance_and_scoped_additional_branches() -> None:
         ),
     )
     assert isinstance(scoped, FlextContainer)
-    base_any: Any = base
+    base_any: FlextContainer = base
     base_any._config = _FalseConfig()
     base_any._context = FlextContext()
     _ = base.scoped(
@@ -576,7 +576,7 @@ def test_container_remaining_branch_paths_in_sync_factory_and_getters() -> None:
     class _CfgNoMethod:
         _namespace_registry: ClassVar[dict[str, object]] = {"n1": object()}
 
-    c_any: Any = c
+    c_any: FlextContainer = c
     c_any._config = _CfgNoMethod()
     c.sync_config_to_di()
 

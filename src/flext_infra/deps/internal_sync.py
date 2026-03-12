@@ -411,8 +411,9 @@ def main() -> int:
     result = service.sync(project_root)
     if result.is_success:
         return result.value
-    service.log.error("sync_internal_deps_failed", error=result.error)
-    u.Infra.error(f"[sync-deps] {result.error}")
+    sync_error = result.error or "sync_internal_deps_failed"
+    service.log.error("sync_internal_deps_failed", error=sync_error)
+    u.Infra.error(f"[sync-deps] {sync_error}")
     return 1
 
 

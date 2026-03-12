@@ -1102,7 +1102,7 @@ class FlextUtilitiesGuards:
 
         Example:
             if u.none_(name, email):
-                return r.fail("Name and email are required")
+                return r[str].fail("Name and email are required")
 
         """
         return all(v is None for v in values)

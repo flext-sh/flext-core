@@ -16,7 +16,7 @@ import warnings
 from collections.abc import Callable, Mapping
 from contextlib import suppress
 from functools import wraps
-from typing import Literal, Protocol, TypeGuard, overload
+from typing import Any, Literal, Protocol, TypeGuard, overload
 
 from flext_core import (
     FlextContainer,
@@ -958,9 +958,7 @@ class FlextDecorators:
         return isinstance(logger_value, FlextLogger)
 
     @staticmethod
-    def _resolve_logger(
-        args: tuple[t.ContainerValue, ...], func: Callable[P, R]
-    ) -> FlextLogger:
+    def _resolve_logger(args: tuple[Any, ...], func: Callable[P, R]) -> FlextLogger:
         """Resolve logger from first argument or create module logger.
 
         Returns:

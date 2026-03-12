@@ -267,10 +267,11 @@ class FlextInfraDependencyPathSync:
                 dry_run=args.dry_run,
             )
             if changes_result.is_failure:
+                root_error = changes_result.error or "sync_dep_paths_root_failed"
                 self._log.error(
                     "sync_dep_paths_root_failed",
                     pyproject=str(root_pyproject),
-                    error=changes_result.error,
+                    error=root_error,
                 )
                 return 1
             changes: list[str] = changes_result.value
@@ -283,10 +284,11 @@ class FlextInfraDependencyPathSync:
 
         discover_result = FlextInfraUtilitiesDiscovery().discover_projects(self.ROOT)
         if discover_result.is_failure:
+            discovery_error = discover_result.error or "sync_dep_paths_discovery_failed"
             self._log.error(
                 "sync_dep_paths_discovery_failed",
                 root=str(self.ROOT),
-                error=discover_result.error,
+                error=discovery_error,
             )
             return 1
 
@@ -324,10 +326,11 @@ class FlextInfraDependencyPathSync:
                 dry_run=args.dry_run,
             )
             if changes_result.is_failure:
+                project_error = changes_result.error or "sync_dep_paths_project_failed"
                 self._log.error(
                     "sync_dep_paths_project_failed",
                     pyproject=str(pyproject),
-                    error=changes_result.error,
+                    error=project_error,
                 )
                 return 1
             project_changes: list[str] = changes_result.value

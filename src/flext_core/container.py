@@ -310,19 +310,15 @@ class FlextContainer(p.DI):
 
                             def factory_wrapper(
                                 *,
-                                _factory_func_ref: t.FactoryCallable
-                                | None = factory_func_ref,
+                                _factory_func_ref: t.FactoryCallable = factory_func_ref,
                                 _factory_name: str = factory_name,
                                 _factory_config: m.FactoryDecoratorConfig = factory_config,
                             ) -> t.RegisterableService:
                                 config_callable = getattr(_factory_config, "fn", None)
                                 if callable(config_callable):
                                     raw_result = config_callable()
-                                elif _factory_func_ref is not None:
-                                    raw_result = _factory_func_ref()
                                 else:
-                                    msg = f"Factory '{_factory_name}' is not callable"
-                                    raise TypeError(msg)
+                                    raw_result = _factory_func_ref()
                                 try:
                                     if not instance._is_registerable_service(
                                         raw_result

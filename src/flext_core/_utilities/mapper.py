@@ -1622,11 +1622,11 @@ class FlextUtilitiesMapper:
 
         Example:
             >>> FlextUtilitiesMapper.ensure_str_or_none("hello")
-            r.ok("hello")
+            r[str].ok("hello")
             >>> FlextUtilitiesMapper.ensure_str_or_none(123)
-            r.fail("Value is not a string")
+            r[str].fail("Value is not a string")
             >>> FlextUtilitiesMapper.ensure_str_or_none(None)
-            r.fail("Value is not a string")
+            r[str].fail("Value is not a string")
 
         """
         if isinstance(value, str):
@@ -1662,7 +1662,7 @@ class FlextUtilitiesMapper:
         Example:
             config = {"database": {"host": c.Platform.DEFAULT_HOST, "port": 5432}}
             result = FlextUtilitiesMapper.extract(config, "database.port")
-            # → r.ok(5432)
+            # → r[t.ContainerValue].ok(5432)
 
         """
         try:

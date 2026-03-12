@@ -18,7 +18,6 @@ from flext_infra.basemk.engine import FlextInfraBaseMkTemplateEngine
 from flext_infra.basemk.generator import FlextInfraBaseMkGenerator
 from flext_tests import tm
 from tests.infra.models import m as im
-from tests.infra.typings import t
 
 
 class _InvalidTemplateEngine:
@@ -140,9 +139,7 @@ def test_basemk_engine_render_all_handles_template_error(
 ) -> None:
     """Test engine.render_all() handles TemplateError gracefully."""
 
-    def mock_get_template(
-        *args: object, **kwargs: object
-    ) -> t.ContainerValue:
+    def mock_get_template(*args: object, **kwargs: object) -> t.ContainerValue:
         msg = "Template not found"
         raise TemplateError(msg)
 

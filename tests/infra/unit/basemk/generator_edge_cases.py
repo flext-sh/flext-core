@@ -17,7 +17,6 @@ import pytest
 from flext_infra.basemk.generator import FlextInfraBaseMkGenerator
 from flext_tests import tm
 from tests.infra.models import m as im
-from tests.infra.typings import t
 
 
 def test_generator_write_handles_file_permission_error(tmp_path: Path) -> None:
@@ -91,6 +90,7 @@ def test_generator_write_to_stream_handles_oserror(
     content = "all:\n\t@echo 'test'\n"
     gen = FlextInfraBaseMkGenerator()
 
+    def mock_write(*args: object, **kwargs: object) -> None:
     def mock_write(*args: object, **kwargs: object) -> None:
         msg = "Stream write failed"
         raise OSError(msg)

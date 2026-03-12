@@ -12,6 +12,8 @@ from __future__ import annotations
 import inspect
 import sys
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
+from datetime import datetime
+from pathlib import Path
 from typing import Annotated, ClassVar, Literal, Self, TypeGuard, override
 
 from pydantic import BaseModel, Field, PrivateAttr, ValidationError, computed_field
@@ -31,7 +33,7 @@ from flext_core import (
 from flext_core._models.containers import FlextModelsContainers
 from flext_core.typings import RegistryBindingKey
 
-type RegistrablePlugin = t.ContainerValue
+type RegistrablePlugin = t.RegistrablePlugin
 
 
 class FlextRegistry(s[bool]):
@@ -202,7 +204,7 @@ class FlextRegistry(s[bool]):
 
     @staticmethod
     def _is_protocol_handler(
-        value: t.ContainerValue,
+        value: t.RegisterableService,
     ) -> TypeGuard[p.Handler[t.ContainerValue, t.ContainerValue]]:
         return bool(
             hasattr(value, "handle")
@@ -217,6 +219,24 @@ class FlextRegistry(s[bool]):
         """Resolve registration key from handler."""
         handler_id = getattr(handler, "handler_id", None)
         return str(handler_id) if handler_id else handler.__class__.__name__
+
+    @staticmethod
+    def _to_plugin_container_value(
+        value: t.RegisterableService | t.RegistrablePlugin,
+    ) -> r[t.ContainerValue]:
+        if callable(value):
+            return r[t.ContainerValue].fail(
+                "Callable plugin cannot be returned as container value"
+            )
+        if value is None or isinstance(
+            value, (str, int, float, bool, datetime, BaseModel, Path)
+        ):
+            return r[t.ContainerValue].ok(value)
+        if isinstance(value, Sequence):
+            return r[t.ContainerValue].ok(value)
+        if isinstance(value, Mapping):
+            return r[t.ContainerValue].ok(value)
+        return r[t.ContainerValue].fail("Plugin value is not container-compatible")
 
     @staticmethod
     def _safe_get_handler_mode(value: t.Scalar | BaseModel) -> c.Cqrs.HandlerType:
@@ -267,13 +287,13 @@ class FlextRegistry(s[bool]):
 
         message_type_attr = getattr(handler_for_dispatch, "message_type", None)
         if message_type_attr is not None:
-            _dispatch_wrapper.message_type = message_type_attr
+            setattr(_dispatch_wrapper, "message_type", message_type_attr)
         event_type_attr = getattr(handler_for_dispatch, "event_type", None)
         if event_type_attr is not None:
-            _dispatch_wrapper.event_type = event_type_attr
+            setattr(_dispatch_wrapper, "event_type", event_type_attr)
         can_handle_attr = getattr(handler_for_dispatch, "can_handle", None)
         if can_handle_attr is not None:
-            _dispatch_wrapper.can_handle = can_handle_attr
+            setattr(_dispatch_wrapper, "can_handle", can_handle_attr)
         return _dispatch_wrapper
 
     @override
@@ -313,12 +333,11 @@ class FlextRegistry(s[bool]):
                     f"{category} '{name}' not found. Available: {available}"
                 )
             raw_result = self.container.get(key)
-            return raw_result.fold(
-                on_failure=lambda e: r[t.ContainerValue].fail(
-                    f"Failed to retrieve {category} '{name}': {e}"
-                ),
-                on_success=lambda v: r[t.ContainerValue].ok(v),
-            )
+            if raw_result.is_failure:
+                return r[t.ContainerValue].fail(
+                    f"Failed to retrieve {category} '{name}': {raw_result.error}"
+                )
+            return FlextRegistry._to_plugin_container_value(raw_result.value)
         cls = type(self)
         if key not in cls._class_registered_keys:
             available = [
@@ -329,7 +348,7 @@ class FlextRegistry(s[bool]):
             return r[t.ContainerValue].fail(
                 f"{category} '{name}' not found. Available: {available}"
             )
-        return r[t.ContainerValue].ok(cls._class_plugin_storage[key])
+        return FlextRegistry._to_plugin_container_value(cls._class_plugin_storage[key])
 
     def list_plugins(
         self, category: str, *, scope: Literal["instance", "class"] = "instance"
