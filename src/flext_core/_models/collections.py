@@ -68,7 +68,7 @@ class FlextModelsCollections:
 
         @computed_field
         @property
-        def category_names(self) -> list[str]:
+        def category_names(self) -> Sequence[str]:
             """Get list of all category names.
 
             Returns:
@@ -107,8 +107,8 @@ class FlextModelsCollections:
             self.categories.clear()
 
         def get(
-            self, category: str, default: list[t.ContainerValue] | None = None
-        ) -> list[t.ContainerValue]:
+            self, category: str, default: Sequence[t.ContainerValue] | None = None
+        ) -> Sequence[t.ContainerValue]:
             """Get entries for a category with optional default (dict-like interface).
 
             Args:
@@ -201,7 +201,9 @@ class FlextModelsCollections:
             return non_none[-1]
 
         @classmethod
-        def aggregate(cls, stats_list: list[Self]) -> Mapping[str, t.ContainerValue]:
+        def aggregate(
+            cls, stats_list: Sequence[Self]
+        ) -> Mapping[str, t.ContainerValue]:
             """Aggregate multiple statistics instances (ConfigurationMapping pattern).
 
             Combines statistics by:
@@ -280,8 +282,8 @@ class FlextModelsCollections:
 
         @classmethod
         def _concatenate_lists(
-            cls, non_none: list[t.ContainerValue]
-        ) -> list[t.Scalar | None]:
+            cls, non_none: Sequence[t.ContainerValue]
+        ) -> Sequence[t.Scalar | None]:
             """Concatenate list-like values.
 
             Args:
@@ -304,7 +306,7 @@ class FlextModelsCollections:
 
         @classmethod
         def _merge_dicts(
-            cls, non_none: list[t.ContainerValue]
+            cls, non_none: Sequence[t.ContainerValue]
         ) -> Mapping[str, t.ContainerValue]:
             """Merge dict-like values.
 
@@ -371,7 +373,7 @@ class FlextModelsCollections:
 
         @classmethod
         def _sum_numeric_values(
-            cls, non_none: list[t.ContainerValue]
+            cls, non_none: Sequence[t.ContainerValue]
         ) -> int | float | None:
             """Sum numeric values excluding booleans.
 
@@ -390,7 +392,9 @@ class FlextModelsCollections:
             return sum(numeric_values) if numeric_values else None
 
         @classmethod
-        def aggregate(cls, results_list: list[Self]) -> Mapping[str, t.ContainerValue]:
+        def aggregate(
+            cls, results_list: Sequence[Self]
+        ) -> Mapping[str, t.ContainerValue]:
             """Aggregate multiple results instances (ConfigurationMapping pattern).
 
             Combines results by:
