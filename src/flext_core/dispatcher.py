@@ -164,12 +164,20 @@ class FlextDispatcher:
         """
         route_name: str | None = None
         handler_message_type = getattr(handler, "message_type", None)
-        if handler_message_type is not None:
-            route_name = str(handler_message_type)
-        else:
+        if isinstance(handler_message_type, str):
+            route_name = handler_message_type
+        elif handler_message_type is not None:
+            try:
+                route_name = u.get_message_route(handler_message_type)
+            except (TypeError, ValueError):
+                pass
+        if route_name is None:
             accepted = u.compute_accepted_message_types(handler.__class__)
             if accepted:
-                route_name = u.get_message_route(accepted[0])
+                try:
+                    route_name = u.get_message_route(accepted[0])
+                except (TypeError, ValueError):
+                    pass
         if route_name is None:
             if callable(getattr(handler, "can_handle", None)):
                 self._auto_handlers.append(handler)

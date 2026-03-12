@@ -16,8 +16,8 @@ from typing import Annotated, Self
 
 from flext_core import c, p, t
 from flext_core._models.base import FlextModelFoundation
-from flext_core.protocols import Context
-from flext_core._typings import RegisterableService, Scalar
+
+from pydantic import Field, model_validator
 
 
 class FlextModelsService:
@@ -26,74 +26,6 @@ class FlextModelsService:
     This class acts as a namespace container for domain service patterns.
     All nested classes are accessed via FlextModels.Service.* in the main models.py.
     """
-
-    class RuntimeBootstrapOptions(FlextModelFoundation.ArbitraryTypesModel):
-        """Runtime bootstrap options for service initialization."""
-
-        config_type: type[BaseSettings] | None = Field(
-            default=None,
-            description="Settings model class used to bootstrap runtime configuration.",
-            title="Config Type",
-            examples=["AppSettings"],
-        )
-        config_overrides: Mapping[str, Scalar] | None = Field(
-            default=None,
-            description="Configuration key overrides applied before runtime initialization.",
-            title="Config Overrides",
-            examples=[{"LOG_LEVEL": "DEBUG"}],
-        )
-        context: Context | None = Field(
-            default=None,
-            description="Initial context object injected into the service runtime scope.",
-            title="Runtime Context",
-        )
-        subproject: str | None = Field(
-            default=None,
-            description="Subproject identifier used to scope runtime dependencies and settings.",
-            title="Subproject",
-            examples=["flext-core"],
-        )
-        services: Mapping[str, RegisterableService] | None = Field(
-            default=None,
-            description="Pre-registered service instances keyed by service name.",
-            title="Services",
-            examples=[{"logger": "service-instance"}],
-        )
-        factories: Mapping[str, t.FactoryCallable] | None = Field(
-            default=None,
-            description="Factory callables used to lazily create service instances.",
-            title="Factories",
-            examples=[{"db": "factory-callable"}],
-        )
-        resources: Mapping[str, t.ResourceCallable] | None = Field(
-            default=None,
-            description="Resource factory callables for lifecycle-managed dependencies.",
-            title="Resources",
-            examples=[{"redis": "resource-callable"}],
-        )
-        container_overrides: Mapping[str, t.Scalar] | None = Field(
-            default=None,
-            description="Dependency container configuration overrides applied at bootstrap.",
-            title="Container Overrides",
-            examples=[{"max_services": 256}],
-        )
-        wire_modules: Sequence[ModuleType] | None = Field(
-            default=None,
-            description="Python modules to wire for dependency injection.",
-            title="Wire Modules",
-        )
-        wire_packages: Sequence[str] | None = Field(
-            default=None,
-            description="Package names to scan and wire for dependency injection.",
-            title="Wire Packages",
-            examples=[["app.api", "app.services"]],
-        )
-        wire_classes: Sequence[type] | None = Field(
-            default=None,
-            description="Concrete classes to wire explicitly in the dependency container.",
-            title="Wire Classes",
-            examples=[["UserService", "OrderService"]],
-        )
 
     class ServiceRuntime(FlextModelFoundation.ArbitraryTypesModel):
         """Runtime triple (config, context, container) for services.
