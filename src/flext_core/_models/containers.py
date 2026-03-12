@@ -11,22 +11,12 @@ from __future__ import annotations
 
 import typing
 from collections.abc import Callable, ItemsView, KeysView, Mapping, ValuesView
+from datetime import datetime
 from typing import ClassVar
 
 from pydantic import BaseModel, ConfigDict, Field, RootModel
 
 from flext_core.typings import t
-
-
-class ErrorCodeMap(BaseModel):
-    """Model for nested error code mappings."""
-
-    codes: dict[str, int] = Field(
-        default_factory=dict,
-        title="Error Codes",
-        description="Mapping from error keys to numeric error codes.",
-        examples=[{"timeout": 504, "invalid_payload": 400}],
-    )
 
 
 class FlextModelsContainers:
@@ -37,17 +27,27 @@ class FlextModelsContainers:
     Access via ``m.ConfigMap``, ``m.Dict``, etc.
     """
 
-    class ObjectList(RootModel[list[t.Scalar | BaseModel]]):
+    class ErrorCodeMap(BaseModel):
+        """Model for nested error code mappings."""
+
+        codes: dict[str, int] = Field(
+            default_factory=dict,
+            title="Error Codes",
+            description="Mapping from error keys to numeric error codes.",
+            examples=[{"timeout": 504, "invalid_payload": 400}],
+        )
+
+    class ObjectList(RootModel[list[t.Container]]):
         """Sequence of container values for batch operations."""
 
-        root: list[t.Scalar | BaseModel] = Field(
+        root: list[t.Container] = Field(
             default_factory=list,
             title="Object List",
             description=(
-                "Ordered values for batch operations, limited to scalar values "
-                "or validated Pydantic model instances."
+                "Ordered container values for batch operations "
+                "(scalar, BaseModel, or Path)."
             ),
-            examples=[["item-1", 42, True]],
+            examples=[["item-1", 2, True]],
         )
 
     class _RootDictProtocol[RootValueT](typing.Protocol):
@@ -96,7 +96,7 @@ class FlextModelsContainers:
         def values(self) -> ValuesView[DictValueT]:
             return self.root.values()
 
-    class Dict(_RootDictModel[t.Scalar]):
+    class Dict(_RootDictModel[t.Container]):
         """Generic dictionary container. Use ``m.Dict``."""
 
         # Used by: flext-core CQRS/message payloads (`_models/base.py`, `_models/cqrs.py`),
@@ -105,14 +105,17 @@ class FlextModelsContainers:
         # Migration note: command/query/event payloads should move to domain-specific
         # Pydantic models instead of generic key-value dictionaries.
 
-        root: dict[str, t.Scalar] = Field(
+        root: dict[str, t.Container] = Field(
             default_factory=dict,
             title="Dictionary Payload",
-            description="Dictionary payload storing strict scalar values only.",
+            description=(
+                "Dictionary payload storing strict container values "
+                "(scalar, BaseModel, or Path)."
+            ),
             examples=[{"request_id": "req-123", "retry_count": 3, "dry_run": True}],
         )
 
-    class ConfigMap(_RootDictModel[t.Scalar]):
+    class ConfigMap(_RootDictModel[t.Container]):
         """Configuration map container. Use ``m.ConfigMap``."""
 
         # Used by: flext-core container/context/runtime/logging/exceptions, flext-tests
@@ -120,7 +123,7 @@ class FlextModelsContainers:
         # flext-target-ldif). Most call sites represent typed config contracts and can
         # be replaced by explicit domain settings models over time.
 
-        root: dict[str, t.Scalar] = Field(
+        root: dict[str, t.Container] = Field(
             default_factory=dict,
             title="Configuration Map",
             description="Configuration entries keyed by normalized setting names.",
@@ -143,13 +146,13 @@ class FlextModelsContainers:
             ],
         )
 
-    class ErrorMap(_RootDictModel[int | str | ErrorCodeMap]):
+    class ErrorMap(_RootDictModel[int | str | BaseModel]):
         """Error type mapping container.
 
         Replaces: ErrorTypeMapping
         """
 
-        root: dict[str, int | str | ErrorCodeMap] = Field(
+        root: dict[str, int | str | BaseModel] = Field(
             default_factory=dict,
             title="Error Map",
             description="Error catalog mapping keys to codes, messages, or nested code maps.",
@@ -183,21 +186,27 @@ class FlextModelsContainers:
         )
 
     class ValidatorCallable(
-        RootModel[Callable[[t.Scalar | BaseModel | None], t.Scalar | BaseModel | None]]
+        RootModel[
+            Callable[
+                [str | int | float | bool | datetime | BaseModel | None],
+                str | int | float | bool | datetime | BaseModel | None,
+            ]
+        ]
     ):
         """Callable validator container. Fixed types: ScalarValue | BaseModel."""
 
-        root: Callable[[t.Scalar | BaseModel | None], t.Scalar | BaseModel | None] = (
-            Field(
-                title="Validator Callable",
-                description="Callable that validates or transforms one scalar/model input value.",
-                examples=["identity_validator"],
-            )
+        root: Callable[
+            [str | int | float | bool | datetime | BaseModel | None],
+            str | int | float | bool | datetime | BaseModel | None,
+        ] = Field(
+            title="Validator Callable",
+            description="Callable that validates or transforms one scalar/model input value.",
+            examples=["identity_validator"],
         )
 
         def __call__(
-            self, value: t.Scalar | BaseModel | None
-        ) -> t.Scalar | BaseModel | None:
+            self, value: str | float | bool | datetime | BaseModel | None
+        ) -> str | float | bool | datetime | BaseModel | None:
             """Execute validator."""
             return self.root(value)
 
@@ -205,7 +214,10 @@ class FlextModelsContainers:
         RootModel[
             dict[
                 str,
-                Callable[[t.Scalar | BaseModel | None], t.Scalar | BaseModel | None],
+                Callable[
+                    [str | int | float | bool | datetime | BaseModel | None],
+                    str | int | float | bool | datetime | BaseModel | None,
+                ],
             ]
         ]
     ):
@@ -214,24 +226,37 @@ class FlextModelsContainers:
         def items(
             self,
         ) -> ItemsView[
-            str, Callable[[t.Scalar | BaseModel | None], t.Scalar | BaseModel | None]
+            str,
+            Callable[
+                [str | int | float | bool | datetime | BaseModel | None],
+                str | int | float | bool | datetime | BaseModel | None,
+            ],
         ]:
             """Get validator items."""
             validated: dict[
                 str,
-                Callable[[t.Scalar | BaseModel | None], t.Scalar | BaseModel | None],
+                Callable[
+                    [str | int | float | bool | datetime | BaseModel | None],
+                    str | int | float | bool | datetime | BaseModel | None,
+                ],
             ] = {key: value for key, value in self.root.items() if callable(value)}
             return validated.items()
 
         def values(
             self,
         ) -> ValuesView[
-            Callable[[t.Scalar | BaseModel | None], t.Scalar | BaseModel | None],
+            Callable[
+                [str | int | float | bool | datetime | BaseModel | None],
+                str | int | float | bool | datetime | BaseModel | None,
+            ],
         ]:
             """Get validator values."""
             validated: dict[
                 str,
-                Callable[[t.Scalar | BaseModel | None], t.Scalar | BaseModel | None],
+                Callable[
+                    [str | int | float | bool | datetime | BaseModel | None],
+                    str | int | float | bool | datetime | BaseModel | None,
+                ],
             ] = {key: value for key, value in self.root.items() if callable(value)}
             return validated.values()
 
@@ -239,7 +264,11 @@ class FlextModelsContainers:
         """Map of field validators."""
 
         root: dict[
-            str, Callable[[t.Scalar | BaseModel | None], t.Scalar | BaseModel | None]
+            str,
+            Callable[
+                [str | int | float | bool | datetime | BaseModel | None],
+                str | int | float | bool | datetime | BaseModel | None,
+            ],
         ] = Field(
             default_factory=dict,
             title="Field Validator Map",
@@ -251,7 +280,11 @@ class FlextModelsContainers:
         """Map of consistency rules."""
 
         root: dict[
-            str, Callable[[t.Scalar | BaseModel | None], t.Scalar | BaseModel | None]
+            str,
+            Callable[
+                [str | int | float | bool | datetime | BaseModel | None],
+                str | int | float | bool | datetime | BaseModel | None,
+            ],
         ] = Field(
             default_factory=dict,
             title="Consistency Rule Map",
@@ -263,7 +296,11 @@ class FlextModelsContainers:
         """Map of event validators."""
 
         root: dict[
-            str, Callable[[t.Scalar | BaseModel | None], t.Scalar | BaseModel | None]
+            str,
+            Callable[
+                [str | int | float | bool | datetime | BaseModel | None],
+                str | int | float | bool | datetime | BaseModel | None,
+            ],
         ] = Field(
             default_factory=dict,
             title="Event Validator Map",
@@ -277,7 +314,7 @@ class FlextModelsContainers:
         model_config: ClassVar[ConfigDict] = ConfigDict(
             validate_assignment=True, extra="forbid"
         )
-        results: list[t.Scalar | None] = Field(
+        results: list[str | int | float | bool | datetime | None] = Field(
             default=[],
             title="Batch Results",
             description="Batch result values in processing order.",

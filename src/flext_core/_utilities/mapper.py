@@ -16,7 +16,7 @@ from typing import Protocol, TypeAlias, overload
 
 from pydantic import BaseModel
 
-from flext_core import FlextRuntime, T, m, p, r, t
+from flext_core import FlextRuntime, T, m, p, r
 from flext_core._utilities.cache import FlextUtilitiesCache
 from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core.typings import t
