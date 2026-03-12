@@ -20,7 +20,7 @@ from typing import override
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import FlextModels, FlextTypes
+from flext_core import FlextModels
 from flext_infra import FlextInfraModels
 from flext_tests import FlextTestsModels
 
@@ -228,14 +228,14 @@ class TestsFlextModels(FlextTestsModels, FlextInfraModels):
             model_config = ConfigDict(frozen=True)
 
             description: str
-            input: FlextTypes.ConfigurationMapping
+            input: object
             expected_success: bool
 
         class StandardTestCaseModel(BaseModel):
             """Standard operation case model for shared test utilities."""
 
             description: str
-            input_data: FlextTypes.ConfigurationMapping
+            input_data: object
             expected_result: object
             expected_success: bool = True
             error_contains: str | None = None

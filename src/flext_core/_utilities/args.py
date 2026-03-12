@@ -116,8 +116,8 @@ class FlextUtilitiesArgs:
                     valid = ", ".join(m.value for m in enum_members)
                     errors.append(f"{field}: '{value}' not in [{valid}]")
         if errors:
-            return r[object].fail(f"Invalid values: {'; '.join(errors)}")
-        return r[object].ok(parsed)
+            return r[Mapping[str, object]].fail(f"Invalid values: {'; '.join(errors)}")
+        return r[Mapping[str, object]].ok(parsed)
 
     @staticmethod
     def validated(

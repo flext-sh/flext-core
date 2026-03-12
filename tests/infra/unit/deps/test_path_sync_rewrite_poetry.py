@@ -3,6 +3,7 @@ from __future__ import annotations
 import tomlkit
 from tomlkit.toml_document import TOMLDocument
 
+from flext_infra.deps.path_sync import _rewrite_poetry
 from flext_tests import tm
 
 

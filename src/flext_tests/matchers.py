@@ -94,7 +94,7 @@ def _to_test_payload(value: object) -> t.Tests.object:
     return str(value)
 
 
-def _as_guard_input(value: object) -> core_object:
+def _as_guard_input(value: object) -> t.Container:
     if isinstance(value, BaseModel | str | int | float | bool | Path):
         return value
     if value is None:
@@ -104,14 +104,14 @@ def _as_guard_input(value: object) -> core_object:
             mapping_value = _GUARD_PAYLOAD_DICT_ADAPTER.validate_python(value)
             return {key: _as_guard_input(item) for key, item in mapping_value.items()}
         except ValidationError:
-            empty_map: dict[str, core_object] = {}
+            empty_map: dict[str, t.Container] = {}
             return empty_map
     if _is_non_string_sequence(value):
         try:
             sequence_value = _GUARD_PAYLOAD_LIST_ADAPTER.validate_python(value)
             return [_as_guard_input(seq_item) for seq_item in sequence_value]
         except ValidationError:
-            empty_seq: list[core_object] = []
+            empty_seq: list[t.Container] = []
             return empty_seq
     return str(value)
 
@@ -483,7 +483,7 @@ class FlextTestsMatchers:
                     params.msg
                     or f"Path extraction requires dict or model, got {type(result_value).__name__}"
                 )
-            extract_source: BaseModel | core_object
+            extract_source: BaseModel | t.Container
             if isinstance(result_value, BaseModel):
                 extract_source = result_value
             elif isinstance(result_value, Mapping):
@@ -492,7 +492,7 @@ class FlextTestsMatchers:
                         result_value
                     )
                 except ValidationError:
-                    fallback_map: dict[str, core_object] = {}
+                    fallback_map: dict[str, t.Container] = {}
                     extract_source = fallback_map
             else:
                 raise AssertionError(
@@ -824,7 +824,7 @@ class FlextTestsMatchers:
         subject: object = value
         if FlextUtilitiesGuards.is_result_like(subject):
             result_obj = subject
-            actual_value: core_object | str = ""
+            actual_value: t.Container | str = ""
             if params.ok is not None:
                 if params.ok and (not result_obj.is_success):
                     raise AssertionError(
@@ -832,14 +832,14 @@ class FlextTestsMatchers:
                         or c.Tests.Matcher.ERR_OK_FAILED.format(error=result_obj.error)
                     )
                 if not params.ok and result_obj.is_success:
-                    unwrapped_value_error: core_object = result_obj.value
+                    unwrapped_value_error: t.Container = result_obj.value
                     value_str: str = str(unwrapped_value_error)
                     raise AssertionError(
                         params.msg
                         or c.Tests.Matcher.ERR_FAIL_EXPECTED.format(value=value_str)
                     )
                 if result_obj.is_success:
-                    unwrapped_value: core_object = result_obj.value
+                    unwrapped_value: t.Container = result_obj.value
                     actual_value = unwrapped_value
             elif params.has is not None:
                 err = result_obj.error or ""

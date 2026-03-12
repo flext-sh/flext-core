@@ -6,7 +6,7 @@ from typing import TypeAlias
 
 from flext_core import t
 
-object: TypeAlias = t.Primitives | None
+LooseTypeAlias: TypeAlias = t.Primitives | None
 
 
 class FlextTestModels:

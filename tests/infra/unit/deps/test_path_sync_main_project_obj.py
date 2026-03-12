@@ -13,8 +13,6 @@ from flext_infra import m
 from flext_infra.deps import path_sync as path_sync_module
 from flext_tests import tm
 
-from ...models import m
-
 
 class _OutputNoop:
     def info(self, _message: str) -> None:

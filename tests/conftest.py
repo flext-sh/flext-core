@@ -301,7 +301,7 @@ class FlextScenarioRunner:
                 )
 
 
-class rAssertionHelper:
+class RAssertionHelper:
     """Helper for common r assertions.
 
     Provides pattern for asserting result success/failure with
@@ -565,9 +565,9 @@ def scenario_runner() -> FlextScenarioRunner:
 
 
 @pytest.fixture
-def result_assertion_helper() -> rAssertionHelper:
+def result_assertion_helper() -> RAssertionHelper:
     """Helper for common r assertions."""
-    return rAssertionHelper()
+    return RAssertionHelper()
 
 
 @pytest.fixture

@@ -94,8 +94,8 @@ def _to_payload(value: object) -> t.Tests.object:
     return str(value)
 
 
-def _to_config_map_value(value: t.Tests.object) -> core_object:
-    """Converobject to object."""
+def _to_config_map_value(value: t.Tests.object) -> t.Container:
+    """Convert value to container."""
     if value is None or isinstance(value, t.Primitives | BaseModel):
         return value
     if isinstance(value, bytes):
