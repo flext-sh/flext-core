@@ -14,6 +14,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
+import warnings
 from collections.abc import Callable, Mapping, Sequence, Sized
 from datetime import datetime
 from pathlib import Path
@@ -202,7 +203,7 @@ class FlextUtilitiesGuards:
         if not isinstance(value, dict):
             return False
         for item_value in value.values():
-            if not FlextUtilitiesGuards.is_general_value_type(item_value):
+            if not FlextUtilitiesGuards.is_container(item_value):
                 return False
         return True
 
@@ -231,7 +232,7 @@ class FlextUtilitiesGuards:
         if not isinstance(value, Mapping):
             return False
         for item_value in value.values():
-            if not FlextUtilitiesGuards.is_general_value_type(item_value):
+            if not FlextUtilitiesGuards.is_container(item_value):
                 return False
         return True
 
@@ -264,7 +265,7 @@ class FlextUtilitiesGuards:
         return False
 
     @staticmethod
-    def is_general_value_type(
+    def is_container(
         value: FlextUtilitiesGuards._GuardInput,
     ) -> TypeGuard[object]:
         """Check if value is a valid object.
@@ -287,18 +288,23 @@ class FlextUtilitiesGuards:
         if value is True or value is False:
             return True
         if FlextUtilitiesGuards._is_list_or_tuple(value):
-            for item in value:
-                if not FlextUtilitiesGuards.is_general_value_type(item):
-                    return False
-            return True
+            return all(FlextUtilitiesGuards.is_container(item) for item in value)
         if FlextUtilitiesGuards._is_mapping(value):
-            for v in value.values():
-                if not FlextUtilitiesGuards.is_general_value_type(v):
-                    return False
-            return True
+            return all(FlextUtilitiesGuards.is_container(v) for v in value.values())
         if callable(value):
             return True
         return hasattr(value, "model_dump") or isinstance(value, Path)
+
+    @staticmethod
+    def is_general_value_type(value: object) -> bool:
+        """Deprecated alias; use is_container."""
+        warnings.warn(
+            "is_general_value_type is deprecated; use is_container. "
+            "Planned removal: v0.12.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return FlextUtilitiesGuards.is_container(value)
 
     @staticmethod
     def is_handler_callable(
@@ -641,7 +647,7 @@ class FlextUtilitiesGuards:
         error_msg: str | None,
     ) -> str:
         if isinstance(condition, type):
-            if FlextUtilitiesGuards.is_general_value_type(value):
+            if FlextUtilitiesGuards.is_container(value):
                 return FlextUtilitiesGuards._guard_check_type(
                     value, condition, context_name, error_msg
                 )
@@ -650,7 +656,7 @@ class FlextUtilitiesGuards:
                 or f"{context_name} must be {condition.__name__}, got {value.__class__.__name__}"
             )
         if FlextUtilitiesGuards._is_type_tuple(condition):
-            if FlextUtilitiesGuards.is_general_value_type(value):
+            if FlextUtilitiesGuards.is_container(value):
                 return FlextUtilitiesGuards._guard_check_type(
                     value, condition, context_name, error_msg
                 )
@@ -659,7 +665,7 @@ class FlextUtilitiesGuards:
                 or f"{context_name} type check failed for {value.__class__.__name__}"
             )
         if isinstance(condition, p.ValidatorSpec):
-            if not FlextUtilitiesGuards.is_general_value_type(value):
+            if not FlextUtilitiesGuards.is_container(value):
                 return (
                     error_msg or f"{context_name} must be a valid configuration value"
                 )
@@ -668,7 +674,7 @@ class FlextUtilitiesGuards:
                 typed_value, condition, context_name, error_msg
             )
         if isinstance(condition, str):
-            if not FlextUtilitiesGuards.is_general_value_type(value):
+            if not FlextUtilitiesGuards.is_container(value):
                 return (
                     error_msg or f"{context_name} must be a valid configuration value"
                 )
@@ -1163,7 +1169,7 @@ class FlextUtilitiesGuards:
                     "dict_non_empty",
                     "list_non_empty",
                 }:
-                    if FlextUtilitiesGuards.is_general_value_type(value):
+                    if FlextUtilitiesGuards.is_container(value):
                         return bool(method(value))
                     return False
                 return bool(method(value))

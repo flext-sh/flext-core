@@ -34,12 +34,12 @@ class ResultHelpers:
             if items.is_failure:
                 return True
             result_value = items.value
-            if not FlextUtilitiesGuards.is_general_value_type(result_value):
+            if not FlextUtilitiesGuards.is_container(result_value):
                 return True
             return FlextUtilitiesGuards.empty(result_value)
         if items is None:
             return True
-        if not FlextUtilitiesGuards.is_general_value_type(items):
+        if not FlextUtilitiesGuards.is_container(items):
             return True
         return FlextUtilitiesGuards.empty(items)
 

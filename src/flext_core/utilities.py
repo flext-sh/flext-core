@@ -259,6 +259,7 @@ class FlextUtilities:
     )
     is_context = staticmethod(FlextUtilitiesGuards.is_context)
     is_dict_non_empty = staticmethod(FlextUtilitiesGuards.is_dict_non_empty)
+    is_container = staticmethod(FlextUtilitiesGuards.is_container)
     is_general_value_type = staticmethod(FlextUtilitiesGuards.is_general_value_type)
     is_handler_type = staticmethod(FlextUtilitiesGuards.is_handler_type)
     is_handler_callable = staticmethod(FlextUtilitiesGuards.is_handler_callable)
@@ -279,6 +280,7 @@ class FlextUtilities:
     none_ = staticmethod(FlextUtilitiesGuards.none_)
     is_result_like = staticmethod(FlextUtilitiesGuards.is_result_like)
     normalize_to_metadata_value = staticmethod(FlextRuntime.normalize_to_metadata_value)
+    normalize_to_container = staticmethod(FlextRuntime.normalize_to_container)
     require_initialized = staticmethod(FlextUtilitiesGuards.require_initialized)
     agg = staticmethod(FlextUtilitiesMapper.agg)
     build = staticmethod(FlextUtilitiesMapper.build)
@@ -293,6 +295,7 @@ class FlextUtilities:
     ensure = staticmethod(FlextUtilitiesMapper.ensure)
     ensure_str = staticmethod(FlextUtilitiesMapper.ensure_str)
     ensure_str_or_none = staticmethod(FlextUtilitiesMapper.ensure_str_or_none)
+    narrow_to_container = staticmethod(FlextUtilitiesMapper.narrow_to_container)
     narrow_to_general_value_type = staticmethod(
         FlextUtilitiesMapper.narrow_to_general_value_type
     )

@@ -19,7 +19,6 @@ import types
 import warnings
 from collections.abc import Iterator, Mapping
 from contextlib import contextmanager, suppress
-from datetime import datetime
 from pathlib import Path
 from typing import ClassVar, Literal, Self, overload, override
 
@@ -104,7 +103,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             context_vars = FlextRuntime.structlog().contextvars.get_contextvars()
             context_map: dict[str, t.Container] = (
                 {
-                    str(k): FlextLogger._to_scalar_value(v)
+                    str(k): FlextRuntime.normalize_to_general_value(v)
                     for k, v in dict(context_vars).items()
                 }
                 if context_vars
@@ -638,25 +637,27 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             return f"{message} | args={args!r}"
 
     @staticmethod
+    def _to_container_value(value: object) -> t.Container:
+        """Normalize value to Container (internal helper)."""
+        return FlextRuntime.normalize_to_general_value(value)
+
+    @staticmethod
     def _to_scalar_value(value: object) -> t.Scalar:
-        if isinstance(value, str | int | float | bool | datetime):
+        if u.Guards.is_scalar(value):
             return value
         return str(value)
 
-    @classmethod
-    def _to_scalar_context(
-        cls, context: Mapping[str, t.Container]
-    ) -> dict[str, t.Scalar]:
-        return {key: cls._to_scalar_value(value) for key, value in context.items()}
-
-    @classmethod
-    def _to_container_context(
-        cls, context: Mapping[str, t.Container]
-    ) -> dict[str, t.Container]:
+    @staticmethod
+    def _to_container_context(context: Mapping[str, object]) -> dict[str, t.Container]:
+        """Convert mapping to container context using normalization."""
         return {
             key: FlextRuntime.normalize_to_general_value(value)
             for key, value in context.items()
         }
+
+    @classmethod
+    def _to_scalar_context(cls, context: Mapping[str, object]) -> dict[str, t.Scalar]:
+        return {key: cls._to_scalar_value(value) for key, value in context.items()}
 
     @staticmethod
     def _get_caller_source_path() -> str | None:
@@ -790,6 +791,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         self,
         msg: str | object,
         *args: object,
+        _return_result: bool = False,
         **kw: t.Container,
     ) -> r[bool] | None:
         """Log critical message - Logger.Log implementation.
@@ -803,40 +805,39 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         response. All critical messages go through this method, ensuring consistent
         log formatting and context inclusion across FLEXT.
         """
-        return self._log_standard_level(c.Settings.LogLevel.CRITICAL, msg, *args, **kw)
+        return self._log_standard_level(
+            c.Settings.LogLevel.CRITICAL,
+            msg,
+            *args,
+            _return_result=_return_result,
+            **kw,
+        )
 
     @overload
     def debug(
         self,
         msg: str | object,
-        *args: object | Exception,
-        _return_result: Literal[True],
-        **kw: t.Container,
-    ) -> r[bool]: ...
-
-    @overload
-    def debug(
-        self,
-        msg: str | object,
-        *args: object | Exception,
+        *args: object,
         _return_result: Literal[False] = ...,
-        **kw: t.Container,
+        **kw: t.Scalar,
     ) -> None: ...
 
     @overload
     def debug(
         self,
         msg: str | object,
-        *args: object | Exception,
-        **kw: t.Container,
-    ) -> r[bool] | None: ...
+        *args: object,
+        _return_result: Literal[True],
+        **kw: t.Scalar,
+    ) -> r[bool]: ...
 
     @override
     def debug(
         self,
         msg: str | object,
-        *args: object | Exception,
-        **kw: t.Container,
+        *args: object,
+        _return_result: bool = False,
+        **kw: t.Scalar,
     ) -> r[bool] | None:
         """Log debug message - Logger.Log implementation.
 
@@ -849,7 +850,13 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         All debug messages go through this method, ensuring consistent log formatting
         and context inclusion across FLEXT.
         """
-        return self._log_standard_level(c.Settings.LogLevel.DEBUG, msg, *args, **kw)
+        return self._log_standard_level(
+            c.Settings.LogLevel.DEBUG,
+            msg,
+            *args,
+            _return_result=_return_result,
+            **kw,
+        )
 
     @overload
     def error(
@@ -882,6 +889,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         self,
         msg: str | object,
         *args: object,
+        _return_result: bool = False,
         **kw: t.Container,
     ) -> r[bool] | None:
         """Log error message - Logger.Log implementation.
@@ -895,7 +903,13 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         error messages go through this method, ensuring consistent log formatting and
         context inclusion across FLEXT.
         """
-        return self._log_standard_level(c.Settings.LogLevel.ERROR, msg, *args, **kw)
+        return self._log_standard_level(
+            c.Settings.LogLevel.ERROR,
+            msg,
+            *args,
+            _return_result=_return_result,
+            **kw,
+        )
 
     @overload
     def exception(
@@ -927,23 +941,10 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
     def exception(
         self,
         msg: str | object,
-        *args: object,
-        **kw: t.Container,
+        *args: object | Exception,
+        **kw: t.Container | Exception | bool | None,
     ) -> r[bool] | None:
-        """Log exception with conditional stack trace (DEBUG only).
-
-        Business Rule: Logs an exception with conditional stack trace inclusion based
-        on effective log level. Stack trace is included only if effective log level is
-        DEBUG. Exception details (type, message, stack trace) are added to context.
-        Uses FlextRuntime for centralized logging management.
-
-        Audit Implication: Exception logging ensures audit trail completeness by recording
-        exception details and stack traces. Stack traces are critical for troubleshooting
-        but may contain sensitive information, so they're only included at DEBUG level.
-        All exception messages go through this method, ensuring consistent log formatting
-        and context inclusion across FLEXT. Exception details are critical for audit
-        trail reconstruction and failure analysis.
-        """
+        """Log exception with conditional stack trace (DEBUG only)."""
         message = str(msg)
         filtered_args: tuple[t.Scalar, ...] = tuple(
             FlextLogger._to_scalar_value(arg)
@@ -951,14 +952,13 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             if not isinstance(arg, BaseException)
         )
         try:
-            raw_context: dict[str, object] = dict(kw)
-            raw_exception = raw_context.get("exception")
-            exc_info_value = raw_context.get("exc_info", True)
             resolved_exception: Exception | None = (
-                raw_exception if isinstance(raw_exception, Exception) else None
+                args[0] if args and isinstance(args[0], Exception) else None
             )
+            raw_exception = kw.get("exception")
+            exc_info_value = kw.get("exc_info", True)
             context_input: dict[str, t.Scalar | Exception] = {}
-            for key, value in raw_context.items():
+            for key, value in kw.items():
                 if key in {"exception", "exc_info"}:
                     continue
                 if isinstance(value, Exception):
@@ -982,52 +982,6 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
             FlextLogger._report_internal_logging_failure("exception", exc)
             return r[bool].fail(f"Exception logging failed: {exc}")
-
-    @overload
-    def info(
-        self,
-        msg: str | object,
-        *args: object,
-        _return_result: Literal[True],
-        **kw: t.Container,
-    ) -> r[bool]: ...
-
-    @overload
-    def info(
-        self,
-        msg: str | object,
-        *args: object,
-        _return_result: Literal[False] = ...,
-        **kw: t.Container,
-    ) -> None: ...
-
-    @overload
-    def info(
-        self,
-        msg: str | object,
-        *args: object,
-        **kw: t.Container,
-    ) -> r[bool] | None: ...
-
-    @override
-    def info(
-        self,
-        msg: str | object,
-        *args: object,
-        **kw: t.Container,
-    ) -> r[bool] | None:
-        """Log info message - Logger.Log implementation.
-
-        Business Rule: Logs an info-level message with optional context. Uses _log
-        method for actual logging. Uses FlextRuntime for centralized logging management.
-
-        Audit Implication: Info logging ensures audit trail completeness by recording
-        informational messages about application flow. Info messages are typically
-        included in production logs and critical for audit trail reconstruction.
-        All info messages go through this method, ensuring consistent log formatting
-        and context inclusion across FLEXT.
-        """
-        return self._log_standard_level(c.Settings.LogLevel.INFO, msg, *args, **kw)
 
     @overload
     def log(
@@ -1137,42 +1091,74 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         return self.__class__.create_bound_logger(self.name, bound_logger)
 
     @overload
-    def warning(
+    def info(
         self,
         msg: str | object,
-        *args: object,
+        *args: object | Exception,
+        _return_result: Literal[False] = ...,
+        **kw: t.Container | Exception | bool | None,
+    ) -> None: ...
+
+    @overload
+    def info(
+        self,
+        msg: str | object,
+        *args: object | Exception,
         _return_result: Literal[True],
-        **kw: t.Container,
+        **kw: t.Container | Exception | bool | None,
     ) -> r[bool]: ...
+
+    @override
+    def info(
+        self,
+        msg: str | object,
+        *args: object | Exception,
+        _return_result: bool = False,
+        **kw: t.Scalar,
+    ) -> r[bool] | None:
+        """Log info message - Logger.Log implementation."""
+        return self._log_standard_level(
+            c.Settings.LogLevel.INFO,
+            msg,
+            *args,
+            _return_result=_return_result,
+            **kw,
+        )
 
     @overload
     def warning(
         self,
         msg: str | object,
-        *args: object,
+        *args: object | Exception,
         _return_result: Literal[False] = ...,
-        **kw: t.Container,
+        **kw: t.Container | Exception | bool | None,
     ) -> None: ...
+
+    @overload
+    def warning(
+        self,
+        msg: str | object,
+        *args: object | Exception,
+        _return_result: Literal[True],
+        **kw: t.Container | Exception | bool | None,
+    ) -> r[bool]: ...
 
     @override
     def warning(
         self,
         msg: str | object,
-        *args: object,
-        **kw: t.Container,
+        *args: object | Exception,
+        _return_result: bool = False,
+        **kw: t.Scalar,
     ) -> r[bool] | None:
-        """Log warning message - Logger.Log implementation.
-
-        Business Rule: Logs a warning-level message with optional context. Uses _log
-        method for actual logging. Uses FlextRuntime for centralized logging management.
-
-        Audit Implication: Warning logging ensures audit trail completeness by recording
-        warning messages about potential issues. Warning messages are typically included
-        in production logs and critical for audit trail reconstruction and issue
-        identification. All warning messages go through this method, ensuring consistent
-        log formatting and context inclusion across FLEXT.
-        """
-        return self._log_standard_level(c.Settings.LogLevel.WARNING, msg, *args, **kw)
+        """Log warning message - Logger.Log implementation."""
+        return self._log_standard_level(
+            c.Settings.LogLevel.WARNING,
+            msg,
+            *args,
+            _return_result=_return_result,
+            **kw,
+        )
 
     def with_result(self) -> FlextLogger.ResultAdapter:
         """Get a result-returning logger adapter.
@@ -1196,8 +1182,8 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         self,
         _level: c.Settings.LogLevel | str,
         message: str,
-        *args: object,
-        **context: t.Container,
+        *args: object | Exception,
+        **context: t.Container | Exception | bool | None,
     ) -> r[bool] | None:
         """Internal logging method - consolidates all log level methods.
 
@@ -1225,7 +1211,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
                 case _:
                     level_raw = str(_level)
             level_str = level_raw.lower()
-            scalar_context = FlextLogger._to_scalar_context(context)
+            scalar_context = FlextLogger._to_container_context(context)
             getattr(self.logger, level_str)(formatted_message, **scalar_context)
             return r[bool].ok(value=True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
@@ -1236,7 +1222,8 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         level: c.Settings.LogLevel,
         msg: str | object,
         *args: object | Exception,
-        **kw: t.Container,
+        _return_result: bool = False,
+        **kw: t.Container | Exception | bool | None,
     ) -> r[bool] | None:
         message = str(msg)
         filtered_args: tuple[t.Container, ...] = tuple(
@@ -1285,28 +1272,26 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
                 _ = self.logger.info(
                     f"{self._operation_name} {status}",
                     _return_result=False,
-                    **FlextLogger._to_scalar_context(context.root),
+                    **FlextLogger._to_container_context(context.root),
                 )
             else:
                 _ = self.logger.error(
                     f"{self._operation_name} {status}",
                     _return_result=False,
-                    **FlextLogger._to_scalar_context(context.root),
+                    **FlextLogger._to_container_context(context.root),
                 )
 
     class ResultAdapter:
-        """Adapter ensuring FlextLogger methods return r outputs.
-
-        Provides explicit wrapper methods for common logger operations.
-        For other methods, access _base_logger directly.
-        """
-
-        __slots__ = ("_base_logger",)
+        """Adapter providing r[bool] results (DEPRECATED: Use direct logging)."""
 
         def __init__(self, base_logger: FlextLogger) -> None:
-            """Initialize adapter with base logger."""
-            super().__init__()
+            """Wrap a FlextLogger with r[bool] return values (deprecated)."""
             self._base_logger = base_logger
+            warnings.warn(
+                "ResultAdapter is deprecated and will be removed in future versions. Use direct logging methods instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
 
         @property
         def name(self) -> str:
@@ -1327,10 +1312,6 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             """Log debug message returning r."""
             return self._log_and_wrap("debug", message, *args, **kwargs)
 
-        def error(self, message: str, *args: object, **kwargs: t.Container) -> r[bool]:
-            """Log error message returning r."""
-            return self._log_and_wrap("error", message, *args, **kwargs)
-
         def exception(
             self,
             message: str,
@@ -1339,12 +1320,34 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             exc_info: bool = True,
             **kwargs: t.Container,
         ) -> r[bool]:
-            """Log exception with traceback returning r.
+            """Log exception with context, returning r[bool]."""
+            try:
+                _ = self._base_logger.error(
+                    message,
+                    _return_result=False,
+                    exception=exception,
+                    exc_info=exc_info,
+                    **kwargs,
+                )
+                return r[bool].ok(value=True)
+            except (
+                AttributeError,
+                TypeError,
+                ValueError,
+                RuntimeError,
+                KeyError,
+            ) as exc:
+                return r[bool].fail(f"Exception logging failed: {exc}")
 
-            Note: Uses error() with exception context as FlextLogger.exception()
-            is typically used in adapter context where direct exception handling
-            is done by the base logger.
-            """
+        def error(
+            self,
+            message: str,
+            exception: Exception | BaseException | None = None,
+            *,
+            exc_info: bool = True,
+            **kwargs: t.Container | Exception | bool | None,
+        ) -> r[bool]:
+            """Log error message returning r."""
             match exception:
                 case Exception() as exc:
                     resolved_exception: Exception | None = exc
@@ -1361,12 +1364,14 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
                         }
                 case _:
                     pass
-            normalized_context: dict[str, t.Scalar | Exception] = {}
+            normalized_context: dict[str, t.Container | Exception] = {}
             for ctx_key, ctx_val in context_kwargs.items():
                 if isinstance(ctx_val, Exception):
                     normalized_context[ctx_key] = ctx_val
                 else:
-                    normalized_context[ctx_key] = FlextLogger._to_scalar_value(ctx_val)
+                    normalized_context[ctx_key] = (
+                        FlextRuntime.normalize_to_general_value(ctx_val)
+                    )
             context = self._base_logger.build_exception_context(
                 exception=resolved_exception,
                 exc_info=exc_info,
@@ -1375,20 +1380,33 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             _ = self._base_logger.error(
                 message,
                 _return_result=False,
-                **FlextLogger._to_scalar_context(context.root),
+                **FlextLogger._to_container_context(context.root),
             )
             return r[bool].ok(value=True)
 
-        def info(self, message: str, *args: object, **kwargs: t.Container) -> r[bool]:
+        def info(
+            self,
+            message: str,
+            *args: object,
+            **kwargs: t.Container | Exception | bool | None,
+        ) -> r[bool]:
             """Log info message returning r."""
             return self._log_and_wrap("info", message, *args, **kwargs)
 
-        def trace(self, message: str, *args: object, **kwargs: t.Container) -> r[bool]:
+        def trace(
+            self,
+            message: str,
+            *args: object,
+            **kwargs: t.Container | Exception | bool | None,
+        ) -> r[bool]:
             """Log trace message returning r."""
             return self._log_and_wrap("trace", message, *args, **kwargs)
 
         def warning(
-            self, message: str, *args: object, **kwargs: t.Container
+            self,
+            message: str,
+            *args: object,
+            **kwargs: t.Container | Exception | bool | None,
         ) -> r[bool]:
             """Log warning message returning r."""
             return self._log_and_wrap("warning", message, *args, **kwargs)
@@ -1402,7 +1420,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             method_name: str,
             message: str,
             *args: object,
-            **kwargs: t.Container,
+            **kwargs: t.Container | Exception | bool | None,
         ) -> r[bool]:
             log_method = getattr(self._base_logger, method_name)
             log_method(message, *args, **kwargs)

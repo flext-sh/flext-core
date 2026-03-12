@@ -53,17 +53,15 @@ type _Primitives = str | int | float | bool
 type _Scalar = str | int | float | bool | datetime
 type _Container = _Scalar | BaseModel | Path
 
-type _GeneralValueType = (
-    _Scalar
-    | BaseModel
-    | Path
-    | Sequence[_GeneralValueType]
-    | Mapping[str, _GeneralValueType]
-)
-type _Serializable = _Scalar | Sequence[_Serializable] | Mapping[str, _Serializable]
+# --- RECURSIVE TYPES (PEP 695 - Annotation-only, NEVER with isinstance) ---
+
 type _JsonValue = _Scalar | list[_JsonValue] | dict[str, _JsonValue]
+type _Serializable = _Scalar | list[_Serializable] | dict[str, _Serializable]
 type _ContainerValue = (
-    _Scalar | BaseModel | Sequence[_ContainerValue] | Mapping[str, _ContainerValue]
+    _Scalar | BaseModel | list[_ContainerValue] | dict[str, _ContainerValue]
+)
+type _GeneralValueType = (
+    _Scalar | BaseModel | Path | list[_GeneralValueType] | dict[str, _GeneralValueType]
 )
 
 type _ConstantValue = (
@@ -100,16 +98,16 @@ class FlextTypes:
     FactoryCallable: TypeAlias = Callable[[], RegisterableService]
     ResourceCallable: TypeAlias = Callable[[], Container]
     MetadataValue: TypeAlias = (
-        _Scalar | Mapping[str, _Scalar | Sequence[_Scalar]] | Sequence[_Scalar]
+        Scalar | Mapping[str, Scalar | Sequence[Scalar]] | Sequence[Scalar]
     )
     MetadataAttributeValue: TypeAlias = MetadataValue
     HandlerCallable: TypeAlias = Callable[[Container], Container]
     HandlerLike: TypeAlias = Callable[..., Container]
     RegistrablePlugin: TypeAlias = (
-        _Scalar | BaseModel | Callable[..., _Scalar | BaseModel]
+        Scalar | BaseModel | Callable[..., Scalar | BaseModel]
     )
 
-    # RECURSIVE types (must use `TypeAlias` here to point to module-level definitions)
+    # RECURSIVE types (Annotation-only, use guards.py for narrowing)
     GeneralValueType: TypeAlias = _GeneralValueType
     Serializable: TypeAlias = _Serializable
     JsonValue: TypeAlias = _JsonValue

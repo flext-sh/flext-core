@@ -12,17 +12,16 @@ from __future__ import annotations
 import inspect
 import sys
 from collections.abc import Callable, Mapping, Sequence
-from datetime import datetime
-from pathlib import Path
 from typing import Annotated, ClassVar, Literal, Self, override
 
-from pydantic import BaseModel, Field, PrivateAttr, computed_field
+from pydantic import Field, PrivateAttr, computed_field
 
 from flext_core import (
     FlextContainer,
     FlextDispatcher,
     FlextHandlers,
     c,
+    e,
     m,
     p,
     r,
@@ -192,80 +191,23 @@ class FlextRegistry(s[bool]):
         return instance
 
     @staticmethod
-    def _to_plugin_container_value(
-        value: object,
-    ) -> r[object]:
-        """Convert value to container-friendly object wrap in r."""
-        if callable(value):
-            return r[object].fail(
-                "Callable plugin cannot be returned as container value"
-            )
-        if value is None or isinstance(
-            value, (str, int, float, bool, datetime, BaseModel, Path, Sequence, Mapping)
-        ):
-            return r[object].ok(value)
-        return r[object].fail(
-            f"Plugin value of type {type(value).__name__} is not container-compatible"
-        )
+    def _narrow_value(value: object | None) -> object | None:
+        """Safe conversion using centralized utilities."""
+        return u.narrow_to_container(value)
 
-    @staticmethod
-    def _safe_get_handler_mode(value: object) -> c.Cqrs.HandlerType:
-        """Safely extract and validate handler mode from value."""
-        parse_result = u.parse(
-            value,
-            c.Cqrs.HandlerType,
-            default=c.Cqrs.HandlerType.COMMAND,
-            case_insensitive=True,
-        )
-        if parse_result.is_success:
-            parsed = parse_result.value
-            if isinstance(parsed, c.Cqrs.HandlerType):
-                return parsed
-        return c.Cqrs.HandlerType.COMMAND
+    def _get_handler_mode(self, value: object) -> c.Cqrs.HandlerType:
+        """Safe conversion to HandlerType."""
+        try:
+            return u.parse(value, c.Cqrs.HandlerType)
+        except (e.ValidationError, ValueError):
+            return c.Cqrs.HandlerType.COMMAND
 
-    @staticmethod
-    def _safe_get_status(value: object) -> c.Cqrs.CommonStatus:
-        """Safely extract and validate status from value."""
-        if value == c.Cqrs.RegistrationStatus.ACTIVE:
-            return c.Cqrs.CommonStatus.RUNNING
-        if value == c.Cqrs.RegistrationStatus.INACTIVE:
-            return c.Cqrs.CommonStatus.FAILED
-
-        parse_result = u.parse(
-            value,
-            c.Cqrs.CommonStatus,
-            default=c.Cqrs.CommonStatus.RUNNING,
-            case_insensitive=True,
-        )
-        if parse_result.is_success:
-            parsed = parse_result.value
-            if isinstance(parsed, c.Cqrs.CommonStatus):
-                return parsed
-        return c.Cqrs.CommonStatus.RUNNING
-
-    @staticmethod
-    def _to_dispatcher_handler(
-        handler_for_dispatch: p.Handler[object, object],
-    ) -> t.HandlerLike:
-        """Convert handler to dispatcher-compatible callable."""
-        handler_ref = handler_for_dispatch
-
-        def _dispatch_wrapper(*args: object) -> object | None:
-            if args:
-                result = handler_ref.handle(args[0])
-                return result.value if result.is_success else None
-            return None
-
-        message_type_attr = getattr(handler_for_dispatch, "message_type", None)
-        if message_type_attr is not None:
-            setattr(_dispatch_wrapper, "message_type", message_type_attr)
-        event_type_attr = getattr(handler_for_dispatch, "event_type", None)
-        if event_type_attr is not None:
-            setattr(_dispatch_wrapper, "event_type", event_type_attr)
-        can_handle_attr = getattr(handler_for_dispatch, "can_handle", None)
-        if can_handle_attr is not None:
-            setattr(_dispatch_wrapper, "can_handle", can_handle_attr)
-        return _dispatch_wrapper
+    def _get_status(self, value: object) -> m.HandlerStatus:
+        """Safe conversion to HandlerStatus."""
+        try:
+            return u.parse(value, m.HandlerStatus)
+        except (e.ValidationError, ValueError):
+            return m.HandlerStatus.ACTIVE
 
     @override
     def execute(self) -> r[bool]:
@@ -308,7 +250,7 @@ class FlextRegistry(s[bool]):
                 return r[object].fail(
                     f"Failed to retrieve {category} '{name}': {raw_result.error}"
                 )
-            return FlextRegistry._to_plugin_container_value(raw_result.value)
+            return self._narrow_value(raw_result.value)
         cls = type(self)
         if key not in cls._class_registered_keys:
             available = [
@@ -319,7 +261,7 @@ class FlextRegistry(s[bool]):
             return r[object].fail(
                 f"{category} '{name}' not found. Available: {available}"
             )
-        return FlextRegistry._to_plugin_container_value(cls._class_plugin_storage[key])
+        return self._narrow_value(cls._class_plugin_storage[key])
 
     def list_plugins(
         self, category: str, *, scope: Literal["instance", "class"] = "instance"
@@ -424,7 +366,7 @@ class FlextRegistry(s[bool]):
     def register_handler(
         self,
         handler: p.Handler[object, object] | t.HandlerLike,
-        metadata: m.ConfigMap | m.Metadata | None = None,
+        _metadata: m.ConfigMap | m.Metadata | None = None,
     ) -> r[m.HandlerRegistrationDetails]:
         """Register a handler instance or callable.
 
@@ -436,55 +378,37 @@ class FlextRegistry(s[bool]):
             r[m.HandlerRegistrationDetails]: Success result with registration details.
 
         """
-        handler_name = u.get_protocol_name(handler, default=handler.__class__.__name__)
-        self._propagate_context(f"register_handler_{handler_name}")
+        handler_id = str(getattr(handler, "handler_id", id(handler)))
+        status_raw = getattr(handler, "status", "active")
+        status = self._get_status(status_raw)
+        handler_mode_raw = getattr(
+            handler, "handler_mode", getattr(handler, "mode", "command")
+        )
+        handler_mode = self._get_handler_mode(handler_mode_raw)
 
-        key = handler_name
-        if key in self._registered_keys:
-            self.logger.debug(
-                "Handler already registered, returning existing registration",
-                operation="register_handler",
-                handler_name=handler_name,
-                handler_key=key,
-            )
-            return r[m.HandlerRegistrationDetails].ok(
-                m.HandlerRegistrationDetails(
-                    registration_id=key,
-                    handler_mode=c.Cqrs.HandlerType.COMMAND,
-                    timestamp="",
-                    status=c.Cqrs.CommonStatus.RUNNING,
-                )
-            )
-
-        # Implementation check
-        if u.is_protocol_implementation(handler):
-            registration_handler = self._to_dispatcher_handler(handler)
-        else:
-            registration_handler = handler
-
+        # Standard Dispatcher registration avoids passing name/metadata
+        # as it discovers routes from the handler itself.
+        registration_handler: object = handler
         registration_result = self._dispatcher.register_handler(
-            handler_name,
             registration_handler,
-            metadata=metadata,
+            is_event=(handler_mode == c.Cqrs.HandlerType.EVENT),
         )
 
-        if registration_result.is_success:
-            reg_result = registration_result.value
-            reg_details = self._create_registration_details(
-                m.HandlerRegistrationResult.model_validate(reg_result), key
+        if registration_result.is_failure:
+            return r[m.HandlerRegistrationDetails].fail(
+                registration_result.error or "Dispatcher registration failed"
             )
-            self._registered_keys.add(key)
-            return r[m.HandlerRegistrationDetails].ok(reg_details)
 
-        error_msg = registration_result.error
-        self.logger.warning(
-            "Handler registration failed",
-            operation="register_handler",
-            handler_name=handler_name,
-            handler_key=key,
-            error=error_msg or "",
+        self._registered_keys.add(handler_id)
+        return r[m.HandlerRegistrationDetails].ok(
+            m.HandlerRegistrationDetails(
+                registration_id=handler_id,
+                handler_mode=handler_mode,
+                status=status
+                if isinstance(status, c.Cqrs.CommonStatus)
+                else c.Cqrs.CommonStatus.RUNNING,
+            )
         )
-        return r[m.HandlerRegistrationDetails].fail(error_msg or "Unknown error")
 
     def register_handlers(
         self, handlers: Sequence[p.Handler[object, object] | t.HandlerLike]

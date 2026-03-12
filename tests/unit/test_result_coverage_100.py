@@ -311,61 +311,71 @@ class TestrCoverage:
     def test_to_maybe_success(self) -> None:
         """Test conversion to Maybe on success."""
         result = r[str].ok("test")
-        maybe = result.to_maybe()
+        with pytest.warns(DeprecationWarning, match="to_maybe\(\) is deprecated"):
+            maybe = result.to_maybe()
         assert isinstance(maybe, Some)
         assert maybe.unwrap() == "test"
 
     def test_to_maybe_failure(self) -> None:
         """Test conversion to Maybe on failure."""
         result: r[str] = r[str].fail("error")
-        maybe = result.to_maybe()
+        with pytest.warns(DeprecationWarning, match="to_maybe\(\) is deprecated"):
+            maybe = result.to_maybe()
         assert maybe is Nothing
 
     def test_from_maybe_success(self) -> None:
         """Test creation from Maybe with Some."""
         maybe = Some("test")
-        result = r[str].from_maybe(maybe)
+        with pytest.warns(DeprecationWarning, match="from_maybe\(\) is deprecated"):
+            result = r[str].from_maybe(maybe)
         _ResultAssertions.assert_success_with_value(result, "test")
 
     def test_from_maybe_failure(self) -> None:
         """Test creation from Maybe with Nothing."""
-        result = r[str].from_maybe(Nothing, "No value")
+        with pytest.warns(DeprecationWarning, match="from_maybe\(\) is deprecated"):
+            result = r[str].from_maybe(Nothing, "No value")
         _ResultAssertions.assert_failure_with_error(result, "No value")
 
     def test_to_io_success(self) -> None:
         """Test conversion to IO on success."""
         result = r[str].ok("test")
-        io = result.to_io()
+        with pytest.warns(DeprecationWarning, match="to_io\(\) is deprecated"):
+            io = result.to_io()
         assert io is not None
 
     def test_to_io_failure_raises(self) -> None:
         """Test that to_io raises on failure."""
         result: r[str] = r[str].fail("error")
-        with pytest.raises(e.ValidationError):
-            result.to_io()
+        with pytest.warns(DeprecationWarning, match="to_io\(\) is deprecated"):
+            with pytest.raises(e.ValidationError):
+                result.to_io()
 
     def test_to_io_result_success(self) -> None:
         """Test conversion to IOResult on success."""
         result = r[str].ok("test")
-        io_result = result.to_io_result()
+        with pytest.warns(DeprecationWarning, match="to_io_result\(\) is deprecated"):
+            io_result = result.to_io_result()
         assert isinstance(io_result, IOSuccess)
 
     def test_to_io_result_failure(self) -> None:
         """Test conversion to IOResult on failure."""
         result: r[str] = r[str].fail("error")
-        io_result = result.to_io_result()
+        with pytest.warns(DeprecationWarning, match="to_io_result\(\) is deprecated"):
+            io_result = result.to_io_result()
         assert isinstance(io_result, IOFailure)
 
     def test_from_io_result_success(self) -> None:
         """Test creation from IOResult success - wraps returns IOSuccess/IOFailure."""
         io_result: IOResult[str, str] = IOResult.from_value("test")
-        result = r[str].from_io_result(io_result)
+        with pytest.warns(DeprecationWarning, match="from_io_result\(\) is deprecated"):
+            result = r[str].from_io_result(io_result)
         _ResultAssertions.assert_success(result)
 
     def test_from_io_result_failure(self) -> None:
         """Test creation from IOResult failure - wraps returns IOFailure/Failure."""
         io_result: IOResult[str, str] = IOResult.from_failure("error")
-        result = r[str].from_io_result(io_result)
+        with pytest.warns(DeprecationWarning, match="from_io_result\(\) is deprecated"):
+            result = r[str].from_io_result(io_result)
         _ResultAssertions.assert_failure(result)
 
     def test_safe_decorator_success(self) -> None:

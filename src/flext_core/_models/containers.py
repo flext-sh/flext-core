@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import typing
 from collections.abc import Callable, ItemsView, KeysView, Mapping, ValuesView
-from datetime import datetime
 from typing import ClassVar
 
 from pydantic import BaseModel, ConfigDict, Field, RootModel
@@ -188,16 +187,16 @@ class FlextModelsContainers:
     class ValidatorCallable(
         RootModel[
             Callable[
-                [str | int | float | bool | datetime | BaseModel | None],
-                str | int | float | bool | datetime | BaseModel | None,
+                [t.Scalar | BaseModel | None],
+                t.Scalar | BaseModel | None,
             ]
         ]
     ):
         """Callable validator container. Fixed types: ScalarValue | BaseModel."""
 
         root: Callable[
-            [str | int | float | bool | datetime | BaseModel | None],
-            str | int | float | bool | datetime | BaseModel | None,
+            [t.Scalar | BaseModel | None],
+            t.Scalar | BaseModel | None,
         ] = Field(
             title="Validator Callable",
             description="Callable that validates or transforms one scalar/model input value.",
@@ -205,8 +204,8 @@ class FlextModelsContainers:
         )
 
         def __call__(
-            self, value: str | float | bool | datetime | BaseModel | None
-        ) -> str | float | bool | datetime | BaseModel | None:
+            self, value: t.Scalar | BaseModel | None
+        ) -> t.Scalar | BaseModel | None:
             """Execute validator."""
             return self.root(value)
 
@@ -215,8 +214,8 @@ class FlextModelsContainers:
             dict[
                 str,
                 Callable[
-                    [str | int | float | bool | datetime | BaseModel | None],
-                    str | int | float | bool | datetime | BaseModel | None,
+                    [t.Scalar | BaseModel | None],
+                    t.Scalar | BaseModel | None,
                 ],
             ]
         ]
@@ -228,16 +227,16 @@ class FlextModelsContainers:
         ) -> ItemsView[
             str,
             Callable[
-                [str | int | float | bool | datetime | BaseModel | None],
-                str | int | float | bool | datetime | BaseModel | None,
+                [t.Scalar | BaseModel | None],
+                t.Scalar | BaseModel | None,
             ],
         ]:
             """Get validator items."""
             validated: dict[
                 str,
                 Callable[
-                    [str | int | float | bool | datetime | BaseModel | None],
-                    str | int | float | bool | datetime | BaseModel | None,
+                    [t.Scalar | BaseModel | None],
+                    t.Scalar | BaseModel | None,
                 ],
             ] = {key: value for key, value in self.root.items() if callable(value)}
             return validated.items()
@@ -246,16 +245,16 @@ class FlextModelsContainers:
             self,
         ) -> ValuesView[
             Callable[
-                [str | int | float | bool | datetime | BaseModel | None],
-                str | int | float | bool | datetime | BaseModel | None,
+                [t.Scalar | BaseModel | None],
+                t.Scalar | BaseModel | None,
             ],
         ]:
             """Get validator values."""
             validated: dict[
                 str,
                 Callable[
-                    [str | int | float | bool | datetime | BaseModel | None],
-                    str | int | float | bool | datetime | BaseModel | None,
+                    [t.Scalar | BaseModel | None],
+                    t.Scalar | BaseModel | None,
                 ],
             ] = {key: value for key, value in self.root.items() if callable(value)}
             return validated.values()
@@ -266,8 +265,8 @@ class FlextModelsContainers:
         root: dict[
             str,
             Callable[
-                [str | int | float | bool | datetime | BaseModel | None],
-                str | int | float | bool | datetime | BaseModel | None,
+                [t.Scalar | BaseModel | None],
+                t.Scalar | BaseModel | None,
             ],
         ] = Field(
             default_factory=dict,
@@ -282,8 +281,8 @@ class FlextModelsContainers:
         root: dict[
             str,
             Callable[
-                [str | int | float | bool | datetime | BaseModel | None],
-                str | int | float | bool | datetime | BaseModel | None,
+                [t.Scalar | BaseModel | None],
+                t.Scalar | BaseModel | None,
             ],
         ] = Field(
             default_factory=dict,
@@ -298,8 +297,8 @@ class FlextModelsContainers:
         root: dict[
             str,
             Callable[
-                [str | int | float | bool | datetime | BaseModel | None],
-                str | int | float | bool | datetime | BaseModel | None,
+                [t.Scalar | BaseModel | None],
+                t.Scalar | BaseModel | None,
             ],
         ] = Field(
             default_factory=dict,
@@ -314,12 +313,13 @@ class FlextModelsContainers:
         model_config: ClassVar[ConfigDict] = ConfigDict(
             validate_assignment=True, extra="forbid"
         )
-        results: list[str | int | float | bool | datetime | None] = Field(
+        results: list[t.Scalar | None] = Field(
             default=[],
             title="Batch Results",
             description="Batch result values in processing order.",
             examples=[["ok", 1, None]],
         )
+
         errors: list[tuple[int, str]] = Field(
             default=[],
             title="Batch Errors",

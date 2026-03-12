@@ -255,7 +255,7 @@ class FlextUtilitiesParser:
             attr_value = getattr(obj, attr)
             return (
                 attr_value
-                if FlextUtilitiesGuards.is_general_value_type(attr_value)
+                if FlextUtilitiesGuards.is_container(attr_value)
                 else str(attr_value)
             )
         return default

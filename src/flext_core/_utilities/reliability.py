@@ -62,7 +62,7 @@ class FlextUtilitiesReliability:
         for raw_key, raw_value in value.items():
             normalized_value = (
                 raw_value
-                if FlextUtilitiesGuards.is_general_value_type(raw_value)
+                if FlextUtilitiesGuards.is_container(raw_value)
                 else str(raw_value)
             )
             normalized[str(raw_key)] = normalized_value
@@ -227,7 +227,7 @@ class FlextUtilitiesReliability:
                     op_dict = _RELIABILITY_CONTAINER_DICT_ADAPTER.validate_python(op)
                 except ValidationError:
                     op_dict = {}
-                if FlextUtilitiesGuards.is_general_value_type(current):
+                if FlextUtilitiesGuards.is_container(current):
                     current = FlextUtilitiesMapper.build(current, ops=op_dict)
             elif callable(op):
                 current = op(current)

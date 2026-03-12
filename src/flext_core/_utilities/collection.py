@@ -178,9 +178,7 @@ class FlextUtilitiesCollection:
                             result_value
                         ):
                             for inner_item in result_value:
-                                if FlextUtilitiesGuards.is_general_value_type(
-                                    inner_item
-                                ):
+                                if FlextUtilitiesGuards.is_container(inner_item):
                                     results.append(
                                         FlextUtilitiesCollection._coerce_guard_value(
                                             inner_item
@@ -211,7 +209,7 @@ class FlextUtilitiesCollection:
                 try:
                     if do_flatten and FlextUtilitiesGuards.is_object_list(result_raw):
                         for inner_item in result_raw:
-                            if FlextUtilitiesGuards.is_general_value_type(inner_item):
+                            if FlextUtilitiesGuards.is_container(inner_item):
                                 results.append(
                                     FlextUtilitiesCollection._coerce_guard_value(
                                         inner_item
@@ -220,7 +218,7 @@ class FlextUtilitiesCollection:
                             else:
                                 results.append(str(inner_item))
                         continue
-                    if FlextUtilitiesGuards.is_general_value_type(result_raw):
+                    if FlextUtilitiesGuards.is_container(result_raw):
                         direct_result = FlextUtilitiesCollection._coerce_guard_value(
                             result_raw
                         )

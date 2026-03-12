@@ -367,10 +367,10 @@ class FlextContext(FlextRuntime):
             statistics=dict(statistics_mapping.items()),
         )
 
-    def get(self, key: str, scope: str = c.Context.SCOPE_GLOBAL) -> r[object]:
+    def get(self, key: str, scope: str = c.Context.SCOPE_GLOBAL) -> r[t.Container]:
         """Get a value from the context.
 
-        Fast fail: Returns r[object] - fails if key not found.
+        Fast fail: Returns r[t.Container] - fails if key not found.
         No fallback behavior - use r monadic operations for defaults.
 
         ARCHITECTURAL NOTE: Uses Python contextvars for storage (single source of truth).
@@ -381,7 +381,7 @@ class FlextContext(FlextRuntime):
             scope: The scope to get from (global, user, session)
 
         Returns:
-            r[object]: Success with value, or failure if key not found
+            r[t.Container]: Success with value, or failure if key not found
 
         Example:
             >>> context = FlextContext()
@@ -399,43 +399,32 @@ class FlextContext(FlextRuntime):
 
         """
         if not self._active:
-            return r[object].fail("Context is not active")
+            return r[t.Container].fail("Context is not active")
         scope_data = self._get_from_contextvar(scope)
         if key not in scope_data:
-            return r[object].fail(f"Context key '{key}' not found in scope '{scope}'")
+            return r[t.Container].fail(
+                f"Context key '{key}' not found in scope '{scope}'"
+            )
         value = scope_data[key]
         self._update_statistics(c.Context.OPERATION_GET)
         if value is None:
-            return r[object].fail(
+            return r[t.Container].fail(
                 f"Context key '{key}' has None value in scope '{scope}'"
             )
 
-        def normalize_plain(raw_value: object) -> object:
-            mapped_value = FlextRuntime.normalize_to_general_value(raw_value)
-            if isinstance(mapped_value, Mapping):
-                return {
-                    str(item_key): normalize_plain(
-                        FlextRuntime.normalize_to_general_value(item_value)
-                    )
-                    for item_key, item_value in mapped_value.items()
-                }
-            if isinstance(mapped_value, list):
-                return [normalize_plain(item) for item in mapped_value]
-            return mapped_value
+        return r[t.Container].ok(FlextRuntime.normalize_to_general_value(value))
 
-        return r[object].ok(normalize_plain(value))
-
-    def get_metadata(self, key: str) -> r[object]:
+    def get_metadata(self, key: str) -> r[t.Container]:
         """Get metadata from the context.
 
-        Fast fail: Returns r[object] - fails if key not found.
+        Fast fail: Returns r[t.Container] - fails if key not found.
         No fallback behavior - use r monadic operations for defaults.
 
         Args:
             key: The metadata key
 
         Returns:
-            r[object]: Success with metadata value, or failure if key not found
+            r[t.Container]: Success with metadata value, or failure if key not found
 
         Example:
             >>> context = FlextContext()
@@ -453,10 +442,12 @@ class FlextContext(FlextRuntime):
 
         """
         if key not in self._metadata.attributes:
-            return r[object].fail(f"Metadata key '{key}' not found")
+            return r[t.Container].fail(f"Metadata key '{key}' not found")
         raw_value: object = self._metadata.attributes[key]
-        normalized_value: object = FlextRuntime.normalize_to_general_value(raw_value)
-        return r[object].ok(normalized_value)
+        normalized_value: t.Container = FlextRuntime.normalize_to_general_value(
+            raw_value
+        )
+        return r[t.Container].ok(normalized_value)
 
     def has(self, key: str, scope: str = c.Context.SCOPE_GLOBAL) -> bool:
         """Check if a key exists in the context.
@@ -583,7 +574,9 @@ class FlextContext(FlextRuntime):
             self._update_statistics(c.Context.OPERATION_REMOVE)
 
     @overload
-    def set(self, key_or_data: str, value: object, *, scope: str = ...) -> r[bool]: ...
+    def set(
+        self, key_or_data: str, value: t.Container, *, scope: str = ...
+    ) -> r[bool]: ...
 
     @overload
     def set(
@@ -593,7 +586,7 @@ class FlextContext(FlextRuntime):
     def set(
         self,
         key_or_data: str | m.ConfigMap,
-        value: object | None = _SENTINEL,
+        value: t.Container | None = _SENTINEL,
         *,
         scope: str = c.Context.SCOPE_GLOBAL,
     ) -> r[bool]:

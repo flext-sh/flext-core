@@ -608,7 +608,7 @@ class FlextRuntime:
             return False
 
     @staticmethod
-    def normalize_to_general_value(
+    def normalize_to_container(
         val: object,
     ) -> t.Container:
         """Normalize any value to t.Container recursively (Scalar | BaseModel | Path).
@@ -634,19 +634,30 @@ class FlextRuntime:
             normalized_dict: dict[str, t.Container] = {}
             if isinstance(raw_dict, Mapping):
                 for k, v in raw_dict.items():
-                    normalized_dict[str(k)] = FlextRuntime.normalize_to_general_value(v)
+                    normalized_dict[str(k)] = FlextRuntime.normalize_to_container(v)
             return FlextModelsContainers.Dict(root=normalized_dict)
         if FlextRuntime.is_list_like(val):
             normalized_list: list[t.Container] = []
             if isinstance(val, Sequence):
                 normalized_list.extend(
-                    FlextRuntime.normalize_to_general_value(item) for item in val
+                    FlextRuntime.normalize_to_container(item) for item in val
                 )
             return FlextModelsContainers.ObjectList(root=normalized_list)
         return str(val)
 
     @staticmethod
-    def normalize_to_metadata_value(
+    def normalize_to_general_value(val: object) -> t.Container:
+        """Deprecated alias; use normalize_to_container."""
+        warnings.warn(
+            "normalize_to_general_value is deprecated; use normalize_to_container. "
+            "Planned removal: v0.12.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return FlextRuntime.normalize_to_container(val)
+
+    @staticmethod
+    def normalize_to_metadata(
         val: object,
     ) -> t.Container:
         """Normalize any value to t.Container for metadata.
@@ -654,11 +665,22 @@ class FlextRuntime:
         Wraps nested structures in Pydantic models for strict type safety
         and Pydantic usage throughout the FLEXT ecosystem.
         """
-        return FlextRuntime.normalize_to_general_value(val)
+        return FlextRuntime.normalize_to_container(val)
+
+    @staticmethod
+    def normalize_to_metadata_value(val: object) -> t.Container:
+        """Deprecated alias; use normalize_to_metadata."""
+        warnings.warn(
+            "normalize_to_metadata_value is deprecated; use normalize_to_metadata. "
+            "Planned removal: v0.12.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return FlextRuntime.normalize_to_metadata(val)
 
     @staticmethod
     def safe_get_attribute(
-        obj: t.GeneralValueType, attr: str, default: t.GeneralValueType | None = None
+        obj: object, attr: str, default: object | None = None
     ) -> object | None:
         """Safe attribute access without raising AttributeError.
 
@@ -1226,6 +1248,20 @@ class FlextRuntime:
         def __or__(self, default: T) -> T:
             """Operator overload for default values."""
             return self.unwrap_or(default)
+
+        @property
+        def data(self) -> T:
+            """Compatibility alias returning successful payload value."""
+            warnings.warn(
+                "RuntimeResult.data is deprecated; use RuntimeResult.value. "
+                "Planned removal: v0.12.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            if not self.is_success or self._payload is None:
+                msg = f"Cannot access value of failed result: {self.error}"
+                raise RuntimeError(msg)
+            return self._payload
 
         @property
         def exception(self) -> BaseException | None:
