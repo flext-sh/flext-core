@@ -40,34 +40,34 @@ class FlextUtilitiesGuards:
     """
 
     @staticmethod
-    def _is_bool(value: t.ContainerValue) -> TypeGuard[bool]:
+    def _is_bool(value: t.GeneralValueType) -> TypeGuard[bool]:
         """Check if value is bool."""
         return isinstance(value, bool)
 
     @staticmethod
-    def _is_bytes(value: t.ContainerValue) -> TypeGuard[bytes]:
+    def _is_bytes(value: t.GeneralValueType) -> TypeGuard[bytes]:
         """Check if value is bytes."""
         return isinstance(value, bytes)
 
     @staticmethod
     def _is_callable_key_func(
-        func: t.ContainerValue,
+        func: t.GeneralValueType,
     ) -> TypeGuard[Callable[[t.ContainerValue], t.ContainerValue]]:
         """Check if value is callable and can be used as key function for sorted()."""
         return callable(func)
 
     @staticmethod
-    def _is_dict(value: t.ContainerValue) -> TypeGuard[m.Dict]:
+    def _is_dict(value: t.GeneralValueType) -> TypeGuard[m.Dict]:
         """Check if value is a dict-like mapping."""
         return isinstance(value, dict)
 
     @staticmethod
-    def _is_float(value: t.ContainerValue) -> TypeGuard[float]:
+    def _is_float(value: t.GeneralValueType) -> TypeGuard[float]:
         """Check if value is float."""
         return isinstance(value, float)
 
     @staticmethod
-    def _is_int(value: t.ContainerValue) -> TypeGuard[int]:
+    def _is_int(value: t.GeneralValueType) -> TypeGuard[int]:
         """Check if value is int."""
         return isinstance(value, int)
 
@@ -105,25 +105,27 @@ class FlextUtilitiesGuards:
         return isinstance(value, tuple)
 
     @staticmethod
-    def _is_none(value: t.ContainerValue) -> TypeGuard[None]:
+    def _is_none(value: t.GeneralValueType) -> TypeGuard[None]:
         """Check if value is None."""
         return value is None
 
     @staticmethod
-    def _is_sequence(value: t.ContainerValue) -> TypeGuard[Sequence[t.ContainerValue]]:
+    def _is_sequence(
+        value: t.GeneralValueType,
+    ) -> TypeGuard[Sequence[t.ContainerValue]]:
         """Check if value is Sequence of ContainerValue."""
         return isinstance(value, (list, tuple, range))
 
     @staticmethod
     def _is_sequence_not_str(
-        value: t.ContainerValue,
+        value: t.GeneralValueType,
     ) -> TypeGuard[Sequence[t.ContainerValue]]:
         """Check if value is Sequence and not str."""
         return isinstance(value, (list, tuple, range)) and (not isinstance(value, str))
 
     @staticmethod
     def _is_sequence_not_str_bytes(
-        value: t.ContainerValue,
+        value: t.GeneralValueType,
     ) -> TypeGuard[Sequence[t.ContainerValue]]:
         """Check if value is Sequence and not str or bytes."""
         return isinstance(value, (list, tuple, range)) and (
@@ -131,19 +133,19 @@ class FlextUtilitiesGuards:
         )
 
     @staticmethod
-    def _is_sized(value: t.ContainerValue) -> TypeGuard[Sized]:
+    def _is_sized(value: t.GeneralValueType) -> TypeGuard[Sized]:
         """Check if value has __len__ (str, bytes, Sequence, Mapping)."""
         if isinstance(value, (str, bytes, list, tuple, dict)):
             return True
         return hasattr(value, "__len__") and callable(getattr(value, "__len__", None))
 
     @staticmethod
-    def _is_str(value: t.ContainerValue) -> TypeGuard[str]:
+    def _is_str(value: t.GeneralValueType) -> TypeGuard[str]:
         """Check if value is str."""
         return isinstance(value, str)
 
     @staticmethod
-    def _is_tuple(value: t.ContainerValue) -> TypeGuard[tuple[t.ContainerValue, ...]]:
+    def _is_tuple(value: t.GeneralValueType) -> TypeGuard[tuple[t.ContainerValue, ...]]:
         """Check if value is tuple."""
         return isinstance(value, tuple)
 
@@ -238,7 +240,7 @@ class FlextUtilitiesGuards:
         return True
 
     @staticmethod
-    def is_context(obj: t.ContainerValue) -> TypeGuard[p.Context]:
+    def is_context(obj: t.GeneralValueType) -> TypeGuard[p.Context]:
         """Check if object satisfies the Context protocol."""
         return (
             hasattr(obj, "clone")
@@ -250,7 +252,7 @@ class FlextUtilitiesGuards:
         )
 
     @staticmethod
-    def is_dict_non_empty(value: t.ContainerValue) -> bool:
+    def is_dict_non_empty(value: t.GeneralValueType) -> bool:
         """Check if value is a non-empty dictionary using duck typing."""
         return isinstance(value, Mapping) and bool(value)
 
@@ -351,12 +353,12 @@ class FlextUtilitiesGuards:
         return hasattr(value, "handle") or hasattr(value, "can_handle")
 
     @staticmethod
-    def is_list(value: t.ContainerValue) -> TypeGuard[list[t.ContainerValue]]:
+    def is_list(value: t.GeneralValueType) -> TypeGuard[list[t.ContainerValue]]:
         """Check if value is a list (type guard)."""
         return isinstance(value, list)
 
     @staticmethod
-    def is_list_non_empty(value: t.ContainerValue) -> bool:
+    def is_list_non_empty(value: t.GeneralValueType) -> bool:
         """Check if value is a non-empty list using duck typing."""
         return (
             isinstance(value, Sequence)
@@ -409,7 +411,7 @@ class FlextUtilitiesGuards:
         return isinstance(value, (str, int, float, bool, datetime))
 
     @staticmethod
-    def is_string_non_empty(value: t.ContainerValue) -> TypeGuard[str]:
+    def is_string_non_empty(value: t.GeneralValueType) -> TypeGuard[str]:
         """Check if value is a non-empty string using duck typing."""
         return isinstance(value, str) and bool(value.strip())
 
@@ -994,14 +996,14 @@ class FlextUtilitiesGuards:
         return value if return_value else r[T].ok(value)
 
     @staticmethod
-    def has(obj: t.ContainerValue, key: str) -> bool:
+    def has(obj: t.GeneralValueType, key: str) -> bool:
         """Check if object has attribute/key."""
         if isinstance(obj, dict):
             return key in obj
         return hasattr(obj, key)
 
     @staticmethod
-    def in_(value: t.ContainerValue, container: t.ContainerValue) -> bool:
+    def in_(value: t.GeneralValueType, container: t.GeneralValueType) -> bool:
         """Check if value is in container."""
         if isinstance(container, (list, tuple, set, dict)):
             try:
@@ -1011,7 +1013,7 @@ class FlextUtilitiesGuards:
         return False
 
     @staticmethod
-    def is_pydantic_model(value: t.ContainerValue) -> TypeGuard[p.HasModelDump]:
+    def is_pydantic_model(value: t.GeneralValueType) -> TypeGuard[p.HasModelDump]:
         """Type guard to check if value is a Pydantic model with model_dump method."""
         return (
             isinstance(value, BaseModel)
@@ -1089,7 +1091,7 @@ class FlextUtilitiesGuards:
             return False
 
     @staticmethod
-    def none_(*values: t.ContainerValue) -> bool:
+    def none_(*values: t.GeneralValueType) -> bool:
         """Check if all values are None.
 
         Args:
