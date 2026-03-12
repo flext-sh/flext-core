@@ -113,8 +113,8 @@ class FlextTypes:
         Scalar | Mapping[str, Scalar | Sequence[Scalar]] | Sequence[Scalar]
     )
     type MetadataAttributeValue = MetadataValue
-    type HandlerCallable = Callable[['p.Model'], 'p.Model']
-    type HandlerLike = Callable[..., 'p.Model']
+    type HandlerCallable = Callable[["p.Model"], "p.Model"]
+    type HandlerLike = Callable[..., "p.Model"]
     type RegistrablePlugin = Scalar | Callable[..., Scalar | BaseModel]
 
     # Other Types
