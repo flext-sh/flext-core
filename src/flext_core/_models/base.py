@@ -13,7 +13,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import uuid
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from datetime import UTC, datetime
 from typing import Annotated, ClassVar, Literal, Self, override
 
@@ -51,34 +51,36 @@ class FlextModelFoundation:
         """Pydantic v2 validators - single namespace for all field validators."""
 
         _tags_adapter: ClassVar[TypeAdapter[list[str]] | None] = None
-        _list_adapter: ClassVar[TypeAdapter[list[object]] | None] = None
+        _list_adapter: ClassVar[TypeAdapter[list[t.Container]] | None] = None
         _strict_string_adapter: ClassVar[
             TypeAdapter[Annotated[str, Field(strict=True)]] | None
         ] = None
         _metadata_map_adapter: ClassVar[
-            TypeAdapter[dict[str, t.MetadataValue]] | None
+            TypeAdapter[Mapping[str, t.Container]] | None
         ] = None
-        _config_adapter: ClassVar[TypeAdapter[dict[str, object]] | None] = None
+        _config_adapter: ClassVar[TypeAdapter[Mapping[str, t.Container]] | None] = None
 
         @classmethod
-        def config_adapter(cls) -> TypeAdapter[dict[str, object]]:
+        def config_adapter(cls) -> TypeAdapter[Mapping[str, t.Container]]:
             """Lazy-load config TypeAdapter on first access."""
             if cls._config_adapter is None:
-                cls._config_adapter = TypeAdapter(dict[str, object])
+                cls._config_adapter = TypeAdapter(Mapping[str, t.Container])
             return cls._config_adapter
 
         @classmethod
-        def list_adapter(cls) -> TypeAdapter[list[object]]:
+        def list_adapter(cls) -> TypeAdapter[list[t.Container]]:
             """Lazy-load list TypeAdapter on first access."""
             if cls._list_adapter is None:
-                cls._list_adapter = TypeAdapter(list[object])
+                cls._list_adapter = TypeAdapter(list[t.Container])
             return cls._list_adapter
 
         @classmethod
-        def metadata_map_adapter(cls) -> TypeAdapter[dict[str, t.MetadataValue]]:
+        def metadata_map_adapter(
+            cls,
+        ) -> TypeAdapter[Mapping[str, t.Container]]:
             """Lazy-load metadata map TypeAdapter on first access."""
             if cls._metadata_map_adapter is None:
-                cls._metadata_map_adapter = TypeAdapter(dict[str, t.MetadataValue])
+                cls._metadata_map_adapter = TypeAdapter(Mapping[str, t.Container])
             return cls._metadata_map_adapter
 
         @classmethod
@@ -105,7 +107,7 @@ class FlextModelFoundation:
             return _ensure_utc_datetime(v)
 
         @staticmethod
-        def normalize_to_list(v: object) -> list[object]:
+        def normalize_to_list(v: t.Container) -> list[t.Container]:
             """Normalize value to list format."""
             try:
                 return FlextModelFoundation.Validators.list_adapter().validate_python(v)
@@ -118,7 +120,9 @@ class FlextModelFoundation:
             return v.strip()
 
         @staticmethod
-        def validate_config_dict(v: object) -> Mapping[str, object]:
+        def validate_config_dict(
+            v: t.Container,
+        ) -> Mapping[str, t.Container]:
             """Validate configuration dictionary structure."""
             try:
                 normalized = (
@@ -127,7 +131,7 @@ class FlextModelFoundation:
             except ValidationError as exc:
                 msg = "Configuration must be a dictionary"
                 raise TypeError(msg) from exc
-            out: dict[str, object] = {}
+            out: dict[str, t.Container] = {}
             for key, item in normalized.items():
                 if key.startswith("_"):
                     msg = f"Keys starting with '_' are reserved: {key}"
@@ -136,10 +140,10 @@ class FlextModelFoundation:
             return out
 
         @staticmethod
-        def validate_tags_list(v: object) -> list[str]:
+        def validate_tags_list(v: t.Container) -> list[str]:
             """Validate and normalize tags list."""
             try:
-                raw_tags = (
+                raw_tags: Sequence[t.Container] = (
                     FlextModelFoundation.Validators.list_adapter().validate_python(v)
                 )
             except ValidationError as exc:
@@ -270,7 +274,7 @@ class FlextModelFoundation:
             title="Tags",
             examples=[["billing", "critical"]],
         )
-        attributes: Mapping[str, t.MetadataValue] = Field(
+        attributes: Mapping[str, t.Container] = Field(
             default_factory=dict,
             description="Arbitrary metadata attributes stored as key-value pairs.",
             title="Attributes",
@@ -283,8 +287,9 @@ class FlextModelFoundation:
         @field_validator("attributes", mode="before")
         @classmethod
         def _validate_attributes(
-            cls, value: t.MetadataValue | Mapping[str, t.MetadataValue] | None
-        ) -> Mapping[str, t.MetadataValue]:
+            cls,
+            value: t.Container | Mapping[str, t.Container] | None,
+        ) -> Mapping[str, t.Container]:
             if value is None:
                 return {}
             try:
@@ -354,7 +359,7 @@ class FlextModelFoundation:
         """Success result for discriminated union."""
 
         result_type: Literal["success"] = "success"
-        value: object
+        value: t.Container
         metadata: FlextModelFoundation.Metadata = Field(
             default_factory=lambda: FlextModelFoundation.Metadata(),
             description="Structured metadata attached to a successful operation result.",
@@ -372,7 +377,7 @@ class FlextModelFoundation:
         """Partial result for discriminated union."""
 
         result_type: Literal["partial"] = "partial"
-        value: object
+        value: t.Container
         warnings: list[str] = Field(
             default_factory=list,
             description="Non-fatal warning messages generated during partial processing.",
@@ -387,7 +392,7 @@ class FlextModelFoundation:
         """Valid validation outcome."""
 
         outcome_type: Literal["valid"] = "valid"
-        validated_data: object
+        validated_data: t.Container
         validation_time_ms: float
 
     class InvalidOutcome(BaseModel):
@@ -404,7 +409,7 @@ class FlextModelFoundation:
         """Warning validation outcome."""
 
         outcome_type: Literal["warning"] = "warning"
-        validated_data: object
+        validated_data: t.Container
         warnings: list[str]
         validation_time_ms: float
 

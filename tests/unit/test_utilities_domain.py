@@ -36,12 +36,12 @@ from ._models import InputPayloadMap, TestCaseMap
 def _build_domain_test_entity(
     *,
     name: str,
-    value: t.Tests.ContainerValue,
+    value: t.Tests.object,
 ) -> m.Tests.DomainTestEntity:
     return m.Tests.DomainTestEntity(name=name, value=cast("int", value))
 
 
-def _convert_to_general_value(obj: object) -> t.Tests.ContainerValue:
+def _convert_to_general_value(obj: object) -> t.Tests.object:
     """Convert object to object (handles Pydantic models).
 
     Args:
@@ -57,7 +57,7 @@ def _convert_to_general_value(obj: object) -> t.Tests.ContainerValue:
         return obj
     if isinstance(obj, dict):
         return cast(
-            "t.Tests.ContainerValue",
+            "t.Tests.object",
             {
                 str(key): _convert_to_general_value(val)
                 for key, val in cast("dict[str, object]", obj).items()
@@ -65,13 +65,13 @@ def _convert_to_general_value(obj: object) -> t.Tests.ContainerValue:
         )
     if isinstance(obj, (list, tuple)):
         return cast(
-            "t.Tests.ContainerValue",
+            "t.Tests.object",
             [_convert_to_general_value(elem) for elem in cast("list[object]", obj)],
         )
     return str(obj)
 
 
-def _require_payload_str(value: t.Tests.ContainerValue) -> str:
+def _require_payload_str(value: t.Tests.object) -> str:
     if isinstance(value, str):
         return value
     msg = f"Expected str payload, got {type(value).__name__}"
@@ -79,8 +79,8 @@ def _require_payload_str(value: t.Tests.ContainerValue) -> str:
 
 
 def _require_payload_mapping(
-    value: t.Tests.ContainerValue,
-) -> Mapping[str, t.Tests.ContainerValue]:
+    value: t.Tests.object,
+) -> Mapping[str, t.Tests.object]:
     if isinstance(value, Mapping):
         return value
     msg = f"Expected mapping payload, got {type(value).__name__}"
@@ -89,12 +89,12 @@ def _require_payload_mapping(
 
 def _as_test_payload(
     value: object | type[t.Primitives],
-) -> t.Tests.ContainerValue:
-    return cast("t.Tests.ContainerValue", value)
+) -> t.Tests.object:
+    return cast("t.Tests.object", value)
 
 
-def _as_payload_map(value: InputPayloadMap) -> Mapping[str, t.Tests.ContainerValue]:
-    return cast("Mapping[str, t.Tests.ContainerValue]", value)
+def _as_payload_map(value: InputPayloadMap) -> Mapping[str, t.Tests.object]:
+    return cast("Mapping[str, t.Tests.object]", value)
 
 
 def create_compare_entities_cases() -> list[TestCaseMap]:
@@ -289,7 +289,7 @@ def create_compare_value_objects_cases() -> list[TestCaseMap]:
                 "no_dict",
             ],
             input_data_list=cast(
-                "list[Mapping[str, t.Tests.ContainerValue]]",
+                "list[Mapping[str, t.Tests.object]]",
                 input_data_list,
             ),
             expected_results=[True, False, False, True, _as_test_payload(bool), True],
@@ -334,7 +334,7 @@ def create_hash_value_object_cases() -> list[TestCaseMap]:
                 "no_dict",
             ],
             input_data_list=cast(
-                "list[Mapping[str, t.Tests.ContainerValue]]",
+                "list[Mapping[str, t.Tests.object]]",
                 input_data_list_hash,
             ),
             expected_results=[
@@ -428,7 +428,7 @@ def create_validate_value_object_immutable_cases() -> list[TestCaseMap]:
                 "no_setattr",
             ],
             input_data_list=cast(
-                "list[Mapping[str, t.Tests.ContainerValue]]",
+                "list[Mapping[str, t.Tests.object]]",
                 [
                     {"obj": value_obj},
                     {"obj": mutable_obj},

@@ -87,7 +87,7 @@ if TYPE_CHECKING:
     )
     from examples._models.exconfig import ExConfigAppConfig
     from examples._models.shared import SharedHandle, SharedPerson
-    from examples.ex_01_flext_result import Ex01FlextResult
+    from examples.ex_01_flext_result import Ex01r
     from examples.ex_02_flext_settings import Ex02FlextSettings
     from examples.ex_03_flext_logger import Ex03FlextLogger
     from examples.ex_04_flext_dispatcher import Ex04FlextDispatcher
@@ -125,7 +125,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "Ex00UserInput": ("examples._models.ex00", "Ex00UserInput"),
     "Ex00UserProfile": ("examples._models.ex00", "Ex00UserProfile"),
     "Ex01DemonstrationResult": ("examples._models.ex01", "Ex01DemonstrationResult"),
-    "Ex01FlextResult": ("examples.ex_01_flext_result", "Ex01FlextResult"),
+    "Ex01r": ("examples.ex_01_flext_result", "Ex01r"),
     "Ex01InvalidPersonPayload": ("examples._models.ex01", "Ex01InvalidPersonPayload"),
     "Ex01RunDemonstrationCommand": (
         "examples._models.ex01",
@@ -219,11 +219,11 @@ __all__ = [
     "Ex00UserInput",
     "Ex00UserProfile",
     "Ex01DemonstrationResult",
-    "Ex01FlextResult",
     "Ex01InvalidPersonPayload",
     "Ex01RunDemonstrationCommand",
     "Ex01User",
     "Ex01ValidPersonPayload",
+    "Ex01r",
     "Ex02CacheService",
     "Ex02DatabaseService",
     "Ex02EmailService",

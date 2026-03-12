@@ -503,7 +503,7 @@ class FlextProtocols:
     class Configurable(BaseProtocol, Protocol):
         """Protocol for component configuration."""
 
-        def configure(self, config: t.ConfigurationMapping | None = None) -> Self:
+        def configure(self, config: object | None = None) -> Self:
             """Configure component with settings."""
             ...
 
@@ -906,7 +906,7 @@ class FlextProtocols:
             """
             ...
 
-        def pop_context(self) -> FlextProtocols.Result[t.ConfigurationMapping]:
+        def pop_context(self) -> FlextProtocols.Result[object]:
             """Pop execution context from the stack.
 
             Returns:
@@ -1163,8 +1163,8 @@ class FlextProtocols:
 
     type AccessibleData = (
         FlextModelsContainers.ConfigMap
-        | Mapping[str, t.JsonValue]
-        | t.ConfigurationMapping
+        | Mapping[str, object]
+        | object
         | BaseModel
         | "FlextProtocols.HasModelDump"
         | "FlextProtocols.ValidatorSpec"
@@ -1180,7 +1180,7 @@ class FlextProtocols:
         | CommandBus
     )
     type ServiceFactory = t.FactoryCallable
-    'Factory callable returning any registerable service type.\n\n    Broader than t.FactoryCallable (which returns ContainerValue).\n    Supports factories that create protocols like Log,             ..., Config, etc.\n\n    Usage:\n        def create_logger() -> FlextLogger:\n            return FlextLogger.create_module_logger("app")\n\n        container.register_factory("logger", create_logger)  # OK\n    '
+    'Factory callable returning any registerable service type.\n\n    Broader than t.FactoryCallable (which returns object).\n    Supports factories that create protocols like Log,             ..., Config, etc.\n\n    Usage:\n        def create_logger() -> FlextLogger:\n            return FlextLogger.create_module_logger("app")\n\n        container.register_factory("logger", create_logger)  # OK\n    '
 
     class ProtocolModelMeta(_CombinedModelMeta):
         """Metaclass combining Pydantic with Protocol structural typing.

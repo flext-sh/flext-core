@@ -53,7 +53,7 @@ class FlextTypes:
 
     Three core layers — each builds on the previous:
 
-        Primitives  ⊂  Scalar  ⊂  Serializable  ⊂  Container
+        Primitives  ⊂  Scalar  ⊂  object  ⊂  Container
 
     ``None`` is **never** baked into definitions.
     Use ``X | None`` at call-sites when needed.
@@ -62,45 +62,13 @@ class FlextTypes:
     Primitives: TypeAlias = str | int | float | bool
     Scalar: TypeAlias = str | int | float | bool | datetime
     Container: TypeAlias = str | int | float | bool | datetime | BaseModel | Path
-    type GeneralValueType = (
-        Scalar
-        | BaseModel
-        | Path
-        | Sequence[FlextTypes.GeneralValueType]
-        | Mapping[str, FlextTypes.GeneralValueType]
-        | type
-        | Callable[..., FlextTypes.GeneralValueType]
-        | None
-    )
-    type Serializable = (
-        Scalar | list[FlextTypes.Serializable] | dict[str, FlextTypes.Serializable]
-    )
-    type JsonValue = (
-        Scalar | Sequence[FlextTypes.JsonValue] | Mapping[str, FlextTypes.JsonValue]
-    )
-    type JsonDict = Mapping[str, JsonValue]
-    type ContainerValue = (
-        Scalar
-        | BaseModel
-        | Path
-        | Sequence[FlextTypes.ContainerValue]
-        | Mapping[str, FlextTypes.ContainerValue]
-        | type
-        | Callable[..., FlextTypes.ContainerValue]
-        | None
-    )
-    type ConfigurationMapping = Mapping[str, GeneralValueType]
-    type LazyExportType = tuple[str, str]
-    type AnnotationMap = Mapping[str, LazyExportType]
-    type RegisterableService = (
-        GeneralValueType | BindableLogger | Callable[..., GeneralValueType]
-    )
+    type RegisterableService = object | BindableLogger | Callable[..., object]
     type FactoryCallable = Callable[[], RegisterableService]
-    type ResourceCallable = Callable[[], GeneralValueType]
+    type ResourceCallable = Callable[[], object]
     type MetadataValue = Scalar | Mapping[str, Scalar | list[Scalar]] | list[Scalar]
     type MetadataAttributeValue = MetadataValue
-    type HandlerCallable = Callable[[GeneralValueType], GeneralValueType]
-    type HandlerLike = Callable[..., GeneralValueType]
+    type HandlerCallable = Callable[[object], object]
+    type HandlerLike = Callable[..., object]
     type RegistrablePlugin = Scalar | BaseModel | Callable[..., Scalar | BaseModel]
     type ConstantValue = (
         Primitives
@@ -123,10 +91,8 @@ class FlextTypes:
     type MessageTypeSpecifier = str | type
     type IncEx = set[str] | Mapping[str, set[str] | bool]
     type TYPE_CHECKING = bool
-    type Dict = Mapping[str, GeneralValueType]
-    type ModuleExport = (
-        type | ModuleType | Callable[..., GeneralValueType] | GeneralValueType
-    )
+    type Dict = Mapping[str, object]
+    type ModuleExport = type | ModuleType | Callable[..., object] | object
 
     class Validation:
         """Validation type aliases with Pydantic constraints."""

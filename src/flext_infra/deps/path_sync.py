@@ -20,7 +20,6 @@ from flext_infra import (
     FlextInfraUtilitiesToml,
     c,
     m,
-    t,
     u,
 )
 
@@ -75,7 +74,7 @@ class FlextInfraDependencyPathSync:
 
     @staticmethod
     def _mapping_str_value(
-        mapping: Table | t.ConfigurationMapping, key: str
+        mapping: Table | object, key: str
     ) -> str | None:
         if key not in mapping:
             return None

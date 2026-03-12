@@ -54,7 +54,7 @@ class FlextInfraTypes(FlextTypes):
         "Immutable string-to-string mapping (env vars, keyword renames)."
         type MutableStrMap = MutableMapping[str, str]
         "Mutable string-to-string mapping for accumulation patterns."
-        type ContainerDict = dict[str, FlextTypes.ContainerValue]
+        type ContainerDict = dict[str, object]
         "Dict with string keys and container values (project reports, etc.)."
         TomlScalar: TypeAlias = str | int | float | bool | None
         "TOML scalar value (null, string, integer, float, boolean)."
@@ -74,7 +74,7 @@ class FlextInfraTypes(FlextTypes):
         "Optional environment variable mapping for subprocess execution."
         type PathLike = str | Path
         "Flexible path representation (str or Path)."
-        type InfraValue = FlextTypes.ContainerValue
+        type InfraValue = object
         "Recursive infrastructure value: primitive, nested list/mapping, or null."
         type IssueMap = Mapping[str, InfraValue]
         "Dependency issue mapping: string-keyed mapping of infra values."

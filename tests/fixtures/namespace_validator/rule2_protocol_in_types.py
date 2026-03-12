@@ -8,7 +8,7 @@ from typing import Protocol
 class FlextTestTypes:
     """Types with Protocol inside — WRONG."""
 
-    class Serializable(Protocol):
+    class object(Protocol):
         """Protocol inside Types — VIOLATION."""
 
         def to_dict(self) -> dict[str, str]:

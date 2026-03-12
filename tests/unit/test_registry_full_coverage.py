@@ -198,8 +198,8 @@ def test_get_plugin_and_register_metadata_and_list_items_exception(
     registry = FlextRegistry()
     registry._registered_keys.add("cat::name")
 
-    def _container_get_fail(_key: str) -> r[t.JsonValue]:
-        return r[t.JsonValue].fail("missing")
+    def _container_get_fail(_key: str) -> r[object]:
+        return r[object].fail("missing")
 
     def _container_register_raise(_name: str, _service: t.RegisterableService) -> None:
         msg = "nope"

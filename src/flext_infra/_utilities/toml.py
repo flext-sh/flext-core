@@ -37,7 +37,7 @@ class FlextInfraUtilitiesToml:
 
     @staticmethod
     def _get_container_dict_adapter() -> TypeAdapter[dict[str, object]]:
-        """Get or create TypeAdapter for dict[str, ContainerValue]."""
+        """Get or create TypeAdapter for dict[str, object]."""
         if FlextInfraUtilitiesToml._CONTAINER_DICT_ADAPTER is None:
             FlextInfraUtilitiesToml._CONTAINER_DICT_ADAPTER = TypeAdapter(
                 dict[str, object],

@@ -15,7 +15,7 @@ Usage (inside an ``ex_*.py`` file)::
     from .shared import Examples
 
 
-    class Ex01FlextResult(Examples):
+    class Ex01r(Examples):
         def exercise(self) -> None:
             val = self.rand_int()
             result = r[int].ok(val)
@@ -23,7 +23,7 @@ Usage (inside an ``ex_*.py`` file)::
 
 
     if __name__ == "__main__":
-        Ex01FlextResult(__file__).run()
+        Ex01r(__file__).run()
 """
 
 from __future__ import annotations

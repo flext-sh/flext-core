@@ -16,7 +16,6 @@ from typing import Protocol, runtime_checkable
 
 from flext_core import FlextProtocols, r
 from flext_infra.models import m
-from flext_infra.typings import t
 
 
 class FlextInfraProtocols(FlextProtocols):
@@ -96,7 +95,7 @@ class FlextInfraProtocols(FlextProtocols):
             def generate(
                 self,
                 config: m.Infra.Basemk.BaseMkConfig
-                | t.ConfigurationMapping
+                | object
                 | None = None,
             ) -> r[str]:
                 """Generate text or artifacts from configuration."""

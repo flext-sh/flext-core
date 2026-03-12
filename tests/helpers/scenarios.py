@@ -14,7 +14,7 @@ from typing import ClassVar
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import m, t
+from flext_core import m
 
 
 class ValidationScenario(BaseModel):
@@ -25,7 +25,7 @@ class ValidationScenario(BaseModel):
     name: str = Field(description="Unique scenario name")
     validator_type: str = Field(description="Validator category under test")
     input_value: object = Field(description="Input value passed to validator")
-    input_params: t.ConfigurationMapping | None = Field(
+    input_params: object | None = Field(
         default=None,
         description="Optional validator parameters for scenario execution",
     )

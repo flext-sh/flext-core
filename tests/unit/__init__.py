@@ -99,7 +99,7 @@ if TYPE_CHECKING:
         TestAutomatedFlextMixins as x,
     )
     from tests.unit.test_automated_registry import TestAutomatedFlextRegistry
-    from tests.unit.test_automated_result import TestAutomatedFlextResult
+    from tests.unit.test_automated_result import TestAutomatedr
     from tests.unit.test_automated_runtime import TestAutomatedFlextRuntime
     from tests.unit.test_automated_service import TestAutomatedFlextService
     from tests.unit.test_automated_settings import TestAutomatedFlextSettings
@@ -1120,9 +1120,9 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_automated_registry",
         "TestAutomatedFlextRegistry",
     ),
-    "TestAutomatedFlextResult": (
+    "TestAutomatedr": (
         "tests.unit.test_automated_result",
-        "TestAutomatedFlextResult",
+        "TestAutomatedr",
     ),
     "TestAutomatedFlextRuntime": (
         "tests.unit.test_automated_runtime",
@@ -3512,11 +3512,11 @@ __all__ = [
     "TestAutomatedFlextLoggings",
     "TestAutomatedFlextMixins",
     "TestAutomatedFlextRegistry",
-    "TestAutomatedFlextResult",
     "TestAutomatedFlextRuntime",
     "TestAutomatedFlextService",
     "TestAutomatedFlextSettings",
     "TestAutomatedFlextUtilities",
+    "TestAutomatedr",
     "TestBackwardCompatDiscardReturnValue",
     "TestBatchOperations",
     "TestCleanText",

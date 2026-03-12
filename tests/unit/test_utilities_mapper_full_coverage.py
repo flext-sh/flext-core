@@ -11,14 +11,14 @@ from typing import Protocol, cast, override
 import pytest
 from pydantic import BaseModel, Field
 
-from flext_core import m, p, r, t, u
+from flext_core import m, p, r, u
 
 
 class _PortModel(BaseModel):
     """Model with port/nested for mapper take/extract tests."""
 
     port: int = 0
-    nested: dict[str, t.ContainerValue] = Field(default_factory=dict)
+    nested: dict[str, object] = Field(default_factory=dict)
 
 
 class _AtCallable(Protocol):
@@ -94,11 +94,11 @@ def _parse_int(value: object) -> int:
     return int(cast("str", value))
 
 
-def _plus_one(value: t.ContainerValue) -> t.ContainerValue:
+def _plus_one(value: object) -> object:
     return cast("int", value) + 1
 
 
-def _times_two(value: t.ContainerValue) -> t.ContainerValue:
+def _times_two(value: object) -> object:
     return cast("int", value) * 2
 
 
@@ -132,11 +132,11 @@ class ExplodingLenList(UserList[object]):
         raise TypeError(msg)
 
 
-class BadMapping(Mapping[str, t.ContainerValue]):
+class BadMapping(Mapping[str, object]):
     """BadMapping class."""
 
     @override
-    def __getitem__(self, key: str) -> t.ContainerValue:
+    def __getitem__(self, key: str) -> object:
         """__getitem__ method."""
         msg = f"missing {key}"
         raise KeyError(msg)
@@ -167,7 +167,7 @@ def test_type_guards_and_narrowing_failures(mapper: type[u.Mapper]) -> None:
 
 def test_narrow_to_string_keyed_dict_and_mapping_paths(mapper: type[u.Mapper]) -> None:
     converted = mapper._narrow_to_string_keyed_dict(
-        cast("t.ContainerValue", {1: "x", "b": object()}),
+        cast("object", {1: "x", "b": object()}),
     )
     assert "1" in converted
     assert isinstance(converted["b"], str)
@@ -178,7 +178,7 @@ def test_narrow_to_string_keyed_dict_and_mapping_paths(mapper: type[u.Mapper]) -
     assert mapped.root["x"] == 1
     with pytest.raises(TypeError, match="Cannot coerce"):
         _ = mapper._narrow_to_configuration_mapping(
-            cast("t.ContainerValue", {1: BadString()}),
+            cast("object", {1: BadString()}),
         )
     with pytest.raises(TypeError, match="Cannot narrow"):
         mapper._narrow_to_configuration_mapping(3)
@@ -193,7 +193,7 @@ def test_general_value_helpers_and_logger(mapper: type[u.Mapper]) -> None:
 
     assert (
         mapper.narrow_to_general_value_type(
-            cast("t.ContainerValue", cast("object", Stable())),
+            cast("object", Stable()),
         )
         == "stable"
     )
@@ -220,7 +220,7 @@ def test_invert_and_json_conversion_branches(mapper: type[u.Mapper]) -> None:
     as_json = mapper.convert_dict_to_json({"x": Path("/tmp")})
     assert as_json["x"] == Path("/tmp")
     list_json = mapper.convert_list_to_json(
-        cast("Sequence[t.ContainerValue]", [{"a": 1}, {"b": object()}]),
+        cast("Sequence[object]", [{"a": 1}, {"b": object()}]),
     )
     assert isinstance(list_json, list)
     assert list_json[0]["a"] == 1
@@ -313,10 +313,7 @@ def test_at_take_and_as_branches(mapper: type[u.Mapper]) -> None:
     assert mapper.take(model, "port") == 8081
     assert mapper.take(123, "port", default="d") == "d"
     assert mapper.take({"port": None}, "port", default="x") == "x"
-    assert (
-        mapper.take(cast("Mapping[str, t.ContainerValue]", cast("object", 123)), 2)
-        == ""
-    )
+    assert mapper.take(cast("Mapping[str, object]", cast("object", 123)), 2) == ""
     assert mapper.as_(12, str) == "12"
     assert mapper.as_("off", bool) is False
 
@@ -332,18 +329,18 @@ def test_extract_field_value_and_ensure_variants(mapper: type[u.Mapper]) -> None
 
 
 def test_filter_map_normalize_convert_helpers(mapper: type[u.Mapper]) -> None:
-    plus_one = cast("Callable[[t.ContainerValue], t.ContainerValue]", _plus_one)
-    times_two = cast("Callable[[t.ContainerValue], t.ContainerValue]", _times_two)
+    plus_one = cast("Callable[[object], object]", _plus_one)
+    times_two = cast("Callable[[object], object]", _times_two)
     assert mapper._build_apply_filter(1, {"filter": 1}, 0) == 1
     assert mapper._build_apply_filter(
         {"a": 1, "b": 0},
-        cast("Mapping[str, t.ContainerValue]", {"filter": bool}),
+        cast("Mapping[str, object]", {"filter": bool}),
         0,
     ) == {"a": 1}
     assert (
         mapper._build_apply_filter(
             0,
-            cast("Mapping[str, t.ContainerValue]", {"filter": bool}),
+            cast("Mapping[str, object]", {"filter": bool}),
             "d",
         )
         == "d"
@@ -351,12 +348,12 @@ def test_filter_map_normalize_convert_helpers(mapper: type[u.Mapper]) -> None:
     assert mapper._build_apply_map(1, {"map": 1}) == 1
     assert mapper._build_apply_map(
         {"a": 1},
-        cast("Mapping[str, t.ContainerValue]", {"map": plus_one}),
+        cast("Mapping[str, object]", {"map": plus_one}),
     ) == {"a": 2}
     assert (
         mapper._build_apply_map(
             2,
-            cast("Mapping[str, t.ContainerValue]", {"map": times_two}),
+            cast("Mapping[str, object]", {"map": times_two}),
         )
         == 4
     )
@@ -383,18 +380,18 @@ def test_filter_map_normalize_convert_helpers(mapper: type[u.Mapper]) -> None:
 )
 def test_convert_default_fallback_matrix(
     mapper: type[u.Mapper],
-    value: t.ContainerValue,
+    value: object,
     convert_spec: Callable[[object], object] | type,
-    expected: t.ContainerValue,
+    expected: object,
 ) -> None:
-    operations = cast("Mapping[str, t.ContainerValue]", {"convert": convert_spec})
+    operations = cast("Mapping[str, object]", {"convert": convert_spec})
     assert mapper._build_apply_convert(value, operations) == expected
 
 
 def test_convert_sequence_branch_returns_tuple(mapper: type[u.Mapper]) -> None:
     converted = mapper._build_apply_convert(
         ("bad",),
-        cast("Mapping[str, t.ContainerValue]", {"convert": int}),
+        cast("Mapping[str, object]", {"convert": int}),
     )
     assert converted == (0,)
 
@@ -413,7 +410,7 @@ def test_transform_option_extract_and_step_helpers(
         "to_json": True,
     }
     extracted = mapper._extract_transform_options(
-        cast("Mapping[str, t.ContainerValue]", opts),
+        cast("Mapping[str, object]", opts),
     )
     assert extracted[3] == {"1": "one", "a": "b"}
     monkeypatch.setattr(
@@ -439,7 +436,7 @@ def test_build_apply_transform_and_process_error_paths(
     }
 
     def explode_transform_steps(
-        _result: Mapping[str, t.ContainerValue],
+        _result: Mapping[str, object],
         *,
         _normalize: bool,
         _map_keys: Mapping[str, str] | None,
@@ -448,7 +445,7 @@ def test_build_apply_transform_and_process_error_paths(
         _strip_none: bool,
         _strip_empty: bool,
         _to_json: bool,
-    ) -> dict[str, t.ContainerValue]:
+    ) -> dict[str, object]:
         raise RuntimeError(msg)
 
     msg = "explode transform"
@@ -464,10 +461,10 @@ def test_build_apply_transform_and_process_error_paths(
         "a": 1,
     }
     assert mapper._build_apply_process(1, {"process": 1}, 0, "stop") == 1
-    process_map_ops = cast("Mapping[str, t.ContainerValue]", {"process": _plus_one})
+    process_map_ops = cast("Mapping[str, object]", {"process": _plus_one})
     assert mapper._build_apply_process({"a": 1}, process_map_ops, 0, "stop") == {"a": 2}
     process_fail_ops = cast(
-        "Mapping[str, t.ContainerValue]",
+        "Mapping[str, object]",
         {"process": _raise_value_error},
     )
     assert mapper._build_apply_process(1, process_fail_ops, 7, "stop") == 7
@@ -488,7 +485,7 @@ def test_group_sort_unique_slice_chunk_branches(mapper: type[u.Mapper]) -> None:
         {"sort": "name"},
     )
     assert isinstance(sorted_with_scalar, list)
-    bad_sort_ops = cast("Mapping[str, t.ContainerValue]", {"sort": _raise_value_error})
+    bad_sort_ops = cast("Mapping[str, object]", {"sort": _raise_value_error})
     bad_sort = mapper._build_apply_sort([1, 2], bad_sort_ops)
     assert bad_sort == [1, 2]
     sorted_tuple = mapper._build_apply_sort(("b", "a"), {"sort": True})
@@ -519,9 +516,9 @@ def test_field_and_fields_multi_branches(mapper: type[u.Mapper]) -> None:
 def test_construct_transform_and_deep_eq_branches(mapper: type[u.Mapper]) -> None:
     constructed_none = mapper.construct({"x": {"field": "a", "default": 9}}, None)
     assert constructed_none["x"] == 9
-    source: dict[str, t.ContainerValue] = {"name": "alice", "n": 3}
+    source: dict[str, object] = {"name": "alice", "n": 3}
     spec = cast(
-        "Mapping[str, t.ContainerValue]",
+        "Mapping[str, object]",
         {
             "name": {"field": "name", "ops": "skip-ops"},
             "n": {"field": "n", "ops": {"map": _plus_one}},
@@ -533,7 +530,7 @@ def test_construct_transform_and_deep_eq_branches(mapper: type[u.Mapper]) -> Non
     assert constructed["n"] == 4
     assert constructed["literal"] == 5
 
-    class ExplodeOnGet(Mapping[str, t.ContainerValue]):
+    class ExplodeOnGet(Mapping[str, object]):
         @override
         def __iter__(self) -> Iterator[str]:
             return iter(("field",))
@@ -543,7 +540,7 @@ def test_construct_transform_and_deep_eq_branches(mapper: type[u.Mapper]) -> Non
             return 1
 
         @override
-        def __getitem__(self, key: str) -> t.ContainerValue:
+        def __getitem__(self, key: str) -> object:
             if key == "field":
                 msg = "boom"
                 raise RuntimeError(msg)
@@ -580,7 +577,7 @@ def test_process_context_data_and_related_convenience(
     mapper: type[u.Mapper],
     merge_strategy: str,
 ) -> None:
-    primary: dict[str, t.ContainerValue] = {"a": 1, "drop": "x"}
+    primary: dict[str, object] = {"a": 1, "drop": "x"}
     secondary = {"b": 2}
     result = mapper.process_context_data(
         primary_data=primary,
@@ -613,7 +610,7 @@ def test_small_mapper_convenience_methods(mapper: type[u.Mapper]) -> None:
     assert fields_from_mapping["email"] == "x@x"
     assert fields_from_mapping["age"] == 1
     fields_from_object = mapper.fields(
-        cast("t.ContainerValue", cast("object", AttrObject(name="obj", value=4))),
+        cast("object", AttrObject(name="obj", value=4)),
         "name",
     )
     assert fields_from_object == {"name": "obj"}
@@ -663,9 +660,9 @@ def test_map_flags_collect_and_invert_branches(mapper: type[u.Mapper]) -> None:
     assert mapped.is_success
     assert mapped.value == {"new": 1, "x": 2}
 
-    class BadItems(UserDict[str, t.ContainerValue]):
+    class BadItems(UserDict[str, object]):
         @override
-        def items(self) -> ItemsView[str, t.ContainerValue]:
+        def items(self) -> ItemsView[str, object]:
             msg = "bad items"
             raise RuntimeError(msg)
 
@@ -707,15 +704,12 @@ def test_conversion_and_extract_success_branches(mapper: type[u.Mapper]) -> None
         def __str__(self) -> str:
             return "plain"
 
-    assert (
-        mapper.convert_to_json_value(cast("t.ContainerValue", cast("object", Plain())))
-        == "plain"
-    )
+    assert mapper.convert_to_json_value(cast("object", Plain())) == "plain"
     assert mapper.convert_to_json_value(
-        cast("t.ContainerValue", cast("object", {1: Plain()})),
+        cast("object", {1: Plain()}),
     ) == {"1": "plain"}
     assert mapper.convert_to_json_value(
-        cast("t.ContainerValue", cast("object", [1, {"k": Plain()}])),
+        cast("object", [1, {"k": Plain()}]),
     ) == [1, {"k": "plain"}]
     assert mapper.ensure_str(None, "d") == "d"
     assert mapper.ensure_str("x") == "x"
@@ -730,13 +724,13 @@ def test_conversion_and_extract_success_branches(mapper: type[u.Mapper]) -> None
         a: int = 1
 
     value, found = mapper._extract_get_value(
-        cast("t.ContainerValue | BaseModel", cast("object", DumpOnly())),
+        cast("object | BaseModel", cast("object", DumpOnly())),
         "a",
     )
     assert found is True
     assert value == 1
     value, found = mapper._extract_get_value(
-        cast("t.ContainerValue | BaseModel", cast("object", DumpOnly())),
+        cast("object | BaseModel", cast("object", DumpOnly())),
         "missing",
     )
     assert found is False
@@ -787,7 +781,7 @@ def test_accessor_take_pick_as_or_flat_and_agg_branches(mapper: type[u.Mapper]) 
     assert mapper.flat([[1, 2], [3]]) == [1, 2, 3]
     assert mapper._extract_field_value({"x": 1}, "x") == 1
     assert mapper.agg([{"v": 1}, {"v": 2}], "v") == 3
-    mixed_items: tuple[dict[str, t.ContainerValue], ...] = ({"v": 1}, {"v": "no"})
+    mixed_items: tuple[dict[str, object], ...] = ({"v": 1}, {"v": "no"})
     assert mapper.agg(mixed_items, "v") == 1
     assert mapper.agg([1, 2, 3], lambda x: x, fn=max) == 3
 
@@ -798,28 +792,28 @@ def test_remaining_build_fields_construct_and_eq_paths(mapper: type[u.Mapper]) -
     assert mapper._build_apply_ensure({"a": 1}, {"ensure": "dict"}) == {"a": 1}
     assert mapper._build_apply_filter(
         [1, 2, 0],
-        cast("Mapping[str, t.ContainerValue]", {"filter": bool}),
+        cast("Mapping[str, object]", {"filter": bool}),
         0,
     ) == [1, 2]
     assert mapper._build_apply_map(
         [1, 2],
-        cast("Mapping[str, t.ContainerValue]", {"map": _plus_one}),
+        cast("Mapping[str, object]", {"map": _plus_one}),
     ) == [2, 3]
     assert mapper._apply_map_keys({"a": 1}, map_keys={"b": "B"}) == {"a": 1}
     assert mapper._apply_strip_none({"a": None, "b": 1}, strip_none=True) == {"b": 1}
     assert mapper._apply_strip_empty({"a": "", "b": 1}, strip_empty=True) == {"b": 1}
-    process_list_ops = cast("Mapping[str, t.ContainerValue]", {"process": _plus_one})
+    process_list_ops = cast("Mapping[str, object]", {"process": _plus_one})
     assert mapper._build_apply_process([1, 2], process_list_ops, 0, "stop") == [2, 3]
     grouped_call = mapper._build_apply_group(
         ["aa", "b"],
-        cast("Mapping[str, t.ContainerValue]", {"group": len}),
+        cast("Mapping[str, object]", {"group": len}),
     )
     assert grouped_call == {"2": ["aa"], "1": ["b"]}
     grouped_skip = mapper._build_apply_group([{"kind": None}, 1], {"group": "kind"})
     assert grouped_skip == {"": [{"kind": None}]}
     sorted_ok = mapper._build_apply_sort(
         [3, 1, 2],
-        cast("Mapping[str, t.ContainerValue]", {"sort": int}),
+        cast("Mapping[str, object]", {"sort": int}),
     )
     assert sorted_ok == [1, 2, 3]
     assert mapper._build_apply_sort([3, 1], {"sort": True}) == [1, 3]
@@ -849,16 +843,13 @@ def test_remaining_build_fields_construct_and_eq_paths(mapper: type[u.Mapper]) -
             return ["y"]
 
     context = mapper.process_context_data(
-        primary_data=cast("t.ContainerValue", cast("object", DictLikeOnly())),
-        secondary_data=cast(
-            "t.ContainerValue",
-            cast("object", DictLikeOnlySecondary()),
-        ),
+        primary_data=cast("object", DictLikeOnly()),
+        secondary_data=cast("object", DictLikeOnlySecondary()),
         merge_strategy="merge",
     )
     assert context == {}
     fields_obj = mapper.fields(
-        cast("t.ContainerValue", object()),
+        object(),
         {"x": {"default": 1}},
     )
     assert fields_obj == {"x": 1}
@@ -912,11 +903,11 @@ def test_remaining_uncovered_branches(
 
     with pytest.raises(TypeError):
         mapper.process_context_data(
-            primary_data=cast("t.ContainerValue", cast("object", CallableDictLike())),
-            secondary_data=cast("t.ContainerValue", cast("object", CallableDictLike())),
+            primary_data=cast("object", CallableDictLike()),
+            secondary_data=cast("object", CallableDictLike()),
         )
     obj_fields = mapper.fields(
-        cast("t.ContainerValue", cast("object", AttrObject(name="n", value=3))),
+        cast("object", AttrObject(name="n", value=3)),
         {"name": 0, "missing": 7},
     )
     assert obj_fields == {"name": "n"}

@@ -20,7 +20,7 @@ from tests.test_utils import assertion_helpers
 
 def _as_builder_dict(value: object) -> t.Tests.Builders.BuilderDict:
     assert isinstance(value, Mapping)
-    typed_mapping = cast("Mapping[str, t.Tests.ContainerValue]", value)
+    typed_mapping = cast("Mapping[str, t.Tests.object]", value)
     return cast("t.Tests.Builders.BuilderDict", dict(typed_mapping))
 
 
@@ -207,7 +207,7 @@ class TestFlextTestsBuilders:
     def test_add_with_items_and_map(self) -> None:
         """Test add() with items and items_map."""
 
-        def _double_item(item: t.Tests.ContainerValue) -> t.Tests.ContainerValue:
+        def _double_item(item: t.Tests.object) -> t.Tests.object:
             assert isinstance(item, int)
             return item * 2
 
@@ -215,7 +215,7 @@ class TestFlextTestsBuilders:
         builder.add(
             "doubled",
             items=[1, 2, 3],
-            items_map=cast("t.Tests.ContainerValue", _double_item),
+            items_map=cast("t.Tests.object", _double_item),
         )
         data = _as_builder_dict(builder.build())
         doubled = cast("list[int]", data["doubled"])
@@ -227,7 +227,7 @@ class TestFlextTestsBuilders:
         builder.add(
             "filtered",
             entries={"a": 1, "b": 2, "c": 3},
-            entries_filter=cast("t.Tests.ContainerValue", cast("object", {"a", "c"})),
+            entries_filter=cast("t.Tests.object", cast("object", {"a", "c"})),
         )
         data = _as_builder_dict(builder.build())
         filtered = cast("dict[str, int]", data["filtered"])
@@ -341,7 +341,7 @@ class TestFlextTestsBuilders:
         builder.add("count", 5)
         build_result = builder.build(
             validate_with=cast(
-                "t.Tests.ContainerValue",
+                "t.Tests.object",
                 _has_expected_count,
             ),
         )
@@ -359,7 +359,7 @@ class TestFlextTestsBuilders:
 
         def _double_x(
             data: t.Tests.Builders.BuilderOutputDict,
-        ) -> t.Tests.ContainerValue:
+        ) -> t.Tests.object:
             assert isinstance(data["x"], int)
             return data["x"] * 2
 
@@ -367,7 +367,7 @@ class TestFlextTestsBuilders:
         builder.add("x", 1)
         build_result = builder.build(
             map_result=cast(
-                "t.Tests.ContainerValue",
+                "t.Tests.object",
                 _double_x,
             ),
         )
@@ -412,7 +412,7 @@ class TestFlextTestsBuilders:
         builder.add("count", 5)
         result_raw = builder.to_result(
             validate=cast(
-                "t.Tests.ContainerValue",
+                "t.Tests.object",
                 _has_count,
             ),
         )
@@ -658,7 +658,7 @@ class TestFlextTestsBuilders:
 
     def test_result_assert_failure_delegates_to_tu(self) -> None:
         """Test tb.Tests.Result.assert_failure() delegates to tu.Tests.Result."""
-        result: r[t.Tests.ContainerValue] = r[t.Tests.ContainerValue].fail("Error")
+        result: r[t.Tests.object] = r[t.Tests.object].fail("Error")
         error: str = tb.Tests.Result.assert_failure(result)
         assert "Error" in error
 

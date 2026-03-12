@@ -246,7 +246,7 @@ class FlextInfraUtilitiesRefactor:
             return []
         if isinstance(value, list):
             return [item for item in value if isinstance(item, dict)]
-        msg = "expected list[dict[str, ContainerValue]] value"
+        msg = "expected list[dict[str, object]] value"
         raise ValueError(msg)
 
     @staticmethod

@@ -84,14 +84,14 @@ class FlextUtilitiesCollection:
     def _is_general_value_dict(
         value: object,
     ) -> TypeGuard[dict[str, object]]:
-        """Type guard to narrow dict to ContainerValue dict."""
+        """Type guard to narrow dict to object dict."""
         return isinstance(value, dict)
 
     @staticmethod
     def _is_general_value_list(
         value: object,
     ) -> TypeGuard[list[object]]:
-        """Type guard to narrow list to ContainerValue list."""
+        """Type guard to narrow list to object list."""
         return value.__class__ is list
 
     @staticmethod
@@ -273,7 +273,7 @@ class FlextUtilitiesCollection:
         return [list(items[i : i + size]) for i in range(0, len(items), size)]
 
     @staticmethod
-    def coerce_dict_to_bool() -> Callable[[t.ConfigurationMapping], Mapping[str, bool]]:
+    def coerce_dict_to_bool() -> Callable[[object], Mapping[str, bool]]:
         """Create validator that coerces dict values to bool."""
 
         def validator(data: Mapping[str, object]) -> Mapping[str, bool]:
@@ -308,7 +308,7 @@ class FlextUtilitiesCollection:
 
     @staticmethod
     def coerce_dict_to_float() -> Callable[
-        [t.ConfigurationMapping], Mapping[str, float]
+        [object], Mapping[str, float]
     ]:
         """Create validator that coerces dict values to float."""
 
@@ -321,7 +321,7 @@ class FlextUtilitiesCollection:
         return validator
 
     @staticmethod
-    def coerce_dict_to_int() -> Callable[[t.ConfigurationMapping], Mapping[str, int]]:
+    def coerce_dict_to_int() -> Callable[[object], Mapping[str, int]]:
         """Create validator that coerces dict values to int."""
 
         def validator(data: Mapping[str, object]) -> Mapping[str, int]:
@@ -333,7 +333,7 @@ class FlextUtilitiesCollection:
         return validator
 
     @staticmethod
-    def coerce_dict_to_str() -> Callable[[t.ConfigurationMapping], Mapping[str, str]]:
+    def coerce_dict_to_str() -> Callable[[object], Mapping[str, str]]:
         """Create validator that coerces dict values to str."""
 
         def validator(data: Mapping[str, object]) -> Mapping[str, str]:
@@ -523,7 +523,7 @@ class FlextUtilitiesCollection:
         """Extract mapping items as typed list for iteration.
 
         Helper function to properly type narrow Mapping.items() for pyright.
-        Converts keys to strings and values to ContainerValue.
+        Converts keys to strings and values to object.
 
         Args:
             mapping: Mapping to extract items from

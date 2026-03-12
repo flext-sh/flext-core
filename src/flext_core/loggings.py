@@ -373,7 +373,10 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
 
     @classmethod
     def for_container(
-        cls, container: p.DI, level: str | None = None, **context: t.MetadataValue
+        cls,
+        container: p.DI,
+        level: str | None = None,
+        **context: t.MetadataValue,
     ) -> FlextLogger:
         """Create logger configured for a specific container.
 
@@ -617,7 +620,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         return None
 
     @staticmethod
-    def _format_log_message(message: str, *args: object) -> str:
+    def _format_log_message(message: str, *args: t.Scalar) -> str:
         """Format log message with % arguments."""
         try:
             return message % args if args else message
@@ -697,7 +700,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         *,
         exception: Exception | None,
         exc_info: bool,
-        context: Mapping[str, object | Exception],
+        context: Mapping[str, t.Scalar | Exception],
     ) -> m.ConfigMap:
         """Build normalized context payload for exception/error logging."""
         include_stack_trace = self._should_include_stack_trace()
@@ -734,7 +737,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         msg: str | object,
         *args: object,
         _return_result: Literal[True],
-        **kw: t.MetadataValue,
+        **kw: object,
     ) -> r[bool]: ...
 
     @overload
@@ -743,7 +746,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         msg: str | object,
         *args: object,
         _return_result: Literal[False] = ...,
-        **kw: t.MetadataValue,
+        **kw: object,
     ) -> None: ...
 
     @overload
@@ -751,7 +754,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         self,
         msg: str | object,
         *args: object,
-        **kw: t.MetadataValue,
+        **kw: object,
     ) -> r[bool] | None: ...
 
     @override
@@ -759,7 +762,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         self,
         msg: str | object,
         *args: object,
-        **kw: t.MetadataValue,
+        **kw: object,
     ) -> r[bool] | None:
         """Log critical message - Logger.Log implementation.
 
@@ -780,7 +783,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         msg: str | object,
         *args: object | Exception,
         _return_result: Literal[True],
-        **kw: t.MetadataValue,
+        **kw: object,
     ) -> r[bool]: ...
 
     @overload
@@ -789,7 +792,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         msg: str | object,
         *args: object | Exception,
         _return_result: Literal[False] = ...,
-        **kw: t.MetadataValue,
+        **kw: object,
     ) -> None: ...
 
     @overload
@@ -797,7 +800,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         self,
         msg: str | object,
         *args: object | Exception,
-        **kw: t.MetadataValue,
+        **kw: object,
     ) -> r[bool] | None: ...
 
     @override
@@ -805,7 +808,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         self,
         msg: str | object,
         *args: object | Exception,
-        **kw: t.MetadataValue,
+        **kw: object,
     ) -> r[bool] | None:
         """Log debug message - Logger.Log implementation.
 
@@ -826,7 +829,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         msg: str | object,
         *args: object,
         _return_result: Literal[True],
-        **kw: t.MetadataValue,
+        **kw: object,
     ) -> r[bool]: ...
 
     @overload
@@ -835,7 +838,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         msg: str | object,
         *args: object,
         _return_result: Literal[False] = ...,
-        **kw: t.MetadataValue,
+        **kw: object,
     ) -> None: ...
 
     @overload
@@ -843,7 +846,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         self,
         msg: str | object,
         *args: object,
-        **kw: t.MetadataValue,
+        **kw: object,
     ) -> r[bool] | None: ...
 
     @override
@@ -851,7 +854,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         self,
         msg: str | object,
         *args: object,
-        **kw: t.MetadataValue,
+        **kw: object,
     ) -> r[bool] | None:
         """Log error message - Logger.Log implementation.
 
@@ -872,7 +875,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         msg: str | object,
         *args: object,
         _return_result: Literal[True],
-        **kw: t.MetadataValue,
+        **kw: object,
     ) -> r[bool]: ...
 
     @overload
@@ -881,7 +884,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         msg: str | object,
         *args: object,
         _return_result: Literal[False] = ...,
-        **kw: t.MetadataValue,
+        **kw: object,
     ) -> None: ...
 
     @overload
@@ -889,7 +892,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         self,
         msg: str | object,
         *args: object,
-        **kw: t.MetadataValue,
+        **kw: object,
     ) -> r[bool] | None: ...
 
     @override
@@ -897,7 +900,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         self,
         msg: str | object,
         *args: object,
-        **kw: t.MetadataValue,
+        **kw: object,
     ) -> r[bool] | None:
         """Log exception with conditional stack trace (DEBUG only).
 
@@ -952,7 +955,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         msg: str | object,
         *args: object,
         _return_result: Literal[True],
-        **kw: t.MetadataValue,
+        **kw: object,
     ) -> r[bool]: ...
 
     @overload
@@ -961,7 +964,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         msg: str | object,
         *args: object,
         _return_result: Literal[False] = ...,
-        **kw: t.MetadataValue,
+        **kw: object,
     ) -> None: ...
 
     @overload
@@ -969,7 +972,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         self,
         msg: str | object,
         *args: object,
-        **kw: t.MetadataValue,
+        **kw: object,
     ) -> r[bool] | None: ...
 
     @override
@@ -977,7 +980,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         self,
         msg: str | object,
         *args: object,
-        **kw: t.MetadataValue,
+        **kw: object,
     ) -> r[bool] | None:
         """Log info message - Logger.Log implementation.
 
@@ -999,7 +1002,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         message: str,
         *args: object,
         _return_result: Literal[True],
-        **context: t.MetadataValue,
+        **context: object,
     ) -> r[bool]: ...
 
     @overload
@@ -1009,7 +1012,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         message: str,
         *args: object,
         _return_result: Literal[False] = ...,
-        **context: t.MetadataValue,
+        **context: object,
     ) -> None: ...
 
     def log(
@@ -1017,7 +1020,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         level: str,
         message: str,
         *args: object,
-        **context: t.MetadataValue,
+        **context: object,
     ) -> r[bool] | None:
         """Log message with specified level - Logger.Log implementation.
 
@@ -1045,7 +1048,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         return self._log(level_enum, message, *args, **context)
 
     @override
-    def new(self, **context: t.MetadataValue) -> Self:
+    def new(self, **context: object) -> Self:
         """Create new logger with context - implements BindableLogger protocol."""
         return self.bind(**context)
 
@@ -1055,7 +1058,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         message: str,
         *args: object,
         _return_result: Literal[True],
-        **kwargs: t.MetadataValue,
+        **kwargs: object,
     ) -> r[bool]: ...
 
     @overload
@@ -1064,14 +1067,14 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         message: str,
         *args: object,
         _return_result: Literal[False] = ...,
-        **kwargs: t.MetadataValue,
+        **kwargs: object,
     ) -> None: ...
 
     def trace(
         self,
         message: str,
         *args: object,
-        **kwargs: t.MetadataValue,
+        **kwargs: object,
     ) -> r[bool] | None:
         """Log trace message - Logger.Log implementation."""
         try:
@@ -1105,7 +1108,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         msg: str | object,
         *args: object,
         _return_result: Literal[True],
-        **kw: t.MetadataValue,
+        **kw: object,
     ) -> r[bool]: ...
 
     @overload
@@ -1114,7 +1117,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         msg: str | object,
         *args: object,
         _return_result: Literal[False] = ...,
-        **kw: t.MetadataValue,
+        **kw: object,
     ) -> None: ...
 
     @overload
@@ -1122,7 +1125,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         self,
         msg: str | object,
         *args: object,
-        **kw: t.MetadataValue,
+        **kw: object,
     ) -> r[bool] | None: ...
 
     @override
@@ -1130,7 +1133,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         self,
         msg: str | object,
         *args: object,
-        **kw: t.MetadataValue,
+        **kw: object,
     ) -> r[bool] | None:
         """Log warning message - Logger.Log implementation.
 
@@ -1162,7 +1165,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         _level: c.Settings.LogLevel | str,
         message: str,
         *args: object,
-        **context: t.MetadataValue,
+        **context: object,
     ) -> r[bool] | None:
         """Internal logging method - consolidates all log level methods.
 
@@ -1200,7 +1203,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         level: c.Settings.LogLevel,
         msg: str | object,
         *args: object | Exception,
-        **kw: t.MetadataValue,
+        **kw: object,
     ) -> r[bool] | None:
         message = str(msg)
         filtered_args: tuple[object, ...] = tuple(
@@ -1275,25 +1278,19 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             """Get logger name - delegate to base logger."""
             return self._base_logger.name
 
-        def bind(self, **context: t.MetadataValue) -> FlextLogger.ResultAdapter:
+        def bind(self, **context: object) -> FlextLogger.ResultAdapter:
             """Bind context preserving adapter wrapper."""
             return FlextLogger.ResultAdapter(self._base_logger.bind(**context))
 
-        def critical(
-            self, message: str, *args: t.MetadataValue, **kwargs: t.MetadataValue
-        ) -> r[bool]:
+        def critical(self, message: str, *args: object, **kwargs: object) -> r[bool]:
             """Log critical message returning r."""
             return self._log_and_wrap("critical", message, *args, **kwargs)
 
-        def debug(
-            self, message: str, *args: t.MetadataValue, **kwargs: t.MetadataValue
-        ) -> r[bool]:
+        def debug(self, message: str, *args: object, **kwargs: object) -> r[bool]:
             """Log debug message returning r."""
             return self._log_and_wrap("debug", message, *args, **kwargs)
 
-        def error(
-            self, message: str, *args: t.MetadataValue, **kwargs: t.MetadataValue
-        ) -> r[bool]:
+        def error(self, message: str, *args: object, **kwargs: object) -> r[bool]:
             """Log error message returning r."""
             return self._log_and_wrap("error", message, *args, **kwargs)
 
@@ -1303,7 +1300,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             *,
             exception: BaseException | None = None,
             exc_info: bool = True,
-            **kwargs: t.MetadataValue,
+            **kwargs: object,
         ) -> r[bool]:
             """Log exception with traceback returning r.
 
@@ -1345,21 +1342,15 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             )
             return r[bool].ok(value=True)
 
-        def info(
-            self, message: str, *args: t.MetadataValue, **kwargs: t.MetadataValue
-        ) -> r[bool]:
+        def info(self, message: str, *args: object, **kwargs: object) -> r[bool]:
             """Log info message returning r."""
             return self._log_and_wrap("info", message, *args, **kwargs)
 
-        def trace(
-            self, message: str, *args: t.MetadataValue, **kwargs: t.MetadataValue
-        ) -> r[bool]:
+        def trace(self, message: str, *args: object, **kwargs: object) -> r[bool]:
             """Log trace message returning r."""
             return self._log_and_wrap("trace", message, *args, **kwargs)
 
-        def warning(
-            self, message: str, *args: t.MetadataValue, **kwargs: t.MetadataValue
-        ) -> r[bool]:
+        def warning(self, message: str, *args: object, **kwargs: object) -> r[bool]:
             """Log warning message returning r."""
             return self._log_and_wrap("warning", message, *args, **kwargs)
 
@@ -1371,8 +1362,8 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             self,
             method_name: str,
             message: str,
-            *args: t.MetadataValue,
-            **kwargs: t.MetadataValue,
+            *args: object,
+            **kwargs: object,
         ) -> r[bool]:
             log_method = getattr(self._base_logger, method_name)
             log_method(message, *args, **kwargs)

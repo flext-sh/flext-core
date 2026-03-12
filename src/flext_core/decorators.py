@@ -16,7 +16,7 @@ import warnings
 from collections.abc import Callable, Mapping
 from contextlib import suppress
 from functools import wraps
-from typing import Any, Literal, Protocol, TypeGuard, overload
+from typing import Literal, Protocol, TypeGuard, overload
 
 from flext_core import (
     FlextContainer,
@@ -506,7 +506,7 @@ class FlextDecorators:
                     RuntimeError,
                     KeyError,
                 ) as exc:
-                    failure_extra: dict[str, t.MetadataValue] = {
+                    failure_extra: dict[str, object] = {
                         "function": func.__name__,
                         "success": False,
                         "error": str(exc),
@@ -956,7 +956,7 @@ class FlextDecorators:
         return isinstance(logger_value, FlextLogger)
 
     @staticmethod
-    def _resolve_logger(args: tuple[Any, ...], func: Callable[P, R]) -> FlextLogger:
+    def _resolve_logger(args: tuple[object, ...], func: Callable[P, R]) -> FlextLogger:
         """Resolve logger from first argument or create module logger.
 
         Returns:
@@ -1314,7 +1314,7 @@ class FlextDecorators:
                 logger = FlextDecorators._resolve_logger(args, func)
                 try:
                     if context_vars:
-                        filtered_vars: dict[str, t.MetadataValue] = {
+                        filtered_vars: dict[str, object] = {
                             k: v for k, v in context_vars.items() if v is not None
                         }
                         bind_result = FlextLogger.bind_global_context(**filtered_vars)

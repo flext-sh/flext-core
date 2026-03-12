@@ -16,7 +16,7 @@ from pathlib import Path
 from pydantic import BaseModel, TypeAdapter, ValidationError
 
 from flext_core import r
-from flext_infra import c, t
+from flext_infra import c
 
 
 class FlextInfraUtilitiesIo:
@@ -44,22 +44,22 @@ class FlextInfraUtilitiesIo:
 
         """
         if not path.exists():
-            return r[t.ConfigurationMapping].ok({})
+            return r[object].ok({})
         try:
             loaded_obj: object = json.loads(
                 path.read_text(encoding=c.Infra.Encoding.DEFAULT),
             )
             if not isinstance(loaded_obj, dict):
-                return r[t.ConfigurationMapping].fail("JSON root must be object")
+                return r[object].fail("JSON root must be object")
             parser = TypeAdapter(dict[str, object])
             data = parser.validate_python(loaded_obj, strict=True)
-            return r[t.ConfigurationMapping].ok(data)
+            return r[object].ok(data)
         except ValidationError as exc:
-            return r[t.ConfigurationMapping].fail(
+            return r[object].fail(
                 f"JSON object validation error: {exc}",
             )
         except (json.JSONDecodeError, OSError) as exc:
-            return r[t.ConfigurationMapping].fail(f"JSON read error: {exc}")
+            return r[object].fail(f"JSON read error: {exc}")
 
     @staticmethod
     def write_json(

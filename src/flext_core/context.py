@@ -51,8 +51,8 @@ class FlextContext(FlextRuntime):
 
     @staticmethod
     def _narrow_contextvar_to_configuration_dict(
-        ctx_value: m.ConfigMap | t.ConfigurationMapping | None,
-    ) -> dict[str, object]:
+        ctx_value: m.ConfigMap | object | None,
+    ) -> Mapping[str, object]:
         """Return contextvar payload as ConfigMap with safe default."""
         if ctx_value is None:
             return {}
@@ -80,7 +80,7 @@ class FlextContext(FlextRuntime):
     _metadata: m.Metadata
 
     def __init__(
-        self, initial_data: m.ContextData | t.ConfigurationMapping | None = None
+        self, initial_data: m.ContextData | object | None = None
     ) -> None:
         """Initialize FlextContext with optional initial data.
 
@@ -303,7 +303,7 @@ class FlextContext(FlextRuntime):
         include_statistics: bool = False,
         include_metadata: bool = False,
         as_dict: bool = True,
-    ) -> m.ContextExport | dict[str, object]:
+    ) -> m.ContextExport | Mapping[str, object]:
         """Export context data for serialization or debugging.
 
         Args:
@@ -321,7 +321,7 @@ class FlextContext(FlextRuntime):
         stats_dict_export: m.ConfigMap | None = None
         if include_statistics and self._statistics:
             stats_dict_export = m.ConfigMap(root=self._statistics.model_dump())
-        metadata_dict_export: dict[str, object] | None = None
+        metadata_dict_export: Mapping[str, object] | None = None
         if include_metadata:
             metadata_dict_export = self._get_all_metadata()
         metadata_for_model: m.ConfigMap | None = None
@@ -456,7 +456,7 @@ class FlextContext(FlextRuntime):
         """
         if key not in self._metadata.attributes:
             return r[object].fail(f"Metadata key '{key}' not found")
-        raw_value: t.MetadataValue = self._metadata.attributes[key]
+        raw_value: object = self._metadata.attributes[key]
         normalized_value: object = FlextRuntime.normalize_to_general_value(raw_value)
         return r[object].ok(normalized_value)
 
@@ -526,7 +526,7 @@ class FlextContext(FlextRuntime):
             all_keys.update(scope_dict.keys())
         return list(all_keys)
 
-    def merge(self, other: FlextContext | t.ConfigurationMapping) -> Self:
+    def merge(self, other: FlextContext | object) -> Self:
         """Merge another context or dictionary into this context.
 
         ARCHITECTURAL NOTE: Uses Python contextvars for storage, delegates to
@@ -635,9 +635,7 @@ class FlextContext(FlextRuntime):
             value: The metadata value
 
         """
-        normalized_value: t.MetadataValue = FlextRuntime.normalize_to_metadata_value(
-            value
-        )
+        normalized_value: object = FlextRuntime.normalize_to_metadata_value(value)
         updated_attributes = dict(self._metadata.attributes.items())
         updated_attributes[key] = normalized_value
         self._metadata = self._metadata.model_copy(
@@ -710,7 +708,7 @@ class FlextContext(FlextRuntime):
                     hook_data = str(event_data)
                 _ = hook(hook_data)
 
-    def _get_all_metadata(self) -> dict[str, object]:
+    def _get_all_metadata(self) -> Mapping[str, object]:
         """Get all metadata from the context.
 
         ARCHITECTURAL NOTE: Uses Python contextvars for storage.
@@ -743,7 +741,7 @@ class FlextContext(FlextRuntime):
         result.update(custom_fields_dict)
         return result
 
-    def _get_all_scopes(self) -> dict[str, dict[str, object]]:
+    def _get_all_scopes(self) -> Mapping[str, Mapping[str, object]]:
         """Get all scope registrations.
 
         ARCHITECTURAL NOTE: Uses Python contextvars for storage.
@@ -821,7 +819,7 @@ class FlextContext(FlextRuntime):
         updated.update(data.root)
         _ = ctx_var.set(updated)
         if scope == c.Context.SCOPE_GLOBAL:
-            normalized_context: dict[str, t.MetadataValue] = {
+            normalized_context: dict[str, object] = {
                 key: FlextRuntime.normalize_to_metadata_value(value)
                 for key, value in data.items()
             }
@@ -1171,7 +1169,7 @@ class FlextContext(FlextRuntime):
         """Context serialization and deserialization utilities."""
 
         @staticmethod
-        def get_full_context() -> dict[str, object]:
+        def get_full_context() -> Mapping[str, object]:
             """Get current context as dictionary."""
             context_vars = FlextContext.Variables
             raw_context: dict[str, object | None] = {

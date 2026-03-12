@@ -43,12 +43,12 @@ class FlextUtilitiesModel:
     def _normalize_to_pydantic_value(
         value: object,
     ) -> t.Scalar | list[t.Primitives]:
-        """Normalize ContainerValue to Pydantic-safe PydanticConfigValue.
+        """Normalize object to Pydantic-safe PydanticConfigValue.
 
         Converts complex types to strings, preserves primitives.
 
         Args:
-            value: ContainerValue value to normalize
+            value: object value to normalize
 
         Returns:
             t.PydanticConfigValue: Pydantic-safe value
@@ -198,8 +198,8 @@ class FlextUtilitiesModel:
     @staticmethod
     def merge_defaults[M: BaseModel](
         model_cls: type[M],
-        defaults: Mapping[str, t.JsonValue],
-        overrides: Mapping[str, t.JsonValue],
+        defaults: Mapping[str, object],
+        overrides: Mapping[str, object],
     ) -> r[M]:
         """Merge defaults with overrides and create model.
 
@@ -259,7 +259,7 @@ class FlextUtilitiesModel:
         if isinstance(value, m.Metadata):
             return m.Metadata.model_validate(value.model_dump())
         if FlextRuntime.is_dict_like(value):
-            attributes: dict[str, t.MetadataValue] = {}
+            attributes: dict[str, object] = {}
             for key, val in value.items():
                 attributes[str(key)] = FlextRuntime.normalize_to_metadata_value(val)
             return m.Metadata.model_validate({"attributes": attributes})
@@ -272,11 +272,11 @@ class FlextUtilitiesModel:
     ) -> Mapping[str, t.Scalar | list[t.Primitives]]:
         """Convert EventDataMapping to Pydantic-safe PydanticConfigDict.
 
-        Normalizes ContainerValue values to the restricted PydanticConfigValue type
+        Normalizes object values to the restricted PydanticConfigValue type
         that Pydantic can generate schemas for without recursion issues.
 
         Args:
-            data: EventDataMapping (Mapping[str, ContainerValue]) or None
+            data: EventDataMapping (Mapping[str, object]) or None
 
         Returns:
             Mapping[str, object]: Mapping with Pydantic-safe values
@@ -299,7 +299,7 @@ class FlextUtilitiesModel:
         return result
 
     @staticmethod
-    def update[M: BaseModel](instance: M, **updates: t.JsonValue) -> r[M]:
+    def update[M: BaseModel](instance: M, **updates: object) -> r[M]:
         """Update existing model with new values.
 
         Example:

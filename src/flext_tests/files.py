@@ -55,7 +55,7 @@ def _yaml_dump(value: object, *, indent: int) -> str:
     )
 
 
-def _is_batch_content(content_raw: object) -> TypeGuard[t.Tests.ContainerValue]:
+def _is_batch_content(content_raw: object) -> TypeGuard[t.Tests.object]:
     try:
         _ = m.Tests.Files.CreateParams.model_validate({
             "content": content_raw,
@@ -108,9 +108,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
     _created_files: list[Path] | None = None
     _created_dirs: list[Path] | None = None
 
-    def __init__(
-        self, base_dir: Path | None = None, **data: t.Tests.ContainerValue
-    ) -> None:
+    def __init__(self, base_dir: Path | None = None, **data: t.Tests.object) -> None:
         """Initialize file manager with optional base directory.
 
         Args:
@@ -163,7 +161,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         directory: Path | None = None,
         ext: str | None = None,
         extract_result: bool = True,
-        **kwargs: t.Tests.ContainerValue,
+        **kwargs: t.Tests.object,
     ) -> Generator[Mapping[str, Path]]:
         """Create temporary files with auto-cleanup.
 
@@ -198,7 +196,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             paths: dict[str, Path] = {}
             default_ext = ext or c.Tests.Files.DEFAULT_EXTENSION
             for name, data_raw in content.items():
-                data: t.Tests.ContainerValue = data_raw
+                data: t.Tests.object = data_raw
                 filename = name if "." in name else f"{name}{default_ext}"
                 if "." not in name and (
                     u.is_type(data, "dict")
@@ -444,7 +442,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             return r[m.Tests.Files.BatchResult].fail(
                 f"Invalid parameters for batch operation: {exc}"
             )
-        files_dict: dict[str, t.Tests.ContainerValue]
+        files_dict: dict[str, t.Tests.object]
         if isinstance(params.files, Mapping):
             files_dict = {str(k): v for k, v in params.files.items()}
         elif not isinstance(params.files, str):
@@ -464,7 +462,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         error_mode_str = "collect" if params.on_error == "collect" else "fail"
 
         def process_one(
-            name_and_content: tuple[str, t.Tests.ContainerValue],
+            name_and_content: tuple[str, t.Tests.object],
         ) -> object | r[object]:
             """Process single file operation."""
             name, content = name_and_content
@@ -527,7 +525,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                 case _:
                     return r[object].fail(f"Unknown operation: {params.operation}")
 
-        items_list: list[tuple[str, t.Tests.ContainerValue]] = list(files_dict.items())
+        items_list: list[tuple[str, t.Tests.object]] = list(files_dict.items())
         results: list[object] = []
         errors: list[tuple[int, str]] = []
         total = len(items_list)
@@ -545,15 +543,15 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                 errors.append((index, str(error_message)))
                 continue
             results.append(operation_result)
-        results_dict: dict[str, r[Path | t.Tests.ContainerValue]] = {}
+        results_dict: dict[str, r[Path | t.Tests.object]] = {}
         failed_dict: dict[str, str] = {}
         for idx, result in enumerate(results):
             if idx < len(items_list):
                 name, _ = items_list[idx]
                 if isinstance(result, Path):
-                    results_dict[name] = r[Path | t.Tests.ContainerValue].ok(result)
+                    results_dict[name] = r[Path | t.Tests.object].ok(result)
                 else:
-                    results_dict[name] = r[Path | t.Tests.ContainerValue].ok(
+                    results_dict[name] = r[Path | t.Tests.object].ok(
                         self._to_payload_value(result)
                     )
         for idx, error_msg in errors:
@@ -789,13 +787,11 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             | m.ConfigMap
             | Sequence[Sequence[str]]
             | BaseModel
-            | Mapping[str, t.Tests.ContainerValue]
+            | Mapping[str, t.Tests.object]
         ) = self._coerce_file_content(params.content)
         if isinstance(actual_content, BaseModel):
             actual_content = self._mapping_to_payload(u.Model.dump(actual_content))
-        content_for_detect: (
-            str | bytes | Mapping[str, t.Tests.ContainerValue] | list[list[str]]
-        )
+        content_for_detect: str | bytes | Mapping[str, t.Tests.object] | list[list[str]]
         if isinstance(actual_content, str | bytes):
             content_for_detect = actual_content
         elif isinstance(actual_content, Mapping):
@@ -825,7 +821,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             if isinstance(actual_content, Mapping):
                 data = dict(actual_content)
             else:
-                empty_data: dict[str, t.Tests.ContainerValue] = {}
+                empty_data: dict[str, t.Tests.object] = {}
                 data = {"value": actual_content} if actual_content else empty_data
             _ = file_path.write_text(
                 json.dumps(data, indent=params.indent, ensure_ascii=False),
@@ -835,7 +831,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             if isinstance(actual_content, Mapping):
                 data = dict(actual_content)
             else:
-                empty_data_y: dict[str, t.Tests.ContainerValue] = {}
+                empty_data_y: dict[str, t.Tests.object] = {}
                 data = {"value": actual_content} if actual_content else empty_data_y
             yaml_result = _yaml_dump(data, indent=params.indent)
             _ = file_path.write_text(yaml_result, encoding=params.enc)
@@ -1339,8 +1335,8 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
 
     def _mapping_to_payload(
         self, mapping: Mapping[str, object]
-    ) -> Mapping[str, t.Tests.ContainerValue]:
-        payload: dict[str, t.Tests.ContainerValue] = {}
+    ) -> Mapping[str, t.Tests.object]:
+        payload: dict[str, t.Tests.object] = {}
         for key, value in mapping.items():
             payload[str(key)] = self._to_payload_value(value)
         return payload
@@ -1393,7 +1389,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         column_count: int | None = None
         model_valid: bool | None = None
         model_name: str | None = None
-        parsed_content: m.ConfigMap | list[t.Tests.ContainerValue] | None = None
+        parsed_content: m.ConfigMap | list[t.Tests.object] | None = None
         if fmt in {"json", "yaml"}:
             try:
                 if fmt == "json":
@@ -1467,7 +1463,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         self._created_dirs.append(temp_dir)
         return temp_dir
 
-    def _to_config_map_value(self, value: t.Tests.ContainerValue) -> object:
+    def _to_config_map_value(self, value: t.Tests.object) -> object:
         if value is None or isinstance(value, t.Primitives | BaseModel | Path):
             return value
         if isinstance(value, bytes):
@@ -1481,7 +1477,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             try:
                 sequence_value = _OBJECT_LIST_ADAPTER.validate_python(value)
             except ValidationError:
-                empty_sequence: list[t.Tests.ContainerValue] = []
+                empty_sequence: list[t.Tests.object] = []
                 return empty_sequence
             return [
                 self._to_config_map_value(self._to_payload_value(item))
@@ -1489,7 +1485,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             ]
         return str(value)
 
-    def _to_payload_value(self, value: object) -> t.Tests.ContainerValue:
+    def _to_payload_value(self, value: object) -> t.Tests.object:
         if value is None or isinstance(value, t.Primitives | bytes | BaseModel):
             return value
         if isinstance(value, Path | datetime):
@@ -1502,7 +1498,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                 sequence_value = _OBJECT_LIST_ADAPTER.validate_python(value)
             except ValidationError:
                 return []
-            payload_items: list[t.Tests.ContainerValue] = [
+            payload_items: list[t.Tests.object] = [
                 self._to_payload_value(item_raw) for item_raw in sequence_value
             ]
             return payload_items

@@ -16,7 +16,7 @@ from collections.abc import Mapping, Sequence
 
 from pydantic import BaseModel
 
-from flext_core import FlextRuntime, c, r, t
+from flext_core import FlextRuntime, c, r
 
 
 class FlextUtilitiesPagination:
@@ -44,7 +44,7 @@ class FlextUtilitiesPagination:
         data = pagination_data.get("data")
         pagination = pagination_data.get("pagination")
         if data is None or pagination is None:
-            return r[t.ConfigurationMapping].fail("Invalid pagination data structure")
+            return r[object].fail("Invalid pagination data structure")
         if not FlextRuntime.is_list_like(data):
             data = str(data)
         if not FlextRuntime.is_dict_like(pagination):
@@ -55,7 +55,7 @@ class FlextUtilitiesPagination:
         }
         if message is not None:
             response = {**response, "message": message}
-        return r[t.ConfigurationMapping].ok(response)
+        return r[object].ok(response)
 
     @staticmethod
     def extract_page_params(
@@ -98,7 +98,7 @@ class FlextUtilitiesPagination:
 
     @staticmethod
     def extract_pagination_config(
-        config: BaseModel | t.ConfigurationMapping | None,
+        config: BaseModel | object | None,
     ) -> Mapping[str, int]:
         """Extract pagination configuration values - no fallbacks.
 
@@ -153,7 +153,7 @@ class FlextUtilitiesPagination:
         total_count = total if total is not None else len(data)
         total_pages = (total_count + page_size - 1) // page_size
         if page > total_pages > 0:
-            return r[t.ConfigurationMapping].fail(
+            return r[object].fail(
                 f"Page {page} exceeds total pages {total_pages}"
             )
         has_next = page < total_pages
@@ -162,7 +162,7 @@ class FlextUtilitiesPagination:
         for item in data:
             normalized = FlextRuntime.normalize_to_general_value(item)
             data_list.append(normalized)
-        return r[t.ConfigurationMapping].ok({
+        return r[object].ok({
             "data": data_list,
             "pagination": {
                 "page": page,

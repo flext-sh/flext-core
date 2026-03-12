@@ -232,7 +232,7 @@ class FlextInfraPrManager:
             release_result = self._trigger_release_if_needed(repo_root, head)
             if release_result.is_success:
                 info[c.Infra.ReportKeys.RELEASE] = release_result.value
-        return r[t.ConfigurationMapping].ok(info)
+        return r[object].ok(info)
 
     def open_pr_for_head(self, repo_root: Path, head: str) -> r[Mapping[str, t.Scalar]]:
         """Find an open PR for the given head branch.

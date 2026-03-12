@@ -61,21 +61,20 @@ class TestFactoriesHelpers:
 
     @staticmethod
     def as_single_payload_result(
-        value: r[t.Tests.ContainerValue] | list[r[t.Tests.ContainerValue]],
-    ) -> r[t.Tests.ContainerValue]:
+        value: r[t.Tests.object] | list[r[t.Tests.object]],
+    ) -> r[t.Tests.object]:
         return value if isinstance(value, r) else value[0]
 
     @staticmethod
     def as_payload_list(
-        value: list[t.Tests.ContainerValue] | r[list[t.Tests.ContainerValue]],
-    ) -> list[t.Tests.ContainerValue]:
+        value: list[t.Tests.object] | r[list[t.Tests.object]],
+    ) -> list[t.Tests.object]:
         return value if isinstance(value, list) else value.value
 
     @staticmethod
     def as_payload_mapping(
-        value: Mapping[str, t.Tests.ContainerValue]
-        | r[Mapping[str, t.Tests.ContainerValue]],
-    ) -> Mapping[str, t.Tests.ContainerValue]:
+        value: Mapping[str, t.Tests.object] | r[Mapping[str, t.Tests.object]],
+    ) -> Mapping[str, t.Tests.object]:
         return value if isinstance(value, Mapping) else value.value
 
 

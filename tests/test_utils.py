@@ -25,7 +25,6 @@ from flext_core import (
     FlextUtilities,
     m,
     r,
-    t,
 )
 
 from .models import TestsFlextModels
@@ -45,7 +44,7 @@ class TestDataFactory:
         unique_id: str,
         name: str,
         **kwargs: object,
-    ) -> t.ConfigurationMapping:
+    ) -> object:
         """Create standardized entity test data."""
         return {"unique_id": unique_id, "name": name, **kwargs}
 
@@ -53,7 +52,7 @@ class TestDataFactory:
     def create_value_object_data(
         value: object,
         **kwargs: object,
-    ) -> t.ConfigurationMapping:
+    ) -> object:
         """Create standardized value object test data."""
         return {"value": value, **kwargs}
 
@@ -61,7 +60,7 @@ class TestDataFactory:
     def create_operation_test_case(
         operation: str,
         description: str,
-        input_data: t.ConfigurationMapping,
+        input_data: object,
         expected_result: object,
         *,
         expected_success: bool = True,
@@ -115,7 +114,7 @@ class AssertionHelpers:
     @staticmethod
     def assert_entity_properties(
         entity: m.Entity,
-        expected_props: t.ConfigurationMapping,
+        expected_props: object,
         context: str = "",
     ) -> None:
         """Assert entity has expected properties."""

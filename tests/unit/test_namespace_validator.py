@@ -212,7 +212,7 @@ class TestFlextInfraNamespaceValidator:
         assert result.is_success
         assert not result.value.passed
         assert any(
-            "TypeAlias 'JsonValue' belongs in typings.py" in v
+            "TypeAlias 'object' belongs in typings.py" in v
             for v in result.value.violations
         )
 
@@ -226,7 +226,7 @@ class TestFlextInfraNamespaceValidator:
         result = validator.validate(root)
         assert result.is_success
         assert not result.value.passed
-        assert any("Inner class 'Serializable'" in v for v in result.value.violations)
+        assert any("Inner class 'object'" in v for v in result.value.violations)
 
     def test_exempt_files_skipped(self, tmp_path: Path) -> None:
         validator = FlextInfraNamespaceValidator()

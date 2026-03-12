@@ -471,7 +471,7 @@ class FlextContainer(p.DI):
         self._resources.clear()
 
     @override
-    def configure(self, config: t.ConfigurationMapping | None = None) -> Self:
+    def configure(self, config: object | None = None) -> Self:
         """Apply user-provided overrides to container configuration.
 
         Args:
@@ -725,14 +725,14 @@ class FlextContainer(p.DI):
         """Register a service instance for dependency resolution.
 
         Business Rule: The container accepts service values for registration,
-        including ContainerValue, protocols (Config, Ctx, DI, Service, Log,
+        including object, protocols (Config, Ctx, DI, Service, Log,
         Handler, Registry), and callables. This enables dependency injection of
         typed service instances and protocol implementations.
 
         Args:
             name: Unique key for the registration.
             impl: Concrete instance or callable used for registration.
-                Must be ContainerValue (primitives, BaseModel, callable,
+                Must be object (primitives, BaseModel, callable,
                 sequence, or mapping).
 
         Returns:
@@ -772,7 +772,7 @@ class FlextContainer(p.DI):
                     raw_result = factory_fn()
                     narrowed = FlextContainer._narrow_factory_result(raw_result)
                     if not self._is_registerable_service(narrowed):
-                        msg = f"Factory '{name}' returned value that does not satisfy RegisterableService protocol. Expected ContainerValue, protocol, or callable."
+                        msg = f"Factory '{name}' returned value that does not satisfy RegisterableService protocol. Expected object, protocol, or callable."
                         raise ValueError(msg)
                     return narrowed
 

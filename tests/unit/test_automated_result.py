@@ -16,7 +16,7 @@ from tests.conftest import test_framework
 from tests.test_utils import assertion_helpers, fixture_factory
 
 
-class TestAutomatedFlextResult:
+class TestAutomatedr:
     """Automated tests for r functionality.
 
     Generated for 100% coverage with:

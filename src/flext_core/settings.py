@@ -237,7 +237,7 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
                 del cls._instances[instance_cls]
 
     @classmethod
-    def get_global(cls, *, overrides: t.ConfigurationMapping | None = None) -> Self:
+    def get_global(cls, *, overrides: object | None = None) -> Self:
         """Get global settings, optionally materialized with overrides."""
         u.Configuration.normalize_env_log_level()
         if overrides is None:

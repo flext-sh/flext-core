@@ -226,7 +226,7 @@ class FlextUtilitiesConfiguration:
 
     @staticmethod
     def _try_get_from_duck_model_dump(
-        obj: p.HasModelDump | t.ConfigurationMapping | object,
+        obj: p.HasModelDump | object,
         parameter: str,
     ) -> tuple[bool, object]:
         try:
@@ -493,7 +493,7 @@ class FlextUtilitiesConfiguration:
 
     @staticmethod
     def get_parameter(
-        obj: p.HasModelDump | t.ConfigurationMapping, parameter: str
+        obj: p.HasModelDump | object, parameter: str
     ) -> object:
         """Get parameter value from a configuration object.
 

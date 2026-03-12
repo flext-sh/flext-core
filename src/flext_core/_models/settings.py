@@ -705,12 +705,12 @@ class FlextModelsConfig:
             default=None, description="Expected type class"
         )
         actual_type: type | None = Field(default=None, description="Actual type class")
-        context: Mapping[str, t.MetadataValue] | None = Field(
+        context: Mapping[str, object] | None = Field(
             default=None, description="Additional context for error"
         )
-        metadata: (
-            FlextModelFoundation.Metadata | Mapping[str, t.MetadataValue] | None
-        ) = Field(default=None, description="Metadata for error")
+        metadata: FlextModelFoundation.Metadata | Mapping[str, object] | None = Field(
+            default=None, description="Metadata for error"
+        )
 
     class ValueErrorConfig(ExceptionConfig):
         """Configuration for ValueError (Pydantic v2)."""

@@ -246,7 +246,7 @@ class FlextUtilitiesParser:
 
     @staticmethod
     def _parse_get_attr(
-        obj: BaseModel | t.ConfigurationMapping,
+        obj: BaseModel | object,
         attr: str,
         default: object = None,
     ) -> object:
@@ -273,11 +273,11 @@ class FlextUtilitiesParser:
             return r[TModel].fail(
                 f"{field_prefix}Expected dict for model, got {value.__class__.__name__}"
             )
-        value_dict_data: dict[str, t.JsonValue] = {}
+        value_dict_data: dict[str, object] = {}
         for k, v in value.items():
             key = str(k)
             value_dict_data[key] = FlextUtilitiesParser._to_json_value(v)
-        scalar_data: dict[str, t.JsonValue] = {}
+        scalar_data: dict[str, object] = {}
         for dict_key, dict_value in value_dict_data.items():
             if dict_value.__class__ in {str, int, float, bool}:
                 scalar_data[dict_key] = dict_value
@@ -507,7 +507,7 @@ class FlextUtilitiesParser:
         return "unknown"
 
     @staticmethod
-    def _to_json_value(value: object) -> t.JsonValue:
+    def _to_json_value(value: object) -> object:
         if isinstance(value, t.Primitives):
             return value
         if value is None:
@@ -720,7 +720,7 @@ class FlextUtilitiesParser:
     @staticmethod
     def norm_in(
         value: str,
-        items: list[str] | m.ConfigMap | t.ConfigurationMapping,
+        items: list[str] | m.ConfigMap | object,
         *,
         case: str | None = None,
     ) -> bool:
@@ -774,7 +774,7 @@ class FlextUtilitiesParser:
 
     @staticmethod
     def norm_list(
-        items: list[str] | m.ConfigMap | t.ConfigurationMapping,
+        items: list[str] | m.ConfigMap | object,
         *,
         case: str | None = None,
         filter_truthy: bool = False,

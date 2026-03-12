@@ -11,7 +11,7 @@ from examples.shared import Examples
 from flext_core import e, r, t
 
 
-class Ex01FlextResult(Examples):
+class Ex01r(Examples):
     """Golden-file tests for ``r`` / ``r`` public API."""
 
     def __init__(self) -> None:
@@ -310,7 +310,7 @@ class Ex01FlextResult(Examples):
 
 def main() -> None:
     """Entry point."""
-    Ex01FlextResult().run()
+    Ex01r().run()
 
 
 if __name__ == "__main__":

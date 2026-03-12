@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping
 from typing import override
 
-from flext_core import FlextRuntime, FlextSettings, c, m, r, t, x
+from flext_core import FlextRuntime, FlextSettings, c, m, r, x
 
 from .shared import Examples
 
@@ -25,7 +25,7 @@ class Ex05FlextMixins(Examples):
             except ValueError as exc:
                 return str(exc)
 
-        def run_track_success(self) -> Mapping[str, t.Serializable]:
+        def run_track_success(self) -> Mapping[str, object]:
             """Run a tracked operation that succeeds."""
             with self.track("demo_success") as metrics:
                 has_duration = "duration_ms" in metrics

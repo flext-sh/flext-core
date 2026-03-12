@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 
-from flext_core import FlextTypes, T, T_co, T_contra
+from flext_core import T, T_co, T_contra
 from flext_infra import FlextInfraTypes
 from flext_tests import FlextTestsTypes
 
@@ -41,12 +41,12 @@ class TestsFlextTypes(FlextTestsTypes, FlextInfraTypes):
 
         type ServiceConfigMapping = Mapping[
             str,
-            FlextTypes.ContainerValue | Sequence[str] | Mapping[str, str | int] | None,
+            object | Sequence[str] | Mapping[str, str | int] | None,
         ]
         "Service configuration mapping specific to flext-core services."
         type HandlerConfigMapping = Mapping[
             str,
-            FlextTypes.ContainerValue | Sequence[str] | Mapping[str, str] | None,
+            object | Sequence[str] | Mapping[str, str] | None,
         ]
         "Handler configuration mapping specific to flext-core handlers."
 

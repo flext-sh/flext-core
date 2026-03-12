@@ -760,7 +760,7 @@ class TestRealWorldScenarios:
         _ = fixture_builder.add_fixture("api_base_url", "https://api.test.com")
         _ = fixture_builder.add_fixture("timeout", 30)
         with fixture_builder.setup_context()():
-            test_request: dict[str, FlextTypes.ContainerValue] = {
+            test_request: dict[str, object] = {
                 "method": "POST",
                 "url": "https://api.example.com/users",
                 "correlation_id": "corr_12345678",
@@ -769,8 +769,8 @@ class TestRealWorldScenarios:
             }
 
             def process_api_request(
-                request: dict[str, FlextTypes.ContainerValue],
-            ) -> dict[str, FlextTypes.ContainerValue]:
+                request: dict[str, object],
+            ) -> dict[str, object]:
                 return {
                     "status": "success",
                     "method": request["method"],

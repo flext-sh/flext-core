@@ -38,7 +38,7 @@ from tests.utilities import (
     TestsFlextUtilities,
 )
 
-_ContainerValue = tests_t.Tests.ContainerValue
+_object = tests_t.Tests.object
 
 
 class StringParserTestFactory:
@@ -359,7 +359,7 @@ class StringParserTestFactory:
 
     @staticmethod
     def object_key_cases() -> list[tm.Tests.ObjectKeyCase]:
-        """Generate comprehensive get_object_key test cases (ContainerValue only)."""
+        """Generate comprehensive get_object_key test cases (object only)."""
         return [
             tm.Tests.ObjectKeyCase(
                 obj={},
@@ -428,7 +428,7 @@ class TestuStringParser:
                 return parser.parse_delimited(case.text, case.delimiter)
 
             u.Tests.ParserHelpers.execute_and_assert_parser_result(
-                cast("Callable[[], r[_ContainerValue]]", operation),
+                cast("Callable[[], r[_object]]", operation),
                 expected_value=case.expected,
                 expected_error=case.expected_error,
                 description=case.description,
@@ -460,7 +460,7 @@ class TestuStringParser:
             """Test split_on_char_with_escape with parametrized cases."""
             u.Tests.ParserHelpers.execute_and_assert_parser_result(
                 cast(
-                    "Callable[[], r[tests_t.Tests.ContainerValue]]",
+                    "Callable[[], r[tests_t.Tests.object]]",
                     lambda: parser.split_on_char_with_escape(
                         case.text,
                         case.split_char,
@@ -501,7 +501,7 @@ class TestuStringParser:
             """Test normalize_whitespace with parametrized cases."""
             u.Tests.ParserHelpers.execute_and_assert_parser_result(
                 cast(
-                    "Callable[[], r[tests_t.Tests.ContainerValue]]",
+                    "Callable[[], r[tests_t.Tests.object]]",
                     lambda: parser.normalize_whitespace(
                         case.text,
                         pattern=case.pattern,
@@ -536,7 +536,7 @@ class TestuStringParser:
             """Test apply_regex_pipeline with parametrized cases."""
             u.Tests.ParserHelpers.execute_and_assert_parser_result(
                 cast(
-                    "Callable[[], r[tests_t.Tests.ContainerValue]]",
+                    "Callable[[], r[tests_t.Tests.object]]",
                     lambda: parser.apply_regex_pipeline(case.text, case.patterns),
                 ),
                 expected_value=case.expected,
@@ -572,7 +572,7 @@ class TestuStringParser:
             text = cast("str", cast("object", None))
             u.Tests.ParserHelpers.execute_and_assert_parser_result(
                 cast(
-                    "Callable[[], r[tests_t.Tests.ContainerValue]]",
+                    "Callable[[], r[tests_t.Tests.object]]",
                     lambda: parser.apply_regex_pipeline(
                         text,
                         [
@@ -592,7 +592,7 @@ class TestuStringParser:
             text = cast("str", cast("object", 123))
             u.Tests.ParserHelpers.execute_and_assert_parser_result(
                 cast(
-                    "Callable[[], r[tests_t.Tests.ContainerValue]]",
+                    "Callable[[], r[tests_t.Tests.object]]",
                     lambda: parser.apply_regex_pipeline(
                         text,
                         [

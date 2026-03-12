@@ -66,8 +66,8 @@ from flext_core import r
 from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_tests import c, m, t, u
 
-_TEST_PAYLOAD_DICT_ADAPTER = TypeAdapter(dict[str, t.Tests.ContainerValue])
-_TEST_PAYLOAD_LIST_ADAPTER = TypeAdapter(list[t.Tests.ContainerValue])
+_TEST_PAYLOAD_DICT_ADAPTER = TypeAdapter(dict[str, t.Tests.object])
+_TEST_PAYLOAD_LIST_ADAPTER = TypeAdapter(list[t.Tests.object])
 _GUARD_PAYLOAD_DICT_ADAPTER = TypeAdapter(dict[str, object])
 _GUARD_PAYLOAD_LIST_ADAPTER = TypeAdapter(list[object])
 
@@ -76,7 +76,7 @@ def _is_non_string_sequence(value: object) -> TypeGuard[Sequence[object]]:
     return isinstance(value, Sequence) and (not isinstance(value, str | bytes))
 
 
-def _to_test_payload(value: object) -> t.Tests.ContainerValue:
+def _to_test_payload(value: object) -> t.Tests.object:
     if value is None or isinstance(value, t.Primitives | bytes | BaseModel):
         return value
     if isinstance(value, Mapping):
@@ -373,7 +373,7 @@ class FlextTestsMatchers:
                     )
         if params.data is not None:
             actual_raw = result.error_data
-            actual_data: MutableMapping[str, t.Tests.ContainerValue] = {}
+            actual_data: MutableMapping[str, t.Tests.object] = {}
             if actual_raw is not None:
                 actual_data = {
                     str(k): _to_test_payload(v) for k, v in actual_raw.root.items()
@@ -403,12 +403,12 @@ class FlextTestsMatchers:
     @overload
     def ok[TResult](
         result: r[TResult], **kwargs: t.Tests.Matcher.MatcherKwargValue
-    ) -> TResult | t.Tests.ContainerValue: ...
+    ) -> TResult | t.Tests.object: ...
 
     @staticmethod
     def ok[TResult](
         result: r[TResult], **kwargs: t.Tests.Matcher.MatcherKwargValue
-    ) -> TResult | t.Tests.ContainerValue:
+    ) -> TResult | t.Tests.object:
         """Enhanced assertion for r success with optional value validation.
 
         Uses Pydantic 2 models for parameter validation and computation.
@@ -465,8 +465,8 @@ class FlextTestsMatchers:
             raise AssertionError(
                 params.msg or c.Tests.Matcher.ERR_OK_FAILED.format(error=result.error)
             )
-        result_value: TResult | t.Tests.ContainerValue = result.value
-        extracted_payload: t.Tests.ContainerValue | None = None
+        result_value: TResult | t.Tests.object = result.value
+        extracted_payload: t.Tests.object | None = None
         if params.path is not None:
             if isinstance(params.path, str):
                 path_str: str = params.path
@@ -588,7 +588,7 @@ class FlextTestsMatchers:
                     params.msg
                     or f"Deep matching requires dict or model, got {type(result_value).__name__}"
                 )
-            deep_input: BaseModel | Mapping[str, t.Tests.ContainerValue]
+            deep_input: BaseModel | Mapping[str, t.Tests.object]
             if isinstance(result_value, BaseModel):
                 deep_input = result_value
             else:
@@ -624,7 +624,7 @@ class FlextTestsMatchers:
 
     @staticmethod
     @contextmanager
-    def scope(**kwargs: t.Tests.ContainerValue) -> Iterator[m.Tests.Matcher.TestScope]:
+    def scope(**kwargs: t.Tests.object) -> Iterator[m.Tests.Matcher.TestScope]:
         """Enhanced isolated test execution scope.
 
         Uses Pydantic 2 model (ScopeParams) for parameter validation and computation.
@@ -681,15 +681,15 @@ class FlextTestsMatchers:
                     Path(params.cwd) if u.is_type(params.cwd, "str") else params.cwd
                 )
                 os.chdir(cwd_path)
-            cfg: dict[str, t.Tests.ContainerValue] = {}
+            cfg: dict[str, t.Tests.object] = {}
             if params.config:
                 cfg = {str(key): value for key, value in params.config.items()}
-            container_dict: dict[str, t.Tests.ContainerValue] = {
+            container_dict: dict[str, t.Tests.object] = {
                 k: v
                 for k, v in (params.container or {}).items()
                 if t.Guards.is_general_value(v)
             }
-            context_map: dict[str, t.Tests.ContainerValue] = {}
+            context_map: dict[str, t.Tests.object] = {}
             if params.context:
                 context_map = {str(key): value for key, value in params.context.items()}
             yield m.Tests.Matcher.TestScope.model_validate({
@@ -968,7 +968,7 @@ class FlextTestsMatchers:
                 )
             )
         if isinstance(subject_payload, (list, tuple)):
-            seq_value: list[t.Tests.ContainerValue] = []
+            seq_value: list[t.Tests.object] = []
             try:
                 seq_value = _TEST_PAYLOAD_LIST_ADAPTER.validate_python(subject_payload)
             except ValidationError:
@@ -1090,7 +1090,7 @@ class FlextTestsMatchers:
                         params.msg or "Sequence contains duplicate items"
                     )
         if isinstance(subject_payload, Mapping):
-            mapping_value: dict[str, t.Tests.ContainerValue] = {}
+            mapping_value: dict[str, t.Tests.object] = {}
             try:
                 mapping_value = _TEST_PAYLOAD_DICT_ADAPTER.validate_python(
                     subject_payload
@@ -1203,7 +1203,7 @@ class FlextTestsMatchers:
                     params.msg
                     or f"Deep matching requires dict or model, got {type(subject_payload).__name__}"
                 )
-            deep_value: BaseModel | Mapping[str, t.Tests.ContainerValue]
+            deep_value: BaseModel | Mapping[str, t.Tests.object]
             if isinstance(subject_payload, BaseModel):
                 deep_value = subject_payload
             else:

@@ -16,7 +16,7 @@ from typing import Annotated, ParamSpec, TypeVar, get_args, get_origin, get_type
 
 from pydantic import ConfigDict, TypeAdapter, ValidationError, validate_call
 
-from flext_core import p, r, t
+from flext_core import p, r
 
 _ValidatedParams = ParamSpec("_ValidatedParams")
 _ValidatedReturn = TypeVar("_ValidatedReturn")
@@ -116,10 +116,10 @@ class FlextUtilitiesArgs:
                     valid = ", ".join(m.value for m in enum_members)
                     errors.append(f"{field}: '{value}' not in [{valid}]")
         if errors:
-            return r[t.ConfigurationMapping].fail(
+            return r[object].fail(
                 f"Invalid values: {'; '.join(errors)}"
             )
-        return r[t.ConfigurationMapping].ok(parsed)
+        return r[object].ok(parsed)
 
     @staticmethod
     def validated(

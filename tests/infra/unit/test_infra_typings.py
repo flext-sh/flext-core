@@ -30,10 +30,10 @@ class TestFlextInfraTypesImport:
         assert hasattr(FlextTypes, "Scalar") or hasattr(FlextInfraTypes, "Scalar")
 
     def test_flext_infra_types_has_general_value_type(self) -> None:
-        """Test that FlextInfraTypes has ContainerValue type."""
-        assert hasattr(FlextTypes, "ContainerValue") or hasattr(
+        """Test that FlextInfraTypes has object type."""
+        assert hasattr(FlextTypes, "object") or hasattr(
             FlextInfraTypes,
-            "ContainerValue",
+            "object",
         )
 
     def test_flext_infra_types_has_dict_type(self) -> None:
@@ -41,8 +41,8 @@ class TestFlextInfraTypesImport:
         assert hasattr(FlextTypes, "Dict") or hasattr(FlextInfraTypes, "Dict")
 
     def test_flext_infra_types_has_json_value_type(self) -> None:
-        """Test that FlextInfraTypes has JsonValue type."""
-        assert hasattr(FlextTypes, "JsonValue") or hasattr(FlextInfraTypes, "JsonValue")
+        """Test that FlextInfraTypes has object type."""
+        assert hasattr(FlextTypes, "object") or hasattr(FlextInfraTypes, "object")
 
     def test_flext_infra_types_has_json_dict_type(self) -> None:
         """Test that FlextInfraTypes has JsonDict type."""
@@ -63,10 +63,10 @@ class TestFlextInfraTypesImport:
         )
 
     def test_flext_infra_types_has_serializable_type(self) -> None:
-        """Test that FlextInfraTypes has Serializable type."""
-        assert hasattr(FlextTypes, "Serializable") or hasattr(
+        """Test that FlextInfraTypes has object type."""
+        assert hasattr(FlextTypes, "object") or hasattr(
             FlextInfraTypes,
-            "Serializable",
+            "object",
         )
 
     def test_flext_infra_types_has_registerable_service_type(self) -> None:

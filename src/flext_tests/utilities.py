@@ -59,14 +59,14 @@ def _to_scalar(value: object) -> core_t.Scalar:
     return str(value)
 
 
-def _to_payload(value: object) -> t.Tests.ContainerValue:
+def _to_payload(value: object) -> t.Tests.object:
     """Convert a value to tesobject.
 
     Args:
         value: Any value to convert
 
     Returns:
-        ContainerValue suitable for test assertions
+        object suitable for test assertions
 
     """
     if value is None or isinstance(
@@ -78,7 +78,7 @@ def _to_payload(value: object) -> t.Tests.ContainerValue:
             mapping_value = _PAYLOAD_MAPPING_ADAPTER.validate_python(value)
         except ValidationError:
             return {}
-        payload_map: dict[str, t.Tests.ContainerValue] = {}
+        payload_map: dict[str, t.Tests.object] = {}
         for key_raw, item_obj in mapping_value.items():
             payload_map[str(key_raw)] = _to_payload(item_obj)
         return payload_map
@@ -87,15 +87,15 @@ def _to_payload(value: object) -> t.Tests.ContainerValue:
             iterable_items = _PAYLOAD_SEQUENCE_ADAPTER.validate_python(value)
         except ValidationError:
             return []
-        payload_items: list[t.Tests.ContainerValue] = [
+        payload_items: list[t.Tests.object] = [
             _to_payload(item_obj) for item_obj in iterable_items
         ]
         return payload_items
     return str(value)
 
 
-def _to_config_map_value(value: t.Tests.ContainerValue) -> core_object:
-    """Converobject to ContainerValue."""
+def _to_config_map_value(value: t.Tests.object) -> core_object:
+    """Converobject to object."""
     if value is None or isinstance(value, t.Primitives | BaseModel):
         return value
     if isinstance(value, bytes):
@@ -110,7 +110,7 @@ def _to_config_map_value(value: t.Tests.ContainerValue) -> core_object:
 
 
 class _EntityFactory[TEntity](Protocol):
-    def __call__(self, *, name: str, value: t.Tests.ContainerValue) -> TEntity: ...
+    def __call__(self, *, name: str, value: t.Tests.object) -> TEntity: ...
 
 
 class _ValueFactory[TValue](Protocol):
@@ -315,7 +315,7 @@ class FlextTestsUtilities(FlextUtilities):
             @staticmethod
             @contextmanager
             def temporary_attribute(
-                target: object, attribute: str, value: t.Tests.ContainerValue
+                target: object, attribute: str, value: t.Tests.object
             ) -> Generator[None]:
                 """Temporarily set attribute on target object.
 
@@ -329,7 +329,7 @@ class FlextTestsUtilities(FlextUtilities):
 
                 """
                 attribute_existed = hasattr(target, attribute)
-                original_value: t.Tests.ContainerValue | None = None
+                original_value: t.Tests.object | None = None
                 if attribute_existed:
                     original_value = target.__getattribute__(attribute)
                 object.__setattr__(target, attribute, value)
@@ -345,9 +345,7 @@ class FlextTestsUtilities(FlextUtilities):
             """Factory helpers for test data creation."""
 
             @staticmethod
-            def add_operation(
-                a: t.Tests.ContainerValue, b: t.Tests.ContainerValue
-            ) -> t.Tests.ContainerValue:
+            def add_operation(a: t.Tests.object, b: t.Tests.object) -> t.Tests.object:
                 """Execute add operation for numeric or string values.
 
                 Args:
@@ -366,7 +364,7 @@ class FlextTestsUtilities(FlextUtilities):
             @staticmethod
             def create_error_operation(
                 error_message: str,
-            ) -> Callable[[], t.Tests.ContainerValue]:
+            ) -> Callable[[], t.Tests.object]:
                 """Create callable that raises ValueError.
 
                 Args:
@@ -378,7 +376,7 @@ class FlextTestsUtilities(FlextUtilities):
 
                 """
 
-                def error_op() -> t.Tests.ContainerValue:
+                def error_op() -> t.Tests.object:
                     raise ValueError(error_message)
 
                 return error_op
@@ -406,8 +404,8 @@ class FlextTestsUtilities(FlextUtilities):
 
             @staticmethod
             def create_test_data(
-                **kwargs: t.Tests.ContainerValue,
-            ) -> MutableMapping[str, t.Tests.ContainerValue]:
+                **kwargs: t.Tests.object,
+            ) -> MutableMapping[str, t.Tests.object]:
                 """Create test data dictionary.
 
                 Args:
@@ -423,7 +421,7 @@ class FlextTestsUtilities(FlextUtilities):
             @staticmethod
             def execute_complex_service(
                 validation_result: r[bool],
-            ) -> r[t.Tests.ContainerValue]:
+            ) -> r[t.Tests.object]:
                 """Execute complex service operation.
 
                 Args:
@@ -435,14 +433,14 @@ class FlextTestsUtilities(FlextUtilities):
 
                 """
                 if validation_result.is_failure:
-                    return r[t.Tests.ContainerValue].fail(
+                    return r[t.Tests.object].fail(
                         validation_result.error or "Validation failed"
                     )
-                result_data: t.Tests.ContainerValue = {"result": "success"}
-                return r[t.Tests.ContainerValue].ok(result_data)
+                result_data: t.Tests.object = {"result": "success"}
+                return r[t.Tests.object].ok(result_data)
 
             @staticmethod
-            def execute_default_service(service_type: str) -> r[t.Tests.ContainerValue]:
+            def execute_default_service(service_type: str) -> r[t.Tests.object]:
                 """Execute default service operation.
 
                 Args:
@@ -453,13 +451,13 @@ class FlextTestsUtilities(FlextUtilities):
                     r with service type data.
 
                 """
-                service_data: t.Tests.ContainerValue = {"service_type": service_type}
-                return r[t.Tests.ContainerValue].ok(service_data)
+                service_data: t.Tests.object = {"service_type": service_type}
+                return r[t.Tests.object].ok(service_data)
 
             @staticmethod
             def execute_user_service(
-                overrides: Mapping[str, t.Tests.ContainerValue],
-            ) -> r[t.Tests.ContainerValue]:
+                overrides: Mapping[str, t.Tests.object],
+            ) -> r[t.Tests.object]:
                 """Execute user service operation.
 
                 Args:
@@ -471,11 +469,11 @@ class FlextTestsUtilities(FlextUtilities):
 
                 """
                 user_id = "default_123" if overrides.get("default") else "test_123"
-                user_data: t.Tests.ContainerValue = {
+                user_data: t.Tests.object = {
                     "user_id": user_id,
                     "email": "test@example.com",
                 }
-                return r[t.Tests.ContainerValue].ok(user_data)
+                return r[t.Tests.object].ok(user_data)
 
             @staticmethod
             def format_operation(name: str, value: int = 10) -> str:
@@ -518,7 +516,7 @@ class FlextTestsUtilities(FlextUtilities):
                 return FlextUtilities.generate("ulid", length=length)
 
             @staticmethod
-            def simple_operation() -> t.Tests.ContainerValue:
+            def simple_operation() -> t.Tests.object:
                 """Execute simple operation returning success message.
 
                 Returns:
@@ -628,15 +626,15 @@ class FlextTestsUtilities(FlextUtilities):
 
             @staticmethod
             def create_parametrized_cases(
-                success_values: list[t.Tests.ContainerValue],
+                success_values: list[t.Tests.object],
                 failure_errors: list[str] | None = None,
                 *,
                 error_codes: list[str | None] | None = None,
             ) -> list[
                 tuple[
-                    r[t.Tests.ContainerValue],
+                    r[t.Tests.object],
                     bool,
-                    t.Tests.ContainerValue | None,
+                    t.Tests.object | None,
                     str | None,
                 ]
             ]:
@@ -654,22 +652,20 @@ class FlextTestsUtilities(FlextUtilities):
                 """
                 cases: list[
                     tuple[
-                        r[t.Tests.ContainerValue],
+                        r[t.Tests.object],
                         bool,
-                        t.Tests.ContainerValue | None,
+                        t.Tests.object | None,
                         str | None,
                     ]
                 ] = []
                 for value in success_values:
-                    result = r[t.Tests.ContainerValue].ok(value)
+                    result = r[t.Tests.object].ok(value)
                     cases.append((result, True, value, None))
                 if failure_errors:
                     codes = error_codes or [None] * len(failure_errors)
                     for i, error in enumerate(failure_errors):
                         error_code = codes[i] if i < len(codes) else None
-                        result = r[t.Tests.ContainerValue].fail(
-                            error, error_code=error_code
-                        )
+                        result = r[t.Tests.object].fail(error, error_code=error_code)
                         cases.append((result, False, None, error))
                 return cases
 
@@ -759,7 +755,7 @@ class FlextTestsUtilities(FlextUtilities):
                     assert actual_value == expected_value, msg
 
             @staticmethod
-            def create_test_config(**kwargs: t.Tests.ContainerValue) -> FlextSettings:
+            def create_test_config(**kwargs: t.Tests.object) -> FlextSettings:
                 """Create a test config instance.
 
                 Args:
@@ -777,7 +773,7 @@ class FlextTestsUtilities(FlextUtilities):
             @staticmethod
             @contextmanager
             def env_vars_context(
-                env_vars: Mapping[str, t.Tests.ContainerValue],
+                env_vars: Mapping[str, t.Tests.object],
                 vars_to_clear: list[str] | None = None,
             ) -> Generator[None]:
                 """Context manager for temporary environment variable changes.
@@ -815,7 +811,7 @@ class FlextTestsUtilities(FlextUtilities):
 
             @staticmethod
             def assert_context_get_success(
-                context: FlextContext, key: str, expected_value: t.Tests.ContainerValue
+                context: FlextContext, key: str, expected_value: t.Tests.object
             ) -> None:
                 """Assert context get returns expected value.
 
@@ -947,8 +943,8 @@ class FlextTestsUtilities(FlextUtilities):
 
             @staticmethod
             def execute_and_assert_parser_result(
-                operation: Callable[[], r[t.Tests.ContainerValue]],
-                expected_value: t.Tests.ContainerValue | None = None,
+                operation: Callable[[], r[t.Tests.object]],
+                expected_value: t.Tests.object | None = None,
                 expected_error: str | None = None,
                 description: str = "",
             ) -> None:
@@ -983,10 +979,10 @@ class FlextTestsUtilities(FlextUtilities):
             def create_batch_operation_test_cases(
                 operation: str,
                 descriptions: list[str],
-                input_data_list: list[Mapping[str, t.Tests.ContainerValue]],
-                expected_results: list[t.Tests.ContainerValue],
-                **common_kwargs: t.Tests.ContainerValue,
-            ) -> list[MutableMapping[str, t.Tests.ContainerValue]]:
+                input_data_list: list[Mapping[str, t.Tests.object]],
+                expected_results: list[t.Tests.object],
+                **common_kwargs: t.Tests.object,
+            ) -> list[MutableMapping[str, t.Tests.object]]:
                 """Create batch test cases for operation testing.
 
                 Args:
@@ -1001,7 +997,7 @@ class FlextTestsUtilities(FlextUtilities):
                     List of test case dictionaries
 
                 """
-                cases: list[MutableMapping[str, t.Tests.ContainerValue]] = []
+                cases: list[MutableMapping[str, t.Tests.object]] = []
                 for desc, data, expected in zip(
                     descriptions, input_data_list, expected_results, strict=True
                 ):
@@ -1020,10 +1016,10 @@ class FlextTestsUtilities(FlextUtilities):
             def create_operation_test_case(
                 operation: str,
                 description: str,
-                input_data: Mapping[str, t.Tests.ContainerValue],
-                expected_result: t.Tests.ContainerValue,
-                **kwargs: t.Tests.ContainerValue,
-            ) -> MutableMapping[str, t.Tests.ContainerValue]:
+                input_data: Mapping[str, t.Tests.object],
+                expected_result: t.Tests.object,
+                **kwargs: t.Tests.object,
+            ) -> MutableMapping[str, t.Tests.object]:
                 """Create a test case dict for operation testing.
 
                 Args:
@@ -1038,7 +1034,7 @@ class FlextTestsUtilities(FlextUtilities):
                     Test case dictionary
 
                 """
-                result: MutableMapping[str, t.Tests.ContainerValue] = {
+                result: MutableMapping[str, t.Tests.object] = {
                     "operation": operation,
                     "description": description,
                     "input_data": input_data,
@@ -1049,8 +1045,8 @@ class FlextTestsUtilities(FlextUtilities):
 
             @staticmethod
             def execute_and_assert_operation_result(
-                operation: Callable[[], t.Tests.ContainerValue],
-                test_case: Mapping[str, t.Tests.ContainerValue],
+                operation: Callable[[], t.Tests.object],
+                test_case: Mapping[str, t.Tests.object],
             ) -> None:
                 """Execute operation and assert result.
 
@@ -1072,7 +1068,7 @@ class FlextTestsUtilities(FlextUtilities):
             @staticmethod
             def create_test_entities_batch[TEntity](
                 names: list[str],
-                values: list[t.Tests.ContainerValue],
+                values: list[t.Tests.object],
                 entity_class: _EntityFactory[TEntity],
                 remove_ids: list[bool] | None = None,
             ) -> r[list[TEntity]]:
@@ -1111,7 +1107,7 @@ class FlextTestsUtilities(FlextUtilities):
             @staticmethod
             def create_test_entity_instance[TEntity](
                 name: str,
-                value: t.Tests.ContainerValue,
+                value: t.Tests.object,
                 entity_class: _EntityFactory[TEntity],
                 *,
                 remove_id: bool = False,
@@ -1178,9 +1174,9 @@ class FlextTestsUtilities(FlextUtilities):
             @staticmethod
             def execute_domain_operation(
                 operation: str,
-                input_data: Mapping[str, t.Tests.ContainerValue],
-                **kwargs: t.Tests.ContainerValue,
-            ) -> t.Tests.ContainerValue:
+                input_data: Mapping[str, t.Tests.object],
+                **kwargs: t.Tests.object,
+            ) -> t.Tests.object:
                 """Execute a domain utility operation.
 
                 Args:
@@ -1208,8 +1204,8 @@ class FlextTestsUtilities(FlextUtilities):
 
             @staticmethod
             def create_metadata_object(
-                attributes: Mapping[str, t.Tests.ContainerValue],
-            ) -> MutableMapping[str, t.Tests.ContainerValue]:
+                attributes: Mapping[str, t.Tests.object],
+            ) -> MutableMapping[str, t.Tests.object]:
                 """Create a metadata object for exceptions.
 
                 Args:
@@ -1228,20 +1224,20 @@ class FlextTestsUtilities(FlextUtilities):
             class BadModelDump:
                 """Object with model_dump that raises."""
 
-                model_dump: Callable[
-                    [], MutableMapping[str, t.Tests.ContainerValue]
-                ] = staticmethod(
-                    lambda: (_ for _ in ()).throw(RuntimeError("Bad model_dump"))
+                model_dump: Callable[[], MutableMapping[str, t.Tests.object]] = (
+                    staticmethod(
+                        lambda: (_ for _ in ()).throw(RuntimeError("Bad model_dump"))
+                    )
                 )
 
             class BadConfig:
                 """Config object that raises on attribute access."""
 
                 @override
-                def __getattribute__(self, name: str) -> t.Tests.ContainerValue:
+                def __getattribute__(self, name: str) -> t.Tests.object:
                     """Raise error on attribute access - test helper for error testing."""
                     if name.startswith("__") and name.endswith("__"):
-                        result: t.Tests.ContainerValue = super().__getattribute__(name)
+                        result: t.Tests.object = super().__getattribute__(name)
                         return result
                     msg = f"Bad config: {name}"
                     raise AttributeError(msg)
@@ -1250,10 +1246,10 @@ class FlextTestsUtilities(FlextUtilities):
                 """Config object that raises TypeError on attribute access."""
 
                 @override
-                def __getattribute__(self, name: str) -> t.Tests.ContainerValue:
+                def __getattribute__(self, name: str) -> t.Tests.object:
                     """Raise TypeError on attribute access - test helper for error testing."""
                     if name.startswith("__") and name.endswith("__"):
-                        result: t.Tests.ContainerValue = super().__getattribute__(name)
+                        result: t.Tests.object = super().__getattribute__(name)
                         return result
                     msg = f"Bad config type: {name}"
                     raise TypeError(msg)
@@ -1281,7 +1277,7 @@ class FlextTestsUtilities(FlextUtilities):
                 return re.compile(pattern_str, re.IGNORECASE)
 
             @staticmethod
-            def get_constant_by_path(path: str) -> t.Tests.ContainerValue:
+            def get_constant_by_path(path: str) -> t.Tests.object:
                 """Get a constant value by dot-separated path.
 
                 Args:
@@ -1318,7 +1314,7 @@ class FlextTestsUtilities(FlextUtilities):
 
             @staticmethod
             def assert_result_matches_expected(
-                result: t.Tests.ContainerValue,
+                result: t.Tests.object,
                 expected_type: type,
                 description: str = "",
             ) -> None:
@@ -1371,10 +1367,7 @@ class FlextTestsUtilities(FlextUtilities):
 
             @staticmethod
             def detect_format(
-                content: str
-                | bytes
-                | Mapping[str, t.Tests.ContainerValue]
-                | list[list[str]],
+                content: str | bytes | Mapping[str, t.Tests.object] | list[list[str]],
                 name: str,
                 fmt: str,
             ) -> str:
@@ -1471,10 +1464,7 @@ class FlextTestsUtilities(FlextUtilities):
             @staticmethod
             def write_csv(
                 path: Path,
-                content: str
-                | bytes
-                | Mapping[str, t.Tests.ContainerValue]
-                | list[list[str]],
+                content: str | bytes | Mapping[str, t.Tests.object] | list[list[str]],
                 headers: list[str] | None,
                 delimiter: str | None = None,
                 encoding: str | None = None,
@@ -1739,10 +1729,10 @@ class FlextTestsUtilities(FlextUtilities):
 
             @staticmethod
             def match(
-                obj: BaseModel | Mapping[str, t.Tests.ContainerValue],
+                obj: BaseModel | Mapping[str, t.Tests.object],
                 spec: Mapping[
                     str,
-                    t.Tests.ContainerValue | Callable[[t.Tests.ContainerValue], bool],
+                    t.Tests.object | Callable[[t.Tests.object], bool],
                 ],
                 *,
                 path_sep: str = ".",
@@ -1838,9 +1828,7 @@ class FlextTestsUtilities(FlextUtilities):
             """
 
             @staticmethod
-            def validate(
-                value: t.Tests.ContainerValue, spec: int | tuple[int, int]
-            ) -> bool:
+            def validate(value: t.Tests.object, spec: int | tuple[int, int]) -> bool:
                 """Validate length against spec.
 
                 Uses u.chk() for validation - NO code duplication.

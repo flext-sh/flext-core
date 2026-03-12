@@ -13,22 +13,22 @@ from flext_core import FlextExceptions, FlextHandlers, c, h, m, r, t
 handlers_module = importlib.import_module("flext_core.handlers")
 
 
-class _Handler(FlextHandlers[t.JsonValue, t.JsonValue]):
+class _Handler(FlextHandlers[object, object]):
     @override
-    def handle(self, message: t.JsonValue) -> r[t.JsonValue]:
-        return r[t.JsonValue].ok(message)
+    def handle(self, message: object) -> r[object]:
+        return r[object].ok(message)
 
 
 class _QueryHandler(_Handler):
     @override
-    def validate(self, data: t.JsonValue) -> r[bool]:
+    def validate(self, data: object) -> r[bool]:
         _ = data
         return r[bool].ok(True)
 
 
 class _EventHandler(_Handler):
     @override
-    def validate(self, data: t.JsonValue) -> r[bool]:
+    def validate(self, data: object) -> r[bool]:
         _ = data
         return r[bool].ok(True)
 

@@ -18,15 +18,15 @@ from pydantic import BaseModel, InstanceOf
 
 from flext_core import FlextTypes, m, r
 
-type _TestContainerValue = (
+type _Testobject = (
     t.Primitives
     | None
     | bytes
     | datetime
     | Path
     | BaseModel
-    | Sequence[_TestContainerValue]
-    | Mapping[str, _TestContainerValue]
+    | Sequence[_Testobject]
+    | Mapping[str, _Testobject]
 )
 
 
@@ -35,7 +35,7 @@ class FlextTestsTypes(FlextTypes):
 
     Architecture: Extends FlextTypes with test-specific type aliases and definitions.
     All base types from FlextTypes are available through inheritance.
-    Uses specific, directed types instead of FTestContainerValue where possible.
+    Uses specific, directed types instead of FTestobject where possible.
 
     This class serves as a library of support and base for all tests in the FLEXT
     workspace projects, without being directed to any specific project.
@@ -45,15 +45,15 @@ class FlextTestsTypes(FlextTypes):
         """Test-specific type definitions namespace.
 
         All test-specific types organized under t.Tests.* pattern.
-        Use specific types instead of TestContainerValue where possible.
+        Use specific types instead of Testobject where possible.
         """
 
         type TestPayloadScalar = t.Primitives | None
-        type TestContainerValue = _TestContainerValue
+        type Testobject = _Testobject
         type FileContent = (
             str
             | bytes
-            | Mapping[str, _TestContainerValue]
+            | Mapping[str, _Testobject]
             | Sequence[Sequence[str]]
             | InstanceOf[BaseModel]
         )
@@ -69,9 +69,9 @@ class FlextTestsTypes(FlextTypes):
         "Mapping for test data with specific value types."
         type TestConfigMapping = m.ConfigMap
         "Mapping for test configuration with specific value types."
-        type ContainerValue = _TestContainerValue
+        type object = _Testobject
         "Canonical payload value for test modules."
-        type TestResultValue = _TestContainerValue
+        type TestResultValue = _Testobject
         "Type for test result values with specific constraints."
 
         class Docker:
@@ -176,7 +176,7 @@ class FlextTestsTypes(FlextTypes):
                 | Literal["user", "config", "service", "entity", "value"]
             )
             "Source type for dict() factory method."
-            type GenericArgs = Sequence[FlextTestsTypes.Tests.TestContainerValue]
+            type GenericArgs = Sequence[FlextTestsTypes.Tests.Testobject]
             "Positional arguments for generic type instantiation."
             type GenericKwargs = m.ConfigMap
             "Keyword arguments for generic type instantiation."
@@ -186,12 +186,12 @@ class FlextTestsTypes(FlextTypes):
 
             type ScalarValue = t.Scalar
             "Scalar values that can be serialized directly."
-            type SerializableValue = t.JsonValue
+            type SerializableValue = object
             "Values that can be serialized to JSON/YAML."
             type ReadResult[T] = (
                 T
-                | Mapping[str, FlextTestsTypes.Tests.TestContainerValue]
-                | list[str | Mapping[str, FlextTestsTypes.Tests.TestContainerValue]]
+                | Mapping[str, FlextTestsTypes.Tests.Testobject]
+                | list[str | Mapping[str, FlextTestsTypes.Tests.Testobject]]
             )
             "Result type for file read operations with generic support."
             type FormatLiteral = Literal["json", "yaml", "csv", "txt", "md", "auto"]
@@ -202,9 +202,7 @@ class FlextTestsTypes(FlextTypes):
             "Literal type for batch operation specification."
             type ErrorModeLiteral = Literal["stop", "skip", "collect"]
             "Error handling mode for batch operations.\n\n            - stop: Stop at first error\n            - skip: Skip failed operations, continue with remaining\n            - collect: Collect all errors, return BatchResult with failures\n            "
-            type BatchFiles = (
-                Mapping[str, t.Tests.ContainerValue] | Sequence[t.Tests.ContainerValue]
-            )
+            type BatchFiles = Mapping[str, t.Tests.object] | Sequence[t.Tests.object]
             "Type for batch file operations - Mapping or Sequence of files."
 
         class Builders:
@@ -213,54 +211,50 @@ class FlextTestsTypes(FlextTypes):
             Provides centralized types for FlextTestsBuilders following FLEXT patterns.
             Use t.Tests.Builders.* for access.
 
-            Uses FlextTestsTypes.Tests.TestContainerValue as base since it already handles nested structures
+            Uses FlextTestsTypes.Tests.Testobject as base since it already handles nested structures
             through Sequence payloads and Mapping payloads.
             r types are added on top for builder-specific needs.
             """
 
-            type BuilderValue = FlextTestsTypes.Tests.TestContainerValue
+            type BuilderValue = FlextTestsTypes.Tests.Testobject
             "Type for values stored in builder."
-            type BuilderDict = MutableMapping[
-                str, FlextTestsTypes.Tests.TestContainerValue
-            ]
+            type BuilderDict = MutableMapping[str, FlextTestsTypes.Tests.Testobject]
             "Type for builder internal data structure."
             type BuilderOutputDict = Mapping[
                 str,
-                FlextTestsTypes.Tests.TestContainerValue
-                | r[FlextTestsTypes.Tests.TestContainerValue]
+                FlextTestsTypes.Tests.Testobject
+                | r[FlextTestsTypes.Tests.Testobject]
                 | list[
-                    FlextTestsTypes.Tests.TestContainerValue
-                    | r[FlextTestsTypes.Tests.TestContainerValue]
+                    FlextTestsTypes.Tests.Testobject
+                    | r[FlextTestsTypes.Tests.Testobject]
                 ]
-                | Mapping[str, FlextTestsTypes.Tests.TestContainerValue],
+                | Mapping[str, FlextTestsTypes.Tests.Testobject],
             ]
             "Type for builder output dict after batch result conversion."
             type BuildOutputValue = (
-                FlextTestsTypes.Tests.TestContainerValue
-                | r[FlextTestsTypes.Tests.TestContainerValue]
+                FlextTestsTypes.Tests.Testobject
+                | r[FlextTestsTypes.Tests.Testobject]
                 | list[
-                    FlextTestsTypes.Tests.TestContainerValue
-                    | r[FlextTestsTypes.Tests.TestContainerValue]
+                    FlextTestsTypes.Tests.Testobject
+                    | r[FlextTestsTypes.Tests.Testobject]
                 ]
                 | Mapping[str, FlextTestsTypes.Tests.Builders.BuildOutputValue]
             )
             "Type for build() output values, including r-wrapped results."
             type BuilderMapping = m.ConfigMap
             "Type for builder mappings."
-            type BuilderSequence = Sequence[FlextTestsTypes.Tests.TestContainerValue]
+            type BuilderSequence = Sequence[FlextTestsTypes.Tests.Testobject]
             "Type for builder sequences."
             type ParametrizedCase = tuple[
-                str, Mapping[str, FlextTestsTypes.Tests.TestContainerValue]
+                str, Mapping[str, FlextTestsTypes.Tests.Testobject]
             ]
             "Type for parametrized test cases (test_id, data)."
             type TransformFunc = Callable[
-                [FlextTestsTypes.Tests.TestContainerValue],
-                FlextTestsTypes.Tests.TestContainerValue,
+                [FlextTestsTypes.Tests.Testobject],
+                FlextTestsTypes.Tests.Testobject,
             ]
             "Type for transformation functions."
-            type ValidateFunc = Callable[
-                [FlextTestsTypes.Tests.TestContainerValue], bool
-            ]
+            type ValidateFunc = Callable[[FlextTestsTypes.Tests.Testobject], bool]
             "Type for validation functions."
             type ResultBuilder[T] = Callable[[], r[T]]
             "Type for result builder functions that return r."
@@ -278,72 +272,70 @@ class FlextTestsTypes(FlextTypes):
             """
 
             type MatcherKwargValue = (
-                _TestContainerValue
+                _Testobject
                 | type
                 | tuple[type, ...]
                 | TypeAliasType
-                | set[_TestContainerValue]
-                | Callable[..., _TestContainerValue]
-                | Mapping[str, Callable[..., _TestContainerValue] | _TestContainerValue]
+                | set[_Testobject]
+                | Callable[..., _Testobject]
+                | Mapping[str, Callable[..., _Testobject] | _Testobject]
             )
-            "Union of all value types accepted by matcher kwargs.\n\n            Covers all field types across OkParams, FailParams, and ThatParams:\n            - _TestContainerValue: scalar, bytes, BaseModel, Sequence, Mapping\n            - type/tuple[type, ...]: is_, not_ (type checking)\n            - TypeAliasType: eq, ne in OkParams\n            - set: keys, lacks_keys, eq (set values)\n            - Callable: where, all_, any_, sorted (predicates/key functions)\n            - Mapping[str, Callable | Value]: deep (structural matching)\n            "
+            "Union of all value types accepted by matcher kwargs.\n\n            Covers all field types across OkParams, FailParams, and ThatParams:\n            - _Testobject: scalar, bytes, BaseModel, Sequence, Mapping\n            - type/tuple[type, ...]: is_, not_ (type checking)\n            - TypeAliasType: eq, ne in OkParams\n            - set: keys, lacks_keys, eq (set values)\n            - Callable: where, all_, any_, sorted (predicates/key functions)\n            - Mapping[str, Callable | Value]: deep (structural matching)\n            "
             type LengthSpec = int | tuple[int, int]
             "Length specification: exact int or (min, max) tuple.\n\n            Examples:\n                len=5              # Exact length 5\n                len=(1, 10)        # Length between 1 and 10 (inclusive)\n            "
             type DeepSpec = Mapping[
                 str,
-                Callable[[FlextTestsTypes.Tests.TestContainerValue], bool]
-                | FlextTestsTypes.Tests.TestContainerValue,
+                Callable[[FlextTestsTypes.Tests.Testobject], bool]
+                | FlextTestsTypes.Tests.Testobject,
             ]
             'Deep structural matching specification: path -> value or predicate.\n\n            Supports unlimited nesting with dot notation paths.\n            Values can be direct values or predicate functions.\n\n            Examples:\n                deep={"user.name": "John"}                    # Direct value\n                deep={"user.email": lambda e: "@" in e}       # Predicate\n                deep={"user.profile.age": lambda a: a >= 18}  # Deep nesting\n            '
             type PathSpec = str | Sequence[str]
             'Path specification for nested value extraction.\n\n            Supports dot notation (str) or sequence of keys (Sequence[str]).\n\n            Examples:\n                path="user.profile.name"        # Dot notation\n                path=["user", "profile", "name"]  # Sequence of keys\n            '
-            type PredicateSpec = Callable[
-                [FlextTestsTypes.Tests.TestContainerValue], bool
-            ]
+            type PredicateSpec = Callable[[FlextTestsTypes.Tests.Testobject], bool]
             "Custom predicate function for validation.\n\n            Takes a value and returns True if validation passes.\n\n            Examples:\n                where=lambda x: x > 0\n                where=lambda u: u.age >= 18 and u.verified\n            "
             type ValueSpec = (
-                Callable[[FlextTestsTypes.Tests.TestContainerValue], bool]
-                | FlextTestsTypes.Tests.TestContainerValue
+                Callable[[FlextTestsTypes.Tests.Testobject], bool]
+                | FlextTestsTypes.Tests.Testobject
             )
             "Value specification: direct value or predicate function.\n\n            Used in deep matching and custom validation.\n            Can be a direct value for equality check or a predicate for custom logic.\n            "
             type AssertionSpec = (
-                Mapping[str, FlextTestsTypes.Tests.TestContainerValue]
-                | Callable[[FlextTestsTypes.Tests.TestContainerValue], bool]
+                Mapping[str, FlextTestsTypes.Tests.Testobject]
+                | Callable[[FlextTestsTypes.Tests.Testobject], bool]
                 | type
                 | tuple[type, ...]
             )
             "Assertion specification for flexible validation.\n\n            Supports multiple assertion types:\n            - Mapping: Key-value pairs for structured validation\n            - Callable: Predicate function\n            - type: Type check (single type)\n            - tuple[type, ...]: Type check (multiple types)\n            "
             type ContainmentSpec = (
-                FlextTestsTypes.Tests.TestContainerValue
-                | Sequence[FlextTestsTypes.Tests.TestContainerValue]
+                FlextTestsTypes.Tests.Testobject
+                | Sequence[FlextTestsTypes.Tests.Testobject]
             )
             'Containment specification: single item or sequence of items.\n\n            Used for has/lacks parameters that check if container contains item(s).\n\n            Examples:\n                has="key"              # Single item\n                has=["key1", "key2"]   # Multiple items\n            '
             type ExclusionSpec = str | Sequence[str]
             'Exclusion specification: single string or sequence of strings.\n\n            Used for lacks/excludes parameters that check if container does NOT contain.\n\n            Examples:\n                lacks="error"              # Single exclusion\n                lacks=["error", "fail"]    # Multiple exclusions\n            '
             type SequencePredicate = (
-                type | Callable[[FlextTestsTypes.Tests.TestContainerValue], bool]
+                type | Callable[[FlextTestsTypes.Tests.Testobject], bool]
             )
             "Sequence predicate: type check or custom predicate.\n\n            Used for all_/any_ parameters that validate sequence items.\n\n            Examples:\n                all_=str                    # All items are strings\n                all_=lambda x: x > 0        # All items pass predicate\n            "
             type SortKey = (
                 bool
                 | Callable[
-                    [FlextTestsTypes.Tests.TestContainerValue],
-                    FlextTestsTypes.Tests.TestContainerValue,
+                    [FlextTestsTypes.Tests.Testobject],
+                    FlextTestsTypes.Tests.Testobject,
                 ]
             )
             "Sort key specification: boolean or key function.\n\n            Used for sorted parameter.\n            - True: Check if sequence is sorted (ascending)\n            - Callable: Key function returning a comparable type\n\n            The key function must return a type that supports __lt__ (less-than\n            comparison), as required by Python's sorted() function.\n\n            Examples:\n                sorted=True                  # Check ascending sort\n                sorted=lambda x: x.id       # Check sort by id (int supports __lt__)\n            "
             type KeySpec = Sequence[str] | set[str]
             'Key specification: sequence or set of keys.\n\n            Used for keys/lacks_keys parameters.\n\n            Examples:\n                keys=["id", "name"]         # Sequence\n                keys={"id", "name"}         # Set\n            '
             type KeyValueSpec = (
-                tuple[str, FlextTestsTypes.Tests.TestContainerValue]
-                | Mapping[str, FlextTestsTypes.Tests.TestContainerValue]
+                tuple[str, FlextTestsTypes.Tests.Testobject]
+                | Mapping[str, FlextTestsTypes.Tests.Testobject]
             )
             'Key-value specification: single pair or mapping.\n\n            Used for kv parameter that validates key-value pairs.\n\n            Examples:\n                kv=("status", "active")                    # Single pair\n                kv={"status": "active", "type": "user"}    # Multiple pairs\n            '
             type AttributeSpec = str | Sequence[str]
             'Attribute specification: single attribute or sequence.\n\n            Used for attrs/methods parameters.\n\n            Examples:\n                attrs="name"                    # Single attribute\n                attrs=["name", "email"]          # Multiple attributes\n            '
             type AttributeValueSpec = (
-                tuple[str, FlextTestsTypes.Tests.TestContainerValue]
-                | Mapping[str, FlextTestsTypes.Tests.TestContainerValue]
+                tuple[str, FlextTestsTypes.Tests.Testobject]
+                | Mapping[str, FlextTestsTypes.Tests.Testobject]
             )
             'Attribute-value specification: single pair or mapping.\n\n            Used for attr_eq parameter that validates attribute values.\n\n            Examples:\n                attr_eq=("status", "active")                    # Single pair\n                attr_eq={"status": "active", "type": "user"}   # Multiple pairs\n            '
             type ErrorCodeSpec = str | Sequence[str]
@@ -365,15 +357,15 @@ class FlextTestsTypes(FlextTypes):
 
         @staticmethod
         def is_builder_dict(
-            value: FlextTestsTypes.Tests.TestContainerValue,
+            value: FlextTestsTypes.Tests.Testobject,
         ) -> TypeGuard[FlextTestsTypes.Tests.Builders.BuilderDict]:
             """Check if value is a BuilderDict (dict with str keys)."""
             return isinstance(value, dict)
 
         @staticmethod
         def is_builder_value(
-            value: FlextTestsTypes.Tests.TestContainerValue | type,
-        ) -> TypeGuard[FlextTestsTypes.Tests.TestContainerValue]:
+            value: FlextTestsTypes.Tests.Testobject | type,
+        ) -> TypeGuard[FlextTestsTypes.Tests.Testobject]:
             """Check if value is a valid BuilderValue."""
             if value is None:
                 return True
@@ -385,29 +377,29 @@ class FlextTestsTypes(FlextTypes):
 
         @staticmethod
         def is_configuration_dict(
-            value: FlextTestsTypes.Tests.TestContainerValue,
-        ) -> TypeGuard[Mapping[str, FlextTestsTypes.Tests.TestContainerValue]]:
+            value: FlextTestsTypes.Tests.Testobject,
+        ) -> TypeGuard[Mapping[str, FlextTestsTypes.Tests.Testobject]]:
             """Check if value is a ConfigurationDict."""
             return isinstance(value, dict)
 
         @staticmethod
         def is_configuration_mapping(
-            value: FlextTestsTypes.Tests.TestContainerValue,
+            value: FlextTestsTypes.Tests.Testobject,
         ) -> TypeGuard[m.ConfigMap]:
             """Check if value is a ConfigurationMapping."""
             return isinstance(value, Mapping)
 
         @staticmethod
         def is_flext_result(
-            value: FlextTestsTypes.Tests.TestContainerValue,
-        ) -> TypeGuard[r[FlextTestsTypes.Tests.TestContainerValue]]:
+            value: FlextTestsTypes.Tests.Testobject,
+        ) -> TypeGuard[r[FlextTestsTypes.Tests.Testobject]]:
             """Check if value is a r."""
             return r in type(value).__mro__
 
         @staticmethod
         def is_general_value(
-            value: FlextTestsTypes.Tests.TestContainerValue,
-        ) -> TypeGuard[FlextTestsTypes.Tests.TestContainerValue]:
+            value: FlextTestsTypes.Tests.Testobject,
+        ) -> TypeGuard[FlextTestsTypes.Tests.Testobject]:
             """Check if value is payload-compatible."""
             if value is None:
                 return True
@@ -419,8 +411,8 @@ class FlextTestsTypes(FlextTypes):
 
         @staticmethod
         def is_mapping(
-            value: FlextTestsTypes.Tests.TestContainerValue,
-        ) -> TypeGuard[Mapping[str, FlextTestsTypes.Tests.TestContainerValue]]:
+            value: FlextTestsTypes.Tests.Testobject,
+        ) -> TypeGuard[Mapping[str, FlextTestsTypes.Tests.Testobject]]:
             """Check if value is a payload mapping."""
             return isinstance(value, dict)
 
@@ -433,8 +425,8 @@ class FlextTestsTypes(FlextTypes):
 
         @staticmethod
         def is_sequence(
-            value: FlextTestsTypes.Tests.TestContainerValue,
-        ) -> TypeGuard[Sequence[FlextTestsTypes.Tests.TestContainerValue]]:
+            value: FlextTestsTypes.Tests.Testobject,
+        ) -> TypeGuard[Sequence[FlextTestsTypes.Tests.Testobject]]:
             """Check if value is a payload sequence."""
             return isinstance(value, (list, tuple)) and (
                 not isinstance(value, str | bytes)
@@ -442,7 +434,7 @@ class FlextTestsTypes(FlextTypes):
 
         @staticmethod
         def is_test_result_value(
-            value: FlextTestsTypes.Tests.TestContainerValue,
+            value: FlextTestsTypes.Tests.Testobject,
         ) -> TypeGuard[FlextTestsTypes.Tests.TestResultValue]:
             """Check if value is a valid TestResultValue."""
             if value is None:

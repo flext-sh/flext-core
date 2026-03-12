@@ -9,7 +9,7 @@ from typing import cast
 
 import pytest
 
-from flext_core import p, r, t, u
+from flext_core import p, r, u
 
 from ._models import _DumpErrorModel, _Opts
 
@@ -22,8 +22,8 @@ class _ContainerOK:
     def register(
         self,
         _name: str,
-        _instance: t.JsonValue,
-        **kwargs: t.MetadataValue,
+        _instance: object,
+        **kwargs: object,
     ) -> r[bool]:
         return r[bool].ok(True)
 
@@ -35,8 +35,8 @@ class _ContainerFail:
     def register(
         self,
         _name: str,
-        _instance: t.JsonValue,
-        **kwargs: t.MetadataValue,
+        _instance: object,
+        **kwargs: object,
     ) -> r[bool]:
         return r[bool].fail("reg fail")
 
@@ -48,8 +48,8 @@ class _ContainerRaise:
     def register(
         self,
         _name: str,
-        _instance: t.JsonValue,
-        **kwargs: t.MetadataValue,
+        _instance: object,
+        **kwargs: object,
     ) -> r[bool]:
         msg = "reg ex"
         raise RuntimeError(msg)

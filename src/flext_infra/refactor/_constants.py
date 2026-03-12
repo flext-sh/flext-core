@@ -206,7 +206,7 @@ class FlextInfraRefactorConstants:
     "Relative path from the refactor package to the nesting mappings YAML."
     VIOLATION_PATTERNS: ClassVar[Mapping[str, re.Pattern[str]]] = {
         "container_invariance": re.compile(
-            r"\bdict\s*\[\s*str\s*,\s*t\.(?:Container|ContainerValue)\s*\]",
+            r"\bdict\s*\[\s*str\s*,\s*t\.(?:Container|object)\s*\]",
         ),
         "redundant_cast": re.compile(r"\bcast\s*\(\s*[\"'][^\"']+[\"']\s*,"),
         "direct_submodule_import": re.compile(

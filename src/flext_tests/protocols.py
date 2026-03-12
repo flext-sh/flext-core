@@ -59,7 +59,7 @@ class FlextTestsProtocols(FlextProtocols):
                     ...
 
                 def remove(
-                    self, *, force: bool = False, **kwargs: t.Tests.ContainerValue
+                    self, *, force: bool = False, **kwargs: t.Tests.object
                 ) -> None:
                     """Remove the container.
 
@@ -116,8 +116,8 @@ class FlextTestsProtocols(FlextProtocols):
                     self,
                     *,
                     show_all: bool = False,
-                    filters: Mapping[str, t.Tests.ContainerValue] | None = None,
-                    **kwargs: t.Tests.ContainerValue,
+                    filters: Mapping[str, t.Tests.object] | None = None,
+                    **kwargs: t.Tests.object,
                 ) -> list[FlextTestsProtocols.Tests.Docker.Container]:
                     """List containers with filters.
 
@@ -135,9 +135,9 @@ class FlextTestsProtocols(FlextProtocols):
                     *,
                     name: str | None = None,
                     detach: bool = True,
-                    ports: Mapping[str, t.Tests.ContainerValue] | None = None,
+                    ports: Mapping[str, t.Tests.object] | None = None,
                     environment: Sequence[str] | None = None,
-                    **kwargs: t.Tests.ContainerValue,
+                    **kwargs: t.Tests.object,
                 ) -> FlextTestsProtocols.Tests.Docker.Container:
                     """Run a new container.
 
@@ -162,7 +162,7 @@ class FlextTestsProtocols(FlextProtocols):
                     *,
                     tag: str | None = None,
                     build_args: Mapping[str, str] | None = None,
-                    **kwargs: t.Tests.ContainerValue,
+                    **kwargs: t.Tests.object,
                 ) -> FlextTestsProtocols.Tests.Docker.Image:
                     """Build an image.
 
@@ -183,8 +183,8 @@ class FlextTestsProtocols(FlextProtocols):
                     self,
                     *,
                     show_all: bool = False,
-                    filters: Mapping[str, t.Tests.ContainerValue] | None = None,
-                    **kwargs: t.Tests.ContainerValue,
+                    filters: Mapping[str, t.Tests.object] | None = None,
+                    **kwargs: t.Tests.object,
                 ) -> list[FlextTestsProtocols.Tests.Docker.Image]:
                     """List images with filters.
 
@@ -219,8 +219,8 @@ class FlextTestsProtocols(FlextProtocols):
                     name: str,
                     *,
                     driver: str = "bridge",
-                    ipam: Mapping[str, t.Tests.ContainerValue] | None = None,
-                    **kwargs: t.Tests.ContainerValue,
+                    ipam: Mapping[str, t.Tests.object] | None = None,
+                    **kwargs: t.Tests.object,
                 ) -> FlextTestsProtocols.Tests.Docker.Network:
                     """Create a network.
 
@@ -242,8 +242,8 @@ class FlextTestsProtocols(FlextProtocols):
                 def list(
                     self,
                     *,
-                    filters: Mapping[str, t.Tests.ContainerValue] | None = None,
-                    **kwargs: t.Tests.ContainerValue,
+                    filters: Mapping[str, t.Tests.object] | None = None,
+                    **kwargs: t.Tests.object,
                 ) -> list[FlextTestsProtocols.Tests.Docker.Network]:
                     """List networks with filters.
 
@@ -278,7 +278,7 @@ class FlextTestsProtocols(FlextProtocols):
                     *,
                     driver: str | None = None,
                     driver_opts: Mapping[str, str] | None = None,
-                    **kwargs: t.Tests.ContainerValue,
+                    **kwargs: t.Tests.object,
                 ) -> FlextTestsProtocols.Tests.Docker.Volume:
                     """Create a volume.
 
@@ -300,8 +300,8 @@ class FlextTestsProtocols(FlextProtocols):
                 def list(
                     self,
                     *,
-                    filters: Mapping[str, t.Tests.ContainerValue] | None = None,
-                    **kwargs: t.Tests.ContainerValue,
+                    filters: Mapping[str, t.Tests.object] | None = None,
+                    **kwargs: t.Tests.object,
                 ) -> list[FlextTestsProtocols.Tests.Docker.Volume]:
                     """List volumes with filters.
 
@@ -345,7 +345,7 @@ class FlextTestsProtocols(FlextProtocols):
                     volumes: bool = False,
                     remove_orphans: bool = False,
                     timeout: int | None = None,
-                    **kwargs: t.Tests.ContainerValue,
+                    **kwargs: t.Tests.object,
                 ) -> None:
                     """Stop compose services.
 
@@ -363,7 +363,7 @@ class FlextTestsProtocols(FlextProtocols):
                     services: Sequence[str] | None = None,
                     *,
                     timeout: int | None = None,
-                    **kwargs: t.Tests.ContainerValue,
+                    **kwargs: t.Tests.object,
                 ) -> None:
                     """Restart compose services.
 
@@ -381,7 +381,7 @@ class FlextTestsProtocols(FlextProtocols):
                     *,
                     detach: bool = True,
                     build: bool = False,
-                    **kwargs: t.Tests.ContainerValue,
+                    **kwargs: t.Tests.object,
                 ) -> None:
                     """Start compose services.
 
@@ -411,14 +411,14 @@ class FlextTestsProtocols(FlextProtocols):
                 """
 
                 def __call__(
-                    self, kind: str = ..., **kwargs: t.Tests.ContainerValue
+                    self, kind: str = ..., **kwargs: t.Tests.object
                 ) -> (
-                    t.Tests.ContainerValue
-                    | list[t.Tests.ContainerValue]
-                    | Mapping[str, t.Tests.ContainerValue]
-                    | r[t.Tests.ContainerValue]
-                    | r[list[t.Tests.ContainerValue]]
-                    | r[Mapping[str, t.Tests.ContainerValue]]
+                    t.Tests.object
+                    | list[t.Tests.object]
+                    | Mapping[str, t.Tests.object]
+                    | r[t.Tests.object]
+                    | r[list[t.Tests.object]]
+                    | r[Mapping[str, t.Tests.object]]
                 ):
                     """Create model instance(s) with optional transformations.
 
@@ -454,7 +454,7 @@ class FlextTestsProtocols(FlextProtocols):
                     self,
                     kind: str = "ok",
                     value: TValue | None = None,
-                    **kwargs: t.Tests.ContainerValue,
+                    **kwargs: t.Tests.object,
                 ) -> (
                     FlextProtocols.Result[TValue] | list[FlextProtocols.Result[TValue]]
                 ):
@@ -490,8 +490,8 @@ class FlextTestsProtocols(FlextProtocols):
 
                 def dict[K, V](
                     self,
-                    source: Mapping[K, V] | t.Tests.ContainerValue = "user",
-                    **kwargs: t.Tests.ContainerValue,
+                    source: Mapping[K, V] | t.Tests.object = "user",
+                    **kwargs: t.Tests.object,
                 ) -> Mapping[K, V] | r[Mapping[K, V]]:
                     """Create typed dict from source.
 
@@ -512,8 +512,8 @@ class FlextTestsProtocols(FlextProtocols):
 
                 def list[T](
                     self,
-                    source: t.Tests.ContainerValue = "user",
-                    **kwargs: t.Tests.ContainerValue,
+                    source: t.Tests.object = "user",
+                    **kwargs: t.Tests.object,
                 ) -> list[T] | r[list[T]]:
                     """Create typed list from source.
 
@@ -542,7 +542,7 @@ class FlextTestsProtocols(FlextProtocols):
                 """
 
                 def __call__[T](
-                    self, type_: type[T], **kwargs: t.Tests.ContainerValue
+                    self, type_: type[T], **kwargs: t.Tests.object
                 ) -> T | list[T] | r[T] | r[list[T]]:
                     """Create instance(s) of any type with full type safety.
 
@@ -600,8 +600,7 @@ class FlextTestsProtocols(FlextProtocols):
                     obj: T,
                     spec: Mapping[
                         str,
-                        t.Tests.ContainerValue
-                        | Callable[[t.Tests.ContainerValue], bool],
+                        t.Tests.object | Callable[[t.Tests.object], bool],
                     ],
                     *,
                     path_sep: str = ".",
@@ -730,8 +729,8 @@ class FlextTestsProtocols(FlextProtocols):
                     operation: str = ...,
                     model: type[BaseModel] | None = ...,
                     on_error: str = ...,
-                    **kwargs: t.Tests.ContainerValue,
-                ) -> FlextProtocols.Result[t.Tests.ContainerValue]:
+                    **kwargs: t.Tests.object,
+                ) -> FlextProtocols.Result[t.Tests.object]:
                     """Batch file operations.
 
                     Returns:
@@ -746,7 +745,7 @@ class FlextTestsProtocols(FlextProtocols):
                     file2: Path | str,
                     *,
                     mode: str = ...,
-                    **kwargs: t.Tests.ContainerValue,
+                    **kwargs: t.Tests.object,
                 ) -> FlextProtocols.Result[bool]:
                     """Compare two files.
 
@@ -758,10 +757,10 @@ class FlextTestsProtocols(FlextProtocols):
 
                 def create(
                     self,
-                    content: t.Tests.ContainerValue,
+                    content: t.Tests.object,
                     name: str = ...,
                     directory: str | None = ...,
-                    **kwargs: t.Tests.ContainerValue,
+                    **kwargs: t.Tests.object,
                 ) -> FlextProtocols.Result[Path]:
                     """Create file with auto-detection.
 
@@ -777,8 +776,8 @@ class FlextTestsProtocols(FlextProtocols):
                     *,
                     compute_hash: bool = ...,
                     detect_fmt: bool = ...,
-                    **kwargs: t.Tests.ContainerValue,
-                ) -> FlextProtocols.Result[t.Tests.ContainerValue]:
+                    **kwargs: t.Tests.object,
+                ) -> FlextProtocols.Result[t.Tests.object]:
                     """Get comprehensive file information.
 
                     Returns:
@@ -792,8 +791,8 @@ class FlextTestsProtocols(FlextProtocols):
                     path: Path | str,
                     *,
                     model_cls: type[BaseModel] | None = ...,
-                    **kwargs: t.Tests.ContainerValue,
-                ) -> FlextProtocols.Result[t.Tests.ContainerValue]:
+                    **kwargs: t.Tests.object,
+                ) -> FlextProtocols.Result[t.Tests.object]:
                     """Read file with optional model deserialization.
 
                     Returns:
@@ -820,8 +819,8 @@ class FlextTestsProtocols(FlextProtocols):
                 def add(
                     self,
                     key: str,
-                    value: t.Tests.ContainerValue | None = ...,
-                    **kwargs: t.Tests.ContainerValue,
+                    value: t.Tests.object | None = ...,
+                    **kwargs: t.Tests.object,
                 ) -> Self:
                     """Add data to builder.
 
@@ -839,8 +838,8 @@ class FlextTestsProtocols(FlextProtocols):
                 def batch(
                     self,
                     key: str,
-                    scenarios: Sequence[tuple[str, t.Tests.ContainerValue]],
-                    **kwargs: t.Tests.ContainerValue,
+                    scenarios: Sequence[tuple[str, t.Tests.object]],
+                    **kwargs: t.Tests.object,
                 ) -> Self:
                     """Build batch of test scenarios.
 
@@ -856,14 +855,14 @@ class FlextTestsProtocols(FlextProtocols):
                     ...
 
                 def build(
-                    self, **kwargs: t.Tests.ContainerValue
+                    self, **kwargs: t.Tests.object
                 ) -> (
-                    Mapping[str, t.Tests.ContainerValue]
+                    Mapping[str, t.Tests.object]
                     | BaseModel
-                    | list[tuple[str, t.Tests.ContainerValue]]
+                    | list[tuple[str, t.Tests.object]]
                     | list[str]
-                    | list[t.Tests.ContainerValue]
-                    | t.Tests.ContainerValue
+                    | list[t.Tests.object]
+                    | t.Tests.object
                 ):
                     """Build the dataset with output type control.
 
@@ -885,7 +884,7 @@ class FlextTestsProtocols(FlextProtocols):
                     """
                     ...
 
-                def fork(self, **updates: t.Tests.ContainerValue) -> Self:
+                def fork(self, **updates: t.Tests.object) -> Self:
                     """Copy and immediately add updates.
 
                     Args:
@@ -947,8 +946,8 @@ class FlextTestsProtocols(FlextProtocols):
                     ...
 
                 def scenarios(
-                    self, *cases: tuple[str, Mapping[str, t.Tests.ContainerValue]]
-                ) -> list[tuple[str, Mapping[str, t.Tests.ContainerValue]]]:
+                    self, *cases: tuple[str, Mapping[str, t.Tests.object]]
+                ) -> list[tuple[str, Mapping[str, t.Tests.object]]]:
                     """Build pytest.mark.parametrize compatible scenarios.
 
                     Args:
@@ -963,10 +962,10 @@ class FlextTestsProtocols(FlextProtocols):
                 def set(
                     self,
                     path: str,
-                    value: t.Tests.ContainerValue | None = ...,
+                    value: t.Tests.object | None = ...,
                     *,
                     create_parents: bool = ...,
-                    **kwargs: t.Tests.ContainerValue,
+                    **kwargs: t.Tests.object,
                 ) -> Self:
                     """Set value at nested path.
 
@@ -983,10 +982,10 @@ class FlextTestsProtocols(FlextProtocols):
                     ...
 
                 def to_result[T](
-                    self, **kwargs: t.Tests.ContainerValue
+                    self, **kwargs: t.Tests.object
                 ) -> (
                     r[T]
-                    | r[Mapping[str, t.Tests.ContainerValue]]
+                    | r[Mapping[str, t.Tests.object]]
                     | r[BaseModel]
                     | r[list[T]]
                     | r[Mapping[str, T]]

@@ -23,7 +23,7 @@ from pydantic import (
     model_validator,
 )
 
-from flext_core import c, t
+from flext_core import c
 from flext_core._models.base import FlextModelFoundation
 from flext_core._models.containers import FlextModelsContainers
 from flext_core._models.entity import FlextModelsEntity
@@ -111,7 +111,7 @@ class FlextModelsContext:
     class StructlogProxyContextVar[T: object]:
         """ContextVar-like proxy using structlog as backend (single source of truth).
 
-        Type Parameter T is bounded by ContainerValue - all storable context values.
+        Type Parameter T is bounded by object - all storable context values.
 
         ARCHITECTURAL NOTE: This proxy delegates ALL operations to structlog's
         contextvar storage. This ensures FlextContext.Variables and FlextLogger
@@ -328,7 +328,7 @@ class FlextModelsContext:
         @classmethod
         def validate_dict_serializable(
             cls,
-            v: FlextModelsContainers.Dict | t.ConfigurationMapping | BaseModel | None,
+            v: FlextModelsContainers.Dict | object | BaseModel | None,
         ) -> Mapping[str, object]:
             """Validate that ConfigurationMapping values are JSON-serializable.
 
@@ -428,7 +428,7 @@ class FlextModelsContext:
         @classmethod
         def validate_dict_serializable(
             cls,
-            v: FlextModelsContainers.Dict | t.ConfigurationMapping | BaseModel | None,
+            v: FlextModelsContainers.Dict | object | BaseModel | None,
         ) -> Mapping[str, object]:
             """Validate that ConfigurationMapping values are JSON-serializable.
 

@@ -13,13 +13,13 @@ from flext_tests import t
 class _ValidationLikeError(Exception):
     """Validation-like error for tests."""
 
-    def errors(self) -> list[dict[str, t.JsonValue]]:
+    def errors(self) -> list[dict[str, object]]:
         return [{"loc": ["value"], "msg": "bad value"}]
 
 
-TestCaseMap: TypeAlias = Mapping[str, t.Tests.ContainerValue]
+TestCaseMap: TypeAlias = Mapping[str, t.Tests.object]
 
-InputPayloadMap: TypeAlias = dict[str, t.Tests.ContainerValue]
+InputPayloadMap: TypeAlias = dict[str, t.Tests.object]
 
 __all__ = [
     "BadConfigForTest",
@@ -78,7 +78,7 @@ class _BrokenDumpModel(BaseModel):
         if name == "model_dump":
 
             def _broken_dump(
-                _value: t.Tests.TestContainerValue = None,
+                _value: t.Tests.Testobject = None,
             ) -> bool:
                 return True
 

@@ -73,7 +73,7 @@ if TYPE_CHECKING:
         TestIntegrationWithRealCommandServices,
         TestOutputSingletonConsistency,
         TestPathResolverDiscoveryFlow,
-        TestServiceFlextResultChaining,
+        TestServicerChaining,
         TestWorkspaceDetectionOrchestrationFlow,
     )
     from tests.integration.test_integration import TestLibraryIntegration
@@ -378,9 +378,9 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.integration.patterns.test_patterns_testing",
         "TestRealWorldScenarios",
     ),
-    "TestServiceFlextResultChaining": (
+    "TestServicerChaining": (
         "tests.integration.test_infra_integration",
-        "TestServiceFlextResultChaining",
+        "TestServicerChaining",
     ),
     "TestWorkspaceDetectionOrchestrationFlow": (
         "tests.integration.test_infra_integration",
@@ -505,7 +505,7 @@ __all__ = [
     "TestProjectLevelRefactor",
     "TestPropertyBasedPatterns",
     "TestRealWorldScenarios",
-    "TestServiceFlextResultChaining",
+    "TestServicerChaining",
     "TestWorkspaceDetectionOrchestrationFlow",
     "TestWorkspaceLevelRefactor",
     "ThreadSafetyTest",

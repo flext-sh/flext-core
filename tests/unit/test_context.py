@@ -49,7 +49,7 @@ class ContextScenarios:
     """Centralized context test scenarios using FlextConstants."""
 
     SET_GET_CASES: ClassVar[
-        list[tuple[str, tests_t.Tests.ContainerValue, tests_t.Tests.ContainerValue]]
+        list[tuple[str, tests_t.Tests.object, tests_t.Tests.object]]
     ] = [
         ("string_key", "string_value", "string_value"),
         ("int_key", 42, 42),
@@ -66,7 +66,7 @@ class ContextScenarios:
         ("special_chars", "key!@#$%^&*()"),
         ("long_key", "k" * 1000),
     ]
-    EDGE_CASE_VALUES: ClassVar[list[tuple[str, tests_t.Tests.ContainerValue]]] = [
+    EDGE_CASE_VALUES: ClassVar[list[tuple[str, tests_t.Tests.object]]] = [
         ("long_value", "v" * 10000),
         (
             "complex_nested",
@@ -115,8 +115,8 @@ class TestFlextContext:
         self,
         test_context: FlextContext,
         key: str,
-        value: tests_t.Tests.ContainerValue,
-        expected: tests_t.Tests.ContainerValue,
+        value: tests_t.Tests.object,
+        expected: tests_t.Tests.object,
     ) -> None:
         """Test context set/get value operations."""
         context = test_context
@@ -371,7 +371,7 @@ class TestFlextContext:
         self,
         test_context: FlextContext,
         value_name: str,
-        special_value: tests_t.Tests.ContainerValue,
+        special_value: tests_t.Tests.object,
     ) -> None:
         """Test context with special values."""
         context = test_context

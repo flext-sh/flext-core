@@ -31,7 +31,6 @@ if TYPE_CHECKING:
     )
     from tests.conftest import (
         FlextConsolidationContext,
-        FlextResultAssertionHelper,
         FlextScenarioRunner,
         FlextTestAutomationFramework,
         FunctionalExternalService,
@@ -49,6 +48,7 @@ if TYPE_CHECKING:
         mock_external_service,
         out_of_range,
         parser_scenarios,
+        rAssertionHelper,
         real_entity,
         real_value_object,
         reliability_scenarios,
@@ -1148,7 +1148,7 @@ if TYPE_CHECKING:
         TestIntegrationWithRealCommandServices,
         TestOutputSingletonConsistency,
         TestPathResolverDiscoveryFlow,
-        TestServiceFlextResultChaining,
+        TestServicerChaining,
         TestWorkspaceDetectionOrchestrationFlow,
     )
     from tests.integration.test_integration import TestLibraryIntegration
@@ -1306,7 +1306,7 @@ if TYPE_CHECKING:
         TestAutomatedFlextMixins as x,
     )
     from tests.unit.test_automated_registry import TestAutomatedFlextRegistry
-    from tests.unit.test_automated_result import TestAutomatedFlextResult
+    from tests.unit.test_automated_result import TestAutomatedr
     from tests.unit.test_automated_runtime import TestAutomatedFlextRuntime
     from tests.unit.test_automated_service import TestAutomatedFlextService
     from tests.unit.test_automated_settings import TestAutomatedFlextSettings
@@ -2305,7 +2305,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.integration.test_refactor_policy_mro",
         "FlextLdapUtilities",
     ),
-    "FlextResultAssertionHelper": ("tests.conftest", "FlextResultAssertionHelper"),
+    "rAssertionHelper": ("tests.conftest", "rAssertionHelper"),
     "FlextScenarioRunner": ("tests.conftest", "FlextScenarioRunner"),
     "FlextTestAutomationFramework": ("tests.conftest", "FlextTestAutomationFramework"),
     "FlextTestBuilder": (
@@ -2536,9 +2536,9 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_automated_registry",
         "TestAutomatedFlextRegistry",
     ),
-    "TestAutomatedFlextResult": (
+    "TestAutomatedr": (
         "tests.unit.test_automated_result",
-        "TestAutomatedFlextResult",
+        "TestAutomatedr",
     ),
     "TestAutomatedFlextRuntime": (
         "tests.unit.test_automated_runtime",
@@ -4328,9 +4328,9 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "TestServiceBootstrapWithDI",
     ),
     "TestServiceDomain": ("tests.unit.test_coverage_context", "TestServiceDomain"),
-    "TestServiceFlextResultChaining": (
+    "TestServicerChaining": (
         "tests.integration.test_infra_integration",
-        "TestServiceFlextResultChaining",
+        "TestServicerChaining",
     ),
     "TestServiceResultProperty": (
         "tests.test_service_result_property",
@@ -7514,7 +7514,6 @@ __all__ = [
     "FlextLdapProtocols",
     "FlextLdapTypes",
     "FlextLdapUtilities",
-    "FlextResultAssertionHelper",
     "FlextScenarioRunner",
     "FlextTestAutomationFramework",
     "FlextTestBuilder",
@@ -7613,11 +7612,11 @@ __all__ = [
     "TestAutomatedFlextLoggings",
     "TestAutomatedFlextMixins",
     "TestAutomatedFlextRegistry",
-    "TestAutomatedFlextResult",
     "TestAutomatedFlextRuntime",
     "TestAutomatedFlextService",
     "TestAutomatedFlextSettings",
     "TestAutomatedFlextUtilities",
+    "TestAutomatedr",
     "TestBackwardCompatDiscardReturnValue",
     "TestBackwardCompatibility",
     "TestBaseMkGenerationFlow",
@@ -8139,9 +8138,9 @@ __all__ = [
     "TestServiceBootstrap",
     "TestServiceBootstrapWithDI",
     "TestServiceDomain",
-    "TestServiceFlextResultChaining",
     "TestServiceResultProperty",
     "TestServiceWithValidation",
+    "TestServicerChaining",
     "TestServicesIntegrationViaDI",
     "TestShortAlias",
     "TestShouldBubbleUp",
@@ -8375,6 +8374,7 @@ __all__ = [
     "pyright_content",
     "pytestmark",
     "r",
+    "rAssertionHelper",
     "real_docs_project",
     "real_entity",
     "real_git_repo",

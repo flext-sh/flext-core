@@ -20,7 +20,6 @@ from flext_infra import (
     FlextInfraUtilitiesReporting,
     c,
     m,
-    t,
     u,
 )
 
@@ -111,7 +110,7 @@ class FlextInfraDocsShared:
         )
 
     @staticmethod
-    def write_json(path: Path, payload: BaseModel | t.ConfigurationMapping) -> r[bool]:
+    def write_json(path: Path, payload: BaseModel | object) -> r[bool]:
         """Write JSON payload to path."""
         return u.Infra.write_json(path, payload)
 

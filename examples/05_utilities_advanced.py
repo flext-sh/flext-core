@@ -26,7 +26,7 @@ from typing import override
 
 from pydantic import Field
 
-from flext_core import c, m, r, s, t, u
+from flext_core import c, m, r, s, u
 
 
 class StatusEnum(StrEnum):
@@ -104,7 +104,7 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
         print("\n=== Data Mapping ===")
         source_value = TEST_DATA["source_dict"]
         mapping_value = TEST_DATA["key_mapping"]
-        map_result: r[Mapping[str, object]] = r[t.ConfigurationMapping].fail(
+        map_result: r[Mapping[str, object]] = r[object].fail(
             "Invalid data types"
         )
         if isinstance(source_value, Mapping) and isinstance(mapping_value, Mapping):
@@ -173,8 +173,8 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
             user = kwargs_result.value
             status_value = user.status.value
             print(f"✅ Model from kwargs: {user.name} ({status_value})")
-        defaults: Mapping[str, t.JsonValue] = {"status": StatusEnum.PENDING, "age": 0}
-        overrides: Mapping[str, t.JsonValue] = {"name": "Charlie"}
+        defaults: Mapping[str, object] = {"status": StatusEnum.PENDING, "age": 0}
+        overrides: Mapping[str, object] = {"name": "Charlie"}
         merge_result = u.merge_defaults(UserModel, defaults, overrides)
         if merge_result.is_success:
             user = merge_result.value

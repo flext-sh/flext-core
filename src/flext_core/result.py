@@ -19,7 +19,7 @@ from returns.maybe import Maybe, Nothing, Some
 from returns.primitives.exceptions import UnwrapFailedError
 from returns.result import Failure, Result, Success
 
-from flext_core import FlextRuntime, T_Model, U, t
+from flext_core import FlextRuntime, T_Model, U
 
 
 class FlextResult[T_co = object](FlextRuntime.RuntimeResult[T_co]):
@@ -35,7 +35,7 @@ class FlextResult[T_co = object](FlextRuntime.RuntimeResult[T_co]):
         self,
         source: Result[T_co, str] | None = None,
         error_code: str | None = None,
-        error_data: t.ConfigurationMapping | BaseModel | None = None,
+        error_data: object | BaseModel | None = None,
         *,
         value: T_co | None = None,
         error: str | None = None,
@@ -179,7 +179,7 @@ class FlextResult[T_co = object](FlextRuntime.RuntimeResult[T_co]):
         cls: type[FlextResult[U]],
         error: str | None,
         error_code: str | None = None,
-        error_data: t.ConfigurationMapping | BaseModel | None = None,
+        error_data: object | BaseModel | None = None,
         *,
         exception: BaseException | None = None,
     ) -> FlextResult[U]:

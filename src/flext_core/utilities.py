@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from types import MappingProxyType
 
-from flext_core import FlextRuntime, p, r, t
+from flext_core import FlextRuntime, p, r
 from flext_core._utilities.args import FlextUtilitiesArgs
 from flext_core._utilities.cache import FlextUtilitiesCache
 from flext_core._utilities.checker import FlextUtilitiesChecker
@@ -377,7 +377,7 @@ class FlextUtilities:
     def fail(
         error: str | None,
         error_code: str | None = None,
-        error_data: t.ConfigurationMapping | None = None,
+        error_data: object | None = None,
     ) -> r[object]:
         """Create failed result with optional code and data."""
         return r[object].fail(

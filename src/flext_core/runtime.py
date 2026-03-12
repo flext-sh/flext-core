@@ -352,7 +352,7 @@ class FlextRuntime:
             return FlextRuntime.create_instance(class_type)
 
     @staticmethod
-    def _is_scalar(value: object | t.MetadataValue) -> TypeGuard[t.Scalar]:
+    def _is_scalar(value: object) -> TypeGuard[t.Scalar]:
         """Check if value is a scalar type accepted by t.Scalar."""
         match value:
             case datetime() | None:
@@ -373,7 +373,7 @@ class FlextRuntime:
     @staticmethod
     def extract_generic_args(
         type_hint: t.TypeHintSpecifier,
-    ) -> tuple[t.GenericTypeArgument | type[t.ConfigurationMapping], ...]:
+    ) -> tuple[t.GenericTypeArgument | type[object], ...]:
         """Extract generic type arguments from a type hint.
 
         Business Rule: Extracts generic type arguments from type hints using
@@ -449,7 +449,7 @@ class FlextRuntime:
 
     @staticmethod
     def is_base_model(obj: object) -> TypeGuard[BaseModel]:
-        """Type guard to narrow object to BaseModel (part of GeneralValueType).
+        """Type guard to narrow object to BaseModel (part of object).
 
         This allows isinstance checks to narrow types for FlextRuntime methods
         that accepobject (which includes BaseModel).
@@ -475,7 +475,7 @@ class FlextRuntime:
 
     @staticmethod
     def is_dict_like(
-        value: object | t.MetadataValue,
+        value: object,
     ) -> TypeGuard[FlextModelsContainers.ConfigMap]:
         """Type guard to check if value is dict-like.
 
@@ -508,7 +508,7 @@ class FlextRuntime:
 
     @staticmethod
     def is_list_like(
-        value: object | t.MetadataValue,
+        value: object,
     ) -> TypeGuard[Sequence[object]]:
         """Type guard to check if value is list-like."""
         return isinstance(value, list)
@@ -598,7 +598,7 @@ class FlextRuntime:
 
     @staticmethod
     def normalize_to_general_value(
-        val: object | t.MetadataValue,
+        val: object,
     ) -> object:
         """Normalize any value to object recursively.
 
@@ -642,8 +642,8 @@ class FlextRuntime:
 
     @staticmethod
     def normalize_to_metadata_value(
-        val: object | t.MetadataValue,
-    ) -> t.MetadataValue:
+        val: object,
+    ) -> object:
         """Normalize any value to t.MetadataAttributeValue.
 
         t.MetadataAttributeValue is more restrictive than object,
@@ -666,7 +666,7 @@ class FlextRuntime:
 
         """
         if FlextRuntime._is_scalar(val):
-            result_scalar: t.MetadataValue = val
+            result_scalar: object = val
             return result_scalar
         if isinstance(val, BaseModel):
             model_dump_result: object = val.model_dump()
@@ -687,7 +687,7 @@ class FlextRuntime:
                 else:
                     result_list.append(str(item) if item is not None else "")
             return result_list
-        result_str: t.MetadataValue = str(val)
+        result_str: object = str(val)
         return result_str
 
     @staticmethod
@@ -1243,7 +1243,7 @@ class FlextRuntime:
             value: T | None = None,
             error: str | None = None,
             error_code: str | None = None,
-            error_data: t.ConfigurationMapping | BaseModel | None = None,
+            error_data: object | BaseModel | None = None,
             *,
             is_success: bool = True,
         ) -> None:
@@ -1368,7 +1368,7 @@ class FlextRuntime:
             cls: type[FlextRuntime.RuntimeResult[U]],
             error: str | None,
             error_code: str | None = None,
-            error_data: t.ConfigurationMapping | BaseModel | None = None,
+            error_data: object | BaseModel | None = None,
         ) -> FlextRuntime.RuntimeResult[U]:
             """Create failed result with error message.
 
@@ -1776,9 +1776,7 @@ class FlextRuntime:
         return id_a is not None and id_a == id_b
 
     @staticmethod
-    def compare_value_objects_by_value(
-        obj_a: object, obj_b: object
-    ) -> bool:
+    def compare_value_objects_by_value(obj_a: object, obj_b: object) -> bool:
         """Compare value objects by their values (all attributes)."""
         if FlextRuntime._is_scalar(obj_a):
             return obj_a == obj_b

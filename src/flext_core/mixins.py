@@ -73,7 +73,7 @@ class FlextMixins(FlextRuntime):
         error_data: m.ConfigMap | None = None,
     ) -> r[object]:
         """Create failed result with error message."""
-        fail_error_data: t.ConfigurationMapping = (
+        fail_error_data: object = (
             {
                 str(k): FlextRuntime.normalize_to_general_value(v)
                 for k, v in error_data.root.items()
@@ -92,7 +92,7 @@ class FlextMixins(FlextRuntime):
     accumulate_errors = staticmethod(r.accumulate_errors)
 
     @classmethod
-    def to_dict(cls, obj: BaseModel | t.ConfigurationMapping | None) -> m.ConfigMap:
+    def to_dict(cls, obj: BaseModel | object | None) -> m.ConfigMap:
         """Convert BaseModel/dict to dict (None → empty dict). Use x.to_dict at call sites."""
         if obj is None:
             return m.ConfigMap(root={})
@@ -241,9 +241,7 @@ class FlextMixins(FlextRuntime):
         _ = FlextContext.Utilities.ensure_correlation_id()
 
     @staticmethod
-    def _with_operation_context(
-        operation_name: str, **operation_data: t.MetadataValue
-    ) -> None:
+    def _with_operation_context(operation_name: str, **operation_data: object) -> None:
         """Set operation context with level-based binding (DEBUG/ERROR/normal)."""
         FlextMixins._propagate_context(operation_name)
         if operation_data:
@@ -272,13 +270,13 @@ class FlextMixins(FlextRuntime):
                 merged_error.update(error_data.root)
                 all_context_data = merged_error
             if all_context_data:
-                metadata_context: dict[str, t.MetadataValue] = {
+                metadata_context: dict[str, object] = {
                     key: FlextRuntime.normalize_to_metadata_value(value)
                     for key, value in all_context_data.root.items()
                 }
                 _ = FlextLogger.bind_global_context(**metadata_context)
             if normal_data:
-                normal_metadata_context: dict[str, t.MetadataValue] = {
+                normal_metadata_context: dict[str, object] = {
                     key: FlextRuntime.normalize_to_metadata_value(value)
                     for key, value in normal_data.root.items()
                 }
@@ -371,7 +369,7 @@ class FlextMixins(FlextRuntime):
         finally:
             FlextMixins._clear_operation_context()
 
-    def _enrich_context(self, **context_data: t.MetadataValue) -> None:
+    def _enrich_context(self, **context_data: object) -> None:
         """Log service information ONCE at initialization (not bound to context)."""
         service_context: m.ConfigMap = m.ConfigMap(
             root={
@@ -472,9 +470,7 @@ class FlextMixins(FlextRuntime):
         config_typed: m.ConfigMap = m.ConfigMap(root=dict(config.items()))
         self.logger.info(message, **config_typed.root)
 
-    def _log_with_context(
-        self, level: str, message: str, **extra: t.MetadataValue
-    ) -> None:
+    def _log_with_context(self, level: str, message: str, **extra: object) -> None:
         """Log message with automatic context data inclusion."""
         correlation_id = FlextContext.Correlation.get_correlation_id()
         operation_name = FlextContext.Request.get_operation_name()
@@ -687,7 +683,7 @@ class FlextMixins(FlextRuntime):
                             if validation_result.error
                             else f"{base_msg} (validation rule failed)"
                         )
-                        fail_error_data: t.ConfigurationMapping = (
+                        fail_error_data: object = (
                             dict(validation_result.error_data.root)
                             if validation_result.error_data is not None
                             else {}

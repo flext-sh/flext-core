@@ -209,7 +209,7 @@ class TestFlextExceptionsHierarchy:
         """Test creating exceptions with various scenarios."""
         if scenario.kwargs:
             type_kwargs: dict[str, type] = {}
-            metadata_kwargs: dict[str, t.MetadataValue] = {}
+            metadata_kwargs: dict[str, object] = {}
             for key, value in scenario.kwargs.items():
                 if (
                     scenario.exception_type == FlextExceptions.TypeError
@@ -357,7 +357,7 @@ class TestExceptionContext:
 
     def test_exception_with_context_data(self) -> None:
         """Test exception with contextual information via metadata."""
-        metadata_dict: dict[str, t.MetadataValue] = {
+        metadata_dict: dict[str, object] = {
             "user_id": "123",
             "operation": "create_user",
             "timestamp": 1234567890,
@@ -441,10 +441,10 @@ class TestExceptionFactory:
         expected_type: type[FlextExceptions.BaseError],
     ) -> None:
         """Test smart error type detection in create()."""
-        converted_kwargs: dict[str, t.MetadataValue] = {
+        converted_kwargs: dict[str, object] = {
             k: cast("t.MetadataAttributeValue", v) for k, v in kwargs.items()
         }
-        kwargs_typed: dict[str, t.MetadataValue] = converted_kwargs
+        kwargs_typed: dict[str, object] = converted_kwargs
         create_error = cast(
             "Callable[..., FlextExceptions.BaseError]",
             FlextExceptions.create,

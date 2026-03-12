@@ -149,7 +149,7 @@ class TestOutputSingletonConsistency:
         assert callable(output.progress)
 
 
-class TestServiceFlextResultChaining:
+class TestServicerChaining:
     """Test service r chaining via .map()/.flat_map()."""
 
     @pytest.mark.integration

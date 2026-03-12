@@ -22,12 +22,12 @@ from pydantic import (
     ValidationError as PydanticValidationError,
 )
 
-from flext_core import FlextRuntime, c, m, t
+from flext_core import FlextRuntime, c, m
 
 
 class MetadataProtocol(Protocol):
     @property
-    def attributes(self) -> Mapping[str, t.MetadataValue]: ...
+    def attributes(self) -> Mapping[str, object]: ...
 
 
 class FlextExceptions:
@@ -37,8 +37,8 @@ class FlextExceptions:
     for consistent error handling and logging.
     """
 
-    _metadata_map_adapter: ClassVar[TypeAdapter[dict[str, t.MetadataValue]]] = (
-        TypeAdapter(dict[str, t.MetadataValue])
+    _metadata_map_adapter: ClassVar[TypeAdapter[dict[str, object]]] = TypeAdapter(
+        dict[str, object]
     )
 
     class _ParamsModel(m.ArbitraryTypesModel):
@@ -77,7 +77,7 @@ class FlextExceptions:
             title="Field",
             examples=["email"],
         )
-        value: t.MetadataValue | None = None
+        value: object | None = None
 
     class ConfigurationErrorParams(_ParamsModel):
         """Validated params for ConfigurationError."""
@@ -318,7 +318,7 @@ class FlextExceptions:
             title="Attribute Name",
             examples=["token"],
         )
-        attribute_context: t.MetadataValue | None = Field(
+        attribute_context: object | None = Field(
             default=None,
             description="Context payload describing the object or state during access failure.",
             title="Attribute Context",
@@ -327,8 +327,8 @@ class FlextExceptions:
 
     @staticmethod
     def _build_context_map(
-        context: Mapping[str, t.MetadataValue] | m.ConfigMap | None,
-        extra_kwargs: Mapping[str, t.MetadataValue] | m.ConfigMap,
+        context: Mapping[str, object] | m.ConfigMap | None,
+        extra_kwargs: Mapping[str, object] | m.ConfigMap,
         excluded_keys: set[str] | frozenset[str] | None = None,
     ) -> m.ConfigMap:
         """Build normalized context map from context and kwargs."""
@@ -350,8 +350,8 @@ class FlextExceptions:
 
     @staticmethod
     def _build_param_map(
-        context: Mapping[str, t.MetadataValue] | m.ConfigMap | None,
-        extra_kwargs: Mapping[str, t.MetadataValue] | m.ConfigMap,
+        context: Mapping[str, object] | m.ConfigMap | None,
+        extra_kwargs: Mapping[str, object] | m.ConfigMap,
         keys: set[str] | frozenset[str],
     ) -> m.ConfigMap:
         """Build unnormalized parameter map for strict params validation."""
@@ -364,15 +364,15 @@ class FlextExceptions:
 
     @staticmethod
     def _init_error_params[TParams: BaseModel](
-        context: Mapping[str, t.MetadataValue] | None,
-        extra_kwargs: dict[str, t.MetadataValue],
-        named_params: Mapping[str, t.MetadataValue | None],
+        context: Mapping[str, object] | None,
+        extra_kwargs: dict[str, object],
+        named_params: Mapping[str, object | None],
         params_cls: type[TParams],
         existing_params: TParams | None,
         param_keys: set[str] | frozenset[str],
         *,
         excluded_context_keys: set[str] | frozenset[str] | None = None,
-    ) -> tuple[TParams, m.ConfigMap | None, t.MetadataValue | None, str | None]:
+    ) -> tuple[TParams, m.ConfigMap | None, object | None, str | None]:
         """Extract, resolve and build error parameters from kwargs.
 
         Shared init boilerplate for all typed error subclasses.
@@ -412,7 +412,7 @@ class FlextExceptions:
         return (resolved, error_context or None, preserved_metadata, correlation_id_str)
 
     @staticmethod
-    def _safe_bool(value: t.MetadataValue | None, *, default: bool) -> bool:
+    def _safe_bool(value: object | None, *, default: bool) -> bool:
         """Extract strict bool from dynamic values with default fallback."""
         if value is None:
             return default
@@ -422,15 +422,8 @@ class FlextExceptions:
 
     @staticmethod
     def _safe_config_map(
-        value: MetadataProtocol
-        | m.Metadata
-        | t.ConfigurationMapping
-        | m.ConfigMap
-        | object
-        | t.MetadataValue
-        | Mapping[str, t.MetadataValue]
-        | None,
-    ) -> Mapping[str, t.MetadataValue] | None:
+        value: MetadataProtocol | m.Metadata | object | m.ConfigMap | Mapping[str, object] | None,
+    ) -> Mapping[str, object] | None:
         """Extract ConfigMap when value is mapping-compatible."""
         if value is None:
             return None
@@ -440,7 +433,7 @@ class FlextExceptions:
             return None
 
     @staticmethod
-    def _safe_int(value: t.MetadataValue | None) -> int | None:
+    def _safe_int(value: object | None) -> int | None:
         """Extract optional strict integer from dynamic values."""
         if value is None:
             return None
@@ -450,14 +443,7 @@ class FlextExceptions:
 
     @staticmethod
     def _safe_metadata(
-        value: MetadataProtocol
-        | m.Metadata
-        | t.ConfigurationMapping
-        | m.ConfigMap
-        | object
-        | t.MetadataValue
-        | Mapping[str, t.MetadataValue]
-        | None,
+        value: MetadataProtocol | m.Metadata | object | m.ConfigMap | Mapping[str, object] | None,
     ) -> MetadataProtocol | None:
         """Normalize supported metadata inputs to runtime metadata model."""
         if value is None:
@@ -466,7 +452,7 @@ class FlextExceptions:
             return m.Metadata.model_validate(value)
         except PydanticValidationError:
             pass
-        dumped_map: Mapping[str, t.MetadataValue] | None = None
+        dumped_map: Mapping[str, object] | None = None
         if isinstance(value, BaseModel):
             dumped_candidate = value.model_dump()
             try:
@@ -492,7 +478,7 @@ class FlextExceptions:
         return None
 
     @staticmethod
-    def _safe_number(value: t.MetadataValue | None) -> int | float | None:
+    def _safe_number(value: object | None) -> int | float | None:
         """Extract optional strict numeric value from dynamic values."""
         if value is None:
             return None
@@ -501,7 +487,7 @@ class FlextExceptions:
         return None
 
     @staticmethod
-    def _safe_optional_str(value: t.MetadataValue | type | None) -> str | None:
+    def _safe_optional_str(value: object | type | None) -> str | None:
         """Extract optional strict string from dynamic values."""
         if value is None:
             return None
@@ -521,17 +507,17 @@ class FlextExceptions:
             message: str,
             *,
             error_code: str = c.Errors.UNKNOWN_ERROR,
-            context: Mapping[str, t.MetadataValue] | m.ConfigMap | None = None,
+            context: Mapping[str, object] | m.ConfigMap | None = None,
             metadata: m.Metadata
             | MetadataProtocol
             | m.ConfigMap
-            | t.MetadataValue
+            | object
             | None = None,
             correlation_id: str | None = None,
             auto_correlation: bool = False,
             auto_log: bool = True,
-            merged_kwargs: Mapping[str, t.MetadataValue] | m.ConfigMap | None = None,
-            **extra_kwargs: t.MetadataValue,
+            merged_kwargs: Mapping[str, object] | m.ConfigMap | None = None,
+            **extra_kwargs: object,
         ) -> None:
             """Initialize base error with message and optional metadata.
 
@@ -580,12 +566,8 @@ class FlextExceptions:
 
         @staticmethod
         def _normalize_metadata(
-            metadata: m.Metadata
-            | MetadataProtocol
-            | m.ConfigMap
-            | t.MetadataValue
-            | None,
-            merged_kwargs: Mapping[str, t.MetadataValue] | m.ConfigMap,
+            metadata: m.Metadata | MetadataProtocol | m.ConfigMap | object | None,
+            merged_kwargs: Mapping[str, object] | m.ConfigMap,
         ) -> MetadataProtocol:
             """Normalize metadata from various input types to m.Metadata model.
 
@@ -625,11 +607,11 @@ class FlextExceptions:
 
         @staticmethod
         def _normalize_metadata_from_dict(
-            metadata_dict: Mapping[str, t.MetadataValue] | m.ConfigMap,
-            merged_kwargs: Mapping[str, t.MetadataValue] | m.ConfigMap,
+            metadata_dict: Mapping[str, object] | m.ConfigMap,
+            merged_kwargs: Mapping[str, object] | m.ConfigMap,
         ) -> MetadataProtocol:
             """Normalize metadata from dict-like object."""
-            merged_attrs: dict[str, t.MetadataValue] = {}
+            merged_attrs: dict[str, object] = {}
             for k, v in metadata_dict.items():
                 merged_attrs[k] = FlextRuntime.normalize_to_metadata_value(v)
             if merged_kwargs:
@@ -642,14 +624,14 @@ class FlextExceptions:
                 }
             })
 
-        def to_dict(self) -> Mapping[str, t.MetadataValue | None]:
+        def to_dict(self) -> Mapping[str, object | None]:
             """Convert exception to dictionary representation.
 
             Returns:
                 Dictionary with error_type, message, error_code, and other fields.
 
             """
-            result: dict[str, t.MetadataValue | None] = {
+            result: dict[str, object | None] = {
                 "error_type": type(self).__name__,
                 "message": self.message,
                 "error_code": self.error_code,
@@ -671,12 +653,12 @@ class FlextExceptions:
             message: str,
             *,
             field: str | None = None,
-            value: t.MetadataValue | None = None,
+            value: object | None = None,
             error_code: str = c.Errors.VALIDATION_ERROR,
-            context: Mapping[str, t.MetadataValue] | None = None,
+            context: Mapping[str, object] | None = None,
             _correlation_id: str | None = None,
             params: e.ValidationErrorParams | None = None,
-            **extra_kwargs: t.MetadataValue,
+            **extra_kwargs: object,
         ) -> None:
             """Initialize validation error with field and value information."""
             resolved, ctx, meta, corr = e._init_error_params(
@@ -707,10 +689,10 @@ class FlextExceptions:
             config_key: str | None = None,
             config_source: str | None = None,
             error_code: str = c.Errors.CONFIGURATION_ERROR,
-            context: Mapping[str, t.MetadataValue] | None = None,
+            context: Mapping[str, object] | None = None,
             _correlation_id: str | None = None,
             params: e.ConfigurationErrorParams | None = None,
-            **extra_kwargs: t.MetadataValue,
+            **extra_kwargs: object,
         ) -> None:
             """Initialize configuration error with config context."""
             resolved, ctx, meta, corr = e._init_error_params(
@@ -739,10 +721,10 @@ class FlextExceptions:
             message: str,
             *,
             error_code: str = c.Errors.CONNECTION_ERROR,
-            context: Mapping[str, t.MetadataValue] | None = None,
+            context: Mapping[str, object] | None = None,
             _correlation_id: str | None = None,
             params: e.ConnectionErrorParams | None = None,
-            **extra_kwargs: t.MetadataValue,
+            **extra_kwargs: object,
         ) -> None:
             """Initialize connection error with network context."""
             resolved, ctx, meta, corr = e._init_error_params(
@@ -774,10 +756,10 @@ class FlextExceptions:
             timeout_seconds: float | None = None,
             operation: str | None = None,
             error_code: str = c.Errors.TIMEOUT_ERROR,
-            context: Mapping[str, t.MetadataValue] | None = None,
+            context: Mapping[str, object] | None = None,
             _correlation_id: str | None = None,
             params: e.TimeoutErrorParams | None = None,
-            **extra_kwargs: t.MetadataValue,
+            **extra_kwargs: object,
         ) -> None:
             """Initialize timeout error with timeout context."""
             resolved, ctx, meta, corr = e._init_error_params(
@@ -808,10 +790,10 @@ class FlextExceptions:
             auth_method: str | None = None,
             user_id: str | None = None,
             error_code: str = c.Errors.AUTHENTICATION_ERROR,
-            context: Mapping[str, t.MetadataValue] | None = None,
+            context: Mapping[str, object] | None = None,
             _correlation_id: str | None = None,
             params: e.AuthenticationErrorParams | None = None,
-            **extra_kwargs: t.MetadataValue,
+            **extra_kwargs: object,
         ) -> None:
             """Initialize authentication error with auth context."""
             resolved, ctx, meta, corr = e._init_error_params(
@@ -840,10 +822,10 @@ class FlextExceptions:
             message: str,
             *,
             error_code: str = c.Errors.AUTHORIZATION_ERROR,
-            context: Mapping[str, t.MetadataValue] | None = None,
+            context: Mapping[str, object] | None = None,
             correlation_id: str | None = None,
             params: e.AuthorizationErrorParams | None = None,
-            **extra_kwargs: t.MetadataValue,
+            **extra_kwargs: object,
         ) -> None:
             """Initialize authorization error with permission context."""
             resolved, ctx, meta, corr = e._init_error_params(
@@ -875,15 +857,15 @@ class FlextExceptions:
             resource_type: str | None = None,
             resource_id: str | None = None,
             error_code: str = c.Errors.NOT_FOUND_ERROR,
-            context: Mapping[str, t.MetadataValue] | None = None,
+            context: Mapping[str, object] | None = None,
             metadata: m.Metadata
             | MetadataProtocol
             | m.ConfigMap
-            | t.MetadataValue
+            | object
             | None = None,
             correlation_id: str | None = None,
             params: e.NotFoundErrorParams | None = None,
-            **extra_kwargs: t.MetadataValue,
+            **extra_kwargs: object,
         ) -> None:
             """Initialize not found error with resource context."""
             resolved, ctx, meta, _ = e._init_error_params(
@@ -914,10 +896,10 @@ class FlextExceptions:
             message: str,
             *,
             error_code: str = c.Errors.ALREADY_EXISTS,
-            context: Mapping[str, t.MetadataValue] | None = None,
+            context: Mapping[str, object] | None = None,
             correlation_id: str | None = None,
             params: e.ConflictErrorParams | None = None,
-            **extra_kwargs: t.MetadataValue,
+            **extra_kwargs: object,
         ) -> None:
             """Initialize conflict error with resource context."""
             resolved, ctx, meta, corr = e._init_error_params(
@@ -947,10 +929,10 @@ class FlextExceptions:
             message: str,
             *,
             error_code: str = c.Errors.OPERATION_ERROR,
-            context: Mapping[str, t.MetadataValue] | None = None,
+            context: Mapping[str, object] | None = None,
             correlation_id: str | None = None,
             params: e.RateLimitErrorParams | None = None,
-            **extra_kwargs: t.MetadataValue,
+            **extra_kwargs: object,
         ) -> None:
             """Initialize rate limit error with limit context."""
             resolved, ctx, meta, corr = e._init_error_params(
@@ -980,10 +962,10 @@ class FlextExceptions:
             message: str,
             *,
             error_code: str = c.Errors.EXTERNAL_SERVICE_ERROR,
-            context: Mapping[str, t.MetadataValue] | None = None,
+            context: Mapping[str, object] | None = None,
             correlation_id: str | None = None,
             params: e.CircuitBreakerErrorParams | None = None,
-            **extra_kwargs: t.MetadataValue,
+            **extra_kwargs: object,
         ) -> None:
             """Initialize circuit breaker error with service context."""
             resolved, ctx, meta, corr = e._init_error_params(
@@ -1015,10 +997,10 @@ class FlextExceptions:
             error_code: str = c.Errors.TYPE_ERROR,
             expected_type: type | str | None = None,
             actual_type: type | str | None = None,
-            context: Mapping[str, t.MetadataValue] | None = None,
+            context: Mapping[str, object] | None = None,
             correlation_id: str | None = None,
             params: e.TypeErrorParams | None = None,
-            **extra_kwargs: t.MetadataValue,
+            **extra_kwargs: object,
         ) -> None:
             """Initialize type error with type information."""
             preserved_metadata = extra_kwargs.pop("metadata", None)
@@ -1065,8 +1047,8 @@ class FlextExceptions:
         def _build_type_context(
             expected_type: type | str | None,
             actual_type: type | str | None,
-            context: Mapping[str, t.MetadataValue] | None,
-            extra_kwargs: Mapping[str, t.MetadataValue],
+            context: Mapping[str, object] | None,
+            extra_kwargs: Mapping[str, object],
         ) -> m.ConfigMap:
             """Build type context dictionary."""
             type_context = e._build_context_map(context, extra_kwargs)
@@ -1097,11 +1079,11 @@ class FlextExceptions:
         def _normalize_type(
             type_value: type | str | None,
             type_map: Mapping[str, type],
-            extra_kwargs: Mapping[str, t.MetadataValue],
+            extra_kwargs: Mapping[str, object],
             key: str,
         ) -> type | None:
             """Normalize type value from various sources."""
-            source_value: type | str | t.MetadataValue | None = type_value
+            source_value: type | str | object | None = type_value
             if source_value is None and key in extra_kwargs:
                 source_value = extra_kwargs.pop(key)
             type_name = e.TypeError._resolve_type_name(source_value)
@@ -1111,7 +1093,7 @@ class FlextExceptions:
 
         @staticmethod
         def _resolve_type_name(
-            type_value: type | str | t.MetadataValue | None,
+            type_value: type | str | object | None,
         ) -> str | None:
             """Resolve type-like input to canonical string name."""
             if type_value is None:
@@ -1134,10 +1116,10 @@ class FlextExceptions:
             operation: str | None = None,
             reason: str | None = None,
             error_code: str = c.Errors.OPERATION_ERROR,
-            context: Mapping[str, t.MetadataValue] | None = None,
+            context: Mapping[str, object] | None = None,
             correlation_id: str | None = None,
             params: e.OperationErrorParams | None = None,
-            **extra_kwargs: t.MetadataValue,
+            **extra_kwargs: object,
         ) -> None:
             """Initialize operation error with operation context."""
             resolved, ctx, meta, corr = e._init_error_params(
@@ -1168,10 +1150,10 @@ class FlextExceptions:
             attribute_name: str | None = None,
             attribute_context: str | None = None,
             error_code: str = c.Errors.ATTRIBUTE_ERROR,
-            context: Mapping[str, t.MetadataValue] | None = None,
+            context: Mapping[str, object] | None = None,
             correlation_id: str | None = None,
             params: e.AttributeAccessErrorParams | None = None,
-            **extra_kwargs: t.MetadataValue,
+            **extra_kwargs: object,
         ) -> None:
             """Initialize attribute access error with attribute context."""
             resolved, ctx, meta, corr = e._init_error_params(
@@ -1198,8 +1180,8 @@ class FlextExceptions:
     @staticmethod
     def _build_error_context(
         correlation_id: str | None,
-        metadata_obj: MetadataProtocol | Mapping[str, t.MetadataValue] | None,
-        kwargs: Mapping[str, t.MetadataValue] | m.ConfigMap,
+        metadata_obj: MetadataProtocol | Mapping[str, object] | None,
+        kwargs: Mapping[str, object] | m.ConfigMap,
     ) -> m.ConfigMap:
         """Build error context dictionary."""
         error_context: m.ConfigMap = m.ConfigMap(root={})
@@ -1216,7 +1198,7 @@ class FlextExceptions:
         error_type: str | None,
         message: str,
         error_code: str | None,
-        context: Mapping[str, t.MetadataValue] | m.ConfigMap | None = None,
+        context: Mapping[str, object] | m.ConfigMap | None = None,
     ) -> e.BaseError:
         """Create error by type using context dict."""
         error_context: m.ConfigMap = m.ConfigMap(root={})
@@ -1243,7 +1225,7 @@ class FlextExceptions:
         correlation_id = None
         if error_context and "correlation_id" in error_context:
             correlation_id = str(error_context["correlation_id"])
-        context_payload: Mapping[str, t.MetadataValue] | None = None
+        context_payload: Mapping[str, object] | None = None
         if error_context:
             context_payload = {
                 key: FlextRuntime.normalize_to_metadata_value(value)
@@ -1264,7 +1246,7 @@ class FlextExceptions:
         )
 
     @staticmethod
-    def _determine_error_type(kwargs: Mapping[str, t.MetadataValue]) -> str | None:
+    def _determine_error_type(kwargs: Mapping[str, object]) -> str | None:
         """Determine error type from kwargs using pattern matching.
 
         Returns:
@@ -1292,8 +1274,8 @@ class FlextExceptions:
 
     @staticmethod
     def _extract_common_kwargs(
-        kwargs: Mapping[str, t.MetadataValue],
-    ) -> tuple[str | None, MetadataProtocol | Mapping[str, t.MetadataValue] | None]:
+        kwargs: Mapping[str, object],
+    ) -> tuple[str | None, MetadataProtocol | Mapping[str, object] | None]:
         """Extract correlation_id and metadata from kwargs.
 
         Returns typed values: correlation_id as str | None, metadata as m.Metadata | Mapping | None.
@@ -1301,7 +1283,7 @@ class FlextExceptions:
         correlation_id_raw = kwargs.get("correlation_id")
         correlation_id = e._safe_optional_str(correlation_id_raw)
         metadata_raw = kwargs.get("metadata")
-        metadata: MetadataProtocol | Mapping[str, t.MetadataValue] | None = None
+        metadata: MetadataProtocol | Mapping[str, object] | None = None
         model_dump = getattr(metadata_raw, "model_dump", None)
         if callable(model_dump):
             metadata = e._safe_metadata(metadata_raw)
@@ -1319,7 +1301,7 @@ class FlextExceptions:
     @staticmethod
     def _merge_metadata_into_context(
         context: m.ConfigMap,
-        metadata_obj: MetadataProtocol | Mapping[str, t.MetadataValue] | None,
+        metadata_obj: MetadataProtocol | Mapping[str, object] | None,
     ) -> None:
         """Merge metadata object into context dictionary."""
         if metadata_obj is None:
@@ -1336,19 +1318,19 @@ class FlextExceptions:
 
     @staticmethod
     def _prepare_exception_kwargs(
-        kwargs: Mapping[str, t.MetadataValue],
-        specific_params: Mapping[str, t.MetadataValue | None] | None = None,
+        kwargs: Mapping[str, object],
+        specific_params: Mapping[str, object | None] | None = None,
     ) -> tuple[
         str | None,
-        t.MetadataValue | None,
+        object | None,
         bool,
         bool,
-        t.MetadataValue | None,
-        Mapping[str, t.MetadataValue],
+        object | None,
+        Mapping[str, object],
     ]:
         """Prepare exception kwargs by extracting common parameters."""
         if specific_params:
-            filtered_params: dict[str, t.MetadataValue] = {}
+            filtered_params: dict[str, object] = {}
             for k, v in specific_params.items():
                 if v is None:
                     continue
@@ -1379,7 +1361,7 @@ class FlextExceptions:
 
     @staticmethod
     def create(
-        message: str, error_code: str | None = None, **kwargs: t.MetadataValue
+        message: str, error_code: str | None = None, **kwargs: object
     ) -> e.BaseError:
         """Create an appropriate exception instance based on kwargs context."""
         legacy_type_map: Mapping[str, str] = {
@@ -1425,22 +1407,22 @@ class FlextExceptions:
 
     @staticmethod
     def extract_common_kwargs(
-        kwargs: Mapping[str, t.MetadataValue],
-    ) -> tuple[str | None, MetadataProtocol | Mapping[str, t.MetadataValue] | None]:
+        kwargs: Mapping[str, object],
+    ) -> tuple[str | None, MetadataProtocol | Mapping[str, object] | None]:
         """Extract common correlation and metadata fields from kwargs."""
         return e._extract_common_kwargs(kwargs)
 
     @staticmethod
     def prepare_exception_kwargs(
-        kwargs: Mapping[str, t.MetadataValue],
-        specific_params: Mapping[str, t.MetadataValue | None] | None = None,
+        kwargs: Mapping[str, object],
+        specific_params: Mapping[str, object | None] | None = None,
     ) -> tuple[
         str | None,
-        t.MetadataValue | None,
+        object | None,
         bool,
         bool,
-        t.MetadataValue | None,
-        Mapping[str, t.MetadataValue],
+        object | None,
+        Mapping[str, object],
     ]:
         """Prepare normalized kwargs payload for exception construction."""
         return e._prepare_exception_kwargs(kwargs, specific_params)
@@ -1448,7 +1430,7 @@ class FlextExceptions:
     _exception_counts: ClassVar[dict[type, int]] = {}
 
     def __call__(
-        self, message: str, error_code: str | None = None, **kwargs: t.MetadataValue
+        self, message: str, error_code: str | None = None, **kwargs: object
     ) -> e.BaseError:
         """Create exception by calling the class instance."""
         normalized_kwargs: m.ConfigMap = m.ConfigMap(root={})

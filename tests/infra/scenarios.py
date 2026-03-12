@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from typing import ClassVar
 
-from flext_tests import m, t
+from flext_tests import m
 
 
 class SubprocessScenario(m.Value):
@@ -38,7 +38,7 @@ class WorkspaceScenario(m.Value):
     """Single scenario for workspace state testing using m.Value."""
 
     name: str
-    structure: t.ConfigurationMapping
+    structure: object
     should_be_valid: bool = True
     description: str | None = None
 

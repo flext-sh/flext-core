@@ -13,27 +13,27 @@ from flext_core import r
 from flext_tests import c, m, t, tm
 
 
-def _is_string(value: t.Tests.TestContainerValue) -> bool:
+def _is_string(value: t.Tests.Testobject) -> bool:
     return isinstance(value, str)
 
 
-def _is_string_or_bytes(value: t.Tests.TestContainerValue) -> bool:
+def _is_string_or_bytes(value: t.Tests.Testobject) -> bool:
     return isinstance(value, str | bytes)
 
 
-def _is_positive(value: t.Tests.TestContainerValue) -> bool:
+def _is_positive(value: t.Tests.Testobject) -> bool:
     return isinstance(value, int) and value > 0
 
 
-def _is_negative(value: t.Tests.TestContainerValue) -> bool:
+def _is_negative(value: t.Tests.Testobject) -> bool:
     return isinstance(value, int) and value < 0
 
 
-def _greater_than_zero(value: t.Tests.TestContainerValue) -> bool:
+def _greater_than_zero(value: t.Tests.Testobject) -> bool:
     return isinstance(value, int) and value > 0
 
 
-def _greater_than_two(value: t.Tests.TestContainerValue) -> bool:
+def _greater_than_two(value: t.Tests.Testobject) -> bool:
     return isinstance(value, int) and value > 2
 
 
@@ -235,26 +235,22 @@ class TestFlextTestsMatchers:
 
     def test_ok_with_deep_parameter(self) -> None:
         """Test tm.ok() with deep parameter."""
-        data: dict[str, t.Tests.TestContainerValue] = {
-            "user": {"name": "John", "age": 30}
-        }
-        result = r[t.Tests.ContainerValue].ok(data)
+        data: dict[str, t.Tests.Testobject] = {"user": {"name": "John", "age": 30}}
+        result = r[t.Tests.object].ok(data)
         value = tm.ok(result, deep={"user.name": "John"})
         assert value == data
 
     def test_ok_with_deep_predicate_parameter(self) -> None:
         """Test tm.ok() with deep predicate parameter."""
-        data: dict[str, t.Tests.TestContainerValue] = {
-            "user": {"email": "test@example.com"}
-        }
-        result = r[t.Tests.ContainerValue].ok(data)
+        data: dict[str, t.Tests.Testobject] = {"user": {"email": "test@example.com"}}
+        result = r[t.Tests.object].ok(data)
         value = tm.ok(result, deep={"user.email": "test@example.com"})
         assert value == data
 
     def test_ok_with_path_parameter(self) -> None:
         """Test tm.ok() with path parameter."""
-        data: dict[str, t.Tests.TestContainerValue] = {"user": {"name": "John"}}
-        result = r[t.Tests.ContainerValue].ok(data)
+        data: dict[str, t.Tests.Testobject] = {"user": {"name": "John"}}
+        result = r[t.Tests.object].ok(data)
         value = tm.ok(result, path="user.name", eq="John")
         assert value == "John"
 

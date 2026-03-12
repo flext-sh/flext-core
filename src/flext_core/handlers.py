@@ -232,9 +232,7 @@ class FlextHandlers[MessageT_contra = object, ResultT = object](x):
                     if isinstance(result, r):
                         return result
                     if isinstance(result, set):
-                        return r[t.Scalar].fail(
-                            "Result must be compatible with ContainerValue"
-                        )
+                        return r[t.Scalar].fail("Result must be compatible with object")
                     return r[t.Scalar].ok(result)
                 except (
                     ValueError,
@@ -452,7 +450,7 @@ class FlextHandlers[MessageT_contra = object, ResultT = object](x):
             return r[FlextModelsContainers.ConfigMap].ok(context_dict)
         return r[FlextModelsContainers.ConfigMap].ok(popped)
 
-    def push_context(self, ctx: m.ExecutionContext | dict[str, object]) -> r[bool]:
+    def push_context(self, ctx: m.ExecutionContext | Mapping[str, object]) -> r[bool]:
         """Push execution context onto the local handler stack."""
         if isinstance(ctx, m.ExecutionContext):
             self._stack.append(ctx)

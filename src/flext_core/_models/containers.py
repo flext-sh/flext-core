@@ -26,10 +26,10 @@ class FlextModelsContainers:
     Access via ``m.ConfigMap``, ``m.Dict``, etc.
     """
 
-    class ObjectList(RootModel[list[object]]):
+    class ObjectList(RootModel[list[t.Container]]):
         """Sequence of container values for batch operations."""
 
-        root: list[object]
+        root: list[t.Container]
 
     @typing.runtime_checkable
     class _RootDictProtocol[RootValueT](typing.Protocol):

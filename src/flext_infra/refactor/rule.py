@@ -7,7 +7,7 @@ from collections.abc import Callable, Mapping
 from pathlib import Path
 
 from flext_core import r
-from flext_infra import c, m, t, u
+from flext_infra import c, m, u
 from flext_infra.refactor._base_rule import FlextInfraRefactorRule
 from flext_infra.refactor.rules.class_nesting import ClassNestingRefactorRule
 from flext_infra.refactor.validation import FlextInfraRefactorRuleDefinitionValidator
@@ -20,30 +20,30 @@ class FlextInfraRefactorRuleLoader:
         """Initialize with path to the refactor engine configuration file."""
         self.config_path = config_path
 
-    def load_config(self) -> r[t.ConfigurationMapping]:
+    def load_config(self) -> r[object]:
         """Load and validate the refactor engine configuration."""
         try:
             loaded = u.Infra.safe_load_yaml(self.config_path)
             normalized = dict(loaded)
             scope_raw = normalized.get("refactor_engine")
-            scope_map: t.ConfigurationMapping = (
+            scope_map: object = (
                 dict(scope_raw) if isinstance(scope_raw, Mapping) else {}
             )
             scope = m.Infra.Refactor.EngineConfig.model_validate(scope_map)
             normalized["refactor_engine"] = scope.model_dump(mode="python")
-            return r[t.ConfigurationMapping].ok(normalized)
+            return r[object].ok(normalized)
         except (OSError, TypeError, ValueError) as exc:
-            return r[t.ConfigurationMapping].fail(f"Failed to load config: {exc}")
+            return r[object].fail(f"Failed to load config: {exc}")
 
     def extract_engine_file_filters(
         self,
-        config: t.ConfigurationMapping,
+        config: object,
     ) -> tuple[list[str], list[str]]:
         """Extract ignore patterns and file extensions from engine config."""
         scope = self._resolve_engine_config(config)
         return (list(scope.ignore_patterns), list(scope.file_extensions))
 
-    def extract_project_scan_dirs(self, config: t.ConfigurationMapping) -> list[str]:
+    def extract_project_scan_dirs(self, config: object) -> list[str]:
         """Extract project scan directories from engine config."""
         scope = self._resolve_engine_config(config)
         return list(scope.project_scan_dirs)
@@ -132,10 +132,10 @@ class FlextInfraRefactorRuleLoader:
 
     def _resolve_engine_config(
         self,
-        config: t.ConfigurationMapping,
+        config: object,
     ) -> m.Infra.Refactor.EngineConfig:
         scope_raw = config.get("refactor_engine")
-        scope_map: t.ConfigurationMapping = (
+        scope_map: object = (
             dict(scope_raw) if isinstance(scope_raw, Mapping) else {}
         )
         return m.Infra.Refactor.EngineConfig.model_validate(scope_map)

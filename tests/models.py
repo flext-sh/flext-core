@@ -80,7 +80,7 @@ class TestsFlextModels(FlextTestsModels, FlextInfraModels):
             model_config = ConfigDict(frozen=False)
 
             name: str
-            value: FlextTypes.ContainerValue
+            value: object
 
         class DomainTestValue(FlextModels.Value):
             """Test value object for domain tests."""
@@ -217,7 +217,7 @@ class TestsFlextModels(FlextTestsModels, FlextInfraModels):
 
             model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
 
-            obj: FlextTypes.ContainerValue
+            obj: object
             expected_contains: list[str] | None = None
             expected_exact: str | None = None
             description: str = Field(default="", exclude=True)
@@ -236,7 +236,7 @@ class TestsFlextModels(FlextTestsModels, FlextInfraModels):
 
             description: str
             input_data: FlextTypes.ConfigurationMapping
-            expected_result: FlextTypes.ContainerValue
+            expected_result: object
             expected_success: bool = True
             error_contains: str | None = None
 
@@ -246,14 +246,14 @@ class TestsFlextModels(FlextTestsModels, FlextInfraModels):
             model_config = ConfigDict(frozen=False)
 
             name: str
-            value: FlextTypes.ContainerValue
+            value: object
 
         class UtilityValueModel(FlextModels.Value):
             """Shared value model for generic test fixtures."""
 
             model_config = ConfigDict(frozen=True)
 
-            value: FlextTypes.ContainerValue
+            value: object
 
         class BddPhaseDict(BaseModel):
             """BDD phase (given/when/then) configuration."""
