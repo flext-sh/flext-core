@@ -45,7 +45,7 @@ def _normalize_event_data(value: object) -> _ComparableConfigMap:
     if isinstance(value, dict):
         intermediate = FlextModelsContainers.ConfigMap(
             root={
-                str(k): FlextRuntime.normalize_to_metadata_value(v)
+                str(k): FlextRuntime.normalize_to_metadata(v)
                 for k, v in value.items()
             }
         )
@@ -53,7 +53,7 @@ def _normalize_event_data(value: object) -> _ComparableConfigMap:
     if isinstance(value, Mapping):
         intermediate = FlextModelsContainers.ConfigMap(
             root={
-                str(k): FlextRuntime.normalize_to_metadata_value(v)
+                str(k): FlextRuntime.normalize_to_metadata(v)
                 for k, v in value.items()
             }
         )
@@ -87,7 +87,7 @@ class FlextModelsDomainEvent:
             return _ComparableConfigMap(root={})
         return _ComparableConfigMap(
             root={
-                str(key): FlextRuntime.normalize_to_metadata_value(value)
+                str(key): FlextRuntime.normalize_to_metadata(value)
                 for key, value in data.items()
             }
         )

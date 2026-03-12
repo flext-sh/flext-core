@@ -279,6 +279,8 @@ class FlextUtilities:
     is_mapping = staticmethod(FlextUtilitiesGuards.is_mapping)
     none_ = staticmethod(FlextUtilitiesGuards.none_)
     is_result_like = staticmethod(FlextUtilitiesGuards.is_result_like)
+    normalize_to_metadata = staticmethod(FlextRuntime.normalize_to_metadata)
+    # DEPRECATED: Use normalize_to_metadata. Planned removal: v0.12.
     normalize_to_metadata_value = staticmethod(FlextRuntime.normalize_to_metadata_value)
     normalize_to_container = staticmethod(FlextRuntime.normalize_to_container)
     require_initialized = staticmethod(FlextUtilitiesGuards.require_initialized)
@@ -361,6 +363,7 @@ class FlextUtilities:
     with_timeout = staticmethod(FlextUtilitiesReliability.with_timeout)
     is_dict_like = staticmethod(FlextRuntime.is_dict_like)
     is_list_like = staticmethod(FlextRuntime.is_list_like)
+    # DEPRECATED: Use normalize_to_container. Planned removal: v0.12.
     normalize_to_general_value = staticmethod(FlextRuntime.normalize_to_general_value)
     runtime_generate_datetime_utc = staticmethod(FlextRuntime.generate_datetime_utc)
     generate_id = staticmethod(FlextRuntime.generate_id)

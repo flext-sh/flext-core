@@ -32,7 +32,7 @@ class _Predicate[T](Protocol):
 
 
 # --- Mapper-local recursive types (self-contained, no t.GeneralValueType dependency) ---
-type _MappingValue = t.Container | list[_MappingValue] | dict[str, _MappingValue] | None
+type _MappingValue = t.Container | BaseModel | list[_MappingValue] | dict[str, _MappingValue] | None
 type _MapperCallable = Callable[[_MappingValue], _MappingValue]
 _ContainerTransformer: TypeAlias = _MapperCallable
 
@@ -856,19 +856,26 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _extract_get_value(
-        current: t.GeneralValueType | BaseModel, key_part: str
-    ) -> tuple[_MappingValue, bool]:
-        """Helper: Get raw value from dict/object/model."""
+        current: object, key_part: str
+    ) -> r[_MappingValue]:
+        """Helper: Get raw value from dict/object/model.
+
+        Returns:
+            r[_MappingValue]: Ok with value if found, Fail if not found.
+
+        """
         if isinstance(current, Mapping):
             if key_part in current:
                 raw_val = current[key_part]
-                return (FlextUtilitiesMapper.narrow_to_container(raw_val), True)
-            return (None, False)
+                return r[_MappingValue].ok(
+                    FlextUtilitiesMapper.narrow_to_container(raw_val)
+                )
+            return r[_MappingValue].fail(f"Key '{key_part}' not found in Mapping")
         if hasattr(current, key_part):
             attr_val = getattr(current, key_part)
             if FlextUtilitiesGuards.is_container(attr_val):
-                return (attr_val, True)
-            return (str(attr_val), True)
+                return r[_MappingValue].ok(attr_val)
+            return r[_MappingValue].ok(str(attr_val))
         if isinstance(current, BaseModel):
             model_dump_attr = current.model_dump
             if callable(model_dump_attr):
@@ -880,16 +887,21 @@ class FlextUtilitiesMapper:
                         FlextUtilitiesMapper._narrow_to_configuration_dict(model_dict)
                     )
                     if key_part in model_dict_typed:
-                        return (model_dict_typed[key_part], True)
-        return (None, False)
+                        return r[_MappingValue].ok(model_dict_typed[key_part])
+        return r[_MappingValue].fail(f"Key '{key_part}' not found")
 
     @staticmethod
     def _extract_handle_array_index(
         current: _MappingValue, array_match: str
-    ) -> tuple[_MappingValue, _MappingValue]:
-        """Helper: Handle array indexing with support for negative indices."""
+    ) -> r[_MappingValue]:
+        """Helper: Handle array indexing with support for negative indices.
+
+        Returns:
+            r[_MappingValue]: Ok with indexed value, Fail with error message.
+
+        """
         if current.__class__ not in {list, tuple}:
-            return (None, "Not a sequence")
+            return r[_MappingValue].fail("Not a sequence")
         sequence: Sequence[_MappingValue] = FlextUtilitiesMapper._narrow_to_sequence(
             current
         )
@@ -898,10 +910,10 @@ class FlextUtilitiesMapper:
             if idx < 0:
                 idx = len(sequence) + idx
             if 0 <= idx < len(sequence):
-                return (sequence[idx], None)
-            return (None, f"Index {int(array_match)} out of range")
+                return r[_MappingValue].ok(sequence[idx])
+            return r[_MappingValue].fail(f"Index {int(array_match)} out of range")
         except (ValueError, IndexError):
-            return (None, f"Invalid index {array_match}")
+            return r[_MappingValue].fail(f"Invalid index {array_match}")
 
     @staticmethod
     def _extract_parse_array_index(part: str) -> tuple[str, str]:
@@ -1504,14 +1516,9 @@ class FlextUtilitiesMapper:
                     else field_default
                 )
                 if field_ops is not None and extracted_raw is not None:
-                    if isinstance(field_ops, dict):
-                        field_ops_dict: ContainerMapping = (
-                            FlextUtilitiesMapper._narrow_to_configuration_dict(
-                                field_ops
-                            )
-                        )
+                    if isinstance(field_ops, Mapping):
                         extracted = FlextUtilitiesMapper.build(
-                            extracted_raw, ops=field_ops_dict
+                            extracted_raw, ops=dict(field_ops)
                         )
                     else:
                         extracted = extracted_raw
@@ -1738,10 +1745,10 @@ class FlextUtilitiesMapper:
                 key_part, array_match = FlextUtilitiesMapper._extract_parse_array_index(
                     part
                 )
-                value, found = FlextUtilitiesMapper._extract_get_value(
+                get_result = FlextUtilitiesMapper._extract_get_value(
                     current, key_part
                 )
-                if not found:
+                if get_result.is_failure:
                     path_context = separator.join(parts[:i])
                     if required:
                         return r[_MappingValue].fail(
@@ -1752,22 +1759,22 @@ class FlextUtilitiesMapper:
                             f"Key '{key_part}' not found at '{path_context}' and default is None"
                         )
                     return r[_MappingValue].ok(default)
-                current = value
+                current = get_result.value
                 if array_match:
-                    value, error = FlextUtilitiesMapper._extract_handle_array_index(
+                    index_result = FlextUtilitiesMapper._extract_handle_array_index(
                         current, array_match
                     )
-                    if error:
+                    if index_result.is_failure:
                         if required:
                             return r[_MappingValue].fail(
-                                f"Array error at '{key_part}': {error}"
+                                f"Array error at '{key_part}': {index_result.error}"
                             )
                         if default is None:
                             return r[_MappingValue].fail(
-                                f"Array error at '{key_part}': {error} and default is None"
+                                f"Array error at '{key_part}': {index_result.error} and default is None"
                             )
                         return r[_MappingValue].ok(default)
-                    current = value
+                    current = index_result.value
             if current is None:
                 if required:
                     return r[_MappingValue].fail("Extracted value is None")
@@ -2212,13 +2219,13 @@ class FlextUtilitiesMapper:
         raw_result: ContainerMapping = FlextUtilitiesMapper.process_context_data(
             primary_data=context,
             secondary_data=extra_kwargs,
-            transformer=FlextRuntime.normalize_to_metadata_value,
+            transformer=FlextRuntime.normalize_to_metadata,
             field_overrides=field_overrides_config,
             merge_strategy="merge",
         )
         result: dict[str, t.MetadataValue] = {}
         for k, v in raw_result.items():
-            result[k] = FlextRuntime.normalize_to_metadata_value(v)
+            result[k] = FlextRuntime.normalize_to_metadata(v)
         return result
 
     @staticmethod

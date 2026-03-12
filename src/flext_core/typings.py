@@ -66,7 +66,14 @@ class FlextTypes:
     # Use these tuples for ALL runtime isinstance() checks.
     PRIMITIVES_TYPES: tuple[type, ...] = (str, int, float, bool)
     SCALAR_TYPES: tuple[type, ...] = (str, int, float, bool, datetime)
-    CONTAINER_TYPES: tuple[type, ...] = (str, int, float, bool, datetime, Path)
+    CONTAINER_TYPES: tuple[type, ...] = (
+        str,
+        int,
+        float,
+        bool,
+        datetime,
+        Path,
+    )
 
     # --- RECURSIVE TYPES (PEP 695 - Annotation-only, NEVER with isinstance) ---
 

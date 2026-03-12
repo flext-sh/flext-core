@@ -26,7 +26,7 @@ class TestService(s[str]):
     @override
     def execute(self, **_kwargs: t.Scalar) -> r[str]:
         """Execute service."""
-        return self.ok("success")
+        return r[str].ok("success")
 
 
 class TestServiceWithValidation(s[str]):
@@ -41,7 +41,7 @@ class TestServiceWithValidation(s[str]):
     @override
     def execute(self, **_kwargs: t.Scalar) -> r[str]:
         """Execute service."""
-        return self.ok("validated")
+        return r[str].ok("validated")
 
 
 class TestService100Coverage:
@@ -75,9 +75,8 @@ class TestService100Coverage:
         assert isinstance(result.value, str)
 
     def test_ok_method(self) -> None:
-        """Test ok method."""
-        service = TestService()
-        result = service.ok("test")
+        """Test r.ok factory method (strict mode — no self.ok)."""
+        result = r[str].ok("test")
         assert result.is_success
         assert result.value == "test"
 

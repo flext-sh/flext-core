@@ -41,7 +41,7 @@ class _BridgeBadProvide:
 
 class _BridgeGoodProvide:
     @staticmethod
-    def Provide(name: str) -> str:  # noqa: N802  # Test double for protocol method Provide
+    def Provide(name: str) -> str:
         return name
 
 

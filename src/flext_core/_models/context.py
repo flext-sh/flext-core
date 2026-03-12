@@ -364,7 +364,7 @@ class FlextModelsContext:
         @staticmethod
         def normalize_to_general_value(val: object) -> object:
             """Normalize any value to object recursively."""
-            return FlextRuntime.normalize_to_general_value(val)
+            return FlextRuntime.normalize_to_container(val)
 
     class ContextExport(FlextModelsEntity.Value):
         """Typed snapshot returned by export_snapshot.

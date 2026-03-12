@@ -151,7 +151,7 @@ class FlextModelsCollections:
             for key, value_list in self.categories.items():
                 normalized_list: list[t.MetadataValue] = []
                 for item in value_list:
-                    normalized = FlextRuntime.normalize_to_general_value(item)
+                    normalized = FlextRuntime.normalize_to_container(item)
                     normalized_list.append(normalized)
                 result[key] = normalized_list
             return result
@@ -478,7 +478,7 @@ class FlextModelsCollections:
                 for v in non_none:
                     if FlextRuntime.is_list_like(v) and v.__class__ not in {str, bytes}:
                         for item in v:
-                            normalized = FlextRuntime.normalize_to_general_value(item)
+                            normalized = FlextRuntime.normalize_to_container(item)
                             combined.append(normalized)
                 return combined
             return non_none[-1]
@@ -510,7 +510,7 @@ class FlextModelsCollections:
                         result[key] = cls._resolve_merge_conflict(result[key], value)
             normalized_result: dict[str, t.MetadataValue] = {}
             for key, value in result.items():
-                normalized_result[key] = FlextRuntime.normalize_to_general_value(value)
+                normalized_result[key] = FlextRuntime.normalize_to_container(value)
             return cls(**normalized_result)
 
         def merge(self, *options: Self) -> Self:
@@ -625,7 +625,7 @@ class FlextModelsCollections:
             """
             normalized: dict[str, t.MetadataValue] = {}
             for key, value in self.model_dump().items():
-                normalized[str(key)] = FlextRuntime.normalize_to_general_value(value)
+                normalized[str(key)] = FlextRuntime.normalize_to_container(value)
             return FlextModelsContainers.ConfigMap(root=normalized)
 
         def with_updates(self, **updates: t.MetadataValue) -> Self:

@@ -406,7 +406,7 @@ class FlextContainer(p.DI):
             return self
         processed_dict = m.ConfigMap(root={})
         for key, value in config.items():
-            processed_dict[str(key)] = FlextRuntime.normalize_to_general_value(value)
+            processed_dict[str(key)] = FlextRuntime.normalize_to_container(value)
         merged = m.ConfigMap(root=dict(self._user_overrides.items()))
         merged.update(dict(processed_dict.items()))
         self._user_overrides = merged
@@ -540,7 +540,7 @@ class FlextContainer(p.DI):
         config_dict_raw = self._global_config.model_dump()
         return m.ConfigMap(
             root={
-                str(key): FlextRuntime.normalize_to_general_value(value)
+                str(key): FlextRuntime.normalize_to_container(value)
                 for key, value in config_dict_raw.items()
             }
         )
@@ -914,7 +914,7 @@ class FlextContainer(p.DI):
         config_dict_raw = self._global_config.model_dump()
         config_map = m.ConfigMap(
             root={
-                str(key): FlextRuntime.normalize_to_general_value(value)
+                str(key): FlextRuntime.normalize_to_container(value)
                 for key, value in config_dict_raw.items()
             }
         )

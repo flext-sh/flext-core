@@ -103,7 +103,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             context_vars = FlextRuntime.structlog().contextvars.get_contextvars()
             context_map: dict[str, t.Container] = (
                 {
-                    str(k): FlextRuntime.normalize_to_general_value(v)
+                    str(k): FlextRuntime.normalize_to_container(v)
                     for k, v in dict(context_vars).items()
                 }
                 if context_vars
@@ -169,11 +169,11 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             if scope not in cls._scoped_contexts:
                 cls._scoped_contexts[scope] = {}
             current_context: dict[str, t.Container] = {
-                key: FlextRuntime.normalize_to_general_value(value)
+                key: FlextRuntime.normalize_to_container(value)
                 for key, value in cls._scoped_contexts[scope].items()
             }
             incoming_context: dict[str, t.Container] = {
-                key: FlextRuntime.normalize_to_general_value(value)
+                key: FlextRuntime.normalize_to_container(value)
                 for key, value in context.items()
             }
             merge_result = u.merge(
@@ -230,7 +230,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             if level_normalized not in cls._level_contexts:
                 cls._level_contexts[level_normalized] = {}
             normalized_context = {
-                key: FlextRuntime.normalize_to_general_value(value)
+                key: FlextRuntime.normalize_to_container(value)
                 for key, value in context.items()
             }
             prefixed_context = {
@@ -274,7 +274,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         """
         try:
             normalized_context = {
-                key: FlextRuntime.normalize_to_general_value(value)
+                key: FlextRuntime.normalize_to_container(value)
                 for key, value in context.items()
             }
             FlextRuntime.structlog().contextvars.bind_contextvars(**normalized_context)
@@ -639,7 +639,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
     @staticmethod
     def _to_container_value(value: object) -> t.Container:
         """Normalize value to Container (internal helper)."""
-        return FlextRuntime.normalize_to_general_value(value)
+        return FlextRuntime.normalize_to_container(value)
 
     @staticmethod
     def _to_scalar_value(value: object) -> t.Scalar:
@@ -651,7 +651,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
     def _to_container_context(context: Mapping[str, object]) -> dict[str, t.Container]:
         """Convert mapping to container context using normalization."""
         return {
-            key: FlextRuntime.normalize_to_general_value(value)
+            key: FlextRuntime.normalize_to_container(value)
             for key, value in context.items()
         }
 

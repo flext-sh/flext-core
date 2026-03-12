@@ -267,20 +267,20 @@ class FlextUtilitiesGuards:
     @staticmethod
     def is_container(
         value: FlextUtilitiesGuards._GuardInput,
-    ) -> TypeGuard[object]:
-        """Check if value is a valid object.
+    ) -> TypeGuard[str | int | float | bool | datetime | BaseModel | Path]:
+        """Check if value is a valid Container type.
 
-        object = ScalarValue | Sequence[object] | Mapping[str, object]
-        ScalarValue = str | int | float | bool | datetime | None
+        Container = Scalar | BaseModel | Path
+        Scalar = str | int | float | bool | datetime
 
-        This TypeGuard enables type narrowing for object.
+        This TypeGuard enables type narrowing to t.Container.
         Uses structural typing to validate at runtime.
 
         Args:
             value: Object to check
 
         Returns:
-            TypeGuard[object]: True if value matches object structure
+            TypeGuard narrowing to Container union members
 
         """
         if value is None or isinstance(value, (str, int, float, bool, datetime)):

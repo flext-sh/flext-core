@@ -238,15 +238,15 @@ def test_invert_and_json_conversion_branches(mapper: type[u.Mapper]) -> None:
 
 def test_ensure_and_extract_array_index_helpers(mapper: type[u.Mapper]) -> None:
     assert mapper.ensure(123) == ["123"]
-    value, error = mapper._extract_handle_array_index("x", "0")
-    assert value is None
-    assert error == "Not a sequence"
-    value, error = mapper._extract_handle_array_index([1, 2], "-1")
-    assert value == 2
-    assert error is None
-    value, error = mapper._extract_handle_array_index([1, 2], "bad")
-    assert value is None
-    assert "Invalid index" in str(error)
+    idx_result = mapper._extract_handle_array_index("x", "0")
+    assert idx_result.is_failure
+    assert idx_result.error == "Not a sequence"
+    idx_neg = mapper._extract_handle_array_index([1, 2], "-1")
+    assert idx_neg.is_success
+    assert idx_neg.value == 2
+    idx_bad = mapper._extract_handle_array_index([1, 2], "bad")
+    assert idx_bad.is_failure
+    assert "Invalid index" in str(idx_bad.error)
 
 
 def test_extract_error_paths_and_prop_accessor(mapper: type[u.Mapper]) -> None:
@@ -723,21 +723,20 @@ def test_conversion_and_extract_success_branches(mapper: type[u.Mapper]) -> None
     class DumpOnly:
         a: int = 1
 
-    value, found = mapper._extract_get_value(
+    get_result = mapper._extract_get_value(
         cast("object | BaseModel", cast("object", DumpOnly())),
         "a",
     )
-    assert found is True
-    assert value == 1
-    value, found = mapper._extract_get_value(
+    assert get_result.is_success
+    assert get_result.value == 1
+    get_missing = mapper._extract_get_value(
         cast("object | BaseModel", cast("object", DumpOnly())),
         "missing",
     )
-    assert found is False
-    assert value is None
-    value, err = mapper._extract_handle_array_index([1], "3")
-    assert value is None
-    assert err == "Index 3 out of range"
+    assert get_missing.is_failure
+    idx_range = mapper._extract_handle_array_index([1], "3")
+    assert idx_range.is_failure
+    assert idx_range.error == "Index 3 out of range"
     required_fail = mapper.extract({"a": None}, "a.b", default="z", required=True)
     assert required_fail.is_failure
     assert "is None" in str(required_fail.error)
@@ -901,11 +900,13 @@ def test_remaining_uncovered_branches(
         def get(self, key: str, default: object = None) -> object:
             return 1 if key == "k" else default
 
-    with pytest.raises(TypeError):
-        mapper.process_context_data(
-            primary_data=cast("object", CallableDictLike()),
-            secondary_data=cast("object", CallableDictLike()),
-        )
+    # CallableDictLike is not a Mapping/ConfigMap, so process_context_data
+    # treats it as non-dict data and returns empty result (no TypeError).
+    callable_result = mapper.process_context_data(
+        primary_data=cast("object", CallableDictLike()),
+        secondary_data=cast("object", CallableDictLike()),
+    )
+    assert callable_result == {}
     obj_fields = mapper.fields(
         cast("object", AttrObject(name="n", value=3)),
         {"name": 0, "missing": 7},

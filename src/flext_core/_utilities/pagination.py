@@ -162,7 +162,7 @@ class FlextUtilitiesPagination:
         has_prev = page > 1
         data_list: list[t.Container] = []
         for item in data:
-            normalized = FlextRuntime.normalize_to_general_value(item)
+            normalized = FlextRuntime.normalize_to_container(item)
             data_list.append(normalized)
         return r[Mapping[str, t.Container]].ok({
             "data": data_list,

@@ -36,10 +36,10 @@ class FlextModelsContainers:
             examples=[{"timeout": 504, "invalid_payload": 400}],
         )
 
-    class ObjectList(RootModel[list[t.Container]]):
+    class ObjectList(RootModel[list[t.Container | BaseModel]]):
         """Sequence of container values for batch operations."""
 
-        root: list[t.Container] = Field(
+        root: list[t.Container | BaseModel] = Field(
             default_factory=list,
             title="Object List",
             description=(
@@ -95,7 +95,7 @@ class FlextModelsContainers:
         def values(self) -> ValuesView[DictValueT]:
             return self.root.values()
 
-    class Dict(_RootDictModel[t.Container]):
+    class Dict(_RootDictModel[t.Container | BaseModel]):
         """Generic dictionary container. Use ``m.Dict``."""
 
         # Used by: flext-core CQRS/message payloads (`_models/base.py`, `_models/cqrs.py`),
@@ -104,7 +104,7 @@ class FlextModelsContainers:
         # Migration note: command/query/event payloads should move to domain-specific
         # Pydantic models instead of generic key-value dictionaries.
 
-        root: dict[str, t.Container] = Field(
+        root: dict[str, t.Container | BaseModel] = Field(
             default_factory=dict,
             title="Dictionary Payload",
             description=(
@@ -114,7 +114,7 @@ class FlextModelsContainers:
             examples=[{"request_id": "req-123", "retry_count": 3, "dry_run": True}],
         )
 
-    class ConfigMap(_RootDictModel[t.Container]):
+    class ConfigMap(_RootDictModel[t.Container | BaseModel]):
         """Configuration map container. Use ``m.ConfigMap``."""
 
         # Used by: flext-core container/context/runtime/logging/exceptions, flext-tests
@@ -122,7 +122,7 @@ class FlextModelsContainers:
         # flext-target-ldif). Most call sites represent typed config contracts and can
         # be replaced by explicit domain settings models over time.
 
-        root: dict[str, t.Container] = Field(
+        root: dict[str, t.Container | BaseModel] = Field(
             default_factory=dict,
             title="Configuration Map",
             description="Configuration entries keyed by normalized setting names.",

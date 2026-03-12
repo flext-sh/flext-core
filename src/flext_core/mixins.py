@@ -194,13 +194,13 @@ class FlextMixins(FlextRuntime):
                 all_context_data = merged_error
             if all_context_data:
                 metadata_context: dict[str, object] = {
-                    key: FlextRuntime.normalize_to_metadata_value(value)
+                    key: FlextRuntime.normalize_to_metadata(value)
                     for key, value in all_context_data.root.items()
                 }
                 _ = FlextLogger.bind_global_context(**metadata_context)
             if normal_data:
                 normal_metadata_context: dict[str, object] = {
-                    key: FlextRuntime.normalize_to_metadata_value(value)
+                    key: FlextRuntime.normalize_to_metadata(value)
                     for key, value in normal_data.root.items()
                 }
                 _ = FlextLogger.bind_context(
@@ -226,7 +226,7 @@ class FlextMixins(FlextRuntime):
             with FlextContext.Performance.timed_operation(operation_name) as metrics:
                 metrics_map: dict[str, object] = (
                     {
-                        str(k): FlextRuntime.normalize_to_general_value(v)
+                        str(k): FlextRuntime.normalize_to_container(v)
                         for k, v in metrics.items()
                     }
                     if hasattr(metrics, "items")
@@ -399,14 +399,14 @@ class FlextMixins(FlextRuntime):
         operation_name = FlextContext.Request.get_operation_name()
         context_data: m.ConfigMap = m.ConfigMap(
             root={
-                "correlation_id": FlextRuntime.normalize_to_general_value(
+                "correlation_id": FlextRuntime.normalize_to_container(
                     correlation_id or ""
                 ),
-                "operation": FlextRuntime.normalize_to_general_value(
+                "operation": FlextRuntime.normalize_to_container(
                     operation_name or ""
                 ),
                 **{
-                    k: FlextRuntime.normalize_to_general_value(v)
+                    k: FlextRuntime.normalize_to_container(v)
                     for k, v in extra.items()
                 },
             }

@@ -63,7 +63,7 @@ class FlextContext(FlextRuntime):
             for key, value in ctx_value.items():
                 if str(key) != key:
                     return {}
-                normalized_value = FlextRuntime.normalize_to_general_value(value)
+                normalized_value = FlextRuntime.normalize_to_container(value)
                 normalized[key] = normalized_value
             return normalized
         except (TypeError, ValueError, AttributeError, KeyError) as exc:
@@ -220,7 +220,7 @@ class FlextContext(FlextRuntime):
 
         """
         if scope == c.Context.SCOPE_GLOBAL:
-            normalized = FlextRuntime.normalize_to_metadata_value(value)
+            normalized = FlextRuntime.normalize_to_metadata(value)
             _ = FlextLogger.bind_global_context(**{key: normalized})
 
     @staticmethod
@@ -329,9 +329,7 @@ class FlextContext(FlextRuntime):
                 metadata_value: object = v
                 if hasattr(v, "items") and callable(getattr(v, "items", None)):
                     metadata_value = m.ConfigMap.model_validate(v)
-                normalized_metadata_map[k] = FlextRuntime.normalize_to_general_value(
-                    FlextRuntime.normalize_to_metadata_value(metadata_value)
-                )
+                normalized_metadata_map[k] = FlextRuntime.normalize_to_container(FlextRuntime.normalize_to_metadata(metadata_value))
             metadata_for_model = m.ConfigMap(root=normalized_metadata_map)
         statistics_mapping: m.Dict = m.Dict(
             root=dict((stats_dict_export or m.ConfigMap(root={})).items())
@@ -347,7 +345,7 @@ class FlextContext(FlextRuntime):
         metadata_root: m.ConfigMap | None = (
             m.ConfigMap(
                 root={
-                    k: FlextRuntime.normalize_to_general_value(v)
+                    k: FlextRuntime.normalize_to_container(v)
                     for k, v in metadata_for_model.items()
                 }
             )
@@ -358,7 +356,7 @@ class FlextContext(FlextRuntime):
             data=dict(all_data.items()),
             metadata=m.Metadata(
                 attributes={
-                    key: FlextRuntime.normalize_to_metadata_value(value)
+                    key: FlextRuntime.normalize_to_metadata(value)
                     for key, value in metadata_root.items()
                 }
             )
@@ -412,7 +410,7 @@ class FlextContext(FlextRuntime):
                 f"Context key '{key}' has None value in scope '{scope}'"
             )
 
-        return r[t.Container].ok(FlextRuntime.normalize_to_general_value(value))
+        return r[t.Container].ok(FlextRuntime.normalize_to_container(value))
 
     def get_metadata(self, key: str) -> r[t.Container]:
         """Get metadata from the context.
@@ -444,9 +442,7 @@ class FlextContext(FlextRuntime):
         if key not in self._metadata.attributes:
             return r[t.Container].fail(f"Metadata key '{key}' not found")
         raw_value: object = self._metadata.attributes[key]
-        normalized_value: t.Container = FlextRuntime.normalize_to_general_value(
-            raw_value
-        )
+        normalized_value: t.Container = FlextRuntime.normalize_to_container(raw_value)
         return r[t.Container].ok(normalized_value)
 
     def has(self, key: str, scope: str = c.Context.SCOPE_GLOBAL) -> bool:
@@ -626,7 +622,7 @@ class FlextContext(FlextRuntime):
             value: The metadata value
 
         """
-        normalized_value: object = FlextRuntime.normalize_to_metadata_value(value)
+        normalized_value: object = FlextRuntime.normalize_to_metadata(value)
         updated_attributes = dict(self._metadata.attributes.items())
         updated_attributes[key] = normalized_value
         self._metadata = self._metadata.model_copy(
@@ -811,7 +807,7 @@ class FlextContext(FlextRuntime):
         _ = ctx_var.set(updated)
         if scope == c.Context.SCOPE_GLOBAL:
             normalized_context: dict[str, object] = {
-                key: FlextRuntime.normalize_to_metadata_value(value)
+                key: FlextRuntime.normalize_to_metadata(value)
                 for key, value in data.items()
             }
             _ = FlextLogger.bind_global_context(**normalized_context)

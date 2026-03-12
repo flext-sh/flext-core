@@ -336,13 +336,13 @@ class FlextExceptions:
         context_map: m.ConfigMap = m.ConfigMap(root={})
         if context:
             context_map.update({
-                k: FlextRuntime.normalize_to_metadata_value(v)
+                k: FlextRuntime.normalize_to_metadata(v)
                 for k, v in context.items()
                 if k not in excluded
             })
         if extra_kwargs:
             context_map.update({
-                k: FlextRuntime.normalize_to_metadata_value(v)
+                k: FlextRuntime.normalize_to_metadata(v)
                 for k, v in extra_kwargs.items()
                 if k not in excluded
             })
@@ -408,7 +408,7 @@ class FlextExceptions:
         for key in param_keys:
             attr_val = getattr(resolved, key, None)
             if attr_val is not None:
-                error_context[key] = FlextRuntime.normalize_to_metadata_value(attr_val)
+                error_context[key] = FlextRuntime.normalize_to_metadata(attr_val)
         return (resolved, error_context or None, preserved_metadata, correlation_id_str)
 
     @staticmethod
@@ -474,14 +474,14 @@ class FlextExceptions:
             attrs_map = e._safe_config_map(attrs_raw)
             if attrs_map is not None:
                 attrs = {
-                    k: FlextRuntime.normalize_to_metadata_value(v)
+                    k: FlextRuntime.normalize_to_metadata(v)
                     for k, v in attrs_map.items()
                 }
                 return m.Metadata.model_validate({"attributes": attrs})
         attrs_map = e._safe_config_map(value)
         if attrs_map is not None:
             attrs = {
-                k: FlextRuntime.normalize_to_metadata_value(v)
+                k: FlextRuntime.normalize_to_metadata(v)
                 for k, v in attrs_map.items()
             }
             return m.Metadata.model_validate({"attributes": attrs})
@@ -554,7 +554,7 @@ class FlextExceptions:
                 final_kwargs.update(dict(context))
             if extra_kwargs:
                 normalized_extra = {
-                    k: FlextRuntime.normalize_to_metadata_value(v)
+                    k: FlextRuntime.normalize_to_metadata(v)
                     for k, v in extra_kwargs.items()
                 }
                 final_kwargs.update(normalized_extra)
@@ -592,7 +592,7 @@ class FlextExceptions:
             if metadata is None:
                 if merged_kwargs:
                     normalized_attrs = {
-                        k: FlextRuntime.normalize_to_metadata_value(v)
+                        k: FlextRuntime.normalize_to_metadata(v)
                         for k, v in merged_kwargs.items()
                     }
                     return m.Metadata.model_validate({"attributes": normalized_attrs})
@@ -602,11 +602,11 @@ class FlextExceptions:
                 if not merged_kwargs:
                     return metadata_model
                 merged_attrs = {
-                    k: FlextRuntime.normalize_to_metadata_value(v)
+                    k: FlextRuntime.normalize_to_metadata(v)
                     for k, v in metadata_model.attributes.items()
                 }
                 for k, v in merged_kwargs.items():
-                    merged_attrs[k] = FlextRuntime.normalize_to_metadata_value(v)
+                    merged_attrs[k] = FlextRuntime.normalize_to_metadata(v)
                 return m.Metadata.model_validate({"attributes": merged_attrs})
             metadata_dict = e._safe_config_map(metadata)
             if metadata_dict is not None:
@@ -623,13 +623,13 @@ class FlextExceptions:
             """Normalize metadata from dict-like object."""
             merged_attrs: dict[str, object] = {}
             for k, v in metadata_dict.items():
-                merged_attrs[k] = FlextRuntime.normalize_to_metadata_value(v)
+                merged_attrs[k] = FlextRuntime.normalize_to_metadata(v)
             if merged_kwargs:
                 for k, v in merged_kwargs.items():
-                    merged_attrs[k] = FlextRuntime.normalize_to_metadata_value(v)
+                    merged_attrs[k] = FlextRuntime.normalize_to_metadata(v)
             return m.Metadata.model_validate({
                 "attributes": {
-                    k: FlextRuntime.normalize_to_metadata_value(v)
+                    k: FlextRuntime.normalize_to_metadata(v)
                     for k, v in merged_attrs.items()
                 }
             })
@@ -1200,7 +1200,7 @@ class FlextExceptions:
         e._merge_metadata_into_context(error_context, metadata_obj)
         for k, v in kwargs.items():
             if k not in {"correlation_id", "metadata"}:
-                error_context[k] = FlextRuntime.normalize_to_metadata_value(v)
+                error_context[k] = FlextRuntime.normalize_to_metadata(v)
         return error_context
 
     @staticmethod
@@ -1238,7 +1238,7 @@ class FlextExceptions:
         context_payload: Mapping[str, object] | None = None
         if error_context:
             context_payload = {
-                key: FlextRuntime.normalize_to_metadata_value(value)
+                key: FlextRuntime.normalize_to_metadata(value)
                 for key, value in error_context.items()
             }
         if error_class is not None:
@@ -1319,12 +1319,12 @@ class FlextExceptions:
         metadata_model = e._safe_metadata(metadata_obj)
         if metadata_model is not None:
             for k, v in metadata_model.attributes.items():
-                context[k] = FlextRuntime.normalize_to_metadata_value(v)
+                context[k] = FlextRuntime.normalize_to_metadata(v)
             return
         metadata_map = e._safe_config_map(metadata_obj)
         if metadata_map is not None:
             for k, metadata_value in metadata_map.items():
-                context[k] = FlextRuntime.normalize_to_metadata_value(metadata_value)
+                context[k] = FlextRuntime.normalize_to_metadata(metadata_value)
 
     @staticmethod
     def _prepare_exception_kwargs(
@@ -1445,12 +1445,12 @@ class FlextExceptions:
         """Create exception by calling the class instance."""
         normalized_kwargs: m.ConfigMap = m.ConfigMap(root={})
         for k, v in kwargs.items():
-            normalized_kwargs[k] = FlextRuntime.normalize_to_metadata_value(v)
+            normalized_kwargs[k] = FlextRuntime.normalize_to_metadata(v)
         return self.create(
             message,
             error_code,
             **{
-                k: FlextRuntime.normalize_to_metadata_value(v)
+                k: FlextRuntime.normalize_to_metadata(v)
                 for k, v in normalized_kwargs.items()
             },
         )

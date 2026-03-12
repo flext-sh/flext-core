@@ -58,13 +58,13 @@ class ContainerScenarios:
     SERVICE_SCENARIOS: ClassVar[list[ServiceScenario]] = [
         ServiceScenario(
             name="test_service",
-            service={"key": "value"},
-            description="Simple dict service",
+            service="test_service_value",
+            description="Simple string service",
         ),
         ServiceScenario(
             name="service_instance",
-            service={"instance_id": 123},
-            description="Dict service instance",
+            service=42,
+            description="Integer service instance",
         ),
         ServiceScenario(
             name="string_service",
@@ -75,10 +75,10 @@ class ContainerScenarios:
     TYPED_RETRIEVAL_SCENARIOS: ClassVar[list[TypedRetrievalScenario]] = [
         TypedRetrievalScenario(
             name="dict_service",
-            service={"key": "value"},
-            expected_type=dict,
+            service="test_dict_service",
+            expected_type=str,
             should_pass=True,
-            description="Dict service",
+            description="String service",
         ),
         TypedRetrievalScenario(
             name="string_service",
@@ -89,10 +89,10 @@ class ContainerScenarios:
         ),
         TypedRetrievalScenario(
             name="list_service",
-            service={"items": "test"},
-            expected_type=dict,
+            service=123,
+            expected_type=int,
             should_pass=True,
-            description="Dict service for typed retrieval",
+            description="Integer service for typed retrieval",
         ),
     ]
     CONFIG_SCENARIOS: ClassVar[list[dict[str, t.Scalar]]] = [

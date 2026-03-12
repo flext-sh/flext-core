@@ -352,7 +352,7 @@ class FlextUtilitiesConversion:
         """
         if isinstance(value, type_cls):
             return value
-        return type_cls(value)  # type: ignore[call-arg]
+        return type_cls(value)
 
 
 __all__ = ["FlextUtilitiesConversion"]

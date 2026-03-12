@@ -48,7 +48,7 @@ def _normalize_metadata(value: _MetadataInput) -> FlextModelFoundation.Metadata:
         raise TypeError(msg)
     items_iter = value.items()
     normalized_attrs: dict[str, object] = {
-        str(key): FlextRuntime.normalize_to_metadata_value(raw_value)
+        str(key): FlextRuntime.normalize_to_metadata(raw_value)
         for key, raw_value in items_iter
     }
     return FlextModelFoundation.Metadata.model_validate({

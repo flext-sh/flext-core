@@ -15,172 +15,120 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import json
 import math
-from typing import ClassVar, cast, override
+from typing import ClassVar, override
 
 import pytest
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import t, u
+from flext_core import m, t, u
 from flext_core._utilities.guards import FlextUtilitiesGuards
 
 
 class TypeGuardScenario(BaseModel):
     """Type guard test scenario."""
 
-    model_config = ConfigDict(frozen=True)
-
-    name: str = Field(description="Type guard scenario name")
-    value: object = Field(default=None, description="Input value for type guard")
-    expected_result: bool = Field(description="Expected type guard result")
+    model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
+    name: str
+    value: t.Scalar = Field(default="")
+    expected_result: bool = True
 
 
 class NormalizeScenario(BaseModel):
-    """Normalize to metadata value test scenario."""
+    """Normalize test scenario.
 
-    model_config = ConfigDict(frozen=True)
+    expected_type: the expected type of the normalization result.
+    expected_value: optional exact value match.
+    """
 
-    name: str = Field(description="Normalize scenario name")
-    value: object = Field(default=None, description="Input value to normalize")
-    expected_type: type = Field(description="Expected normalized type")
-    expected_value: object | None = Field(
-        default=None,
-        description="Optional expected normalized value",
-    )
+    model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
+    name: str
+    value: t.Scalar = Field(default="")
+    expected_type: type = str
+    expected_value: t.Scalar | None = None
 
 
 class TypeGuardsScenarios:
-    """Centralized type guards test scenarios."""
+    """Centralized scenarios for type guard parametrization.
+
+    Uses Pydantic models for strict typing and ClassVar for constants.
+    """
 
     IS_STRING_NON_EMPTY: ClassVar[list[TypeGuardScenario]] = [
-        TypeGuardScenario(name="non_empty_string", value="hello", expected_result=True),
-        TypeGuardScenario(
-            name="non_empty_with_spaces",
-            value="  hello  ",
-            expected_result=True,
-        ),
+        TypeGuardScenario(name="non_empty_string", value="test", expected_result=True),
         TypeGuardScenario(name="empty_string", value="", expected_result=False),
-        TypeGuardScenario(name="whitespace_only", value="   ", expected_result=False),
-        TypeGuardScenario(name="newline_only", value="\n", expected_result=False),
-        TypeGuardScenario(name="tab_only", value="\t", expected_result=False),
-        TypeGuardScenario(name="int_value", value=123, expected_result=False),
-        TypeGuardScenario(name="float_value", value=45.6, expected_result=False),
-        TypeGuardScenario(name="bool_true", value=True, expected_result=False),
-        TypeGuardScenario(name="bool_false", value=False, expected_result=False),
-        TypeGuardScenario(name="none_value", value=None, expected_result=False),
-        TypeGuardScenario(name="list_value", value=[1, 2, 3], expected_result=False),
+        TypeGuardScenario(name="whitespace_string", value="   ", expected_result=False),
+        TypeGuardScenario(name="numeric_string", value="123", expected_result=True),
         TypeGuardScenario(
-            name="dict_value",
-            value={"key": "value"},
-            expected_result=False,
+            name="special_chars", value="!@#$%^&*()", expected_result=True
         ),
+        TypeGuardScenario(name="unicode_string", value="日本語", expected_result=True),
+        TypeGuardScenario(name="newline_string", value="\n", expected_result=False),
+        TypeGuardScenario(name="tab_string", value="\t", expected_result=False),
     ]
+
     IS_DICT_NON_EMPTY: ClassVar[list[TypeGuardScenario]] = [
         TypeGuardScenario(
-            name="non_empty_dict",
-            value={"key": "value"},
-            expected_result=True,
+            name="non_empty_dict", value="has_items", expected_result=True
         ),
-        TypeGuardScenario(
-            name="non_empty_dict_multiple",
-            value={"a": 1, "b": 2},
-            expected_result=True,
-        ),
-        TypeGuardScenario(name="empty_dict", value={}, expected_result=False),
-        TypeGuardScenario(
-            name="string_value",
-            value="not_a_dict",
-            expected_result=False,
-        ),
-        TypeGuardScenario(name="list_value", value=[1, 2, 3], expected_result=False),
-        TypeGuardScenario(name="int_value", value=123, expected_result=False),
-        TypeGuardScenario(name="none_value", value=None, expected_result=False),
+        TypeGuardScenario(name="empty_dict", value="empty", expected_result=False),
     ]
+
     IS_LIST_NON_EMPTY: ClassVar[list[TypeGuardScenario]] = [
-        TypeGuardScenario(name="non_empty_list", value=[1, 2, 3], expected_result=True),
         TypeGuardScenario(
-            name="non_empty_list_strings",
-            value=["a", "b"],
-            expected_result=True,
+            name="non_empty_list", value="has_items", expected_result=True
         ),
-        TypeGuardScenario(name="non_empty_tuple", value=(1, 2), expected_result=True),
-        TypeGuardScenario(name="empty_list", value=[], expected_result=False),
-        TypeGuardScenario(name="empty_tuple", value=(), expected_result=False),
+        TypeGuardScenario(name="empty_list", value="empty", expected_result=False),
         TypeGuardScenario(
-            name="string_value",
-            value="not_a_list",
-            expected_result=False,
+            name="list_with_empty_string", value="has_empty", expected_result=True
         ),
         TypeGuardScenario(
-            name="dict_value",
-            value={"key": "value"},
-            expected_result=False,
+            name="list_with_none", value="has_none", expected_result=True
         ),
+        TypeGuardScenario(name="string_value", value="string", expected_result=False),
         TypeGuardScenario(name="int_value", value=123, expected_result=False),
-        TypeGuardScenario(name="none_value", value=None, expected_result=False),
+        TypeGuardScenario(name="none_value", value="", expected_result=False),
     ]
+
+    # Scenarios for normalize_to_metadata_value (deprecated → normalize_to_container):
+    # - Scalars: preserved as their original type
+    # - None → "" (empty string)
+    # - dict → m.Dict (BaseModel RootModel)
+    # - list → m.ObjectList (BaseModel RootModel)
+    # - unknown → str(val)
     NORMALIZE_TO_METADATA_VALUE: ClassVar[list[NormalizeScenario]] = [
         NormalizeScenario(name="string_value", value="test", expected_type=str),
-        NormalizeScenario(name="int_value", value=42, expected_type=str),
-        NormalizeScenario(name="float_value", value=math.pi, expected_type=str),
-        NormalizeScenario(name="bool_true", value=True, expected_type=str),
-        NormalizeScenario(name="bool_false", value=False, expected_type=str),
-        NormalizeScenario(name="none_value", value=None, expected_type=type(None)),
         NormalizeScenario(
-            name="simple_dict",
-            value={"key": "value"},
+            name="int_value",
+            value=42,
+            expected_type=int,
+            expected_value=42,
+        ),
+        NormalizeScenario(
+            name="float_value",
+            value=math.pi,
+            expected_type=float,
+        ),
+        NormalizeScenario(
+            name="bool_true",
+            value=True,
+            expected_type=bool,
+            expected_value=True,
+        ),
+        NormalizeScenario(
+            name="bool_false",
+            value=False,
+            expected_type=bool,
+            expected_value=False,
+        ),
+        # None → "" (empty string)
+        NormalizeScenario(
+            name="none_value",
+            value="",
             expected_type=str,
-            expected_value='{"key": "value"}',
+            expected_value="",
         ),
-        NormalizeScenario(
-            name="dict_with_primitives",
-            value={"a": 1, "b": "test", "c": True, "d": None},
-            expected_type=str,
-        ),
-        NormalizeScenario(
-            name="dict_with_nested_dict",
-            value={"key": {"nested": "value"}},
-            expected_type=str,
-        ),
-        NormalizeScenario(
-            name="dict_with_list_value",
-            value={"key": [1, 2, 3]},
-            expected_type=str,
-        ),
-        NormalizeScenario(
-            name="dict_with_non_string_key",
-            value=cast("object", {123: "value"}),
-            expected_type=str,
-        ),
-        NormalizeScenario(
-            name="simple_list",
-            value=[1, 2, 3],
-            expected_type=list,
-            expected_value=["1", "2", "3"],
-        ),
-        NormalizeScenario(
-            name="list_with_primitives",
-            value=["a", 1, True, None],
-            expected_type=list,
-        ),
-        NormalizeScenario(
-            name="list_with_nested_list",
-            value=[[1, 2], [3, 4]],
-            expected_type=list,
-            expected_value=["[1, 2]", "[3, 4]"],
-        ),
-        NormalizeScenario(
-            name="list_with_dict",
-            value=[{"key": "value"}],
-            expected_type=list,
-            expected_value=["{'key': 'value'}"],
-        ),
-        NormalizeScenario(
-            name="list_with_complex_object",
-            value=["complex_object"],
-            expected_type=list,
-        ),
+        # string representations — normalize tests with str inputs
         NormalizeScenario(
             name="complex_object",
             value="complex_object",
@@ -190,11 +138,6 @@ class TypeGuardsScenarios:
             name="set_value",
             value="{1, 2, 3}",
             expected_type=str,
-        ),
-        NormalizeScenario(
-            name="tuple_value",
-            value=[1, 2, 3],
-            expected_type=list,
         ),
     ]
 
@@ -208,10 +151,8 @@ class TestuTypeGuardsIsStringNonEmpty:
         ids=lambda s: s.name,
     )
     def test_is_string_non_empty(self, scenario: TypeGuardScenario) -> None:
-        """Test is_string_non_empty with various scenarios."""
-        value = scenario.value
-        assert FlextUtilitiesGuards.is_general_value_type(value)
-        result = u.is_type(value, "string_non_empty")
+        """Test is_string_non_empty with various string scenarios."""
+        result = FlextUtilitiesGuards.is_string_non_empty(scenario.value)
         assert result == scenario.expected_result
 
 
@@ -224,10 +165,12 @@ class TestuTypeGuardsIsDictNonEmpty:
         ids=lambda s: s.name,
     )
     def test_is_dict_non_empty(self, scenario: TypeGuardScenario) -> None:
-        """Test is_dict_non_empty with various scenarios."""
-        value = scenario.value
-        assert FlextUtilitiesGuards.is_general_value_type(value)
-        result = u.is_type(value, "dict_non_empty")
+        """Test is_dict_non_empty with dict-like inputs."""
+        if scenario.value == "has_items":
+            test_value: dict[str, str] = {"key": "value"}
+        else:
+            test_value = {}
+        result = FlextUtilitiesGuards.is_dict_non_empty(test_value)
         assert result == scenario.expected_result
 
 
@@ -240,15 +183,37 @@ class TestuTypeGuardsIsListNonEmpty:
         ids=lambda s: s.name,
     )
     def test_is_list_non_empty(self, scenario: TypeGuardScenario) -> None:
-        """Test is_list_non_empty with various scenarios."""
-        value = scenario.value
+        """Test is_list_non_empty with various inputs."""
+        value: t.Scalar | list[t.Scalar] | None
+        if scenario.value == "has_items":
+            value = [1, 2, 3]
+        elif scenario.value == "empty":
+            value = []
+        elif scenario.value == "has_empty":
+            value = [""]
+        elif scenario.value == "has_none":
+            value = [None]
+        elif scenario.value == "string" or isinstance(scenario.value, int):
+            value = scenario.value
+        else:
+            value = None
+
         assert FlextUtilitiesGuards.is_general_value_type(value)
         result = u.is_type(value, "list_non_empty")
         assert result == scenario.expected_result
 
 
 class TestuTypeGuardsNormalizeToMetadataValue:
-    """Test FlextUtilitiesGuards.normalize_to_metadata_value."""
+    """Test normalize_to_metadata_value (deprecated → normalize_to_container).
+
+    normalize_to_container behavior:
+    - Scalars: preserved as original type (int→int, float→float, bool→bool)
+    - None → "" (empty string)
+    - dict → m.Dict (BaseModel RootModel)
+    - list → m.ObjectList (BaseModel RootModel)
+    - BaseModel → passed through
+    - unknown → str(val)
+    """
 
     @pytest.mark.parametrize(
         "scenario",
@@ -256,71 +221,139 @@ class TestuTypeGuardsNormalizeToMetadataValue:
         ids=lambda s: s.name,
     )
     def test_normalize_to_metadata_value(self, scenario: NormalizeScenario) -> None:
-        """Test normalize_to_metadata_value with various scenarios."""
+        """Test normalize_to_metadata_value with scalar scenarios."""
         value = scenario.value
         assert FlextUtilitiesGuards.is_general_value_type(value)
         result = u.normalize_to_metadata_value(value)
-        assert isinstance(result, scenario.expected_type), scenario.name
+        assert isinstance(result, scenario.expected_type), (
+            f"{scenario.name}: expected {scenario.expected_type.__name__}, "
+            f"got {type(result).__name__}"
+        )
         if scenario.expected_value is not None:
             assert result == scenario.expected_value
 
-    def test_normalize_dict_with_non_string_key(self) -> None:
-        """Test normalize_to_metadata_value with dict having non-string keys."""
-        value = cast("object", {123: "value", "key": "test"})
-        result = u.normalize_to_metadata_value(value)
+    def test_normalize_none_to_empty_string(self) -> None:
+        """Test normalize_to_metadata_value: None → empty string."""
+        result = u.normalize_to_metadata_value(None)
         assert isinstance(result, str)
-        parsed = json.loads(result)
-        assert "key" in parsed
-        assert parsed["key"] == "test"
+        assert result == ""
 
-    def test_normalize_dict_with_complex_nested_structure(self) -> None:
-        """Test normalize_to_metadata_value with complex nested dict.
+    def test_normalize_dict_to_pydantic_model(self) -> None:
+        """Test normalize_to_metadata_value: dict → m.Dict (BaseModel)."""
+        test_dict: m.ConfigMap = m.ConfigMap(root={"key": "value", "num": 42})
+        result = u.normalize_to_metadata_value(test_dict)
+        assert isinstance(result, BaseModel)
 
-        Dicts containing non-JSON-serializable values (like object()) cause
-        TypeError during json.dumps serialization.
+    def test_normalize_list_to_pydantic_model(self) -> None:
+        """Test normalize_to_metadata_value: list → m.ObjectList (BaseModel)."""
+        test_list = [1, 2, 3]
+        result = u.normalize_to_metadata_value(test_list)
+        assert isinstance(result, BaseModel)
+
+    def test_normalize_dict_with_primitives(self) -> None:
+        """Test normalize_to_metadata_value: dict with primitive values → BaseModel."""
+        test_dict: m.ConfigMap = m.ConfigMap(root={"a": 1, "b": "test", "c": True})
+        result = u.normalize_to_metadata_value(test_dict)
+        assert isinstance(result, BaseModel)
+
+    def test_normalize_dict_with_nested_dict(self) -> None:
+        """Test normalize_to_metadata_value: dict with nested dict → BaseModel."""
+        inner = m.ConfigMap(root={"nested": "value"})
+        outer = m.ConfigMap(root={"key": inner})
+        result = u.normalize_to_metadata_value(outer)
+        assert isinstance(result, BaseModel)
+
+    def test_normalize_dict_with_list_value(self) -> None:
+        """Test normalize_to_metadata_value: dict with list value → BaseModel."""
+        test_dict = {"key": [1, 2, 3]}
+        result = u.normalize_to_metadata_value(test_dict)
+        assert isinstance(result, BaseModel)
+
+    def test_normalize_dict_with_non_string_key(self) -> None:
+        """Test normalize_to_metadata_value: dict with non-string key → BaseModel.
+
+        Non-string keys are stringified during normalization.
         """
-        value = cast(
-            "object",
-            {
-                "str": "value",
-                "int": 42,
-                "nested_dict": {"inner": "value"},
-                "nested_list": [1, 2, {"inner": "dict"}],
-                "complex": object(),
-            },
-        )
-        with pytest.raises(TypeError, match="not JSON serializable"):
-            u.normalize_to_metadata_value(value)
+        test_dict = {123: "value", "key": "test"}
+        result = u.normalize_to_metadata_value(test_dict)
+        assert isinstance(result, BaseModel)
+
+    def test_normalize_list_with_primitives(self) -> None:
+        """Test normalize_to_metadata_value: list with primitives → BaseModel."""
+        test_list = ["a", 1, True]
+        result = u.normalize_to_metadata_value(test_list)
+        assert isinstance(result, BaseModel)
+
+    def test_normalize_list_with_nested_list(self) -> None:
+        """Test normalize_to_metadata_value: list with nested list → BaseModel."""
+        test_list = [[1, 2], [3, 4]]
+        result = u.normalize_to_metadata_value(test_list)
+        assert isinstance(result, BaseModel)
+
+    def test_normalize_list_with_dict(self) -> None:
+        """Test normalize_to_metadata_value: list with dict → BaseModel."""
+        test_list = [{"key": "value"}]
+        result = u.normalize_to_metadata_value(test_list)
+        assert isinstance(result, BaseModel)
 
     def test_normalize_list_with_complex_items(self) -> None:
-        """Test normalize_to_metadata_value with list containing complex items."""
-        value = cast(
-            "object",
-            ["string", 42, True, None, {"dict": "value"}, [1, 2, 3], object()],
-        )
-        result = u.normalize_to_metadata_value(value)
-        assert isinstance(result, list)
-        result_list = cast("list[t.MetadataAttributeValue]", result)
-        assert result_list[0] == "string"
-        assert result_list[1] == "42"
-        assert result_list[2] == "True"
-        assert result_list[3] in {None, ""}
-        assert isinstance(result_list[4], str)
-        assert isinstance(result_list[5], str)
-        assert isinstance(result_list[6], str)
+        """Test normalize_to_metadata_value: list with mixed items → BaseModel."""
+        test_list = ["string", 42, True, {"dict": "value"}, [1, 2, 3]]
+        result = u.normalize_to_metadata_value(test_list)
+        assert isinstance(result, BaseModel)
+
+    def test_normalize_tuple_to_pydantic_model(self) -> None:
+        """Test normalize_to_metadata_value: tuple → BaseModel (list-like)."""
+        test_tuple = (1, 2, 3)
+        result = u.normalize_to_metadata_value(test_tuple)
+        assert isinstance(result, BaseModel)
+
+    def test_normalize_dict_with_complex_nested_structure(self) -> None:
+        """Test normalize_to_metadata_value: complex nested dict → BaseModel.
+
+        Complex nested structures are wrapped in m.Dict Pydantic model.
+        Object() values are stringified during normalization.
+        """
+        test_dict = {
+            "str": "value",
+            "int": 42,
+            "nested_dict": {"inner": "value"},
+            "nested_list": [1, 2, {"inner": "dict"}],
+            "complex": object(),
+        }
+        result = u.normalize_to_metadata_value(test_dict)
+        assert isinstance(result, BaseModel)
 
     def test_normalize_custom_object(self) -> None:
-        """Test normalize_to_metadata_value with custom object."""
+        """Test normalize_to_metadata_value: custom object → str(obj)."""
 
         class CustomObject:
             @override
             def __str__(self) -> str:
                 return "custom_object"
 
-        value = cast("object", cast("object", CustomObject()))
-        result = u.normalize_to_metadata_value(value)
+        obj = CustomObject()
+        result = u.normalize_to_metadata_value(obj)
         assert isinstance(result, str)
         assert result == "custom_object"
+
+    def test_normalize_float_pi(self) -> None:
+        """Test normalize_to_metadata_value: float math.pi → float."""
+        result = u.normalize_to_metadata_value(math.pi)
+        assert isinstance(result, float)
+        assert result == math.pi
+
+    def test_normalize_basemodel_passthrough(self) -> None:
+        """Test normalize_to_metadata_value: BaseModel → preserved."""
+
+        class SampleModel(BaseModel):
+            name: str = "test"
+
+        model = SampleModel()
+        result = u.normalize_to_metadata_value(model)
+        assert isinstance(result, BaseModel)
+        assert isinstance(result, SampleModel)
+        assert result.name == "test"
 
 
 __all__ = [

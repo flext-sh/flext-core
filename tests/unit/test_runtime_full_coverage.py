@@ -8,7 +8,7 @@ import logging
 import queue
 import types
 from collections import UserDict
-from collections.abc import Callable, Generator, ItemsView, Iterator
+from collections.abc import Callable, Generator, ItemsView, Iterator, Mapping
 from datetime import UTC, datetime
 from importlib import import_module
 from pathlib import Path
@@ -263,10 +263,11 @@ def test_runtime_create_instance_failure_branch(
 
 def test_normalization_edge_branches() -> None:
     cfg = m.ConfigMap(root={"a": 1})
-    normalized_cfg = FlextRuntime.normalize_to_general_value(cfg)
-    assert normalized_cfg == {"a": 1}
+    normalized_cfg = FlextRuntime.normalize_to_container(cfg)
+    assert hasattr(normalized_cfg, "root") and normalized_cfg.root == {"a": 1}
 
-    class DictLike:
+    class DictLike(Mapping[str, object]):
+        @override
         def __getitem__(self, key: str) -> object:
             if key == "x":
                 return 1
@@ -278,29 +279,50 @@ def test_normalization_edge_branches() -> None:
         def items(self) -> list[tuple[str, object]]:
             return [("x", 1)]
 
-        def get(self, key: str, default: object = None) -> object:
-            _ = key
-            return default
+        @override
+        def __len__(self) -> int:
+            return 1
 
-        def __iter__(self) -> Iterator[tuple[str, int]]:
-            return iter([("x", 1)])
+        @override
+        def __iter__(self) -> Iterator[str]:
+            return iter(["x"])
 
-    normalized_dict_like = FlextRuntime.normalize_to_general_value(
-        cast("object", cast("object", DictLike())),
+    normalized_dict_like = FlextRuntime.normalize_to_container(
+        cast("object", DictLike()),
     )
-    assert normalized_dict_like == {"x": 1}
-    metadata_cfg = FlextRuntime.normalize_to_metadata_value(cfg)
-    assert metadata_cfg == '{"a": 1}'
-    metadata_dict_like = FlextRuntime.normalize_to_metadata_value(
-        cast("object", cast("object", DictLike())),
+    assert hasattr(normalized_dict_like, "root") and normalized_dict_like.root == {"x": 1}
+    # normalize_to_metadata delegates to normalize_to_container
+    # ConfigMap is BaseModel → returned as-is
+    metadata_cfg = FlextRuntime.normalize_to_metadata(cfg)
+    assert isinstance(metadata_cfg, BaseModel)
+    # DictLike is Mapping → wrapped in Dict model
+    metadata_dict_like = FlextRuntime.normalize_to_metadata(
+        cast("object", DictLike()),
     )
-    assert metadata_dict_like == '{"x": 1}'
-    metadata_list = FlextRuntime.normalize_to_metadata_value(
+    assert hasattr(metadata_dict_like, "root") and metadata_dict_like.root == {"x": 1}
+    # List → wrapped in ObjectList model
+    metadata_list = FlextRuntime.normalize_to_metadata(
         cast("object", ["a", object()]),
     )
-    assert isinstance(metadata_list, list)
-    assert metadata_list[0] == "a"
-    assert isinstance(metadata_list[1], str)
+    assert hasattr(metadata_list, "root")
+
+
+def test_deprecated_normalize_to_general_value_warns() -> None:
+    """Verify deprecated normalize_to_general_value emits DeprecationWarning."""
+    # COMPATIBILITY: normalize_to_general_value deprecated → use normalize_to_container
+    # Planned removal: v0.12
+    with pytest.warns(DeprecationWarning, match="normalize_to_general_value is deprecated"):
+        result = FlextRuntime.normalize_to_general_value("hello")
+    assert result == "hello"
+
+
+def test_deprecated_normalize_to_metadata_value_warns() -> None:
+    """Verify deprecated normalize_to_metadata_value emits DeprecationWarning."""
+    # COMPATIBILITY: normalize_to_metadata_value deprecated → use normalize_to_metadata
+    # Planned removal: v0.12
+    with pytest.warns(DeprecationWarning, match="normalize_to_metadata_value is deprecated"):
+        result = FlextRuntime.normalize_to_metadata_value(42)
+    assert result is not None
 
 
 def test_get_logger_none_name_paths(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -666,20 +688,21 @@ def test_config_bridge_and_trace_context_and_http_validation() -> None:
             msg = "boom"
             raise RuntimeError(msg)
 
-    with pytest.raises(RuntimeError, match="boom"):
-        FlextRuntime.ensure_trace_context(cast("object", BadDict()))
+    # ensure_trace_context catches RuntimeError internally for bad mappings
+    bad_trace = FlextRuntime.ensure_trace_context(cast("object", BadDict()))
+    assert "trace_id" in bad_trace  # graceful fallback
     trace_from_mapping = FlextRuntime.ensure_trace_context(MappingProxyType({"a": "b"}))
     assert "trace_id" in trace_from_mapping
     trace_from_other = FlextRuntime.ensure_trace_context(Path())
     assert "trace_id" in trace_from_other
-    ok_statuses: list[object] = [200, "201"]
+    ok_statuses: list[int | str] = [200, "201"]
     ok_result = FlextRuntime.validate_http_status_codes(ok_statuses)
     assert ok_result.is_success and ok_result.value == [200, 201]
     bad_range = FlextRuntime.validate_http_status_codes([99])
     assert bad_range.is_failure and "Invalid HTTP status code" in (
         bad_range.error or ""
     )
-    invalid_statuses: list[object] = [cast("object", object())]
+    invalid_statuses: list[int | str] = cast("list[int | str]", [object()])
     bad_type = FlextRuntime.validate_http_status_codes(invalid_statuses)
     assert bad_type.is_failure and "Invalid HTTP status code type" in (
         bad_type.error or ""
@@ -705,18 +728,22 @@ def test_runtime_misc_remaining_paths(monkeypatch: pytest.MonkeyPatch) -> None:
         value: int = 1
 
     assert FlextRuntime.is_base_model(BasicModel()) is True
-    normalized_mapping = FlextRuntime.normalize_to_general_value(
+    normalized_mapping = FlextRuntime.normalize_to_container(
         MappingProxyType({"k": "v"}),
     )
-    assert normalized_mapping == {"k": "v"}
-    assert FlextRuntime.normalize_to_general_value([1, "x"]) == [1, "x"]
-    assert FlextRuntime.normalize_to_general_value(Path("/tmp")) == "/tmp"
-    assert FlextRuntime.normalize_to_metadata_value(1) == "1"
-    assert (
-        FlextRuntime.normalize_to_metadata_value(MappingProxyType({"a": 1}))
-        == '{"a": 1}'
-    )
-    assert FlextRuntime.normalize_to_metadata_value(Path("/tmp")) == "/tmp"
+    assert hasattr(normalized_mapping, "root") and normalized_mapping.root == {"k": "v"}
+    norm_list = FlextRuntime.normalize_to_container([1, "x"])
+    assert hasattr(norm_list, "root") and list(norm_list.root) == [1, "x"]
+    # Path is Container, returned as-is
+    assert FlextRuntime.normalize_to_container(Path("/tmp")) == Path("/tmp")
+    # normalize_to_metadata delegates to normalize_to_container:
+    # int is scalar → returned as-is (int 1, not string "1")
+    assert FlextRuntime.normalize_to_metadata(1) == 1
+    # MappingProxyType → Dict wrapper with root
+    metadata_mapping = FlextRuntime.normalize_to_metadata(MappingProxyType({"a": 1}))
+    assert hasattr(metadata_mapping, "root") and metadata_mapping.root == {"a": 1}
+    # Path → returned as-is (Path is Container)
+    assert FlextRuntime.normalize_to_metadata(Path("/tmp")) == Path("/tmp")
 
     class Frame:
         f_back: types.FrameType | None = None

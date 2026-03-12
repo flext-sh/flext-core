@@ -168,7 +168,7 @@ class FlextUtilitiesGenerators:
                 msg = f"Failed to convert Mapping {context.__class__.__name__}: {e}"
                 raise TypeError(msg) from e
         try:
-            model_data = FlextRuntime.normalize_to_general_value(context.model_dump())
+            model_data = FlextRuntime.normalize_to_container(context.model_dump())
             if FlextUtilitiesGenerators._is_config_mapping(model_data):
                 return dict(model_data.items())
         except (AttributeError, TypeError) as e:
@@ -267,7 +267,7 @@ class FlextUtilitiesGenerators:
                 msg = f"Failed to convert Mapping {value.__class__.__name__}: {e}"
                 raise TypeError(msg) from e
         if isinstance(value, BaseModel):
-            normalized = FlextRuntime.normalize_to_general_value(value)
+            normalized = FlextRuntime.normalize_to_container(value)
             if isinstance(normalized, Mapping):
                 try:
                     return dict(normalized.items())

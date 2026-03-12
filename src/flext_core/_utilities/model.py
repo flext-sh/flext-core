@@ -261,7 +261,7 @@ class FlextUtilitiesModel:
         if FlextRuntime.is_dict_like(value):
             attributes: dict[str, object] = {}
             for key, val in value.items():
-                attributes[str(key)] = FlextRuntime.normalize_to_metadata_value(val)
+                attributes[str(key)] = FlextRuntime.normalize_to_metadata(val)
             return m.Metadata.model_validate({"attributes": attributes})
         msg = f"metadata must be None, dict, or m.Metadata, got {value.__class__.__name__}"
         raise TypeError(msg)
@@ -332,9 +332,7 @@ class FlextUtilitiesModel:
                     elif isinstance(
                         value, (str, int, float, bool, type(None), BaseModel)
                     ):
-                        normalized_value = FlextRuntime.normalize_to_general_value(
-                            value
-                        )
+                        normalized_value = FlextRuntime.normalize_to_container(value)
                     else:
                         normalized_value = str(value)
                     normalized_model_dump[str(key)] = normalized_value
@@ -346,7 +344,7 @@ class FlextUtilitiesModel:
                 normalized_mapping: dict[str, object] = {}
                 for key, value in obj.items():
                     normalized_mapping_value: object = (
-                        FlextRuntime.normalize_to_general_value(value)
+                        FlextRuntime.normalize_to_container(value)
                         if isinstance(
                             value, (str, int, float, bool, type(None), BaseModel)
                         )
@@ -358,7 +356,7 @@ class FlextUtilitiesModel:
                 return m.ConfigMap(root={})
 
         # Fallback to general value normalization
-        normalized = FlextRuntime.normalize_to_general_value(obj)
+        normalized = FlextRuntime.normalize_to_container(obj)
         if isinstance(normalized, Mapping):
             return m.ConfigMap(root=dict(normalized.items()))
         return m.ConfigMap(root={})

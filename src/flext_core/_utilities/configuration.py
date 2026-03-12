@@ -233,9 +233,7 @@ class FlextUtilitiesConfiguration:
             model_dump_attr = getattr(obj, "model_dump", None)
             if model_dump_attr is None or not callable(model_dump_attr):
                 return FlextUtilitiesConfiguration._NOT_FOUND
-            obj_dict: object = FlextRuntime.normalize_to_general_value(
-                model_dump_attr()
-            )
+            obj_dict: object = FlextRuntime.normalize_to_container(model_dump_attr())
             if FlextUtilitiesGuards.is_mapping(obj_dict) and parameter in obj_dict:
                 raw_value = obj_dict[parameter]
                 if raw_value is None or isinstance(raw_value, (str, int, float, bool)):

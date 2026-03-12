@@ -455,11 +455,11 @@ class FlextRuntime:
         return logger
 
     @staticmethod
-    def is_base_model(obj: t.GeneralValueType) -> TypeGuard[BaseModel]:
-        """Type guard to narrow object to BaseModel (part of object).
+    def is_base_model(obj: object) -> TypeGuard[BaseModel]:
+        """Type guard to narrow object to BaseModel.
 
         This allows isinstance checks to narrow types for FlextRuntime methods
-        that accepobject (which includes BaseModel).
+        that accept object (which includes BaseModel).
         """
         match obj:
             case BaseModel():
@@ -606,17 +606,14 @@ class FlextRuntime:
     @staticmethod
     def normalize_to_container(
         val: object,
-    ) -> t.Container:
-        """Normalize any value to t.Container recursively (Scalar | BaseModel | Path).
-
-        Avoids recursive generalized types by wrapping nested structures in
-        Pydantic RootModels (m.Dict, m.ObjectList).
+    ) -> t.Container | BaseModel:
+        """Normalize any value to t.Container | BaseModel.
 
         Args:
             val: Value to normalize
 
         Returns:
-            t.Container: Normalized value compatible with persistent storage.
+            Scalar | Path | BaseModel
 
         """
         if val is None:
@@ -627,13 +624,13 @@ class FlextRuntime:
             return val
         if FlextRuntime.is_dict_like(val):
             raw_dict = getattr(val, "root", val)
-            normalized_dict: dict[str, t.Container] = {}
+            normalized_dict: dict[str, t.Container | BaseModel] = {}
             if isinstance(raw_dict, Mapping):
                 for k, v in raw_dict.items():
                     normalized_dict[str(k)] = FlextRuntime.normalize_to_container(v)
             return FlextModelsContainers.Dict(root=normalized_dict)
         if FlextRuntime.is_list_like(val):
-            normalized_list: list[t.Container] = []
+            normalized_list: list[t.Container | BaseModel] = []
             if isinstance(val, Sequence):
                 normalized_list.extend(
                     FlextRuntime.normalize_to_container(item) for item in val
@@ -642,7 +639,7 @@ class FlextRuntime:
         return str(val)
 
     @staticmethod
-    def normalize_to_general_value(val: object) -> t.Container:
+    def normalize_to_general_value(val: object) -> t.Container | BaseModel:
         """Deprecated alias; use normalize_to_container."""
         warnings.warn(
             "normalize_to_general_value is deprecated; use normalize_to_container. "
@@ -655,16 +652,12 @@ class FlextRuntime:
     @staticmethod
     def normalize_to_metadata(
         val: object,
-    ) -> t.Container:
-        """Normalize any value to t.Container for metadata.
-
-        Wraps nested structures in Pydantic models for strict type safety
-        and Pydantic usage throughout the FLEXT ecosystem.
-        """
+    ) -> t.Container | BaseModel:
+        """Normalize any value to t.Container | BaseModel for metadata."""
         return FlextRuntime.normalize_to_container(val)
 
     @staticmethod
-    def normalize_to_metadata_value(val: object) -> t.Container:
+    def normalize_to_metadata_value(val: object) -> t.Container | BaseModel:
         """Deprecated alias; use normalize_to_metadata."""
         warnings.warn(
             "normalize_to_metadata_value is deprecated; use normalize_to_metadata. "
@@ -952,7 +945,7 @@ class FlextRuntime:
         config: object | None = None,
         log_level: int | None = None,
         console_renderer: bool = True,
-        additional_processors: Sequence[t.GeneralValueType] | None = None,
+        additional_processors: Sequence[t.Container] | None = None,
         wrapper_class_factory: Callable[[], type[p.Log.StructlogLogger]] | None = None,
         logger_factory: Callable[[], p.Log.StructlogLogger] | None = None,
         cache_logger_on_first_use: bool = True,
@@ -1056,7 +1049,7 @@ class FlextRuntime:
         *,
         log_level: int | None = None,
         console_renderer: bool = True,
-        additional_processors: list[t.GeneralValueType] | None = None,
+        additional_processors: list[t.Container] | None = None,
     ) -> None:
         """Force reconfigure structlog (ignores is_configured checks).
 
@@ -1176,7 +1169,7 @@ class FlextRuntime:
             "critical": 50,
         }
         current_level = level_hierarchy.get(method_name.lower(), 20)
-        filtered_dict: dict[str, t.GeneralValueType] = {}
+        filtered_dict: dict[str, t.Scalar] = {}
         for key, value in event_dict.items():
             if key.startswith("_level_"):
                 parts = key.split("_", c.Validation.LEVEL_PREFIX_PARTS_COUNT)
@@ -1270,7 +1263,10 @@ class FlextRuntime:
             if not self.is_success:
                 msg = f"Cannot access value of failed result: {self.error}"
                 raise RuntimeError(msg)
-            return self._payload  # type: ignore[return-value]
+            if self._payload is None:
+                msg = "Invariant violation: success result has None payload"
+                raise RuntimeError(msg)
+            return self._payload
 
         @classmethod
         def fail[U](
@@ -1636,9 +1632,15 @@ class FlextRuntime:
         """
         context_dict = FlextModelsContainers.ConfigMap(root={})
         if isinstance(context, Mapping):
-            parsed_context: dict[str, str] = TypeAdapter(
-                dict[str, str]
-            ).validate_python(context)
+            try:
+                parsed_context: dict[str, str] = {
+                    str(k): str(v) for k, v in context.items()
+                }
+            except (TypeError, ValueError, AttributeError, RuntimeError) as exc:
+                logging.getLogger(__name__).debug(
+                    "Failed to convert mapping context to string dict", exc_info=exc
+                )
+                parsed_context = {}
             context_dict = FlextModelsContainers.ConfigMap.model_validate(
                 parsed_context
             )
@@ -1765,7 +1767,7 @@ class FlextRuntime:
         return hash((entity.__class__.__name__, entity_id))
 
     @staticmethod
-    def hash_value_object_by_value(obj: t.GeneralValueType) -> int:
+    def hash_value_object_by_value(obj: object) -> int:
         """Hash value object based on all attribute values."""
         if FlextRuntime._is_scalar(obj):
             return hash(obj)
@@ -1778,7 +1780,7 @@ class FlextRuntime:
 
     @staticmethod
     def validate_http_status_codes(
-        codes: list[int] | list[str] | list[t.GeneralValueType],
+        codes: list[int] | list[str] | list[int | str],
         min_code: int | None = None,
         max_code: int | None = None,
     ) -> RuntimeResult[list[int]]:
