@@ -68,8 +68,8 @@ from flext_tests import c, m, t, u
 
 _TEST_PAYLOAD_DICT_ADAPTER = TypeAdapter(dict[str, t.Tests.ContainerValue])
 _TEST_PAYLOAD_LIST_ADAPTER = TypeAdapter(list[t.Tests.ContainerValue])
-_GUARD_PAYLOAD_DICT_ADAPTER = TypeAdapter(dict[str, core_object])
-_GUARD_PAYLOAD_LIST_ADAPTER = TypeAdapter(list[core_object])
+_GUARD_PAYLOAD_DICT_ADAPTER = TypeAdapter(dict[str, object])
+_GUARD_PAYLOAD_LIST_ADAPTER = TypeAdapter(list[object])
 
 
 def _is_non_string_sequence(value: object) -> TypeGuard[Sequence[object]]:

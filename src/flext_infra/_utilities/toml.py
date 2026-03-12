@@ -46,7 +46,7 @@ class FlextInfraUtilitiesToml:
 
     @staticmethod
     def _get_container_list_adapter() -> TypeAdapter[list[object]]:
-        """Get or create TypeAdapter for list[ContainerValue]."""
+        """Get or create TypeAdapter for lisobject]."""
         if FlextInfraUtilitiesToml._CONTAINER_LIST_ADAPTER is None:
             FlextInfraUtilitiesToml._CONTAINER_LIST_ADAPTER = TypeAdapter(
                 list[object],

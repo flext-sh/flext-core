@@ -60,7 +60,7 @@ def _to_scalar(value: object) -> core_t.Scalar:
 
 
 def _to_payload(value: object) -> t.Tests.ContainerValue:
-    """Convert a value to test ContainerValue.
+    """Convert a value to tesobject.
 
     Args:
         value: Any value to convert
@@ -95,7 +95,7 @@ def _to_payload(value: object) -> t.Tests.ContainerValue:
 
 
 def _to_config_map_value(value: t.Tests.ContainerValue) -> core_object:
-    """Convert ContainerValue to ContainerValue."""
+    """Converobject to ContainerValue."""
     if value is None or isinstance(value, t.Primitives | BaseModel):
         return value
     if isinstance(value, bytes):

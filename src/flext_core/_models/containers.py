@@ -26,10 +26,10 @@ class FlextModelsContainers:
     Access via ``m.ConfigMap``, ``m.Dict``, etc.
     """
 
-    class ObjectList(RootModel[list[t.GeneralValueType]]):
+    class ObjectList(RootModel[list[object]]):
         """Sequence of container values for batch operations."""
 
-        root: list[t.GeneralValueType]
+        root: list[object]
 
     @typing.runtime_checkable
     class _RootDictProtocol[RootValueT](typing.Protocol):
@@ -78,26 +78,26 @@ class FlextModelsContainers:
         def values(self) -> ValuesView[DictValueT]:
             return self.root.values()
 
-    class Dict(_RootDictModel[t.GeneralValueType]):
+    class Dict(_RootDictModel[object]):
         """Generic dictionary container. Use ``m.Dict``."""
 
-        root: dict[str, t.GeneralValueType] = Field(
+        root: dict[str, object] = Field(
             default_factory=dict,
             description="Dictionary payload storing generic container values by key.",
         )
 
-    class ConfigMap(_RootDictModel[t.GeneralValueType]):
+    class ConfigMap(_RootDictModel[object]):
         """Configuration map container. Use ``m.ConfigMap``."""
 
-        root: dict[str, t.GeneralValueType] = Field(
+        root: dict[str, object] = Field(
             default_factory=dict,
             description="Configuration entries keyed by normalized setting names.",
         )
 
-    class ServiceMap(_RootDictModel[t.GeneralValueType]):
+    class ServiceMap(_RootDictModel[object]):
         """Service registry map container. Use ``m.ServiceMap``."""
 
-        root: dict[str, t.GeneralValueType] = Field(
+        root: dict[str, object] = Field(
             default_factory=dict,
             description="Service registry entries keyed by service identifiers.",
         )
