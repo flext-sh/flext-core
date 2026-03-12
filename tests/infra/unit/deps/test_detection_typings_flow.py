@@ -12,6 +12,9 @@ from flext_tests import tm
 from ...models import m
 from ...typings import t
 
+from ...models import m
+from ...typings import t
+
 
 class _StubToml:
     def __init__(self, values: list[r[dict[str, t.Infra.TomlValue]]]) -> None:

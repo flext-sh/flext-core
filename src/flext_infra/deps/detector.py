@@ -5,6 +5,8 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
+from pydantic import Field
+
 from flext_core import FlextLogger, r
 from flext_infra import (
     FlextInfraUtilitiesIo,
@@ -35,7 +37,6 @@ class FlextInfraRuntimeDevDependencyDetector:
 
     @staticmethod
     def parser(default_limits_path: Path) -> argparse.ArgumentParser:
-    def parser(default_limits_path: Path) -> argparse.ArgumentParser:
         """Create argument parser for CLI with deptry, pip-check, and typing options."""
         parser = argparse.ArgumentParser(
             description="Detect runtime vs dev dependencies (deptry + pip check).",
@@ -47,7 +48,6 @@ class FlextInfraRuntimeDevDependencyDetector:
         )
         _ = parser.add_argument(
             "--projects", metavar="NAMES", help="Comma-separated list of project names."
-            "--projects", metavar="NAMES", help="Comma-separated list of project names."
         )
         _ = parser.add_argument(
             "--no-pip-check",
@@ -55,7 +55,6 @@ class FlextInfraRuntimeDevDependencyDetector:
             help="Skip pip check (workspace-level).",
         )
         _ = parser.add_argument(
-            "--dry-run", action="store_true", help="Do not write report files."
             "--dry-run", action="store_true", help="Do not write report files."
         )
         _ = parser.add_argument(
@@ -72,10 +71,8 @@ class FlextInfraRuntimeDevDependencyDetector:
         )
         _ = parser.add_argument(
             "-q", "--quiet", action="store_true", help="Minimal output (summary only)."
-            "-q", "--quiet", action="store_true", help="Minimal output (summary only)."
         )
         _ = parser.add_argument(
-            "--no-fail", action="store_true", help="Always exit 0 (report only)."
             "--no-fail", action="store_true", help="Always exit 0 (report only)."
         )
         _ = parser.add_argument(
@@ -97,7 +94,6 @@ class FlextInfraRuntimeDevDependencyDetector:
         return parser
 
     @staticmethod
-    def project_filter(args: argparse.Namespace) -> list[str] | None:
     def project_filter(args: argparse.Namespace) -> list[str] | None:
         """Extract project filter list from parsed CLI arguments."""
         if args.project:

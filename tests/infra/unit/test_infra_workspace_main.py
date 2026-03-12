@@ -7,7 +7,6 @@ import pytest
 
 from flext_core import r
 from flext_infra.models import FlextInfraModels as m
-from flext_infra.models import FlextInfraModels as m
 from flext_infra.workspace import __main__ as workspace_main
 from flext_infra.workspace.detector import FlextInfraWorkspaceDetector, WorkspaceMode
 from flext_infra.workspace.migrator import FlextInfraProjectMigrator
@@ -128,7 +127,6 @@ class TestRunOrchestrate:
             FlextInfraOrchestratorService,
             "orchestrate",
             _orchestrate_partial,
-            _orchestrate_partial,
         )
         tm.that(workspace_main._run_orchestrate(_orch_args()), eq=1)
 
@@ -210,7 +208,6 @@ class TestRunMigrate:
         monkeypatch.setattr(
             FlextInfraProjectMigrator,
             "migrate",
-            _migrate_with_errors,
             _migrate_with_errors,
         )
         tm.that(

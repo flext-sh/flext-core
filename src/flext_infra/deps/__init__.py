@@ -73,10 +73,16 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "flext_infra.deps._phases.ensure_mypy",
         "EnsureMypyConfigPhase",
     ),
+    "EnsurePyrightConfigPhase": (
+        "flext_infra.deps._phases",
+        "EnsurePyrightConfigPhase",
     "EnsureNamespaceToolingPhase": (
         "flext_infra.deps._phases.ensure_namespace",
         "EnsureNamespaceToolingPhase",
     ),
+    "EnsurePytestConfigPhase": (
+        "flext_infra.deps._phases",
+        "EnsurePytestConfigPhase",
     "EnsurePydanticMypyConfigPhase": (
         "flext_infra.deps._phases.ensure_pydantic_mypy",
         "EnsurePydanticMypyConfigPhase",

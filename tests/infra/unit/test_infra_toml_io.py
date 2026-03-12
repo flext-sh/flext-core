@@ -33,6 +33,12 @@ class TestFlextInfraTomlRead:
         section_obj: object = doc["section"]
         assert isinstance(section_obj, Table)
         section = section_obj
+        if doc is None:
+            msg = "expected parsed TOML document"
+            raise AssertionError(msg)
+        section_obj: object = doc["section"]
+        assert isinstance(section_obj, Table)
+        section = section_obj
         tm.that(section["key"], eq="value")
         tm.that(section["number"], eq=42)
 
@@ -58,6 +64,9 @@ class TestFlextInfraTomlDocument:
         result = service.read_document(toml_file)
         tm.ok(result)
         doc = result.value
+        section_obj: object = doc["section"]
+        assert isinstance(section_obj, Table)
+        section = section_obj
         section_obj: object = doc["section"]
         assert isinstance(section_obj, Table)
         section = section_obj
@@ -126,10 +135,19 @@ class TestFlextInfraTomlDocument:
         section_obj: object = doc["section"]
         assert isinstance(section_obj, Table)
         section = section_obj
+        section_obj: object = doc["section"]
+        assert isinstance(section_obj, Table)
+        section = section_obj
         section["key"] = "new"
         tm.ok(service.write_document(toml_file, doc))
         verify_doc = service.read(toml_file)
         tm.that(verify_doc, none=False)
+        if verify_doc is None:
+            msg = "expected persisted TOML document"
+            raise AssertionError(msg)
+        verify_section_obj: object = verify_doc["section"]
+        assert isinstance(verify_section_obj, Table)
+        verify_section = verify_section_obj
         if verify_doc is None:
             msg = "expected persisted TOML document"
             raise AssertionError(msg)

@@ -13,6 +13,9 @@ from flext_infra import FlextInfraUtilitiesDiscovery, FlextInfraUtilitiesToml, m
 from flext_infra.deps import path_sync as path_sync_module
 from flext_tests import tm
 
+from ... import h
+from ...models import m
+
 
 class _OutputNoop:
     def info(self, _message: str) -> None:
@@ -37,24 +40,23 @@ def test_main_project_obj_not_dict_first_loop(
     project_dir.mkdir()
     (project_dir / "pyproject.toml").touch()
 
-    def _mock_discover_1(
-        _self: FlextInfraUtilitiesDiscovery, _root: Path
+    def _discover_projects(
+        _self: object,
+        _root: Path,
     ) -> r[list[m.Infra.Workspace.ProjectInfo]]:
         return r[list[m.Infra.Workspace.ProjectInfo]].ok([_project(project_dir)])
 
-    def _mock_read_doc_1(
-        _self: FlextInfraUtilitiesToml, _path: Path
-    ) -> r[TOMLDocument]:
+    def _read_document(_self: object, _path: Path) -> r[TOMLDocument]:
         return r[TOMLDocument].ok(tomlkit.parse('[project]\nvalue = "not-a-dict"\n'))
 
     monkeypatch.setattr(sys, "argv", ["sync-paths"])
     monkeypatch.setattr(
         "flext_infra.FlextInfraUtilitiesDiscovery.discover_projects",
-        _mock_discover_1,
+        _discover_projects,
     )
     monkeypatch.setattr(
         "flext_infra.FlextInfraUtilitiesToml.read_document",
-        _mock_read_doc_1,
+        _read_document,
     )
     monkeypatch.setattr(path_sync_module, "output", _OutputNoop())
     tm.that(path_sync_module.main(), eq=0)
@@ -64,27 +66,25 @@ def test_main_project_obj_not_dict_second_loop(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-
-    def _mock_discover_2(
-        _self: FlextInfraUtilitiesDiscovery, _root: Path
+    def _discover_projects(
+        _self: object,
+        _root: Path,
     ) -> r[list[m.Infra.Workspace.ProjectInfo]]:
         return r[list[m.Infra.Workspace.ProjectInfo]].ok([
             _project(tmp_path / "test-project")
         ])
 
-    def _mock_read_doc_2(
-        _self: FlextInfraUtilitiesToml, _path: Path
-    ) -> r[TOMLDocument]:
+    def _read_document(_self: object, _path: Path) -> r[TOMLDocument]:
         return r[TOMLDocument].ok(tomlkit.parse('[project]\nvalue = "not-a-dict"\n'))
 
     monkeypatch.setattr(sys, "argv", ["sync-paths"])
     monkeypatch.setattr(
         "flext_infra.FlextInfraUtilitiesDiscovery.discover_projects",
-        _mock_discover_2,
+        _discover_projects,
     )
     monkeypatch.setattr(
         "flext_infra.FlextInfraUtilitiesToml.read_document",
-        _mock_read_doc_2,
+        _read_document,
     )
     monkeypatch.setattr(path_sync_module, "output", _OutputNoop())
     tm.that(path_sync_module.main(), eq=0)
