@@ -483,7 +483,7 @@ class FlextRuntime:
     @staticmethod
     def is_dict_like(
         value: object,
-    ) -> TypeGuard[FlextModelsContainers.ConfigMap]:
+    ) -> TypeGuard[FlextModelsContainers.ConfigMap | Mapping[object, object]]:
         """Type guard to check if value is dict-like.
 
         Note:
@@ -623,18 +623,22 @@ class FlextRuntime:
         if isinstance(val, BaseModel):
             return val
         if FlextRuntime.is_dict_like(val):
-            raw_dict = getattr(val, "root", val)
-            normalized_dict: dict[str, t.Container | BaseModel] = {}
-            if isinstance(raw_dict, Mapping):
-                for k, v in raw_dict.items():
-                    normalized_dict[str(k)] = FlextRuntime.normalize_to_container(v)
+            normalized_dict: dict[str, object] = {}
+            if isinstance(val, FlextModelsContainers.ConfigMap):
+                for key, item in val.root.items():
+                    normalized_dict[key] = FlextRuntime.normalize_to_container(item)
+            else:
+                typed_mapping = val
+                for key, item in typed_mapping.items():
+                    normalized_dict[str(key)] = FlextRuntime.normalize_to_container(
+                        item
+                    )
             return FlextModelsContainers.Dict(root=normalized_dict)
         if FlextRuntime.is_list_like(val):
-            normalized_list: list[t.Container | BaseModel] = []
-            if isinstance(val, Sequence):
-                normalized_list.extend(
-                    FlextRuntime.normalize_to_container(item) for item in val
-                )
+            normalized_list: list[object] = []
+            normalized_list.extend(
+                FlextRuntime.normalize_to_container(item) for item in val
+            )
             return FlextModelsContainers.ObjectList(root=normalized_list)
         return str(val)
 
@@ -1273,7 +1277,10 @@ class FlextRuntime:
             cls: type[FlextRuntime.RuntimeResult[U]],
             error: str | None,
             error_code: str | None = None,
-            error_data: t.ResultErrorData | None = None,
+            error_data: t.ResultErrorData
+            | BaseModel
+            | FlextModelsContainers.ConfigMap
+            | None = None,
         ) -> FlextRuntime.RuntimeResult[U]:
             """Create failed result with error message.
 
@@ -1296,18 +1303,14 @@ class FlextRuntime:
                 validated_error_data = FlextModelsContainers.ConfigMap(root={})
             elif isinstance(error_data, FlextModelsContainers.ConfigMap):
                 validated_error_data = error_data
-            elif isinstance(error_data, (BaseModel, Mapping)):
-                dump = (
-                    error_data.model_dump()
-                    if isinstance(error_data, BaseModel)
-                    else dict(error_data)
-                )
+            elif isinstance(error_data, BaseModel):
+                dump = error_data.model_dump()
                 validated_error_data = FlextModelsContainers.ConfigMap.model_validate(
                     dump
                 )
             else:
-                validated_error_data = FlextModelsContainers.ConfigMap(
-                    root={"raw": str(error_data)}
+                validated_error_data = FlextModelsContainers.ConfigMap.model_validate(
+                    dict(error_data)
                 )
 
             return cls(
@@ -1347,7 +1350,9 @@ class FlextRuntime:
         ) -> FlextRuntime.RuntimeResult[T]:
             """Filter success value using predicate."""
             if self.is_success and (not predicate(self.value)):
-                return FlextRuntime.RuntimeResult.fail(error="Filter predicate failed")
+                return FlextRuntime.RuntimeResult[T].fail(
+                    error="Filter predicate failed"
+                )
             return self
 
         def flat_map[U](
@@ -1356,7 +1361,7 @@ class FlextRuntime:
             """Chain operations returning RuntimeResult."""
             if self.is_success:
                 return func(self.value)
-            return FlextRuntime.RuntimeResult.fail(
+            return FlextRuntime.RuntimeResult[U].fail(
                 error=self.error,
                 error_code=self.error_code,
                 error_data=self.error_data,
@@ -1408,7 +1413,7 @@ class FlextRuntime:
             """Transform success value using function."""
             if self.is_success:
                 try:
-                    return FlextRuntime.RuntimeResult.ok(value=func(self.value))
+                    return FlextRuntime.RuntimeResult[U].ok(value=func(self.value))
                 except (
                     ValueError,
                     TypeError,
@@ -1416,8 +1421,8 @@ class FlextRuntime:
                     AttributeError,
                     RuntimeError,
                 ) as e:
-                    return FlextRuntime.RuntimeResult.fail(error=str(e))
-            return FlextRuntime.RuntimeResult.fail(
+                    return FlextRuntime.RuntimeResult[U].fail(error=str(e))
+            return FlextRuntime.RuntimeResult[U].fail(
                 error=self.error,
                 error_code=self.error_code,
                 error_data=self.error_data,
@@ -1428,7 +1433,7 @@ class FlextRuntime:
         ) -> FlextRuntime.RuntimeResult[T]:
             """Transform error message."""
             if not self.is_success:
-                return FlextRuntime.RuntimeResult.fail(
+                return FlextRuntime.RuntimeResult[T].fail(
                     error=func(self.error or ""),
                     error_code=self.error_code,
                     error_data=self.error_data,
@@ -1439,7 +1444,7 @@ class FlextRuntime:
             """Recover from failure with fallback value."""
             if not self.is_success:
                 fallback_value = func(self.error or "")
-                return FlextRuntime.RuntimeResult.ok(value=fallback_value)
+                return FlextRuntime.RuntimeResult[T].ok(value=fallback_value)
             return self
 
         def tap(self, func: Callable[[T], None]) -> FlextRuntime.RuntimeResult[T]:
@@ -1800,17 +1805,11 @@ class FlextRuntime:
         validated_codes: list[int] = []
         for code in codes:
             try:
-                match code:
-                    case int() | str():
-                        code_int = int(str(code))
-                        if not min_val <= code_int <= max_val:
-                            msg = f"Invalid HTTP status code: {code} (must be {min_val}-{max_val})"
-                            return FlextRuntime.RuntimeResult[list[int]].fail(msg)
-                        validated_codes.append(code_int)
-                    case _:
-                        return FlextRuntime.RuntimeResult[list[int]].fail(
-                            f"Invalid HTTP status code type: {code.__class__.__name__}"
-                        )
+                code_int = int(str(code))
+                if not min_val <= code_int <= max_val:
+                    msg = f"Invalid HTTP status code: {code} (must be {min_val}-{max_val})"
+                    return FlextRuntime.RuntimeResult[list[int]].fail(msg)
+                validated_codes.append(code_int)
             except ValueError:
                 return FlextRuntime.RuntimeResult[list[int]].fail(
                     f"Cannot convert to integer: {code}"

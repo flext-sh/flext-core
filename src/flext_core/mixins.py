@@ -108,36 +108,10 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
         with cls._cache_lock:
             if logger_name in cls._logger_cache:
                 return cls._logger_cache[logger_name]
-        try:
-            container = FlextContainer.create()
-            logger_key = f"logger:{logger_name}"
-            logger_result = container.get(logger_key, type_cls=FlextLogger)
-            if logger_result.is_success:
-                logger: FlextLogger = logger_result.value
-                with cls._cache_lock:
-                    cls._logger_cache[logger_name] = logger
-                return logger
-            logger = FlextLogger(logger_name)
-            container_impl: p.DI = container
-            with suppress(ValueError, TypeError):
-                if hasattr(container_impl, "register_factory"):
-
-                    def logger_factory() -> object:
-                        return logger_name
-
-                    _ = container_impl.register(
-                        logger_key, logger_factory, kind="factory"
-                    )
-                else:
-                    _ = container_impl.register(logger_key, logger)
-            with cls._cache_lock:
-                cls._logger_cache[logger_name] = logger
-            return logger
-        except (AttributeError, TypeError, ValueError, RuntimeError, KeyError):
-            logger = FlextLogger(logger_name)
-            with cls._cache_lock:
-                cls._logger_cache[logger_name] = logger
-            return logger
+        logger = FlextLogger(logger_name)
+        with cls._cache_lock:
+            cls._logger_cache[logger_name] = logger
+        return logger
 
     config_type: type[FlextSettings] | None = Field(
         default=None, description="Configuration class to initialize the service."
@@ -193,14 +167,14 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
                 merged_error.update(error_data.root)
                 all_context_data = merged_error
             if all_context_data:
-                metadata_context: dict[str, object] = {
-                    key: FlextRuntime.normalize_to_metadata(value)
+                metadata_context: dict[str, t.Container] = {
+                    key: FlextRuntime.normalize_to_container(value)
                     for key, value in all_context_data.root.items()
                 }
                 _ = FlextLogger.bind_global_context(**metadata_context)
             if normal_data:
-                normal_metadata_context: dict[str, object] = {
-                    key: FlextRuntime.normalize_to_metadata(value)
+                normal_metadata_context: dict[str, t.Container] = {
+                    key: FlextRuntime.normalize_to_container(value)
                     for key, value in normal_data.root.items()
                 }
                 _ = FlextLogger.bind_context(
@@ -331,13 +305,12 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
         )
         runtime_config_typed: FlextSettings = runtime_config
         runtime_container = FlextContainer.create().scoped(
-            _config=runtime_config_typed, _context=runtime_context
+            config=runtime_config_typed, context=runtime_context
         )
         self._runtime = m.ServiceRuntime(
             container=runtime_container,
             config=runtime_config_typed,
             context=runtime_context,
-            logger=self.logger,
         )
         return self._runtime
 
@@ -555,16 +528,17 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
         """Railway-oriented validation patterns with r composition."""
 
         @staticmethod
-        def validate_with_result[T](
-            data: T,
-            validators: Sequence[Callable[[T], r[bool]]],
-        ) -> r[T]:
+        @staticmethod
+        def validate_with_result[TValidation](
+            data: TValidation,
+            validators: Sequence[Callable[[TValidation], r[bool]]],
+        ) -> r[TValidation]:
             """Chain validators sequentially, returning first failure or data on success."""
-            result: r[T] = r[T].ok(data)
+            result: r[TValidation] = r[TValidation].ok(data)
             for validator in validators:
-
-                def validate_and_preserve(data: T, v: Callable[[T], r[bool]]) -> r[T]:
-                    validation_result = v(data)
+                if result.is_success:
+                    current_data = cast(TValidation, result.unwrap())
+                    validation_result = validator(current_data)
                     if validation_result.is_failure:
                         base_msg = "Validation failed"
                         error_msg = (
@@ -580,19 +554,16 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
                             if validation_result.error_data is not None
                             else {}
                         )
-                        return r[T].fail(
+                        return r[TValidation].fail(
                             error_msg,
                             error_code=validation_result.error_code,
                             error_data=fail_error_data,
                         )
                     if validation_result.value is not True:
-                        return r[T].fail(
+                        return r[TValidation].fail(
                             f"Validator must return r[bool].ok(True) for success, got {validation_result.value!r}"
                         )
-                    return r[T].ok(data)
-
-                if result.is_success:
-                    result = validate_and_preserve(result.value, validator)
+                    result = r[TValidation].ok(current_data)
             return result
 
     class ProtocolValidation:

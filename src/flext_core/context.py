@@ -13,10 +13,10 @@ from __future__ import annotations
 
 import contextvars
 import enum
-from collections.abc import Generator, Mapping
+from collections.abc import Callable, Generator, Mapping
 from contextlib import contextmanager
 from datetime import datetime
-from typing import ClassVar, Final, Self, overload
+from typing import ClassVar, Final, Self, cast, overload
 
 from pydantic import BaseModel, Field, PrivateAttr
 
@@ -70,8 +70,7 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
 
         try:
             normalized: dict[str, object] = {}
-            # Safe because we checked for items() above, but type check needs help
-            mapping_value: Mapping[str, object] = typing.cast(Mapping[str, object], ctx_value)
+            mapping_value: Mapping[str, object] = cast(Mapping[str, object], ctx_value)
             for key, value in mapping_value.items():
                 if str(key) != key:
                     return {}
@@ -90,7 +89,7 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
         return "FlextContext"
 
     _metadata: m.Metadata = PrivateAttr()
-    _hooks: dict[str, list[t.HandlerCallable]] = PrivateAttr(default_factory=dict)
+    _hooks: dict[str, list[Callable[[t.Scalar], object]]] = PrivateAttr(default_factory=dict)
     _statistics: m.ContextStatistics = PrivateAttr(default_factory=m.ContextStatistics)
     _active: bool = PrivateAttr(default=True)
     _suspended: bool = PrivateAttr(default=False)
@@ -234,7 +233,7 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
 
         """
         if scope == c.Context.SCOPE_GLOBAL:
-            normalized = FlextRuntime.normalize_to_metadata(value)
+            normalized = FlextRuntime.normalize_to_container(value)
             _ = FlextLogger.bind_global_context(**{key: normalized})
 
     @staticmethod
@@ -441,7 +440,7 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
             key: The metadata key
 
         Returns:
-            r[t.Container]: Success with metadata value, or failure if key not found
+            r[t.Container | BaseModel]: Success with metadata value, or failure if key not found
 
         Example:
             >>> context = FlextContext()
@@ -459,7 +458,7 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
 
         """
         if key not in self._metadata.attributes:
-            return r[t.Container].fail(f"Metadata key '{key}' not found")
+            return r[t.Container | BaseModel].fail(f"Metadata key '{key}' not found")
         raw_value: object = self._metadata.attributes[key]
         normalized_value: t.Container | BaseModel = FlextRuntime.normalize_to_container(raw_value)
         return r[t.Container | BaseModel].ok(normalized_value)
@@ -584,8 +583,13 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
         ctx_var = self._get_or_create_scope_var(scope)
         current = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
         if key in current:
-            filtered = u.filter_dict(current, lambda k, _v: k != key)
-            _ = ctx_var.set(m.ConfigMap(root=dict(filtered)))
+            filtered = {k: v for k, v in current.items() if k != key}
+            try:
+                _ = ctx_var.set(m.ConfigMap.model_validate(filtered))
+            except (TypeError, ValueError, AttributeError) as exc:
+                FlextContext._logger.debug(
+                    "Failed to validate context after removal", exc_info=exc
+                )
             self._update_statistics(c.Context.OPERATION_REMOVE)
 
     @overload
@@ -825,8 +829,8 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
         updated.update(data.root)
         _ = ctx_var.set(updated)
         if scope == c.Context.SCOPE_GLOBAL:
-            normalized_context: dict[str, object] = {
-                key: FlextRuntime.normalize_to_metadata(value)
+            normalized_context: dict[str, t.Container | BaseModel] = {
+                key: FlextRuntime.normalize_to_container(value)
                 for key, value in data.items()
             }
             _ = FlextLogger.bind_global_context(**normalized_context)

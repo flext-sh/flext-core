@@ -8,7 +8,7 @@ from typing import override
 
 import libcst as cst
 from libcst.metadata import MetadataWrapper
-from pydantic import TypeAdapter, ValidationError
+from pydantic import JsonValue, TypeAdapter, ValidationError
 
 from flext_infra import c, m, t, u
 from flext_infra.refactor._base_rule import FlextInfraRefactorRule
@@ -117,32 +117,24 @@ class PreCheckGate:
         return by_family
 
     def _schema_valid(self, loaded: dict[str, object]) -> bool:
-        try:
-            schema: dict[str, object] = dict(
-                u.Infra.safe_load_yaml(self._schema_path).items()
-            )
-        except (OSError, TypeError):
+        schema_result = u.Infra.read_json(self._schema_path)
+        if schema_result.is_failure:
             return True
-        top_required = u.Infra.string_list(schema.get("required", []))
+        schema: dict[str, JsonValue] = dict(schema_result.value.items())
+        top_required = u.Infra.string_list(schema.get("required"))
         if not u.Infra.has_required_fields(loaded, top_required):
             return False
-        definitions_raw = schema.get("definitions", {})
+        definitions_raw: JsonValue | None = schema.get("definitions")
         if not isinstance(definitions_raw, dict):
             return False
-        policy_entry_raw = definitions_raw.get("policyEntry", {})
-        class_rule_raw = definitions_raw.get("classRule", {})
+        policy_entry_raw: JsonValue | None = definitions_raw.get("policyEntry")
+        class_rule_raw: JsonValue | None = definitions_raw.get("classRule")
         if not isinstance(policy_entry_raw, dict):
             return False
         if not isinstance(class_rule_raw, dict):
             return False
-        policy_entry = policy_entry_raw
-        class_rule = class_rule_raw
-        policy_entry_required = u.Infra.string_list(
-            policy_entry.get("required", []),
-        )
-        class_rule_required = u.Infra.string_list(
-            class_rule.get("required", []),
-        )
+        policy_entry_required = u.Infra.string_list(policy_entry_raw.get("required"))
+        class_rule_required = u.Infra.string_list(class_rule_raw.get("required"))
         policy_matrix = u.Infra.mapping_list(loaded.get("policy_matrix"))
         for entry in policy_matrix:
             if not u.Infra.has_required_fields(entry, policy_entry_required):

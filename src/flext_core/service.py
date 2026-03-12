@@ -16,7 +16,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from collections.abc import Mapping, Sequence
 from types import ModuleType
-from typing import override
+from typing import cast, override
 
 from pydantic import ConfigDict, Field, PrivateAttr, ValidationError, computed_field, field_validator
 
@@ -124,7 +124,7 @@ class FlextService[TDomainResult: object = object](FlextMixins, ABC):
             self._execution_result = self.execute()
         execution_result: r[TDomainResult] = self._execution_result
         if execution_result.is_success:
-            return execution_result.value
+            return cast(TDomainResult, execution_result.unwrap())
         raise FlextExceptions.BaseError(
             execution_result.error or "Service execution failed"
         )

@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import inspect
 from collections.abc import Callable, Mapping
-from typing import get_args, get_origin, get_type_hints
+from typing import cast, get_args, get_origin, get_type_hints
 
 from pydantic import BaseModel
 
@@ -167,7 +167,7 @@ class FlextUtilitiesChecker:
         if signature_result.is_failure:
             signature_error = signature_result.error or "Invalid handle signature"
             return r[t.MessageTypeSpecifier].fail(signature_error)
-        signature = signature_result.value
+        signature: inspect.Signature = cast(inspect.Signature, signature_result.unwrap())
         type_hints = cls._get_type_hints_safe(handle_method, handler_class)
         for name, parameter in signature.parameters.items():
             if name == "self":

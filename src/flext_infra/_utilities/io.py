@@ -16,7 +16,7 @@ from pathlib import Path
 from pydantic import BaseModel, JsonValue, TypeAdapter, ValidationError
 
 from flext_core import r
-from flext_infra import c, t
+from flext_infra import c
 
 
 class FlextInfraUtilitiesIo:
@@ -107,7 +107,7 @@ class FlextInfraUtilitiesIo:
         return r[bool].ok(True)
 
     @staticmethod
-    def parse(text: str) -> r[t.Container]:
+    def parse(text: str) -> r[JsonValue]:
         """Parse a JSON string.
 
         Args:
@@ -118,10 +118,11 @@ class FlextInfraUtilitiesIo:
 
         """
         try:
-            parsed: object = json.loads(text)
-            return r[t.Container].ok(parsed)
-        except (json.JSONDecodeError, ValueError) as exc:
-            return r[t.Container].fail(f"JSON parse error: {exc}")
+            _ta: TypeAdapter[JsonValue] = TypeAdapter(JsonValue)
+            parsed: JsonValue = _ta.validate_python(json.loads(text))
+            return r[JsonValue].ok(parsed)
+        except (ValidationError, json.JSONDecodeError, ValueError) as exc:
+            return r[JsonValue].fail(f"JSON parse error: {exc}")
 
     @staticmethod
     def serialize(

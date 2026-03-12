@@ -102,15 +102,18 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         """Get current global context (internal use only)."""
         try:
             context_vars = FlextRuntime.structlog().contextvars.get_contextvars()
-            context_map: dict[str, t.Container | BaseModel] = (
+            context_map: dict[str, t.Container] = (
                 {
-                    str(k): FlextRuntime.normalize_to_container(v)
+                    str(k): cls._to_container_value(v)
                     for k, v in dict(context_vars).items()
                 }
                 if context_vars
                 else {}
             )
-            return m.ConfigMap(root=context_map)
+            context_obj: dict[str, object] = {
+                key: value for key, value in context_map.items()
+            }
+            return m.ConfigMap(root=context_obj)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError):
             return m.ConfigMap(root={})
 
@@ -170,12 +173,11 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             if scope not in cls._scoped_contexts:
                 cls._scoped_contexts[scope] = {}
             current_context: dict[str, t.Container] = {
-                key: FlextRuntime.normalize_to_container(value)
+                key: cls._to_container_value(value)
                 for key, value in cls._scoped_contexts[scope].items()
             }
             incoming_context: dict[str, t.Container] = {
-                key: FlextRuntime.normalize_to_container(value)
-                for key, value in context.items()
+                key: cls._to_container_value(value) for key, value in context.items()
             }
             current_context_obj: dict[str, object] = {
                 key: value for key, value in current_context.items()
@@ -191,12 +193,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             merged_value = merge_result.unwrap_or(current_context_obj)
             merged_context: dict[str, t.Container] = {}
             for key, value in merged_value.items():
-                if u.is_scalar(value):
-                    merged_context[key] = value
-                elif isinstance(value, Path):
-                    merged_context[key] = value
-                else:
-                    merged_context[key] = cls._to_container_value(value)
+                merged_context[str(key)] = cls._to_container_value(value)
             cls._scoped_contexts[scope] = merged_context
             FlextRuntime.structlog().contextvars.bind_contextvars(**context)
             return r[bool].ok(value=True)
@@ -244,10 +241,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             }.get(level_lower, level_lower)
             if level_normalized not in cls._level_contexts:
                 cls._level_contexts[level_normalized] = {}
-            normalized_context = {
-                key: FlextRuntime.normalize_to_container(value)
-                for key, value in context.items()
-            }
+            normalized_context = cls._to_container_context(context)
             prefixed_context = {
                 f"_level_{level_normalized}_{key}": value
                 for key, value in normalized_context.items()
@@ -288,10 +282,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
 
         """
         try:
-            normalized_context = {
-                key: FlextRuntime.normalize_to_container(value)
-                for key, value in context.items()
-            }
+            normalized_context = cls._to_container_context(context)
             FlextRuntime.structlog().contextvars.bind_contextvars(**normalized_context)
             return r[bool].ok(value=True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
@@ -654,7 +645,12 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
     @staticmethod
     def _to_container_value(value: object) -> t.Container:
         """Normalize value to Container (internal helper)."""
-        return u.normalize_to_container(value)
+        normalized = FlextRuntime.normalize_to_container(value)
+        if u.is_scalar(normalized) or isinstance(normalized, Path):
+            return normalized
+        if isinstance(normalized, BaseModel):
+            return normalized.model_dump_json()
+        return str(normalized)
 
     @staticmethod
     def _to_scalar_value(value: object) -> t.Scalar:
@@ -666,7 +662,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
     def _to_container_context(context: Mapping[str, object]) -> dict[str, t.Container]:
         """Convert mapping to container context using normalization."""
         return {
-            key: FlextRuntime.normalize_to_container(value)
+            key: FlextLogger._to_container_value(value)
             for key, value in context.items()
         }
 
@@ -780,7 +776,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         self,
         msg: str,
         *args: t.Container,
-        **kw: t.Container | Exception,
+        **kw: t.Container | BaseModel | Exception,
     ) -> r[bool] | None:
         """Log critical message - Logger.Log implementation.
 
@@ -805,7 +801,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         self,
         msg: str,
         *args: t.Container,
-        **kw: t.Container | Exception,
+        **kw: t.Container | BaseModel | Exception,
     ) -> r[bool] | None:
         """Log debug message - Logger.Log implementation.
 
@@ -830,7 +826,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         self,
         msg: str,
         *args: t.Container,
-        **kw: t.Container | Exception,
+        **kw: t.Container | BaseModel | Exception,
     ) -> r[bool] | None:
         """Log error message - Logger.Log implementation.
 
@@ -855,7 +851,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         self,
         msg: str | object,
         *args: object | Exception,
-        **kw: t.Container | Exception | bool | None,
+        **kw: t.Container | BaseModel | Exception | bool | None,
     ) -> r[bool] | None:
         """Log exception with conditional stack trace (DEBUG only)."""
         message = str(msg)
@@ -1003,6 +999,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         bound_logger = self.logger.unbind(*keys)
         return self.__class__.create_bound_logger(self.name, bound_logger)
 
+    @override
     def try_unbind(self, *keys: str) -> Self:
         """Unbind keys in safe mode (deprecated compatibility helper)."""
         warnings.warn(
@@ -1018,7 +1015,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         self,
         msg: str,
         *args: t.Container,
-        **kw: t.Container | Exception,
+        **kw: t.Container | BaseModel | Exception,
     ) -> r[bool] | None:
         """Log info message - Logger.Log implementation."""
         return self._log_standard_level(
@@ -1033,7 +1030,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         self,
         msg: str,
         *args: t.Container,
-        **kw: t.Container | Exception,
+        **kw: t.Container | BaseModel | Exception,
     ) -> r[bool] | None:
         """Log warning message - Logger.Log implementation."""
         return self._log_standard_level(
@@ -1048,7 +1045,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         _level: c.Settings.LogLevel | str,
         message: str,
         *args: object | Exception,
-        **context: t.Container | Exception | bool | None,
+        **context: t.Container | BaseModel | Exception | bool | None,
     ) -> r[bool] | None:
         """Internal logging method - consolidates all log level methods.
 
@@ -1087,7 +1084,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         level: c.Settings.LogLevel,
         msg: str,
         *args: t.Container,
-        **kw: t.Container | Exception,
+        **kw: t.Container | BaseModel | Exception,
     ) -> r[bool] | None:
         message = msg
         filtered_args: tuple[t.Scalar, ...] = tuple(
