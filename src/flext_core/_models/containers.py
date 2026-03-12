@@ -11,7 +11,9 @@ from __future__ import annotations
 
 import typing
 from collections.abc import Callable, ItemsView, KeysView, Mapping, ValuesView
-from typing import ClassVar
+from datetime import datetime
+from pathlib import Path
+from typing import Annotated, ClassVar
 
 from pydantic import BaseModel, ConfigDict, Field, RootModel
 
@@ -36,18 +38,21 @@ class FlextModelsContainers:
             examples=[{"timeout": 504, "invalid_payload": 400}],
         )
 
-    class ObjectList(RootModel[list[object]]):
+    class ObjectList(RootModel[list[str | int | float | bool | datetime | Path]]):
         """Sequence of container values for batch operations."""
 
-        root: list[object] = Field(
-            default_factory=list,
-            title="Object List",
-            description=(
-                "Ordered container values for batch operations "
-                "(scalar, BaseModel, or Path)."
+        root: Annotated[
+            list[str | int | float | bool | datetime | Path],
+            Field(
+                default_factory=list,
+                title="Object List",
+                description=(
+                    "Ordered container values for batch operations "
+                    "(scalar, BaseModel, or Path)."
+                ),
+                examples=[["item-1", 2, True]],
             ),
-            examples=[["item-1", 2, True]],
-        )
+        ]
 
     class _RootDictProtocol[RootValueT](typing.Protocol):
         root: dict[str, RootValueT]
