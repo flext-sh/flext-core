@@ -1,0 +1,27 @@
+tests/unit/test_dispatcher_full_coverage.py
+  bdf88880ee83350f 154
+tests/unit/test_models_validation_full_coverage.py
+  bdf88880ee83350f 42
+tests/unit/test_utilities_mapper_coverage_100.py
+  bdf88880ee83350f 18,24-25
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.10",
+  "base_commit_sha": "6318d725ef0013c30a455e6b886de0bfbfe6e43d",
+  "prompts": {
+    "bdf88880ee83350f": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_31d14a269ffe7kqo41fOt8jbRO",
+        "model": "anthropic/claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 7,
+      "total_deletions": 4,
+      "accepted_lines": 6,
+      "overriden_lines": 0
+    }
+  }
+}
