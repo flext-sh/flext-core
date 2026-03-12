@@ -102,13 +102,13 @@ class FlextModelsContainer:
         @field_validator("service", mode="before")
         @classmethod
         def validate_service_type(
-            cls, v: t.RegisterableService
-        ) -> t.RegisterableService:
-            """Validate service is a RegisterableService type.
-
-            RegisterableService includes: str, int, float, bool, datetime, None,
-            BaseModel, Path, Sequence, Mapping, callables, and objects with __dict__.
-            """
+            cls,
+            v: t.RegisterableService,
+        ) -> (
+            t.RegisterableService
+            | FlextModelsContainers.ConfigMap
+            | FlextModelsContainers.ObjectList
+        ):
             if isinstance(v, (str, int, float, bool, type(None))):
                 return v
             if isinstance(v, (BaseModel, Path)):
@@ -116,9 +116,9 @@ class FlextModelsContainer:
             if callable(v):
                 return v
             if isinstance(v, Mapping):
-                return FlextModelsContainers.ConfigMap.model_validate(v).root
+                return FlextModelsContainers.ConfigMap.model_validate(v)
             if isinstance(v, Sequence) and (not isinstance(v, (str, bytes, bytearray))):
-                return FlextModelsContainers.ObjectList.model_validate(v).root
+                return FlextModelsContainers.ObjectList.model_validate(v)
             if hasattr(v, "__dict__"):
                 return v
             if hasattr(v, "bind") and hasattr(v, "info"):

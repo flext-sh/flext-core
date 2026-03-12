@@ -828,7 +828,10 @@ class FlextTestsUtilities(FlextUtilities):
                 assert result.is_success, (
                     f"Expected success for key '{key}', got: {result.error!r}"
                 )
-                assert result.value == expected_value, (
+                actual = result.value
+                if hasattr(actual, "root"):
+                    actual = actual.root
+                assert actual == expected_value, (
                     f"Expected {expected_value!r} for key '{key}', got {result.value!r}"
                 )
 

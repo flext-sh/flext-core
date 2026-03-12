@@ -162,7 +162,7 @@ class EnumScenarios:
             value="invalid",
             expected_success=False,
             expected_status=None,
-            expected_error="Invalid Status",
+            expected_error="Cannot parse",
         ),
     ]
     PARSE_OR_DEFAULT: ClassVar[list[ParseOrDefaultScenario]] = [
@@ -259,7 +259,7 @@ class TestuEnumParse:
     @pytest.mark.parametrize("scenario", EnumScenarios.PARSE, ids=lambda s: s.name)
     def test_parse(self, scenario: ParseScenario) -> None:
         """Test parse with various scenarios."""
-        result = u.parse(Status, scenario.value)
+        result = u.parse(scenario.value, Status)
         if scenario.expected_success:
             assert result.is_success
             assert result.value == scenario.expected_status

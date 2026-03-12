@@ -23,7 +23,7 @@ from pydantic import (
     model_validator,
 )
 
-from flext_core import c
+from flext_core import c, t
 from flext_core._models.base import FlextModelFoundation
 from flext_core._models.containers import FlextModelsContainers
 from flext_core._models.entity import FlextModelsEntity
@@ -328,7 +328,7 @@ class FlextModelsContext:
         @classmethod
         def validate_dict_serializable(
             cls,
-            v: FlextModelsContainers.Dict | object | BaseModel | None,
+            v: FlextModelsContainers.Dict | Mapping[str, t.Scalar] | BaseModel | None,
         ) -> Mapping[str, object]:
             """Validate that ConfigurationMapping values are JSON-serializable.
 
@@ -428,7 +428,7 @@ class FlextModelsContext:
         @classmethod
         def validate_dict_serializable(
             cls,
-            v: FlextModelsContainers.Dict | object | BaseModel | None,
+            v: FlextModelsContainers.Dict | Mapping[str, t.Scalar] | BaseModel | None,
         ) -> Mapping[str, object]:
             """Validate that ConfigurationMapping values are JSON-serializable.
 

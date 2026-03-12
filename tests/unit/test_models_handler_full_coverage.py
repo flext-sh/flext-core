@@ -16,8 +16,8 @@ def test_models_handler_branches() -> None:
     req = m.RegistrationRequest(handler=lambda value: value, handler_mode="command")
     assert req.handler_mode == "command"
     with pytest.raises(Exception, match="Handler must be callable"):
-        m.HandlerRegistration.model_validate({"name": "bad", "handler": 1})
-    ctx = m.HandlerExecutionContext.create_for_handler("h1", "command")
+        m.Registration.model_validate({"name": "bad", "handler": 1})
+    ctx = m.ExecutionContext.create_for_handler("h1", "command")
     raw_execution_time = ctx.execution_time_ms
     execution_time_ms = (
         raw_execution_time() if callable(raw_execution_time) else raw_execution_time

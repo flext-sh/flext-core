@@ -90,22 +90,22 @@ class _BridgeGoodProvide:
 
 def _scan_factory_module(
     _module: object,
-) -> list[tuple[str, m.HandlerFactoryDecoratorConfig]]:
+) -> list[tuple[str, m.FactoryDecoratorConfig]]:
     return [
         (
             "the_factory",
-            m.HandlerFactoryDecoratorConfig(name="x", singleton=False, lazy=True),
+            m.FactoryDecoratorConfig(name="x", singleton=False, lazy=True),
         ),
     ]
 
 
 def _scan_factory_module_captured(
     _module: object,
-) -> list[tuple[str, m.HandlerFactoryDecoratorConfig]]:
+) -> list[tuple[str, m.FactoryDecoratorConfig]]:
     return [
         (
             "factory_fn",
-            m.HandlerFactoryDecoratorConfig(
+            m.FactoryDecoratorConfig(
                 name="factory.captured",
                 singleton=False,
                 lazy=True,

@@ -414,7 +414,7 @@ class FlextContext(FlextRuntime):
                 f"Context key '{key}' has None value in scope '{scope}'"
             )
 
-        return r[t.Container | BaseModel].ok(FlextRuntime.normalize_to_container(value))
+        return r[t.Container | BaseModel].ok(value)
 
     def get_metadata(self, key: str) -> r[t.Container]:
         """Get metadata from the context.

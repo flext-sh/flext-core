@@ -30,7 +30,7 @@ class _FakeLogger:
     def info(self, _message: str, **_kwargs: t.Scalar) -> None:
         return None
 
-    def debug(self, _message: str, **_kwargs: t.Scalar) -> None:
+    def debug(self, _message: str, *_args: object, **_kwargs: object) -> None:
         return None
 
     def exception(self, message: str, **kwargs: t.Scalar) -> None:

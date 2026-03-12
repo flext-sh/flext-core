@@ -120,7 +120,7 @@ def test_create_enum_executes_factory_path() -> None:
 
 def test_shortcuts_delegate_to_primary_methods() -> None:
     assert u.is_member(Status, "active") is True
-    parsed = u.parse(Status, "inactive")
+    parsed = u.parse("inactive", Status)
     assert parsed.is_success
     assert parsed.value == Status.INACTIVE
 

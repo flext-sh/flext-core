@@ -642,7 +642,7 @@ class FlextDecorators:
                     KeyError,
                 ) as e:
                     effective_error_code: str = (
-                        error_code if error_code is not None else "OPERATION_ERROR"
+                        str(error_code) if error_code is not None else "OPERATION_ERROR"
                     )
                     return r[T].fail(str(e), error_code=effective_error_code)
 

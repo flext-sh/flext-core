@@ -146,7 +146,7 @@ class TestFlextModelsContainer:
             tags=["test", "integration"],
         )
         assert registration.name == "full_service"
-        assert registration.service == {"data": "value"}
+        assert registration.service == m.ConfigMap(root={"data": "value"})
         assert registration.metadata == metadata
         assert registration.service_type == "TestService"
         assert registration.tags == ["test", "integration"]
