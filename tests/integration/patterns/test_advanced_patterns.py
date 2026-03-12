@@ -17,7 +17,7 @@ from collections.abc import Callable
 
 import pytest
 
-from flext_core import r, u
+from flext_core import r, t, u
 
 from ...models import m
 
@@ -77,7 +77,7 @@ class GivenWhenThenBuilder:
     def given(
         self,
         _description: str,
-        **kwargs: object,
+        **kwargs: t.Scalar,
     ) -> GivenWhenThenBuilder:
         """Given method.
 
@@ -91,7 +91,7 @@ class GivenWhenThenBuilder:
     def when(
         self,
         _description: str,
-        **kwargs: object,
+        **kwargs: t.Scalar,
     ) -> GivenWhenThenBuilder:
         """When method.
 
@@ -105,7 +105,7 @@ class GivenWhenThenBuilder:
     def then(
         self,
         _description: str,
-        **kwargs: object,
+        **kwargs: t.Scalar,
     ) -> GivenWhenThenBuilder:
         """Then method.
 
@@ -224,7 +224,7 @@ class FlextTestBuilder:
         self._data["correlation_id"] = correlation_id
         return self
 
-    def with_metadata(self, **kwargs: object) -> FlextTestBuilder:
+    def with_metadata(self, **kwargs: t.Scalar) -> FlextTestBuilder:
         """with_metadata method.
 
         Returns:
@@ -256,7 +256,7 @@ class FlextTestBuilder:
         self._data.setdefault("updated_at", "2023-01-01T00:00:00+00:00")
         return self
 
-    def with_validation_rules(self, **kwargs: object) -> FlextTestBuilder:
+    def with_validation_rules(self, **kwargs: t.Scalar) -> FlextTestBuilder:
         """with_validation_rules method.
 
         Returns:

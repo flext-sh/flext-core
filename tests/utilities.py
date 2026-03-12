@@ -17,7 +17,7 @@ from collections import UserDict, UserList
 from collections.abc import Callable, Iterator
 from typing import override
 
-from flext_core import r
+from flext_core import r, t
 from flext_infra import FlextInfraUtilities
 from flext_tests import FlextTestsUtilities
 
@@ -88,7 +88,7 @@ class TestsFlextUtilities(FlextTestsUtilities, FlextInfraUtilities):
                 def split(
                     self,
                     *_args: object,
-                    **_kwargs: object,
+                    **_kwargs: t.Scalar,
                 ) -> list[str]:
                     """Raise error on split attempt."""
                     msg = "Bad split"

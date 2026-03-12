@@ -139,7 +139,7 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
     )
     _di_provider: t.Scalar | None = PrivateAttr(default=None)
 
-    def __new__(cls, **_kwargs: object) -> Self:
+    def __new__(cls, **_kwargs: t.Scalar) -> Self:
         """Create singleton instance.
 
         Note: BaseSettings.__init__ accepts **values internally.
@@ -160,7 +160,7 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
             raise TypeError(msg)
         return raw_instance
 
-    def __init__(self, **kwargs: object) -> None:
+    def __init__(self, **kwargs: t.Scalar) -> None:
         """Initialize config with data.
 
         Kwargs are applied as field overrides after base env/config loading

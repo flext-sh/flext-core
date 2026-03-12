@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pytest
 
+from flext_core import t
 from flext_infra import c, m, u
 from flext_infra._utilities.iteration import FlextInfraUtilitiesIteration
 
@@ -61,7 +62,7 @@ class TestDiscoveryIterPythonFiles:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        def _raise_oserror(workspace_root: Path, **_kwargs: object) -> list[Path]:
+        def _raise_oserror(workspace_root: Path, **_kwargs: t.Scalar) -> list[Path]:
             del workspace_root  # Mock function doesn't use the parameter
             msg = "forced failure"
             raise OSError(msg)

@@ -19,7 +19,7 @@ from returns.maybe import Maybe, Nothing, Some
 from returns.primitives.exceptions import UnwrapFailedError
 from returns.result import Failure, Result, Success
 
-from flext_core import FlextRuntime, T_Model, U
+from flext_core import FlextRuntime, T_Model, U, t
 
 
 class FlextResult[T_co = object](FlextRuntime.RuntimeResult[T_co]):
@@ -35,7 +35,7 @@ class FlextResult[T_co = object](FlextRuntime.RuntimeResult[T_co]):
         self,
         source: Result[T_co, str] | None = None,
         error_code: str | None = None,
-        error_data: object | BaseModel | None = None,
+        error_data: t.ResultErrorData | None = None,
         *,
         value: T_co | None = None,
         error: str | None = None,
@@ -98,11 +98,11 @@ class FlextResult[T_co = object](FlextRuntime.RuntimeResult[T_co]):
     @classmethod
     def _fail_like[S](
         cls, source: FlextRuntime.RuntimeResult[S], *, default_error: str = ""
-    ) -> FlextResult[object]:
+    ) -> FlextResult[S]:
         if source.is_success:
             msg = "Cannot mirror failure from successful result"
             raise ValueError(msg)
-        return FlextResult[object].fail(
+        return FlextResult[S].fail(
             source.error or default_error,
             error_code=source.error_code,
             error_data=source.error_data,
@@ -124,7 +124,11 @@ class FlextResult[T_co = object](FlextRuntime.RuntimeResult[T_co]):
 
     @classmethod
     def _validate_model[UModel: BaseModel](
-        cls, data: object, model: type[UModel], *, failure_prefix: str
+        cls,
+        data: Mapping[str, t.Container] | BaseModel,
+        model: type[UModel],
+        *,
+        failure_prefix: str,
     ) -> FlextResult[UModel]:
         try:
             return FlextResult[UModel].ok(model.model_validate(data))
@@ -175,14 +179,14 @@ class FlextResult[T_co = object](FlextRuntime.RuntimeResult[T_co]):
 
     @classmethod
     @override
-    def fail[U](
-        cls: type[FlextResult[U]],
+    def fail[T](
+        cls: type[FlextResult[T]],
         error: str | None,
         error_code: str | None = None,
-        error_data: object | BaseModel | None = None,
+        error_data: t.ResultErrorData | None = None,
         *,
         exception: BaseException | None = None,
-    ) -> FlextResult[U]:
+    ) -> FlextResult[T]:
         """Create failed result with error message using Python 3.13 advanced patterns.
 
         Business Rule: Creates failed FlextResult with error message, optional error
@@ -208,7 +212,7 @@ class FlextResult[T_co = object](FlextRuntime.RuntimeResult[T_co]):
 
         """
         error_msg = error if error is not None else ""
-        result = FlextResult[U](
+        result = FlextResult[T](
             error_code=error_code,
             error_data=error_data,
             error=error_msg,
@@ -219,15 +223,13 @@ class FlextResult[T_co = object](FlextRuntime.RuntimeResult[T_co]):
         return result
 
     @classmethod
-    def from_io_result[U](
-        cls, io_result: IOResult[U, str] | object
-    ) -> FlextResult[U | IO[U]]:
+    def from_io_result[U](cls, io_result: IOResult[U, str]) -> FlextResult[U | IO[U]]:
         """Build result from IOResult by unwrapping value or failure message."""
         if isinstance(io_result, IOSuccess):
             return FlextResult[U | IO[U]](value=io_result.unwrap(), is_success=True)
         if isinstance(io_result, IOFailure):
             return FlextResult[U | IO[U]].fail(str(io_result.failure()))
-        return FlextResult[U | IO[U]].fail("Invalid IOResult structure")
+        return FlextResult[U | IO[U]].fail("Unsupported IOResult variant")
 
     @classmethod
     def from_maybe[U](
@@ -241,7 +243,7 @@ class FlextResult[T_co = object](FlextRuntime.RuntimeResult[T_co]):
     @classmethod
     def from_validation(
         cls: type[FlextResult[T_Model]],
-        data: object | Mapping[str, object],
+        data: Mapping[str, t.Container] | BaseModel,
         model: type[T_Model],
     ) -> FlextResult[T_Model]:
         """Create result from Pydantic validation.
@@ -356,15 +358,15 @@ class FlextResult[T_co = object](FlextRuntime.RuntimeResult[T_co]):
 
     @staticmethod
     def is_failure_result(
-        value: FlextRuntime.RuntimeResult[object] | object,
-    ) -> TypeIs[FlextResult[object]]:
+        value: FlextRuntime.RuntimeResult[t.Container] | t.Container,
+    ) -> TypeIs[FlextResult[t.Container]]:
         """Return ``True`` when *value* is a failed runtime result."""
         return isinstance(value, FlextRuntime.RuntimeResult) and value.is_failure
 
     @staticmethod
     def is_success_result(
-        value: FlextRuntime.RuntimeResult[object] | object,
-    ) -> TypeIs[FlextResult[object]]:
+        value: FlextRuntime.RuntimeResult[t.Container] | t.Container,
+    ) -> TypeIs[FlextResult[t.Container]]:
         """Return ``True`` when *value* is a successful runtime result."""
         return isinstance(value, FlextRuntime.RuntimeResult) and value.is_success
 

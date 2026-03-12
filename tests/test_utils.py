@@ -25,6 +25,7 @@ from flext_core import (
     FlextUtilities,
     m,
     r,
+    t,
 )
 
 from .models import TestsFlextModels
@@ -43,7 +44,7 @@ class TestDataFactory:
     def create_entity_data(
         unique_id: str,
         name: str,
-        **kwargs: object,
+        **kwargs: t.Scalar,
     ) -> object:
         """Create standardized entity test data."""
         return {"unique_id": unique_id, "name": name, **kwargs}
@@ -51,7 +52,7 @@ class TestDataFactory:
     @staticmethod
     def create_value_object_data(
         value: object,
-        **kwargs: object,
+        **kwargs: t.Scalar,
     ) -> object:
         """Create standardized value object test data."""
         return {"value": value, **kwargs}

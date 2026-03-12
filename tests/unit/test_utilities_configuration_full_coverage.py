@@ -9,7 +9,7 @@ from typing import cast
 
 import pytest
 
-from flext_core import p, r, u
+from flext_core import p, r, t, u
 
 from ._models import _DumpErrorModel, _Opts
 
@@ -23,7 +23,7 @@ class _ContainerOK:
         self,
         _name: str,
         _instance: object,
-        **kwargs: object,
+        **kwargs: t.Scalar,
     ) -> r[bool]:
         return r[bool].ok(True)
 
@@ -36,7 +36,7 @@ class _ContainerFail:
         self,
         _name: str,
         _instance: object,
-        **kwargs: object,
+        **kwargs: t.Scalar,
     ) -> r[bool]:
         return r[bool].fail("reg fail")
 
@@ -49,7 +49,7 @@ class _ContainerRaise:
         self,
         _name: str,
         _instance: object,
-        **kwargs: object,
+        **kwargs: t.Scalar,
     ) -> r[bool]:
         msg = "reg ex"
         raise RuntimeError(msg)

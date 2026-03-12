@@ -17,7 +17,7 @@ from typing import TypeVar
 import pytest
 from pydantic import ConfigDict
 
-from flext_core import FlextContainer, FlextContext, FlextSettings, m, r
+from flext_core import FlextContainer, FlextContext, FlextSettings, m, r, t
 
 from .helpers.scenarios import (
     ParserScenario,
@@ -102,7 +102,7 @@ class FlextTestAutomationFramework:
     def create_test_entity(
         unique_id: str,
         name: str,
-        **kwargs: object,
+        **kwargs: t.Scalar,
     ) -> TestResult[m.Entity]:
         """Create test entity with real functionality.
 

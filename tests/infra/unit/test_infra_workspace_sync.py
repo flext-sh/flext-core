@@ -49,7 +49,7 @@ def _setup_gen_fail(svc: _S, _monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def _setup_gitignore_fail(_svc: _S, monkeypatch: pytest.MonkeyPatch) -> None:
-    def _open(*_args: object, **_kwargs: object) -> None:
+    def _open(*_args: object, **_kwargs: t.Scalar) -> None:
         msg = "Write failed"
         raise OSError(msg)
 
@@ -128,7 +128,7 @@ def test_gitignore_sync_failure(
 ) -> None:
     service = _S()
 
-    def _ensure(*_args: object, **_kwargs: object) -> r[bool]:
+    def _ensure(*_args: object, **_kwargs: t.Scalar) -> r[bool]:
         return r[bool].fail(".gitignore sync failed")
 
     monkeypatch.setattr(
@@ -146,7 +146,7 @@ def test_atomic_write_ok(tmp_path: Path) -> None:
 
 
 def test_atomic_write_fail(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    def _temp(*_args: object, **_kwargs: object) -> None:
+    def _temp(*_args: object, **_kwargs: t.Scalar) -> None:
         msg = "Temp file failed"
         raise OSError(msg)
 
@@ -202,7 +202,7 @@ def test_gitignore_write_failure(
 ) -> None:
     tf.create_in("*.pyc\n", ".gitignore", tmp_path)
 
-    def _open(*_args: object, **_kwargs: object) -> None:
+    def _open(*_args: object, **_kwargs: t.Scalar) -> None:
         msg = "Write failed"
         raise OSError(msg)
 

@@ -11,7 +11,7 @@ from typing import Any, cast
 import pytest
 from pydantic import BaseModel, Field
 
-from flext_core import FlextContainer, FlextContext, FlextLogger, c, d, e, m, r
+from flext_core import FlextContainer, FlextContext, FlextLogger, c, d, e, m, r, t
 
 
 class _ResultLogger:
@@ -21,7 +21,7 @@ class _ResultLogger:
     def debug(self, _msg: str, *_args: object, extra: dict[str, object]) -> None:
         _ = extra
 
-    def exception(self, message: str, **kwargs: object) -> None:
+    def exception(self, message: str, **kwargs: t.Scalar) -> None:
         self.exceptions.append((message, kwargs))
 
 
@@ -35,19 +35,19 @@ class _FakeLogger:
     def with_result(self) -> _ResultLogger:
         return self.result_logger
 
-    def warning(self, message: str, **kwargs: object) -> None:
+    def warning(self, message: str, **kwargs: t.Scalar) -> None:
         self.warning_calls.append((message, kwargs))
 
-    def error(self, message: str, **kwargs: object) -> None:
+    def error(self, message: str, **kwargs: t.Scalar) -> None:
         self.error_calls.append((message, kwargs))
 
-    def info(self, _message: str, **_kwargs: object) -> None:
+    def info(self, _message: str, **_kwargs: t.Scalar) -> None:
         return None
 
-    def debug(self, _message: str, **_kwargs: object) -> None:
+    def debug(self, _message: str, **_kwargs: t.Scalar) -> None:
         return None
 
-    def exception(self, _message: str, **_kwargs: object) -> None:
+    def exception(self, _message: str, **_kwargs: t.Scalar) -> None:
         return None
 
 
@@ -99,10 +99,10 @@ def test_log_operation_track_perf_exception_adds_duration(
     ) -> _FakeLogger:
         return fake_logger
 
-    def _bind_operation_context(**_kwargs: object) -> str:
+    def _bind_operation_context(**_kwargs: t.Scalar) -> str:
         return "cid-1"
 
-    def _clear_operation_scope(**_kwargs: object) -> None:
+    def _clear_operation_scope(**_kwargs: t.Scalar) -> None:
         return None
 
     monkeypatch.setattr(
@@ -132,10 +132,10 @@ def test_log_operation_track_perf_exception_adds_duration(
 
 def test_retry_unreachable_timeouterror_path(monkeypatch: pytest.MonkeyPatch) -> None:
 
-    def _execute_retry_loop(*_args: object, **_kwargs: object) -> Exception:
+    def _execute_retry_loop(*_args: object, **_kwargs: t.Scalar) -> Exception:
         return ValueError("failed")
 
-    def _handle_retry_exhaustion(*_args: object, **_kwargs: object) -> None:
+    def _handle_retry_exhaustion(*_args: object, **_kwargs: t.Scalar) -> None:
         return None
 
     def _resolve_logger(
@@ -186,7 +186,7 @@ def test_execute_retry_loop_covers_default_linear_and_never_ran(
     monkeypatch.setattr("flext_core.decorators.time.sleep", _sleep)
     calls = {"n": 0}
 
-    def flaky(*_args: object, **_kwargs: object) -> str:
+    def flaky(*_args: object, **_kwargs: t.Scalar) -> str:
         calls["n"] += 1
         msg = "nope"
         raise ValueError(msg)
@@ -233,7 +233,7 @@ def test_handle_retry_exhaustion_falsey_exception_reaches_timeout_error() -> Non
 
     fake_logger = _FakeLogger()
 
-    def fn(*_args: object, **_kwargs: object) -> None:
+    def fn(*_args: object, **_kwargs: t.Scalar) -> None:
         return None
 
     with pytest.raises(e.TimeoutError):
@@ -252,7 +252,7 @@ def test_bind_operation_context_without_ensure_correlation_and_bind_failure(
     fake_logger = _FakeLogger()
     _ = FlextContext.Variables.CorrelationId.set("cid-existing")
 
-    def _bind_context(*_args: object, **_kwargs: object) -> r[bool]:
+    def _bind_context(*_args: object, **_kwargs: t.Scalar) -> r[bool]:
         return r[bool].fail("bind-fail", error_code="E_BIND")
 
     monkeypatch.setattr("flext_core.decorators.FlextLogger.bind_context", _bind_context)
@@ -402,16 +402,16 @@ def test_with_correlation_with_context_track_operation_and_factory(
     ) -> _FakeLogger:
         return fake_logger
 
-    def _bind_global_context(**_kwargs: object) -> r[bool]:
+    def _bind_global_context(**_kwargs: t.Scalar) -> r[bool]:
         return r[bool].fail("bind", error_code="B")
 
     def _unbind_global_context(*_keys: str) -> r[bool]:
         return r[bool].fail("unbind", error_code="U")
 
-    def _bind_operation_context(**_kwargs: object) -> None:
+    def _bind_operation_context(**_kwargs: t.Scalar) -> None:
         return None
 
-    def _clear_operation_scope(**_kwargs: object) -> None:
+    def _clear_operation_scope(**_kwargs: t.Scalar) -> None:
         return None
 
     monkeypatch.setattr(
@@ -465,10 +465,10 @@ def test_track_performance_success_and_failure_paths(
     ) -> _FakeLogger:
         return fake_logger
 
-    def _bind_operation_context(**_kwargs: object) -> str:
+    def _bind_operation_context(**_kwargs: t.Scalar) -> str:
         return "cid-perf"
 
-    def _clear_operation_scope(**_kwargs: object) -> None:
+    def _clear_operation_scope(**_kwargs: t.Scalar) -> None:
         return None
 
     monkeypatch.setattr(
@@ -521,7 +521,7 @@ def test_railway_and_retry_additional_paths(monkeypatch: pytest.MonkeyPatch) -> 
     ) -> _FakeLogger:
         return fake_logger
 
-    def _execute_retry_loop(*_args: object, **_kwargs: object) -> str:
+    def _execute_retry_loop(*_args: object, **_kwargs: t.Scalar) -> str:
         return "done"
 
     monkeypatch.setattr(
@@ -551,7 +551,7 @@ def test_execute_retry_exponential_and_handle_exhaustion_raise_last_exception(
     monkeypatch.setattr("flext_core.decorators.time.sleep", _sleep)
     calls = {"n": 0}
 
-    def always_fails(*_args: object, **_kwargs: object) -> str:
+    def always_fails(*_args: object, **_kwargs: t.Scalar) -> str:
         calls["n"] += 1
         msg = "fail"
         raise KeyError(msg)
@@ -573,7 +573,7 @@ def test_execute_retry_exponential_and_handle_exhaustion_raise_last_exception(
     assert isinstance(result, Exception)
     assert calls["n"] == 2
 
-    def fn(*_args: object, **_kwargs: object) -> None:
+    def fn(*_args: object, **_kwargs: t.Scalar) -> None:
         return None
 
     with pytest.raises(ValueError, match="last"):

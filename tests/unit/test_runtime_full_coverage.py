@@ -19,7 +19,7 @@ import pytest
 from pydantic import BaseModel
 
 import flext_core.runtime as runtime_module
-from flext_core import FlextRuntime, c, m, r, u
+from flext_core import FlextRuntime, c, m, r, t, u
 
 runtime_tests: ModuleType = import_module("tests.unit.test_runtime")
 runtime_cov_tests: ModuleType = import_module("tests.unit.test_runtime_coverage_100")
@@ -349,10 +349,10 @@ def test_configure_structlog_edge_paths(monkeypatch: pytest.MonkeyPatch) -> None
             def _add_log_level(*_args: object) -> dict[str, object]:
                 return {}
 
-            def _time_stamper(**_kwargs: object) -> object:
+            def _time_stamper(**_kwargs: t.Scalar) -> object:
                 return object()
 
-            def _console_renderer(**_kwargs: object) -> object:
+            def _console_renderer(**_kwargs: t.Scalar) -> object:
                 return object()
 
             self.contextvars = type(
@@ -383,7 +383,7 @@ def test_configure_structlog_edge_paths(monkeypatch: pytest.MonkeyPatch) -> None
             _ = level
             return dict
 
-        def configure(self, **kwargs: object) -> None:
+        def configure(self, **kwargs: t.Scalar) -> None:
             calls.append(kwargs)
 
         def __getattr__(self, name: str) -> object:
@@ -395,7 +395,7 @@ def test_configure_structlog_edge_paths(monkeypatch: pytest.MonkeyPatch) -> None
             if self._print_access == 1:
                 raise AttributeError(name)
 
-            def _print_logger_factory(**_kwargs: object) -> object:
+            def _print_logger_factory(**_kwargs: t.Scalar) -> object:
                 return object()
 
             return _print_logger_factory
@@ -425,7 +425,7 @@ def test_configure_structlog_edge_paths(monkeypatch: pytest.MonkeyPatch) -> None
     with contextlib.suppress(AttributeError):
         delattr(fake_module, "PrintLoggerFactory")
 
-    def _print_logger_factory(**_kwargs: object) -> object:
+    def _print_logger_factory(**_kwargs: t.Scalar) -> object:
         return object()
 
     setattr(fake_module, "PrintLoggerFactory", _print_logger_factory)
@@ -750,10 +750,10 @@ def test_configure_structlog_print_logger_factory_fallback(
             def _add_log_level(*_args: object) -> dict[str, object]:
                 return {}
 
-            def _time_stamper(**_kwargs: object) -> object:
+            def _time_stamper(**_kwargs: t.Scalar) -> object:
                 return object()
 
-            def _console_renderer(**_kwargs: object) -> object:
+            def _console_renderer(**_kwargs: t.Scalar) -> object:
                 return object()
 
             self.contextvars = type(
@@ -785,7 +785,7 @@ def test_configure_structlog_print_logger_factory_fallback(
                 if calls == 1:
                     return None
 
-                def _print_logger_factory(**_kwargs: object) -> object:
+                def _print_logger_factory(**_kwargs: t.Scalar) -> object:
                     return object()
 
                 return _print_logger_factory
@@ -795,7 +795,7 @@ def test_configure_structlog_print_logger_factory_fallback(
             _ = level
             return dict
 
-        def configure(self, **_kwargs: object) -> None:
+        def configure(self, **_kwargs: t.Scalar) -> None:
             return None
 
     module = FallbackModule()
@@ -897,10 +897,10 @@ def test_runtime_integration_tracking_paths(monkeypatch: pytest.MonkeyPatch) -> 
     events: list[tuple[str, dict[str, object]]] = []
 
     class Logger:
-        def info(self, message: str, **kwargs: object) -> None:
+        def info(self, message: str, **kwargs: t.Scalar) -> None:
             events.append((message, kwargs))
 
-        def error(self, message: str, **kwargs: object) -> None:
+        def error(self, message: str, **kwargs: t.Scalar) -> None:
             events.append((message, kwargs))
 
     def _get_logger(_name: str | None = None) -> Logger:
@@ -912,7 +912,7 @@ def test_runtime_integration_tracking_paths(monkeypatch: pytest.MonkeyPatch) -> 
             return {"correlation_id": "corr-1"}
 
         @staticmethod
-        def bind_contextvars(**_kwargs: object) -> None:
+        def bind_contextvars(**_kwargs: t.Scalar) -> None:
             return None
 
     fake_structlog = type(

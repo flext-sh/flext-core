@@ -19,7 +19,7 @@ import tomllib
 from pathlib import Path
 from types import SimpleNamespace
 
-from flext_core import r
+from flext_core import r, t
 from flext_tests import tm
 
 
@@ -308,7 +308,7 @@ class FlextInfraTestHelpers:
         )
 
     @staticmethod
-    def ns(**kwargs: object | None) -> argparse.Namespace:
+    def ns(**kwargs: t.Scalar | None) -> argparse.Namespace:
         """Create ``argparse.Namespace`` from keyword arguments.
 
         Eliminates the repeated ``_ns()`` / ``_build_args()`` helpers from

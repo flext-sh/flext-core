@@ -241,7 +241,9 @@ class FlextMixins(FlextRuntime):
         _ = FlextContext.Utilities.ensure_correlation_id()
 
     @staticmethod
-    def _with_operation_context(operation_name: str, **operation_data: object) -> None:
+    def _with_operation_context(
+        operation_name: str, **operation_data: t.Scalar
+    ) -> None:
         """Set operation context with level-based binding (DEBUG/ERROR/normal)."""
         FlextMixins._propagate_context(operation_name)
         if operation_data:
@@ -369,7 +371,7 @@ class FlextMixins(FlextRuntime):
         finally:
             FlextMixins._clear_operation_context()
 
-    def _enrich_context(self, **context_data: object) -> None:
+    def _enrich_context(self, **context_data: t.Scalar) -> None:
         """Log service information ONCE at initialization (not bound to context)."""
         service_context: m.ConfigMap = m.ConfigMap(
             root={
@@ -470,7 +472,7 @@ class FlextMixins(FlextRuntime):
         config_typed: m.ConfigMap = m.ConfigMap(root=dict(config.items()))
         self.logger.info(message, **config_typed.root)
 
-    def _log_with_context(self, level: str, message: str, **extra: object) -> None:
+    def _log_with_context(self, level: str, message: str, **extra: t.Scalar) -> None:
         """Log message with automatic context data inclusion."""
         correlation_id = FlextContext.Correlation.get_correlation_id()
         operation_name = FlextContext.Request.get_operation_name()
@@ -527,7 +529,7 @@ class FlextMixins(FlextRuntime):
 
             _metrics: ClassVar[dict[str, object]] = {}
 
-            def __init__(self, *args: object, **kwargs: object) -> None:
+            def __init__(self, *args: object, **kwargs: t.Scalar) -> None:
                 """Initialize metrics tracker with empty metrics dict."""
                 super().__init__(*args, **kwargs)
                 vars(self)["_metrics"] = {}
@@ -566,7 +568,7 @@ class FlextMixins(FlextRuntime):
                 list[m.ExecutionContext | m.ConfigMap | dict[str, object]]
             ] = []
 
-            def __init__(self, *args: object, **kwargs: object) -> None:
+            def __init__(self, *args: object, **kwargs: t.Scalar) -> None:
                 """Initialize context stack with empty list."""
                 super().__init__(*args, **kwargs)
                 object.__setattr__(self, "_stack", [])

@@ -14,7 +14,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from flext_core import r
+from flext_core import r, t
 from flext_infra._utilities.subprocess import FlextInfraUtilitiesSubprocess
 from flext_infra.check.services import FlextInfraWorkspaceChecker
 from flext_tests import tm
@@ -158,7 +158,7 @@ class TestRunCommand:
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
 
         def _fake_run_raw(
-            _self: object, _cmd: list[str], **_kw: object
+            _self: object, _cmd: list[str], **_kw: t.Scalar
         ) -> r[m.Infra.Core.CommandOutput]:
             return r[m.Infra.Core.CommandOutput].ok(
                 m.Infra.Core.CommandOutput(stdout="output", stderr="", exit_code=0)
@@ -175,7 +175,7 @@ class TestRunCommand:
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
 
         def _fake_run_raw(
-            _self: object, _cmd: list[str], **_kw: object
+            _self: object, _cmd: list[str], **_kw: t.Scalar
         ) -> r[m.Infra.Core.CommandOutput]:
             return r[m.Infra.Core.CommandOutput].fail("execution failed")
 

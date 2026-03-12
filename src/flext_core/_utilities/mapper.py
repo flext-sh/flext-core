@@ -12,13 +12,14 @@ from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime
 from functools import partial
 from pathlib import Path
-from typing import Protocol, overload
+from typing import Protocol, TypeAlias, overload
 
 from pydantic import BaseModel
 
-from flext_core import FlextRuntime, m, p, r, t
+from flext_core import FlextRuntime, T, m, p, r, t
 from flext_core._utilities.cache import FlextUtilitiesCache
 from flext_core._utilities.guards import FlextUtilitiesGuards
+from flext_core.typings import t
 
 
 class _Predicate[T](Protocol):
@@ -29,8 +30,11 @@ class _Predicate[T](Protocol):
         ...
 
 
-type _MapperCallable = Callable[[object], object]
-type objectMapping = Mapping[str, object]
+_MapperCallable: TypeAlias = Callable[
+    [t.GeneralValueType | None], t.GeneralValueType | None
+]
+objectMapping: TypeAlias = Mapping[str, t.GeneralValueType | None]
+objectList: TypeAlias = list[t.GeneralValueType | None]
 
 
 class FlextUtilitiesMapper:
@@ -53,7 +57,9 @@ class FlextUtilitiesMapper:
         return FlextRuntime.get_logger(__name__)
 
     @classmethod
-    def convert_dict_to_json(cls, data: Mapping[str, object]) -> Mapping[str, object]:
+    def convert_dict_to_json(
+        cls, data: objectMapping
+    ) -> dict[str, t.GeneralValueType | None]:
         """Convert dict with any values to JSON-compatible dict.
 
         **Generic replacement for**: Manual dict-to-JSON conversion loops
@@ -73,7 +79,9 @@ class FlextUtilitiesMapper:
         return {key: cls.convert_to_json_value(value) for key, value in data.items()}
 
     @classmethod
-    def convert_list_to_json(cls, data: Sequence[object]) -> list[Mapping[str, object]]:
+    def convert_list_to_json(
+        cls, data: Sequence[t.GeneralValueType | None]
+    ) -> list[dict[str, t.GeneralValueType | None]]:
         """Convert list of dict-like items to JSON-compatible list.
 
         **Generic replacement for**: Manual list-to-JSON conversion loops
@@ -98,7 +106,9 @@ class FlextUtilitiesMapper:
         ]
 
     @classmethod
-    def convert_to_json_value(cls, value: object) -> object:
+    def convert_to_json_value(
+        cls, value: t.GeneralValueType | None
+    ) -> t.GeneralValueType | None:
         """Convert any value to JSON-compatible type.
 
         **Generic replacement for**: Manual type conversion to JSON values
@@ -110,7 +120,7 @@ class FlextUtilitiesMapper:
             4. Other → convert to str()
 
         Args:
-            value: object value to convert
+            value: t.GeneralValueType value to convert
 
         Returns:
             JSON-compatible value (str, int, float, bool, None, dict, list)
@@ -122,8 +132,8 @@ class FlextUtilitiesMapper:
             [1, 2, 'three']
 
         """
-        narrowed_value: object
-        if isinstance(value, t.Primitives):
+        narrowed_value: t.GeneralValueType | None
+        if isinstance(value, (str, int, float, bool)):
             narrowed_value = value
         elif value is None:
             narrowed_value = None
@@ -134,7 +144,7 @@ class FlextUtilitiesMapper:
         if cls.is_json_primitive(narrowed_value):
             return narrowed_value
         if isinstance(narrowed_value, Mapping):
-            result_dict: dict[str, object] = {}
+            result_dict: dict[str, t.GeneralValueType | None] = {}
             for key, val in narrowed_value.items():
                 val_typed = FlextUtilitiesMapper.narrow_to_general_value_type(val)
                 result_dict[str(key)] = FlextUtilitiesMapper.convert_to_json_value(
@@ -144,7 +154,7 @@ class FlextUtilitiesMapper:
         if isinstance(narrowed_value, Sequence) and (
             not isinstance(narrowed_value, str | bytes)
         ):
-            result_list: list[object] = []
+            result_list: objectList = []
             for item in narrowed_value:
                 converted_item = cls.convert_to_json_value(item)
                 result_list.append(converted_item)
@@ -152,7 +162,9 @@ class FlextUtilitiesMapper:
         return narrowed_value
 
     @classmethod
-    def convert_to_json_safe(cls, value: object) -> object | None:
+    def convert_to_json_safe(
+        cls, value: t.GeneralValueType
+    ) -> t.GeneralValueType | None:
         """Convert any value to guaranteed JSON-safe type.
 
         **Generic replacement for**: Manual JSON serialization with type safety
@@ -166,15 +178,15 @@ class FlextUtilitiesMapper:
             6. list-like → recursively convert items to JSON-safe
             7. Other → convert to str()
 
-        This differs from convert_to_json_value() which returns object
-        (allows BaseModel/Path through unchanged). This method GUARANTEES object
-        (JSON-safe: Scalar | list[object] | dict[str, object]).
+        This differs from convert_to_json_value() which returns t.GeneralValueType
+        (allows BaseModel/Path through unchanged). This method GUARANTEES t.GeneralValueType
+        (JSON-safe: Scalar | objectList | dict[str, t.GeneralValueType | None]).
 
         Args:
-            value: Any value to convert to JSON-safe type
+            value: t.GeneralValueType value to convert to JSON-safe type
 
         Returns:
-            object | None: Guaranteed JSON-serializable value
+            t.GeneralValueType | None: Guaranteed JSON-serializable value
 
         Example:
             >>> FlextUtilitiesMapper.convert_to_json_safe(datetime.now())
@@ -196,7 +208,7 @@ class FlextUtilitiesMapper:
         if isinstance(value, BaseModel):
             return value.model_dump(mode="json")
         if isinstance(value, Mapping):
-            result_dict: dict[str, object] = {}
+            result_dict: dict[str, t.GeneralValueType | None] = {}
             for key, val in value.items():
                 val_typed = FlextUtilitiesMapper.narrow_to_general_value_type(val)
                 result_dict[str(key)] = FlextUtilitiesMapper.convert_to_json_safe(
@@ -204,7 +216,7 @@ class FlextUtilitiesMapper:
                 )
             return result_dict
         if isinstance(value, Sequence) and (not isinstance(value, str | bytes)):
-            result_list: list[object] = []
+            result_list: objectList = []
             for item in value:
                 converted_item = cls.convert_to_json_safe(item)
                 result_list.append(converted_item)
@@ -213,11 +225,11 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _apply_exclude_keys(
-        result: Mapping[str, object], *, exclude_keys: set[str] | None
-    ) -> Mapping[str, object]:
+        result: objectMapping, *, exclude_keys: set[str] | None
+    ) -> objectMapping:
         """Apply exclude keys step."""
         if exclude_keys:
-            filtered_result: dict[str, object] = dict(result)
+            filtered_result: dict[str, t.GeneralValueType | None] = dict(result)
             for key in exclude_keys:
                 _ = filtered_result.pop(key, None)
             return filtered_result
@@ -225,11 +237,11 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _apply_filter_keys(
-        result: Mapping[str, object], *, filter_keys: set[str] | None
-    ) -> Mapping[str, object]:
+        result: objectMapping, *, filter_keys: set[str] | None
+    ) -> objectMapping:
         """Apply filter keys step."""
         if filter_keys:
-            filtered_dict: dict[str, object] = {}
+            filtered_dict: dict[str, t.GeneralValueType | None] = {}
             for key in filter_keys:
                 if key in result:
                     filtered_dict[key] = result[key]
@@ -238,15 +250,15 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _apply_map_keys(
-        result: Mapping[str, object], *, map_keys: Mapping[str, str] | None
-    ) -> Mapping[str, object]:
+        result: objectMapping, *, map_keys: Mapping[str, str] | None
+    ) -> objectMapping:
         """Apply map keys step."""
         if map_keys:
-            mapped: r[Mapping[str, object]] = FlextUtilitiesMapper.map_dict_keys(
+            mapped: r[objectMapping] = FlextUtilitiesMapper.map_dict_keys(
                 result, map_keys
             )
             if mapped.is_success:
-                mapped_value = mapped.value
+                mapped_value = t.cast(objectMapping, mapped.value)
                 return {
                     str(key): FlextUtilitiesMapper.narrow_to_general_value_type(value)
                     for key, value in mapped_value.items()
@@ -254,14 +266,14 @@ class FlextUtilitiesMapper:
         return result
 
     @staticmethod
-    def _apply_normalize(
-        result: Mapping[str, object], *, normalize: bool
-    ) -> Mapping[str, object]:
+    def _apply_normalize(result: objectMapping, *, normalize: bool) -> objectMapping:
         """Apply normalize step."""
         if normalize:
-            normalized = FlextUtilitiesCache.normalize_component(result)
+            normalized: objectMapping = t.cast(
+                objectMapping, FlextUtilitiesCache.normalize_component(result)
+            )
             if isinstance(normalized, Mapping):
-                normalized_result: dict[str, object] = {}
+                normalized_result: dict[str, t.GeneralValueType | None] = {}
                 for key, value in normalized.items():
                     normalized_result[str(key)] = (
                         FlextUtilitiesMapper.narrow_to_general_value_type(value)
@@ -271,8 +283,8 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _apply_strip_empty(
-        result: Mapping[str, object], *, strip_empty: bool
-    ) -> Mapping[str, object]:
+        result: objectMapping, *, strip_empty: bool
+    ) -> objectMapping:
         """Apply strip empty step."""
         if strip_empty:
             return FlextUtilitiesMapper.filter_dict(
@@ -281,18 +293,14 @@ class FlextUtilitiesMapper:
         return result
 
     @staticmethod
-    def _apply_strip_none(
-        result: Mapping[str, object], *, strip_none: bool
-    ) -> Mapping[str, object]:
+    def _apply_strip_none(result: objectMapping, *, strip_none: bool) -> objectMapping:
         """Apply strip none step."""
         if strip_none:
             return FlextUtilitiesMapper.filter_dict(result, lambda _k, v: v is not None)
         return result
 
     @staticmethod
-    def _apply_to_json(
-        result: Mapping[str, object], *, to_json: bool
-    ) -> Mapping[str, object]:
+    def _apply_to_json(result: objectMapping, *, to_json: bool) -> objectMapping:
         """Apply to JSON step."""
         if to_json:
             return FlextUtilitiesMapper.convert_dict_to_json(result)
@@ -300,7 +308,7 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _apply_transform_steps(
-        result: Mapping[str, object],
+        result: objectMapping,
         *,
         normalize: bool,
         map_keys: Mapping[str, str] | None,
@@ -309,7 +317,7 @@ class FlextUtilitiesMapper:
         strip_none: bool,
         strip_empty: bool,
         to_json: bool,
-    ) -> Mapping[str, object]:
+    ) -> objectMapping:
         """Apply transform steps to result dict."""
         result = FlextUtilitiesMapper._apply_normalize(result, normalize=normalize)
         result = FlextUtilitiesMapper._apply_map_keys(result, map_keys=map_keys)
@@ -326,7 +334,9 @@ class FlextUtilitiesMapper:
         return FlextUtilitiesMapper._apply_to_json(result, to_json=to_json)
 
     @staticmethod
-    def _build_apply_chunk(current: object, ops: Mapping[str, object]) -> object:
+    def _build_apply_chunk(
+        current: t.GeneralValueType | None, ops: objectMapping
+    ) -> t.GeneralValueType | None:
         """Helper: Apply chunk operation to split into sublists."""
         if "chunk" not in ops:
             return current
@@ -335,19 +345,21 @@ class FlextUtilitiesMapper:
         chunk_size = ops["chunk"]
         if not isinstance(chunk_size, int) or chunk_size <= 0:
             return current
-        current_items: Sequence[object] = current
-        current_list: list[object] = [
+        current_items: Sequence[t.GeneralValueType | None] = current
+        current_list: objectList = [
             FlextUtilitiesMapper.narrow_to_general_value_type(item)
             for item in current_items
         ]
-        chunked: list[list[object]] = []
+        chunked: list[objectList] = []
         for i in range(0, len(current_list), chunk_size):
-            chunk: list[object] = current_list[i : i + chunk_size]
+            chunk: objectList = current_list[i : i + chunk_size]
             chunked.append(chunk)
         return chunked
 
     @staticmethod
-    def _build_apply_convert(current: object, ops: Mapping[str, object]) -> object:
+    def _build_apply_convert(
+        current: t.GeneralValueType | None, ops: objectMapping
+    ) -> t.GeneralValueType | None:
         """Helper: Apply convert operation."""
         if "convert" not in ops:
             return current
@@ -356,11 +368,13 @@ class FlextUtilitiesMapper:
         )
         if convert_func_result.is_failure:
             return current
-        convert_callable_raw = convert_func_result.value
+        convert_callable_raw: _MapperCallable = t.cast(
+            _MapperCallable, convert_func_result.value
+        )
         convert_default = ops.get("convert_default")
         fallback = convert_default
 
-        def convert_callable(value: object) -> object:
+        def convert_callable(value: t.GeneralValueType) -> t.GeneralValueType | None:
             return FlextUtilitiesMapper._to_general_value_from_object(
                 convert_callable_raw(value)
             )
@@ -371,7 +385,7 @@ class FlextUtilitiesMapper:
             else ""
         )
         if fallback is None:
-            converter_defaults: Mapping[str, object] = {
+            converter_defaults: objectMapping = {
                 "int": 0,
                 "float": 0.0,
                 "str": "",
@@ -381,21 +395,26 @@ class FlextUtilitiesMapper:
                 "tuple": (),
                 "set": [],
             }
-            fallback = converter_defaults.get(converter_name, current)
+            fallback = t.cast(
+                t.GeneralValueType | None,
+                converter_defaults.get(converter_name, current),
+            )
 
-        def _convert(value: object) -> object:
-            converted_result: r[object] = r[object].create_from_callable(
+        def _convert(value: t.GeneralValueType) -> t.GeneralValueType | None:
+            converted_result: r[t.GeneralValueType] = r[
+                t.GeneralValueType
+            ].create_from_callable(
                 lambda: FlextUtilitiesMapper.narrow_to_general_value_type(
                     convert_callable(value)
                 )
             )
             if converted_result.is_success:
-                result_val: object = converted_result.value
+                result_val: t.GeneralValueType | None = converted_result.value
                 return result_val if result_val is not None else fallback
-            return FlextUtilitiesMapper.narrow_to_general_value_type(fallback)
+            return t.cast(t.GeneralValueType | None, fallback)
 
         if isinstance(current, (list, tuple)):
-            current_items: Sequence[object] = current
+            current_items: Sequence[t.GeneralValueType | None] = current
             converted = [
                 _convert(FlextUtilitiesMapper.narrow_to_general_value_type(item))
                 for item in current_items
@@ -404,13 +423,15 @@ class FlextUtilitiesMapper:
         return _convert(current)
 
     @staticmethod
-    def _build_apply_ensure(current: object, ops: Mapping[str, object]) -> object:
+    def _build_apply_ensure(
+        current: t.GeneralValueType | None, ops: objectMapping
+    ) -> t.GeneralValueType | None:
         """Helper: Apply ensure operation."""
         if "ensure" not in ops:
             return current
         ensure_type = FlextUtilitiesMapper._get_str_from_dict(ops, "ensure", "")
         ensure_default_val = ops.get("ensure_default")
-        default_map: Mapping[str, object] = {
+        default_map: objectMapping = {
             "str_list": [],
             "dict": {},
             "list": [],
@@ -426,7 +447,7 @@ class FlextUtilitiesMapper:
                 return str(current) if current is not None else default_val
             case "list":
                 if isinstance(current, list):
-                    list_current: list[object] = current
+                    list_current: objectList = current
                     return [
                         FlextUtilitiesMapper.narrow_to_general_value_type(item)
                         for item in list_current
@@ -438,7 +459,7 @@ class FlextUtilitiesMapper:
                 )
             case "str_list":
                 if isinstance(current, list):
-                    list_current_str: list[object] = current
+                    list_current_str: objectList = current
                     return [
                         str(FlextUtilitiesMapper.narrow_to_general_value_type(x))
                         for x in list_current_str
@@ -459,10 +480,10 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _build_apply_filter(
-        current: object,
-        ops: Mapping[str, object],
-        default: object,
-    ) -> object:
+        current: t.GeneralValueType | None,
+        ops: objectMapping,
+        default: t.GeneralValueType | None,
+    ) -> t.GeneralValueType | None:
         """Helper: Apply filter operation."""
         if "filter" not in ops:
             return current
@@ -471,18 +492,18 @@ class FlextUtilitiesMapper:
             return current
         filter_pred_callable = filter_pred_result.value
 
-        def filter_pred(value: object) -> bool:
+        def filter_pred(value: t.GeneralValueType) -> bool:
             return bool(filter_pred_callable(value))
 
         if isinstance(current, (list, tuple)):
-            seq_current: Sequence[object] = current
+            seq_current: Sequence[t.GeneralValueType | None] = current
             return [
                 FlextUtilitiesMapper.narrow_to_general_value_type(x)
                 for x in seq_current
                 if filter_pred(FlextUtilitiesMapper.narrow_to_general_value_type(x))
             ]
         if isinstance(current, Mapping):
-            current_dict: Mapping[str, object] = (
+            current_dict: objectMapping = (
                 FlextUtilitiesMapper._narrow_to_configuration_dict(current)
             )
             return FlextUtilitiesMapper.filter_dict(
@@ -491,21 +512,23 @@ class FlextUtilitiesMapper:
         return default if not bool(filter_pred(current)) else current
 
     @staticmethod
-    def _build_apply_group(current: object, ops: Mapping[str, object]) -> object:
+    def _build_apply_group(
+        current: t.GeneralValueType | None, ops: objectMapping
+    ) -> t.GeneralValueType | None:
         """Helper: Apply group operation."""
         if "group" not in ops:
             return current
         if not isinstance(current, (list, tuple)):
             return current
-        group_spec_raw: object | _MapperCallable = ops["group"]
-        current_items: Sequence[object] = current
-        current_list: list[object] = [
+        group_spec_raw: t.GeneralValueType | _MapperCallable = ops["group"]
+        current_items: Sequence[t.GeneralValueType | None] = current
+        current_list: objectList = [
             FlextUtilitiesMapper.narrow_to_general_value_type(item)
             for item in current_items
         ]
         if isinstance(group_spec_raw, str):
             group_spec = group_spec_raw
-            grouped: dict[str, list[object]] = {}
+            grouped: dict[str, objectList] = {}
             for item in current_list:
                 if isinstance(item, Mapping):
                     key_raw = item.get(group_spec)
@@ -529,9 +552,9 @@ class FlextUtilitiesMapper:
             if group_callable_result.is_failure:
                 return current
             group_callable = group_callable_result.value
-            grouped_callable: dict[str, list[object]] = {}
+            grouped_callable: dict[str, objectList] = {}
             for item in current_list:
-                key_result = r[object].create_from_callable(
+                key_result = r[t.GeneralValueType].create_from_callable(
                     partial(group_callable, item)
                 )
                 if key_result.is_failure:
@@ -544,28 +567,30 @@ class FlextUtilitiesMapper:
         return current
 
     @staticmethod
-    def _build_apply_map(current: object, ops: Mapping[str, object]) -> object:
+    def _build_apply_map(
+        current: t.GeneralValueType | None, ops: objectMapping
+    ) -> t.GeneralValueType | None:
         """Helper: Apply map operation."""
         if "map" not in ops:
             return current
         map_func_result = FlextUtilitiesMapper._get_callable_from_dict(ops, "map")
         if map_func_result.is_failure:
             return current
-        map_callable = map_func_result.value
+        map_callable: _MapperCallable = t.cast(_MapperCallable, map_func_result.value)
 
-        def map_func(value: object) -> object:
+        def map_func(value: t.GeneralValueType) -> t.GeneralValueType | None:
             return FlextUtilitiesMapper._to_general_value_from_object(
                 map_callable(value)
             )
 
         if isinstance(current, (list, tuple)):
-            seq_current: Sequence[object] = current
+            seq_current: Sequence[t.GeneralValueType | None] = current
             return [
                 map_func(FlextUtilitiesMapper._to_general_value_from_object(x))
                 for x in seq_current
             ]
         if isinstance(current, Mapping):
-            current_dict: Mapping[str, object] = (
+            current_dict: objectMapping = (
                 FlextUtilitiesMapper._narrow_to_configuration_dict(current)
             )
             return {k: map_func(v) for k, v in current_dict.items()}
@@ -573,7 +598,9 @@ class FlextUtilitiesMapper:
         return map_func(current_general)
 
     @staticmethod
-    def _build_apply_normalize(current: object, ops: Mapping[str, object]) -> object:
+    def _build_apply_normalize(
+        current: t.GeneralValueType | None, ops: objectMapping
+    ) -> t.GeneralValueType | None:
         """Helper: Apply normalize operation."""
         if "normalize" not in ops:
             return current
@@ -581,8 +608,8 @@ class FlextUtilitiesMapper:
         if isinstance(current, str):
             return current.lower() if normalize_case == "lower" else current.upper()
         if isinstance(current, (list, tuple)):
-            seq_current: Sequence[object] = current
-            result: list[object] = []
+            seq_current: Sequence[t.GeneralValueType | None] = current
+            result: objectList = []
             for x in seq_current:
                 x_general = FlextUtilitiesMapper._to_general_value_from_object(x)
                 if isinstance(x_general, str):
@@ -598,11 +625,11 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _build_apply_process(
-        current: object,
-        ops: Mapping[str, object],
-        default: object,
+        current: t.GeneralValueType | None,
+        ops: objectMapping,
+        default: t.GeneralValueType | None,
         on_error: str,
-    ) -> object:
+    ) -> t.GeneralValueType | None:
         """Helper: Apply process operation."""
         if "process" not in ops:
             return current
@@ -611,42 +638,46 @@ class FlextUtilitiesMapper:
         )
         if process_func_result.is_failure:
             return current
-        process_callable = process_func_result.value
+        process_callable = t.cast(_MapperCallable, process_func_result.value)
 
-        def process_func(value: object) -> object:
+        def process_func(value: t.GeneralValueType) -> t.GeneralValueType | None:
             return FlextUtilitiesMapper._to_general_value_from_object(
                 process_callable(value)
             )
 
-        def _process_current() -> object:
+        def _process_current() -> t.GeneralValueType | None:
             if isinstance(current, (list, tuple)):
-                seq_current: Sequence[object] = current
+                seq_current: Sequence[t.GeneralValueType | None] = current
                 return [
                     process_func(FlextUtilitiesMapper._to_general_value_from_object(x))
                     for x in seq_current
                 ]
             if isinstance(current, Mapping):
-                current_dict: Mapping[str, object] = (
+                current_dict: objectMapping = (
                     FlextUtilitiesMapper._narrow_to_configuration_dict(current)
                 )
                 return {k: process_func(v) for k, v in current_dict.items()}
             current_general = FlextUtilitiesMapper.narrow_to_general_value_type(current)
             return process_func(current_general)
 
-        process_result: r[object] = r[object].create_from_callable(_process_current)
+        process_result: r[t.GeneralValueType] = r[
+            t.GeneralValueType
+        ].create_from_callable(_process_current)
         if process_result.is_failure:
             return default if on_error == "stop" else current
-        process_val: object = process_result.value
+        process_val: t.GeneralValueType = process_result.value
         return process_val if process_val is not None else current
 
     @staticmethod
-    def _build_apply_slice(current: object, ops: Mapping[str, object]) -> object:
+    def _build_apply_slice(
+        current: t.GeneralValueType | None, ops: objectMapping
+    ) -> t.GeneralValueType | None:
         """Helper: Apply slice operation."""
         if "slice" not in ops:
             return current
         if not isinstance(current, (list, tuple)):
             return current
-        current_items: Sequence[object] = current
+        current_items: Sequence[t.GeneralValueType | None] = current
         slice_spec = ops["slice"]
         min_slice_length = 2
         if (
@@ -658,12 +689,12 @@ class FlextUtilitiesMapper:
             start: int | None = start_raw if isinstance(start_raw, int) else None
             end: int | None = end_raw if isinstance(end_raw, int) else None
             if isinstance(current, list):
-                sliced_list: list[object] = [
+                sliced_list: objectList = [
                     FlextUtilitiesMapper.narrow_to_general_value_type(item)
                     for item in current_items[start:end]
                 ]
                 return sliced_list
-            sliced_tuple: tuple[object, ...] = tuple(
+            sliced_tuple: tuple[t.GeneralValueType, ...] = tuple(
                 FlextUtilitiesMapper.narrow_to_general_value_type(item)
                 for item in current_items[start:end]
             )
@@ -671,22 +702,24 @@ class FlextUtilitiesMapper:
         return current
 
     @staticmethod
-    def _build_apply_sort(current: object, ops: Mapping[str, object]) -> object:
+    def _build_apply_sort(
+        current: t.GeneralValueType | None, ops: objectMapping
+    ) -> t.GeneralValueType | None:
         """Helper: Apply sort operation."""
         if "sort" not in ops:
             return current
         if not isinstance(current, (list, tuple)):
             return current
-        sort_spec_raw: object | _MapperCallable = ops["sort"]
-        current_items: Sequence[object] = current
-        current_list: list[object] = [
+        sort_spec_raw: t.GeneralValueType | _MapperCallable = ops["sort"]
+        current_items: Sequence[t.GeneralValueType | None] = current
+        current_list: objectList = [
             FlextUtilitiesMapper.narrow_to_general_value_type(item)
             for item in current_items
         ]
         if isinstance(sort_spec_raw, str):
             field_name: str = sort_spec_raw
 
-            def key_func(item: object) -> str:
+            def key_func(item: t.GeneralValueType | None) -> str:
                 if isinstance(item, Mapping):
                     return str(item.get(field_name, ""))
                 if isinstance(item, BaseModel):
@@ -695,7 +728,7 @@ class FlextUtilitiesMapper:
                     return ""
                 return ""
 
-            sorted_list_key: list[object] = sorted(current_list, key=key_func)
+            sorted_list_key: objectList = sorted(current_list, key=key_func)
             return (
                 list(sorted_list_key)
                 if isinstance(current, list)
@@ -709,10 +742,10 @@ class FlextUtilitiesMapper:
                 return current
             sort_callable = sort_callable_result.value
 
-            def sort_key(item: object) -> str:
+            def sort_key(item: t.GeneralValueType | None) -> str:
                 return str(sort_callable(item))
 
-            sorted_result = r[list[object]].create_from_callable(
+            sorted_result = r[objectList].create_from_callable(
                 lambda: sorted(current_list, key=sort_key)
             )
             if sorted_result.is_failure:
@@ -724,7 +757,7 @@ class FlextUtilitiesMapper:
                 else tuple(sorted_callable)
             )
         if sort_spec_raw is True:
-            comparable_items: list[object] = [
+            comparable_items: objectList = [
                 FlextUtilitiesMapper.narrow_to_general_value_type(
                     item
                     if item.__class__ in {str, int, float, bool} or item is None
@@ -732,7 +765,7 @@ class FlextUtilitiesMapper:
                 )
                 for item in current_list
             ]
-            sorted_comparable: list[object] = sorted(comparable_items, key=str)
+            sorted_comparable: objectList = sorted(comparable_items, key=str)
             if isinstance(current, list):
                 return sorted_comparable
             return tuple(sorted_comparable)
@@ -740,17 +773,17 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _build_apply_transform(
-        current: object,
-        ops: Mapping[str, object],
-        default: object,
+        current: t.GeneralValueType | None,
+        ops: objectMapping,
+        default: t.GeneralValueType | None,
         on_error: str,
-    ) -> object:
+    ) -> t.GeneralValueType | None:
         """Helper: Apply transform operation."""
         if "transform" not in ops or not FlextUtilitiesGuards.is_type(
             current, "mapping"
         ):
             return current
-        transform_opts_raw: object = ops["transform"]
+        transform_opts_raw: t.GeneralValueType = ops["transform"]
         if not isinstance(transform_opts_raw, Mapping):
             return current
         transform_opts = FlextUtilitiesMapper._narrow_to_configuration_dict(
@@ -768,7 +801,7 @@ class FlextUtilitiesMapper:
         current_dict: m.ConfigMap = (
             FlextUtilitiesMapper._narrow_to_configuration_mapping(current)
         )
-        transform_result = r[object].create_from_callable(
+        transform_result = r[t.GeneralValueType].create_from_callable(
             lambda: FlextUtilitiesMapper.apply_transform_steps(
                 dict(current_dict),
                 normalize=normalize_bool,
@@ -787,21 +820,23 @@ class FlextUtilitiesMapper:
         return transform_result.value
 
     @staticmethod
-    def _build_apply_unique(current: object, ops: Mapping[str, object]) -> object:
+    def _build_apply_unique(
+        current: t.GeneralValueType | None, ops: objectMapping
+    ) -> t.GeneralValueType | None:
         """Helper: Apply unique operation to remove duplicates."""
         if "unique" not in ops or not ops.get("unique"):
             return current
         if not isinstance(current, (list, tuple)):
             return current
-        current_items: Sequence[object] = current
-        current_list_unique: list[object] = [
+        current_items: Sequence[t.GeneralValueType | None] = current
+        current_list_unique: objectList = [
             FlextUtilitiesMapper.narrow_to_general_value_type(item)
             for item in current_items
         ]
-        seen: set[object | str] = set()
-        unique_list: list[object] = []
+        seen: set[t.GeneralValueType] = set()
+        unique_list: objectList = []
         for item in current_list_unique:
-            item_hashable: object | str = (
+            item_hashable: t.GeneralValueType | str = (
                 item
                 if item.__class__ in {str, int, float, bool} or item is None
                 else str(item)
@@ -814,15 +849,17 @@ class FlextUtilitiesMapper:
         return tuple(unique_list)
 
     @staticmethod
-    def _extract_field_value(item: object, field_name: str) -> object:
+    def _extract_field_value(
+        item: t.GeneralValueType | None, field_name: str
+    ) -> t.GeneralValueType | None:
         """Extract field value from item (dict or object).
 
         Helper method to improve type inference for pyrefly.
         """
         if isinstance(item, Mapping):
-            dict_item: dict[str, object] = {}
+            dict_item: dict[str, t.GeneralValueType | None] = {}
             for key, value in item.items():
-                coerced_value: object = (
+                coerced_value: t.GeneralValueType = (
                     value
                     if FlextUtilitiesGuards.is_general_value_type(value)
                     else str(value)
@@ -838,8 +875,8 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _extract_get_value(
-        current: object | BaseModel, key_part: str
-    ) -> tuple[object, bool]:
+        current: t.GeneralValueType | BaseModel, key_part: str
+    ) -> tuple[t.GeneralValueType, bool]:
         """Helper: Get raw value from dict/object/model."""
         if isinstance(current, Mapping):
             current_mapping: m.ConfigMap = (
@@ -869,12 +906,14 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _extract_handle_array_index(
-        current: object, array_match: str
-    ) -> tuple[object, object]:
+        current: t.GeneralValueType | None, array_match: str
+    ) -> tuple[t.GeneralValueType, t.GeneralValueType]:
         """Helper: Handle array indexing with support for negative indices."""
         if current.__class__ not in {list, tuple}:
             return (None, "Not a sequence")
-        sequence: Sequence[object] = FlextUtilitiesMapper._narrow_to_sequence(current)
+        sequence: Sequence[t.GeneralValueType | None] = (
+            FlextUtilitiesMapper._narrow_to_sequence(current)
+        )
         try:
             idx = int(array_match)
             if idx < 0:
@@ -897,7 +936,7 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _extract_transform_options(
-        transform_opts: Mapping[str, object],
+        transform_opts: objectMapping,
     ) -> tuple[
         bool,
         bool,
@@ -943,18 +982,16 @@ class FlextUtilitiesMapper:
         )
 
     @staticmethod
-    def _get_callable_from_dict(
-        ops: Mapping[str, object], key: str
-    ) -> r[_MapperCallable]:
-        value: object | _MapperCallable | None = ops.get(key)
+    def _get_callable_from_dict(ops: objectMapping, key: str) -> r[_MapperCallable]:
+        value: t.GeneralValueType | _MapperCallable | None = ops.get(key)
         if callable(value):
             return r[_MapperCallable].ok(value)
         return r[_MapperCallable].fail(f"Operation '{key}' is not callable")
 
     @staticmethod
     def _get_raw(
-        data: p.AccessibleData, key: str, *, default: object | None = None
-    ) -> object:
+        data: p.AccessibleData, key: str, *, default: t.GeneralValueType | None = None
+    ) -> t.GeneralValueType | None:
         """Internal helper for raw get without DSL conversion."""
         match data:
             case dict() | Mapping():
@@ -969,9 +1006,7 @@ class FlextUtilitiesMapper:
                 return default if default is not None else ""
 
     @staticmethod
-    def _get_str_from_dict(
-        ops: Mapping[str, object], key: str, default: str = ""
-    ) -> str:
+    def _get_str_from_dict(ops: objectMapping, key: str, default: str = "") -> str:
         """Safely extract str value from ConfigurationDict."""
         value = ops.get(key, default)
         if isinstance(value, str):
@@ -980,11 +1015,11 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _narrow_to_configuration_dict(
-        value: object,
-    ) -> dict[str, object]:
-        """Safely narrow object to ConfigurationDict with runtime validation."""
+        value: t.GeneralValueType,
+    ) -> dict[str, t.GeneralValueType | None]:
+        """Safely narrow t.GeneralValueType to ConfigurationDict with runtime validation."""
         if FlextUtilitiesGuards.is_configuration_dict(value):
-            normalized_dict: dict[str, object] = {}
+            normalized_dict: dict[str, t.GeneralValueType | None] = {}
             for key, item in value.items():
                 normalized_dict[str(key)] = (
                     FlextUtilitiesMapper.narrow_to_general_value_type(item)
@@ -994,8 +1029,8 @@ class FlextUtilitiesMapper:
         raise TypeError(error_msg)
 
     @staticmethod
-    def _narrow_to_configuration_mapping(value: object) -> m.ConfigMap:
-        """Safely narrow object to ConfigurationMapping with runtime validation."""
+    def _narrow_to_configuration_mapping(value: t.GeneralValueType) -> m.ConfigMap:
+        """Safely narrow t.GeneralValueType to ConfigurationMapping with runtime validation."""
         if isinstance(value, m.ConfigMap):
             return value
         if isinstance(value, Mapping):
@@ -1005,17 +1040,20 @@ class FlextUtilitiesMapper:
                 )
             )
             if coerced_result.is_success:
-                return coerced_result.value
+                val: m.ConfigMap = coerced_result.value
+                return val
             error_msg = f"Cannot coerce {value.__class__.__name__} to m.ConfigMap: {coerced_result.error}"
             raise TypeError(error_msg)
         error_msg = f"Cannot narrow {value.__class__.__name__} to m.ConfigMap"
         raise TypeError(error_msg)
 
     @staticmethod
-    def _narrow_to_sequence(value: object) -> Sequence[object]:
-        """Safely narrow object to Sequence[object]."""
+    def _narrow_to_sequence(
+        value: t.GeneralValueType,
+    ) -> Sequence[t.GeneralValueType | None]:
+        """Safely narrow t.GeneralValueType to Sequence[t.GeneralValueType | None]."""
         if isinstance(value, (list, tuple)):
-            narrowed_items: list[object] = []
+            narrowed_items: objectList = []
             for item_raw in value:
                 item = FlextUtilitiesMapper._to_general_value_from_object(item_raw)
                 narrowed_item = FlextUtilitiesMapper.narrow_to_general_value_type(item)
@@ -1026,17 +1064,17 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _narrow_to_string_keyed_dict(
-        value: object,
-    ) -> dict[str, object]:
-        """Narrow object to ConfigurationDict (for conversion purposes).
+        value: t.GeneralValueType,
+    ) -> dict[str, t.GeneralValueType | None]:
+        """Narrow t.GeneralValueType to ConfigurationDict (for conversion purposes).
 
         Validates that the value is a dict with string keys and object values.
         Uses TypeGuard pattern for proper type narrowing.
         """
         if isinstance(value, Mapping):
-            result: dict[str, object] = {}
+            result: dict[str, t.GeneralValueType | None] = {}
             key: str
-            val: object
+            val: t.GeneralValueType
             for key, val in value.items():
                 str_key = str(key)
                 if FlextUtilitiesGuards.is_general_value_type(val):
@@ -1048,7 +1086,9 @@ class FlextUtilitiesMapper:
         raise TypeError(error_msg)
 
     @staticmethod
-    def _to_general_value_from_object(value: object) -> object:
+    def _to_general_value_from_object(
+        value: t.GeneralValueType,
+    ) -> t.GeneralValueType | None:
         if FlextUtilitiesGuards.is_general_value_type(value):
             return value
         return str(value)
@@ -1107,7 +1147,7 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def apply_transform_steps(
-        result: Mapping[str, object],
+        result: objectMapping,
         *,
         normalize: bool,
         map_keys: Mapping[str, str] | None,
@@ -1116,7 +1156,7 @@ class FlextUtilitiesMapper:
         strip_none: bool,
         strip_empty: bool,
         to_json: bool,
-    ) -> Mapping[str, object]:
+    ) -> objectMapping:
         return FlextUtilitiesMapper._apply_transform_steps(
             result,
             normalize=normalize,
@@ -1130,12 +1170,12 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def as_(
-        value: object,
+        value: t.GeneralValueType | None,
         target: type,
         *,
-        default: object | None = None,
+        default: t.GeneralValueType | None = None,
         strict: bool = False,
-    ) -> object:
+    ) -> t.GeneralValueType | None:
         """Type conversion with guard (mnemonic: as_ = convert to type).
 
          Generic replacement for: type check +  patterns
@@ -1224,12 +1264,12 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def build(
-        value: object,
+        value: t.GeneralValueType | None,
         *,
-        ops: Mapping[str, object] | None = None,
-        default: object | None = None,
+        ops: objectMapping | None = None,
+        default: t.GeneralValueType | None = None,
         on_error: str = "stop",
-    ) -> object:
+    ) -> t.GeneralValueType | None:
         """Builder pattern for fluent operation composition using DSL.
 
         Uses DSL dict to compose operations:
@@ -1271,8 +1311,8 @@ class FlextUtilitiesMapper:
         """
         if ops is None:
             return value
-        current: object = value
-        default_val: object = default if default is not None else value
+        current: t.GeneralValueType | None = value
+        default_val: t.GeneralValueType = default if default is not None else value
         current = FlextUtilitiesMapper._build_apply_ensure(current, ops)
         current = FlextUtilitiesMapper._build_apply_filter(current, ops, default_val)
         current = FlextUtilitiesMapper._build_apply_map(current, ops)
@@ -1342,8 +1382,8 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def cast_generic[T](
-        value: object,
-        target_type: Callable[[object], T] | None = None,
+        value: t.GeneralValueType | None,
+        target_type: Callable[[t.GeneralValueType], T] | None = None,
         *,
         default: T | None = None,
     ) -> T | object:
@@ -1410,11 +1450,11 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def construct(
-        spec: Mapping[str, object],
+        spec: objectMapping,
         source: m.ConfigMap | BaseModel | None = None,
         *,
         on_error: str = "stop",
-    ) -> Mapping[str, object]:
+    ) -> objectMapping:
         """Construct object using mnemonic specification pattern.
 
         Builds object from mnemonic spec that maps target keys to source
@@ -1443,10 +1483,10 @@ class FlextUtilitiesMapper:
             )
 
         """
-        constructed: dict[str, object] = {}
+        constructed: dict[str, t.GeneralValueType | None] = {}
         for target_key, target_spec in spec.items():
             try:
-                target_spec_mapping: Mapping[str, object] | None = None
+                target_spec_mapping: objectMapping | None = None
                 if isinstance(target_spec, Mapping):
                     target_spec_mapping = target_spec
                     if "value" in target_spec_mapping:
@@ -1481,7 +1521,7 @@ class FlextUtilitiesMapper:
                 )
                 if field_ops is not None and extracted_raw is not None:
                     if isinstance(field_ops, dict):
-                        field_ops_dict: Mapping[str, object] = (
+                        field_ops_dict: objectMapping = (
                             FlextUtilitiesMapper._narrow_to_configuration_dict(
                                 field_ops
                             )
@@ -1493,8 +1533,10 @@ class FlextUtilitiesMapper:
                         extracted = extracted_raw
                 else:
                     extracted = extracted_raw
-                final_value: object = FlextUtilitiesMapper.narrow_to_general_value_type(
-                    extracted if extracted is not None else field_default
+                final_value: t.GeneralValueType | None = (
+                    FlextUtilitiesMapper.narrow_to_general_value_type(
+                        extracted if extracted is not None else field_default
+                    )
                 )
                 constructed[target_key] = final_value
             except (TypeError, ValueError, KeyError, AttributeError) as e:
@@ -1506,7 +1548,7 @@ class FlextUtilitiesMapper:
         return constructed
 
     @staticmethod
-    def deep_eq(a: Mapping[str, object], b: Mapping[str, object]) -> bool:
+    def deep_eq(a: objectMapping, b: objectMapping) -> bool:
         """Deep equality comparison for nested structures.
 
         Generic replacement for: Manual deep dict comparison.
@@ -1572,7 +1614,9 @@ class FlextUtilitiesMapper:
         return True
 
     @staticmethod
-    def ensure(value: object, default: list[str] | None = None) -> list[str]:
+    def ensure(
+        value: t.GeneralValueType | None, default: list[str] | None = None
+    ) -> list[str]:
         """Ensure value is a list of strings, converting if needed.
 
         **Generic replacement for**: [str(item) for item in list] patterns
@@ -1607,7 +1651,7 @@ class FlextUtilitiesMapper:
         return [str(value)]
 
     @staticmethod
-    def ensure_str(value: object, default: str = "") -> str:
+    def ensure_str(value: t.GeneralValueType | None, default: str = "") -> str:
         """Ensure value is a string, converting if needed.
 
         **Generic replacement for**: Manual str() conversions with isinstance checks
@@ -1635,7 +1679,7 @@ class FlextUtilitiesMapper:
         return str(value)
 
     @staticmethod
-    def ensure_str_or_none(value: object) -> r[str]:
+    def ensure_str_or_none(value: t.GeneralValueType | None) -> r[str]:
         """Ensure value is a string result.
 
         **Generic replacement for**: value if isinstance(value, str) else None
@@ -1661,13 +1705,13 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def extract(
-        data: object,
+        data: t.GeneralValueType,
         path: str,
         *,
-        default: object | None = None,
+        default: t.GeneralValueType | None = None,
         required: bool = False,
         separator: str = ".",
-    ) -> r[object]:
+    ) -> r[t.GeneralValueType]:
         """Safe nested data extraction with dot notation.
 
         Business Rule: Extracts nested values using dot notation paths.
@@ -1688,12 +1732,12 @@ class FlextUtilitiesMapper:
         Example:
             config = {"database": {"host": c.Platform.DEFAULT_HOST, "port": 5432}}
             result = FlextUtilitiesMapper.extract(config, "database.port")
-            # → r[object].ok(5432)
+            # → r[t.GeneralValueType].ok(5432)
 
         """
         try:
             parts = path.split(separator)
-            current: object | BaseModel | None
+            current: t.GeneralValueType | BaseModel | None
             if isinstance(data, BaseModel):
                 current = data
             elif isinstance(data, Mapping):
@@ -1703,14 +1747,14 @@ class FlextUtilitiesMapper:
             for i, part in enumerate(parts):
                 if current is None:
                     if required:
-                        return r[object].fail(
+                        return r[t.GeneralValueType].fail(
                             f"Path '{separator.join(parts[:i])}' is None"
                         )
                     if default is None:
-                        return r[object].fail(
+                        return r[t.GeneralValueType].fail(
                             f"Path '{separator.join(parts[:i])}' is None and default is None"
                         )
-                    return r[object].ok(default)
+                    return r[t.GeneralValueType].ok(default)
                 key_part, array_match = FlextUtilitiesMapper._extract_parse_array_index(
                     part
                 )
@@ -1720,14 +1764,14 @@ class FlextUtilitiesMapper:
                 if not found:
                     path_context = separator.join(parts[:i])
                     if required:
-                        return r[object].fail(
+                        return r[t.GeneralValueType].fail(
                             f"Key '{key_part}' not found at '{path_context}'"
                         )
                     if default is None:
-                        return r[object].fail(
+                        return r[t.GeneralValueType].fail(
                             f"Key '{key_part}' not found at '{path_context}' and default is None"
                         )
-                    return r[object].ok(default)
+                    return r[t.GeneralValueType].ok(default)
                 current = value
                 if array_match:
                     value, error = FlextUtilitiesMapper._extract_handle_array_index(
@@ -1735,36 +1779,38 @@ class FlextUtilitiesMapper:
                     )
                     if error:
                         if required:
-                            return r[object].fail(
+                            return r[t.GeneralValueType].fail(
                                 f"Array error at '{key_part}': {error}"
                             )
                         if default is None:
-                            return r[object].fail(
+                            return r[t.GeneralValueType].fail(
                                 f"Array error at '{key_part}': {error} and default is None"
                             )
-                        return r[object].ok(default)
+                        return r[t.GeneralValueType].ok(default)
                     current = value
             if current is None:
                 if required:
-                    return r[object].fail("Extracted value is None")
+                    return r[t.GeneralValueType].fail("Extracted value is None")
                 if default is None:
-                    return r[object].fail("Extracted value is None and default is None")
-                return r[object].ok(default)
+                    return r[t.GeneralValueType].fail(
+                        "Extracted value is None and default is None"
+                    )
+                return r[t.GeneralValueType].ok(default)
             if FlextUtilitiesGuards.is_general_value_type(current):
-                return r[object].ok(current)
-            return r[object].ok(str(current))
+                return r[t.GeneralValueType].ok(current)
+            return r[t.GeneralValueType].ok(str(current))
         except (AttributeError, TypeError, ValueError, KeyError, IndexError) as e:
-            return r[object].fail(f"Extract failed: {e}")
+            return r[t.GeneralValueType].fail(f"Extract failed: {e}")
 
     @staticmethod
     def field(
-        source: object,
+        source: t.GeneralValueType,
         name: str,
         *,
-        default: object | None = None,
+        default: t.GeneralValueType | None = None,
         required: bool = False,
-        ops: Mapping[str, object] | None = None,
-    ) -> object:
+        ops: objectMapping | None = None,
+    ) -> t.GeneralValueType | None:
         """Extract single field from source with optional DSL processing.
 
         FLEXT Pattern: Simplified single-field extraction (split from overloaded fields).
@@ -1792,12 +1838,14 @@ class FlextUtilitiesMapper:
         if not has_value:
             if required:
                 return None
-            value: object = default if default is not None else ""
+            value: t.GeneralValueType | None = default if default is not None else ""
         else:
-            raw_value: object = FlextUtilitiesMapper.get(source, name, default=default)
+            raw_value: t.GeneralValueType | None = FlextUtilitiesMapper.get(
+                source, name, default=default
+            )
             value = raw_value if raw_value is not None else default
         if ops is not None:
-            value_for_build: object = (
+            value_for_build: t.GeneralValueType = (
                 FlextUtilitiesMapper.narrow_to_general_value_type(value)
                 if value is not None
                 else FlextUtilitiesMapper.narrow_to_general_value_type("")
@@ -1807,9 +1855,9 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def fields(
-        obj: object,
+        obj: t.GeneralValueType,
         *field_names: str | object,
-    ) -> Mapping[str, object]:
+    ) -> objectMapping:
         """Extract specified fields from object.
 
         Supports two patterns:
@@ -1834,12 +1882,12 @@ class FlextUtilitiesMapper:
             })
 
         """
-        result: dict[str, object] = {}
+        result: dict[str, t.GeneralValueType | None] = {}
         spec_item: str | object
         for spec_item in field_names:
             if isinstance(spec_item, Mapping):
                 name: str
-                field_config: object
+                field_config: t.GeneralValueType
                 for name, field_config in spec_item.items():
                     if isinstance(obj, Mapping):
                         if name in obj:
@@ -1866,9 +1914,7 @@ class FlextUtilitiesMapper:
         return result
 
     @staticmethod
-    def fields_multi(
-        source: object, spec: Mapping[str, object]
-    ) -> Mapping[str, object]:
+    def fields_multi(source: t.GeneralValueType, spec: objectMapping) -> objectMapping:
         """Extract multiple fields using specification dict.
 
         FLEXT Pattern: Simplified multi-field extraction (split from overloaded fields).
@@ -1887,9 +1933,9 @@ class FlextUtilitiesMapper:
             )
 
         """
-        result: dict[str, object] = {}
+        result: dict[str, t.GeneralValueType | None] = {}
         for field_name, field_default in spec.items():
-            value: object = FlextUtilitiesMapper.get(
+            value: t.GeneralValueType | None = FlextUtilitiesMapper.get(
                 source, field_name, default=field_default
             )
             result[field_name] = value if value is not None else field_default
@@ -1897,9 +1943,9 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def filter_dict(
-        source: object,
-        predicate: Callable[[str, object], bool],
-    ) -> Mapping[str, object]:
+        source: objectMapping,
+        predicate: Callable[[str, t.GeneralValueType | None], bool],
+    ) -> objectMapping:
         """Filter dict by predicate function on key-value pairs.
 
         Args:
@@ -1985,8 +2031,8 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def get(
-        data: p.AccessibleData, key: str, *, default: object | None = None
-    ) -> object:
+        data: p.AccessibleData, key: str, *, default: t.GeneralValueType | None = None
+    ) -> t.GeneralValueType | None:
         """Unified get function for dict/object access with default.
 
         Generic replacement for: get(), get_str(), get_list()
@@ -2052,7 +2098,7 @@ class FlextUtilitiesMapper:
         return {v: k for k, v in source.items()}
 
     @staticmethod
-    def is_json_primitive(value: object) -> bool:
+    def is_json_primitive(value: t.GeneralValueType | None) -> bool:
         """Check if value is a JSON primitive type (str, int, float, bool, None)."""
         return bool(
             FlextUtilitiesGuards.is_type(value, (str, int, float, bool, None.__class__))
@@ -2082,11 +2128,11 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def map_dict_keys(
-        source: Mapping[str, object],
+        source: objectMapping,
         key_mapping: Mapping[str, str],
         *,
         keep_unmapped: bool = True,
-    ) -> r[Mapping[str, object]]:
+    ) -> r[objectMapping]:
         """Map dictionary keys using mapping specification.
 
         **Generic replacement for**: Key renaming in dicts
@@ -2109,8 +2155,8 @@ class FlextUtilitiesMapper:
 
         """
 
-        def _map_keys() -> Mapping[str, object]:
-            result: dict[str, object] = {}
+        def _map_keys() -> objectMapping:
+            result: dict[str, t.GeneralValueType | None] = {}
             for key, value in source.items():
                 new_key = key_mapping.get(key)
                 if new_key:
@@ -2126,8 +2172,10 @@ class FlextUtilitiesMapper:
         )
 
     @staticmethod
-    def narrow_to_general_value_type(value: object) -> object:
-        """Safely narrow object to object.
+    def narrow_to_general_value_type(
+        value: t.GeneralValueType | None,
+    ) -> t.GeneralValueType | None:
+        """Safely narrow t.GeneralValueType to object.
 
         Uses TypeGuard-based validation to ensure type safety.
         If value is not a valid object, returns string representation.
@@ -2156,8 +2204,8 @@ class FlextUtilitiesMapper:
             Normalized metadata attribute dict
 
         """
-        field_overrides_config: Mapping[str, object] = dict(specific_fields)
-        raw_result: Mapping[str, object] = FlextUtilitiesMapper.process_context_data(
+        field_overrides_config: objectMapping = dict(specific_fields)
+        raw_result: objectMapping = FlextUtilitiesMapper.process_context_data(
             primary_data=context,
             secondary_data=extra_kwargs,
             transformer=FlextRuntime.normalize_to_metadata_value,
@@ -2217,7 +2265,7 @@ class FlextUtilitiesMapper:
     @staticmethod
     def pick(
         data: p.AccessibleData, *keys: str, as_dict: bool = True
-    ) -> Mapping[str, object] | list[object]:
+    ) -> objectMapping | objectList:
         """Pick multiple fields at once (mnemonic: pick = select fields).
 
         Generic replacement for: Multiple get() calls
@@ -2241,10 +2289,10 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def pluck(
-        items: Sequence[Mapping[str, object]],
+        items: Sequence[objectMapping],
         key: str,
-        default: object | None = None,
-    ) -> list[object]:
+        default: t.GeneralValueType | None = None,
+    ) -> objectList:
         """Extract single key from sequence of mappings.
 
         Generic replacement for: [item.get(key) for item in items]
@@ -2265,7 +2313,7 @@ class FlextUtilitiesMapper:
             # [25, 30, 0]
 
         """
-        values: list[object] = []
+        values: objectList = []
         for item in items:
             raw_value = item.get(key, default)
             if raw_value is None:
@@ -2280,15 +2328,15 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def process_context_data(
-        primary_data: m.ConfigMap | object | None = None,
-        secondary_data: m.ConfigMap | object | None = None,
+        primary_data: m.ConfigMap | t.GeneralValueType | None = None,
+        secondary_data: m.ConfigMap | t.GeneralValueType | None = None,
         *,
-        transformer: Callable[[object], object] | None = None,
-        field_overrides: Mapping[str, object] | None = None,
+        transformer: _MapperCallable | None = None,
+        field_overrides: objectMapping | None = None,
         merge_strategy: str = "merge",
         filter_keys: set[str] | None = None,
         exclude_keys: set[str] | None = None,
-    ) -> Mapping[str, object]:
+    ) -> objectMapping:
         """Process and merge contextual data with flexible transformation options.
 
         Generic utility for processing context data across the FLEXT ecosystem.
@@ -2335,13 +2383,15 @@ class FlextUtilitiesMapper:
         """
         if transformer is None:
 
-            def identity_transformer(x: object) -> object:
+            def identity_transformer(
+                x: t.GeneralValueType,
+            ) -> t.GeneralValueType | None:
                 return x
 
             transformer = identity_transformer
-        result: dict[str, object] = {}
+        result: dict[str, t.GeneralValueType | None] = {}
         if primary_data is not None:
-            primary_source: Mapping[str, object] | None = None
+            primary_source: objectMapping | None = None
             if isinstance(primary_data, m.ConfigMap):
                 primary_source = primary_data.root
             else:
@@ -2360,7 +2410,7 @@ class FlextUtilitiesMapper:
                 )
                 result.update(transformed_primary)
         if secondary_data is not None and merge_strategy != "primary_only":
-            secondary_source: Mapping[str, object] | None = None
+            secondary_source: objectMapping | None = None
             if isinstance(secondary_data, m.ConfigMap):
                 secondary_source = secondary_data.root
             else:
@@ -2383,7 +2433,7 @@ class FlextUtilitiesMapper:
                     result.update(transformed_secondary)
         if field_overrides:
             for key, value in field_overrides.items():
-                transformed_value: object = transformer(value)
+                transformed_value: t.GeneralValueType | None = transformer(value)
                 result[key] = transformed_value
         if filter_keys:
             result = dict(
@@ -2419,7 +2469,7 @@ class FlextUtilitiesMapper:
 
         """
 
-        def accessor(obj: m.ConfigMap | BaseModel) -> object:
+        def accessor(obj: m.ConfigMap | BaseModel) -> t.GeneralValueType | None:
             """Access property from object."""
             result = FlextUtilitiesMapper.get(obj, key)
             return result if result is not None else ""
@@ -2429,48 +2479,48 @@ class FlextUtilitiesMapper:
     @staticmethod
     @overload
     def take(
-        data_or_items: Mapping[str, object] | object,
+        data_or_items: objectMapping | object,
         key_or_n: str,
         *,
         as_type: type | None = None,
-        default: object | None = None,
+        default: t.GeneralValueType | None = None,
         from_start: bool = True,
-    ) -> object: ...
+    ) -> t.GeneralValueType | None: ...
 
     @staticmethod
     @overload
     def take(
-        data_or_items: Mapping[str, object],
+        data_or_items: objectMapping,
         key_or_n: int,
         *,
         as_type: type | None = None,
-        default: object | None = None,
+        default: t.GeneralValueType | None = None,
         from_start: bool = True,
-    ) -> Mapping[str, object]: ...
+    ) -> objectMapping: ...
 
     @staticmethod
     @overload
     def take(
-        data_or_items: list[object] | tuple[object, ...],
+        data_or_items: objectList | tuple[t.GeneralValueType, ...],
         key_or_n: int,
         *,
         as_type: type | None = None,
-        default: object | None = None,
+        default: t.GeneralValueType | None = None,
         from_start: bool = True,
-    ) -> list[object]: ...
+    ) -> objectList: ...
 
     @staticmethod
     def take(
-        data_or_items: Mapping[str, object]
+        data_or_items: objectMapping
         | object
-        | list[object]
-        | tuple[object, ...],
+        | objectList
+        | tuple[t.GeneralValueType, ...],
         key_or_n: str | int,
         *,
         as_type: type | None = None,
-        default: object | None = None,
+        default: t.GeneralValueType | None = None,
         from_start: bool = True,
-    ) -> objectMapping | list[object] | object:
+    ) -> objectMapping | objectList | object:
         """Unified take function (generalized from take_n).
 
         Generic replacement for: list slicing, dict slicing
@@ -2523,7 +2573,7 @@ class FlextUtilitiesMapper:
             selected_keys = keys[:n] if from_start else keys[-n:]
             return {k: data_or_items[k] for k in selected_keys}
         if isinstance(data_or_items, (list, tuple)):
-            items_list: list[object] = [
+            items_list: objectList = [
                 FlextUtilitiesMapper.narrow_to_general_value_type(
                     FlextUtilitiesMapper._to_general_value_from_object(item)
                 )
@@ -2534,7 +2584,7 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def transform(
-        source: Mapping[str, object] | m.ConfigMap,
+        source: objectMapping | m.ConfigMap,
         *,
         normalize: bool = False,
         strip_none: bool = False,
@@ -2543,7 +2593,7 @@ class FlextUtilitiesMapper:
         filter_keys: set[str] | None = None,
         exclude_keys: set[str] | None = None,
         to_json: bool = False,
-    ) -> r[Mapping[str, object]]:
+    ) -> r[objectMapping]:
         """Transform dictionary with multiple options.
 
         Args:
@@ -2587,9 +2637,9 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def transform_values(
-        source: Mapping[str, object],
-        transformer: Callable[[object], object],
-    ) -> Mapping[str, object]:
+        source: objectMapping,
+        transformer: Callable[[t.GeneralValueType], object],
+    ) -> objectMapping:
         """Transform all values in dict using transformer function.
 
         **Generic replacement for**: Manual dict value transformations

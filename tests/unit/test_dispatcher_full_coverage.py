@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from flext_core import FlextDispatcher, m, p
+from flext_core import FlextDispatcher, m, p, t
 from flext_core.dispatcher import _DispatchableHandler
 
 
@@ -17,7 +17,7 @@ def _force_handler(obj: object) -> _DispatchableHandler:
 
     def _wrapper(
         *_args: object,
-        **_kwargs: object,
+        **_kwargs: t.Scalar,
     ) -> p.ResultLike[object] | object | None:
         return None
 

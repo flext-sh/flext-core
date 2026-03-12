@@ -739,7 +739,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         msg: str | object,
         *args: object,
         _return_result: Literal[True],
-        **kw: object,
+        **kw: t.Scalar,
     ) -> r[bool]: ...
 
     @overload
@@ -748,7 +748,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         msg: str | object,
         *args: object,
         _return_result: Literal[False] = ...,
-        **kw: object,
+        **kw: t.Scalar,
     ) -> None: ...
 
     @overload
@@ -756,7 +756,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         self,
         msg: str | object,
         *args: object,
-        **kw: object,
+        **kw: t.Scalar,
     ) -> r[bool] | None: ...
 
     @override
@@ -764,7 +764,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         self,
         msg: str | object,
         *args: object,
-        **kw: object,
+        **kw: t.Scalar,
     ) -> r[bool] | None:
         """Log critical message - Logger.Log implementation.
 
@@ -785,7 +785,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         msg: str | object,
         *args: object | Exception,
         _return_result: Literal[True],
-        **kw: object,
+        **kw: t.Scalar,
     ) -> r[bool]: ...
 
     @overload
@@ -794,7 +794,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         msg: str | object,
         *args: object | Exception,
         _return_result: Literal[False] = ...,
-        **kw: object,
+        **kw: t.Scalar,
     ) -> None: ...
 
     @overload
@@ -802,7 +802,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         self,
         msg: str | object,
         *args: object | Exception,
-        **kw: object,
+        **kw: t.Scalar,
     ) -> r[bool] | None: ...
 
     @override
@@ -810,7 +810,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         self,
         msg: str | object,
         *args: object | Exception,
-        **kw: object,
+        **kw: t.Scalar,
     ) -> r[bool] | None:
         """Log debug message - Logger.Log implementation.
 
@@ -831,7 +831,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         msg: str | object,
         *args: object,
         _return_result: Literal[True],
-        **kw: object,
+        **kw: t.Scalar,
     ) -> r[bool]: ...
 
     @overload
@@ -840,7 +840,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         msg: str | object,
         *args: object,
         _return_result: Literal[False] = ...,
-        **kw: object,
+        **kw: t.Scalar,
     ) -> None: ...
 
     @overload
@@ -848,7 +848,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         self,
         msg: str | object,
         *args: object,
-        **kw: object,
+        **kw: t.Scalar,
     ) -> r[bool] | None: ...
 
     @override
@@ -856,7 +856,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         self,
         msg: str | object,
         *args: object,
-        **kw: object,
+        **kw: t.Scalar,
     ) -> r[bool] | None:
         """Log error message - Logger.Log implementation.
 
@@ -877,7 +877,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         msg: str | object,
         *args: object,
         _return_result: Literal[True],
-        **kw: object,
+        **kw: t.Scalar,
     ) -> r[bool]: ...
 
     @overload
@@ -886,7 +886,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         msg: str | object,
         *args: object,
         _return_result: Literal[False] = ...,
-        **kw: object,
+        **kw: t.Scalar,
     ) -> None: ...
 
     @overload
@@ -894,7 +894,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         self,
         msg: str | object,
         *args: object,
-        **kw: object,
+        **kw: t.Scalar,
     ) -> r[bool] | None: ...
 
     @override
@@ -902,7 +902,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         self,
         msg: str | object,
         *args: object,
-        **kw: object,
+        **kw: t.Scalar,
     ) -> r[bool] | None:
         """Log exception with conditional stack trace (DEBUG only).
 
@@ -957,7 +957,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         msg: str | object,
         *args: object,
         _return_result: Literal[True],
-        **kw: object,
+        **kw: t.Scalar,
     ) -> r[bool]: ...
 
     @overload
@@ -966,7 +966,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         msg: str | object,
         *args: object,
         _return_result: Literal[False] = ...,
-        **kw: object,
+        **kw: t.Scalar,
     ) -> None: ...
 
     @overload
@@ -974,7 +974,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         self,
         msg: str | object,
         *args: object,
-        **kw: object,
+        **kw: t.Scalar,
     ) -> r[bool] | None: ...
 
     @override
@@ -982,7 +982,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         self,
         msg: str | object,
         *args: object,
-        **kw: object,
+        **kw: t.Scalar,
     ) -> r[bool] | None:
         """Log info message - Logger.Log implementation.
 
@@ -1004,7 +1004,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         message: str,
         *args: object,
         _return_result: Literal[True],
-        **context: object,
+        **context: t.Scalar,
     ) -> r[bool]: ...
 
     @overload
@@ -1014,7 +1014,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         message: str,
         *args: object,
         _return_result: Literal[False] = ...,
-        **context: object,
+        **context: t.Scalar,
     ) -> None: ...
 
     def log(
@@ -1022,7 +1022,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         level: str,
         message: str,
         *args: object,
-        **context: object,
+        **context: t.Scalar,
     ) -> r[bool] | None:
         """Log message with specified level - Logger.Log implementation.
 
@@ -1050,7 +1050,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         return self._log(level_enum, message, *args, **context)
 
     @override
-    def new(self, **context: object) -> Self:
+    def new(self, **context: t.Scalar) -> Self:
         """Create new logger with context - implements BindableLogger protocol."""
         return self.bind(**context)
 
@@ -1060,7 +1060,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         message: str,
         *args: object,
         _return_result: Literal[True],
-        **kwargs: object,
+        **kwargs: t.Scalar,
     ) -> r[bool]: ...
 
     @overload
@@ -1069,14 +1069,14 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         message: str,
         *args: object,
         _return_result: Literal[False] = ...,
-        **kwargs: object,
+        **kwargs: t.Scalar,
     ) -> None: ...
 
     def trace(
         self,
         message: str,
         *args: object,
-        **kwargs: object,
+        **kwargs: t.Scalar,
     ) -> r[bool] | None:
         """Log trace message - Logger.Log implementation."""
         try:
@@ -1110,7 +1110,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         msg: str | object,
         *args: object,
         _return_result: Literal[True],
-        **kw: object,
+        **kw: t.Scalar,
     ) -> r[bool]: ...
 
     @overload
@@ -1119,7 +1119,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         msg: str | object,
         *args: object,
         _return_result: Literal[False] = ...,
-        **kw: object,
+        **kw: t.Scalar,
     ) -> None: ...
 
     @overload
@@ -1127,7 +1127,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         self,
         msg: str | object,
         *args: object,
-        **kw: object,
+        **kw: t.Scalar,
     ) -> r[bool] | None: ...
 
     @override
@@ -1135,7 +1135,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         self,
         msg: str | object,
         *args: object,
-        **kw: object,
+        **kw: t.Scalar,
     ) -> r[bool] | None:
         """Log warning message - Logger.Log implementation.
 
@@ -1167,7 +1167,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         _level: c.Settings.LogLevel | str,
         message: str,
         *args: object,
-        **context: object,
+        **context: t.Scalar,
     ) -> r[bool] | None:
         """Internal logging method - consolidates all log level methods.
 
@@ -1205,7 +1205,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         level: c.Settings.LogLevel,
         msg: str | object,
         *args: object | Exception,
-        **kw: object,
+        **kw: t.Scalar,
     ) -> r[bool] | None:
         message = str(msg)
         filtered_args: tuple[object, ...] = tuple(
@@ -1280,19 +1280,19 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             """Get logger name - delegate to base logger."""
             return self._base_logger.name
 
-        def bind(self, **context: object) -> FlextLogger.ResultAdapter:
+        def bind(self, **context: t.Scalar) -> FlextLogger.ResultAdapter:
             """Bind context preserving adapter wrapper."""
             return FlextLogger.ResultAdapter(self._base_logger.bind(**context))
 
-        def critical(self, message: str, *args: object, **kwargs: object) -> r[bool]:
+        def critical(self, message: str, *args: object, **kwargs: t.Scalar) -> r[bool]:
             """Log critical message returning r."""
             return self._log_and_wrap("critical", message, *args, **kwargs)
 
-        def debug(self, message: str, *args: object, **kwargs: object) -> r[bool]:
+        def debug(self, message: str, *args: object, **kwargs: t.Scalar) -> r[bool]:
             """Log debug message returning r."""
             return self._log_and_wrap("debug", message, *args, **kwargs)
 
-        def error(self, message: str, *args: object, **kwargs: object) -> r[bool]:
+        def error(self, message: str, *args: object, **kwargs: t.Scalar) -> r[bool]:
             """Log error message returning r."""
             return self._log_and_wrap("error", message, *args, **kwargs)
 
@@ -1302,7 +1302,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             *,
             exception: BaseException | None = None,
             exc_info: bool = True,
-            **kwargs: object,
+            **kwargs: t.Scalar,
         ) -> r[bool]:
             """Log exception with traceback returning r.
 
@@ -1344,15 +1344,15 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             )
             return r[bool].ok(value=True)
 
-        def info(self, message: str, *args: object, **kwargs: object) -> r[bool]:
+        def info(self, message: str, *args: object, **kwargs: t.Scalar) -> r[bool]:
             """Log info message returning r."""
             return self._log_and_wrap("info", message, *args, **kwargs)
 
-        def trace(self, message: str, *args: object, **kwargs: object) -> r[bool]:
+        def trace(self, message: str, *args: object, **kwargs: t.Scalar) -> r[bool]:
             """Log trace message returning r."""
             return self._log_and_wrap("trace", message, *args, **kwargs)
 
-        def warning(self, message: str, *args: object, **kwargs: object) -> r[bool]:
+        def warning(self, message: str, *args: object, **kwargs: t.Scalar) -> r[bool]:
             """Log warning message returning r."""
             return self._log_and_wrap("warning", message, *args, **kwargs)
 
@@ -1365,7 +1365,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             method_name: str,
             message: str,
             *args: object,
-            **kwargs: object,
+            **kwargs: t.Scalar,
         ) -> r[bool]:
             log_method = getattr(self._base_logger, method_name)
             log_method(message, *args, **kwargs)

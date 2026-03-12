@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
+from flext_core import t
 from flext_infra.check.services import (
     CheckIssue,
     GateExecution,
@@ -34,7 +35,7 @@ class Spy:
         self._return_value = return_value
         self._side_effect = list(side_effect) if side_effect else None
 
-    def __call__(self, *args: object, **kwargs: object) -> object:
+    def __call__(self, *args: object, **kwargs: t.Scalar) -> object:
         self.called = True
         self.call_count += 1
         self.call_args = (args, kwargs)

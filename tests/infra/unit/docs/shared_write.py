@@ -12,6 +12,7 @@ from pathlib import Path
 
 import pytest
 
+from flext_core import t
 from flext_infra.docs.shared import FlextInfraDocsShared
 from flext_tests import tm
 from tests.infra.models import m
@@ -162,7 +163,7 @@ class TestWriteMarkdown:
             self: object,
             data: str,
             *args: object,
-            **kwargs: object,
+            **kwargs: t.Scalar,
         ) -> None:
             msg = "Permission denied"
             raise OSError(msg)

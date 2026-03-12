@@ -723,7 +723,7 @@ class FlextHandlers[MessageT_contra = object, ResultT = object](x):
                 def narrowed_func(
                     message: object,
                     captured_callable: Callable[..., object] = callable_func,
-                    **kwargs: object,
+                    **kwargs: t.Scalar,
                 ) -> object | None:
                     fn_candidate = kwargs.get("fn", captured_callable)
                     if not callable(fn_candidate):

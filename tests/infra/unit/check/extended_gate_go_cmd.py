@@ -11,7 +11,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from flext_core import r
+from flext_core import r, t
 from flext_infra._utilities.subprocess import FlextInfraUtilitiesSubprocess
 from flext_infra.check.services import FlextInfraWorkspaceChecker
 from flext_tests import tm
@@ -40,7 +40,7 @@ class TestWorkspaceCheckerRunGo:
         (proj_dir / "go.mod").write_text("module test")
         call_count = [0]
 
-        def _fake_run(*_a: object, **_kw: object) -> SimpleNamespace:
+        def _fake_run(*_a: object, **_kw: t.Scalar) -> SimpleNamespace:
             call_count[0] += 1
             if call_count[0] == 1:
                 return h.stub_run(stdout="main.go:10:5: error message", returncode=1)
@@ -61,7 +61,7 @@ class TestWorkspaceCheckerRunGo:
         (proj_dir / "main.go").write_text("package main")
         call_count = [0]
 
-        def _fake_run(*_a: object, **_kw: object) -> SimpleNamespace:
+        def _fake_run(*_a: object, **_kw: t.Scalar) -> SimpleNamespace:
             call_count[0] += 1
             if call_count[0] == 1:
                 return h.stub_run()
@@ -82,7 +82,7 @@ class TestWorkspaceCheckerRunGo:
         (proj_dir / "go.mod").write_text("module test")
         call_count = [0]
 
-        def _fake_run(*_a: object, **_kw: object) -> SimpleNamespace:
+        def _fake_run(*_a: object, **_kw: t.Scalar) -> SimpleNamespace:
             call_count[0] += 1
             if call_count[0] == 1:
                 return h.stub_run(stderr="go vet failed", returncode=1)
@@ -107,7 +107,7 @@ class TestWorkspaceCheckerRunCommand:
         def _fake_run(
             _self: FlextInfraUtilitiesSubprocess,
             _cmd: list[str],
-            **_kw: object,
+            **_kw: t.Scalar,
         ) -> r[m.Infra.Core.CommandOutput]:
             return r[m.Infra.Core.CommandOutput].ok(
                 m.Infra.Core.CommandOutput(stdout="output", stderr="", exit_code=0),
@@ -128,7 +128,7 @@ class TestWorkspaceCheckerRunCommand:
         def _fake_run(
             _self: FlextInfraUtilitiesSubprocess,
             _cmd: list[str],
-            **_kw: object,
+            **_kw: t.Scalar,
         ) -> r[m.Infra.Core.CommandOutput]:
             return r[m.Infra.Core.CommandOutput].fail("execution failed")
 

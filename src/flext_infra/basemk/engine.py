@@ -14,12 +14,12 @@ from jinja2 import (
     select_autoescape,
 )
 
-from flext_core import r, s
+from flext_core import r, s, t
 from flext_infra import c, m
 
 
 class _TemplateRenderer(Protocol):
-    def render(self, **kwargs: object) -> str: ...
+    def render(self, **kwargs: t.Scalar) -> str: ...
 
 
 def _render_template(

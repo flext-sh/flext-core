@@ -10,6 +10,7 @@ from pathlib import Path
 
 import pytest
 
+from flext_core import t
 from flext_infra.workspace.migrator import FlextInfraProjectMigrator
 from flext_tests import tm
 from tests.infra import h
@@ -42,7 +43,7 @@ class TestMigratorWriteFailures:
         _root, proj = _setup_basic(tmp_path)
         migrator = _build_migrator(proj, "base")
 
-        def _write_fail(_self: Path, _data: str, **_kw: object) -> int:
+        def _write_fail(_self: Path, _data: str, **_kw: t.Scalar) -> int:
             msg = "Write failed"
             raise OSError(msg)
 
@@ -68,7 +69,7 @@ class TestMigratorWriteFailures:
         (root / ".gitignore").write_text("", encoding="utf-8")
         migrator = _build_migrator(_project(root), "new content")
 
-        def _write_fail(_self: Path, _data: str, **_kw: object) -> int:
+        def _write_fail(_self: Path, _data: str, **_kw: t.Scalar) -> int:
             msg = "Write failed"
             raise OSError(msg)
 

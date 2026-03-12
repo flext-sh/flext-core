@@ -14,9 +14,10 @@ from typing import Literal, overload
 
 from pydantic import BaseModel, TypeAdapter, ValidationError
 
-from flext_core import r, t
+from flext_core.result import r
+from flext_core.typings import t
 
-type StrictValue = t.Scalar | t.Dict | list[t.Container] | None
+type StrictValue = t.Scalar | t.ConfigurationMapping | list[t.Container] | None
 
 
 class FlextUtilitiesConversion:

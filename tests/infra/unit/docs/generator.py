@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pytest
 
-from flext_core import r
+from flext_core import r, t
 from flext_infra.docs.generator import FlextInfraDocGenerator
 from flext_infra.docs.shared import FlextInfraDocsShared
 from flext_tests import tm
@@ -171,7 +171,7 @@ class TestGeneratorCore:
     ) -> None:
         """Test generate returns failure when scope building fails."""
 
-        def mock_build_scopes(*args: object, **kwargs: object) -> r[list[object]]:
+        def mock_build_scopes(*args: object, **kwargs: t.Scalar) -> r[list[object]]:
             return r[list[object]].fail("Scope error")
 
         monkeypatch.setattr(FlextInfraDocsShared, "build_scopes", mock_build_scopes)

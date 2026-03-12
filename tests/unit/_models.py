@@ -193,7 +193,7 @@ class BadConfigForTest(BaseModel):
 
     model_config = ConfigDict(validate_assignment=True)
 
-    def __init__(self, **kwargs: object) -> None:
+    def __init__(self, **kwargs: t.Scalar) -> None:
         """Raise error on init."""
         super().__init__(**kwargs)
         msg = "Cannot instantiate"

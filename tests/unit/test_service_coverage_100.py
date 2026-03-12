@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_core import r, s
+from flext_core import r, s, t
 
 
 class TestService(s[str]):
@@ -19,12 +19,12 @@ class TestService(s[str]):
 
     __test__ = False
 
-    def __init__(self, **data: object) -> None:
+    def __init__(self, **data: t.Scalar) -> None:
         """Initialize test service."""
         super().__init__(**data)
 
     @override
-    def execute(self, **_kwargs: object) -> r[str]:
+    def execute(self, **_kwargs: t.Scalar) -> r[str]:
         """Execute service."""
         return self.ok("success")
 
@@ -34,12 +34,12 @@ class TestServiceWithValidation(s[str]):
 
     __test__ = False
 
-    def __init__(self, **data: object) -> None:
+    def __init__(self, **data: t.Scalar) -> None:
         """Initialize test service."""
         super().__init__(**data)
 
     @override
-    def execute(self, **_kwargs: object) -> r[str]:
+    def execute(self, **_kwargs: t.Scalar) -> r[str]:
         """Execute service."""
         return self.ok("validated")
 

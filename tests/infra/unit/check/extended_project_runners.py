@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pytest
 
-from flext_core import r
+from flext_core import r, t
 from flext_infra.check.services import (
     CheckIssue,
     FlextInfraWorkspaceChecker,
@@ -78,7 +78,7 @@ class TestJsonWriteFailure:
         (proj_dir / "pyproject.toml").write_text("[tool.poetry]\n")
 
         class _FakeJson:
-            def write_json(self, *_a: object, **_kw: object) -> r[bool]:
+            def write_json(self, *_a: object, **_kw: t.Scalar) -> r[bool]:
                 return r[bool].fail("write error")
 
         monkeypatch.setattr(checker, "_json", _FakeJson())

@@ -38,6 +38,7 @@ from flext_core import (
     FlextTypes,
     FlextUtilities,
     r,
+    t,
 )
 from tests.test_utils import assertion_helpers
 
@@ -117,7 +118,7 @@ class TestMigrationScenario4:
                 self._logger = FlextLogger(__name__)
 
             @override
-            def execute(self, **_kwargs: object) -> r[None]:
+            def execute(self, **_kwargs: t.Scalar) -> r[None]:
                 """Execute method required by FlextService abstract class."""
                 return r[None].ok(None)
 

@@ -32,7 +32,7 @@ _DEFAULTS: dict[str, object] = {
 }
 
 
-def _args(**overrides: object) -> argparse.Namespace:
+def _args(**overrides: t.Scalar) -> argparse.Namespace:
     return h.ns(**{**_DEFAULTS, **overrides})
 
 

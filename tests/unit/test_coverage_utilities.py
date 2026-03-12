@@ -145,7 +145,7 @@ class UtilityScenarios:
     ]
 
     @staticmethod
-    def create_mock_config(**kwargs: object) -> p.HasModelDump:
+    def create_mock_config(**kwargs: t.Scalar) -> p.HasModelDump:
         """Create mock config object."""
         result: dict[str, object] = {}
         for key, value in kwargs.items():

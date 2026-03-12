@@ -128,7 +128,7 @@ class FlextUtilitiesCache:
             return r[bool].fail(f"Failed to clear caches: {e}")
 
     @staticmethod
-    def generate_cache_key(*args: object, **kwargs: object) -> str:
+    def generate_cache_key(*args: object, **kwargs: t.Scalar) -> str:
         """Generate a deterministic cache key from arguments.
 
         Business Rule: SHA-256 Cache Key Generation

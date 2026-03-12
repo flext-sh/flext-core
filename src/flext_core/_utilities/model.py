@@ -299,7 +299,7 @@ class FlextUtilitiesModel:
         return result
 
     @staticmethod
-    def update[M: BaseModel](instance: M, **updates: object) -> r[M]:
+    def update[M: BaseModel](instance: M, **updates: t.Scalar) -> r[M]:
         """Update existing model with new values.
 
         Example:

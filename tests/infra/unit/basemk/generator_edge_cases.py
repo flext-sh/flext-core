@@ -14,6 +14,7 @@ from pathlib import Path
 
 import pytest
 
+from flext_core import t
 from flext_infra.basemk.generator import FlextInfraBaseMkGenerator
 from flext_tests import tm
 from tests.infra.models import m as im
@@ -90,7 +91,7 @@ def test_generator_write_to_stream_handles_oserror(
     content = "all:\n\t@echo 'test'\n"
     gen = FlextInfraBaseMkGenerator()
 
-    def mock_write(*args: object, **kwargs: object) -> None:
+    def mock_write(*args: object, **kwargs: t.Scalar) -> None:
         msg = "Stream write failed"
         raise OSError(msg)
 
@@ -107,7 +108,7 @@ def test_generator_validate_generated_output_handles_oserror(
     gen = FlextInfraBaseMkGenerator()
     content = "all:\n\t@echo 'test'\n"
 
-    def mock_tempdir(*args: object, **kwargs: object) -> object:
+    def mock_tempdir(*args: object, **kwargs: t.Scalar) -> object:
         msg = "Temp directory creation failed"
         raise OSError(msg)
 

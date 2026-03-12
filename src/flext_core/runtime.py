@@ -75,15 +75,6 @@ from flext_core._models.base import FlextModelFoundation
 from flext_core._models.containers import FlextModelsContainers
 
 
-class _LazyMetadata:
-    """Descriptor for lazy-loading Metadata class."""
-
-    def __get__(self, obj: object, objtype: type | None = None) -> type:
-        metadata_cls = FlextModelFoundation.Metadata
-        (objtype or FlextRuntime).Metadata = metadata_cls
-        return metadata_cls
-
-
 class FlextRuntime:
     """Expose structlog, DI providers, and validation helpers to higher layers.
 
@@ -173,7 +164,7 @@ class FlextRuntime:
             cls._runtime_logger = logger
         return logger
 
-    Metadata: ClassVar[type | _LazyMetadata] = _LazyMetadata()
+    Metadata: ClassVar[type] = FlextModelFoundation.Metadata
 
     class _AsyncLogWriter(io.TextIOBase):
         """Background log writer using a queue and a separate thread.
@@ -448,7 +439,7 @@ class FlextRuntime:
         return logger
 
     @staticmethod
-    def is_base_model(obj: object) -> TypeGuard[BaseModel]:
+    def is_base_model(obj: t.GeneralValueType) -> TypeGuard[BaseModel]:
         """Type guard to narrow object to BaseModel (part of object).
 
         This allows isinstance checks to narrow types for FlextRuntime methods
@@ -509,7 +500,7 @@ class FlextRuntime:
     @staticmethod
     def is_list_like(
         value: object,
-    ) -> TypeGuard[Sequence[object]]:
+    ) -> TypeGuard[Sequence[t.GeneralValueType]]:
         """Type guard to check if value is list-like."""
         return isinstance(value, list)
 
@@ -598,12 +589,12 @@ class FlextRuntime:
 
     @staticmethod
     def normalize_to_general_value(
-        val: object,
-    ) -> object:
+        val: t.GeneralValueType,
+    ) -> t.GeneralValueType:
         """Normalize any value to object recursively.
 
-        Converts arbitrary objects, FlextModelsContainers.ConfigMap, list[object], and other types
-        to FlextModelsContainers.ConfigMap, Sequence[object], etc.
+        Converts arbitrary objects, FlextModelsContainers.ConfigMap, list[t.GeneralValueType], and other types
+        to FlextModelsContainers.ConfigMap, Sequence[t.GeneralValueType], etc.
         This is the central conversion function for type safety.
 
         Args:
@@ -629,7 +620,7 @@ class FlextRuntime:
             return FlextRuntime.normalize_to_general_value(val.model_dump())
         if FlextRuntime.is_dict_like(val):
             dict_v = getattr(val, "root", val)
-            result: dict[str, object] = {}
+            result: dict[str, t.GeneralValueType] = {}
             for k, v in dict_v.items():
                 result[str(k)] = FlextRuntime.normalize_to_general_value(v)
             return result
@@ -642,8 +633,8 @@ class FlextRuntime:
 
     @staticmethod
     def normalize_to_metadata_value(
-        val: object,
-    ) -> object:
+        val: t.GeneralValueType,
+    ) -> t.MetadataAttributeValue:
         """Normalize any value to t.MetadataAttributeValue.
 
         t.MetadataAttributeValue is more restrictive than object,
@@ -666,14 +657,14 @@ class FlextRuntime:
 
         """
         if FlextRuntime._is_scalar(val):
-            result_scalar: object = val
+            result_scalar: t.Scalar = val
             return result_scalar
         if isinstance(val, BaseModel):
-            model_dump_result: object = val.model_dump()
+            model_dump_result: t.GeneralValueTypeMapping = val.model_dump()
             return FlextRuntime.normalize_to_metadata_value(model_dump_result)
         if FlextRuntime.is_dict_like(val):
             raw_mapping = getattr(val, "root", val)
-            normalized_mapping: dict[str, object] = {}
+            normalized_mapping: dict[str, t.GeneralValueType] = {}
             for key, value in raw_mapping.items():
                 normalized_mapping[str(key)] = FlextRuntime.normalize_to_general_value(
                     value
@@ -685,14 +676,14 @@ class FlextRuntime:
                 if FlextRuntime._is_scalar(item):
                     result_list.append(item)
                 else:
-                    result_list.append(str(item) if item is not None else "")
+                    result_list.append(str(item))
             return result_list
-        result_str: object = str(val)
+        result_str: str = str(val)
         return result_str
 
     @staticmethod
     def safe_get_attribute(
-        obj: object, attr: str, default: object | None = None
+        obj: t.GeneralValueType, attr: str, default: t.GeneralValueType | None = None
     ) -> object | None:
         """Safe attribute access without raising AttributeError.
 
@@ -968,7 +959,7 @@ class FlextRuntime:
         config: object | None = None,
         log_level: int | None = None,
         console_renderer: bool = True,
-        additional_processors: Sequence[object] | None = None,
+        additional_processors: Sequence[t.GeneralValueType] | None = None,
         wrapper_class_factory: Callable[[], type[p.Log.StructlogLogger]] | None = None,
         logger_factory: Callable[[], p.Log.StructlogLogger] | None = None,
         cache_logger_on_first_use: bool = True,
@@ -1072,7 +1063,7 @@ class FlextRuntime:
         *,
         log_level: int | None = None,
         console_renderer: bool = True,
-        additional_processors: list[object] | None = None,
+        additional_processors: list[t.GeneralValueType] | None = None,
     ) -> None:
         """Force reconfigure structlog (ignores is_configured checks).
 
@@ -1150,8 +1141,8 @@ class FlextRuntime:
     def level_based_context_filter(
         _logger: object,
         method_name: str,
-        event_dict: Mapping[str, object],
-    ) -> Mapping[str, object]:
+        event_dict: t.GeneralValueTypeMapping,
+    ) -> t.GeneralValueTypeMapping:
         """Filter context variables based on log level.
 
         Removes context variables that are restricted to specific log levels
@@ -1192,7 +1183,7 @@ class FlextRuntime:
             "critical": 50,
         }
         current_level = level_hierarchy.get(method_name.lower(), 20)
-        filtered_dict: dict[str, object] = {}
+        filtered_dict: dict[str, t.GeneralValueType] = {}
         for key, value in event_dict.items():
             if key.startswith("_level_"):
                 parts = key.split("_", c.Validation.LEVEL_PREFIX_PARTS_COUNT)
@@ -1243,7 +1234,7 @@ class FlextRuntime:
             value: T | None = None,
             error: str | None = None,
             error_code: str | None = None,
-            error_data: object | BaseModel | None = None,
+            error_data: t.ResultErrorData | None = None,
             *,
             is_success: bool = True,
         ) -> None:
@@ -1252,14 +1243,18 @@ class FlextRuntime:
             self._value = value
             self._error = error
             self._error_code = error_code
-            if error_data is not None and (
-                not isinstance(error_data, FlextModelsContainers.ConfigMap)
-            ):
-                self._error_data: FlextModelsContainers.ConfigMap | None = (
-                    FlextModelsContainers.ConfigMap(root=dict(error_data))
+            if isinstance(error_data, FlextModelsContainers.ConfigMap):
+                self._error_data = error_data
+            elif isinstance(error_data, BaseModel):
+                self._error_data = FlextModelsContainers.ConfigMap.model_validate(
+                    error_data.model_dump()
+                )
+            elif isinstance(error_data, Mapping):
+                self._error_data = FlextModelsContainers.ConfigMap.model_validate(
+                    dict(error_data)
                 )
             else:
-                self._error_data = error_data
+                self._error_data = None
             self._is_success = is_success
             self._exception: BaseException | None = None
             self._result_logger: p.Log.StructlogLogger | None = None
@@ -1368,7 +1363,7 @@ class FlextRuntime:
             cls: type[FlextRuntime.RuntimeResult[U]],
             error: str | None,
             error_code: str | None = None,
-            error_data: object | BaseModel | None = None,
+            error_data: t.ResultErrorData | None = None,
         ) -> FlextRuntime.RuntimeResult[U]:
             """Create failed result with error message.
 
@@ -1696,7 +1691,7 @@ class FlextRuntime:
     @classmethod
     def ensure_trace_context(
         cls,
-        context: Mapping[str, str] | object,
+        context: Mapping[str, t.Scalar] | BaseModel | t.Scalar,
         *,
         include_correlation_id: bool = False,
         include_timestamp: bool = False,
@@ -1714,8 +1709,12 @@ class FlextRuntime:
         """
         context_dict = FlextModelsContainers.ConfigMap(root={})
         if isinstance(context, Mapping):
-            for key, value in context.items():
-                context_dict[str(key)] = FlextRuntime.normalize_to_general_value(value)
+            parsed_context: dict[str, str] = TypeAdapter(
+                dict[str, str]
+            ).validate_python(context)
+            context_dict = FlextModelsContainers.ConfigMap.model_validate(
+                parsed_context
+            )
         elif not isinstance(context, Mapping) and FlextRuntime._is_scalar(context):
             context_dict = FlextModelsContainers.ConfigMap(root={})
         elif isinstance(context, BaseModel):
@@ -1724,14 +1723,13 @@ class FlextRuntime:
             try:
                 for k_obj, v_obj in context.items():
                     key_str = str(k_obj)
-                    val_typed = FlextRuntime.normalize_to_general_value(v_obj)
-                    context_dict[key_str] = val_typed
+                    context_dict[key_str] = str(v_obj)
             except (TypeError, ValueError, AttributeError) as exc:
                 logging.getLogger(__name__).debug(
                     "Failed to normalize mapping context fields", exc_info=exc
                 )
                 context_dict = FlextModelsContainers.ConfigMap(root={})
-        elif hasattr(context, "items"):
+        else:
             context_dict = FlextModelsContainers.ConfigMap(root={})
         result: dict[str, str] = {}
         for key, value in context_dict.items():
@@ -1840,7 +1838,7 @@ class FlextRuntime:
         return hash((entity.__class__.__name__, entity_id))
 
     @staticmethod
-    def hash_value_object_by_value(obj: object) -> int:
+    def hash_value_object_by_value(obj: t.GeneralValueType) -> int:
         """Hash value object based on all attribute values."""
         if FlextRuntime._is_scalar(obj):
             return hash(obj)
@@ -1853,7 +1851,7 @@ class FlextRuntime:
 
     @staticmethod
     def validate_http_status_codes(
-        codes: list[int] | list[str] | list[object],
+        codes: list[int] | list[str] | list[t.GeneralValueType],
         min_code: int | None = None,
         max_code: int | None = None,
     ) -> RuntimeResult[list[int]]:

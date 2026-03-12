@@ -16,7 +16,7 @@ class _FakeBindable:
     def __init__(self) -> None:
         self.calls: list[tuple[str, tuple[object, ...], dict[str, object]]] = []
 
-    def bind(self, **kwargs: object) -> _FakeBindable:
+    def bind(self, **kwargs: t.Scalar) -> _FakeBindable:
         self.calls.append(("bind", (), kwargs))
         return self
 
@@ -28,19 +28,19 @@ class _FakeBindable:
         self.calls.append(("try_unbind", keys, {}))
         return self
 
-    def debug(self, message: str, *args: object, **kwargs: object) -> None:
+    def debug(self, message: str, *args: object, **kwargs: t.Scalar) -> None:
         self.calls.append(("debug", (message, *args), kwargs))
 
-    def info(self, message: str, *args: object, **kwargs: object) -> None:
+    def info(self, message: str, *args: object, **kwargs: t.Scalar) -> None:
         self.calls.append(("info", (message, *args), kwargs))
 
-    def warning(self, message: str, *args: object, **kwargs: object) -> None:
+    def warning(self, message: str, *args: object, **kwargs: t.Scalar) -> None:
         self.calls.append(("warning", (message, *args), kwargs))
 
-    def error(self, message: str, *args: object, **kwargs: object) -> None:
+    def error(self, message: str, *args: object, **kwargs: t.Scalar) -> None:
         self.calls.append(("error", (message, *args), kwargs))
 
-    def critical(self, message: str, *args: object, **kwargs: object) -> None:
+    def critical(self, message: str, *args: object, **kwargs: t.Scalar) -> None:
         self.calls.append(("critical", (message, *args), kwargs))
 
 
@@ -48,7 +48,7 @@ class _ContextVars:
     def __init__(self) -> None:
         self.store: dict[str, object] = {}
 
-    def bind_contextvars(self, **kwargs: object) -> None:
+    def bind_contextvars(self, **kwargs: t.Scalar) -> None:
         self.store.update(kwargs)
 
     def unbind_contextvars(self, *keys: str) -> None:
@@ -90,7 +90,7 @@ def test_loggings_context_and_factory_paths(monkeypatch: pytest.MonkeyPatch) -> 
     assert isinstance(get_result, m.ConfigMap)
     assert clear_result.is_success
 
-    def _raise_bind_contextvars(**_kwargs: object) -> None:
+    def _raise_bind_contextvars(**_kwargs: t.Scalar) -> None:
         msg = "boom"
         raise RuntimeError(msg)
 
@@ -140,7 +140,7 @@ def test_loggings_bind_clear_level_error_paths(monkeypatch: pytest.MonkeyPatch) 
 
     monkeypatch.setattr(FlextRuntime, "structlog", staticmethod(_structlog_accessor))
 
-    def _raise_merge(*_args: object, **_kwargs: object) -> object:
+    def _raise_merge(*_args: object, **_kwargs: t.Scalar) -> object:
         msg = "merge boom"
         raise RuntimeError(msg)
 
@@ -157,7 +157,7 @@ def test_loggings_bind_clear_level_error_paths(monkeypatch: pytest.MonkeyPatch) 
     failed_clear = FlextLogger.clear_scope("request")
     assert failed_clear.is_failure
 
-    def _raise_bind_contextvars(**_kwargs: object) -> None:
+    def _raise_bind_contextvars(**_kwargs: t.Scalar) -> None:
         msg = "bind boom"
         raise RuntimeError(msg)
 
@@ -284,7 +284,7 @@ def test_loggings_source_and_log_error_paths(monkeypatch: pytest.MonkeyPatch) ->
         cast("object", _FakeBindable()),
     )
 
-    def _raise_info(*_args: object, **_kwargs: object) -> None:
+    def _raise_info(*_args: object, **_kwargs: t.Scalar) -> None:
         msg = "no info"
         raise AttributeError(msg)
 
@@ -326,7 +326,7 @@ def test_loggings_exception_and_adapter_paths(monkeypatch: pytest.MonkeyPatch) -
         cast("p.Log.StructlogLogger", cast("object", _FakeBindable())),
     )
 
-    def _raise_error(*_args: object, **_kwargs: object) -> None:
+    def _raise_error(*_args: object, **_kwargs: t.Scalar) -> None:
         msg = "boom"
         raise RuntimeError(msg)
 
@@ -385,7 +385,7 @@ def test_loggings_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> Non
 
     class _TraceLogger(_FakeBindable):
         @override
-        def debug(self, message: str, *_args: object, **_kwargs: object) -> None:
+        def debug(self, message: str, *_args: object, **_kwargs: t.Scalar) -> None:
             msg = "trace boom"
             raise RuntimeError(msg)
 
@@ -483,7 +483,7 @@ def test_loggings_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> Non
 
     class _ErrorLogger(_FakeBindable):
         @override
-        def error(self, message: str, *_args: object, **_kwargs: object) -> None:
+        def error(self, message: str, *_args: object, **_kwargs: t.Scalar) -> None:
             msg = "err"
             raise TypeError(msg)
 
@@ -524,12 +524,12 @@ def test_loggings_uncovered_level_trace_path_and_exception_guards(
 
     class _StructlogLogger(_FakeBindable):
         @override
-        def debug(self, message: str, *_args: object, **_kwargs: object) -> None:
+        def debug(self, message: str, *_args: object, **_kwargs: t.Scalar) -> None:
             msg = "trace"
             raise KeyError(msg)
 
         @override
-        def error(self, message: str, *_args: object, **_kwargs: object) -> None:
+        def error(self, message: str, *_args: object, **_kwargs: t.Scalar) -> None:
             msg = "exception"
             raise RuntimeError(msg)
 

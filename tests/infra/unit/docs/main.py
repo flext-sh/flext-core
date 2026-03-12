@@ -11,7 +11,7 @@ from collections.abc import Callable
 
 import pytest
 
-from flext_core import r
+from flext_core import r, t
 from flext_infra.docs import __main__ as docs_main
 from flext_infra.docs.__main__ import _run_audit, _run_fix
 from flext_infra.docs.auditor import FlextInfraDocAuditor
@@ -21,7 +21,7 @@ from tests.infra.helpers import h
 from tests.infra.models import m
 
 
-def _audit_args(**overrides: object) -> argparse.Namespace:
+def _audit_args(**overrides: t.Scalar) -> argparse.Namespace:
     defaults: dict[str, object | None] = {
         "root": ".",
         "project": None,
@@ -34,7 +34,7 @@ def _audit_args(**overrides: object) -> argparse.Namespace:
     return h.ns(**defaults)
 
 
-def _fix_args(**overrides: object) -> argparse.Namespace:
+def _fix_args(**overrides: t.Scalar) -> argparse.Namespace:
     defaults: dict[str, object | None] = {
         "root": ".",
         "project": None,
@@ -52,7 +52,7 @@ def _ok(
     def _fn(
         _self: object,
         *_a: object,
-        **_kw: object,
+        **_kw: t.Scalar,
     ) -> r[list[m.Infra.Docs.DocsPhaseReport]]:
         _ = (_self, _a, _kw)
         return r[list[m.Infra.Docs.DocsPhaseReport]].ok(val)
@@ -64,7 +64,7 @@ def _fail_report(err: str) -> Callable[..., r[list[m.Infra.Docs.DocsPhaseReport]
     def _fn(
         _self: object,
         *_a: object,
-        **_kw: object,
+        **_kw: t.Scalar,
     ) -> r[list[m.Infra.Docs.DocsPhaseReport]]:
         _ = (_self, _a, _kw)
         return r[list[m.Infra.Docs.DocsPhaseReport]].fail(err)
@@ -76,7 +76,7 @@ def _ok_list(val: list[object]) -> Callable[..., r[list[object]]]:
     def _fn(
         _self: object,
         *_a: object,
-        **_kw: object,
+        **_kw: t.Scalar,
     ) -> r[list[object]]:
         _ = (_self, _a, _kw)
         return r[list[object]].ok(val)
@@ -88,7 +88,7 @@ def _fail_list(err: str) -> Callable[..., r[list[object]]]:
     def _fn(
         _self: object,
         *_a: object,
-        **_kw: object,
+        **_kw: t.Scalar,
     ) -> r[list[object]]:
         _ = (_self, _a, _kw)
         return r[list[object]].fail(err)
@@ -105,7 +105,7 @@ def _capturing(
     def _fn(
         _self: object,
         *_a: object,
-        **kw: object,
+        **kw: t.Scalar,
     ) -> r[list[m.Infra.Docs.DocsPhaseReport]]:
         _ = (_self, _a)
         captured.update(kw)
@@ -185,7 +185,7 @@ class TestRunFix:
         def mock_fix(
             _self: object,
             *_a: object,
-            **kw: object,
+            **kw: t.Scalar,
         ) -> r[list[object]]:
             _ = (_self, _a)
             captured_kwargs.update(kw)

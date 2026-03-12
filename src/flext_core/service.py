@@ -71,7 +71,7 @@ class FlextService[TDomainResult: object = object](
     _execution_result: r[TDomainResult] | None = PrivateAttr(default=None)
 
     @override
-    def __init__(self, **data: object) -> None:
+    def __init__(self, **data: t.Scalar) -> None:
         """Initialize service with configuration data.
 
         Sets up the service instance with runtime configuration.

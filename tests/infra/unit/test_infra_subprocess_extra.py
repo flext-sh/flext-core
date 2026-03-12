@@ -10,6 +10,7 @@ from pathlib import Path
 
 import pytest
 
+from flext_core import t
 from flext_infra import FlextInfraUtilitiesSubprocess, m
 from flext_tests import tm
 
@@ -90,7 +91,7 @@ class TestFlextInfraCommandRunnerExtra:
         runner = FlextInfraUtilitiesSubprocess()
         output_file = tmp_path / "output.txt"
 
-        def mock_run(*args: object, **kwargs: object) -> object:
+        def mock_run(*args: object, **kwargs: t.Scalar) -> object:
             msg = "Invalid argument"
             raise ValueError(msg)
 

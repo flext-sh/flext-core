@@ -1208,7 +1208,7 @@ class FlextProtocols:
             name: str,
             bases: tuple[type, ...],
             namespace: Mapping[str, object],
-            **_kwargs: object,
+            **_kwargs: t.Scalar,
         ) -> type:
             """Create a new class with protocol validation.
 

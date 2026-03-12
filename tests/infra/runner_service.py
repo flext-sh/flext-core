@@ -8,7 +8,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import r
+from flext_core import r, t
 from flext_infra._utilities.subprocess import FlextInfraUtilitiesSubprocess
 from flext_tests import s
 
@@ -24,7 +24,7 @@ class RealSubprocessRunner(s[str]):
         FlextInfraUtilitiesSubprocess
     )
 
-    def __init__(self, **data: object) -> None:
+    def __init__(self, **data: t.Scalar) -> None:
         super().__init__(**data)
         # Import c at runtime to avoid circular reference
         self.allowed_commands = frozenset({

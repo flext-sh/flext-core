@@ -10,6 +10,7 @@ from pathlib import Path
 
 import pytest
 
+from flext_core import t
 from flext_infra.workspace.migrator import FlextInfraProjectMigrator
 from flext_tests import tm
 from tests.infra.unit.test_infra_workspace_migrator import (
@@ -89,7 +90,7 @@ def test_workspace_migrator_makefile_read_error(
     makefile.write_text("test")
     migrator = _build_migrator(_project(tmp_path, name="test-proj"), "base")
 
-    def _read_fail(*args: object, **kwargs: object) -> str:
+    def _read_fail(*args: object, **kwargs: t.Scalar) -> str:
         msg = "Read failed"
         raise OSError(msg)
 
@@ -107,7 +108,7 @@ def test_workspace_migrator_pyproject_write_error(
     pyproject.write_text("[tool.poetry]\n")
     migrator = _build_migrator(_project(tmp_path, name="test-proj"), "base")
 
-    def _write_fail(*args: object, **kwargs: object) -> None:
+    def _write_fail(*args: object, **kwargs: t.Scalar) -> None:
         msg = "Write failed"
         raise OSError(msg)
 

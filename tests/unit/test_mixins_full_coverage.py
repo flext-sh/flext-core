@@ -8,7 +8,7 @@ from typing import cast, override
 
 import pytest
 
-from flext_core import FlextLogger, FlextMixins, FlextRuntime, c, m, p, r, u, x
+from flext_core import FlextLogger, FlextMixins, FlextRuntime, c, m, p, r, t, u, x
 
 from ._models import _SvcModel
 
@@ -18,12 +18,12 @@ def _normalize_to_one(_v: object) -> int:
     return 1
 
 
-def _noop(*_a: object, **_k: object) -> None:
+def _noop(*_a: object, **_k: t.Scalar) -> None:
     """Typed no-op for protocol stubs."""
     return
 
 
-def _return_true(*_a: object, **_k: object) -> bool:
+def _return_true(*_a: object, **_k: t.Scalar) -> bool:
     """Typed return-True for protocol stubs."""
     return True
 
@@ -62,13 +62,13 @@ class _RuntimeContainer:
         self.configured: dict[str, object] | None = None
         self.wired: dict[str, object] | None = None
 
-    def scoped(self, **_kwargs: object) -> _RuntimeContainer:
+    def scoped(self, **_kwargs: t.Scalar) -> _RuntimeContainer:
         return self
 
     def configure(self, overrides: dict[str, object]) -> None:
         self.configured = overrides
 
-    def wire_modules(self, **kwargs: object) -> None:
+    def wire_modules(self, **kwargs: t.Scalar) -> None:
         self.wired = kwargs
 
 
@@ -246,10 +246,10 @@ def test_mixins_container_registration_and_logger_paths(
 def test_mixins_context_logging_and_cqrs_paths(monkeypatch: pytest.MonkeyPatch) -> None:
 
     class _LocalLogger:
-        def info(self, *_args: object, **_kwargs: object) -> None:
+        def info(self, *_args: object, **_kwargs: t.Scalar) -> None:
             return None
 
-        def warning(self, *_args: object, **_kwargs: object) -> None:
+        def warning(self, *_args: object, **_kwargs: t.Scalar) -> None:
             return None
 
     class _Service(x):
@@ -437,7 +437,7 @@ def test_mixins_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> None:
     assert isinstance(captured["value"], _ModelMarker)
 
     class _WarnLogger:
-        def warning(self, *_args: object, **_kwargs: object) -> None:
+        def warning(self, *_args: object, **_kwargs: t.Scalar) -> None:
             return None
 
     class _WarnService(x):

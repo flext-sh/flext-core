@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from flext_core import r
+from flext_core import r, t
 from flext_infra.release.orchestrator import FlextInfraReleaseOrchestrator
 from flext_tests import tm
 
@@ -24,15 +24,15 @@ if TYPE_CHECKING:
 _CLS = FlextInfraReleaseOrchestrator
 
 
-def _noop_branches(*args: object, **kwargs: object) -> r[bool]:
+def _noop_branches(*args: object, **kwargs: t.Scalar) -> r[bool]:
     return r[bool].ok(True)
 
 
-def _noop_dispatch(*args: object, **kwargs: object) -> r[bool]:
+def _noop_dispatch(*args: object, **kwargs: t.Scalar) -> r[bool]:
     return r[bool].ok(True)
 
 
-def _noop_bump(*args: object, **kwargs: object) -> r[bool]:
+def _noop_bump(*args: object, **kwargs: t.Scalar) -> r[bool]:
     return r[bool].ok(True)
 
 
@@ -156,7 +156,7 @@ class TestReleaseOrchestratorExecute:
             _self: FlextInfraReleaseOrchestrator,
             phase: str,
             *args: object,
-            **kwargs: object,
+            **kwargs: t.Scalar,
         ) -> r[bool]:
             nonlocal call_count
             call_count += 1

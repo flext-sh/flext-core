@@ -332,7 +332,7 @@ class FlextUtilitiesConfiguration:
                 self,
                 entries: list[Entry],
                 format_options: WriteFormatOptions | None = None,
-                **format_kwargs: object,
+        **format_kwargs: t.Scalar,
             ) -> "FlextRuntime.RuntimeResult[str]":
                 # Get ldif config using get_namespace_config (no __getattr__)
                 def get_ldif_config_default() -> WriteFormatOptions:

@@ -31,19 +31,19 @@ def _is_flexible_value_obj(value: object) -> bool:
 
 
 class _LoggerLike:
-    def debug(self, *_args: object, **_kwargs: object) -> None:
+    def debug(self, *_args: object, **_kwargs: t.Scalar) -> None:
         return None
 
-    def info(self, *_args: object, **_kwargs: object) -> None:
+    def info(self, *_args: object, **_kwargs: t.Scalar) -> None:
         return None
 
-    def warning(self, *_args: object, **_kwargs: object) -> None:
+    def warning(self, *_args: object, **_kwargs: t.Scalar) -> None:
         return None
 
-    def error(self, *_args: object, **_kwargs: object) -> None:
+    def error(self, *_args: object, **_kwargs: t.Scalar) -> None:
         return None
 
-    def exception(self, *_args: object, **_kwargs: object) -> None:
+    def exception(self, *_args: object, **_kwargs: t.Scalar) -> None:
         return None
 
 

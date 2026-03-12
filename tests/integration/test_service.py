@@ -14,7 +14,7 @@ from typing import override
 import pytest
 from pydantic import BaseModel, Field, PrivateAttr
 
-from flext_core import FlextContainer, FlextService, m, r
+from flext_core import FlextContainer, FlextService, m, r, t
 
 from ..conftest import FunctionalExternalService
 from ..test_utils import assertion_helpers
@@ -55,7 +55,7 @@ class UserQueryService(FlextService[bool]):
     _should_fail: bool = PrivateAttr(default=False)
     _call_count: int = PrivateAttr(default_factory=lambda: 0)
 
-    def __init__(self, **data: object) -> None:
+    def __init__(self, **data: t.Scalar) -> None:
         """Initialize user query service."""
         super().__init__(**data)
 
@@ -130,7 +130,7 @@ class NotificationService(FlextService[str]):
     _call_count: int = PrivateAttr(default_factory=lambda: 0)
     _should_fail: bool = PrivateAttr(default=False)
 
-    def __init__(self, **data: object) -> None:
+    def __init__(self, **data: t.Scalar) -> None:
         """Initialize notification service."""
         super().__init__(**data)
 
@@ -206,7 +206,7 @@ class LifecycleService(FlextService[str]):
     _should_fail_init: bool = PrivateAttr(default=False)
     _should_fail_shutdown: bool = PrivateAttr(default=False)
 
-    def __init__(self, **data: object) -> None:
+    def __init__(self, **data: t.Scalar) -> None:
         """Initialize lifecycle service."""
         super().__init__(**data)
 

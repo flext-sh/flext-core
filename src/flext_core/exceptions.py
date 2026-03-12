@@ -22,7 +22,7 @@ from pydantic import (
     ValidationError as PydanticValidationError,
 )
 
-from flext_core import FlextRuntime, c, m
+from flext_core import FlextRuntime, c, m, t
 
 
 class MetadataProtocol(Protocol):
@@ -527,7 +527,7 @@ class FlextExceptions:
             auto_correlation: bool = False,
             auto_log: bool = True,
             merged_kwargs: Mapping[str, object] | m.ConfigMap | None = None,
-            **extra_kwargs: object,
+            **extra_kwargs: t.Scalar,
         ) -> None:
             """Initialize base error with message and optional metadata.
 
@@ -668,7 +668,7 @@ class FlextExceptions:
             context: Mapping[str, object] | None = None,
             _correlation_id: str | None = None,
             params: e.ValidationErrorParams | None = None,
-            **extra_kwargs: object,
+            **extra_kwargs: t.Scalar,
         ) -> None:
             """Initialize validation error with field and value information."""
             resolved, ctx, meta, corr = e._init_error_params(
@@ -702,7 +702,7 @@ class FlextExceptions:
             context: Mapping[str, object] | None = None,
             _correlation_id: str | None = None,
             params: e.ConfigurationErrorParams | None = None,
-            **extra_kwargs: object,
+            **extra_kwargs: t.Scalar,
         ) -> None:
             """Initialize configuration error with config context."""
             resolved, ctx, meta, corr = e._init_error_params(
@@ -734,7 +734,7 @@ class FlextExceptions:
             context: Mapping[str, object] | None = None,
             _correlation_id: str | None = None,
             params: e.ConnectionErrorParams | None = None,
-            **extra_kwargs: object,
+            **extra_kwargs: t.Scalar,
         ) -> None:
             """Initialize connection error with network context."""
             resolved, ctx, meta, corr = e._init_error_params(
@@ -769,7 +769,7 @@ class FlextExceptions:
             context: Mapping[str, object] | None = None,
             _correlation_id: str | None = None,
             params: e.TimeoutErrorParams | None = None,
-            **extra_kwargs: object,
+            **extra_kwargs: t.Scalar,
         ) -> None:
             """Initialize timeout error with timeout context."""
             resolved, ctx, meta, corr = e._init_error_params(
@@ -803,7 +803,7 @@ class FlextExceptions:
             context: Mapping[str, object] | None = None,
             _correlation_id: str | None = None,
             params: e.AuthenticationErrorParams | None = None,
-            **extra_kwargs: object,
+            **extra_kwargs: t.Scalar,
         ) -> None:
             """Initialize authentication error with auth context."""
             resolved, ctx, meta, corr = e._init_error_params(
@@ -835,7 +835,7 @@ class FlextExceptions:
             context: Mapping[str, object] | None = None,
             correlation_id: str | None = None,
             params: e.AuthorizationErrorParams | None = None,
-            **extra_kwargs: object,
+            **extra_kwargs: t.Scalar,
         ) -> None:
             """Initialize authorization error with permission context."""
             resolved, ctx, meta, corr = e._init_error_params(
@@ -875,7 +875,7 @@ class FlextExceptions:
             | None = None,
             correlation_id: str | None = None,
             params: e.NotFoundErrorParams | None = None,
-            **extra_kwargs: object,
+            **extra_kwargs: t.Scalar,
         ) -> None:
             """Initialize not found error with resource context."""
             resolved, ctx, meta, _ = e._init_error_params(
@@ -909,7 +909,7 @@ class FlextExceptions:
             context: Mapping[str, object] | None = None,
             correlation_id: str | None = None,
             params: e.ConflictErrorParams | None = None,
-            **extra_kwargs: object,
+            **extra_kwargs: t.Scalar,
         ) -> None:
             """Initialize conflict error with resource context."""
             resolved, ctx, meta, corr = e._init_error_params(
@@ -942,7 +942,7 @@ class FlextExceptions:
             context: Mapping[str, object] | None = None,
             correlation_id: str | None = None,
             params: e.RateLimitErrorParams | None = None,
-            **extra_kwargs: object,
+            **extra_kwargs: t.Scalar,
         ) -> None:
             """Initialize rate limit error with limit context."""
             resolved, ctx, meta, corr = e._init_error_params(
@@ -975,7 +975,7 @@ class FlextExceptions:
             context: Mapping[str, object] | None = None,
             correlation_id: str | None = None,
             params: e.CircuitBreakerErrorParams | None = None,
-            **extra_kwargs: object,
+            **extra_kwargs: t.Scalar,
         ) -> None:
             """Initialize circuit breaker error with service context."""
             resolved, ctx, meta, corr = e._init_error_params(
@@ -1010,7 +1010,7 @@ class FlextExceptions:
             context: Mapping[str, object] | None = None,
             correlation_id: str | None = None,
             params: e.TypeErrorParams | None = None,
-            **extra_kwargs: object,
+            **extra_kwargs: t.Scalar,
         ) -> None:
             """Initialize type error with type information."""
             preserved_metadata = extra_kwargs.pop("metadata", None)
@@ -1129,7 +1129,7 @@ class FlextExceptions:
             context: Mapping[str, object] | None = None,
             correlation_id: str | None = None,
             params: e.OperationErrorParams | None = None,
-            **extra_kwargs: object,
+            **extra_kwargs: t.Scalar,
         ) -> None:
             """Initialize operation error with operation context."""
             resolved, ctx, meta, corr = e._init_error_params(
@@ -1163,7 +1163,7 @@ class FlextExceptions:
             context: Mapping[str, object] | None = None,
             correlation_id: str | None = None,
             params: e.AttributeAccessErrorParams | None = None,
-            **extra_kwargs: object,
+            **extra_kwargs: t.Scalar,
         ) -> None:
             """Initialize attribute access error with attribute context."""
             resolved, ctx, meta, corr = e._init_error_params(
@@ -1371,7 +1371,7 @@ class FlextExceptions:
 
     @staticmethod
     def create(
-        message: str, error_code: str | None = None, **kwargs: object
+        message: str, error_code: str | None = None, **kwargs: t.Scalar
     ) -> e.BaseError:
         """Create an appropriate exception instance based on kwargs context."""
         legacy_type_map: Mapping[str, str] = {
@@ -1440,7 +1440,7 @@ class FlextExceptions:
     _exception_counts: ClassVar[dict[type, int]] = {}
 
     def __call__(
-        self, message: str, error_code: str | None = None, **kwargs: object
+        self, message: str, error_code: str | None = None, **kwargs: t.Scalar
     ) -> e.BaseError:
         """Create exception by calling the class instance."""
         normalized_kwargs: m.ConfigMap = m.ConfigMap(root={})

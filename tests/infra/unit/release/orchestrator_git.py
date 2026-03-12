@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from flext_core import r
+from flext_core import r, t
 from flext_infra.release import orchestrator as _orch_mod
 from flext_infra.release.orchestrator import FlextInfraReleaseOrchestrator
 from flext_tests import tm
@@ -68,7 +68,7 @@ class TestCreateBranches:
         mock_project = SimpleNamespace(name="proj1", path=workspace_root / "proj1")
         fake_sel._resolve_result = r[list[SimpleNamespace]].ok([mock_project])
 
-        def _selection_factory(*a: object, **kw: object) -> FakeSelection:
+        def _selection_factory(*a: object, **kw: t.Scalar) -> FakeSelection:
             del a, kw
             return fake_sel
 

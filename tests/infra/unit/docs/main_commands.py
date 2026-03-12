@@ -8,7 +8,7 @@ from collections.abc import Callable
 import pytest
 from pydantic import BaseModel, Field
 
-from flext_core import r
+from flext_core import r, t
 from flext_infra.docs import __main__ as docs_main
 from flext_infra.docs.__main__ import _run_build, _run_generate, _run_validate
 from flext_infra.docs.builder import FlextInfraDocBuilder
@@ -23,7 +23,7 @@ class _Report(BaseModel):
 
 def _cli_args(
     extra_defaults: dict[str, object | None],
-    **overrides: object,
+    **overrides: t.Scalar,
 ) -> argparse.Namespace:
     defaults: dict[str, object | None] = {
         "root": ".",
@@ -36,15 +36,15 @@ def _cli_args(
     return argparse.Namespace(**defaults)
 
 
-def _build_args(**overrides: object) -> argparse.Namespace:
+def _build_args(**overrides: t.Scalar) -> argparse.Namespace:
     return _cli_args({}, **overrides)
 
 
-def _gen_args(**overrides: object) -> argparse.Namespace:
+def _gen_args(**overrides: t.Scalar) -> argparse.Namespace:
     return _cli_args({"apply": False}, **overrides)
 
 
-def _val_args(**overrides: object) -> argparse.Namespace:
+def _val_args(**overrides: t.Scalar) -> argparse.Namespace:
     return _cli_args({"check": "all", "apply": False}, **overrides)
 
 
@@ -97,7 +97,7 @@ class TestRunGenerate:
     ) -> None:
         captured_kwargs: dict[str, object] = {}
 
-        def mock_gen(*_a: object, **kw: object) -> r[list[object]]:
+        def mock_gen(*_a: object, **kw: t.Scalar) -> r[list[object]]:
             captured_kwargs.update(kw)
             return r[list[object]].ok([])
 
@@ -133,7 +133,7 @@ class TestRunValidate:
     ) -> None:
         captured_kwargs: dict[str, object] = {}
 
-        def mock_val(*_a: object, **kw: object) -> r[list[object]]:
+        def mock_val(*_a: object, **kw: t.Scalar) -> r[list[object]]:
             captured_kwargs.update(kw)
             return r[list[object]].ok([])
 

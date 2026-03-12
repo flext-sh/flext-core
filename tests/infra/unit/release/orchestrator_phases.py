@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from flext_core import r
+from flext_core import r, t
 from flext_infra import FlextInfraModels
 from flext_infra.release import orchestrator as _orch_mod
 from flext_infra.release.orchestrator import FlextInfraReleaseOrchestrator
@@ -55,7 +55,7 @@ class TestPhaseValidate:
     ) -> None:
         fake_sp = FakeSubprocess()
 
-        def _fake_subprocess_factory(*a: object, **kw: object) -> FakeSubprocess:
+        def _fake_subprocess_factory(*a: object, **kw: t.Scalar) -> FakeSubprocess:
             del a, kw
             return fake_sp
 
@@ -75,7 +75,7 @@ class TestPhaseVersion:
     def test_updates_files(
         self, workspace_root: Path, monkeypatch: MonkeyPatch
     ) -> None:
-        def _fake_versioning_factory(*a: object, **kw: object) -> FakeVersioning:
+        def _fake_versioning_factory(*a: object, **kw: t.Scalar) -> FakeVersioning:
             del a, kw
             return FakeVersioning()
 
@@ -93,7 +93,7 @@ class TestPhaseVersion:
         fake_vs = FakeVersioning()
         fake_vs._parse_result = r[str].fail("invalid version")
 
-        def _fake_versioning_factory(*a: object, **kw: object) -> FakeVersioning:
+        def _fake_versioning_factory(*a: object, **kw: t.Scalar) -> FakeVersioning:
             del a, kw
             return fake_vs
 
@@ -108,7 +108,7 @@ class TestPhaseVersion:
     def test_with_dev_suffix(
         self, workspace_root: Path, monkeypatch: MonkeyPatch
     ) -> None:
-        def _fake_versioning_factory(*a: object, **kw: object) -> FakeVersioning:
+        def _fake_versioning_factory(*a: object, **kw: t.Scalar) -> FakeVersioning:
             del a, kw
             return FakeVersioning()
 
@@ -121,7 +121,7 @@ class TestPhaseVersion:
         tm.ok(orchestrator.phase_version(workspace_root, "1.0.0", [], dev_suffix=True))
 
     def test_dry_run(self, workspace_root: Path, monkeypatch: MonkeyPatch) -> None:
-        def _fake_versioning_factory(*a: object, **kw: object) -> FakeVersioning:
+        def _fake_versioning_factory(*a: object, **kw: t.Scalar) -> FakeVersioning:
             del a, kw
             return FakeVersioning()
 
@@ -138,7 +138,7 @@ class TestPhaseVersion:
     ) -> None:
         orchestrator = FlextInfraReleaseOrchestrator()
 
-        def _fake_version_files(*a: object, **kw: object) -> list[Path]:
+        def _fake_version_files(*a: object, **kw: t.Scalar) -> list[Path]:
             del a, kw
             return [workspace_root / "nonexistent.toml"]
 
@@ -159,11 +159,11 @@ class TestPhaseBuild:
         fake_rep = FakeReporting()
         fake_rep._report_dir = workspace_root / "reports"
 
-        def _fake_reporting_factory(*a: object, **kw: object) -> FakeReporting:
+        def _fake_reporting_factory(*a: object, **kw: t.Scalar) -> FakeReporting:
             del a, kw
             return fake_rep
 
-        def _fake_run_make(*a: object, **kw: object) -> r[tuple[int, str]]:
+        def _fake_run_make(*a: object, **kw: t.Scalar) -> r[tuple[int, str]]:
             del a, kw
             return r[tuple[int, str]].ok((0, "ok"))
 
@@ -186,11 +186,11 @@ class TestPhaseBuild:
         fake_rep = FakeReporting()
         fake_rep._report_dir = workspace_root / "reports"
 
-        def _fake_reporting_factory(*a: object, **kw: object) -> FakeReporting:
+        def _fake_reporting_factory(*a: object, **kw: t.Scalar) -> FakeReporting:
             del a, kw
             return fake_rep
 
-        def _raise_mkdir(*a: object, **kw: object) -> None:
+        def _raise_mkdir(*a: object, **kw: t.Scalar) -> None:
             del a, kw
             msg = "permission denied"
             raise OSError(msg)
@@ -207,11 +207,11 @@ class TestPhaseBuild:
     def test_with_make_failure(
         self, workspace_root: Path, monkeypatch: MonkeyPatch
     ) -> None:
-        def _fake_build_targets(*a: object, **kw: object) -> list[tuple[str, Path]]:
+        def _fake_build_targets(*a: object, **kw: t.Scalar) -> list[tuple[str, Path]]:
             del a, kw
             return [("root", workspace_root)]
 
-        def _fake_run_make_failure(*a: object, **kw: object) -> r[tuple[int, str]]:
+        def _fake_run_make_failure(*a: object, **kw: t.Scalar) -> r[tuple[int, str]]:
             del a, kw
             return r[tuple[int, str]].fail("make failed")
 

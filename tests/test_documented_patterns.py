@@ -34,6 +34,7 @@ from flext_core import (
     FlextSettings,
     m,
     r,
+    t,
 )
 
 from ._models import EmailResponse
@@ -285,7 +286,7 @@ def _value_lt_100(data: m.ConfigMap) -> bool:
     return isinstance(value, int) and value < 100
 
 
-def _make[T](cls: type[T], **kwargs: object) -> T:
+def _make[T](cls: type[T], **kwargs: t.Scalar) -> T:
     """Create a FlextService subclass — all fields must have defaults."""
     instance = cls()
     for key, value in kwargs.items():

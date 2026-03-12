@@ -11,7 +11,7 @@ import pytest
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings as _BaseSettings
 
-from flext_core import FlextContainer, FlextContext, FlextSettings, m
+from flext_core import FlextContainer, FlextContext, FlextSettings, m, t
 
 
 class _FalseConfig:
@@ -75,17 +75,17 @@ def _has_service_false(_name: str) -> bool:
     return False
 
 
-def _raise_register_object(*_args: object, **_kwargs: object) -> None:
+def _raise_register_object(*_args: object, **_kwargs: t.Scalar) -> None:
     msg = "boom"
     raise RuntimeError(msg)
 
 
-def _raise_register_factory(*_args: object, **_kwargs: object) -> None:
+def _raise_register_factory(*_args: object, **_kwargs: t.Scalar) -> None:
     msg = "boom"
     raise RuntimeError(msg)
 
 
-def _raise_register_resource(*_args: object, **_kwargs: object) -> None:
+def _raise_register_resource(*_args: object, **_kwargs: t.Scalar) -> None:
     msg = "boom"
     raise RuntimeError(msg)
 
@@ -125,7 +125,7 @@ def test_create_auto_register_factories_path(monkeypatch: pytest.MonkeyPatch) ->
 
     monkeypatch.setattr(container, "register", _register)
 
-    def _call_container(*_args: object, **_kwargs: object) -> FlextContainer:
+    def _call_container(*_args: object, **_kwargs: t.Scalar) -> FlextContainer:
         return container
 
     monkeypatch.setattr(
@@ -328,7 +328,7 @@ def test_scoped_config_context_branches(monkeypatch: pytest.MonkeyPatch) -> None
     c._context = FlextContext()
     captured: dict[str, object] = {}
 
-    def _fake_create_scoped_instance(**kwargs: object) -> FlextContainer:
+    def _fake_create_scoped_instance(**kwargs: t.Scalar) -> FlextContainer:
         captured.update(kwargs)
         return c
 

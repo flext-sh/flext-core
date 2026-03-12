@@ -11,7 +11,7 @@ from collections.abc import Callable
 
 import pytest
 
-from flext_core import r
+from flext_core import r, t
 from flext_infra.docs.__main__ import main
 from flext_infra.docs.auditor import FlextInfraDocAuditor
 from flext_infra.docs.builder import FlextInfraDocBuilder
@@ -22,11 +22,11 @@ from flext_tests import tm
 from tests.infra.models import m
 
 
-def _ok_empty(*a: object, **kw: object) -> r[list[object]]:
+def _ok_empty(*a: object, **kw: t.Scalar) -> r[list[object]]:
     return r[list[object]].ok([])
 
 
-def _ok_audit(*a: object, **kw: object) -> r[list[m.Infra.Docs.DocsPhaseReport]]:
+def _ok_audit(*a: object, **kw: t.Scalar) -> r[list[m.Infra.Docs.DocsPhaseReport]]:
     return r[list[m.Infra.Docs.DocsPhaseReport]].ok([])
 
 
@@ -102,7 +102,7 @@ class TestMainRouting:
 def _capture_audit(
     store: dict[str, object],
 ) -> Callable[..., r[list[m.Infra.Docs.DocsPhaseReport]]]:
-    def _fn(*a: object, **kw: object) -> r[list[m.Infra.Docs.DocsPhaseReport]]:
+    def _fn(*a: object, **kw: t.Scalar) -> r[list[m.Infra.Docs.DocsPhaseReport]]:
         store.update(kw)
         return r[list[m.Infra.Docs.DocsPhaseReport]].ok([])
 
@@ -112,7 +112,7 @@ def _capture_audit(
 def _capture_simple(
     store: dict[str, object],
 ) -> Callable[..., r[list[object]]]:
-    def _fn(*a: object, **kw: object) -> r[list[object]]:
+    def _fn(*a: object, **kw: t.Scalar) -> r[list[object]]:
         store.update(kw)
         return r[list[object]].ok([])
 

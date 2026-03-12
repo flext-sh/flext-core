@@ -8,7 +8,7 @@ from typing import cast, override
 
 import pytest
 
-from flext_core import c, m, r, u
+from flext_core import c, m, r, t, u
 
 from ._models import _Model
 
@@ -43,7 +43,7 @@ def _raise_type_error_value(_value: object) -> str:
     raise TypeError(msg)
 
 
-def _fail_components(*_args: object, **_kwargs: object) -> r[list[str]]:
+def _fail_components(*_args: object, **_kwargs: t.Scalar) -> r[list[str]]:
     return r[list[str]].fail("forced")
 
 
@@ -55,11 +55,11 @@ def _fail_escape_split(*_args: object) -> r[tuple[list[str], int]]:
     return r[tuple[list[str], int]].fail("split fail")
 
 
-def _fail_pipeline_continue(*_args: object, **_kwargs: object) -> r[str]:
+def _fail_pipeline_continue(*_args: object, **_kwargs: t.Scalar) -> r[str]:
     return r[str].fail("Continue pipeline", error_code="PIPELINE_CONTINUE")
 
 
-def _raise_runtime_boom(*_args: object, **_kwargs: object) -> str:
+def _raise_runtime_boom(*_args: object, **_kwargs: t.Scalar) -> str:
     msg = "boom"
     raise RuntimeError(msg)
 
@@ -84,7 +84,7 @@ def _raise_type_error_str(_value: object) -> r[str]:
     raise TypeError(msg)
 
 
-def _norm_list_dict(*_args: object, **_kwargs: object) -> dict[str, str]:
+def _norm_list_dict(*_args: object, **_kwargs: t.Scalar) -> dict[str, str]:
     return {"k": "v"}
 
 

@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from flext_core import r
+from flext_core import r, t
 from flext_infra.release import orchestrator as _orch_mod
 from flext_infra.release.orchestrator import FlextInfraReleaseOrchestrator
 from flext_tests import tm
@@ -38,7 +38,7 @@ def workspace_root(tmp_path: Path) -> Path:
 
 
 def _patch_sel(mp: MonkeyPatch, sel: FakeSelection) -> None:
-    def _factory(*a: object, **kw: object) -> FakeSelection:
+    def _factory(*a: object, **kw: t.Scalar) -> FakeSelection:
         del a, kw
         return sel
 
@@ -46,7 +46,7 @@ def _patch_sel(mp: MonkeyPatch, sel: FakeSelection) -> None:
 
 
 def _patch_sp(mp: MonkeyPatch, sp: FakeSubprocess) -> None:
-    def _factory(*a: object, **kw: object) -> FakeSubprocess:
+    def _factory(*a: object, **kw: t.Scalar) -> FakeSubprocess:
         del a, kw
         return sp
 
@@ -121,11 +121,11 @@ class TestGenerateNotes:
         FakeUtilsNamespace.Infra.reset()
         monkeypatch.setattr(_orch_mod, "u", FakeUtilsNamespace)
 
-        def _previous_tag(*a: object, **kw: object) -> r[str]:
+        def _previous_tag(*a: object, **kw: t.Scalar) -> r[str]:
             del a, kw
             return r[str].ok("")
 
-        def _collect_changes(*a: object, **kw: object) -> r[str]:
+        def _collect_changes(*a: object, **kw: t.Scalar) -> r[str]:
             del a, kw
             return r[str].ok("")
 
@@ -166,11 +166,11 @@ class TestBumpNextDev:
     def test_bumps_version(
         self, workspace_root: Path, monkeypatch: MonkeyPatch
     ) -> None:
-        def _versioning_factory(*a: object, **kw: object) -> FakeVersioning:
+        def _versioning_factory(*a: object, **kw: t.Scalar) -> FakeVersioning:
             del a, kw
             return FakeVersioning()
 
-        def _phase_version(*a: object, **kw: object) -> r[bool]:
+        def _phase_version(*a: object, **kw: t.Scalar) -> r[bool]:
             del a, kw
             return r[bool].ok(True)
 
@@ -186,7 +186,7 @@ class TestBumpNextDev:
         fake_vs = FakeVersioning()
         fake_vs._bump_result = r[str].fail("invalid bump")
 
-        def _versioning_factory(*a: object, **kw: object) -> FakeVersioning:
+        def _versioning_factory(*a: object, **kw: t.Scalar) -> FakeVersioning:
             del a, kw
             return fake_vs
 
@@ -224,7 +224,7 @@ class TestDispatchPhase:
     def test_routes_validate(
         self, workspace_root: Path, monkeypatch: MonkeyPatch
     ) -> None:
-        def _phase_validate(*a: object, **kw: object) -> r[bool]:
+        def _phase_validate(*a: object, **kw: t.Scalar) -> r[bool]:
             del a, kw
             return r[bool].ok(True)
 

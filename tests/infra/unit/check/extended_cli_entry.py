@@ -17,7 +17,7 @@ import pytest
 import flext_infra.check.__main__ as check_main_mod
 import flext_infra.check.fix_pyrefly_config as fix_pyrefly_mod
 import flext_infra.check.workspace_check as ws_mod
-from flext_core import r
+from flext_core import r, t
 from flext_infra.check.services import (
     GateExecution,
     ProjectResult,
@@ -33,7 +33,7 @@ def _fake_checker_cls(
     run_result: r[list[SimpleNamespace]] | r[list[ProjectResult]],
 ) -> type:
     class _Fake:
-        def __init__(self, **_kw: object) -> None:
+        def __init__(self, **_kw: t.Scalar) -> None:
             _ = _kw
 
         @staticmethod
@@ -44,7 +44,7 @@ def _fake_checker_cls(
             self,
             projects: list[str] | None = None,
             gates: list[str] | None = None,
-            **kw: object,
+            **kw: t.Scalar,
         ) -> r[list[SimpleNamespace]] | r[list[ProjectResult]]:
             _ = projects, gates, kw
             return run_result
@@ -56,10 +56,12 @@ def _fake_fixer_cls(
     run_result: r[list[str]],
 ) -> type:
     class _Fake:
-        def __init__(self, **_kw: object) -> None:
+        def __init__(self, **_kw: t.Scalar) -> None:
             _ = _kw
 
-        def run(self, _projects: list[str] | None = None, **kw: object) -> r[list[str]]:
+        def run(
+            self, _projects: list[str] | None = None, **kw: t.Scalar
+        ) -> r[list[str]]:
             _ = _projects, kw
             return run_result
 
