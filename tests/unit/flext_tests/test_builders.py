@@ -200,7 +200,7 @@ class TestFlextTestsBuilders:
         builder = tb()
         builder.add("error", result_fail="Failed", result_code="E001")
         data = _as_builder_dict(builder.build())
-        result = cast("r[object]", cast("object", data["error"]))
+        result = cast("r[str]", cast("object", data["error"]))
         _ = assertion_helpers.assert_flext_result_failure(result)
         assert "Failed" in str(result.error)
 
@@ -489,7 +489,7 @@ class TestFlextTestsBuilders:
 
     def test_tests_result_fail(self) -> None:
         """Test tb.Tests.Result.fail()."""
-        result_raw: r[object] = tb.Tests.Result.fail("Error", code="E001")
+        result_raw: r[str] = tb.Tests.Result.fail("Error", code="E001")
         result = result_raw
         _ = assertion_helpers.assert_flext_result_failure(result)
 
@@ -623,7 +623,7 @@ class TestFlextTestsBuilders:
 
     def test_result_fail_delegates_to_tt_res(self) -> None:
         """Test tb.Tests.Result.fail() delegates to tt.res()."""
-        result_raw: r[object] = tb.Tests.Result.fail("Error")
+        result_raw: r[str] = tb.Tests.Result.fail("Error")
         result = result_raw
         _ = assertion_helpers.assert_flext_result_failure(result)
 

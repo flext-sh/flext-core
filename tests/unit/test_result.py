@@ -21,12 +21,12 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from enum import StrEnum
-from typing import ClassVar, Never, cast
+from typing import ClassVar
 
 import pytest
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import c, m, p, r
+from flext_core import c, m, r
 from flext_tests import t, u
 
 from ..test_utils import assertion_helpers
@@ -215,27 +215,23 @@ class Testr:
         op_type = scenario.operation_type
         value = scenario.value
         is_success = scenario.is_success_expected
+        assert isinstance(value, str)
         if op_type == ResultOperationType.CREATION_SUCCESS:
-            creation_result: r[object] = (
-                u.Tests.GenericHelpers.create_result_from_value(
-                    value,
-                    error_on_none="Value cannot be None",
-                )
+            creation_result: r[str] = u.Tests.GenericHelpers.create_result_from_value(
+                value,
+                error_on_none="Value cannot be None",
             )
             u.Tests.Result.assert_success_with_value(creation_result, value)
         elif op_type == ResultOperationType.CREATION_FAILURE:
             failure_result_raw = u.Tests.Result.create_failure_result(str(value))
-            failure_result: r[object] = cast(
-                "r[object]",
-                failure_result_raw,
-            )
+            failure_result: r[str] = failure_result_raw
             u.Tests.Result.assert_failure_with_error(failure_result, str(value))
         elif op_type == ResultOperationType.UNWRAP_OR:
             if is_success:
-                unwrap_result: r[object] = u.Tests.Result.create_success_result(value)
+                unwrap_result: r[str] = u.Tests.Result.create_success_result(value)
             else:
                 failure_raw = u.Tests.Result.create_failure_result(str(value))
-                unwrap_result = cast("r[object]", failure_raw)
+                unwrap_result = failure_raw
             default = "default"
             assert unwrap_result.unwrap_or(default) == (
                 value if is_success else default
@@ -246,20 +242,17 @@ class Testr:
             u.Tests.Result.assert_failure_with_error(mapped, str(value))
         elif op_type == ResultOperationType.FLAT_MAP:
             failure_raw = u.Tests.Result.create_failure_result(str(value))
-            flat_map_result: r[object] = cast(
-                "r[object]",
-                failure_raw,
-            )
+            flat_map_result: r[str] = failure_raw
             flat_mapped = flat_map_result.flat_map(lambda x: r[str].ok(f"value_{x}"))
             u.Tests.Result.assert_failure_with_error(flat_mapped, str(value))
         elif op_type == ResultOperationType.ALT:
             if is_success:
-                result_alt: r[object] = u.Tests.Result.create_success_result(
+                result_alt: r[str] = u.Tests.Result.create_success_result(
                     value,
                 )
             else:
                 failure_raw = u.Tests.Result.create_failure_result(str(value))
-                result_alt = cast("r[object]", failure_raw)
+                result_alt = failure_raw
             alt_result = result_alt.map_error(lambda e: f"alt_{e}")
             if is_success:
                 u.Tests.Result.assert_success_with_value(alt_result, value)
@@ -278,12 +271,12 @@ class Testr:
                 u.Tests.Result.assert_success_with_value(lash_result, expected)
         elif op_type == ResultOperationType.OR_OPERATOR:
             if is_success:
-                result_or: r[object] = u.Tests.Result.create_success_result(
+                result_or: r[str] = u.Tests.Result.create_success_result(
                     value,
                 )
             else:
                 failure_raw = u.Tests.Result.create_failure_result(str(value))
-                result_or = cast("r[object]", failure_raw)
+                result_or = failure_raw
             default = "default"
             assert result_or | default == (value if is_success else default)
 
@@ -326,11 +319,7 @@ class Testr:
             res2 = res1.map(lambda v: v * 2)
             res3 = res2.map(lambda v: f"result_{v}")
             expected = f"result_{value * 2}"
-            result_list: list[r[Never]] = [
-                cast("r[Never]", res1),
-                cast("r[Never]", res2),
-                cast("r[Never]", res3),
-            ]
+            result_list: list[r[str]] = [res1.map(str), res2.map(str), res3]
             u.Tests.GenericHelpers.assert_result_chain(
                 result_list,
                 expected_success_count=3,
@@ -444,8 +433,7 @@ class Testr:
         def divide(a: int, b: int) -> int:
             return a // b
 
-        divide_func = cast("p.VariadicCallable[int]", divide)
-        divide_wrapped: p.VariadicCallable[r[int]] = r.safe(divide_func)
+        divide_wrapped = r.safe(divide)
         result: r[int] = divide_wrapped(10, 2)
         _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value == 5
@@ -454,7 +442,7 @@ class Testr:
 
     def test_map_error(self) -> None:
         """Test map_error transforms error message."""
-        result: r[str] = cast("r[str]", r.fail("original error"))
+        result: r[str] = r[str].fail("original error")
         transformed = result.map_error(lambda e: f"PREFIX: {e}")
         assert transformed.is_failure
         assert transformed.error == "PREFIX: original error"
@@ -474,7 +462,7 @@ class Testr:
 
     def test_filter_failure(self) -> None:
         """Test filter with failure result returns unchanged."""
-        result: r[int] = cast("r[int]", r.fail("error"))
+        result: r[int] = r[int].fail("error")
         filtered = result.filter(lambda x: x > 5)
         assert filtered.is_failure
         assert filtered.error == "error"
@@ -576,15 +564,15 @@ class Testr:
             resource_created.append("created")
             return ["resource"]
 
-        def op(resource: list[str]) -> r[object]:
+        def op(resource: list[str]) -> r[str]:
             resource.append("used")
-            return r[object].ok("success")
+            return r[str].ok("success")
 
         def cleanup(resource: list[str]) -> None:
             resource_cleaned.append("cleaned")
             resource.clear()
 
-        result: r[object] = r.with_resource(factory, op, cleanup)
+        result: r[str] = r[str].with_resource(factory, op, cleanup)
         _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value == "success"
         assert len(resource_created) == 1
@@ -606,14 +594,14 @@ class Testr:
 
     def test_repr_failure(self) -> None:
         """Test __repr__ for failure result."""
-        result: r[str] = cast("r[str]", r.fail("error"))
+        result: r[str] = r[str].fail("error")
         repr_str = repr(result)
         assert "r[T].fail" in repr_str
         assert "error" in repr_str
 
     def test_value_property_failure(self) -> None:
         """Test value property raises RuntimeError on failure."""
-        result: r[str] = cast("r[str]", r.fail("error"))
+        result: r[str] = r[str].fail("error")
         with pytest.raises(RuntimeError, match="Cannot access value of failed result"):
             _ = result.value
 
@@ -624,22 +612,22 @@ class Testr:
 
     def test_error_code_property(self) -> None:
         """Test error_code property."""
-        result: r[str] = cast("r[str]", r.fail("error", error_code="TEST_ERROR"))
+        result: r[str] = r[str].fail("error", error_code="TEST_ERROR")
         assert result.error_code == "TEST_ERROR"
         success = r[str].ok("test")
         assert success.error_code is None
 
     def test_error_data_property(self) -> None:
         """Test error_data property."""
-        error_data: dict[str, object] = {"key": "value"}
-        result: r[str] = cast("r[str]", r.fail("error", error_data=error_data))
-        assert result.error_data == m.ConfigMap(root=error_data)
+        error_data = m.ConfigMap(root={"key": "value"})
+        result: r[str] = r[str].fail("error", error_data=error_data)
+        assert result.error_data == error_data
         success = r[str].ok("test")
         assert success.error_data is None
 
     def test_unwrap_failure(self) -> None:
         """Test unwrap raises RuntimeError on failure."""
-        result: r[str] = cast("r[str]", r.fail("error"))
+        result: r[str] = r[str].fail("error")
         with pytest.raises(RuntimeError, match="Cannot access value of failed result"):
             result.value
 

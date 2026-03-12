@@ -155,7 +155,7 @@ class FlextTestAutomationFramework:
     def execute_with_timeout(
         func: Callable[..., object],
         timeout_seconds: float = 5.0,
-    ) -> TestResult[object]:
+    ) -> TestResult[str]:
         """Execute function with timeout for performance testing.
 
         Args:
@@ -163,7 +163,7 @@ class FlextTestAutomationFramework:
             timeout_seconds: Timeout in seconds
 
         Returns:
-            r[object]: Result of execution or timeout error
+            r[str]: Result of execution or timeout error
 
         """
         result_queue: queue.Queue[tuple[bool, object]] = queue.Queue(maxsize=1)
@@ -179,13 +179,13 @@ class FlextTestAutomationFramework:
             worker.start()
             worker.join(timeout=timeout_seconds)
             if worker.is_alive():
-                return r[object].fail(f"Operation timed out after {timeout_seconds}s")
+                return r[str].fail(f"Operation timed out after {timeout_seconds}s")
             succeeded, payload = result_queue.get_nowait()
             if succeeded:
-                return r[object].ok(payload)
-            return r[object].fail(f"Execution failed: {payload}")
+                return r[str].ok(str(payload))
+            return r[str].fail(f"Execution failed: {payload}")
         except queue.Empty:
-            return r[object].fail("Execution failed: no result produced")
+            return r[str].fail("Execution failed: no result produced")
 
     @staticmethod
     def parametrize_real_data(
@@ -265,7 +265,7 @@ class FlextScenarioRunner:
 
     @staticmethod
     def assert_scenario_result(
-        result: r[object],
+        result: r[t.Container],
         scenario: ValidationScenario | ParserScenario | ReliabilityScenario,
         context: str = "",
     ) -> None:
@@ -310,10 +310,10 @@ class RAssertionHelper:
 
     @staticmethod
     def assert_success(
-        result: r[object],
-        expected_value: object = None,
+        result: r[t.Container],
+        expected_value: t.Container | None = None,
         context: str = "",
-    ) -> object:
+    ) -> t.Container:
         """Assert result is success.
 
         Args:
@@ -333,7 +333,7 @@ class RAssertionHelper:
 
     @staticmethod
     def assert_failure(
-        result: r[object],
+        result: r[t.Container],
         expected_error: str | None = None,
         context: str = "",
     ) -> str:
@@ -535,9 +535,9 @@ def flext_result_success() -> r[dict[str, object]]:
 
 
 @pytest.fixture
-def flext_result_failure() -> r[object]:
+def flext_result_failure() -> r[str]:
     """Failed r fixture available to all FLEXT projects."""
-    return r[object].fail("Test error")
+    return r[str].fail("Test error")
 
 
 @pytest.fixture

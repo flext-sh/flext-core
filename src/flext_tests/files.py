@@ -463,7 +463,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
 
         def process_one(
             name_and_content: tuple[str, t.Tests.object],
-        ) -> object | r[object]:
+        ) -> Path | r[Path]:
             """Process single file operation."""
             name, content = name_and_content
             match params.operation:
@@ -500,7 +500,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                         )
                         return self.create(normalized_content, name, params.directory)
                     except (OSError, TypeError, ValueError, AttributeError) as e:
-                        return r[object].fail(f"Failed to create {name}: {e}")
+                        return r[Path].fail(f"Failed to create {name}: {e}")
                 case "read":
                     path = (
                         Path(content)
@@ -510,7 +510,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                     read_result = self.read(path, model_cls=None)
                     if read_result.is_success:
                         return path
-                    return r[object].fail(read_result.error or f"Failed to read {name}")
+                    return r[Path].fail(read_result.error or f"Failed to read {name}")
                 case "delete":
                     path = (
                         Path(content)
@@ -521,9 +521,9 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                         Path(path).unlink(missing_ok=True)
                         return Path(path)
                     except OSError as e:
-                        return r[object].fail(f"Failed to delete {name}: {e}")
+                        return r[Path].fail(f"Failed to delete {name}: {e}")
                 case _:
-                    return r[object].fail(f"Unknown operation: {params.operation}")
+                    return r[Path].fail(f"Unknown operation: {params.operation}")
 
         items_list: list[tuple[str, t.Tests.object]] = list(files_dict.items())
         results: list[object] = []

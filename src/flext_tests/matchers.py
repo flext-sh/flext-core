@@ -94,7 +94,7 @@ def _to_test_payload(value: object) -> t.Tests.object:
     return str(value)
 
 
-def _as_guard_input(value: object) -> t.Container:
+def _as_guard_input(value: object) -> t.Container | BaseModel:
     if isinstance(value, BaseModel | str | int | float | bool | Path):
         return value
     if value is None:

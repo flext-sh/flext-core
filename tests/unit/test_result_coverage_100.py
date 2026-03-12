@@ -23,11 +23,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import math
-from typing import cast
 
 import pytest
 
-from flext_core import m, p, r
+from flext_core import m, r, t
 
 
 class _ResultAssertions:
@@ -73,14 +72,14 @@ class TestrCoverage:
         expected: object,
     ) -> None:
         """Test creating success results with different value types."""
-        result = r[object].ok(value)
+        result = r[t.GeneralValueType].ok(value)
         _ResultAssertions.assert_success(result)
         assert result.value == expected
 
     def test_ok_rejects_none_value(self) -> None:
         """Test that ok() rejects None values."""
         with pytest.raises(ValueError, match="Cannot create success result with None"):
-            r[object].ok(None)
+            r[t.GeneralValueType].ok(None)
 
     def test_fail_creates_failure_with_message(self) -> None:
         """Test creating failure results."""
@@ -179,10 +178,10 @@ class TestrCoverage:
     def test_flat_map_success(self) -> None:
         """Test flat_map chaining results."""
 
-        def double_in_result(x: object) -> r[object]:
+        def double_in_result(x: object) -> r[int]:
             if isinstance(x, int):
-                return r[object].ok(x * 2)
-            return r[object].fail("Not int")
+                return r[int].ok(x * 2)
+            return r[int].fail("Not int")
 
         result = r[int].ok(5).flat_map(double_in_result)
         _ResultAssertions.assert_success(result)
@@ -191,8 +190,8 @@ class TestrCoverage:
     def test_flat_map_failure_propagates(self) -> None:
         """Test that flat_map propagates failure from inner result."""
 
-        def failing_op(x: object) -> r[object]:
-            return r[object].fail("Inner failed")
+        def failing_op(x: object) -> r[str]:
+            return r[str].fail("Inner failed")
 
         result = r[int].ok(5).flat_map(failing_op)
         _ResultAssertions.assert_failure(result)
@@ -201,10 +200,10 @@ class TestrCoverage:
     def test_flat_map_initial_failure_skips(self) -> None:
         """Test that flat_map skips on initial failure."""
 
-        def double_in_result(x: object) -> r[object]:
+        def double_in_result(x: object) -> r[int]:
             if isinstance(x, int):
-                return r[object].ok(x * 2)
-            return r[object].fail("Not int")
+                return r[int].ok(x * 2)
+            return r[int].fail("Not int")
 
         result = r[int].fail("error").flat_map(double_in_result)
         _ResultAssertions.assert_failure(result)
@@ -271,38 +270,32 @@ class TestrCoverage:
     def test_flow_through_chain_success(self) -> None:
         """Test flow_through chains multiple operations."""
 
-        def double(x: object) -> r[object]:
+        def double(x: object) -> r[int]:
             if isinstance(x, int):
-                return r[object].ok(x * 2)
-            return r[object].fail("Not an int")
+                return r[int].ok(x * 2)
+            return r[int].fail("Not an int")
 
-        def add_ten(x: object) -> r[object]:
+        def add_ten(x: object) -> r[int]:
             if isinstance(x, int):
-                return r[object].ok(x + 10)
-            return r[object].fail("Not an int")
+                return r[int].ok(x + 10)
+            return r[int].fail("Not an int")
 
-        result: r[object] = cast(
-            "r[object]",
-            r[int].ok(5).flow_through(double, add_ten),
-        )
+        result = r[int].ok(5).flow_through(double, add_ten)
         _ResultAssertions.assert_success(result)
         assert result.value == 20
 
     def test_flow_through_stops_on_failure(self) -> None:
         """Test flow_through stops processing on failure."""
 
-        def double(x: object) -> r[object]:
+        def double(x: object) -> r[int]:
             if isinstance(x, int):
-                return r[object].ok(x * 2)
-            return r[object].fail("Not an int")
+                return r[int].ok(x * 2)
+            return r[int].fail("Not an int")
 
-        def add_ten(x: object) -> r[object]:
-            return r[object].fail("Should not reach here")
+        def add_ten(x: object) -> r[int]:
+            return r[int].fail("Should not reach here")
 
-        result: r[object] = cast(
-            "r[object]",
-            r[str].ok("test").flow_through(double, add_ten),
-        )
+        result = r[str].ok("test").flow_through(double, add_ten)
         _ResultAssertions.assert_failure(result)
         assert result.error == "Not an int"
 
@@ -312,11 +305,7 @@ class TestrCoverage:
         def success_func() -> str:
             return "success"
 
-        success_func_typed: p.VariadicCallable[str] = cast(
-            "p.VariadicCallable[str]",
-            success_func,
-        )
-        wrapped_func = r.safe(success_func_typed)
+        wrapped_func = r.safe(success_func)
         result: r[str] = wrapped_func()
         _ResultAssertions.assert_success_with_value(result, "success")
 
@@ -327,11 +316,7 @@ class TestrCoverage:
         def failing_func() -> str:
             raise ValueError(error_msg)
 
-        failing_func_typed: p.VariadicCallable[str] = cast(
-            "p.VariadicCallable[str]",
-            failing_func,
-        )
-        wrapped_func = r.safe(failing_func_typed)
+        wrapped_func = r.safe(failing_func)
         result: r[str] = wrapped_func()
         _ResultAssertions.assert_failure(result)
         assert result.error is not None and error_msg in result.error
@@ -522,10 +507,10 @@ class TestrCoverage:
                 return x * 2
             return 0
 
-        def add_three(x: object) -> r[object]:
+        def add_three(x: object) -> r[int]:
             if isinstance(x, int):
-                return r[object].ok(x + 3)
-            return r[object].fail("Not int")
+                return r[int].ok(x + 3)
+            return r[int].fail("Not int")
 
         def is_gt_10(x: object) -> bool:
             if isinstance(x, int):

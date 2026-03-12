@@ -22,9 +22,9 @@ class Ex11HandlerLikeService(FlextSettings):
         """Check whether message type is handled."""
         return bool(message_type)
 
-    def handle(self, message: object) -> r[object]:
+    def handle(self, message: object) -> r[str]:
         """Handle service message."""
-        return r[object].ok(message)
+        return r[str].ok(str(message))
 
 
 class Ex11Payload(m.Value):
@@ -60,8 +60,8 @@ class Ex11ProcessorProtocolBad(m.Value):
 class Ex11CommandBusStub(m.Value):
     model_config = ConfigDict(frozen=False)
 
-    def dispatch(self, message: object) -> r[object]:
-        return r[object].ok(message)
+    def dispatch(self, message: object) -> r[str]:
+        return r[str].ok(str(message))
 
     def publish(self, _event: object) -> None:
         return

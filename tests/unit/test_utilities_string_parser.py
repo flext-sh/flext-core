@@ -442,11 +442,8 @@ class TestuStringParser:
                 bad_str,
                 TestsFlextConstants.Delimiters.COMMA,
             )
-            TestsFlextUtilities.Tests.CoreAssertions.assert_failure(
-                cast("r[object]", result),
-                TestsFlextConstants.TestErrors.FAILED_PARSE,
-                "exception handling",
-            )
+            assert result.is_failure
+            assert TestsFlextConstants.TestErrors.FAILED_PARSE in (result.error or "")
 
     class TestSplitWithEscape:
         """Test split_on_char_with_escape method."""
@@ -480,11 +477,8 @@ class TestuStringParser:
                 bad_str,
                 TestsFlextConstants.Delimiters.COMMA,
             )
-            TestsFlextUtilities.Tests.CoreAssertions.assert_failure(
-                cast("r[object]", result),
-                TestsFlextConstants.TestErrors.FAILED_SPLIT,
-                "exception handling",
-            )
+            assert result.is_failure
+            assert TestsFlextConstants.TestErrors.FAILED_SPLIT in (result.error or "")
 
     class TestNormalizeWhitespace:
         """Test normalize_whitespace method."""
@@ -518,10 +512,9 @@ class TestuStringParser:
             bad_obj = TestsFlextUtilities.Tests.CoreBadObjects.create_for_str()
             bad_str = cast("str", cast("object", bad_obj))
             result = parser.normalize_whitespace(bad_str)
-            TestsFlextUtilities.Tests.CoreAssertions.assert_failure(
-                cast("r[object]", result),
-                TestsFlextConstants.TestErrors.FAILED_NORMALIZE,
-                "exception handling",
+            assert result.is_failure
+            assert TestsFlextConstants.TestErrors.FAILED_NORMALIZE in (
+                result.error or ""
             )
 
     class TestRegexPipeline:
@@ -549,10 +542,9 @@ class TestuStringParser:
             invalid_pattern = cast("tuple[str, str]", (None, "replacement"))
             patterns: list[tuple[str, str] | tuple[str, str, int]] = [invalid_pattern]
             result = parser.apply_regex_pipeline("test", patterns)
-            TestsFlextUtilities.Tests.CoreAssertions.assert_failure(
-                cast("r[object]", result),
-                TestsFlextConstants.TestErrors.FAILED_PIPELINE,
-                "exception handling",
+            assert result.is_failure
+            assert TestsFlextConstants.TestErrors.FAILED_PIPELINE in (
+                result.error or ""
             )
 
         def test_invalid_pattern(self, parser: u.Parser) -> None:
@@ -561,11 +553,8 @@ class TestuStringParser:
                 ("[invalid", "replacement"),
             ]
             result = parser.apply_regex_pipeline("test", patterns)
-            TestsFlextUtilities.Tests.CoreAssertions.assert_failure(
-                cast("r[object]", result),
-                TestsFlextConstants.TestErrors.INVALID_REGEX,
-                "invalid pattern",
-            )
+            assert result.is_failure
+            assert TestsFlextConstants.TestErrors.INVALID_REGEX in (result.error or "")
 
         def test_none_text(self, parser: u.Parser) -> None:
             """Test pipeline with None text."""

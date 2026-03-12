@@ -36,7 +36,7 @@ from pathlib import Path
 
 from pydantic import ConfigDict
 
-from flext_core import m, r
+from flext_core import m, r, t
 
 
 class Examples:
@@ -199,7 +199,7 @@ class Examples:
 
     @staticmethod
     def bind_status(
-        value: object | r[object],
+        value: object | r[t.Container],
     ) -> object:
         """Return a summary ConfigMap when *value* is a ``r``."""
         match value:

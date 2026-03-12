@@ -25,13 +25,13 @@ class _ProtocolHandler:
     def can_handle(self, message_type: type) -> bool:
         return message_type is self.message_type
 
-    def handle(self, message: object) -> r[object]:
+    def handle(self, message: object) -> r[str]:
         value = ""
         if hasattr(message, "value"):
             value = str(getattr(message, "value"))
         if hasattr(message, "amount"):
             value = str(getattr(message, "amount"))
-        return r[object].ok(f"{self._label}:{value}")
+        return r[str].ok(f"{self._label}:{value}")
 
     def _protocol_name(self) -> str:
         return f"example-protocol-handler::{self._label}"

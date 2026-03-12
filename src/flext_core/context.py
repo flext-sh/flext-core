@@ -367,7 +367,9 @@ class FlextContext(FlextRuntime):
             statistics=dict(statistics_mapping.items()),
         )
 
-    def get(self, key: str, scope: str = c.Context.SCOPE_GLOBAL) -> r[t.Container]:
+    def get(
+        self, key: str, scope: str = c.Context.SCOPE_GLOBAL
+    ) -> r[t.Container | BaseModel]:
         """Get a value from the context.
 
         Fast fail: Returns r[t.Container] - fails if key not found.
@@ -399,20 +401,20 @@ class FlextContext(FlextRuntime):
 
         """
         if not self._active:
-            return r[t.Container].fail("Context is not active")
+            return r[t.Container | BaseModel].fail("Context is not active")
         scope_data = self._get_from_contextvar(scope)
         if key not in scope_data:
-            return r[t.Container].fail(
+            return r[t.Container | BaseModel].fail(
                 f"Context key '{key}' not found in scope '{scope}'"
             )
         value = scope_data[key]
         self._update_statistics(c.Context.OPERATION_GET)
         if value is None:
-            return r[t.Container].fail(
+            return r[t.Container | BaseModel].fail(
                 f"Context key '{key}' has None value in scope '{scope}'"
             )
 
-        return r[t.Container].ok(FlextRuntime.normalize_to_container(value))
+        return r[t.Container | BaseModel].ok(FlextRuntime.normalize_to_container(value))
 
     def get_metadata(self, key: str) -> r[t.Container]:
         """Get metadata from the context.
@@ -573,7 +575,7 @@ class FlextContext(FlextRuntime):
 
     @overload
     def set(
-        self, key_or_data: str, value: t.Container, *, scope: str = ...
+        self, key_or_data: str, value: t.Container | BaseModel, *, scope: str = ...
     ) -> r[bool]: ...
 
     @overload
@@ -584,7 +586,7 @@ class FlextContext(FlextRuntime):
     def set(
         self,
         key_or_data: str | m.ConfigMap,
-        value: t.Container | None = _SENTINEL,
+        value: t.Container | BaseModel | None = _SENTINEL,
         *,
         scope: str = c.Context.SCOPE_GLOBAL,
     ) -> r[bool]:

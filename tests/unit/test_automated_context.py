@@ -10,7 +10,7 @@ from collections.abc import Mapping
 
 import pytest
 
-from flext_core import FlextContext, r
+from flext_core import FlextContext, r, t
 from tests import m
 from tests.conftest import test_framework
 from tests.test_utils import assertion_helpers, fixture_factory
@@ -64,7 +64,12 @@ class TestAutomatedFlextContext:
         """Comprehensive test scenarios for context functionality."""
         try:
             instance = fixture_factory.create_test_context_instance()
-            result = self._execute_context_operation(instance, test_scenario.input)
+            input_data = (
+                test_scenario.input
+                if isinstance(test_scenario.input, dict)
+                else dict[str, object]()
+            )
+            result = self._execute_context_operation(instance, input_data)
             if test_scenario.expected_success:
                 assert result.is_success, f"Expected success but got failure: {result}"
         except Exception:
@@ -126,7 +131,7 @@ class TestAutomatedFlextContext:
         self,
         instance: FlextContext,
         input_data: Mapping[str, object],
-    ) -> r[object]:
+    ) -> r[t.Container]:
         """Execute a test operation on context instance.
 
         Tests actual FlextContext API methods like set, get, validate, etc.
@@ -135,28 +140,28 @@ class TestAutomatedFlextContext:
             if input_data.get("type_safe"):
                 instance.set("test_key", "test_value")
                 value = instance.get("test_key")
-                return r[object].ok(value)
+                return r[t.Container].ok(str(value))
             if input_data.get("validate"):
                 validation_result = instance.validate()
                 if validation_result.is_success:
-                    return r[object].ok(validation_result.value)
-                return r[object].fail(
+                    return r[t.Container].ok(str(validation_result.value))
+                return r[t.Container].fail(
                     validation_result.error or "Context validation failed"
                 )
             if input_data.get("performance_test"):
                 instance.set("perf_test", "data")
                 _ = instance.get("perf_test")
-                return r[object].ok("performance_test_ok")
+                return r[t.Container].ok("performance_test_ok")
             if input_data.get("resource_test"):
                 cloned = instance.clone()
                 cloned.set("cloned_key", "cloned_value")
-                return r[object].ok("resource_test_ok")
+                return r[t.Container].ok("resource_test_ok")
             result = instance.validate()
             if result.is_success:
-                return r[object].ok(result.value)
-            return r[object].fail(result.error or "Context validation failed")
+                return r[t.Container].ok(str(result.value))
+            return r[t.Container].fail(result.error or "Context validation failed")
         except Exception as e:
-            return r[object].fail(f"FlextContext operation failed: {e}")
+            return r[t.Container].fail(f"FlextContext operation failed: {e}")
 
     @pytest.fixture
     def test_context_instance(self) -> FlextContext:

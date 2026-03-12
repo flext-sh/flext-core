@@ -13,7 +13,7 @@ from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime
 from functools import partial
 from pathlib import Path
-from typing import Protocol, TypeAlias, overload
+from typing import Protocol, TypeAlias, cast, overload
 
 from pydantic import BaseModel
 
@@ -339,7 +339,7 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _build_apply_chunk(
-        current: _MappingValue, ops: ContainerMapping
+        current: _MappingValue, ops: Mapping[str, object]
     ) -> _MappingValue:
         """Helper: Apply chunk operation to split into sublists."""
         if "chunk" not in ops:
@@ -361,7 +361,7 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _build_apply_convert(
-        current: _MappingValue, ops: ContainerMapping
+        current: _MappingValue, ops: Mapping[str, object]
     ) -> _MappingValue:
         """Helper: Apply convert operation."""
         if "convert" not in ops:
@@ -418,7 +418,7 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _build_apply_ensure(
-        current: _MappingValue, ops: ContainerMapping
+        current: _MappingValue, ops: Mapping[str, object]
     ) -> _MappingValue:
         """Helper: Apply ensure operation."""
         if "ensure" not in ops:
@@ -473,7 +473,7 @@ class FlextUtilitiesMapper:
     @staticmethod
     def _build_apply_filter(
         current: _MappingValue,
-        ops: ContainerMapping,
+        ops: Mapping[str, object],
         default: _MappingValue,
     ) -> _MappingValue:
         """Helper: Apply filter operation."""
@@ -505,7 +505,7 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _build_apply_group(
-        current: _MappingValue, ops: ContainerMapping
+        current: _MappingValue, ops: Mapping[str, object]
     ) -> _MappingValue:
         """Helper: Apply group operation."""
         if "group" not in ops:
@@ -559,7 +559,7 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _build_apply_map(
-        current: _MappingValue, ops: ContainerMapping
+        current: _MappingValue, ops: Mapping[str, object]
     ) -> _MappingValue:
         """Helper: Apply map operation."""
         if "map" not in ops:
@@ -588,7 +588,7 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _build_apply_normalize(
-        current: _MappingValue, ops: ContainerMapping
+        current: _MappingValue, ops: Mapping[str, object]
     ) -> _MappingValue:
         """Helper: Apply normalize operation."""
         if "normalize" not in ops:
@@ -615,7 +615,7 @@ class FlextUtilitiesMapper:
     @staticmethod
     def _build_apply_process(
         current: _MappingValue,
-        ops: ContainerMapping,
+        ops: Mapping[str, object],
         default: _MappingValue,
         on_error: str,
     ) -> _MappingValue:
@@ -657,7 +657,7 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _build_apply_slice(
-        current: _MappingValue, ops: ContainerMapping
+        current: _MappingValue, ops: Mapping[str, object]
     ) -> _MappingValue:
         """Helper: Apply slice operation."""
         if "slice" not in ops:
@@ -690,7 +690,7 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _build_apply_sort(
-        current: _MappingValue, ops: ContainerMapping
+        current: _MappingValue, ops: Mapping[str, object]
     ) -> _MappingValue:
         """Helper: Apply sort operation."""
         if "sort" not in ops:
@@ -760,7 +760,7 @@ class FlextUtilitiesMapper:
     @staticmethod
     def _build_apply_transform(
         current: _MappingValue,
-        ops: ContainerMapping,
+        ops: Mapping[str, object],
         default: _MappingValue,
         on_error: str,
     ) -> _MappingValue:
@@ -807,7 +807,7 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _build_apply_unique(
-        current: _MappingValue, ops: ContainerMapping
+        current: _MappingValue, ops: Mapping[str, object]
     ) -> _MappingValue:
         """Helper: Apply unique operation to remove duplicates."""
         if "unique" not in ops or not ops.get("unique"):
@@ -885,14 +885,13 @@ class FlextUtilitiesMapper:
             model_dump_attr = current.model_dump
             if callable(model_dump_attr):
                 model_dict = model_dump_attr()
-                if isinstance(model_dict, Mapping):
-                    if key_part in model_dict:
-                        val = FlextUtilitiesMapper.narrow_to_container(
-                            model_dict[key_part]
-                        )
-                        if val is None:
-                            return r[_MappingValue].fail(f"found_none:{key_part}")
-                        return r[_MappingValue].ok(val)
+                if isinstance(model_dict, Mapping) and key_part in model_dict:
+                    val = FlextUtilitiesMapper.narrow_to_container(
+                        model_dict[key_part]
+                    )
+                    if val is None:
+                        return r[_MappingValue].fail(f"found_none:{key_part}")
+                    return r[_MappingValue].ok(val)
         return r[_MappingValue].fail(f"Key '{key_part}' not found")
 
     @staticmethod
@@ -982,10 +981,10 @@ class FlextUtilitiesMapper:
         )
 
     @staticmethod
-    def _get_callable_from_dict(ops: ContainerMapping, key: str) -> r[_MapperCallable]:
+    def _get_callable_from_dict(ops: Mapping[str, object], key: str) -> r[_MapperCallable]:
         value: _MappingValue | _MapperCallable = ops.get(key)
         if callable(value):
-            return r[_MapperCallable].ok(value)
+            return r[_MapperCallable].ok(cast("_MapperCallable", value))
         return r[_MapperCallable].fail(f"Operation '{key}' is not callable")
 
     @staticmethod
@@ -1006,7 +1005,7 @@ class FlextUtilitiesMapper:
                 return default if default is not None else ""
 
     @staticmethod
-    def _get_str_from_dict(ops: ContainerMapping, key: str, default: str = "") -> str:
+    def _get_str_from_dict(ops: Mapping[str, object], key: str, default: str = "") -> str:
         """Safely extract str value from ConfigurationDict."""
         value = ops.get(key, default)
         if isinstance(value, str):
@@ -1269,9 +1268,9 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def build(
-        value: _MappingValue,
+        value: p.AccessibleData,
         *,
-        ops: ContainerMapping | None = None,
+        ops: Mapping[str, object] | None = None,
         default: _MappingValue = None,
         on_error: str = "stop",
     ) -> _MappingValue:
@@ -1314,10 +1313,11 @@ class FlextUtilitiesMapper:
             )
 
         """
+        narrowed_value = FlextUtilitiesMapper.narrow_to_container(value)
         if ops is None:
-            return value
-        current: _MappingValue = value
-        default_val: _MappingValue = default if default is not None else value
+            return narrowed_value
+        current: _MappingValue = narrowed_value
+        default_val: _MappingValue = default if default is not None else narrowed_value
         current = FlextUtilitiesMapper._build_apply_ensure(current, ops)
         current = FlextUtilitiesMapper._build_apply_filter(current, ops, default_val)
         current = FlextUtilitiesMapper._build_apply_map(current, ops)
@@ -1455,7 +1455,7 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def construct(
-        spec: ContainerMapping,
+        spec: Mapping[str, object],
         source: m.ConfigMap | BaseModel | None = None,
         *,
         on_error: str = "stop",
@@ -1701,7 +1701,7 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def extract(
-        data: _MappingValue,
+        data: p.AccessibleData,
         path: str,
         *,
         default: _MappingValue = None,
@@ -1818,12 +1818,12 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def field(
-        source: _MappingValue,
+        source: p.AccessibleData,
         name: str,
         *,
         default: _MappingValue = None,
         required: bool = False,
-        ops: ContainerMapping | None = None,
+        ops: Mapping[str, object] | None = None,
     ) -> _MappingValue:
         """Extract single field from source with optional DSL processing.
 
@@ -1869,7 +1869,7 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def fields(
-        obj: _MappingValue,
+        obj: p.AccessibleData,
         *field_names: str | _MappingValue,
     ) -> ContainerMapping:
         """Extract specified fields from object.
@@ -1905,7 +1905,7 @@ class FlextUtilitiesMapper:
                 for name, field_config in spec_item.items():
                     if isinstance(obj, Mapping):
                         if name in obj:
-                            result[name] = obj[name]
+                            result[name] = FlextUtilitiesMapper.narrow_to_container(obj[name])
                         elif isinstance(field_config, Mapping):
                             default_value = field_config.get("default")
                             if default_value is not None:
@@ -1913,7 +1913,7 @@ class FlextUtilitiesMapper:
                         else:
                             result[name] = field_config
                     elif hasattr(obj, name):
-                        result[name] = getattr(obj, name)
+                        result[name] = FlextUtilitiesMapper.narrow_to_container(getattr(obj, name))
                     elif isinstance(field_config, Mapping):
                         default_value = field_config.get("default")
                         if default_value is not None:
@@ -1922,13 +1922,13 @@ class FlextUtilitiesMapper:
                 field_name: str = spec_item
                 if isinstance(obj, Mapping):
                     if field_name in obj:
-                        result[field_name] = obj[field_name]
+                        result[field_name] = FlextUtilitiesMapper.narrow_to_container(obj[field_name])
                 elif hasattr(obj, field_name):
-                    result[field_name] = getattr(obj, field_name)
+                    result[field_name] = FlextUtilitiesMapper.narrow_to_container(getattr(obj, field_name))
         return result
 
     @staticmethod
-    def fields_multi(source: object, spec: ContainerMapping) -> ContainerMapping:
+    def fields_multi(source: object, spec: Mapping[str, object]) -> ContainerMapping:
         """Extract multiple fields using specification dict.
 
         FLEXT Pattern: Simplified multi-field extraction (split from overloaded fields).
@@ -2202,17 +2202,20 @@ class FlextUtilitiesMapper:
         if isinstance(value, t.CONTAINER_TYPES):
             return value
         if isinstance(value, BaseModel):
+            model_dict = cast("dict[str, object]", value.model_dump())
             return {
                 str(k): FlextUtilitiesMapper.narrow_to_container(v)
-                for k, v in value.model_dump().items()
+                for k, v in model_dict.items()
             }
-        if isinstance(value, dict):
+        if isinstance(value, Mapping):
+            value_dict = cast("Mapping[object, object]", value)
             return {
                 str(k): FlextUtilitiesMapper.narrow_to_container(v)
-                for k, v in value.items()
+                for k, v in value_dict.items()
             }
-        if isinstance(value, (list, tuple)):
-            return [FlextUtilitiesMapper.narrow_to_container(item) for item in value]
+        if isinstance(value, Sequence) and not isinstance(value, str):
+            value_seq = cast("Sequence[object]", value)
+            return [FlextUtilitiesMapper.narrow_to_container(item) for item in value_seq]
         return str(value)
 
     @staticmethod
@@ -2246,17 +2249,19 @@ class FlextUtilitiesMapper:
             Normalized metadata attribute dict
 
         """
-        field_overrides_config: ContainerMapping = dict(specific_fields)
+        field_overrides_config: ContainerMapping = {
+            k: cast("_MappingValue", v) for k, v in specific_fields.items()
+        }
         raw_result: ContainerMapping = FlextUtilitiesMapper.process_context_data(
             primary_data=context,
             secondary_data=extra_kwargs,
-            transformer=FlextRuntime.normalize_to_metadata,
+            transformer=cast("_ContainerTransformer", FlextRuntime.normalize_to_metadata),
             field_overrides=field_overrides_config,
             merge_strategy="merge",
         )
         result: dict[str, t.MetadataValue] = {}
         for k, v in raw_result.items():
-            result[k] = FlextRuntime.normalize_to_metadata(v)
+            result[k] = cast("t.MetadataValue", FlextRuntime.normalize_to_metadata(v))
         return result
 
     @staticmethod
@@ -2431,13 +2436,13 @@ class FlextUtilitiesMapper:
             transformer = identity_transformer
         result: dict[str, _MappingValue] = {}
         if primary_data is not None:
-            primary_source: ContainerMapping | None = None
+            primary_source: Mapping[str, object] | None = None
             if isinstance(primary_data, m.ConfigMap):
                 primary_source = primary_data.root
             else:
                 primary_general = FlextUtilitiesMapper.narrow_to_container(primary_data)
                 if FlextRuntime.is_dict_like(primary_general):
-                    primary_source = dict(primary_general)
+                    primary_source = dict(cast("Mapping[str, object]", primary_general))
             if primary_source is not None:
                 primary_dict = {
                     str(key): FlextUtilitiesMapper.narrow_to_container(value)
@@ -2448,7 +2453,7 @@ class FlextUtilitiesMapper:
                 )
                 result.update(transformed_primary)
         if secondary_data is not None and merge_strategy != "primary_only":
-            secondary_source: ContainerMapping | None = None
+            secondary_source: Mapping[str, object] | None = None
             if isinstance(secondary_data, m.ConfigMap):
                 secondary_source = secondary_data.root
             else:
@@ -2456,7 +2461,7 @@ class FlextUtilitiesMapper:
                     secondary_data
                 )
                 if FlextRuntime.is_dict_like(secondary_general):
-                    secondary_source = dict(secondary_general)
+                    secondary_source = dict(cast("Mapping[str, object]", secondary_general))
             if secondary_source is not None:
                 secondary_dict = {
                     str(key): FlextUtilitiesMapper.narrow_to_container(value)
@@ -2656,9 +2661,15 @@ class FlextUtilitiesMapper:
             >>> transformed = result.map_or({})  # {"new": "value"}
 
         """
+        source_dict: ContainerMapping
+        if isinstance(source, m.ConfigMap):
+            source_dict = {str(k): FlextUtilitiesMapper.narrow_to_container(v) for k, v in source.root.items()}
+        else:
+            source_dict = dict(source)
+            
         transform_result = r[ContainerMapping].create_from_callable(
             lambda: FlextUtilitiesMapper._apply_transform_steps(
-                dict(source),
+                source_dict,
                 normalize=normalize,
                 map_keys=map_keys,
                 filter_keys=filter_keys,

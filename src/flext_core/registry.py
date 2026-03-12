@@ -14,7 +14,7 @@ import sys
 from collections.abc import Callable, Mapping, Sequence
 from typing import Annotated, ClassVar, Literal, Self, override
 
-from pydantic import Field, PrivateAttr, computed_field
+from pydantic import BaseModel, Field, PrivateAttr, computed_field
 
 from flext_core import (
     FlextContainer,
@@ -191,7 +191,7 @@ class FlextRegistry(s[bool]):
         return instance
 
     @staticmethod
-    def _narrow_value(value: object | None) -> t.Container | None:
+    def _narrow_value(value: object | None) -> t.Container | BaseModel | None:
         """Safe conversion using centralized utilities."""
         return u.narrow_to_container(value)
 
@@ -227,7 +227,7 @@ class FlextRegistry(s[bool]):
         name: str,
         *,
         scope: Literal["instance", "class"] = "instance",
-    ) -> r[t.Container]:
+    ) -> r[t.Container | BaseModel]:
         """Get a registered plugin by category and name.
 
         Returns:
@@ -242,12 +242,12 @@ class FlextRegistry(s[bool]):
                     for k in self._registered_keys
                     if k.startswith(f"{category}::")
                 ]
-                return r[t.Container].fail(
+                return r[t.Container | BaseModel].fail(
                     f"{category} '{name}' not found. Available: {available}"
                 )
             raw_result = self.container.get(key)
             if raw_result.is_failure:
-                return r[t.Container].fail(
+                return r[t.Container | BaseModel].fail(
                     f"Failed to retrieve {category} '{name}': {raw_result.error}"
                 )
             return self._narrow_value(raw_result.value)
@@ -258,7 +258,7 @@ class FlextRegistry(s[bool]):
                 for k in cls._class_registered_keys
                 if k.startswith(f"{category}::")
             ]
-            return r[t.Container].fail(
+            return r[t.Container | BaseModel].fail(
                 f"{category} '{name}' not found. Available: {available}"
             )
         return self._narrow_value(cls._class_plugin_storage[key])

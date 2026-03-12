@@ -128,7 +128,7 @@ class AssertionHelpers:
 
     @staticmethod
     def assert_operation_result(
-        operation_func: Callable[[], r[object]],
+        operation_func: Callable[[], r[t.Container]],
         test_case: StandardTestCase,
         context: str = "",
     ) -> object:
@@ -223,7 +223,7 @@ class TestFixtureFactory:
         return FlextRegistry()
 
     @staticmethod
-    def create_test_result_instance() -> type[r[object]]:
+    def create_test_result_instance() -> type[r[t.Container]]:
         """Create test result fixture."""
         return r
 
@@ -264,11 +264,12 @@ class TestFixtureFactory:
         success: bool = True,
         value: object | None = None,
         error: str = "Test error",
-    ) -> TestResult[object]:
+    ) -> TestResult[str]:
         """Create test service result fixture."""
         if success:
-            return r[object].ok(value if value is not None else "test_value")
-        return r[object].fail(error)
+            resolved_value = str(value) if value is not None else "test_value"
+            return r[str].ok(resolved_value)
+        return r[str].fail(error)
 
 
 test_data_factory = TestDataFactory()

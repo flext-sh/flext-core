@@ -14,10 +14,12 @@ class _Handler(FlextHandlers[object, object]):
     """Test handler implementation."""
 
     @override
-    def handle(self, message: object) -> r[object]:
-        return r[object].ok(message)
+    def handle(self, message: object) -> r[t.Container]:
+        if isinstance(message, (str, int, float, bool)):
+            return r[t.Container].ok(message)
+        return r[t.Container].fail("unsupported message")
 
-    def __call__(self, message: object) -> r[object]:
+    def __call__(self, message: object) -> r[t.Container]:
         return self.handle(message)
 
     def _protocol_name(self) -> str:
@@ -198,8 +200,8 @@ def test_get_plugin_and_register_metadata_and_list_items_exception(
     registry = FlextRegistry()
     registry._registered_keys.add("cat::name")
 
-    def _container_get_fail(_key: str) -> r[object]:
-        return r[object].fail("missing")
+    def _container_get_fail(_key: str) -> r[str]:
+        return r[str].fail("missing")
 
     def _container_register_raise(_name: str, _service: t.RegisterableService) -> None:
         msg = "nope"

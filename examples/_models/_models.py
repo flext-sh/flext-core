@@ -157,9 +157,9 @@ class Ex10ProtocolHandler(BaseModel):
 
     model_config = ConfigDict(frozen=False)
 
-    def handle(self, message: object) -> r[object]:
+    def handle(self, message: object) -> r[str]:
         """Echo handled message."""
-        return r[object].ok(message)
+        return r[str].ok(str(message))
 
     def check_data(self, data: object) -> r[bool]:
         """Check data is present."""
@@ -176,9 +176,9 @@ class Ex10ServiceStub(BaseModel):
         """Return service validity state."""
         return True
 
-    def execute(self) -> r[object]:
+    def execute(self) -> r[m.ConfigMap]:
         """Execute service action."""
-        return r[object].ok(m.ConfigMap(root={"ok": True}))
+        return r[m.ConfigMap].ok(m.ConfigMap(root={"ok": True}))
 
     def get_service_info(self) -> m.ConfigMap:
         """Return service metadata."""
@@ -194,9 +194,9 @@ class Ex10CommandBusStub(BaseModel):
 
     model_config = ConfigDict(frozen=False)
 
-    def dispatch(self, message: object) -> r[object]:
+    def dispatch(self, message: object) -> r[str]:
         """Dispatch command message."""
-        return r[object].ok(message)
+        return r[str].ok(str(message))
 
     def publish(self, event: object) -> None:
         """Publish event message."""
@@ -254,9 +254,9 @@ class Ex11CommandBusStub(BaseModel):
 
     model_config = ConfigDict(frozen=False)
 
-    def dispatch(self, message: object) -> r[object]:
+    def dispatch(self, message: object) -> r[str]:
         """Dispatch message."""
-        return r[object].ok(message)
+        return r[str].ok(str(message))
 
     def publish(self, _event: object) -> None:
         """Publish event."""

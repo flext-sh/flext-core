@@ -228,13 +228,13 @@ class FlextProtocols:
             """Clone context for isolated execution."""
             ...
 
-        def get(self, key: str, scope: str = ...) -> r[t.Container]:
+        def get(self, key: str, scope: str = ...) -> r[t.Container | BaseModel]:
             """Get a context value. Returns Result-like object."""
             ...
 
         @overload
         def set(
-            self, key_or_data: str, value: t.Container, *, scope: str = ...
+            self, key_or_data: str, value: t.Container | BaseModel, *, scope: str = ...
         ) -> r[bool]: ...
 
         @overload
@@ -249,7 +249,7 @@ class FlextProtocols:
         def set(
             self,
             key_or_data: str | FlextModelsContainers.ConfigMap,
-            value: t.Container | None = ...,
+            value: t.Container | BaseModel | None = ...,
             *,
             scope: str = ...,
         ) -> r[bool]:

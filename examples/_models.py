@@ -14,8 +14,8 @@ class _ProtocolHandler(BaseModel):
     def _protocol_name() -> str:
         return "ProtocolHandler"
 
-    def handle(self, message: object) -> r[object]:
-        return r[object].ok(message)
+    def handle(self, message: object) -> r[str]:
+        return r[str].ok(str(message))
 
     def check_data(self, data: object) -> r[bool]:
         return r[bool].ok(data is not None)
@@ -32,8 +32,8 @@ class _ServiceStub(BaseModel):
     def _protocol_name() -> str:
         return "ServiceStub"
 
-    def execute(self) -> r[object]:
-        return r[object].ok(m.ConfigMap(root={"ok": True}))
+    def execute(self) -> r[m.ConfigMap]:
+        return r[m.ConfigMap].ok(m.ConfigMap(root={"ok": True}))
 
     def get_service_info(self) -> m.ConfigMap:
         return m.ConfigMap(root={"service": "stub"})
@@ -47,8 +47,8 @@ class _CommandBusStub(BaseModel):
 
     model_config = ConfigDict(frozen=False)
 
-    def dispatch(self, message: object) -> r[object]:
-        return r[object].ok(message)
+    def dispatch(self, message: object) -> r[str]:
+        return r[str].ok(str(message))
 
     def publish(self, event: object) -> None:
         pass

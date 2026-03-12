@@ -22,6 +22,7 @@ from contextlib import contextmanager, suppress
 from pathlib import Path
 from typing import ClassVar, Literal, Self, overload, override
 
+from pydantic import BaseModel
 from structlog.typing import Context
 
 from flext_core import FlextRuntime, FlextSettings, c, m, p, r, t, u
@@ -101,7 +102,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         """Get current global context (internal use only)."""
         try:
             context_vars = FlextRuntime.structlog().contextvars.get_contextvars()
-            context_map: dict[str, t.Container] = (
+            context_map: dict[str, t.Container | BaseModel] = (
                 {
                     str(k): FlextRuntime.normalize_to_container(v)
                     for k, v in dict(context_vars).items()

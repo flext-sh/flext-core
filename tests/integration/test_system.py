@@ -85,12 +85,12 @@ class TestCompleteFlextSystemIntegration:
         assert failure_result.error == "erro_de_processamento"
         assert failure_result.unwrap_or("") == ""
 
-        def operacao_que_pode_falhar(data: object) -> r[object]:
+        def operacao_que_pode_falhar(data: object) -> r[str]:
             if isinstance(data, str) and "invalido" in data:
-                return r[object].fail("dados_invalidos")
+                return r[str].fail("dados_invalidos")
             if isinstance(data, str):
-                return r[object].ok(f"validado_{data}")
-            return r[object].fail("tipo_invalido")
+                return r[str].ok(f"validado_{data}")
+            return r[str].fail("tipo_invalido")
 
         flat_map_success = success_result.flat_map(operacao_que_pode_falhar)
         assert flat_map_success.is_success is True
@@ -217,22 +217,22 @@ class TestCompleteFlextSystemIntegration:
         assert resultado_recuperado.is_success is True
         assert resultado_recuperado.value == "valor_recuperado"
 
-        def operacao_1(data: object) -> r[object]:
+        def operacao_1(data: object) -> r[str]:
             if isinstance(data, str):
-                return r[object].ok(f"etapa1_{data}")
-            return r[object].fail("tipo_invalido")
+                return r[str].ok(f"etapa1_{data}")
+            return r[str].fail("tipo_invalido")
 
-        def operacao_2(data: object) -> r[object]:
+        def operacao_2(data: object) -> r[str]:
             if isinstance(data, str):
                 if "erro" in data:
-                    return r[object].fail("erro_na_etapa2")
-                return r[object].ok(f"etapa2_{data}")
-            return r[object].fail("tipo_invalido")
+                    return r[str].fail("erro_na_etapa2")
+                return r[str].ok(f"etapa2_{data}")
+            return r[str].fail("tipo_invalido")
 
-        def operacao_3(data: object) -> r[object]:
+        def operacao_3(data: object) -> r[str]:
             if isinstance(data, str):
-                return r[object].ok(f"final_{data}")
-            return r[object].fail("tipo_invalido")
+                return r[str].ok(f"final_{data}")
+            return r[str].fail("tipo_invalido")
 
         pipeline_sucesso = (
             r[str]

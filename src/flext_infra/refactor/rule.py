@@ -7,7 +7,7 @@ from collections.abc import Callable, Mapping
 from pathlib import Path
 
 from flext_core import r
-from flext_infra import c, m, u
+from flext_infra import c, m, t, u
 from flext_infra.refactor._base_rule import FlextInfraRefactorRule
 from flext_infra.refactor.rules.class_nesting import ClassNestingRefactorRule
 from flext_infra.refactor.validation import FlextInfraRefactorRuleDefinitionValidator
@@ -20,7 +20,7 @@ class FlextInfraRefactorRuleLoader:
         """Initialize with path to the refactor engine configuration file."""
         self.config_path = config_path
 
-    def load_config(self) -> r[object]:
+    def load_config(self) -> r[Mapping[str, t.Container]]:
         """Load and validate the refactor engine configuration."""
         try:
             loaded = u.Infra.safe_load_yaml(self.config_path)
@@ -31,9 +31,9 @@ class FlextInfraRefactorRuleLoader:
             )
             scope = m.Infra.Refactor.EngineConfig.model_validate(scope_map)
             normalized["refactor_engine"] = scope.model_dump(mode="python")
-            return r[object].ok(normalized)
+            return r[Mapping[str, t.Container]].ok(normalized)
         except (OSError, TypeError, ValueError) as exc:
-            return r[object].fail(f"Failed to load config: {exc}")
+            return r[Mapping[str, t.Container]].fail(f"Failed to load config: {exc}")
 
     def extract_engine_file_filters(
         self,

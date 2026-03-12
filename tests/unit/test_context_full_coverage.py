@@ -3,27 +3,30 @@
 from __future__ import annotations
 
 import pytest
+from pydantic import BaseModel
 
-from flext_core import FlextContainer, FlextContext, c, m, r
+from flext_core import FlextContainer, FlextContext, c, m, r, t
 
 
 class _ContainerStub:
     def __init__(self) -> None:
-        self.services: dict[str, object] = {}
+        self.services: dict[str, t.Container | BaseModel] = {}
 
-    def get(self, name: str) -> r[object]:
+    def get(self, name: str) -> r[t.Container | BaseModel]:
         if name in self.services:
-            return r[object].ok(self.services[name])
-        return r[object].fail("missing")
+            return r[t.Container | BaseModel].ok(self.services[name])
+        return r[t.Container | BaseModel].fail("missing")
 
-    def with_service(self, name: str, service: object) -> _ContainerStub:
+    def with_service(
+        self, name: str, service: t.Container | BaseModel
+    ) -> _ContainerStub:
         if name == "bad":
             msg = "bad service"
             raise ValueError(msg)
         self.services[name] = service
         return self
 
-    def register(self, name: str, service: object) -> _ContainerStub:
+    def register(self, name: str, service: t.Container | BaseModel) -> _ContainerStub:
         return self.with_service(name, service)
 
 

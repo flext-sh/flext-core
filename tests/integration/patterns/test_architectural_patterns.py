@@ -13,8 +13,9 @@ from __future__ import annotations
 import time
 
 import pytest
+from pydantic import BaseModel
 
-from flext_core import FlextConstants, m, r
+from flext_core import FlextConstants, m, r, t
 from tests.test_utils import assertion_helpers
 
 
@@ -122,20 +123,20 @@ class TestEnterprisePatterns:
             def __init__(self) -> None:
                 """Initialize repository."""
                 super().__init__()
-                self._data: dict[str, object] = {}
+                self._data: dict[str, t.Container | BaseModel] = {}
                 self._query_count = 0
 
-            def save(self, entity_id: str, data: object) -> r[bool]:
+            def save(self, entity_id: str, data: t.Container | BaseModel) -> r[bool]:
                 """Save entity to repository."""
                 self._data[entity_id] = data
                 return r[bool].ok(True)
 
-            def find_by_id(self, entity_id: str) -> r[object]:
+            def find_by_id(self, entity_id: str) -> r[t.Container | BaseModel]:
                 """Find entity by ID."""
                 self._query_count += 1
                 if entity_id in self._data:
-                    return r[object].ok(self._data[entity_id])
-                return r[object].fail(
+                    return r[t.Container | BaseModel].ok(self._data[entity_id])
+                return r[t.Container | BaseModel].fail(
                     f"Entity not found: {entity_id}",
                 )
 
@@ -146,7 +147,10 @@ class TestEnterprisePatterns:
         repo = InMemoryRepository()
         start_time = time.perf_counter()
         for i in range(1000):
-            result = repo.save(f"entity_{i}", {"id": i, "name": f"Entity {i}"})
+            result = repo.save(
+                f"entity_{i}",
+                m.ConfigMap(root={"id": i, "name": f"Entity {i}"}),
+            )
             assertion_helpers.assert_flext_result_success(
                 result,
                 f"Save operation {i} should succeed",
@@ -159,13 +163,13 @@ class TestEnterprisePatterns:
         assert len(repo._data) == 1000, f"Expected 1000 entities, got {len(repo._data)}"
         start_time = time.perf_counter()
         for i in range(100):
-            query_result: r[object] = repo.find_by_id(f"entity_{i}")
+            query_result: r[t.Container | BaseModel] = repo.find_by_id(f"entity_{i}")
             assert query_result.is_success, f"Query {i} should succeed"
             entity_data = query_result.value
-            assert isinstance(entity_data, dict), (
-                f"Expected dict, got {type(entity_data)}"
+            assert isinstance(entity_data, m.ConfigMap), (
+                f"Expected ConfigMap, got {type(entity_data)}"
             )
-            assert entity_data.get("id") == i, f"Entity {i} should have id={i}"
+            assert entity_data.root.get("id") == i, f"Entity {i} should have id={i}"
         query_duration = time.perf_counter() - start_time
         assert query_duration < 0.5, (
             f"100 queries took {query_duration:.3f}s, expected < 0.5s"

@@ -7,11 +7,10 @@ type-system-architecture.md rules with real functionality testing.
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import cast
 
 import pytest
 
-from flext_core import r
+from flext_core import r, t
 from tests import m
 from tests.conftest import test_framework
 from tests.test_utils import assertion_helpers, fixture_factory
@@ -65,7 +64,12 @@ class TestAutomatedFlextLoggings:
         """Comprehensive test scenarios for loggings functionality."""
         try:
             instance = fixture_factory.create_test_loggings_instance()
-            result = self._execute_loggings_operation(instance, test_scenario.input)
+            input_data = (
+                test_scenario.input
+                if isinstance(test_scenario.input, dict)
+                else dict[str, object]()
+            )
+            result = self._execute_loggings_operation(instance, input_data)
             if test_scenario.expected_success:
                 assert result.is_success, f"Expected success but got failure: {result}"
         except Exception:
@@ -123,9 +127,9 @@ class TestAutomatedFlextLoggings:
         cleanup = getattr(instance, "cleanup", None)
         if callable(cleanup):
             cleanup_result = cleanup()
-            if cleanup_result:
+            if isinstance(cleanup_result, r):
                 _ = assertion_helpers.assert_flext_result_success(
-                    cast("r[object]", cleanup_result),
+                    cleanup_result,
                     "FlextLoggings cleanup failed",
                 )
 
@@ -133,7 +137,7 @@ class TestAutomatedFlextLoggings:
         self,
         instance: object,
         input_data: Mapping[str, object],
-    ) -> r[object]:
+    ) -> r[t.Container]:
         """Execute a test operation on loggings instance.
 
         This method should be customized based on the actual loggings API.
@@ -145,32 +149,34 @@ class TestAutomatedFlextLoggings:
                 result = process(dict(input_data))
                 if isinstance(result, r):
                     if result.is_success:
-                        return r[object].ok(True)
-                    return r[object].fail(
+                        return r[t.Container].ok(True)
+                    return r[t.Container].fail(
                         result.error or "FlextLoggings process failed"
                     )
-                return r[object].ok(cast("object", result))
+                return r[t.Container].ok(str(result))
             execute = getattr(instance, "execute", None)
             if callable(execute):
                 result = execute(dict(input_data))
                 if isinstance(result, r):
                     if result.is_success:
-                        return r[object].ok(True)
-                    return r[object].fail(
+                        return r[t.Container].ok(True)
+                    return r[t.Container].fail(
                         result.error or "FlextLoggings execute failed"
                     )
-                return r[object].ok(cast("object", result))
+                return r[t.Container].ok(str(result))
             handle = getattr(instance, "handle", None)
             if callable(handle):
                 result = handle(dict(input_data))
                 if isinstance(result, r):
                     if result.is_success:
-                        return r[object].ok(True)
-                    return r[object].fail(result.error or "FlextLoggings handle failed")
-                return r[object].ok(cast("object", result))
-            return r[object].ok(cast("object", instance))
+                        return r[t.Container].ok(True)
+                    return r[t.Container].fail(
+                        result.error or "FlextLoggings handle failed"
+                    )
+                return r[t.Container].ok(str(result))
+            return r[t.Container].ok(str(instance))
         except Exception as e:
-            return r[object].fail(f"FlextLoggings operation failed: {e}")
+            return r[t.Container].fail(f"FlextLoggings operation failed: {e}")
 
     @pytest.fixture
     def test_loggings_instance(self) -> object:

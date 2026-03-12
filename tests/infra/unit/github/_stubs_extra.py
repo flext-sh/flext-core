@@ -26,7 +26,7 @@ class StubPrManager:
         create_returns: Sequence[r[dict[str, t.Scalar]]] | None = None,
         view_returns: Sequence[r[str]] | None = None,
         checks_returns: Sequence[r[dict[str, t.Scalar]]] | None = None,
-        merge_returns: Sequence[r[object]] | None = None,
+        merge_returns: Sequence[r[t.Container]] | None = None,
         close_returns: Sequence[r[bool]] | None = None,
     ) -> None:
         self._status = list(status_returns or [])
@@ -50,10 +50,10 @@ class StubPrManager:
 
     @staticmethod
     def _pop_merge(
-        returns: list[r[object]],
-    ) -> r[object]:
+        returns: list[r[t.Container]],
+    ) -> r[t.Container]:
         if not returns:
-            return r[object].fail("no return configured")
+            return r[t.Container].fail("no return configured")
         return returns[0] if len(returns) == 1 else returns.pop(0)
 
     @staticmethod
@@ -108,7 +108,7 @@ class StubPrManager:
         auto: bool = False,
         delete_branch: bool = False,
         release_on_merge: bool = True,
-    ) -> r[object]:
+    ) -> r[t.Container]:
         _ = repo_root, selector, head, method, auto, delete_branch, release_on_merge
         return self._pop_merge(self._merge)
 

@@ -576,7 +576,7 @@ class FlextTestsProtocols(FlextProtocols):
                 Used for validation and testing operations.
                 """
 
-                def assert_fail(self, result: r[object]) -> str:
+                def assert_fail(self, result: r[t.Container]) -> str:
                     """Assert result is failure and return error."""
                     ...
 

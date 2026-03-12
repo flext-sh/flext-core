@@ -53,9 +53,9 @@ class _ProcessorBad(m.Value):
         return "ok"
 
 
-class _NotImplementedPatternHandler(h[object, object]):
+class _NotImplementedPatternHandler(h[object, str]):
     @override
-    def handle(self, message: object) -> r[object]:
+    def handle(self, message: object) -> r[str]:
         return super().handle(message)
 
 

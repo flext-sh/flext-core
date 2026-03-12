@@ -16,7 +16,7 @@ from pathlib import Path
 from pydantic import BaseModel, TypeAdapter, ValidationError
 
 from flext_core import r
-from flext_infra import c
+from flext_infra import c, t
 
 
 class FlextInfraUtilitiesIo:
@@ -33,7 +33,7 @@ class FlextInfraUtilitiesIo:
     """
 
     @staticmethod
-    def read_json(path: Path) -> r[Mapping[str, object]]:
+    def read_json(path: Path) -> r[Mapping[str, t.Container]]:
         """Read and parse a JSON file.
 
         Args:
@@ -44,22 +44,22 @@ class FlextInfraUtilitiesIo:
 
         """
         if not path.exists():
-            return r[object].ok({})
+            return r[Mapping[str, t.Container]].ok({})
         try:
             loaded_obj: object = json.loads(
                 path.read_text(encoding=c.Infra.Encoding.DEFAULT),
             )
             if not isinstance(loaded_obj, dict):
-                return r[object].fail("JSON root must be object")
-            parser = TypeAdapter(dict[str, object])
+                return r[Mapping[str, t.Container]].fail("JSON root must be object")
+            parser = TypeAdapter(dict[str, t.Container])
             data = parser.validate_python(loaded_obj, strict=True)
-            return r[object].ok(data)
+            return r[Mapping[str, t.Container]].ok(data)
         except ValidationError as exc:
-            return r[object].fail(
+            return r[Mapping[str, t.Container]].fail(
                 f"JSON object validation error: {exc}",
             )
         except (json.JSONDecodeError, OSError) as exc:
-            return r[object].fail(f"JSON read error: {exc}")
+            return r[Mapping[str, t.Container]].fail(f"JSON read error: {exc}")
 
     @staticmethod
     def write_json(
@@ -105,7 +105,7 @@ class FlextInfraUtilitiesIo:
         return r[bool].ok(True)
 
     @staticmethod
-    def parse(text: str) -> r[object]:
+    def parse(text: str) -> r[t.Container]:
         """Parse a JSON string.
 
         Args:
@@ -117,9 +117,9 @@ class FlextInfraUtilitiesIo:
         """
         try:
             parsed: object = json.loads(text)
-            return r[object].ok(parsed)
+            return r[t.Container].ok(parsed)
         except (json.JSONDecodeError, ValueError) as exc:
-            return r[object].fail(f"JSON parse error: {exc}")
+            return r[t.Container].fail(f"JSON parse error: {exc}")
 
     @staticmethod
     def serialize(

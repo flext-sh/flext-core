@@ -151,7 +151,7 @@ def test_handler_attribute_discovery(dispatcher: FlextDispatcher) -> None:
         def can_handle(self, msg_type: type) -> bool:
             return msg_type is SampleCommand
 
-        def handle(self, message: p.Routable) -> object:
+        def handle(self, message: SampleCommand) -> str:
             return "ok"
 
     res = dispatcher.register_handler(PredicateHandler())

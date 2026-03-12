@@ -45,9 +45,9 @@ class Ex05FlextMixins(Examples):
             """Report capability for handler protocol."""
             return bool(message_type)
 
-        def handle(self, message: object) -> r[object]:
+        def handle(self, message: object) -> r[str]:
             """Handle data and return result."""
-            return r[object].ok(message)
+            return r[str].ok(str(message))
 
     class HandlerBad:
         """Non-handler for negative ``is_handler`` check."""

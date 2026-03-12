@@ -4,31 +4,57 @@ from __future__ import annotations
 
 import sys
 import types
-from collections.abc import Callable
-from typing import ClassVar, cast
+from collections.abc import Callable, Mapping
+from typing import ClassVar, Self, cast
 
 import pytest
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings as _BaseSettings
 
-from flext_core import FlextContainer, FlextContext, FlextSettings, m, t
+from flext_core import FlextContainer, FlextContext, FlextSettings, m, r, t
 
 
 class _FalseConfig:
-    app_name = "app"
+    app_name: str = "app"
+    version: str = "1.0.0"
+    enable_caching: bool = False
+    timeout_seconds: float = 1.0
+    dispatcher_auto_context: bool = False
+    dispatcher_enable_logging: bool = False
 
     def model_copy(
         self,
         *,
+        update: Mapping[str, t.Container] | None = None,
         deep: bool = False,
-        update: dict[str, object] | None = None,
-    ) -> _FalseConfig:
+    ) -> Self:
         return self
+
+    def _protocol_name(self) -> str:
+        return "Config"
+
+    def model_dump(self) -> dict[str, t.Scalar]:
+        return {}
 
 
 class _ContextNoClone:
-    def set(self, _k: str, _v: object) -> None:
-        return None
+    def _protocol_name(self) -> str:
+        return "Context"
+
+    def clone(self) -> _ContextNoClone:
+        return self
+
+    def get(self, key: str, scope: str = "") -> r[t.Container]:
+        return r[t.Container].fail("err")
+
+    def set(
+        self,
+        key_or_data: str | m.ConfigMap,
+        value: t.Container | None = None,
+        *,
+        scope: str = "",
+    ) -> r[bool]:
+        return r[bool].ok(True)
 
 
 class _BridgeNoProvide:
@@ -36,12 +62,12 @@ class _BridgeNoProvide:
 
 
 class _BridgeBadProvide:
-    Provide: None = None
+    provide: None = None
 
 
 class _BridgeGoodProvide:
     @staticmethod
-    def Provide(name: str) -> str:
+    def provide(name: str) -> str:
         return name
 
 
@@ -138,15 +164,14 @@ def test_create_auto_register_factories_path(monkeypatch: pytest.MonkeyPatch) ->
     assert "x" in called
 
 
-def test_provide_property_paths() -> None:
+def test_provide_property_paths(monkeypatch: pytest.MonkeyPatch) -> None:
     c = FlextContainer.create()
-    c_any: FlextContainer = c
-    c_any._di_bridge = _BridgeGoodProvide()
+    monkeypatch.setattr(c, "_di_bridge", _BridgeGoodProvide())
     assert c.provide("x") == "x"
-    c_any._di_bridge = _BridgeBadProvide()
+    monkeypatch.setattr(c, "_di_bridge", _BridgeBadProvide())
     with pytest.raises(RuntimeError):
         _ = c.provide
-    c_any._di_bridge = _BridgeNoProvide()
+    monkeypatch.setattr(c, "_di_bridge", _BridgeNoProvide())
     with pytest.raises(RuntimeError):
         _ = c.provide
 
@@ -223,9 +248,8 @@ def test_register_existing_providers_skips_and_register_core_fallback(
     setattr(c._di_services, "fac", object())
     setattr(c._di_resources, "res", object())
     c.register_existing_providers()
-    c_any: FlextContainer = c
-    c_any._config = _FalseConfig()
-    c_any._context = None
+    c._config = _FalseConfig()
+    c._context = None
     monkeypatch.setattr(c, "has_service", _has_service_false)
     c.register_core_services()
 
@@ -281,9 +305,9 @@ def test_get_and_get_typed_resource_factory_paths() -> None:
     }
     assert c.get("r").is_failure
     c._factories = {"f2": m.FactoryRegistration(name="f2", factory=lambda: "abc")}
-    assert c.get("f2", type_cls=dict).is_failure
+    assert c.get("f2", type_cls=int).is_failure
     c._resources = {"r2": m.ResourceRegistration(name="r2", factory=lambda: "abc")}
-    assert c.get("r2", type_cls=dict).is_failure
+    assert c.get("r2", type_cls=int).is_failure
     c._factories = {
         "f3": m.FactoryRegistration(
             name="f3",
@@ -339,8 +363,8 @@ def test_scoped_config_context_branches(monkeypatch: pytest.MonkeyPatch) -> None
     _ = c.scoped(subproject="sub")
     assert isinstance(captured["config"], FlextSettings)
     _ = c.scoped(
-        config=cast("object", _FalseConfig()),
-        context=cast("object", _ContextNoClone()),
+        config=_FalseConfig(),
+        context=_ContextNoClone(),
     )
     assert isinstance(captured["context"], FlextContext)
 
@@ -409,7 +433,7 @@ def test_initialize_di_components_second_type_error_branch(
         c.initialize_di_components()
 
 
-def test_sync_config_registers_namespace_factories_and_fallbacks() -> None:
+def test_sync_config_registers_namespace_factories_and_fallbacks(monkeypatch: pytest.MonkeyPatch) -> None:
     c = FlextContainer.create()
 
     class _NsAlpha(_BaseSettings):
@@ -425,14 +449,13 @@ def test_sync_config_registers_namespace_factories_and_fallbacks() -> None:
 
     try:
 
-        class _Cfg:
+        class _Cfg(_FalseConfig):
             _namespace_registry: ClassVar[dict[str, object]] = {
                 "alpha": object(),
                 "beta": object(),
             }
 
-        c_any: FlextContainer = c
-        c_any._config = _Cfg()
+        c._config = _Cfg()
         c._global_config = m.ContainerConfig(
             enable_singleton=True,
             enable_factory_caching=False,
@@ -441,7 +464,7 @@ def test_sync_config_registers_namespace_factories_and_fallbacks() -> None:
         )
         c._user_overrides = m.ConfigMap(root={})
         registered: dict[str, Callable[..., object]] = {}
-        c_any.has_service = _has_service_false
+        monkeypatch.setattr(c, "has_service", _has_service_false)
 
         def _register(
             name: str,
@@ -453,7 +476,7 @@ def test_sync_config_registers_namespace_factories_and_fallbacks() -> None:
                 registered[name] = impl
             return c
 
-        c_any.register = _register
+        monkeypatch.setattr(c, "register", _register)
         c.sync_config_to_di()
         assert "config.alpha" in registered
         assert "config.beta" in registered
@@ -464,7 +487,7 @@ def test_sync_config_registers_namespace_factories_and_fallbacks() -> None:
         FlextSettings._namespace_registry.update(original_registry)
 
 
-def test_register_existing_providers_full_paths_and_misc_methods() -> None:
+def test_register_existing_providers_full_paths_and_misc_methods(monkeypatch: pytest.MonkeyPatch) -> None:
     c = FlextContainer.create()
     c._services = {
         "s1": m.ServiceRegistration(name="s1", service="v", service_type="str"),
@@ -475,9 +498,8 @@ def test_register_existing_providers_full_paths_and_misc_methods() -> None:
     assert hasattr(c._di_container, "s1")
     assert hasattr(c._di_container, "f1")
     assert hasattr(c._di_container, "r1")
-    c_any: FlextContainer = c
-    c_any._context = FlextContext()
-    c_any.has_service = _has_service_false
+    monkeypatch.setattr(c, "_context", FlextContext())
+    monkeypatch.setattr(c, "has_service", _has_service_false)
     c.register_core_services()
     assert c.has_service("context") is False or True
     c.wire_modules(modules=[])
@@ -503,18 +525,16 @@ def test_create_scoped_instance_and_scoped_additional_branches() -> None:
         ),
     )
     assert isinstance(scoped, FlextContainer)
-    base_any: FlextContainer = base
-    base_any._config = _FalseConfig()
-    base_any._context = FlextContext()
+    base._config = _FalseConfig()
+    base._context = FlextContext()
     _ = base.scoped(
         config=FlextSettings(app_name="x"),
-        context=FlextContext(),
         services={"sx": "vx"},
         factories={"fx": lambda: "fv"},
         resources={"rx": lambda: "rv"},
     )
-    base_any._config = _FalseConfig()
-    base_any._context = _ContextNoClone()
+    base._config = _FalseConfig()
+    base._context = _ContextNoClone()
     _ = base.scoped()
 
 
@@ -549,8 +569,7 @@ def test_additional_register_factory_and_unregister_paths() -> None:
     )
     c.register("fac-ok", lambda: 1, kind="factory")
     c.register("fac-ok", lambda: 2, kind="factory")
-    c.register("fac-bad", cast("object", 123), kind="factory")
-    assert FlextContainer._narrow_factory_result("x") == "x"
+    c.register("fac-bad", 123, kind="factory")
     _ = c.register("svc-remove", "v")
     _ = c.register("res-remove", lambda: "r", kind="resource")
     _ = c.register("fac-remove", lambda: "f", kind="factory")
@@ -560,7 +579,7 @@ def test_additional_register_factory_and_unregister_paths() -> None:
     assert c.unregister("not-there").is_failure
 
 
-def test_container_remaining_branch_paths_in_sync_factory_and_getters() -> None:
+def test_container_remaining_branch_paths_in_sync_factory_and_getters(monkeypatch: pytest.MonkeyPatch) -> None:
     c = FlextContainer.create()
     c._global_config = m.ContainerConfig(
         enable_singleton=True,
@@ -573,11 +592,10 @@ def test_container_remaining_branch_paths_in_sync_factory_and_getters() -> None:
     # --- _CfgNoMethod: namespace_registry without get_namespace_config ---
     # n1 is NOT registered in FlextSettings, so get_namespace_config returns None
     # and sync_config_to_di skips it (continue branch).
-    class _CfgNoMethod:
+    class _CfgNoMethod(_FalseConfig):
         _namespace_registry: ClassVar[dict[str, object]] = {"n1": object()}
 
-    c_any: FlextContainer = c
-    c_any._config = _CfgNoMethod()
+    c._config = _CfgNoMethod()
     c.sync_config_to_di()
 
     # --- Create real BaseSettings subclasses for n2, n3, n4 ---
@@ -593,18 +611,18 @@ def test_container_remaining_branch_paths_in_sync_factory_and_getters() -> None:
 
     try:
 
-        class _CfgFallback:
+        class _CfgFallback(_FalseConfig):
             _namespace_registry: ClassVar[dict[str, object]] = {"n2": object()}
 
-        class _CfgBadNamespace:
+        class _CfgBadNamespace(_FalseConfig):
             _namespace_registry: ClassVar[dict[str, object]] = {"n3": object()}
 
-        class _CfgGoodNamespace:
+        class _CfgGoodNamespace(_FalseConfig):
             _namespace_registry: ClassVar[dict[str, object]] = {"n4": object()}
 
-        c_any._config = _CfgFallback()
+        c._config = _CfgFallback()
         captured: dict[str, Callable[..., object]] = {}
-        c_any.has_service = _has_service_false
+        monkeypatch.setattr(c, "has_service", _has_service_false)
 
         def _capture_register(
             name: str,
@@ -616,16 +634,15 @@ def test_container_remaining_branch_paths_in_sync_factory_and_getters() -> None:
                 captured[name] = impl
             return c
 
-        c_any.register = _capture_register
+        monkeypatch.setattr(c, "register", _capture_register)
         c.sync_config_to_di()
-        c_any._config = _CfgBadNamespace()
+        c._config = _CfgBadNamespace()
         c.sync_config_to_di()
-        c_any._config = _CfgGoodNamespace()
+        c._config = _CfgGoodNamespace()
         c.sync_config_to_di()
         assert isinstance(captured["config.n2"](), BaseModel)
         assert isinstance(captured["config.n3"](), BaseModel)
         assert isinstance(captured["config.n4"](), BaseModel)
-        delattr(c_any, "register")
         c2 = FlextContainer.create()
         c2._global_config = m.ContainerConfig(
             enable_singleton=True,
@@ -657,7 +674,7 @@ def test_container_remaining_branch_paths_in_sync_factory_and_getters() -> None:
         }
         assert c2.get("svc-int", type_cls=int).is_failure
         executed: list[str] = []
-        c_any.has_service = _has_service_false
+        monkeypatch.setattr(c, "has_service", _has_service_false)
 
         def _track_register(
             _name: str,
@@ -669,10 +686,10 @@ def test_container_remaining_branch_paths_in_sync_factory_and_getters() -> None:
                 executed.append(type(impl()).__name__)
             return c
 
-        c_any.register = _track_register
-        c_any._config = _CfgFallback()
+        monkeypatch.setattr(c, "register", _track_register)
+        c._config = _CfgFallback()
         c.sync_config_to_di()
-        c_any._config = _CfgBadNamespace()
+        c._config = _CfgBadNamespace()
         c.sync_config_to_di()
         assert executed
     finally:

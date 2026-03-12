@@ -17,7 +17,9 @@ import warnings
 
 import pytest
 
-from flext_core import FlextRuntime, FlextUtilities
+from flext_core import FlextRuntime, FlextUtilities, m
+from flext_core._utilities.guards import FlextUtilitiesGuards
+from flext_core._utilities.mapper import FlextUtilitiesMapper
 
 pytestmark = [pytest.mark.unit]
 
@@ -68,8 +70,6 @@ class TestGuardsDeprecatedMethods:
 
     def test_is_general_value_type_emits_deprecation(self) -> None:
         """FlextUtilitiesGuards.is_general_value_type -> is_container."""
-        from flext_core._utilities.guards import FlextUtilitiesGuards
-
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
             result = FlextUtilitiesGuards.is_general_value_type("test")
@@ -86,8 +86,6 @@ class TestMapperDeprecatedMethods:
 
     def test_narrow_to_general_value_type_emits_deprecation(self) -> None:
         """FlextUtilitiesMapper.narrow_to_general_value_type -> narrow_to_container."""
-        from flext_core._utilities.mapper import FlextUtilitiesMapper
-
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
             result = FlextUtilitiesMapper.narrow_to_general_value_type("hello")
@@ -100,8 +98,6 @@ class TestMapperDeprecatedMethods:
 
     def test_to_general_value_from_object_emits_deprecation(self) -> None:
         """FlextUtilitiesMapper._to_general_value_from_object -> narrow_to_container."""
-        from flext_core._utilities.mapper import FlextUtilitiesMapper
-
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
             result = FlextUtilitiesMapper._to_general_value_from_object(99)
@@ -155,15 +151,11 @@ class TestStrictContainerNormalization:
 
     def test_normalize_to_container_dict_wraps_in_model(self) -> None:
         """Nested dicts are wrapped in m.Dict RootModel."""
-        from flext_core import m
-
         result = FlextRuntime.normalize_to_container({"key": "value"})
         assert isinstance(result, m.Dict)
 
     def test_normalize_to_container_list_wraps_in_model(self) -> None:
         """Nested lists are wrapped in m.ObjectList RootModel."""
-        from flext_core import m
-
         result = FlextRuntime.normalize_to_container([1, 2, 3])
         assert isinstance(result, m.ObjectList)
 
