@@ -47,7 +47,7 @@ class _ProtocolIntrospection:
         registered_protocols = cls.get_class_protocols(instance.__class__)
         if protocol in registered_protocols:
             return True
-        protocol_annotations: dict[str, t.GeneralValueType] = (
+        protocol_annotations: Mapping[str, t.GeneralValueType] = (
             protocol.__annotations__ if hasattr(protocol, "__annotations__") else {}
         )
         raw_attrs_candidate = getattr(protocol, "__protocol_attrs__", ())
@@ -116,7 +116,7 @@ class _ProtocolIntrospection:
         target_cls: type, protocol: type, class_name: str
     ) -> None:
         """Validate that a class implements all required protocol members."""
-        protocol_annotations: dict[str, t.GeneralValueType] = (
+        protocol_annotations: Mapping[str, t.GeneralValueType] = (
             protocol.__annotations__ if hasattr(protocol, "__annotations__") else {}
         )
         raw_attrs_candidate = getattr(protocol, "__protocol_attrs__", ())
@@ -142,7 +142,7 @@ class _ProtocolIntrospection:
         }
         all_annotations: set[str] = set()
         for base in target_cls.mro():
-            base_annotations: dict[str, t.GeneralValueType] = (
+            base_annotations: Mapping[str, t.GeneralValueType] = (
                 base.__annotations__ if hasattr(base, "__annotations__") else {}
             )
             all_annotations.update(base_annotations.keys())
@@ -353,7 +353,7 @@ class FlextProtocols:
         @classmethod
         def accumulate_errors[TItem](
             cls, *results: FlextProtocols.Result[TItem]
-        ) -> FlextProtocols.Result[list[TItem]]:
+        ) -> FlextProtocols.Result[Sequence[TItem]]:
             """Collect all successes, fail if any failure."""
             ...
 
@@ -371,7 +371,7 @@ class FlextProtocols:
             func: Callable[[TItem], FlextProtocols.Result[UResult]],
             *,
             fail_fast: bool = True,
-        ) -> FlextProtocols.Result[list[UResult]]:
+        ) -> FlextProtocols.Result[Sequence[UResult]]:
             """Map over sequence with configurable failure handling."""
             ...
 
@@ -744,7 +744,7 @@ class FlextProtocols:
             ...
 
         def publish(
-            self, event: FlextProtocols.Routable | list[FlextProtocols.Routable]
+            self, event: FlextProtocols.Routable | Sequence[FlextProtocols.Routable]
         ) -> FlextProtocols.Result[bool]:
             """Publish events to registered subscribers."""
             ...
