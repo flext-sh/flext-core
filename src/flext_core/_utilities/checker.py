@@ -167,7 +167,9 @@ class FlextUtilitiesChecker:
         if signature_result.is_failure:
             signature_error = signature_result.error or "Invalid handle signature"
             return r[t.MessageTypeSpecifier].fail(signature_error)
-        signature: inspect.Signature = cast(inspect.Signature, signature_result.unwrap())
+        signature: inspect.Signature = cast(
+            "inspect.Signature", signature_result.unwrap()
+        )
         type_hints = cls._get_type_hints_safe(handle_method, handler_class)
         for name, parameter in signature.parameters.items():
             if name == "self":
@@ -322,7 +324,7 @@ class FlextUtilitiesChecker:
             explicit_type_result = cls._extract_message_type_from_handle(handler_class)
             if explicit_type_result.is_success:
                 message_types.append(
-                    cast(t.MessageTypeSpecifier, explicit_type_result.unwrap())
+                    cast("t.MessageTypeSpecifier", explicit_type_result.unwrap())
                 )
         return tuple(message_types)
 

@@ -15,9 +15,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Mapping
 from types import ModuleType
-from typing import ClassVar, override, Unpack
+from typing import ClassVar, Unpack, override
 
 from pydantic import ConfigDict
 
@@ -131,9 +131,7 @@ class FlextHandlers[MessageT_contra = object, ResultT = object](x):
         """Callable interface for seamless dispatcher integration."""
         return self.handle(message)
 
-    def __init_subclass__(
-        cls, **kwargs: Unpack[ConfigDict]
-    ) -> None:
+    def __init_subclass__(cls, **kwargs: Unpack[ConfigDict]) -> None:
         """Validate non-abstract subclasses implement a handle() method.
 
         Chains with FlextMixins.__init_subclass__ via super() to preserve

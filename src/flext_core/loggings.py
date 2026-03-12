@@ -110,9 +110,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
                 if context_vars
                 else {}
             )
-            context_obj: dict[str, object] = {
-                key: value for key, value in context_map.items()
-            }
+            context_obj: dict[str, object] = dict(context_map.items())
             return m.ConfigMap(root=context_obj)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError):
             return m.ConfigMap(root={})
@@ -179,12 +177,8 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             incoming_context: dict[str, t.Container | BaseModel] = {
                 key: cls._to_container_value(value) for key, value in context.items()
             }
-            current_context_obj: dict[str, object] = {
-                key: value for key, value in current_context.items()
-            }
-            incoming_context_obj: dict[str, object] = {
-                key: value for key, value in incoming_context.items()
-            }
+            current_context_obj: dict[str, object] = dict(current_context.items())
+            incoming_context_obj: dict[str, object] = dict(incoming_context.items())
             merge_result = u.merge(
                 current_context_obj,
                 incoming_context_obj,

@@ -60,7 +60,7 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
         """Return contextvar payload as ConfigMap with safe default."""
         if ctx_value is None:
             return {}
-        
+
         if isinstance(ctx_value, BaseModel):
             ctx_value = getattr(ctx_value, "root", ctx_value.model_dump())
         elif hasattr(ctx_value, "items") and callable(getattr(ctx_value, "items")):
@@ -70,7 +70,9 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
 
         try:
             normalized: dict[str, object] = {}
-            mapping_value: Mapping[str, object] = cast(Mapping[str, object], ctx_value)
+            mapping_value: Mapping[str, object] = cast(
+                "Mapping[str, object]", ctx_value
+            )
             for key, value in mapping_value.items():
                 if str(key) != key:
                     return {}
@@ -89,7 +91,9 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
         return "FlextContext"
 
     _metadata: m.Metadata = PrivateAttr()
-    _hooks: dict[str, list[Callable[[t.Scalar], object]]] = PrivateAttr(default_factory=dict)
+    _hooks: dict[str, list[Callable[[t.Scalar], object]]] = PrivateAttr(
+        default_factory=dict
+    )
     _statistics: m.ContextStatistics = PrivateAttr(default_factory=m.ContextStatistics)
     _active: bool = PrivateAttr(default=True)
     _suspended: bool = PrivateAttr(default=False)
@@ -106,7 +110,9 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
         super().__init__(**data)
         context_data = m.ContextData()
         if self.initial_data is not None:
-            if hasattr(self.initial_data, "data") and hasattr(self.initial_data, "metadata"):
+            if hasattr(self.initial_data, "data") and hasattr(
+                self.initial_data, "metadata"
+            ):
                 context_data = m.ContextData.model_validate(self.initial_data)
             else:
                 context_data = m.ContextData(
@@ -354,7 +360,9 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
             if include_statistics and stats_dict_export:
                 result_dict["statistics"] = stats_dict_export
             if include_metadata and metadata_dict_export:
-                metadata_container: object = m.ConfigMap(root=dict(metadata_dict_export.items()))
+                metadata_container: object = m.ConfigMap(
+                    root=dict(metadata_dict_export.items())
+                )
                 result_dict["metadata"] = metadata_container
             return result_dict
         metadata_root: m.ConfigMap | None = (
@@ -460,7 +468,9 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
         if key not in self._metadata.attributes:
             return r[t.Container | BaseModel].fail(f"Metadata key '{key}' not found")
         raw_value: object = self._metadata.attributes[key]
-        normalized_value: t.Container | BaseModel = FlextRuntime.normalize_to_container(raw_value)
+        normalized_value: t.Container | BaseModel = FlextRuntime.normalize_to_container(
+            raw_value
+        )
         return r[t.Container | BaseModel].ok(normalized_value)
 
     def has(self, key: str, scope: str = c.Context.SCOPE_GLOBAL) -> bool:

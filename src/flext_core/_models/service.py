@@ -10,14 +10,13 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import uuid
-from collections.abc import Callable, Mapping, Sequence
-from types import ModuleType
+from collections.abc import Callable
 from typing import Annotated, Self
 
-from flext_core import c, p, t
-from flext_core._models.base import FlextModelFoundation
-
 from pydantic import Field, model_validator
+
+from flext_core import c, p
+from flext_core._models.base import FlextModelFoundation
 
 
 class FlextModelsService:

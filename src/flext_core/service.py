@@ -14,34 +14,39 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Mapping, Sequence
 from types import ModuleType
 from typing import cast, override
 
-from pydantic import ConfigDict, Field, PrivateAttr, ValidationError, computed_field, field_validator
+from pydantic import (
+    ConfigDict,
+    Field,
+    PrivateAttr,
+    ValidationError,
+    computed_field,
+    field_validator,
+)
 
 from flext_core import (
     FlextContainer,
     FlextContext,
-    FlextExceptions,
-    FlextHandlers,
-    FlextMixins,
     FlextSettings,
+    e,
+    h,
     m,
     p,
     r,
     t,
     u,
+    x,
 )
-from flext_core._models.base import FlextModelFoundation
-from flext_core._models.service import FlextModelsService
 
 
-class FlextService[TDomainResult: object = object](FlextMixins, ABC):
+class FlextService[TDomainResult: object = object](x, ABC):
     """Base class for domain services in FLEXT applications.
 
     Subclasses implement ``execute`` to run business logic and return
-    ``r`` (r) values. The base inherits :class:`FlextMixins` (which extends
+    ``r`` (r) values. The base inherits :class:`x` (which extends
     :class:`FlextRuntime`) so services can reuse runtime automation for creating
     scoped config/context/container triples via :meth:`create_service_runtime`
     while remaining protocol compliant via structural typing.
@@ -68,13 +73,21 @@ class FlextService[TDomainResult: object = object](FlextMixins, ABC):
     )
     # --- Service Bootstrap Configuration ---
     config_type: type[FlextSettings] | None = Field(default=None, exclude=True)
-    config_overrides: Mapping[str, "t.Scalar"] | None = Field(default=None, exclude=True)
-    initial_context: "FlextContext | None" = Field(default=None, exclude=True)
+    config_overrides: Mapping[str, t.Scalar] | None = Field(default=None, exclude=True)
+    initial_context: FlextContext | None = Field(default=None, exclude=True)
     subproject: str | None = Field(default=None, exclude=True)
-    services: Mapping[str, "t.RegisterableService"] | None = Field(default=None, exclude=True)
-    factories: Mapping[str, "t.FactoryCallable"] | None = Field(default=None, exclude=True)
-    resources: Mapping[str, "t.ResourceCallable"] | None = Field(default=None, exclude=True)
-    container_overrides: Mapping[str, "t.Scalar"] | None = Field(default=None, exclude=True)
+    services: Mapping[str, t.RegisterableService] | None = Field(
+        default=None, exclude=True
+    )
+    factories: Mapping[str, t.FactoryCallable] | None = Field(
+        default=None, exclude=True
+    )
+    resources: Mapping[str, t.ResourceCallable] | None = Field(
+        default=None, exclude=True
+    )
+    container_overrides: Mapping[str, t.Scalar] | None = Field(
+        default=None, exclude=True
+    )
     wire_modules: Sequence[ModuleType] | None = Field(default=None, exclude=True)
     wire_packages: Sequence[str] | None = Field(default=None, exclude=True)
     wire_classes: Sequence[type] | None = Field(default=None, exclude=True)
@@ -92,12 +105,11 @@ class FlextService[TDomainResult: object = object](FlextMixins, ABC):
         registration: developers can mark methods with @h.handler() and they are
         automatically discovered.
         """
-        runtime = self._create_initial_runtime(cast(dict[str, "t.Scalar"], data))
+        runtime = self._create_initial_runtime()
         with FlextContext.create().Service.service_context(
             self.__class__.__name__, runtime.config.version
         ):
-            base_init = cast(Callable[..., None], super().__init__)
-            base_init(**data)
+            pass
         if not isinstance(runtime.context, FlextContext):
             msg = "Expected FlextContext"
             raise TypeError(msg)
@@ -109,8 +121,8 @@ class FlextService[TDomainResult: object = object](FlextMixins, ABC):
         self._container = runtime.container
         self._runtime = runtime
         self._discovered_handlers = (
-            FlextHandlers.Discovery.scan_class(self.__class__)
-            if FlextHandlers.Discovery.has_handlers(self.__class__)
+            h.Discovery.scan_class(self.__class__)
+            if h.Discovery.has_handlers(self.__class__)
             else []
         )
 
@@ -122,10 +134,8 @@ class FlextService[TDomainResult: object = object](FlextMixins, ABC):
             self._execution_result = self.execute()
         execution_result: r[TDomainResult] = self._execution_result
         if execution_result.is_success:
-            return cast(TDomainResult, execution_result.unwrap())
-        raise FlextExceptions.BaseError(
-            execution_result.error or "Service execution failed"
-        )
+            return cast("TDomainResult", execution_result.unwrap())
+        raise e.BaseError(execution_result.error or "Service execution failed")
 
     _context: p.Context | None = PrivateAttr(default=None)
     _config: FlextSettings | None = PrivateAttr(default=None)
@@ -167,22 +177,20 @@ class FlextService[TDomainResult: object = object](FlextMixins, ABC):
         msg = "Service config is not FlextSettings"
         raise TypeError(msg)
 
-    def _create_initial_runtime(self, data: dict[str, "t.Scalar"]) -> m.ServiceRuntime:
+    def _create_initial_runtime(self) -> m.ServiceRuntime:
         """Build the initial runtime triple for a new service instance."""
         config_type = self._get_service_config_type()
-        config_type_raw = data.get("config_type", getattr(self, "config_type", None))
+        config_type_raw = getattr(self, "config_type", None)
         config_type_val: type[FlextSettings] | None
         if config_type_raw is not None and issubclass(
-            cast(type, config_type_raw), FlextSettings
+            cast("type", config_type_raw), FlextSettings
         ):
-            config_type_val = cast(type[FlextSettings], config_type_raw)
+            config_type_val = cast("type[FlextSettings]", config_type_raw)
         else:
             config_type_val = config_type
-        context_val_raw = data.get(
-            "initial_context", getattr(self, "initial_context", None)
-        )
+        context_val_raw = getattr(self, "initial_context", None)
         context_val: p.Context | None = (
-            cast(p.Context, context_val_raw)
+            cast("p.Context", context_val_raw)
             if context_val_raw is not None
             and getattr(context_val_raw, "set", None) is not None
             and (getattr(context_val_raw, "get", None) is not None)
@@ -190,38 +198,16 @@ class FlextService[TDomainResult: object = object](FlextMixins, ABC):
         )
         return self._create_runtime(
             config_type=config_type_val,
-            config_overrides=cast(
-                Mapping[str, "t.Scalar"] | None,
-                data.get("config_overrides", getattr(self, "config_overrides", None)),
-            ),
+            config_overrides=getattr(self, "config_overrides", None),
             context=context_val,
-            subproject=cast(str | None, data.get("subproject", getattr(self, "subproject", None))),
-            services=cast(
-                Mapping[str, "t.RegisterableService"] | None,
-                data.get("services", getattr(self, "services", None)),
-            ),
-            factories=cast(
-                Mapping[str, "t.FactoryCallable"] | None,
-                data.get("factories", getattr(self, "factories", None)),
-            ),
-            resources=cast(
-                Mapping[str, "t.ResourceCallable"] | None,
-                data.get("resources", getattr(self, "resources", None)),
-            ),
-            container_overrides=cast(
-                Mapping[str, "t.Scalar"] | None,
-                data.get("container_overrides", getattr(self, "container_overrides", None)),
-            ),
-            wire_modules=cast(
-                Sequence[ModuleType] | None,
-                data.get("wire_modules", getattr(self, "wire_modules", None)),
-            ),
-            wire_packages=cast(
-                Sequence[str] | None, data.get("wire_packages", getattr(self, "wire_packages", None))
-            ),
-            wire_classes=cast(
-                Sequence[type] | None, data.get("wire_classes", getattr(self, "wire_classes", None))
-            ),
+            subproject=getattr(self, "subproject", None),
+            services=getattr(self, "services", None),
+            factories=getattr(self, "factories", None),
+            resources=getattr(self, "resources", None),
+            container_overrides=getattr(self, "container_overrides", None),
+            wire_modules=getattr(self, "wire_modules", None),
+            wire_packages=getattr(self, "wire_packages", None),
+            wire_classes=getattr(self, "wire_classes", None),
         )
 
     @classmethod
@@ -305,12 +291,12 @@ class FlextService[TDomainResult: object = object](FlextMixins, ABC):
     @field_validator("services", mode="before")
     @classmethod
     def _normalize_scoped_services(
-        cls, services: Mapping[str, "t.RegisterableService"] | None
-    ) -> Mapping[str, "t.RegisterableService"] | None:
+        cls, services: Mapping[str, t.RegisterableService] | None
+    ) -> Mapping[str, t.RegisterableService] | None:
         """Normalize and validate scoped services using Pydantic model."""
         if services is None:
             return None
-        normalized: dict[str, "t.RegisterableService"] = {}
+        normalized: dict[str, t.RegisterableService] = {}
         for name, service in services.items():
             try:
                 m.ServiceRegistration(name=str(name), service=service)

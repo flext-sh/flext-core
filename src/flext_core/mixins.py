@@ -12,9 +12,8 @@ from __future__ import annotations
 
 import threading
 from collections.abc import Callable, Iterator, Mapping, Sequence
-from contextlib import contextmanager, suppress
-from types import ModuleType
-from typing import ClassVar, cast, override, Unpack
+from contextlib import contextmanager
+from typing import ClassVar, Unpack, cast, override
 
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
 
@@ -31,7 +30,6 @@ from flext_core import (
     t,
     u,
 )
-from flext_core._models.service import FlextModelsService
 
 
 class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
@@ -69,9 +67,7 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
     _logger_cache: ClassVar[dict[str, FlextLogger]] = {}
     _cache_lock: ClassVar[threading.Lock] = threading.Lock()
 
-    def __init_subclass__(
-        cls, **kwargs: Unpack[ConfigDict]
-    ) -> None:
+    def __init_subclass__(cls, **kwargs: Unpack[ConfigDict]) -> None:
         """Auto-initialize container for subclasses (ABI compatibility)."""
         super().__init_subclass__(**kwargs)
 
@@ -278,7 +274,7 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
         self.logger.info(
             "Service initialized",
             return_result=False,
-            **cast(dict[str, t.Container], service_context.root),
+            **cast("dict[str, t.Container]", service_context.root),
         )
 
     def _get_runtime(self) -> m.ServiceRuntime:
@@ -295,10 +291,10 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
             config_cls_typed = config_type_raw
         else:
             config_cls_typed = FlextSettings
-            
+
         overrides = getattr(self, "config_overrides", None)
         runtime_config = config_cls_typed.get_global(overrides=overrides)
-        
+
         initial_ctx = getattr(self, "initial_context", None)
         runtime_context: p.Context = (
             initial_ctx if initial_ctx is not None else FlextContext.create()
@@ -337,7 +333,7 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
     ) -> None:
         """Log configuration ONCE without binding to context."""
         config_typed: m.ConfigMap = m.ConfigMap(root=dict(config.items()))
-        self.logger.info(message, **cast(dict[str, t.Container], config_typed.root))
+        self.logger.info(message, **cast("dict[str, t.Container]", config_typed.root))
 
     def _log_with_context(self, level: str, message: str, **extra: t.Scalar) -> None:
         """Log message with automatic context data inclusion."""
@@ -357,7 +353,7 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
             if hasattr(self.logger, level)
             else self.logger.info
         )
-        _ = log_method(message, **cast(dict[str, t.Container], context_data.root))
+        _ = log_method(message, **cast("dict[str, t.Container]", context_data.root))
 
     def _register_in_container(self, service_name: str) -> r[bool]:
         """Register self in global container for service discovery."""
@@ -367,7 +363,7 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
             container = self.container
             was_registered = container.has_service(service_name)
             if isinstance(self, BaseModel):
-                _ = container.register(service_name, cast(p.Model, self))
+                _ = container.register(service_name, cast("p.Model", self))
             else:
                 _ = container.register(service_name, service_name)
             if was_registered:
@@ -537,7 +533,7 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
             result: r[TValidation] = r[TValidation].ok(data)
             for validator in validators:
                 if result.is_success:
-                    current_data = cast(TValidation, result.unwrap())
+                    current_data = cast("TValidation", result.unwrap())
                     validation_result = validator(current_data)
                     if validation_result.is_failure:
                         base_msg = "Validation failed"
@@ -548,7 +544,7 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
                         )
                         fail_error_data: Mapping[str, t.Container] | None = (
                             cast(
-                                Mapping[str, t.Container],
+                                "Mapping[str, t.Container]",
                                 dict(validation_result.error_data.root),
                             )
                             if validation_result.error_data is not None

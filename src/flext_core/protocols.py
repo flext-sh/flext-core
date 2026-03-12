@@ -860,7 +860,9 @@ class FlextProtocols:
         def process[TResult](
             self,
             command: FlextProtocols.Model,
-            next_handler: Callable[[FlextProtocols.Model], FlextProtocols.Result[TResult]],
+            next_handler: Callable[
+                [FlextProtocols.Model], FlextProtocols.Result[TResult]
+            ],
         ) -> FlextProtocols.Result[TResult]:
             """Process command."""
             ...
@@ -946,10 +948,13 @@ class FlextProtocols:
 
             Returns:
                 Result[Model]: Success result with popped context
+
             """
             ...
 
-        def push_context(self, ctx: FlextProtocols.Model) -> FlextProtocols.Result[bool]:
+        def push_context(
+            self, ctx: FlextProtocols.Model
+        ) -> FlextProtocols.Result[bool]:
             """Push execution context onto the stack.
 
             Args:

@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import contextlib
 from collections.abc import Callable
 from typing import Protocol, runtime_checkable
 
@@ -167,17 +168,13 @@ class FlextDispatcher:
         if isinstance(handler_message_type, str):
             route_name = handler_message_type
         elif handler_message_type is not None:
-            try:
+            with contextlib.suppress(TypeError, ValueError):
                 route_name = u.get_message_route(handler_message_type)
-            except (TypeError, ValueError):
-                pass
         if route_name is None:
             accepted = u.compute_accepted_message_types(handler.__class__)
             if accepted:
-                try:
+                with contextlib.suppress(TypeError, ValueError):
                     route_name = u.get_message_route(accepted[0])
-                except (TypeError, ValueError):
-                    pass
         if route_name is None:
             if callable(getattr(handler, "can_handle", None)):
                 self._auto_handlers.append(handler)

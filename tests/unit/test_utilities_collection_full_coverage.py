@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections import UserDict
+from collections import UserDict, UserList
 from collections.abc import Iterator, Mapping
 from enum import StrEnum
 from typing import cast, override
@@ -45,7 +45,7 @@ class _BadCopyDict(UserDict[str, object]):
         raise TypeError(msg)
 
 
-class _ListSubclass(list[object]):
+class _ListSubclass(UserList[object]):
     pass
 
 

@@ -118,8 +118,8 @@ class FlextInfraUtilitiesIo:
 
         """
         try:
-            _ta: TypeAdapter[JsonValue] = TypeAdapter(JsonValue)
-            parsed: JsonValue = _ta.validate_python(json.loads(text))
+            ta: TypeAdapter[JsonValue] = TypeAdapter(JsonValue)
+            parsed: JsonValue = ta.validate_python(json.loads(text))
             return r[JsonValue].ok(parsed)
         except (ValidationError, json.JSONDecodeError, ValueError) as exc:
             return r[JsonValue].fail(f"JSON parse error: {exc}")

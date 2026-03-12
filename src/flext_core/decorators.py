@@ -1305,10 +1305,11 @@ class FlextDecorators:
                 logger = FlextDecorators._resolve_logger(args, func)
                 try:
                     if context_vars:
-                        filtered_vars: dict[str, t.Container] = {}
-                        for k, v in context_vars.items():
-                            if v is not None and u.is_container(v):
-                                filtered_vars[k] = v
+                        filtered_vars: dict[str, t.Container] = {
+                            k: v
+                            for k, v in context_vars.items()
+                            if v is not None and u.is_container(v)
+                        }
                         bind_result = FlextLogger.bind_global_context(**filtered_vars)
                         if bind_result.is_failure:
                             logger.warning(
