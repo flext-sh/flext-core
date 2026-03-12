@@ -762,10 +762,9 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
     @override
     def critical(
         self,
-        msg: str | object,
-        *args: object,
-        _return_result: bool = False,
-        **kw: t.Container,
+        msg: str,
+        *args: t.Container,
+        **kw: t.Container | Exception,
     ) -> r[bool] | None:
         """Log critical message - Logger.Log implementation.
 
@@ -782,35 +781,15 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             c.Settings.LogLevel.CRITICAL,
             msg,
             *args,
-            _return_result=_return_result,
             **kw,
         )
-
-    @overload
-    def debug(
-        self,
-        msg: str | object,
-        *args: object,
-        _return_result: Literal[False] = ...,
-        **kw: t.Scalar,
-    ) -> None: ...
-
-    @overload
-    def debug(
-        self,
-        msg: str | object,
-        *args: object,
-        _return_result: Literal[True],
-        **kw: t.Scalar,
-    ) -> r[bool]: ...
 
     @override
     def debug(
         self,
-        msg: str | object,
-        *args: object,
-        _return_result: bool = False,
-        **kw: t.Scalar,
+        msg: str,
+        *args: t.Container,
+        **kw: t.Container | Exception,
     ) -> r[bool] | None:
         """Log debug message - Logger.Log implementation.
 
@@ -827,43 +806,15 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             c.Settings.LogLevel.DEBUG,
             msg,
             *args,
-            _return_result=_return_result,
             **kw,
         )
-
-    @overload
-    def error(
-        self,
-        msg: str | object,
-        *args: object,
-        _return_result: Literal[True],
-        **kw: t.Container,
-    ) -> r[bool]: ...
-
-    @overload
-    def error(
-        self,
-        msg: str | object,
-        *args: object,
-        _return_result: Literal[False] = ...,
-        **kw: t.Container,
-    ) -> None: ...
-
-    @overload
-    def error(
-        self,
-        msg: str | object,
-        *args: object,
-        **kw: t.Container,
-    ) -> r[bool] | None: ...
 
     @override
     def error(
         self,
-        msg: str | object,
-        *args: object,
-        _return_result: bool = False,
-        **kw: t.Container,
+        msg: str,
+        *args: t.Container,
+        **kw: t.Container | Exception,
     ) -> r[bool] | None:
         """Log error message - Logger.Log implementation.
 
@@ -880,35 +831,8 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             c.Settings.LogLevel.ERROR,
             msg,
             *args,
-            _return_result=_return_result,
             **kw,
         )
-
-    @overload
-    def exception(
-        self,
-        msg: str | object,
-        *args: object,
-        _return_result: Literal[True],
-        **kw: t.Container,
-    ) -> r[bool]: ...
-
-    @overload
-    def exception(
-        self,
-        msg: str | object,
-        *args: object,
-        _return_result: Literal[False] = ...,
-        **kw: t.Container,
-    ) -> None: ...
-
-    @overload
-    def exception(
-        self,
-        msg: str | object,
-        *args: object,
-        **kw: t.Container,
-    ) -> r[bool] | None: ...
 
     @override
     def exception(

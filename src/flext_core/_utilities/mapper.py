@@ -200,7 +200,7 @@ class FlextUtilitiesMapper:
             {'a': '2025-03-12T10:30:45.123456'}
 
         """
-        if isinstance(value, t.Primitives):
+        if isinstance(value, (str, int, float, bool)):
             return value
         if value is None:
             return None

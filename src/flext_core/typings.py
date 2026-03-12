@@ -71,7 +71,7 @@ class FlextTypes:
         Scalar | BaseModel | Path | list[FlextTypes.GeneralValueType] | dict[str, FlextTypes.GeneralValueType]
     )
 
-    type _ConstantValue = (
+    type ConstantValue = (
         Primitives
         | ConfigDict
         | SettingsConfigDict
@@ -102,7 +102,6 @@ class FlextTypes:
     )
 
     # Other Types
-    type ConstantValue = _ConstantValue
     type SortableObjectType = str | int | float
     type ConversionMode = Literal["to_str", "to_str_list", "normalize", "join"]
     type TypeHintSpecifier = type | str | Callable[[Scalar], Scalar]
