@@ -2,15 +2,11 @@ from __future__ import annotations
 
 from pathlib import Path
 
-
 import pytest
 
 from flext_core import r
 from flext_infra.deps.detection import FlextInfraDependencyDetectionService
 from flext_tests import tm
-
-from ...models import m
-from ...typings import t
 
 from ...models import m
 from ...typings import t

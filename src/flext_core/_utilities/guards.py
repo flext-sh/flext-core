@@ -51,7 +51,7 @@ class FlextUtilitiesGuards:
 
     @staticmethod
     def _is_callable_key_func(
-        func: t.GeneralValueType,
+        func: object,
     ) -> TypeGuard[Callable[[t.ContainerValue], t.ContainerValue]]:
         """Check if value is callable and can be used as key function for sorted()."""
         return callable(func)
@@ -240,7 +240,7 @@ class FlextUtilitiesGuards:
         return True
 
     @staticmethod
-    def is_context(obj: t.GeneralValueType) -> TypeGuard[p.Context]:
+    def is_context(obj: object) -> TypeGuard[p.Context]:
         """Check if object satisfies the Context protocol."""
         return (
             hasattr(obj, "clone")
@@ -311,7 +311,7 @@ class FlextUtilitiesGuards:
 
     @staticmethod
     def is_handler_callable(
-        value: FlextUtilitiesGuards._GuardInput,
+        value: object,
     ) -> TypeGuard[t.HandlerCallable]:
         """Check if value is a valid t.HandlerCallable."""
         return callable(value)
