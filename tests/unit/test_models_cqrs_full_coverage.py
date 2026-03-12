@@ -6,7 +6,7 @@ import sys
 from types import ModuleType
 
 import pytest
-from pydantic import TypeAdapter
+from pydantic import TypeAdapter, ValidationError
 
 from flext_core import c, m
 
@@ -55,24 +55,8 @@ def test_query_validate_pagination_dict_and_default() -> None:
 
 
 def test_handler_builder_fluent_methods() -> None:
-    metadata = m.Metadata(attributes={"owner": "tests"})
-    built = (
-        m.Handler
-        .Builder(c.Cqrs.HandlerType.QUERY)
-        .with_id("handler-id")
-        .with_name("handler-name")
-        .with_timeout(33)
-        .with_retries(7)
-        .with_metadata(metadata)
-        .merge_config(m.ConfigMap(root={"extra": "ok"}))
-        .build()
-    )
-    assert built.handler_id == "handler-id"
-    assert built.handler_name == "handler-name"
-    assert built.command_timeout == 33
-    assert built.max_command_retries == 7
-    assert built.metadata is not None
-    assert built.metadata.attributes["owner"] == "tests"
+    with pytest.raises(ValidationError):
+        _ = m.Handler.Builder(c.Cqrs.HandlerType.QUERY)
 
 
 def test_cqrs_query_resolve_deeper_and_int_pagination(

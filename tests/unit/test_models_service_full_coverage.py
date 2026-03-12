@@ -17,7 +17,7 @@ def test_service_request_timeout_validator_branches() -> None:
     assert isinstance(m.Categories(), m.Categories)
     assert r[int].ok(1).is_success
     assert isinstance(m.ConfigMap.model_validate({"k": 1}), m.ConfigMap)
-    assert u.Conversion.to_str(1) == "1"
+    assert u.to_str(1) == "1"
     with pytest.raises(ValueError, match="greater than 0"):
         FlextModelsService.DomainServiceExecutionRequest(
             service_name="svc",

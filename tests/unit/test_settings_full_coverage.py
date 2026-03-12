@@ -20,7 +20,7 @@ def test_settings_materialize_and_context_overrides() -> None:
     assert isinstance(m.Categories(), m.Categories)
     assert r[int].ok(1).is_success
     assert isinstance(m.ConfigMap.model_validate({"k": 1}), m.ConfigMap)
-    assert u.Conversion.to_str(1) == "1"
+    assert u.to_str(1) == "1"
     sub = _SubSettings.get_global()
     assert isinstance(sub, _SubSettings)
     FlextSettings.register_context_overrides("ctx-a", app_name="A")

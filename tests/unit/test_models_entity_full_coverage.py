@@ -21,7 +21,7 @@ def test_entity_comparable_map_and_bulk_validation_paths() -> None:
     assert isinstance(m.Categories(), m.Categories)
     assert r[int].ok(1).is_success
     assert isinstance(m.ConfigMap.model_validate({"k": 1}), m.ConfigMap)
-    assert u.Conversion.to_str(1) == "1"
+    assert u.to_str(1) == "1"
     cfg = ComparableConfigMap(root={"a": 1})
     assert (cfg == 1) is False
     with pytest.raises(

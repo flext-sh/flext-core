@@ -30,7 +30,7 @@ and provides type guards and serialization utilities.
 
 **Usage** (simple runtime aliases only; no alias registry):
 - Package __init__: c = FlextConstants, m = FlextModels, etc. (direct assignment only). Never use FlextRuntime.Aliases.
-- Facades (e.g. FlextUtilities) expose staticmethod aliases from external subclasses so call sites get one flat namespace (u.foo, u.bar), no subdivision (no u.Mapper.foo).
+- Facades (e.g. FlextUtilities) expose staticmethod aliases from external subclasses so call sites get one flat namespace (u.foo, u.bar), no subdivision (no u.foo).
 - At call sites use project namespace only: c, m, r, t, u, p, d, e, h, s, x from project __init__. Subprojects: access only via that project's namespace; no cross-project alias subdivision. MRO protocol only; direct methods.
 - Runtime helpers via x (e.g. x.create_instance, x.is_dict_like).
 
@@ -147,7 +147,7 @@ class FlextRuntime:
 
     **Usage** (simple runtime aliases only; no alias registry):
     - Package __init__: c = FlextConstants, m = FlextModels, etc. (direct assignment only). Never use FlextRuntime.Aliases or any registry.
-    - Facades use staticmethod aliases from external subclasses so one flat namespace (no u.Mapper.foo); subprojects use project namespace only (from flext_cli import m, x; m.Foo, m.Bar).
+    - Facades use staticmethod aliases from external subclasses so one flat namespace (no u.foo); subprojects use project namespace only (from flext_cli import m, x; m.Foo, m.Bar).
     - At call sites use runtime aliases from project __init__: c, m, r, t, u, p, d, e, h, s, x. Access via project runtime alias only; no subdivision. MRO only; direct methods. Examples: x.create_instance(MyClass), r[T].ok(value).
 
     **Design Principles**:

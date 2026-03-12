@@ -31,7 +31,7 @@ def test_args_get_enum_params_branches() -> None:
     assert isinstance(m.Categories(), m.Categories)
     assert r[int].ok(1).is_success
     assert isinstance(m.ConfigMap.model_validate({"k": 1}), m.ConfigMap)
-    assert u.Conversion.to_str(1) == "1"
+    assert u.to_str(1) == "1"
     annotated = u.Args.get_enum_params(cast("p.CallableWithHints", _annotated_func))
     assert "mode" in annotated
     failed = u.Args.get_enum_params(cast("p.CallableWithHints", _bad_hints_func))

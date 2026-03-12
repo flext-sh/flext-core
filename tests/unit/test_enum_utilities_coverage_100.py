@@ -16,12 +16,12 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from enum import StrEnum
-from typing import ClassVar, cast
+from typing import ClassVar
 
 import pytest
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import r, t
+from flext_core import t
 from flext_tests import u
 
 
@@ -261,13 +261,8 @@ class TestuEnumParse:
         """Test parse with various scenarios."""
         result = u.Enum.parse(Status, scenario.value)
         if scenario.expected_success:
-            expected_status_cast: object = cast(
-                "object",
-                scenario.expected_status,
-            )
-            result_typed: r[object] = cast("r[object]", result)
-            expected_typed: object = expected_status_cast
-            u.Tests.Result.assert_success_with_value(result_typed, expected_typed)
+            assert result.is_success
+            assert result.value == scenario.expected_status
         else:
             _ = u.Tests.Result.assert_failure(result)
             assert (

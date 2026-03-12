@@ -109,12 +109,12 @@ class TestMainFunction:
         tm.that(main(), eq=1)
 
     def test_merge_success(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        mgr = StubPrManager(merge_returns=[r[object].ok({"status": "merged"})])
+        mgr = StubPrManager(merge_returns=[r[t.Container].ok("merged")])
         self._setup(monkeypatch, _args(action="merge", number="42"), mgr)
         tm.that(main(), eq=0)
 
     def test_merge_failure(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        mgr = StubPrManager(merge_returns=[r[object].fail("merge failed")])
+        mgr = StubPrManager(merge_returns=[r[t.Container].fail("merge failed")])
         self._setup(monkeypatch, _args(action="merge", number="42"), mgr)
         tm.that(main(), eq=1)
 

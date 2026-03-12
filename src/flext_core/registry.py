@@ -21,7 +21,6 @@ from flext_core import (
     FlextDispatcher,
     FlextHandlers,
     c,
-    e,
     m,
     p,
     r,
@@ -197,17 +196,17 @@ class FlextRegistry(s[bool]):
 
     def _get_handler_mode(self, value: object) -> c.Cqrs.HandlerType:
         """Safe conversion to HandlerType."""
-        try:
-            return u.parse(value, c.Cqrs.HandlerType)
-        except (e.ValidationError, ValueError):
-            return c.Cqrs.HandlerType.COMMAND
+        result = u.parse(c.Cqrs.HandlerType, str(value))
+        if result.is_success:
+            return result.value
+        return c.Cqrs.HandlerType.COMMAND
 
-    def _get_status(self, value: object) -> m.HandlerStatus:
-        """Safe conversion to HandlerStatus."""
-        try:
-            return u.parse(value, m.HandlerStatus)
-        except (e.ValidationError, ValueError):
-            return m.HandlerStatus.ACTIVE
+    def _get_status(self, value: object) -> c.Cqrs.CommonStatus:
+        """Safe conversion to CommonStatus."""
+        result = u.parse(c.Cqrs.CommonStatus, str(value))
+        if result.is_success:
+            return result.value
+        return c.Cqrs.CommonStatus.ACTIVE
 
     @override
     def execute(self) -> r[bool]:
@@ -548,9 +547,9 @@ class FlextRegistry(s[bool]):
         status = reg_result.status
         return m.HandlerRegistrationDetails(
             registration_id=key,
-            handler_mode=FlextRegistry._safe_get_handler_mode(handler_mode),
+            handler_mode=self._get_handler_mode(handler_mode),
             timestamp=timestamp,
-            status=self._safe_get_status(status),
+            status=self._get_status(status),
         )
 
     def _finalize_summary(

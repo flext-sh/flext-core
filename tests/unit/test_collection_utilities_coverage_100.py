@@ -228,7 +228,7 @@ class TestuCollectionParseSequence:
     )
     def test_parse_sequence(self, scenario: ParseSequenceScenario) -> None:
         """Test parse_sequence with various scenarios."""
-        result = u.Collection.parse_sequence(Status, scenario.values)
+        result = u.parse_sequence(Status, scenario.values)
         if scenario.expected_success:
             _ = u.Tests.Result.assert_success(result)
             parsed = result.value
@@ -251,7 +251,7 @@ class TestuCollectionCoerceListValidator:
     )
     def test_coerce_list_validator(self, scenario: CoerceListValidatorScenario) -> None:
         """Test coerce_list_validator with various scenarios."""
-        validator = u.Collection.coerce_list_validator(Status)
+        validator = u.coerce_list_validator(Status)
         if scenario.expected_success:
             result = validator(scenario.value)
             assert isinstance(result, list)
@@ -275,7 +275,7 @@ class TestuCollectionParseMapping:
     )
     def test_parse_mapping(self, scenario: ParseMappingScenario) -> None:
         """Test parse_mapping with various scenarios."""
-        result = u.Collection.parse_mapping(Status, scenario.mapping)
+        result = u.parse_mapping(Status, scenario.mapping)
         if scenario.expected_success:
             _ = u.Tests.Result.assert_success(result)
             parsed = result.value
@@ -294,7 +294,7 @@ class TestuCollectionCoerceDictValidator:
 
     def test_coerce_dict_validator_valid_strings(self) -> None:
         """Test coerce_dict_validator with valid string values."""
-        validator = u.Collection.coerce_dict_validator(Status)
+        validator = u.coerce_dict_validator(Status)
         result = validator({"user1": "active", "user2": "pending"})
         assert isinstance(result, dict)
         assert result["user1"] == Status.ACTIVE
@@ -302,7 +302,7 @@ class TestuCollectionCoerceDictValidator:
 
     def test_coerce_dict_validator_valid_enums(self) -> None:
         """Test coerce_dict_validator with valid enum values."""
-        validator = u.Collection.coerce_dict_validator(Status)
+        validator = u.coerce_dict_validator(Status)
         result = validator({"user1": Status.ACTIVE, "user2": Status.PENDING})
         assert isinstance(result, dict)
         assert result["user1"] == Status.ACTIVE
@@ -310,21 +310,21 @@ class TestuCollectionCoerceDictValidator:
 
     def test_coerce_dict_validator_invalid_not_dict(self) -> None:
         """Test coerce_dict_validator with non-dict value."""
-        validator = u.Collection.coerce_dict_validator(Status)
+        validator = u.coerce_dict_validator(Status)
         with pytest.raises(TypeError) as exc_info:
             validator("not a dict")
         assert "Expected dict" in str(exc_info.value)
 
     def test_coerce_dict_validator_invalid_string(self) -> None:
         """Test coerce_dict_validator with invalid string value."""
-        validator = u.Collection.coerce_dict_validator(Status)
+        validator = u.coerce_dict_validator(Status)
         with pytest.raises(ValueError) as exc_info:
             validator({"user1": "invalid"})
         assert "Invalid Status" in str(exc_info.value)
 
     def test_coerce_dict_validator_invalid_type(self) -> None:
         """Test coerce_dict_validator with invalid type value."""
-        validator = u.Collection.coerce_dict_validator(Status)
+        validator = u.coerce_dict_validator(Status)
         with pytest.raises(TypeError) as exc_info:
             validator({"user1": 123})
         assert "Expected str" in str(exc_info.value)

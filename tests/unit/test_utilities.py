@@ -167,7 +167,7 @@ class Testu(TextUtilityContract):
     def test_generators_operations(self, method_name: str, kind: str | None) -> None:
         """Test ID and timestamp generation operations."""
         if method_name == "generate_iso_timestamp":
-            result = u.Generators.generate_iso_timestamp()
+            result = u.generate_iso_timestamp()
         else:
             result = u.generate(kind) if kind else u.generate()
         assert isinstance(result, str) and len(result) > 0
@@ -337,24 +337,24 @@ class Testu(TextUtilityContract):
         expected: bool,
     ) -> None:
         """Test type checking."""
-        result = u.Checker.can_handle_message_type(accepted_types, message_type)
+        result = u.can_handle_message_type(accepted_types, message_type)
         assert result is expected
 
     def test_configuration_get_parameter(self) -> None:
         """Test getting configuration parameter."""
         config = FlextSettings.get_global()
-        value = u.Configuration.get_parameter(config, "app_name")
+        value = u.get_parameter(config, "app_name")
         assert value is not None
 
     def test_configuration_set_parameter(self) -> None:
         """Test setting configuration parameter."""
         config = FlextSettings.get_global()
-        result = u.Configuration.set_parameter(config, "test_param", "test_value")
+        result = u.set_parameter(config, "test_param", "test_value")
         assert isinstance(result, bool)
 
     def test_configuration_get_singleton(self) -> None:
         """Test getting singleton configuration."""
-        value = u.Configuration.get_singleton(FlextSettings, "app_name")
+        value = u.get_singleton(FlextSettings, "app_name")
         assert value is not None
 
     def test_reliability_retry_immediate_success(self) -> None:

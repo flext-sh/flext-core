@@ -1389,7 +1389,7 @@ class FlextTestsBuilders:
         class Data:
             """Data generation helpers - tb.Tests.Data.*.
 
-            DELEGATES TO: u.Collection.*, u.Mapper.*, u.Tests.Factory.*
+            DELEGATES TO: u.*, u.*, u.Tests.Factory.*
             """
 
             @staticmethod

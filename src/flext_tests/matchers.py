@@ -499,7 +499,7 @@ class FlextTestsMatchers:
                     params.msg
                     or f"Path extraction requires dict or model, got {type(result_value).__name__}"
                 )
-            extracted = u.Mapper.extract(extract_source, path_str)
+            extracted = u.extract(extract_source, path_str)
             if extracted.is_failure:
                 raise AssertionError(
                     params.msg
@@ -628,7 +628,7 @@ class FlextTestsMatchers:
         """Enhanced isolated test execution scope.
 
         Uses Pydantic 2 model (ScopeParams) for parameter validation and computation.
-        All parameters are validated automatically via u.Model.from_kwargs.
+        All parameters are validated automatically via u.from_kwargs.
 
         Provides isolated configuration, container, and context for tests.
         Supports temporary environment variables, working directory changes,
@@ -832,14 +832,16 @@ class FlextTestsMatchers:
                         or c.Tests.Matcher.ERR_OK_FAILED.format(error=result_obj.error)
                     )
                 if not params.ok and result_obj.is_success:
-                    unwrapped_value_error: t.Container = result_obj.value
+                    unwrapped_value_error: t.Container = t.cast(
+                        t.Container, result_obj.value
+                    )
                     value_str: str = str(unwrapped_value_error)
                     raise AssertionError(
                         params.msg
                         or c.Tests.Matcher.ERR_FAIL_EXPECTED.format(value=value_str)
                     )
                 if result_obj.is_success:
-                    unwrapped_value: t.Container = result_obj.value
+                    unwrapped_value: t.Container = t.cast(t.Container, result_obj.value)
                     actual_value = unwrapped_value
             elif params.has is not None:
                 err = result_obj.error or ""

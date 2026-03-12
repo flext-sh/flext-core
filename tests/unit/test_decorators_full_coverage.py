@@ -59,8 +59,8 @@ def test_inject_sets_missing_dependency_from_container(
 
     class _Container:
         @staticmethod
-        def get(_name: str) -> r[object]:
-            return r[object].ok("dep")
+        def get(_name: str) -> r[str]:
+            return r[str].ok("dep")
 
     monkeypatch.setattr(
         "flext_core.decorators.FlextContainer.create",

@@ -25,7 +25,7 @@ def test_pagination_response_string_fallbacks() -> None:
         "Mapping[str, object]",
         {"data": _Obj(), "pagination": _Obj()},
     )
-    response = u.Pagination.build_pagination_response(pagination_data, message="ok")
+    response = u.build_pagination_response(pagination_data, message="ok")
     assert response.is_success
     value = response.value
     assert isinstance(value["data"], str)

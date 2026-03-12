@@ -120,7 +120,7 @@ class MockScenario:
         """Initialize mock scenario with name and test data."""
         super().__init__()
         self.name = name
-        mapper = FlextUtilities.Mapper
+        mapper = FlextUtilities
         self.given = _to_general_mapping(mapper.get(data, "given", default={}))
         self.when = _to_general_mapping(mapper.get(data, "when", default={}))
         self.then = _to_general_mapping(mapper.get(data, "then", default={}))
@@ -576,7 +576,7 @@ class TestPerformanceAnalysis:
         _ = gc.collect()
         large_list = list(range(10000))
         filtered_list = list(
-            FlextUtilities.Collection.filter(large_list, lambda x: x % 2 == 0),
+            FlextUtilities.filter(large_list, lambda x: x % 2 == 0),
         )
         sorted_list = sorted(filtered_list, reverse=True)
         assert len(large_list) == 10000

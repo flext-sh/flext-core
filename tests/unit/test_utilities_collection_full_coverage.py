@@ -50,21 +50,21 @@ def test_find_mapping_no_match_and_merge_error_paths() -> None:
     assert isinstance(m.Categories(), m.Categories)
     assert r[int].ok(1).is_success
     assert isinstance(m.ConfigMap.model_validate({"a": 1}), m.ConfigMap)
-    not_found = u.Collection.find({"a": 1}, lambda value: value == 2)
+    not_found = u.find({"a": 1}, lambda value: value == 2)
     assert not_found.is_failure
-    nested = u.Collection._merge_deep_single_key(
+    nested = u._merge_deep_single_key(
         cast("dict[str, object]", {"x": _BadCopyDict({"a": 1})}),
         "x",
         cast("object", {"b": 2}),
     )
     assert nested.is_success
-    deep = u.Collection.merge(
+    deep = u.merge(
         cast("dict[str, object]", {"x": _BadCopyDict({"a": 1})}),
         cast("dict[str, object]", {"x": {"b": 2}}),
         strategy="deep",
     )
     assert deep.is_success
-    broken = u.Collection.merge(
+    broken = u.merge(
         cast("dict[str, object]", None),
         {"x": 1},
         strategy="deep",
@@ -91,7 +91,7 @@ def test_batch_fail_collect_flatten_and_progress() -> None:
     def _identity(item: int) -> object:
         return item
 
-    flattened = u.Collection.batch(
+    flattened = u.batch(
         [1],
         _success_list,
         flatten=True,
@@ -99,7 +99,7 @@ def test_batch_fail_collect_flatten_and_progress() -> None:
     assert flattened.is_success
     flat_value = flattened.value
     assert flat_value.results == [1, 2]
-    collected = u.Collection.batch(
+    collected = u.batch(
         [1],
         _failure_result,
         on_error="collect",
@@ -108,15 +108,15 @@ def test_batch_fail_collect_flatten_and_progress() -> None:
     collected_value = collected.value
     assert len(collected_value.errors) == 1
     assert "err" in collected_value.errors[0][1]
-    failed = u.Collection.batch([1], _hard_failure, on_error="fail")
+    failed = u.batch([1], _hard_failure, on_error="fail")
     assert failed.is_failure
-    failed_exc = u.Collection.batch(
+    failed_exc = u.batch(
         [1],
         _raise_value_error,
     )
     assert failed_exc.is_failure
     progress_calls: list[tuple[int, int]] = []
-    ok = u.Collection.batch(
+    ok = u.batch(
         [1, 2],
         _identity,
         progress=lambda processed, total: progress_calls.append((processed, total)),
@@ -126,25 +126,25 @@ def test_batch_fail_collect_flatten_and_progress() -> None:
 
 
 def test_process_outer_exception_and_coercion_branches() -> None:
-    processed: r[list[object]] = u.Collection.process(
+    processed: r[list[object]] = u.process(
         cast("list[object]", _BadSequence()),
         lambda x: x,
     )
     assert processed.is_failure
-    value = u.Collection._coerce_value_to_float(1.5)
+    value = u._coerce_value_to_float(1.5)
     assert abs(value - 1.5) < 1e-9
-    assert u.Collection._coerce_value_to_bool(True) is True
-    enum_dict = u.Collection.coerce_dict_to_enum(_Color)({"a": _Color.RED})
+    assert u._coerce_value_to_bool(True) is True
+    enum_dict = u.coerce_dict_to_enum(_Color)({"a": _Color.RED})
     assert enum_dict["a"] is _Color.RED
-    enum_list = u.Collection.coerce_list_to_enum(_Color)([_Color.BLUE])
+    enum_list = u.coerce_list_to_enum(_Color)([_Color.BLUE])
     assert enum_list == [_Color.BLUE]
-    assert u.Collection.first([], default=9).value == 9
-    assert u.Collection.last([], default=8).value == 8
+    assert u.first([], default=9).value == 9
+    assert u.last([], default=8).value == 8
 
 
 def test_parse_mapping_outer_exception() -> None:
     with pytest.raises(RuntimeError, match="boom"):
-        u.Collection.parse_mapping(
+        u.parse_mapping(
             _Color,
             cast("dict[str, str | _Color]", _BadMapping()),
         )
@@ -159,7 +159,7 @@ def test_collection_batch_failure_error_capture_and_parse_sequence_outer_error()
         value: None = None
         error = "boom"
 
-    collected = u.Collection.batch(
+    collected = u.batch(
         [1],
         lambda _item: _FailureResult(),
         on_error="collect",
@@ -167,7 +167,7 @@ def test_collection_batch_failure_error_capture_and_parse_sequence_outer_error()
     assert collected.is_success
     collected_value = collected.value
     assert collected_value.errors[0][1] == "boom"
-    failed = u.Collection.batch([1], lambda _item: _FailureResult(), on_error="fail")
+    failed = u.batch([1], lambda _item: _FailureResult(), on_error="fail")
     assert failed.is_failure
 
     class _ExplodingMeta(type):
@@ -178,5 +178,5 @@ def test_collection_batch_failure_error_capture_and_parse_sequence_outer_error()
     class _ExplodingEnum(metaclass=_ExplodingMeta):
         pass
 
-    parsed = u.Collection.parse_sequence(cast("type[_Color]", _ExplodingEnum), ["x"])
+    parsed = u.parse_sequence(cast("type[_Color]", _ExplodingEnum), ["x"])
     assert parsed.is_failure

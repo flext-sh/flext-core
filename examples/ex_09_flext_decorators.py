@@ -63,7 +63,7 @@ class Ex09FlextDecorators(Examples):
         def combined_standard(*, service: str | None = None) -> str:
             """Use combined decorator without railway wrapping."""
             op_name = FlextContext.Request.get_operation_name()
-            service_value = service if u.Guards.is_type(service, str) else "none"
+            service_value = service if u.is_type(service, str) else "none"
             return f"{service_value}|{op_name}"
 
         @d.combined(
@@ -78,7 +78,7 @@ class Ex09FlextDecorators(Examples):
             if not ok:
                 msg = self.rand_str(12)
                 raise ValueError(msg)
-            service_value = service if u.Guards.is_type(service, str) else "none"
+            service_value = service if u.is_type(service, str) else "none"
             return f"{service_value}|{FlextContext.Request.get_operation_name()}"
 
         std_result = combined_standard()
@@ -418,9 +418,7 @@ class Ex09FlextDecorators(Examples):
         inside_dropped = inside.get("dropped")
         after_tenant_raw = after.get("tenant")
         after_tenant = (
-            after_tenant_raw
-            if u.Guards.is_type(after_tenant_raw, (str, int, bool))
-            else None
+            after_tenant_raw if u.is_type(after_tenant_raw, (str, int, bool)) else None
         )
         self.check("with_context.inside.tenant", inside.get("tenant") == tenant)
         self.check("with_context.inside.retries", inside.get("retries") == retries)

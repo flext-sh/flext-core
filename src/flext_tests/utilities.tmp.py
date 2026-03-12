@@ -5,7 +5,6 @@ helpers for result validation, context management, and test data creation.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-"""
 
 from __future__ import annotations
 
@@ -17,6 +16,7 @@ import re
 from collections.abc import (
     Callable,
     Generator,
+    Iterable,
     Mapping,
     MutableMapping,
     Sized,
@@ -25,7 +25,7 @@ from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
 from re import Pattern
-from typing import Protocol, cast, override
+from typing import Protocol, override
 
 from pydantic import BaseModel, TypeAdapter, ValidationError
 
@@ -52,9 +52,8 @@ def _to_scalar(value: object) -> core_t.Scalar:
     Returns:
         ScalarValue (str | int | float | bool | datetime | None)
 
-    """
     if isinstance(value, t.PRIMITIVES_TYPES):
-        return cast("core_t.Scalar", value)
+        return value
     return str(value)
 
 
@@ -67,11 +66,10 @@ def _to_payload(value: object) -> t.Tests.object:
     Returns:
         object suitable for test assertions
 
-    """
     if value is None or isinstance(
         value, (*t.PRIMITIVES_TYPES, bytes, datetime, Path, BaseModel)
     ):
-        return cast("t.Tests.object", value)
+        return value
     if isinstance(value, Mapping):
         try:
             mapping_value = _PAYLOAD_MAPPING_ADAPTER.validate_python(value)
@@ -81,7 +79,7 @@ def _to_payload(value: object) -> t.Tests.object:
         for key_raw, item_obj in mapping_value.items():
             payload_map[str(key_raw)] = _to_payload(item_obj)
         return payload_map
-    if isinstance(value, (list, tuple, set)):
+    if isinstance(value, Iterable):
         try:
             iterable_items = _PAYLOAD_SEQUENCE_ADAPTER.validate_python(value)
         except ValidationError:
@@ -93,7 +91,7 @@ def _to_payload(value: object) -> t.Tests.object:
     return str(value)
 
 
-def _to_config_map_value(value: t.Tests.object) -> object:
+def _to_config_map_value(value: t.Tests.object) -> t.Container | BaseModel:
     """Convert value to container."""
     if value is None or isinstance(value, (*t.PRIMITIVES_TYPES, BaseModel)):
         return value
@@ -105,9 +103,7 @@ def _to_config_map_value(value: t.Tests.object) -> object:
         return str(value)
     if isinstance(value, Mapping):
         return {str(k): _to_config_map_value(v) for k, v in value.items()}
-    if isinstance(value, (list, tuple, set)):
-        return [_to_config_map_value(item) for item in value]
-    return value
+    return [_to_config_map_value(item) for item in value]
 
 
 class _EntityFactory[TEntity](Protocol):
@@ -123,10 +119,7 @@ class FlextTestsUtilities(FlextUtilities):
 
     Provides essential test helpers that complement FlextUtilities.
     All FlextUtilities functionality is available via inheritance.
-    """
 
-    class Validation:
-        """Validation helpers for tests - extends FlextUtilities.Validation."""
 
         @staticmethod
         def validate_pipeline(
@@ -144,7 +137,6 @@ class FlextTestsUtilities(FlextUtilities):
             Returns:
                 r[bool]: Success if all validators pass, failure from first failure
 
-            """
             for validator in validators:
                 try:
                     result = validator(value)
@@ -158,14 +150,8 @@ class FlextTestsUtilities(FlextUtilities):
                     return r[bool].fail(str(e))
             return r[bool].ok(value=True)
 
-    class Tests:
-        """Test-specific utilities namespace.
 
-        All test utilities organized under u.Tests.* pattern.
-        """
 
-        class Result:
-            """Result helpers for test assertions."""
 
             @staticmethod
             def assert_failure[TResult](
@@ -184,7 +170,6 @@ class FlextTestsUtilities(FlextUtilities):
                 Raises:
                     AssertionError: If result is success
 
-                """
                 if result.is_success:
                     msg = f"Expected failure but got success: {result.value}"
                     raise AssertionError(msg)
@@ -212,7 +197,6 @@ class FlextTestsUtilities(FlextUtilities):
                 Raises:
                     AssertionError: If result is success or error doesn't match
 
-                """
                 if result.is_success:
                     msg = f"Expected failure, got success: {result.value}"
                     raise AssertionError(msg)
@@ -233,8 +217,7 @@ class FlextTestsUtilities(FlextUtilities):
                 Raises:
                     AssertionError: If result is not failure or error mismatch
 
-                """
-                FlextTestsUtilities.Tests.Result.assert_failure_with_error(
+                FlextTestsUtilities.assert_failure_with_error(
                     result, expected_error
                 )
 
@@ -254,13 +237,13 @@ class FlextTestsUtilities(FlextUtilities):
                 Raises:
                     AssertionError: If result is failure
 
-                """
                 if not result.is_success:
                     msg = (
                         error_msg or f"Expected success but got failure: {result.error}"
                     )
                     raise AssertionError(msg)
-                return cast("TResult", result.value)
+                value: TResult = result.value
+                return value
 
             @staticmethod
             def assert_success_with_value[T](
@@ -275,7 +258,6 @@ class FlextTestsUtilities(FlextUtilities):
                 Raises:
                     AssertionError: If result is failure or value doesn't match
 
-                """
                 if not result.is_success:
                     msg = f"Expected success, got failure: {result.error}"
                     raise AssertionError(msg)
@@ -292,7 +274,6 @@ class FlextTestsUtilities(FlextUtilities):
                     r[TEntity]: Result containing created entity or error
                     r with failure and error message
 
-                """
                 return r[str].fail(error)
 
             @staticmethod
@@ -306,11 +287,8 @@ class FlextTestsUtilities(FlextUtilities):
                     r[TEntity]: Result containing created entity or error
                     r with success and value
 
-                """
                 return r[T].ok(value)
 
-        class TestContext:
-            """Context managers for tests."""
 
             @staticmethod
             @contextmanager
@@ -327,7 +305,6 @@ class FlextTestsUtilities(FlextUtilities):
                 Yields:
                     None
 
-                """
                 attribute_existed = hasattr(target, attribute)
                 original_value: t.Tests.object | None = None
                 if attribute_existed:
@@ -341,8 +318,6 @@ class FlextTestsUtilities(FlextUtilities):
                     else:
                         object.__delattr__(target, attribute)
 
-        class Factory:
-            """Factory helpers for test data creation."""
 
             @staticmethod
             def add_operation(a: t.Tests.object, b: t.Tests.object) -> t.Tests.object:
@@ -356,7 +331,6 @@ class FlextTestsUtilities(FlextUtilities):
                     r[TEntity]: Result containing created entity or error
                     Sum if both numeric, concatenation otherwise.
 
-                """
                 if isinstance(a, (int, float)) and isinstance(b, (int, float)):
                     return a + b
                 return str(a) + str(b)
@@ -374,7 +348,6 @@ class FlextTestsUtilities(FlextUtilities):
                     r[TEntity]: Result containing created entity or error
                     Callable that raises ValueError when called.
 
-                """
 
                 def error_op() -> t.Tests.object:
                     raise ValueError(error_message)
@@ -395,7 +368,6 @@ class FlextTestsUtilities(FlextUtilities):
                     r[TEntity]: Result containing created entity or error
                     r with value or error
 
-                """
                 if error is not None:
                     return r[T].fail(error)
                 if value is not None:
@@ -415,7 +387,6 @@ class FlextTestsUtilities(FlextUtilities):
                     r[TEntity]: Result containing created entity or error
                     Configuration dictionary
 
-                """
                 return dict(kwargs)
 
             @staticmethod
@@ -431,7 +402,6 @@ class FlextTestsUtilities(FlextUtilities):
                     r[TEntity]: Result containing created entity or error
                     r with service data or error.
 
-                """
                 if validation_result.is_failure:
                     return r[t.Tests.object].fail(
                         validation_result.error or "Validation failed"
@@ -450,7 +420,6 @@ class FlextTestsUtilities(FlextUtilities):
                     r[TEntity]: Result containing created entity or error
                     r with service type data.
 
-                """
                 service_data: t.Tests.object = {"service_type": service_type}
                 return r[t.Tests.object].ok(service_data)
 
@@ -467,7 +436,6 @@ class FlextTestsUtilities(FlextUtilities):
                     r[TEntity]: Result containing created entity or error
                     r with user data.
 
-                """
                 user_id = "default_123" if overrides.get("default") else "test_123"
                 user_data: t.Tests.object = {
                     "user_id": user_id,
@@ -487,7 +455,6 @@ class FlextTestsUtilities(FlextUtilities):
                     r[TEntity]: Result containing created entity or error
                     Formatted string "name: value".
 
-                """
                 return f"{name}: {value}"
 
             @staticmethod
@@ -498,7 +465,6 @@ class FlextTestsUtilities(FlextUtilities):
                     r[TEntity]: Result containing created entity or error
                     Generated UUID string.
 
-                """
                 return FlextUtilities.generate()
 
             @staticmethod
@@ -512,7 +478,6 @@ class FlextTestsUtilities(FlextUtilities):
                     r[TEntity]: Result containing created entity or error
                     Generated short ID string.
 
-                """
                 return FlextUtilities.generate("ulid", length=length)
 
             @staticmethod
@@ -523,23 +488,16 @@ class FlextTestsUtilities(FlextUtilities):
                     r[TEntity]: Result containing created entity or error
                     Success message string from constants.
 
-                """
-                return c.Tests.Factory.SUCCESS_MESSAGE
+                return c.SUCCESS_MESSAGE
 
-        class ResultHelpers:
-            """Result helpers — delegates to Tests.Result (compat).
 
-            .. deprecated::
-                Use ``u.Tests.Result`` directly. This namespace exists only
-                for backward-compatibility.
-            """
 
             @staticmethod
             def assert_failure_with_error[T](
                 result: r[T] | p.Result[T], expected_error: str | None = None
             ) -> None:
                 """Delegate to Result.assert_failure_with_error."""
-                FlextTestsUtilities.Tests.Result.assert_failure_with_error(
+                FlextTestsUtilities.assert_failure_with_error(
                     result, expected_error
                 )
 
@@ -548,7 +506,7 @@ class FlextTestsUtilities(FlextUtilities):
                 result: r[T] | p.Result[T], expected_error: str
             ) -> None:
                 """Delegate to Result.assert_result_failure_with_error."""
-                FlextTestsUtilities.Tests.Result.assert_result_failure_with_error(
+                FlextTestsUtilities.assert_result_failure_with_error(
                     result, expected_error
                 )
 
@@ -557,22 +515,20 @@ class FlextTestsUtilities(FlextUtilities):
                 result: r[T] | p.Result[T], expected_value: T
             ) -> None:
                 """Delegate to Result.assert_success_with_value."""
-                FlextTestsUtilities.Tests.Result.assert_success_with_value(
+                FlextTestsUtilities.assert_success_with_value(
                     result, expected_value
                 )
 
             @staticmethod
             def create_failure_result(error: str) -> r[str]:
                 """Delegate to Result.create_failure_result."""
-                return FlextTestsUtilities.Tests.Result.create_failure_result(error)
+                return FlextTestsUtilities.create_failure_result(error)
 
             @staticmethod
             def create_success_result[T](value: T) -> r[T]:
                 """Delegate to Result.create_success_result."""
-                return FlextTestsUtilities.Tests.Result.create_success_result(value)
+                return FlextTestsUtilities.create_success_result(value)
 
-        class GenericHelpers:
-            """Generic helpers for test data creation."""
 
             @staticmethod
             def assert_result_chain[T](
@@ -596,7 +552,6 @@ class FlextTestsUtilities(FlextUtilities):
                 Raises:
                     AssertionError: If counts don't match
 
-                """
                 successes_expected = expected_successes or expected_success_count
                 failures_expected = expected_failures or expected_failure_count
                 successes = sum(1 for res in results if res.is_success)
@@ -649,7 +604,6 @@ class FlextTestsUtilities(FlextUtilities):
                     r[TEntity]: Result containing created entity or error
                     List of tuples (result, is_success, value, error)
 
-                """
                 cases: list[
                     tuple[
                         r[t.Tests.object],
@@ -686,7 +640,6 @@ class FlextTestsUtilities(FlextUtilities):
                     r[TEntity]: Result containing created entity or error
                     r with success or failure
 
-                """
                 if value is None:
                     if default_on_none is not None:
                         return r[T].ok(default_on_none)
@@ -710,14 +663,11 @@ class FlextTestsUtilities(FlextUtilities):
                     r[TEntity]: Result containing created entity or error
                     r with True if all required attrs exist
 
-                """
                 missing = [attr for attr in required_attrs if not hasattr(model, attr)]
                 if missing:
                     return r[bool].fail(f"Missing required attributes: {missing}")
                 return r[bool].ok(value=True)
 
-        class RegistryHelpers:
-            """Registry testing helpers - use FlextRegistry directly when possible."""
 
             @staticmethod
             def create_test_registry() -> FlextRegistry:
@@ -727,11 +677,8 @@ class FlextTestsUtilities(FlextUtilities):
                     r[TEntity]: Result containing created entity or error
                     New FlextRegistry instance
 
-                """
                 return FlextRegistry()
 
-        class ConfigHelpers:
-            """Config testing helpers - use FlextSettings directly when possible."""
 
             @staticmethod
             def assert_config_fields(
@@ -746,7 +693,6 @@ class FlextTestsUtilities(FlextUtilities):
                 Raises:
                     AssertionError: If fields don't match
 
-                """
                 for key, expected_value in expected_fields.items():
                     actual_value = (
                         getattr(config, key) if hasattr(config, key) else None
@@ -764,7 +710,6 @@ class FlextTestsUtilities(FlextUtilities):
                 Returns:
                     New FlextSettings instance
 
-                """
                 scalar_overrides: dict[str, core_t.Scalar] = {
                     str(key): _to_scalar(value) for key, value in kwargs.items()
                 }
@@ -785,7 +730,6 @@ class FlextTestsUtilities(FlextUtilities):
                 Yields:
                     None
 
-                """
                 original_values: MutableMapping[str, str | None] = {}
                 if vars_to_clear:
                     for var in vars_to_clear:
@@ -823,7 +767,6 @@ class FlextTestsUtilities(FlextUtilities):
                 Raises:
                     AssertionError: If value doesn't match
 
-                """
                 result = context.get(key)
                 assert result.is_success, (
                     f"Expected success for key '{key}', got: {result.error!r}"
@@ -845,7 +788,6 @@ class FlextTestsUtilities(FlextUtilities):
                     r[TEntity]: Result containing created entity or error
                     New FlextContext instance
 
-                """
                 return FlextContext.create()
 
         class ContainerHelpers:
@@ -864,7 +806,6 @@ class FlextTestsUtilities(FlextUtilities):
                     r[TEntity]: Result containing created entity or error
                     Tuple of (factory function, count getter)
 
-                """
                 count = [0]
 
                 def factory() -> TFactory:
@@ -889,7 +830,6 @@ class FlextTestsUtilities(FlextUtilities):
                     r[TEntity]: Result containing created entity or error
                     Factory function
 
-                """
 
                 def factory() -> TFactory:
                     return return_value
@@ -924,7 +864,6 @@ class FlextTestsUtilities(FlextUtilities):
                     r[TEntity]: Result containing created entity or error
                     Handler configuration model
 
-                """
                 h_type = handler_type or c.Cqrs.HandlerType.COMMAND
                 h_mode = handler_mode or h_type
                 return m.Handler(
@@ -956,7 +895,6 @@ class FlextTestsUtilities(FlextUtilities):
                     expected_error: Expected error substring on failure
                     description: Test case description for error messages
 
-                """
                 result = operation()
                 if expected_error is not None:
                     assert result.is_failure, (
@@ -996,7 +934,6 @@ class FlextTestsUtilities(FlextUtilities):
                     r[TEntity]: Result containing created entity or error
                     List of test case dictionaries
 
-                """
                 cases: list[MutableMapping[str, t.Tests.object]] = []
                 for desc, data, expected in zip(
                     descriptions, input_data_list, expected_results, strict=True
@@ -1033,7 +970,6 @@ class FlextTestsUtilities(FlextUtilities):
                     r[TEntity]: Result containing created entity or error
                     Test case dictionary
 
-                """
                 result: MutableMapping[str, t.Tests.object] = {
                     "operation": operation,
                     "description": description,
@@ -1057,7 +993,6 @@ class FlextTestsUtilities(FlextUtilities):
                 Raises:
                     AssertionError: If result doesn't match expectation
 
-                """
                 result = operation()
                 expected = test_case.get("expected_result")
                 assert result == expected, f"Expected {expected}, got {result}"
@@ -1083,7 +1018,6 @@ class FlextTestsUtilities(FlextUtilities):
                 Returns:
                     r[list[TEntity]]: Result containing list of entities or error
 
-                """
                 ids_removal = remove_ids or [False] * len(names)
                 entities: list[TEntity] = []
                 dh = FlextTestsUtilities.Tests.DomainHelpers
@@ -1123,7 +1057,6 @@ class FlextTestsUtilities(FlextUtilities):
                 Returns:
                     TEntity: Created entity instance
 
-                """
                 entity = entity_class(name=name, value=value)
                 if remove_id and hasattr(entity, "unique_id"):
                     delattr(entity, "unique_id")
@@ -1143,7 +1076,6 @@ class FlextTestsUtilities(FlextUtilities):
                 Returns:
                     TValue: Created value object instance
 
-                """
                 return value_class(data=data, count=count)
 
             @staticmethod
@@ -1163,7 +1095,6 @@ class FlextTestsUtilities(FlextUtilities):
                     r[TEntity]: Result containing created entity or error
                     List of created value objects
 
-                """
                 return [
                     FlextTestsUtilities.Tests.DomainHelpers.create_test_value_object_instance(
                         data=data, count=count, value_class=value_class
@@ -1188,7 +1119,6 @@ class FlextTestsUtilities(FlextUtilities):
                     r[TEntity]: Result containing created entity or error
                     Operation result (type depends on operation)
 
-                """
                 if not hasattr(FlextUtilities, operation):
                     msg = f"Unknown operation: {operation}"
                     raise ValueError(msg)
@@ -1215,7 +1145,6 @@ class FlextTestsUtilities(FlextUtilities):
                     r[TEntity]: Result containing created entity or error
                     Metadata object with attributes as dict
 
-                """
                 return {"attributes": attributes, **attributes}
 
         class BadObjects:
@@ -1268,7 +1197,6 @@ class FlextTestsUtilities(FlextUtilities):
                     r[TEntity]: Result containing created entity or error
                     Compiled regex pattern
 
-                """
                 parts = pattern_attr.split(".")
                 current: object = c
                 for part in parts:
@@ -1287,7 +1215,6 @@ class FlextTestsUtilities(FlextUtilities):
                     r[TEntity]: Result containing created entity or error
                     The constant value at the given path
 
-                """
                 parts = path.split(".")
                 current: object = c
                 for part in parts:
@@ -1297,18 +1224,16 @@ class FlextTestsUtilities(FlextUtilities):
         class Assertions:
             """Common assertion helpers — delegates to Tests.Result (compat).
 
-            .. deprecated::
-                Use ``u.Tests.Result`` directly for assert_result_failure /
+                Use ``u.Result`` directly for assert_result_failure /
                 assert_result_success. Only ``assert_result_matches_expected``
                 is unique to this namespace.
-            """
 
             @staticmethod
             def assert_result_failure[TResult](
                 result: r[TResult], expected_error: str | None = None
             ) -> str:
                 """Delegate to Result.assert_failure."""
-                return FlextTestsUtilities.Tests.Result.assert_failure(
+                return FlextTestsUtilities.assert_failure(
                     result, expected_error
                 )
 
@@ -1328,7 +1253,6 @@ class FlextTestsUtilities(FlextUtilities):
                 Raises:
                     AssertionError: If result is not instance of expected_type
 
-                """
                 assert isinstance(result, expected_type), (
                     f"Expected {expected_type.__name__}, got {type(result).__name__}{(f' for {description}' if description else '')}"
                 )
@@ -1336,14 +1260,13 @@ class FlextTestsUtilities(FlextUtilities):
             @staticmethod
             def assert_result_success[TResult](result: r[TResult]) -> TResult:
                 """Delegate to Result.assert_success."""
-                return FlextTestsUtilities.Tests.Result.assert_success(result)
+                return FlextTestsUtilities.assert_success(result)
 
         class Files:
             """File utilities for test file operations.
 
             Provides reusable helper functions for file operations that can be
             used by FlextTestsFiles and other test utilities.
-            """
 
             @staticmethod
             def compute_hash(path: Path, chunk_size: int | None = None) -> str:
@@ -1357,7 +1280,6 @@ class FlextTestsUtilities(FlextUtilities):
                     r[TEntity]: Result containing created entity or error
                     SHA256 hash as hex string
 
-                """
                 size = chunk_size or c.Tests.Files.HASH_CHUNK_SIZE
                 sha256 = hashlib.sha256()
                 with path.open("rb") as f:
@@ -1382,7 +1304,6 @@ class FlextTestsUtilities(FlextUtilities):
                     r[TEntity]: Result containing created entity or error
                     Detected format string
 
-                """
                 if fmt != c.Tests.Files.Format.AUTO:
                     return fmt
                 if isinstance(content, bytes):
@@ -1410,7 +1331,6 @@ class FlextTestsUtilities(FlextUtilities):
                     r[TEntity]: Result containing created entity or error
                     Detected format string
 
-                """
                 if fmt != c.Tests.Files.Format.AUTO:
                     return fmt
                 return c.Tests.Files.get_format(path.suffix)
@@ -1428,7 +1348,6 @@ class FlextTestsUtilities(FlextUtilities):
                     r[TEntity]: Result containing created entity or error
                     Human-readable size string like "1.2 KB"
 
-                """
                 return c.Tests.Files.format_size(size)
 
             @staticmethod
@@ -1451,7 +1370,6 @@ class FlextTestsUtilities(FlextUtilities):
                     r[TEntity]: Result containing created entity or error
                     List of rows (each row is list of strings)
 
-                """
                 delim = delimiter or c.Tests.Files.DEFAULT_CSV_DELIMITER
                 enc = encoding or c.Tests.Files.DEFAULT_ENCODING
                 with path.open(newline="", encoding=enc) as f:
@@ -1478,7 +1396,6 @@ class FlextTestsUtilities(FlextUtilities):
                     delimiter: CSV delimiter (default: from constants)
                     encoding: File encoding (default: from constants)
 
-                """
                 delim = delimiter or c.Tests.Files.DEFAULT_CSV_DELIMITER
                 enc = encoding or c.Tests.Files.DEFAULT_ENCODING
                 with path.open("w", newline="", encoding=enc) as f:
@@ -1494,7 +1411,6 @@ class FlextTestsUtilities(FlextUtilities):
 
             Provides reusable helper functions for validators. All validators
             should use these instead of implementing their own versions.
-            """
 
             @staticmethod
             def create_violation(
@@ -1517,7 +1433,6 @@ class FlextTestsUtilities(FlextUtilities):
                     r[TEntity]: Result containing created entity or error
                     Violation model instance
 
-                """
                 severity, desc = c.Tests.Validator.Rules.get(rule_id)
                 description = f"{desc}: {extra_desc}" if extra_desc else desc
                 line = lines[line_number - 1] if line_number <= len(lines) else ""
@@ -1542,7 +1457,6 @@ class FlextTestsUtilities(FlextUtilities):
                     r[TEntity]: Result containing created entity or error
                     Line number (1-indexed) or 1 if not found
 
-                """
                 for i, line in enumerate(lines, start=1):
                     if pattern in line:
                         return i
@@ -1559,7 +1473,6 @@ class FlextTestsUtilities(FlextUtilities):
                     r[TEntity]: Result containing created entity or error
                     Set of exception names found
 
-                """
                 names: set[str] = set()
                 if isinstance(exc_type, ast.Name):
                     names.add(exc_type.id)
@@ -1581,7 +1494,6 @@ class FlextTestsUtilities(FlextUtilities):
                     r[TEntity]: Result containing created entity or error
                     Parent node or None if not found
 
-                """
                 for parent in ast.walk(tree):
                     for child in ast.iter_child_nodes(parent):
                         if child is node:
@@ -1599,7 +1511,6 @@ class FlextTestsUtilities(FlextUtilities):
                     r[TEntity]: Result containing created entity or error
                     True if node represents typing.Any type annotation
 
-                """
                 return (
                     (isinstance(node, ast.Name) and node.id == "Any")
                     or (isinstance(node, ast.Attribute) and node.attr == "Any")
@@ -1621,7 +1532,6 @@ class FlextTestsUtilities(FlextUtilities):
                     r[TEntity]: Result containing created entity or error
                     True if file matches any approved pattern for this rule
 
-                """
                 patterns = approved.get(rule_id, [])
                 file_str = str(file_path)
                 return any(re.search(pattern, file_str) for pattern in patterns)
@@ -1639,7 +1549,6 @@ class FlextTestsUtilities(FlextUtilities):
                     r[TEntity]: Result containing created entity or error
                     True if body contains only pass or ellipsis (...)
 
-                """
                 if len(body) == 1:
                     stmt = body[0]
                     if isinstance(stmt, ast.Pass):
@@ -1668,7 +1577,6 @@ class FlextTestsUtilities(FlextUtilities):
                     True if pattern appears in real code comment (after #),
                     not inside a string literal (single/double/triple quoted)
 
-                """
                 match = pattern.search(line)
                 if not match:
                     return False
@@ -1725,7 +1633,6 @@ class FlextTestsUtilities(FlextUtilities):
 
             All operations delegate to FlextUtilities.extract() for
             path extraction, ensuring consistency with flext-core patterns.
-            """
 
             @staticmethod
             def match(
@@ -1752,7 +1659,7 @@ class FlextTestsUtilities(FlextUtilities):
                     DeepMatchResult with match status and details
 
                 Examples:
-                    result = u.Tests.DeepMatch.match(
+                    result = u.DeepMatch.match(
                         data,
                         {
                             "user.name": "John",
@@ -1763,7 +1670,6 @@ class FlextTestsUtilities(FlextUtilities):
                     if not result.matched:
                         raise AssertionError(f"Failed at {result.path}: {result.reason}")
 
-                """
                 if isinstance(obj, BaseModel):
                     dumped = obj.model_dump(mode="python")
                     source_obj = {
@@ -1825,7 +1731,6 @@ class FlextTestsUtilities(FlextUtilities):
 
             All operations delegate to FlextUtilities.chk() for validation,
             ensuring consistency with flext-core patterns.
-            """
 
             @staticmethod
             def validate(value: t.Tests.object, spec: int | tuple[int, int]) -> bool:
@@ -1843,11 +1748,10 @@ class FlextTestsUtilities(FlextUtilities):
                     True if length matches spec, False otherwise
 
                 Examples:
-                    u.Tests.Length.validate("hello", 5)           # Exact: True
-                    u.Tests.Length.validate([1, 2, 3], (1, 10))  # Range: True
-                    u.Tests.Length.validate("hi", 5)              # Exact: False
+                    u.Length.validate("hello", 5)           # Exact: True
+                    u.Length.validate([1, 2, 3], (1, 10))  # Range: True
+                    u.Length.validate("hi", 5)              # Exact: False
 
-                """
                 try:
                     if not isinstance(value, Sized):
                         return False

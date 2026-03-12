@@ -21,18 +21,18 @@ from ._models import _FrozenEntity, _SampleEntity
 
 
 class TestDomainLogger:
-    """Tests for u.Domain.logger property."""
+    """Tests for u.logger property."""
 
     def test_logger_property_returns_logger(self) -> None:
         """Logger property returns a structlog logger (line 32)."""
-        domain_util = u.Domain()
+        domain_util = u()
         logger = domain_util.logger
         assert logger is not None
         assert hasattr(logger, "info")
 
 
 class TestDomainHashValue:
-    """Tests for u.Domain.hash_value_object_by_value()."""
+    """Tests for u.hash_value_object_by_value()."""
 
     def test_hash_with_hashable_non_primitive(self) -> None:
         """Hashable non-primitive value in model_dump is repr'd (line 156)."""
@@ -42,7 +42,7 @@ class TestDomainHashValue:
             created: datetime = datetime(2025, 1, 1, tzinfo=UTC)
 
         entity = EntityWithDate()
-        result = u.Domain.hash_value_object_by_value(entity)
+        result = u.hash_value_object_by_value(entity)
         assert isinstance(result, int)
 
     def test_hash_with_non_hashable_value(self) -> None:
@@ -53,22 +53,22 @@ class TestDomainHashValue:
             tags: list[str] = Field(default_factory=lambda: ["a", "b"])
 
         entity = EntityWithList()
-        result = u.Domain.hash_value_object_by_value(entity)
+        result = u.hash_value_object_by_value(entity)
         assert isinstance(result, int)
 
 
 class TestValidateValueImmutable:
-    """Tests for u.Domain.validate_value_object_immutable()."""
+    """Tests for u.validate_value_object_immutable()."""
 
     def test_frozen_model_is_immutable(self) -> None:
         """Pydantic model with frozen=True detected as immutable (lines 197-200)."""
         entity = _FrozenEntity()
-        assert u.Domain.validate_value_object_immutable(entity) is True
+        assert u.validate_value_object_immutable(entity) is True
 
     def test_non_frozen_model_checks_setattr(self) -> None:
         """Non-frozen Pydantic model checks __setattr__ override."""
         entity = _SampleEntity()
-        result = u.Domain.validate_value_object_immutable(entity)
+        result = u.validate_value_object_immutable(entity)
         assert isinstance(result, bool)
 
     def test_plain_object_is_mutable(self) -> None:
@@ -79,7 +79,7 @@ class TestValidateValueImmutable:
 
         obj = PlainObj()
         assert (
-            u.Domain.validate_value_object_immutable(
+            u.validate_value_object_immutable(
                 cast("object", cast("object", obj)),
             )
             is False
@@ -87,7 +87,7 @@ class TestValidateValueImmutable:
 
     def test_object_without_model_config(self) -> None:
         """Object without model_config just checks __setattr__."""
-        result = u.Domain.validate_value_object_immutable("hello")
+        result = u.validate_value_object_immutable("hello")
         assert isinstance(result, bool)
 
 
@@ -112,13 +112,13 @@ def test_validate_value_object_immutable_exception_and_no_setattr_branch() -> No
             return object.__getattribute__(self, name)
 
     assert (
-        u.Domain.validate_value_object_immutable(
+        u.validate_value_object_immutable(
             cast("object", cast("object", _BrokenConfig())),
         )
         is False
     )
     assert (
-        u.Domain.validate_value_object_immutable(
+        u.validate_value_object_immutable(
             cast("object", cast("object", _NoSetattrVisible())),
         )
         is False

@@ -44,7 +44,7 @@ def test_implements_decorator_validation_error_message() -> None:
     assert c.Errors.UNKNOWN_ERROR
     assert r[int].ok(1).is_success
     assert isinstance(m.ConfigMap(root={}), m.ConfigMap)
-    assert isinstance(u.Conversion.to_str_list(1), list)
+    assert isinstance(u.to_str_list(1), list)
 
     def _create_invalid() -> type:
         @p.implements(_RequirePing)

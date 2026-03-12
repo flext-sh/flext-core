@@ -142,7 +142,7 @@ class FlextUtilitiesConfiguration:
             # In namespace config classes (e.g., FlextLdapSettings)
             model_config = SettingsConfigDict(
                 env_prefix="FLEXT_LDAP_",
-                env_file=u.Configuration.resolve_env_file(),
+                env_file=u.resolve_env_file(),
                 ...
             )
 

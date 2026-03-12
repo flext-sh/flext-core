@@ -91,7 +91,7 @@ def _norm_list_dict(*_args: object, **_kwargs: t.Scalar) -> dict[str, str]:
 def test_parser_safe_length_and_parse_delimited_error_paths(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    parser = u.Parser()
+    parser = u()
     sample: object = "ok"
     assert sample == "ok"
     assert isinstance(c.Processing.PATTERN_TUPLE_MIN_LENGTH, int)
@@ -119,37 +119,37 @@ def test_parser_safe_length_and_parse_delimited_error_paths(
 def test_parser_split_and_normalize_exception_paths(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    parser = u.Parser()
+    parser = u()
     monkeypatch.setattr(parser, "_safe_text_length", _safe_length_abc)
     assert parser._get_safe_text_length("abc") == -1
     monkeypatch.setattr(parser, "_process_escape_splitting", _fail_escape_split)
     split_result = parser._execute_escape_splitting("a,b", ",", "\\")
     assert split_result.is_failure
     text_obj = cast("str", cast("object", _BoolRaises()))
-    normal_split = u.Parser().split_on_char_with_escape(text_obj, ",")
+    normal_split = u().split_on_char_with_escape(text_obj, ",")
     assert normal_split.is_failure
-    parser2 = u.Parser()
+    parser2 = u()
     monkeypatch.setattr(parser2, "_safe_text_length", _raise_type_error_value)
     normalized = parser2.normalize_whitespace("x")
     assert normalized.is_success
-    regex_fail = u.Parser().normalize_whitespace("abc", pattern="[", replacement="x")
+    regex_fail = u().normalize_whitespace("abc", pattern="[", replacement="x")
     assert regex_fail.is_failure
 
 
 def test_parser_pipeline_and_pattern_branches(monkeypatch: pytest.MonkeyPatch) -> None:
-    parser = u.Parser()
+    parser = u()
     monkeypatch.setattr(parser, "_safe_text_length", _raise_type_error_value)
     ok = parser.apply_regex_pipeline("abc", [("a", "b")])
     assert ok.is_success
     monkeypatch.setattr(parser, "_handle_pipeline_edge_cases", _fail_pipeline_continue)
     none_text = parser.apply_regex_pipeline(None, [("a", "b")])
     assert none_text.is_failure
-    parser2 = u.Parser()
+    parser2 = u()
     monkeypatch.setattr(parser2, "_process_all_patterns", _raise_runtime_boom)
     monkeypatch.setattr(parser2, "_safe_text_length", _raise_type_error_value)
     fail = parser2.apply_regex_pipeline("abc", [("a", "b")])
     assert fail.is_failure
-    str_conversion_result = u.Parser()._extract_key_from_str_conversion(
+    str_conversion_result = u()._extract_key_from_str_conversion(
         cast("object", cast("object", _StrRaises())),
     )
     assert str_conversion_result.is_failure
@@ -160,7 +160,7 @@ def test_parser_pipeline_and_pattern_branches(monkeypatch: pytest.MonkeyPatch) -
             msg = "bad"
             raise TypeError(msg)
 
-    parser3 = u.Parser()
+    parser3 = u()
     original_hasattr = hasattr
 
     def _patched_hasattr(obj: object, name: str) -> bool:
@@ -195,7 +195,7 @@ def test_parser_pipeline_and_pattern_branches(monkeypatch: pytest.MonkeyPatch) -
 def test_parser_parse_helpers_and_primitive_coercion_branches(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    parser = u.Parser()
+    parser = u()
     assert parser._parse_find_first([1, 2], lambda v: v > 5).is_failure
     assert parser._parse_normalize_compare("x", 1) is False
     assert parser._parse_normalize_str(123, case="lower") == "123"
@@ -238,14 +238,14 @@ def test_parser_parse_helpers_and_primitive_coercion_branches(
     assert primitive_float is not None and primitive_float.is_success
     assert primitive_str is not None and primitive_str.is_success
     monkeypatch.setattr(
-        u.Parser.__mro__[1],
+        u.__mro__[1],
         "_coerce_to_float",
         staticmethod(_raise_value_error_float),
     )
     failed_float = parser._parse_try_primitive("x", float, 1.2, None, "field: ")
     assert failed_float is not None and failed_float.is_failure
     monkeypatch.setattr(
-        u.Parser.__mro__[1],
+        u.__mro__[1],
         "_coerce_to_bool",
         staticmethod(_raise_type_error_bool),
     )
@@ -265,7 +265,7 @@ def test_parser_parse_helpers_and_primitive_coercion_branches(
 
 
 def test_parser_convert_and_norm_branches(monkeypatch: pytest.MonkeyPatch) -> None:
-    parser = u.Parser()
+    parser = u()
 
     class _BadStr:
         @override
@@ -314,16 +314,16 @@ def test_parser_convert_and_norm_branches(monkeypatch: pytest.MonkeyPatch) -> No
         parser.norm_in("a", cast("list[str]", object()), case="lower")
     assert mapping_result is True
     assert config_map_result is True
-    original_norm_list = u.Parser.norm_list
-    monkeypatch.setattr(u.Parser.__mro__[1], "norm_list", staticmethod(_norm_list_dict))
+    original_norm_list = u.norm_list
+    monkeypatch.setattr(u.__mro__[1], "norm_list", staticmethod(_norm_list_dict))
     try:
         assert parser.norm_in("v", ["x"], case="lower") is False
     finally:
-        monkeypatch.setattr(u.Parser.__mro__[1], "norm_list", original_norm_list)
+        monkeypatch.setattr(u.__mro__[1], "norm_list", original_norm_list)
 
 
 def test_parser_success_and_edge_paths_cover_major_branches() -> None:
-    parser = u.Parser()
+    parser = u()
     opts = m.CollectionsParseOptions(
         strip=True,
         remove_empty=True,
@@ -346,7 +346,7 @@ def test_parser_success_and_edge_paths_cover_major_branches() -> None:
 
 
 def test_parser_internal_helpers_additional_coverage() -> None:
-    parser = u.Parser()
+    parser = u()
     mapped = parser._extract_key_from_mapping({"name": "n1", "id": "i1"})
     attrs = parser._extract_key_from_attributes(
         cast("object", cast("object", type("Obj", (), {"id": "x1"})())),
@@ -372,7 +372,7 @@ def test_parser_internal_helpers_additional_coverage() -> None:
 
 
 def test_parser_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> None:
-    parser = u.Parser()
+    parser = u()
     assert parser._coerce_to_float([]).is_failure
 
     class _ValueEnum(StrEnum):
@@ -388,14 +388,14 @@ def test_parser_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> None:
     )
     assert enum_by_member_value is not None and enum_by_member_value.is_success
     monkeypatch.setattr(
-        u.Parser.__mro__[1],
+        u.__mro__[1],
         "_coerce_to_int",
         staticmethod(_raise_value_error_int),
     )
     failed_int = parser._parse_try_primitive("x", int, 1, None, "field: ")
     assert failed_int is not None and failed_int.is_failure
     monkeypatch.setattr(
-        u.Parser.__mro__[1],
+        u.__mro__[1],
         "_coerce_to_str",
         staticmethod(_raise_type_error_str),
     )

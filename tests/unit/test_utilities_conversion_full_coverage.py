@@ -20,7 +20,7 @@ def test_conversion_string_and_join_paths() -> None:
     assert isinstance(m.Categories(), m.Categories)
     assert r[int].ok(1).is_success
     assert isinstance(m.ConfigMap.model_validate({"a": 1}), m.ConfigMap)
-    assert u.Conversion.to_str_list(None) == []
-    assert u.Conversion.normalize("Ab") == "Ab"
-    assert u.Conversion.join([]) == ""
-    assert u.Conversion.join(["A", "B"], case="lower") == "a b"
+    assert u.to_str_list(None) == []
+    assert u.normalize("Ab") == "Ab"
+    assert u.join([]) == ""
+    assert u.join(["A", "B"], case="lower") == "a b"

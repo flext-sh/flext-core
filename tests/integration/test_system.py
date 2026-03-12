@@ -136,7 +136,7 @@ class TestCompleteFlextSystemIntegration:
         assert len(generated_id) == 36
         uuid_obj = uuid.UUID(generated_id)
         assert str(uuid_obj) == generated_id
-        timestamp = u.Generators.generate_iso_timestamp()
+        timestamp = u.generate_iso_timestamp()
         assert isinstance(timestamp, str)
         assert len(timestamp) > 0
         try:
@@ -182,13 +182,13 @@ class TestCompleteFlextSystemIntegration:
                 )
             dados_processados: dict[str, str] = {}
             for key, value in dados.items():
-                if not u.Guards.is_string_non_empty(value):
+                if not u.is_string_non_empty(value):
                     return r[dict[str, str]].fail(
                         f"Campo '{key}' não pode estar vazio",
                         error_code=FlextConstants.Errors.VALIDATION_ERROR,
                     )
                 dados_processados[key] = f"processado_{value}"
-            dados_processados["processado_em"] = u.Generators.generate_iso_timestamp()
+            dados_processados["processado_em"] = u.generate_iso_timestamp()
             dados_processados["processado_por"] = "sistema_flext"
             return r[dict[str, str]].ok(dados_processados)
 

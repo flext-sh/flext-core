@@ -5,13 +5,30 @@ from __future__ import annotations
 import sys
 import types
 from collections.abc import Callable, Mapping
-from typing import ClassVar, Self, cast
+from typing import ClassVar, Protocol, Self, cast
 
 import pytest
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings as _BaseSettings
 
 from flext_core import FlextContainer, FlextContext, FlextSettings, m, r, t
+
+
+class _MonkeyPatchProtocol(Protocol):
+    def setattr(
+        self,
+        target: object,
+        name: object = None,
+        value: object = None,
+        raising: bool = True,
+    ) -> None: ...
+    def setitem(self, dic: object, name: object, value: object) -> None: ...
+    def delitem(self, dic: object, name: object, raising: bool = True) -> None: ...
+    def delattr(self, target: object, name: object, raising: bool = True) -> None: ...
+    def setenv(self, name: str, value: str, prepend: str | None = None) -> None: ...
+    def delenv(self, name: str, raising: bool = True) -> None: ...
+    def syspath_prepend(self, path: object) -> None: ...
+    def chdir(self, path: object) -> None: ...
 
 
 class _FalseConfig:
@@ -44,13 +61,13 @@ class _ContextNoClone:
     def clone(self) -> _ContextNoClone:
         return self
 
-    def get(self, key: str, scope: str = "") -> r[t.Container]:
-        return r[t.Container].fail("err")
+    def get(self, key: str, scope: str = "") -> r[t.Container | BaseModel]:
+        return r[t.Container | BaseModel].fail("err")
 
     def set(
         self,
         key_or_data: str | m.ConfigMap,
-        value: t.Container | None = None,
+        value: t.Container | BaseModel | None = None,
         *,
         scope: str = "",
     ) -> r[bool]:
@@ -126,7 +143,7 @@ def test_protocol_name_and_builder() -> None:
     assert isinstance(FlextContainer.Builder.create(), FlextContainer)
 
 
-def test_create_auto_register_factories_path(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_create_auto_register_factories_path(monkeypatch: _MonkeyPatchProtocol) -> None:
     container = FlextContainer.create()
     called: list[str] = []
 
@@ -164,7 +181,7 @@ def test_create_auto_register_factories_path(monkeypatch: pytest.MonkeyPatch) ->
     assert "x" in called
 
 
-def test_provide_property_paths(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_provide_property_paths(monkeypatch: _MonkeyPatchProtocol) -> None:
     c = FlextContainer.create()
     monkeypatch.setattr(c, "_di_bridge", _BridgeGoodProvide())
     assert c.provide("x") == "x"
@@ -177,7 +194,7 @@ def test_provide_property_paths(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def test_config_context_properties_and_defaults(
-    monkeypatch: pytest.MonkeyPatch,
+    monkeypatch: _MonkeyPatchProtocol,
 ) -> None:
     c = FlextContainer.create()
     c._config = None
@@ -193,7 +210,9 @@ def test_config_context_properties_and_defaults(
     assert isinstance(c._get_default_config(), FlextSettings)
 
 
-def test_initialize_di_components_error_paths(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_initialize_di_components_error_paths(
+    monkeypatch: _MonkeyPatchProtocol,
+) -> None:
     c = FlextContainer.create()
     bad_bridge = types.SimpleNamespace(config="not-provider")
     monkeypatch.setattr(
@@ -204,7 +223,7 @@ def test_initialize_di_components_error_paths(monkeypatch: pytest.MonkeyPatch) -
         c.initialize_di_components()
 
 
-def test_sync_config_namespace_paths(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_sync_config_namespace_paths(monkeypatch: _MonkeyPatchProtocol) -> None:
     c = FlextContainer.create()
     c._config = FlextSettings()
     c._user_overrides = m.ConfigMap(root={})
@@ -236,7 +255,7 @@ def test_sync_config_namespace_paths(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def test_register_existing_providers_skips_and_register_core_fallback(
-    monkeypatch: pytest.MonkeyPatch,
+    monkeypatch: _MonkeyPatchProtocol,
 ) -> None:
     c = FlextContainer.create()
     c._services = {
@@ -255,7 +274,7 @@ def test_register_existing_providers_skips_and_register_core_fallback(
 
 
 def test_configure_with_resource_register_and_factory_error_paths(
-    monkeypatch: pytest.MonkeyPatch,
+    monkeypatch: _MonkeyPatchProtocol,
 ) -> None:
     c = FlextContainer.create()
     c._user_overrides = m.ConfigMap(root={})
@@ -336,7 +355,7 @@ def test_misc_unregistration_clear_and_reset() -> None:
     assert instance._global_instance is instance
 
 
-def test_scoped_config_context_branches(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_scoped_config_context_branches(monkeypatch: _MonkeyPatchProtocol) -> None:
     c = FlextContainer.create()
     c._services = {}
     c._factories = {}
@@ -370,7 +389,7 @@ def test_scoped_config_context_branches(monkeypatch: pytest.MonkeyPatch) -> None
 
 
 def test_create_auto_register_factory_wrapper_callable_and_non_callable(
-    monkeypatch: pytest.MonkeyPatch,
+    monkeypatch: _MonkeyPatchProtocol,
 ) -> None:
     captured: dict[str, Callable[..., object]] = {}
 
@@ -420,7 +439,7 @@ def test_create_auto_register_factory_wrapper_callable_and_non_callable(
 
 
 def test_initialize_di_components_second_type_error_branch(
-    monkeypatch: pytest.MonkeyPatch,
+    monkeypatch: _MonkeyPatchProtocol,
 ) -> None:
     c = FlextContainer.create()
     bad_bridge = types.SimpleNamespace(config=None)
@@ -433,7 +452,9 @@ def test_initialize_di_components_second_type_error_branch(
         c.initialize_di_components()
 
 
-def test_sync_config_registers_namespace_factories_and_fallbacks(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_sync_config_registers_namespace_factories_and_fallbacks(
+    monkeypatch: _MonkeyPatchProtocol,
+) -> None:
     c = FlextContainer.create()
 
     class _NsAlpha(_BaseSettings):
@@ -487,7 +508,9 @@ def test_sync_config_registers_namespace_factories_and_fallbacks(monkeypatch: py
         FlextSettings._namespace_registry.update(original_registry)
 
 
-def test_register_existing_providers_full_paths_and_misc_methods(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_register_existing_providers_full_paths_and_misc_methods(
+    monkeypatch: _MonkeyPatchProtocol,
+) -> None:
     c = FlextContainer.create()
     c._services = {
         "s1": m.ServiceRegistration(name="s1", service="v", service_type="str"),
@@ -579,7 +602,9 @@ def test_additional_register_factory_and_unregister_paths() -> None:
     assert c.unregister("not-there").is_failure
 
 
-def test_container_remaining_branch_paths_in_sync_factory_and_getters(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_container_remaining_branch_paths_in_sync_factory_and_getters(
+    monkeypatch: _MonkeyPatchProtocol,
+) -> None:
     c = FlextContainer.create()
     c._global_config = m.ContainerConfig(
         enable_singleton=True,
@@ -650,8 +675,11 @@ def test_container_remaining_branch_paths_in_sync_factory_and_getters(monkeypatc
             max_services=10,
             max_factories=10,
         )
+        c2._factories = {}
         c2.register("fac-call", lambda: "value", kind="factory")
-        assert c2._factories["fac-call"].factory() == "value"
+        fac_call = c2.get("fac-call")
+        assert fac_call.is_success
+        assert fac_call.value == "value"
         c2._factories = {
             "boom": m.FactoryRegistration(
                 name="boom",

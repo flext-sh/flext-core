@@ -571,14 +571,14 @@ class TestFlextTestsBuilders:
             builder1.merge_from(builder2, strategy="invalid")
 
     def test_add_uses_model_from_kwargs(self) -> None:
-        """Test add() uses u.Model.from_kwargs() for validation."""
+        """Test add() uses u.from_kwargs() for validation."""
         builder = tb()
         builder.add("value", value=42, count=1)
         data = _as_builder_dict(builder.build())
         assert data["value"] == 42
 
     def test_build_uses_model_from_kwargs(self) -> None:
-        """Test build() uses u.Model.from_kwargs() for validation."""
+        """Test build() uses u.from_kwargs() for validation."""
         builder = tb()
         builder.add("x", 1)
         data_raw = builder.build(filter_none=True)
@@ -586,7 +586,7 @@ class TestFlextTestsBuilders:
         assert data["x"] == 1
 
     def test_to_result_uses_model_from_kwargs(self) -> None:
-        """Test to_result() uses u.Model.from_kwargs() for validation."""
+        """Test to_result() uses u.from_kwargs() for validation."""
         builder = tb()
         builder.add("x", 1)
         result_raw = builder.to_result(unwrap=False)
@@ -611,7 +611,7 @@ class TestFlextTestsBuilders:
         assert merged["b"] == 2
 
     def test_data_transform_uses_collection_map(self) -> None:
-        """Test tb.Tests.Data.transform() uses u.Collection.map()."""
+        """Test tb.Tests.Data.transform() uses u.map()."""
         doubled = tb.Tests.Data.transform([1, 2, 3], lambda x: x * 2)
         assert doubled == [2, 4, 6]
 

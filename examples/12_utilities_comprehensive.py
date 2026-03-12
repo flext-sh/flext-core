@@ -75,7 +75,7 @@ class UtilitiesService(FlextService[m.ConfigMap]):
         print("\n=== Type Conversions ===")
         number_str = str(TEST_DATA["number_str"])
         float_str = str(TEST_DATA["float_str"])
-        parser = u.Parser()
+        parser = u()
         delimited_result = parser.parse_delimited("a,b,c", ",").map(
             lambda parsed: print(f"✅ Delimited parsing: {parsed}")
         )
@@ -122,7 +122,7 @@ class UtilitiesService(FlextService[m.ConfigMap]):
     def _demonstrate_string_parsing() -> None:
         """Show string parsing utilities."""
         print("\n=== String Parsing ===")
-        parser = u.Parser()
+        parser = u()
         options = m.CollectionsParseOptions(strip=True, remove_empty=True)
         delimited_result = parser.parse_delimited("a, b, c", ",", options=options).map(
             lambda parsed: print(f"✅ Delimited parsing: {parsed}")

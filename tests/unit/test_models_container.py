@@ -54,7 +54,7 @@ def _factory_reg_with_metadata(
 
 def _normalize_metadata_obj(value: object) -> m.Metadata:
     """Call normalize_to_metadata with arbitrary object for error-path testing."""
-    fn: Callable[[object], m.Metadata] = getattr(u.Model, "normalize_to_metadata")
+    fn: Callable[[object], m.Metadata] = getattr(u, "normalize_to_metadata")
     return fn(value)
 
 
@@ -225,37 +225,37 @@ class TestFlextModelsContainer:
     ) -> None:
         """Test ContainerConfig creation with various configurations."""
         config = m.ContainerConfig.model_validate(config_dict)
-        assert config.enable_singleton is u.Mapper.get(
+        assert config.enable_singleton is u.get(
             config_dict,
             "enable_singleton",
             default=True,
         )
-        assert config.enable_factory_caching is u.Mapper.get(
+        assert config.enable_factory_caching is u.get(
             config_dict,
             "enable_factory_caching",
             default=True,
         )
-        assert config.max_services == u.Mapper.get(
+        assert config.max_services == u.get(
             config_dict,
             "max_services",
             default=1000,
         )
-        assert config.max_factories == u.Mapper.get(
+        assert config.max_factories == u.get(
             config_dict,
             "max_factories",
             default=500,
         )
-        assert config.enable_auto_registration is u.Mapper.get(
+        assert config.enable_auto_registration is u.get(
             config_dict,
             "enable_auto_registration",
             default=False,
         )
-        assert config.enable_lifecycle_hooks is u.Mapper.get(
+        assert config.enable_lifecycle_hooks is u.get(
             config_dict,
             "enable_lifecycle_hooks",
             default=True,
         )
-        assert config.lazy_loading is u.Mapper.get(
+        assert config.lazy_loading is u.get(
             config_dict,
             "lazy_loading",
             default=True,
@@ -323,19 +323,19 @@ class TestFlextUtilitiesModelNormalizeToMetadata:
 
     def test_normalize_to_metadata_none(self) -> None:
         """Test normalize_to_metadata with None returns empty Metadata."""
-        result = u.Model.normalize_to_metadata(None)
+        result = u.ensure_metadata(None)
         assert hasattr(result, "attributes")
         assert result.attributes == {}
 
     def test_normalize_to_metadata_empty_dict(self) -> None:
         """Test normalize_to_metadata with empty dict."""
-        result = u.Model.normalize_to_metadata(m.ConfigMap(root={}))
+        result = u.ensure_metadata(m.ConfigMap(root={}))
         assert hasattr(result, "attributes")
         assert result.attributes == {}
 
     def test_normalize_to_metadata_with_values(self) -> None:
         """Test normalize_to_metadata with dict containing values."""
-        result = u.Model.normalize_to_metadata(
+        result = u.ensure_metadata(
             m.ConfigMap(root={"key1": "value1", "key2": 42, "key3": True}),
         )
         assert hasattr(result, "attributes")
@@ -346,13 +346,13 @@ class TestFlextUtilitiesModelNormalizeToMetadata:
     def test_normalize_to_metadata_existing_metadata(self) -> None:
         """Test normalize_to_metadata with existing Metadata instance."""
         existing = m.Metadata(attributes={"existing": "value"})
-        result = u.Model.normalize_to_metadata(existing)
+        result = u.ensure_metadata(existing)
         assert result is existing
         assert result.attributes["existing"] == "value"
 
     def test_normalize_to_metadata_nested_dict(self) -> None:
         """Test normalize_to_metadata with nested dict values."""
-        result = u.Model.normalize_to_metadata(
+        result = u.ensure_metadata(
             m.ConfigMap(root={"nested": {"level1": {"level2": "value"}}}),
         )
         assert hasattr(result, "attributes")
@@ -364,12 +364,12 @@ class TestFlextUtilitiesModelNormalizeToMetadata:
             TypeError,
             match=r"metadata must be None, dict, or.*Metadata",
         ):
-            u.Model.normalize_to_metadata("invalid_string")
+            u.ensure_metadata("invalid_string")
         with pytest.raises(
             TypeError,
             match=r"metadata must be None, dict, or.*Metadata",
         ):
-            u.Model.normalize_to_metadata(123)
+            u.ensure_metadata(123)
         with pytest.raises(
             TypeError,
             match=r"metadata must be None, dict, or.*Metadata",

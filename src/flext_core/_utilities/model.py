@@ -127,7 +127,7 @@ class FlextUtilitiesModel:
 
         Example:
             >>> user = UserModel(status=Status.ACTIVE, name="John")
-            >>> data = u.Model.dump(user, exclude_none=True)
+            >>> data = u.dump(user, exclude_none=True)
             >>> # {"status": "active", "name": "John"}
 
         """
@@ -150,7 +150,7 @@ class FlextUtilitiesModel:
         and field_validators defined in the model.
 
         Example:
-             result = u.Model.from_kwargs(
+             result = u.from_kwargs(
                  CreateParams,
                  content={"key": "value"},
                  name="file.json",
@@ -184,7 +184,7 @@ class FlextUtilitiesModel:
             r containing model instance or error message.
 
         Example:
-            >>> result = u.Model.load(UserModel, {"status": "active", "name": "John"})
+            >>> result = u.load(UserModel, {"status": "active", "name": "John"})
             >>> if result.is_success:
             ...     user: UserModel = result.value
 
@@ -206,7 +206,7 @@ class FlextUtilitiesModel:
         Example:
              DEFAULTS = {"status": Status.PENDING, "retries": 3}
 
-             result = u.Model.merge_defaults(
+             result = u.merge_defaults(
                  ConfigModel,
                  defaults=DEFAULTS,
                  overrides={"status": "active"},  # Overrides
@@ -223,7 +223,7 @@ class FlextUtilitiesModel:
             return r[M].fail(f"Model validation failed: {e}")
 
     @staticmethod
-    def normalize_to_metadata(
+    def ensure_metadata(
         value: t.Scalar | m.ConfigMap | m.Metadata | None,
     ) -> m.Metadata:
         """Normalize any value to m.Metadata.
@@ -244,11 +244,11 @@ class FlextUtilitiesModel:
             TypeError: If value is not None, dict-like, or Metadata instance
 
         Example:
-            >>> u.Model.normalize_to_metadata(None)
+            >>> u.ensure_metadata(None)
             Metadata(attributes={})
-            >>> u.Model.normalize_to_metadata({"key": "value"})
+            >>> u.ensure_metadata({"key": "value"})
             Metadata(attributes={"key": "value"})
-            >>> u.Model.normalize_to_metadata(Metadata(attributes={"a": 1}))
+            >>> u.ensure_metadata(Metadata(attributes={"a": 1}))
             Metadata(attributes={"a": 1})
 
         """
@@ -282,11 +282,11 @@ class FlextUtilitiesModel:
             Mapping[str, object]: Mapping with Pydantic-safe values
 
         Example:
-            >>> u.Model.normalize_to_pydantic_dict(None)
+            >>> u.normalize_to_pydantic_dict(None)
             {}
-            >>> u.Model.normalize_to_pydantic_dict({"key": "value"})
+            >>> u.normalize_to_pydantic_dict({"key": "value"})
             {"key": "value"}
-            >>> u.Model.normalize_to_pydantic_dict({"obj": SomeModel()})
+            >>> u.normalize_to_pydantic_dict({"obj": SomeModel()})
             {"obj": "SomeModel(...)"}  # Complex types converted to string
 
         """
@@ -304,7 +304,7 @@ class FlextUtilitiesModel:
 
         Example:
              user = UserModel(status=Status.ACTIVE, name="John")
-             result = u.Model.update(user, status="inactive")
+             result = u.update(user, status="inactive")
              # result.value = UserModel with status=Status.INACTIVE
 
         """

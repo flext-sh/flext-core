@@ -64,11 +64,9 @@ class Ex08FlextContainer(Examples):
         config_map = container.get_config()
         max_services = config_map["max_services"]
         enable_factory_caching = config_map["enable_factory_caching"]
-        max_services_num = max_services if u.Guards.is_type(max_services, int) else -1
+        max_services_num = max_services if u.is_type(max_services, int) else -1
         factory_cache_flag = (
-            enable_factory_caching
-            if u.Guards.is_type(enable_factory_caching, bool)
-            else False
+            enable_factory_caching if u.is_type(enable_factory_caching, bool) else False
         )
         self.check(
             "configure.get_config.max_services_matches",

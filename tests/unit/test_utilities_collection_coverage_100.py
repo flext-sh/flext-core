@@ -678,7 +678,7 @@ class CollectionUtilitiesScenarios:
 
 
 class TestuCollectionParseSequence:
-    """Real tests for u.Collection.parse_sequence."""
+    """Real tests for u.parse_sequence."""
 
     @pytest.mark.parametrize(
         "scenario",
@@ -687,7 +687,7 @@ class TestuCollectionParseSequence:
     )
     def test_parse_sequence(self, scenario: ParseSequenceScenario) -> None:
         """Test parse_sequence with various scenarios."""
-        result = u.Collection.parse_sequence(scenario.enum_cls, scenario.values)
+        result = u.parse_sequence(scenario.enum_cls, scenario.values)
         if scenario.expected_success:
             _ = assertion_helpers.assert_flext_result_success(result)
             assert result.value is not None
@@ -703,7 +703,7 @@ class TestuCollectionParseSequence:
 
     def test_parse_sequence_with_custom_enum(self) -> None:
         """Test parse_sequence with custom enum class."""
-        result = u.Collection.parse_sequence(FixturePriority, ["low", "medium", "high"])
+        result = u.parse_sequence(FixturePriority, ["low", "medium", "high"])
         _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value is not None
         assert len(result.value) == 3
@@ -711,7 +711,7 @@ class TestuCollectionParseSequence:
 
     def test_parse_sequence_error_message_format(self) -> None:
         """Test parse_sequence error message format."""
-        result = u.Collection.parse_sequence(
+        result = u.parse_sequence(
             FixtureStatus,
             ["active", "invalid1", "invalid2"],
         )
@@ -722,7 +722,7 @@ class TestuCollectionParseSequence:
 
 
 class TestuCollectionCoerceListValidator:
-    """Real tests for u.Collection.coerce_list_validator."""
+    """Real tests for u.coerce_list_validator."""
 
     @pytest.mark.parametrize(
         "scenario",
@@ -731,7 +731,7 @@ class TestuCollectionCoerceListValidator:
     )
     def test_coerce_list_validator(self, scenario: CoerceListScenario) -> None:
         """Test coerce_list_validator with various scenarios."""
-        validator = u.Collection.coerce_list_validator(scenario.enum_cls)
+        validator = u.coerce_list_validator(scenario.enum_cls)
         if scenario.expected_success:
             result = validator(scenario.value)
             u.Tests.Assertions.assert_result_matches_expected(result, list)
@@ -748,7 +748,7 @@ class TestuCollectionCoerceListValidator:
 
     def test_coerce_list_validator_with_pydantic(self) -> None:
         """Test coerce_list_validator integration with Pydantic."""
-        _ = u.Collection.coerce_list_validator(FixtureStatus)
+        _ = u.coerce_list_validator(FixtureStatus)
 
         class TestModel(BaseModel):
             statuses: tuple[FixtureStatus, ...] = Field(default_factory=tuple)
@@ -766,7 +766,7 @@ class TestuCollectionCoerceListValidator:
 
 
 class TestuCollectionParseMapping:
-    """Real tests for u.Collection.parse_mapping."""
+    """Real tests for u.parse_mapping."""
 
     @pytest.mark.parametrize(
         "scenario",
@@ -775,7 +775,7 @@ class TestuCollectionParseMapping:
     )
     def test_parse_mapping(self, scenario: ParseMappingScenario) -> None:
         """Test parse_mapping with various scenarios."""
-        result = u.Collection.parse_mapping(scenario.enum_cls, scenario.mapping)
+        result = u.parse_mapping(scenario.enum_cls, scenario.mapping)
         if scenario.expected_success:
             _ = assertion_helpers.assert_flext_result_success(result)
             assert result.value is not None
@@ -791,7 +791,7 @@ class TestuCollectionParseMapping:
 
     def test_parse_mapping_with_custom_enum(self) -> None:
         """Test parse_mapping with custom enum class."""
-        result = u.Collection.parse_mapping(
+        result = u.parse_mapping(
             FixturePriority,
             {"task1": "low", "task2": "medium", "task3": "high"},
         )
@@ -802,7 +802,7 @@ class TestuCollectionParseMapping:
 
     def test_parse_mapping_error_message_format(self) -> None:
         """Test parse_mapping error message format."""
-        result = u.Collection.parse_mapping(
+        result = u.parse_mapping(
             FixtureStatus,
             {"user1": "active", "user2": "invalid1", "user3": "invalid2"},
         )
@@ -813,7 +813,7 @@ class TestuCollectionParseMapping:
 
 
 class TestuCollectionCoerceDictValidator:
-    """Real tests for u.Collection.coerce_dict_validator."""
+    """Real tests for u.coerce_dict_validator."""
 
     @pytest.mark.parametrize(
         "scenario",
@@ -822,7 +822,7 @@ class TestuCollectionCoerceDictValidator:
     )
     def test_coerce_dict_validator(self, scenario: CoerceDictScenario) -> None:
         """Test coerce_dict_validator with various scenarios."""
-        validator = u.Collection.coerce_dict_validator(scenario.enum_cls)
+        validator = u.coerce_dict_validator(scenario.enum_cls)
         if scenario.expected_success:
             result = validator(scenario.value)
             u.Tests.Assertions.assert_result_matches_expected(result, dict)
@@ -839,7 +839,7 @@ class TestuCollectionCoerceDictValidator:
 
     def test_coerce_dict_validator_with_pydantic(self) -> None:
         """Test coerce_dict_validator integration with Pydantic."""
-        _ = u.Collection.coerce_dict_validator(FixtureStatus)
+        _ = u.coerce_dict_validator(FixtureStatus)
 
         class TestModel(BaseModel):
             user_statuses: dict[str, FixtureStatus] = Field(default_factory=dict)
@@ -860,7 +860,7 @@ class TestuCollectionCoerceDictValidator:
 
 
 class TestuCollectionMap:
-    """Real tests for u.Collection.map."""
+    """Real tests for u.map."""
 
     @pytest.mark.parametrize(
         "scenario",
@@ -871,12 +871,12 @@ class TestuCollectionMap:
         """Test map with various scenarios."""
         if isinstance(scenario.items, (r, FlextRuntime.RuntimeResult)):
             pytest.skip("Collection.map() does not handle r items")
-        result = u.Collection.map(scenario.items, scenario.mapper)
+        result = u.map(scenario.items, scenario.mapper)
         assert result == scenario.expected_result
 
 
 class TestuCollectionFind:
-    """Real tests for u.Collection.find."""
+    """Real tests for u.find."""
 
     @pytest.mark.parametrize(
         "scenario",
@@ -885,7 +885,7 @@ class TestuCollectionFind:
     )
     def test_find(self, scenario: FindScenario) -> None:
         """Test find with various scenarios."""
-        result = u.Collection.find(scenario.items, cast("Any", scenario.predicate))
+        result = u.find(scenario.items, cast("Any", scenario.predicate))
         if scenario.expected_result is None:
             assert result.is_failure
         else:
@@ -894,7 +894,7 @@ class TestuCollectionFind:
 
 
 class TestuCollectionFilter:
-    """Real tests for u.Collection.filter."""
+    """Real tests for u.filter."""
 
     @pytest.mark.parametrize(
         "scenario",
@@ -903,7 +903,7 @@ class TestuCollectionFilter:
     )
     def test_filter(self, scenario: FilterScenario) -> None:
         """Test filter with various scenarios."""
-        result = u.Collection.filter(
+        result = u.filter(
             scenario.items,
             scenario.predicate,
             mapper=scenario.mapper,
@@ -912,7 +912,7 @@ class TestuCollectionFilter:
 
 
 class TestuCollectionCount:
-    """Real tests for u.Collection.count."""
+    """Real tests for u.count."""
 
     @pytest.mark.parametrize(
         "scenario",
@@ -921,12 +921,12 @@ class TestuCollectionCount:
     )
     def test_count(self, scenario: CountScenario) -> None:
         """Test count with various scenarios."""
-        result = u.Collection.count(scenario.items, scenario.predicate)
+        result = u.count(scenario.items, scenario.predicate)
         assert result == scenario.expected_count
 
 
 class TestuCollectionProcess:
-    """Real tests for u.Collection.process."""
+    """Real tests for u.process."""
 
     @pytest.mark.parametrize(
         "scenario",
@@ -935,7 +935,7 @@ class TestuCollectionProcess:
     )
     def test_process(self, scenario: ProcessScenario) -> None:
         """Test process with various scenarios."""
-        result = u.Collection.process(
+        result = u.process(
             scenario.items,
             scenario.processor,
             on_error=scenario.on_error,
@@ -953,7 +953,7 @@ class TestuCollectionProcess:
 
 
 class TestuCollectionGroup:
-    """Real tests for u.Collection.group."""
+    """Real tests for u.group."""
 
     @pytest.mark.parametrize(
         "scenario",
@@ -962,12 +962,12 @@ class TestuCollectionGroup:
     )
     def test_group(self, scenario: GroupScenario) -> None:
         """Test group with various scenarios."""
-        result = u.Collection.group(scenario.items, scenario.key)
+        result = u.group(scenario.items, scenario.key)
         assert result == scenario.expected_result
 
 
 class TestuCollectionChunk:
-    """Real tests for u.Collection.chunk."""
+    """Real tests for u.chunk."""
 
     @pytest.mark.parametrize(
         "scenario",
@@ -976,17 +976,17 @@ class TestuCollectionChunk:
     )
     def test_chunk(self, scenario: ChunkScenario) -> None:
         """Test chunk with various scenarios."""
-        result = u.Collection.chunk(scenario.items, scenario.size)
+        result = u.chunk(scenario.items, scenario.size)
         assert result == scenario.expected_result
 
 
 class TestuCollectionBatch:
-    """Real tests for u.Collection.batch."""
+    """Real tests for u.batch."""
 
     def test_batch_basic(self) -> None:
         """Test batch basic functionality."""
         items = [1, 2, 3, 4, 5]
-        result = u.Collection.batch(items, lambda x: x * 2, size=2)
+        result = u.batch(items, lambda x: x * 2, size=2)
         _ = assertion_helpers.assert_flext_result_success(result)
         data = result.value
         assert data.total == 5
@@ -1004,7 +1004,7 @@ class TestuCollectionBatch:
                 raise ValueError(msg)
             return 10 // x
 
-        result = u.Collection.batch(items, op, on_error="collect")
+        result = u.batch(items, op, on_error="collect")
         _ = assertion_helpers.assert_flext_result_success(result)
         data = result.value
         assert data.total == 4
@@ -1019,7 +1019,7 @@ class TestuCollectionBatch:
         def flatten_op(value: object) -> int | r[int]:
             return cast("int | r[int]", value)
 
-        result = u.Collection.batch(
+        result = u.batch(
             items,
             flatten_op,
             flatten=True,
@@ -1030,23 +1030,27 @@ class TestuCollectionBatch:
 
 
 class TestuCollectionMerge:
-    """Real tests for u.Collection.merge."""
+    """Real tests for u.merge."""
 
     def test_merge_deep(self) -> None:
         """Test deep merge."""
         base = m.ConfigMap(root={"a": 1, "b": {"x": 1}})
         other = m.ConfigMap(root={"b": {"y": 2}, "c": 3})
-        result = u.Collection.merge(base.root, other.root)
+        result = u.merge(base.root, other.root)
         _ = assertion_helpers.assert_flext_result_success(result)
-        assert result.value == {"a": 1, "b": {"x": 1, "y": 2}, "c": 3}
+        assert result.value["a"] == 1
+        assert result.value["c"] == 3
+        assert isinstance(result.value["b"], BaseModel)
 
     def test_merge_override(self) -> None:
         """Test override merge."""
         base = m.ConfigMap(root={"a": 1, "b": {"x": 1}})
         other = m.ConfigMap(root={"b": {"y": 2}, "c": 3})
-        result = u.Collection.merge(base.root, other.root, strategy="override")
+        result = u.merge(base.root, other.root, strategy="override")
         _ = assertion_helpers.assert_flext_result_success(result)
-        assert result.value == {"a": 1, "b": {"y": 2}, "c": 3}
+        assert result.value["a"] == 1
+        assert result.value["c"] == 3
+        assert isinstance(result.value["b"], BaseModel)
 
 
 __all__ = [

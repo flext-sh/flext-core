@@ -195,7 +195,7 @@ class FlextUtilitiesGuards:
 
         Example:
             >>> from flext_core import u
-            >>> if u.Guards.is_configuration_dict(config):
+            >>> if u.is_configuration_dict(config):
             ...     # config is now typed as m.Dict
             ...     config["key"] = "value"
 
@@ -224,7 +224,7 @@ class FlextUtilitiesGuards:
 
         Example:
             >>> from flext_core import u
-            >>> if u.Guards.is_configuration_mapping(config):
+            >>> if u.is_configuration_mapping(config):
             ...     # config is now typed as m.ConfigMap
             ...     items = config.items()
 
@@ -332,7 +332,7 @@ class FlextUtilitiesGuards:
 
         Example:
             >>> from flext_core import u
-            >>> if u.Guards.is_handler_type(handler):
+            >>> if u.is_handler_type(handler):
             ...     # handler is now typed as t.HandlerLike
             ...     result = container.register("my_handler", handler)
 

@@ -76,11 +76,11 @@ class ConcreteTestHandler(h[object, object]):
     """Concrete implementation of h for testing."""
 
     @override
-    def handle(self, message: object) -> r[object]:
+    def handle(self, message: object) -> r[str]:
         """Handle the message."""
-        return r[object].ok(f"processed_{message}")
+        return r[str].ok(f"processed_{message}")
 
-    def __call__(self, message: object) -> r[object]:
+    def __call__(self, message: object) -> r[str]:
         """Make handler callable for registry validation."""
         return self.handle(message)
 
@@ -492,23 +492,25 @@ class TestFlextRegistry:
     ) -> None:
         """Test safe handler mode extraction."""
         registry = FlextTestsUtilities.Tests.RegistryHelpers.create_test_registry()
-        assert registry._safe_get_handler_mode(mode or "") == expected
+        assert registry._get_handler_mode(mode or "") == expected
 
     @pytest.mark.parametrize(
         ("status", "expected"),
         [
-            ("active", "running"),
-            ("inactive", "failed"),
-            ("invalid", "running"),
-            (None, "running"),
+            ("active", c.Cqrs.CommonStatus.ACTIVE),
+            ("inactive", c.Cqrs.CommonStatus.INACTIVE),
+            ("invalid", c.Cqrs.CommonStatus.ACTIVE),
+            ("", c.Cqrs.CommonStatus.ACTIVE),
         ],
-        ids=["active", "inactive", "invalid", "none"],
+        ids=["active", "inactive", "invalid", "empty"],
     )
-    def test_safe_status_extraction(self, status: str | None, expected: str) -> None:
-        """Test safe status extraction."""
+    def test_safe_status_extraction(
+        self,
+        status: str,
+        expected: c.Cqrs.CommonStatus,
+    ) -> None:
         registry = FlextTestsUtilities.Tests.RegistryHelpers.create_test_registry()
-        parsed_status = cast("str", status)
-        assert registry._safe_get_status(parsed_status) == expected
+        assert registry._get_status(status) == expected
 
 
 __all__ = ["ConcreteTestHandler", "TestFlextRegistry"]

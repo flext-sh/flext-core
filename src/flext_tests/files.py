@@ -399,7 +399,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
     ) -> r[m.Tests.Files.BatchResult]:
         """Batch file operations.
 
-        Uses u.Collection.batch() for batch processing with error handling.
+        Uses u.batch() for batch processing with error handling.
 
         Args:
             files: Mapping[str, t.FileContent] or Sequence[tuple[str, t.FileContent]]
@@ -790,7 +790,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             | Mapping[str, t.Tests.object]
         ) = self._coerce_file_content(params.content)
         if isinstance(actual_content, BaseModel):
-            actual_content = self._mapping_to_payload(u.Model.dump(actual_content))
+            actual_content = self._mapping_to_payload(u.dump(actual_content))
         content_for_detect: str | bytes | Mapping[str, t.Tests.object] | list[list[str]]
         if isinstance(actual_content, str | bytes):
             content_for_detect = actual_content
@@ -1180,10 +1180,10 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             return (dict1, dict2)
         filter_keys_set = set(keys) if keys is not None else None
         exclude_keys_set = set(exclude_keys) if exclude_keys is not None else None
-        result1 = u.Mapper.transform(
+        result1 = u.transform(
             dict1, filter_keys=filter_keys_set, exclude_keys=exclude_keys_set
         )
-        result2 = u.Mapper.transform(
+        result2 = u.transform(
             dict2, filter_keys=filter_keys_set, exclude_keys=exclude_keys_set
         )
         if result1.is_success and result2.is_success:
@@ -1369,7 +1369,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
     ) -> m.Tests.Files.ContentMeta:
         """Parse file content and extract metadata.
 
-        Uses u.Model.load() for model validation and format-specific parsing
+        Uses u.load() for model validation and format-specific parsing
         to extract content statistics (key_count, item_count, row_count, etc.).
 
         Args:
@@ -1522,7 +1522,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             return None
         dict1, dict2 = parsed
         dict1, dict2 = self._apply_key_filtering(dict1, dict2, keys, exclude_keys)
-        return r[bool].ok(u.Mapper.deep_eq(dict1, dict2))
+        return r[bool].ok(u.deep_eq(dict1, dict2))
 
     def _try_parse_both(
         self, content1: str, content2: str, fmt: str

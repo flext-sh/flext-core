@@ -7,11 +7,10 @@ type-system-architecture.md rules with real functionality testing.
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import cast
 
 import pytest
 
-from flext_core import r
+from flext_core import r, t
 from tests import m
 from tests.conftest import test_framework
 from tests.test_utils import assertion_helpers, fixture_factory
@@ -65,7 +64,12 @@ class TestAutomatedFlextMixins:
         """Comprehensive test scenarios for mixins functionality."""
         try:
             instance = fixture_factory.create_test_mixins_instance()
-            result = self._execute_mixins_operation(instance, test_scenario.input)
+            input_data = (
+                test_scenario.input
+                if isinstance(test_scenario.input, dict)
+                else dict[str, object]()
+            )
+            result = self._execute_mixins_operation(instance, input_data)
             if test_scenario.expected_success:
                 _ = assertion_helpers.assert_flext_result_success(
                     result,
@@ -130,9 +134,9 @@ class TestAutomatedFlextMixins:
         cleanup = getattr(instance, "cleanup", None)
         if callable(cleanup):
             cleanup_result = cleanup()
-            if cleanup_result:
+            if isinstance(cleanup_result, r):
                 _ = assertion_helpers.assert_flext_result_success(
-                    cast("r[object]", cleanup_result),
+                    cleanup_result,
                     "FlextMixins cleanup failed",
                 )
 
@@ -140,7 +144,7 @@ class TestAutomatedFlextMixins:
         self,
         instance: object,
         input_data: Mapping[str, object],
-    ) -> r[object]:
+    ) -> r[t.Container]:
         """Execute a test operation on mixins instance.
 
         This method should be customized based on the actual mixins API.
@@ -149,16 +153,37 @@ class TestAutomatedFlextMixins:
         try:
             process = getattr(instance, "process", None)
             if callable(process):
-                return cast("r[object]", process(dict(input_data)))
+                result = process(dict(input_data))
+                if isinstance(result, r):
+                    if result.is_success:
+                        return r[t.Container].ok(str(result.value))
+                    return r[t.Container].fail(
+                        result.error or "FlextMixins process failed"
+                    )
+                return r[t.Container].ok(str(result))
             execute = getattr(instance, "execute", None)
             if callable(execute):
-                return cast("r[object]", execute(dict(input_data)))
+                result = execute(dict(input_data))
+                if isinstance(result, r):
+                    if result.is_success:
+                        return r[t.Container].ok(str(result.value))
+                    return r[t.Container].fail(
+                        result.error or "FlextMixins execute failed"
+                    )
+                return r[t.Container].ok(str(result))
             handle = getattr(instance, "handle", None)
             if callable(handle):
-                return cast("r[object]", handle(dict(input_data)))
-            return r[object].ok(cast("object", instance))
+                result = handle(dict(input_data))
+                if isinstance(result, r):
+                    if result.is_success:
+                        return r[t.Container].ok(str(result.value))
+                    return r[t.Container].fail(
+                        result.error or "FlextMixins handle failed"
+                    )
+                return r[t.Container].ok(str(result))
+            return r[t.Container].ok(str(instance))
         except Exception as e:
-            return r[object].fail(f"FlextMixins operation failed: {e}")
+            return r[t.Container].fail(f"FlextMixins operation failed: {e}")
 
     @pytest.fixture
     def test_mixins_instance(self) -> object:

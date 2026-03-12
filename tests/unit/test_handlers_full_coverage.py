@@ -13,10 +13,12 @@ from flext_core import FlextExceptions, FlextHandlers, c, h, m, r, t
 handlers_module = importlib.import_module("flext_core.handlers")
 
 
-class _Handler(FlextHandlers[object, object]):
+class _Handler(FlextHandlers[object, t.Container]):
     @override
-    def handle(self, message: object) -> r[object]:
-        return r[object].ok(message)
+    def handle(self, message: object) -> r[t.Container]:
+        if isinstance(message, (str, int, float, bool)):
+            return r[t.Container].ok(message)
+        return r[t.Container].fail("unsupported message")
 
 
 class _QueryHandler(_Handler):

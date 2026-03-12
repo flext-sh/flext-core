@@ -18,7 +18,7 @@ from ._models import _Model
 def _is_type_obj(value: object, type_spec: str | type | tuple[type, ...]) -> bool:
     """Call is_type with arbitrary object for negative-case testing."""
     fn: Callable[[object, str | type | tuple[type, ...]], bool] = getattr(
-        u.Guards,
+        u,
         "is_type",
     )
     return fn(value, type_spec)
@@ -26,7 +26,7 @@ def _is_type_obj(value: object, type_spec: str | type | tuple[type, ...]) -> boo
 
 def _is_flexible_value_obj(value: object) -> bool:
     """Call is_flexible_value with arbitrary object for negative-case testing."""
-    fn: Callable[[object], bool] = getattr(u.Guards, "is_flexible_value")
+    fn: Callable[[object], bool] = getattr(u, "is_flexible_value")
     return fn(value)
 
 
@@ -63,18 +63,18 @@ def test_aliases_are_available() -> None:
 
 
 def test_is_general_value_type_negative_paths_and_callable() -> None:
-    assert u.Guards.is_general_value_type(_sample_handler)
-    assert u.Guards.is_general_value_type([1, "x", None])
-    assert u.Guards.is_general_value_type({"k": 1})
-    assert not u.Guards.is_general_value_type([{"x"}])
-    assert u.Guards.is_general_value_type({1: "x"})
-    assert not u.Guards.is_general_value_type({"x": {1}})
+    assert u.is_general_value_type(_sample_handler)
+    assert u.is_general_value_type([1, "x", None])
+    assert u.is_general_value_type({"k": 1})
+    assert not u.is_general_value_type([{"x"}])
+    assert u.is_general_value_type({1: "x"})
+    assert not u.is_general_value_type({"x": {1}})
 
 
 def test_is_handler_type_branches() -> None:
-    assert u.Guards.is_handler_type({"a": 1})
-    assert u.Guards.is_handler_type(_Model.model_validate({"value": 1}))
-    assert u.Guards.is_handler_type(cast("object", _sample_handler))
+    assert u.is_handler_type({"a": 1})
+    assert u.is_handler_type(_Model.model_validate({"value": 1}))
+    assert u.is_handler_type(cast("object", _sample_handler))
 
     class _BaseModelSubclass:
         value: str = "ok"
@@ -85,15 +85,15 @@ def test_is_handler_type_branches() -> None:
         def handle(self, _value: object) -> object:
             return None
 
-    assert u.Guards.is_handler_type(cast("object", _BaseModelSubclass))
-    assert u.Guards.is_handler_type(cast("object", _DuckHandler()))
+    assert u.is_handler_type(cast("object", _BaseModelSubclass))
+    assert u.is_handler_type(cast("object", _DuckHandler()))
 
 
 def test_non_empty_and_normalize_branches() -> None:
-    assert u.Guards.is_string_non_empty("x")
+    assert u.is_string_non_empty("x")
     assert u.is_type("x", "string_non_empty")
-    assert u.Guards.is_dict_non_empty({"k": "v"})
-    assert u.Guards.is_list_non_empty([1])
+    assert u.is_dict_non_empty({"k": "v"})
+    assert u.is_list_non_empty([1])
     assert u.normalize_to_metadata_value("x") == "x"
     dict_scalar_out = u.normalize_to_metadata_value({"k": 1})
     assert dict_scalar_out == '{"k": 1}'
@@ -110,29 +110,29 @@ def test_non_empty_and_normalize_branches() -> None:
 
 
 def test_configuration_mapping_and_dict_negative_branches() -> None:
-    assert not u.Guards.is_configuration_mapping(1)
+    assert not u.is_configuration_mapping(1)
     bad_key_mapping: dict[object, object] = {1: "ok"}
     bad_value_mapping: dict[str, object] = {"k": {1}}
     bad_value_dict: dict[str, object] = {"k": {1}}
-    assert u.Guards.is_configuration_mapping(cast("object", bad_key_mapping))
-    assert not u.Guards.is_configuration_mapping(
+    assert u.is_configuration_mapping(cast("object", bad_key_mapping))
+    assert not u.is_configuration_mapping(
         cast("object", bad_value_mapping),
     )
-    assert not u.Guards.is_configuration_dict([])
-    assert u.Guards.is_configuration_dict(cast("object", {1: "v"}))
-    assert not u.Guards.is_configuration_dict(cast("object", bad_value_dict))
-    assert u.Guards.is_configuration_dict({"k": 1})
+    assert not u.is_configuration_dict([])
+    assert u.is_configuration_dict(cast("object", {1: "v"}))
+    assert not u.is_configuration_dict(cast("object", bad_value_dict))
+    assert u.is_configuration_dict({"k": 1})
 
 
 def test_is_flexible_value_covers_all_branches() -> None:
-    assert u.Guards.is_flexible_value(None)
-    assert u.Guards.is_flexible_value(1)
-    assert u.Guards.is_flexible_value(datetime.now(UTC))
-    assert u.Guards.is_flexible_value(["a", 1, None, datetime.now(UTC)])
-    assert not u.Guards.is_flexible_value(["a", {"no": "nested"}])
+    assert u.is_flexible_value(None)
+    assert u.is_flexible_value(1)
+    assert u.is_flexible_value(datetime.now(UTC))
+    assert u.is_flexible_value(["a", 1, None, datetime.now(UTC)])
+    assert not u.is_flexible_value(["a", {"no": "nested"}])
     assert _is_flexible_value_obj({1: "bad_key"})
-    assert not u.Guards.is_flexible_value({"k": {"nested": "bad"}})
-    assert u.Guards.is_flexible_value({"k": "v"})
+    assert not u.is_flexible_value({"k": {"nested": "bad"}})
+    assert u.is_flexible_value({"k": "v"})
     empty_set: set[int] = set()
     assert not _is_flexible_value_obj(empty_set)
 
@@ -146,8 +146,8 @@ def test_protocol_and_simple_guard_helpers() -> None:
     assert _is_type_obj(r[int].ok(1), "result")
     assert not _is_type_obj(object(), "service")
     assert not _is_type_obj(object(), "middleware")
-    assert u.Guards.is_handler_callable(cast("object", _sample_handler))
-    assert u.Guards.is_mapping({"k": "v"})
+    assert u.is_handler_callable(cast("object", _sample_handler))
+    assert u.is_mapping({"k": "v"})
 
     def _identity(value: object) -> object:
         return value
@@ -168,7 +168,7 @@ def test_protocol_and_simple_guard_helpers() -> None:
     assert u.is_type({"k": 1}, "mapping")
     assert u.is_type([1], "sequence_not_str")
     assert u.is_type([1], "sequence_not_str_bytes")
-    assert u.Guards.is_pydantic_model(_Model.model_validate({"value": 1}))
+    assert u.is_pydantic_model(_Model.model_validate({"value": 1}))
 
 
 def test_is_type_non_empty_unknown_and_tuple_and_fallback() -> None:
@@ -255,7 +255,7 @@ def test_chk_exercises_missed_branches() -> None:
 def test_guards_bool_shortcut_and_issubclass_typeerror(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    assert u.Guards.is_general_value_type(True)
+    assert u.is_general_value_type(True)
 
     class _SomeType:
         pass
@@ -293,7 +293,7 @@ def test_guards_bool_shortcut_and_issubclass_typeerror(
 
 
 def test_guard_instance_attribute_access_warnings() -> None:
-    guards = u.Guards()
+    guards = u()
     method = guards.is_type
     assert callable(method)
     private_method = cast("Callable[..., object]", getattr(guards, "_is_str"))
@@ -336,7 +336,7 @@ def test_guards_bool_identity_branch_via_isinstance_fallback(
         return original_isinstance(obj, classinfo)
 
     monkeypatch.setattr(builtins, "isinstance", _patched_isinstance)
-    assert u.Guards.is_general_value_type(True)
+    assert u.is_general_value_type(True)
 
 
 def test_guards_issubclass_typeerror_when_class_not_treated_as_callable(

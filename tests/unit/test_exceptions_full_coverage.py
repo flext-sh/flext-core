@@ -19,7 +19,7 @@ def test_base_error_normalize_metadata_merges_existing_metadata_model() -> None:
     assert c.Errors.UNKNOWN_ERROR
     assert isinstance(m.Metadata(attributes={}), m.Metadata)
     assert r[str].ok("ok").is_success
-    assert u.Conversion.to_str(1) == "1"
+    assert u.to_str(1) == "1"
 
 
 def test_authentication_error_normalizes_extra_kwargs_into_context() -> None:
@@ -41,7 +41,7 @@ def test_not_found_error_correlation_id_selection_and_extra_kwargs() -> None:
         extra_value=3,
     )
     assert err_explicit.correlation_id == "explicit-cid"
-    assert err_explicit.to_dict()["extra_value"] == "3"
+    assert err_explicit.to_dict()["extra_value"] == 3
     err_preserved = e.NotFoundError(
         "missing",
         resource_id="x",

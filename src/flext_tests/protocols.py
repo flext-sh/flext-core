@@ -407,7 +407,7 @@ class FlextTestsProtocols(FlextProtocols):
 
                 Compatible with FlextTestsFactories.model() method.
                 Uses structural typing - any callable matching this signature.
-                All parameters validated via ModelFactoryParams with u.Model.from_kwargs().
+                All parameters validated via ModelFactoryParams with u.from_kwargs().
                 """
 
                 def __call__(
@@ -447,7 +447,7 @@ class FlextTestsProtocols(FlextProtocols):
 
                 Compatible with FlextTestsFactories.res() method.
                 Uses structural typing for r creation.
-                All parameters validated via ResultFactoryParams with u.Model.from_kwargs().
+                All parameters validated via ResultFactoryParams with u.from_kwargs().
                 """
 
                 def __call__[TValue](
@@ -485,7 +485,7 @@ class FlextTestsProtocols(FlextProtocols):
 
                 Compatible with FlextTestsFactories.list() and dict() methods.
                 Uses structural typing for collection creation.
-                All parameters validated via ListFactoryParams/DictFactoryParams with u.Model.from_kwargs().
+                All parameters validated via ListFactoryParams/DictFactoryParams with u.from_kwargs().
                 """
 
                 def dict[K, V](
@@ -538,7 +538,7 @@ class FlextTestsProtocols(FlextProtocols):
 
                 Compatible with FlextTestsFactories.generic() method.
                 Uses structural typing for generic type instantiation.
-                All parameters validated via GenericFactoryParams with u.Model.from_kwargs().
+                All parameters validated via GenericFactoryParams with u.from_kwargs().
                 """
 
                 def __call__[T](

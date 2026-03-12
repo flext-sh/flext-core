@@ -1022,7 +1022,7 @@ class FlextUtilitiesParser:
         Example:
             >>> from flext_core._utilities.guards import FlextUtilitiesGuards
         from flext_core import p
-            >>> parser = u.Parser()
+            >>> parser = u()
             >>> # Class/Type
             >>> parser.get_object_key(int)
             'int'

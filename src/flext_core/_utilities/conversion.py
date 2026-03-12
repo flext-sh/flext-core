@@ -286,9 +286,9 @@ class FlextUtilitiesConversion:
             list[str]: List of string values
 
         Example:
-            >>> u.Conversion.to_str_list_safe("foo")
+            >>> u.to_str_list_safe("foo")
             ["foo"]
-            >>> u.Conversion.to_str_list_safe(["a", "b", ["nested"]])
+            >>> u.to_str_list_safe(["a", "b", ["nested"]])
             ["a", "b"]  # nested list filtered
 
         """

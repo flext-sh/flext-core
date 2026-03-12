@@ -56,10 +56,10 @@ def test_checker_logger_and_safe_type_hints_fallback() -> None:
     assert isinstance(m.Categories(), m.Categories)
     assert r[int].ok(1).is_success
     assert isinstance(m.ConfigMap.model_validate({"a": 1}), m.ConfigMap)
-    checker = u.Checker()
+    checker = u()
     logger = checker.logger
     assert hasattr(logger, "info")
-    hints = u.Checker._get_type_hints_safe(
+    hints = u._get_type_hints_safe(
         cast("t.HandlerCallable", _UnknownHintHandler.handle),
         _UnknownHintHandler,
     )
@@ -68,19 +68,19 @@ def test_checker_logger_and_safe_type_hints_fallback() -> None:
 
 def test_extract_message_type_from_parameter_branches() -> None:
     param = inspect.Parameter("message", inspect.Parameter.POSITIONAL_OR_KEYWORD)
-    none_hint = u.Checker._extract_message_type_from_parameter(
+    none_hint = u._extract_message_type_from_parameter(
         param,
         cast("dict[str, object]", {"message": None}),
         "message",
     )
     assert none_hint.is_failure
-    str_hint = u.Checker._extract_message_type_from_parameter(
+    str_hint = u._extract_message_type_from_parameter(
         param,
         {"message": "abc"},
         "message",
     )
     assert str_hint.is_success and str_hint.value == "abc"
-    generic_hint = u.Checker._extract_message_type_from_parameter(
+    generic_hint = u._extract_message_type_from_parameter(
         param,
         {"message": str(list[int])},
         "message",
@@ -89,12 +89,12 @@ def test_extract_message_type_from_parameter_branches() -> None:
 
 
 def test_extract_message_type_from_handle_with_only_self() -> None:
-    assert u.Checker._extract_message_type_from_handle(_OnlySelfHandler).is_failure
+    assert u._extract_message_type_from_handle(_OnlySelfHandler).is_failure
 
 
 def test_object_dict_and_type_error_fallback_paths() -> None:
     assert (
-        u.Checker._check_object_type_compatibility(
+        u._check_object_type_compatibility(
             cast("t.TypeOriginSpecifier", object),
         )
         is True
@@ -104,12 +104,12 @@ def test_object_dict_and_type_error_fallback_paths() -> None:
         __name__ = "object"
 
     fake_object = cast("t.TypeOriginSpecifier", _FakeObjectName())
-    assert u.Checker._check_object_type_compatibility(fake_object) is False
+    assert u._check_object_type_compatibility(fake_object) is False
 
     class _DictChild(UserDict[str, str]):
         pass
 
-    dict_match = u.Checker._check_dict_compatibility(
+    dict_match = u._check_dict_compatibility(
         cast("t.TypeOriginSpecifier", dict),
         _DictChild,
         cast("t.TypeOriginSpecifier", dict),
@@ -117,7 +117,7 @@ def test_object_dict_and_type_error_fallback_paths() -> None:
     )
     assert dict_match is False
     assert (
-        u.Checker._handle_type_or_origin_check(
+        u._handle_type_or_origin_check(
             cast("t.TypeOriginSpecifier", _ExplodingExpected),
             cast("t.TypeOriginSpecifier", type("Sub", (), {})),
             cast("t.TypeOriginSpecifier", _ExplodingExpected),
@@ -126,7 +126,7 @@ def test_object_dict_and_type_error_fallback_paths() -> None:
         is False
     )
     assert (
-        u.Checker._handle_instance_check(
+        u._handle_instance_check(
             cast("t.TypeOriginSpecifier", object()),
             cast("t.TypeOriginSpecifier", _ExplodingOrigin),
         )
@@ -140,7 +140,7 @@ def test_extract_message_type_annotation_and_dict_subclass_paths() -> None:
         inspect.Parameter.POSITIONAL_OR_KEYWORD,
         annotation=list[int],
     )
-    typed_hint = u.Checker._extract_message_type_from_parameter(
+    typed_hint = u._extract_message_type_from_parameter(
         param_typed,
         {},
         "message",
@@ -151,7 +151,7 @@ def test_extract_message_type_annotation_and_dict_subclass_paths() -> None:
         inspect.Parameter.POSITIONAL_OR_KEYWORD,
         annotation=inspect.Signature.empty,
     )
-    empty_hint = u.Checker._extract_message_type_from_parameter(
+    empty_hint = u._extract_message_type_from_parameter(
         param_empty,
         {},
         "message",
@@ -162,7 +162,7 @@ def test_extract_message_type_annotation_and_dict_subclass_paths() -> None:
         inspect.Parameter.POSITIONAL_OR_KEYWORD,
         annotation="MyType",
     )
-    string_hint = u.Checker._extract_message_type_from_parameter(
+    string_hint = u._extract_message_type_from_parameter(
         param_str,
         {},
         "message",
@@ -173,7 +173,7 @@ def test_extract_message_type_annotation_and_dict_subclass_paths() -> None:
         inspect.Parameter.POSITIONAL_OR_KEYWORD,
         annotation=int,
     )
-    type_hint = u.Checker._extract_message_type_from_parameter(
+    type_hint = u._extract_message_type_from_parameter(
         param_type,
         {},
         "message",
@@ -187,7 +187,7 @@ def test_extract_message_type_annotation_and_dict_subclass_paths() -> None:
         pass
 
     assert (
-        u.Checker._check_dict_compatibility(
+        u._check_dict_compatibility(
             cast("t.TypeOriginSpecifier", _ExpectedDict),
             _MessageDict,
             cast("t.TypeOriginSpecifier", _ExpectedDict),

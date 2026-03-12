@@ -96,7 +96,7 @@ class FlextDispatcher:
             msg_type = message.__class__
             for auto_h in self._auto_handlers:
                 accepted = u.compute_accepted_message_types(auto_h.__class__)
-                if u.Checker.can_handle_message_type(accepted, msg_type):
+                if u.can_handle_message_type(accepted, msg_type):
                     handler = auto_h
                     break
         if not handler:
@@ -137,7 +137,7 @@ class FlextDispatcher:
         evt_type = event.__class__
         for auto_h in self._auto_handlers:
             accepted = u.compute_accepted_message_types(auto_h.__class__)
-            if u.Checker.can_handle_message_type(accepted, evt_type) and (
+            if u.can_handle_message_type(accepted, evt_type) and (
                 auto_h not in handlers
             ):
                 handlers.append(auto_h)
@@ -222,14 +222,14 @@ class FlextDispatcher:
                     return r[t.Container | BaseModel].fail(
                         "Handler returned None in success result"
                     )
-                if not u.Guards.is_container(value):
+                if not u.is_container(value):
                     return r[t.Container | BaseModel].fail(
                         "Handler returned non-container value in success result"
                     )
                 return r[t.Container | BaseModel].ok(value)
             if raw_output is None:
                 return r[t.Container | BaseModel].fail("Handler returned None")
-            if not u.Guards.is_container(raw_output):
+            if not u.is_container(raw_output):
                 return r[t.Container | BaseModel].fail(
                     "Handler returned non-container value"
                 )

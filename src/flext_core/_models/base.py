@@ -107,12 +107,12 @@ class FlextModelFoundation:
             return _ensure_utc_datetime(v)
 
         @staticmethod
-        def normalize_to_list(v: t.Container) -> list[t.Container]:
+        def normalize_to_list(v: object) -> list[t.Container]:
             """Normalize value to list format."""
             try:
                 return FlextModelFoundation.Validators.list_adapter().validate_python(v)
             except ValidationError:
-                return [v]
+                return [t.cast(t.Container, v)]
 
         @staticmethod
         def strip_whitespace(v: str) -> str:
@@ -121,7 +121,7 @@ class FlextModelFoundation:
 
         @staticmethod
         def validate_config_dict(
-            v: t.Container,
+            v: object,
         ) -> Mapping[str, t.Container]:
             """Validate configuration dictionary structure."""
             try:
@@ -140,7 +140,7 @@ class FlextModelFoundation:
             return out
 
         @staticmethod
-        def validate_tags_list(v: t.Container) -> list[str]:
+        def validate_tags_list(v: object) -> list[str]:
             """Validate and normalize tags list."""
             try:
                 raw_tags: Sequence[t.Container] = (

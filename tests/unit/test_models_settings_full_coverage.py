@@ -19,7 +19,7 @@ def test_models_settings_branch_paths() -> None:
     assert isinstance(m.Categories(), m.Categories)
     assert r[int].ok(1).is_success
     assert isinstance(m.ConfigMap.model_validate({"k": 1}), m.ConfigMap)
-    assert u.Conversion.to_str(1) == "1"
+    assert u.to_str(1) == "1"
     assert isinstance(FlextModelsConfig._get_log_level_from_config(), int)
     with pytest.raises(ValueError, match="HTTP status code validation failed"):
         FlextModelsConfig.RetryConfiguration(retry_on_status_codes=[9999])

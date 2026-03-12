@@ -428,7 +428,7 @@ class FlextUtilitiesReliability:
 
         """
         if not operations:
-            return r[t.Container].ok(value)
+            return r[t.Container].ok(t.cast(t.Container, value))
         current: object = value
         for i, op in enumerate(operations):
             try:
@@ -454,7 +454,7 @@ class FlextUtilitiesReliability:
             ) as e:
                 if on_error == "stop":
                     return r[t.Container].fail(f"Pipeline step {i} failed: {e}")
-        return r[t.Container].ok(current)
+        return r[t.Container].ok(t.cast(t.Container, current))
 
     @staticmethod
     def retry[TResult](

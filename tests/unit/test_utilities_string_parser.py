@@ -1,7 +1,7 @@
-"""Comprehensive tests for u.Parser - 100% coverage target.
+"""Comprehensive tests for u - 100% coverage target.
 
 **Modules Tested:**
-- flext_core._utilities.string_parser.u.Parser
+- flext_core._utilities.string_parser.u
 
 **Test Scope:**
 - parse_delimited: All options, validators, legacy params, edge cases, error handling
@@ -385,12 +385,12 @@ class StringParserTestFactory:
 
 
 class TestuStringParser:
-    """Comprehensive tests for u.Parser using nested organization."""
+    """Comprehensive tests for u using nested organization."""
 
     @pytest.fixture
-    def parser(self) -> u.Parser:
+    def parser(self) -> u:
         """Create parser instance."""
-        return u.Parser()
+        return u()
 
     class TestParseDelimited:
         """Test parse_delimited method."""
@@ -401,7 +401,7 @@ class TestuStringParser:
         )
         def test_parse_delimited(
             self,
-            parser: u.Parser,
+            parser: u,
             case: tm.Tests.ParseDelimitedCase,
         ) -> None:
             """Test parse_delimited with parametrized cases."""
@@ -434,7 +434,7 @@ class TestuStringParser:
                 description=case.description,
             )
 
-        def test_exception_handling(self, parser: u.Parser) -> None:
+        def test_exception_handling(self, parser: u) -> None:
             """Test parsing exception handling with bad object."""
             bad_obj = TestsFlextUtilities.Tests.CoreBadObjects.create_for_split()
             bad_str = cast("str", cast("object", bad_obj))
@@ -451,7 +451,7 @@ class TestuStringParser:
         @pytest.mark.parametrize("case", StringParserTestFactory.split_escape_cases())
         def test_split_with_escape(
             self,
-            parser: u.Parser,
+            parser: u,
             case: tm.Tests.SplitEscapeCase,
         ) -> None:
             """Test split_on_char_with_escape with parametrized cases."""
@@ -469,7 +469,7 @@ class TestuStringParser:
                 description=case.description,
             )
 
-        def test_exception_handling(self, parser: u.Parser) -> None:
+        def test_exception_handling(self, parser: u) -> None:
             """Test split exception handling with bad object."""
             bad_obj = TestsFlextUtilities.Tests.CoreBadObjects.create_for_index()
             bad_str = cast("str", cast("object", bad_obj))
@@ -489,7 +489,7 @@ class TestuStringParser:
         )
         def test_normalize_whitespace(
             self,
-            parser: u.Parser,
+            parser: u,
             case: tm.Tests.NormalizeWhitespaceCase,
         ) -> None:
             """Test normalize_whitespace with parametrized cases."""
@@ -507,7 +507,7 @@ class TestuStringParser:
                 description=case.description,
             )
 
-        def test_exception_handling(self, parser: u.Parser) -> None:
+        def test_exception_handling(self, parser: u) -> None:
             """Test normalization exception handling with bad object."""
             bad_obj = TestsFlextUtilities.Tests.CoreBadObjects.create_for_str()
             bad_str = cast("str", cast("object", bad_obj))
@@ -523,7 +523,7 @@ class TestuStringParser:
         @pytest.mark.parametrize("case", StringParserTestFactory.regex_pipeline_cases())
         def test_apply_regex_pipeline(
             self,
-            parser: u.Parser,
+            parser: u,
             case: tm.Tests.RegexPipelineCase,
         ) -> None:
             """Test apply_regex_pipeline with parametrized cases."""
@@ -537,7 +537,7 @@ class TestuStringParser:
                 description=case.description,
             )
 
-        def test_exception_handling(self, parser: u.Parser) -> None:
+        def test_exception_handling(self, parser: u) -> None:
             """Test pipeline exception handling."""
             invalid_pattern = cast("tuple[str, str]", (None, "replacement"))
             patterns: list[tuple[str, str] | tuple[str, str, int]] = [invalid_pattern]
@@ -547,7 +547,7 @@ class TestuStringParser:
                 result.error or ""
             )
 
-        def test_invalid_pattern(self, parser: u.Parser) -> None:
+        def test_invalid_pattern(self, parser: u) -> None:
             """Test pipeline with invalid regex pattern."""
             patterns: list[tuple[str, str] | tuple[str, str, int]] = [
                 ("[invalid", "replacement"),
@@ -556,7 +556,7 @@ class TestuStringParser:
             assert result.is_failure
             assert TestsFlextConstants.TestErrors.INVALID_REGEX in (result.error or "")
 
-        def test_none_text(self, parser: u.Parser) -> None:
+        def test_none_text(self, parser: u) -> None:
             """Test pipeline with None text."""
             text = cast("str", cast("object", None))
             u.Tests.ParserHelpers.execute_and_assert_parser_result(
@@ -576,7 +576,7 @@ class TestuStringParser:
                 description="none text",
             )
 
-        def test_invalid_text_type(self, parser: u.Parser) -> None:
+        def test_invalid_text_type(self, parser: u) -> None:
             """Test pipeline with invalid text type."""
             text = cast("str", cast("object", 123))
             u.Tests.ParserHelpers.execute_and_assert_parser_result(
@@ -596,7 +596,7 @@ class TestuStringParser:
                 description="invalid text type",
             )
 
-        def test_empty_patterns(self, parser: u.Parser) -> None:
+        def test_empty_patterns(self, parser: u) -> None:
             """Test pipeline with empty patterns list."""
             patterns: list[tuple[str, str] | tuple[str, str, int]] = []
             result = parser.apply_regex_pipeline("test", patterns)
@@ -608,7 +608,7 @@ class TestuStringParser:
         @pytest.mark.parametrize("case", StringParserTestFactory.object_key_cases())
         def test_get_object_key(
             self,
-            parser: u.Parser,
+            parser: u,
             case: tm.Tests.ObjectKeyCase,
         ) -> None:
             """Test get_object_key with parametrized cases."""

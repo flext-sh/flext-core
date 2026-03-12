@@ -935,18 +935,14 @@ class TestFlextRuntime:
             assert runtime_first is runtime_second
             assert component.config.app_name == "runtime-aware"
             assert component.context is runtime_first.context
-            service_result_raw: r[object] = cast(
-                "r[object]",
-                component.container.get("preseed"),
+            service_result: r[t.RegisterableService] = component.container.get(
+                "preseed"
             )
-            service_result: r[object] = service_result_raw
             assert service_result.is_success
             assert service_result.value == {"enabled": True}
-            factory_result_raw: r[object] = cast(
-                "r[object]",
-                component.container.get("counter"),
+            factory_result: r[t.RegisterableService] = component.container.get(
+                "counter"
             )
-            factory_result: r[object] = factory_result_raw
             assert factory_result.is_success
             assert factory_result.value == {"count": 1}
 

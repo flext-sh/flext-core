@@ -1,9 +1,9 @@
-"""Tests for u.Domain - Domain entity and value object operations.
+"""Tests for u - Domain entity and value object operations.
 
 Module: flext_core._utilities.domain
-Scope: u.Domain - entity/value object comparison, hashing, validation
+Scope: u - entity/value object comparison, hashing, validation
 
-Tests u.Domain functionality including:
+Tests u functionality including:
 - Entity comparison by ID (compare_entities_by_id)
 - Entity hashing by ID (hash_entity_by_id)
 - Value object comparison by value (compare_value_objects_by_value)
@@ -444,7 +444,7 @@ def create_validate_value_object_immutable_cases() -> list[TestCaseMap]:
 
 
 class TestuDomain:
-    """Comprehensive tests for u.Domain using FlextTestsUtilities and constants extensively."""
+    """Comprehensive tests for u using FlextTestsUtilities and constants extensively."""
 
     @pytest.mark.parametrize(
         "test_case",
@@ -553,11 +553,11 @@ class TestuDomain:
         )
 
     def test_validate_immutable_config_type_error(self) -> None:
-        """Test validation with config that raises TypeError using u.Domain directly."""
+        """Test validation with config that raises TypeError using u directly."""
         obj = u.Tests.BadObjects.BadConfigTypeError()
         try:
             obj_value = cast("object", cast("object", obj))
-            result = u.Domain.validate_value_object_immutable(obj_value)
+            result = u.validate_value_object_immutable(obj_value)
             assert isinstance(result, bool)
         except TypeError:
             pass

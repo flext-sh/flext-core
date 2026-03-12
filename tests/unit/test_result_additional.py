@@ -22,7 +22,7 @@ from flext_tests import u
 def test_ok_raises_on_none() -> None:
     """Ensure None successes are rejected."""
     with pytest.raises(ValueError):
-        r[object].ok(None)
+        r[str].ok(None)
 
 
 def test_map_error_identity_and_transform() -> None:

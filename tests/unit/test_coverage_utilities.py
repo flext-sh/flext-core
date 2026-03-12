@@ -258,7 +258,7 @@ class Testu(TextUtilityContract):
     def test_generators(self, method_name: str, prefix: str | None) -> None:
         """Test various ID and timestamp generators."""
         if method_name == "generate_iso_timestamp":
-            result = u.Generators.generate_iso_timestamp()
+            result = u.generate_iso_timestamp()
         elif method_name == "generate_id":
             result = u.generate()
         elif method_name == "generate_correlation_id":
@@ -270,7 +270,7 @@ class Testu(TextUtilityContract):
         elif method_name == "generate_event_id":
             result = u.generate("event")
         else:
-            method = getattr(u.Generators, method_name, None)
+            method = getattr(u, method_name, None)
             if method is None:
                 pytest.skip(f"Method {method_name} not available")
             result = method()
@@ -426,34 +426,34 @@ class Testu(TextUtilityContract):
     def test_type_checker_object_accepts_all(self) -> None:
         """Test type checking with object (accepts all)."""
         accepted: tuple[t.MessageTypeSpecifier, ...] = (str,)
-        assert u.Checker.can_handle_message_type(accepted, str) is True
+        assert u.can_handle_message_type(accepted, str) is True
 
     def test_type_checker_specific_type_match(self) -> None:
         """Test type checking with matching specific type."""
         accepted = (str,)
-        assert u.Checker.can_handle_message_type(accepted, str) is True
+        assert u.can_handle_message_type(accepted, str) is True
 
     def test_type_checker_specific_type_mismatch(self) -> None:
         """Test type checking with mismatched specific type."""
         accepted = (str,)
-        assert u.Checker.can_handle_message_type(accepted, int) is False
+        assert u.can_handle_message_type(accepted, int) is False
 
     def test_type_checker_empty_accepted(self) -> None:
         """Test type checking with no accepted types."""
         accepted: tuple[t.MessageTypeSpecifier, ...] = ()
-        assert u.Checker.can_handle_message_type(accepted, str) is False
+        assert u.can_handle_message_type(accepted, str) is False
 
     def test_configuration_get_parameter(self) -> None:
         """Test parameter retrieval from config."""
         config = UtilityScenarios.create_mock_config(timeout=30)
-        value = u.Configuration.get_parameter(config, "timeout")
+        value = u.get_parameter(config, "timeout")
         assert value == 30
 
     def test_configuration_get_parameter_missing(self) -> None:
         """Test parameter retrieval for missing parameter."""
         config = UtilityScenarios.create_mock_config(timeout=30)
         with pytest.raises(FlextExceptions.NotFoundError):
-            u.Configuration.get_parameter(config, "missing")
+            u.get_parameter(config, "missing")
 
 
 __all__ = ["Testu"]

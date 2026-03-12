@@ -262,7 +262,7 @@ class FlextUtilitiesCollection:
             List of chunks
 
         Example:
-            batches = u.Collection.chunk(records, 100)
+            batches = u.chunk(records, 100)
             # [[record1, ..., record100], [record101, ...], ...]
 
         """
@@ -480,7 +480,7 @@ class FlextUtilitiesCollection:
             Count of matching items
 
         Example:
-            active_count = u.Collection.count(users, lambda u: u.is_active)
+            active_count = u.count(users, lambda u: u.is_active)
 
         """
         if predicate is None:
@@ -874,7 +874,7 @@ class FlextUtilitiesCollection:
             r with parsed dict
 
         Example:
-            result = u.Collection.parse_mapping(Status, {"key": "active"})
+            result = u.parse_mapping(Status, {"key": "active"})
             # result.value == {"key": Status.ACTIVE}
 
         """

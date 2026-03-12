@@ -14,12 +14,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import ClassVar, cast
+from typing import ClassVar
 
 import pytest
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import FlextContainer, FlextExceptions, p, r, u
+from flext_core import FlextContainer, FlextExceptions, r, u
 
 
 class ResultOperationScenario(BaseModel):
@@ -179,25 +179,25 @@ class TestCoveragePush75Percent:
         """Test r operations with various scenarios."""
         if scenario.initial_value is not None:
             initial_result = r[int].ok(scenario.initial_value)
-            result: r[object] = r[object](initial_result._result)
+            result: r[int] = r[int](initial_result._result)
         else:
             initial_result = r[int].fail("error")
-            result = r[object](initial_result._result)
+            result = r[int](initial_result._result)
         for op in scenario.operations:
             if op == "map":
                 result = result.map(lambda x: x * 2 if isinstance(x, int) else x)
             elif op == "flat_map":
 
-                def flat_map_func(x: object) -> r[object]:
+                def flat_map_func(x: object) -> r[int]:
                     if isinstance(x, int):
-                        return r[object].ok(x * 2)
-                    return r[object].ok(x)
+                        return r[int].ok(x * 2)
+                    return r[int].fail("error")
 
                 result = result.flat_map(flat_map_func)
             elif op == "flat_map_fail":
-                result = result.flat_map(lambda _: r[object].fail("error"))
+                result = result.flat_map(lambda _: r[int].fail("error"))
             elif op == "lash":
-                result = result.lash(lambda _: r[object].ok(99))
+                result = result.lash(lambda _: r[int].ok(99))
         if scenario.expected_success:
             assert result.is_success
             if scenario.expected_value is not None:
@@ -264,7 +264,7 @@ class TestCoveragePush75Percent:
 
     def test_utilities_timestamp(self) -> None:
         """Test timestamp generation."""
-        ts = u.Generators.generate_iso_timestamp()
+        ts = u.generate_iso_timestamp()
         assert isinstance(ts, str)
         assert len(ts) > 0
 
@@ -314,10 +314,7 @@ class TestCoveragePush75Percent:
         def divide(a: int, b: int) -> int:
             return a // b
 
-        divide_func = cast("p.VariadicCallable[int]", divide)
-        divide_wrapped: p.VariadicCallable[r[int]] = r.safe(
-            divide_func,
-        )
+        divide_wrapped = r.safe(divide)
         result: r[int] = divide_wrapped(10, 2)
         assert result.is_success
         assert result.value == 5

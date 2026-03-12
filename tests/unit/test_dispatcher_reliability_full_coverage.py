@@ -11,7 +11,7 @@ def test_dispatcher_reliability_branch_paths() -> None:
     assert isinstance(m.Categories(), m.Categories)
     assert r[int].ok(1).is_success
     assert isinstance(m.ConfigMap.model_validate({"k": 1}), m.ConfigMap)
-    assert u.Conversion.to_str(1) == "1"
+    assert u.to_str(1) == "1"
     cb = disp_rel.CircuitBreakerManager(
         threshold=3,
         recovery_timeout=1.0,

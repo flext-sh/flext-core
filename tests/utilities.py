@@ -45,7 +45,7 @@ class TestsFlextUtilities(FlextTestsUtilities, FlextInfraUtilities):
 
             @staticmethod
             def execute_and_assert_parser_result(
-                operation: Callable[[], r[object]],
+                operation: Callable[[], r[t.Container]],
                 expected_value: object | None = None,
                 expected_error: str | None = None,
                 description: str = "",
@@ -180,7 +180,7 @@ class TestsFlextUtilities(FlextTestsUtilities, FlextInfraUtilities):
 
             @staticmethod
             def assert_failure(
-                result: r[object],
+                result: r[t.Container],
                 expected_error: str,
                 description: str = "",
             ) -> None:
@@ -200,7 +200,7 @@ class TestsFlextUtilities(FlextTestsUtilities, FlextInfraUtilities):
 
             @staticmethod
             def assert_success(
-                result: r[object],
+                result: r[t.Container],
                 description: str = "",
             ) -> None:
                 """Assert that result is a success.
@@ -217,7 +217,7 @@ class TestsFlextUtilities(FlextTestsUtilities, FlextInfraUtilities):
 
             @staticmethod
             def assert_success_with_value(
-                result: r[object],
+                result: r[t.Container],
                 expected_value: object,
                 description: str = "",
             ) -> None:

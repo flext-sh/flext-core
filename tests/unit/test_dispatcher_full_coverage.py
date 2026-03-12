@@ -93,11 +93,11 @@ class EventHandler:
 
     message_type = SampleEvent
 
-    def handle(self, message: p.Routable) -> object:
+    def handle(self, message: SampleEvent) -> object:
         """Handle the event."""
         return True
 
-    def can_handle(self, message_type: type) -> bool:
+    def can_handle(self, message_type: type[SampleEvent]) -> bool:
         return message_type is SampleEvent
 
 
@@ -136,7 +136,8 @@ def test_invalid_registration_attempts(dispatcher: FlextDispatcher) -> None:
 def test_event_publishing_strict(dispatcher: FlextDispatcher) -> None:
     """Verify that event publishing strictly uses event_type or can_handle."""
     handler = EventHandler()
-    dispatcher.register_handler(handler, is_event=True)
+    registration = dispatcher.register_handler(handler, is_event=True)
+    assert registration.is_success
     evt = SampleEvent(aggregate_id="agg-1", event_type="sample_event")
     res = dispatcher.publish(evt)
     assert res.is_success

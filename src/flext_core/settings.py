@@ -214,7 +214,7 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
     @property
     def effective_log_level(self) -> c.Settings.LogLevel:
         """Get effective log level based on debug/trace flags."""
-        return u.Configuration.resolve_effective_log_level(
+        return u.resolve_effective_log_level(
             trace=self.trace,
             debug=self.debug,
             log_level=self.log_level,
@@ -239,7 +239,7 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
     @classmethod
     def get_global(cls, *, overrides: object | None = None) -> Self:
         """Get global settings, optionally materialized with overrides."""
-        u.Configuration.normalize_env_log_level()
+        u.normalize_env_log_level()
         if overrides is None:
             return cls()
         if cls is FlextSettings:
@@ -291,7 +291,7 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
         """Validate configuration.
 
         Business Rule: Validates configuration consistency after model initialization.
-        Delegates to ``u.Configuration`` validation utilities for database URL scheme
+        Delegates to ``u`` validation utilities for database URL scheme
         and trace/debug consistency checks.
 
         Returns:
@@ -301,8 +301,8 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
             ValueError: If configuration is invalid
 
         """
-        u.Configuration.validate_database_url_scheme(self.database_url)
-        u.Configuration.validate_trace_requires_debug(
+        u.validate_database_url_scheme(self.database_url)
+        u.validate_trace_requires_debug(
             trace=self.trace,
             debug=self.debug,
         )

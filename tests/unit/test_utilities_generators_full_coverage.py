@@ -47,18 +47,18 @@ class _BrokenModel:
 
 def test_normalize_context_to_dict_error_paths() -> None:
     with pytest.raises(TypeError, match="Failed to convert Mapping"):
-        u.Generators._normalize_context_to_dict(_BrokenMapping())
+        u._normalize_context_to_dict(_BrokenMapping())
     with pytest.raises(TypeError, match="Failed to dump BaseModel"):
-        u.Generators._normalize_context_to_dict(
+        u._normalize_context_to_dict(
             cast(
                 "Mapping[str, object] | BaseModel | None",
                 cast("object", _BrokenModel()),
             ),
         )
     with pytest.raises(TypeError, match="Context cannot be None"):
-        u.Generators._normalize_context_to_dict(None)
+        u._normalize_context_to_dict(None)
     with pytest.raises(TypeError, match="Failed to dump BaseModel int"):
-        u.Generators._normalize_context_to_dict(
+        u._normalize_context_to_dict(
             cast("Mapping[str, object] | BaseModel | None", cast("object", 42)),
         )
 
@@ -77,7 +77,7 @@ def test_enrich_and_ensure_trace_context_branches(
         "generate_iso_timestamp",
         staticmethod(lambda: "2026-01-01T00:00:00+00:00"),
     )
-    enriched = u.Generators.ensure_trace_context(
+    enriched = u.ensure_trace_context(
         _GoodModel(value=9),
         include_correlation_id=True,
         include_timestamp=True,
@@ -93,7 +93,7 @@ def test_enrich_and_ensure_trace_context_branches(
         "correlation_id": "already-corr",
         "timestamp": "already-ts",
     }
-    preserved = u.Generators.ensure_trace_context(
+    preserved = u.ensure_trace_context(
         existing,
         include_correlation_id=True,
         include_timestamp=True,
@@ -103,7 +103,7 @@ def test_enrich_and_ensure_trace_context_branches(
 
 def test_ensure_dict_branches(monkeypatch: pytest.MonkeyPatch) -> None:
     raw = {"a": 1}
-    assert u.Generators.ensure_dict(raw) is raw
+    assert u.ensure_dict(raw) is raw
 
     def _normalize_stub(_value: object) -> object:
         return "not-a-dict"
@@ -113,20 +113,20 @@ def test_ensure_dict_branches(monkeypatch: pytest.MonkeyPatch) -> None:
         staticmethod(_normalize_stub),
     )
     with pytest.raises(TypeError, match=r"Normalized BaseModel .* is not mapping-like"):
-        u.Generators.ensure_dict(_GoodModel(value=5))
+        u.ensure_dict(_GoodModel(value=5))
     with pytest.raises(TypeError, match=r"Failed to convert Mapping"):
-        u.Generators.ensure_dict(_BrokenMapping())
-    assert u.Generators.ensure_dict(None, default={"x": "y"}) == {"x": "y"}
+        u.ensure_dict(_BrokenMapping())
+    assert u.ensure_dict(None, default={"x": "y"}) == {"x": "y"}
     with pytest.raises(TypeError, match=r"Value cannot be None"):
-        u.Generators.ensure_dict(None)
+        u.ensure_dict(None)
     with pytest.raises(TypeError, match=r"Cannot convert int to dict"):
-        u.Generators.ensure_dict(123)
+        u.ensure_dict(123)
 
 
 def test_generate_special_paths_and_dynamic_subclass(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    generated = u.Generators.generate(kind="id")
+    generated = u.generate(kind="id")
     assert isinstance(generated, str)
     assert len(generated) > 0
     fixed_ts = datetime(2026, 1, 2, tzinfo=UTC)
@@ -138,7 +138,7 @@ def test_generate_special_paths_and_dynamic_subclass(
             return fixed_ts
 
     monkeypatch.setattr(generators_module, "datetime", _FixedDatetime)
-    custom = u.Generators.generate(
+    custom = u.generate(
         kind="command",
         include_timestamp=True,
         separator="-",
@@ -147,9 +147,9 @@ def test_generate_special_paths_and_dynamic_subclass(
     )
     assert custom.startswith("cmd-")
     assert "-part-" in custom
-    fallback = u.Generators.generate(kind="aggregate")
+    fallback = u.generate(kind="aggregate")
     assert isinstance(fallback, str)
-    dynamic = u.Generators.create_dynamic_type_subclass(
+    dynamic = u.create_dynamic_type_subclass(
         "DynCls",
         object,
         m.ConfigMap(root={"value": 10}).root,
@@ -160,11 +160,11 @@ def test_generate_special_paths_and_dynamic_subclass(
 
 def test_generators_additional_missed_paths() -> None:
     mapping_ctx: Mapping[str, object] = {"a": 1}
-    normalized = u.Generators._normalize_context_to_dict(mapping_ctx)
+    normalized = u._normalize_context_to_dict(mapping_ctx)
     assert normalized == {"a": 1}
-    ensured = u.Generators.ensure_dict(_GoodModel(value=3))
+    ensured = u.ensure_dict(_GoodModel(value=3))
     assert ensured == {"value": 3}
-    generated = u.Generators.generate(kind="event", separator="-")
+    generated = u.generate(kind="event", separator="-")
     assert generated.startswith("evt-")
 
 
@@ -185,5 +185,5 @@ def test_generators_mapping_non_dict_normalization_path() -> None:
         def __len__(self) -> int:
             return 1
 
-    normalized = u.Generators._normalize_context_to_dict(_SimpleMapping())
+    normalized = u._normalize_context_to_dict(_SimpleMapping())
     assert normalized == {"a": 1}

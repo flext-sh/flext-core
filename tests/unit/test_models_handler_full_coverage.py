@@ -12,7 +12,7 @@ def test_models_handler_branches() -> None:
     assert isinstance(m.Categories(), m.Categories)
     assert r[int].ok(1).is_success
     assert isinstance(m.ConfigMap.model_validate({"k": 1}), m.ConfigMap)
-    assert u.Conversion.to_str(1) == "1"
+    assert u.to_str(1) == "1"
     req = m.RegistrationRequest(handler=lambda value: value, handler_mode="command")
     assert req.handler_mode == "command"
     with pytest.raises(Exception, match="Handler must be callable"):

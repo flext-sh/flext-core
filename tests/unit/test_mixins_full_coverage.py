@@ -7,6 +7,7 @@ from types import SimpleNamespace
 from typing import cast, override
 
 import pytest
+from pydantic import BaseModel
 
 from flext_core import FlextLogger, FlextMixins, FlextRuntime, c, m, p, r, t, u, x
 
@@ -73,23 +74,32 @@ class _RuntimeContainer:
 
 
 class _ContainerForLogger:
-    def __init__(self, success: bool, logger: object | None = None) -> None:
+    def __init__(
+        self,
+        success: bool,
+        logger: t.Container | BaseModel | None = None,
+    ) -> None:
         super().__init__()
         self.success: bool = success
-        self.logger: object | None = logger
+        self.logger: t.Container | BaseModel | None = logger
         self.factories: dict[str, object] = {}
         self.register_calls: list[tuple[str, str]] = []
 
-    def get_typed(self, _key: str, _tp: object) -> r[object]:
+    def get_typed(self, _key: str, _tp: object) -> r[t.Container | BaseModel]:
         if self.success:
-            return r[object].ok(self.logger or object())
-        return r[object].fail("missing")
+            return r[t.Container | BaseModel].ok(self.logger or "logger")
+        return r[t.Container | BaseModel].fail("missing")
 
-    def get(self, _key: str, *, type_cls: object | None = None) -> r[object]:
+    def get(
+        self,
+        _key: str,
+        *,
+        type_cls: object | None = None,
+    ) -> r[t.Container | BaseModel]:
         _ = type_cls
         if self.success:
-            return r[object].ok(self.logger or object())
-        return r[object].fail("missing")
+            return r[t.Container | BaseModel].ok(self.logger or "logger")
+        return r[t.Container | BaseModel].fail("missing")
 
     def register_factory(self, key: str, factory: object) -> r[bool]:
         _ = key
@@ -224,7 +234,7 @@ def test_mixins_container_registration_and_logger_paths(
     monkeypatch.setattr(
         "flext_core.mixins.FlextContainer.create",
         staticmethod(
-            lambda: _ContainerForLogger(True, logger=SimpleNamespace(name="l")),
+            lambda: _ContainerForLogger(True, logger="l"),
         ),
     )
     logger_from_di = _Service._get_or_create_logger()
@@ -503,7 +513,7 @@ def test_mixins_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> None:
     assert "_LoggerService" in factory_value
 
     class _BrokenContainer:
-        def get_typed(self, _key: str, _tp: object) -> r[object]:
+        def get_typed(self, _key: str, _tp: object) -> r[t.Container | BaseModel]:
             msg = "boom"
             raise RuntimeError(msg)
 

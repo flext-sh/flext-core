@@ -15,8 +15,12 @@ def test_utilities_reliability_branches() -> None:
     assert isinstance(m.Categories(), m.Categories)
     assert r[int].ok(1).is_success
     assert isinstance(m.ConfigMap.model_validate({"k": 1}), m.ConfigMap)
-    fail: r[object] = u.Reliability.retry(
-        lambda: r.fail("e"),
+
+    def _always_fail() -> r[t.Container]:
+        return r[t.Container].fail("e")
+
+    fail: r[t.Container] = u.Reliability.retry(
+        _always_fail,
         max_attempts=1,
         delay_seconds=0.0,
     )

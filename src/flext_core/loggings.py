@@ -644,7 +644,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
 
     @staticmethod
     def _to_scalar_value(value: object) -> t.Scalar:
-        if u.Guards.is_scalar(value):
+        if u.is_scalar(value):
             return value
         return str(value)
 

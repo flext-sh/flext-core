@@ -124,14 +124,14 @@ class TestFlextTestsDomains:
         assert isinstance(cases, list)
         assert len(cases) == 7
         valid_emails = list(
-            u.Collection.map(
-                u.Collection.filter(cases, operator.itemgetter(1)),
+            u.map(
+                u.filter(cases, operator.itemgetter(1)),
                 operator.itemgetter(0),
             ),
         )
         invalid_emails = list(
-            u.Collection.map(
-                u.Collection.filter(cases, lambda item: not item[1]),
+            u.map(
+                u.filter(cases, lambda item: not item[1]),
                 operator.itemgetter(0),
             ),
         )

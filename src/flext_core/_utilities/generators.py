@@ -240,16 +240,16 @@ class FlextUtilitiesGenerators:
 
         Example:
             >>> from flext_core._utilities.guards import FlextUtilitiesGuards
-            >>> u.Generators.ensure_dict({"a": 1})
+            >>> u.ensure_dict({"a": 1})
             {'a': 1}
-            >>> u.Generators.ensure_dict(None, default={})
+            >>> u.ensure_dict(None, default={})
             {}
             >>> # Pydantic model
             >>> from pydantic import BaseModel
             >>> class MyModel(BaseModel):
             ...     field: str = "value"
             >>> model = MyModel()
-            >>> u.Generators.ensure_dict(model)
+            >>> u.ensure_dict(model)
             {'field': 'value'}
 
         """
@@ -306,19 +306,19 @@ class FlextUtilitiesGenerators:
         Example:
             >>> from flext_core._utilities.guards import FlextUtilitiesGuards
             >>> # Basic: trace_id + span_id
-            >>> ctx = u.Generators.ensure_trace_context({})
+            >>> ctx = u.ensure_trace_context({})
             >>> "trace_id" in ctx and "span_id" in ctx
             True
             >>> # With correlation_id
-            >>> ctx = u.Generators.ensure_trace_context({}, include_correlation_id=True)
+            >>> ctx = u.ensure_trace_context({}, include_correlation_id=True)
             >>> "correlation_id" in ctx
             True
             >>> # With timestamp
-            >>> ctx = u.Generators.ensure_trace_context({}, include_timestamp=True)
+            >>> ctx = u.ensure_trace_context({}, include_timestamp=True)
             >>> "timestamp" in ctx
             True
             >>> # Existing values preserved
-            >>> ctx = u.Generators.ensure_trace_context({"trace_id": "abc"})
+            >>> ctx = u.ensure_trace_context({"trace_id": "abc"})
             >>> ctx["trace_id"]
             'abc'
 

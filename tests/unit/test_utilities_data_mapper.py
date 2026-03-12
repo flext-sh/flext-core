@@ -1,4 +1,4 @@
-"""Comprehensive tests for FlextUtilities.Mapper - 100% coverage target.
+"""Comprehensive tests for FlextUtilities - 100% coverage target.
 
 Tested modules: flext_core._utilities.mapper
 Test scope: Data mapping utilities for dict key mapping, flags building, active keys
@@ -25,14 +25,14 @@ from tests.test_utils import (
 
 
 class TestMapperMapDictKeys:
-    """Tests for FlextUtilities.Mapper.map_dict_keys."""
+    """Tests for FlextUtilities.map_dict_keys."""
 
     def test_basic_key_mapping(self) -> None:
         """Test basic key mapping."""
         mc = TestsFlextConstants.Mapper
         source_raw = {mc.OLD_KEY: mc.VALUE1, mc.FOO: mc.VALUE2}
         mapping = {mc.OLD_KEY: mc.NEW_KEY, mc.FOO: mc.BAR}
-        result = FlextUtilities.Mapper.map_dict_keys(source_raw, mapping)
+        result = FlextUtilities.map_dict_keys(source_raw, mapping)
         mapped = assertion_helpers.assert_flext_result_success(result)
         assert mapped == {mc.NEW_KEY: mc.VALUE1, mc.BAR: mc.VALUE2}
 
@@ -41,7 +41,7 @@ class TestMapperMapDictKeys:
         mc = TestsFlextConstants.Mapper
         source_raw = {mc.OLD_KEY: mc.VALUE1, mc.UNMAPPED: mc.VALUE2}
         mapping = {mc.OLD_KEY: mc.NEW_KEY}
-        result = FlextUtilities.Mapper.map_dict_keys(
+        result = FlextUtilities.map_dict_keys(
             source_raw,
             mapping,
             keep_unmapped=True,
@@ -54,7 +54,7 @@ class TestMapperMapDictKeys:
         mc = TestsFlextConstants.Mapper
         source_raw = {mc.OLD_KEY: mc.VALUE1, mc.UNMAPPED: mc.VALUE2}
         mapping = {mc.OLD_KEY: mc.NEW_KEY}
-        result = FlextUtilities.Mapper.map_dict_keys(
+        result = FlextUtilities.map_dict_keys(
             source_raw,
             mapping,
             keep_unmapped=False,
@@ -75,12 +75,12 @@ class TestMapperMapDictKeys:
                 raise RuntimeError(msg)
 
         bad_dict_instance = BadDict()
-        result = FlextUtilities.Mapper.map_dict_keys(bad_dict_instance, {})
+        result = FlextUtilities.map_dict_keys(bad_dict_instance, {})
         tm.fail(result, contains="Failed to map dict keys")
 
 
 class TestMapperBuildFlagsDict:
-    """Tests for FlextUtilities.Mapper.build_flags_dict."""
+    """Tests for FlextUtilities.build_flags_dict."""
 
     def test_basic_flags_building(self) -> None:
         """Test basic flags dict building."""
@@ -91,7 +91,7 @@ class TestMapperBuildFlagsDict:
             mc.FLAGS_WRITE: mc.CAN_WRITE,
             mc.FLAGS_DELETE: mc.CAN_DELETE,
         }
-        result = FlextUtilities.Mapper.build_flags_dict(flags, mapping)
+        result = FlextUtilities.build_flags_dict(flags, mapping)
         _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value == {
             mc.CAN_READ: True,
@@ -104,7 +104,7 @@ class TestMapperBuildFlagsDict:
         mc = TestsFlextConstants.Mapper
         flags = [mc.FLAGS_READ]
         mapping = {mc.FLAGS_READ: mc.CAN_READ, mc.FLAGS_WRITE: mc.CAN_WRITE}
-        result = FlextUtilities.Mapper.build_flags_dict(
+        result = FlextUtilities.build_flags_dict(
             flags,
             mapping,
             default_value=True,
@@ -126,20 +126,20 @@ class TestMapperBuildFlagsDict:
 
         bad_list_instance = BadList()
         bad_list_typed: list[str] = cast("list[str]", bad_list_instance)
-        result = FlextUtilities.Mapper.build_flags_dict(bad_list_typed, {})
+        result = FlextUtilities.build_flags_dict(bad_list_typed, {})
         _ = assertion_helpers.assert_flext_result_failure(result)
         assert "Failed to build flags dict" in str(result.error)
 
 
 class TestMapperCollectActiveKeys:
-    """Tests for FlextUtilities.Mapper.collect_active_keys."""
+    """Tests for FlextUtilities.collect_active_keys."""
 
     def test_basic_active_keys(self) -> None:
         """Test collecting active keys."""
         mc = TestsFlextConstants.Mapper
         source = {mc.FLAGS_READ: True, mc.FLAGS_WRITE: True, mc.FLAGS_DELETE: False}
         mapping = {mc.FLAGS_READ: "r", mc.FLAGS_WRITE: "w", mc.FLAGS_DELETE: "d"}
-        result = FlextUtilities.Mapper.collect_active_keys(source, mapping)
+        result = FlextUtilities.collect_active_keys(source, mapping)
         _ = assertion_helpers.assert_flext_result_success(result)
         assert set(result.value) == {"r", "w"}
 
@@ -148,7 +148,7 @@ class TestMapperCollectActiveKeys:
         mc = TestsFlextConstants.Mapper
         source = {mc.FLAGS_READ: False, mc.FLAGS_WRITE: False}
         mapping = {mc.FLAGS_READ: "r", mc.FLAGS_WRITE: "w"}
-        result = FlextUtilities.Mapper.collect_active_keys(source, mapping)
+        result = FlextUtilities.collect_active_keys(source, mapping)
         _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value == []
 
@@ -163,7 +163,7 @@ class TestMapperCollectActiveKeys:
                 msg = "Bad dict get"
                 raise RuntimeError(msg)
 
-        result = FlextUtilities.Mapper.collect_active_keys(
+        result = FlextUtilities.collect_active_keys(
             cast("Mapping[str, bool]", BadDictGet()),
             {"key": "output"},
         )
@@ -172,13 +172,13 @@ class TestMapperCollectActiveKeys:
 
 
 class TestMapperTransformValues:
-    """Tests for FlextUtilities.Mapper.transform_values."""
+    """Tests for FlextUtilities.transform_values."""
 
     def test_basic_transform(self) -> None:
         """Test basic value transformation."""
         mc = TestsFlextConstants.Mapper
         source_raw = {mc.A: mc.HELLO, mc.B: mc.WORLD}
-        result = FlextUtilities.Mapper.transform_values(
+        result = FlextUtilities.transform_values(
             source_raw,
             lambda v: str(v).upper(),
         )
@@ -188,7 +188,7 @@ class TestMapperTransformValues:
         """Test numeric value transformation."""
         mc = TestsFlextConstants.Mapper
         source_raw = {mc.A: mc.NUM_1, mc.B: mc.NUM_2, mc.C: mc.NUM_3}
-        result = FlextUtilities.Mapper.transform_values(
+        result = FlextUtilities.transform_values(
             source_raw,
             lambda v: v * 2 if isinstance(v, int) else v,
         )
@@ -196,13 +196,13 @@ class TestMapperTransformValues:
 
 
 class TestMapperFilterDict:
-    """Tests for FlextUtilities.Mapper.filter_dict."""
+    """Tests for FlextUtilities.filter_dict."""
 
     def test_basic_filter(self) -> None:
         """Test basic dict filtering."""
         mc = TestsFlextConstants.Mapper
         source_raw = {mc.A: mc.NUM_1, mc.B: mc.NUM_2, mc.C: mc.NUM_3}
-        result = FlextUtilities.Mapper.filter_dict(
+        result = FlextUtilities.filter_dict(
             source_raw,
             lambda k, v: isinstance(v, int) and v > mc.NUM_1,
         )
@@ -210,18 +210,18 @@ class TestMapperFilterDict:
 
 
 class TestMapperInvertDict:
-    """Tests for FlextUtilities.Mapper.invert_dict."""
+    """Tests for FlextUtilities.invert_dict."""
 
     def test_basic_invert(self) -> None:
         """Test basic dict inversion."""
         mc = TestsFlextConstants.Mapper
         source = {mc.X: mc.Y, mc.A: mc.B}
-        result = FlextUtilities.Mapper.invert_dict(source)
+        result = FlextUtilities.invert_dict(source)
         assert result == {mc.Y: mc.X, mc.B: mc.A}
 
     def test_collision_handling_last(self) -> None:
         """Test collision handling with 'last' strategy."""
         mc = TestsFlextConstants.Mapper
         source = {mc.A: mc.B, mc.X: mc.B}
-        result = FlextUtilities.Mapper.invert_dict(source, handle_collisions="last")
+        result = FlextUtilities.invert_dict(source, handle_collisions="last")
         assert result == {mc.B: mc.X}

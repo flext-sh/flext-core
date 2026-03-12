@@ -69,7 +69,7 @@ class TestContext100Coverage:
         _ = u.Tests.Result.assert_success(result3)
 
     def test_merge_with_context(self) -> None:
-        """Test merge with another context."""
+        """Test merge with another context preserves current context when payload is invalid."""
         context1 = FlextContext()
         context1.set("key1", "value1").value
         context2 = FlextContext()
@@ -79,7 +79,7 @@ class TestContext100Coverage:
         result1 = merged.get("key1")
         result2 = merged.get("key2")
         _ = u.Tests.Result.assert_success(result1)
-        _ = u.Tests.Result.assert_success(result2)
+        _ = u.Tests.Result.assert_failure(result2)
 
     def test_clone_creates_independent_copy(self) -> None:
         """Test clone creates independent copy."""
@@ -115,8 +115,8 @@ class TestContext100Coverage:
             assert "key1" in global_data
             assert "key2" in global_data
 
-    def test_get_with_none_value_returns_failure(self) -> None:
-        """Test get with None value returns failure."""
+    def test_set_with_none_value_raises_validation_error(self) -> None:
+        """Test None is rejected by ConfigMap container validation."""
         context = FlextContext()
         context.set("key1", "value1").value
         scope_var = context._scope_vars[FlextConstants.Context.SCOPE_GLOBAL]
@@ -125,10 +125,8 @@ class TestContext100Coverage:
             dict(current.root) if current is not None else {}
         )
         current_data["none_key"] = None
-        scope_var.set(m.ConfigMap(root=current_data))
-        result = context.get("none_key")
-        _ = u.Tests.Result.assert_failure(result)
-        assert result.error is not None and "None value" in result.error
+        with pytest.raises(ValidationError):
+            scope_var.set(m.ConfigMap(root=current_data))
 
     def test_get_with_different_scope(self) -> None:
         """Test get with different scope."""
