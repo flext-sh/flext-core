@@ -107,9 +107,7 @@ class FlextTypes:
     type GeneralValueTypeMapping = Mapping[str, Scalar]
 
     type RegisterableService = Union["p.Model", Callable[..., "p.Model"]]
-    type RegisterableService = Union["p.Model", Callable[..., "p.Model"]]
     type FactoryCallable = Callable[[], RegisterableService]
-    type ResourceCallable = Callable[[], "p.Model"]
     type ResourceCallable = Callable[[], "p.Model"]
     type MetadataValue = (
         Scalar | Mapping[str, Scalar | Sequence[Scalar]] | Sequence[Scalar]
