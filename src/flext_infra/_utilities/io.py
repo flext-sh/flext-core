@@ -13,7 +13,7 @@ import json
 from collections.abc import Mapping
 from pathlib import Path
 
-from pydantic import BaseModel, TypeAdapter, ValidationError
+from pydantic import BaseModel, JsonValue, TypeAdapter, ValidationError
 
 from flext_core import r
 from flext_infra import c, t
@@ -33,7 +33,7 @@ class FlextInfraUtilitiesIo:
     """
 
     @staticmethod
-    def read_json(path: Path) -> r[Mapping[str, t.Container]]:
+    def read_json(path: Path) -> r[Mapping[str, JsonValue]]:
         """Read and parse a JSON file.
 
         Args:
@@ -44,22 +44,24 @@ class FlextInfraUtilitiesIo:
 
         """
         if not path.exists():
-            return r[Mapping[str, t.Container]].ok({})
+            return r[Mapping[str, JsonValue]].ok({})
         try:
             loaded_obj: object = json.loads(
                 path.read_text(encoding=c.Infra.Encoding.DEFAULT),
             )
             if not isinstance(loaded_obj, dict):
-                return r[Mapping[str, t.Container]].fail("JSON root must be object")
-            parser = TypeAdapter(dict[str, t.Container])
-            data = parser.validate_python(loaded_obj, strict=True)
-            return r[Mapping[str, t.Container]].ok(data)
+                return r[Mapping[str, JsonValue]].fail("JSON root must be object")
+            parser: TypeAdapter[dict[str, JsonValue]] = TypeAdapter(
+                dict[str, JsonValue]
+            )
+            data = parser.validate_python(loaded_obj)
+            return r[Mapping[str, JsonValue]].ok(data)
         except ValidationError as exc:
-            return r[Mapping[str, t.Container]].fail(
+            return r[Mapping[str, JsonValue]].fail(
                 f"JSON object validation error: {exc}",
             )
         except (json.JSONDecodeError, OSError) as exc:
-            return r[Mapping[str, t.Container]].fail(f"JSON read error: {exc}")
+            return r[Mapping[str, JsonValue]].fail(f"JSON read error: {exc}")
 
     @staticmethod
     def write_json(

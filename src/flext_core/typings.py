@@ -79,9 +79,6 @@ class FlextTypes:
 
     # --- RECURSIVE TYPES (PEP 695 - Annotation-only, NEVER with isinstance) ---
 
-    type JsonValue = (
-        Scalar | list[FlextTypes.JsonValue] | dict[str, FlextTypes.JsonValue]
-    )
     type Serializable = (
         Scalar | list[FlextTypes.Serializable] | dict[str, FlextTypes.Serializable]
     )
@@ -119,7 +116,7 @@ class FlextTypes:
     type MetadataAttributeValue = MetadataValue
     type HandlerCallable = Callable[['p.Model'], 'p.Model']
     type HandlerLike = Callable[..., 'p.Model']
-    type RegistrablePlugin = Scalar | Callable[..., Scalar | BaseModel]
+    type RegistrablePlugin = Scalar | Callable[..., Scalar]
 
     # Other Types
     type SortableObjectType = str | int | float
@@ -131,9 +128,9 @@ class FlextTypes:
     type IncEx = set[str] | Mapping[str, set[str] | bool]
 
     type ConfigurationMapping = Mapping[str, Scalar]
-    type ResultErrorData = BaseModel | Mapping[str, Container]
-    type Dict = Mapping[str, Scalar | BaseModel]
-    type ConfigMap = Mapping[str, Scalar | BaseModel]
+    type ResultErrorData = Mapping[str, Container]
+    type Dict = Mapping[str, Scalar]
+    type ConfigMap = Mapping[str, Scalar]
     type ServiceMap = Mapping[str, RegisterableService]
     type ObjectList = Sequence[Container]
     type ModuleExport = Container | ModuleType | type | Callable[..., Container]

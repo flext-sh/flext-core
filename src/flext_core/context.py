@@ -18,7 +18,7 @@ from contextlib import contextmanager
 from datetime import datetime
 from typing import ClassVar, Final, Self, overload
 
-from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
+from pydantic import BaseModel, Field, PrivateAttr
 
 from flext_core import FlextLogger, FlextRuntime, c, m, p, r, t, u
 
@@ -60,11 +60,19 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
         """Return contextvar payload as ConfigMap with safe default."""
         if ctx_value is None:
             return {}
-        if not hasattr(ctx_value, "items"):
+        
+        if isinstance(ctx_value, BaseModel):
+            ctx_value = getattr(ctx_value, "root", ctx_value.model_dump())
+        elif hasattr(ctx_value, "items") and callable(getattr(ctx_value, "items")):
+            pass
+        else:
             return {}
+
         try:
             normalized: dict[str, object] = {}
-            for key, value in ctx_value.items():
+            # Safe because we checked for items() above, but type check needs help
+            mapping_value: Mapping[str, object] = typing.cast(Mapping[str, object], ctx_value)
+            for key, value in mapping_value.items():
                 if str(key) != key:
                     return {}
                 normalized_value = FlextRuntime.normalize_to_container(value)
@@ -347,7 +355,7 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
             if include_statistics and stats_dict_export:
                 result_dict["statistics"] = stats_dict_export
             if include_metadata and metadata_dict_export:
-                metadata_container: object = m.ConfigMap(root=metadata_dict_export)
+                metadata_container: object = m.ConfigMap(root=dict(metadata_dict_export.items()))
                 result_dict["metadata"] = metadata_container
             return result_dict
         metadata_root: m.ConfigMap | None = (
@@ -420,12 +428,13 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
                 f"Context key '{key}' has None value in scope '{scope}'"
             )
 
-        return r[t.Container | BaseModel].ok(value)
+        normalized = FlextRuntime.normalize_to_container(value)
+        return r[t.Container | BaseModel].ok(normalized)
 
-    def get_metadata(self, key: str) -> r[t.Container]:
+    def get_metadata(self, key: str) -> r[t.Container | BaseModel]:
         """Get metadata from the context.
 
-        Fast fail: Returns r[t.Container] - fails if key not found.
+        Fast fail: Returns r[t.Container | BaseModel] - fails if key not found.
         No fallback behavior - use r monadic operations for defaults.
 
         Args:
@@ -452,8 +461,8 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
         if key not in self._metadata.attributes:
             return r[t.Container].fail(f"Metadata key '{key}' not found")
         raw_value: object = self._metadata.attributes[key]
-        normalized_value: t.Container = FlextRuntime.normalize_to_container(raw_value)
-        return r[t.Container].ok(normalized_value)
+        normalized_value: t.Container | BaseModel = FlextRuntime.normalize_to_container(raw_value)
+        return r[t.Container | BaseModel].ok(normalized_value)
 
     def has(self, key: str, scope: str = c.Context.SCOPE_GLOBAL) -> bool:
         """Check if a key exists in the context.
@@ -643,7 +652,7 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
         """Set context statistics (used internally for cloning)."""
         self._statistics = statistics
 
-    def validate(self) -> r[bool]:
+    def validate_context(self) -> r[bool]:
         """Validate the context data.
 
         ARCHITECTURAL NOTE: Uses Python contextvars for storage.
@@ -1042,7 +1051,7 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
 
             """
             container: p.DI = FlextContext.get_container()
-            service_result: p.ResultLike[t.Container] = container.get(service_name)
+            service_result = container.get(service_name)
             if service_result.is_success:
                 service_value = service_result.value
                 if service_value is None:
@@ -1077,7 +1086,8 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
             """
             container = FlextContext.get_container()
             try:
-                _ = container.register(service_name, service)
+                # Type ignoring register until Pydantic vs arbitrary type unification is complete
+                _ = container.register(service_name, service)  # type: ignore[arg-type]
                 return r[bool].ok(value=True)
             except ValueError as e:
                 return r[bool].fail(str(e))
