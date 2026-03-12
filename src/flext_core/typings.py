@@ -79,6 +79,16 @@ class FlextTypes:
         Scalar | Sequence[FlextTypes.JsonValue] | Mapping[str, FlextTypes.JsonValue]
     )
     type JsonDict = Mapping[str, JsonValue]
+    type ContainerValue = (
+        Scalar
+        | BaseModel
+        | Path
+        | Sequence[FlextTypes.ContainerValue]
+        | Mapping[str, FlextTypes.ContainerValue]
+        | type
+        | Callable[..., FlextTypes.ContainerValue]
+        | None
+    )
     type ConfigurationMapping = Mapping[str, GeneralValueType]
     type LazyExportType = tuple[str, str]
     type AnnotationMap = Mapping[str, LazyExportType]

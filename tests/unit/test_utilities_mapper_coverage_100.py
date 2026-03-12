@@ -284,7 +284,7 @@ class TestuMapperConversions:
     def test_convert_to_json_value(self) -> None:
         """Test convert_to_json_value preserves BaseModel objects."""
         obj = SimpleObj(name="test", value=1)
-        payload: dict[str, t.ContainerValue] = {"obj": obj}
+        payload: dict[str, t.GeneralValueType] = {"obj": obj}
         res = u.Mapper.convert_to_json_value(payload)
         assert isinstance(res, dict)
         assert "obj" in res
@@ -293,7 +293,7 @@ class TestuMapperConversions:
     def test_convert_to_json_safe(self) -> None:
         obj = SimpleObj(name="test", value=1)
         now = datetime(2026, 3, 12, 10, 30, 45, tzinfo=UTC)
-        payload: dict[str, t.ContainerValue] = {
+        payload: dict[str, t.GeneralValueType] = {
             "obj": obj,
             "path": Path("/tmp/example"),
             "when": now,

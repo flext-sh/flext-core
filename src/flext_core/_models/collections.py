@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, MutableMapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime
 from typing import Self, override
 
@@ -45,7 +45,7 @@ class FlextModelsCollections:
         model_config = ConfigDict(
             strict=True, validate_default=True, validate_assignment=True
         )
-        categories: MutableMapping[str, list[object]] = Field(
+        categories: dict[str, list[object]] = Field(
             default_factory=dict, description="Map of category name to list of items"
         )
 
@@ -145,7 +145,7 @@ class FlextModelsCollections:
                 CategoryGroupsMapping: Dictionary representation of categories.
 
             """
-            result: MutableMapping[str, Sequence[object]] = {}
+            result: dict[str, Sequence[object]] = {}
             for key, value_list in self.categories.items():
                 normalized_list: list[object] = []
                 for item in value_list:
@@ -218,7 +218,7 @@ class FlextModelsCollections:
             """
             if not stats_list:
                 return {}
-            result: MutableMapping[str, object] = {}
+            result: dict[str, object] = {}
             for stats in stats_list:
                 stats_dict = stats.model_dump()
                 for key, value in stats_dict.items():
@@ -228,7 +228,7 @@ class FlextModelsCollections:
                         result[key] = cls._resolve_aggregate_conflict(
                             result[key], value
                         )
-            normalized_result: MutableMapping[str, object] = {}
+            normalized_result: dict[str, object] = {}
             for key, value in result.items():
                 if value is None or value.__class__ in {
                     str,
@@ -266,7 +266,7 @@ class FlextModelsCollections:
                 Merged rules instance
 
             """
-            merged_data: MutableMapping[str, object] = {}
+            merged_data: dict[str, object] = {}
             for rule in rules:
                 merged_data.update(rule.model_dump())
             return cls(**merged_data)
@@ -309,7 +309,7 @@ class FlextModelsCollections:
                 Merged dictionary matching ContainerValue's dict type
 
             """
-            merged: MutableMapping[str, object] = {}
+            merged: dict[str, object] = {}
             for v in non_none:
                 if FlextRuntime.is_dict_like(v):
                     for key, val in v.items():
@@ -399,7 +399,7 @@ class FlextModelsCollections:
             """
             if not results_list:
                 return {}
-            result: MutableMapping[str, object] = {}
+            result: dict[str, object] = {}
             for res in results_list:
                 res_dict = res.model_dump()
                 for key, value in res_dict.items():
@@ -422,7 +422,7 @@ class FlextModelsCollections:
                 Combined results instance
 
             """
-            combined_data: MutableMapping[str, object] = {}
+            combined_data: dict[str, object] = {}
             for result in results:
                 combined_data.update(result.model_dump())
             return cls(**combined_data)
@@ -484,7 +484,7 @@ class FlextModelsCollections:
             """
             if not options:
                 return cls()
-            result: MutableMapping[str, object] = {}
+            result: dict[str, object] = {}
             for opt in options:
                 opt_dict = opt.model_dump()
                 for key, value in opt_dict.items():
@@ -492,7 +492,7 @@ class FlextModelsCollections:
                         result[key] = value
                     else:
                         result[key] = cls._resolve_merge_conflict(result[key], value)
-            normalized_result: MutableMapping[str, object] = {}
+            normalized_result: dict[str, object] = {}
             for key, value in result.items():
                 normalized_result[key] = FlextRuntime.normalize_to_general_value(value)
             return cls(**normalized_result)
@@ -574,7 +574,7 @@ class FlextModelsCollections:
             """
             self_dict = self.model_dump()
             other_dict = other.model_dump()
-            differences: MutableMapping[str, tuple[object, object]] = {}
+            differences: dict[str, tuple[object, object]] = {}
             all_keys = set(self_dict.keys()) | set(other_dict.keys())
             for key in all_keys:
                 self_val = self_dict.get(key)

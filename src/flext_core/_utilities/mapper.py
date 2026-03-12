@@ -30,7 +30,7 @@ class _Predicate[T](Protocol):
 
 
 type _MapperCallable = Callable[[t.ContainerValue], t.ContainerValue]
-type objectMapping = Mapping[str, t.ContainerValue]
+type objectMapping = Mapping[str, t.GeneralValueType]
 
 
 class FlextUtilitiesMapper:
@@ -156,7 +156,7 @@ class FlextUtilitiesMapper:
         return narrowed_value
 
     @classmethod
-    def convert_to_json_safe(cls, value: t.ContainerValue) -> t.Serializable | None:
+    def convert_to_json_safe(cls, value: t.GeneralValueType) -> t.Serializable | None:
         """Convert any value to guaranteed JSON-safe type.
 
         **Generic replacement for**: Manual JSON serialization with type safety

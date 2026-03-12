@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, MutableMapping, Sequence
+from collections.abc import Mapping, Sequence
 from typing import Annotated, Self
 
 import structlog.contextvars
@@ -337,7 +337,7 @@ class FlextModelsContext:
             Only allows JSON-serializable types: str, int, float, bool, list, dict,
             None.
             """
-            working_value: MutableMapping[str, object]
+            working_value: dict[str, object]
             normalized_mapping: Mapping[str, object]
             if v is None:
                 return {}
@@ -437,7 +437,7 @@ class FlextModelsContext:
             Only allows JSON-serializable types: str, int, float, bool, list, dict,
             None.
             """
-            working_value: MutableMapping[str, object]
+            working_value: dict[str, object]
             normalized_mapping: Mapping[str, object]
             if v is None:
                 return {}

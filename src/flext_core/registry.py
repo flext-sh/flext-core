@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import inspect
 import sys
-from collections.abc import Callable, Mapping, MutableMapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime
 from pathlib import Path
 from typing import Annotated, ClassVar, Literal, Self, TypeGuard, override
@@ -105,7 +105,7 @@ class FlextRegistry(s[bool]):
 
     _dispatcher: p.CommandBus | FlextDispatcher = PrivateAttr()
     _registered_keys: set[str] = PrivateAttr(default_factory=lambda: set[str]())
-    _class_plugin_storage: ClassVar[MutableMapping[str, t.RegistrablePlugin]] = {}
+    _class_plugin_storage: ClassVar[dict[str, t.RegistrablePlugin]] = {}
     _class_registered_keys: ClassVar[set[str]] = set()
 
     def __init__(
