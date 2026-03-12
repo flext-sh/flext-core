@@ -23,7 +23,7 @@ import pytest
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import r
-from flext_tests import p, u
+from flext_tests import u
 
 from ..test_utils import assertion_helpers
 
@@ -347,7 +347,7 @@ class TestFlextUtilitiesArgs:
             """Test parse_kwargs with parametrized success scenarios."""
             scenarios = TestFlextUtilitiesArgs.Scenarios.get_parse_kwargs_scenarios()
             scenario = scenarios[scenario_name]
-            result = u.parse_kwargs($$$)
+            result = u.parse_kwargs(scenario.kwargs, scenario.enum_fields)
             if scenario.expected_success:
                 _ = u.Tests.Result.assert_success(result)
                 parsed = result.value
@@ -360,7 +360,7 @@ class TestFlextUtilitiesArgs:
             """Test parse_kwargs with invalid enum value."""
             scenarios = TestFlextUtilitiesArgs.Scenarios.get_parse_kwargs_scenarios()
             scenario = scenarios["invalid_enum_value"]
-            result = u.parse_kwargs($$$)
+            result = u.parse_kwargs(scenario.kwargs, scenario.enum_fields)
             u.Tests.Result.assert_failure_with_error(
                 result,
                 expected_error=scenario.expected_error,
@@ -376,7 +376,7 @@ class TestFlextUtilitiesArgs:
             def process(status: TestFlextUtilitiesArgs.StatusEnum, name: str) -> bool:
                 return True
 
-            params = u.get_enum_params($$$)
+            params = u.get_enum_params(process)
             assert "status" in params
             assert params["status"] == TestFlextUtilitiesArgs.StatusEnum
             assert "name" not in params
@@ -392,7 +392,7 @@ class TestFlextUtilitiesArgs:
             ) -> bool:
                 return True
 
-            params = u.get_enum_params($$$)
+            params = u.get_enum_params(process)
             assert "status" in params
             assert "priority" in params
             assert params["status"] == TestFlextUtilitiesArgs.StatusEnum
@@ -408,7 +408,7 @@ class TestFlextUtilitiesArgs:
             ) -> bool:
                 return True
 
-            params = u.get_enum_params($$$)
+            params = u.get_enum_params(process)
             assert "status" in params
             assert params["status"] == TestFlextUtilitiesArgs.StatusEnum
 
@@ -419,7 +419,7 @@ class TestFlextUtilitiesArgs:
             def process(status: str | TestFlextUtilitiesArgs.StatusEnum) -> bool:
                 return True
 
-            params = u.get_enum_params($$$)
+            params = u.get_enum_params(process)
             assert "status" in params
             assert params["status"] == TestFlextUtilitiesArgs.StatusEnum
 
@@ -430,7 +430,7 @@ class TestFlextUtilitiesArgs:
             def process(name: str, age: int) -> bool:
                 return True
 
-            params = u.get_enum_params($$$)
+            params = u.get_enum_params(process)
             assert params == {}
 
         @staticmethod
@@ -440,7 +440,7 @@ class TestFlextUtilitiesArgs:
             class BadFunction:
                 __annotations__ = {"invalid": object()}
 
-            params = u.get_enum_params($$$)
+            params = u.get_enum_params(BadFunction)
             assert params == {}
 
         @staticmethod
@@ -455,7 +455,7 @@ class TestFlextUtilitiesArgs:
             ) -> bool:
                 return True
 
-            params = u.get_enum_params($$$)
+            params = u.get_enum_params(process)
             assert "status" in params
             assert params["status"] == TestFlextUtilitiesArgs.StatusEnum
 
@@ -471,6 +471,6 @@ class TestFlextUtilitiesArgs:
             ) -> bool:
                 return True
 
-            params = u.get_enum_params($$$)
+            params = u.get_enum_params(process)
             assert "status" in params
             assert params["status"] == TestFlextUtilitiesArgs.StatusEnum

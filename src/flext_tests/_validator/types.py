@@ -144,7 +144,7 @@ class FlextValidatorTypes:
         cls,
         files: list[Path],
         approved_exceptions: Mapping[str, list[str]] | None = None,
-    ) -> r[m.Tests.Validator.ScanResult]:
+    ) -> r[m.Tests.ScanResult]:
         """Scan files for type violations.
 
         Args:
@@ -160,8 +160,8 @@ class FlextValidatorTypes:
         for file_path in files:
             file_violations = cls._scan_file(file_path, approved)
             violations.extend(file_violations)
-        return r[m.Tests.Validator.ScanResult].ok(
-            m.Tests.Validator.ScanResult.create(
+        return r[m.Tests.ScanResult].ok(
+            m.Tests.ScanResult.create(
                 validator_name=c.Tests.Validator.Defaults.VALIDATOR_TYPES,
                 files_scanned=len(files),
                 violations=violations,

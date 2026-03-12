@@ -798,7 +798,7 @@ class TestFlextModels:
         def dummy_handler(value: object) -> object:
             return value
 
-        reg = m.HandlerRegistration(
+        reg = m.Registration(
             name="TestHandler",
             handler=dummy_handler,
             event_types=["CreateUser"],
@@ -1016,17 +1016,17 @@ class TestFlextModels:
 
     def test_handler_execution_context_model(self) -> None:
         """Test HandlerExecutionContext model creation."""
-        context = m.HandlerExecutionContext.create_for_handler(
+        context = m.ExecutionContext.create_for_handler(
             handler_name="ProcessOrderCommand",
             handler_mode="command",
         )
         assert context.handler_name == "ProcessOrderCommand"
         assert context.handler_mode == "command"
-        assert isinstance(context, m.HandlerExecutionContext)
+        assert isinstance(context, m.ExecutionContext)
 
     def test_registration_details_model(self) -> None:
         """Test RegistrationDetails model creation."""
-        details = m.HandlerRegistrationDetails(
+        details = m.RegistrationDetails(
             registration_id="reg-123",
             handler_mode=c.Cqrs.HandlerType.COMMAND,
             timestamp="2025-01-01T00:00:00Z",

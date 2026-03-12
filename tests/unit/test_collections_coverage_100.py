@@ -327,7 +327,7 @@ class TestFlextModelsCollectionsResults:
     def test_results_aggregate_empty(self) -> None:
         """Test aggregate with empty list."""
 
-        class TestResult(m.CollectionsResults):
+        class TestResult(m.Results):
             processed: int = 0
 
         assert TestResult.aggregate([]) == {}
@@ -335,7 +335,7 @@ class TestFlextModelsCollectionsResults:
     def test_results_aggregate_numbers(self) -> None:
         """Test aggregate with numeric values."""
 
-        class TestResult(m.CollectionsResults):
+        class TestResult(m.Results):
             processed: int = 0
 
         result1 = TestResult(processed=10)
@@ -348,7 +348,7 @@ class TestFlextModelsCollectionsResults:
     def test_results_aggregate_lists(self) -> None:
         """Test aggregate with list values."""
 
-        class TestResult(m.CollectionsResults):
+        class TestResult(m.Results):
             errors: list[str] = Field(default_factory=list)
 
         result1 = TestResult(errors=["error1"])
@@ -361,7 +361,7 @@ class TestFlextModelsCollectionsResults:
     def test_results_aggregate_dicts(self) -> None:
         """Test aggregate with dict values."""
 
-        class TestResult(m.CollectionsResults):
+        class TestResult(m.Results):
             metadata: dict[str, str] = Field(default_factory=dict)
 
         result1 = TestResult(metadata={"key1": "value1"})
@@ -374,7 +374,7 @@ class TestFlextModelsCollectionsResults:
     def test_results_aggregate_mixed(self) -> None:
         """Test aggregate with mixed types."""
 
-        class TestResult(m.CollectionsResults):
+        class TestResult(m.Results):
             processed: int = 0
             errors: list[str] = Field(default_factory=list)
             status: str = ""
@@ -391,7 +391,7 @@ class TestFlextModelsCollectionsResults:
     def test_results_aggregate_none_values(self) -> None:
         """Test aggregate with None values."""
 
-        class TestResult(m.CollectionsResults):
+        class TestResult(m.Results):
             processed: int | None = None
             status: str | None = None
 
@@ -410,7 +410,7 @@ class TestFlextModelsCollectionsOptions:
     def test_options_merge(self) -> None:
         """Test merge method."""
 
-        class TestOptions(m.CollectionsOptions):
+        class TestOptions(m.Options):
             verbose: bool = False
             color: bool = True
 
@@ -423,7 +423,7 @@ class TestFlextModelsCollectionsOptions:
     def test_options_merge_all_fields(self) -> None:
         """Test merge with all fields."""
 
-        class TestOptions(m.CollectionsOptions):
+        class TestOptions(m.Options):
             verbose: bool = False
             color: bool = True
 

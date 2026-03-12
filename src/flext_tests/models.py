@@ -10,12 +10,15 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import datetime
-from collections.abc import Callable, Mapping, Sequence
+import sys
+from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from pathlib import Path
-from typing import override
+from typing import TypeAliasType, override
 
 from pydantic import (
+    AliasChoices,
     BaseModel,
+    ConfigDict,
     Field,
     computed_field,
     field_validator,
@@ -251,7 +254,7 @@ class FlextTestsModels(
             @model_validator(mode="after")
             def validate_batch_params(
                 self,
-            ) -> FlextTestsModels.Tests.Factory.ResultFactoryParams:
+            ) -> FlextTestsModels.Tests.ResultFactoryParams:
                 """Validate batch parameters are consistent."""
                 if (
                     self.mix_pattern is not None
@@ -629,106 +632,106 @@ class FlextTestsModels(
                 """Convert string to Path - Field constraints cannot handle type conversion."""
                 return Path(value)
 
-            class CreateKwargsParams(FlextModels.Value):
-                """Parameters for file create() kwargs with Pydantic 2 validation.
+        class CreateKwargsParams(FlextModels.Value):
+            """Parameters for file create() kwargs with Pydantic 2 validation.
 
-                Fields match FlextTestsFileManager.create() method signature exactly.
-                """
+            Fields match FlextTestsFileManager.create() method signature exactly.
+            """
 
-                directory: Path | None = Field(
-                    default=None,
-                    description="Directory to create file in.",
-                )
-                fmt: c.Tests.Files.FormatLiteral = Field(
-                    default="auto",
-                    description="File format override.",
-                )
-                enc: str = Field(
-                    default=c.Tests.Files.DEFAULT_ENCODING,
-                    min_length=1,
-                    description="File encoding.",
-                )
-                indent: int = Field(
-                    default=c.Tests.Files.DEFAULT_JSON_INDENT,
-                    ge=0,
-                    description="JSON indentation level.",
-                )
-                delim: str = Field(
-                    default=c.Tests.Files.DEFAULT_CSV_DELIMITER,
-                    min_length=1,
-                    max_length=1,
-                    description="CSV delimiter (single character).",
-                )
-                headers: list[str] | None = Field(
-                    default=None,
-                    description="CSV column headers.",
-                )
-                readonly: bool = Field(
-                    default=False,
-                    description="Create file as read-only.",
-                )
+            directory: Path | None = Field(
+                default=None,
+                description="Directory to create file in.",
+            )
+            fmt: c.Tests.Files.FormatLiteral = Field(
+                default="auto",
+                description="File format override.",
+            )
+            enc: str = Field(
+                default=c.Tests.Files.DEFAULT_ENCODING,
+                min_length=1,
+                description="File encoding.",
+            )
+            indent: int = Field(
+                default=c.Tests.Files.DEFAULT_JSON_INDENT,
+                ge=0,
+                description="JSON indentation level.",
+            )
+            delim: str = Field(
+                default=c.Tests.Files.DEFAULT_CSV_DELIMITER,
+                min_length=1,
+                max_length=1,
+                description="CSV delimiter (single character).",
+            )
+            headers: list[str] | None = Field(
+                default=None,
+                description="CSV column headers.",
+            )
+            readonly: bool = Field(
+                default=False,
+                description="Create file as read-only.",
+            )
 
-            class BatchParams(FlextModels.Value):
-                """Parameters for FlextTestsFiles.batch() method."""
+        class BatchParams(FlextModels.Value):
+            """Parameters for FlextTestsFiles.batch() method."""
 
-                files: t.Tests.Files.BatchFiles = Field(
-                    description="Mapping or Sequence of files to process",
-                )
-                directory: Path | None = Field(
-                    default=None,
-                    description="Target directory for create operations",
-                )
-                operation: t.Tests.Files.OperationLiteral = Field(
-                    default="create",
-                    description="Operation type: create, read, or delete",
-                )
-                model: type[BaseModel] | None = Field(
-                    default=None,
-                    description="Optional model class for read operations",
-                )
-                on_error: t.Tests.Files.ErrorModeLiteral = Field(
-                    default="collect",
-                    description="Error handling mode: stop, skip, or collect",
-                )
-                parallel: bool = Field(
-                    default=False,
-                    description="Run operations in parallel",
-                )
+            files: t.Tests.Files.BatchFiles = Field(
+                description="Mapping or Sequence of files to process",
+            )
+            directory: Path | None = Field(
+                default=None,
+                description="Target directory for create operations",
+            )
+            operation: t.Tests.Files.OperationLiteral = Field(
+                default="create",
+                description="Operation type: create, read, or delete",
+            )
+            model: type[BaseModel] | None = Field(
+                default=None,
+                description="Optional model class for read operations",
+            )
+            on_error: t.Tests.Files.ErrorModeLiteral = Field(
+                default="collect",
+                description="Error handling mode: stop, skip, or collect",
+            )
+            parallel: bool = Field(
+                default=False,
+                description="Run operations in parallel",
+            )
 
-            class BatchResult(FlextModels.Value):
-                """Result of batch file operations."""
+        class BatchResult(FlextModels.Value):
+            """Result of batch file operations."""
 
-                succeeded: int = Field(
-                    ge=0,
-                    description="Number of successful operations",
-                )
-                failed: int = Field(ge=0, description="Number of failed operations")
-                total: int = Field(ge=0, description="Total number of operations")
-                results: Mapping[str, r[Path | t.Tests.object]] = Field(
-                    default_factory=dict,
-                    description="Mapping of file names to operation results",
-                )
-                errors: Mapping[str, str] = Field(
-                    default_factory=dict,
-                    description="Mapping of file names to error messages",
-                )
+            succeeded: int = Field(
+                ge=0,
+                description="Number of successful operations",
+            )
+            failed: int = Field(ge=0, description="Number of failed operations")
+            total: int = Field(ge=0, description="Total number of operations")
+            results: Mapping[str, r[Path | t.Tests.object]] = Field(
+                default_factory=dict,
+                description="Mapping of file names to operation results",
+            )
+            errors: Mapping[str, str] = Field(
+                default_factory=dict,
+                description="Mapping of file names to error messages",
+            )
 
-                @computed_field
-                def failure_count(self) -> int:
-                    """Alias for failed count."""
-                    return self.failed
+            @computed_field
+            def failure_count(self) -> int:
+                """Alias for failed count."""
+                return self.failed
 
-                @computed_field
-                def success_count(self) -> int:
-                    """Alias for succeeded count."""
-                    return self.succeeded
+            @computed_field
+            def success_count(self) -> int:
+                """Alias for succeeded count."""
+                return self.succeeded
 
-                @computed_field
-                def success_rate(self) -> float:
-                    """Compute success rate as percentage."""
-                    if self.total == 0:
-                        return 0.0
-                    return (self.succeeded / self.total) * 100.0
+            @computed_field
+            def success_rate(self) -> float:
+                """Compute success rate as percentage."""
+                if self.total == 0:
+                    return 0.0
+                return (self.succeeded / self.total) * 100.0
 
         Severity = c.Tests.Validator.Severity
 
@@ -780,6 +783,639 @@ class FlextTestsModels(
                     violations=violations,
                     passed=len(violations) == 0,
                 )
+
+        class AddParams(FlextModels.Value):
+            key: str = Field(min_length=1, description="Key to store data under")
+            value: t.Tests.object | None = Field(
+                default=None, description="Direct value to store"
+            )
+            factory: str | None = Field(default=None, description="Factory name to use")
+            count: int | None = Field(
+                default=None, ge=1, description="Number of items for factory generation"
+            )
+            model: type[BaseModel] | None = Field(
+                default=None, description="Pydantic model class to instantiate"
+            )
+            model_data: Mapping[str, t.Tests.object] | None = Field(
+                default=None, description="Data for model instantiation"
+            )
+            mapping: Mapping[str, t.Tests.object] | None = Field(
+                default=None, description="Dict/mapping to store"
+            )
+            sequence: Sequence[t.Tests.object] | None = Field(
+                default=None, description="List/sequence to store"
+            )
+            transform: t.Tests.Builders.TransformFunc | None = Field(
+                default=None, description="Transform function before storing"
+            )
+            validate_func: t.Tests.Builders.ValidateFunc | None = Field(
+                default=None, alias="validate", description="Validation function"
+            )
+            merge: bool = Field(
+                default=False, description="Whether to merge with existing data at key"
+            )
+            default: t.Tests.object | None = Field(
+                default=None, description="Default value if result is None"
+            )
+            production: bool | None = Field(
+                default=None, description="Shortcut for production config"
+            )
+            debug: bool | None = Field(
+                default=None, description="Shortcut for debug config"
+            )
+            result: r[t.Tests.object] | None = Field(
+                default=None, description="r to store directly"
+            )
+            result_ok: t.Tests.object | None = Field(
+                default=None, description="Value to wrap in r[T].ok()"
+            )
+            result_fail: str | None = Field(
+                default=None, description="Error message for r[T].fail()"
+            )
+            result_code: str | None = Field(
+                default=None, description="Error code for result_fail"
+            )
+            results: Sequence[r[t.Tests.object]] | None = Field(
+                default=None, description="Sequence of r to store"
+            )
+            results_ok: Sequence[t.Tests.object] | None = Field(
+                default=None, description="Sequence of values to wrap in r[T].ok()"
+            )
+            results_fail: Sequence[str] | None = Field(
+                default=None, description="Sequence of error messages for r[T].fail()"
+            )
+            cls: type[BaseModel] | None = Field(
+                default=None, description="Class type to instantiate"
+            )
+            cls_args: tuple[t.Tests.object, ...] | None = Field(
+                default=None, description="Positional arguments for cls"
+            )
+            cls_kwargs: Mapping[str, t.Tests.object] | None = Field(
+                default=None, description="Keyword arguments for cls"
+            )
+            items: Sequence[t.Tests.object] | None = Field(
+                default=None, description="Type-safe sequence"
+            )
+            items_map: Callable[[t.Tests.object], t.Tests.object] | None = Field(
+                default=None, description="Transform each item"
+            )
+            items_filter: Callable[[t.Tests.object], bool] | None = Field(
+                default=None, description="Filter items"
+            )
+            entries: Mapping[str, t.Tests.object] | None = Field(
+                default=None, description="Type-safe mapping"
+            )
+            entries_map: Callable[[t.Tests.object], t.Tests.object] | None = Field(
+                default=None, description="Transform values"
+            )
+            entries_filter: set[str] | None = Field(
+                default=None, description="Include only these keys"
+            )
+
+            @computed_field
+            def effective_count(self) -> int:
+                return self.count or c.Tests.Factory.DEFAULT_BATCH_COUNT
+
+            @computed_field
+            def effective_error_code(self) -> str:
+                return self.result_code or c.Errors.VALIDATION_ERROR
+
+            @computed_field
+            def resolution_priority(self) -> int:
+                if self.result is not None:
+                    return 1
+                if self.result_ok is not None:
+                    return 2
+                if self.result_fail is not None:
+                    return 3
+                if self.results is not None:
+                    return 4
+                if self.results_ok is not None:
+                    return 5
+                if self.results_fail is not None:
+                    return 6
+                if self.cls is not None:
+                    return 7
+                if self.items is not None:
+                    return 8
+                if self.entries is not None:
+                    return 9
+                if self.factory is not None:
+                    return 10
+                if self.model is not None:
+                    return 11
+                if self.production is not None or self.debug is not None:
+                    return 12
+                if self.mapping is not None:
+                    return 13
+                if self.sequence is not None:
+                    return 14
+                if self.value is not None:
+                    return 15
+                if self.default is not None:
+                    return 16
+                return 0
+
+            @model_validator(mode="after")
+            def validate_cls_with_args(self) -> FlextTestsModels.Tests.AddParams:
+                if (
+                    self.cls_args is not None or self.cls_kwargs is not None
+                ) and self.cls is None:
+                    msg = "cls_args/cls_kwargs can only be used with cls"
+                    raise ValueError(msg)
+                return self
+
+            @model_validator(mode="after")
+            def validate_count_positive(self) -> FlextTestsModels.Tests.AddParams:
+                if self.count is not None and self.count < 1:
+                    msg = c.Tests.Builders.ERROR_INVALID_COUNT.format(count=self.count)
+                    raise ValueError(msg)
+                return self
+
+            @model_validator(mode="after")
+            def validate_entries_transform(self) -> FlextTestsModels.Tests.AddParams:
+                if (
+                    self.entries_map is not None or self.entries_filter is not None
+                ) and self.entries is None:
+                    msg = "entries_map/entries_filter can only be used with entries"
+                    raise ValueError(msg)
+                return self
+
+            @model_validator(mode="after")
+            def validate_items_transform(self) -> FlextTestsModels.Tests.AddParams:
+                if (
+                    self.items_map is not None or self.items_filter is not None
+                ) and self.items is None:
+                    msg = "items_map/items_filter can only be used with items"
+                    raise ValueError(msg)
+                return self
+
+            @model_validator(mode="after")
+            def validate_model_data(self) -> FlextTestsModels.Tests.AddParams:
+                if self.model_data is not None and self.model is None:
+                    msg = "model_data can only be used with model"
+                    raise ValueError(msg)
+                return self
+
+            @model_validator(mode="after")
+            def validate_result_code_with_fail(
+                self,
+            ) -> FlextTestsModels.Tests.AddParams:
+                if self.result_code is not None and self.result_fail is None:
+                    msg = "result_code can only be used with result_fail"
+                    raise ValueError(msg)
+                return self
+
+        class BuildParams(FlextModels.Value):
+            as_model: type[BaseModel] | None = Field(
+                default=None, description="Pydantic model class to instantiate"
+            )
+            as_list: bool = Field(
+                default=False, description="Return as list of (key, value) tuples"
+            )
+            keys_only: bool = Field(
+                default=False, description="Return only keys as list"
+            )
+            values_only: bool = Field(
+                default=False, description="Return only values as list"
+            )
+            flatten: bool = Field(
+                default=False, description="Flatten nested dicts with dot notation"
+            )
+            filter_none: bool = Field(
+                default=False, description="Remove None values from result"
+            )
+            as_parametrized: bool = Field(
+                default=False,
+                description="Return as list of (test_id, data) tuples for pytest",
+            )
+            parametrize_key: str = Field(
+                default="test_id",
+                min_length=1,
+                description="Key to use as test_id in parametrized output",
+            )
+            validate_with: (
+                Callable[[t.Tests.Builders.BuilderOutputDict], bool] | None
+            ) = Field(default=None, description="Validation function")
+            assert_with: Callable[[t.Tests.Builders.BuilderOutputDict], None] | None = (
+                Field(default=None, description="Assertion function")
+            )
+            map_result: (
+                Callable[[t.Tests.Builders.BuilderOutputDict], t.Tests.object] | None
+            ) = Field(
+                default=None, description="Transform function applied to final result"
+            )
+
+            @model_validator(mode="after")
+            def validate_parametrize_key(self) -> FlextTestsModels.Tests.BuildParams:
+                if self.as_parametrized and not self.parametrize_key:
+                    msg = "parametrize_key cannot be empty when as_parametrized is True"
+                    raise ValueError(msg)
+                return self
+
+        class ToResultParams(FlextModels.Value):
+            error: str | None = Field(
+                default=None,
+                min_length=1,
+                description="Error message to return as failure result",
+            )
+            error_code: str | None = Field(
+                default=None, min_length=1, description="Error code for failure result"
+            )
+            error_data: FlextModels.ConfigMap | None = Field(
+                default=None, description="Error metadata dictionary"
+            )
+            unwrap: bool = Field(
+                default=False, description="Unwrap r and return value directly"
+            )
+            unwrap_msg: str | None = Field(
+                default=None,
+                min_length=1,
+                description="Custom error message when unwrap fails",
+            )
+            as_model: type[BaseModel] | None = Field(
+                default=None, description="Pydantic model class to instantiate"
+            )
+            as_cls: type | None = Field(
+                default=None, description="Class type to instantiate"
+            )
+            cls_args: tuple[t.Tests.object, ...] | None = Field(
+                default=None, description="Positional arguments for as_cls"
+            )
+            validate_func: Callable[[t.Tests.Builders.BuilderDict], bool] | None = (
+                Field(
+                    default=None,
+                    alias="validate",
+                    description="Validation function for built data",
+                )
+            )
+            map_fn: Callable[[t.Tests.Builders.BuilderDict], t.Tests.object] | None = (
+                Field(
+                    default=None,
+                    description="Transform function applied before wrapping in result",
+                )
+            )
+            as_list_result: bool = Field(
+                default=False, description="Return as r[list[T]]"
+            )
+            as_dict_result: bool = Field(
+                default=False, description="Return as r[Mapping[str, T]]"
+            )
+
+            @computed_field
+            def effective_error_code(self) -> str:
+                return self.error_code or c.Errors.VALIDATION_ERROR
+
+            @model_validator(mode="after")
+            def validate_mutually_exclusive(
+                self,
+            ) -> FlextTestsModels.Tests.ToResultParams:
+                if self.as_cls is not None and self.as_model is not None:
+                    msg = "as_cls and as_model cannot be used together"
+                    raise ValueError(msg)
+                if self.as_list_result and self.as_dict_result:
+                    msg = "as_list_result and as_dict_result cannot be used together"
+                    raise ValueError(msg)
+                if self.cls_args is not None and self.as_cls is None:
+                    msg = "cls_args can only be used with as_cls"
+                    raise ValueError(msg)
+                return self
+
+        class BuildersBatchParams(FlextModels.Value):
+            key: str = Field(min_length=1, description="Key to store batch under")
+            scenarios: Sequence[tuple[str, t.Tests.object]] = Field(
+                description="Sequence of (scenario_id, data) tuples"
+            )
+            as_results: bool = Field(
+                default=False, description="Wrap each value in r[T].ok()"
+            )
+            with_failures: Sequence[tuple[str, str]] | None = Field(
+                default=None, min_length=1, description="Sequence of (id, error) tuples"
+            )
+
+            @model_validator(mode="after")
+            def validate_scenarios(self) -> FlextTestsModels.Tests.BuildersBatchParams:
+                if not self.scenarios:
+                    msg = "scenarios cannot be empty"
+                    raise ValueError(msg)
+                return self
+
+        class MergeFromParams(FlextModels.Value):
+            strategy: str = Field(
+                default="deep",
+                min_length=1,
+                description="Merge strategy (deep, override, append, etc.)",
+            )
+            exclude_keys: frozenset[str] | None = Field(
+                default=None, description="Set of keys to exclude from merge"
+            )
+
+            @model_validator(mode="after")
+            def validate_strategy(self) -> FlextTestsModels.Tests.MergeFromParams:
+                valid_strategies = {"deep", "override", "append", "prepend", "replace"}
+                if self.strategy not in valid_strategies:
+                    msg = f"strategy must be one of {valid_strategies}, got {self.strategy}"
+                    raise ValueError(msg)
+                return self
+
+        class OkParams(FlextModels.Value):
+            model_config = ConfigDict(populate_by_name=True)
+
+            eq: (
+                Mapping[str, t.Tests.object]
+                | Sequence[t.Tests.object]
+                | bytes
+                | str
+                | int
+                | float
+                | bool
+                | TypeAliasType
+                | None
+            ) = Field(
+                default=None,
+                description="Expected value (equality check)",
+                union_mode="left_to_right",
+            )
+            ne: (
+                Mapping[str, t.Tests.object]
+                | Sequence[t.Tests.object]
+                | bytes
+                | str
+                | int
+                | float
+                | bool
+                | TypeAliasType
+                | None
+            ) = Field(
+                default=None,
+                description="Value must not equal",
+                union_mode="left_to_right",
+            )
+            is_: type | tuple[type, ...] | None = Field(
+                default=None,
+                validation_alias=AliasChoices("is_", "is"),
+                description="Runtime type check",
+            )
+            none: bool | None = Field(default=None, description="None check")
+            empty: bool | None = Field(default=None, description="Empty check")
+            gt: float | int | None = Field(default=None, description="Greater than")
+            gte: float | int | None = Field(
+                default=None, description="Greater than or equal"
+            )
+            lt: float | int | None = Field(default=None, description="Less than")
+            lte: float | int | None = Field(
+                default=None, description="Less than or equal"
+            )
+            has: t.Tests.Matcher.ContainmentSpec | None = Field(
+                default=None, description="Unified containment check"
+            )
+            lacks: t.Tests.Matcher.ExclusionSpec | None = Field(
+                default=None, description="Unified non-containment check"
+            )
+            starts: str | None = Field(
+                default=None, description="String starts with prefix"
+            )
+            ends: str | None = Field(
+                default=None, description="String ends with suffix"
+            )
+            match: str | None = Field(default=None, description="Regex pattern")
+            len: t.Tests.Matcher.LengthSpec | None = Field(
+                default=None, description="Length spec"
+            )
+            deep: t.Tests.Matcher.DeepSpec | None = Field(
+                default=None, description="Deep structural matching"
+            )
+            path: t.Tests.Matcher.PathSpec | None = Field(
+                default=None, description="Extract nested value via dot notation"
+            )
+            where: t.Tests.Matcher.PredicateSpec | None = Field(
+                default=None, description="Custom predicate function"
+            )
+            msg: str | None = Field(default=None, description="Custom error message")
+
+        class FailParams(FlextModels.Value):
+            model_config = ConfigDict(populate_by_name=True)
+
+            msg: str | None = Field(default=None, description="Custom error message")
+            has: t.Tests.Matcher.ExclusionSpec | None = Field(
+                default=None,
+                validation_alias=AliasChoices("has", "contains"),
+                description="Error contains substring(s)",
+            )
+            lacks: t.Tests.Matcher.ExclusionSpec | None = Field(
+                default=None,
+                validation_alias=AliasChoices("lacks", "excludes"),
+                description="Error does NOT contain substring(s)",
+            )
+            starts: str | None = Field(
+                default=None, description="Error starts with prefix"
+            )
+            ends: str | None = Field(default=None, description="Error ends with suffix")
+            match: str | None = Field(default=None, description="Error matches regex")
+            code: str | None = Field(default=None, description="Error code equals")
+            code_has: t.Tests.Matcher.ErrorCodeSpec | None = Field(
+                default=None, description="Error code contains substring(s)"
+            )
+            data: t.Tests.Matcher.ErrorDataSpec | None = Field(
+                default=None, description="Error data contains key-value pairs"
+            )
+
+        class ThatParams(FlextModels.Value):
+            model_config = ConfigDict(populate_by_name=True)
+
+            msg: str | None = Field(default=None, description="Custom error message")
+            eq: t.Tests.object | None = Field(
+                default=None, description="Expected value (equality check)"
+            )
+            ne: t.Tests.object | None = Field(
+                default=None, description="Value must not equal"
+            )
+            is_: type | tuple[type, ...] | None = Field(
+                default=None,
+                validation_alias=AliasChoices("is_", "is"),
+                description="Runtime type check",
+            )
+            not_: type | tuple[type, ...] | None = Field(
+                default=None,
+                validation_alias=AliasChoices("not_", "not"),
+                description="Type check — value is NOT instance of type(s)",
+            )
+            none: bool | None = Field(default=None, description="None check")
+            empty: bool | None = Field(default=None, description="Empty check")
+            gt: float | int | None = Field(default=None, description="Greater than")
+            gte: float | int | None = Field(
+                default=None, description="Greater than or equal"
+            )
+            lt: float | int | None = Field(default=None, description="Less than")
+            lte: float | int | None = Field(
+                default=None, description="Less than or equal"
+            )
+            len: t.Tests.Matcher.LengthSpec | None = Field(
+                default=None,
+                validation_alias=AliasChoices("len", "length"),
+                description="Length spec",
+            )
+            length_gt: int | None = Field(
+                default=None, description="Length greater than"
+            )
+            length_gte: int | None = Field(
+                default=None, description="Length greater than or equal"
+            )
+            length_lt: int | None = Field(default=None, description="Length less than")
+            length_lte: int | None = Field(
+                default=None, description="Length less than or equal"
+            )
+            has: t.Tests.Matcher.ContainmentSpec | None = Field(
+                default=None,
+                validation_alias=AliasChoices("has", "contains"),
+                description="Unified containment check",
+            )
+            lacks: t.Tests.Matcher.ExclusionSpec | None = Field(
+                default=None,
+                validation_alias=AliasChoices("lacks", "excludes"),
+                description="Unified non-containment check",
+            )
+            starts: str | None = Field(
+                default=None, description="String starts with prefix"
+            )
+            ends: str | None = Field(
+                default=None, description="String ends with suffix"
+            )
+            match: str | None = Field(default=None, description="Regex pattern")
+            first: t.Tests.object | None = Field(
+                default=None, description="Sequence first item equals"
+            )
+            last: t.Tests.object | None = Field(
+                default=None, description="Sequence last item equals"
+            )
+            all_: t.Tests.Matcher.SequencePredicate | None = Field(
+                default=None,
+                validation_alias=AliasChoices("all_", "all"),
+                description="All items match type or predicate",
+            )
+            any_: t.Tests.Matcher.SequencePredicate | None = Field(
+                default=None,
+                validation_alias=AliasChoices("any_", "any"),
+                description="Any item matches type or predicate",
+            )
+            sorted: t.Tests.Matcher.SortKey | None = Field(
+                default=None, description="Is sorted"
+            )
+            unique: bool | None = Field(default=None, description="All items unique")
+            keys: t.Tests.Matcher.KeySpec | None = Field(
+                default=None, description="Mapping has all keys"
+            )
+            lacks_keys: t.Tests.Matcher.KeySpec | None = Field(
+                default=None, description="Mapping missing keys"
+            )
+            values: Sequence[t.Tests.object] | None = Field(
+                default=None, description="Mapping has all values"
+            )
+            kv: t.Tests.Matcher.KeyValueSpec | None = Field(
+                default=None, description="Key-value pairs"
+            )
+            attrs: t.Tests.Matcher.AttributeSpec | None = Field(
+                default=None, description="Object has attribute(s)"
+            )
+            methods: t.Tests.Matcher.AttributeSpec | None = Field(
+                default=None, description="Object has method(s)"
+            )
+            attr_eq: t.Tests.Matcher.AttributeValueSpec | None = Field(
+                default=None, description="Attribute equals"
+            )
+            ok: bool | None = Field(default=None, description="For r: assert success")
+            error: str | Sequence[str] | None = Field(
+                default=None, description="For r: error contains"
+            )
+            deep: t.Tests.Matcher.DeepSpec | None = Field(
+                default=None, description="Deep structural matching"
+            )
+            where: t.Tests.Matcher.PredicateSpec | None = Field(
+                default=None, description="Custom predicate function"
+            )
+
+            @model_validator(mode="after")
+            def normalize_legacy_parameters(self) -> FlextTestsModels.Tests.ThatParams:
+                updates: MutableMapping[str, t.Tests.object] = {}
+                if self.error is not None and self.has is None:
+                    updates["has"] = self.error
+                if self.len is None and any(
+                    v is not None
+                    for v in (
+                        self.length_gt,
+                        self.length_gte,
+                        self.length_lt,
+                        self.length_lte,
+                    )
+                ):
+                    min_len = 0
+                    max_len = sys.maxsize
+                    if self.length_gt is not None:
+                        min_len = self.length_gt + 1
+                    if self.length_gte is not None:
+                        min_len = max(min_len, self.length_gte)
+                    if self.length_lt is not None:
+                        max_len = self.length_lt - 1
+                    if self.length_lte is not None:
+                        max_len = min(max_len, self.length_lte)
+                    updates["len"] = (min_len, max_len)
+                if updates:
+                    return self.model_copy(update=updates)
+                return self
+
+        class ScopeParams(FlextModels.Value):
+            model_config = ConfigDict(populate_by_name=True)
+
+            config: Mapping[str, t.Tests.object] | None = Field(
+                default=None, description="Initial configuration values"
+            )
+            container: Mapping[str, t.Tests.object] | None = Field(
+                default=None, description="Initial container/service mappings"
+            )
+            context: Mapping[str, t.Tests.object] | None = Field(
+                default=None, description="Initial context values"
+            )
+            cleanup: t.Tests.Matcher.CleanupSpec | None = Field(
+                default=None, description="Cleanup functions"
+            )
+            env: t.Tests.Matcher.EnvironmentSpec | None = Field(
+                default=None, description="Temporary environment variables"
+            )
+            cwd: Path | str | None = Field(
+                default=None, description="Temporary working directory"
+            )
+
+            @field_validator("cwd", mode="before")
+            @classmethod
+            def convert_cwd(cls, value: Path | str | None) -> Path | str | None:
+                if isinstance(value, str):
+                    return Path(value)
+                return value
+
+        class DeepMatchResult(FlextModels.Value):
+            path: str = Field(description="Path where match occurred or failed")
+            expected: t.Tests.Matcher.ValueSpec = Field(
+                description="Expected value or predicate"
+            )
+            actual: t.Tests.object | None = Field(
+                default=None, description="Actual value found"
+            )
+            matched: bool = Field(description="Whether match succeeded")
+            reason: str = Field(default="", description="Reason for match failure")
+
+        class Chain[TResult](FlextModels.Value):
+            result: r[TResult] = Field(description="r being chained")
+
+        class TestScope(FlextModels.ArbitraryTypesModel):
+            config: Mapping[str, t.Tests.object] = Field(
+                default_factory=dict, description="Configuration dictionary"
+            )
+            container: Mapping[str, t.Tests.object] = Field(
+                default_factory=dict, description="Container/service mappings"
+            )
+            context: Mapping[str, t.Tests.object] = Field(
+                default_factory=dict, description="Context values"
+            )
 
 
 m = FlextTestsModels

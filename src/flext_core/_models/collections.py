@@ -1,7 +1,6 @@
 """Collection models for categorized data.
 
 TIER 0.5: Depends only on base.py (Tier 0).
-Uses inline type checks to avoid importing runtime.py.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -18,11 +17,91 @@ from pydantic import ConfigDict, Field, computed_field
 from flext_core import t
 from flext_core._models.base import FlextModelFoundation
 from flext_core._models.containers import FlextModelsContainers
-from flext_core.runtime import FlextRuntime
 
 
 class FlextModelsCollections:
     """Collection models container class."""
+
+    class _MetadataAggregateMixin:
+        """Pure-logic mixin for metadata aggregation via MRO.
+
+        Must be combined with a Pydantic BaseModel subclass.
+        Provides shared conflict resolution for Statistics, Results, and Options.
+        """
+
+        @classmethod
+        def _sum_numeric_values(
+            cls,
+            non_none: Sequence[t.MetadataValue],
+        ) -> int | float | None:
+            numeric: list[int | float] = [
+                v
+                for v in non_none
+                if isinstance(v, (int, float)) and not isinstance(v, bool)
+            ]
+            return sum(numeric) if numeric else None
+
+        @classmethod
+        def _concatenate_lists(
+            cls,
+            non_none: Sequence[t.MetadataValue],
+        ) -> list[t.Scalar]:
+            combined: list[t.Scalar] = []
+            for v in non_none:
+                if isinstance(v, list):
+                    combined.extend(
+                        item
+                        for item in v
+                        if isinstance(item, (str, int, float, bool, datetime))
+                    )
+            return combined
+
+        @classmethod
+        def _merge_dicts(
+            cls,
+            non_none: Sequence[t.MetadataValue],
+        ) -> Mapping[str, t.Scalar | Sequence[t.Scalar]]:
+            merged: dict[str, t.Scalar | Sequence[t.Scalar]] = {}
+            for v in non_none:
+                if isinstance(v, Mapping):
+                    for key, val in v.items():
+                        if isinstance(val, (str, int, float, bool, datetime)):
+                            merged[str(key)] = val
+                        elif isinstance(val, list):
+                            merged[str(key)] = [
+                                item
+                                for item in val
+                                if isinstance(item, (str, int, float, bool, datetime))
+                            ]
+            return merged
+
+        @classmethod
+        def _resolve_conflict(
+            cls,
+            existing: t.MetadataValue | None,
+            value: t.MetadataValue | None,
+        ) -> t.MetadataValue | None:
+            """Resolve conflict when aggregating two metadata values.
+
+            Strategy: booleans last-wins, numerics sum, lists concatenate,
+            mappings merge, all others last-wins.
+            """
+            non_none: list[t.MetadataValue] = [
+                v for v in (existing, value) if v is not None
+            ]
+            if not non_none:
+                return None
+            first_val = non_none[0]
+            if isinstance(first_val, bool):
+                return non_none[-1]
+            if isinstance(first_val, (int, float)):
+                numeric_sum = cls._sum_numeric_values(non_none)
+                return numeric_sum if numeric_sum is not None else non_none[-1]
+            if isinstance(first_val, list):
+                return cls._concatenate_lists(non_none)
+            if isinstance(first_val, Mapping):
+                return cls._merge_dicts(non_none)
+            return non_none[-1]
 
     class Categories(FlextModelFoundation.ArbitraryTypesModel):
         """Generic categorized collection with dynamic categories.
@@ -50,12 +129,6 @@ class FlextModelsCollections:
         )
 
         def __len__(self) -> int:
-            """Return total number of entries across all categories.
-
-            Returns:
-                int: Total number of entries
-
-            """
             return sum(len(entries) for entries in self.categories.values())
 
         @classmethod
@@ -69,176 +142,59 @@ class FlextModelsCollections:
         @computed_field
         @property
         def category_names(self) -> Sequence[str]:
-            """Get list of all category names.
-
-            Returns:
-                list[str]: List of category names
-
-            """
             return list(self.categories.keys())
 
         @computed_field
         @property
         def total_entries(self) -> int:
-            """Get total number of entries across all categories.
-
-            Returns:
-                int: Total count of entries
-
-            """
             return sum(len(entries) for entries in self.categories.values())
 
         def add_entries(
             self, category: str, entries: Sequence[t.MetadataValue]
         ) -> None:
-            """Add entries to a category.
-
-            Args:
-                category: Category name
-                entries: Sequence of entries (accepts subtypes due to covariance)
-
-            """
             if category not in self.categories:
                 self.categories[category] = []
             self.categories[category].extend(entries)
 
         def clear(self) -> None:
-            """Clear all categories and entries."""
             self.categories.clear()
 
         def get(
             self, category: str, default: Sequence[t.MetadataValue] | None = None
         ) -> Sequence[t.MetadataValue]:
-            """Get entries for a category with optional default (dict-like interface).
-
-            Args:
-                category: Category name
-                default: Default value if category not found (None returns empty list)
-
-            Returns:
-                list[T]: List of entries for the category, or default/empty
-                list if not found.
-
-            """
             if default is None:
                 return self.categories.get(category, [])
             return self.categories.get(category, default)
 
         def has_category(self, category: str) -> bool:
-            """Check if a category exists."""
             return category in self.categories
 
         def remove_category(self, category: str) -> None:
-            """Remove a category and all its entries.
-
-            Args:
-                category: Category name to remove
-
-            """
             _ = self.categories.pop(category, None)
 
         def to_mapping(self) -> Mapping[str, Sequence[t.MetadataValue]]:
-            """Convert categories to immutable dictionary representation.
-
-            Items are already MetadataValue — returns a shallow copy of each
-            category list wrapped in a Mapping.
-
-            Returns:
-                Mapping[str, Sequence[MetadataValue]]: Category mapping.
-
-            """
             return {key: list(entries) for key, entries in self.categories.items()}
 
-    class Statistics(FlextModelFoundation.FrozenValueModel):
+    class Statistics(_MetadataAggregateMixin, FlextModelFoundation.FrozenValueModel):
         """Base for statistics models (frozen Value)."""
 
         @classmethod
-        def _resolve_aggregate_conflict(
+        def aggregate(
             cls,
-            existing: t.MetadataValue | None,
-            value: t.MetadataValue | None,
-        ) -> t.MetadataValue | None:
-            """Resolve conflict when aggregating two statistic values.
+            stats_list: Sequence[Self],
+        ) -> Mapping[str, t.MetadataValue]:
+            """Aggregate multiple statistics instances.
 
-            Args:
-                existing: Existing value in result dict
-                value: New value to aggregate
-
-            Returns:
-                Resolved value (sum for numeric, concatenated for lists,
-                last for others)
-
-            """
-            non_none: list[t.MetadataValue] = [
-                v for v in (existing, value) if v is not None
-            ]
-            if not non_none:
-                return None
-            first_val = non_none[0]
-            if isinstance(first_val, (int, float)) and (
-                not isinstance(first_val, bool)
-            ):
-                numeric_values: list[int | float] = [
-                    v
-                    for v in non_none
-                    if isinstance(v, (int, float)) and (not isinstance(v, bool))
-                ]
-                return sum(numeric_values)
-            if FlextRuntime.is_list_like(first_val):
-                combined: list[t.Scalar] = []
-                for v in non_none:
-                    if FlextRuntime.is_list_like(v) and v.__class__ not in {str, bytes}:
-                        combined.extend(
-                            item
-                            for item in v
-                            if isinstance(item, (str, int, float, bool, datetime))
-                        )
-                return combined
-            return non_none[-1]
-
-        @classmethod
-        def aggregate(cls, stats_list: Sequence[Self]) -> Mapping[str, t.MetadataValue]:
-            """Aggregate multiple statistics instances (ConfigurationMapping pattern).
-
-            Combines statistics by:
-            - Summing numeric values (int, float)
-            - Concatenating lists
-            - Using max for comparable values
-            - Keeping last value for other types
-
-            Returns:
-                object: Aggregated statistics dictionary.
-
-            Example:
-                stats1 = Stats(count=10, items=['a'])
-                stats2 = Stats(count=20, items=['b'])
-                result = Stats.aggregate([stats1, stats2])
-                # {'count': 30, 'items': ['a', 'b']}
-
+            Combines statistics by summing numerics, concatenating lists,
+            merging mappings, and keeping last value for other types.
             """
             if not stats_list:
                 return {}
             result: dict[str, t.MetadataValue | None] = {}
             for stats in stats_list:
                 for key, value in stats.model_dump().items():
-                    if key not in result:
-                        result[key] = value
-                    else:
-                        result[key] = cls._resolve_aggregate_conflict(
-                            result[key], value
-                        )
-            normalized_result: dict[str, t.MetadataValue] = {}
-            for key, value in result.items():
-                if isinstance(value, (str, int, float, bool, datetime)):
-                    normalized_result[key] = value
-                elif isinstance(value, list):
-                    filtered: list[t.Scalar] = [
-                        item
-                        for item in value
-                        if isinstance(item, (str, int, float, bool, datetime))
-                    ]
-                    normalized_result[key] = filtered
-            return normalized_result
+                    result[key] = cls._resolve_conflict(result.get(key), value)
+            return {k: v for k, v in result.items() if v is not None}
 
         @classmethod
         def from_mapping(cls, data: Mapping[str, t.MetadataValue]) -> Self:
@@ -249,15 +205,6 @@ class FlextModelsCollections:
 
         @classmethod
         def merge(cls, *rules: Self) -> Self:
-            """Merge multiple rules instances.
-
-            Args:
-                *rules: Rules instances to merge
-
-            Returns:
-                Merged rules instance
-
-            """
             if not rules:
                 return cls()
             base = rules[0].model_copy()
@@ -265,250 +212,61 @@ class FlextModelsCollections:
                 base = base.model_copy(update=other.model_dump())
             return base
 
-    class Results(FlextModelFoundation.ArbitraryTypesModel):
+    class Results(_MetadataAggregateMixin, FlextModelFoundation.ArbitraryTypesModel):
         """Base for results models (mutable)."""
 
         @classmethod
-        def _concatenate_lists(
-            cls, non_none: Sequence[t.MetadataValue]
-        ) -> Sequence[t.Scalar]:
-            """Concatenate list-like values.
-
-            Args:
-                non_none: List of non-None values
-
-            Returns:
-                Combined list of scalar values
-
-            """
-            combined: list[t.Scalar] = []
-            for v in non_none:
-                if isinstance(v, Sequence) and not isinstance(v, (str, bytes)):
-                    combined.extend(
-                        item
-                        for item in v
-                        if isinstance(item, (str, int, float, bool, datetime))
-                    )
-            return combined
-
-        @classmethod
-        def _merge_dicts(
-            cls, non_none: Sequence[t.MetadataValue]
-        ) -> Mapping[str, t.MetadataValue]:
-            merged: dict[str, t.MetadataValue] = {}
-            for v in non_none:
-                if isinstance(v, Mapping):
-                    for key, val in v.items():
-                        if isinstance(val, (str, int, float, bool, datetime)):
-                            merged[str(key)] = val
-                        elif isinstance(val, Sequence) and not isinstance(
-                            val, (str, bytes)
-                        ):
-                            scalar_items: list[t.Scalar] = [
-                                item
-                                for item in val
-                                if isinstance(item, (str, int, float, bool, datetime))
-                            ]
-                            merged[str(key)] = scalar_items
-            return merged
-
-        @classmethod
-        def _resolve_aggregate_conflict(
-            cls, existing: t.MetadataValue, value: t.MetadataValue
-        ) -> t.MetadataValue:
-            """Resolve conflict when aggregating two result values.
-
-            Args:
-                existing: Existing value in result dict
-                value: New value to aggregate
-
-            Returns:
-                Resolved value (sum for numeric, concatenated for lists,
-                merged for dicts, last for others)
-
-            """
-            non_none: list[t.MetadataValue] = [
-                v for v in [existing, value] if v is not None
-            ]
-            if not non_none:
-                return None
-            first_val = non_none[0]
-            if first_val.__class__ is bool:
-                return non_none[-1]
-            if first_val.__class__ in {int, float}:
-                numeric_sum = cls._sum_numeric_values(non_none)
-                return numeric_sum if numeric_sum is not None else non_none[-1]
-            if FlextRuntime.is_list_like(first_val):
-                return cls._concatenate_lists(non_none)
-            if FlextRuntime.is_dict_like(first_val):
-                return cls._merge_dicts(non_none)
-            return non_none[-1]
-
-        @classmethod
-        def _sum_numeric_values(
-            cls, non_none: Sequence[t.MetadataValue]
-        ) -> int | float | None:
-            """Sum numeric values excluding booleans.
-
-            Args:
-                non_none: List of non-None values
-
-            Returns:
-                Sum of numeric values, or None if no numeric values found
-
-            """
-            numeric_values: list[int | float] = [
-                v
-                for v in non_none
-                if isinstance(v, (int, float)) and (not isinstance(v, bool))
-            ]
-            return sum(numeric_values) if numeric_values else None
-
-        @classmethod
         def aggregate(
-            cls, results_list: Sequence[Self]
+            cls,
+            results_list: Sequence[Self],
         ) -> Mapping[str, t.MetadataValue]:
-            """Aggregate multiple results instances (ConfigurationMapping pattern).
+            """Aggregate multiple results instances.
 
-            Combines results by:
-            - Summing numeric values (int, float)
-            - Concatenating lists
-            - Merging dicts
-            - Keeping last value for other types
-
-            Returns:
-                object: Aggregated results dictionary.
-
-            Example:
-                result1 = Results(processed=10, errors=['a'])
-                result2 = Results(processed=20, errors=['b'])
-                aggregated = Results.aggregate([result1, result2])
-                # {'processed': 30, 'errors': ['a', 'b']}
-
+            Combines results by summing numerics, concatenating lists,
+            merging mappings, and keeping last value for other types.
             """
             if not results_list:
                 return {}
-            result: dict[str, t.MetadataValue] = {}
+            result: dict[str, t.MetadataValue | None] = {}
             for res in results_list:
-                res_dict = res.model_dump()
-                for key, value in res_dict.items():
-                    if key not in result:
-                        result[key] = value
-                    else:
-                        result[key] = cls._resolve_aggregate_conflict(
-                            result[key], value
-                        )
-            return result
+                for key, value in res.model_dump().items():
+                    result[key] = cls._resolve_conflict(result.get(key), value)
+            return {k: v for k, v in result.items() if v is not None}
 
         @classmethod
         def combine(cls, *results: Self) -> Self:
-            """Combine multiple results instances.
+            if not results:
+                return cls()
+            base = results[0].model_copy()
+            for other in results[1:]:
+                base = base.model_copy(update=other.model_dump())
+            return base
 
-            Args:
-                *results: Results instances to combine
-
-            Returns:
-                Combined results instance
-
-            """
-            combined_data: dict[str, t.MetadataValue] = {}
-            for result in results:
-                combined_data.update(result.model_dump())
-            return cls(**combined_data)
-
-    class Options(FlextModelFoundation.ArbitraryTypesModel):
+    class Options(_MetadataAggregateMixin, FlextModelFoundation.ArbitraryTypesModel):
         """Base for options models (mutable)."""
 
         @classmethod
-        def _resolve_merge_conflict(
-            cls, existing: t.MetadataValue, value: t.MetadataValue
-        ) -> t.MetadataValue:
-            """Resolve conflict when merging two option values.
-
-            Args:
-                existing: Existing value in result dict
-                value: New value to merge
-
-            Returns:
-                Resolved value (sum for numeric, concatenated for lists,
-                last for others including booleans)
-
-            """
-            non_none = [v for v in [existing, value] if v is not None]
-            if not non_none:
-                return None
-            first_val = non_none[0]
-            if first_val.__class__ is bool:
-                return non_none[-1]
-            if first_val.__class__ in {int, float}:
-                numeric_values: list[int | float] = [
-                    v
-                    for v in non_none
-                    if isinstance(v, (int, float)) and (not isinstance(v, bool))
-                ]
-                if numeric_values:
-                    return sum(numeric_values)
-            if FlextRuntime.is_list_like(first_val):
-                combined: list[t.MetadataValue] = []
-                for v in non_none:
-                    if FlextRuntime.is_list_like(v) and v.__class__ not in {str, bytes}:
-                        for item in v:
-                            normalized = FlextRuntime.normalize_to_container(item)
-                            combined.append(normalized)
-                return combined
-            return non_none[-1]
-
-        @classmethod
         def merge_options(cls, *options: Self) -> Self:
-            """Merge multiple options instances with conflict resolution.
-
-            Business Rule: Merges options with last-wins strategy for conflicts.
-            For numeric values, sums them. For lists, concatenates them.
-            For other types, keeps the last value.
-
-            Args:
-                *options: Options instances to merge
-
-            Returns:
-                Merged options instance
-
-            """
             if not options:
                 return cls()
-            result: dict[str, t.MetadataValue] = {}
+            result: dict[str, t.MetadataValue | None] = {}
             for opt in options:
-                opt_dict = opt.model_dump()
-                for key, value in opt_dict.items():
-                    if key not in result:
-                        result[key] = value
-                    else:
-                        result[key] = cls._resolve_merge_conflict(result[key], value)
-            normalized_result: dict[str, t.MetadataValue] = {}
-            for key, value in result.items():
-                normalized_result[key] = FlextRuntime.normalize_to_container(value)
-            return cls(**normalized_result)
+                for key, value in opt.model_dump().items():
+                    result[key] = cls._resolve_conflict(
+                        result.get(key),
+                        value,
+                    )
+            return cls.model_validate({
+                k: v for k, v in result.items() if v is not None
+            })
 
         def merge(self, *options: Self) -> Self:
-            """Merge this instance with other options instances (instance method).
-
-            Convenience method that delegates to merge_options classmethod.
-
-            Args:
-                *options: Options instances to merge with self
-
-            Returns:
-                Merged options instance
-
-            """
             return self.__class__.merge_options(self, *options)
 
     class Config(FlextModelFoundation.ArbitraryTypesModel):
         """Base for configuration models - mutable Pydantic v2 model.
 
-        Pydantic v2 models are not hashable by default when not frozen.
-        Type checkers understand that non-frozen models are not hashable.
-        This is intentional - Config models are mutable and should not be hashable.
-
+        Non-frozen models are not hashable by design.
         """
 
         model_config = ConfigDict(
@@ -516,106 +274,40 @@ class FlextModelsCollections:
         )
 
         @override
-        def __eq__(self, other: t.MetadataValue) -> bool:
-            """Compare configs by value.
-
-            Args:
-                other: Object to compare with
-
-            Returns:
-                True if configs are equal by value, False otherwise
-
-            """
+        def __eq__(self, other: object) -> bool:
             if not isinstance(other, self.__class__):
                 return NotImplemented
             return self.model_dump() == other.model_dump()
 
         def __hash__(self) -> int:
-            """Raise TypeError to indicate this class is not hashable.
-
-            Config models are mutable and should not be used as dict keys or set elements.
-            """
             msg = f"{self.__class__.__name__} objects are not hashable"
             raise TypeError(msg)
 
         @classmethod
         def from_mapping(cls, mapping: FlextModelsContainers.ConfigMap) -> Self:
-            """Create Config instance from mapping.
-
-            Args:
-                mapping: Mapping with configuration data
-
-            Returns:
-                Config instance
-
-            """
-            mapping_dict = dict(mapping)
-            return cls.model_validate(mapping_dict)
+            return cls.model_validate(dict(mapping))
 
         def diff(
-            self, other: Self
-        ) -> Mapping[str, tuple[t.MetadataValue, t.MetadataValue]]:
-            """Compute differences between this config and another.
-
-            Args:
-                other: Another config instance to compare with
-
-            Returns:
-                Dictionary mapping field names to (self_value, other_value) tuples
-                for fields that differ
-
-            """
+            self,
+            other: Self,
+        ) -> Mapping[str, tuple[t.MetadataValue | None, t.MetadataValue | None]]:
             self_dict = self.model_dump()
             other_dict = other.model_dump()
-            differences: dict[str, tuple[t.MetadataValue, t.MetadataValue]] = {}
-            all_keys = set(self_dict.keys()) | set(other_dict.keys())
-            for key in all_keys:
-                self_val = self_dict.get(key)
-                other_val = other_dict.get(key)
-                if self_val != other_val:
-                    differences[key] = (self_val, other_val)
-            return differences
+            all_keys = set(self_dict) | set(other_dict)
+            return {
+                key: (self_dict.get(key), other_dict.get(key))
+                for key in all_keys
+                if self_dict.get(key) != other_dict.get(key)
+            }
 
         def merge(self, other: Self) -> Self:
-            """Merge this config with another config.
-
-            Args:
-                other: Another config instance to merge with
-
-            Returns:
-                Merged config instance (other values override self)
-
-            """
-            self_dict = self.model_dump()
-            other_dict = other.model_dump()
-            merged_dict = {**self_dict, **other_dict}
-            return self.__class__(**merged_dict)
+            return self.model_copy(update=other.model_dump())
 
         def to_mapping(self) -> FlextModelsContainers.ConfigMap:
-            """Convert Config to mapping.
-
-            Returns:
-                ConfigurationMapping: Mapping representation
-
-            """
-            normalized: dict[str, t.MetadataValue] = {}
-            for key, value in self.model_dump().items():
-                normalized[str(key)] = FlextRuntime.normalize_to_container(value)
-            return FlextModelsContainers.ConfigMap(root=normalized)
+            return FlextModelsContainers.ConfigMap(root=self.model_dump())
 
         def with_updates(self, **updates: t.MetadataValue) -> Self:
-            """Create a new config instance with updated values.
-
-            Args:
-                **updates: Field updates to apply
-
-            Returns:
-                New config instance with updates applied
-
-            """
-            current_dict = self.model_dump()
-            updated_dict = {**current_dict, **updates}
-            return self.__class__(**updated_dict)
+            return self.model_copy(update=updates)
 
     class ParseOptions(FlextModelFoundation.ArbitraryTypesModel):
         """Options for string parsing operations."""

@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Annotated, cast
+from typing import Annotated
 
 import pytest
 
 import flext_core._utilities.args as args_module
-from flext_core import c, m, p, r, u
+from flext_core import c, m, r, u
 
 
 def _annotated_func(mode: Annotated[c.Cqrs.HandlerType, "meta"]) -> None:
@@ -32,9 +32,9 @@ def test_args_get_enum_params_branches() -> None:
     assert r[int].ok(1).is_success
     assert isinstance(m.ConfigMap.model_validate({"k": 1}), m.ConfigMap)
     assert u.to_str(1) == "1"
-    annotated = u.get_enum_params($$$)
+    annotated = u.get_enum_params(_annotated_func)
     assert "mode" in annotated
-    failed = u.get_enum_params($$$)
+    failed = u.get_enum_params(_bad_hints_func)
     assert failed == {}
 
 
@@ -49,5 +49,5 @@ def test_args_get_enum_params_annotated_unwrap_branch(
         "get_type_hints",
         _mock_get_type_hints,
     )
-    params = u.get_enum_params($$$)
+    params = u.get_enum_params(_no_op_func)
     assert params["mode"] is c.Cqrs.HandlerType

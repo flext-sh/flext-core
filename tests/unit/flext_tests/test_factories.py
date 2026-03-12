@@ -109,7 +109,7 @@ class TestConfig:
 
     def test_config_creation_default(self) -> None:
         """Test Config model creation with defaults."""
-        config = m.Config()
+        config = m.Tests.Config()
         assert config.service_type == "api"
         assert config.environment == "test"
         assert config.debug is True
@@ -119,7 +119,7 @@ class TestConfig:
 
     def test_config_creation_custom(self) -> None:
         """Test Config model creation with custom values."""
-        config = m.Config(
+        config = m.Tests.Config(
             service_type="database",
             environment="production",
             debug=False,
@@ -136,7 +136,7 @@ class TestService:
 
     def test_service_creation_minimal(self) -> None:
         """Test Service model creation with minimal fields."""
-        service = m.Service(id="test-123")
+        service = m.Tests.Service(id="test-123")
         assert service.id == "test-123"
         assert service.type == "api"
         assert service.name == ""
@@ -144,7 +144,7 @@ class TestService:
 
     def test_service_creation_complete(self) -> None:
         """Test Service model creation with all fields."""
-        service = m.Service(
+        service = m.Tests.Service(
             id="test-123",
             type="database",
             name="Database Service",
@@ -195,7 +195,7 @@ class TestFlextTestsFactoriesModernAPI:
         """Test tt.model('config') with default parameters."""
         config_result = tt.model("config")
         config = TestFactoriesHelpers.extract_model(config_result)
-        assert isinstance(config, m.Config)
+        assert isinstance(config, m.Tests.Config)
         assert config.service_type == "api"
         assert config.environment == "test"
         assert config.debug is True
@@ -210,7 +210,7 @@ class TestFlextTestsFactoriesModernAPI:
             timeout=60,
         )
         config = TestFactoriesHelpers.extract_model(config_result)
-        assert isinstance(config, m.Config)
+        assert isinstance(config, m.Tests.Config)
         assert config.service_type == "database"
         assert config.environment == "production"
         assert config.debug is False
@@ -220,7 +220,7 @@ class TestFlextTestsFactoriesModernAPI:
         """Test tt.model('config') with overrides."""
         config_result = tt.model("config", log_level="INFO", max_retries=5)
         config = TestFactoriesHelpers.extract_model(config_result)
-        assert isinstance(config, m.Config)
+        assert isinstance(config, m.Tests.Config)
         assert config.log_level == "INFO"
         assert config.max_retries == 5
 
@@ -228,7 +228,7 @@ class TestFlextTestsFactoriesModernAPI:
         """Test tt.model('service') with default parameters."""
         service_result = tt.model("service")
         service = TestFactoriesHelpers.extract_model(service_result)
-        assert isinstance(service, m.Service)
+        assert isinstance(service, m.Tests.Service)
         assert service.id is not None
         assert service.type == "api"
         assert "Test api Service" in service.name
@@ -243,7 +243,7 @@ class TestFlextTestsFactoriesModernAPI:
             name="Custom Service",
         )
         service = TestFactoriesHelpers.extract_model(service_result)
-        assert isinstance(service, m.Service)
+        assert isinstance(service, m.Tests.Service)
         assert service.id == "custom-123"
         assert service.type == "database"
         assert service.name == "Custom Service"
@@ -252,7 +252,7 @@ class TestFlextTestsFactoriesModernAPI:
         """Test tt.model('service') with overrides."""
         service_result = tt.model("service", status="inactive")
         service = TestFactoriesHelpers.extract_model(service_result)
-        assert isinstance(service, m.Service)
+        assert isinstance(service, m.Tests.Service)
         assert service.status == "inactive"
 
     def test_batch_users_default(self) -> None:
@@ -475,26 +475,26 @@ class TestsFlextTestsFactoriesModel:
     def test_model_config(self) -> None:
         """Test config model creation."""
         config = tt.model("config", environment="production")
-        assert isinstance(config, m.Config)
+        assert isinstance(config, m.Tests.Config)
         assert config.environment == "production"
 
     def test_model_service(self) -> None:
         """Test service model creation."""
         service_result = tt.model("service", service_type="database")
         service = TestFactoriesHelpers.extract_model(service_result)
-        assert isinstance(service, m.Service)
+        assert isinstance(service, m.Tests.Service)
         assert service.type == "database"
 
     def test_model_entity(self) -> None:
         """Test entity model creation."""
         entity = tt.model("entity", name="Test Entity", value=42)
-        assert isinstance(entity, m.Entity)
+        assert isinstance(entity, m.Tests.Entity)
         assert entity.name == "Test Entity"
 
     def test_model_value_object(self) -> None:
         """Test value object model creation."""
         value_obj = tt.model("value", data="test_data", value_count=3)
-        assert isinstance(value_obj, m.Value)
+        assert isinstance(value_obj, m.Tests.Value)
         assert value_obj.data == "test_data"
 
     def test_model_with_transform(self) -> None:

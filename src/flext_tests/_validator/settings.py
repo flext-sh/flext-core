@@ -224,7 +224,7 @@ class FlextValidatorSettings:
         cls,
         files: list[Path],
         approved_exceptions: Mapping[str, list[str]] | None = None,
-    ) -> r[m.Tests.Validator.ScanResult]:
+    ) -> r[m.Tests.ScanResult]:
         """Scan pyproject.toml files for config violations.
 
         Args:
@@ -242,8 +242,8 @@ class FlextValidatorSettings:
                 continue
             file_violations = cls._scan_file(file_path, approved)
             violations.extend(file_violations)
-        return r[m.Tests.Validator.ScanResult].ok(
-            m.Tests.Validator.ScanResult.create(
+        return r[m.Tests.ScanResult].ok(
+            m.Tests.ScanResult.create(
                 validator_name=c.Tests.Validator.Defaults.VALIDATOR_CONFIG,
                 files_scanned=len(files),
                 violations=violations,
@@ -255,7 +255,7 @@ class FlextValidatorSettings:
         cls,
         pyproject_path: Path,
         approved_exceptions: Mapping[str, list[str]] | None = None,
-    ) -> r[m.Tests.Validator.ScanResult]:
+    ) -> r[m.Tests.ScanResult]:
         """Validate a single pyproject.toml file.
 
         Args:

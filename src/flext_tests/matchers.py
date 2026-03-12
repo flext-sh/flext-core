@@ -624,7 +624,7 @@ class FlextTestsMatchers:
 
     @staticmethod
     @contextmanager
-    def scope(**kwargs: t.Tests.object) -> Iterator[m.TestScope]:
+    def scope(**kwargs: t.Tests.object) -> Iterator[m.Tests.TestScope]:
         """Enhanced isolated test execution scope.
 
         Uses Pydantic 2 model (ScopeParams) for parameter validation and computation.
@@ -665,7 +665,7 @@ class FlextTestsMatchers:
 
         """
         try:
-            params = m.ScopeParams.model_validate(kwargs)
+            params = m.Tests.ScopeParams.model_validate(kwargs)
         except (TypeError, ValueError, AttributeError) as exc:
             raise ValueError(f"Parameter validation failed: {exc}") from exc
         original_env: dict[str, str | None] = {}
@@ -692,7 +692,7 @@ class FlextTestsMatchers:
             context_map: dict[str, t.Tests.object] = {}
             if params.context:
                 context_map = {str(key): value for key, value in params.context.items()}
-            yield m.TestScope.model_validate({
+            yield m.Tests.TestScope.model_validate({
                 "config": cfg,
                 "container": container_dict,
                 "context": context_map,
@@ -808,7 +808,7 @@ class FlextTestsMatchers:
         raw_eq = kwargs.get("eq") if "eq" in kwargs else None
         raw_ne = kwargs.get("ne") if "ne" in kwargs else None
         try:
-            params = m.ThatParams.model_validate(kwargs)
+            params = m.Tests.ThatParams.model_validate(kwargs)
         except (TypeError, ValueError, AttributeError) as exc:
             filtered_kwargs = {
                 key: val for key, val in kwargs.items() if key not in {"eq", "ne"}
@@ -816,7 +816,7 @@ class FlextTestsMatchers:
             if filtered_kwargs == kwargs:
                 raise ValueError(f"Parameter validation failed: {exc}") from exc
             try:
-                params = m.ThatParams.model_validate(filtered_kwargs)
+                params = m.Tests.ThatParams.model_validate(filtered_kwargs)
             except (TypeError, ValueError, AttributeError) as filtered_exc:
                 raise ValueError(
                     f"Parameter validation failed: {filtered_exc}"

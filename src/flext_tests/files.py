@@ -57,7 +57,7 @@ def _yaml_dump(value: object, *, indent: int) -> str:
 
 def _is_batch_content(content_raw: object) -> TypeGuard[t.Tests.object]:
     try:
-        _ = m.CreateParams.model_validate({
+        _ = m.Tests.CreateParams.model_validate({
             "content": content_raw,
             "name": c.Tests.Files.DEFAULT_FILENAME,
         })
@@ -396,7 +396,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         model: type[TModel] | None = None,
         on_error: _ErrorModeLiteral = "collect",
         parallel: bool = False,
-    ) -> r[m.BatchResult]:
+    ) -> r[m.Tests.BatchResult]:
         """Batch file operations.
 
         Uses u.batch() for batch processing with error handling.
@@ -410,7 +410,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             parallel: Run operations in parallel (not implemented yet)
 
         Returns:
-            r[m.BatchResult] with results and errors
+            r[m.Tests.BatchResult] with results and errors
 
         Examples:
             # Batch create
@@ -439,7 +439,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                 "parallel": parallel,
             })
         except (TypeError, ValueError, AttributeError) as exc:
-            return r[m.BatchResult].fail(
+            return r[m.Tests.BatchResult].fail(
                 f"Invalid parameters for batch operation: {exc}"
             )
         files_dict: dict[str, t.Tests.object]
@@ -456,7 +456,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                     name = str(item[0])
                     files_dict[name] = item[1]
         else:
-            return r[m.BatchResult].fail(
+            return r[m.Tests.BatchResult].fail(
                 f"Invalid BatchFiles type: {type(params.files)}"
             )
         error_mode_str = "collect" if params.on_error == "collect" else "fail"
@@ -537,7 +537,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                     continue
                 error_message = operation_result.error or "Unknown error"
                 if error_mode_str == "fail":
-                    return r[m.BatchResult].fail(
+                    return r[m.Tests.BatchResult].fail(
                         f"Batch operation failed: {error_message}"
                     )
                 errors.append((index, str(error_message)))
@@ -560,8 +560,8 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                 failed_dict[name] = error_msg
         succeeded_count = len(results_dict)
         failed_count = len(failed_dict)
-        return r[m.BatchResult].ok(
-            m.BatchResult(
+        return r[m.Tests.BatchResult].ok(
+            m.Tests.BatchResult(
                 succeeded=succeeded_count,
                 failed=failed_count,
                 total=total,
@@ -764,7 +764,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         """
         content_to_validate = self._extract_content(content, extract_result)
         try:
-            params = m.CreateParams.model_validate({
+            params = m.Tests.CreateParams.model_validate({
                 "content": content_to_validate,
                 "name": name,
                 "directory": directory,
@@ -910,7 +910,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
 
         """
         try:
-            params = m.InfoParams.model_validate({
+            params = m.Tests.InfoParams.model_validate({
                 "path": path,
                 "compute_hash": compute_hash,
                 "detect_fmt": detect_fmt,
@@ -1067,7 +1067,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
 
         """
         try:
-            params = m.ReadParams.model_validate({
+            params = m.Tests.ReadParams.model_validate({
                 "path": path,
                 "fmt": fmt,
                 "enc": enc,

@@ -56,7 +56,7 @@ def test_statistics_from_dict_and_none_conflict_resolution() -> None:
     config_map = m.ConfigMap.model_validate({"value": 5})
     loaded = _Stats.from_mapping(cast("dict[str, t.MetadataValue]", config_map.root))
     assert loaded.value == 5
-    assert _Stats._resolve_aggregate_conflict(None, None) is None
+    assert _Stats._resolve_conflict(None, None) is None
 
 
 def test_rules_merge_combines_model_dump_values() -> None:
@@ -74,18 +74,18 @@ def test_results_internal_conflict_paths_and_combine() -> None:
     )
     assert merged_dict["ok"] == "v"
     assert merged_dict["xs"] == [1, "a"]
-    assert merged_dict["ys"] == [2, None, 3.5]
-    assert _Results._resolve_aggregate_conflict(None, None) is None
-    assert _Results._resolve_aggregate_conflict(True, False) is False
+    assert merged_dict["ys"] == [2, 3.5]
+    assert _Results._resolve_conflict(None, None) is None
+    assert _Results._resolve_conflict(True, False) is False
     combined = _Results.combine(_Results(value=1), _Results(value=2))
     assert combined.value == 2
 
 
 def test_options_merge_conflict_paths_and_empty_merge_options() -> None:
-    assert _Options._resolve_merge_conflict(None, None) is None
-    assert _Options._resolve_merge_conflict(2, 3) == 5
-    assert _Options._resolve_merge_conflict([1], [2, "x"]) == [1, 2, "x"]
-    assert _Options._resolve_merge_conflict("a", "b") == "b"
+    assert _Options._resolve_conflict(None, None) is None
+    assert _Options._resolve_conflict(2, 3) == 5
+    assert _Options._resolve_conflict([1], [2, "x"]) == [1, 2, "x"]
+    assert _Options._resolve_conflict("a", "b") == "b"
     empty = _Options.merge_options()
     assert isinstance(empty, _Options)
 

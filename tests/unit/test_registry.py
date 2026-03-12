@@ -406,7 +406,7 @@ class TestFlextRegistry:
         if test_case.handler_count > 0:
             for i in range(test_case.handler_count):
                 summary.registered.append(
-                    m.HandlerRegistrationDetails(
+                    m.RegistrationDetails(
                         registration_id=f"test_{i}",
                         handler_mode=c.Cqrs.HandlerType.COMMAND,
                         timestamp="2025-01-01T00:00:00Z",
@@ -459,7 +459,7 @@ class TestFlextRegistry:
             handler = ConcreteTestHandler()
             result = registry.register_handler(handler)
             _ = u.Tests.Result.assert_success(result)
-            assert isinstance(result.value, m.HandlerRegistrationDetails)
+            assert isinstance(result.value, m.RegistrationDetails)
 
     def test_registry_initialization(self) -> None:
         """Test registry initialization."""
@@ -473,7 +473,7 @@ class TestFlextRegistry:
         handler = ConcreteTestHandler()
         result = registry.register_handler(handler)
         _ = u.Tests.Result.assert_success(result)
-        assert isinstance(result.value, m.HandlerRegistrationDetails)
+        assert isinstance(result.value, m.RegistrationDetails)
 
     @pytest.mark.parametrize(
         ("mode", "expected"),
