@@ -796,10 +796,7 @@ class FlextTestsModels(
         super().__init_subclass__(**kwargs)
         if cls.__module__.startswith("tests"):
             return
-        u.Deprecation.warn_once(
-            f"subclass:{cls.__name__}",
-            "Subclassing FlextTestsModels is deprecated. Use FlextModels directly with composition instead.",
-        )
+        u.warn_once($$$)
 
     class Tests:
         """Test-specific models namespace."""

@@ -32,9 +32,9 @@ def test_args_get_enum_params_branches() -> None:
     assert r[int].ok(1).is_success
     assert isinstance(m.ConfigMap.model_validate({"k": 1}), m.ConfigMap)
     assert u.to_str(1) == "1"
-    annotated = u.Args.get_enum_params(cast("p.CallableWithHints", _annotated_func))
+    annotated = u.get_enum_params($$$)
     assert "mode" in annotated
-    failed = u.Args.get_enum_params(cast("p.CallableWithHints", _bad_hints_func))
+    failed = u.get_enum_params($$$)
     assert failed == {}
 
 
@@ -49,5 +49,5 @@ def test_args_get_enum_params_annotated_unwrap_branch(
         "get_type_hints",
         _mock_get_type_hints,
     )
-    params = u.Args.get_enum_params(cast("p.CallableWithHints", _no_op_func))
+    params = u.get_enum_params($$$)
     assert params["mode"] is c.Cqrs.HandlerType
