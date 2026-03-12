@@ -8,8 +8,9 @@ import pytest
 from flext_core import r
 from flext_infra.deps.detection import FlextInfraDependencyDetectionService
 from flext_tests import tm
-from tests.infra.models import m
-from tests.infra.typings import t
+
+from ...models import m
+from ...typings import t
 
 
 class _StubRunner:
@@ -80,9 +81,7 @@ class TestDetectionUncoveredLines:
                 _ = path
                 self._i += 1
                 if self._i == 1:
-                    return r[t.Infra.TomlConfig].ok({
-                        "python": {"version": "3.13"}
-                    })
+                    return r[t.Infra.TomlConfig].ok({"python": {"version": "3.13"}})
                 return r[t.Infra.TomlConfig].ok({})
 
         monkeypatch.setattr(service, "toml", _Toml())

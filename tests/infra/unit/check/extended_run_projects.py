@@ -11,6 +11,7 @@ from pathlib import Path
 
 import pytest
 
+from flext_infra import m
 from flext_infra.check.services import (
     CheckIssue,
     FlextInfraWorkspaceChecker,
@@ -18,7 +19,6 @@ from flext_infra.check.services import (
     ProjectResult,
 )
 from flext_tests import tm
-from tests.infra.models import m
 
 CheckProjectStub = Callable[[Path, list[str], Path], ProjectResult]
 

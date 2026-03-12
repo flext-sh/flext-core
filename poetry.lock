@@ -4786,4 +4786,4 @@ dev = ["autoflake", "bandit", "beartype", "black", "codespell", "deptry", "detec
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.13,<3.14"
-content-hash = "e11ba862acb4b8d27d41e47d42d343e93c460ac9c744a9fa4a82a420114a4229"
+content-hash = "c4a1d635f0f0430ac597d90353c1d3707fbb0b51b27025d17fc8660d661a6216"

@@ -4,6 +4,7 @@ import pytest
 
 from flext_core import r
 from flext_infra.models import FlextInfraModels as m
+from flext_infra.models import FlextInfraModels as m
 from flext_infra.workspace.orchestrator import FlextInfraOrchestratorService
 from flext_tests import tm
 
@@ -50,6 +51,9 @@ class TestOrchestratorFailures:
         self,
         orchestrator: FlextInfraOrchestratorService,
         monkeypatch: pytest.MonkeyPatch,
+        self,
+        orchestrator: FlextInfraOrchestratorService,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         def _run_project_fail(
             self: FlextInfraOrchestratorService,
@@ -70,6 +74,9 @@ class TestOrchestratorFailures:
         )
 
     def test_runner_exception(
+        self,
+        orchestrator: FlextInfraOrchestratorService,
+        monkeypatch: pytest.MonkeyPatch,
         self,
         orchestrator: FlextInfraOrchestratorService,
         monkeypatch: pytest.MonkeyPatch,
@@ -98,6 +105,7 @@ class TestOrchestratorFailures:
         call_count = [0]
 
         def _run_project(
+            self: FlextInfraOrchestratorService,
             self: FlextInfraOrchestratorService,
             project: str,
             verb: str,

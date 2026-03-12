@@ -12,8 +12,9 @@ import pytest
 
 from flext_infra.check.services import FlextInfraWorkspaceChecker
 from flext_tests import tm
-from tests.infra import h
-from tests.infra.models import m
+
+from ...helpers import h
+from ...models import m
 
 
 def _run_stub(

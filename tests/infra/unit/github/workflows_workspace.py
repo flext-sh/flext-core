@@ -10,14 +10,20 @@ from pathlib import Path
 
 from flext_core import r
 from flext_infra import m
+from flext_infra import m
 from flext_infra.github.workflows import FlextInfraWorkflowSyncer, SyncOperation
 from flext_tests import tm
 
 from ._stubs import (
     StubJsonIo,
+    StubProjectInfo,
     StubSelector,
     StubTemplates,
 )
+
+
+def _as_project(info: StubProjectInfo) -> m.Infra.Workspace.ProjectInfo:
+    return m.Infra.Workspace.ProjectInfo.model_validate(info.model_dump())
 
 
 def _syncer(
@@ -47,7 +53,9 @@ class TestSyncWorkspace:
         )
         proj.path.mkdir()
         selector = StubSelector(
-            resolve_returns=r[list[m.Infra.Workspace.ProjectInfo]].ok([proj]),
+            resolve_returns=r[list[m.Infra.Workspace.ProjectInfo]].ok([
+                _as_project(proj)
+            ]),
         )
         json_io = StubJsonIo()
         tm.ok(

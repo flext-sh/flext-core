@@ -24,8 +24,9 @@ from flext_infra.check.services import (
     run_cli,
 )
 from flext_tests import tm
-from tests.infra.models import m
-from tests.infra.typings import t
+
+from ...models import m
+from ...typings import t
 
 
 def _fake_checker_cls(

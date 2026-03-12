@@ -50,19 +50,16 @@ class _ProtocolIntrospection:
         protocol_annotations: dict[str, t.GeneralValueType] = (
             protocol.__annotations__ if hasattr(protocol, "__annotations__") else {}
         )
-        raw_attrs_candidate = getattr(protocol, "__protocol_attrs__", "")
+        raw_attrs_candidate = getattr(protocol, "__protocol_attrs__", ())
         raw_attrs: set[str] = set[str]()
-        iterable_attrs: Sequence[t.GeneralValueType] = ()
+        iterable_attrs: Sequence[str] = ()
         try:
             iterable_attrs = tuple(raw_attrs_candidate)
         except TypeError:
             iterable_attrs = ()
-        for attr in iterable_attrs:
-            if isinstance(attr, str):
-                raw_attrs.add(attr)
+        raw_attrs = set(iterable_attrs)
         protocol_methods: set[str] = set()
-        for attr in raw_attrs:
-            protocol_methods.add(attr)
+        protocol_methods.update(raw_attrs)
         required_members: set[str] = set(protocol_annotations.keys())
         required_members.update(protocol_methods)
         required_members = {
@@ -94,22 +91,17 @@ class _ProtocolIntrospection:
     @staticmethod
     def get_class_protocols(target_cls: type) -> tuple[type, ...]:
         """Get the protocols a class implements."""
-        protocols_candidate = getattr(target_cls, "__protocols__", "")
-        iterable_protocols: Sequence[t.GeneralValueType] = ()
+        protocols_candidate = getattr(target_cls, "__protocols__", ())
+        iterable_protocols: Sequence[type] = ()
         try:
             iterable_protocols = tuple(protocols_candidate)
         except TypeError:
             return ()
         try:
-            typed_protocols: list[type] = []
-            for protocol_item in iterable_protocols:
-                if not isinstance(protocol_item, type):
-                    return ()
-                typed_protocols.append(protocol_item)
+            typed_protocols = list(iterable_protocols)
             return tuple(typed_protocols)
         except TypeError:
             return ()
-        return ()
 
     @staticmethod
     def is_protocol(target_cls: type) -> bool:
@@ -127,19 +119,16 @@ class _ProtocolIntrospection:
         protocol_annotations: dict[str, t.GeneralValueType] = (
             protocol.__annotations__ if hasattr(protocol, "__annotations__") else {}
         )
-        raw_attrs_candidate = getattr(protocol, "__protocol_attrs__", "")
+        raw_attrs_candidate = getattr(protocol, "__protocol_attrs__", ())
         raw_attrs: set[str] = set[str]()
-        iterable_attrs: Sequence[t.GeneralValueType] = ()
+        iterable_attrs: Sequence[str] = ()
         try:
             iterable_attrs = tuple(raw_attrs_candidate)
         except TypeError:
             iterable_attrs = ()
-        for attr in iterable_attrs:
-            if isinstance(attr, str):
-                raw_attrs.add(attr)
+        raw_attrs = set(iterable_attrs)
         protocol_methods: set[str] = set()
-        for attr in raw_attrs:
-            protocol_methods.add(attr)
+        protocol_methods.update(raw_attrs)
         required_members: set[str] = set(protocol_annotations.keys())
         if protocol_methods:
             required_members.update(protocol_methods)

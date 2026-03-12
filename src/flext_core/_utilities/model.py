@@ -14,7 +14,6 @@ from typing import ClassVar, TypeVar
 from pydantic import BaseModel, TypeAdapter, ValidationError
 
 from flext_core import FlextRuntime, m, r, t
-from flext_core._models.base import FlextModelFoundation
 
 T_Model = TypeVar("T_Model", bound=BaseModel)
 
@@ -225,9 +224,9 @@ class FlextUtilitiesModel:
 
     @staticmethod
     def normalize_to_metadata(
-        value: t.Scalar | m.ConfigMap | FlextModelFoundation.Metadata | None,
+        value: t.Scalar | m.ConfigMap | m.Metadata | None,
     ) -> m.Metadata:
-        """Normalize any value to FlextModelFoundation.Metadata.
+        """Normalize any value to m.Metadata.
 
         Business Rule: Always returns Metadata, never None.
         Uses FlextRuntime guards and normalization methods for automatic
@@ -238,7 +237,7 @@ class FlextUtilitiesModel:
             value: None, dict, Mapping, Metadata, or any t.ContainerValue
 
         Returns:
-            FlextModelFoundation.Metadata: Normalized metadata (empty attributes
+            m.Metadata: Normalized metadata (empty attributes
                 if input was None or empty dict)
 
         Raises:
@@ -257,14 +256,14 @@ class FlextUtilitiesModel:
             return m.Metadata(attributes={})
         if isinstance(value, m.Metadata):
             return value
-        if isinstance(value, FlextModelFoundation.Metadata):
+        if isinstance(value, m.Metadata):
             return m.Metadata.model_validate(value.model_dump())
         if FlextRuntime.is_dict_like(value):
             attributes: dict[str, t.MetadataValue] = {}
             for key, val in value.items():
                 attributes[str(key)] = FlextRuntime.normalize_to_metadata_value(val)
             return m.Metadata.model_validate({"attributes": attributes})
-        msg = f"metadata must be None, dict, or FlextModelFoundation.Metadata, got {value.__class__.__name__}"
+        msg = f"metadata must be None, dict, or m.Metadata, got {value.__class__.__name__}"
         raise TypeError(msg)
 
     @staticmethod

@@ -15,8 +15,9 @@ from flext_infra.check.services import (
     GateExecution,
     ProjectResult,
 )
-from tests.infra.models import m
-from tests.infra.typings import t
+
+from ...models import m
+from ...typings import t
 
 
 class Spy:

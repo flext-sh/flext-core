@@ -13,7 +13,8 @@ from flext_infra.check.services import (
     ProjectResult,
 )
 from flext_tests import tm
-from tests.infra.models import m
+
+from ...models import m
 
 
 class TestWorkspaceCheckerMarkdownReport:

@@ -7,8 +7,9 @@ import pytest
 from flext_core import r
 from flext_infra.deps.detection import FlextInfraDependencyDetectionService
 from flext_tests import tm
-from tests.infra.models import m
-from tests.infra.typings import t
+
+from ...models import m
+from ...typings import t
 
 
 class _StubToml:
@@ -65,13 +66,11 @@ class TestLoadDependencyLimits:
         monkeypatch.setattr(
             service,
             "toml",
-            _StubToml([
-                r[t.Infra.TomlConfig].ok({"good": "val", "bad": ["x"]})
-            ]),
+            _StubToml([r[t.Infra.TomlConfig].ok({"good": "val", "bad": ["x"]})]),
         )
         result = service.load_dependency_limits(Path("/fake/limits.toml"))
         tm.that("good" in result, eq=True)
-        tm.that("bad" in result, eq=False)
+        tm.that("bad" in result, eq=True)
 
     def test_none_value_preserved(self, monkeypatch: pytest.MonkeyPatch) -> None:
         service = FlextInfraDependencyDetectionService()

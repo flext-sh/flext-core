@@ -242,6 +242,9 @@ class StubProjectInfo(m.Infra.Workspace.ProjectInfo):
 
     name: str = Field(default="test-project", description="Project name")
     path: Path = Field(default=Path("/tmp/test-project"), description="Project path")
+    stack: str = Field(default="python", description="Primary technology stack")
+    has_tests: bool = Field(default=False, description="Project has tests")
+    has_src: bool = Field(default=True, description="Project has source")
 
 
 __all__ = [

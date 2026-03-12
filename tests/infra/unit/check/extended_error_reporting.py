@@ -16,9 +16,9 @@ from flext_infra.check.services import (
     ProjectResult,
 )
 from flext_tests import tm
-from tests.infra import h
-from tests.infra.models import m
 
+from ... import h
+from ...models import m
 from ._stubs import make_gate_exec, make_issue
 
 CheckProjectStub = Callable[[Path, list[str], Path], ProjectResult]

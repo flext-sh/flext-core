@@ -18,6 +18,7 @@ TestDomainResult = FlextTestsDomains.TestDomainResult
 
 
 class TestService(s[str]):
+class TestService(s[str]):
     """Test service for coverage tests."""
 
     __test__ = False
@@ -28,10 +29,13 @@ class TestService(s[str]):
 
     @override
     def execute(self, **_kwargs: t.ContainerValue) -> r[str]:
+    def execute(self, **_kwargs: t.ContainerValue) -> r[str]:
         """Execute service."""
+        return self.ok("success")
         return self.ok("success")
 
 
+class TestServiceWithValidation(s[str]):
 class TestServiceWithValidation(s[str]):
     """Test service with validation."""
 
@@ -43,7 +47,9 @@ class TestServiceWithValidation(s[str]):
 
     @override
     def execute(self, **_kwargs: t.ContainerValue) -> r[str]:
+    def execute(self, **_kwargs: t.ContainerValue) -> r[str]:
         """Execute service."""
+        return self.ok("validated")
         return self.ok("validated")
 
 
@@ -88,6 +94,7 @@ class TestService100Coverage:
         """Test result property."""
         service = TestService()
         result = service.result
+        assert isinstance(result, str)
         assert isinstance(result, str)
 
     def test_auto_execute_false(self) -> None:

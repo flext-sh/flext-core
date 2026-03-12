@@ -57,6 +57,7 @@ def __getattr__(name: str) -> Any:
 def __dir__() -> list[str]:
     """Return list of available attributes for dir() and autocomplete."""
     return sorted(_LAZY_IMPORTS)
+    return sorted(_LAZY_IMPORTS)
 
 
 cleanup_submodule_namespace(__name__, _LAZY_IMPORTS)

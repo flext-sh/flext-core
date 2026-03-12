@@ -12,7 +12,7 @@ from pathlib import Path
 
 import pytest
 
-from flext_infra import FlextInfraUtilitiesSelection, m
+from flext_infra import FlextInfraUtilitiesSelection
 from flext_tests import tm
 
 
@@ -116,10 +116,10 @@ class TestFlextInfraUtilitiesSelection:
     ) -> None:
         """Test that result contains properly typed ProjectInfo items."""
         result = selector.resolve_projects(workspace_with_projects, [])
-        projects = tm.ok(result, is_=list)
-        assert isinstance(projects, list)
-        for p in projects:
-            tm.that(isinstance(p, m.Infra.Workspace.ProjectInfo), eq=True)
+        assert result.is_success
+        projects = result.value
+        tm.that(len(projects), eq=3)
+        tm.that([p.name for p in projects], eq=["alpha", "beta", "gamma"])
 
     def test_selector_with_default_discovery(
         self,

@@ -1,15 +1,12 @@
 from __future__ import annotations
 
-from collections.abc import MutableMapping
-
 import tomlkit
 from tomlkit.toml_document import TOMLDocument
 
 from flext_infra.deps.path_sync import FlextInfraDependencyPathSync
 from flext_tests import tm
 
-_PATH_SYNC = FlextInfraDependencyPathSync()
-_rewrite_poetry = _PATH_SYNC._rewrite_poetry
+from ...helpers import FlextInfraTestHelpers
 
 
 class TestRewritePoetry:
@@ -40,23 +37,7 @@ class TestRewritePoetry:
         }
         changes = _rewrite_poetry(doc, is_root=True, mode="workspace")
         tm.that(len(changes) > 0, eq=True)
-        tool = doc["tool"]
-        tm.that(isinstance(tool, MutableMapping), eq=True)
-        if not isinstance(tool, MutableMapping):
-            return
-        poetry = tool["poetry"]
-        tm.that(isinstance(poetry, MutableMapping), eq=True)
-        if not isinstance(poetry, MutableMapping):
-            return
-        deps = poetry["dependencies"]
-        tm.that(isinstance(deps, MutableMapping), eq=True)
-        if not isinstance(deps, MutableMapping):
-            return
-        core = deps["flext-core"]
-        tm.that(isinstance(core, MutableMapping), eq=True)
-        if not isinstance(core, MutableMapping):
-            return
-        tm.that(core["path"], eq="flext-core")
+        tm.that(doc.as_string(), contains='path = "flext-core"')
 
     def test_rewrite_poetry_skip_non_path_dep(self) -> None:
         doc = TOMLDocument()
@@ -87,37 +68,18 @@ class TestRewritePoetry:
         }
         changes = _rewrite_poetry(doc, is_root=False, mode="workspace")
         tm.that(len(changes) > 0, eq=True)
-        tool = doc["tool"]
-        tm.that(isinstance(tool, MutableMapping), eq=True)
-        if not isinstance(tool, MutableMapping):
-            return
-        poetry = tool["poetry"]
-        tm.that(isinstance(poetry, MutableMapping), eq=True)
-        if not isinstance(poetry, MutableMapping):
-            return
-        deps = poetry["dependencies"]
-        tm.that(isinstance(deps, MutableMapping), eq=True)
-        if not isinstance(deps, MutableMapping):
-            return
-        core = deps["flext-core"]
-        tm.that(isinstance(core, MutableMapping), eq=True)
-        if not isinstance(core, MutableMapping):
-            return
-        tm.that(core["path"], eq="../flext-core")
+        tm.that(doc.as_string(), contains='path = "../flext-core"')
 
 
 def test_rewrite_poetry_with_non_dict_value() -> None:
     doc = tomlkit.document()
-    doc["tool"] = tomlkit.table()
-    tool = doc["tool"]
-    tm.that(isinstance(tool, MutableMapping), eq=True)
-    if not isinstance(tool, MutableMapping):
-        return
     poetry = tomlkit.table()
-    tool["poetry"] = poetry
     deps = tomlkit.table()
     deps["flext-core"] = "string-value"
     poetry["dependencies"] = deps
+    tool = tomlkit.table()
+    tool["poetry"] = poetry
+    doc["tool"] = tool
     tm.that(len(_rewrite_poetry(doc, is_root=False, mode="workspace")), eq=0)
 
 

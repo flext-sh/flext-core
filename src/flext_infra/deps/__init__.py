@@ -20,6 +20,18 @@ from flext_core import t
 from flext_core.lazy import cleanup_submodule_namespace
 
 if TYPE_CHECKING:
+    from flext_infra.deps._phases import (
+        ConsolidateGroupsPhase,
+        EnsureFormattingToolingPhase,
+        EnsureMypyConfigPhase,
+        EnsureNamespaceToolingPhase,
+        EnsurePydanticMypyConfigPhase,
+        EnsurePyreflyConfigPhase,
+        EnsurePyrightConfigPhase,
+        EnsurePytestConfigPhase,
+        EnsureRuffConfigPhase,
+        InjectCommentsPhase,
+    )
     from flext_infra.deps._phases.ensure_formatting import EnsureFormattingToolingPhase
     from flext_infra.deps._phases.ensure_mypy import EnsureMypyConfigPhase
     from flext_infra.deps._phases.ensure_namespace import EnsureNamespaceToolingPhase

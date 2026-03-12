@@ -2,13 +2,15 @@ from __future__ import annotations
 
 from pathlib import Path
 
+
 import pytest
 
 from flext_core import r
 from flext_infra.deps.detection import FlextInfraDependencyDetectionService
 from flext_tests import tm
-from tests.infra.models import m
-from tests.infra.typings import t
+
+from ...models import m
+from ...typings import t
 
 
 class _StubToml:

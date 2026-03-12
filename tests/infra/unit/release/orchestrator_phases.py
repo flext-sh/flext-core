@@ -18,12 +18,13 @@ from flext_infra import FlextInfraModels
 from flext_infra.release import orchestrator as _orch_mod
 from flext_infra.release.orchestrator import FlextInfraReleaseOrchestrator
 from flext_tests import tm
-from tests.infra.typings import t
 from tests.infra.unit.release._stubs import (
     FakeReporting,
     FakeSubprocess,
     FakeVersioning,
 )
+
+from ...typings import t
 
 if TYPE_CHECKING:
     from pathlib import Path

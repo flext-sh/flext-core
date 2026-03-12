@@ -6,7 +6,8 @@ from pathlib import Path
 from flext_core import r
 from flext_infra.deps.internal_sync import FlextInfraInternalDependencySyncService
 from flext_tests import tm
-from tests.infra.typings import t
+
+from ...typings import t
 
 
 class _TomlReaderStub:
@@ -27,7 +28,10 @@ def _set_toml_stub(
     service: FlextInfraInternalDependencySyncService,
     value: r[dict[str, t.Infra.TomlValue]],
 ) -> None:
-    service.toml = _TomlReaderStub(fn=lambda _path: value)
+    def _reader(_path: Path) -> r[dict[str, t.ContainerValue]]:
+        return value
+
+    service.toml = _TomlReaderStub(fn=_reader)
 
 
 def _set_toml_sequence(

@@ -16,7 +16,8 @@ from flext_infra.check.services import (
     GateExecution,
 )
 from flext_tests import tm
-from tests.infra.models import m
+
+from ...models import m
 
 
 def _make_gate_exec(

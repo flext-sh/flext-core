@@ -303,7 +303,7 @@ def main() -> None:
         features = metadata.get("context_features", ())
 
         def _seq_len(x: object) -> int:
-            return int(bool(x))
+            return 1 if x else 0
 
         patterns_count = _seq_len(patterns)
         features_count = _seq_len(features)
