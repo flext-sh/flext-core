@@ -116,7 +116,7 @@ class FlextModelsEntity:
             handler_event_type_raw = data_map.get("event_type", event_type)
             handler_event_type = (
                 handler_event_type_raw
-                if handler_event_type_raw.__class__ is str and handler_event_type_raw
+                if isinstance(handler_event_type_raw, str) and handler_event_type_raw
                 else event_type
             )
             handler_name = f"_apply_{handler_event_type}"
@@ -139,7 +139,7 @@ class FlextModelsEntity:
                 r with list of created DomainEvents or error
 
             """
-            if events.__class__ not in {list, tuple}:
+            if not isinstance(events, (list, tuple)):
                 return r[list[FlextModelsDomainEvent.Entry]].fail(
                     "Events must be a list or tuple"
                 )
