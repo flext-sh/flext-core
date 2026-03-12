@@ -336,19 +336,6 @@ def test_loggings_exception_and_adapter_paths(monkeypatch: pytest.MonkeyPatch) -
     with tracker:
         pass
     tracker.__exit__(RuntimeError, RuntimeError("x"), None)
-    with pytest.warns(DeprecationWarning, match="with_result"):
-        adapter = logger.with_result()
-    assert adapter.trace("x").is_success
-    assert adapter.debug("x").is_success
-    assert adapter.info("x").is_success
-    assert adapter.warning("x").is_success
-    assert adapter.error("x").is_success
-    assert adapter.critical("x").is_success
-
-    class _NonException(BaseException):
-        pass
-
-    adapter.exception("boom", exception=_NonException("x"), x=1)
     assert logger.unbind("missing", safe=True)
 
 

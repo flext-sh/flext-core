@@ -18,7 +18,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextLogger, FlextSettings, m, r
+from flext_core import FlextLogger, FlextSettings, m
 from tests.test_utils import assertion_helpers
 
 
@@ -31,8 +31,8 @@ def make_result_logger(
     _service_version: str | None = None,
     _correlation_id: str | None = None,
     _force_new: bool = False,
-) -> FlextLogger.ResultAdapter:
-    """Helper to build loggers returning r for logging tests."""
+) -> FlextLogger:
+    """Helper to build FlextLogger for logging tests."""
     return FlextLogger(
         name,
         config=config,
@@ -41,7 +41,7 @@ def make_result_logger(
         _service_version=_service_version,
         _correlation_id=_correlation_id,
         _force_new=_force_new,
-    ).with_result()
+    )
 
 
 class TestGlobalContextManagement:
@@ -588,85 +588,6 @@ class TestExceptionLogging:
         assert str(exception_obj) == msg
 
 
-class TestResultAdapter:
-    """Test FlextLogger.ResultAdapter functionality."""
-
-    def test_with_result_returns_adapter(self) -> None:
-        """Test with_result returns FlextLogger.ResultAdapter."""
-        logger = make_result_logger("test")
-        adapter = logger.with_result()
-        assert isinstance(adapter, FlextLogger.ResultAdapter)
-
-    def test_result_adapter_info(self) -> None:
-        """Test result adapter info method returns Result."""
-        logger = make_result_logger("test")
-        adapter = logger.with_result()
-        result = adapter.info("Test message")
-        _ = assertion_helpers.assert_flext_result_success(result)
-
-    def test_result_adapter_debug(self) -> None:
-        """Test result adapter debug method returns Result."""
-        logger = make_result_logger("test")
-        adapter = logger.with_result()
-        result = adapter.debug("Debug message")
-        _ = assertion_helpers.assert_flext_result_success(result)
-
-    def test_result_adapter_warning(self) -> None:
-        """Test result adapter warning method returns Result."""
-        logger = make_result_logger("test")
-        adapter = logger.with_result()
-        result = adapter.warning("Warning message")
-        _ = assertion_helpers.assert_flext_result_success(result)
-
-    def test_result_adapter_error(self) -> None:
-        """Test result adapter error method returns Result."""
-        logger = make_result_logger("test")
-        adapter = logger.with_result()
-        result = adapter.error("Error message")
-        _ = assertion_helpers.assert_flext_result_success(result)
-
-
-class TestResultIntegration:
-    """Test r integration with logging via with_result()."""
-
-    def test_log_result_success(self) -> None:
-        """Test logging successful result via with_result()."""
-        logger = make_result_logger("test")
-        result = r[str].ok("test_value")
-        log_result = logger.with_result().info(
-            f"Operation completed with: {result.value}",
-        )
-        assert log_result.is_success
-
-    def test_log_result_failure(self) -> None:
-        """Test logging failed result via with_result()."""
-        logger = make_result_logger("test")
-        result: r[str] = r[str].fail("Something went wrong")
-        log_result = logger.with_result().error(f"Operation failed: {result.error}")
-        assert log_result.is_success
-
-    def test_log_result_without_operation(self) -> None:
-        """Test logging result without operation name."""
-        logger = make_result_logger("test")
-        result = r[str].ok("value")
-        log_result = logger.with_result().info(f"Result: {result.value}")
-        assert log_result.is_success
-
-    def test_log_result_with_custom_level(self) -> None:
-        """Test logging result with debug level."""
-        logger = make_result_logger("test")
-        result = r[str].ok("value")
-        log_result = logger.with_result().debug(f"Debug result: {result.value}")
-        assert log_result.is_success
-
-    def test_log_result_failure_includes_error_details(self) -> None:
-        """Test logging result includes error details."""
-        logger = make_result_logger("test")
-        result: r[str] = r[str].fail("Error occurred")
-        log_result = logger.with_result().error(f"Error: {result.error}")
-        assert log_result.is_success
-
-
 class TestLoggingIntegration:
     """Test logging integration patterns."""
 
@@ -764,7 +685,5 @@ __all__ = [
     "TestLevelBasedContextManagement",
     "TestLoggingIntegration",
     "TestLoggingMethods",
-    "TestResultAdapter",
-    "TestResultIntegration",
     "TestScopedContextManagement",
 ]

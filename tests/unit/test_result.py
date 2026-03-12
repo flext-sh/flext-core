@@ -617,14 +617,6 @@ class Testr:
         with pytest.raises(RuntimeError, match="Cannot access value of failed result"):
             _ = result.value
 
-    def test_data_property(self) -> None:
-        """Test data property (alias for value)."""
-        result = r[str].ok("test")
-        with pytest.warns(DeprecationWarning, match="FlextResult.data is deprecated"):
-            assert result.data == "test"
-        with pytest.warns(DeprecationWarning, match="FlextResult.data is deprecated"):
-            assert result.data == result.value
-
     def test_error_property_success(self) -> None:
         """Test error property returns None for success."""
         result = r[str].ok("test")

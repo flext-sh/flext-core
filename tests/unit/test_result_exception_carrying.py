@@ -24,9 +24,8 @@ from collections.abc import Sized
 
 import pytest
 from pydantic import BaseModel, ValidationError
-from returns.io import IO, IOSuccess
 
-from flext_core import e, m, p, r
+from flext_core import m, p, r
 
 
 class TestFailNoExceptionBackwardCompat:
@@ -337,16 +336,6 @@ class TestTraversePropagatesException:
         assert "error 1" in result.error and "error 2" in result.error
 
 
-class TestFromIOResultCarriesException:
-    """Test from_io_result() carries exception."""
-
-    def test_from_io_result_carries_exception(self) -> None:
-        """Verify from_io_result() preserves exception from IOResult."""
-        result = r[int].from_io_result(IOSuccess(42))
-        assert result.is_success
-        assert isinstance(result.value, IO)
-
-
 class TestFromValidationCarriesException:
     """Test from_validation() carries exception."""
 
@@ -362,17 +351,6 @@ class TestFromValidationCarriesException:
         assert result.is_failure
         assert result.exception is not None
         assert isinstance(result.exception, ValidationError)
-
-
-class TestToIOChainsException:
-    """Test to_io() chains exception."""
-
-    def test_to_io_chains_exception(self) -> None:
-        """Verify to_io() raises on failure."""
-        exc = ValueError("conversion error")
-        result: r[int] = r[int].fail("error", exception=exc)
-        with pytest.raises(e.ValidationError):
-            result.to_io()
 
 
 class TestErrorOrPatternUnchanged:

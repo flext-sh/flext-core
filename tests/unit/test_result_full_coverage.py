@@ -8,8 +8,6 @@ from __future__ import annotations
 
 from typing import cast
 
-from returns.io import IOResult, IOSuccess
-
 from flext_core import FlextRuntime, r
 
 from ._models import _ErrorsModel, _PlainErrorModel, _TargetModel
@@ -34,23 +32,23 @@ def test_type_guards_and_protocol_name() -> None:
     assert ok_res._protocol_name() == "r"
 
 
-def test_init_fallback_and_lazy_result_property() -> None:
+def test_init_fallback_and_lazy_returns_result_property() -> None:
     fallback = r[int](value=9, is_success=True)
     assert fallback.is_success
     assert fallback.value == 9
     lazy_ok = r[int](value=5, is_success=True)
     assert lazy_ok._result is None
-    _ = lazy_ok.result
+    _ = lazy_ok._returns_result
     lazy_fail = r[int](error="nope", is_success=False)
     assert lazy_fail._result is None
-    _ = lazy_fail.result
+    _ = lazy_fail._returns_result
 
 
 def test_map_flat_map_and_then_paths() -> None:
     mapped_fail = r[int].ok(2).map(lambda _: (_ for _ in ()).throw(ValueError("m")))
     assert mapped_fail.is_failure
     assert mapped_fail.error == "m"
-    runtime_ok = FlextRuntime.RuntimeResult(value=20, is_success=True)
+    runtime_ok = FlextRuntime.RuntimeResult[int].ok(20)
     flat_ok = r[int].ok(1).flat_map(lambda _: runtime_ok)
     assert flat_ok.is_success
     assert flat_ok.value == 20
@@ -102,8 +100,8 @@ def test_from_validation_and_to_model_paths() -> None:
     assert "Model conversion failed" in (invalid_to_model.error or "")
 
 
-def test_lash_runtime_result_and_from_io_result_fallback() -> None:
-    runtime_ok = FlextRuntime.RuntimeResult(value=99, is_success=True)
+def test_lash_runtime_result_paths() -> None:
+    runtime_ok = FlextRuntime.RuntimeResult[int].ok(99)
     failed_for_lash: r[int] = cast("r[int]", r.fail("x"))
     lash_ok: r[int] = failed_for_lash.lash(lambda _e: runtime_ok)
     assert lash_ok.is_success
@@ -116,9 +114,3 @@ def test_lash_runtime_result_and_from_io_result_fallback() -> None:
     lash_fail: r[int] = failed_for_lash_2.lash(lambda _e: runtime_fail)
     assert lash_fail.is_failure
     assert lash_fail.error == "recovery failed"
-    good = r[int].from_io_result(IOSuccess(1))
-    assert good.is_success
-    invalid_io = cast("IOResult[int, str]", object())
-    invalid = r[int].from_io_result(invalid_io)
-    assert invalid.is_failure
-    assert invalid.error == "Invalid IOResult structure"

@@ -10,17 +10,13 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import logging
-import warnings
 from collections.abc import Callable, Mapping, Sequence
 from typing import Self, TypeIs, overload, override
 
 from pydantic import BaseModel, PrivateAttr, ValidationError
-from returns.io import IO, IOFailure, IOResult, IOSuccess
-from returns.maybe import Maybe, Nothing, Some
 from returns.primitives.exceptions import UnwrapFailedError
 from returns.result import Failure, Result, Success
 
-import flext_core
 from flext_core import FlextRuntime, T_Model, U, t
 
 
@@ -119,29 +115,6 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
             msg = "Internal result wrapper was not initialized"
             raise RuntimeError(msg)
         return result
-
-    @property
-    @override
-    def data(self) -> T_co:
-        """Compatibility alias returning successful payload value."""
-        warnings.warn(
-            "FlextResult.data is deprecated; use FlextResult.value.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.value
-
-    @property
-    @override
-    def result(self) -> Self:
-        """Protocol compatibility: return self (same as RuntimeResult)."""
-        warnings.warn(
-            "FlextResult.result is deprecated; use .value or .error. "
-            "Planned removal: v0.12.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self
 
     @classmethod
     def _fail_like[S](
@@ -269,34 +242,6 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         setattr(result, "_result", Failure(error_msg))
         setattr(result, "_exception", exception)
         return result
-
-    @classmethod
-    def from_io_result[U](cls, io_result: IOResult[U, str]) -> FlextResult[U | IO[U]]:
-        """Build result from IOResult by unwrapping value or failure message."""
-        warnings.warn(
-            "from_io_result() is deprecated; prefer explicit IOResult handling",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        if isinstance(io_result, IOSuccess):
-            return FlextResult[U | IO[U]](value=io_result.unwrap(), is_success=True)
-        if isinstance(io_result, IOFailure):
-            return FlextResult[U | IO[U]].fail(str(io_result.failure()))
-        return FlextResult[U | IO[U]].fail("Invalid IOResult structure")
-
-    @classmethod
-    def from_maybe[U](
-        cls, maybe: Maybe[U], error_message: str = "No value"
-    ) -> FlextResult[U]:
-        """Build result from Maybe by mapping Nothing to failure."""
-        warnings.warn(
-            "from_maybe() is deprecated; prefer explicit Maybe handling",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        if maybe is Nothing:
-            return FlextResult[U].fail(error_message)
-        return FlextResult[U].ok(maybe.unwrap())
 
     @classmethod
     def from_validation(
@@ -718,41 +663,6 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         if self.is_failure:
             func(self.error or "")
         return self
-
-    def to_io(self) -> IO[T_co]:
-        """Convert successful value to IO; fail by raising validation error."""
-        warnings.warn(
-            "to_io() is deprecated; prefer explicit IO conversion at call sites",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        if self.is_failure:
-            raise flext_core.e.ValidationError(
-                self.error or "Cannot convert failure to IO"
-            ) from self._exception
-        return IO(self.value)
-
-    def to_io_result(self) -> IOResult[T_co, str]:
-        """Convert result to IOResult while preserving success/failure state."""
-        warnings.warn(
-            "to_io_result() is deprecated; prefer explicit IOResult conversion",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        if self.is_success:
-            return IOSuccess(self.value)
-        return IOFailure(self.error or "")
-
-    def to_maybe(self) -> Maybe[T_co]:
-        """Convert result into Maybe, dropping failure details."""
-        warnings.warn(
-            "to_maybe() is deprecated; prefer explicit Maybe conversion",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        if self.is_success:
-            return Some(self.value)
-        return Nothing
 
     def to_model[U: BaseModel](self, model: type[U]) -> FlextResult[U]:
         """Convert successful value to Pydantic model.

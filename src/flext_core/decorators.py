@@ -448,7 +448,6 @@ class FlextDecorators:
                     operation_name if operation_name is not None else func.__name__
                 )
                 logger = FlextDecorators._resolve_logger(args, func)
-                result_logger = logger.with_result()
                 correlation_id = FlextDecorators._bind_operation_context(
                     operation=op_name,
                     logger=logger,
@@ -464,7 +463,7 @@ class FlextDecorators:
                     if correlation_id is not None:
                         start_extra["correlation_id"] = correlation_id
                     if correlation_id is not None:
-                        _ = result_logger.debug(
+                        logger.debug(
                             "%s_started",
                             op_name,
                             extra={
@@ -474,7 +473,7 @@ class FlextDecorators:
                             },
                         )
                     else:
-                        _ = result_logger.debug(
+                        logger.debug(
                             "%s_started",
                             op_name,
                             extra={
@@ -495,9 +494,7 @@ class FlextDecorators:
                             duration * c.MILLISECONDS_MULTIPLIER
                         )
                         completion_extra["duration_seconds"] = duration
-                    _ = result_logger.debug(
-                        "%s_completed", op_name, extra=dict(completion_extra)
-                    )
+                    logger.debug("%s_completed", op_name, extra=dict(completion_extra))
                     return result
                 except (
                     AttributeError,
@@ -525,7 +522,7 @@ class FlextDecorators:
                         failure_extra["duration_seconds"] = tracked_duration
                     exc_info_value = True
                     if correlation_id is not None and track_perf:
-                        _ = result_logger.exception(
+                        logger.exception(
                             op_name,
                             exception=exc,
                             exc_info=exc_info_value,
@@ -539,7 +536,7 @@ class FlextDecorators:
                             duration_seconds=tracked_duration,
                         )
                     elif correlation_id is not None:
-                        _ = result_logger.exception(
+                        logger.exception(
                             op_name,
                             exception=exc,
                             exc_info=exc_info_value,
@@ -551,7 +548,7 @@ class FlextDecorators:
                             correlation_id=correlation_id,
                         )
                     elif track_perf:
-                        _ = result_logger.exception(
+                        logger.exception(
                             op_name,
                             exception=exc,
                             exc_info=exc_info_value,
@@ -564,7 +561,7 @@ class FlextDecorators:
                             duration_seconds=tracked_duration,
                         )
                     else:
-                        _ = result_logger.exception(
+                        logger.exception(
                             op_name,
                             exception=exc,
                             exc_info=exc_info_value,

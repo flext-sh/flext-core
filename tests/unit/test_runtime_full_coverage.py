@@ -509,7 +509,7 @@ def test_runtime_result_all_missed_branches() -> None:
         error_code="E1",
         error_data=m.ConfigMap(root={"x": 1}),
     )
-    assert success.result is success
+    assert success.is_success
     assert success.unwrap_or(9) == 1
     assert failure.unwrap_or(9) == 9
     assert success.unwrap_or_else(lambda: 7) == 1
@@ -872,8 +872,7 @@ def test_runtime_result_remaining_paths() -> None:
     )
     assert failure.error_code == "E2"
     assert failure.error_data is not None
-    with pytest.warns(DeprecationWarning, match="RuntimeResult.data is deprecated"):
-        assert success.data == 3
+    assert success.value == 3
     with pytest.raises(RuntimeError, match="Cannot access value of failed result"):
         _ = failure.value
     assert success.unwrap() == 3

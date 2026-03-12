@@ -1250,20 +1250,6 @@ class FlextRuntime:
             return self.unwrap_or(default)
 
         @property
-        def data(self) -> T:
-            """Compatibility alias returning successful payload value."""
-            warnings.warn(
-                "RuntimeResult.data is deprecated; use RuntimeResult.value. "
-                "Planned removal: v0.12.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if not self.is_success or self._payload is None:
-                msg = f"Cannot access value of failed result: {self.error}"
-                raise RuntimeError(msg)
-            return self._payload
-
-        @property
         def exception(self) -> BaseException | None:
             """Get the exception if one was captured."""
             return self._exception
@@ -1281,21 +1267,6 @@ class FlextRuntime:
                 logger = structlog.get_logger(__name__)
                 setattr(self, "_result_logger", logger)
             return logger
-
-        @property
-        def result(self) -> Self:
-            """Access internal result for protocol compatibility.
-
-            RuntimeResult doesn't use an internal Result wrapper like r,
-            so this returns self for protocol compatibility.
-            """
-            warnings.warn(
-                "RuntimeResult.result is deprecated; use RuntimeResult directly. "
-                "Planned removal: v0.12.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            return self
 
         @property
         def value(self) -> T:

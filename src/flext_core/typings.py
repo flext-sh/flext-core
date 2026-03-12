@@ -16,11 +16,9 @@ from pathlib import Path
 from re import Pattern
 from types import ModuleType
 from typing import (
-    TYPE_CHECKING as _TYPE_CHECKING,
     Annotated,
     Literal,
     ParamSpec,
-    TypeAlias,
     TypeVar,
     cast as _cast,
     override as _override,
@@ -47,38 +45,6 @@ MessageT_contra = TypeVar("MessageT_contra", contravariant=True)
 EnumT = TypeVar("EnumT", bound=StrEnum)
 type RegistryBindingKey = str | type
 
-# --- MODULE LEVEL TYPES (Recursive types must be defined here for reliability) ---
-
-type _Primitives = str | int | float | bool
-type _Scalar = str | int | float | bool | datetime
-type _Container = _Scalar | BaseModel | Path
-
-# --- RECURSIVE TYPES (PEP 695 - Annotation-only, NEVER with isinstance) ---
-
-type _JsonValue = _Scalar | list[_JsonValue] | dict[str, _JsonValue]
-type _Serializable = _Scalar | list[_Serializable] | dict[str, _Serializable]
-type _ContainerValue = (
-    _Scalar | BaseModel | list[_ContainerValue] | dict[str, _ContainerValue]
-)
-type _GeneralValueType = (
-    _Scalar | BaseModel | Path | list[_GeneralValueType] | dict[str, _GeneralValueType]
-)
-
-type _ConstantValue = (
-    _Primitives
-    | ConfigDict
-    | SettingsConfigDict
-    | frozenset[str]
-    | tuple[str, ...]
-    | Mapping[str, str | int]
-    | StrEnum
-    | type[StrEnum]
-    | Pattern[str]
-    | type
-)
-type _FileContent = str | bytes | BaseModel | Sequence[Sequence[str]]
-type _GeneralValueTypeMapping = Mapping[str, _GeneralValueType]
-
 
 class FlextTypes:
     """Type system foundation for FLEXT ecosystem.
@@ -88,69 +54,88 @@ class FlextTypes:
     ``None`` is **never** baked into definitions.
     """
 
-    Primitives: TypeAlias = _Primitives
-    Scalar: TypeAlias = _Scalar
-    Container: TypeAlias = _Container
+    # --- MODULE LEVEL TYPES (Recursive types must be defined here for reliability) ---
 
-    RegisterableService: TypeAlias = (
+    type Primitives = str | int | float | bool
+    type Scalar = str | int | float | bool | datetime
+    type Container = Scalar | BaseModel | Path
+
+    # --- RECURSIVE TYPES (PEP 695 - Annotation-only, NEVER with isinstance) ---
+
+    type JsonValue = Scalar | list[FlextTypes.JsonValue] | dict[str, FlextTypes.JsonValue]
+    type Serializable = Scalar | list[FlextTypes.Serializable] | dict[str, FlextTypes.Serializable]
+    type ContainerValue = (
+        Scalar | BaseModel | list[FlextTypes.ContainerValue] | dict[str, FlextTypes.ContainerValue]
+    )
+    type GeneralValueType = (
+        Scalar | BaseModel | Path | list[FlextTypes.GeneralValueType] | dict[str, FlextTypes.GeneralValueType]
+    )
+
+    type _ConstantValue = (
+        Primitives
+        | ConfigDict
+        | SettingsConfigDict
+        | frozenset[str]
+        | tuple[str, ...]
+        | Mapping[str, str | int]
+        | StrEnum
+        | type[StrEnum]
+        | Pattern[str]
+        | type
+    )
+    type FileContent = str | bytes | BaseModel | Sequence[Sequence[str]]
+    type GeneralValueTypeMapping = Mapping[str, GeneralValueType]
+
+    type RegisterableService = (
         Container | BindableLogger | Callable[..., Container]
     )
-    FactoryCallable: TypeAlias = Callable[[], RegisterableService]
-    ResourceCallable: TypeAlias = Callable[[], Container]
-    MetadataValue: TypeAlias = (
+    type FactoryCallable = Callable[[], RegisterableService]
+    type ResourceCallable = Callable[[], Container]
+    type MetadataValue = (
         Scalar | Mapping[str, Scalar | Sequence[Scalar]] | Sequence[Scalar]
     )
-    MetadataAttributeValue: TypeAlias = MetadataValue
-    HandlerCallable: TypeAlias = Callable[[Container], Container]
-    HandlerLike: TypeAlias = Callable[..., Container]
-    RegistrablePlugin: TypeAlias = (
+    type MetadataAttributeValue = MetadataValue
+    type HandlerCallable = Callable[[Container], Container]
+    type HandlerLike = Callable[..., Container]
+    type RegistrablePlugin = (
         Scalar | BaseModel | Callable[..., Scalar | BaseModel]
     )
 
-    # RECURSIVE types (Annotation-only, use guards.py for narrowing)
-    GeneralValueType: TypeAlias = _GeneralValueType
-    Serializable: TypeAlias = _Serializable
-    JsonValue: TypeAlias = _JsonValue
-    ContainerValue: TypeAlias = _ContainerValue
-
     # Other Types
-    ConstantValue: TypeAlias = _ConstantValue
-    FileContent: TypeAlias = _FileContent
-    SortableObjectType: TypeAlias = str | int | float
-    ConversionMode: TypeAlias = Literal["to_str", "to_str_list", "normalize", "join"]
-    TypeHintSpecifier: TypeAlias = type | str | Callable[[_Scalar], _Scalar]
-    TypeOriginSpecifier: TypeAlias = TypeHintSpecifier
-    GenericTypeArgument: TypeAlias = str | type[_Scalar]
-    MessageTypeSpecifier: TypeAlias = str | type
-    IncEx: TypeAlias = set[str] | Mapping[str, set[str] | bool]
-    TYPE_CHECKING = _TYPE_CHECKING
+    type ConstantValue = _ConstantValue
+    type SortableObjectType = str | int | float
+    type ConversionMode = Literal["to_str", "to_str_list", "normalize", "join"]
+    type TypeHintSpecifier = type | str | Callable[[Scalar], Scalar]
+    type TypeOriginSpecifier = TypeHintSpecifier
+    type GenericTypeArgument = str | type[Scalar]
+    type MessageTypeSpecifier = str | type
+    type IncEx = set[str] | Mapping[str, set[str] | bool]
     cast = staticmethod(_cast)
     override = staticmethod(_override)
 
-    ConfigurationMapping: TypeAlias = Mapping[str, Scalar]
-    ResultErrorData: TypeAlias = BaseModel | Mapping[str, Container]
-    Dict: TypeAlias = Mapping[str, Scalar | BaseModel]
-    ConfigMap: TypeAlias = Mapping[str, Scalar | BaseModel]
-    ServiceMap: TypeAlias = Mapping[str, RegisterableService]
-    ObjectList: TypeAlias = Sequence[Container]
-    GeneralValueTypeMapping: TypeAlias = _GeneralValueTypeMapping
-    ModuleExport: TypeAlias = Container | ModuleType | type | Callable[..., Container]
+    type ConfigurationMapping = Mapping[str, Scalar]
+    type ResultErrorData = BaseModel | Mapping[str, Container]
+    type Dict = Mapping[str, Scalar | BaseModel]
+    type ConfigMap = Mapping[str, Scalar | BaseModel]
+    type ServiceMap = Mapping[str, RegisterableService]
+    type ObjectList = Sequence[Container]
+    type ModuleExport = Container | ModuleType | type | Callable[..., Container]
 
     class Validation:
         """Validation type aliases with Pydantic constraints."""
 
-        PortNumber: TypeAlias = Annotated[int, Field(ge=1, le=65535)]
-        PositiveTimeout: TypeAlias = Annotated[float, Field(gt=0.0, le=300.0)]
-        RetryCount: TypeAlias = Annotated[int, Field(ge=0, le=10)]
-        WorkerCount: TypeAlias = Annotated[int, Field(ge=1, le=100)]
-        NonEmptyStr: TypeAlias = Annotated[str, Field(min_length=1)]
-        StrippedStr: TypeAlias = Annotated[str, Field(min_length=1)]
-        UriString: TypeAlias = Annotated[str, Field(min_length=1)]
-        HostnameStr: TypeAlias = Annotated[str, Field(min_length=1)]
-        PositiveInt: TypeAlias = Annotated[int, Field(gt=0)]
-        NonNegativeInt: TypeAlias = Annotated[int, Field(ge=0)]
-        BoundedStr: TypeAlias = Annotated[str, Field(min_length=1, max_length=255)]
-        TimestampStr: TypeAlias = Annotated[str, Field(min_length=1)]
+        type PortNumber = Annotated[int, Field(ge=1, le=65535)]
+        type PositiveTimeout = Annotated[float, Field(gt=0.0, le=300.0)]
+        type RetryCount = Annotated[int, Field(ge=0, le=10)]
+        type WorkerCount = Annotated[int, Field(ge=1, le=100)]
+        type NonEmptyStr = Annotated[str, Field(min_length=1)]
+        type StrippedStr = Annotated[str, Field(min_length=1)]
+        type UriString = Annotated[str, Field(min_length=1)]
+        type HostnameStr = Annotated[str, Field(min_length=1)]
+        type PositiveInt = Annotated[int, Field(gt=0)]
+        type NonNegativeInt = Annotated[int, Field(ge=0)]
+        type BoundedStr = Annotated[str, Field(min_length=1, max_length=255)]
+        type TimestampStr = Annotated[str, Field(min_length=1)]
 
 
 t = FlextTypes

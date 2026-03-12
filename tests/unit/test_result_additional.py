@@ -5,39 +5,18 @@ Exercises edge/error paths not covered in the base suite:
 - map_error identity/transform
 - flow_through short-circuit on failure
 - create_from_callable None/exception handling
-- to_io_result failure path and __repr__
+- __repr__ formatting
 """
 
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import cast, override
+from typing import cast
 
 import pytest
-from returns.io import IOFailure
 
 from flext_core import m, r
 from flext_tests import u
-
-
-class ExplodingGetattr:
-    """Mock IOSuccess that raises on getattr to exercise error guard.
-
-    Note: Cannot inherit from IOSuccess as it's a final class from returns library.
-    Instead, we create a mock that behaves similarly for testing purposes.
-    """
-
-    def __init__(self, value: int) -> None:
-        """Initialize with a value."""
-        self._value = value
-
-    @override
-    def __getattribute__(self, name: str) -> object:
-        """Raise on attribute access except for class/dict/value."""
-        if name in {"__class__", "__dict__", "_value"}:
-            return super().__getattribute__(name)
-        msg = "boom"
-        raise RuntimeError(msg)
 
 
 def test_ok_raises_on_none() -> None:
@@ -102,14 +81,6 @@ def test_create_from_callable_and_repr() -> None:
     assert repr(failure_repr) == "r[T].fail('oops')"
 
 
-def test_to_io_result_failure_path() -> None:
-    """Ensure failures produce IOFailure with propagated message."""
-    failure: r[str] = r[str].fail("io_fail")
-    io_result = failure.to_io_result()
-    assert isinstance(io_result, IOFailure)
-    assert "io_fail" in str(io_result)
-
-
 def test_with_resource_cleanup_runs() -> None:
     """with_resource should call cleanup even on success."""
     cleanup_calls: list[str] = []
@@ -128,10 +99,3 @@ def test_with_resource_cleanup_runs() -> None:
     result = r[str].with_resource(factory, op, cleanup)
     u.Tests.Result.assert_success_with_value(result, "done")
     assert cleanup_calls == ["ran"]
-
-
-def test_data_alias_matches_value() -> None:
-    """Confirm data alias returns same value property."""
-    success = u.Tests.Result.create_success_result("v")
-    with pytest.warns(DeprecationWarning, match="FlextResult.data is deprecated"):
-        assert success.data == success.value == "v"

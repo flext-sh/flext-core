@@ -14,26 +14,12 @@ from pydantic import BaseModel, Field
 from flext_core import FlextContainer, FlextContext, FlextLogger, c, d, e, m, r, t
 
 
-class _ResultLogger:
-    def __init__(self) -> None:
-        self.exceptions: list[tuple[str, dict[str, object]]] = []
-
-    def debug(self, _msg: str, *_args: object, extra: dict[str, object]) -> None:
-        _ = extra
-
-    def exception(self, message: str, **kwargs: t.Scalar) -> None:
-        self.exceptions.append((message, kwargs))
-
-
 class _FakeLogger:
     def __init__(self) -> None:
-        self.warning_calls: list[tuple[str, dict[str, object]]] = []
-        self.error_calls: list[tuple[str, dict[str, object]]] = []
+        self.warning_calls: list[tuple[str, dict[str, t.Scalar]]] = []
+        self.error_calls: list[tuple[str, dict[str, t.Scalar]]] = []
+        self.exception_calls: list[tuple[str, dict[str, t.Scalar]]] = []
         self.logger = self
-        self.result_logger = _ResultLogger()
-
-    def with_result(self) -> _ResultLogger:
-        return self.result_logger
 
     def warning(self, message: str, **kwargs: t.Scalar) -> None:
         self.warning_calls.append((message, kwargs))
@@ -47,8 +33,8 @@ class _FakeLogger:
     def debug(self, _message: str, **_kwargs: t.Scalar) -> None:
         return None
 
-    def exception(self, _message: str, **_kwargs: t.Scalar) -> None:
-        return None
+    def exception(self, message: str, **kwargs: t.Scalar) -> None:
+        self.exception_calls.append((message, kwargs))
 
 
 class _ObjWithLogger(BaseModel):
@@ -125,7 +111,7 @@ def test_log_operation_track_perf_exception_adds_duration(
 
     with pytest.raises(ValueError):
         fn()
-    _message, kwargs = fake_logger.result_logger.exceptions[-1]
+    _message, kwargs = fake_logger.exception_calls[-1]
     assert "duration_ms" in kwargs
     assert "duration_seconds" in kwargs
 

@@ -16,7 +16,6 @@ import inspect
 import time
 import traceback
 import types
-import warnings
 from collections.abc import Iterator, Mapping
 from contextlib import contextmanager, suppress
 from pathlib import Path
@@ -757,34 +756,8 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             context_dict["stack_trace"] = traceback.format_exc()
         for key, value in context.items():
             if not isinstance(value, BaseException):
-                context_dict[key] = FlextRuntime.normalize_to_general_value(value)
+                context_dict[key] = FlextRuntime.normalize_to_container(value)
         return context_dict
-
-    @overload
-    def critical(
-        self,
-        msg: str | object,
-        *args: object,
-        _return_result: Literal[True],
-        **kw: t.Container,
-    ) -> r[bool]: ...
-
-    @overload
-    def critical(
-        self,
-        msg: str | object,
-        *args: object,
-        _return_result: Literal[False] = ...,
-        **kw: t.Container,
-    ) -> None: ...
-
-    @overload
-    def critical(
-        self,
-        msg: str | object,
-        *args: object,
-        **kw: t.Container,
-    ) -> r[bool] | None: ...
 
     @override
     def critical(
@@ -1160,24 +1133,6 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             **kw,
         )
 
-    def with_result(self) -> FlextLogger.ResultAdapter:
-        """Get a result-returning logger adapter.
-
-        Returns a ResultAdapter that wraps all logging methods
-        to return r[bool] indicating success/failure.
-
-        Returns:
-            ResultAdapter wrapping this logger
-
-        """
-        warnings.warn(
-            "FlextLogger.with_result and FlextLogger.ResultAdapter are compatibility "
-            "adapters and will be removed in v0.12; call logger methods directly.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return FlextLogger.ResultAdapter(self)
-
     def _log(
         self,
         _level: c.Settings.LogLevel | str,
@@ -1280,151 +1235,6 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
                     _return_result=False,
                     **FlextLogger._to_container_context(context.root),
                 )
-
-    class ResultAdapter:
-        """Adapter providing r[bool] results (DEPRECATED: Use direct logging)."""
-
-        def __init__(self, base_logger: FlextLogger) -> None:
-            """Wrap a FlextLogger with r[bool] return values (deprecated)."""
-            self._base_logger = base_logger
-            warnings.warn(
-                "ResultAdapter is deprecated and will be removed in future versions. Use direct logging methods instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-
-        @property
-        def name(self) -> str:
-            """Get logger name - delegate to base logger."""
-            return self._base_logger.name
-
-        def bind(self, **context: t.Container) -> FlextLogger.ResultAdapter:
-            """Bind context preserving adapter wrapper."""
-            return FlextLogger.ResultAdapter(self._base_logger.bind(**context))
-
-        def critical(
-            self, message: str, *args: object, **kwargs: t.Container
-        ) -> r[bool]:
-            """Log critical message returning r."""
-            return self._log_and_wrap("critical", message, *args, **kwargs)
-
-        def debug(self, message: str, *args: object, **kwargs: t.Container) -> r[bool]:
-            """Log debug message returning r."""
-            return self._log_and_wrap("debug", message, *args, **kwargs)
-
-        def exception(
-            self,
-            message: str,
-            *,
-            exception: BaseException | None = None,
-            exc_info: bool = True,
-            **kwargs: t.Container,
-        ) -> r[bool]:
-            """Log exception with context, returning r[bool]."""
-            try:
-                _ = self._base_logger.error(
-                    message,
-                    _return_result=False,
-                    exception=exception,
-                    exc_info=exc_info,
-                    **kwargs,
-                )
-                return r[bool].ok(value=True)
-            except (
-                AttributeError,
-                TypeError,
-                ValueError,
-                RuntimeError,
-                KeyError,
-            ) as exc:
-                return r[bool].fail(f"Exception logging failed: {exc}")
-
-        def error(
-            self,
-            message: str,
-            exception: Exception | BaseException | None = None,
-            *,
-            exc_info: bool = True,
-            **kwargs: t.Container | Exception | bool | None,
-        ) -> r[bool]:
-            """Log error message returning r."""
-            match exception:
-                case Exception() as exc:
-                    resolved_exception: Exception | None = exc
-                case _:
-                    resolved_exception = None
-            context_kwargs = kwargs
-            match exception:
-                case BaseException() as non_standard_exception:
-                    if resolved_exception is None:
-                        context_kwargs = {
-                            **kwargs,
-                            "exception_type": non_standard_exception.__class__.__name__,
-                            "exception_message": str(non_standard_exception),
-                        }
-                case _:
-                    pass
-            normalized_context: dict[str, t.Container | Exception] = {}
-            for ctx_key, ctx_val in context_kwargs.items():
-                if isinstance(ctx_val, Exception):
-                    normalized_context[ctx_key] = ctx_val
-                else:
-                    normalized_context[ctx_key] = (
-                        FlextRuntime.normalize_to_general_value(ctx_val)
-                    )
-            context = self._base_logger.build_exception_context(
-                exception=resolved_exception,
-                exc_info=exc_info,
-                context=normalized_context,
-            )
-            _ = self._base_logger.error(
-                message,
-                _return_result=False,
-                **FlextLogger._to_container_context(context.root),
-            )
-            return r[bool].ok(value=True)
-
-        def info(
-            self,
-            message: str,
-            *args: object,
-            **kwargs: t.Container | Exception | bool | None,
-        ) -> r[bool]:
-            """Log info message returning r."""
-            return self._log_and_wrap("info", message, *args, **kwargs)
-
-        def trace(
-            self,
-            message: str,
-            *args: object,
-            **kwargs: t.Container | Exception | bool | None,
-        ) -> r[bool]:
-            """Log trace message returning r."""
-            return self._log_and_wrap("trace", message, *args, **kwargs)
-
-        def warning(
-            self,
-            message: str,
-            *args: object,
-            **kwargs: t.Container | Exception | bool | None,
-        ) -> r[bool]:
-            """Log warning message returning r."""
-            return self._log_and_wrap("warning", message, *args, **kwargs)
-
-        def with_result(self) -> FlextLogger.ResultAdapter:
-            """Return self (idempotent)."""
-            return self
-
-        def _log_and_wrap(
-            self,
-            method_name: str,
-            message: str,
-            *args: object,
-            **kwargs: t.Container | Exception | bool | None,
-        ) -> r[bool]:
-            log_method = getattr(self._base_logger, method_name)
-            log_method(message, *args, **kwargs)
-            return r[bool].ok(value=True)
 
 
 __all__: list[str] = ["FlextLogger"]

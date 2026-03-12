@@ -89,10 +89,10 @@ class ContainerScenarios:
         ),
         TypedRetrievalScenario(
             name="list_service",
-            service=[1, 2, 3],
-            expected_type=list,
+            service={"items": "test"},
+            expected_type=dict,
             should_pass=True,
-            description="List service",
+            description="Dict service for typed retrieval",
         ),
     ]
     CONFIG_SCENARIOS: ClassVar[list[dict[str, t.Scalar]]] = [

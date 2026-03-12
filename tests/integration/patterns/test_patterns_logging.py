@@ -18,9 +18,8 @@ from tests.test_utils import assertion_helpers
 EXPECTED_BULK_SIZE = 2
 
 
-def make_result_logger(name: str) -> FlextLogger.ResultAdapter:
-    """Helper to create loggers with r outputs."""
-    return FlextLogger(name).with_result()
+def make_result_logger(name: str) -> FlextLogger:
+    return FlextLogger(name)
 
 
 class TestFlextContext:

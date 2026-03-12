@@ -192,8 +192,6 @@ if TYPE_CHECKING:
         TestLevelBasedContextManagement,
         TestLoggingIntegration,
         TestLoggingMethods,
-        TestResultAdapter,
-        TestResultIntegration,
         TestScopedContextManagement,
     )
     from tests.unit.test_coverage_models import (
@@ -1623,12 +1621,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_di_incremental",
         "TestRealWiringScenarios",
     ),
-    "TestResultAdapter": ("tests.unit.test_coverage_loggings", "TestResultAdapter"),
     "TestResultBasics": ("tests.unit.test_coverage_76_lines", "TestResultBasics"),
-    "TestResultIntegration": (
-        "tests.unit.test_coverage_loggings",
-        "TestResultIntegration",
-    ),
     "TestResultTransformations": (
         "tests.unit.test_coverage_76_lines",
         "TestResultTransformations",
@@ -3661,9 +3654,7 @@ __all__ = [
     "TestProtocolComplianceStructlogLogger",
     "TestQueries",
     "TestRealWiringScenarios",
-    "TestResultAdapter",
     "TestResultBasics",
-    "TestResultIntegration",
     "TestResultTransformations",
     "TestRuntimeDictLike",
     "TestRuntimeTypeChecking",
