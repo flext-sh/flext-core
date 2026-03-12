@@ -240,7 +240,7 @@ class FlextUtilitiesGuards:
     def is_context(value: object) -> TypeGuard[p.Context]:
         """Check if *value* satisfies ``p.Context`` structurally."""
         return bool(
-            hasattr(value, "get") and hasattr(value, "set") and hasattr(value, "info")
+            hasattr(value, "get") and hasattr(value, "set") and hasattr(value, "clone")
         )
 
     @staticmethod
@@ -1026,7 +1026,7 @@ class FlextUtilitiesGuards:
         *,
         default: object | None = None,
         return_value: bool = False,
-    ) -> object | bool | r[object]:
+    ) -> t.Container | bool | r[t.Container]:
         guarded_value: object = value
         try:
             if isinstance(validator, type):
@@ -1047,12 +1047,16 @@ class FlextUtilitiesGuards:
                 return guarded_value if return_value else True
             if default is not None:
                 return default
-            return r[object].fail("Guard validation failed") if return_value else False
+            return (
+                r[t.Container].fail("Guard validation failed")
+                if return_value
+                else False
+            )
         except (TypeError, ValueError, AttributeError):
             if default is not None:
                 return default
             return (
-                r[object].fail("Guard validation raised an exception")
+                r[t.Container].fail("Guard validation raised an exception")
                 if return_value
                 else False
             )
@@ -1187,7 +1191,11 @@ class FlextUtilitiesGuards:
             if isinstance(type_spec, type)
             else type_spec
         )
-        return isinstance(value, check_type)
+        try:
+            return isinstance(value, check_type)
+        except TypeError:
+            # PEP 695 TypeAliasType cannot be used with isinstance()
+            return False
 
     @staticmethod
     def none_(*values: object) -> bool:

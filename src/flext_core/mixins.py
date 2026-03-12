@@ -587,17 +587,15 @@ class FlextMixins(FlextRuntime):
         """Railway-oriented validation patterns with r composition."""
 
         @staticmethod
-        def validate_with_result(
-            data: object,
-            validators: list[Callable[[object], r[bool]]],
-        ) -> r[object]:
+        def validate_with_result[T](
+            data: T,
+            validators: Sequence[Callable[[T], r[bool]]],
+        ) -> r[T]:
             """Chain validators sequentially, returning first failure or data on success."""
-            result: r[object] = r[object].ok(data)
+            result: r[T] = r[T].ok(data)
             for validator in validators:
 
-                def validate_and_preserve(
-                    data: object, v: Callable[[object], r[bool]]
-                ) -> r[object]:
+                def validate_and_preserve(data: T, v: Callable[[T], r[bool]]) -> r[T]:
                     validation_result = v(data)
                     if validation_result.is_failure:
                         base_msg = "Validation failed"
@@ -606,21 +604,21 @@ class FlextMixins(FlextRuntime):
                             if validation_result.error
                             else f"{base_msg} (validation rule failed)"
                         )
-                        fail_error_data: object = (
+                        fail_error_data: t.Container | None = (
                             dict(validation_result.error_data.root)
                             if validation_result.error_data is not None
                             else {}
                         )
-                        return r[object].fail(
+                        return r[T].fail(
                             error_msg,
                             error_code=validation_result.error_code,
                             error_data=fail_error_data,
                         )
                     if validation_result.value is not True:
-                        return r[object].fail(
+                        return r[T].fail(
                             f"Validator must return r[bool].ok(True) for success, got {validation_result.value!r}"
                         )
-                    return r[object].ok(data)
+                    return r[T].ok(data)
 
                 if result.is_success:
                     result = validate_and_preserve(result.value, validator)

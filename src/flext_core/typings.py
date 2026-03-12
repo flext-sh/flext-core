@@ -59,24 +59,24 @@ class FlextTypes:
 
     type Primitives = str | int | float | bool
     type Scalar = str | int | float | bool | datetime
-    type Container = Scalar | BaseModel | Path
+    type Container = Scalar | Path
 
     # --- RUNTIME isinstance() TUPLES ---
     # PEP 695 `type` aliases are TypeAliasType and CANNOT be used with isinstance().
     # Use these tuples for ALL runtime isinstance() checks.
     PRIMITIVES_TYPES: tuple[type, ...] = (str, int, float, bool)
     SCALAR_TYPES: tuple[type, ...] = (str, int, float, bool, datetime)
-    CONTAINER_TYPES: tuple[type, ...] = (str, int, float, bool, datetime, BaseModel, Path)
+    CONTAINER_TYPES: tuple[type, ...] = (str, int, float, bool, datetime, Path)
 
     # --- RECURSIVE TYPES (PEP 695 - Annotation-only, NEVER with isinstance) ---
 
     type JsonValue = Scalar | list[FlextTypes.JsonValue] | dict[str, FlextTypes.JsonValue]
     type Serializable = Scalar | list[FlextTypes.Serializable] | dict[str, FlextTypes.Serializable]
     type ContainerValue = (
-        Scalar | BaseModel | list[FlextTypes.ContainerValue] | dict[str, FlextTypes.ContainerValue]
+        Scalar | list[FlextTypes.ContainerValue] | dict[str, FlextTypes.ContainerValue]
     )
     type GeneralValueType = (
-        Scalar | BaseModel | Path | list[FlextTypes.GeneralValueType] | dict[str, FlextTypes.GeneralValueType]
+        Scalar | Path | list[FlextTypes.GeneralValueType] | dict[str, FlextTypes.GeneralValueType]
     )
 
     type ConstantValue = (
@@ -91,7 +91,7 @@ class FlextTypes:
         | Pattern[str]
         | type
     )
-    type FileContent = str | bytes | BaseModel | Sequence[Sequence[str]]
+    type FileContent = str | bytes | Sequence[Sequence[str]]
     type GeneralValueTypeMapping = Mapping[str, Scalar]
 
     type RegisterableService = (
@@ -106,7 +106,7 @@ class FlextTypes:
     type HandlerCallable = Callable[[Container], Container]
     type HandlerLike = Callable[..., Container]
     type RegistrablePlugin = (
-        Scalar | BaseModel | Callable[..., Scalar | BaseModel]
+        Scalar | Callable[..., Scalar | BaseModel]
     )
 
     # Other Types

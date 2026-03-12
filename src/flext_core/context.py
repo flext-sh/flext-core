@@ -1018,7 +1018,7 @@ class FlextContext(FlextRuntime):
         """Service identification and lifecycle context management utilities."""
 
         @staticmethod
-        def get_service(service_name: str) -> r[object]:
+        def get_service(service_name: str) -> r[t.Scalar]:
             """Resolve service from global container using r.
 
             Provides unified service resolution pattern across the ecosystem
@@ -1038,15 +1038,15 @@ class FlextContext(FlextRuntime):
 
             """
             container: p.DI = FlextContext.get_container()
-            service_result: p.ResultLike[object] = container.get(service_name)
+            service_result: p.ResultLike[t.Container] = container.get(service_name)
             if service_result.is_success:
                 service_value = service_result.value
                 if service_value is None:
-                    return r[object].ok("")
+                    return r[t.Scalar].ok("")
                 if isinstance(service_value, (str, int, float, bool, datetime)):
-                    return r[object].ok(service_value)
-                return r[object].ok(str(service_value))
-            return r[object].fail(service_result.error or "Service not found")
+                    return r[t.Scalar].ok(service_value)
+                return r[t.Scalar].ok(str(service_value))
+            return r[t.Scalar].fail(service_result.error or "Service not found")
 
         @staticmethod
         def register_service(service_name: str, service: object | BaseModel) -> r[bool]:

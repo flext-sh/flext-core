@@ -15,7 +15,7 @@ from typing import Protocol, runtime_checkable
 
 from pydantic import BaseModel
 
-from flext_core import c, p, r, u
+from flext_core import c, p, r, t, u
 from flext_core.loggings import FlextLogger
 
 
@@ -75,7 +75,7 @@ class FlextDispatcher:
         self._auto_handlers: list[_DispatchableHandler] = []
         self._event_subscribers: dict[str, list[_DispatchableHandler]] = {}
 
-    def dispatch(self, message: p.Routable) -> r[object]:
+    def dispatch(self, message: p.Routable) -> r[t.Container]:
         """Dispatch a CQRS message to its registered handler.
 
         Args:
@@ -88,7 +88,7 @@ class FlextDispatcher:
         try:
             route_name = u.get_message_route(message)
         except (TypeError, ValueError) as e:
-            return r[object].fail(
+            return r[t.Container].fail(
                 f"Dispatch failed: {e!s}", error_code=c.Errors.COMMAND_PROCESSING_FAILED
             )
         handler = self._handlers.get(route_name)
@@ -100,7 +100,7 @@ class FlextDispatcher:
                     handler = auto_h
                     break
         if not handler:
-            return r[object].fail(
+            return r[t.Container].fail(
                 f"No handler found for {route_name}",
                 error_code=c.Errors.COMMAND_HANDLER_NOT_FOUND,
             )
@@ -186,47 +186,58 @@ class FlextDispatcher:
 
     def _execute_handler(
         self, handler: _DispatchableHandler, message: p.Routable, route_name: str
-    ) -> r[object]:
+    ) -> r[t.Container]:
         """Execute a handler against a message.
 
         Supports handlers with dispatch_message, handle, execute methods,
         or plain callables. Uses pattern matching for handler dispatch.
         """
-        result_raw: p.ResultLike[object] | object | None = None
+        result_raw: p.ResultLike[t.Container] | t.Container | None = None
+        raw_output: p.ResultLike[object] | object | None = None
         try:
             if isinstance(handler, DispatchMessageProtocol):
-                result_raw = handler.dispatch_message(message)
+                raw_output = handler.dispatch_message(message)
             elif isinstance(handler, HandleProtocol):
-                result_raw = handler.handle(message)
+                raw_output = handler.handle(message)
             elif isinstance(handler, ExecuteProtocol):
-                result_raw = handler.execute(message)
+                raw_output = handler.execute(message)
             elif callable(handler):
-                result_raw = handler(message)
+                raw_output = handler(message)
             else:
-                return r[object].fail(
+                return r[t.Container].fail(
                     f"Handler for {route_name} is not callable or dispatchable",
                     error_code=c.Errors.COMMAND_HANDLER_NOT_FOUND,
                 )
-            if isinstance(result_raw, p.ResultLike):
-                if result_raw.is_failure:
-                    error_data_value = result_raw.error_data
-                    return r[object].fail(
-                        result_raw.error or "Handler failed",
-                        error_code=result_raw.error_code,
+            if isinstance(raw_output, p.ResultLike):
+                if raw_output.is_failure:
+                    error_data_value = raw_output.error_data
+                    return r[t.Container].fail(
+                        raw_output.error or "Handler failed",
+                        error_code=raw_output.error_code,
                         error_data=error_data_value
                         if isinstance(error_data_value, BaseModel)
                         else None,
                     )
-                value = result_raw.value
+                value = raw_output.value
                 if value is None:
-                    return r[object].fail("Handler returned None in success result")
-                return r[object].ok(value)
-            if result_raw is None:
-                return r[object].fail("Handler returned None")
-            return r[object].ok(result_raw)
+                    return r[t.Container].fail(
+                        "Handler returned None in success result"
+                    )
+                if not u.Guards.is_container(value):
+                    return r[t.Container].fail(
+                        "Handler returned non-container value in success result"
+                    )
+                result_raw = value
+                return r[t.Container].ok(result_raw)
+            if raw_output is None:
+                return r[t.Container].fail("Handler returned None")
+            if not u.Guards.is_container(raw_output):
+                return r[t.Container].fail("Handler returned non-container value")
+            result_raw = raw_output
+            return r[t.Container].ok(result_raw)
         except Exception as exc:
             self._logger.exception("Handler execution failed", route=route_name)
-            return r[object].fail(
+            return r[t.Container].fail(
                 f"Handler execution failed: {exc}",
                 error_code=c.Errors.COMMAND_PROCESSING_FAILED,
             )

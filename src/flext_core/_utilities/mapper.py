@@ -271,7 +271,9 @@ class FlextUtilitiesMapper:
     ) -> ContainerMapping:
         """Apply normalize step."""
         if normalize:
-            normalized: ContainerMapping = FlextUtilitiesCache.normalize_component(result)
+            normalized: ContainerMapping = FlextUtilitiesCache.normalize_component(
+                result
+            )
             if isinstance(normalized, Mapping):
                 normalized_result: dict[str, _MappingValue] = {}
                 for key, value in normalized.items():
@@ -543,7 +545,7 @@ class FlextUtilitiesMapper:
             group_callable = group_callable_result.value
             grouped_callable: dict[str, ContainerList] = {}
             for item in current_list:
-                key_result = r[object].create_from_callable(
+                key_result = r[_MappingValue].create_from_callable(
                     partial(group_callable, item)
                 )
                 if key_result.is_failure:
@@ -1710,7 +1712,7 @@ class FlextUtilitiesMapper:
         Example:
             config = {"database": {"host": c.Platform.DEFAULT_HOST, "port": 5432}}
             result = FlextUtilitiesMapper.extract(config, "database.port")
-            # → r[object].ok(5432)
+            # → r[_MappingValue].ok(5432)
 
         """
         try:
@@ -1725,14 +1727,14 @@ class FlextUtilitiesMapper:
             for i, part in enumerate(parts):
                 if current is None:
                     if required:
-                        return r[object].fail(
+                        return r[_MappingValue].fail(
                             f"Path '{separator.join(parts[:i])}' is None"
                         )
                     if default is None:
-                        return r[object].fail(
+                        return r[_MappingValue].fail(
                             f"Path '{separator.join(parts[:i])}' is None and default is None"
                         )
-                    return r[object].ok(default)
+                    return r[_MappingValue].ok(default)
                 key_part, array_match = FlextUtilitiesMapper._extract_parse_array_index(
                     part
                 )
@@ -1742,14 +1744,14 @@ class FlextUtilitiesMapper:
                 if not found:
                     path_context = separator.join(parts[:i])
                     if required:
-                        return r[object].fail(
+                        return r[_MappingValue].fail(
                             f"Key '{key_part}' not found at '{path_context}'"
                         )
                     if default is None:
-                        return r[object].fail(
+                        return r[_MappingValue].fail(
                             f"Key '{key_part}' not found at '{path_context}' and default is None"
                         )
-                    return r[object].ok(default)
+                    return r[_MappingValue].ok(default)
                 current = value
                 if array_match:
                     value, error = FlextUtilitiesMapper._extract_handle_array_index(
@@ -1757,26 +1759,28 @@ class FlextUtilitiesMapper:
                     )
                     if error:
                         if required:
-                            return r[object].fail(
+                            return r[_MappingValue].fail(
                                 f"Array error at '{key_part}': {error}"
                             )
                         if default is None:
-                            return r[object].fail(
+                            return r[_MappingValue].fail(
                                 f"Array error at '{key_part}': {error} and default is None"
                             )
-                        return r[object].ok(default)
+                        return r[_MappingValue].ok(default)
                     current = value
             if current is None:
                 if required:
-                    return r[object].fail("Extracted value is None")
+                    return r[_MappingValue].fail("Extracted value is None")
                 if default is None:
-                    return r[object].fail("Extracted value is None and default is None")
-                return r[object].ok(default)
+                    return r[_MappingValue].fail(
+                        "Extracted value is None and default is None"
+                    )
+                return r[_MappingValue].ok(default)
             if FlextUtilitiesGuards.is_container(current):
-                return r[object].ok(current)
-            return r[object].ok(str(current))
+                return r[_MappingValue].ok(current)
+            return r[_MappingValue].ok(str(current))
         except (AttributeError, TypeError, ValueError, KeyError, IndexError) as e:
-            return r[object].fail(f"Extract failed: {e}")
+            return r[_MappingValue].fail(f"Extract failed: {e}")
 
     @staticmethod
     def field(
@@ -2507,7 +2511,10 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def take(
-        data_or_items: ContainerMapping | _MappingValue | ContainerList | tuple[_MappingValue, ...],
+        data_or_items: ContainerMapping
+        | _MappingValue
+        | ContainerList
+        | tuple[_MappingValue, ...],
         key_or_n: str | int,
         *,
         as_type: type | None = None,

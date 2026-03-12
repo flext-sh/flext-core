@@ -16,7 +16,7 @@ from collections.abc import Mapping, Sequence
 
 from pydantic import BaseModel
 
-from flext_core import FlextRuntime, c, r
+from flext_core import FlextRuntime, c, r, t
 
 
 class FlextUtilitiesPagination:
@@ -29,8 +29,8 @@ class FlextUtilitiesPagination:
 
     @staticmethod
     def build_pagination_response(
-        pagination_data: Mapping[str, object], message: str | None = None
-    ) -> r[Mapping[str, object]]:
+        pagination_data: Mapping[str, t.Container], message: str | None = None
+    ) -> r[Mapping[str, t.Container]]:
         """Build paginated response dictionary.
 
         Args:
@@ -44,18 +44,20 @@ class FlextUtilitiesPagination:
         data = pagination_data.get("data")
         pagination = pagination_data.get("pagination")
         if data is None or pagination is None:
-            return r[object].fail("Invalid pagination data structure")
+            return r[Mapping[str, t.Container]].fail(
+                "Invalid pagination data structure"
+            )
         if not FlextRuntime.is_list_like(data):
             data = str(data)
         if not FlextRuntime.is_dict_like(pagination):
             pagination = str(pagination)
-        response: Mapping[str, object] = {
+        response: Mapping[str, t.Container] = {
             "data": data,
             "pagination": pagination,
         }
         if message is not None:
             response = {**response, "message": message}
-        return r[object].ok(response)
+        return r[Mapping[str, t.Container]].ok(response)
 
     @staticmethod
     def extract_page_params(
@@ -98,7 +100,7 @@ class FlextUtilitiesPagination:
 
     @staticmethod
     def extract_pagination_config(
-        config: BaseModel | object | None,
+        config: BaseModel | None,
     ) -> Mapping[str, int]:
         """Extract pagination configuration values - no fallbacks.
 
@@ -130,12 +132,12 @@ class FlextUtilitiesPagination:
 
     @staticmethod
     def prepare_pagination_data(
-        data: Sequence[object] | None,
+        data: Sequence[t.Container] | None,
         total: int | None,
         *,
         page: int,
         page_size: int,
-    ) -> r[Mapping[str, object]]:
+    ) -> r[Mapping[str, t.Container]]:
         """Prepare pagination data structure.
 
         Args:
@@ -153,14 +155,16 @@ class FlextUtilitiesPagination:
         total_count = total if total is not None else len(data)
         total_pages = (total_count + page_size - 1) // page_size
         if page > total_pages > 0:
-            return r[object].fail(f"Page {page} exceeds total pages {total_pages}")
+            return r[Mapping[str, t.Container]].fail(
+                f"Page {page} exceeds total pages {total_pages}"
+            )
         has_next = page < total_pages
         has_prev = page > 1
-        data_list: list[object] = []
+        data_list: list[t.Container] = []
         for item in data:
             normalized = FlextRuntime.normalize_to_general_value(item)
             data_list.append(normalized)
-        return r[object].ok({
+        return r[Mapping[str, t.Container]].ok({
             "data": data_list,
             "pagination": {
                 "page": page,

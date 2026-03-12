@@ -19,7 +19,7 @@ from typing import TypeGuard
 
 from pydantic import TypeAdapter, ValidationError
 
-from flext_core import FlextRuntime, c, p, r
+from flext_core import FlextRuntime, c, p, r, t
 from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core._utilities.mapper import FlextUtilitiesMapper
 
@@ -159,7 +159,7 @@ class FlextUtilitiesReliability:
     @staticmethod
     def compose(
         *funcs: Callable[[object], object], mode: str = "pipe"
-    ) -> Callable[[object], object | r[object]]:
+    ) -> Callable[[t.Container], t.Container | r[t.Container]]:
         """Compose multiple functions into a single function.
 
         Unifies pipe/chain/flow patterns into a single super-method.
@@ -183,8 +183,8 @@ class FlextUtilitiesReliability:
         if mode == "pipe":
 
             def piped(
-                value: object,
-            ) -> object | r[object]:
+                value: t.Container,
+            ) -> t.Container | r[t.Container]:
                 result = FlextUtilitiesReliability.pipe(value, *funcs)
                 return result.value if result.is_success else result
 
@@ -329,7 +329,7 @@ class FlextUtilitiesReliability:
             object | Callable[[object], object],
         ],
         default: object | Callable[[object], object] | None = None,
-    ) -> r[object]:
+    ) -> r[t.Container]:
         """Pattern match on a value with type, value, or predicate matching.
 
         Supports three matching modes:
@@ -372,18 +372,18 @@ class FlextUtilitiesReliability:
         input_value: object = value
         for pattern, result in cases:
             if isinstance(pattern, type) and isinstance(input_value, pattern):
-                return r[object].ok(
+                return r[t.Container].ok(
                     FlextUtilitiesReliability._resolve_match_output(result, value)
                 )
             if pattern == input_value:
-                return r[object].ok(
+                return r[t.Container].ok(
                     FlextUtilitiesReliability._resolve_match_output(result, input_value)
                 )
             if FlextUtilitiesReliability._is_match_predicate(pattern):
                 try:
                     pred_result = pattern(input_value)
                     if pred_result:
-                        return r[object].ok(
+                        return r[t.Container].ok(
                             FlextUtilitiesReliability._resolve_match_output(
                                 result, input_value
                             )
@@ -391,17 +391,17 @@ class FlextUtilitiesReliability:
                 except (ValueError, TypeError, AttributeError):
                     pass
         if default is not None:
-            return r[object].ok(
+            return r[t.Container].ok(
                 FlextUtilitiesReliability._resolve_match_output(default, input_value)
             )
-        return r[object].fail("No match found and no default provided")
+        return r[t.Container].fail("No match found and no default provided")
 
     @staticmethod
     def pipe(
         value: object,
         *operations: Callable[[object], object],
         on_error: str = "stop",
-    ) -> r[object]:
+    ) -> r[t.Container]:
         """Functional pipeline with railway-oriented error handling.
 
         Business Rule: Chains operations sequentially, unwrapping r
@@ -424,11 +424,11 @@ class FlextUtilitiesReliability:
                 str.upper,
                 lambda s: s.replace(" ", "_"),
             )
-            # → r[object].ok("HELLO_WORLD")
+            # → r[t.Container].ok("HELLO_WORLD")
 
         """
         if not operations:
-            return r[object].ok(value)
+            return r[t.Container].ok(value)
         current: object = value
         for i, op in enumerate(operations):
             try:
@@ -437,7 +437,7 @@ class FlextUtilitiesReliability:
                     if op_result.is_failure:
                         if on_error == "stop":
                             err_msg = op_result.error or "Unknown error"
-                            return r[object].fail(
+                            return r[t.Container].fail(
                                 f"Pipeline step {i} failed: {err_msg}"
                             )
                         continue
@@ -453,8 +453,8 @@ class FlextUtilitiesReliability:
                 OSError,
             ) as e:
                 if on_error == "stop":
-                    return r[object].fail(f"Pipeline step {i} failed: {e}")
-        return r[object].ok(current)
+                    return r[t.Container].fail(f"Pipeline step {i} failed: {e}")
+        return r[t.Container].ok(current)
 
     @staticmethod
     def retry[TResult](
