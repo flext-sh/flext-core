@@ -635,10 +635,11 @@ class FlextRuntime:
                     )
             return FlextModelsContainers.Dict(root=normalized_dict)
         if FlextRuntime.is_list_like(val):
-            normalized_list: list[object] = []
-            normalized_list.extend(
-                FlextRuntime.normalize_to_container(item) for item in val
-            )
+            normalized_list: list[str | int | float | bool | datetime | Path] = []
+            for v in val:
+                normalized_item = FlextRuntime.normalize_to_container(v)
+                if isinstance(normalized_item, (str, int, float, bool, datetime, Path)):
+                    normalized_list.append(normalized_item)
             return FlextModelsContainers.ObjectList(root=normalized_list)
         return str(val)
 
