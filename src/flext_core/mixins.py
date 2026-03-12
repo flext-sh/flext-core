@@ -14,9 +14,9 @@ import threading
 from collections.abc import Callable, Iterator, Mapping, Sequence
 from contextlib import contextmanager, suppress
 from types import ModuleType
-from typing import ClassVar, override
+from typing import ClassVar, cast, override, Unpack
 
-from pydantic import BaseModel, PrivateAttr
+from pydantic import BaseModel, PrivateAttr, ConfigDict
 
 from flext_core import (
     FlextContainer,
@@ -34,7 +34,7 @@ from flext_core import (
 from flext_core._models.service import FlextModelsService
 
 
-class FlextMixins(FlextRuntime):
+class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
     """Composable behaviors for dispatcher-driven services and handlers.
 
     These mixins centralize DI container access, structured logging, and
@@ -70,7 +70,7 @@ class FlextMixins(FlextRuntime):
     _cache_lock: ClassVar[threading.Lock] = threading.Lock()
 
     def __init_subclass__(
-        cls, **kwargs: t.Scalar | m.ConfigMap | Sequence[t.Scalar]
+        cls, **kwargs: Unpack[ConfigDict]
     ) -> None:
         """Auto-initialize container for subclasses (ABI compatibility)."""
         super().__init_subclass__(**kwargs)
@@ -304,7 +304,7 @@ class FlextMixins(FlextRuntime):
         self.logger.info(
             "Service initialized",
             return_result=False,
-            **t.cast(dict[str, t.Container], service_context.root),
+            **cast(dict[str, t.Container], service_context.root),
         )
 
     def _get_runtime(self) -> m.ServiceRuntime:
@@ -413,7 +413,7 @@ class FlextMixins(FlextRuntime):
             if hasattr(self.logger, level)
             else self.logger.info
         )
-        _ = log_method(message, **t.cast(dict[str, t.Container], context_data.root))
+        _ = log_method(message, **cast(dict[str, t.Container], context_data.root))
 
     def _register_in_container(self, service_name: str) -> r[bool]:
         """Register self in global container for service discovery."""
@@ -423,7 +423,7 @@ class FlextMixins(FlextRuntime):
             container = self.container
             was_registered = container.has_service(service_name)
             if isinstance(self, BaseModel):
-                _ = container.register(service_name, self)
+                _ = container.register(service_name, cast(p.Model, self))
             else:
                 _ = container.register(service_name, service_name)
             if was_registered:
@@ -696,6 +696,23 @@ class FlextMixins(FlextRuntime):
                         f"{obj.__class__.__name__} missing '{attr}' required by {protocol_name}"
                     )
             return r[bool].ok(value=True)
+
+    @classmethod
+    def fail(cls, error: str, *, error_code: str | None = None) -> r[bool]:
+        """Create a failure result — convenience shortcut for mixin consumers.
+
+        Delegates to ``r[bool].fail`` so callers can write ``x.fail("msg")``
+        without importing ``r`` separately.
+
+        Args:
+            error: Human-readable error description.
+            error_code: Optional machine-readable error code for routing.
+
+        Returns:
+            r[bool]: Failure result carrying the given error message.
+
+        """
+        return r[bool].fail(error, error_code=error_code)
 
 
 x = FlextMixins

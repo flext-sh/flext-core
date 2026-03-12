@@ -11,6 +11,7 @@ from datetime import datetime
 from types import ModuleType, TracebackType
 from typing import (
     TYPE_CHECKING,
+    ClassVar,
     Literal,
     Protocol,
     Self,
@@ -195,6 +196,26 @@ class FlextProtocols:
             ...
 
     @runtime_checkable
+    class Model(BaseProtocol, Protocol):
+        """Structural typing protocol for Pydantic v2 models.
+
+        Ensures types have Pydantic signatures without importing BaseModel directly
+        in typings.py, preventing circular dependencies.
+        """
+
+        model_config: ClassVar[Mapping[str, object]]
+        model_fields: ClassVar[Mapping[str, object]]
+
+        def model_dump(self, **kwargs: object) -> Mapping[str, object]:
+            """Dump model to dictionary."""
+            ...
+
+        @classmethod
+        def model_validate(cls, obj: object, **kwargs: object) -> Self:
+            """Validate object against model."""
+            ...
+
+    @runtime_checkable
     class Routable(Protocol):
         """Protocol for messages that carry explicit route information."""
 
@@ -283,6 +304,21 @@ class FlextProtocols:
         Defined at root level to allow self-referencing in method signatures
         (e.g., `def map[U](...) -> FlextProtocols.Result[U]`).
         """
+
+        @classmethod
+        def __subclasshook__(cls, C: type) -> bool | type[NotImplemented]:
+            """Enable isinstance() for Pydantic-backed implementations.
+
+            Python 3.12+ Protocol isinstance checks use class __dict__ lookup,
+            which misses Pydantic v2 model fields (stored in __pydantic_fields__,
+            not __dict__). This hook uses class-level attrs that ARE in __dict__.
+            """
+            if cls is FlextProtocols.Result:
+                # Check only attrs that exist in class __dict__ (not Pydantic fields)
+                required = frozenset({"is_failure", "value", "flat_map", "lash"})
+                if all(any(a in B.__dict__ for B in C.__mro__) for a in required):
+                    return True
+            return NotImplemented
 
         @override
         def __repr__(self) -> str:
@@ -703,7 +739,7 @@ class FlextProtocols:
                 ...
 
     @runtime_checkable
-    class Handler[MessageT, ResultT](BaseProtocol, Protocol):
+    class Handler[MessageT: Model, ResultT](BaseProtocol, Protocol):
         """Command/Query handler interface (generic).
 
         Reflects real implementations like FlextHandlers which provide
@@ -739,7 +775,7 @@ class FlextProtocols:
 
         def dispatch(
             self, message: FlextProtocols.Routable
-        ) -> FlextProtocols.Result[t.Container]:
+        ) -> FlextProtocols.Result[FlextProtocols.Model]:
             """Dispatch a CQRS message to its registered handler."""
             ...
 
@@ -760,7 +796,7 @@ class FlextProtocols:
             ...
 
     @runtime_checkable
-    class Registry[MessageT, ResultT](BaseProtocol, Protocol):
+    class Registry[MessageT: Model, ResultT](BaseProtocol, Protocol):
         """Handler registry protocol for CQRS handler registration.
 
         Reflects real implementations like FlextRegistry which provides
@@ -788,7 +824,7 @@ class FlextProtocols:
                 t.MessageTypeSpecifier,
                 FlextProtocols.Handler[MessageT, ResultT],
             ],
-        ) -> FlextProtocols.Result[BaseModel]:
+        ) -> FlextProtocols.Result[FlextProtocols.Model]:
             """Register message-to-handler bindings.
 
             Reflects real implementations like FlextRegistry.register_bindings()
@@ -798,7 +834,7 @@ class FlextProtocols:
 
         def register_handler(
             self, handler: FlextProtocols.Handler[MessageT, ResultT]
-        ) -> FlextProtocols.Result[BaseModel]:
+        ) -> FlextProtocols.Result[FlextProtocols.Model]:
             """Register a handler instance.
 
             Reflects real implementations like FlextRegistry.register_handler()
@@ -809,7 +845,7 @@ class FlextProtocols:
         def register_handlers(
             self,
             handlers: Sequence[FlextProtocols.Handler[MessageT, ResultT]],
-        ) -> FlextProtocols.Result[BaseModel]:
+        ) -> FlextProtocols.Result[FlextProtocols.Model]:
             """Register multiple handlers in batch.
 
             Reflects real implementations like FlextRegistry.register_handlers()
@@ -823,8 +859,8 @@ class FlextProtocols:
 
         def process[TResult](
             self,
-            command: t.Container,
-            next_handler: Callable[[t.Container], FlextProtocols.Result[TResult]],
+            command: FlextProtocols.Model,
+            next_handler: Callable[[FlextProtocols.Model], FlextProtocols.Result[TResult]],
         ) -> FlextProtocols.Result[TResult]:
             """Process command."""
             ...
@@ -846,12 +882,11 @@ class FlextProtocols:
 
         def process(
             self,
-            data: t.Container | BaseModel | FlextProtocols.Result[t.Container],
-        ) -> t.Container | BaseModel | FlextProtocols.Result[t.Container]:
+            data: FlextProtocols.Model | FlextProtocols.Result[FlextProtocols.Model],
+        ) -> FlextProtocols.Model | FlextProtocols.Result[FlextProtocols.Model]:
             """Process data and return result.
 
             Returns can be:
-            - Direct value (t.Container)
             - BaseModel instance (Pydantic model)
             - Result (structural typing compatible)
             """
@@ -897,7 +932,7 @@ class FlextProtocols:
         manages a stack of execution contexts for nested handler invocations.
         """
 
-        def current_context(self) -> t.Container | None:
+        def current_context(self) -> FlextProtocols.Model | None:
             """Get current execution context without popping.
 
             Returns:
@@ -906,20 +941,19 @@ class FlextProtocols:
             """
             ...
 
-        def pop_context(self) -> FlextProtocols.Result[object]:
+        def pop_context(self) -> FlextProtocols.Result[FlextProtocols.Model]:
             """Pop execution context from the stack.
 
             Returns:
-                Result[Mapping]: Success result with popped context or empty dict
-
+                Result[Model]: Success result with popped context
             """
             ...
 
-        def push_context(self, ctx: t.Container) -> FlextProtocols.Result[bool]:
+        def push_context(self, ctx: FlextProtocols.Model) -> FlextProtocols.Result[bool]:
             """Push execution context onto the stack.
 
             Args:
-                ctx: Execution context or context dict to push
+                ctx: Execution context to push
 
             Returns:
                 Result[bool]: Success result

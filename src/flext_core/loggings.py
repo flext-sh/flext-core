@@ -177,13 +177,27 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
                 key: FlextRuntime.normalize_to_container(value)
                 for key, value in context.items()
             }
+            current_context_obj: dict[str, object] = {
+                key: value for key, value in current_context.items()
+            }
+            incoming_context_obj: dict[str, object] = {
+                key: value for key, value in incoming_context.items()
+            }
             merge_result = u.merge(
-                t.cast(dict[str, object], current_context),
-                t.cast(dict[str, object], incoming_context),
+                current_context_obj,
+                incoming_context_obj,
                 strategy="deep",
             )
-            merged_value = merge_result.unwrap_or(current_context)
-            cls._scoped_contexts[scope] = t.cast(dict[str, t.Container], merged_value)
+            merged_value = merge_result.unwrap_or(current_context_obj)
+            merged_context: dict[str, t.Container] = {}
+            for key, value in merged_value.items():
+                if u.is_scalar(value):
+                    merged_context[key] = value
+                elif isinstance(value, Path):
+                    merged_context[key] = value
+                else:
+                    merged_context[key] = cls._to_container_value(value)
+            cls._scoped_contexts[scope] = merged_context
             FlextRuntime.structlog().contextvars.bind_contextvars(**context)
             return r[bool].ok(value=True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:

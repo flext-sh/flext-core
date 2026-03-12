@@ -22,6 +22,10 @@ class FlextUtilitiesDomain:
         return FlextRuntime.get_logger(__name__)
 
     @staticmethod
+    def same_type(obj_a: object, obj_b: object) -> bool:
+        return type(obj_a) is type(obj_b)
+
+    @staticmethod
     def compare_entities_by_id(
         entity_a: p.HasModelDump,
         entity_b: p.HasModelDump,
@@ -46,7 +50,7 @@ class FlextUtilitiesDomain:
             True
 
         """
-        if entity_b.__class__ is not entity_a.__class__:
+        if not FlextUtilitiesDomain.same_type(entity_b, entity_a):
             return False
         id_a = getattr(entity_a, id_attr, None)
         id_b = getattr(entity_b, id_attr, None)
@@ -72,7 +76,7 @@ class FlextUtilitiesDomain:
             True
 
         """
-        if obj_b.__class__ is not obj_a.__class__:
+        if not FlextUtilitiesDomain.same_type(obj_b, obj_a):
             return False
         try:
             return obj_a.__dict__ == obj_b.__dict__

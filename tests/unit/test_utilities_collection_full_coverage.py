@@ -45,6 +45,10 @@ class _BadCopyDict(UserDict[str, object]):
         raise TypeError(msg)
 
 
+class _ListSubclass(list[object]):
+    pass
+
+
 def test_find_mapping_no_match_and_merge_error_paths() -> None:
     assert c.Errors.UNKNOWN_ERROR
     assert isinstance(m.Categories(), m.Categories)
@@ -180,3 +184,9 @@ def test_collection_batch_failure_error_capture_and_parse_sequence_outer_error()
 
     parsed = u.parse_sequence(cast("type[_Color]", _ExplodingEnum), ["x"])
     assert parsed.is_failure
+
+
+def test_is_general_value_list_accepts_list_subclass() -> None:
+    value = _ListSubclass([1, 2, 3])
+
+    assert u._is_general_value_list(value) is True

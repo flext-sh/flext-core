@@ -72,7 +72,7 @@ class FlextUtilitiesCollection:
         """Check if value is considered empty (empty string, empty list, etc.)."""
         if value is None:
             return True
-        if value.__class__ is str:
+        if isinstance(value, str):
             return not value
         if FlextUtilitiesCollection._is_general_value_list(value):
             return len(value) == 0
@@ -92,7 +92,7 @@ class FlextUtilitiesCollection:
         value: object,
     ) -> TypeGuard[list[object]]:
         """Type guard to narrow list to object list."""
-        return value.__class__ is list
+        return isinstance(value, list)
 
     @staticmethod
     def _merge_deep_single_key(
@@ -274,9 +274,12 @@ class FlextUtilitiesCollection:
     def coerce_dict_to_bool() -> Callable[[object], Mapping[str, bool]]:
         """Create validator that coerces dict values to bool."""
 
-        def validator(data: Mapping[str, object]) -> Mapping[str, bool]:
+        def validator(data: object) -> Mapping[str, bool]:
+            if not isinstance(data, Mapping):
+                msg = f"Expected mapping, got {data.__class__.__name__}"
+                raise TypeError(msg)
             return {
-                k: FlextUtilitiesCollection._coerce_value_to_bool(v)
+                str(k): FlextUtilitiesCollection._coerce_value_to_bool(v)
                 for k, v in data.items()
             }
 
@@ -308,9 +311,12 @@ class FlextUtilitiesCollection:
     def coerce_dict_to_float() -> Callable[[object], Mapping[str, float]]:
         """Create validator that coerces dict values to float."""
 
-        def validator(data: Mapping[str, object]) -> Mapping[str, float]:
+        def validator(data: object) -> Mapping[str, float]:
+            if not isinstance(data, Mapping):
+                msg = f"Expected mapping, got {data.__class__.__name__}"
+                raise TypeError(msg)
             return {
-                k: FlextUtilitiesCollection._coerce_value_to_float(v)
+                str(k): FlextUtilitiesCollection._coerce_value_to_float(v)
                 for k, v in data.items()
             }
 
@@ -320,9 +326,12 @@ class FlextUtilitiesCollection:
     def coerce_dict_to_int() -> Callable[[object], Mapping[str, int]]:
         """Create validator that coerces dict values to int."""
 
-        def validator(data: Mapping[str, object]) -> Mapping[str, int]:
+        def validator(data: object) -> Mapping[str, int]:
+            if not isinstance(data, Mapping):
+                msg = f"Expected mapping, got {data.__class__.__name__}"
+                raise TypeError(msg)
             return {
-                k: FlextUtilitiesCollection._coerce_value_to_int(v)
+                str(k): FlextUtilitiesCollection._coerce_value_to_int(v)
                 for k, v in data.items()
             }
 
@@ -332,9 +341,12 @@ class FlextUtilitiesCollection:
     def coerce_dict_to_str() -> Callable[[object], Mapping[str, str]]:
         """Create validator that coerces dict values to str."""
 
-        def validator(data: Mapping[str, object]) -> Mapping[str, str]:
+        def validator(data: object) -> Mapping[str, str]:
+            if not isinstance(data, Mapping):
+                msg = f"Expected mapping, got {data.__class__.__name__}"
+                raise TypeError(msg)
             return {
-                k: FlextUtilitiesCollection._coerce_value_to_str(v)
+                str(k): FlextUtilitiesCollection._coerce_value_to_str(v)
                 for k, v in data.items()
             }
 

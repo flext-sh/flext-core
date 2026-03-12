@@ -60,7 +60,7 @@ class PreparePaginationDataScenario(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     name: str = Field(description="Prepare pagination data scenario name")
-    data: list[object] | None = Field(description="Input page data")
+    data: list[str] | None = Field(description="Input page data")
     total: int | None = Field(description="Input total count")
     page: int = Field(description="Requested page")
     page_size: int = Field(description="Requested page size")

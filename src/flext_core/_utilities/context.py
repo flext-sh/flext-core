@@ -13,7 +13,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from datetime import datetime
 
-from flext_core import m, p
+from flext_core import m, p, t
 
 
 class FlextUtilitiesContext:
@@ -24,7 +24,7 @@ class FlextUtilitiesContext:
         container: p.DI,
         *,
         scope_id: str | None = None,
-        overrides: Mapping[str, object] | None = None,
+        overrides: Mapping[str, t.RegisterableService] | None = None,
     ) -> p.DI:
         """Clone container with scoping.
 

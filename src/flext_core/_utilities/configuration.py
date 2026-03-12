@@ -425,7 +425,7 @@ class FlextUtilitiesConfiguration:
         count = 0
         for name, value in registrations.items():
             try:
-                register_result = container.register(name, value)
+                register_result = container.register(name, t.cast(t.RegisterableService, value))
                 if not isinstance(register_result, p.ResultLike):
                     return r[int].fail(
                         f"Bulk registration failed at {name}: register returned non-result"
@@ -641,7 +641,9 @@ class FlextUtilitiesConfiguration:
         """
         try:
             _ = _cache
-            register_result = container.register(name, factory, kind="factory")
+            register_result = container.register(
+                name, t.cast(t.RegisterableService, factory), kind="factory"
+            )
             if not isinstance(register_result, p.ResultLike):
                 return r[bool].fail("Factory registration failed")
             if register_result.is_failure:
@@ -668,7 +670,7 @@ class FlextUtilitiesConfiguration:
 
         """
         try:
-            register_result = container.register(name, instance)
+            register_result = container.register(name, t.cast(t.RegisterableService, instance))
             if not isinstance(register_result, p.ResultLike):
                 return r[bool].fail("Registration failed")
             if register_result.is_failure:

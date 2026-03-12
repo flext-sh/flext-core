@@ -163,14 +163,20 @@ class FlextDispatcher:
 
         """
         route_name: str | None = None
-        accepted = u.compute_accepted_message_types(handler.__class__)
-        if accepted:
-            route_name = u.get_message_route(accepted[0])
-        elif callable(getattr(handler, "can_handle", None)):
-            self._auto_handlers.append(handler)
-            self._logger.info("Registered auto-discovery handler", handler=str(handler))
-            return r[bool].ok(value=True)
+        handler_message_type = getattr(handler, "message_type", None)
+        if handler_message_type is not None:
+            route_name = str(handler_message_type)
         else:
+            accepted = u.compute_accepted_message_types(handler.__class__)
+            if accepted:
+                route_name = u.get_message_route(accepted[0])
+        if route_name is None:
+            if callable(getattr(handler, "can_handle", None)):
+                self._auto_handlers.append(handler)
+                self._logger.info(
+                    "Registered auto-discovery handler", handler=str(handler)
+                )
+                return r[bool].ok(value=True)
             return r[bool].fail(
                 "Handler must expose message_type, event_type, or can_handle"
             )
@@ -207,7 +213,7 @@ class FlextDispatcher:
                     f"Handler for {route_name} is not callable or dispatchable",
                     error_code=c.Errors.COMMAND_HANDLER_NOT_FOUND,
                 )
-            if isinstance(raw_output, p.ResultLike):
+            if u.is_result_like(raw_output):
                 if raw_output.is_failure:
                     error_data_value = raw_output.error_data
                     return r[t.Container | BaseModel].fail(
@@ -217,7 +223,7 @@ class FlextDispatcher:
                         if isinstance(error_data_value, BaseModel)
                         else None,
                     )
-                value = raw_output.value
+                value: object = raw_output.value
                 if value is None:
                     return r[t.Container | BaseModel].fail(
                         "Handler returned None in success result"

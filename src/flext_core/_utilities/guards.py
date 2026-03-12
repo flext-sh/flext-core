@@ -411,7 +411,7 @@ class FlextUtilitiesGuards:
     @staticmethod
     def is_result_like(
         value: FlextUtilitiesGuards._GuardInput,
-    ) -> TypeGuard[p.ResultLike[object]]:
+    ) -> TypeGuard[p.ResultLike[t.Container | BaseModel]]:
         """Check if value implements ResultLike protocol (has is_success, value, error).
 
         Uses try/except to avoid triggering property getters that may raise
@@ -740,13 +740,13 @@ class FlextUtilitiesGuards:
                 return ""
             return error_msg or f"{context_name} must be non-negative number"
         if shortcut_lower == "dict":
-            if hasattr(value, "items") and value.__class__ not in {str, bytes}:
+            if hasattr(value, "items") and (not isinstance(value, (str, bytes))):
                 return ""
             return error_msg or f"{context_name} must be dict-like"
         if shortcut_lower == "list":
             if (
                 hasattr(value, "__iter__")
-                and value.__class__ not in {str, bytes}
+                and (not isinstance(value, (str, bytes)))
                 and (not hasattr(value, "items"))
             ):
                 return ""
@@ -795,7 +795,7 @@ class FlextUtilitiesGuards:
         context_name: str,
         error_msg: str | None,
     ) -> str:
-        if not condition(value):
+        if not condition(t.cast(t.Container, value)):
             if error_msg is None:
                 desc = (
                     getattr(condition, "description", "validation")
@@ -1031,7 +1031,7 @@ class FlextUtilitiesGuards:
         try:
             if isinstance(validator, type):
                 if isinstance(value, validator):
-                    return guarded_value if return_value else True
+                    return t.cast(t.Container, guarded_value) if return_value else True
             elif FlextUtilitiesGuards.is_object_tuple(validator):
                 tuple_types = tuple(
                     item for item in validator if isinstance(item, type)
@@ -1039,14 +1039,14 @@ class FlextUtilitiesGuards:
                 if len(tuple_types) == len(validator) and isinstance(
                     value, tuple_types
                 ):
-                    return guarded_value if return_value else True
+                    return t.cast(t.Container, guarded_value) if return_value else True
             elif callable(validator):
                 if validator(value):
-                    return guarded_value if return_value else True
+                    return t.cast(t.Container, guarded_value) if return_value else True
             elif value:
-                return guarded_value if return_value else True
+                return t.cast(t.Container, guarded_value) if return_value else True
             if default is not None:
-                return default
+                return t.cast(t.Container, default)
             return (
                 r[t.Container].fail("Guard validation failed")
                 if return_value
@@ -1054,7 +1054,7 @@ class FlextUtilitiesGuards:
             )
         except (TypeError, ValueError, AttributeError):
             if default is not None:
-                return default
+                return t.cast(t.Container, default)
             return (
                 r[t.Container].fail("Guard validation raised an exception")
                 if return_value

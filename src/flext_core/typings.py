@@ -16,19 +16,23 @@ from pathlib import Path
 from re import Pattern
 from types import ModuleType
 from typing import (
-    TYPE_CHECKING as _TYPE_CHECKING,
     Annotated,
     Literal,
     ParamSpec,
     TypeVar,
-    cast as _cast,
-    override as _override,
+    TYPE_CHECKING,
+    Union,
 )
+
+if TYPE_CHECKING:
+    from flext_core import p
 
 from pydantic import BaseModel, ConfigDict, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from structlog.typing import BindableLogger
 
+EnumT = TypeVar("EnumT", bound=StrEnum)
+MessageT_contra = TypeVar("MessageT_contra", contravariant=True)
 P = ParamSpec("P")
 R = TypeVar("R")
 ResultT = TypeVar("ResultT")
@@ -36,15 +40,13 @@ T = TypeVar("T")
 T_co = TypeVar("T_co", covariant=True)
 T_contra = TypeVar("T_contra", contravariant=True)
 T_Model = TypeVar("T_Model", bound=BaseModel)
-T_Settings = TypeVar("T_Settings", bound=BaseSettings)
 T_Namespace = TypeVar("T_Namespace")
+T_Settings = TypeVar("T_Settings", bound=BaseSettings)
 TRuntime = TypeVar("TRuntime")
-U = TypeVar("U")
 TV = TypeVar("TV")
 TV_co = TypeVar("TV_co", covariant=True)
-MessageT_contra = TypeVar("MessageT_contra", contravariant=True)
-EnumT = TypeVar("EnumT", bound=StrEnum)
 type RegistryBindingKey = str | type
+U = TypeVar("U")
 
 
 class FlextTypes:
@@ -108,15 +110,15 @@ class FlextTypes:
     type FileContent = str | bytes | Sequence[Sequence[str]]
     type GeneralValueTypeMapping = Mapping[str, Scalar]
 
-    type RegisterableService = Container | BindableLogger | Callable[..., Container]
+    type RegisterableService = Union['p.Model', Callable[..., 'p.Model']]
     type FactoryCallable = Callable[[], RegisterableService]
-    type ResourceCallable = Callable[[], Container]
+    type ResourceCallable = Callable[[], 'p.Model']
     type MetadataValue = (
         Scalar | Mapping[str, Scalar | Sequence[Scalar]] | Sequence[Scalar]
     )
     type MetadataAttributeValue = MetadataValue
-    type HandlerCallable = Callable[[Container], Container]
-    type HandlerLike = Callable[..., Container]
+    type HandlerCallable = Callable[['p.Model'], 'p.Model']
+    type HandlerLike = Callable[..., 'p.Model']
     type RegistrablePlugin = Scalar | Callable[..., Scalar | BaseModel]
 
     # Other Types
@@ -127,9 +129,6 @@ class FlextTypes:
     type GenericTypeArgument = str | type[Scalar]
     type MessageTypeSpecifier = str | type
     type IncEx = set[str] | Mapping[str, set[str] | bool]
-    TYPE_CHECKING = _TYPE_CHECKING
-    cast = staticmethod(_cast)
-    override = staticmethod(_override)
 
     type ConfigurationMapping = Mapping[str, Scalar]
     type ResultErrorData = BaseModel | Mapping[str, Container]
