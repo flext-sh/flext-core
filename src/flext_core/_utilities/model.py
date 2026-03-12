@@ -329,7 +329,9 @@ class FlextUtilitiesModel:
                     normalized_value: object
                     if value is None:
                         normalized_value = ""
-                    elif isinstance(value, (str, int, float, bool, type(None), BaseModel)):
+                    elif isinstance(
+                        value, (str, int, float, bool, type(None), BaseModel)
+                    ):
                         normalized_value = FlextRuntime.normalize_to_general_value(
                             value
                         )

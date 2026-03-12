@@ -269,9 +269,7 @@ class FlextUtilities:
     is_protocol_implementation = staticmethod(
         FlextUtilitiesGuards.is_protocol_implementation
     )
-    is_registerable_service = staticmethod(
-        FlextUtilitiesGuards.is_registerable_service
-    )
+    is_registerable_service = staticmethod(FlextUtilitiesGuards.is_registerable_service)
     is_instance_of = staticmethod(FlextUtilitiesGuards.is_instance_of)
     is_pydantic_model = staticmethod(FlextUtilitiesGuards.is_pydantic_model)
     is_string_non_empty = staticmethod(FlextUtilitiesGuards.is_string_non_empty)

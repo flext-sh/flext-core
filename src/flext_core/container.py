@@ -302,9 +302,8 @@ class FlextContainer(p.DI):
                             if hasattr(caller_module, factory_name)
                             else None
                         )
-                        if (
-                            factory_func_raw is not None
-                            and u.is_factory(factory_func_raw)
+                        if factory_func_raw is not None and u.is_factory(
+                            factory_func_raw
                         ):
                             factory_func_ref: t.FactoryCallable = factory_func_raw
 
@@ -320,9 +319,7 @@ class FlextContainer(p.DI):
                                 else:
                                     raw_result = _factory_func_ref()
                                 try:
-                                    if not u.is_registerable_service(
-                                        raw_result
-                                    ):
+                                    if not u.is_registerable_service(raw_result):
                                         msg = f"Factory '{_factory_name}' returned unsupported type: {raw_result.__class__.__name__}"
                                         raise TypeError(msg)
                                     m.ServiceRegistration(
@@ -930,9 +927,7 @@ class FlextContainer(p.DI):
         namespace_registry_raw = getattr(
             self._config.__class__, "_namespace_registry", None
         )
-        if not namespace_registry_raw or not u.is_mapping(
-            namespace_registry_raw
-        ):
+        if not namespace_registry_raw or not u.is_mapping(namespace_registry_raw):
             return
         namespace_registry = namespace_registry_raw
         namespaces: list[str] = [
