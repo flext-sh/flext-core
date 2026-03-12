@@ -913,7 +913,7 @@ class FlextDecorators:
             fallback_kwargs["extra"] = extra_payload
             filtered_kwargs: dict[str, t.Container | Exception] = {}
             for key, value in fallback_kwargs.root.items():
-                if u.is_scalar(value) or isinstance(value, Exception):
+                if isinstance(value, (str, int, float, bool, Exception)):
                     filtered_kwargs[key] = value
             _ = fallback_logger.warning(fallback_message, **filtered_kwargs)
 
