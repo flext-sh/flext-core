@@ -14,7 +14,7 @@ import secrets
 import string
 import time
 import uuid
-from collections.abc import Mapping, MutableMapping
+from collections.abc import Mapping
 from datetime import UTC, datetime
 from typing import TypeGuard
 
@@ -74,7 +74,7 @@ class FlextUtilitiesGenerators:
 
     @staticmethod
     def _enrich_context_fields(
-        context_dict: MutableMapping[str, str],
+        context_dict: dict[str, str],
         *,
         include_correlation_id: bool = False,
         include_timestamp: bool = False,
@@ -324,9 +324,7 @@ class FlextUtilitiesGenerators:
 
         """
         normalized_dict = FlextUtilitiesGenerators._normalize_context_to_dict(context)
-        context_dict: MutableMapping[str, str] = {
-            k: str(v) for k, v in normalized_dict.items()
-        }
+        context_dict: dict[str, str] = {k: str(v) for k, v in normalized_dict.items()}
         FlextUtilitiesGenerators._enrich_context_fields(
             context_dict,
             include_correlation_id=include_correlation_id,
