@@ -47,7 +47,7 @@ class _ProtocolIntrospection:
         registered_protocols = cls.get_class_protocols(instance.__class__)
         if protocol in registered_protocols:
             return True
-        protocol_annotations: Mapping[str, t.GeneralValueType] = (
+        protocol_annotations: Mapping[str, object] = (
             protocol.__annotations__ if hasattr(protocol, "__annotations__") else {}
         )
         raw_attrs_candidate = getattr(protocol, "__protocol_attrs__", ())
@@ -116,7 +116,7 @@ class _ProtocolIntrospection:
         target_cls: type, protocol: type, class_name: str
     ) -> None:
         """Validate that a class implements all required protocol members."""
-        protocol_annotations: Mapping[str, t.GeneralValueType] = (
+        protocol_annotations: Mapping[str, object] = (
             protocol.__annotations__ if hasattr(protocol, "__annotations__") else {}
         )
         raw_attrs_candidate = getattr(protocol, "__protocol_attrs__", ())
@@ -142,7 +142,7 @@ class _ProtocolIntrospection:
         }
         all_annotations: set[str] = set()
         for base in target_cls.mro():
-            base_annotations: Mapping[str, t.GeneralValueType] = (
+            base_annotations: Mapping[str, object] = (
                 base.__annotations__ if hasattr(base, "__annotations__") else {}
             )
             all_annotations.update(base_annotations.keys())
@@ -946,54 +946,54 @@ class FlextProtocols:
 
             def critical(
                 self,
-                msg: str | t.Container,
-                *args: t.Container,
-                **kw: t.Container | Exception,
+                msg: str,
+                *args: t.Scalar,
+                **kw: t.Scalar | Exception,
             ) -> r[bool] | None:
                 """Log critical message."""
                 ...
 
             def debug(
                 self,
-                msg: str | t.Container,
-                *args: t.Container | Exception,
-                **kw: t.Container | Exception,
+                msg: str,
+                *args: t.Scalar,
+                **kw: t.Scalar | Exception,
             ) -> r[bool] | None:
                 """Log debug message."""
                 ...
 
             def error(
                 self,
-                msg: str | t.Container,
-                *args: t.Container,
-                **kw: t.Container | Exception,
+                msg: str,
+                *args: t.Scalar,
+                **kw: t.Scalar | Exception,
             ) -> r[bool] | None:
                 """Log error message."""
                 ...
 
             def exception(
                 self,
-                msg: str | t.Container,
-                *args: t.Container,
-                **kw: t.Container | Exception,
+                msg: str,
+                *args: t.Scalar,
+                **kw: t.Scalar | Exception,
             ) -> r[bool] | None:
                 """Log exception with traceback."""
                 ...
 
             def info(
                 self,
-                msg: str | t.Container,
-                *args: t.Container,
-                **kw: t.Container | Exception,
+                msg: str,
+                *args: t.Scalar,
+                **kw: t.Scalar | Exception,
             ) -> r[bool] | None:
                 """Log info message."""
                 ...
 
             def warning(
                 self,
-                msg: str | t.Container,
-                *args: t.Container,
-                **kw: t.Container | Exception,
+                msg: str,
+                *args: t.Scalar,
+                **kw: t.Scalar | Exception,
             ) -> r[bool] | None:
                 """Log warning message."""
                 ...
@@ -1207,8 +1207,8 @@ class FlextProtocols:
             cls,
             name: str,
             bases: tuple[type, ...],
-            namespace: Mapping[str, t.GeneralValueType],
-            **_kwargs: t.GeneralValueType,
+            namespace: Mapping[str, object],
+            **_kwargs: object,
         ) -> type:
             """Create a new class with protocol validation.
 
