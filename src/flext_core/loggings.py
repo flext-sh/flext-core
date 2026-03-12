@@ -118,7 +118,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             return m.ConfigMap(root={})
 
     @classmethod
-    def bind_context(cls, scope: str, **context: t.Container) -> r[bool]:
+    def bind_context(cls, scope: str, **context: t.Container | BaseModel) -> r[bool]:
         """Bind context variables to a specific scope.
 
         Business Rule: Binds context variables to a specific scope (APPLICATION, REQUEST,
@@ -172,11 +172,11 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         try:
             if scope not in cls._scoped_contexts:
                 cls._scoped_contexts[scope] = {}
-            current_context: dict[str, t.Container] = {
+            current_context: dict[str, t.Container | BaseModel] = {
                 key: cls._to_container_value(value)
                 for key, value in cls._scoped_contexts[scope].items()
             }
-            incoming_context: dict[str, t.Container] = {
+            incoming_context: dict[str, t.Container | BaseModel] = {
                 key: cls._to_container_value(value) for key, value in context.items()
             }
             current_context_obj: dict[str, object] = {
@@ -201,7 +201,9 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             return r[bool].fail(f"Failed to bind context for scope '{scope}': {exc}")
 
     @classmethod
-    def bind_context_for_level(cls, level: str, **context: t.Container) -> r[bool]:
+    def bind_context_for_level(
+        cls, level: str, **context: t.Container | BaseModel
+    ) -> r[bool]:
         """Bind context variables that only appear in logs at specified level or higher.
 
         Business Rule: Binds context variables with level prefix (`_level_{level}_`) for
@@ -253,7 +255,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             return r[bool].fail(f"Failed to bind context for level {level}: {e}")
 
     @classmethod
-    def bind_global_context(cls, **context: t.Container) -> r[bool]:
+    def bind_global_context(cls, **context: t.Container | BaseModel) -> r[bool]:
         """Bind context globally using FlextRuntime.structlog() contextvars.
 
         Business Rule: Binds context variables globally using structlog contextvars,

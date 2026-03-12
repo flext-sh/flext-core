@@ -29,7 +29,6 @@ if TYPE_CHECKING:
 
 from pydantic import BaseModel, ConfigDict, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from structlog.typing import BindableLogger
 
 EnumT = TypeVar("EnumT", bound=StrEnum)
 MessageT_contra = TypeVar("MessageT_contra", contravariant=True)
@@ -107,15 +106,15 @@ class FlextTypes:
     type FileContent = str | bytes | Sequence[Sequence[str]]
     type GeneralValueTypeMapping = Mapping[str, Scalar]
 
-    type RegisterableService = Union['p.Model', Callable[..., 'p.Model']]
+    type RegisterableService = Union["p.Model", Callable[..., "p.Model"]]
     type FactoryCallable = Callable[[], RegisterableService]
-    type ResourceCallable = Callable[[], 'p.Model']
+    type ResourceCallable = Callable[[], "p.Model"]
     type MetadataValue = (
         Scalar | Mapping[str, Scalar | Sequence[Scalar]] | Sequence[Scalar]
     )
     type MetadataAttributeValue = MetadataValue
-    type HandlerCallable = Callable[['p.Model'], 'p.Model']
-    type HandlerLike = Callable[..., 'p.Model']
+    type HandlerCallable = Callable[["p.Model"], "p.Model"]
+    type HandlerLike = Callable[..., "p.Model"]
     type RegistrablePlugin = Scalar | Callable[..., Scalar]
 
     # Other Types

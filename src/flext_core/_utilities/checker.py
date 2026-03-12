@@ -321,7 +321,9 @@ class FlextUtilitiesChecker:
         if not message_types:
             explicit_type_result = cls._extract_message_type_from_handle(handler_class)
             if explicit_type_result.is_success:
-                message_types.append(explicit_type_result.value)
+                message_types.append(
+                    cast(t.MessageTypeSpecifier, explicit_type_result.unwrap())
+                )
         return tuple(message_types)
 
     @classmethod

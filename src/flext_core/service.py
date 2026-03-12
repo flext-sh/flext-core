@@ -14,7 +14,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from types import ModuleType
 from typing import cast, override
 
@@ -69,7 +69,7 @@ class FlextService[TDomainResult: object = object](FlextMixins, ABC):
     # --- Service Bootstrap Configuration ---
     config_type: type[FlextSettings] | None = Field(default=None, exclude=True)
     config_overrides: Mapping[str, "t.Scalar"] | None = Field(default=None, exclude=True)
-    initial_context: "p.Context | None" = Field(default=None, exclude=True)
+    initial_context: "FlextContext | None" = Field(default=None, exclude=True)
     subproject: str | None = Field(default=None, exclude=True)
     services: Mapping[str, "t.RegisterableService"] | None = Field(default=None, exclude=True)
     factories: Mapping[str, "t.FactoryCallable"] | None = Field(default=None, exclude=True)
@@ -95,11 +95,12 @@ class FlextService[TDomainResult: object = object](FlextMixins, ABC):
         automatically discovered during initialization.
 
         """
-        runtime = self._create_initial_runtime()
+        runtime = self._create_initial_runtime(cast(dict[str, "t.Scalar"], data))
         with FlextContext.create().Service.service_context(
             self.__class__.__name__, runtime.config.version
         ):
-            super().__init__(**data)
+            base_init = cast(Callable[..., None], super().__init__)
+            base_init(**data)
         if not isinstance(runtime.context, FlextContext):
             msg = "Expected FlextContext"
             raise TypeError(msg)
@@ -169,18 +170,22 @@ class FlextService[TDomainResult: object = object](FlextMixins, ABC):
         msg = "Service config is not FlextSettings"
         raise TypeError(msg)
 
-    def _create_initial_runtime(self) -> m.ServiceRuntime:
+    def _create_initial_runtime(self, data: dict[str, "t.Scalar"]) -> m.ServiceRuntime:
         """Build the initial runtime triple for a new service instance."""
         config_type = self._get_service_config_type()
-        config_type_raw = self.config_type
+        config_type_raw = data.get("config_type", getattr(self, "config_type", None))
         config_type_val: type[FlextSettings] | None
-        if config_type_raw is not None and issubclass(config_type_raw, FlextSettings):
-            config_type_val = config_type_raw
+        if config_type_raw is not None and issubclass(
+            cast(type, config_type_raw), FlextSettings
+        ):
+            config_type_val = cast(type[FlextSettings], config_type_raw)
         else:
             config_type_val = config_type
-        context_val_raw = self.initial_context
+        context_val_raw = data.get(
+            "initial_context", getattr(self, "initial_context", None)
+        )
         context_val: p.Context | None = (
-            context_val_raw
+            cast(p.Context, context_val_raw)
             if context_val_raw is not None
             and getattr(context_val_raw, "set", None) is not None
             and (getattr(context_val_raw, "get", None) is not None)
@@ -188,16 +193,38 @@ class FlextService[TDomainResult: object = object](FlextMixins, ABC):
         )
         return self._create_runtime(
             config_type=config_type_val,
-            config_overrides=self.config_overrides,
+            config_overrides=cast(
+                Mapping[str, "t.Scalar"] | None,
+                data.get("config_overrides", getattr(self, "config_overrides", None)),
+            ),
             context=context_val,
-            subproject=self.subproject,
-            services=self.services,
-            factories=self.factories,
-            resources=self.resources,
-            container_overrides=self.container_overrides,
-            wire_modules=self.wire_modules,
-            wire_packages=self.wire_packages,
-            wire_classes=self.wire_classes,
+            subproject=cast(str | None, data.get("subproject", getattr(self, "subproject", None))),
+            services=cast(
+                Mapping[str, "t.RegisterableService"] | None,
+                data.get("services", getattr(self, "services", None)),
+            ),
+            factories=cast(
+                Mapping[str, "t.FactoryCallable"] | None,
+                data.get("factories", getattr(self, "factories", None)),
+            ),
+            resources=cast(
+                Mapping[str, "t.ResourceCallable"] | None,
+                data.get("resources", getattr(self, "resources", None)),
+            ),
+            container_overrides=cast(
+                Mapping[str, "t.Scalar"] | None,
+                data.get("container_overrides", getattr(self, "container_overrides", None)),
+            ),
+            wire_modules=cast(
+                Sequence[ModuleType] | None,
+                data.get("wire_modules", getattr(self, "wire_modules", None)),
+            ),
+            wire_packages=cast(
+                Sequence[str] | None, data.get("wire_packages", getattr(self, "wire_packages", None))
+            ),
+            wire_classes=cast(
+                Sequence[type] | None, data.get("wire_classes", getattr(self, "wire_classes", None))
+            ),
         )
 
     @classmethod

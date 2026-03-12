@@ -11,6 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
+import warnings
 from collections.abc import Callable, Mapping
 from datetime import datetime
 from enum import StrEnum
@@ -19,7 +20,7 @@ from typing import overload
 
 from pydantic import BaseModel, TypeAdapter, ValidationError
 
-from flext_core import FlextRuntime, c, m, r, t
+from flext_core import FlextRuntime, c, m, p, r, t
 from flext_core._models.collections import FlextModelsCollections
 from flext_core._models.containers import FlextModelsContainers
 from flext_core._utilities.guards import FlextUtilitiesGuards
@@ -720,7 +721,7 @@ class FlextUtilitiesParser:
     @staticmethod
     def norm_in(
         value: str,
-        items: list[str] | m.ConfigMap | object,
+        items: p.HasModelDump | list[str] | m.ConfigMap | Mapping[str, t.Container],
         *,
         case: str | None = None,
     ) -> bool:
@@ -728,9 +729,12 @@ class FlextUtilitiesParser:
 
         Mnemonic: norm = normalize, in_ = membership check
 
+        Canonical path: pass m.ConfigMap or any Pydantic BaseModel (p.HasModelDump).
+        Legacy path: raw Mapping or list[str] — emits DeprecationWarning.
+
         Args:
             value: Value to check
-            items: Items to check against
+            items: Items to check against (ConfigMap/BaseModel preferred; raw Mapping deprecated)
             case: Case normalization
 
         Returns:
@@ -739,10 +743,23 @@ class FlextUtilitiesParser:
         """
         items_to_check: list[str]
         if isinstance(items, m.ConfigMap):
+            # Canonical ConfigMap Protocol path
             items_to_check = [str(k) for k in items.root]
+        elif isinstance(items, p.HasModelDump):
+            # Canonical BaseModel Protocol path
+            items_to_check = list(items.model_dump().keys())
         elif isinstance(items, Mapping):
+            # Legacy raw Mapping path — use m.ConfigMap or a Pydantic model instead
+            warnings.warn(
+                "Passing raw Mapping to norm_in() is deprecated. "
+                "Use m.ConfigMap or a Pydantic BaseModel (p.HasModelDump) instead. "
+                "Will be removed in v0.13.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
             items_to_check = [str(k) for k in items]
         else:
+            # list[str] path — no Protocol available, no warning
             items_to_check = items
         normalized_value = FlextUtilitiesParser.norm_str(value, case=case or "lower")
         normalized_result = [

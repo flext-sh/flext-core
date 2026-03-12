@@ -167,13 +167,13 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
                 merged_error.update(error_data.root)
                 all_context_data = merged_error
             if all_context_data:
-                metadata_context: dict[str, t.Container] = {
+                metadata_context: dict[str, t.Container | BaseModel] = {
                     key: FlextRuntime.normalize_to_container(value)
                     for key, value in all_context_data.root.items()
                 }
                 _ = FlextLogger.bind_global_context(**metadata_context)
             if normal_data:
-                normal_metadata_context: dict[str, t.Container] = {
+                normal_metadata_context: dict[str, t.Container | BaseModel] = {
                     key: FlextRuntime.normalize_to_container(value)
                     for key, value in normal_data.root.items()
                 }

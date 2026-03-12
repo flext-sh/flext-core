@@ -32,6 +32,7 @@ from flext_core import (
     p,
     r,
     t,
+    u,
 )
 
 
@@ -901,18 +902,18 @@ class FlextDecorators:
             extra_payload_raw = fallback_kwargs["extra"]
             extra_dict: dict[str, object] = {}
             if FlextRuntime.is_dict_like(extra_payload_raw):
-                extra_dict = dict(extra_payload_raw)
+                if isinstance(extra_payload_raw, m.ConfigMap):
+                    extra_dict = dict(extra_payload_raw.root)
+                else:
+                    # extra_payload_raw is Mapping[object, object]
+                    extra_dict = {str(k): v for k, v in extra_payload_raw.items()}
             extra_payload = m.ConfigMap(root=extra_dict)
-            if FlextRuntime.is_dict_like(extra_payload):
-                extra_payload["log_error"] = result.error
-                extra_payload["log_error_code"] = result.error_code
-                fallback_kwargs["extra"] = extra_payload
-            else:
-                fallback_kwargs["log_error"] = result.error
-                fallback_kwargs["log_error_code"] = result.error_code
+            extra_payload["log_error"] = result.error
+            extra_payload["log_error_code"] = result.error_code
+            fallback_kwargs["extra"] = extra_payload
             filtered_kwargs: dict[str, t.Container | Exception] = {}
             for key, value in fallback_kwargs.root.items():
-                if u.Guards.is_scalar(value) or isinstance(value, Exception):
+                if u.is_scalar(value) or isinstance(value, Exception):
                     filtered_kwargs[key] = value
             _ = fallback_logger.warning(fallback_message, **filtered_kwargs)
 
@@ -1308,9 +1309,10 @@ class FlextDecorators:
                 logger = FlextDecorators._resolve_logger(args, func)
                 try:
                     if context_vars:
-                        filtered_vars: dict[str, object] = {
-                            k: v for k, v in context_vars.items() if v is not None
-                        }
+                        filtered_vars: dict[str, t.Container] = {}
+                        for k, v in context_vars.items():
+                            if v is not None and u.is_container(v):
+                                filtered_vars[k] = v
                         bind_result = FlextLogger.bind_global_context(**filtered_vars)
                         if bind_result.is_failure:
                             logger.warning(
