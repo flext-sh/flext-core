@@ -52,7 +52,7 @@ class FlextUtilitiesParser:
     def __init__(self) -> None:
         """Initialize string parser with logging."""
         super().__init__()
-        self.logger = FlextRuntime.get_logger(__name__)
+        self._parser_log = FlextRuntime.get_logger(__name__)
 
     @staticmethod
     def _coerce_to_bool(value: object) -> r[bool]:
@@ -952,7 +952,7 @@ class FlextUtilitiesParser:
 
         """
         text_len = self._get_safe_text_length(text)
-        self.logger.debug(
+        self._parser_log.debug(
             "Starting regex pipeline application",
             operation="apply_regex_pipeline",
             text_length=text_len,
@@ -964,7 +964,7 @@ class FlextUtilitiesParser:
         if text is None:
             return r[str].fail("Text cannot be None for regex pipeline")
         try:
-            self.logger.debug(
+            self._parser_log.debug(
                 "Applying regex patterns sequentially",
                 operation="apply_regex_pipeline",
                 patterns_count=len(patterns),
@@ -976,7 +976,7 @@ class FlextUtilitiesParser:
                 )
             result_text, applied_patterns = process_result.value
             final_result = result_text.strip()
-            self.logger.debug(
+            self._parser_log.debug(
                 "Regex pipeline completed successfully",
                 operation="apply_regex_pipeline",
                 patterns_applied=applied_patterns,
@@ -987,7 +987,7 @@ class FlextUtilitiesParser:
             return r[str].ok(final_result)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
             text_len = self._get_safe_text_length(text)
-            self.logger.exception(
+            self._parser_log.exception(
                 "FATAL ERROR during regex pipeline application - PIPELINE ABORTED",
                 operation="apply_regex_pipeline",
                 error=str(e),
@@ -1039,7 +1039,7 @@ class FlextUtilitiesParser:
             True
 
         """
-        self.logger.debug(
+        self._parser_log.debug(
             "Starting object key extraction",
             operation="get_object_key",
             obj_type=obj.__class__.__name__,
@@ -1088,7 +1088,7 @@ class FlextUtilitiesParser:
 
         """
         text_len = self._get_safe_text_length(text)
-        self.logger.debug(
+        self._parser_log.debug(
             "Starting whitespace normalization",
             operation="normalize_whitespace",
             text_length=text_len,
@@ -1096,20 +1096,20 @@ class FlextUtilitiesParser:
             replacement=replacement,
         )
         if not text:
-            self.logger.debug(
+            self._parser_log.debug(
                 "Empty text provided, returning unchanged",
                 operation="normalize_whitespace",
             )
             return r[str].ok(text)
         try:
-            self.logger.debug(
+            self._parser_log.debug(
                 "Applying regex pattern for whitespace normalization",
                 operation="normalize_whitespace",
                 pattern=pattern,
                 replacement=replacement,
             )
             normalized = re.sub(pattern, replacement, text).strip()
-            self.logger.debug(
+            self._parser_log.debug(
                 "Whitespace normalization completed",
                 operation="normalize_whitespace",
                 original_length=len(text),
@@ -1125,7 +1125,7 @@ class FlextUtilitiesParser:
             KeyError,
             re.error,
         ) as e:
-            self.logger.exception(
+            self._parser_log.exception(
                 "FATAL ERROR during whitespace normalization - NORMALIZATION ABORTED",
                 operation="normalize_whitespace",
                 error=str(e),
@@ -1177,7 +1177,7 @@ class FlextUtilitiesParser:
         strip = parse_opts.strip
         remove_empty = parse_opts.remove_empty
         validator = parse_opts.validator
-        self.logger.debug(
+        self._parser_log.debug(
             "Starting delimited string parsing",
             operation="parse_delimited",
             text_length=text_len,
@@ -1188,7 +1188,7 @@ class FlextUtilitiesParser:
             has_validator=validator is not None,
         )
         if not text:
-            self.logger.debug(
+            self._parser_log.debug(
                 "Empty text provided, returning empty list", operation="parse_delimited"
             )
             return r[list[str]].ok([])
@@ -1201,13 +1201,13 @@ class FlextUtilitiesParser:
                 f"Delimiter cannot be a whitespace or control character: '{delimiter}'"
             )
         try:
-            self.logger.debug(
+            self._parser_log.debug(
                 "Splitting text by delimiter",
                 operation="parse_delimited",
                 delimiter=delimiter,
             )
             components = text.split(delimiter)
-            self.logger.debug(
+            self._parser_log.debug(
                 "Initial split completed",
                 operation="parse_delimited",
                 raw_components_count=len(components),
@@ -1218,7 +1218,7 @@ class FlextUtilitiesParser:
             if result.is_failure:
                 return result
             components = result.value
-            self.logger.debug(
+            self._parser_log.debug(
                 "Delimited parsing completed successfully",
                 operation="parse_delimited",
                 final_components_count=len(components),
@@ -1226,7 +1226,7 @@ class FlextUtilitiesParser:
             return r[list[str]].ok(components)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
             text_len = self._get_safe_text_length(text)
-            self.logger.exception(
+            self._parser_log.exception(
                 "FATAL ERROR during delimited parsing - PARSING ABORTED",
                 operation="parse_delimited",
                 error=str(e),
@@ -1267,7 +1267,7 @@ class FlextUtilitiesParser:
             return r[list[str]].fail(validation_result.error or "Validation failed")
         text_is_empty_result = r[bool].create_from_callable(lambda: not text)
         if text_is_empty_result.is_success and text_is_empty_result.value:
-            self.logger.debug(
+            self._parser_log.debug(
                 "Empty text provided, returning list with empty string",
                 operation="split_on_char_with_escape",
             )
@@ -1278,7 +1278,7 @@ class FlextUtilitiesParser:
         self, params: FlextModelsCollections.PatternApplicationParams
     ) -> r[str]:
         """Apply a single regex pattern to text."""
-        self.logger.debug(
+        self._parser_log.debug(
             "Applying regex pattern",
             operation="apply_regex_pipeline",
             pattern_index=params.pattern_index + 1,
@@ -1296,7 +1296,7 @@ class FlextUtilitiesParser:
             return r[str].fail(f"Invalid regex pattern '{params.pattern}': {e}")
         after_length = len(result_text)
         replacements = before_length - after_length
-        self.logger.debug(
+        self._parser_log.debug(
             "Pattern applied",
             operation="apply_regex_pipeline",
             pattern_index=params.pattern_index + 1,
@@ -1319,7 +1319,7 @@ class FlextUtilitiesParser:
 
         """
         text_len = self._get_safe_text_length(text)
-        self.logger.debug(
+        self._parser_log.debug(
             "Starting escape-aware string splitting",
             operation="split_on_char_with_escape",
             text_length=text_len,
@@ -1327,7 +1327,7 @@ class FlextUtilitiesParser:
             escape_char=escape_char,
         )
         try:
-            self.logger.debug(
+            self._parser_log.debug(
                 "Processing text with escape character handling",
                 operation="split_on_char_with_escape",
                 text_length=text_len,
@@ -1338,7 +1338,7 @@ class FlextUtilitiesParser:
                     split_result.error or "Unknown error in escape splitting"
                 )
             components, escape_count = split_result.value
-            self.logger.debug(
+            self._parser_log.debug(
                 "Escape-aware splitting completed successfully",
                 operation="split_on_char_with_escape",
                 components_count=len(components),
@@ -1347,7 +1347,7 @@ class FlextUtilitiesParser:
             return r[list[str]].ok(components)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
             text_len = self._get_safe_text_length(text)
-            self.logger.exception(
+            self._parser_log.exception(
                 "FATAL ERROR during escape-aware splitting - SPLITTING ABORTED",
                 operation="split_on_char_with_escape",
                 error=str(e),
@@ -1431,19 +1431,19 @@ class FlextUtilitiesParser:
 
         """
         if text is None:
-            self.logger.debug(
+            self._parser_log.debug(
                 "None text provided, returning failure",
                 operation="apply_regex_pipeline",
             )
             return r[str].fail("Text cannot be None")
         if not text:
-            self.logger.debug(
+            self._parser_log.debug(
                 "Empty text provided, returning unchanged",
                 operation="apply_regex_pipeline",
             )
             return r[str].ok(text)
         if not patterns:
-            self.logger.warning(
+            self._parser_log.warning(
                 "No patterns provided for regex pipeline",
                 operation="apply_regex_pipeline",
                 text_length=self._safe_text_length(text),
@@ -1502,15 +1502,15 @@ class FlextUtilitiesParser:
     ) -> r[list[str]]:
         """Process components with strip, remove_empty, and validator."""
         if strip:
-            self.logger.debug(
+            self._parser_log.debug(
                 "Stripping whitespace from components", operation="parse_delimited"
             )
             components = [c.strip() for c in components]
         if remove_empty:
-            self.logger.debug("Removing empty components", operation="parse_delimited")
+            self._parser_log.debug("Removing empty components", operation="parse_delimited")
             components = [c for c in components if c.strip()]
         if validator:
-            self.logger.debug(
+            self._parser_log.debug(
                 "Validating components with custom validator",
                 operation="parse_delimited",
             )
@@ -1519,7 +1519,7 @@ class FlextUtilitiesParser:
                 if validator(comp):
                     valid_components.append(comp)
                 else:
-                    self.logger.debug(
+                    self._parser_log.debug(
                         "Component filtered out by validator",
                         operation="parse_delimited",
                         invalid_component=comp,
@@ -1538,7 +1538,7 @@ class FlextUtilitiesParser:
         escape_count = 0
         while i < len(text):
             if text[i] == escape_char and i + 1 < len(text):
-                self.logger.debug(
+                self._parser_log.debug(
                     "Found escape sequence",
                     operation="split_on_char_with_escape",
                     position=i,
@@ -1548,7 +1548,7 @@ class FlextUtilitiesParser:
                 escape_count += 1
                 i += 2
             elif text[i] == split_char:
-                self.logger.debug(
+                self._parser_log.debug(
                     "Found unescaped delimiter",
                     operation="split_on_char_with_escape",
                     position=i,
@@ -1560,7 +1560,7 @@ class FlextUtilitiesParser:
             else:
                 current.append(text[i])
                 i += 1
-        self.logger.debug(
+        self._parser_log.debug(
             "Adding final component",
             operation="split_on_char_with_escape",
             final_component_length=len(current),

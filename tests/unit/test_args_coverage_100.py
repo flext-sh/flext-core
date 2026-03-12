@@ -209,7 +209,7 @@ class TestFlextUtilitiesArgs:
         ]:
             """Create validated function for testing."""
 
-            @u.Args.validated
+            @u.validated
             def process(status: TestFlextUtilitiesArgs.StatusEnum) -> str:
                 return status.value
 
@@ -222,7 +222,7 @@ class TestFlextUtilitiesArgs:
         ]:
             """Create validated_with_result function for testing."""
 
-            @u.Args.validated_with_result
+            @u.validated_with_result
             def process(status: TestFlextUtilitiesArgs.StatusEnum) -> r[str]:
                 return r[str].ok(status.value)
 
@@ -232,7 +232,7 @@ class TestFlextUtilitiesArgs:
             )
 
     class TestValidated:
-        """Tests for u.Args.validated decorator."""
+        """Tests for u.validated decorator."""
 
         @pytest.mark.parametrize("scenario_name", ["string_to_enum", "enum_value"])
         def test_validated_decorator_success(self, scenario_name: str) -> None:
@@ -259,7 +259,7 @@ class TestFlextUtilitiesArgs:
         def test_validated_multiple_params() -> None:
             """Test validated decorator with multiple parameters."""
 
-            @u.Args.validated
+            @u.validated
             def process(
                 status: TestFlextUtilitiesArgs.StatusEnum,
                 priority: TestFlextUtilitiesArgs.PriorityEnum,
@@ -279,7 +279,7 @@ class TestFlextUtilitiesArgs:
             assert result == expected
 
     class TestValidatedWithResult:
-        """Tests for u.Args.validated_with_result decorator."""
+        """Tests for u.validated_with_result decorator."""
 
         @staticmethod
         def test_validated_with_result_success() -> None:
@@ -318,7 +318,7 @@ class TestFlextUtilitiesArgs:
             values = TestFlextUtilitiesArgs.Constants.Values
             errors = TestFlextUtilitiesArgs.Constants.Errors
 
-            @u.Args.validated_with_result
+            @u.validated_with_result
             def process(status: TestFlextUtilitiesArgs.StatusEnum) -> r[str]:
                 raise ValueError(errors.INTERNAL_ERROR)
 
@@ -332,7 +332,7 @@ class TestFlextUtilitiesArgs:
             )
 
     class TestParseKwargs:
-        """Tests for u.Args.parse_kwargs."""
+        """Tests for u.parse_kwargs."""
 
         @pytest.mark.parametrize(
             "scenario_name",
@@ -367,7 +367,7 @@ class TestFlextUtilitiesArgs:
             )
 
     class TestGetEnumParams:
-        """Tests for u.Args.get_enum_params."""
+        """Tests for u.get_enum_params."""
 
         @staticmethod
         def test_get_enum_params_simple() -> None:
