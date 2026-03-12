@@ -20,17 +20,17 @@ from .contracts.text_contract import TextUtilityContract
 
 
 class TestTextLogger:
-    """Tests for u.Text.logger property."""
+    """Tests for u.logger property."""
 
     def test_logger_property_returns_logger(self) -> None:
         """Logger property returns a structlog logger instance."""
-        logger = u.Text().logger
+        logger = u().logger
         assert logger is not None
         assert hasattr(logger, "info")
 
 
 class TestSafeString(TextUtilityContract):
-    """Tests for u.Text.safe_string()."""
+    """Tests for u.safe_string()."""
 
     @pytest.mark.parametrize(
         ("value", "message"),
@@ -41,7 +41,7 @@ class TestSafeString(TextUtilityContract):
     ) -> None:
         """Invalid values raise ValueError with actionable message."""
         with pytest.raises(ValueError, match=message):
-            u.Text.safe_string(value)
+            u.safe_string(value)
 
     @pytest.mark.parametrize(
         ("value", "expected"),
@@ -55,7 +55,7 @@ class TestSafeString(TextUtilityContract):
 
 
 class TestFormatAppId(TextUtilityContract):
-    """Tests for u.Text.format_app_id()."""
+    """Tests for u.format_app_id()."""
 
     @pytest.mark.parametrize(
         ("name", "expected"),
@@ -73,19 +73,19 @@ class TestFormatAppId(TextUtilityContract):
     @given(st.text())
     def test_format_app_id_keeps_length(self, name: str) -> None:
         """Only character substitution is performed, never insertion/removal."""
-        assert len(u.Text.format_app_id(name)) == len(name)
+        assert len(u.format_app_id(name)) == len(name)
 
     @given(st.text())
     def test_format_app_id_normalization_rules(self, name: str) -> None:
         """Result is lowercase and contains no spaces or underscores."""
-        formatted = u.Text.format_app_id(name)
+        formatted = u.format_app_id(name)
         assert formatted == name.lower().replace(" ", "-").replace("_", "-")
         assert " " not in formatted
         assert "_" not in formatted
 
 
 class TestCleanText(TextUtilityContract):
-    """Tests for u.Text.clean_text()."""
+    """Tests for u.clean_text()."""
 
     @pytest.mark.parametrize(
         ("raw", "expected"),
@@ -98,6 +98,6 @@ class TestCleanText(TextUtilityContract):
     @given(st.text())
     def test_clean_text_never_contains_repeated_whitespace(self, raw: str) -> None:
         """Property-based guarantee for whitespace normalization."""
-        cleaned = u.Text.clean_text(raw)
+        cleaned = u.clean_text(raw)
         assert re.search(r"\s{2,}", cleaned) is None
         assert cleaned == cleaned.strip()

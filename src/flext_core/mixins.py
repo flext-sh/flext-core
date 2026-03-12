@@ -302,7 +302,9 @@ class FlextMixins(FlextRuntime):
             }
         )
         self.logger.info(
-            "Service initialized", return_result=False, **service_context.root
+            "Service initialized",
+            return_result=False,
+            **t.cast(dict[str, t.Container], service_context.root),
         )
 
     def _get_runtime(self) -> m.ServiceRuntime:
@@ -391,7 +393,7 @@ class FlextMixins(FlextRuntime):
     ) -> None:
         """Log configuration ONCE without binding to context."""
         config_typed: m.ConfigMap = m.ConfigMap(root=dict(config.items()))
-        self.logger.info(message, **config_typed.root)
+        self.logger.info(message, **t.cast(dict[str, t.Container], config_typed.root))
 
     def _log_with_context(self, level: str, message: str, **extra: t.Scalar) -> None:
         """Log message with automatic context data inclusion."""
@@ -411,7 +413,7 @@ class FlextMixins(FlextRuntime):
             if hasattr(self.logger, level)
             else self.logger.info
         )
-        _ = log_method(message, **context_data.root)
+        _ = log_method(message, **t.cast(dict[str, t.Container], context_data.root))
 
     def _register_in_container(self, service_name: str) -> r[bool]:
         """Register self in global container for service discovery."""
@@ -599,8 +601,11 @@ class FlextMixins(FlextRuntime):
                             if validation_result.error
                             else f"{base_msg} (validation rule failed)"
                         )
-                        fail_error_data: t.Container | None = (
-                            dict(validation_result.error_data.root)
+                        fail_error_data: Mapping[str, t.Container] | None = (
+                            t.cast(
+                                Mapping[str, t.Container],
+                                dict(validation_result.error_data.root),
+                            )
                             if validation_result.error_data is not None
                             else {}
                         )

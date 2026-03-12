@@ -280,7 +280,7 @@ class FlextUtilitiesGenerators:
         raise TypeError(msg)
 
     @staticmethod
-    def ensure_trace_context(
+    def ensure_trace_context_dict(
         context: Mapping[str, object] | BaseModel | None,
         *,
         include_correlation_id: bool = False,

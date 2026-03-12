@@ -915,7 +915,9 @@ class FlextDecorators:
             else:
                 fallback_kwargs["log_error"] = result.error
                 fallback_kwargs["log_error_code"] = result.error_code
-            _ = fallback_logger.warning(fallback_message, **fallback_kwargs.root)
+            _ = fallback_logger.warning(
+                fallback_message, **t.cast(dict[str, t.Container], fallback_kwargs.root)
+            )
 
     @staticmethod
     def _handle_retry_exhaustion(
@@ -1094,9 +1096,7 @@ class FlextDecorators:
 
         def decorator(func: t.HandlerCallable) -> t.HandlerCallable:
             """Apply factory configuration metadata to function."""
-            config = m.HandlerFactoryDecoratorConfig(
-                name=name, singleton=singleton, lazy=lazy
-            )
+            config = m.FactoryDecoratorConfig(name=name, singleton=singleton, lazy=lazy)
             setattr(func, c.Discovery.FACTORY_ATTR, config)
             return func
 

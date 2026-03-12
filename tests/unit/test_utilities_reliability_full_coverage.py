@@ -19,21 +19,21 @@ def test_utilities_reliability_branches() -> None:
     def _always_fail() -> r[t.Container]:
         return r[t.Container].fail("e")
 
-    fail: r[t.Container] = u.Reliability.retry(
+    fail: r[t.Container] = u.retry(
         _always_fail,
         max_attempts=1,
         delay_seconds=0.0,
     )
     assert fail.is_failure
-    delay_default = u.Reliability.calculate_delay(0, None)
+    delay_default = u.calculate_delay(0, None)
     assert isinstance(delay_default, float)
-    assert u.Reliability.with_retry(
+    assert u.with_retry(
         lambda: (_ for _ in ()).throw(ValueError("x")),
         max_attempts=2,
         cleanup_func=lambda: None,
     ).is_failure
-    assert u.Reliability.pipe("x").is_success
-    assert callable(u.Reliability.compose(lambda x: x, mode="pipe"))
+    assert u.pipe("x").is_success
+    assert callable(u.compose(lambda x: x, mode="pipe"))
 
 
 def test_utilities_reliability_uncovered_retry_compose_and_sequence_paths(
@@ -54,7 +54,7 @@ def test_utilities_reliability_uncovered_retry_compose_and_sequence_paths(
         msg = "boom"
         raise ValueError(msg)
 
-    failed: r[Never] = u.Reliability.retry(
+    failed: r[Never] = u.retry(
         _raise_once,
         max_attempts=2,
         delay_seconds=0.01,
@@ -62,7 +62,7 @@ def test_utilities_reliability_uncovered_retry_compose_and_sequence_paths(
     )
     assert failed.is_failure
     assert len(sleep_calls) == 1
-    exhausted = u.Reliability.with_retry(lambda: r[int].ok(1), max_attempts=0)
+    exhausted = u.with_retry(lambda: r[int].ok(1), max_attempts=0)
     assert exhausted.is_failure
 
 

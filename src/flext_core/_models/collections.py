@@ -138,31 +138,26 @@ class FlextModelsCollections:
             _ = self.categories.pop(category, None)
 
         def to_mapping(self) -> Mapping[str, Sequence[t.MetadataValue]]:
-            """Convert categories to dictionary representation.
+            """Convert categories to immutable dictionary representation.
 
-            Normalizes list[T] to Sequence[object] for type compatibility.
-            Uses inline _normalize_to_general_value to avoid circular import.
+            Items are already MetadataValue — returns a shallow copy of each
+            category list wrapped in a Mapping.
 
             Returns:
-                CategoryGroupsMapping: Dictionary representation of categories.
+                Mapping[str, Sequence[MetadataValue]]: Category mapping.
 
             """
-            result: dict[str, Sequence[t.MetadataValue]] = {}
-            for key, value_list in self.categories.items():
-                normalized_list: list[t.MetadataValue] = []
-                for item in value_list:
-                    normalized = FlextRuntime.normalize_to_container(item)
-                    normalized_list.append(normalized)
-                result[key] = normalized_list
-            return result
+            return {key: list(entries) for key, entries in self.categories.items()}
 
     class Statistics(FlextModelFoundation.FrozenValueModel):
         """Base for statistics models (frozen Value)."""
 
         @classmethod
         def _resolve_aggregate_conflict(
-            cls, existing: t.MetadataValue, value: t.MetadataValue
-        ) -> t.MetadataValue:
+            cls,
+            existing: t.MetadataValue | None,
+            value: t.MetadataValue | None,
+        ) -> t.MetadataValue | None:
             """Resolve conflict when aggregating two statistic values.
 
             Args:
@@ -174,7 +169,9 @@ class FlextModelsCollections:
                 last for others)
 
             """
-            non_none = [v for v in [existing, value] if v is not None]
+            non_none: list[t.MetadataValue] = [
+                v for v in (existing, value) if v is not None
+            ]
             if not non_none:
                 return None
             first_val = non_none[0]
@@ -188,14 +185,13 @@ class FlextModelsCollections:
                 ]
                 return sum(numeric_values)
             if FlextRuntime.is_list_like(first_val):
-                combined: list[t.Scalar | None] = []
+                combined: list[t.Scalar] = []
                 for v in non_none:
                     if FlextRuntime.is_list_like(v) and v.__class__ not in {str, bytes}:
                         combined.extend(
                             item
                             for item in v
-                            if item is None
-                            or isinstance(item, (str, int, float, bool, datetime))
+                            if isinstance(item, (str, int, float, bool, datetime))
                         )
                 return combined
             return non_none[-1]

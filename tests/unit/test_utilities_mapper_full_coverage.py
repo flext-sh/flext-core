@@ -414,7 +414,7 @@ def test_transform_option_extract_and_step_helpers(
     )
     assert extracted[3] == {"1": "one", "a": "b"}
     monkeypatch.setattr(
-        u.Cache,
+        u,
         "normalize_component",
         staticmethod(_normalize_not_dict),
     )

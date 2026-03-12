@@ -343,10 +343,10 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
         namespace_key = namespace
         config_class = self._namespace_registry.get(namespace_key)
         if config_class is None:
-            normalized = u.Text.normalize_alnum(namespace)
+            normalized = u.normalize_alnum(namespace)
             if normalized:
                 for key, value in self._namespace_registry.items():
-                    key_normalized = u.Text.normalize_alnum(key)
+                    key_normalized = u.normalize_alnum(key)
                     if normalized == key_normalized or normalized.startswith(
                         key_normalized
                     ):

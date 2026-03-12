@@ -11,10 +11,10 @@ from typing import cast
 import pytest
 from pydantic import Field
 
-from flext_core import c, m, r, u
+from flext_core import c, m, r, t, u
 
 
-class _Stats(m.CollectionsStatistics):
+class _Stats(m.Statistics):
     value: int | None = None
 
 
@@ -23,7 +23,7 @@ class _Rules(m.Rules):
     count: int = 0
 
 
-class _Results(m.CollectionsResults):
+class _Results(m.Results):
     value: int | bool | None = None
     data: dict[str, object] = Field(default_factory=dict)
 
@@ -32,12 +32,12 @@ def _default_tags() -> list[str]:
     return []
 
 
-class _Options(m.CollectionsOptions):
+class _Options(m.Options):
     score: int | float | bool | None = None
     tags: list[str] = Field(default_factory=_default_tags)
 
 
-class _Config(m.CollectionsConfig):
+class _Config(m.Config):
     value: int = 0
 
 
@@ -54,7 +54,7 @@ def test_categories_clear_and_symbols_are_available() -> None:
 
 def test_statistics_from_dict_and_none_conflict_resolution() -> None:
     config_map = m.ConfigMap.model_validate({"value": 5})
-    loaded = _Stats.from_mapping(config_map.root)
+    loaded = _Stats.from_mapping(cast("dict[str, t.MetadataValue]", config_map.root))
     assert loaded.value == 5
     assert _Stats._resolve_aggregate_conflict(None, None) is None
 

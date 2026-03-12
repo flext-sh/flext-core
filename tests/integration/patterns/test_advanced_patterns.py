@@ -50,7 +50,7 @@ pytestmark = [pytest.mark.unit, pytest.mark.architecture, pytest.mark.advanced]
 class MockScenario:
     """Mock scenario object for testing purposes."""
 
-    def __init__(self, name: str, data: m.Tests.MockScenarioData) -> None:
+    def __init__(self, name: str, data: m.MockScenarioData) -> None:
         """Initialize mockscenario:."""
         super().__init__()
         self.name = name
@@ -185,7 +185,7 @@ class GivenWhenThenBuilder:
         then_converted: dict[str, str | int | bool] = {
             key: convert_dict_value(value) for key, value in then_mapped.items()
         }
-        scenario_data = m.Tests.MockScenarioData.model_validate({
+        scenario_data = m.MockScenarioData.model_validate({
             "given": given_converted,
             "when": when_converted,
             "then": then_converted,
@@ -283,9 +283,9 @@ class ParameterizedTestBuilder:
         """Initialize parameterizedtestbuilder:."""
         super().__init__()
         self.test_name = test_name
-        self._cases: list[m.Tests.FixtureCaseDict] = []
-        self._success_cases: list[m.Tests.FixtureCaseDict] = []
-        self._failure_cases: list[m.Tests.FixtureCaseDict] = []
+        self._cases: list[m.FixtureCaseDict] = []
+        self._success_cases: list[m.FixtureCaseDict] = []
+        self._failure_cases: list[m.FixtureCaseDict] = []
 
     def add_case(
         self,
@@ -297,12 +297,12 @@ class ParameterizedTestBuilder:
             ParameterizedTestBuilder: Self for method chaining.
 
         """
-        self._cases.append(m.Tests.FixtureCaseDict.model_validate(kwargs))
+        self._cases.append(m.FixtureCaseDict.model_validate(kwargs))
         return self
 
     def add_success_cases(
         self,
-        cases: list[m.Tests.FixtureCaseDict],
+        cases: list[m.FixtureCaseDict],
     ) -> ParameterizedTestBuilder:
         """add_success_cases method.
 
@@ -315,7 +315,7 @@ class ParameterizedTestBuilder:
 
     def add_failure_cases(
         self,
-        cases: list[m.Tests.FixtureCaseDict],
+        cases: list[m.FixtureCaseDict],
     ) -> ParameterizedTestBuilder:
         """add_failure_cases method.
 
@@ -326,7 +326,7 @@ class ParameterizedTestBuilder:
         self._failure_cases.extend(cases)
         return self
 
-    def build(self) -> list[m.Tests.FixtureCaseDict]:
+    def build(self) -> list[m.FixtureCaseDict]:
         """Build method.
 
         Returns:
@@ -504,21 +504,21 @@ class TestAdvancedPatterns:
         builder = (
             ParameterizedTestBuilder("email_validation")
             .add_success_cases([
-                m.Tests.FixtureCaseDict.model_validate({
+                m.FixtureCaseDict.model_validate({
                     "email": "valid@example.com",
                     "input": "valid@example.com",
                 }),
-                m.Tests.FixtureCaseDict.model_validate({
+                m.FixtureCaseDict.model_validate({
                     "email": "user.name@domain.co.uk",
                     "input": "user.name@domain.co.uk",
                 }),
             ])
             .add_failure_cases([
-                m.Tests.FixtureCaseDict.model_validate({
+                m.FixtureCaseDict.model_validate({
                     "email": "invalid-email",
                     "input": "invalid-email",
                 }),
-                m.Tests.FixtureCaseDict.model_validate({
+                m.FixtureCaseDict.model_validate({
                     "email": "@domain.com",
                     "input": "@domain.com",
                 }),
@@ -551,7 +551,7 @@ class TestAdvancedPatterns:
     @mark_test_pattern("mock_scenario")
     def test_mock_scenario_pattern(self) -> None:
         """Test mock scenario pattern."""
-        scenario_data = m.Tests.MockScenarioData.model_validate({
+        scenario_data = m.MockScenarioData.model_validate({
             "given": {"user": "authenticated"},
             "when": {"action": "request_data"},
             "then": {"result": "success"},

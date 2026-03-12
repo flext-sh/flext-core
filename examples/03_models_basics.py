@@ -30,7 +30,7 @@ from flext_core._models.generic import FlextGenericModels as gm
 def demonstrate_enhanced_generic_models() -> None:
     """Demonstrate enhanced generic models with advanced features."""
     print("🎯 ENHANCED GENERIC MODELS - Advanced Features")
-    context = gm.Value.OperationContext(
+    context = gm.OperationContext(
         source="demo",
         user_id="user123",
         tenant_id="tenant456",
@@ -43,7 +43,7 @@ def demonstrate_enhanced_generic_models() -> None:
     )
     print(f"👤 User: {context.user_id}, Tenant: {context.tenant_id}")
     print(f"🧾 Metadata: {context.metadata.root}")
-    service = gm.Snapshot.Service(
+    service = gm.Service(
         name="user-service",
         version="2.1.0",
         status="active",
@@ -58,7 +58,7 @@ def demonstrate_enhanced_generic_models() -> None:
     print(
         f"📈 Resources: memory={service.memory_usage_mb}MB cpu={service.cpu_usage_percent}%"
     )
-    health = gm.Snapshot.Health(
+    health = gm.Health(
         healthy=True,
         checks=m.Dict(
             root={
@@ -83,9 +83,7 @@ def demonstrate_enhanced_generic_models() -> None:
     print(f"📋 Status: service={health.service_name} version={health.service_version}")
     print(f"🚨 Severity: {('high' if failed_checks > 0 else 'normal')}")
     print(f"❌ Failed Checks: {failed_checks}")
-    operation = gm.Progress.Operation(
-        operation_name="user_import", estimated_total=1000
-    )
+    operation = gm.Operation(operation_name="user_import", estimated_total=1000)
     operation.start_operation()
     for _ in range(750):
         operation.record_success()
@@ -96,12 +94,10 @@ def demonstrate_enhanced_generic_models() -> None:
     operation_total = (
         operation.success_count + operation.failure_count + operation.skipped_count
     )
-    operation_completion = gm.Progress.safe_percentage(
+    operation_completion = gm.safe_percentage(
         operation_total, operation.estimated_total
     )
-    operation_success_rate = gm.Progress.safe_rate(
-        operation.success_count, operation_total
-    )
+    operation_success_rate = gm.safe_rate(operation.success_count, operation_total)
     print(f"📈 Operation: {operation.operation_name}")
     print(f"✅ Progress: {operation_completion:.1f}%")
     print(f"🎯 Success Rate: {operation_success_rate:.1%}")
@@ -109,7 +105,7 @@ def demonstrate_enhanced_generic_models() -> None:
     print(
         f"📊 Status: successes={operation.success_count}, failures={operation.failure_count}"
     )
-    conversion = gm.Progress.Conversion(
+    conversion = gm.Conversion(
         source_format="csv", target_format="json", total_input_count=500
     )
     conversion.start_conversion()
@@ -123,12 +119,10 @@ def demonstrate_enhanced_generic_models() -> None:
     conversion_total = (
         len(conversion.converted) + len(conversion.errors) + len(conversion.skipped)
     )
-    conversion_completion = gm.Progress.safe_percentage(
+    conversion_completion = gm.safe_percentage(
         conversion_total, conversion.total_input_count
     )
-    conversion_success_rate = gm.Progress.safe_rate(
-        len(conversion.converted), conversion_total
-    )
+    conversion_success_rate = gm.safe_rate(len(conversion.converted), conversion_total)
     duration_seconds = (
         (conversion.end_time - conversion.start_time).total_seconds()
         if conversion.start_time is not None and conversion.end_time is not None

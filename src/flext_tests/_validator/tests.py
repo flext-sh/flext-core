@@ -19,7 +19,7 @@ from flext_tests import c, m, u
 class FlextValidatorTests:
     """Test validation methods for FlextTestsValidator.
 
-    Uses c.Tests.Validator, m.Tests.Validator, u.Tests.Validator.
+    Uses c.Tests.Validator, m.Validator, u.Tests.Validator.
     """
 
     @classmethod
@@ -29,11 +29,11 @@ class FlextValidatorTests:
         tree: ast.AST,
         lines: list[str],
         approved: Mapping[str, list[str]],
-    ) -> list[m.Tests.Validator.Violation]:
+    ) -> list[m.Validator.Violation]:
         """Detect Mock and MagicMock usage."""
         if u.Tests.Validator.is_approved("TEST-002", file_path, approved):
             return []
-        violations: list[m.Tests.Validator.Violation] = []
+        violations: list[m.Validator.Violation] = []
         mock_names = c.Tests.Validator.Approved.MOCK_NAMES
         for node in ast.walk(tree):
             if isinstance(node, ast.ImportFrom):
@@ -66,11 +66,11 @@ class FlextValidatorTests:
         tree: ast.AST,
         lines: list[str],
         approved: Mapping[str, list[str]],
-    ) -> list[m.Tests.Validator.Violation]:
+    ) -> list[m.Validator.Violation]:
         """Detect monkeypatch usage in function parameters and calls."""
         if u.Tests.Validator.is_approved("TEST-001", file_path, approved):
             return []
-        violations: list[m.Tests.Validator.Violation] = []
+        violations: list[m.Validator.Violation] = []
         for node in ast.walk(tree):
             if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
                 for arg in node.args.args:
@@ -107,11 +107,11 @@ class FlextValidatorTests:
         tree: ast.AST,
         lines: list[str],
         approved: Mapping[str, list[str]],
-    ) -> list[m.Tests.Validator.Violation]:
+    ) -> list[m.Validator.Violation]:
         """Detect @patch decorator usage."""
         if u.Tests.Validator.is_approved("TEST-003", file_path, approved):
             return []
-        violations: list[m.Tests.Validator.Violation] = []
+        violations: list[m.Validator.Violation] = []
         for node in ast.walk(tree):
             if not isinstance(
                 node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)
@@ -150,9 +150,9 @@ class FlextValidatorTests:
     @classmethod
     def _scan_file(
         cls, file_path: Path, approved: Mapping[str, list[str]]
-    ) -> list[m.Tests.Validator.Violation]:
+    ) -> list[m.Validator.Violation]:
         """Scan a single file for test violations."""
-        violations: list[m.Tests.Validator.Violation] = []
+        violations: list[m.Validator.Violation] = []
         try:
             content = file_path.read_text(encoding="utf-8")
             tree = ast.parse(content, filename=str(file_path))
@@ -169,7 +169,7 @@ class FlextValidatorTests:
         cls,
         files: list[Path],
         approved_exceptions: Mapping[str, list[str]] | None = None,
-    ) -> r[m.Tests.Validator.ScanResult]:
+    ) -> r[m.Validator.ScanResult]:
         """Scan files for test violations.
 
         Args:
@@ -180,13 +180,13 @@ class FlextValidatorTests:
             r with ScanResult containing all violations found
 
         """
-        violations: list[m.Tests.Validator.Violation] = []
+        violations: list[m.Validator.Violation] = []
         approved = approved_exceptions or {}
         for file_path in files:
             file_violations = cls._scan_file(file_path, approved)
             violations.extend(file_violations)
-        return r[m.Tests.Validator.ScanResult].ok(
-            m.Tests.Validator.ScanResult.create(
+        return r[m.Validator.ScanResult].ok(
+            m.Validator.ScanResult.create(
                 validator_name=c.Tests.Validator.Defaults.VALIDATOR_TESTS,
                 files_scanned=len(files),
                 violations=violations,

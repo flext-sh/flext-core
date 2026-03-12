@@ -30,7 +30,7 @@ def test_models_handler_branches() -> None:
 
 
 def test_models_handler_uncovered_mode_and_reset_paths() -> None:
-    ctx = m.Handler.ExecutionContext.create_for_handler("h2", "query")
+    ctx = m.ExecutionContext.create_for_handler("h2", "query")
     assert ctx.is_running is False
     ctx.start_execution()
     assert ctx.is_running

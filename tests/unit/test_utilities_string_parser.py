@@ -45,71 +45,71 @@ class StringParserTestFactory:
     """Factory for generating test cases with edge cases."""
 
     @staticmethod
-    def parse_delimited_cases() -> list[tm.Tests.ParseDelimitedCase]:
+    def parse_delimited_cases() -> list[tm.ParseDelimitedCase]:
         """Generate comprehensive parse_delimited test cases."""
         return [
-            tm.Tests.ParseDelimitedCase(
+            tm.ParseDelimitedCase(
                 text=TestsFlextConstants.Strings.BASIC_LIST,
                 delimiter=TestsFlextConstants.Delimiters.COMMA,
                 expected=["a", "b", "c"],
                 description="basic",
             ),
-            tm.Tests.ParseDelimitedCase(
+            tm.ParseDelimitedCase(
                 text=TestsFlextConstants.Strings.WITH_SPACES,
                 delimiter=TestsFlextConstants.Delimiters.COMMA,
                 expected=["a", "b", "c"],
                 description="with spaces",
             ),
-            tm.Tests.ParseDelimitedCase(
+            tm.ParseDelimitedCase(
                 text=TestsFlextConstants.Strings.EMPTY,
                 delimiter=TestsFlextConstants.Delimiters.COMMA,
                 expected=[],
                 description="empty string",
             ),
-            tm.Tests.ParseDelimitedCase(
+            tm.ParseDelimitedCase(
                 text=TestsFlextConstants.Strings.WITH_SPACES,
                 delimiter=TestsFlextConstants.Delimiters.COMMA,
                 expected=["a", "b", "c"],
-                options=tm.Tests.ParseOptions(strip=True, remove_empty=True),
+                options=tm.ParseOptions(strip=True, remove_empty=True),
                 description="with options",
             ),
-            tm.Tests.ParseDelimitedCase(
+            tm.ParseDelimitedCase(
                 text=TestsFlextConstants.Strings.WITH_SPACES,
                 delimiter=TestsFlextConstants.Delimiters.COMMA,
                 expected=["a", " b", " c"],
-                options=tm.Tests.ParseOptions(strip=False, remove_empty=True),
+                options=tm.ParseOptions(strip=False, remove_empty=True),
                 description="options no strip",
             ),
-            tm.Tests.ParseDelimitedCase(
+            tm.ParseDelimitedCase(
                 text=TestsFlextConstants.Strings.WITH_EMPTY,
                 delimiter=TestsFlextConstants.Delimiters.COMMA,
                 expected=["a", "", "c"],
-                options=tm.Tests.ParseOptions(strip=True, remove_empty=False),
+                options=tm.ParseOptions(strip=True, remove_empty=False),
                 description="options no remove empty",
             ),
-            tm.Tests.ParseDelimitedCase(
+            tm.ParseDelimitedCase(
                 text=TestsFlextConstants.Strings.BASIC_LIST,
                 delimiter=TestsFlextConstants.Delimiters.COMMA,
                 expected=["a", "b", "c"],
-                options=tm.Tests.ParseOptions(
+                options=tm.ParseOptions(
                     strip=True,
                     remove_empty=True,
                     validator=lambda s: len(s) > 0,
                 ),
                 description="validator success",
             ),
-            tm.Tests.ParseDelimitedCase(
+            tm.ParseDelimitedCase(
                 text="a,b",
                 delimiter=TestsFlextConstants.Delimiters.COMMA,
                 expected=[],
-                options=tm.Tests.ParseOptions(
+                options=tm.ParseOptions(
                     strip=True,
                     remove_empty=True,
                     validator=lambda s: len(s) > 1,
                 ),
                 description="validator filters components",
             ),
-            tm.Tests.ParseDelimitedCase(
+            tm.ParseDelimitedCase(
                 text=TestsFlextConstants.Strings.WITH_SPACES,
                 delimiter=TestsFlextConstants.Delimiters.COMMA,
                 expected=["a", "b", "c"],
@@ -118,7 +118,7 @@ class StringParserTestFactory:
                 use_legacy=True,
                 description="legacy params",
             ),
-            tm.Tests.ParseDelimitedCase(
+            tm.ParseDelimitedCase(
                 text=TestsFlextConstants.Strings.BASIC_LIST,
                 delimiter=TestsFlextConstants.Delimiters.COMMA,
                 expected=["a", "b", "c"],
@@ -126,45 +126,45 @@ class StringParserTestFactory:
                 use_legacy=True,
                 description="legacy validator",
             ),
-            tm.Tests.ParseDelimitedCase(
+            tm.ParseDelimitedCase(
                 text=TestsFlextConstants.Strings.BASIC_LIST,
                 delimiter=TestsFlextConstants.Delimiters.COMMA,
                 expected=["a", "b", "c"],
                 description="no spaces",
             ),
-            tm.Tests.ParseDelimitedCase(
+            tm.ParseDelimitedCase(
                 text=TestsFlextConstants.Strings.EXCESSIVE_SPACES,
                 delimiter=TestsFlextConstants.Delimiters.COMMA,
                 expected=["a", "b", "c"],
                 description="excessive spaces",
             ),
-            tm.Tests.ParseDelimitedCase(
+            tm.ParseDelimitedCase(
                 text=TestsFlextConstants.Strings.LEADING_TRAILING,
                 delimiter=TestsFlextConstants.Delimiters.COMMA,
                 expected=["a", "b", "c"],
                 description="leading/trailing delimiters",
             ),
-            tm.Tests.ParseDelimitedCase(
+            tm.ParseDelimitedCase(
                 text=TestsFlextConstants.Strings.SINGLE_CHAR,
                 delimiter=TestsFlextConstants.Delimiters.COMMA,
                 expected=["a"],
                 description="single component",
             ),
-            tm.Tests.ParseDelimitedCase(
+            tm.ParseDelimitedCase(
                 text=TestsFlextConstants.Strings.BASIC_LIST,
                 delimiter="",
                 expected=None,
                 expected_error=TestsFlextConstants.TestErrors.DELIMITER_EMPTY,
                 description="empty delimiter",
             ),
-            tm.Tests.ParseDelimitedCase(
+            tm.ParseDelimitedCase(
                 text=TestsFlextConstants.Strings.BASIC_LIST,
                 delimiter=",,",
                 expected=None,
                 expected_error=TestsFlextConstants.TestErrors.DELIMITER_MULTI,
                 description="multi-char delimiter",
             ),
-            tm.Tests.ParseDelimitedCase(
+            tm.ParseDelimitedCase(
                 text=TestsFlextConstants.Strings.BASIC_LIST,
                 delimiter=" ",
                 expected=None,
@@ -174,72 +174,72 @@ class StringParserTestFactory:
         ]
 
     @staticmethod
-    def split_escape_cases() -> list[tm.Tests.SplitEscapeCase]:
+    def split_escape_cases() -> list[tm.SplitEscapeCase]:
         """Generate comprehensive split_on_char_with_escape test cases."""
         return [
-            tm.Tests.SplitEscapeCase(
+            tm.SplitEscapeCase(
                 text=TestsFlextConstants.Strings.BASIC_LIST,
                 split_char=TestsFlextConstants.Delimiters.COMMA,
                 expected=["a", "b", "c"],
                 description="basic",
             ),
-            tm.Tests.SplitEscapeCase(
+            tm.SplitEscapeCase(
                 text="a\\,b,c",
                 split_char=TestsFlextConstants.Delimiters.COMMA,
                 expected=["a,b", "c"],
                 description="escaped delimiter",
             ),
-            tm.Tests.SplitEscapeCase(
+            tm.SplitEscapeCase(
                 text=TestsFlextConstants.Strings.EMPTY,
                 split_char=TestsFlextConstants.Delimiters.COMMA,
                 expected=[""],
                 description="empty string",
             ),
-            tm.Tests.SplitEscapeCase(
+            tm.SplitEscapeCase(
                 text="a#b,c",
                 split_char=TestsFlextConstants.Delimiters.COMMA,
                 escape_char=TestsFlextConstants.EscapeChars.HASH,
                 expected=["ab", "c"],
                 description="custom escape char",
             ),
-            tm.Tests.SplitEscapeCase(
+            tm.SplitEscapeCase(
                 text="a,b\\",
                 split_char=TestsFlextConstants.Delimiters.COMMA,
                 expected=["a", "b\\"],
                 description="escape at end",
             ),
-            tm.Tests.SplitEscapeCase(
+            tm.SplitEscapeCase(
                 text="a\\\\,b",
                 split_char=TestsFlextConstants.Delimiters.COMMA,
                 expected=["a\\", "b"],
                 description="escaped escape char",
             ),
-            tm.Tests.SplitEscapeCase(
+            tm.SplitEscapeCase(
                 text="a,b,c,d",
                 split_char=TestsFlextConstants.Delimiters.COMMA,
                 expected=["a", "b", "c", "d"],
                 description="multiple components",
             ),
-            tm.Tests.SplitEscapeCase(
+            tm.SplitEscapeCase(
                 text="\\,a,b",
                 split_char=TestsFlextConstants.Delimiters.COMMA,
                 expected=[",a", "b"],
                 description="escaped at start",
             ),
-            tm.Tests.SplitEscapeCase(
+            tm.SplitEscapeCase(
                 text="a,b",
                 split_char="",
                 expected_error=TestsFlextConstants.TestErrors.SPLIT_EMPTY,
                 description="empty split char",
             ),
-            tm.Tests.SplitEscapeCase(
+            tm.SplitEscapeCase(
                 text="a,b",
                 split_char=TestsFlextConstants.Delimiters.COMMA,
                 escape_char="",
                 expected_error=TestsFlextConstants.TestErrors.ESCAPE_EMPTY,
                 description="empty escape char",
             ),
-            tm.Tests.SplitEscapeCase(
+            tm.SplitEscapeCase(
                 text="a,b",
                 split_char=TestsFlextConstants.Delimiters.COMMA,
                 escape_char=TestsFlextConstants.Delimiters.COMMA,
@@ -249,48 +249,48 @@ class StringParserTestFactory:
         ]
 
     @staticmethod
-    def normalize_whitespace_cases() -> list[tm.Tests.NormalizeWhitespaceCase]:
+    def normalize_whitespace_cases() -> list[tm.NormalizeWhitespaceCase]:
         """Generate comprehensive normalize_whitespace test cases."""
         return [
-            tm.Tests.NormalizeWhitespaceCase(
+            tm.NormalizeWhitespaceCase(
                 text="  hello   world  ",
                 expected="hello world",
                 description="basic",
             ),
-            tm.Tests.NormalizeWhitespaceCase(
+            tm.NormalizeWhitespaceCase(
                 text=TestsFlextConstants.Strings.EMPTY,
                 expected=TestsFlextConstants.Strings.EMPTY,
                 description="empty string",
             ),
-            tm.Tests.NormalizeWhitespaceCase(
+            tm.NormalizeWhitespaceCase(
                 text="hello---world",
                 pattern=TestsFlextConstants.Patterns.DASH,
                 replacement=TestsFlextConstants.Replacements.DASH,
                 expected="hello-world",
                 description="custom pattern",
             ),
-            tm.Tests.NormalizeWhitespaceCase(
+            tm.NormalizeWhitespaceCase(
                 text="hello   world",
                 replacement=TestsFlextConstants.Replacements.UNDERSCORE,
                 expected="hello_world",
                 description="custom replacement",
             ),
-            tm.Tests.NormalizeWhitespaceCase(
+            tm.NormalizeWhitespaceCase(
                 text="hello\t\n\rworld",
                 expected="hello world",
                 description="various whitespace",
             ),
-            tm.Tests.NormalizeWhitespaceCase(
+            tm.NormalizeWhitespaceCase(
                 text="   ",
                 expected="",
                 description="only whitespace",
             ),
-            tm.Tests.NormalizeWhitespaceCase(
+            tm.NormalizeWhitespaceCase(
                 text=TestsFlextConstants.Strings.SINGLE_CHAR,
                 expected=TestsFlextConstants.Strings.SINGLE_CHAR,
                 description="single char",
             ),
-            tm.Tests.NormalizeWhitespaceCase(
+            tm.NormalizeWhitespaceCase(
                 text="hello\n\n\nworld",
                 expected="hello world",
                 description="multiple newlines",
@@ -298,10 +298,10 @@ class StringParserTestFactory:
         ]
 
     @staticmethod
-    def regex_pipeline_cases() -> list[tm.Tests.RegexPipelineCase]:
+    def regex_pipeline_cases() -> list[tm.RegexPipelineCase]:
         """Generate comprehensive apply_regex_pipeline test cases."""
         return [
-            tm.Tests.RegexPipelineCase(
+            tm.RegexPipelineCase(
                 text="hello   world",
                 patterns=[
                     (
@@ -313,7 +313,7 @@ class StringParserTestFactory:
                 expected="hello world",
                 description="basic",
             ),
-            tm.Tests.RegexPipelineCase(
+            tm.RegexPipelineCase(
                 text=TestsFlextConstants.Strings.EMPTY,
                 patterns=[
                     (
@@ -324,7 +324,7 @@ class StringParserTestFactory:
                 expected=TestsFlextConstants.Strings.EMPTY,
                 description="empty string",
             ),
-            tm.Tests.RegexPipelineCase(
+            tm.RegexPipelineCase(
                 text="cn = REDACTED_LDAP_BIND_PASSWORD , ou = users",
                 patterns=[
                     (
@@ -343,13 +343,13 @@ class StringParserTestFactory:
                 expected="cn= REDACTED_LDAP_BIND_PASSWORD ,ou= users",
                 description="multiple patterns",
             ),
-            tm.Tests.RegexPipelineCase(
+            tm.RegexPipelineCase(
                 text="test",
                 patterns=[],
                 expected="test",
                 description="empty patterns",
             ),
-            tm.Tests.RegexPipelineCase(
+            tm.RegexPipelineCase(
                 text="a=b=c",
                 patterns=[("=", ":"), (":", "=")],
                 expected="a=b=c",
@@ -358,25 +358,25 @@ class StringParserTestFactory:
         ]
 
     @staticmethod
-    def object_key_cases() -> list[tm.Tests.ObjectKeyCase]:
+    def object_key_cases() -> list[tm.ObjectKeyCase]:
         """Generate comprehensive get_object_key test cases (object only)."""
         return [
-            tm.Tests.ObjectKeyCase(
+            tm.ObjectKeyCase(
                 obj={},
                 expected_exact="dict",
                 description="instance",
             ),
-            tm.Tests.ObjectKeyCase(
+            tm.ObjectKeyCase(
                 obj="test",
                 expected_exact="test",
                 description="string",
             ),
-            tm.Tests.ObjectKeyCase(
+            tm.ObjectKeyCase(
                 obj={"name": "DictName"},
                 expected_exact="DictName",
                 description="dict with name",
             ),
-            tm.Tests.ObjectKeyCase(
+            tm.ObjectKeyCase(
                 obj={"id": "DictId"},
                 expected_exact="DictId",
                 description="dict with id",
@@ -402,14 +402,14 @@ class TestuStringParser:
         def test_parse_delimited(
             self,
             parser: u,
-            case: tm.Tests.ParseDelimitedCase,
+            case: tm.ParseDelimitedCase,
         ) -> None:
             """Test parse_delimited with parametrized cases."""
 
             def operation() -> r[list[str]]:
                 """Execute parse_delimited based on case configuration."""
                 if case.use_legacy:
-                    options = m.CollectionsParseOptions(
+                    options = m.ParseOptions(
                         strip=case.strip or True,
                         remove_empty=case.remove_empty or True,
                         validator=case.validator,
@@ -452,7 +452,7 @@ class TestuStringParser:
         def test_split_with_escape(
             self,
             parser: u,
-            case: tm.Tests.SplitEscapeCase,
+            case: tm.SplitEscapeCase,
         ) -> None:
             """Test split_on_char_with_escape with parametrized cases."""
             u.Tests.ParserHelpers.execute_and_assert_parser_result(
@@ -524,7 +524,7 @@ class TestuStringParser:
         def test_apply_regex_pipeline(
             self,
             parser: u,
-            case: tm.Tests.RegexPipelineCase,
+            case: tm.RegexPipelineCase,
         ) -> None:
             """Test apply_regex_pipeline with parametrized cases."""
             u.Tests.ParserHelpers.execute_and_assert_parser_result(
@@ -609,7 +609,7 @@ class TestuStringParser:
         def test_get_object_key(
             self,
             parser: u,
-            case: tm.Tests.ObjectKeyCase,
+            case: tm.ObjectKeyCase,
         ) -> None:
             """Test get_object_key with parametrized cases."""
             key = parser.get_object_key(case.obj)

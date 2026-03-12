@@ -53,7 +53,7 @@ class FlextTestsDocker:
         c.Tests.Docker.ContainerStatus
     )
 
-    class ContainerInfo(m.Tests.Docker.ContainerInfo):
+    class ContainerInfo(m.Docker.ContainerInfo):
         """Container information model for tests - real inheritance from m."""
 
     SHARED_CONTAINERS: ClassVar[Mapping[str, m.ConfigMap]] = (
@@ -216,9 +216,7 @@ class FlextTestsDocker:
                 self._client = self._OfflineDockerClient()
         return self._client
 
-    def get_container_info(
-        self, container_name: str
-    ) -> r[m.Tests.Docker.ContainerInfo]:
+    def get_container_info(self, container_name: str) -> r[m.Docker.ContainerInfo]:
         """Get container information."""
         try:
             client = self.get_client()
@@ -237,8 +235,8 @@ class FlextTestsDocker:
             image_tags_raw = image_obj.tags if image_obj is not None else ()
             image_tags = [str(tag) for tag in image_tags_raw]
             container_id = str(container.id)
-            return r[m.Tests.Docker.ContainerInfo].ok(
-                m.Tests.Docker.ContainerInfo(
+            return r[m.Docker.ContainerInfo].ok(
+                m.Docker.ContainerInfo(
                     name=container_name,
                     status=self.ContainerStatus(status_val),
                     ports=ports,
@@ -247,15 +245,13 @@ class FlextTestsDocker:
                 )
             )
         except NotFound:
-            return r[m.Tests.Docker.ContainerInfo].fail(
+            return r[m.Docker.ContainerInfo].fail(
                 f"Container {container_name} not found"
             )
         except (AttributeError, KeyError, TypeError, ValueError, RuntimeError) as exc:
-            return r[m.Tests.Docker.ContainerInfo].fail(str(exc))
+            return r[m.Docker.ContainerInfo].fail(str(exc))
 
-    def get_container_status(
-        self, container_name: str
-    ) -> r[m.Tests.Docker.ContainerInfo]:
+    def get_container_status(self, container_name: str) -> r[m.Docker.ContainerInfo]:
         """Get container status (alias for get_container_info)."""
         return self.get_container_info(container_name)
 

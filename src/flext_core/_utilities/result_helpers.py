@@ -4,7 +4,6 @@ from collections.abc import Callable, Mapping, Sequence
 from typing import TypeVar
 
 from flext_core import p, r, t
-from flext_core._utilities.collection import FlextUtilitiesCollection
 from flext_core._utilities.guards import FlextUtilitiesGuards
 
 T = TypeVar("T")
@@ -14,17 +13,6 @@ class ResultHelpers:
     @staticmethod
     def any_(*values: object) -> bool:
         return any(bool(v) for v in values)
-
-    @staticmethod
-    def count(
-        items: Sequence[object] | Mapping[str, object],
-        predicate: Callable[[object], bool] | None = None,
-    ) -> int:
-        if predicate is None:
-            return len(items)
-        if isinstance(items, Mapping):
-            return FlextUtilitiesCollection.count(list(items.values()), predicate)
-        return FlextUtilitiesCollection.count(items, predicate)
 
     @staticmethod
     def empty(

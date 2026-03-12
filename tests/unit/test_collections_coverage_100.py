@@ -23,7 +23,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from flext_core import FlextRuntime, m
 
 
-class _TestConfig(m.CollectionsConfig):
+class _TestConfig(m.Config):
     """Module-level test config for pydantic mypy plugin compatibility."""
 
     timeout: int = 30
@@ -202,7 +202,7 @@ class TestFlextModelsCollectionsStatistics:
     def test_statistics_aggregate_empty(self) -> None:
         """Test aggregate with empty list."""
 
-        class TestStats(m.CollectionsStatistics):
+        class TestStats(m.Statistics):
             count: int = 0
 
         assert TestStats.aggregate([]) == {}
@@ -210,7 +210,7 @@ class TestFlextModelsCollectionsStatistics:
     def test_statistics_aggregate_numbers(self) -> None:
         """Test aggregate with numeric values."""
 
-        class TestStats(m.CollectionsStatistics):
+        class TestStats(m.Statistics):
             count: int = 0
 
         stats1 = TestStats(count=10)
@@ -222,7 +222,7 @@ class TestFlextModelsCollectionsStatistics:
     def test_statistics_aggregate_lists(self) -> None:
         """Test aggregate with list values."""
 
-        class TestStats(m.CollectionsStatistics):
+        class TestStats(m.Statistics):
             items: list[str] = Field(default_factory=list)
 
         stats1 = TestStats(items=["a", "b"])
@@ -234,7 +234,7 @@ class TestFlextModelsCollectionsStatistics:
     def test_statistics_aggregate_mixed(self) -> None:
         """Test aggregate with mixed types."""
 
-        class TestStats(m.CollectionsStatistics):
+        class TestStats(m.Statistics):
             count: int = 0
             items: list[str] = Field(default_factory=list)
             name: str = ""
@@ -250,7 +250,7 @@ class TestFlextModelsCollectionsStatistics:
     def test_statistics_aggregate_none_values(self) -> None:
         """Test aggregate with None values."""
 
-        class TestStats(m.CollectionsStatistics):
+        class TestStats(m.Statistics):
             count: int | None = None
             name: str | None = None
 

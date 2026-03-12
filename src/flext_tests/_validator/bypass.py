@@ -20,7 +20,7 @@ from flext_tests import c, m, u
 class FlextValidatorBypass:
     """Bypass validation methods for FlextTestsValidator.
 
-    Uses c.Tests.Validator for constants and m.Tests.Validator for models.
+    Uses c.Tests.Validator for constants and m.Validator for models.
     """
 
     @classmethod
@@ -30,11 +30,11 @@ class FlextValidatorBypass:
         tree: ast.AST,
         lines: list[str],
         approved: Mapping[str, list[str]],
-    ) -> list[m.Tests.Validator.Violation]:
+    ) -> list[m.Validator.Violation]:
         """Detect exception swallowing patterns (bare except or except with pass)."""
         if u.Tests.Validator.is_approved("BYPASS-003", file_path, approved):
             return []
-        violations: list[m.Tests.Validator.Violation] = []
+        violations: list[m.Validator.Violation] = []
         for node in ast.walk(tree):
             if isinstance(node, ast.ExceptHandler):
                 if node.type is None:
@@ -60,11 +60,11 @@ class FlextValidatorBypass:
     @classmethod
     def _check_noqa(
         cls, file_path: Path, lines: list[str], approved: Mapping[str, list[str]]
-    ) -> list[m.Tests.Validator.Violation]:
+    ) -> list[m.Validator.Violation]:
         """Detect # noqa comments."""
         if u.Tests.Validator.is_approved("BYPASS-001", file_path, approved):
             return []
-        violations: list[m.Tests.Validator.Violation] = []
+        violations: list[m.Validator.Violation] = []
         pattern = re.compile(r"#\s*noqa", re.IGNORECASE)
         for i, line in enumerate(lines, start=1):
             is_real = u.Tests.Validator.is_real_comment(line, pattern)
@@ -78,7 +78,7 @@ class FlextValidatorBypass:
     @classmethod
     def _check_pragma_no_cover(
         cls, file_path: Path, lines: list[str], approved: Mapping[str, list[str]]
-    ) -> list[m.Tests.Validator.Violation]:
+    ) -> list[m.Validator.Violation]:
         """Detect # pragma: no cover comments."""
         patterns = list(approved.get("BYPASS-002", [])) + list(
             c.Tests.Validator.Approved.PRAGMA_PATTERNS
@@ -86,7 +86,7 @@ class FlextValidatorBypass:
         file_str = str(file_path)
         if any(re.search(pattern, file_str) for pattern in patterns):
             return []
-        violations: list[m.Tests.Validator.Violation] = []
+        violations: list[m.Validator.Violation] = []
         pattern = re.compile(r"#\s*pragma:\s*no\s*cover", re.IGNORECASE)
         for i, line in enumerate(lines, start=1):
             is_real = u.Tests.Validator.is_real_comment(line, pattern)
@@ -100,9 +100,9 @@ class FlextValidatorBypass:
     @classmethod
     def _scan_file(
         cls, file_path: Path, approved: Mapping[str, list[str]]
-    ) -> list[m.Tests.Validator.Violation]:
+    ) -> list[m.Validator.Violation]:
         """Scan a single file for bypass violations."""
-        violations: list[m.Tests.Validator.Violation] = []
+        violations: list[m.Validator.Violation] = []
         try:
             content = file_path.read_text(encoding="utf-8")
         except (OSError, UnicodeDecodeError):
@@ -124,7 +124,7 @@ class FlextValidatorBypass:
         cls,
         files: list[Path],
         approved_exceptions: Mapping[str, list[str]] | None = None,
-    ) -> r[m.Tests.Validator.ScanResult]:
+    ) -> r[m.Validator.ScanResult]:
         """Scan files for bypass violations.
 
         Args:
@@ -135,13 +135,13 @@ class FlextValidatorBypass:
             r with ScanResult containing all violations found
 
         """
-        violations: list[m.Tests.Validator.Violation] = []
+        violations: list[m.Validator.Violation] = []
         approved = approved_exceptions or {}
         for file_path in files:
             file_violations = cls._scan_file(file_path, approved)
             violations.extend(file_violations)
-        return r[m.Tests.Validator.ScanResult].ok(
-            m.Tests.Validator.ScanResult.create(
+        return r[m.Validator.ScanResult].ok(
+            m.Validator.ScanResult.create(
                 validator_name=c.Tests.Validator.Defaults.VALIDATOR_BYPASS,
                 files_scanned=len(files),
                 violations=violations,

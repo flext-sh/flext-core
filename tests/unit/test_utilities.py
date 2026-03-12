@@ -218,7 +218,7 @@ class Testu(TextUtilityContract):
         expected_pattern: str,
     ) -> None:
         """Test text cleaning."""
-        result = u.Text.clean_text(input_text)
+        result = u.clean_text(input_text)
         assert result.replace(" ", "") == expected_pattern.replace(" ", "")
 
     @pytest.mark.parametrize(
@@ -232,7 +232,7 @@ class Testu(TextUtilityContract):
         should_truncate: bool,
     ) -> None:
         """Test text truncation."""
-        result = u.Text.truncate_text(text, max_length=max_length)
+        result = u.truncate_text(text, max_length=max_length)
         _ = u.Tests.Result.assert_success(result)
         if should_truncate:
             assert len(result.value) <= max_length + 3
@@ -246,7 +246,7 @@ class Testu(TextUtilityContract):
     def test_text_processor_safe_string_empty(self) -> None:
         """Test safe string with empty raises ValueError."""
         with pytest.raises(ValueError):
-            _ = u.Text.safe_string("")
+            _ = u.safe_string("")
 
     @pytest.mark.parametrize(
         ("text", "expected"),
@@ -268,7 +268,7 @@ class Testu(TextUtilityContract):
         expected_type: type | tuple[type, ...],
     ) -> None:
         """Test cache component normalization."""
-        normalized = u.Cache.normalize_component(cast("object", input_data))
+        normalized = u.normalize_component(cast("object", input_data))
         if isinstance(expected_type, tuple):
             assert isinstance(normalized, expected_type)
         else:
@@ -277,24 +277,24 @@ class Testu(TextUtilityContract):
     def test_cache_sort_dict_keys(self) -> None:
         """Test dictionary key sorting."""
         data: m.ConfigMap = m.ConfigMap(root={"z": 1, "a": 2, "m": 3})
-        result = u.Cache.sort_dict_keys(data)
+        result = u.sort_dict_keys(data)
         assert result == {"a": 2, "m": 3, "z": 1}
 
     def test_cache_generate_key(self) -> None:
         """Test cache key generation."""
-        key1 = u.Cache.generate_cache_key("arg1", "arg2")
-        key2 = u.Cache.generate_cache_key("arg1", "arg2")
+        key1 = u.generate_cache_key("arg1", "arg2")
+        key2 = u.generate_cache_key("arg1", "arg2")
         assert key1 == key2 and isinstance(key1, str)
 
     def test_cache_generate_key_with_kwargs(self) -> None:
         """Test cache key generation with kwargs."""
-        key = u.Cache.generate_cache_key("test", foo="bar", num=42)
+        key = u.generate_cache_key("test", foo="bar", num=42)
         assert isinstance(key, str) and len(key) > 0
 
     def test_cache_clear_object_cache(self) -> None:
         """Test clearing object cache."""
         cache_data: m.ConfigMap = m.ConfigMap(root={"test": "data"})
-        result = u.Cache.clear_object_cache(cache_data)
+        result = u.clear_object_cache(cache_data)
         _ = u.Tests.Result.assert_success(result)
 
     @pytest.mark.parametrize(("has_cache", "expected"), [(True, True), (False, False)])
@@ -306,7 +306,7 @@ class Testu(TextUtilityContract):
                 _cache: ClassVar[m.ConfigMap] = m.ConfigMap(root={})
 
             cache_obj = TestWithCache()
-            result = u.Cache.has_cache_attributes(
+            result = u.has_cache_attributes(
                 cast("object", cast("object", cache_obj)),
             )
             assert result is expected
@@ -316,14 +316,14 @@ class Testu(TextUtilityContract):
                 pass
 
             no_cache_obj = TestNoCache()
-            result = u.Cache.has_cache_attributes(
+            result = u.has_cache_attributes(
                 cast("object", cast("object", no_cache_obj)),
             )
             assert result is expected
 
     def test_cache_sort_key(self) -> None:
         """Test sort_key returns tuple."""
-        key = u.Cache.sort_key("test")
+        key = u.sort_key("test")
         assert isinstance(key, tuple) and len(key) == 2
 
     @pytest.mark.parametrize(
@@ -363,7 +363,7 @@ class Testu(TextUtilityContract):
         def quick_success() -> r[str]:
             return r[str].ok("success")
 
-        result: r[str] = u.Reliability.retry(
+        result: r[str] = u.retry(
             quick_success,
             max_attempts=c.Reliability.MAX_RETRY_ATTEMPTS,
         )
@@ -379,7 +379,7 @@ class Testu(TextUtilityContract):
                 return r[str].fail("Temporary failure")
             return r[str].ok("Success")
 
-        result: r[str] = u.Reliability.retry(
+        result: r[str] = u.retry(
             flaky_op,
             max_attempts=5,
             delay_seconds=c.Reliability.DEFAULT_RETRY_DELAY_SECONDS,

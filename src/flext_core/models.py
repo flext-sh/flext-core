@@ -12,12 +12,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping
-from typing import TypeAlias, override
-
-from pydantic import ConfigDict
-
-from flext_core import p
 from flext_core._models.base import FlextModelFoundation
 from flext_core._models.collections import FlextModelsCollections
 from flext_core._models.container import FlextModelsContainer
@@ -63,6 +57,7 @@ class FlextModels(
     Pydantic v2 integration supplies BaseModel validation, computed fields,
     and JSON-ready serialization for all exported types.
     """
+
 
 # Main alias for direct access
 m = FlextModels

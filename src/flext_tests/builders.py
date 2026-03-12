@@ -140,7 +140,7 @@ class FlextTestsBuilders:
         """Add data to builder with smart type inference.
 
         Uses Pydantic 2 models for parameter validation and computation.
-        All parameters are validated using m.Tests.Builders.AddParams model.
+        All parameters are validated using m.Builders.AddParams model.
 
         Resolution order (first match wins):
         1. result → Store r as-is
@@ -196,7 +196,7 @@ class FlextTestsBuilders:
         else:
             value_for_kwargs = str(value)
         try:
-            params = m.Tests.Builders.AddParams.model_validate({
+            params = m.Builders.AddParams.model_validate({
                 "key": key,
                 "value": value_for_kwargs,
                 **kwargs,
@@ -221,24 +221,22 @@ class FlextTestsBuilders:
 
             def is_entity_class(
                 cls: type[object],
-            ) -> TypeGuard[type[m.Tests.Factory.Entity]]:
+            ) -> TypeGuard[type[m.Entity]]:
                 """Type guard to check if class is Entity subclass."""
-                return issubclass(cls, m.Tests.Factory.Entity)
+                return issubclass(cls, m.Entity)
 
             def is_value_class(
                 cls: type[object],
-            ) -> TypeGuard[type[m.Tests.Factory.Value]]:
+            ) -> TypeGuard[type[m.Value]]:
                 """Type guard to check if class is Value subclass."""
-                return issubclass(cls, m.Tests.Factory.Value)
+                return issubclass(cls, m.Value)
 
             if is_entity_class(cls_type):
-                entity_cls: type[m.Tests.Factory.Entity] = cls_type
+                entity_cls: type[m.Entity] = cls_type
                 name_val = cls_kwargs.get("name", "")
                 value_val = cls_kwargs.get("value", "")
 
-                def entity_factory(
-                    *, name: str, value: t.Tests.object
-                ) -> m.Tests.Factory.Entity:
+                def entity_factory(*, name: str, value: t.Tests.object) -> m.Entity:
                     return entity_cls(name=name, value=value)
 
                 resolved_value = u.Tests.DomainHelpers.create_test_entity_instance(
@@ -247,11 +245,11 @@ class FlextTestsBuilders:
                     entity_class=entity_factory,
                 )
             elif is_value_class(cls_type):
-                value_cls: type[m.Tests.Factory.Value] = cls_type
+                value_cls: type[m.Value] = cls_type
                 data_val = cls_kwargs.get("data", "")
                 count_val = cls_kwargs.get("count", 1)
 
-                def value_factory(*, data: str, count: int) -> m.Tests.Factory.Value:
+                def value_factory(*, data: str, count: int) -> m.Value:
                     return value_cls(data=data, count=count)
 
                 resolved_value = (
@@ -443,7 +441,7 @@ class FlextTestsBuilders:
         """Build batch of test scenarios.
 
         Uses Pydantic 2 models for parameter validation and computation.
-        All parameters are validated using m.Tests.Builders.BatchParams model.
+        All parameters are validated using m.Builders.BatchParams model.
 
         Args:
             key: Key to store batch under.
@@ -471,7 +469,7 @@ class FlextTestsBuilders:
 
         """
         try:
-            params = m.Tests.Builders.BatchParams.model_validate({
+            params = m.Builders.BatchParams.model_validate({
                 "key": key,
                 "scenarios": scenarios,
                 **kwargs,
@@ -513,7 +511,7 @@ class FlextTestsBuilders:
         """Build the dataset with output type control.
 
         Uses Pydantic 2 models for parameter validation and computation.
-        All parameters are validated using m.Tests.Builders.BuildParams model.
+        All parameters are validated using m.Builders.BuildParams model.
 
         Args:
             **kwargs: Build parameters (as_model, as_list, flatten, etc.)
@@ -537,7 +535,7 @@ class FlextTestsBuilders:
 
         """
         try:
-            params = m.Tests.Builders.BuildParams.model_validate(kwargs)
+            params = m.Builders.BuildParams.model_validate(kwargs)
         except (TypeError, ValueError, AttributeError) as exc:
             error_msg = f"Invalid build() parameters: {exc}"
             raise ValueError(error_msg) from exc
@@ -618,7 +616,7 @@ class FlextTestsBuilders:
         """Copy and immediately add updates.
 
         Uses Pydantic 2 models for parameter validation.
-        All updates are validated using m.Tests.Builders.AddParams model via add().
+        All updates are validated using m.Builders.AddParams model via add().
 
         Examples:
             base = tb().add("config", mapping={"env": "test"})
@@ -699,7 +697,7 @@ class FlextTestsBuilders:
         """Merge data from another builder.
 
         Uses Pydantic 2 models for parameter validation.
-        All parameters are validated using m.Tests.Builders.MergeFromParams model.
+        All parameters are validated using m.Builders.MergeFromParams model.
         Uses FlextUtilities.merge() internally.
 
         Examples:
@@ -719,7 +717,7 @@ class FlextTestsBuilders:
 
         """
         try:
-            params = m.Tests.Builders.MergeFromParams.model_validate({
+            params = m.Builders.MergeFromParams.model_validate({
                 "strategy": strategy,
                 "exclude_keys": list(exclude_keys) if exclude_keys else None,
             })
@@ -865,7 +863,7 @@ class FlextTestsBuilders:
         """Build data wrapped in r.
 
         Uses Pydantic 2 models for parameter validation and computation.
-        All parameters are validated using m.Tests.Builders.ToResultParams model.
+        All parameters are validated using m.Builders.ToResultParams model.
 
         Args:
             **kwargs: Result parameters (as_model, error, unwrap, etc.)
@@ -888,7 +886,7 @@ class FlextTestsBuilders:
 
         """
         try:
-            params = m.Tests.Builders.ToResultParams.model_validate(kwargs)
+            params = m.Builders.ToResultParams.model_validate(kwargs)
         except (TypeError, ValueError, AttributeError) as exc:
             error_msg = f"Invalid to_result() parameters: {exc}"
             raise ValueError(error_msg) from exc
@@ -1054,20 +1052,20 @@ class FlextTestsBuilders:
             debug=debug,
             timeout=c.Tests.Factory.DEFAULT_TIMEOUT,
         )
-        config: m.Tests.Factory.Config
+        config: m.Config
         if self._is_result_obj(config_result):
             config_unwrapped = config_result.value
-            if isinstance(config_unwrapped, m.Tests.Factory.Config):
+            if isinstance(config_unwrapped, m.Config):
                 config = config_unwrapped
             else:
                 msg = f"Expected Config from result, got {type(config_unwrapped)}"
                 raise TypeError(msg)
-        elif isinstance(config_result, m.Tests.Factory.Config):
+        elif isinstance(config_result, m.Config):
             config = config_result
         elif isinstance(config_result, list):
             if len(config_result) == 1 and BaseModel in type(config_result[0]).__mro__:
                 only_item = config_result[0]
-                if isinstance(only_item, m.Tests.Factory.Config):
+                if isinstance(only_item, m.Config):
                     config = only_item
                 else:
                     msg = f"Expected Config model, got {type(only_item)}"
@@ -1078,7 +1076,7 @@ class FlextTestsBuilders:
         elif isinstance(config_result, dict):
             if len(config_result) == 1:
                 config_value = next(iter(config_result.values()))
-                if isinstance(config_value, m.Tests.Factory.Config):
+                if isinstance(config_value, m.Config):
                     config = config_value
                 else:
                     msg = f"Expected Config in dict result, got {type(config_value)}"
@@ -1153,7 +1151,7 @@ class FlextTestsBuilders:
                     c.Tests.Builders.KEY_ACTIVE: item.active,
                 }
                 for item in batch_result
-                if isinstance(item, m.Tests.Factory.User)
+                if isinstance(item, m.User)
             ]
             return users_data
         if factory == "configs":
@@ -1162,7 +1160,7 @@ class FlextTestsBuilders:
             services: list[dict[str, str]] = []
             for i in range(count):
                 service_result = tt.model("service", name=f"service_{i}")
-                if not isinstance(service_result, m.Tests.Factory.Service):
+                if not isinstance(service_result, m.Service):
                     continue
                 services.append({
                     "id": service_result.id,
@@ -1262,7 +1260,7 @@ class FlextTestsBuilders:
     class Tests:
         """Test-specific builder helpers under tb.Tests.*.
 
-        Pattern matches: u.Tests.*, c.Tests.*, m.Tests.*
+        Pattern matches: u.Tests.*, c.Tests.*, m.*
 
         CRITICAL: All methods DELEGATE to existing utilities!
         """
@@ -1477,7 +1475,7 @@ class FlextTestsBuilders:
             """
 
             @staticmethod
-            def batch_entities[T: m.Tests.Factory.Entity](
+            def batch_entities[T: m.Entity](
                 entity_class: type[T],
                 names: Sequence[str],
                 values: Sequence[t.Tests.object],
@@ -1497,27 +1495,23 @@ class FlextTestsBuilders:
             @staticmethod
             def batch_users(
                 count: int = c.Tests.Factory.DEFAULT_BATCH_COUNT,
-            ) -> list[m.Tests.Factory.User]:
+            ) -> list[m.User]:
                 """Create batch users - DELEGATES to tt.batch()."""
                 batch_result = tt.batch("user", count=count)
-                return [
-                    item
-                    for item in batch_result
-                    if isinstance(item, m.Tests.Factory.User)
-                ]
+                return [item for item in batch_result if isinstance(item, m.User)]
 
             @staticmethod
-            def config(**overrides: t.Tests.object) -> m.Tests.Factory.Config:
+            def config(**overrides: t.Tests.object) -> m.Config:
                 """Create config - DELEGATES to tt.model()."""
                 result = tt.model("config", **overrides)
-                if isinstance(result, m.Tests.Factory.Config):
+                if isinstance(result, m.Config):
                     return result
                 raise TypeError(
                     f"Expected Config from tt.model('config'), got {type(result).__name__}"
                 )
 
             @staticmethod
-            def entity[T: m.Tests.Factory.Entity](
+            def entity[T: m.Entity](
                 entity_class: type[T],
                 name: str = "",
                 value: t.Tests.object = "",
@@ -1532,27 +1526,27 @@ class FlextTestsBuilders:
                 )
 
             @staticmethod
-            def service(**overrides: t.Tests.object) -> m.Tests.Factory.Service:
+            def service(**overrides: t.Tests.object) -> m.Service:
                 """Create service - DELEGATES to tt.model()."""
                 result = tt.model("service", **overrides)
-                if isinstance(result, m.Tests.Factory.Service):
+                if isinstance(result, m.Service):
                     return result
                 raise TypeError(
                     f"Expected Service from tt.model('service'), got {type(result).__name__}"
                 )
 
             @staticmethod
-            def user(**overrides: t.Tests.object) -> m.Tests.Factory.User:
+            def user(**overrides: t.Tests.object) -> m.User:
                 """Create user - DELEGATES to tt.model()."""
                 result = tt.model("user", **overrides)
-                if isinstance(result, m.Tests.Factory.User):
+                if isinstance(result, m.User):
                     return result
                 raise TypeError(
                     f"Expected User from tt.model('user'), got {type(result).__name__}"
                 )
 
             @staticmethod
-            def value_object[T: m.Tests.Factory.Value](
+            def value_object[T: m.Value](
                 value_class: type[T], data: str = "", count: int = 1
             ) -> T:
                 """Create value object - DELEGATES to u.Tests.DomainHelpers."""

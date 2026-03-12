@@ -234,7 +234,7 @@ class TestuEnumIsMember:
             if isinstance(scenario.value, (str, int, float, bool, Status))
             else str(scenario.value)
         )
-        result = u.Enum.is_member(Status, value_typed)
+        result = u.is_member(Status, value_typed)
         assert result == scenario.expected
 
 
@@ -249,7 +249,7 @@ class TestuEnumIsSubset:
             if isinstance(scenario.value, (str, int, float, bool, Status))
             else str(scenario.value)
         )
-        result = u.Enum.is_subset(Status, scenario.valid_members, value_typed)
+        result = u.is_subset(Status, scenario.valid_members, value_typed)
         assert result == scenario.expected
 
 
@@ -259,7 +259,7 @@ class TestuEnumParse:
     @pytest.mark.parametrize("scenario", EnumScenarios.PARSE, ids=lambda s: s.name)
     def test_parse(self, scenario: ParseScenario) -> None:
         """Test parse with various scenarios."""
-        result = u.Enum.parse(Status, scenario.value)
+        result = u.parse(Status, scenario.value)
         if scenario.expected_success:
             assert result.is_success
             assert result.value == scenario.expected_status
@@ -282,7 +282,7 @@ class TestuEnumParseOrDefault:
     )
     def test_parse_or_default(self, scenario: ParseOrDefaultScenario) -> None:
         """Test parse_or_default with various scenarios."""
-        result = u.Enum.parse_or_default(Status, scenario.value, scenario.default)
+        result = u.parse_or_default(Status, scenario.value, scenario.default)
         assert result == scenario.expected
 
 
@@ -296,7 +296,7 @@ class TestuEnumCoerceValidator:
     )
     def test_coerce_validator(self, scenario: CoerceValidatorScenario) -> None:
         """Test coerce_validator with various scenarios."""
-        validator = u.Enum.coerce_validator(Status)
+        validator = u.coerce_validator(Status)
         value: bool | float | int | str | Status = (
             scenario.value
             if isinstance(scenario.value, (str, int, float, bool, Status))
@@ -320,25 +320,25 @@ class TestuEnumCoerceByNameValidator:
 
     def test_coerce_by_name_validator_by_name(self) -> None:
         """Test coerce_by_name_validator with member name."""
-        validator = u.Enum.coerce_by_name_validator(Status)
+        validator = u.coerce_by_name_validator(Status)
         result = validator("ACTIVE")
         assert result == Status.ACTIVE
 
     def test_coerce_by_name_validator_by_value(self) -> None:
         """Test coerce_by_name_validator with member value."""
-        validator = u.Enum.coerce_by_name_validator(Status)
+        validator = u.coerce_by_name_validator(Status)
         result = validator("active")
         assert result == Status.ACTIVE
 
     def test_coerce_by_name_validator_direct_enum(self) -> None:
         """Test coerce_by_name_validator with direct enum."""
-        validator = u.Enum.coerce_by_name_validator(Status)
+        validator = u.coerce_by_name_validator(Status)
         result = validator(Status.PENDING)
         assert result == Status.PENDING
 
     def test_coerce_by_name_validator_invalid(self) -> None:
         """Test coerce_by_name_validator with invalid value."""
-        validator = u.Enum.coerce_by_name_validator(Status)
+        validator = u.coerce_by_name_validator(Status)
         with pytest.raises(ValueError) as exc_info:
             _ = validator("invalid")
         assert "Invalid Status" in str(exc_info.value)
@@ -349,7 +349,7 @@ class TestuEnumMetadata:
 
     def test_values(self) -> None:
         """Test values method."""
-        values = u.Enum.values(Status)
+        values = u.values(Status)
         assert isinstance(values, frozenset)
         assert "active" in values
         assert "pending" in values
@@ -357,7 +357,7 @@ class TestuEnumMetadata:
 
     def test_names(self) -> None:
         """Test names method."""
-        names = u.Enum.names(Status)
+        names = u.names(Status)
         assert isinstance(names, frozenset)
         assert "ACTIVE" in names
         assert "PENDING" in names
@@ -365,7 +365,7 @@ class TestuEnumMetadata:
 
     def test_members(self) -> None:
         """Test members method."""
-        members = u.Enum.members(Status)
+        members = u.members(Status)
         assert isinstance(members, frozenset)
         assert Status.ACTIVE in members
         assert Status.PENDING in members
@@ -373,6 +373,6 @@ class TestuEnumMetadata:
 
     def test_metadata_caching(self) -> None:
         """Test that metadata methods are cached."""
-        values1 = u.Enum.values(Status)
-        values2 = u.Enum.values(Status)
+        values1 = u.values(Status)
+        values2 = u.values(Status)
         assert values1 is values2

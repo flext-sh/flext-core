@@ -264,9 +264,9 @@ class FlextTestsMatchers:
         return result.value
 
     @staticmethod
-    def check[TResult](result: r[TResult]) -> m.Tests.Matcher.Chain[TResult]:
+    def check[TResult](result: r[TResult]) -> m.Chain[TResult]:
         """Start chained assertions on result (railway pattern)."""
-        return m.Tests.Matcher.Chain[TResult](result=result)
+        return m.Chain[TResult](result=result)
 
     @staticmethod
     def fail[TResult](
@@ -311,11 +311,11 @@ class FlextTestsMatchers:
             ValueError: If parameter validation fails (via Pydantic model)
 
         Uses Pydantic 2 models for parameter validation and computation.
-        All parameters are validated via m.Tests.Matcher.FailParams model.
+        All parameters are validated via m.FailParams model.
 
         """
         try:
-            params = m.Tests.Matcher.FailParams.model_validate(kwargs)
+            params = m.FailParams.model_validate(kwargs)
         except (TypeError, ValueError, AttributeError) as exc:
             raise ValueError(f"Parameter validation failed: {exc}") from exc
         if result.is_success:
@@ -412,7 +412,7 @@ class FlextTestsMatchers:
         """Enhanced assertion for r success with optional value validation.
 
         Uses Pydantic 2 models for parameter validation and computation.
-        All parameters are validated via m.Tests.Matcher.OkParams model.
+        All parameters are validated via m.OkParams model.
 
         Examples:
             # Basic success assertions
@@ -435,7 +435,7 @@ class FlextTestsMatchers:
 
         Args:
             result: r to validate
-            **kwargs: Parameters validated via m.Tests.Matcher.OkParams model
+            **kwargs: Parameters validated via m.OkParams model
                 - eq, ne: Equality/inequality check
                 - is_: Runtime type check against single type or tuple
                 - none, empty: Nullability checks
@@ -458,7 +458,7 @@ class FlextTestsMatchers:
 
         """
         try:
-            params = m.Tests.Matcher.OkParams.model_validate(kwargs)
+            params = m.OkParams.model_validate(kwargs)
         except (TypeError, ValueError, AttributeError) as exc:
             raise ValueError(f"Parameter validation failed: {exc}") from exc
         if not result.is_success:
@@ -624,7 +624,7 @@ class FlextTestsMatchers:
 
     @staticmethod
     @contextmanager
-    def scope(**kwargs: t.Tests.object) -> Iterator[m.Tests.Matcher.TestScope]:
+    def scope(**kwargs: t.Tests.object) -> Iterator[m.TestScope]:
         """Enhanced isolated test execution scope.
 
         Uses Pydantic 2 model (ScopeParams) for parameter validation and computation.
@@ -635,7 +635,7 @@ class FlextTestsMatchers:
         and automatic cleanup functions.
 
         Args:
-            **kwargs: Parameters validated via m.Tests.Matcher.ScopeParams model
+            **kwargs: Parameters validated via m.ScopeParams model
                 - config: Initial configuration values
                 - container: Initial container/service mappings
                 - context: Initial context values
@@ -665,7 +665,7 @@ class FlextTestsMatchers:
 
         """
         try:
-            params = m.Tests.Matcher.ScopeParams.model_validate(kwargs)
+            params = m.ScopeParams.model_validate(kwargs)
         except (TypeError, ValueError, AttributeError) as exc:
             raise ValueError(f"Parameter validation failed: {exc}") from exc
         original_env: dict[str, str | None] = {}
@@ -692,7 +692,7 @@ class FlextTestsMatchers:
             context_map: dict[str, t.Tests.object] = {}
             if params.context:
                 context_map = {str(key): value for key, value in params.context.items()}
-            yield m.Tests.Matcher.TestScope.model_validate({
+            yield m.TestScope.model_validate({
                 "config": cfg,
                 "container": container_dict,
                 "context": context_map,
@@ -808,7 +808,7 @@ class FlextTestsMatchers:
         raw_eq = kwargs.get("eq") if "eq" in kwargs else None
         raw_ne = kwargs.get("ne") if "ne" in kwargs else None
         try:
-            params = m.Tests.Matcher.ThatParams.model_validate(kwargs)
+            params = m.ThatParams.model_validate(kwargs)
         except (TypeError, ValueError, AttributeError) as exc:
             filtered_kwargs = {
                 key: val for key, val in kwargs.items() if key not in {"eq", "ne"}
@@ -816,7 +816,7 @@ class FlextTestsMatchers:
             if filtered_kwargs == kwargs:
                 raise ValueError(f"Parameter validation failed: {exc}") from exc
             try:
-                params = m.Tests.Matcher.ThatParams.model_validate(filtered_kwargs)
+                params = m.ThatParams.model_validate(filtered_kwargs)
             except (TypeError, ValueError, AttributeError) as filtered_exc:
                 raise ValueError(
                     f"Parameter validation failed: {filtered_exc}"

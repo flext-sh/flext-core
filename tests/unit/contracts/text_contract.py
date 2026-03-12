@@ -47,14 +47,14 @@ class TextUtilityContract:
     @staticmethod
     def assert_safe_string_valid(raw: str, expected: str) -> None:
         """Assert safe string normalization for valid input."""
-        assert u.Text.safe_string(raw) == expected
+        assert u.safe_string(raw) == expected
 
     @staticmethod
     def assert_clean_text(raw: str, expected: str) -> None:
         """Assert clean_text normalization."""
-        assert u.Text.clean_text(raw) == expected
+        assert u.clean_text(raw) == expected
 
     @staticmethod
     def assert_format_app_id(raw: str, expected: str) -> None:
         """Assert app id formatting behavior."""
-        assert u.Text.format_app_id(raw) == expected
+        assert u.format_app_id(raw) == expected

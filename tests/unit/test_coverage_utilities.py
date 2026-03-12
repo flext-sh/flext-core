@@ -292,7 +292,7 @@ class Testu(TextUtilityContract):
 
     def test_text_processor_truncate(self) -> None:
         """Test text truncation - returns r[str]."""
-        result = u.Text.truncate_text("hello world", max_length=8)
+        result = u.truncate_text("hello world", max_length=8)
         _ = assertion_helpers.assert_flext_result_success(result)
         assert len(result.value) <= 8
         assert result.value.endswith("...")
@@ -316,7 +316,7 @@ class Testu(TextUtilityContract):
     ) -> None:
         """Test safe string contract for invalid values."""
         with pytest.raises(ValueError, match=error_message):
-            u.Text.safe_string(raw)
+            u.safe_string(raw)
 
     @pytest.mark.parametrize(
         ("input_data", "expected_type"),
@@ -328,34 +328,34 @@ class Testu(TextUtilityContract):
         expected_type: type,
     ) -> None:
         """Test cache component normalization."""
-        result = u.Cache.normalize_component(input_data)
+        result = u.normalize_component(input_data)
         assert isinstance(result, (dict, str, type(None), expected_type))
 
     def test_cache_sort_dict_keys(self) -> None:
         """Test dictionary key sorting."""
         data = {"z": 1, "a": 2, "m": 3}
-        result = u.Cache.sort_dict_keys(data)
+        result = u.sort_dict_keys(data)
         assert isinstance(result, dict)
         keys = list(result.keys())
         assert keys == sorted(keys)
 
     def test_cache_generate_key(self) -> None:
         """Test cache key generation."""
-        key1 = u.Cache.generate_cache_key(None, None)
+        key1 = u.generate_cache_key(None, None)
         assert isinstance(key1, str)
         assert len(key1) > 0
 
     def test_cache_generate_key_uniqueness(self) -> None:
         """Test cache keys are unique for different inputs."""
-        key1 = u.Cache.generate_cache_key("arg1", kwarg1="value1")
-        key2 = u.Cache.generate_cache_key("different")
+        key1 = u.generate_cache_key("arg1", kwarg1="value1")
+        key2 = u.generate_cache_key("different")
         assert key1 != key2
 
     def test_cache_clear_object(self) -> None:
         """Test clearing object cache."""
         obj = UtilityScenarios.create_mock_cached_object()
         if isinstance(obj, BaseModel):
-            result = u.Cache.clear_object_cache(obj)
+            result = u.clear_object_cache(obj)
         else:
             obj_dict: dict[str, object] = {}
             if hasattr(obj, "__dict__"):
@@ -368,20 +368,20 @@ class Testu(TextUtilityContract):
                         )
                         else str(v)
                     )
-            result = u.Cache.clear_object_cache(obj_dict)
+            result = u.clear_object_cache(obj_dict)
         _ = assertion_helpers.assert_flext_result_success(result)
 
     def test_cache_has_attributes_true(self) -> None:
         """Test detecting cache attributes on object with cache."""
         obj = UtilityScenarios.create_mock_cached_object()
         obj_typed: object = cast("object", obj)
-        assert u.Cache.has_cache_attributes(obj_typed) is True
+        assert u.has_cache_attributes(obj_typed) is True
 
     def test_cache_has_attributes_false(self) -> None:
         """Test detecting cache attributes on object without cache."""
         obj = UtilityScenarios.create_mock_uncached_object()
         obj_typed: object = cast("object", obj)
-        assert u.Cache.has_cache_attributes(obj_typed) is False
+        assert u.has_cache_attributes(obj_typed) is False
 
     def test_reliability_timeout_success(self) -> None:
         """Test timeout with successful operation."""
@@ -389,7 +389,7 @@ class Testu(TextUtilityContract):
         def quick_op() -> r[str]:
             return r[str].ok("success")
 
-        result = u.Reliability.with_timeout(quick_op, 5.0)
+        result = u.with_timeout(quick_op, 5.0)
         _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value == "success"
 
@@ -399,7 +399,7 @@ class Testu(TextUtilityContract):
         def op() -> r[str]:
             return r[str].ok("success")
 
-        result = u.Reliability.with_timeout(op, -1.0)
+        result = u.with_timeout(op, -1.0)
         _ = assertion_helpers.assert_flext_result_failure(result)
 
     def test_reliability_retry_first_success(self) -> None:
@@ -408,14 +408,14 @@ class Testu(TextUtilityContract):
         def op() -> r[str]:
             return r[str].ok("success")
 
-        result: r[str] = u.Reliability.retry(op, max_attempts=3)
+        result: r[str] = u.retry(op, max_attempts=3)
         _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value == "success"
 
     def test_reliability_retry_eventual_success(self) -> None:
         """Test retry with eventual success."""
         attempt_count, flaky_op = UtilityScenarios.create_flaky_operation()
-        result: r[str] = u.Reliability.retry(
+        result: r[str] = u.retry(
             flaky_op,
             max_attempts=3,
             delay_seconds=0.01,

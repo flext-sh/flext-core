@@ -349,7 +349,7 @@ class FlextUtilitiesReliability:
             The result from the first matching case, or default, or None
 
         Example:
-            >>> u.Reliability.match(
+            >>> u.match(
             ...     "REDACTED_LDAP_BIND_PASSWORD",
             ...     (str, lambda s: s.upper()),  # type match
             ...     (
@@ -360,7 +360,7 @@ class FlextUtilitiesReliability:
             ... )
             'ADMIN'
 
-            >>> u.Reliability.match(
+            >>> u.match(
             ...     15,
             ...     (lambda x: x > 10, "big"),  # predicate match
             ...     (lambda x: x > 5, "medium"),

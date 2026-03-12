@@ -53,8 +53,8 @@ def _factory_reg_with_metadata(
 
 
 def _normalize_metadata_obj(value: object) -> m.Metadata:
-    """Call normalize_to_metadata with arbitrary object for error-path testing."""
-    fn: Callable[[object], m.Metadata] = getattr(u, "normalize_to_metadata")
+    """Call ensure_metadata with arbitrary object for error-path testing."""
+    fn: Callable[[object], m.Metadata] = getattr(u, "ensure_metadata")
     return fn(value)
 
 

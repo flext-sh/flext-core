@@ -181,7 +181,7 @@ class NotificationService(FlextService[str]):
         return self._call_count
 
 
-class ServiceConfig(m.CollectionsConfig):
+class ServiceConfig(m.Config):
     """Service configuration model with required fields."""
 
     name: str

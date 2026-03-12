@@ -324,7 +324,7 @@ def test_parser_convert_and_norm_branches(monkeypatch: pytest.MonkeyPatch) -> No
 
 def test_parser_success_and_edge_paths_cover_major_branches() -> None:
     parser = u()
-    opts = m.CollectionsParseOptions(
+    opts = m.ParseOptions(
         strip=True,
         remove_empty=True,
         validator=lambda value: len(value) > 1,

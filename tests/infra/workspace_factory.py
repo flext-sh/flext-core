@@ -18,7 +18,7 @@ from flext_infra.constants import FlextInfraConstants
 from flext_tests import m
 
 
-class WorkspaceFactory(m.Tests.Factory.Config):
+class WorkspaceFactory(m.Config):
     """Factory for creating test workspaces with real project structures.
 
     Extends FlextTestsModels.Factory.Config for consistent test data generation.

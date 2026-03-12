@@ -328,7 +328,7 @@ class FlextUtilitiesEnum:
             by_name_value = FlextUtilitiesEnum._validate_str(value)
             if by_name and by_name_value.is_success:
                 is_member_result: bool = FlextUtilitiesEnum._is_member_by_name(
-                    by_name_value.value, enum_cls
+                    str(by_name_value.value), enum_cls
                 )
                 return is_member_result
             result_bool: bool = FlextUtilitiesEnum._is_member_by_value(value, enum_cls)
@@ -340,14 +340,16 @@ class FlextUtilitiesEnum:
                 return FlextUtilitiesEnum._parse(enum_cls, value)
             validated_value = FlextUtilitiesEnum._validate_str(value)
             if validated_value.is_success:
-                return FlextUtilitiesEnum._parse(enum_cls, validated_value.value)
+                return FlextUtilitiesEnum._parse(enum_cls, str(validated_value.value))
             return FlextUtilitiesEnum._parse(enum_cls, str(value))
         if mode == "coerce":
             if isinstance(value, enum_cls):
                 return value
             validated_value = FlextUtilitiesEnum._validate_str(value)
             if validated_value.is_success:
-                coerced: E = FlextUtilitiesEnum._coerce(enum_cls, validated_value.value)
+                coerced: E = FlextUtilitiesEnum._coerce(
+                    enum_cls, str(validated_value.value)
+                )
                 return coerced
             value_str: str = str(value)
             coerced_str: E = FlextUtilitiesEnum._coerce(enum_cls, value_str)
@@ -449,7 +451,7 @@ class FlextUtilitiesEnum:
         return result
 
     @staticmethod
-    def parse(enum_cls: type[EnumT], value: str | EnumT) -> r[EnumT]:
+    def parse_enum(enum_cls: type[EnumT], value: str | EnumT) -> r[EnumT]:
         """Convert string to StrEnum with r.
 
         Example:

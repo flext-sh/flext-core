@@ -50,27 +50,27 @@ class TestAutomatedFlextRegistry:
     @pytest.mark.parametrize(
         "test_scenario",
         [
-            m.Tests.AutomatedTestScenario(
+            m.AutomatedTestScenario(
                 description="basic_functionality",
                 input={},
                 expected_success=True,
             ),
-            m.Tests.AutomatedTestScenario(
+            m.AutomatedTestScenario(
                 description="edge_case_handling",
                 input={"edge": True},
                 expected_success=True,
             ),
-            m.Tests.AutomatedTestScenario(
+            m.AutomatedTestScenario(
                 description="error_conditions",
                 input={"invalid": True},
                 expected_success=False,
             ),
-            m.Tests.AutomatedTestScenario(
+            m.AutomatedTestScenario(
                 description="boundary_conditions",
                 input={"boundary": True},
                 expected_success=True,
             ),
-            m.Tests.AutomatedTestScenario(
+            m.AutomatedTestScenario(
                 description="complex_scenarios",
                 input={"complex": True},
                 expected_success=True,
@@ -80,7 +80,7 @@ class TestAutomatedFlextRegistry:
     )
     def test_automated_registry_comprehensive_scenarios(
         self,
-        test_scenario: m.Tests.AutomatedTestScenario,
+        test_scenario: m.AutomatedTestScenario,
     ) -> None:
         """Comprehensive test scenarios for registry functionality."""
         try:

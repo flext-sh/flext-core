@@ -113,9 +113,7 @@ class FlextGenericModels:
             description="Capture timestamp",
         )
         source: str | None = Field(default=None, description="Config source")
-        environment: str | None = Field(
-            default=None, description="Target environment"
-        )
+        environment: str | None = Field(default=None, description="Target environment")
         version: str = Field(default="1.0.0", description="Schema version")
         checksum: str | None = Field(default=None, description="Checksum")
         validation_errors: list[str] = Field(
@@ -143,12 +141,8 @@ class FlextGenericModels:
             default_factory=lambda: datetime.now(UTC), description="Check timestamp"
         )
         service_name: str | None = Field(default=None, description="Service name")
-        service_version: str | None = Field(
-            default=None, description="Service version"
-        )
-        duration_ms: float | None = Field(
-            default=None, description="Check duration ms"
-        )
+        service_version: str | None = Field(default=None, description="Service version")
+        duration_ms: float | None = Field(default=None, description="Check duration ms")
         environment: str | None = Field(default=None, description="Environment")
         metadata: FlextModelsContainers.Dict = Field(
             default_factory=FlextModelsContainers.Dict,
@@ -183,16 +177,10 @@ class FlextGenericModels:
         warning_count: int = Field(default=0, description="Warnings")
         retry_count: int = Field(default=0, description="Retries")
         start_time: datetime | None = Field(default=None, description="Start time")
-        last_update: datetime | None = Field(
-            default=None, description="Last update"
-        )
-        estimated_total: int | None = Field(
-            default=None, description="Estimated total"
-        )
+        last_update: datetime | None = Field(default=None, description="Last update")
+        estimated_total: int | None = Field(default=None, description="Estimated total")
         current_item: str | None = Field(default=None, description="Current item")
-        operation_name: str | None = Field(
-            default=None, description="Operation name"
-        )
+        operation_name: str | None = Field(default=None, description="Operation name")
         metadata: FlextModelsContainers.Dict = Field(
             default_factory=FlextModelsContainers.Dict,
             description="Operation metadata",
@@ -243,9 +231,7 @@ class FlextGenericModels:
         """
 
         converted: list[object] = Field(default=[], description="Converted items")
-        errors: list[str] = Field(
-            default_factory=list, description="Error messages"
-        )
+        errors: list[str] = Field(default_factory=list, description="Error messages")
         warnings: list[str] = Field(
             default_factory=list, description="Warning messages"
         )

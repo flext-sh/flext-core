@@ -200,7 +200,7 @@ class TestuCacheLogger:
 
     def test_logger_property(self) -> None:
         """Test logger property returns structlog logger."""
-        cache = u.Cache()
+        cache = u()
         logger = cache.logger
         assert hasattr(logger, "info")
         assert hasattr(logger, "debug")
@@ -218,7 +218,7 @@ class TestuCacheNormalizeComponent:
     )
     def test_normalize_component(self, scenario: NormalizeComponentScenario) -> None:
         """Test normalize_component with various scenarios."""
-        result = u.Cache.normalize_component(cast("object", scenario.component))
+        result = u.normalize_component(cast("object", scenario.component))
         assert isinstance(result, scenario.expected_type)
         if scenario.expected_value is not None:
             assert result == scenario.expected_value
@@ -226,7 +226,7 @@ class TestuCacheNormalizeComponent:
     def test_normalize_pydantic_model(self) -> None:
         """Test normalize_component with Pydantic model."""
         model = CacheTestModel(name="test", value=42)
-        result = u.Cache.normalize_component(model)
+        result = u.normalize_component(model)
         assert isinstance(result, dict)
         result_dict: dict[str, object] = result
         assert result_dict["name"] == "test"
@@ -235,7 +235,7 @@ class TestuCacheNormalizeComponent:
     def test_normalize_nested_pydantic_model(self) -> None:
         """Test normalize_component with nested Pydantic model."""
         model = NestedModel(inner=CacheTestModel(name="inner", value=10), count=5)
-        result = u.Cache.normalize_component(model)
+        result = u.normalize_component(model)
         assert isinstance(result, dict)
         result_dict: dict[str, object] = result
         assert isinstance(result_dict["inner"], dict)
@@ -247,7 +247,7 @@ class TestuCacheNormalizeComponent:
     def test_normalize_set_preserves_order(self) -> None:
         """Test normalize_component converts set to tuple."""
         component = {3, 1, 2}
-        result = u.Cache.normalize_component(
+        result = u.normalize_component(
             cast("object | BaseModel", component),
         )
         assert isinstance(result, tuple)
@@ -262,7 +262,7 @@ class TestuCacheNormalizeComponent:
     def test_normalize_set_with_nested_values(self) -> None:
         """Test normalize_component with set containing nested values."""
         component = {1, "test", math.pi, None}
-        result = u.Cache.normalize_component(
+        result = u.normalize_component(
             cast("object | BaseModel", component),
         )
         tm.that(
@@ -288,7 +288,7 @@ class TestuCacheNormalizeComponent:
             "Sequence[object]",
             component_raw,
         )
-        result = u.Cache.normalize_component(component)
+        result = u.normalize_component(component)
         tm.that(result, is_=list, none=False, msg="Result must be list")
         result_list = cast("list[object]", result)
         tm.that(len(result_list), eq=4, msg="Result list must have 4 items")
@@ -308,7 +308,7 @@ class TestuCacheNormalizeComponent:
                 return "custom_object"
 
         obj = CustomObject()
-        result = u.Cache.normalize_component(cast("object | BaseModel", obj))
+        result = u.normalize_component(cast("object | BaseModel", obj))
         assert isinstance(result, str)
         assert result == "custom_object"
 
@@ -319,7 +319,7 @@ class TestuCacheSortKey:
     @pytest.mark.parametrize("scenario", CacheScenarios.SORT_KEY, ids=lambda s: s.name)
     def test_sort_key(self, scenario: SortKeyScenario) -> None:
         """Test sort_key with various scenarios."""
-        result = u.Cache.sort_key(scenario.key)
+        result = u.sort_key(scenario.key)
         if scenario.name in {"custom_object", "float_key"}:
             assert result[0] == scenario.expected_tuple[0]
             assert isinstance(result[1], str)
@@ -330,17 +330,17 @@ class TestuCacheSortKey:
 
     def test_sort_key_string_case_insensitive(self) -> None:
         """Test sort_key handles string case-insensitively."""
-        assert u.Cache.sort_key("Hello") == (0, "hello")
-        assert u.Cache.sort_key("HELLO") == (0, "hello")
-        assert u.Cache.sort_key("hello") == (0, "hello")
+        assert u.sort_key("Hello") == (0, "hello")
+        assert u.sort_key("HELLO") == (0, "hello")
+        assert u.sort_key("hello") == (0, "hello")
 
     def test_sort_key_number_types(self) -> None:
         """Test sort_key handles different number types."""
-        assert u.Cache.sort_key(42) == (1, "42")
-        pi_result = u.Cache.sort_key(math.pi)
+        assert u.sort_key(42) == (1, "42")
+        pi_result = u.sort_key(math.pi)
         assert pi_result[0] == 1
         assert isinstance(pi_result[1], str)
-        assert u.Cache.sort_key(-10) == (1, "-10")
+        assert u.sort_key(-10) == (1, "-10")
 
 
 class TestuCacheSortDictKeys:
@@ -349,7 +349,7 @@ class TestuCacheSortDictKeys:
     def test_sort_dict_keys_simple(self) -> None:
         """Test sort_dict_keys with simple dict."""
         data = {"c": 3, "a": 1, "b": 2}
-        result = u.Cache.sort_dict_keys(data)
+        result = u.sort_dict_keys(data)
         assert isinstance(result, dict)
         result_dict: dict[str, object] = result
         assert list(result_dict.keys()) == ["a", "b", "c"]
@@ -357,7 +357,7 @@ class TestuCacheSortDictKeys:
     def test_sort_dict_keys_with_none_values(self) -> None:
         """Test sort_dict_keys converts None values to empty dict."""
         data: dict[str, str | int | None] = {"key1": "value", "key2": None, "key3": 42}
-        result = u.Cache.sort_dict_keys(data)
+        result = u.sort_dict_keys(data)
         assert isinstance(result, dict)
         result_dict: dict[str, object] = result
         assert result_dict["key1"] == "value"
@@ -367,7 +367,7 @@ class TestuCacheSortDictKeys:
     def test_sort_dict_keys_nested(self) -> None:
         """Test sort_dict_keys with nested dicts."""
         data = {"z": {"c": 3, "a": 1, "b": 2}, "a": {"x": 10, "y": 20}}
-        result = u.Cache.sort_dict_keys(data)
+        result = u.sort_dict_keys(data)
         assert isinstance(result, dict)
         result_dict: dict[str, object] = result
         assert list(result_dict.keys()) == ["a", "z"]
@@ -378,9 +378,9 @@ class TestuCacheSortDictKeys:
 
     def test_sort_dict_keys_non_dict(self) -> None:
         """Test sort_dict_keys returns non-dict unchanged."""
-        assert u.Cache.sort_dict_keys("string") == "string"
-        assert u.Cache.sort_dict_keys(42) == 42
-        assert u.Cache.sort_dict_keys([1, 2, 3]) == [1, 2, 3]
+        assert u.sort_dict_keys("string") == "string"
+        assert u.sort_dict_keys(42) == 42
+        assert u.sort_dict_keys([1, 2, 3]) == [1, 2, 3]
 
 
 class TestuCacheClearObjectCache:
@@ -399,7 +399,7 @@ class TestuCacheClearObjectCache:
 
         obj = TestObject()
         assert len(obj._cache) == 2
-        result = u.Cache.clear_object_cache(obj)
+        result = u.clear_object_cache(obj)
         _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value is True
         assert len(obj._cache) == 0
@@ -414,7 +414,7 @@ class TestuCacheClearObjectCache:
 
         obj = TestObject()
         assert obj._cached_value == "cached_value"
-        result = u.Cache.clear_object_cache(obj)
+        result = u.clear_object_cache(obj)
         _ = assertion_helpers.assert_flext_result_success(result)
         assert getattr(obj, "_cached_value", None) is None
 
@@ -428,7 +428,7 @@ class TestuCacheClearObjectCache:
 
         obj = TestObject()
         assert obj._cache == "simple_string_cache"
-        result = u.Cache.clear_object_cache(obj)
+        result = u.clear_object_cache(obj)
         _ = assertion_helpers.assert_flext_result_success(result)
         assert getattr(obj, "_cache", None) is None
 
@@ -451,7 +451,7 @@ class TestuCacheClearObjectCache:
         assert len(obj._cache) == 1
         assert obj._cached_value == "value"
         assert len(obj._cached_at) == 1
-        result = u.Cache.clear_object_cache(obj)
+        result = u.clear_object_cache(obj)
         _ = assertion_helpers.assert_flext_result_success(result)
         assert len(obj._cache) == 0
         assert getattr(obj, "_cached_value", None) is None
@@ -466,7 +466,7 @@ class TestuCacheClearObjectCache:
             data: str = "value"
 
         obj = TestObject()
-        result = u.Cache.clear_object_cache(obj)
+        result = u.clear_object_cache(obj)
         _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value is True
 
@@ -479,7 +479,7 @@ class TestuCacheClearObjectCache:
             _cache: dict[str, str] | None = None
 
         obj = TestObject()
-        result = u.Cache.clear_object_cache(obj)
+        result = u.clear_object_cache(obj)
         _ = assertion_helpers.assert_flext_result_success(result)
 
     def test_clear_object_cache_error_handling(self) -> None:
@@ -492,7 +492,7 @@ class TestuCacheClearObjectCache:
                 raise RuntimeError(error_msg)
 
         obj = BadObject()
-        result = u.Cache.clear_object_cache(cast("object | BaseModel", obj))
+        result = u.clear_object_cache(cast("object | BaseModel", obj))
         _ = assertion_helpers.assert_flext_result_failure(result)
         assert result.error is not None and "Failed to clear caches" in result.error
 
@@ -511,7 +511,7 @@ class TestuCacheClearObjectCache:
                 super().__setattr__(name, value)
 
         obj = BadObject()
-        result = u.Cache.clear_object_cache(cast("object | BaseModel", obj))
+        result = u.clear_object_cache(cast("object | BaseModel", obj))
         _ = assertion_helpers.assert_flext_result_failure(result)
         assert result.error is not None and "Failed to clear caches" in result.error
 
@@ -530,7 +530,7 @@ class TestuCacheClearObjectCache:
                 return super().__getattribute__(name)
 
         obj = BadObject()
-        result = u.Cache.clear_object_cache(cast("object | BaseModel", obj))
+        result = u.clear_object_cache(cast("object | BaseModel", obj))
         _ = assertion_helpers.assert_flext_result_failure(result)
         assert result.error is not None and "Failed to clear caches" in result.error
 
@@ -548,7 +548,7 @@ class TestuCacheClearObjectCache:
                 self._cache = BadCache({"key": "value"})
 
         obj = BadObject()
-        result = u.Cache.clear_object_cache(cast("object | BaseModel", obj))
+        result = u.clear_object_cache(cast("object | BaseModel", obj))
         _ = assertion_helpers.assert_flext_result_failure(result)
         assert result.error is not None and "Failed to clear caches" in result.error
 
@@ -569,7 +569,7 @@ class TestuCacheClearObjectCache:
         cache_before = getattr(model, "_cache", None)
         assert cache_before is not None
         assert len(cache_before) == 1
-        result = u.Cache.clear_object_cache(model)
+        result = u.clear_object_cache(model)
         _ = assertion_helpers.assert_flext_result_success(result)
         cache_after = getattr(model, "_cache", None)
         assert cache_after == {}
@@ -586,7 +586,7 @@ class TestuCacheHasCacheAttributes:
                 self._cache: dict[str, object] = {}  # Test double
 
         obj = TestObject()
-        assert u.Cache.has_cache_attributes(cast("object", obj)) is True
+        assert u.has_cache_attributes(cast("object", obj)) is True
 
     def test_has_cache_attributes_false(self) -> None:
         """Test has_cache_attributes returns False when no cache."""
@@ -596,7 +596,7 @@ class TestuCacheHasCacheAttributes:
                 self.data = "value"
 
         obj = TestObject()
-        assert u.Cache.has_cache_attributes(cast("object", obj)) is False
+        assert u.has_cache_attributes(cast("object", obj)) is False
 
     def test_has_cache_attributes_multiple(self) -> None:
         """Test has_cache_attributes with multiple cache attributes."""
@@ -607,7 +607,7 @@ class TestuCacheHasCacheAttributes:
                 self.cache: dict[str, object] = {}
 
         obj = TestObject()
-        assert u.Cache.has_cache_attributes(cast("object", obj)) is True
+        assert u.has_cache_attributes(cast("object", obj)) is True
 
 
 class TestuCacheGenerateCacheKey:
@@ -615,33 +615,33 @@ class TestuCacheGenerateCacheKey:
 
     def test_generate_cache_key_args_only(self) -> None:
         """Test generate_cache_key with positional arguments."""
-        key1 = u.Cache.generate_cache_key(1, 2, 3)
-        key2 = u.Cache.generate_cache_key(1, 2, 3)
+        key1 = u.generate_cache_key(1, 2, 3)
+        key2 = u.generate_cache_key(1, 2, 3)
         assert key1 == key2
         assert len(key1) == 64
 
     def test_generate_cache_key_kwargs_only(self) -> None:
         """Test generate_cache_key with keyword arguments."""
-        key1 = u.Cache.generate_cache_key(a=1, b=2)
-        key2 = u.Cache.generate_cache_key(b=2, a=1)
+        key1 = u.generate_cache_key(a=1, b=2)
+        key2 = u.generate_cache_key(b=2, a=1)
         assert key1 == key2
 
     def test_generate_cache_key_mixed(self) -> None:
         """Test generate_cache_key with both args and kwargs."""
-        key1 = u.Cache.generate_cache_key(1, 2, x=3, y=4)
-        key2 = u.Cache.generate_cache_key(1, 2, y=4, x=3)
+        key1 = u.generate_cache_key(1, 2, x=3, y=4)
+        key2 = u.generate_cache_key(1, 2, y=4, x=3)
         assert key1 == key2
 
     def test_generate_cache_key_deterministic(self) -> None:
         """Test generate_cache_key produces deterministic keys."""
-        key1 = u.Cache.generate_cache_key("test", 42, flag=True)
-        key2 = u.Cache.generate_cache_key("test", 42, flag=True)
+        key1 = u.generate_cache_key("test", 42, flag=True)
+        key2 = u.generate_cache_key("test", 42, flag=True)
         assert key1 == key2
 
     def test_generate_cache_key_different_inputs(self) -> None:
         """Test generate_cache_key produces different keys for different inputs."""
-        key1 = u.Cache.generate_cache_key("test1")
-        key2 = u.Cache.generate_cache_key("test2")
+        key1 = u.generate_cache_key("test1")
+        key2 = u.generate_cache_key("test2")
         assert key1 != key2
 
 

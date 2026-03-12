@@ -108,7 +108,7 @@ class FlextUtilitiesText:
             Lowercase string with only alphanumeric characters.
 
         Example:
-            >>> u.Text.normalize_alnum("flext-ldap")
+            >>> u.normalize_alnum("flext-ldap")
             'flextldap'
 
         """

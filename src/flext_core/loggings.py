@@ -640,7 +640,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
     @staticmethod
     def _to_container_value(value: object) -> t.Container:
         """Normalize value to Container (internal helper)."""
-        return FlextRuntime.normalize_to_container(value)
+        return u.normalize_to_container(value)
 
     @staticmethod
     def _to_scalar_value(value: object) -> t.Scalar:
@@ -745,7 +745,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
                     "exception_message": str(exception),
                 }
             )
-            merged_root: dict[str, t.Container] = dict(context_dict.root)
+            merged_root: dict[str, object] = dict(context_dict.root)
             merged_root.update(dict(exception_data.root))
             context_dict = m.ConfigMap(root=merged_root)
             if include_stack_trace:

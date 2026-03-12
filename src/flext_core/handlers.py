@@ -316,7 +316,7 @@ class FlextHandlers[MessageT_contra = object, ResultT = object](x):
             one to run takes precedence.
             """
             if not hasattr(func, c.Discovery.HANDLER_ATTR):
-                config = m.HandlerDecoratorConfig(
+                config = m.DecoratorConfig(
                     command=command, priority=priority, timeout=timeout, middleware=[]
                 )
                 if middleware is not None:
@@ -649,7 +649,7 @@ class FlextHandlers[MessageT_contra = object, ResultT = object](x):
         @staticmethod
         def scan_class(
             target_class: type,
-        ) -> list[tuple[str, m.HandlerDecoratorConfig]]:
+        ) -> list[tuple[str, m.DecoratorConfig]]:
             """Scan class for methods decorated with @handler().
 
             Introspects the class to find all methods with handler configuration
@@ -667,11 +667,11 @@ class FlextHandlers[MessageT_contra = object, ResultT = object](x):
                 ...     print(f"{method_name}: {config.command.__name__}")
 
             """
-            handlers: list[tuple[str, m.HandlerDecoratorConfig]] = []
+            handlers: list[tuple[str, m.DecoratorConfig]] = []
             for name in dir(target_class):
                 method = getattr(target_class, name, None)
                 if hasattr(method, c.Discovery.HANDLER_ATTR):
-                    config: m.HandlerDecoratorConfig = getattr(
+                    config: m.DecoratorConfig = getattr(
                         method, c.Discovery.HANDLER_ATTR
                     )
                     handlers.append((name, config))
@@ -680,7 +680,7 @@ class FlextHandlers[MessageT_contra = object, ResultT = object](x):
         @staticmethod
         def scan_module(
             module: ModuleType,
-        ) -> list[tuple[str, Callable[..., object | None], m.HandlerDecoratorConfig]]:
+        ) -> list[tuple[str, Callable[..., object | None], m.DecoratorConfig]]:
             """Scan module for functions decorated with @handler().
 
             Introspects the module to find all functions with handler configuration
@@ -702,7 +702,7 @@ class FlextHandlers[MessageT_contra = object, ResultT = object](x):
                 tuple[
                     str,
                     Callable[..., object | None],
-                    m.HandlerDecoratorConfig,
+                    m.DecoratorConfig,
                 ]
             ] = []
             for name in dir(module):
@@ -715,9 +715,7 @@ class FlextHandlers[MessageT_contra = object, ResultT = object](x):
                     continue
                 if not callable(func):
                     continue
-                config: m.HandlerDecoratorConfig = getattr(
-                    func, c.Discovery.HANDLER_ATTR
-                )
+                config: m.DecoratorConfig = getattr(func, c.Discovery.HANDLER_ATTR)
                 callable_func: Callable[..., object] = func
 
                 def narrowed_func(

@@ -96,6 +96,18 @@ class FlextModelsService:
             examples=[["UserService", "OrderService"]],
         )
 
+    class ServiceRuntime(FlextModelFoundation.ArbitraryTypesModel):
+        """Runtime triple (config, context, container) for services.
+
+        Represents the core service runtime with configuration, context,
+        and dependency injection container. CQRS components (dispatcher,
+        registry) should be used directly - not through FlextService.
+        """
+
+        config: p.Config
+        context: p.Context
+        container: p.DI
+
     class TraceContext(FlextModelFoundation.FrozenStrictModel):
         """Trace context for distributed tracing."""
 
@@ -113,7 +125,7 @@ class FlextModelsService:
         )
         parent_span_id: str | None = None
 
-    class RetryConfiguration(
+    class ServiceRetryConfiguration(
         FlextModelFoundation.FrozenStrictModel,
         FlextModelFoundation.RetryConfigurationMixin,
     ):
@@ -321,7 +333,7 @@ class FlextModelsService:
             le=c.Performance.MAX_TIMEOUT_SECONDS,
             description="Timeout from FlextSettings (Config has priority over Constants)",
         )
-        retry_config: FlextModelsService.RetryConfiguration | None = None
+        retry_config: FlextModelsService.ServiceRetryConfiguration | None = None
 
         @model_validator(mode="after")
         def apply_defaults(self) -> Self:
@@ -331,5 +343,8 @@ class FlextModelsService:
             if self.keyword_arguments is None:
                 self.keyword_arguments = FlextModelsService.ServiceParameters()
             if self.retry_config is None:
-                self.retry_config = FlextModelsService.RetryConfiguration()
+                self.retry_config = FlextModelsService.ServiceRetryConfiguration()
             return self
+
+
+__all__ = ["FlextModelsService"]

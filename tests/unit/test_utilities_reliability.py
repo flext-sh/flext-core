@@ -192,7 +192,7 @@ class TestFlextUtilitiesReliability:
         """Test timeout operations covering all scenarios."""
         scenario_enum = self.TimeoutScenario(scenario)
         operation = self.Factories.create_timeout_operation(scenario_enum)
-        result = u.Reliability.with_timeout(operation, timeout)
+        result = u.with_timeout(operation, timeout)
         if expected_success:
             u.Tests.Result.assert_success_with_value(
                 result,
@@ -205,14 +205,14 @@ class TestFlextUtilitiesReliability:
 
     def test_with_timeout_invalid_timeout(self) -> None:
         """Test timeout validation."""
-        result = u.Reliability.with_timeout(lambda: r[str].ok("test"), -1.0)
+        result = u.with_timeout(lambda: r[str].ok("test"), -1.0)
         _ = u.Tests.Result.assert_failure(result)
         assert "Timeout must be positive" in (result.error or "")
 
     def test_retry_succeeds_after_failure(self) -> None:
         """Test retry succeeds after initial failure."""
         op, attempts = self.Factories.create_retry_operation(success_after=2)
-        result: r[int] = u.Reliability.retry(
+        result: r[int] = u.retry(
             op,
             max_attempts=self.Constants.MAX_ATTEMPTS_VALID,
             delay_seconds=0.0,
@@ -222,7 +222,7 @@ class TestFlextUtilitiesReliability:
 
     def test_retry_validation_error(self) -> None:
         """Test retry parameter validation."""
-        result: r[int] = u.Reliability.retry(
+        result: r[int] = u.retry(
             lambda: r[int].fail("fail"),
             max_attempts=self.Constants.MAX_ATTEMPTS_INVALID,
         )
@@ -248,7 +248,7 @@ class TestFlextUtilitiesReliability:
         """Test delay calculation for exponential and linear configs."""
         config_enum = self.DelayConfig(config_type)
         config = self.Factories.create_delay_config(config_enum)
-        delay = u.Reliability.calculate_delay(attempt, config)
+        delay = u.calculate_delay(attempt, config)
         if expected_exact is not None:
             assert delay == expected_exact
         else:
@@ -257,7 +257,7 @@ class TestFlextUtilitiesReliability:
             if expected_max is not None:
                 assert delay <= expected_max
             if config_type == "exponential" and attempt > 0:
-                delay0 = u.Reliability.calculate_delay(0, config)
+                delay0 = u.calculate_delay(0, config)
                 assert delay > delay0
 
     def test_with_retry_controlled_retries(self) -> None:
@@ -268,7 +268,7 @@ class TestFlextUtilitiesReliability:
                 constants=self._constants,
             )
         )
-        result = u.Reliability.with_retry(
+        result = u.with_retry(
             op,
             max_attempts=self.Constants.MAX_ATTEMPTS_VALID,
             should_retry_func=should_retry,
@@ -281,7 +281,7 @@ class TestFlextUtilitiesReliability:
 
     def test_with_retry_blocked(self) -> None:
         """Test retry blocked by should_retry_func."""
-        blocked: FlextRuntime.RuntimeResult[str] = u.Reliability.with_retry(
+        blocked: FlextRuntime.RuntimeResult[str] = u.with_retry(
             lambda: r[str].fail("stop"),
             max_attempts=2,
             should_retry_func=lambda attempt, _error: attempt == 0,
