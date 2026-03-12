@@ -18,6 +18,7 @@ from returns.primitives.exceptions import UnwrapFailedError
 from returns.result import Failure, Result, Success
 
 from flext_core import FlextRuntime, T_Model, U, t
+from flext_core._models.containers import FlextModelsContainers
 
 
 class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
@@ -29,17 +30,40 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
 
     _result: Result[T_co, str] | None = PrivateAttr(default=None)
 
+    @staticmethod
+    def _validate_error_data(
+        error_data: t.ResultErrorData
+        | BaseModel
+        | FlextModelsContainers.ConfigMap
+        | None,
+    ) -> FlextModelsContainers.ConfigMap:
+        """Convert error_data to ConfigMap, matching RuntimeResult.fail() logic."""
+        if error_data is None:
+            return FlextModelsContainers.ConfigMap(root={})
+        if isinstance(error_data, FlextModelsContainers.ConfigMap):
+            return error_data
+        if isinstance(error_data, BaseModel):
+            dump = error_data.model_dump()
+            return FlextModelsContainers.ConfigMap.model_validate(dump)
+        return FlextModelsContainers.ConfigMap.model_validate(dict(error_data))
+
     def __init__(
         self,
         source: Result[T_co, str] | None = None,
         error_code: str | None = None,
-        error_data: t.ResultErrorData | None = None,
+        error_data: t.ResultErrorData
+        | BaseModel
+        | FlextModelsContainers.ConfigMap
+        | None = None,
         *,
         value: T_co | None = None,
         error: str | None = None,
         is_success: bool = True,
     ) -> None:
         """Initialize FlextResult from value/error/is_success only (direct typing, no Result unwrap)."""
+        # Convert error_data to ConfigMap using the same logic as RuntimeResult.fail()
+        validated_error_data = FlextResult._validate_error_data(error_data)
+
         if source is not None and value is None and (error is None):
             object.__setattr__(self, "_result", source)
             try:
@@ -49,17 +73,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
                     error_code=error_code,
                     is_success=True,
                 )
-                if error_data is None:
-                    object.__setattr__(self, "error_data", None)
-                else:
-                    object.__setattr__(
-                        self,
-                        "error_data",
-                        FlextRuntime
-                        .RuntimeResult[t.Container]
-                        .fail(error="", error_data=error_data)
-                        .error_data,
-                    )
+                object.__setattr__(self, "error_data", validated_error_data)
                 setattr(self, "_payload", source.unwrap())
                 self.result_logger.debug(
                     "Result source is success path during initialization", exc_info=exc
@@ -70,17 +84,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
                 error=str(failure_value),
                 is_success=False,
             )
-            if error_data is None:
-                object.__setattr__(self, "error_data", None)
-            else:
-                object.__setattr__(
-                    self,
-                    "error_data",
-                    FlextRuntime
-                    .RuntimeResult[t.Container]
-                    .fail(error="", error_data=error_data)
-                    .error_data,
-                )
+            object.__setattr__(self, "error_data", validated_error_data)
             return
         object.__setattr__(self, "_result", source)
         super().__init__(
@@ -88,17 +92,7 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
             error_code=error_code,
             is_success=is_success,
         )
-        if error_data is None:
-            object.__setattr__(self, "error_data", None)
-        else:
-            object.__setattr__(
-                self,
-                "error_data",
-                FlextRuntime
-                .RuntimeResult[t.Container]
-                .fail(error="", error_data=error_data)
-                .error_data,
-            )
+        object.__setattr__(self, "error_data", validated_error_data)
         if value is not None and is_success:
             setattr(self, "_payload", value)
 
@@ -204,7 +198,10 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         cls: type[FlextResult[T]],
         error: str | None,
         error_code: str | None = None,
-        error_data: t.ResultErrorData | None = None,
+        error_data: t.ResultErrorData
+        | BaseModel
+        | FlextModelsContainers.ConfigMap
+        | None = None,
         *,
         exception: BaseException | None = None,
     ) -> FlextResult[T]:

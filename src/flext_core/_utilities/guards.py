@@ -267,10 +267,10 @@ class FlextUtilitiesGuards:
     @staticmethod
     def is_container(
         value: FlextUtilitiesGuards._GuardInput,
-    ) -> TypeGuard[str | int | float | bool | datetime | BaseModel | Path]:
+    ) -> TypeGuard[str | int | float | bool | datetime | Path]:
         """Check if value is a valid Container type.
 
-        Container = Scalar | BaseModel | Path
+        Container = Scalar | Path
         Scalar = str | int | float | bool | datetime
 
         This TypeGuard enables type narrowing to t.Container.
@@ -291,9 +291,7 @@ class FlextUtilitiesGuards:
             return all(FlextUtilitiesGuards.is_container(item) for item in value)
         if FlextUtilitiesGuards._is_mapping(value):
             return all(FlextUtilitiesGuards.is_container(v) for v in value.values())
-        if callable(value):
-            return True
-        return hasattr(value, "model_dump") or isinstance(value, Path)
+        return isinstance(value, Path)
 
     @staticmethod
     def is_general_value_type(value: object) -> bool:

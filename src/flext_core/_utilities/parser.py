@@ -743,13 +743,10 @@ class FlextUtilitiesParser:
         """
         items_to_check: list[str]
         if isinstance(items, m.ConfigMap):
-            # Canonical ConfigMap Protocol path
             items_to_check = [str(k) for k in items.root]
         elif isinstance(items, p.HasModelDump):
-            # Canonical BaseModel Protocol path
             items_to_check = list(items.model_dump().keys())
         elif isinstance(items, Mapping):
-            # Legacy raw Mapping path — use m.ConfigMap or a Pydantic model instead
             warnings.warn(
                 "Passing raw Mapping to norm_in() is deprecated. "
                 "Use m.ConfigMap or a Pydantic BaseModel (p.HasModelDump) instead. "
@@ -759,7 +756,6 @@ class FlextUtilitiesParser:
             )
             items_to_check = [str(k) for k in items]
         else:
-            # list[str] path — no Protocol available, no warning
             items_to_check = items
         normalized_value = FlextUtilitiesParser.norm_str(value, case=case or "lower")
         normalized_result = [
@@ -791,26 +787,13 @@ class FlextUtilitiesParser:
 
     @staticmethod
     def norm_list(
-        items: list[str] | m.ConfigMap | object,
+        items: p.HasModelDump | list[str] | m.ConfigMap | Mapping[str, t.Container],
         *,
         case: str | None = None,
         filter_truthy: bool = False,
         to_set: bool = False,
-    ) -> list[str] | set[str] | m.ConfigMap | dict[str, str]:
-        """Normalize list/dict (builder: norm().list()).
-
-        Mnemonic: norm = normalize, list = list[str]
-
-        Args:
-            items: Items to normalize
-            case: Case normalization
-            filter_truthy: Filter truthy first
-            to_set: Return set instead of list
-
-        Returns:
-            Normalized list/set/dict
-
-        """
+    ) -> list[str] | set[str] | dict[str, str]:
+        """Normalize list/dict (builder: norm().list())."""
         if isinstance(items, FlextModelsContainers.ConfigMap):
             dict_items: Mapping[str, object] = items.root
             if filter_truthy:
@@ -819,13 +802,28 @@ class FlextUtilitiesParser:
                 k: FlextUtilitiesParser.norm_str(v, case=case)
                 for k, v in dict_items.items()
             }
-        if isinstance(items, Mapping):
-            dict_items = items
+        if isinstance(items, p.HasModelDump):
+            dumped: dict[str, object] = dict(items.model_dump())
             if filter_truthy:
-                dict_items = {k: v for k, v in dict_items.items() if v}
+                dumped = {k: v for k, v in dumped.items() if v}
             return {
                 k: FlextUtilitiesParser.norm_str(v, case=case)
-                for k, v in dict_items.items()
+                for k, v in dumped.items()
+            }
+        if isinstance(items, Mapping):
+            warnings.warn(
+                "Passing raw Mapping to norm_list() is deprecated. "
+                "Use m.ConfigMap or a Pydantic BaseModel (p.HasModelDump) instead. "
+                "Will be removed in v0.13.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            dict_items_raw: Mapping[str, object] = {str(k): v for k, v in items.items()}
+            if filter_truthy:
+                dict_items_raw = {k: v for k, v in dict_items_raw.items() if v}
+            return {
+                k: FlextUtilitiesParser.norm_str(v, case=case)
+                for k, v in dict_items_raw.items()
             }
         list_items: list[str] = items
         if filter_truthy:
