@@ -113,6 +113,14 @@ class FlextTypes:
     type ModuleExport = (
         type | ModuleType | Callable[..., ContainerValue] | ContainerValue
     )
+    type GeneralValueType = (
+        Scalar
+        | Sequence[FlextTypes.GeneralValueType]
+        | Mapping[str, FlextTypes.GeneralValueType]
+        | type
+        | Callable[..., ContainerValue]
+        | None
+    )
 
     class Validation:
         """Validation type aliases with Pydantic constraints."""
