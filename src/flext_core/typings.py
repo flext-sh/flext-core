@@ -70,13 +70,20 @@ class FlextTypes:
 
     # --- RECURSIVE TYPES (PEP 695 - Annotation-only, NEVER with isinstance) ---
 
-    type JsonValue = Scalar | list[FlextTypes.JsonValue] | dict[str, FlextTypes.JsonValue]
-    type Serializable = Scalar | list[FlextTypes.Serializable] | dict[str, FlextTypes.Serializable]
+    type JsonValue = (
+        Scalar | list[FlextTypes.JsonValue] | dict[str, FlextTypes.JsonValue]
+    )
+    type Serializable = (
+        Scalar | list[FlextTypes.Serializable] | dict[str, FlextTypes.Serializable]
+    )
     type ContainerValue = (
         Scalar | list[FlextTypes.ContainerValue] | dict[str, FlextTypes.ContainerValue]
     )
     type GeneralValueType = (
-        Scalar | Path | list[FlextTypes.GeneralValueType] | dict[str, FlextTypes.GeneralValueType]
+        Scalar
+        | Path
+        | list[FlextTypes.GeneralValueType]
+        | dict[str, FlextTypes.GeneralValueType]
     )
 
     type ConstantValue = (
@@ -94,9 +101,7 @@ class FlextTypes:
     type FileContent = str | bytes | Sequence[Sequence[str]]
     type GeneralValueTypeMapping = Mapping[str, Scalar]
 
-    type RegisterableService = (
-        Container | BindableLogger | Callable[..., Container]
-    )
+    type RegisterableService = Container | BindableLogger | Callable[..., Container]
     type FactoryCallable = Callable[[], RegisterableService]
     type ResourceCallable = Callable[[], Container]
     type MetadataValue = (
@@ -105,9 +110,7 @@ class FlextTypes:
     type MetadataAttributeValue = MetadataValue
     type HandlerCallable = Callable[[Container], Container]
     type HandlerLike = Callable[..., Container]
-    type RegistrablePlugin = (
-        Scalar | Callable[..., Scalar | BaseModel]
-    )
+    type RegistrablePlugin = Scalar | Callable[..., Scalar | BaseModel]
 
     # Other Types
     type SortableObjectType = str | int | float
