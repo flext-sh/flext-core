@@ -48,6 +48,7 @@ from collections.abc import Callable, Mapping
 from pathlib import Path
 
 from pydantic import BaseModel
+from typing import cast
 
 from flext_core import FlextExceptions as e, FlextRuntime, T_Model, c, m, p, r, t
 from flext_core._models.containers import FlextModelsContainers
@@ -425,7 +426,7 @@ class FlextUtilitiesConfiguration:
         count = 0
         for name, value in registrations.items():
             try:
-                register_result = container.register(name, t.cast(t.RegisterableService, value))
+                register_result = container.register(name, cast(t.RegisterableService, value))
                 if not isinstance(register_result, p.ResultLike):
                     return r[int].fail(
                         f"Bulk registration failed at {name}: register returned non-result"
@@ -642,7 +643,7 @@ class FlextUtilitiesConfiguration:
         try:
             _ = _cache
             register_result = container.register(
-                name, t.cast(t.RegisterableService, factory), kind="factory"
+                name, cast(t.RegisterableService, factory), kind="factory"
             )
             if not isinstance(register_result, p.ResultLike):
                 return r[bool].fail("Factory registration failed")
@@ -670,7 +671,7 @@ class FlextUtilitiesConfiguration:
 
         """
         try:
-            register_result = container.register(name, t.cast(t.RegisterableService, instance))
+            register_result = container.register(name, cast(t.RegisterableService, instance))
             if not isinstance(register_result, p.ResultLike):
                 return r[bool].fail("Registration failed")
             if register_result.is_failure:

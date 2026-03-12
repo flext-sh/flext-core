@@ -93,7 +93,7 @@ class ResultHelpers:
                 return r[list[T]].fail(
                     items.error or "Failed to extract values from result"
                 )
-            return r[list[T]].ok(list(t.cast(Mapping[str, T], items.value).values()))
+            return r[list[T]].ok(list(cast(Mapping[str, T], items.value).values()))
         if items:
             return r[list[T]].ok(list(items.values()))
         if default is not None:
@@ -116,12 +116,12 @@ class ResultHelpers:
 
         # Fallback for protocol compliance if it's a Result-like but not FlextResult
         if hasattr(value, "is_success") and hasattr(value, "value"):
-            res = t.cast(p.Result[V], value)
+            res = cast(p.Result[V], value)
             if res.is_success:
                 return r[V].ok(res.value)
             return r[V].fail(res.error)
 
-        return r[V].ok(t.cast(V, value))
+        return r[V].ok(cast(V, value))
 
 
 __all__ = ["ResultHelpers"]

@@ -832,7 +832,7 @@ class FlextTestsMatchers:
                         or c.Tests.Matcher.ERR_OK_FAILED.format(error=result_obj.error)
                     )
                 if not params.ok and result_obj.is_success:
-                    unwrapped_value_error: t.Container = t.cast(
+                    unwrapped_value_error: t.Container = cast(
                         t.Container, result_obj.value
                     )
                     value_str: str = str(unwrapped_value_error)
@@ -841,7 +841,7 @@ class FlextTestsMatchers:
                         or c.Tests.Matcher.ERR_FAIL_EXPECTED.format(value=value_str)
                     )
                 if result_obj.is_success:
-                    unwrapped_value: t.Container = t.cast(t.Container, result_obj.value)
+                    unwrapped_value: t.Container = cast(t.Container, result_obj.value)
                     actual_value = unwrapped_value
             elif params.has is not None:
                 err = result_obj.error or ""

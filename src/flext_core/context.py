@@ -18,7 +18,7 @@ from contextlib import contextmanager
 from datetime import datetime
 from typing import ClassVar, Final, Self, overload
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
 
 from flext_core import FlextLogger, FlextRuntime, c, m, p, r, t, u
 
@@ -32,7 +32,7 @@ class _Sentinel(enum.Enum):
 _SENTINEL: Final[str] = _Sentinel.MISSING.value
 
 
-class FlextContext(FlextRuntime):
+class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
     """Context manager for correlation, request data, and timing metadata.
 
     The dispatcher and decorators rely on FlextContext to move correlation IDs,
@@ -48,6 +48,10 @@ class FlextContext(FlextRuntime):
     """
 
     _logger: ClassVar[FlextLogger] = FlextLogger(__name__)
+
+    initial_data: m.ContextData | object | None = Field(
+        default=None, description="Initial data for context scopes."
+    )
 
     @staticmethod
     def _narrow_contextvar_to_configuration_dict(
@@ -77,34 +81,36 @@ class FlextContext(FlextRuntime):
         """Return the protocol name for introspection."""
         return "FlextContext"
 
-    _metadata: m.Metadata
+    _metadata: m.Metadata = PrivateAttr()
+    _hooks: dict[str, list[t.HandlerCallable]] = PrivateAttr(default_factory=dict)
+    _statistics: m.ContextStatistics = PrivateAttr(default_factory=m.ContextStatistics)
+    _active: bool = PrivateAttr(default=True)
+    _suspended: bool = PrivateAttr(default=False)
+    _scope_vars: dict[str, contextvars.ContextVar[m.ConfigMap | None]] = PrivateAttr()
 
-    def __init__(self, initial_data: m.ContextData | object | None = None) -> None:
+    def __init__(self, **data: object) -> None:
         """Initialize FlextContext with optional initial data.
 
         ARCHITECTURAL NOTE: FlextContext now uses Python's contextvars for storage,
         completely independent of structlog. It delegates to FlextLogger for logging
         integration, maintaining clear separation of concerns.
 
-        Args:
-            initial_data: Optional `m.ContextData` instance or dict
-
         """
-        super().__init__()
+        super().__init__(**data)
         context_data = m.ContextData()
-        if initial_data is not None:
-            if hasattr(initial_data, "data") and hasattr(initial_data, "metadata"):
-                context_data = m.ContextData.model_validate(initial_data)
+        if self.initial_data is not None:
+            if hasattr(self.initial_data, "data") and hasattr(self.initial_data, "metadata"):
+                context_data = m.ContextData.model_validate(self.initial_data)
             else:
                 context_data = m.ContextData(
-                    data=m.Dict(root=m.ConfigMap.model_validate(initial_data).root)
+                    data=m.Dict(root=m.ConfigMap.model_validate(self.initial_data).root)
                 )
         self._metadata = m.Metadata()
-        self._hooks: dict[str, list[t.HandlerCallable]] = {}
-        self._statistics: m.ContextStatistics = m.ContextStatistics()
-        self._active: bool = True
-        self._suspended: bool = False
-        self._scope_vars: dict[str, contextvars.ContextVar[m.ConfigMap | None]] = {
+        self._hooks = {}
+        self._statistics = m.ContextStatistics()
+        self._active = True
+        self._suspended = False
+        self._scope_vars = {
             c.Context.SCOPE_GLOBAL: contextvars.ContextVar(
                 "flext_global_context", default=None
             ),
@@ -281,7 +287,7 @@ class FlextContext(FlextRuntime):
             A new FlextContext with the same data
 
         """
-        cloned: Self = self.__class__()
+        cloned: Self = self.__class__(initial_data=self.initial_data)
         for scope_name, ctx_var in self.iter_scope_vars().items():
             scope_dict = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
             if scope_dict:

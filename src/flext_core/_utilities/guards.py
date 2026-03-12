@@ -19,7 +19,7 @@ from collections.abc import Callable, Mapping, Sequence, Sized
 from datetime import datetime
 from pathlib import Path
 from types import MappingProxyType
-from typing import TypeGuard, TypeIs
+from typing import TypeGuard, TypeIs, cast
 
 from pydantic import BaseModel
 
@@ -795,7 +795,7 @@ class FlextUtilitiesGuards:
         context_name: str,
         error_msg: str | None,
     ) -> str:
-        if not condition(t.cast(t.Container, value)):
+        if not condition(cast(t.Container, value)):
             if error_msg is None:
                 desc = (
                     getattr(condition, "description", "validation")
@@ -1031,7 +1031,7 @@ class FlextUtilitiesGuards:
         try:
             if isinstance(validator, type):
                 if isinstance(value, validator):
-                    return t.cast(t.Container, guarded_value) if return_value else True
+                    return cast(t.Container, guarded_value) if return_value else True
             elif FlextUtilitiesGuards.is_object_tuple(validator):
                 tuple_types = tuple(
                     item for item in validator if isinstance(item, type)
@@ -1039,14 +1039,14 @@ class FlextUtilitiesGuards:
                 if len(tuple_types) == len(validator) and isinstance(
                     value, tuple_types
                 ):
-                    return t.cast(t.Container, guarded_value) if return_value else True
+                    return cast(t.Container, guarded_value) if return_value else True
             elif callable(validator):
                 if validator(value):
-                    return t.cast(t.Container, guarded_value) if return_value else True
+                    return cast(t.Container, guarded_value) if return_value else True
             elif value:
-                return t.cast(t.Container, guarded_value) if return_value else True
+                return cast(t.Container, guarded_value) if return_value else True
             if default is not None:
-                return t.cast(t.Container, default)
+                return cast(t.Container, default)
             return (
                 r[t.Container].fail("Guard validation failed")
                 if return_value
@@ -1054,7 +1054,7 @@ class FlextUtilitiesGuards:
             )
         except (TypeError, ValueError, AttributeError):
             if default is not None:
-                return t.cast(t.Container, default)
+                return cast(t.Container, default)
             return (
                 r[t.Container].fail("Guard validation raised an exception")
                 if return_value

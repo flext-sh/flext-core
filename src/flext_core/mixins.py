@@ -16,7 +16,7 @@ from contextlib import contextmanager, suppress
 from types import ModuleType
 from typing import ClassVar, cast, override, Unpack
 
-from pydantic import BaseModel, PrivateAttr, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
 
 from flext_core import (
     FlextContainer,
@@ -139,15 +139,15 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
                 cls._logger_cache[logger_name] = logger
             return logger
 
-    @classmethod
-    def _runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
-        """Hook to customize runtime creation for mixin consumers.
-
-        Returns:
-            p.RuntimeBootstrapOptions: Pydantic model with optional runtime configuration options.
-
-        """
-        return FlextModelsService.RuntimeBootstrapOptions()
+    config_type: type[FlextSettings] | None = Field(
+        default=None, description="Configuration class to initialize the service."
+    )
+    config_overrides: dict[str, object] | None = Field(
+        default=None, description="Configuration overrides applied at instantiation."
+    )
+    initial_context: FlextContext | None = Field(
+        default=None, description="Initial FlextContext for the service scope."
+    )
 
     @staticmethod
     def _clear_operation_context() -> None:
@@ -315,60 +315,31 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
                 return service_runtime
             case _:
                 pass
-        runtime_options_callable = (
-            self._runtime_bootstrap_options
-            if hasattr(self, "_runtime_bootstrap_options")
-            else None
-        )
-        options_candidate = (
-            runtime_options_callable()
-            if callable(runtime_options_callable)
-            else FlextModelsService.RuntimeBootstrapOptions()
-        )
-        try:
-            options: p.RuntimeBootstrapOptions = (
-                FlextModelsService.RuntimeBootstrapOptions.model_validate(
-                    options_candidate
-                )
-            )
-        except (TypeError, ValueError, AttributeError) as exc:
-            self.logger.debug(
-                "Runtime bootstrap options validation failed", exc_info=exc
-            )
-            options = FlextModelsService.RuntimeBootstrapOptions()
-        config_type_raw = options.config_type
+        config_type_raw = getattr(self, "config_type", None)
         config_cls_typed: type[FlextSettings]
         if config_type_raw is not None and issubclass(config_type_raw, FlextSettings):
             config_cls_typed = config_type_raw
         else:
             config_cls_typed = FlextSettings
-        runtime_config = config_cls_typed.get_global(overrides=options.config_overrides)
+            
+        overrides = getattr(self, "config_overrides", None)
+        runtime_config = config_cls_typed.get_global(overrides=overrides)
+        
+        initial_ctx = getattr(self, "initial_context", None)
         runtime_context: p.Context = (
-            options.context if options.context is not None else FlextContext.create()
+            initial_ctx if initial_ctx is not None else FlextContext.create()
         )
         runtime_config_typed: FlextSettings = runtime_config
         runtime_container = FlextContainer.create().scoped(
+            _config=runtime_config_typed, _context=runtime_context
+        )
+        self._runtime = m.ServiceRuntime(
+            container=runtime_container,
             config=runtime_config_typed,
             context=runtime_context,
-            subproject=options.subproject,
-            services=options.services,
-            factories=options.factories,
-            resources=options.resources,
+            logger=self.logger,
         )
-        if options.container_overrides:
-            runtime_container.configure(dict(options.container_overrides))
-        wire_modules: Sequence[ModuleType] | None = options.wire_modules
-        wire_packages: Sequence[str] | None = options.wire_packages
-        wire_classes: Sequence[type] | None = options.wire_classes
-        if wire_modules or wire_packages or wire_classes:
-            runtime_container.wire_modules(
-                modules=wire_modules, packages=wire_packages, classes=wire_classes
-            )
-        runtime = m.ServiceRuntime.model_construct(
-            config=runtime_config, context=runtime_context, container=runtime_container
-        )
-        self._runtime = runtime
-        return runtime
+        return self._runtime
 
     def _init_service(self, service_name: str | None = None) -> None:
         """Initialize service with automatic container registration."""

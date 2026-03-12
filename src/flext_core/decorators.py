@@ -916,7 +916,7 @@ class FlextDecorators:
                 fallback_kwargs["log_error"] = result.error
                 fallback_kwargs["log_error_code"] = result.error_code
             _ = fallback_logger.warning(
-                fallback_message, **t.cast(dict[str, t.Container], fallback_kwargs.root)
+                fallback_message, **cast(dict[str, t.Container], fallback_kwargs.root)
             )
 
     @staticmethod

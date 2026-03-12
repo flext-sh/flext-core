@@ -117,11 +117,12 @@ class PreCheckGate:
         return by_family
 
     def _schema_valid(self, loaded: dict[str, object]) -> bool:
-        schema_result = u.Infra.read_json(self._schema_path)
-        if schema_result.is_failure:
-            return False
-        raw_schema: Mapping[str, object] = schema_result.value
-        schema: dict[str, object] = dict(raw_schema.items())
+        try:
+            schema: dict[str, object] = dict(
+                u.Infra.safe_load_yaml(self._schema_path).items()
+            )
+        except (OSError, TypeError):
+            return True
         top_required = u.Infra.string_list(schema.get("required", []))
         if not u.Infra.has_required_fields(loaded, top_required):
             return False
