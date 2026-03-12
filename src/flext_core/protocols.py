@@ -51,13 +51,15 @@ class _ProtocolIntrospection:
             protocol.__annotations__ if hasattr(protocol, "__annotations__") else {}
         )
         raw_attrs_candidate = getattr(protocol, "__protocol_attrs__", "")
-        raw_attrs: set[str] = set()
+        raw_attrs: set[str] = set[str]()
+        iterable_attrs: Sequence[t.GeneralValueType] = ()
         try:
-            for attr in raw_attrs_candidate:
-                if isinstance(attr, str):
-                    raw_attrs.add(attr)
+            iterable_attrs = tuple(raw_attrs_candidate)
         except TypeError:
-            raw_attrs = set[str]()
+            iterable_attrs = ()
+        for attr in iterable_attrs:
+            if isinstance(attr, str):
+                raw_attrs.add(attr)
         protocol_methods: set[str] = set()
         for attr in raw_attrs:
             protocol_methods.add(attr)
@@ -93,9 +95,14 @@ class _ProtocolIntrospection:
     def get_class_protocols(target_cls: type) -> tuple[type, ...]:
         """Get the protocols a class implements."""
         protocols_candidate = getattr(target_cls, "__protocols__", "")
+        iterable_protocols: Sequence[t.GeneralValueType] = ()
+        try:
+            iterable_protocols = tuple(protocols_candidate)
+        except TypeError:
+            return ()
         try:
             typed_protocols: list[type] = []
-            for protocol_item in protocols_candidate:
+            for protocol_item in iterable_protocols:
                 if not isinstance(protocol_item, type):
                     return ()
                 typed_protocols.append(protocol_item)
@@ -121,13 +128,15 @@ class _ProtocolIntrospection:
             protocol.__annotations__ if hasattr(protocol, "__annotations__") else {}
         )
         raw_attrs_candidate = getattr(protocol, "__protocol_attrs__", "")
-        raw_attrs: set[str] = set()
+        raw_attrs: set[str] = set[str]()
+        iterable_attrs: Sequence[t.GeneralValueType] = ()
         try:
-            for attr in raw_attrs_candidate:
-                if isinstance(attr, str):
-                    raw_attrs.add(attr)
+            iterable_attrs = tuple(raw_attrs_candidate)
         except TypeError:
-            raw_attrs = set[str]()
+            iterable_attrs = ()
+        for attr in iterable_attrs:
+            if isinstance(attr, str):
+                raw_attrs.add(attr)
         protocol_methods: set[str] = set()
         for attr in raw_attrs:
             protocol_methods.add(attr)
