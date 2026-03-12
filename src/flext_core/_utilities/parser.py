@@ -787,7 +787,7 @@ class FlextUtilitiesParser:
 
     @staticmethod
     def norm_list(
-        items: p.HasModelDump | list[str] | m.ConfigMap | Mapping[str, t.Container],
+        items: m.ConfigMap | BaseModel | list[str] | Mapping[str, object],
         *,
         case: str | None = None,
         filter_truthy: bool = False,
@@ -802,7 +802,7 @@ class FlextUtilitiesParser:
                 k: FlextUtilitiesParser.norm_str(v, case=case)
                 for k, v in dict_items.items()
             }
-        if isinstance(items, p.HasModelDump):
+        if isinstance(items, BaseModel):
             dumped: dict[str, object] = dict(items.model_dump())
             if filter_truthy:
                 dumped = {k: v for k, v in dumped.items() if v}
@@ -813,12 +813,12 @@ class FlextUtilitiesParser:
         if isinstance(items, Mapping):
             warnings.warn(
                 "Passing raw Mapping to norm_list() is deprecated. "
-                "Use m.ConfigMap or a Pydantic BaseModel (p.HasModelDump) instead. "
+                "Use m.ConfigMap or a Pydantic BaseModel instead. "
                 "Will be removed in v0.13.",
                 DeprecationWarning,
                 stacklevel=2,
             )
-            dict_items_raw: Mapping[str, object] = {str(k): v for k, v in items.items()}
+            dict_items_raw: dict[str, object] = {str(k): v for k, v in items.items()}
             if filter_truthy:
                 dict_items_raw = {k: v for k, v in dict_items_raw.items() if v}
             return {
