@@ -902,20 +902,16 @@ class FlextDecorators:
             extra_payload_raw = fallback_kwargs["extra"]
             extra_dict: dict[str, object] = {}
             if FlextRuntime.is_dict_like(extra_payload_raw):
-                if isinstance(extra_payload_raw, m.ConfigMap):
-                    extra_dict = dict(extra_payload_raw.root)
-                else:
-                    # extra_payload_raw is Mapping[object, object]
-                    extra_dict = {str(k): v for k, v in extra_payload_raw.items()}
+                extra_dict = dict(extra_payload_raw)
             extra_payload = m.ConfigMap(root=extra_dict)
-            extra_payload["log_error"] = result.error
-            extra_payload["log_error_code"] = result.error_code
-            fallback_kwargs["extra"] = extra_payload
-            filtered_kwargs: dict[str, t.Container | Exception] = {}
-            for key, value in fallback_kwargs.root.items():
-                if isinstance(value, (str, int, float, bool, Exception)):
-                    filtered_kwargs[key] = value
-            _ = fallback_logger.warning(fallback_message, **filtered_kwargs)
+            if FlextRuntime.is_dict_like(extra_payload):
+                extra_payload["log_error"] = result.error
+                extra_payload["log_error_code"] = result.error_code
+                fallback_kwargs["extra"] = extra_payload
+            else:
+                fallback_kwargs["log_error"] = result.error
+                fallback_kwargs["log_error_code"] = result.error_code
+            _ = fallback_logger.warning(fallback_message, **fallback_kwargs.root)
 
     @staticmethod
     def _handle_retry_exhaustion(

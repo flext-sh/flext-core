@@ -193,7 +193,7 @@ class FlextUtilitiesGenerators:
 
     @staticmethod
     def create_dynamic_type_subclass(
-        name: str, base_class: type, attributes: m.ConfigMap | object
+        name: str, base_class: type, attributes: m.ConfigMap
     ) -> type:
         """Create a dynamic subclass using type() for metaprogramming.
 

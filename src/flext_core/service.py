@@ -82,18 +82,15 @@ class FlextService[TDomainResult: object = object](FlextMixins, ABC):
     # --- Internal State ---
     _execution_result: r[TDomainResult] | None = PrivateAttr(default=None)
 
-    @override
-    def __init__(self, **data: object) -> None:
-        """Initialize service with configuration data.
+    def model_post_init(self, __context: t.Container | None) -> None:
+        """Post-initialization hook.
 
-        Sets up the service instance with runtime configuration.
-        Delegates to parent classes for proper initialization of mixins,
-        models, and infrastructure components.
+        Sets up the service instance with runtime configuration after Pydantic
+        has populated the fields.
 
         Auto-discovery of handler-decorated methods enables zero-config handler
         registration: developers can mark methods with @h.handler() and they are
-        automatically discovered during initialization.
-
+        automatically discovered.
         """
         runtime = self._create_initial_runtime(cast(dict[str, "t.Scalar"], data))
         with FlextContext.create().Service.service_context(
