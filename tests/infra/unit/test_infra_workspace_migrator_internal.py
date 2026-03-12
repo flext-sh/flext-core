@@ -12,7 +12,6 @@ import pytest
 
 from flext_infra.workspace.migrator import FlextInfraProjectMigrator
 from flext_tests import tm
-from tests.infra.typings import t
 from tests.infra.unit.test_infra_workspace_migrator import (
     _build_migrator,
     _project,
@@ -36,7 +35,7 @@ class TestMigratorInternalMakefile:
         proj = _project(tmp_path, "test-proj")
         migrator = _build_migrator(proj, "base")
 
-        def _read_fail(*_a: t.ContainerValue, **_kw: t.ContainerValue) -> str:
+        def _read_fail(*_a: object, **_kw: object) -> str:
             msg = "Read failed"
             raise OSError(msg)
 
@@ -63,7 +62,7 @@ class TestMigratorInternalPyproject:
         proj = _project(tmp_path, "test-proj")
         migrator = _build_migrator(proj, "base")
 
-        def _write_fail(*_a: t.ContainerValue, **_kw: t.ContainerValue) -> None:
+        def _write_fail(*_a: object, **_kw: object) -> None:
             msg = "Write failed"
             raise OSError(msg)
 

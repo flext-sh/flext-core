@@ -26,7 +26,6 @@ from flext_infra.check.services import (
 from flext_tests import tm
 
 from ...models import m
-from ...typings import t
 
 
 def _fake_checker_cls(
@@ -34,7 +33,7 @@ def _fake_checker_cls(
     run_result: r[list[SimpleNamespace]] | r[list[ProjectResult]],
 ) -> type:
     class _Fake:
-        def __init__(self, **_kw: t.ContainerValue) -> None:
+        def __init__(self, **_kw: object) -> None:
             _ = _kw
 
         @staticmethod
@@ -45,7 +44,7 @@ def _fake_checker_cls(
             self,
             projects: list[str] | None = None,
             gates: list[str] | None = None,
-            **kw: t.ContainerValue,
+            **kw: object,
         ) -> r[list[SimpleNamespace]] | r[list[ProjectResult]]:
             _ = projects, gates, kw
             return run_result
@@ -57,12 +56,10 @@ def _fake_fixer_cls(
     run_result: r[list[str]],
 ) -> type:
     class _Fake:
-        def __init__(self, **_kw: t.ContainerValue) -> None:
+        def __init__(self, **_kw: object) -> None:
             _ = _kw
 
-        def run(
-            self, _projects: list[str] | None = None, **kw: t.ContainerValue
-        ) -> r[list[str]]:
+        def run(self, _projects: list[str] | None = None, **kw: object) -> r[list[str]]:
             _ = _projects, kw
             return run_result
 

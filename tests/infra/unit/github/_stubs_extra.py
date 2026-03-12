@@ -128,7 +128,7 @@ class StubSyncer:
             if sync_returns is not None
             else r[list[m.Infra.Github.SyncOperation]].ok([])
         )
-        self.sync_workspace_calls: list[dict[str, t.ContainerValue]] = []
+        self.sync_workspace_calls: list[dict[str, object]] = []
 
     def sync_workspace(
         self,
@@ -139,7 +139,7 @@ class StubSyncer:
         apply: bool = False,
         prune: bool = False,
     ) -> r[list[m.Infra.Github.SyncOperation]]:
-        kwargs: dict[str, t.ContainerValue] = {
+        kwargs: dict[str, object] = {
             "workspace_root": workspace_root,
             "source_workflow": source_workflow,
             "report_path": report_path,
@@ -164,7 +164,7 @@ class StubLinter:
                 m.Infra.Github.WorkflowLintResult(status="ok", exit_code=0),
             )
         )
-        self.lint_calls: list[dict[str, t.ContainerValue]] = []
+        self.lint_calls: list[dict[str, object]] = []
 
     def lint(
         self,
@@ -173,7 +173,7 @@ class StubLinter:
         report_path: Path | None = None,
         strict: bool = False,
     ) -> r[m.Infra.Github.WorkflowLintResult]:
-        kwargs: dict[str, t.ContainerValue] = {
+        kwargs: dict[str, object] = {
             "root": root,
             "report_path": report_path,
             "strict": strict,
@@ -201,7 +201,7 @@ class StubWorkspaceManager:
                 ),
             )
         )
-        self.orchestrate_calls: list[dict[str, t.ContainerValue]] = []
+        self.orchestrate_calls: list[dict[str, object]] = []
 
     def orchestrate(
         self,
@@ -214,7 +214,7 @@ class StubWorkspaceManager:
         fail_fast: bool = False,
         pr_args: dict[str, str] | None = None,
     ) -> r[m.Infra.Github.PrOrchestrationResult]:
-        kwargs: dict[str, t.ContainerValue] = {
+        kwargs: dict[str, object] = {
             "workspace_root": workspace_root,
             "projects": projects,
             "include_root": include_root,
@@ -236,29 +236,23 @@ class StubUtilities:
         _git_branch_returns: r[str] | None = None
 
         @classmethod
-        def git_current_branch(
-            cls, *_a: t.ContainerValue, **_kw: t.ContainerValue
-        ) -> r[str]:
+        def git_current_branch(cls, *_a: object, **_kw: object) -> r[str]:
             return cls._git_branch_returns or r[str].ok("feature")
 
         @classmethod
-        def git_has_changes(
-            cls, *_a: t.ContainerValue, **_kw: t.ContainerValue
-        ) -> r[bool]:
+        def git_has_changes(cls, *_a: object, **_kw: object) -> r[bool]:
             return r[bool].ok(True)
 
         @classmethod
-        def git_checkout(
-            cls, *_a: t.ContainerValue, **_kw: t.ContainerValue
-        ) -> r[bool]:
+        def git_checkout(cls, *_a: object, **_kw: object) -> r[bool]:
             return r[bool].ok(True)
 
         @classmethod
-        def git_add(cls, *_a: t.ContainerValue, **_kw: t.ContainerValue) -> r[bool]:
+        def git_add(cls, *_a: object, **_kw: object) -> r[bool]:
             return r[bool].ok(True)
 
         @classmethod
-        def git_commit(cls, *_a: t.ContainerValue, **_kw: t.ContainerValue) -> r[bool]:
+        def git_commit(cls, *_a: object, **_kw: object) -> r[bool]:
             return r[bool].ok(True)
 
 

@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import time
 import uuid
-from collections.abc import Mapping, MutableMapping
+from collections.abc import Mapping
 from typing import ClassVar, Protocol, override
 
 from pydantic import (
@@ -426,7 +426,7 @@ class FlextExceptions:
         | m.Metadata
         | t.ConfigurationMapping
         | m.ConfigMap
-        | t.ContainerValue
+        | object
         | t.MetadataValue
         | Mapping[str, t.MetadataValue]
         | None,
@@ -454,7 +454,7 @@ class FlextExceptions:
         | m.Metadata
         | t.ConfigurationMapping
         | m.ConfigMap
-        | t.ContainerValue
+        | object
         | t.MetadataValue
         | Mapping[str, t.MetadataValue]
         | None,
@@ -1097,7 +1097,7 @@ class FlextExceptions:
         def _normalize_type(
             type_value: type | str | None,
             type_map: Mapping[str, type],
-            extra_kwargs: MutableMapping[str, t.MetadataValue],
+            extra_kwargs: Mapping[str, t.MetadataValue],
             key: str,
         ) -> type | None:
             """Normalize type value from various sources."""
@@ -1336,7 +1336,7 @@ class FlextExceptions:
 
     @staticmethod
     def _prepare_exception_kwargs(
-        kwargs: MutableMapping[str, t.MetadataValue],
+        kwargs: Mapping[str, t.MetadataValue],
         specific_params: Mapping[str, t.MetadataValue | None] | None = None,
     ) -> tuple[
         str | None,
@@ -1432,7 +1432,7 @@ class FlextExceptions:
 
     @staticmethod
     def prepare_exception_kwargs(
-        kwargs: MutableMapping[str, t.MetadataValue],
+        kwargs: Mapping[str, t.MetadataValue],
         specific_params: Mapping[str, t.MetadataValue | None] | None = None,
     ) -> tuple[
         str | None,
@@ -1445,7 +1445,7 @@ class FlextExceptions:
         """Prepare normalized kwargs payload for exception construction."""
         return e._prepare_exception_kwargs(kwargs, specific_params)
 
-    _exception_counts: ClassVar[MutableMapping[type, int]] = {}
+    _exception_counts: ClassVar[dict[type, int]] = {}
 
     def __call__(
         self, message: str, error_code: str | None = None, **kwargs: t.MetadataValue

@@ -20,7 +20,7 @@ from typing import ClassVar
 import pytest
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import FlextRuntime, m, t
+from flext_core import FlextRuntime, m
 
 
 class _TestConfig(m.CollectionsConfig):
@@ -39,7 +39,7 @@ class CategoryOperationScenario(BaseModel):
     category: str = Field(description="Category key")
     entries: list[str] = Field(description="Entries associated with operation")
     operation: str = Field(description="Category operation name")
-    expected_result: t.ContainerValue = Field(description="Expected operation result")
+    expected_result: object = Field(description="Expected operation result")
 
 
 def _scenario_id(scenario: CategoryOperationScenario) -> str:

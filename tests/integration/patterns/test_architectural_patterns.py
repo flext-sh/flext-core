@@ -14,7 +14,7 @@ import time
 
 import pytest
 
-from flext_core import FlextConstants, m, r, t
+from flext_core import FlextConstants, m, r
 from tests.test_utils import assertion_helpers
 
 
@@ -66,7 +66,7 @@ class TestEnterprisePatterns:
             def __init__(self) -> None:
                 """Initialize builder."""
                 super().__init__()
-                self._config: dict[str, t.ContainerValue] = {}
+                self._config: dict[str, object] = {}
 
             def with_database(self, host: str, port: int) -> ConfigurationBuilder:
                 """Add database configuration."""
@@ -83,13 +83,13 @@ class TestEnterprisePatterns:
                 self._config["cache"] = {"enabled": enabled}
                 return self
 
-            def build(self) -> r[dict[str, t.ContainerValue]]:
+            def build(self) -> r[dict[str, object]]:
                 """Build the configuration."""
                 if not self._config:
-                    return r[dict[str, t.ContainerValue]].fail(
+                    return r[dict[str, object]].fail(
                         "Configuration cannot be empty",
                     )
-                return r[dict[str, t.ContainerValue]].ok(self._config.copy())
+                return r[dict[str, object]].ok(self._config.copy())
 
         config_result = (
             ConfigurationBuilder()
@@ -122,20 +122,20 @@ class TestEnterprisePatterns:
             def __init__(self) -> None:
                 """Initialize repository."""
                 super().__init__()
-                self._data: dict[str, t.ContainerValue] = {}
+                self._data: dict[str, object] = {}
                 self._query_count = 0
 
-            def save(self, entity_id: str, data: t.ContainerValue) -> r[bool]:
+            def save(self, entity_id: str, data: object) -> r[bool]:
                 """Save entity to repository."""
                 self._data[entity_id] = data
                 return r[bool].ok(True)
 
-            def find_by_id(self, entity_id: str) -> r[t.ContainerValue]:
+            def find_by_id(self, entity_id: str) -> r[object]:
                 """Find entity by ID."""
                 self._query_count += 1
                 if entity_id in self._data:
-                    return r[t.ContainerValue].ok(self._data[entity_id])
-                return r[t.ContainerValue].fail(
+                    return r[object].ok(self._data[entity_id])
+                return r[object].fail(
                     f"Entity not found: {entity_id}",
                 )
 
@@ -159,7 +159,7 @@ class TestEnterprisePatterns:
         assert len(repo._data) == 1000, f"Expected 1000 entities, got {len(repo._data)}"
         start_time = time.perf_counter()
         for i in range(100):
-            query_result: r[t.ContainerValue] = repo.find_by_id(f"entity_{i}")
+            query_result: r[object] = repo.find_by_id(f"entity_{i}")
             assert query_result.is_success, f"Query {i} should succeed"
             entity_data = query_result.value
             assert isinstance(entity_data, dict), (
@@ -251,14 +251,14 @@ class TestEventDrivenPatterns:
     @pytest.mark.architecture
     def test_observer_pattern_implementation(self) -> None:
         """Test Observer pattern implementation."""
-        observers: list[dict[str, t.ContainerValue]] = []
+        observers: list[dict[str, object]] = []
 
         def notify_all(state: str) -> None:
             for observer in observers:
                 observer["state"] = state
 
-        obs1: dict[str, t.ContainerValue] = {"name": "Observer1", "state": None}
-        obs2: dict[str, t.ContainerValue] = {"name": "Observer2", "state": None}
+        obs1: dict[str, object] = {"name": "Observer1", "state": None}
+        obs2: dict[str, object] = {"name": "Observer2", "state": None}
         observers.extend([obs1, obs2])
         notify_all("new_state")
         assert obs1["state"] == "new_state"

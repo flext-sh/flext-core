@@ -37,7 +37,7 @@ from flext_core._models.base import FlextModelFoundation
 from flext_core._models.service import FlextModelsService
 
 
-class FlextService[TDomainResult: t.ContainerValue = t.ContainerValue](
+class FlextService[TDomainResult: object = object](
     FlextModelFoundation.ArbitraryTypesModel, FlextMixins, ABC
 ):
     """Base class for domain services in FLEXT applications.
@@ -71,7 +71,7 @@ class FlextService[TDomainResult: t.ContainerValue = t.ContainerValue](
     _execution_result: r[TDomainResult] | None = PrivateAttr(default=None)
 
     @override
-    def __init__(self, **data: t.ContainerValue) -> None:
+    def __init__(self, **data: object) -> None:
         """Initialize service with configuration data.
 
         Sets up the service instance with runtime configuration.
@@ -306,8 +306,8 @@ class FlextService[TDomainResult: t.ContainerValue = t.ContainerValue](
         Override to customize:
         - config_overrides: Dict of config values to override
         - services: Mapping[str, t.RegisterableService] to register as singletons
-        - factories: Mapping[str, Callable[..., t.ContainerValue]] to register as factories
-        - resources: Mapping[str, Callable[[], t.ContainerValue]] to register as resources
+        - factories: Mapping[str, Callable[..., object]] to register as factories
+        - resources: Mapping[str, Callable[[], object]] to register as resources
         - wire_modules: List of modules to wire for @inject
         - wire_packages: List of packages to wire
         - wire_classes: List of classes to wire

@@ -15,7 +15,7 @@ import warnings
 from collections.abc import Callable
 from typing import ClassVar
 
-from flext_core import P, R, t
+from flext_core import P, R
 
 
 class FlextUtilitiesDeprecation:
@@ -114,9 +114,9 @@ class FlextUtilitiesDeprecation:
             if original_init is None:
 
                 def noop_init(
-                    self: t.ContainerValue,
-                    *args: t.ContainerValue,
-                    **kwargs: t.ContainerValue,
+                    self: object,
+                    *args: object,
+                    **kwargs: object,
                 ) -> None:
                     pass
 
@@ -124,9 +124,9 @@ class FlextUtilitiesDeprecation:
 
             @functools.wraps(original_init)
             def new_init(
-                self: t.ContainerValue,
-                *args: t.ContainerValue,
-                **kwargs: t.ContainerValue,
+                self: object,
+                *args: object,
+                **kwargs: object,
             ) -> None:
                 cls_name = getattr(cls, "__name__", cls.__class__.__name__)
                 message_parts = [f"{cls_name} is deprecated"]

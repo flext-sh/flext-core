@@ -15,7 +15,7 @@ from typing import Annotated, override
 
 from pydantic import BeforeValidator, Field
 
-from flext_core import c, t
+from flext_core import c
 from flext_core._models.base import FlextModelFoundation
 from flext_core._models.containers import FlextModelsContainers
 from flext_core.runtime import FlextRuntime
@@ -36,7 +36,7 @@ class _ComparableConfigMap(FlextModelsContainers.ConfigMap):
     __hash__ = FlextModelsContainers.ConfigMap.__hash__
 
 
-def _normalize_event_data(value: t.ContainerValue) -> _ComparableConfigMap:
+def _normalize_event_data(value: object) -> _ComparableConfigMap:
     """BeforeValidator: normalize event data to _ComparableConfigMap."""
     if isinstance(value, _ComparableConfigMap):
         return value
@@ -74,7 +74,7 @@ class FlextModelsDomainEvent:
     ComparableConfigMap = _ComparableConfigMap
 
     @staticmethod
-    def _normalize_event_data(value: t.ContainerValue) -> _ComparableConfigMap:
+    def _normalize_event_data(value: object) -> _ComparableConfigMap:
         """BeforeValidator: normalize event data to _ComparableConfigMap."""
         return _normalize_event_data(value)
 

@@ -74,9 +74,7 @@ class _BrokenDumpModel(BaseModel):
     value: int = 1
 
     @override
-    def __getattribute__(
-        self, name: str
-    ) -> t.ContainerValue | t.Tests.Matcher.PredicateSpec:
+    def __getattribute__(self, name: str) -> object | t.Tests.Matcher.PredicateSpec:
         if name == "model_dump":
 
             def _broken_dump(
@@ -100,7 +98,7 @@ class _ErrorsModel(BaseModel):
         strict: bool | None = None,
         extra: str | None = None,
         from_attributes: bool | None = None,
-        context: dict[str, t.ContainerValue] | None = None,
+        context: dict[str, object] | None = None,
         by_alias: bool | None = None,
         by_name: bool | None = None,
     ) -> Never:
@@ -121,7 +119,7 @@ class _PlainErrorModel(BaseModel):
         strict: bool | None = None,
         extra: str | None = None,
         from_attributes: bool | None = None,
-        context: dict[str, t.ContainerValue] | None = None,
+        context: dict[str, object] | None = None,
         by_alias: bool | None = None,
         by_name: bool | None = None,
     ) -> Never:
@@ -195,7 +193,7 @@ class BadConfigForTest(BaseModel):
 
     model_config = ConfigDict(validate_assignment=True)
 
-    def __init__(self, **kwargs: t.ContainerValue) -> None:
+    def __init__(self, **kwargs: object) -> None:
         """Raise error on init."""
         super().__init__(**kwargs)
         msg = "Cannot instantiate"
@@ -216,7 +214,7 @@ class _FakeConfig(BaseModel):
     timeout: int = 10
 
     @property
-    def data(self) -> dict[str, t.ContainerValue]:
+    def data(self) -> dict[str, object]:
         return {"timeout": self.timeout}
 
 
@@ -249,7 +247,7 @@ class ComplexModel(BaseModel):
     """Complex test model."""
 
     id: int
-    data: dict[str, t.ContainerValue]
+    data: dict[str, object]
     items: list[str]
 
 

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_core import FlextDispatcher, m, p, r, t
+from flext_core import FlextDispatcher, m, p, r
 
 from .shared import Examples
 
@@ -70,7 +70,7 @@ class Ex04FlextDispatcher(Examples):
             """Bind handler to CreateUser message type."""
             self.message_type = Ex04FlextDispatcher.CreateUser
 
-        def handle(self, message: p.Routable) -> t.ContainerValue:
+        def handle(self, message: p.Routable) -> object:
             """Create a deterministic response for CreateUser."""
             typed_message = Ex04FlextDispatcher.CreateUser.model_validate(message)
             return f"created:{typed_message.username}"
@@ -84,7 +84,7 @@ class Ex04FlextDispatcher(Examples):
             """Bind dispatcher to GetUser query type."""
             self.message_type = Ex04FlextDispatcher.GetUser
 
-        def dispatch_message(self, message: p.Routable) -> t.ContainerValue:
+        def dispatch_message(self, message: p.Routable) -> object:
             """Return deterministic user payload for GetUser."""
             typed_message = Ex04FlextDispatcher.GetUser.model_validate(message)
             return m.ConfigMap(
@@ -100,7 +100,7 @@ class Ex04FlextDispatcher(Examples):
             """Bind executor to DeleteUser command type."""
             self.message_type = Ex04FlextDispatcher.DeleteUser
 
-        def execute(self, message: p.Routable) -> t.ContainerValue:
+        def execute(self, message: p.Routable) -> object:
             """Create deterministic deletion output."""
             typed_message = Ex04FlextDispatcher.DeleteUser.model_validate(message)
             return f"deleted:{typed_message.username}"
@@ -140,7 +140,7 @@ class Ex04FlextDispatcher(Examples):
             """Report support for AutoCommand class or instance."""
             return bool(message)
 
-        def handle(self, message: p.Routable) -> t.ContainerValue:
+        def handle(self, message: p.Routable) -> object:
             """Handle discovered command and return a synthetic payload."""
             typed_message = Ex04FlextDispatcher.AutoCommand.model_validate(message)
             return f"auto:{typed_message.payload}"
@@ -155,7 +155,7 @@ class Ex04FlextDispatcher(Examples):
             self.event_type = Ex04FlextDispatcher.UserCreated
             self.events: list[str] = []
 
-        def handle(self, message: p.Routable) -> t.ContainerValue:
+        def handle(self, message: p.Routable) -> object:
             """Store event entries when receiving UserCreated."""
             typed_message = Ex04FlextDispatcher.UserCreated.model_validate(message)
             self.events.append(f"user:{typed_message.username}")
@@ -171,7 +171,7 @@ class Ex04FlextDispatcher(Examples):
             self.event_type = Ex04FlextDispatcher.UserCreated
             self.events: list[str] = []
 
-        def dispatch_message(self, message: p.Routable) -> t.ContainerValue:
+        def dispatch_message(self, message: p.Routable) -> object:
             """Store audit entries when receiving UserCreated."""
             typed_message = Ex04FlextDispatcher.UserCreated.model_validate(message)
             self.events.append(f"audit:{typed_message.username}")

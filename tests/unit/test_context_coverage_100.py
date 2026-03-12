@@ -14,7 +14,7 @@ from collections import UserDict as UserDictBase
 import pytest
 from pydantic import BaseModel, ValidationError
 
-from flext_core import FlextConstants, FlextContext, m, t
+from flext_core import FlextConstants, FlextContext, m
 from flext_core._models.base import FlextModelFoundation
 from flext_core._models.context import FlextModelsContext
 from flext_tests import u
@@ -54,8 +54,8 @@ class TestContext100Coverage:
         """Test merge with dictionary."""
         context1 = FlextContext()
         context1.set("key1", "value1").value
-        merge_data: dict[str, t.ContainerValue] = {"key2": "value2", "key3": "value3"}
-        converted_data: dict[str, t.ContainerValue] = {
+        merge_data: dict[str, object] = {"key2": "value2", "key3": "value3"}
+        converted_data: dict[str, object] = {
             k: v
             if isinstance(v, (str, int, float, bool, type(None), list, dict))
             else str(v)
@@ -121,7 +121,7 @@ class TestContext100Coverage:
         context.set("key1", "value1").value
         scope_var = context._scope_vars[FlextConstants.Context.SCOPE_GLOBAL]
         current: m.ConfigMap | None = scope_var.get()
-        current_data: dict[str, t.ContainerValue] = (
+        current_data: dict[str, object] = (
             dict(current.root) if current is not None else {}
         )
         current_data["none_key"] = None
@@ -254,7 +254,7 @@ class TestContext100Coverage:
 
     def test_context_data_validate_dict_serializable_non_dict(self) -> None:
         """Test ContextData.validate_dict_serializable with non-dict."""
-        invalid_metadata: t.ContainerValue = 123
+        invalid_metadata: object = 123
         exc_types: tuple[type[Exception], ...] = (TypeError, ValidationError)
         with pytest.raises(exc_types):
             FlextModelsContext.ContextData.model_validate({
@@ -304,7 +304,7 @@ class TestContext100Coverage:
 
     def test_context_export_validate_dict_serializable_non_dict(self) -> None:
         """Test ContextExport.validate_dict_serializable with non-dict."""
-        invalid_data: t.ContainerValue = 123
+        invalid_data: object = 123
         with pytest.raises(TypeError):
             FlextModelsContext.ContextExport.model_validate({"data": invalid_data})
 
@@ -412,7 +412,7 @@ class TestContext100Coverage:
 
     def test_context_statistics_validate_operations_with_none(self) -> None:
         """Test ContextStatistics._validate_operations with None."""
-        none_operations: t.ContainerValue = None
+        none_operations: object = None
         stats = FlextModelsContext.ContextStatistics.model_validate({
             "operations": none_operations,
         })
@@ -434,7 +434,7 @@ class TestContext100Coverage:
 
     def test_context_metadata_validate_custom_fields_with_none(self) -> None:
         """Test ContextMetadata._validate_custom_fields with None."""
-        none_custom_fields: t.ContainerValue = None
+        none_custom_fields: object = None
         metadata = FlextModelsContext.ContextMetadata.model_validate({
             "custom_fields": none_custom_fields,
         })

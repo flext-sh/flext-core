@@ -8,7 +8,7 @@ from typing import cast, override
 
 import pytest
 
-from flext_core import c, m, r, t, u
+from flext_core import c, m, r, u
 
 from ._models import _Model
 
@@ -64,22 +64,22 @@ def _raise_runtime_boom(*_args: object, **_kwargs: object) -> str:
     raise RuntimeError(msg)
 
 
-def _raise_value_error_float(_value: t.ContainerValue) -> r[float]:
+def _raise_value_error_float(_value: object) -> r[float]:
     msg = "boom"
     raise ValueError(msg)
 
 
-def _raise_type_error_bool(_value: t.ContainerValue) -> r[bool]:
+def _raise_type_error_bool(_value: object) -> r[bool]:
     msg = "boom"
     raise TypeError(msg)
 
 
-def _raise_value_error_int(_value: t.ContainerValue) -> r[int]:
+def _raise_value_error_int(_value: object) -> r[int]:
     msg = "boom"
     raise ValueError(msg)
 
 
-def _raise_type_error_str(_value: t.ContainerValue) -> r[str]:
+def _raise_type_error_str(_value: object) -> r[str]:
     msg = "boom"
     raise TypeError(msg)
 
@@ -92,7 +92,7 @@ def test_parser_safe_length_and_parse_delimited_error_paths(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     parser = u.Parser()
-    sample: t.ContainerValue = "ok"
+    sample: object = "ok"
     assert sample == "ok"
     assert isinstance(c.Processing.PATTERN_TUPLE_MIN_LENGTH, int)
     assert parser._safe_text_length(_LenRaises("x")) == "unknown"
@@ -150,7 +150,7 @@ def test_parser_pipeline_and_pattern_branches(monkeypatch: pytest.MonkeyPatch) -
     fail = parser2.apply_regex_pipeline("abc", [("a", "b")])
     assert fail.is_failure
     str_conversion_result = u.Parser()._extract_key_from_str_conversion(
-        cast("t.ContainerValue", cast("object", _StrRaises())),
+        cast("object", cast("object", _StrRaises())),
     )
     assert str_conversion_result.is_failure
 
@@ -170,10 +170,10 @@ def test_parser_pipeline_and_pattern_branches(monkeypatch: pytest.MonkeyPatch) -
 
     monkeypatch.setattr("builtins.hasattr", _patched_hasattr)
     assert "<object object" in parser3.get_object_key(
-        cast("t.ContainerValue", object()),
+        cast("object", object()),
     )
     assert (
-        parser3.get_object_key(cast("t.ContainerValue", cast("object", _OddNoStr())))
+        parser3.get_object_key(cast("object", cast("object", _OddNoStr())))
         == "_OddNoStr"
     )
     invalid_type = parser3._extract_pattern_components(
@@ -203,7 +203,7 @@ def test_parser_parse_helpers_and_primitive_coercion_branches(
     assert parser._parse_normalize_str("abc", case="none") == "abc"
     assert parser._parse_result_error(r[int].ok(1), default="fallback") == "fallback"
     model_result = parser._parse_model(
-        cast("t.ContainerValue", {"name": "ok", "count": 2, "payload": "obj"}),
+        cast("object", {"name": "ok", "count": 2, "payload": "obj"}),
         _Model,
         "field: ",
         strict=False,
@@ -287,19 +287,16 @@ def test_parser_convert_and_norm_branches(monkeypatch: pytest.MonkeyPatch) -> No
     assert parser._convert_to_str(None, default="d") == "d"
     assert (
         parser._convert_to_str(
-            cast("t.ContainerValue", cast("object", _BadStr())),
+            cast("object", cast("object", _BadStr())),
             default="d",
         )
         == "d"
     )
     assert parser._convert_to_bool(True, default=False) is True
-    assert (
-        parser._convert_to_bool(cast("t.ContainerValue", object()), default=True)
-        is True
-    )
+    assert parser._convert_to_bool(cast("object", object()), default=True) is True
     assert (
         parser.conv_str(
-            cast("t.ContainerValue", cast("object", _BadConv())),
+            cast("object", cast("object", _BadConv())),
             default="d",
         )
         == "d"
@@ -352,7 +349,7 @@ def test_parser_internal_helpers_additional_coverage() -> None:
     parser = u.Parser()
     mapped = parser._extract_key_from_mapping({"name": "n1", "id": "i1"})
     attrs = parser._extract_key_from_attributes(
-        cast("t.ContainerValue", cast("object", type("Obj", (), {"id": "x1"})())),
+        cast("object", cast("object", type("Obj", (), {"id": "x1"})())),
     )
     assert mapped.is_success and mapped.value == "n1"
     assert attrs.is_success and attrs.value == "x1"
@@ -406,11 +403,10 @@ def test_parser_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> None:
     assert failed_str is not None and failed_str.is_failure
     assert parser.convert("x", bool, cast("bool", cast("object", "d"))) == "d"
     assert parser._convert_to_int(5, default=7) == 5
-    assert parser._convert_to_float(cast("t.ContainerValue", object()), default=1.5)
+    assert parser._convert_to_float(cast("object", object()), default=1.5)
     assert (
         abs(
-            parser._convert_to_float(cast("t.ContainerValue", object()), default=1.5)
-            - 1.5,
+            parser._convert_to_float(cast("object", object()), default=1.5) - 1.5,
         )
         < 1e-09
     )

@@ -23,7 +23,6 @@ from typing import Literal
 
 from pydantic import Field
 
-from flext_core import t
 from flext_core._models.base import FlextModelFoundation
 from flext_core._models.containers import FlextModelsContainers
 
@@ -68,9 +67,7 @@ class FlextGenericModels:
                 default_factory=FlextModelsContainers.Dict,
                 description="Additional metadata",
             )
-            message: t.ContainerValue | None = Field(
-                default=None, description="Message payload"
-            )
+            message: object | None = Field(default=None, description="Message payload")
             message_type: str = Field(default="", description="Message type")
             dispatch_type: str = Field(default="", description="Dispatch type")
             timeout_override: int | None = Field(
@@ -252,18 +249,14 @@ class FlextGenericModels:
             Used by: flext-ldif conversion, data transformations, ETL.
             """
 
-            converted: list[t.ContainerValue] = Field(
-                default=[], description="Converted items"
-            )
+            converted: list[object] = Field(default=[], description="Converted items")
             errors: list[str] = Field(
                 default_factory=list, description="Error messages"
             )
             warnings: list[str] = Field(
                 default_factory=list, description="Warning messages"
             )
-            skipped: list[t.ContainerValue] = Field(
-                default=[], description="Skipped items"
-            )
+            skipped: list[object] = Field(default=[], description="Skipped items")
             start_time: datetime | None = Field(default=None, description="Start time")
             end_time: datetime | None = Field(default=None, description="End time")
             source_format: str | None = Field(default=None, description="Source format")
@@ -276,29 +269,23 @@ class FlextGenericModels:
                 description="Conversion metadata",
             )
 
-            def add_converted(self, item: t.ContainerValue) -> None:
+            def add_converted(self, item: object) -> None:
                 """Add a successfully converted item."""
                 self.converted.append(item)
 
-            def add_error(
-                self, error: str, item: t.ContainerValue | None = None
-            ) -> None:
+            def add_error(self, error: str, item: object | None = None) -> None:
                 """Add an error with optional failed item."""
                 self.errors.append(error)
                 if item is not None:
                     self._append_metadata_item("failed_items", item)
 
-            def add_skipped(
-                self, item: t.ContainerValue, reason: str | None = None
-            ) -> None:
+            def add_skipped(self, item: object, reason: str | None = None) -> None:
                 """Add a skipped item with optional reason."""
                 self.skipped.append(item)
                 if reason:
                     self._upsert_skip_reason(item, reason)
 
-            def add_warning(
-                self, warning: str, item: t.ContainerValue | None = None
-            ) -> None:
+            def add_warning(self, warning: str, item: object | None = None) -> None:
                 """Add a warning with optional item."""
                 self.warnings.append(warning)
                 if item is not None:
@@ -323,7 +310,7 @@ class FlextGenericModels:
             def _append_metadata_item(
                 self,
                 key: Literal["failed_items", "warning_items"],
-                item: t.ContainerValue,
+                item: object,
             ) -> None:
                 if key not in self.metadata.root:
                     self.metadata.root[key] = []
@@ -332,7 +319,7 @@ class FlextGenericModels:
                 items.append(item)
                 self.metadata.root[key] = items
 
-            def _upsert_skip_reason(self, item: t.ContainerValue, reason: str) -> None:
+            def _upsert_skip_reason(self, item: object, reason: str) -> None:
                 raw_reasons = self.metadata.root.get("skip_reasons", {})
                 reasons: dict[str, str] = {}
                 if isinstance(raw_reasons, Mapping):

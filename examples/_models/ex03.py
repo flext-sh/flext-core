@@ -6,7 +6,7 @@ from decimal import Decimal
 
 from pydantic import EmailStr, Field, computed_field, field_validator
 
-from flext_core import c, m, r, t
+from flext_core import c, m, r
 
 
 class Ex03Email(m.Value):
@@ -23,7 +23,7 @@ class Ex03Money(m.Value):
 
     @field_validator("currency", mode="before")
     @classmethod
-    def normalize_currency(cls, value: t.ContainerValue) -> c.Domain.Currency:
+    def normalize_currency(cls, value: object) -> c.Domain.Currency:
         if isinstance(value, c.Domain.Currency):
             return value
         if isinstance(value, str):

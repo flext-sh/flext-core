@@ -23,7 +23,7 @@ import pytest
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import r
-from flext_tests import p, t, u
+from flext_tests import p, u
 
 from ..test_utils import assertion_helpers
 
@@ -76,9 +76,7 @@ class TestFlextUtilitiesArgs:
 
         model_config = ConfigDict(frozen=True)
         name: str = Field(description="Parse kwargs scenario name")
-        kwargs: dict[str, t.ContainerValue] = Field(
-            description="Keyword arguments input payload"
-        )
+        kwargs: dict[str, object] = Field(description="Keyword arguments input payload")
         enum_fields: dict[str, type[StrEnum]] = Field(
             description="Enum fields map for conversion"
         )

@@ -30,7 +30,7 @@ from pydantic import Field, TypeAdapter, ValidationError
 
 from flext_core import FlextConstants, FlextService, FlextSettings, c, m, r, t
 
-_CONTAINER_LIST_ADAPTER = TypeAdapter(list[t.ContainerValue])
+_CONTAINER_LIST_ADAPTER = TypeAdapter(list[object])
 
 
 class AppConfig(FlextSettings):

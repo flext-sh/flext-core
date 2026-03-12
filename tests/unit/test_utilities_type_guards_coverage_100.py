@@ -150,7 +150,7 @@ class TypeGuardsScenarios:
         ),
         NormalizeScenario(
             name="dict_with_non_string_key",
-            value=cast("t.ContainerValue", {123: "value"}),
+            value=cast("object", {123: "value"}),
             expected_type=str,
         ),
         NormalizeScenario(
@@ -266,7 +266,7 @@ class TestuTypeGuardsNormalizeToMetadataValue:
 
     def test_normalize_dict_with_non_string_key(self) -> None:
         """Test normalize_to_metadata_value with dict having non-string keys."""
-        value = cast("t.ContainerValue", {123: "value", "key": "test"})
+        value = cast("object", {123: "value", "key": "test"})
         result = u.normalize_to_metadata_value(value)
         assert isinstance(result, str)
         parsed = json.loads(result)
@@ -280,7 +280,7 @@ class TestuTypeGuardsNormalizeToMetadataValue:
         TypeError during json.dumps serialization.
         """
         value = cast(
-            "t.ContainerValue",
+            "object",
             {
                 "str": "value",
                 "int": 42,
@@ -295,7 +295,7 @@ class TestuTypeGuardsNormalizeToMetadataValue:
     def test_normalize_list_with_complex_items(self) -> None:
         """Test normalize_to_metadata_value with list containing complex items."""
         value = cast(
-            "t.ContainerValue",
+            "object",
             ["string", 42, True, None, {"dict": "value"}, [1, 2, 3], object()],
         )
         result = u.normalize_to_metadata_value(value)
@@ -317,7 +317,7 @@ class TestuTypeGuardsNormalizeToMetadataValue:
             def __str__(self) -> str:
                 return "custom_object"
 
-        value = cast("t.ContainerValue", cast("object", CustomObject()))
+        value = cast("object", cast("object", CustomObject()))
         result = u.normalize_to_metadata_value(value)
         assert isinstance(result, str)
         assert result == "custom_object"

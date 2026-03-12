@@ -18,7 +18,7 @@ from typing import ClassVar, Self, TypeAlias, override
 
 from pydantic import BaseModel, Field, computed_field, model_validator
 
-from flext_core import c, p, r, t
+from flext_core import c, p, r
 from flext_core._models.base import FlextModelFoundation
 from flext_core._models.containers import FlextModelsContainers
 from flext_core._models.domain_event import FlextModelsDomainEvent
@@ -185,7 +185,7 @@ class FlextModelsEntity:
             return r[list[FlextModelsDomainEvent.Entry]].ok(events)
 
         @override
-        def model_post_init(self, __context: t.ContainerValue, /) -> None:
+        def model_post_init(self, __context: object, /) -> None:
             """Post-initialization hook to set updated_at timestamp."""
             if self.updated_at is None:
                 self.updated_at = FlextRuntime.generate_datetime_utc()

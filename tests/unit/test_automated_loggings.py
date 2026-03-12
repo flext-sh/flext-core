@@ -11,7 +11,7 @@ from typing import cast
 
 import pytest
 
-from flext_core import r, t
+from flext_core import r
 from tests import m
 from tests.conftest import test_framework
 from tests.test_utils import assertion_helpers, fixture_factory
@@ -125,15 +125,15 @@ class TestAutomatedFlextLoggings:
             cleanup_result = cleanup()
             if cleanup_result:
                 _ = assertion_helpers.assert_flext_result_success(
-                    cast("r[t.ContainerValue]", cleanup_result),
+                    cast("r[object]", cleanup_result),
                     "FlextLoggings cleanup failed",
                 )
 
     def _execute_loggings_operation(
         self,
         instance: object,
-        input_data: Mapping[str, t.ContainerValue],
-    ) -> r[t.ContainerValue]:
+        input_data: Mapping[str, object],
+    ) -> r[object]:
         """Execute a test operation on loggings instance.
 
         This method should be customized based on the actual loggings API.
@@ -145,34 +145,32 @@ class TestAutomatedFlextLoggings:
                 result = process(dict(input_data))
                 if isinstance(result, r):
                     if result.is_success:
-                        return r[t.ContainerValue].ok(True)
-                    return r[t.ContainerValue].fail(
+                        return r[object].ok(True)
+                    return r[object].fail(
                         result.error or "FlextLoggings process failed"
                     )
-                return r[t.ContainerValue].ok(cast("t.ContainerValue", result))
+                return r[object].ok(cast("object", result))
             execute = getattr(instance, "execute", None)
             if callable(execute):
                 result = execute(dict(input_data))
                 if isinstance(result, r):
                     if result.is_success:
-                        return r[t.ContainerValue].ok(True)
-                    return r[t.ContainerValue].fail(
+                        return r[object].ok(True)
+                    return r[object].fail(
                         result.error or "FlextLoggings execute failed"
                     )
-                return r[t.ContainerValue].ok(cast("t.ContainerValue", result))
+                return r[object].ok(cast("object", result))
             handle = getattr(instance, "handle", None)
             if callable(handle):
                 result = handle(dict(input_data))
                 if isinstance(result, r):
                     if result.is_success:
-                        return r[t.ContainerValue].ok(True)
-                    return r[t.ContainerValue].fail(
-                        result.error or "FlextLoggings handle failed"
-                    )
-                return r[t.ContainerValue].ok(cast("t.ContainerValue", result))
-            return r[t.ContainerValue].ok(cast("t.ContainerValue", instance))
+                        return r[object].ok(True)
+                    return r[object].fail(result.error or "FlextLoggings handle failed")
+                return r[object].ok(cast("object", result))
+            return r[object].ok(cast("object", instance))
         except Exception as e:
-            return r[t.ContainerValue].fail(f"FlextLoggings operation failed: {e}")
+            return r[object].fail(f"FlextLoggings operation failed: {e}")
 
     @pytest.fixture
     def test_loggings_instance(self) -> object:

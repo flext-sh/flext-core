@@ -15,7 +15,6 @@ from flext_infra.docs.fixer import FlextInfraDocFixer
 from flext_infra.docs.shared import FlextInfraDocsShared
 from flext_tests import tf, tm
 from tests.infra.models import m
-from tests.infra.typings import t
 
 
 class TestFixerCore:
@@ -142,10 +141,8 @@ class TestFixerCore:
     ) -> None:
         """Test fix returns failure when scope building fails."""
 
-        def mock_build_scopes(
-            *args: object, **kwargs: object
-        ) -> r[list[t.ContainerValue]]:
-            return r[list[t.ContainerValue]].fail("Scope error")
+        def mock_build_scopes(*args: object, **kwargs: object) -> r[list[object]]:
+            return r[list[object]].fail("Scope error")
 
         monkeypatch.setattr(FlextInfraDocsShared, "build_scopes", mock_build_scopes)
         result = fixer.fix(tmp_path)

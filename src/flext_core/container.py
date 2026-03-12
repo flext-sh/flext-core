@@ -14,7 +14,7 @@ from __future__ import annotations
 import inspect
 import sys
 import threading
-from collections.abc import Callable, Mapping, MutableMapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from types import ModuleType
 from typing import Literal, Self, TypeGuard, overload, override
@@ -62,9 +62,9 @@ class FlextContainer(p.DI):
     _config_provider: di_providers.Configuration
     _base_config_provider: di_providers.Configuration
     _user_config_provider: di_providers.Configuration
-    _services: MutableMapping[str, m.ServiceRegistration]
-    _factories: MutableMapping[str, m.FactoryRegistration]
-    _resources: MutableMapping[str, m.ResourceRegistration]
+    _services: dict[str, m.ServiceRegistration]
+    _factories: dict[str, m.FactoryRegistration]
+    _resources: dict[str, m.ResourceRegistration]
     _global_config: m.ContainerConfig
 
     def __new__(
@@ -290,7 +290,7 @@ class FlextContainer(p.DI):
         if auto_register_factories:
             frame = inspect.currentframe()
             if frame and frame.f_back:
-                caller_globals: Mapping[str, t.ContainerValue] = frame.f_back.f_globals
+                caller_globals: Mapping[str, object] = frame.f_back.f_globals
                 module_name_raw = caller_globals.get("__name__", "__main__")
                 module_name = str(module_name_raw) if module_name_raw else "__main__"
                 caller_module = sys.modules.get(module_name)
@@ -380,7 +380,7 @@ class FlextContainer(p.DI):
 
     @staticmethod
     def _is_context_protocol(
-        value: t.ContainerValue | p.Context | object | None,
+        value: object | p.Context | None,
     ) -> TypeGuard[p.Context]:
         if value is None:
             return False
@@ -444,8 +444,8 @@ class FlextContainer(p.DI):
 
     @staticmethod
     def _is_object_mapping(
-        value: t.ContainerValue,
-    ) -> TypeGuard[Mapping[t.ContainerValue, t.ContainerValue]]:
+        value: object,
+    ) -> TypeGuard[Mapping[object, object]]:
         return isinstance(value, Mapping)
 
     @staticmethod
@@ -942,15 +942,15 @@ class FlextContainer(p.DI):
             scoped_context = self.context.clone()
         if subproject:
             _ = scoped_context.set("subproject", subproject)
-        cloned_services: MutableMapping[str, m.ServiceRegistration] = {
+        cloned_services: dict[str, m.ServiceRegistration] = {
             name: registration.model_copy(deep=False)
             for name, registration in self._services.items()
         }
-        cloned_factories: MutableMapping[str, m.FactoryRegistration] = {
+        cloned_factories: dict[str, m.FactoryRegistration] = {
             name: registration.model_copy(deep=False)
             for name, registration in self._factories.items()
         }
-        cloned_resources: MutableMapping[str, m.ResourceRegistration] = {
+        cloned_resources: dict[str, m.ResourceRegistration] = {
             name: registration.model_copy(deep=False)
             for name, registration in self._resources.items()
         }

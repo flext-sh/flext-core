@@ -23,7 +23,7 @@ from typing import ParamSpec, TypeGuard, TypeVar
 import pytest
 from hypothesis import HealthCheck, given, settings, strategies as st
 
-from flext_core import FlextTypes, FlextUtilities, t
+from flext_core import FlextTypes, FlextUtilities
 
 from ._models import (
     FixtureCaseDict,
@@ -37,8 +37,8 @@ R = TypeVar("R")
 
 
 def _to_general_mapping(
-    value: t.ContainerValue | None,
-) -> dict[str, t.ContainerValue]:
+    value: object | None,
+) -> dict[str, object]:
     if not isinstance(value, dict):
         return {}
     return {
@@ -47,13 +47,13 @@ def _to_general_mapping(
     }
 
 
-def _to_string_list(value: t.ContainerValue | None) -> list[str]:
+def _to_string_list(value: object | None) -> list[str]:
     if not isinstance(value, list):
         return []
     return [str(item) for item in value]
 
 
-def _to_string(value: t.ContainerValue | None, *, default: str) -> str:
+def _to_string(value: object | None, *, default: str) -> str:
     if isinstance(value, str):
         return value
     if value is None:
@@ -61,40 +61,38 @@ def _to_string(value: t.ContainerValue | None, *, default: str) -> str:
     return str(value)
 
 
-def _as_object_dict(value: t.ContainerValue) -> dict[str, t.ContainerValue]:
+def _as_object_dict(value: object) -> dict[str, object]:
     if not _is_object_mapping(value):
         return {}
-    output: dict[str, t.ContainerValue] = {}
+    output: dict[str, object] = {}
     for key, item in value.items():
         output[str(key)] = FlextUtilities.normalize_to_general_value(item)
     return output
 
 
-def _as_object_list(value: t.ContainerValue) -> list[t.ContainerValue] | None:
+def _as_object_list(value: object) -> list[object] | None:
     if not _is_object_list(value):
         return None
     return list(value)
 
 
 def _is_object_mapping(
-    value: t.ContainerValue,
-) -> TypeGuard[Mapping[t.ContainerValue, t.ContainerValue]]:
+    value: object,
+) -> TypeGuard[Mapping[object, object]]:
     return isinstance(value, Mapping)
 
 
-def _is_object_list(value: t.ContainerValue) -> TypeGuard[list[t.ContainerValue]]:
+def _is_object_list(value: object) -> TypeGuard[list[object]]:
     return isinstance(value, list)
 
 
 def _is_object_container_sequence(
-    value: t.ContainerValue,
-) -> TypeGuard[
-    list[t.ContainerValue] | tuple[t.ContainerValue, ...] | set[t.ContainerValue]
-]:
+    value: object,
+) -> TypeGuard[list[object] | tuple[object, ...] | set[object]]:
     return isinstance(value, (list, tuple, set))
 
 
-def _as_int_list(value: t.ContainerValue) -> list[int] | None:
+def _as_int_list(value: object) -> list[int] | None:
     object_list = _as_object_list(value)
     if object_list is None:
         return None
@@ -124,7 +122,7 @@ pytestmark = [pytest.mark.unit, pytest.mark.architecture, pytest.mark.advanced]
 class MockScenario:
     """Mock scenario object for testing purposes."""
 
-    def __init__(self, name: str, data: dict[str, t.ContainerValue]) -> None:
+    def __init__(self, name: str, data: dict[str, object]) -> None:
         """Initialize mock scenario with name and test data."""
         super().__init__()
         self.name = name
@@ -191,7 +189,7 @@ class GivenWhenThenBuilder:
 
     def build(self) -> MockScenario:
         """Build the final mock scenario object."""
-        data: dict[str, t.ContainerValue] = {
+        data: dict[str, object] = {
             "given": self._given,
             "when": self._when,
             "then": self._then,
@@ -313,11 +311,11 @@ class ParameterizedTestBuilder:
 class AssertionBuilder:
     """Builder for complex test assertions."""
 
-    def __init__(self, data: t.ContainerValue) -> None:
+    def __init__(self, data: object) -> None:
         """Initialize test assertion builder with data to test."""
         super().__init__()
         self._data = data
-        self._checks: list[tuple[str, t.ContainerValue]] = []
+        self._checks: list[tuple[str, object]] = []
 
     def is_not_none(self) -> AssertionBuilder:
         """Assert that the data is not None."""
@@ -332,7 +330,7 @@ class AssertionBuilder:
         assert len(self._data) == length
         return self
 
-    def contains(self, item: t.ContainerValue) -> AssertionBuilder:
+    def contains(self, item: object) -> AssertionBuilder:
         """Assert that the data contains the specified item."""
         data = self._data
         if _is_object_mapping(data):
@@ -354,7 +352,7 @@ class AssertionBuilder:
 
     def satisfies(
         self,
-        predicate: Callable[[t.ContainerValue], bool],
+        predicate: Callable[[object], bool],
         message: str = "",
     ) -> AssertionBuilder:
         """Assert that the data satisfies the given predicate."""
@@ -460,17 +458,17 @@ class FixtureBuilder:
 
 
 def arrange_act_assert(
-    _arrange_func: Callable[[], t.ContainerValue],
-    _act_func: Callable[[t.ContainerValue], t.ContainerValue],
-    _assert_func: Callable[[t.ContainerValue, t.ContainerValue], None],
-) -> Callable[[Callable[[], t.ContainerValue]], Callable[[], t.ContainerValue]]:
+    _arrange_func: Callable[[], object],
+    _act_func: Callable[[object], object],
+    _assert_func: Callable[[object, object], None],
+) -> Callable[[Callable[[], object]], Callable[[], object]]:
     """Decorator for AAA pattern testing."""
 
     def decorator(
-        _test_func: Callable[[], t.ContainerValue],
-    ) -> Callable[[], t.ContainerValue]:
+        _test_func: Callable[[], object],
+    ) -> Callable[[], object]:
 
-        def wrapper() -> t.ContainerValue:
+        def wrapper() -> object:
             data = _arrange_func()
             result = _act_func(data)
             _assert_func(result, data)
@@ -654,7 +652,7 @@ class TestAdvancedPatterns:
         """Demonstrate assertion builder pattern."""
         test_data = ["apple", "banana", "cherry"]
 
-        def check_all_strings(x: t.ContainerValue) -> bool:
+        def check_all_strings(x: object) -> bool:
             """Check if all items in a list are strings."""
             values = _as_object_dict({"items": x}).get("items")
             values_list = _as_object_list(values)
@@ -670,10 +668,10 @@ class TestAdvancedPatterns:
     def test_arrange_act_assert_decorator(self) -> None:
         """Demonstrate Arrange-Act-Assert pattern decorator."""
 
-        def arrange_data(*_args: t.ContainerValue) -> dict[str, list[int]]:
+        def arrange_data(*_args: object) -> dict[str, list[int]]:
             return {"numbers": [1, 2, 3, 4, 5]}
 
-        def act_on_data(data: t.ContainerValue) -> t.ContainerValue:
+        def act_on_data(data: object) -> object:
             payload = _as_object_dict(data)
             if "numbers" in payload:
                 numbers = _as_int_list(payload["numbers"])
@@ -683,8 +681,8 @@ class TestAdvancedPatterns:
             return 0
 
         def assert_result(
-            result: t.ContainerValue,
-            original_data: t.ContainerValue,
+            result: object,
+            original_data: object,
         ) -> None:
             assert result == 15
             payload = _as_object_dict(original_data)
@@ -740,7 +738,7 @@ class TestComprehensiveIntegration:
         assert "integration" in tags_value
         setup_data = suite["setup_data"]
         if isinstance(setup_data, dict) and "environment" in setup_data:
-            env_value: t.ContainerValue = setup_data["environment"]
+            env_value: object = setup_data["environment"]
             assert env_value == "test"
 
 
@@ -783,17 +781,17 @@ class TestRealWorldScenarios:
 
             result = process_api_request(test_request)
 
-            def check_status_success(x: t.ContainerValue) -> bool:
+            def check_status_success(x: object) -> bool:
                 """Check if status is success."""
                 payload = _as_object_dict(x)
                 return payload.get("status") == "success"
 
-            def check_correlation_id(x: t.ContainerValue) -> bool:
+            def check_correlation_id(x: object) -> bool:
                 """Check if correlation_id exists."""
                 payload = _as_object_dict(x)
                 return "correlation_id" in payload
 
-            def check_valid_method(x: t.ContainerValue) -> bool:
+            def check_valid_method(x: object) -> bool:
                 """Check if method is valid HTTP method."""
                 payload = _as_object_dict(x)
                 method = payload.get("method")

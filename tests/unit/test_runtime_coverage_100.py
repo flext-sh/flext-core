@@ -16,7 +16,7 @@ from typing import ClassVar, Never, cast, overload, override
 
 import structlog
 
-from flext_core import FlextRuntime, t
+from flext_core import FlextRuntime
 
 
 class TestRuntimeDictLike:
@@ -26,7 +26,7 @@ class TestRuntimeDictLike:
         """Test is_dict_like when items() raises AttributeError."""
 
         class BadDictLike:
-            def keys(self) -> list[t.ContainerValue]:
+            def keys(self) -> list[object]:
                 return []
 
             def items(self) -> Never:
@@ -37,7 +37,7 @@ class TestRuntimeDictLike:
                 return None
 
         obj = BadDictLike()
-        obj_typed = cast("t.ContainerValue", cast("object", obj))
+        obj_typed = cast("object", cast("object", obj))
         result = FlextRuntime.is_dict_like(obj_typed)
         assert result is False
 
@@ -45,7 +45,7 @@ class TestRuntimeDictLike:
         """Test is_dict_like when items() raises TypeError."""
 
         class BadDictLike:
-            def keys(self) -> list[t.ContainerValue]:
+            def keys(self) -> list[object]:
                 return []
 
             def items(self) -> Never:
@@ -56,7 +56,7 @@ class TestRuntimeDictLike:
                 return None
 
         obj = BadDictLike()
-        obj_typed = cast("t.ContainerValue", cast("object", obj))
+        obj_typed = cast("object", cast("object", obj))
         result = FlextRuntime.is_dict_like(obj_typed)
         assert result is False
 
@@ -73,7 +73,7 @@ class TestRuntimeDictLike:
             pass
 
         obj = NotDictLike()
-        obj_typed = cast("t.ContainerValue", cast("object", obj))
+        obj_typed = cast("object", cast("object", obj))
         result = FlextRuntime.is_dict_like(obj_typed)
         assert result is False
 
@@ -81,14 +81,14 @@ class TestRuntimeDictLike:
         """Test is_dict_like with object missing keys attribute."""
 
         class NotDictLike:
-            def items(self) -> list[t.ContainerValue]:
+            def items(self) -> list[object]:
                 return []
 
             def get(self, key: object) -> object:
                 return None
 
         obj = NotDictLike()
-        obj_typed = cast("t.ContainerValue", cast("object", obj))
+        obj_typed = cast("object", cast("object", obj))
         result = FlextRuntime.is_dict_like(obj_typed)
         assert result is False
 
@@ -96,14 +96,14 @@ class TestRuntimeDictLike:
         """Test is_dict_like with object missing items attribute."""
 
         class NotDictLike:
-            def keys(self) -> list[t.ContainerValue]:
+            def keys(self) -> list[object]:
                 return []
 
             def get(self, key: object) -> object:
                 return None
 
         obj = NotDictLike()
-        obj_typed = cast("t.ContainerValue", cast("object", obj))
+        obj_typed = cast("object", cast("object", obj))
         result = FlextRuntime.is_dict_like(obj_typed)
         assert result is False
 
@@ -111,14 +111,14 @@ class TestRuntimeDictLike:
         """Test is_dict_like with object missing get attribute."""
 
         class NotDictLike:
-            def keys(self) -> list[t.ContainerValue]:
+            def keys(self) -> list[object]:
                 return []
 
             def items(self) -> list[tuple[object, object]]:
                 return []
 
         obj = NotDictLike()
-        obj_typed = cast("t.ContainerValue", cast("object", obj))
+        obj_typed = cast("object", cast("object", obj))
         result = FlextRuntime.is_dict_like(obj_typed)
         assert result is False
 
@@ -178,7 +178,7 @@ class TestRuntimeTypeChecking:
         """Test level_based_context_filter with malformed prefix."""
         FlextRuntime.configure_structlog()
         malformed_key = "_level_"
-        event_dict: dict[str, t.ContainerValue] = {
+        event_dict: dict[str, object] = {
             malformed_key: "value1",
             "normal_key": "value2",
         }
@@ -199,21 +199,21 @@ class TestRuntimeTypeChecking:
             cache_logger_on_first_use: ClassVar[bool] = True
 
         config = Config()
-        additional_processors_typed: Sequence[t.ContainerValue] = cast(
-            "Sequence[t.ContainerValue]",
+        additional_processors_typed: Sequence[object] = cast(
+            "Sequence[object]",
             config.additional_processors,
         )
-        wrapper_class_factory_typed: t.ContainerValue | None = (
-            cast("t.ContainerValue", config.wrapper_class_factory)
+        wrapper_class_factory_typed: object | None = (
+            cast("object", config.wrapper_class_factory)
             if config.wrapper_class_factory is not None
             else None
         )
-        logger_factory_typed: t.ContainerValue | None = (
-            cast("t.ContainerValue", config.logger_factory)
+        logger_factory_typed: object | None = (
+            cast("object", config.logger_factory)
             if config.logger_factory is not None
             else None
         )
-        config_dict: dict[str, t.ContainerValue] = {
+        config_dict: dict[str, object] = {
             "log_level": config.log_level,
             "console_renderer": config.console_renderer,
             "additional_processors": additional_processors_typed,
@@ -303,7 +303,7 @@ class TestRuntimeTypeChecking:
     def test_level_based_context_filter_with_level_prefixed(self) -> None:
         """Test level_based_context_filter with properly formatted level prefix."""
         FlextRuntime.configure_structlog()
-        event_dict: Mapping[str, t.ContainerValue] = {
+        event_dict: Mapping[str, object] = {
             "_level_debug_config": {"key": "value"},
             "_level_info_status": "ok",
             "_level_error_stack": "trace",
@@ -323,8 +323,8 @@ class TestRuntimeTypeChecking:
         def custom_processor(
             logger: object,
             method_name: str,
-            event_dict: dict[str, t.ContainerValue],
-        ) -> dict[str, t.ContainerValue]:
+            event_dict: dict[str, object],
+        ) -> dict[str, object]:
             event_dict["custom"] = True
             return event_dict
 
@@ -337,21 +337,21 @@ class TestRuntimeTypeChecking:
             cache_logger_on_first_use: ClassVar[bool] = True
 
         config = Config()
-        additional_processors_typed: Sequence[t.ContainerValue] = cast(
-            "Sequence[t.ContainerValue]",
+        additional_processors_typed: Sequence[object] = cast(
+            "Sequence[object]",
             config.additional_processors,
         )
-        wrapper_class_factory_typed: t.ContainerValue | None = (
-            cast("t.ContainerValue", config.wrapper_class_factory)
+        wrapper_class_factory_typed: object | None = (
+            cast("object", config.wrapper_class_factory)
             if config.wrapper_class_factory is not None
             else None
         )
-        logger_factory_typed: t.ContainerValue | None = (
-            cast("t.ContainerValue", config.logger_factory)
+        logger_factory_typed: object | None = (
+            cast("object", config.logger_factory)
             if config.logger_factory is not None
             else None
         )
-        config_dict: dict[str, t.ContainerValue] = {
+        config_dict: dict[str, object] = {
             "log_level": config.log_level,
             "console_renderer": config.console_renderer,
             "additional_processors": additional_processors_typed,

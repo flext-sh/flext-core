@@ -24,7 +24,7 @@ class ValidationScenario(BaseModel):
 
     name: str = Field(description="Unique scenario name")
     validator_type: str = Field(description="Validator category under test")
-    input_value: t.ContainerValue = Field(description="Input value passed to validator")
+    input_value: object = Field(description="Input value passed to validator")
     input_params: t.ConfigurationMapping | None = Field(
         default=None,
         description="Optional validator parameters for scenario execution",
@@ -32,7 +32,7 @@ class ValidationScenario(BaseModel):
     should_succeed: bool = Field(
         default=True, description="Whether scenario expects validation success"
     )
-    expected_value: t.ContainerValue | None = Field(
+    expected_value: object | None = Field(
         default=None,
         description="Expected normalized value when validation succeeds",
     )
@@ -53,7 +53,7 @@ class ParserScenario(BaseModel):
     name: str = Field(description="Unique parser scenario name")
     parser_method: str = Field(description="Parser method to execute")
     input_data: str = Field(description="Raw parser input data")
-    expected_output: t.ContainerValue | None = Field(
+    expected_output: object | None = Field(
         default=None,
         description="Expected parsed output for successful scenarios",
     )

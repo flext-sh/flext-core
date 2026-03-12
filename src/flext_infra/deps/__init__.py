@@ -151,16 +151,17 @@ __all__ = [
     "run_mypy_stub_hints",
     "run_pip_check",
     "s",
+    "t",
 ]
 
 
-def __getattr__(name: str) -> t.ContainerValue:
+def __getattr__(name: str) -> object:
     """Lazy-load module attributes on first access (PEP 562)."""
     if name in _LAZY_IMPORTS:
         module_path, attr_name = _LAZY_IMPORTS[name]
         module = importlib.import_module(module_path)
         value = getattr(module, attr_name)
-        module_globals: MutableMapping[str, t.ContainerValue] = globals()
+        module_globals: MutableMapping[str, object] = globals()
         module_globals[name] = value
         return value
     msg = f"module {__name__!r} has no attribute {name!r}"

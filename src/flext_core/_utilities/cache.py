@@ -60,7 +60,7 @@ class FlextUtilitiesCache:
        - Type-aware sorting for cross-type comparisons
 
     2. **Type Safety**:
-       - Handles all t.ContainerValue variants
+       - Handles all object variants
        - BaseModel special handling with model_dump()
        - Graceful fallback to string representation
 
@@ -76,7 +76,7 @@ class FlextUtilitiesCache:
         return FlextRuntime.get_logger(__name__)
 
     @staticmethod
-    def clear_object_cache(obj: t.ContainerValue) -> r[bool]:
+    def clear_object_cache(obj: object) -> r[bool]:
         """Clear cache-like attributes on an object.
 
         Business Rule: Safe Cache Invalidation
@@ -128,7 +128,7 @@ class FlextUtilitiesCache:
             return r[bool].fail(f"Failed to clear caches: {e}")
 
     @staticmethod
-    def generate_cache_key(*args: t.ContainerValue, **kwargs: t.ContainerValue) -> str:
+    def generate_cache_key(*args: object, **kwargs: object) -> str:
         """Generate a deterministic cache key from arguments.
 
         Business Rule: SHA-256 Cache Key Generation
@@ -163,9 +163,7 @@ class FlextUtilitiesCache:
         return hashlib.sha256(key_data.encode()).hexdigest()
 
     @staticmethod
-    def generate_cache_key_for_command(
-        command: t.ContainerValue, command_type: type
-    ) -> str:
+    def generate_cache_key_for_command(command: object, command_type: type) -> str:
         if isinstance(command, Mapping):
             sorted_data = FlextUtilitiesCache.sort_dict_keys(command)
             return f"{command_type.__name__}_{hash(str(sorted_data))}"
@@ -177,7 +175,7 @@ class FlextUtilitiesCache:
             return f"{command_type.__name__}_{abs(hash(encoded))}"
 
     @staticmethod
-    def has_cache_attributes(obj: t.ContainerValue) -> bool:
+    def has_cache_attributes(obj: object) -> bool:
         """Check if an object exposes any known cache-related attributes.
 
         Business Rule: Cache Detection
@@ -186,7 +184,7 @@ class FlextUtilitiesCache:
         Useful for deciding whether to attempt cache clearing.
 
         Args:
-            obj: t.ContainerValue object
+            obj: object object
 
         Returns:
             True if any known cache attribute exists, False otherwise
@@ -196,7 +194,7 @@ class FlextUtilitiesCache:
         return any(hasattr(obj, attr) for attr in cache_attributes)
 
     @staticmethod
-    def normalize_component(component: t.ContainerValue) -> t.ContainerValue:
+    def normalize_component(component: object) -> object:
         """Normalize a component recursively for consistent representation.
 
         Business Rule: Recursive Component Normalization
@@ -228,7 +226,7 @@ class FlextUtilitiesCache:
                 for k, v in component.model_dump().items()
             }
         if isinstance(component, Mapping):
-            dict_component: Mapping[str, t.ContainerValue] = dict(component.items())
+            dict_component: Mapping[str, object] = dict(component.items())
             return {
                 str(k): FlextUtilitiesCache.normalize_component(v)
                 for k, v in dict_component.items()
@@ -237,7 +235,7 @@ class FlextUtilitiesCache:
             return component
         if isinstance(component, set):
             try:
-                set_items = TypeAdapter(set[t.ContainerValue]).validate_python(
+                set_items = TypeAdapter(set[object]).validate_python(
                     component,
                     strict=False,
                 )
@@ -247,7 +245,7 @@ class FlextUtilitiesCache:
                     strict=False,
                 )
                 return tuple(fallback_items)
-            normalized_items: list[t.ContainerValue] = [
+            normalized_items: list[object] = [
                 FlextUtilitiesCache.normalize_component(item) for item in set_items
             ]
             return tuple(normalized_items)
@@ -256,7 +254,7 @@ class FlextUtilitiesCache:
         return str(component)
 
     @staticmethod
-    def sort_dict_keys(data: t.ContainerValue) -> t.ContainerValue:
+    def sort_dict_keys(data: object) -> object:
         """Sort dictionary keys recursively for consistent representations.
 
         Business Rule: Recursive Key Sorting for Cache Consistency
@@ -277,10 +275,10 @@ class FlextUtilitiesCache:
         Type Safety:
         - Uses FlextRuntime.is_dict_like for Mapping detection
         - Returns input unchanged if not dict-like
-        - Preserves t.ContainerValue contract
+        - Preserves object contract
 
         Args:
-            data: t.ContainerValue value
+            data: object value
 
         Returns:
             Sorted dict if input is dict-like, unchanged otherwise
@@ -289,7 +287,7 @@ class FlextUtilitiesCache:
         if isinstance(data, BaseModel):
             return FlextUtilitiesCache.sort_dict_keys(data.model_dump())
         if isinstance(data, Mapping):
-            result: dict[str, t.ContainerValue] = {}
+            result: dict[str, object] = {}
             for k in sorted(data.keys(), key=FlextUtilitiesCache.sort_key):
                 value = data[k]
                 if value is None:

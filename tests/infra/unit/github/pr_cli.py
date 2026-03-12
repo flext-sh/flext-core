@@ -15,7 +15,7 @@ from tests.infra.helpers import h
 from tests.infra.typings import t
 from tests.infra.unit.github._stubs import StubPrManager, StubUtilities
 
-_DEFAULTS: dict[str, t.ContainerValue] = {
+_DEFAULTS: dict[str, object] = {
     "action": "status",
     "repo_root": Path("/tmp/test"),
     "base": "main",
@@ -32,7 +32,7 @@ _DEFAULTS: dict[str, t.ContainerValue] = {
 }
 
 
-def _args(**overrides: t.ContainerValue) -> argparse.Namespace:
+def _args(**overrides: object) -> argparse.Namespace:
     return h.ns(**{**_DEFAULTS, **overrides})
 
 

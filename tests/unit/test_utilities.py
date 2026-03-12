@@ -25,7 +25,7 @@ from typing import ClassVar, cast
 
 import pytest
 
-from flext_core import FlextSettings, c, m, r, t
+from flext_core import FlextSettings, c, m, r
 from flext_tests import u
 
 from .contracts.text_contract import TextUtilityContract
@@ -129,7 +129,7 @@ class Testu(TextUtilityContract):
         expected: bool,
     ) -> None:
         """Test string type guards."""
-        result = u.is_type(cast("t.ContainerValue", value), "string_non_empty")
+        result = u.is_type(cast("object", value), "string_non_empty")
         assert result is expected, f"{description}: expected {expected}, got {result}"
 
     @pytest.mark.parametrize(
@@ -143,7 +143,7 @@ class Testu(TextUtilityContract):
         expected: bool,
     ) -> None:
         """Test dict type guards."""
-        result = u.is_type(cast("t.ContainerValue", value), "dict_non_empty")
+        result = u.is_type(cast("object", value), "dict_non_empty")
         assert result is expected, f"{description}: expected {expected}, got {result}"
 
     @pytest.mark.parametrize(
@@ -157,7 +157,7 @@ class Testu(TextUtilityContract):
         expected: bool,
     ) -> None:
         """Test list type guards."""
-        result = u.is_type(cast("t.ContainerValue", value), "list_non_empty")
+        result = u.is_type(cast("object", value), "list_non_empty")
         assert result is expected, f"{description}: expected {expected}, got {result}"
 
     @pytest.mark.parametrize(
@@ -268,7 +268,7 @@ class Testu(TextUtilityContract):
         expected_type: type | tuple[type, ...],
     ) -> None:
         """Test cache component normalization."""
-        normalized = u.Cache.normalize_component(cast("t.ContainerValue", input_data))
+        normalized = u.Cache.normalize_component(cast("object", input_data))
         if isinstance(expected_type, tuple):
             assert isinstance(normalized, expected_type)
         else:
@@ -307,7 +307,7 @@ class Testu(TextUtilityContract):
 
             cache_obj = TestWithCache()
             result = u.Cache.has_cache_attributes(
-                cast("t.ContainerValue", cast("object", cache_obj)),
+                cast("object", cast("object", cache_obj)),
             )
             assert result is expected
         else:
@@ -317,7 +317,7 @@ class Testu(TextUtilityContract):
 
             no_cache_obj = TestNoCache()
             result = u.Cache.has_cache_attributes(
-                cast("t.ContainerValue", cast("object", no_cache_obj)),
+                cast("object", cast("object", no_cache_obj)),
             )
             assert result is expected
 

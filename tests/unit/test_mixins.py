@@ -28,7 +28,7 @@ from typing import ClassVar
 import pytest
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import FlextContext, m, t, x
+from flext_core import FlextContext, m, x
 from flext_tests import u
 
 
@@ -85,7 +85,7 @@ class ModelConversionScenario(BaseModel):
     scenario_type: ModelConversionScenarioType = Field(
         description="Model conversion scenario type"
     )
-    input_value: t.ContainerValue = Field(description="Input value for conversion")
+    input_value: object = Field(description="Input value for conversion")
     expected_output: m.ConfigMap = Field(description="Expected conversion output")
 
 
@@ -97,7 +97,7 @@ class ResultHandlingScenario(BaseModel):
     scenario_type: ResultHandlingScenarioType = Field(
         description="Result handling scenario type"
     )
-    input_value: t.ContainerValue = Field(description="Input value for result handling")
+    input_value: object = Field(description="Input value for result handling")
 
 
 class MixinScenarios:

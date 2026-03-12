@@ -19,7 +19,7 @@ from collections.abc import Callable
 
 import pytest
 
-from flext_core import FlextContainer, t
+from flext_core import FlextContainer
 
 
 class PerformanceBenchmark:
@@ -27,8 +27,8 @@ class PerformanceBenchmark:
 
     @staticmethod
     def measure_time(
-        func: Callable[[], t.ContainerValue],
-    ) -> tuple[t.ContainerValue, float]:
+        func: Callable[[], object],
+    ) -> tuple[object, float]:
         """Measure execution time of a function.
 
         Args:

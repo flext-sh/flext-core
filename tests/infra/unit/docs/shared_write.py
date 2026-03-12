@@ -15,7 +15,6 @@ import pytest
 from flext_infra.docs.shared import FlextInfraDocsShared
 from flext_tests import tm
 from tests.infra.models import m
-from tests.infra.typings import t
 
 
 class TestWriteJson:
@@ -160,10 +159,10 @@ class TestWriteMarkdown:
         md_file = tmp_path / "test.md"
 
         def mock_write_text(
-            self: t.ContainerValue,
+            self: object,
             data: str,
-            *args: t.ContainerValue,
-            **kwargs: t.ContainerValue,
+            *args: object,
+            **kwargs: object,
         ) -> None:
             msg = "Permission denied"
             raise OSError(msg)

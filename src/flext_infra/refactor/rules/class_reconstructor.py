@@ -116,12 +116,12 @@ class PreCheckGate:
             by_family[policy.family_name] = policy
         return by_family
 
-    def _schema_valid(self, loaded: dict[str, t.ContainerValue]) -> bool:
+    def _schema_valid(self, loaded: dict[str, object]) -> bool:
         schema_result = u.Infra.read_json(self._schema_path)
         if schema_result.is_failure:
             return False
-        raw_schema: Mapping[str, t.ContainerValue] = schema_result.value
-        schema: dict[str, t.ContainerValue] = dict(raw_schema.items())
+        raw_schema: Mapping[str, object] = schema_result.value
+        schema: dict[str, object] = dict(raw_schema.items())
         top_required = u.Infra.string_list(schema.get("required", []))
         if not u.Infra.has_required_fields(loaded, top_required):
             return False

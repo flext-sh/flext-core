@@ -13,13 +13,13 @@ from pathlib import Path
 
 import libcst as cst
 
-from flext_infra import c, t
+from flext_infra import c
 
 
 class FlextInfraRefactorRule:
     """Base class for flext_infra refactor rules."""
 
-    def __init__(self, config: Mapping[str, t.ContainerValue]) -> None:
+    def __init__(self, config: Mapping[str, object]) -> None:
         """Initialize rule metadata from rule config."""
         self.config = dict(config)
         rule_id = self.config.get(c.Infra.ReportKeys.ID, c.Infra.Defaults.UNKNOWN)

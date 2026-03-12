@@ -51,29 +51,27 @@ class FlextModelFoundation:
         """Pydantic v2 validators - single namespace for all field validators."""
 
         _tags_adapter: ClassVar[TypeAdapter[list[str]] | None] = None
-        _list_adapter: ClassVar[TypeAdapter[list[t.ContainerValue]] | None] = None
+        _list_adapter: ClassVar[TypeAdapter[list[object]] | None] = None
         _strict_string_adapter: ClassVar[
             TypeAdapter[Annotated[str, Field(strict=True)]] | None
         ] = None
         _metadata_map_adapter: ClassVar[
             TypeAdapter[dict[str, t.MetadataValue]] | None
         ] = None
-        _config_adapter: ClassVar[TypeAdapter[dict[str, t.ContainerValue]] | None] = (
-            None
-        )
+        _config_adapter: ClassVar[TypeAdapter[dict[str, object]] | None] = None
 
         @classmethod
-        def config_adapter(cls) -> TypeAdapter[dict[str, t.ContainerValue]]:
+        def config_adapter(cls) -> TypeAdapter[dict[str, object]]:
             """Lazy-load config TypeAdapter on first access."""
             if cls._config_adapter is None:
-                cls._config_adapter = TypeAdapter(dict[str, t.ContainerValue])
+                cls._config_adapter = TypeAdapter(dict[str, object])
             return cls._config_adapter
 
         @classmethod
-        def list_adapter(cls) -> TypeAdapter[list[t.ContainerValue]]:
+        def list_adapter(cls) -> TypeAdapter[list[object]]:
             """Lazy-load list TypeAdapter on first access."""
             if cls._list_adapter is None:
-                cls._list_adapter = TypeAdapter(list[t.ContainerValue])
+                cls._list_adapter = TypeAdapter(list[object])
             return cls._list_adapter
 
         @classmethod
@@ -107,7 +105,7 @@ class FlextModelFoundation:
             return _ensure_utc_datetime(v)
 
         @staticmethod
-        def normalize_to_list(v: t.ContainerValue) -> list[t.ContainerValue]:
+        def normalize_to_list(v: object) -> list[object]:
             """Normalize value to list format."""
             try:
                 return FlextModelFoundation.Validators.list_adapter().validate_python(v)
@@ -120,7 +118,7 @@ class FlextModelFoundation:
             return v.strip()
 
         @staticmethod
-        def validate_config_dict(v: t.ContainerValue) -> Mapping[str, t.ContainerValue]:
+        def validate_config_dict(v: object) -> Mapping[str, object]:
             """Validate configuration dictionary structure."""
             try:
                 normalized = (
@@ -129,7 +127,7 @@ class FlextModelFoundation:
             except ValidationError as exc:
                 msg = "Configuration must be a dictionary"
                 raise TypeError(msg) from exc
-            out: dict[str, t.ContainerValue] = {}
+            out: dict[str, object] = {}
             for key, item in normalized.items():
                 if key.startswith("_"):
                     msg = f"Keys starting with '_' are reserved: {key}"
@@ -138,7 +136,7 @@ class FlextModelFoundation:
             return out
 
         @staticmethod
-        def validate_tags_list(v: t.ContainerValue) -> list[str]:
+        def validate_tags_list(v: object) -> list[str]:
             """Validate and normalize tags list."""
             try:
                 raw_tags = (
@@ -356,7 +354,7 @@ class FlextModelFoundation:
         """Success result for discriminated union."""
 
         result_type: Literal["success"] = "success"
-        value: t.ContainerValue
+        value: object
         metadata: FlextModelFoundation.Metadata = Field(
             default_factory=lambda: FlextModelFoundation.Metadata(),
             description="Structured metadata attached to a successful operation result.",
@@ -374,7 +372,7 @@ class FlextModelFoundation:
         """Partial result for discriminated union."""
 
         result_type: Literal["partial"] = "partial"
-        value: t.ContainerValue
+        value: object
         warnings: list[str] = Field(
             default_factory=list,
             description="Non-fatal warning messages generated during partial processing.",
@@ -389,7 +387,7 @@ class FlextModelFoundation:
         """Valid validation outcome."""
 
         outcome_type: Literal["valid"] = "valid"
-        validated_data: t.ContainerValue
+        validated_data: object
         validation_time_ms: float
 
     class InvalidOutcome(BaseModel):
@@ -406,7 +404,7 @@ class FlextModelFoundation:
         """Warning validation outcome."""
 
         outcome_type: Literal["warning"] = "warning"
-        validated_data: t.ContainerValue
+        validated_data: object
         warnings: list[str]
         validation_time_ms: float
 

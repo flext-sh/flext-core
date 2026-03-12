@@ -310,9 +310,9 @@ class FlextModelsService:
             min_length=c.Reliability.RETRY_COUNT_MIN,
             description="Operation name",
         )
-        operation_callable: Callable[
-            [t.ContainerValue], p.ResultLike[t.ContainerValue]
-        ] = Field(description="Callable operation returning result")
+        operation_callable: Callable[[object], p.ResultLike[object]] = Field(
+            description="Callable operation returning result"
+        )
         arguments: FlextModelsService.ServiceParameters | None = None
         keyword_arguments: FlextModelsService.ServiceParameters | None = None
         timeout_seconds: float = Field(

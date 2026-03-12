@@ -30,9 +30,9 @@ from flext_core._models.entity import FlextModelsEntity
 from flext_core.runtime import FlextRuntime
 
 
-def _normalize_to_mapping(v: t.ContainerValue) -> Mapping[str, t.ContainerValue]:
+def _normalize_to_mapping(v: object) -> Mapping[str, object]:
     if v is None:
-        out: dict[str, t.ContainerValue] = {}
+        out: dict[str, object] = {}
         return out
     if isinstance(v, Mapping):
         return {str(k): v for k, v in v.items()}
@@ -42,7 +42,7 @@ def _normalize_to_mapping(v: t.ContainerValue) -> Mapping[str, t.ContainerValue]
     raise ValueError(msg)
 
 
-def _normalize_metadata_before(v: t.ContainerValue | None) -> t.ContainerValue | None:
+def _normalize_metadata_before(v: object | None) -> object | None:
     if v is None:
         return None
     if isinstance(v, FlextModelFoundation.Metadata):
@@ -54,9 +54,9 @@ def _normalize_metadata_before(v: t.ContainerValue | None) -> t.ContainerValue |
     return v
 
 
-def _normalize_statistics_before(v: t.ContainerValue) -> Mapping[str, t.ContainerValue]:
+def _normalize_statistics_before(v: object) -> Mapping[str, object]:
     if v is None:
-        out: dict[str, t.ContainerValue] = {}
+        out: dict[str, object] = {}
         return out
     return _normalize_to_mapping(v)
 
@@ -104,11 +104,11 @@ class FlextModelsContext:
             ),
         ]
         previous_value: Annotated[
-            t.ContainerValue | None,
+            object | None,
             Field(default=None, description="Previous value before set operation"),
         ] = None
 
-    class StructlogProxyContextVar[T: t.ContainerValue]:
+    class StructlogProxyContextVar[T: object]:
         """ContextVar-like proxy using structlog as backend (single source of truth).
 
         Type Parameter T is bounded by ContainerValue - all storable context values.
@@ -125,8 +125,8 @@ class FlextModelsContext:
 
         Type Safety Note:
             structlog.contextvars.get_contextvars() has incomplete type hints:
-            it returns mapping[str, t.ContainerValue] but we control the values (always
-            t.ContainerValue). We cast to mapping[str, t.ContainerValue]
+            it returns mapping[str, object] but we control the values (always
+            object). We cast to mapping[str, object]
             to recover proper type information. This is NECESSARY to enable
             type inference of T through the proxy.
 
@@ -170,7 +170,7 @@ class FlextModelsContext:
                     token.key: token.previous_value
                 })
 
-        def get(self) -> t.ContainerValue | None:
+        def get(self) -> object | None:
             """Get current value from structlog context.
 
             Returns:
@@ -178,12 +178,12 @@ class FlextModelsContext:
 
             Architecture:
                 structlog.contextvars.get_contextvars() returns a mapping;
-                we control stored values via set() (t.ContainerValue). Key presence
-                is checked then the value is returned; T is bounded to t.ContainerValue.
+                we control stored values via set() (object). Key presence
+                is checked then the value is returned; T is bounded to object.
 
             """
             contextvars_data = structlog.contextvars.get_contextvars()
-            structlog_context: Mapping[str, t.ContainerValue] = contextvars_data
+            structlog_context: Mapping[str, object] = contextvars_data
             if self._key not in structlog_context:
                 return self._default
             value = structlog_context[self._key]
@@ -206,7 +206,7 @@ class FlextModelsContext:
                 _ = structlog.contextvars.bind_contextvars(**{self._key: value})
             else:
                 structlog.contextvars.unbind_contextvars(self._key)
-            prev_value: t.ContainerValue | None = current_value
+            prev_value: object | None = current_value
             return FlextModelsContext.StructlogProxyToken(
                 key=self._key, previous_value=prev_value
             )
@@ -243,7 +243,7 @@ class FlextModelsContext:
             ),
         ]
         old_value: Annotated[
-            t.ContainerValue | None,
+            object | None,
             Field(default=None, description="Previous value before set operation"),
         ]
 
@@ -291,17 +291,17 @@ class FlextModelsContext:
         model_config = ConfigDict(extra=c.ModelConfig.EXTRA_IGNORE)
 
         @classmethod
-        def check_json_serializable(cls, obj: t.ContainerValue, path: str = "") -> None:
+        def check_json_serializable(cls, obj: object, path: str = "") -> None:
             """Recursively check if object is JSON-serializable."""
             if obj is None or isinstance(obj, (str, int, float, bool)):
                 return
             if FlextRuntime.is_dict_like(obj):
-                dict_obj: Mapping[str, t.ContainerValue] = dict(obj)
+                dict_obj: Mapping[str, object] = dict(obj)
                 for key, val in dict_obj.items():
                     cls.check_json_serializable(val, f"{path}.{key}")
                 return
             if FlextRuntime.is_list_like(obj) and (not isinstance(obj, (str, bytes))):
-                seq_obj: Sequence[t.ContainerValue] = obj
+                seq_obj: Sequence[object] = obj
                 for i, item in enumerate(seq_obj):
                     cls.check_json_serializable(item, f"{path}[{i}]")
                 return
@@ -309,9 +309,7 @@ class FlextModelsContext:
             raise TypeError(msg)
 
         @classmethod
-        def normalize_to_serializable_value(
-            cls, val: t.ContainerValue
-        ) -> t.ContainerValue:
+        def normalize_to_serializable_value(cls, val: object) -> object:
             normalized = cls.normalize_to_general_value(val)
             if normalized is None or isinstance(normalized, (str, int, float, bool)):
                 return normalized
@@ -331,7 +329,7 @@ class FlextModelsContext:
         def validate_dict_serializable(
             cls,
             v: FlextModelsContainers.Dict | t.ConfigurationMapping | BaseModel | None,
-        ) -> Mapping[str, t.ContainerValue]:
+        ) -> Mapping[str, object]:
             """Validate that ConfigurationMapping values are JSON-serializable.
 
             STRICT mode: Also accepts FlextModelFoundation.Metadata and converts to dict.
@@ -339,8 +337,8 @@ class FlextModelsContext:
             Only allows JSON-serializable types: str, int, float, bool, list, dict,
             None.
             """
-            working_value: MutableMapping[str, t.ContainerValue]
-            normalized_mapping: Mapping[str, t.ContainerValue]
+            working_value: MutableMapping[str, object]
+            normalized_mapping: Mapping[str, object]
             if v is None:
                 return {}
             if isinstance(v, FlextModelFoundation.Metadata):
@@ -364,8 +362,8 @@ class FlextModelsContext:
             return dict(working_value)
 
         @staticmethod
-        def normalize_to_general_value(val: t.ContainerValue) -> t.ContainerValue:
-            """Normalize any value to t.ContainerValue recursively."""
+        def normalize_to_general_value(val: object) -> object:
+            """Normalize any value to object recursively."""
             return FlextRuntime.normalize_to_general_value(val)
 
     class ContextExport(FlextModelsEntity.Value):
@@ -399,7 +397,7 @@ class FlextModelsContext:
 
         """
 
-        data: Mapping[str, t.ContainerValue] = Field(
+        data: Mapping[str, object] = Field(
             default_factory=dict, description="All context data from all scopes"
         )
         metadata: Annotated[
@@ -409,7 +407,7 @@ class FlextModelsContext:
             default=None, description="Context metadata (creation info, source, etc.)"
         )
         statistics: Annotated[
-            Mapping[str, t.ContainerValue],
+            Mapping[str, object],
             BeforeValidator(_normalize_statistics_before),
         ] = Field(
             default_factory=dict,
@@ -431,7 +429,7 @@ class FlextModelsContext:
         def validate_dict_serializable(
             cls,
             v: FlextModelsContainers.Dict | t.ConfigurationMapping | BaseModel | None,
-        ) -> Mapping[str, t.ContainerValue]:
+        ) -> Mapping[str, object]:
             """Validate that ConfigurationMapping values are JSON-serializable.
 
             Uses mode='before' to validate raw input before Pydantic processing.
@@ -439,8 +437,8 @@ class FlextModelsContext:
             Only allows JSON-serializable types: str, int, float, bool, list, dict,
             None.
             """
-            working_value: MutableMapping[str, t.ContainerValue]
-            normalized_mapping: Mapping[str, t.ContainerValue]
+            working_value: MutableMapping[str, object]
+            normalized_mapping: Mapping[str, object]
             if v is None:
                 return {}
             if isinstance(v, FlextModelFoundation.Metadata):
@@ -499,10 +497,10 @@ class FlextModelsContext:
             str, Field(default="", description="Type/category of scope")
         ] = ""
         data: Annotated[
-            Mapping[str, t.ContainerValue], BeforeValidator(_normalize_to_mapping)
+            Mapping[str, object], BeforeValidator(_normalize_to_mapping)
         ] = Field(default_factory=dict, description="Scope data")
         metadata: Annotated[
-            Mapping[str, t.ContainerValue], BeforeValidator(_normalize_to_mapping)
+            Mapping[str, object], BeforeValidator(_normalize_to_mapping)
         ] = Field(default_factory=dict, description="Scope metadata")
 
     class ContextStatistics(FlextModelFoundation.ArbitraryTypesModel):
@@ -550,7 +548,7 @@ class FlextModelsContext:
             Field(default=c.ZERO, ge=c.ZERO, description="Number of clear operations"),
         ] = c.ZERO
         operations: Annotated[
-            Mapping[str, t.ContainerValue],
+            Mapping[str, object],
             BeforeValidator(_normalize_to_mapping),
             Field(
                 default_factory=dict, description="Extensible operation/metrics counts"
@@ -563,7 +561,7 @@ class FlextModelsContext:
     class ContextMetadata(BaseModel):
         """Metadata storage for context objects with full tracing support.
 
-        Enhanced to use t.ContainerValue and Mapping patterns
+        Enhanced to use object and Mapping patterns
         across multiple modules including context.py, handlers.py, dispatcher.py,
         and config.py for consistent, strongly-typed metadata handling.
 
@@ -634,7 +632,7 @@ class FlextModelsContext:
             str | None, Field(default=None, description="Unique message identifier")
         ] = None
         custom_fields: Annotated[
-            Mapping[str, t.ContainerValue],
+            Mapping[str, object],
             BeforeValidator(_normalize_to_mapping),
             Field(
                 default_factory=dict, description="Extensible custom metadata fields"
@@ -669,14 +667,14 @@ class FlextModelsContext:
             str | None, Field(default=None, description="Type of domain")
         ] = None
         domain_data: Annotated[
-            Mapping[str, t.ContainerValue],
+            Mapping[str, object],
             Field(default_factory=dict, description="Domain-specific data"),
         ] = Field(
             default_factory=dict,
             description="Domain payload values scoped to the current business context.",
         )
         domain_metadata: Annotated[
-            Mapping[str, t.ContainerValue],
+            Mapping[str, object],
             Field(default_factory=dict, description="Domain metadata"),
         ] = Field(
             default_factory=dict,

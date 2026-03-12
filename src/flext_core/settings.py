@@ -14,7 +14,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import threading
-from collections.abc import Callable, Mapping, MutableMapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from typing import ClassVar, Self
 
@@ -51,7 +51,7 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
     - Protocol compliance via inheritance (p.Config, p.ProtocolSettings)
     """
 
-    _instances: ClassVar[MutableMapping[type[Self], Self]] = {}
+    _instances: ClassVar[dict[type[Self], Self]] = {}
     _lock: ClassVar[threading.RLock] = threading.RLock()
 
     model_config = SettingsConfigDict(
@@ -139,7 +139,7 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
     )
     _di_provider: t.Scalar | None = PrivateAttr(default=None)
 
-    def __new__(cls, **_kwargs: t.ContainerValue) -> Self:
+    def __new__(cls, **_kwargs: object) -> Self:
         """Create singleton instance.
 
         Note: BaseSettings.__init__ accepts **values internally.
@@ -160,7 +160,7 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
             raise TypeError(msg)
         return raw_instance
 
-    def __init__(self, **kwargs: t.ContainerValue) -> None:
+    def __init__(self, **kwargs: object) -> None:
         """Initialize config with data.
 
         Kwargs are applied as field overrides after base env/config loading
@@ -329,10 +329,8 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
             """Create configuration instance."""
             return self.config_class()
 
-    _namespace_registry: ClassVar[MutableMapping[str, type[BaseSettings]]] = {}
-    _context_overrides: ClassVar[
-        MutableMapping[str, MutableMapping[str, t.Scalar]]
-    ] = {}
+    _namespace_registry: ClassVar[dict[str, type[BaseSettings]]] = {}
+    _context_overrides: ClassVar[dict[str, dict[str, t.Scalar]]] = {}
 
     def __getattr__(self, name: str) -> BaseSettings:
         """Resolve namespace-style attribute access to registered settings."""

@@ -89,8 +89,8 @@ class FlextUtilitiesArgs:
 
     @staticmethod
     def parse_kwargs[E: StrEnum](
-        kwargs: Mapping[str, t.ContainerValue], enum_fields: Mapping[str, type[E]]
-    ) -> r[Mapping[str, t.ContainerValue]]:
+        kwargs: Mapping[str, object], enum_fields: Mapping[str, type[E]]
+    ) -> r[Mapping[str, object]]:
         """Parse kwargs converting specific fields to StrEnums.
 
         Example:

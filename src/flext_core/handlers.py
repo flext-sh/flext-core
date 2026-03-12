@@ -23,7 +23,7 @@ from flext_core import c, e, m, p, r, t, u, x
 from flext_core._models.containers import FlextModelsContainers
 
 
-class FlextHandlers[MessageT_contra = t.ContainerValue, ResultT = t.ContainerValue](x):
+class FlextHandlers[MessageT_contra = object, ResultT = object](x):
     """Abstract CQRS handler with validation and railway-style execution.
 
     Provides the base implementation for Command Query Responsibility Segregation
@@ -122,7 +122,7 @@ class FlextHandlers[MessageT_contra = t.ContainerValue, ResultT = t.ContainerVal
         self._accepted_message_types: list[type] = []
         self._revalidate_pydantic_messages: bool = False
         self._type_warning_emitted: bool = False
-        self._metrics: dict[str, t.ContainerValue] = {}
+        self._metrics: dict[str, object] = {}
         self._stack: list[m.ExecutionContext | FlextModelsContainers.ConfigMap] = []
 
     def __call__(self, message: MessageT_contra) -> r[ResultT]:
@@ -196,7 +196,7 @@ class FlextHandlers[MessageT_contra = t.ContainerValue, ResultT = t.ContainerVal
             handler_config: Optional m configuration
 
         Returns:
-            FlextHandlers[t.ContainerValue, t.ContainerValue]: Handler instance wrapping the callable
+            FlextHandlers[object, object]: Handler instance wrapping the callable
 
         Raises:
             e.ValidationError: If invalid mode is provided
@@ -452,9 +452,7 @@ class FlextHandlers[MessageT_contra = t.ContainerValue, ResultT = t.ContainerVal
             return r[FlextModelsContainers.ConfigMap].ok(context_dict)
         return r[FlextModelsContainers.ConfigMap].ok(popped)
 
-    def push_context(
-        self, ctx: m.ExecutionContext | dict[str, t.ContainerValue]
-    ) -> r[bool]:
+    def push_context(self, ctx: m.ExecutionContext | dict[str, object]) -> r[bool]:
         """Push execution context onto the local handler stack."""
         if isinstance(ctx, m.ExecutionContext):
             self._stack.append(ctx)
@@ -484,7 +482,7 @@ class FlextHandlers[MessageT_contra = t.ContainerValue, ResultT = t.ContainerVal
         self._stack.append(execution_ctx)
         return r[bool].ok(value=True)
 
-    def record_metric(self, name: str, value: t.ContainerValue) -> r[bool]:
+    def record_metric(self, name: str, value: object) -> r[bool]:
         """Record a metric value in the current handler state."""
         self._metrics[name] = value
         return r[bool].ok(value=True)
@@ -684,9 +682,7 @@ class FlextHandlers[MessageT_contra = t.ContainerValue, ResultT = t.ContainerVal
         @staticmethod
         def scan_module(
             module: ModuleType,
-        ) -> list[
-            tuple[str, Callable[..., t.ContainerValue | None], m.HandlerDecoratorConfig]
-        ]:
+        ) -> list[tuple[str, Callable[..., object | None], m.HandlerDecoratorConfig]]:
             """Scan module for functions decorated with @handler().
 
             Introspects the module to find all functions with handler configuration
@@ -707,7 +703,7 @@ class FlextHandlers[MessageT_contra = t.ContainerValue, ResultT = t.ContainerVal
             handlers: list[
                 tuple[
                     str,
-                    Callable[..., t.ContainerValue | None],
+                    Callable[..., object | None],
                     m.HandlerDecoratorConfig,
                 ]
             ] = []
@@ -727,10 +723,10 @@ class FlextHandlers[MessageT_contra = t.ContainerValue, ResultT = t.ContainerVal
                 callable_func: Callable[..., object] = func
 
                 def narrowed_func(
-                    message: t.ContainerValue,
+                    message: object,
                     captured_callable: Callable[..., object] = callable_func,
-                    **kwargs: t.ContainerValue,
-                ) -> t.ContainerValue | None:
+                    **kwargs: object,
+                ) -> object | None:
                     fn_candidate = kwargs.get("fn", captured_callable)
                     if not callable(fn_candidate):
                         return ""

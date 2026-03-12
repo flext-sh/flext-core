@@ -62,17 +62,17 @@ from typing import TypeGuard, overload
 
 from pydantic import BaseModel, RootModel, TypeAdapter, ValidationError
 
-from flext_core import r, t as core_t
+from flext_core import r
 from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_tests import c, m, t, u
 
 _TEST_PAYLOAD_DICT_ADAPTER = TypeAdapter(dict[str, t.Tests.ContainerValue])
 _TEST_PAYLOAD_LIST_ADAPTER = TypeAdapter(list[t.Tests.ContainerValue])
-_GUARD_PAYLOAD_DICT_ADAPTER = TypeAdapter(dict[str, core_t.ContainerValue])
-_GUARD_PAYLOAD_LIST_ADAPTER = TypeAdapter(list[core_t.ContainerValue])
+_GUARD_PAYLOAD_DICT_ADAPTER = TypeAdapter(dict[str, core_object])
+_GUARD_PAYLOAD_LIST_ADAPTER = TypeAdapter(list[core_object])
 
 
-def _is_non_string_sequence(value: object) -> TypeGuard[Sequence[t.ContainerValue]]:
+def _is_non_string_sequence(value: object) -> TypeGuard[Sequence[object]]:
     return isinstance(value, Sequence) and (not isinstance(value, str | bytes))
 
 
@@ -94,7 +94,7 @@ def _to_test_payload(value: object) -> t.Tests.ContainerValue:
     return str(value)
 
 
-def _as_guard_input(value: object) -> core_t.ContainerValue:
+def _as_guard_input(value: object) -> core_object:
     if isinstance(value, BaseModel | str | int | float | bool | Path):
         return value
     if value is None:
@@ -104,22 +104,22 @@ def _as_guard_input(value: object) -> core_t.ContainerValue:
             mapping_value = _GUARD_PAYLOAD_DICT_ADAPTER.validate_python(value)
             return {key: _as_guard_input(item) for key, item in mapping_value.items()}
         except ValidationError:
-            empty_map: dict[str, core_t.ContainerValue] = {}
+            empty_map: dict[str, core_object] = {}
             return empty_map
     if _is_non_string_sequence(value):
         try:
             sequence_value = _GUARD_PAYLOAD_LIST_ADAPTER.validate_python(value)
             return [_as_guard_input(seq_item) for seq_item in sequence_value]
         except ValidationError:
-            empty_seq: list[core_t.ContainerValue] = []
+            empty_seq: list[core_object] = []
             return empty_seq
     return str(value)
 
 
 def _check_has_lacks(
     value: object,
-    has: t.ContainerValue | Sequence[t.ContainerValue] | None,
-    lacks: t.ContainerValue | Sequence[t.ContainerValue] | None,
+    has: object | Sequence[object] | None,
+    lacks: object | Sequence[object] | None,
     msg: str | None,
     *,
     as_str: bool = False,
@@ -483,7 +483,7 @@ class FlextTestsMatchers:
                     params.msg
                     or f"Path extraction requires dict or model, got {type(result_value).__name__}"
                 )
-            extract_source: BaseModel | core_t.ContainerValue
+            extract_source: BaseModel | core_object
             if isinstance(result_value, BaseModel):
                 extract_source = result_value
             elif isinstance(result_value, Mapping):
@@ -492,7 +492,7 @@ class FlextTestsMatchers:
                         result_value
                     )
                 except ValidationError:
-                    fallback_map: dict[str, core_t.ContainerValue] = {}
+                    fallback_map: dict[str, core_object] = {}
                     extract_source = fallback_map
             else:
                 raise AssertionError(
@@ -824,7 +824,7 @@ class FlextTestsMatchers:
         subject: object = value
         if FlextUtilitiesGuards.is_result_like(subject):
             result_obj = subject
-            actual_value: core_t.ContainerValue | str = ""
+            actual_value: core_object | str = ""
             if params.ok is not None:
                 if params.ok and (not result_obj.is_success):
                     raise AssertionError(
@@ -832,14 +832,14 @@ class FlextTestsMatchers:
                         or c.Tests.Matcher.ERR_OK_FAILED.format(error=result_obj.error)
                     )
                 if not params.ok and result_obj.is_success:
-                    unwrapped_value_error: core_t.ContainerValue = result_obj.value
+                    unwrapped_value_error: core_object = result_obj.value
                     value_str: str = str(unwrapped_value_error)
                     raise AssertionError(
                         params.msg
                         or c.Tests.Matcher.ERR_FAIL_EXPECTED.format(value=value_str)
                     )
                 if result_obj.is_success:
-                    unwrapped_value: core_t.ContainerValue = result_obj.value
+                    unwrapped_value: core_object = result_obj.value
                     actual_value = unwrapped_value
             elif params.has is not None:
                 err = result_obj.error or ""

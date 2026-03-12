@@ -17,7 +17,7 @@ from collections import UserDict, UserList
 from collections.abc import Callable, Iterator
 from typing import override
 
-from flext_core import r, t
+from flext_core import r
 from flext_infra import FlextInfraUtilities
 from flext_tests import FlextTestsUtilities
 
@@ -45,8 +45,8 @@ class TestsFlextUtilities(FlextTestsUtilities, FlextInfraUtilities):
 
             @staticmethod
             def execute_and_assert_parser_result(
-                operation: Callable[[], r[t.ContainerValue]],
-                expected_value: t.ContainerValue | None = None,
+                operation: Callable[[], r[object]],
+                expected_value: object | None = None,
                 expected_error: str | None = None,
                 description: str = "",
             ) -> None:
@@ -87,8 +87,8 @@ class TestsFlextUtilities(FlextTestsUtilities, FlextInfraUtilities):
 
                 def split(
                     self,
-                    *_args: t.ContainerValue,
-                    **_kwargs: t.ContainerValue,
+                    *_args: object,
+                    **_kwargs: object,
                 ) -> list[str]:
                     """Raise error on split attempt."""
                     msg = "Bad split"
@@ -142,20 +142,20 @@ class TestsFlextUtilities(FlextTestsUtilities, FlextInfraUtilities):
                 """Create object that fails on str()."""
                 return TestsFlextUtilities.Tests.CoreBadObjects.BadStrObject()
 
-            class BadDict(UserDict[str, t.ContainerValue]):
+            class BadDict(UserDict[str, object]):
                 """Dict that raises on get()."""
 
                 @override
-                def __getitem__(self, key: str) -> t.ContainerValue:
+                def __getitem__(self, key: str) -> object:
                     """Raise error on get attempt."""
                     msg = "Bad dict get"
                     raise RuntimeError(msg)
 
-            class BadList(UserList[t.ContainerValue]):
+            class BadList(UserList[object]):
                 """List that raises on iteration."""
 
                 @override
-                def __iter__(self) -> Iterator[t.ContainerValue]:
+                def __iter__(self) -> Iterator[object]:
                     """Raise error on iteration."""
                     msg = "Bad list iteration"
                     raise RuntimeError(msg)
@@ -163,14 +163,14 @@ class TestsFlextUtilities(FlextTestsUtilities, FlextInfraUtilities):
             class BadModelDump:
                 """Object with model_dump that raises."""
 
-                model_dump: Callable[[], dict[str, t.ContainerValue]] = staticmethod(
+                model_dump: Callable[[], dict[str, object]] = staticmethod(
                     lambda: (_ for _ in ()).throw(RuntimeError("Bad model_dump")),
                 )
 
             class BadConfig:
                 """Config object that raises on attribute access."""
 
-                def get_attribute(self, name: str) -> t.ContainerValue:
+                def get_attribute(self, name: str) -> object:
                     """Raise error on attribute access."""
                     msg = f"Bad config: {name}"
                     raise AttributeError(msg)
@@ -180,7 +180,7 @@ class TestsFlextUtilities(FlextTestsUtilities, FlextInfraUtilities):
 
             @staticmethod
             def assert_failure(
-                result: r[t.ContainerValue],
+                result: r[object],
                 expected_error: str,
                 description: str = "",
             ) -> None:
@@ -200,7 +200,7 @@ class TestsFlextUtilities(FlextTestsUtilities, FlextInfraUtilities):
 
             @staticmethod
             def assert_success(
-                result: r[t.ContainerValue],
+                result: r[object],
                 description: str = "",
             ) -> None:
                 """Assert that result is a success.
@@ -217,8 +217,8 @@ class TestsFlextUtilities(FlextTestsUtilities, FlextInfraUtilities):
 
             @staticmethod
             def assert_success_with_value(
-                result: r[t.ContainerValue],
-                expected_value: t.ContainerValue,
+                result: r[object],
+                expected_value: object,
                 description: str = "",
             ) -> None:
                 """Assert result is success with specific value.

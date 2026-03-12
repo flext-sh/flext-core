@@ -11,19 +11,15 @@ from __future__ import annotations
 
 import importlib
 import sys
-from collections.abc import Mapping, MutableMapping
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from flext_core.typings import FlextTypes as _t
+from collections.abc import Mapping
 
 
 def lazy_getattr(
     name: str,
     lazy_imports: Mapping[str, tuple[str, str]],
-    module_globals: MutableMapping[str, _t.GeneralValueType],
+    module_globals: Mapping[str, _object],
     module_name: str,
-) -> _t.GeneralValueType:
+) -> _object:
     """Lazy-load a module attribute on first access (PEP 562).
 
     Args:

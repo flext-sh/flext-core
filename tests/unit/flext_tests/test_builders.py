@@ -100,7 +100,7 @@ class TestFlextTestsBuilders:
         assert result is builder
         data = _as_builder_dict(builder.build())
         assert "validation_fields" in data
-        fields = cast("dict[str, t.ContainerValue]", data["validation_fields"])
+        fields = cast("dict[str, object]", data["validation_fields"])
         valid_emails = cast("list[str]", fields["valid_emails"])
         assert len(valid_emails) == 5
         assert valid_emails[0] == "user0@example.com"
@@ -114,7 +114,7 @@ class TestFlextTestsBuilders:
         builder.with_validation_fields(count=3)
         data = _as_builder_dict(builder.build())
         validation_fields = cast(
-            "dict[str, t.ContainerValue]",
+            "dict[str, object]",
             data["validation_fields"],
         )
         valid_emails = cast("list[str]", validation_fields["valid_emails"])
@@ -200,7 +200,7 @@ class TestFlextTestsBuilders:
         builder = tb()
         builder.add("error", result_fail="Failed", result_code="E001")
         data = _as_builder_dict(builder.build())
-        result = cast("r[t.ContainerValue]", cast("object", data["error"]))
+        result = cast("r[object]", cast("object", data["error"]))
         _ = assertion_helpers.assert_flext_result_failure(result)
         assert "Failed" in str(result.error)
 
@@ -240,7 +240,7 @@ class TestFlextTestsBuilders:
         builder = tb()
         builder.add("users", factory="users", count=3)
         data = _as_builder_dict(builder.build())
-        users = cast("list[dict[str, t.ContainerValue]]", data["users"])
+        users = cast("list[dict[str, object]]", data["users"])
         assert len(users) == 3
 
     def test_add_with_mapping(self) -> None:
@@ -248,7 +248,7 @@ class TestFlextTestsBuilders:
         builder = tb()
         builder.add("config", mapping={"env": "test", "debug": True})
         data = _as_builder_dict(builder.build())
-        config = cast("dict[str, t.ContainerValue]", data["config"])
+        config = cast("dict[str, object]", data["config"])
         assert config["env"] == "test"
         assert config["debug"] is True
 
@@ -274,7 +274,7 @@ class TestFlextTestsBuilders:
         builder = tb()
         builder.add("a", 1).add("b", 2)
         result = builder.build(as_list=True)
-        items = cast("list[tuple[str, t.ContainerValue]]", result)
+        items = cast("list[tuple[str, object]]", result)
         assert len(items) == 2
         assert ("a", 1) in items
         assert ("b", 2) in items
@@ -302,7 +302,7 @@ class TestFlextTestsBuilders:
         builder = tb()
         builder.set("a.b.c", 42)
         flattened_raw = builder.build(flatten=True)
-        flattened = cast("dict[str, t.ContainerValue]", flattened_raw)
+        flattened = cast("dict[str, object]", flattened_raw)
         assert isinstance(flattened, dict)
         assert "a.b.c" in flattened
         assert flattened["a.b.c"] == 42
@@ -312,7 +312,7 @@ class TestFlextTestsBuilders:
         builder = tb()
         builder.add("a", 1).add("b", None).add("c", 3)
         filtered_raw = builder.build(filter_none=True)
-        filtered = cast("dict[str, t.ContainerValue]", filtered_raw)
+        filtered = cast("dict[str, object]", filtered_raw)
         assert "a" in filtered
         assert "b" not in filtered
         assert "c" in filtered
@@ -458,7 +458,7 @@ class TestFlextTestsBuilders:
             [("valid", "test@example.com"), ("invalid", "not-email")],
         )
         data = _as_builder_dict(builder.build())
-        cases = cast("list[t.ContainerValue]", data["cases"])
+        cases = cast("list[object]", data["cases"])
         assert len(cases) == 2
 
     def test_batch_with_results(self) -> None:
@@ -489,7 +489,7 @@ class TestFlextTestsBuilders:
 
     def test_tests_result_fail(self) -> None:
         """Test tb.Tests.Result.fail()."""
-        result_raw: r[t.ContainerValue] = tb.Tests.Result.fail("Error", code="E001")
+        result_raw: r[object] = tb.Tests.Result.fail("Error", code="E001")
         result = result_raw
         _ = assertion_helpers.assert_flext_result_failure(result)
 
@@ -623,7 +623,7 @@ class TestFlextTestsBuilders:
 
     def test_result_fail_delegates_to_tt_res(self) -> None:
         """Test tb.Tests.Result.fail() delegates to tt.res()."""
-        result_raw: r[t.ContainerValue] = tb.Tests.Result.fail("Error")
+        result_raw: r[object] = tb.Tests.Result.fail("Error")
         result = result_raw
         _ = assertion_helpers.assert_flext_result_failure(result)
 

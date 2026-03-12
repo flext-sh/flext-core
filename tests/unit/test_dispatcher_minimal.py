@@ -8,7 +8,7 @@ Tests the strict FlextDispatcher API:
 
 from __future__ import annotations
 
-from flext_core import FlextDispatcher, c, m, t
+from flext_core import FlextDispatcher, c, m
 
 
 class EchoHandler:
@@ -93,7 +93,7 @@ def test_register_handler_without_route_fails() -> None:
     class BareHandler:
         """Callable handler lacking routing attributes — should fail registration."""
 
-        def __call__(self, msg: t.ContainerValue) -> t.ContainerValue:
+        def __call__(self, msg: object) -> object:
             return "bare"
 
     res = dispatcher.register_handler(BareHandler())

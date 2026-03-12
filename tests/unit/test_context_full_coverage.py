@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from flext_core import FlextContainer, FlextContext, c, m, r, t
+from flext_core import FlextContainer, FlextContext, c, m, r
 
 
 class _ContainerStub:
@@ -41,7 +41,7 @@ def test_protocol_name_and_narrow_contextvar_exception_branch(
     ctx = FlextContext()
     assert ctx._protocol_name() == "FlextContext"
 
-    def _raise_type_error(_value: t.ContainerValue) -> t.ContainerValue:
+    def _raise_type_error(_value: object) -> object:
         msg = "bad"
         raise TypeError(msg)
 
@@ -78,7 +78,7 @@ def test_set_set_all_get_validation_and_error_paths(
         def get(self) -> dict[str, object]:
             return {}
 
-        def set(self, _v: t.ContainerValue) -> None:
+        def set(self, _v: object) -> None:
             msg = "boom"
             raise TypeError(msg)
 
@@ -149,7 +149,7 @@ def test_update_statistics_remove_hook_and_clone_false_result(
     def _fail_set(
         self: FlextContext,
         key_or_data: str | m.ConfigMap,
-        value: t.ContainerValue | None = None,
+        value: object | None = None,
         scope: str = "current",
     ) -> r[bool]:
         _ = self, key_or_data, value, scope

@@ -693,7 +693,7 @@ class Teste:
         """Test ValidationError with context - tests lines 243-244."""
         context_raw = {"key1": "value1", "key2": 123}
         context: dict[str, t.MetadataValue] = {
-            k: FlextRuntime.normalize_to_metadata_value(cast("t.ContainerValue", v))
+            k: FlextRuntime.normalize_to_metadata_value(cast("object", v))
             for k, v in context_raw.items()
         }
         error = e.ValidationError(
@@ -737,7 +737,7 @@ class Teste:
             "auto_correlation": True,
         }
         context: dict[str, t.MetadataValue] = {
-            k: FlextRuntime.normalize_to_metadata_value(cast("t.ContainerValue", v))
+            k: FlextRuntime.normalize_to_metadata_value(cast("object", v))
             for k, v in context_raw.items()
         }
         error = e.NotFoundError(
@@ -1054,7 +1054,7 @@ class Teste:
             k: FlextRuntime.normalize_to_metadata_value(
                 str(v)
                 if not isinstance(v, (str, int, float, bool, type(None), list, dict))
-                else cast("t.ContainerValue", v),
+                else cast("object", v),
             )
             for k, v in dict_like.items()
         }
@@ -1263,7 +1263,7 @@ class Teste:
             k: FlextRuntime.normalize_to_metadata_value(
                 str(v)
                 if not isinstance(v, (str, int, float, bool, type(None), list, dict))
-                else cast("t.ContainerValue", v),
+                else cast("object", v),
             )
             for k, v in dict_like.items()
         }
@@ -1283,7 +1283,7 @@ class Teste:
         class DictLike(Mapping[str, object]):
             @override
             def __getitem__(self, key: str) -> object:
-                mapping: dict[str, t.ContainerValue] = {"key1": "value1", "key2": 123}
+                mapping: dict[str, object] = {"key1": "value1", "key2": 123}
                 if key in mapping:
                     return mapping[key]
                 raise KeyError(key)
@@ -1301,7 +1301,7 @@ class Teste:
             k: FlextRuntime.normalize_to_metadata_value(
                 str(v)
                 if not isinstance(v, (str, int, float, bool, type(None), list, dict))
-                else cast("t.ContainerValue", v),
+                else cast("object", v),
             )
             for k, v in dict_like.items()
         }
@@ -1344,7 +1344,7 @@ class Teste:
             k: FlextRuntime.normalize_to_metadata_value(
                 str(v)
                 if not isinstance(v, (str, int, float, bool, type(None), list, dict))
-                else cast("t.ContainerValue", v),
+                else cast("object", v),
             )
             for k, v in dict_like.items()
         }

@@ -17,7 +17,6 @@ from flext_infra.check.services import (
 )
 
 from ...models import m
-from ...typings import t
 
 
 class Spy:
@@ -25,16 +24,12 @@ class Spy:
 
     def __init__(
         self,
-        return_value: t.ContainerValue = None,
-        side_effect: list[t.ContainerValue] | None = None,
+        return_value: object = None,
+        side_effect: list[object] | None = None,
     ) -> None:
         self.call_count: int = 0
-        self.call_args: (
-            tuple[tuple[t.ContainerValue, ...], dict[str, t.ContainerValue]] | None
-        ) = None
-        self.call_args_list: list[
-            tuple[tuple[t.ContainerValue, ...], dict[str, t.ContainerValue]]
-        ] = []
+        self.call_args: tuple[tuple[object, ...], dict[str, object]] | None = None
+        self.call_args_list: list[tuple[tuple[object, ...], dict[str, object]]] = []
         self.called: bool = False
         self._return_value = return_value
         self._side_effect = list(side_effect) if side_effect else None
@@ -49,14 +44,14 @@ class Spy:
         return self._return_value
 
     @property
-    def kwargs(self) -> dict[str, t.ContainerValue]:
+    def kwargs(self) -> dict[str, object]:
         """Return kwargs from last call."""
         if self.call_args is None:
             return {}
         return self.call_args[1]
 
     @property
-    def args(self) -> tuple[t.ContainerValue, ...]:
+    def args(self) -> tuple[object, ...]:
         """Return positional args from last call."""
         if self.call_args is None:
             return ()

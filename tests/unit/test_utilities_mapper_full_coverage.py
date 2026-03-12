@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections import UserDict, UserList
 from collections.abc import Callable, ItemsView, Iterator, Mapping, Sequence
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Protocol, cast, override
 
@@ -223,6 +224,16 @@ def test_invert_and_json_conversion_branches(mapper: type[u.Mapper]) -> None:
     )
     assert isinstance(list_json, list)
     assert list_json[0]["a"] == 1
+
+    safe_json = mapper.convert_to_json_safe({
+        "model": model,
+        "path": Path("/tmp"),
+        "when": datetime(2026, 3, 12, 10, 30, 45, tzinfo=UTC),
+    })
+    assert isinstance(safe_json, Mapping)
+    assert safe_json["model"] == {"x": 1}
+    assert safe_json["path"] == "/tmp"
+    assert safe_json["when"] == "2026-03-12T10:30:45+00:00"
 
 
 def test_ensure_and_extract_array_index_helpers(mapper: type[u.Mapper]) -> None:

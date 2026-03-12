@@ -19,12 +19,11 @@ from flext_infra.core.__main__ import (
     _run_scan,
 )
 from flext_tests import tm
-from tests.infra.typings import t
 
 _CWD = "/home/marlonsc/flext/flext-core"
 
 
-def _ns(**kwargs: t.ContainerValue) -> argparse.Namespace:
+def _ns(**kwargs: object) -> argparse.Namespace:
     """Create a simple namespace from keyword arguments."""
     return argparse.Namespace(**kwargs)
 

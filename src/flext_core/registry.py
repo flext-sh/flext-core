@@ -205,7 +205,7 @@ class FlextRegistry(s[bool]):
     @staticmethod
     def _is_protocol_handler(
         value: t.RegisterableService,
-    ) -> TypeGuard[p.Handler[t.ContainerValue, t.ContainerValue]]:
+    ) -> TypeGuard[p.Handler[object, object]]:
         return bool(
             hasattr(value, "handle")
             and hasattr(value, "can_handle")
@@ -214,7 +214,7 @@ class FlextRegistry(s[bool]):
 
     @staticmethod
     def _resolve_handler_key(
-        handler: p.Handler[t.ContainerValue, t.ContainerValue],
+        handler: p.Handler[object, object],
     ) -> str:
         """Resolve registration key from handler."""
         handler_id = getattr(handler, "handler_id", None)
@@ -223,20 +223,20 @@ class FlextRegistry(s[bool]):
     @staticmethod
     def _to_plugin_container_value(
         value: t.RegisterableService | t.RegistrablePlugin,
-    ) -> r[t.ContainerValue]:
+    ) -> r[object]:
         if callable(value):
-            return r[t.ContainerValue].fail(
+            return r[object].fail(
                 "Callable plugin cannot be returned as container value"
             )
         if value is None or isinstance(
             value, (str, int, float, bool, datetime, BaseModel, Path)
         ):
-            return r[t.ContainerValue].ok(value)
+            return r[object].ok(value)
         if isinstance(value, Sequence):
-            return r[t.ContainerValue].ok(value)
+            return r[object].ok(value)
         if isinstance(value, Mapping):
-            return r[t.ContainerValue].ok(value)
-        return r[t.ContainerValue].fail("Plugin value is not container-compatible")
+            return r[object].ok(value)
+        return r[object].fail("Plugin value is not container-compatible")
 
     @staticmethod
     def _safe_get_handler_mode(value: t.Scalar | BaseModel) -> c.Cqrs.HandlerType:
@@ -274,12 +274,12 @@ class FlextRegistry(s[bool]):
 
     @staticmethod
     def _to_dispatcher_handler(
-        handler_for_dispatch: p.Handler[t.ContainerValue, t.ContainerValue],
+        handler_for_dispatch: p.Handler[object, object],
     ) -> t.HandlerLike:
         """Convert handler to dispatcher-compatible callable."""
         handler_ref = handler_for_dispatch
 
-        def _dispatch_wrapper(*args: t.ContainerValue) -> t.ContainerValue | None:
+        def _dispatch_wrapper(*args: object) -> object | None:
             if args:
                 result = handler_ref.handle(args[0])
                 return result.value if result.is_success else None
@@ -314,7 +314,7 @@ class FlextRegistry(s[bool]):
         name: str,
         *,
         scope: Literal["instance", "class"] = "instance",
-    ) -> r[t.ContainerValue]:
+    ) -> r[object]:
         """Get a registered plugin by category and name.
 
         Returns:
@@ -329,12 +329,12 @@ class FlextRegistry(s[bool]):
                     for k in self._registered_keys
                     if k.startswith(f"{category}::")
                 ]
-                return r[t.ContainerValue].fail(
+                return r[object].fail(
                     f"{category} '{name}' not found. Available: {available}"
                 )
             raw_result = self.container.get(key)
             if raw_result.is_failure:
-                return r[t.ContainerValue].fail(
+                return r[object].fail(
                     f"Failed to retrieve {category} '{name}': {raw_result.error}"
                 )
             return FlextRegistry._to_plugin_container_value(raw_result.value)
@@ -345,7 +345,7 @@ class FlextRegistry(s[bool]):
                 for k in cls._class_registered_keys
                 if k.startswith(f"{category}::")
             ]
-            return r[t.ContainerValue].fail(
+            return r[object].fail(
                 f"{category} '{name}' not found. Available: {available}"
             )
         return FlextRegistry._to_plugin_container_value(cls._class_plugin_storage[key])
@@ -390,7 +390,7 @@ class FlextRegistry(s[bool]):
         """
         validated_metadata: FlextModelsContainers.ConfigMap | None = None
         if metadata is not None:
-            raw_metadata: t.ContainerValue
+            raw_metadata: object
             if isinstance(metadata, m.Metadata):
                 raw_metadata = metadata.attributes
             else:
@@ -419,9 +419,7 @@ class FlextRegistry(s[bool]):
 
     def register_bindings(
         self,
-        bindings: Mapping[
-            RegistryBindingKey, p.Handler[t.ContainerValue, t.ContainerValue]
-        ],
+        bindings: Mapping[RegistryBindingKey, p.Handler[object, object]],
     ) -> r[FlextRegistry.Summary]:
         """Register message-to-handler bindings.
 
@@ -449,9 +447,7 @@ class FlextRegistry(s[bool]):
                         key, "Handler validation failed", summary
                     )
                     continue
-                handler_for_dispatch: p.Handler[t.ContainerValue, t.ContainerValue] = (
-                    handler
-                )
+                handler_for_dispatch: p.Handler[object, object] = handler
                 reg_result: r[m.HandlerRegistrationResult]
                 if isinstance(self._dispatcher, FlextDispatcher):
                     dispatcher_handler = FlextRegistry._to_dispatcher_handler(
@@ -525,7 +521,7 @@ class FlextRegistry(s[bool]):
         return self._finalize_summary(summary)
 
     def register_handler(
-        self, handler: p.Handler[t.ContainerValue, t.ContainerValue]
+        self, handler: p.Handler[object, object]
     ) -> r[m.HandlerRegistrationDetails]:
         """Register an already-constructed handler instance.
 
@@ -576,7 +572,7 @@ class FlextRegistry(s[bool]):
             handler_name=handler_name,
             handler_key=key,
         )
-        handler_for_dispatch: p.Handler[t.ContainerValue, t.ContainerValue] = handler
+        handler_for_dispatch: p.Handler[object, object] = handler
         registration_result: r[m.HandlerRegistrationResult]
         if isinstance(self._dispatcher, FlextDispatcher):
             dispatcher_handler = FlextRegistry._to_dispatcher_handler(
@@ -648,7 +644,7 @@ class FlextRegistry(s[bool]):
         return r[m.HandlerRegistrationDetails].fail(error_str)
 
     def register_handlers(
-        self, handlers: Sequence[p.Handler[t.ContainerValue, t.ContainerValue]]
+        self, handlers: Sequence[p.Handler[object, object]]
     ) -> r[FlextRegistry.Summary]:
         """Register multiple handlers in batch.
 

@@ -12,7 +12,7 @@ import time
 
 import pytest
 
-from flext_core import FlextLogger, t
+from flext_core import FlextLogger
 from tests.test_utils import assertion_helpers
 
 EXPECTED_BULK_SIZE = 2
@@ -28,7 +28,7 @@ class TestFlextContext:
 
     def test_context_creation_empty(self) -> None:
         """Test creating empty log context."""
-        context: dict[str, t.ContainerValue] = {}
+        context: dict[str, object] = {}
         assert isinstance(context, dict)
         if len(context) != 0:
             msg = f"Expected {0}, got {len(context)}"
@@ -36,7 +36,7 @@ class TestFlextContext:
 
     def test_context_creation_with_values(self) -> None:
         """Test creating log context with values."""
-        context: dict[str, t.ContainerValue] = {
+        context: dict[str, object] = {
             "user_id": "123",
             "request_id": "req-456",
             "operation": "login",
@@ -56,14 +56,14 @@ class TestFlextContext:
 
     def test_context_optional_fields(self) -> None:
         """Test that all context fields are optional."""
-        context: dict[str, t.ContainerValue] = {"user_id": "123"}
+        context: dict[str, object] = {"user_id": "123"}
         if context["user_id"] != "123":
             msg = f"Expected {'123'}, got {context['user_id']}"
             raise AssertionError(msg)
 
     def test_context_enterprise_fields(self) -> None:
         """Test enterprise-specific context fields."""
-        context: dict[str, t.ContainerValue] = {
+        context: dict[str, object] = {
             "tenant_id": "tenant-123",
             "session_id": "session-456",
             "transaction_id": "tx-789",
@@ -84,7 +84,7 @@ class TestFlextContext:
 
     def test_context_performance_fields(self) -> None:
         """Test performance-related context fields."""
-        context: dict[str, t.ContainerValue] = {
+        context: dict[str, object] = {
             "duration_ms": 250.0,
             "memory_mb": 128.5,
             "cpu_percent": 75.2,
@@ -108,7 +108,7 @@ class TestFlextContext:
 
     def test_context_error_fields(self) -> None:
         """Test error-related context fields."""
-        context: dict[str, t.ContainerValue] = {
+        context: dict[str, object] = {
             "error_code": "E001",
             "error_type": "ValidationError",
             "stack_trace": "Traceback...",

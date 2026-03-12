@@ -21,7 +21,7 @@ from typing import ClassVar
 import pytest
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_tests import t, u
+from flext_tests import u
 
 
 class Status(StrEnum):
@@ -60,7 +60,7 @@ class CoerceListValidatorScenario(BaseModel):
 
     model_config = ConfigDict(frozen=True)
     name: str = Field(description="Coerce list scenario name")
-    value: t.ContainerValue = Field(description="Input value for list coercion")
+    value: object = Field(description="Input value for list coercion")
     expected_success: bool = Field(description="Whether coercion should succeed")
     expected_error: str | None = Field(
         default=None, description="Expected error message fragment"

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pydantic import ConfigDict
 
-from flext_core import m, r, t
+from flext_core import m, r
 
 
 class Ex10Message(m.Command):
@@ -51,10 +51,10 @@ class Ex10ContextPayload(m.Value):
 class Ex10ProtocolHandler(m.Value):
     model_config = ConfigDict(frozen=False)
 
-    def handle(self, message: t.ContainerValue) -> r[t.ContainerValue]:
-        return r[t.ContainerValue].ok(message)
+    def handle(self, message: object) -> r[object]:
+        return r[object].ok(message)
 
-    def check_data(self, data: t.ContainerValue) -> r[bool]:
+    def check_data(self, data: object) -> r[bool]:
         return r[bool].ok(data is not None)
 
 
@@ -65,8 +65,8 @@ class Ex10ServiceStub(m.Value):
     def is_valid(self) -> bool:
         return True
 
-    def execute(self) -> r[t.ContainerValue]:
-        return r[t.ContainerValue].ok(m.ConfigMap(root={"ok": True}))
+    def execute(self) -> r[object]:
+        return r[object].ok(m.ConfigMap(root={"ok": True}))
 
     def get_service_info(self) -> m.ConfigMap:
         return m.ConfigMap(root={"service": "stub"})
@@ -78,11 +78,11 @@ class Ex10ServiceStub(m.Value):
 class Ex10CommandBusStub(m.Value):
     model_config = ConfigDict(frozen=False)
 
-    def dispatch(self, message: t.ContainerValue) -> r[t.ContainerValue]:
-        return r[t.ContainerValue].ok(message)
+    def dispatch(self, message: object) -> r[object]:
+        return r[object].ok(message)
 
-    def publish(self, event: t.ContainerValue) -> None:
+    def publish(self, event: object) -> None:
         del event
 
-    def register_handler(self, _handler: t.ContainerValue) -> r[bool]:
+    def register_handler(self, _handler: object) -> r[bool]:
         return r[bool].ok(True)

@@ -13,7 +13,7 @@ from datetime import UTC, datetime
 from typing import cast
 from unittest.mock import MagicMock
 
-from flext_core import m, p, t, u
+from flext_core import m, p, u
 
 from ._models import _FakeConfig
 
@@ -79,7 +79,7 @@ class _FakeContext:
     def clone(self) -> _FakeContext:
         return _FakeContext()
 
-    def set(self, key: str, value: t.ContainerValue) -> None:
+    def set(self, key: str, value: object) -> None:
         _ = (key, value)
 
     def get(self, key: str) -> object:

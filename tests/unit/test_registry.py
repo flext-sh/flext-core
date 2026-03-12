@@ -28,7 +28,7 @@ from typing import ClassVar, cast, override
 import pytest
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import FlextRegistry, c, h, m, p, r, t
+from flext_core import FlextRegistry, c, h, m, p, r
 from flext_tests import FlextTestsUtilities, u
 
 
@@ -72,15 +72,15 @@ class RegistryTestCase(BaseModel):
     )
 
 
-class ConcreteTestHandler(h[t.ContainerValue, t.ContainerValue]):
+class ConcreteTestHandler(h[object, object]):
     """Concrete implementation of h for testing."""
 
     @override
-    def handle(self, message: t.ContainerValue) -> r[t.ContainerValue]:
+    def handle(self, message: object) -> r[object]:
         """Handle the message."""
-        return r[t.ContainerValue].ok(f"processed_{message}")
+        return r[object].ok(f"processed_{message}")
 
-    def __call__(self, message: t.ContainerValue) -> r[t.ContainerValue]:
+    def __call__(self, message: object) -> r[object]:
         """Make handler callable for registry validation."""
         return self.handle(message)
 
@@ -274,27 +274,25 @@ class RegistryScenarios:
     @staticmethod
     def create_handlers(
         count: int,
-    ) -> list[p.Handler[t.ContainerValue, t.ContainerValue]]:
+    ) -> list[p.Handler[object, object]]:
         """Create test handlers."""
         return [ConcreteTestHandler() for _ in range(count)]
 
     @staticmethod
     def create_bindings(
-        handlers: Sequence[p.Handler[t.ContainerValue, t.ContainerValue]],
-    ) -> list[
-        tuple[type[t.ContainerValue], p.Handler[t.ContainerValue, t.ContainerValue]]
-    ]:
+        handlers: Sequence[p.Handler[object, object]],
+    ) -> list[tuple[type[object], p.Handler[object, object]]]:
         """Create test bindings using str message type."""
         return [(str, handler) for handler in handlers]
 
     @staticmethod
     def create_function_map(
-        handlers: Sequence[p.Handler[t.ContainerValue, t.ContainerValue]],
-    ) -> dict[type[t.ContainerValue], p.Handler[t.ContainerValue, t.ContainerValue]]:
+        handlers: Sequence[p.Handler[object, object]],
+    ) -> dict[type[object], p.Handler[object, object]]:
         """Create test function map using str message type."""
         result: dict[
-            type[t.ContainerValue],
-            p.Handler[t.ContainerValue, t.ContainerValue],
+            type[object],
+            p.Handler[object, object],
         ] = {}
         for idx, handler in enumerate(handlers):
             result[str if idx == 0 else int] = handler
@@ -315,7 +313,7 @@ class TestFlextRegistry:
         if test_case.handler_count == 0:
             result = registry.register_handler(
                 cast(
-                    "p.Handler[t.ContainerValue, t.ContainerValue]",
+                    "p.Handler[object, object]",
                     cast("object", None),
                 ),
             )
@@ -448,7 +446,7 @@ class TestFlextRegistry:
         if test_case.handler_count == 0:
             result = registry.register_handler(
                 cast(
-                    "p.Handler[t.ContainerValue, t.ContainerValue]",
+                    "p.Handler[object, object]",
                     cast("object", None),
                 ),
             )

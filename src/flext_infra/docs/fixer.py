@@ -19,7 +19,6 @@ from flext_infra import (
     FlextInfraUtilitiesTemplates,
     c,
     m,
-    t,
     u,
 )
 from flext_infra.docs.shared import FlextInfraDocsShared
@@ -136,11 +135,11 @@ class FlextInfraDocFixer:
                         toc=item.toc,
                     ),
                 )
-        changes_payload: list[Mapping[str, t.ContainerValue]] = [
+        changes_payload: list[Mapping[str, object]] = [
             {c.Infra.ReportKeys.FILE: item.file, "links": item.links, "toc": item.toc}
             for item in items
         ]
-        payload: Mapping[str, t.ContainerValue] = {
+        payload: Mapping[str, object] = {
             c.Infra.ReportKeys.SUMMARY: {
                 c.Infra.ReportKeys.SCOPE: scope.name,
                 "changed_files": len(items),

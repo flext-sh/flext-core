@@ -16,8 +16,6 @@ from flext_infra.check.services import (
 )
 from flext_tests import tm
 
-from ...typings import t
-
 
 class TestWorkspaceCheckerInitialization:
     """Test FlextInfraWorkspaceChecker initialization."""
@@ -106,9 +104,7 @@ class TestWorkspaceCheckerInitOSError:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        def _raise_oserror(
-            *_args: t.ContainerValue, **_kwargs: t.ContainerValue
-        ) -> None:
+        def _raise_oserror(*_args: object, **_kwargs: object) -> None:
             msg = "Permission denied"
             raise OSError(msg)
 

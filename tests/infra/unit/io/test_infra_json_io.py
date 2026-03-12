@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pytest
 
-from flext_infra import FlextInfraUtilitiesIo, t
+from flext_infra import FlextInfraUtilitiesIo
 from flext_tests import tf, tm
 from tests.unit._models import SampleModel
 
@@ -74,7 +74,7 @@ class TestFlextInfraJsonService:
         self,
         tmp_path: Path,
         path_parts: tuple[str, ...],
-        payload: t.ContainerValue,
+        payload: object,
         sort_keys: bool,
         ensure_ascii: bool,
         expected: str,

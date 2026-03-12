@@ -106,7 +106,7 @@ class FlextUtilitiesGenerators:
     @staticmethod
     def _generate_prefixed_id(
         prefix: str,
-        *parts: t.ContainerValue,
+        *parts: object,
         length: int = c.Utilities.SHORT_UUID_LENGTH,
     ) -> str:
         """Factory method for generating prefixed IDs with UUID.
@@ -138,21 +138,21 @@ class FlextUtilitiesGenerators:
 
     @staticmethod
     def _is_config_mapping(
-        value: t.ContainerValue,
-    ) -> TypeGuard[Mapping[str, t.ContainerValue]]:
+        value: object,
+    ) -> TypeGuard[Mapping[str, object]]:
         return isinstance(value, Mapping)
 
     @staticmethod
     def _normalize_context_to_dict(
-        context: Mapping[str, t.ContainerValue] | BaseModel | None,
-    ) -> Mapping[str, t.ContainerValue]:
+        context: Mapping[str, object] | BaseModel | None,
+    ) -> Mapping[str, object]:
         """Normalize context to dict - fast fail validation.
 
         Args:
             context: Context to normalize
 
         Returns:
-            Mapping[str, t.ContainerValue]: Normalized context dict
+            Mapping[str, object]: Normalized context dict
 
         Raises:
             TypeError: If context cannot be normalized
@@ -215,9 +215,9 @@ class FlextUtilitiesGenerators:
 
     @staticmethod
     def ensure_dict(
-        value: t.ContainerValue | None,
-        default: Mapping[str, t.ContainerValue] | None = None,
-    ) -> Mapping[str, t.ContainerValue]:
+        value: object | None,
+        default: Mapping[str, object] | None = None,
+    ) -> Mapping[str, object]:
         """Ensure value is a dict, converting from Pydantic models or dict-like.
 
         This generic helper consolidates duplicate dict normalization logic
@@ -236,7 +236,7 @@ class FlextUtilitiesGenerators:
             default: Default value to return if value is None (optional)
 
         Returns:
-            Mapping[str, t.ContainerValue]: Normalized dict or default
+            Mapping[str, object]: Normalized dict or default
 
         Example:
             >>> from flext_core._utilities.guards import FlextUtilitiesGuards
@@ -281,7 +281,7 @@ class FlextUtilitiesGenerators:
 
     @staticmethod
     def ensure_trace_context(
-        context: Mapping[str, t.ContainerValue] | BaseModel | None,
+        context: Mapping[str, object] | BaseModel | None,
         *,
         include_correlation_id: bool = False,
         include_timestamp: bool = False,
@@ -339,7 +339,7 @@ class FlextUtilitiesGenerators:
         kind: str | None = None,
         *,
         prefix: str | None = None,
-        parts: tuple[t.ContainerValue, ...] | None = None,
+        parts: tuple[object, ...] | None = None,
         length: int | None = None,
         include_timestamp: bool = False,
         separator: str = "_",
@@ -377,7 +377,7 @@ class FlextUtilitiesGenerators:
         if kind == "id" and actual_prefix is None:
             return FlextUtilitiesGenerators._generate_id()
         if actual_prefix is not None:
-            all_parts: list[t.ContainerValue] = []
+            all_parts: list[object] = []
             if include_timestamp:
                 timestamp = int(datetime.now(UTC).timestamp())
                 all_parts.append(timestamp)
@@ -428,7 +428,7 @@ class FlextUtilitiesGenerators:
         return datetime.now(UTC).replace(microsecond=0).isoformat()
 
     @staticmethod
-    def generate_operation_id(message_type: str, message: t.ContainerValue) -> str:
+    def generate_operation_id(message_type: str, message: object) -> str:
         """Generate unique operation ID for dispatch operations.
 
         Args:

@@ -22,7 +22,7 @@ import types
 from collections.abc import Callable
 from typing import ClassVar, cast, override
 
-from flext_core import FlextService, c, h, m, p, r, t
+from flext_core import FlextService, c, h, m, p, r
 
 type _TestCallable = Callable[..., r[str]]
 type _TestDecorator = Callable[[_TestCallable], _TestCallable]
@@ -500,7 +500,7 @@ class TestHandlerDiscoveryEdgeCases:
         class TestService:
             @_test_handler(command=UserCreateCommand, priority=10)
             @_test_handler(command=UserDeleteCommand, priority=20)
-            def handle(self, cmd: t.ContainerValue) -> r[str]:
+            def handle(self, cmd: object) -> r[str]:
                 return r[str].ok("ok")
 
         method = TestService.handle

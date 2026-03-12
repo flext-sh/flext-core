@@ -87,7 +87,7 @@ class FlextModelsConfig:
 
         @field_validator("context", mode="before")
         @classmethod
-        def validate_context(cls, v: t.ContainerValue) -> Mapping[str, str]:
+        def validate_context(cls, v: object) -> Mapping[str, str]:
             """Ensure context has required fields (using FlextRuntime).
 
             Returns Mapping[str, str] because ensure_trace_context generates
@@ -177,7 +177,7 @@ class FlextModelsConfig:
         validate_on_assignment: bool = True
         validate_on_read: bool = False
         custom_validators: Annotated[
-            list[t.ContainerValue],
+            list[object],
             Field(
                 default_factory=list,
                 max_length=c.Validation.MAX_CUSTOM_VALIDATORS,
@@ -187,9 +187,7 @@ class FlextModelsConfig:
 
         @field_validator("custom_validators", mode="after")
         @classmethod
-        def validate_additional_validators(
-            cls, v: list[t.ContainerValue]
-        ) -> list[t.ContainerValue]:
+        def validate_additional_validators(cls, v: list[object]) -> list[object]:
             """Validate custom validators are callable."""
             for validator in v:
                 if not callable(validator):
@@ -217,7 +215,7 @@ class FlextModelsConfig:
         )
         continue_on_error: bool = True
         data_items: Annotated[
-            list[t.ContainerValue],
+            list[object],
             Field(
                 default_factory=list,
                 max_length=c.Performance.BatchProcessing.MAX_ITEMS,
@@ -229,7 +227,7 @@ class FlextModelsConfig:
 
         @classmethod
         def validate_batch(
-            cls, models: list[t.ContainerValue]
+            cls, models: list[object]
         ) -> list[FlextModelsConfig.BatchProcessingConfig]:
             try:
                 validated = TypeAdapter(list[FlextModelsConfig.BatchProcessingConfig])
@@ -401,14 +399,14 @@ class FlextModelsConfig:
             default=True,
             description="Use console renderer (True) or JSON renderer (False)",
         )
-        additional_processors: list[p.VariadicCallable[t.ContainerValue]] = Field(
+        additional_processors: list[p.VariadicCallable[object]] = Field(
             default=[],
             description="Optional extra processors after standard FLEXT processors",
         )
         wrapper_class_factory: Callable[[], type] | None = Field(
             default=None, description="Custom wrapper factory for structlog"
         )
-        logger_factory: p.VariadicCallable[t.ContainerValue] | None = Field(
+        logger_factory: p.VariadicCallable[object] | None = Field(
             default=None, description="Custom logger factory for structlog"
         )
         cache_logger_on_first_use: bool = Field(
@@ -469,7 +467,7 @@ class FlextModelsConfig:
         message_type: str = Field(
             description="Message type name for routing and circuit breaker"
         )
-        metadata: t.ContainerValue | None = Field(
+        metadata: object | None = Field(
             default=None, description="Optional execution context metadata"
         )
         correlation_id: str | None = Field(
@@ -487,7 +485,7 @@ class FlextModelsConfig:
         Groups runtime scope configuration parameters.
         """
 
-        config_overrides: Mapping[str, t.ContainerValue] | None = Field(
+        config_overrides: Mapping[str, object] | None = Field(
             default=None, description="Optional configuration overrides"
         )
         context: p.Context | None = Field(
@@ -496,20 +494,18 @@ class FlextModelsConfig:
         subproject: str | None = Field(
             default=None, description="Optional subproject name"
         )
-        services: Mapping[str, t.ContainerValue] | None = Field(
+        services: Mapping[str, object] | None = Field(
             default=None, description="Optional container services mapping"
         )
-        factories: Mapping[str, Callable[[], t.ContainerValue]] | None = Field(
+        factories: Mapping[str, Callable[[], object]] | None = Field(
             default=None, description="Optional container factories mapping"
         )
-        container_services: Mapping[str, t.ContainerValue] | None = Field(
+        container_services: Mapping[str, object] | None = Field(
             default=None, description="Optional container services (alias for services)"
         )
-        container_factories: Mapping[str, Callable[[], t.ContainerValue]] | None = (
-            Field(
-                default=None,
-                description="Optional container factories (alias for factories)",
-            )
+        container_factories: Mapping[str, Callable[[], object]] | None = Field(
+            default=None,
+            description="Optional container factories (alias for factories)",
         )
 
     class NestedExecutionOptions(FlextModelsCollections.Config):
@@ -519,7 +515,7 @@ class FlextModelsConfig:
         Groups nested execution configuration parameters.
         """
 
-        config_overrides: Mapping[str, t.ContainerValue] | None = Field(
+        config_overrides: Mapping[str, object] | None = Field(
             default=None, description="Optional configuration overrides"
         )
         service_name: str | None = Field(
@@ -529,11 +525,11 @@ class FlextModelsConfig:
         correlation_id: str | None = Field(
             default=None, description="Optional correlation ID for tracing"
         )
-        container_services: Mapping[str, t.ContainerValue] | None = Field(
+        container_services: Mapping[str, object] | None = Field(
             default=None, description="Optional container services mapping"
         )
-        container_factories: Mapping[str, Callable[[], t.ContainerValue]] | None = (
-            Field(default=None, description="Optional container factories mapping")
+        container_factories: Mapping[str, Callable[[], object]] | None = Field(
+            default=None, description="Optional container factories mapping"
         )
 
     class ExceptionConfig(FlextModelsCollections.Config):
@@ -585,7 +581,7 @@ class FlextModelsConfig:
         field: str | None = Field(
             default=None, description="Field name that failed validation"
         )
-        value: t.ContainerValue | None = Field(
+        value: object | None = Field(
             default=None, description="Value that failed validation"
         )
 
@@ -722,7 +718,7 @@ class FlextModelsConfig:
         expected_value: str | None = Field(
             default=None, description="Expected value description"
         )
-        actual_value: t.ContainerValue | None = Field(
+        actual_value: object | None = Field(
             default=None, description="Actual value that caused error"
         )
 
@@ -817,10 +813,8 @@ class FlextModelsConfig:
         """
 
         model_config = ConfigDict(arbitrary_types_allowed=True)
-        func: p.VariadicCallable[t.ContainerValue] = Field(
-            description="Function to execute"
-        )
-        args: tuple[t.ContainerValue, ...] = Field(
+        func: p.VariadicCallable[object] = Field(description="Function to execute")
+        args: tuple[object, ...] = Field(
             default_factory=tuple, description="Positional arguments for function"
         )
         call_kwargs: FlextModelsContainers.ConfigMap = Field(

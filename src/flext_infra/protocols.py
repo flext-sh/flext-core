@@ -145,7 +145,7 @@ class FlextInfraProtocols(FlextProtocols):
         class TomlReader(Protocol):
             """Contract for TOML file readers used by dependency services."""
 
-            def read_plain(self, path: Path) -> r[dict[str, t.ContainerValue]]:
+            def read_plain(self, path: Path) -> r[dict[str, object]]:
                 """Read and parse a TOML file as a plain dict with r error handling."""
                 ...
 

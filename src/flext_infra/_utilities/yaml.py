@@ -15,7 +15,6 @@ from pathlib import Path
 from yaml import safe_load
 
 from flext_infra.constants import FlextInfraConstants as c
-from flext_infra.typings import t
 
 
 class FlextInfraUtilitiesYaml:
@@ -29,7 +28,7 @@ class FlextInfraUtilitiesYaml:
     """
 
     @staticmethod
-    def safe_load_yaml(path: Path) -> Mapping[str, t.ContainerValue]:
+    def safe_load_yaml(path: Path) -> Mapping[str, object]:
         """Load YAML file safely, returning empty mapping on missing/invalid.
 
         Args:
@@ -43,17 +42,17 @@ class FlextInfraUtilitiesYaml:
 
         """
         raw = path.read_text(encoding=c.Infra.Encoding.DEFAULT)
-        parsed: t.ContainerValue | None = safe_load(raw)
+        parsed: object | None = safe_load(raw)
         if parsed is None:
             return {}
         if not isinstance(parsed, Mapping):
             msg = f"rules.yml must be a mapping: {path}"
             raise TypeError(msg)
-        normalized: dict[str, t.ContainerValue] = dict(parsed.items())
+        normalized: dict[str, object] = dict(parsed.items())
         return normalized
 
     @staticmethod
-    def normalize_string_list(value: t.ContainerValue, field: str) -> list[str]:
+    def normalize_string_list(value: object, field: str) -> list[str]:
         """Validate and normalize a list[str] config field.
 
         Args:

@@ -19,11 +19,11 @@ from typing import TypeGuard
 
 from pydantic import TypeAdapter, ValidationError
 
-from flext_core import FlextRuntime, c, p, r, t
+from flext_core import FlextRuntime, c, p, r
 from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core._utilities.mapper import FlextUtilitiesMapper
 
-_RELIABILITY_CONTAINER_DICT_ADAPTER = TypeAdapter(dict[str, t.ContainerValue])
+_RELIABILITY_CONTAINER_DICT_ADAPTER = TypeAdapter(dict[str, object])
 
 
 class FlextUtilitiesReliability:
@@ -44,21 +44,21 @@ class FlextUtilitiesReliability:
 
     @staticmethod
     def _is_match_mapper(
-        value: t.ContainerValue | Callable[[t.ContainerValue], t.ContainerValue],
-    ) -> TypeGuard[Callable[[t.ContainerValue], t.ContainerValue]]:
+        value: object | Callable[[object], object],
+    ) -> TypeGuard[Callable[[object], object]]:
         return callable(value)
 
     @staticmethod
     def _is_match_predicate(
-        value: type | t.ContainerValue | Callable[[t.ContainerValue], bool],
-    ) -> TypeGuard[Callable[[t.ContainerValue], bool]]:
+        value: type | object | Callable[[object], bool],
+    ) -> TypeGuard[Callable[[object], bool]]:
         return callable(value) and (not isinstance(value, type))
 
     @staticmethod
     def _normalize_operation_mapping[TKey, TValue](
         value: Mapping[TKey, TValue],
-    ) -> dict[str, t.ContainerValue]:
-        normalized: dict[str, t.ContainerValue] = {}
+    ) -> dict[str, object]:
+        normalized: dict[str, object] = {}
         for raw_key, raw_value in value.items():
             normalized_value = (
                 raw_value
@@ -70,15 +70,13 @@ class FlextUtilitiesReliability:
 
     @staticmethod
     def _resolve_match_output(
-        candidate: t.ContainerValue | Callable[[t.ContainerValue], t.ContainerValue],
-        value: t.ContainerValue,
-    ) -> t.ContainerValue:
+        candidate: object | Callable[[object], object],
+        value: object,
+    ) -> object:
         return candidate(value) if callable(candidate) else candidate
 
     @staticmethod
-    def calculate_delay(
-        attempt: int, config: Mapping[str, t.ContainerValue] | None
-    ) -> float:
+    def calculate_delay(attempt: int, config: Mapping[str, object] | None) -> float:
         """Calculate delay for retry attempt using configuration.
 
         Args:
@@ -129,9 +127,7 @@ class FlextUtilitiesReliability:
         return float(delay)
 
     @staticmethod
-    def chain(
-        value: t.ContainerValue, *funcs: Callable[[t.ContainerValue], t.ContainerValue]
-    ) -> t.ContainerValue:
+    def chain(value: object, *funcs: Callable[[object], object]) -> object:
         """Chain operations (mnemonic: chain = pipeline).
 
         Business Rule: Execute a sequence of functions in order, passing each
@@ -155,15 +151,15 @@ class FlextUtilitiesReliability:
             )
 
         """
-        current: t.ContainerValue = value
+        current: object = value
         for func in funcs:
             current = func(current)
         return current
 
     @staticmethod
     def compose(
-        *funcs: Callable[[t.ContainerValue], t.ContainerValue], mode: str = "pipe"
-    ) -> Callable[[t.ContainerValue], t.ContainerValue | r[t.ContainerValue]]:
+        *funcs: Callable[[object], object], mode: str = "pipe"
+    ) -> Callable[[object], object | r[object]]:
         """Compose multiple functions into a single function.
 
         Unifies pipe/chain/flow patterns into a single super-method.
@@ -187,8 +183,8 @@ class FlextUtilitiesReliability:
         if mode == "pipe":
 
             def piped(
-                value: t.ContainerValue,
-            ) -> t.ContainerValue | r[t.ContainerValue]:
+                value: object,
+            ) -> object | r[object]:
                 result = FlextUtilitiesReliability.pipe(value, *funcs)
                 return result.value if result.is_success else result
 
@@ -199,10 +195,9 @@ class FlextUtilitiesReliability:
 
     @staticmethod
     def flow(
-        value: t.ContainerValue,
-        *ops: Mapping[str, t.ContainerValue]
-        | Callable[[t.ContainerValue], t.ContainerValue],
-    ) -> t.ContainerValue:
+        value: object,
+        *ops: Mapping[str, object] | Callable[[object], object],
+    ) -> object:
         """Flow operations using DSL or functions (mnemonic: flow = fluent pipeline).
 
         Generic replacement for: build() + chain() combinations
@@ -224,10 +219,10 @@ class FlextUtilitiesReliability:
             )
 
         """
-        current: t.ContainerValue = value
+        current: object = value
         for op in ops:
             if isinstance(op, Mapping):
-                op_dict: dict[str, t.ContainerValue]
+                op_dict: dict[str, object]
                 try:
                     op_dict = _RELIABILITY_CONTAINER_DICT_ADAPTER.validate_python(op)
                 except ValidationError:
@@ -328,15 +323,13 @@ class FlextUtilitiesReliability:
 
     @staticmethod
     def match(
-        value: t.ContainerValue,
+        value: object,
         *cases: tuple[
-            type | t.ContainerValue | Callable[[t.ContainerValue], bool],
-            t.ContainerValue | Callable[[t.ContainerValue], t.ContainerValue],
+            type | object | Callable[[object], bool],
+            object | Callable[[object], object],
         ],
-        default: t.ContainerValue
-        | Callable[[t.ContainerValue], t.ContainerValue]
-        | None = None,
-    ) -> r[t.ContainerValue]:
+        default: object | Callable[[object], object] | None = None,
+    ) -> r[object]:
         """Pattern match on a value with type, value, or predicate matching.
 
         Supports three matching modes:
@@ -376,21 +369,21 @@ class FlextUtilitiesReliability:
             'big'
 
         """
-        input_value: t.ContainerValue = value
+        input_value: object = value
         for pattern, result in cases:
             if isinstance(pattern, type) and isinstance(input_value, pattern):
-                return r[t.ContainerValue].ok(
+                return r[object].ok(
                     FlextUtilitiesReliability._resolve_match_output(result, value)
                 )
             if pattern == input_value:
-                return r[t.ContainerValue].ok(
+                return r[object].ok(
                     FlextUtilitiesReliability._resolve_match_output(result, input_value)
                 )
             if FlextUtilitiesReliability._is_match_predicate(pattern):
                 try:
                     pred_result = pattern(input_value)
                     if pred_result:
-                        return r[t.ContainerValue].ok(
+                        return r[object].ok(
                             FlextUtilitiesReliability._resolve_match_output(
                                 result, input_value
                             )
@@ -398,17 +391,17 @@ class FlextUtilitiesReliability:
                 except (ValueError, TypeError, AttributeError):
                     pass
         if default is not None:
-            return r[t.ContainerValue].ok(
+            return r[object].ok(
                 FlextUtilitiesReliability._resolve_match_output(default, input_value)
             )
-        return r[t.ContainerValue].fail("No match found and no default provided")
+        return r[object].fail("No match found and no default provided")
 
     @staticmethod
     def pipe(
-        value: t.ContainerValue,
-        *operations: Callable[[t.ContainerValue], t.ContainerValue],
+        value: object,
+        *operations: Callable[[object], object],
         on_error: str = "stop",
-    ) -> r[t.ContainerValue]:
+    ) -> r[object]:
         """Functional pipeline with railway-oriented error handling.
 
         Business Rule: Chains operations sequentially, unwrapping r
@@ -431,12 +424,12 @@ class FlextUtilitiesReliability:
                 str.upper,
                 lambda s: s.replace(" ", "_"),
             )
-            # → r[t.ContainerValue].ok("HELLO_WORLD")
+            # → r[object].ok("HELLO_WORLD")
 
         """
         if not operations:
-            return r[t.ContainerValue].ok(value)
-        current: t.ContainerValue = value
+            return r[object].ok(value)
+        current: object = value
         for i, op in enumerate(operations):
             try:
                 op_result = op(current)
@@ -444,7 +437,7 @@ class FlextUtilitiesReliability:
                     if op_result.is_failure:
                         if on_error == "stop":
                             err_msg = op_result.error or "Unknown error"
-                            return r[t.ContainerValue].fail(
+                            return r[object].fail(
                                 f"Pipeline step {i} failed: {err_msg}"
                             )
                         continue
@@ -460,8 +453,8 @@ class FlextUtilitiesReliability:
                 OSError,
             ) as e:
                 if on_error == "stop":
-                    return r[t.ContainerValue].fail(f"Pipeline step {i} failed: {e}")
-        return r[t.ContainerValue].ok(current)
+                    return r[object].fail(f"Pipeline step {i} failed: {e}")
+        return r[object].ok(current)
 
     @staticmethod
     def retry[TResult](

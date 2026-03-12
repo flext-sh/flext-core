@@ -57,16 +57,16 @@ class IntHandler(h[int, int]):
         return r[int].ok(message * 2)
 
 
-class DictHandler(h[dict[str, t.ContainerValue], dict[str, t.ContainerValue]]):
+class DictHandler(h[dict[str, object], dict[str, object]]):
     """Handler for dict messages."""
 
     @override
     def handle(
         self,
-        message: dict[str, t.ContainerValue],
-    ) -> r[dict[str, t.ContainerValue]]:
+        message: dict[str, object],
+    ) -> r[dict[str, object]]:
         """Handle dict message."""
-        return r[dict[str, t.ContainerValue]].ok({
+        return r[dict[str, object]].ok({
             "processed": True,
             **message,
         })
@@ -174,7 +174,7 @@ class TestuTypeChecker:
         accepted: tuple[t.MessageTypeSpecifier, ...] = (_message_type(dict),)
         assert u.Checker.can_handle_message_type(accepted, str) is False
         assert u.Checker.can_handle_message_type(accepted, dict) is True
-        dict_type: type[dict[str, t.ContainerValue]] = dict
+        dict_type: type[dict[str, object]] = dict
         assert u.Checker.can_handle_message_type(accepted, dict_type) is True
 
     def test_can_handle_message_type_empty_accepted(self) -> None:
@@ -209,7 +209,7 @@ class TestuTypeChecker:
     def test_evaluate_type_compatibility_dict_types(self) -> None:
         """Test _evaluate_type_compatibility with dict types."""
         assert u.Checker._evaluate_type_compatibility(_type_origin(dict), dict) is True
-        dict_type: type[dict[str, t.ContainerValue]] = dict
+        dict_type: type[dict[str, object]] = dict
         assert (
             u.Checker._evaluate_type_compatibility(_type_origin(dict), dict_type)
             is True
@@ -251,7 +251,7 @@ class TestuTypeChecker:
     def test_check_dict_compatibility_dict_subclass(self) -> None:
         """Test _check_dict_compatibility with dict subclass."""
 
-        class CustomDict(BaseUserDict[str, t.ContainerValue]):
+        class CustomDict(BaseUserDict[str, object]):
             """Custom dict subclass."""
 
         result = u.Checker._check_dict_compatibility(
@@ -435,7 +435,7 @@ class TestuTypeChecker:
         accepted = (str,)
         result = u.Checker.can_handle_message_type(
             accepted,
-            cast("str | type[t.ContainerValue]", None),
+            cast("str | type[object]", None),
         )
         assert isinstance(result, bool)
 

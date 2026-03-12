@@ -16,7 +16,6 @@ from flext_core import (
     p,
     r,
     s,
-    t,
 )
 
 from ._models import (
@@ -141,8 +140,8 @@ class _ServiceLike:
     def context(self) -> p.Context:
         return self._inner.context
 
-    def execute(self) -> s.RuntimeResult[t.ContainerValue]:
-        return s.RuntimeResult[t.ContainerValue].ok("service-like")
+    def execute(self) -> s.RuntimeResult[object]:
+        return s.RuntimeResult[object].ok("service-like")
 
     def validate_business_rules(self) -> s.RuntimeResult[bool]:
         return s.RuntimeResult[bool].ok(True)
@@ -304,12 +303,12 @@ class Ex11FlextService(Examples):
         self.check("ProtocolValidation.processor_ok", processor_ok.is_success)
         self.check("ProtocolValidation.processor_bad", processor_bad.error)
 
-        def _validator_len(data: t.ContainerValue) -> r[bool]:
+        def _validator_len(data: object) -> r[bool]:
             if isinstance(data, str) and len(data) >= 3:
                 return r[bool].ok(True)
             return r[bool].fail("too-short")
 
-        def _validator_upper(data: t.ContainerValue) -> r[bool]:
+        def _validator_upper(data: object) -> r[bool]:
             if isinstance(data, str) and data.isupper():
                 return r[bool].ok(True)
             return r[bool].fail("not-upper")
@@ -506,7 +505,7 @@ class Ex11FlextService(Examples):
         valid_container_value = self.rand_str(4)
         self.check(
             "RuntimeResult.ok.none_raises",
-            s.RuntimeResult[t.ContainerValue].ok(valid_container_value).is_success,
+            s.RuntimeResult[object].ok(valid_container_value).is_success,
         )
         self.check("RuntimeResult.ok.none_type", type(valid_container_value).__name__)
 
@@ -533,7 +532,7 @@ class Ex11FlextService(Examples):
         self.check("ensure_trace_context.has_trace_id", "trace_id" in trace)
         self.check("ensure_trace_context.has_span_id", "span_id" in trace)
         self.check("ensure_trace_context.has_correlation_id", "correlation_id" in trace)
-        http_mixed: list[t.ContainerValue] = [200, "201"]
+        http_mixed: list[object] = [200, "201"]
         self.check(
             "validate_http_status_codes.ok",
             s.validate_http_status_codes(http_mixed).unwrap_or([]),
@@ -626,7 +625,7 @@ class Ex11FlextService(Examples):
         failing = _FailingService()
         try:
             self.check("result.failure.raises", False)
-            failing_result: t.ContainerValue = getattr(failing, "result")
+            failing_result: object = getattr(failing, "result")
             self.check("result.failure.value", failing_result)
         except FlextExceptions.BaseError as exc:
             self.check("result.failure.raises", True)

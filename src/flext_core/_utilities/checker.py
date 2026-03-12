@@ -31,12 +31,12 @@ class FlextUtilitiesChecker:
         return FlextRuntime.get_logger(__name__)
 
     @staticmethod
-    def _is_subclass_of(candidate: t.ContainerValue, parent: type) -> bool:
+    def _is_subclass_of(candidate: object, parent: type) -> bool:
         """Safe subclass check that never raises TypeError."""
         return isinstance(candidate, type) and issubclass(candidate, parent)
 
     @classmethod
-    def _is_dict_type(cls, candidate: t.ContainerValue) -> bool:
+    def _is_dict_type(cls, candidate: object) -> bool:
         """Check if candidate is ``dict`` or a subclass of ``dict``."""
         return cls._is_subclass_of(candidate, dict)
 
@@ -129,7 +129,7 @@ class FlextUtilitiesChecker:
 
         """
         message_types: list[t.MessageTypeSpecifier] = []
-        raw_bases: t.ContainerValue = getattr(handler_class, "__orig_bases__", ())
+        raw_bases: object = getattr(handler_class, "__orig_bases__", ())
         if not FlextUtilitiesGuards.is_object_tuple(raw_bases):
             return message_types
         for base in raw_bases:
@@ -177,7 +177,7 @@ class FlextUtilitiesChecker:
     def _extract_message_type_from_parameter(
         cls,
         parameter: inspect.Parameter,
-        type_hints: Mapping[str, t.ContainerValue],
+        type_hints: Mapping[str, object],
         param_name: str,
     ) -> r[t.MessageTypeSpecifier]:
         """Extract message type from parameter hints or annotation."""
@@ -214,7 +214,7 @@ class FlextUtilitiesChecker:
     @classmethod
     def _get_type_hints_safe(
         cls, handle_method: Callable[..., object], handler_class: type
-    ) -> Mapping[str, t.ContainerValue]:
+    ) -> Mapping[str, object]:
         """Safely extract type hints from handle method."""
         try:
             return get_type_hints(

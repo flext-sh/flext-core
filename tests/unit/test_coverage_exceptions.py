@@ -35,10 +35,10 @@ class ExceptionCreationScenario(BaseModel):
         description="Exception class to instantiate"
     )
     message: str = Field(description="Exception message")
-    kwargs: dict[str, t.ContainerValue | type] = Field(
+    kwargs: dict[str, object | type] = Field(
         description="Keyword arguments for exception creation"
     )
-    expected_attrs: dict[str, t.ContainerValue | type] = Field(
+    expected_attrs: dict[str, object | type] = Field(
         description="Expected attributes to validate"
     )
 
@@ -172,7 +172,7 @@ class ExceptionScenarios:
         ),
     ]
     FACTORY_CREATION: ClassVar[
-        list[tuple[str, dict[str, t.ContainerValue], type[FlextExceptions.BaseError]]]
+        list[tuple[str, dict[str, object], type[FlextExceptions.BaseError]]]
     ] = [
         (
             "ValidationError",
@@ -255,11 +255,11 @@ class TestExceptionIntegration:
         """Test exception handling in railway pattern."""
 
         def validate_and_process(
-            data: dict[str, t.ContainerValue],
-        ) -> r[dict[str, t.ContainerValue]]:
+            data: dict[str, object],
+        ) -> r[dict[str, object]]:
             if not data.get("id"):
-                return r[dict[str, t.ContainerValue]].fail("Missing id")
-            return r[dict[str, t.ContainerValue]].ok(data)
+                return r[dict[str, object]].fail("Missing id")
+            return r[dict[str, object]].ok(data)
 
         assert validate_and_process({}).is_failure
         assert validate_and_process({"id": "123"}).is_success
@@ -437,7 +437,7 @@ class TestExceptionFactory:
     def test_create_error_auto_detection(
         self,
         message: str,
-        kwargs: dict[str, t.ContainerValue],
+        kwargs: dict[str, object],
         expected_type: type[FlextExceptions.BaseError],
     ) -> None:
         """Test smart error type detection in create()."""

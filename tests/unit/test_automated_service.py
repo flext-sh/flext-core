@@ -10,7 +10,7 @@ from collections.abc import Mapping
 
 import pytest
 
-from flext_core import r, t
+from flext_core import r
 from tests import m
 from tests.conftest import test_framework
 from tests.test_utils import assertion_helpers, fixture_factory
@@ -138,7 +138,7 @@ class TestAutomatedFlextService:
     def _execute_service_operation(
         self,
         instance: object,
-        input_data: Mapping[str, t.ContainerValue],
+        input_data: Mapping[str, object],
     ) -> r[bool]:
         """Execute a test operation on service instance.
 

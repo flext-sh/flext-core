@@ -30,7 +30,7 @@ from typing import ClassVar
 import pytest
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 
-from flext_core import c, m, t
+from flext_core import c, m
 from flext_core._models.domain_event import _ComparableConfigMap
 from flext_tests import tm, u
 
@@ -54,7 +54,7 @@ class ModelCreationScenario(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     model_type: ModelType = Field(description="Model type under creation test")
-    field_data: dict[str, t.ContainerValue] = Field(description="Model input payload")
+    field_data: dict[str, object] = Field(description="Model input payload")
     expected_checks: list[str] = Field(description="Expected validation check labels")
     description: str = Field(default="", description="Scenario description")
 
@@ -713,9 +713,9 @@ class TestFlextModels:
         class TestAggregate(m.AggregateRoot):
             name: str
             handler_called: bool = False
-            handler_data: dict[str, t.ContainerValue] = Field(default_factory=dict)
+            handler_data: dict[str, object] = Field(default_factory=dict)
 
-            def _apply_test_event(self, data: dict[str, t.ContainerValue]) -> None:
+            def _apply_test_event(self, data: dict[str, object]) -> None:
                 self.handler_called = True
                 self.handler_data = data
 
@@ -734,7 +734,7 @@ class TestFlextModels:
         class TestAggregate(m.AggregateRoot):
             name: str
 
-            def _apply_failing_event(self, data: dict[str, t.ContainerValue]) -> None:
+            def _apply_failing_event(self, data: dict[str, object]) -> None:
                 error_msg = "Handler failed"
                 raise ValueError(error_msg)
 
@@ -795,7 +795,7 @@ class TestFlextModels:
     def test_handler_registration_model_creation(self) -> None:
         """Test HandlerRegistration model with correct fields."""
 
-        def dummy_handler(value: t.ContainerValue) -> t.ContainerValue:
+        def dummy_handler(value: object) -> object:
             return value
 
         reg = m.HandlerRegistration(

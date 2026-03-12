@@ -19,7 +19,7 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_core import FlextService, r, t
+from flext_core import FlextService, r
 
 
 class FlextTestsServiceBase[T]:
@@ -73,7 +73,7 @@ class FlextTestsServiceBase[T]:
         return result.value
 
 
-class FlextTestsUtilityBase[TValue: t.ContainerValue](FlextService[TValue]):
+class FlextTestsUtilityBase[TValue: object](FlextService[TValue]):
     """Base class for FLEXT test utility classes (factories, builders, validators).
 
     Architecture: Extends FlextService for service functionality.

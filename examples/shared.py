@@ -36,7 +36,7 @@ from pathlib import Path
 
 from pydantic import ConfigDict
 
-from flext_core import m, r, t
+from flext_core import m, r
 
 
 class Examples:
@@ -66,7 +66,7 @@ class Examples:
         max_u64 = (1 << 64) - 1
         return raw / max_u64
 
-    def check(self, label: str, value: t.ContainerValue | None) -> None:
+    def check(self, label: str, value: object | None) -> None:
         """Append ``label: <serialised value>`` to the results buffer."""
         self._results.append(f"{label}: {self.ser(value)}")
 
@@ -118,7 +118,7 @@ class Examples:
             self._results.append("")
         self._results.append(f"[{name}]")
 
-    def ser(self, v: t.ContainerValue | None) -> str:
+    def ser(self, v: object | None) -> str:
         """Deterministic, human-readable serialisation for golden-file output.
 
         Handles ``None``, bools, numbers, strings, lists, dicts, types,
@@ -190,7 +190,7 @@ class Examples:
         cleaned: bool = False
 
     @staticmethod
-    def bind_probe(result_obj: r[int], delta: int) -> t.ContainerValue:
+    def bind_probe(result_obj: r[int], delta: int) -> object:
         """Safely attempt ``result_obj.bind(lambda n: r[int].ok(n + delta))``."""
         try:
             return result_obj.flat_map(lambda n: r[int].ok(n + delta)).unwrap_or(-1)
@@ -199,8 +199,8 @@ class Examples:
 
     @staticmethod
     def bind_status(
-        value: t.ContainerValue | r[t.ContainerValue],
-    ) -> t.ContainerValue:
+        value: object | r[object],
+    ) -> object:
         """Return a summary ConfigMap when *value* is a ``r``."""
         match value:
             case r() as result:

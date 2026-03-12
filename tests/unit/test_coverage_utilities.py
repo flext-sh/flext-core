@@ -52,7 +52,7 @@ class UtilityTestCase(BaseModel):
 
     model_config = ConfigDict(frozen=True)
     operation: UtilityOperationType = Field(description="Utility operation under test")
-    input_data: t.ContainerValue | None = Field(
+    input_data: object | None = Field(
         default=None, description="Input data for operation"
     )
     expected_type: type | None = Field(default=None, description="Expected output type")
@@ -145,9 +145,9 @@ class UtilityScenarios:
     ]
 
     @staticmethod
-    def create_mock_config(**kwargs: t.ContainerValue) -> p.HasModelDump:
+    def create_mock_config(**kwargs: object) -> p.HasModelDump:
         """Create mock config object."""
-        result: dict[str, t.ContainerValue] = {}
+        result: dict[str, object] = {}
         for key, value in kwargs.items():
             result[str(key)] = value
         return cast("p.HasModelDump", cast("object", m.ConfigMap(root=result)))
@@ -324,7 +324,7 @@ class Testu(TextUtilityContract):
     )
     def test_cache_normalize_component(
         self,
-        input_data: t.ContainerValue | None,
+        input_data: object | None,
         expected_type: type,
     ) -> None:
         """Test cache component normalization."""
@@ -357,7 +357,7 @@ class Testu(TextUtilityContract):
         if isinstance(obj, BaseModel):
             result = u.Cache.clear_object_cache(obj)
         else:
-            obj_dict: dict[str, t.ContainerValue] = {}
+            obj_dict: dict[str, object] = {}
             if hasattr(obj, "__dict__"):
                 for k, v in obj.__dict__.items():
                     obj_dict[str(k)] = (
@@ -374,13 +374,13 @@ class Testu(TextUtilityContract):
     def test_cache_has_attributes_true(self) -> None:
         """Test detecting cache attributes on object with cache."""
         obj = UtilityScenarios.create_mock_cached_object()
-        obj_typed: t.ContainerValue = cast("t.ContainerValue", obj)
+        obj_typed: object = cast("object", obj)
         assert u.Cache.has_cache_attributes(obj_typed) is True
 
     def test_cache_has_attributes_false(self) -> None:
         """Test detecting cache attributes on object without cache."""
         obj = UtilityScenarios.create_mock_uncached_object()
-        obj_typed: t.ContainerValue = cast("t.ContainerValue", obj)
+        obj_typed: object = cast("object", obj)
         assert u.Cache.has_cache_attributes(obj_typed) is False
 
     def test_reliability_timeout_success(self) -> None:

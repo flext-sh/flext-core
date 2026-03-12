@@ -21,7 +21,6 @@ from flext_infra import (
     FlextInfraUtilitiesIo,
     FlextInfraUtilitiesPaths,
     c,
-    t,
 )
 from flext_infra._utilities.output import output
 
@@ -79,13 +78,13 @@ class FlextInfraConfigFixer(s[list[str]]):
         tool_data = doc_data.get(c.Infra.Toml.TOOL)
         if not isinstance(tool_data, dict):
             return r[list[str]].ok([])
-        typed_tool_data = TypeAdapter(dict[str, t.ContainerValue]).validate_python(
+        typed_tool_data = TypeAdapter(dict[str, object]).validate_python(
             tool_data,
         )
         pyrefly_data = typed_tool_data.get(c.Infra.Toml.PYREFLY)
         if not isinstance(pyrefly_data, Mapping):
             return r[list[str]].ok([])
-        pyrefly: MutableMapping[str, t.ContainerValue] = dict(pyrefly_data)
+        pyrefly: MutableMapping[str, object] = dict(pyrefly_data)
         all_fixes: list[str] = []
         fixes = self._fix_search_paths_tk(pyrefly, path.parent)
         all_fixes.extend(fixes)
@@ -152,7 +151,7 @@ class FlextInfraConfigFixer(s[list[str]]):
 
     def _ensure_project_excludes_tk(
         self,
-        pyrefly: MutableMapping[str, t.ContainerValue],
+        pyrefly: MutableMapping[str, object],
     ) -> list[str]:
         fixes: list[str] = []
         excludes = pyrefly.get(c.Infra.Toml.PROJECT_EXCLUDES)
@@ -172,7 +171,7 @@ class FlextInfraConfigFixer(s[list[str]]):
 
     def _fix_search_paths_tk(
         self,
-        pyrefly: MutableMapping[str, t.ContainerValue],
+        pyrefly: MutableMapping[str, object],
         project_dir: Path,
     ) -> list[str]:
         fixes: list[str] = []
@@ -197,7 +196,7 @@ class FlextInfraConfigFixer(s[list[str]]):
             if fixes:
                 pyrefly[c.Infra.Toml.SEARCH_PATH] = self._to_array(new_paths)
         search_raw = pyrefly.get(c.Infra.Toml.SEARCH_PATH)
-        current_paths: list[t.ContainerValue] = (
+        current_paths: list[object] = (
             list(search_raw) if isinstance(search_raw, list) else []
         )
         nonexistent = [
@@ -217,13 +216,13 @@ class FlextInfraConfigFixer(s[list[str]]):
 
     def _remove_ignore_sub_config_tk(
         self,
-        pyrefly: MutableMapping[str, t.ContainerValue],
+        pyrefly: MutableMapping[str, object],
     ) -> list[str]:
         fixes: list[str] = []
         sub_configs = pyrefly.get(c.Infra.Toml.SUB_CONFIG)
         if not isinstance(sub_configs, list):
             return []
-        new_configs: list[t.ContainerValue] = []
+        new_configs: list[object] = []
         for conf in sub_configs:
             if isinstance(conf, Mapping) and conf.get(c.Infra.Toml.IGNORE) is True:
                 matches = conf.get("matches", c.Infra.Defaults.UNKNOWN)

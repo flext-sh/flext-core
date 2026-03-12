@@ -8,7 +8,7 @@ from typing import override
 
 import libcst as cst
 
-from flext_infra import c, t
+from flext_infra import c
 from flext_infra.refactor.rule import FlextInfraRefactorRule
 from flext_infra.refactor.transformers.alias_remover import (
     FlextInfraRefactorAliasRemover,
@@ -100,7 +100,7 @@ class FlextInfraRefactorLegacyRemovalRule(FlextInfraRefactorRule):
         return (tree, changes)
 
     @staticmethod
-    def _normalize_string_items(value: t.ContainerValue) -> list[str]:
+    def _normalize_string_items(value: object) -> list[str]:
         if not isinstance(value, (list, tuple, set)):
             return []
         return [item for item in value if isinstance(item, str)]

@@ -5,7 +5,7 @@ from __future__ import annotations
 from pydantic import ConfigDict, Field, computed_field, model_serializer
 
 from flext_core import FlextModels
-from flext_infra import c, t
+from flext_infra import c
 
 
 class FlextInfraCheckModels:
@@ -104,7 +104,7 @@ class FlextInfraCheckModels:
             short_description: str = Field(description="Rule short description")
 
             @model_serializer(mode="plain")
-            def _serialize(self) -> dict[str, t.ContainerValue]:
+            def _serialize(self) -> dict[str, object]:
                 return {
                     "id": self.id,
                     "shortDescription": {"text": self.short_description},
@@ -122,7 +122,7 @@ class FlextInfraCheckModels:
             )
 
             @model_serializer(mode="plain")
-            def _serialize(self) -> dict[str, t.ContainerValue]:
+            def _serialize(self) -> dict[str, object]:
                 return {
                     "physicalLocation": {
                         "artifactLocation": {
@@ -147,7 +147,7 @@ class FlextInfraCheckModels:
             )
 
             @model_serializer(mode="plain")
-            def _serialize(self) -> dict[str, t.ContainerValue]:
+            def _serialize(self) -> dict[str, object]:
                 return {
                     "ruleId": self.rule_id,
                     "level": self.level,
@@ -176,7 +176,7 @@ class FlextInfraCheckModels:
             )
 
             @model_serializer(mode="plain")
-            def _serialize(self) -> dict[str, t.ContainerValue]:
+            def _serialize(self) -> dict[str, object]:
                 return {
                     "tool": {
                         "driver": {

@@ -16,7 +16,7 @@ import inspect
 import time
 import traceback
 import types
-from collections.abc import Iterator, Mapping, MutableMapping
+from collections.abc import Iterator, Mapping
 from contextlib import contextmanager, suppress
 from pathlib import Path
 from typing import ClassVar, Literal, Self, overload, override
@@ -35,12 +35,8 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
     bespoke wrappers.
     """
 
-    _scoped_contexts: ClassVar[
-        MutableMapping[str, MutableMapping[str, t.MetadataValue]]
-    ] = {}
-    _level_contexts: ClassVar[
-        MutableMapping[str, MutableMapping[str, t.MetadataValue]]
-    ] = {}
+    _scoped_contexts: ClassVar[dict[str, dict[str, t.MetadataValue]]] = {}
+    _level_contexts: ClassVar[dict[str, dict[str, t.MetadataValue]]] = {}
     _structlog_instance: p.Log.StructlogLogger | None = None
 
     def __init__(
@@ -104,7 +100,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         """Get current global context (internal use only)."""
         try:
             context_vars = FlextRuntime.structlog().contextvars.get_contextvars()
-            context_map: dict[str, t.ContainerValue] = (
+            context_map: dict[str, object] = (
                 {
                     str(k): FlextRuntime.normalize_to_general_value(v)
                     for k, v in dict(context_vars).items()
@@ -171,18 +167,16 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         try:
             if scope not in cls._scoped_contexts:
                 cls._scoped_contexts[scope] = {}
-            current_context: dict[str, t.ContainerValue] = {
+            current_context: dict[str, object] = {
                 key: FlextRuntime.normalize_to_general_value(value)
                 for key, value in cls._scoped_contexts[scope].items()
             }
-            incoming_context: dict[str, t.ContainerValue] = {
+            incoming_context: dict[str, object] = {
                 key: FlextRuntime.normalize_to_general_value(value)
                 for key, value in context.items()
             }
             merge_result = u.merge(current_context, incoming_context, strategy="deep")
-            merged_value: dict[str, t.ContainerValue] = merge_result.unwrap_or(
-                current_context
-            )
+            merged_value: dict[str, object] = merge_result.unwrap_or(current_context)
             merged_context: dict[str, t.MetadataValue] = {
                 key: FlextRuntime.normalize_to_metadata_value(value)
                 for key, value in merged_value.items()
@@ -623,7 +617,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         return None
 
     @staticmethod
-    def _format_log_message(message: str, *args: t.ContainerValue) -> str:
+    def _format_log_message(message: str, *args: object) -> str:
         """Format log message with % arguments."""
         try:
             return message % args if args else message
@@ -703,7 +697,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         *,
         exception: Exception | None,
         exc_info: bool,
-        context: Mapping[str, t.ContainerValue | Exception],
+        context: Mapping[str, object | Exception],
     ) -> m.ConfigMap:
         """Build normalized context payload for exception/error logging."""
         include_stack_trace = self._should_include_stack_trace()
@@ -719,9 +713,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
                 dict(context_dict.root), dict(exception_data.root), strategy="deep"
             )
             base_context = dict(context_dict.root)
-            merged_value: dict[str, t.ContainerValue] = merge_result.unwrap_or(
-                base_context
-            )
+            merged_value: dict[str, object] = merge_result.unwrap_or(base_context)
             context_dict = m.ConfigMap(root=dict(merged_value))
             if include_stack_trace:
                 context_dict["stack_trace"] = "".join(
@@ -739,8 +731,8 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
     @overload
     def critical(
         self,
-        msg: str | t.ContainerValue,
-        *args: t.ContainerValue,
+        msg: str | object,
+        *args: object,
         _return_result: Literal[True],
         **kw: t.MetadataValue,
     ) -> r[bool]: ...
@@ -748,8 +740,8 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
     @overload
     def critical(
         self,
-        msg: str | t.ContainerValue,
-        *args: t.ContainerValue,
+        msg: str | object,
+        *args: object,
         _return_result: Literal[False] = ...,
         **kw: t.MetadataValue,
     ) -> None: ...
@@ -757,16 +749,16 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
     @overload
     def critical(
         self,
-        msg: str | t.ContainerValue,
-        *args: t.ContainerValue,
+        msg: str | object,
+        *args: object,
         **kw: t.MetadataValue,
     ) -> r[bool] | None: ...
 
     @override
     def critical(
         self,
-        msg: str | t.ContainerValue,
-        *args: t.ContainerValue,
+        msg: str | object,
+        *args: object,
         **kw: t.MetadataValue,
     ) -> r[bool] | None:
         """Log critical message - Logger.Log implementation.
@@ -785,8 +777,8 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
     @overload
     def debug(
         self,
-        msg: str | t.ContainerValue,
-        *args: t.ContainerValue | Exception,
+        msg: str | object,
+        *args: object | Exception,
         _return_result: Literal[True],
         **kw: t.MetadataValue,
     ) -> r[bool]: ...
@@ -794,8 +786,8 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
     @overload
     def debug(
         self,
-        msg: str | t.ContainerValue,
-        *args: t.ContainerValue | Exception,
+        msg: str | object,
+        *args: object | Exception,
         _return_result: Literal[False] = ...,
         **kw: t.MetadataValue,
     ) -> None: ...
@@ -803,16 +795,16 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
     @overload
     def debug(
         self,
-        msg: str | t.ContainerValue,
-        *args: t.ContainerValue | Exception,
+        msg: str | object,
+        *args: object | Exception,
         **kw: t.MetadataValue,
     ) -> r[bool] | None: ...
 
     @override
     def debug(
         self,
-        msg: str | t.ContainerValue,
-        *args: t.ContainerValue | Exception,
+        msg: str | object,
+        *args: object | Exception,
         **kw: t.MetadataValue,
     ) -> r[bool] | None:
         """Log debug message - Logger.Log implementation.
@@ -831,8 +823,8 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
     @overload
     def error(
         self,
-        msg: str | t.ContainerValue,
-        *args: t.ContainerValue,
+        msg: str | object,
+        *args: object,
         _return_result: Literal[True],
         **kw: t.MetadataValue,
     ) -> r[bool]: ...
@@ -840,8 +832,8 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
     @overload
     def error(
         self,
-        msg: str | t.ContainerValue,
-        *args: t.ContainerValue,
+        msg: str | object,
+        *args: object,
         _return_result: Literal[False] = ...,
         **kw: t.MetadataValue,
     ) -> None: ...
@@ -849,16 +841,16 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
     @overload
     def error(
         self,
-        msg: str | t.ContainerValue,
-        *args: t.ContainerValue,
+        msg: str | object,
+        *args: object,
         **kw: t.MetadataValue,
     ) -> r[bool] | None: ...
 
     @override
     def error(
         self,
-        msg: str | t.ContainerValue,
-        *args: t.ContainerValue,
+        msg: str | object,
+        *args: object,
         **kw: t.MetadataValue,
     ) -> r[bool] | None:
         """Log error message - Logger.Log implementation.
@@ -877,8 +869,8 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
     @overload
     def exception(
         self,
-        msg: str | t.ContainerValue,
-        *args: t.ContainerValue,
+        msg: str | object,
+        *args: object,
         _return_result: Literal[True],
         **kw: t.MetadataValue,
     ) -> r[bool]: ...
@@ -886,8 +878,8 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
     @overload
     def exception(
         self,
-        msg: str | t.ContainerValue,
-        *args: t.ContainerValue,
+        msg: str | object,
+        *args: object,
         _return_result: Literal[False] = ...,
         **kw: t.MetadataValue,
     ) -> None: ...
@@ -895,16 +887,16 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
     @overload
     def exception(
         self,
-        msg: str | t.ContainerValue,
-        *args: t.ContainerValue,
+        msg: str | object,
+        *args: object,
         **kw: t.MetadataValue,
     ) -> r[bool] | None: ...
 
     @override
     def exception(
         self,
-        msg: str | t.ContainerValue,
-        *args: t.ContainerValue,
+        msg: str | object,
+        *args: object,
         **kw: t.MetadataValue,
     ) -> r[bool] | None:
         """Log exception with conditional stack trace (DEBUG only).
@@ -922,7 +914,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         trail reconstruction and failure analysis.
         """
         message = str(msg)
-        filtered_args: tuple[t.ContainerValue, ...] = tuple(
+        filtered_args: tuple[object, ...] = tuple(
             arg for arg in args if not isinstance(arg, BaseException)
         )
         try:
@@ -957,8 +949,8 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
     @overload
     def info(
         self,
-        msg: str | t.ContainerValue,
-        *args: t.ContainerValue,
+        msg: str | object,
+        *args: object,
         _return_result: Literal[True],
         **kw: t.MetadataValue,
     ) -> r[bool]: ...
@@ -966,8 +958,8 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
     @overload
     def info(
         self,
-        msg: str | t.ContainerValue,
-        *args: t.ContainerValue,
+        msg: str | object,
+        *args: object,
         _return_result: Literal[False] = ...,
         **kw: t.MetadataValue,
     ) -> None: ...
@@ -975,16 +967,16 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
     @overload
     def info(
         self,
-        msg: str | t.ContainerValue,
-        *args: t.ContainerValue,
+        msg: str | object,
+        *args: object,
         **kw: t.MetadataValue,
     ) -> r[bool] | None: ...
 
     @override
     def info(
         self,
-        msg: str | t.ContainerValue,
-        *args: t.ContainerValue,
+        msg: str | object,
+        *args: object,
         **kw: t.MetadataValue,
     ) -> r[bool] | None:
         """Log info message - Logger.Log implementation.
@@ -1005,7 +997,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         self,
         level: str,
         message: str,
-        *args: t.ContainerValue,
+        *args: object,
         _return_result: Literal[True],
         **context: t.MetadataValue,
     ) -> r[bool]: ...
@@ -1015,7 +1007,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         self,
         level: str,
         message: str,
-        *args: t.ContainerValue,
+        *args: object,
         _return_result: Literal[False] = ...,
         **context: t.MetadataValue,
     ) -> None: ...
@@ -1024,7 +1016,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         self,
         level: str,
         message: str,
-        *args: t.ContainerValue,
+        *args: object,
         **context: t.MetadataValue,
     ) -> r[bool] | None:
         """Log message with specified level - Logger.Log implementation.
@@ -1061,7 +1053,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
     def trace(
         self,
         message: str,
-        *args: t.ContainerValue,
+        *args: object,
         _return_result: Literal[True],
         **kwargs: t.MetadataValue,
     ) -> r[bool]: ...
@@ -1070,7 +1062,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
     def trace(
         self,
         message: str,
-        *args: t.ContainerValue,
+        *args: object,
         _return_result: Literal[False] = ...,
         **kwargs: t.MetadataValue,
     ) -> None: ...
@@ -1078,7 +1070,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
     def trace(
         self,
         message: str,
-        *args: t.ContainerValue,
+        *args: object,
         **kwargs: t.MetadataValue,
     ) -> r[bool] | None:
         """Log trace message - Logger.Log implementation."""
@@ -1110,8 +1102,8 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
     @overload
     def warning(
         self,
-        msg: str | t.ContainerValue,
-        *args: t.ContainerValue,
+        msg: str | object,
+        *args: object,
         _return_result: Literal[True],
         **kw: t.MetadataValue,
     ) -> r[bool]: ...
@@ -1119,8 +1111,8 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
     @overload
     def warning(
         self,
-        msg: str | t.ContainerValue,
-        *args: t.ContainerValue,
+        msg: str | object,
+        *args: object,
         _return_result: Literal[False] = ...,
         **kw: t.MetadataValue,
     ) -> None: ...
@@ -1128,16 +1120,16 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
     @overload
     def warning(
         self,
-        msg: str | t.ContainerValue,
-        *args: t.ContainerValue,
+        msg: str | object,
+        *args: object,
         **kw: t.MetadataValue,
     ) -> r[bool] | None: ...
 
     @override
     def warning(
         self,
-        msg: str | t.ContainerValue,
-        *args: t.ContainerValue,
+        msg: str | object,
+        *args: object,
         **kw: t.MetadataValue,
     ) -> r[bool] | None:
         """Log warning message - Logger.Log implementation.
@@ -1169,7 +1161,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         self,
         _level: c.Settings.LogLevel | str,
         message: str,
-        *args: t.ContainerValue,
+        *args: object,
         **context: t.MetadataValue,
     ) -> r[bool] | None:
         """Internal logging method - consolidates all log level methods.
@@ -1206,12 +1198,12 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
     def _log_standard_level(
         self,
         level: c.Settings.LogLevel,
-        msg: str | t.ContainerValue,
-        *args: t.ContainerValue | Exception,
+        msg: str | object,
+        *args: object | Exception,
         **kw: t.MetadataValue,
     ) -> r[bool] | None:
         message = str(msg)
-        filtered_args: tuple[t.ContainerValue, ...] = tuple(
+        filtered_args: tuple[object, ...] = tuple(
             arg for arg in args if not isinstance(arg, BaseException)
         )
         return self._log(level, message, *filtered_args, **kw)
@@ -1335,7 +1327,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
                         }
                 case _:
                     pass
-            normalized_context: dict[str, t.ContainerValue | Exception] = {}
+            normalized_context: dict[str, object | Exception] = {}
             for ctx_key, ctx_val in context_kwargs.items():
                 if isinstance(ctx_val, Exception):
                     normalized_context[ctx_key] = ctx_val

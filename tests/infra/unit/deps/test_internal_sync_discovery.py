@@ -28,7 +28,7 @@ def _set_toml_stub(
     service: FlextInfraInternalDependencySyncService,
     value: r[dict[str, t.Infra.TomlValue]],
 ) -> None:
-    def _reader(_path: Path) -> r[dict[str, t.ContainerValue]]:
+    def _reader(_path: Path) -> r[dict[str, object]]:
         return value
 
     service.toml = _TomlReaderStub(fn=_reader)
@@ -108,9 +108,7 @@ class TestParseRepoMap:
 
     def test_parse_repo_map_non_dict_repo(self) -> None:
         service = FlextInfraInternalDependencySyncService()
-        _set_toml_stub(
-            service, r[t.Infra.TomlConfig].ok({"repo": "not-a-dict"})
-        )
+        _set_toml_stub(service, r[t.Infra.TomlConfig].ok({"repo": "not-a-dict"}))
         tm.ok(service.parse_repo_map(Path("/fake/map.toml")), eq={})
 
     def test_parse_repo_map_non_dict_values(self) -> None:
@@ -125,9 +123,7 @@ class TestParseRepoMap:
         service = FlextInfraInternalDependencySyncService()
         _set_toml_stub(
             service,
-            r[t.Infra.TomlConfig].ok({
-                "repo": {"flext-core": {"other": "val"}}
-            }),
+            r[t.Infra.TomlConfig].ok({"repo": {"flext-core": {"other": "val"}}}),
         )
         tm.ok(service.parse_repo_map(Path("/fake/map.toml")), eq={})
 

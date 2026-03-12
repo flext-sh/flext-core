@@ -29,7 +29,7 @@ from typing import ClassVar
 import pytest
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import FlextContainer, FlextContext, m, t
+from flext_core import FlextContainer, FlextContext, m
 from flext_tests import FlextTestsUtilities, t as tests_t, u
 
 
@@ -120,7 +120,7 @@ class TestFlextContext:
     ) -> None:
         """Test context set/get value operations."""
         context = test_context
-        converted_value: t.ContainerValue = (
+        converted_value: object = (
             value
             if isinstance(value, (str, int, float, bool, type(None), list, dict))
             else str(value)
@@ -182,7 +182,7 @@ class TestFlextContext:
     def test_context_nested_data(self, test_context: FlextContext) -> None:
         """Test context with nested data structures."""
         context = test_context
-        nested_data: dict[str, t.ContainerValue] = {
+        nested_data: dict[str, object] = {
             "user": {
                 "id": "123",
                 "profile": {"name": "John Doe", "email": "john@example.com"},
@@ -193,13 +193,13 @@ class TestFlextContext:
         _ = u.Tests.Result.assert_success(result)
         retrieved = result.value
         assert isinstance(retrieved, dict)
-        retrieved_dict: dict[str, t.ContainerValue] = retrieved
+        retrieved_dict: dict[str, object] = retrieved
         user_data = retrieved_dict.get("user")
         assert isinstance(user_data, dict)
-        user_dict: dict[str, t.ContainerValue] = user_data
+        user_dict: dict[str, object] = user_data
         profile_data = user_dict.get("profile")
         assert isinstance(profile_data, dict)
-        profile_dict: dict[str, t.ContainerValue] = profile_data
+        profile_dict: dict[str, object] = profile_data
         assert profile_dict.get("name") == "John Doe"
 
     def test_context_merge(self, test_context: FlextContext) -> None:
@@ -375,7 +375,7 @@ class TestFlextContext:
     ) -> None:
         """Test context with special values."""
         context = test_context
-        converted_value: t.ContainerValue = special_value
+        converted_value: object = special_value
         context.set(f"{value_name}_key", converted_value).value
         result = context.get(f"{value_name}_key")
         _ = u.Tests.Result.assert_success(result)

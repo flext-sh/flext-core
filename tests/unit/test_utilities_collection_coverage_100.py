@@ -23,7 +23,7 @@ from typing import Annotated, Any, ClassVar, cast
 import pytest
 from pydantic import BaseModel, ConfigDict, Field, SkipValidation
 
-from flext_core import FlextRuntime, m, r, t
+from flext_core import FlextRuntime, m, r
 from flext_tests import u
 
 from ..test_utils import assertion_helpers
@@ -69,7 +69,7 @@ class CoerceListScenario(BaseModel):
     model_config = ConfigDict(frozen=True)
     name: str = Field(description="Coerce list scenario name")
     enum_cls: type[StrEnum] = Field(description="Enum class for coercion")
-    value: Annotated[t.ContainerValue, SkipValidation] = Field(
+    value: Annotated[object, SkipValidation] = Field(
         description="Input value to coerce"
     )
     expected_success: bool = Field(description="Whether coercion should succeed")
@@ -106,7 +106,7 @@ class CoerceDictScenario(BaseModel):
     model_config = ConfigDict(frozen=True)
     name: str = Field(description="Coerce dict scenario name")
     enum_cls: type[StrEnum] = Field(description="Enum class for coercion")
-    value: Annotated[t.ContainerValue, SkipValidation] = Field(
+    value: Annotated[object, SkipValidation] = Field(
         description="Input value to coerce"
     )
     expected_success: bool = Field(description="Whether coercion should succeed")
@@ -235,13 +235,11 @@ class ChunkScenario(BaseModel):
 
     model_config = ConfigDict(frozen=True)
     name: str = Field(description="Chunk scenario name")
-    items: list[t.ContainerValue] | tuple[t.ContainerValue, ...] = Field(
+    items: list[object] | tuple[object, ...] = Field(
         description="Input items for chunking",
     )
     size: int = Field(description="Chunk size")
-    expected_result: list[list[t.ContainerValue]] = Field(
-        description="Expected chunked output"
-    )
+    expected_result: list[list[object]] = Field(description="Expected chunked output")
 
 
 class BatchScenario(BaseModel):
@@ -249,7 +247,7 @@ class BatchScenario(BaseModel):
 
     model_config = ConfigDict(frozen=True)
     name: str = Field(description="Batch scenario name")
-    items: list[t.ContainerValue] = Field(description="Input items for batch")
+    items: list[object] = Field(description="Input items for batch")
     operation: Callable[[object], object] = Field(
         description="Batch operation callable"
     )

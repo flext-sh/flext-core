@@ -70,7 +70,7 @@ def test_extract_message_type_from_parameter_branches() -> None:
     param = inspect.Parameter("message", inspect.Parameter.POSITIONAL_OR_KEYWORD)
     none_hint = u.Checker._extract_message_type_from_parameter(
         param,
-        cast("dict[str, t.ContainerValue]", {"message": None}),
+        cast("dict[str, object]", {"message": None}),
         "message",
     )
     assert none_hint.is_failure

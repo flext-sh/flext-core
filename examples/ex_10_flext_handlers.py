@@ -8,7 +8,7 @@ from pathlib import Path
 from types import ModuleType
 from typing import ClassVar, override
 
-from flext_core import FlextHandlers, c, e, h, m, r, t
+from flext_core import FlextHandlers, c, e, h, m, r
 
 from ._models import _CommandBusStub, _ProtocolHandler, _ServiceStub
 from .shared import Examples
@@ -53,17 +53,17 @@ class _ProcessorBad(m.Value):
         return "ok"
 
 
-class _NotImplementedPatternHandler(h[t.ContainerValue, t.ContainerValue]):
+class _NotImplementedPatternHandler(h[object, object]):
     @override
-    def handle(self, message: t.ContainerValue) -> r[t.ContainerValue]:
+    def handle(self, message: object) -> r[object]:
         return super().handle(message)
 
 
-class _DemoHandler(h[t.ContainerValue, str]):
+class _DemoHandler(h[object, str]):
     _expected_message_type: ClassVar[type | None] = _Message
 
     @override
-    def handle(self, message: t.ContainerValue) -> r[str]:
+    def handle(self, message: object) -> r[str]:
         if message == "explode":
             error_message = "forced boom"
             raise RuntimeError(error_message)
@@ -72,7 +72,7 @@ class _DemoHandler(h[t.ContainerValue, str]):
         return r[str].ok(f"msg:{message}")
 
     @override
-    def validate(self, data: t.ContainerValue) -> r[bool]:
+    def validate(self, data: object) -> r[bool]:
         base = super().validate(data)
         if base.is_failure:
             return base
@@ -154,7 +154,7 @@ class Ex10FlextHandlers(Examples):
         )
         try:
             FlextHandlers.create_from_callable(lambda message: message, mode="invalid")
-            invalid_mode: t.ContainerValue = "no-error"
+            invalid_mode: object = "no-error"
         except e.ValidationError as exc:
             invalid_mode = f"{type(exc).__name__}:{exc}"
         self.check("callable.invalid_mode", invalid_mode)
@@ -168,12 +168,12 @@ class Ex10FlextHandlers(Examples):
         class _Service:
             @staticmethod
             @h.handler(_Message, priority=2)
-            def high(_message: t.ContainerValue) -> t.ContainerValue:
+            def high(_message: object) -> object:
                 return "high"
 
             @staticmethod
             @h.handler(_Message, priority=1, timeout=3.0, middleware=[])
-            def low(_message: t.ContainerValue) -> t.ContainerValue:
+            def low(_message: object) -> object:
                 return "low"
 
         class_scan = h.Discovery.scan_class(_Service)
@@ -184,10 +184,10 @@ class Ex10FlextHandlers(Examples):
         module = ModuleType("ex10_handlers_module")
 
         @h.handler(_Message, priority=mod_priority)
-        def mod_handler(message: t.ContainerValue) -> t.ContainerValue:
+        def mod_handler(message: object) -> object:
             return f"module:{message}"
 
-        def plain_function(_message: t.ContainerValue) -> t.ContainerValue:
+        def plain_function(_message: object) -> object:
             return "plain"
 
         setattr(module, "mod_handler", mod_handler)
@@ -221,7 +221,7 @@ class Ex10FlextHandlers(Examples):
         pattern_handler = _NotImplementedPatternHandler()
         try:
             pattern_handler.handle(pattern_probe)
-            pattern_value: t.ContainerValue = "no-error"
+            pattern_value: object = "no-error"
         except NotImplementedError as exc:
             pattern_value = f"{type(exc).__name__}:{exc}"
         self.check("handle.not_implemented_pattern", pattern_value)
@@ -267,7 +267,7 @@ class Ex10FlextHandlers(Examples):
             "record_metric.ok",
             handler.record_metric(metric_key, metric_value).is_success,
         )
-        context_payload_query: dict[str, t.ContainerValue] = {
+        context_payload_query: dict[str, object] = {
             "handler_name": context_name_1,
             "handler_mode": "query",
         }
@@ -275,7 +275,7 @@ class Ex10FlextHandlers(Examples):
             "push_context.mapping",
             handler.push_context(context_payload_query).is_success,
         )
-        context_payload_event: dict[str, t.ContainerValue] = {
+        context_payload_event: dict[str, object] = {
             "handler_name": context_name_2,
             "handler_mode": "event",
         }
@@ -373,7 +373,7 @@ class Ex10FlextHandlers(Examples):
         )
         try:
             di.register_object(di_container, obj_key, self.rand_int(100, 200))
-            duplicate_error: t.ContainerValue = "no-error"
+            duplicate_error: object = "no-error"
         except ValueError as exc:
             duplicate_error = f"{type(exc).__name__}:{exc}"
         self.check("di.duplicate_error", duplicate_error)
@@ -442,13 +442,13 @@ class Ex10FlextHandlers(Examples):
             h.ProtocolValidation.validate_processor_protocol(_ProcessorBad()).error,
         )
 
-        def positive_validator(item: t.ContainerValue) -> r[bool]:
+        def positive_validator(item: object) -> r[bool]:
             return r[bool].ok(item == positive_token)
 
-        def strict_validator(item: t.ContainerValue) -> r[bool]:
+        def strict_validator(item: object) -> r[bool]:
             return r[bool].ok(bool(item))
 
-        def fail_validator(_item: t.ContainerValue) -> r[bool]:
+        def fail_validator(_item: object) -> r[bool]:
             return r[bool].fail("rule-failed")
 
         self.check(
@@ -597,7 +597,7 @@ class Ex10FlextHandlers(Examples):
             ],
         )
         self.check("runtime.get_log_level", h.get_log_level_from_config() >= 0)
-        http_mixed: list[t.ContainerValue] = [200, "404"]
+        http_mixed: list[object] = [200, "404"]
         self.check(
             "runtime.validate_http.success",
             h.validate_http_status_codes(http_mixed).unwrap_or([]),
@@ -605,7 +605,7 @@ class Ex10FlextHandlers(Examples):
         self.check(
             "runtime.validate_http.range_fail", h.validate_http_status_codes([99]).error
         )
-        http_bad_type: list[t.ContainerValue] = [Path("x")]
+        http_bad_type: list[object] = [Path("x")]
         self.check(
             "runtime.validate_http.type_fail",
             h.validate_http_status_codes(http_bad_type).error,

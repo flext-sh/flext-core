@@ -21,7 +21,6 @@ from typing import ClassVar
 import pytest
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import t
 from flext_tests import u
 
 
@@ -61,7 +60,7 @@ class PreparePaginationDataScenario(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     name: str = Field(description="Prepare pagination data scenario name")
-    data: list[t.ContainerValue] | None = Field(description="Input page data")
+    data: list[object] | None = Field(description="Input page data")
     total: int | None = Field(description="Input total count")
     page: int = Field(description="Requested page")
     page_size: int = Field(description="Requested page size")
@@ -396,7 +395,7 @@ class TestuPaginationBuildPaginationResponse:
 
     def test_build_pagination_response_success(self) -> None:
         """Test build_pagination_response with valid data."""
-        pagination_data: dict[str, t.ContainerValue] = {
+        pagination_data: dict[str, object] = {
             "data": ["item1", "item2"],
             "pagination": {
                 "page": 1,
@@ -419,7 +418,7 @@ class TestuPaginationBuildPaginationResponse:
 
     def test_build_pagination_response_no_message(self) -> None:
         """Test build_pagination_response without message."""
-        pagination_data: dict[str, t.ContainerValue] = {
+        pagination_data: dict[str, object] = {
             "data": ["item1"],
             "pagination": {
                 "page": 1,
@@ -439,7 +438,7 @@ class TestuPaginationBuildPaginationResponse:
 
     def test_build_pagination_response_missing_data(self) -> None:
         """Test build_pagination_response with missing data."""
-        pagination_data: dict[str, t.ContainerValue] = {"pagination": {}}
+        pagination_data: dict[str, object] = {"pagination": {}}
         result = u.Pagination.build_pagination_response(pagination_data)
         u.Tests.Result.assert_failure_with_error(
             result,
@@ -448,7 +447,7 @@ class TestuPaginationBuildPaginationResponse:
 
     def test_build_pagination_response_missing_pagination(self) -> None:
         """Test build_pagination_response with missing pagination."""
-        pagination_data: dict[str, t.ContainerValue] = {"data": []}
+        pagination_data: dict[str, object] = {"data": []}
         result = u.Pagination.build_pagination_response(pagination_data)
         u.Tests.Result.assert_failure_with_error(
             result,
@@ -457,7 +456,7 @@ class TestuPaginationBuildPaginationResponse:
 
     def test_build_pagination_response_with_non_sequence_data(self) -> None:
         """Test build_pagination_response with non-sequence data."""
-        pagination_data: dict[str, t.ContainerValue] = {
+        pagination_data: dict[str, object] = {
             "data": {"key": "value"},
             "pagination": {
                 "page": 1,

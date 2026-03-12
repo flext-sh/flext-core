@@ -105,7 +105,7 @@ def test_ensure_dict_branches(monkeypatch: pytest.MonkeyPatch) -> None:
     raw = {"a": 1}
     assert u.Generators.ensure_dict(raw) is raw
 
-    def _normalize_stub(_value: t.ContainerValue) -> t.ContainerValue:
+    def _normalize_stub(_value: object) -> object:
         return "not-a-dict"
 
     monkeypatch.setattr(

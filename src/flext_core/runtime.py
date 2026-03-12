@@ -57,7 +57,6 @@ import uuid
 from collections.abc import (
     Callable,
     Mapping,
-    MutableMapping,
     Sequence,
 )
 from datetime import UTC, datetime
@@ -353,7 +352,7 @@ class FlextRuntime:
             return FlextRuntime.create_instance(class_type)
 
     @staticmethod
-    def _is_scalar(value: t.ContainerValue | t.MetadataValue) -> TypeGuard[t.Scalar]:
+    def _is_scalar(value: t.GeneralValueType | t.MetadataValue) -> TypeGuard[t.Scalar]:
         """Check if value is a scalar type accepted by t.Scalar."""
         match value:
             case datetime() | None:
@@ -449,11 +448,11 @@ class FlextRuntime:
         return logger
 
     @staticmethod
-    def is_base_model(obj: t.ContainerValue) -> TypeGuard[BaseModel]:
-        """Type guard to narrow object to BaseModel (part of ContainerValue).
+    def is_base_model(obj: t.GeneralValueType) -> TypeGuard[BaseModel]:
+        """Type guard to narrow object to BaseModel (part of GeneralValueType).
 
         This allows isinstance checks to narrow types for FlextRuntime methods
-        that accept ContainerValue (which includes BaseModel).
+        that accept GeneralValueType (which includes BaseModel).
         """
         match obj:
             case BaseModel():
@@ -462,7 +461,7 @@ class FlextRuntime:
                 return False
 
     @staticmethod
-    def _has_dict_protocol(obj: t.ContainerValue) -> bool:
+    def _has_dict_protocol(obj: t.GeneralValueType) -> bool:
         if not (hasattr(obj, "keys") and hasattr(obj, "items") and hasattr(obj, "get")):
             return False
         try:
@@ -476,13 +475,13 @@ class FlextRuntime:
 
     @staticmethod
     def is_dict_like(
-        value: t.ContainerValue | t.MetadataValue,
+        value: t.GeneralValueType | t.MetadataValue,
     ) -> TypeGuard[FlextModelsContainers.ConfigMap]:
         """Type guard to check if value is dict-like.
 
         Note:
             ``value`` remains broad because this guard is a boundary utility used
-            by normalization paths that accept full ``t.ContainerValue``.
+            by normalization paths that accept full ``t.GeneralValueType``.
 
         Args:
             value: Value to check
@@ -509,8 +508,8 @@ class FlextRuntime:
 
     @staticmethod
     def is_list_like(
-        value: t.ContainerValue | t.MetadataValue,
-    ) -> TypeGuard[Sequence[t.ContainerValue]]:
+        value: t.GeneralValueType | t.MetadataValue,
+    ) -> TypeGuard[Sequence[t.GeneralValueType]]:
         """Type guard to check if value is list-like."""
         return isinstance(value, list)
 
@@ -565,12 +564,12 @@ class FlextRuntime:
             return False
 
     @staticmethod
-    def is_valid_identifier(value: t.ContainerValue) -> TypeGuard[str]:
+    def is_valid_identifier(value: t.GeneralValueType) -> TypeGuard[str]:
         """Type guard to check if value is a valid Python identifier."""
         return isinstance(value, str) and value.isidentifier()
 
     @staticmethod
-    def is_valid_json(value: t.ContainerValue) -> TypeGuard[str]:
+    def is_valid_json(value: t.GeneralValueType) -> TypeGuard[str]:
         """Type guard to check if value is valid JSON string.
 
         Business Rule: Validates JSON strings using json.loads() for parsing.
@@ -599,19 +598,19 @@ class FlextRuntime:
 
     @staticmethod
     def normalize_to_general_value(
-        val: t.ContainerValue | t.MetadataValue,
-    ) -> t.ContainerValue:
-        """Normalize any value to t.ContainerValue recursively.
+        val: t.GeneralValueType | t.MetadataValue,
+    ) -> t.GeneralValueType:
+        """Normalize any value to t.GeneralValueType recursively.
 
-        Converts arbitrary objects, FlextModelsContainers.ConfigMap, list[t.ContainerValue], and other types
-        to FlextModelsContainers.ConfigMap, Sequence[t.ContainerValue], etc.
+        Converts arbitrary objects, FlextModelsContainers.ConfigMap, list[t.GeneralValueType], and other types
+        to FlextModelsContainers.ConfigMap, Sequence[t.GeneralValueType], etc.
         This is the central conversion function for type safety.
 
         Args:
             val: Value to normalize (accepts object for flexibility with generics)
 
         Returns:
-            Normalized value compatible with t.ContainerValue
+            Normalized value compatible with t.GeneralValueType
 
         Examples:
             >>> FlextRuntime.normalize_to_general_value({"key": "value"})
@@ -630,12 +629,12 @@ class FlextRuntime:
             return FlextRuntime.normalize_to_general_value(val.model_dump())
         if FlextRuntime.is_dict_like(val):
             dict_v = getattr(val, "root", val)
-            result: dict[str, t.ContainerValue] = {}
+            result: dict[str, t.GeneralValueType] = {}
             for k, v in dict_v.items():
                 result[str(k)] = FlextRuntime.normalize_to_general_value(v)
             return result
         if FlextRuntime.is_list_like(val):
-            list_result: t.ContainerValue = [
+            list_result: t.GeneralValueType = [
                 FlextRuntime.normalize_to_general_value(item) for item in val
             ]
             return list_result
@@ -643,11 +642,11 @@ class FlextRuntime:
 
     @staticmethod
     def normalize_to_metadata_value(
-        val: t.ContainerValue | t.MetadataValue,
+        val: t.GeneralValueType | t.MetadataValue,
     ) -> t.MetadataValue:
         """Normalize any value to t.MetadataAttributeValue.
 
-        t.MetadataAttributeValue is more restrictive than t.ContainerValue,
+        t.MetadataAttributeValue is more restrictive than t.GeneralValueType,
         so we need to normalize nested structures to flat types.
         This method is in FlextRuntime (Tier 0.5) to avoid circular dependencies.
 
@@ -670,11 +669,11 @@ class FlextRuntime:
             result_scalar: t.MetadataValue = val
             return result_scalar
         if isinstance(val, BaseModel):
-            model_dump_result: t.ContainerValue = val.model_dump()
+            model_dump_result: t.GeneralValueType = val.model_dump()
             return FlextRuntime.normalize_to_metadata_value(model_dump_result)
         if FlextRuntime.is_dict_like(val):
             raw_mapping = getattr(val, "root", val)
-            normalized_mapping: dict[str, t.ContainerValue] = {}
+            normalized_mapping: dict[str, t.GeneralValueType] = {}
             for key, value in raw_mapping.items():
                 normalized_mapping[str(key)] = FlextRuntime.normalize_to_general_value(
                     value
@@ -693,8 +692,8 @@ class FlextRuntime:
 
     @staticmethod
     def safe_get_attribute(
-        obj: t.ContainerValue, attr: str, default: t.ContainerValue | None = None
-    ) -> t.ContainerValue | None:
+        obj: t.GeneralValueType, attr: str, default: t.GeneralValueType | None = None
+    ) -> t.GeneralValueType | None:
         """Safe attribute access without raising AttributeError.
 
         Business Rule: Accesses object attributes safely using getattr() with
@@ -1734,7 +1733,7 @@ class FlextRuntime:
                 context_dict = FlextModelsContainers.ConfigMap(root={})
         elif hasattr(context, "items"):
             context_dict = FlextModelsContainers.ConfigMap(root={})
-        result: MutableMapping[str, str] = {}
+        result: dict[str, str] = {}
         for key, value in context_dict.items():
             result[key] = str(value)
         if "trace_id" not in result:

@@ -21,17 +21,16 @@ from flext_infra import (
     c,
     m,
     p,
-    t,
 )
 from flext_infra._utilities.yaml import FlextInfraUtilitiesYaml
 
 
-def _safe_load_yaml(path: Path) -> Mapping[str, t.ContainerValue]:
+def _safe_load_yaml(path: Path) -> Mapping[str, object]:
     """Load YAML file safely; delegates to ``u.Infra``."""
     return FlextInfraUtilitiesYaml.safe_load_yaml(path)
 
 
-def _normalize_string_list(value: t.ContainerValue, field: str) -> list[str]:
+def _normalize_string_list(value: object, field: str) -> list[str]:
     """Validate and normalize a list[str] config field; delegates to ``u.Infra``."""
     return FlextInfraUtilitiesYaml.normalize_string_list(value, field)
 
@@ -191,7 +190,7 @@ class FlextInfraSkillValidator:
 
     def _run_ast_grep_count(
         self,
-        rule: Mapping[str, t.ContainerValue],
+        rule: Mapping[str, object],
         skill_dir: Path,
         project_path: Path,
         include_globs: list[str],
@@ -240,7 +239,7 @@ class FlextInfraSkillValidator:
 
     def _run_custom_count(
         self,
-        rule: Mapping[str, t.ContainerValue],
+        rule: Mapping[str, object],
         skill_dir: Path,
         project_path: Path,
         mode: str,

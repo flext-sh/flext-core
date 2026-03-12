@@ -11,7 +11,7 @@ from typing import Any, cast
 import pytest
 from pydantic import BaseModel, Field
 
-from flext_core import FlextContainer, FlextContext, FlextLogger, c, d, e, m, r, t
+from flext_core import FlextContainer, FlextContext, FlextLogger, c, d, e, m, r
 
 
 class _ResultLogger:
@@ -448,7 +448,7 @@ def test_with_correlation_with_context_track_operation_and_factory(
     assert tracked() == "done"
 
     @d.factory(name="svc.factory", singleton=True, lazy=False)
-    def build(_value: t.ContainerValue) -> t.ContainerValue:
+    def build(_value: object) -> object:
         return 7
 
     assert hasattr(build, c.Discovery.FACTORY_ATTR)

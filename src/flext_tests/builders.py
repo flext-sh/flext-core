@@ -666,7 +666,7 @@ class FlextTestsBuilders:
         """
         self._ensure_data_initialized()
         parts = path.split(".")
-        current: t.ContainerValue = self._data
+        current: object = self._data
         for part in parts:
             if not isinstance(current, Mapping):
                 return default

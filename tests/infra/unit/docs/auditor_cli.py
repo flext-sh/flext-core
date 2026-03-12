@@ -16,7 +16,6 @@ from flext_infra.docs.auditor import FlextInfraDocAuditor, main
 from flext_infra.docs.shared import FlextInfraDocsShared
 from flext_tests import tm
 from tests.infra.models import m
-from tests.infra.typings import t
 
 
 class TestAuditorScopeFailure:
@@ -30,10 +29,8 @@ class TestAuditorScopeFailure:
         """Test audit() when scope building fails."""
         auditor = FlextInfraDocAuditor()
 
-        def mock_build_scopes(
-            *args: object, **kwargs: object
-        ) -> r[list[t.ContainerValue]]:
-            return r[list[t.ContainerValue]].fail("scope build error")
+        def mock_build_scopes(*args: object, **kwargs: object) -> r[list[object]]:
+            return r[list[object]].fail("scope build error")
 
         monkeypatch.setattr(FlextInfraDocsShared, "build_scopes", mock_build_scopes)
         result = auditor.audit(tmp_path)

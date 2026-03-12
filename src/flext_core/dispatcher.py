@@ -10,12 +10,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, MutableMapping
+from collections.abc import Callable
 from typing import Protocol, runtime_checkable
 
 from pydantic import BaseModel
 
-from flext_core import c, p, r, t
+from flext_core import c, p, r
 from flext_core.loggings import FlextLogger
 
 
@@ -25,7 +25,7 @@ class DispatchMessageProtocol(Protocol):
 
     __slots__ = ()
 
-    def dispatch_message(self, message: p.Routable) -> t.ContainerValue:
+    def dispatch_message(self, message: p.Routable) -> object:
         """Dispatch a message."""
         ...
 
@@ -36,7 +36,7 @@ class HandleProtocol(Protocol):
 
     __slots__ = ()
 
-    def handle(self, message: p.Routable) -> t.ContainerValue:
+    def handle(self, message: p.Routable) -> object:
         """Handle a message."""
         ...
 
@@ -47,13 +47,13 @@ class ExecuteProtocol(Protocol):
 
     __slots__ = ()
 
-    def execute(self, message: p.Routable) -> t.ContainerValue:
+    def execute(self, message: p.Routable) -> object:
         """Execute a message."""
         ...
 
 
 type _DispatchableHandler = (
-    Callable[..., p.ResultLike[t.ContainerValue] | t.ContainerValue | None]
+    Callable[..., p.ResultLike[object] | object | None]
     | DispatchMessageProtocol
     | HandleProtocol
     | ExecuteProtocol
@@ -71,11 +71,11 @@ class FlextDispatcher:
         """Initialize dispatcher."""
         super().__init__()
         self._logger = FlextLogger.create_module_logger(__name__)
-        self._handlers: MutableMapping[str, _DispatchableHandler] = {}
+        self._handlers: dict[str, _DispatchableHandler] = {}
         self._auto_handlers: list[_DispatchableHandler] = []
-        self._event_subscribers: MutableMapping[str, list[_DispatchableHandler]] = {}
+        self._event_subscribers: dict[str, list[_DispatchableHandler]] = {}
 
-    def dispatch(self, message: p.Routable) -> r[t.ContainerValue]:
+    def dispatch(self, message: p.Routable) -> r[object]:
         """Dispatch a CQRS message to its registered handler.
 
         Args:
@@ -88,7 +88,7 @@ class FlextDispatcher:
         try:
             route_name = self._resolve_route(message)
         except (TypeError, ValueError) as e:
-            return r[t.ContainerValue].fail(
+            return r[object].fail(
                 f"Dispatch failed: {e!s}", error_code=c.Errors.COMMAND_PROCESSING_FAILED
             )
         handler = self._handlers.get(route_name)
@@ -100,7 +100,7 @@ class FlextDispatcher:
                     handler = auto_h
                     break
         if not handler:
-            return r[t.ContainerValue].fail(
+            return r[object].fail(
                 f"No handler found for {route_name}",
                 error_code=c.Errors.COMMAND_HANDLER_NOT_FOUND,
             )
@@ -192,13 +192,13 @@ class FlextDispatcher:
 
     def _execute_handler(
         self, handler: _DispatchableHandler, message: p.Routable, route_name: str
-    ) -> r[t.ContainerValue]:
+    ) -> r[object]:
         """Execute a handler against a message.
 
         Supports handlers with dispatch_message, handle, execute methods,
         or plain callables. Uses pattern matching for handler dispatch.
         """
-        result_raw: p.ResultLike[t.ContainerValue] | t.ContainerValue | None = None
+        result_raw: p.ResultLike[object] | object | None = None
         try:
             if isinstance(handler, DispatchMessageProtocol):
                 result_raw = handler.dispatch_message(message)
@@ -209,14 +209,14 @@ class FlextDispatcher:
             elif callable(handler):
                 result_raw = handler(message)
             else:
-                return r[t.ContainerValue].fail(
+                return r[object].fail(
                     f"Handler for {route_name} is not callable or dispatchable",
                     error_code=c.Errors.COMMAND_HANDLER_NOT_FOUND,
                 )
             if isinstance(result_raw, p.ResultLike):
                 if result_raw.is_failure:
                     error_data_value = result_raw.error_data
-                    return r[t.ContainerValue].fail(
+                    return r[object].fail(
                         result_raw.error or "Handler failed",
                         error_code=result_raw.error_code,
                         error_data=error_data_value
@@ -225,23 +225,21 @@ class FlextDispatcher:
                     )
                 value = result_raw.value
                 if value is None:
-                    return r[t.ContainerValue].fail(
-                        "Handler returned None in success result"
-                    )
-                return r[t.ContainerValue].ok(value)
+                    return r[object].fail("Handler returned None in success result")
+                return r[object].ok(value)
             if result_raw is None:
-                return r[t.ContainerValue].fail("Handler returned None")
-            return r[t.ContainerValue].ok(result_raw)
+                return r[object].fail("Handler returned None")
+            return r[object].ok(result_raw)
         except Exception as exc:
             self._logger.exception("Handler execution failed", route=route_name)
-            return r[t.ContainerValue].fail(
+            return r[object].fail(
                 f"Handler execution failed: {exc}",
                 error_code=c.Errors.COMMAND_PROCESSING_FAILED,
             )
 
     @staticmethod
     def _coerce_dispatch_value[DispatchValueT](
-        value: t.ContainerValue, expected_type: type[DispatchValueT]
+        value: object, expected_type: type[DispatchValueT]
     ) -> r[DispatchValueT]:
         """Coerce dispatcher payload to expected type with typed result."""
         if isinstance(value, expected_type):
@@ -261,7 +259,7 @@ class FlextDispatcher:
             return msg
         route_attrs = ("command_type", "query_type", "event_type")
         for attr in route_attrs:
-            attr_val: t.ContainerValue = getattr(msg, attr, None)
+            attr_val: object = getattr(msg, attr, None)
             if isinstance(attr_val, str) and attr_val:
                 return attr_val
         if isinstance(msg, type) and issubclass(msg, BaseModel):

@@ -75,7 +75,7 @@ def test_loggings_context_and_factory_paths(monkeypatch: pytest.MonkeyPatch) -> 
 
     monkeypatch.setattr(FlextRuntime, "structlog", staticmethod(_structlog_accessor))
     assert isinstance(c.Settings.LogLevel.DEBUG.value, str)
-    value: t.ContainerValue = "ok"
+    value: object = "ok"
     assert value == "ok"
     logger_obj = FlextLogger.create_bound_logger(
         "x",
@@ -140,7 +140,7 @@ def test_loggings_bind_clear_level_error_paths(monkeypatch: pytest.MonkeyPatch) 
 
     monkeypatch.setattr(FlextRuntime, "structlog", staticmethod(_structlog_accessor))
 
-    def _raise_merge(*_args: object, **_kwargs: object) -> t.ContainerValue:
+    def _raise_merge(*_args: object, **_kwargs: object) -> object:
         msg = "merge boom"
         raise RuntimeError(msg)
 

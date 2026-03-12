@@ -356,7 +356,7 @@ class ClassNestingRefactorRule:
 
     def _coerce_entries(
         self,
-        entries: list[dict[str, t.ContainerValue]],
+        entries: list[dict[str, object]],
     ) -> list[t.Infra.StrMap]:
         coerced: list[t.Infra.StrMap] = []
         for typed in entries:

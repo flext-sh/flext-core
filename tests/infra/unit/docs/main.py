@@ -19,11 +19,10 @@ from flext_infra.docs.fixer import FlextInfraDocFixer
 from flext_tests import tm
 from tests.infra.helpers import h
 from tests.infra.models import m
-from tests.infra.typings import t
 
 
-def _audit_args(**overrides: t.ContainerValue) -> argparse.Namespace:
-    defaults: dict[str, t.ContainerValue | None] = {
+def _audit_args(**overrides: object) -> argparse.Namespace:
+    defaults: dict[str, object | None] = {
         "root": ".",
         "project": None,
         "projects": None,
@@ -35,8 +34,8 @@ def _audit_args(**overrides: t.ContainerValue) -> argparse.Namespace:
     return h.ns(**defaults)
 
 
-def _fix_args(**overrides: t.ContainerValue) -> argparse.Namespace:
-    defaults: dict[str, t.ContainerValue | None] = {
+def _fix_args(**overrides: object) -> argparse.Namespace:
+    defaults: dict[str, object | None] = {
         "root": ".",
         "project": None,
         "projects": None,
@@ -51,9 +50,9 @@ def _ok(
     val: list[m.Infra.Docs.DocsPhaseReport],
 ) -> Callable[..., r[list[m.Infra.Docs.DocsPhaseReport]]]:
     def _fn(
-        _self: t.ContainerValue,
-        *_a: t.ContainerValue,
-        **_kw: t.ContainerValue,
+        _self: object,
+        *_a: object,
+        **_kw: object,
     ) -> r[list[m.Infra.Docs.DocsPhaseReport]]:
         _ = (_self, _a, _kw)
         return r[list[m.Infra.Docs.DocsPhaseReport]].ok(val)
@@ -63,9 +62,9 @@ def _ok(
 
 def _fail_report(err: str) -> Callable[..., r[list[m.Infra.Docs.DocsPhaseReport]]]:
     def _fn(
-        _self: t.ContainerValue,
-        *_a: t.ContainerValue,
-        **_kw: t.ContainerValue,
+        _self: object,
+        *_a: object,
+        **_kw: object,
     ) -> r[list[m.Infra.Docs.DocsPhaseReport]]:
         _ = (_self, _a, _kw)
         return r[list[m.Infra.Docs.DocsPhaseReport]].fail(err)
@@ -73,26 +72,26 @@ def _fail_report(err: str) -> Callable[..., r[list[m.Infra.Docs.DocsPhaseReport]
     return _fn
 
 
-def _ok_list(val: list[t.ContainerValue]) -> Callable[..., r[list[t.ContainerValue]]]:
+def _ok_list(val: list[object]) -> Callable[..., r[list[object]]]:
     def _fn(
-        _self: t.ContainerValue,
-        *_a: t.ContainerValue,
-        **_kw: t.ContainerValue,
-    ) -> r[list[t.ContainerValue]]:
+        _self: object,
+        *_a: object,
+        **_kw: object,
+    ) -> r[list[object]]:
         _ = (_self, _a, _kw)
-        return r[list[t.ContainerValue]].ok(val)
+        return r[list[object]].ok(val)
 
     return _fn
 
 
-def _fail_list(err: str) -> Callable[..., r[list[t.ContainerValue]]]:
+def _fail_list(err: str) -> Callable[..., r[list[object]]]:
     def _fn(
-        _self: t.ContainerValue,
-        *_a: t.ContainerValue,
-        **_kw: t.ContainerValue,
-    ) -> r[list[t.ContainerValue]]:
+        _self: object,
+        *_a: object,
+        **_kw: object,
+    ) -> r[list[object]]:
         _ = (_self, _a, _kw)
-        return r[list[t.ContainerValue]].fail(err)
+        return r[list[object]].fail(err)
 
     return _fn
 
@@ -101,12 +100,12 @@ _SILENT = type("O", (), {"error": staticmethod(lambda *a: None)})()
 
 
 def _capturing(
-    captured: dict[str, t.ContainerValue],
+    captured: dict[str, object],
 ) -> Callable[..., r[list[m.Infra.Docs.DocsPhaseReport]]]:
     def _fn(
-        _self: t.ContainerValue,
-        *_a: t.ContainerValue,
-        **kw: t.ContainerValue,
+        _self: object,
+        *_a: object,
+        **kw: object,
     ) -> r[list[m.Infra.Docs.DocsPhaseReport]]:
         _ = (_self, _a)
         captured.update(kw)
@@ -154,11 +153,11 @@ class TestRunAudit:
     def test_run_audit_forwards_arguments(
         self,
         monkeypatch: pytest.MonkeyPatch,
-        kwargs: dict[str, t.ContainerValue],
+        kwargs: dict[str, object],
         field: str,
-        expected: t.ContainerValue,
+        expected: object,
     ) -> None:
-        captured_kwargs: dict[str, t.ContainerValue] = {}
+        captured_kwargs: dict[str, object] = {}
         monkeypatch.setattr(FlextInfraDocAuditor, "audit", _capturing(captured_kwargs))
         _run_audit(_audit_args(**kwargs))
         tm.that(captured_kwargs.get(field), eq=expected)
@@ -181,16 +180,16 @@ class TestRunFix:
         apply: bool,
         expected: bool,
     ) -> None:
-        captured_kwargs: dict[str, t.ContainerValue] = {}
+        captured_kwargs: dict[str, object] = {}
 
         def mock_fix(
-            _self: t.ContainerValue,
-            *_a: t.ContainerValue,
-            **kw: t.ContainerValue,
-        ) -> r[list[t.ContainerValue]]:
+            _self: object,
+            *_a: object,
+            **kw: object,
+        ) -> r[list[object]]:
             _ = (_self, _a)
             captured_kwargs.update(kw)
-            return r[list[t.ContainerValue]].ok([])
+            return r[list[object]].ok([])
 
         monkeypatch.setattr(FlextInfraDocFixer, "fix", mock_fix)
         _run_fix(_fix_args(apply=apply))

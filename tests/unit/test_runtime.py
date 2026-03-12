@@ -571,11 +571,11 @@ class TestFlextRuntime:
     def test_dict_like_validation(self, test_case: RuntimeTestCase) -> None:
         """Test dict-like object validation.
 
-        Business Rule: is_dict_like accepts t.ContainerValue compatible objects.
-        test_case.test_input may be None or various types, so we cast to t.ContainerValue
+        Business Rule: is_dict_like accepts object compatible objects.
+        test_case.test_input may be None or various types, so we cast to object
         for type compatibility while preserving runtime behavior.
         """
-        test_input_typed = cast("t.ContainerValue", test_case.test_input)
+        test_input_typed = cast("object", test_case.test_input)
         result = FlextRuntime.is_dict_like(test_input_typed)
         assert result == test_case.expected_result
 
@@ -587,11 +587,11 @@ class TestFlextRuntime:
     def test_list_like_validation(self, test_case: RuntimeTestCase) -> None:
         """Test list-like object validation.
 
-        Business Rule: is_list_like accepts t.ContainerValue compatible objects.
-        test_case.test_input may be None or various types, so we cast to t.ContainerValue
+        Business Rule: is_list_like accepts object compatible objects.
+        test_case.test_input may be None or various types, so we cast to object
         for type compatibility while preserving runtime behavior.
         """
-        test_input_typed = cast("t.ContainerValue", test_case.test_input)
+        test_input_typed = cast("object", test_case.test_input)
         result = FlextRuntime.is_list_like(test_input_typed)
         assert result == test_case.expected_result
 
@@ -607,7 +607,7 @@ class TestFlextRuntime:
         correctly returns False for None values.
         """
         result = FlextRuntime.is_valid_json(
-            cast("t.ContainerValue", test_case.test_input),
+            cast("object", test_case.test_input),
         )
         assert result == test_case.expected_result
 
@@ -623,7 +623,7 @@ class TestFlextRuntime:
         correctly returns False for None values.
         """
         result = FlextRuntime.is_valid_identifier(
-            cast("t.ContainerValue", test_case.test_input),
+            cast("object", test_case.test_input),
         )
         assert result == test_case.expected_result
 
@@ -640,8 +640,8 @@ class TestFlextRuntime:
                 attr = "value"
 
             test_obj = TestObj()
-            test_obj_cast: t.ContainerValue = cast(
-                "t.ContainerValue",
+            test_obj_cast: object = cast(
+                "object",
                 cast("object", test_obj),
             )
             result = FlextRuntime.safe_get_attribute(test_obj_cast, "attr")
@@ -655,8 +655,8 @@ class TestFlextRuntime:
                 pass
 
             test_obj_default_obj = TestObjDefault()
-            test_obj_default_cast: t.ContainerValue = cast(
-                "t.ContainerValue",
+            test_obj_default_cast: object = cast(
+                "object",
                 cast("object", test_obj_default_obj),
             )
             result = FlextRuntime.safe_get_attribute(
@@ -674,7 +674,7 @@ class TestFlextRuntime:
                 pass
 
             test_obj_no_default = cast(
-                "t.ContainerValue",
+                "object",
                 cast("object", TestObjNoDefault()),
             )
             result = FlextRuntime.safe_get_attribute(test_obj_no_default, "missing")
@@ -838,7 +838,7 @@ class TestFlextRuntime:
                 factories={"token_factory": token_factory},
                 resources={
                     "api_client": cast(
-                        "Callable[[], t.ContainerValue]",
+                        "Callable[[], object]",
                         lambda: {"connected": True},
                     ),
                 },
@@ -890,7 +890,7 @@ class TestFlextRuntime:
                 factories={"token_factory": token_factory},
                 resources={
                     "api_client": cast(
-                        "Callable[[], t.ContainerValue]",
+                        "Callable[[], object]",
                         lambda: {"connected": True},
                     ),
                 },
@@ -920,8 +920,8 @@ class TestFlextRuntime:
                 @override
                 def _runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
 
-                    def counter_factory() -> t.ContainerValue:
-                        return cast("t.ContainerValue", {"count": 1})
+                    def counter_factory() -> object:
+                        return cast("object", {"count": 1})
 
                     return FlextModelsService.RuntimeBootstrapOptions(
                         config_overrides={"app_name": "runtime-aware"},
@@ -935,18 +935,18 @@ class TestFlextRuntime:
             assert runtime_first is runtime_second
             assert component.config.app_name == "runtime-aware"
             assert component.context is runtime_first.context
-            service_result_raw: r[t.ContainerValue] = cast(
-                "r[t.ContainerValue]",
+            service_result_raw: r[object] = cast(
+                "r[object]",
                 component.container.get("preseed"),
             )
-            service_result: r[t.ContainerValue] = service_result_raw
+            service_result: r[object] = service_result_raw
             assert service_result.is_success
             assert service_result.value == {"enabled": True}
-            factory_result_raw: r[t.ContainerValue] = cast(
-                "r[t.ContainerValue]",
+            factory_result_raw: r[object] = cast(
+                "r[object]",
                 component.container.get("counter"),
             )
-            factory_result: r[t.ContainerValue] = factory_result_raw
+            factory_result: r[object] = factory_result_raw
             assert factory_result.is_success
             assert factory_result.value == {"count": 1}
 
@@ -982,13 +982,13 @@ class TestFlextRuntime:
             def custom_processor(
                 logger: object,
                 method_name: str,
-                event_dict: dict[str, t.ContainerValue],
-            ) -> dict[str, t.ContainerValue]:
+                event_dict: dict[str, object],
+            ) -> dict[str, object]:
                 event_dict["custom"] = True
                 return event_dict
 
-            processor_typed: t.ContainerValue = cast(
-                "t.ContainerValue",
+            processor_typed: object = cast(
+                "object",
                 custom_processor,
             )
             FlextRuntime.configure_structlog(additional_processors=[processor_typed])

@@ -277,6 +277,7 @@ class FlextUtilities:
     construct = staticmethod(FlextUtilitiesMapper.construct)
     convert_dict_to_json = staticmethod(FlextUtilitiesMapper.convert_dict_to_json)
     convert_list_to_json = staticmethod(FlextUtilitiesMapper.convert_list_to_json)
+    convert_to_json_safe = staticmethod(FlextUtilitiesMapper.convert_to_json_safe)
     convert_to_json_value = staticmethod(FlextUtilitiesMapper.convert_to_json_value)
     deep_eq = staticmethod(FlextUtilitiesMapper.deep_eq)
     ensure = staticmethod(FlextUtilitiesMapper.ensure)
@@ -292,8 +293,8 @@ class FlextUtilities:
 
     @staticmethod
     def get(
-        data: p.AccessibleData, key: str, *, default: t.ContainerValue | None = None
-    ) -> t.ContainerValue:
+        data: p.AccessibleData, key: str, *, default: object | None = None
+    ) -> object:
         """Unified get function for dict/object access with default."""
         return FlextUtilitiesMapper.get(data, key, default=default)
 
@@ -377,9 +378,9 @@ class FlextUtilities:
         error: str | None,
         error_code: str | None = None,
         error_data: t.ConfigurationMapping | None = None,
-    ) -> r[t.ContainerValue]:
+    ) -> r[object]:
         """Create failed result with optional code and data."""
-        return r[t.ContainerValue].fail(
+        return r[object].fail(
             error, error_code=error_code, error_data=error_data or MappingProxyType({})
         )
 

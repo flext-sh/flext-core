@@ -138,12 +138,12 @@ class Ex09FlextDecorators(Examples):
         custom_value = self.rand_str(10)
 
         @d.factory(name=factory_default_name)
-        def factory_default(_: t.ContainerValue) -> str:
+        def factory_default(_: object) -> str:
             """Factory function with default singleton and lazy values."""
             return default_value
 
         @d.factory(name=factory_custom_name, singleton=True, lazy=False)
-        def factory_custom(_: t.ContainerValue) -> str:
+        def factory_custom(_: object) -> str:
             """Factory function with explicit singleton and lazy values."""
             return custom_value
 
@@ -195,7 +195,7 @@ class Ex09FlextDecorators(Examples):
         missing_provided_value = self.rand_str(8)
 
         @d.inject(missing=f"svc.{self.rand_str(6)}")
-        def missing_with_default(*, missing: t.ContainerValue | None = None) -> str:
+        def missing_with_default(*, missing: object | None = None) -> str:
             """Keep running when dependency is not registered."""
             return missing_default_value if missing is None else missing_provided_value
 

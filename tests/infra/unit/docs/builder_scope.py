@@ -15,7 +15,7 @@ from flext_core import r
 from flext_infra.docs.builder import FlextInfraDocBuilder
 from flext_infra.docs.shared import FlextInfraDocsShared
 from flext_tests import tm
-from tests.infra import m, t
+from tests.infra import m
 
 
 class _RunnerStub:
@@ -135,10 +135,8 @@ class TestBuilderScope:
     ) -> None:
         """Test build returns failure when scope building fails."""
 
-        def mock_build_scopes(
-            *args: object, **kwargs: object
-        ) -> r[list[t.ContainerValue]]:
-            return r[list[t.ContainerValue]].fail("Scope error")
+        def mock_build_scopes(*args: object, **kwargs: object) -> r[list[object]]:
+            return r[list[object]].fail("Scope error")
 
         monkeypatch.setattr(FlextInfraDocsShared, "build_scopes", mock_build_scopes)
         result = builder.build(tmp_path)

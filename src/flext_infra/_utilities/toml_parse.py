@@ -59,7 +59,7 @@ class FlextInfraUtilitiesTomlParse:
         raw = FlextInfraUtilitiesToml.unwrap_item(
             FlextInfraUtilitiesToml.get(pyright, "executionEnvironments"),
         )
-        current: list[t.ContainerValue] = raw if isinstance(raw, list) else []
+        current: list[object] = raw if isinstance(raw, list) else []
         if list(current) != expected:
             pyright["executionEnvironments"] = expected
             changes.append(
@@ -94,10 +94,10 @@ class FlextInfraUtilitiesTomlParse:
             optional_raw = project_raw[c.Infra.Toml.OPTIONAL_DEPENDENCIES]
         if not isinstance(optional_raw, (Table, dict)):
             return {}
-        opt_deps: Table | dict[str, t.ContainerValue] = optional_raw
+        opt_deps: Table | dict[str, object] = optional_raw
 
         def _group_values(group_key: str) -> list[str]:
-            value: t.ContainerValue | Item | None = None
+            value: object | Item | None = None
             if group_key in opt_deps:
                 value = opt_deps[group_key]
             return FlextInfraUtilitiesToml.as_string_list(value)

@@ -7,7 +7,7 @@ from typing import Never
 import pytest
 
 import flext_core._utilities.reliability as reliability_module
-from flext_core import c, m, r, t, u
+from flext_core import c, m, r, u
 
 
 def test_utilities_reliability_branches() -> None:
@@ -15,7 +15,7 @@ def test_utilities_reliability_branches() -> None:
     assert isinstance(m.Categories(), m.Categories)
     assert r[int].ok(1).is_success
     assert isinstance(m.ConfigMap.model_validate({"k": 1}), m.ConfigMap)
-    fail: r[t.ContainerValue] = u.Reliability.retry(
+    fail: r[object] = u.Reliability.retry(
         lambda: r.fail("e"),
         max_attempts=1,
         delay_seconds=0.0,
@@ -66,7 +66,7 @@ def test_utilities_reliability_compose_returns_non_result_directly(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
 
-    def _always_ok(*_args: t.ContainerValue, **_kwargs: t.ContainerValue) -> r[int]:
+    def _always_ok(*_args: object, **_kwargs: object) -> r[int]:
         return r[int].ok(7)
 
     monkeypatch.setattr(

@@ -10,14 +10,14 @@ import pytest
 from flext_core import FlextHandlers, FlextRegistry, c, h, m, p, r, t
 
 
-class _Handler(FlextHandlers[t.ContainerValue, t.ContainerValue]):
+class _Handler(FlextHandlers[object, object]):
     """Test handler implementation."""
 
     @override
-    def handle(self, message: t.ContainerValue) -> r[t.ContainerValue]:
-        return r[t.ContainerValue].ok(message)
+    def handle(self, message: object) -> r[object]:
+        return r[object].ok(message)
 
-    def __call__(self, message: t.ContainerValue) -> r[t.ContainerValue]:
+    def __call__(self, message: object) -> r[object]:
         return self.handle(message)
 
     def _protocol_name(self) -> str:
@@ -110,7 +110,7 @@ def test_create_auto_discover_and_mode_mapping(monkeypatch: pytest.MonkeyPatch) 
 
     def _register_handler_ok(
         _self: FlextRegistry,
-        handler: p.Handler[t.ContainerValue, t.ContainerValue],
+        handler: p.Handler[object, object],
     ) -> r[m.HandlerRegistrationDetails]:
         return r[m.HandlerRegistrationDetails].ok(
             _success_details(handler.__class__.__name__),
@@ -148,7 +148,7 @@ def test_summary_error_paths_and_bindings_failures(
 ) -> None:
     def _register_handler_fail(
         _self: FlextRegistry,
-        _handler: p.Handler[t.ContainerValue, t.ContainerValue],
+        _handler: p.Handler[object, object],
     ) -> r[m.HandlerRegistrationDetails]:
         return r[m.HandlerRegistrationDetails].fail("x")
 

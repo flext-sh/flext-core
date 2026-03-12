@@ -11,7 +11,7 @@ import pytest
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings as _BaseSettings
 
-from flext_core import FlextContainer, FlextContext, FlextSettings, m, t
+from flext_core import FlextContainer, FlextContext, FlextSettings, m
 
 
 class _FalseConfig:
@@ -21,7 +21,7 @@ class _FalseConfig:
         self,
         *,
         deep: bool = False,
-        update: dict[str, t.ContainerValue] | None = None,
+        update: dict[str, object] | None = None,
     ) -> _FalseConfig:
         return self
 

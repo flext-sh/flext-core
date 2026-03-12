@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, Sequence
 from typing import TypeVar
 
-from flext_core import p, r, t
+from flext_core import p, r
 from flext_core._utilities.collection import FlextUtilitiesCollection
 from flext_core._utilities.guards import FlextUtilitiesGuards
 
@@ -12,13 +12,13 @@ T = TypeVar("T")
 
 class ResultHelpers:
     @staticmethod
-    def any_(*values: t.ContainerValue) -> bool:
+    def any_(*values: object) -> bool:
         return any(bool(v) for v in values)
 
     @staticmethod
     def count(
-        items: Sequence[t.ContainerValue] | Mapping[str, t.ContainerValue],
-        predicate: Callable[[t.ContainerValue], bool] | None = None,
+        items: Sequence[object] | Mapping[str, object],
+        predicate: Callable[[object], bool] | None = None,
     ) -> int:
         if predicate is None:
             return len(items)
@@ -28,11 +28,7 @@ class ResultHelpers:
 
     @staticmethod
     def empty(
-        items: Sequence[t.ContainerValue]
-        | Mapping[str, t.ContainerValue]
-        | str
-        | p.Result[t.ContainerValue]
-        | None,
+        items: Sequence[object] | Mapping[str, object] | str | p.Result[object] | None,
     ) -> bool:
         if FlextUtilitiesGuards.is_result_like(items):
             if items.is_failure:
@@ -58,7 +54,7 @@ class ResultHelpers:
         return default
 
     @staticmethod
-    def not_(value: t.ContainerValue) -> bool:
+    def not_(value: object) -> bool:
         return not bool(value)
 
     @staticmethod

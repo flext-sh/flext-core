@@ -220,7 +220,7 @@ class FlextInfraUtilitiesRefactor:
             raise ValueError(msg) from None
 
     @staticmethod
-    def string_list(value: t.ContainerValue | None) -> list[str]:
+    def string_list(value: object | None) -> list[str]:
         """Normalize policy fields that should contain string collections."""
         if value is None:
             return []
@@ -239,8 +239,8 @@ class FlextInfraUtilitiesRefactor:
 
     @staticmethod
     def mapping_list(
-        value: t.ContainerValue | None,
-    ) -> list[dict[str, t.ContainerValue]]:
+        value: object | None,
+    ) -> list[dict[str, object]]:
         """Normalize policy fields that should contain mapping collections."""
         if value is None:
             return []
@@ -251,7 +251,7 @@ class FlextInfraUtilitiesRefactor:
 
     @staticmethod
     def has_required_fields(
-        entry: t.ContainerValue,
+        entry: object,
         required_fields: list[str],
     ) -> bool:
         if not isinstance(entry, dict):
@@ -323,14 +323,14 @@ class FlextInfraUtilitiesRefactor:
 
     @staticmethod
     def policy_document_schema_valid(
-        loaded: dict[str, t.ContainerValue],
+        loaded: dict[str, object],
         schema_path: Path,
     ) -> bool:
         schema_result = FlextInfraUtilitiesIo.read_json(schema_path)
         if schema_result.is_failure:
             return False
-        raw_schema: Mapping[str, t.ContainerValue] = schema_result.value
-        schema: dict[str, t.ContainerValue] = dict(raw_schema.items())
+        raw_schema: Mapping[str, object] = schema_result.value
+        schema: dict[str, object] = dict(raw_schema.items())
         top_required = FlextInfraUtilitiesRefactor.string_list(
             schema.get("required", [])
         )

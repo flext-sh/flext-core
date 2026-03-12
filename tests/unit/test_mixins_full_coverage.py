@@ -8,12 +8,12 @@ from typing import cast, override
 
 import pytest
 
-from flext_core import FlextLogger, FlextMixins, FlextRuntime, c, m, p, r, t, u, x
+from flext_core import FlextLogger, FlextMixins, FlextRuntime, c, m, p, r, u, x
 
 from ._models import _SvcModel
 
 
-def _normalize_to_one(_v: t.ContainerValue) -> int:
+def _normalize_to_one(_v: object) -> int:
     """Staticmethod helper for monkeypatch; type known for pyright."""
     return 1
 
@@ -41,17 +41,17 @@ def _mock_register_fail(_name: str) -> r[bool]:
     )
 
 
-def _validation_ok_true(v: t.ContainerValue) -> r[bool]:
+def _validation_ok_true(v: object) -> r[bool]:
     """Validator that always returns ok(True)."""
     return r[bool].ok(True)
 
 
-def _validation_ok_false(v: t.ContainerValue) -> r[bool]:
+def _validation_ok_false(v: object) -> r[bool]:
     """Validator that always returns ok(False)."""
     return r[bool].ok(False)
 
 
-def _validation_fail_no(v: t.ContainerValue) -> r[bool]:
+def _validation_fail_no(v: object) -> r[bool]:
     """Validator that always returns fail('no')."""
     return r[bool].fail("no")
 
@@ -59,13 +59,13 @@ def _validation_fail_no(v: t.ContainerValue) -> r[bool]:
 class _RuntimeContainer:
     def __init__(self) -> None:
         super().__init__()
-        self.configured: dict[str, t.ContainerValue] | None = None
+        self.configured: dict[str, object] | None = None
         self.wired: dict[str, object] | None = None
 
     def scoped(self, **_kwargs: object) -> _RuntimeContainer:
         return self
 
-    def configure(self, overrides: dict[str, t.ContainerValue]) -> None:
+    def configure(self, overrides: dict[str, object]) -> None:
         self.configured = overrides
 
     def wire_modules(self, **kwargs: object) -> None:
@@ -126,7 +126,7 @@ def test_mixins_result_and_model_conversion_paths(
     scalar_wrapped = x.to_dict(_SvcModel(value="ok"))
     assert scalar_wrapped.root == {"value": 1}
 
-    class _BadMap(Mapping[str, t.ContainerValue]):
+    class _BadMap(Mapping[str, object]):
         @override
         def __iter__(self) -> Iterator[str]:
             return iter(["k"])
@@ -136,7 +136,7 @@ def test_mixins_result_and_model_conversion_paths(
             return 1
 
         @override
-        def __getitem__(self, _key: str) -> t.ContainerValue:
+        def __getitem__(self, _key: str) -> object:
             msg = "boom"
             raise RuntimeError(msg)
 
@@ -176,7 +176,7 @@ def test_mixins_runtime_bootstrap_and_track_paths(
     assert runtime_container.configured == {"debug": True}
     assert runtime_container.wired is not None
     with service.track("op") as metrics:
-        cast("dict[str, t.ContainerValue]", metrics)["duration_ms"] = 2.0
+        cast("dict[str, object]", metrics)["duration_ms"] = 2.0
     assert hasattr(service, "_stats_op")
     try:
         with service.track("op_fail"):
@@ -291,12 +291,12 @@ def test_mixins_context_logging_and_cqrs_paths(monkeypatch: pytest.MonkeyPatch) 
 
 
 def test_mixins_validation_and_protocol_paths() -> None:
-    validators: list[Callable[[t.ContainerValue], r[bool]]] = [
+    validators: list[Callable[[object], r[bool]]] = [
         _validation_ok_false,
     ]
     bad_true = x.Validation.validate_with_result("v", validators)
     assert bad_true.is_failure
-    fail_validators: list[Callable[[t.ContainerValue], r[bool]]] = [
+    fail_validators: list[Callable[[object], r[bool]]] = [
         _validation_fail_no,
     ]
     fail_result = x.Validation.validate_with_result("v", fail_validators)
@@ -304,7 +304,7 @@ def test_mixins_validation_and_protocol_paths() -> None:
     assert (
         x.ProtocolValidation.is_handler(
             cast(
-                "t.ContainerValue",
+                "object",
                 cast("object", SimpleNamespace(handle=_noop)),
             ),
         )
@@ -312,7 +312,7 @@ def test_mixins_validation_and_protocol_paths() -> None:
     )
     assert (
         x.ProtocolValidation.is_service(
-            cast("p.Service[t.ContainerValue]", cast("object", SimpleNamespace())),
+            cast("p.Service[object]", cast("object", SimpleNamespace())),
         )
         is False
     )
@@ -324,7 +324,7 @@ def test_mixins_validation_and_protocol_paths() -> None:
     assert x.ProtocolValidation.is_command_bus(cmd_bus) is True
     unknown = x.ProtocolValidation.validate_protocol_compliance(
         cast(
-            "p.Handler[t.ContainerValue, t.ContainerValue]",
+            "p.Handler[object, object]",
             cast("object", SimpleNamespace()),
         ),
         "Nope",
@@ -336,7 +336,7 @@ def test_mixins_validation_and_protocol_paths() -> None:
     )
     known = x.ProtocolValidation.validate_protocol_compliance(
         cast(
-            "p.Handler[t.ContainerValue, t.ContainerValue]",
+            "p.Handler[object, object]",
             cast("object", service_like),
         ),
         "Service",

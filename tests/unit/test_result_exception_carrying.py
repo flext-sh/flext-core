@@ -26,7 +26,7 @@ import pytest
 from pydantic import BaseModel, ValidationError
 from returns.io import IO, IOSuccess
 
-from flext_core import e, m, p, r, t
+from flext_core import e, m, p, r
 
 
 class TestFailNoExceptionBackwardCompat:
@@ -70,7 +70,7 @@ class TestFailWithException:
     def test_fail_with_exception_and_error_data(self) -> None:
         """Verify fail() carries exception with error_data."""
         error_msg = "Validation failed"
-        error_data: dict[str, t.ContainerValue] = {
+        error_data: dict[str, object] = {
             "field": "email",
             "reason": "invalid format",
         }

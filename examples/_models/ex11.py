@@ -6,7 +6,7 @@ from typing import override
 
 from pydantic import ConfigDict, Field
 
-from flext_core import FlextSettings, m, r, t
+from flext_core import FlextSettings, m, r
 
 
 class Ex11HandlerLikeService(FlextSettings):
@@ -14,7 +14,7 @@ class Ex11HandlerLikeService(FlextSettings):
 
     @classmethod
     @override
-    def validate(cls, value: t.ContainerValue) -> Ex11HandlerLikeService:
+    def validate(cls, value: object) -> Ex11HandlerLikeService:
         """Validate service payload."""
         return cls.model_validate(value)
 
@@ -22,9 +22,9 @@ class Ex11HandlerLikeService(FlextSettings):
         """Check whether message type is handled."""
         return bool(message_type)
 
-    def handle(self, message: t.ContainerValue) -> r[t.ContainerValue]:
+    def handle(self, message: object) -> r[object]:
         """Handle service message."""
-        return r[t.ContainerValue].ok(message)
+        return r[object].ok(message)
 
 
 class Ex11Payload(m.Value):
@@ -60,11 +60,11 @@ class Ex11ProcessorProtocolBad(m.Value):
 class Ex11CommandBusStub(m.Value):
     model_config = ConfigDict(frozen=False)
 
-    def dispatch(self, message: t.ContainerValue) -> r[t.ContainerValue]:
-        return r[t.ContainerValue].ok(message)
+    def dispatch(self, message: object) -> r[object]:
+        return r[object].ok(message)
 
-    def publish(self, _event: t.ContainerValue) -> None:
+    def publish(self, _event: object) -> None:
         return
 
-    def register_handler(self, _handler: t.ContainerValue) -> r[bool]:
+    def register_handler(self, _handler: object) -> r[bool]:
         return r[bool].ok(True)

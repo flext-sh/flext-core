@@ -261,12 +261,12 @@ class TestuEnumParse:
         """Test parse with various scenarios."""
         result = u.Enum.parse(Status, scenario.value)
         if scenario.expected_success:
-            expected_status_cast: t.ContainerValue = cast(
-                "t.ContainerValue",
+            expected_status_cast: object = cast(
+                "object",
                 scenario.expected_status,
             )
-            result_typed: r[t.ContainerValue] = cast("r[t.ContainerValue]", result)
-            expected_typed: t.ContainerValue = expected_status_cast
+            result_typed: r[object] = cast("r[object]", result)
+            expected_typed: object = expected_status_cast
             u.Tests.Result.assert_success_with_value(result_typed, expected_typed)
         else:
             _ = u.Tests.Result.assert_failure(result)

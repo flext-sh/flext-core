@@ -17,7 +17,7 @@ from typing import TypeAlias, override
 
 from pydantic import ConfigDict
 
-from flext_core import p, t
+from flext_core import p
 from flext_core._models.base import FlextModelFoundation
 from flext_core._models.collections import FlextModelsCollections
 from flext_core._models.container import FlextModelsContainer
@@ -248,7 +248,7 @@ class FlextModels:
     class ContextMetadata(FlextModelsContext.ContextMetadata):
         """Context metadata — real re-export for pydantic-mypy compatibility."""
 
-    class StructlogProxyContextVar[T: t.ContainerValue](
+    class StructlogProxyContextVar[T: object](
         FlextModelsContext.StructlogProxyContextVar[T]
     ):
         """ContextVar-like proxy using structlog as single source of truth."""

@@ -24,7 +24,6 @@ from flext_infra import (
     m,
     output,
     p,
-    t,
 )
 from flext_infra.check._constants import FlextInfraCheckConstants
 from flext_infra.check.fix_pyrefly_config import FlextInfraConfigFixer
@@ -75,7 +74,7 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
     def generate_sarif_report(
         results: list[m.Infra.Check.ProjectResult],
         gates: list[str],
-    ) -> Mapping[str, t.ContainerValue]:
+    ) -> Mapping[str, object]:
         """Generate a SARIF payload from gate results."""
         sarif_runs: list[m.Infra.Check.Sarif.Run] = []
         for gate in gates:
@@ -408,22 +407,22 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
         return result.value if result.is_success else Path.cwd().resolve()
 
     @staticmethod
-    def _to_mapping(value: t.ContainerValue) -> dict[str, t.ContainerValue]:
+    def _to_mapping(value: object) -> dict[str, object]:
         if not isinstance(value, Mapping):
             return {}
-        return TypeAdapter(dict[str, t.ContainerValue]).validate_python(value)
+        return TypeAdapter(dict[str, object]).validate_python(value)
 
     @classmethod
     def _to_mapping_list(
         cls,
-        value: t.ContainerValue,
-    ) -> list[dict[str, t.ContainerValue]]:
+        value: object,
+    ) -> list[dict[str, object]]:
         if not isinstance(value, list):
             return []
         return [cls._to_mapping(item) for item in value if isinstance(item, Mapping)]
 
     @staticmethod
-    def _as_int(value: t.ContainerValue, default: int = 0) -> int:
+    def _as_int(value: object, default: int = 0) -> int:
         if isinstance(value, int):
             return value
         if isinstance(value, float):
@@ -436,19 +435,19 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
         return default
 
     @staticmethod
-    def _as_str(value: t.ContainerValue, default: str = "") -> str:
+    def _as_str(value: object, default: str = "") -> str:
         return value if isinstance(value, str) else default
 
     @staticmethod
     def _nested_mapping(
-        data: dict[str, t.ContainerValue],
+        data: dict[str, object],
         *keys: str,
-    ) -> dict[str, t.ContainerValue]:
-        current: t.ContainerValue = data
+    ) -> dict[str, object]:
+        current: object = data
         for key in keys:
             if not isinstance(current, Mapping):
                 return {}
-            child: t.ContainerValue = current.get(key)
+            child: object = current.get(key)
             if child is None:
                 return {}
             current = child
@@ -459,12 +458,12 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
     @classmethod
     def _nested_int(
         cls,
-        data: dict[str, t.ContainerValue],
+        data: dict[str, object],
         *keys: str,
         default: int = 0,
     ) -> int:
         target = cls._nested_mapping(data, *keys[:-1])
-        raw: t.ContainerValue = target.get(keys[-1])
+        raw: object = target.get(keys[-1])
         if raw is None:
             return default
         return cls._as_int(raw, default)
@@ -472,7 +471,7 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
     @classmethod
     def _result_exit_code(cls, result: p.Infra.CommandOutput) -> int:
         try:
-            payload = TypeAdapter(dict[str, t.ContainerValue]).validate_python(
+            payload = TypeAdapter(dict[str, object]).validate_python(
                 vars(result),
             )
         except (TypeError, ValidationError, AttributeError):
@@ -533,12 +532,12 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
             project_dir,
         )
         issues: list[m.Infra.Check.Issue] = []
-        bandit_data: dict[str, t.ContainerValue] = {}
+        bandit_data: dict[str, object] = {}
         try:
             parsed = self._json.parse(result.stdout or "{}")
             if parsed.is_success and isinstance(parsed.value, Mapping):
                 bandit_data = self._to_mapping(parsed.value)
-            raw_results: list[dict[str, t.ContainerValue]] = self._to_mapping_list(
+            raw_results: list[dict[str, object]] = self._to_mapping_list(
                 bandit_data.get("results", []),
             )
             issues.extend(
@@ -756,7 +755,7 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
             if not stripped:
                 continue
             try:
-                line_data = TypeAdapter(dict[str, t.ContainerValue]).validate_json(
+                line_data = TypeAdapter(dict[str, object]).validate_json(
                     stripped,
                 )
             except ValidationError:
@@ -819,8 +818,8 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
                 parsed = self._json.parse(raw_text)
                 if parsed.is_success and isinstance(parsed.value, Mapping):
                     parsed_map = self._to_mapping(parsed.value)
-                    error_items: list[dict[str, t.ContainerValue]] = (
-                        self._to_mapping_list(parsed_map.get("errors", []))
+                    error_items: list[dict[str, object]] = self._to_mapping_list(
+                        parsed_map.get("errors", [])
                     )
                 elif parsed.is_success and isinstance(parsed.value, list):
                     error_items = self._to_mapping_list(parsed.value)
@@ -884,11 +883,11 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
         )
         issues: list[m.Infra.Check.Issue] = []
         pyright_parse_result = self._json.parse(result.stdout or "{}")
-        pyright_data: dict[str, t.ContainerValue] = self._to_mapping(
+        pyright_data: dict[str, object] = self._to_mapping(
             pyright_parse_result.value if pyright_parse_result.is_success else {},
         )
         try:
-            raw_diagnostics: list[dict[str, t.ContainerValue]] = self._to_mapping_list(
+            raw_diagnostics: list[dict[str, object]] = self._to_mapping_list(
                 pyright_data.get("generalDiagnostics", []),
             )
             issues.extend(
@@ -994,7 +993,7 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
         )
         issues: list[m.Infra.Check.Issue] = []
         ruff_parse_result = self._json.parse(result.stdout or "[]")
-        ruff_data: t.ContainerValue = (
+        ruff_data: object = (
             ruff_parse_result.value if ruff_parse_result.is_success else []
         )
         try:

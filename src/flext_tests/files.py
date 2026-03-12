@@ -45,11 +45,11 @@ _YAMLError = YAMLError
 _OBJECT_LIST_ADAPTER = TypeAdapter(list[object])
 
 
-def _yaml_safe_load(raw: str) -> t.ContainerValue | list[t.ContainerValue]:
+def _yaml_safe_load(raw: str) -> object | list[object]:
     return yaml_safe_load(raw)
 
 
-def _yaml_dump(value: t.ContainerValue, *, indent: int) -> str:
+def _yaml_dump(value: object, *, indent: int) -> str:
     return str(
         yaml_dump(value, default_flow_style=False, allow_unicode=True, indent=indent)
     )
@@ -245,7 +245,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             yield paths
 
     @staticmethod
-    def _is_mapping(value: object) -> TypeGuard[Mapping[str, t.ContainerValue]]:
+    def _is_mapping(value: object) -> TypeGuard[Mapping[str, object]]:
         return isinstance(value, Mapping)
 
     @staticmethod
@@ -465,7 +465,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
 
         def process_one(
             name_and_content: tuple[str, t.Tests.ContainerValue],
-        ) -> t.ContainerValue | r[t.ContainerValue]:
+        ) -> object | r[object]:
             """Process single file operation."""
             name, content = name_and_content
             match params.operation:
@@ -502,7 +502,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                         )
                         return self.create(normalized_content, name, params.directory)
                     except (OSError, TypeError, ValueError, AttributeError) as e:
-                        return r[t.ContainerValue].fail(f"Failed to create {name}: {e}")
+                        return r[object].fail(f"Failed to create {name}: {e}")
                 case "read":
                     path = (
                         Path(content)
@@ -512,9 +512,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                     read_result = self.read(path, model_cls=None)
                     if read_result.is_success:
                         return path
-                    return r[t.ContainerValue].fail(
-                        read_result.error or f"Failed to read {name}"
-                    )
+                    return r[object].fail(read_result.error or f"Failed to read {name}")
                 case "delete":
                     path = (
                         Path(content)
@@ -525,14 +523,12 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                         Path(path).unlink(missing_ok=True)
                         return Path(path)
                     except OSError as e:
-                        return r[t.ContainerValue].fail(f"Failed to delete {name}: {e}")
+                        return r[object].fail(f"Failed to delete {name}: {e}")
                 case _:
-                    return r[t.ContainerValue].fail(
-                        f"Unknown operation: {params.operation}"
-                    )
+                    return r[object].fail(f"Unknown operation: {params.operation}")
 
         items_list: list[tuple[str, t.Tests.ContainerValue]] = list(files_dict.items())
-        results: list[t.ContainerValue] = []
+        results: list[object] = []
         errors: list[tuple[int, str]] = []
         total = len(items_list)
         for index, item in enumerate(items_list):
@@ -1178,11 +1174,11 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
 
     def _apply_key_filtering(
         self,
-        dict1: Mapping[str, t.ContainerValue],
-        dict2: Mapping[str, t.ContainerValue],
+        dict1: Mapping[str, object],
+        dict2: Mapping[str, object],
         keys: list[str] | None,
         exclude_keys: list[str] | None,
-    ) -> tuple[Mapping[str, t.ContainerValue], Mapping[str, t.ContainerValue]]:
+    ) -> tuple[Mapping[str, object], Mapping[str, object]]:
         """Apply key filtering to both dicts if specified."""
         if keys is None and exclude_keys is None:
             return (dict1, dict2)
@@ -1206,7 +1202,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         if isinstance(value, BaseModel):
             return value
         if self._is_mapping(value):
-            mapping_value: Mapping[str, t.ContainerValue] = value
+            mapping_value: Mapping[str, object] = value
             return m.ConfigMap(
                 root={
                     str(key): FlextRuntime.normalize_to_general_value(
@@ -1327,9 +1323,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             return self._coerce_file_content(content.value)
         return self._coerce_file_content(content)
 
-    def _is_nested_rows(
-        self, value: object
-    ) -> TypeGuard[Sequence[Sequence[t.ContainerValue]]]:
+    def _is_nested_rows(self, value: object) -> TypeGuard[Sequence[Sequence[object]]]:
         if not isinstance(value, Sequence) or isinstance(value, str | bytes):
             return False
         try:
@@ -1403,7 +1397,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         if fmt in {"json", "yaml"}:
             try:
                 if fmt == "json":
-                    parsed_raw: t.ContainerValue | list[t.ContainerValue] = (
+                    parsed_raw: object | list[object] = (
                         json.loads(text) if text.strip() else {}
                     )
                 else:
@@ -1473,7 +1467,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         self._created_dirs.append(temp_dir)
         return temp_dir
 
-    def _to_config_map_value(self, value: t.Tests.ContainerValue) -> t.ContainerValue:
+    def _to_config_map_value(self, value: t.Tests.ContainerValue) -> object:
         if value is None or isinstance(value, t.Primitives | BaseModel | Path):
             return value
         if isinstance(value, bytes):
@@ -1536,7 +1530,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
 
     def _try_parse_both(
         self, content1: str, content2: str, fmt: str
-    ) -> tuple[Mapping[str, t.ContainerValue], Mapping[str, t.ContainerValue]] | None:
+    ) -> tuple[Mapping[str, object], Mapping[str, object]] | None:
         """Try to parse both contents as dicts in given format."""
         try:
             match fmt:

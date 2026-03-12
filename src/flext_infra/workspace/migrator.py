@@ -13,7 +13,7 @@ from tomlkit.items import Item, Table
 from tomlkit.toml_document import TOMLDocument
 
 from flext_core import r, s
-from flext_infra import FlextInfraUtilitiesDiscovery, c, m, p, t
+from flext_infra import FlextInfraUtilitiesDiscovery, c, m, p
 from flext_infra.basemk.generator import FlextInfraBaseMkGenerator
 
 _OBJECT_LIST_ADAPTER = TypeAdapter(list[object])
@@ -58,7 +58,7 @@ class FlextInfraProjectMigrator(s[list[m.Infra.Workspace.MigrationResult]]):
     def _toml_get(
         container: TOMLDocument | Table,
         key: str,
-    ) -> Item | Table | t.ContainerValue | None:
+    ) -> Item | Table | object | None:
         if key not in container:
             return None
         return container[key]

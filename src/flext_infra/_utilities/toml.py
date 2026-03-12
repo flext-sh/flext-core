@@ -32,29 +32,29 @@ class FlextInfraUtilitiesToml:
 
     logger = FlextLogger(__name__)
 
-    _CONTAINER_DICT_ADAPTER: TypeAdapter[dict[str, t.ContainerValue]] | None = None
-    _CONTAINER_LIST_ADAPTER: TypeAdapter[list[t.ContainerValue]] | None = None
+    _CONTAINER_DICT_ADAPTER: TypeAdapter[dict[str, object]] | None = None
+    _CONTAINER_LIST_ADAPTER: TypeAdapter[list[object]] | None = None
 
     @staticmethod
-    def _get_container_dict_adapter() -> TypeAdapter[dict[str, t.ContainerValue]]:
+    def _get_container_dict_adapter() -> TypeAdapter[dict[str, object]]:
         """Get or create TypeAdapter for dict[str, ContainerValue]."""
         if FlextInfraUtilitiesToml._CONTAINER_DICT_ADAPTER is None:
             FlextInfraUtilitiesToml._CONTAINER_DICT_ADAPTER = TypeAdapter(
-                dict[str, t.ContainerValue],
+                dict[str, object],
             )
         return FlextInfraUtilitiesToml._CONTAINER_DICT_ADAPTER
 
     @staticmethod
-    def _get_container_list_adapter() -> TypeAdapter[list[t.ContainerValue]]:
+    def _get_container_list_adapter() -> TypeAdapter[list[object]]:
         """Get or create TypeAdapter for list[ContainerValue]."""
         if FlextInfraUtilitiesToml._CONTAINER_LIST_ADAPTER is None:
             FlextInfraUtilitiesToml._CONTAINER_LIST_ADAPTER = TypeAdapter(
-                list[t.ContainerValue],
+                list[object],
             )
         return FlextInfraUtilitiesToml._CONTAINER_LIST_ADAPTER
 
     @staticmethod
-    def as_toml_mapping(value: t.ContainerValue) -> t.Infra.ContainerDict | None:
+    def as_toml_mapping(value: object) -> t.Infra.ContainerDict | None:
         """Check if value is a MutableMapping and return it typed, otherwise None."""
         if not isinstance(value, dict):
             return None
@@ -66,14 +66,10 @@ class FlextInfraUtilitiesToml:
 
     @staticmethod
     def normalize_container_value(
-        value: t.ContainerValue
-        | Item
-        | TOMLDocument
-        | dict[str, t.ContainerValue]
-        | None,
-    ) -> t.ContainerValue | None:
+        value: object | Item | TOMLDocument | dict[str, object] | None,
+    ) -> object | None:
         """Normalize TOML items/documents to a concrete container value."""
-        normalized: t.ContainerValue | Item | dict[str, t.ContainerValue] | None = value
+        normalized: object | Item | dict[str, object] | None = value
         if isinstance(value, (TOMLDocument, Item)):
             normalized = value.unwrap()
         if isinstance(normalized, Item):
@@ -82,8 +78,8 @@ class FlextInfraUtilitiesToml:
 
     @staticmethod
     def as_container_list(
-        value: t.ContainerValue | Item | None,
-    ) -> list[t.ContainerValue]:
+        value: object | Item | None,
+    ) -> list[object]:
         """Validate and normalize list-like values to typed container list."""
         normalized = FlextInfraUtilitiesToml.normalize_container_value(value)
         if normalized is None:
@@ -99,13 +95,13 @@ class FlextInfraUtilitiesToml:
 
     @staticmethod
     def unwrap_item(
-        value: t.ContainerValue | Item | None,
-    ) -> t.ContainerValue | None:
+        value: object | Item | None,
+    ) -> object | None:
         """Unwrap a tomlkit Item to get the underlying value."""
         return FlextInfraUtilitiesToml.normalize_container_value(value)
 
     @staticmethod
-    def as_string_list(value: t.ContainerValue | Item | None) -> list[str]:
+    def as_string_list(value: object | Item | None) -> list[str]:
         """Convert TOML value to list of strings."""
         normalized = FlextInfraUtilitiesToml.normalize_container_value(value)
         if normalized is None or isinstance(normalized, str):
@@ -151,12 +147,12 @@ class FlextInfraUtilitiesToml:
     @staticmethod
     def get(
         container: TOMLDocument | Table,
-        key: t.ContainerValue,
-    ) -> t.ContainerValue | None:
+        key: object,
+    ) -> object | None:
         """Retrieve and normalize a value from a TOML container by key."""
         if not isinstance(key, str):
             return None
-        raw_value: t.ContainerValue | None = None
+        raw_value: object | None = None
         if key in container:
             raw_value = FlextInfraUtilitiesToml.normalize_container_value(
                 container[key],

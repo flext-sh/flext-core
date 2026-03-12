@@ -6,8 +6,6 @@ from collections.abc import ItemsView, Mapping, ValuesView
 
 from pydantic import RootModel
 
-from flext_core import t
-
 
 class _StringDictModel(RootModel[dict[str, str]]):
     def __getitem__(self, key: str) -> str:
@@ -35,31 +33,29 @@ class _StringDictModel(RootModel[dict[str, str]]):
         return self.root.items()
 
 
-class _ContainerDictModel(RootModel[dict[str, t.ContainerValue]]):
-    def __getitem__(self, key: str) -> t.ContainerValue:
+class _ContainerDictModel(RootModel[dict[str, object]]):
+    def __getitem__(self, key: str) -> object:
         return self.root[key]
 
-    def __setitem__(self, key: str, value: t.ContainerValue) -> None:
+    def __setitem__(self, key: str, value: object) -> None:
         self.root[key] = value
 
     def __contains__(self, key: object) -> bool:
         return key in self.root
 
-    def get(
-        self, key: str, default: t.ContainerValue | None = None
-    ) -> t.ContainerValue | None:
+    def get(self, key: str, default: object | None = None) -> object | None:
         return self.root.get(key, default)
 
-    def update(self, payload: Mapping[str, t.ContainerValue]) -> None:
+    def update(self, payload: Mapping[str, object]) -> None:
         self.root.update(payload)
 
-    def setdefault(self, key: str, default: t.ContainerValue) -> t.ContainerValue:
+    def setdefault(self, key: str, default: object) -> object:
         return self.root.setdefault(key, default)
 
-    def values(self) -> ValuesView[t.ContainerValue]:
+    def values(self) -> ValuesView[object]:
         return self.root.values()
 
-    def items(self) -> ItemsView[str, t.ContainerValue]:
+    def items(self) -> ItemsView[str, object]:
         return self.root.items()
 
 

@@ -10,7 +10,7 @@ from collections.abc import Mapping
 
 import pytest
 
-from flext_core import r, t
+from flext_core import r
 from tests import m
 from tests.conftest import test_framework
 from tests.test_utils import assertion_helpers, fixture_factory
@@ -93,7 +93,7 @@ class TestAutomatedFlextUtilities:
     def test_automated_utilities_error_handling(self) -> None:
         """Test comprehensive error handling for utilities."""
         instance = fixture_factory.create_test_utilities_instance()
-        error_inputs: list[Mapping[str, t.ContainerValue] | None] = [
+        error_inputs: list[Mapping[str, object] | None] = [
             None,
             dict[str, str](),
             {"invalid": "data"},
@@ -141,7 +141,7 @@ class TestAutomatedFlextUtilities:
     def _execute_utilities_operation(
         self,
         instance: object,
-        input_data: Mapping[str, t.ContainerValue],
+        input_data: Mapping[str, object],
     ) -> r[bool]:
         """Execute a test operation on utilities instance.
 

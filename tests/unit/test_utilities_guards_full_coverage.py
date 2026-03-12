@@ -47,7 +47,7 @@ class _LoggerLike:
         return None
 
 
-def _sample_handler(value: t.ContainerValue) -> t.ContainerValue:
+def _sample_handler(value: object) -> object:
     return value
 
 
@@ -74,7 +74,7 @@ def test_is_general_value_type_negative_paths_and_callable() -> None:
 def test_is_handler_type_branches() -> None:
     assert u.Guards.is_handler_type({"a": 1})
     assert u.Guards.is_handler_type(_Model.model_validate({"value": 1}))
-    assert u.Guards.is_handler_type(cast("t.ContainerValue", _sample_handler))
+    assert u.Guards.is_handler_type(cast("object", _sample_handler))
 
     class _BaseModelSubclass:
         value: str = "ok"
@@ -85,8 +85,8 @@ def test_is_handler_type_branches() -> None:
         def handle(self, _value: object) -> object:
             return None
 
-    assert u.Guards.is_handler_type(cast("t.ContainerValue", _BaseModelSubclass))
-    assert u.Guards.is_handler_type(cast("t.ContainerValue", _DuckHandler()))
+    assert u.Guards.is_handler_type(cast("object", _BaseModelSubclass))
+    assert u.Guards.is_handler_type(cast("object", _DuckHandler()))
 
 
 def test_non_empty_and_normalize_branches() -> None:
@@ -98,13 +98,13 @@ def test_non_empty_and_normalize_branches() -> None:
     dict_scalar_out = u.normalize_to_metadata_value({"k": 1})
     assert dict_scalar_out == '{"k": 1}'
     with pytest.raises(TypeError):
-        u.normalize_to_metadata_value(cast("t.ContainerValue", {"k": object()}))
-    list_out = u.normalize_to_metadata_value(cast("t.ContainerValue", [1, object()]))
+        u.normalize_to_metadata_value(cast("object", {"k": object()}))
+    list_out = u.normalize_to_metadata_value(cast("object", [1, object()]))
     assert isinstance(list_out, list)
     assert list_out[0] == "1"
     assert isinstance(list_out[1], str)
     assert isinstance(
-        u.normalize_to_metadata_value(cast("t.ContainerValue", cast("object", {1, 2}))),
+        u.normalize_to_metadata_value(cast("object", cast("object", {1, 2}))),
         str,
     )
 
@@ -114,13 +114,13 @@ def test_configuration_mapping_and_dict_negative_branches() -> None:
     bad_key_mapping: dict[object, object] = {1: "ok"}
     bad_value_mapping: dict[str, object] = {"k": {1}}
     bad_value_dict: dict[str, object] = {"k": {1}}
-    assert u.Guards.is_configuration_mapping(cast("t.ContainerValue", bad_key_mapping))
+    assert u.Guards.is_configuration_mapping(cast("object", bad_key_mapping))
     assert not u.Guards.is_configuration_mapping(
-        cast("t.ContainerValue", bad_value_mapping),
+        cast("object", bad_value_mapping),
     )
     assert not u.Guards.is_configuration_dict([])
-    assert u.Guards.is_configuration_dict(cast("t.ContainerValue", {1: "v"}))
-    assert not u.Guards.is_configuration_dict(cast("t.ContainerValue", bad_value_dict))
+    assert u.Guards.is_configuration_dict(cast("object", {1: "v"}))
+    assert not u.Guards.is_configuration_dict(cast("object", bad_value_dict))
     assert u.Guards.is_configuration_dict({"k": 1})
 
 
@@ -146,10 +146,10 @@ def test_protocol_and_simple_guard_helpers() -> None:
     assert _is_type_obj(r[int].ok(1), "result")
     assert not _is_type_obj(object(), "service")
     assert not _is_type_obj(object(), "middleware")
-    assert u.Guards.is_handler_callable(cast("t.ContainerValue", _sample_handler))
+    assert u.Guards.is_handler_callable(cast("object", _sample_handler))
     assert u.Guards.is_mapping({"k": "v"})
 
-    def _identity(value: t.ContainerValue) -> t.ContainerValue:
+    def _identity(value: object) -> object:
         return value
 
     assert _is_type_obj(_identity, "callable")
@@ -197,7 +197,7 @@ def test_extract_mapping_or_none_branches() -> None:
     mapping_result = u.extract_mapping_or_none({"k": "v"})
     assert mapping_result.is_success
     assert mapping_result.value == {"k": "v"}
-    mapping_non_str_keys = u.extract_mapping_or_none(cast("t.ContainerValue", {1: "v"}))
+    mapping_non_str_keys = u.extract_mapping_or_none(cast("object", {1: "v"}))
     assert mapping_non_str_keys.is_success
     assert mapping_non_str_keys.value == {1: "v"}
     assert u.extract_mapping_or_none([1, 2, 3]).is_failure

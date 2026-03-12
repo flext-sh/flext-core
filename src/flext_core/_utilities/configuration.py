@@ -163,7 +163,7 @@ class FlextUtilitiesConfiguration:
     @staticmethod
     def _try_get_attr(
         obj: p.HasModelDump | object, parameter: str
-    ) -> tuple[bool, t.ContainerValue]:
+    ) -> tuple[bool, object]:
         """Try to get attribute value from object via hasattr/getattr.
 
         Business Rule: Direct Attribute Access (Fallback Strategy)
@@ -175,7 +175,7 @@ class FlextUtilitiesConfiguration:
 
         Type Safety:
         - Uses hasattr() before getattr() to avoid AttributeError
-        - Cast to t.ContainerValue preserves union type safety
+        - Cast to object preserves union type safety
         - Returns sentinel tuple to distinguish "not found" from "None value"
 
         Args:
@@ -192,8 +192,8 @@ class FlextUtilitiesConfiguration:
 
     @staticmethod
     def _try_get_from_dict_like(
-        obj: Mapping[str, t.ContainerValue], parameter: str
-    ) -> tuple[bool, t.ContainerValue]:
+        obj: Mapping[str, object], parameter: str
+    ) -> tuple[bool, object]:
         """Try to get parameter from dict-like object.
 
         Business Rule: Dict-Like Access (Secondary Strategy)
@@ -226,14 +226,14 @@ class FlextUtilitiesConfiguration:
 
     @staticmethod
     def _try_get_from_duck_model_dump(
-        obj: p.HasModelDump | t.ConfigurationMapping | t.ContainerValue,
+        obj: p.HasModelDump | t.ConfigurationMapping | object,
         parameter: str,
-    ) -> tuple[bool, t.ContainerValue]:
+    ) -> tuple[bool, object]:
         try:
             model_dump_attr = getattr(obj, "model_dump", None)
             if model_dump_attr is None or not callable(model_dump_attr):
                 return FlextUtilitiesConfiguration._NOT_FOUND
-            obj_dict: t.ContainerValue = FlextRuntime.normalize_to_general_value(
+            obj_dict: object = FlextRuntime.normalize_to_general_value(
                 model_dump_attr()
             )
             if FlextUtilitiesGuards.is_mapping(obj_dict) and parameter in obj_dict:
@@ -250,7 +250,7 @@ class FlextUtilitiesConfiguration:
     @staticmethod
     def _try_get_from_model_dump(
         obj: p.HasModelDump, parameter: str
-    ) -> tuple[bool, t.ContainerValue]:
+    ) -> tuple[bool, object]:
         """Try to get parameter from HasModelDump protocol object.
 
         Business Rule: Pydantic Model Access (Primary Strategy)
@@ -332,7 +332,7 @@ class FlextUtilitiesConfiguration:
                 self,
                 entries: list[Entry],
                 format_options: WriteFormatOptions | None = None,
-                **format_kwargs: t.ContainerValue,
+                **format_kwargs: object,
             ) -> "FlextRuntime.RuntimeResult[str]":
                 # Get ldif config using get_namespace_config (no __getattr__)
                 def get_ldif_config_default() -> WriteFormatOptions:
@@ -494,7 +494,7 @@ class FlextUtilitiesConfiguration:
     @staticmethod
     def get_parameter(
         obj: p.HasModelDump | t.ConfigurationMapping, parameter: str
-    ) -> t.ContainerValue:
+    ) -> object:
         """Get parameter value from a configuration object.
 
         Business Rule: Parameter Access Precedence Chain
@@ -564,7 +564,7 @@ class FlextUtilitiesConfiguration:
         raise e.NotFoundError(msg)
 
     @staticmethod
-    def get_singleton(singleton_class: type, parameter: str) -> t.ContainerValue:
+    def get_singleton(singleton_class: type, parameter: str) -> object:
         """Get parameter from a singleton configuration instance.
 
         Business Rule: Singleton Configuration Access (FLEXT Pattern)

@@ -16,7 +16,6 @@ from flext_infra import (
     c,
     m,
     p,
-    t,
 )
 from flext_infra.deps.detection import FlextInfraDependencyDetectionService
 
@@ -27,7 +26,7 @@ class _WorkspaceReportProtocol(Protocol):
     pip_check: object | None
     dependency_limits: object | None
 
-    def model_dump(self) -> dict[str, t.ContainerValue]:
+    def model_dump(self) -> dict[str, object]:
         """Serialize report model payload."""
         ...
 
@@ -85,7 +84,7 @@ def run_detector(
     apply_typings = bool(args.apply_typings)
     do_typings = bool(args.typings) or apply_typings
     limits_path = Path(args.limits) if args.limits else limits_default
-    projects_report: dict[str, dict[str, t.ContainerValue]] = {}
+    projects_report: dict[str, dict[str, object]] = {}
     report_model = workspace_report_factory(
         workspace=str(root),
         projects=projects_report,

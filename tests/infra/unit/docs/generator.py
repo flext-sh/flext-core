@@ -15,7 +15,6 @@ from flext_infra.docs.generator import FlextInfraDocGenerator
 from flext_infra.docs.shared import FlextInfraDocsShared
 from flext_tests import tm
 from tests.infra.models import m
-from tests.infra.typings import t
 
 
 class TestGeneratorCore:
@@ -172,10 +171,8 @@ class TestGeneratorCore:
     ) -> None:
         """Test generate returns failure when scope building fails."""
 
-        def mock_build_scopes(
-            *args: object, **kwargs: object
-        ) -> r[list[t.ContainerValue]]:
-            return r[list[t.ContainerValue]].fail("Scope error")
+        def mock_build_scopes(*args: object, **kwargs: object) -> r[list[object]]:
+            return r[list[object]].fail("Scope error")
 
         monkeypatch.setattr(FlextInfraDocsShared, "build_scopes", mock_build_scopes)
         result = gen.generate(tmp_path)

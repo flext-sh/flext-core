@@ -31,7 +31,6 @@ from flext_core import (
     p,
     r,
     s,
-    t,
 )
 from flext_core._models.service import FlextModelsService
 from flext_tests import tm, u
@@ -154,7 +153,7 @@ class TestContextServiceViaDI:
         custom_context = FlextContext()
         returned_container = container.register(
             "custom_context",
-            cast("t.ContainerValue", custom_context),
+            cast("object", custom_context),
         )
         assert returned_container is container
         assert container.has_service("custom_context")
@@ -217,9 +216,9 @@ class TestServicesIntegrationViaDI:
         """Test injecting multiple services via @inject."""
         logger_instance = FlextLogger.create_module_logger("test")
         context_instance = FlextContext()
-        services_raw: dict[str, t.ContainerValue] = {
-            "logger": cast("t.ContainerValue", logger_instance),
-            "context": cast("t.ContainerValue", context_instance),
+        services_raw: dict[str, object] = {
+            "logger": cast("object", logger_instance),
+            "context": cast("object", context_instance),
         }
         services = services_raw
         di_container = FlextRuntime.DependencyIntegration.create_container(

@@ -14,7 +14,6 @@ from flext_infra.workspace.migrator import FlextInfraProjectMigrator
 from flext_tests import tm
 from tests.infra import h
 from tests.infra.models import m as im
-from tests.infra.typings import t
 from tests.infra.unit.test_infra_workspace_migrator import (
     _build_migrator,
     _project,
@@ -43,7 +42,7 @@ class TestMigratorWriteFailures:
         _root, proj = _setup_basic(tmp_path)
         migrator = _build_migrator(proj, "base")
 
-        def _write_fail(_self: Path, _data: str, **_kw: t.ContainerValue) -> int:
+        def _write_fail(_self: Path, _data: str, **_kw: object) -> int:
             msg = "Write failed"
             raise OSError(msg)
 
@@ -69,7 +68,7 @@ class TestMigratorWriteFailures:
         (root / ".gitignore").write_text("", encoding="utf-8")
         migrator = _build_migrator(_project(root), "new content")
 
-        def _write_fail(_self: Path, _data: str, **_kw: t.ContainerValue) -> int:
+        def _write_fail(_self: Path, _data: str, **_kw: object) -> int:
             msg = "Write failed"
             raise OSError(msg)
 

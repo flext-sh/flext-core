@@ -20,7 +20,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 from flext_core import r
-from flext_tests import t, tm
+from flext_tests import tm
 
 
 class FlextInfraTestHelpers:
@@ -139,9 +139,7 @@ class FlextInfraTestHelpers:
         return path
 
     @staticmethod
-    def assert_toml_valid(
-        path: Path, msg: str | None = None
-    ) -> dict[str, t.ContainerValue]:
+    def assert_toml_valid(path: Path, msg: str | None = None) -> dict[str, object]:
         """Assert TOML file is valid and return parsed content.
 
         Args:
@@ -157,9 +155,7 @@ class FlextInfraTestHelpers:
         """
         FlextInfraTestHelpers.assert_file_exists(path, msg)
         try:
-            content: dict[str, t.ContainerValue] = tomllib.loads(
-                path.read_text(encoding="utf-8")
-            )
+            content: dict[str, object] = tomllib.loads(path.read_text(encoding="utf-8"))
         except tomllib.TOMLDecodeError as exc:
             raise AssertionError(msg or f"Invalid TOML in {path}: {exc}") from exc
         return content
@@ -167,7 +163,7 @@ class FlextInfraTestHelpers:
     @staticmethod
     def assert_toml_has_section(
         path: Path, section: str, msg: str | None = None
-    ) -> dict[str, t.ContainerValue]:
+    ) -> dict[str, object]:
         """Assert TOML file has specific section.
 
         Args:
@@ -181,7 +177,7 @@ class FlextInfraTestHelpers:
         """
         content = FlextInfraTestHelpers.assert_toml_valid(path, msg)
         parts = section.split(".")
-        current: dict[str, t.ContainerValue] | t.ContainerValue = content
+        current: dict[str, object] | object = content
         for part in parts:
             tm.that(
                 isinstance(current, dict),
@@ -189,7 +185,7 @@ class FlextInfraTestHelpers:
                 msg=msg or f"TOML section '{section}' not found in {path}",
             )
             assert isinstance(current, dict)
-            current_map: dict[str, t.ContainerValue] = current
+            current_map: dict[str, object] = current
             tm.that(
                 part in current_map,
                 eq=True,
@@ -312,7 +308,7 @@ class FlextInfraTestHelpers:
         )
 
     @staticmethod
-    def ns(**kwargs: t.ContainerValue | None) -> argparse.Namespace:
+    def ns(**kwargs: object | None) -> argparse.Namespace:
         """Create ``argparse.Namespace`` from keyword arguments.
 
         Eliminates the repeated ``_ns()`` / ``_build_args()`` helpers from

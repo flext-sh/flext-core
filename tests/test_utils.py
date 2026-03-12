@@ -44,15 +44,15 @@ class TestDataFactory:
     def create_entity_data(
         unique_id: str,
         name: str,
-        **kwargs: t.ContainerValue,
+        **kwargs: object,
     ) -> t.ConfigurationMapping:
         """Create standardized entity test data."""
         return {"unique_id": unique_id, "name": name, **kwargs}
 
     @staticmethod
     def create_value_object_data(
-        value: t.ContainerValue,
-        **kwargs: t.ContainerValue,
+        value: object,
+        **kwargs: object,
     ) -> t.ConfigurationMapping:
         """Create standardized value object test data."""
         return {"value": value, **kwargs}
@@ -62,7 +62,7 @@ class TestDataFactory:
         operation: str,
         description: str,
         input_data: t.ConfigurationMapping,
-        expected_result: t.ContainerValue,
+        expected_result: object,
         *,
         expected_success: bool = True,
         error_contains: str | None = None,
@@ -128,10 +128,10 @@ class AssertionHelpers:
 
     @staticmethod
     def assert_operation_result(
-        operation_func: Callable[[], r[t.ContainerValue]],
+        operation_func: Callable[[], r[object]],
         test_case: StandardTestCase,
         context: str = "",
-    ) -> t.ContainerValue:
+    ) -> object:
         """Execute operation and assert result matches test case."""
         try:
             result = operation_func()
@@ -172,7 +172,7 @@ class TestFixtureFactory:
 
     @staticmethod
     def create_test_value_object(
-        value: t.ContainerValue = "test_value",
+        value: object = "test_value",
     ) -> TestsFlextModels.Tests.UtilityValueModel:
         """Create test value object fixture."""
         return TestsFlextModels.Tests.UtilityValueModel(value=value)
@@ -203,9 +203,7 @@ class TestFixtureFactory:
         return FlextExceptions
 
     @staticmethod
-    def create_test_handlers_instance() -> type[
-        FlextHandlers[t.ContainerValue, t.ContainerValue]
-    ]:
+    def create_test_handlers_instance() -> type[FlextHandlers[object, object]]:
         """Create test handlers fixture."""
         return FlextHandlers
 
@@ -225,7 +223,7 @@ class TestFixtureFactory:
         return FlextRegistry()
 
     @staticmethod
-    def create_test_result_instance() -> type[r[t.ContainerValue]]:
+    def create_test_result_instance() -> type[r[object]]:
         """Create test result fixture."""
         return r
 
@@ -264,13 +262,13 @@ class TestFixtureFactory:
     def create_test_service_result(
         *,
         success: bool = True,
-        value: t.ContainerValue | None = None,
+        value: object | None = None,
         error: str = "Test error",
-    ) -> TestResult[t.ContainerValue]:
+    ) -> TestResult[object]:
         """Create test service result fixture."""
         if success:
-            return r[t.ContainerValue].ok(value if value is not None else "test_value")
-        return r[t.ContainerValue].fail(error)
+            return r[object].ok(value if value is not None else "test_value")
+        return r[object].fail(error)
 
 
 test_data_factory = TestDataFactory()

@@ -15,7 +15,6 @@ from flext_infra.docs.builder import FlextInfraDocBuilder
 from flext_infra.docs.generator import FlextInfraDocGenerator
 from flext_infra.docs.validator import FlextInfraDocValidator
 from flext_tests import tm
-from tests.infra.typings import t
 
 
 class _Report(BaseModel):
@@ -23,10 +22,10 @@ class _Report(BaseModel):
 
 
 def _cli_args(
-    extra_defaults: dict[str, t.ContainerValue | None],
-    **overrides: t.ContainerValue,
+    extra_defaults: dict[str, object | None],
+    **overrides: object,
 ) -> argparse.Namespace:
-    defaults: dict[str, t.ContainerValue | None] = {
+    defaults: dict[str, object | None] = {
         "root": ".",
         "project": None,
         "projects": None,
@@ -37,24 +36,24 @@ def _cli_args(
     return argparse.Namespace(**defaults)
 
 
-def _build_args(**overrides: t.ContainerValue) -> argparse.Namespace:
+def _build_args(**overrides: object) -> argparse.Namespace:
     return _cli_args({}, **overrides)
 
 
-def _gen_args(**overrides: t.ContainerValue) -> argparse.Namespace:
+def _gen_args(**overrides: object) -> argparse.Namespace:
     return _cli_args({"apply": False}, **overrides)
 
 
-def _val_args(**overrides: t.ContainerValue) -> argparse.Namespace:
+def _val_args(**overrides: object) -> argparse.Namespace:
     return _cli_args({"check": "all", "apply": False}, **overrides)
 
 
-def _stub_ok(val: list[t.ContainerValue]) -> Callable[..., r[list[t.ContainerValue]]]:
-    return lambda *_a, **_kw: r[list[t.ContainerValue]].ok(val)
+def _stub_ok(val: list[object]) -> Callable[..., r[list[object]]]:
+    return lambda *_a, **_kw: r[list[object]].ok(val)
 
 
-def _stub_fail(err: str) -> Callable[..., r[list[t.ContainerValue]]]:
-    return lambda *_a, **_kw: r[list[t.ContainerValue]].fail(err)
+def _stub_fail(err: str) -> Callable[..., r[list[object]]]:
+    return lambda *_a, **_kw: r[list[object]].fail(err)
 
 
 _SILENT_OUTPUT = type("O", (), {"error": staticmethod(lambda *a: None)})()
@@ -96,13 +95,11 @@ class TestRunGenerate:
     def test_run_generate_with_apply_flag(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        captured_kwargs: dict[str, t.ContainerValue] = {}
+        captured_kwargs: dict[str, object] = {}
 
-        def mock_gen(
-            *_a: t.ContainerValue, **kw: t.ContainerValue
-        ) -> r[list[t.ContainerValue]]:
+        def mock_gen(*_a: object, **kw: object) -> r[list[object]]:
             captured_kwargs.update(kw)
-            return r[list[t.ContainerValue]].ok([])
+            return r[list[object]].ok([])
 
         monkeypatch.setattr(FlextInfraDocGenerator, "generate", mock_gen)
         _run_generate(_gen_args(apply=True))
@@ -134,13 +131,11 @@ class TestRunValidate:
     def test_run_validate_with_check_parameter(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        captured_kwargs: dict[str, t.ContainerValue] = {}
+        captured_kwargs: dict[str, object] = {}
 
-        def mock_val(
-            *_a: t.ContainerValue, **kw: t.ContainerValue
-        ) -> r[list[t.ContainerValue]]:
+        def mock_val(*_a: object, **kw: object) -> r[list[object]]:
             captured_kwargs.update(kw)
-            return r[list[t.ContainerValue]].ok([])
+            return r[list[object]].ok([])
 
         monkeypatch.setattr(FlextInfraDocValidator, "validate", mock_val)
         _run_validate(_val_args(check="links"))

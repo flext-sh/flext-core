@@ -50,8 +50,8 @@ class FlextModelsHandler:
         @field_validator("handler", mode="before")
         @classmethod
         def validate_handler(
-            cls, v: t.HandlerCallable | t.ContainerValue
-        ) -> t.HandlerCallable | t.ContainerValue:
+            cls, v: t.HandlerCallable | object
+        ) -> t.HandlerCallable | object:
             if not callable(v):
                 msg = f"Handler must be callable, got {v.__class__.__name__}"
                 raise TypeError(msg)
@@ -94,7 +94,7 @@ class FlextModelsHandler:
             "message_type",
         })
 
-        def __getitem__(self, key: str) -> t.ContainerValue:
+        def __getitem__(self, key: str) -> object:
             if key in self._GETITEM_FIELDS:
                 return getattr(self, key)
             raise KeyError(key)
@@ -106,11 +106,9 @@ class FlextModelsHandler:
         legacy dictionary-based configuration.
         """
 
-        handler: (
-            t.HandlerCallable
-            | p.Handler[t.ContainerValue, t.ContainerValue]
-            | BaseModel
-        ) = Field(description="Handler instance (callable, object, or FlextHandlers)")
+        handler: t.HandlerCallable | p.Handler[object, object] | BaseModel = Field(
+            description="Handler instance (callable, object, or FlextHandlers)"
+        )
         message_type: t.MessageTypeSpecifier | None = Field(
             default=None,
             description="Message type to handle (required for explicit mode)",

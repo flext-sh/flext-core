@@ -13,7 +13,6 @@ import pytest
 from flext_core import r
 from flext_infra.release.orchestrator import FlextInfraReleaseOrchestrator
 from flext_tests import tm
-from tests.infra.typings import t
 
 from ... import h
 
@@ -156,8 +155,8 @@ class TestReleaseOrchestratorExecute:
         def fake_dispatch(
             _self: FlextInfraReleaseOrchestrator,
             phase: str,
-            *args: t.ContainerValue,
-            **kwargs: t.ContainerValue,
+            *args: object,
+            **kwargs: object,
         ) -> r[bool]:
             nonlocal call_count
             call_count += 1

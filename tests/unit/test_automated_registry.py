@@ -11,7 +11,7 @@ from typing import Protocol, runtime_checkable
 
 import pytest
 
-from flext_core import r, t
+from flext_core import r
 from tests import m
 from tests.conftest import test_framework
 from tests.test_utils import assertion_helpers, fixture_factory
@@ -19,7 +19,7 @@ from tests.test_utils import assertion_helpers, fixture_factory
 
 @runtime_checkable
 class _ProcessCapable(Protocol):
-    def process(self, input_data: Mapping[str, t.ContainerValue]) -> object: ...
+    def process(self, input_data: Mapping[str, object]) -> object: ...
 
 
 @runtime_checkable
@@ -29,7 +29,7 @@ class _ExecuteCapable(Protocol):
 
 @runtime_checkable
 class _HandleCapable(Protocol):
-    def handle(self, input_data: Mapping[str, t.ContainerValue]) -> object: ...
+    def handle(self, input_data: Mapping[str, object]) -> object: ...
 
 
 @runtime_checkable
@@ -161,7 +161,7 @@ class TestAutomatedFlextRegistry:
     def _execute_registry_operation(
         self,
         instance: object,
-        input_data: Mapping[str, t.ContainerValue],
+        input_data: Mapping[str, object],
     ) -> r[bool]:
         """Execute a test operation on registry instance.
 

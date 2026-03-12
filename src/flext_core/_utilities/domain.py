@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextRuntime, c, p, t
+from flext_core import FlextRuntime, c, p
 
 
 class FlextUtilitiesDomain:
@@ -53,9 +53,7 @@ class FlextUtilitiesDomain:
         return id_a is not None and id_a == id_b
 
     @staticmethod
-    def compare_value_objects_by_value(
-        obj_a: t.ContainerValue, obj_b: t.ContainerValue
-    ) -> bool:
+    def compare_value_objects_by_value(obj_a: object, obj_b: object) -> bool:
         """Compare two value objects by their values (all attributes).
 
         Generic comparison for DDD Value Objects - compares by value, not identity.
@@ -107,7 +105,7 @@ class FlextUtilitiesDomain:
         return hash((entity.__class__.__name__, entity_id))
 
     @staticmethod
-    def hash_value_object_by_value(obj: t.ContainerValue) -> int:
+    def hash_value_object_by_value(obj: object) -> int:
         """Generate hash for value object based on all attribute values.
 
         Generic hashing for DDD Value Objects - uses values, not identity.
@@ -125,7 +123,7 @@ class FlextUtilitiesDomain:
         """
         try:
             obj_dict = obj.__dict__
-            hashable_items: list[tuple[str, t.ContainerValue]] = []
+            hashable_items: list[tuple[str, object]] = []
             for key, value in sorted(obj_dict.items()):
                 if value.__class__ in {str, int, float, bool, None.__class__}:
                     hashable_items.append((key, value))
@@ -146,7 +144,7 @@ class FlextUtilitiesDomain:
 
     @staticmethod
     def validate_entity_has_id(
-        entity: t.ContainerValue, id_attr: str = c.Mixins.FIELD_ID
+        entity: object, id_attr: str = c.Mixins.FIELD_ID
     ) -> bool:
         """Validate that entity has a non-None unique ID.
 
@@ -162,7 +160,7 @@ class FlextUtilitiesDomain:
         return bool(entity_id)
 
     @staticmethod
-    def validate_value_object_immutable(obj: t.ContainerValue) -> bool:
+    def validate_value_object_immutable(obj: object) -> bool:
         """Check if value object appears to be immutable (frozen).
 
         Args:

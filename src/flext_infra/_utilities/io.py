@@ -33,7 +33,7 @@ class FlextInfraUtilitiesIo:
     """
 
     @staticmethod
-    def read_json(path: Path) -> r[Mapping[str, t.ContainerValue]]:
+    def read_json(path: Path) -> r[Mapping[str, object]]:
         """Read and parse a JSON file.
 
         Args:
@@ -46,12 +46,12 @@ class FlextInfraUtilitiesIo:
         if not path.exists():
             return r[t.ConfigurationMapping].ok({})
         try:
-            loaded_obj: t.ContainerValue = json.loads(
+            loaded_obj: object = json.loads(
                 path.read_text(encoding=c.Infra.Encoding.DEFAULT),
             )
             if not isinstance(loaded_obj, dict):
                 return r[t.ConfigurationMapping].fail("JSON root must be object")
-            parser = TypeAdapter(dict[str, t.ContainerValue])
+            parser = TypeAdapter(dict[str, object])
             data = parser.validate_python(loaded_obj, strict=True)
             return r[t.ConfigurationMapping].ok(data)
         except ValidationError as exc:
@@ -64,7 +64,7 @@ class FlextInfraUtilitiesIo:
     @staticmethod
     def write_json(
         path: Path,
-        payload: t.ContainerValue,
+        payload: object,
         *,
         sort_keys: bool = False,
         ensure_ascii: bool = False,
@@ -87,7 +87,7 @@ class FlextInfraUtilitiesIo:
         """
         try:
             path.parent.mkdir(parents=True, exist_ok=True)
-            raw_payload: t.ContainerValue = (
+            raw_payload: object = (
                 payload.model_dump() if isinstance(payload, BaseModel) else payload
             )
             content = (
@@ -105,7 +105,7 @@ class FlextInfraUtilitiesIo:
         return r[bool].ok(True)
 
     @staticmethod
-    def parse(text: str) -> r[t.ContainerValue]:
+    def parse(text: str) -> r[object]:
         """Parse a JSON string.
 
         Args:
@@ -116,14 +116,14 @@ class FlextInfraUtilitiesIo:
 
         """
         try:
-            parsed: t.ContainerValue = json.loads(text)
-            return r[t.ContainerValue].ok(parsed)
+            parsed: object = json.loads(text)
+            return r[object].ok(parsed)
         except (json.JSONDecodeError, ValueError) as exc:
-            return r[t.ContainerValue].fail(f"JSON parse error: {exc}")
+            return r[object].fail(f"JSON parse error: {exc}")
 
     @staticmethod
     def serialize(
-        data: t.ContainerValue,
+        data: object,
         *,
         sort_keys: bool = False,
         ensure_ascii: bool = False,
@@ -142,7 +142,7 @@ class FlextInfraUtilitiesIo:
 
         """
         try:
-            raw_data: t.ContainerValue = (
+            raw_data: object = (
                 data.model_dump() if isinstance(data, BaseModel) else data
             )
             return r[str].ok(

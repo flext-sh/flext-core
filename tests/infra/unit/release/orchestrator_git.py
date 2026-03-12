@@ -20,8 +20,6 @@ from flext_infra.release.orchestrator import FlextInfraReleaseOrchestrator
 from flext_tests import tm
 from tests.infra.unit.release._stubs import FakeSelection, FakeUtilsNamespace
 
-from ...typings import t
-
 if TYPE_CHECKING:
     from pathlib import Path
 
@@ -70,9 +68,7 @@ class TestCreateBranches:
         mock_project = SimpleNamespace(name="proj1", path=workspace_root / "proj1")
         fake_sel._resolve_result = r[list[SimpleNamespace]].ok([mock_project])
 
-        def _selection_factory(
-            *a: t.ContainerValue, **kw: t.ContainerValue
-        ) -> FakeSelection:
+        def _selection_factory(*a: object, **kw: object) -> FakeSelection:
             del a, kw
             return fake_sel
 

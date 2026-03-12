@@ -53,7 +53,7 @@ class FlextInfraRefactorRuleLoader:
         rule_filters: list[str],
         validator: FlextInfraRefactorRuleDefinitionValidator,
         build_rule: Callable[
-            [Mapping[str, t.ContainerValue]],
+            [Mapping[str, object]],
             FlextInfraRefactorRule | None,
         ],
         build_file_rules: Callable[[], list[ClassNestingRefactorRule]],
@@ -142,11 +142,11 @@ class FlextInfraRefactorRuleLoader:
 
     @staticmethod
     def _coerce_rule_definitions(
-        value: t.ContainerValue | None,
-    ) -> list[dict[str, t.ContainerValue]]:
+        value: object | None,
+    ) -> list[dict[str, object]]:
         if not isinstance(value, list):
             return []
-        definitions: list[dict[str, t.ContainerValue]] = []
+        definitions: list[dict[str, object]] = []
         for item in value:
             if not isinstance(item, Mapping):
                 continue

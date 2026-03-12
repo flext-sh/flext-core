@@ -102,28 +102,28 @@ class TypeScenarios:
             {
                 "name": "Command",
                 "category": TypeVarCategory.CQRS,
-                "type_var": t.ContainerValue,
+                "type_var": object,
             },
         ),
         TypeVarTestCase.model_validate(
             {
                 "name": "Query",
                 "category": TypeVarCategory.CQRS,
-                "type_var": t.ContainerValue,
+                "type_var": object,
             },
         ),
         TypeVarTestCase.model_validate(
             {
                 "name": "Event",
                 "category": TypeVarCategory.CQRS,
-                "type_var": t.ContainerValue,
+                "type_var": object,
             },
         ),
         TypeVarTestCase.model_validate(
             {
                 "name": "Message",
                 "category": TypeVarCategory.CQRS,
-                "type_var": t.ContainerValue,
+                "type_var": object,
             },
         ),
     ]
@@ -218,8 +218,8 @@ class TestFlextTypings:
             )
             tm.that(
                 test_case.type_var,
-                eq=t.ContainerValue,
-                msg=f"{test_case.name} must equal t.ContainerValue",
+                eq=object,
+                msg=f"{test_case.name} must equal object",
             )
 
     @pytest.mark.parametrize(
@@ -259,17 +259,17 @@ class TestFlextTypings:
         for tv in [T, U, P, R]:
             tm.that(tv, none=False, msg="TypeVar must not be None")
         cqrs_aliases = [
-            t.ContainerValue,
-            t.ContainerValue,
-            t.ContainerValue,
-            t.ContainerValue,
+            object,
+            object,
+            object,
+            object,
         ]
         for alias in cqrs_aliases:
             tm.that(alias, none=False, msg="CQRS alias must not be None")
             tm.that(
                 alias,
-                eq=t.ContainerValue,
-                msg="CQRS alias must equal t.ContainerValue",
+                eq=object,
+                msg="CQRS alias must equal object",
             )
 
     def test_hostname_validation_success(self) -> None:

@@ -13,6 +13,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import operator
+from datetime import UTC, datetime
+from pathlib import Path
 
 from pydantic import BaseModel, Field
 
@@ -287,6 +289,22 @@ class TestuMapperConversions:
         assert isinstance(res, dict)
         assert "obj" in res
         assert isinstance(res["obj"], SimpleObj)
+
+    def test_convert_to_json_safe(self) -> None:
+        obj = SimpleObj(name="test", value=1)
+        now = datetime(2026, 3, 12, 10, 30, 45, tzinfo=UTC)
+        payload: dict[str, t.ContainerValue] = {
+            "obj": obj,
+            "path": Path("/tmp/example"),
+            "when": now,
+        }
+
+        res = u.Mapper.convert_to_json_safe(payload)
+
+        assert isinstance(res, dict)
+        assert res["obj"] == {"name": "test", "value": 1}
+        assert res["path"] == "/tmp/example"
+        assert res["when"] == "2026-03-12T10:30:45+00:00"
 
     def test_convert_dict_to_json(self) -> None:
         """Test convert_dict_to_json - use convert_to_json_value for arbitrary objects."""

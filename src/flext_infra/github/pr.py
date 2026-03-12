@@ -167,7 +167,7 @@ class FlextInfraPrManager:
         auto: bool = False,
         delete_branch: bool = False,
         release_on_merge: bool = True,
-    ) -> r[Mapping[str, t.ContainerValue]]:
+    ) -> r[Mapping[str, object]]:
         """Merge a PR with retry on rebase.
 
         Args:
@@ -186,7 +186,7 @@ class FlextInfraPrManager:
         if selector == head:
             pr_result = self.open_pr_for_head(repo_root, head)
             if pr_result.is_success and (not pr_result.unwrap()):
-                return r[Mapping[str, t.ContainerValue]].ok({
+                return r[Mapping[str, object]].ok({
                     c.Infra.ReportKeys.STATUS: "no-open-pr",
                 })
         merge_flag = {
@@ -222,10 +222,10 @@ class FlextInfraPrManager:
                 if update_result.is_success:
                     result = self._runner.run(command, cwd=repo_root)
         if result.is_failure:
-            return r[Mapping[str, t.ContainerValue]].fail(
+            return r[Mapping[str, object]].fail(
                 result.error or "merge failed",
             )
-        info: MutableMapping[str, t.ContainerValue] = {
+        info: MutableMapping[str, object] = {
             c.Infra.ReportKeys.STATUS: "merged",
         }
         if release_on_merge:

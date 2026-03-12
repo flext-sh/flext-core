@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_core import FlextDispatcher, FlextHandlers, FlextRegistry, c, m, r, t
+from flext_core import FlextDispatcher, FlextHandlers, FlextRegistry, c, m, r
 
 from .shared import Examples
 
@@ -18,27 +18,27 @@ class _CommandB(m.Command):
 
 
 class _ProtocolHandler:
-    def __init__(self, label: str, message_type: type[t.ContainerValue]) -> None:
+    def __init__(self, label: str, message_type: type[object]) -> None:
         self._label = label
         self.message_type = message_type
 
     def can_handle(self, message_type: type) -> bool:
         return message_type is self.message_type
 
-    def handle(self, message: t.ContainerValue) -> r[t.ContainerValue]:
+    def handle(self, message: object) -> r[object]:
         value = ""
         if hasattr(message, "value"):
             value = str(getattr(message, "value"))
         if hasattr(message, "amount"):
             value = str(getattr(message, "amount"))
-        return r[t.ContainerValue].ok(f"{self._label}:{value}")
+        return r[object].ok(f"{self._label}:{value}")
 
     def _protocol_name(self) -> str:
         return f"example-protocol-handler::{self._label}"
 
 
 @FlextHandlers.handler(_CommandA, priority=3)
-def _discovered_handler(_message: t.ContainerValue) -> t.ContainerValue:
+def _discovered_handler(_message: object) -> object:
     return "decorated"
 
 

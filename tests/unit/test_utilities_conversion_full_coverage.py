@@ -11,7 +11,7 @@ from collections.abc import Mapping
 from datetime import UTC, datetime
 from typing import cast
 
-from flext_core import c, m, r, t, u
+from flext_core import c, m, r, u
 from flext_core._utilities.conversion import StrictJsonValue
 
 from ._models import _Model
@@ -44,7 +44,7 @@ def test_to_flexible_value_and_safe_list_branches() -> None:
         cast("StrictJsonValue", cast("object", _Model(value=1))),
     )
     assert model_result.is_failure
-    mapping_value: Mapping[str, t.ContainerValue] = {"x": 1}
+    mapping_value: Mapping[str, object] = {"x": 1}
     mapping_result = u.Conversion.to_flexible_value(
         cast("StrictJsonValue", mapping_value),
     )

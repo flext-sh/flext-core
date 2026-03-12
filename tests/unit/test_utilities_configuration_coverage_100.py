@@ -230,7 +230,7 @@ class TestFlextUtilitiesConfiguration:
         """Tests for get_parameter method."""
 
         @staticmethod
-        def _create_test_dict() -> dict[str, t.ContainerValue]:
+        def _create_test_dict() -> dict[str, object]:
             """Factory for test dict."""
             return {
                 TestConfigConstants.ParameterNames.NAME.value: TestConfigConstants.TestValues.TEST_NAME,
@@ -239,7 +239,7 @@ class TestFlextUtilitiesConfiguration:
             }
 
         @staticmethod
-        def _create_boundary_dict() -> dict[str, t.ContainerValue]:
+        def _create_boundary_dict() -> dict[str, object]:
             """Factory for boundary values dict."""
             return {
                 TestConfigConstants.ParameterNames.EMPTY_STRING.value: TestConfigConstants.TestValues.EMPTY_STRING,
@@ -269,7 +269,7 @@ class TestFlextUtilitiesConfiguration:
         def test_from_dict(
             self,
             param_name: str,
-            expected_value: t.ContainerValue,
+            expected_value: object,
         ) -> None:
             """Test get_parameter from dict-like object."""
             config_dict = self._create_test_dict()
@@ -317,7 +317,7 @@ class TestFlextUtilitiesConfiguration:
         def test_from_pydantic_model(
             self,
             param_name: str,
-            expected_value: t.ContainerValue,
+            expected_value: object,
         ) -> None:
             """Test get_parameter from Pydantic model."""
             config = ConfigModelForTest(
@@ -372,7 +372,7 @@ class TestFlextUtilitiesConfiguration:
         def test_from_attribute_access(
             self,
             param_name: str,
-            expected_value: t.ContainerValue,
+            expected_value: object,
         ) -> None:
             """Test get_parameter from object attribute access."""
             config = DataclassConfigForTest(
@@ -380,7 +380,7 @@ class TestFlextUtilitiesConfiguration:
                 value=TestConfigConstants.TestValues.TEST_VALUE,
             )
             config_cast = cast(
-                "p.HasModelDump | Mapping[str, t.ContainerValue]",
+                "p.HasModelDump | Mapping[str, object]",
                 cast("object", config),
             )
             result = u.get_parameter(config_cast, param_name)
@@ -392,7 +392,7 @@ class TestFlextUtilitiesConfiguration:
                 name=TestConfigConstants.TestValues.TEST_NAME,
             )
             config_cast = cast(
-                "p.HasModelDump | Mapping[str, t.ContainerValue]",
+                "p.HasModelDump | Mapping[str, object]",
                 cast("object", config),
             )
             with pytest.raises(FlextExceptions.NotFoundError) as exc_info:
@@ -432,7 +432,7 @@ class TestFlextUtilitiesConfiguration:
         def test_boundary_values(
             self,
             param_name: str,
-            expected_value: t.ContainerValue,
+            expected_value: object,
         ) -> None:
             """Test get_parameter with boundary values."""
             config_dict = self._create_boundary_dict()
@@ -460,7 +460,7 @@ class TestFlextUtilitiesConfiguration:
         def test_on_pydantic_model_success(
             self,
             param_name: str,
-            value: t.ContainerValue,
+            value: object,
             expected_success: bool,
         ) -> None:
             """Test set_parameter on Pydantic model with validation."""
@@ -494,7 +494,7 @@ class TestFlextUtilitiesConfiguration:
         def test_on_pydantic_model_validation_error(
             self,
             param_name: str,
-            value: t.ContainerValue,
+            value: object,
         ) -> None:
             """Test set_parameter handles Pydantic validation errors."""
             config = ConfigModelForTest(name=TestConfigConstants.TestValues.TEST_NAME)
@@ -511,7 +511,7 @@ class TestFlextUtilitiesConfiguration:
                 name=TestConfigConstants.TestValues.TEST_NAME,
                 value=TestConfigConstants.TestValues.TEST_VALUE,
             )
-            config_cast = cast("t.ContainerValue | object", config)
+            config_cast = cast("object", config)
             result = u.set_parameter(
                 config_cast,
                 TestConfigConstants.ParameterNames.VALUE.value,
@@ -540,7 +540,7 @@ class TestFlextUtilitiesConfiguration:
         def test_boundary_values(
             self,
             param_name: str,
-            value: t.ContainerValue,
+            value: object,
         ) -> None:
             """Test set_parameter with boundary values."""
             config = ConfigModelForTest(name=TestConfigConstants.TestValues.TEST_NAME)
@@ -572,7 +572,7 @@ class TestFlextUtilitiesConfiguration:
         def test_get_singleton_success(
             self,
             param_name: str,
-            expected_value: t.ContainerValue,
+            expected_value: object,
         ) -> None:
             """Test get_singleton from singleton class."""
             result = u.get_singleton(SingletonClassForTest, param_name)

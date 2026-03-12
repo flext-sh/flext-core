@@ -15,16 +15,16 @@ from jinja2 import (
 )
 
 from flext_core import r, s
-from flext_infra import c, m, t
+from flext_infra import c, m
 
 
 class _TemplateRenderer(Protocol):
-    def render(self, **kwargs: t.ContainerValue) -> str: ...
+    def render(self, **kwargs: object) -> str: ...
 
 
 def _render_template(
     template: _TemplateRenderer,
-    context: Mapping[str, t.ContainerValue],
+    context: Mapping[str, object],
 ) -> str:
     return template.render(**context)
 
@@ -77,7 +77,7 @@ class FlextInfraBaseMkTemplateEngine(s[str]):
     def render_all(self, config: m.Infra.Basemk.BaseMkConfig | None = None) -> r[str]:
         """Render all base.mk templates in order with the given configuration."""
         active_config = config or self._default_config()
-        context: Mapping[str, t.ContainerValue] = {
+        context: Mapping[str, object] = {
             c.Infra.ReportKeys.CONFIG: active_config,
             "lint_gates_csv": ",".join(active_config.lint_gates),
         }

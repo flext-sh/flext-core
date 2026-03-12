@@ -15,8 +15,6 @@ from flext_core import r
 from flext_infra.check.services import FlextInfraConfigFixer
 from flext_tests import tm
 
-from ...typings import t
-
 
 def _fake_process(
     _s: FlextInfraConfigFixer,
@@ -124,7 +122,7 @@ class TestProcessFileReadError:
 
         def _fake_fix(
             _s: FlextInfraConfigFixer,
-            _d: MutableMapping[str, t.ContainerValue],
+            _d: MutableMapping[str, object],
             _r: Path,
         ) -> list[str]:
             return ["fix1"]

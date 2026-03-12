@@ -24,7 +24,7 @@ import pytest
 import yaml
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import FlextConstants, FlextContainer, FlextLogger, FlextSettings, t
+from flext_core import FlextConstants, FlextContainer, FlextLogger, FlextSettings
 
 
 class ConfigTestCase(BaseModel):
@@ -33,10 +33,10 @@ class ConfigTestCase(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     test_name: str = Field(description="Configuration test case name")
-    config_data: dict[str, t.ContainerValue] = Field(
+    config_data: dict[str, object] = Field(
         description="Input configuration payload",
     )
-    expected_values: dict[str, t.ContainerValue] = Field(
+    expected_values: dict[str, object] = Field(
         default_factory=dict,
         description="Expected effective values",
     )

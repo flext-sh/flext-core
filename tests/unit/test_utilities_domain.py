@@ -42,13 +42,13 @@ def _build_domain_test_entity(
 
 
 def _convert_to_general_value(obj: object) -> t.Tests.ContainerValue:
-    """Convert object to t.ContainerValue (handles Pydantic models).
+    """Convert object to object (handles Pydantic models).
 
     Args:
         obj: Object to convert (Pydantic model, dict, list, or primitive)
 
     Returns:
-        t.ContainerValue-compatible value
+        object-compatible value
 
     """
     if isinstance(obj, BaseModel):
@@ -88,7 +88,7 @@ def _require_payload_mapping(
 
 
 def _as_test_payload(
-    value: t.ContainerValue | type[t.Primitives],
+    value: object | type[t.Primitives],
 ) -> t.Tests.ContainerValue:
     return cast("t.Tests.ContainerValue", value)
 
@@ -556,7 +556,7 @@ class TestuDomain:
         """Test validation with config that raises TypeError using u.Domain directly."""
         obj = u.Tests.BadObjects.BadConfigTypeError()
         try:
-            obj_value = cast("t.ContainerValue", cast("object", obj))
+            obj_value = cast("object", cast("object", obj))
             result = u.Domain.validate_value_object_immutable(obj_value)
             assert isinstance(result, bool)
         except TypeError:

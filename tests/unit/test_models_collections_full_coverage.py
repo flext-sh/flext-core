@@ -11,7 +11,7 @@ from typing import cast
 import pytest
 from pydantic import Field
 
-from flext_core import c, m, r, t, u
+from flext_core import c, m, r, u
 
 
 class _Stats(m.CollectionsStatistics):
@@ -25,7 +25,7 @@ class _Rules(m.Rules):
 
 class _Results(m.CollectionsResults):
     value: int | bool | None = None
-    data: dict[str, t.ContainerValue] = Field(default_factory=dict)
+    data: dict[str, object] = Field(default_factory=dict)
 
 
 def _default_tags() -> list[str]:
@@ -68,7 +68,7 @@ def test_rules_merge_combines_model_dump_values() -> None:
 def test_results_internal_conflict_paths_and_combine() -> None:
     merged_dict = _Results._merge_dicts(
         cast(
-            "list[t.ContainerValue]",
+            "list[object]",
             [{"ok": "v", "xs": [1, "a", object()]}, {"ys": [2, None, 3.5]}],
         ),
     )

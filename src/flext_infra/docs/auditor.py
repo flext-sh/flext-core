@@ -19,7 +19,7 @@ from pathlib import Path
 from pydantic import TypeAdapter, ValidationError
 
 from flext_core import FlextLogger, r
-from flext_infra import FlextInfraUtilitiesPatterns, c, m, output, t, u
+from flext_infra import FlextInfraUtilitiesPatterns, c, m, output, u
 from flext_infra.docs.shared import FlextInfraDocsShared
 
 logger = FlextLogger.create_module_logger(__name__)
@@ -61,10 +61,10 @@ class FlextInfraDocAuditor:
             return (None, {})
         default_budget = audit_gate_value.get("max_issues_default")
         by_scope_raw_value = audit_gate_value.get("max_issues_by_scope")
-        by_scope_raw: Mapping[str, t.ContainerValue] = {}
+        by_scope_raw: Mapping[str, object] = {}
         if isinstance(by_scope_raw_value, Mapping):
             try:
-                by_scope_raw = TypeAdapter(dict[str, t.ContainerValue]).validate_python(
+                by_scope_raw = TypeAdapter(dict[str, object]).validate_python(
                     by_scope_raw_value,
                     strict=True,
                 )
@@ -181,14 +181,14 @@ class FlextInfraDocAuditor:
             issues.extend(self.broken_link_issues(scope))
         if "forbidden-terms" in checks:
             issues.extend(self.forbidden_term_issues(scope))
-        summary: Mapping[str, t.ContainerValue] = {
+        summary: Mapping[str, object] = {
             c.Infra.ReportKeys.SCOPE: scope.name,
             "issues": len(issues),
             c.Infra.Verbs.CHECKS: sorted(checks),
             c.Infra.Modes.STRICT: strict,
             "report_dir": scope.report_dir.as_posix(),
         }
-        issues_payload: list[Mapping[str, t.ContainerValue]] = [
+        issues_payload: list[Mapping[str, object]] = [
             {
                 c.Infra.ReportKeys.FILE: issue.file,
                 "issue_type": issue.issue_type,
@@ -197,7 +197,7 @@ class FlextInfraDocAuditor:
             }
             for issue in issues
         ]
-        summary_payload: Mapping[str, t.ContainerValue] = {
+        summary_payload: Mapping[str, object] = {
             c.Infra.ReportKeys.SUMMARY: summary,
             "issues": issues_payload,
         }

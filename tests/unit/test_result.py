@@ -56,11 +56,11 @@ class ResultScenario(BaseModel):
 
     name: str = Field(description="Result scenario name")
     operation_type: ResultOperationType = Field(description="Result operation type")
-    value: t.ContainerValue = Field(description="Input value for result operation")
+    value: object = Field(description="Input value for result operation")
     is_success_expected: bool = Field(
         default=True, description="Expected success state"
     )
-    expected_result: t.ContainerValue | None = Field(
+    expected_result: object | None = Field(
         default=None,
         description="Optional expected result payload",
     )
@@ -69,10 +69,10 @@ class ResultScenario(BaseModel):
         self,
         name: str,
         operation_type: ResultOperationType,
-        value: t.ContainerValue,
+        value: object,
         *,
         is_success_expected: bool = True,
-        expected_result: t.ContainerValue | None = None,
+        expected_result: object | None = None,
     ) -> None:
         super().__init__(
             name=name,
@@ -216,7 +216,7 @@ class Testr:
         value = scenario.value
         is_success = scenario.is_success_expected
         if op_type == ResultOperationType.CREATION_SUCCESS:
-            creation_result: r[t.ContainerValue] = (
+            creation_result: r[object] = (
                 u.Tests.GenericHelpers.create_result_from_value(
                     value,
                     error_on_none="Value cannot be None",
@@ -225,19 +225,17 @@ class Testr:
             u.Tests.Result.assert_success_with_value(creation_result, value)
         elif op_type == ResultOperationType.CREATION_FAILURE:
             failure_result_raw = u.Tests.Result.create_failure_result(str(value))
-            failure_result: r[t.ContainerValue] = cast(
-                "r[t.ContainerValue]",
+            failure_result: r[object] = cast(
+                "r[object]",
                 failure_result_raw,
             )
             u.Tests.Result.assert_failure_with_error(failure_result, str(value))
         elif op_type == ResultOperationType.UNWRAP_OR:
             if is_success:
-                unwrap_result: r[t.ContainerValue] = (
-                    u.Tests.Result.create_success_result(value)
-                )
+                unwrap_result: r[object] = u.Tests.Result.create_success_result(value)
             else:
                 failure_raw = u.Tests.Result.create_failure_result(str(value))
-                unwrap_result = cast("r[t.ContainerValue]", failure_raw)
+                unwrap_result = cast("r[object]", failure_raw)
             default = "default"
             assert unwrap_result.unwrap_or(default) == (
                 value if is_success else default
@@ -248,20 +246,20 @@ class Testr:
             u.Tests.Result.assert_failure_with_error(mapped, str(value))
         elif op_type == ResultOperationType.FLAT_MAP:
             failure_raw = u.Tests.Result.create_failure_result(str(value))
-            flat_map_result: r[t.ContainerValue] = cast(
-                "r[t.ContainerValue]",
+            flat_map_result: r[object] = cast(
+                "r[object]",
                 failure_raw,
             )
             flat_mapped = flat_map_result.flat_map(lambda x: r[str].ok(f"value_{x}"))
             u.Tests.Result.assert_failure_with_error(flat_mapped, str(value))
         elif op_type == ResultOperationType.ALT:
             if is_success:
-                result_alt: r[t.ContainerValue] = u.Tests.Result.create_success_result(
+                result_alt: r[object] = u.Tests.Result.create_success_result(
                     value,
                 )
             else:
                 failure_raw = u.Tests.Result.create_failure_result(str(value))
-                result_alt = cast("r[t.ContainerValue]", failure_raw)
+                result_alt = cast("r[object]", failure_raw)
             alt_result = result_alt.map_error(lambda e: f"alt_{e}")
             if is_success:
                 u.Tests.Result.assert_success_with_value(alt_result, value)
@@ -280,12 +278,12 @@ class Testr:
                 u.Tests.Result.assert_success_with_value(lash_result, expected)
         elif op_type == ResultOperationType.OR_OPERATOR:
             if is_success:
-                result_or: r[t.ContainerValue] = u.Tests.Result.create_success_result(
+                result_or: r[object] = u.Tests.Result.create_success_result(
                     value,
                 )
             else:
                 failure_raw = u.Tests.Result.create_failure_result(str(value))
-                result_or = cast("r[t.ContainerValue]", failure_raw)
+                result_or = cast("r[object]", failure_raw)
             default = "default"
             assert result_or | default == (value if is_success else default)
 
@@ -578,15 +576,15 @@ class Testr:
             resource_created.append("created")
             return ["resource"]
 
-        def op(resource: list[str]) -> r[t.ContainerValue]:
+        def op(resource: list[str]) -> r[object]:
             resource.append("used")
-            return r[t.ContainerValue].ok("success")
+            return r[object].ok("success")
 
         def cleanup(resource: list[str]) -> None:
             resource_cleaned.append("cleaned")
             resource.clear()
 
-        result: r[t.ContainerValue] = r.with_resource(factory, op, cleanup)
+        result: r[object] = r.with_resource(factory, op, cleanup)
         _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value == "success"
         assert len(resource_created) == 1
@@ -639,7 +637,7 @@ class Testr:
 
     def test_error_data_property(self) -> None:
         """Test error_data property."""
-        error_data: dict[str, t.ContainerValue] = {"key": "value"}
+        error_data: dict[str, object] = {"key": "value"}
         result: r[str] = cast("r[str]", r.fail("error", error_data=error_data))
         assert result.error_data == m.ConfigMap(root=error_data)
         success = r[str].ok("test")
@@ -772,7 +770,7 @@ class Testr:
     def test_fold_different_return_types(self) -> None:
         """Test fold can return different types than input."""
         result: r[str] = r[str].ok("hello")
-        response: dict[str, t.ContainerValue] = result.fold(
+        response: dict[str, object] = result.fold(
             on_success=lambda v: {"status": 200, "data": v},
             on_failure=lambda e: {"status": 400, "error": e},
         )

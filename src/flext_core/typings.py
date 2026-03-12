@@ -62,31 +62,35 @@ class FlextTypes:
     Primitives: TypeAlias = str | int | float | bool
     Scalar: TypeAlias = str | int | float | bool | datetime
     Container: TypeAlias = str | int | float | bool | datetime | BaseModel | Path
+    type GeneralValueType = (
+        Scalar
+        | BaseModel
+        | Path
+        | Sequence[FlextTypes.GeneralValueType]
+        | Mapping[str, FlextTypes.GeneralValueType]
+        | type
+        | Callable[..., FlextTypes.GeneralValueType]
+        | None
+    )
     type Serializable = (
         Scalar | list[FlextTypes.Serializable] | dict[str, FlextTypes.Serializable]
-    )
-    type ContainerValue = (
-        Container
-        | Sequence[FlextTypes.ContainerValue]
-        | Mapping[str, FlextTypes.ContainerValue]
-        | None
     )
     type JsonValue = (
         Scalar | Sequence[FlextTypes.JsonValue] | Mapping[str, FlextTypes.JsonValue]
     )
     type JsonDict = Mapping[str, JsonValue]
-    type ConfigurationMapping = Mapping[str, ContainerValue]
+    type ConfigurationMapping = Mapping[str, GeneralValueType]
     type LazyExportType = tuple[str, str]
     type AnnotationMap = Mapping[str, LazyExportType]
     type RegisterableService = (
-        ContainerValue | BindableLogger | Callable[..., ContainerValue]
+        GeneralValueType | BindableLogger | Callable[..., GeneralValueType]
     )
     type FactoryCallable = Callable[[], RegisterableService]
-    type ResourceCallable = Callable[[], ContainerValue]
+    type ResourceCallable = Callable[[], GeneralValueType]
     type MetadataValue = Scalar | Mapping[str, Scalar | list[Scalar]] | list[Scalar]
     type MetadataAttributeValue = MetadataValue
-    type HandlerCallable = Callable[[ContainerValue], ContainerValue]
-    type HandlerLike = Callable[..., ContainerValue]
+    type HandlerCallable = Callable[[GeneralValueType], GeneralValueType]
+    type HandlerLike = Callable[..., GeneralValueType]
     type RegistrablePlugin = Scalar | BaseModel | Callable[..., Scalar | BaseModel]
     type ConstantValue = (
         Primitives
@@ -109,17 +113,9 @@ class FlextTypes:
     type MessageTypeSpecifier = str | type
     type IncEx = set[str] | Mapping[str, set[str] | bool]
     type TYPE_CHECKING = bool
-    type Dict = Mapping[str, ContainerValue]
+    type Dict = Mapping[str, GeneralValueType]
     type ModuleExport = (
-        type | ModuleType | Callable[..., ContainerValue] | ContainerValue
-    )
-    type GeneralValueType = (
-        Scalar
-        | Sequence[FlextTypes.GeneralValueType]
-        | Mapping[str, FlextTypes.GeneralValueType]
-        | type
-        | Callable[..., ContainerValue]
-        | None
+        type | ModuleType | Callable[..., GeneralValueType] | GeneralValueType
     )
 
     class Validation:

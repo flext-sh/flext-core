@@ -11,7 +11,7 @@ from typing import Protocol, cast, override, runtime_checkable
 
 import pytest
 
-from flext_core import c, m, p, r, t, u
+from flext_core import c, m, p, r, u
 
 
 @runtime_checkable
@@ -102,10 +102,7 @@ def test_implements_decorator_helper_methods_and_static_wrappers() -> None:
     assert implements(_NamedProtocol) is True
     assert get_protocols() == (_NamedProtocol,)
     assert p.is_protocol(_NamedProtocol) is True
-    assert (
-        p.check_implements_protocol(cast("t.ContainerValue", obj), _NamedProtocol)
-        is True
-    )
+    assert p.check_implements_protocol(cast("object", obj), _NamedProtocol) is True
 
 
 def test_check_implements_protocol_false_non_runtime_protocol() -> None:
@@ -119,10 +116,7 @@ def test_check_implements_protocol_false_non_runtime_protocol() -> None:
             return "thing"
 
     obj = _Thing()
-    assert (
-        p.check_implements_protocol(cast("t.ContainerValue", obj), _NotAProtocol)
-        is False
-    )
+    assert p.check_implements_protocol(cast("object", obj), _NotAProtocol) is False
 
 
 def test_protocol_base_name_methods_and_runtime_check_branch() -> None:
@@ -134,7 +128,7 @@ def test_protocol_base_name_methods_and_runtime_check_branch() -> None:
     runtime_obj = _OnlyRuntime()
     assert (
         p.check_implements_protocol(
-            cast("t.ContainerValue", runtime_obj),
+            cast("object", runtime_obj),
             _NamedProtocol,
         )
         is True

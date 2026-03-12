@@ -9,7 +9,7 @@ from typing import cast, override
 
 import pytest
 
-from flext_core import c, m, r, t, u
+from flext_core import c, m, r, u
 
 
 class _Color(StrEnum):
@@ -38,7 +38,7 @@ class _BadSequence:
         raise TypeError(msg)
 
 
-class _BadCopyDict(UserDict[str, t.ContainerValue]):
+class _BadCopyDict(UserDict[str, object]):
     @override
     def copy(self) -> _BadCopyDict:
         msg = "copy failed"
@@ -53,19 +53,19 @@ def test_find_mapping_no_match_and_merge_error_paths() -> None:
     not_found = u.Collection.find({"a": 1}, lambda value: value == 2)
     assert not_found.is_failure
     nested = u.Collection._merge_deep_single_key(
-        cast("dict[str, t.ContainerValue]", {"x": _BadCopyDict({"a": 1})}),
+        cast("dict[str, object]", {"x": _BadCopyDict({"a": 1})}),
         "x",
-        cast("t.ContainerValue", {"b": 2}),
+        cast("object", {"b": 2}),
     )
     assert nested.is_success
     deep = u.Collection.merge(
-        cast("dict[str, t.ContainerValue]", {"x": _BadCopyDict({"a": 1})}),
-        cast("dict[str, t.ContainerValue]", {"x": {"b": 2}}),
+        cast("dict[str, object]", {"x": _BadCopyDict({"a": 1})}),
+        cast("dict[str, object]", {"x": {"b": 2}}),
         strategy="deep",
     )
     assert deep.is_success
     broken = u.Collection.merge(
-        cast("dict[str, t.ContainerValue]", None),
+        cast("dict[str, object]", None),
         {"x": 1},
         strategy="deep",
     )
@@ -73,22 +73,22 @@ def test_find_mapping_no_match_and_merge_error_paths() -> None:
 
 
 def test_batch_fail_collect_flatten_and_progress() -> None:
-    def _success_list(_item: int) -> t.ContainerValue:
+    def _success_list(_item: int) -> object:
         return [1, 2]
 
-    def _failure_result(_item: int) -> t.ContainerValue:
+    def _failure_result(_item: int) -> object:
         msg = "err"
         raise ValueError(msg)
 
-    def _hard_failure(_item: int) -> t.ContainerValue:
+    def _hard_failure(_item: int) -> object:
         msg = "hard"
         raise ValueError(msg)
 
-    def _raise_value_error(_item: int) -> t.ContainerValue:
+    def _raise_value_error(_item: int) -> object:
         msg = "x"
         raise ValueError(msg)
 
-    def _identity(item: int) -> t.ContainerValue:
+    def _identity(item: int) -> object:
         return item
 
     flattened = u.Collection.batch(
@@ -126,8 +126,8 @@ def test_batch_fail_collect_flatten_and_progress() -> None:
 
 
 def test_process_outer_exception_and_coercion_branches() -> None:
-    processed: r[list[t.ContainerValue]] = u.Collection.process(
-        cast("list[t.ContainerValue]", _BadSequence()),
+    processed: r[list[object]] = u.Collection.process(
+        cast("list[object]", _BadSequence()),
         lambda x: x,
     )
     assert processed.is_failure
@@ -171,7 +171,7 @@ def test_collection_batch_failure_error_capture_and_parse_sequence_outer_error()
     assert failed.is_failure
 
     class _ExplodingMeta(type):
-        def __call__(cls, _value: t.ContainerValue) -> t.ContainerValue:
+        def __call__(cls, _value: object) -> object:
             msg = "parse exploded"
             raise ValueError(msg)
 

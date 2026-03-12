@@ -28,7 +28,7 @@ from typing import cast
 
 import pytest
 
-from flext_core import m, r, t
+from flext_core import m, r
 from flext_tests import t as tests_t, u
 from tests.constants import (
     TestsFlextConstants,
@@ -443,7 +443,7 @@ class TestuStringParser:
                 TestsFlextConstants.Delimiters.COMMA,
             )
             TestsFlextUtilities.Tests.CoreAssertions.assert_failure(
-                cast("r[t.ContainerValue]", result),
+                cast("r[object]", result),
                 TestsFlextConstants.TestErrors.FAILED_PARSE,
                 "exception handling",
             )
@@ -481,7 +481,7 @@ class TestuStringParser:
                 TestsFlextConstants.Delimiters.COMMA,
             )
             TestsFlextUtilities.Tests.CoreAssertions.assert_failure(
-                cast("r[t.ContainerValue]", result),
+                cast("r[object]", result),
                 TestsFlextConstants.TestErrors.FAILED_SPLIT,
                 "exception handling",
             )
@@ -519,7 +519,7 @@ class TestuStringParser:
             bad_str = cast("str", cast("object", bad_obj))
             result = parser.normalize_whitespace(bad_str)
             TestsFlextUtilities.Tests.CoreAssertions.assert_failure(
-                cast("r[t.ContainerValue]", result),
+                cast("r[object]", result),
                 TestsFlextConstants.TestErrors.FAILED_NORMALIZE,
                 "exception handling",
             )
@@ -550,7 +550,7 @@ class TestuStringParser:
             patterns: list[tuple[str, str] | tuple[str, str, int]] = [invalid_pattern]
             result = parser.apply_regex_pipeline("test", patterns)
             TestsFlextUtilities.Tests.CoreAssertions.assert_failure(
-                cast("r[t.ContainerValue]", result),
+                cast("r[object]", result),
                 TestsFlextConstants.TestErrors.FAILED_PIPELINE,
                 "exception handling",
             )
@@ -562,7 +562,7 @@ class TestuStringParser:
             ]
             result = parser.apply_regex_pipeline("test", patterns)
             TestsFlextUtilities.Tests.CoreAssertions.assert_failure(
-                cast("r[t.ContainerValue]", result),
+                cast("r[object]", result),
                 TestsFlextConstants.TestErrors.INVALID_REGEX,
                 "invalid pattern",
             )

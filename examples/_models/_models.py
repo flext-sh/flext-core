@@ -6,7 +6,7 @@ from typing import override
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import m, r, t
+from flext_core import m, r
 
 
 class Ex01ValidPersonPayload(BaseModel):
@@ -128,7 +128,7 @@ class Ex05GoodProcessor(BaseModel):
 
     @classmethod
     @override
-    def validate(cls, value: t.ContainerValue) -> Ex05GoodProcessor:
+    def validate(cls, value: object) -> Ex05GoodProcessor:
         """Validate processor payload."""
         return cls.model_validate(value)
 
@@ -157,11 +157,11 @@ class Ex10ProtocolHandler(BaseModel):
 
     model_config = ConfigDict(frozen=False)
 
-    def handle(self, message: t.ContainerValue) -> r[t.ContainerValue]:
+    def handle(self, message: object) -> r[object]:
         """Echo handled message."""
-        return r[t.ContainerValue].ok(message)
+        return r[object].ok(message)
 
-    def check_data(self, data: t.ContainerValue) -> r[bool]:
+    def check_data(self, data: object) -> r[bool]:
         """Check data is present."""
         return r[bool].ok(data is not None)
 
@@ -176,9 +176,9 @@ class Ex10ServiceStub(BaseModel):
         """Return service validity state."""
         return True
 
-    def execute(self) -> r[t.ContainerValue]:
+    def execute(self) -> r[object]:
         """Execute service action."""
-        return r[t.ContainerValue].ok(m.ConfigMap(root={"ok": True}))
+        return r[object].ok(m.ConfigMap(root={"ok": True}))
 
     def get_service_info(self) -> m.ConfigMap:
         """Return service metadata."""
@@ -194,15 +194,15 @@ class Ex10CommandBusStub(BaseModel):
 
     model_config = ConfigDict(frozen=False)
 
-    def dispatch(self, message: t.ContainerValue) -> r[t.ContainerValue]:
+    def dispatch(self, message: object) -> r[object]:
         """Dispatch command message."""
-        return r[t.ContainerValue].ok(message)
+        return r[object].ok(message)
 
-    def publish(self, event: t.ContainerValue) -> None:
+    def publish(self, event: object) -> None:
         """Publish event message."""
         del event
 
-    def register_handler(self, _handler: t.ContainerValue) -> r[bool]:
+    def register_handler(self, _handler: object) -> r[bool]:
         """Register a command handler."""
         return r[bool].ok(True)
 
@@ -254,15 +254,15 @@ class Ex11CommandBusStub(BaseModel):
 
     model_config = ConfigDict(frozen=False)
 
-    def dispatch(self, message: t.ContainerValue) -> r[t.ContainerValue]:
+    def dispatch(self, message: object) -> r[object]:
         """Dispatch message."""
-        return r[t.ContainerValue].ok(message)
+        return r[object].ok(message)
 
-    def publish(self, _event: t.ContainerValue) -> None:
+    def publish(self, _event: object) -> None:
         """Publish event."""
         return
 
-    def register_handler(self, _handler: t.ContainerValue) -> r[bool]:
+    def register_handler(self, _handler: object) -> r[bool]:
         """Register handler."""
         return r[bool].ok(True)
 

@@ -11,7 +11,7 @@ from typing import cast
 
 import pytest
 
-from flext_core import r, t
+from flext_core import r
 from tests import m
 from tests.conftest import test_framework
 from tests.test_utils import assertion_helpers, fixture_factory
@@ -138,15 +138,15 @@ class TestAutomatedFlextDecorators:
             cleanup_result = cleanup()
             if cleanup_result:
                 _ = assertion_helpers.assert_flext_result_success(
-                    cast("r[t.ContainerValue]", cleanup_result),
+                    cast("r[object]", cleanup_result),
                     "FlextDecorators cleanup failed",
                 )
 
     def _execute_decorators_operation(
         self,
         instance: object,
-        input_data: Mapping[str, t.ContainerValue],
-    ) -> r[t.ContainerValue]:
+        input_data: Mapping[str, object],
+    ) -> r[object]:
         """Execute a test operation on decorators instance.
 
         This method should be customized based on the actual decorators API.
@@ -155,16 +155,16 @@ class TestAutomatedFlextDecorators:
         try:
             process = getattr(instance, "process", None)
             if callable(process):
-                return cast("r[t.ContainerValue]", process(dict(input_data)))
+                return cast("r[object]", process(dict(input_data)))
             execute = getattr(instance, "execute", None)
             if callable(execute):
-                return cast("r[t.ContainerValue]", execute(dict(input_data)))
+                return cast("r[object]", execute(dict(input_data)))
             handle = getattr(instance, "handle", None)
             if callable(handle):
-                return cast("r[t.ContainerValue]", handle(dict(input_data)))
-            return r[t.ContainerValue].ok(cast("t.ContainerValue", instance))
+                return cast("r[object]", handle(dict(input_data)))
+            return r[object].ok(cast("object", instance))
         except Exception as e:
-            return r[t.ContainerValue].fail(f"FlextDecorators operation failed: {e}")
+            return r[object].fail(f"FlextDecorators operation failed: {e}")
 
     @pytest.fixture
     def test_decorators_instance(self) -> object:

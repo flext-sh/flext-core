@@ -21,7 +21,6 @@ from flext_tests import tm
 
 from ...helpers import h
 from ...models import m
-from ...typings import t
 
 RunCallable = Callable[
     [list[str], Path, int, dict[str, str] | None], m.Infra.Core.CommandOutput
@@ -159,7 +158,7 @@ class TestRunCommand:
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
 
         def _fake_run_raw(
-            _self: t.ContainerValue, _cmd: list[str], **_kw: t.ContainerValue
+            _self: object, _cmd: list[str], **_kw: object
         ) -> r[m.Infra.Core.CommandOutput]:
             return r[m.Infra.Core.CommandOutput].ok(
                 m.Infra.Core.CommandOutput(stdout="output", stderr="", exit_code=0)
@@ -176,7 +175,7 @@ class TestRunCommand:
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
 
         def _fake_run_raw(
-            _self: t.ContainerValue, _cmd: list[str], **_kw: t.ContainerValue
+            _self: object, _cmd: list[str], **_kw: object
         ) -> r[m.Infra.Core.CommandOutput]:
             return r[m.Infra.Core.CommandOutput].fail("execution failed")
 

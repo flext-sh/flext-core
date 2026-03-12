@@ -730,9 +730,7 @@ class FlextDecorators:
                 try:
                     retry_args = tuple(m.ObjectList.model_validate(list(args)).root)
                     retry_kwargs_map = m.ConfigMap.model_validate(dict(kwargs))
-                    retry_kwargs: Mapping[str, t.ContainerValue] = dict(
-                        retry_kwargs_map.items()
-                    )
+                    retry_kwargs: Mapping[str, object] = dict(retry_kwargs_map.items())
                     retry_result = FlextDecorators._execute_retry_loop(
                         retry_func,
                         retry_args,
@@ -827,8 +825,8 @@ class FlextDecorators:
     @staticmethod
     def _execute_retry_loop(
         func: Callable[..., R],
-        args: tuple[t.ContainerValue, ...],
-        kwargs: Mapping[str, t.ContainerValue],
+        args: tuple[object, ...],
+        kwargs: Mapping[str, object],
         logger: FlextLogger,
         *,
         retry_config: m.RetryConfiguration | None = None,
@@ -951,7 +949,7 @@ class FlextDecorators:
         )
 
     @staticmethod
-    def _has_flext_logger(value: t.ContainerValue) -> TypeGuard[_HasLogger]:
+    def _has_flext_logger(value: object) -> TypeGuard[_HasLogger]:
         if not hasattr(value, "logger"):
             return False
         logger_value = getattr(value, "logger", None)

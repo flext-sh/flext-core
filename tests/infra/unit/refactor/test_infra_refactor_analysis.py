@@ -71,7 +71,7 @@ def test_violation_analysis_counts_massive_patterns(tmp_path: Path) -> None:
     src_dir.mkdir(parents=True)
     target_file = src_dir / "sample.py"
     target_file.write_text(
-        'from typing import Mapping, cast\nfrom flext_core.models import User\n\ndef f(data: dict[str, t.ContainerValue]) -> dict[str, t.ContainerValue]:\n    value = cast("m.ConfigMap", data)\n    return value\n',
+        'from typing import Mapping, cast\nfrom flext_core.models import User\n\ndef f(data: dict[str, object]) -> dict[str, object]:\n    value = cast("m.ConfigMap", data)\n    return value\n',
         encoding="utf-8",
     )
     engine = FlextInfraRefactorEngine(config_path=config_path)

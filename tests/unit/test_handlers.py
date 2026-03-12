@@ -68,7 +68,7 @@ class HandlerConfigScenario(BaseModel):
     max_command_retries: int | None = Field(
         default=None, description="Maximum retry count"
     )
-    metadata: dict[str, t.ContainerValue] | None = Field(
+    metadata: dict[str, object] | None = Field(
         default=None, description="Handler metadata payload"
     )
 
@@ -261,15 +261,15 @@ class TestFlextHandlers:
         assert isinstance(handler, x)
 
     def test_handlers_run_pipeline_with_dict_message_command_id(self) -> None:
-        """Test _run_pipeline with dict[str, t.ContainerValue] message having command_id."""
+        """Test _run_pipeline with dict[str, object] message having command_id."""
 
-        class DictHandler(h[dict[str, t.ContainerValue], str]):
+        class DictHandler(h[dict[str, object], str]):
             @override
             def __init__(self, config: m.Handler) -> None:
                 super().__init__(config=config)
 
             @override
-            def handle(self, message: dict[str, t.ContainerValue]) -> r[str]:
+            def handle(self, message: dict[str, object]) -> r[str]:
                 return r[str].ok(f"processed_{message}")
 
         config_raw = FlextTestsUtilities.Tests.HandlerHelpers.create_handler_config(
@@ -280,7 +280,7 @@ class TestFlextHandlers:
         )
         config = config_raw
         handler = DictHandler(config=config)
-        dict_message: dict[str, t.ContainerValue] = {
+        dict_message: dict[str, object] = {
             "command_id": "cmd_123",
             "data": "test_data",
         }
@@ -546,7 +546,7 @@ class TestFlextHandlers:
             "Test Push Context",
         )
         handler = ConcreteTestHandler(config=config)
-        context_typed: dict[str, t.ContainerValue] = {
+        context_typed: dict[str, object] = {
             "user_id": "123",
             "operation": "test",
         }

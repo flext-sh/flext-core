@@ -14,7 +14,7 @@ from operator import itemgetter
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from flext_infra import c, m, t, u
+from flext_infra import c, m, u
 from flext_infra.refactor.analysis import FlextInfraRefactorViolationAnalyzer
 from flext_infra.refactor.mro_resolver import FlextInfraRefactorMROMigrationScanner
 
@@ -31,7 +31,7 @@ class PostCheckGate:
     def validate(
         self,
         result: m.Infra.Refactor.Result,
-        expected: Mapping[str, t.ContainerValue],
+        expected: Mapping[str, object],
     ) -> tuple[bool, list[str]]:
         """Validate a refactor result against expected post-checks and gates."""
         errors: list[str] = []
@@ -124,7 +124,7 @@ class FlextInfraRefactorRuleDefinitionValidator:
 
     def validate_rule_definition(
         self,
-        rule_def: Mapping[str, t.ContainerValue],
+        rule_def: Mapping[str, object],
     ) -> str | None:
         """Validate a rule definition and return error message if invalid."""
         rule_id = str(rule_def.get(c.Infra.ReportKeys.ID, c.Infra.Defaults.UNKNOWN))

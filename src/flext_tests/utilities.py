@@ -94,7 +94,7 @@ def _to_payload(value: object) -> t.Tests.ContainerValue:
     return str(value)
 
 
-def _to_config_map_value(value: t.Tests.ContainerValue) -> core_t.ContainerValue:
+def _to_config_map_value(value: t.Tests.ContainerValue) -> core_object:
     """Convert ContainerValue to ContainerValue."""
     if value is None or isinstance(value, t.Primitives | BaseModel):
         return value
@@ -315,7 +315,7 @@ class FlextTestsUtilities(FlextUtilities):
             @staticmethod
             @contextmanager
             def temporary_attribute(
-                target: t.ContainerValue, attribute: str, value: t.Tests.ContainerValue
+                target: object, attribute: str, value: t.Tests.ContainerValue
             ) -> Generator[None]:
                 """Temporarily set attribute on target object.
 

@@ -34,7 +34,6 @@ from flext_core import (
     m,
     r,
     s,
-    t,
     u,
 )
 
@@ -215,7 +214,7 @@ def main() -> None:
     result = service.execute()
     if result.is_success:
         data = result.value
-        root_data: dict[str, t.ContainerValue] = data.root
+        root_data: dict[str, object] = data.root
         components = root_data.get("components_integrated", [])
         total = root_data.get("total_components", 0)
         if isinstance(components, (list, tuple)) and isinstance(total, int):

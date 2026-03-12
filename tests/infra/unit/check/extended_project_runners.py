@@ -19,7 +19,6 @@ from flext_infra.check.services import (
 from flext_tests import tm
 
 from ...models import m
-from ...typings import t
 
 
 def _make_gate_exec(
@@ -79,9 +78,7 @@ class TestJsonWriteFailure:
         (proj_dir / "pyproject.toml").write_text("[tool.poetry]\n")
 
         class _FakeJson:
-            def write_json(
-                self, *_a: t.ContainerValue, **_kw: t.ContainerValue
-            ) -> r[bool]:
+            def write_json(self, *_a: object, **_kw: object) -> r[bool]:
                 return r[bool].fail("write error")
 
         monkeypatch.setattr(checker, "_json", _FakeJson())
