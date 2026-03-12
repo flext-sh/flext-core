@@ -340,7 +340,7 @@ class FlextUtilitiesConversion:
 
     @staticmethod
     def narrow[T](value: object, type_cls: type[T]) -> T:
-        """Narrow *value* to *type_cls*, attempting coercion if needed.
+        """Narrow *value* to *type_cls*, attempting coercion via Pydantic validation.
 
         Args:
             value: Value to narrow
@@ -352,7 +352,8 @@ class FlextUtilitiesConversion:
         """
         if isinstance(value, type_cls):
             return value
-        return type_cls(value)  # type: ignore[call-arg]
+        adapter: TypeAdapter[T] = TypeAdapter(type_cls)
+        return adapter.validate_python(value)
 
 
 __all__ = ["FlextUtilitiesConversion"]
