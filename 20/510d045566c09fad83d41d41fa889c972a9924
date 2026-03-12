@@ -1,0 +1,23 @@
+src/flext_core/_models/collections.py
+  bdf88880ee83350f 221,223,232,235,261-266,281,286,300,302,304-307,312
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.10",
+  "base_commit_sha": "20510d045566c09fad83d41d41fa889c972a9924",
+  "prompts": {
+    "bdf88880ee83350f": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_31d14a269ffe7kqo41fOt8jbRO",
+        "model": "anthropic/claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 30,
+      "total_deletions": 54,
+      "accepted_lines": 19,
+      "overriden_lines": 1
+    }
+  }
+}
