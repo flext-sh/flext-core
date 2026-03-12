@@ -19,7 +19,7 @@ from pydantic import BaseModel, InstanceOf
 from flext_core import FlextTypes, m, r
 
 type _Testobject = (
-    t.Primitives
+    FlextTypes.Primitives
     | None
     | bytes
     | datetime
@@ -429,17 +429,15 @@ class FlextTestsTypes(FlextTypes):
         ) -> TypeGuard[Sequence[FlextTestsTypes.Tests.Testobject]]:
             """Check if value is a payload sequence."""
             return isinstance(value, (list, tuple)) and (
-                not isinstance(value, str | bytes)
+                not isinstance(value, (str, bytes))
             )
 
         @staticmethod
-        def is_test_result_value(
-            value: FlextTestsTypes.Tests.Testobject,
-        ) -> TypeGuard[FlextTestsTypes.Tests.TestResultValue]:
+        def is_test_result_value(value: object) -> bool:
             """Check if value is a valid TestResultValue."""
             if value is None:
                 return True
-            if isinstance(value, t.PRIMITIVES_TYPES):
+            if isinstance(value, (str, int, float, bool)):
                 return True
             if isinstance(value, (list, tuple)):
                 return True
