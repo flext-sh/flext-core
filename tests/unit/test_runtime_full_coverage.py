@@ -290,7 +290,9 @@ def test_normalization_edge_branches() -> None:
     normalized_dict_like = FlextRuntime.normalize_to_container(
         cast("object", DictLike()),
     )
-    assert hasattr(normalized_dict_like, "root") and normalized_dict_like.root == {"x": 1}
+    assert hasattr(normalized_dict_like, "root") and normalized_dict_like.root == {
+        "x": 1
+    }
     # normalize_to_metadata delegates to normalize_to_container
     # ConfigMap is BaseModel → returned as-is
     metadata_cfg = FlextRuntime.normalize_to_metadata(cfg)
@@ -311,7 +313,9 @@ def test_deprecated_normalize_to_general_value_warns() -> None:
     """Verify deprecated normalize_to_general_value emits DeprecationWarning."""
     # COMPATIBILITY: normalize_to_general_value deprecated → use normalize_to_container
     # Planned removal: v0.12
-    with pytest.warns(DeprecationWarning, match="normalize_to_general_value is deprecated"):
+    with pytest.warns(
+        DeprecationWarning, match="normalize_to_general_value is deprecated"
+    ):
         result = FlextRuntime.normalize_to_general_value("hello")
     assert result == "hello"
 
@@ -320,7 +324,9 @@ def test_deprecated_normalize_to_metadata_value_warns() -> None:
     """Verify deprecated normalize_to_metadata_value emits DeprecationWarning."""
     # COMPATIBILITY: normalize_to_metadata_value deprecated → use normalize_to_metadata
     # Planned removal: v0.12
-    with pytest.warns(DeprecationWarning, match="normalize_to_metadata_value is deprecated"):
+    with pytest.warns(
+        DeprecationWarning, match="normalize_to_metadata_value is deprecated"
+    ):
         result = FlextRuntime.normalize_to_metadata_value(42)
     assert result is not None
 
@@ -691,6 +697,7 @@ def test_config_bridge_and_trace_context_and_http_validation() -> None:
     # ensure_trace_context catches RuntimeError internally for bad mappings
     bad_trace = FlextRuntime.ensure_trace_context(cast("object", BadDict()))
     assert "trace_id" in bad_trace  # graceful fallback
+    assert "span_id" in bad_trace
     trace_from_mapping = FlextRuntime.ensure_trace_context(MappingProxyType({"a": "b"}))
     assert "trace_id" in trace_from_mapping
     trace_from_other = FlextRuntime.ensure_trace_context(Path())
@@ -855,12 +862,12 @@ def test_configure_structlog_print_logger_factory_fallback(
 def test_dependency_integration_and_wiring_paths() -> None:
     bridge, services, resources = (
         FlextRuntime.DependencyIntegration.create_layered_bridge(
-            config=m.ConfigMap(root={"db": {"dsn": "sqlite://"}}),
+            config=m.ConfigMap(root={"db": m.Dict(root={"dsn": "sqlite://"})}),
         )
     )
     assert bridge is not None and services is not None and (resources is not None)
     di = FlextRuntime.DependencyIntegration.create_container(
-        config=m.ConfigMap(root={"feature": {"enabled": True}}),
+        config=m.ConfigMap(root={"feature": m.Dict(root={"enabled": True})}),
         services={"svc": 1},
         factories={"factory": lambda: 2},
         resources={"resource": lambda: {"ok": True}},
@@ -875,7 +882,7 @@ def test_dependency_integration_and_wiring_paths() -> None:
     provider = runtime_module.providers.Configuration()
     FlextRuntime.DependencyIntegration.bind_configuration_provider(
         provider,
-        m.ConfigMap(root={"api": {"url": "x"}}),
+        m.ConfigMap(root={"api": m.Dict(root={"url": "x"})}),
     )
     assert provider.api.url() == "x"
 
