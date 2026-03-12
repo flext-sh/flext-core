@@ -466,20 +466,16 @@ class FlextDecorators:
                         logger.debug(
                             "%s_started",
                             op_name,
-                            extra={
-                                "function": func.__name__,
-                                "func_module": func.__module__,
-                                "correlation_id": correlation_id,
-                            },
+                            function=func.__name__,
+                            func_module=func.__module__,
+                            correlation_id=correlation_id,
                         )
                     else:
                         logger.debug(
                             "%s_started",
                             op_name,
-                            extra={
-                                "function": func.__name__,
-                                "func_module": func.__module__,
-                            },
+                            function=func.__name__,
+                            func_module=func.__module__,
                         )
                     result = func(*args, **kwargs)
                     completion_extra: dict[str, t.Scalar] = {
@@ -494,7 +490,7 @@ class FlextDecorators:
                             duration * c.MILLISECONDS_MULTIPLIER
                         )
                         completion_extra["duration_seconds"] = duration
-                    logger.debug("%s_completed", op_name, extra=dict(completion_extra))
+                    logger.debug("%s_completed", op_name, **completion_extra)
                     return result
                 except (
                     AttributeError,
@@ -900,14 +896,13 @@ class FlextDecorators:
             fallback_logger = logger.logger if hasattr(logger, "logger") else None
             if fallback_logger is None or not hasattr(fallback_logger, "warning"):
                 return
-            fallback_kwargs = m.ConfigMap(root=dict(kwargs.root))
+            fallback_kwargs = m.ConfigMap(root=kwargs.root)
             _ = fallback_kwargs.setdefault("extra", {})
             extra_payload_raw = fallback_kwargs["extra"]
-            extra_payload = (
-                m.ConfigMap(root=dict(extra_payload_raw))
-                if FlextRuntime.is_dict_like(extra_payload_raw)
-                else m.ConfigMap(root={})
-            )
+            extra_dict: dict[str, object] = {}
+            if FlextRuntime.is_dict_like(extra_payload_raw):
+                extra_dict = dict(extra_payload_raw)
+            extra_payload = m.ConfigMap(root=extra_dict)
             if FlextRuntime.is_dict_like(extra_payload):
                 extra_payload["log_error"] = result.error
                 extra_payload["log_error_code"] = result.error_code
@@ -915,9 +910,11 @@ class FlextDecorators:
             else:
                 fallback_kwargs["log_error"] = result.error
                 fallback_kwargs["log_error_code"] = result.error_code
-            _ = fallback_logger.warning(
-                fallback_message, **cast(dict[str, t.Container], fallback_kwargs.root)
-            )
+            filtered_kwargs: dict[str, t.Container | Exception] = {}
+            for key, value in fallback_kwargs.root.items():
+                if u.Guards.is_scalar(value) or isinstance(value, Exception):
+                    filtered_kwargs[key] = value
+            _ = fallback_logger.warning(fallback_message, **filtered_kwargs)
 
     @staticmethod
     def _handle_retry_exhaustion(
