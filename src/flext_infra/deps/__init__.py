@@ -32,13 +32,6 @@ if TYPE_CHECKING:
         EnsureRuffConfigPhase,
         InjectCommentsPhase,
     )
-    from flext_infra.deps._phases.ensure_formatting import EnsureFormattingToolingPhase
-    from flext_infra.deps._phases.ensure_mypy import EnsureMypyConfigPhase
-    from flext_infra.deps._phases.ensure_namespace import EnsureNamespaceToolingPhase
-    from flext_infra.deps._phases.ensure_pydantic_mypy import (
-        EnsurePydanticMypyConfigPhase,
-    )
-    from flext_infra.deps._phases.ensure_ruff import EnsureRuffConfigPhase
     from flext_infra.deps.detection import (
         FlextInfraDependencyDetectionService,
         FlextInfraDependencyDetectionService as s,
@@ -76,6 +69,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "EnsurePyrightConfigPhase": (
         "flext_infra.deps._phases",
         "EnsurePyrightConfigPhase",
+    ),
     "EnsureNamespaceToolingPhase": (
         "flext_infra.deps._phases.ensure_namespace",
         "EnsureNamespaceToolingPhase",
@@ -83,6 +77,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "EnsurePytestConfigPhase": (
         "flext_infra.deps._phases",
         "EnsurePytestConfigPhase",
+    ),
     "EnsurePydanticMypyConfigPhase": (
         "flext_infra.deps._phases.ensure_pydantic_mypy",
         "EnsurePydanticMypyConfigPhase",
@@ -129,15 +124,20 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
 }
 
 __all__ = [
+    "ConsolidateGroupsPhase",
     "EnsureFormattingToolingPhase",
     "EnsureMypyConfigPhase",
     "EnsureNamespaceToolingPhase",
     "EnsurePydanticMypyConfigPhase",
+    "EnsurePyreflyConfigPhase",
+    "EnsurePyrightConfigPhase",
+    "EnsurePytestConfigPhase",
     "EnsureRuffConfigPhase",
     "FlextInfraDependencyDetectionService",
     "FlextInfraInternalDependencySyncService",
     "FlextInfraPyprojectModernizer",
     "FlextInfraRuntimeDevDependencyDetector",
+    "InjectCommentsPhase",
     "build_project_report",
     "classify_issues",
     "discover_project_paths",

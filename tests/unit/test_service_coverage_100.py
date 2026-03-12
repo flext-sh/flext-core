@@ -12,16 +12,9 @@ from __future__ import annotations
 from typing import override
 
 from flext_core import r, s, t
-from flext_tests import FlextTestsDomains
-
-TestDomainResult = FlextTestsDomains.TestDomainResult
 
 
 class TestService(s[str]):
-<<<<<<< Updated upstream
-class TestService(s[str]):
-=======
->>>>>>> Stashed changes
     """Test service for coverage tests."""
 
     __test__ = False
@@ -32,22 +25,11 @@ class TestService(s[str]):
 
     @override
     def execute(self, **_kwargs: t.ContainerValue) -> r[str]:
-<<<<<<< Updated upstream
-    def execute(self, **_kwargs: t.ContainerValue) -> r[str]:
-        """Execute service."""
-        return self.ok("success")
-        return self.ok("success")
-
-
-class TestServiceWithValidation(s[str]):
-class TestServiceWithValidation(s[str]):
-=======
         """Execute service."""
         return self.ok("success")
 
 
 class TestServiceWithValidation(s[str]):
->>>>>>> Stashed changes
     """Test service with validation."""
 
     __test__ = False
@@ -58,15 +40,8 @@ class TestServiceWithValidation(s[str]):
 
     @override
     def execute(self, **_kwargs: t.ContainerValue) -> r[str]:
-<<<<<<< Updated upstream
-    def execute(self, **_kwargs: t.ContainerValue) -> r[str]:
         """Execute service."""
         return self.ok("validated")
-        return self.ok("validated")
-=======
-        """Execute service."""
-        return self.ok("validated")
->>>>>>> Stashed changes
 
 
 class TestService100Coverage:
@@ -96,22 +71,14 @@ class TestService100Coverage:
         """Test execute method."""
         service = TestService()
         result = service.execute()
-<<<<<<< Updated upstream
         assert result.is_success
-=======
-        _ = assertion_helpers.assert_flext_result_success(result)
->>>>>>> Stashed changes
         assert isinstance(result.value, str)
 
     def test_ok_method(self) -> None:
         """Test ok method."""
         service = TestService()
         result = service.ok("test")
-<<<<<<< Updated upstream
         assert result.is_success
-=======
-        _ = assertion_helpers.assert_flext_result_success(result)
->>>>>>> Stashed changes
         assert result.value == "test"
 
     def test_result_property(self) -> None:
@@ -119,10 +86,6 @@ class TestService100Coverage:
         service = TestService()
         result = service.result
         assert isinstance(result, str)
-<<<<<<< Updated upstream
-        assert isinstance(result, str)
-=======
->>>>>>> Stashed changes
 
     def test_auto_execute_false(self) -> None:
         """Test auto_execute when False."""
