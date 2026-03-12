@@ -54,7 +54,7 @@ def _to_scalar(value: object) -> core_t.Scalar:
         ScalarValue (str | int | float | bool | datetime | None)
 
     """
-    if isinstance(value, t.Primitives):
+    if isinstance(value, t.PRIMITIVES_TYPES):
         return value
     return str(value)
 
@@ -70,7 +70,7 @@ def _to_payload(value: object) -> t.Tests.object:
 
     """
     if value is None or isinstance(
-        value, t.Primitives | bytes | datetime | Path | BaseModel
+        value, (*t.PRIMITIVES_TYPES, bytes, datetime, Path, BaseModel)
     ):
         return value
     if isinstance(value, Mapping):
@@ -96,7 +96,7 @@ def _to_payload(value: object) -> t.Tests.object:
 
 def _to_config_map_value(value: t.Tests.object) -> t.Container:
     """Convert value to container."""
-    if value is None or isinstance(value, t.Primitives | BaseModel):
+    if value is None or isinstance(value, (*t.PRIMITIVES_TYPES, BaseModel)):
         return value
     if isinstance(value, bytes):
         return value.decode(errors="ignore")

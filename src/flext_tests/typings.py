@@ -439,7 +439,7 @@ class FlextTestsTypes(FlextTypes):
             """Check if value is a valid TestResultValue."""
             if value is None:
                 return True
-            if isinstance(value, t.Primitives):
+            if isinstance(value, t.PRIMITIVES_TYPES):
                 return True
             if isinstance(value, (list, tuple)):
                 return True

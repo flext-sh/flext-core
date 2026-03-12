@@ -16,6 +16,7 @@ import inspect
 import time
 import traceback
 import types
+import warnings
 from collections.abc import Iterator, Mapping
 from contextlib import contextmanager, suppress
 from pathlib import Path
@@ -987,73 +988,43 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         bound_logger = self.logger.unbind(*keys)
         return self.__class__.create_bound_logger(self.name, bound_logger)
 
-    @overload
-    def info(
-        self,
-        msg: str | object,
-        *args: object | Exception,
-        _return_result: Literal[False] = ...,
-        **kw: t.Container | Exception | bool | None,
-    ) -> None: ...
-
-    @overload
-    def info(
-        self,
-        msg: str | object,
-        *args: object | Exception,
-        _return_result: Literal[True],
-        **kw: t.Container | Exception | bool | None,
-    ) -> r[bool]: ...
+    def try_unbind(self, *keys: str) -> Self:
+        """Unbind keys in safe mode (deprecated compatibility helper)."""
+        warnings.warn(
+            "FlextLogger.try_unbind is deprecated; use unbind(*keys, safe=True). "
+            "Planned removal: v0.12.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.unbind(*keys, safe=True)
 
     @override
     def info(
         self,
-        msg: str | object,
-        *args: object | Exception,
-        _return_result: bool = False,
-        **kw: t.Scalar,
+        msg: str,
+        *args: t.Container,
+        **kw: t.Container | Exception,
     ) -> r[bool] | None:
         """Log info message - Logger.Log implementation."""
         return self._log_standard_level(
             c.Settings.LogLevel.INFO,
             msg,
             *args,
-            _return_result=_return_result,
             **kw,
         )
-
-    @overload
-    def warning(
-        self,
-        msg: str | object,
-        *args: object | Exception,
-        _return_result: Literal[False] = ...,
-        **kw: t.Container | Exception | bool | None,
-    ) -> None: ...
-
-    @overload
-    def warning(
-        self,
-        msg: str | object,
-        *args: object | Exception,
-        _return_result: Literal[True],
-        **kw: t.Container | Exception | bool | None,
-    ) -> r[bool]: ...
 
     @override
     def warning(
         self,
-        msg: str | object,
-        *args: object | Exception,
-        _return_result: bool = False,
-        **kw: t.Scalar,
+        msg: str,
+        *args: t.Container,
+        **kw: t.Container | Exception,
     ) -> r[bool] | None:
         """Log warning message - Logger.Log implementation."""
         return self._log_standard_level(
             c.Settings.LogLevel.WARNING,
             msg,
             *args,
-            _return_result=_return_result,
             **kw,
         )
 
@@ -1090,7 +1061,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
                 case _:
                     level_raw = str(_level)
             level_str = level_raw.lower()
-            scalar_context = FlextLogger._to_container_context(context)
+            scalar_context = FlextLogger._to_scalar_context(context)
             getattr(self.logger, level_str)(formatted_message, **scalar_context)
             return r[bool].ok(value=True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
@@ -1099,14 +1070,13 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
     def _log_standard_level(
         self,
         level: c.Settings.LogLevel,
-        msg: str | object,
-        *args: object | Exception,
-        _return_result: bool = False,
-        **kw: t.Container | Exception | bool | None,
+        msg: str,
+        *args: t.Container,
+        **kw: t.Container | Exception,
     ) -> r[bool] | None:
-        message = str(msg)
-        filtered_args: tuple[t.Container, ...] = tuple(
-            FlextRuntime.normalize_to_general_value(arg)
+        message = msg
+        filtered_args: tuple[t.Scalar, ...] = tuple(
+            FlextLogger._to_scalar_value(arg)
             for arg in args
             if not isinstance(arg, BaseException)
         )
@@ -1150,13 +1120,11 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             if is_success:
                 _ = self.logger.info(
                     f"{self._operation_name} {status}",
-                    _return_result=False,
                     **FlextLogger._to_container_context(context.root),
                 )
             else:
                 _ = self.logger.error(
                     f"{self._operation_name} {status}",
-                    _return_result=False,
                     **FlextLogger._to_container_context(context.root),
                 )
 

@@ -14,7 +14,7 @@ from flext_core import FlextLogger, FlextRuntime, FlextSettings, c, m, p, r, t, 
 
 class _FakeBindable:
     def __init__(self) -> None:
-        self.calls: list[tuple[str, tuple[object, ...], dict[str, object]]] = []
+        self.calls: list[tuple[str, tuple[object, ...], dict[str, t.Scalar]]] = []
 
     def bind(self, **kwargs: t.Scalar) -> _FakeBindable:
         self.calls.append(("bind", (), kwargs))
@@ -337,6 +337,8 @@ def test_loggings_exception_and_adapter_paths(monkeypatch: pytest.MonkeyPatch) -
         pass
     tracker.__exit__(RuntimeError, RuntimeError("x"), None)
     assert logger.unbind("missing", safe=True)
+    with pytest.warns(DeprecationWarning, match="try_unbind"):
+        assert logger.try_unbind("missing")
 
 
 def test_loggings_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> None:

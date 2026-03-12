@@ -1750,13 +1750,10 @@ if TYPE_CHECKING:
     )
     from tests.unit.test_result import Testr
     from tests.unit.test_result_additional import (
-        ExplodingGetattr,
         test_create_from_callable_and_repr,
-        test_data_alias_matches_value,
         test_flow_through_short_circuits_on_failure,
         test_map_error_identity_and_transform,
         test_ok_raises_on_none,
-        test_to_io_result_failure_path,
         test_with_resource_cleanup_runs,
     )
     from tests.unit.test_result_coverage_100 import TestrCoverage
@@ -1768,20 +1765,18 @@ if TYPE_CHECKING:
         TestFailNoExceptionBackwardCompat,
         TestFailWithException,
         TestFlatMapPropagatesException,
-        TestFromIOResultCarriesException,
         TestFromValidationCarriesException,
         TestLashPropagatesException,
         TestMapPropagatesException,
         TestMonadicOperationsUnchanged,
         TestOkNoneGuardStillRaises,
         TestSafeCarriesException,
-        TestToIOChainsException,
         TestTraversePropagatesException,
     )
     from tests.unit.test_result_full_coverage import (
         test_from_validation_and_to_model_paths,
-        test_init_fallback_and_lazy_result_property,
-        test_lash_runtime_result_and_from_io_result_fallback,
+        test_init_fallback_and_lazy_returns_result_property,
+        test_lash_runtime_result_paths,
         test_map_flat_map_and_then_paths,
         test_recover_tap_and_tap_error_paths,
         test_type_guards_and_protocol_name,
@@ -2224,7 +2219,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_utilities_type_checker_coverage_100",
         "ExplicitTypeHandler",
     ),
-    "ExplodingGetattr": ("tests.unit.test_result_additional", "ExplodingGetattr"),
     "ExplodingHandler": ("tests.unit.test_dispatcher_minimal", "ExplodingHandler"),
     "ExplodingLenList": (
         "tests.unit.test_utilities_mapper_full_coverage",
@@ -3484,10 +3478,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.infra.unit._utilities.test_formatting",
         "TestFormattingRunRuffFix",
     ),
-    "TestFromIOResultCarriesException": (
-        "tests.unit.test_result_exception_carrying",
-        "TestFromIOResultCarriesException",
-    ),
     "TestFromValidationCarriesException": (
         "tests.unit.test_result_exception_carrying",
         "TestFromValidationCarriesException",
@@ -4431,10 +4421,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "TestTimeoutEnforcerInitialization": (
         "tests.unit.test_dispatcher_timeout_coverage_100",
         "TestTimeoutEnforcerInitialization",
-    ),
-    "TestToIOChainsException": (
-        "tests.unit.test_result_exception_carrying",
-        "TestToIOChainsException",
     ),
     "TestToInfraValue": (
         "tests.infra.unit.deps.test_detection_models",
@@ -5507,10 +5493,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.infra.unit.test_infra_versioning",
         "test_current_workspace_version",
     ),
-    "test_data_alias_matches_value": (
-        "tests.unit.test_result_additional",
-        "test_data_alias_matches_value",
-    ),
     "test_data_factory": ("tests.test_utils", "test_data_factory"),
     "test_decorators_family_blocks_dispatcher_target": (
         "tests.unit.test_refactor_policy_family_rules",
@@ -6078,9 +6060,9 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_context_full_coverage",
         "test_inactive_and_none_value_paths",
     ),
-    "test_init_fallback_and_lazy_result_property": (
+    "test_init_fallback_and_lazy_returns_result_property": (
         "tests.unit.test_result_full_coverage",
-        "test_init_fallback_and_lazy_result_property",
+        "test_init_fallback_and_lazy_returns_result_property",
     ),
     "test_initialize_di_components_error_paths": (
         "tests.unit.test_container_full_coverage",
@@ -6146,9 +6128,9 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_service_additional",
         "test_is_valid_handles_validation_exception",
     ),
-    "test_lash_runtime_result_and_from_io_result_fallback": (
+    "test_lash_runtime_result_paths": (
         "tests.unit.test_result_full_coverage",
-        "test_lash_runtime_result_and_from_io_result_fallback",
+        "test_lash_runtime_result_paths",
     ),
     "test_lazy_import_rule_hoists_import_to_module_level": (
         "tests.infra.unit.refactor.test_infra_refactor_import_modernizer",
@@ -7287,10 +7269,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_models_context_full_coverage",
         "test_to_general_value_dict_removed",
     ),
-    "test_to_io_result_failure_path": (
-        "tests.unit.test_result_additional",
-        "test_to_io_result_failure_path",
-    ),
     "test_track_performance_success_and_failure_paths": (
         "tests.unit.test_decorators_full_coverage",
         "test_track_performance_success_and_failure_paths",
@@ -7476,7 +7454,6 @@ __all__ = [
     "EventHandler",
     "EventSubscriber",
     "ExplicitTypeHandler",
-    "ExplodingGetattr",
     "ExplodingHandler",
     "ExplodingLenList",
     "ExtractPageParamsScenario",
@@ -7877,7 +7854,6 @@ __all__ = [
     "TestFlextVersion",
     "TestFormatAppId",
     "TestFormattingRunRuffFix",
-    "TestFromIOResultCarriesException",
     "TestFromValidationCarriesException",
     "TestFunction",
     "TestGenerateFile",
@@ -8162,7 +8138,6 @@ __all__ = [
     "TestTimeoutEnforcerEdgeCases",
     "TestTimeoutEnforcerExecutorManagement",
     "TestTimeoutEnforcerInitialization",
-    "TestToIOChainsException",
     "TestToInfraValue",
     "TestTraceReturnsResultBool",
     "TestTraversePropagatesException",
@@ -8521,7 +8496,6 @@ __all__ = [
     "test_create_overloads_and_auto_correlation",
     "test_create_scoped_instance_and_scoped_additional_branches",
     "test_current_workspace_version",
-    "test_data_alias_matches_value",
     "test_data_factory",
     "test_decorators_family_blocks_dispatcher_target",
     "test_dedupe_specs",
@@ -8666,7 +8640,7 @@ __all__ = [
     "test_import_modernizer_updates_aliased_symbol_usage",
     "test_in_context_typevar_not_flagged",
     "test_inactive_and_none_value_paths",
-    "test_init_fallback_and_lazy_result_property",
+    "test_init_fallback_and_lazy_returns_result_property",
     "test_initialize_di_components_error_paths",
     "test_initialize_di_components_second_type_error_branch",
     "test_inject_comments_phase_apply_banner",
@@ -8683,7 +8657,7 @@ __all__ = [
     "test_is_type_non_empty_unknown_and_tuple_and_fallback",
     "test_is_type_protocol_fallback_branches",
     "test_is_valid_handles_validation_exception",
-    "test_lash_runtime_result_and_from_io_result_fallback",
+    "test_lash_runtime_result_paths",
     "test_lazy_import_rule_hoists_import_to_module_level",
     "test_lazy_import_rule_uses_fix_action_for_hoist",
     "test_legacy_import_bypass_collapses_to_primary_import",
@@ -8969,7 +8943,6 @@ __all__ = [
     "test_to_flexible_value_and_safe_list_branches",
     "test_to_flexible_value_fallback_none_branch_for_unsupported_type",
     "test_to_general_value_dict_removed",
-    "test_to_io_result_failure_path",
     "test_track_performance_success_and_failure_paths",
     "test_transform_option_extract_and_step_helpers",
     "test_type_guards_and_narrowing_failures",

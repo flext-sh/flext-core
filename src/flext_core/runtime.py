@@ -365,11 +365,7 @@ class FlextRuntime:
     @staticmethod
     def _is_scalar(value: object) -> TypeGuard[t.Scalar]:
         """Check if value is a scalar type accepted by t.Scalar."""
-        match value:
-            case datetime() | None:
-                return True
-            case _:
-                return False
+        return isinstance(value, t.Scalar)
 
     @staticmethod
     def dependency_containers() -> ModuleType:

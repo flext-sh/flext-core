@@ -79,7 +79,7 @@ class FlextTestsBuilders:
 
     @staticmethod
     def _to_guard_input(value: t.Tests.object) -> t.Tests.object:
-        if value is None or isinstance(value, t.Primitives | BaseModel):
+        if value is None or isinstance(value, (*t.PRIMITIVES_TYPES, BaseModel)):
             return value
         if isinstance(value, Mapping):
             try:
@@ -109,7 +109,7 @@ class FlextTestsBuilders:
 
     @staticmethod
     def _to_payload_value(value: object) -> t.Tests.object:
-        if value is None or isinstance(value, t.Primitives | bytes | BaseModel):
+        if value is None or isinstance(value, (*t.PRIMITIVES_TYPES, bytes, BaseModel)):
             return value
         if isinstance(value, Mapping):
             try:
@@ -681,7 +681,7 @@ class FlextTestsBuilders:
                 typed_current: T = current
                 return typed_current
             return default
-        if isinstance(current, t.Primitives | bytes | BaseModel):
+        if isinstance(current, (*t.PRIMITIVES_TYPES, bytes, BaseModel)):
             return current
         if isinstance(current, Mapping):
             return {str(k): self._to_payload_value(v) for k, v in current.items()}

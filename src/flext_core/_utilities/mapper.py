@@ -213,10 +213,7 @@ class FlextUtilitiesMapper:
         if isinstance(value, Mapping):
             result_dict: dict[str, _MappingValue] = {}
             for key, val in value.items():
-                val_typed = FlextUtilitiesMapper.narrow_to_container(val)
-                result_dict[str(key)] = FlextUtilitiesMapper.convert_to_json_safe(
-                    val_typed
-                )
+                result_dict[str(key)] = FlextUtilitiesMapper.convert_to_json_safe(val)
             return result_dict
         if isinstance(value, Sequence) and (not isinstance(value, str | bytes)):
             result_list: ContainerList = []
@@ -785,10 +782,10 @@ class FlextUtilitiesMapper:
             exclude_keys_set,
             to_json_bool,
         ) = FlextUtilitiesMapper._extract_transform_options(transform_opts)
-        current_dict: m.ConfigMap = (
-            FlextUtilitiesMapper._narrow_to_configuration_mapping(current)
+        current_dict: ContainerMapping = (
+            FlextUtilitiesMapper._narrow_to_configuration_dict(current)
         )
-        transform_result = r[object].create_from_callable(
+        transform_result = r[_MappingValue].create_from_callable(
             lambda: FlextUtilitiesMapper.apply_transform_steps(
                 dict(current_dict),
                 normalize=normalize_bool,

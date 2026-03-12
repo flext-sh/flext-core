@@ -119,7 +119,7 @@ class FlextUtilitiesCollection:
     def _to_batch_scalar(value: object) -> t.Scalar:
         if value is None:
             return ""
-        if isinstance(value, t.Scalar):
+        if isinstance(value, t.SCALAR_TYPES):
             return value
         return str(value)
 

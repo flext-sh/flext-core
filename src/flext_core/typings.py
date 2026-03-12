@@ -16,9 +16,11 @@ from pathlib import Path
 from re import Pattern
 from types import ModuleType
 from typing import (
+    TYPE_CHECKING as _TYPE_CHECKING,
     Annotated,
     Literal,
     ParamSpec,
+    TypeAlias,
     TypeVar,
     cast as _cast,
     override as _override,
@@ -54,11 +56,18 @@ class FlextTypes:
     ``None`` is **never** baked into definitions.
     """
 
-    # --- MODULE LEVEL TYPES (Recursive types must be defined here for reliability) ---
+    # --- NON-RECURSIVE TYPES (TypeAlias — isinstance-safe) ---
 
     type Primitives = str | int | float | bool
     type Scalar = str | int | float | bool | datetime
     type Container = Scalar | BaseModel | Path
+
+    # --- RUNTIME isinstance() TUPLES ---
+    # PEP 695 `type` aliases are TypeAliasType and CANNOT be used with isinstance().
+    # Use these tuples for ALL runtime isinstance() checks.
+    PRIMITIVES_TYPES: tuple[type, ...] = (str, int, float, bool)
+    SCALAR_TYPES: tuple[type, ...] = (str, int, float, bool, datetime)
+    CONTAINER_TYPES: tuple[type, ...] = (str, int, float, bool, datetime, BaseModel, Path)
 
     # --- RECURSIVE TYPES (PEP 695 - Annotation-only, NEVER with isinstance) ---
 
@@ -84,7 +93,7 @@ class FlextTypes:
         | type
     )
     type FileContent = str | bytes | BaseModel | Sequence[Sequence[str]]
-    type GeneralValueTypeMapping = Mapping[str, GeneralValueType]
+    type GeneralValueTypeMapping = Mapping[str, Scalar]
 
     type RegisterableService = (
         Container | BindableLogger | Callable[..., Container]
@@ -109,6 +118,7 @@ class FlextTypes:
     type GenericTypeArgument = str | type[Scalar]
     type MessageTypeSpecifier = str | type
     type IncEx = set[str] | Mapping[str, set[str] | bool]
+    TYPE_CHECKING = _TYPE_CHECKING
     cast = staticmethod(_cast)
     override = staticmethod(_override)
 

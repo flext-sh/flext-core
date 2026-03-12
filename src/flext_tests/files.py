@@ -1464,7 +1464,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         return temp_dir
 
     def _to_config_map_value(self, value: t.Tests.object) -> object:
-        if value is None or isinstance(value, t.Primitives | BaseModel | Path):
+        if value is None or isinstance(value, (*t.PRIMITIVES_TYPES, BaseModel, Path)):
             return value
         if isinstance(value, bytes):
             return value.decode(c.Tests.Files.DEFAULT_ENCODING, errors="replace")
@@ -1486,7 +1486,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         return str(value)
 
     def _to_payload_value(self, value: object) -> t.Tests.object:
-        if value is None or isinstance(value, t.Primitives | bytes | BaseModel):
+        if value is None or isinstance(value, (*t.PRIMITIVES_TYPES, bytes, BaseModel)):
             return value
         if isinstance(value, Path | datetime):
             return str(value)

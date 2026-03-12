@@ -508,7 +508,7 @@ class FlextUtilitiesParser:
 
     @staticmethod
     def _to_json_value(value: object) -> object:
-        if isinstance(value, t.Primitives):
+        if isinstance(value, t.PRIMITIVES_TYPES):
             return value
         if value is None:
             return str(value)

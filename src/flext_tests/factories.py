@@ -32,7 +32,7 @@ _TEST_CONTAINER_LIST_ADAPTER = TypeAdapter(list[object])
 
 
 def _to_payload_value(value: object) -> t.Tests.object:
-    if value is None or isinstance(value, t.Primitives | bytes | BaseModel):
+    if value is None or isinstance(value, (*t.PRIMITIVES_TYPES, bytes, BaseModel)):
         return value
     if isinstance(value, Mapping):
         return {str(k): _to_payload_value(v) for k, v in value.items()}
@@ -42,7 +42,7 @@ def _to_payload_value(value: object) -> t.Tests.object:
 
 
 def _to_guard_input(value: t.Tests.object) -> object:
-    if value is None or isinstance(value, t.Primitives | BaseModel):
+    if value is None or isinstance(value, (*t.PRIMITIVES_TYPES, BaseModel)):
         return value
     if isinstance(value, Mapping):
         return {str(k): _to_guard_input(_to_payload_value(v)) for k, v in value.items()}

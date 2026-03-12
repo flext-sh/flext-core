@@ -231,7 +231,7 @@ class FlextUtilitiesCache:
                 str(k): FlextUtilitiesCache.normalize_component(v)
                 for k, v in dict_component.items()
             }
-        if isinstance(component, t.Primitives) or component is None:
+        if isinstance(component, t.PRIMITIVES_TYPES) or component is None:
             return component
         if isinstance(component, set):
             try:
