@@ -274,7 +274,7 @@ class FlextModelFoundation:
             title="Tags",
             examples=[["billing", "critical"]],
         )
-        attributes: Mapping[str, t.Container] = Field(
+        attributes: Mapping[str, t.Container | BaseModel] = Field(
             default_factory=dict,
             description="Arbitrary metadata attributes stored as key-value pairs.",
             title="Attributes",

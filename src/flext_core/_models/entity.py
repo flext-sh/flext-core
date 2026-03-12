@@ -37,7 +37,7 @@ class FlextModelsEntity:
 
     DomainEvent: TypeAlias = FlextModelsDomainEvent.Entry
 
-    class Entry(
+    class Entity(
         FlextModelFoundation.TimestampedModel,
         FlextModelFoundation.IdentifiableMixin,
         FlextModelFoundation.VersionableMixin,
@@ -204,7 +204,7 @@ class FlextModelsEntity:
             """Hash based on values for use in sets/dicts."""
             return FlextRuntime.hash_value_object_by_value(self)
 
-    class AggregateRoot(Entry):
+    class AggregateRoot(Entity):
         """Base class for aggregate roots - consistency boundaries."""
 
         _invariants: ClassVar[list[Callable[[], bool]]] = []

@@ -117,7 +117,7 @@ class ResultHelpers:
         return [result.value for result in results if result.is_success]
 
     @staticmethod
-    def ensure[V](value: V | p.Result[V]) -> r[V]:
+    def ensure_result[V](value: V | p.Result[V]) -> r[V]:
         """Wrap value in r if not already a Result.
 
         Generic replacement for:

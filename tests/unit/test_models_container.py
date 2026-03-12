@@ -340,8 +340,8 @@ class TestFlextUtilitiesModelNormalizeToMetadata:
         )
         assert hasattr(result, "attributes")
         assert result.attributes["key1"] == "value1"
-        assert result.attributes["key2"] == "42"
-        assert result.attributes["key3"] == "True"
+        assert result.attributes["key2"] == 42
+        assert result.attributes["key3"] is True
 
     def test_normalize_to_metadata_existing_metadata(self) -> None:
         """Test normalize_to_metadata with existing Metadata instance."""
