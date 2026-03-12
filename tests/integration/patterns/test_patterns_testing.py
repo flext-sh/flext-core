@@ -42,7 +42,7 @@ def _to_general_mapping(
     if not isinstance(value, dict):
         return {}
     return {
-        str(key): FlextUtilities.normalize_to_container(item)
+        str(key): item
         for key, item in value.items()
     }
 
@@ -66,7 +66,7 @@ def _as_object_dict(value: object) -> dict[str, object]:
         return {}
     output: dict[str, object] = {}
     for key, item in value.items():
-        output[str(key)] = FlextUtilities.normalize_to_container(item)
+        output[str(key)] = item
     return output
 
 
