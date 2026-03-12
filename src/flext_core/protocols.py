@@ -341,7 +341,7 @@ class FlextProtocols:
             ...
 
         @property
-        def result(self) -> t.Container:
+        def result(self) -> Self:
             """Access internal Result for advanced operations."""
             ...
 

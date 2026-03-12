@@ -620,8 +620,10 @@ class Testr:
     def test_data_property(self) -> None:
         """Test data property (alias for value)."""
         result = r[str].ok("test")
-        assert result.data == "test"
-        assert result.data == result.value
+        with pytest.warns(DeprecationWarning, match="FlextResult.data is deprecated"):
+            assert result.data == "test"
+        with pytest.warns(DeprecationWarning, match="FlextResult.data is deprecated"):
+            assert result.data == result.value
 
     def test_error_property_success(self) -> None:
         """Test error property returns None for success."""

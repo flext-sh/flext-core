@@ -16,8 +16,10 @@ import inspect
 import time
 import traceback
 import types
+import warnings
 from collections.abc import Iterator, Mapping
 from contextlib import contextmanager, suppress
+from datetime import datetime
 from pathlib import Path
 from typing import ClassVar, Literal, Self, overload, override
 
@@ -102,7 +104,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             context_vars = FlextRuntime.structlog().contextvars.get_contextvars()
             context_map: dict[str, t.Container] = (
                 {
-                    str(k): FlextRuntime.normalize_to_general_value(v)
+                    str(k): FlextLogger._to_scalar_value(v)
                     for k, v in dict(context_vars).items()
                 }
                 if context_vars
@@ -167,20 +169,18 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         try:
             if scope not in cls._scoped_contexts:
                 cls._scoped_contexts[scope] = {}
-            current_context: dict[str, t.Container] = {
+            current_context: dict[str, object] = {
                 key: FlextRuntime.normalize_to_general_value(value)
                 for key, value in cls._scoped_contexts[scope].items()
             }
-            incoming_context: dict[str, t.Container] = {
+            incoming_context: dict[str, object] = {
                 key: FlextRuntime.normalize_to_general_value(value)
                 for key, value in context.items()
             }
             merge_result = u.merge(current_context, incoming_context, strategy="deep")
-            merged_value: dict[str, t.Container] = merge_result.unwrap_or(
-                current_context
-            )
+            merged_value: dict[str, object] = merge_result.unwrap_or(current_context)
             merged_context: dict[str, t.MetadataValue] = {
-                key: FlextRuntime.normalize_to_metadata_value(value)
+                key: FlextLogger._to_scalar_value(value)
                 for key, value in merged_value.items()
             }
             cls._scoped_contexts[scope] = merged_context
@@ -622,12 +622,24 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         return None
 
     @staticmethod
-    def _format_log_message(message: str, *args: t.Scalar) -> str:
+    def _format_log_message(message: str, *args: object) -> str:
         """Format log message with % arguments."""
         try:
             return message % args if args else message
         except (TypeError, ValueError):
             return f"{message} | args={args!r}"
+
+    @staticmethod
+    def _to_scalar_value(value: object) -> t.Scalar:
+        if isinstance(value, str | int | float | bool | datetime):
+            return value
+        return str(value)
+
+    @classmethod
+    def _to_scalar_context(
+        cls, context: Mapping[str, t.Container]
+    ) -> dict[str, t.Scalar]:
+        return {key: cls._to_scalar_value(value) for key, value in context.items()}
 
     @staticmethod
     def _get_caller_source_path() -> str | None:
@@ -714,12 +726,9 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
                     "exception_message": str(exception),
                 }
             )
-            merge_result = u.merge(
-                dict(context_dict.root), dict(exception_data.root), strategy="deep"
-            )
-            base_context = dict(context_dict.root)
-            merged_value: dict[str, t.Container] = merge_result.unwrap_or(base_context)
-            context_dict = m.ConfigMap(root=dict(merged_value))
+            merged_root: dict[str, t.Container] = dict(context_dict.root)
+            merged_root.update(dict(exception_data.root))
+            context_dict = m.ConfigMap(root=merged_root)
             if include_stack_trace:
                 context_dict["stack_trace"] = "".join(
                     traceback.format_exception(
@@ -730,7 +739,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             context_dict["stack_trace"] = traceback.format_exc()
         for key, value in context.items():
             if not isinstance(value, BaseException):
-                context_dict[key] = FlextRuntime.normalize_to_general_value(value)
+                context_dict[key] = FlextLogger._to_scalar_value(value)
         return context_dict
 
     @overload
@@ -919,33 +928,39 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         trail reconstruction and failure analysis.
         """
         message = str(msg)
-        filtered_args: tuple[object, ...] = tuple(
-            arg for arg in args if not isinstance(arg, BaseException)
+        filtered_args: tuple[t.Scalar, ...] = tuple(
+            FlextLogger._to_scalar_value(arg)
+            for arg in args
+            if not isinstance(arg, BaseException)
         )
         try:
-            exception_value = kw.get("exception")
-            exc_info_value = kw.get("exc_info", True)
-            context_input = {
-                key: value
-                for key, value in kw.items()
-                if key not in {"exception", "exc_info"}
-            }
-            match exception_value:
-                case Exception() as exc:
-                    resolved_exception: Exception | None = exc
-                case _:
-                    resolved_exception = None
+            raw_context: dict[str, object] = dict(kw)
+            raw_exception = raw_context.get("exception")
+            exc_info_value = raw_context.get("exc_info", True)
+            resolved_exception: Exception | None = (
+                raw_exception if isinstance(raw_exception, Exception) else None
+            )
+            context_input: dict[str, t.Scalar | Exception] = {}
+            for key, value in raw_context.items():
+                if key in {"exception", "exc_info"}:
+                    continue
+                if isinstance(value, Exception):
+                    context_input[key] = value
+                else:
+                    context_input[key] = FlextLogger._to_scalar_value(value)
             context_dict = self.build_exception_context(
                 exception=resolved_exception,
                 exc_info=bool(exc_info_value),
                 context=context_input,
             )
-            if resolved_exception is None and isinstance(
-                exception_value, BaseException
-            ):
-                context_dict["exception_type"] = exception_value.__class__.__name__
-                context_dict["exception_message"] = str(exception_value)
-            _ = self.logger.error(message, *filtered_args, **context_dict.root)
+            if resolved_exception is None and isinstance(raw_exception, BaseException):
+                context_dict["exception_type"] = raw_exception.__class__.__name__
+                context_dict["exception_message"] = str(raw_exception)
+            _ = self.logger.error(
+                message,
+                *filtered_args,
+                **FlextLogger._to_scalar_context(context_dict.root),
+            )
             return r[bool].ok(value=True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as exc:
             FlextLogger._report_internal_logging_failure("exception", exc)
@@ -1093,6 +1108,12 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
     @override
     def try_unbind(self, *keys: str) -> Self:
         """Unbind keys if present, ignoring missing keys - implements BindableLogger protocol."""
+        warnings.warn(
+            "FlextLogger.try_unbind is deprecated; use unbind(*keys, safe=True). "
+            "Planned removal: v0.12.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         bound_logger = self.logger.try_unbind(*keys)
         return self.__class__.create_bound_logger(self.name, bound_logger)
 
@@ -1160,6 +1181,12 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             ResultAdapter wrapping this logger
 
         """
+        warnings.warn(
+            "FlextLogger.with_result and FlextLogger.ResultAdapter are compatibility "
+            "adapters and will be removed in v0.12; call logger methods directly.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         return FlextLogger.ResultAdapter(self)
 
     def _log(
@@ -1252,13 +1279,13 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
                 _ = self.logger.info(
                     f"{self._operation_name} {status}",
                     _return_result=False,
-                    **context.root,
+                    **FlextLogger._to_scalar_context(context.root),
                 )
             else:
                 _ = self.logger.error(
                     f"{self._operation_name} {status}",
                     _return_result=False,
-                    **context.root,
+                    **FlextLogger._to_scalar_context(context.root),
                 )
 
     class ResultAdapter:
@@ -1326,12 +1353,12 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
                         }
                 case _:
                     pass
-            normalized_context: dict[str, object | Exception] = {}
+            normalized_context: dict[str, t.Scalar | Exception] = {}
             for ctx_key, ctx_val in context_kwargs.items():
                 if isinstance(ctx_val, Exception):
                     normalized_context[ctx_key] = ctx_val
                 else:
-                    normalized_context[ctx_key] = str(ctx_val)
+                    normalized_context[ctx_key] = FlextLogger._to_scalar_value(ctx_val)
             context = self._base_logger.build_exception_context(
                 exception=resolved_exception,
                 exc_info=exc_info,
@@ -1340,7 +1367,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             _ = self._base_logger.error(
                 message,
                 _return_result=False,
-                **context.root,
+                **FlextLogger._to_scalar_context(context.root),
             )
             return r[bool].ok(value=True)
 

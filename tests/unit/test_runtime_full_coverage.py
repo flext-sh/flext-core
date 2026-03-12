@@ -872,7 +872,8 @@ def test_runtime_result_remaining_paths() -> None:
     )
     assert failure.error_code == "E2"
     assert failure.error_data is not None
-    assert success.data == 3
+    with pytest.warns(DeprecationWarning, match="RuntimeResult.data is deprecated"):
+        assert success.data == 3
     with pytest.raises(RuntimeError, match="Cannot access value of failed result"):
         _ = failure.value
     assert success.unwrap() == 3

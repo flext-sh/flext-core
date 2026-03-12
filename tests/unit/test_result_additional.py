@@ -133,4 +133,5 @@ def test_with_resource_cleanup_runs() -> None:
 def test_data_alias_matches_value() -> None:
     """Confirm data alias returns same value property."""
     success = u.Tests.Result.create_success_result("v")
-    assert success.data == success.value == "v"
+    with pytest.warns(DeprecationWarning, match="FlextResult.data is deprecated"):
+        assert success.data == success.value == "v"

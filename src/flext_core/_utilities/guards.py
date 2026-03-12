@@ -412,6 +412,24 @@ class FlextUtilitiesGuards:
         return isinstance(value, str) and bool(value.strip())
 
     @staticmethod
+    def is_protocol_implementation(obj: object) -> bool:
+        """Check if object implements a FLEXT protocol via _protocol_name attribute."""
+        if obj is None:
+            return False
+        protocol_name = getattr(obj, "_protocol_name", None)
+        return isinstance(protocol_name, str) and bool(protocol_name.strip())
+
+    @staticmethod
+    def get_protocol_name(obj: object, default: str = "") -> str:
+        """Get the protocol name from an object, with fallback to default."""
+        if obj is None:
+            return default
+        protocol_name = getattr(obj, "_protocol_name", None)
+        if isinstance(protocol_name, str) and protocol_name.strip():
+            return protocol_name
+        return default
+
+    @staticmethod
     def require_initialized[T](value: T | None, name: str) -> T:
         """Guard that a service attribute was initialized.
 
@@ -452,6 +470,11 @@ class FlextUtilitiesGuards:
             hasattr(v, a) for a in ("is_success", "is_failure", "value", "error")
         ),
         "service": lambda v: hasattr(v, "run") and callable(getattr(v, "run", None)),
+        "protocol": lambda v: (
+            hasattr(v, "_protocol_name")
+            and isinstance(getattr(v, "_protocol_name", ""), str)
+            and bool(getattr(v, "_protocol_name", "").strip())
+        ),
         "middleware": lambda v: (
             hasattr(v, "before_dispatch")
             and callable(getattr(v, "before_dispatch", None))

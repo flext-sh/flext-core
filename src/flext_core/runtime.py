@@ -54,6 +54,7 @@ import sys
 import threading
 import typing
 import uuid
+import warnings
 from collections.abc import (
     Callable,
     Mapping,
@@ -66,7 +67,14 @@ from typing import ClassVar, Self, TypeGuard, override
 
 import structlog
 from dependency_injector import containers, providers, wiring
-from pydantic import BaseModel, TypeAdapter, ValidationError
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    PrivateAttr,
+    TypeAdapter,
+    ValidationError,
+)
 from structlog.processors import JSONRenderer, StackInfoRenderer, TimeStamper
 from structlog.stdlib import add_log_level
 
@@ -164,7 +172,19 @@ class FlextRuntime:
             cls._runtime_logger = logger
         return logger
 
-    Metadata: ClassVar[type] = FlextModelFoundation.Metadata
+    class _LazyMetadata:
+        """Lazy access to Metadata model to avoid heavy Tier 0 imports."""
+
+        _model: ClassVar[type | None] = None
+
+        @classmethod
+        def get(cls) -> type:
+            """Lazily import and return the Metadata model."""
+            if cls._model is None:
+                cls._model = FlextModelFoundation.Metadata
+            return cls._model
+
+    Metadata: ClassVar[type] = _LazyMetadata.get()
 
     class _AsyncLogWriter(io.TextIOBase):
         """Background log writer using a queue and a separate thread.
@@ -500,9 +520,9 @@ class FlextRuntime:
     @staticmethod
     def is_list_like(
         value: object,
-    ) -> TypeGuard[Sequence[t.GeneralValueType]]:
+    ) -> TypeGuard[Sequence[object]]:
         """Type guard to check if value is list-like."""
-        return isinstance(value, list)
+        return isinstance(value, (list, tuple)) and not isinstance(value, (str, bytes))
 
     @staticmethod
     def is_sequence_type(type_hint: t.TypeHintSpecifier) -> bool:
@@ -589,97 +609,52 @@ class FlextRuntime:
 
     @staticmethod
     def normalize_to_general_value(
-        val: t.GeneralValueType,
-    ) -> t.GeneralValueType:
-        """Normalize any value to object recursively.
+        val: object,
+    ) -> t.Container:
+        """Normalize any value to t.Container recursively (Scalar | BaseModel | Path).
 
-        Converts arbitrary objects, FlextModelsContainers.ConfigMap, list[t.GeneralValueType], and other types
-        to FlextModelsContainers.ConfigMap, Sequence[t.GeneralValueType], etc.
-        This is the central conversion function for type safety.
-
-        Args:
-            val: Value to normalize (accepts object for flexibility with generics)
-
-        Returns:
-            Normalized value compatible with object
-
-        Examples:
-            >>> FlextRuntime.normalize_to_general_value({"key": "value"})
-            {'key': 'value'}
-            >>> FlextRuntime.normalize_to_general_value({"nested": {"inner": 123}})
-            {'nested': {'inner': 123}}
-            >>> FlextRuntime.normalize_to_general_value([1, 2, {"a": "b"}])
-            [1, 2, {'a': 'b'}]
-
-        """
-        if FlextRuntime._is_scalar(val):
-            return val
-        if isinstance(val, Path):
-            return str(val)
-        if isinstance(val, BaseModel):
-            return FlextRuntime.normalize_to_general_value(val.model_dump())
-        if FlextRuntime.is_dict_like(val):
-            dict_v = getattr(val, "root", val)
-            result: dict[str, t.GeneralValueType] = {}
-            for k, v in dict_v.items():
-                result[str(k)] = FlextRuntime.normalize_to_general_value(v)
-            return result
-        if FlextRuntime.is_list_like(val):
-            list_result: object = [
-                FlextRuntime.normalize_to_general_value(item) for item in val
-            ]
-            return list_result
-        return val
-
-    @staticmethod
-    def normalize_to_metadata_value(
-        val: t.GeneralValueType,
-    ) -> t.MetadataAttributeValue:
-        """Normalize any value to t.MetadataAttributeValue.
-
-        t.MetadataAttributeValue is more restrictive than object,
-        so we need to normalize nested structures to flat types.
-        This method is in FlextRuntime (Tier 0.5) to avoid circular dependencies.
+        Avoids recursive generalized types by wrapping nested structures in
+        Pydantic RootModels (m.Dict, m.ObjectList).
 
         Args:
             val: Value to normalize
 
         Returns:
-            t.MetadataAttributeValue: Normalized value compatible with Metadata attributes
-
-        Example:
-            >>> FlextRuntime.normalize_to_metadata_value("test")
-            'test'
-            >>> FlextRuntime.normalize_to_metadata_value({"key": "value"})
-            {'key': 'value'}
-            >>> FlextRuntime.normalize_to_metadata_value([1, 2, 3])
-            [1, 2, 3]
+            t.Container: Normalized value compatible with persistent storage.
 
         """
-        if FlextRuntime._is_scalar(val):
-            result_scalar: t.Scalar = val
-            return result_scalar
+        if val is None:
+            return ""
+        if FlextRuntime._is_scalar(val) or isinstance(val, Path):
+            return val
         if isinstance(val, BaseModel):
-            model_dump_result: t.GeneralValueTypeMapping = val.model_dump()
-            return FlextRuntime.normalize_to_metadata_value(model_dump_result)
+            return val
         if FlextRuntime.is_dict_like(val):
-            raw_mapping = getattr(val, "root", val)
-            normalized_mapping: dict[str, t.GeneralValueType] = {}
-            for key, value in raw_mapping.items():
-                normalized_mapping[str(key)] = FlextRuntime.normalize_to_general_value(
-                    value
-                )
-            return json.dumps(normalized_mapping)
+            raw_dict = getattr(val, "root", val)
+            normalized_dict: dict[str, t.Container] = {}
+            if isinstance(raw_dict, Mapping):
+                for k, v in raw_dict.items():
+                    normalized_dict[str(k)] = FlextRuntime.normalize_to_general_value(v)
+            return FlextModelsContainers.Dict(root=normalized_dict)
         if FlextRuntime.is_list_like(val):
-            result_list: list[t.Scalar] = []
-            for item in val:
-                if FlextRuntime._is_scalar(item):
-                    result_list.append(item)
-                else:
-                    result_list.append(str(item))
-            return result_list
-        result_str: str = str(val)
-        return result_str
+            normalized_list: list[t.Container] = []
+            if isinstance(val, Sequence):
+                normalized_list.extend(
+                    FlextRuntime.normalize_to_general_value(item) for item in val
+                )
+            return FlextModelsContainers.ObjectList(root=normalized_list)
+        return str(val)
+
+    @staticmethod
+    def normalize_to_metadata_value(
+        val: object,
+    ) -> t.Container:
+        """Normalize any value to t.Container for metadata.
+
+        Wraps nested structures in Pydantic models for strict type safety
+        and Pydantic usage throughout the FLEXT ecosystem.
+        """
+        return FlextRuntime.normalize_to_general_value(val)
 
     @staticmethod
     def safe_get_attribute(
@@ -1201,63 +1176,29 @@ class FlextRuntime:
                 filtered_dict[key] = value
         return filtered_dict
 
-    class RuntimeResult[T]:
-        """Lightweight Result implementation for Tier 0.5.
+    class RuntimeResult[T](BaseModel):
+        """Lightweight implementation of Result pattern (Layer 0.5).
 
-        This class implements p.Result without depending
-        on r, allowing runtime.py to create results that can be used
-        by higher layers. r can wrap or extend this as needed.
-
-        **Type Compatibility**:
-        - Implements p.Result[T] protocol (structural typing)
-        - Compatible with r[T] for mypy type checking
-        - Both types can be used interchangeably where p.Result[T] is expected
-
-        **Mypy Recognition**:
-        - RuntimeResult[T] is recognized by mypy as compatible with p.Result[T]
-        - Functions accepting p.Result[T] will accept both RuntimeResult[T] and r[T]
-        - Use p.Result[T] in function signatures to accept both types
+        Implements basic success/failure handling with Pydantic integration.
+        Compatible with p.Result and r usage patterns.
         """
 
-        __slots__ = (
-            "_error",
-            "_error_code",
-            "_error_data",
-            "_exception",
-            "_is_success",
-            "_result_logger",
-            "_value",
+        model_config = ConfigDict(
+            arbitrary_types_allowed=True,
+            frozen=True,
+            populate_by_name=True,
         )
 
-        def __init__(
-            self,
-            value: T | None = None,
-            error: str | None = None,
-            error_code: str | None = None,
-            error_data: t.ResultErrorData | None = None,
-            *,
-            is_success: bool = True,
-        ) -> None:
-            """Initialize RuntimeResult."""
-            super().__init__()
-            self._value = value
-            self._error = error
-            self._error_code = error_code
-            if isinstance(error_data, FlextModelsContainers.ConfigMap):
-                self._error_data = error_data
-            elif isinstance(error_data, BaseModel):
-                self._error_data = FlextModelsContainers.ConfigMap.model_validate(
-                    error_data.model_dump()
-                )
-            elif isinstance(error_data, Mapping):
-                self._error_data = FlextModelsContainers.ConfigMap.model_validate(
-                    dict(error_data)
-                )
-            else:
-                self._error_data = None
-            self._is_success = is_success
-            self._exception: BaseException | None = None
-            self._result_logger: p.Log.StructlogLogger | None = None
+        is_success: bool = Field(default=True)
+        _payload: T | None = PrivateAttr(default=None)
+        error: str | None = Field(default=None)
+        error_code: str | None = Field(default=None)
+        error_data: FlextModelsContainers.ConfigMap = Field(
+            default_factory=lambda: FlextModelsContainers.ConfigMap(root={})
+        )
+
+        _exception: BaseException | None = PrivateAttr(default=None)
+        _result_logger: p.Log.StructlogLogger | None = PrivateAttr(default=None)
 
         @override
         def __repr__(self) -> str:
@@ -1289,22 +1230,13 @@ class FlextRuntime:
         @property
         def data(self) -> T:
             """Backward-compatible alias for value."""
+            warnings.warn(
+                "RuntimeResult.data is deprecated; use RuntimeResult.value. "
+                "Planned removal: v0.12.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
             return self.value
-
-        @property
-        def error(self) -> str | None:
-            """Get the error message."""
-            return self._error
-
-        @property
-        def error_code(self) -> str | None:
-            """Get the error code."""
-            return self._error_code
-
-        @property
-        def error_data(self) -> FlextModelsContainers.ConfigMap | None:
-            """Get the error data."""
-            return self._error_data
 
         @property
         def exception(self) -> BaseException | None:
@@ -1314,20 +1246,15 @@ class FlextRuntime:
         @property
         def is_failure(self) -> bool:
             """Check if result is a failure."""
-            return not self._is_success
+            return not self.is_success
 
         @property
-        def is_success(self) -> bool:
-            """Check if result is successful."""
-            return self._is_success
-
-        @property
-        def logger(self) -> p.Log.StructlogLogger:
+        def result_logger(self) -> p.Log.StructlogLogger:
             """Logger for RuntimeResult."""
             logger = self._result_logger
             if logger is None:
                 logger = structlog.get_logger(__name__)
-                self._result_logger = logger
+                setattr(self, "_result_logger", logger)
             return logger
 
         @property
@@ -1337,26 +1264,21 @@ class FlextRuntime:
             RuntimeResult doesn't use an internal Result wrapper like r,
             so this returns self for protocol compatibility.
             """
+            warnings.warn(
+                "RuntimeResult.result is deprecated; use RuntimeResult directly. "
+                "Planned removal: v0.12.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
             return self
 
         @property
         def value(self) -> T:
-            """Get the success value.
-
-            ARCHITECTURAL NOTE: FlextCore never returns None on success, so this
-            property always returns a valid value when is_success is True.
-
-            Raises:
-                RuntimeError: If result is failure (consistent with r)
-
-            """
-            if not self._is_success:
-                msg = f"Cannot access value of failed result: {self._error}"
+            """Result value (available on success, never None)."""
+            if not self.is_success:
+                msg = f"Cannot access value of failed result: {self.error}"
                 raise RuntimeError(msg)
-            if self._value is None:
-                msg = "Invariant violation: successful result has None value"
-                raise RuntimeError(msg)
-            return self._value
+            return self._payload  # type: ignore[return-value]
 
         @classmethod
         def fail[U](
@@ -1381,11 +1303,30 @@ class FlextRuntime:
 
             """
             error_msg = error if error is not None else ""
+            validated_error_data: FlextModelsContainers.ConfigMap
+            if error_data is None:
+                validated_error_data = FlextModelsContainers.ConfigMap(root={})
+            elif isinstance(error_data, FlextModelsContainers.ConfigMap):
+                validated_error_data = error_data
+            elif isinstance(error_data, (BaseModel, Mapping)):
+                dump = (
+                    error_data.model_dump()
+                    if isinstance(error_data, BaseModel)
+                    else dict(error_data)
+                )
+                validated_error_data = FlextModelsContainers.ConfigMap.model_validate(
+                    dump
+                )
+            else:
+                validated_error_data = FlextModelsContainers.ConfigMap(
+                    root={"raw": str(error_data)}
+                )
+
             return cls(
+                is_success=False,
                 error=error_msg,
                 error_code=error_code,
-                error_data=error_data,
-                is_success=False,
+                error_data=validated_error_data,
             )
 
         @classmethod
@@ -1409,16 +1350,16 @@ class FlextRuntime:
             if value is None:
                 msg = "Cannot create success result with None value"
                 raise ValueError(msg)
-            return cls(value=value, is_success=True)
+            instance = cls(is_success=True)
+            setattr(instance, "_payload", value)
+            return instance
 
         def filter(
             self, predicate: Callable[[T], bool]
         ) -> FlextRuntime.RuntimeResult[T]:
             """Filter success value using predicate."""
             if self.is_success and (not predicate(self.value)):
-                return FlextRuntime.RuntimeResult(
-                    error="Filter predicate failed", is_success=False
-                )
+                return FlextRuntime.RuntimeResult.fail(error="Filter predicate failed")
             return self
 
         def flat_map[U](
@@ -1427,11 +1368,10 @@ class FlextRuntime:
             """Chain operations returning RuntimeResult."""
             if self.is_success:
                 return func(self.value)
-            return FlextRuntime.RuntimeResult(
-                error=self._error or "",
-                error_code=self._error_code,
-                error_data=self._error_data,
-                is_success=False,
+            return FlextRuntime.RuntimeResult.fail(
+                error=self.error,
+                error_code=self.error_code,
+                error_data=self.error_data,
             )
 
         def flow_through[U](
@@ -1466,23 +1406,21 @@ class FlextRuntime:
             """Fold result into single value (catamorphism)."""
             if self.is_success:
                 return on_success(self.value)
-            return on_failure(self._error or "")
+            return on_failure(self.error or "")
 
         def lash(
             self, func: Callable[[str], FlextRuntime.RuntimeResult[T]]
         ) -> FlextRuntime.RuntimeResult[T]:
             """Apply recovery function on failure."""
-            if not self._is_success:
-                return func(self._error or "")
+            if not self.is_success:
+                return func(self.error or "")
             return self
 
         def map[U](self, func: Callable[[T], U]) -> FlextRuntime.RuntimeResult[U]:
             """Transform success value using function."""
             if self.is_success:
                 try:
-                    return FlextRuntime.RuntimeResult(
-                        value=func(self.value), is_success=True
-                    )
+                    return FlextRuntime.RuntimeResult.ok(value=func(self.value))
                 except (
                     ValueError,
                     TypeError,
@@ -1491,52 +1429,50 @@ class FlextRuntime:
                     RuntimeError,
                 ) as e:
                     self.logger.debug("RuntimeResult.map callable failed", exc_info=e)
-                    return FlextRuntime.RuntimeResult(error=str(e), is_success=False)
-            return FlextRuntime.RuntimeResult(
-                error=self._error or "",
-                error_code=self._error_code,
-                error_data=self._error_data,
-                is_success=False,
+                    return FlextRuntime.RuntimeResult.fail(error=str(e))
+            return FlextRuntime.RuntimeResult.fail(
+                error=self.error,
+                error_code=self.error_code,
+                error_data=self.error_data,
             )
 
         def map_error(
             self, func: Callable[[str], str]
         ) -> FlextRuntime.RuntimeResult[T]:
             """Transform error message."""
-            if not self._is_success:
-                return FlextRuntime.RuntimeResult(
-                    error=func(self._error or ""),
-                    error_code=self._error_code,
-                    error_data=self._error_data,
-                    is_success=False,
+            if not self.is_success:
+                return FlextRuntime.RuntimeResult.fail(
+                    error=func(self.error or ""),
+                    error_code=self.error_code,
+                    error_data=self.error_data,
                 )
             return self
 
         def recover(self, func: Callable[[str], T]) -> FlextRuntime.RuntimeResult[T]:
             """Recover from failure with fallback value."""
-            if not self._is_success:
-                fallback_value = func(self._error or "")
-                return FlextRuntime.RuntimeResult(value=fallback_value, is_success=True)
+            if not self.is_success:
+                fallback_value = func(self.error or "")
+                return FlextRuntime.RuntimeResult.ok(value=fallback_value)
             return self
 
         def tap(self, func: Callable[[T], None]) -> FlextRuntime.RuntimeResult[T]:
             """Apply side effect to success value, return unchanged."""
-            if self._is_success and self._value is not None:
-                func(self._value)
+            if self.is_success and self._payload is not None:
+                func(self._payload)
             return self
 
         def tap_error(
             self, func: Callable[[str], None]
         ) -> FlextRuntime.RuntimeResult[T]:
             """Apply side effect to error, return unchanged."""
-            if not self._is_success:
-                func(self._error or "")
+            if not self.is_success:
+                func(self.error or "")
             return self
 
         def unwrap(self) -> T:
             """Unwrap the success value or raise RuntimeError."""
-            if not self._is_success:
-                msg = f"Cannot unwrap failed result: {self._error}"
+            if not self.is_success:
+                msg = f"Cannot unwrap failed result: {self.error}"
                 raise RuntimeError(msg)
             return self.value
 

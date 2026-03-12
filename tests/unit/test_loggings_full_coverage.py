@@ -336,7 +336,8 @@ def test_loggings_exception_and_adapter_paths(monkeypatch: pytest.MonkeyPatch) -
     with tracker:
         pass
     tracker.__exit__(RuntimeError, RuntimeError("x"), None)
-    adapter = logger.with_result()
+    with pytest.warns(DeprecationWarning, match="with_result"):
+        adapter = logger.with_result()
     assert adapter.trace("x").is_success
     assert adapter.debug("x").is_success
     assert adapter.info("x").is_success
@@ -348,6 +349,8 @@ def test_loggings_exception_and_adapter_paths(monkeypatch: pytest.MonkeyPatch) -
         pass
 
     adapter.exception("boom", exception=_NonException("x"), x=1)
+    with pytest.warns(DeprecationWarning, match="try_unbind"):
+        logger.try_unbind("missing")
 
 
 def test_loggings_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> None:

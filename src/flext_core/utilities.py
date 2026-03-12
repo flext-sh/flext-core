@@ -247,6 +247,7 @@ class FlextUtilities:
     chk = staticmethod(FlextUtilitiesGuards.chk)
     empty = staticmethod(FlextUtilitiesGuards.empty)
     extract_mapping_or_none = staticmethod(FlextUtilitiesGuards.extract_mapping_or_none)
+    get_protocol_name = staticmethod(FlextUtilitiesGuards.get_protocol_name)
     guard = staticmethod(FlextUtilitiesGuards.guard)
     has = staticmethod(FlextUtilitiesGuards.has)
     in_ = staticmethod(FlextUtilitiesGuards.in_)
@@ -261,6 +262,9 @@ class FlextUtilities:
     is_handler_callable = staticmethod(FlextUtilitiesGuards.is_handler_callable)
     is_list = staticmethod(FlextUtilitiesGuards.is_list)
     is_list_non_empty = staticmethod(FlextUtilitiesGuards.is_list_non_empty)
+    is_protocol_implementation = staticmethod(
+        FlextUtilitiesGuards.is_protocol_implementation
+    )
     is_pydantic_model = staticmethod(FlextUtilitiesGuards.is_pydantic_model)
     is_string_non_empty = staticmethod(FlextUtilitiesGuards.is_string_non_empty)
     is_type = staticmethod(FlextUtilitiesGuards.is_type)
