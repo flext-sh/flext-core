@@ -307,9 +307,7 @@ class FlextUtilitiesCollection:
         return validator
 
     @staticmethod
-    def coerce_dict_to_float() -> Callable[
-        [object], Mapping[str, float]
-    ]:
+    def coerce_dict_to_float() -> Callable[[object], Mapping[str, float]]:
         """Create validator that coerces dict values to float."""
 
         def validator(data: Mapping[str, object]) -> Mapping[str, float]:

@@ -153,9 +153,7 @@ class FlextUtilitiesPagination:
         total_count = total if total is not None else len(data)
         total_pages = (total_count + page_size - 1) // page_size
         if page > total_pages > 0:
-            return r[object].fail(
-                f"Page {page} exceeds total pages {total_pages}"
-            )
+            return r[object].fail(f"Page {page} exceeds total pages {total_pages}")
         has_next = page < total_pages
         has_prev = page > 1
         data_list: list[object] = []

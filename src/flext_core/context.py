@@ -79,9 +79,7 @@ class FlextContext(FlextRuntime):
 
     _metadata: m.Metadata
 
-    def __init__(
-        self, initial_data: m.ContextData | object | None = None
-    ) -> None:
+    def __init__(self, initial_data: m.ContextData | object | None = None) -> None:
         """Initialize FlextContext with optional initial data.
 
         ARCHITECTURAL NOTE: FlextContext now uses Python's contextvars for storage,

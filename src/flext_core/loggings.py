@@ -100,7 +100,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         """Get current global context (internal use only)."""
         try:
             context_vars = FlextRuntime.structlog().contextvars.get_contextvars()
-            context_map: dict[str, object] = (
+            context_map: dict[str, t.Container] = (
                 {
                     str(k): FlextRuntime.normalize_to_general_value(v)
                     for k, v in dict(context_vars).items()
@@ -167,16 +167,18 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         try:
             if scope not in cls._scoped_contexts:
                 cls._scoped_contexts[scope] = {}
-            current_context: dict[str, object] = {
+            current_context: dict[str, t.Container] = {
                 key: FlextRuntime.normalize_to_general_value(value)
                 for key, value in cls._scoped_contexts[scope].items()
             }
-            incoming_context: dict[str, object] = {
+            incoming_context: dict[str, t.Container] = {
                 key: FlextRuntime.normalize_to_general_value(value)
                 for key, value in context.items()
             }
             merge_result = u.merge(current_context, incoming_context, strategy="deep")
-            merged_value: dict[str, object] = merge_result.unwrap_or(current_context)
+            merged_value: dict[str, t.Container] = merge_result.unwrap_or(
+                current_context
+            )
             merged_context: dict[str, t.MetadataValue] = {
                 key: FlextRuntime.normalize_to_metadata_value(value)
                 for key, value in merged_value.items()
@@ -716,7 +718,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
                 dict(context_dict.root), dict(exception_data.root), strategy="deep"
             )
             base_context = dict(context_dict.root)
-            merged_value: dict[str, object] = merge_result.unwrap_or(base_context)
+            merged_value: dict[str, t.Container] = merge_result.unwrap_or(base_context)
             context_dict = m.ConfigMap(root=dict(merged_value))
             if include_stack_trace:
                 context_dict["stack_trace"] = "".join(

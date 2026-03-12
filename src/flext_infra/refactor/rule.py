@@ -135,9 +135,7 @@ class FlextInfraRefactorRuleLoader:
         config: object,
     ) -> m.Infra.Refactor.EngineConfig:
         scope_raw = config.get("refactor_engine")
-        scope_map: object = (
-            dict(scope_raw) if isinstance(scope_raw, Mapping) else {}
-        )
+        scope_map: object = dict(scope_raw) if isinstance(scope_raw, Mapping) else {}
         return m.Infra.Refactor.EngineConfig.model_validate(scope_map)
 
     @staticmethod

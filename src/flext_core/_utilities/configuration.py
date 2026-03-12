@@ -492,9 +492,7 @@ class FlextUtilitiesConfiguration:
         }
 
     @staticmethod
-    def get_parameter(
-        obj: p.HasModelDump | object, parameter: str
-    ) -> object:
+    def get_parameter(obj: p.HasModelDump | object, parameter: str) -> object:
         """Get parameter value from a configuration object.
 
         Business Rule: Parameter Access Precedence Chain
