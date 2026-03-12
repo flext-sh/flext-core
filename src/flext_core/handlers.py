@@ -17,7 +17,9 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
 from types import ModuleType
-from typing import ClassVar, override
+from typing import ClassVar, override, Unpack
+
+from pydantic import ConfigDict
 
 from flext_core import c, e, m, p, r, t, u, x
 from flext_core._models.containers import FlextModelsContainers
@@ -130,7 +132,7 @@ class FlextHandlers[MessageT_contra = object, ResultT = object](x):
         return self.handle(message)
 
     def __init_subclass__(
-        cls, **kwargs: t.Scalar | m.ConfigMap | Sequence[t.Scalar]
+        cls, **kwargs: Unpack[ConfigDict]
     ) -> None:
         """Validate non-abstract subclasses implement a handle() method.
 

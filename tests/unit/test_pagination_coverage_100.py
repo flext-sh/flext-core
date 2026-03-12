@@ -395,7 +395,7 @@ class TestuPaginationBuildPaginationResponse:
 
     def test_build_pagination_response_success(self) -> None:
         """Test build_pagination_response with valid data."""
-        pagination_data: dict[str, object] = {
+        pagination_data: dict[str, list[str] | dict[str, int | bool]] = {
             "data": ["item1", "item2"],
             "pagination": {
                 "page": 1,
@@ -418,7 +418,7 @@ class TestuPaginationBuildPaginationResponse:
 
     def test_build_pagination_response_no_message(self) -> None:
         """Test build_pagination_response without message."""
-        pagination_data: dict[str, object] = {
+        pagination_data: dict[str, list[str] | dict[str, int | bool]] = {
             "data": ["item1"],
             "pagination": {
                 "page": 1,
@@ -438,7 +438,7 @@ class TestuPaginationBuildPaginationResponse:
 
     def test_build_pagination_response_missing_data(self) -> None:
         """Test build_pagination_response with missing data."""
-        pagination_data: dict[str, object] = {"pagination": {}}
+        pagination_data: dict[str, dict[str, int | bool]] = {"pagination": {}}
         result = u.build_pagination_response(pagination_data)
         u.Tests.Result.assert_failure_with_error(
             result,
@@ -447,7 +447,7 @@ class TestuPaginationBuildPaginationResponse:
 
     def test_build_pagination_response_missing_pagination(self) -> None:
         """Test build_pagination_response with missing pagination."""
-        pagination_data: dict[str, object] = {"data": []}
+        pagination_data: dict[str, list[str]] = {"data": []}
         result = u.build_pagination_response(pagination_data)
         u.Tests.Result.assert_failure_with_error(
             result,
@@ -456,7 +456,7 @@ class TestuPaginationBuildPaginationResponse:
 
     def test_build_pagination_response_with_non_sequence_data(self) -> None:
         """Test build_pagination_response with non-sequence data."""
-        pagination_data: dict[str, object] = {
+        pagination_data: dict[str, dict[str, str] | dict[str, int | bool]] = {
             "data": {"key": "value"},
             "pagination": {
                 "page": 1,
@@ -490,10 +490,10 @@ class TestuPaginationExtractPaginationConfig:
             max_page_size = 500
 
         config = Config()
-        if isinstance(config, (BaseModel, Mapping)):
+        if isinstance(config, BaseModel):
             _ = u.extract_pagination_config(config)
         else:
-            pytest.skip("Config is not BaseModel or Mapping")
+            pytest.skip("Config is not BaseModel")
 
     def test_extract_pagination_config_partial_attributes(self) -> None:
         """Test extract_pagination_config with partial attributes."""
@@ -502,12 +502,12 @@ class TestuPaginationExtractPaginationConfig:
             default_page_size = 30
 
         config = Config()
-        if isinstance(config, (BaseModel, Mapping)):
+        if isinstance(config, BaseModel):
             result = u.extract_pagination_config(config)
             assert result["default_page_size"] == 30
             assert result["max_page_size"] == 1000
         else:
-            pytest.skip("Config is not BaseModel or Mapping")
+            pytest.skip("Config is not BaseModel")
 
     def test_extract_pagination_config_invalid_values(self) -> None:
         """Test extract_pagination_config with invalid values."""
@@ -517,12 +517,12 @@ class TestuPaginationExtractPaginationConfig:
             max_page_size = 0
 
         config = Config()
-        if isinstance(config, (BaseModel, Mapping)):
+        if isinstance(config, BaseModel):
             result = u.extract_pagination_config(config)
             assert result["default_page_size"] == 20
             assert result["max_page_size"] == 1000
         else:
-            pytest.skip("Config is not BaseModel or Mapping")
+            pytest.skip("Config is not BaseModel")
 
     def test_extract_pagination_config_with_dict(self) -> None:
         """Test extract_pagination_config with dict-like object."""
@@ -533,9 +533,9 @@ class TestuPaginationExtractPaginationConfig:
                 self.max_page_size = 600
 
         config = Config()
-        if isinstance(config, (BaseModel, Mapping)):
+        if isinstance(config, BaseModel):
             result = u.extract_pagination_config(config)
             assert result["default_page_size"] == 40
             assert result["max_page_size"] == 600
         else:
-            pytest.skip("Config is not BaseModel or Mapping")
+            pytest.skip("Config is not BaseModel")

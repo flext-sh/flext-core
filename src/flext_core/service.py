@@ -18,7 +18,7 @@ from collections.abc import Mapping, Sequence
 from types import ModuleType
 from typing import override
 
-from pydantic import ConfigDict, PrivateAttr, ValidationError, computed_field
+from pydantic import ConfigDict, Field, PrivateAttr, ValidationError, computed_field, field_validator
 
 from flext_core import (
     FlextContainer,
@@ -37,9 +37,7 @@ from flext_core._models.base import FlextModelFoundation
 from flext_core._models.service import FlextModelsService
 
 
-class FlextService[TDomainResult: object = object](
-    FlextModelFoundation.ArbitraryTypesModel, FlextMixins, ABC
-):
+class FlextService[TDomainResult: object = object](FlextMixins, ABC):
     """Base class for domain services in FLEXT applications.
 
     Subclasses implement ``execute`` to run business logic and return
@@ -68,10 +66,24 @@ class FlextService[TDomainResult: object = object](
         use_enum_values=True,
         validate_assignment=True,
     )
+    # --- Service Bootstrap Configuration ---
+    config_type: type[FlextSettings] | None = Field(default=None, exclude=True)
+    config_overrides: Mapping[str, "t.Scalar"] | None = Field(default=None, exclude=True)
+    initial_context: "p.Context | None" = Field(default=None, exclude=True)
+    subproject: str | None = Field(default=None, exclude=True)
+    services: Mapping[str, "t.RegisterableService"] | None = Field(default=None, exclude=True)
+    factories: Mapping[str, "t.FactoryCallable"] | None = Field(default=None, exclude=True)
+    resources: Mapping[str, "t.ResourceCallable"] | None = Field(default=None, exclude=True)
+    container_overrides: Mapping[str, "t.Scalar"] | None = Field(default=None, exclude=True)
+    wire_modules: Sequence[ModuleType] | None = Field(default=None, exclude=True)
+    wire_packages: Sequence[str] | None = Field(default=None, exclude=True)
+    wire_classes: Sequence[type] | None = Field(default=None, exclude=True)
+
+    # --- Internal State ---
     _execution_result: r[TDomainResult] | None = PrivateAttr(default=None)
 
     @override
-    def __init__(self, **data: t.Scalar) -> None:
+    def __init__(self, **data: object) -> None:
         """Initialize service with configuration data.
 
         Sets up the service instance with runtime configuration.
@@ -157,20 +169,16 @@ class FlextService[TDomainResult: object = object](
         msg = "Service config is not FlextSettings"
         raise TypeError(msg)
 
-    @classmethod
-    def _create_initial_runtime(cls) -> m.ServiceRuntime:
+    def _create_initial_runtime(self) -> m.ServiceRuntime:
         """Build the initial runtime triple for a new service instance."""
-        config_type = cls._get_service_config_type()
-        options = cls._normalize_runtime_bootstrap_options(
-            cls._runtime_bootstrap_options()
-        )
-        config_type_raw = options.config_type
+        config_type = self._get_service_config_type()
+        config_type_raw = self.config_type
         config_type_val: type[FlextSettings] | None
         if config_type_raw is not None and issubclass(config_type_raw, FlextSettings):
             config_type_val = config_type_raw
         else:
             config_type_val = config_type
-        context_val_raw = options.context
+        context_val_raw = self.initial_context
         context_val: p.Context | None = (
             context_val_raw
             if context_val_raw is not None
@@ -178,18 +186,18 @@ class FlextService[TDomainResult: object = object](
             and (getattr(context_val_raw, "get", None) is not None)
             else None
         )
-        return cls._create_runtime(
+        return self._create_runtime(
             config_type=config_type_val,
-            config_overrides=options.config_overrides,
+            config_overrides=self.config_overrides,
             context=context_val,
-            subproject=options.subproject,
-            services=cls._normalize_scoped_services(options.services),
-            factories=options.factories,
-            resources=options.resources,
-            container_overrides=options.container_overrides,
-            wire_modules=options.wire_modules,
-            wire_packages=options.wire_packages,
-            wire_classes=options.wire_classes,
+            subproject=self.subproject,
+            services=self.services,
+            factories=self.factories,
+            resources=self.resources,
+            container_overrides=self.container_overrides,
+            wire_modules=self.wire_modules,
+            wire_packages=self.wire_packages,
+            wire_classes=self.wire_classes,
         )
 
     @classmethod
@@ -270,26 +278,15 @@ class FlextService[TDomainResult: object = object](
         """
         return FlextSettings
 
-    @classmethod
-    def _normalize_runtime_bootstrap_options(
-        cls, options_raw: p.RuntimeBootstrapOptions
-    ) -> p.RuntimeBootstrapOptions:
-        del cls
-        if isinstance(options_raw, FlextModelsService.RuntimeBootstrapOptions):
-            return options_raw
-        model_fields = FlextModelsService.RuntimeBootstrapOptions.model_fields
-        payload = {key: getattr(options_raw, key, None) for key in model_fields}
-        return FlextModelsService.RuntimeBootstrapOptions.model_validate(payload)
-
+    @field_validator("services", mode="before")
     @classmethod
     def _normalize_scoped_services(
-        cls, services: Mapping[str, t.RegisterableService] | None
-    ) -> Mapping[str, t.RegisterableService] | None:
+        cls, services: Mapping[str, "t.RegisterableService"] | None
+    ) -> Mapping[str, "t.RegisterableService"] | None:
         """Normalize and validate scoped services using Pydantic model."""
-        del cls
         if services is None:
             return None
-        normalized: dict[str, t.RegisterableService] = {}
+        normalized: dict[str, "t.RegisterableService"] = {}
         for name, service in services.items():
             try:
                 m.ServiceRegistration(name=str(name), service=service)
@@ -297,36 +294,6 @@ class FlextService[TDomainResult: object = object](
             except ValidationError:
                 continue
         return normalized or None
-
-    @classmethod
-    @override
-    def _runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
-        """Hook for subclasses to parametrize runtime automation.
-
-        Override to customize:
-        - config_overrides: Dict of config values to override
-        - services: Mapping[str, t.RegisterableService] to register as singletons
-        - factories: Mapping[str, Callable[..., object]] to register as factories
-        - resources: Mapping[str, Callable[[], object]] to register as resources
-        - wire_modules: List of modules to wire for @inject
-        - wire_packages: List of packages to wire
-        - wire_classes: List of classes to wire
-
-        Subclasses can override this method to pass keyword arguments directly
-        to :meth:`_create_runtime`, enabling opt-in configuration overrides,
-        scoped service registrations, factory/resource wiring, and container
-        configuration changes without duplicating setup code in ``__init__``.
-
-        Example:
-            @classmethod
-            def _runtime_bootstrap_options(cls):
-                return FlextModelsService.RuntimeBootstrapOptions(
-                    config_overrides={"app_name": "MyApp"},
-                    services={"db": my_db_service},
-                )
-
-        """
-        return FlextModelsService.RuntimeBootstrapOptions()
 
     @abstractmethod
     def execute(self) -> r[TDomainResult]:

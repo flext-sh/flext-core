@@ -393,7 +393,7 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
     ) -> None:
         """Log configuration ONCE without binding to context."""
         config_typed: m.ConfigMap = m.ConfigMap(root=dict(config.items()))
-        self.logger.info(message, **t.cast(dict[str, t.Container], config_typed.root))
+        self.logger.info(message, **cast(dict[str, t.Container], config_typed.root))
 
     def _log_with_context(self, level: str, message: str, **extra: t.Scalar) -> None:
         """Log message with automatic context data inclusion."""
@@ -602,7 +602,7 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
                             else f"{base_msg} (validation rule failed)"
                         )
                         fail_error_data: Mapping[str, t.Container] | None = (
-                            t.cast(
+                            cast(
                                 Mapping[str, t.Container],
                                 dict(validation_result.error_data.root),
                             )

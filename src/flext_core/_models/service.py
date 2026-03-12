@@ -14,11 +14,10 @@ from collections.abc import Callable, Mapping, Sequence
 from types import ModuleType
 from typing import Annotated, Self
 
-from pydantic import Field, model_validator
-from pydantic_settings import BaseSettings
-
 from flext_core import c, p, t
 from flext_core._models.base import FlextModelFoundation
+from flext_core.protocols import Context
+from flext_core._typings import RegisterableService, Scalar
 
 
 class FlextModelsService:
@@ -37,13 +36,13 @@ class FlextModelsService:
             title="Config Type",
             examples=["AppSettings"],
         )
-        config_overrides: Mapping[str, t.Scalar] | None = Field(
+        config_overrides: Mapping[str, Scalar] | None = Field(
             default=None,
             description="Configuration key overrides applied before runtime initialization.",
             title="Config Overrides",
             examples=[{"LOG_LEVEL": "DEBUG"}],
         )
-        context: p.Context | None = Field(
+        context: Context | None = Field(
             default=None,
             description="Initial context object injected into the service runtime scope.",
             title="Runtime Context",
@@ -54,7 +53,7 @@ class FlextModelsService:
             title="Subproject",
             examples=["flext-core"],
         )
-        services: Mapping[str, t.RegisterableService] | None = Field(
+        services: Mapping[str, RegisterableService] | None = Field(
             default=None,
             description="Pre-registered service instances keyed by service name.",
             title="Services",
