@@ -55,21 +55,24 @@ class DatabaseService(s[m.ConfigMap]):
 class MigrationService(s[m.ConfigMap]):
     """Example migration service with config log-once pattern."""
 
-    def __init__(self, input_dir: str, output_dir: str, sync: bool) -> None:
-        """Initialize migration service.
+    input_dir: str
+    output_dir: str
+    sync: bool
+
+    @override
+    def model_post_init(self, /, __context: t.Container | None) -> None:
+        """Post-initialization hook.
 
         Args:
-            input_dir: Input directory path
-            output_dir: Output directory path
-            sync: Enable synchronization
+            __context: Pydantic context (unused)
 
         """
-        super().__init__()
+        super().model_post_init(__context)
         config = m.ConfigMap(
             root={
-                "input_dir": input_dir,
-                "output_dir": output_dir,
-                "sync": sync,
+                "input_dir": self.input_dir,
+                "output_dir": self.output_dir,
+                "sync": self.sync,
                 "batch_size": 100,
                 "max_workers": 4,
             }

@@ -143,7 +143,7 @@ class RegistryDispatcherService(s[m.ConfigMap]):
         print("\n=== Registry Operations ===")
         registry = FlextRegistry()
 
-        def create_plugin():
+        def create_plugin() -> _DemoPlugin:
             return _DemoPlugin(name="create_user")
 
         register_result = registry.register_plugin(
@@ -152,7 +152,7 @@ class RegistryDispatcherService(s[m.ConfigMap]):
         if register_result.is_success:
             print("✅ Plugin registered successfully")
 
-        def query_plugin():
+        def query_plugin() -> _DemoPlugin:
             return _DemoPlugin(name="get_user")
 
         registry.register_plugin("handlers", "get_user", query_plugin)

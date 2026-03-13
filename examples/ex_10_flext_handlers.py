@@ -10,7 +10,7 @@ from pydantic import BaseModel
 
 from flext_core import FlextHandlers, c, e, h, m, r
 
-from ._models import _CommandBusStub, _ProtocolHandler, _ServiceStub
+from ._models import Ex10CommandBusStub, Ex10ProtocolHandler, Ex10ServiceStub
 from .shared import Examples
 
 
@@ -49,13 +49,13 @@ class _ProcessorBad(m.Value):
         return "ok"
 
 
-class _NotImplementedPatternHandler(h[object, str]):
+class _NotImplementedPatternHandler(FlextHandlers[object, str]):
     @override
     def handle(self, message: object) -> r[str]:
-        return super().handle(message)
+        raise NotImplementedError
 
 
-class _DemoHandler(h[object, str]):
+class _DemoHandler(FlextHandlers[object, str]):
     _expected_message_type: ClassVar[type | None] = _Message
 
     @override
@@ -68,8 +68,8 @@ class _DemoHandler(h[object, str]):
         return r[str].ok(f"msg:{message}")
 
     @override
-    def validate(self, data: object) -> r[bool]:
-        base = super().model_validate(data)
+    def validate_message(self, data: object) -> r[bool]:
+        base = super().validate_message(data)
         if base.is_failure:
             return base
         if data == "bad":
@@ -224,15 +224,15 @@ class Ex10FlextHandlers(Examples):
         self.check("handler.handler_name", handler.handler_name)
         self.check("handler.name_matches", bool(handler.handler_name))
         self.check("handler.mode", handler.mode.value)
-        self.check("validate.none.failure", handler.validate(None).is_failure)
-        self.check("validate.ok.success", handler.validate(message_ok).is_success)
-        self.check("validate.blocked_cmd", handler.validate("bad").error)
-        self.check("validate.blocked_qry", handler.validate("bad").error)
+        self.check("validate.none.failure", handler.validate_message(None).is_failure)
+        self.check("validate.ok.success", handler.validate_message(message_ok).is_success)
+        self.check("validate.blocked_cmd", handler.validate_message("bad").error)
+        self.check("validate.blocked_qry", handler.validate_message("bad").error)
         self.check(
             "validate.consistent",
-            handler.validate(message_ok).unwrap_or(False)
-            and handler.validate(message_ok).unwrap_or(False)
-            and handler.validate(message_ok).unwrap_or(False),
+            handler.validate_message(message_ok).unwrap_or(False)
+            and handler.validate_message(message_ok).unwrap_or(False)
+            and handler.validate_message(message_ok).unwrap_or(False),
         )
         self.check("can_handle.expected", handler.can_handle(_Message))
         self.check("can_handle.derived", handler.can_handle(_DerivedMessage))
@@ -396,7 +396,7 @@ class Ex10FlextHandlers(Examples):
         meta = m.Metadata(version=metadata_version, attributes={"tag": metadata_tag})
         self.check("metadata.version", meta.version)
         self.check("metadata.attributes", meta.attributes)
-        protocol_handler = _ProtocolHandler()
+        protocol_handler = Ex10ProtocolHandler()
         self.check(
             "protocol.is_handler.true",
             h.ProtocolValidation.is_handler(protocol_handler),
@@ -406,11 +406,11 @@ class Ex10FlextHandlers(Examples):
             h.ProtocolValidation.is_handler(m.ConfigMap(root={})),
         )
         self.check(
-            "protocol.is_service", h.ProtocolValidation.is_service(_ServiceStub())
+            "protocol.is_service", h.ProtocolValidation.is_service(Ex10ServiceStub())
         )
         self.check(
             "protocol.is_command_bus",
-            h.ProtocolValidation.is_command_bus(_CommandBusStub()),
+            h.ProtocolValidation.is_command_bus(Ex10CommandBusStub()),
         )
         self.check(
             "protocol.validate_known",
