@@ -14,7 +14,7 @@ import threading
 from collections.abc import Callable, Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from types import ModuleType
-from typing import ClassVar, TypeGuard, Unpack, cast, override
+from typing import Annotated, ClassVar, TypeGuard, Unpack, override
 
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, ValidationError
 
@@ -110,15 +110,24 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
             cls._logger_cache[logger_name] = logger
         return logger
 
-    config_type: type[FlextSettings] | None = Field(
-        default=None, description="Configuration class to initialize the service."
-    )
-    config_overrides: dict[str, object] | None = Field(
-        default=None, description="Configuration overrides applied at instantiation."
-    )
-    initial_context: FlextContext | None = Field(
-        default=None, description="Initial FlextContext for the service scope."
-    )
+    config_type: Annotated[
+        type[FlextSettings] | None,
+        Field(
+            default=None,
+            description="Configuration class to initialize the service.",
+        ),
+    ]
+    config_overrides: Annotated[
+        dict[str, object] | None,
+        Field(
+            default=None,
+            description="Configuration overrides applied at instantiation.",
+        ),
+    ]
+    initial_context: Annotated[
+        FlextContext | None,
+        Field(default=None, description="Initial FlextContext for the service scope."),
+    ]
 
     @staticmethod
     def _clear_operation_context() -> None:
@@ -304,6 +313,8 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
         bootstrap_factories: Mapping[str, t.FactoryCallable] | None = None
         bootstrap_resources: Mapping[str, t.ResourceCallable] | None = None
         bootstrap_wire_modules: Sequence[ModuleType] | None = None
+        bootstrap_wire_packages: Sequence[str] | None = None
+        bootstrap_wire_classes: Sequence[type[object]] | None = None
 
         if hasattr(self, "_runtime_bootstrap_options"):
             bootstrap_method = getattr(self, "_runtime_bootstrap_options")
@@ -340,15 +351,22 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
                         bootstrap_factories = options.factories
                         bootstrap_resources = options.resources
                         if options.wire_modules is not None:
-                            bootstrap_wire_modules = list(options.wire_modules)
-                        if (
-                            options.wire_packages is not None
-                            and not bootstrap_wire_modules
-                        ):
-                            # Fallback to packages if modules not present (simple string modules)
-                            bootstrap_wire_modules = cast(
-                                "Sequence[ModuleType]", list(options.wire_packages)
-                            )
+                            modules_list: list[ModuleType] = []
+                            packages_list: list[str] = []
+                            for item in options.wire_modules:
+                                if isinstance(item, str):
+                                    packages_list.append(item)
+                                else:
+                                    modules_list.append(item)
+                            bootstrap_wire_modules = modules_list
+                            if packages_list:
+                                bootstrap_wire_packages = packages_list
+                        if options.wire_packages is not None:
+                            current_packages = list(bootstrap_wire_packages or [])
+                            current_packages.extend(options.wire_packages)
+                            bootstrap_wire_packages = current_packages
+                        if options.wire_classes is not None:
+                            bootstrap_wire_classes = options.wire_classes
                 except Exception as exc:
                     FlextLogger.create_module_logger(__name__).warning(
                         "Failed to load runtime bootstrap options",
@@ -385,8 +403,12 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
             factories=bootstrap_factories,
             resources=bootstrap_resources,
         )
-        if bootstrap_wire_modules:
-            runtime_container.wire_modules(modules=bootstrap_wire_modules)
+        if bootstrap_wire_modules or bootstrap_wire_packages or bootstrap_wire_classes:
+            runtime_container.wire_modules(
+                modules=bootstrap_wire_modules,
+                packages=bootstrap_wire_packages,
+                classes=bootstrap_wire_classes,
+            )
 
         self._runtime = m.ServiceRuntime(
             container=runtime_container,

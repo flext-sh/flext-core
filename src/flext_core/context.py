@@ -16,7 +16,7 @@ import enum
 from collections.abc import Callable, Generator, Mapping
 from contextlib import contextmanager
 from datetime import datetime
-from typing import ClassVar, Final, Self, cast, overload, override
+from typing import Annotated, ClassVar, Final, Self, cast, overload, override
 
 from pydantic import BaseModel, Field, PrivateAttr
 
@@ -49,9 +49,10 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
 
     _logger: ClassVar[FlextLogger] = FlextLogger(__name__)
 
-    initial_data: m.ContextData | object | None = Field(
-        default=None, description="Initial data for context scopes."
-    )
+    initial_data: Annotated[
+        m.ContextData | object | None,
+        Field(default=None, description="Initial data for context scopes."),
+    ]
 
     @staticmethod
     def _narrow_contextvar_to_configuration_dict(
@@ -109,7 +110,9 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
             if hasattr(self.initial_data, "data") and hasattr(
                 self.initial_data, "metadata"
             ):
-                context_data = m.ContextData.model_validate(self.initial_data)
+                context_data = m.ContextData.model_validate(
+                    self.initial_data, from_attributes=True
+                )
             else:
                 context_data = m.ContextData(
                     data=m.Dict(root=m.ConfigMap(self.initial_data).root)

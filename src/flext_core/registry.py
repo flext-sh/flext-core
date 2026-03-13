@@ -55,10 +55,13 @@ class FlextRegistry(s[bool]):
         success indicators for batch handler operations.
         """
 
-        registered: list[m.RegistrationDetails] = Field(
-            default_factory=lambda: list[m.RegistrationDetails](),
-            description="Successfully registered handlers with registration details.",
-        )
+        registered: Annotated[
+            list[m.RegistrationDetails],
+            Field(
+                default_factory=list,
+                description="Successfully registered handlers with registration details.",
+            ),
+        ]
         skipped: Annotated[
             list[str],
             Field(
@@ -66,10 +69,7 @@ class FlextRegistry(s[bool]):
                 description="Handler identifiers that were skipped (already registered)",
                 examples=[["CreateUserCommand", "UpdateUserCommand"]],
             ),
-        ] = Field(
-            default_factory=list,
-            description="Handler identifiers skipped because they were already registered.",
-        )
+        ]
         errors: Annotated[
             list[str],
             Field(
@@ -77,10 +77,7 @@ class FlextRegistry(s[bool]):
                 description="Error messages for failed registrations",
                 examples=[["Handler validation failed", "Duplicate registration"]],
             ),
-        ] = Field(
-            default_factory=list,
-            description="Error messages captured for failed handler registrations.",
-        )
+        ]
 
         @computed_field
         def is_failure(self) -> bool:
@@ -107,7 +104,7 @@ class FlextRegistry(s[bool]):
     _class_plugin_storage: ClassVar[dict[str, t.RegistrablePlugin]] = {}
     _class_registered_keys: ClassVar[set[str]] = set()
 
-    dispatcher: p.CommandBus | None = Field(default=None, exclude=True)
+    dispatcher: Annotated[p.CommandBus | None, Field(default=None, exclude=True)]
 
     @override
     def model_post_init(self, __context: t.Container | None, /) -> None:
