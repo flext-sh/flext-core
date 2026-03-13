@@ -65,43 +65,6 @@ class FlextUtilitiesMapper:
         """Get structlog logger via FlextRuntime (infrastructure-level, no FlextLogger)."""
         return FlextRuntime.get_logger(__name__)
 
-    @classmethod
-    def _convert_to_json_recursive(cls, value: object) -> _MappingValue:
-        """Internal helper: recursively convert value to JSON-compatible type.
-
-        Used by _apply_transform_steps to handle nested structures.
-        """
-        narrowed_value: _MappingValue
-        if (
-            isinstance(value, (str, int, float, bool, Path, datetime))
-            or value is None
-            or isinstance(value, (dict, list))
-        ):
-            narrowed_value = cast("_MappingValue", value)
-        elif isinstance(value, BaseModel):
-            narrowed_value = cast("_MappingValue", value.model_dump(mode="json"))
-        else:
-            narrowed_value = str(value)
-        if FlextUtilitiesGuards.is_primitive(narrowed_value):
-            return narrowed_value
-        if isinstance(narrowed_value, Mapping):
-            result_dict: dict[str, _MappingValue] = {}
-            for key, val in narrowed_value.items():
-                val_typed = FlextUtilitiesMapper.narrow_to_container(val)
-                result_dict[str(key)] = FlextUtilitiesMapper._convert_to_json_recursive(
-                    val_typed
-                )
-            return result_dict
-        if isinstance(narrowed_value, Sequence) and (
-            not isinstance(narrowed_value, str | bytes)
-        ):
-            result_list: ContainerList = []
-            for item in narrowed_value:
-                converted_item = cls._convert_to_json_recursive(item)
-                result_list.append(converted_item)
-            return result_list
-        return narrowed_value
-
     @staticmethod
     def _apply_exclude_keys(
         result: ContainerMapping, *, exclude_keys: set[str] | None
@@ -210,9 +173,16 @@ class FlextUtilitiesMapper:
         if to_json:
             json_result: dict[str, _MappingValue] = {}
             for key, val in result.items():
-                json_result[str(key)] = FlextUtilitiesMapper._convert_to_json_recursive(
-                    val
-                )  # type: ignore
+                if isinstance(val, BaseModel):
+                    json_result[str(key)] = cast(
+                        "_MappingValue", val.model_dump(mode="json")
+                    )
+                elif isinstance(val, Path):
+                    json_result[str(key)] = cast("_MappingValue", val.as_posix())
+                elif isinstance(val, datetime):
+                    json_result[str(key)] = cast("_MappingValue", val.isoformat())
+                else:
+                    json_result[str(key)] = val  # type: ignore
             return json_result
         return result
 

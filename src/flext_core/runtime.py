@@ -655,10 +655,23 @@ class FlextRuntime:
         return FlextRuntime.normalize_to_container(val)
 
     @staticmethod
+    def _normalize_to_metadata_scalar(val: object) -> str | int | float | bool:
+        if val is None:
+            return ""
+        if isinstance(val, (str, int, float, bool)):
+            return val
+        if isinstance(val, datetime):
+            return val.isoformat()
+        if isinstance(val, Path):
+            return str(val)
+        if isinstance(val, BaseModel):
+            return val.model_dump_json()
+        return str(val)
+
+    @staticmethod
     def normalize_to_metadata(
         val: object,
     ) -> t.MetadataValue:
-
         if val is None:
             return ""
         if isinstance(val, (str, int, float, bool)):
@@ -670,28 +683,32 @@ class FlextRuntime:
         if isinstance(val, BaseModel):
             return val.model_dump_json()
         if FlextRuntime.is_dict_like(val):
-            clean: dict[str, str | int | float | bool] = {}
+            normalized: dict[str, t.Scalar | list[t.Scalar]] = {}
             for k, v in val.items():
-                if isinstance(v, (str, int, float, bool)):
-                    clean[str(k)] = v
-                elif v is None:
-                    clean[str(k)] = ""
+                str_k = str(k)
+                if v is None:
+                    normalized[str_k] = ""
+                elif isinstance(v, (str, int, float, bool, datetime)):
+                    normalized[str_k] = v
+                elif isinstance(v, Path):
+                    normalized[str_k] = str(v)
+                elif isinstance(v, BaseModel):
+                    normalized[str_k] = v.model_dump_json()
+                elif FlextRuntime.is_list_like(v):
+                    normalized[str_k] = [
+                        FlextRuntime._normalize_to_metadata_scalar(item) for item in v
+                    ]
+                elif FlextRuntime.is_dict_like(v):
+                    # Nested dict: check depth. One-level with scalars → keep; else JSON encode.
+                    inner: dict[str, str | int | float | bool] = {}
+                    for ik, iv in v.items():
+                        inner[str(ik)] = FlextRuntime._normalize_to_metadata_scalar(iv)
+                    normalized[str_k] = json.dumps(inner)
                 else:
-                    raise TypeError(
-                        f"Cannot normalize value of type {type(v).__name__!r} "
-                        "to metadata JSON scalar"
-                    )
-            return json.dumps(clean)
+                    normalized[str_k] = str(v)
+            return normalized
         if FlextRuntime.is_list_like(val):
-            result_list: list[str] = []
-            for item in val:
-                if isinstance(item, (str, int, float, bool)):
-                    result_list.append(str(item))
-                elif item is None:
-                    result_list.append("")
-                else:
-                    result_list.append(str(item))
-            return result_list
+            return [FlextRuntime._normalize_to_metadata_scalar(item) for item in val]
         return str(val)
 
     @staticmethod

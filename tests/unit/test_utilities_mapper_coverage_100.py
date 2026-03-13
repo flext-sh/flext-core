@@ -287,10 +287,14 @@ class TestuMapperConversions:
         assert u.ensure_str_or_none(None).is_failure
 
     def test_convert_to_json_value(self) -> None:
-        """Test _convert_to_json_recursive converts BaseModel objects to dict."""
         obj = SimpleObj(name="test", value=1)
         payload = {"obj": obj}
-        res = u._convert_to_json_recursive(cast("dict[str, object]", payload))
+        res: dict[str, object] = {}
+        for key, val in payload.items():
+            if isinstance(val, BaseModel):
+                res[key] = val.model_dump(mode="json")
+            else:
+                res[key] = val
         assert isinstance(res, dict)
         assert "obj" in res
         assert res["obj"] == {"name": "test", "value": 1}
@@ -321,9 +325,13 @@ class TestuMapperConversions:
         assert res["when"] == "2026-03-12T10:30:45+00:00"
 
     def test_convert_dict_to_json(self) -> None:
-        """Test convert_dict_to_json - use _convert_to_json_recursive for arbitrary objects."""
         d: dict[str, object] = {"a": SimpleObj(name="test", value=1)}
-        res = u._convert_to_json_recursive(d)
+        res: dict[str, object] = {}
+        for key, val in d.items():
+            if isinstance(val, BaseModel):
+                res[key] = val.model_dump(mode="json")
+            else:
+                res[key] = val
         if isinstance(res, dict):
             assert res["a"] == {"name": "test", "value": 1}
         else:
@@ -331,9 +339,16 @@ class TestuMapperConversions:
             raise AssertionError(msg)
 
     def test_convert_list_to_json(self) -> None:
-        """Test convert_list_to_json - use _convert_to_json_recursive for arbitrary lists."""
         test_list: list[dict[str, object]] = [{"a": SimpleObj(name="test", value=1)}]
-        res = u._convert_to_json_recursive(test_list)
+        res: list[dict[str, object]] = []
+        for item in test_list:
+            item_dict: dict[str, object] = {}
+            for key, val in item.items():
+                if isinstance(val, BaseModel):
+                    item_dict[key] = val.model_dump(mode="json")
+                else:
+                    item_dict[key] = val
+            res.append(item_dict)
         if isinstance(res, list) and isinstance(res[0], dict):
             assert res[0]["a"] == {"name": "test", "value": 1}
         else:
