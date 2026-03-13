@@ -11,9 +11,11 @@ from __future__ import annotations
 
 import uuid
 from collections.abc import Callable, Mapping, Sequence
+from types import ModuleType
 from typing import Annotated, Self
 
 from pydantic import Field, model_validator
+from pydantic_settings import BaseSettings
 
 from flext_core import c, p, t
 from flext_core._models.base import FlextModelFoundation
@@ -279,15 +281,15 @@ class FlextModelsService:
     class RuntimeBootstrapOptions(FlextModelFoundation.ArbitraryTypesModel):
         """Options for runtime bootstrapping."""
 
-        config_type: type | None = None
-        config_overrides: Mapping[str, object] | None = None
+        config_type: type[BaseSettings] | None = None
+        config_overrides: Mapping[str, t.Scalar] | None = None
         context: p.Context | None = None
         subproject: str | None = None
-        services: Mapping[str, object] | None = None
+        services: Mapping[str, t.RegisterableService] | None = None
         factories: Mapping[str, t.FactoryCallable] | None = None
         resources: Mapping[str, t.ResourceCallable] | None = None
-        container_overrides: Mapping[str, object] | None = None
-        wire_modules: Sequence[object] | None = None
+        container_overrides: Mapping[str, t.Scalar] | None = None
+        wire_modules: Sequence[ModuleType] | None = None
         wire_packages: Sequence[str] | None = None
         wire_classes: Sequence[type] | None = None
 
