@@ -9,6 +9,7 @@ from typing import cast, override
 import pytest
 
 from flext_core import c, m, r, t, u
+from flext_core._utilities.parser import FlextUtilitiesParser
 
 from ._models import _Model
 
@@ -317,7 +318,6 @@ def test_parser_convert_and_norm_branches(monkeypatch: pytest.MonkeyPatch) -> No
     assert mapping_result is True
     assert config_map_result is True
     original_norm_list = u.norm_list
-    from flext_core._utilities.parser import FlextUtilitiesParser
 
     monkeypatch.setattr(
         FlextUtilitiesParser, "norm_list", staticmethod(_norm_list_dict)
@@ -393,7 +393,6 @@ def test_parser_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> None:
         field_prefix="",
     )
     assert enum_by_member_value is not None and enum_by_member_value.is_success
-    from flext_core._utilities.parser import FlextUtilitiesParser
 
     monkeypatch.setattr(
         FlextUtilitiesParser,

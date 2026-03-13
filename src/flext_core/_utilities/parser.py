@@ -13,9 +13,7 @@ from __future__ import annotations
 import re
 import warnings
 from collections.abc import Callable, Mapping
-from datetime import datetime
 from enum import StrEnum
-from pathlib import Path
 from typing import cast, overload
 
 from pydantic import BaseModel, TypeAdapter, ValidationError
@@ -274,18 +272,9 @@ class FlextUtilitiesParser:
             return r[TModel].fail(
                 f"{field_prefix}Expected dict for model, got {value.__class__.__name__}"
             )
-        value_dict_data: dict[str, object] = {}
-        for k, v in value.items():
-            key = str(k)
-            value_dict_data[key] = FlextUtilitiesParser._to_json_value(v)
-        scalar_data: dict[str, object] = {}
-        for dict_key, dict_value in value_dict_data.items():
-            if dict_value.__class__ in {str, int, float, bool}:
-                scalar_data[dict_key] = dict_value
-            else:
-                scalar_data[dict_key] = str(dict_value)
+        value_dict_data: dict[str, object] = {str(k): v for k, v in value.items()}
         try:
-            return r[TModel].ok(target.model_validate(scalar_data, strict=strict))
+            return r[TModel].ok(target.model_validate(value_dict_data, strict=strict))
         except (ValidationError, TypeError, ValueError) as exc:
             return r[TModel].fail(f"Model parse failed: {exc}")
 
@@ -506,20 +495,6 @@ class FlextUtilitiesParser:
         if text_length_result.is_success:
             return text_length_result.value
         return "unknown"
-
-    @staticmethod
-    def _to_json_value(value: object) -> object:
-        if isinstance(value, t.PRIMITIVES_TYPES):
-            return value
-        if value is None:
-            return str(value)
-        if isinstance(value, (list, tuple)):
-            return str(cast("object", value))
-        if isinstance(value, Mapping):
-            return str(cast("object", value))
-        if isinstance(value, (BaseModel, Path, datetime)):
-            return str(value)
-        return str(value)
 
     @staticmethod
     def _validate_split_inputs(split_char: str, escape_char: str) -> r[bool]:
