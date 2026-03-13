@@ -19,7 +19,7 @@ from collections.abc import Callable, Mapping
 from types import ModuleType
 from typing import ClassVar, Unpack, override
 
-from pydantic import ConfigDict
+from pydantic import BaseModel, ConfigDict
 
 from flext_core import c, e, m, p, r, t, u, x
 from flext_core._models.containers import FlextModelsContainers
@@ -518,6 +518,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
             return r[bool].fail("Message cannot be None")
         return r[bool].ok(value=True)
 
+    @override
     def validate(self, value: MessageT_contra) -> r[bool]:
         """Validate input — override in subclasses for domain-specific logic."""
         return self.validate_message(value)
@@ -707,7 +708,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
             handlers: list[
                 tuple[
                     str,
-                    Callable[..., object | None],
+                    Callable[..., t.Scalar | None],
                     m.DecoratorConfig,
                 ]
             ] = []
@@ -722,13 +723,15 @@ class FlextHandlers[MessageT_contra, ResultT](x):
                 if not callable(func):
                     continue
                 config: m.DecoratorConfig = getattr(func, c.Discovery.HANDLER_ATTR)
-                callable_func: Callable[..., object] = func
+                callable_func: Callable[..., t.Container | BaseModel | None] = func
 
                 def narrowed_func(
-                    message: object,
-                    captured_callable: Callable[..., object] = callable_func,
+                    message: BaseModel | t.Container,
+                    captured_callable: Callable[
+                        ..., t.Container | BaseModel | None
+                    ] = callable_func,
                     **kwargs: t.Scalar,
-                ) -> object | None:
+                ) -> t.Scalar | None:
                     fn_candidate = kwargs.get("fn", captured_callable)
                     if not callable(fn_candidate):
                         return ""
