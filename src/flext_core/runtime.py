@@ -1763,10 +1763,7 @@ class FlextRuntime:
             case _:
                 pass
         entity_a_type = type(entity_a)
-        entity_b_type = type(entity_b)
-        if not isinstance(entity_b, entity_a_type) and entity_a_type not in getattr(
-            entity_b_type, "__mro__", ()
-        ):
+        if not isinstance(entity_b, entity_a_type):
             return False
         id_a = getattr(entity_a, id_attr) if hasattr(entity_a, id_attr) else None
         id_b = getattr(entity_b, id_attr) if hasattr(entity_b, id_attr) else None
@@ -1784,10 +1781,7 @@ class FlextRuntime:
         if hasattr(obj_b, "__iter__") and (not hasattr(obj_b, "model_dump")):
             return obj_a == obj_b
         obj_a_type = type(obj_a)
-        obj_b_type = type(obj_b)
-        if not isinstance(obj_b, obj_a_type) and obj_a_type not in getattr(
-            obj_b_type, "__mro__", ()
-        ):
+        if not isinstance(obj_b, obj_a_type):
             return False
         if isinstance(obj_a, BaseModel) and isinstance(obj_b, BaseModel):
             dump_a = obj_a.model_dump()

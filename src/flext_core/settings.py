@@ -459,7 +459,7 @@ class FlextSettings(BaseSettings, FlextRuntime):
             msg = f"Namespace '{namespace}' not registered"
             raise ValueError(msg)
         config_instance = config_class_raw()
-        if isinstance(config_instance, config_type):
+        if u.is_instance_of(config_instance, config_type):
             return config_instance
         msg = f"Namespace '{namespace}' config instance {config_instance.__class__.__name__} is not instance of {config_type.__name__}"
         raise TypeError(msg)

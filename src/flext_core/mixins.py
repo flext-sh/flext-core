@@ -378,7 +378,9 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
 
     @staticmethod
     def _is_flext_settings_type(candidate: object) -> TypeGuard[type[FlextSettings]]:
-        return isinstance(candidate, type) and hasattr(candidate, "model_fields")
+        return isinstance(candidate, type) and callable(
+            getattr(candidate, "get_global", None)
+        )
 
     def _init_service(self, service_name: str | None = None) -> None:
         """Initialize service with automatic container registration."""
