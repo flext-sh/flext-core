@@ -450,51 +450,73 @@ class FlextModelFoundation:
             populate_by_name=True,
             arbitrary_types_allowed=True,
         )
-        created_at: datetime = Field(
-            default_factory=lambda: datetime.now(UTC),
-            description="Timestamp when the metadata record was first created in UTC.",
-            title="Created At",
-            examples=["2026-03-03T10:00:00+00:00"],
-        )
-        updated_at: datetime = Field(
-            default_factory=lambda: datetime.now(UTC),
-            description="Timestamp of the most recent metadata update in UTC.",
-            title="Updated At",
-            examples=["2026-03-03T10:05:00+00:00"],
-        )
-        version: str = Field(
-            default="1.0.0",
-            description="Semantic version string representing the metadata schema revision.",
-            title="Metadata Version",
-            examples=["1.0.0", "1.2.3"],
-        )
-        created_by: str | None = Field(
-            default=None,
-            description="Identifier of the actor that originally created this metadata.",
-            title="Created By",
-            examples=["system", "user-123"],
-        )
-        modified_by: str | None = Field(
-            default=None,
-            description="Identifier of the actor that last modified this metadata.",
-            title="Modified By",
-            examples=["system", "user-456"],
-        )
-        tags: list[str] = Field(
-            default_factory=list,
-            description="Normalized labels used to classify and filter this metadata.",
-            title="Tags",
-            examples=[["billing", "critical"]],
-        )
-        attributes: Mapping[str, t.MetadataValue] = Field(
-            default_factory=dict,
-            description="Arbitrary metadata attributes stored as key-value pairs.",
-            title="Attributes",
-            examples=[{"source": "api", "priority": "high"}],
-        )
-        metadata_value: t.Scalar | None = Field(
-            default=None, description="Scalar metadata value."
-        )
+        created_at: Annotated[
+            datetime,
+            Field(
+                default_factory=lambda: datetime.now(UTC),
+                description="Timestamp when the metadata record was first created in UTC.",
+                title="Created At",
+                examples=["2026-03-03T10:00:00+00:00"],
+            ),
+        ]
+        updated_at: Annotated[
+            datetime,
+            Field(
+                default_factory=lambda: datetime.now(UTC),
+                description="Timestamp of the most recent metadata update in UTC.",
+                title="Updated At",
+                examples=["2026-03-03T10:05:00+00:00"],
+            ),
+        ]
+        version: Annotated[
+            str,
+            Field(
+                default="1.0.0",
+                description="Semantic version string representing the metadata schema revision.",
+                title="Metadata Version",
+                examples=["1.0.0", "1.2.3"],
+            ),
+        ] = "1.0.0"
+        created_by: Annotated[
+            str | None,
+            Field(
+                default=None,
+                description="Identifier of the actor that originally created this metadata.",
+                title="Created By",
+                examples=["system", "user-123"],
+            ),
+        ] = None
+        modified_by: Annotated[
+            str | None,
+            Field(
+                default=None,
+                description="Identifier of the actor that last modified this metadata.",
+                title="Modified By",
+                examples=["system", "user-456"],
+            ),
+        ] = None
+        tags: Annotated[
+            list[str],
+            Field(
+                default_factory=list,
+                description="Normalized labels used to classify and filter this metadata.",
+                title="Tags",
+                examples=[["billing", "critical"]],
+            ),
+        ]
+        attributes: Annotated[
+            Mapping[str, t.MetadataValue],
+            Field(
+                default_factory=dict,
+                description="Arbitrary metadata attributes stored as key-value pairs.",
+                title="Attributes",
+                examples=[{"source": "api", "priority": "high"}],
+            ),
+        ]
+        metadata_value: Annotated[
+            t.Scalar | None,
+            Field(default=None, description="Scalar metadata value."),
+        ] = None
 
         @field_validator("attributes", mode="before")
         @classmethod
@@ -532,20 +554,26 @@ class FlextModelFoundation:
         message_type: Literal["command"] = "command"
         command_type: str
         issuer_id: str | None = None
-        data: FlextModelsContainers.Dict = Field(
-            default_factory=FlextModelsContainers.Dict,
-            description="Command payload containing input data required for execution.",
-        )
+        data: Annotated[
+            FlextModelsContainers.Dict,
+            Field(
+                default_factory=FlextModelsContainers.Dict,
+                description="Command payload containing input data required for execution.",
+            ),
+        ]
 
     class QueryMessage(BaseModel):
         """Query message with discriminated union support."""
 
         message_type: Literal["query"] = "query"
         query_type: str
-        filters: FlextModelsContainers.Dict = Field(
-            default_factory=FlextModelsContainers.Dict,
-            description="Filter criteria used to constrain query results.",
-        )
+        filters: Annotated[
+            FlextModelsContainers.Dict,
+            Field(
+                default_factory=FlextModelsContainers.Dict,
+                description="Filter criteria used to constrain query results.",
+            ),
+        ]
         pagination: FlextModelsContainers.Dict | None = None
 
     class EventMessage(BaseModel):
@@ -554,14 +582,20 @@ class FlextModelFoundation:
         message_type: Literal["event"] = "event"
         event_type: str
         aggregate_id: str
-        data: FlextModelsContainers.Dict = Field(
-            default_factory=FlextModelsContainers.Dict,
-            description="Event payload with domain data describing what happened.",
-        )
-        metadata: FlextModelFoundation.Metadata = Field(
-            default_factory=lambda: FlextModelFoundation.Metadata(),
-            description="Structured metadata associated with this event message.",
-        )
+        data: Annotated[
+            FlextModelsContainers.Dict,
+            Field(
+                default_factory=FlextModelsContainers.Dict,
+                description="Event payload with domain data describing what happened.",
+            ),
+        ]
+        metadata: Annotated[
+            FlextModelFoundation.Metadata,
+            Field(
+                default_factory=lambda: FlextModelFoundation.Metadata(),
+                description="Structured metadata associated with this event message.",
+            ),
+        ]
 
     MessageUnion = Annotated[
         CommandMessage | QueryMessage | EventMessage, Discriminator("message_type")
@@ -572,10 +606,13 @@ class FlextModelFoundation:
 
         result_type: Literal["success"] = "success"
         value: t.Container
-        metadata: FlextModelFoundation.Metadata = Field(
-            default_factory=lambda: FlextModelFoundation.Metadata(),
-            description="Structured metadata attached to a successful operation result.",
-        )
+        metadata: Annotated[
+            FlextModelFoundation.Metadata,
+            Field(
+                default_factory=lambda: FlextModelFoundation.Metadata(),
+                description="Structured metadata attached to a successful operation result.",
+            ),
+        ]
 
     class FailureResult(BaseModel):
         """Failure result for discriminated union."""
@@ -590,10 +627,13 @@ class FlextModelFoundation:
 
         result_type: Literal["partial"] = "partial"
         value: t.Container
-        warnings: list[str] = Field(
-            default_factory=list,
-            description="Non-fatal warning messages generated during partial processing.",
-        )
+        warnings: Annotated[
+            list[str],
+            Field(
+                default_factory=list,
+                description="Non-fatal warning messages generated during partial processing.",
+            ),
+        ]
         partial_success_rate: float
 
     OperationResult = Annotated[
@@ -612,10 +652,13 @@ class FlextModelFoundation:
 
         outcome_type: Literal["invalid"] = "invalid"
         errors: list[str]
-        error_codes: list[str] = Field(
-            default_factory=list,
-            description="Machine-readable error codes that classify validation failures.",
-        )
+        error_codes: Annotated[
+            list[str],
+            Field(
+                default_factory=list,
+                description="Machine-readable error codes that classify validation failures.",
+            ),
+        ]
 
     class WarningOutcome(BaseModel):
         """Warning validation outcome."""
@@ -670,12 +713,15 @@ class FlextModelFoundation:
             validate_assignment=True,
             str_strip_whitespace=True,
         )
-        unique_id: str = Field(
-            default_factory=lambda: str(uuid.uuid4()),
-            description="Unique identifier",
-            min_length=1,
-            frozen=False,
-        )
+        unique_id: Annotated[
+            str,
+            Field(
+                default_factory=lambda: str(uuid.uuid4()),
+                description="Unique identifier",
+                min_length=1,
+                frozen=False,
+            ),
+        ]
 
         def regenerate_id(self) -> None:
             """Regenerate the unique_id with a new UUID."""
@@ -687,14 +733,18 @@ class FlextModelFoundation:
         model_config = ConfigDict(
             defer_build=True, arbitrary_types_allowed=True, validate_assignment=True
         )
-        created_at: UTCDatetime = Field(
-            default_factory=lambda: datetime.now(UTC),
-            description="Creation timestamp (UTC)",
-            frozen=True,
-        )
-        updated_at: UTCDatetime | None = Field(
-            default=None, description="Last update timestamp (UTC)"
-        )
+        created_at: Annotated[
+            UTCDatetime,
+            Field(
+                default_factory=lambda: datetime.now(UTC),
+                description="Creation timestamp (UTC)",
+                frozen=True,
+            ),
+        ]
+        updated_at: Annotated[
+            UTCDatetime | None,
+            Field(default=None, description="Last update timestamp (UTC)"),
+        ] = None
 
         @field_serializer("created_at", "updated_at", when_used="json")
         def serialize_timestamps(self, value: datetime | None) -> str | None:
@@ -719,12 +769,15 @@ class FlextModelFoundation:
         model_config = ConfigDict(
             defer_build=True, arbitrary_types_allowed=True, validate_assignment=True
         )
-        version: int = Field(
-            default=c.Performance.DEFAULT_VERSION,
-            ge=c.Performance.MIN_VERSION,
-            description="Version number for optimistic locking",
-            frozen=False,
-        )
+        version: Annotated[
+            int,
+            Field(
+                default=c.Performance.DEFAULT_VERSION,
+                ge=c.Performance.MIN_VERSION,
+                description="Version number for optimistic locking",
+                frozen=False,
+            ),
+        ] = c.Performance.DEFAULT_VERSION
 
         def increment_version(self) -> None:
             """Increment the version number."""
@@ -742,22 +795,31 @@ class FlextModelFoundation:
         """Mixin for shared retry configuration properties."""
 
         model_config = ConfigDict(populate_by_name=True)
-        max_retries: int = Field(
-            default=c.Reliability.DEFAULT_MAX_RETRIES,
-            ge=c.ZERO,
-            alias="max_attempts",
-            description="Maximum retry attempts",
-        )
-        initial_delay_seconds: float = Field(
-            default=c.Reliability.DEFAULT_RETRY_DELAY_SECONDS,
-            gt=c.ZERO,
-            description="Initial delay between retries",
-        )
-        max_delay_seconds: float = Field(
-            default=c.Reliability.RETRY_BACKOFF_MAX,
-            gt=c.ZERO,
-            description="Maximum delay between retries",
-        )
+        max_retries: Annotated[
+            int,
+            Field(
+                default=c.Reliability.DEFAULT_MAX_RETRIES,
+                ge=c.ZERO,
+                alias="max_attempts",
+                description="Maximum retry attempts",
+            ),
+        ] = c.Reliability.DEFAULT_MAX_RETRIES
+        initial_delay_seconds: Annotated[
+            float,
+            Field(
+                default=c.Reliability.DEFAULT_RETRY_DELAY_SECONDS,
+                gt=c.ZERO,
+                description="Initial delay between retries",
+            ),
+        ] = c.Reliability.DEFAULT_RETRY_DELAY_SECONDS
+        max_delay_seconds: Annotated[
+            float,
+            Field(
+                default=c.Reliability.RETRY_BACKOFF_MAX,
+                gt=c.ZERO,
+                description="Maximum delay between retries",
+            ),
+        ] = c.Reliability.RETRY_BACKOFF_MAX
 
     class TimestampedModel(ArbitraryTypesModel, TimestampableMixin):
         """Model with timestamp fields."""

@@ -42,22 +42,31 @@ class FlextModelsCqrs:
         """Base class for CQRS commands with validation."""
 
         tag: ClassVar[Literal["command"]] = "command"
-        message_type: Literal["command"] = Field(
-            default="command",
-            frozen=True,
-            description="Message type discriminator (always 'command')",
-        )
-        command_type: str = Field(
-            default=c.Cqrs.DEFAULT_COMMAND_TYPE,
-            min_length=c.Reliability.RETRY_COUNT_MIN,
-            description="Command type identifier",
-        )
-        command_id: str = Field(
-            default_factory=lambda: FlextRuntime.generate_prefixed_id("cmd"),
-            description="Unique command identifier used for tracing and idempotency checks.",
-            title="Command Id",
-            examples=["cmd_01HZX7Q0P5N6M2"],
-        )
+        message_type: Annotated[
+            Literal["command"],
+            Field(
+                default="command",
+                frozen=True,
+                description="Message type discriminator (always 'command')",
+            ),
+        ] = "command"
+        command_type: Annotated[
+            str,
+            Field(
+                default=c.Cqrs.DEFAULT_COMMAND_TYPE,
+                min_length=c.Reliability.RETRY_COUNT_MIN,
+                description="Command type identifier",
+            ),
+        ] = c.Cqrs.DEFAULT_COMMAND_TYPE
+        command_id: Annotated[
+            str,
+            Field(
+                default_factory=lambda: FlextRuntime.generate_prefixed_id("cmd"),
+                description="Unique command identifier used for tracing and idempotency checks.",
+                title="Command Id",
+                examples=["cmd_01HZX7Q0P5N6M2"],
+            ),
+        ]
         issuer_id: str | None = None
 
         @property
@@ -129,27 +138,41 @@ class FlextModelsCqrs:
             ]
             | None
         ] = None
-        message_type: Literal["query"] = Field(
-            default="query", frozen=True, description="Message type discriminator"
-        )
-        filters: FlextModelsContainers.Dict = Field(
-            default_factory=FlextModelsContainers.Dict,
-            description="Filter values that restrict which records are returned by the query.",
-            title="Query Filters",
-            examples=[{"status": "active", "tenant": "acme"}],
-        )
-        pagination: FlextModelsCqrs.Pagination | FlextModelsContainers.Dict = Field(
-            default_factory=FlextModelsContainers.Dict,
-            description="Pagination settings controlling page number and page size for query results.",
-            title="Pagination",
-            examples=[{"page": 1, "size": 50}],
-        )
-        query_id: str = Field(
-            default_factory=lambda: FlextRuntime.generate_prefixed_id("query"),
-            description="Unique query identifier used for tracing and cache correlation.",
-            title="Query Id",
-            examples=["query_01HZX7Q0P5N6M2"],
-        )
+        message_type: Annotated[
+            Literal["query"],
+            Field(
+                default="query",
+                frozen=True,
+                description="Message type discriminator",
+            ),
+        ] = "query"
+        filters: Annotated[
+            FlextModelsContainers.Dict,
+            Field(
+                default_factory=FlextModelsContainers.Dict,
+                description="Filter values that restrict which records are returned by the query.",
+                title="Query Filters",
+                examples=[{"status": "active", "tenant": "acme"}],
+            ),
+        ]
+        pagination: Annotated[
+            FlextModelsCqrs.Pagination | FlextModelsContainers.Dict,
+            Field(
+                default_factory=FlextModelsContainers.Dict,
+                description="Pagination settings controlling page number and page size for query results.",
+                title="Pagination",
+                examples=[{"page": 1, "size": 50}],
+            ),
+        ]
+        query_id: Annotated[
+            str,
+            Field(
+                default_factory=lambda: FlextRuntime.generate_prefixed_id("query"),
+                description="Unique query identifier used for tracing and cache correlation.",
+                title="Query Id",
+                examples=["query_01HZX7Q0P5N6M2"],
+            ),
+        ]
         query_type: str | None = None
 
         @property
@@ -239,26 +262,40 @@ class FlextModelsCqrs:
                 "description": "CQRS dispatcher configuration",
             }
         )
-        enable_middleware: bool = Field(
-            default=True, description="Enable middleware pipeline"
-        )
-        enable_metrics: bool = Field(
-            default=True, description="Enable metrics collection"
-        )
-        enable_caching: bool = Field(
-            default=True, description="Enable query result caching"
-        )
-        execution_timeout: int = Field(
-            default=c.Defaults.TIMEOUT, description="Command execution timeout"
-        )
-        max_cache_size: int = Field(
-            default=c.Defaults.DEFAULT_MAX_CACHE_SIZE, description="Maximum cache size"
-        )
-        implementation_path: str = Field(
-            default=c.Dispatcher.DEFAULT_DISPATCHER_PATH,
-            pattern=c.Platform.PATTERN_MODULE_PATH,
-            description="Implementation path",
-        )
+        enable_middleware: Annotated[
+            bool,
+            Field(default=True, description="Enable middleware pipeline"),
+        ] = True
+        enable_metrics: Annotated[
+            bool,
+            Field(default=True, description="Enable metrics collection"),
+        ] = True
+        enable_caching: Annotated[
+            bool,
+            Field(default=True, description="Enable query result caching"),
+        ] = True
+        execution_timeout: Annotated[
+            int,
+            Field(
+                default=c.Defaults.TIMEOUT,
+                description="Command execution timeout",
+            ),
+        ] = c.Defaults.TIMEOUT
+        max_cache_size: Annotated[
+            int,
+            Field(
+                default=c.Defaults.DEFAULT_MAX_CACHE_SIZE,
+                description="Maximum cache size",
+            ),
+        ] = c.Defaults.DEFAULT_MAX_CACHE_SIZE
+        implementation_path: Annotated[
+            str,
+            Field(
+                default=c.Dispatcher.DEFAULT_DISPATCHER_PATH,
+                pattern=c.Platform.PATTERN_MODULE_PATH,
+                description="Implementation path",
+            ),
+        ] = c.Dispatcher.DEFAULT_DISPATCHER_PATH
 
     class Handler(BaseModel):
         """Handler configuration model with Builder pattern support."""
@@ -269,25 +306,43 @@ class FlextModelsCqrs:
                 "description": "CQRS handler configuration",
             }
         )
-        handler_id: str = Field(description="Unique handler identifier")
-        handler_name: str = Field(description="Human-readable handler name")
-        handler_type: c.Cqrs.HandlerType = Field(
-            default=c.Cqrs.HandlerType.COMMAND, description="Handler type"
-        )
-        handler_mode: c.Cqrs.HandlerType = Field(
-            default=c.Cqrs.HandlerType.COMMAND, description="Handler mode"
-        )
-        command_timeout: int = Field(
-            default=c.Cqrs.DEFAULT_COMMAND_TIMEOUT,
-            description="Command timeout from c (default). Models use Config values in initialization.",
-        )
-        max_command_retries: int = Field(
-            default=c.Cqrs.DEFAULT_MAX_COMMAND_RETRIES,
-            description="Maximum retry attempts from c (default). Models use Config values in initialization.",
-        )
-        metadata: FlextModelFoundation.Metadata | None = Field(
-            default=None, description="Handler metadata (Pydantic model)"
-        )
+        handler_id: Annotated[str, Field(description="Unique handler identifier")]
+        handler_name: Annotated[str, Field(description="Human-readable handler name")]
+        handler_type: Annotated[
+            c.Cqrs.HandlerType,
+            Field(
+                default=c.Cqrs.HandlerType.COMMAND,
+                description="Handler type",
+            ),
+        ] = c.Cqrs.HandlerType.COMMAND
+        handler_mode: Annotated[
+            c.Cqrs.HandlerType,
+            Field(
+                default=c.Cqrs.HandlerType.COMMAND,
+                description="Handler mode",
+            ),
+        ] = c.Cqrs.HandlerType.COMMAND
+        command_timeout: Annotated[
+            int,
+            Field(
+                default=c.Cqrs.DEFAULT_COMMAND_TIMEOUT,
+                description="Command timeout from c (default). Models use Config values in initialization.",
+            ),
+        ] = c.Cqrs.DEFAULT_COMMAND_TIMEOUT
+        max_command_retries: Annotated[
+            int,
+            Field(
+                default=c.Cqrs.DEFAULT_MAX_COMMAND_RETRIES,
+                description="Maximum retry attempts from c (default). Models use Config values in initialization.",
+            ),
+        ] = c.Cqrs.DEFAULT_MAX_COMMAND_RETRIES
+        metadata: Annotated[
+            FlextModelFoundation.Metadata | None,
+            Field(
+                default=None,
+                description="Handler metadata (Pydantic model)",
+            ),
+        ] = None
 
         class ConfigParams(BaseModel):
             """Parameter object for handler configuration (reduces parameter count)."""
@@ -376,12 +431,15 @@ class FlextModelsCqrs:
         """
 
         tag: ClassVar[Literal["event"]] = "event"
-        message_type: Literal["event"] = Field(
-            default="event",
-            frozen=True,
-            description="Message type discriminator (always 'event')",
-        )
-        event_type: str = Field(description="Event type identifier")
+        message_type: Annotated[
+            Literal["event"],
+            Field(
+                default="event",
+                frozen=True,
+                description="Message type discriminator (always 'event')",
+            ),
+        ] = "event"
+        event_type: Annotated[str, Field(description="Event type identifier")]
 
         @property
         def command_type(self) -> str | None:
@@ -393,22 +451,35 @@ class FlextModelsCqrs:
             """Query type identifier (always None for events)."""
             return None
 
-        aggregate_id: str = Field(
-            description="ID of the aggregate that generated this event"
-        )
-        event_id: str = Field(
-            default_factory=lambda: FlextRuntime.generate_prefixed_id("evt"),
-            description="Unique event identifier used for deduplication and observability.",
-            title="Event Id",
-            examples=["evt_01HZX7Q0P5N6M2"],
-        )
-        data: FlextModelsContainers.Dict = Field(
-            default_factory=FlextModelsContainers.Dict, description="Event payload data"
-        )
-        metadata: FlextModelsContainers.Dict = Field(
-            default_factory=FlextModelsContainers.Dict,
-            description="Event metadata (timestamps, correlation IDs, etc.)",
-        )
+        aggregate_id: Annotated[
+            str,
+            Field(
+                description="ID of the aggregate that generated this event",
+            ),
+        ]
+        event_id: Annotated[
+            str,
+            Field(
+                default_factory=lambda: FlextRuntime.generate_prefixed_id("evt"),
+                description="Unique event identifier used for deduplication and observability.",
+                title="Event Id",
+                examples=["evt_01HZX7Q0P5N6M2"],
+            ),
+        ]
+        data: Annotated[
+            FlextModelsContainers.Dict,
+            Field(
+                default_factory=FlextModelsContainers.Dict,
+                description="Event payload data",
+            ),
+        ]
+        metadata: Annotated[
+            FlextModelsContainers.Dict,
+            Field(
+                default_factory=FlextModelsContainers.Dict,
+                description="Event metadata (timestamps, correlation IDs, etc.)",
+            ),
+        ]
 
     type FlextMessage = Annotated[
         Command | Query | Event, Discriminator("message_type")

@@ -951,7 +951,7 @@ class FlextUtilitiesMapper:
         else:
             field_name: str = field
             for item in items_list:
-                if not isinstance(item, Mapping[str, object] | BaseModel):
+                if not isinstance(item, (Mapping, BaseModel)):
                     continue
                 val_raw = FlextUtilitiesMapper._extract_field_value(item, field_name)
                 if isinstance(val_raw, int | float):

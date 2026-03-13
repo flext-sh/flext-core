@@ -19,11 +19,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import override
+from typing import cast, override
 
 from pydantic import PrivateAttr
 
-from flext_core import FlextContext, c, m, r, s, u
+from flext_core import FlextContext, FlextRuntime, c, m, r, s, u
 
 
 class UserService(s[m.ConfigMap]):
@@ -164,7 +164,7 @@ class AutomationService(s[m.ConfigMap]):
         cached = get_cached()
         config_result = get_default() if cached.is_failure else cached
         if config_result.is_success:
-            config: m.ConfigMap = config_result.value
+            config = cast("m.ConfigMap", config_result.value)
             mode = config.get("automation_mode", "unknown")
             batch_size = config.get("batch_size", 0)
             print(f"✅ Config acquired: {mode}")
@@ -183,7 +183,9 @@ class AutomationService(s[m.ConfigMap]):
                 m.ConfigMap(root={"id": 2, "name": "Item B", "value": 200}),
             ])
 
-        def transform(data: list[m.ConfigMap]) -> r[list[m.ConfigMap]]:
+        def transform(
+            data: list[m.ConfigMap],
+        ) -> FlextRuntime.RuntimeResult[list[m.ConfigMap]]:
             transformed: list[m.ConfigMap] = [
                 m.ConfigMap(
                     root={
@@ -196,11 +198,21 @@ class AutomationService(s[m.ConfigMap]):
             ]
             return r[list[m.ConfigMap]].ok(transformed)
 
-        def load(data: list[m.ConfigMap]) -> r[list[m.ConfigMap]]:
+        def load(
+            data: list[m.ConfigMap],
+        ) -> FlextRuntime.RuntimeResult[list[m.ConfigMap]]:
             print(f"   💾 Loaded {len(data)} records successfully")
             return r[list[m.ConfigMap]].ok(data)
 
-        result = extract().flow_through(transform, load)
+        extract_result = extract()
+        if extract_result.is_failure:
+            print(f"❌ ETL Pipeline failed: {extract_result.error}")
+            return
+        transform_result = transform(cast("list[m.ConfigMap]", extract_result.value))
+        if transform_result.is_failure:
+            print(f"❌ ETL Pipeline failed: {transform_result.error}")
+            return
+        result = load(cast("list[m.ConfigMap]", transform_result.value))
         if result.is_success:
             print(f"✅ ETL Pipeline: {result.value}")
         else:
@@ -211,13 +223,17 @@ class AutomationService(s[m.ConfigMap]):
         """Demo 2: flow_through - Automation Pipeline Composition."""
         print("\n=== 2. flow_through: Automation Pipeline Composition ===")
 
-        def validate(data: m.ConfigMap) -> r[m.ConfigMap]:
+        def validate(
+            data: m.ConfigMap,
+        ) -> FlextRuntime.RuntimeResult[m.ConfigMap]:
             task_type = str(data.get("task_type", ""))
             if not task_type:
                 return r[m.ConfigMap].fail("Task type required")
             return r[m.ConfigMap].ok(data)
 
-        def enrich(data: m.ConfigMap) -> r[m.ConfigMap]:
+        def enrich(
+            data: m.ConfigMap,
+        ) -> FlextRuntime.RuntimeResult[m.ConfigMap]:
             enriched: m.ConfigMap = m.ConfigMap(
                 root={
                     **data.root,
@@ -231,11 +247,13 @@ class AutomationService(s[m.ConfigMap]):
         automation_input: m.ConfigMap = m.ConfigMap(
             root={"task_type": c.Cqrs.ProcessingMode.BATCH.value, "source": "database"}
         )
-        pipeline_result = (
-            r[m.ConfigMap].ok(automation_input).flow_through(validate, enrich)
-        )
+        validate_result = validate(automation_input)
+        if validate_result.is_failure:
+            print(f"❌ Pipeline failed: {validate_result.error}")
+            return
+        pipeline_result = enrich(cast("m.ConfigMap", validate_result.value))
         if pipeline_result.is_success:
-            data: m.ConfigMap = pipeline_result.value
+            data = cast("m.ConfigMap", pipeline_result.value)
             task_type = data.get("task_type", "")
             duration = data.get("duration_ms", 0)
             print(f"✅ Pipeline complete: {task_type}")
@@ -304,7 +322,11 @@ class AutomationService(s[m.ConfigMap]):
             return cache
 
         fail_attempt: r[m.ConfigMap] = r[m.ConfigMap].fail("No cached config")
-        config: m.ConfigMap = load_config() if fail_attempt.is_failure else fail_attempt.value
+        config: m.ConfigMap = (
+            load_config()
+            if fail_attempt.is_failure
+            else cast("m.ConfigMap", fail_attempt.value)
+        )
         config_count = len(config.root)
         print(f"✅ Config loaded: {config_count} settings")
         cached_config = load_config()
@@ -350,7 +372,11 @@ class AutomationService(s[m.ConfigMap]):
             )
 
         fail_result: r[m.ConfigMap] = r[m.ConfigMap].fail("No existing engine")
-        engine: m.ConfigMap = create_engine() if fail_result.is_failure else fail_result.value
+        engine: m.ConfigMap = (
+            create_engine()
+            if fail_result.is_failure
+            else cast("m.ConfigMap", fail_result.value)
+        )
         engine_id = str(engine.get("engine_id", "unknown"))
         worker_count_text = str(engine.get("worker_count", 0))
         worker_count = int(worker_count_text) if worker_count_text.isdigit() else 0

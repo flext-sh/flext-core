@@ -31,12 +31,15 @@ class FlextModelsContainers:
     class ErrorCodeMap(BaseModel):
         """Model for nested error code mappings."""
 
-        codes: dict[str, int] = Field(
-            default_factory=dict,
-            title="Error Codes",
-            description="Mapping from error keys to numeric error codes.",
-            examples=[{"timeout": 504, "invalid_payload": 400}],
-        )
+        codes: Annotated[
+            dict[str, int],
+            Field(
+                default_factory=dict,
+                title="Error Codes",
+                description="Mapping from error keys to numeric error codes.",
+                examples=[{"timeout": 504, "invalid_payload": 400}],
+            ),
+        ]
 
     class ObjectList(RootModel[list[str | int | float | bool | datetime | Path]]):
         """Sequence of container values for batch operations."""
@@ -115,15 +118,18 @@ class FlextModelsContainers:
         # Migration note: command/query/event payloads should move to domain-specific
         # Pydantic models instead of generic key-value dictionaries.
 
-        root: dict[str, object] = Field(
-            default_factory=dict,
-            title="Dictionary Payload",
-            description=(
-                "Dictionary payload storing strict container values "
-                "(scalar, BaseModel, or Path)."
+        root: Annotated[
+            dict[str, object],
+            Field(
+                default_factory=dict,
+                title="Dictionary Payload",
+                description=(
+                    "Dictionary payload storing strict container values "
+                    "(scalar, BaseModel, or Path)."
+                ),
+                examples=[{"request_id": "req-123", "retry_count": 3, "dry_run": True}],
             ),
-            examples=[{"request_id": "req-123", "retry_count": 3, "dry_run": True}],
-        )
+        ]
 
     class ConfigMap(_RootDictModel[object]):
         """Configuration map container. Use ``m.ConfigMap``."""
@@ -133,12 +139,17 @@ class FlextModelsContainers:
         # flext-target-ldif). Most call sites represent typed config contracts and can
         # be replaced by explicit domain settings models over time.
 
-        root: dict[str, object] = Field(
-            default_factory=dict,
-            title="Configuration Map",
-            description="Configuration entries keyed by normalized setting names.",
-            examples=[{"timeout_seconds": 30, "environment": "dev", "debug": False}],
-        )
+        root: Annotated[
+            dict[str, object],
+            Field(
+                default_factory=dict,
+                title="Configuration Map",
+                description="Configuration entries keyed by normalized setting names.",
+                examples=[
+                    {"timeout_seconds": 30, "environment": "dev", "debug": False}
+                ],
+            ),
+        ]
 
     class ServiceMap(_RootDictModel[type[BaseModel] | Callable[..., BaseModel]]):
         """Service registry map container. Use ``m.ServiceMap``."""
@@ -147,14 +158,17 @@ class FlextModelsContainers:
         # constructor usage currently found by ast-grep. Intended payload represents
         # service classes or service factory callables, not generic container values.
 
-        root: dict[str, type[BaseModel] | Callable[..., BaseModel]] = Field(
-            default_factory=dict,
-            title="Service Registry Map",
-            description="Service registry entries keyed by service identifiers.",
-            examples=[
-                {"user_service": "UserService", "session_factory": "build_session"}
-            ],
-        )
+        root: Annotated[
+            dict[str, type[BaseModel] | Callable[..., BaseModel]],
+            Field(
+                default_factory=dict,
+                title="Service Registry Map",
+                description="Service registry entries keyed by service identifiers.",
+                examples=[
+                    {"user_service": "UserService", "session_factory": "build_session"}
+                ],
+            ),
+        ]
 
     class ErrorMap(_RootDictModel[int | str | BaseModel]):
         """Error type mapping container.
@@ -162,12 +176,15 @@ class FlextModelsContainers:
         Replaces: ErrorTypeMapping
         """
 
-        root: dict[str, int | str | BaseModel] = Field(
-            default_factory=dict,
-            title="Error Map",
-            description="Error catalog mapping keys to codes, messages, or nested code maps.",
-            examples=[{"user_missing": 404, "bad_input": "invalid data"}],
-        )
+        root: Annotated[
+            dict[str, int | str | BaseModel],
+            Field(
+                default_factory=dict,
+                title="Error Map",
+                description="Error catalog mapping keys to codes, messages, or nested code maps.",
+                examples=[{"user_missing": 404, "bad_input": "invalid data"}],
+            ),
+        ]
 
     class FactoryMap(_RootDictModel[t.FactoryCallable]):
         """Map of factory registration callables.
@@ -175,12 +192,15 @@ class FlextModelsContainers:
         Replaces: Mapping[str, FactoryRegistrationCallable]
         """
 
-        root: dict[str, t.FactoryCallable] = Field(
-            default_factory=dict,
-            title="Factory Map",
-            description="Factory callables keyed by registration name.",
-            examples=[{"db_client": "create_db_client"}],
-        )
+        root: Annotated[
+            dict[str, t.FactoryCallable],
+            Field(
+                default_factory=dict,
+                title="Factory Map",
+                description="Factory callables keyed by registration name.",
+                examples=[{"db_client": "create_db_client"}],
+            ),
+        ]
 
     class ResourceMap(_RootDictModel[t.ResourceCallable]):
         """Map of resource callables.
@@ -188,12 +208,15 @@ class FlextModelsContainers:
         Replaces: Mapping[str, ResourceCallable]
         """
 
-        root: dict[str, t.ResourceCallable] = Field(
-            default_factory=dict,
-            title="Resource Map",
-            description="Lifecycle resource factories keyed by resource name.",
-            examples=[{"connection": "open_connection"}],
-        )
+        root: Annotated[
+            dict[str, t.ResourceCallable],
+            Field(
+                default_factory=dict,
+                title="Resource Map",
+                description="Lifecycle resource factories keyed by resource name.",
+                examples=[{"connection": "open_connection"}],
+            ),
+        ]
 
     class ValidatorCallable(
         RootModel[
@@ -273,50 +296,59 @@ class FlextModelsContainers:
     class FieldValidatorMap(_RootValidatorMapModel):
         """Map of field validators."""
 
-        root: dict[
-            str,
-            Callable[
-                [t.Scalar | BaseModel | None],
-                t.Scalar | BaseModel | None,
+        root: Annotated[
+            dict[
+                str,
+                Callable[
+                    [t.Scalar | BaseModel | None],
+                    t.Scalar | BaseModel | None,
+                ],
             ],
-        ] = Field(
-            default_factory=dict,
-            title="Field Validator Map",
-            description="Field-level validators keyed by field name.",
-            examples=[{"email": "validate_email"}],
-        )
+            Field(
+                default_factory=dict,
+                title="Field Validator Map",
+                description="Field-level validators keyed by field name.",
+                examples=[{"email": "validate_email"}],
+            ),
+        ]
 
     class ConsistencyRuleMap(_RootValidatorMapModel):
         """Map of consistency rules."""
 
-        root: dict[
-            str,
-            Callable[
-                [t.Scalar | BaseModel | None],
-                t.Scalar | BaseModel | None,
+        root: Annotated[
+            dict[
+                str,
+                Callable[
+                    [t.Scalar | BaseModel | None],
+                    t.Scalar | BaseModel | None,
+                ],
             ],
-        ] = Field(
-            default_factory=dict,
-            title="Consistency Rule Map",
-            description="Consistency rule callables keyed by rule identifier.",
-            examples=[{"order_total": "validate_order_total"}],
-        )
+            Field(
+                default_factory=dict,
+                title="Consistency Rule Map",
+                description="Consistency rule callables keyed by rule identifier.",
+                examples=[{"order_total": "validate_order_total"}],
+            ),
+        ]
 
     class EventValidatorMap(_RootValidatorMapModel):
         """Map of event validators."""
 
-        root: dict[
-            str,
-            Callable[
-                [t.Scalar | BaseModel | None],
-                t.Scalar | BaseModel | None,
+        root: Annotated[
+            dict[
+                str,
+                Callable[
+                    [t.Scalar | BaseModel | None],
+                    t.Scalar | BaseModel | None,
+                ],
             ],
-        ] = Field(
-            default_factory=dict,
-            title="Event Validator Map",
-            description="Event validator callables keyed by event type or alias.",
-            examples=[{"user.created": "validate_user_created"}],
-        )
+            Field(
+                default_factory=dict,
+                title="Event Validator Map",
+                description="Event validator callables keyed by event type or alias.",
+                examples=[{"user.created": "validate_user_created"}],
+            ),
+        ]
 
     class BatchResultDict(BaseModel):
         """Result payload model for batch operation outputs."""
@@ -324,37 +356,52 @@ class FlextModelsContainers:
         model_config: ClassVar[ConfigDict] = ConfigDict(
             validate_assignment=True, extra="forbid"
         )
-        results: list[t.Scalar | None] = Field(
-            default=[],
-            title="Batch Results",
-            description="Batch result values in processing order.",
-            examples=[["ok", 1, None]],
-        )
+        results: Annotated[
+            list[t.Scalar | None],
+            Field(
+                default_factory=list,
+                title="Batch Results",
+                description="Batch result values in processing order.",
+                examples=[["ok", 1, None]],
+            ),
+        ]
 
-        errors: list[tuple[int, str]] = Field(
-            default=[],
-            title="Batch Errors",
-            description="Batch error tuples as (index, message).",
-            examples=[[(0, "invalid payload")]],
-        )
-        total: int = Field(
-            default=0,
-            title="Total Items",
-            description="Total number of batch items processed.",
-            examples=[10],
-        )
-        success_count: int = Field(
-            default=0,
-            title="Success Count",
-            description="Number of batch items processed successfully.",
-            examples=[8],
-        )
-        error_count: int = Field(
-            default=0,
-            title="Error Count",
-            description="Number of batch items that failed with errors.",
-            examples=[2],
-        )
+        errors: Annotated[
+            list[tuple[int, str]],
+            Field(
+                default_factory=list,
+                title="Batch Errors",
+                description="Batch error tuples as (index, message).",
+                examples=[[(0, "invalid payload")]],
+            ),
+        ]
+        total: Annotated[
+            int,
+            Field(
+                default=0,
+                title="Total Items",
+                description="Total number of batch items processed.",
+                examples=[10],
+            ),
+        ] = 0
+        success_count: Annotated[
+            int,
+            Field(
+                default=0,
+                title="Success Count",
+                description="Number of batch items processed successfully.",
+                examples=[8],
+            ),
+        ] = 0
+        error_count: Annotated[
+            int,
+            Field(
+                default=0,
+                title="Error Count",
+                description="Number of batch items that failed with errors.",
+                examples=[2],
+            ),
+        ] = 0
 
 
 __all__ = ["FlextModelsContainers"]

@@ -64,29 +64,47 @@ class FlextModelsContainer:
         model_config = ConfigDict(
             frozen=False, validate_assignment=True, arbitrary_types_allowed=True
         )
-        name: str = Field(
-            ...,
-            min_length=c.Reliability.RETRY_COUNT_MIN,
-            description="Service identifier/name",
-        )
-        service: Annotated[t.RegisterableService, SkipValidation] = Field(
-            ..., description="Service instance (protocols, models, callables)"
-        )
-        registration_time: datetime = Field(
-            default_factory=FlextRuntime.generate_datetime_utc,
-            description="UTC timestamp when service was registered",
-        )
-        metadata: (
-            FlextModelFoundation.Metadata | FlextModelsContainers.ConfigMap | None
-        ) = Field(
-            default=None, description="Additional service metadata (JSON-serializable)"
-        )
-        service_type: str | None = Field(
-            default=None, description="Service type name (e.g., 'DatabaseService')"
-        )
-        tags: list[str] = Field(
-            default_factory=list, description="Service tags for categorization"
-        )
+        name: Annotated[
+            str,
+            Field(
+                ...,
+                min_length=c.Reliability.RETRY_COUNT_MIN,
+                description="Service identifier/name",
+            ),
+        ]
+        service: Annotated[
+            t.RegisterableService,
+            SkipValidation,
+            Field(..., description="Service instance (protocols, models, callables)"),
+        ]
+        registration_time: Annotated[
+            datetime,
+            Field(
+                default_factory=FlextRuntime.generate_datetime_utc,
+                description="UTC timestamp when service was registered",
+            ),
+        ]
+        metadata: Annotated[
+            FlextModelFoundation.Metadata | FlextModelsContainers.ConfigMap | None,
+            Field(
+                default=None,
+                description="Additional service metadata (JSON-serializable)",
+            ),
+        ] = None
+        service_type: Annotated[
+            str | None,
+            Field(
+                default=None,
+                description="Service type name (e.g., 'DatabaseService')",
+            ),
+        ] = None
+        tags: Annotated[
+            list[str],
+            Field(
+                default_factory=list,
+                description="Service tags for categorization",
+            ),
+        ]
 
         @field_validator("metadata", mode="before")
         @classmethod
@@ -131,37 +149,56 @@ class FlextModelsContainer:
         model_config = ConfigDict(
             frozen=False, validate_assignment=True, arbitrary_types_allowed=True
         )
-        name: str = Field(
-            ...,
-            min_length=c.Reliability.RETRY_COUNT_MIN,
-            description="Factory identifier/name",
-        )
-        factory: Annotated[t.FactoryCallable, SkipValidation] = Field(
-            ..., description="Factory function that creates service instances"
-        )
-        registration_time: datetime = Field(
-            default_factory=FlextRuntime.generate_datetime_utc,
-            description="UTC timestamp when factory was registered",
-        )
-        is_singleton: bool = Field(
-            default=False, description="Whether factory creates singleton instances"
-        )
-        cached_instance: Annotated[t.RegisterableService | None, SkipValidation] = (
+        name: Annotated[
+            str,
+            Field(
+                ...,
+                min_length=c.Reliability.RETRY_COUNT_MIN,
+                description="Factory identifier/name",
+            ),
+        ]
+        factory: Annotated[
+            t.FactoryCallable,
+            SkipValidation,
+            Field(..., description="Factory function that creates service instances"),
+        ]
+        registration_time: Annotated[
+            datetime,
+            Field(
+                default_factory=FlextRuntime.generate_datetime_utc,
+                description="UTC timestamp when factory was registered",
+            ),
+        ]
+        is_singleton: Annotated[
+            bool,
+            Field(
+                default=False,
+                description="Whether factory creates singleton instances",
+            ),
+        ] = False
+        cached_instance: Annotated[
+            t.RegisterableService | None,
+            SkipValidation,
             Field(
                 default=None,
                 description="Cached singleton instance (if is_singleton=True)",
-            )
-        )
-        metadata: (
-            FlextModelFoundation.Metadata | FlextModelsContainers.ConfigMap | None
-        ) = Field(
-            default=None, description="Additional factory metadata (JSON-serializable)"
-        )
-        invocation_count: int = Field(
-            default=c.ZERO,
-            ge=c.ZERO,
-            description="Number of times factory has been invoked",
-        )
+            ),
+        ] = None
+        metadata: Annotated[
+            FlextModelFoundation.Metadata | FlextModelsContainers.ConfigMap | None,
+            Field(
+                default=None,
+                description="Additional factory metadata (JSON-serializable)",
+            ),
+        ] = None
+        invocation_count: Annotated[
+            int,
+            Field(
+                default=c.ZERO,
+                ge=c.ZERO,
+                description="Number of times factory has been invoked",
+            ),
+        ] = c.ZERO
 
         @field_validator("metadata", mode="before")
         @classmethod
@@ -179,23 +216,33 @@ class FlextModelsContainer:
         model_config = ConfigDict(
             frozen=False, validate_assignment=True, arbitrary_types_allowed=True
         )
-        name: str = Field(
-            ...,
-            min_length=c.Reliability.RETRY_COUNT_MIN,
-            description="Resource identifier/name",
-        )
-        factory: Annotated[t.ResourceCallable, SkipValidation] = Field(
-            ..., description="Factory returning the lifecycle-managed resource"
-        )
-        registration_time: datetime = Field(
-            default_factory=FlextRuntime.generate_datetime_utc,
-            description="UTC timestamp when resource was registered",
-        )
-        metadata: (
-            FlextModelFoundation.Metadata | FlextModelsContainers.ConfigMap | None
-        ) = Field(
-            default=None, description="Additional resource metadata (JSON-serializable)"
-        )
+        name: Annotated[
+            str,
+            Field(
+                ...,
+                min_length=c.Reliability.RETRY_COUNT_MIN,
+                description="Resource identifier/name",
+            ),
+        ]
+        factory: Annotated[
+            t.ResourceCallable,
+            SkipValidation,
+            Field(..., description="Factory returning the lifecycle-managed resource"),
+        ]
+        registration_time: Annotated[
+            datetime,
+            Field(
+                default_factory=FlextRuntime.generate_datetime_utc,
+                description="UTC timestamp when resource was registered",
+            ),
+        ]
+        metadata: Annotated[
+            FlextModelFoundation.Metadata | FlextModelsContainers.ConfigMap | None,
+            Field(
+                default=None,
+                description="Additional resource metadata (JSON-serializable)",
+            ),
+        ] = None
 
         @field_validator("metadata", mode="before")
         @classmethod
@@ -211,35 +258,59 @@ class FlextModelsContainer:
         """
 
         model_config = ConfigDict(frozen=False, validate_assignment=True)
-        enable_singleton: bool = Field(
-            default=True, description="Enable singleton pattern for factories"
-        )
-        enable_factory_caching: bool = Field(
-            default=True, description="Enable caching of factory-created instances"
-        )
-        max_services: int = Field(
-            default=c.Container.DEFAULT_MAX_SERVICES,
-            ge=c.Reliability.RETRY_COUNT_MIN,
-            le=c.Performance.MAX_BATCH_SIZE,
-            description="Maximum number of services allowed in registry",
-        )
-        max_factories: int = Field(
-            default=c.Container.DEFAULT_MAX_FACTORIES,
-            ge=c.Reliability.RETRY_COUNT_MIN,
-            le=c.Container.MAX_FACTORIES,
-            description="Maximum number of factories allowed in registry",
-        )
-        enable_auto_registration: bool = Field(
-            default=False,
-            description="Enable automatic service registration from decorators",
-        )
-        enable_lifecycle_hooks: bool = Field(
-            default=True,
-            description="Enable lifecycle hooks (on_register, on_get, etc.)",
-        )
-        lazy_loading: bool = Field(
-            default=True, description="Enable lazy loading of services"
-        )
+        enable_singleton: Annotated[
+            bool,
+            Field(
+                default=True,
+                description="Enable singleton pattern for factories",
+            ),
+        ] = True
+        enable_factory_caching: Annotated[
+            bool,
+            Field(
+                default=True,
+                description="Enable caching of factory-created instances",
+            ),
+        ] = True
+        max_services: Annotated[
+            int,
+            Field(
+                default=c.Container.DEFAULT_MAX_SERVICES,
+                ge=c.Reliability.RETRY_COUNT_MIN,
+                le=c.Performance.MAX_BATCH_SIZE,
+                description="Maximum number of services allowed in registry",
+            ),
+        ] = c.Container.DEFAULT_MAX_SERVICES
+        max_factories: Annotated[
+            int,
+            Field(
+                default=c.Container.DEFAULT_MAX_FACTORIES,
+                ge=c.Reliability.RETRY_COUNT_MIN,
+                le=c.Container.MAX_FACTORIES,
+                description="Maximum number of factories allowed in registry",
+            ),
+        ] = c.Container.DEFAULT_MAX_FACTORIES
+        enable_auto_registration: Annotated[
+            bool,
+            Field(
+                default=False,
+                description="Enable automatic service registration from decorators",
+            ),
+        ] = False
+        enable_lifecycle_hooks: Annotated[
+            bool,
+            Field(
+                default=True,
+                description="Enable lifecycle hooks (on_register, on_get, etc.)",
+            ),
+        ] = True
+        lazy_loading: Annotated[
+            bool,
+            Field(
+                default=True,
+                description="Enable lazy loading of services",
+            ),
+        ] = True
 
     class FactoryDecoratorConfig(BaseModel):
         """Configuration extracted from @d.factory() decorator.
@@ -266,18 +337,28 @@ class FlextModelsContainer:
         """
 
         model_config = ConfigDict(frozen=True)
-        name: str = Field(
-            ...,
-            min_length=c.Reliability.RETRY_COUNT_MIN,
-            description="Name to register this factory under in the container",
-        )
-        singleton: bool = Field(
-            default=False, description="Whether factory creates singleton instances"
-        )
-        lazy: bool = Field(
-            default=True,
-            description="Whether to defer factory invocation until first use",
-        )
+        name: Annotated[
+            str,
+            Field(
+                ...,
+                min_length=c.Reliability.RETRY_COUNT_MIN,
+                description="Name to register this factory under in the container",
+            ),
+        ]
+        singleton: Annotated[
+            bool,
+            Field(
+                default=False,
+                description="Whether factory creates singleton instances",
+            ),
+        ] = False
+        lazy: Annotated[
+            bool,
+            Field(
+                default=True,
+                description="Whether to defer factory invocation until first use",
+            ),
+        ] = True
 
 
 __all__ = ["FlextModelsContainer"]

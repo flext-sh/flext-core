@@ -234,42 +234,19 @@ class FlextUtilitiesCache:
                 for k, v in component.model_dump().items()
             }
         if isinstance(component, Mapping):
-            dict_component = (
-                FlextUtilitiesCache._V.dict_str_metadata_adapter().validate_python(
-                    component
-                )
-            )
             return {
                 str(k): FlextUtilitiesCache.normalize_component(v)
-                for k, v in dict_component.items()
+                for k, v in component.items()
             }
         if isinstance(component, t.PRIMITIVES_TYPES) or component is None:
             return component
         if isinstance(component, set):
-            try:
-                set_items = (
-                    FlextUtilitiesCache._V.set_container_adapter().validate_python(
-                        component,
-                        strict=False,
-                    )
-                )
-            except ValidationError:
-                fallback_items = (
-                    FlextUtilitiesCache._V.set_str_adapter().validate_python(
-                        component,
-                        strict=False,
-                    )
-                )
-                return tuple(fallback_items)
-            normalized_items: list[object] = [
-                FlextUtilitiesCache.normalize_component(item) for item in set_items
+            normalized_set_items: list[t.ContainerValue | None] = [
+                FlextUtilitiesCache.normalize_component(item) for item in component
             ]
-            return tuple(normalized_items)
+            return tuple(normalized_set_items)
         if isinstance(component, (list, tuple)):
-            sequence = FlextUtilitiesCache._V.list_container_adapter().validate_python(
-                component
-            )
-            return [FlextUtilitiesCache.normalize_component(item) for item in sequence]
+            return [FlextUtilitiesCache.normalize_component(item) for item in component]
         return str(component)
 
     @staticmethod

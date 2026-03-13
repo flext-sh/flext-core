@@ -55,35 +55,50 @@ class FlextModelsConfig:
             use_enum_values=True,
             arbitrary_types_allowed=True,
         )
-        operation_id: str = Field(
-            default_factory=FlextRuntime.generate_id,
-            min_length=c.Reliability.RETRY_COUNT_MIN,
-            description="Unique operation identifier",
-        )
-        data: FlextModelsContainers.ConfigMap = Field(
-            default_factory=FlextModelsContainers.ConfigMap,
-            description="Primary request payload passed to the processing operation.",
-            title="Processing Data",
-            examples=[{"record_id": "123", "status": "pending"}],
-        )
-        context: FlextModelsContainers.ConfigMap = Field(
-            default_factory=FlextModelsContainers.ConfigMap,
-            description="Execution context metadata used for traceability and request scoping.",
-            title="Processing Context",
-            examples=[{"correlation_id": "corr-123"}],
-        )
-        timeout_seconds: float = Field(
-            default=c.Defaults.TIMEOUT,
-            gt=c.ZERO,
-            le=c.Performance.MAX_TIMEOUT_SECONDS,
-            description="Operation timeout from c (Constants default)",
-        )
-        retry_attempts: int = Field(
-            default=c.Reliability.MAX_RETRY_ATTEMPTS,
-            ge=c.ZERO,
-            le=c.Reliability.MAX_RETRY_ATTEMPTS,
-            description="Maximum retry attempts from c (Constants default)",
-        )
+        operation_id: Annotated[
+            str,
+            Field(
+                default_factory=FlextRuntime.generate_id,
+                min_length=c.Reliability.RETRY_COUNT_MIN,
+                description="Unique operation identifier",
+            ),
+        ]
+        data: Annotated[
+            FlextModelsContainers.ConfigMap,
+            Field(
+                default_factory=FlextModelsContainers.ConfigMap,
+                description="Primary request payload passed to the processing operation.",
+                title="Processing Data",
+                examples=[{"record_id": "123", "status": "pending"}],
+            ),
+        ]
+        context: Annotated[
+            FlextModelsContainers.ConfigMap,
+            Field(
+                default_factory=FlextModelsContainers.ConfigMap,
+                description="Execution context metadata used for traceability and request scoping.",
+                title="Processing Context",
+                examples=[{"correlation_id": "corr-123"}],
+            ),
+        ]
+        timeout_seconds: Annotated[
+            float,
+            Field(
+                default=c.Defaults.TIMEOUT,
+                gt=c.ZERO,
+                le=c.Performance.MAX_TIMEOUT_SECONDS,
+                description="Operation timeout from c (Constants default)",
+            ),
+        ] = c.Defaults.TIMEOUT
+        retry_attempts: Annotated[
+            int,
+            Field(
+                default=c.Reliability.MAX_RETRY_ATTEMPTS,
+                ge=c.ZERO,
+                le=c.Reliability.MAX_RETRY_ATTEMPTS,
+                description="Maximum retry attempts from c (Constants default)",
+            ),
+        ] = c.Reliability.MAX_RETRY_ATTEMPTS
         enable_validation: bool = True
 
         @field_validator("context", mode="before")
@@ -109,29 +124,42 @@ class FlextModelsConfig:
     ):
         """Retry configuration with advanced validation."""
 
-        max_retries: int = Field(
-            default=c.Reliability.MAX_RETRY_ATTEMPTS,
-            ge=c.Reliability.RETRY_COUNT_MIN,
-            le=c.Reliability.MAX_RETRY_ATTEMPTS,
-            alias="max_attempts",
-            validation_alias=AliasChoices("max_attempts", "max_retries"),
-            serialization_alias="max_attempts",
-            description="Maximum retry attempts from c (Constants default)",
-        )
+        max_retries: Annotated[
+            int,
+            Field(
+                default=c.Reliability.MAX_RETRY_ATTEMPTS,
+                ge=c.Reliability.RETRY_COUNT_MIN,
+                le=c.Reliability.MAX_RETRY_ATTEMPTS,
+                alias="max_attempts",
+                validation_alias=AliasChoices("max_attempts", "max_retries"),
+                serialization_alias="max_attempts",
+                description="Maximum retry attempts from c (Constants default)",
+            ),
+        ] = c.Reliability.MAX_RETRY_ATTEMPTS
         exponential_backoff: bool = True
-        backoff_multiplier: float = Field(
-            default=c.DEFAULT_BACKOFF_MULTIPLIER,
-            ge=float(c.Reliability.RETRY_COUNT_MIN),
-            description="Backoff multiplier for exponential backoff",
-        )
-        retry_on_exceptions: list[type[BaseException]] = Field(
-            default=[], description="Exception types to retry on"
-        )
-        retry_on_status_codes: list[int] = Field(
-            default=[],
-            max_length=c.Validation.MAX_RETRY_STATUS_CODES,
-            description="HTTP status codes to retry on",
-        )
+        backoff_multiplier: Annotated[
+            float,
+            Field(
+                default=c.DEFAULT_BACKOFF_MULTIPLIER,
+                ge=float(c.Reliability.RETRY_COUNT_MIN),
+                description="Backoff multiplier for exponential backoff",
+            ),
+        ] = c.DEFAULT_BACKOFF_MULTIPLIER
+        retry_on_exceptions: Annotated[
+            list[type[BaseException]],
+            Field(
+                default_factory=list,
+                description="Exception types to retry on",
+            ),
+        ]
+        retry_on_status_codes: Annotated[
+            list[int],
+            Field(
+                default_factory=list,
+                max_length=c.Validation.MAX_RETRY_STATUS_CODES,
+                description="HTTP status codes to retry on",
+            ),
+        ]
 
         @field_validator("retry_on_status_codes", mode="after")
         @classmethod
@@ -173,12 +201,15 @@ class FlextModelsConfig:
     class ValidationConfiguration(FlextModelFoundation.ArbitraryTypesModel):
         """Validation configuration."""
 
-        max_validation_errors: int = Field(
-            default=c.Cqrs.DEFAULT_MAX_VALIDATION_ERRORS,
-            ge=c.Reliability.RETRY_COUNT_MIN,
-            le=c.Validation.MAX_RETRY_STATUS_CODES,
-            description="Maximum validation errors",
-        )
+        max_validation_errors: Annotated[
+            int,
+            Field(
+                default=c.Cqrs.DEFAULT_MAX_VALIDATION_ERRORS,
+                ge=c.Reliability.RETRY_COUNT_MIN,
+                le=c.Validation.MAX_RETRY_STATUS_CODES,
+                description="Maximum validation errors",
+            ),
+        ] = c.Cqrs.DEFAULT_MAX_VALIDATION_ERRORS
         validate_on_assignment: bool = True
         validate_on_read: bool = False
         custom_validators: Annotated[
@@ -208,20 +239,29 @@ class FlextModelsConfig:
             TypeAdapter[list[FlextModelsConfig.BatchProcessingConfig]] | None
         ] = None
 
-        batch_size: int = Field(
-            default=c.Performance.MAX_BATCH_SIZE,
-            le=c.Performance.BatchProcessing.MAX_VALIDATION_SIZE,
-            description="Batch size from c (Constants default)",
-        )
-        max_workers: int = Field(
-            default=c.Processing.DEFAULT_MAX_WORKERS,
-            le=c.Settings.MAX_WORKERS_THRESHOLD,
-            description="Maximum workers (Config has priority over Constants)",
-        )
-        timeout_per_item: float = Field(
-            default=c.Defaults.TIMEOUT,
-            description="Timeout per item (Config has priority over Constants)",
-        )
+        batch_size: Annotated[
+            int,
+            Field(
+                default=c.Performance.MAX_BATCH_SIZE,
+                le=c.Performance.BatchProcessing.MAX_VALIDATION_SIZE,
+                description="Batch size from c (Constants default)",
+            ),
+        ] = c.Performance.MAX_BATCH_SIZE
+        max_workers: Annotated[
+            int,
+            Field(
+                default=c.Processing.DEFAULT_MAX_WORKERS,
+                le=c.Settings.MAX_WORKERS_THRESHOLD,
+                description="Maximum workers (Config has priority over Constants)",
+            ),
+        ] = c.Processing.DEFAULT_MAX_WORKERS
+        timeout_per_item: Annotated[
+            float,
+            Field(
+                default=c.Defaults.TIMEOUT,
+                description="Timeout per item (Config has priority over Constants)",
+            ),
+        ] = c.Defaults.TIMEOUT
         continue_on_error: bool = True
         data_items: Annotated[
             list[object],
@@ -267,34 +307,49 @@ class FlextModelsConfig:
     class HandlerExecutionConfig(FlextModelsCollections.Config):
         """Enhanced handler execution configuration."""
 
-        handler_name: str = Field(
-            pattern=c.Platform.PATTERN_IDENTIFIER,
-            description="Handler identifier used to route execution in the dispatcher.",
-            title="Handler Name",
-            examples=["process_order", "sync_inventory"],
-        )
-        input_data: FlextModelsContainers.ConfigMap = Field(
-            default_factory=FlextModelsContainers.ConfigMap,
-            description="Input payload supplied to the handler during execution.",
-            title="Input Data",
-            examples=[{"order_id": "ord-1001"}],
-        )
-        execution_context: FlextModelsContainers.ConfigMap = Field(
-            default_factory=FlextModelsContainers.ConfigMap,
-            description="Context values provided to the handler for tracing and runtime behavior.",
-            title="Execution Context",
-            examples=[{"correlation_id": "corr-abc"}],
-        )
-        timeout_seconds: float = Field(
-            default=c.Defaults.TIMEOUT,
-            le=c.Performance.MAX_TIMEOUT_SECONDS,
-            description="Timeout in seconds (default from constants)",
-        )
+        handler_name: Annotated[
+            str,
+            Field(
+                pattern=c.Platform.PATTERN_IDENTIFIER,
+                description="Handler identifier used to route execution in the dispatcher.",
+                title="Handler Name",
+                examples=["process_order", "sync_inventory"],
+            ),
+        ]
+        input_data: Annotated[
+            FlextModelsContainers.ConfigMap,
+            Field(
+                default_factory=FlextModelsContainers.ConfigMap,
+                description="Input payload supplied to the handler during execution.",
+                title="Input Data",
+                examples=[{"order_id": "ord-1001"}],
+            ),
+        ]
+        execution_context: Annotated[
+            FlextModelsContainers.ConfigMap,
+            Field(
+                default_factory=FlextModelsContainers.ConfigMap,
+                description="Context values provided to the handler for tracing and runtime behavior.",
+                title="Execution Context",
+                examples=[{"correlation_id": "corr-abc"}],
+            ),
+        ]
+        timeout_seconds: Annotated[
+            float,
+            Field(
+                default=c.Defaults.TIMEOUT,
+                le=c.Performance.MAX_TIMEOUT_SECONDS,
+                description="Timeout in seconds (default from constants)",
+            ),
+        ] = c.Defaults.TIMEOUT
         retry_on_failure: bool = True
-        max_retries: int = Field(
-            default=c.Reliability.MAX_RETRY_ATTEMPTS,
-            description="Max retries (default from constants)",
-        )
+        max_retries: Annotated[
+            int,
+            Field(
+                default=c.Reliability.MAX_RETRY_ATTEMPTS,
+                description="Max retries (default from constants)",
+            ),
+        ] = c.Reliability.MAX_RETRY_ATTEMPTS
 
     class MiddlewareConfig:
         """Configuration for middleware execution.
@@ -310,16 +365,28 @@ class FlextModelsConfig:
                 "description": "Configuration for middleware execution in request processing",
             },
         )
-        enabled: bool = Field(default=True, description="Whether middleware is enabled")
-        order: int = Field(
-            default=c.Defaults.DEFAULT_MIDDLEWARE_ORDER,
-            description="Execution order in middleware chain",
-        )
-        name: str | None = Field(default=None, description="Optional middleware name")
-        config: FlextModelsContainers.ConfigMap = Field(
-            default_factory=FlextModelsContainers.ConfigMap,
-            description="Middleware-specific configuration",
-        )
+        enabled: Annotated[
+            bool,
+            Field(default=True, description="Whether middleware is enabled"),
+        ] = True
+        order: Annotated[
+            int,
+            Field(
+                default=c.Defaults.DEFAULT_MIDDLEWARE_ORDER,
+                description="Execution order in middleware chain",
+            ),
+        ] = c.Defaults.DEFAULT_MIDDLEWARE_ORDER
+        name: Annotated[
+            str | None,
+            Field(default=None, description="Optional middleware name"),
+        ] = None
+        config: Annotated[
+            FlextModelsContainers.ConfigMap,
+            Field(
+                default_factory=FlextModelsContainers.ConfigMap,
+                description="Middleware-specific configuration",
+            ),
+        ]
 
     class DispatcherMiddlewareConfig(MiddlewareConfig):
         """Internal configuration for dispatcher middleware."""

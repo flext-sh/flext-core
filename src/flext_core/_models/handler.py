@@ -37,15 +37,24 @@ class FlextModelsHandler:
     class Registration(FlextModelFoundation.ArbitraryTypesModel):
         """Handler registration with advanced validation."""
 
-        name: str = Field(
-            min_length=c.Reliability.RETRY_COUNT_MIN, description="Handler name"
-        )
-        handler: t.HandlerCallable = Field(
-            description="Handler callable function or method"
-        )
-        event_types: list[str] = Field(
-            default_factory=list, description="Event types this handler processes"
-        )
+        name: Annotated[
+            str,
+            Field(
+                min_length=c.Reliability.RETRY_COUNT_MIN,
+                description="Handler name",
+            ),
+        ]
+        handler: Annotated[
+            t.HandlerCallable,
+            Field(description="Handler callable function or method"),
+        ]
+        event_types: Annotated[
+            list[str],
+            Field(
+                default_factory=list,
+                description="Event types this handler processes",
+            ),
+        ]
 
         @field_validator("handler", mode="before")
         @classmethod
@@ -75,17 +84,28 @@ class FlextModelsHandler:
         including status, mode, and identification.
         """
 
-        handler_name: str = Field(description="Name of the handler")
-        status: str = Field(
-            description="Registration status (registered, skipped, failed)"
-        )
-        mode: str = Field(description="Registration mode (auto_discovery, explicit)")
-        handler_mode: c.Cqrs.HandlerTypeLiteral | c.Cqrs.HandlerType | None = Field(
-            default=None, description="Handler mode (command/query/event)"
-        )
-        message_type: str | None = Field(
-            default=None, description="Message type bound (for explicit mode)"
-        )
+        handler_name: Annotated[str, Field(description="Name of the handler")]
+        status: Annotated[
+            str,
+            Field(
+                description="Registration status (registered, skipped, failed)",
+            ),
+        ]
+        mode: Annotated[
+            str,
+            Field(description="Registration mode (auto_discovery, explicit)"),
+        ]
+        handler_mode: Annotated[
+            c.Cqrs.HandlerTypeLiteral | c.Cqrs.HandlerType | None,
+            Field(default=None, description="Handler mode (command/query/event)"),
+        ] = None
+        message_type: Annotated[
+            str | None,
+            Field(
+                default=None,
+                description="Message type bound (for explicit mode)",
+            ),
+        ] = None
         _GETITEM_FIELDS: ClassVar[frozenset[str]] = frozenset({
             "handler_name",
             "status",
@@ -106,19 +126,33 @@ class FlextModelsHandler:
         legacy dictionary-based configuration.
         """
 
-        handler: t.HandlerCallable | p.Handler[p.Model, object] | BaseModel = Field(
-            description="Handler instance (callable, object, or FlextHandlers)"
-        )
-        message_type: t.MessageTypeSpecifier | None = Field(
-            default=None,
-            description="Message type to handle (required for explicit mode)",
-        )
-        handler_mode: c.Cqrs.HandlerTypeLiteral | None = Field(
-            default=None, description="Handler operation mode (command, query, event)"
-        )
-        handler_name: str | None = Field(
-            default=None, description="Explicit handler name override"
-        )
+        handler: Annotated[
+            t.HandlerCallable | p.Handler[p.Model, object] | BaseModel,
+            Field(
+                description="Handler instance (callable, object, or FlextHandlers)",
+            ),
+        ]
+        message_type: Annotated[
+            t.MessageTypeSpecifier | None,
+            Field(
+                default=None,
+                description="Message type to handle (required for explicit mode)",
+            ),
+        ] = None
+        handler_mode: Annotated[
+            c.Cqrs.HandlerTypeLiteral | None,
+            Field(
+                default=None,
+                description="Handler operation mode (command, query, event)",
+            ),
+        ] = None
+        handler_name: Annotated[
+            str | None,
+            Field(
+                default=None,
+                description="Explicit handler name override",
+            ),
+        ] = None
 
     class RegistrationDetails(FlextModelFoundation.ArbitraryTypesModel):
         """Registration details for handler registration tracking.
@@ -173,16 +207,12 @@ class FlextModelsHandler:
             str,
             Field(
                 default_factory=lambda: c.Cqrs.DEFAULT_TIMESTAMP,
-                description="ISO 8601 registration timestamp",
+                description="ISO 8601 timestamp recording when the registration entry was created.",
+                title="Registration Timestamp",
                 examples=["2025-01-01T00:00:00Z", "2025-10-12T15:30:00+00:00"],
                 pattern=c.Platform.PATTERN_ISO8601_TIMESTAMP,
             ),
-        ] = Field(
-            default_factory=lambda: c.Cqrs.DEFAULT_TIMESTAMP,
-            description="ISO 8601 timestamp recording when the registration entry was created.",
-            title="Registration Timestamp",
-            examples=["2025-01-01T00:00:00Z"],
-        )
+        ]
         status: Annotated[
             c.Cqrs.CommonStatus,
             Field(

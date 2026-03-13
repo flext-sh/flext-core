@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 from types import ModuleType
-from typing import ClassVar, override
+from typing import ClassVar, cast, override
 
 from pydantic import BaseModel
 
@@ -69,7 +69,7 @@ class _DemoHandler(FlextHandlers[object, str]):
 
     @override
     def validate_message(self, data: object) -> r[bool]:
-        base = super().validate_message(data)
+        base = super().validate_message(cast(object, data))
         if base.is_failure:
             return base
         if data == "bad":
@@ -239,23 +239,23 @@ class Ex10FlextHandlers(Examples):
         self.check("can_handle.expected", handler.can_handle(_Message))
         self.check("can_handle.derived", handler.can_handle(_DerivedMessage))
         self.check("can_handle.other", handler.can_handle(str))
-        execute_value = handler.execute(_Message(text=payload_text)).unwrap_or("-")
+        execute_value = handler.execute(cast(object, _Message(text=payload_text))).unwrap_or("-")
         self.check("execute.success.value", payload_text in str(execute_value))
-        self.check("execute.validation_failure", handler.execute("bad").error)
+        self.check("execute.validation_failure", handler.execute(cast(object, "bad")).error)
         dispatch_value = handler.dispatch_message(
-            _Message(text=dispatch_text)
+            cast(object, _Message(text=dispatch_text))
         ).unwrap_or("-")
         self.check("dispatch.success", dispatch_text in str(dispatch_value))
         self.check(
             "dispatch.mode_mismatch",
             handler.dispatch_message(
-                _Message(text="go"), operation=c.Dispatcher.HANDLER_MODE_QUERY
+                cast(object, _Message(text="go")), operation=c.Dispatcher.HANDLER_MODE_QUERY
             ).error,
         )
         self.check(
             "dispatch.pipeline_exception",
             handler.dispatch_message(
-                "explode", operation=c.Dispatcher.HANDLER_MODE_COMMAND
+                cast(object, "explode"), operation=c.Dispatcher.HANDLER_MODE_COMMAND
             ).error,
         )
         self.check(
@@ -280,17 +280,17 @@ class Ex10FlextHandlers(Examples):
         )
         self.check(
             "pop_context.1",
-            handler
-            .pop_context()
-            .unwrap_or(m.ConfigMap(root={}))
-            .get("handler_name", "-"),
+            cast(
+                m.ConfigMap,
+                handler.pop_context().unwrap_or(m.ConfigMap(root={}))
+            ).get("handler_name", "-"),
         )
         self.check(
             "pop_context.2",
-            handler
-            .pop_context()
-            .unwrap_or(m.ConfigMap(root={}))
-            .get("handler_name", "-"),
+            cast(
+                m.ConfigMap,
+                handler.pop_context().unwrap_or(m.ConfigMap(root={}))
+            ).get("handler_name", "-"),
         )
 
     def demo_namespaces_and_mixins(self) -> None:
@@ -323,7 +323,10 @@ class Ex10FlextHandlers(Examples):
         )
         self.check(
             "cqrs.get_metrics",
-            tracker.get_metrics().unwrap_or(m.ConfigMap(root={})).get(hit_key, -1),
+            cast(
+                m.ConfigMap,
+                tracker.get_metrics().unwrap_or(m.ConfigMap(root={}))
+            ).get(hit_key, -1),
         )
         stack = h.CQRS.ContextStack()
         self.check(
@@ -338,10 +341,10 @@ class Ex10FlextHandlers(Examples):
         )
         self.check(
             "cqrs.pop_context",
-            stack
-            .pop_context()
-            .unwrap_or(m.ConfigMap(root={}))
-            .get("handler_name", "-"),
+            cast(
+                m.ConfigMap,
+                stack.pop_context().unwrap_or(m.ConfigMap(root={}))
+            ).get("handler_name", "-"),
         )
         di = h.DependencyIntegration
         di_container = di.create_container(config=m.ConfigMap(root={"env": env_value}))

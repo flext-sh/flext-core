@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime
-from typing import Self, override
+from typing import Annotated, Self, override
 
 from pydantic import ConfigDict, Field, computed_field
 
@@ -124,9 +124,13 @@ class FlextModelsCollections:
         model_config = ConfigDict(
             strict=True, validate_default=True, validate_assignment=True
         )
-        categories: dict[str, list[t.MetadataValue]] = Field(
-            default_factory=dict, description="Map of category name to list of items"
-        )
+        categories: Annotated[
+            dict[str, list[t.MetadataValue]],
+            Field(
+                default_factory=dict,
+                description="Map of category name to list of items",
+            ),
+        ]
 
         def __len__(self) -> int:
             return sum(len(entries) for entries in self.categories.values())
@@ -312,25 +316,37 @@ class FlextModelsCollections:
     class ParseOptions(FlextModelFoundation.ArbitraryTypesModel):
         """Options for string parsing operations."""
 
-        strip: bool = Field(
-            default=True, description="Strip whitespace from components"
-        )
-        remove_empty: bool = Field(
-            default=True, description="Remove empty components from result"
-        )
-        validator: Callable[[str], bool] | None = Field(
-            default=None, description="Optional validator function for components"
-        )
+        strip: Annotated[
+            bool,
+            Field(
+                default=True,
+                description="Strip whitespace from components",
+            ),
+        ] = True
+        remove_empty: Annotated[
+            bool,
+            Field(
+                default=True,
+                description="Remove empty components from result",
+            ),
+        ] = True
+        validator: Annotated[
+            Callable[[str], bool] | None,
+            Field(
+                default=None,
+                description="Optional validator function for components",
+            ),
+        ] = None
 
     class PatternApplicationParams(FlextModelFoundation.ArbitraryTypesModel):
         """Parameters for regex pattern application."""
 
-        text: str = Field(description="Text to apply pattern to")
-        pattern: str = Field(description="Regex pattern")
-        replacement: str = Field(description="Replacement string")
-        flags: int = Field(default=0, description="Regex flags")
-        pattern_index: int = Field(description="Index of pattern in pipeline")
-        total_patterns: int = Field(description="Total number of patterns")
+        text: Annotated[str, Field(description="Text to apply pattern to")]
+        pattern: Annotated[str, Field(description="Regex pattern")]
+        replacement: Annotated[str, Field(description="Replacement string")]
+        flags: Annotated[int, Field(default=0, description="Regex flags")] = 0
+        pattern_index: Annotated[int, Field(description="Index of pattern in pipeline")]
+        total_patterns: Annotated[int, Field(description="Total number of patterns")]
 
 
 __all__ = ["FlextModelsCollections"]

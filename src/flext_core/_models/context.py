@@ -290,16 +290,21 @@ class FlextModelsContext:
 
         """
 
-        data: FlextModelsContainers.Dict = Field(
-            default_factory=FlextModelsContainers.Dict,
-            description="Initial context data as key-value pairs",
-        )
+        data: Annotated[
+            FlextModelsContainers.Dict,
+            Field(
+                default_factory=FlextModelsContainers.Dict,
+                description="Initial context data as key-value pairs",
+            ),
+        ]
         metadata: Annotated[
             FlextModelFoundation.Metadata | FlextModelsContainers.Dict | None,
             BeforeValidator(_normalize_metadata_before),
-        ] = Field(
-            default=None, description="Context metadata (creation info, source, etc.)"
-        )
+            Field(
+                default=None,
+                description="Context metadata (creation info, source, etc.)",
+            ),
+        ] = None
         model_config = ConfigDict(extra=c.ModelConfig.EXTRA_IGNORE)
 
         @classmethod
@@ -412,22 +417,29 @@ class FlextModelsContext:
 
         """
 
-        data: Mapping[str, object] = Field(
-            default_factory=dict, description="All context data from all scopes"
-        )
+        data: Annotated[
+            Mapping[str, object],
+            Field(
+                default_factory=dict,
+                description="All context data from all scopes",
+            ),
+        ]
         metadata: Annotated[
             FlextModelFoundation.Metadata | FlextModelsContainers.Dict | None,
             BeforeValidator(_normalize_metadata_before),
-        ] = Field(
-            default=None, description="Context metadata (creation info, source, etc.)"
-        )
+            Field(
+                default=None,
+                description="Context metadata (creation info, source, etc.)",
+            ),
+        ] = None
         statistics: Annotated[
             Mapping[str, object],
             BeforeValidator(_normalize_statistics_before),
-        ] = Field(
-            default_factory=dict,
-            description="Usage statistics (operation counts, timing info)",
-        )
+            Field(
+                default_factory=dict,
+                description="Usage statistics (operation counts, timing info)",
+            ),
+        ]
 
         @computed_field
         def has_statistics(self) -> bool:
@@ -512,11 +524,15 @@ class FlextModelsContext:
             str, Field(default="", description="Type/category of scope")
         ] = ""
         data: Annotated[
-            Mapping[str, object], BeforeValidator(_normalize_to_mapping)
-        ] = Field(default_factory=dict, description="Scope data")
+            Mapping[str, object],
+            BeforeValidator(_normalize_to_mapping),
+            Field(default_factory=dict, description="Scope data"),
+        ]
         metadata: Annotated[
-            Mapping[str, object], BeforeValidator(_normalize_to_mapping)
-        ] = Field(default_factory=dict, description="Scope metadata")
+            Mapping[str, object],
+            BeforeValidator(_normalize_to_mapping),
+            Field(default_factory=dict, description="Scope metadata"),
+        ]
 
     class ContextStatistics(FlextModelFoundation.ArbitraryTypesModel):
         """Statistics tracking for context operations and metrics.
@@ -566,12 +582,10 @@ class FlextModelsContext:
             Mapping[str, object],
             BeforeValidator(_normalize_to_mapping),
             Field(
-                default_factory=dict, description="Extensible operation/metrics counts"
+                default_factory=dict,
+                description="Additional metric counters and timing values grouped by metric key.",
             ),
-        ] = Field(
-            default_factory=dict,
-            description="Additional metric counters and timing values grouped by metric key.",
-        )
+        ]
 
     class ContextMetadata(BaseModel):
         """Metadata storage for context objects with full tracing support.
@@ -650,12 +664,10 @@ class FlextModelsContext:
             Mapping[str, object],
             BeforeValidator(_normalize_to_mapping),
             Field(
-                default_factory=dict, description="Extensible custom metadata fields"
+                default_factory=dict,
+                description="Custom metadata attributes for caller-specific tracing and context.",
             ),
-        ] = Field(
-            default_factory=dict,
-            description="Custom metadata attributes for caller-specific tracing and context.",
-        )
+        ]
 
         @model_validator(mode="after")
         def validate_context_protocol(self) -> Self:
@@ -683,18 +695,18 @@ class FlextModelsContext:
         ] = None
         domain_data: Annotated[
             Mapping[str, object],
-            Field(default_factory=dict, description="Domain-specific data"),
-        ] = Field(
-            default_factory=dict,
-            description="Domain payload values scoped to the current business context.",
-        )
+            Field(
+                default_factory=dict,
+                description="Domain payload values scoped to the current business context.",
+            ),
+        ]
         domain_metadata: Annotated[
             Mapping[str, object],
-            Field(default_factory=dict, description="Domain metadata"),
-        ] = Field(
-            default_factory=dict,
-            description="Domain metadata attributes describing origin and processing state.",
-        )
+            Field(
+                default_factory=dict,
+                description="Domain metadata attributes describing origin and processing state.",
+            ),
+        ]
 
 
 __all__ = ["FlextModelsContext"]

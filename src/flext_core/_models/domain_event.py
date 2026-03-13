@@ -103,13 +103,16 @@ class FlextModelsDomainEvent:
     ):
         """Base class for domain events."""
 
-        message_type: c.Cqrs.EventMessageTypeLiteral = Field(
-            default="event",
-            frozen=True,
-            description="Message type discriminator for union routing - always 'event'",
-        )
-        event_type: str = Field(min_length=c.Reliability.RETRY_COUNT_MIN)
-        aggregate_id: str = Field(min_length=c.Reliability.RETRY_COUNT_MIN)
+        message_type: Annotated[
+            c.Cqrs.EventMessageTypeLiteral,
+            Field(
+                default="event",
+                frozen=True,
+                description="Message type discriminator for union routing - always 'event'",
+            ),
+        ] = "event"
+        event_type: Annotated[str, Field(min_length=c.Reliability.RETRY_COUNT_MIN)]
+        aggregate_id: Annotated[str, Field(min_length=c.Reliability.RETRY_COUNT_MIN)]
         data: Annotated[
             _ComparableConfigMap, BeforeValidator(_normalize_event_data)
         ] = Field(

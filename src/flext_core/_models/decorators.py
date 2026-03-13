@@ -10,6 +10,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import Annotated
+
 from pydantic import ConfigDict, Field
 
 from flext_core._models.base import FlextModelFoundation
@@ -30,9 +32,14 @@ class FlextModelsDecorators:
         """
 
         model_config = ConfigDict(frozen=True, extra="forbid", validate_assignment=True)
-        timeout_seconds: float = Field(
-            gt=0, description="Timeout duration in seconds (must be positive)"
-        )
-        error_code: str | None = Field(
-            default=None, description="Optional error code to use when timeout occurs"
-        )
+        timeout_seconds: Annotated[
+            float,
+            Field(gt=0, description="Timeout duration in seconds (must be positive)"),
+        ]
+        error_code: Annotated[
+            str | None,
+            Field(
+                default=None,
+                description="Optional error code to use when timeout occurs",
+            ),
+        ] = None

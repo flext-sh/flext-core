@@ -52,10 +52,13 @@ class FlextModelsEntity:
         - domain_events: Event sourcing support
         """
 
-        domain_events: list[FlextModelsDomainEvent.Entry] = Field(
-            default=[],
-            description="List of uncommitted domain events for event sourcing",
-        )
+        domain_events: Annotated[
+            list[FlextModelsDomainEvent.Entry],
+            Field(
+                default_factory=list,
+                description="List of uncommitted domain events for event sourcing",
+            ),
+        ]
 
         @override
         def __eq__(self, other: object) -> bool:
