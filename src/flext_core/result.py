@@ -147,7 +147,7 @@ class FlextResult[T](FlextRuntime.RuntimeResult[T]):
         failure_prefix: str,
     ) -> FlextResult[UModel]:
         try:
-            return FlextResult[UModel].ok(model(data))
+            return FlextResult[UModel].ok(model.model_validate(data))
         except (
             ValidationError,
             ValueError,
@@ -683,7 +683,7 @@ class FlextResult[T](FlextRuntime.RuntimeResult[T]):
                 exception=self.exception,
             )
         try:
-            return FlextResult[U].ok(model(self.value))
+            return FlextResult[U].ok(model.model_validate(self.value))
         except (
             ValidationError,
             ValueError,

@@ -109,7 +109,7 @@ class PreCheckGate:
         by_family: dict[str, m.Infra.Refactor.ClassNestingPolicy] = {}
         for raw in policy_matrix:
             try:
-                policy = m.Infra.Refactor.ClassNestingPolicy(raw)
+                policy = m.Infra.Refactor.ClassNestingPolicy.model_validate(raw)
             except ValidationError:
                 continue
             by_family[policy.family_name] = policy

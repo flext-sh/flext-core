@@ -91,11 +91,10 @@ def test_context_data_normalize_and_json_checks() -> None:
             cast("object", {"bad": object()})
         )
     obj = object()
-    normalized_obj = FlextModelsContext.ContextData.normalize_to_general_value(
-        cast("object", obj)
-    )
-    # Unknown objects are now converted to str representation
-    assert isinstance(normalized_obj, str)
+    with pytest.raises(TypeError):
+        FlextModelsContext.ContextData.normalize_to_general_value(
+            cast("object", obj)
+        )
 
 
 def test_context_data_validate_dict_serializable_error_paths() -> None:

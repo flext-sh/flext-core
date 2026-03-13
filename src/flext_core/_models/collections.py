@@ -202,7 +202,7 @@ class FlextModelsCollections:
 
         @classmethod
         def from_mapping(cls, data: Mapping[str, t.MetadataValue]) -> Self:
-            return cls(dict(data))
+            return cls.model_validate(dict(data))
 
     class Rules(FlextModelFoundation.ArbitraryTypesModel):
         """Base for rules models (mutable)."""
@@ -260,7 +260,9 @@ class FlextModelsCollections:
                         result.get(key),
                         value,
                     )
-            return cls({k: v for k, v in result.items() if v is not None})
+            return cls.model_validate({
+                k: v for k, v in result.items() if v is not None
+            })
 
         def merge(self, *options: Self) -> Self:
             return self.__class__.merge_options(self, *options)
@@ -287,7 +289,7 @@ class FlextModelsCollections:
 
         @classmethod
         def from_mapping(cls, mapping: FlextModelsContainers.ConfigMap) -> Self:
-            return cls(dict(mapping))
+            return cls.model_validate(dict(mapping))
 
         def diff(
             self,

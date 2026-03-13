@@ -293,7 +293,7 @@ class FlextService[TDomainResult: object = object](x, ABC):
         :meth:`_runtime_bootstrap_options` to get the configuration options.
         """
         config_cls = config_type or FlextSettings
-        runtime_config = config_cls(config_overrides or {})
+        runtime_config = config_cls.model_validate(config_overrides or {})
         runtime_context_input = (
             context if context is not None else FlextContext.create()
         )
@@ -312,11 +312,11 @@ class FlextService[TDomainResult: object = object](x, ABC):
             runtime_container.wire_modules(
                 modules=wire_modules, packages=wire_packages, classes=wire_classes
             )
-        return m.ServiceRuntime({
-            "config": runtime_config,
-            "context": runtime_container.context,
-            "container": runtime_container,
-        })
+        return m.ServiceRuntime(
+            config=runtime_config,
+            context=runtime_container.context,
+            container=runtime_container,
+        )
 
     @classmethod
     def _get_service_config_type(cls) -> type[FlextSettings]:

@@ -74,20 +74,20 @@ class FlextInfraRefactorMigrateToClassMRO:
                 target=normalized_target,
             )
         )
-        return m.Infra.Refactor.MROMigrationReport({
-            "workspace": str(self._workspace_root),
-            "target": normalized_target,
-            "dry_run": not apply_changes,
-            "files_scanned": files_scanned,
-            "files_with_candidates": len(scan_results),
-            "migrations": tuple(migrations),
-            "rewrites": rewrites,
-            "remaining_violations": remaining_violations,
-            "mro_failures": mro_failures,
-            "stash_ref": stash_ref,
-            "warnings": tuple(warnings),
-            "errors": tuple(errors),
-        })
+        return m.Infra.Refactor.MROMigrationReport(
+            workspace=str(self._workspace_root),
+            target=normalized_target,
+            dry_run=not apply_changes,
+            files_scanned=files_scanned,
+            files_with_candidates=len(scan_results),
+            migrations=tuple(migrations),
+            rewrites=rewrites,
+            remaining_violations=remaining_violations,
+            mro_failures=mro_failures,
+            stash_ref=stash_ref,
+            warnings=tuple(warnings),
+            errors=tuple(errors),
+        )
 
     @staticmethod
     def render_text(report: m.Infra.Refactor.MROMigrationReport) -> str:

@@ -12,7 +12,8 @@ from __future__ import annotations
 import time
 import uuid
 from collections.abc import Mapping, MutableMapping
-from typing import ClassVar, Protocol, override
+from datetime import datetime
+from typing import Annotated, ClassVar, override
 
 from pydantic import (
     BaseModel,
@@ -23,11 +24,6 @@ from pydantic import (
 
 from flext_core import FlextRuntime, c, m, t
 from flext_core._models.base import FlextModelFoundation
-
-
-class Metadata(Protocol):
-    @property
-    def attributes(self) -> Mapping[str, object]: ...
 
 
 class FlextExceptions:
@@ -53,280 +49,370 @@ class FlextExceptions:
     class _StrictStringValue(_ParamsModel):
         """Strict string extractor for kwargs/context parsing."""
 
-        value: str = Field(strict=True)
+        value: Annotated[str, Field(strict=True)]
 
     class _StrictBooleanValue(_ParamsModel):
         """Strict boolean extractor for kwargs/context parsing."""
 
-        value: bool = Field(strict=True)
+        value: Annotated[bool, Field(strict=True)]
 
     class _StrictNumberValue(_ParamsModel):
         """Strict numeric extractor for kwargs/context parsing."""
 
-        value: int | float = Field()
+        value: Annotated[int | float, Field()]
 
     class ValidationErrorParams(_ParamsModel):
         """Validated params for ValidationError."""
 
-        field: str | None = Field(
-            default=None,
-            strict=True,
-            description="Name of the input field that failed validation.",
-            title="Field",
-            examples=["email"],
-        )
-        value: object | None = None
+        field: Annotated[
+            str | None,
+            Field(
+                default=None,
+                strict=True,
+                description="Name of the input field that failed validation.",
+                title="Field",
+                examples=["email"],
+            ),
+        ]
+        value: t.Scalar | None = None
 
     class ConfigurationErrorParams(_ParamsModel):
         """Validated params for ConfigurationError."""
 
-        config_key: str | None = Field(
-            default=None,
-            strict=True,
-            description="Configuration key associated with the error.",
-            title="Config Key",
-            examples=["database_url"],
-        )
-        config_source: str | None = Field(
-            default=None,
-            strict=True,
-            description="Configuration source where the invalid value originated.",
-            title="Config Source",
-            examples=[".env"],
-        )
+        config_key: Annotated[
+            str | None,
+            Field(
+                default=None,
+                strict=True,
+                description="Configuration key associated with the error.",
+                title="Config Key",
+                examples=["database_url"],
+            ),
+        ]
+        config_source: Annotated[
+            str | None,
+            Field(
+                default=None,
+                strict=True,
+                description="Configuration source where the invalid value originated.",
+                title="Config Source",
+                examples=[".env"],
+            ),
+        ]
 
     class ConnectionErrorParams(_ParamsModel):
         """Validated params for ConnectionError."""
 
-        host: str | None = Field(
-            default=None,
-            strict=True,
-            description="Hostname or address used for the failed connection attempt.",
-            title="Host",
-            examples=["db.internal"],
-        )
-        port: int | None = Field(
-            default=None,
-            strict=True,
-            description="Network port used for the failed connection attempt.",
-            title="Port",
-            examples=[5432],
-        )
-        timeout: int | float | None = Field(
-            default=None,
-            description="Connection timeout threshold in seconds.",
-            title="Timeout",
-            examples=[5, 5.5],
-        )
+        host: Annotated[
+            str | None,
+            Field(
+                default=None,
+                strict=True,
+                description="Hostname or address used for the failed connection attempt.",
+                title="Host",
+                examples=["db.internal"],
+            ),
+        ]
+        port: Annotated[
+            int | None,
+            Field(
+                default=None,
+                strict=True,
+                description="Network port used for the failed connection attempt.",
+                title="Port",
+                examples=[5432],
+            ),
+        ]
+        timeout: Annotated[
+            int | float | None,
+            Field(
+                default=None,
+                description="Connection timeout threshold in seconds.",
+                title="Timeout",
+                examples=[5, 5.5],
+            ),
+        ]
 
     class TimeoutErrorParams(_ParamsModel):
         """Validated params for TimeoutError."""
 
-        timeout_seconds: int | float | None = Field(
-            default=None,
-            description="Timeout duration in seconds that triggered this exception.",
-            title="Timeout Seconds",
-            examples=[30, 30.0],
-        )
-        operation: str | None = Field(
-            default=None,
-            strict=True,
-            description="Operation name that exceeded the configured timeout.",
-            title="Operation",
-            examples=["dispatch"],
-        )
+        timeout_seconds: Annotated[
+            int | float | None,
+            Field(
+                default=None,
+                description="Timeout duration in seconds that triggered this exception.",
+                title="Timeout Seconds",
+                examples=[30, 30.0],
+            ),
+        ]
+        operation: Annotated[
+            str | None,
+            Field(
+                default=None,
+                strict=True,
+                description="Operation name that exceeded the configured timeout.",
+                title="Operation",
+                examples=["dispatch"],
+            ),
+        ]
 
     class AuthenticationErrorParams(_ParamsModel):
         """Validated params for AuthenticationError."""
 
-        auth_method: str | None = Field(
-            default=None,
-            strict=True,
-            description="Authentication method used when the failure occurred.",
-            title="Auth Method",
-            examples=["token"],
-        )
-        user_id: str | None = Field(
-            default=None,
-            strict=True,
-            description="User identifier associated with the authentication attempt.",
-            title="User ID",
-            examples=["user-123"],
-        )
+        auth_method: Annotated[
+            str | None,
+            Field(
+                default=None,
+                strict=True,
+                description="Authentication method used when the failure occurred.",
+                title="Auth Method",
+                examples=["token"],
+            ),
+        ]
+        user_id: Annotated[
+            str | None,
+            Field(
+                default=None,
+                strict=True,
+                description="User identifier associated with the authentication attempt.",
+                title="User ID",
+                examples=["user-123"],
+            ),
+        ]
 
     class AuthorizationErrorParams(_ParamsModel):
         """Validated params for AuthorizationError."""
 
-        user_id: str | None = Field(
-            default=None,
-            strict=True,
-            description="User identifier denied access to a protected resource.",
-            title="User ID",
-            examples=["user-123"],
-        )
-        resource: str | None = Field(
-            default=None,
-            strict=True,
-            description="Protected resource that triggered the authorization failure.",
-            title="Resource",
-            examples=["invoice:12345"],
-        )
-        permission: str | None = Field(
-            default=None,
-            strict=True,
-            description="Missing permission required to complete the requested action.",
-            title="Permission",
-            examples=["write"],
-        )
+        user_id: Annotated[
+            str | None,
+            Field(
+                default=None,
+                strict=True,
+                description="User identifier denied access to a protected resource.",
+                title="User ID",
+                examples=["user-123"],
+            ),
+        ]
+        resource: Annotated[
+            str | None,
+            Field(
+                default=None,
+                strict=True,
+                description="Protected resource that triggered the authorization failure.",
+                title="Resource",
+                examples=["invoice:12345"],
+            ),
+        ]
+        permission: Annotated[
+            str | None,
+            Field(
+                default=None,
+                strict=True,
+                description="Missing permission required to complete the requested action.",
+                title="Permission",
+                examples=["write"],
+            ),
+        ]
 
     class NotFoundErrorParams(_ParamsModel):
         """Validated params for NotFoundError."""
 
-        resource_type: str | None = Field(
-            default=None,
-            strict=True,
-            description="Domain resource type that could not be located.",
-            title="Resource Type",
-            examples=["user"],
-        )
-        resource_id: str | None = Field(
-            default=None,
-            strict=True,
-            description="Unique identifier of the missing resource.",
-            title="Resource ID",
-            examples=["42"],
-        )
+        resource_type: Annotated[
+            str | None,
+            Field(
+                default=None,
+                strict=True,
+                description="Domain resource type that could not be located.",
+                title="Resource Type",
+                examples=["user"],
+            ),
+        ]
+        resource_id: Annotated[
+            str | None,
+            Field(
+                default=None,
+                strict=True,
+                description="Unique identifier of the missing resource.",
+                title="Resource ID",
+                examples=["42"],
+            ),
+        ]
 
     class ConflictErrorParams(_ParamsModel):
         """Validated params for ConflictError."""
 
-        resource_type: str | None = Field(
-            default=None,
-            strict=True,
-            description="Domain resource type involved in the conflict.",
-            title="Resource Type",
-            examples=["order"],
-        )
-        resource_id: str | None = Field(
-            default=None,
-            strict=True,
-            description="Identifier of the resource that caused the conflict.",
-            title="Resource ID",
-            examples=["ord-1001"],
-        )
-        conflict_reason: str | None = Field(
-            default=None,
-            strict=True,
-            description="Human-readable explanation for why the conflict occurred.",
-            title="Conflict Reason",
-            examples=["version_mismatch"],
-        )
+        resource_type: Annotated[
+            str | None,
+            Field(
+                default=None,
+                strict=True,
+                description="Domain resource type involved in the conflict.",
+                title="Resource Type",
+                examples=["order"],
+            ),
+        ]
+        resource_id: Annotated[
+            str | None,
+            Field(
+                default=None,
+                strict=True,
+                description="Identifier of the resource that caused the conflict.",
+                title="Resource ID",
+                examples=["ord-1001"],
+            ),
+        ]
+        conflict_reason: Annotated[
+            str | None,
+            Field(
+                default=None,
+                strict=True,
+                description="Human-readable explanation for why the conflict occurred.",
+                title="Conflict Reason",
+                examples=["version_mismatch"],
+            ),
+        ]
 
     class RateLimitErrorParams(_ParamsModel):
         """Validated params for RateLimitError."""
 
-        limit: int | None = Field(
-            default=None,
-            strict=True,
-            description="Maximum request count allowed within the configured window.",
-            title="Limit",
-            examples=[100],
-        )
-        window_seconds: int | None = Field(
-            default=None,
-            strict=True,
-            description="Duration, in seconds, of the rate-limit window.",
-            title="Window Seconds",
-            examples=[60],
-        )
-        retry_after: int | float | None = Field(
-            default=None,
-            description="Time in seconds clients should wait before retrying.",
-            title="Retry After",
-            examples=[1, 1.5],
-        )
+        limit: Annotated[
+            int | None,
+            Field(
+                default=None,
+                strict=True,
+                description="Maximum request count allowed within the configured window.",
+                title="Limit",
+                examples=[100],
+            ),
+        ]
+        window_seconds: Annotated[
+            int | None,
+            Field(
+                default=None,
+                strict=True,
+                description="Duration, in seconds, of the rate-limit window.",
+                title="Window Seconds",
+                examples=[60],
+            ),
+        ]
+        retry_after: Annotated[
+            int | float | None,
+            Field(
+                default=None,
+                description="Time in seconds clients should wait before retrying.",
+                title="Retry After",
+                examples=[1, 1.5],
+            ),
+        ]
 
     class CircuitBreakerErrorParams(_ParamsModel):
         """Validated params for CircuitBreakerError."""
 
-        service_name: str | None = Field(
-            default=None,
-            strict=True,
-            description="External service monitored by the circuit breaker.",
-            title="Service Name",
-            examples=["payments-api"],
-        )
-        failure_count: int | None = Field(
-            default=None,
-            strict=True,
-            description="Consecutive failure count at the moment the breaker opened.",
-            title="Failure Count",
-            examples=[5],
-        )
-        reset_timeout: int | float | None = Field(
-            default=None,
-            description="Seconds before allowing a circuit breaker reset attempt.",
-            title="Reset Timeout",
-            examples=[30, 30.0],
-        )
+        service_name: Annotated[
+            str | None,
+            Field(
+                default=None,
+                strict=True,
+                description="External service monitored by the circuit breaker.",
+                title="Service Name",
+                examples=["payments-api"],
+            ),
+        ]
+        failure_count: Annotated[
+            int | None,
+            Field(
+                default=None,
+                strict=True,
+                description="Consecutive failure count at the moment the breaker opened.",
+                title="Failure Count",
+                examples=[5],
+            ),
+        ]
+        reset_timeout: Annotated[
+            int | float | None,
+            Field(
+                default=None,
+                description="Seconds before allowing a circuit breaker reset attempt.",
+                title="Reset Timeout",
+                examples=[30, 30.0],
+            ),
+        ]
 
     class TypeErrorParams(_ParamsModel):
         """Validated params for TypeError."""
 
-        expected_type: str | None = Field(
-            default=None,
-            strict=True,
-            description="Expected type name for the failing value.",
-            title="Expected Type",
-            examples=["str"],
-        )
-        actual_type: str | None = Field(
-            default=None,
-            strict=True,
-            description="Actual type name received at runtime.",
-            title="Actual Type",
-            examples=["int"],
-        )
+        expected_type: Annotated[
+            str | None,
+            Field(
+                default=None,
+                strict=True,
+                description="Expected type name for the failing value.",
+                title="Expected Type",
+                examples=["str"],
+            ),
+        ]
+        actual_type: Annotated[
+            str | None,
+            Field(
+                default=None,
+                strict=True,
+                description="Actual type name received at runtime.",
+                title="Actual Type",
+                examples=["int"],
+            ),
+        ]
 
     class OperationErrorParams(_ParamsModel):
         """Validated params for OperationError."""
 
-        operation: str | None = Field(
-            default=None,
-            strict=True,
-            description="Operation name associated with the failure.",
-            title="Operation",
-            examples=["publish_events"],
-        )
-        reason: str | None = Field(
-            default=None,
-            strict=True,
-            description="Short reason explaining the operation failure.",
-            title="Reason",
-            examples=["transient_backend_error"],
-        )
+        operation: Annotated[
+            str | None,
+            Field(
+                default=None,
+                strict=True,
+                description="Operation name associated with the failure.",
+                title="Operation",
+                examples=["publish_events"],
+            ),
+        ]
+        reason: Annotated[
+            str | None,
+            Field(
+                default=None,
+                strict=True,
+                description="Short reason explaining the operation failure.",
+                title="Reason",
+                examples=["transient_backend_error"],
+            ),
+        ]
 
     class AttributeAccessErrorParams(_ParamsModel):
         """Validated params for AttributeAccessError."""
 
-        attribute_name: str | None = Field(
-            default=None,
-            strict=True,
-            description="Attribute name that could not be accessed safely.",
-            title="Attribute Name",
-            examples=["token"],
-        )
-        attribute_context: object | None = Field(
-            default=None,
-            description="Context payload describing the object or state during access failure.",
-            title="Attribute Context",
-            examples=[{"owner": "session"}],
-        )
+        attribute_name: Annotated[
+            str | None,
+            Field(
+                default=None,
+                strict=True,
+                description="Attribute name that could not be accessed safely.",
+                title="Attribute Name",
+                examples=["token"],
+            ),
+        ]
+        attribute_context: Annotated[
+            t.Scalar | None,
+            Field(
+                default=None,
+                description="Context payload describing the object or state during access failure.",
+                title="Attribute Context",
+                examples=[{"owner": "session"}],
+            ),
+        ]
 
     @staticmethod
     def _build_context_map(
-        context: Mapping[str, object] | m.ConfigMap | None,
-        extra_kwargs: Mapping[str, object] | m.ConfigMap,
+        context: Mapping[str, t.MetadataValue] | m.ConfigMap | None,
+        extra_kwargs: Mapping[str, t.MetadataValue] | m.ConfigMap,
         excluded_keys: set[str] | frozenset[str] | None = None,
     ) -> m.ConfigMap:
         """Build normalized context map from context and kwargs."""
@@ -348,8 +434,8 @@ class FlextExceptions:
 
     @staticmethod
     def _build_param_map(
-        context: Mapping[str, object] | m.ConfigMap | None,
-        extra_kwargs: Mapping[str, object] | m.ConfigMap,
+        context: Mapping[str, t.MetadataValue] | m.ConfigMap | None,
+        extra_kwargs: Mapping[str, t.MetadataValue] | m.ConfigMap,
         keys: set[str] | frozenset[str],
     ) -> m.ConfigMap:
         """Build unnormalized parameter map for strict params validation."""
@@ -362,15 +448,15 @@ class FlextExceptions:
 
     @staticmethod
     def _init_error_params[TParams: BaseModel](
-        context: Mapping[str, object] | None,
+        context: Mapping[str, t.MetadataValue] | None,
         extra_kwargs: dict[str, t.Container],
-        named_params: Mapping[str, object | None],
+        named_params: Mapping[str, t.MetadataValue | None],
         params_cls: type[TParams],
         existing_params: TParams | None,
         param_keys: set[str] | frozenset[str],
         *,
         excluded_context_keys: set[str] | frozenset[str] | None = None,
-    ) -> tuple[TParams, m.ConfigMap | None, t.Container | None, str | None]:
+    ) -> tuple[TParams, m.ConfigMap | None, t.MetadataValue | None, str | None]:
         """Extract, resolve and build error parameters from kwargs.
 
         Shared init boilerplate for all typed error subclasses.
@@ -388,20 +474,35 @@ class FlextExceptions:
             Tuple of (resolved_params, error_context, metadata, correlation_id)
 
         """
-        preserved_metadata = extra_kwargs.pop("metadata", None)
+        preserved_metadata_raw = extra_kwargs.pop("metadata", None)
+        preserved_metadata = (
+            FlextRuntime.normalize_to_metadata(preserved_metadata_raw)
+            if preserved_metadata_raw is not None
+            else None
+        )
         correlation_id_raw = extra_kwargs.pop("correlation_id", None)
-        correlation_id_str = e._safe_optional_str(correlation_id_raw)
-        param_values = e._build_param_map(context, extra_kwargs, keys=param_keys)
+        correlation_id_str = (
+            e._safe_optional_str(correlation_id_raw)
+            if isinstance(correlation_id_raw, (str, int, float, bool, datetime))
+            else None
+        )
+        normalized_extra_kwargs: dict[str, t.MetadataValue] = {
+            key: FlextRuntime.normalize_to_metadata(value)
+            for key, value in extra_kwargs.items()
+        }
+        param_values = e._build_param_map(
+            context, normalized_extra_kwargs, keys=param_keys
+        )
         for key, val in named_params.items():
             if val is not None:
                 param_values[key] = val
         resolved = (
             existing_params
             if existing_params is not None
-            else params_cls(dict(param_values))
+            else params_cls.model_validate(dict(param_values))
         )
         error_context = e._build_context_map(
-            context, extra_kwargs, excluded_keys=excluded_context_keys
+            context, normalized_extra_kwargs, excluded_keys=excluded_context_keys
         )
         for key in param_keys:
             attr_val = getattr(resolved, key, None)
@@ -410,7 +511,7 @@ class FlextExceptions:
         return (resolved, error_context or None, preserved_metadata, correlation_id_str)
 
     @staticmethod
-    def _safe_bool(value: object | None, *, default: bool) -> bool:
+    def _safe_bool(value: t.Scalar | None, *, default: bool) -> bool:
         """Extract strict bool from dynamic values with default fallback."""
         if value is None:
             return default
@@ -422,11 +523,11 @@ class FlextExceptions:
     def _safe_config_map(
         value: Metadata
         | m.Metadata
-        | object
         | m.ConfigMap
-        | Mapping[str, object]
+        | Mapping[str, t.MetadataValue | None]
+        | t.MetadataValue
         | None,
-    ) -> Mapping[str, object] | None:
+    ) -> Mapping[str, t.MetadataValue | None] | None:
         """Extract ConfigMap when value is mapping-compatible."""
         if value is None:
             return None
@@ -436,7 +537,7 @@ class FlextExceptions:
             return None
 
     @staticmethod
-    def _safe_int(value: object | None) -> int | None:
+    def _safe_int(value: t.Scalar | None) -> int | None:
         """Extract optional strict integer from dynamic values."""
         if value is None:
             return None
@@ -448,19 +549,19 @@ class FlextExceptions:
     def _safe_metadata(
         value: Metadata
         | m.Metadata
-        | object
         | m.ConfigMap
-        | Mapping[str, object]
+        | Mapping[str, t.MetadataValue | None]
+        | t.MetadataValue
         | None,
     ) -> Metadata | None:
         """Normalize supported metadata inputs to runtime metadata model."""
         if value is None:
             return None
         try:
-            return m.Metadata(value)
-        except PydanticValidationError:
+            return m.Metadata.model_validate(value, from_attributes=True)
+        except (PydanticValidationError, TypeError):
             pass
-        dumped_map: Mapping[str, object] | None = None
+        dumped_map: Mapping[str, t.MetadataValue | None] | None = None
         if isinstance(value, BaseModel):
             dumped_candidate = value.model_dump()
             try:
@@ -477,17 +578,17 @@ class FlextExceptions:
                     k: FlextRuntime.normalize_to_metadata(v)
                     for k, v in attrs_map.items()
                 }
-                return m.Metadata({"attributes": attrs})
+                return m.Metadata.model_validate({"attributes": attrs})
         attrs_map = e._safe_config_map(value)
         if attrs_map is not None:
             attrs = {
                 k: FlextRuntime.normalize_to_metadata(v) for k, v in attrs_map.items()
             }
-            return m.Metadata({"attributes": attrs})
+            return m.Metadata.model_validate({"attributes": attrs})
         return None
 
     @staticmethod
-    def _safe_number(value: object | None) -> int | float | None:
+    def _safe_number(value: t.Scalar | None) -> int | float | None:
         """Extract optional strict numeric value from dynamic values."""
         if value is None:
             return None
@@ -496,7 +597,7 @@ class FlextExceptions:
         return None
 
     @staticmethod
-    def _safe_optional_str(value: object | type | None) -> str | None:
+    def _safe_optional_str(value: t.Container | type | None) -> str | None:
         """Extract optional strict string from dynamic values."""
         if value is None:
             return None
@@ -516,12 +617,16 @@ class FlextExceptions:
             message: str,
             *,
             error_code: str = c.Errors.UNKNOWN_ERROR,
-            context: Mapping[str, object] | m.ConfigMap | None = None,
-            metadata: m.Metadata | Metadata | m.ConfigMap | object | None = None,
+            context: Mapping[str, t.MetadataValue] | m.ConfigMap | None = None,
+            metadata: m.Metadata
+            | Metadata
+            | m.ConfigMap
+            | t.MetadataValue
+            | None = None,
             correlation_id: str | None = None,
             auto_correlation: bool = False,
             auto_log: bool = True,
-            merged_kwargs: Mapping[str, object] | m.ConfigMap | None = None,
+            merged_kwargs: Mapping[str, t.MetadataValue] | m.ConfigMap | None = None,
             **extra_kwargs: t.Container,
         ) -> None:
             """Initialize base error with message and optional metadata.
@@ -571,8 +676,8 @@ class FlextExceptions:
 
         @staticmethod
         def _normalize_metadata(
-            metadata: m.Metadata | Metadata | m.ConfigMap | object | None,
-            merged_kwargs: Mapping[str, object] | m.ConfigMap,
+            metadata: m.Metadata | Metadata | m.ConfigMap | t.MetadataValue | None,
+            merged_kwargs: Mapping[str, t.MetadataValue] | m.ConfigMap,
         ) -> Metadata:
             """Normalize metadata from various input types to m.Metadata model.
 
@@ -590,8 +695,8 @@ class FlextExceptions:
                         k: FlextRuntime.normalize_to_metadata(v)
                         for k, v in merged_kwargs.items()
                     }
-                    return m.Metadata({"attributes": normalized_attrs})
-                return m.Metadata(attributes={})
+                    return m.Metadata.model_validate({"attributes": normalized_attrs})
+                return m.Metadata.model_validate({"attributes": {}})
             metadata_model = e._safe_metadata(metadata)
             if metadata_model is not None:
                 if not merged_kwargs:
@@ -602,41 +707,41 @@ class FlextExceptions:
                 }
                 for k, v in merged_kwargs.items():
                     merged_attrs[k] = FlextRuntime.normalize_to_metadata(v)
-                return m.Metadata({"attributes": merged_attrs})
+                return m.Metadata.model_validate({"attributes": merged_attrs})
             metadata_dict = e._safe_config_map(metadata)
             if metadata_dict is not None:
                 return e.BaseError._normalize_metadata_from_dict(
                     metadata_dict, merged_kwargs
                 )
-            return m.Metadata(attributes={"value": str(metadata)})
+            return m.Metadata.model_validate({"attributes": {"value": str(metadata)}})
 
         @staticmethod
         def _normalize_metadata_from_dict(
-            metadata_dict: Mapping[str, object] | m.ConfigMap,
-            merged_kwargs: Mapping[str, object] | m.ConfigMap,
+            metadata_dict: Mapping[str, t.MetadataValue | None] | m.ConfigMap,
+            merged_kwargs: Mapping[str, t.MetadataValue] | m.ConfigMap,
         ) -> Metadata:
             """Normalize metadata from dict-like object."""
-            merged_attrs: dict[str, object] = {}
+            merged_attrs: dict[str, t.MetadataValue | None] = {}
             for k, v in metadata_dict.items():
                 merged_attrs[k] = FlextRuntime.normalize_to_metadata(v)
             if merged_kwargs:
                 for k, v in merged_kwargs.items():
                     merged_attrs[k] = FlextRuntime.normalize_to_metadata(v)
-            return m.Metadata({
+            return m.Metadata.model_validate({
                 "attributes": {
                     k: FlextRuntime.normalize_to_metadata(v)
                     for k, v in merged_attrs.items()
                 }
             })
 
-        def to_dict(self) -> Mapping[str, object | None]:
+        def to_dict(self) -> Mapping[str, t.MetadataValue | None]:
             """Convert exception to dictionary representation.
 
             Returns:
                 Dictionary with error_type, message, error_code, and other fields.
 
             """
-            result: dict[str, object | None] = {
+            result: dict[str, t.MetadataValue | None] = {
                 "error_type": type(self).__name__,
                 "message": self.message,
                 "error_code": self.error_code,
@@ -658,9 +763,9 @@ class FlextExceptions:
             message: str,
             *,
             field: str | None = None,
-            value: object | None = None,
+            value: t.Scalar | None = None,
             error_code: str = c.Errors.VALIDATION_ERROR,
-            context: Mapping[str, object] | None = None,
+            context: Mapping[str, t.MetadataValue] | None = None,
             _correlation_id: str | None = None,
             params: e.ValidationErrorParams | None = None,
             **extra_kwargs: t.Container,
@@ -694,7 +799,7 @@ class FlextExceptions:
             config_key: str | None = None,
             config_source: str | None = None,
             error_code: str = c.Errors.CONFIGURATION_ERROR,
-            context: Mapping[str, object] | None = None,
+            context: Mapping[str, t.MetadataValue] | None = None,
             _correlation_id: str | None = None,
             params: e.ConfigurationErrorParams | None = None,
             **extra_kwargs: t.Container,
@@ -726,7 +831,7 @@ class FlextExceptions:
             message: str,
             *,
             error_code: str = c.Errors.CONNECTION_ERROR,
-            context: Mapping[str, object] | None = None,
+            context: Mapping[str, t.MetadataValue] | None = None,
             _correlation_id: str | None = None,
             params: e.ConnectionErrorParams | None = None,
             **extra_kwargs: t.Container,
@@ -761,7 +866,7 @@ class FlextExceptions:
             timeout_seconds: float | None = None,
             operation: str | None = None,
             error_code: str = c.Errors.TIMEOUT_ERROR,
-            context: Mapping[str, object] | None = None,
+            context: Mapping[str, t.MetadataValue] | None = None,
             _correlation_id: str | None = None,
             params: e.TimeoutErrorParams | None = None,
             **extra_kwargs: t.Container,
@@ -795,7 +900,7 @@ class FlextExceptions:
             auth_method: str | None = None,
             user_id: str | None = None,
             error_code: str = c.Errors.AUTHENTICATION_ERROR,
-            context: Mapping[str, object] | None = None,
+            context: Mapping[str, t.MetadataValue] | None = None,
             _correlation_id: str | None = None,
             params: e.AuthenticationErrorParams | None = None,
             **extra_kwargs: t.Container,
@@ -827,7 +932,7 @@ class FlextExceptions:
             message: str,
             *,
             error_code: str = c.Errors.AUTHORIZATION_ERROR,
-            context: Mapping[str, object] | None = None,
+            context: Mapping[str, t.MetadataValue] | None = None,
             correlation_id: str | None = None,
             params: e.AuthorizationErrorParams | None = None,
             **extra_kwargs: t.Container,
@@ -862,8 +967,12 @@ class FlextExceptions:
             resource_type: str | None = None,
             resource_id: str | None = None,
             error_code: str = c.Errors.NOT_FOUND_ERROR,
-            context: Mapping[str, object] | None = None,
-            metadata: m.Metadata | Metadata | m.ConfigMap | object | None = None,
+            context: Mapping[str, t.MetadataValue] | None = None,
+            metadata: m.Metadata
+            | Metadata
+            | m.ConfigMap
+            | t.MetadataValue
+            | None = None,
             correlation_id: str | None = None,
             params: e.NotFoundErrorParams | None = None,
             **extra_kwargs: t.Container,
@@ -897,7 +1006,7 @@ class FlextExceptions:
             message: str,
             *,
             error_code: str = c.Errors.ALREADY_EXISTS,
-            context: Mapping[str, object] | None = None,
+            context: Mapping[str, t.MetadataValue] | None = None,
             correlation_id: str | None = None,
             params: e.ConflictErrorParams | None = None,
             **extra_kwargs: t.Container,
@@ -930,7 +1039,7 @@ class FlextExceptions:
             message: str,
             *,
             error_code: str = c.Errors.OPERATION_ERROR,
-            context: Mapping[str, object] | None = None,
+            context: Mapping[str, t.MetadataValue] | None = None,
             correlation_id: str | None = None,
             params: e.RateLimitErrorParams | None = None,
             **extra_kwargs: t.Container,
@@ -963,7 +1072,7 @@ class FlextExceptions:
             message: str,
             *,
             error_code: str = c.Errors.EXTERNAL_SERVICE_ERROR,
-            context: Mapping[str, object] | None = None,
+            context: Mapping[str, t.MetadataValue] | None = None,
             correlation_id: str | None = None,
             params: e.CircuitBreakerErrorParams | None = None,
             **extra_kwargs: t.Container,
@@ -998,13 +1107,18 @@ class FlextExceptions:
             error_code: str = c.Errors.TYPE_ERROR,
             expected_type: type | str | None = None,
             actual_type: type | str | None = None,
-            context: Mapping[str, object] | None = None,
+            context: Mapping[str, t.MetadataValue] | None = None,
             correlation_id: str | None = None,
             params: e.TypeErrorParams | None = None,
             **extra_kwargs: t.Container,
         ) -> None:
             """Initialize type error with type information."""
             preserved_metadata = extra_kwargs.pop("metadata", None)
+            normalized_metadata = (
+                FlextRuntime.normalize_to_metadata(preserved_metadata)
+                if preserved_metadata is not None
+                else None
+            )
             preserved_corr_id = extra_kwargs.pop("correlation_id", None)
             type_map = self._get_type_map()
             normalized_expected_type = self._normalize_type(
@@ -1022,19 +1136,25 @@ class FlextExceptions:
                 else None,
             }
             resolved_params = (
-                params if params is not None else e.TypeErrorParams(param_values)
+                params
+                if params is not None
+                else e.TypeErrorParams.model_validate(param_values)
             )
+            normalized_extra_kwargs: dict[str, t.MetadataValue] = {
+                key: FlextRuntime.normalize_to_metadata(value)
+                for key, value in extra_kwargs.items()
+            }
             type_context = self._build_type_context(
                 resolved_params.expected_type,
                 resolved_params.actual_type,
                 context,
-                extra_kwargs,
+                normalized_extra_kwargs,
             )
             super().__init__(
                 message,
                 error_code=error_code,
                 context=type_context or None,
-                metadata=preserved_metadata,
+                metadata=normalized_metadata,
                 correlation_id=correlation_id
                 if correlation_id is not None
                 else e._safe_optional_str(preserved_corr_id),
@@ -1046,8 +1166,8 @@ class FlextExceptions:
         def _build_type_context(
             expected_type: type | str | None,
             actual_type: type | str | None,
-            context: Mapping[str, object] | None,
-            extra_kwargs: Mapping[str, object],
+            context: Mapping[str, t.MetadataValue] | None,
+            extra_kwargs: Mapping[str, t.MetadataValue],
         ) -> m.ConfigMap:
             """Build type context dictionary."""
             type_context = e._build_context_map(context, extra_kwargs)
@@ -1082,7 +1202,7 @@ class FlextExceptions:
             key: str,
         ) -> type | None:
             """Normalize type value from various sources."""
-            source_value: type | str | object | None = type_value
+            source_value: type | str | t.Container | None = type_value
             if source_value is None and key in extra_kwargs:
                 source_value = extra_kwargs.pop(key)
             type_name = e.TypeError._resolve_type_name(source_value)
@@ -1092,7 +1212,7 @@ class FlextExceptions:
 
         @staticmethod
         def _resolve_type_name(
-            type_value: type | str | object | None,
+            type_value: type | str | t.Container | None,
         ) -> str | None:
             """Resolve type-like input to canonical string name."""
             if type_value is None:
@@ -1115,7 +1235,7 @@ class FlextExceptions:
             operation: str | None = None,
             reason: str | None = None,
             error_code: str = c.Errors.OPERATION_ERROR,
-            context: Mapping[str, object] | None = None,
+            context: Mapping[str, t.MetadataValue] | None = None,
             correlation_id: str | None = None,
             params: e.OperationErrorParams | None = None,
             **extra_kwargs: t.Container,
@@ -1147,9 +1267,9 @@ class FlextExceptions:
             message: str,
             *,
             attribute_name: str | None = None,
-            attribute_context: str | None = None,
+            attribute_context: t.Scalar | None = None,
             error_code: str = c.Errors.ATTRIBUTE_ERROR,
-            context: Mapping[str, object] | None = None,
+            context: Mapping[str, t.MetadataValue] | None = None,
             correlation_id: str | None = None,
             params: e.AttributeAccessErrorParams | None = None,
             **extra_kwargs: t.Container,
@@ -1179,8 +1299,8 @@ class FlextExceptions:
     @staticmethod
     def _build_error_context(
         correlation_id: str | None,
-        metadata_obj: Metadata | Mapping[str, object] | None,
-        kwargs: Mapping[str, object] | m.ConfigMap,
+        metadata_obj: Metadata | Mapping[str, t.MetadataValue | None] | None,
+        kwargs: Mapping[str, t.MetadataValue] | m.ConfigMap,
     ) -> m.ConfigMap:
         """Build error context dictionary."""
         error_context: m.ConfigMap = m.ConfigMap(root={})
@@ -1197,7 +1317,7 @@ class FlextExceptions:
         error_type: str | None,
         message: str,
         error_code: str | None,
-        context: Mapping[str, object] | m.ConfigMap | None = None,
+        context: Mapping[str, t.MetadataValue] | m.ConfigMap | None = None,
     ) -> e.BaseError:
         """Create error by type using context dict."""
         error_context: m.ConfigMap = m.ConfigMap(root={})
@@ -1224,7 +1344,7 @@ class FlextExceptions:
         correlation_id = None
         if error_context and "correlation_id" in error_context:
             correlation_id = str(error_context["correlation_id"])
-        context_payload: Mapping[str, object] | None = None
+        context_payload: Mapping[str, t.MetadataValue] | None = None
         if error_context:
             context_payload = {
                 key: FlextRuntime.normalize_to_metadata(value)
@@ -1245,7 +1365,7 @@ class FlextExceptions:
         )
 
     @staticmethod
-    def _determine_error_type(kwargs: Mapping[str, object]) -> str | None:
+    def _determine_error_type(kwargs: Mapping[str, t.MetadataValue]) -> str | None:
         """Determine error type from kwargs using pattern matching.
 
         Returns:
@@ -1273,16 +1393,20 @@ class FlextExceptions:
 
     @staticmethod
     def _extract_common_kwargs(
-        kwargs: Mapping[str, object],
-    ) -> tuple[str | None, Metadata | Mapping[str, object] | None]:
+        kwargs: Mapping[str, t.MetadataValue],
+    ) -> tuple[str | None, Metadata | Mapping[str, t.MetadataValue | None] | None]:
         """Extract correlation_id and metadata from kwargs.
 
         Returns typed values: correlation_id as str | None, metadata as m.Metadata | Mapping | None.
         """
         correlation_id_raw = kwargs.get("correlation_id")
-        correlation_id = e._safe_optional_str(correlation_id_raw)
+        correlation_id = (
+            e._safe_optional_str(correlation_id_raw)
+            if isinstance(correlation_id_raw, (str, int, float, bool, datetime))
+            else None
+        )
         metadata_raw = kwargs.get("metadata")
-        metadata: Metadata | Mapping[str, object] | None = None
+        metadata: Metadata | Mapping[str, t.MetadataValue | None] | None = None
         model_dump = getattr(metadata_raw, "model_dump", None)
         if callable(model_dump):
             metadata = e._safe_metadata(metadata_raw)
@@ -1292,13 +1416,15 @@ class FlextExceptions:
             attrs_raw = getattr(metadata_raw, "attributes", None)
             attrs_map = e._safe_config_map(attrs_raw)
             if attrs_map is not None:
-                metadata = m.Metadata({"attributes": dict(attrs_map.items())})
+                metadata = m.Metadata.model_validate({
+                    "attributes": dict(attrs_map.items())
+                })
         return (correlation_id, metadata)
 
     @staticmethod
     def _merge_metadata_into_context(
         context: m.ConfigMap,
-        metadata_obj: Metadata | Mapping[str, object] | None,
+        metadata_obj: Metadata | Mapping[str, t.MetadataValue | None] | None,
     ) -> None:
         """Merge metadata object into context dictionary."""
         if metadata_obj is None:
@@ -1315,18 +1441,18 @@ class FlextExceptions:
 
     @staticmethod
     def _prepare_exception_kwargs(
-        kwargs: Mapping[str, object],
-        specific_params: Mapping[str, object | None] | None = None,
+        kwargs: Mapping[str, t.MetadataValue],
+        specific_params: Mapping[str, t.MetadataValue | None] | None = None,
     ) -> tuple[
         str | None,
-        object | None,
+        t.MetadataValue | None,
         bool,
         bool,
-        object | None,
-        Mapping[str, object],
+        t.MetadataValue | None,
+        Mapping[str, t.MetadataValue],
     ]:
         """Prepare exception kwargs by extracting common parameters."""
-        merged_kwargs: dict[str, object] = dict(kwargs)
+        merged_kwargs: dict[str, t.MetadataValue] = dict(kwargs)
         if specific_params:
             for k, v in specific_params.items():
                 if v is None:
@@ -1345,12 +1471,28 @@ class FlextExceptions:
             }
         }
         correlation_id_raw = merged_kwargs.get("correlation_id")
-        correlation_id = e._safe_optional_str(correlation_id_raw)
+        correlation_id = (
+            e._safe_optional_str(correlation_id_raw)
+            if isinstance(correlation_id_raw, (str, int, float, bool, datetime))
+            else None
+        )
+        auto_log_raw = merged_kwargs.get("auto_log")
+        auto_correlation_raw = merged_kwargs.get("auto_correlation")
         return (
             correlation_id,
             merged_kwargs.get("metadata"),
-            e._safe_bool(merged_kwargs.get("auto_log"), default=False),
-            e._safe_bool(merged_kwargs.get("auto_correlation"), default=False),
+            e._safe_bool(
+                auto_log_raw
+                if isinstance(auto_log_raw, (str, int, float, bool, datetime))
+                else None,
+                default=False,
+            ),
+            e._safe_bool(
+                auto_correlation_raw
+                if isinstance(auto_correlation_raw, (str, int, float, bool, datetime))
+                else None,
+                default=False,
+            ),
             merged_kwargs.get("config"),
             extra_kwargs,
         )
@@ -1405,22 +1547,22 @@ class FlextExceptions:
 
     @staticmethod
     def extract_common_kwargs(
-        kwargs: Mapping[str, object],
-    ) -> tuple[str | None, Metadata | Mapping[str, object] | None]:
+        kwargs: Mapping[str, t.MetadataValue],
+    ) -> tuple[str | None, Metadata | Mapping[str, t.MetadataValue | None] | None]:
         """Extract common correlation and metadata fields from kwargs."""
         return e._extract_common_kwargs(kwargs)
 
     @staticmethod
     def prepare_exception_kwargs(
-        kwargs: Mapping[str, object],
-        specific_params: Mapping[str, object | None] | None = None,
+        kwargs: Mapping[str, t.MetadataValue],
+        specific_params: Mapping[str, t.MetadataValue | None] | None = None,
     ) -> tuple[
         str | None,
-        object | None,
+        t.MetadataValue | None,
         bool,
         bool,
-        object | None,
-        Mapping[str, object],
+        t.MetadataValue | None,
+        Mapping[str, t.MetadataValue],
     ]:
         """Prepare normalized kwargs payload for exception construction."""
         return e._prepare_exception_kwargs(kwargs, specific_params)
@@ -1468,13 +1610,11 @@ class FlextExceptions:
                 else str(exc_type)
             )
             exception_counts_dict[exc_name] = count
-        exception_counts_payload: dict[str, object] = dict(
-            exception_counts_dict.items()
-        )
+        exception_counts_payload = m.ConfigMap.model_validate(exception_counts_dict)
         result_dict: m.ErrorMap = m.ErrorMap(
             root={
                 "total_exceptions": total,
-                "exception_counts": m.ConfigMap(root=exception_counts_payload),
+                "exception_counts": exception_counts_payload,
                 "exception_counts_summary": exception_counts_str,
                 "unique_exception_types": len(cls._exception_counts),
             }
