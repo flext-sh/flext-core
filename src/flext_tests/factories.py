@@ -630,7 +630,7 @@ class FlextTestsFactories(s[t.Tests.object]):
                             str(k): _to_payload_value(v)
                             for k, v in merge_result.value.items()
                         }
-                return m.Tests.User(user_data)
+                return m.Tests.User.model_validate(user_data)
             if params.kind == "config":
                 config_data: MutableMapping[str, t.Tests.object] = {
                     "service_type": params.service_type
@@ -662,7 +662,7 @@ class FlextTestsFactories(s[t.Tests.object]):
                             str(k): _to_payload_value(v)
                             for k, v in merge_result.value.items()
                         }
-                return m.Tests.Config(config_data)
+                return m.Tests.Config.model_validate(config_data)
             if params.kind == "service":
                 service_type_str = params.service_type or "api"
                 svc_data: MutableMapping[str, t.Tests.TestResultValue] = {
@@ -678,7 +678,7 @@ class FlextTestsFactories(s[t.Tests.object]):
                         overrides_mapping
                     )
                     svc_data.update(overrides_dict)
-                return m.Tests.Service(svc_data)
+                return m.Tests.Service.model_validate(svc_data)
             if params.kind == "entity":
                 return u.Tests.DomainHelpers.create_test_entity_instance(
                     name=params.name or c.Tests.Factory.DEFAULT_ENTITY_NAME,
@@ -919,7 +919,7 @@ class FlextTestsFactories(s[t.Tests.object]):
 
         """
         try:
-            params = m.Tests.ResultFactoryParams({
+            params = m.Tests.ResultFactoryParams.model_validate({
                 "kind": kind,
                 "value": value,
                 **kwargs,
@@ -1273,7 +1273,7 @@ class FlextTestsFactories(s[t.Tests.object]):
             user_data = {
                 str(k): _to_payload_value(v) for k, v in merge_result.value.items()
             }
-        return m.Tests.User(user_data)
+        return m.Tests.User.model_validate(user_data)
 
     @override
     def execute(self) -> r[t.Tests.object]:
