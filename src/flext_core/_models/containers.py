@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import typing
-from collections.abc import Callable, ItemsView, KeysView, Mapping, ValuesView
+from collections.abc import Callable, ItemsView, Iterator, KeysView, Mapping, ValuesView
 from datetime import datetime
 from pathlib import Path
 from typing import Annotated, ClassVar
@@ -97,8 +97,13 @@ class FlextModelsContainers:
         def update(self, other: Mapping[str, DictValueT]) -> None:
             self.root.update(other)
 
+        def __iter__(self) -> Iterator[str]:
+            return iter(self.root)
+
         def values(self) -> ValuesView[DictValueT]:
             return self.root.values()
+
+    Mapping.register(_RootDictModel)
 
     class Dict(_RootDictModel[object]):
         """Generic dictionary container. Use ``m.Dict``."""
