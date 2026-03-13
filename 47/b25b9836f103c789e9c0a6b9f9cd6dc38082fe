@@ -1,0 +1,36 @@
+tests/unit/test_pagination_coverage_100.py
+  00fa95b37860ab7c 487-489,491-493,498-499,501,503,508-510,512-514,519-521,523,525
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.11",
+  "base_commit_sha": "47b25b9836f103c789e9c0a6b9f9cd6dc38082fe",
+  "prompts": {
+    "00fa95b37860ab7c": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_31b7450d5ffeFd8tYeKPduNQ1d",
+        "model": "anthropic/claude-sonnet-4-6"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 26,
+      "total_deletions": 41,
+      "accepted_lines": 24,
+      "overriden_lines": 0
+    },
+    "91717b2958b06925": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3193d8ba8ffe351OXLCFGpx2bq",
+        "model": "anthropic/claude-haiku-4-5"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 26,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    }
+  }
+}
