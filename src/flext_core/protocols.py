@@ -234,6 +234,115 @@ class FlextProtocols:
             """Query type identifier."""
             ...
 
+    _protocol_members_cache: ClassVar[dict[type, frozenset[str]]] = {}
+    _class_annotations_cache: ClassVar[dict[type, frozenset[str]]] = {}
+    _compliance_results_cache: ClassVar[dict[tuple[type, type], bool]] = {}
+
+    @classmethod
+    def _get_protocol_members(cls, protocol: type) -> frozenset[str]:
+        if protocol not in cls._protocol_members_cache:
+            raw_attrs_candidate = getattr(protocol, "__protocol_attrs__", ())
+            iterable_attrs: Sequence[str] = ()
+            try:
+                iterable_attrs = tuple(raw_attrs_candidate)
+            except TypeError:
+                iterable_attrs = ()
+            cls._protocol_members_cache[protocol] = frozenset(iterable_attrs)
+        return cls._protocol_members_cache[protocol]
+
+    @classmethod
+    def _get_class_annotation_members(cls, target_cls: type) -> frozenset[str]:
+        if target_cls not in cls._class_annotations_cache:
+            all_annotations: set[str] = set()
+            for base in target_cls.mro():
+                base_annotations: Mapping[str, object] = (
+                    base.__annotations__ if hasattr(base, "__annotations__") else {}
+                )
+                all_annotations.update(base_annotations.keys())
+            cls._class_annotations_cache[target_cls] = frozenset(all_annotations)
+        return cls._class_annotations_cache[target_cls]
+
+    @classmethod
+    def _get_protocol_required_members(cls, protocol: type) -> frozenset[str]:
+        protocol_annotations: Mapping[str, object] = (
+            protocol.__annotations__ if hasattr(protocol, "__annotations__") else {}
+        )
+        required_members: set[str] = set(protocol_annotations.keys())
+        required_members.update(cls._get_protocol_members(protocol))
+        filtered_members = {
+            member
+            for member in required_members
+            if not member.startswith("_")
+            or member.startswith("__")
+            or (member in {"metadata_extra", "sealed"})
+        }
+        return frozenset(filtered_members)
+
+    @classmethod
+    def _get_compliance_cache_key(
+        cls, target_cls: type, protocol: type
+    ) -> tuple[type, type]:
+        return (target_cls, protocol)
+
+    @classmethod
+    def _check_protocol_compliance(
+        cls,
+        instance: FlextProtocols.BaseProtocol | t.Container,
+        protocol: type,
+    ) -> bool:
+        target_cls = instance.__class__
+        cache_key = cls._get_compliance_cache_key(target_cls, protocol)
+        cached_result = cls._compliance_results_cache.get(cache_key)
+        if cached_result is not None:
+            return cached_result
+        try:
+            runtime_compliant = isinstance(instance, protocol)
+        except TypeError:
+            runtime_compliant = False
+        if runtime_compliant:
+            cls._compliance_results_cache[cache_key] = True
+            return True
+        registered_protocols = _ProtocolIntrospection.get_class_protocols(target_cls)
+        if protocol in registered_protocols:
+            cls._compliance_results_cache[cache_key] = True
+            return True
+        required_members = cls._get_protocol_required_members(protocol)
+        if not required_members:
+            cls._compliance_results_cache[cache_key] = False
+            return False
+        class_annotations = cls._get_class_annotation_members(target_cls)
+        is_compliant = all(
+            hasattr(instance, member) or member in class_annotations
+            for member in required_members
+        )
+        cls._compliance_results_cache[cache_key] = is_compliant
+        return is_compliant
+
+    @classmethod
+    def _validate_protocol_compliance(
+        cls, target_cls: type, protocol: type, class_name: str
+    ) -> None:
+        cache_key = cls._get_compliance_cache_key(target_cls, protocol)
+        cached_result = cls._compliance_results_cache.get(cache_key)
+        if cached_result is True:
+            return
+        required_members = cls._get_protocol_required_members(protocol)
+        class_annotations = cls._get_class_annotation_members(target_cls)
+        missing = [
+            member
+            for member in required_members
+            if not (hasattr(target_cls, member) or member in class_annotations)
+        ]
+        if missing:
+            cls._compliance_results_cache[cache_key] = False
+            protocol_name = (
+                protocol.__name__ if hasattr(protocol, "__name__") else str(protocol)
+            )
+            missing_str = ", ".join(sorted(missing))
+            msg = f"Class '{class_name}' does not implement required members of protocol '{protocol_name}': {missing_str}"
+            raise TypeError(msg)
+        cls._compliance_results_cache[cache_key] = True
+
     @runtime_checkable
     class Context(Protocol):
         """Context protocol for type safety without circular imports.
@@ -1258,9 +1367,7 @@ class FlextProtocols:
             )
             setattr(built_cls, "__protocols__", tuple(protocols))
             for protocol in protocols:
-                _ProtocolIntrospection.validate_protocol_compliance(
-                    built_cls, protocol, name
-                )
+                FlextProtocols._validate_protocol_compliance(built_cls, protocol, name)
             return built_cls
 
     class ProtocolModel(metaclass=ProtocolModelMeta):
@@ -1353,7 +1460,7 @@ class FlextProtocols:
             True if the instance implements the protocol.
 
         """
-        return _ProtocolIntrospection.check_implements_protocol(instance, protocol)
+        return FlextProtocols._check_protocol_compliance(instance, protocol)
 
     @staticmethod
     def implements(*protocols: type) -> Callable[[type[T]], type[T]]:
@@ -1388,16 +1495,14 @@ class FlextProtocols:
         def decorator(cls: type[T]) -> type[T]:
             class_name = cls.__name__ if hasattr(cls, "__name__") else str(cls)
             for protocol in protocols:
-                _ProtocolIntrospection.validate_protocol_compliance(
-                    cls, protocol, class_name
-                )
+                FlextProtocols._validate_protocol_compliance(cls, protocol, class_name)
             setattr(cls, "__protocols__", tuple(protocols))
 
             def _instance_implements_protocol(
                 self: FlextProtocols.BaseProtocol | t.Container,
                 protocol: type,
             ) -> bool:
-                return _ProtocolIntrospection.check_implements_protocol(self, protocol)
+                return FlextProtocols._check_protocol_compliance(self, protocol)
 
             setattr(cls, "implements_protocol", _instance_implements_protocol)
 
