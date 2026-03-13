@@ -484,57 +484,42 @@ class TestuPaginationExtractPaginationConfig:
     def test_extract_pagination_config_with_attributes(self) -> None:
         """Test extract_pagination_config with object attributes."""
 
-        class Config:
-            default_page_size = 50
-            max_page_size = 500
+        class Config(BaseModel):
+            default_page_size: int = 50
+            max_page_size: int = 500
 
-        config = Config()
-        if isinstance(config, BaseModel):
-            _ = u.extract_pagination_config(config)
-        else:
-            pytest.skip("Config is not BaseModel")
+        result = u.extract_pagination_config(Config())
+        assert result["default_page_size"] == 50
+        assert result["max_page_size"] == 500
 
     def test_extract_pagination_config_partial_attributes(self) -> None:
         """Test extract_pagination_config with partial attributes."""
 
-        class Config:
-            default_page_size = 30
+        class Config(BaseModel):
+            default_page_size: int = 30
 
-        config = Config()
-        if isinstance(config, BaseModel):
-            result = u.extract_pagination_config(config)
-            assert result["default_page_size"] == 30
-            assert result["max_page_size"] == 1000
-        else:
-            pytest.skip("Config is not BaseModel")
+        result = u.extract_pagination_config(Config())
+        assert result["default_page_size"] == 30
+        assert result["max_page_size"] == 1000
 
     def test_extract_pagination_config_invalid_values(self) -> None:
         """Test extract_pagination_config with invalid values."""
 
-        class Config:
-            default_page_size = -10
-            max_page_size = 0
+        class Config(BaseModel):
+            default_page_size: int = -10
+            max_page_size: int = 0
 
-        config = Config()
-        if isinstance(config, BaseModel):
-            result = u.extract_pagination_config(config)
-            assert result["default_page_size"] == 20
-            assert result["max_page_size"] == 1000
-        else:
-            pytest.skip("Config is not BaseModel")
+        result = u.extract_pagination_config(Config())
+        assert result["default_page_size"] == 20
+        assert result["max_page_size"] == 1000
 
     def test_extract_pagination_config_with_dict(self) -> None:
         """Test extract_pagination_config with dict-like object."""
 
-        class Config:
-            def __init__(self) -> None:
-                self.default_page_size = 40
-                self.max_page_size = 600
+        class Config(BaseModel):
+            default_page_size: int = 40
+            max_page_size: int = 600
 
-        config = Config()
-        if isinstance(config, BaseModel):
-            result = u.extract_pagination_config(config)
-            assert result["default_page_size"] == 40
-            assert result["max_page_size"] == 600
-        else:
-            pytest.skip("Config is not BaseModel")
+        result = u.extract_pagination_config(Config())
+        assert result["default_page_size"] == 40
+        assert result["max_page_size"] == 600

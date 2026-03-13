@@ -10,9 +10,7 @@ from __future__ import annotations
 
 import warnings
 from collections.abc import Callable, Mapping, Sequence
-from datetime import datetime
 from functools import partial
-from pathlib import Path
 from typing import Protocol, TypeAlias, cast, overload
 
 from pydantic import BaseModel
@@ -155,7 +153,6 @@ class FlextUtilitiesMapper:
         exclude_keys: set[str] | None,
         strip_none: bool,
         strip_empty: bool,
-        to_json: bool,
     ) -> ContainerMapping:
         """Apply transform steps to result dict."""
         result = FlextUtilitiesMapper._apply_normalize(result, normalize=normalize)
@@ -167,24 +164,7 @@ class FlextUtilitiesMapper:
             result, exclude_keys=exclude_keys
         )
         result = FlextUtilitiesMapper._apply_strip_none(result, strip_none=strip_none)
-        result = FlextUtilitiesMapper._apply_strip_empty(
-            result, strip_empty=strip_empty
-        )
-        if to_json:
-            json_result: dict[str, _MappingValue] = {}
-            for key, val in result.items():
-                if isinstance(val, BaseModel):
-                    json_result[str(key)] = cast(
-                        "_MappingValue", val.model_dump(mode="json")
-                    )
-                elif isinstance(val, Path):
-                    json_result[str(key)] = cast("_MappingValue", val.as_posix())
-                elif isinstance(val, datetime):
-                    json_result[str(key)] = cast("_MappingValue", val.isoformat())
-                else:
-                    json_result[str(key)] = val  # type: ignore
-            return json_result
-        return result
+        return FlextUtilitiesMapper._apply_strip_empty(result, strip_empty=strip_empty)
 
     @staticmethod
     def _build_apply_chunk(
@@ -371,7 +351,7 @@ class FlextUtilitiesMapper:
         if isinstance(group_spec_raw, str):
             group_spec = group_spec_raw
             grouped: dict[str, ContainerList] = {}
-            for orig_item, item in zip(current_items, current_list):
+            for orig_item, item in zip(current_items, current_list, strict=False):
                 if isinstance(orig_item, BaseModel):
                     if not hasattr(orig_item, group_spec):
                         continue
@@ -633,7 +613,6 @@ class FlextUtilitiesMapper:
             map_keys_dict,
             filter_keys_set,
             exclude_keys_set,
-            to_json_bool,
         ) = FlextUtilitiesMapper._extract_transform_options(transform_opts)
         current_dict: ContainerMapping = (
             FlextUtilitiesMapper._narrow_to_configuration_dict(current)
@@ -647,7 +626,6 @@ class FlextUtilitiesMapper:
                 exclude_keys=exclude_keys_set,
                 strip_none=strip_none_bool,
                 strip_empty=strip_empty_bool,
-                to_json=to_json_bool,
             )
         )
         if transform_result.is_failure:
@@ -792,7 +770,6 @@ class FlextUtilitiesMapper:
         Mapping[str, str] | None,
         set[str] | None,
         set[str] | None,
-        bool,
     ]:
         """Extract transform options from dict."""
         normalize_val = transform_opts.get("normalize")
@@ -817,8 +794,6 @@ class FlextUtilitiesMapper:
         exclude_keys_set: set[str] | None = None
         if isinstance(exclude_keys_val, set):
             exclude_keys_set = set(map(str, exclude_keys_val))
-        to_json_val = transform_opts.get("to_json")
-        to_json_bool = to_json_val if isinstance(to_json_val, bool) else False
         return (
             normalize_bool,
             strip_none_bool,
@@ -826,7 +801,6 @@ class FlextUtilitiesMapper:
             map_keys_dict,
             filter_keys_set,
             exclude_keys_set,
-            to_json_bool,
         )
 
     @staticmethod
@@ -1014,7 +988,6 @@ class FlextUtilitiesMapper:
         exclude_keys: set[str] | None,
         strip_none: bool,
         strip_empty: bool,
-        to_json: bool,
     ) -> ContainerMapping:
         return FlextUtilitiesMapper._apply_transform_steps(
             result,
@@ -1024,7 +997,6 @@ class FlextUtilitiesMapper:
             exclude_keys=exclude_keys,
             strip_none=strip_none,
             strip_empty=strip_empty,
-            to_json=to_json,
         )
 
     @staticmethod
@@ -2505,7 +2477,6 @@ class FlextUtilitiesMapper:
         map_keys: Mapping[str, str] | None = None,
         filter_keys: set[str] | None = None,
         exclude_keys: set[str] | None = None,
-        to_json: bool = False,
     ) -> r[ContainerMapping]:
         """Transform dictionary with multiple options.
 
@@ -2517,7 +2488,6 @@ class FlextUtilitiesMapper:
             map_keys: Dictionary mapping old keys to new keys.
             filter_keys: Set of keys to keep (all others removed).
             exclude_keys: Set of keys to remove.
-            to_json: Convert to JSON-compatible values.
 
         Returns:
             r with transformed dictionary.
@@ -2545,7 +2515,6 @@ class FlextUtilitiesMapper:
                 exclude_keys=exclude_keys,
                 strip_none=strip_none,
                 strip_empty=strip_empty,
-                to_json=to_json,
             )
         )
         return transform_result.fold(
