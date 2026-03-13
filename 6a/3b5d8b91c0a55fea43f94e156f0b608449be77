@@ -1,0 +1,25 @@
+src/flext_core/_models/context.py
+  8e96e3522f8e85cd 316
+tests/unit/test_config.py
+  8e96e3522f8e85cd 595
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.11",
+  "base_commit_sha": "6a3b5d8b91c0a55fea43f94e156f0b608449be77",
+  "prompts": {
+    "8e96e3522f8e85cd": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3184d12dfffeCgdQpaY1N92LeX",
+        "model": "kimi-for-coding/k2p5"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 3,
+      "total_deletions": 3,
+      "accepted_lines": 3,
+      "overriden_lines": 0
+    }
+  }
+}
