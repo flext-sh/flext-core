@@ -42,7 +42,7 @@ from __future__ import annotations
 import hashlib
 from collections.abc import Mapping
 
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel
 
 from flext_core import FlextRuntime, c, p, r, t
 from flext_core._models.base import FlextModelFoundation
@@ -202,7 +202,9 @@ class FlextUtilitiesCache:
         return any(hasattr(obj, attr) for attr in cache_attributes)
 
     @staticmethod
-    def normalize_component(component: object) -> object:
+    def normalize_component(
+        component: t.NormalizedValue | BaseModel | set[t.NormalizedValue],
+    ) -> t.NormalizedValue:
         """Normalize a component recursively for consistent representation.
 
         Business Rule: Recursive Component Normalization
@@ -238,10 +240,10 @@ class FlextUtilitiesCache:
                 str(k): FlextUtilitiesCache.normalize_component(v)
                 for k, v in component.items()
             }
-        if isinstance(component, t.PRIMITIVES_TYPES) or component is None:
+        if isinstance(component, (str, int, float, bool)) or component is None:
             return component
         if isinstance(component, set):
-            normalized_set_items: list[t.ContainerValue | None] = [
+            normalized_set_items: list[t.NormalizedValue] = [
                 FlextUtilitiesCache.normalize_component(item) for item in component
             ]
             return tuple(normalized_set_items)

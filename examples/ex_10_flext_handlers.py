@@ -49,17 +49,17 @@ class _ProcessorBad(m.Value):
         return "ok"
 
 
-class _NotImplementedPatternHandler(FlextHandlers[object, str]):
+class _NotImplementedPatternHandler(FlextHandlers[_Message | str, str]):
     @override
-    def handle(self, message: object) -> r[str]:
+    def handle(self, message: _Message | str) -> r[str]:
         raise NotImplementedError
 
 
-class _DemoHandler(FlextHandlers[object, str]):
+class _DemoHandler(FlextHandlers[_Message | str, str]):
     _expected_message_type: ClassVar[type | None] = _Message
 
     @override
-    def handle(self, message: object) -> r[str]:
+    def handle(self, message: _Message | str) -> r[str]:
         if message == "explode":
             error_message = "forced boom"
             raise RuntimeError(error_message)
@@ -68,8 +68,8 @@ class _DemoHandler(FlextHandlers[object, str]):
         return r[str].ok(f"msg:{message}")
 
     @override
-    def validate_message(self, data: object) -> r[bool]:
-        base = super().validate_message(cast(object, data))
+    def validate_message(self, data: _Message | str) -> r[bool]:
+        base = super().validate_message(data)
         if base.is_failure:
             return base
         if data == "bad":
@@ -150,7 +150,7 @@ class Ex10FlextHandlers(Examples):
         )
         try:
             FlextHandlers.create_from_callable(lambda message: message, mode="invalid")
-            invalid_mode: object = "no-error"
+            invalid_mode: str = "no-error"
         except e.ValidationError as exc:
             invalid_mode = f"{type(exc).__name__}:{exc}"
         self.check("callable.invalid_mode", invalid_mode)
@@ -216,7 +216,7 @@ class Ex10FlextHandlers(Examples):
         pattern_handler = _NotImplementedPatternHandler()
         try:
             pattern_handler.handle(pattern_probe)
-            pattern_value: object = "no-error"
+            pattern_value: str = "no-error"
         except NotImplementedError as exc:
             pattern_value = f"{type(exc).__name__}:{exc}"
         self.check("handle.not_implemented_pattern", pattern_value)
@@ -224,7 +224,10 @@ class Ex10FlextHandlers(Examples):
         self.check("handler.handler_name", handler.handler_name)
         self.check("handler.name_matches", bool(handler.handler_name))
         self.check("handler.mode", handler.mode.value)
-        self.check("validate.none.failure", handler.validate_message(None).is_failure)
+        self.check(
+            "validate.none.failure",
+            handler.validate_message(cast("_Message | str", None)).is_failure,
+        )
         self.check(
             "validate.ok.success", handler.validate_message(message_ok).is_success
         )
@@ -239,30 +242,36 @@ class Ex10FlextHandlers(Examples):
         self.check("can_handle.expected", handler.can_handle(_Message))
         self.check("can_handle.derived", handler.can_handle(_DerivedMessage))
         self.check("can_handle.other", handler.can_handle(str))
-        execute_value = handler.execute(cast(object, _Message(text=payload_text))).unwrap_or("-")
+        msg_type = _Message | str
+        execute_value = handler.execute(
+            cast("msg_type", _Message(text=payload_text))
+        ).unwrap_or("-")
         self.check("execute.success.value", payload_text in str(execute_value))
-        self.check("execute.validation_failure", handler.execute(cast(object, "bad")).error)
+        self.check(
+            "execute.validation_failure", handler.execute(cast("msg_type", "bad")).error
+        )
         dispatch_value = handler.dispatch_message(
-            cast(object, _Message(text=dispatch_text))
+            cast("msg_type", _Message(text=dispatch_text))
         ).unwrap_or("-")
         self.check("dispatch.success", dispatch_text in str(dispatch_value))
         self.check(
             "dispatch.mode_mismatch",
             handler.dispatch_message(
-                cast(object, _Message(text="go")), operation=c.Dispatcher.HANDLER_MODE_QUERY
+                cast("msg_type", _Message(text="go")),
+                operation=c.Dispatcher.HANDLER_MODE_QUERY,
             ).error,
         )
         self.check(
             "dispatch.pipeline_exception",
             handler.dispatch_message(
-                cast(object, "explode"), operation=c.Dispatcher.HANDLER_MODE_COMMAND
+                cast("msg_type", "explode"), operation=c.Dispatcher.HANDLER_MODE_COMMAND
             ).error,
         )
         self.check(
             "record_metric.ok",
             handler.record_metric(metric_key, metric_value).is_success,
         )
-        context_payload_query: dict[str, object] = {
+        context_payload_query: dict[str, str] = {
             "handler_name": context_name_1,
             "handler_mode": "query",
         }
@@ -270,7 +279,7 @@ class Ex10FlextHandlers(Examples):
             "push_context.mapping",
             handler.push_context(context_payload_query).is_success,
         )
-        context_payload_event: dict[str, object] = {
+        context_payload_event: dict[str, str] = {
             "handler_name": context_name_2,
             "handler_mode": "event",
         }
@@ -280,17 +289,17 @@ class Ex10FlextHandlers(Examples):
         )
         self.check(
             "pop_context.1",
-            cast(
-                m.ConfigMap,
-                handler.pop_context().unwrap_or(m.ConfigMap(root={}))
-            ).get("handler_name", "-"),
+            handler
+            .pop_context()
+            .unwrap_or(m.ConfigMap(root={}))
+            .get("handler_name", "-"),
         )
         self.check(
             "pop_context.2",
-            cast(
-                m.ConfigMap,
-                handler.pop_context().unwrap_or(m.ConfigMap(root={}))
-            ).get("handler_name", "-"),
+            handler
+            .pop_context()
+            .unwrap_or(m.ConfigMap(root={}))
+            .get("handler_name", "-"),
         )
 
     def demo_namespaces_and_mixins(self) -> None:
@@ -323,10 +332,7 @@ class Ex10FlextHandlers(Examples):
         )
         self.check(
             "cqrs.get_metrics",
-            cast(
-                m.ConfigMap,
-                tracker.get_metrics().unwrap_or(m.ConfigMap(root={}))
-            ).get(hit_key, -1),
+            tracker.get_metrics().unwrap_or(m.ConfigMap(root={})).get(hit_key, -1),
         )
         stack = h.CQRS.ContextStack()
         self.check(
@@ -342,8 +348,7 @@ class Ex10FlextHandlers(Examples):
         self.check(
             "cqrs.pop_context",
             cast(
-                m.ConfigMap,
-                stack.pop_context().unwrap_or(m.ConfigMap(root={}))
+                "m.ConfigMap", stack.pop_context().unwrap_or(m.ConfigMap(root={}))
             ).get("handler_name", "-"),
         )
         di = h.DependencyIntegration
@@ -371,7 +376,7 @@ class Ex10FlextHandlers(Examples):
         )
         try:
             di.register_object(di_container, obj_key, self.rand_int(100, 200))
-            duplicate_error: object = "no-error"
+            duplicate_error: str = "no-error"
         except ValueError as exc:
             duplicate_error = f"{type(exc).__name__}:{exc}"
         self.check("di.duplicate_error", duplicate_error)
@@ -440,13 +445,13 @@ class Ex10FlextHandlers(Examples):
             h.ProtocolValidation.validate_processor_protocol(_ProcessorBad()).error,
         )
 
-        def positive_validator(item: object) -> r[bool]:
+        def positive_validator(item: str) -> r[bool]:
             return r[bool].ok(item == positive_token)
 
-        def strict_validator(item: object) -> r[bool]:
+        def strict_validator(item: str) -> r[bool]:
             return r[bool].ok(bool(item))
 
-        def fail_validator(_item: object) -> r[bool]:
+        def fail_validator(_item: str) -> r[bool]:
             return r[bool].fail("rule-failed")
 
         self.check(

@@ -18,7 +18,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from typing import cast, override
+from typing import override
 
 from flext_core import FlextContainer, FlextSettings, c, m, r, s, u
 
@@ -149,7 +149,7 @@ class DependencyInjectionService(s[m.ConfigMap]):
         missing_result = container.get("non_existent")
         typed_db_result = container.get("database", type_cls=DatabaseService)
         invalid_query = (
-            cast("DatabaseService", typed_db_result.value).query("INVALID QUERY")
+            typed_db_result.value.query("INVALID QUERY")
             if typed_db_result.is_success
             else r[m.ConfigMap].fail("database service unavailable")
         )

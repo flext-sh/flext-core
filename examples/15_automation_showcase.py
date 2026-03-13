@@ -19,7 +19,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import cast, override
+from typing import override
 
 from pydantic import PrivateAttr
 
@@ -164,7 +164,7 @@ class AutomationService(s[m.ConfigMap]):
         cached = get_cached()
         config_result = get_default() if cached.is_failure else cached
         if config_result.is_success:
-            config = cast("m.ConfigMap", config_result.value)
+            config = config_result.value
             mode = config.get("automation_mode", "unknown")
             batch_size = config.get("batch_size", 0)
             print(f"✅ Config acquired: {mode}")
@@ -208,11 +208,11 @@ class AutomationService(s[m.ConfigMap]):
         if extract_result.is_failure:
             print(f"❌ ETL Pipeline failed: {extract_result.error}")
             return
-        transform_result = transform(cast("list[m.ConfigMap]", extract_result.value))
+        transform_result = transform(extract_result.value)
         if transform_result.is_failure:
             print(f"❌ ETL Pipeline failed: {transform_result.error}")
             return
-        result = load(cast("list[m.ConfigMap]", transform_result.value))
+        result = load(transform_result.value)
         if result.is_success:
             print(f"✅ ETL Pipeline: {result.value}")
         else:
@@ -251,9 +251,9 @@ class AutomationService(s[m.ConfigMap]):
         if validate_result.is_failure:
             print(f"❌ Pipeline failed: {validate_result.error}")
             return
-        pipeline_result = enrich(cast("m.ConfigMap", validate_result.value))
+        pipeline_result = enrich(validate_result.value)
         if pipeline_result.is_success:
-            data = cast("m.ConfigMap", pipeline_result.value)
+            data = pipeline_result.value
             task_type = data.get("task_type", "")
             duration = data.get("duration_ms", 0)
             print(f"✅ Pipeline complete: {task_type}")
@@ -323,9 +323,7 @@ class AutomationService(s[m.ConfigMap]):
 
         fail_attempt: r[m.ConfigMap] = r[m.ConfigMap].fail("No cached config")
         config: m.ConfigMap = (
-            load_config()
-            if fail_attempt.is_failure
-            else cast("m.ConfigMap", fail_attempt.value)
+            load_config() if fail_attempt.is_failure else fail_attempt.value
         )
         config_count = len(config.root)
         print(f"✅ Config loaded: {config_count} settings")
@@ -373,9 +371,7 @@ class AutomationService(s[m.ConfigMap]):
 
         fail_result: r[m.ConfigMap] = r[m.ConfigMap].fail("No existing engine")
         engine: m.ConfigMap = (
-            create_engine()
-            if fail_result.is_failure
-            else cast("m.ConfigMap", fail_result.value)
+            create_engine() if fail_result.is_failure else fail_result.value
         )
         engine_id = str(engine.get("engine_id", "unknown"))
         worker_count_text = str(engine.get("worker_count", 0))

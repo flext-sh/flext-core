@@ -407,32 +407,50 @@ class FlextModelsConfig:
                 "description": "State tracking for rate limiter functionality",
             }
         )
-        processor_name: str = Field(
-            default="", description="Name of the rate limiter processor"
-        )
-        count: int = Field(
-            default=c.ZERO, ge=c.ZERO, description="Current request count in window"
-        )
-        window_start: float = Field(
-            default=c.INITIAL_TIME,
-            ge=c.INITIAL_TIME,
-            description="Timestamp when current window started",
-        )
-        limit: int = Field(
-            default=c.Reliability.DEFAULT_RATE_LIMIT_MAX_REQUESTS,
-            ge=c.Reliability.RETRY_COUNT_MIN,
-            description="Maximum requests allowed per window",
-        )
-        window_seconds: int = Field(
-            default=c.Reliability.DEFAULT_RATE_LIMIT_WINDOW_SECONDS,
-            ge=c.Reliability.RETRY_COUNT_MIN,
-            description="Duration of rate limit window in seconds",
-        )
-        block_until: float = Field(
-            default=c.INITIAL_TIME,
-            ge=c.INITIAL_TIME,
-            description="Timestamp until which requests are blocked",
-        )
+        processor_name: Annotated[
+            str,
+            Field(default="", description="Name of the rate limiter processor"),
+        ] = ""
+        count: Annotated[
+            int,
+            Field(
+                default=c.ZERO,
+                ge=c.ZERO,
+                description="Current request count in window",
+            ),
+        ] = c.ZERO
+        window_start: Annotated[
+            float,
+            Field(
+                default=c.INITIAL_TIME,
+                ge=c.INITIAL_TIME,
+                description="Timestamp when current window started",
+            ),
+        ] = c.INITIAL_TIME
+        limit: Annotated[
+            int,
+            Field(
+                default=c.Reliability.DEFAULT_RATE_LIMIT_MAX_REQUESTS,
+                ge=c.Reliability.RETRY_COUNT_MIN,
+                description="Maximum requests allowed per window",
+            ),
+        ] = c.Reliability.DEFAULT_RATE_LIMIT_MAX_REQUESTS
+        window_seconds: Annotated[
+            int,
+            Field(
+                default=c.Reliability.DEFAULT_RATE_LIMIT_WINDOW_SECONDS,
+                ge=c.Reliability.RETRY_COUNT_MIN,
+                description="Duration of rate limit window in seconds",
+            ),
+        ] = c.Reliability.DEFAULT_RATE_LIMIT_WINDOW_SECONDS
+        block_until: Annotated[
+            float,
+            Field(
+                default=c.INITIAL_TIME,
+                ge=c.INITIAL_TIME,
+                description="Timestamp until which requests are blocked",
+            ),
+        ] = c.INITIAL_TIME
 
     class ExternalCommandConfig(FlextModelsCollections.Config):
         """Configuration for external command execution (Pydantic v2).
@@ -442,30 +460,54 @@ class FlextModelsConfig:
         Reuses timeout pattern from ProcessingRequest and HandlerExecutionConfig.
         """
 
-        capture_output: bool = Field(
-            default=True, description="Whether to capture stdout/stderr"
-        )
-        check: bool = Field(
-            default=True, description="Whether to raise exception on non-zero exit code"
-        )
-        env: FlextModelsContainers.ConfigMap | None = Field(
-            default=None, description="Environment variables for the command"
-        )
-        cwd: str | None = Field(
-            default=None, description="Working directory for command execution"
-        )
-        timeout_seconds: float | None = Field(
-            default=None,
-            gt=c.ZERO,
-            le=c.Performance.MAX_TIMEOUT_SECONDS,
-            description="Command timeout in seconds (max 5 min)",
-        )
-        command_input: str | bytes | None = Field(
-            default=None, description="Input to send to command stdin"
-        )
-        text: bool | None = Field(
-            default=None, description="Whether to decode stdout/stderr as text"
-        )
+        capture_output: Annotated[
+            bool,
+            Field(default=True, description="Whether to capture stdout/stderr"),
+        ] = True
+        check: Annotated[
+            bool,
+            Field(
+                default=True,
+                description="Whether to raise exception on non-zero exit code",
+            ),
+        ] = True
+        env: Annotated[
+            FlextModelsContainers.ConfigMap | None,
+            Field(
+                default=None,
+                description="Environment variables for the command",
+            ),
+        ] = None
+        cwd: Annotated[
+            str | None,
+            Field(
+                default=None,
+                description="Working directory for command execution",
+            ),
+        ] = None
+        timeout_seconds: Annotated[
+            float | None,
+            Field(
+                default=None,
+                gt=c.ZERO,
+                le=c.Performance.MAX_TIMEOUT_SECONDS,
+                description="Command timeout in seconds (max 5 min)",
+            ),
+        ] = None
+        command_input: Annotated[
+            str | bytes | None,
+            Field(
+                default=None,
+                description="Input to send to command stdin",
+            ),
+        ] = None
+        text: Annotated[
+            bool | None,
+            Field(
+                default=None,
+                description="Whether to decode stdout/stderr as text",
+            ),
+        ] = None
 
     class StructlogConfig(FlextModelsCollections.Config):
         """Configuration for structlog setup (Pydantic v2).
@@ -474,30 +516,50 @@ class FlextModelsConfig:
         Allows validation and composition of logging configuration.
         """
 
-        log_level: int = Field(
-            default_factory=FlextRuntime.get_log_level_from_config,
-            ge=c.ZERO,
-            le=c.Validation.MAX_CUSTOM_VALIDATORS,
-            description="Numeric log level (DEBUG=10, INFO=20, WARNING=30, ERROR=40, CRITICAL=50) - default from constants",
-        )
-        console_renderer: bool = Field(
-            default=True,
-            description="Use console renderer (True) or JSON renderer (False)",
-        )
-        additional_processors: list[p.VariadicCallable[object]] = Field(
-            default=[],
-            description="Optional extra processors after standard FLEXT processors",
-        )
-        wrapper_class_factory: Callable[[], type] | None = Field(
-            default=None, description="Custom wrapper factory for structlog"
-        )
-        logger_factory: p.VariadicCallable[object] | None = Field(
-            default=None, description="Custom logger factory for structlog"
-        )
-        cache_logger_on_first_use: bool = Field(
-            default=True,
-            description="Cache logger on first use (performance optimization)",
-        )
+        log_level: Annotated[
+            int,
+            Field(
+                default_factory=FlextRuntime.get_log_level_from_config,
+                ge=c.ZERO,
+                le=c.Validation.MAX_CUSTOM_VALIDATORS,
+                description="Numeric log level (DEBUG=10, INFO=20, WARNING=30, ERROR=40, CRITICAL=50) - default from constants",
+            ),
+        ]
+        console_renderer: Annotated[
+            bool,
+            Field(
+                default=True,
+                description="Use console renderer (True) or JSON renderer (False)",
+            ),
+        ] = True
+        additional_processors: Annotated[
+            list[p.VariadicCallable[object]],
+            Field(
+                default_factory=list,
+                description="Optional extra processors after standard FLEXT processors",
+            ),
+        ]
+        wrapper_class_factory: Annotated[
+            Callable[[], type] | None,
+            Field(
+                default=None,
+                description="Custom wrapper factory for structlog",
+            ),
+        ] = None
+        logger_factory: Annotated[
+            p.VariadicCallable[object] | None,
+            Field(
+                default=None,
+                description="Custom logger factory for structlog",
+            ),
+        ] = None
+        cache_logger_on_first_use: Annotated[
+            bool,
+            Field(
+                default=True,
+                description="Cache logger on first use (performance optimization)",
+            ),
+        ] = True
 
     class LoggerConfig(FlextModelsCollections.Config):
         """Configuration for FlextLogger initialization (Pydantic v2).
@@ -506,23 +568,41 @@ class FlextModelsConfig:
         Groups optional logger context and configuration.
         """
 
-        level: str = Field(
-            default=c.Logging.DEFAULT_LEVEL,
-            description="Log level (default from constants, can be overridden)",
-        )
-        service_name: str | None = Field(
-            default=None, description="Service name for distributed tracing context"
-        )
-        service_version: str | None = Field(
-            default=None, description="Service version for distributed tracing context"
-        )
-        correlation_id: str | None = Field(
-            default=None, description="Correlation ID for distributed tracing"
-        )
-        force_new: bool = Field(
-            default=False,
-            description="Force creation of new logger instance (for testing)",
-        )
+        level: Annotated[
+            str,
+            Field(
+                default=c.Logging.DEFAULT_LEVEL,
+                description="Log level (default from constants, can be overridden)",
+            ),
+        ] = c.Logging.DEFAULT_LEVEL
+        service_name: Annotated[
+            str | None,
+            Field(
+                default=None,
+                description="Service name for distributed tracing context",
+            ),
+        ] = None
+        service_version: Annotated[
+            str | None,
+            Field(
+                default=None,
+                description="Service version for distributed tracing context",
+            ),
+        ] = None
+        correlation_id: Annotated[
+            str | None,
+            Field(
+                default=None,
+                description="Correlation ID for distributed tracing",
+            ),
+        ] = None
+        force_new: Annotated[
+            bool,
+            Field(
+                default=False,
+                description="Force creation of new logger instance (for testing)",
+            ),
+        ] = False
 
     class DispatchConfig(FlextModelsCollections.Config):
         """Configuration for FlextDispatcher.dispatch (Pydantic v2).
@@ -531,16 +611,28 @@ class FlextModelsConfig:
         Groups optional dispatch context and overrides.
         """
 
-        metadata: FlextModelFoundation.Metadata | None = Field(
-            default=None,
-            description="Optional execution context metadata (Pydantic model)",
-        )
-        correlation_id: str | None = Field(
-            default=None, description="Optional correlation ID for distributed tracing"
-        )
-        timeout_override: int | None = Field(
-            default=None, ge=c.ZERO, description="Optional timeout override in seconds"
-        )
+        metadata: Annotated[
+            FlextModelFoundation.Metadata | None,
+            Field(
+                default=None,
+                description="Optional execution context metadata (Pydantic model)",
+            ),
+        ] = None
+        correlation_id: Annotated[
+            str | None,
+            Field(
+                default=None,
+                description="Optional correlation ID for distributed tracing",
+            ),
+        ] = None
+        timeout_override: Annotated[
+            int | None,
+            Field(
+                default=None,
+                ge=c.ZERO,
+                description="Optional timeout override in seconds",
+            ),
+        ] = None
 
     class ExecuteDispatchAttemptOptions(FlextModelsCollections.Config):
         """Options for _execute_dispatch_attempt (Pydantic v2).
@@ -549,19 +641,37 @@ class FlextModelsConfig:
         Groups execution context parameters.
         """
 
-        message_type: str = Field(
-            description="Message type name for routing and circuit breaker"
-        )
-        metadata: object | None = Field(
-            default=None, description="Optional execution context metadata"
-        )
-        correlation_id: str | None = Field(
-            default=None, description="Optional correlation ID for distributed tracing"
-        )
-        timeout_override: int | None = Field(
-            default=None, ge=c.ZERO, description="Optional timeout override in seconds"
-        )
-        operation_id: str = Field(description="Operation ID for timeout tracking")
+        message_type: Annotated[
+            str,
+            Field(
+                description="Message type name for routing and circuit breaker",
+            ),
+        ]
+        metadata: Annotated[
+            object | None,
+            Field(
+                default=None,
+                description="Optional execution context metadata",
+            ),
+        ] = None
+        correlation_id: Annotated[
+            str | None,
+            Field(
+                default=None,
+                description="Optional correlation ID for distributed tracing",
+            ),
+        ] = None
+        timeout_override: Annotated[
+            int | None,
+            Field(
+                default=None,
+                ge=c.ZERO,
+                description="Optional timeout override in seconds",
+            ),
+        ] = None
+        operation_id: Annotated[
+            str, Field(description="Operation ID for timeout tracking")
+        ]
 
     class RuntimeScopeOptions(FlextModelsCollections.Config):
         """Options for runtime_scope (Pydantic v2).
@@ -570,28 +680,40 @@ class FlextModelsConfig:
         Groups runtime scope configuration parameters.
         """
 
-        config_overrides: Mapping[str, object] | None = Field(
-            default=None, description="Optional configuration overrides"
-        )
-        context: p.Context | None = Field(
-            default=None, description="Optional context protocol instance"
-        )
-        subproject: str | None = Field(
-            default=None, description="Optional subproject name"
-        )
-        services: Mapping[str, object] | None = Field(
-            default=None, description="Optional container services mapping"
-        )
-        factories: Mapping[str, Callable[[], object]] | None = Field(
-            default=None, description="Optional container factories mapping"
-        )
-        container_services: Mapping[str, object] | None = Field(
-            default=None, description="Optional container services (alias for services)"
-        )
-        container_factories: Mapping[str, Callable[[], object]] | None = Field(
-            default=None,
-            description="Optional container factories (alias for factories)",
-        )
+        config_overrides: Annotated[
+            Mapping[str, object] | None,
+            Field(default=None, description="Optional configuration overrides"),
+        ] = None
+        context: Annotated[
+            p.Context | None,
+            Field(default=None, description="Optional context protocol instance"),
+        ] = None
+        subproject: Annotated[
+            str | None,
+            Field(default=None, description="Optional subproject name"),
+        ] = None
+        services: Annotated[
+            Mapping[str, object] | None,
+            Field(default=None, description="Optional container services mapping"),
+        ] = None
+        factories: Annotated[
+            Mapping[str, Callable[[], object]] | None,
+            Field(default=None, description="Optional container factories mapping"),
+        ] = None
+        container_services: Annotated[
+            Mapping[str, object] | None,
+            Field(
+                default=None,
+                description="Optional container services (alias for services)",
+            ),
+        ] = None
+        container_factories: Annotated[
+            Mapping[str, Callable[[], object]] | None,
+            Field(
+                default=None,
+                description="Optional container factories (alias for factories)",
+            ),
+        ] = None
 
     class NestedExecutionOptions(FlextModelsCollections.Config):
         """Options for nested_execution (Pydantic v2).
@@ -600,22 +722,30 @@ class FlextModelsConfig:
         Groups nested execution configuration parameters.
         """
 
-        config_overrides: Mapping[str, object] | None = Field(
-            default=None, description="Optional configuration overrides"
-        )
-        service_name: str | None = Field(
-            default=None, description="Optional service name"
-        )
-        version: str | None = Field(default=None, description="Optional version string")
-        correlation_id: str | None = Field(
-            default=None, description="Optional correlation ID for tracing"
-        )
-        container_services: Mapping[str, object] | None = Field(
-            default=None, description="Optional container services mapping"
-        )
-        container_factories: Mapping[str, Callable[[], object]] | None = Field(
-            default=None, description="Optional container factories mapping"
-        )
+        config_overrides: Annotated[
+            Mapping[str, object] | None,
+            Field(default=None, description="Optional configuration overrides"),
+        ] = None
+        service_name: Annotated[
+            str | None,
+            Field(default=None, description="Optional service name"),
+        ] = None
+        version: Annotated[
+            str | None,
+            Field(default=None, description="Optional version string"),
+        ] = None
+        correlation_id: Annotated[
+            str | None,
+            Field(default=None, description="Optional correlation ID for tracing"),
+        ] = None
+        container_services: Annotated[
+            Mapping[str, object] | None,
+            Field(default=None, description="Optional container services mapping"),
+        ] = None
+        container_factories: Annotated[
+            Mapping[str, Callable[[], object]] | None,
+            Field(default=None, description="Optional container factories mapping"),
+        ] = None
 
     class ExceptionConfig(FlextModelsCollections.Config):
         """Configuration for e.__init__ (Pydantic v2).
@@ -624,25 +754,36 @@ class FlextModelsConfig:
         (message, config). Groups optional exception context and behavior.
         """
 
-        error_code: str | None = Field(
-            default=None, description="Error code for categorization"
-        )
-        correlation_id: str | None = Field(
-            default=None, description="Correlation ID for distributed tracing"
-        )
-        metadata: FlextModelFoundation.Metadata | None = Field(
-            default=None, description="Additional metadata (Pydantic model)"
-        )
-        auto_log: bool = Field(
-            default=False, description="Whether to automatically log exception"
-        )
-        auto_correlation: bool = Field(
-            default=False, description="Whether to auto-generate correlation ID"
-        )
-        extra_kwargs: FlextModelsContainers.Dict = Field(
-            default_factory=FlextModelsContainers.Dict,
-            description="Additional keyword arguments for metadata",
-        )
+        error_code: Annotated[
+            str | None,
+            Field(default=None, description="Error code for categorization"),
+        ] = None
+        correlation_id: Annotated[
+            str | None,
+            Field(default=None, description="Correlation ID for distributed tracing"),
+        ] = None
+        metadata: Annotated[
+            FlextModelFoundation.Metadata | None,
+            Field(default=None, description="Additional metadata (Pydantic model)"),
+        ] = None
+        auto_log: Annotated[
+            bool,
+            Field(default=False, description="Whether to automatically log exception"),
+        ] = False
+        auto_correlation: Annotated[
+            bool,
+            Field(
+                default=False,
+                description="Whether to auto-generate correlation ID",
+            ),
+        ] = False
+        extra_kwargs: Annotated[
+            FlextModelsContainers.Dict,
+            Field(
+                default_factory=FlextModelsContainers.Dict,
+                description="Additional keyword arguments for metadata",
+            ),
+        ]
 
     class ResultConfig(FlextModelsCollections.Config):
         """Configuration for r failure case (Pydantic v2).
@@ -650,135 +791,168 @@ class FlextModelsConfig:
         Groups optional error context for result failures.
         """
 
-        error: str | None = Field(
-            default=None, description="Error message for failure case"
-        )
-        error_code: str | None = Field(
-            default=None, description="Error code for categorization"
-        )
-        error_data: FlextModelFoundation.Metadata | None = Field(
-            default=None, description="Additional error data (Pydantic model)"
-        )
+        error: Annotated[
+            str | None,
+            Field(default=None, description="Error message for failure case"),
+        ] = None
+        error_code: Annotated[
+            str | None,
+            Field(default=None, description="Error code for categorization"),
+        ] = None
+        error_data: Annotated[
+            FlextModelFoundation.Metadata | None,
+            Field(default=None, description="Additional error data (Pydantic model)"),
+        ] = None
 
     class ValidationErrorConfig(ExceptionConfig):
         """Configuration for ValidationError (Pydantic v2)."""
 
-        field: str | None = Field(
-            default=None, description="Field name that failed validation"
-        )
-        value: object | None = Field(
-            default=None, description="Value that failed validation"
-        )
+        field: Annotated[
+            str | None,
+            Field(default=None, description="Field name that failed validation"),
+        ] = None
+        value: Annotated[
+            object | None,
+            Field(default=None, description="Value that failed validation"),
+        ] = None
 
     class ConfigurationErrorConfig(ExceptionConfig):
         """Configuration for ConfigurationError (Pydantic v2)."""
 
-        config_key: str | None = Field(
-            default=None, description="Configuration key that caused error"
-        )
-        config_source: str | None = Field(
-            default=None, description="Source of configuration (file, env, etc.)"
-        )
+        config_key: Annotated[
+            str | None,
+            Field(default=None, description="Configuration key that caused error"),
+        ] = None
+        config_source: Annotated[
+            str | None,
+            Field(
+                default=None, description="Source of configuration (file, env, etc.)"
+            ),
+        ] = None
 
     class ConnectionErrorConfig(ExceptionConfig):
         """Configuration for ConnectionError (Pydantic v2)."""
 
-        host: str | None = Field(
-            default=None, description="Host that connection failed to"
-        )
-        port: int | None = Field(
-            default=None, description="Port that connection failed to"
-        )
-        timeout: float | None = Field(
-            default=None, description="Timeout value that was exceeded"
-        )
+        host: Annotated[
+            str | None,
+            Field(default=None, description="Host that connection failed to"),
+        ] = None
+        port: Annotated[
+            int | None,
+            Field(default=None, description="Port that connection failed to"),
+        ] = None
+        timeout: Annotated[
+            float | None,
+            Field(default=None, description="Timeout value that was exceeded"),
+        ] = None
 
     class TimeoutErrorConfig(ExceptionConfig):
         """Configuration for TimeoutError (Pydantic v2)."""
 
-        timeout_seconds: float | None = Field(
-            default=None, description="Timeout in seconds that was exceeded"
-        )
-        operation: str | None = Field(
-            default=None, description="Operation that timed out"
-        )
+        timeout_seconds: Annotated[
+            float | None,
+            Field(default=None, description="Timeout in seconds that was exceeded"),
+        ] = None
+        operation: Annotated[
+            str | None,
+            Field(default=None, description="Operation that timed out"),
+        ] = None
 
     class AuthenticationErrorConfig(ExceptionConfig):
         """Configuration for AuthenticationError (Pydantic v2)."""
 
-        auth_method: str | None = Field(
-            default=None, description="Authentication method that failed"
-        )
-        user_id: str | None = Field(
-            default=None, description="User ID that authentication failed for"
-        )
+        auth_method: Annotated[
+            str | None,
+            Field(default=None, description="Authentication method that failed"),
+        ] = None
+        user_id: Annotated[
+            str | None,
+            Field(default=None, description="User ID that authentication failed for"),
+        ] = None
 
     class AuthorizationErrorConfig(ExceptionConfig):
         """Configuration for AuthorizationError (Pydantic v2)."""
 
-        user_id: str | None = Field(
-            default=None, description="User ID that authorization failed for"
-        )
-        resource: str | None = Field(
-            default=None, description="Resource that access was denied to"
-        )
-        permission: str | None = Field(
-            default=None, description="Permission that was denied"
-        )
+        user_id: Annotated[
+            str | None,
+            Field(default=None, description="User ID that authorization failed for"),
+        ] = None
+        resource: Annotated[
+            str | None,
+            Field(default=None, description="Resource that access was denied to"),
+        ] = None
+        permission: Annotated[
+            str | None,
+            Field(default=None, description="Permission that was denied"),
+        ] = None
 
     class NotFoundErrorConfig(ExceptionConfig):
         """Configuration for NotFoundError (Pydantic v2)."""
 
-        resource_type: str | None = Field(
-            default=None, description="Type of resource that was not found"
-        )
-        resource_id: str | None = Field(
-            default=None, description="ID of resource that was not found"
-        )
+        resource_type: Annotated[
+            str | None,
+            Field(default=None, description="Type of resource that was not found"),
+        ] = None
+        resource_id: Annotated[
+            str | None,
+            Field(default=None, description="ID of resource that was not found"),
+        ] = None
 
     class ConflictErrorConfig(ExceptionConfig):
         """Configuration for ConflictError (Pydantic v2)."""
 
-        resource_type: str | None = Field(
-            default=None, description="Type of resource that conflicted"
-        )
-        resource_id: str | None = Field(
-            default=None, description="ID of resource that conflicted"
-        )
-        conflict_reason: str | None = Field(
-            default=None, description="Reason for the conflict"
-        )
+        resource_type: Annotated[
+            str | None,
+            Field(default=None, description="Type of resource that conflicted"),
+        ] = None
+        resource_id: Annotated[
+            str | None,
+            Field(default=None, description="ID of resource that conflicted"),
+        ] = None
+        conflict_reason: Annotated[
+            str | None,
+            Field(default=None, description="Reason for the conflict"),
+        ] = None
 
     class RateLimitErrorConfig(ExceptionConfig):
         """Configuration for RateLimitError (Pydantic v2)."""
 
-        limit: int | None = Field(
-            default=None, description="Rate limit that was exceeded"
-        )
-        window_seconds: int | None = Field(
-            default=None, description="Time window for rate limit"
-        )
-        retry_after: float | None = Field(
-            default=None, description="Seconds to wait before retrying"
-        )
+        limit: Annotated[
+            int | None,
+            Field(default=None, description="Rate limit that was exceeded"),
+        ] = None
+        window_seconds: Annotated[
+            int | None,
+            Field(default=None, description="Time window for rate limit"),
+        ] = None
+        retry_after: Annotated[
+            float | None,
+            Field(default=None, description="Seconds to wait before retrying"),
+        ] = None
 
     class InternalErrorConfig(ExceptionConfig):
         """Configuration for InternalError (Pydantic v2)."""
 
-        component: str | None = Field(
-            default=None, description="Component where internal error occurred"
-        )
-        operation: str | None = Field(
-            default=None, description="Operation that caused internal error"
-        )
+        component: Annotated[
+            str | None,
+            Field(default=None, description="Component where internal error occurred"),
+        ] = None
+        operation: Annotated[
+            str | None,
+            Field(default=None, description="Operation that caused internal error"),
+        ] = None
 
     class TypeErrorConfig(ExceptionConfig):
         """Configuration for TypeError (Pydantic v2)."""
 
-        expected_type: str | None = Field(
-            default=None, description="Expected type name"
-        )
-        actual_type: str | None = Field(default=None, description="Actual type name")
+        expected_type: Annotated[
+            str | None,
+            Field(default=None, description="Expected type name"),
+        ] = None
+        actual_type: Annotated[
+            str | None,
+            Field(default=None, description="Actual type name"),
+        ] = None
 
     class TypeErrorOptions(FlextModelsCollections.Config):
         """Options for TypeError initialization (Pydantic v2).
@@ -786,58 +960,82 @@ class FlextModelsConfig:
         Groups TypeError constructor parameters for cleaner initialization.
         """
 
-        expected_type: type | None = Field(
-            default=None, description="Expected type class"
-        )
-        actual_type: type | None = Field(default=None, description="Actual type class")
-        context: Mapping[str, object] | None = Field(
-            default=None, description="Additional context for error"
-        )
-        metadata: FlextModelFoundation.Metadata | Mapping[str, object] | None = Field(
-            default=None, description="Metadata for error"
-        )
+        expected_type: Annotated[
+            type | None,
+            Field(default=None, description="Expected type class"),
+        ] = None
+        actual_type: Annotated[
+            type | None,
+            Field(default=None, description="Actual type class"),
+        ] = None
+        context: Annotated[
+            Mapping[str, object] | None,
+            Field(default=None, description="Additional context for error"),
+        ] = None
+        metadata: Annotated[
+            FlextModelFoundation.Metadata | Mapping[str, object] | None,
+            Field(default=None, description="Metadata for error"),
+        ] = None
 
     class ValueErrorConfig(ExceptionConfig):
         """Configuration for ValueError (Pydantic v2)."""
 
-        expected_value: str | None = Field(
-            default=None, description="Expected value description"
-        )
-        actual_value: object | None = Field(
-            default=None, description="Actual value that caused error"
-        )
+        expected_value: Annotated[
+            str | None,
+            Field(default=None, description="Expected value description"),
+        ] = None
+        actual_value: Annotated[
+            object | None,
+            Field(default=None, description="Actual value that caused error"),
+        ] = None
 
     class CircuitBreakerErrorConfig(ExceptionConfig):
         """Configuration for CircuitBreakerError (Pydantic v2)."""
 
-        service_name: str | None = Field(
-            default=None, description="Service name where circuit breaker opened"
-        )
-        failure_count: int | None = Field(
-            default=None,
-            description="Number of failures that triggered circuit breaker",
-        )
-        reset_timeout: float | None = Field(
-            default=None, description="Timeout before circuit breaker resets"
-        )
+        service_name: Annotated[
+            str | None,
+            Field(
+                default=None, description="Service name where circuit breaker opened"
+            ),
+        ] = None
+        failure_count: Annotated[
+            int | None,
+            Field(
+                default=None,
+                description="Number of failures that triggered circuit breaker",
+            ),
+        ] = None
+        reset_timeout: Annotated[
+            float | None,
+            Field(default=None, description="Timeout before circuit breaker resets"),
+        ] = None
 
     class OperationErrorConfig(ExceptionConfig):
         """Configuration for OperationError (Pydantic v2)."""
 
-        operation: str | None = Field(default=None, description="Operation that failed")
-        reason: str | None = Field(
-            default=None, description="Reason for operation failure"
-        )
+        operation: Annotated[
+            str | None,
+            Field(default=None, description="Operation that failed"),
+        ] = None
+        reason: Annotated[
+            str | None,
+            Field(default=None, description="Reason for operation failure"),
+        ] = None
 
     class AttributeAccessErrorConfig(ExceptionConfig):
         """Configuration for AttributeAccessError (Pydantic v2)."""
 
-        attribute_name: str | None = Field(
-            default=None, description="Attribute name that access failed for"
-        )
-        object_type: str | None = Field(
-            default=None, description="Type of object that attribute access failed on"
-        )
+        attribute_name: Annotated[
+            str | None,
+            Field(default=None, description="Attribute name that access failed for"),
+        ] = None
+        object_type: Annotated[
+            str | None,
+            Field(
+                default=None,
+                description="Type of object that attribute access failed on",
+            ),
+        ] = None
 
     class OperationExtraConfig(FlextModelsCollections.Config):
         """Configuration for operation logging extra data (Pydantic v2).
@@ -846,26 +1044,36 @@ class FlextModelsConfig:
         Groups operation context and performance tracking.
         """
 
-        func_name: str = Field(description="Function name for logging")
-        func_module: str = Field(description="Function module for logging")
-        correlation_id: str | None = Field(
-            default=None, description="Correlation ID for distributed tracing"
-        )
-        success: bool | None = Field(
-            default=None, description="Operation success status"
-        )
-        error: str | None = Field(
-            default=None, description="Error message if operation failed"
-        )
-        error_type: str | None = Field(default=None, description="Error type name")
-        start_time: float = Field(
-            default=c.INITIAL_TIME,
-            ge=c.INITIAL_TIME,
-            description="Operation start time for performance tracking",
-        )
-        track_perf: bool = Field(
-            default=False, description="Whether to track performance metrics"
-        )
+        func_name: Annotated[str, Field(description="Function name for logging")]
+        func_module: Annotated[str, Field(description="Function module for logging")]
+        correlation_id: Annotated[
+            str | None,
+            Field(default=None, description="Correlation ID for distributed tracing"),
+        ] = None
+        success: Annotated[
+            bool | None,
+            Field(default=None, description="Operation success status"),
+        ] = None
+        error: Annotated[
+            str | None,
+            Field(default=None, description="Error message if operation failed"),
+        ] = None
+        error_type: Annotated[
+            str | None,
+            Field(default=None, description="Error type name"),
+        ] = None
+        start_time: Annotated[
+            float,
+            Field(
+                default=c.INITIAL_TIME,
+                ge=c.INITIAL_TIME,
+                description="Operation start time for performance tracking",
+            ),
+        ] = c.INITIAL_TIME
+        track_perf: Annotated[
+            bool,
+            Field(default=False, description="Whether to track performance metrics"),
+        ] = False
 
     class LogOperationFailureConfig(FlextModelsCollections.Config):
         """Configuration for logging operation failures (Pydantic v2).
@@ -874,21 +1082,26 @@ class FlextModelsConfig:
         Groups logger, operation context, and exception details.
         """
 
-        op_name: str = Field(description="Operation name")
-        func_name: str = Field(description="Function name")
-        func_module: str = Field(description="Function module")
-        correlation_id: str | None = Field(
-            default=None, description="Correlation ID for distributed tracing"
-        )
-        exc: Exception = Field(description="Exception that caused failure")
-        start_time: float = Field(
-            default=c.INITIAL_TIME,
-            ge=c.INITIAL_TIME,
-            description="Operation start time",
-        )
-        track_perf: bool = Field(
-            default=False, description="Whether to track performance metrics"
-        )
+        op_name: Annotated[str, Field(description="Operation name")]
+        func_name: Annotated[str, Field(description="Function name")]
+        func_module: Annotated[str, Field(description="Function module")]
+        correlation_id: Annotated[
+            str | None,
+            Field(default=None, description="Correlation ID for distributed tracing"),
+        ] = None
+        exc: Annotated[Exception, Field(description="Exception that caused failure")]
+        start_time: Annotated[
+            float,
+            Field(
+                default=c.INITIAL_TIME,
+                ge=c.INITIAL_TIME,
+                description="Operation start time",
+            ),
+        ] = c.INITIAL_TIME
+        track_perf: Annotated[
+            bool,
+            Field(default=False, description="Whether to track performance metrics"),
+        ] = False
 
     class RetryLoopConfig(FlextModelFoundation.ArbitraryTypesModel):
         """Configuration for retry loop execution (Pydantic v2).
@@ -898,32 +1111,54 @@ class FlextModelsConfig:
         """
 
         model_config = ConfigDict(arbitrary_types_allowed=True)
-        func: p.VariadicCallable[object] = Field(description="Function to execute")
-        args: tuple[object, ...] = Field(
-            default_factory=tuple, description="Positional arguments for function"
-        )
-        call_kwargs: FlextModelsContainers.ConfigMap = Field(
-            default_factory=FlextModelsContainers.ConfigMap,
-            description="Keyword arguments for function",
-        )
-        retry_config: FlextModelsConfig.RetryConfiguration | None = Field(
-            default=None,
-            description="Retry configuration (takes priority over individual params)",
-        )
-        attempts: int = Field(
-            default=c.Reliability.MAX_RETRY_ATTEMPTS,
-            ge=c.Reliability.RETRY_COUNT_MIN,
-            description="Number of retry attempts (used if retry_config is None)",
-        )
-        delay: float = Field(
-            default=float(c.Reliability.DEFAULT_RETRY_DELAY_SECONDS),
-            gt=c.INITIAL_TIME,
-            description="Initial delay between retries (used if retry_config is None)",
-        )
-        strategy: str = Field(
-            default=c.Reliability.DEFAULT_BACKOFF_STRATEGY,
-            description="Retry strategy: 'exponential' or 'linear' (used if retry_config is None)",
-        )
+        func: Annotated[
+            p.VariadicCallable[object],
+            Field(description="Function to execute"),
+        ]
+        args: Annotated[
+            tuple[object, ...],
+            Field(
+                default_factory=tuple,
+                description="Positional arguments for function",
+            ),
+        ]
+        call_kwargs: Annotated[
+            FlextModelsContainers.ConfigMap,
+            Field(
+                default_factory=FlextModelsContainers.ConfigMap,
+                description="Keyword arguments for function",
+            ),
+        ]
+        retry_config: Annotated[
+            FlextModelsConfig.RetryConfiguration | None,
+            Field(
+                default=None,
+                description="Retry configuration (takes priority over individual params)",
+            ),
+        ] = None
+        attempts: Annotated[
+            int,
+            Field(
+                default=c.Reliability.MAX_RETRY_ATTEMPTS,
+                ge=c.Reliability.RETRY_COUNT_MIN,
+                description="Number of retry attempts (used if retry_config is None)",
+            ),
+        ] = c.Reliability.MAX_RETRY_ATTEMPTS
+        delay: Annotated[
+            float,
+            Field(
+                default=float(c.Reliability.DEFAULT_RETRY_DELAY_SECONDS),
+                gt=c.INITIAL_TIME,
+                description="Initial delay between retries (used if retry_config is None)",
+            ),
+        ] = float(c.Reliability.DEFAULT_RETRY_DELAY_SECONDS)
+        strategy: Annotated[
+            str,
+            Field(
+                default=c.Reliability.DEFAULT_BACKOFF_STRATEGY,
+                description="Retry strategy: 'exponential' or 'linear' (used if retry_config is None)",
+            ),
+        ] = c.Reliability.DEFAULT_BACKOFF_STRATEGY
 
     class DispatcherConfig(FlextModelFoundation.ArbitraryTypesModel):
         """Configuration for message dispatcher.
@@ -935,41 +1170,86 @@ class FlextModelsConfig:
         model_config = ConfigDict(
             validate_assignment=True, use_enum_values=True, extra="forbid"
         )
-        dispatcher_timeout_seconds: float = Field(
-            default=30.0,
-            gt=0,
-            description="Timeout in seconds for dispatcher operations",
-        )
-        executor_workers: int = Field(
-            default=4, ge=1, le=256, description="Number of executor worker threads"
-        )
-        circuit_breaker_threshold: int = Field(
-            default=5, ge=1, description="Circuit breaker failure threshold"
-        )
-        rate_limit_max_requests: int = Field(
-            default=1000, ge=1, description="Maximum requests for rate limiting"
-        )
-        rate_limit_window_seconds: float = Field(
-            default=60.0, gt=0, description="Rate limit window in seconds"
-        )
-        max_retry_attempts: int = Field(
-            default=3, ge=0, le=10, description="Maximum retry attempts"
-        )
-        retry_delay: float = Field(
-            default=1.0, ge=0, description="Delay between retries in seconds"
-        )
-        enable_timeout_executor: bool = Field(
-            default=True, description="Enable timeout executor"
-        )
-        dispatcher_enable_logging: bool = Field(
-            default=True, description="Enable dispatcher logging"
-        )
-        dispatcher_auto_context: bool = Field(
-            default=True, description="Automatically add context to messages"
-        )
-        dispatcher_enable_metrics: bool = Field(
-            default=True, description="Enable dispatcher metrics collection"
-        )
+        dispatcher_timeout_seconds: Annotated[
+            float,
+            Field(
+                default=30.0,
+                gt=0,
+                description="Timeout in seconds for dispatcher operations",
+            ),
+        ] = 30.0
+        executor_workers: Annotated[
+            int,
+            Field(
+                default=4,
+                ge=1,
+                le=256,
+                description="Number of executor worker threads",
+            ),
+        ] = 4
+        circuit_breaker_threshold: Annotated[
+            int,
+            Field(
+                default=5,
+                ge=1,
+                description="Circuit breaker failure threshold",
+            ),
+        ] = 5
+        rate_limit_max_requests: Annotated[
+            int,
+            Field(
+                default=1000,
+                ge=1,
+                description="Maximum requests for rate limiting",
+            ),
+        ] = 1000
+        rate_limit_window_seconds: Annotated[
+            float,
+            Field(
+                default=60.0,
+                gt=0,
+                description="Rate limit window in seconds",
+            ),
+        ] = 60.0
+        max_retry_attempts: Annotated[
+            int,
+            Field(
+                default=3,
+                ge=0,
+                le=10,
+                description="Maximum retry attempts",
+            ),
+        ] = 3
+        retry_delay: Annotated[
+            float,
+            Field(
+                default=1.0,
+                ge=0,
+                description="Delay between retries in seconds",
+            ),
+        ] = 1.0
+        enable_timeout_executor: Annotated[
+            bool,
+            Field(default=True, description="Enable timeout executor"),
+        ] = True
+        dispatcher_enable_logging: Annotated[
+            bool,
+            Field(default=True, description="Enable dispatcher logging"),
+        ] = True
+        dispatcher_auto_context: Annotated[
+            bool,
+            Field(
+                default=True,
+                description="Automatically add context to messages",
+            ),
+        ] = True
+        dispatcher_enable_metrics: Annotated[
+            bool,
+            Field(
+                default=True,
+                description="Enable dispatcher metrics collection",
+            ),
+        ] = True
 
     DOMAIN_MODEL_CONFIG: Final[ConfigDict] = ConfigDict(
         use_enum_values=True,

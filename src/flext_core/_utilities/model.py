@@ -67,36 +67,16 @@ class FlextUtilitiesModel:
             return ""
         if isinstance(value, (bool, int, float, str)):
             return value
-        if isinstance(value, list):
-            list_items = (
-                FlextUtilitiesModel._V.list_container_adapter().validate_python(value)
-            )
+        if isinstance(value, (list, tuple)):
             normalized_items: list[t.Primitives] = []
-            for item in list_items:
-                try:
-                    normalized_items.append(
-                        FlextUtilitiesModel._V.primitives_adapter().validate_python(
-                            item
-                        )
-                    )
-                except ValidationError:
+            for item in value:
+                if item is None:
+                    normalized_items.append("")
+                elif isinstance(item, (bool, int, float, str)):
+                    normalized_items.append(item)
+                else:
                     normalized_items.append(str(item))
             return normalized_items
-        if isinstance(value, tuple):
-            tuple_items = (
-                FlextUtilitiesModel._V.tuple_container_adapter().validate_python(value)
-            )
-            normalized_tuple_items: list[t.Primitives] = []
-            for item in tuple_items:
-                try:
-                    normalized_tuple_items.append(
-                        FlextUtilitiesModel._V.primitives_adapter().validate_python(
-                            item
-                        )
-                    )
-                except ValidationError:
-                    normalized_tuple_items.append(str(item))
-            return normalized_tuple_items
         return str(value)
 
     @staticmethod
