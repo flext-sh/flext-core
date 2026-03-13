@@ -45,7 +45,6 @@ import atexit
 import contextlib
 import inspect
 import io
-import json
 import logging
 import queue
 import secrets
@@ -579,9 +578,9 @@ class FlextRuntime:
     def is_valid_json(value: object) -> TypeGuard[str]:
         """Type guard to check if value is valid JSON string.
 
-        Business Rule: Validates JSON strings using json.loads() for parsing.
+        Business Rule: Validates JSON strings using Pydantic v2 TypeAdapter for parsing.
         Returns TypeGuard[str] for type narrowing in conditional blocks.
-        Catches JSONDecodeError and ValueError for safe validation. Used for
+        Catches ValidationError for safe validation. Used for
         validating JSON payloads before deserialization.
 
         Audit Implication: JSON validation ensures audit trail completeness by
@@ -598,9 +597,9 @@ class FlextRuntime:
         if not isinstance(value, str):
             return False
         try:
-            json.loads(value)
+            TypeAdapter(object).validate_json(value)
             return True
-        except (json.JSONDecodeError, TypeError, ValueError):
+        except (ValidationError, TypeError, ValueError):
             return False
 
     @staticmethod
@@ -1480,14 +1479,6 @@ class FlextRuntime:
             if self.is_success:
                 return self.value
             return func()
-
-        def _protocol_name(self) -> str:
-            """Return the protocol name for BaseProtocol compliance.
-
-            Required by FlextProtocols.BaseProtocol to enable protocol introspection
-            and ensure r satisfies the ResultLike protocol.
-            """
-            return "RuntimeResult"
 
     class Integration:
         """Application-layer integration helpers using structlog directly (Layer 0.5).
