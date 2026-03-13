@@ -442,7 +442,7 @@ class FlextTestsFactories(s[t.Tests.object]):
 
         """
         try:
-            params = m.Tests.ListFactoryParams({
+            params = m.Tests.ListFactoryParams.model_validate({
                 "source": source,
                 **kwargs,
             })
@@ -581,7 +581,7 @@ class FlextTestsFactories(s[t.Tests.object]):
 
         """
         try:
-            params = m.Tests.ModelFactoryParams({
+            params = m.Tests.ModelFactoryParams.model_validate({
                 "kind": kind,
                 **kwargs,
             })
