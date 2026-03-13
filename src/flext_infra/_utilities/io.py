@@ -9,7 +9,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import json
 from collections.abc import Mapping
 from pathlib import Path
 
@@ -46,13 +45,16 @@ class FlextInfraUtilitiesIo:
         if not path.exists():
             return r[Mapping[str, JsonValue]].ok({})
         try:
-            loaded_obj: object = json.loads(
-                path.read_text(encoding=c.Infra.Encoding.DEFAULT),
-            )
-            if not isinstance(loaded_obj, dict):
-                return r[Mapping[str, JsonValue]].fail("JSON root must be object")
+            raw_content = path.read_text(encoding=c.Infra.Encoding.DEFAULT)
+            value_parser: TypeAdapter[JsonValue] = TypeAdapter(JsonValue)
+            loaded_obj: JsonValue = value_parser.validate_json(raw_content)
+        except (ValidationError, OSError) as exc:
+            return r[Mapping[str, JsonValue]].fail(f"JSON read error: {exc}")
+        if not isinstance(loaded_obj, dict):
+            return r[Mapping[str, JsonValue]].fail("JSON root must be object")
+        try:
             parser: TypeAdapter[dict[str, JsonValue]] = TypeAdapter(
-                dict[str, JsonValue]
+                dict[str, JsonValue],
             )
             data = parser.validate_python(loaded_obj)
             return r[Mapping[str, JsonValue]].ok(data)
@@ -60,8 +62,6 @@ class FlextInfraUtilitiesIo:
             return r[Mapping[str, JsonValue]].fail(
                 f"JSON object validation error: {exc}",
             )
-        except (json.JSONDecodeError, OSError) as exc:
-            return r[Mapping[str, JsonValue]].fail(f"JSON read error: {exc}")
 
     @staticmethod
     def write_json(
@@ -92,19 +92,46 @@ class FlextInfraUtilitiesIo:
             raw_payload: object = (
                 payload.model_dump() if isinstance(payload, BaseModel) else payload
             )
+            parser: TypeAdapter[JsonValue] = TypeAdapter(JsonValue)
+            validated_payload: JsonValue = parser.validate_python(raw_payload)
+            normalized_payload: JsonValue = (
+                FlextInfraUtilitiesIo._sort_json_keys(validated_payload)
+                if sort_keys
+                else validated_payload
+            )
             content = (
-                json.dumps(
-                    raw_payload,
+                parser.dump_json(
+                    normalized_payload,
                     indent=indent,
-                    sort_keys=sort_keys,
                     ensure_ascii=ensure_ascii,
-                )
+                ).decode(c.Infra.Encoding.DEFAULT)
                 + "\n"
             )
             _ = path.write_text(content, encoding=c.Infra.Encoding.DEFAULT)
-        except (TypeError, OSError) as exc:
+        except (TypeError, ValueError, ValidationError, OSError) as exc:
             return r[bool].fail(f"JSON write error: {exc}")
         return r[bool].ok(True)
+
+    @staticmethod
+    def _sort_json_keys(data: JsonValue) -> JsonValue:
+        if isinstance(data, dict):
+            dict_parser: TypeAdapter[dict[str, JsonValue]] = TypeAdapter(
+                dict[str, JsonValue],
+            )
+            mapped_data = dict_parser.validate_python(data)
+            sorted_items: list[tuple[str, JsonValue]] = sorted(
+                mapped_data.items(),
+                key=lambda item: item[0],
+            )
+            return {
+                key: FlextInfraUtilitiesIo._sort_json_keys(value)
+                for key, value in sorted_items
+            }
+        if isinstance(data, list):
+            list_parser: TypeAdapter[list[JsonValue]] = TypeAdapter(list[JsonValue])
+            items = list_parser.validate_python(data)
+            return [FlextInfraUtilitiesIo._sort_json_keys(item) for item in items]
+        return data
 
     @staticmethod
     def parse(text: str) -> r[JsonValue]:
@@ -119,9 +146,9 @@ class FlextInfraUtilitiesIo:
         """
         try:
             ta: TypeAdapter[JsonValue] = TypeAdapter(JsonValue)
-            parsed: JsonValue = ta.validate_python(json.loads(text))
+            parsed: JsonValue = ta.validate_json(text)
             return r[JsonValue].ok(parsed)
-        except (ValidationError, json.JSONDecodeError, ValueError) as exc:
+        except (ValidationError, ValueError) as exc:
             return r[JsonValue].fail(f"JSON parse error: {exc}")
 
     @staticmethod
@@ -148,15 +175,20 @@ class FlextInfraUtilitiesIo:
             raw_data: object = (
                 data.model_dump() if isinstance(data, BaseModel) else data
             )
-            return r[str].ok(
-                json.dumps(
-                    raw_data,
-                    indent=indent,
-                    sort_keys=sort_keys,
-                    ensure_ascii=ensure_ascii,
-                ),
+            parser: TypeAdapter[JsonValue] = TypeAdapter(JsonValue)
+            validated_data: JsonValue = parser.validate_python(raw_data)
+            normalized_data: JsonValue = (
+                FlextInfraUtilitiesIo._sort_json_keys(validated_data)
+                if sort_keys
+                else validated_data
             )
-        except (TypeError, ValueError) as exc:
+            serialized = parser.dump_json(
+                normalized_data,
+                indent=indent,
+                ensure_ascii=ensure_ascii,
+            ).decode(c.Infra.Encoding.DEFAULT)
+            return r[str].ok(serialized)
+        except (TypeError, ValueError, ValidationError) as exc:
             return r[str].fail(f"JSON serialize error: {exc}")
 
 
