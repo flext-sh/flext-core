@@ -25,7 +25,7 @@ from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
 from re import Pattern
-from typing import Protocol, cast, override
+from typing import Protocol, override
 
 from pydantic import BaseModel, RootModel, TypeAdapter, ValidationError
 
@@ -54,7 +54,8 @@ def _to_scalar(value: object) -> core_t.Scalar:
 
     """
     if isinstance(value, t.PRIMITIVES_TYPES):
-        return cast("core_t.Scalar", value)
+        scalar_value: core_t.Scalar = value
+        return scalar_value
     return str(value)
 
 
@@ -73,7 +74,8 @@ def _to_payload(value: object) -> t.Tests.object:
     if value is None or isinstance(
         value, (*t.PRIMITIVES_TYPES, bytes, datetime, Path, BaseModel)
     ):
-        return cast("t.Tests.object", value)
+        payload_value: t.Tests.object = value
+        return payload_value
     if isinstance(value, Mapping):
         try:
             mapping_value = _PAYLOAD_MAPPING_ADAPTER.validate_python(value)

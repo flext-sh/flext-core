@@ -16,7 +16,7 @@ import enum
 from collections.abc import Callable, Generator, Mapping
 from contextlib import contextmanager
 from datetime import datetime
-from typing import Annotated, ClassVar, Final, Self, cast, overload, override
+from typing import Annotated, ClassVar, Final, Self, overload, override
 
 from pydantic import BaseModel, Field, PrivateAttr
 
@@ -64,16 +64,14 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
 
         if isinstance(ctx_value, BaseModel):
             ctx_value = getattr(ctx_value, "root", ctx_value.model_dump())
-        elif hasattr(ctx_value, "items") and callable(getattr(ctx_value, "items")):
+        elif u.is_mapping(ctx_value):
             pass
         else:
             return {}
 
         try:
             normalized: dict[str, object] = {}
-            mapping_value: Mapping[str, object] = cast(
-                "Mapping[str, object]", ctx_value
-            )
+            mapping_value: Mapping[str, object] = ctx_value
             for key, value in mapping_value.items():
                 if str(key) != key:
                     return {}

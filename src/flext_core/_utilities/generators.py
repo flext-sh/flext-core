@@ -13,7 +13,6 @@ from __future__ import annotations
 import secrets
 import string
 import time
-import typing
 import uuid
 from collections.abc import Mapping
 from datetime import UTC, datetime
@@ -169,7 +168,8 @@ class FlextUtilitiesGenerators:
                 raise TypeError(msg) from e
         try:
             model_data = context.model_dump()
-            return typing.cast("dict[str, object]", model_data)
+            model_data_typed: dict[str, object] = model_data
+            return model_data_typed
         except (AttributeError, TypeError, ValueError) as e:
             msg = f"Failed to dump BaseModel {type(context).__name__}: {type(e).__name__}: {e}"
             raise TypeError(msg) from e
@@ -256,19 +256,21 @@ class FlextUtilitiesGenerators:
             msg = "Value cannot be None"
             raise TypeError(msg)
         if isinstance(value, dict):
-            return typing.cast("dict[str, object]", value)
+            value_typed: dict[str, object] = value
+            return value_typed
         if isinstance(value, Mapping):
             try:
-                return dict(typing.cast("Mapping[str, object]", value))
+                return dict(value)
             except (TypeError, ValueError, AttributeError) as e:
-                msg = f"Failed to convert Mapping {type(typing.cast('object', value)).__name__}: {e}"
+                msg = f"Failed to convert Mapping {type(value).__name__}: {e}"
                 raise TypeError(msg) from e
         if isinstance(value, BaseModel):
             try:
                 dumped = value.model_dump()
-                return typing.cast("dict[str, object]", dumped)
+                dumped_typed: dict[str, object] = dumped
+                return dumped_typed
             except (AttributeError, TypeError, ValueError) as e:
-                msg = f"Failed to convert BaseModel {type(typing.cast('object', value)).__name__} to dict: {e}"
+                msg = f"Failed to convert BaseModel {type(value).__name__} to dict: {e}"
                 raise TypeError(msg) from e
         msg = f"Cannot convert {value.__class__.__name__} to dict"
         raise TypeError(msg)

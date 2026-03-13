@@ -11,7 +11,7 @@ from __future__ import annotations
 import warnings
 from collections.abc import Callable, Mapping, Sequence
 from functools import partial
-from typing import cast, overload
+from typing import overload
 
 from pydantic import BaseModel
 
@@ -2018,22 +2018,18 @@ class FlextUtilitiesMapper:
         if isinstance(value, t.CONTAINER_TYPES):
             return value
         if isinstance(value, BaseModel):
-            model_dict = cast("dict[str, object]", value.model_dump())
+            model_dict = value.model_dump()
             return {
                 str(k): FlextUtilitiesMapper.narrow_to_container(v)
                 for k, v in model_dict.items()
             }
         if isinstance(value, Mapping):
-            value_dict = cast("Mapping[object, object]", value)
             return {
                 str(k): FlextUtilitiesMapper.narrow_to_container(v)
-                for k, v in value_dict.items()
+                for k, v in value.items()
             }
         if isinstance(value, Sequence) and not isinstance(value, str):
-            value_seq = cast("Sequence[object]", value)
-            return [
-                FlextUtilitiesMapper.narrow_to_container(item) for item in value_seq
-            ]
+            return [FlextUtilitiesMapper.narrow_to_container(item) for item in value]
         return str(value)
 
     @staticmethod
@@ -2068,12 +2064,13 @@ class FlextUtilitiesMapper:
 
         """
         field_overrides_config: t.ContainerMapping = {
-            k: cast("t.NormalizedValue", v) for k, v in specific_fields.items()
+            k: FlextRuntime.normalize_to_container(v)
+            for k, v in specific_fields.items()
         }
         raw_result: t.ContainerMapping = FlextUtilitiesMapper.process_context_data(
             primary_data=context,
             secondary_data=extra_kwargs,
-            transformer=cast("t.MapperCallable", FlextRuntime.normalize_to_metadata),
+            transformer=lambda value: FlextRuntime.normalize_to_metadata(value),
             field_overrides=field_overrides_config,
             merge_strategy="merge",
         )
@@ -2259,8 +2256,13 @@ class FlextUtilitiesMapper:
                 primary_source = primary_data.root
             else:
                 primary_general = FlextUtilitiesMapper.narrow_to_container(primary_data)
-                if FlextRuntime.is_dict_like(primary_general):
-                    primary_source = dict(cast("Mapping[str, object]", primary_general))
+                if FlextRuntime.is_dict_like(primary_general) and isinstance(
+                    primary_general, Mapping
+                ):
+                    primary_source = {
+                        str(key): item_value
+                        for key, item_value in primary_general.items()
+                    }
             if primary_source is not None:
                 primary_dict = {
                     str(key): FlextUtilitiesMapper.narrow_to_container(value)
@@ -2278,10 +2280,13 @@ class FlextUtilitiesMapper:
                 secondary_general = FlextUtilitiesMapper.narrow_to_container(
                     secondary_data
                 )
-                if FlextRuntime.is_dict_like(secondary_general):
-                    secondary_source = dict(
-                        cast("Mapping[str, object]", secondary_general)
-                    )
+                if FlextRuntime.is_dict_like(secondary_general) and isinstance(
+                    secondary_general, Mapping
+                ):
+                    secondary_source = {
+                        str(key): item_value
+                        for key, item_value in secondary_general.items()
+                    }
             if secondary_source is not None:
                 secondary_dict = {
                     str(key): FlextUtilitiesMapper.narrow_to_container(value)

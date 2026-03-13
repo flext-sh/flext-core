@@ -13,7 +13,7 @@ import typing
 from collections.abc import Callable, ItemsView, Iterator, KeysView, Mapping, ValuesView
 from datetime import datetime
 from pathlib import Path
-from typing import Annotated, ClassVar, cast, override
+from typing import Annotated, ClassVar, override
 
 from pydantic import BaseModel, ConfigDict, Field, RootModel
 
@@ -107,7 +107,7 @@ class FlextModelsContainers:
         def values(self) -> ValuesView[DictValueT]:
             return self.root.values()
 
-    cast("type", Mapping).register(_RootDictModel)
+    Mapping.register(_RootDictModel)  # type: ignore[attr-defined]  # ABCMeta.register exists at runtime
 
     class Dict(_RootDictModel[object]):
         """Generic dictionary container. Use ``m.Dict``."""

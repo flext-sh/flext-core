@@ -19,7 +19,7 @@ from collections.abc import Callable, Iterable, Mapping, Sequence, Sized
 from datetime import datetime
 from pathlib import Path
 from types import MappingProxyType
-from typing import TypeGuard, TypeIs, cast
+from typing import TypeGuard, TypeIs
 
 from pydantic import BaseModel
 
@@ -167,7 +167,7 @@ class FlextUtilitiesGuards:
         if isinstance(value, (str, int, float, bool, datetime)):
             return True
         if FlextUtilitiesGuards._is_list_or_tuple(value):
-            sequence_value = cast("Sequence[object]", value)
+            sequence_value: Sequence[object] = value
             for item in sequence_value:
                 if not (
                     item is None or isinstance(item, (str, int, float, bool, datetime))
@@ -203,7 +203,7 @@ class FlextUtilitiesGuards:
         """
         if not isinstance(value, dict):
             return False
-        typed_value = cast("dict[str, object]", value)
+        typed_value: dict[str, object] = value
         for item_value in typed_value.values():
             item_value_typed: object = item_value
             if not FlextUtilitiesGuards.is_container(item_value_typed):
@@ -234,7 +234,7 @@ class FlextUtilitiesGuards:
         """
         if not isinstance(value, Mapping):
             return False
-        typed_value = cast("Mapping[str, object]", value)
+        typed_value: Mapping[str, object] = value
         for item_value in typed_value.values():
             item_value_typed: object = item_value
             if not FlextUtilitiesGuards.is_container(item_value_typed):
@@ -258,7 +258,7 @@ class FlextUtilitiesGuards:
         if value is None or FlextUtilitiesGuards.is_scalar(value):
             return True
         if FlextUtilitiesGuards._is_list_or_tuple(value):
-            sequence_value = cast("Sequence[object]", value)
+            sequence_value: Sequence[object] = value
             for item in sequence_value:
                 if item is not None and (not FlextUtilitiesGuards.is_scalar(item)):
                     return False
@@ -365,7 +365,7 @@ class FlextUtilitiesGuards:
             return False
         if isinstance(value, (str, bytes)):
             return False
-        sequence_value = cast("Sequence[object]", value)
+        sequence_value: Sequence[object] = value
         return len(sequence_value) > 0
 
     @staticmethod
@@ -591,7 +591,7 @@ class FlextUtilitiesGuards:
         if value is None:
             return default if default is not None else {}
         if isinstance(value, Mapping):
-            mapping_value = cast("Mapping[str, object]", value)
+            mapping_value: Mapping[str, object] = value
             normalized: dict[str, object] = {}
             for key, item_value in mapping_value.items():
                 normalized[str(key)] = item_value
@@ -607,7 +607,7 @@ class FlextUtilitiesGuards:
         if value is None:
             return default if default is not None else []
         if isinstance(value, list):
-            return list(cast("list[object]", value))
+            return list(value)
         single_item_list: list[object] = [value]
         return single_item_list
 
@@ -698,9 +698,9 @@ class FlextUtilitiesGuards:
         if shortcut_lower == "non_empty":
             if isinstance(value, str) and bool(value):
                 return ""
-            if isinstance(value, list) and len(cast("list[object]", value)) > 0:
+            if isinstance(value, list) and len(value) > 0:
                 return ""
-            if isinstance(value, dict) and len(cast("dict[object, object]", value)) > 0:
+            if isinstance(value, dict) and len(value) > 0:
                 return ""
             return error_msg or f"{context_name} must be non-empty"
         if shortcut_lower == "positive":
@@ -775,7 +775,9 @@ class FlextUtilitiesGuards:
         context_name: str,
         error_msg: str | None,
     ) -> str:
-        if not condition(cast("t.Container", value)):
+        if not FlextUtilitiesGuards.is_container(value):
+            return error_msg or f"{context_name} must be a valid configuration value"
+        if not condition(value):
             if error_msg is None:
                 desc = (
                     getattr(condition, "description", "validation")
@@ -874,7 +876,7 @@ class FlextUtilitiesGuards:
         if isinstance(value, (int, float)):
             check_val = value
         elif isinstance(value, (str, bytes, list, tuple, dict, set, frozenset)):
-            sized_value = cast("Sized", value)
+            sized_value: Sized = value
             check_val = len(sized_value)
         elif hasattr(value, "__len__"):
             try:
@@ -912,7 +914,7 @@ class FlextUtilitiesGuards:
                 return False
         elif contains is not None:
             if isinstance(value, (str, bytes, list, tuple, set, frozenset, dict)):
-                iterable_value = cast("Iterable[object]", value)
+                iterable_value: Iterable[object] = value
                 found = False
                 for item in iterable_value:
                     item_value: object = item
@@ -961,10 +963,10 @@ class FlextUtilitiesGuards:
         if target_type == "str_list":
             str_list_default: list[str] | None = None
             if isinstance(default, list):
-                default_values = cast("list[object]", default)
+                default_values: list[object] = default
                 str_list_default = [str(item) for item in default_values]
             if isinstance(value, Sequence) and (not isinstance(value, (str, bytes))):
-                seq_value = cast("Sequence[object]", value)
+                seq_value: Sequence[object] = value
                 return list(seq_value)
             if value is None:
                 return list(str_list_default) if str_list_default else []
@@ -975,7 +977,7 @@ class FlextUtilitiesGuards:
                 dict_default = default
             return FlextUtilitiesGuards._ensure_to_dict(value, dict_default)
         if target_type == "auto" and isinstance(value, Mapping):
-            mapping_value = cast("Mapping[str, object]", value)
+            mapping_value: Mapping[str, object] = value
             normalized_auto: dict[str, object] = {}
             for key, item_value in mapping_value.items():
                 normalized_auto[str(key)] = item_value
@@ -1018,7 +1020,13 @@ class FlextUtilitiesGuards:
         try:
             if isinstance(validator, type):
                 if isinstance(value, validator):
-                    return cast("t.Container", guarded_value) if return_value else True
+                    if return_value:
+                        return (
+                            guarded_value
+                            if FlextUtilitiesGuards.is_container(guarded_value)
+                            else str(guarded_value)
+                        )
+                    return True
             elif FlextUtilitiesGuards.is_object_tuple(validator):
                 tuple_types = tuple(
                     item for item in validator if isinstance(item, type)
@@ -1026,14 +1034,36 @@ class FlextUtilitiesGuards:
                 if len(tuple_types) == len(validator) and isinstance(
                     value, tuple_types
                 ):
-                    return cast("t.Container", guarded_value) if return_value else True
+                    if return_value:
+                        return (
+                            guarded_value
+                            if FlextUtilitiesGuards.is_container(guarded_value)
+                            else str(guarded_value)
+                        )
+                    return True
             elif callable(validator):
                 if validator(value):
-                    return cast("t.Container", guarded_value) if return_value else True
+                    if return_value:
+                        return (
+                            guarded_value
+                            if FlextUtilitiesGuards.is_container(guarded_value)
+                            else str(guarded_value)
+                        )
+                    return True
             elif value:
-                return cast("t.Container", guarded_value) if return_value else True
+                if return_value:
+                    return (
+                        guarded_value
+                        if FlextUtilitiesGuards.is_container(guarded_value)
+                        else str(guarded_value)
+                    )
+                return True
             if default is not None:
-                return cast("t.Container", default)
+                return (
+                    default
+                    if FlextUtilitiesGuards.is_container(default)
+                    else str(default)
+                )
             return (
                 r[t.Container].fail("Guard validation failed")
                 if return_value
@@ -1041,7 +1071,11 @@ class FlextUtilitiesGuards:
             )
         except (TypeError, ValueError, AttributeError):
             if default is not None:
-                return cast("t.Container", default)
+                return (
+                    default
+                    if FlextUtilitiesGuards.is_container(default)
+                    else str(default)
+                )
             return (
                 r[t.Container].fail("Guard validation raised an exception")
                 if return_value
