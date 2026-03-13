@@ -45,7 +45,6 @@ import atexit
 import contextlib
 import inspect
 import io
-import json
 import logging
 import queue
 import secrets
@@ -55,6 +54,8 @@ import threading
 import typing
 import uuid
 import warnings
+
+import orjson
 from collections.abc import (
     Callable,
     Mapping,
@@ -611,7 +612,7 @@ class FlextRuntime:
         if not isinstance(value, str):
             return False
         try:
-            json.loads(value)
+            orjson.loads(value)
             return True
         except (TypeError, ValueError):
             return False

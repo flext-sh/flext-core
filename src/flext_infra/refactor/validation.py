@@ -6,13 +6,14 @@ import argparse
 import ast
 import difflib
 import fnmatch
-import json
 import re
 import sys
 from collections.abc import Mapping, Sequence
 from operator import itemgetter
 from pathlib import Path
 from typing import TYPE_CHECKING
+
+import orjson
 
 from flext_infra import c, m, u
 from flext_infra.refactor.analysis import FlextInfraRefactorViolationAnalyzer
@@ -256,7 +257,9 @@ class FlextInfraRefactorCliSupport:
         impact_map = FlextInfraRefactorCliSupport.build_impact_map(results)
         try:
             output_path.parent.mkdir(parents=True, exist_ok=True)
-            payload = json.dumps(impact_map, ensure_ascii=True, indent=2) + "\n"
+            payload = (
+                orjson.dumps(impact_map, option=orjson.OPT_INDENT_2).decode() + "\n"
+            )
             _ = output_path.write_text(payload, encoding=c.Infra.Encoding.DEFAULT)
             FlextInfraRefactorCliSupport.info(f"Impact map written: {output_path}")
             FlextInfraRefactorCliSupport.info(f"Impact map entries: {len(impact_map)}")
