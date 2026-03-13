@@ -1,0 +1,27 @@
+src/flext_core/_utilities/mapper.py
+  6d2b63b3f4a5063b 2109
+src/flext_infra/refactor/engine.py
+  6d2b63b3f4a5063b 10
+src/flext_infra/basemk/engine.py
+  6d2b63b3f4a5063b 17
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.11",
+  "base_commit_sha": "0a3a4a0799cc363a47683427f8d8767a586ba79e",
+  "prompts": {
+    "6d2b63b3f4a5063b": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_318b3ee13ffeyEph3Z90r1Aduf",
+        "model": "anthropic/claude-haiku-4-5"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 7,
+      "total_deletions": 14,
+      "accepted_lines": 3,
+      "overriden_lines": 0
+    }
+  }
+}
