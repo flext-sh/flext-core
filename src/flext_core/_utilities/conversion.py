@@ -14,6 +14,7 @@ from typing import Literal, overload
 
 from pydantic import BaseModel, TypeAdapter, ValidationError
 
+from flext_core._models.base import FlextModelFoundation
 from flext_core.result import r
 from flext_core.typings import t
 
@@ -33,13 +34,7 @@ class FlextUtilitiesConversion:
     - Reuses base types from flext_core and constants from flext_core.constants
     """
 
-    _strict_json_list_adapter: TypeAdapter[list[StrictValue]] = TypeAdapter(
-        list[StrictValue]
-    )
-    _strict_json_scalar_adapter: TypeAdapter[t.Scalar] = TypeAdapter(t.Scalar)
-    _float_adapter = TypeAdapter(float)
-    _str_adapter = TypeAdapter(str)
-    _str_list_adapter = TypeAdapter(list[str])
+    _V = FlextModelFoundation.Validators
 
     @overload
     @staticmethod
@@ -101,8 +96,10 @@ class FlextUtilitiesConversion:
             default_str: str | None = None
             if default is not None:
                 try:
-                    default_str = FlextUtilitiesConversion._str_adapter.validate_python(
-                        default
+                    default_str = (
+                        FlextUtilitiesConversion._V.str_adapter().validate_python(
+                            default
+                        )
                     )
                 except ValidationError:
                     default_str = None
@@ -112,7 +109,7 @@ class FlextUtilitiesConversion:
             if default is not None:
                 try:
                     default_list = (
-                        FlextUtilitiesConversion._str_list_adapter.validate_python(
+                        FlextUtilitiesConversion._V.tags_adapter().validate_python(
                             default
                         )
                     )
@@ -124,10 +121,8 @@ class FlextUtilitiesConversion:
         if mode == "join":
             raw_values: list[StrictValue]
             try:
-                raw_values = (
-                    FlextUtilitiesConversion._strict_json_list_adapter.validate_python(
-                        value
-                    )
+                raw_values = FlextUtilitiesConversion._V.strict_json_list_adapter().validate_python(
+                    value
                 )
             except ValidationError as err:
                 error_msg = "join mode requires Sequence"
@@ -205,10 +200,8 @@ class FlextUtilitiesConversion:
             if callable(isoformat_method):
                 return r[t.Scalar].ok(str(value))
         try:
-            strict_value = (
-                FlextUtilitiesConversion._strict_json_scalar_adapter.validate_python(
-                    value
-                )
+            strict_value = FlextUtilitiesConversion._V.strict_json_scalar_adapter().validate_python(
+                value
             )
             return r[t.Scalar].ok(strict_value)
         except ValidationError:
@@ -231,7 +224,9 @@ class FlextUtilitiesConversion:
         if isinstance(value, str):
             return str(value)
         try:
-            float_value = FlextUtilitiesConversion._float_adapter.validate_python(value)
+            float_value = FlextUtilitiesConversion._V.float_adapter().validate_python(
+                value
+            )
             if float_value.is_integer():
                 return str(int(float_value))
             return f"{float_value:.2f}"
@@ -260,7 +255,7 @@ class FlextUtilitiesConversion:
             return [str(value)]
         try:
             list_value = (
-                FlextUtilitiesConversion._strict_json_list_adapter.validate_python(
+                FlextUtilitiesConversion._V.strict_json_list_adapter().validate_python(
                     value
                 )
             )
@@ -300,10 +295,8 @@ class FlextUtilitiesConversion:
             items = [value]
         elif value_class is list:
             try:
-                items = (
-                    FlextUtilitiesConversion._strict_json_list_adapter.validate_python(
-                        value
-                    )
+                items = FlextUtilitiesConversion._V.strict_json_list_adapter().validate_python(
+                    value
                 )
             except ValidationError:
                 items = []

@@ -35,7 +35,13 @@ class _Predicate[T](Protocol):
 
 
 # --- Mapper-local recursive types (self-contained, no t.GeneralValueType dependency) ---
-type _MappingValue = t.Container | list[_MappingValue] | dict[str, _MappingValue] | tuple[_MappingValue, ...] | None
+type _MappingValue = (
+    t.Container
+    | list[_MappingValue]
+    | dict[str, _MappingValue]
+    | tuple[_MappingValue, ...]
+    | None
+)
 type _MapperCallable = Callable[[_MappingValue], _MappingValue]
 _ContainerTransformer: TypeAlias = _MapperCallable
 
@@ -250,8 +256,6 @@ class FlextUtilitiesMapper:
             return converted if isinstance(current, list) else tuple(converted)
         return _convert(current)
 
-  
-
     @staticmethod
     def _build_apply_ensure(
         current: _MappingValue, ops: Mapping[str, object]
@@ -395,8 +399,6 @@ class FlextUtilitiesMapper:
                 grouped_callable[key].append(item)
             return grouped_callable
         return current
-
-  
 
     @staticmethod
     def _build_apply_map(
@@ -821,8 +823,6 @@ class FlextUtilitiesMapper:
         if callable(value):
             return r[_MapperCallable].ok(value)
         return r[_MapperCallable].fail(f"Operation '{key}' is not callable")
-
-  
 
     @staticmethod
     def _get_raw(
@@ -1798,8 +1798,6 @@ class FlextUtilitiesMapper:
             )
             result[field_name] = value if value is not None else field_default
         return result
-
-  
 
     @staticmethod
     def filter_dict(

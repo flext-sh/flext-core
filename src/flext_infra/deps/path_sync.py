@@ -74,7 +74,9 @@ class FlextInfraDependencyPathSync:
         return f"{c.Infra.Deps.FLEXT_DEPS_DIR}/{dep_name}"
 
     @staticmethod
-    def _mapping_str_value(mapping: Table | Mapping[str, object], key: str) -> str | None:
+    def _mapping_str_value(
+        mapping: Table | Mapping[str, object], key: str
+    ) -> str | None:
         if key not in mapping:
             return None
         value = mapping[key]

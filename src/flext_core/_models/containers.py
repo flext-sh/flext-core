@@ -104,7 +104,7 @@ class FlextModelsContainers:
         def values(self) -> ValuesView[DictValueT]:
             return self.root.values()
 
-    cast(type, Mapping).register(_RootDictModel)
+    cast("type", Mapping).register(_RootDictModel)
 
     class Dict(_RootDictModel[object]):
         """Generic dictionary container. Use ``m.Dict``."""
