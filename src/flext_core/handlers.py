@@ -518,27 +518,10 @@ class FlextHandlers[MessageT_contra, ResultT](x):
             return r[bool].fail("Message cannot be None")
         return r[bool].ok(value=True)
 
-    def validate(self, data: MessageT_contra) -> r[bool]:
-        """Validate input data — override in subclasses for domain-specific logic.
-
-        Base implementation delegates to validate_message(). Override in subclasses
-        to add domain-specific validation before execute() processes the message.
-
-        Args:
-            data: Input data to validate
-
-        Returns:
-            r[bool]: Success if valid, failure with error details if invalid
-
-        Example:
-            >>> class MyHandler(FlextHandlers[MyCommand, MyResult]):
-            ...     def validate(self, data: MyCommand) -> r[bool]:
-            ...         if not data.required_field:
-            ...             return r[bool].fail("required_field is missing")
-            ...         return r[bool].ok(True)
-
-        """
-        return self.validate_message(data)
+    @override
+    def validate(self, value: MessageT_contra) -> r[bool]:
+        """Validate input — override in subclasses for domain-specific logic."""
+        return self.validate_message(value)
 
     def _record_execution_metrics(
         self, *, success: bool, error: str | None = None

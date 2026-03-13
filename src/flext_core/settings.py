@@ -149,8 +149,7 @@ class FlextSettings(BaseSettings, FlextRuntime):
                     instance = super().__new__(cls)
                     cls._instances[base_class] = instance
         raw_instance = cls._instances[base_class]
-        raw_type = raw_instance.__class__
-        if raw_type is not cls and cls not in getattr(raw_type, "__mro__", ()):
+        if not isinstance(raw_instance, cls):
             cls_name = getattr(cls, "__name__", type(cls).__name__)
             msg = f"Singleton instance is not of expected type {cls_name}"
             raise TypeError(msg)
@@ -196,8 +195,8 @@ class FlextSettings(BaseSettings, FlextRuntime):
         with cls._lock:
             keys_to_remove = [
                 instance_cls
-                for instance_cls in cls._instances
-                if instance_cls is cls or cls in getattr(instance_cls, "__mro__", ())
+                for instance_cls, instance in cls._instances.items()
+                if isinstance(instance, cls)
             ]
             for instance_cls in keys_to_remove:
                 del cls._instances[instance_cls]
@@ -459,9 +458,6 @@ class FlextSettings(BaseSettings, FlextRuntime):
         if config_class_raw is None:
             msg = f"Namespace '{namespace}' not registered"
             raise ValueError(msg)
-        if config_type not in getattr(config_class_raw, "__mro__", ()):
-            msg = f"Namespace '{namespace}' config class {config_class_raw} is not subclass of {config_type}"
-            raise TypeError(msg)
         config_instance = config_class_raw()
         if isinstance(config_instance, config_type):
             return config_instance

@@ -173,19 +173,24 @@ class FlextDispatcher:
 
         """
         route_name: str | None = None
-        accepted_message_types: tuple[t.MessageTypeSpecifier, ...] = ()
-        resolved_handler = self._resolve_handler_callable(handler)
+        accepted_message_types = u.compute_accepted_message_types(handler.__class__)
+        if isinstance(handler, DispatchMessageProtocol):
+            resolved_handler = handler.dispatch_message
+        elif isinstance(handler, HandleProtocol):
+            resolved_handler = handler.handle
+        elif isinstance(handler, ExecuteProtocol):
+            resolved_handler = handler.execute
+        else:
+            resolved_handler = handler
         handler_message_type = getattr(handler, "message_type", None)
         if isinstance(handler_message_type, str):
             route_name = handler_message_type
         elif handler_message_type is not None:
             with contextlib.suppress(TypeError, ValueError):
                 route_name = u.get_message_route(handler_message_type)
-        if route_name is None:
-            accepted_message_types = u.compute_accepted_message_types(handler.__class__)
-            if accepted_message_types:
-                with contextlib.suppress(TypeError, ValueError):
-                    route_name = u.get_message_route(accepted_message_types[0])
+        if route_name is None and accepted_message_types:
+            with contextlib.suppress(TypeError, ValueError):
+                route_name = u.get_message_route(accepted_message_types[0])
         if route_name is None:
             if callable(getattr(handler, "can_handle", None)):
                 self._auto_handlers.append((
@@ -210,32 +215,13 @@ class FlextDispatcher:
             self._logger.info("Registered handler", route=route_name)
         return r[bool].ok(value=True)
 
-    def _resolve_handler_callable(
-        self, handler: _DispatchableHandler
-    ) -> _ResolvedHandlerCallable:
-        if isinstance(handler, DispatchMessageProtocol):
-            return handler.dispatch_message
-        if isinstance(handler, HandleProtocol):
-            return handler.handle
-        if isinstance(handler, ExecuteProtocol):
-            return handler.execute
-        if callable(handler):
-            return handler
-        msg = f"Handler {handler!r} is not callable and does not implement known protocols"
-        raise TypeError(msg)
-
     def _execute_handler(
         self,
         resolved_handler: _ResolvedHandlerCallable,
         message: p.Routable,
         route_name: str,
     ) -> r[t.Container | BaseModel]:
-        """Execute a handler against a message.
-
-        Supports handlers with dispatch_message, handle, execute methods,
-        or plain callables. Uses pattern matching for handler dispatch.
-        """
-        raw_output: p.ResultLike[object] | object | None = None
+        """Execute a handler against a message."""
         try:
             raw_output = resolved_handler(message)
             if u.is_result_like(raw_output):

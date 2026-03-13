@@ -523,7 +523,7 @@ class FlextRuntime:
         """Check if type hint represents a sequence type (list, tuple, etc.).
 
         Business Rule: Checks if type hint represents a sequence type using
-        typing.get_origin() and issubclass() checks. Supports both standard
+        typing.get_origin() and structural class checks. Supports both standard
         generics and type aliases. Returns False on error for safe type checking.
 
         Audit Implication: Sequence type checking enables audit trail completeness

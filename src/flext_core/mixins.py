@@ -14,7 +14,7 @@ import threading
 from collections.abc import Callable, Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from types import ModuleType
-from typing import ClassVar, Unpack, override
+from typing import ClassVar, TypeGuard, Unpack, override
 
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
 
@@ -336,9 +336,7 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
                         exc_info=exc,
                     )
 
-        if isinstance(config_type_raw, type) and issubclass(
-            config_type_raw, FlextSettings
-        ):
+        if FlextMixins._is_flext_settings_type(config_type_raw):
             config_cls_typed = config_type_raw
         else:
             config_cls_typed = FlextSettings
@@ -377,6 +375,10 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
             context=runtime_context,
         )
         return self._runtime
+
+    @staticmethod
+    def _is_flext_settings_type(candidate: object) -> TypeGuard[type[FlextSettings]]:
+        return isinstance(candidate, type) and hasattr(candidate, "model_fields")
 
     def _init_service(self, service_name: str | None = None) -> None:
         """Initialize service with automatic container registration."""
