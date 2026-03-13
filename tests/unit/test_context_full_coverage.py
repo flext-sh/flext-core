@@ -57,11 +57,10 @@ def test_narrow_contextvar_invalid_inputs() -> None:
     assert data["a"]
 
 
-def test_protocol_name_and_narrow_contextvar_exception_branch(
+def test_narrow_contextvar_exception_branch(
     monkeypatch: _MonkeyPatchProtocol,
 ) -> None:
-    ctx = FlextContext()
-    assert ctx._protocol_name() == "FlextContext"
+    FlextContext()
 
     def _raise_type_error(_value: object) -> object:
         msg = "bad"

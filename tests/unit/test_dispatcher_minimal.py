@@ -1,7 +1,7 @@
 """Minimal dispatcher flow coverage with real handlers (no mocks).
 
 Tests the strict FlextDispatcher API:
-- register_handler(handler: t.HandlerLike) — handler must expose
+- register_handler(handler: p.HandlerLike) — handler must expose
   message_type, event_type, or can_handle.
 - dispatch(message: p.Routable) — accepts only CQRS messages.
 """

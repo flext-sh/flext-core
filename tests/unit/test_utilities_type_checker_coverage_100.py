@@ -319,7 +319,7 @@ class TestuTypeChecker:
             return str(x)
 
         signature = u._get_method_signature(
-            cast("t.HandlerCallable", test_func),
+            cast("p.HandlerCallable", test_func),
         )
         assert signature.is_success
         signature_value = signature.value
@@ -329,7 +329,7 @@ class TestuTypeChecker:
     def test_get_method_signature_non_callable(self) -> None:
         """Test _get_method_signature with non-callable."""
         signature = u._get_method_signature(
-            cast("t.HandlerCallable", "not callable"),
+            cast("p.HandlerCallable", "not callable"),
         )
         assert signature.is_failure
 
@@ -344,7 +344,7 @@ class TestuTypeChecker:
                 return message
 
         hints = u._get_type_hints_safe(
-            cast("t.HandlerCallable", TestClass.handle),
+            cast("p.HandlerCallable", TestClass.handle),
             TestClass,
         )
         assert "message" in hints
@@ -363,7 +363,7 @@ class TestuTypeChecker:
                 return message
 
         hints = u._get_type_hints_safe(
-            cast("t.HandlerCallable", TestClass.handle),
+            cast("p.HandlerCallable", TestClass.handle),
             TestClass,
         )
         assert isinstance(hints, dict)

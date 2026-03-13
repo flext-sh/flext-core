@@ -16,7 +16,7 @@ from collections.abc import Callable, Mapping
 from datetime import datetime
 from enum import StrEnum
 from pathlib import Path
-from typing import overload
+from typing import cast, overload
 
 from pydantic import BaseModel, TypeAdapter, ValidationError
 
@@ -514,9 +514,9 @@ class FlextUtilitiesParser:
         if value is None:
             return str(value)
         if isinstance(value, (list, tuple)):
-            return str(value)
+            return str(cast("object", value))
         if isinstance(value, Mapping):
-            return str(value)
+            return str(cast("object", value))
         if isinstance(value, (BaseModel, Path, datetime)):
             return str(value)
         return str(value)
@@ -598,11 +598,11 @@ class FlextUtilitiesParser:
         if value is None:
             return default
         if isinstance(value, list):
-            return [str(item) for item in value]
+            return [str(cast("object", item)) for item in value]
         if isinstance(value, str):
             return [value] if value else default
         if isinstance(value, (tuple, set, frozenset)):
-            return [str(item) for item in value]
+            return [str(cast("object", item)) for item in value]
         return [str(value)]
 
     @staticmethod
@@ -1069,8 +1069,10 @@ class FlextUtilitiesParser:
             else:
                 key = obj.__class__.__name__
         elif isinstance(obj, Mapping):
-            mapping_key = self._extract_key_from_mapping(obj)
-            key = mapping_key.unwrap_or(obj.__class__.__name__)
+            mapping_key = self._extract_key_from_mapping(
+                cast("Mapping[str, object]", obj)
+            )
+            key = mapping_key.unwrap_or(type(obj).__name__)
         elif (attr_key := self._extract_key_from_attributes(obj)).is_success:
             key = attr_key.value
         elif hasattr(obj, "__class__"):

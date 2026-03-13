@@ -125,7 +125,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "Ex00UserInput": ("examples._models.ex00", "Ex00UserInput"),
     "Ex00UserProfile": ("examples._models.ex00", "Ex00UserProfile"),
     "Ex01DemonstrationResult": ("examples._models.ex01", "Ex01DemonstrationResult"),
-    "Ex01r": ("examples.ex_01_flext_result", "Ex01r"),
     "Ex01InvalidPersonPayload": ("examples._models.ex01", "Ex01InvalidPersonPayload"),
     "Ex01RunDemonstrationCommand": (
         "examples._models.ex01",
@@ -133,6 +132,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     ),
     "Ex01User": ("examples._models.ex01", "Ex01User"),
     "Ex01ValidPersonPayload": ("examples._models.ex01", "Ex01ValidPersonPayload"),
+    "Ex01r": ("examples.ex_01_flext_result", "Ex01r"),
     "Ex02CacheService": ("examples._models.ex02", "Ex02CacheService"),
     "Ex02DatabaseService": ("examples._models.ex02", "Ex02DatabaseService"),
     "Ex02EmailService": ("examples._models.ex02", "Ex02EmailService"),

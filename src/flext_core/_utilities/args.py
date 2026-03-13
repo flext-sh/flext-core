@@ -12,7 +12,14 @@ from collections.abc import Callable, Mapping
 from enum import Enum, StrEnum
 from functools import wraps
 from types import UnionType
-from typing import Annotated, ParamSpec, TypeVar, get_args, get_origin, get_type_hints
+from typing import (
+    Annotated,
+    ParamSpec,
+    TypeVar,
+    get_args,
+    get_origin,
+    get_type_hints,
+)
 
 from pydantic import ConfigDict, TypeAdapter, ValidationError, validate_call
 

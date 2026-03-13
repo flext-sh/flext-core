@@ -14,9 +14,10 @@ from typing import Protocol, TypeGuard, TypeVar, overload, runtime_checkable
 
 from pydantic import TypeAdapter, ValidationError
 
-from flext_core import R, T, U, r, t
+from flext_core import r, t
 from flext_core._models.containers import FlextModelsContainers
 from flext_core._utilities.guards import FlextUtilitiesGuards
+from flext_core.typings import R, T, U
 
 _PredicateT_contra = TypeVar("_PredicateT_contra", contravariant=True)
 

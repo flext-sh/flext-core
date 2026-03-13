@@ -9,6 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import operator
 from collections.abc import Mapping
 from pathlib import Path
 
@@ -121,7 +122,7 @@ class FlextInfraUtilitiesIo:
             mapped_data = dict_parser.validate_python(data)
             sorted_items: list[tuple[str, JsonValue]] = sorted(
                 mapped_data.items(),
-                key=lambda item: item[0],
+                key=operator.itemgetter(0),
             )
             return {
                 key: FlextInfraUtilitiesIo._sort_json_keys(value)

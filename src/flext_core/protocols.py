@@ -68,7 +68,6 @@ class _ProtocolIntrospection:
             for m in required_members
             if not m.startswith("_")
             or m.startswith("__")
-            or m == "_protocol_name"
             or (m in {"metadata_extra", "sealed"})
         }
         if not required_members:
@@ -138,7 +137,6 @@ class _ProtocolIntrospection:
             for m in required_members
             if not m.startswith("_")
             or m.startswith("__")
-            or m == "_protocol_name"
             or (m in {"metadata_extra", "sealed"})
         }
         all_annotations: set[str] = set()
@@ -191,9 +189,7 @@ class FlextProtocols:
     class BaseProtocol(Protocol):
         """Base protocol for FLEXT structural types."""
 
-        def _protocol_name(self) -> str:
-            """Return the protocol name for introspection."""
-            ...
+        pass
 
     @runtime_checkable
     class Model(BaseProtocol, Protocol):
@@ -1237,9 +1233,6 @@ class FlextProtocols:
             class MyModel(p.ProtocolModel, p.Domain.Entity):
                 name: str
                 value: int
-
-                def _protocol_name(self) -> str:
-                    return "MyModel"
         """
 
         def __new__(
@@ -1287,9 +1280,6 @@ class FlextProtocols:
                 name: str
                 value: int
 
-                def _protocol_name(self) -> str:
-                    return "MyEntity"
-
             # Check protocols at runtime
             entity = MyEntity(name="test", value=42)
             assert entity.implements_protocol(p.Domain.Entity)
@@ -1318,18 +1308,6 @@ class FlextProtocols:
             """
             return _ProtocolIntrospection.check_implements_protocol(self, protocol)
 
-        def _protocol_name(self) -> str:
-            """Return the protocol name for introspection.
-
-            Returns:
-                The class name as protocol name.
-
-            """
-            class_ref: type = self.__class__
-            return (
-                class_ref.__name__ if hasattr(class_ref, "__name__") else str(class_ref)
-            )
-
     class ProtocolSettings(BaseSettings, metaclass=ProtocolModelMeta):
         """Base class for Pydantic Settings that implement protocols.
 
@@ -1342,9 +1320,6 @@ class FlextProtocols:
                 debug: bool = Field(default=False)
 
                 model_config = SettingsConfigDict(env_prefix="MY_")
-
-                def _protocol_name(self) -> str:
-                    return "MySettings"
         """
 
         @classmethod
@@ -1368,18 +1343,6 @@ class FlextProtocols:
 
             """
             return _ProtocolIntrospection.check_implements_protocol(self, protocol)
-
-        def _protocol_name(self) -> str:
-            """Return the protocol name for introspection.
-
-            Returns:
-                The class name as protocol name.
-
-            """
-            class_ref: type = self.__class__
-            return (
-                class_ref.__name__ if hasattr(class_ref, "__name__") else str(class_ref)
-            )
 
     @staticmethod
     def check_implements_protocol(
@@ -1414,9 +1377,6 @@ class FlextProtocols:
             class MyHandler(FlextHandlers[Command, Result]):
                 def handle(self, message: Command) -> Result:
                     ...
-
-                def _protocol_name(self) -> str:
-                    return "MyHandler"
 
             # Check protocols at runtime
             handler = MyHandler()

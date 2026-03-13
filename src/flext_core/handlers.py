@@ -143,6 +143,8 @@ class FlextHandlers[MessageT_contra = object, ResultT = object](x):
 
         """
         super().__init_subclass__(**kwargs)
+        if "[" in cls.__qualname__:
+            return
         abstract_methods_default: frozenset[str] = frozenset()
         abstract_methods = getattr(cls, "__abstractmethods__", abstract_methods_default)
         if abstract_methods:

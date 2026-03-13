@@ -251,7 +251,3 @@ class FlextDispatcher:
                 f"Handler execution failed: {exc}",
                 error_code=c.Errors.COMMAND_PROCESSING_FAILED,
             )
-
-    def _protocol_name(self) -> str:
-        """Return the protocol name for introspection."""
-        return "core-command-bus"

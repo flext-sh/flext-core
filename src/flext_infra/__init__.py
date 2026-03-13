@@ -98,18 +98,26 @@ if TYPE_CHECKING:
     from flext_infra.core.scanner import FlextInfraTextPatternScanner
     from flext_infra.core.skill_validator import FlextInfraSkillValidator
     from flext_infra.core.stub_chain import FlextInfraStubSupplyChain
+    from flext_infra.deps._phases.consolidate_groups import ConsolidateGroupsPhase
+    from flext_infra.deps._phases.ensure_coverage import EnsureCoverageConfigPhase
+    from flext_infra.deps._phases.ensure_extra_paths import EnsureExtraPathsPhase
     from flext_infra.deps._phases.ensure_formatting import EnsureFormattingToolingPhase
     from flext_infra.deps._phases.ensure_mypy import EnsureMypyConfigPhase
     from flext_infra.deps._phases.ensure_namespace import EnsureNamespaceToolingPhase
     from flext_infra.deps._phases.ensure_pydantic_mypy import (
         EnsurePydanticMypyConfigPhase,
     )
+    from flext_infra.deps._phases.ensure_pyrefly import EnsurePyreflyConfigPhase
+    from flext_infra.deps._phases.ensure_pyright import EnsurePyrightConfigPhase
+    from flext_infra.deps._phases.ensure_pytest import EnsurePytestConfigPhase
     from flext_infra.deps._phases.ensure_ruff import EnsureRuffConfigPhase
+    from flext_infra.deps._phases.inject_comments import InjectCommentsPhase
     from flext_infra.deps.detection import (
         FlextInfraDependencyDetectionService,
         build_project_report,
         classify_issues,
         discover_project_paths,
+        dm,
         get_current_typings_from_pyproject,
         get_required_typings,
         load_dependency_limits,
@@ -118,13 +126,11 @@ if TYPE_CHECKING:
         run_mypy_stub_hints,
         run_pip_check,
     )
-    from flext_infra.deps.detector import (
-        FlextInfraRuntimeDevDependencyDetector,
-    )
+    from flext_infra.deps.detector import FlextInfraRuntimeDevDependencyDetector
+    from flext_infra.deps.extra_paths import FlextInfraExtraPathsManager, sync_one
     from flext_infra.deps.internal_sync import FlextInfraInternalDependencySyncService
-    from flext_infra.deps.modernizer import (
-        FlextInfraPyprojectModernizer,
-    )
+    from flext_infra.deps.modernizer import FlextInfraPyprojectModernizer
+    from flext_infra.deps.path_sync import FlextInfraDependencyPathSync
     from flext_infra.deps.tool_config import load_tool_config
     from flext_infra.docs.auditor import FlextInfraDocAuditor
     from flext_infra.docs.builder import FlextInfraDocBuilder
@@ -304,6 +310,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "flext_infra.refactor.dependency_analyzer",
         "CompatibilityAliasDetector",
     ),
+    "ConsolidateGroupsPhase": (
+        "flext_infra.deps._phases.consolidate_groups",
+        "ConsolidateGroupsPhase",
+    ),
     "CyclicImportDetector": (
         "flext_infra.refactor.dependency_analyzer",
         "CyclicImportDetector",
@@ -311,6 +321,14 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "DependencyAnalyzer": (
         "flext_infra.refactor.dependency_analyzer",
         "DependencyAnalyzer",
+    ),
+    "EnsureCoverageConfigPhase": (
+        "flext_infra.deps._phases.ensure_coverage",
+        "EnsureCoverageConfigPhase",
+    ),
+    "EnsureExtraPathsPhase": (
+        "flext_infra.deps._phases.ensure_extra_paths",
+        "EnsureExtraPathsPhase",
     ),
     "EnsureFormattingToolingPhase": (
         "flext_infra.deps._phases.ensure_formatting",
@@ -327,6 +345,18 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "EnsurePydanticMypyConfigPhase": (
         "flext_infra.deps._phases.ensure_pydantic_mypy",
         "EnsurePydanticMypyConfigPhase",
+    ),
+    "EnsurePyreflyConfigPhase": (
+        "flext_infra.deps._phases.ensure_pyrefly",
+        "EnsurePyreflyConfigPhase",
+    ),
+    "EnsurePyrightConfigPhase": (
+        "flext_infra.deps._phases.ensure_pyright",
+        "EnsurePyrightConfigPhase",
+    ),
+    "EnsurePytestConfigPhase": (
+        "flext_infra.deps._phases.ensure_pytest",
+        "EnsurePytestConfigPhase",
     ),
     "EnsureRuffConfigPhase": (
         "flext_infra.deps._phases.ensure_ruff",
@@ -375,12 +405,20 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "flext_infra.deps.detection",
         "FlextInfraDependencyDetectionService",
     ),
+    "FlextInfraDependencyPathSync": (
+        "flext_infra.deps.path_sync",
+        "FlextInfraDependencyPathSync",
+    ),
     "FlextInfraDocAuditor": ("flext_infra.docs.auditor", "FlextInfraDocAuditor"),
     "FlextInfraDocBuilder": ("flext_infra.docs.builder", "FlextInfraDocBuilder"),
     "FlextInfraDocFixer": ("flext_infra.docs.fixer", "FlextInfraDocFixer"),
     "FlextInfraDocGenerator": ("flext_infra.docs.generator", "FlextInfraDocGenerator"),
     "FlextInfraDocValidator": ("flext_infra.docs.validator", "FlextInfraDocValidator"),
     "FlextInfraDocsShared": ("flext_infra.docs.shared", "FlextInfraDocsShared"),
+    "FlextInfraExtraPathsManager": (
+        "flext_infra.deps.extra_paths",
+        "FlextInfraExtraPathsManager",
+    ),
     "FlextInfraInternalDependencySyncService": (
         "flext_infra.deps.internal_sync",
         "FlextInfraInternalDependencySyncService",
@@ -715,6 +753,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "flext_infra.refactor.dependency_analyzer",
         "ImportAliasDetector",
     ),
+    "InjectCommentsPhase": (
+        "flext_infra.deps._phases.inject_comments",
+        "InjectCommentsPhase",
+    ),
     "InternalImportDetector": (
         "flext_infra.refactor.dependency_analyzer",
         "InternalImportDetector",
@@ -779,6 +821,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "c": ("flext_infra.constants", "c"),
     "classify_issues": ("flext_infra.deps.detection", "classify_issues"),
     "discover_project_paths": ("flext_infra.deps.detection", "discover_project_paths"),
+    "dm": ("flext_infra.deps.detection", "dm"),
     "ensure_table": ("flext_infra._utilities.toml", "ensure_table"),
     "get_current_typings_from_pyproject": (
         "flext_infra.deps.detection",
@@ -811,6 +854,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "run_mypy_stub_hints": ("flext_infra.deps.detection", "run_mypy_stub_hints"),
     "run_pip_check": ("flext_infra.deps.detection", "run_pip_check"),
     "s": ("flext_infra.core.inventory", "FlextInfraInventoryService"),
+    "sync_one": ("flext_infra.deps.extra_paths", "sync_one"),
     "t": ("flext_infra.typings", "t"),
     "table_string_keys": ("flext_infra._utilities.toml", "table_string_keys"),
     "toml_get": ("flext_infra._utilities.toml", "toml_get"),
@@ -824,12 +868,18 @@ __all__ = [
     "CheckIssue",
     "ClassNestingRefactorRule",
     "CompatibilityAliasDetector",
+    "ConsolidateGroupsPhase",
     "CyclicImportDetector",
     "DependencyAnalyzer",
+    "EnsureCoverageConfigPhase",
+    "EnsureExtraPathsPhase",
     "EnsureFormattingToolingPhase",
     "EnsureMypyConfigPhase",
     "EnsureNamespaceToolingPhase",
     "EnsurePydanticMypyConfigPhase",
+    "EnsurePyreflyConfigPhase",
+    "EnsurePyrightConfigPhase",
+    "EnsurePytestConfigPhase",
     "EnsureRuffConfigPhase",
     "FlextInfraBaseMkGenerator",
     "FlextInfraBaseMkTemplateEngine",
@@ -844,12 +894,14 @@ __all__ = [
     "FlextInfraConfigFixer",
     "FlextInfraConstants",
     "FlextInfraDependencyDetectionService",
+    "FlextInfraDependencyPathSync",
     "FlextInfraDocAuditor",
     "FlextInfraDocBuilder",
     "FlextInfraDocFixer",
     "FlextInfraDocGenerator",
     "FlextInfraDocValidator",
     "FlextInfraDocsShared",
+    "FlextInfraExtraPathsManager",
     "FlextInfraInternalDependencySyncService",
     "FlextInfraInventoryService",
     "FlextInfraModels",
@@ -941,6 +993,7 @@ __all__ = [
     "GateExecution",
     "HelperConsolidationTransformer",
     "ImportAliasDetector",
+    "InjectCommentsPhase",
     "InternalImportDetector",
     "LooseObjectDetector",
     "ManualProtocolDetector",
@@ -975,6 +1028,7 @@ __all__ = [
     "c",
     "classify_issues",
     "discover_project_paths",
+    "dm",
     "ensure_table",
     "get_current_typings_from_pyproject",
     "get_required_typings",
@@ -995,6 +1049,7 @@ __all__ = [
     "run_mypy_stub_hints",
     "run_pip_check",
     "s",
+    "sync_one",
     "t",
     "table_string_keys",
     "toml_get",

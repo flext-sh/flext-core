@@ -34,6 +34,7 @@ if TYPE_CHECKING:
         FlextScenarioRunner,
         FlextTestAutomationFramework,
         FunctionalExternalService,
+        RAssertionHelper,
         assert_rejects,
         assert_validates,
         automation_framework,
@@ -48,7 +49,6 @@ if TYPE_CHECKING:
         mock_external_service,
         out_of_range,
         parser_scenarios,
-        rAssertionHelper,
         real_entity,
         real_value_object,
         reliability_scenarios,
@@ -577,7 +577,14 @@ if TYPE_CHECKING:
         test_consolidate_groups_phase_apply_with_empty_poetry_group,
     )
     from tests.infra.unit.deps.test_modernizer_helpers import (
+        array,
+        as_string_list,
+        canonical_dev_dependencies,
+        dedupe_specs,
+        dep_name,
         doc,
+        ensure_table,
+        project_dev_groups,
         test_array,
         test_as_string_list,
         test_as_string_list_toml_item,
@@ -589,6 +596,7 @@ if TYPE_CHECKING:
         test_project_dev_groups_missing_sections,
         test_unwrap_item,
         test_unwrap_item_toml_item,
+        unwrap_item,
     )
     from tests.infra.unit.deps.test_modernizer_main import (
         TestFlextInfraPyprojectModernizer,
@@ -631,6 +639,8 @@ if TYPE_CHECKING:
         TestDetectMode,
         TestFlextInfraDependencyPathSync,
         TestPathSyncEdgeCases,
+        detect_mode,
+        extract_dep_name,
         test_detect_mode_with_nonexistent_path,
         test_detect_mode_with_path_object,
     )
@@ -656,6 +666,7 @@ if TYPE_CHECKING:
     )
     from tests.infra.unit.deps.test_path_sync_rewrite_deps import (
         TestRewriteDepPaths,
+        rewrite_dep_paths,
         test_rewrite_dep_paths_dry_run,
         test_rewrite_dep_paths_read_failure,
         test_rewrite_dep_paths_with_internal_names,
@@ -663,14 +674,12 @@ if TYPE_CHECKING:
     )
     from tests.infra.unit.deps.test_path_sync_rewrite_pep621 import (
         TestRewritePep621,
-        test_helpers_alias_is_reachable_pep621,
         test_rewrite_pep621_invalid_path_dep_regex,
         test_rewrite_pep621_no_project_table,
         test_rewrite_pep621_non_string_item,
     )
     from tests.infra.unit.deps.test_path_sync_rewrite_poetry import (
         TestRewritePoetry,
-        test_helpers_alias_is_reachable_poetry,
         test_rewrite_poetry_no_poetry_table,
         test_rewrite_poetry_no_tool_table,
         test_rewrite_poetry_with_non_dict_value,
@@ -1333,6 +1342,7 @@ if TYPE_CHECKING:
     from tests.unit.test_container_full_coverage import (
         test_additional_container_branches_cover_fluent_and_lookup_paths,
         test_additional_register_factory_and_unregister_paths,
+        test_builder,
         test_config_context_properties_and_defaults,
         test_configure_with_resource_register_and_factory_error_paths,
         test_container_remaining_branch_paths_in_sync_factory_and_getters,
@@ -1343,7 +1353,6 @@ if TYPE_CHECKING:
         test_initialize_di_components_error_paths,
         test_initialize_di_components_second_type_error_branch,
         test_misc_unregistration_clear_and_reset,
-        test_protocol_name_and_builder,
         test_provide_property_paths,
         test_register_existing_providers_full_paths_and_misc_methods,
         test_register_existing_providers_skips_and_register_core_fallback,
@@ -1359,8 +1368,8 @@ if TYPE_CHECKING:
         test_create_overloads_and_auto_correlation,
         test_export_paths_with_metadata_and_statistics,
         test_inactive_and_none_value_paths,
+        test_narrow_contextvar_exception_branch,
         test_narrow_contextvar_invalid_inputs,
-        test_protocol_name_and_narrow_contextvar_exception_branch,
         test_set_set_all_get_validation_and_error_paths,
         test_update_statistics_remove_hook_and_clone_false_result,
     )
@@ -1433,6 +1442,13 @@ if TYPE_CHECKING:
         test_timeout_reraises_original_exception_when_within_limit,
         test_track_performance_success_and_failure_paths,
         test_with_correlation_with_context_track_operation_and_factory,
+    )
+    from tests.unit.test_deprecation_warnings import (
+        TestFacadeDeprecatedAliases,
+        TestGuardsDeprecatedMethods,
+        TestMapperDeprecatedMethods,
+        TestRuntimeDeprecatedNormalizeMethods,
+        TestStrictContainerNormalization,
     )
     from tests.unit.test_di_incremental import (
         TestContainerDIRealExecution,
@@ -1692,9 +1708,8 @@ if TYPE_CHECKING:
         test_check_implements_protocol_false_non_runtime_protocol,
         test_implements_decorator_helper_methods_and_static_wrappers,
         test_implements_decorator_validation_error_message,
-        test_protocol_base_name_methods_and_runtime_check_branch,
-        test_protocol_meta_default_model_base_and_get_protocols_default,
         test_protocol_model_and_settings_methods,
+        test_protocol_runtime_check,
     )
     from tests.unit.test_refactor_cli_models_workflow import (
         test_centralize_pydantic_cli_outputs_extended_metrics,
@@ -1779,7 +1794,7 @@ if TYPE_CHECKING:
         test_lash_runtime_result_paths,
         test_map_flat_map_and_then_paths,
         test_recover_tap_and_tap_error_paths,
-        test_type_guards_and_protocol_name,
+        test_type_guards_result,
         test_validation_like_error_structure,
     )
     from tests.unit.test_runtime import TestFlextRuntime
@@ -1798,6 +1813,8 @@ if TYPE_CHECKING:
         test_configure_structlog_print_logger_factory_fallback,
         test_dependency_integration_and_wiring_paths,
         test_dependency_registration_duplicate_guards,
+        test_deprecated_normalize_to_general_value_warns,
+        test_deprecated_normalize_to_metadata_value_warns,
         test_ensure_trace_context_dict_conversion_paths,
         test_get_logger_none_name_paths,
         test_model_helpers_remaining_paths,
@@ -1826,7 +1843,6 @@ if TYPE_CHECKING:
         TestServiceBootstrap,
     )
     from tests.unit.test_service_coverage_100 import (
-        TestDomainResult,
         TestService,
         TestService100Coverage,
         TestServiceWithValidation,
@@ -1902,6 +1918,7 @@ if TYPE_CHECKING:
         test_batch_fail_collect_flatten_and_progress,
         test_collection_batch_failure_error_capture_and_parse_sequence_outer_error,
         test_find_mapping_no_match_and_merge_error_paths,
+        test_is_general_value_list_accepts_list_subclass,
         test_parse_mapping_outer_exception,
         test_process_outer_exception_and_coercion_branches,
     )
@@ -1933,8 +1950,6 @@ if TYPE_CHECKING:
     )
     from tests.unit.test_utilities_conversion_full_coverage import (
         test_conversion_string_and_join_paths,
-        test_to_flexible_value_and_safe_list_branches,
-        test_to_flexible_value_fallback_none_branch_for_unsupported_type,
     )
     from tests.unit.test_utilities_coverage import TestUtilitiesCoverage
     from tests.unit.test_utilities_data_mapper import (
@@ -2297,7 +2312,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.integration.test_refactor_policy_mro",
         "FlextLdapUtilities",
     ),
-    "rAssertionHelper": ("tests.conftest", "rAssertionHelper"),
     "FlextScenarioRunner": ("tests.conftest", "FlextScenarioRunner"),
     "FlextTestAutomationFramework": ("tests.conftest", "FlextTestAutomationFramework"),
     "FlextTestBuilder": (
@@ -2399,6 +2413,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     ),
     "Priority": ("tests.unit.test_utilities_enum_full_coverage", "Priority"),
     "QueryHandler": ("tests.unit.test_dispatcher_full_coverage", "QueryHandler"),
+    "RAssertionHelper": ("tests.conftest", "RAssertionHelper"),
     "RailwayTestCase": ("tests.test_documented_patterns", "RailwayTestCase"),
     "RealGitService": ("tests.infra.git_service", "RealGitService"),
     "RealSubprocessRunner": ("tests.infra.runner_service", "RealSubprocessRunner"),
@@ -2528,10 +2543,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_automated_registry",
         "TestAutomatedFlextRegistry",
     ),
-    "TestAutomatedr": (
-        "tests.unit.test_automated_result",
-        "TestAutomatedr",
-    ),
     "TestAutomatedFlextRuntime": (
         "tests.unit.test_automated_runtime",
         "TestAutomatedFlextRuntime",
@@ -2548,6 +2559,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_automated_utilities",
         "TestAutomatedFlextUtilities",
     ),
+    "TestAutomatedr": ("tests.unit.test_automated_result", "TestAutomatedr"),
     "TestBackwardCompatDiscardReturnValue": (
         "tests.unit.test_loggings_strict_returns",
         "TestBackwardCompatDiscardReturnValue",
@@ -2884,7 +2896,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_utilities_domain_full_coverage",
         "TestDomainLogger",
     ),
-    "TestDomainResult": ("tests.unit.test_service_coverage_100", "TestDomainResult"),
     "TestEdgeCases": ("tests.infra.unit.codegen.lazy_init_tests", "TestEdgeCases"),
     "TestEnforcerExecute": (
         "tests.infra.unit.test_infra_maintenance_python_version",
@@ -3006,6 +3017,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "TestExtractVersionExports": (
         "tests.infra.unit.codegen.lazy_init_transforms",
         "TestExtractVersionExports",
+    ),
+    "TestFacadeDeprecatedAliases": (
+        "tests.unit.test_deprecation_warnings",
+        "TestFacadeDeprecatedAliases",
     ),
     "TestFactories": ("tests.test_documented_patterns", "TestFactories"),
     "TestFactoriesHelpers": (
@@ -3530,6 +3545,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.infra.unit.check.extended_error_reporting",
         "TestGoFmtEmptyLinesInOutput",
     ),
+    "TestGuardsDeprecatedMethods": (
+        "tests.unit.test_deprecation_warnings",
+        "TestGuardsDeprecatedMethods",
+    ),
     "TestHandleLazyInit": ("tests.infra.unit.codegen.main", "TestHandleLazyInit"),
     "TestHandlerDecoratorMetadata": (
         "tests.unit.test_handler_decorator_discovery",
@@ -3777,6 +3796,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "TestMapperCollectActiveKeys": (
         "tests.unit.test_utilities_data_mapper",
         "TestMapperCollectActiveKeys",
+    ),
+    "TestMapperDeprecatedMethods": (
+        "tests.unit.test_deprecation_warnings",
+        "TestMapperDeprecatedMethods",
     ),
     "TestMapperFilterDict": (
         "tests.unit.test_utilities_data_mapper",
@@ -4231,6 +4254,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "TestRunSync": ("tests.infra.unit.test_infra_workspace_main", "TestRunSync"),
     "TestRunValidate": ("tests.infra.unit.docs.main_commands", "TestRunValidate"),
     "TestRunWorkflows": ("tests.infra.unit.github.main", "TestRunWorkflows"),
+    "TestRuntimeDeprecatedNormalizeMethods": (
+        "tests.unit.test_deprecation_warnings",
+        "TestRuntimeDeprecatedNormalizeMethods",
+    ),
     "TestRuntimeDictLike": (
         "tests.unit.test_runtime_coverage_100",
         "TestRuntimeDictLike",
@@ -4311,10 +4338,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "TestServiceBootstrapWithDI",
     ),
     "TestServiceDomain": ("tests.unit.test_coverage_context", "TestServiceDomain"),
-    "TestServicerChaining": (
-        "tests.integration.test_infra_integration",
-        "TestServicerChaining",
-    ),
     "TestServiceResultProperty": (
         "tests.test_service_result_property",
         "TestServiceResultProperty",
@@ -4322,6 +4345,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "TestServiceWithValidation": (
         "tests.unit.test_service_coverage_100",
         "TestServiceWithValidation",
+    ),
+    "TestServicerChaining": (
+        "tests.integration.test_infra_integration",
+        "TestServicerChaining",
     ),
     "TestServicesIntegrationViaDI": (
         "tests.unit.test_di_services_access",
@@ -4357,6 +4384,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "TestStaticMethods",
     ),
     "TestStatus": ("tests.infra.unit.github.pr", "TestStatus"),
+    "TestStrictContainerNormalization": (
+        "tests.unit.test_deprecation_warnings",
+        "TestStrictContainerNormalization",
+    ),
     "TestStubChainAnalyze": (
         "tests.infra.unit.core.stub_chain",
         "TestStubChainAnalyze",
@@ -4858,6 +4889,11 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.integration.patterns.test_patterns_testing",
         "arrange_act_assert",
     ),
+    "array": ("tests.infra.unit.deps.test_modernizer_helpers", "array"),
+    "as_string_list": (
+        "tests.infra.unit.deps.test_modernizer_helpers",
+        "as_string_list",
+    ),
     "assert_rejects": ("tests.conftest", "assert_rejects"),
     "assert_validates": ("tests.conftest", "assert_validates"),
     "assertion_helpers": ("tests.test_utils", "assertion_helpers"),
@@ -4865,6 +4901,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "automation_framework": ("tests.conftest", "automation_framework"),
     "builder": ("tests.infra.unit.docs.builder", "builder"),
     "c": ("tests.constants", "c"),
+    "canonical_dev_dependencies": (
+        "tests.infra.unit.deps.test_modernizer_helpers",
+        "canonical_dev_dependencies",
+    ),
     "census": ("tests.infra.unit.codegen.census", "census"),
     "clean_container": ("tests.conftest", "clean_container"),
     "consolidation_context": ("tests.conftest", "consolidation_context"),
@@ -4893,12 +4933,20 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "create_validate_value_object_immutable_cases",
     ),
     "d": ("tests.unit.test_automated_decorators", "TestAutomatedFlextDecorators"),
+    "dedupe_specs": ("tests.infra.unit.deps.test_modernizer_helpers", "dedupe_specs"),
+    "dep_name": ("tests.infra.unit.deps.test_modernizer_helpers", "dep_name"),
+    "detect_mode": ("tests.infra.unit.deps.test_path_sync_init", "detect_mode"),
     "detector": ("tests.infra.unit.test_infra_workspace_detector", "detector"),
     "dispatcher": ("tests.unit.test_dispatcher_full_coverage", "dispatcher"),
     "doc": ("tests.infra.unit.deps.test_modernizer_helpers", "doc"),
     "e": ("tests.unit.test_automated_exceptions", "TestAutomatedFlextExceptions"),
     "empty_strings": ("tests.conftest", "empty_strings"),
     "engine": ("tests.infra.unit.test_infra_templates", "engine"),
+    "ensure_table": ("tests.infra.unit.deps.test_modernizer_helpers", "ensure_table"),
+    "extract_dep_name": (
+        "tests.infra.unit.deps.test_path_sync_init",
+        "extract_dep_name",
+    ),
     "fixer": ("tests.infra.unit.codegen.autofix", "fixer"),
     "fixture_factory": ("tests.test_utils", "fixture_factory"),
     "flext_result_failure": ("tests.conftest", "flext_result_failure"),
@@ -4957,6 +5005,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "out_of_range": ("tests.conftest", "out_of_range"),
     "p": ("tests.protocols", "p"),
     "parser_scenarios": ("tests.conftest", "parser_scenarios"),
+    "project_dev_groups": (
+        "tests.infra.unit.deps.test_modernizer_helpers",
+        "project_dev_groups",
+    ),
     "pyright_content": (
         "tests.infra.unit.deps.test_extra_paths_sync",
         "pyright_content",
@@ -4982,6 +5034,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "reset_runtime_state",
     ),
     "result_assertion_helper": ("tests.conftest", "result_assertion_helper"),
+    "rewrite_dep_paths": (
+        "tests.infra.unit.deps.test_path_sync_rewrite_deps",
+        "rewrite_dep_paths",
+    ),
     "run_lint": ("tests.infra.unit.github.main", "run_lint"),
     "run_pr": ("tests.infra.unit.github.main", "run_pr"),
     "run_pr_workspace": ("tests.infra.unit.github.main_dispatch", "run_pr_workspace"),
@@ -5176,6 +5232,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_utilities_configuration_full_coverage",
         "test_build_options_invalid_only_kwargs_returns_base",
     ),
+    "test_builder": ("tests.unit.test_container_full_coverage", "test_builder"),
     "test_bump_version_invalid": (
         "tests.infra.unit.test_infra_versioning",
         "test_bump_version_invalid",
@@ -5514,6 +5571,14 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "test_deprecated_class_noop_init_branch": (
         "tests.unit.test_utilities_deprecation_full_coverage",
         "test_deprecated_class_noop_init_branch",
+    ),
+    "test_deprecated_normalize_to_general_value_warns": (
+        "tests.unit.test_runtime_full_coverage",
+        "test_deprecated_normalize_to_general_value_warns",
+    ),
+    "test_deprecated_normalize_to_metadata_value_warns": (
+        "tests.unit.test_runtime_full_coverage",
+        "test_deprecated_normalize_to_metadata_value_warns",
     ),
     "test_deprecated_wrapper_emits_warning_and_returns_value": (
         "tests.unit.test_decorators_full_coverage",
@@ -5996,14 +6061,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.infra.unit.deps.test_path_sync_main",
         "test_helpers_alias_is_reachable_main",
     ),
-    "test_helpers_alias_is_reachable_pep621": (
-        "tests.infra.unit.deps.test_path_sync_rewrite_pep621",
-        "test_helpers_alias_is_reachable_pep621",
-    ),
-    "test_helpers_alias_is_reachable_poetry": (
-        "tests.infra.unit.deps.test_path_sync_rewrite_poetry",
-        "test_helpers_alias_is_reachable_poetry",
-    ),
     "test_helpers_alias_is_reachable_project_obj": (
         "tests.infra.unit.deps.test_path_sync_main_project_obj",
         "test_helpers_alias_is_reachable_project_obj",
@@ -6107,6 +6164,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "test_is_flexible_value_covers_all_branches": (
         "tests.unit.test_utilities_guards_full_coverage",
         "test_is_flexible_value_covers_all_branches",
+    ),
+    "test_is_general_value_list_accepts_list_subclass": (
+        "tests.unit.test_utilities_collection_full_coverage",
+        "test_is_general_value_list_accepts_list_subclass",
     ),
     "test_is_general_value_type_negative_paths_and_callable": (
         "tests.unit.test_utilities_guards_full_coverage",
@@ -6556,6 +6617,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_refactor_namespace_enforcer",
         "test_namespace_enforcer_does_not_rewrite_multiline_import_alias_blocks",
     ),
+    "test_narrow_contextvar_exception_branch": (
+        "tests.unit.test_context_full_coverage",
+        "test_narrow_contextvar_exception_branch",
+    ),
     "test_narrow_contextvar_invalid_inputs": (
         "tests.unit.test_context_full_coverage",
         "test_narrow_contextvar_invalid_inputs",
@@ -6748,25 +6813,13 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_utilities_guards_full_coverage",
         "test_protocol_and_simple_guard_helpers",
     ),
-    "test_protocol_base_name_methods_and_runtime_check_branch": (
-        "tests.unit.test_protocols_full_coverage",
-        "test_protocol_base_name_methods_and_runtime_check_branch",
-    ),
-    "test_protocol_meta_default_model_base_and_get_protocols_default": (
-        "tests.unit.test_protocols_full_coverage",
-        "test_protocol_meta_default_model_base_and_get_protocols_default",
-    ),
     "test_protocol_model_and_settings_methods": (
         "tests.unit.test_protocols_full_coverage",
         "test_protocol_model_and_settings_methods",
     ),
-    "test_protocol_name_and_builder": (
-        "tests.unit.test_container_full_coverage",
-        "test_protocol_name_and_builder",
-    ),
-    "test_protocol_name_and_narrow_contextvar_exception_branch": (
-        "tests.unit.test_context_full_coverage",
-        "test_protocol_name_and_narrow_contextvar_exception_branch",
+    "test_protocol_runtime_check": (
+        "tests.unit.test_protocols_full_coverage",
+        "test_protocol_runtime_check",
     ),
     "test_provide_property_paths": (
         "tests.unit.test_container_full_coverage",
@@ -7257,14 +7310,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_models_base_full_coverage",
         "test_timestamped_model_and_alias_and_canonical_symbols",
     ),
-    "test_to_flexible_value_and_safe_list_branches": (
-        "tests.unit.test_utilities_conversion_full_coverage",
-        "test_to_flexible_value_and_safe_list_branches",
-    ),
-    "test_to_flexible_value_fallback_none_branch_for_unsupported_type": (
-        "tests.unit.test_utilities_conversion_full_coverage",
-        "test_to_flexible_value_fallback_none_branch_for_unsupported_type",
-    ),
     "test_to_general_value_dict_removed": (
         "tests.unit.test_models_context_full_coverage",
         "test_to_general_value_dict_removed",
@@ -7281,9 +7326,9 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_utilities_mapper_full_coverage",
         "test_type_guards_and_narrowing_failures",
     ),
-    "test_type_guards_and_protocol_name": (
+    "test_type_guards_result": (
         "tests.unit.test_result_full_coverage",
-        "test_type_guards_and_protocol_name",
+        "test_type_guards_result",
     ),
     "test_ultrawork_models_cli_runs_dry_run_copy": (
         "tests.unit.test_refactor_cli_models_workflow",
@@ -7398,6 +7443,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "test_workspace_root_fallback",
     ),
     "u": ("tests.utilities", "u"),
+    "unwrap_item": ("tests.infra.unit.deps.test_modernizer_helpers", "unwrap_item"),
     "v": ("tests.infra.unit.core.basemk_validator", "v"),
     "valid_hostnames": ("tests.conftest", "valid_hostnames"),
     "valid_port_numbers": ("tests.conftest", "valid_port_numbers"),
@@ -7525,6 +7571,7 @@ __all__ = [
     "PreparePaginationDataScenario",
     "Priority",
     "QueryHandler",
+    "RAssertionHelper",
     "RailwayTestCase",
     "RealGitService",
     "RealSubprocessRunner",
@@ -7686,7 +7733,6 @@ __all__ = [
     "TestDomainEvents",
     "TestDomainHashValue",
     "TestDomainLogger",
-    "TestDomainResult",
     "TestEdgeCases",
     "TestEnforcerExecute",
     "TestEnsureCheckout",
@@ -7719,6 +7765,7 @@ __all__ = [
     "TestExtractExports",
     "TestExtractInlineConstants",
     "TestExtractVersionExports",
+    "TestFacadeDeprecatedAliases",
     "TestFactories",
     "TestFactoriesHelpers",
     "TestFactoryDecoratorsDiscoveryHasFactories",
@@ -7870,6 +7917,7 @@ __all__ = [
     "TestGithubInit",
     "TestGlobalContextManagement",
     "TestGoFmtEmptyLinesInOutput",
+    "TestGuardsDeprecatedMethods",
     "TestHandleLazyInit",
     "TestHandlerDecoratorMetadata",
     "TestHandlerDiscoveryClass",
@@ -7941,6 +7989,7 @@ __all__ = [
     "TestMapPropagatesException",
     "TestMapperBuildFlagsDict",
     "TestMapperCollectActiveKeys",
+    "TestMapperDeprecatedMethods",
     "TestMapperFilterDict",
     "TestMapperInvertDict",
     "TestMapperMapDictKeys",
@@ -8079,6 +8128,7 @@ __all__ = [
     "TestRunSync",
     "TestRunValidate",
     "TestRunWorkflows",
+    "TestRuntimeDeprecatedNormalizeMethods",
     "TestRuntimeDictLike",
     "TestRuntimeTypeChecking",
     "TestSafeCarriesException",
@@ -8118,6 +8168,7 @@ __all__ = [
     "TestSkillValidatorRenderTemplate",
     "TestStaticMethods",
     "TestStatus",
+    "TestStrictContainerNormalization",
     "TestStubChainAnalyze",
     "TestStubChainCore",
     "TestStubChainDiscoverProjects",
@@ -8274,6 +8325,8 @@ __all__ = [
     "WorkspaceScenario",
     "WorkspaceScenarios",
     "arrange_act_assert",
+    "array",
+    "as_string_list",
     "assert_rejects",
     "assert_validates",
     "assertion_helpers",
@@ -8281,6 +8334,7 @@ __all__ = [
     "automation_framework",
     "builder",
     "c",
+    "canonical_dev_dependencies",
     "census",
     "clean_container",
     "consolidation_context",
@@ -8291,12 +8345,17 @@ __all__ = [
     "create_validate_entity_has_id_cases",
     "create_validate_value_object_immutable_cases",
     "d",
+    "dedupe_specs",
+    "dep_name",
+    "detect_mode",
     "detector",
     "dispatcher",
     "doc",
     "e",
     "empty_strings",
     "engine",
+    "ensure_table",
+    "extract_dep_name",
     "fixer",
     "fixture_factory",
     "flext_result_failure",
@@ -8337,10 +8396,10 @@ __all__ = [
     "out_of_range",
     "p",
     "parser_scenarios",
+    "project_dev_groups",
     "pyright_content",
     "pytestmark",
     "r",
-    "rAssertionHelper",
     "real_docs_project",
     "real_entity",
     "real_git_repo",
@@ -8354,6 +8413,7 @@ __all__ = [
     "reset_global_container",
     "reset_runtime_state",
     "result_assertion_helper",
+    "rewrite_dep_paths",
     "run_lint",
     "run_pr",
     "run_pr_workspace",
@@ -8416,6 +8476,7 @@ __all__ = [
     "test_build_impact_map_extracts_rename_entries",
     "test_build_impact_map_extracts_signature_entries",
     "test_build_options_invalid_only_kwargs_returns_base",
+    "test_builder",
     "test_bump_version_invalid",
     "test_bump_version_result_type",
     "test_bump_version_valid",
@@ -8503,6 +8564,8 @@ __all__ = [
     "test_dependency_integration_and_wiring_paths",
     "test_dependency_registration_duplicate_guards",
     "test_deprecated_class_noop_init_branch",
+    "test_deprecated_normalize_to_general_value_warns",
+    "test_deprecated_normalize_to_metadata_value_warns",
     "test_deprecated_wrapper_emits_warning_and_returns_value",
     "test_detect_mode_with_nonexistent_path",
     "test_detect_mode_with_path_object",
@@ -8624,8 +8687,6 @@ __all__ = [
     "test_helpers_alias_exposed",
     "test_helpers_alias_is_reachable_helpers",
     "test_helpers_alias_is_reachable_main",
-    "test_helpers_alias_is_reachable_pep621",
-    "test_helpers_alias_is_reachable_poetry",
     "test_helpers_alias_is_reachable_project_obj",
     "test_identifiable_unique_id_empty_rejected",
     "test_implements_decorator_helper_methods_and_static_wrappers",
@@ -8652,6 +8713,7 @@ __all__ = [
     "test_invalid_registration_attempts",
     "test_invert_and_json_conversion_branches",
     "test_is_flexible_value_covers_all_branches",
+    "test_is_general_value_list_accepts_list_subclass",
     "test_is_general_value_type_negative_paths_and_callable",
     "test_is_handler_type_branches",
     "test_is_type_non_empty_unknown_and_tuple_and_fallback",
@@ -8764,6 +8826,7 @@ __all__ = [
     "test_namespace_enforcer_detects_missing_runtime_alias_outside_src",
     "test_namespace_enforcer_does_not_rewrite_indented_import_aliases",
     "test_namespace_enforcer_does_not_rewrite_multiline_import_alias_blocks",
+    "test_narrow_contextvar_exception_branch",
     "test_narrow_contextvar_invalid_inputs",
     "test_narrow_to_string_keyed_dict_and_mapping_paths",
     "test_nested_class_propagation_preserves_asname_and_rewrites_alias_usage",
@@ -8812,11 +8875,8 @@ __all__ = [
     "test_project_dev_groups_missing_sections",
     "test_project_without_src_returns_empty",
     "test_protocol_and_simple_guard_helpers",
-    "test_protocol_base_name_methods_and_runtime_check_branch",
-    "test_protocol_meta_default_model_base_and_get_protocols_default",
     "test_protocol_model_and_settings_methods",
-    "test_protocol_name_and_builder",
-    "test_protocol_name_and_narrow_contextvar_exception_branch",
+    "test_protocol_runtime_check",
     "test_provide_property_paths",
     "test_publish_event_to_subscriber",
     "test_publish_no_subscribers_succeeds",
@@ -8940,13 +9000,11 @@ __all__ = [
     "test_timeout_reraises_original_exception_when_within_limit",
     "test_timestampable_timestamp_conversion_and_json_serializer",
     "test_timestamped_model_and_alias_and_canonical_symbols",
-    "test_to_flexible_value_and_safe_list_branches",
-    "test_to_flexible_value_fallback_none_branch_for_unsupported_type",
     "test_to_general_value_dict_removed",
     "test_track_performance_success_and_failure_paths",
     "test_transform_option_extract_and_step_helpers",
     "test_type_guards_and_narrowing_failures",
-    "test_type_guards_and_protocol_name",
+    "test_type_guards_result",
     "test_ultrawork_models_cli_runs_dry_run_copy",
     "test_unwrap_item",
     "test_unwrap_item_toml_item",
@@ -8976,6 +9034,7 @@ __all__ = [
     "test_workspace_root_doc_construction",
     "test_workspace_root_fallback",
     "u",
+    "unwrap_item",
     "v",
     "valid_hostnames",
     "valid_port_numbers",

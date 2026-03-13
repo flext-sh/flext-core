@@ -60,7 +60,7 @@ def test_checker_logger_and_safe_type_hints_fallback() -> None:
     logger = checker.logger
     assert hasattr(logger, "info")
     hints = u._get_type_hints_safe(
-        cast("t.HandlerCallable", _UnknownHintHandler.handle),
+        cast("p.HandlerCallable", _UnknownHintHandler.handle),
         _UnknownHintHandler,
     )
     assert hints == {"message": MissingType, "return": type(None)}

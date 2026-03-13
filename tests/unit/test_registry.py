@@ -84,10 +84,6 @@ class ConcreteTestHandler(h[object, object]):
         """Make handler callable for registry validation."""
         return self.handle(message)
 
-    def _protocol_name(self) -> str:
-        """Return protocol name for registry identification."""
-        return "test-handler"
-
 
 class RegistryScenarios:
     """Centralized registry test scenarios using c."""
@@ -235,26 +231,7 @@ class RegistryScenarios:
             with_summary=True,
         ),
     ]
-    KEY_RESOLUTION: ClassVar[list[RegistryTestCase]] = [
-        RegistryTestCase(
-            name="resolve_handler_key_string_type",
-            operation=RegistryOperationType.RESOLVE_HANDLER_KEY,
-            handler_count=1,
-            should_succeed=True,
-        ),
-        RegistryTestCase(
-            name="resolve_handler_key_class_type",
-            operation=RegistryOperationType.RESOLVE_HANDLER_KEY,
-            handler_count=1,
-            should_succeed=True,
-        ),
-        RegistryTestCase(
-            name="resolve_binding_key",
-            operation=RegistryOperationType.RESOLVE_BINDING_KEY,
-            handler_count=1,
-            should_succeed=True,
-        ),
-    ]
+    KEY_RESOLUTION: ClassVar[list[RegistryTestCase]] = []
     ERROR_SCENARIOS: ClassVar[list[RegistryTestCase]] = [
         RegistryTestCase(
             name="register_none_handler",
@@ -418,22 +395,6 @@ class TestFlextRegistry:
         assert len(summary.registered) == test_case.handler_count
         assert (len(summary.errors) > 0) == (not test_case.should_succeed)
         assert summary.is_failure == (not test_case.should_succeed)
-
-    @pytest.mark.parametrize(
-        "test_case",
-        RegistryScenarios.KEY_RESOLUTION,
-        ids=lambda c: c.name,
-    )
-    def test_key_resolution(self, test_case: RegistryTestCase) -> None:
-        """Test handler key resolution."""
-        registry = FlextTestsUtilities.Tests.RegistryHelpers.create_test_registry()
-        handler = ConcreteTestHandler()
-        if test_case.operation in {
-            RegistryOperationType.RESOLVE_HANDLER_KEY,
-            RegistryOperationType.RESOLVE_BINDING_KEY,
-        }:
-            key = registry._resolve_handler_key(handler)
-            assert isinstance(key, str) and len(key) > 0
 
     @pytest.mark.parametrize(
         "test_case",

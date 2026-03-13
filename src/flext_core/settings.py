@@ -28,19 +28,16 @@ from pydantic import (
 )
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from flext_core import FlextRuntime, T_Namespace, T_Settings, __version__, c, p, t, u
+from flext_core import FlextRuntime, T_Settings, __version__, c, t, u
+from flext_core.typings import T_Namespace
 
 
-class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelMeta):
+class FlextSettings(BaseSettings, FlextRuntime):
     """Configuration management with Pydantic validation and dependency injection.
 
     Architecture: Layer 0.5 (Configuration Foundation)
     Provides enterprise-grade configuration management for the FLEXT ecosystem
     through p.ProtocolSettings base class with natural protocol multi-inheritance.
-
-    Protocol Implementation: Inherits from p.ProtocolSettings which uses
-    ProtocolModelMeta metaclass to resolve the Pydantic/Protocol metaclass conflict.
-    Implements p.Config protocol via direct inheritance (not structural typing).
 
     Core Features:
     - Pydantic v2 BaseSettings with type-safe configuration
@@ -237,7 +234,7 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
                 del cls._instances[instance_cls]
 
     @classmethod
-    def get_global(cls, *, overrides: object | None = None) -> Self:
+    def get_global(cls, *, overrides: Mapping[str, t.Scalar] | None = None) -> Self:
         """Get global settings, optionally materialized with overrides."""
         u.normalize_env_log_level()
         if overrides is None:
@@ -248,7 +245,8 @@ class FlextSettings(p.ProtocolSettings, FlextRuntime, metaclass=p.ProtocolModelM
         else:
             instance = cls()
         if overrides:
-            instance = instance.model_copy(update=overrides, deep=True)
+            update_data = dict(overrides.items())
+            instance = instance.model_copy(update=update_data, deep=True)
         return instance
 
     def apply_override(

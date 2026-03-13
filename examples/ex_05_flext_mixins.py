@@ -66,14 +66,8 @@ class Ex05FlextMixins(Examples):
             del value
             return cls()
 
-        def _protocol_name(self) -> str:
-            return "HasModelDump"
-
     class BadProcessor(m.Value):
         """Processor missing ``process`` for negative validation."""
-
-        def _protocol_name(self) -> str:
-            return "HasModelDump"
 
     @override
     def exercise(self) -> None:

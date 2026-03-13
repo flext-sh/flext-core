@@ -10,10 +10,6 @@ from flext_core import m, r
 class _ProtocolHandler(BaseModel):
     model_config = ConfigDict(frozen=False)
 
-    @staticmethod
-    def _protocol_name() -> str:
-        return "ProtocolHandler"
-
     def handle(self, message: object) -> r[str]:
         return r[str].ok(str(message))
 
@@ -27,10 +23,6 @@ class _ServiceStub(BaseModel):
     @property
     def is_valid(self) -> bool:
         return True
-
-    @staticmethod
-    def _protocol_name() -> str:
-        return "ServiceStub"
 
     def execute(self) -> r[m.ConfigMap]:
         return r[m.ConfigMap].ok(m.ConfigMap(root={"ok": True}))
@@ -83,16 +75,10 @@ class _ProcessorProtocolGood(BaseModel):
     def process(self) -> str:
         return "ok"
 
-    def _protocol_name(self) -> str:
-        return "ProcessorProtocolGood"
-
 
 class _ProcessorProtocolBad(BaseModel):
     model_config = ConfigDict(frozen=False)
     status: str = "bad"
-
-    def _protocol_name(self) -> str:
-        return "ProcessorProtocolBad"
 
 
 def get_example_instances() -> tuple[

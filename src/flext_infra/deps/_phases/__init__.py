@@ -5,12 +5,9 @@
 
 from __future__ import annotations
 
-import importlib
-from collections.abc import MutableMapping
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
-from flext_core import t
-from flext_core.lazy import cleanup_submodule_namespace
+from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
     from flext_infra.deps._phases.consolidate_groups import ConsolidateGroupsPhase
@@ -33,6 +30,14 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "ConsolidateGroupsPhase": (
         "flext_infra.deps._phases.consolidate_groups",
         "ConsolidateGroupsPhase",
+    ),
+    "EnsureCoverageConfigPhase": (
+        "flext_infra.deps._phases.ensure_coverage",
+        "EnsureCoverageConfigPhase",
+    ),
+    "EnsureExtraPathsPhase": (
+        "flext_infra.deps._phases.ensure_extra_paths",
+        "EnsureExtraPathsPhase",
     ),
     "EnsureFormattingToolingPhase": (
         "flext_infra.deps._phases.ensure_formatting",
@@ -70,14 +75,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "flext_infra.deps._phases.inject_comments",
         "InjectCommentsPhase",
     ),
-    "EnsureCoverageConfigPhase": (
-        "flext_infra.deps._phases.ensure_coverage",
-        "EnsureCoverageConfigPhase",
-    ),
-    "EnsureExtraPathsPhase": (
-        "flext_infra.deps._phases.ensure_extra_paths",
-        "EnsureExtraPathsPhase",
-    ),
 }
 
 __all__ = [
@@ -93,21 +90,12 @@ __all__ = [
     "EnsurePytestConfigPhase",
     "EnsureRuffConfigPhase",
     "InjectCommentsPhase",
-    "t",
 ]
 
 
-def __getattr__(name: str) -> object:
+def __getattr__(name: str) -> Any:
     """Lazy-load module attributes on first access (PEP 562)."""
-    if name in _LAZY_IMPORTS:
-        module_path, attr_name = _LAZY_IMPORTS[name]
-        module = importlib.import_module(module_path)
-        value = getattr(module, attr_name)
-        module_globals: MutableMapping[str, object] = globals()
-        module_globals[name] = value
-        return value
-    msg = f"module {__name__!r} has no attribute {name!r}"
-    raise AttributeError(msg)
+    return lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)
 
 
 def __dir__() -> list[str]:

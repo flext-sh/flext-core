@@ -990,11 +990,6 @@ class FlextContainer(p.DI):
         """Get default configuration instance."""
         return FlextSettings.get_global()
 
-    @override
-    def _protocol_name(self) -> str:
-        """Return protocol name for BaseProtocol compliance."""
-        return "FlextContainer"
-
     class Builder:
         """Builder utility for creating FlextContainer instances.
 

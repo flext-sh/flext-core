@@ -132,17 +132,11 @@ class Ex05GoodProcessor(BaseModel):
         """Validate processor payload."""
         return cls.model_validate(value)
 
-    def _protocol_name(self) -> str:
-        return "HasModelDump"
-
 
 class Ex05BadProcessor(BaseModel):
     """Processor that intentionally fails protocol checks."""
 
     model_config = ConfigDict(frozen=False)
-
-    def _protocol_name(self) -> str:
-        return "HasModelDump"
 
 
 class Ex10ContextPayload(BaseModel):

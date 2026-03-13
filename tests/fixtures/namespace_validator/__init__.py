@@ -5,9 +5,31 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
+
+if TYPE_CHECKING:
+    from tests.fixtures.namespace_validator.rule0_no_class import MAX_VALUE, helper
+    from tests.fixtures.namespace_validator.rule0_wrong_prefix import RandomConstants
+    from tests.fixtures.namespace_validator.rule1_loose_constant import (
+        DEFAULT_TIMEOUT,
+        MAX_RETRIES,
+    )
+    from tests.fixtures.namespace_validator.rule1_loose_enum import Status
+    from tests.fixtures.namespace_validator.rule1_magic_number import (
+        FlextTestUtilities,
+        u,
+    )
+    from tests.fixtures.namespace_validator.rule1_valid_constants import (
+        FlextTestConstants,
+        c,
+    )
+    from tests.fixtures.namespace_validator.rule2_typevar_wrong_module import (
+        FlextTestModels,
+        m,
+    )
+    from tests.fixtures.namespace_validator.rule2_valid_types import FlextTestTypes, t
 
 # Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
@@ -48,6 +70,23 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "u": ("tests.fixtures.namespace_validator.rule1_magic_number", "u"),
 }
 
+__all__ = [
+    "DEFAULT_TIMEOUT",
+    "MAX_RETRIES",
+    "MAX_VALUE",
+    "FlextTestConstants",
+    "FlextTestModels",
+    "FlextTestTypes",
+    "FlextTestUtilities",
+    "RandomConstants",
+    "Status",
+    "c",
+    "helper",
+    "m",
+    "t",
+    "u",
+]
+
 
 def __getattr__(name: str) -> Any:
     """Lazy-load module attributes on first access (PEP 562)."""
@@ -56,8 +95,7 @@ def __getattr__(name: str) -> Any:
 
 def __dir__() -> list[str]:
     """Return list of available attributes for dir() and autocomplete."""
-    return sorted(_LAZY_IMPORTS)
-    return sorted(_LAZY_IMPORTS)
+    return sorted(__all__)
 
 
 cleanup_submodule_namespace(__name__, _LAZY_IMPORTS)

@@ -22,10 +22,6 @@ class _Handler(FlextHandlers[object, object]):
     def __call__(self, message: object) -> r[t.Container]:
         return self.handle(message)
 
-    def _protocol_name(self) -> str:
-        """Return protocol name for registry identification."""
-        return "Handler"
-
 
 def _success_details(reg_id: str) -> m.RegistrationDetails:
     return m.RegistrationDetails(
@@ -62,7 +58,9 @@ def test_execute_and_register_handler_failure_paths(
     assert execute_result.is_failure
 
     class _FailDispatcher:
-        def register_handler(self, *_args: object) -> r[m.RegistrationResult]:
+        def register_handler(
+            self, *_args: object, is_event: bool = False
+        ) -> r[m.RegistrationResult]:
             return r[m.RegistrationResult].fail("dispatcher-fail")
 
     setattr(
@@ -75,7 +73,9 @@ def test_execute_and_register_handler_failure_paths(
     assert reg_result.error == "dispatcher-fail"
 
     class _OkDispatcher:
-        def register_handler(self, *_args: object) -> r[m.RegistrationResult]:
+        def register_handler(
+            self, *_args: object, is_event: bool = False
+        ) -> r[m.RegistrationResult]:
             return r[m.RegistrationResult].ok(
                 m.RegistrationResult(
                     handler_name="h",
@@ -154,11 +154,8 @@ def test_summary_error_paths_and_bindings_failures(
     ) -> r[m.RegistrationDetails]:
         return r[m.RegistrationDetails].fail("x")
 
-    summary = FlextRegistry.Summary()
-    msg = FlextRegistry._add_registration_error("k", "", summary)
-    assert msg == ""
-    assert summary.errors[0].startswith("Failed to register handler")
     registry = FlextRegistry()
+    summary = FlextRegistry.Summary(errors=["something bad"])
     finalize = registry._finalize_summary(summary)
     assert finalize.is_failure
     monkeypatch.setattr(
@@ -170,11 +167,15 @@ def test_summary_error_paths_and_bindings_failures(
     assert batch.is_failure
 
     class _FailBindingDispatcher:
-        def register_handler(self, *_args: object) -> r[m.RegistrationResult]:
+        def register_handler(
+            self, *_args: object, is_event: bool = False
+        ) -> r[m.RegistrationResult]:
             return r[m.RegistrationResult].fail("bind-fail")
 
     class _RaiseBindingDispatcher:
-        def register_handler(self, *_args: object) -> r[m.RegistrationResult]:
+        def register_handler(
+            self, *_args: object, is_event: bool = False
+        ) -> r[m.RegistrationResult]:
             msg = "bind-ex"
             raise RuntimeError(msg)
 

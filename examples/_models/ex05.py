@@ -52,12 +52,6 @@ class Ex05GoodProcessor(m.Value):
     def validate(cls, value: object) -> Ex05GoodProcessor:
         return cls.model_validate(value)
 
-    def _protocol_name(self) -> str:
-        return "HasModelDump"
-
 
 class Ex05BadProcessor(m.Value):
     model_config = ConfigDict(frozen=False)
-
-    def _protocol_name(self) -> str:
-        return "HasModelDump"

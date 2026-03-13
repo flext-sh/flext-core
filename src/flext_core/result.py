@@ -17,8 +17,9 @@ from pydantic import BaseModel, PrivateAttr, ValidationError
 from returns.primitives.exceptions import UnwrapFailedError
 from returns.result import Failure, Result, Success
 
-from flext_core import FlextRuntime, T_Model, U, t
+from flext_core import FlextRuntime, T_Model, t
 from flext_core._models.containers import FlextModelsContainers
+from flext_core.typings import U
 
 
 class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
@@ -725,14 +726,6 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         if self.is_success and self.value is not None:
             return self.value
         return default
-
-    @override
-    def _protocol_name(self) -> str:
-        """Return the protocol name for introspection.
-
-        Satisfies BaseProtocol requirement for ResultLike protocol.
-        """
-        return "r"
 
 
 r = FlextResult

@@ -47,17 +47,11 @@ class _FalseConfig:
     ) -> Self:
         return self
 
-    def _protocol_name(self) -> str:
-        return "Config"
-
     def model_dump(self) -> dict[str, t.Scalar]:
         return {}
 
 
 class _ContextNoClone:
-    def _protocol_name(self) -> str:
-        return "Context"
-
     def clone(self) -> _ContextNoClone:
         return self
 
@@ -137,9 +131,7 @@ def _namespace_config_none(_namespace: str) -> None:
     return None
 
 
-def test_protocol_name_and_builder() -> None:
-    c = FlextContainer.create()
-    assert c._protocol_name() == "FlextContainer"
+def test_builder() -> None:
     assert isinstance(FlextContainer.Builder.create(), FlextContainer)
 
 

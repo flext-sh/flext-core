@@ -12,14 +12,17 @@ from __future__ import annotations
 import inspect
 import sys
 from collections.abc import Callable, Mapping, Sequence
-from typing import Annotated, ClassVar, Literal, Self, override
+from types import ModuleType
+from typing import Annotated, ClassVar, Literal, Self, cast, override
 
 from pydantic import BaseModel, Field, PrivateAttr, computed_field
 
 from flext_core import (
     FlextContainer,
+    FlextContext,
     FlextDispatcher,
     FlextHandlers,
+    FlextSettings,
     c,
     m,
     p,
@@ -108,17 +111,50 @@ class FlextRegistry(s[bool]):
 
     def __init__(
         self,
+        *,
         dispatcher: p.CommandBus | None = None,
-        **data: t.Scalar | m.ConfigMap | Sequence[t.Scalar],
+        config_type: type[FlextSettings] | None = None,
+        config_overrides: Mapping[str, t.Scalar] | None = None,
+        initial_context: FlextContext | None = None,
+        subproject: str | None = None,
+        services: Mapping[str, t.RegisterableService] | None = None,
+        factories: Mapping[str, t.FactoryCallable] | None = None,
+        resources: Mapping[str, t.ResourceCallable] | None = None,
+        container_overrides: Mapping[str, t.Scalar] | None = None,
+        wire_modules: Sequence[ModuleType] | None = None,
+        wire_packages: Sequence[str] | None = None,
+        wire_classes: Sequence[type] | None = None,
     ) -> None:
         """Initialize the registry with a CommandBus protocol instance.
 
         Args:
             dispatcher: CommandBus protocol instance (defaults to container DI resolution)
-            **data: Additional configuration passed to s
+            config_type: Class reference for settings
+            config_overrides: Runtime settings overrides
+            initial_context: Starting context
+            subproject: Differentiator for logical grouping
+            services: Dependency injection services
+            factories: Dependency injection factories
+            resources: Dependency injection resources
+            container_overrides: Runtime DI overrides
+            wire_modules: Auto-wiring target modules
+            wire_packages: Auto-wiring target packages
+            wire_classes: Auto-wiring target classes
 
         """
-        super().__init__(**data)
+        super().__init__(
+            config_type=config_type,
+            config_overrides=config_overrides,
+            initial_context=initial_context,
+            subproject=subproject,
+            services=services,
+            factories=factories,
+            resources=resources,
+            container_overrides=container_overrides,
+            wire_modules=wire_modules,
+            wire_packages=wire_packages,
+            wire_classes=wire_classes,
+        )
         if dispatcher is not None:
             self._dispatcher = dispatcher
         else:
@@ -171,7 +207,7 @@ class FlextRegistry(s[bool]):
             FlextRegistry instance with auto-discovered handlers if enabled.
 
         """
-        instance = cls(dispatcher)
+        instance = cls(dispatcher=dispatcher)
         if auto_discover_handlers:
             frame = inspect.currentframe()
             if frame and frame.f_back:
@@ -181,11 +217,7 @@ class FlextRegistry(s[bool]):
                 if caller_module:
                     handlers = FlextHandlers.Discovery.scan_module(caller_module)
                     for _handler_name, handler_func, _handler_config in handlers:
-                        if (
-                            handler_func is not None
-                            and callable(handler_func)
-                            and u.is_protocol_implementation(handler_func)
-                        ):
+                        if handler_func is not None and callable(handler_func):
                             _ = instance.register_handler(handler_func)
         return instance
 
@@ -198,14 +230,14 @@ class FlextRegistry(s[bool]):
         """Safe conversion to HandlerType."""
         result = u.parse_enum(c.Cqrs.HandlerType, str(value))
         if result.is_success:
-            return result.value
+            return cast("c.Cqrs.HandlerType", result.value)
         return c.Cqrs.HandlerType.COMMAND
 
     def _get_status(self, value: object) -> c.Cqrs.CommonStatus:
         """Safe conversion to CommonStatus."""
         result = u.parse_enum(c.Cqrs.CommonStatus, str(value))
         if result.is_success:
-            return result.value
+            return cast("c.Cqrs.CommonStatus", result.value)
         return c.Cqrs.CommonStatus.ACTIVE
 
     @override
@@ -345,9 +377,7 @@ class FlextRegistry(s[bool]):
         summary = FlextRegistry.Summary()
         for message_type, handler in bindings.items():
             message_type_name = getattr(message_type, "__name__", str(message_type))
-            handler_name = u.get_protocol_name(
-                handler, default=handler.__class__.__name__
-            )
+            handler_name = getattr(handler, "__name__", handler.__class__.__name__)
             key = f"binding::{message_type_name}::{handler_name}"
 
             reg_result = self.register_handler(handler)
@@ -424,7 +454,7 @@ class FlextRegistry(s[bool]):
         summary = FlextRegistry.Summary()
         for handler in handlers:
             result = self.register_handler(handler)
-            key = u.get_protocol_name(handler, default=handler.__class__.__name__)
+            key = getattr(handler, "__name__", handler.__class__.__name__)
             if result.is_success:
                 registration_details = result.value
                 if isinstance(registration_details, m.RegistrationDetails):

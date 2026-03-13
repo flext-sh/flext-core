@@ -20,8 +20,7 @@ from typing import TypeGuard
 
 from pydantic import BaseModel
 
-from flext_core import FlextRuntime, c, m
-from flext_core.result import r
+from flext_core import c, m, r
 
 
 class FlextUtilitiesGenerators:
@@ -168,14 +167,13 @@ class FlextUtilitiesGenerators:
                 msg = f"Failed to convert Mapping {context.__class__.__name__}: {e}"
                 raise TypeError(msg) from e
         try:
-            model_data = FlextRuntime.normalize_to_container(context.model_dump())
-            if FlextUtilitiesGenerators._is_config_mapping(model_data):
-                return dict(model_data.items())
-        except (AttributeError, TypeError) as e:
-            msg = f"Failed to dump BaseModel {context.__class__.__name__}: {e.__class__.__name__}: {e}"
+            import typing
+
+            model_data = context.model_dump()
+            return typing.cast("dict[str, object]", model_data)
+        except (AttributeError, TypeError, ValueError) as e:
+            msg = f"Failed to dump BaseModel {type(context).__name__}: {type(e).__name__}: {e}"
             raise TypeError(msg) from e
-        msg = f"Context must be dict, Mapping, or BaseModel, got {context.__class__.__name__}"
-        raise TypeError(msg)
 
     @staticmethod
     def _should_generate_uuid(kind: str | None, actual_prefix: str | None) -> bool:
@@ -258,24 +256,23 @@ class FlextUtilitiesGenerators:
                 return default
             msg = "Value cannot be None"
             raise TypeError(msg)
+        import typing
+
         if isinstance(value, dict):
-            return value
+            return typing.cast("dict[str, object]", value)
         if isinstance(value, Mapping):
             try:
-                return dict(value.items())
+                return dict(typing.cast("Mapping[str, object]", value))
             except (TypeError, ValueError, AttributeError) as e:
-                msg = f"Failed to convert Mapping {value.__class__.__name__}: {e}"
+                msg = f"Failed to convert Mapping {type(value).__name__}: {e}"
                 raise TypeError(msg) from e
         if isinstance(value, BaseModel):
-            normalized = FlextRuntime.normalize_to_container(value)
-            if isinstance(normalized, Mapping):
-                try:
-                    return dict(normalized.items())
-                except (TypeError, ValueError, AttributeError) as e:
-                    msg = f"Failed to convert normalized BaseModel {value.__class__.__name__} to dict: {e}"
-                    raise TypeError(msg) from e
-            msg = f"Normalized BaseModel {value.__class__.__name__} is not mapping-like ({normalized.__class__.__name__})"
-            raise TypeError(msg)
+            try:
+                dumped = value.model_dump()
+                return typing.cast("dict[str, object]", dumped)
+            except (AttributeError, TypeError, ValueError) as e:
+                msg = f"Failed to convert BaseModel {type(value).__name__} to dict: {e}"
+                raise TypeError(msg) from e
         msg = f"Cannot convert {value.__class__.__name__} to dict"
         raise TypeError(msg)
 

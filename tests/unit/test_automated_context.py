@@ -142,7 +142,7 @@ class TestAutomatedFlextContext:
                 value = instance.get("test_key")
                 return r[t.Container].ok(str(value))
             if input_data.get("validate"):
-                validation_result = instance.validate()
+                validation_result = instance.validate_context()
                 if validation_result.is_success:
                     return r[t.Container].ok(str(validation_result.value))
                 return r[t.Container].fail(
@@ -156,7 +156,7 @@ class TestAutomatedFlextContext:
                 cloned = instance.clone()
                 cloned.set("cloned_key", "cloned_value")
                 return r[t.Container].ok("resource_test_ok")
-            result = instance.validate()
+            result = instance.validate_context()
             if result.is_success:
                 return r[t.Container].ok(str(result.value))
             return r[t.Container].fail(result.error or "Context validation failed")

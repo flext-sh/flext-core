@@ -12,32 +12,32 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import importlib
-from collections.abc import MutableMapping
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
-from flext_core import t
-from flext_core.lazy import cleanup_submodule_namespace
+from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
-    from flext_infra.deps._phases import (
-        ConsolidateGroupsPhase,
-        EnsureFormattingToolingPhase,
-        EnsureMypyConfigPhase,
-        EnsureNamespaceToolingPhase,
+    from flext_infra.deps._phases.consolidate_groups import ConsolidateGroupsPhase
+    from flext_infra.deps._phases.ensure_coverage import EnsureCoverageConfigPhase
+    from flext_infra.deps._phases.ensure_extra_paths import EnsureExtraPathsPhase
+    from flext_infra.deps._phases.ensure_formatting import EnsureFormattingToolingPhase
+    from flext_infra.deps._phases.ensure_mypy import EnsureMypyConfigPhase
+    from flext_infra.deps._phases.ensure_namespace import EnsureNamespaceToolingPhase
+    from flext_infra.deps._phases.ensure_pydantic_mypy import (
         EnsurePydanticMypyConfigPhase,
-        EnsurePyreflyConfigPhase,
-        EnsurePyrightConfigPhase,
-        EnsurePytestConfigPhase,
-        EnsureRuffConfigPhase,
-        InjectCommentsPhase,
     )
+    from flext_infra.deps._phases.ensure_pyrefly import EnsurePyreflyConfigPhase
+    from flext_infra.deps._phases.ensure_pyright import EnsurePyrightConfigPhase
+    from flext_infra.deps._phases.ensure_pytest import EnsurePytestConfigPhase
+    from flext_infra.deps._phases.ensure_ruff import EnsureRuffConfigPhase
+    from flext_infra.deps._phases.inject_comments import InjectCommentsPhase
     from flext_infra.deps.detection import (
         FlextInfraDependencyDetectionService,
         FlextInfraDependencyDetectionService as s,
         build_project_report,
         classify_issues,
         discover_project_paths,
+        dm,
         get_current_typings_from_pyproject,
         get_required_typings,
         load_dependency_limits,
@@ -46,18 +46,27 @@ if TYPE_CHECKING:
         run_mypy_stub_hints,
         run_pip_check,
     )
-    from flext_infra.deps.detector import (
-        FlextInfraRuntimeDevDependencyDetector,
-    )
+    from flext_infra.deps.detector import FlextInfraRuntimeDevDependencyDetector
+    from flext_infra.deps.extra_paths import FlextInfraExtraPathsManager, sync_one
     from flext_infra.deps.internal_sync import FlextInfraInternalDependencySyncService
-    from flext_infra.deps.modernizer import (
-        FlextInfraPyprojectModernizer,
-    )
-    from flext_infra.deps.path_sync import main
+    from flext_infra.deps.modernizer import FlextInfraPyprojectModernizer
+    from flext_infra.deps.path_sync import FlextInfraDependencyPathSync, main
     from flext_infra.deps.tool_config import load_tool_config
 
 # Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
+    "ConsolidateGroupsPhase": (
+        "flext_infra.deps._phases.consolidate_groups",
+        "ConsolidateGroupsPhase",
+    ),
+    "EnsureCoverageConfigPhase": (
+        "flext_infra.deps._phases.ensure_coverage",
+        "EnsureCoverageConfigPhase",
+    ),
+    "EnsureExtraPathsPhase": (
+        "flext_infra.deps._phases.ensure_extra_paths",
+        "EnsureExtraPathsPhase",
+    ),
     "EnsureFormattingToolingPhase": (
         "flext_infra.deps._phases.ensure_formatting",
         "EnsureFormattingToolingPhase",
@@ -66,21 +75,25 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "flext_infra.deps._phases.ensure_mypy",
         "EnsureMypyConfigPhase",
     ),
-    "EnsurePyrightConfigPhase": (
-        "flext_infra.deps._phases",
-        "EnsurePyrightConfigPhase",
-    ),
     "EnsureNamespaceToolingPhase": (
         "flext_infra.deps._phases.ensure_namespace",
         "EnsureNamespaceToolingPhase",
     ),
-    "EnsurePytestConfigPhase": (
-        "flext_infra.deps._phases",
-        "EnsurePytestConfigPhase",
-    ),
     "EnsurePydanticMypyConfigPhase": (
         "flext_infra.deps._phases.ensure_pydantic_mypy",
         "EnsurePydanticMypyConfigPhase",
+    ),
+    "EnsurePyreflyConfigPhase": (
+        "flext_infra.deps._phases.ensure_pyrefly",
+        "EnsurePyreflyConfigPhase",
+    ),
+    "EnsurePyrightConfigPhase": (
+        "flext_infra.deps._phases.ensure_pyright",
+        "EnsurePyrightConfigPhase",
+    ),
+    "EnsurePytestConfigPhase": (
+        "flext_infra.deps._phases.ensure_pytest",
+        "EnsurePytestConfigPhase",
     ),
     "EnsureRuffConfigPhase": (
         "flext_infra.deps._phases.ensure_ruff",
@@ -89,6 +102,14 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextInfraDependencyDetectionService": (
         "flext_infra.deps.detection",
         "FlextInfraDependencyDetectionService",
+    ),
+    "FlextInfraDependencyPathSync": (
+        "flext_infra.deps.path_sync",
+        "FlextInfraDependencyPathSync",
+    ),
+    "FlextInfraExtraPathsManager": (
+        "flext_infra.deps.extra_paths",
+        "FlextInfraExtraPathsManager",
     ),
     "FlextInfraInternalDependencySyncService": (
         "flext_infra.deps.internal_sync",
@@ -102,9 +123,14 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "flext_infra.deps.detector",
         "FlextInfraRuntimeDevDependencyDetector",
     ),
+    "InjectCommentsPhase": (
+        "flext_infra.deps._phases.inject_comments",
+        "InjectCommentsPhase",
+    ),
     "build_project_report": ("flext_infra.deps.detection", "build_project_report"),
     "classify_issues": ("flext_infra.deps.detection", "classify_issues"),
     "discover_project_paths": ("flext_infra.deps.detection", "discover_project_paths"),
+    "dm": ("flext_infra.deps.detection", "dm"),
     "get_current_typings_from_pyproject": (
         "flext_infra.deps.detection",
         "get_current_typings_from_pyproject",
@@ -121,10 +147,13 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "run_mypy_stub_hints": ("flext_infra.deps.detection", "run_mypy_stub_hints"),
     "run_pip_check": ("flext_infra.deps.detection", "run_pip_check"),
     "s": ("flext_infra.deps.detection", "FlextInfraDependencyDetectionService"),
+    "sync_one": ("flext_infra.deps.extra_paths", "sync_one"),
 }
 
 __all__ = [
     "ConsolidateGroupsPhase",
+    "EnsureCoverageConfigPhase",
+    "EnsureExtraPathsPhase",
     "EnsureFormattingToolingPhase",
     "EnsureMypyConfigPhase",
     "EnsureNamespaceToolingPhase",
@@ -134,6 +163,8 @@ __all__ = [
     "EnsurePytestConfigPhase",
     "EnsureRuffConfigPhase",
     "FlextInfraDependencyDetectionService",
+    "FlextInfraDependencyPathSync",
+    "FlextInfraExtraPathsManager",
     "FlextInfraInternalDependencySyncService",
     "FlextInfraPyprojectModernizer",
     "FlextInfraRuntimeDevDependencyDetector",
@@ -141,6 +172,7 @@ __all__ = [
     "build_project_report",
     "classify_issues",
     "discover_project_paths",
+    "dm",
     "get_current_typings_from_pyproject",
     "get_required_typings",
     "load_dependency_limits",
@@ -151,21 +183,13 @@ __all__ = [
     "run_mypy_stub_hints",
     "run_pip_check",
     "s",
-    "t",
+    "sync_one",
 ]
 
 
-def __getattr__(name: str) -> object:
+def __getattr__(name: str) -> Any:
     """Lazy-load module attributes on first access (PEP 562)."""
-    if name in _LAZY_IMPORTS:
-        module_path, attr_name = _LAZY_IMPORTS[name]
-        module = importlib.import_module(module_path)
-        value = getattr(module, attr_name)
-        module_globals: MutableMapping[str, object] = globals()
-        module_globals[name] = value
-        return value
-    msg = f"module {__name__!r} has no attribute {name!r}"
-    raise AttributeError(msg)
+    return lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)
 
 
 def __dir__() -> list[str]:

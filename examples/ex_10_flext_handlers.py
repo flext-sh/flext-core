@@ -34,20 +34,12 @@ class _NoArgs:
 class _ProcessorGood(m.Value):
     marker: str = "good"
 
-    @staticmethod
-    def _protocol_name() -> str:
-        return "ProcessorGood"
-
     def process(self) -> str:
         return "ok"
 
 
 class _ProcessorBad(m.Value):
     marker: str = "bad"
-
-    @staticmethod
-    def _protocol_name() -> str:
-        return "ProcessorBad"
 
     def process(self) -> str:
         return "ok"

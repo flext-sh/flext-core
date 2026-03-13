@@ -15,29 +15,24 @@ from flext_core import c, m, p, r, u
 
 
 @runtime_checkable
-class _NamedProtocol(Protocol):
-    def _protocol_name(self) -> str: ...
+class _RequirePing(Protocol):
+    def ping(self) -> str: ...
 
 
-class _SettingsModel(p.ProtocolSettings, _NamedProtocol):
+class _SettingsModel(p.ProtocolSettings, _RequirePing):
     app_name: str = "x"
 
     @override
-    def _protocol_name(self) -> str:
-        return "settings"
+    def ping(self) -> str:
+        return "pong"
 
 
-class _ProtocolModel(p.ProtocolModel, _NamedProtocol):
+class _ProtocolModel(p.ProtocolModel, _RequirePing):
     name: str = "ok"
 
     @override
-    def _protocol_name(self) -> str:
-        return "model"
-
-
-@runtime_checkable
-class _RequirePing(Protocol):
-    def ping(self) -> str: ...
+    def ping(self) -> str:
+        return "pong"
 
 
 def test_implements_decorator_validation_error_message() -> None:
@@ -57,41 +52,21 @@ def test_implements_decorator_validation_error_message() -> None:
         _create_invalid()
 
 
-def test_protocol_meta_default_model_base_and_get_protocols_default() -> None:
-
-    class _MetaCreated(_NamedProtocol, metaclass=p.ProtocolModelMeta):
-        @override
-        def _protocol_name(self) -> str:
-            return "meta"
-
-    instance = _MetaCreated()
-    assert isinstance(instance, _MetaCreated)
-    assert getattr(_MetaCreated, "__protocols__", ()) == (_NamedProtocol,)
-
-    class _NoProtocols(m.ArbitraryTypesModel, metaclass=p.ProtocolModelMeta):
-        x: int = 1
-
-    assert not hasattr(_NoProtocols, "get_protocols")
-    assert getattr(_NoProtocols, "__protocols__", ()) == ()
-
-
 def test_protocol_model_and_settings_methods() -> None:
     model = _ProtocolModel()
     settings = _SettingsModel(app_name="a")
-    assert model.implements_protocol(_NamedProtocol) is True
-    assert model.get_protocols() == (_NamedProtocol,)
-    assert model._protocol_name() == "model"
-    assert settings.implements_protocol(_NamedProtocol) is True
-    assert settings.get_protocols() == (_NamedProtocol,)
-    assert settings._protocol_name() == "settings"
+    assert model.implements_protocol(_RequirePing) is True
+    assert model.get_protocols() == (_RequirePing,)
+    assert settings.implements_protocol(_RequirePing) is True
+    assert settings.get_protocols() == (_RequirePing,)
 
 
 def test_implements_decorator_helper_methods_and_static_wrappers() -> None:
 
-    @p.implements(_NamedProtocol)
+    @p.implements(_RequirePing)
     class _Decorated:
-        def _protocol_name(self) -> str:
-            return "decorated"
+        def ping(self) -> str:
+            return "pong"
 
     obj = _Decorated()
     implements = cast("Callable[[type], bool]", getattr(obj, "implements_protocol"))
@@ -99,10 +74,10 @@ def test_implements_decorator_helper_methods_and_static_wrappers() -> None:
         "Callable[[], tuple[type, ...]]",
         getattr(_Decorated, "get_protocols"),
     )
-    assert implements(_NamedProtocol) is True
-    assert get_protocols() == (_NamedProtocol,)
-    assert p.is_protocol(_NamedProtocol) is True
-    assert p.check_implements_protocol(cast("object", obj), _NamedProtocol) is True
+    assert implements(_RequirePing) is True
+    assert get_protocols() == (_RequirePing,)
+    assert p.is_protocol(_RequirePing) is True
+    assert p.check_implements_protocol(cast("object", obj), _RequirePing) is True
 
 
 def test_check_implements_protocol_false_non_runtime_protocol() -> None:
@@ -110,43 +85,26 @@ def test_check_implements_protocol_false_non_runtime_protocol() -> None:
     class _NotAProtocol:
         pass
 
-    @p.implements(_NamedProtocol)
+    @p.implements(_RequirePing)
     class _Thing:
-        def _protocol_name(self) -> str:
-            return "thing"
+        def ping(self) -> str:
+            return "pong"
 
     obj = _Thing()
     assert p.check_implements_protocol(cast("object", obj), _NotAProtocol) is False
 
 
-def test_protocol_base_name_methods_and_runtime_check_branch() -> None:
+def test_protocol_runtime_check() -> None:
 
     class _OnlyRuntime:
-        def _protocol_name(self) -> str:
-            return "runtime"
+        def ping(self) -> str:
+            return "pong"
 
     runtime_obj = _OnlyRuntime()
     assert (
         p.check_implements_protocol(
             cast("object", runtime_obj),
-            _NamedProtocol,
+            _RequirePing,
         )
         is True
     )
-
-    class _DefaultModelName(p.ProtocolModel):
-        value: int = 1
-
-    class _DefaultSettingsName(p.ProtocolModel):
-        app_name: str = "x"
-
-    model_name_getter = cast(
-        "Callable[[], str]",
-        getattr(_DefaultModelName(), "_protocol_name"),
-    )
-    settings_name_getter = cast(
-        "Callable[[], str]",
-        getattr(_DefaultSettingsName(), "_protocol_name"),
-    )
-    assert model_name_getter() == "_DefaultModelName"
-    assert settings_name_getter() == "_DefaultSettingsName"

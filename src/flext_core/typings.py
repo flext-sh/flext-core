@@ -16,15 +16,11 @@ from pathlib import Path
 from re import Pattern
 from types import ModuleType
 from typing import (
-    TYPE_CHECKING,
     Annotated,
     Literal,
     ParamSpec,
     TypeVar,
 )
-
-if TYPE_CHECKING:
-    from flext_core import p
 
 from pydantic import BaseModel, ConfigDict, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -105,15 +101,15 @@ class FlextTypes:
     type FileContent = str | bytes | Sequence[Sequence[str]]
     type GeneralValueTypeMapping = Mapping[str, Scalar]
 
-    type RegisterableService = "p.Model" | Callable[..., p.Model]
+    type RegisterableService = BaseModel | Callable[..., BaseModel]
     type FactoryCallable = Callable[[], RegisterableService]
-    type ResourceCallable = Callable[[], p.Model]
+    type ResourceCallable = Callable[[], BaseModel]
     type MetadataValue = (
         Scalar | Mapping[str, Scalar | Sequence[Scalar]] | Sequence[Scalar]
     )
     type MetadataAttributeValue = MetadataValue
-    type HandlerCallable = Callable[[p.Model], p.Model]
-    type HandlerLike = Callable[..., p.Model]
+    type HandlerCallable = Callable[[BaseModel], BaseModel]
+    type HandlerLike = Callable[..., BaseModel]
     type RegistrablePlugin = Scalar | Callable[..., Scalar | BaseModel]
 
     # Other Types
@@ -153,11 +149,19 @@ class FlextTypes:
 t = FlextTypes
 
 __all__ = [
+    "TV",
+    "EnumT",
     "FlextTypes",
+    "P",
+    "R",
+    "ResultT",
     "T",
+    "TRuntime",
+    "TV_co",
     "T_Model",
     "T_Settings",
     "T_co",
     "T_contra",
+    "U",
     "t",
 ]

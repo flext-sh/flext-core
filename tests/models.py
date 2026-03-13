@@ -20,7 +20,7 @@ from typing import override
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import FlextModels
+from flext_core import FlextModels, t
 from flext_infra import FlextInfraModels
 from flext_tests import FlextTestsModels
 
@@ -77,7 +77,7 @@ class TestsFlextModels(FlextTestsModels, FlextInfraModels):
         model_config = ConfigDict(frozen=False)
 
         name: str
-        value: object
+        value: t.ContainerValue
 
     class DomainTestValue(FlextModels.Value):
         """Test value object for domain tests."""
@@ -140,7 +140,7 @@ class TestsFlextModels(FlextTestsModels, FlextInfraModels):
             object.__setattr__(self, "value", value)
 
         @override
-        def __setattr__(self, name: str, value: object) -> None:
+        def __setattr__(self, name: str, value: t.ContainerValue) -> None:
             """Prevent attribute setting if frozen."""
             if self._frozen:
                 msg = "Object is frozen"
@@ -214,7 +214,7 @@ class TestsFlextModels(FlextTestsModels, FlextInfraModels):
 
         model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
 
-        obj: object
+        obj: t.ContainerValue
         expected_contains: list[str] | None = None
         expected_exact: str | None = None
         description: str = Field(default="", exclude=True)
@@ -225,15 +225,15 @@ class TestsFlextModels(FlextTestsModels, FlextInfraModels):
         model_config = ConfigDict(frozen=True)
 
         description: str
-        input: object
+        input: t.ContainerValue
         expected_success: bool
 
     class StandardTestCaseModel(BaseModel):
         """Standard operation case model for shared test utilities."""
 
         description: str
-        input_data: object
-        expected_result: object
+        input_data: t.ContainerValue
+        expected_result: t.ContainerValue
         expected_success: bool = True
         error_contains: str | None = None
 
@@ -243,14 +243,14 @@ class TestsFlextModels(FlextTestsModels, FlextInfraModels):
         model_config = ConfigDict(frozen=False)
 
         name: str
-        value: object
+        value: t.ContainerValue
 
     class UtilityValueModel(FlextModels.Value):
         """Shared value model for generic test fixtures."""
 
         model_config = ConfigDict(frozen=True)
 
-        value: object
+        value: t.ContainerValue
 
     class BddPhaseDict(BaseModel):
         """BDD phase (given/when/then) configuration."""

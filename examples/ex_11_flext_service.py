@@ -146,9 +146,6 @@ class _ServiceLike:
     def validate_business_rules(self) -> s.RuntimeResult[bool]:
         return s.RuntimeResult[bool].ok(True)
 
-    def _protocol_name(self) -> str:
-        return "ServiceLike"
-
 
 class Ex11FlextService(Examples):
     """Exercise FlextService public API."""

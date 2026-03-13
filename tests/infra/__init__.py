@@ -495,7 +495,14 @@ if TYPE_CHECKING:
         test_consolidate_groups_phase_apply_with_empty_poetry_group,
     )
     from tests.infra.unit.deps.test_modernizer_helpers import (
+        array,
+        as_string_list,
+        canonical_dev_dependencies,
+        dedupe_specs,
+        dep_name,
         doc,
+        ensure_table,
+        project_dev_groups,
         test_array,
         test_as_string_list,
         test_as_string_list_toml_item,
@@ -507,6 +514,7 @@ if TYPE_CHECKING:
         test_project_dev_groups_missing_sections,
         test_unwrap_item,
         test_unwrap_item_toml_item,
+        unwrap_item,
     )
     from tests.infra.unit.deps.test_modernizer_main import (
         TestFlextInfraPyprojectModernizer,
@@ -549,6 +557,8 @@ if TYPE_CHECKING:
         TestDetectMode,
         TestFlextInfraDependencyPathSync,
         TestPathSyncEdgeCases,
+        detect_mode,
+        extract_dep_name,
         test_detect_mode_with_nonexistent_path,
         test_detect_mode_with_path_object,
     )
@@ -574,6 +584,7 @@ if TYPE_CHECKING:
     )
     from tests.infra.unit.deps.test_path_sync_rewrite_deps import (
         TestRewriteDepPaths,
+        rewrite_dep_paths,
         test_rewrite_dep_paths_dry_run,
         test_rewrite_dep_paths_read_failure,
         test_rewrite_dep_paths_with_internal_names,
@@ -581,14 +592,12 @@ if TYPE_CHECKING:
     )
     from tests.infra.unit.deps.test_path_sync_rewrite_pep621 import (
         TestRewritePep621,
-        test_helpers_alias_is_reachable_pep621,
         test_rewrite_pep621_invalid_path_dep_regex,
         test_rewrite_pep621_no_project_table,
         test_rewrite_pep621_non_string_item,
     )
     from tests.infra.unit.deps.test_path_sync_rewrite_poetry import (
         TestRewritePoetry,
-        test_helpers_alias_is_reachable_poetry,
         test_rewrite_poetry_no_poetry_table,
         test_rewrite_poetry_no_tool_table,
         test_rewrite_poetry_with_non_dict_value,
@@ -2348,13 +2357,30 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "WorkspaceFactory": ("tests.infra.workspace_factory", "WorkspaceFactory"),
     "WorkspaceScenario": ("tests.infra.scenarios", "WorkspaceScenario"),
     "WorkspaceScenarios": ("tests.infra.scenarios", "WorkspaceScenarios"),
+    "array": ("tests.infra.unit.deps.test_modernizer_helpers", "array"),
+    "as_string_list": (
+        "tests.infra.unit.deps.test_modernizer_helpers",
+        "as_string_list",
+    ),
     "auditor": ("tests.infra.unit.docs.auditor", "auditor"),
     "builder": ("tests.infra.unit.docs.builder", "builder"),
     "c": ("tests.infra.constants", "c"),
+    "canonical_dev_dependencies": (
+        "tests.infra.unit.deps.test_modernizer_helpers",
+        "canonical_dev_dependencies",
+    ),
     "census": ("tests.infra.unit.codegen.census", "census"),
+    "dedupe_specs": ("tests.infra.unit.deps.test_modernizer_helpers", "dedupe_specs"),
+    "dep_name": ("tests.infra.unit.deps.test_modernizer_helpers", "dep_name"),
+    "detect_mode": ("tests.infra.unit.deps.test_path_sync_init", "detect_mode"),
     "detector": ("tests.infra.unit.test_infra_workspace_detector", "detector"),
     "doc": ("tests.infra.unit.deps.test_modernizer_helpers", "doc"),
     "engine": ("tests.infra.unit.test_infra_templates", "engine"),
+    "ensure_table": ("tests.infra.unit.deps.test_modernizer_helpers", "ensure_table"),
+    "extract_dep_name": (
+        "tests.infra.unit.deps.test_path_sync_init",
+        "extract_dep_name",
+    ),
     "fixer": ("tests.infra.unit.codegen.autofix", "fixer"),
     "gen": ("tests.infra.unit.docs.generator_internals", "gen"),
     "git_repo": ("tests.infra.unit.test_infra_git", "git_repo"),
@@ -2367,6 +2393,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "orchestrator",
     ),
     "p": ("tests.infra.protocols", "p"),
+    "project_dev_groups": (
+        "tests.infra.unit.deps.test_modernizer_helpers",
+        "project_dev_groups",
+    ),
     "pyright_content": (
         "tests.infra.unit.deps.test_extra_paths_sync",
         "pyright_content",
@@ -2381,6 +2411,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "real_python_package": ("tests.infra.fixtures", "real_python_package"),
     "real_toml_project": ("tests.infra.fixtures", "real_toml_project"),
     "real_workspace": ("tests.infra.fixtures", "real_workspace"),
+    "rewrite_dep_paths": (
+        "tests.infra.unit.deps.test_path_sync_rewrite_deps",
+        "rewrite_dep_paths",
+    ),
     "run_lint": ("tests.infra.unit.github.main", "run_lint"),
     "run_pr": ("tests.infra.unit.github.main", "run_pr"),
     "run_pr_workspace": ("tests.infra.unit.github.main_dispatch", "run_pr_workspace"),
@@ -2779,14 +2813,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "test_helpers_alias_is_reachable_main": (
         "tests.infra.unit.deps.test_path_sync_main",
         "test_helpers_alias_is_reachable_main",
-    ),
-    "test_helpers_alias_is_reachable_pep621": (
-        "tests.infra.unit.deps.test_path_sync_rewrite_pep621",
-        "test_helpers_alias_is_reachable_pep621",
-    ),
-    "test_helpers_alias_is_reachable_poetry": (
-        "tests.infra.unit.deps.test_path_sync_rewrite_poetry",
-        "test_helpers_alias_is_reachable_poetry",
     ),
     "test_helpers_alias_is_reachable_project_obj": (
         "tests.infra.unit.deps.test_path_sync_main_project_obj",
@@ -3370,6 +3396,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "test_workspace_root_fallback",
     ),
     "u": ("tests.infra.utilities", "u"),
+    "unwrap_item": ("tests.infra.unit.deps.test_modernizer_helpers", "unwrap_item"),
     "v": ("tests.infra.unit.core.basemk_validator", "v"),
     "validator": ("tests.infra.unit.docs.validator_internals", "validator"),
     "workspace_root": (
@@ -3792,13 +3819,21 @@ __all__ = [
     "WorkspaceFactory",
     "WorkspaceScenario",
     "WorkspaceScenarios",
+    "array",
+    "as_string_list",
     "auditor",
     "builder",
     "c",
+    "canonical_dev_dependencies",
     "census",
+    "dedupe_specs",
+    "dep_name",
+    "detect_mode",
     "detector",
     "doc",
     "engine",
+    "ensure_table",
+    "extract_dep_name",
     "fixer",
     "gen",
     "git_repo",
@@ -3808,6 +3843,7 @@ __all__ = [
     "normalize_link",
     "orchestrator",
     "p",
+    "project_dev_groups",
     "pyright_content",
     "r",
     "real_docs_project",
@@ -3816,6 +3852,7 @@ __all__ = [
     "real_python_package",
     "real_toml_project",
     "real_workspace",
+    "rewrite_dep_paths",
     "run_lint",
     "run_pr",
     "run_pr_workspace",
@@ -3924,8 +3961,6 @@ __all__ = [
     "test_helpers_alias_exposed",
     "test_helpers_alias_is_reachable_helpers",
     "test_helpers_alias_is_reachable_main",
-    "test_helpers_alias_is_reachable_pep621",
-    "test_helpers_alias_is_reachable_poetry",
     "test_helpers_alias_is_reachable_project_obj",
     "test_import_modernizer_adds_c_when_existing_c_is_aliased",
     "test_import_modernizer_does_not_rewrite_function_parameter_shadow",
@@ -4073,6 +4108,7 @@ __all__ = [
     "test_workspace_root_doc_construction",
     "test_workspace_root_fallback",
     "u",
+    "unwrap_item",
     "v",
     "validator",
     "workspace_root",

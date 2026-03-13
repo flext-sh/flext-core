@@ -33,9 +33,6 @@ class _ProtocolHandler:
             value = str(getattr(message, "amount"))
         return r[str].ok(f"{self._label}:{value}")
 
-    def _protocol_name(self) -> str:
-        return f"example-protocol-handler::{self._label}"
-
 
 @FlextHandlers.handler(_CommandA, priority=3)
 def _discovered_handler(_message: object) -> object:

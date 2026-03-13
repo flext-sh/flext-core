@@ -80,9 +80,6 @@ class _DemoPlugin(m.Value):
 
     name: str
 
-    def _protocol_name(self) -> str:
-        return f"demo-plugin::{self.name}"
-
 
 class RegistryDispatcherService(s[m.ConfigMap]):
     """Service demonstrating FlextRegistry and FlextDispatcher."""

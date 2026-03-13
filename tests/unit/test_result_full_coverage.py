@@ -24,12 +24,11 @@ def test_validation_like_error_structure() -> None:
     assert details[0]["msg"] == "bad value"
 
 
-def test_type_guards_and_protocol_name() -> None:
+def test_type_guards_result() -> None:
     ok_res = r[int].ok(1)
     fail_res: r[int] = cast("r[int]", r.fail("x"))
     assert r.is_success_result(ok_res)
     assert r.is_failure_result(fail_res)
-    assert ok_res._protocol_name() == "r"
 
 
 def test_init_fallback_and_lazy_returns_result_property() -> None:

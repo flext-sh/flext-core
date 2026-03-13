@@ -24,8 +24,6 @@ from flext_core import (
     FlextExceptions as e,
     FlextLogger,
     FlextRuntime,
-    P,
-    R,
     T,
     c,
     m,
@@ -34,6 +32,7 @@ from flext_core import (
     t,
     u,
 )
+from flext_core.typings import P, R
 
 
 class FlextDecorators:

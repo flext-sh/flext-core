@@ -86,10 +86,6 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
             )
             return {}
 
-    def _protocol_name(self) -> str:
-        """Return the protocol name for introspection."""
-        return "FlextContext"
-
     _metadata: m.Metadata = PrivateAttr()
     _hooks: dict[str, list[Callable[[t.Scalar], object]]] = PrivateAttr(
         default_factory=dict

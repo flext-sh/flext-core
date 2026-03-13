@@ -37,7 +37,7 @@ class ServiceScenario(BaseModel):
 
     model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
     name: str = Field(description="Service scenario name")
-    service: t.RegisterableService = Field(description="Service value to register")
+    service: str | int | float | bool = Field(description="Service value to register")
     description: str = Field(default="", description="Scenario description")
 
 
@@ -46,7 +46,7 @@ class TypedRetrievalScenario(BaseModel):
 
     model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
     name: str = Field(description="Typed retrieval scenario name")
-    service: t.RegisterableService = Field(description="Registered service value")
+    service: str | int | float | bool = Field(description="Registered service value")
     expected_type: type = Field(description="Expected service type")
     should_pass: bool = Field(description="Whether typed retrieval should succeed")
     description: str = Field(default="", description="Scenario description")

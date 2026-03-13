@@ -582,7 +582,7 @@ def test_runtime_result_all_missed_branches() -> None:
     )
     flowed = none_success.flow_through(_ok_plus_one)
     assert flowed is none_success
-    assert success._protocol_name() == "RuntimeResult"
+
     with pytest.raises(
         ValueError,
         match="Cannot create success result with None value",
