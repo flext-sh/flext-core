@@ -62,6 +62,7 @@ class FlextInfraRefactorPydanticCentralizer:
         return (
             '"""Auto-generated centralized models."""\n\n'
             "from __future__ import annotations\n\n"
+            "from typing import Annotated\n\n"
             "from pydantic import BaseModel, ConfigDict, Field, RootModel\n\n"
             "class FlextAutoConstants:\n    pass\n\n"
             "class FlextAutoTypes:\n    pass\n\n"

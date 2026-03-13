@@ -269,7 +269,7 @@ class FlextInfraRefactorPydanticCentralizerAnalysis:
             annotation = ast.unparse(value_node)
             if total_false:
                 field_lines.append(
-                    f"    {key_value}: {annotation} | None = Field(default=None)",
+                    f"    {key_value}: Annotated[{annotation} | None, Field(default=None)]",
                 )
             else:
                 field_lines.append(f"    {key_value}: {annotation}")
@@ -311,7 +311,7 @@ class FlextInfraRefactorPydanticCentralizerAnalysis:
                     continue
                 if total_false:
                     fields.append(
-                        f"    {stmt.target.id}: {ann} | None = Field(default=None)",
+                        f"    {stmt.target.id}: Annotated[{ann} | None, Field(default=None)]",
                     )
                 else:
                     fields.append(f"    {stmt.target.id}: {ann}")
