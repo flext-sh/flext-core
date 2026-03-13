@@ -15,7 +15,7 @@ from __future__ import annotations
 import operator
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import cast
+from typing import Annotated, cast
 
 from pydantic import BaseModel, Field
 
@@ -28,8 +28,8 @@ from ._models import ComplexModel
 class SimpleObj(BaseModel):
     """Simple test object."""
 
-    name: str = Field(description="Simple object name")
-    value: int = Field(description="Simple object value")
+    name: Annotated[str, Field(description="Simple object name")]
+    value: Annotated[int, Field(description="Simple object value")]
 
 
 class _DoubleOp(BaseModel):
@@ -435,7 +435,7 @@ class TestuMapperAdvanced:
         """Test extraction via model_dump."""
 
         class Dumpable(BaseModel):
-            a: int = Field(default=1, description="Dumpable value")
+            a: Annotated[int, Field(default=1, description="Dumpable value")]
 
         obj = Dumpable()
         assert u.extract(obj, "a").value == 1

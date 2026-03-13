@@ -14,7 +14,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import override
+from typing import Annotated, override
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -48,27 +48,27 @@ class TestsFlextServiceBase(FlextTestsServiceBase[T]):
 
         model_config = ConfigDict(frozen=True)
 
-        handler_id: str = Field(description="Unique handler identifier for test case")
-        handler_name: str | None = Field(
+        handler_id: Annotated[str, Field(description="Unique handler identifier for test case")]
+        handler_name: Annotated[str | None, Field(
             default=None, description="Optional display name for handler"
-        )
-        handler_type: FlextConstants.Cqrs.HandlerType = Field(
+        )]
+        handler_type: Annotated[FlextConstants.Cqrs.HandlerType, Field(
             default=FlextConstants.Cqrs.HandlerType.COMMAND,
             description="Handler type used for test case configuration",
-        )
-        expected_result: FlextTypes.Container | None = Field(
+        )]
+        expected_result: Annotated[FlextTypes.Container | None, Field(
             default=None,
             description="Expected handler result when execution succeeds",
-        )
-        should_fail: bool = Field(
+        )]
+        should_fail: Annotated[bool, Field(
             default=False, description="Whether test case expects failure"
-        )
-        error_message: str | None = Field(
+        )]
+        error_message: Annotated[str | None, Field(
             default=None, description="Expected error message for failures"
-        )
-        description: str = Field(
+        )]
+        description: Annotated[str, Field(
             default="", description="Human-readable test case description"
-        )
+        )]
 
         def create_handler(
             self,

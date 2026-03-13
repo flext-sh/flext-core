@@ -21,7 +21,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from enum import StrEnum
-from typing import ClassVar
+from typing import Annotated, ClassVar
 
 import pytest
 from pydantic import BaseModel, ConfigDict, Field
@@ -46,9 +46,9 @@ class ProtocolDefinitionScenario(BaseModel):
 
     model_config = ConfigDict(frozen=True)
 
-    name: str = Field(description="Protocol definition scenario name")
-    protocol_name: str = Field(description="Protocol attribute name")
-    category: ProtocolCategoryType = Field(description="Protocol category")
+    name: Annotated[str, Field(description="Protocol definition scenario name")]
+    protocol_name: Annotated[str, Field(description="Protocol attribute name")]
+    category: Annotated[ProtocolCategoryType, Field(description="Protocol category")]
 
 
 class ProtocolAvailabilityScenario(BaseModel):
@@ -56,9 +56,9 @@ class ProtocolAvailabilityScenario(BaseModel):
 
     model_config = ConfigDict(frozen=True)
 
-    name: str = Field(description="Protocol availability scenario name")
-    category: ProtocolCategoryType = Field(description="Protocol category")
-    protocol_names: list[str] = Field(description="Expected protocol names")
+    name: Annotated[str, Field(description="Protocol availability scenario name")]
+    category: Annotated[ProtocolCategoryType, Field(description="Protocol category")]
+    protocol_names: Annotated[list[str], Field(description="Expected protocol names")]
 
 
 class ProtocolScenarios:

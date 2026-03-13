@@ -14,7 +14,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from enum import StrEnum
-from typing import Final, Literal
+from typing import Annotated, Final, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -330,152 +330,152 @@ class TestsFlextConstants(FlextTestsConstants, FlextInfraConstants):
 
                 model_config = ConfigDict(frozen=True)
 
-                user_id: str = Field(
+                user_id: Annotated[str, Field(
                     default="test_user_123", description="Default test user identifier"
-                )
-                session_id: str = Field(
+                )]
+                session_id: Annotated[str, Field(
                     default="test_session_123",
                     description="Default test session identifier",
-                )
-                service_name: str = Field(
+                )]
+                service_name: Annotated[str, Field(
                     default="test_service", description="Default test service name"
-                )
-                operation_id: str = Field(
+                )]
+                operation_id: Annotated[str, Field(
                     default="test_operation",
                     description="Default test operation identifier",
-                )
-                request_id: str = Field(
+                )]
+                request_id: Annotated[str, Field(
                     default="test-request-456",
                     description="Default test request identifier",
-                )
-                correlation_id: str = Field(
+                )]
+                correlation_id: Annotated[str, Field(
                     default="test-corr-123",
                     description="Default test correlation identifier",
-                )
+                )]
 
             class Names(BaseModel):
                 """Test module and component names."""
 
                 model_config = ConfigDict(frozen=True)
 
-                module_name: str = Field(
+                module_name: Annotated[str, Field(
                     default="test_module", description="Default test module name"
-                )
-                handler_name: str = Field(
+                )]
+                handler_name: Annotated[str, Field(
                     default="test_handler", description="Default test handler name"
-                )
-                chain_name: str = Field(
+                )]
+                chain_name: Annotated[str, Field(
                     default="test_chain", description="Default test chain name"
-                )
-                command_type: str = Field(
+                )]
+                command_type: Annotated[str, Field(
                     default="test_command", description="Default test command type"
-                )
-                query_type: str = Field(
+                )]
+                query_type: Annotated[str, Field(
                     default="test_query", description="Default test query type"
-                )
-                logger_name: str = Field(
+                )]
+                logger_name: Annotated[str, Field(
                     default="test_logger", description="Default test logger name"
-                )
-                app_name: str = Field(
+                )]
+                app_name: Annotated[str, Field(
                     default="test-app", description="Default test application name"
-                )
-                validation_app: str = Field(
+                )]
+                validation_app: Annotated[str, Field(
                     default="validation-test",
                     description="Default validation test application name",
-                )
-                source_service: str = Field(
+                )]
+                source_service: Annotated[str, Field(
                     default="test_service", description="Default source service name"
-                )
+                )]
 
             class ErrorData(BaseModel):
                 """Test error codes and messages."""
 
                 model_config = ConfigDict(frozen=True)
 
-                error_code: str = Field(
+                error_code: Annotated[str, Field(
                     default="TEST_ERROR_001", description="Default test error code"
-                )
-                validation_error: str = Field(
+                )]
+                validation_error: Annotated[str, Field(
                     default="test_error", description="Default validation error message"
-                )
-                operation_error: str = Field(
+                )]
+                operation_error: Annotated[str, Field(
                     default="Op failed", description="Default operation error message"
-                )
-                config_error: str = Field(
+                )]
+                config_error: Annotated[str, Field(
                     default="Config failed",
                     description="Default configuration error message",
-                )
-                timeout_error: str = Field(
+                )]
+                timeout_error: Annotated[str, Field(
                     default="Operation timeout",
                     description="Default timeout error message",
-                )
+                )]
 
             class Data(BaseModel):
                 """Test field names and data values."""
 
                 model_config = ConfigDict(frozen=True)
 
-                field_name: str = Field(
+                field_name: Annotated[str, Field(
                     default="test_field", description="Default test field name"
-                )
-                config_key: str = Field(
+                )]
+                config_key: Annotated[str, Field(
                     default="test_key", description="Default test config key"
-                )
-                username: str = Field(
+                )]
+                username: Annotated[str, Field(
                     default="test_user", description="Default test username"
-                )
-                email: str = Field(
+                )]
+                email: Annotated[str, Field(
                     default="test@example.com", description="Default test email"
-                )
-                password: str = Field(
+                )]
+                password: Annotated[str, Field(
                     default="test_pass", description="Default test password"
-                )
-                string_value: str = Field(
+                )]
+                string_value: Annotated[str, Field(
                     default="test_value", description="Default test string value"
-                )
-                input_data: str = Field(
+                )]
+                input_data: Annotated[str, Field(
                     default="test_input", description="Default test input data"
-                )
-                request_data: str = Field(
+                )]
+                request_data: Annotated[str, Field(
                     default="test_request", description="Default test request data"
-                )
-                result_data: str = Field(
+                )]
+                result_data: Annotated[str, Field(
                     default="test_result", description="Default test result data"
-                )
-                message: str = Field(
+                )]
+                message: Annotated[str, Field(
                     default="test_message", description="Default test message"
-                )
+                )]
 
             class PatternData(BaseModel):
                 """Test patterns and formats."""
 
                 model_config = ConfigDict(frozen=True)
 
-                slug_input: str = Field(
+                slug_input: Annotated[str, Field(
                     default="Test_String",
                     description="Input value for slug conversion tests",
-                )
-                slug_expected: str = Field(
+                )]
+                slug_expected: Annotated[str, Field(
                     default="test_string", description="Expected slug conversion output"
-                )
-                uuid_format: str = Field(
+                )]
+                uuid_format: Annotated[str, Field(
                     default="550e8400-e29b-41d4-a716-446655440000",
                     description="Sample UUID format for tests",
-                )
+                )]
 
             class NumericValues(BaseModel):
                 """Test port and numeric values."""
 
                 model_config = ConfigDict(frozen=True)
 
-                port: int = Field(default=8080, description="Default test port")
-                timeout: int = Field(
+                port: Annotated[int, Field(default=8080, description="Default test port")]
+                timeout: Annotated[int, Field(
                     default=30, description="Default timeout in seconds"
-                )
-                retry_count: int = Field(default=3, description="Default retry count")
-                batch_size: int = Field(
+                )]
+                retry_count: Annotated[int, Field(default=3, description="Default retry count")]
+                batch_size: Annotated[int, Field(
                     default=100, description="Default test batch size"
-                )
+                )]
 
     Strings = Tests.Strings
     Delimiters = Tests.Delimiters

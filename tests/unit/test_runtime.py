@@ -24,7 +24,7 @@ import logging
 from collections.abc import Callable
 from enum import StrEnum
 from types import ModuleType
-from typing import ClassVar, cast, override
+from typing import Annotated, ClassVar, cast, override
 
 import pytest
 import structlog
@@ -99,20 +99,20 @@ class RuntimeTestCase(BaseModel):
 
     model_config = ConfigDict(frozen=True)
 
-    name: str = Field(description="Runtime test case name")
-    operation: RuntimeOperationType = Field(description="Runtime operation type")
-    test_input: object | None = Field(
+    name: Annotated[str, Field(description="Runtime test case name")]
+    operation: Annotated[RuntimeOperationType, Field(description="Runtime operation type")]
+    test_input: Annotated[object | None, Field(
         default=None,
         description="Optional test input",
-    )
-    expected_result: bool | tuple[object, ...] | object = Field(
+    )]
+    expected_result: Annotated[bool | tuple[object, ...] | object, Field(
         default=None,
         description="Expected operation result",
-    )
-    should_reset_config: bool = Field(
+    )]
+    should_reset_config: Annotated[bool, Field(
         default=False,
         description="Whether structlog config should be reset before test",
-    )
+    )]
 
 
 class RuntimeScenarios:

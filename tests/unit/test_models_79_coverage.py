@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from decimal import Decimal
-from typing import override
+from typing import Annotated, override
 
 from pydantic import BaseModel, Field
 
@@ -19,34 +19,34 @@ from flext_core._models.domain_event import _ComparableConfigMap
 
 
 class CreateUserCommand(BaseModel):
-    user_id: str = Field(description="User identifier for create command")
-    name: str = Field(description="User display name for create command")
-    email: str = Field(description="User email for create command")
+    user_id: Annotated[str, Field(description="User identifier for create command")]
+    name: Annotated[str, Field(description="User display name for create command")]
+    email: Annotated[str, Field(description="User email for create command")]
 
 
 class FindUserQuery(BaseModel):
-    user_id: str = Field(description="User identifier for lookup query")
+    user_id: Annotated[str, Field(description="User identifier for lookup query")]
 
 
 class OptionalFieldCommand(BaseModel):
-    required_field: str = Field(description="Required command field")
-    optional_field: str | None = Field(
+    required_field: Annotated[str, Field(description="Required command field")]
+    optional_field: Annotated[str | None, Field(
         default=None, description="Optional command field"
-    )
+    )]
 
 
 class PagedQuery(BaseModel):
-    page: int = Field(description="Requested page number")
-    page_size: int = Field(description="Requested page size")
+    page: Annotated[int, Field(description="Requested page number")]
+    page_size: Annotated[int, Field(description="Requested page size")]
 
 
 class CreateUserCmd(BaseModel):
-    user_id: str = Field(description="User identifier for integration command")
-    name: str = Field(description="User name for integration command")
+    user_id: Annotated[str, Field(description="User identifier for integration command")]
+    name: Annotated[str, Field(description="User name for integration command")]
 
 
 class GetUserQuery(BaseModel):
-    user_id: str = Field(description="User identifier for integration query")
+    user_id: Annotated[str, Field(description="User identifier for integration query")]
 
 
 class TestFlextModelsEntity:
@@ -56,9 +56,9 @@ class TestFlextModelsEntity:
         """Test basic entity creation."""
 
         class User(BaseModel):
-            unique_id: str = Field(description="Unique identifier for test user")
-            name: str = Field(description="User name for entity test")
-            email: str = Field(description="User email for entity test")
+            unique_id: Annotated[str, Field(description="Unique identifier for test user")]
+            name: Annotated[str, Field(description="User name for entity test")]
+            email: Annotated[str, Field(description="User email for entity test")]
 
         user = User(unique_id="user-1", name="Alice", email="alice@example.com")
         assert user.unique_id == "user-1"
@@ -69,8 +69,8 @@ class TestFlextModelsEntity:
         """Test entity equality based on ID."""
 
         class User(BaseModel):
-            unique_id: str = Field(description="Unique identifier for equality test")
-            name: str = Field(description="User name for equality test")
+            unique_id: Annotated[str, Field(description="Unique identifier for equality test")]
+            name: Annotated[str, Field(description="User name for equality test")]
 
             @override
             def __eq__(self, other: object) -> bool:
@@ -102,7 +102,7 @@ class TestFlextModelsValue:
         """Test value object creation."""
 
         class Email(BaseModel):
-            address: str = Field(description="Email address for value object test")
+            address: Annotated[str, Field(description="Email address for value object test")]
 
         email1 = Email(address="test@example.com")
         email2 = Email(address="test@example.com")
@@ -114,8 +114,8 @@ class TestFlextModelsValue:
         """Test that value objects are immutable."""
 
         class Price(BaseModel):
-            amount: Decimal = Field(description="Price amount for value object test")
-            currency: str = Field(description="Currency code for value object test")
+            amount: Annotated[Decimal, Field(description="Price amount for value object test")]
+            currency: Annotated[str, Field(description="Currency code for value object test")]
 
         price = Price(amount=Decimal("10.00"), currency="USD")
         assert price.amount == Decimal("10.00")
@@ -129,9 +129,9 @@ class TestFlextModelsAggregateRoot:
         """Test aggregate root creation."""
 
         class Account(BaseModel):
-            unique_id: str = Field(description="Unique account identifier")
-            owner_name: str = Field(description="Account owner name")
-            balance: Decimal = Field(description="Account balance")
+            unique_id: Annotated[str, Field(description="Unique account identifier")]
+            owner_name: Annotated[str, Field(description="Account owner name")]
+            balance: Annotated[Decimal, Field(description="Account balance")]
 
         account = Account(
             unique_id="acc-1",
@@ -243,13 +243,13 @@ class TestFlextModelsEdgeCases:
         """Test entity with complex nested types."""
 
         class Address(BaseModel):
-            street: str = Field(description="Street for nested entity test")
-            city: str = Field(description="City for nested entity test")
+            street: Annotated[str, Field(description="Street for nested entity test")]
+            city: Annotated[str, Field(description="City for nested entity test")]
 
         class Person(BaseModel):
-            unique_id: str = Field(description="Unique person identifier")
-            name: str = Field(description="Person name")
-            address: Address = Field(description="Person address")
+            unique_id: Annotated[str, Field(description="Unique person identifier")]
+            name: Annotated[str, Field(description="Person name")]
+            address: Annotated[Address, Field(description="Person address")]
 
         addr = Address(street="123 Main", city="Springfield")
         person = Person(unique_id="p-1", name="Homer", address=addr)
@@ -259,11 +259,11 @@ class TestFlextModelsEdgeCases:
         """Test aggregate root containing multiple entities."""
 
         class Item(BaseModel):
-            quantity: int = Field(description="Item quantity for cart test")
+            quantity: Annotated[int, Field(description="Item quantity for cart test")]
 
         class ShoppingCart(BaseModel):
-            unique_id: str = Field(description="Unique shopping cart identifier")
-            customer_id: str = Field(description="Customer identifier for cart")
+            unique_id: Annotated[str, Field(description="Unique shopping cart identifier")]
+            customer_id: Annotated[str, Field(description="Customer identifier for cart")]
 
         cart = ShoppingCart(unique_id="cart-1", customer_id="cust-1")
         item = Item(quantity=1)

@@ -15,7 +15,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import ClassVar
+from typing import Annotated, ClassVar
 
 import pytest
 from pydantic import BaseModel, ConfigDict, Field
@@ -35,11 +35,11 @@ class CategoryOperationScenario(BaseModel):
 
     model_config = ConfigDict(frozen=True)
 
-    name: str = Field(description="Category operation scenario name")
-    category: str = Field(description="Category key")
-    entries: list[str] = Field(description="Entries associated with operation")
-    operation: str = Field(description="Category operation name")
-    expected_result: object = Field(description="Expected operation result")
+    name: Annotated[str, Field(description="Category operation scenario name")]
+    category: Annotated[str, Field(description="Category key")]
+    entries: Annotated[list[str], Field(description="Entries associated with operation")]
+    operation: Annotated[str, Field(description="Category operation name")]
+    expected_result: Annotated[object, Field(description="Expected operation result")]
 
 
 def _scenario_id(scenario: CategoryOperationScenario) -> str:
@@ -223,7 +223,7 @@ class TestFlextModelsCollectionsStatistics:
         """Test aggregate with list values."""
 
         class TestStats(m.Statistics):
-            items: list[str] = Field(default_factory=list)
+            items: Annotated[list[str], Field(default_factory=list)]
 
         stats1 = TestStats(items=["a", "b"])
         stats2 = TestStats(items=["c"])
@@ -236,7 +236,7 @@ class TestFlextModelsCollectionsStatistics:
 
         class TestStats(m.Statistics):
             count: int = 0
-            items: list[str] = Field(default_factory=list)
+            items: Annotated[list[str], Field(default_factory=list)]
             name: str = ""
 
         stats1 = TestStats(count=10, items=["a"], name="first")
@@ -349,7 +349,7 @@ class TestFlextModelsCollectionsResults:
         """Test aggregate with list values."""
 
         class TestResult(m.Results):
-            errors: list[str] = Field(default_factory=list)
+            errors: Annotated[list[str], Field(default_factory=list)]
 
         result1 = TestResult(errors=["error1"])
         result2 = TestResult(errors=["error2"])
@@ -362,7 +362,7 @@ class TestFlextModelsCollectionsResults:
         """Test aggregate with dict values."""
 
         class TestResult(m.Results):
-            metadata: dict[str, str] = Field(default_factory=dict)
+            metadata: Annotated[dict[str, str], Field(default_factory=dict)]
 
         result1 = TestResult(metadata={"key1": "value1"})
         result2 = TestResult(metadata={"key2": "value2"})
@@ -376,7 +376,7 @@ class TestFlextModelsCollectionsResults:
 
         class TestResult(m.Results):
             processed: int = 0
-            errors: list[str] = Field(default_factory=list)
+            errors: Annotated[list[str], Field(default_factory=list)]
             status: str = ""
 
         result1 = TestResult(processed=10, errors=["a"], status="ok")

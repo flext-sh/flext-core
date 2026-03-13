@@ -21,7 +21,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from enum import StrEnum
-from typing import ClassVar
+from typing import Annotated, ClassVar
 
 import pytest
 from pydantic import BaseModel, ConfigDict, Field
@@ -54,16 +54,16 @@ class ResultScenario(BaseModel):
 
     model_config = ConfigDict(frozen=True)
 
-    name: str = Field(description="Result scenario name")
-    operation_type: ResultOperationType = Field(description="Result operation type")
-    value: object = Field(description="Input value for result operation")
-    is_success_expected: bool = Field(
+    name: Annotated[str, Field(description="Result scenario name")]
+    operation_type: Annotated[ResultOperationType, Field(description="Result operation type")]
+    value: Annotated[object, Field(description="Input value for result operation")]
+    is_success_expected: Annotated[bool, Field(
         default=True, description="Expected success state"
-    )
-    expected_result: object | None = Field(
+    )]
+    expected_result: Annotated[object | None, Field(
         default=None,
         description="Optional expected result payload",
-    )
+    )]
 
     def __init__(
         self,

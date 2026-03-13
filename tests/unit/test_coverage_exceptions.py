@@ -16,7 +16,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import ClassVar, cast
+from typing import Annotated, ClassVar, cast
 
 import pytest
 from pydantic import BaseModel, ConfigDict, Field
@@ -30,17 +30,17 @@ class ExceptionCreationScenario(BaseModel):
     """Exception creation test scenario."""
 
     model_config = ConfigDict(frozen=True)
-    name: str = Field(description="Exception creation scenario name")
-    exception_type: type[FlextExceptions.BaseError] = Field(
+    name: Annotated[str, Field(description="Exception creation scenario name")]
+    exception_type: Annotated[type[FlextExceptions.BaseError], Field(
         description="Exception class to instantiate"
-    )
-    message: str = Field(description="Exception message")
-    kwargs: dict[str, object | type] = Field(
+    )]
+    message: Annotated[str, Field(description="Exception message")]
+    kwargs: Annotated[dict[str, object | type], Field(
         description="Keyword arguments for exception creation"
-    )
-    expected_attrs: dict[str, object | type] = Field(
+    )]
+    expected_attrs: Annotated[dict[str, object | type], Field(
         description="Expected attributes to validate"
-    )
+    )]
 
 
 class ExceptionScenarios:

@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from pathlib import Path
-from typing import ClassVar, override
+from typing import Annotated, ClassVar, override
 
 from pydantic import Field
 
@@ -37,9 +37,9 @@ from ._stubs_extra import (
 class StubCommandOutput(FlextModels.ArbitraryTypesModel):
     """Stub command output matching p.Infra.CommandOutput protocol."""
 
-    exit_code: int = Field(default=0, description="Command exit code")
-    stdout: str = Field(default="", description="Captured stdout")
-    stderr: str = Field(default="", description="Captured stderr")
+    exit_code: Annotated[int, Field(default=0, description="Command exit code")]
+    stdout: Annotated[str, Field(default="", description="Captured stdout")]
+    stderr: Annotated[str, Field(default="", description="Captured stderr")]
 
 
 class StubRunner:
@@ -239,11 +239,11 @@ class StubTemplates(FlextInfraUtilitiesTemplates):
 class StubProjectInfo(m.Infra.Workspace.ProjectInfo):
     """Stub for p.Infra.ProjectInfo protocol."""
 
-    name: str = Field(default="test-project", description="Project name")
-    path: Path = Field(default=Path("/tmp/test-project"), description="Project path")
-    stack: str = Field(default="python", description="Primary technology stack")
-    has_tests: bool = Field(default=False, description="Project has tests")
-    has_src: bool = Field(default=True, description="Project has source")
+    name: Annotated[str, Field(default="test-project", description="Project name")]
+    path: Annotated[Path, Field(default=Path("/tmp/test-project"), description="Project path")]
+    stack: Annotated[str, Field(default="python", description="Primary technology stack")]
+    has_tests: Annotated[bool, Field(default=False, description="Project has tests")]
+    has_src: Annotated[bool, Field(default=True, description="Project has source")]
 
 
 __all__ = [

@@ -22,7 +22,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from enum import StrEnum
-from typing import ClassVar, override
+from typing import Annotated, ClassVar, override
 
 import pytest
 from pydantic import BaseModel, ConfigDict, Field
@@ -46,13 +46,13 @@ class ServiceScenario(BaseModel):
 
     model_config = ConfigDict(frozen=True)
 
-    name: str = Field(description="Service scenario name")
-    scenario_type: ServiceScenarioType = Field(description="Service scenario type")
-    is_valid_expected: bool = Field(description="Expected is_valid result")
-    service_kwargs: Mapping[str, t.Scalar] | None = Field(
+    name: Annotated[str, Field(description="Service scenario name")]
+    scenario_type: Annotated[ServiceScenarioType, Field(description="Service scenario type")]
+    is_valid_expected: Annotated[bool, Field(description="Expected is_valid result")]
+    service_kwargs: Annotated[Mapping[str, t.Scalar] | None, Field(
         default=None,
         description="Optional scenario service kwargs",
-    )
+    )]
 
 
 class UserService(s[m.ConfigMap]):

@@ -121,10 +121,10 @@ class MockScenario:
         super().__init__()
         self.name = name
         mapper = FlextUtilities
-        self.given = _to_general_mapping(mapper.get(data, "given", default={}))
-        self.when = _to_general_mapping(mapper.get(data, "when", default={}))
-        self.then = _to_general_mapping(mapper.get(data, "then", default={}))
-        self.tags = _to_string_list(mapper.get(data, "tags", default=[]))
+        self.given = _to_general_mapping(mapper.get(data, "given", default=None))
+        self.when = _to_general_mapping(mapper.get(data, "when", default=None))
+        self.then = _to_general_mapping(mapper.get(data, "then", default=None))
+        self.tags = _to_string_list(mapper.get(data, "tags", default=()))
         self.priority = _to_string(
             mapper.get(data, "priority", default="normal"),
             default="normal",

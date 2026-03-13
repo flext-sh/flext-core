@@ -15,7 +15,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import ClassVar
+from typing import Annotated, ClassVar
 
 import pytest
 from pydantic import BaseModel, ConfigDict, Field
@@ -28,15 +28,15 @@ class ExtractPageParamsScenario(BaseModel):
 
     model_config = ConfigDict(frozen=True)
 
-    name: str = Field(description="Extract page params scenario name")
-    query_params: dict[str, str] = Field(description="Input query parameters")
-    default_page: int = Field(description="Default page value")
-    default_page_size: int = Field(description="Default page size value")
-    max_page_size: int = Field(description="Maximum allowed page size")
-    expected_success: bool = Field(description="Expected operation success")
-    expected_page: int | None = Field(description="Expected resolved page")
-    expected_page_size: int | None = Field(description="Expected resolved page size")
-    expected_error: str | None = Field(description="Expected error message")
+    name: Annotated[str, Field(description="Extract page params scenario name")]
+    query_params: Annotated[dict[str, str], Field(description="Input query parameters")]
+    default_page: Annotated[int, Field(description="Default page value")]
+    default_page_size: Annotated[int, Field(description="Default page size value")]
+    max_page_size: Annotated[int, Field(description="Maximum allowed page size")]
+    expected_success: Annotated[bool, Field(description="Expected operation success")]
+    expected_page: Annotated[int | None, Field(description="Expected resolved page")]
+    expected_page_size: Annotated[int | None, Field(description="Expected resolved page size")]
+    expected_error: Annotated[str | None, Field(description="Expected error message")]
 
 
 class ValidatePaginationParamsScenario(BaseModel):
@@ -44,13 +44,13 @@ class ValidatePaginationParamsScenario(BaseModel):
 
     model_config = ConfigDict(frozen=True)
 
-    name: str = Field(description="Validate pagination scenario name")
-    page: int = Field(description="Input page number")
-    page_size: int | None = Field(description="Input page size")
-    max_page_size: int = Field(description="Maximum allowed page size")
-    expected_success: bool = Field(description="Expected validation success")
-    expected_page_size: int | None = Field(description="Expected validated page size")
-    expected_error: str | None = Field(description="Expected validation error")
+    name: Annotated[str, Field(description="Validate pagination scenario name")]
+    page: Annotated[int, Field(description="Input page number")]
+    page_size: Annotated[int | None, Field(description="Input page size")]
+    max_page_size: Annotated[int, Field(description="Maximum allowed page size")]
+    expected_success: Annotated[bool, Field(description="Expected validation success")]
+    expected_page_size: Annotated[int | None, Field(description="Expected validated page size")]
+    expected_error: Annotated[str | None, Field(description="Expected validation error")]
 
 
 class PreparePaginationDataScenario(BaseModel):
@@ -58,17 +58,17 @@ class PreparePaginationDataScenario(BaseModel):
 
     model_config = ConfigDict(frozen=True)
 
-    name: str = Field(description="Prepare pagination data scenario name")
-    data: list[str] | None = Field(description="Input page data")
-    total: int | None = Field(description="Input total count")
-    page: int = Field(description="Requested page")
-    page_size: int = Field(description="Requested page size")
-    expected_success: bool = Field(description="Expected preparation success")
-    expected_total: int | None = Field(description="Expected total in output")
-    expected_total_pages: int | None = Field(
+    name: Annotated[str, Field(description="Prepare pagination data scenario name")]
+    data: Annotated[list[str] | None, Field(description="Input page data")]
+    total: Annotated[int | None, Field(description="Input total count")]
+    page: Annotated[int, Field(description="Requested page")]
+    page_size: Annotated[int, Field(description="Requested page size")]
+    expected_success: Annotated[bool, Field(description="Expected preparation success")]
+    expected_total: Annotated[int | None, Field(description="Expected total in output")]
+    expected_total_pages: Annotated[int | None, Field(
         description="Expected total pages in output"
-    )
-    expected_error: str | None = Field(description="Expected preparation error")
+    )]
+    expected_error: Annotated[str | None, Field(description="Expected preparation error")]
 
 
 class PaginationScenarios:

@@ -16,7 +16,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import math
-from typing import ClassVar, override
+from typing import Annotated, ClassVar, override
 
 import pytest
 from pydantic import BaseModel, ConfigDict, Field
@@ -30,7 +30,7 @@ class TypeGuardScenario(BaseModel):
 
     model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
     name: str
-    value: t.Scalar = Field(default="")
+    value: Annotated[t.Scalar, Field(default="")]
     expected_result: bool = True
 
 
@@ -43,7 +43,7 @@ class NormalizeScenario(BaseModel):
 
     model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
     name: str
-    value: t.Scalar = Field(default="")
+    value: Annotated[t.Scalar, Field(default="")]
     expected_type: type = str
     expected_value: t.Scalar | None = None
 

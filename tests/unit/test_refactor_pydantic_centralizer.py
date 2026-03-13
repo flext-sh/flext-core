@@ -39,8 +39,8 @@ def test_centralizer_converts_typed_dict_factory_to_model(tmp_path: Path) -> Non
     assert "Payload = TypedDict(" not in updated_source
     assert "from ._models import Payload" in updated_source
     assert "class Payload(BaseModel):" in generated_models
-    assert "name: str | None = Field(default=None)" in generated_models
-    assert "active: bool | None = Field(default=None)" in generated_models
+    assert "name: Annotated[str | None, Field(default=None)]" in generated_models
+    assert "active: Annotated[bool | None, Field(default=None)]" in generated_models
 
 
 def test_centralizer_does_not_touch_settings_module(tmp_path: Path) -> None:

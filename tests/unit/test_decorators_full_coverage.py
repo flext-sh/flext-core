@@ -6,7 +6,7 @@ import time
 import warnings
 from collections.abc import Callable
 from types import SimpleNamespace
-from typing import Any, cast
+from typing import Annotated, Any, cast
 
 import pytest
 from pydantic import BaseModel, Field
@@ -38,7 +38,7 @@ class _FakeLogger:
 
 
 class _ObjWithLogger(BaseModel):
-    logger: object = Field(description="Logger instance holder")
+    logger: Annotated[object, Field(description="Logger instance holder")]
 
 
 def test_deprecated_wrapper_emits_warning_and_returns_value() -> None:

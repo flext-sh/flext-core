@@ -23,7 +23,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import ClassVar, cast
+from typing import Annotated, ClassVar, cast
 
 import pytest
 from pydantic import BaseModel, ConfigDict, Field
@@ -36,20 +36,20 @@ class ServiceScenario(BaseModel):
     """Test scenario for service registration and retrieval."""
 
     model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
-    name: str = Field(description="Service scenario name")
-    service: str | int | float | bool = Field(description="Service value to register")
-    description: str = Field(default="", description="Scenario description")
+    name: Annotated[str, Field(description="Service scenario name")]
+    service: Annotated[str | int | float | bool, Field(description="Service value to register")]
+    description: Annotated[str, Field(default="", description="Scenario description")]
 
 
 class TypedRetrievalScenario(BaseModel):
     """Test scenario for typed service retrieval."""
 
     model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
-    name: str = Field(description="Typed retrieval scenario name")
-    service: str | int | float | bool = Field(description="Registered service value")
-    expected_type: type = Field(description="Expected service type")
-    should_pass: bool = Field(description="Whether typed retrieval should succeed")
-    description: str = Field(default="", description="Scenario description")
+    name: Annotated[str, Field(description="Typed retrieval scenario name")]
+    service: Annotated[str | int | float | bool, Field(description="Registered service value")]
+    expected_type: Annotated[type, Field(description="Expected service type")]
+    should_pass: Annotated[bool, Field(description="Whether typed retrieval should succeed")]
+    description: Annotated[str, Field(default="", description="Scenario description")]
 
 
 class ContainerScenarios:

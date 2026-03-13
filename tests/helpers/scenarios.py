@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import ClassVar
+from typing import Annotated, ClassVar
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -22,27 +22,27 @@ class ValidationScenario(BaseModel):
 
     model_config = ConfigDict(frozen=True)
 
-    name: str = Field(description="Unique scenario name")
-    validator_type: str = Field(description="Validator category under test")
-    input_value: object = Field(description="Input value passed to validator")
-    input_params: object | None = Field(
+    name: Annotated[str, Field(description="Unique scenario name")]
+    validator_type: Annotated[str, Field(description="Validator category under test")]
+    input_value: Annotated[object, Field(description="Input value passed to validator")]
+    input_params: Annotated[object | None, Field(
         default=None,
         description="Optional validator parameters for scenario execution",
-    )
-    should_succeed: bool = Field(
+    )]
+    should_succeed: Annotated[bool, Field(
         default=True, description="Whether scenario expects validation success"
-    )
-    expected_value: object | None = Field(
+    )]
+    expected_value: Annotated[object | None, Field(
         default=None,
         description="Expected normalized value when validation succeeds",
-    )
-    expected_error_contains: str | None = Field(
+    )]
+    expected_error_contains: Annotated[str | None, Field(
         default=None,
         description="Expected error substring when validation fails",
-    )
-    description: str | None = Field(
+    )]
+    description: Annotated[str | None, Field(
         default=None, description="Human-readable scenario description"
-    )
+    )]
 
 
 class ParserScenario(BaseModel):
@@ -50,22 +50,22 @@ class ParserScenario(BaseModel):
 
     model_config = ConfigDict(frozen=True)
 
-    name: str = Field(description="Unique parser scenario name")
-    parser_method: str = Field(description="Parser method to execute")
-    input_data: str = Field(description="Raw parser input data")
-    expected_output: object | None = Field(
+    name: Annotated[str, Field(description="Unique parser scenario name")]
+    parser_method: Annotated[str, Field(description="Parser method to execute")]
+    input_data: Annotated[str, Field(description="Raw parser input data")]
+    expected_output: Annotated[object | None, Field(
         default=None,
         description="Expected parsed output for successful scenarios",
-    )
-    should_succeed: bool = Field(
+    )]
+    should_succeed: Annotated[bool, Field(
         default=True, description="Whether parser scenario expects success"
-    )
-    error_contains: str | None = Field(
+    )]
+    error_contains: Annotated[str | None, Field(
         default=None, description="Expected parser error substring"
-    )
-    description: str | None = Field(
+    )]
+    description: Annotated[str | None, Field(
         default=None, description="Human-readable scenario description"
-    )
+    )]
 
 
 class ReliabilityScenario(BaseModel):
@@ -73,17 +73,17 @@ class ReliabilityScenario(BaseModel):
 
     model_config = ConfigDict(frozen=True)
 
-    name: str = Field(description="Unique reliability scenario name")
-    strategy: str = Field(description="Reliability strategy under test")
-    config: m.ConfigMap = Field(description="Reliability configuration payload")
-    simulate_failures: int = Field(description="Number of failures to simulate")
-    expected_state: str = Field(description="Expected strategy terminal state")
-    should_succeed: bool = Field(
+    name: Annotated[str, Field(description="Unique reliability scenario name")]
+    strategy: Annotated[str, Field(description="Reliability strategy under test")]
+    config: Annotated[m.ConfigMap, Field(description="Reliability configuration payload")]
+    simulate_failures: Annotated[int, Field(description="Number of failures to simulate")]
+    expected_state: Annotated[str, Field(description="Expected strategy terminal state")]
+    should_succeed: Annotated[bool, Field(
         default=True, description="Whether scenario expects successful outcome"
-    )
-    description: str | None = Field(
+    )]
+    description: Annotated[str | None, Field(
         default=None, description="Human-readable scenario description"
-    )
+    )]
 
 
 class ValidationScenarios:

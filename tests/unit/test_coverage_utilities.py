@@ -22,7 +22,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from enum import StrEnum
-from typing import ClassVar, cast, override
+from typing import Annotated, ClassVar, cast, override
 
 import pytest
 from pydantic import BaseModel, ConfigDict, Field
@@ -51,15 +51,15 @@ class UtilityTestCase(BaseModel):
     """Test case for utility operations."""
 
     model_config = ConfigDict(frozen=True)
-    operation: UtilityOperationType = Field(description="Utility operation under test")
-    input_data: object | None = Field(
+    operation: Annotated[UtilityOperationType, Field(description="Utility operation under test")]
+    input_data: Annotated[object | None, Field(
         default=None, description="Input data for operation"
-    )
-    expected_type: type | None = Field(default=None, description="Expected output type")
-    should_succeed: bool = Field(
+    )]
+    expected_type: Annotated[type | None, Field(default=None, description="Expected output type")]
+    should_succeed: Annotated[bool, Field(
         default=True, description="Whether operation should succeed"
-    )
-    description: str = Field(default="", description="Scenario description")
+    )]
+    description: Annotated[str, Field(default="", description="Scenario description")]
 
 
 class UtilityScenarios:

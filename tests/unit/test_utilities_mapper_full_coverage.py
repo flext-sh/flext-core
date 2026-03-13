@@ -6,7 +6,7 @@ from collections import UserDict, UserList
 from collections.abc import Callable, ItemsView, Iterator, Mapping
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Protocol, cast, override
+from typing import Annotated, Protocol, cast, override
 
 import pytest
 from pydantic import BaseModel, Field
@@ -18,7 +18,7 @@ class _PortModel(BaseModel):
     """Model with port/nested for mapper take/extract tests."""
 
     port: int = 0
-    nested: dict[str, object] = Field(default_factory=dict)
+    nested: Annotated[dict[str, object], Field(default_factory=dict)]
 
 
 class _AtCallable(Protocol):
@@ -161,8 +161,8 @@ def _build_flags_obj(
 class AttrObject(BaseModel):
     """AttrObject class."""
 
-    name: str = Field(default="name", description="Attribute object name")
-    value: int = Field(default=1, description="Attribute object value")
+    name: Annotated[str, Field(default="name", description="Attribute object name")]
+    value: Annotated[int, Field(default=1, description="Attribute object value")]
 
 
 class BadString:

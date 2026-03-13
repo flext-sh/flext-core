@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import cast
+from typing import Annotated, cast
 
 import pytest
 from pydantic import Field
@@ -25,7 +25,7 @@ class _Rules(m.Rules):
 
 class _Results(m.Results):
     value: int | bool | None = None
-    data: dict[str, object] = Field(default_factory=dict)
+    data: Annotated[dict[str, object], Field(default_factory=dict)]
 
 
 def _default_tags() -> list[str]:
@@ -34,7 +34,7 @@ def _default_tags() -> list[str]:
 
 class _Options(m.Options):
     score: int | float | bool | None = None
-    tags: list[str] = Field(default_factory=_default_tags)
+    tags: Annotated[list[str], Field(default_factory=_default_tags)]
 
 
 class _Config(m.Config):

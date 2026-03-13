@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import override
+from typing import Annotated, override
 
 import pytest
 from pydantic import BaseModel, Field, PrivateAttr
@@ -23,10 +23,10 @@ from ..test_utils import assertion_helpers
 class UserServiceEntity(BaseModel):
     """Test user entity model using dataclass."""
 
-    unique_id: str = Field(description="Unique user identifier")
-    name: str = Field(description="User display name")
-    email: str = Field(description="User email address")
-    active: bool = Field(default=True, description="Whether user is active")
+    unique_id: Annotated[str, Field(description="Unique user identifier")]
+    name: Annotated[str, Field(description="User display name")]
+    email: Annotated[str, Field(description="User email address")]
+    active: Annotated[bool, Field(default=True, description="Whether user is active")]
 
 
 def _empty_user_map() -> dict[str, UserServiceEntity]:

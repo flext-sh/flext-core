@@ -19,6 +19,7 @@ import json
 import os
 import threading
 from pathlib import Path
+from typing import Annotated
 
 import pytest
 import yaml
@@ -32,20 +33,20 @@ class ConfigTestCase(BaseModel):
 
     model_config = ConfigDict(frozen=True)
 
-    test_name: str = Field(description="Configuration test case name")
-    config_data: dict[str, object] = Field(
+    test_name: Annotated[str, Field(description="Configuration test case name")]
+    config_data: Annotated[dict[str, object], Field(
         description="Input configuration payload",
-    )
-    expected_values: dict[str, object] = Field(
+    )]
+    expected_values: Annotated[dict[str, object], Field(
         default_factory=dict,
         description="Expected effective values",
-    )
-    file_format: str = Field(default="json", description="Configuration file format")
-    env_vars: dict[str, str] = Field(
+    )]
+    file_format: Annotated[str, Field(default="json", description="Configuration file format")]
+    env_vars: Annotated[dict[str, str], Field(
         default_factory=dict,
         description="Environment variable overrides",
-    )
-    description: str = Field(default="", description="Human-readable test description")
+    )]
+    description: Annotated[str, Field(default="", description="Human-readable test description")]
 
     def create_temp_file(self, temp_dir: Path) -> Path:
         """Create temporary config file."""
@@ -67,14 +68,14 @@ class ThreadSafetyTest(BaseModel):
 
     model_config = ConfigDict(frozen=True)
 
-    thread_count: int = Field(default=5, description="Number of concurrent threads")
-    operations_per_thread: int = Field(
+    thread_count: Annotated[int, Field(default=5, description="Number of concurrent threads")]
+    operations_per_thread: Annotated[int, Field(
         default=10,
         description="Operations per thread",
-    )
-    description: str = Field(
+    )]
+    description: Annotated[str, Field(
         default="", description="Thread safety scenario description"
-    )
+    )]
 
 
 class ConfigTestFactories:

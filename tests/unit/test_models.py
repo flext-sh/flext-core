@@ -25,7 +25,7 @@ import json
 import threading
 from collections.abc import Callable
 from enum import StrEnum
-from typing import ClassVar
+from typing import Annotated, ClassVar
 
 import pytest
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
@@ -53,10 +53,10 @@ class ModelCreationScenario(BaseModel):
 
     model_config = ConfigDict(frozen=True)
 
-    model_type: ModelType = Field(description="Model type under creation test")
-    field_data: dict[str, object] = Field(description="Model input payload")
-    expected_checks: list[str] = Field(description="Expected validation check labels")
-    description: str = Field(default="", description="Scenario description")
+    model_type: Annotated[ModelType, Field(description="Model type under creation test")]
+    field_data: Annotated[dict[str, object], Field(description="Model input payload")]
+    expected_checks: Annotated[list[str], Field(description="Expected validation check labels")]
+    description: Annotated[str, Field(default="", description="Scenario description")]
 
 
 class SampleAggregate(m.AggregateRoot):
@@ -713,7 +713,7 @@ class TestFlextModels:
         class TestAggregate(m.AggregateRoot):
             name: str
             handler_called: bool = False
-            handler_data: dict[str, object] = Field(default_factory=dict)
+            handler_data: Annotated[dict[str, object], Field(default_factory=dict)]
 
             def _apply_test_event(self, data: dict[str, object]) -> None:
                 self.handler_called = True

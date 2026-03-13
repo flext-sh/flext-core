@@ -24,7 +24,7 @@ from __future__ import annotations
 
 import threading
 import time
-from typing import ClassVar
+from typing import Annotated, ClassVar
 
 import pytest
 from pydantic import BaseModel, ConfigDict, Field
@@ -37,12 +37,12 @@ class ContextOperationScenario(BaseModel):
     """Test scenario for context operations."""
 
     model_config = ConfigDict(frozen=True)
-    name: str = Field(description="Context operation scenario name")
-    key: str = Field(description="Context key under test")
-    value: object = Field(description="Context value under test")
-    expected_success: bool = Field(
+    name: Annotated[str, Field(description="Context operation scenario name")]
+    key: Annotated[str, Field(description="Context key under test")]
+    value: Annotated[object, Field(description="Context value under test")]
+    expected_success: Annotated[bool, Field(
         default=True, description="Whether operation should succeed"
-    )
+    )]
 
 
 class ContextScenarios:

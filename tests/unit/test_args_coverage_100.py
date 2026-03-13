@@ -75,35 +75,35 @@ class TestFlextUtilitiesArgs:
         """Parse kwargs test scenario."""
 
         model_config = ConfigDict(frozen=True)
-        name: str = Field(description="Parse kwargs scenario name")
-        kwargs: t.ConfigMap = Field(description="Keyword arguments input payload")
-        enum_fields: Mapping[str, type[StrEnum]] = Field(
+        name: Annotated[str, Field(description="Parse kwargs scenario name")]
+        kwargs: Annotated[t.ConfigMap, Field(description="Keyword arguments input payload")]
+        enum_fields: Annotated[Mapping[str, type[StrEnum]], Field(
             description="Enum fields map for conversion"
-        )
-        expected_success: bool = Field(description="Whether parsing should succeed")
-        expected_status: TestFlextUtilitiesArgs.StatusEnum | None = Field(
+        )]
+        expected_success: Annotated[bool, Field(description="Whether parsing should succeed")]
+        expected_status: Annotated[TestFlextUtilitiesArgs.StatusEnum | None, Field(
             default=None,
             description="Expected parsed status enum",
-        )
-        expected_error: str | None = Field(
+        )]
+        expected_error: Annotated[str | None, Field(
             default=None, description="Expected error message fragment"
-        )
+        )]
 
     class ValidatedScenario(BaseModel):
         """Validated decorator test scenario."""
 
         model_config = ConfigDict(frozen=True)
-        name: str = Field(description="Validated decorator scenario name")
-        input_value: str | TestFlextUtilitiesArgs.StatusEnum = Field(
+        name: Annotated[str, Field(description="Validated decorator scenario name")]
+        input_value: Annotated[str | TestFlextUtilitiesArgs.StatusEnum, Field(
             description="Input status value"
-        )
-        expected_success: bool = Field(description="Whether validation should succeed")
-        expected_result: str | None = Field(
+        )]
+        expected_success: Annotated[bool, Field(description="Whether validation should succeed")]
+        expected_result: Annotated[str | None, Field(
             default=None, description="Expected validated result value"
-        )
-        expected_error: str | None = Field(
+        )]
+        expected_error: Annotated[str | None, Field(
             default=None, description="Expected error message fragment"
-        )
+        )]
 
     class Scenarios:
         """Centralized test scenarios."""

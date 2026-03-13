@@ -19,7 +19,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from enum import StrEnum
-from typing import ClassVar, cast
+from typing import Annotated, ClassVar, cast
 
 import pytest
 from pydantic import BaseModel, Field
@@ -84,14 +84,14 @@ class OptionsModelForTest(m.Value):
 class StrictOptionsForTest(m.Value):
     """Strict options with validation."""
 
-    value: int = Field(ge=0, le=100)
+    value: Annotated[int, Field(ge=0, le=100)]
 
 
 class DataclassConfigForTest(BaseModel):
     """Test dataclass configuration."""
 
-    name: str = Field(description="Config object name")
-    value: int = Field(default=42, description="Config object value")
+    name: Annotated[str, Field(description="Config object name")]
+    value: Annotated[int, Field(default=42, description="Config object value")]
 
 
 class SingletonWithoutGetGlobalForTest:

@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import time
 from concurrent.futures import Future
-from typing import ClassVar
+from typing import Annotated, ClassVar
 
 import pytest
 from pydantic import BaseModel, ConfigDict, Field
@@ -30,13 +30,13 @@ class TimeoutEnforcerScenario(BaseModel):
 
     model_config = ConfigDict(frozen=True)
 
-    name: str = Field(description="Timeout enforcer scenario name")
-    use_timeout_executor: bool = Field(
+    name: Annotated[str, Field(description="Timeout enforcer scenario name")]
+    use_timeout_executor: Annotated[bool, Field(
         description="Whether timeout executor is enabled"
-    )
-    executor_workers: int = Field(description="Configured executor worker count")
-    expected_workers: int = Field(description="Expected resolved worker count")
-    should_use_executor: bool = Field(description="Expected executor usage flag")
+    )]
+    executor_workers: Annotated[int, Field(description="Configured executor worker count")]
+    expected_workers: Annotated[int, Field(description="Expected resolved worker count")]
+    should_use_executor: Annotated[bool, Field(description="Expected executor usage flag")]
 
 
 class TimeoutEnforcerScenarios:

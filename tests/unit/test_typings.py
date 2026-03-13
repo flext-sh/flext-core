@@ -16,7 +16,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from enum import StrEnum
-from typing import ClassVar, ParamSpec, TypeVar
+from typing import Annotated, ClassVar, ParamSpec, TypeVar
 
 import pytest
 from pydantic import (
@@ -46,13 +46,13 @@ class TypeVarTestCase(BaseModel):
 
     model_config = ConfigDict(frozen=True)
 
-    name: str = Field(description="Type variable test case name")
-    category: TypeVarCategory = Field(description="Type variable category")
-    type_var: object = Field(description="Type variable object under test")
-    expected_not_none: bool = Field(
+    name: Annotated[str, Field(description="Type variable test case name")]
+    category: Annotated[TypeVarCategory, Field(description="Type variable category")]
+    type_var: Annotated[object, Field(description="Type variable object under test")]
+    expected_not_none: Annotated[bool, Field(
         default=True,
         description="Whether object is expected to be non-none",
-    )
+    )]
 
 
 class TypeScenarios:

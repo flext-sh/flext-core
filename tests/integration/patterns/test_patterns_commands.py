@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import override
+from typing import Annotated, override
 
 from pydantic import Field
 
@@ -107,7 +107,7 @@ class CreateUserCommandHandler(
 ):
     """Test handler for CreateUserCommand."""
 
-    created_users: list[dict[str, object]] = Field(default_factory=list)
+    created_users: Annotated[list[dict[str, object]], Field(default_factory=list)]
 
     def __init__(self) -> None:
         """Initialize create user command handler."""

@@ -23,7 +23,7 @@ from __future__ import annotations
 import time
 from collections.abc import Iterator, Mapping
 from enum import StrEnum
-from typing import ClassVar, cast, override
+from typing import Annotated, ClassVar, cast, override
 
 import pytest
 from pydantic import ConfigDict, Field
@@ -71,19 +71,19 @@ class ExceptionScenario(m.Value):
 
     model_config = ConfigDict(frozen=True)
 
-    name: str = Field(description="Exception scenario name")
-    scenario_type: ExceptionScenarioType = Field(description="Exception scenario type")
-    exception_type: type[e.BaseError] | None = Field(
+    name: Annotated[str, Field(description="Exception scenario name")]
+    scenario_type: Annotated[ExceptionScenarioType, Field(description="Exception scenario type")]
+    exception_type: Annotated[type[e.BaseError] | None, Field(
         default=None,
         description="Exception class for the scenario",
-    )
-    should_raise: bool = Field(
+    )]
+    should_raise: Annotated[bool, Field(
         default=False, description="Whether scenario should raise"
-    )
-    error_factory_type: str | None = Field(
+    )]
+    error_factory_type: Annotated[str | None, Field(
         default=None,
         description="Factory type name for create() tests",
-    )
+    )]
 
 
 class ExceptionTypeScenario(m.Value):
@@ -91,13 +91,13 @@ class ExceptionTypeScenario(m.Value):
 
     model_config = ConfigDict(frozen=True)
 
-    name: str = Field(description="Exception type scenario name")
-    scenario_type: ExceptionTypeScenarioType = Field(
+    name: Annotated[str, Field(description="Exception type scenario name")]
+    scenario_type: Annotated[ExceptionTypeScenarioType, Field(
         description="Exception type scenario category",
-    )
-    exception_class: type[e.BaseError] = Field(
+    )]
+    exception_class: Annotated[type[e.BaseError], Field(
         description="Exception class to instantiate",
-    )
+    )]
 
 
 class ExceptionScenarios:

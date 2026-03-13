@@ -518,7 +518,6 @@ class FlextHandlers[MessageT_contra, ResultT](x):
             return r[bool].fail("Message cannot be None")
         return r[bool].ok(value=True)
 
-    @override
     def validate(self, value: MessageT_contra) -> r[bool]:
         """Validate input — override in subclasses for domain-specific logic."""
         return self.validate_message(value)

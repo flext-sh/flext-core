@@ -21,7 +21,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import operator
-from typing import override
+from typing import Annotated, override
 
 import pytest
 from pydantic import BaseModel, ConfigDict, Field
@@ -44,10 +44,10 @@ from .test_utils import assertion_helpers
 class User(BaseModel):
     """User domain model."""
 
-    unique_id: str = Field(description="Unique user identifier")
-    name: str = Field(description="User display name")
-    email: str = Field(description="User email address")
-    active: bool = Field(default=True, description="Whether user is active")
+    unique_id: Annotated[str, Field(description="Unique user identifier")]
+    name: Annotated[str, Field(description="User display name")]
+    email: Annotated[str, Field(description="User email address")]
+    active: Annotated[bool, Field(default=True, description="Whether user is active")]
 
 
 class ServiceTestCase(BaseModel):
@@ -55,16 +55,16 @@ class ServiceTestCase(BaseModel):
 
     model_config = ConfigDict(frozen=True)
 
-    user_id: str = Field(description="User identifier for test case")
-    expected_success: bool = Field(
+    user_id: Annotated[str, Field(description="User identifier for test case")]
+    expected_success: Annotated[bool, Field(
         default=True, description="Whether service call is expected to succeed"
-    )
-    expected_error: str | None = Field(
+    )]
+    expected_error: Annotated[str | None, Field(
         default=None, description="Expected error substring for failure cases"
-    )
-    description: str = Field(
+    )]
+    description: Annotated[str, Field(
         default="", description="Human-readable test case description"
-    )
+    )]
 
     def create_user_service(self) -> GetUserService:
         """Create GetUserService instance for this test case."""
@@ -76,19 +76,19 @@ class RailwayTestCase(BaseModel):
 
     model_config = ConfigDict(frozen=True)
 
-    user_ids: list[str] = Field(description="User identifiers used in pipeline")
-    operations: list[str] = Field(
+    user_ids: Annotated[list[str], Field(description="User identifiers used in pipeline")]
+    operations: Annotated[list[str], Field(
         default_factory=list, description="Pipeline operations to execute"
-    )
-    expected_pipeline_length: int = Field(
+    )]
+    expected_pipeline_length: Annotated[int, Field(
         default=1, description="Expected number of pipeline stages"
-    )
-    should_fail_at: int | None = Field(
+    )]
+    should_fail_at: Annotated[int | None, Field(
         default=None, description="Optional pipeline step expected to fail"
-    )
-    description: str = Field(
+    )]
+    description: Annotated[str, Field(
         default="", description="Human-readable railway test case description"
-    )
+    )]
 
     def execute_v1_pipeline(self) -> r[str | User | EmailResponse]:
         """Execute V1 railway pipeline for this test case."""

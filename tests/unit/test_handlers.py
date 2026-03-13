@@ -15,7 +15,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import math
-from typing import ClassVar, override
+from typing import Annotated, ClassVar, override
 
 import pytest
 from pydantic import BaseModel, ConfigDict, Field
@@ -66,29 +66,29 @@ class HandlerConfigScenario(BaseModel):
     """Handler configuration test scenario."""
 
     model_config = ConfigDict(frozen=True)
-    name: str = Field(description="Handler config scenario name")
-    handler_id: str = Field(description="Handler identifier")
-    handler_name: str = Field(description="Handler display name")
-    handler_type: str | None = Field(default=None, description="Handler type name")
-    handler_mode: str | None = Field(default=None, description="Handler mode name")
-    command_timeout: int | None = Field(
+    name: Annotated[str, Field(description="Handler config scenario name")]
+    handler_id: Annotated[str, Field(description="Handler identifier")]
+    handler_name: Annotated[str, Field(description="Handler display name")]
+    handler_type: Annotated[str | None, Field(default=None, description="Handler type name")]
+    handler_mode: Annotated[str | None, Field(default=None, description="Handler mode name")]
+    command_timeout: Annotated[int | None, Field(
         default=None, description="Command timeout in seconds"
-    )
-    max_command_retries: int | None = Field(
+    )]
+    max_command_retries: Annotated[int | None, Field(
         default=None, description="Maximum retry count"
-    )
-    metadata: dict[str, object] | None = Field(
+    )]
+    metadata: Annotated[dict[str, object] | None, Field(
         default=None, description="Handler metadata payload"
-    )
+    )]
 
 
 class HandlerTypeScenario(BaseModel):
     """Handler type test scenario."""
 
     model_config = ConfigDict(frozen=True)
-    name: str = Field(description="Handler type scenario name")
-    handler_type: c.Cqrs.HandlerType = Field(description="Configured handler type")
-    handler_mode: c.Cqrs.HandlerType = Field(description="Configured handler mode")
+    name: Annotated[str, Field(description="Handler type scenario name")]
+    handler_type: Annotated[c.Cqrs.HandlerType, Field(description="Configured handler type")]
+    handler_mode: Annotated[c.Cqrs.HandlerType, Field(description="Configured handler mode")]
 
 
 class HandlerScenarios:
@@ -615,8 +615,8 @@ class TestFlextHandlers:
         """Test dataclass message validation."""
 
         class DataClassMessage(BaseModel):
-            value: str = Field(description="Message value")
-            number: int = Field(description="Message number")
+            value: Annotated[str, Field(description="Message value")]
+            number: Annotated[int, Field(description="Message number")]
 
         config = FlextTestsUtilities.Tests.HandlerHelpers.create_handler_config(
             "test_dataclass_message",

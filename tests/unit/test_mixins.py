@@ -23,7 +23,7 @@ from __future__ import annotations
 
 import time
 from enum import StrEnum
-from typing import ClassVar
+from typing import Annotated, ClassVar
 
 import pytest
 from pydantic import BaseModel, ConfigDict, Field
@@ -65,39 +65,39 @@ class ServiceMixinScenario(BaseModel):
     """Service mixin test scenario definition."""
 
     model_config = ConfigDict(frozen=True)
-    name: str = Field(description="Service mixin scenario name")
-    scenario_type: ServiceMixinScenarioType = Field(
+    name: Annotated[str, Field(description="Service mixin scenario name")]
+    scenario_type: Annotated[ServiceMixinScenarioType, Field(
         description="Service mixin scenario type"
-    )
-    needs_init: bool = Field(
+    )]
+    needs_init: Annotated[bool, Field(
         default=False, description="Whether service initialization is required"
-    )
-    operation_context: str | None = Field(
+    )]
+    operation_context: Annotated[str | None, Field(
         default=None, description="Optional operation context name"
-    )
+    )]
 
 
 class ModelConversionScenario(BaseModel):
     """ModelConversion test scenario definition."""
 
     model_config = ConfigDict(frozen=True)
-    name: str = Field(description="Model conversion scenario name")
-    scenario_type: ModelConversionScenarioType = Field(
+    name: Annotated[str, Field(description="Model conversion scenario name")]
+    scenario_type: Annotated[ModelConversionScenarioType, Field(
         description="Model conversion scenario type"
-    )
-    input_value: object = Field(description="Input value for conversion")
-    expected_output: m.ConfigMap = Field(description="Expected conversion output")
+    )]
+    input_value: Annotated[object, Field(description="Input value for conversion")]
+    expected_output: Annotated[m.ConfigMap, Field(description="Expected conversion output")]
 
 
 class ResultHandlingScenario(BaseModel):
     """ResultHandling test scenario definition."""
 
     model_config = ConfigDict(frozen=True)
-    name: str = Field(description="Result handling scenario name")
-    scenario_type: ResultHandlingScenarioType = Field(
+    name: Annotated[str, Field(description="Result handling scenario name")]
+    scenario_type: Annotated[ResultHandlingScenarioType, Field(
         description="Result handling scenario type"
-    )
-    input_value: object = Field(description="Input value for result handling")
+    )]
+    input_value: Annotated[object, Field(description="Input value for result handling")]
 
 
 class MixinScenarios:

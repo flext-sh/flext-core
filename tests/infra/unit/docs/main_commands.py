@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 from collections.abc import Callable
+from typing import Annotated
 
 import pytest
 from pydantic import BaseModel, Field
@@ -18,7 +19,7 @@ from flext_tests import tm
 
 
 class _Report(BaseModel):
-    result: str = Field(default="OK")
+    result: Annotated[str, Field(default="OK")]
 
 
 def _cli_args(

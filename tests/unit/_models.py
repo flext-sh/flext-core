@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import ClassVar, Never, TypeAlias, override
+from typing import Annotated, ClassVar, Never, TypeAlias, override
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -138,8 +138,8 @@ class CacheTestModel(BaseModel):
 
     name: str
     value: int
-    tags: list[str] = Field(default_factory=list)
-    meta: dict[str, str] = Field(default_factory=dict)
+    tags: Annotated[list[str], Field(default_factory=list)]
+    meta: Annotated[dict[str, str], Field(default_factory=dict)]
 
 
 class NestedModel(BaseModel):
@@ -155,7 +155,7 @@ class ConfigModelForTest(BaseModel):
     model_config = ConfigDict(validate_assignment=True, extra="forbid")
 
     name: str = "default_config"
-    timeout: int = Field(default=30, ge=0)
+    timeout: Annotated[int, Field(default=30, ge=0)]
     enabled: bool = True
 
 

@@ -14,7 +14,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import ClassVar
+from typing import Annotated, ClassVar
 
 import pytest
 from pydantic import BaseModel, ConfigDict, Field
@@ -27,13 +27,13 @@ class ResultOperationScenario(BaseModel):
 
     model_config = ConfigDict(frozen=True)
 
-    name: str = Field(description="Result operation scenario name")
-    initial_value: int | None = Field(description="Initial result value")
-    operations: list[str] = Field(description="Operation chain to apply")
-    expected_success: bool = Field(description="Expected success state")
-    expected_value: int | None = Field(
+    name: Annotated[str, Field(description="Result operation scenario name")]
+    initial_value: Annotated[int | None, Field(description="Initial result value")]
+    operations: Annotated[list[str], Field(description="Operation chain to apply")]
+    expected_success: Annotated[bool, Field(description="Expected success state")]
+    expected_value: Annotated[int | None, Field(
         default=None, description="Expected resulting value"
-    )
+    )]
 
 
 class ExceptionTypeScenario(BaseModel):
@@ -41,12 +41,12 @@ class ExceptionTypeScenario(BaseModel):
 
     model_config = ConfigDict(frozen=True)
 
-    name: str = Field(description="Exception scenario name")
-    exception_type: type[FlextExceptions.BaseError] = Field(
+    name: Annotated[str, Field(description="Exception scenario name")]
+    exception_type: Annotated[type[FlextExceptions.BaseError], Field(
         description="Exception class under test",
-    )
-    message: str = Field(description="Exception message")
-    expected_in_str: str = Field(description="Expected string marker")
+    )]
+    message: Annotated[str, Field(description="Exception message")]
+    expected_in_str: Annotated[str, Field(description="Expected string marker")]
 
 
 class CoverageScenarios:

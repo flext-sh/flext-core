@@ -20,7 +20,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import ClassVar
+from typing import Annotated, ClassVar
 
 import pytest
 from pydantic import BaseModel, ConfigDict, Field
@@ -32,17 +32,17 @@ class ConstantPathScenario(BaseModel):
     """Test scenario for constant path access."""
 
     model_config = ConfigDict(frozen=True)
-    path: str = Field(description="Constant access path")
-    expected: object = Field(description="Expected constant value")
+    path: Annotated[str, Field(description="Constant access path")]
+    expected: Annotated[object, Field(description="Expected constant value")]
 
 
 class PatternValidationScenario(BaseModel):
     """Test scenario for pattern validation."""
 
     model_config = ConfigDict(frozen=True)
-    pattern_attr: str = Field(description="Pattern attribute path")
-    valid_cases: list[str] = Field(description="Inputs expected to match the pattern")
-    invalid_cases: list[str] = Field(description="Inputs expected to fail the pattern")
+    pattern_attr: Annotated[str, Field(description="Pattern attribute path")]
+    valid_cases: Annotated[list[str], Field(description="Inputs expected to match the pattern")]
+    invalid_cases: Annotated[list[str], Field(description="Inputs expected to fail the pattern")]
 
 
 class ConstantsScenarios:

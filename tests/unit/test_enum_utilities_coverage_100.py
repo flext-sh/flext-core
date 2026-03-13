@@ -16,7 +16,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from enum import StrEnum
-from typing import ClassVar
+from typing import Annotated, ClassVar
 
 import pytest
 from pydantic import BaseModel, ConfigDict, Field
@@ -45,59 +45,59 @@ class IsMemberScenario(BaseModel):
     """Is member test scenario."""
 
     model_config = ConfigDict(frozen=True)
-    name: str = Field(description="Is member scenario name")
-    value: object = Field(description="Input value to validate")
-    expected: bool = Field(description="Expected membership result")
+    name: Annotated[str, Field(description="Is member scenario name")]
+    value: Annotated[object, Field(description="Input value to validate")]
+    expected: Annotated[bool, Field(description="Expected membership result")]
 
 
 class IsSubsetScenario(BaseModel):
     """Is subset test scenario."""
 
     model_config = ConfigDict(frozen=True)
-    name: str = Field(description="Is subset scenario name")
-    valid_members: frozenset[Status] = Field(description="Allowed enum members")
-    value: object = Field(description="Input value to validate")
-    expected: bool = Field(description="Expected subset membership result")
+    name: Annotated[str, Field(description="Is subset scenario name")]
+    valid_members: Annotated[frozenset[Status], Field(description="Allowed enum members")]
+    value: Annotated[object, Field(description="Input value to validate")]
+    expected: Annotated[bool, Field(description="Expected subset membership result")]
 
 
 class ParseScenario(BaseModel):
     """Parse test scenario."""
 
     model_config = ConfigDict(frozen=True)
-    name: str = Field(description="Parse scenario name")
-    value: str | Status = Field(description="Input value to parse")
-    expected_success: bool = Field(description="Whether parse should succeed")
-    expected_status: Status | None = Field(
+    name: Annotated[str, Field(description="Parse scenario name")]
+    value: Annotated[str | Status, Field(description="Input value to parse")]
+    expected_success: Annotated[bool, Field(description="Whether parse should succeed")]
+    expected_status: Annotated[Status | None, Field(
         default=None, description="Expected parsed enum status"
-    )
-    expected_error: str | None = Field(
+    )]
+    expected_error: Annotated[str | None, Field(
         default=None, description="Expected error message fragment"
-    )
+    )]
 
 
 class ParseOrDefaultScenario(BaseModel):
     """Parse or default test scenario."""
 
     model_config = ConfigDict(frozen=True)
-    name: str = Field(description="Parse or default scenario name")
-    value: str | Status | None = Field(description="Input value to parse")
-    default: Status = Field(description="Default enum value")
-    expected: Status = Field(description="Expected output enum value")
+    name: Annotated[str, Field(description="Parse or default scenario name")]
+    value: Annotated[str | Status | None, Field(description="Input value to parse")]
+    default: Annotated[Status, Field(description="Default enum value")]
+    expected: Annotated[Status, Field(description="Expected output enum value")]
 
 
 class CoerceValidatorScenario(BaseModel):
     """Coerce validator test scenario."""
 
     model_config = ConfigDict(frozen=True)
-    name: str = Field(description="Coerce validator scenario name")
-    value: t.Primitives | Status | None = Field(description="Input value for coercion")
-    expected_success: bool = Field(description="Whether coercion should succeed")
-    expected_status: Status | None = Field(
+    name: Annotated[str, Field(description="Coerce validator scenario name")]
+    value: Annotated[t.Primitives | Status | None, Field(description="Input value for coercion")]
+    expected_success: Annotated[bool, Field(description="Whether coercion should succeed")]
+    expected_status: Annotated[Status | None, Field(
         default=None, description="Expected coerced status"
-    )
-    expected_error: str | None = Field(
+    )]
+    expected_error: Annotated[str | None, Field(
         default=None, description="Expected error message fragment"
-    )
+    )]
 
 
 class EnumScenarios:
