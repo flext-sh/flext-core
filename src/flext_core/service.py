@@ -16,7 +16,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from collections.abc import Mapping, Sequence
 from types import ModuleType
-from typing import cast, override
+from typing import Annotated, cast, override
 
 from pydantic import (
     ConfigDict,
@@ -72,25 +72,31 @@ class FlextService[TDomainResult: object = object](x, ABC):
         validate_assignment=True,
     )
     # --- Service Bootstrap Configuration ---
-    config_type: type[FlextSettings] | None = Field(default=None, exclude=True)
-    config_overrides: Mapping[str, t.Scalar] | None = Field(default=None, exclude=True)
-    initial_context: FlextContext | None = Field(default=None, exclude=True)
-    subproject: str | None = Field(default=None, exclude=True)
-    services: Mapping[str, t.RegisterableService] | None = Field(
-        default=None, exclude=True
-    )
-    factories: Mapping[str, t.FactoryCallable] | None = Field(
-        default=None, exclude=True
-    )
-    resources: Mapping[str, t.ResourceCallable] | None = Field(
-        default=None, exclude=True
-    )
-    container_overrides: Mapping[str, t.Scalar] | None = Field(
-        default=None, exclude=True
-    )
-    wire_modules: Sequence[ModuleType] | None = Field(default=None, exclude=True)
-    wire_packages: Sequence[str] | None = Field(default=None, exclude=True)
-    wire_classes: Sequence[type] | None = Field(default=None, exclude=True)
+    config_type: Annotated[
+        type[FlextSettings] | None, Field(default=None, exclude=True)
+    ]
+    config_overrides: Annotated[
+        Mapping[str, t.Scalar] | None, Field(default=None, exclude=True)
+    ]
+    initial_context: Annotated[FlextContext | None, Field(default=None, exclude=True)]
+    subproject: Annotated[str | None, Field(default=None, exclude=True)]
+    services: Annotated[
+        Mapping[str, t.RegisterableService] | None, Field(default=None, exclude=True)
+    ]
+    factories: Annotated[
+        Mapping[str, t.FactoryCallable] | None, Field(default=None, exclude=True)
+    ]
+    resources: Annotated[
+        Mapping[str, t.ResourceCallable] | None, Field(default=None, exclude=True)
+    ]
+    container_overrides: Annotated[
+        Mapping[str, t.Scalar] | None, Field(default=None, exclude=True)
+    ]
+    wire_modules: Annotated[
+        Sequence[ModuleType] | None, Field(default=None, exclude=True)
+    ]
+    wire_packages: Annotated[Sequence[str] | None, Field(default=None, exclude=True)]
+    wire_classes: Annotated[Sequence[type] | None, Field(default=None, exclude=True)]
 
     # --- Internal State ---
     _execution_result: r[TDomainResult] | None = PrivateAttr(default=None)

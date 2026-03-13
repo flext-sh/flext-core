@@ -62,7 +62,7 @@ from collections.abc import (
 from datetime import UTC, datetime
 from pathlib import Path
 from types import ModuleType, TracebackType
-from typing import ClassVar, Self, TypeGuard, override
+from typing import Annotated, ClassVar, Self, TypeGuard, override
 
 import structlog
 from dependency_injector import containers, providers, wiring
@@ -1277,11 +1277,13 @@ class FlextRuntime:
             populate_by_name=True,
         )
 
-        is_success: bool = Field(default=True)
+        is_success: Annotated[bool, Field(default=True)]
         _payload: T | None = PrivateAttr(default=None)
-        error: str | None = Field(default=None)
-        error_code: str | None = Field(default=None)
-        error_data: FlextModelsContainers.ConfigMap | None = Field(default=None)
+        error: Annotated[str | None, Field(default=None)]
+        error_code: Annotated[str | None, Field(default=None)]
+        error_data: Annotated[
+            FlextModelsContainers.ConfigMap | None, Field(default=None)
+        ]
 
         _exception: BaseException | None = PrivateAttr(default=None)
         _result_logger: p.Log.StructlogLogger | None = PrivateAttr(default=None)

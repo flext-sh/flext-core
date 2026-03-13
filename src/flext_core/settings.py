@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import threading
 from collections.abc import Callable, Mapping, Sequence
-from typing import ClassVar, Self
+from typing import Annotated, ClassVar, Self
 
 from pydantic import (
     BaseModel,
@@ -60,79 +60,123 @@ class FlextSettings(BaseSettings, FlextRuntime):
         validate_assignment=True,
     )
 
-    app_name: str = Field(default="flext", description="Application name")
-    version: str = Field(default=__version__, description="Application version")
-    debug: bool = Field(default=False, description="Enable debug mode")
-    trace: bool = Field(default=False, description="Enable trace mode")
-    log_level: c.Settings.LogLevel = Field(
-        default=c.Settings.LogLevel.INFO, description="Log level"
-    )
-    async_logging: bool = Field(
-        default=True, description="Enable asynchronous buffered logging for performance"
-    )
-    enable_caching: bool = Field(
-        default=c.Settings.DEFAULT_ENABLE_CACHING, description="Enable caching"
-    )
-    cache_ttl: int = Field(default=c.Defaults.CACHE_TTL, description="Cache TTL")
-    database_url: str = Field(
-        default=c.Defaults.DATABASE_URL, description="Database URL"
-    )
-    database_pool_size: int = Field(
-        default=c.Performance.DEFAULT_DB_POOL_SIZE, description="Database pool size"
-    )
-    circuit_breaker_threshold: int = Field(
-        default=c.Reliability.DEFAULT_FAILURE_THRESHOLD,
-        description="Circuit breaker threshold",
-    )
-    rate_limit_max_requests: int = Field(
-        default=c.Reliability.DEFAULT_RATE_LIMIT_MAX_REQUESTS,
-        description="Rate limit max requests",
-    )
-    rate_limit_window_seconds: int = Field(
-        default=c.Reliability.DEFAULT_RATE_LIMIT_WINDOW_SECONDS,
-        description="Rate limit window",
-    )
-    retry_delay: int = Field(
-        default=c.Reliability.DEFAULT_RETRY_DELAY_SECONDS, description="Retry delay"
-    )
-    max_retry_attempts: int = Field(
-        default=c.Reliability.MAX_RETRY_ATTEMPTS, description="Max retry attempts"
-    )
-    enable_timeout_executor: bool = Field(
-        default=True, description="Enable timeout executor"
-    )
-    dispatcher_enable_logging: bool = Field(
-        default=c.Dispatcher.DEFAULT_ENABLE_LOGGING,
-        description="Enable dispatcher logging",
-    )
-    dispatcher_auto_context: bool = Field(
-        default=c.Dispatcher.DEFAULT_AUTO_CONTEXT,
-        description="Auto context in dispatcher",
-    )
-    dispatcher_timeout_seconds: float = Field(
-        default=c.Dispatcher.DEFAULT_TIMEOUT_SECONDS, description="Dispatcher timeout"
-    )
-    dispatcher_enable_metrics: bool = Field(
-        default=c.Dispatcher.DEFAULT_ENABLE_METRICS,
-        description="Enable dispatcher metrics",
-    )
-    executor_workers: int = Field(
-        default=c.Container.DEFAULT_WORKERS, description="Executor workers"
-    )
-    timeout_seconds: float = Field(
-        default=c.Network.DEFAULT_TIMEOUT, description="Default timeout"
-    )
-    max_workers: int = Field(
-        default=c.Processing.DEFAULT_MAX_WORKERS, description="Max workers"
-    )
-    max_batch_size: int = Field(
-        default=c.Performance.MAX_BATCH_SIZE, description="Max batch size"
-    )
-    api_key: str | None = Field(default=None, description="API key")
-    exception_failure_level: c.Exceptions.FailureLevel = Field(
-        default=c.Exceptions.FAILURE_LEVEL_DEFAULT,
-        description="Exception failure level",
-    )
+    app_name: Annotated[str, Field(default="flext", description="Application name")]
+    version: Annotated[
+        str, Field(default=__version__, description="Application version")
+    ]
+    debug: Annotated[bool, Field(default=False, description="Enable debug mode")]
+    trace: Annotated[bool, Field(default=False, description="Enable trace mode")]
+    log_level: Annotated[
+        c.Settings.LogLevel,
+        Field(default=c.Settings.LogLevel.INFO, description="Log level"),
+    ]
+    async_logging: Annotated[
+        bool,
+        Field(
+            default=True,
+            description="Enable asynchronous buffered logging for performance",
+        ),
+    ]
+    enable_caching: Annotated[
+        bool,
+        Field(default=c.Settings.DEFAULT_ENABLE_CACHING, description="Enable caching"),
+    ]
+    cache_ttl: Annotated[
+        int, Field(default=c.Defaults.CACHE_TTL, description="Cache TTL")
+    ]
+    database_url: Annotated[
+        str, Field(default=c.Defaults.DATABASE_URL, description="Database URL")
+    ]
+    database_pool_size: Annotated[
+        int,
+        Field(
+            default=c.Performance.DEFAULT_DB_POOL_SIZE, description="Database pool size"
+        ),
+    ]
+    circuit_breaker_threshold: Annotated[
+        int,
+        Field(
+            default=c.Reliability.DEFAULT_FAILURE_THRESHOLD,
+            description="Circuit breaker threshold",
+        ),
+    ]
+    rate_limit_max_requests: Annotated[
+        int,
+        Field(
+            default=c.Reliability.DEFAULT_RATE_LIMIT_MAX_REQUESTS,
+            description="Rate limit max requests",
+        ),
+    ]
+    rate_limit_window_seconds: Annotated[
+        int,
+        Field(
+            default=c.Reliability.DEFAULT_RATE_LIMIT_WINDOW_SECONDS,
+            description="Rate limit window",
+        ),
+    ]
+    retry_delay: Annotated[
+        int,
+        Field(
+            default=c.Reliability.DEFAULT_RETRY_DELAY_SECONDS, description="Retry delay"
+        ),
+    ]
+    max_retry_attempts: Annotated[
+        int,
+        Field(
+            default=c.Reliability.MAX_RETRY_ATTEMPTS, description="Max retry attempts"
+        ),
+    ]
+    enable_timeout_executor: Annotated[
+        bool, Field(default=True, description="Enable timeout executor")
+    ]
+    dispatcher_enable_logging: Annotated[
+        bool,
+        Field(
+            default=c.Dispatcher.DEFAULT_ENABLE_LOGGING,
+            description="Enable dispatcher logging",
+        ),
+    ]
+    dispatcher_auto_context: Annotated[
+        bool,
+        Field(
+            default=c.Dispatcher.DEFAULT_AUTO_CONTEXT,
+            description="Auto context in dispatcher",
+        ),
+    ]
+    dispatcher_timeout_seconds: Annotated[
+        float,
+        Field(
+            default=c.Dispatcher.DEFAULT_TIMEOUT_SECONDS,
+            description="Dispatcher timeout",
+        ),
+    ]
+    dispatcher_enable_metrics: Annotated[
+        bool,
+        Field(
+            default=c.Dispatcher.DEFAULT_ENABLE_METRICS,
+            description="Enable dispatcher metrics",
+        ),
+    ]
+    executor_workers: Annotated[
+        int, Field(default=c.Container.DEFAULT_WORKERS, description="Executor workers")
+    ]
+    timeout_seconds: Annotated[
+        float, Field(default=c.Network.DEFAULT_TIMEOUT, description="Default timeout")
+    ]
+    max_workers: Annotated[
+        int, Field(default=c.Processing.DEFAULT_MAX_WORKERS, description="Max workers")
+    ]
+    max_batch_size: Annotated[
+        int, Field(default=c.Performance.MAX_BATCH_SIZE, description="Max batch size")
+    ]
+    api_key: Annotated[str | None, Field(default=None, description="API key")]
+    exception_failure_level: Annotated[
+        c.Exceptions.FailureLevel,
+        Field(
+            default=c.Exceptions.FAILURE_LEVEL_DEFAULT,
+            description="Exception failure level",
+        ),
+    ]
     _di_provider: t.Scalar | None = PrivateAttr(default=None)
 
     def __new__(cls, **_kwargs: object) -> Self:
@@ -279,17 +323,24 @@ class FlextSettings(BaseSettings, FlextRuntime):
 
         model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
 
-        config_class: type[BaseSettings] = Field(
-            description="Settings class to instantiate",
-        )
-        env_prefix: str = Field(
-            default=c.Platform.ENV_PREFIX,
-            description="Environment variable prefix for settings resolution",
-        )
-        env_file: str | None = Field(
-            default=None,
-            description="Path to .env file for environment variable loading",
-        )
+        config_class: Annotated[
+            type[BaseSettings],
+            Field(description="Settings class to instantiate"),
+        ]
+        env_prefix: Annotated[
+            str,
+            Field(
+                default=c.Platform.ENV_PREFIX,
+                description="Environment variable prefix for settings resolution",
+            ),
+        ]
+        env_file: Annotated[
+            str | None,
+            Field(
+                default=None,
+                description="Path to .env file for environment variable loading",
+            ),
+        ]
 
         def create_config(self) -> BaseSettings:
             """Create configuration instance."""
