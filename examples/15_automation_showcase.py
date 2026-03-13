@@ -164,7 +164,7 @@ class AutomationService(s[m.ConfigMap]):
         cached = get_cached()
         config_result = get_default() if cached.is_failure else cached
         if config_result.is_success:
-            config = config_result.value
+            config: m.ConfigMap = config_result.value
             mode = config.get("automation_mode", "unknown")
             batch_size = config.get("batch_size", 0)
             print(f"✅ Config acquired: {mode}")
@@ -235,7 +235,7 @@ class AutomationService(s[m.ConfigMap]):
             r[m.ConfigMap].ok(automation_input).flow_through(validate, enrich)
         )
         if pipeline_result.is_success:
-            data = pipeline_result.value
+            data: m.ConfigMap = pipeline_result.value
             task_type = data.get("task_type", "")
             duration = data.get("duration_ms", 0)
             print(f"✅ Pipeline complete: {task_type}")
@@ -304,7 +304,7 @@ class AutomationService(s[m.ConfigMap]):
             return cache
 
         fail_attempt: r[m.ConfigMap] = r[m.ConfigMap].fail("No cached config")
-        config = load_config() if fail_attempt.is_failure else fail_attempt.value
+        config: m.ConfigMap = load_config() if fail_attempt.is_failure else fail_attempt.value
         config_count = len(config.root)
         print(f"✅ Config loaded: {config_count} settings")
         cached_config = load_config()
@@ -350,7 +350,7 @@ class AutomationService(s[m.ConfigMap]):
             )
 
         fail_result: r[m.ConfigMap] = r[m.ConfigMap].fail("No existing engine")
-        engine = create_engine() if fail_result.is_failure else fail_result.value
+        engine: m.ConfigMap = create_engine() if fail_result.is_failure else fail_result.value
         engine_id = str(engine.get("engine_id", "unknown"))
         worker_count_text = str(engine.get("worker_count", 0))
         worker_count = int(worker_count_text) if worker_count_text.isdigit() else 0
