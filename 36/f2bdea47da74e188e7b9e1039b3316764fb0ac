@@ -1,0 +1,23 @@
+src/flext_core/decorators.py
+  00fa95b37860ab7c 35
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.11",
+  "base_commit_sha": "36f2bdea47da74e188e7b9e1039b3316764fb0ac",
+  "prompts": {
+    "00fa95b37860ab7c": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_31b7450d5ffeFd8tYeKPduNQ1d",
+        "model": "anthropic/claude-sonnet-4-6"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 2,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    }
+  }
+}
