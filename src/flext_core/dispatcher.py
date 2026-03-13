@@ -24,7 +24,7 @@ from flext_core.loggings import FlextLogger
 class DispatchMessageProtocol(Protocol):
     """Protocol for objects that can dispatch messages."""
 
-    __slots__ = ()
+    __slots__: tuple[()] = ()
 
     def dispatch_message(self, message: p.Routable) -> object:
         """Dispatch a message."""
@@ -35,7 +35,7 @@ class DispatchMessageProtocol(Protocol):
 class HandleProtocol(Protocol):
     """Protocol for objects that can handle messages."""
 
-    __slots__ = ()
+    __slots__: tuple[()] = ()
 
     def handle(self, message: p.Routable) -> object:
         """Handle a message."""
@@ -46,7 +46,7 @@ class HandleProtocol(Protocol):
 class ExecuteProtocol(Protocol):
     """Protocol for objects that can execute messages."""
 
-    __slots__ = ()
+    __slots__: tuple[()] = ()
 
     def execute(self, message: p.Routable) -> object:
         """Execute a message."""

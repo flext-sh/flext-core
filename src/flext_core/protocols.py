@@ -306,6 +306,7 @@ class FlextProtocols:
         """
 
         @classmethod
+        @override
         def __subclasshook__(cls, cls_: type) -> bool:
             """Enable isinstance() for Pydantic-backed implementations.
 

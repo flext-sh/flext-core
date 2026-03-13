@@ -407,7 +407,7 @@ def test_configure_structlog_edge_paths(monkeypatch: pytest.MonkeyPatch) -> None
             self, name: str
         ) -> t.Scalar | type | Callable[..., t.Scalar] | types.SimpleNamespace:
             if name == "types":
-                return types.SimpleNamespace(Processor=type)
+                return types.SimpleNamespace(Processor=object)
             if name != "PrintLoggerFactory":
                 raise AttributeError(name)
             self._print_access += 1

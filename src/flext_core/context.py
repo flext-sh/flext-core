@@ -16,7 +16,7 @@ import enum
 from collections.abc import Callable, Generator, Mapping
 from contextlib import contextmanager
 from datetime import datetime
-from typing import ClassVar, Final, Self, cast, overload
+from typing import ClassVar, Final, Self, cast, overload, override
 
 from pydantic import BaseModel, Field, PrivateAttr
 
@@ -643,7 +643,7 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
         """Set all metadata for the context (used internally for cloning)."""
         self._metadata = metadata
 
-    def set_metadata(self, key: str, value: object) -> None:
+    def set_metadata(self, key: str, value: t.MetadataValue) -> None:
         """Set metadata for the context.
 
         Args:
@@ -651,7 +651,7 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
             value: The metadata value
 
         """
-        normalized_value: object = FlextRuntime.normalize_to_metadata(value)
+        normalized_value: t.MetadataValue = FlextRuntime.normalize_to_metadata(value)
         updated_attributes = dict(self._metadata.attributes.items())
         updated_attributes[key] = normalized_value
         self._metadata = self._metadata.model_copy(
@@ -662,6 +662,7 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
         """Set context statistics (used internally for cloning)."""
         self._statistics = statistics
 
+    @override
     def validate(self) -> r[bool]:
         """Validate context data integrity across all active scopes."""
         return self.validate_context()
