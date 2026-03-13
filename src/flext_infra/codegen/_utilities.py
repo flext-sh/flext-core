@@ -10,7 +10,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import ast
-import json
 import shutil
 import subprocess
 import sys
@@ -444,8 +443,13 @@ class FlextInfraUtilitiesCodegen:
         if not resolved.is_file():
             return (None, str(resolved), f"baseline file not found: {resolved}")
         try:
-            payload = json.loads(resolved.read_text(encoding=c.Infra.Encoding.DEFAULT))
-        except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+            text = resolved.read_text(encoding=c.Infra.Encoding.DEFAULT)
+            payload = (
+                FlextInfraUtilitiesCodegen._container_mapping_adapter.validate_json(
+                    text
+                )
+            )
+        except (OSError, UnicodeDecodeError, ValueError):
             return (None, str(resolved), "baseline parse failed")
         if not isinstance(payload, dict):
             return (None, str(resolved), "baseline payload is not a JSON object")
@@ -758,36 +762,57 @@ class FlextInfraUtilitiesCodegen:
         inventory_json = directory / "inventory-after.json"
         validate_json = directory / "validate-after.json"
         baseline_json = directory / "baseline-used.json"
+        report_adapter: TypeAdapter[dict[str, object]] = TypeAdapter(dict[str, object])
         report_json.write_text(
-            json.dumps(report, ensure_ascii=True, sort_keys=True),
+            report_adapter.dump_json(report, by_alias=True).decode(
+                c.Infra.Encoding.DEFAULT
+            ),
             encoding=c.Infra.Encoding.DEFAULT,
         )
         report_text.write_text(render_text, encoding=c.Infra.Encoding.DEFAULT)
         census_payload: list[dict[str, object]] = [
             item.model_dump() for item in census_reports
         ]
+        census_adapter: TypeAdapter[list[dict[str, object]]] = TypeAdapter(
+            list[dict[str, object]]
+        )
         census_json.write_text(
-            json.dumps(census_payload, ensure_ascii=True),
+            census_adapter.dump_json(census_payload, by_alias=True).decode(
+                c.Infra.Encoding.DEFAULT
+            ),
             encoding=c.Infra.Encoding.DEFAULT,
+        )
+        inventory_adapter: TypeAdapter[dict[str, object]] = TypeAdapter(
+            dict[str, object]
         )
         inventory_json.write_text(
-            json.dumps({"duplicate_groups": duplicate_groups}, ensure_ascii=True),
+            inventory_adapter.dump_json(
+                {"duplicate_groups": duplicate_groups}, by_alias=True
+            ).decode(c.Infra.Encoding.DEFAULT),
             encoding=c.Infra.Encoding.DEFAULT,
         )
+        validate_adapter: TypeAdapter[dict[str, object]] = TypeAdapter(
+            dict[str, object]
+        )
         validate_json.write_text(
-            json.dumps(
+            validate_adapter.dump_json(
                 {
                     "mro_failures": 0,
                     "layer_violations": 0,
                     "cross_project_reference_violations": 0,
                 },
-                ensure_ascii=True,
-            ),
+                by_alias=True,
+            ).decode(c.Infra.Encoding.DEFAULT),
             encoding=c.Infra.Encoding.DEFAULT,
         )
         if before_payload is not None:
+            baseline_adapter: TypeAdapter[dict[str, object]] = TypeAdapter(
+                dict[str, object]
+            )
             baseline_json.write_text(
-                json.dumps(before_payload, ensure_ascii=True, sort_keys=True),
+                baseline_adapter.dump_json(before_payload, by_alias=True).decode(
+                    c.Infra.Encoding.DEFAULT
+                ),
                 encoding=c.Infra.Encoding.DEFAULT,
             )
         return {
@@ -849,10 +874,13 @@ class FlextInfraUtilitiesCodegen:
         )
         if fallback.is_file():
             try:
-                payload = json.loads(
-                    fallback.read_text(encoding=c.Infra.Encoding.DEFAULT)
+                text = fallback.read_text(encoding=c.Infra.Encoding.DEFAULT)
+                payload = (
+                    FlextInfraUtilitiesCodegen._container_mapping_adapter.validate_json(
+                        text
+                    )
                 )
-            except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+            except (OSError, UnicodeDecodeError, ValueError):
                 return []
             if isinstance(payload, dict):
                 try:
