@@ -148,7 +148,7 @@ class FlextUtilitiesMapper:
             narrowed_value = cast("_MappingValue", value.model_dump())
         else:
             narrowed_value = str(value)
-        if cls.is_json_primitive(narrowed_value):
+        if FlextUtilitiesGuards.is_primitive(narrowed_value):
             return narrowed_value
         if isinstance(narrowed_value, Mapping):
             result_dict: dict[str, _MappingValue] = {}
@@ -2136,13 +2136,6 @@ class FlextUtilitiesMapper:
                     result[v] = k
             return result
         return {v: k for k, v in source.items()}
-
-    @staticmethod
-    def is_json_primitive(value: _MappingValue) -> bool:
-        """Check if value is a JSON primitive type (str, int, float, bool, None)."""
-        return bool(
-            FlextUtilitiesGuards.is_type(value, (str, int, float, bool, None.__class__))
-        )
 
     @staticmethod
     def key_by[T, K](items: Sequence[T], key_func: Callable[[T], K]) -> Mapping[K, T]:
