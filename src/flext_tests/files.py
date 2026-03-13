@@ -17,7 +17,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import csv
-import json
 import os
 import re
 import shutil
@@ -823,10 +822,12 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             else:
                 empty_data: dict[str, t.Tests.object] = {}
                 data = {"value": actual_content} if actual_content else empty_data
-            _ = file_path.write_text(
-                json.dumps(data, indent=params.indent, ensure_ascii=False),
-                encoding=params.enc,
+            json_str = (
+                TypeAdapter(dict[str, object])
+                .dump_json(data, indent=params.indent)
+                .decode()
             )
+            _ = file_path.write_text(json_str, encoding=params.enc)
         elif actual_fmt == c.Tests.Files.Format.YAML:
             if isinstance(actual_content, Mapping):
                 data = dict(actual_content)
@@ -1098,7 +1099,9 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                 )
             elif actual_fmt == c.Tests.Files.Format.JSON:
                 text = params.path.read_text(encoding=params.enc)
-                parsed_json = json.loads(text)
+                parsed_json = TypeAdapter(dict[str, object]).validate_json(
+                    text.encode()
+                )
                 content = self._coerce_read_content(parsed_json)
             elif actual_fmt == c.Tests.Files.Format.YAML:
                 text = params.path.read_text(encoding=params.enc)
@@ -1395,7 +1398,9 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             try:
                 if fmt == "json":
                     parsed_raw: object | list[object] = (
-                        json.loads(text) if text.strip() else {}
+                        TypeAdapter(dict[str, object]).validate_json(text.encode())
+                        if text.strip()
+                        else {}
                     )
                 else:
                     parsed_raw = (
@@ -1557,8 +1562,9 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         try:
             match fmt:
                 case "json":
-                    dict1_raw = json.loads(content1)
-                    dict2_raw = json.loads(content2)
+                    adapter = TypeAdapter(dict[str, object])
+                    dict1_raw = adapter.validate_json(content1.encode())
+                    dict2_raw = adapter.validate_json(content2.encode())
                 case "yaml":
                     dict1_raw = _yaml_safe_load(content1)
                     dict2_raw = _yaml_safe_load(content2)

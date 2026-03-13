@@ -726,5 +726,10 @@ class FlextResult[T](FlextRuntime.RuntimeResult[T]):
         return default
 
 
-r = FlextResult
+from typing import TypeAlias
+
+# Alias for semantic conciseness
+r: TypeAlias = FlextResult
+
+# Ensure we export all types needed for module clients
 __all__ = ["FlextResult", "r"]
