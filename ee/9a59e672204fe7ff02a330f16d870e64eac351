@@ -1,0 +1,40 @@
+src/flext_core/_utilities/model.py
+  8e96e3522f8e85cd 70,72-77
+src/flext_core/_models/settings.py
+  9b84c00304b90445 410-415,419-423,428-431,436-439,444-447,452-453,463-468,471-475,478-482,485-489,495-498,501-505,508-510,519-520,526-529,533-536,538,540-543,546-550,553-557,561-562,571-572,576-579,582-586,589-593,596-600,604-605,614-615,619-622,625-629,633-635,644-645,647-651,654-658,661-665,669-674,683-704,707-711,715-716,725-748,757-774,777-781,785-786,794-805,810-817,822-827,830-831,836-847,852-859,864-871,892-899,904-915,920-931,936-943,948-955,963-978,983-990,995-996,999-1002,1006-1011,1016-1023,1028-1033,1036-1038,1047-1066,1071-1076,1085-1094,1099-1104,1114-1119,1122-1126,1130-1133,1137-1140,1145-1148,1152-1156,1160-1161,1173-1174,1179-1182,1187-1191,1195-1199,1203-1207,1211-1215,1220-1224,1228-1240,1243-1247,1250-1252
+src/flext_core/_utilities/cache.py
+  8e96e3522f8e85cd 243,246
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.11",
+  "base_commit_sha": "ee9a59e672204fe7ff02a330f16d870e64eac351",
+  "prompts": {
+    "8e96e3522f8e85cd": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3184d12dfffeCgdQpaY1N92LeX",
+        "model": "kimi-for-coding/k2p5"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 10,
+      "total_deletions": 30,
+      "accepted_lines": 9,
+      "overriden_lines": 0
+    },
+    "9b84c00304b90445": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_317f38b67ffeWpBcp0QHIg1tvn",
+        "model": "anthropic/claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 659,
+      "total_deletions": 380,
+      "accepted_lines": 504,
+      "overriden_lines": 1
+    }
+  }
+}
