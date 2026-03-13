@@ -185,13 +185,15 @@ class GivenWhenThenBuilder:
         then_converted: dict[str, str | int | bool] = {
             key: convert_dict_value(value) for key, value in then_mapped.items()
         }
-        scenario_data = m.MockScenarioData({
-            "given": given_converted,
-            "when": when_converted,
-            "then": then_converted,
-            "tags": self._tags,
-            "priority": self._priority,
-        })
+        scenario_data = m.MockScenarioData.model_validate(
+            obj={
+                "given": given_converted,
+                "when": when_converted,
+                "then": then_converted,
+                "tags": self._tags,
+                "priority": self._priority,
+            }
+        )
         return MockScenario(self.name, scenario_data)
 
 
@@ -297,7 +299,7 @@ class ParameterizedTestBuilder:
             ParameterizedTestBuilder: Self for method chaining.
 
         """
-        self._cases.append(m.FixtureCaseDict(kwargs))
+        self._cases.append(m.FixtureCaseDict.model_validate(obj=kwargs))
         return self
 
     def add_success_cases(
@@ -504,24 +506,32 @@ class TestAdvancedPatterns:
         builder = (
             ParameterizedTestBuilder("email_validation")
             .add_success_cases([
-                m.FixtureCaseDict({
-                    "email": "valid@example.com",
-                    "input": "valid@example.com",
-                }),
-                m.FixtureCaseDict({
-                    "email": "user.name@domain.co.uk",
-                    "input": "user.name@domain.co.uk",
-                }),
+                m.FixtureCaseDict.model_validate(
+                    obj={
+                        "email": "valid@example.com",
+                        "input": "valid@example.com",
+                    }
+                ),
+                m.FixtureCaseDict.model_validate(
+                    obj={
+                        "email": "user.name@domain.co.uk",
+                        "input": "user.name@domain.co.uk",
+                    }
+                ),
             ])
             .add_failure_cases([
-                m.FixtureCaseDict({
-                    "email": "invalid-email",
-                    "input": "invalid-email",
-                }),
-                m.FixtureCaseDict({
-                    "email": "@domain.com",
-                    "input": "@domain.com",
-                }),
+                m.FixtureCaseDict.model_validate(
+                    obj={
+                        "email": "invalid-email",
+                        "input": "invalid-email",
+                    }
+                ),
+                m.FixtureCaseDict.model_validate(
+                    obj={
+                        "email": "@domain.com",
+                        "input": "@domain.com",
+                    }
+                ),
             ])
         )
         params = builder.build_pytest_params()
@@ -551,13 +561,15 @@ class TestAdvancedPatterns:
     @mark_test_pattern("mock_scenario")
     def test_mock_scenario_pattern(self) -> None:
         """Test mock scenario pattern."""
-        scenario_data = m.MockScenarioData({
-            "given": {"user": "authenticated"},
-            "when": {"action": "request_data"},
-            "then": {"result": "success"},
-            "tags": ["api", "integration"],
-            "priority": "medium",
-        })
+        scenario_data = m.MockScenarioData.model_validate(
+            obj={
+                "given": {"user": "authenticated"},
+                "when": {"action": "request_data"},
+                "then": {"result": "success"},
+                "tags": ["api", "integration"],
+                "priority": "medium",
+            }
+        )
         scenario = MockScenario("api_request", scenario_data)
         assert scenario.name == "api_request"
         assert scenario.given["user"] == "authenticated"

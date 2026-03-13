@@ -56,13 +56,15 @@ def _project(
     project_root: Path,
     name: str = "project-a",
 ) -> im.Infra.Workspace.ProjectInfo:
-    return im.Infra.Workspace.ProjectInfo({
-        "name": name,
-        "path": project_root,
-        "stack": "python/external",
-        "has_tests": False,
-        "has_src": True,
-    })
+    return im.Infra.Workspace.ProjectInfo.model_validate(
+        obj={
+            "name": name,
+            "path": project_root,
+            "stack": "python/external",
+            "has_tests": False,
+            "has_src": True,
+        }
+    )
 
 
 def _build_migrator(

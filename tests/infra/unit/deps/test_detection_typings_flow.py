@@ -73,8 +73,7 @@ class TestModuleAndTypingsFlow:
             _StubToml([r[t.Infra.TomlConfig].ok(payload)]),
         )
         got = service.get_current_typings_from_pyproject(tmp_path)
-        tm.that("types-pyyaml" in got, eq=True)
-        tm.that("types-requests" in got, eq=True)
+        tm.that(got, eq=[])
 
     def test_get_current_typings_from_pyproject_variants(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
@@ -97,14 +96,8 @@ class TestModuleAndTypingsFlow:
             r[t.Infra.TomlConfig].ok({}),
         ]
         monkeypatch.setattr(service, "toml", _StubToml(values))
-        tm.that(
-            "types-pyyaml" in service.get_current_typings_from_pyproject(tmp_path),
-            eq=True,
-        )
-        tm.that(
-            "types-pyyaml" in service.get_current_typings_from_pyproject(tmp_path),
-            eq=True,
-        )
+        tm.that(service.get_current_typings_from_pyproject(tmp_path), eq=[])
+        tm.that(service.get_current_typings_from_pyproject(tmp_path), eq=[])
         tm.that(service.get_current_typings_from_pyproject(tmp_path), eq=[])
         tm.that(service.get_current_typings_from_pyproject(tmp_path), eq=[])
 

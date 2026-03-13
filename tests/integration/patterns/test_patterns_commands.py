@@ -28,10 +28,12 @@ class CreateUserCommand(FlextModels.Command):
 
     def get_payload(self) -> m.UserPayloadDict:
         """Get command payload."""
-        return m.UserPayloadDict({
-            "username": self.username,
-            "email": self.email,
-        })
+        return m.UserPayloadDict.model_validate(
+            obj={
+                "username": self.username,
+                "email": self.email,
+            }
+        )
 
     def validate_command(self) -> r[bool]:
         """Validate command data."""
@@ -53,18 +55,22 @@ class UpdateUserCommand(FlextModels.Command):
     def get_payload(self) -> m.UpdatePayloadDict:
         """Get command payload."""
         typed_updates: dict[str, m.UpdateFieldDict] = {
-            key: m.UpdateFieldDict({
-                "field_name": key,
-                "new_value": value
-                if isinstance(value, (str, int, bool))
-                else str(value),
-            })
+            key: m.UpdateFieldDict.model_validate(
+                obj={
+                    "field_name": key,
+                    "new_value": value
+                    if isinstance(value, (str, int, bool))
+                    else str(value),
+                }
+            )
             for key, value in self.updates.items()
         }
-        return m.UpdatePayloadDict({
-            "target_user_id": self.target_user_id,
-            "updates": typed_updates,
-        })
+        return m.UpdatePayloadDict.model_validate(
+            obj={
+                "target_user_id": self.target_user_id,
+                "updates": typed_updates,
+            }
+        )
 
     def validate_command(self) -> r[bool]:
         """Validate command data."""
@@ -80,7 +86,7 @@ class FailingCommand(FlextModels.Command):
 
     def get_payload(self) -> m.CommandPayloadDict:
         """Get command payload."""
-        return m.CommandPayloadDict({})
+        return m.CommandPayloadDict.model_validate(obj={})
 
     def validate_command(self) -> r[bool]:
         """Fail validation intentionally."""
@@ -88,7 +94,7 @@ class FailingCommand(FlextModels.Command):
 
 
 def _create_user_command(*, username: str, email: str) -> CreateUserCommand:
-    return CreateUserCommand({"username": username, "email": email})
+    return CreateUserCommand.model_validate(obj={"username": username, "email": email})
 
 
 def _update_user_command(
@@ -96,10 +102,12 @@ def _update_user_command(
     target_user_id: str,
     updates: dict[str, object],
 ) -> UpdateUserCommand:
-    return UpdateUserCommand({
-        "target_user_id": target_user_id,
-        "updates": updates,
-    })
+    return UpdateUserCommand.model_validate(
+        obj={
+            "target_user_id": target_user_id,
+            "updates": updates,
+        }
+    )
 
 
 class CreateUserCommandHandler(
