@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import os
 from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime
 from types import ModuleType, TracebackType
@@ -170,6 +171,9 @@ else:
         return type("_CombinedModelMeta", (type(BaseModel), type(Protocol)), {})
 
     _CombinedModelMeta: type = _build_combined_model_meta()
+
+
+_METACLASS_STRICT: bool = os.environ.get("FLEXT_METACLASS_STRICT", "1") == "1"
 
 
 class FlextProtocols:
@@ -1366,8 +1370,11 @@ class FlextProtocols:
                 cls, name, tuple(model_bases), dict(namespace)
             )
             setattr(built_cls, "__protocols__", tuple(protocols))
-            for protocol in protocols:
-                FlextProtocols._validate_protocol_compliance(built_cls, protocol, name)
+            if _METACLASS_STRICT:
+                for protocol in protocols:
+                    FlextProtocols._validate_protocol_compliance(
+                        built_cls, protocol, name
+                    )
             return built_cls
 
     class ProtocolModel(metaclass=ProtocolModelMeta):
