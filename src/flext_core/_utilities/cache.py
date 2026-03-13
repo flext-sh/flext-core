@@ -46,6 +46,12 @@ from pydantic import BaseModel, TypeAdapter, ValidationError
 
 from flext_core import FlextRuntime, c, p, r, t
 
+_CACHE_DICT_STR_OBJECT_ADAPTER = TypeAdapter(dict[str, object])
+_CACHE_SET_OBJECT_ADAPTER = TypeAdapter(set[object])
+_CACHE_SET_STR_ADAPTER = TypeAdapter(set[str])
+_CACHE_LIST_OBJECT_ADAPTER = TypeAdapter(list[object])
+_CACHE_SORTABLE_DICT_ADAPTER = TypeAdapter(dict[t.SortableObjectType, object])
+
 
 class FlextUtilitiesCache:
     """Cache utilities for deterministic normalization and key management.
@@ -165,7 +171,7 @@ class FlextUtilitiesCache:
     @staticmethod
     def generate_cache_key_for_command(command: object, command_type: type) -> str:
         if isinstance(command, Mapping):
-            command_map = TypeAdapter(dict[str, object]).validate_python(command)
+            command_map = _CACHE_DICT_STR_OBJECT_ADAPTER.validate_python(command)
             sorted_data = FlextUtilitiesCache.sort_dict_keys(command_map)
             return f"{command_type.__name__}_{hash(str(sorted_data))}"
         command_str = "None" if command is None else str(command)
@@ -227,7 +233,7 @@ class FlextUtilitiesCache:
                 for k, v in component.model_dump().items()
             }
         if isinstance(component, Mapping):
-            dict_component = TypeAdapter(dict[str, object]).validate_python(component)
+            dict_component = _CACHE_DICT_STR_OBJECT_ADAPTER.validate_python(component)
             return {
                 str(k): FlextUtilitiesCache.normalize_component(v)
                 for k, v in dict_component.items()
@@ -236,12 +242,12 @@ class FlextUtilitiesCache:
             return component
         if isinstance(component, set):
             try:
-                set_items = TypeAdapter(set[object]).validate_python(
+                set_items = _CACHE_SET_OBJECT_ADAPTER.validate_python(
                     component,
                     strict=False,
                 )
             except ValidationError:
-                fallback_items = TypeAdapter(set[str]).validate_python(
+                fallback_items = _CACHE_SET_STR_ADAPTER.validate_python(
                     component,
                     strict=False,
                 )
@@ -251,7 +257,7 @@ class FlextUtilitiesCache:
             ]
             return tuple(normalized_items)
         if isinstance(component, (list, tuple)):
-            sequence = TypeAdapter(list[object]).validate_python(component)
+            sequence = _CACHE_LIST_OBJECT_ADAPTER.validate_python(component)
             return [FlextUtilitiesCache.normalize_component(item) for item in sequence]
         return str(component)
 
@@ -289,9 +295,7 @@ class FlextUtilitiesCache:
         if isinstance(data, BaseModel):
             return FlextUtilitiesCache.sort_dict_keys(data.model_dump())
         if isinstance(data, Mapping):
-            data_map = TypeAdapter(dict[t.SortableObjectType, object]).validate_python(
-                data
-            )
+            data_map = _CACHE_SORTABLE_DICT_ADAPTER.validate_python(data)
             result: dict[str, object] = {}
             for k in sorted(data_map.keys(), key=FlextUtilitiesCache.sort_key):
                 value = data_map[k]

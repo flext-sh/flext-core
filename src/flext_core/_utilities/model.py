@@ -17,6 +17,9 @@ from pydantic import BaseModel, TypeAdapter, ValidationError
 from flext_core import FlextRuntime, m, r, t
 
 T_Model = TypeVar("T_Model", bound=BaseModel)
+_MODEL_DICT_STR_OBJECT_ADAPTER = TypeAdapter(dict[str, object])
+_MODEL_LIST_OBJECT_ADAPTER = TypeAdapter(list[object])
+_MODEL_TUPLE_OBJECT_ADAPTER = TypeAdapter(tuple[object, ...])
 
 
 class FlextUtilitiesModel:
@@ -42,9 +45,8 @@ class FlextUtilitiesModel:
 
     @staticmethod
     def _normalize_str_object_mapping(value: object) -> dict[str, object]:
-        adapter: TypeAdapter[dict[str, object]] = TypeAdapter(dict[str, object])
         try:
-            return adapter.validate_python(value)
+            return _MODEL_DICT_STR_OBJECT_ADAPTER.validate_python(value)
         except ValidationError:
             return {}
 
@@ -68,8 +70,7 @@ class FlextUtilitiesModel:
         if isinstance(value, (bool, int, float, str)):
             return value
         if isinstance(value, list):
-            list_adapter: TypeAdapter[list[object]] = TypeAdapter(list[object])
-            list_items = list_adapter.validate_python(value)
+            list_items = _MODEL_LIST_OBJECT_ADAPTER.validate_python(value)
             normalized_items: list[t.Primitives] = []
             for item in list_items:
                 if item is None:
@@ -85,10 +86,7 @@ class FlextUtilitiesModel:
                     normalized_items.append(str(item))
             return normalized_items
         if isinstance(value, tuple):
-            tuple_adapter: TypeAdapter[tuple[object, ...]] = TypeAdapter(
-                tuple[object, ...]
-            )
-            tuple_items = tuple_adapter.validate_python(value)
+            tuple_items = _MODEL_TUPLE_OBJECT_ADAPTER.validate_python(value)
             normalized_tuple_items: list[t.Primitives] = []
             for item in tuple_items:
                 if item is None:
@@ -366,10 +364,7 @@ class FlextUtilitiesModel:
         if isinstance(obj, Mapping):
             try:
                 normalized_mapping: dict[str, object] = {}
-                mapping_adapter: TypeAdapter[dict[str, object]] = TypeAdapter(
-                    dict[str, object]
-                )
-                obj_mapping = mapping_adapter.validate_python(obj)
+                obj_mapping = _MODEL_DICT_STR_OBJECT_ADAPTER.validate_python(obj)
                 for key, value in obj_mapping.items():
                     normalized_mapping_value: object = (
                         FlextRuntime.normalize_to_container(value)

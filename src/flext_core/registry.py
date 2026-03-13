@@ -13,17 +13,14 @@ import inspect
 import sys
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
-from types import ModuleType
 from typing import Annotated, ClassVar, Literal, Self, override
 
 from pydantic import BaseModel, Field, PrivateAttr, computed_field
 
 from flext_core import (
     FlextContainer,
-    FlextContext,
     FlextDispatcher,
     FlextHandlers,
-    FlextSettings,
     c,
     m,
     p,

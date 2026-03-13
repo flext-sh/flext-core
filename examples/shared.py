@@ -33,6 +33,7 @@ import string
 import sys
 from datetime import datetime
 from pathlib import Path
+from typing import cast
 
 from pydantic import ConfigDict
 
@@ -185,7 +186,7 @@ class Examples:
     def bind_probe(result_obj: r[int], delta: int) -> object:
         """Safely attempt ``result_obj.bind(lambda n: r[int].ok(n + delta))``."""
         try:
-            return result_obj.flat_map(lambda n: r[int].ok(n + delta)).unwrap_or(-1)
+            return result_obj.flat_map(lambda n: r[int].ok(cast("int", n) + delta)).unwrap_or(-1)
         except (AttributeError, RuntimeError, TypeError, ValueError) as exc:
             return f"{type(exc).__name__}:{exc}"
 

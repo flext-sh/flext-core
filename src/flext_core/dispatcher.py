@@ -60,6 +60,16 @@ type _DispatchableHandler = (
     | ExecuteProtocol
 )
 
+type _ResolvedHandlerCallable = Callable[
+    [p.Routable], p.ResultLike[object] | object | None
+]
+type _RegisteredHandler = tuple[_DispatchableHandler, _ResolvedHandlerCallable]
+type _AutoHandlerRegistration = tuple[
+    _DispatchableHandler,
+    _ResolvedHandlerCallable,
+    tuple[t.MessageTypeSpecifier, ...],
+]
+
 
 class FlextDispatcher:
     """Application-level dispatcher that satisfies the command bus protocol.
@@ -72,9 +82,9 @@ class FlextDispatcher:
         """Initialize dispatcher."""
         super().__init__()
         self._logger = FlextLogger.create_module_logger(__name__)
-        self._handlers: dict[str, _DispatchableHandler] = {}
-        self._auto_handlers: list[_DispatchableHandler] = []
-        self._event_subscribers: dict[str, list[_DispatchableHandler]] = {}
+        self._handlers: dict[str, _RegisteredHandler] = {}
+        self._auto_handlers: list[_AutoHandlerRegistration] = []
+        self._event_subscribers: dict[str, list[_RegisteredHandler]] = {}
 
     def dispatch(self, message: p.Routable) -> r[t.Container | BaseModel]:
         """Dispatch a CQRS message to its registered handler.
@@ -92,20 +102,20 @@ class FlextDispatcher:
             return r[t.Container | BaseModel].fail(
                 f"Dispatch failed: {e!s}", error_code=c.Errors.COMMAND_PROCESSING_FAILED
             )
-        handler = self._handlers.get(route_name)
-        if not handler:
+        handler_entry = self._handlers.get(route_name)
+        if not handler_entry:
             msg_type = message.__class__
-            for auto_h in self._auto_handlers:
-                accepted = u.compute_accepted_message_types(auto_h.__class__)
+            for auto_h, resolved_handler, accepted in self._auto_handlers:
                 if u.can_handle_message_type(accepted, msg_type):
-                    handler = auto_h
+                    handler_entry = (auto_h, resolved_handler)
                     break
-        if not handler:
+        if not handler_entry:
             return r[t.Container | BaseModel].fail(
                 f"No handler found for {route_name}",
                 error_code=c.Errors.COMMAND_HANDLER_NOT_FOUND,
             )
-        return self._execute_handler(handler, message, route_name)
+        _, resolved_handler = handler_entry
+        return self._execute_handler(resolved_handler, message, route_name)
 
     def dispatch_typed[DispatchValueT](
         self, message: p.Routable, expected_type: type[DispatchValueT]
@@ -136,16 +146,15 @@ class FlextDispatcher:
         route_name = u.get_message_route(event)
         handlers = self._event_subscribers.get(route_name, [])
         evt_type = event.__class__
-        for auto_h in self._auto_handlers:
-            accepted = u.compute_accepted_message_types(auto_h.__class__)
+        for auto_h, resolved_handler, accepted in self._auto_handlers:
             if u.can_handle_message_type(accepted, evt_type) and (
-                auto_h not in handlers
+                all(existing_handler != auto_h for existing_handler, _ in handlers)
             ):
-                handlers.append(auto_h)
+                handlers.append((auto_h, resolved_handler))
         if not handlers:
             return r[bool].ok(value=True)
-        for handler in handlers:
-            _ = self._execute_handler(handler, event, route_name)
+        for _, resolved_handler in handlers:
+            _ = self._execute_handler(resolved_handler, event, route_name)
         return r[bool].ok(value=True)
 
     def register_handler(
@@ -164,6 +173,8 @@ class FlextDispatcher:
 
         """
         route_name: str | None = None
+        accepted_message_types: tuple[t.MessageTypeSpecifier, ...] = ()
+        resolved_handler = self._resolve_handler_callable(handler)
         handler_message_type = getattr(handler, "message_type", None)
         if isinstance(handler_message_type, str):
             route_name = handler_message_type
@@ -171,13 +182,17 @@ class FlextDispatcher:
             with contextlib.suppress(TypeError, ValueError):
                 route_name = u.get_message_route(handler_message_type)
         if route_name is None:
-            accepted = u.compute_accepted_message_types(handler.__class__)
-            if accepted:
+            accepted_message_types = u.compute_accepted_message_types(handler.__class__)
+            if accepted_message_types:
                 with contextlib.suppress(TypeError, ValueError):
-                    route_name = u.get_message_route(accepted[0])
+                    route_name = u.get_message_route(accepted_message_types[0])
         if route_name is None:
             if callable(getattr(handler, "can_handle", None)):
-                self._auto_handlers.append(handler)
+                self._auto_handlers.append((
+                    handler,
+                    resolved_handler,
+                    accepted_message_types,
+                ))
                 self._logger.info(
                     "Registered auto-discovery handler", handler=str(handler)
                 )
@@ -188,15 +203,30 @@ class FlextDispatcher:
         if is_event:
             if route_name not in self._event_subscribers:
                 self._event_subscribers[route_name] = []
-            self._event_subscribers[route_name].append(handler)
+            self._event_subscribers[route_name].append((handler, resolved_handler))
             self._logger.info("Registered event subscriber", route=route_name)
         else:
-            self._handlers[route_name] = handler
+            self._handlers[route_name] = (handler, resolved_handler)
             self._logger.info("Registered handler", route=route_name)
         return r[bool].ok(value=True)
 
+    def _resolve_handler_callable(
+        self, handler: _DispatchableHandler
+    ) -> _ResolvedHandlerCallable:
+        if isinstance(handler, DispatchMessageProtocol):
+            return handler.dispatch_message
+        if isinstance(handler, HandleProtocol):
+            return handler.handle
+        if isinstance(handler, ExecuteProtocol):
+            return handler.execute
+        if callable(handler):
+            return handler
+
     def _execute_handler(
-        self, handler: _DispatchableHandler, message: p.Routable, route_name: str
+        self,
+        resolved_handler: _ResolvedHandlerCallable,
+        message: p.Routable,
+        route_name: str,
     ) -> r[t.Container | BaseModel]:
         """Execute a handler against a message.
 
@@ -205,19 +235,7 @@ class FlextDispatcher:
         """
         raw_output: p.ResultLike[object] | object | None = None
         try:
-            if isinstance(handler, DispatchMessageProtocol):
-                raw_output = handler.dispatch_message(message)
-            elif isinstance(handler, HandleProtocol):
-                raw_output = handler.handle(message)
-            elif isinstance(handler, ExecuteProtocol):
-                raw_output = handler.execute(message)
-            elif callable(handler):
-                raw_output = handler(message)
-            else:
-                return r[t.Container | BaseModel].fail(
-                    f"Handler for {route_name} is not callable or dispatchable",
-                    error_code=c.Errors.COMMAND_HANDLER_NOT_FOUND,
-                )
+            raw_output = resolved_handler(message)
             if u.is_result_like(raw_output):
                 if raw_output.is_failure:
                     error_data_value = raw_output.error_data
@@ -228,11 +246,7 @@ class FlextDispatcher:
                         if isinstance(error_data_value, BaseModel)
                         else None,
                     )
-                value: object = raw_output.value
-                if value is None:
-                    return r[t.Container | BaseModel].fail(
-                        "Handler returned None in success result"
-                    )
+                value: t.Container | BaseModel | None = raw_output.value
                 if not u.is_container(value):
                     return r[t.Container | BaseModel].fail(
                         "Handler returned non-container value in success result"

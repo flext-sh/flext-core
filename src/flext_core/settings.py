@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import threading
 from collections.abc import Callable, Mapping, Sequence
-from typing import ClassVar, Self
+from typing import ClassVar, Self, cast
 
 from pydantic import (
     BaseModel,
@@ -150,7 +150,7 @@ class FlextSettings(BaseSettings, FlextRuntime):
                     cls._instances[base_class] = instance
         raw_instance = cls._instances[base_class]
         raw_type = raw_instance.__class__
-        if raw_type is not cls and (not issubclass(raw_type, cls)):
+        if raw_type is not cls and cls not in getattr(raw_type, "__mro__", ()):
             cls_name = getattr(cls, "__name__", type(cls).__name__)
             msg = f"Singleton instance is not of expected type {cls_name}"
             raise TypeError(msg)
@@ -197,7 +197,7 @@ class FlextSettings(BaseSettings, FlextRuntime):
             keys_to_remove = [
                 instance_cls
                 for instance_cls in cls._instances
-                if instance_cls is cls or issubclass(instance_cls, cls)
+                if instance_cls is cls or cls in getattr(instance_cls, "__mro__", ())
             ]
             for instance_cls in keys_to_remove:
                 del cls._instances[instance_cls]
@@ -459,11 +459,10 @@ class FlextSettings(BaseSettings, FlextRuntime):
         if config_class_raw is None:
             msg = f"Namespace '{namespace}' not registered"
             raise ValueError(msg)
-        if not issubclass(config_class_raw, config_type):
+        if config_type not in getattr(config_class_raw, "__mro__", ()):
             msg = f"Namespace '{namespace}' config class {config_class_raw} is not subclass of {config_type}"
             raise TypeError(msg)
-        config_class: type[T_Namespace] = config_class_raw
-        return config_class()
+        return cast("T_Namespace", config_class_raw())
 
 
 __all__ = ["FlextSettings"]

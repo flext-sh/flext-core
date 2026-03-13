@@ -543,10 +543,12 @@ class FlextRuntime:
             if isinstance(origin, type):
                 if origin in {list, tuple}:
                     return True
-                return issubclass(origin, Sequence)
+                return FlextRuntime._is_sequence_type_class(origin)
             if type_hint in {list, tuple, str}:
                 return True
-            if isinstance(type_hint, type) and issubclass(type_hint, Sequence):
+            if isinstance(type_hint, type) and FlextRuntime._is_sequence_type_class(
+                type_hint
+            ):
                 return True
             if isinstance(type_hint, type) and getattr(type_hint, "__name__", "") in {
                 "StringList",
@@ -568,6 +570,18 @@ class FlextRuntime:
             }
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError):
             return False
+
+    @staticmethod
+    def _is_sequence_type_class(candidate: type[object]) -> bool:
+        if candidate in {list, tuple, range}:
+            return True
+        if candidate in {str, bytes, bytearray, memoryview, dict}:
+            return False
+        candidate_mro = getattr(candidate, "__mro__", ())
+        if any(getattr(base, "__name__", "") == "Sequence" for base in candidate_mro):
+            return True
+        required_members = ("__iter__", "__len__", "__getitem__", "count", "index")
+        return all(hasattr(candidate, member) for member in required_members)
 
     @staticmethod
     def is_valid_identifier(value: object) -> TypeGuard[str]:
@@ -1743,8 +1757,10 @@ class FlextRuntime:
                 return False
             case _:
                 pass
-        if not isinstance(entity_b, type(entity_a)) and not issubclass(
-            type(entity_b), type(entity_a)
+        entity_a_type = type(entity_a)
+        entity_b_type = type(entity_b)
+        if not isinstance(entity_b, entity_a_type) and entity_a_type not in getattr(
+            entity_b_type, "__mro__", ()
         ):
             return False
         id_a = getattr(entity_a, id_attr) if hasattr(entity_a, id_attr) else None
@@ -1762,8 +1778,10 @@ class FlextRuntime:
             return obj_a == obj_b
         if hasattr(obj_b, "__iter__") and (not hasattr(obj_b, "model_dump")):
             return obj_a == obj_b
-        if not isinstance(obj_b, type(obj_a)) and not issubclass(
-            type(obj_b), type(obj_a)
+        obj_a_type = type(obj_a)
+        obj_b_type = type(obj_b)
+        if not isinstance(obj_b, obj_a_type) and obj_a_type not in getattr(
+            obj_b_type, "__mro__", ()
         ):
             return False
         if isinstance(obj_a, BaseModel) and isinstance(obj_b, BaseModel):

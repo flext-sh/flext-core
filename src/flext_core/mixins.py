@@ -331,8 +331,10 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
                         exc_info=exc,
                     )
 
-        if config_type_raw is not None and issubclass(config_type_raw, FlextSettings):
-            config_cls_typed = config_type_raw
+        if config_type_raw is not None and FlextSettings in getattr(
+            config_type_raw, "__mro__", ()
+        ):
+            config_cls_typed = cast("type[FlextSettings]", config_type_raw)
         else:
             config_cls_typed = FlextSettings
 
