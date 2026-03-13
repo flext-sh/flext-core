@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Self
+from typing import Annotated, Self
 
 from pydantic import ConfigDict, Field
 
@@ -60,11 +60,11 @@ def _empty_project_reports() -> list[NamespaceProjectEnforcementReport]:
 class NamespaceFacadeStatus(FlextModels.ArbitraryTypesModel):
     model_config = ConfigDict(frozen=True)
 
-    family: str = Field(min_length=1)
-    exists: bool = Field()
-    class_name: str = Field(default="")
-    file: str = Field(default="")
-    symbol_count: int = Field(default=0, ge=0)
+    family: Annotated[str, Field(min_length=1)]
+    exists: Annotated[bool, Field()]
+    class_name: Annotated[str, Field(default="")]
+    file: Annotated[str, Field(default="")]
+    symbol_count: Annotated[int, Field(default=0, ge=0)]
 
     @classmethod
     def create(
@@ -88,11 +88,11 @@ class NamespaceFacadeStatus(FlextModels.ArbitraryTypesModel):
 class NamespaceLooseObjectViolation(FlextModels.ArbitraryTypesModel):
     model_config = ConfigDict(frozen=True)
 
-    file: str = Field(min_length=1)
-    line: int = Field(ge=1)
-    name: str = Field(min_length=1)
-    kind: str = Field()
-    suggestion: str = Field(default="")
+    file: Annotated[str, Field(min_length=1)]
+    line: Annotated[int, Field(ge=1)]
+    name: Annotated[str, Field(min_length=1)]
+    kind: Annotated[str, Field()]
+    suggestion: Annotated[str, Field(default="")]
 
     @classmethod
     def create(
@@ -116,10 +116,10 @@ class NamespaceLooseObjectViolation(FlextModels.ArbitraryTypesModel):
 class NamespaceImportAliasViolation(FlextModels.ArbitraryTypesModel):
     model_config = ConfigDict(frozen=True)
 
-    file: str = Field(min_length=1)
-    line: int = Field(ge=1)
-    current_import: str = Field()
-    suggested_import: str = Field()
+    file: Annotated[str, Field(min_length=1)]
+    line: Annotated[int, Field(ge=1)]
+    current_import: Annotated[str, Field()]
+    suggested_import: Annotated[str, Field()]
 
     @classmethod
     def create(
@@ -141,10 +141,10 @@ class NamespaceImportAliasViolation(FlextModels.ArbitraryTypesModel):
 class NamespaceInternalImportViolation(FlextModels.ArbitraryTypesModel):
     model_config = ConfigDict(frozen=True)
 
-    file: str = Field(min_length=1)
-    line: int = Field(ge=1)
-    current_import: str = Field()
-    detail: str = Field()
+    file: Annotated[str, Field(min_length=1)]
+    line: Annotated[int, Field(ge=1)]
+    current_import: Annotated[str, Field()]
+    detail: Annotated[str, Field()]
 
     @classmethod
     def create(cls, *, file: str, line: int, current_import: str, detail: str) -> Self:
@@ -159,10 +159,12 @@ class NamespaceInternalImportViolation(FlextModels.ArbitraryTypesModel):
 class NamespaceManualProtocolViolation(FlextModels.ArbitraryTypesModel):
     model_config = ConfigDict(frozen=True)
 
-    file: str = Field(min_length=1)
-    line: int = Field(ge=1)
-    name: str = Field(min_length=1)
-    suggestion: str = Field(default="Move to protocols.py/protocols/*.py/_protocols.py")
+    file: Annotated[str, Field(min_length=1)]
+    line: Annotated[int, Field(ge=1)]
+    name: Annotated[str, Field(min_length=1)]
+    suggestion: Annotated[
+        str, Field(default="Move to protocols.py/protocols/*.py/_protocols.py")
+    ]
 
     @classmethod
     def create(cls, *, file: str, line: int, name: str, suggestion: str = "") -> Self:
@@ -174,8 +176,8 @@ class NamespaceManualProtocolViolation(FlextModels.ArbitraryTypesModel):
 class NamespaceCyclicImportViolation(FlextModels.ArbitraryTypesModel):
     model_config = ConfigDict(frozen=True)
 
-    cycle: tuple[str, ...] = Field()
-    files: tuple[str, ...] = Field(default_factory=tuple)
+    cycle: Annotated[tuple[str, ...], Field()]
+    files: Annotated[tuple[str, ...], Field(default_factory=tuple)]
 
     @classmethod
     def create(cls, *, cycle: tuple[str, ...], files: tuple[str, ...]) -> Self:
@@ -185,11 +187,11 @@ class NamespaceCyclicImportViolation(FlextModels.ArbitraryTypesModel):
 class NamespaceRuntimeAliasViolation(FlextModels.ArbitraryTypesModel):
     model_config = ConfigDict(frozen=True)
 
-    file: str = Field(min_length=1)
-    line: int = Field(default=0, ge=0)
-    kind: str = Field()
-    alias: str = Field()
-    detail: str = Field(default="")
+    file: Annotated[str, Field(min_length=1)]
+    line: Annotated[int, Field(default=0, ge=0)]
+    kind: Annotated[str, Field()]
+    alias: Annotated[str, Field()]
+    detail: Annotated[str, Field(default="")]
 
     @classmethod
     def create(
@@ -213,7 +215,7 @@ class NamespaceRuntimeAliasViolation(FlextModels.ArbitraryTypesModel):
 class NamespaceFutureAnnotationsViolation(FlextModels.ArbitraryTypesModel):
     model_config = ConfigDict(frozen=True)
 
-    file: str = Field(min_length=1)
+    file: Annotated[str, Field(min_length=1)]
 
     @classmethod
     def create(cls, *, file: str) -> Self:
@@ -223,10 +225,10 @@ class NamespaceFutureAnnotationsViolation(FlextModels.ArbitraryTypesModel):
 class NamespaceManualTypingAliasViolation(FlextModels.ArbitraryTypesModel):
     model_config = ConfigDict(frozen=True)
 
-    file: str = Field(min_length=1)
-    line: int = Field(ge=1)
-    name: str = Field(min_length=1)
-    detail: str = Field(default="")
+    file: Annotated[str, Field(min_length=1)]
+    line: Annotated[int, Field(ge=1)]
+    name: Annotated[str, Field(min_length=1)]
+    detail: Annotated[str, Field(default="")]
 
     @classmethod
     def create(cls, *, file: str, line: int, name: str, detail: str) -> Self:
@@ -241,10 +243,10 @@ class NamespaceManualTypingAliasViolation(FlextModels.ArbitraryTypesModel):
 class NamespaceCompatibilityAliasViolation(FlextModels.ArbitraryTypesModel):
     model_config = ConfigDict(frozen=True)
 
-    file: str = Field(min_length=1)
-    line: int = Field(ge=1)
-    alias_name: str = Field(min_length=1)
-    target_name: str = Field(min_length=1)
+    file: Annotated[str, Field(min_length=1)]
+    line: Annotated[int, Field(ge=1)]
+    alias_name: Annotated[str, Field(min_length=1)]
+    target_name: Annotated[str, Field(min_length=1)]
 
     @classmethod
     def create(cls, *, file: str, line: int, alias_name: str, target_name: str) -> Self:
@@ -259,10 +261,10 @@ class NamespaceCompatibilityAliasViolation(FlextModels.ArbitraryTypesModel):
 class NamespaceParseFailureViolation(FlextModels.ArbitraryTypesModel):
     model_config = ConfigDict(frozen=True)
 
-    file: str = Field(min_length=1)
-    stage: str = Field(min_length=1)
-    error_type: str = Field(min_length=1)
-    detail: str = Field(default="")
+    file: Annotated[str, Field(min_length=1)]
+    stage: Annotated[str, Field(min_length=1)]
+    error_type: Annotated[str, Field(min_length=1)]
+    detail: Annotated[str, Field(default="")]
 
     @classmethod
     def create(cls, *, file: str, stage: str, error_type: str, detail: str) -> Self:
@@ -275,42 +277,75 @@ class NamespaceParseFailureViolation(FlextModels.ArbitraryTypesModel):
 
 
 class NamespaceProjectEnforcementReport(FlextModels.ArbitraryTypesModel):
-    project: str = Field(min_length=1)
-    project_root: str = Field()
-    facade_statuses: list[NamespaceFacadeStatus] = Field(
-        default_factory=_empty_facade_statuses,
-    )
-    loose_objects: list[NamespaceLooseObjectViolation] = Field(
-        default_factory=_empty_loose_objects,
-    )
-    import_violations: list[NamespaceImportAliasViolation] = Field(
-        default_factory=_empty_import_violations,
-    )
-    internal_import_violations: list[NamespaceInternalImportViolation] = Field(
-        default_factory=_empty_internal_import_violations,
-    )
-    manual_protocol_violations: list[NamespaceManualProtocolViolation] = Field(
-        default_factory=_empty_manual_protocol_violations,
-    )
-    cyclic_imports: list[NamespaceCyclicImportViolation] = Field(
-        default_factory=_empty_cyclic_imports,
-    )
-    runtime_alias_violations: list[NamespaceRuntimeAliasViolation] = Field(
-        default_factory=_empty_runtime_alias_violations,
-    )
-    future_violations: list[NamespaceFutureAnnotationsViolation] = Field(
-        default_factory=_empty_future_violations,
-    )
-    manual_typing_violations: list[NamespaceManualTypingAliasViolation] = Field(
-        default_factory=_empty_manual_typing_violations,
-    )
-    compatibility_alias_violations: list[NamespaceCompatibilityAliasViolation] = Field(
-        default_factory=_empty_compatibility_alias_violations,
-    )
-    parse_failures: list[NamespaceParseFailureViolation] = Field(
-        default_factory=_empty_parse_failures,
-    )
-    files_scanned: int = Field(default=0, ge=0)
+    project: Annotated[str, Field(min_length=1)]
+    project_root: Annotated[str, Field()]
+    facade_statuses: Annotated[
+        list[NamespaceFacadeStatus],
+        Field(
+            default_factory=_empty_facade_statuses,
+        ),
+    ]
+    loose_objects: Annotated[
+        list[NamespaceLooseObjectViolation],
+        Field(
+            default_factory=_empty_loose_objects,
+        ),
+    ]
+    import_violations: Annotated[
+        list[NamespaceImportAliasViolation],
+        Field(
+            default_factory=_empty_import_violations,
+        ),
+    ]
+    internal_import_violations: Annotated[
+        list[NamespaceInternalImportViolation],
+        Field(
+            default_factory=_empty_internal_import_violations,
+        ),
+    ]
+    manual_protocol_violations: Annotated[
+        list[NamespaceManualProtocolViolation],
+        Field(
+            default_factory=_empty_manual_protocol_violations,
+        ),
+    ]
+    cyclic_imports: Annotated[
+        list[NamespaceCyclicImportViolation],
+        Field(
+            default_factory=_empty_cyclic_imports,
+        ),
+    ]
+    runtime_alias_violations: Annotated[
+        list[NamespaceRuntimeAliasViolation],
+        Field(
+            default_factory=_empty_runtime_alias_violations,
+        ),
+    ]
+    future_violations: Annotated[
+        list[NamespaceFutureAnnotationsViolation],
+        Field(
+            default_factory=_empty_future_violations,
+        ),
+    ]
+    manual_typing_violations: Annotated[
+        list[NamespaceManualTypingAliasViolation],
+        Field(
+            default_factory=_empty_manual_typing_violations,
+        ),
+    ]
+    compatibility_alias_violations: Annotated[
+        list[NamespaceCompatibilityAliasViolation],
+        Field(
+            default_factory=_empty_compatibility_alias_violations,
+        ),
+    ]
+    parse_failures: Annotated[
+        list[NamespaceParseFailureViolation],
+        Field(
+            default_factory=_empty_parse_failures,
+        ),
+    ]
+    files_scanned: Annotated[int, Field(default=0, ge=0)]
 
     @classmethod
     def create(
@@ -350,22 +385,25 @@ class NamespaceProjectEnforcementReport(FlextModels.ArbitraryTypesModel):
 
 
 class NamespaceWorkspaceEnforcementReport(FlextModels.ArbitraryTypesModel):
-    workspace: str = Field(min_length=1)
-    projects: list[NamespaceProjectEnforcementReport] = Field(
-        default_factory=_empty_project_reports,
-    )
-    total_facades_missing: int = Field(default=0, ge=0)
-    total_loose_objects: int = Field(default=0, ge=0)
-    total_import_violations: int = Field(default=0, ge=0)
-    total_internal_import_violations: int = Field(default=0, ge=0)
-    total_manual_protocol_violations: int = Field(default=0, ge=0)
-    total_cyclic_imports: int = Field(default=0, ge=0)
-    total_runtime_alias_violations: int = Field(default=0, ge=0)
-    total_future_violations: int = Field(default=0, ge=0)
-    total_manual_typing_violations: int = Field(default=0, ge=0)
-    total_compatibility_alias_violations: int = Field(default=0, ge=0)
-    total_parse_failures: int = Field(default=0, ge=0)
-    total_files_scanned: int = Field(default=0, ge=0)
+    workspace: Annotated[str, Field(min_length=1)]
+    projects: Annotated[
+        list[NamespaceProjectEnforcementReport],
+        Field(
+            default_factory=_empty_project_reports,
+        ),
+    ]
+    total_facades_missing: Annotated[int, Field(default=0, ge=0)]
+    total_loose_objects: Annotated[int, Field(default=0, ge=0)]
+    total_import_violations: Annotated[int, Field(default=0, ge=0)]
+    total_internal_import_violations: Annotated[int, Field(default=0, ge=0)]
+    total_manual_protocol_violations: Annotated[int, Field(default=0, ge=0)]
+    total_cyclic_imports: Annotated[int, Field(default=0, ge=0)]
+    total_runtime_alias_violations: Annotated[int, Field(default=0, ge=0)]
+    total_future_violations: Annotated[int, Field(default=0, ge=0)]
+    total_manual_typing_violations: Annotated[int, Field(default=0, ge=0)]
+    total_compatibility_alias_violations: Annotated[int, Field(default=0, ge=0)]
+    total_parse_failures: Annotated[int, Field(default=0, ge=0)]
+    total_files_scanned: Annotated[int, Field(default=0, ge=0)]
 
     @classmethod
     def create(

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Annotated
+
 from pydantic import ConfigDict, Field, computed_field, model_serializer
 
 from flext_core import FlextModels
@@ -14,15 +16,18 @@ class FlextInfraCheckModels:
     class Issue(FlextModels.FrozenStrictModel):
         """Single issue reported by a quality gate tool."""
 
-        file: str = Field(description="Source file path")
-        line: int = Field(description="Line number")
-        column: int = Field(description="Column number")
-        code: str = Field(description="Rule or error code")
-        message: str = Field(description="Human-readable issue description")
-        severity: str = Field(
-            default=c.Infra.Toml.ERROR,
-            description="Issue severity level",
-        )
+        file: Annotated[str, Field(description="Source file path")]
+        line: Annotated[int, Field(description="Line number")]
+        column: Annotated[int, Field(description="Column number")]
+        code: Annotated[str, Field(description="Rule or error code")]
+        message: Annotated[str, Field(description="Human-readable issue description")]
+        severity: Annotated[
+            str,
+            Field(
+                default=c.Infra.Toml.ERROR,
+                description="Issue severity level",
+            ),
+        ]
 
         @computed_field
         @property
@@ -36,26 +41,37 @@ class FlextInfraCheckModels:
     class GateExecution(FlextModels.ArbitraryTypesModel):
         """Execution result for a single quality gate."""
 
-        result: FlextInfraCheckModels.GateResult = Field(
-            description="Gate result model",
-        )
-        issues: list[FlextInfraCheckModels.Issue] = Field(
-            default_factory=lambda: list[FlextInfraCheckModels.Issue](),
-            description="Detected issues",
-        )
-        raw_output: str = Field(default="", description="Raw tool output")
+        result: Annotated[
+            FlextInfraCheckModels.GateResult,
+            Field(
+                description="Gate result model",
+            ),
+        ]
+        issues: Annotated[
+            list[FlextInfraCheckModels.Issue],
+            Field(
+                default_factory=lambda: list[FlextInfraCheckModels.Issue](),
+                description="Detected issues",
+            ),
+        ]
+        raw_output: Annotated[str, Field(default="", description="Raw tool output")]
 
     class GateResult(FlextModels.ArbitraryTypesModel):
         """Result summary for a single quality gate execution."""
 
-        gate: str = Field(min_length=1, description="Gate name")
-        project: str = Field(min_length=1, description="Project name")
-        passed: bool = Field(description="Gate execution status")
-        errors: list[str] = Field(
-            default_factory=lambda: list[str](),
-            description="Gate error messages",
-        )
-        duration: float = Field(default=0.0, ge=0.0, description="Duration in seconds")
+        gate: Annotated[str, Field(min_length=1, description="Gate name")]
+        project: Annotated[str, Field(min_length=1, description="Project name")]
+        passed: Annotated[bool, Field(description="Gate execution status")]
+        errors: Annotated[
+            list[str],
+            Field(
+                default_factory=lambda: list[str](),
+                description="Gate error messages",
+            ),
+        ]
+        duration: Annotated[
+            float, Field(default=0.0, ge=0.0, description="Duration in seconds")
+        ]
 
     class CheckResult(GateResult):
         pass
@@ -63,11 +79,16 @@ class FlextInfraCheckModels:
     class ProjectResult(FlextModels.ArbitraryTypesModel):
         """Aggregated gate results for a single project."""
 
-        project: str = Field(description="Project name")
-        gates: dict[str, FlextInfraCheckModels.GateExecution] = Field(
-            default_factory=lambda: dict[str, FlextInfraCheckModels.GateExecution](),
-            description="Gate name to execution mapping",
-        )
+        project: Annotated[str, Field(description="Project name")]
+        gates: Annotated[
+            dict[str, FlextInfraCheckModels.GateExecution],
+            Field(
+                default_factory=lambda: dict[
+                    str, FlextInfraCheckModels.GateExecution
+                ](),
+                description="Gate name to execution mapping",
+            ),
+        ]
 
         @computed_field
         @property
@@ -82,15 +103,23 @@ class FlextInfraCheckModels:
             return sum(len(v.issues) for v in self.gates.values())
 
     class WorkspaceCheckReport(FlextModels.ArbitraryTypesModel):
-        generated_at: str = Field(description="UTC timestamp for report generation")
-        gates: list[str] = Field(
-            default_factory=lambda: list[str](),
-            description="Gates executed in this run",
-        )
-        projects: list[FlextInfraCheckModels.ProjectResult] = Field(
-            default_factory=lambda: list[FlextInfraCheckModels.ProjectResult](),
-            description="Per-project check results",
-        )
+        generated_at: Annotated[
+            str, Field(description="UTC timestamp for report generation")
+        ]
+        gates: Annotated[
+            list[str],
+            Field(
+                default_factory=lambda: list[str](),
+                description="Gates executed in this run",
+            ),
+        ]
+        projects: Annotated[
+            list[FlextInfraCheckModels.ProjectResult],
+            Field(
+                default_factory=lambda: list[FlextInfraCheckModels.ProjectResult](),
+                description="Per-project check results",
+            ),
+        ]
 
     # -- SARIF 2.1.0 report models -----------------------------------------
 
@@ -100,8 +129,10 @@ class FlextInfraCheckModels:
         class Rule(FlextModels.FrozenStrictModel):
             """Compact SARIF rule descriptor."""
 
-            id: str = Field(description="Rule identifier")
-            short_description: str = Field(description="Rule short description")
+            id: Annotated[str, Field(description="Rule identifier")]
+            short_description: Annotated[
+                str, Field(description="Rule short description")
+            ]
 
             @model_serializer(mode="plain")
             def _serialize(self) -> dict[str, object]:
@@ -113,13 +144,16 @@ class FlextInfraCheckModels:
         class Location(FlextModels.FrozenStrictModel):
             """Compact SARIF location source span."""
 
-            uri: str = Field(description="Artifact URI")
-            start_line: int = Field(description="Start line (1-based)")
-            start_column: int = Field(description="Start column (1-based)")
-            uri_base_id: str = Field(
-                default="%SRCROOT%",
-                description="URI base identifier",
-            )
+            uri: Annotated[str, Field(description="Artifact URI")]
+            start_line: Annotated[int, Field(description="Start line (1-based)")]
+            start_column: Annotated[int, Field(description="Start column (1-based)")]
+            uri_base_id: Annotated[
+                str,
+                Field(
+                    default="%SRCROOT%",
+                    description="URI base identifier",
+                ),
+            ]
 
             @model_serializer(mode="plain")
             def _serialize(self) -> dict[str, object]:
@@ -139,12 +173,15 @@ class FlextInfraCheckModels:
         class Result(FlextModels.FrozenStrictModel):
             """SARIF result entry."""
 
-            rule_id: str = Field(description="Rule identifier")
-            level: str = Field(description="Result level (error/warning)")
-            message: str = Field(description="Result message")
-            locations: list[FlextInfraCheckModels.Sarif.Location] = Field(
-                description="Result locations",
-            )
+            rule_id: Annotated[str, Field(description="Rule identifier")]
+            level: Annotated[str, Field(description="Result level (error/warning)")]
+            message: Annotated[str, Field(description="Result message")]
+            locations: Annotated[
+                list[FlextInfraCheckModels.Sarif.Location],
+                Field(
+                    description="Result locations",
+                ),
+            ]
 
             @model_serializer(mode="plain")
             def _serialize(self) -> dict[str, object]:
@@ -161,19 +198,28 @@ class FlextInfraCheckModels:
         class Run(FlextModels.FrozenStrictModel):
             """SARIF run entry."""
 
-            tool_name: str = Field(description="Tool name")
-            information_uri: str = Field(
-                default="",
-                description="Tool documentation URL",
-            )
-            rules: list[FlextInfraCheckModels.Sarif.Rule] = Field(
-                default_factory=lambda: list[FlextInfraCheckModels.Sarif.Rule](),
-                description="Rule descriptors",
-            )
-            results: list[FlextInfraCheckModels.Sarif.Result] = Field(
-                default_factory=lambda: list[FlextInfraCheckModels.Sarif.Result](),
-                description="Run results",
-            )
+            tool_name: Annotated[str, Field(description="Tool name")]
+            information_uri: Annotated[
+                str,
+                Field(
+                    default="",
+                    description="Tool documentation URL",
+                ),
+            ]
+            rules: Annotated[
+                list[FlextInfraCheckModels.Sarif.Rule],
+                Field(
+                    default_factory=lambda: list[FlextInfraCheckModels.Sarif.Rule](),
+                    description="Rule descriptors",
+                ),
+            ]
+            results: Annotated[
+                list[FlextInfraCheckModels.Sarif.Result],
+                Field(
+                    default_factory=lambda: list[FlextInfraCheckModels.Sarif.Result](),
+                    description="Run results",
+                ),
+            ]
 
             @model_serializer(mode="plain")
             def _serialize(self) -> dict[str, object]:
@@ -197,16 +243,22 @@ class FlextInfraCheckModels:
 
             model_config = ConfigDict(extra="forbid", populate_by_name=True)
 
-            schema_uri: str = Field(
-                default="https://raw.githubusercontent.com/oasis-tcs/sarif-spec/main/Schemata/sarif-schema-2.1.0.json",
-                alias="$schema",
-                description="SARIF schema URI",
-            )
-            version: str = Field(default="2.1.0", description="SARIF version")
-            runs: list[FlextInfraCheckModels.Sarif.Run] = Field(
-                default_factory=lambda: list[FlextInfraCheckModels.Sarif.Run](),
-                description="SARIF runs",
-            )
+            schema_uri: Annotated[
+                str,
+                Field(
+                    default="https://raw.githubusercontent.com/oasis-tcs/sarif-spec/main/Schemata/sarif-schema-2.1.0.json",
+                    alias="$schema",
+                    description="SARIF schema URI",
+                ),
+            ]
+            version: Annotated[str, Field(default="2.1.0", description="SARIF version")]
+            runs: Annotated[
+                list[FlextInfraCheckModels.Sarif.Run],
+                Field(
+                    default_factory=lambda: list[FlextInfraCheckModels.Sarif.Run](),
+                    description="SARIF runs",
+                ),
+            ]
 
 
 __all__ = ["FlextInfraCheckModels"]
