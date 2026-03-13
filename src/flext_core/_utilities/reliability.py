@@ -17,17 +17,18 @@ import time
 from collections.abc import Callable, Mapping
 from typing import TypeGuard
 
-from pydantic import TypeAdapter, ValidationError
+from pydantic import ValidationError
 
 from flext_core import FlextRuntime, c, p, r, t
+from flext_core._models.base import FlextModelFoundation
 from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core._utilities.mapper import FlextUtilitiesMapper
-
-_RELIABILITY_CONTAINER_DICT_ADAPTER = TypeAdapter(dict[str, object])
 
 
 class FlextUtilitiesReliability:
     """Reliability patterns for resilient, dispatcher-safe operations."""
+
+    _V = FlextModelFoundation.Validators
 
     @property
     def logger(self) -> p.Log.StructlogLogger:
@@ -72,8 +73,11 @@ class FlextUtilitiesReliability:
     def _resolve_match_output(
         candidate: object | Callable[[object], object],
         value: object,
-    ) -> object:
-        return candidate(value) if callable(candidate) else candidate
+    ) -> t.Container:
+        raw = candidate(value) if callable(candidate) else candidate
+        if FlextUtilitiesGuards.is_container(raw):
+            return raw
+        return str(raw)
 
     @staticmethod
     def calculate_delay(attempt: int, config: Mapping[str, object] | None) -> float:
@@ -186,12 +190,35 @@ class FlextUtilitiesReliability:
                 value: t.Container,
             ) -> t.Container | r[t.Container]:
                 result = FlextUtilitiesReliability.pipe(value, *funcs)
-                return result.value if result.is_success else result
+                if result.is_success:
+                    val = result.value
+                    if FlextUtilitiesGuards.is_container(val):
+                        return val
+                    return str(val)
+                return result
 
             return piped
         if mode == "chain":
-            return lambda value: FlextUtilitiesReliability.chain(value, *funcs)
-        return lambda value: FlextUtilitiesReliability.flow(value, *funcs)
+
+            def chained(
+                value: t.Container,
+            ) -> t.Container | r[t.Container]:
+                raw = FlextUtilitiesReliability.chain(value, *funcs)
+                if FlextUtilitiesGuards.is_container(raw):
+                    return raw
+                return str(raw)
+
+            return chained
+
+        def flowed(
+            value: t.Container,
+        ) -> t.Container | r[t.Container]:
+            raw = FlextUtilitiesReliability.flow(value, *funcs)
+            if FlextUtilitiesGuards.is_container(raw):
+                return raw
+            return str(raw)
+
+        return flowed
 
     @staticmethod
     def flow(
@@ -224,7 +251,11 @@ class FlextUtilitiesReliability:
             if isinstance(op, Mapping):
                 op_dict: dict[str, object]
                 try:
-                    op_dict = _RELIABILITY_CONTAINER_DICT_ADAPTER.validate_python(op)
+                    op_dict = dict(
+                        FlextUtilitiesReliability._V.dict_str_metadata_adapter().validate_python(
+                            op
+                        )
+                    )
                 except ValidationError:
                     op_dict = {}
                 if FlextUtilitiesGuards.is_container(current):

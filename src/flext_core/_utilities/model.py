@@ -10,9 +10,9 @@ from __future__ import annotations
 
 import json
 from collections.abc import Mapping
-from typing import ClassVar, TypeVar
+from typing import TypeVar
 
-from pydantic import BaseModel, TypeAdapter, ValidationError
+from pydantic import BaseModel, ValidationError
 
 from flext_core import FlextRuntime, m, r, t
 from flext_core._models.base import FlextModelFoundation
@@ -37,21 +37,17 @@ class FlextUtilitiesModel:
 
     """
 
-    _dict_str_object_adapter: ClassVar[TypeAdapter[dict[str, object]]] = TypeAdapter(
-        dict[str, object]
-    )
-    _list_object_adapter: ClassVar[TypeAdapter[list[object]]] = TypeAdapter(
-        list[object]
-    )
-    _tuple_object_adapter: ClassVar[TypeAdapter[tuple[object, ...]]] = TypeAdapter(
-        tuple[object, ...]
-    )
     _V = FlextModelFoundation.Validators
 
     @staticmethod
     def _normalize_str_object_mapping(value: object) -> dict[str, object]:
         try:
-            return FlextUtilitiesModel._dict_str_object_adapter.validate_python(value)
+            validated = (
+                FlextUtilitiesModel._V.dict_str_metadata_adapter().validate_python(
+                    value
+                )
+            )
+            return dict(validated)
         except ValidationError:
             return {}
 
@@ -75,7 +71,9 @@ class FlextUtilitiesModel:
         if isinstance(value, (bool, int, float, str)):
             return value
         if isinstance(value, list):
-            list_items = FlextUtilitiesModel._list_object_adapter.validate_python(value)
+            list_items = (
+                FlextUtilitiesModel._V.list_container_adapter().validate_python(value)
+            )
             normalized_items: list[t.Primitives] = []
             for item in list_items:
                 if item is None:
@@ -91,8 +89,8 @@ class FlextUtilitiesModel:
                     normalized_items.append(str(item))
             return normalized_items
         if isinstance(value, tuple):
-            tuple_items = FlextUtilitiesModel._tuple_object_adapter.validate_python(
-                value
+            tuple_items = (
+                FlextUtilitiesModel._V.tuple_container_adapter().validate_python(value)
             )
             normalized_tuple_items: list[t.Primitives] = []
             for item in tuple_items:
@@ -291,7 +289,7 @@ class FlextUtilitiesModel:
                     safe_attrs[str_k] = json.dumps(nested_mapping)
                 else:
                     safe_attrs[str_k] = str(v)
-            return m.Metadata(attributes=safe_attrs)
+            return m.Metadata.model_validate({"attributes": safe_attrs})
         msg = f"metadata must be None, dict, or m.Metadata, got {value.__class__.__name__}"
         raise TypeError(msg)
 
@@ -372,7 +370,9 @@ class FlextUtilitiesModel:
             try:
                 normalized_mapping: dict[str, object] = {}
                 obj_mapping = (
-                    FlextUtilitiesModel._dict_str_object_adapter.validate_python(obj)
+                    FlextUtilitiesModel._V.dict_str_metadata_adapter().validate_python(
+                        obj
+                    )
                 )
                 for key, value in obj_mapping.items():
                     normalized_mapping_value: object = (

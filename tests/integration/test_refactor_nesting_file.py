@@ -17,7 +17,9 @@ pytestmark = [pytest.mark.integration]
 
 
 def test_class_nesting_refactor_single_file_end_to_end(tmp_path: Path) -> None:
-    fixture_file = Path("tests/fixtures/namespace_validator/rule0_valid.py")
+    fixture_file = (
+        Path(__file__).parent.parent / "fixtures/namespace_validator/rule0_valid.py"
+    )
     source = fixture_file.read_text(encoding="utf-8")
     dispatcher_dir = tmp_path / "_dispatcher"
     dispatcher_dir.mkdir(parents=True, exist_ok=True)

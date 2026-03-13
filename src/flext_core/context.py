@@ -1102,7 +1102,7 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
             container = FlextContext.get_container()
             try:
                 # Type ignoring register until Pydantic vs arbitrary type unification is complete
-                _ = container.register(service_name, service)  # type: ignore[arg-type]
+                _ = container.register(service_name, service)
                 return r[bool].ok(value=True)
             except ValueError as e:
                 return r[bool].fail(str(e))

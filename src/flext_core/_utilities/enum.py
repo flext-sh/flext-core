@@ -11,11 +11,12 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
 from enum import StrEnum
-from typing import Annotated, ClassVar, Literal, TypeGuard, TypeIs, overload
+from typing import ClassVar, Literal, TypeGuard, TypeIs, overload
 
-from pydantic import Field, TypeAdapter, ValidationError
+from pydantic import ValidationError
 
 from flext_core import r, t
+from flext_core._models.base import FlextModelFoundation
 from flext_core.typings import EnumT
 
 
@@ -33,9 +34,7 @@ class FlextUtilitiesEnum:
     _values_cache: ClassVar[dict[type[StrEnum], frozenset[str]]] = {}
     _names_cache: ClassVar[dict[type[StrEnum], frozenset[str]]] = {}
     _members_cache: ClassVar[dict[type[StrEnum], frozenset[StrEnum]]] = {}
-    _strict_str_adapter: ClassVar[TypeAdapter[Annotated[str, Field(strict=True)]]] = (
-        TypeAdapter(Annotated[str, Field(strict=True)])
-    )
+    _V = FlextModelFoundation.Validators
 
     @staticmethod
     def _coerce[E: StrEnum](enum_cls: type[E], value: str | E) -> E:
@@ -80,7 +79,7 @@ class FlextUtilitiesEnum:
         """Validate strict string input for parsing paths."""
         try:
             return r[str].ok(
-                FlextUtilitiesEnum._strict_str_adapter.validate_python(value)
+                FlextUtilitiesEnum._V.strict_string_adapter().validate_python(value)
             )
         except ValidationError:
             return r[str].fail("Value is not a valid string input")

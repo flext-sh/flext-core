@@ -13,8 +13,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import uuid
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from datetime import UTC, datetime
+from enum import StrEnum
 from typing import Annotated, ClassVar, Literal, Self, override
 
 from pydantic import (
@@ -67,6 +68,31 @@ class FlextModelFoundation:
             TypeAdapter[tuple[t.Container, ...]] | None
         ] = None
         _primitives_adapter: ClassVar[TypeAdapter[t.Primitives] | None] = None
+        _dict_str_metadata_adapter: ClassVar[
+            TypeAdapter[dict[str, t.MetadataValue]] | None
+        ] = None
+        _set_container_adapter: ClassVar[TypeAdapter[set[t.Container]] | None] = None
+        _set_str_adapter: ClassVar[TypeAdapter[set[str]] | None] = None
+        _sortable_dict_adapter: ClassVar[
+            TypeAdapter[dict[t.SortableObjectType, t.MetadataValue]] | None
+        ] = None
+        _strict_json_list_adapter: ClassVar[
+            TypeAdapter[
+                list[t.Scalar | t.ConfigurationMapping | list[t.Container] | None]
+            ]
+            | None
+        ] = None
+        _strict_json_scalar_adapter: ClassVar[TypeAdapter[t.Scalar] | None] = None
+        _float_adapter: ClassVar[TypeAdapter[float] | None] = None
+        _str_adapter: ClassVar[TypeAdapter[str] | None] = None
+        _enum_type_adapter: ClassVar[TypeAdapter[type[StrEnum]] | None] = None
+        _serializable_adapter: ClassVar[TypeAdapter[t.Serializable] | None] = None
+        _metadata_json_dict_adapter: ClassVar[
+            TypeAdapter[dict[str, str | int | float | bool]] | None
+        ] = None
+        _structlog_processor_adapter: ClassVar[
+            TypeAdapter[Callable[..., t.Container]] | None
+        ] = None
 
         @classmethod
         def config_adapter(cls) -> TypeAdapter[Mapping[str, t.Container]]:
@@ -136,6 +162,98 @@ class FlextModelFoundation:
             if cls._primitives_adapter is None:
                 cls._primitives_adapter = TypeAdapter(t.Primitives)
             return cls._primitives_adapter
+
+        @classmethod
+        def dict_str_metadata_adapter(
+            cls,
+        ) -> TypeAdapter[dict[str, t.MetadataValue]]:
+            if cls._dict_str_metadata_adapter is None:
+                cls._dict_str_metadata_adapter = TypeAdapter(dict[str, t.MetadataValue])
+            return cls._dict_str_metadata_adapter
+
+        @classmethod
+        def set_container_adapter(cls) -> TypeAdapter[set[t.Container]]:
+            if cls._set_container_adapter is None:
+                cls._set_container_adapter = TypeAdapter(set[t.Container])
+            return cls._set_container_adapter
+
+        @classmethod
+        def set_str_adapter(cls) -> TypeAdapter[set[str]]:
+            if cls._set_str_adapter is None:
+                cls._set_str_adapter = TypeAdapter(set[str])
+            return cls._set_str_adapter
+
+        @classmethod
+        def sortable_dict_adapter(
+            cls,
+        ) -> TypeAdapter[dict[t.SortableObjectType, t.MetadataValue]]:
+            if cls._sortable_dict_adapter is None:
+                cls._sortable_dict_adapter = TypeAdapter(
+                    dict[t.SortableObjectType, t.MetadataValue]
+                )
+            return cls._sortable_dict_adapter
+
+        @classmethod
+        def strict_json_list_adapter(
+            cls,
+        ) -> TypeAdapter[
+            list[t.Scalar | t.ConfigurationMapping | list[t.Container] | None]
+        ]:
+            if cls._strict_json_list_adapter is None:
+                cls._strict_json_list_adapter = TypeAdapter(
+                    list[t.Scalar | t.ConfigurationMapping | list[t.Container] | None]
+                )
+            return cls._strict_json_list_adapter
+
+        @classmethod
+        def strict_json_scalar_adapter(cls) -> TypeAdapter[t.Scalar]:
+            if cls._strict_json_scalar_adapter is None:
+                cls._strict_json_scalar_adapter = TypeAdapter(t.Scalar)
+            return cls._strict_json_scalar_adapter
+
+        @classmethod
+        def float_adapter(cls) -> TypeAdapter[float]:
+            if cls._float_adapter is None:
+                cls._float_adapter = TypeAdapter(float)
+            return cls._float_adapter
+
+        @classmethod
+        def str_adapter(cls) -> TypeAdapter[str]:
+            if cls._str_adapter is None:
+                cls._str_adapter = TypeAdapter(str)
+            return cls._str_adapter
+
+        @classmethod
+        def enum_type_adapter(cls) -> TypeAdapter[type[StrEnum]]:
+            if cls._enum_type_adapter is None:
+                cls._enum_type_adapter = TypeAdapter(type[StrEnum])
+            return cls._enum_type_adapter
+
+        @classmethod
+        def serializable_adapter(cls) -> TypeAdapter[t.Serializable]:
+            if cls._serializable_adapter is None:
+                cls._serializable_adapter = TypeAdapter(t.Serializable)
+            return cls._serializable_adapter
+
+        @classmethod
+        def metadata_json_dict_adapter(
+            cls,
+        ) -> TypeAdapter[dict[str, str | int | float | bool]]:
+            if cls._metadata_json_dict_adapter is None:
+                cls._metadata_json_dict_adapter = TypeAdapter(
+                    dict[str, str | int | float | bool]
+                )
+            return cls._metadata_json_dict_adapter
+
+        @classmethod
+        def structlog_processor_adapter(
+            cls,
+        ) -> TypeAdapter[Callable[..., t.Container]]:
+            if cls._structlog_processor_adapter is None:
+                cls._structlog_processor_adapter = TypeAdapter(
+                    Callable[..., t.Container]
+                )
+            return cls._structlog_processor_adapter
 
         @staticmethod
         def ensure_utc_datetime(v: datetime | None) -> datetime | None:

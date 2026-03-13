@@ -18,11 +18,11 @@ from pydantic import (
     BaseModel,
     ConfigDict,
     Field,
-    TypeAdapter,
     ValidationError as PydanticValidationError,
 )
 
 from flext_core import FlextRuntime, c, m, t
+from flext_core._models.base import FlextModelFoundation
 
 
 class MetadataProtocol(Protocol):
@@ -37,9 +37,7 @@ class FlextExceptions:
     for consistent error handling and logging.
     """
 
-    _metadata_map_adapter: ClassVar[TypeAdapter[dict[str, object]]] = TypeAdapter(
-        dict[str, object]
-    )
+    _V = FlextModelFoundation.Validators
 
     class _ParamsModel(m.ArbitraryTypesModel):
         """Shared strict params model for exception helpers."""
@@ -433,7 +431,7 @@ class FlextExceptions:
         if value is None:
             return None
         try:
-            return e._metadata_map_adapter.validate_python(value)
+            return e._V.dict_str_metadata_adapter().validate_python(value)
         except PydanticValidationError:
             return None
 
@@ -466,7 +464,9 @@ class FlextExceptions:
         if isinstance(value, BaseModel):
             dumped_candidate = value.model_dump()
             try:
-                dumped_map = e._metadata_map_adapter.validate_python(dumped_candidate)
+                dumped_map = e._V.dict_str_metadata_adapter().validate_python(
+                    dumped_candidate
+                )
             except PydanticValidationError:
                 dumped_map = None
         if dumped_map is not None:

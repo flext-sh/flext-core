@@ -11,11 +11,12 @@ from __future__ import annotations
 from collections.abc import Callable, Hashable, Mapping, Sequence
 from datetime import datetime
 from enum import StrEnum
-from typing import ClassVar, Protocol, TypeGuard, TypeVar, overload, runtime_checkable
+from typing import Protocol, TypeGuard, TypeVar, overload, runtime_checkable
 
-from pydantic import TypeAdapter, ValidationError
+from pydantic import ValidationError
 
 from flext_core import r, t
+from flext_core._models.base import FlextModelFoundation
 from flext_core._models.containers import FlextModelsContainers
 from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core.typings import R, T, U
@@ -33,18 +34,14 @@ class _Predicate(Protocol[_PredicateT_contra]):
 class FlextUtilitiesCollection:
     """Utilities for collection operations with full generic type support."""
 
-    _object_adapter: ClassVar[TypeAdapter[object]] = TypeAdapter(object)
-    _dict_str_object_adapter: ClassVar[TypeAdapter[dict[str, object]]] = TypeAdapter(
-        dict[str, object]
-    )
-    _list_object_adapter: ClassVar[TypeAdapter[list[object]]] = TypeAdapter(
-        list[object]
-    )
+    _V = FlextModelFoundation.Validators
 
     @staticmethod
     def _coerce_guard_value(value: object) -> object:
         try:
-            return FlextUtilitiesCollection._object_adapter.validate_python(value)
+            return FlextUtilitiesCollection._V.serializable_adapter().validate_python(
+                value
+            )
         except ValidationError:
             return str(value)
 
@@ -79,13 +76,17 @@ class FlextUtilitiesCollection:
     @staticmethod
     def _normalize_mapping_items(data: object) -> list[tuple[str, object]]:
         normalized_mapping = (
-            FlextUtilitiesCollection._dict_str_object_adapter.validate_python(data)
+            FlextUtilitiesCollection._V.dict_str_metadata_adapter().validate_python(
+                data
+            )
         )
         return list(normalized_mapping.items())
 
     @staticmethod
-    def _normalize_sequence_items(data: object) -> list[object]:
-        return FlextUtilitiesCollection._list_object_adapter.validate_python(data)
+    def _normalize_sequence_items(data: object) -> list[t.Container]:
+        return FlextUtilitiesCollection._V.list_container_adapter().validate_python(
+            data
+        )
 
     @staticmethod
     def _is_empty_value(value: object) -> bool:
@@ -296,10 +297,8 @@ class FlextUtilitiesCollection:
 
         def validator(data: object) -> Mapping[str, bool]:
             try:
-                normalized_map = (
-                    FlextUtilitiesCollection._dict_str_object_adapter.validate_python(
-                        data
-                    )
+                normalized_map = FlextUtilitiesCollection._V.dict_str_metadata_adapter().validate_python(
+                    data
                 )
             except ValidationError as exc:
                 msg = f"Expected mapping, got {data.__class__.__name__}"
@@ -339,10 +338,8 @@ class FlextUtilitiesCollection:
 
         def validator(data: object) -> Mapping[str, float]:
             try:
-                normalized_map = (
-                    FlextUtilitiesCollection._dict_str_object_adapter.validate_python(
-                        data
-                    )
+                normalized_map = FlextUtilitiesCollection._V.dict_str_metadata_adapter().validate_python(
+                    data
                 )
             except ValidationError as exc:
                 msg = f"Expected mapping, got {data.__class__.__name__}"
@@ -360,10 +357,8 @@ class FlextUtilitiesCollection:
 
         def validator(data: object) -> Mapping[str, int]:
             try:
-                normalized_map = (
-                    FlextUtilitiesCollection._dict_str_object_adapter.validate_python(
-                        data
-                    )
+                normalized_map = FlextUtilitiesCollection._V.dict_str_metadata_adapter().validate_python(
+                    data
                 )
             except ValidationError as exc:
                 msg = f"Expected mapping, got {data.__class__.__name__}"
@@ -381,10 +376,8 @@ class FlextUtilitiesCollection:
 
         def validator(data: object) -> Mapping[str, str]:
             try:
-                normalized_map = (
-                    FlextUtilitiesCollection._dict_str_object_adapter.validate_python(
-                        data
-                    )
+                normalized_map = FlextUtilitiesCollection._V.dict_str_metadata_adapter().validate_python(
+                    data
                 )
             except ValidationError as exc:
                 msg = f"Expected mapping, got {data.__class__.__name__}"
@@ -410,10 +403,8 @@ class FlextUtilitiesCollection:
 
         def validator(data: object) -> dict[str, E]:
             try:
-                normalized_map = (
-                    FlextUtilitiesCollection._dict_str_object_adapter.validate_python(
-                        data
-                    )
+                normalized_map = FlextUtilitiesCollection._V.dict_str_metadata_adapter().validate_python(
+                    data
                 )
             except ValidationError as exc:
                 msg = f"Expected dict, got {data.__class__.__name__}"
@@ -511,8 +502,8 @@ class FlextUtilitiesCollection:
                 msg = f"Expected sequence, got {data.__class__.__name__}"
                 raise TypeError(msg)
             try:
-                normalized_items = (
-                    FlextUtilitiesCollection._list_object_adapter.validate_python(data)
+                normalized_items = FlextUtilitiesCollection._V.list_container_adapter().validate_python(
+                    data
                 )
             except ValidationError as exc:
                 msg = f"Expected sequence, got {data.__class__.__name__}"
