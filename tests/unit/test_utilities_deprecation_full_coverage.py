@@ -11,7 +11,7 @@ def test_deprecated_class_noop_init_branch() -> None:
     assert c.Errors.UNKNOWN_ERROR
     assert isinstance(m.Categories(), m.Categories)
     assert r[int].ok(1).is_success
-    assert isinstance(m.ConfigMap.model_validate({"k": 1}), m.ConfigMap)
+    assert isinstance(m.ConfigMap({"k": 1}), m.ConfigMap)
     legacy_base = type("LegacyBase", (object,), {"__init__": None})
     legacy = u.deprecated_class("NewClass", "2.0.0")(
         legacy_base,

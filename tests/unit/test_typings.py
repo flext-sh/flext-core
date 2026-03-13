@@ -59,77 +59,73 @@ class TypeScenarios:
     """Factory for type system test scenarios with centralized test data."""
 
     CORE_TYPEVARS: ClassVar[list[TypeVarTestCase]] = [
-        TypeVarTestCase.model_validate({
-            "name": "T",
-            "category": TypeVarCategory.CORE,
-            "type_var": T,
-        }),
-        TypeVarTestCase.model_validate({
-            "name": "U",
-            "category": TypeVarCategory.CORE,
-            "type_var": U,
-        }),
-        TypeVarTestCase.model_validate({
-            "name": "E",
-            "category": TypeVarCategory.CORE,
-            "type_var": e,
-        }),
-        TypeVarTestCase.model_validate({
-            "name": "R",
-            "category": TypeVarCategory.CORE,
-            "type_var": R,
-        }),
-        TypeVarTestCase.model_validate(
-            {"name": "ResultT", "category": TypeVarCategory.CORE, "type_var": ResultT},
+        TypeVarTestCase(
+            name="T",
+            category=TypeVarCategory.CORE,
+            type_var=T,
+        ),
+        TypeVarTestCase(
+            name="U",
+            category=TypeVarCategory.CORE,
+            type_var=U,
+        ),
+        TypeVarTestCase(
+            name="E",
+            category=TypeVarCategory.CORE,
+            type_var=e,
+        ),
+        TypeVarTestCase(
+            name="R",
+            category=TypeVarCategory.CORE,
+            type_var=R,
+        ),
+        TypeVarTestCase(
+            name="ResultT",
+            category=TypeVarCategory.CORE,
+            type_var=ResultT,
         ),
     ]
     COVARIANT_TYPEVARS: ClassVar[list[TypeVarTestCase]] = [
-        TypeVarTestCase.model_validate(
-            {"name": "T_co", "category": TypeVarCategory.COVARIANT, "type_var": T_co},
+        TypeVarTestCase(
+            name="T_co",
+            category=TypeVarCategory.COVARIANT,
+            type_var=T_co,
         ),
     ]
     CONTRAVARIANT_TYPEVARS: ClassVar[list[TypeVarTestCase]] = [
-        TypeVarTestCase.model_validate(
-            {
-                "name": "T_contra",
-                "category": TypeVarCategory.CONTRAVARIANT,
-                "type_var": T_contra,
-            },
+        TypeVarTestCase(
+            name="T_contra",
+            category=TypeVarCategory.CONTRAVARIANT,
+            type_var=T_contra,
         ),
     ]
     CQRS_ALIASES: ClassVar[list[TypeVarTestCase]] = [
-        TypeVarTestCase.model_validate(
-            {
-                "name": "Command",
-                "category": TypeVarCategory.CQRS,
-                "type_var": object,
-            },
+        TypeVarTestCase(
+            name="Command",
+            category=TypeVarCategory.CQRS,
+            type_var=object,
         ),
-        TypeVarTestCase.model_validate(
-            {
-                "name": "Query",
-                "category": TypeVarCategory.CQRS,
-                "type_var": object,
-            },
+        TypeVarTestCase(
+            name="Query",
+            category=TypeVarCategory.CQRS,
+            type_var=object,
         ),
-        TypeVarTestCase.model_validate(
-            {
-                "name": "Event",
-                "category": TypeVarCategory.CQRS,
-                "type_var": object,
-            },
+        TypeVarTestCase(
+            name="Event",
+            category=TypeVarCategory.CQRS,
+            type_var=object,
         ),
-        TypeVarTestCase.model_validate(
-            {
-                "name": "Message",
-                "category": TypeVarCategory.CQRS,
-                "type_var": object,
-            },
+        TypeVarTestCase(
+            name="Message",
+            category=TypeVarCategory.CQRS,
+            type_var=object,
         ),
     ]
     PARAMSPEC_ITEMS: ClassVar[list[TypeVarTestCase]] = [
-        TypeVarTestCase.model_validate(
-            {"name": "P", "category": TypeVarCategory.PARAMSPEC, "type_var": P},
+        TypeVarTestCase(
+            name="P",
+            category=TypeVarCategory.PARAMSPEC,
+            type_var=P,
         ),
     ]
 

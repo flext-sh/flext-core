@@ -74,7 +74,7 @@ class FlextInfraRefactorMigrateToClassMRO:
                 target=normalized_target,
             )
         )
-        return m.Infra.Refactor.MROMigrationReport.model_validate({
+        return m.Infra.Refactor.MROMigrationReport({
             "workspace": str(self._workspace_root),
             "target": normalized_target,
             "dry_run": not apply_changes,

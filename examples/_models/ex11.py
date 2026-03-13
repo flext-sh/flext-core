@@ -16,7 +16,7 @@ class Ex11HandlerLikeService(FlextSettings):
     @override
     def validate(cls, value: object) -> Ex11HandlerLikeService:
         """Validate service payload."""
-        return cls.model_validate(value)
+        return cls(value)
 
     def can_handle(self, message_type: type) -> bool:
         """Check whether message type is handled."""

@@ -27,7 +27,7 @@ def test_workspace_cli_migrate_command(monkeypatch: MonkeyPatch) -> None:
         del self, workspace_root
         assert dry_run is True
         return r[list[m.Infra.Workspace.MigrationResult]].ok([
-            m.Infra.Workspace.MigrationResult.model_validate({
+            m.Infra.Workspace.MigrationResult({
                 "project": "flext-core",
                 "changes": ["[DRY-RUN] base.mk regenerated via BaseMkGenerator"],
                 "errors": [],
@@ -56,7 +56,7 @@ def test_workspace_cli_migrate_output_contains_summary(
     ) -> r[list[m.Infra.Workspace.MigrationResult]]:
         del self, workspace_root, dry_run
         return r[list[m.Infra.Workspace.MigrationResult]].ok([
-            m.Infra.Workspace.MigrationResult.model_validate({
+            m.Infra.Workspace.MigrationResult({
                 "project": "flext-core",
                 "changes": [
                     "[DRY-RUN] .gitignore cleaned from scripts/ and normalized",

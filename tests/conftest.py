@@ -121,7 +121,7 @@ class FlextTestAutomationFramework:
                 model_config = ConfigDict(extra="allow")
                 name: str
 
-            entity = TestEntity.model_validate({
+            entity = TestEntity({
                 "unique_id": unique_id,
                 "name": name,
                 **kwargs,

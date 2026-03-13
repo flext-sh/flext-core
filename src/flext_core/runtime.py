@@ -45,6 +45,7 @@ import atexit
 import contextlib
 import inspect
 import io
+import json
 import logging
 import queue
 import secrets
@@ -506,7 +507,7 @@ class FlextRuntime:
                 if FlextRuntime._has_dict_protocol(value):
                     return True
                 try:
-                    FlextModelsContainers.ConfigMap.model_validate(value)
+                    FlextModelsContainers.ConfigMap(value)
                     return True
                 except (ValidationError, TypeError, ValueError, AttributeError):
                     return False
@@ -610,9 +611,9 @@ class FlextRuntime:
         if not isinstance(value, str):
             return False
         try:
-            FlextModelFoundation.Validators.serializable_adapter().validate_json(value)
+            json.loads(value)
             return True
-        except (ValidationError, TypeError, ValueError):
+        except (TypeError, ValueError):
             return False
 
     @staticmethod
@@ -1378,13 +1379,9 @@ class FlextRuntime:
                 validated_error_data = error_data
             elif isinstance(error_data, BaseModel):
                 dump = error_data.model_dump()
-                validated_error_data = FlextModelsContainers.ConfigMap.model_validate(
-                    dump
-                )
+                validated_error_data = FlextModelsContainers.ConfigMap(dump)
             else:
-                validated_error_data = FlextModelsContainers.ConfigMap.model_validate(
-                    dict(error_data)
-                )
+                validated_error_data = FlextModelsContainers.ConfigMap(dict(error_data))
 
             return cls(
                 is_success=False,
@@ -1711,9 +1708,7 @@ class FlextRuntime:
                     "Failed to convert mapping context to string dict", exc_info=exc
                 )
                 parsed_context = {}
-            context_dict = FlextModelsContainers.ConfigMap.model_validate(
-                parsed_context
-            )
+            context_dict = FlextModelsContainers.ConfigMap(parsed_context)
         elif not isinstance(context, Mapping) and FlextRuntime._is_scalar(context):
             context_dict = FlextModelsContainers.ConfigMap(root={})
         elif isinstance(context, BaseModel):

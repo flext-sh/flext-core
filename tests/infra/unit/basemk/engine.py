@@ -40,7 +40,7 @@ def test_render_all_has_no_scripts_path_references() -> None:
 
 
 def test_generator_renders_with_config_override() -> None:
-    config = im.Infra.Basemk.BaseMkConfig.model_validate({
+    config = im.Infra.Basemk.BaseMkConfig({
         "project_name": "sample-project",
         "python_version": "3.11",
         "core_stack": "python",

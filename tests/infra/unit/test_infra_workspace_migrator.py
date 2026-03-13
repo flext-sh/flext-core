@@ -56,7 +56,7 @@ def _project(
     project_root: Path,
     name: str = "project-a",
 ) -> im.Infra.Workspace.ProjectInfo:
-    return im.Infra.Workspace.ProjectInfo.model_validate({
+    return im.Infra.Workspace.ProjectInfo({
         "name": name,
         "path": project_root,
         "stack": "python/external",

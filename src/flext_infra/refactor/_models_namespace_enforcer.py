@@ -76,7 +76,7 @@ class NamespaceFacadeStatus(FlextModels.ArbitraryTypesModel):
         file: str,
         symbol_count: int,
     ) -> Self:
-        return cls.model_validate({
+        return cls({
             "family": family,
             "exists": exists,
             "class_name": class_name,
@@ -104,7 +104,7 @@ class NamespaceLooseObjectViolation(FlextModels.ArbitraryTypesModel):
         kind: str,
         suggestion: str,
     ) -> Self:
-        return cls.model_validate({
+        return cls({
             "file": file,
             "line": line,
             "name": name,
@@ -130,7 +130,7 @@ class NamespaceImportAliasViolation(FlextModels.ArbitraryTypesModel):
         current_import: str,
         suggested_import: str,
     ) -> Self:
-        return cls.model_validate({
+        return cls({
             "file": file,
             "line": line,
             "current_import": current_import,
@@ -148,7 +148,7 @@ class NamespaceInternalImportViolation(FlextModels.ArbitraryTypesModel):
 
     @classmethod
     def create(cls, *, file: str, line: int, current_import: str, detail: str) -> Self:
-        return cls.model_validate({
+        return cls({
             "file": file,
             "line": line,
             "current_import": current_import,
@@ -169,7 +169,7 @@ class NamespaceManualProtocolViolation(FlextModels.ArbitraryTypesModel):
         payload = {"file": file, "line": line, "name": name}
         if len(suggestion) > 0:
             payload["suggestion"] = suggestion
-        return cls.model_validate(payload)
+        return cls(payload)
 
 
 class NamespaceCyclicImportViolation(FlextModels.ArbitraryTypesModel):
@@ -180,7 +180,7 @@ class NamespaceCyclicImportViolation(FlextModels.ArbitraryTypesModel):
 
     @classmethod
     def create(cls, *, cycle: tuple[str, ...], files: tuple[str, ...]) -> Self:
-        return cls.model_validate({"cycle": cycle, "files": files})
+        return cls({"cycle": cycle, "files": files})
 
 
 class NamespaceRuntimeAliasViolation(FlextModels.ArbitraryTypesModel):
@@ -202,7 +202,7 @@ class NamespaceRuntimeAliasViolation(FlextModels.ArbitraryTypesModel):
         detail: str,
         line: int = 0,
     ) -> Self:
-        return cls.model_validate({
+        return cls({
             "file": file,
             "line": line,
             "kind": kind,
@@ -218,7 +218,7 @@ class NamespaceFutureAnnotationsViolation(FlextModels.ArbitraryTypesModel):
 
     @classmethod
     def create(cls, *, file: str) -> Self:
-        return cls.model_validate({"file": file})
+        return cls({"file": file})
 
 
 class NamespaceManualTypingAliasViolation(FlextModels.ArbitraryTypesModel):
@@ -231,7 +231,7 @@ class NamespaceManualTypingAliasViolation(FlextModels.ArbitraryTypesModel):
 
     @classmethod
     def create(cls, *, file: str, line: int, name: str, detail: str) -> Self:
-        return cls.model_validate({
+        return cls({
             "file": file,
             "line": line,
             "name": name,
@@ -249,7 +249,7 @@ class NamespaceCompatibilityAliasViolation(FlextModels.ArbitraryTypesModel):
 
     @classmethod
     def create(cls, *, file: str, line: int, alias_name: str, target_name: str) -> Self:
-        return cls.model_validate({
+        return cls({
             "file": file,
             "line": line,
             "alias_name": alias_name,
@@ -267,7 +267,7 @@ class NamespaceParseFailureViolation(FlextModels.ArbitraryTypesModel):
 
     @classmethod
     def create(cls, *, file: str, stage: str, error_type: str, detail: str) -> Self:
-        return cls.model_validate({
+        return cls({
             "file": file,
             "stage": stage,
             "error_type": error_type,
@@ -332,7 +332,7 @@ class NamespaceProjectEnforcementReport(FlextModels.ArbitraryTypesModel):
         parse_failures: list[NamespaceParseFailureViolation],
         files_scanned: int,
     ) -> Self:
-        return cls.model_validate({
+        return cls({
             "project": project,
             "project_root": project_root,
             "facade_statuses": facade_statuses,
@@ -387,7 +387,7 @@ class NamespaceWorkspaceEnforcementReport(FlextModels.ArbitraryTypesModel):
         total_parse_failures: int,
         total_files_scanned: int,
     ) -> Self:
-        return cls.model_validate({
+        return cls({
             "workspace": workspace,
             "projects": projects,
             "total_facades_missing": total_facades_missing,

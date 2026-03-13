@@ -138,7 +138,7 @@ class FlextTestsFactories(s[t.Tests.object]):
             for i in range(count):
                 name = names[i % len(names)] if names else f"User {i}"
                 user_model = cls.model("user", name=name, email=f"user{i}@example.com")
-                result_users.append(m.Tests.User.model_validate(user_model))
+                result_users.append(m.Tests.User(user_model))
             return result_users
         if kind == "config":
             envs = (
@@ -149,7 +149,7 @@ class FlextTestsFactories(s[t.Tests.object]):
             configs: builtins.list[m.Tests.Config] = []
             for i in range(count):
                 config_model = cls.model("config", environment=envs[i % len(envs)])
-                configs.append(m.Tests.Config.model_validate(config_model))
+                configs.append(m.Tests.Config(config_model))
             return configs
         types = (
             list(service_types)
@@ -159,7 +159,7 @@ class FlextTestsFactories(s[t.Tests.object]):
         services: builtins.list[m.Tests.Service] = []
         for i in range(count):
             service_model = cls.model("service", service_type=types[i % len(types)])
-            services.append(m.Tests.Service.model_validate(service_model))
+            services.append(m.Tests.Service(service_model))
         return services
 
     @classmethod
@@ -219,7 +219,7 @@ class FlextTestsFactories(s[t.Tests.object]):
 
         """
         try:
-            params = m.Tests.DictFactoryParams.model_validate({
+            params = m.Tests.DictFactoryParams({
                 "source": source,
                 **kwargs,
             })
@@ -329,7 +329,7 @@ class FlextTestsFactories(s[t.Tests.object]):
             validate_data: dict[str, object] = {"type_": type_, **kwargs}
             if "kwargs" in validate_data:
                 validate_data["call_kwargs"] = validate_data.pop("kwargs")
-            params = m.Tests.GenericFactoryParams.model_validate(validate_data)
+            params = m.Tests.GenericFactoryParams(validate_data)
         except (TypeError, ValueError, AttributeError) as exc:
             invalid_params_result: r[T] | r[builtins.list[T]] = r[
                 builtins.list[T]
@@ -427,7 +427,7 @@ class FlextTestsFactories(s[t.Tests.object]):
 
         """
         try:
-            params = m.Tests.ListFactoryParams.model_validate({
+            params = m.Tests.ListFactoryParams({
                 "source": source,
                 **kwargs,
             })
@@ -566,7 +566,7 @@ class FlextTestsFactories(s[t.Tests.object]):
 
         """
         try:
-            params = m.Tests.ModelFactoryParams.model_validate({
+            params = m.Tests.ModelFactoryParams({
                 "kind": kind,
                 **kwargs,
             })
@@ -615,7 +615,7 @@ class FlextTestsFactories(s[t.Tests.object]):
                             str(k): _to_payload_value(v)
                             for k, v in merge_result.value.items()
                         }
-                return m.Tests.User.model_validate(user_data)
+                return m.Tests.User(user_data)
             if params.kind == "config":
                 config_data: MutableMapping[str, t.Tests.object] = {
                     "service_type": params.service_type
@@ -647,7 +647,7 @@ class FlextTestsFactories(s[t.Tests.object]):
                             str(k): _to_payload_value(v)
                             for k, v in merge_result.value.items()
                         }
-                return m.Tests.Config.model_validate(config_data)
+                return m.Tests.Config(config_data)
             if params.kind == "service":
                 service_type_str = params.service_type or "api"
                 svc_data: MutableMapping[str, t.Tests.TestResultValue] = {
@@ -663,7 +663,7 @@ class FlextTestsFactories(s[t.Tests.object]):
                         overrides_mapping
                     )
                     svc_data.update(overrides_dict)
-                return m.Tests.Service.model_validate(svc_data)
+                return m.Tests.Service(svc_data)
             if params.kind == "entity":
                 return u.Tests.DomainHelpers.create_test_entity_instance(
                     name=params.name or c.Tests.Factory.DEFAULT_ENTITY_NAME,
@@ -904,7 +904,7 @@ class FlextTestsFactories(s[t.Tests.object]):
 
         """
         try:
-            params = m.Tests.ResultFactoryParams.model_validate({
+            params = m.Tests.ResultFactoryParams({
                 "kind": kind,
                 "value": value,
                 **kwargs,
@@ -1258,7 +1258,7 @@ class FlextTestsFactories(s[t.Tests.object]):
             user_data = {
                 str(k): _to_payload_value(v) for k, v in merge_result.value.items()
             }
-        return m.Tests.User.model_validate(user_data)
+        return m.Tests.User(user_data)
 
     @override
     def execute(self) -> r[t.Tests.object]:

@@ -73,7 +73,7 @@ def test_is_general_value_type_negative_paths_and_callable() -> None:
 
 def test_is_handler_type_branches() -> None:
     assert u.is_handler_type({"a": 1})
-    assert u.is_handler_type(_Model.model_validate({"value": 1}))
+    assert u.is_handler_type(_Model({"value": 1}))
     assert u.is_handler_type(cast("object", _sample_handler))
 
     class _BaseModelSubclass:
@@ -168,7 +168,7 @@ def test_protocol_and_simple_guard_helpers() -> None:
     assert u.is_type({"k": 1}, "mapping")
     assert u.is_type([1], "sequence_not_str")
     assert u.is_type([1], "sequence_not_str_bytes")
-    assert u.is_pydantic_model(_Model.model_validate({"value": 1}))
+    assert u.is_pydantic_model(_Model({"value": 1}))
 
 
 def test_is_type_non_empty_unknown_and_tuple_and_fallback() -> None:

@@ -196,7 +196,7 @@ class FlextTestsBuilders:
         else:
             value_for_kwargs = str(value)
         try:
-            params = m.Tests.AddParams.model_validate({
+            params = m.Tests.AddParams({
                 "key": key,
                 "value": value_for_kwargs,
                 **kwargs,
@@ -471,7 +471,7 @@ class FlextTestsBuilders:
 
         """
         try:
-            params = m.Tests.BuildersBatchParams.model_validate({
+            params = m.Tests.BuildersBatchParams({
                 "key": key,
                 "scenarios": scenarios,
                 **kwargs,
@@ -537,7 +537,7 @@ class FlextTestsBuilders:
 
         """
         try:
-            params = m.Tests.BuildParams.model_validate(kwargs)
+            params = m.Tests.BuildParams(kwargs)
         except (TypeError, ValueError, AttributeError) as exc:
             error_msg = f"Invalid build() parameters: {exc}"
             raise ValueError(error_msg) from exc
@@ -719,7 +719,7 @@ class FlextTestsBuilders:
 
         """
         try:
-            params = m.Tests.MergeFromParams.model_validate({
+            params = m.Tests.MergeFromParams({
                 "strategy": strategy,
                 "exclude_keys": list(exclude_keys) if exclude_keys else None,
             })
@@ -888,7 +888,7 @@ class FlextTestsBuilders:
 
         """
         try:
-            params = m.Tests.ToResultParams.model_validate(kwargs)
+            params = m.Tests.ToResultParams(kwargs)
         except (TypeError, ValueError, AttributeError) as exc:
             error_msg = f"Invalid to_result() parameters: {exc}"
             raise ValueError(error_msg) from exc

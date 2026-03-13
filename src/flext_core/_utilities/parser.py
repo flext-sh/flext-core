@@ -274,7 +274,7 @@ class FlextUtilitiesParser:
             )
         value_dict_data: dict[str, object] = {str(k): v for k, v in value.items()}
         try:
-            return r[TModel].ok(target.model_validate(value_dict_data, strict=strict))
+            return r[TModel].ok(target(value_dict_data, strict=strict))
         except (ValidationError, TypeError, ValueError) as exc:
             return r[TModel].fail(f"Model parse failed: {exc}")
 

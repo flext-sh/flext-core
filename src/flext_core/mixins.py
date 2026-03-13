@@ -14,9 +14,9 @@ import threading
 from collections.abc import Callable, Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from types import ModuleType
-from typing import ClassVar, TypeGuard, Unpack, override
+from typing import ClassVar, TypeGuard, Unpack, cast, override
 
-from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
+from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, ValidationError
 
 from flext_core import (
     FlextContainer,
@@ -310,26 +310,45 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
             if callable(bootstrap_method):
                 try:
                     options_raw = bootstrap_method()
-                    match options_raw:
-                        case m.RuntimeBootstrapOptions() as options:
-                            if options.config_type is not None:
-                                config_type_raw = options.config_type
-                            if options.config_overrides is not None:
-                                overrides = options.config_overrides
-                            if options.context is not None:
-                                initial_ctx = options.context
-                            if options.services is not None:
-                                services_typed: dict[str, t.RegisterableService] = {}
-                                for key, value in options.services.items():
-                                    if u.is_registerable_service(value):
-                                        services_typed[str(key)] = value
-                                bootstrap_services = services_typed
-                            bootstrap_factories = options.factories
-                            bootstrap_resources = options.resources
-                            if options.wire_modules is not None:
-                                bootstrap_wire_modules = list(options.wire_modules)
-                        case _:
-                            pass
+                    options: m.RuntimeBootstrapOptions | None = None
+                    if isinstance(options_raw, m.RuntimeBootstrapOptions):
+                        options = options_raw
+                    elif isinstance(options_raw, (dict, Mapping)):
+                        options = m.RuntimeBootstrapOptions.model_validate(options_raw)
+                    elif options_raw is not None:
+                        # Handle duck-typed objects (e.g. SimpleNamespace)
+                        try:
+                            options = m.RuntimeBootstrapOptions.model_validate(
+                                options_raw, from_attributes=True
+                            )
+                        except ValidationError:
+                            options = None
+
+                    if options:
+                        if options.config_type is not None:
+                            config_type_raw = options.config_type
+                        if options.config_overrides is not None:
+                            overrides = options.config_overrides
+                        if options.context is not None:
+                            initial_ctx = options.context
+                        if options.services is not None:
+                            services_typed: dict[str, t.RegisterableService] = {}
+                            for key, value in options.services.items():
+                                if u.is_registerable_service(value):
+                                    services_typed[str(key)] = value
+                            bootstrap_services = services_typed
+                        bootstrap_factories = options.factories
+                        bootstrap_resources = options.resources
+                        if options.wire_modules is not None:
+                            bootstrap_wire_modules = list(options.wire_modules)
+                        if (
+                            options.wire_packages is not None
+                            and not bootstrap_wire_modules
+                        ):
+                            # Fallback to packages if modules not present (simple string modules)
+                            bootstrap_wire_modules = cast(
+                                "Sequence[ModuleType]", list(options.wire_packages)
+                            )
                 except Exception as exc:
                     FlextLogger.create_module_logger(__name__).warning(
                         "Failed to load runtime bootstrap options",

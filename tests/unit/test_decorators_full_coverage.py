@@ -177,7 +177,7 @@ def test_execute_retry_loop_covers_default_linear_and_never_ran(
         msg = "nope"
         raise ValueError(msg)
 
-    cfg = m.RetryConfiguration.model_validate(
+    cfg = m.RetryConfiguration(
         {
             "max_attempts": 2,
             "initial_delay_seconds": 0.01,
@@ -542,7 +542,7 @@ def test_execute_retry_exponential_and_handle_exhaustion_raise_last_exception(
         msg = "fail"
         raise KeyError(msg)
 
-    cfg = m.RetryConfiguration.model_validate(
+    cfg = m.RetryConfiguration(
         {
             "max_attempts": 2,
             "initial_delay_seconds": 0.01,

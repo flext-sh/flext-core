@@ -11,12 +11,12 @@ def test_models_handler_branches() -> None:
     assert c.Errors.UNKNOWN_ERROR
     assert isinstance(m.Categories(), m.Categories)
     assert r[int].ok(1).is_success
-    assert isinstance(m.ConfigMap.model_validate({"k": 1}), m.ConfigMap)
+    assert isinstance(m.ConfigMap({"k": 1}), m.ConfigMap)
     assert u.to_str(1) == "1"
     req = m.RegistrationRequest(handler=lambda value: value, handler_mode="command")
     assert req.handler_mode == "command"
     with pytest.raises(Exception, match="Handler must be callable"):
-        m.Registration.model_validate({"name": "bad", "handler": 1})
+        m.Registration({"name": "bad", "handler": 1})
     ctx = m.ExecutionContext.create_for_handler("h1", "command")
     raw_execution_time = ctx.execution_time_ms
     execution_time_ms = (

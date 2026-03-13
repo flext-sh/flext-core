@@ -185,7 +185,7 @@ class GivenWhenThenBuilder:
         then_converted: dict[str, str | int | bool] = {
             key: convert_dict_value(value) for key, value in then_mapped.items()
         }
-        scenario_data = m.MockScenarioData.model_validate({
+        scenario_data = m.MockScenarioData({
             "given": given_converted,
             "when": when_converted,
             "then": then_converted,
@@ -297,7 +297,7 @@ class ParameterizedTestBuilder:
             ParameterizedTestBuilder: Self for method chaining.
 
         """
-        self._cases.append(m.FixtureCaseDict.model_validate(kwargs))
+        self._cases.append(m.FixtureCaseDict(kwargs))
         return self
 
     def add_success_cases(
@@ -504,21 +504,21 @@ class TestAdvancedPatterns:
         builder = (
             ParameterizedTestBuilder("email_validation")
             .add_success_cases([
-                m.FixtureCaseDict.model_validate({
+                m.FixtureCaseDict({
                     "email": "valid@example.com",
                     "input": "valid@example.com",
                 }),
-                m.FixtureCaseDict.model_validate({
+                m.FixtureCaseDict({
                     "email": "user.name@domain.co.uk",
                     "input": "user.name@domain.co.uk",
                 }),
             ])
             .add_failure_cases([
-                m.FixtureCaseDict.model_validate({
+                m.FixtureCaseDict({
                     "email": "invalid-email",
                     "input": "invalid-email",
                 }),
-                m.FixtureCaseDict.model_validate({
+                m.FixtureCaseDict({
                     "email": "@domain.com",
                     "input": "@domain.com",
                 }),
@@ -551,7 +551,7 @@ class TestAdvancedPatterns:
     @mark_test_pattern("mock_scenario")
     def test_mock_scenario_pattern(self) -> None:
         """Test mock scenario pattern."""
-        scenario_data = m.MockScenarioData.model_validate({
+        scenario_data = m.MockScenarioData({
             "given": {"user": "authenticated"},
             "when": {"action": "request_data"},
             "then": {"result": "success"},

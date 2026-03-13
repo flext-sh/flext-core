@@ -508,7 +508,7 @@ class GenericModelFactory:
     ) -> m.Configuration:
         """Create ConfigurationSnapshot."""
         return m.Configuration(
-            config=m.Dict.model_validate(config or {}),
+            config=m.Dict(config or {}),
             source=source,
             environment=environment,
         )
@@ -520,7 +520,7 @@ class GenericModelFactory:
         checks: dict[str, bool] | None = None,
     ) -> m.Health:
         """Create HealthStatus."""
-        return m.Health(healthy=healthy, checks=m.Dict.model_validate(checks or {}))
+        return m.Health(healthy=healthy, checks=m.Dict(checks or {}))
 
     @staticmethod
     def operation_progress(

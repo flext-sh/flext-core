@@ -45,8 +45,8 @@ class FlextResult[T](FlextRuntime.RuntimeResult[T]):
             return error_data
         if isinstance(error_data, BaseModel):
             dump = error_data.model_dump()
-            return FlextModelsContainers.ConfigMap.model_validate(dump)
-        return FlextModelsContainers.ConfigMap.model_validate(dict(error_data))
+            return FlextModelsContainers.ConfigMap(dump)
+        return FlextModelsContainers.ConfigMap(dict(error_data))
 
     def __init__(
         self,
@@ -147,7 +147,7 @@ class FlextResult[T](FlextRuntime.RuntimeResult[T]):
         failure_prefix: str,
     ) -> FlextResult[UModel]:
         try:
-            return FlextResult[UModel].ok(model.model_validate(data))
+            return FlextResult[UModel].ok(model(data))
         except (
             ValidationError,
             ValueError,
@@ -683,7 +683,7 @@ class FlextResult[T](FlextRuntime.RuntimeResult[T]):
                 exception=self.exception,
             )
         try:
-            return FlextResult[U].ok(model.model_validate(self.value))
+            return FlextResult[U].ok(model(self.value))
         except (
             ValidationError,
             ValueError,

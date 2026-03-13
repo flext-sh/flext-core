@@ -311,13 +311,9 @@ class FlextRegistry(s[bool]):
                 raw_metadata = metadata.attributes
             else:
                 raw_metadata = metadata
-            validated_metadata = FlextModelsContainers.ConfigMap.model_validate(
-                raw_metadata
-            )
+            validated_metadata = FlextModelsContainers.ConfigMap(raw_metadata)
         if validated_metadata is not None:
-            metadata_dict = FlextModelsContainers.ConfigMap.model_validate(
-                validated_metadata
-            )
+            metadata_dict = FlextModelsContainers.ConfigMap(validated_metadata)
             metadata_keys_str: str = ",".join(metadata_dict.keys())
             self.logger.debug(
                 "Registering service with metadata",

@@ -60,7 +60,7 @@ def _normalize_metadata_before(v: object | None) -> object | None:
     if isinstance(v, FlextModelFoundation.Metadata):
         return v
     if isinstance(v, Mapping):
-        return FlextModelFoundation.Metadata.model_validate({
+        return FlextModelFoundation.Metadata({
             "attributes": _V.dict_str_metadata_adapter().validate_python(v)
         })
     return v
@@ -361,14 +361,10 @@ class FlextModelsContext:
             if v is None:
                 return {}
             if isinstance(v, FlextModelFoundation.Metadata):
-                normalized_mapping = FlextModelsContainers.ConfigMap.model_validate(
-                    v.attributes
-                ).root
+                normalized_mapping = FlextModelsContainers.ConfigMap(v.attributes).root
             elif isinstance(v, BaseModel):
                 dump_result = v.model_dump()
-                normalized_mapping = FlextModelsContainers.ConfigMap.model_validate(
-                    dump_result
-                ).root
+                normalized_mapping = FlextModelsContainers.ConfigMap(dump_result).root
             else:
                 normalized_mapping = dict(v)
             working_value = {
@@ -468,14 +464,10 @@ class FlextModelsContext:
             if v is None:
                 return {}
             if isinstance(v, FlextModelFoundation.Metadata):
-                normalized_mapping = FlextModelsContainers.ConfigMap.model_validate(
-                    v.attributes
-                ).root
+                normalized_mapping = FlextModelsContainers.ConfigMap(v.attributes).root
             elif isinstance(v, BaseModel):
                 dump_result = v.model_dump()
-                normalized_mapping = FlextModelsContainers.ConfigMap.model_validate(
-                    dump_result
-                ).root
+                normalized_mapping = FlextModelsContainers.ConfigMap(dump_result).root
             else:
                 normalized_mapping = dict(v)
             working_value = {

@@ -149,7 +149,7 @@ class FlextUtilitiesModel:
 
         """
         try:
-            instance = model_cls.model_validate(kwargs)
+            instance = model_cls(**kwargs)
             return r[M].ok(instance)
         except (ValidationError, TypeError, ValueError) as e:
             return r[M].fail(f"Model validation failed: {e}")
@@ -160,7 +160,7 @@ class FlextUtilitiesModel:
     ) -> r[T_Model]:
         """Load Pydantic model from mapping with r.
 
-        Generic replacement for: Model.model_validate(data) with error handling.
+        Generic replacement for: Model(data) with error handling.
 
         Args:
             model_cls: Pydantic model class to instantiate.
@@ -244,7 +244,7 @@ class FlextUtilitiesModel:
         if isinstance(value, m.Metadata):
             return value
         if isinstance(value, m.Metadata):
-            return m.Metadata.model_validate(value.model_dump())
+            return m.Metadata(value.model_dump())
         if FlextRuntime.is_dict_like(value):
             safe_attrs: dict[str, t.MetadataValue] = {}
             for k, v in value.items():
@@ -260,7 +260,7 @@ class FlextUtilitiesModel:
                     safe_attrs[str_k] = json.dumps(nested_mapping)
                 else:
                     safe_attrs[str_k] = str(v)
-            return m.Metadata.model_validate({"attributes": safe_attrs})
+            return m.Metadata(attributes=safe_attrs)
         msg = f"metadata must be None, dict, or m.Metadata, got {value.__class__.__name__}"
         raise TypeError(msg)
 
@@ -334,7 +334,7 @@ class FlextUtilitiesModel:
                     else:
                         normalized_value = str(value)
                     normalized_model_dump[str(key)] = normalized_value
-                return m.ConfigMap.model_validate(normalized_model_dump)
+                return m.ConfigMap(normalized_model_dump)
             except (TypeError, ValueError, AttributeError):
                 return m.ConfigMap(root={"value": str(model_dump_result)})
         if isinstance(obj, Mapping):
@@ -354,7 +354,7 @@ class FlextUtilitiesModel:
                         else str(value)
                     )
                     normalized_mapping[str(key)] = normalized_mapping_value
-                return m.ConfigMap.model_validate(normalized_mapping)
+                return m.ConfigMap(normalized_mapping)
             except (TypeError, ValueError, AttributeError):
                 return m.ConfigMap(root={})
 

@@ -56,7 +56,7 @@ def _yaml_dump(value: object, *, indent: int) -> str:
 
 def _is_batch_content(content_raw: object) -> TypeGuard[t.Tests.object]:
     try:
-        _ = m.Tests.CreateParams.model_validate({
+        _ = m.Tests.CreateParams({
             "content": content_raw,
             "name": c.Tests.Files.DEFAULT_FILENAME,
         })
@@ -98,7 +98,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         content: str | bytes | m.ConfigMap | list[list[str]],
     ) -> r[TModelRead]:
         try:
-            model_instance: TModelRead = model_cls.model_validate(content)
+            model_instance: TModelRead = model_cls(content)
             return r[TModelRead].ok(model_instance)
         except (TypeError, ValueError, AttributeError) as ex:
             return r[TModelRead].fail(f"Failed to validate model: {ex}")
@@ -212,13 +212,13 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                     if is_nested_sequence:
                         filename = f"{name}.csv"
                 kwargs_result = r[m.Tests.CreateKwargsParams].ok(
-                    m.Tests.CreateKwargsParams.model_validate(kwargs)
+                    m.Tests.CreateKwargsParams(kwargs)
                 )
                 if kwargs_result.is_success:
                     validated_kwargs = kwargs_result.value
                 else:
                     default_result = r[m.Tests.CreateKwargsParams].ok(
-                        m.Tests.CreateKwargsParams.model_validate({})
+                        m.Tests.CreateKwargsParams({})
                     )
                     if default_result.is_success:
                         validated_kwargs = default_result.value
@@ -429,7 +429,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
 
         """
         try:
-            params = m.Tests.BatchParams.model_validate({
+            params = m.Tests.BatchParams({
                 "files": files,
                 "directory": directory,
                 "operation": operation,
@@ -646,7 +646,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
 
         """
         try:
-            params = m.Tests.CompareParams.model_validate({
+            params = m.Tests.CompareParams({
                 "file1": file1,
                 "file2": file2,
                 "mode": mode,
@@ -763,7 +763,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         """
         content_to_validate = self._extract_content(content, extract_result)
         try:
-            params = m.Tests.CreateParams.model_validate({
+            params = m.Tests.CreateParams({
                 "content": content_to_validate,
                 "name": name,
                 "directory": directory,
@@ -911,7 +911,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
 
         """
         try:
-            params = m.Tests.InfoParams.model_validate({
+            params = m.Tests.InfoParams({
                 "path": path,
                 "compute_hash": compute_hash,
                 "detect_fmt": detect_fmt,
@@ -1068,7 +1068,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
 
         """
         try:
-            params = m.Tests.ReadParams.model_validate({
+            params = m.Tests.ReadParams({
                 "path": path,
                 "fmt": fmt,
                 "enc": enc,
@@ -1444,7 +1444,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             model_name = validate_model.__name__
             if isinstance(parsed_content, m.ConfigMap):
                 try:
-                    _ = validate_model.model_validate(parsed_content.root)
+                    _ = validate_model(parsed_content.root)
                     model_valid = True
                 except (TypeError, ValueError, AttributeError):
                     model_valid = False

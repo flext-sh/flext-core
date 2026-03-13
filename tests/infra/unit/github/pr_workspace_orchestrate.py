@@ -24,7 +24,7 @@ from tests.infra.unit.github._stubs import (
 
 
 def _as_project(info: StubProjectInfo) -> m.Infra.Workspace.ProjectInfo:
-    return m.Infra.Workspace.ProjectInfo.model_validate(info.model_dump())
+    return m.Infra.Workspace.ProjectInfo(info.model_dump())
 
 
 class TestOrchestrate:

@@ -29,7 +29,7 @@ class FlextInfraRefactorTransformerPolicyUtilities:
         if raw is None:
             return None
         try:
-            return m.Infra.Refactor.ClassNestingPolicy.model_validate(raw)
+            return m.Infra.Refactor.ClassNestingPolicy(raw)
         except ValidationError:
             return None
 

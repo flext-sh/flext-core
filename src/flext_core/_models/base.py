@@ -527,14 +527,14 @@ class FlextModelFoundation:
             if value is None:
                 return {}
             try:
-                result = FlextModelsContainers.Dict.model_validate(value).root
+                result = FlextModelsContainers.Dict(value).root
             except ValidationError:
                 if not isinstance(value, BaseModel):
                     msg = "attributes must be dict-like"
                     raise TypeError(msg) from None
                 dumped = value.model_dump()
                 try:
-                    result = FlextModelsContainers.Dict.model_validate(dumped).root
+                    result = FlextModelsContainers.Dict(dumped).root
                 except ValidationError as exc:
                     msg = "attributes BaseModel must dump to mapping"
                     raise TypeError(msg) from exc

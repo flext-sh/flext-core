@@ -50,7 +50,7 @@ class Ex05GoodProcessor(m.Value):
     @classmethod
     @override
     def validate(cls, value: object) -> Ex05GoodProcessor:
-        return cls.model_validate(value)
+        return cls(value)
 
 
 class Ex05BadProcessor(m.Value):

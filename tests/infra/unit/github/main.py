@@ -62,7 +62,7 @@ class TestRunLint:
     def _lint_ok(self) -> StubLinter:
         return StubLinter(
             lint_returns=r[m.Infra.Github.WorkflowLintResult].ok(
-                m.Infra.Github.WorkflowLintResult.model_validate({"status": "ok"}),
+                m.Infra.Github.WorkflowLintResult({"status": "ok"}),
             )
         )
 

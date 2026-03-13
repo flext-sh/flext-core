@@ -39,7 +39,7 @@ class Ex05FlextMixins(Examples):
         @override
         def validate(cls, value: object) -> Ex05FlextMixins.HandlerLike:
             """Validate using Pydantic model_validate."""
-            return cls.model_validate(value)
+            return cls(value)
 
         def can_handle(self, message_type: type) -> bool:
             """Report capability for handler protocol."""

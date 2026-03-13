@@ -112,7 +112,7 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
                 context_data = m.ContextData.model_validate(self.initial_data)
             else:
                 context_data = m.ContextData(
-                    data=m.Dict(root=m.ConfigMap.model_validate(self.initial_data).root)
+                    data=m.Dict(root=m.ConfigMap(self.initial_data).root)
                 )
         self._metadata = m.Metadata()
         self._hooks = {}
@@ -210,7 +210,7 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
                 initial_data=m.ContextData(data=m.Dict(root=initial_data_dict.root))
             )
         data_map = (
-            m.ConfigMap.model_validate(initial_data)
+            m.ConfigMap(initial_data)
             if initial_data is not None
             else m.ConfigMap(root={})
         )
@@ -300,9 +300,7 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
         for scope_name, ctx_var in self.iter_scope_vars().items():
             scope_dict = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
             if scope_dict:
-                result = cloned.set(
-                    m.ConfigMap.model_validate(scope_dict), scope=scope_name
-                )
+                result = cloned.set(m.ConfigMap(scope_dict), scope=scope_name)
                 if not result:
                     pass
         cloned.set_all_metadata_for_clone(self._metadata.model_copy())
@@ -343,7 +341,7 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
             for k, v in metadata_dict_export.items():
                 metadata_value: object = v
                 if hasattr(v, "items") and callable(getattr(v, "items", None)):
-                    metadata_value = m.ConfigMap.model_validate(v)
+                    metadata_value = m.ConfigMap(v)
                 normalized_metadata_map[k] = FlextRuntime.normalize_to_container(
                     FlextRuntime.normalize_to_metadata(metadata_value)
                 )
@@ -554,7 +552,7 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
         if callable(export_callable):
             exported = export_callable(as_dict=True)
             try:
-                exported_map = m.ConfigMap.model_validate(exported)
+                exported_map = m.ConfigMap(exported)
             except (TypeError, ValueError, AttributeError) as exc:
                 FlextContext._logger.debug(
                     "Context export payload validation failed", exc_info=exc
@@ -568,7 +566,7 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
                 }:
                     continue
                 try:
-                    scope_data = m.ConfigMap.model_validate(scope_payload)
+                    scope_data = m.ConfigMap(scope_payload)
                 except (TypeError, ValueError, AttributeError) as exc:
                     FlextContext._logger.debug(
                         "Context scope payload validation failed", exc_info=exc
@@ -577,9 +575,7 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
                 if scope_data is not None:
                     self._set_in_contextvar(scope_name, scope_data)
         else:
-            self._set_in_contextvar(
-                c.Context.SCOPE_GLOBAL, m.ConfigMap.model_validate(other)
-            )
+            self._set_in_contextvar(c.Context.SCOPE_GLOBAL, m.ConfigMap(other))
         return self
 
     def remove(self, key: str, scope: str = c.Context.SCOPE_GLOBAL) -> None:
@@ -591,7 +587,7 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
         if key in current:
             filtered = {k: v for k, v in current.items() if k != key}
             try:
-                _ = ctx_var.set(m.ConfigMap.model_validate(filtered))
+                _ = ctx_var.set(m.ConfigMap(filtered))
             except (TypeError, ValueError, AttributeError) as exc:
                 FlextContext._logger.debug(
                     "Failed to validate context after removal", exc_info=exc
@@ -743,9 +739,7 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
         custom_fields_raw = data.pop("custom_fields", {})
         custom_fields_dict: dict[str, object] = {}
         try:
-            custom_fields_dict = dict(
-                m.ConfigMap.model_validate(custom_fields_raw).items()
-            )
+            custom_fields_dict = dict(m.ConfigMap(custom_fields_raw).items())
         except (TypeError, ValueError, AttributeError) as exc:
             FlextContext._logger.debug(
                 "Custom metadata field normalization failed", exc_info=exc
@@ -784,9 +778,7 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
         """Get all values from contextvar scope."""
         ctx_var = self._get_or_create_scope_var(scope)
         value = ctx_var.get()
-        return m.ConfigMap.model_validate(
-            FlextContext._narrow_contextvar_to_configuration_dict(value)
-        )
+        return m.ConfigMap(FlextContext._narrow_contextvar_to_configuration_dict(value))
 
     def _get_or_create_scope_var(
         self, scope: str
@@ -813,7 +805,7 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
         try:
             ctx_var = self._get_or_create_scope_var(scope)
             current = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
-            updated = m.ConfigMap.model_validate(current)
+            updated = m.ConfigMap(current)
             updated.update(data.root)
             _ = ctx_var.set(updated)
             self._update_statistics(c.Context.OPERATION_SET)
@@ -833,7 +825,7 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
     def _set_in_contextvar(self, scope: str, data: m.ConfigMap) -> None:
         """Set multiple values in contextvar scope."""
         ctx_var = self._get_or_create_scope_var(scope)
-        current = m.ConfigMap.model_validate(
+        current = m.ConfigMap(
             self._narrow_contextvar_to_configuration_dict(ctx_var.get())
         )
         updated = current.model_copy()
@@ -856,7 +848,7 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
         try:
             ctx_var = self._get_or_create_scope_var(scope)
             current = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
-            updated = m.ConfigMap.model_validate(current)
+            updated = m.ConfigMap(current)
             updated[key] = value
             _ = ctx_var.set(updated)
             FlextContext._propagate_to_logger(key, value, scope)

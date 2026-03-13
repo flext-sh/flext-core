@@ -250,7 +250,7 @@ class TestContext100Coverage:
         invalid_metadata: object = 123
         exc_types: tuple[type[Exception], ...] = (TypeError, ValidationError)
         with pytest.raises(exc_types):
-            FlextModelsContext.ContextData.model_validate({
+            FlextModelsContext.ContextData({
                 "metadata": invalid_metadata,
             })
 
@@ -267,7 +267,7 @@ class TestContext100Coverage:
                 self[123] = "value"
 
         int_key_dict = IntKeyDict()
-        result = FlextModelsContext.ContextData.model_validate({"data": int_key_dict})
+        result = FlextModelsContext.ContextData({"data": int_key_dict})
         assert "123" in result.data
 
     def test_context_data_validate_dict_serializable_non_serializable_value(
@@ -281,7 +281,7 @@ class TestContext100Coverage:
         can be stored in context.
         """
         bad_dict = {"key": {1, 2, 3}}
-        result = FlextModelsContext.ContextData.model_validate({"data": bad_dict})
+        result = FlextModelsContext.ContextData({"data": bad_dict})
         assert isinstance(result.data["key"], str)
 
     def test_context_export_validate_dict_serializable_pydantic_model(self) -> None:
@@ -291,7 +291,7 @@ class TestContext100Coverage:
             field: str = "value"
 
         model = TestModel()
-        export = FlextModelsContext.ContextExport.model_validate({"data": model})
+        export = FlextModelsContext.ContextExport({"data": model})
         assert isinstance(export.data, dict)
         assert "field" in export.data
 
@@ -299,7 +299,7 @@ class TestContext100Coverage:
         """Test ContextExport.validate_dict_serializable with non-dict."""
         invalid_data: object = 123
         with pytest.raises(TypeError):
-            FlextModelsContext.ContextExport.model_validate({"data": invalid_data})
+            FlextModelsContext.ContextExport({"data": invalid_data})
 
     def test_context_export_validate_dict_serializable_non_string_key(self) -> None:
         """Test ContextExport.validate_dict_serializable with non-string key.
@@ -308,7 +308,7 @@ class TestContext100Coverage:
         so integer key 123 becomes string key "123". No error is raised.
         """
         data = {123: "value"}
-        result = FlextModelsContext.ContextExport.model_validate({"data": data})
+        result = FlextModelsContext.ContextExport({"data": data})
         assert "123" in result.data
 
     def test_context_export_validate_dict_serializable_non_serializable_value(
@@ -320,7 +320,7 @@ class TestContext100Coverage:
         by FlextRuntime.normalize_to_general_value() before serializability check.
         """
         data = {"key": {1, 2, 3}}
-        result = FlextModelsContext.ContextExport.model_validate({"data": data})
+        result = FlextModelsContext.ContextExport({"data": data})
         assert isinstance(result.data["key"], str)
 
     def test_context_export_total_data_items(self) -> None:
@@ -354,7 +354,7 @@ class TestContext100Coverage:
             field: str = "value"
 
         model = TestModel()
-        scope_data = FlextModelsContext.ContextScopeData.model_validate({"data": model})
+        scope_data = FlextModelsContext.ContextScopeData({"data": model})
         assert isinstance(scope_data.data, dict)
         assert "field" in scope_data.data
 
@@ -374,7 +374,7 @@ class TestContext100Coverage:
             field: str = "value"
 
         model = TestModel()
-        scope_data = FlextModelsContext.ContextScopeData.model_validate({
+        scope_data = FlextModelsContext.ContextScopeData({
             "scope_name": "global",
             "metadata": model,
         })
@@ -397,7 +397,7 @@ class TestContext100Coverage:
             field: str = "value"
 
         model = TestModel()
-        stats = FlextModelsContext.ContextStatistics.model_validate({
+        stats = FlextModelsContext.ContextStatistics({
             "operations": model,
         })
         assert isinstance(stats.operations, dict)
@@ -406,7 +406,7 @@ class TestContext100Coverage:
     def test_context_statistics_validate_operations_with_none(self) -> None:
         """Test ContextStatistics._validate_operations with None."""
         none_operations: object = None
-        stats = FlextModelsContext.ContextStatistics.model_validate({
+        stats = FlextModelsContext.ContextStatistics({
             "operations": none_operations,
         })
         assert isinstance(stats.operations, dict)
@@ -419,7 +419,7 @@ class TestContext100Coverage:
             field: str = "value"
 
         model = TestModel()
-        metadata = FlextModelsContext.ContextMetadata.model_validate({
+        metadata = FlextModelsContext.ContextMetadata({
             "custom_fields": model,
         })
         assert isinstance(metadata.custom_fields, dict)
@@ -428,7 +428,7 @@ class TestContext100Coverage:
     def test_context_metadata_validate_custom_fields_with_none(self) -> None:
         """Test ContextMetadata._validate_custom_fields with None."""
         none_custom_fields: object = None
-        metadata = FlextModelsContext.ContextMetadata.model_validate({
+        metadata = FlextModelsContext.ContextMetadata({
             "custom_fields": none_custom_fields,
         })
         assert isinstance(metadata.custom_fields, dict)

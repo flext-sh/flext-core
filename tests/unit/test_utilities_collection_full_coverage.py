@@ -53,7 +53,7 @@ def test_find_mapping_no_match_and_merge_error_paths() -> None:
     assert c.Errors.UNKNOWN_ERROR
     assert isinstance(m.Categories(), m.Categories)
     assert r[int].ok(1).is_success
-    assert isinstance(m.ConfigMap.model_validate({"a": 1}), m.ConfigMap)
+    assert isinstance(m.ConfigMap({"a": 1}), m.ConfigMap)
     not_found = u.find({"a": 1}, lambda value: value == 2)
     assert not_found.is_failure
     nested = u._merge_deep_single_key(

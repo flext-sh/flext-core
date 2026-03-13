@@ -54,7 +54,7 @@ def test_merge_metadata_context_paths() -> None:
     context = m.ConfigMap(root={})
     err = e.BaseError("meta", metadata={"x": 1})
     meta = err.metadata
-    config_attrs = m.ConfigMap.model_validate({"k": 1, "z": "q"})
+    config_attrs = m.ConfigMap({"k": 1, "z": "q"})
     object.__setattr__(meta, "attributes", config_attrs)
     e._merge_metadata_into_context(context, meta)
     assert context["k"] == 1

@@ -32,7 +32,7 @@ def _service_reg_with_metadata(
     metadata: object,
 ) -> m.ServiceRegistration:
     """Create ServiceRegistration with arbitrary metadata for validation testing."""
-    return m.ServiceRegistration.model_validate({
+    return m.ServiceRegistration({
         "name": name,
         "service": service,
         "metadata": metadata,
@@ -45,7 +45,7 @@ def _factory_reg_with_metadata(
     metadata: object,
 ) -> m.FactoryRegistration:
     """Create FactoryRegistration with arbitrary metadata for validation testing."""
-    return m.FactoryRegistration.model_validate({
+    return m.FactoryRegistration({
         "name": name,
         "factory": factory,
         "metadata": metadata,
@@ -224,7 +224,7 @@ class TestFlextModelsContainer:
         config_dict: dict[str, object],
     ) -> None:
         """Test ContainerConfig creation with various configurations."""
-        config = m.ContainerConfig.model_validate(config_dict)
+        config = m.ContainerConfig(config_dict)
         assert config.enable_singleton is u.get(
             config_dict,
             "enable_singleton",

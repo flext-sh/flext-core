@@ -20,7 +20,7 @@ def test_pagination_response_string_fallbacks() -> None:
     assert c.Errors.UNKNOWN_ERROR
     assert isinstance(m.Categories(), m.Categories)
     assert r[int].ok(1).is_success
-    assert isinstance(m.ConfigMap.model_validate({"k": 1}), m.ConfigMap)
+    assert isinstance(m.ConfigMap({"k": 1}), m.ConfigMap)
     pagination_data = cast(
         "Mapping[str, object]",
         {"data": _Obj(), "pagination": _Obj()},

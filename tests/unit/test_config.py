@@ -78,7 +78,7 @@ class TestFlextSettings:
         config = u.Tests.ConfigHelpers.create_test_config(**config_data)
         u.Tests.ConfigHelpers.assert_config_fields(
             config,
-            m.ConfigMap.model_validate(dict(config_data)),
+            m.ConfigMap(dict(config_data)),
         )
         tm.that(config, is_=FlextSettings, msg="Config must be FlextSettings instance")
 
@@ -92,7 +92,7 @@ class TestFlextSettings:
         config = u.Tests.ConfigHelpers.create_test_config(**config_data)
         u.Tests.ConfigHelpers.assert_config_fields(
             config,
-            m.ConfigMap.model_validate(dict(config_data)),
+            m.ConfigMap(dict(config_data)),
         )
 
     def test_config_to_dict(self) -> None:
@@ -115,7 +115,7 @@ class TestFlextSettings:
             version="1.0.0",
         )
         config_dict = original_config.model_dump(exclude={"is_production"})
-        cloned_config = FlextSettings.model_validate(config_dict)
+        cloned_config = FlextSettings(config_dict)
         tm.that(
             cloned_config.app_name,
             eq=original_config.app_name,
@@ -266,7 +266,7 @@ class TestFlextSettings:
     ) -> None:
         """Test config validation with invalid inputs."""
         with pytest.raises(ValidationError) as exc_info:
-            FlextSettings.model_validate(config_data)
+            FlextSettings(config_data)
         assert error_pattern in str(exc_info.value)
 
     def test_config_create_and_configure_pattern(self) -> None:
@@ -525,7 +525,7 @@ class TestFlextSettingsPydantic:
     def test_validate_database_url_invalid_scheme(self) -> None:
         """Test model_validator raises ValueError for invalid database URL."""
         with pytest.raises(ValueError, match="Invalid database URL scheme"):
-            FlextSettings.model_validate({"database_url": "invalid://scheme"})
+            FlextSettings({"database_url": "invalid://scheme"})
 
     def test_effective_log_level_trace(self) -> None:
         """Test effective_log_level with trace mode."""

@@ -132,7 +132,7 @@ class Ex02FlextSettings(Examples):
         self.check("field.max_batch_size", config.max_batch_size)
         self.check("field.api_key", config.api_key)
         self.check("field.exception_failure_level", config.exception_failure_level)
-        validated = FlextSettings.model_validate(config.model_dump())
+        validated = FlextSettings(config.model_dump())
         self.check(
             "validate_configuration.indirect_via_model_validate", validated.app_name
         )

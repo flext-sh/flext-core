@@ -53,7 +53,7 @@ def test_categories_clear_and_symbols_are_available() -> None:
 
 
 def test_statistics_from_dict_and_none_conflict_resolution() -> None:
-    config_map = m.ConfigMap.model_validate({"value": 5})
+    config_map = m.ConfigMap({"value": 5})
     loaded = _Stats.from_mapping(cast("dict[str, t.MetadataValue]", config_map.root))
     assert loaded.value == 5
     assert _Stats._resolve_conflict(None, None) is None

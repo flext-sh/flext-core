@@ -208,7 +208,7 @@ class ConfigManagementService(FlextService[m.ConfigMap]):
                     "api_timeout": -1.0,
                     "database_url": "sqlite:///:memory:",
                 }
-                config = AppConfig.model_validate(invalid_data)
+                config = AppConfig(invalid_data)
                 if config.api_timeout < 0:
                     print(
                         "⚠️  Note: Validation constraints may not apply to singleton instances"
@@ -228,7 +228,7 @@ class ConfigManagementService(FlextService[m.ConfigMap]):
             AppConfig.reset_for_testing()
             try:
                 invalid_data = {"log_level": "INVALID"}
-                AppConfig.model_validate(invalid_data)
+                AppConfig(invalid_data)
                 print("⚠️  Note: Log level validation handled by field_validator")
                 print("✅ Config created (validation handled by type system)")
                 return r[bool].ok(value=True)

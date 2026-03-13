@@ -30,7 +30,7 @@ def test_service_init_type_guards_and_properties(
     assert c.Errors.UNKNOWN_ERROR
     assert isinstance(m.Categories(), m.Categories)
     assert r[int].ok(1).is_success
-    assert isinstance(m.ConfigMap.model_validate({"k": 1}), m.ConfigMap)
+    assert isinstance(m.ConfigMap({"k": 1}), m.ConfigMap)
     assert u.to_str(1) == "1"
     bad_ctx_runtime = m.ServiceRuntime.model_construct(
         config=FlextSettings(),

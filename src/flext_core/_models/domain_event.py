@@ -31,7 +31,7 @@ class _ComparableConfigMap(FlextModelsContainers.ConfigMap):
         if isinstance(other, dict):
             return self.root == other
         if isinstance(other, Mapping):
-            other_mapping = FlextModelsContainers.ConfigMap.model_validate(other).root
+            other_mapping = FlextModelsContainers.ConfigMap(other).root
             return self.root == other_mapping
         return super().__eq__(other)
 

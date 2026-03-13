@@ -205,7 +205,7 @@ class FlextSettings(BaseSettings, FlextRuntime):
         Kwargs are applied as field overrides after base env/config loading
         to avoid type conflicts with BaseSettings internal parameters.
         """
-        model_fields = getattr(self, "model_fields", {})
+        model_fields = self.__class__.model_fields
         if hasattr(self, "_di_provider"):
             if kwargs:
                 for key, value in kwargs.items():
