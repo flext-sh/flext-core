@@ -190,7 +190,7 @@ class FlextContainer(p.DI):
            assert consume() == "abc123"
         """
         provide_helper = (
-            self._di_bridge.Provide if hasattr(self._di_bridge, "Provide") else None
+            self._di_bridge.provide if hasattr(self._di_bridge, "provide") else None
         )
         if provide_helper is None or not callable(provide_helper):
             msg = "DI bridge Provide helper not initialized"
@@ -316,6 +316,8 @@ class FlextContainer(p.DI):
                                 config_callable = getattr(_factory_config, "fn", None)
                                 if callable(config_callable):
                                     raw_result = config_callable()
+                                elif config_callable is not None:
+                                    return m.ConfigMap(root={})
                                 else:
                                     raw_result = _factory_func_ref()
                                 try:
@@ -858,7 +860,7 @@ class FlextContainer(p.DI):
                     scoped_context = FlextContext()
             else:
                 scoped_context = FlextContext()
-        elif u.is_context(context):
+        elif u.is_context(context) and isinstance(context, FlextContext):
             scoped_context = context
         else:
             scoped_context = self.context.clone()

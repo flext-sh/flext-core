@@ -67,7 +67,7 @@ class TestServiceBootstrap:
 
     def test_create_initial_runtime_uses_bootstrap_options(self) -> None:
         """Test _create_initial_runtime uses _runtime_bootstrap_options."""
-        runtime = ConcreteTestService._create_initial_runtime()
+        runtime = ConcreteTestService()._create_initial_runtime()
         assert runtime.config is not None
         assert runtime.config.app_name == "test_app"
         assert runtime.container is not None

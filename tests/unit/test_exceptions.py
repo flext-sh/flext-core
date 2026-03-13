@@ -996,8 +996,8 @@ class Teste:
         assert isinstance(error, e.ConfigurationError)
         error = e.create("Conn error", host=FlextConstants.Network.LOCALHOST)
         assert isinstance(error, e.ConnectionError)
-        with pytest.raises(Exception):
-            e.create("Timeout error", timeout_seconds=30.0)
+        error = e.create("Timeout error", timeout_seconds=30.0)
+        assert isinstance(error, e.TimeoutError)
         error = e.create("Auth error", user_id="user1", auth_method="password")
         assert isinstance(error, e.AuthenticationError)
         error = e.create("Authz error", user_id="user1", permission="read")

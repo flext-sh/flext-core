@@ -35,7 +35,7 @@ def test_entity_comparable_map_and_bulk_validation_paths() -> None:
                 "data": 1,
             },
         )
-    entry = FlextModelsEntity.Entry(unique_id="e1")
+    entry = FlextModelsEntity.Entity(unique_id="e1")
     bad = entry.add_domain_events_bulk(
         cast("Sequence[tuple[str, m.ConfigMap | None]]", "invalid"),
     )

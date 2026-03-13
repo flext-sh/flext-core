@@ -423,10 +423,9 @@ def test_create_auto_register_factory_wrapper_callable_and_non_callable(
     _ = FlextContainer.create(auto_register_factories=True)
     wrapper = captured["factory.captured"]
     assert wrapper() == 7
-    assert (
-        wrapper(_factory_config=types.SimpleNamespace(fn=123, name="factory.captured"))
-        == ""
-    )
+    assert wrapper(
+        _factory_config=types.SimpleNamespace(fn=123, name="factory.captured")
+    ) == m.ConfigMap(root={})
     monkeypatch.setattr(FlextContainer, "register", original_register)
 
 
@@ -667,8 +666,9 @@ def test_container_remaining_branch_paths_in_sync_factory_and_getters(
             max_services=10,
             max_factories=10,
         )
-        c2._factories = {}
-        c2.register("fac-call", lambda: "value", kind="factory")
+        c2._factories = {
+            "fac-call": m.FactoryRegistration(name="fac-call", factory=lambda: "value")
+        }
         fac_call = c2.get("fac-call")
         assert fac_call.is_success
         assert fac_call.value == "value"

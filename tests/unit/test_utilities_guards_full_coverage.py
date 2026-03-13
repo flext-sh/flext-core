@@ -96,12 +96,12 @@ def test_non_empty_and_normalize_branches() -> None:
     assert u.is_list_non_empty([1])
     assert u.normalize_to_metadata_value("x") == "x"
     dict_scalar_out = u.normalize_to_metadata_value({"k": 1})
-    assert dict_scalar_out == '{"k": 1}'
-    with pytest.raises(TypeError):
-        u.normalize_to_metadata_value(cast("object", {"k": object()}))
+    assert dict_scalar_out == {"k": 1}
+    dict_complex_out = u.normalize_to_metadata_value(cast("object", {"k": object()}))
+    assert isinstance(dict_complex_out, dict) and "k" in dict_complex_out
     list_out = u.normalize_to_metadata_value(cast("object", [1, object()]))
     assert isinstance(list_out, list)
-    assert list_out[0] == "1"
+    assert list_out[0] == 1
     assert isinstance(list_out[1], str)
     assert isinstance(
         u.normalize_to_metadata_value(cast("object", cast("object", {1, 2}))),

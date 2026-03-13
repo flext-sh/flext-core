@@ -67,7 +67,7 @@ def test_narrow_contextvar_exception_branch(
         raise TypeError(msg)
 
     monkeypatch.setattr(
-        "flext_core.context.FlextRuntime.normalize_to_general_value",
+        "flext_core.context.FlextRuntime.normalize_to_container",
         _raise_type_error,
     )
     assert FlextContext._narrow_contextvar_to_configuration_dict({"x": 1}) == {}
@@ -131,7 +131,7 @@ def test_inactive_and_none_value_paths() -> None:
     assert ctx._get_all_scopes() == {}
     ctx2 = FlextContext()
     ctx2._set_in_contextvar(c.Context.SCOPE_GLOBAL, m.ConfigMap(root={"k": None}))
-    assert ctx2.get("k").is_failure
+    assert ctx2.get("k").is_success
 
 
 def test_clear_keys_values_items_and_validate_branches(

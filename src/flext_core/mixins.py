@@ -336,7 +336,7 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
         )
         runtime_config_typed: FlextSettings = runtime_config
         runtime_container = FlextContainer.create().scoped(
-            config=runtime_config_typed, 
+            config=runtime_config_typed,
             context=runtime_context,
             services=bootstrap_services,
             factories=bootstrap_factories,

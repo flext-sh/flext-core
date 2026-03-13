@@ -15,7 +15,7 @@ import contextvars
 import threading
 import time
 from collections.abc import Callable, Mapping
-from typing import TypeGuard, cast
+from typing import TypeGuard
 
 from pydantic import TypeAdapter, ValidationError
 

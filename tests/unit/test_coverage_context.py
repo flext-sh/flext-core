@@ -116,7 +116,7 @@ class TestContextDataModel:
         context_data = m.ContextData(
             data=m.Dict(root={"key1": "value1", "key2": "value2"}),
         )
-        context = FlextContext(context_data)
+        context = FlextContext(initial_data=context_data)
         result1 = context.get("key1")
         assert result1.is_success
         assert result1.value == "value1"

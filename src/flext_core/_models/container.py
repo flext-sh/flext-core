@@ -146,8 +146,11 @@ class FlextModelsContainer:
         is_singleton: bool = Field(
             default=False, description="Whether factory creates singleton instances"
         )
-        cached_instance: t.RegisterableService | None = Field(
-            default=None, description="Cached singleton instance (if is_singleton=True)"
+        cached_instance: Annotated[t.RegisterableService | None, SkipValidation] = (
+            Field(
+                default=None,
+                description="Cached singleton instance (if is_singleton=True)",
+            )
         )
         metadata: (
             FlextModelFoundation.Metadata | FlextModelsContainers.ConfigMap | None

@@ -293,20 +293,16 @@ def test_normalization_edge_branches() -> None:
     assert hasattr(normalized_dict_like, "root") and normalized_dict_like.root == {
         "x": 1
     }
-    # normalize_to_metadata delegates to normalize_to_container
-    # ConfigMap is BaseModel → returned as-is
     metadata_cfg = FlextRuntime.normalize_to_metadata(cfg)
-    assert isinstance(metadata_cfg, BaseModel)
-    # DictLike is Mapping → wrapped in Dict model
+    assert isinstance(metadata_cfg, str)
     metadata_dict_like = FlextRuntime.normalize_to_metadata(
         cast("object", DictLike()),
     )
-    assert hasattr(metadata_dict_like, "root") and metadata_dict_like.root == {"x": 1}
-    # List → wrapped in ObjectList model
+    assert isinstance(metadata_dict_like, dict) and metadata_dict_like == {"x": 1}
     metadata_list = FlextRuntime.normalize_to_metadata(
         cast("object", ["a", object()]),
     )
-    assert hasattr(metadata_list, "root")
+    assert isinstance(metadata_list, list)
 
 
 def test_deprecated_normalize_to_general_value_warns() -> None:
@@ -711,9 +707,7 @@ def test_config_bridge_and_trace_context_and_http_validation() -> None:
     )
     invalid_statuses: list[int | str] = cast("list[int | str]", [object()])
     bad_type = FlextRuntime.validate_http_status_codes(invalid_statuses)
-    assert bad_type.is_failure and "Invalid HTTP status code type" in (
-        bad_type.error or ""
-    )
+    assert bad_type.is_failure and "Cannot convert to integer" in (bad_type.error or "")
     bad_value = FlextRuntime.validate_http_status_codes(["abc"])
     assert bad_value.is_failure and "Cannot convert to integer" in (
         bad_value.error or ""
@@ -743,14 +737,10 @@ def test_runtime_misc_remaining_paths(monkeypatch: pytest.MonkeyPatch) -> None:
     assert hasattr(norm_list, "root") and list(norm_list.root) == [1, "x"]
     # Path is Container, returned as-is
     assert FlextRuntime.normalize_to_container(Path("/tmp")) == Path("/tmp")
-    # normalize_to_metadata delegates to normalize_to_container:
-    # int is scalar → returned as-is (int 1, not string "1")
     assert FlextRuntime.normalize_to_metadata(1) == 1
-    # MappingProxyType → Dict wrapper with root
     metadata_mapping = FlextRuntime.normalize_to_metadata(MappingProxyType({"a": 1}))
-    assert hasattr(metadata_mapping, "root") and metadata_mapping.root == {"a": 1}
-    # Path → returned as-is (Path is Container)
-    assert FlextRuntime.normalize_to_metadata(Path("/tmp")) == Path("/tmp")
+    assert isinstance(metadata_mapping, dict) and metadata_mapping == {"a": 1}
+    assert FlextRuntime.normalize_to_metadata(Path("/tmp")) == str(Path("/tmp"))
 
     class Frame:
         f_back: types.FrameType | None = None

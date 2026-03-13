@@ -939,7 +939,7 @@ class TestFlextRuntime:
                 "preseed"
             )
             assert service_result.is_success
-            assert service_result.value == {"enabled": True}
+            assert service_result.value == m.ConfigMap(root={"enabled": True})
             factory_result: r[t.RegisterableService] = component.container.get(
                 "counter"
             )

@@ -412,22 +412,13 @@ class FlextUtilitiesGuards:
     ) -> TypeGuard[p.ResultLike[t.Container | BaseModel]]:
         """Check if value implements ResultLike protocol (has is_success, value, error).
 
-        Uses try/except to avoid triggering property getters that may raise
-        (e.g., r.value on failure raises RuntimeError, not AttributeError).
+        Checks the class MRO rather than instance attribute access to avoid
+        triggering property getters that raise RuntimeError (e.g., r.value on failure).
         """
-        try:
-            return (
-                hasattr(value, "is_success")
-                and hasattr(value, "value")
-                and hasattr(value, "error")
-            )
-        except (RuntimeError, TypeError, ValueError):
-            cls = type(value)
-            return (
-                hasattr(cls, "is_success")
-                and hasattr(cls, "value")
-                and hasattr(cls, "error")
-            )
+        if not (hasattr(value, "is_success") and hasattr(value, "error")):
+            return False
+        cls = type(value)
+        return any("value" in vars(base) for base in cls.__mro__)
 
     @staticmethod
     def is_scalar(

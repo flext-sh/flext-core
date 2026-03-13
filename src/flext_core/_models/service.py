@@ -10,12 +10,12 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import uuid
-from collections.abc import Callable
+from collections.abc import Callable, Mapping, Sequence
 from typing import Annotated, Self
 
 from pydantic import Field, model_validator
 
-from flext_core import c, p
+from flext_core import c, p, t
 from flext_core._models.base import FlextModelFoundation
 
 
@@ -275,6 +275,7 @@ class FlextModelsService:
             if self.retry_config is None:
                 self.retry_config = FlextModelsService.ServiceRetryConfiguration()
             return self
+
     class RuntimeBootstrapOptions(FlextModelFoundation.ArbitraryTypesModel):
         """Options for runtime bootstrapping."""
 
@@ -282,7 +283,7 @@ class FlextModelsService:
         config_overrides: Mapping[str, object] | None = None
         context: p.Context | None = None
         subproject: str | None = None
-        services: Mapping[str, t.RegisterableService] | None = None
+        services: Mapping[str, object] | None = None
         factories: Mapping[str, t.FactoryCallable] | None = None
         resources: Mapping[str, t.ResourceCallable] | None = None
         container_overrides: Mapping[str, object] | None = None

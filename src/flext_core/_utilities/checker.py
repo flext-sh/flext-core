@@ -132,14 +132,28 @@ class FlextUtilitiesChecker:
         """
         message_types: list[t.MessageTypeSpecifier] = []
         raw_bases: object = getattr(handler_class, "__orig_bases__", ())
-        if not FlextUtilitiesGuards.is_object_tuple(raw_bases):
+        if FlextUtilitiesGuards.is_object_tuple(raw_bases):
+            for base in raw_bases:
+                origin = get_origin(base)
+                if origin is not None and origin.__name__ in {"h", "FlextHandlers"}:
+                    args = get_args(base)
+                    if args:
+                        message_types.append(args[0])
+        if message_types:
             return message_types
-        for base in raw_bases:
-            origin = get_origin(base)
-            if origin is not None and origin.__name__ in {"h", "FlextHandlers"}:
-                args = get_args(base)
-                if args:
-                    message_types.append(args[0])
+        for base in getattr(handler_class, "__bases__", ()):
+            meta = getattr(base, "__pydantic_generic_metadata__", None)
+            if meta is None:
+                continue
+            origin = meta.get("origin")
+            if origin is None:
+                continue
+            origin_name = getattr(origin, "__name__", "")
+            if origin_name not in {"FlextHandlers", "h"}:
+                continue
+            args = meta.get("args", ())
+            if args:
+                message_types.append(args[0])
         return message_types
 
     @classmethod

@@ -177,10 +177,17 @@ class FlextService[TDomainResult: object = object](x, ABC):
         msg = "Service config is not FlextSettings"
         raise TypeError(msg)
 
+    @classmethod
+    def _runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions | None:
+        return None
+
     def _create_initial_runtime(self) -> m.ServiceRuntime:
         """Build the initial runtime triple for a new service instance."""
+        bootstrap_opts = self._runtime_bootstrap_options()
         config_type = self._get_service_config_type()
-        config_type_raw = getattr(self, "config_type", None)
+        config_type_raw = self.config_type or (
+            bootstrap_opts.config_type if bootstrap_opts is not None else None
+        )
         config_type_val: type[FlextSettings] | None
         if config_type_raw is not None and issubclass(
             cast("type", config_type_raw), FlextSettings
@@ -188,26 +195,55 @@ class FlextService[TDomainResult: object = object](x, ABC):
             config_type_val = cast("type[FlextSettings]", config_type_raw)
         else:
             config_type_val = config_type
-        context_val_raw = getattr(self, "initial_context", None)
+        ctx_raw = self.initial_context or (
+            bootstrap_opts.context if bootstrap_opts is not None else None
+        )
         context_val: p.Context | None = (
-            cast("p.Context", context_val_raw)
-            if context_val_raw is not None
-            and getattr(context_val_raw, "set", None) is not None
-            and (getattr(context_val_raw, "get", None) is not None)
+            cast("p.Context", ctx_raw)
+            if ctx_raw is not None
+            and getattr(ctx_raw, "set", None) is not None
+            and getattr(ctx_raw, "get", None) is not None
             else None
+        )
+        config_overrides = self.config_overrides or (
+            bootstrap_opts.config_overrides if bootstrap_opts is not None else None
+        )
+        subproject = self.subproject or (
+            bootstrap_opts.subproject if bootstrap_opts is not None else None
+        )
+        services = self.services or (
+            bootstrap_opts.services if bootstrap_opts is not None else None
+        )
+        factories = self.factories or (
+            bootstrap_opts.factories if bootstrap_opts is not None else None
+        )
+        resources = self.resources or (
+            bootstrap_opts.resources if bootstrap_opts is not None else None
+        )
+        container_overrides = self.container_overrides or (
+            bootstrap_opts.container_overrides if bootstrap_opts is not None else None
+        )
+        wire_modules = self.wire_modules or (
+            bootstrap_opts.wire_modules if bootstrap_opts is not None else None
+        )
+        wire_packages = self.wire_packages or (
+            bootstrap_opts.wire_packages if bootstrap_opts is not None else None
+        )
+        wire_classes = self.wire_classes or (
+            bootstrap_opts.wire_classes if bootstrap_opts is not None else None
         )
         return self._create_runtime(
             config_type=config_type_val,
-            config_overrides=getattr(self, "config_overrides", None),
+            config_overrides=config_overrides,
             context=context_val,
-            subproject=getattr(self, "subproject", None),
-            services=getattr(self, "services", None),
-            factories=getattr(self, "factories", None),
-            resources=getattr(self, "resources", None),
-            container_overrides=getattr(self, "container_overrides", None),
-            wire_modules=getattr(self, "wire_modules", None),
-            wire_packages=getattr(self, "wire_packages", None),
-            wire_classes=getattr(self, "wire_classes", None),
+            subproject=subproject,
+            services=services,
+            factories=factories,
+            resources=resources,
+            container_overrides=container_overrides,
+            wire_modules=wire_modules,
+            wire_packages=wire_packages,
+            wire_classes=wire_classes,
         )
 
     @classmethod

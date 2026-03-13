@@ -420,4 +420,3 @@ FlextModelsCqrs.Query.model_rebuild()
 FlextModelsCqrs.Bus.model_rebuild()
 FlextModelsCqrs.Handler.model_rebuild()
 FlextModelsCqrs.Event.model_rebuild()
-

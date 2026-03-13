@@ -239,81 +239,64 @@ class TestuTypeGuardsNormalizeToMetadataValue:
         assert result == ""
 
     def test_normalize_dict_to_pydantic_model(self) -> None:
-        """Test normalize_to_metadata_value: dict → m.Dict (BaseModel)."""
         test_dict: m.ConfigMap = m.ConfigMap(root={"key": "value", "num": 42})
         result = u.normalize_to_metadata_value(test_dict)
-        assert isinstance(result, BaseModel)
+        assert isinstance(result, str)
 
     def test_normalize_list_to_pydantic_model(self) -> None:
-        """Test normalize_to_metadata_value: list → m.ObjectList (BaseModel)."""
         test_list = [1, 2, 3]
         result = u.normalize_to_metadata_value(test_list)
-        assert isinstance(result, BaseModel)
+        assert isinstance(result, list)
 
     def test_normalize_dict_with_primitives(self) -> None:
-        """Test normalize_to_metadata_value: dict with primitive values → BaseModel."""
         test_dict: m.ConfigMap = m.ConfigMap(root={"a": 1, "b": "test", "c": True})
         result = u.normalize_to_metadata_value(test_dict)
-        assert isinstance(result, BaseModel)
+        assert isinstance(result, str)
 
     def test_normalize_dict_with_nested_dict(self) -> None:
-        """Test normalize_to_metadata_value: dict with nested dict → BaseModel."""
         inner = m.ConfigMap(root={"nested": "value"})
         outer = m.ConfigMap(root={"key": inner})
         result = u.normalize_to_metadata_value(outer)
-        assert isinstance(result, BaseModel)
+        assert isinstance(result, str)
 
     def test_normalize_dict_with_list_value(self) -> None:
-        """Test normalize_to_metadata_value: dict with list value → BaseModel."""
         test_dict = {"key": [1, 2, 3]}
         result = u.normalize_to_metadata_value(test_dict)
-        assert isinstance(result, BaseModel)
+        assert isinstance(result, dict)
+        assert isinstance(result["key"], list)
 
     def test_normalize_dict_with_non_string_key(self) -> None:
-        """Test normalize_to_metadata_value: dict with non-string key → BaseModel.
-
-        Non-string keys are stringified during normalization.
-        """
         test_dict = {123: "value", "key": "test"}
         result = u.normalize_to_metadata_value(test_dict)
-        assert isinstance(result, BaseModel)
+        assert isinstance(result, dict)
+        assert "123" in result
 
     def test_normalize_list_with_primitives(self) -> None:
-        """Test normalize_to_metadata_value: list with primitives → BaseModel."""
         test_list = ["a", 1, True]
         result = u.normalize_to_metadata_value(test_list)
-        assert isinstance(result, BaseModel)
+        assert isinstance(result, list)
 
     def test_normalize_list_with_nested_list(self) -> None:
-        """Test normalize_to_metadata_value: list with nested list → BaseModel."""
         test_list = [[1, 2], [3, 4]]
         result = u.normalize_to_metadata_value(test_list)
-        assert isinstance(result, BaseModel)
+        assert isinstance(result, list)
 
     def test_normalize_list_with_dict(self) -> None:
-        """Test normalize_to_metadata_value: list with dict → BaseModel."""
         test_list = [{"key": "value"}]
         result = u.normalize_to_metadata_value(test_list)
-        assert isinstance(result, BaseModel)
+        assert isinstance(result, list)
 
     def test_normalize_list_with_complex_items(self) -> None:
-        """Test normalize_to_metadata_value: list with mixed items → BaseModel."""
         test_list = ["string", 42, True, {"dict": "value"}, [1, 2, 3]]
         result = u.normalize_to_metadata_value(test_list)
-        assert isinstance(result, BaseModel)
+        assert isinstance(result, list)
 
     def test_normalize_tuple_to_pydantic_model(self) -> None:
-        """Test normalize_to_metadata_value: tuple → BaseModel (list-like)."""
         test_tuple = (1, 2, 3)
         result = u.normalize_to_metadata_value(test_tuple)
-        assert isinstance(result, BaseModel)
+        assert isinstance(result, list)
 
     def test_normalize_dict_with_complex_nested_structure(self) -> None:
-        """Test normalize_to_metadata_value: complex nested dict → BaseModel.
-
-        Complex nested structures are wrapped in m.Dict Pydantic model.
-        Object() values are stringified during normalization.
-        """
         test_dict = {
             "str": "value",
             "int": 42,
@@ -322,7 +305,7 @@ class TestuTypeGuardsNormalizeToMetadataValue:
             "complex": object(),
         }
         result = u.normalize_to_metadata_value(test_dict)
-        assert isinstance(result, BaseModel)
+        assert isinstance(result, dict)
 
     def test_normalize_custom_object(self) -> None:
         """Test normalize_to_metadata_value: custom object → str(obj)."""
@@ -344,16 +327,13 @@ class TestuTypeGuardsNormalizeToMetadataValue:
         assert result == math.pi
 
     def test_normalize_basemodel_passthrough(self) -> None:
-        """Test normalize_to_metadata_value: BaseModel → preserved."""
-
         class SampleModel(BaseModel):
             name: str = "test"
 
         model = SampleModel()
         result = u.normalize_to_metadata_value(model)
-        assert isinstance(result, BaseModel)
-        assert isinstance(result, SampleModel)
-        assert result.name == "test"
+        assert isinstance(result, str)
+        assert "test" in result
 
 
 __all__ = [

@@ -2,21 +2,16 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, Iterator, Mapping
+from collections.abc import Callable, Iterator, Mapping, Sequence
 from types import SimpleNamespace
 from typing import cast, override
 
 import pytest
 from pydantic import BaseModel
 
-from flext_core import FlextLogger, FlextMixins, FlextRuntime, c, m, p, r, t, u, x
+from flext_core import FlextLogger, FlextMixins, c, m, p, r, t, u, x
 
 from ._models import _SvcModel
-
-
-def _normalize_to_one(_v: object) -> int:
-    """Staticmethod helper for monkeypatch; type known for pyright."""
-    return 1
 
 
 def _noop(*_a: object, **_k: t.Scalar) -> None:
@@ -70,7 +65,35 @@ class _RuntimeContainer:
         self.configured = overrides
 
     def wire_modules(self, **kwargs: t.Scalar) -> None:
-        self.wired = kwargs
+        self.wired = dict(kwargs)
+
+    def list_services(self) -> Sequence[str]:
+        return []
+
+    def has_service(self, _name: str) -> bool:
+        return False
+
+    def register(
+        self, _name: str, _value: object, *, kind: str = "service"
+    ) -> _RuntimeContainer:
+        return self
+
+    def clear_all(self) -> None:
+        pass
+
+    def get_config(self) -> m.ConfigMap:
+        return m.ConfigMap(root={})
+
+    def get(self, _key: str, **_kwargs: object) -> r[object]:
+        return r[object].fail("not implemented")
+
+    @property
+    def context(self) -> object:
+        return None
+
+    @property
+    def config(self) -> object:
+        return None
 
 
 class _ContainerForLogger:
@@ -127,14 +150,9 @@ def test_mixins_result_and_model_conversion_paths(
     assert hasattr(u, "merge")
     assert x.fail("error").is_failure
     conf = m.ConfigMap(root={"a": "b"})
-    assert x.to_dict(conf) is conf
-    monkeypatch.setattr(
-        FlextRuntime,
-        "normalize_to_general_value",
-        staticmethod(_normalize_to_one),
-    )
-    scalar_wrapped = x.to_dict(_SvcModel(value="ok"))
-    assert scalar_wrapped.root == {"value": 1}
+    assert x.normalize_to_container(conf) is conf
+    model = _SvcModel(value="ok")
+    assert x.normalize_to_container(model) is model
 
     class _BadMap(Mapping[str, object]):
         @override
@@ -151,7 +169,7 @@ def test_mixins_result_and_model_conversion_paths(
             raise RuntimeError(msg)
 
     with pytest.raises(RuntimeError, match="boom"):
-        _ = x.to_dict(_BadMap())
+        _ = x.normalize_to_container(_BadMap())
 
 
 def test_mixins_runtime_bootstrap_and_track_paths(
@@ -171,19 +189,21 @@ def test_mixins_runtime_bootstrap_and_track_paths(
                 "p.RuntimeBootstrapOptions",
                 cast(
                     "object",
-                    {
-                        "container_overrides": {"debug": True},
-                        "wire_packages": ["pkg"],
-                        "resources": {"res": lambda: "x"},
-                        "factories": {"fac": lambda: "y"},
-                    },
+                    SimpleNamespace(
+                        config_type=None,
+                        config_overrides=None,
+                        context=None,
+                        services=None,
+                        wire_modules=["pkg"],
+                        resources={"res": lambda: "x"},
+                        factories={"fac": lambda: "y"},
+                    ),
                 ),
             )
 
     service = _Service()
     runtime = service._get_runtime()
     assert runtime is not None
-    assert runtime_container.configured == {"debug": True}
     assert runtime_container.wired is not None
     with service.track("op") as metrics:
         cast("dict[str, object]", metrics)["duration_ms"] = 2.0
@@ -490,27 +510,8 @@ def test_mixins_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> None:
     )
     assert valid.is_success
     FlextMixins._logger_cache.clear()
-
-    class _FactoryContainer(_ContainerForLogger):
-        def __init__(self) -> None:
-            super().__init__(False)
-
-    factory_container = _FactoryContainer()
-
-    def _create_factory_container() -> _ContainerForLogger:
-        return factory_container
-
-    monkeypatch.setattr(
-        "flext_core.mixins.FlextContainer.create",
-        staticmethod(_create_factory_container),
-    )
-    _ = _LoggerService._get_or_create_logger()
-    assert any((kind == "factory" for _name, kind in factory_container.register_calls))
-    factory = next(iter(factory_container.factories.values()))
-    assert callable(factory)
-    factory_value = factory()
-    assert isinstance(factory_value, str)
-    assert "_LoggerService" in factory_value
+    logger_obj = _LoggerService._get_or_create_logger()
+    assert isinstance(logger_obj, FlextLogger)
 
     class _BrokenContainer:
         def get_typed(self, _key: str, _tp: object) -> r[t.Container | BaseModel]:

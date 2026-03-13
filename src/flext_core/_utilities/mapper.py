@@ -371,15 +371,13 @@ class FlextUtilitiesMapper:
         if isinstance(group_spec_raw, str):
             group_spec = group_spec_raw
             grouped: dict[str, ContainerList] = {}
-            for item in current_list:
-                if isinstance(item, Mapping):
+            for orig_item, item in zip(current_items, current_list):
+                if isinstance(orig_item, BaseModel):
+                    if not hasattr(orig_item, group_spec):
+                        continue
+                    key_raw = getattr(orig_item, group_spec)
+                elif isinstance(item, Mapping):
                     key_raw = item.get(group_spec)
-                elif isinstance(item, BaseModel):
-                    if not hasattr(item, group_spec):
-                        continue
-                    key_raw = getattr(item, group_spec)
-                    if key_raw is None:
-                        continue
                 else:
                     continue
                 key = "" if key_raw is None else str(key_raw)
@@ -2533,18 +2531,14 @@ class FlextUtilitiesMapper:
             >>> transformed = result.map_or({})  # {"new": "value"}
 
         """
-        source_dict: ContainerMapping
-        if isinstance(source, m.ConfigMap):
-            source_dict = {
-                str(k): FlextUtilitiesMapper.narrow_to_container(v)
-                for k, v in source.root.items()
-            }
-        else:
-            source_dict = dict(source)
-
         transform_result = r[ContainerMapping].create_from_callable(
             lambda: FlextUtilitiesMapper._apply_transform_steps(
-                source_dict,
+                {
+                    str(k): FlextUtilitiesMapper.narrow_to_container(v)
+                    for k, v in source.root.items()
+                }
+                if isinstance(source, m.ConfigMap)
+                else dict(source),
                 normalize=normalize,
                 map_keys=map_keys,
                 filter_keys=filter_keys,

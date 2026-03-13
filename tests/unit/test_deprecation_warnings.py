@@ -164,12 +164,14 @@ class TestStrictContainerNormalization:
         result = FlextRuntime.normalize_to_container(object())
         assert isinstance(result, str)
 
-    def test_normalize_to_metadata_delegates_to_container(self) -> None:
-        """normalize_to_metadata is an alias for normalize_to_container."""
-        for val in ["str", 42, [1], {"k": "v"}, None]:
-            container = FlextRuntime.normalize_to_container(val)
+    def test_normalize_to_metadata_returns_metadata_value(self) -> None:
+        for val in ["str", 42, None]:
             metadata = FlextRuntime.normalize_to_metadata(val)
-            assert type(container) is type(metadata)
+            assert isinstance(metadata, (str, int, float, bool, list, dict))
+        list_meta = FlextRuntime.normalize_to_metadata([1])
+        assert isinstance(list_meta, list)
+        dict_meta = FlextRuntime.normalize_to_metadata({"k": "v"})
+        assert isinstance(dict_meta, dict)
 
     def test_no_deprecation_on_strict_methods(self) -> None:
         """Non-deprecated methods must NOT emit DeprecationWarning."""

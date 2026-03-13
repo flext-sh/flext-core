@@ -272,9 +272,7 @@ class FlextInfraDependencyDetectionService:
         toml_data = self._to_toml_config(result.value)
         for key, value in toml_data.items():
             converted = FlextInfraDependencyDetectionService.to_infra_value(value)
-            if (converted is not None or value is None) and not isinstance(
-                converted, list
-            ):
+            if converted is not None or value is None:
                 limits[str(key)] = converted
         return limits
 

@@ -699,7 +699,6 @@ class FlextRuntime:
                         FlextRuntime._normalize_to_metadata_scalar(item) for item in v
                     ]
                 elif FlextRuntime.is_dict_like(v):
-                    # Nested dict: check depth. One-level with scalars → keep; else JSON encode.
                     inner: dict[str, str | int | float | bool] = {}
                     for ik, iv in v.items():
                         inner[str(ik)] = FlextRuntime._normalize_to_metadata_scalar(iv)
@@ -1767,6 +1766,8 @@ class FlextRuntime:
             dump_a = obj_a.model_dump()
             dump_b = obj_b.model_dump()
             return dump_a == dump_b
+        if hasattr(obj_a, "__dict__") and hasattr(obj_b, "__dict__"):
+            return obj_a.__dict__ == obj_b.__dict__
         return repr(obj_a) == repr(obj_b)
 
     @staticmethod

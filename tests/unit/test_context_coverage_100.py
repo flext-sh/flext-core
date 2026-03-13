@@ -14,7 +14,7 @@ from collections import UserDict as UserDictBase
 import pytest
 from pydantic import BaseModel, ValidationError
 
-from flext_core import FlextConstants, FlextContext, m
+from flext_core import FlextConstants, FlextContext
 from flext_core._models.base import FlextModelFoundation
 from flext_core._models.context import FlextModelsContext
 from flext_tests import u
@@ -79,7 +79,7 @@ class TestContext100Coverage:
         result1 = merged.get("key1")
         result2 = merged.get("key2")
         _ = u.Tests.Result.assert_success(result1)
-        _ = u.Tests.Result.assert_failure(result2)
+        _ = u.Tests.Result.assert_success(result2)
 
     def test_clone_creates_independent_copy(self) -> None:
         """Test clone creates independent copy."""
@@ -116,17 +116,11 @@ class TestContext100Coverage:
             assert "key2" in global_data
 
     def test_set_with_none_value_raises_validation_error(self) -> None:
-        """Test None is rejected by ConfigMap container validation."""
+        """Test None is rejected by context.set validation."""
         context = FlextContext()
         context.set("key1", "value1").value
-        scope_var = context._scope_vars[FlextConstants.Context.SCOPE_GLOBAL]
-        current: m.ConfigMap | None = scope_var.get()
-        current_data: dict[str, object] = (
-            dict(current.root) if current is not None else {}
-        )
-        current_data["none_key"] = None
-        with pytest.raises(ValidationError):
-            scope_var.set(m.ConfigMap(root=current_data))
+        result = context.set("none_key", None)
+        assert result.is_failure
 
     def test_get_with_different_scope(self) -> None:
         """Test get with different scope."""

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections import UserDict, UserList
-from collections.abc import Callable, ItemsView, Iterator, Mapping, Sequence
+from collections.abc import Callable, ItemsView, Iterator, Mapping
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Protocol, cast, override
@@ -250,7 +250,7 @@ def test_invert_and_json_conversion_branches(mapper: type[u]) -> None:
 
 
 def test_ensure_and_extract_array_index_helpers(mapper: type[u]) -> None:
-    assert mapper.ensure(123) == ["123"]
+    assert mapper.ensure(123) == [123]
     idx_result = mapper._extract_handle_array_index("x", "0")
     assert idx_result.is_failure
     assert idx_result.error == "Not a sequence"
@@ -730,7 +730,7 @@ def test_conversion_and_extract_success_branches(mapper: type[u]) -> None:
     assert mapper.ensure_str(2) == "2"
     assert mapper.ensure(None) == []
     assert mapper.ensure("x") == ["x"]
-    assert mapper.ensure([1, 2]) == ["1", "2"]
+    assert mapper.ensure([1, 2]) == [1, 2]
     str_result = mapper.ensure_str_or_none("x")
     assert str_result.is_success and str_result.value == "x"
 
@@ -836,7 +836,7 @@ def test_remaining_build_fields_construct_and_eq_paths(mapper: type[u]) -> None:
     assert mapper._build_apply_chunk([1, 2, 3], {"chunk": 2}) == [[1, 2], [3]]
     assert mapper.field({"a": 1}, "a") == 1
     assert mapper.fields_multi({"a": 1, "b": 2}, {"a": 0, "b": 0}) == {"a": 1, "b": 2}
-    assert mapper.fields_multi(m.ConfigMap(root={"a": 1}), {"a": 0}) == {"a": 0}
+    assert mapper.fields_multi(m.ConfigMap(root={"a": 1}), {"a": 0}) == {"a": 1}
     assert mapper.construct({"x": {"value": 1}}, m.ConfigMap(root={"x": 0})) == {"x": 1}
     assert mapper.construct({"x": "a"}, m.ConfigMap(root={"a": 2})) == {"x": 2}
     assert mapper.construct(
@@ -898,7 +898,7 @@ def test_remaining_uncovered_branches(
         kind: str | None = None
 
     grouped = mapper._build_apply_group([GroupModel(kind=None)], {"group": "kind"})
-    assert grouped == {}
+    assert grouped == {"": [{"kind": None}]}
     assert mapper._build_apply_sort([2, 1], {"sort": 5}) == [2, 1]
 
     class CallableDictLike:

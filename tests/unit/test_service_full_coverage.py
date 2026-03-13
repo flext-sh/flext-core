@@ -87,7 +87,7 @@ def test_service_create_initial_runtime_prefers_custom_config_type_and_context_p
                 config_type=_CustomSettings,
             )
 
-    runtime = _CustomSvc._create_initial_runtime()
+    runtime = _CustomSvc()._create_initial_runtime()
     assert isinstance(runtime.config, _CustomSettings)
     service = _Svc()
     assert service.context is not None

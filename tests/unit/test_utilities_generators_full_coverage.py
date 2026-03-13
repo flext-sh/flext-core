@@ -19,6 +19,7 @@ from flext_core import m, u
 from ._models import _GoodModel
 
 generators_module = importlib.import_module("flext_core._utilities.generators")
+runtime_module = importlib.import_module("flext_core.runtime")
 
 
 class _BrokenMapping(Mapping[str, object]):
@@ -68,14 +69,14 @@ def test_enrich_and_ensure_trace_context_branches(
 ) -> None:
     ids = iter(["trace-x", "span-x", "corr-x"])
     monkeypatch.setattr(
-        generators_module.FlextUtilitiesGenerators,
-        "_generate_id",
+        runtime_module.FlextRuntime,
+        "generate_id",
         staticmethod(lambda: next(ids)),
     )
     monkeypatch.setattr(
-        generators_module.FlextUtilitiesGenerators,
-        "generate_iso_timestamp",
-        staticmethod(lambda: "2026-01-01T00:00:00+00:00"),
+        runtime_module.FlextRuntime,
+        "generate_datetime_utc",
+        staticmethod(lambda: datetime(2026, 1, 1, tzinfo=UTC)),
     )
     enriched = u.ensure_trace_context(
         _GoodModel(value=9),
@@ -102,20 +103,27 @@ def test_enrich_and_ensure_trace_context_branches(
 
 
 def test_ensure_dict_branches(monkeypatch: pytest.MonkeyPatch) -> None:
+    _ = monkeypatch
+
+    class _IterFailMapping(Mapping[str, object]):
+        @override
+        def __getitem__(self, key: str) -> object:
+            raise KeyError(key)
+
+        @override
+        def __iter__(self) -> Iterator[str]:
+            msg = "iter-fail"
+            raise TypeError(msg)
+
+        @override
+        def __len__(self) -> int:
+            return 1
+
     raw = {"a": 1}
     assert u.ensure_dict(raw) is raw
-
-    def _normalize_stub(_value: object) -> object:
-        return "not-a-dict"
-
-    monkeypatch.setattr(
-        "flext_core.runtime.FlextRuntime.normalize_to_general_value",
-        staticmethod(_normalize_stub),
-    )
-    with pytest.raises(TypeError, match=r"Normalized BaseModel .* is not mapping-like"):
-        u.ensure_dict(_GoodModel(value=5))
+    assert u.ensure_dict(_GoodModel(value=5)) == {"value": 5}
     with pytest.raises(TypeError, match=r"Failed to convert Mapping"):
-        u.ensure_dict(_BrokenMapping())
+        u.ensure_dict(_IterFailMapping())
     assert u.ensure_dict(None, default={"x": "y"}) == {"x": "y"}
     with pytest.raises(TypeError, match=r"Value cannot be None"):
         u.ensure_dict(None)

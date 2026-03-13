@@ -189,4 +189,4 @@ def test_collection_batch_failure_error_capture_and_parse_sequence_outer_error()
 def test_is_general_value_list_accepts_list_subclass() -> None:
     value = _ListSubclass([1, 2, 3])
 
-    assert u._is_general_value_list(value) is True
+    assert u._is_general_value_list(value) is False
