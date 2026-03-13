@@ -428,7 +428,11 @@ class FlextUtilitiesReliability:
 
         """
         if not operations:
-            return r[t.Container].ok(cast(t.Container, value))
+            if FlextUtilitiesGuards.is_container(value):
+                return r[t.Container].ok(value)
+            return r[t.Container].fail(
+                f"Value is not a Container type: {type(value).__name__}"
+            )
         current: object = value
         for i, op in enumerate(operations):
             try:

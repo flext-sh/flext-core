@@ -112,7 +112,9 @@ class FlextModelFoundation:
             try:
                 return FlextModelFoundation.Validators.list_adapter().validate_python(v)
             except ValidationError:
-                return [cast(t.Container, v)]
+                if isinstance(v, (str, int, float, bool, datetime)):
+                    return [v]
+                return [str(v)]
 
         @staticmethod
         def strip_whitespace(v: str) -> str:

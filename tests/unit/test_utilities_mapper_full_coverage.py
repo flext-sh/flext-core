@@ -222,7 +222,7 @@ def test_invert_and_json_conversion_branches(mapper: type[u]) -> None:
         for key, val in {"x": Path("/tmp")}.items()
     }
     assert as_json["x"] == Path("/tmp")
-    list_json = mapper.convert_list_to_json(
+    list_json = mapper.convert_to_json_value(
         cast("Sequence[object]", [{"a": 1}, {"b": object()}]),
     )
     assert isinstance(list_json, list)

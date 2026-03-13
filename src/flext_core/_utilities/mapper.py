@@ -66,36 +66,6 @@ class FlextUtilitiesMapper:
         return FlextRuntime.get_logger(__name__)
 
     @classmethod
-    def convert_list_to_json(
-        cls, data: Sequence[_MappingValue]
-    ) -> list[dict[str, _MappingValue]]:
-        """Convert list of dict-like items to JSON-compatible list.
-
-        **Generic replacement for**: Manual list-to-JSON conversion loops
-
-        Args:
-            data: Source list of dict-like items
-
-        Returns:
-            List with all dict items converted to JSON-compatible format
-
-        Example:
-            >>> data = [{"a": 1}, {"b": 2}]
-            >>> result = FlextUtilitiesMapper.convert_list_to_json(data)
-
-        """
-        return [
-            {
-                str(key): FlextUtilitiesMapper.convert_to_json_value(val)
-                for key, val in FlextUtilitiesMapper._narrow_to_string_keyed_dict(
-                    item
-                ).items()
-            }
-            for item in data
-            if isinstance(item, Mapping)
-        ]
-
-    @classmethod
     def convert_to_json_value(cls, value: object) -> _MappingValue:
         """Convert any value to JSON-compatible type.
 
