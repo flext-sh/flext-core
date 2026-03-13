@@ -818,9 +818,11 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                 _ = file_path.write_bytes(str(actual_content).encode(params.enc))
         elif actual_fmt == c.Tests.Files.Format.JSON:
             if isinstance(actual_content, Mapping):
-                data = dict(actual_content)
+                data: dict[str, object] = {
+                    str(key): value for key, value in actual_content.items()
+                }
             else:
-                empty_data: dict[str, t.Tests.object] = {}
+                empty_data: dict[str, object] = {}
                 data = {"value": actual_content} if actual_content else empty_data
             json_str = (
                 TypeAdapter(dict[str, object])
@@ -830,11 +832,15 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             _ = file_path.write_text(json_str, encoding=params.enc)
         elif actual_fmt == c.Tests.Files.Format.YAML:
             if isinstance(actual_content, Mapping):
-                data = dict(actual_content)
+                data_yaml: dict[str, object] = {
+                    str(key): value for key, value in actual_content.items()
+                }
             else:
-                empty_data_y: dict[str, t.Tests.object] = {}
-                data = {"value": actual_content} if actual_content else empty_data_y
-            yaml_result = _yaml_dump(data, indent=params.indent)
+                empty_data_y: dict[str, object] = {}
+                data_yaml = (
+                    {"value": actual_content} if actual_content else empty_data_y
+                )
+            yaml_result = _yaml_dump(data_yaml, indent=params.indent)
             _ = file_path.write_text(yaml_result, encoding=params.enc)
         elif actual_fmt == c.Tests.Files.Format.CSV:
             csv_content: list[list[str]]
@@ -1407,7 +1413,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                                 text.encode()
                             )
                     else:
-                        parsed_raw = {}
+                        parsed_raw = m.ConfigMap(root={}).root
                 else:
                     parsed_raw = (
                         _yaml_safe_load(text)

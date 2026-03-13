@@ -400,7 +400,7 @@ class FlextExceptions:
             ),
         ]
         attribute_context: Annotated[
-            t.Scalar | None,
+            t.MetadataValue | None,
             Field(
                 default=None,
                 description="Context payload describing the object or state during access failure.",
@@ -1267,7 +1267,7 @@ class FlextExceptions:
             message: str,
             *,
             attribute_name: str | None = None,
-            attribute_context: t.Scalar | None = None,
+            attribute_context: t.MetadataValue | None = None,
             error_code: str = c.Errors.ATTRIBUTE_ERROR,
             context: Mapping[str, t.MetadataValue] | None = None,
             correlation_id: str | None = None,

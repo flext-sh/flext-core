@@ -308,12 +308,12 @@ class FlextUtilitiesConversion:
                 if item is not None
                 and (
                     not (
-                        item.__class__ in {list, tuple, set, frozenset}
+                        isinstance(item, (list, tuple, set, frozenset))
                         or (
-                            item.__class__ in {list, tuple}
+                            isinstance(item, (list, tuple))
                             or (
                                 hasattr(item, "__getitem__")
-                                and item.__class__ not in {str, bytes}
+                                and not isinstance(item, (str, bytes))
                             )
                         )
                     )

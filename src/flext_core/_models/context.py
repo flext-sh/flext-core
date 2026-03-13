@@ -18,7 +18,6 @@ from pydantic import (
     BeforeValidator,
     ConfigDict,
     Field,
-    ValidationError,
     computed_field,
     field_validator,
     model_validator,
@@ -31,14 +30,6 @@ from flext_core._models.entity import FlextModelsEntity
 from flext_core.runtime import FlextRuntime
 
 _V = FlextModelFoundation.Validators
-
-
-def _normalize_str_object_mapping(value: object) -> dict[str, object]:
-    try:
-        validated = _V.dict_str_metadata_adapter().validate_python(value)
-        return dict(validated)
-    except ValidationError:
-        return {}
 
 
 def _normalize_to_mapping(v: object) -> Mapping[str, object]:
@@ -60,7 +51,7 @@ def _normalize_metadata_before(v: object | None) -> object | None:
     if isinstance(v, FlextModelFoundation.Metadata):
         return v
     if isinstance(v, Mapping):
-        return FlextModelFoundation.Metadata({
+        return FlextModelFoundation.Metadata.model_validate({
             "attributes": _V.dict_str_metadata_adapter().validate_python(v)
         })
     return v
@@ -361,7 +352,9 @@ class FlextModelsContext:
             if v is None:
                 return {}
             if isinstance(v, FlextModelFoundation.Metadata):
-                normalized_mapping = FlextModelsContainers.ConfigMap(v.attributes).root
+                normalized_mapping = FlextModelsContainers.ConfigMap(
+                    root=dict(v.attributes.items())
+                ).root
             elif isinstance(v, BaseModel):
                 dump_result = v.model_dump()
                 normalized_mapping = FlextModelsContainers.ConfigMap(dump_result).root
@@ -378,8 +371,17 @@ class FlextModelsContext:
 
         @staticmethod
         def normalize_to_general_value(val: object) -> object:
-            """Normalize any value to object recursively."""
-            return FlextRuntime.normalize_to_container(val)
+            """Normalize to container; raises TypeError for non-normalizable types."""
+            if val is None:
+                return ""
+            if isinstance(val, t.SCALAR_TYPES):
+                return val
+            if isinstance(val, BaseModel):
+                return val
+            if FlextRuntime.is_dict_like(val) or FlextRuntime.is_list_like(val):
+                return FlextRuntime.normalize_to_container(val)
+            msg = f"Non-normalizable type {type(val).__name__}"
+            raise TypeError(msg)
 
     class ContextExport(FlextModelsEntity.Value):
         """Typed snapshot returned by export_snapshot.
@@ -464,7 +466,9 @@ class FlextModelsContext:
             if v is None:
                 return {}
             if isinstance(v, FlextModelFoundation.Metadata):
-                normalized_mapping = FlextModelsContainers.ConfigMap(v.attributes).root
+                normalized_mapping = FlextModelsContainers.ConfigMap(
+                    root=dict(v.attributes.items())
+                ).root
             elif isinstance(v, BaseModel):
                 dump_result = v.model_dump()
                 normalized_mapping = FlextModelsContainers.ConfigMap(dump_result).root

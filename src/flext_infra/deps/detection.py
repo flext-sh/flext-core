@@ -50,12 +50,14 @@ class FlextInfraDependencyDetectionService:
                 sequence = TypeAdapter(list[object]).validate_python(value)
             except ValidationError:
                 return None
-            converted: list[t.Infra.TomlValue] = []
+            converted: list[str | int | float | bool | None] = []
             for item in sequence:
                 converted_item = FlextInfraDependencyDetectionService.to_infra_value(
                     item
                 )
                 if converted_item is None and item is not None:
+                    return None
+                if not isinstance(converted_item, (str, int, float, bool, type(None))):
                     return None
                 converted.append(converted_item)
             return converted
@@ -64,12 +66,14 @@ class FlextInfraDependencyDetectionService:
                 mapping_value = TypeAdapter(dict[object, object]).validate_python(value)
             except ValidationError:
                 return None
-            converted_map: dict[str, t.Infra.TomlValue] = {}
+            converted_map: dict[str, str | int | float | bool | None] = {}
             for key, item in mapping_value.items():
                 converted_item = FlextInfraDependencyDetectionService.to_infra_value(
                     item
                 )
                 if converted_item is None and item is not None:
+                    return None
+                if not isinstance(converted_item, (str, int, float, bool, type(None))):
                     return None
                 converted_map[str(key)] = converted_item
             return converted_map

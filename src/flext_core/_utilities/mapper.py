@@ -562,7 +562,7 @@ class FlextUtilitiesMapper:
             comparable_items: t.ContainerList = [
                 FlextUtilitiesMapper.narrow_to_container(
                     item
-                    if item.__class__ in {str, int, float, bool} or item is None
+                    if isinstance(item, (str, int, float, bool)) or item is None
                     else str(item)
                 )
                 for item in current_list
@@ -637,7 +637,7 @@ class FlextUtilitiesMapper:
         for item in current_list_unique:
             item_hashable: object | str = (
                 item
-                if item.__class__ in {str, int, float, bool} or item is None
+                if isinstance(item, (str, int, float, bool)) or item is None
                 else str(item)
             )
             if item_hashable not in seen:
@@ -719,7 +719,7 @@ class FlextUtilitiesMapper:
             Fail with error message if out of bounds or invalid.
 
         """
-        if current.__class__ not in {list, tuple}:
+        if not isinstance(current, (list, tuple)):
             return r[t.NormalizedValue].fail("Not a sequence")
         sequence: Sequence[t.NormalizedValue] = (
             FlextUtilitiesMapper._narrow_to_sequence(current)

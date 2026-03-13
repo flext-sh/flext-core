@@ -721,13 +721,13 @@ class FlextDecorators:
                     initial_delay_seconds=delay,
                     exponential_backoff=strategy
                     == c.Reliability.BACKOFF_STRATEGY_EXPONENTIAL,
+                    retry_on_exceptions=[],
+                    retry_on_status_codes=[],
                 )
                 try:
                     retry_args = args
                     retry_kwargs_map = m.ConfigMap(dict(kwargs))
-                    retry_kwargs: Mapping[str, t.Container] = dict(
-                        retry_kwargs_map.items()
-                    )
+                    retry_kwargs: Mapping[str, object] = dict(retry_kwargs_map.root)
                     retry_result = FlextDecorators._execute_retry_loop(
                         retry_func,
                         retry_args,
@@ -844,7 +844,10 @@ class FlextDecorators:
 
         """
         if retry_config is None:
-            retry_config = m.RetryConfiguration()
+            retry_config = m.RetryConfiguration(
+                retry_on_exceptions=[],
+                retry_on_status_codes=[],
+            )
         attempts = retry_config.max_retries
         delay = retry_config.initial_delay_seconds
         strategy = (

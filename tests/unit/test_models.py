@@ -135,7 +135,7 @@ class TestFlextModels:
         validation_dict = {
             k: dumped[k] for k in type(entity).model_fields if k in dumped
         }
-        validated_entity = entity(validation_dict)
+        validated_entity = type(entity).model_validate(validation_dict)
         tm.that(
             validated_entity.email,
             eq="test@example.com",
@@ -191,7 +191,7 @@ class TestFlextModels:
             command_type: str = "test_command"
             data: str
 
-        command = TestCommand({"data": "test_data"})
+        command = TestCommand.model_validate({"data": "test_data"})
         tm.that(
             command.command_type,
             eq="test_command",
@@ -597,7 +597,7 @@ class TestFlextModels:
             action: str
             target: str
 
-        command = TestCommand({"action": "create", "target": "user"})
+        command = TestCommand.model_validate({"action": "create", "target": "user"})
         assert all(hasattr(command, attr) for attr in ["command_id", "command_type"])
         assert command.command_type == "generic_command"
         assert command.action == "create"
@@ -830,7 +830,7 @@ class TestFlextModels:
 
     def test_retry_configuration_model(self) -> None:
         """Test RetryConfiguration model with correct fields."""
-        retry = m.RetryConfiguration({
+        retry = m.RetryConfiguration.model_validate({
             "max_attempts": 3,
             "initial_delay_seconds": 1000,
             "max_delay_seconds": 30000,
@@ -860,7 +860,7 @@ class TestFlextModels:
 
     def test_retry_configuration_with_exceptions(self) -> None:
         """Test RetryConfiguration with retry_on_exceptions."""
-        retry = m.RetryConfiguration({
+        retry = m.RetryConfiguration.model_validate({
             "max_attempts": 3,
             "retry_on_exceptions": [ValueError, RuntimeError, TypeError],
         })
@@ -876,7 +876,7 @@ class TestFlextModels:
 
     def test_retry_configuration_with_status_codes(self) -> None:
         """Test RetryConfiguration with retry_on_status_codes."""
-        retry = m.RetryConfiguration({
+        retry = m.RetryConfiguration.model_validate({
             "max_attempts": 3,
             "retry_on_status_codes": [500, 502, 503, 504],
         })
@@ -915,7 +915,7 @@ class TestFlextModels:
 
     def test_retry_configuration_with_both_exceptions_and_status_codes(self) -> None:
         """Test RetryConfiguration with both retry_on_exceptions and status codes."""
-        retry = m.RetryConfiguration({
+        retry = m.RetryConfiguration.model_validate({
             "max_attempts": 3,
             "retry_on_exceptions": [ValueError, ConnectionError],
             "retry_on_status_codes": [429, 500, 503],

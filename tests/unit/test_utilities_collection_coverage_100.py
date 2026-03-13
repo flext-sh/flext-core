@@ -753,10 +753,12 @@ class TestuCollectionCoerceListValidator:
         class TestModel(BaseModel):
             statuses: tuple[FixtureStatus, ...] = Field(default_factory=tuple)
 
-        model1: TestModel = TestModel({"statuses": ["active", "pending"]})
+        model1: TestModel = TestModel.model_validate({
+            "statuses": ["active", "pending"]
+        })
         dumped1 = model1.model_dump()
         assert len(dumped1["statuses"]) == 2
-        model2: TestModel = TestModel({
+        model2: TestModel = TestModel.model_validate({
             "statuses": [FixtureStatus.ACTIVE, FixtureStatus.PENDING],
         })
         dumped2 = model2.model_dump()
@@ -842,12 +844,12 @@ class TestuCollectionCoerceDictValidator:
         class TestModel(BaseModel):
             user_statuses: dict[str, FixtureStatus] = Field(default_factory=dict)
 
-        model1 = TestModel({
+        model1 = TestModel.model_validate({
             "user_statuses": {"user1": "active", "user2": "pending"},
         })
         assert len(model1.user_statuses) == 2
         assert all(isinstance(s, FixtureStatus) for s in model1.user_statuses.values())
-        model2 = TestModel({
+        model2 = TestModel.model_validate({
             "user_statuses": {
                 "user1": FixtureStatus.ACTIVE,
                 "user2": FixtureStatus.PENDING,

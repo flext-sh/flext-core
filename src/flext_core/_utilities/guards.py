@@ -1293,7 +1293,7 @@ def validate_pydantic_model[T: BaseModel](
 
     """
     try:
-        validated = model_class(data)
+        validated = model_class.model_validate(data)
         return r[T].ok(validated)
     except Exception as e:
         return r[T].fail(f"Validation failed: {e}")

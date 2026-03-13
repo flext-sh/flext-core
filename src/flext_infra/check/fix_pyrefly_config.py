@@ -7,6 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import argparse
+import contextlib
 from collections.abc import Mapping, MutableMapping, Sequence
 from pathlib import Path
 from typing import override
@@ -162,10 +163,9 @@ class FlextInfraConfigFixer(s[list[str]]):
         excludes = pyrefly.get(c.Infra.Toml.PROJECT_EXCLUDES)
         current: list[str] = []
         if isinstance(excludes, list):
-            try:
+            exclude_items: list[object] = []
+            with contextlib.suppress(ValidationError):
                 exclude_items = TypeAdapter(list[object]).validate_python(excludes)
-            except ValidationError:
-                exclude_items = []
             current = [str(value) for value in exclude_items]
         stripped_to_add: list[str] = []
         for glob in c.Infra.Check.REQUIRED_EXCLUDES:
@@ -189,10 +189,9 @@ class FlextInfraConfigFixer(s[list[str]]):
             return []
         if project_dir == self._workspace_root:
             new_paths: list[str] = []
-            try:
+            search_items: list[object] = []
+            with contextlib.suppress(ValidationError):
                 search_items = TypeAdapter(list[object]).validate_python(search_path)
-            except ValidationError:
-                search_items = []
             for path_item in search_items:
                 if not isinstance(path_item, str):
                     continue
@@ -239,10 +238,9 @@ class FlextInfraConfigFixer(s[list[str]]):
         if not isinstance(sub_configs, list):
             return []
         new_configs: list[object] = []
-        try:
+        configs: list[object] = []
+        with contextlib.suppress(ValidationError):
             configs = TypeAdapter(list[object]).validate_python(sub_configs)
-        except ValidationError:
-            configs = []
         for conf in configs:
             conf_out: object = conf
             if isinstance(conf, Mapping):

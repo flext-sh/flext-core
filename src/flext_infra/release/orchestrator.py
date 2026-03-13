@@ -237,8 +237,8 @@ class FlextInfraReleaseOrchestrator(s[bool]):
             "release_run_started",
             release_version=spec.version,
             release_tag=spec.tag,
-            phases=phases,
-            projects=names,
+            phases=str(phases),
+            projects=str(names),
         )
         if create_branches and (not dry_run):
             branch_result = self._create_branches(root, version, names)

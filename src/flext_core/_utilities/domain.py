@@ -129,16 +129,11 @@ class FlextUtilitiesDomain:
             obj_dict = obj.__dict__
             hashable_items: list[tuple[str, object]] = []
             for key, value in sorted(obj_dict.items()):
-                if value.__class__ in {str, int, float, bool, None.__class__}:
+                if isinstance(value, (str, int, float, bool, type(None))):
                     hashable_items.append((key, value))
-                elif hasattr(value, "__hash__") and value.__class__ in {
-                    str,
-                    int,
-                    float,
-                    bool,
-                    tuple,
-                    frozenset,
-                }:
+                elif hasattr(value, "__hash__") and isinstance(
+                    value, (str, int, float, bool, tuple, frozenset)
+                ):
                     hashable_items.append((key, repr(value)))
                 else:
                     hashable_items.append((key, repr(value)))

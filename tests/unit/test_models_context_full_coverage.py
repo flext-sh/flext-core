@@ -92,9 +92,7 @@ def test_context_data_normalize_and_json_checks() -> None:
         )
     obj = object()
     with pytest.raises(TypeError):
-        FlextModelsContext.ContextData.normalize_to_general_value(
-            cast("object", obj)
-        )
+        FlextModelsContext.ContextData.normalize_to_general_value(cast("object", obj))
 
 
 def test_context_data_validate_dict_serializable_error_paths() -> None:

@@ -120,7 +120,7 @@ class TestFlextUtilitiesArgs:
             errors = TestFlextUtilitiesArgs.Constants.Errors
             scenario_class = TestFlextUtilitiesArgs.ParseKwargsScenario
             scenarios = [
-                scenario_class({
+                scenario_class.model_validate({
                     "name": "valid_string_to_enum",
                     "kwargs": {
                         "status": values.STATUS_ACTIVE,
@@ -130,14 +130,14 @@ class TestFlextUtilitiesArgs:
                     "expected_success": True,
                     "expected_status": status_enum.ACTIVE,
                 }),
-                scenario_class({
+                scenario_class.model_validate({
                     "name": "already_enum",
                     "kwargs": {"status": status_enum.PENDING, "name": values.NAME_JANE},
                     "enum_fields": {"status": status_enum},
                     "expected_success": True,
                     "expected_status": status_enum.PENDING,
                 }),
-                scenario_class({
+                scenario_class.model_validate({
                     "name": "invalid_enum_value",
                     "kwargs": {
                         "status": values.STATUS_INVALID,
@@ -147,7 +147,7 @@ class TestFlextUtilitiesArgs:
                     "expected_success": False,
                     "expected_error": errors.INVALID_VALUES,
                 }),
-                scenario_class({
+                scenario_class.model_validate({
                     "name": "multiple_enum_fields",
                     "kwargs": {
                         "status": values.STATUS_ACTIVE,
@@ -157,7 +157,7 @@ class TestFlextUtilitiesArgs:
                     "expected_success": True,
                     "expected_status": status_enum.ACTIVE,
                 }),
-                scenario_class({
+                scenario_class.model_validate({
                     "name": "no_enum_fields",
                     "kwargs": {"name": values.NAME_JOHN, "age": values.AGE_30},
                     "enum_fields": {},

@@ -68,8 +68,9 @@ class FlextUtilitiesModel:
         if isinstance(value, (bool, int, float, str)):
             return value
         if isinstance(value, (list, tuple)):
+            sequence_items: list[object] = list(value)
             normalized_items: list[t.Primitives] = []
-            for item in value:
+            for item in sequence_items:
                 if item is None:
                     normalized_items.append("")
                 elif isinstance(item, (bool, int, float, str)):
@@ -240,11 +241,9 @@ class FlextUtilitiesModel:
 
         """
         if value is None:
-            return m.Metadata(attributes={})
+            return m.Metadata.model_validate({"attributes": {}})
         if isinstance(value, m.Metadata):
             return value
-        if isinstance(value, m.Metadata):
-            return m.Metadata(value.model_dump())
         if FlextRuntime.is_dict_like(value):
             safe_attrs: dict[str, t.MetadataValue] = {}
             for k, v in value.items():
@@ -260,7 +259,7 @@ class FlextUtilitiesModel:
                     safe_attrs[str_k] = json.dumps(nested_mapping)
                 else:
                     safe_attrs[str_k] = str(v)
-            return m.Metadata(attributes=safe_attrs)
+            return m.Metadata.model_validate({"attributes": safe_attrs})
         msg = f"metadata must be None, dict, or m.Metadata, got {value.__class__.__name__}"
         raise TypeError(msg)
 

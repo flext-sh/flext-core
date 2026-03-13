@@ -660,8 +660,7 @@ class FlextRuntime:
                 if isinstance(normalized_item, (str, int, float, bool, datetime, Path)):
                     normalized_list.append(normalized_item)
             return FlextModelsContainers.ObjectList(root=normalized_list)
-        msg = f"Cannot normalize {type(val)} to Container"
-        raise TypeError(msg)
+        return str(val)
 
     @staticmethod
     def normalize_to_general_value(val: object) -> t.Container | BaseModel:

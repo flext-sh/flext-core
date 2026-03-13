@@ -31,7 +31,7 @@ def _load_tool_config_cached() -> r[ToolConfigDocument]:
                 "tool_config.yml must contain a top-level mapping",
             )
         payload: t.Infra.TomlConfig = dict(parsed_raw.items())
-        validated = ToolConfigDocument(payload)
+        validated = ToolConfigDocument.model_validate(payload)
         return r[ToolConfigDocument].ok(validated)
     except (FileNotFoundError, OSError, YAMLError, ValidationError, TypeError) as exc:
         return r[ToolConfigDocument].fail(

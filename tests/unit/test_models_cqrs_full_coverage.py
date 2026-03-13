@@ -42,14 +42,14 @@ def test_query_resolve_pagination_wrapper_and_fallback(
 
 
 def test_query_validate_pagination_dict_and_default() -> None:
-    parsed = m.Query({
+    parsed = m.Query.model_validate({
         "pagination": {"page": "4", "size": "20"},
         "filters": {},
     })
     assert isinstance(parsed.pagination, m.Pagination)
     assert parsed.pagination.page == 4
     assert parsed.pagination.size == 20
-    defaulted = m.Query({"pagination": None, "filters": {}})
+    defaulted = m.Query.model_validate({"pagination": None, "filters": {}})
     assert isinstance(defaulted.pagination, m.Pagination)
     assert defaulted.pagination.page == c.Pagination.DEFAULT_PAGE_NUMBER
 
@@ -74,7 +74,7 @@ def test_cqrs_query_resolve_deeper_and_int_pagination(
     setattr(mock_module, "Wrapper", Wrapper)
     monkeypatch.setitem(sys.modules, "flext_core.models", mock_module)
     assert Wrapper.Inner.Query._resolve_pagination_class() is m.Pagination
-    parsed = m.Query({
+    parsed = m.Query.model_validate({
         "pagination": {"page": 2, "size": 10},
         "filters": {},
     })

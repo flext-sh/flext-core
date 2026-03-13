@@ -26,25 +26,25 @@ class _Timestampable(m.TimestampableMixin):
 
 
 def test_metadata_attributes_accepts_none() -> None:
-    model = m.Metadata({"attributes": None})
+    model = m.Metadata.model_validate({"attributes": None})
     assert model.attributes == {}
 
 
 def test_metadata_attributes_accepts_basemodel_mapping() -> None:
     """Metadata.attributes accepts mapping-like input; use dict for model_validate."""
-    model = m.Metadata({"attributes": {"key": "value"}})
+    model = m.Metadata.model_validate({"attributes": {"key": "value"}})
     assert model.attributes == {"key": "value"}
 
 
 def test_metadata_attributes_rejects_basemodel_non_mapping_dump() -> None:
     with pytest.raises(TypeError, match="must dump to mapping") as exc_info:
-        m.Metadata({"attributes": _BrokenDumpModel()})
+        m.Metadata.model_validate({"attributes": _BrokenDumpModel()})
     assert exc_info.value is not None
     assert "must dump to mapping" in str(exc_info.value)
 
 
 def test_metadata_attributes_accepts_t_dict_and_mapping() -> None:
-    model_from_t_dict = m.Metadata({"attributes": m.Dict(root={"a": 1})})
+    model_from_t_dict = m.Metadata.model_validate({"attributes": m.Dict(root={"a": 1})})
     model_from_mapping = m.Metadata(attributes={"b": 2})
     assert model_from_t_dict.attributes == {"a": 1}
     assert model_from_mapping.attributes == {"b": 2}
@@ -52,7 +52,7 @@ def test_metadata_attributes_accepts_t_dict_and_mapping() -> None:
 
 def test_metadata_attributes_rejects_non_mapping() -> None:
     with pytest.raises(TypeError, match="attributes must be dict-like") as exc_info:
-        m.Metadata({"attributes": 123})
+        m.Metadata.model_validate({"attributes": 123})
     assert exc_info.value is not None
     assert "attributes must be dict-like" in str(exc_info.value)
 

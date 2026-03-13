@@ -246,10 +246,10 @@ class FlextModelsCqrs:
                 return pagination_cls()
             try:
                 if isinstance(parsed_input, FlextModelsContainers.Dict):
-                    return pagination_cls(parsed_input.root)
+                    return pagination_cls.model_validate(parsed_input.root)
                 if isinstance(parsed_input, FlextModelsCqrs.Pagination):
-                    return pagination_cls(parsed_input.model_dump())
-                return pagination_cls(dict(parsed_input))
+                    return pagination_cls.model_validate(parsed_input.model_dump())
+                return pagination_cls.model_validate(dict(parsed_input))
             except (ValidationError, TypeError, ValueError):
                 return pagination_cls()
 
@@ -391,7 +391,7 @@ class FlextModelsCqrs:
 
             def build(self) -> FlextModelsCqrs.Handler:
                 """Build and validate Handler instance."""
-                return FlextModelsCqrs.Handler(self._data.root)
+                return FlextModelsCqrs.Handler.model_validate(self._data.root)
 
             def merge_config(self, config: FlextModelsContainers.ConfigMap) -> Self:
                 """Merge additional config (fluent API)."""

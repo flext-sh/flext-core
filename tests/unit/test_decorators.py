@@ -316,7 +316,7 @@ class TestFlextDecorators:
             def process(*, service: TestServiceTyped) -> str:
                 return service.value
 
-            explicit_service = TestServiceTyped({"value": "explicit"})
+            explicit_service = TestServiceTyped.model_validate({"value": "explicit"})
             assert process(service=explicit_service) == "explicit"
 
     @pytest.mark.parametrize(

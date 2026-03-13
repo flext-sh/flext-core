@@ -691,11 +691,11 @@ class FlextTestsMatchers:
             context_map: dict[str, t.Tests.object] = {}
             if params.context:
                 context_map = {str(key): value for key, value in params.context.items()}
-            yield m.Tests.TestScope(
-                config=cfg,
-                container=container_dict,
-                context=context_map,
-            )
+            yield m.Tests.TestScope.model_validate({
+                "config": cfg,
+                "container": container_dict,
+                "context": context_map,
+            })
         finally:
             if params.env is not None:
                 for key, original_value in original_env.items():

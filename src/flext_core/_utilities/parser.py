@@ -70,7 +70,7 @@ class FlextUtilitiesParser:
     @staticmethod
     def _coerce_to_float(value: object) -> r[float]:
         """Coerce value to float. Returns None if not coercible."""
-        if value.__class__ in {str, int}:
+        if isinstance(value, (str, int)):
             return r[float].create_from_callable(
                 lambda: float(str(value)), error_code="FLOAT_COERCE_ERROR"
             )
@@ -82,7 +82,7 @@ class FlextUtilitiesParser:
     @staticmethod
     def _coerce_to_int(value: object) -> r[int]:
         """Coerce value to int. Returns None if not coercible."""
-        if value.__class__ in {str, float}:
+        if isinstance(value, (str, float)):
             return r[int].create_from_callable(
                 lambda: int(float(str(value))), error_code="INT_COERCE_ERROR"
             )

@@ -29,7 +29,7 @@ class FlextInfraRefactorRuleLoader:
             normalized = dict(loaded)
             scope_raw = normalized.get("refactor_engine")
             scope_map = self._normalize_str_object_mapping(scope_raw)
-            scope = m.Infra.Refactor.EngineConfig(scope_map)
+            scope = m.Infra.Refactor.EngineConfig.model_validate(scope_map)
             normalized["refactor_engine"] = scope.model_dump(mode="python")
             return r[Mapping[str, object]].ok(normalized)
         except (OSError, TypeError, ValueError) as exc:
@@ -137,7 +137,7 @@ class FlextInfraRefactorRuleLoader:
         config_map = self._normalize_str_object_mapping(config)
         scope_raw = config_map.get("refactor_engine")
         scope_map = self._normalize_str_object_mapping(scope_raw)
-        return m.Infra.Refactor.EngineConfig(scope_map)
+        return m.Infra.Refactor.EngineConfig.model_validate(scope_map)
 
     @staticmethod
     def _coerce_rule_definitions(

@@ -507,7 +507,9 @@ class FlextInfraUtilitiesCodegen:
             violations = tuple(report.violations)
             total_violations += len(violations)
             for raw_violation in violations:
-                parsed = FlextInfraCodegenModels.CensusViolation(raw_violation)
+                parsed = FlextInfraCodegenModels.CensusViolation.model_validate(
+                    raw_violation
+                )
                 if parsed.rule in by_rule:
                     by_rule[parsed.rule] += 1
         projects_total = len(census_reports)

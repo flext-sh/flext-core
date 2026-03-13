@@ -576,7 +576,7 @@ class TestModelIntegration:
         customer_dict = {
             k: dumped[k] for k in type(customer).model_fields if k in dumped
         }
-        validated = Customer(customer_dict)
+        validated = Customer.model_validate(customer_dict)
         assert validated is not None
         assert validated.name == "John"
         assert validated.email == "john@example.com"
