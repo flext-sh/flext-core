@@ -66,15 +66,15 @@ class FlextResult[T](FlextRuntime.RuntimeResult[T]):
         validated_error_data = FlextResult._validate_error_data(error_data)
 
         if source is not None and value is None and (error is None):
-            object.__setattr__(self, "_result", source)
             try:
                 failure_value = source.failure()
             except UnwrapFailedError as exc:
                 super().__init__(
                     error_code=error_code,
                     is_success=True,
+                    error_data=validated_error_data,
                 )
-                object.__setattr__(self, "error_data", validated_error_data)
+                setattr(self, "_result", source)
                 setattr(self, "_payload", source.unwrap())
                 self.result_logger.debug(
                     "Result source is success path during initialization", exc_info=exc
@@ -84,16 +84,17 @@ class FlextResult[T](FlextRuntime.RuntimeResult[T]):
                 error_code=error_code,
                 error=str(failure_value),
                 is_success=False,
+                error_data=validated_error_data,
             )
-            object.__setattr__(self, "error_data", validated_error_data)
+            setattr(self, "_result", source)
             return
-        object.__setattr__(self, "_result", source)
         super().__init__(
             error=error,
             error_code=error_code,
             is_success=is_success,
+            error_data=validated_error_data,
         )
-        object.__setattr__(self, "error_data", validated_error_data)
+        setattr(self, "_result", source)
         if value is not None and is_success:
             setattr(self, "_payload", value)
 

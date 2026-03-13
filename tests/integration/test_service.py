@@ -182,11 +182,11 @@ class ServiceConfig(m.Config):
 
 
 def _build_service_config(*, name: str, version: str, temp_dir: str) -> ServiceConfig:
-    return ServiceConfig({
-        "name": name,
-        "version": version,
-        "temp_dir": temp_dir,
-    })
+    return ServiceConfig(
+        name=name,
+        version=version,
+        temp_dir=temp_dir,
+    )
 
 
 class LifecycleService(FlextService[str]):

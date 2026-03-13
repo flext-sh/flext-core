@@ -493,61 +493,40 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
         class MetricsTracker:
             """Tracks handler execution metrics."""
 
-            _metrics: ClassVar[dict[str, object]] = {}
+            _metrics: dict[str, t.Scalar]
 
-            def __init__(self, *args: object, **kwargs: t.Scalar) -> None:
-                """Initialize metrics tracker with empty metrics dict."""
+            def __init__(self, *args: t.Scalar, **kwargs: t.Scalar) -> None:
+                """Initialize metrics tracker with empty metrics store."""
                 super().__init__(*args, **kwargs)
-                vars(self)["_metrics"] = {}
+                self._metrics = {}
 
             def get_metrics(self) -> r[m.ConfigMap]:
-                """Get current metrics dictionary.
-
-                Returns:
-                    r[m.ConfigMap]: Success result with metrics collection
-
-                """
+                """Return all recorded metrics as a ConfigMap result."""
                 if not hasattr(self, "_metrics"):
-                    vars(self)["_metrics"] = {}
+                    self._metrics = {}
                 return r[m.ConfigMap].ok(m.ConfigMap(root=dict(self._metrics.items())))
 
-            def record_metric(self, name: str, value: object) -> r[bool]:
-                """Record a metric value.
-
-                Args:
-                    name: Metric name
-                    value: Metric value to record
-
-                Returns:
-                    r[bool]: Success result
-
-                """
+            def record_metric(self, name: str, value: t.Scalar) -> r[bool]:
+                """Record a named metric value in the tracker."""
                 if not hasattr(self, "_metrics"):
-                    vars(self)["_metrics"] = {}
+                    self._metrics = {}
                 self._metrics[name] = value
                 return r[bool].ok(value=True)
 
         class ContextStack:
             """Manages execution context stack."""
 
-            _stack: ClassVar[
-                list[m.ExecutionContext | m.ConfigMap | dict[str, object]]
-            ] = []
+            _stack: list[m.ExecutionContext | m.ConfigMap | dict[str, t.Scalar]]
 
-            def __init__(self, *args: object, **kwargs: t.Scalar) -> None:
-                """Initialize context stack with empty list."""
+            def __init__(self, *args: t.Scalar, **kwargs: t.Scalar) -> None:
+                """Initialize context stack with empty stack list."""
                 super().__init__(*args, **kwargs)
-                object.__setattr__(self, "_stack", [])
+                self._stack = []
 
-            def current_context(self) -> object | None:
-                """Get current execution context without popping.
-
-                Returns:
-                    m.ExecutionContext | None: Current context or None if stack is empty
-
-                """
+            def current_context(self) -> m.ExecutionContext | None:
+                """Return the current top-of-stack execution context, or None."""
                 if not hasattr(self, "_stack"):
-                    vars(self)["_stack"] = []
+                    self._stack = []
                 if self._stack:
                     top_item = self._stack[-1]
                     match top_item:
@@ -557,57 +536,47 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
                             return None
                 return None
 
-            def pop_context(self) -> r[Mapping[str, object]]:
-                """Pop execution context from the stack.
-
-                Returns:
-                    r[m.ConfigMap]: Success result with popped context or empty dict
-
-                """
+            def pop_context(self) -> r[dict[str, t.Scalar]]:
+                """Pop and return the top context from the stack as a scalar dict."""
                 if not hasattr(self, "_stack"):
-                    vars(self)["_stack"] = []
+                    self._stack = []
                 if self._stack:
                     popped = self._stack.pop()
-                    match popped:
-                        case m.ExecutionContext() as execution_ctx:
-                            context_dict: m.ConfigMap = m.ConfigMap(
-                                root={
-                                    "handler_name": execution_ctx.handler_name,
-                                    "handler_mode": execution_ctx.handler_mode,
-                                }
-                            )
-                            return r[dict[str, object]].ok(context_dict.root)
-                        case m.ConfigMap() as popped_dict:
-                            return r[dict[str, object]].ok(popped_dict.root)
-                        case dict() as popped_plain:
-                            return r[dict[str, object]].ok(dict(popped_plain))
-                return r[dict[str, object]].ok({})
+                    if isinstance(popped, m.ExecutionContext):
+                        return r[dict[str, t.Scalar]].ok({
+                            "handler_name": popped.handler_name,
+                            "handler_mode": popped.handler_mode,
+                        })
+                    if isinstance(popped, m.ConfigMap):
+                        cm_result: dict[str, t.Scalar] = {}
+                        for ck, cv in popped.root.items():
+                            if u.Guards.is_scalar(cv):
+                                cm_result[str(ck)] = cv
+                        return r[dict[str, t.Scalar]].ok(cm_result)
+                    return r[dict[str, t.Scalar]].ok(popped)
+                return r[dict[str, t.Scalar]].ok({})
 
-            def push_context(self, ctx: object) -> r[bool]:
-                """Push execution context onto the stack.
-
-                Args:
-                    ctx: Execution context or context dict to push onto the stack
-
-                Returns:
-                    r[bool]: Success result
-
-                """
+            def push_context(
+                self, ctx: m.ExecutionContext | Mapping[str, t.Scalar]
+            ) -> r[bool]:
+                """Push an execution context or mapping onto the context stack."""
                 if not hasattr(self, "_stack"):
-                    vars(self)["_stack"] = []
+                    self._stack = []
                 if isinstance(ctx, m.ExecutionContext):
                     self._stack.append(ctx)
                     return r[bool].ok(value=True)
                 if not u.is_mapping(ctx):
                     return r[bool].fail("Unsupported context type for push_context")
-                ctx_mapping: dict[str, object] = {}
-                for key, value in ctx.items():
-                    ctx_mapping[str(key)] = value
-                handler_name_raw: object = ctx_mapping.get("handler_name", "unknown")
+                ctx_mapping: dict[str, t.Scalar] = {str(k): v for k, v in ctx.items()}
+                handler_name_raw: t.Scalar | None = ctx_mapping.get(
+                    "handler_name", "unknown"
+                )
                 handler_name: str = (
                     str(handler_name_raw) if handler_name_raw is not None else "unknown"
                 )
-                handler_mode_raw: object = ctx_mapping.get("handler_mode", "operation")
+                handler_mode_raw: t.Scalar | None = ctx_mapping.get(
+                    "handler_mode", "operation"
+                )
                 handler_mode_str: str = (
                     str(handler_mode_raw)
                     if handler_mode_raw is not None
