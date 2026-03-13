@@ -37,7 +37,9 @@ class CategoryOperationScenario(BaseModel):
 
     name: Annotated[str, Field(description="Category operation scenario name")]
     category: Annotated[str, Field(description="Category key")]
-    entries: Annotated[list[str], Field(description="Entries associated with operation")]
+    entries: Annotated[
+        list[str], Field(description="Entries associated with operation")
+    ]
     operation: Annotated[str, Field(description="Category operation name")]
     expected_result: Annotated[object, Field(description="Expected operation result")]
 

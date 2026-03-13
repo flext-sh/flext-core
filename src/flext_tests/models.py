@@ -102,92 +102,156 @@ class FlextTestsModels(
         class ModelFactoryParams(FlextModels.Value):
             """Parameters for factory model() method with Pydantic 2 validation."""
 
-            kind: Annotated[t.Tests.Factory.ModelKind, Field(
-                default="user",
-                description="Model type to create",
-            )]
-            count: Annotated[int, Field(
-                default=1,
-                ge=1,
-                description="Number of instances to create",
-            )]
-            as_dict: Annotated[bool, Field(
-                default=False,
-                description="Return as dict keyed by ID",
-            )]
-            as_mapping: Annotated[Mapping[str, str] | None, Field(
-                default=None,
-                description="Custom key mapping for dict output",
-            )]
-            as_result: Annotated[bool, Field(
-                default=False,
-                description="Wrap result in r",
-            )]
+            kind: Annotated[
+                t.Tests.Factory.ModelKind,
+                Field(
+                    default="user",
+                    description="Model type to create",
+                ),
+            ]
+            count: Annotated[
+                int,
+                Field(
+                    default=1,
+                    ge=1,
+                    description="Number of instances to create",
+                ),
+            ]
+            as_dict: Annotated[
+                bool,
+                Field(
+                    default=False,
+                    description="Return as dict keyed by ID",
+                ),
+            ]
+            as_mapping: Annotated[
+                Mapping[str, str] | None,
+                Field(
+                    default=None,
+                    description="Custom key mapping for dict output",
+                ),
+            ]
+            as_result: Annotated[
+                bool,
+                Field(
+                    default=False,
+                    description="Wrap result in r",
+                ),
+            ]
             # User-specific
-            model_id: Annotated[str | None, Field(
-                default=None,
-                description="Model ID override",
-            )]
-            name: Annotated[str | None, Field(default=None, description="Name override")]
-            email: Annotated[str | None, Field(default=None, description="Email override")]
-            active: Annotated[bool | None, Field(
-                default=None,
-                description="Active status override",
-            )]
+            model_id: Annotated[
+                str | None,
+                Field(
+                    default=None,
+                    description="Model ID override",
+                ),
+            ]
+            name: Annotated[
+                str | None, Field(default=None, description="Name override")
+            ]
+            email: Annotated[
+                str | None, Field(default=None, description="Email override")
+            ]
+            active: Annotated[
+                bool | None,
+                Field(
+                    default=None,
+                    description="Active status override",
+                ),
+            ]
             # Config-specific
-            service_type: Annotated[str | None, Field(
-                default=None,
-                description="Service type override",
-            )]
-            environment: Annotated[str | None, Field(
-                default=None,
-                description="Environment override",
-            )]
-            debug: Annotated[bool | None, Field(default=None, description="Debug override")]
-            log_level: Annotated[str | None, Field(
-                default=None,
-                description="Log level override",
-            )]
-            timeout: Annotated[int | None, Field(
-                default=None,
-                description="Timeout override",
-            )]
-            max_retries: Annotated[int | None, Field(
-                default=None,
-                description="Max retries override",
-            )]
+            service_type: Annotated[
+                str | None,
+                Field(
+                    default=None,
+                    description="Service type override",
+                ),
+            ]
+            environment: Annotated[
+                str | None,
+                Field(
+                    default=None,
+                    description="Environment override",
+                ),
+            ]
+            debug: Annotated[
+                bool | None, Field(default=None, description="Debug override")
+            ]
+            log_level: Annotated[
+                str | None,
+                Field(
+                    default=None,
+                    description="Log level override",
+                ),
+            ]
+            timeout: Annotated[
+                int | None,
+                Field(
+                    default=None,
+                    description="Timeout override",
+                ),
+            ]
+            max_retries: Annotated[
+                int | None,
+                Field(
+                    default=None,
+                    description="Max retries override",
+                ),
+            ]
             # Service-specific
-            status: Annotated[str | None, Field(default=None, description="Status override")]
+            status: Annotated[
+                str | None, Field(default=None, description="Status override")
+            ]
             # Entity-specific
-            value: Annotated[t.Tests.object | None, Field(
-                default=None,
-                description="Value override",
-            )]
+            value: Annotated[
+                t.Tests.object | None,
+                Field(
+                    default=None,
+                    description="Value override",
+                ),
+            ]
             # Value-specific
-            data: Annotated[str | None, Field(default=None, description="Data override")]
-            value_count: Annotated[int | None, Field(
-                default=None,
-                description="Value count override",
-            )]
+            data: Annotated[
+                str | None, Field(default=None, description="Data override")
+            ]
+            value_count: Annotated[
+                int | None,
+                Field(
+                    default=None,
+                    description="Value count override",
+                ),
+            ]
             # Generic overrides
-            overrides: Annotated[Mapping[str, t.Tests.object] | None, Field(
-                default=None,
-                description="Generic field overrides",
-            )]
+            overrides: Annotated[
+                Mapping[str, t.Tests.object] | None,
+                Field(
+                    default=None,
+                    description="Generic field overrides",
+                ),
+            ]
             # Factory/transform/validation
-            factory: Annotated[Callable[[], BaseModel] | None, Field(
-                default=None,
-                description="Custom factory function",
-            )]
-            transform: Annotated[Callable[[BaseModel], BaseModel] | None, Field(
-                default=None,
-                description="Transform function",
-            )]
-            validate_fn: Annotated[Callable[[BaseModel], bool] | None, Field(
-                default=None,
-                alias="validate",
-                description="Validation function",
-            )]
+            factory: Annotated[
+                Callable[[], BaseModel] | None,
+                Field(
+                    default=None,
+                    description="Custom factory function",
+                ),
+            ]
+            transform: Annotated[
+                Callable[[BaseModel], BaseModel] | None,
+                Field(
+                    default=None,
+                    description="Transform function",
+                ),
+            ]
+            validate_fn: Annotated[
+                Callable[[BaseModel], bool] | None,
+                Field(
+                    default=None,
+                    alias="validate",
+                    description="Validation function",
+                ),
+            ]
 
             @model_validator(mode="after")
             def validate_mapping(
@@ -209,47 +273,77 @@ class FlextTestsModels(
             Uses Field constraints and model_validator for comprehensive validation.
             """
 
-            kind: Annotated[t.Tests.Factory.ResultKind, Field(
-                default="ok",
-                description="Result type ('ok', 'fail', 'from_value')",
-            )]
-            value: Annotated[t.Tests.object, Field(
-                default=None,
-                description="Value for success (required for 'ok')",
-            )]
-            count: Annotated[int, Field(
-                default=1,
-                ge=1,
-                description="Number of results to create",
-            )]
-            values: Annotated[Sequence[t.Tests.object] | None, Field(
-                default=None,
-                description="Explicit value list for batch creation",
-            )]
-            errors: Annotated[Sequence[str] | None, Field(
-                default=None,
-                description="Error messages for failure results",
-            )]
-            mix_pattern: Annotated[t.Tests.Factory.BatchPattern | None, Field(
-                default=None,
-                description="Success/failure pattern (True=success, False=failure)",
-            )]
-            error: Annotated[str, Field(
-                default=c.Tests.Factory.ERROR_DEFAULT,
-                description="Error message for failure results",
-            )]
-            error_code: Annotated[str | None, Field(
-                default=None,
-                description="Optional error code for failure results",
-            )]
-            error_on_none: Annotated[str | None, Field(
-                default=None,
-                description="Error message when value is None (for 'from_value')",
-            )]
-            transform: Annotated[Callable[[t.Tests.object], t.Tests.object] | None, Field(
-                default=None,
-                description="Transform function for success values",
-            )]
+            kind: Annotated[
+                t.Tests.Factory.ResultKind,
+                Field(
+                    default="ok",
+                    description="Result type ('ok', 'fail', 'from_value')",
+                ),
+            ]
+            value: Annotated[
+                t.Tests.object,
+                Field(
+                    default=None,
+                    description="Value for success (required for 'ok')",
+                ),
+            ]
+            count: Annotated[
+                int,
+                Field(
+                    default=1,
+                    ge=1,
+                    description="Number of results to create",
+                ),
+            ]
+            values: Annotated[
+                Sequence[t.Tests.object] | None,
+                Field(
+                    default=None,
+                    description="Explicit value list for batch creation",
+                ),
+            ]
+            errors: Annotated[
+                Sequence[str] | None,
+                Field(
+                    default=None,
+                    description="Error messages for failure results",
+                ),
+            ]
+            mix_pattern: Annotated[
+                t.Tests.Factory.BatchPattern | None,
+                Field(
+                    default=None,
+                    description="Success/failure pattern (True=success, False=failure)",
+                ),
+            ]
+            error: Annotated[
+                str,
+                Field(
+                    default=c.Tests.Factory.ERROR_DEFAULT,
+                    description="Error message for failure results",
+                ),
+            ]
+            error_code: Annotated[
+                str | None,
+                Field(
+                    default=None,
+                    description="Optional error code for failure results",
+                ),
+            ]
+            error_on_none: Annotated[
+                str | None,
+                Field(
+                    default=None,
+                    description="Error message when value is None (for 'from_value')",
+                ),
+            ]
+            transform: Annotated[
+                Callable[[t.Tests.object], t.Tests.object] | None,
+                Field(
+                    default=None,
+                    description="Transform function for success values",
+                ),
+            ]
 
             @model_validator(mode="after")
             def validate_batch_params(
@@ -292,36 +386,54 @@ class FlextTestsModels(
             model_config = BaseModel.model_config.copy()
             model_config["populate_by_name"] = True
 
-            source: Annotated[(
-                t.Tests.Factory.ModelKind
-                | Sequence[t.Tests.object]
-                | Callable[[], t.Tests.object]
-            ), Field(
-                default="user",
-                description="Source for list items (ModelKind, Sequence, or Callable)",
-            )]
-            count: Annotated[int, Field(
-                default=5,
-                ge=1,
-                description="Number of items to create",
-            )]
-            as_result: Annotated[bool, Field(
-                default=False,
-                description="Wrap result in r",
-            )]
-            unique: Annotated[bool, Field(
-                default=False,
-                description="Ensure all items are unique",
-            )]
-            transform: Annotated[Callable[[t.Tests.object], t.Tests.object] | None, Field(
-                default=None,
-                description="Transform function applied to each item",
-            )]
-            filter_: Annotated[Callable[[t.Tests.object], bool] | None, Field(
-                default=None,
-                alias="filter",
-                description="Filter predicate to exclude items",
-            )]
+            source: Annotated[
+                (
+                    t.Tests.Factory.ModelKind
+                    | Sequence[t.Tests.object]
+                    | Callable[[], t.Tests.object]
+                ),
+                Field(
+                    default="user",
+                    description="Source for list items (ModelKind, Sequence, or Callable)",
+                ),
+            ]
+            count: Annotated[
+                int,
+                Field(
+                    default=5,
+                    ge=1,
+                    description="Number of items to create",
+                ),
+            ]
+            as_result: Annotated[
+                bool,
+                Field(
+                    default=False,
+                    description="Wrap result in r",
+                ),
+            ]
+            unique: Annotated[
+                bool,
+                Field(
+                    default=False,
+                    description="Ensure all items are unique",
+                ),
+            ]
+            transform: Annotated[
+                Callable[[t.Tests.object], t.Tests.object] | None,
+                Field(
+                    default=None,
+                    description="Transform function applied to each item",
+                ),
+            ]
+            filter_: Annotated[
+                Callable[[t.Tests.object], bool] | None,
+                Field(
+                    default=None,
+                    alias="filter",
+                    description="Filter predicate to exclude items",
+                ),
+            ]
 
         class DictFactoryParams(FlextModels.Value):
             """Parameters for tt.dict_factory() method with Pydantic 2 advanced validation.
@@ -330,35 +442,53 @@ class FlextTestsModels(
             Mapping, or Callable - uses object type to accept all variants.
             """
 
-            source: Annotated[(
-                t.Tests.Factory.ModelKind
-                | Mapping[str, t.Tests.object]
-                | Callable[[], tuple[str, t.Tests.object]]
-            ), Field(
-                default="user",
-                description="Source for dict items (ModelKind, Mapping, or Callable)",
-            )]
-            count: Annotated[int, Field(
-                default=5,
-                ge=1,
-                description="Number of items to create",
-            )]
-            key_factory: Annotated[Callable[[int], str] | None, Field(
-                default=None,
-                description="Factory function for keys (takes index, returns str key)",
-            )]
-            value_factory: Annotated[Callable[[str], t.Tests.object] | None, Field(
-                default=None,
-                description="Factory function for values (takes key, returns value)",
-            )]
-            as_result: Annotated[bool, Field(
-                default=False,
-                description="Wrap result in r",
-            )]
-            merge_with: Annotated[Mapping[str, t.Tests.object] | None, Field(
-                default=None,
-                description="Additional mapping to merge into result",
-            )]
+            source: Annotated[
+                (
+                    t.Tests.Factory.ModelKind
+                    | Mapping[str, t.Tests.object]
+                    | Callable[[], tuple[str, t.Tests.object]]
+                ),
+                Field(
+                    default="user",
+                    description="Source for dict items (ModelKind, Mapping, or Callable)",
+                ),
+            ]
+            count: Annotated[
+                int,
+                Field(
+                    default=5,
+                    ge=1,
+                    description="Number of items to create",
+                ),
+            ]
+            key_factory: Annotated[
+                Callable[[int], str] | None,
+                Field(
+                    default=None,
+                    description="Factory function for keys (takes index, returns str key)",
+                ),
+            ]
+            value_factory: Annotated[
+                Callable[[str], t.Tests.object] | None,
+                Field(
+                    default=None,
+                    description="Factory function for values (takes key, returns value)",
+                ),
+            ]
+            as_result: Annotated[
+                bool,
+                Field(
+                    default=False,
+                    description="Wrap result in r",
+                ),
+            ]
+            merge_with: Annotated[
+                Mapping[str, t.Tests.object] | None,
+                Field(
+                    default=None,
+                    description="Additional mapping to merge into result",
+                ),
+            ]
 
         class GenericFactoryParams(FlextModels.Value):
             """Parameters for tt.generic() factory method with Pydantic 2 advanced validation.
@@ -367,31 +497,49 @@ class FlextTestsModels(
                 model_validator since Field constraints cannot validate runtime type checks.
             """
 
-            type_: Annotated[type, Field(
-                description="Type class to instantiate",
-            )]
-            args: Annotated[Sequence[t.Tests.object] | None, Field(
-                default=None,
-                description="Positional arguments for constructor",
-            )]
-            call_kwargs: Annotated[Mapping[str, t.Tests.object] | None, Field(
-                default=None,
-                description="Keyword arguments for constructor",
-            )]
-            count: Annotated[int, Field(
-                default=1,
-                ge=1,
-                description="Number of instances to create",
-            )]
-            as_result: Annotated[bool, Field(
-                default=False,
-                description="Wrap result in r",
-            )]
-            validate_fn: Annotated[Callable[[object], bool] | None, Field(
-                default=None,
-                alias="validate",
-                description="Validation predicate (must return True for success)",
-            )]
+            type_: Annotated[
+                type,
+                Field(
+                    description="Type class to instantiate",
+                ),
+            ]
+            args: Annotated[
+                Sequence[t.Tests.object] | None,
+                Field(
+                    default=None,
+                    description="Positional arguments for constructor",
+                ),
+            ]
+            call_kwargs: Annotated[
+                Mapping[str, t.Tests.object] | None,
+                Field(
+                    default=None,
+                    description="Keyword arguments for constructor",
+                ),
+            ]
+            count: Annotated[
+                int,
+                Field(
+                    default=1,
+                    ge=1,
+                    description="Number of instances to create",
+                ),
+            ]
+            as_result: Annotated[
+                bool,
+                Field(
+                    default=False,
+                    description="Wrap result in r",
+                ),
+            ]
+            validate_fn: Annotated[
+                Callable[[object], bool] | None,
+                Field(
+                    default=None,
+                    alias="validate",
+                    description="Validation predicate (must return True for success)",
+                ),
+            ]
 
         class User(FlextModels.Value):
             """Test user model - immutable value object."""
@@ -473,47 +621,74 @@ class FlextTestsModels(
 
             content: t.Tests.object
             """File content to create."""
-            name: Annotated[str, Field(
-                default=c.Tests.Files.DEFAULT_FILENAME,
-                min_length=1,
-                description="Filename for the created file (non-empty).",
-            )]
-            directory: Annotated[Path | None, Field(
-                default=None,
-                description="Target directory (uses base_dir or temp if None).",
-            )]
-            fmt: Annotated[c.Tests.Files.FormatLiteral, Field(
-                default="auto",
-                description="File format override.",
-            )]
-            enc: Annotated[str, Field(
-                default=c.Tests.Files.DEFAULT_ENCODING,
-                min_length=1,
-                description="File encoding.",
-            )]
-            indent: Annotated[int, Field(
-                default=c.Tests.Files.DEFAULT_JSON_INDENT,
-                ge=0,
-                description="JSON/YAML indentation (non-negative).",
-            )]
-            delim: Annotated[str, Field(
-                default=c.Tests.Files.DEFAULT_CSV_DELIMITER,
-                min_length=1,
-                max_length=1,
-                description="CSV delimiter (single character).",
-            )]
-            headers: Annotated[list[str] | None, Field(
-                default=None,
-                description="CSV headers.",
-            )]
-            readonly: Annotated[bool, Field(
-                default=False,
-                description="Create file as read-only.",
-            )]
-            extract_result: Annotated[bool, Field(
-                default=True,
-                description="Auto-extract r value.",
-            )]
+            name: Annotated[
+                str,
+                Field(
+                    default=c.Tests.Files.DEFAULT_FILENAME,
+                    min_length=1,
+                    description="Filename for the created file (non-empty).",
+                ),
+            ]
+            directory: Annotated[
+                Path | None,
+                Field(
+                    default=None,
+                    description="Target directory (uses base_dir or temp if None).",
+                ),
+            ]
+            fmt: Annotated[
+                c.Tests.Files.FormatLiteral,
+                Field(
+                    default="auto",
+                    description="File format override.",
+                ),
+            ]
+            enc: Annotated[
+                str,
+                Field(
+                    default=c.Tests.Files.DEFAULT_ENCODING,
+                    min_length=1,
+                    description="File encoding.",
+                ),
+            ]
+            indent: Annotated[
+                int,
+                Field(
+                    default=c.Tests.Files.DEFAULT_JSON_INDENT,
+                    ge=0,
+                    description="JSON/YAML indentation (non-negative).",
+                ),
+            ]
+            delim: Annotated[
+                str,
+                Field(
+                    default=c.Tests.Files.DEFAULT_CSV_DELIMITER,
+                    min_length=1,
+                    max_length=1,
+                    description="CSV delimiter (single character).",
+                ),
+            ]
+            headers: Annotated[
+                list[str] | None,
+                Field(
+                    default=None,
+                    description="CSV headers.",
+                ),
+            ]
+            readonly: Annotated[
+                bool,
+                Field(
+                    default=False,
+                    description="Create file as read-only.",
+                ),
+            ]
+            extract_result: Annotated[
+                bool,
+                Field(
+                    default=True,
+                    description="Auto-extract r value.",
+                ),
+            ]
 
             @field_validator("name", mode="before")
             @classmethod
@@ -526,32 +701,50 @@ class FlextTestsModels(
         class ReadParams(FlextModels.Value):
             """Parameters for file read operations with Pydantic 2 advanced validation."""
 
-            path: Annotated[Path, Field(
-                description="Path to file to read (str or Path converted automatically).",
-            )]
-            model_cls: Annotated[type[BaseModel] | None, Field(
-                default=None,
-                description="Optional Pydantic model class to deserialize into.",
-            )]
-            fmt: Annotated[c.Tests.Files.FormatLiteral, Field(
-                default="auto",
-                description="Format override.",
-            )]
-            enc: Annotated[str, Field(
-                default=c.Tests.Files.DEFAULT_ENCODING,
-                min_length=1,
-                description="File encoding.",
-            )]
-            delim: Annotated[str, Field(
-                default=c.Tests.Files.DEFAULT_CSV_DELIMITER,
-                min_length=1,
-                max_length=1,
-                description="CSV delimiter (single character).",
-            )]
-            has_headers: Annotated[bool, Field(
-                default=True,
-                description="CSV has headers.",
-            )]
+            path: Annotated[
+                Path,
+                Field(
+                    description="Path to file to read (str or Path converted automatically).",
+                ),
+            ]
+            model_cls: Annotated[
+                type[BaseModel] | None,
+                Field(
+                    default=None,
+                    description="Optional Pydantic model class to deserialize into.",
+                ),
+            ]
+            fmt: Annotated[
+                c.Tests.Files.FormatLiteral,
+                Field(
+                    default="auto",
+                    description="Format override.",
+                ),
+            ]
+            enc: Annotated[
+                str,
+                Field(
+                    default=c.Tests.Files.DEFAULT_ENCODING,
+                    min_length=1,
+                    description="File encoding.",
+                ),
+            ]
+            delim: Annotated[
+                str,
+                Field(
+                    default=c.Tests.Files.DEFAULT_CSV_DELIMITER,
+                    min_length=1,
+                    max_length=1,
+                    description="CSV delimiter (single character).",
+                ),
+            ]
+            has_headers: Annotated[
+                bool,
+                Field(
+                    default=True,
+                    description="CSV has headers.",
+                ),
+            ]
 
             @field_validator("path", mode="before")
             @classmethod
@@ -562,40 +755,67 @@ class FlextTestsModels(
         class CompareParams(FlextModels.Value):
             """Parameters for file comparison operations with Pydantic 2 advanced validation."""
 
-            file1: Annotated[Path, Field(
-                description="First file to compare (str or Path converted automatically).",
-            )]
-            file2: Annotated[Path, Field(
-                description="Second file to compare (str or Path converted automatically).",
-            )]
-            mode: Annotated[str, Field(
-                default=c.Tests.Files.CompareMode.CONTENT.value,
-                description="Comparison mode.",
-            )]
-            ignore_ws: Annotated[bool, Field(
-                default=False,
-                description="Ignore whitespace in comparison.",
-            )]
-            ignore_case: Annotated[bool, Field(
-                default=False,
-                description="Case-insensitive comparison.",
-            )]
-            pattern: Annotated[str | None, Field(
-                default=None,
-                description="Pattern to check if both files contain.",
-            )]
-            deep: Annotated[bool, Field(
-                default=True,
-                description="Use deep comparison for nested structures (dict/JSON/YAML).",
-            )]
-            keys: Annotated[list[str] | None, Field(
-                default=None,
-                description="Only compare these keys (for dict/JSON/YAML content).",
-            )]
-            exclude_keys: Annotated[list[str] | None, Field(
-                default=None,
-                description="Exclude these keys from comparison (for dict/JSON/YAML content).",
-            )]
+            file1: Annotated[
+                Path,
+                Field(
+                    description="First file to compare (str or Path converted automatically).",
+                ),
+            ]
+            file2: Annotated[
+                Path,
+                Field(
+                    description="Second file to compare (str or Path converted automatically).",
+                ),
+            ]
+            mode: Annotated[
+                str,
+                Field(
+                    default=c.Tests.Files.CompareMode.CONTENT.value,
+                    description="Comparison mode.",
+                ),
+            ]
+            ignore_ws: Annotated[
+                bool,
+                Field(
+                    default=False,
+                    description="Ignore whitespace in comparison.",
+                ),
+            ]
+            ignore_case: Annotated[
+                bool,
+                Field(
+                    default=False,
+                    description="Case-insensitive comparison.",
+                ),
+            ]
+            pattern: Annotated[
+                str | None,
+                Field(
+                    default=None,
+                    description="Pattern to check if both files contain.",
+                ),
+            ]
+            deep: Annotated[
+                bool,
+                Field(
+                    default=True,
+                    description="Use deep comparison for nested structures (dict/JSON/YAML).",
+                ),
+            ]
+            keys: Annotated[
+                list[str] | None,
+                Field(
+                    default=None,
+                    description="Only compare these keys (for dict/JSON/YAML content).",
+                ),
+            ]
+            exclude_keys: Annotated[
+                list[str] | None,
+                Field(
+                    default=None,
+                    description="Exclude these keys from comparison (for dict/JSON/YAML content).",
+                ),
+            ]
 
             @field_validator("file1", "file2", mode="before")
             @classmethod
@@ -606,25 +826,40 @@ class FlextTestsModels(
         class InfoParams(FlextModels.Value):
             """Parameters for file info() operations with Pydantic 2 validation."""
 
-            path: Annotated[Path, Field(
-                description="Path to file (str or Path converted automatically).",
-            )]
-            compute_hash: Annotated[bool, Field(
-                default=False,
-                description="Compute SHA256 hash.",
-            )]
-            detect_fmt: Annotated[bool, Field(
-                default=True,
-                description="Auto-detect format.",
-            )]
-            parse_content: Annotated[bool, Field(
-                default=False,
-                description="Parse content and include metadata.",
-            )]
-            validate_model: Annotated[type[BaseModel] | None, Field(
-                default=None,
-                description="Pydantic model to validate content against.",
-            )]
+            path: Annotated[
+                Path,
+                Field(
+                    description="Path to file (str or Path converted automatically).",
+                ),
+            ]
+            compute_hash: Annotated[
+                bool,
+                Field(
+                    default=False,
+                    description="Compute SHA256 hash.",
+                ),
+            ]
+            detect_fmt: Annotated[
+                bool,
+                Field(
+                    default=True,
+                    description="Auto-detect format.",
+                ),
+            ]
+            parse_content: Annotated[
+                bool,
+                Field(
+                    default=False,
+                    description="Parse content and include metadata.",
+                ),
+            ]
+            validate_model: Annotated[
+                type[BaseModel] | None,
+                Field(
+                    default=None,
+                    description="Pydantic model to validate content against.",
+                ),
+            ]
 
             @field_validator("path", mode="before")
             @classmethod
@@ -638,83 +873,133 @@ class FlextTestsModels(
             Fields match FlextTestsFileManager.create() method signature exactly.
             """
 
-            directory: Annotated[Path | None, Field(
-                default=None,
-                description="Directory to create file in.",
-            )]
-            fmt: Annotated[c.Tests.Files.FormatLiteral, Field(
-                default="auto",
-                description="File format override.",
-            )]
-            enc: Annotated[str, Field(
-                default=c.Tests.Files.DEFAULT_ENCODING,
-                min_length=1,
-                description="File encoding.",
-            )]
-            indent: Annotated[int, Field(
-                default=c.Tests.Files.DEFAULT_JSON_INDENT,
-                ge=0,
-                description="JSON indentation level.",
-            )]
-            delim: Annotated[str, Field(
-                default=c.Tests.Files.DEFAULT_CSV_DELIMITER,
-                min_length=1,
-                max_length=1,
-                description="CSV delimiter (single character).",
-            )]
-            headers: Annotated[list[str] | None, Field(
-                default=None,
-                description="CSV column headers.",
-            )]
-            readonly: Annotated[bool, Field(
-                default=False,
-                description="Create file as read-only.",
-            )]
+            directory: Annotated[
+                Path | None,
+                Field(
+                    default=None,
+                    description="Directory to create file in.",
+                ),
+            ]
+            fmt: Annotated[
+                c.Tests.Files.FormatLiteral,
+                Field(
+                    default="auto",
+                    description="File format override.",
+                ),
+            ]
+            enc: Annotated[
+                str,
+                Field(
+                    default=c.Tests.Files.DEFAULT_ENCODING,
+                    min_length=1,
+                    description="File encoding.",
+                ),
+            ]
+            indent: Annotated[
+                int,
+                Field(
+                    default=c.Tests.Files.DEFAULT_JSON_INDENT,
+                    ge=0,
+                    description="JSON indentation level.",
+                ),
+            ]
+            delim: Annotated[
+                str,
+                Field(
+                    default=c.Tests.Files.DEFAULT_CSV_DELIMITER,
+                    min_length=1,
+                    max_length=1,
+                    description="CSV delimiter (single character).",
+                ),
+            ]
+            headers: Annotated[
+                list[str] | None,
+                Field(
+                    default=None,
+                    description="CSV column headers.",
+                ),
+            ]
+            readonly: Annotated[
+                bool,
+                Field(
+                    default=False,
+                    description="Create file as read-only.",
+                ),
+            ]
 
         class BatchParams(FlextModels.Value):
             """Parameters for FlextTestsFiles.batch() method."""
 
-            files: Annotated[t.Tests.Files.BatchFiles, Field(
-                description="Mapping or Sequence of files to process",
-            )]
-            directory: Annotated[Path | None, Field(
-                default=None,
-                description="Target directory for create operations",
-            )]
-            operation: Annotated[t.Tests.Files.OperationLiteral, Field(
-                default="create",
-                description="Operation type: create, read, or delete",
-            )]
-            model: Annotated[type[BaseModel] | None, Field(
-                default=None,
-                description="Optional model class for read operations",
-            )]
-            on_error: Annotated[t.Tests.Files.ErrorModeLiteral, Field(
-                default="collect",
-                description="Error handling mode: stop, skip, or collect",
-            )]
-            parallel: Annotated[bool, Field(
-                default=False,
-                description="Run operations in parallel",
-            )]
+            files: Annotated[
+                t.Tests.Files.BatchFiles,
+                Field(
+                    description="Mapping or Sequence of files to process",
+                ),
+            ]
+            directory: Annotated[
+                Path | None,
+                Field(
+                    default=None,
+                    description="Target directory for create operations",
+                ),
+            ]
+            operation: Annotated[
+                t.Tests.Files.OperationLiteral,
+                Field(
+                    default="create",
+                    description="Operation type: create, read, or delete",
+                ),
+            ]
+            model: Annotated[
+                type[BaseModel] | None,
+                Field(
+                    default=None,
+                    description="Optional model class for read operations",
+                ),
+            ]
+            on_error: Annotated[
+                t.Tests.Files.ErrorModeLiteral,
+                Field(
+                    default="collect",
+                    description="Error handling mode: stop, skip, or collect",
+                ),
+            ]
+            parallel: Annotated[
+                bool,
+                Field(
+                    default=False,
+                    description="Run operations in parallel",
+                ),
+            ]
 
         class BatchResult(FlextModels.Value):
             """Result of batch file operations."""
 
-            succeeded: Annotated[int, Field(
-                ge=0,
-                description="Number of successful operations",
-            )]
-            failed: Annotated[int, Field(ge=0, description="Number of failed operations")]
+            succeeded: Annotated[
+                int,
+                Field(
+                    ge=0,
+                    description="Number of successful operations",
+                ),
+            ]
+            failed: Annotated[
+                int, Field(ge=0, description="Number of failed operations")
+            ]
             total: Annotated[int, Field(ge=0, description="Total number of operations")]
-            results: Annotated[Mapping[str, r[Path | t.Tests.object]], Field(
-                default_factory=dict,
-                description="Mapping of file names to operation results",
-            )]
-            errors: Annotated[Mapping[str, str], Field(
-                default_factory=dict,
-                description="Mapping of file names to error messages",
-            )]
+            results: Annotated[
+                Mapping[str, r[Path | t.Tests.object]],
+                Field(
+                    default_factory=dict,
+                    description="Mapping of file names to operation results",
+                ),
+            ]
+            errors: Annotated[
+                Mapping[str, str],
+                Field(
+                    default_factory=dict,
+                    description="Mapping of file names to error messages",
+                ),
+            ]
 
             @computed_field
             def failure_count(self) -> int:
@@ -787,92 +1072,138 @@ class FlextTestsModels(
         class AddParams(FlextModels.Value):
             """Parameters for builder add operations."""
 
-            key: Annotated[str, Field(min_length=1, description="Key to store data under")]
-            value: Annotated[t.Tests.object | None, Field(
-                default=None, description="Direct value to store"
-            )]
-            factory: Annotated[str | None, Field(default=None, description="Factory name to use")]
-            count: Annotated[int | None, Field(
-                default=None, ge=1, description="Number of items for factory generation"
-            )]
-            model: Annotated[type[BaseModel] | None, Field(
-                default=None, description="Pydantic model class to instantiate"
-            )]
-            model_data: Annotated[Mapping[str, t.Tests.object] | None, Field(
-                default=None, description="Data for model instantiation"
-            )]
-            mapping: Annotated[Mapping[str, t.Tests.object] | None, Field(
-                default=None, description="Dict/mapping to store"
-            )]
-            sequence: Annotated[Sequence[t.Tests.object] | None, Field(
-                default=None, description="List/sequence to store"
-            )]
-            transform: Annotated[t.Tests.Builders.TransformFunc | None, Field(
-                default=None, description="Transform function before storing"
-            )]
-            validate_func: Annotated[t.Tests.Builders.ValidateFunc | None, Field(
-                default=None, alias="validate", description="Validation function"
-            )]
-            merge: Annotated[bool, Field(
-                default=False, description="Whether to merge with existing data at key"
-            )]
-            default: Annotated[t.Tests.object | None, Field(
-                default=None, description="Default value if result is None"
-            )]
-            production: Annotated[bool | None, Field(
-                default=None, description="Shortcut for production config"
-            )]
-            debug: Annotated[bool | None, Field(
-                default=None, description="Shortcut for debug config"
-            )]
-            result: Annotated[r[t.Tests.object] | None, Field(
-                default=None, description="r to store directly"
-            )]
-            result_ok: Annotated[t.Tests.object | None, Field(
-                default=None, description="Value to wrap in r[T].ok()"
-            )]
-            result_fail: Annotated[str | None, Field(
-                default=None, description="Error message for r[T].fail()"
-            )]
-            result_code: Annotated[str | None, Field(
-                default=None, description="Error code for result_fail"
-            )]
-            results: Annotated[Sequence[r[t.Tests.object]] | None, Field(
-                default=None, description="Sequence of r to store"
-            )]
-            results_ok: Annotated[Sequence[t.Tests.object] | None, Field(
-                default=None, description="Sequence of values to wrap in r[T].ok()"
-            )]
-            results_fail: Annotated[Sequence[str] | None, Field(
-                default=None, description="Sequence of error messages for r[T].fail()"
-            )]
-            cls: Annotated[type[BaseModel] | None, Field(
-                default=None, description="Class type to instantiate"
-            )]
-            cls_args: Annotated[tuple[t.Tests.object, ...] | None, Field(
-                default=None, description="Positional arguments for cls"
-            )]
-            cls_kwargs: Annotated[Mapping[str, t.Tests.object] | None, Field(
-                default=None, description="Keyword arguments for cls"
-            )]
-            items: Annotated[Sequence[t.Tests.object] | None, Field(
-                default=None, description="Type-safe sequence"
-            )]
-            items_map: Annotated[Callable[[t.Tests.object], t.Tests.object] | None, Field(
-                default=None, description="Transform each item"
-            )]
-            items_filter: Annotated[Callable[[t.Tests.object], bool] | None, Field(
-                default=None, description="Filter items"
-            )]
-            entries: Annotated[Mapping[str, t.Tests.object] | None, Field(
-                default=None, description="Type-safe mapping"
-            )]
-            entries_map: Annotated[Callable[[t.Tests.object], t.Tests.object] | None, Field(
-                default=None, description="Transform values"
-            )]
-            entries_filter: Annotated[set[str] | None, Field(
-                default=None, description="Include only these keys"
-            )]
+            key: Annotated[
+                str, Field(min_length=1, description="Key to store data under")
+            ]
+            value: Annotated[
+                t.Tests.object | None,
+                Field(default=None, description="Direct value to store"),
+            ]
+            factory: Annotated[
+                str | None, Field(default=None, description="Factory name to use")
+            ]
+            count: Annotated[
+                int | None,
+                Field(
+                    default=None,
+                    ge=1,
+                    description="Number of items for factory generation",
+                ),
+            ]
+            model: Annotated[
+                type[BaseModel] | None,
+                Field(default=None, description="Pydantic model class to instantiate"),
+            ]
+            model_data: Annotated[
+                Mapping[str, t.Tests.object] | None,
+                Field(default=None, description="Data for model instantiation"),
+            ]
+            mapping: Annotated[
+                Mapping[str, t.Tests.object] | None,
+                Field(default=None, description="Dict/mapping to store"),
+            ]
+            sequence: Annotated[
+                Sequence[t.Tests.object] | None,
+                Field(default=None, description="List/sequence to store"),
+            ]
+            transform: Annotated[
+                t.Tests.Builders.TransformFunc | None,
+                Field(default=None, description="Transform function before storing"),
+            ]
+            validate_func: Annotated[
+                t.Tests.Builders.ValidateFunc | None,
+                Field(
+                    default=None, alias="validate", description="Validation function"
+                ),
+            ]
+            merge: Annotated[
+                bool,
+                Field(
+                    default=False,
+                    description="Whether to merge with existing data at key",
+                ),
+            ]
+            default: Annotated[
+                t.Tests.object | None,
+                Field(default=None, description="Default value if result is None"),
+            ]
+            production: Annotated[
+                bool | None,
+                Field(default=None, description="Shortcut for production config"),
+            ]
+            debug: Annotated[
+                bool | None,
+                Field(default=None, description="Shortcut for debug config"),
+            ]
+            result: Annotated[
+                r[t.Tests.object] | None,
+                Field(default=None, description="r to store directly"),
+            ]
+            result_ok: Annotated[
+                t.Tests.object | None,
+                Field(default=None, description="Value to wrap in r[T].ok()"),
+            ]
+            result_fail: Annotated[
+                str | None,
+                Field(default=None, description="Error message for r[T].fail()"),
+            ]
+            result_code: Annotated[
+                str | None,
+                Field(default=None, description="Error code for result_fail"),
+            ]
+            results: Annotated[
+                Sequence[r[t.Tests.object]] | None,
+                Field(default=None, description="Sequence of r to store"),
+            ]
+            results_ok: Annotated[
+                Sequence[t.Tests.object] | None,
+                Field(
+                    default=None, description="Sequence of values to wrap in r[T].ok()"
+                ),
+            ]
+            results_fail: Annotated[
+                Sequence[str] | None,
+                Field(
+                    default=None,
+                    description="Sequence of error messages for r[T].fail()",
+                ),
+            ]
+            cls: Annotated[
+                type[BaseModel] | None,
+                Field(default=None, description="Class type to instantiate"),
+            ]
+            cls_args: Annotated[
+                tuple[t.Tests.object, ...] | None,
+                Field(default=None, description="Positional arguments for cls"),
+            ]
+            cls_kwargs: Annotated[
+                Mapping[str, t.Tests.object] | None,
+                Field(default=None, description="Keyword arguments for cls"),
+            ]
+            items: Annotated[
+                Sequence[t.Tests.object] | None,
+                Field(default=None, description="Type-safe sequence"),
+            ]
+            items_map: Annotated[
+                Callable[[t.Tests.object], t.Tests.object] | None,
+                Field(default=None, description="Transform each item"),
+            ]
+            items_filter: Annotated[
+                Callable[[t.Tests.object], bool] | None,
+                Field(default=None, description="Filter items"),
+            ]
+            entries: Annotated[
+                Mapping[str, t.Tests.object] | None,
+                Field(default=None, description="Type-safe mapping"),
+            ]
+            entries_map: Annotated[
+                Callable[[t.Tests.object], t.Tests.object] | None,
+                Field(default=None, description="Transform values"),
+            ]
+            entries_filter: Annotated[
+                set[str] | None,
+                Field(default=None, description="Include only these keys"),
+            ]
 
             @computed_field
             def effective_count(self) -> int:
@@ -971,44 +1302,61 @@ class FlextTestsModels(
         class BuildParams(FlextModels.Value):
             """Parameters controlling builder output shaping."""
 
-            as_model: Annotated[type[BaseModel] | None, Field(
-                default=None, description="Pydantic model class to instantiate"
-            )]
-            as_list: Annotated[bool, Field(
-                default=False, description="Return as list of (key, value) tuples"
-            )]
-            keys_only: Annotated[bool, Field(
-                default=False, description="Return only keys as list"
-            )]
-            values_only: Annotated[bool, Field(
-                default=False, description="Return only values as list"
-            )]
-            flatten: Annotated[bool, Field(
-                default=False, description="Flatten nested dicts with dot notation"
-            )]
-            filter_none: Annotated[bool, Field(
-                default=False, description="Remove None values from result"
-            )]
-            as_parametrized: Annotated[bool, Field(
-                default=False,
-                description="Return as list of (test_id, data) tuples for pytest",
-            )]
-            parametrize_key: Annotated[str, Field(
-                default="test_id",
-                min_length=1,
-                description="Key to use as test_id in parametrized output",
-            )]
-            validate_with: Annotated[(
-                Callable[[t.Tests.Builders.BuilderOutputDict], bool] | None
-            ), Field(default=None, description="Validation function")]
-            assert_with: Annotated[Callable[[t.Tests.Builders.BuilderOutputDict], None] | None, (
-                Field(default=None, description="Assertion function")
-            )]
-            map_result: Annotated[(
-                Callable[[t.Tests.Builders.BuilderOutputDict], t.Tests.object] | None
-            ), Field(
-                default=None, description="Transform function applied to final result"
-            )]
+            as_model: Annotated[
+                type[BaseModel] | None,
+                Field(default=None, description="Pydantic model class to instantiate"),
+            ]
+            as_list: Annotated[
+                bool,
+                Field(
+                    default=False, description="Return as list of (key, value) tuples"
+                ),
+            ]
+            keys_only: Annotated[
+                bool, Field(default=False, description="Return only keys as list")
+            ]
+            values_only: Annotated[
+                bool, Field(default=False, description="Return only values as list")
+            ]
+            flatten: Annotated[
+                bool,
+                Field(
+                    default=False, description="Flatten nested dicts with dot notation"
+                ),
+            ]
+            filter_none: Annotated[
+                bool, Field(default=False, description="Remove None values from result")
+            ]
+            as_parametrized: Annotated[
+                bool,
+                Field(
+                    default=False,
+                    description="Return as list of (test_id, data) tuples for pytest",
+                ),
+            ]
+            parametrize_key: Annotated[
+                str,
+                Field(
+                    default="test_id",
+                    min_length=1,
+                    description="Key to use as test_id in parametrized output",
+                ),
+            ]
+            validate_with: Annotated[
+                (Callable[[t.Tests.Builders.BuilderOutputDict], bool] | None),
+                Field(default=None, description="Validation function"),
+            ]
+            assert_with: Annotated[
+                Callable[[t.Tests.Builders.BuilderOutputDict], None] | None,
+                (Field(default=None, description="Assertion function")),
+            ]
+            map_result: Annotated[
+                (Callable[[t.Tests.Builders.BuilderOutputDict], t.Tests.object] | None),
+                Field(
+                    default=None,
+                    description="Transform function applied to final result",
+                ),
+            ]
 
             @model_validator(mode="after")
             def validate_parametrize_key(self) -> FlextTestsModels.Tests.BuildParams:
@@ -1020,53 +1368,75 @@ class FlextTestsModels(
         class ToResultParams(FlextModels.Value):
             """Parameters for converting builder output into results."""
 
-            error: Annotated[str | None, Field(
-                default=None,
-                min_length=1,
-                description="Error message to return as failure result",
-            )]
-            error_code: Annotated[str | None, Field(
-                default=None, min_length=1, description="Error code for failure result"
-            )]
-            error_data: Annotated[FlextModels.ConfigMap | None, Field(
-                default=None, description="Error metadata dictionary"
-            )]
-            unwrap: Annotated[bool, Field(
-                default=False, description="Unwrap r and return value directly"
-            )]
-            unwrap_msg: Annotated[str | None, Field(
-                default=None,
-                min_length=1,
-                description="Custom error message when unwrap fails",
-            )]
-            as_model: Annotated[type[BaseModel] | None, Field(
-                default=None, description="Pydantic model class to instantiate"
-            )]
-            as_cls: Annotated[type | None, Field(
-                default=None, description="Class type to instantiate"
-            )]
-            cls_args: Annotated[tuple[t.Tests.object, ...] | None, Field(
-                default=None, description="Positional arguments for as_cls"
-            )]
-            validate_func: Annotated[Callable[[t.Tests.Builders.BuilderDict], bool] | None, (
+            error: Annotated[
+                str | None,
                 Field(
                     default=None,
-                    alias="validate",
-                    description="Validation function for built data",
-                )
-            )]
-            map_fn: Annotated[Callable[[t.Tests.Builders.BuilderDict], t.Tests.object] | None, (
+                    min_length=1,
+                    description="Error message to return as failure result",
+                ),
+            ]
+            error_code: Annotated[
+                str | None,
                 Field(
                     default=None,
-                    description="Transform function applied before wrapping in result",
-                )
-            )]
-            as_list_result: Annotated[bool, Field(
-                default=False, description="Return as r[list[T]]"
-            )]
-            as_dict_result: Annotated[bool, Field(
-                default=False, description="Return as r[Mapping[str, T]]"
-            )]
+                    min_length=1,
+                    description="Error code for failure result",
+                ),
+            ]
+            error_data: Annotated[
+                FlextModels.ConfigMap | None,
+                Field(default=None, description="Error metadata dictionary"),
+            ]
+            unwrap: Annotated[
+                bool,
+                Field(default=False, description="Unwrap r and return value directly"),
+            ]
+            unwrap_msg: Annotated[
+                str | None,
+                Field(
+                    default=None,
+                    min_length=1,
+                    description="Custom error message when unwrap fails",
+                ),
+            ]
+            as_model: Annotated[
+                type[BaseModel] | None,
+                Field(default=None, description="Pydantic model class to instantiate"),
+            ]
+            as_cls: Annotated[
+                type | None,
+                Field(default=None, description="Class type to instantiate"),
+            ]
+            cls_args: Annotated[
+                tuple[t.Tests.object, ...] | None,
+                Field(default=None, description="Positional arguments for as_cls"),
+            ]
+            validate_func: Annotated[
+                Callable[[t.Tests.Builders.BuilderDict], bool] | None,
+                (
+                    Field(
+                        default=None,
+                        alias="validate",
+                        description="Validation function for built data",
+                    )
+                ),
+            ]
+            map_fn: Annotated[
+                Callable[[t.Tests.Builders.BuilderDict], t.Tests.object] | None,
+                (
+                    Field(
+                        default=None,
+                        description="Transform function applied before wrapping in result",
+                    )
+                ),
+            ]
+            as_list_result: Annotated[
+                bool, Field(default=False, description="Return as r[list[T]]")
+            ]
+            as_dict_result: Annotated[
+                bool, Field(default=False, description="Return as r[Mapping[str, T]]")
+            ]
 
             @computed_field
             def effective_error_code(self) -> str:
@@ -1090,16 +1460,24 @@ class FlextTestsModels(
         class BuildersBatchParams(FlextModels.Value):
             """Parameters for batching builder scenarios."""
 
-            key: Annotated[str, Field(min_length=1, description="Key to store batch under")]
-            scenarios: Annotated[Sequence[tuple[str, t.Tests.object]], Field(
-                description="Sequence of (scenario_id, data) tuples"
-            )]
-            as_results: Annotated[bool, Field(
-                default=False, description="Wrap each value in r[T].ok()"
-            )]
-            with_failures: Annotated[Sequence[tuple[str, str]] | None, Field(
-                default=None, min_length=1, description="Sequence of (id, error) tuples"
-            )]
+            key: Annotated[
+                str, Field(min_length=1, description="Key to store batch under")
+            ]
+            scenarios: Annotated[
+                Sequence[tuple[str, t.Tests.object]],
+                Field(description="Sequence of (scenario_id, data) tuples"),
+            ]
+            as_results: Annotated[
+                bool, Field(default=False, description="Wrap each value in r[T].ok()")
+            ]
+            with_failures: Annotated[
+                Sequence[tuple[str, str]] | None,
+                Field(
+                    default=None,
+                    min_length=1,
+                    description="Sequence of (id, error) tuples",
+                ),
+            ]
 
             @model_validator(mode="after")
             def validate_scenarios(self) -> FlextTestsModels.Tests.BuildersBatchParams:
@@ -1111,14 +1489,18 @@ class FlextTestsModels(
         class MergeFromParams(FlextModels.Value):
             """Parameters for merge-from behavior selection."""
 
-            strategy: Annotated[str, Field(
-                default="deep",
-                min_length=1,
-                description="Merge strategy (deep, override, append, etc.)",
-            )]
-            exclude_keys: Annotated[frozenset[str] | None, Field(
-                default=None, description="Set of keys to exclude from merge"
-            )]
+            strategy: Annotated[
+                str,
+                Field(
+                    default="deep",
+                    min_length=1,
+                    description="Merge strategy (deep, override, append, etc.)",
+                ),
+            ]
+            exclude_keys: Annotated[
+                frozenset[str] | None,
+                Field(default=None, description="Set of keys to exclude from merge"),
+            ]
 
             @model_validator(mode="after")
             def validate_strategy(self) -> FlextTestsModels.Tests.MergeFromParams:
@@ -1133,222 +1515,322 @@ class FlextTestsModels(
 
             model_config = ConfigDict(populate_by_name=True)
 
-            eq: Annotated[(
-                Mapping[str, t.Tests.object]
-                | Sequence[t.Tests.object]
-                | bytes
-                | str
-                | int
-                | float
-                | bool
-                | TypeAliasType
-                | None
-            ), Field(
-                default=None,
-                description="Expected value (equality check)",
-                union_mode="left_to_right",
-            )]
-            ne: Annotated[(
-                Mapping[str, t.Tests.object]
-                | Sequence[t.Tests.object]
-                | bytes
-                | str
-                | int
-                | float
-                | bool
-                | TypeAliasType
-                | None
-            ), Field(
-                default=None,
-                description="Value must not equal",
-                union_mode="left_to_right",
-            )]
-            is_: Annotated[type | tuple[type, ...] | None, Field(
-                default=None,
-                validation_alias=AliasChoices("is_", "is"),
-                description="Runtime type check",
-            )]
+            eq: Annotated[
+                (
+                    Mapping[str, t.Tests.object]
+                    | Sequence[t.Tests.object]
+                    | bytes
+                    | str
+                    | int
+                    | float
+                    | bool
+                    | TypeAliasType
+                    | None
+                ),
+                Field(
+                    default=None,
+                    description="Expected value (equality check)",
+                    union_mode="left_to_right",
+                ),
+            ]
+            ne: Annotated[
+                (
+                    Mapping[str, t.Tests.object]
+                    | Sequence[t.Tests.object]
+                    | bytes
+                    | str
+                    | int
+                    | float
+                    | bool
+                    | TypeAliasType
+                    | None
+                ),
+                Field(
+                    default=None,
+                    description="Value must not equal",
+                    union_mode="left_to_right",
+                ),
+            ]
+            is_: Annotated[
+                type | tuple[type, ...] | None,
+                Field(
+                    default=None,
+                    validation_alias=AliasChoices("is_", "is"),
+                    description="Runtime type check",
+                ),
+            ]
             none: Annotated[bool | None, Field(default=None, description="None check")]
-            empty: Annotated[bool | None, Field(default=None, description="Empty check")]
-            gt: Annotated[float | int | None, Field(default=None, description="Greater than")]
-            gte: Annotated[float | int | None, Field(
-                default=None, description="Greater than or equal"
-            )]
-            lt: Annotated[float | int | None, Field(default=None, description="Less than")]
-            lte: Annotated[float | int | None, Field(
-                default=None, description="Less than or equal"
-            )]
-            has: Annotated[t.Tests.Matcher.ContainmentSpec | None, Field(
-                default=None, description="Unified containment check"
-            )]
-            lacks: Annotated[t.Tests.Matcher.ExclusionSpec | None, Field(
-                default=None, description="Unified non-containment check"
-            )]
-            starts: Annotated[str | None, Field(
-                default=None, description="String starts with prefix"
-            )]
-            ends: Annotated[str | None, Field(
-                default=None, description="String ends with suffix"
-            )]
-            match: Annotated[str | None, Field(default=None, description="Regex pattern")]
-            len: Annotated[t.Tests.Matcher.LengthSpec | None, Field(
-                default=None, description="Length spec"
-            )]
-            deep: Annotated[t.Tests.Matcher.DeepSpec | None, Field(
-                default=None, description="Deep structural matching"
-            )]
-            path: Annotated[t.Tests.Matcher.PathSpec | None, Field(
-                default=None, description="Extract nested value via dot notation"
-            )]
-            where: Annotated[t.Tests.Matcher.PredicateSpec | None, Field(
-                default=None, description="Custom predicate function"
-            )]
-            msg: Annotated[str | None, Field(default=None, description="Custom error message")]
+            empty: Annotated[
+                bool | None, Field(default=None, description="Empty check")
+            ]
+            gt: Annotated[
+                float | int | None, Field(default=None, description="Greater than")
+            ]
+            gte: Annotated[
+                float | int | None,
+                Field(default=None, description="Greater than or equal"),
+            ]
+            lt: Annotated[
+                float | int | None, Field(default=None, description="Less than")
+            ]
+            lte: Annotated[
+                float | int | None,
+                Field(default=None, description="Less than or equal"),
+            ]
+            has: Annotated[
+                t.Tests.Matcher.ContainmentSpec | None,
+                Field(default=None, description="Unified containment check"),
+            ]
+            lacks: Annotated[
+                t.Tests.Matcher.ExclusionSpec | None,
+                Field(default=None, description="Unified non-containment check"),
+            ]
+            starts: Annotated[
+                str | None, Field(default=None, description="String starts with prefix")
+            ]
+            ends: Annotated[
+                str | None, Field(default=None, description="String ends with suffix")
+            ]
+            match: Annotated[
+                str | None, Field(default=None, description="Regex pattern")
+            ]
+            len: Annotated[
+                t.Tests.Matcher.LengthSpec | None,
+                Field(default=None, description="Length spec"),
+            ]
+            deep: Annotated[
+                t.Tests.Matcher.DeepSpec | None,
+                Field(default=None, description="Deep structural matching"),
+            ]
+            path: Annotated[
+                t.Tests.Matcher.PathSpec | None,
+                Field(
+                    default=None, description="Extract nested value via dot notation"
+                ),
+            ]
+            where: Annotated[
+                t.Tests.Matcher.PredicateSpec | None,
+                Field(default=None, description="Custom predicate function"),
+            ]
+            msg: Annotated[
+                str | None, Field(default=None, description="Custom error message")
+            ]
 
         class FailParams(FlextModels.Value):
             """Matcher parameters for failure result assertions."""
 
             model_config = ConfigDict(populate_by_name=True)
 
-            msg: Annotated[str | None, Field(default=None, description="Custom error message")]
-            has: Annotated[t.Tests.Matcher.ExclusionSpec | None, Field(
-                default=None,
-                validation_alias=AliasChoices("has", "contains"),
-                description="Error contains substring(s)",
-            )]
-            lacks: Annotated[t.Tests.Matcher.ExclusionSpec | None, Field(
-                default=None,
-                validation_alias=AliasChoices("lacks", "excludes"),
-                description="Error does NOT contain substring(s)",
-            )]
-            starts: Annotated[str | None, Field(
-                default=None, description="Error starts with prefix"
-            )]
-            ends: Annotated[str | None, Field(default=None, description="Error ends with suffix")]
-            match: Annotated[str | None, Field(default=None, description="Error matches regex")]
-            code: Annotated[str | None, Field(default=None, description="Error code equals")]
-            code_has: Annotated[t.Tests.Matcher.ErrorCodeSpec | None, Field(
-                default=None, description="Error code contains substring(s)"
-            )]
-            data: Annotated[t.Tests.Matcher.ErrorDataSpec | None, Field(
-                default=None, description="Error data contains key-value pairs"
-            )]
+            msg: Annotated[
+                str | None, Field(default=None, description="Custom error message")
+            ]
+            has: Annotated[
+                t.Tests.Matcher.ExclusionSpec | None,
+                Field(
+                    default=None,
+                    validation_alias=AliasChoices("has", "contains"),
+                    description="Error contains substring(s)",
+                ),
+            ]
+            lacks: Annotated[
+                t.Tests.Matcher.ExclusionSpec | None,
+                Field(
+                    default=None,
+                    validation_alias=AliasChoices("lacks", "excludes"),
+                    description="Error does NOT contain substring(s)",
+                ),
+            ]
+            starts: Annotated[
+                str | None, Field(default=None, description="Error starts with prefix")
+            ]
+            ends: Annotated[
+                str | None, Field(default=None, description="Error ends with suffix")
+            ]
+            match: Annotated[
+                str | None, Field(default=None, description="Error matches regex")
+            ]
+            code: Annotated[
+                str | None, Field(default=None, description="Error code equals")
+            ]
+            code_has: Annotated[
+                t.Tests.Matcher.ErrorCodeSpec | None,
+                Field(default=None, description="Error code contains substring(s)"),
+            ]
+            data: Annotated[
+                t.Tests.Matcher.ErrorDataSpec | None,
+                Field(default=None, description="Error data contains key-value pairs"),
+            ]
 
         class ThatParams(FlextModels.Value):
             """Generic matcher parameters for value assertions."""
 
             model_config = ConfigDict(populate_by_name=True)
 
-            msg: Annotated[str | None, Field(default=None, description="Custom error message")]
-            eq: Annotated[t.Tests.object | None, Field(
-                default=None, description="Expected value (equality check)"
-            )]
-            ne: Annotated[t.Tests.object | None, Field(
-                default=None, description="Value must not equal"
-            )]
-            is_: Annotated[type | tuple[type, ...] | None, Field(
-                default=None,
-                validation_alias=AliasChoices("is_", "is"),
-                description="Runtime type check",
-            )]
-            not_: Annotated[type | tuple[type, ...] | None, Field(
-                default=None,
-                validation_alias=AliasChoices("not_", "not"),
-                description="Type check — value is NOT instance of type(s)",
-            )]
+            msg: Annotated[
+                str | None, Field(default=None, description="Custom error message")
+            ]
+            eq: Annotated[
+                t.Tests.object | None,
+                Field(default=None, description="Expected value (equality check)"),
+            ]
+            ne: Annotated[
+                t.Tests.object | None,
+                Field(default=None, description="Value must not equal"),
+            ]
+            is_: Annotated[
+                type | tuple[type, ...] | None,
+                Field(
+                    default=None,
+                    validation_alias=AliasChoices("is_", "is"),
+                    description="Runtime type check",
+                ),
+            ]
+            not_: Annotated[
+                type | tuple[type, ...] | None,
+                Field(
+                    default=None,
+                    validation_alias=AliasChoices("not_", "not"),
+                    description="Type check — value is NOT instance of type(s)",
+                ),
+            ]
             none: Annotated[bool | None, Field(default=None, description="None check")]
-            empty: Annotated[bool | None, Field(default=None, description="Empty check")]
-            gt: Annotated[float | int | None, Field(default=None, description="Greater than")]
-            gte: Annotated[float | int | None, Field(
-                default=None, description="Greater than or equal"
-            )]
-            lt: Annotated[float | int | None, Field(default=None, description="Less than")]
-            lte: Annotated[float | int | None, Field(
-                default=None, description="Less than or equal"
-            )]
-            len: Annotated[t.Tests.Matcher.LengthSpec | None, Field(
-                default=None,
-                validation_alias=AliasChoices("len", "length"),
-                description="Length spec",
-            )]
-            length_gt: Annotated[int | None, Field(
-                default=None, description="Length greater than"
-            )]
-            length_gte: Annotated[int | None, Field(
-                default=None, description="Length greater than or equal"
-            )]
-            length_lt: Annotated[int | None, Field(default=None, description="Length less than")]
-            length_lte: Annotated[int | None, Field(
-                default=None, description="Length less than or equal"
-            )]
-            has: Annotated[t.Tests.Matcher.ContainmentSpec | None, Field(
-                default=None,
-                validation_alias=AliasChoices("has", "contains"),
-                description="Unified containment check",
-            )]
-            lacks: Annotated[t.Tests.Matcher.ExclusionSpec | None, Field(
-                default=None,
-                validation_alias=AliasChoices("lacks", "excludes"),
-                description="Unified non-containment check",
-            )]
-            starts: Annotated[str | None, Field(
-                default=None, description="String starts with prefix"
-            )]
-            ends: Annotated[str | None, Field(
-                default=None, description="String ends with suffix"
-            )]
-            match: Annotated[str | None, Field(default=None, description="Regex pattern")]
-            first: Annotated[t.Tests.object | None, Field(
-                default=None, description="Sequence first item equals"
-            )]
-            last: Annotated[t.Tests.object | None, Field(
-                default=None, description="Sequence last item equals"
-            )]
-            all_: Annotated[t.Tests.Matcher.SequencePredicate | None, Field(
-                default=None,
-                validation_alias=AliasChoices("all_", "all"),
-                description="All items match type or predicate",
-            )]
-            any_: Annotated[t.Tests.Matcher.SequencePredicate | None, Field(
-                default=None,
-                validation_alias=AliasChoices("any_", "any"),
-                description="Any item matches type or predicate",
-            )]
-            sorted: Annotated[t.Tests.Matcher.SortKey | None, Field(
-                default=None, description="Is sorted"
-            )]
-            unique: Annotated[bool | None, Field(default=None, description="All items unique")]
-            keys: Annotated[t.Tests.Matcher.KeySpec | None, Field(
-                default=None, description="Mapping has all keys"
-            )]
-            lacks_keys: Annotated[t.Tests.Matcher.KeySpec | None, Field(
-                default=None, description="Mapping missing keys"
-            )]
-            values: Annotated[Sequence[t.Tests.object] | None, Field(
-                default=None, description="Mapping has all values"
-            )]
-            kv: Annotated[t.Tests.Matcher.KeyValueSpec | None, Field(
-                default=None, description="Key-value pairs"
-            )]
-            attrs: Annotated[t.Tests.Matcher.AttributeSpec | None, Field(
-                default=None, description="Object has attribute(s)"
-            )]
-            methods: Annotated[t.Tests.Matcher.AttributeSpec | None, Field(
-                default=None, description="Object has method(s)"
-            )]
-            attr_eq: Annotated[t.Tests.Matcher.AttributeValueSpec | None, Field(
-                default=None, description="Attribute equals"
-            )]
-            ok: Annotated[bool | None, Field(default=None, description="For r: assert success")]
-            error: Annotated[str | Sequence[str] | None, Field(
-                default=None, description="For r: error contains"
-            )]
-            deep: Annotated[t.Tests.Matcher.DeepSpec | None, Field(
-                default=None, description="Deep structural matching"
-            )]
-            where: Annotated[t.Tests.Matcher.PredicateSpec | None, Field(
-                default=None, description="Custom predicate function"
-            )]
+            empty: Annotated[
+                bool | None, Field(default=None, description="Empty check")
+            ]
+            gt: Annotated[
+                float | int | None, Field(default=None, description="Greater than")
+            ]
+            gte: Annotated[
+                float | int | None,
+                Field(default=None, description="Greater than or equal"),
+            ]
+            lt: Annotated[
+                float | int | None, Field(default=None, description="Less than")
+            ]
+            lte: Annotated[
+                float | int | None,
+                Field(default=None, description="Less than or equal"),
+            ]
+            len: Annotated[
+                t.Tests.Matcher.LengthSpec | None,
+                Field(
+                    default=None,
+                    validation_alias=AliasChoices("len", "length"),
+                    description="Length spec",
+                ),
+            ]
+            length_gt: Annotated[
+                int | None, Field(default=None, description="Length greater than")
+            ]
+            length_gte: Annotated[
+                int | None,
+                Field(default=None, description="Length greater than or equal"),
+            ]
+            length_lt: Annotated[
+                int | None, Field(default=None, description="Length less than")
+            ]
+            length_lte: Annotated[
+                int | None, Field(default=None, description="Length less than or equal")
+            ]
+            has: Annotated[
+                t.Tests.Matcher.ContainmentSpec | None,
+                Field(
+                    default=None,
+                    validation_alias=AliasChoices("has", "contains"),
+                    description="Unified containment check",
+                ),
+            ]
+            lacks: Annotated[
+                t.Tests.Matcher.ExclusionSpec | None,
+                Field(
+                    default=None,
+                    validation_alias=AliasChoices("lacks", "excludes"),
+                    description="Unified non-containment check",
+                ),
+            ]
+            starts: Annotated[
+                str | None, Field(default=None, description="String starts with prefix")
+            ]
+            ends: Annotated[
+                str | None, Field(default=None, description="String ends with suffix")
+            ]
+            match: Annotated[
+                str | None, Field(default=None, description="Regex pattern")
+            ]
+            first: Annotated[
+                t.Tests.object | None,
+                Field(default=None, description="Sequence first item equals"),
+            ]
+            last: Annotated[
+                t.Tests.object | None,
+                Field(default=None, description="Sequence last item equals"),
+            ]
+            all_: Annotated[
+                t.Tests.Matcher.SequencePredicate | None,
+                Field(
+                    default=None,
+                    validation_alias=AliasChoices("all_", "all"),
+                    description="All items match type or predicate",
+                ),
+            ]
+            any_: Annotated[
+                t.Tests.Matcher.SequencePredicate | None,
+                Field(
+                    default=None,
+                    validation_alias=AliasChoices("any_", "any"),
+                    description="Any item matches type or predicate",
+                ),
+            ]
+            sorted: Annotated[
+                t.Tests.Matcher.SortKey | None,
+                Field(default=None, description="Is sorted"),
+            ]
+            unique: Annotated[
+                bool | None, Field(default=None, description="All items unique")
+            ]
+            keys: Annotated[
+                t.Tests.Matcher.KeySpec | None,
+                Field(default=None, description="Mapping has all keys"),
+            ]
+            lacks_keys: Annotated[
+                t.Tests.Matcher.KeySpec | None,
+                Field(default=None, description="Mapping missing keys"),
+            ]
+            values: Annotated[
+                Sequence[t.Tests.object] | None,
+                Field(default=None, description="Mapping has all values"),
+            ]
+            kv: Annotated[
+                t.Tests.Matcher.KeyValueSpec | None,
+                Field(default=None, description="Key-value pairs"),
+            ]
+            attrs: Annotated[
+                t.Tests.Matcher.AttributeSpec | None,
+                Field(default=None, description="Object has attribute(s)"),
+            ]
+            methods: Annotated[
+                t.Tests.Matcher.AttributeSpec | None,
+                Field(default=None, description="Object has method(s)"),
+            ]
+            attr_eq: Annotated[
+                t.Tests.Matcher.AttributeValueSpec | None,
+                Field(default=None, description="Attribute equals"),
+            ]
+            ok: Annotated[
+                bool | None, Field(default=None, description="For r: assert success")
+            ]
+            error: Annotated[
+                str | Sequence[str] | None,
+                Field(default=None, description="For r: error contains"),
+            ]
+            deep: Annotated[
+                t.Tests.Matcher.DeepSpec | None,
+                Field(default=None, description="Deep structural matching"),
+            ]
+            where: Annotated[
+                t.Tests.Matcher.PredicateSpec | None,
+                Field(default=None, description="Custom predicate function"),
+            ]
 
             @model_validator(mode="after")
             def normalize_legacy_parameters(self) -> FlextTestsModels.Tests.ThatParams:
@@ -1384,24 +1866,30 @@ class FlextTestsModels(
 
             model_config = ConfigDict(populate_by_name=True)
 
-            config: Annotated[Mapping[str, t.Tests.object] | None, Field(
-                default=None, description="Initial configuration values"
-            )]
-            container: Annotated[Mapping[str, t.Tests.object] | None, Field(
-                default=None, description="Initial container/service mappings"
-            )]
-            context: Annotated[Mapping[str, t.Tests.object] | None, Field(
-                default=None, description="Initial context values"
-            )]
-            cleanup: Annotated[t.Tests.Matcher.CleanupSpec | None, Field(
-                default=None, description="Cleanup functions"
-            )]
-            env: Annotated[t.Tests.Matcher.EnvironmentSpec | None, Field(
-                default=None, description="Temporary environment variables"
-            )]
-            cwd: Annotated[Path | str | None, Field(
-                default=None, description="Temporary working directory"
-            )]
+            config: Annotated[
+                Mapping[str, t.Tests.object] | None,
+                Field(default=None, description="Initial configuration values"),
+            ]
+            container: Annotated[
+                Mapping[str, t.Tests.object] | None,
+                Field(default=None, description="Initial container/service mappings"),
+            ]
+            context: Annotated[
+                Mapping[str, t.Tests.object] | None,
+                Field(default=None, description="Initial context values"),
+            ]
+            cleanup: Annotated[
+                t.Tests.Matcher.CleanupSpec | None,
+                Field(default=None, description="Cleanup functions"),
+            ]
+            env: Annotated[
+                t.Tests.Matcher.EnvironmentSpec | None,
+                Field(default=None, description="Temporary environment variables"),
+            ]
+            cwd: Annotated[
+                Path | str | None,
+                Field(default=None, description="Temporary working directory"),
+            ]
 
             @field_validator("cwd", mode="before")
             @classmethod
@@ -1413,15 +1901,21 @@ class FlextTestsModels(
         class DeepMatchResult(FlextModels.Value):
             """Structured output for deep-match comparisons."""
 
-            path: Annotated[str, Field(description="Path where match occurred or failed")]
-            expected: Annotated[t.Tests.Matcher.ValueSpec, Field(
-                description="Expected value or predicate"
-            )]
-            actual: Annotated[t.Tests.object | None, Field(
-                default=None, description="Actual value found"
-            )]
+            path: Annotated[
+                str, Field(description="Path where match occurred or failed")
+            ]
+            expected: Annotated[
+                t.Tests.Matcher.ValueSpec,
+                Field(description="Expected value or predicate"),
+            ]
+            actual: Annotated[
+                t.Tests.object | None,
+                Field(default=None, description="Actual value found"),
+            ]
             matched: Annotated[bool, Field(description="Whether match succeeded")]
-            reason: Annotated[str, Field(default="", description="Reason for match failure")]
+            reason: Annotated[
+                str, Field(default="", description="Reason for match failure")
+            ]
 
         class Chain[TResult](FlextModels.Value):
             """Container for chained result assertions."""
@@ -1431,15 +1925,18 @@ class FlextTestsModels(
         class TestScope(FlextModels.ArbitraryTypesModel):
             """Runtime scope snapshot used by test helpers."""
 
-            config: Annotated[Mapping[str, t.Tests.object], Field(
-                default_factory=dict, description="Configuration dictionary"
-            )]
-            container: Annotated[Mapping[str, t.Tests.object], Field(
-                default_factory=dict, description="Container/service mappings"
-            )]
-            context: Annotated[Mapping[str, t.Tests.object], Field(
-                default_factory=dict, description="Context values"
-            )]
+            config: Annotated[
+                Mapping[str, t.Tests.object],
+                Field(default_factory=dict, description="Configuration dictionary"),
+            ]
+            container: Annotated[
+                Mapping[str, t.Tests.object],
+                Field(default_factory=dict, description="Container/service mappings"),
+            ]
+            context: Annotated[
+                Mapping[str, t.Tests.object],
+                Field(default_factory=dict, description="Context values"),
+            ]
 
 
 m = FlextTestsModels

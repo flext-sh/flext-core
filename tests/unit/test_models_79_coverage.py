@@ -30,9 +30,9 @@ class FindUserQuery(BaseModel):
 
 class OptionalFieldCommand(BaseModel):
     required_field: Annotated[str, Field(description="Required command field")]
-    optional_field: Annotated[str | None, Field(
-        default=None, description="Optional command field"
-    )]
+    optional_field: Annotated[
+        str | None, Field(default=None, description="Optional command field")
+    ]
 
 
 class PagedQuery(BaseModel):
@@ -41,7 +41,9 @@ class PagedQuery(BaseModel):
 
 
 class CreateUserCmd(BaseModel):
-    user_id: Annotated[str, Field(description="User identifier for integration command")]
+    user_id: Annotated[
+        str, Field(description="User identifier for integration command")
+    ]
     name: Annotated[str, Field(description="User name for integration command")]
 
 
@@ -56,7 +58,9 @@ class TestFlextModelsEntity:
         """Test basic entity creation."""
 
         class User(BaseModel):
-            unique_id: Annotated[str, Field(description="Unique identifier for test user")]
+            unique_id: Annotated[
+                str, Field(description="Unique identifier for test user")
+            ]
             name: Annotated[str, Field(description="User name for entity test")]
             email: Annotated[str, Field(description="User email for entity test")]
 
@@ -69,7 +73,9 @@ class TestFlextModelsEntity:
         """Test entity equality based on ID."""
 
         class User(BaseModel):
-            unique_id: Annotated[str, Field(description="Unique identifier for equality test")]
+            unique_id: Annotated[
+                str, Field(description="Unique identifier for equality test")
+            ]
             name: Annotated[str, Field(description="User name for equality test")]
 
             @override
@@ -102,7 +108,9 @@ class TestFlextModelsValue:
         """Test value object creation."""
 
         class Email(BaseModel):
-            address: Annotated[str, Field(description="Email address for value object test")]
+            address: Annotated[
+                str, Field(description="Email address for value object test")
+            ]
 
         email1 = Email(address="test@example.com")
         email2 = Email(address="test@example.com")
@@ -114,8 +122,12 @@ class TestFlextModelsValue:
         """Test that value objects are immutable."""
 
         class Price(BaseModel):
-            amount: Annotated[Decimal, Field(description="Price amount for value object test")]
-            currency: Annotated[str, Field(description="Currency code for value object test")]
+            amount: Annotated[
+                Decimal, Field(description="Price amount for value object test")
+            ]
+            currency: Annotated[
+                str, Field(description="Currency code for value object test")
+            ]
 
         price = Price(amount=Decimal("10.00"), currency="USD")
         assert price.amount == Decimal("10.00")
@@ -262,8 +274,12 @@ class TestFlextModelsEdgeCases:
             quantity: Annotated[int, Field(description="Item quantity for cart test")]
 
         class ShoppingCart(BaseModel):
-            unique_id: Annotated[str, Field(description="Unique shopping cart identifier")]
-            customer_id: Annotated[str, Field(description="Customer identifier for cart")]
+            unique_id: Annotated[
+                str, Field(description="Unique shopping cart identifier")
+            ]
+            customer_id: Annotated[
+                str, Field(description="Customer identifier for cart")
+            ]
 
         cart = ShoppingCart(unique_id="cart-1", customer_id="cust-1")
         item = Item(quantity=1)

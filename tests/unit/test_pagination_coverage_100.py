@@ -35,7 +35,9 @@ class ExtractPageParamsScenario(BaseModel):
     max_page_size: Annotated[int, Field(description="Maximum allowed page size")]
     expected_success: Annotated[bool, Field(description="Expected operation success")]
     expected_page: Annotated[int | None, Field(description="Expected resolved page")]
-    expected_page_size: Annotated[int | None, Field(description="Expected resolved page size")]
+    expected_page_size: Annotated[
+        int | None, Field(description="Expected resolved page size")
+    ]
     expected_error: Annotated[str | None, Field(description="Expected error message")]
 
 
@@ -49,8 +51,12 @@ class ValidatePaginationParamsScenario(BaseModel):
     page_size: Annotated[int | None, Field(description="Input page size")]
     max_page_size: Annotated[int, Field(description="Maximum allowed page size")]
     expected_success: Annotated[bool, Field(description="Expected validation success")]
-    expected_page_size: Annotated[int | None, Field(description="Expected validated page size")]
-    expected_error: Annotated[str | None, Field(description="Expected validation error")]
+    expected_page_size: Annotated[
+        int | None, Field(description="Expected validated page size")
+    ]
+    expected_error: Annotated[
+        str | None, Field(description="Expected validation error")
+    ]
 
 
 class PreparePaginationDataScenario(BaseModel):
@@ -65,10 +71,12 @@ class PreparePaginationDataScenario(BaseModel):
     page_size: Annotated[int, Field(description="Requested page size")]
     expected_success: Annotated[bool, Field(description="Expected preparation success")]
     expected_total: Annotated[int | None, Field(description="Expected total in output")]
-    expected_total_pages: Annotated[int | None, Field(
-        description="Expected total pages in output"
-    )]
-    expected_error: Annotated[str | None, Field(description="Expected preparation error")]
+    expected_total_pages: Annotated[
+        int | None, Field(description="Expected total pages in output")
+    ]
+    expected_error: Annotated[
+        str | None, Field(description="Expected preparation error")
+    ]
 
 
 class PaginationScenarios:

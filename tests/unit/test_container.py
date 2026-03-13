@@ -37,7 +37,9 @@ class ServiceScenario(BaseModel):
 
     model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
     name: Annotated[str, Field(description="Service scenario name")]
-    service: Annotated[str | int | float | bool, Field(description="Service value to register")]
+    service: Annotated[
+        str | int | float | bool, Field(description="Service value to register")
+    ]
     description: Annotated[str, Field(default="", description="Scenario description")]
 
 
@@ -46,9 +48,13 @@ class TypedRetrievalScenario(BaseModel):
 
     model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
     name: Annotated[str, Field(description="Typed retrieval scenario name")]
-    service: Annotated[str | int | float | bool, Field(description="Registered service value")]
+    service: Annotated[
+        str | int | float | bool, Field(description="Registered service value")
+    ]
     expected_type: Annotated[type, Field(description="Expected service type")]
-    should_pass: Annotated[bool, Field(description="Whether typed retrieval should succeed")]
+    should_pass: Annotated[
+        bool, Field(description="Whether typed retrieval should succeed")
+    ]
     description: Annotated[str, Field(default="", description="Scenario description")]
 
 

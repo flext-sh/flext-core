@@ -47,12 +47,17 @@ class ServiceScenario(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     name: Annotated[str, Field(description="Service scenario name")]
-    scenario_type: Annotated[ServiceScenarioType, Field(description="Service scenario type")]
+    scenario_type: Annotated[
+        ServiceScenarioType, Field(description="Service scenario type")
+    ]
     is_valid_expected: Annotated[bool, Field(description="Expected is_valid result")]
-    service_kwargs: Annotated[Mapping[str, t.Scalar] | None, Field(
-        default=None,
-        description="Optional scenario service kwargs",
-    )]
+    service_kwargs: Annotated[
+        Mapping[str, t.Scalar] | None,
+        Field(
+            default=None,
+            description="Optional scenario service kwargs",
+        ),
+    ]
 
 
 class UserService(s[m.ConfigMap]):

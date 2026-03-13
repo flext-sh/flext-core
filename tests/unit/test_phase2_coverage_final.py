@@ -31,11 +31,13 @@ class ResultChainingScenario(BaseModel):
 
     name: Annotated[str, Field(description="Result chaining scenario name")]
     initial_value: Annotated[str, Field(description="Initial string value")]
-    operations: Annotated[list[str], Field(description="Operation names applied in sequence")]
+    operations: Annotated[
+        list[str], Field(description="Operation names applied in sequence")
+    ]
     expected_success: Annotated[bool, Field(description="Expected success state")]
-    expected_value: Annotated[str | None, Field(
-        default=None, description="Expected resulting value"
-    )]
+    expected_value: Annotated[
+        str | None, Field(default=None, description="Expected resulting value")
+    ]
 
 
 class CoverageScenarios:

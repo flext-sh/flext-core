@@ -65,29 +65,33 @@ class DecoratorTestCase(BaseModel):
 
     model_config = ConfigDict(frozen=True)
     name: Annotated[str, Field(description="Decorator test case name")]
-    operation: Annotated[DecoratorOperationType, Field(
-        description="Decorator operation under test"
-    )]
-    should_succeed: Annotated[bool, Field(
-        default=True, description="Whether operation should succeed"
-    )]
-    error_type: Annotated[type[Exception] | None, Field(
-        default=None, description="Expected exception type"
-    )]
-    error_pattern: Annotated[str | None, Field(
-        default=None, description="Expected error message pattern"
-    )]
-    requires_container_setup: Annotated[bool, Field(
-        default=False, description="Whether container setup is required"
-    )]
-    with_exception_handling: Annotated[bool, Field(
-        default=False, description="Whether exception handling path is expected"
-    )]
-    timeout_duration: Annotated[float, Field(
-        default=0.1, description="Timeout duration in seconds"
-    )]
+    operation: Annotated[
+        DecoratorOperationType, Field(description="Decorator operation under test")
+    ]
+    should_succeed: Annotated[
+        bool, Field(default=True, description="Whether operation should succeed")
+    ]
+    error_type: Annotated[
+        type[Exception] | None,
+        Field(default=None, description="Expected exception type"),
+    ]
+    error_pattern: Annotated[
+        str | None, Field(default=None, description="Expected error message pattern")
+    ]
+    requires_container_setup: Annotated[
+        bool, Field(default=False, description="Whether container setup is required")
+    ]
+    with_exception_handling: Annotated[
+        bool,
+        Field(default=False, description="Whether exception handling path is expected"),
+    ]
+    timeout_duration: Annotated[
+        float, Field(default=0.1, description="Timeout duration in seconds")
+    ]
     retry_attempts: Annotated[int, Field(default=3, description="Retry attempts count")]
-    retry_delay: Annotated[float, Field(default=0.001, description="Retry delay in seconds")]
+    retry_delay: Annotated[
+        float, Field(default=0.001, description="Retry delay in seconds")
+    ]
 
 
 class TestService:

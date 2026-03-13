@@ -51,14 +51,18 @@ class UtilityTestCase(BaseModel):
     """Test case for utility operations."""
 
     model_config = ConfigDict(frozen=True)
-    operation: Annotated[UtilityOperationType, Field(description="Utility operation under test")]
-    input_data: Annotated[object | None, Field(
-        default=None, description="Input data for operation"
-    )]
-    expected_type: Annotated[type | None, Field(default=None, description="Expected output type")]
-    should_succeed: Annotated[bool, Field(
-        default=True, description="Whether operation should succeed"
-    )]
+    operation: Annotated[
+        UtilityOperationType, Field(description="Utility operation under test")
+    ]
+    input_data: Annotated[
+        object | None, Field(default=None, description="Input data for operation")
+    ]
+    expected_type: Annotated[
+        type | None, Field(default=None, description="Expected output type")
+    ]
+    should_succeed: Annotated[
+        bool, Field(default=True, description="Whether operation should succeed")
+    ]
     description: Annotated[str, Field(default="", description="Scenario description")]
 
 

@@ -41,8 +41,12 @@ class PatternValidationScenario(BaseModel):
 
     model_config = ConfigDict(frozen=True)
     pattern_attr: Annotated[str, Field(description="Pattern attribute path")]
-    valid_cases: Annotated[list[str], Field(description="Inputs expected to match the pattern")]
-    invalid_cases: Annotated[list[str], Field(description="Inputs expected to fail the pattern")]
+    valid_cases: Annotated[
+        list[str], Field(description="Inputs expected to match the pattern")
+    ]
+    invalid_cases: Annotated[
+        list[str], Field(description="Inputs expected to fail the pattern")
+    ]
 
 
 class ConstantsScenarios:

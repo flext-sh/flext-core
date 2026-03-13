@@ -69,17 +69,22 @@ class HandlerConfigScenario(BaseModel):
     name: Annotated[str, Field(description="Handler config scenario name")]
     handler_id: Annotated[str, Field(description="Handler identifier")]
     handler_name: Annotated[str, Field(description="Handler display name")]
-    handler_type: Annotated[str | None, Field(default=None, description="Handler type name")]
-    handler_mode: Annotated[str | None, Field(default=None, description="Handler mode name")]
-    command_timeout: Annotated[int | None, Field(
-        default=None, description="Command timeout in seconds"
-    )]
-    max_command_retries: Annotated[int | None, Field(
-        default=None, description="Maximum retry count"
-    )]
-    metadata: Annotated[dict[str, object] | None, Field(
-        default=None, description="Handler metadata payload"
-    )]
+    handler_type: Annotated[
+        str | None, Field(default=None, description="Handler type name")
+    ]
+    handler_mode: Annotated[
+        str | None, Field(default=None, description="Handler mode name")
+    ]
+    command_timeout: Annotated[
+        int | None, Field(default=None, description="Command timeout in seconds")
+    ]
+    max_command_retries: Annotated[
+        int | None, Field(default=None, description="Maximum retry count")
+    ]
+    metadata: Annotated[
+        dict[str, object] | None,
+        Field(default=None, description="Handler metadata payload"),
+    ]
 
 
 class HandlerTypeScenario(BaseModel):
@@ -87,8 +92,12 @@ class HandlerTypeScenario(BaseModel):
 
     model_config = ConfigDict(frozen=True)
     name: Annotated[str, Field(description="Handler type scenario name")]
-    handler_type: Annotated[c.Cqrs.HandlerType, Field(description="Configured handler type")]
-    handler_mode: Annotated[c.Cqrs.HandlerType, Field(description="Configured handler mode")]
+    handler_type: Annotated[
+        c.Cqrs.HandlerType, Field(description="Configured handler type")
+    ]
+    handler_mode: Annotated[
+        c.Cqrs.HandlerType, Field(description="Configured handler mode")
+    ]
 
 
 class HandlerScenarios:

@@ -53,9 +53,13 @@ class ModelCreationScenario(BaseModel):
 
     model_config = ConfigDict(frozen=True)
 
-    model_type: Annotated[ModelType, Field(description="Model type under creation test")]
+    model_type: Annotated[
+        ModelType, Field(description="Model type under creation test")
+    ]
     field_data: Annotated[dict[str, object], Field(description="Model input payload")]
-    expected_checks: Annotated[list[str], Field(description="Expected validation check labels")]
+    expected_checks: Annotated[
+        list[str], Field(description="Expected validation check labels")
+    ]
     description: Annotated[str, Field(default="", description="Scenario description")]
 
 

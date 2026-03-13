@@ -240,8 +240,12 @@ class StubProjectInfo(m.Infra.Workspace.ProjectInfo):
     """Stub for p.Infra.ProjectInfo protocol."""
 
     name: Annotated[str, Field(default="test-project", description="Project name")]
-    path: Annotated[Path, Field(default=Path("/tmp/test-project"), description="Project path")]
-    stack: Annotated[str, Field(default="python", description="Primary technology stack")]
+    path: Annotated[
+        Path, Field(default=Path("/tmp/test-project"), description="Project path")
+    ]
+    stack: Annotated[
+        str, Field(default="python", description="Primary technology stack")
+    ]
     has_tests: Annotated[bool, Field(default=False, description="Project has tests")]
     has_src: Annotated[bool, Field(default=True, description="Project has source")]
 

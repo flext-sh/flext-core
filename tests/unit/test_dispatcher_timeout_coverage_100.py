@@ -31,12 +31,18 @@ class TimeoutEnforcerScenario(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     name: Annotated[str, Field(description="Timeout enforcer scenario name")]
-    use_timeout_executor: Annotated[bool, Field(
-        description="Whether timeout executor is enabled"
-    )]
-    executor_workers: Annotated[int, Field(description="Configured executor worker count")]
-    expected_workers: Annotated[int, Field(description="Expected resolved worker count")]
-    should_use_executor: Annotated[bool, Field(description="Expected executor usage flag")]
+    use_timeout_executor: Annotated[
+        bool, Field(description="Whether timeout executor is enabled")
+    ]
+    executor_workers: Annotated[
+        int, Field(description="Configured executor worker count")
+    ]
+    expected_workers: Annotated[
+        int, Field(description="Expected resolved worker count")
+    ]
+    should_use_executor: Annotated[
+        bool, Field(description="Expected executor usage flag")
+    ]
 
 
 class TimeoutEnforcerScenarios:

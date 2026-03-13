@@ -54,13 +54,15 @@ class ParseSequenceScenario(BaseModel):
     name: Annotated[str, Field(description="Parse sequence scenario name")]
     enum_cls: Annotated[type[StrEnum], Field(description="Enum class under test")]
     values: Annotated[list[str | StrEnum], Field(description="Input values to parse")]
-    expected_success: Annotated[bool, Field(description="Whether parsing should succeed")]
-    expected_count: Annotated[int | None, Field(
-        default=None, description="Expected parsed values count"
-    )]
-    error_contains: Annotated[str | None, Field(
-        default=None, description="Expected error message fragment"
-    )]
+    expected_success: Annotated[
+        bool, Field(description="Whether parsing should succeed")
+    ]
+    expected_count: Annotated[
+        int | None, Field(default=None, description="Expected parsed values count")
+    ]
+    error_contains: Annotated[
+        str | None, Field(default=None, description="Expected error message fragment")
+    ]
 
 
 class CoerceListScenario(BaseModel):
@@ -69,19 +71,22 @@ class CoerceListScenario(BaseModel):
     model_config = ConfigDict(frozen=True)
     name: Annotated[str, Field(description="Coerce list scenario name")]
     enum_cls: Annotated[type[StrEnum], Field(description="Enum class for coercion")]
-    value: Annotated[Annotated[object, SkipValidation], Field(
-        description="Input value to coerce"
-    )]
-    expected_success: Annotated[bool, Field(description="Whether coercion should succeed")]
-    expected_count: Annotated[int | None, Field(
-        default=None, description="Expected result count"
-    )]
-    error_type: Annotated[type[Exception] | None, Field(
-        default=None, description="Expected exception type"
-    )]
-    error_contains: Annotated[str | None, Field(
-        default=None, description="Expected error message fragment"
-    )]
+    value: Annotated[
+        Annotated[object, SkipValidation], Field(description="Input value to coerce")
+    ]
+    expected_success: Annotated[
+        bool, Field(description="Whether coercion should succeed")
+    ]
+    expected_count: Annotated[
+        int | None, Field(default=None, description="Expected result count")
+    ]
+    error_type: Annotated[
+        type[Exception] | None,
+        Field(default=None, description="Expected exception type"),
+    ]
+    error_contains: Annotated[
+        str | None, Field(default=None, description="Expected error message fragment")
+    ]
 
 
 class ParseMappingScenario(BaseModel):
@@ -90,14 +95,18 @@ class ParseMappingScenario(BaseModel):
     model_config = ConfigDict(frozen=True)
     name: Annotated[str, Field(description="Parse mapping scenario name")]
     enum_cls: Annotated[type[StrEnum], Field(description="Enum class under test")]
-    mapping: Annotated[dict[str, str | StrEnum], Field(description="Input mapping values")]
-    expected_success: Annotated[bool, Field(description="Whether parsing should succeed")]
-    expected_keys: Annotated[list[str] | None, Field(
-        default=None, description="Expected output keys"
-    )]
-    error_contains: Annotated[str | None, Field(
-        default=None, description="Expected error message fragment"
-    )]
+    mapping: Annotated[
+        dict[str, str | StrEnum], Field(description="Input mapping values")
+    ]
+    expected_success: Annotated[
+        bool, Field(description="Whether parsing should succeed")
+    ]
+    expected_keys: Annotated[
+        list[str] | None, Field(default=None, description="Expected output keys")
+    ]
+    error_contains: Annotated[
+        str | None, Field(default=None, description="Expected error message fragment")
+    ]
 
 
 class CoerceDictScenario(BaseModel):
@@ -106,19 +115,22 @@ class CoerceDictScenario(BaseModel):
     model_config = ConfigDict(frozen=True)
     name: Annotated[str, Field(description="Coerce dict scenario name")]
     enum_cls: Annotated[type[StrEnum], Field(description="Enum class for coercion")]
-    value: Annotated[Annotated[object, SkipValidation], Field(
-        description="Input value to coerce"
-    )]
-    expected_success: Annotated[bool, Field(description="Whether coercion should succeed")]
-    expected_keys: Annotated[list[str] | None, Field(
-        default=None, description="Expected output keys"
-    )]
-    error_type: Annotated[type[Exception] | None, Field(
-        default=None, description="Expected exception type"
-    )]
-    error_contains: Annotated[str | None, Field(
-        default=None, description="Expected error message fragment"
-    )]
+    value: Annotated[
+        Annotated[object, SkipValidation], Field(description="Input value to coerce")
+    ]
+    expected_success: Annotated[
+        bool, Field(description="Whether coercion should succeed")
+    ]
+    expected_keys: Annotated[
+        list[str] | None, Field(default=None, description="Expected output keys")
+    ]
+    error_type: Annotated[
+        type[Exception] | None,
+        Field(default=None, description="Expected exception type"),
+    ]
+    error_contains: Annotated[
+        str | None, Field(default=None, description="Expected error message fragment")
+    ]
 
 
 class MapScenario(BaseModel):
@@ -126,22 +138,30 @@ class MapScenario(BaseModel):
 
     model_config = ConfigDict(frozen=True)
     name: Annotated[str, Field(description="Map scenario name")]
-    items: Annotated[list[Any] | tuple[Any, ...] | dict[str, Any] | set[Any] | frozenset[Any], (
-        Field(
-            description="Collection input for map operation",
-        )
-    )]
-    mapper: Annotated[Callable[[Any], Any], Field(description="Mapper callable under test")]
-    expected_result: Annotated[(
-        list[Any] | tuple[Any, ...] | dict[str, Any] | set[Any] | frozenset[Any]
-    ), Field(description="Expected mapped output")]
-    default_error: Annotated[str, Field(
-        default="Operation failed", description="Default error message"
-    )]
-    expected_failure: Annotated[bool, Field(default=False, description="Whether map should fail")]
-    error_contains: Annotated[str | None, Field(
-        default=None, description="Expected error message fragment"
-    )]
+    items: Annotated[
+        list[Any] | tuple[Any, ...] | dict[str, Any] | set[Any] | frozenset[Any],
+        (
+            Field(
+                description="Collection input for map operation",
+            )
+        ),
+    ]
+    mapper: Annotated[
+        Callable[[Any], Any], Field(description="Mapper callable under test")
+    ]
+    expected_result: Annotated[
+        (list[Any] | tuple[Any, ...] | dict[str, Any] | set[Any] | frozenset[Any]),
+        Field(description="Expected mapped output"),
+    ]
+    default_error: Annotated[
+        str, Field(default="Operation failed", description="Default error message")
+    ]
+    expected_failure: Annotated[
+        bool, Field(default=False, description="Whether map should fail")
+    ]
+    error_contains: Annotated[
+        str | None, Field(default=None, description="Expected error message fragment")
+    ]
 
 
 class FindScenario(BaseModel):
@@ -149,16 +169,17 @@ class FindScenario(BaseModel):
 
     model_config = ConfigDict(frozen=True)
     name: Annotated[str, Field(description="Find scenario name")]
-    items: Annotated[list[Any] | tuple[Any, ...] | dict[str, Any], Field(
-        description="Input items for find"
-    )]
-    predicate: Annotated[Callable[[Any], bool], Field(
-        description="Predicate callable under test"
-    )]
+    items: Annotated[
+        list[Any] | tuple[Any, ...] | dict[str, Any],
+        Field(description="Input items for find"),
+    ]
+    predicate: Annotated[
+        Callable[[Any], bool], Field(description="Predicate callable under test")
+    ]
     expected_result: Annotated[object | None, Field(description="Expected found value")]
-    return_key: Annotated[bool, Field(
-        default=False, description="Whether to return dictionary key"
-    )]
+    return_key: Annotated[
+        bool, Field(default=False, description="Whether to return dictionary key")
+    ]
 
 
 class FilterScenario(BaseModel):
@@ -166,18 +187,23 @@ class FilterScenario(BaseModel):
 
     model_config = ConfigDict(frozen=True)
     name: Annotated[str, Field(description="Filter scenario name")]
-    items: Annotated[list[Any] | tuple[Any, ...] | dict[str, Any], Field(
-        description="Input items for filter"
-    )]
-    predicate: Annotated[Callable[[Any], bool], Field(
-        description="Predicate callable under test"
-    )]
-    expected_result: Annotated[list[Any] | tuple[Any, ...] | dict[str, Any], Field(
-        description="Expected filtered output",
-    )]
-    mapper: Annotated[Callable[[Any], Any] | None, Field(
-        default=None, description="Optional mapping callable"
-    )]
+    items: Annotated[
+        list[Any] | tuple[Any, ...] | dict[str, Any],
+        Field(description="Input items for filter"),
+    ]
+    predicate: Annotated[
+        Callable[[Any], bool], Field(description="Predicate callable under test")
+    ]
+    expected_result: Annotated[
+        list[Any] | tuple[Any, ...] | dict[str, Any],
+        Field(
+            description="Expected filtered output",
+        ),
+    ]
+    mapper: Annotated[
+        Callable[[Any], Any] | None,
+        Field(default=None, description="Optional mapping callable"),
+    ]
 
 
 class CountScenario(BaseModel):
@@ -187,9 +213,10 @@ class CountScenario(BaseModel):
     name: Annotated[str, Field(description="Count scenario name")]
     items: Annotated[Sequence[Any], Field(description="Input items for count")]
     expected_count: Annotated[int, Field(description="Expected item count")]
-    predicate: Annotated[Callable[[Any], bool] | None, Field(
-        default=None, description="Optional predicate filter"
-    )]
+    predicate: Annotated[
+        Callable[[Any], bool] | None,
+        Field(default=None, description="Optional predicate filter"),
+    ]
 
 
 class ProcessScenario(BaseModel):
@@ -198,24 +225,31 @@ class ProcessScenario(BaseModel):
     model_config = ConfigDict(frozen=True)
     name: Annotated[str, Field(description="Process scenario name")]
     items: Annotated[Sequence[Any], Field(description="Input items for process")]
-    processor: Annotated[Callable[[Any], Any], Field(description="Processor callable under test")]
+    processor: Annotated[
+        Callable[[Any], Any], Field(description="Processor callable under test")
+    ]
     expected_result: Annotated[object, Field(description="Expected processing result")]
-    on_error: Annotated[str, Field(default="collect", description="Error handling mode")]
-    predicate: Annotated[Callable[[Any], bool] | None, Field(
-        default=None, description="Optional predicate filter"
-    )]
-    filter_keys: Annotated[set[str] | None, Field(
-        default=None, description="Keys to include when processing mappings"
-    )]
-    exclude_keys: Annotated[set[str] | None, Field(
-        default=None, description="Keys to exclude when processing mappings"
-    )]
-    expected_failure: Annotated[bool, Field(
-        default=False, description="Whether processing should fail"
-    )]
-    error_contains: Annotated[str | None, Field(
-        default=None, description="Expected error message fragment"
-    )]
+    on_error: Annotated[
+        str, Field(default="collect", description="Error handling mode")
+    ]
+    predicate: Annotated[
+        Callable[[Any], bool] | None,
+        Field(default=None, description="Optional predicate filter"),
+    ]
+    filter_keys: Annotated[
+        set[str] | None,
+        Field(default=None, description="Keys to include when processing mappings"),
+    ]
+    exclude_keys: Annotated[
+        set[str] | None,
+        Field(default=None, description="Keys to exclude when processing mappings"),
+    ]
+    expected_failure: Annotated[
+        bool, Field(default=False, description="Whether processing should fail")
+    ]
+    error_contains: Annotated[
+        str | None, Field(default=None, description="Expected error message fragment")
+    ]
 
 
 class GroupScenario(BaseModel):
@@ -223,11 +257,15 @@ class GroupScenario(BaseModel):
 
     model_config = ConfigDict(frozen=True)
     name: Annotated[str, Field(description="Group scenario name")]
-    items: Annotated[list[str] | tuple[str, ...], Field(description="Input items for group")]
-    key: Annotated[Callable[[str], int | str], Field(description="Grouping key callable")]
-    expected_result: Annotated[dict[int | str, list[str]], Field(
-        description="Expected grouped output"
-    )]
+    items: Annotated[
+        list[str] | tuple[str, ...], Field(description="Input items for group")
+    ]
+    key: Annotated[
+        Callable[[str], int | str], Field(description="Grouping key callable")
+    ]
+    expected_result: Annotated[
+        dict[int | str, list[str]], Field(description="Expected grouped output")
+    ]
 
 
 class ChunkScenario(BaseModel):
@@ -235,11 +273,16 @@ class ChunkScenario(BaseModel):
 
     model_config = ConfigDict(frozen=True)
     name: Annotated[str, Field(description="Chunk scenario name")]
-    items: Annotated[list[object] | tuple[object, ...], Field(
-        description="Input items for chunking",
-    )]
+    items: Annotated[
+        list[object] | tuple[object, ...],
+        Field(
+            description="Input items for chunking",
+        ),
+    ]
     size: Annotated[int, Field(description="Chunk size")]
-    expected_result: Annotated[list[list[object]], Field(description="Expected chunked output")]
+    expected_result: Annotated[
+        list[list[object]], Field(description="Expected chunked output")
+    ]
 
 
 class BatchScenario(BaseModel):
@@ -248,25 +291,30 @@ class BatchScenario(BaseModel):
     model_config = ConfigDict(frozen=True)
     name: Annotated[str, Field(description="Batch scenario name")]
     items: Annotated[list[object], Field(description="Input items for batch")]
-    operation: Annotated[Callable[[object], object], Field(
-        description="Batch operation callable"
-    )]
+    operation: Annotated[
+        Callable[[object], object], Field(description="Batch operation callable")
+    ]
     expected_result: Annotated[object, Field(description="Expected batch result")]
     size: Annotated[int, Field(default=100, description="Batch size")]
-    on_error: Annotated[str, Field(default="collect", description="Error handling mode")]
-    pre_validate: Annotated[Callable[[object], bool] | None, Field(
-        default=None,
-        description="Optional pre-validation callable",
-    )]
-    flatten: Annotated[bool, Field(
-        default=False, description="Whether to flatten nested results"
-    )]
-    expected_failure: Annotated[bool, Field(
-        default=False, description="Whether batch should fail"
-    )]
-    error_contains: Annotated[str | None, Field(
-        default=None, description="Expected error message fragment"
-    )]
+    on_error: Annotated[
+        str, Field(default="collect", description="Error handling mode")
+    ]
+    pre_validate: Annotated[
+        Callable[[object], bool] | None,
+        Field(
+            default=None,
+            description="Optional pre-validation callable",
+        ),
+    ]
+    flatten: Annotated[
+        bool, Field(default=False, description="Whether to flatten nested results")
+    ]
+    expected_failure: Annotated[
+        bool, Field(default=False, description="Whether batch should fail")
+    ]
+    error_contains: Annotated[
+        str | None, Field(default=None, description="Expected error message fragment")
+    ]
 
 
 class CollectionUtilitiesScenarios:
@@ -842,7 +890,9 @@ class TestuCollectionCoerceDictValidator:
         _ = u.coerce_dict_validator(FixtureStatus)
 
         class TestModel(BaseModel):
-            user_statuses: Annotated[dict[str, FixtureStatus], Field(default_factory=dict)]
+            user_statuses: Annotated[
+                dict[str, FixtureStatus], Field(default_factory=dict)
+            ]
 
         model1 = TestModel.model_validate({
             "user_statuses": {"user1": "active", "user2": "pending"},

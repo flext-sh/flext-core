@@ -31,9 +31,9 @@ class ResultOperationScenario(BaseModel):
     initial_value: Annotated[int | None, Field(description="Initial result value")]
     operations: Annotated[list[str], Field(description="Operation chain to apply")]
     expected_success: Annotated[bool, Field(description="Expected success state")]
-    expected_value: Annotated[int | None, Field(
-        default=None, description="Expected resulting value"
-    )]
+    expected_value: Annotated[
+        int | None, Field(default=None, description="Expected resulting value")
+    ]
 
 
 class ExceptionTypeScenario(BaseModel):
@@ -42,9 +42,12 @@ class ExceptionTypeScenario(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     name: Annotated[str, Field(description="Exception scenario name")]
-    exception_type: Annotated[type[FlextExceptions.BaseError], Field(
-        description="Exception class under test",
-    )]
+    exception_type: Annotated[
+        type[FlextExceptions.BaseError],
+        Field(
+            description="Exception class under test",
+        ),
+    ]
     message: Annotated[str, Field(description="Exception message")]
     expected_in_str: Annotated[str, Field(description="Expected string marker")]
 

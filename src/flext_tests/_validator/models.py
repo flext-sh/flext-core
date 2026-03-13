@@ -87,24 +87,37 @@ class FlextValidatorModels(m):
         """Configuration for validation scan."""
 
         target_path: Path
-        include_patterns: Annotated[list[str], Field(
-            default_factory=lambda: list(c.Tests.Validator.Defaults.INCLUDE_PATTERNS),
-            description="Glob patterns defining files that should be scanned for violations.",
-            title="Include Patterns",
-            examples=[["src/**/*.py", "tests/**/*.py"]],
-        )]
-        exclude_patterns: Annotated[list[str], Field(
-            default_factory=lambda: list(c.Tests.Validator.Defaults.EXCLUDE_PATTERNS),
-            description="Glob patterns defining files that should be excluded from scan input.",
-            title="Exclude Patterns",
-            examples=[["**/__pycache__/**", "**/.venv/**"]],
-        )]
-        approved_exceptions: Annotated[Mapping[str, list[str]], Field(
-            default_factory=dict,
-            description="Rule-to-path allowlist for known and explicitly approved exceptions.",
-            title="Approved Exceptions",
-            examples=[{"RULE_001": ["tests/fixtures/generated.py"]}],
-        )]
+        include_patterns: Annotated[
+            list[str],
+            Field(
+                default_factory=lambda: list(
+                    c.Tests.Validator.Defaults.INCLUDE_PATTERNS
+                ),
+                description="Glob patterns defining files that should be scanned for violations.",
+                title="Include Patterns",
+                examples=[["src/**/*.py", "tests/**/*.py"]],
+            ),
+        ]
+        exclude_patterns: Annotated[
+            list[str],
+            Field(
+                default_factory=lambda: list(
+                    c.Tests.Validator.Defaults.EXCLUDE_PATTERNS
+                ),
+                description="Glob patterns defining files that should be excluded from scan input.",
+                title="Exclude Patterns",
+                examples=[["**/__pycache__/**", "**/.venv/**"]],
+            ),
+        ]
+        approved_exceptions: Annotated[
+            Mapping[str, list[str]],
+            Field(
+                default_factory=dict,
+                description="Rule-to-path allowlist for known and explicitly approved exceptions.",
+                title="Approved Exceptions",
+                examples=[{"RULE_001": ["tests/fixtures/generated.py"]}],
+            ),
+        ]
 
 
 # Short alias

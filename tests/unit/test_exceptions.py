@@ -72,18 +72,26 @@ class ExceptionScenario(m.Value):
     model_config = ConfigDict(frozen=True)
 
     name: Annotated[str, Field(description="Exception scenario name")]
-    scenario_type: Annotated[ExceptionScenarioType, Field(description="Exception scenario type")]
-    exception_type: Annotated[type[e.BaseError] | None, Field(
-        default=None,
-        description="Exception class for the scenario",
-    )]
-    should_raise: Annotated[bool, Field(
-        default=False, description="Whether scenario should raise"
-    )]
-    error_factory_type: Annotated[str | None, Field(
-        default=None,
-        description="Factory type name for create() tests",
-    )]
+    scenario_type: Annotated[
+        ExceptionScenarioType, Field(description="Exception scenario type")
+    ]
+    exception_type: Annotated[
+        type[e.BaseError] | None,
+        Field(
+            default=None,
+            description="Exception class for the scenario",
+        ),
+    ]
+    should_raise: Annotated[
+        bool, Field(default=False, description="Whether scenario should raise")
+    ]
+    error_factory_type: Annotated[
+        str | None,
+        Field(
+            default=None,
+            description="Factory type name for create() tests",
+        ),
+    ]
 
 
 class ExceptionTypeScenario(m.Value):
@@ -92,12 +100,18 @@ class ExceptionTypeScenario(m.Value):
     model_config = ConfigDict(frozen=True)
 
     name: Annotated[str, Field(description="Exception type scenario name")]
-    scenario_type: Annotated[ExceptionTypeScenarioType, Field(
-        description="Exception type scenario category",
-    )]
-    exception_class: Annotated[type[e.BaseError], Field(
-        description="Exception class to instantiate",
-    )]
+    scenario_type: Annotated[
+        ExceptionTypeScenarioType,
+        Field(
+            description="Exception type scenario category",
+        ),
+    ]
+    exception_class: Annotated[
+        type[e.BaseError],
+        Field(
+            description="Exception class to instantiate",
+        ),
+    ]
 
 
 class ExceptionScenarios:

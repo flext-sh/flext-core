@@ -51,25 +51,42 @@ class RegistryTestCase(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     name: Annotated[str, Field(description="Registry test case name")]
-    operation: Annotated[RegistryOperationType, Field(description="Registry operation type")]
-    handler_count: Annotated[int, Field(default=1, description="Number of handlers to generate")]
-    should_succeed: Annotated[bool, Field(default=True, description="Expected operation success")]
-    error_pattern: Annotated[str | None, Field(
-        default=None,
-        description="Expected error message pattern",
-    )]
-    with_bindings: Annotated[bool, Field(
-        default=False, description="Whether bindings are included"
-    )]
-    with_function_map: Annotated[bool, Field(
-        default=False,
-        description="Whether function map is included",
-    )]
-    with_summary: Annotated[bool, Field(default=False, description="Whether summary is included")]
-    duplicate_registration: Annotated[bool, Field(
-        default=False,
-        description="Whether registration is intentionally duplicated",
-    )]
+    operation: Annotated[
+        RegistryOperationType, Field(description="Registry operation type")
+    ]
+    handler_count: Annotated[
+        int, Field(default=1, description="Number of handlers to generate")
+    ]
+    should_succeed: Annotated[
+        bool, Field(default=True, description="Expected operation success")
+    ]
+    error_pattern: Annotated[
+        str | None,
+        Field(
+            default=None,
+            description="Expected error message pattern",
+        ),
+    ]
+    with_bindings: Annotated[
+        bool, Field(default=False, description="Whether bindings are included")
+    ]
+    with_function_map: Annotated[
+        bool,
+        Field(
+            default=False,
+            description="Whether function map is included",
+        ),
+    ]
+    with_summary: Annotated[
+        bool, Field(default=False, description="Whether summary is included")
+    ]
+    duplicate_registration: Annotated[
+        bool,
+        Field(
+            default=False,
+            description="Whether registration is intentionally duplicated",
+        ),
+    ]
 
 
 class ConcreteTestHandler(h[object, object]):

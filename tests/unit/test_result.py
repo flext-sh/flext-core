@@ -55,15 +55,20 @@ class ResultScenario(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     name: Annotated[str, Field(description="Result scenario name")]
-    operation_type: Annotated[ResultOperationType, Field(description="Result operation type")]
+    operation_type: Annotated[
+        ResultOperationType, Field(description="Result operation type")
+    ]
     value: Annotated[object, Field(description="Input value for result operation")]
-    is_success_expected: Annotated[bool, Field(
-        default=True, description="Expected success state"
-    )]
-    expected_result: Annotated[object | None, Field(
-        default=None,
-        description="Optional expected result payload",
-    )]
+    is_success_expected: Annotated[
+        bool, Field(default=True, description="Expected success state")
+    ]
+    expected_result: Annotated[
+        object | None,
+        Field(
+            default=None,
+            description="Optional expected result payload",
+        ),
+    ]
 
     def __init__(
         self,

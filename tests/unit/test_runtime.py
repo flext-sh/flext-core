@@ -100,19 +100,30 @@ class RuntimeTestCase(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     name: Annotated[str, Field(description="Runtime test case name")]
-    operation: Annotated[RuntimeOperationType, Field(description="Runtime operation type")]
-    test_input: Annotated[object | None, Field(
-        default=None,
-        description="Optional test input",
-    )]
-    expected_result: Annotated[bool | tuple[object, ...] | object, Field(
-        default=None,
-        description="Expected operation result",
-    )]
-    should_reset_config: Annotated[bool, Field(
-        default=False,
-        description="Whether structlog config should be reset before test",
-    )]
+    operation: Annotated[
+        RuntimeOperationType, Field(description="Runtime operation type")
+    ]
+    test_input: Annotated[
+        object | None,
+        Field(
+            default=None,
+            description="Optional test input",
+        ),
+    ]
+    expected_result: Annotated[
+        bool | tuple[object, ...] | object,
+        Field(
+            default=None,
+            description="Expected operation result",
+        ),
+    ]
+    should_reset_config: Annotated[
+        bool,
+        Field(
+            default=False,
+            description="Whether structlog config should be reset before test",
+        ),
+    ]
 
 
 class RuntimeScenarios:

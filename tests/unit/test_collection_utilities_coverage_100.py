@@ -46,13 +46,15 @@ class ParseSequenceScenario(BaseModel):
     model_config = ConfigDict(frozen=True)
     name: Annotated[str, Field(description="Parse sequence scenario name")]
     values: Annotated[list[str | Status], Field(description="Input sequence values")]
-    expected_success: Annotated[bool, Field(description="Whether parsing should succeed")]
-    expected_count: Annotated[int | None, Field(
-        default=None, description="Expected parsed item count"
-    )]
-    expected_error: Annotated[str | None, Field(
-        default=None, description="Expected error message fragment"
-    )]
+    expected_success: Annotated[
+        bool, Field(description="Whether parsing should succeed")
+    ]
+    expected_count: Annotated[
+        int | None, Field(default=None, description="Expected parsed item count")
+    ]
+    expected_error: Annotated[
+        str | None, Field(default=None, description="Expected error message fragment")
+    ]
 
 
 class CoerceListValidatorScenario(BaseModel):
@@ -61,10 +63,12 @@ class CoerceListValidatorScenario(BaseModel):
     model_config = ConfigDict(frozen=True)
     name: Annotated[str, Field(description="Coerce list scenario name")]
     value: Annotated[object, Field(description="Input value for list coercion")]
-    expected_success: Annotated[bool, Field(description="Whether coercion should succeed")]
-    expected_error: Annotated[str | None, Field(
-        default=None, description="Expected error message fragment"
-    )]
+    expected_success: Annotated[
+        bool, Field(description="Whether coercion should succeed")
+    ]
+    expected_error: Annotated[
+        str | None, Field(default=None, description="Expected error message fragment")
+    ]
 
 
 class ParseMappingScenario(BaseModel):
@@ -72,14 +76,18 @@ class ParseMappingScenario(BaseModel):
 
     model_config = ConfigDict(frozen=True)
     name: Annotated[str, Field(description="Parse mapping scenario name")]
-    mapping: Annotated[dict[str, str | Status], Field(description="Input mapping values")]
-    expected_success: Annotated[bool, Field(description="Whether parsing should succeed")]
-    expected_count: Annotated[int | None, Field(
-        default=None, description="Expected parsed entry count"
-    )]
-    expected_error: Annotated[str | None, Field(
-        default=None, description="Expected error message fragment"
-    )]
+    mapping: Annotated[
+        dict[str, str | Status], Field(description="Input mapping values")
+    ]
+    expected_success: Annotated[
+        bool, Field(description="Whether parsing should succeed")
+    ]
+    expected_count: Annotated[
+        int | None, Field(default=None, description="Expected parsed entry count")
+    ]
+    expected_error: Annotated[
+        str | None, Field(default=None, description="Expected error message fragment")
+    ]
 
 
 class CollectionScenarios:

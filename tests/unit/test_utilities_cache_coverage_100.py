@@ -36,15 +36,21 @@ class NormalizeComponentScenario(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     name: Annotated[str, Field(description="Normalize scenario name")]
-    component: Annotated[object, Field(
-        default=None,
-        description="Input component to normalize",
-    )]
+    component: Annotated[
+        object,
+        Field(
+            default=None,
+            description="Input component to normalize",
+        ),
+    ]
     expected_type: Annotated[type, Field(description="Expected normalized value type")]
-    expected_value: Annotated[object | None, Field(
-        default=None,
-        description="Optional expected normalized value",
-    )]
+    expected_value: Annotated[
+        object | None,
+        Field(
+            default=None,
+            description="Optional expected normalized value",
+        ),
+    ]
 
 
 class SortKeyScenario(BaseModel):
@@ -53,7 +59,9 @@ class SortKeyScenario(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     name: Annotated[str, Field(description="Sort key scenario name")]
-    key: Annotated[t.SortableObjectType, Field(description="Input key for sort normalization")]
+    key: Annotated[
+        t.SortableObjectType, Field(description="Input key for sort normalization")
+    ]
     expected_tuple: Annotated[tuple[int, str], Field(description="Expected sort tuple")]
 
 
@@ -64,12 +72,19 @@ class ClearCacheScenario(BaseModel):
 
     name: Annotated[str, Field(description="Cache clear scenario name")]
     obj: Annotated[object, Field(description="Object under cache clear test")]
-    has_cache_attr: Annotated[bool, Field(description="Whether object exposes cache attribute")]
-    expected_success: Annotated[bool, Field(description="Expected clear operation success flag")]
-    cache_attr_name: Annotated[str | None, Field(
-        default=None,
-        description="Optional cache attribute name",
-    )]
+    has_cache_attr: Annotated[
+        bool, Field(description="Whether object exposes cache attribute")
+    ]
+    expected_success: Annotated[
+        bool, Field(description="Expected clear operation success flag")
+    ]
+    cache_attr_name: Annotated[
+        str | None,
+        Field(
+            default=None,
+            description="Optional cache attribute name",
+        ),
+    ]
 
 
 class CacheScenarios:

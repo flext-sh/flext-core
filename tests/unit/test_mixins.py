@@ -66,15 +66,16 @@ class ServiceMixinScenario(BaseModel):
 
     model_config = ConfigDict(frozen=True)
     name: Annotated[str, Field(description="Service mixin scenario name")]
-    scenario_type: Annotated[ServiceMixinScenarioType, Field(
-        description="Service mixin scenario type"
-    )]
-    needs_init: Annotated[bool, Field(
-        default=False, description="Whether service initialization is required"
-    )]
-    operation_context: Annotated[str | None, Field(
-        default=None, description="Optional operation context name"
-    )]
+    scenario_type: Annotated[
+        ServiceMixinScenarioType, Field(description="Service mixin scenario type")
+    ]
+    needs_init: Annotated[
+        bool,
+        Field(default=False, description="Whether service initialization is required"),
+    ]
+    operation_context: Annotated[
+        str | None, Field(default=None, description="Optional operation context name")
+    ]
 
 
 class ModelConversionScenario(BaseModel):
@@ -82,11 +83,13 @@ class ModelConversionScenario(BaseModel):
 
     model_config = ConfigDict(frozen=True)
     name: Annotated[str, Field(description="Model conversion scenario name")]
-    scenario_type: Annotated[ModelConversionScenarioType, Field(
-        description="Model conversion scenario type"
-    )]
+    scenario_type: Annotated[
+        ModelConversionScenarioType, Field(description="Model conversion scenario type")
+    ]
     input_value: Annotated[object, Field(description="Input value for conversion")]
-    expected_output: Annotated[m.ConfigMap, Field(description="Expected conversion output")]
+    expected_output: Annotated[
+        m.ConfigMap, Field(description="Expected conversion output")
+    ]
 
 
 class ResultHandlingScenario(BaseModel):
@@ -94,9 +97,9 @@ class ResultHandlingScenario(BaseModel):
 
     model_config = ConfigDict(frozen=True)
     name: Annotated[str, Field(description="Result handling scenario name")]
-    scenario_type: Annotated[ResultHandlingScenarioType, Field(
-        description="Result handling scenario type"
-    )]
+    scenario_type: Annotated[
+        ResultHandlingScenarioType, Field(description="Result handling scenario type")
+    ]
     input_value: Annotated[object, Field(description="Input value for result handling")]
 
 
