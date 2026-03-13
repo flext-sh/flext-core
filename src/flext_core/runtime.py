@@ -45,7 +45,6 @@ import atexit
 import contextlib
 import inspect
 import io
-import json
 import logging
 import queue
 import secrets
@@ -100,7 +99,7 @@ class FlextRuntime:
 
     **Type Guard Utilities** (5+ pattern-based validators):
     1. **is_valid_phone()** - International phone number validation
-    2. **is_valid_json()** - JSON string validation via json.loads()
+    2. **is_valid_json()** - JSON string validation via TypeAdapter
     3. **is_valid_identifier()** - Python identifier validation
     4. **is_dict_like()** / **is_list_like()** - Collection type checking
 
@@ -703,7 +702,11 @@ class FlextRuntime:
                     inner: dict[str, str | int | float | bool] = {}
                     for ik, iv in v.items():
                         inner[str(ik)] = FlextRuntime._normalize_to_metadata_scalar(iv)
-                    normalized[str_k] = json.dumps(inner)
+                    normalized[str_k] = (
+                        TypeAdapter(dict[str, str | int | float | bool])
+                        .dump_json(inner)
+                        .decode()
+                    )
                 else:
                     normalized[str_k] = str(v)
             return normalized
