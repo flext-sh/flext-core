@@ -380,6 +380,8 @@ class FlextModelsContext:
                 return val
             if FlextRuntime.is_dict_like(val) or FlextRuntime.is_list_like(val):
                 return FlextRuntime.normalize_to_container(val)
+            if hasattr(val, "__iter__"):
+                return str(val)
             msg = f"Non-normalizable type {type(val).__name__}"
             raise TypeError(msg)
 
