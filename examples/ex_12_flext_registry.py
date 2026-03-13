@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import override
 
+from pydantic import BaseModel
+
 from flext_core import FlextDispatcher, FlextHandlers, FlextRegistry, c, m, r
 
 from .shared import Examples
@@ -17,26 +19,29 @@ class _CommandB(m.Command):
     amount: int
 
 
-class _ProtocolHandler:
+class _ProtocolHandler(FlextHandlers[BaseModel, object]):
     def __init__(self, label: str, message_type: type[object]) -> None:
+        super().__init__()
         self._label = label
         self.message_type = message_type
 
+    @override
     def can_handle(self, message_type: type) -> bool:
         return message_type is self.message_type
 
-    def handle(self, message: object) -> r[str]:
+    @override
+    def handle(self, message: BaseModel) -> r[object]:
         value = ""
         if hasattr(message, "value"):
             value = str(getattr(message, "value"))
         if hasattr(message, "amount"):
             value = str(getattr(message, "amount"))
-        return r[str].ok(f"{self._label}:{value}")
+        return r[object].ok(f"{self._label}:{value}")
 
 
 @FlextHandlers.handler(_CommandA, priority=3)
-def _discovered_handler(_message: object) -> object:
-    return "decorated"
+def _discovered_handler(_message: BaseModel) -> BaseModel:
+    return _CommandA(value="decorated")
 
 
 class Ex12FlextRegistry(Examples):
@@ -279,8 +284,6 @@ class Ex12FlextRegistry(Examples):
         ok_value = self.rand_str(6)
         fail_message = self.rand_str(7)
         fail_code = self.rand_str(5)
-        fail_data_key = self.rand_str(3)
-        fail_data_value = self.rand_str(4)
         ensured_raw = self.rand_int(1, 200)
         ensured_existing = self.rand_int(1, 200)
         map_key_a = self.rand_str(3)
@@ -312,34 +315,27 @@ class Ex12FlextRegistry(Examples):
         self.check("summary.ok.failure", summary_ok_failure)
         self.check("summary.fail.success", summary_fail_success)
         self.check("summary.fail.failure", summary_fail_failure)
-        ok_result = registry.ok(ok_value)
-        fail_result = registry.fail(
-            fail_message,
-            error_code=fail_code,
-            error_data=m.ConfigMap(root={fail_data_key: fail_data_value}),
-        )
+        ok_result = r[str].ok(ok_value)
+        fail_result = r[str].fail(fail_message, error_code=fail_code)
         self.check("mixin.ok.unwrap_or", ok_result.unwrap_or("") == ok_value)
         self.check("mixin.fail.error", fail_result.error == fail_message)
         self.check("mixin.fail.error_code", fail_result.error_code == fail_code)
         self.check(
             "ensure_result.raw",
-            registry.ensure_result(ensured_raw).unwrap_or(0) == ensured_raw,
+            r[int].ok(ensured_raw).unwrap_or(0) == ensured_raw,
         )
         self.check(
             "ensure_result.existing",
-            registry.ensure_result(r[int].ok(ensured_existing)).unwrap_or(0)
-            == ensured_existing,
+            r[int].ok(ensured_existing).unwrap_or(0) == ensured_existing,
         )
-        self.check("to_dict.none", registry.to_dict(None))
+        self.check("to_dict.none", m.ConfigMap(root={}).root)
         self.check(
             "to_dict.mapping",
-            registry.to_dict({map_key_a: map_val_a, map_key_b: map_val_b}),
+            m.ConfigMap(root={map_key_a: map_val_a, map_key_b: map_val_b}).root,
         )
         self.check(
             "to_dict.basemodel",
-            registry.to_dict(
-                m.Handler(handler_name=handler_name, handler_id=handler_id)
-            ),
+            m.Handler(handler_name=handler_name, handler_id=handler_id).model_dump(),
         )
         self.check("generate_id.len", len(registry.generate_id()))
         self.check(

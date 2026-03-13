@@ -7,6 +7,8 @@ import warnings
 from collections.abc import Mapping
 from typing import override
 
+from pydantic import BaseModel
+
 from flext_core import (
     FlextContainer,
     FlextContext,
@@ -15,6 +17,7 @@ from flext_core import (
     FlextRuntime,
     c,
     d,
+    m,
     r,
     t,
     u,
@@ -137,15 +140,18 @@ class Ex09FlextDecorators(Examples):
         default_value = self.rand_str(10)
         custom_value = self.rand_str(10)
 
+        class _FactoryPayload(m.Value):
+            value: str
+
         @d.factory(name=factory_default_name)
-        def factory_default(_: object) -> str:
+        def factory_default(_: BaseModel) -> BaseModel:
             """Factory function with default singleton and lazy values."""
-            return default_value
+            return _FactoryPayload(value=default_value)
 
         @d.factory(name=factory_custom_name, singleton=True, lazy=False)
-        def factory_custom(_: object) -> str:
+        def factory_custom(_: BaseModel) -> BaseModel:
             """Factory function with explicit singleton and lazy values."""
-            return custom_value
+            return _FactoryPayload(value=custom_value)
 
         attr_name = c.Discovery.FACTORY_ATTR
         default_cfg = getattr(factory_default, attr_name)
@@ -164,11 +170,13 @@ class Ex09FlextDecorators(Examples):
         self.check("factory.custom.lazy", getattr(custom_cfg, "lazy", None))
         self.check(
             "factory.default.call_matches",
-            factory_default(self.rand_str(4)) == default_value,
+            factory_default(m.ConfigMap(root={})).model_dump().get("value")
+            == default_value,
         )
         self.check(
             "factory.custom.call_matches",
-            factory_custom(self.rand_str(4)) == custom_value,
+            factory_custom(m.ConfigMap(root={})).model_dump().get("value")
+            == custom_value,
         )
 
     def _demo_inject(self) -> None:

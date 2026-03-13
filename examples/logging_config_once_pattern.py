@@ -26,7 +26,7 @@ class DatabaseService(s[m.ConfigMap]):
     db_config: m.ConfigMap
 
     @override
-    def execute(self, **_kwargs: t.Scalar) -> r[m.ConfigMap]:
+    def execute(self) -> r[m.ConfigMap]:
         """Execute database operations.
 
         Returns:
@@ -41,7 +41,7 @@ class DatabaseService(s[m.ConfigMap]):
         return r[m.ConfigMap].ok(results)
 
     @override
-    def model_post_init(self, /, __context: object) -> None:
+    def model_post_init(self, /, __context: t.Container | None) -> None:
         """Post-initialization hook.
 
         Args:
@@ -77,7 +77,7 @@ class MigrationService(s[m.ConfigMap]):
         self._log_config_once(config, message="Migration configuration loaded")
 
     @override
-    def execute(self, **_kwargs: t.Scalar) -> r[m.ConfigMap]:
+    def execute(self) -> r[m.ConfigMap]:
         """Execute migration.
 
         Returns:

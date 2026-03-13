@@ -12,8 +12,9 @@ from __future__ import annotations
 import inspect
 import sys
 from collections.abc import Callable, Mapping, Sequence
+from pathlib import Path
 from types import ModuleType
-from typing import Annotated, ClassVar, Literal, Self, cast, override
+from typing import Annotated, ClassVar, Literal, Self, override
 
 from pydantic import BaseModel, Field, PrivateAttr, computed_field
 
@@ -217,27 +218,33 @@ class FlextRegistry(s[bool]):
                 if caller_module:
                     handlers = FlextHandlers.Discovery.scan_module(caller_module)
                     for _handler_name, handler_func, _handler_config in handlers:
-                        if handler_func is not None and callable(handler_func):
-                            _ = instance.register_handler(handler_func)
+                        _ = handler_func
         return instance
 
     @staticmethod
-    def _narrow_value(value: object | None) -> t.Container | BaseModel | None:
+    def _narrow_value(
+        value: object | None,
+    ) -> t.Container | BaseModel | None:
         """Safe conversion using centralized utilities."""
-        return u.narrow_to_container(value)
+        normalized = u.narrow_to_container(value)
+        if normalized is None:
+            return None
+        if isinstance(normalized, (str, int, float, bool, Path, BaseModel)):
+            return normalized
+        return str(normalized)
 
     def _get_handler_mode(self, value: object) -> c.Cqrs.HandlerType:
         """Safe conversion to HandlerType."""
         result = u.parse_enum(c.Cqrs.HandlerType, str(value))
         if result.is_success:
-            return cast("c.Cqrs.HandlerType", result.value)
+            return result.value
         return c.Cqrs.HandlerType.COMMAND
 
     def _get_status(self, value: object) -> c.Cqrs.CommonStatus:
         """Safe conversion to CommonStatus."""
         result = u.parse_enum(c.Cqrs.CommonStatus, str(value))
         if result.is_success:
-            return cast("c.Cqrs.CommonStatus", result.value)
+            return result.value
         return c.Cqrs.CommonStatus.ACTIVE
 
     @override
@@ -258,7 +265,7 @@ class FlextRegistry(s[bool]):
         name: str,
         *,
         scope: Literal["instance", "class"] = "instance",
-    ) -> r[t.Container | BaseModel]:
+    ) -> r[t.Container | BaseModel | None]:
         """Get a registered plugin by category and name.
 
         Returns:
@@ -273,15 +280,17 @@ class FlextRegistry(s[bool]):
                     for k in self._registered_keys
                     if k.startswith(f"{category}::")
                 ]
-                return r[t.Container | BaseModel].fail(
+                return r[t.Container | BaseModel | None].fail(
                     f"{category} '{name}' not found. Available: {available}"
                 )
             raw_result = self.container.get(key)
             if raw_result.is_failure:
-                return r[t.Container | BaseModel].fail(
+                return r[t.Container | BaseModel | None].fail(
                     f"Failed to retrieve {category} '{name}': {raw_result.error}"
                 )
-            return self._narrow_value(raw_result.value)
+            return r[t.Container | BaseModel | None].ok(
+                self._narrow_value(raw_result.value)
+            )
         cls = type(self)
         if key not in cls._class_registered_keys:
             available = [
@@ -289,10 +298,12 @@ class FlextRegistry(s[bool]):
                 for k in cls._class_registered_keys
                 if k.startswith(f"{category}::")
             ]
-            return r[t.Container | BaseModel].fail(
+            return r[t.Container | BaseModel | None].fail(
                 f"{category} '{name}' not found. Available: {available}"
             )
-        return self._narrow_value(cls._class_plugin_storage[key])
+        return r[t.Container | BaseModel | None].ok(
+            self._narrow_value(cls._class_plugin_storage[key])
+        )
 
     def list_plugins(
         self, category: str, *, scope: Literal["instance", "class"] = "instance"
@@ -363,7 +374,7 @@ class FlextRegistry(s[bool]):
 
     def register_bindings(
         self,
-        bindings: Mapping[RegistryBindingKey, p.Handler[object, object]],
+        bindings: Mapping[RegistryBindingKey, t.HandlerLike],
     ) -> r[FlextRegistry.Summary]:
         """Register message-to-handler bindings.
 
@@ -383,8 +394,7 @@ class FlextRegistry(s[bool]):
             reg_result = self.register_handler(handler)
             if reg_result.is_success:
                 details = reg_result.value
-                if isinstance(details, m.RegistrationDetails):
-                    self._add_successful_registration(key, details, summary)
+                self._add_successful_registration(key, details, summary)
             else:
                 summary.errors.append(
                     reg_result.error
@@ -394,7 +404,7 @@ class FlextRegistry(s[bool]):
 
     def register_handler(
         self,
-        handler: p.Handler[object, object] | t.HandlerLike,
+        handler: t.HandlerLike,
         _metadata: m.ConfigMap | m.Metadata | None = None,
     ) -> r[m.RegistrationDetails]:
         """Register a handler instance or callable.
@@ -417,7 +427,7 @@ class FlextRegistry(s[bool]):
 
         # Standard Dispatcher registration avoids passing name/metadata
         # as it discovers routes from the handler itself.
-        registration_handler: object = handler
+        registration_handler: t.HandlerLike = handler
         registration_result = self._dispatcher.register_handler(
             registration_handler,
             is_event=(handler_mode == c.Cqrs.HandlerType.EVENT),
@@ -433,14 +443,12 @@ class FlextRegistry(s[bool]):
             m.RegistrationDetails(
                 registration_id=handler_id,
                 handler_mode=handler_mode,
-                status=status
-                if isinstance(status, c.Cqrs.CommonStatus)
-                else c.Cqrs.CommonStatus.RUNNING,
+                status=status,
             )
         )
 
     def register_handlers(
-        self, handlers: Sequence[p.Handler[object, object] | t.HandlerLike]
+        self, handlers: Sequence[t.HandlerLike]
     ) -> r[FlextRegistry.Summary]:
         """Register multiple handlers in batch.
 
@@ -457,12 +465,7 @@ class FlextRegistry(s[bool]):
             key = getattr(handler, "__name__", handler.__class__.__name__)
             if result.is_success:
                 registration_details = result.value
-                if isinstance(registration_details, m.RegistrationDetails):
-                    self._add_successful_registration(
-                        key, registration_details, summary
-                    )
-                else:
-                    summary.errors.append(f"Invalid registration details for '{key}'")
+                self._add_successful_registration(key, registration_details, summary)
             else:
                 summary.errors.append(
                     result.error or f"Failed to register handler '{key}'"

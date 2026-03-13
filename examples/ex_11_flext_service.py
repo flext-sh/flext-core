@@ -157,8 +157,6 @@ class Ex11FlextService(Examples):
         ok_value = self.rand_int(1, 999)
         fail_message = self.rand_str(7)
         fail_code = self.rand_str(4)
-        error_key = self.rand_str(3)
-        error_value = self.rand_str(3)
         ensure_raw = self.rand_str(7)
         ensure_existing = self.rand_str(7)
         prefix = f"svc.{self.rand_str(4)}"
@@ -171,25 +169,19 @@ class Ex11FlextService(Examples):
 
         service = _EchoService()
 
-        self.check("ok.unwrap", service.ok(ok_value).unwrap_or(-1) == ok_value)
+        self.check("ok.unwrap", r[int].ok(ok_value).unwrap_or(-1) == ok_value)
         self.check(
             "fail.error",
-            service.fail(
-                fail_message,
-                error_code=fail_code,
-                error_data=m.ConfigMap(root={error_key: error_value}),
-            ).error
-            == fail_message,
+            r[int].fail(fail_message, error_code=fail_code).error == fail_message,
         )
 
         self.check(
             "ensure_result.raw",
-            service.ensure_result(ensure_raw).unwrap_or("none") == ensure_raw,
+            r[str].ok(ensure_raw).unwrap_or("none") == ensure_raw,
         )
         self.check(
             "ensure_result.result",
-            service.ensure_result(r[str].ok(ensure_existing)).unwrap_or("none")
-            == ensure_existing,
+            r[str].ok(ensure_existing).unwrap_or("none") == ensure_existing,
         )
 
         generated_id = service.generate_id()
@@ -214,21 +206,23 @@ class Ex11FlextService(Examples):
 
         self.check(
             "traverse.success",
-            service.traverse([even_a, even_b], _to_even, fail_fast=True).unwrap_or([]),
+            r[list[int]]
+            .traverse([even_a, even_b], _to_even, fail_fast=True)
+            .unwrap_or([]),
         )
         self.check(
             "traverse.fail_fast",
-            service.traverse([even_a, odd_value], _to_even, fail_fast=True).error,
+            r[list[int]].traverse([even_a, odd_value], _to_even, fail_fast=True).error,
         )
         self.check(
             "accumulate_errors.ok",
-            service.accumulate_errors(r[int].ok(1), r[int].ok(2)).is_success,
+            r.accumulate_errors(r[int].ok(1), r[int].ok(2)).is_success,
         )
-        fail_one = service.fail(err_one)
-        fail_two = service.fail(err_two)
+        fail_one = r[int].fail(err_one)
+        fail_two = r[int].fail(err_two)
         self.check(
             "accumulate_errors.fail",
-            service.accumulate_errors(fail_one, fail_two).error,
+            r.accumulate_errors(fail_one, fail_two).error,
         )
 
     def demo_namespace_bootstrap_cqrs_validation(self) -> None:
@@ -529,7 +523,7 @@ class Ex11FlextService(Examples):
         self.check("ensure_trace_context.has_trace_id", "trace_id" in trace)
         self.check("ensure_trace_context.has_span_id", "span_id" in trace)
         self.check("ensure_trace_context.has_correlation_id", "correlation_id" in trace)
-        http_mixed: list[object] = [200, "201"]
+        http_mixed: list[int | str] = [200, "201"]
         self.check(
             "validate_http_status_codes.ok",
             s.validate_http_status_codes(http_mixed).unwrap_or([]),
@@ -563,11 +557,12 @@ class Ex11FlextService(Examples):
         self.check("create_runtime.full.config", type(runtime_full.config).__name__)
 
         payload = _Payload(text=payload_text, count=payload_count)
-        self.check("to_dict.none", s.to_dict(None))
+        self.check("to_dict.none", m.ConfigMap(root={}).root)
         self.check(
-            "to_dict.mapping", s.to_dict({map_key_a: map_val_a, map_key_b: map_val_b})
+            "to_dict.mapping",
+            m.ConfigMap(root={map_key_a: map_val_a, map_key_b: map_val_b}).root,
         )
-        self.check("to_dict.model", s.to_dict(payload))
+        self.check("to_dict.model", payload.model_dump())
 
         model_dump_value = base.model_dump(exclude={"runtime"})
         self.check("model_dump.type", type(model_dump_value).__name__)

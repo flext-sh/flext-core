@@ -13,6 +13,8 @@ import sys
 from collections.abc import Mapping, MutableMapping
 from pathlib import Path
 
+from pydantic import TypeAdapter, ValidationError
+
 from flext_core import r
 from flext_infra import (
     FlextInfraUtilitiesIo,
@@ -33,6 +35,14 @@ def _safe_load_yaml(path: Path) -> Mapping[str, object]:
 def _normalize_string_list(value: object, field: str) -> list[str]:
     """Validate and normalize a list[str] config field; delegates to ``u.Infra``."""
     return FlextInfraUtilitiesYaml.normalize_string_list(value, field)
+
+
+def _normalize_str_object_mapping(value: object) -> dict[str, object]:
+    try:
+        adapter: TypeAdapter[dict[str, object]] = TypeAdapter(dict[str, object])
+        return adapter.validate_python(value)
+    except ValidationError:
+        return {}
 
 
 class FlextInfraSkillValidator:
@@ -90,8 +100,9 @@ class FlextInfraSkillValidator:
                     ),
                 )
             rules = _safe_load_yaml(rules_path)
-            scan_targets = rules.get("scan_targets", {}) or {}
-            if not isinstance(scan_targets, dict):
+            scan_targets_raw = rules.get("scan_targets", {})
+            scan_targets = _normalize_str_object_mapping(scan_targets_raw)
+            if not scan_targets and scan_targets_raw not in ({}, None):
                 return r[m.Infra.Core.ValidationReport].fail(
                     f"scan_targets must be a mapping: {rules_path}",
                 )
@@ -103,13 +114,16 @@ class FlextInfraSkillValidator:
                 scan_targets.get(c.Infra.Toml.EXCLUDE, []),
                 "scan_targets.exclude",
             )
-            rules_list = rules.get(c.Infra.ReportKeys.RULES, []) or []
-            if not isinstance(rules_list, list):
+            rules_list_obj = rules.get(c.Infra.ReportKeys.RULES, [])
+            if not isinstance(rules_list_obj, list):
                 return r[m.Infra.Core.ValidationReport].fail("rules must be a list")
+            rules_list_adapter: TypeAdapter[list[object]] = TypeAdapter(list[object])
+            rules_list = rules_list_adapter.validate_python(rules_list_obj)
             counts: MutableMapping[str, int] = {}
             violations: list[str] = []
-            for rule_obj in rules_list:
-                if not isinstance(rule_obj, dict):
+            for rule_obj_raw in rules_list:
+                rule_obj = _normalize_str_object_mapping(rule_obj_raw)
+                if not rule_obj:
                     continue
                 rule_id = str(rule_obj.get(c.Infra.ReportKeys.ID, "")).strip()
                 rule_type = str(rule_obj.get("type", "")).strip()
@@ -140,8 +154,10 @@ class FlextInfraSkillValidator:
             total = sum(counts.values())
             passed = total == 0 if mode == c.Infra.Modes.STRICT else True
             if mode != c.Infra.Modes.STRICT:
-                baseline_obj = rules.get(c.Infra.Modes.BASELINE, {}) or {}
-                if isinstance(baseline_obj, dict):
+                baseline_obj = _normalize_str_object_mapping(
+                    rules.get(c.Infra.Modes.BASELINE, {}),
+                )
+                if baseline_obj:
                     strategy = str(
                         baseline_obj.get("strategy", c.Infra.ReportKeys.TOTAL),
                     )
@@ -158,21 +174,23 @@ class FlextInfraSkillValidator:
                     if baseline_path.exists():
                         bl_data_result = self._json.read_json(baseline_path)
                         if bl_data_result.is_success:
-                            bl_data = bl_data_result.value
-                            bl_counts_raw = bl_data.get("counts", {})
-                            if isinstance(bl_counts_raw, dict):
-                                bl_counts = {
-                                    str(k): int(v)
-                                    for k, v in bl_counts_raw.items()
-                                    if isinstance(v, int)
-                                }
-                                if strategy == c.Infra.ReportKeys.TOTAL:
-                                    passed = total <= sum(bl_counts.values())
-                                else:
-                                    passed = all(
-                                        counts.get(g, 0) <= bl_counts.get(g, 0)
-                                        for g in set(counts) | set(bl_counts)
-                                    )
+                            bl_data = _normalize_str_object_mapping(
+                                bl_data_result.value
+                            )
+                            bl_counts_raw_map = _normalize_str_object_mapping(
+                                bl_data.get("counts", {}),
+                            )
+                            bl_counts: dict[str, int] = {}
+                            for key_obj, val_obj in bl_counts_raw_map.items():
+                                if isinstance(val_obj, int):
+                                    bl_counts[str(key_obj)] = int(val_obj)
+                            if strategy == c.Infra.ReportKeys.TOTAL:
+                                passed = total <= sum(bl_counts.values())
+                            else:
+                                passed = all(
+                                    counts.get(g, 0) <= bl_counts.get(g, 0)
+                                    for g in set(counts) | set(bl_counts)
+                                )
             summary = (
                 f"{skill_name}: {total} violations, {('PASS' if passed else 'FAIL')}"
             )

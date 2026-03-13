@@ -490,7 +490,7 @@ class TestuStringParser:
         def test_normalize_whitespace(
             self,
             parser: u,
-            case: tm.Tests.NormalizeWhitespaceCase,
+            case: tm.NormalizeWhitespaceCase,
         ) -> None:
             """Test normalize_whitespace with parametrized cases."""
             u.Tests.ParserHelpers.execute_and_assert_parser_result(

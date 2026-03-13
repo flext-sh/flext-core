@@ -35,6 +35,42 @@ class _ExtractFieldCallable(Protocol):
     def __call__(self, item: object, field_name: str) -> object: ...
 
 
+class _TakeCallable(Protocol):
+    def __call__(
+        self,
+        data_or_items: object,
+        key_or_index: object,
+        *,
+        default: object = None,
+    ) -> object: ...
+
+
+class _BuildApplyConvertCallable(Protocol):
+    def __call__(self, current: object, operations: Mapping[str, object]) -> object: ...
+
+
+class _ExtractTransformOptionsCallable(Protocol):
+    def __call__(self, transform_opts: Mapping[str, object]) -> tuple[object, ...]: ...
+
+
+class _BuildApplyOpCallable(Protocol):
+    def __call__(self, current: object, operations: Mapping[str, object]) -> object: ...
+
+
+class _TransformCallable(Protocol):
+    def __call__(self, source: object, **kwargs: object) -> r[object]: ...
+
+
+class _MapDictKeysCallable(Protocol):
+    def __call__(
+        self,
+        source: object,
+        key_map: Mapping[str, str],
+        *,
+        keep_unmapped: bool = True,
+    ) -> r[Mapping[str, object]]: ...
+
+
 class _BuildFlagsCallable(Protocol):
     def __call__(
         self,
@@ -53,6 +89,64 @@ def _extract_field_obj(item: object, field_name: str) -> object:
     """Call _extract_field_value with arbitrary object for testing."""
     fn: _ExtractFieldCallable = getattr(u, "_extract_field_value")
     return fn(item, field_name)
+
+
+def _take_obj(
+    data_or_items: object, key_or_index: object, *, default: object = None
+) -> object:
+    fn: _TakeCallable = getattr(u, "take")
+    return fn(data_or_items, key_or_index, default=default)
+
+
+def _build_apply_convert_obj(
+    current: object, operations: Mapping[str, object]
+) -> object:
+    fn: _BuildApplyConvertCallable = getattr(u, "_build_apply_convert")
+    return fn(current, operations)
+
+
+def _extract_transform_options_obj(
+    transform_opts: Mapping[str, object],
+) -> tuple[object, ...]:
+    fn: _ExtractTransformOptionsCallable = getattr(u, "_extract_transform_options")
+    return fn(transform_opts)
+
+
+def _build_apply_sort_obj(current: object, operations: Mapping[str, object]) -> object:
+    fn: _BuildApplyOpCallable = getattr(u, "_build_apply_sort")
+    return fn(current, operations)
+
+
+def _build_apply_unique_obj(
+    current: object, operations: Mapping[str, object]
+) -> object:
+    fn: _BuildApplyOpCallable = getattr(u, "_build_apply_unique")
+    return fn(current, operations)
+
+
+def _build_apply_slice_obj(current: object, operations: Mapping[str, object]) -> object:
+    fn: _BuildApplyOpCallable = getattr(u, "_build_apply_slice")
+    return fn(current, operations)
+
+
+def _build_apply_group_obj(current: object, operations: Mapping[str, object]) -> object:
+    fn: _BuildApplyOpCallable = getattr(u, "_build_apply_group")
+    return fn(current, operations)
+
+
+def _transform_obj(source: object, **kwargs: object) -> r[object]:
+    fn: _TransformCallable = getattr(u, "transform")
+    return fn(source, **kwargs)
+
+
+def _map_dict_keys_obj(
+    source: object,
+    key_map: Mapping[str, str],
+    *,
+    keep_unmapped: bool = True,
+) -> r[Mapping[str, object]]:
+    fn: _MapDictKeysCallable = getattr(u, "map_dict_keys")
+    return fn(source, key_map, keep_unmapped=keep_unmapped)
 
 
 def _build_flags_obj(
@@ -224,7 +318,7 @@ def test_invert_and_json_conversion_branches(mapper: type[u]) -> None:
         else:
             as_json[str(key)] = val
     assert as_json["x"] == "/tmp"
-    list_json: list[object] = [{"a": 1}, {"b": object()}]
+    list_json: list[dict[str, object]] = [{"a": 1}, {"b": "opaque"}]
     assert isinstance(list_json, list)
     assert list_json[0]["a"] == 1
 
@@ -323,10 +417,10 @@ def test_at_take_and_as_branches(mapper: type[u]) -> None:
     assert mapper.at({"a": 1}, 0, default=5).value == 5
     assert cast("r[int]", _at_obj(ExplodingLenList([1]), 0, default=7)).value == 7
     model = _PortModel(port=8081)
-    assert mapper.take(model, "port") == 8081
+    assert _take_obj(model, "port") == 8081
     assert mapper.take(123, "port", default="d") == "d"
     assert mapper.take({"port": None}, "port", default="x") == "x"
-    assert mapper.take(cast("Mapping[str, object]", cast("object", 123)), 2) == ""
+    assert _take_obj(123, 2) == ""
     assert mapper.as_(12, str) == "12"
     assert mapper.as_("off", bool) is False
 
@@ -398,11 +492,11 @@ def test_convert_default_fallback_matrix(
     expected: object,
 ) -> None:
     operations = cast("Mapping[str, object]", {"convert": convert_spec})
-    assert mapper._build_apply_convert(value, operations) == expected
+    assert _build_apply_convert_obj(value, operations) == expected
 
 
 def test_convert_sequence_branch_returns_tuple(mapper: type[u]) -> None:
-    converted = mapper._build_apply_convert(
+    converted = _build_apply_convert_obj(
         ("bad",),
         cast("Mapping[str, object]", {"convert": int}),
     )
@@ -422,9 +516,7 @@ def test_transform_option_extract_and_step_helpers(
         "exclude_keys": {"x"},
         "to_json": True,
     }
-    extracted = mapper._extract_transform_options(
-        cast("Mapping[str, object]", opts),
-    )
+    extracted = _extract_transform_options_obj(cast("Mapping[str, object]", opts))
     assert extracted[3] == {"1": "one", "a": "b"}
     monkeypatch.setattr(
         u,
@@ -504,12 +596,12 @@ def test_group_sort_unique_slice_chunk_branches(mapper: type[u]) -> None:
     bad_sort_ops = cast("Mapping[str, object]", {"sort": _raise_value_error})
     bad_sort = mapper._build_apply_sort([1, 2], bad_sort_ops)
     assert bad_sort == [1, 2]
-    sorted_tuple = mapper._build_apply_sort(("b", "a"), {"sort": True})
+    sorted_tuple = _build_apply_sort_obj(("b", "a"), {"sort": True})
     assert sorted_tuple == ("a", "b")
     assert mapper._build_apply_unique(1, {"unique": True}) == 1
-    assert mapper._build_apply_unique((1, 2, 1), {"unique": True}) == (1, 2)
+    assert _build_apply_unique_obj((1, 2, 1), {"unique": True}) == (1, 2)
     assert mapper._build_apply_slice(1, {"slice": (0, 1)}) == 1
-    assert mapper._build_apply_slice((1, 2, 3), {"slice": (1, 3)}) == (2, 3)
+    assert _build_apply_slice_obj((1, 2, 3), {"slice": (1, 3)}) == (2, 3)
     assert mapper._build_apply_chunk(1, {"chunk": 2}) == 1
     assert mapper._build_apply_chunk([1, 2], {"chunk": 0}) == [1, 2]
     assert mapper.build([1, 2], ops=None) == [1, 2]
@@ -573,7 +665,7 @@ def test_construct_transform_and_deep_eq_branches(mapper: type[u]) -> None:
         on_error="skip",
     ) == {"x": ""}
     assert mapper.transform({"a": 1}, map_keys={"a": "A"}).is_success
-    bad_result = mapper.transform(BadMapping())
+    bad_result = _transform_obj(BadMapping())
     assert bad_result.is_failure
     assert "iter exploded" in (bad_result.error or "")
     d = {"a": 1}
@@ -682,7 +774,7 @@ def test_map_flags_collect_and_invert_branches(mapper: type[u]) -> None:
             msg = "bad items"
             raise RuntimeError(msg)
 
-    fail_map = mapper.map_dict_keys(BadItems(), {})
+    fail_map = _map_dict_keys_obj(BadItems(), {})
     assert fail_map.is_failure
     flags = mapper.build_flags_dict(["read"], {"read": "can_read", "w": "can_write"})
     assert flags.is_success
@@ -889,7 +981,7 @@ def test_remaining_uncovered_branches(
     class MaybeModel(BaseModel):
         x: str | None = None
 
-    assert mapper.take(MaybeModel(x=None), "x", default="d") == "d"
+    assert _take_obj(MaybeModel(x=None), "x", default="d") == "d"
     assert mapper.as_("nope", int, default=9) == 9
     assert mapper.agg([{"v": "x"}], "v") == 0
     assert mapper._apply_map_keys({"a": 1}, map_keys={"a": "A"}) == {"A": 1}
@@ -897,7 +989,7 @@ def test_remaining_uncovered_branches(
     class GroupModel(BaseModel):
         kind: str | None = None
 
-    grouped = mapper._build_apply_group([GroupModel(kind=None)], {"group": "kind"})
+    grouped = _build_apply_group_obj([GroupModel(kind=None)], {"group": "kind"})
     assert grouped == {"": [{"kind": None}]}
     assert mapper._build_apply_sort([2, 1], {"sort": 5}) == [2, 1]
 

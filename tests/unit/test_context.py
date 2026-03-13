@@ -120,12 +120,12 @@ class TestFlextContext:
     ) -> None:
         """Test context set/get value operations."""
         context = test_context
-        converted_value: object = (
-            value
-            if isinstance(value, (str, int, float, bool, type(None), list, dict))
-            else str(value)
-        )
-        set_result = context.set(key, converted_value)
+        if isinstance(value, (dict, list)):
+            set_result = context.set(m.ConfigMap(root={key: value}))
+        elif isinstance(value, (str, int, float, bool)):
+            set_result = context.set(key, value)
+        else:
+            set_result = context.set(key, str(value))
         _ = u.Tests.Result.assert_success(set_result)
         expected_value = expected
         FlextTestsUtilities.Tests.ContextHelpers.assert_context_get_success(
@@ -188,7 +188,7 @@ class TestFlextContext:
                 "profile": {"name": "John Doe", "email": "john@example.com"},
             },
         }
-        context.set("nested", nested_data).value
+        context.set(m.ConfigMap(root={"nested": nested_data})).value
         result = context.get("nested")
         _ = u.Tests.Result.assert_success(result)
         retrieved = result.value
@@ -372,8 +372,15 @@ class TestFlextContext:
     ) -> None:
         """Test context with special values."""
         context = test_context
-        converted_value: object = special_value
-        context.set(f"{value_name}_key", converted_value).value
+        converted_value: str | m.ConfigMap
+        if isinstance(special_value, dict):
+            converted_value = m.ConfigMap(root={f"{value_name}_key": special_value})
+        else:
+            converted_value = str(special_value)
+        if isinstance(converted_value, m.ConfigMap):
+            context.set(converted_value).value
+        else:
+            context.set(f"{value_name}_key", converted_value).value
         result = context.get(f"{value_name}_key")
         _ = u.Tests.Result.assert_success(result)
         actual = result.value
@@ -609,8 +616,9 @@ class TestFlextContext:
     def test_context_edge_case_none_value(self, test_context: FlextContext) -> None:
         """Test context with None value."""
         context = test_context
-        result = context.set("key_none", None)
-        _ = u.Tests.Result.assert_failure(result)
+        config_map = m.ConfigMap(root={"key_none": None})
+        result = context.set(config_map)
+        _ = u.Tests.Result.assert_success(result)
 
     def test_context_get_all_scopes(self, test_context: FlextContext) -> None:
         """Test getting all scope registrations."""

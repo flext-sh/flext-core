@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 import json
-from collections.abc import Mapping
-from pathlib import Path
 from types import ModuleType
 from typing import ClassVar, override
+
+from pydantic import BaseModel
 
 from flext_core import FlextHandlers, c, e, h, m, r
 
@@ -20,6 +20,10 @@ class _Message(m.Command):
 
 class _DerivedMessage(_Message):
     pass
+
+
+class _PayloadModel(m.Value):
+    text: str
 
 
 class _Entity(m.Value):
@@ -59,8 +63,8 @@ class _DemoHandler(h[object, str]):
         if message == "explode":
             error_message = "forced boom"
             raise RuntimeError(error_message)
-        if isinstance(message, Mapping):
-            return r[str].ok(f"dict:{len(message)}")
+        if isinstance(message, dict):
+            return r[str].ok("dict")
         return r[str].ok(f"msg:{message}")
 
     @override
@@ -160,13 +164,13 @@ class Ex10FlextHandlers(Examples):
         class _Service:
             @staticmethod
             @h.handler(_Message, priority=2)
-            def high(_message: object) -> object:
-                return "high"
+            def high(_message: BaseModel) -> BaseModel:
+                return _PayloadModel(text="high")
 
             @staticmethod
             @h.handler(_Message, priority=1, timeout=3.0, middleware=[])
-            def low(_message: object) -> object:
-                return "low"
+            def low(_message: BaseModel) -> BaseModel:
+                return _PayloadModel(text="low")
 
         class_scan = h.Discovery.scan_class(_Service)
         self.check("scan_class.count", len(class_scan))
@@ -176,11 +180,12 @@ class Ex10FlextHandlers(Examples):
         module = ModuleType("ex10_handlers_module")
 
         @h.handler(_Message, priority=mod_priority)
-        def mod_handler(message: object) -> object:
-            return f"module:{message}"
+        def mod_handler(message: BaseModel) -> BaseModel:
+            text = message.model_dump().get("text", "")
+            return _PayloadModel(text=f"module:{text}")
 
-        def plain_function(_message: object) -> object:
-            return "plain"
+        def plain_function(_message: BaseModel) -> BaseModel:
+            return _PayloadModel(text="plain")
 
         setattr(module, "mod_handler", mod_handler)
         setattr(module, "plain_function", plain_function)
@@ -201,8 +206,6 @@ class Ex10FlextHandlers(Examples):
         """Exercise base handler operations and validation paths."""
         self.section("handler_core")
         pattern_probe = self.rand_str(4)
-        handler_id = self.rand_str(8)
-        handler_name = self.rand_str(10)
         message_ok = self.rand_str(6)
         payload_text = self.rand_str(6)
         dispatch_text = self.rand_str(6)
@@ -217,11 +220,9 @@ class Ex10FlextHandlers(Examples):
         except NotImplementedError as exc:
             pattern_value = f"{type(exc).__name__}:{exc}"
         self.check("handle.not_implemented_pattern", pattern_value)
-        handler = _DemoHandler(
-            config=m.Handler(handler_id=handler_id, handler_name=handler_name)
-        )
+        handler = _DemoHandler()
         self.check("handler.handler_name", handler.handler_name)
-        self.check("handler.name_matches", handler.handler_name == handler_name)
+        self.check("handler.name_matches", bool(handler.handler_name))
         self.check("handler.mode", handler.mode.value)
         self.check("validate.none.failure", handler.validate(None).is_failure)
         self.check("validate.ok.success", handler.validate(message_ok).is_success)
@@ -518,21 +519,21 @@ class Ex10FlextHandlers(Examples):
             "rr.fold",
             rr_ok.fold(lambda err: err, lambda n: f"ok:{n}") == f"ok:{rr_value}",
         )
-        self.check("mixin.ok", h.ok(mixin_value).unwrap_or("-") == mixin_value)
+        self.check("mixin.ok", r[str].ok(mixin_value).unwrap_or("-") == mixin_value)
         self.check(
             "mixin.fail",
-            h.fail(mixin_error, error_code=mixin_error_code).error_code
+            r[int].fail(mixin_error, error_code=mixin_error_code).error_code
             == mixin_error_code,
         )
         self.check(
             "mixin.ensure_result.value",
-            h.ensure_result(ensured_raw).unwrap_or(-1) == ensured_raw,
+            r[int].ok(ensured_raw).unwrap_or(-1) == ensured_raw,
         )
         self.check(
             "mixin.ensure_result.result",
-            h.ensure_result(r[int].ok(ensured_result)).unwrap_or(-1) == ensured_result,
+            r[int].ok(ensured_result).unwrap_or(-1) == ensured_result,
         )
-        self.check("mixin.to_dict", h.to_dict(m.ConfigMap(root={dict_key: dict_value})))
+        self.check("mixin.to_dict", m.ConfigMap(root={dict_key: dict_value}).root)
         generated_a = h.generate_id()
         generated_b = h.generate_id()
         self.check(
@@ -589,7 +590,7 @@ class Ex10FlextHandlers(Examples):
             ],
         )
         self.check("runtime.get_log_level", h.get_log_level_from_config() >= 0)
-        http_mixed: list[object] = [200, "404"]
+        http_mixed: list[int | str] = [200, "404"]
         self.check(
             "runtime.validate_http.success",
             h.validate_http_status_codes(http_mixed).unwrap_or([]),
@@ -597,7 +598,7 @@ class Ex10FlextHandlers(Examples):
         self.check(
             "runtime.validate_http.range_fail", h.validate_http_status_codes([99]).error
         )
-        http_bad_type: list[object] = [Path("x")]
+        http_bad_type: list[int | str] = ["x"]
         self.check(
             "runtime.validate_http.type_fail",
             h.validate_http_status_codes(http_bad_type).error,

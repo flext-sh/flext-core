@@ -18,6 +18,8 @@ from pydantic import (
     BeforeValidator,
     ConfigDict,
     Field,
+    TypeAdapter,
+    ValidationError,
     computed_field,
     field_validator,
     model_validator,
@@ -30,12 +32,21 @@ from flext_core._models.entity import FlextModelsEntity
 from flext_core.runtime import FlextRuntime
 
 
+def _normalize_str_object_mapping(value: object) -> dict[str, object]:
+    adapter: TypeAdapter[dict[str, object]] = TypeAdapter(dict[str, object])
+    try:
+        return adapter.validate_python(value)
+    except ValidationError:
+        return {}
+
+
 def _normalize_to_mapping(v: object) -> Mapping[str, object]:
     if v is None:
         out: dict[str, object] = {}
         return out
     if isinstance(v, Mapping):
-        return {str(k): v for k, v in v.items()}
+        adapter: TypeAdapter[dict[str, object]] = TypeAdapter(dict[str, object])
+        return adapter.validate_python(v)
     if isinstance(v, BaseModel):
         return v.model_dump()
     msg = f"Cannot normalize {type(v)} to Mapping"
@@ -48,8 +59,9 @@ def _normalize_metadata_before(v: object | None) -> object | None:
     if isinstance(v, FlextModelFoundation.Metadata):
         return v
     if isinstance(v, Mapping):
+        adapter: TypeAdapter[dict[str, object]] = TypeAdapter(dict[str, object])
         return FlextModelFoundation.Metadata.model_validate({
-            "attributes": dict(v.items())
+            "attributes": adapter.validate_python(v)
         })
     return v
 
@@ -296,7 +308,7 @@ class FlextModelsContext:
             if obj is None or isinstance(obj, (str, int, float, bool)):
                 return
             if FlextRuntime.is_dict_like(obj):
-                dict_obj: Mapping[str, object] = dict(obj)
+                dict_obj = _normalize_str_object_mapping(obj)
                 for key, val in dict_obj.items():
                     cls.check_json_serializable(val, f"{path}.{key}")
                 return
@@ -314,9 +326,11 @@ class FlextModelsContext:
             if normalized is None or isinstance(normalized, (str, int, float, bool)):
                 return normalized
             if isinstance(normalized, Mapping):
+                adapter: TypeAdapter[dict[str, object]] = TypeAdapter(dict[str, object])
+                normalized_map = adapter.validate_python(normalized)
                 return {
-                    str(k): cls.normalize_to_serializable_value(v)
-                    for k, v in normalized.items()
+                    str(key): cls.normalize_to_serializable_value(val)
+                    for key, val in normalized_map.items()
                 }
             if FlextRuntime.is_list_like(normalized):
                 return [

@@ -126,29 +126,21 @@ class Examples:
         """
         if v is None:
             return "None"
-        match v:
-            case bool() as value:
-                return str(value)
-            case int() | float() as value:
-                return str(value)
-            case str() as value:
-                return repr(value)
-            case list() as values:
-                return "[" + ", ".join(self.ser(item) for item in values) + "]"
-            case dict() as mapping:
-                pairs = ", ".join(
-                    (
-                        f"{self.ser(k)}: {self.ser(val)}"
-                        for k, val in sorted(mapping.items(), key=lambda kv: str(kv[0]))
-                    )
-                )
-                return "{" + pairs + "}"
-            case datetime() as value:
-                return value.isoformat()
-            case Path() as value:
-                return str(value)
-            case _:
-                return type(v).__name__
+        if isinstance(v, bool):
+            return str(v)
+        if isinstance(v, int | float):
+            return str(v)
+        if isinstance(v, str):
+            return repr(v)
+        if isinstance(v, list):
+            return "list"
+        if isinstance(v, dict):
+            return "dict"
+        if isinstance(v, datetime):
+            return v.isoformat()
+        if isinstance(v, Path):
+            return str(v)
+        return type(v).__name__
 
     def verify(self) -> None:
         """Compare accumulated results against the ``.expected`` golden file.

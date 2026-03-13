@@ -9,6 +9,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Hashable, Mapping, Sequence
+from datetime import datetime
 from enum import StrEnum
 from typing import Protocol, TypeGuard, TypeVar, overload, runtime_checkable
 
@@ -69,6 +70,17 @@ class FlextUtilitiesCollection:
         return str(value)
 
     @staticmethod
+    def _normalize_mapping_items(data: object) -> list[tuple[str, object]]:
+        mapping_adapter: TypeAdapter[dict[str, object]] = TypeAdapter(dict[str, object])
+        normalized_mapping = mapping_adapter.validate_python(data)
+        return list(normalized_mapping.items())
+
+    @staticmethod
+    def _normalize_sequence_items(data: object) -> list[object]:
+        sequence_adapter: TypeAdapter[list[object]] = TypeAdapter(list[object])
+        return sequence_adapter.validate_python(data)
+
+    @staticmethod
     def _is_empty_value(value: object) -> bool:
         """Check if value is considered empty (empty string, empty list, etc.)."""
         if value is None:
@@ -120,7 +132,7 @@ class FlextUtilitiesCollection:
     def _to_batch_scalar(value: object) -> t.Scalar:
         if value is None:
             return ""
-        if isinstance(value, t.SCALAR_TYPES):
+        if isinstance(value, (str, int, float, bool, datetime)):
             return value
         return str(value)
 
@@ -276,13 +288,18 @@ class FlextUtilitiesCollection:
         """Create validator that coerces dict values to bool."""
 
         def validator(data: object) -> Mapping[str, bool]:
-            if not isinstance(data, Mapping):
+            mapping_adapter: TypeAdapter[dict[str, object]] = TypeAdapter(
+                dict[str, object]
+            )
+            try:
+                normalized_map = mapping_adapter.validate_python(data)
+            except ValidationError as exc:
                 msg = f"Expected mapping, got {data.__class__.__name__}"
-                raise TypeError(msg)
-            return {
-                str(k): FlextUtilitiesCollection._coerce_value_to_bool(v)
-                for k, v in data.items()
-            }
+                raise TypeError(msg) from exc
+            normalized: dict[str, bool] = {}
+            for key, val in normalized_map.items():
+                normalized[key] = FlextUtilitiesCollection._coerce_value_to_bool(val)
+            return normalized
 
         return validator
 
@@ -313,13 +330,18 @@ class FlextUtilitiesCollection:
         """Create validator that coerces dict values to float."""
 
         def validator(data: object) -> Mapping[str, float]:
-            if not isinstance(data, Mapping):
+            mapping_adapter: TypeAdapter[dict[str, object]] = TypeAdapter(
+                dict[str, object]
+            )
+            try:
+                normalized_map = mapping_adapter.validate_python(data)
+            except ValidationError as exc:
                 msg = f"Expected mapping, got {data.__class__.__name__}"
-                raise TypeError(msg)
-            return {
-                str(k): FlextUtilitiesCollection._coerce_value_to_float(v)
-                for k, v in data.items()
-            }
+                raise TypeError(msg) from exc
+            normalized: dict[str, float] = {}
+            for key, val in normalized_map.items():
+                normalized[key] = FlextUtilitiesCollection._coerce_value_to_float(val)
+            return normalized
 
         return validator
 
@@ -328,13 +350,18 @@ class FlextUtilitiesCollection:
         """Create validator that coerces dict values to int."""
 
         def validator(data: object) -> Mapping[str, int]:
-            if not isinstance(data, Mapping):
+            mapping_adapter: TypeAdapter[dict[str, object]] = TypeAdapter(
+                dict[str, object]
+            )
+            try:
+                normalized_map = mapping_adapter.validate_python(data)
+            except ValidationError as exc:
                 msg = f"Expected mapping, got {data.__class__.__name__}"
-                raise TypeError(msg)
-            return {
-                str(k): FlextUtilitiesCollection._coerce_value_to_int(v)
-                for k, v in data.items()
-            }
+                raise TypeError(msg) from exc
+            normalized: dict[str, int] = {}
+            for key, val in normalized_map.items():
+                normalized[key] = FlextUtilitiesCollection._coerce_value_to_int(val)
+            return normalized
 
         return validator
 
@@ -343,13 +370,18 @@ class FlextUtilitiesCollection:
         """Create validator that coerces dict values to str."""
 
         def validator(data: object) -> Mapping[str, str]:
-            if not isinstance(data, Mapping):
+            mapping_adapter: TypeAdapter[dict[str, object]] = TypeAdapter(
+                dict[str, object]
+            )
+            try:
+                normalized_map = mapping_adapter.validate_python(data)
+            except ValidationError as exc:
                 msg = f"Expected mapping, got {data.__class__.__name__}"
-                raise TypeError(msg)
-            return {
-                str(k): FlextUtilitiesCollection._coerce_value_to_str(v)
-                for k, v in data.items()
-            }
+                raise TypeError(msg) from exc
+            normalized: dict[str, str] = {}
+            for key, val in normalized_map.items():
+                normalized[key] = FlextUtilitiesCollection._coerce_value_to_str(val)
+            return normalized
 
         return validator
 
@@ -366,13 +398,16 @@ class FlextUtilitiesCollection:
         """
 
         def validator(data: object) -> dict[str, E]:
-            if not isinstance(data, dict):
+            mapping_adapter: TypeAdapter[dict[str, object]] = TypeAdapter(
+                dict[str, object]
+            )
+            try:
+                normalized_map = mapping_adapter.validate_python(data)
+            except ValidationError as exc:
                 msg = f"Expected dict, got {data.__class__.__name__}"
-                raise TypeError(msg)
+                raise TypeError(msg) from exc
             result: dict[str, E] = {}
-            for k_raw in data:
-                v_raw = data[k_raw]
-                k = str(k_raw)
+            for k, v_raw in normalized_map.items():
                 if isinstance(v_raw, enum_cls):
                     result[k] = v_raw
                 elif isinstance(v_raw, str):
@@ -460,11 +495,17 @@ class FlextUtilitiesCollection:
         """
 
         def validator(data: object) -> list[E]:
-            if isinstance(data, str) or not isinstance(data, Sequence):
+            if isinstance(data, str):
                 msg = f"Expected sequence, got {data.__class__.__name__}"
                 raise TypeError(msg)
+            sequence_adapter: TypeAdapter[list[object]] = TypeAdapter(list[object])
+            try:
+                normalized_items = sequence_adapter.validate_python(data)
+            except ValidationError as exc:
+                msg = f"Expected sequence, got {data.__class__.__name__}"
+                raise TypeError(msg) from exc
             result: list[E] = []
-            for v_raw in data:
+            for v_raw in normalized_items:
                 if isinstance(v_raw, enum_cls):
                     result.append(v_raw)
                 elif isinstance(v_raw, str):

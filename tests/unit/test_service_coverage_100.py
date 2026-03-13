@@ -19,10 +19,6 @@ class TestService(s[str]):
 
     __test__ = False
 
-    def __init__(self, **data: t.Scalar) -> None:
-        """Initialize test service."""
-        super().__init__(**data)
-
     @override
     def execute(self, **_kwargs: t.Scalar) -> r[str]:
         """Execute service."""
@@ -33,10 +29,6 @@ class TestServiceWithValidation(s[str]):
     """Test service with validation."""
 
     __test__ = False
-
-    def __init__(self, **data: t.Scalar) -> None:
-        """Initialize test service."""
-        super().__init__(**data)
 
     @override
     def execute(self, **_kwargs: t.Scalar) -> r[str]:

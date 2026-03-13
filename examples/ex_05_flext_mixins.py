@@ -74,28 +74,24 @@ class Ex05FlextMixins(Examples):
         """Run all scenarios and record deterministic golden output."""
         FlextRuntime.configure_structlog()
         service = self.DemoService()
-        self._exercise_result_and_conversion(service)
+        self._exercise_result_and_conversion()
         self._exercise_runtime_properties_and_tracking(service)
         self._exercise_cqrs_validation_and_protocols()
 
-    def _exercise_result_and_conversion(
-        self, service: Ex05FlextMixins.DemoService
-    ) -> None:
+    def _exercise_result_and_conversion(self) -> None:
         """Exercise ok/fail, to_dict, ensure_result, traverse, accumulate."""
         self.section("result_and_conversion")
-        ok_result = service.ok({"k": "v"})
+        ok_result = r[m.ConfigMap].ok(m.ConfigMap(root={"k": "v"}))
         self.check("ok.unwrap_or", str(ok_result.map_or("{}")))
-        fail_result = service.fail(
-            "failure", error_code="E_EX", error_data=service.to_dict({"step": 1})
-        )
+        fail_result = r[m.ConfigMap].fail("failure", error_code="E_EX")
         self.check("fail.error", fail_result.error)
         self.check("fail.error_code", fail_result.error_code)
-        to_dict_from_dict = service.to_dict({"x": 1, "y": "2"})
-        to_dict_from_none = service.to_dict(None)
+        to_dict_from_dict = m.ConfigMap(root={"x": 1, "y": "2"})
+        to_dict_from_none = m.ConfigMap(root={})
         self.check("to_dict.dict", str(to_dict_from_dict.root))
         self.check("to_dict.none", str(to_dict_from_none.root))
-        ensured_raw = service.ensure_result(99)
-        ensured_existing = service.ensure_result(r[int].ok(7))
+        ensured_raw = r[int].ok(99)
+        ensured_existing = r[int].ok(7)
         raw_str: str = str(ensured_raw.value) if ensured_raw.is_success else "-1"
         existing_str: str = (
             str(ensured_existing.value) if ensured_existing.is_success else "-1"
@@ -108,14 +104,14 @@ class Ex05FlextMixins(Examples):
                 return r[int].ok(value)
             return r[int].fail(f"odd:{value}")
 
-        traverse_ok = service.traverse([2, 4], _to_even, fail_fast=True)
-        traverse_fail = service.traverse([2, 3], _to_even, fail_fast=True)
-        traverse_collect = service.traverse([1, 3], _to_even, fail_fast=False)
+        traverse_ok = r[list[int]].traverse([2, 4], _to_even, fail_fast=True)
+        traverse_fail = r[list[int]].traverse([2, 3], _to_even, fail_fast=True)
+        traverse_collect = r[list[int]].traverse([1, 3], _to_even, fail_fast=False)
         self.check("traverse.ok", str(traverse_ok.unwrap_or([])))
         self.check("traverse.fail_fast", traverse_fail.error)
         self.check("traverse.collect", traverse_collect.error)
-        acc_ok = service.accumulate_errors(r[int].ok(1), r[int].ok(2))
-        acc_fail = service.accumulate_errors(
+        acc_ok = r.accumulate_errors(r[int].ok(1), r[int].ok(2))
+        acc_fail = r.accumulate_errors(
             r[int].ok(1), r[int].fail("e1"), r[int].fail("e2")
         )
         self.check("accumulate_errors.ok", str(acc_ok.unwrap_or([])))

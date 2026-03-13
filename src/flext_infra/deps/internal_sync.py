@@ -10,6 +10,8 @@ import shutil
 from collections.abc import Mapping, MutableMapping
 from pathlib import Path
 
+from pydantic import TypeAdapter, ValidationError
+
 from flext_core import FlextLogger, r
 from flext_infra import (
     FlextInfraUtilitiesSubprocess,
@@ -17,7 +19,6 @@ from flext_infra import (
     c,
     m,
     p,
-    t,
     u,
 )
 
@@ -195,39 +196,24 @@ class FlextInfraInternalDependencySyncService:
                 data_result.error or f"failed to read {pyproject}",
             )
         data = data_result.value
-        tool = data.get(c.Infra.Toml.TOOL)
-        poetry = tool.get(c.Infra.Toml.POETRY) if isinstance(tool, dict) else None
-        empty_deps: dict[str, t.Infra.InfraValue] = {}
-        deps_raw = (
-            poetry.get(c.Infra.Toml.DEPENDENCIES)
-            if isinstance(poetry, dict)
-            else empty_deps
-        )
-        deps: dict[str, t.Infra.InfraValue] = (
-            deps_raw if isinstance(deps_raw, dict) else {}
-        )
+        tool = self._normalize_str_object_mapping(data.get(c.Infra.Toml.TOOL))
+        poetry = self._normalize_str_object_mapping(tool.get(c.Infra.Toml.POETRY))
+        deps = self._normalize_str_object_mapping(poetry.get(c.Infra.Toml.DEPENDENCIES))
         result: MutableMapping[str, Path] = {}
         for dep_name, dep_value in deps.items():
-            if not isinstance(dep_value, dict):
+            dep_value_map = self._normalize_str_object_mapping(dep_value)
+            if not dep_value_map:
                 continue
-            dep_path = dep_value.get(c.Infra.Toml.PATH)
+            dep_path = dep_value_map.get(c.Infra.Toml.PATH)
             if not isinstance(dep_path, str):
                 continue
             repo_name = self.is_internal_path_dep(dep_path)
             if repo_name is None:
                 continue
             result[dep_name] = project_root / ".flext-deps" / repo_name
-        project_obj = data.get(c.Infra.Toml.PROJECT)
-        project_deps_raw = (
-            project_obj.get(c.Infra.Toml.DEPENDENCIES)
-            if isinstance(project_obj, dict)
-            else None
-        )
-        project_deps: list[str] = (
-            [dep for dep in project_deps_raw if isinstance(dep, str)]
-            if isinstance(project_deps_raw, list)
-            else []
-        )
+        project_obj = self._normalize_str_object_mapping(data.get(c.Infra.Toml.PROJECT))
+        project_deps_raw = project_obj.get(c.Infra.Toml.DEPENDENCIES)
+        project_deps = self._normalize_string_list(project_deps_raw)
         for dep in project_deps:
             if " @ " not in dep:
                 continue
@@ -340,21 +326,42 @@ class FlextInfraInternalDependencySyncService:
                 data_result.error or "failed to read repository map",
             )
         data = data_result.value
-        repos_obj = data.get("repo", {})
-        if not isinstance(repos_obj, dict):
+        repos_obj = self._normalize_str_object_mapping(data.get("repo", {}))
+        if not repos_obj:
             return r[Mapping[str, m.Infra.Github.RepoUrls]].ok({})
         result: MutableMapping[str, m.Infra.Github.RepoUrls] = {}
         for repo_name, values in repos_obj.items():
-            if not isinstance(values, dict):
+            values_map = self._normalize_str_object_mapping(values)
+            if not values_map:
                 continue
-            ssh_url = str(values.get("ssh_url", ""))
-            https_url = str(values.get("https_url", self.ssh_to_https(ssh_url)))
+            ssh_url = str(values_map.get("ssh_url", ""))
+            https_url = str(values_map.get("https_url", self.ssh_to_https(ssh_url)))
             if ssh_url:
                 result[repo_name] = m.Infra.Github.RepoUrls(
                     ssh_url=ssh_url,
                     https_url=https_url,
                 )
         return r[Mapping[str, m.Infra.Github.RepoUrls]].ok(result)
+
+    @staticmethod
+    def _normalize_str_object_mapping(value: object) -> dict[str, object]:
+        try:
+            adapter: TypeAdapter[dict[str, object]] = TypeAdapter(dict[str, object])
+            return adapter.validate_python(value)
+        except ValidationError:
+            return {}
+
+    @staticmethod
+    def _normalize_string_list(value: object) -> list[str]:
+        try:
+            adapter: TypeAdapter[list[str]] = TypeAdapter(list[str])
+            return adapter.validate_python(value)
+        except ValidationError:
+            if not isinstance(value, list):
+                return []
+            value_adapter: TypeAdapter[list[object]] = TypeAdapter(list[object])
+            raw_items = value_adapter.validate_python(value)
+            return [str(item) for item in raw_items]
 
     def resolve_ref(self, project_root: Path) -> str:
         """Resolve dependency sync git reference for current environment."""

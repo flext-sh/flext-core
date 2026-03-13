@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_core import FlextContainer, FlextLogger, FlextRuntime, c
+from flext_core import FlextContainer, FlextLogger, FlextRuntime, c, r
 
 from .shared import Examples
 
@@ -13,6 +13,10 @@ FlextRuntime.configure_structlog()
 
 class Ex03FlextLogger(Examples):
     """Golden-file tests for ``FlextLogger`` public API."""
+
+    @staticmethod
+    def _logged(result: r[bool] | None) -> bool:
+        return True if result is None else result.is_success
 
     @override
     def exercise(self) -> None:
@@ -40,14 +44,13 @@ class Ex03FlextLogger(Examples):
         """Exercise global context bind, unbind, and clear."""
         self.section("global_context")
         logger = FlextLogger.create_module_logger("examples.ex_03.global")
-        result_logger = logger.with_result()
         self.check(
             "bind_global_context.ok",
             FlextLogger.bind_global_context(
                 app_name="flext-core", correlation_id="g-001"
             ).is_success,
         )
-        self.check("global.info.ok", result_logger.info("global bound").is_success)
+        self.check("global.info.ok", self._logged(logger.info("global bound")))
         self.check(
             "unbind_global_context.ok",
             FlextLogger.unbind_global_context("correlation_id").is_success,
@@ -60,7 +63,6 @@ class Ex03FlextLogger(Examples):
         """Exercise scoped context management."""
         self.section("scoped_context")
         logger = FlextLogger.create_module_logger("examples.ex_03.scope")
-        result_logger = logger.with_result()
         application_scope = c.Context.SCOPE_APPLICATION
         request_scope = c.Context.SCOPE_REQUEST
         operation_scope = c.Context.SCOPE_OPERATION
@@ -79,7 +81,7 @@ class Ex03FlextLogger(Examples):
         with FlextLogger.scoped_context(request_scope, tenant="acme"):
             self.check(
                 "scoped_context.info.ok",
-                result_logger.info("inside scoped context").is_success,
+                self._logged(logger.info("inside scoped context")),
             )
         self.check(
             "clear_scope.application.ok",
@@ -97,13 +99,12 @@ class Ex03FlextLogger(Examples):
         """Exercise level-specific context binding."""
         self.section("level_context")
         logger = FlextLogger.create_module_logger("examples.ex_03.level")
-        result_logger = logger.with_result()
         self.check(
             "bind_context_for_level.ok",
             FlextLogger.bind_context_for_level("INFO", level_tag="l1").is_success,
         )
         self.check(
-            "level.info.ok", result_logger.info("info with level context").is_success
+            "level.info.ok", self._logged(logger.info("info with level context"))
         )
         self.check(
             "unbind_context_for_level.ok",
@@ -115,18 +116,17 @@ class Ex03FlextLogger(Examples):
         self.section("container")
         container = FlextContainer()
         logger = FlextLogger.for_container(container, level="DEBUG", worker="w-1")
-        result_logger = logger.with_result()
         self.check("for_container.type", type(logger).__name__)
         self.check(
             "for_container.debug.ok",
-            result_logger.debug("for_container debug").is_success,
+            self._logged(logger.debug("for_container debug")),
         )
         with FlextLogger.with_container_context(
             container, level="INFO", feature="demo"
         ):
             self.check(
                 "with_container_context.info.ok",
-                result_logger.info("container scope").is_success,
+                self._logged(logger.info("container scope")),
             )
 
     def _exercise_instance_methods(self) -> None:
@@ -141,19 +141,18 @@ class Ex03FlextLogger(Examples):
         self.check("unbind.type", type(unbound).__name__)
         safe = unbound.unbind("missing", "component", safe=True)
         self.check("try_unbind.type", type(safe).__name__)
-        adapter = safe.with_result()
-        self.check("with_result.type", type(adapter).__name__)
-        self.check("trace.ok", adapter.trace("trace value=%s", 1, key="t").is_success)
-        self.check("debug.ok", adapter.debug("debug value=%s", 2, key="d").is_success)
-        self.check("info.ok", adapter.info("info value=%s", 3, key="i").is_success)
+        self.check("with_result.type", type(safe).__name__)
+        self.check("trace.ok", self._logged(safe.trace("trace value=%s", 1, key="t")))
+        self.check("debug.ok", self._logged(safe.debug("debug value=%s", 2, key="d")))
+        self.check("info.ok", self._logged(safe.info("info value=%s", 3, key="i")))
         self.check(
-            "warning.ok", adapter.warning("warn value=%s", 4, key="w").is_success
+            "warning.ok", self._logged(safe.warning("warn value=%s", 4, key="w"))
         )
-        self.check("error.ok", adapter.error("error value=%s", 6, key="e").is_success)
+        self.check("error.ok", self._logged(safe.error("error value=%s", 6, key="e")))
         self.check(
-            "critical.ok", adapter.critical("critical value=%s", 7, key="c").is_success
+            "critical.ok", self._logged(safe.error("critical value=%s", 7, key="c"))
         )
-        self.check("log.ok", adapter.info("log value=%s", 8, key="l").is_success)
+        self.check("log.ok", self._logged(safe.info("log value=%s", 8, key="l")))
         try:
             boom_msg = "boom"
             raise ValueError(boom_msg)
@@ -169,41 +168,42 @@ class Ex03FlextLogger(Examples):
             self.check("build_exception_context.type", type(context_map).__name__)
             self.check(
                 "exception.ok",
-                adapter.exception(
-                    "exception path",
-                    exception=err,
-                    exc_info=True,
-                    source="demo_instance_methods",
-                ).is_success,
+                self._logged(
+                    safe.exception(
+                        "exception path",
+                        exception=err,
+                        exc_info=True,
+                        source="demo_instance_methods",
+                    )
+                ),
             )
 
     def _exercise_performance_tracker(self) -> None:
         """Exercise PerformanceTracker context manager."""
         self.section("performance_tracker")
         logger = FlextLogger.create_module_logger("examples.ex_03.performance")
-        result_logger = logger.with_result()
         with FlextLogger.PerformanceTracker(logger, "op.example"):
             self.check(
                 "performance_tracker.body.ok",
-                result_logger.info("within tracker").is_success,
+                self._logged(logger.info("within tracker")),
             )
 
     def _exercise_result_adapter(self) -> None:
         """Exercise ResultAdapter wrapper methods."""
         self.section("result_adapter")
         logger = FlextLogger.create_module_logger("examples.ex_03.adapter")
-        adapter = logger.with_result()
-        self.check("adapter.name", adapter.name)
-        self.check("adapter.with_result.idempotent", adapter.with_result() is adapter)
-        rebound = adapter.bind(adapter_key="v")
+        self.check("adapter.name", logger.name)
+        rebound = logger.bind(adapter_key="v")
         self.check("adapter.bind.type", type(rebound).__name__)
-        self.check("adapter.trace.ok", adapter.trace("adapter trace").is_success)
-        self.check("adapter.debug.ok", adapter.debug("adapter debug").is_success)
-        self.check("adapter.info.ok", adapter.info("adapter info").is_success)
-        self.check("adapter.warning.ok", adapter.warning("adapter warning").is_success)
-        self.check("adapter.error.ok", adapter.error("adapter error").is_success)
+        self.check("adapter.trace.ok", self._logged(logger.trace("adapter trace")))
+        self.check("adapter.debug.ok", self._logged(logger.debug("adapter debug")))
+        self.check("adapter.info.ok", self._logged(logger.info("adapter info")))
         self.check(
-            "adapter.critical.ok", adapter.critical("adapter critical").is_success
+            "adapter.warning.ok", self._logged(logger.warning("adapter warning"))
+        )
+        self.check("adapter.error.ok", self._logged(logger.error("adapter error")))
+        self.check(
+            "adapter.critical.ok", self._logged(logger.error("adapter critical"))
         )
         try:
             adapter_msg = "adapter boom"
@@ -211,9 +211,7 @@ class Ex03FlextLogger(Examples):
         except RuntimeError as err:
             self.check(
                 "adapter.exception.ok",
-                adapter.exception(
-                    "adapter exception", exception=err, exc_info=True
-                ).is_success,
+                self._logged(logger.exception("adapter exception", exception=err)),
             )
 
 

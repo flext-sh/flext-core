@@ -41,6 +41,14 @@ class FlextUtilitiesModel:
     )
 
     @staticmethod
+    def _normalize_str_object_mapping(value: object) -> dict[str, object]:
+        adapter: TypeAdapter[dict[str, object]] = TypeAdapter(dict[str, object])
+        try:
+            return adapter.validate_python(value)
+        except ValidationError:
+            return {}
+
+    @staticmethod
     def _normalize_to_pydantic_value(
         value: object,
     ) -> t.Scalar | list[t.Primitives]:
@@ -55,43 +63,47 @@ class FlextUtilitiesModel:
             t.PydanticConfigValue: Pydantic-safe value
 
         """
-        match value:
-            case None:
-                return ""
-            case bool() | int() | float() | str():
-                return value
-            case list() as items:
-                normalized_items: list[t.Primitives] = []
-                for item in items:
-                    if item is None:
-                        normalized_items.append("")
-                        continue
-                    try:
-                        normalized_items.append(
-                            FlextUtilitiesModel._pydantic_scalar_adapter.validate_python(
-                                item
-                            )
+        if value is None:
+            return ""
+        if isinstance(value, (bool, int, float, str)):
+            return value
+        if isinstance(value, list):
+            list_adapter: TypeAdapter[list[object]] = TypeAdapter(list[object])
+            list_items = list_adapter.validate_python(value)
+            normalized_items: list[t.Primitives] = []
+            for item in list_items:
+                if item is None:
+                    normalized_items.append("")
+                    continue
+                try:
+                    normalized_items.append(
+                        FlextUtilitiesModel._pydantic_scalar_adapter.validate_python(
+                            item
                         )
-                    except ValidationError:
-                        normalized_items.append(str(item))
-                return normalized_items
-            case tuple() as items:
-                normalized_tuple_items: list[t.Primitives] = []
-                for item in items:
-                    if item is None:
-                        normalized_tuple_items.append("")
-                        continue
-                    try:
-                        normalized_tuple_items.append(
-                            FlextUtilitiesModel._pydantic_scalar_adapter.validate_python(
-                                item
-                            )
+                    )
+                except ValidationError:
+                    normalized_items.append(str(item))
+            return normalized_items
+        if isinstance(value, tuple):
+            tuple_adapter: TypeAdapter[tuple[object, ...]] = TypeAdapter(
+                tuple[object, ...]
+            )
+            tuple_items = tuple_adapter.validate_python(value)
+            normalized_tuple_items: list[t.Primitives] = []
+            for item in tuple_items:
+                if item is None:
+                    normalized_tuple_items.append("")
+                    continue
+                try:
+                    normalized_tuple_items.append(
+                        FlextUtilitiesModel._pydantic_scalar_adapter.validate_python(
+                            item
                         )
-                    except ValidationError:
-                        normalized_tuple_items.append(str(item))
-                return normalized_tuple_items
-            case _:
-                return str(value)
+                    )
+                except ValidationError:
+                    normalized_tuple_items.append(str(item))
+            return normalized_tuple_items
+        return str(value)
 
     @staticmethod
     def dump(
@@ -268,7 +280,10 @@ class FlextUtilitiesModel:
                 elif isinstance(v, (str, int, float, bool)):
                     safe_attrs[str_k] = v
                 elif FlextRuntime.is_dict_like(v):
-                    safe_attrs[str_k] = json.dumps(dict(v))
+                    nested_mapping = FlextUtilitiesModel._normalize_str_object_mapping(
+                        v
+                    )
+                    safe_attrs[str_k] = json.dumps(nested_mapping)
                 else:
                     safe_attrs[str_k] = str(v)
             return m.Metadata(attributes=safe_attrs)
@@ -351,7 +366,11 @@ class FlextUtilitiesModel:
         if isinstance(obj, Mapping):
             try:
                 normalized_mapping: dict[str, object] = {}
-                for key, value in obj.items():
+                mapping_adapter: TypeAdapter[dict[str, object]] = TypeAdapter(
+                    dict[str, object]
+                )
+                obj_mapping = mapping_adapter.validate_python(obj)
+                for key, value in obj_mapping.items():
                     normalized_mapping_value: object = (
                         FlextRuntime.normalize_to_container(value)
                         if isinstance(
@@ -367,7 +386,11 @@ class FlextUtilitiesModel:
         # Fallback to general value normalization
         normalized = FlextRuntime.normalize_to_container(obj)
         if isinstance(normalized, Mapping):
-            return m.ConfigMap(root=dict(normalized.items()))
+            normalized_obj: object = normalized
+            normalized_map = FlextUtilitiesModel._normalize_str_object_mapping(
+                normalized_obj
+            )
+            return m.ConfigMap(root=normalized_map)
         return m.ConfigMap(root={})
 
 

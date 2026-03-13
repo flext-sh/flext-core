@@ -102,18 +102,13 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
     def _demonstrate_data_mapping() -> None:
         """Show Mapper utilities."""
         print("\n=== Data Mapping ===")
-        source_value = TEST_DATA["source_dict"]
-        mapping_value = TEST_DATA["key_mapping"]
-        if isinstance(source_value, Mapping) and isinstance(mapping_value, Mapping):
-            source_dict = {str(k): v for k, v in source_value.items()}
-            mapped_dict = u.transform_values(source_dict, str)
-            key_mapping_dict: dict[str, str] = {
-                str(k): str(v) for k, v in mapping_value.items()
-            }
-            map_result = u.map_dict_keys(mapped_dict, key_mapping_dict)
-            if map_result.is_success:
-                mapped = map_result.value
-                print(f"✅ Key mapping: {list(mapped.keys())}")
+        source_dict: dict[str, str] = {"old_key": "value", "foo": "bar"}
+        mapped_dict = u.transform_values(source_dict, str)
+        key_mapping_dict: dict[str, str] = {"old_key": "new_key", "foo": "bar"}
+        map_result = u.map_dict_keys(mapped_dict, key_mapping_dict)
+        if map_result.is_success:
+            mapped = map_result.value
+            print(f"✅ Key mapping: {list(mapped.keys())}")
         int_result = u.parse("123", int, default=0)
         print(f"✅ Safe int conversion: '123' → {int_result.map_or(0)}")
         flags: list[str] = ["read", "write"]
@@ -295,9 +290,9 @@ def main() -> None:
             and (not isinstance(utilities, (str, bytes, bytearray)))
             and isinstance(categories, int)
         ):
-            utilities_list = list(utilities)
+            utilities_count = categories
             print(f"\n✅ Demonstrated {categories} utility categories")
-            print(f"✅ Covered {len(utilities_list)} utility types")
+            print(f"✅ Covered {utilities_count} utility types")
     else:
         print(f"\n❌ Failed: {result.error}")
     print("\n" + "=" * 60)

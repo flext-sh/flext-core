@@ -4,11 +4,8 @@ from __future__ import annotations
 
 from typing import override
 
-from returns.io import IOFailure, IOSuccess
-from returns.maybe import Nothing, Some
-
 from examples.shared import Examples
-from flext_core import e, r, t
+from flext_core import r, t
 
 
 class Ex01r(Examples):
@@ -77,30 +74,21 @@ class Ex01r(Examples):
         self.section("conversions_and_models")
         ok_value = r[int].ok(8)
         fail_value = r[int].fail("io-err")
-        self.check("to_maybe.success", ok_value.to_maybe().unwrap())
-        self.check("to_maybe.failure", fail_value.to_maybe().value_or(123))
+        self.check("value.success", ok_value.value)
+        self.check("value.failure.unwrap_or", fail_value.unwrap_or(123))
+        self.check("map.success", ok_value.map(lambda value: value + 1).unwrap_or(-1))
+        self.check("map.failure", fail_value.map(lambda value: value + 1).is_failure)
         self.check(
-            "from_maybe.some", r[str].from_maybe(Some("x"), "empty").unwrap_or("none")
+            "flat_map.success",
+            ok_value.flat_map(lambda value: r[int].ok(value * 2)).unwrap_or(-1),
         )
-        self.check("from_maybe.nothing", r[str].from_maybe(Nothing, "empty").error)
-        io_value = ok_value.to_io()
-        self.check("to_io.success.type", type(io_value).__name__)
-        try:
-            _ = fail_value.to_io()
-            self.check("to_io.failure.raises", False)
-        except e.ValidationError as exc:
-            self.check("to_io.failure.raises", True)
-            self.check("to_io.failure.type", type(exc).__name__)
-        self.check("to_io_result.success.type", type(ok_value.to_io_result()).__name__)
         self.check(
-            "to_io_result.failure.type", type(fail_value.to_io_result()).__name__
+            "map_error.failure",
+            fail_value.map_error(lambda err: f"mapped:{err}").error,
         )
-        from_io_ok = r[int].from_io_result(IOSuccess(11))
-        from_io_fail = r[int].from_io_result(IOFailure("x"))
-        self.check("from_io_result.success", from_io_ok.is_success)
-        self.check("from_io_result.failure", from_io_fail.error)
         self.check(
-            "from_io_result.invalid", r[str].from_io_result("bad-io-result").error
+            "lash.failure",
+            fail_value.lash(lambda err: r[int].ok(len(err))).unwrap_or(-1),
         )
         valid_data: dict[str, t.Scalar] = {"name": "Ada", "age": 30}
         invalid_data: dict[str, t.Scalar] = {"name": "Ada", "age": "bad"}
@@ -163,9 +151,9 @@ class Ex01r(Examples):
         self.check("create_from_callable.success", callable_ok.unwrap_or("fallback"))
         self.check("create_from_callable.failure.code", callable_fail.error_code)
         self.check("create_from_callable.none.error", callable_none.error)
-        self.check("is_success_result.ok", r.is_success_result(ok_result))
-        self.check("is_success_result.fail", r.is_success_result(failed))
-        self.check("is_failure_result.fail", r.is_failure_result(failed))
+        self.check("is_success_result.scalar", r.is_success_result("ok"))
+        self.check("is_success_result.int", r.is_success_result(1))
+        self.check("is_failure_result.scalar", r.is_failure_result("plain"))
         self.check("is_failure_result.string", r.is_failure_result("plain"))
 
     def properties_and_unwrap(self) -> None:
@@ -178,7 +166,7 @@ class Ex01r(Examples):
         self.check("prop.failure.is_success", failure.is_success)
         self.check("prop.failure.is_failure", failure.is_failure)
         self.check("prop.success.value", success.value)
-        self.check("prop.success.result_self", success.result is success)
+        self.check("prop.success.value_readable", success.value == "value")
         self.check("prop.failure.error", failure.error)
         self.check("prop.failure.error_code", failure.error_code)
         self.check("prop.failure.error_data", failure.error_data)

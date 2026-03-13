@@ -6,8 +6,10 @@ import fnmatch
 from collections.abc import Callable, Mapping
 from pathlib import Path
 
+from pydantic import TypeAdapter, ValidationError
+
 from flext_core import r
-from flext_infra import c, m, t, u
+from flext_infra import c, m, u
 from flext_infra.refactor._base_rule import FlextInfraRefactorRule
 from flext_infra.refactor.rules.class_nesting import ClassNestingRefactorRule
 from flext_infra.refactor.validation import FlextInfraRefactorRuleDefinitionValidator
@@ -20,20 +22,18 @@ class FlextInfraRefactorRuleLoader:
         """Initialize with path to the refactor engine configuration file."""
         self.config_path = config_path
 
-    def load_config(self) -> r[Mapping[str, t.Container]]:
+    def load_config(self) -> r[Mapping[str, object]]:
         """Load and validate the refactor engine configuration."""
         try:
             loaded = u.Infra.safe_load_yaml(self.config_path)
             normalized = dict(loaded)
             scope_raw = normalized.get("refactor_engine")
-            scope_map: object = (
-                dict(scope_raw) if isinstance(scope_raw, Mapping) else {}
-            )
+            scope_map = self._normalize_str_object_mapping(scope_raw)
             scope = m.Infra.Refactor.EngineConfig.model_validate(scope_map)
             normalized["refactor_engine"] = scope.model_dump(mode="python")
-            return r[Mapping[str, t.Container]].ok(normalized)
+            return r[Mapping[str, object]].ok(normalized)
         except (OSError, TypeError, ValueError) as exc:
-            return r[Mapping[str, t.Container]].fail(f"Failed to load config: {exc}")
+            return r[Mapping[str, object]].fail(f"Failed to load config: {exc}")
 
     def extract_engine_file_filters(
         self,
@@ -134,23 +134,37 @@ class FlextInfraRefactorRuleLoader:
         self,
         config: object,
     ) -> m.Infra.Refactor.EngineConfig:
-        scope_raw = config.get("refactor_engine")
-        scope_map: object = dict(scope_raw) if isinstance(scope_raw, Mapping) else {}
+        config_map = self._normalize_str_object_mapping(config)
+        scope_raw = config_map.get("refactor_engine")
+        scope_map = self._normalize_str_object_mapping(scope_raw)
         return m.Infra.Refactor.EngineConfig.model_validate(scope_map)
 
     @staticmethod
     def _coerce_rule_definitions(
         value: object | None,
     ) -> list[dict[str, object]]:
-        if not isinstance(value, list):
+        try:
+            list_adapter: TypeAdapter[list[object]] = TypeAdapter(list[object])
+            entries = list_adapter.validate_python(value)
+        except ValidationError:
             return []
         definitions: list[dict[str, object]] = []
-        for item in value:
-            if not isinstance(item, Mapping):
+        for item in entries:
+            normalized = FlextInfraRefactorRuleLoader._normalize_str_object_mapping(
+                item
+            )
+            if not normalized:
                 continue
-            normalized = {str(key): raw_value for key, raw_value in item.items()}
             definitions.append(normalized)
         return definitions
+
+    @staticmethod
+    def _normalize_str_object_mapping(value: object) -> dict[str, object]:
+        try:
+            adapter: TypeAdapter[dict[str, object]] = TypeAdapter(dict[str, object])
+            return adapter.validate_python(value)
+        except ValidationError:
+            return {}
 
 
 __all__ = ["FlextInfraRefactorRule", "FlextInfraRefactorRuleLoader"]

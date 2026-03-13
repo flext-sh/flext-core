@@ -12,14 +12,18 @@ import time
 
 import pytest
 
-from flext_core import FlextLogger
-from tests.test_utils import assertion_helpers
+from flext_core import FlextLogger, r
 
 EXPECTED_BULK_SIZE = 2
 
 
 def make_result_logger(name: str) -> FlextLogger:
     return FlextLogger(name)
+
+
+def assert_result_success(result: r[bool], context: str) -> bool:
+    assert result.is_success, f"{context}: Expected success, got {result.error!r}"
+    return True
 
 
 class TestFlextContext:
@@ -190,11 +194,9 @@ class TestFlextLogger:
         assert hasattr(base_logger, "info")
         assert hasattr(base_logger, "error")
         assert hasattr(base_logger, "debug")
-        result = base_logger.info("Base logger test message")
-        assertion_helpers.assert_flext_result_success(
-            result,
-            "Base logger should log successfully",
-        )
+        result: r[bool] | None = base_logger.info("Base logger test message")
+        assert result is not None
+        assert_result_success(result, "Base logger should log successfully")
 
     def test_get_base_logger_with_level(self) -> None:
         """Test getting base logger with specific level.
@@ -209,11 +211,9 @@ class TestFlextLogger:
         assert hasattr(base_logger, "info")
         assert hasattr(base_logger, "error")
         assert hasattr(base_logger, "debug")
-        result = base_logger.info("Level logger test message")
-        assertion_helpers.assert_flext_result_success(
-            result,
-            "Level logger should log successfully",
-        )
+        result: r[bool] | None = base_logger.info("Level logger test message")
+        assert result is not None
+        assert_result_success(result, "Level logger should log successfully")
 
     def test_bind_context(self) -> None:
         """Test binding context to logger.
@@ -229,11 +229,9 @@ class TestFlextLogger:
         assert hasattr(bound_logger, "info")
         assert hasattr(bound_logger, "error")
         assert hasattr(bound_logger, "debug")
-        result = bound_logger.info("Test message with bound context")
-        success = assertion_helpers.assert_flext_result_success(
-            result,
-            "Bound logger should work for logging",
-        )
+        result: r[bool] | None = bound_logger.info("Test message with bound context")
+        assert result is not None
+        success = assert_result_success(result, "Bound logger should work for logging")
         assert success is True
 
     def test_backward_compatibility_function(self) -> None:
@@ -249,10 +247,10 @@ class TestFlextLogger:
         assert hasattr(logger, "info")
         assert hasattr(logger, "error")
         assert hasattr(logger, "debug")
-        result = logger.info("Compatibility test message")
-        success = assertion_helpers.assert_flext_result_success(
-            result,
-            "Logger should work with standard patterns",
+        result: r[bool] | None = logger.info("Compatibility test message")
+        assert result is not None
+        success = assert_result_success(
+            result, "Logger should work with standard patterns"
         )
         assert success is True
 
@@ -269,11 +267,9 @@ class TestFlextLogger:
         assert hasattr(logger, "info")
         assert hasattr(logger, "error")
         assert hasattr(logger, "debug")
-        result = logger.info("Module-level logger test message")
-        success = assertion_helpers.assert_flext_result_success(
-            result,
-            "Module-level logger should work",
-        )
+        result: r[bool] | None = logger.info("Module-level logger test message")
+        assert result is not None
+        success = assert_result_success(result, "Module-level logger should work")
         assert success is True
 
 
@@ -295,15 +291,24 @@ class TestFlextLoggerUsage:
         assert hasattr(logger, "warning")
         assert hasattr(logger, "error")
         assert hasattr(logger, "critical")
-        result_info = logger.info("Test info message", test=True)
+        result_info: r[bool] | None = logger.info("Test info message", test=True)
+        assert result_info is not None
         assert result_info.is_success, "Info logging should succeed"
-        result_debug = logger.debug("Test debug message", test=True)
+        result_debug: r[bool] | None = logger.debug("Test debug message", test=True)
+        assert result_debug is not None
         assert result_debug.is_success, "Debug logging should succeed"
-        result_warning = logger.warning("Test warning message", test=True)
+        result_warning: r[bool] | None = logger.warning(
+            "Test warning message", test=True
+        )
+        assert result_warning is not None
         assert result_warning.is_success, "Warning logging should succeed"
-        result_error = logger.error("Test error message", test=True)
+        result_error: r[bool] | None = logger.error("Test error message", test=True)
+        assert result_error is not None
         assert result_error.is_success, "Error logging should succeed"
-        result_critical = logger.critical("Test critical message", test=True)
+        result_critical: r[bool] | None = logger.critical(
+            "Test critical message", test=True
+        )
+        assert result_critical is not None
         assert result_critical.is_success, "Critical logging should succeed"
 
     def test_logging_with_context(self) -> None:
@@ -316,13 +321,17 @@ class TestFlextLoggerUsage:
         """
         logger = make_result_logger("context_test")
         assert logger is not None
-        result_info = logger.info("User action", user_id="123", action="login")
+        result_info: r[bool] | None = logger.info(
+            "User action", user_id="123", action="login"
+        )
+        assert result_info is not None
         assert result_info.is_success, "Info logging with context should succeed"
-        result_error = logger.error(
+        result_error: r[bool] | None = logger.error(
             "Operation failed",
             error_code="E001",
             duration_ms=150.5,
         )
+        assert result_error is not None
         assert result_error.is_success, "Error logging with context should succeed"
 
     def test_bound_logger_usage(self) -> None:
@@ -338,9 +347,11 @@ class TestFlextLoggerUsage:
         assert bound_logger is not None
         assert hasattr(bound_logger, "info")
         assert hasattr(bound_logger, "error")
-        result_info = bound_logger.info("Processing request")
+        result_info: r[bool] | None = bound_logger.info("Processing request")
+        assert result_info is not None
         assert result_info.is_success, "Info logging with bound context should succeed"
-        result_error = bound_logger.error("Request failed")
+        result_error: r[bool] | None = bound_logger.error("Request failed")
+        assert result_error is not None
         assert result_error.is_success, (
             "Error logging with bound context should succeed"
         )
@@ -355,17 +366,15 @@ class TestFlextLoggerUsage:
         """
         logger = make_result_logger("context_mgr_test")
         bound_logger = logger.bind(operation="batch_process", batch_id="batch-123")
-        results = [
+        results: list[r[bool] | None] = [
             bound_logger.info("Starting batch process"),
             bound_logger.info("Processing item 1"),
             bound_logger.info("Processing item 2"),
             bound_logger.info("Batch process completed"),
         ]
         for i, result in enumerate(results):
-            success = assertion_helpers.assert_flext_result_success(
-                result,
-                f"Log entry {i + 1} should succeed",
-            )
+            assert result is not None
+            success = assert_result_success(result, f"Log entry {i + 1} should succeed")
             assert success is True
 
     @pytest.mark.performance
@@ -382,13 +391,12 @@ class TestFlextLoggerUsage:
         assert hasattr(perf_logger, "info")
         assert hasattr(perf_logger, "error")
         assert hasattr(perf_logger, "debug")
-        result = perf_logger.info("Performance test message")
-        success = assertion_helpers.assert_flext_result_success(
-            result,
-            "Performance logging should succeed",
-        )
+        result: r[bool] | None = perf_logger.info("Performance test message")
+        assert result is not None
+        success = assert_result_success(result, "Performance logging should succeed")
         assert success is True
-        result2 = perf_logger.debug("Performance debug message")
+        result2: r[bool] | None = perf_logger.debug("Performance debug message")
+        assert result2 is not None
         assert result2.is_success, "Performance debug logging should succeed"
 
 
@@ -409,11 +417,16 @@ class TestFlextLoggerIntegration:
         assert parent_logger is not None
         assert child_logger is not None
         assert grandchild_logger is not None
-        result_parent = parent_logger.info("Parent log message")
+        result_parent: r[bool] | None = parent_logger.info("Parent log message")
+        assert result_parent is not None
         assert result_parent.is_success, "Parent logger should work"
-        result_child = child_logger.info("Child log message")
+        result_child: r[bool] | None = child_logger.info("Child log message")
+        assert result_child is not None
         assert result_child.is_success, "Child logger should work"
-        result_grandchild = grandchild_logger.info("Grandchild log message")
+        result_grandchild: r[bool] | None = grandchild_logger.info(
+            "Grandchild log message"
+        )
+        assert result_grandchild is not None
         assert result_grandchild.is_success, "Grandchild logger should work"
 
     def test_complex_logging_scenario(self) -> None:
@@ -426,25 +439,39 @@ class TestFlextLoggerIntegration:
         """
         logger = make_result_logger("complex_test")
         bound_logger = logger.bind(operation="user_registration", request_id="req-789")
-        result_start = bound_logger.info("Starting user registration")
+        result_start: r[bool] | None = bound_logger.info("Starting user registration")
+        assert result_start is not None
         assert result_start.is_success, "Initial log should succeed"
         validation_logger = bound_logger.bind(
             step="validation",
             user_email="test@example.com",
         )
-        result_debug_val = validation_logger.debug("Validating user input")
+        result_debug_val: r[bool] | None = validation_logger.debug(
+            "Validating user input"
+        )
+        assert result_debug_val is not None
         assert result_debug_val.is_success, "Validation debug log should succeed"
-        result_info_val = validation_logger.info("User input validation passed")
+        result_info_val: r[bool] | None = validation_logger.info(
+            "User input validation passed"
+        )
+        assert result_info_val is not None
         assert result_info_val.is_success, "Validation info log should succeed"
         database_logger = bound_logger.bind(step="database", table="users")
-        result_debug_db = database_logger.debug("Saving user to database")
+        result_debug_db: r[bool] | None = database_logger.debug(
+            "Saving user to database"
+        )
+        assert result_debug_db is not None
         assert result_debug_db.is_success, "Database debug log should succeed"
-        result_info_db = database_logger.info(
+        result_info_db: r[bool] | None = database_logger.info(
             "User saved successfully",
             user_id="user-456",
         )
+        assert result_info_db is not None
         assert result_info_db.is_success, "Database info log should succeed"
-        result_complete = bound_logger.info("User registration completed")
+        result_complete: r[bool] | None = bound_logger.info(
+            "User registration completed"
+        )
+        assert result_complete is not None
         assert result_complete.is_success, "Completion log should succeed"
 
     def test_error_logging_with_context(self) -> None:
@@ -461,7 +488,7 @@ class TestFlextLoggerIntegration:
         except ValueError as e:
             exception_type_name = type(e).__name__
             exception_message = str(e)
-            result = logger.exception(
+            result: r[bool] | None = logger.exception(
                 "Operation failed with error",
                 error_type=exception_type_name,
                 error_message=exception_message,
@@ -469,10 +496,8 @@ class TestFlextLoggerIntegration:
                 operation="test_operation",
                 user_id="user-123",
             )
-            success = assertion_helpers.assert_flext_result_success(
-                result,
-                "Exception logging should succeed",
-            )
+            assert result is not None
+            success = assert_result_success(result, "Exception logging should succeed")
             assert success is True
 
     @pytest.mark.performance
@@ -495,14 +520,12 @@ class TestFlextLoggerIntegration:
         assert duration_ms < expected_duration_ms * 3, (
             f"Duration {duration_ms}ms should be < {expected_duration_ms * 3}ms (reasonable overhead)"
         )
-        result = logger.info(
+        result: r[bool] | None = logger.info(
             "Operation completed",
             operation="test_work",
             duration_ms=duration_ms,
             success=True,
         )
-        success = assertion_helpers.assert_flext_result_success(
-            result,
-            "Logging should succeed",
-        )
+        assert result is not None
+        success = assert_result_success(result, "Logging should succeed")
         assert success is True

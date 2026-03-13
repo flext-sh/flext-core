@@ -29,6 +29,9 @@ from ..test_utils import assertion_helpers
 class ConcreteTestHandler(h[str, str]):
     """Concrete implementation of h for testing."""
 
+    def __init__(self, *, config: m.Handler | None = None) -> None:
+        super().__init__(config=config)
+
     @override
     def handle(self, message: str) -> r[str]:
         """Handle the message."""
@@ -38,6 +41,9 @@ class ConcreteTestHandler(h[str, str]):
 class ValidationTestHandler(h[object, str]):
     """Handler that accepts any object for validation testing."""
 
+    def __init__(self, *, config: m.Handler | None = None) -> None:
+        super().__init__(config=config)
+
     @override
     def handle(self, message: object) -> r[str]:
         """Handle the message."""
@@ -46,6 +52,9 @@ class ValidationTestHandler(h[object, str]):
 
 class FailingTestHandler(h[str, str]):
     """Concrete implementation that fails for testing error handling."""
+
+    def __init__(self, *, config: m.Handler | None = None) -> None:
+        super().__init__(config=config)
 
     @override
     def handle(self, message: str) -> r[str]:
@@ -191,6 +200,9 @@ class TestFlextHandlers:
         """Test handlers with different message and result types."""
 
         class IntHandler(h[int, str]):
+            def __init__(self, *, config: m.Handler | None = None) -> None:
+                super().__init__(config=config)
+
             @override
             def handle(self, message: int) -> r[str]:
                 return r[str].ok(f"processed_{message}")
