@@ -95,6 +95,7 @@ class FlextService[TDomainResult: object = object](x, ABC):
     # --- Internal State ---
     _execution_result: r[TDomainResult] | None = PrivateAttr(default=None)
 
+    @override
     def model_post_init(self, __context: t.Container | None, /) -> None:
         """Post-initialization hook.
 
@@ -134,7 +135,7 @@ class FlextService[TDomainResult: object = object](x, ABC):
             self._execution_result = self.execute()
         execution_result: r[TDomainResult] = self._execution_result
         if execution_result.is_success:
-            return cast("TDomainResult", execution_result.unwrap())
+            return execution_result.unwrap()
         raise e.BaseError(execution_result.error or "Service execution failed")
 
     _context: p.Context | None = PrivateAttr(default=None)

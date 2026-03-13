@@ -354,23 +354,23 @@ def test_dependency_registration_duplicate_guards() -> None:
 
 
 def test_configure_structlog_edge_paths(monkeypatch: pytest.MonkeyPatch) -> None:
-    calls: list[dict[str, object]] = []
+    calls: list[dict[str, t.Scalar]] = []
 
     class StatefulModule:
         def __init__(self) -> None:
             self._print_access: int = 0
 
-            def _merge_contextvars(*_args: object) -> dict[str, object]:
+            def _merge_contextvars(*_args: t.Scalar) -> dict[str, t.Scalar]:
                 return {}
 
-            def _add_log_level(*_args: object) -> dict[str, object]:
+            def _add_log_level(*_args: t.Scalar) -> dict[str, t.Scalar]:
                 return {}
 
-            def _time_stamper(**_kwargs: t.Scalar) -> object:
-                return object()
+            def _time_stamper(**_kwargs: t.Scalar) -> t.Scalar:
+                return ""
 
-            def _console_renderer(**_kwargs: t.Scalar) -> object:
-                return object()
+            def _console_renderer(**_kwargs: t.Scalar) -> t.Scalar:
+                return ""
 
             self.contextvars = type(
                 "Ctx",
@@ -383,8 +383,8 @@ def test_configure_structlog_edge_paths(monkeypatch: pytest.MonkeyPatch) -> None
                 {
                     "add_log_level": staticmethod(_add_log_level),
                     "TimeStamper": staticmethod(_time_stamper),
-                    "StackInfoRenderer": staticmethod(lambda: object()),
-                    "JSONRenderer": staticmethod(lambda: object()),
+                    "StackInfoRenderer": staticmethod(lambda: ""),
+                    "JSONRenderer": staticmethod(lambda: ""),
                 },
             )
             self.dev = type(
@@ -403,17 +403,19 @@ def test_configure_structlog_edge_paths(monkeypatch: pytest.MonkeyPatch) -> None
         def configure(self, **kwargs: t.Scalar) -> None:
             calls.append(dict(kwargs.items()))
 
-        def __getattr__(self, name: str) -> object:
+        def __getattr__(
+            self, name: str
+        ) -> t.Scalar | type | Callable[..., t.Scalar] | types.SimpleNamespace:
             if name == "types":
-                return types.SimpleNamespace(Processor=object)
+                return types.SimpleNamespace(Processor=type)
             if name != "PrintLoggerFactory":
                 raise AttributeError(name)
             self._print_access += 1
             if self._print_access == 1:
                 raise AttributeError(name)
 
-            def _print_logger_factory(**_kwargs: t.Scalar) -> object:
-                return object()
+            def _print_logger_factory(**_kwargs: t.Scalar) -> t.Scalar:
+                return ""
 
             return _print_logger_factory
 
@@ -423,11 +425,11 @@ def test_configure_structlog_edge_paths(monkeypatch: pytest.MonkeyPatch) -> None
     class Config:
         log_level: int = logging.DEBUG
         console_renderer: bool = True
-        additional_processors: ClassVar[list[Callable[..., object]]] = [
+        additional_processors: ClassVar[list[Callable[..., dict[str, t.Scalar]]]] = [
             lambda *_args: {},
         ]
-        wrapper_class_factory: Callable[..., object] | None = None
-        logger_factory: Callable[[], object] = staticmethod(lambda: object())
+        wrapper_class_factory: Callable[..., t.Scalar] | None = None
+        logger_factory: Callable[[], t.Scalar] = staticmethod(lambda: "")
         cache_logger_on_first_use: bool = True
         async_logging: bool = True
 
@@ -440,17 +442,17 @@ def test_configure_structlog_edge_paths(monkeypatch: pytest.MonkeyPatch) -> None
     with contextlib.suppress(AttributeError):
         delattr(fake_module, "PrintLoggerFactory")
 
-    def _print_logger_factory(**_kwargs: t.Scalar) -> object:
-        return object()
+    def _print_logger_factory(**_kwargs: t.Scalar) -> t.Scalar:
+        return ""
 
     setattr(fake_module, "PrintLoggerFactory", _print_logger_factory)
 
     class ConfigNoAsync:
         log_level: int = logging.INFO
         console_renderer: bool = True
-        additional_processors: list[Callable[..., object]] | None = None
-        wrapper_class_factory: Callable[..., object] | None = None
-        logger_factory: Callable[..., object] | None = None
+        additional_processors: list[Callable[..., dict[str, t.Scalar]]] | None = None
+        wrapper_class_factory: Callable[..., t.Scalar] | None = None
+        logger_factory: Callable[..., t.Scalar] | None = None
         cache_logger_on_first_use: bool = True
         async_logging: bool = False
 
@@ -463,9 +465,9 @@ def test_configure_structlog_edge_paths(monkeypatch: pytest.MonkeyPatch) -> None
     class ConfigAsyncFallback:
         log_level: int = logging.INFO
         console_renderer: bool = True
-        additional_processors: list[Callable[..., object]] | None = None
-        wrapper_class_factory: Callable[..., object] | None = None
-        logger_factory: Callable[..., object] | None = None
+        additional_processors: list[Callable[..., dict[str, t.Scalar]]] | None = None
+        wrapper_class_factory: Callable[..., t.Scalar] | None = None
+        logger_factory: Callable[..., t.Scalar] | None = None
         cache_logger_on_first_use: bool = True
         async_logging: bool = True
 
@@ -750,17 +752,17 @@ def test_configure_structlog_print_logger_factory_fallback(
             self.print_calls: int = 0
             self.print_calls = 0
 
-            def _merge_contextvars(*_args: object) -> dict[str, object]:
+            def _merge_contextvars(*_args: t.Scalar) -> dict[str, t.Scalar]:
                 return {}
 
-            def _add_log_level(*_args: object) -> dict[str, object]:
+            def _add_log_level(*_args: t.Scalar) -> dict[str, t.Scalar]:
                 return {}
 
-            def _time_stamper(**_kwargs: t.Scalar) -> object:
-                return object()
+            def _time_stamper(**_kwargs: t.Scalar) -> t.Scalar:
+                return ""
 
-            def _console_renderer(**_kwargs: t.Scalar) -> object:
-                return object()
+            def _console_renderer(**_kwargs: t.Scalar) -> t.Scalar:
+                return ""
 
             self.contextvars = type(
                 "Ctx",
@@ -773,8 +775,8 @@ def test_configure_structlog_print_logger_factory_fallback(
                 {
                     "add_log_level": staticmethod(_add_log_level),
                     "TimeStamper": staticmethod(_time_stamper),
-                    "StackInfoRenderer": staticmethod(lambda: object()),
-                    "JSONRenderer": staticmethod(lambda: object()),
+                    "StackInfoRenderer": staticmethod(lambda: ""),
+                    "JSONRenderer": staticmethod(lambda: ""),
                 },
             )
             self.dev = type(
@@ -784,20 +786,22 @@ def test_configure_structlog_print_logger_factory_fallback(
             )
 
         @override
-        def __getattribute__(self, name: str) -> object:
+        def __getattribute__(
+            self, name: str
+        ) -> t.Scalar | type | Callable[..., t.Scalar] | None:
             if name == "PrintLoggerFactory":
                 calls = object.__getattribute__(self, "print_calls") + 1
                 object.__setattr__(self, "print_calls", calls)
                 if calls == 1:
                     return None
 
-                def _print_logger_factory(**_kwargs: t.Scalar) -> object:
-                    return object()
+                def _print_logger_factory(**_kwargs: t.Scalar) -> t.Scalar:
+                    return ""
 
                 return _print_logger_factory
             return object.__getattribute__(self, name)
 
-        def make_filtering_bound_logger(self, level: int) -> type[object]:
+        def make_filtering_bound_logger(self, level: int) -> type[dict[str, t.Scalar]]:
             _ = level
             return dict
 
@@ -968,7 +972,10 @@ def test_model_helpers_remaining_paths() -> None:
 
 
 def test_ensure_trace_context_dict_conversion_paths() -> None:
-    payload: dict[str, object] = {
+    payload: dict[
+        str,
+        t.Scalar | Path | list[int] | dict[str, int] | Callable[[], int] | type | None,
+    ] = {
         "none": None,
         "str": "x",
         "int": 1,
@@ -979,7 +986,7 @@ def test_ensure_trace_context_dict_conversion_paths() -> None:
         "list": [1, 2],
         "dict": {"a": 1},
         "callable": lambda: 1,
-        "other": object(),
+        "other": type("Sentinel", (), {}),
     }
     result = FlextRuntime.ensure_trace_context(cast("Mapping[str, t.Scalar]", payload))
     assert result["str"] == "x"

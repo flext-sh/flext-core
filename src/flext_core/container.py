@@ -396,7 +396,7 @@ class FlextContainer(p.DI):
         self._resources.clear()
 
     @override
-    def configure(self, config: object | None = None) -> Self:
+    def configure(self, config: Mapping[str, t.Container] | None = None) -> Self:
         """Apply user-provided overrides to container configuration.
 
         Args:
@@ -643,7 +643,13 @@ class FlextContainer(p.DI):
     def register(
         self,
         name: str,
-        impl: t.RegisterableService | t.FactoryCallable | t.ResourceCallable,
+        impl: (
+            t.RegisterableService
+            | t.FactoryCallable
+            | t.ResourceCallable
+            | p.Log.StructlogLogger
+            | Callable[[], p.Log.StructlogLogger]
+        ),
         *,
         kind: Literal["service", "factory", "resource"] = "service",
     ) -> Self:
@@ -764,7 +770,11 @@ class FlextContainer(p.DI):
         ):
             _ = self.register("config", self._config)
         if not self.has_service("logger"):
-            _ = self.register("logger", FlextLogger.create_module_logger("flext_core"))
+            _ = self.register(
+                "logger",
+                lambda: FlextLogger.create_module_logger("flext_core"),
+                kind="factory",
+            )
         if (
             not self.has_service("context")
             and self._context is not None

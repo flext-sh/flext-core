@@ -528,7 +528,7 @@ class FlextProtocols:
     class Configurable(BaseProtocol, Protocol):
         """Protocol for component configuration."""
 
-        def configure(self, config: object | None = None) -> Self:
+        def configure(self, config: Mapping[str, t.Container] | None = None) -> Self:
             """Configure component with settings."""
             ...
 
