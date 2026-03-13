@@ -110,54 +110,18 @@ class FlextRegistry(s[bool]):
     _class_plugin_storage: ClassVar[dict[str, t.RegistrablePlugin]] = {}
     _class_registered_keys: ClassVar[set[str]] = set()
 
-    def __init__(
-        self,
-        *,
-        dispatcher: p.CommandBus | None = None,
-        config_type: type[FlextSettings] | None = None,
-        config_overrides: Mapping[str, t.Scalar] | None = None,
-        initial_context: FlextContext | None = None,
-        subproject: str | None = None,
-        services: Mapping[str, t.RegisterableService] | None = None,
-        factories: Mapping[str, t.FactoryCallable] | None = None,
-        resources: Mapping[str, t.ResourceCallable] | None = None,
-        container_overrides: Mapping[str, t.Scalar] | None = None,
-        wire_modules: Sequence[ModuleType] | None = None,
-        wire_packages: Sequence[str] | None = None,
-        wire_classes: Sequence[type] | None = None,
-    ) -> None:
-        """Initialize the registry with a CommandBus protocol instance.
+    dispatcher: p.CommandBus | None = Field(default=None, exclude=True)
 
-        Args:
-            dispatcher: CommandBus protocol instance (defaults to container DI resolution)
-            config_type: Class reference for settings
-            config_overrides: Runtime settings overrides
-            initial_context: Starting context
-            subproject: Differentiator for logical grouping
-            services: Dependency injection services
-            factories: Dependency injection factories
-            resources: Dependency injection resources
-            container_overrides: Runtime DI overrides
-            wire_modules: Auto-wiring target modules
-            wire_packages: Auto-wiring target packages
-            wire_classes: Auto-wiring target classes
+    @override
+    def model_post_init(self, __context: t.Container | None, /) -> None:
+        """Post-initialization hook for registry.
 
+        Calls parent model_post_init for runtime setup, then resolves
+        the dispatcher from the field or from the global container.
         """
-        super().__init__(
-            config_type=config_type,
-            config_overrides=config_overrides,
-            initial_context=initial_context,
-            subproject=subproject,
-            services=services,
-            factories=factories,
-            resources=resources,
-            container_overrides=container_overrides,
-            wire_modules=wire_modules,
-            wire_packages=wire_packages,
-            wire_classes=wire_classes,
-        )
-        if dispatcher is not None:
-            self._dispatcher = dispatcher
+        super().model_post_init(__context)
+        if self.dispatcher is not None:
+            self._dispatcher = self.dispatcher
         else:
             container_value = FlextContainer.get_global().get("command_bus").unwrap()
             if isinstance(container_value, FlextDispatcher):

@@ -17,13 +17,13 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping
 from enum import StrEnum
-from typing import Annotated, Final, cast
+from typing import Annotated, Final
 
 import pytest
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import r
-from flext_tests import u
+from flext_tests import t, u
 
 from ..test_utils import assertion_helpers
 
@@ -76,8 +76,8 @@ class TestFlextUtilitiesArgs:
 
         model_config = ConfigDict(frozen=True)
         name: str = Field(description="Parse kwargs scenario name")
-        kwargs: dict[str, object] = Field(description="Keyword arguments input payload")
-        enum_fields: dict[str, type[StrEnum]] = Field(
+        kwargs: t.ConfigMap = Field(description="Keyword arguments input payload")
+        enum_fields: Mapping[str, type[StrEnum]] = Field(
             description="Enum fields map for conversion"
         )
         expected_success: bool = Field(description="Whether parsing should succeed")
@@ -119,45 +119,52 @@ class TestFlextUtilitiesArgs:
             values = TestFlextUtilitiesArgs.Constants.Values
             errors = TestFlextUtilitiesArgs.Constants.Errors
             scenario_class = TestFlextUtilitiesArgs.ParseKwargsScenario
-            return {
-                "valid_string_to_enum": scenario_class(
-                    name="valid_string_to_enum",
-                    kwargs={"status": values.STATUS_ACTIVE, "name": values.NAME_JOHN},
-                    enum_fields={"status": status_enum},
-                    expected_success=True,
-                    expected_status=status_enum.ACTIVE,
-                ),
-                "already_enum": scenario_class(
-                    name="already_enum",
-                    kwargs={"status": status_enum.PENDING, "name": values.NAME_JANE},
-                    enum_fields={"status": status_enum},
-                    expected_success=True,
-                    expected_status=status_enum.PENDING,
-                ),
-                "invalid_enum_value": scenario_class(
-                    name="invalid_enum_value",
-                    kwargs={"status": values.STATUS_INVALID, "name": values.NAME_BOB},
-                    enum_fields={"status": status_enum},
-                    expected_success=False,
-                    expected_error=errors.INVALID_VALUES,
-                ),
-                "multiple_enum_fields": scenario_class(
-                    name="multiple_enum_fields",
-                    kwargs={
+            scenarios = [
+                scenario_class.model_validate({
+                    "name": "valid_string_to_enum",
+                    "kwargs": {
+                        "status": values.STATUS_ACTIVE,
+                        "name": values.NAME_JOHN,
+                    },
+                    "enum_fields": {"status": status_enum},
+                    "expected_success": True,
+                    "expected_status": status_enum.ACTIVE,
+                }),
+                scenario_class.model_validate({
+                    "name": "already_enum",
+                    "kwargs": {"status": status_enum.PENDING, "name": values.NAME_JANE},
+                    "enum_fields": {"status": status_enum},
+                    "expected_success": True,
+                    "expected_status": status_enum.PENDING,
+                }),
+                scenario_class.model_validate({
+                    "name": "invalid_enum_value",
+                    "kwargs": {
+                        "status": values.STATUS_INVALID,
+                        "name": values.NAME_BOB,
+                    },
+                    "enum_fields": {"status": status_enum},
+                    "expected_success": False,
+                    "expected_error": errors.INVALID_VALUES,
+                }),
+                scenario_class.model_validate({
+                    "name": "multiple_enum_fields",
+                    "kwargs": {
                         "status": values.STATUS_ACTIVE,
                         "priority": values.PRIORITY_HIGH,
                     },
-                    enum_fields={"status": status_enum, "priority": priority_enum},
-                    expected_success=True,
-                    expected_status=status_enum.ACTIVE,
-                ),
-                "no_enum_fields": scenario_class(
-                    name="no_enum_fields",
-                    kwargs={"name": values.NAME_JOHN, "age": values.AGE_30},
-                    enum_fields={},
-                    expected_success=True,
-                ),
-            }
+                    "enum_fields": {"status": status_enum, "priority": priority_enum},
+                    "expected_success": True,
+                    "expected_status": status_enum.ACTIVE,
+                }),
+                scenario_class.model_validate({
+                    "name": "no_enum_fields",
+                    "kwargs": {"name": values.NAME_JOHN, "age": values.AGE_30},
+                    "enum_fields": {},
+                    "expected_success": True,
+                }),
+            ]
+            return {s.name: s for s in scenarios}
 
         @staticmethod
         def get_validated_scenarios() -> Mapping[
@@ -226,10 +233,7 @@ class TestFlextUtilitiesArgs:
             def process(status: TestFlextUtilitiesArgs.StatusEnum) -> r[str]:
                 return r[str].ok(status.value)
 
-            return cast(
-                "Callable[[TestFlextUtilitiesArgs.StatusEnum], r[str]]",
-                process,
-            )
+            return process
 
     class TestValidated:
         """Tests for u.validated decorator."""
