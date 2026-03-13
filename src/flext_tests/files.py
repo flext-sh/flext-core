@@ -1397,11 +1397,17 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         if fmt in {"json", "yaml"}:
             try:
                 if fmt == "json":
-                    parsed_raw: object | list[object] = (
-                        TypeAdapter(dict[str, object]).validate_json(text.encode())
-                        if text.strip()
-                        else {}
-                    )
+                    if text.strip():
+                        try:
+                            parsed_raw: object | list[object] = TypeAdapter(
+                                dict[str, object]
+                            ).validate_json(text.encode())
+                        except ValidationError:
+                            parsed_raw = TypeAdapter(list[object]).validate_json(
+                                text.encode()
+                            )
+                    else:
+                        parsed_raw = {}
                 else:
                     parsed_raw = (
                         _yaml_safe_load(text)

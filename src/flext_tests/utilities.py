@@ -27,7 +27,7 @@ from pathlib import Path
 from re import Pattern
 from typing import Protocol, cast, override
 
-from pydantic import BaseModel, TypeAdapter, ValidationError
+from pydantic import BaseModel, RootModel, TypeAdapter, ValidationError
 
 from flext_core import (
     FlextContext,
@@ -68,6 +68,8 @@ def _to_payload(value: object) -> t.Tests.object:
         object suitable for test assertions
 
     """
+    if isinstance(value, RootModel):
+        return _to_payload(value.root)
     if value is None or isinstance(
         value, (*t.PRIMITIVES_TYPES, bytes, datetime, Path, BaseModel)
     ):
