@@ -1119,7 +1119,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             if model_cls is not None:
                 return self._validate_model_content(model_cls, content)
             return r[str | bytes | m.ConfigMap | list[list[str]]].ok(content)
-        except json.JSONDecodeError as e:
+        except ValueError as e:
             if model_cls is not None:
                 invalid_json_result: r[TModel] = r[TModel].fail(
                     c.Tests.Files.ERROR_INVALID_JSON.format(error=e)
@@ -1424,7 +1424,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                         self._to_payload_value(item) for item in parsed_list
                     ]
                     item_count = len(parsed_content)
-            except (json.JSONDecodeError, _YAMLError):
+            except (ValueError, _YAMLError):
                 pass
         elif fmt == "csv":
             try:
@@ -1580,7 +1580,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                     for key, value in dict2_raw.items()
                 }
                 return (dict1, dict2)
-        except (json.JSONDecodeError, _YAMLError, ValueError, TypeError):
+        except (ValueError, _YAMLError, TypeError):
             pass
         return None
 
