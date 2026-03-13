@@ -15,7 +15,13 @@ from typing import Protocol, TypeAlias, cast, overload
 
 from pydantic import BaseModel
 
-from flext_core import FlextRuntime, T, m, p, r  # type: ignore
+from flext_core import (  # type: ignore[import-not-found,import-untyped,misc]
+    FlextRuntime,
+    T,
+    m,
+    p,
+    r,
+)
 from flext_core._utilities.cache import FlextUtilitiesCache
 from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core.typings import t
@@ -111,9 +117,9 @@ class FlextUtilitiesMapper:
     ) -> ContainerMapping:
         """Apply normalize step."""
         if normalize:
-            normalized: ContainerMapping = FlextUtilitiesCache.normalize_component(  # type: ignore
+            normalized: ContainerMapping = FlextUtilitiesCache.normalize_component(  # type: ignore[assignment]
                 result
-            )  # type: ignore
+            )  # type: ignore[misc]
             if isinstance(normalized, Mapping):
                 normalized_result: dict[str, _MappingValue] = {}
                 for key, value in normalized.items():
@@ -186,9 +192,9 @@ class FlextUtilitiesMapper:
         for i in range(0, len(current_list), chunk_size):
             chunk: ContainerList = current_list[i : i + chunk_size]
             chunked.append(chunk)
-        return chunked  # type: ignore
+        return chunked  # type: ignore[return-value]
 
-    @staticmethod  # type: ignore
+    @staticmethod  # type: ignore[misc]
     def _build_apply_convert(
         current: _MappingValue, ops: Mapping[str, object]
     ) -> _MappingValue:
@@ -202,9 +208,9 @@ class FlextUtilitiesMapper:
             return current
         convert_callable_raw: _MapperCallable = convert_func_result.value
         convert_default = ops.get("convert_default")
-        fallback: _MappingValue = convert_default  # type: ignore
+        fallback: _MappingValue = convert_default  # type: ignore[assignment]
 
-        def convert_callable(value: _MappingValue) -> _MappingValue:  # type: ignore
+        def convert_callable(value: _MappingValue) -> _MappingValue:  # type: ignore[return-value]
             return FlextUtilitiesMapper.narrow_to_container(convert_callable_raw(value))
 
         converter_name = (
@@ -220,9 +226,9 @@ class FlextUtilitiesMapper:
                 "bool": False,
                 "list": [],
                 "dict": {},
-                "tuple": (),  # type: ignore
+                "tuple": (),  # type: ignore[misc]
                 "set": [],
-            }  # type: ignore
+            }  # type: ignore[misc]
             fallback = converter_defaults.get(converter_name, current)
 
         def _convert(value: _MappingValue) -> _MappingValue:
@@ -242,10 +248,10 @@ class FlextUtilitiesMapper:
                 _convert(FlextUtilitiesMapper.narrow_to_container(item))
                 for item in current_items
             ]
-            return converted if isinstance(current, list) else tuple(converted)  # type: ignore
+            return converted if isinstance(current, list) else tuple(converted)  # type: ignore[return-value]
         return _convert(current)
 
-    # type: ignore
+    # type: ignore[misc]
 
     @staticmethod
     def _build_apply_ensure(
@@ -269,17 +275,17 @@ class FlextUtilitiesMapper:
         )
         match ensure_type:
             case "str":
-                return str(current) if current is not None else default_val  # type: ignore
+                return str(current) if current is not None else default_val  # type: ignore[return-value]
             case "list":
-                if isinstance(current, list):  # type: ignore
+                if isinstance(current, list):  # type: ignore[misc]
                     list_current: ContainerList = current
                     return [
                         FlextUtilitiesMapper.narrow_to_container(item)
                         for item in list_current
                     ]
-                return (  # type: ignore
+                return (  # type: ignore[return-value]
                     default_val
-                    if current is None  # type: ignore
+                    if current is None  # type: ignore[misc]
                     else [FlextUtilitiesMapper.narrow_to_container(current)]
                 )
             case "str_list":
@@ -289,17 +295,17 @@ class FlextUtilitiesMapper:
                         str(FlextUtilitiesMapper.narrow_to_container(x))
                         for x in list_current_str
                     ]
-                return (  # type: ignore
+                return (  # type: ignore[return-value]
                     default_val
-                    if current is None  # type: ignore
+                    if current is None  # type: ignore[misc]
                     else [str(FlextUtilitiesMapper.narrow_to_container(current))]
                 )
             case "dict":
                 if isinstance(current, Mapping):
                     return FlextUtilitiesMapper._narrow_to_configuration_dict(current)
-                return default_val  # type: ignore
+                return default_val  # type: ignore[return-value]
             case _:
-                return current  # type: ignore
+                return current  # type: ignore[return-value]
 
     @staticmethod
     def _build_apply_filter(
@@ -329,9 +335,9 @@ class FlextUtilitiesMapper:
             current_dict: ContainerMapping = (
                 FlextUtilitiesMapper._narrow_to_configuration_dict(current)
             )
-            return FlextUtilitiesMapper.filter_dict(  # type: ignore
+            return FlextUtilitiesMapper.filter_dict(  # type: ignore[return-value]
                 current_dict, lambda _k, v: bool(filter_pred(v))
-            )  # type: ignore
+            )  # type: ignore[misc]
         return default if not bool(filter_pred(current)) else current
 
     @staticmethod
@@ -343,9 +349,9 @@ class FlextUtilitiesMapper:
             return current
         if not isinstance(current, (list, tuple)):
             return current
-        group_spec_raw: _MappingValue | _MapperCallable = ops["group"]  # type: ignore
+        group_spec_raw: _MappingValue | _MapperCallable = ops["group"]  # type: ignore[assignment]
         current_items: Sequence[_MappingValue] = current
-        current_list: ContainerList = [  # type: ignore
+        current_list: ContainerList = [  # type: ignore[assignment]
             FlextUtilitiesMapper.narrow_to_container(item) for item in current_items
         ]
         if isinstance(group_spec_raw, str):
@@ -364,9 +370,9 @@ class FlextUtilitiesMapper:
                 if key not in grouped:
                     grouped[key] = []
                 grouped[key].append(item)
-            return grouped  # type: ignore
+            return grouped  # type: ignore[return-value]
         if callable(group_spec_raw):
-            group_callable_result = FlextUtilitiesMapper._get_callable_from_dict(  # type: ignore
+            group_callable_result = FlextUtilitiesMapper._get_callable_from_dict(  # type: ignore[assignment]
                 ops, "group"
             )
             if group_callable_result.is_failure:
@@ -383,10 +389,10 @@ class FlextUtilitiesMapper:
                 if key not in grouped_callable:
                     grouped_callable[key] = []
                 grouped_callable[key].append(item)
-            return grouped_callable  # type: ignore
+            return grouped_callable  # type: ignore[return-value]
         return current
 
-    # type: ignore
+    # type: ignore[misc]
 
     @staticmethod
     def _build_apply_map(
@@ -500,12 +506,12 @@ class FlextUtilitiesMapper:
         min_slice_length = 2
         if (
             isinstance(slice_spec, (list, tuple))
-            and len(slice_spec) >= min_slice_length  # type: ignore
+            and len(slice_spec) >= min_slice_length  # type: ignore[assignment]
         ):
-            start_raw = slice_spec[0]  # type: ignore
-            end_raw = slice_spec[1]  # type: ignore
-            start: int | None = start_raw if isinstance(start_raw, int) else None  # type: ignore
-            end: int | None = end_raw if isinstance(end_raw, int) else None  # type: ignore
+            start_raw = slice_spec[0]  # type: ignore[assignment]
+            end_raw = slice_spec[1]  # type: ignore[assignment]
+            start: int | None = start_raw if isinstance(start_raw, int) else None  # type: ignore[assignment]
+            end: int | None = end_raw if isinstance(end_raw, int) else None  # type: ignore[assignment]
             if isinstance(current, list):
                 sliced_list: ContainerList = [
                     FlextUtilitiesMapper.narrow_to_container(item)
@@ -528,9 +534,9 @@ class FlextUtilitiesMapper:
             return current
         if not isinstance(current, (list, tuple)):
             return current
-        sort_spec_raw: _MappingValue | _MapperCallable = ops["sort"]  # type: ignore
+        sort_spec_raw: _MappingValue | _MapperCallable = ops["sort"]  # type: ignore[assignment]
         current_items: Sequence[_MappingValue] = current
-        current_list: ContainerList = [  # type: ignore
+        current_list: ContainerList = [  # type: ignore[assignment]
             FlextUtilitiesMapper.narrow_to_container(item) for item in current_items
         ]
         if isinstance(sort_spec_raw, str):
@@ -546,9 +552,9 @@ class FlextUtilitiesMapper:
                 return ""
 
             sorted_list_key: ContainerList = sorted(current_list, key=key_func)
-            return (  # type: ignore
+            return (  # type: ignore[return-value]
                 list(sorted_list_key)
-                if isinstance(current, list)  # type: ignore
+                if isinstance(current, list)  # type: ignore[misc]
                 else tuple(sorted_list_key)
             )
         if callable(sort_spec_raw):
@@ -568,9 +574,9 @@ class FlextUtilitiesMapper:
             if sorted_result.is_failure:
                 return current
             sorted_callable = sorted_result.value
-            return (  # type: ignore
+            return (  # type: ignore[return-value]
                 list(sorted_callable)
-                if isinstance(current, list)  # type: ignore
+                if isinstance(current, list)  # type: ignore[misc]
                 else tuple(sorted_callable)
             )
         if sort_spec_raw is True:
@@ -600,9 +606,9 @@ class FlextUtilitiesMapper:
             current, "mapping"
         ):
             return current
-        transform_opts_raw: _MappingValue = ops["transform"]  # type: ignore
+        transform_opts_raw: _MappingValue = ops["transform"]  # type: ignore[assignment]
         if not isinstance(transform_opts_raw, Mapping):
-            return current  # type: ignore
+            return current  # type: ignore[return-value]
         transform_opts = FlextUtilitiesMapper._narrow_to_configuration_dict(
             FlextUtilitiesMapper.narrow_to_container(transform_opts_raw)
         )
@@ -632,9 +638,9 @@ class FlextUtilitiesMapper:
             if on_error == "stop":
                 return default
             return current
-        return transform_result.value  # type: ignore
+        return transform_result.value  # type: ignore[return-value]
 
-    @staticmethod  # type: ignore
+    @staticmethod  # type: ignore[misc]
     def _build_apply_unique(
         current: _MappingValue, ops: Mapping[str, object]
     ) -> _MappingValue:
@@ -671,17 +677,17 @@ class FlextUtilitiesMapper:
         if isinstance(item, Mapping):
             dict_item: dict[str, _MappingValue] = {}
             for key, value in item.items():
-                coerced_value: _MappingValue = (  # type: ignore
+                coerced_value: _MappingValue = (  # type: ignore[assignment]
                     value if FlextUtilitiesGuards.is_container(value) else str(value)
-                )  # type: ignore
+                )  # type: ignore[misc]
                 dict_item[str(key)] = coerced_value
             return dict_item.get(field_name)
         if hasattr(item, field_name):
             attr_value = getattr(item, field_name)
             if FlextUtilitiesGuards.is_container(attr_value):
-                return attr_value  # type: ignore
+                return attr_value  # type: ignore[return-value]
             return str(attr_value)
-        return None  # type: ignore
+        return None  # type: ignore[return-value]
 
     @staticmethod
     def _extract_get_value(current: object, key_part: str) -> r[_MappingValue]:
@@ -695,10 +701,10 @@ class FlextUtilitiesMapper:
         """
         if isinstance(current, Mapping):
             if key_part in current:
-                raw_val = current[key_part]  # type: ignore
-                narrowed = FlextUtilitiesMapper.narrow_to_container(raw_val)  # type: ignore
-                if narrowed is None:  # type: ignore
-                    return r[_MappingValue].fail(f"found_none:{key_part}")  # type: ignore
+                raw_val = current[key_part]  # type: ignore[assignment]
+                narrowed = FlextUtilitiesMapper.narrow_to_container(raw_val)  # type: ignore[assignment]
+                if narrowed is None:  # type: ignore[misc]
+                    return r[_MappingValue].fail(f"found_none:{key_part}")  # type: ignore[return-value]
                 return r[_MappingValue].ok(narrowed)
             return r[_MappingValue].fail(f"Key '{key_part}' not found in Mapping")
         if hasattr(current, key_part):
@@ -807,12 +813,12 @@ class FlextUtilitiesMapper:
     def _get_callable_from_dict(
         ops: Mapping[str, object], key: str
     ) -> r[_MapperCallable]:
-        value: _MappingValue | _MapperCallable = ops.get(key)  # type: ignore
+        value: _MappingValue | _MapperCallable = ops.get(key)  # type: ignore[assignment]
         if callable(value):
-            return r[_MapperCallable].ok(value)  # type: ignore
+            return r[_MapperCallable].ok(value)  # type: ignore[return-value]
         return r[_MapperCallable].fail(f"Operation '{key}' is not callable")
 
-    # type: ignore
+    # type: ignore[misc]
 
     @staticmethod
     def _get_raw(
@@ -821,12 +827,12 @@ class FlextUtilitiesMapper:
         """Internal helper for raw get without DSL conversion."""
         match data:
             case dict() | Mapping():
-                raw_value = data.get(key)  # type: ignore
+                raw_value = data.get(key)  # type: ignore[assignment]
                 if raw_value is None:
-                    return default if default is not None else ""  # type: ignore
-                return FlextUtilitiesMapper.narrow_to_container(raw_value)  # type: ignore
+                    return default if default is not None else ""  # type: ignore[return-value]
+                return FlextUtilitiesMapper.narrow_to_container(raw_value)  # type: ignore[return-value]
             case _:
-                if hasattr(data, key):  # type: ignore
+                if hasattr(data, key):  # type: ignore[misc]
                     attr_val = getattr(data, key)
                     return FlextUtilitiesMapper.narrow_to_container(attr_val)
                 return default if default is not None else ""
@@ -864,15 +870,15 @@ class FlextUtilitiesMapper:
         if isinstance(value, Mapping):
             coerced_result = r[m.ConfigMap].create_from_callable(
                 lambda: m.ConfigMap(
-                    root=FlextUtilitiesMapper._narrow_to_configuration_dict(value)  # type: ignore
+                    root=FlextUtilitiesMapper._narrow_to_configuration_dict(value)  # type: ignore[assignment]
                 )
-            )  # type: ignore
+            )  # type: ignore[misc]
             if coerced_result.is_success:
                 val: m.ConfigMap = coerced_result.value
                 return val
-            error_msg = f"Cannot coerce {value.__class__.__name__} to m.ConfigMap: {coerced_result.error}"  # type: ignore
+            error_msg = f"Cannot coerce {value.__class__.__name__} to m.ConfigMap: {coerced_result.error}"  # type: ignore[assignment]
             raise TypeError(error_msg)
-        error_msg = f"Cannot narrow {value.__class__.__name__} to m.ConfigMap"  # type: ignore
+        error_msg = f"Cannot narrow {value.__class__.__name__} to m.ConfigMap"  # type: ignore[assignment]
         raise TypeError(error_msg)
 
     @staticmethod
@@ -882,10 +888,10 @@ class FlextUtilitiesMapper:
         """Safely narrow object to Sequence[object | None]."""
         if isinstance(value, (list, tuple)):
             narrowed_items: ContainerList = []
-            for item_raw in value:  # type: ignore
-                item = FlextUtilitiesMapper.narrow_to_container(item_raw)  # type: ignore
-                narrowed_item = FlextUtilitiesMapper.narrow_to_container(item)  # type: ignore
-                narrowed_items.append(narrowed_item)  # type: ignore
+            for item_raw in value:  # type: ignore[misc]
+                item = FlextUtilitiesMapper.narrow_to_container(item_raw)  # type: ignore[assignment]
+                narrowed_item = FlextUtilitiesMapper.narrow_to_container(item)  # type: ignore[assignment]
+                narrowed_items.append(narrowed_item)  # type: ignore[misc]
             return narrowed_items
         error_msg = f"Cannot narrow {value.__class__.__name__} to Sequence"
         raise TypeError(error_msg)
@@ -903,14 +909,14 @@ class FlextUtilitiesMapper:
             result: dict[str, _MappingValue] = {}
             key: str
             val: object
-            for key, val in value.items():  # type: ignore
-                str_key = str(key)  # type: ignore
-                if FlextUtilitiesGuards.is_container(val):  # type: ignore
-                    result[str_key] = val  # type: ignore
-                else:  # type: ignore
-                    result[str_key] = str(val)  # type: ignore
+            for key, val in value.items():  # type: ignore[misc]
+                str_key = str(key)  # type: ignore[assignment]
+                if FlextUtilitiesGuards.is_container(val):  # type: ignore[misc]
+                    result[str_key] = val  # type: ignore[assignment]
+                else:  # type: ignore[misc]
+                    result[str_key] = str(val)  # type: ignore[assignment]
             return result
-        error_msg = f"Cannot narrow {value.__class__.__name__} to ConfigurationDict"  # type: ignore
+        error_msg = f"Cannot narrow {value.__class__.__name__} to ConfigurationDict"  # type: ignore[assignment]
         raise TypeError(error_msg)
 
     @staticmethod
@@ -968,9 +974,9 @@ class FlextUtilitiesMapper:
             for item in items_list:
                 if not isinstance(item, Mapping | BaseModel):
                     continue
-                val_raw = FlextUtilitiesMapper._extract_field_value(item, field_name)  # type: ignore
+                val_raw = FlextUtilitiesMapper._extract_field_value(item, field_name)  # type: ignore[assignment]
                 if isinstance(val_raw, int | float):
-                    numeric_values.append(val_raw)  # type: ignore
+                    numeric_values.append(val_raw)  # type: ignore[misc]
         agg_fn: Callable[[list[int | float]], int | float] = (
             fn if fn is not None else sum
         )
@@ -1320,9 +1326,9 @@ class FlextUtilitiesMapper:
             try:
                 target_spec_mapping: ContainerMapping | None = None
                 if isinstance(target_spec, Mapping):
-                    target_spec_mapping = target_spec  # type: ignore
+                    target_spec_mapping = target_spec  # type: ignore[assignment]
                     if "value" in target_spec_mapping:
-                        constructed[target_key] = target_spec_mapping["value"]  # type: ignore
+                        constructed[target_key] = target_spec_mapping["value"]  # type: ignore[assignment]
                         continue
                 if isinstance(target_spec, str):
                     source_field = target_spec
@@ -1338,9 +1344,9 @@ class FlextUtilitiesMapper:
                     field_default = target_spec_mapping.get("default")
                     field_ops = target_spec_mapping.get("ops")
                 else:
-                    constructed[target_key] = target_spec  # type: ignore
+                    constructed[target_key] = target_spec  # type: ignore[assignment]
                     continue
-                if source is None:  # type: ignore
+                if source is None:  # type: ignore[misc]
                     constructed[target_key] = field_default
                     continue
                 extracted_result = FlextUtilitiesMapper.extract(
@@ -1562,20 +1568,20 @@ class FlextUtilitiesMapper:
         """
         try:
             parts = path.split(separator)
-            current: object | BaseModel | None  # type: ignore
+            current: object | BaseModel | None  # type: ignore[misc]
             if isinstance(data, BaseModel):
-                current = data  # type: ignore
+                current = data  # type: ignore[assignment]
             elif isinstance(data, Mapping):
-                current = FlextUtilitiesMapper.narrow_to_container(data)  # type: ignore
+                current = FlextUtilitiesMapper.narrow_to_container(data)  # type: ignore[assignment]
             else:
-                current = data  # type: ignore
+                current = data  # type: ignore[assignment]
             current: object | None
             if isinstance(data, BaseModel):
                 current = data
             elif isinstance(data, Mapping):
-                current = FlextUtilitiesMapper.narrow_to_container(data)  # type: ignore
+                current = FlextUtilitiesMapper.narrow_to_container(data)  # type: ignore[assignment]
             else:
-                current = data  # type: ignore
+                current = data  # type: ignore[assignment]
             found_none_prefix = "found_none:"
             for i, part in enumerate(parts):
                 if current is None:
@@ -1686,9 +1692,9 @@ class FlextUtilitiesMapper:
             raw_value: _MappingValue = FlextUtilitiesMapper.get(
                 source,
                 name,
-                default=default,  # type: ignore
+                default=default,  # type: ignore[assignment]
             )
-            value = raw_value if raw_value is not None else default  # type: ignore
+            value = raw_value if raw_value is not None else default  # type: ignore[assignment]
         if ops is not None:
             value_for_build: _MappingValue = (
                 FlextUtilitiesMapper.narrow_to_container(value)
@@ -1738,9 +1744,9 @@ class FlextUtilitiesMapper:
                         if name in obj:
                             result[name] = FlextUtilitiesMapper.narrow_to_container(
                                 obj[name]
-                            )  # type: ignore
+                            )  # type: ignore[misc]
                         elif isinstance(field_config, Mapping):
-                            default_value = field_config.get("default")  # type: ignore
+                            default_value = field_config.get("default")  # type: ignore[assignment]
                             if default_value is not None:
                                 result[name] = default_value
                         else:
@@ -1754,16 +1760,16 @@ class FlextUtilitiesMapper:
                         if default_value is not None:
                             result[name] = default_value
             else:
-                field_name: str = spec_item  # type: ignore
+                field_name: str = spec_item  # type: ignore[assignment]
                 if isinstance(obj, Mapping):
-                    if field_name in obj:  # type: ignore
+                    if field_name in obj:  # type: ignore[misc]
                         result[field_name] = FlextUtilitiesMapper.narrow_to_container(
                             obj[field_name]
-                        )  # type: ignore
+                        )  # type: ignore[misc]
                 elif hasattr(obj, field_name):
                     result[field_name] = FlextUtilitiesMapper.narrow_to_container(
                         getattr(obj, field_name)
-                    )  # type: ignore
+                    )  # type: ignore[misc]
         return result
 
     @staticmethod
@@ -1791,12 +1797,12 @@ class FlextUtilitiesMapper:
             value: _MappingValue = FlextUtilitiesMapper.get(
                 source,
                 field_name,
-                default=field_default,  # type: ignore
+                default=field_default,  # type: ignore[assignment]
             )
-            result[field_name] = value if value is not None else field_default  # type: ignore
+            result[field_name] = value if value is not None else field_default  # type: ignore[assignment]
         return result
 
-    # type: ignore
+    # type: ignore[misc]
 
     @staticmethod
     def filter_dict(
@@ -2036,9 +2042,9 @@ class FlextUtilitiesMapper:
         if value is None:
             return None
         if isinstance(value, t.CONTAINER_TYPES):
-            return value  # type: ignore
+            return value  # type: ignore[return-value]
         if isinstance(value, BaseModel):
-            model_dict = cast("dict[str, object]", value.model_dump())  # type: ignore
+            model_dict = cast("dict[str, object]", value.model_dump())  # type: ignore[assignment]
             return {
                 str(k): FlextUtilitiesMapper.narrow_to_container(v)
                 for k, v in model_dict.items()
