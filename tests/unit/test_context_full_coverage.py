@@ -124,7 +124,7 @@ def test_inactive_and_none_value_paths() -> None:
     ctx.remove("k")
     ctx.clear()
     assert ctx.merge(m.ConfigMap(root={"k": "v"}).root) is ctx
-    assert ctx.validate().is_failure
+    assert ctx.validate_context().is_failure
     assert ctx.keys() == []
     assert ctx.values() == []
     assert ctx.items() == []

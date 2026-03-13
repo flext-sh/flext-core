@@ -8,6 +8,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import json
 from collections.abc import Mapping
 from typing import ClassVar, TypeVar
 
@@ -259,7 +260,18 @@ class FlextUtilitiesModel:
         if isinstance(value, m.Metadata):
             return m.Metadata.model_validate(value.model_dump())
         if FlextRuntime.is_dict_like(value):
-            return m.Metadata.model_validate({"attributes": dict(value.items())})
+            safe_attrs: dict[str, t.MetadataValue] = {}
+            for k, v in value.items():
+                str_k = str(k)
+                if v is None:
+                    safe_attrs[str_k] = ""
+                elif isinstance(v, (str, int, float, bool)):
+                    safe_attrs[str_k] = v
+                elif FlextRuntime.is_dict_like(v):
+                    safe_attrs[str_k] = json.dumps(dict(v))
+                else:
+                    safe_attrs[str_k] = str(v)
+            return m.Metadata(attributes=safe_attrs)
         msg = f"metadata must be None, dict, or m.Metadata, got {value.__class__.__name__}"
         raise TypeError(msg)
 

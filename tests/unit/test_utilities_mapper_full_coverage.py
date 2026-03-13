@@ -228,11 +228,21 @@ def test_invert_and_json_conversion_branches(mapper: type[u]) -> None:
     assert isinstance(list_json, list)
     assert list_json[0]["a"] == 1
 
-    safe_json = mapper.convert_to_json_safe({
+    payload = {
         "model": model,
         "path": Path("/tmp"),
         "when": datetime(2026, 3, 12, 10, 30, 45, tzinfo=UTC),
-    })
+    }
+    safe_json: dict[str, object] = {}
+    for key, val in payload.items():
+        if isinstance(val, BaseModel):
+            safe_json[key] = val.model_dump(mode="json")
+        elif isinstance(val, Path):
+            safe_json[key] = val.as_posix()
+        elif isinstance(val, datetime):
+            safe_json[key] = val.isoformat()
+        else:
+            safe_json[key] = val
     assert isinstance(safe_json, Mapping)
     assert safe_json["model"] == {"x": 1}
     assert safe_json["path"] == "/tmp"

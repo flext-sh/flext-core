@@ -30,10 +30,10 @@ class TestFlextInfraTypesImport:
         assert hasattr(FlextTypes, "Scalar") or hasattr(FlextInfraTypes, "Scalar")
 
     def test_flext_infra_types_has_general_value_type(self) -> None:
-        """Test that FlextInfraTypes has object type."""
-        assert hasattr(FlextTypes, "object") or hasattr(
+        """Test that FlextInfraTypes has GeneralValueType."""
+        assert hasattr(FlextTypes, "GeneralValueType") or hasattr(
             FlextInfraTypes,
-            "object",
+            "GeneralValueType",
         )
 
     def test_flext_infra_types_has_dict_type(self) -> None:
@@ -41,12 +41,16 @@ class TestFlextInfraTypesImport:
         assert hasattr(FlextTypes, "Dict") or hasattr(FlextInfraTypes, "Dict")
 
     def test_flext_infra_types_has_json_value_type(self) -> None:
-        """Test that FlextInfraTypes has object type."""
-        assert hasattr(FlextTypes, "object") or hasattr(FlextInfraTypes, "object")
+        """Test that FlextInfraTypes has Serializable type."""
+        assert hasattr(FlextTypes, "Serializable") or hasattr(
+            FlextInfraTypes, "Serializable"
+        )
 
     def test_flext_infra_types_has_json_dict_type(self) -> None:
-        """Test that FlextInfraTypes has JsonDict type."""
-        assert hasattr(FlextTypes, "JsonDict") or hasattr(FlextInfraTypes, "JsonDict")
+        """Test that FlextInfraTypes has ConfigMap or ContainerDict type."""
+        assert hasattr(FlextTypes, "ConfigMap") or hasattr(
+            FlextInfraTypes.Infra, "ContainerDict"
+        )
 
     def test_flext_infra_types_has_metadata_value_type(self) -> None:
         """Test that FlextInfraTypes has MetadataValue type."""
@@ -63,10 +67,10 @@ class TestFlextInfraTypesImport:
         )
 
     def test_flext_infra_types_has_serializable_type(self) -> None:
-        """Test that FlextInfraTypes has object type."""
-        assert hasattr(FlextTypes, "object") or hasattr(
+        """Test that FlextInfraTypes has Serializable type."""
+        assert hasattr(FlextTypes, "Serializable") or hasattr(
             FlextInfraTypes,
-            "object",
+            "Serializable",
         )
 
     def test_flext_infra_types_has_registerable_service_type(self) -> None:

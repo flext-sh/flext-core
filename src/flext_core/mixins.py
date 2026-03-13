@@ -287,22 +287,64 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
                 pass
         config_type_raw = getattr(self, "config_type", None)
         config_cls_typed: type[FlextSettings]
+        
+        overrides: Mapping[str, object] | None = None
+        initial_ctx: object | None = None
+        bootstrap_services = None
+        bootstrap_factories = None
+        bootstrap_resources = None
+        bootstrap_wire_modules = None
+        
+        if hasattr(self, "_runtime_bootstrap_options"):
+            bootstrap_method = getattr(self, "_runtime_bootstrap_options")
+            if callable(bootstrap_method):
+                try:
+                    options = bootstrap_method()
+                    if options is not None:
+                        if hasattr(options, "config_type") and options.config_type is not None:
+                            config_type_raw = options.config_type
+                        if hasattr(options, "config_overrides") and options.config_overrides is not None:
+                            overrides = options.config_overrides
+                        if hasattr(options, "context") and options.context is not None:
+                            initial_ctx = options.context
+                        if hasattr(options, "services"):
+                            bootstrap_services = options.services
+                        if hasattr(options, "factories"):
+                            bootstrap_factories = options.factories
+                        if hasattr(options, "resources"):
+                            bootstrap_resources = options.resources
+                        if hasattr(options, "wire_modules"):
+                            bootstrap_wire_modules = options.wire_modules
+                except Exception:
+                    pass
+
         if config_type_raw is not None and issubclass(config_type_raw, FlextSettings):
             config_cls_typed = config_type_raw
         else:
             config_cls_typed = FlextSettings
 
-        overrides = getattr(self, "config_overrides", None)
+        if overrides is None:
+            overrides = getattr(self, "config_overrides", None)
+            
         runtime_config = config_cls_typed.get_global(overrides=overrides)
 
-        initial_ctx = getattr(self, "initial_context", None)
+        if initial_ctx is None:
+            initial_ctx = getattr(self, "initial_context", None)
+            
         runtime_context: p.Context = (
-            initial_ctx if initial_ctx is not None else FlextContext.create()
+            cast("p.Context", initial_ctx) if initial_ctx is not None else FlextContext.create()
         )
         runtime_config_typed: FlextSettings = runtime_config
         runtime_container = FlextContainer.create().scoped(
-            config=runtime_config_typed, context=runtime_context
+            config=runtime_config_typed, 
+            context=runtime_context,
+            services=bootstrap_services,
+            factories=bootstrap_factories,
+            resources=bootstrap_resources,
         )
+        if bootstrap_wire_modules:
+            runtime_container.wire_modules(modules=bootstrap_wire_modules)
+
         self._runtime = m.ServiceRuntime(
             container=runtime_container,
             config=runtime_config_typed,

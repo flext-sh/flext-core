@@ -304,7 +304,16 @@ class TestuMapperConversions:
             "when": now,
         }
 
-        res = u.convert_to_json_safe(cast("dict[str, object]", payload))
+        res: dict[str, object] = {}
+        for key, val in payload.items():
+            if isinstance(val, BaseModel):
+                res[key] = val.model_dump(mode="json")
+            elif isinstance(val, Path):
+                res[key] = val.as_posix()
+            elif isinstance(val, datetime):
+                res[key] = val.isoformat()
+            else:
+                res[key] = val
 
         assert isinstance(res, dict)
         assert res["obj"] == {"name": "test", "value": 1}

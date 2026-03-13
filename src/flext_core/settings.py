@@ -163,46 +163,16 @@ class FlextSettings(BaseSettings, FlextRuntime):
         Kwargs are applied as field overrides after base env/config loading
         to avoid type conflicts with BaseSettings internal parameters.
         """
+        model_fields = getattr(self, "model_fields", {})
         if hasattr(self, "_di_provider"):
             if kwargs:
                 for key, value in kwargs.items():
-                    if key in self.__class__.model_fields:
+                    if key in model_fields:
                         setattr(self, key, value)
             return
 
-        super().__init__(
-            _case_sensitive=None,
-            _nested_model_default_partial_update=None,
-            _env_prefix=None,
-            _env_prefix_target=None,
-            _env_file=Path(),
-            _env_file_encoding=None,
-            _env_ignore_empty=None,
-            _env_nested_delimiter=None,
-            _env_nested_max_split=None,
-            _env_parse_none_str=None,
-            _env_parse_enums=None,
-            _cli_prog_name=None,
-            _cli_parse_args=None,
-            _cli_settings_source=None,
-            _cli_parse_none_str=None,
-            _cli_hide_none_type=None,
-            _cli_avoid_json=None,
-            _cli_enforce_required=None,
-            _cli_use_class_docs_for_groups=None,
-            _cli_exit_on_error=None,
-            _cli_prefix=None,
-            _cli_flag_prefix_char=None,
-            _cli_implicit_flags=None,
-            _cli_ignore_unknown_args=None,
-            _cli_kebab_case=None,
-            _cli_shortcuts=None,
-            _secrets_dir=None,
-            _build_sources=None,
-            **kwargs,
-        )
+        BaseSettings.__init__(self, **kwargs)
         if kwargs:
-            model_fields = self.__class__.model_fields
             for key, value in kwargs.items():
                 if key in model_fields:
                     setattr(self, key, value)

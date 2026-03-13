@@ -1040,7 +1040,7 @@ class TestuCollectionMerge:
         _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value["a"] == 1
         assert result.value["c"] == 3
-        assert isinstance(result.value["b"], BaseModel)
+        assert isinstance(result.value["b"], dict)
 
     def test_merge_override(self) -> None:
         """Test override merge."""
@@ -1050,7 +1050,7 @@ class TestuCollectionMerge:
         _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value["a"] == 1
         assert result.value["c"] == 3
-        assert isinstance(result.value["b"], BaseModel)
+        assert isinstance(result.value["b"], dict)
 
 
 __all__ = [

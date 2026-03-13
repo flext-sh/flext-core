@@ -99,7 +99,7 @@ class TestContext100Coverage:
         """Test validate with valid context."""
         context = FlextContext()
         context.set("key1", "value1").value
-        result = context.validate()
+        result = context.validate_context()
         _ = u.Tests.Result.assert_success(result)
 
     def test_export_returns_dict(self) -> None:

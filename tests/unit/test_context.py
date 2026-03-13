@@ -95,7 +95,7 @@ class TestFlextContext:
         initial_data = m.ContextData(
             data=m.Dict(root={"user_id": "123", "session_id": "abc"}),
         )
-        context = FlextContext(initial_data)
+        context = FlextContext(initial_data=initial_data)
         FlextTestsUtilities.Tests.ContextHelpers.assert_context_get_success(
             context,
             "user_id",
@@ -192,15 +192,12 @@ class TestFlextContext:
         result = context.get("nested")
         _ = u.Tests.Result.assert_success(result)
         retrieved = result.value
-        assert isinstance(retrieved, dict)
-        retrieved_dict: dict[str, object] = retrieved
-        user_data = retrieved_dict.get("user")
-        assert isinstance(user_data, dict)
-        user_dict: dict[str, object] = user_data
-        profile_data = user_dict.get("profile")
-        assert isinstance(profile_data, dict)
-        profile_dict: dict[str, object] = profile_data
-        assert profile_dict.get("name") == "John Doe"
+        assert isinstance(retrieved, m.Dict)
+        user_data = retrieved.get("user")
+        assert isinstance(user_data, m.Dict)
+        profile_data = user_data.get("profile")
+        assert isinstance(profile_data, m.Dict)
+        assert profile_data.get("name") == "John Doe"
 
     def test_context_merge(self, test_context: FlextContext) -> None:
         """Test context merging."""
@@ -255,7 +252,7 @@ class TestFlextContext:
         """Test context validation."""
         context = test_context
         context.set("valid_key", "valid_value").value
-        result = context.validate()
+        result = context.validate_context()
         _ = u.Tests.Result.assert_success(result)
 
     def test_context_validation_failure(self, test_context: FlextContext) -> None:
@@ -379,7 +376,10 @@ class TestFlextContext:
         context.set(f"{value_name}_key", converted_value).value
         result = context.get(f"{value_name}_key")
         _ = u.Tests.Result.assert_success(result)
-        assert result.value == special_value
+        actual = result.value
+        assert (
+            actual.model_dump() if isinstance(actual, m.Dict) else actual
+        ) == special_value
 
     def test_context_edge_case_duplicate_keys_overwrite(
         self,

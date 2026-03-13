@@ -302,7 +302,7 @@ class FlextUtilitiesGuards:
             DeprecationWarning,
             stacklevel=2,
         )
-        return FlextUtilitiesGuards.is_container(value)
+        return callable(value) or FlextUtilitiesGuards.is_container(value)
 
     @staticmethod
     def is_handler_callable(

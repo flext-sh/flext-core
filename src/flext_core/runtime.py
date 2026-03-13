@@ -45,6 +45,7 @@ import atexit
 import contextlib
 import inspect
 import io
+import json
 import logging
 import queue
 import secrets
@@ -656,12 +657,45 @@ class FlextRuntime:
     @staticmethod
     def normalize_to_metadata(
         val: object,
-    ) -> t.Container | BaseModel:
-        """Normalize any value to t.Container | BaseModel for metadata."""
-        return FlextRuntime.normalize_to_container(val)
+    ) -> t.MetadataValue:
+
+        if val is None:
+            return ""
+        if isinstance(val, (str, int, float, bool)):
+            return val
+        if isinstance(val, datetime):
+            return val
+        if isinstance(val, Path):
+            return str(val)
+        if isinstance(val, BaseModel):
+            return val.model_dump_json()
+        if FlextRuntime.is_dict_like(val):
+            clean: dict[str, str | int | float | bool] = {}
+            for k, v in val.items():
+                if isinstance(v, (str, int, float, bool)):
+                    clean[str(k)] = v
+                elif v is None:
+                    clean[str(k)] = ""
+                else:
+                    raise TypeError(
+                        f"Cannot normalize value of type {type(v).__name__!r} "
+                        "to metadata JSON scalar"
+                    )
+            return json.dumps(clean)
+        if FlextRuntime.is_list_like(val):
+            result_list: list[str] = []
+            for item in val:
+                if isinstance(item, (str, int, float, bool)):
+                    result_list.append(str(item))
+                elif item is None:
+                    result_list.append("")
+                else:
+                    result_list.append(str(item))
+            return result_list
+        return str(val)
 
     @staticmethod
-    def normalize_to_metadata_value(val: object) -> t.Container | BaseModel:
+    def normalize_to_metadata_value(val: object) -> t.MetadataValue:
         """Deprecated alias; use normalize_to_metadata."""
         warnings.warn(
             "normalize_to_metadata_value is deprecated; use normalize_to_metadata. "

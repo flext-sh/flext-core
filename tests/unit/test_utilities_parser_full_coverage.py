@@ -237,15 +237,16 @@ def test_parser_parse_helpers_and_primitive_coercion_branches(
     primitive_str = parser._parse_try_primitive(5, str, "x", None, "")
     assert primitive_float is not None and primitive_float.is_success
     assert primitive_str is not None and primitive_str.is_success
+    from flext_core._utilities.parser import FlextUtilitiesParser
     monkeypatch.setattr(
-        u.__mro__[1],
+        FlextUtilitiesParser,
         "_coerce_to_float",
         staticmethod(_raise_value_error_float),
     )
     failed_float = parser._parse_try_primitive("x", float, 1.2, None, "field: ")
     assert failed_float is not None and failed_float.is_failure
     monkeypatch.setattr(
-        u.__mro__[1],
+        FlextUtilitiesParser,
         "_coerce_to_bool",
         staticmethod(_raise_type_error_bool),
     )
@@ -315,11 +316,12 @@ def test_parser_convert_and_norm_branches(monkeypatch: pytest.MonkeyPatch) -> No
     assert mapping_result is True
     assert config_map_result is True
     original_norm_list = u.norm_list
-    monkeypatch.setattr(u.__mro__[1], "norm_list", staticmethod(_norm_list_dict))
+    from flext_core._utilities.parser import FlextUtilitiesParser
+    monkeypatch.setattr(FlextUtilitiesParser, "norm_list", staticmethod(_norm_list_dict))
     try:
         assert parser.norm_in("v", ["x"], case="lower") is False
     finally:
-        monkeypatch.setattr(u.__mro__[1], "norm_list", original_norm_list)
+        monkeypatch.setattr(FlextUtilitiesParser, "norm_list", original_norm_list)
 
 
 def test_parser_success_and_edge_paths_cover_major_branches() -> None:
@@ -387,15 +389,16 @@ def test_parser_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> None:
         field_prefix="",
     )
     assert enum_by_member_value is not None and enum_by_member_value.is_success
+    from flext_core._utilities.parser import FlextUtilitiesParser
     monkeypatch.setattr(
-        u.__mro__[1],
+        FlextUtilitiesParser,
         "_coerce_to_int",
         staticmethod(_raise_value_error_int),
     )
     failed_int = parser._parse_try_primitive("x", int, 1, None, "field: ")
     assert failed_int is not None and failed_int.is_failure
     monkeypatch.setattr(
-        u.__mro__[1],
+        FlextUtilitiesParser,
         "_coerce_to_str",
         staticmethod(_raise_type_error_str),
     )

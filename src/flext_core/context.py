@@ -662,6 +662,9 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
         """Set context statistics (used internally for cloning)."""
         self._statistics = statistics
 
+    def validate(self) -> r[bool]:
+        return self.validate_context()
+
     def validate_context(self) -> r[bool]:
         """Validate the context data.
 

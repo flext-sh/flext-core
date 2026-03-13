@@ -15,7 +15,7 @@ import contextvars
 import threading
 import time
 from collections.abc import Callable, Mapping
-from typing import TypeGuard
+from typing import TypeGuard, cast
 
 from pydantic import TypeAdapter, ValidationError
 
@@ -458,7 +458,11 @@ class FlextUtilitiesReliability:
             ) as e:
                 if on_error == "stop":
                     return r[t.Container].fail(f"Pipeline step {i} failed: {e}")
-        return r[t.Container].ok(cast(t.Container, current))
+        if FlextUtilitiesGuards.is_container(current):
+            return r[t.Container].ok(current)
+        return r[t.Container].fail(
+            f"Pipeline result is not a Container type: {type(current).__name__}"
+        )
 
     @staticmethod
     def retry[TResult](

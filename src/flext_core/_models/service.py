@@ -275,6 +275,20 @@ class FlextModelsService:
             if self.retry_config is None:
                 self.retry_config = FlextModelsService.ServiceRetryConfiguration()
             return self
+    class RuntimeBootstrapOptions(FlextModelFoundation.ArbitraryTypesModel):
+        """Options for runtime bootstrapping."""
+
+        config_type: type | None = None
+        config_overrides: Mapping[str, object] | None = None
+        context: p.Context | None = None
+        subproject: str | None = None
+        services: Mapping[str, t.RegisterableService] | None = None
+        factories: Mapping[str, t.FactoryCallable] | None = None
+        resources: Mapping[str, t.ResourceCallable] | None = None
+        container_overrides: Mapping[str, object] | None = None
+        wire_modules: Sequence[object] | None = None
+        wire_packages: Sequence[str] | None = None
+        wire_classes: Sequence[type] | None = None
 
 
 __all__ = ["FlextModelsService"]

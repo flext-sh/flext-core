@@ -121,63 +121,6 @@ class FlextUtilitiesMapper:
             return result_list
         return narrowed_value
 
-    @classmethod
-    def convert_to_json_safe(cls, value: object) -> _MappingValue:
-        """Convert any value to guaranteed JSON-safe type.
-
-        **Generic replacement for**: Manual JSON serialization with type safety
-
-        Conversion Strategy:
-            1. Primitives (str, int, float, bool, None) → return as-is
-            2. datetime → convert to ISO 8601 string via .isoformat()
-            3. Path → convert to POSIX string via .as_posix()
-            4. BaseModel → convert to dict via .model_dump(mode="json")
-            5. dict-like → recursively convert keys to str, values to JSON-safe
-            6. list-like → recursively convert items to JSON-safe
-            7. Other → convert to str()
-
-        This differs from convert_to_json_value() which returns object
-        (allows BaseModel/Path through unchanged). This method GUARANTEES object
-        (JSON-safe: Scalar | ContainerList | dict[str, object | None]).
-
-        Args:
-            value: object value to convert to JSON-safe type
-
-        Returns:
-            object | None: Guaranteed JSON-serializable value
-
-        Example:
-            >>> FlextUtilitiesMapper.convert_to_json_safe(datetime.now())
-            '2025-03-12T10:30:45.123456'
-            >>> FlextUtilitiesMapper.convert_to_json_safe(Path("/tmp/file"))
-            '/tmp/file'
-            >>> FlextUtilitiesMapper.convert_to_json_safe({"a": datetime.now()})
-            {'a': '2025-03-12T10:30:45.123456'}
-
-        """
-        if isinstance(value, (str, int, float, bool)):
-            return value
-        if value is None:
-            return None
-        if isinstance(value, datetime):
-            return value.isoformat()
-        if isinstance(value, Path):
-            return value.as_posix()
-        if isinstance(value, BaseModel):
-            return value.model_dump(mode="json")
-        if isinstance(value, Mapping):
-            result_dict: dict[str, _MappingValue] = {}
-            for key, val in value.items():  # type: ignore
-                result_dict[str(key)] = FlextUtilitiesMapper.convert_to_json_safe(val)  # type: ignore
-            return result_dict  # type: ignore
-        if isinstance(value, Sequence) and (not isinstance(value, str | bytes)):  # type: ignore
-            result_list: ContainerList = []
-            for item in value:  # type: ignore
-                converted_item = cls.convert_to_json_safe(item)  # type: ignore
-                result_list.append(converted_item)  # type: ignore
-            return result_list  # type: ignore
-        return str(value)
-
     @staticmethod
     def _apply_exclude_keys(
         result: ContainerMapping, *, exclude_keys: set[str] | None
