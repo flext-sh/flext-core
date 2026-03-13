@@ -7,7 +7,7 @@ from collections.abc import Callable, Mapping
 from pathlib import Path
 
 from flext_core import r
-from flext_infra import c, m, t, u
+from flext_infra import c, m, u
 from flext_infra.refactor.rule import (
     FlextInfraRefactorRule,
     FlextInfraRefactorRuleLoader,
@@ -154,7 +154,7 @@ class FlextInfraRefactorEngine:
             for rule in self.rules
         ]
 
-    def load_config(self) -> r[Mapping[str, t.Container]]:
+    def load_config(self) -> r[Mapping[str, object]]:
         """Load YAML configuration for this engine instance."""
         result = self.rule_loader.load_config()
         if result.is_success:

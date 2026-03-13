@@ -167,7 +167,7 @@ class FlextInfraPrManager:
         auto: bool = False,
         delete_branch: bool = False,
         release_on_merge: bool = True,
-    ) -> r[Mapping[str, t.Container]]:
+    ) -> r[t.Infra.ContainerDict]:
         """Merge a PR with retry on rebase.
 
         Args:
@@ -186,7 +186,7 @@ class FlextInfraPrManager:
         if selector == head:
             pr_result = self.open_pr_for_head(repo_root, head)
             if pr_result.is_success and (not pr_result.unwrap()):
-                return r[Mapping[str, t.Container]].ok({
+                return r[t.Infra.ContainerDict].ok({
                     c.Infra.ReportKeys.STATUS: "no-open-pr",
                 })
         merge_flag = {
@@ -222,17 +222,19 @@ class FlextInfraPrManager:
                 if update_result.is_success:
                     result = self._runner.run(command, cwd=repo_root)
         if result.is_failure:
-            return r[Mapping[str, t.Container]].fail(
+            return r[t.Infra.ContainerDict].fail(
                 result.error or "merge failed",
             )
-        info: MutableMapping[str, t.Container] = {
+        info: t.Infra.ContainerDict = {
             c.Infra.ReportKeys.STATUS: "merged",
         }
         if release_on_merge:
             release_result = self._trigger_release_if_needed(repo_root, head)
             if release_result.is_success:
-                info[c.Infra.ReportKeys.RELEASE] = release_result.value
-        return r[Mapping[str, t.Container]].ok(info)
+                release_data = release_result.value
+                for key, value in release_data.items():
+                    info[f"release_{key}"] = value
+        return r[t.Infra.ContainerDict].ok(info)
 
     def open_pr_for_head(self, repo_root: Path, head: str) -> r[Mapping[str, t.Scalar]]:
         """Find an open PR for the given head branch.

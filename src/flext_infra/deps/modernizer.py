@@ -76,19 +76,24 @@ class FlextInfraPyprojectModernizer:
             if kind_result.is_success:
                 project_kind = kind_result.value
         changes: list[str] = []
-        tool_item = doc.get(c.Infra.Toml.TOOL, None)
-        if isinstance(tool_item, Table):
-            poetry_item = tool_item.get(c.Infra.Toml.POETRY, None)
-            if isinstance(poetry_item, Table):
-                group_item = poetry_item.get(c.Infra.Toml.GROUP, None)
-                if isinstance(group_item, Table):
+        tool_item_raw: object | None = doc.get(c.Infra.Toml.TOOL, None)
+        if isinstance(tool_item_raw, Table):
+            poetry_item_raw: object | None = tool_item_raw.get(
+                c.Infra.Toml.POETRY, None
+            )
+            if isinstance(poetry_item_raw, Table):
+                group_item_raw: object | None = poetry_item_raw.get(
+                    c.Infra.Toml.GROUP, None
+                )
+                if isinstance(group_item_raw, Table):
+                    poetry_item = poetry_item_raw
+                    group_item = group_item_raw
                     empty_groups: list[str] = []
                     for name in u.Infra.table_string_keys(group_item):
-                        group_dep_item = group_item.get(name, None)
+                        group_dep_item: object | None = group_item.get(name, None)
                         if isinstance(group_dep_item, Table):
-                            deps_item = group_dep_item.get(
-                                c.Infra.Toml.DEPENDENCIES,
-                                None,
+                            deps_item: object | None = group_dep_item.get(
+                                c.Infra.Toml.DEPENDENCIES, None
                             )
                             if isinstance(deps_item, Table) and len(deps_item) == 0:
                                 empty_groups.append(name)

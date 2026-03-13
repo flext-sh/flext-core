@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import override
 
 import tomlkit
-from pydantic import TypeAdapter
+from pydantic import TypeAdapter, ValidationError
 from tomlkit import items
 
 from flext_core import FlextLogger, r, s
@@ -84,7 +84,12 @@ class FlextInfraConfigFixer(s[list[str]]):
         pyrefly_data = typed_tool_data.get(c.Infra.Toml.PYREFLY)
         if not isinstance(pyrefly_data, Mapping):
             return r[list[str]].ok([])
-        pyrefly: MutableMapping[str, object] = dict(pyrefly_data)
+        try:
+            pyrefly: MutableMapping[str, object] = TypeAdapter(
+                dict[str, object]
+            ).validate_python(pyrefly_data)
+        except ValidationError:
+            return r[list[str]].ok([])
         all_fixes: list[str] = []
         fixes = self._fix_search_paths_tk(pyrefly, path.parent)
         all_fixes.extend(fixes)
@@ -157,7 +162,11 @@ class FlextInfraConfigFixer(s[list[str]]):
         excludes = pyrefly.get(c.Infra.Toml.PROJECT_EXCLUDES)
         current: list[str] = []
         if isinstance(excludes, list):
-            current = [str(x) for x in excludes]
+            try:
+                exclude_items = TypeAdapter(list[object]).validate_python(excludes)
+            except ValidationError:
+                exclude_items = []
+            current = [str(value) for value in exclude_items]
         stripped_to_add: list[str] = []
         for glob in c.Infra.Check.REQUIRED_EXCLUDES:
             clean_glob = glob.strip('"').strip("'")
@@ -180,7 +189,11 @@ class FlextInfraConfigFixer(s[list[str]]):
             return []
         if project_dir == self._workspace_root:
             new_paths: list[str] = []
-            for path_item in search_path:
+            try:
+                search_items = TypeAdapter(list[object]).validate_python(search_path)
+            except ValidationError:
+                search_items = []
+            for path_item in search_items:
                 if not isinstance(path_item, str):
                     continue
                 if path_item == "../typings/generated":
@@ -196,9 +209,12 @@ class FlextInfraConfigFixer(s[list[str]]):
             if fixes:
                 pyrefly[c.Infra.Toml.SEARCH_PATH] = self._to_array(new_paths)
         search_raw = pyrefly.get(c.Infra.Toml.SEARCH_PATH)
-        current_paths: list[object] = (
-            list(search_raw) if isinstance(search_raw, list) else []
-        )
+        current_paths: list[object] = []
+        if isinstance(search_raw, list):
+            try:
+                current_paths = TypeAdapter(list[object]).validate_python(search_raw)
+            except ValidationError:
+                current_paths = []
         nonexistent = [
             path_item
             for path_item in current_paths
@@ -223,13 +239,28 @@ class FlextInfraConfigFixer(s[list[str]]):
         if not isinstance(sub_configs, list):
             return []
         new_configs: list[object] = []
-        for conf in sub_configs:
-            if isinstance(conf, Mapping) and conf.get(c.Infra.Toml.IGNORE) is True:
-                matches = conf.get("matches", c.Infra.Defaults.UNKNOWN)
+        try:
+            configs = TypeAdapter(list[object]).validate_python(sub_configs)
+        except ValidationError:
+            configs = []
+        for conf in configs:
+            conf_out: object = conf
+            if isinstance(conf, Mapping):
+                try:
+                    conf_map: Mapping[str, object] = TypeAdapter(
+                        dict[str, object]
+                    ).validate_python(conf)
+                    conf_out = dict(conf_map)
+                except ValidationError:
+                    conf_map = {}
+            else:
+                conf_map = {}
+            if conf_map.get(c.Infra.Toml.IGNORE) is True:
+                matches = conf_map.get("matches", c.Infra.Defaults.UNKNOWN)
                 fixes.append(f"removed ignore=true sub-config for '{matches}'")
                 continue
-            new_configs.append(conf)
-        if len(new_configs) != len(sub_configs):
+            new_configs.append(conf_out)
+        if len(new_configs) != len(configs):
             pyrefly[c.Infra.Toml.SUB_CONFIG] = new_configs
         return fixes
 

@@ -40,7 +40,6 @@ from flext_core import (
     r,
     t,
 )
-from tests.test_utils import assertion_helpers
 
 
 class TestMigrationScenario1:
@@ -56,7 +55,7 @@ class TestMigrationScenario1:
             return r[dict[str, str]].ok(user_data)
 
         result = process_user("user_123")
-        _ = assertion_helpers.assert_flext_result_success(result)
+        assert result.is_success
         assert result.value == {"id": "user_123", "name": "Alice"}
         assert result.value["id"] == "user_123"
         assert result.value["name"] == "Alice"
@@ -113,8 +112,8 @@ class TestMigrationScenario4:
         class UserService(FlextService[None]):
             """User service extending FlextService."""
 
-            def __init__(self, **data: FlextTypes.Container) -> None:
-                super().__init__(**data)
+            def model_post_init(self, __context: t.Container | None, /) -> None:
+                super().model_post_init(__context)
                 self._logger = FlextLogger(__name__)
 
             @override
@@ -132,13 +131,13 @@ class TestMigrationScenario4:
                     return r[dict[str, str]].fail(
                         "Username and email required",
                     )
-                self._logger.info("Creating user", extra={"username": username})
+                self._logger.info("Creating user", username=username)
                 user_data = {"username": username, "email": email}
                 return r[dict[str, str]].ok(user_data)
 
         service = UserService()
         result = service.create_user("alice", "alice@example.com")
-        _ = assertion_helpers.assert_flext_result_success(result)
+        assert result.is_success
         assert result.value["username"] == "alice"
 
 
@@ -149,7 +148,7 @@ class TestMigrationScenario5:
         """Verify FlextLogger continues working."""
         logger = FlextLogger(__name__)
         assert logger is not None
-        logger.info("Test message", extra={"test_key": "test_value"})
+        logger.info("Test message", test_key="test_value")
         logger.debug("Debug message")
         logger.warning("Warning message")
         logger.error("Error message")
@@ -228,7 +227,7 @@ class TestMigrationComplexity:
                     return r[dict[str, object]].fail(
                         "Data required",
                     )
-                self.logger.info("Processing data", extra={"size": len(data)})
+                self.logger.info("Processing data", size=len(data))
                 processed: dict[str, object] = {
                     "original": str(data),
                     "processed": True,
@@ -237,13 +236,13 @@ class TestMigrationComplexity:
 
         app = ApplicationExample()
         result = app.process_data({"key": "value"})
-        _ = assertion_helpers.assert_flext_result_success(result)
+        assert result.is_success
         assert result.value["processed"] is True
 
     def test_all_core_apis_functional(self) -> None:
         """Verify all core APIs remain functional."""
         result = r[str].ok("test")
-        _ = assertion_helpers.assert_flext_result_success(result)
+        assert result.is_success
         assert result.value == "test"
         container = FlextContainer()
         assert container is not None

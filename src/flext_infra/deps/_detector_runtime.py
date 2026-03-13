@@ -25,8 +25,8 @@ from flext_infra.deps.detection import FlextInfraDependencyDetectionService
 class _WorkspaceReportProtocol(Protocol):
     """Protocol for workspace dependency report model contract."""
 
-    pip_check: object | None
-    dependency_limits: object | None
+    pip_check: m.Infra.Deps.PipCheckReport | None
+    dependency_limits: m.Infra.Deps.DependencyLimitsInfo | None
 
     def model_dump(self) -> dict[str, object]:
         """Serialize report model payload."""

@@ -892,7 +892,8 @@ class FlextInfraUtilitiesCodegen:
                 modified = raw.get("modified_files")
                 if isinstance(modified, list):
                     filtered: set[str] = set()
-                    for entry in modified:
+                    modified_items = TypeAdapter(list[object]).validate_python(modified)
+                    for entry in modified_items:
                         if not isinstance(entry, str):
                             continue
                         if not entry.endswith(c.Infra.Extensions.PYTHON):
@@ -1055,7 +1056,8 @@ class FlextInfraUtilitiesCodegen:
             return FlextInfraUtilitiesCodegen.as_int(payload.get("duplicate_groups"))
         duplicates = payload.get("duplicates")
         if isinstance(duplicates, list):
-            return len(duplicates)
+            duplicate_items = TypeAdapter(list[object]).validate_python(duplicates)
+            return len(duplicate_items)
         return -1
 
     @staticmethod
@@ -1066,7 +1068,8 @@ class FlextInfraUtilitiesCodegen:
             return FlextInfraUtilitiesCodegen.as_int(value)
         projects = payload.get("projects")
         if isinstance(projects, list):
-            return len(projects)
+            project_items = TypeAdapter(list[object]).validate_python(projects)
+            return len(project_items)
         return 0
 
     @staticmethod
@@ -1098,17 +1101,18 @@ class FlextInfraUtilitiesCodegen:
     def dict_or_empty(value: object) -> dict[str, object]:
         if not isinstance(value, dict):
             return {}
-        return {str(key): item for key, item in value.items()}
+        return TypeAdapter(dict[str, object]).validate_python(value)
 
     @staticmethod
     def dict_list(value: object) -> list[dict[str, object]]:
         if not isinstance(value, list):
             return []
         result: list[dict[str, object]] = []
-        for item in value:
+        value_items = TypeAdapter(list[object]).validate_python(value)
+        for item in value_items:
             if not isinstance(item, dict):
                 continue
-            result.append({str(key): inner for key, inner in item.items()})
+            result.append(TypeAdapter(dict[str, object]).validate_python(item))
         return result
 
 

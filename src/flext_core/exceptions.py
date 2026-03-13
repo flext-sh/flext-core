@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import time
 import uuid
-from collections.abc import Mapping
+from collections.abc import Mapping, MutableMapping
 from typing import ClassVar, Protocol, override
 
 from pydantic import (
@@ -1088,7 +1088,7 @@ class FlextExceptions:
         def _normalize_type(
             type_value: type | str | None,
             type_map: Mapping[str, type],
-            extra_kwargs: Mapping[str, object],
+            extra_kwargs: MutableMapping[str, t.Container],
             key: str,
         ) -> type | None:
             """Normalize type value from various sources."""
@@ -1338,16 +1338,15 @@ class FlextExceptions:
         Mapping[str, object],
     ]:
         """Prepare exception kwargs by extracting common parameters."""
+        merged_kwargs: dict[str, object] = dict(kwargs)
         if specific_params:
-            filtered_params: dict[str, object] = {}
             for k, v in specific_params.items():
                 if v is None:
                     continue
-                filtered_params[k] = v
-            kwargs.update(filtered_params)
+                merged_kwargs[k] = v
         extra_kwargs = {
             k: v
-            for k, v in kwargs.items()
+            for k, v in merged_kwargs.items()
             if k
             not in {
                 "correlation_id",
@@ -1357,20 +1356,22 @@ class FlextExceptions:
                 "config",
             }
         }
-        correlation_id_raw = kwargs.get("correlation_id")
+        correlation_id_raw = merged_kwargs.get("correlation_id")
         correlation_id = e._safe_optional_str(correlation_id_raw)
         return (
             correlation_id,
-            kwargs.get("metadata"),
-            e._safe_bool(kwargs.get("auto_log"), default=False),
-            e._safe_bool(kwargs.get("auto_correlation"), default=False),
-            kwargs.get("config"),
+            merged_kwargs.get("metadata"),
+            e._safe_bool(merged_kwargs.get("auto_log"), default=False),
+            e._safe_bool(merged_kwargs.get("auto_correlation"), default=False),
+            merged_kwargs.get("config"),
             extra_kwargs,
         )
 
     @staticmethod
     def create(
-        message: str, error_code: str | None = None, **kwargs: t.Scalar
+        message: str,
+        error_code: str | None = None,
+        **kwargs: t.MetadataValue,
     ) -> e.BaseError:
         """Create an appropriate exception instance based on kwargs context."""
         legacy_type_map: Mapping[str, str] = {
@@ -1439,7 +1440,10 @@ class FlextExceptions:
     _exception_counts: ClassVar[dict[type, int]] = {}
 
     def __call__(
-        self, message: str, error_code: str | None = None, **kwargs: t.Scalar
+        self,
+        message: str,
+        error_code: str | None = None,
+        **kwargs: t.MetadataValue,
     ) -> e.BaseError:
         """Create exception by calling the class instance."""
         normalized_kwargs: m.ConfigMap = m.ConfigMap(root={})
@@ -1476,10 +1480,13 @@ class FlextExceptions:
                 else str(exc_type)
             )
             exception_counts_dict[exc_name] = count
+        exception_counts_payload: dict[str, object] = dict(
+            exception_counts_dict.items()
+        )
         result_dict: m.ErrorMap = m.ErrorMap(
             root={
                 "total_exceptions": total,
-                "exception_counts": exception_counts_dict,
+                "exception_counts": m.ConfigMap(root=exception_counts_payload),
                 "exception_counts_summary": exception_counts_str,
                 "unique_exception_types": len(cls._exception_counts),
             }

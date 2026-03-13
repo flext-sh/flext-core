@@ -260,7 +260,7 @@ class FlextTestsUtilities(FlextUtilities):
                         error_msg or f"Expected success but got failure: {result.error}"
                     )
                     raise AssertionError(msg)
-                return cast("TResult", result.value)
+                return result.value
 
             @staticmethod
             def assert_success_with_value[T](
@@ -828,9 +828,7 @@ class FlextTestsUtilities(FlextUtilities):
                 assert result.is_success, (
                     f"Expected success for key '{key}', got: {result.error!r}"
                 )
-                actual = result.value
-                if hasattr(actual, "root"):
-                    actual = actual.root
+                actual = _to_payload(result.value)
                 assert actual == expected_value, (
                     f"Expected {expected_value!r} for key '{key}', got {result.value!r}"
                 )

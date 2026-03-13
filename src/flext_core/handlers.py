@@ -121,6 +121,7 @@ class FlextHandlers[MessageT_contra = object, ResultT = object](x):
             handler_name=self._config_model.handler_name,
             handler_mode=handler_mode_literal,
         )
+        object.__setattr__(self, "validate", self.validate_message)
         self._accepted_message_types: list[type] = []
         self._revalidate_pydantic_messages: bool = False
         self._type_warning_emitted: bool = False
@@ -410,7 +411,7 @@ class FlextHandlers[MessageT_contra = object, ResultT = object](x):
             ...     print(f"Failed: {result.error}")
 
         """
-        validation = self.validate(message)
+        validation = self.validate_message(message)
         if validation.is_failure:
             return r[ResultT].fail(validation.error or "Validation failed")
         return self.handle(message)
@@ -487,7 +488,7 @@ class FlextHandlers[MessageT_contra = object, ResultT = object](x):
         self._metrics[name] = value
         return r[bool].ok(value=True)
 
-    def validate(self, data: MessageT_contra) -> r[bool]:
+    def validate_message(self, data: MessageT_contra) -> r[bool]:
         """Validate input data using extensible validation pipeline.
 
         Base validation method that can be overridden by subclasses to implement
@@ -506,7 +507,7 @@ class FlextHandlers[MessageT_contra = object, ResultT = object](x):
 
         Example:
             >>> handler = UserHandler()
-            >>> result = handler.validate(invalid_data)
+            >>> result = handler.validate_message(invalid_data)
             >>> if result.is_failure:
             ...     print(f"Validation error: {result.error}")
 
@@ -570,7 +571,7 @@ class FlextHandlers[MessageT_contra = object, ResultT = object](x):
             type_name = message_type.__name__
             error_msg = f"Handler cannot handle message type {type_name}"
             return r[ResultT].fail(error_msg)
-        validation = self.validate(message)
+        validation = self.validate_message(message)
         if validation.is_failure:
             error_detail = validation.error or "Validation failed"
             error_msg = f"Message validation failed: {error_detail}"

@@ -69,7 +69,7 @@ class _DemoHandler(h[object, str]):
 
     @override
     def validate(self, data: object) -> r[bool]:
-        base = super().validate(data)
+        base = super().model_validate(data)
         if base.is_failure:
             return base
         if data == "bad":

@@ -13,6 +13,7 @@ import tomllib
 from pathlib import Path
 
 import tomlkit
+from pydantic import TypeAdapter, ValidationError
 from tomlkit.items import Item, Table
 
 from flext_core import r
@@ -59,7 +60,12 @@ class FlextInfraUtilitiesTomlParse:
         raw = FlextInfraUtilitiesToml.unwrap_item(
             FlextInfraUtilitiesToml.get(pyright, "executionEnvironments"),
         )
-        current: list[object] = raw if isinstance(raw, list) else []
+        current: list[dict[str, str]] = []
+        if isinstance(raw, list):
+            try:
+                current = TypeAdapter(list[dict[str, str]]).validate_python(raw)
+            except ValidationError:
+                current = []
         if list(current) != expected:
             pyright["executionEnvironments"] = expected
             changes.append(

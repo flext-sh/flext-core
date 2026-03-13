@@ -18,7 +18,6 @@ from flext_core import FlextConstants, FlextContext
 from flext_core._models.base import FlextModelFoundation
 from flext_core._models.context import FlextModelsContext
 from flext_tests import u
-from tests.test_utils import assertion_helpers
 
 
 class TestContext100Coverage:
@@ -119,7 +118,9 @@ class TestContext100Coverage:
         """Test None is rejected by context.set validation."""
         context = FlextContext()
         context.set("key1", "value1").value
-        result = context.set("none_key", None)
+        result = context._set_single(
+            "none_key", None, FlextConstants.Context.SCOPE_GLOBAL
+        )
         assert result.is_failure
 
     def test_get_with_different_scope(self) -> None:
@@ -165,7 +166,7 @@ class TestContext100Coverage:
         context.set("key1", "value1", scope="user").value
         context.remove("key1", scope="user")
         result = context.get("key1", scope="user")
-        _ = assertion_helpers.assert_flext_result_failure(result)
+        assert result.is_failure
 
     def test_has_with_different_scope(self) -> None:
         """Test has with different scope."""

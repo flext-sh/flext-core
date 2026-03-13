@@ -7,6 +7,8 @@ import os
 from collections.abc import Mapping, MutableMapping
 from pathlib import Path
 
+from pydantic import TypeAdapter, ValidationError
+
 from flext_core import FlextLogger, r
 from flext_infra import (
     FlextInfraUtilitiesPatterns,
@@ -38,14 +40,18 @@ class FlextInfraDependencyDetectionService:
 
     @staticmethod
     def to_infra_value(
-        value: t.Infra.TomlValue | t.Infra.InfraValue,
+        value: object,
     ) -> t.Infra.TomlValue | None:
         """Convert container value to namespaced infra value."""
         if value is None or isinstance(value, (str, int, float, bool)):
             return value
         if isinstance(value, list):
+            try:
+                sequence = TypeAdapter(list[object]).validate_python(value)
+            except ValidationError:
+                return None
             converted: list[t.Infra.TomlValue] = []
-            for item in value:
+            for item in sequence:
                 converted_item = FlextInfraDependencyDetectionService.to_infra_value(
                     item
                 )
@@ -54,8 +60,12 @@ class FlextInfraDependencyDetectionService:
                 converted.append(converted_item)
             return converted
         if isinstance(value, Mapping):
+            try:
+                mapping_value = TypeAdapter(dict[object, object]).validate_python(value)
+            except ValidationError:
+                return None
             converted_map: dict[str, t.Infra.TomlValue] = {}
-            for key, item in value.items():
+            for key, item in mapping_value.items():
                 converted_item = FlextInfraDependencyDetectionService.to_infra_value(
                     item
                 )
@@ -75,7 +85,11 @@ class FlextInfraDependencyDetectionService:
             error_obj = item.get(c.Infra.Toml.ERROR)
             if not isinstance(error_obj, Mapping):
                 continue
-            code = error_obj.get(c.Infra.Toml.CODE)
+            try:
+                error_data = TypeAdapter(dict[str, object]).validate_python(error_obj)
+            except ValidationError:
+                continue
+            code = error_data.get(c.Infra.Toml.CODE)
             if code == "DEP001":
                 groups.dep001.append(item)
             elif code == "DEP002":

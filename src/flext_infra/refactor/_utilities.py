@@ -227,8 +227,13 @@ class FlextInfraUtilitiesRefactor:
         if isinstance(value, str):
             return [value]
         if isinstance(value, list):
+            try:
+                value_items = TypeAdapter(list[object]).validate_python(value)
+            except ValidationError as exc:
+                msg = "expected list[str] value"
+                raise ValueError(msg) from exc
             items: list[str] = []
-            for item in value:
+            for item in value_items:
                 if not isinstance(item, str):
                     msg = "expected list[str] value"
                     raise TypeError(msg)
@@ -245,7 +250,17 @@ class FlextInfraUtilitiesRefactor:
         if value is None:
             return []
         if isinstance(value, list):
-            return [item for item in value if isinstance(item, dict)]
+            try:
+                value_items = TypeAdapter(list[object]).validate_python(value)
+            except ValidationError as exc:
+                msg = "expected list[dict[str, object]] value"
+                raise ValueError(msg) from exc
+            normalized: list[dict[str, object]] = []
+            for item in value_items:
+                if not isinstance(item, dict):
+                    continue
+                normalized.append(TypeAdapter(dict[str, object]).validate_python(item))
+            return normalized
         msg = "expected list[dict[str, object]] value"
         raise ValueError(msg)
 
@@ -339,17 +354,25 @@ class FlextInfraUtilitiesRefactor:
         definitions_raw = schema.get("definitions", {})
         if not isinstance(definitions_raw, dict):
             return False
-        policy_entry_raw = definitions_raw.get("policyEntry", {})
-        class_rule_raw = definitions_raw.get("classRule", {})
+        try:
+            definitions = TypeAdapter(dict[str, object]).validate_python(
+                definitions_raw
+            )
+        except ValidationError:
+            return False
+        policy_entry_raw = definitions.get("policyEntry", {})
+        class_rule_raw = definitions.get("classRule", {})
         if not isinstance(policy_entry_raw, dict):
             return False
         if not isinstance(class_rule_raw, dict):
             return False
+        policy_entry = TypeAdapter(dict[str, object]).validate_python(policy_entry_raw)
+        class_rule = TypeAdapter(dict[str, object]).validate_python(class_rule_raw)
         policy_entry_required = FlextInfraUtilitiesRefactor.string_list(
-            policy_entry_raw.get("required", []),
+            policy_entry.get("required", []),
         )
         class_rule_required = FlextInfraUtilitiesRefactor.string_list(
-            class_rule_raw.get("required", []),
+            class_rule.get("required", []),
         )
         for entry in FlextInfraUtilitiesRefactor.mapping_list(
             loaded.get("policy_matrix")

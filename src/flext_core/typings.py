@@ -116,7 +116,7 @@ class FlextTypes:
     type MetadataAttributeValue = MetadataValue
     type HandlerCallable = Callable[[BaseModel], BaseModel]
     type HandlerLike = Callable[..., BaseModel]
-    type RegistrablePlugin = Scalar | Callable[..., Scalar | BaseModel]
+    type RegistrablePlugin = Scalar | BaseModel | Callable[..., Scalar | BaseModel]
 
     # Other Types
     type SortableObjectType = str | int | float

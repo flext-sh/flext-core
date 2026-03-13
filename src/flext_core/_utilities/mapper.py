@@ -17,7 +17,6 @@ from pydantic import BaseModel
 
 from flext_core import (  # type: ignore[import-not-found,import-untyped,misc]
     FlextRuntime,
-    T,
     m,
     p,
     r,
@@ -2107,7 +2106,7 @@ class FlextUtilitiesMapper:
         )
         result: dict[str, t.MetadataValue] = {}
         for k, v in raw_result.items():
-            result[k] = cast("t.MetadataValue", FlextRuntime.normalize_to_metadata(v))
+            result[k] = FlextRuntime.normalize_to_metadata(v)
         return result
 
     @staticmethod

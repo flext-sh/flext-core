@@ -6,7 +6,7 @@ type-system-architecture.md rules with zero duplication.
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from typing import TypeVar, override
 
 from flext_core import (
@@ -61,8 +61,8 @@ class TestDataFactory:
     def create_operation_test_case(
         operation: str,
         description: str,
-        input_data: object,
-        expected_result: object,
+        input_data: Mapping[str, t.ContainerValue],
+        expected_result: t.ContainerValue,
         *,
         expected_success: bool = True,
         error_contains: str | None = None,
@@ -114,8 +114,8 @@ class AssertionHelpers:
 
     @staticmethod
     def assert_entity_properties(
-        entity: m.Entity,
-        expected_props: object,
+        entity: object,
+        expected_props: Mapping[str, t.ContainerValue],
         context: str = "",
     ) -> None:
         """Assert entity has expected properties."""
@@ -172,7 +172,7 @@ class TestFixtureFactory:
 
     @staticmethod
     def create_test_value_object(
-        value: object = "test_value",
+        value: t.ContainerValue = "test_value",
     ) -> TestsFlextModels.UtilityValueModel:
         """Create test value object fixture."""
         return TestsFlextModels.UtilityValueModel(value=value)

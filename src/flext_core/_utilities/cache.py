@@ -165,7 +165,8 @@ class FlextUtilitiesCache:
     @staticmethod
     def generate_cache_key_for_command(command: object, command_type: type) -> str:
         if isinstance(command, Mapping):
-            sorted_data = FlextUtilitiesCache.sort_dict_keys(command)
+            command_map = TypeAdapter(dict[str, object]).validate_python(command)
+            sorted_data = FlextUtilitiesCache.sort_dict_keys(command_map)
             return f"{command_type.__name__}_{hash(str(sorted_data))}"
         command_str = "None" if command is None else str(command)
         try:
@@ -226,7 +227,7 @@ class FlextUtilitiesCache:
                 for k, v in component.model_dump().items()
             }
         if isinstance(component, Mapping):
-            dict_component: Mapping[str, object] = dict(component.items())
+            dict_component = TypeAdapter(dict[str, object]).validate_python(component)
             return {
                 str(k): FlextUtilitiesCache.normalize_component(v)
                 for k, v in dict_component.items()
@@ -250,7 +251,8 @@ class FlextUtilitiesCache:
             ]
             return tuple(normalized_items)
         if isinstance(component, (list, tuple)):
-            return [FlextUtilitiesCache.normalize_component(item) for item in component]
+            sequence = TypeAdapter(list[object]).validate_python(component)
+            return [FlextUtilitiesCache.normalize_component(item) for item in sequence]
         return str(component)
 
     @staticmethod
@@ -287,14 +289,17 @@ class FlextUtilitiesCache:
         if isinstance(data, BaseModel):
             return FlextUtilitiesCache.sort_dict_keys(data.model_dump())
         if isinstance(data, Mapping):
+            data_map = TypeAdapter(dict[t.SortableObjectType, object]).validate_python(
+                data
+            )
             result: dict[str, object] = {}
-            for k in sorted(data.keys(), key=FlextUtilitiesCache.sort_key):
-                value = data[k]
+            for k in sorted(data_map.keys(), key=FlextUtilitiesCache.sort_key):
+                value = data_map[k]
                 if value is None:
-                    result[k] = {}
+                    result[str(k)] = {}
                 else:
                     sorted_value = FlextUtilitiesCache.sort_dict_keys(value)
-                    result[k] = sorted_value
+                    result[str(k)] = sorted_value
             return result
         return data
 

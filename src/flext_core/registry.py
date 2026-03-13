@@ -143,7 +143,8 @@ class FlextRegistry(s[bool]):
             wire_classes: Auto-wiring target classes
 
         """
-        super().__init__(
+        s.__init__(
+            self,
             config_type=config_type,
             config_overrides=config_overrides,
             initial_context=initial_context,

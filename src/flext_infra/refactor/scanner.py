@@ -13,7 +13,7 @@ from pydantic import TypeAdapter, ValidationError
 from flext_core import r
 from flext_infra import c, m, t, u
 
-type RConfigMapping = r[Mapping[str, t.Container]]
+type RConfigMapping = r[t.Infra.ContainerDict]
 type RListPath = r[list[Path]]
 type RPath = r[Path]
 type RListClassOccurrence = r[list[m.Infra.Refactor.ClassOccurrence]]
@@ -50,7 +50,7 @@ class FlextInfraRefactorLooseClassScanner:
         """Scan *project_root*/src and return a violation report dict."""
         files_result = self._discover_python_files(project_root)
         if files_result.is_failure:
-            out: RConfigMapping = r[Mapping[str, t.Container]].fail(
+            out: RConfigMapping = r[t.Infra.ContainerDict].fail(
                 files_result.error or "discovery failed",
             )
             return out
@@ -80,7 +80,7 @@ class FlextInfraRefactorLooseClassScanner:
                 if viol.class_name in targets_found:
                     targets_found[viol.class_name] = True
         counters = Counter(v.confidence for v in violations)
-        out2: RConfigMapping = r[Mapping[str, t.Container]].ok({
+        out2: RConfigMapping = r[t.Infra.ContainerDict].ok({
             "rule": c.Infra.ReportKeys.CLASS_NESTING,
             "files_scanned": len(discovered_files),
             "classes_scanned": classes_scanned,

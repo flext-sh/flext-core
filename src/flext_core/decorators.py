@@ -15,7 +15,9 @@ import time
 import warnings
 from collections.abc import Callable, Mapping
 from contextlib import suppress
+from datetime import datetime
 from functools import wraps
+from pathlib import Path
 from typing import Literal, Protocol, TypeGuard, overload
 
 from flext_core import (
@@ -897,20 +899,35 @@ class FlextDecorators:
             if fallback_logger is None or not hasattr(fallback_logger, "warning"):
                 return
             fallback_kwargs = m.ConfigMap(root=kwargs.root)
-            _ = fallback_kwargs.setdefault("extra", {})
-            extra_payload_raw = fallback_kwargs["extra"]
-            extra_dict: dict[str, object] = {}
-            if FlextRuntime.is_dict_like(extra_payload_raw):
-                extra_dict = dict(extra_payload_raw)
-            extra_payload = m.ConfigMap(root=extra_dict)
-            if FlextRuntime.is_dict_like(extra_payload):
-                extra_payload["log_error"] = result.error
-                extra_payload["log_error_code"] = result.error_code
-                fallback_kwargs["extra"] = extra_payload
-            else:
-                fallback_kwargs["log_error"] = result.error
-                fallback_kwargs["log_error_code"] = result.error_code
-            _ = fallback_logger.warning(fallback_message, **fallback_kwargs.root)
+            warning_context: dict[str, t.Container | Exception] = {}
+            for key, value in fallback_kwargs.root.items():
+                if key == "extra" and FlextRuntime.is_dict_like(value):
+                    extra_items: Mapping[str, object]
+                    if isinstance(value, m.ConfigMap):
+                        extra_items = value.root
+                    else:
+                        extra_items = {
+                            str(extra_key): extra_value
+                            for extra_key, extra_value in value.items()
+                        }
+                    for extra_key, extra_value in extra_items.items():
+                        if isinstance(
+                            extra_value, (str, int, float, bool, datetime, Path)
+                        ):
+                            warning_context[f"extra_{extra_key}"] = extra_value
+                        else:
+                            warning_context[f"extra_{extra_key}"] = str(extra_value)
+                    continue
+                if isinstance(value, Exception):
+                    warning_context[str(key)] = value
+                    continue
+                if isinstance(value, (str, int, float, bool, datetime, Path)):
+                    warning_context[str(key)] = value
+                else:
+                    warning_context[str(key)] = str(value)
+            warning_context["log_error"] = result.error or ""
+            warning_context["log_error_code"] = result.error_code or ""
+            _ = fallback_logger.warning(fallback_message, **warning_context)
 
     @staticmethod
     def _handle_retry_exhaustion(

@@ -352,7 +352,7 @@ class ModernizerFileChanges(FlextModels.ArbitraryTypesModel):
     changes: list[str] = Field(default_factory=list, description="Applied changes")
 
 
-def _empty_issue_list() -> list[t.Dict]:
+def _empty_issue_list() -> list[t.Infra.IssueMap]:
     """Return empty issue list for reports."""
     return []
 
@@ -360,10 +360,10 @@ def _empty_issue_list() -> list[t.Dict]:
 class DeptryIssueGroups(FlextModels.ArbitraryTypesModel):
     """Deptry issue grouping model by error code (DEP001-DEP004)."""
 
-    dep001: list[t.Dict] = Field(default_factory=_empty_issue_list)
-    dep002: list[t.Dict] = Field(default_factory=_empty_issue_list)
-    dep003: list[t.Dict] = Field(default_factory=_empty_issue_list)
-    dep004: list[t.Dict] = Field(default_factory=_empty_issue_list)
+    dep001: list[t.Infra.IssueMap] = Field(default_factory=_empty_issue_list)
+    dep002: list[t.Infra.IssueMap] = Field(default_factory=_empty_issue_list)
+    dep003: list[t.Infra.IssueMap] = Field(default_factory=_empty_issue_list)
+    dep004: list[t.Infra.IssueMap] = Field(default_factory=_empty_issue_list)
 
 
 class DeptryReport(FlextModels.ArbitraryTypesModel):

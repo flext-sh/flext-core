@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import override
 
 import libcst as cst
+from pydantic import TypeAdapter, ValidationError
 
 from flext_infra import c
 from flext_infra.refactor.rule import FlextInfraRefactorRule
@@ -103,7 +104,12 @@ class FlextInfraRefactorLegacyRemovalRule(FlextInfraRefactorRule):
     def _normalize_string_items(value: object) -> list[str]:
         if not isinstance(value, (list, tuple, set)):
             return []
-        return [item for item in value if isinstance(item, str)]
+        try:
+            items = TypeAdapter(list[object]).validate_python(value)
+        except ValidationError:
+            return []
+        output: list[str] = [item for item in items if isinstance(item, str)]
+        return output
 
     def _expected_forwarding_params(
         self,
