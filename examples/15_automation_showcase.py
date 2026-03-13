@@ -23,19 +23,11 @@ from typing import override
 
 from pydantic import PrivateAttr
 
-from flext_core import FlextContext, c, m, r, s, t, u
+from flext_core import FlextContext, c, m, r, s, u
 
 
 class UserService(s[m.ConfigMap]):
     """Service demonstrating automatic context enrichment."""
-
-    def __init__(self, **data: t.Container) -> None:
-        """Initialize with automatic context enrichment.
-
-        s.__init__ automatically calls:
-        - _enrich_context() with service metadata
-        """
-        super().__init__(**data)
 
     def create_user(self, username: str, email: str) -> r[m.ConfigMap]:
         """Create user with automatic context enrichment."""
@@ -54,10 +46,6 @@ class UserService(s[m.ConfigMap]):
 
 class PaymentService(s[m.ConfigMap]):
     """Service demonstrating correlation ID tracking."""
-
-    def __init__(self, **data: t.Container) -> None:
-        """Initialize with automatic context enrichment."""
-        super().__init__(**data)
 
     @override
     def execute(self) -> r[m.ConfigMap]:
@@ -107,10 +95,6 @@ class OrderService(s[m.ConfigMap]):
 
     _order_data: m.ConfigMap = PrivateAttr(default_factory=lambda: m.ConfigMap(root={}))
 
-    def __init__(self, **data: t.Container) -> None:
-        """Initialize service."""
-        super().__init__(**data)
-
     @override
     def execute(self) -> r[m.ConfigMap]:
         """Process order with business logic."""
@@ -147,10 +131,6 @@ class AutomationService(s[m.ConfigMap]):
     - alt: Alternative automation paths
     - unwrap_or pattern: Lazy resource initialization
     """
-
-    def __init__(self, **data: t.Container) -> None:
-        """Initialize automation service."""
-        super().__init__(**data)
 
     @staticmethod
     def _demo_advanced_scenarios() -> None:
@@ -406,7 +386,7 @@ class AutomationService(s[m.ConfigMap]):
         print("=" * 60)
 
     @override
-    def execute(self, **_kwargs: t.Container) -> r[m.ConfigMap]:
+    def execute(self) -> r[m.ConfigMap]:
         """Required abstract method implementation."""
         return r[m.ConfigMap].ok(m.ConfigMap(root={"status": "automation_ready"}))
 

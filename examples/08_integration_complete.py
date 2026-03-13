@@ -38,9 +38,10 @@ from flext_core import (
 )
 
 
-class User(m.Entity):
+class User(m.ArbitraryTypesModel):
     """User entity."""
 
+    unique_id: str
     name: str
     email: str
 
@@ -69,8 +70,8 @@ class IntegrationService(s[m.ConfigMap]):
         """Show FlextContainer integration."""
         print("\n=== FlextContainer Integration ===")
         container = FlextContainer()
-        logger = FlextLogger.create_module_logger(__name__)
-        _ = container.register("logger", logger)
+        logger_service = m.ConfigMap(root={"module": __name__})
+        _ = container.register("logger", logger_service)
         logger_result = container.get("logger")
         if logger_result.is_success:
             print("✅ Container service resolution")
@@ -116,7 +117,7 @@ class IntegrationService(s[m.ConfigMap]):
             email="integration@example.com",
         )
         print(f"✅ Entity created: {user.name}")
-        order = Order(unique_id=u.generate("entity"), customer_id=user.entity_id)
+        order = Order(unique_id=u.generate("entity"), customer_id=user.unique_id)
         print(f"✅ Aggregate created: {order.status.value}")
 
     @staticmethod
@@ -218,9 +219,8 @@ def main() -> None:
         components = root_data.get("components_integrated", [])
         total = root_data.get("total_components", 0)
         if isinstance(components, (list, tuple)) and isinstance(total, int):
-            components_list = list(components)
             print(f"\n✅ Integrated {total} components")
-            print(f"✅ Demonstrated {len(components_list)} integration patterns")
+            print("✅ Demonstrated integration patterns")
     else:
         print(f"\n❌ Failed: {result.error}")
     print("\n" + "=" * 60)

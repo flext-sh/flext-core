@@ -211,6 +211,10 @@ class FlextProtocols:
             """Validate object against model."""
             ...
 
+        def validate(self) -> FlextProtocols.Result[bool]:
+            """Validate model."""
+            ...
+
     @runtime_checkable
     class Routable(Protocol):
         """Protocol for messages that carry explicit route information."""
@@ -302,7 +306,7 @@ class FlextProtocols:
         """
 
         @classmethod
-        def __subclasshook__(cls, C: type) -> bool | type[NotImplemented]:
+        def __subclasshook__(cls, cls_: type) -> bool:
             """Enable isinstance() for Pydantic-backed implementations.
 
             Python 3.12+ Protocol isinstance checks use class __dict__ lookup,
@@ -312,7 +316,7 @@ class FlextProtocols:
             if cls is FlextProtocols.Result:
                 # Check only attrs that exist in class __dict__ (not Pydantic fields)
                 required = frozenset({"is_failure", "value", "flat_map", "lash"})
-                if all(any(a in B.__dict__ for B in C.__mro__) for a in required):
+                if all(any(a in B.__dict__ for B in cls_.__mro__) for a in required):
                     return True
             return NotImplemented
 
@@ -518,17 +522,6 @@ class FlextProtocols:
         @property
         def model_fields(self) -> Mapping[str, t.Scalar]:
             """Model fields mapping."""
-            ...
-
-    @runtime_checkable
-    class Model(HasModelDump, Protocol):
-        """Model type interface for validation.
-
-        Used for model validation without circular imports.
-        """
-
-        def validate(self) -> FlextProtocols.Result[bool]:
-            """Validate model."""
             ...
 
     @runtime_checkable

@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import re
 import warnings
-from collections.abc import Callable, Mapping, Sequence, Sized
+from collections.abc import Callable, Iterable, Mapping, Sequence, Sized
 from datetime import datetime
 from pathlib import Path
 from types import MappingProxyType
@@ -166,14 +166,15 @@ class FlextUtilitiesGuards:
             return True
         if isinstance(value, (str, int, float, bool, datetime)):
             return True
-        if isinstance(value, (list, tuple)):
-            for item in value:
+        if FlextUtilitiesGuards._is_list_or_tuple(value):
+            sequence_value = cast("Sequence[object]", value)
+            for item in sequence_value:
                 if not (
                     item is None or isinstance(item, (str, int, float, bool, datetime))
                 ):
                     return False
             return True
-        if isinstance(value, Mapping):
+        if FlextUtilitiesGuards._is_mapping(value):
             for v in value.values():
                 if not (v is None or isinstance(v, (str, int, float, bool, datetime))):
                     return False
@@ -202,8 +203,10 @@ class FlextUtilitiesGuards:
         """
         if not isinstance(value, dict):
             return False
-        for item_value in value.values():
-            if not FlextUtilitiesGuards.is_container(item_value):
+        typed_value = cast("dict[str, object]", value)
+        for item_value in typed_value.values():
+            item_value_typed: object = item_value
+            if not FlextUtilitiesGuards.is_container(item_value_typed):
                 return False
         return True
 
@@ -231,8 +234,10 @@ class FlextUtilitiesGuards:
         """
         if not isinstance(value, Mapping):
             return False
-        for item_value in value.values():
-            if not FlextUtilitiesGuards.is_container(item_value):
+        typed_value = cast("Mapping[str, object]", value)
+        for item_value in typed_value.values():
+            item_value_typed: object = item_value
+            if not FlextUtilitiesGuards.is_container(item_value_typed):
                 return False
         return True
 
@@ -246,18 +251,19 @@ class FlextUtilitiesGuards:
     @staticmethod
     def is_dict_non_empty(value: object) -> bool:
         """Check if value is a non-empty dictionary using duck typing."""
-        return isinstance(value, Mapping) and bool(value)
+        return FlextUtilitiesGuards._is_mapping(value) and bool(value)
 
     @staticmethod
     def is_flexible_value(value: object) -> TypeIs[object]:
         if value is None or FlextUtilitiesGuards.is_scalar(value):
             return True
-        if isinstance(value, (list, tuple)):
-            for item in value:
+        if FlextUtilitiesGuards._is_list_or_tuple(value):
+            sequence_value = cast("Sequence[object]", value)
+            for item in sequence_value:
                 if item is not None and (not FlextUtilitiesGuards.is_scalar(item)):
                     return False
             return True
-        if isinstance(value, Mapping):
+        if FlextUtilitiesGuards._is_mapping(value):
             for item in value.values():
                 if item is not None and (not FlextUtilitiesGuards.is_scalar(item)):
                     return False
@@ -355,11 +361,12 @@ class FlextUtilitiesGuards:
     @staticmethod
     def is_list_non_empty(value: object) -> bool:
         """Check if value is a non-empty list using duck typing."""
-        return (
-            isinstance(value, Sequence)
-            and (not isinstance(value, str | bytes))
-            and bool(value)
-        )
+        if not isinstance(value, Sequence):
+            return False
+        if isinstance(value, (str, bytes)):
+            return False
+        sequence_value = cast("Sequence[object]", value)
+        return len(sequence_value) > 0
 
     @staticmethod
     def is_mapping(
@@ -417,8 +424,7 @@ class FlextUtilitiesGuards:
         """
         if not (hasattr(value, "is_success") and hasattr(value, "error")):
             return False
-        cls = type(value)
-        return any("value" in vars(base) for base in cls.__mro__)
+        return hasattr(type(value), "value")
 
     @staticmethod
     def is_scalar(
@@ -585,7 +591,11 @@ class FlextUtilitiesGuards:
         if value is None:
             return default if default is not None else {}
         if isinstance(value, Mapping):
-            return {str(k): v for k, v in value.items()}
+            mapping_value = cast("Mapping[str, object]", value)
+            normalized: dict[str, object] = {}
+            for key, item_value in mapping_value.items():
+                normalized[str(key)] = item_value
+            return normalized
         wrapped_dict: Mapping[str, object] = {"value": value}
         return wrapped_dict
 
@@ -597,7 +607,7 @@ class FlextUtilitiesGuards:
         if value is None:
             return default if default is not None else []
         if isinstance(value, list):
-            return value
+            return list(cast("list[object]", value))
         single_item_list: list[object] = [value]
         return single_item_list
 
@@ -686,12 +696,16 @@ class FlextUtilitiesGuards:
     ) -> str:
         shortcut_lower = condition.lower()
         if shortcut_lower == "non_empty":
-            if isinstance(value, (str, list, dict)) and bool(value):
+            if isinstance(value, str) and bool(value):
+                return ""
+            if isinstance(value, list) and len(cast("list[object]", value)) > 0:
+                return ""
+            if isinstance(value, dict) and len(cast("dict[object, object]", value)) > 0:
                 return ""
             return error_msg or f"{context_name} must be non-empty"
         if shortcut_lower == "positive":
             if (
-                isinstance(value, int | float)
+                isinstance(value, (int, float))
                 and (not isinstance(value, bool))
                 and (value > 0)
             ):
@@ -699,7 +713,7 @@ class FlextUtilitiesGuards:
             return error_msg or f"{context_name} must be positive number"
         if shortcut_lower == "non_negative":
             if (
-                isinstance(value, int | float)
+                isinstance(value, (int, float))
                 and (not isinstance(value, bool))
                 and (value >= 0)
             ):
@@ -860,7 +874,8 @@ class FlextUtilitiesGuards:
         if isinstance(value, (int, float)):
             check_val = value
         elif isinstance(value, (str, bytes, list, tuple, dict, set, frozenset)):
-            check_val = len(value)
+            sized_value = cast("Sized", value)
+            check_val = len(sized_value)
         elif hasattr(value, "__len__"):
             try:
                 len_method = getattr(value, "__len__", None)
@@ -896,17 +911,18 @@ class FlextUtilitiesGuards:
             ):
                 return False
         elif contains is not None:
-            if isinstance(value, (dict, list, tuple, set, frozenset)):
-                if contains not in value:
+            if isinstance(value, (str, bytes, list, tuple, set, frozenset, dict)):
+                iterable_value = cast("Iterable[object]", value)
+                found = False
+                for item in iterable_value:
+                    item_value: object = item
+                    if item_value == contains:
+                        found = True
+                        break
+                if not found:
                     return False
-            elif hasattr(value, "__contains__"):
-                contains_method = getattr(value, "__contains__", None)
-                if callable(contains_method):
-                    try:
-                        if not contains_method(contains):
-                            return False
-                    except (TypeError, ValueError):
-                        return False
+            else:
+                return False
         return True
 
     @staticmethod
@@ -945,22 +961,28 @@ class FlextUtilitiesGuards:
         if target_type == "str_list":
             str_list_default: list[str] | None = None
             if isinstance(default, list):
-                str_list_default = [str(x) for x in default]
-            if isinstance(value, Sequence) and (not isinstance(value, str | bytes)):
-                return list(value)
+                default_values = cast("list[object]", default)
+                str_list_default = [str(item) for item in default_values]
+            if isinstance(value, Sequence) and (not isinstance(value, (str, bytes))):
+                seq_value = cast("Sequence[object]", value)
+                return list(seq_value)
             if value is None:
                 return list(str_list_default) if str_list_default else []
             return [value]
         if target_type == "dict":
-            dict_default: Mapping[str, object] | None = (
-                default if isinstance(default, Mapping) else None
-            )
+            dict_default: Mapping[str, object] | None = None
+            if FlextUtilitiesGuards._is_mapping(default):
+                dict_default = default
             return FlextUtilitiesGuards._ensure_to_dict(value, dict_default)
         if target_type == "auto" and isinstance(value, Mapping):
-            return {str(k): v for k, v in value.items()}
-        list_default: list[object] | None = (
-            default if isinstance(default, list) else None
-        )
+            mapping_value = cast("Mapping[str, object]", value)
+            normalized_auto: dict[str, object] = {}
+            for key, item_value in mapping_value.items():
+                normalized_auto[str(key)] = item_value
+            return normalized_auto
+        list_default: list[object] | None = None
+        if FlextUtilitiesGuards.is_object_list(default):
+            list_default = default
         return FlextUtilitiesGuards._ensure_to_list(value, list_default)
 
     @staticmethod
@@ -978,9 +1000,8 @@ class FlextUtilitiesGuards:
             r[m.ConfigMap] containing mapping on success, failure otherwise
 
         """
-        if (
-            isinstance(value, dict)
-            or (hasattr(value, "keys") and hasattr(value, "__getitem__"))
+        if FlextUtilitiesGuards._is_mapping(
+            value
         ) and FlextUtilitiesGuards.is_configuration_mapping(value):
             return r[m.ConfigMap].ok(value)
         return r[m.ConfigMap].fail("Value is not a configuration mapping")

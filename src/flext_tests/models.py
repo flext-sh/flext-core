@@ -785,6 +785,8 @@ class FlextTestsModels(
                 )
 
         class AddParams(FlextModels.Value):
+            """Parameters for builder add operations."""
+
             key: str = Field(min_length=1, description="Key to store data under")
             value: t.Tests.object | None = Field(
                 default=None, description="Direct value to store"
@@ -967,6 +969,8 @@ class FlextTestsModels(
                 return self
 
         class BuildParams(FlextModels.Value):
+            """Parameters controlling builder output shaping."""
+
             as_model: type[BaseModel] | None = Field(
                 default=None, description="Pydantic model class to instantiate"
             )
@@ -1014,6 +1018,8 @@ class FlextTestsModels(
                 return self
 
         class ToResultParams(FlextModels.Value):
+            """Parameters for converting builder output into results."""
+
             error: str | None = Field(
                 default=None,
                 min_length=1,
@@ -1082,6 +1088,8 @@ class FlextTestsModels(
                 return self
 
         class BuildersBatchParams(FlextModels.Value):
+            """Parameters for batching builder scenarios."""
+
             key: str = Field(min_length=1, description="Key to store batch under")
             scenarios: Sequence[tuple[str, t.Tests.object]] = Field(
                 description="Sequence of (scenario_id, data) tuples"
@@ -1101,6 +1109,8 @@ class FlextTestsModels(
                 return self
 
         class MergeFromParams(FlextModels.Value):
+            """Parameters for merge-from behavior selection."""
+
             strategy: str = Field(
                 default="deep",
                 min_length=1,
@@ -1119,6 +1129,8 @@ class FlextTestsModels(
                 return self
 
         class OkParams(FlextModels.Value):
+            """Matcher parameters for successful result assertions."""
+
             model_config = ConfigDict(populate_by_name=True)
 
             eq: (
@@ -1194,6 +1206,8 @@ class FlextTestsModels(
             msg: str | None = Field(default=None, description="Custom error message")
 
         class FailParams(FlextModels.Value):
+            """Matcher parameters for failure result assertions."""
+
             model_config = ConfigDict(populate_by_name=True)
 
             msg: str | None = Field(default=None, description="Custom error message")
@@ -1221,6 +1235,8 @@ class FlextTestsModels(
             )
 
         class ThatParams(FlextModels.Value):
+            """Generic matcher parameters for value assertions."""
+
             model_config = ConfigDict(populate_by_name=True)
 
             msg: str | None = Field(default=None, description="Custom error message")
@@ -1364,6 +1380,8 @@ class FlextTestsModels(
                 return self
 
         class ScopeParams(FlextModels.Value):
+            """Parameters for temporary test scope configuration."""
+
             model_config = ConfigDict(populate_by_name=True)
 
             config: Mapping[str, t.Tests.object] | None = Field(
@@ -1393,6 +1411,8 @@ class FlextTestsModels(
                 return value
 
         class DeepMatchResult(FlextModels.Value):
+            """Structured output for deep-match comparisons."""
+
             path: str = Field(description="Path where match occurred or failed")
             expected: t.Tests.Matcher.ValueSpec = Field(
                 description="Expected value or predicate"
@@ -1404,9 +1424,13 @@ class FlextTestsModels(
             reason: str = Field(default="", description="Reason for match failure")
 
         class Chain[TResult](FlextModels.Value):
+            """Container for chained result assertions."""
+
             result: r[TResult] = Field(description="r being chained")
 
         class TestScope(FlextModels.ArbitraryTypesModel):
+            """Runtime scope snapshot used by test helpers."""
+
             config: Mapping[str, t.Tests.object] = Field(
                 default_factory=dict, description="Configuration dictionary"
             )

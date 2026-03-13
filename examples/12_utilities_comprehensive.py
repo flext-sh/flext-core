@@ -20,7 +20,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping
 from typing import override
 
 from flext_core import FlextConstants, FlextService, c, m, r, u
@@ -50,7 +50,7 @@ class UtilitiesService(FlextService[m.ConfigMap]):
         print(f"✅ Data normalization: {type(test_data_normalized).__name__}")
         sorted_data = u.sort_dict_keys(TEST_DATA)
         if isinstance(sorted_data, Mapping):
-            print(f"✅ Sorted keys: {list(sorted_data.keys())}")
+            print("✅ Sorted keys prepared")
         clear_result = u.clear_object_cache(TEST_DATA)
         print(f"✅ Cache clearing: {clear_result.is_success}")
 
@@ -94,7 +94,7 @@ class UtilitiesService(FlextService[m.ConfigMap]):
         print(
             f"✅ Correlation ID: {correlation_id[: c.Utilities.SHORT_UUID_LENGTH]}..."
         )
-        short_id = u.generate_short_id()
+        short_id = u.generate("ulid")
         print(f"✅ Short ID: {short_id[: c.Utilities.SHORT_UUID_LENGTH]}...")
         entity_id = u.generate("entity")
         print(f"✅ Entity ID: {entity_id[:16]}...")
@@ -123,7 +123,7 @@ class UtilitiesService(FlextService[m.ConfigMap]):
         """Show string parsing utilities."""
         print("\n=== String Parsing ===")
         parser = u()
-        options = m.CollectionsParseOptions(strip=True, remove_empty=True)
+        options = m.ParseOptions(strip=True, remove_empty=True)
         delimited_result = parser.parse_delimited("a, b, c", ",", options=options).map(
             lambda parsed: print(f"✅ Delimited parsing: {parsed}")
         )
@@ -247,14 +247,9 @@ def main() -> None:
         """Handle successful result."""
         categories = data.get("utility_categories", 0)
         utilities = data.get("utilities_demonstrated", [])
-        utilities_count = (
-            len(utilities)
-            if isinstance(utilities, Sequence)
-            and (not isinstance(utilities, (str, bytes, bytearray)))
-            else 0
-        )
         print(f"\n✅ Demonstrated {categories} utility categories")
-        print(f"✅ Covered {utilities_count} utility types")
+        if isinstance(utilities, (list, tuple)):
+            print("✅ Covered listed utility types")
 
     def handle_error(error: str) -> r[None]:
         """Handle error result."""

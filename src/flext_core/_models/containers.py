@@ -97,13 +97,8 @@ class FlextModelsContainers:
         def update(self, other: Mapping[str, DictValueT]) -> None:
             self.root.update(other)
 
-        def __iter__(self) -> typing.Iterator[str]:
-            return iter(self.root)
-
         def values(self) -> ValuesView[DictValueT]:
             return self.root.values()
-
-    Mapping.register(_RootDictModel)
 
     class Dict(_RootDictModel[object]):
         """Generic dictionary container. Use ``m.Dict``."""

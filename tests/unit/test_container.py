@@ -240,10 +240,7 @@ class TestFlextContainer:
         clean_container: FlextContainer,
     ) -> None:
         """Test that registering non-callable with factory kind handles gracefully."""
-        non_callable: Callable[[], object] = cast(
-            "Callable[[], object]",
-            "not_callable",
-        )
+        non_callable = cast("t.FactoryCallable", "not_callable")
         clean_container.register("invalid", non_callable, kind="factory")
         tm.that(
             clean_container.has_service("invalid"),
@@ -276,8 +273,7 @@ class TestFlextContainer:
         """Test service retrieval using fixtures."""
         clean_container.register(scenario.name, scenario.service)
         result: r[t.RegisterableService] = clean_container.get(scenario.name)
-        expected_value: object = cast("object", scenario.service)
-        u.Tests.Result.assert_success_with_value(result, expected_value)
+        u.Tests.Result.assert_success_with_value(result, scenario.service)
 
     def test_get_nonexistent_service(self, clean_container: FlextContainer) -> None:
         """Test getting non-existent service using fixtures."""
@@ -607,7 +603,7 @@ class TestFlextContainer:
         container = clean_container
         error_msg = "Factory failed"
 
-        def failing_factory() -> object:
+        def failing_factory() -> str:
             raise RuntimeError(error_msg)
 
         _ = container.register("failing", failing_factory, kind="factory")

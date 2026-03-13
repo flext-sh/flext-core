@@ -135,7 +135,7 @@ class FlextSettings(BaseSettings, FlextRuntime):
     )
     _di_provider: t.Scalar | None = PrivateAttr(default=None)
 
-    def __new__(cls, **_kwargs: t.Scalar) -> Self:
+    def __new__(cls, **_kwargs: object) -> Self:
         """Create singleton instance.
 
         Note: BaseSettings.__init__ accepts **values internally.
@@ -156,7 +156,7 @@ class FlextSettings(BaseSettings, FlextRuntime):
             raise TypeError(msg)
         return raw_instance
 
-    def __init__(self, **kwargs: t.Scalar) -> None:
+    def __init__(self, **kwargs: object) -> None:
         """Initialize config with data.
 
         Kwargs are applied as field overrides after base env/config loading
@@ -170,7 +170,7 @@ class FlextSettings(BaseSettings, FlextRuntime):
                         setattr(self, key, value)
             return
 
-        BaseSettings.__init__(self, **kwargs)
+        BaseSettings.__init__(self)
         if kwargs:
             for key, value in kwargs.items():
                 if key in model_fields:

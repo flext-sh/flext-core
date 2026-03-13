@@ -22,7 +22,7 @@ from collections.abc import Callable, Sequence
 from datetime import UTC, datetime
 from typing import override
 
-from flext_core import c, e, m, r, s, t, u
+from flext_core import c, e, m, r, s, u
 
 
 class User(m.Entity):
@@ -48,10 +48,6 @@ class RunDemonstrationCommand(m.Command):
 
 class RailwayService(s[DemonstrationResult]):
     """Advanced service demonstrating railway patterns with comprehensive flext-core integration."""
-
-    def __init__(self, **kwargs: t.Container) -> None:
-        """Initialize service."""
-        super().__init__(**kwargs)
 
     @staticmethod
     def _build_result_data(_: None) -> r[DemonstrationResult]:

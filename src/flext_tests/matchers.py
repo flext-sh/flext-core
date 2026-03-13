@@ -94,7 +94,7 @@ def _to_test_payload(value: object) -> t.Tests.object:
     return str(value)
 
 
-def _as_guard_input(value: object) -> t.Container | BaseModel:
+def _as_guard_input(value: object) -> t.Tests.object:
     if isinstance(value, BaseModel | str | int | float | bool | Path):
         return value
     if value is None:
@@ -104,14 +104,14 @@ def _as_guard_input(value: object) -> t.Container | BaseModel:
             mapping_value = _GUARD_PAYLOAD_DICT_ADAPTER.validate_python(value)
             return {key: _as_guard_input(item) for key, item in mapping_value.items()}
         except ValidationError:
-            empty_map: dict[str, t.Container] = {}
+            empty_map: dict[str, t.Tests.object] = {}
             return empty_map
     if _is_non_string_sequence(value):
         try:
             sequence_value = _GUARD_PAYLOAD_LIST_ADAPTER.validate_python(value)
             return [_as_guard_input(seq_item) for seq_item in sequence_value]
         except ValidationError:
-            empty_seq: list[t.Container] = []
+            empty_seq: list[t.Tests.object] = []
             return empty_seq
     return str(value)
 
@@ -483,7 +483,6 @@ class FlextTestsMatchers:
                     params.msg
                     or f"Path extraction requires dict or model, got {type(result_value).__name__}"
                 )
-            extract_source: BaseModel | t.Container
             if isinstance(result_value, BaseModel):
                 extract_source = result_value
             elif isinstance(result_value, Mapping):
@@ -492,7 +491,7 @@ class FlextTestsMatchers:
                         result_value
                     )
                 except ValidationError:
-                    fallback_map: dict[str, t.Container] = {}
+                    fallback_map: dict[str, object] = {}
                     extract_source = fallback_map
             else:
                 raise AssertionError(
@@ -824,7 +823,7 @@ class FlextTestsMatchers:
         subject: object = value
         if FlextUtilitiesGuards.is_result_like(subject):
             result_obj = subject
-            actual_value: t.Container | str = ""
+            actual_value: t.Tests.object | str = ""
             if params.ok is not None:
                 if params.ok and (not result_obj.is_success):
                     raise AssertionError(

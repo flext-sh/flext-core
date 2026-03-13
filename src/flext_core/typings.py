@@ -101,9 +101,15 @@ class FlextTypes:
     type FileContent = str | bytes | Sequence[Sequence[str]]
     type GeneralValueTypeMapping = Mapping[str, Scalar]
 
-    type RegisterableService = BaseModel | Callable[..., BaseModel]
+    type RegisterableService = (
+        Container
+        | BaseModel
+        | Mapping[str, Container | FlextTypes.ContainerValue]
+        | Sequence[Container | FlextTypes.ContainerValue]
+        | Callable[..., Container | BaseModel]
+    )
     type FactoryCallable = Callable[[], RegisterableService]
-    type ResourceCallable = Callable[[], BaseModel]
+    type ResourceCallable = Callable[[], RegisterableService]
     type MetadataValue = (
         Scalar | Mapping[str, Scalar | Sequence[Scalar]] | Sequence[Scalar]
     )

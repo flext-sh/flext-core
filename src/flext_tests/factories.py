@@ -29,15 +29,20 @@ from flext_core import r
 from flext_tests import FlextTestsUtilityBase as s, c, m, t, u
 
 _TEST_CONTAINER_LIST_ADAPTER = TypeAdapter(list[object])
+_TEST_CONTAINER_DICT_ADAPTER = TypeAdapter(dict[str, object])
 
 
 def _to_payload_value(value: object) -> t.Tests.object:
-    if value is None or isinstance(value, (*t.PRIMITIVES_TYPES, bytes, BaseModel)):
+    if value is None:
+        return None
+    if isinstance(value, str | int | float | bool | bytes | BaseModel):
         return value
     if isinstance(value, Mapping):
-        return {str(k): _to_payload_value(v) for k, v in value.items()}
+        mapping_value = _TEST_CONTAINER_DICT_ADAPTER.validate_python(value)
+        return {str(k): _to_payload_value(v) for k, v in mapping_value.items()}
     if isinstance(value, Sequence) and (not isinstance(value, str | bytes)):
-        return [_to_payload_value(item) for item in value]
+        sequence_value = _TEST_CONTAINER_LIST_ADAPTER.validate_python(value)
+        return [_to_payload_value(item) for item in sequence_value]
     return str(value)
 
 
@@ -95,7 +100,11 @@ class FlextTestsFactories(s[t.Tests.object]):
         environments: Sequence[str] | None = None,
         service_types: Sequence[str] | None = None,
         **common_overrides: t.Tests.TestResultValue,
-    ) -> list[m.Tests.User] | builtins.list[m.Config] | builtins.list[m.Service]:
+    ) -> (
+        builtins.list[m.Tests.User]
+        | builtins.list[m.Tests.Config]
+        | builtins.list[m.Tests.Service]
+    ):
         """Unified batch factory - creates multiple model instances.
 
         This is the preferred way to create batches of test models.

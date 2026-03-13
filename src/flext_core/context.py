@@ -663,6 +663,7 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
         self._statistics = statistics
 
     def validate(self) -> r[bool]:
+        """Validate context data integrity across all active scopes."""
         return self.validate_context()
 
     def validate_context(self) -> r[bool]:

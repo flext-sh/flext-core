@@ -110,9 +110,15 @@ class RegistryDispatcherService(s[m.ConfigMap]):
         dispatcher = FlextDispatcher()
         registry = FlextRegistry()
         registry.register_plugin(
-            "handlers", "create_user", _DemoPlugin(name="create_user")
+            "handlers",
+            "create_user",
+            lambda: _DemoPlugin(name="create_user"),
         )
-        registry.register_plugin("handlers", "get_user", _DemoPlugin(name="get_user"))
+        registry.register_plugin(
+            "handlers",
+            "get_user",
+            lambda: _DemoPlugin(name="get_user"),
+        )
         create_handler = CreateUserHandler()
         get_handler = GetUserHandler()
         dispatcher.register_handler(create_handler)
@@ -136,13 +142,19 @@ class RegistryDispatcherService(s[m.ConfigMap]):
         """Show registry operations."""
         print("\n=== Registry Operations ===")
         registry = FlextRegistry()
-        create_plugin = _DemoPlugin(name="create_user")
+
+        def create_plugin():
+            return _DemoPlugin(name="create_user")
+
         register_result = registry.register_plugin(
             "handlers", "create_user", create_plugin
         )
         if register_result.is_success:
             print("✅ Plugin registered successfully")
-        query_plugin = _DemoPlugin(name="get_user")
+
+        def query_plugin():
+            return _DemoPlugin(name="get_user")
+
         registry.register_plugin("handlers", "get_user", query_plugin)
         plugins_result = registry.list_plugins("handlers")
         if plugins_result.is_success:
@@ -196,8 +208,7 @@ def main() -> None:
         data = result.value
         patterns = data.root.get("patterns_demonstrated")
         if isinstance(patterns, (list, tuple)):
-            patterns_list = list(patterns)
-            print(f"\n✅ Demonstrated {len(patterns_list)} patterns")
+            print("\n✅ Demonstrated registry/dispatcher patterns")
     else:
         print(f"\n❌ Failed: {result.error}")
     print("\n" + "=" * 60)

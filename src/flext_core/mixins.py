@@ -13,6 +13,7 @@ from __future__ import annotations
 import threading
 from collections.abc import Callable, Iterator, Mapping, Sequence
 from contextlib import contextmanager
+from types import ModuleType
 from typing import ClassVar, Unpack, cast, override
 
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
@@ -289,40 +290,46 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
         config_cls_typed: type[FlextSettings]
 
         overrides: Mapping[str, object] | None = None
-        initial_ctx: object | None = None
-        bootstrap_services = None
-        bootstrap_factories = None
-        bootstrap_resources = None
-        bootstrap_wire_modules = None
+        initial_ctx: p.Context | None = None
+        bootstrap_services: Mapping[str, t.RegisterableService] | None = None
+        bootstrap_factories: Mapping[str, t.FactoryCallable] | None = None
+        bootstrap_resources: Mapping[str, t.ResourceCallable] | None = None
+        bootstrap_wire_modules: Sequence[ModuleType] | None = None
 
         if hasattr(self, "_runtime_bootstrap_options"):
             bootstrap_method = getattr(self, "_runtime_bootstrap_options")
             if callable(bootstrap_method):
                 try:
-                    options = bootstrap_method()
+                    bootstrap_callable = cast(
+                        "Callable[[], p.RuntimeBootstrapOptions | None]",
+                        bootstrap_method,
+                    )
+                    options = bootstrap_callable()
                     if options is not None:
-                        if (
-                            hasattr(options, "config_type")
-                            and options.config_type is not None
-                        ):
+                        if options.config_type is not None:
                             config_type_raw = options.config_type
-                        if (
-                            hasattr(options, "config_overrides")
-                            and options.config_overrides is not None
-                        ):
+                        if options.config_overrides is not None:
                             overrides = options.config_overrides
-                        if hasattr(options, "context") and options.context is not None:
+                        if options.context is not None:
                             initial_ctx = options.context
-                        if hasattr(options, "services"):
-                            bootstrap_services = options.services
-                        if hasattr(options, "factories"):
-                            bootstrap_factories = options.factories
-                        if hasattr(options, "resources"):
-                            bootstrap_resources = options.resources
-                        if hasattr(options, "wire_modules"):
-                            bootstrap_wire_modules = options.wire_modules
-                except Exception:
-                    pass
+                        if options.services is not None:
+                            services_typed: dict[str, t.RegisterableService] = {}
+                            for key, value in options.services.items():
+                                if u.is_registerable_service(value):
+                                    services_typed[str(key)] = value
+                            bootstrap_services = services_typed
+                        bootstrap_factories = options.factories
+                        bootstrap_resources = options.resources
+                        if options.wire_modules is not None:
+                            bootstrap_wire_modules = cast(
+                                "Sequence[ModuleType]",
+                                list(options.wire_modules),
+                            )
+                except Exception as exc:
+                    FlextLogger.create_module_logger(__name__).warning(
+                        "Failed to load runtime bootstrap options",
+                        exc_info=exc,
+                    )
 
         if config_type_raw is not None and issubclass(config_type_raw, FlextSettings):
             config_cls_typed = config_type_raw
@@ -332,15 +339,19 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
         if overrides is None:
             overrides = getattr(self, "config_overrides", None)
 
-        runtime_config = config_cls_typed.get_global(overrides=overrides)
+        overrides_typed: Mapping[str, t.Scalar] | None = None
+        if overrides is not None:
+            overrides_typed = {
+                key: value for key, value in overrides.items() if u.is_scalar(value)
+            }
+
+        runtime_config = config_cls_typed.get_global(overrides=overrides_typed)
 
         if initial_ctx is None:
             initial_ctx = getattr(self, "initial_context", None)
 
         runtime_context: p.Context = (
-            cast("p.Context", initial_ctx)
-            if initial_ctx is not None
-            else FlextContext.create()
+            initial_ctx if isinstance(initial_ctx, p.Context) else FlextContext.create()
         )
         runtime_config_typed: FlextSettings = runtime_config
         runtime_container = FlextContainer.create().scoped(
@@ -407,25 +418,14 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
 
     def _register_in_container(self, service_name: str) -> r[bool]:
         """Register self in global container for service discovery."""
-
-        def register() -> bool:
-            """Register service in container."""
+        try:
             container = self.container
             was_registered = container.has_service(service_name)
-            if isinstance(self, BaseModel):
-                _ = container.register(service_name, cast("p.Model", self))
-            else:
-                _ = container.register(service_name, service_name)
-            if was_registered:
-                return True
-            if container.has_service(service_name):
-                return True
+            _ = container.register(service_name, self)
+            if was_registered or container.has_service(service_name):
+                return r[bool].ok(True)
             msg = "Service registration failed"
             raise RuntimeError(msg)
-
-        try:
-            result = register()
-            return r[bool].ok(result)
         except (ValueError, TypeError, KeyError, AttributeError, RuntimeError) as e:
             return r[bool].fail(str(e))
 
@@ -540,14 +540,16 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
                 if isinstance(ctx, m.ExecutionContext):
                     self._stack.append(ctx)
                     return r[bool].ok(value=True)
-                if not isinstance(ctx, Mapping):
+                if not u.is_mapping(ctx):
                     return r[bool].fail("Unsupported context type for push_context")
-                ctx_mapping = ctx
-                handler_name_raw = ctx_mapping.get("handler_name", "unknown")
+                ctx_mapping: dict[str, object] = {}
+                for key, value in ctx.items():
+                    ctx_mapping[str(key)] = value
+                handler_name_raw: object = ctx_mapping.get("handler_name", "unknown")
                 handler_name: str = (
                     str(handler_name_raw) if handler_name_raw is not None else "unknown"
                 )
-                handler_mode_raw = ctx_mapping.get("handler_mode", "operation")
+                handler_mode_raw: object = ctx_mapping.get("handler_mode", "operation")
                 handler_mode_str: str = (
                     str(handler_mode_raw)
                     if handler_mode_raw is not None
@@ -583,7 +585,7 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
             result: r[TValidation] = r[TValidation].ok(data)
             for validator in validators:
                 if result.is_success:
-                    current_data = cast("TValidation", result.unwrap())
+                    current_data = result.unwrap()
                     validation_result = validator(current_data)
                     if validation_result.is_failure:
                         base_msg = "Validation failed"

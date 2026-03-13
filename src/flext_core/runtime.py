@@ -672,6 +672,7 @@ class FlextRuntime:
     def normalize_to_metadata(
         val: object,
     ) -> t.MetadataValue:
+        """Normalize input into metadata-compatible scalar, list, or mapping values."""
         if val is None:
             return ""
         if isinstance(val, (str, int, float, bool)):

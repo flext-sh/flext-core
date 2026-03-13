@@ -21,7 +21,7 @@ from __future__ import annotations
 import time
 from typing import override
 
-from flext_core import FlextContainer, FlextDecorators, FlextLogger, c, m, r, s
+from flext_core import FlextContainer, FlextDecorators, c, m, r, s
 
 
 class DecoratorsService(s[m.ConfigMap]):
@@ -32,8 +32,8 @@ class DecoratorsService(s[m.ConfigMap]):
         """Show combined decorator."""
         print("\n=== Combined Decorator ===")
         container = FlextContainer()
-        logger = FlextLogger.create_module_logger(__name__)
-        _ = container.register("logger", logger)
+        logger_service = m.ConfigMap(root={"module": __name__})
+        _ = container.register("logger", logger_service)
 
         @FlextDecorators.combined(
             inject_deps={"logger": "logger"},
@@ -56,8 +56,8 @@ class DecoratorsService(s[m.ConfigMap]):
         """Show dependency injection decorator."""
         print("\n=== Dependency Injection Decorator ===")
         container = FlextContainer()
-        logger = FlextLogger.create_module_logger(__name__)
-        _ = container.register("logger", logger)
+        logger_service = m.ConfigMap(root={"module": __name__})
+        _ = container.register("logger", logger_service)
 
         @FlextDecorators.inject(logger="logger")
         def process_with_logger(message: str) -> str:
@@ -220,12 +220,11 @@ def main() -> None:
         categories = data.root.get("decorator_categories")
         if (
             decorators is not None
-            and categories is not None
+            and isinstance(categories, int)
             and isinstance(decorators, (list, tuple))
         ):
-            decorators_list = list(decorators)
             print(f"\n✅ Demonstrated {categories} decorator categories")
-            print(f"✅ Covered {len(decorators_list)} decorator types")
+            print("✅ Covered decorator types")
     else:
         print(f"\n❌ Failed: {result.error}")
     print("\n" + "=" * 60)

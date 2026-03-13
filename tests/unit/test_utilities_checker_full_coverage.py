@@ -10,7 +10,7 @@ import inspect
 from collections import UserDict
 from typing import cast, override
 
-from flext_core import c, m, r, t, u
+from flext_core import c, m, p, r, t, u
 
 
 class _OnlySelfHandler:

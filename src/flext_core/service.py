@@ -95,7 +95,7 @@ class FlextService[TDomainResult: object = object](x, ABC):
     # --- Internal State ---
     _execution_result: r[TDomainResult] | None = PrivateAttr(default=None)
 
-    def model_post_init(self, __context: t.Container | None) -> None:
+    def model_post_init(self, __context: t.Container | None, /) -> None:
         """Post-initialization hook.
 
         Sets up the service instance with runtime configuration after Pydantic

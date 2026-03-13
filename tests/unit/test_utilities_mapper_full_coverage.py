@@ -208,7 +208,7 @@ def test_invert_and_json_conversion_branches(mapper: type[u]) -> None:
     assert mapper.invert_dict({"a": "x", "b": "x"}, handle_collisions="first") == {
         "x": "a",
     }
-    assert None is None
+    assert True
 
     class Model(BaseModel):
         x: int

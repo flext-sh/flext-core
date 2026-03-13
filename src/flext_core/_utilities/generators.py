@@ -13,6 +13,7 @@ from __future__ import annotations
 import secrets
 import string
 import time
+import typing
 import uuid
 from collections.abc import Mapping
 from datetime import UTC, datetime
@@ -167,8 +168,6 @@ class FlextUtilitiesGenerators:
                 msg = f"Failed to convert Mapping {context.__class__.__name__}: {e}"
                 raise TypeError(msg) from e
         try:
-            import typing
-
             model_data = context.model_dump()
             return typing.cast("dict[str, object]", model_data)
         except (AttributeError, TypeError, ValueError) as e:
@@ -256,8 +255,6 @@ class FlextUtilitiesGenerators:
                 return default
             msg = "Value cannot be None"
             raise TypeError(msg)
-        import typing
-
         if isinstance(value, dict):
             return typing.cast("dict[str, object]", value)
         if isinstance(value, Mapping):

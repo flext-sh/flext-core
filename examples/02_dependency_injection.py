@@ -60,7 +60,7 @@ class DatabaseService(m.ArbitraryTypesModel):
             return r[m.ConfigMap].fail(c.Errors.VALIDATION_ERROR)
         result: m.ConfigMap = m.ConfigMap(
             root={
-                "id": u.generate_short_id(),
+                "id": u.generate("ulid"),
                 "name": "Alice",
                 "email": "alice@example.com",
             }

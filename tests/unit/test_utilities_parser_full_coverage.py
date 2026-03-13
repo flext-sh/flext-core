@@ -238,8 +238,6 @@ def test_parser_parse_helpers_and_primitive_coercion_branches(
     primitive_str = parser._parse_try_primitive(5, str, "x", None, "")
     assert primitive_float is not None and primitive_float.is_success
     assert primitive_str is not None and primitive_str.is_success
-    from flext_core._utilities.parser import FlextUtilitiesParser
-
     monkeypatch.setattr(
         FlextUtilitiesParser,
         "_coerce_to_float",

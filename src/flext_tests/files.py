@@ -1177,10 +1177,14 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         filter_keys_set = set(keys) if keys is not None else None
         exclude_keys_set = set(exclude_keys) if exclude_keys is not None else None
         result1 = u.transform(
-            dict1, filter_keys=filter_keys_set, exclude_keys=exclude_keys_set
+            m.ConfigMap(root=dict(dict1.items())),
+            filter_keys=filter_keys_set,
+            exclude_keys=exclude_keys_set,
         )
         result2 = u.transform(
-            dict2, filter_keys=filter_keys_set, exclude_keys=exclude_keys_set
+            m.ConfigMap(root=dict(dict2.items())),
+            filter_keys=filter_keys_set,
+            exclude_keys=exclude_keys_set,
         )
         if result1.is_success and result2.is_success:
             return (result1.value, result2.value)
@@ -1308,11 +1312,12 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             ValueError: If r is failure and extraction is enabled
 
         """
-        if extract_result and isinstance(content, r):
+        if extract_result and u.is_result_like(content):
             if content.is_failure:
                 error_msg = content.error or "r failure"
                 raise ValueError(f"Cannot create file from failed r: {error_msg}")
-            return self._coerce_file_content(content.value)
+            resolved_value = content.value
+            return self._coerce_file_content(resolved_value)
         return self._coerce_file_content(content)
 
     def _is_nested_rows(self, value: object) -> TypeGuard[Sequence[Sequence[object]]]:
@@ -1409,7 +1414,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                     )
                     key_count = len(parsed_content.root)
                 elif isinstance(parsed_raw, list):
-                    parsed_list = parsed_raw
+                    parsed_list = _OBJECT_LIST_ADAPTER.validate_python(parsed_raw)
                     parsed_content = [
                         self._to_payload_value(item) for item in parsed_list
                     ]
@@ -1482,7 +1487,19 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         return str(value)
 
     def _to_payload_value(self, value: object) -> t.Tests.object:
-        if value is None or isinstance(value, (*t.PRIMITIVES_TYPES, bytes, BaseModel)):
+        if value is None:
+            return None
+        if isinstance(value, str):
+            return value
+        if isinstance(value, int):
+            return value
+        if isinstance(value, float):
+            return value
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, bytes):
+            return value
+        if isinstance(value, BaseModel):
             return value
         if isinstance(value, Path | datetime):
             return str(value)
@@ -1517,8 +1534,21 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         if parsed is None:
             return None
         dict1, dict2 = parsed
-        dict1, dict2 = self._apply_key_filtering(dict1, dict2, keys, exclude_keys)
-        return r[bool].ok(u.deep_eq(dict1, dict2))
+        filter_keys_set = set(keys) if keys is not None else None
+        exclude_keys_set = set(exclude_keys) if exclude_keys is not None else None
+        left_result = u.transform(
+            m.ConfigMap(root=dict(dict1.items())),
+            filter_keys=filter_keys_set,
+            exclude_keys=exclude_keys_set,
+        )
+        right_result = u.transform(
+            m.ConfigMap(root=dict(dict2.items())),
+            filter_keys=filter_keys_set,
+            exclude_keys=exclude_keys_set,
+        )
+        if left_result.is_failure or right_result.is_failure:
+            return r[bool].ok(False)
+        return r[bool].ok(u.deep_eq(left_result.value, right_result.value))
 
     def _try_parse_both(
         self, content1: str, content2: str, fmt: str

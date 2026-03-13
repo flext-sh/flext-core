@@ -118,9 +118,8 @@ class UserService:
     def create_user(self, user_data: m.ConfigMap) -> r[UserProfile]:
         """Create user with advanced context tracing and railway pattern - direct functional composition."""
         with FlextContext.Correlation.new_correlation():
-            correlation_id = (
-                FlextContext.Variables.Correlation.CORRELATION_ID.get() or "unknown"
-            )
+            correlation_raw = FlextContext.Variables.Correlation.CORRELATION_ID.get()
+            correlation_id = str(correlation_raw) if correlation_raw else "unknown"
             self.operation_count += 1
             self.logger.info(
                 "Creating user",
