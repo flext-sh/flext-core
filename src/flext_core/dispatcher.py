@@ -222,12 +222,13 @@ class FlextDispatcher:
         route_name: str,
     ) -> r[t.Container | BaseModel]:
         """Execute a handler against a message."""
+        dispatch_result = r[t.Container | BaseModel]
         try:
             raw_output = resolved_handler(message)
             if u.is_result_like(raw_output):
                 if raw_output.is_failure:
                     error_data_value = raw_output.error_data
-                    return r[t.Container | BaseModel].fail(
+                    return dispatch_result.fail(
                         raw_output.error or "Handler failed",
                         error_code=raw_output.error_code,
                         error_data=error_data_value
@@ -236,20 +237,18 @@ class FlextDispatcher:
                     )
                 value: t.Container | BaseModel | None = raw_output.value
                 if not u.is_container(value):
-                    return r[t.Container | BaseModel].fail(
+                    return dispatch_result.fail(
                         "Handler returned non-container value in success result"
                     )
-                return r[t.Container | BaseModel].ok(value)
+                return dispatch_result.ok(value)
             if raw_output is None:
-                return r[t.Container | BaseModel].fail("Handler returned None")
+                return dispatch_result.fail("Handler returned None")
             if not u.is_container(raw_output):
-                return r[t.Container | BaseModel].fail(
-                    "Handler returned non-container value"
-                )
-            return r[t.Container | BaseModel].ok(raw_output)
+                return dispatch_result.fail("Handler returned non-container value")
+            return dispatch_result.ok(raw_output)
         except Exception as exc:
             self._logger.exception("Handler execution failed", route=route_name)
-            return r[t.Container | BaseModel].fail(
+            return dispatch_result.fail(
                 f"Handler execution failed: {exc}",
                 error_code=c.Errors.COMMAND_PROCESSING_FAILED,
             )
