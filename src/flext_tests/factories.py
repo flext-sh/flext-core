@@ -138,7 +138,12 @@ class FlextTestsFactories(s[t.Tests.object]):
             for i in range(count):
                 name = names[i % len(names)] if names else f"User {i}"
                 user_model = cls.model("user", name=name, email=f"user{i}@example.com")
-                result_users.append(m.Tests.User(user_model))
+                if isinstance(user_model, m.Tests.User):
+                    result_users.append(user_model)
+                else:
+                    extracted = cls._extract_model_instance(user_model)
+                    if isinstance(extracted, m.Tests.User):
+                        result_users.append(extracted)
             return result_users
         if kind == "config":
             envs = (
@@ -149,7 +154,12 @@ class FlextTestsFactories(s[t.Tests.object]):
             configs: builtins.list[m.Tests.Config] = []
             for i in range(count):
                 config_model = cls.model("config", environment=envs[i % len(envs)])
-                configs.append(m.Tests.Config(config_model))
+                if isinstance(config_model, m.Tests.Config):
+                    configs.append(config_model)
+                else:
+                    extracted = cls._extract_model_instance(config_model)
+                    if isinstance(extracted, m.Tests.Config):
+                        configs.append(extracted)
             return configs
         types = (
             list(service_types)
@@ -159,7 +169,12 @@ class FlextTestsFactories(s[t.Tests.object]):
         services: builtins.list[m.Tests.Service] = []
         for i in range(count):
             service_model = cls.model("service", service_type=types[i % len(types)])
-            services.append(m.Tests.Service(service_model))
+            if isinstance(service_model, m.Tests.Service):
+                services.append(service_model)
+            else:
+                extracted = cls._extract_model_instance(service_model)
+                if isinstance(extracted, m.Tests.Service):
+                    services.append(extracted)
         return services
 
     @classmethod
@@ -219,7 +234,7 @@ class FlextTestsFactories(s[t.Tests.object]):
 
         """
         try:
-            params = m.Tests.DictFactoryParams({
+            params = m.Tests.DictFactoryParams.model_validate({
                 "source": source,
                 **kwargs,
             })
@@ -329,7 +344,7 @@ class FlextTestsFactories(s[t.Tests.object]):
             validate_data: dict[str, object] = {"type_": type_, **kwargs}
             if "kwargs" in validate_data:
                 validate_data["call_kwargs"] = validate_data.pop("kwargs")
-            params = m.Tests.GenericFactoryParams(validate_data)
+            params = m.Tests.GenericFactoryParams.model_validate(validate_data)
         except (TypeError, ValueError, AttributeError) as exc:
             invalid_params_result: r[T] | r[builtins.list[T]] = r[
                 builtins.list[T]
