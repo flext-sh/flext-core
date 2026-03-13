@@ -41,16 +41,11 @@ from __future__ import annotations
 
 import hashlib
 from collections.abc import Mapping
+from typing import ClassVar
 
 from pydantic import BaseModel, TypeAdapter, ValidationError
 
 from flext_core import FlextRuntime, c, p, r, t
-
-_CACHE_DICT_STR_OBJECT_ADAPTER = TypeAdapter(dict[str, object])
-_CACHE_SET_OBJECT_ADAPTER = TypeAdapter(set[object])
-_CACHE_SET_STR_ADAPTER = TypeAdapter(set[str])
-_CACHE_LIST_OBJECT_ADAPTER = TypeAdapter(list[object])
-_CACHE_SORTABLE_DICT_ADAPTER = TypeAdapter(dict[t.SortableObjectType, object])
 
 
 class FlextUtilitiesCache:
@@ -75,6 +70,18 @@ class FlextUtilitiesCache:
        - Other methods are pure functions (no side effects)
        - No exceptions propagated to callers
     """
+
+    _dict_str_object_adapter: ClassVar[TypeAdapter[dict[str, object]]] = TypeAdapter(
+        dict[str, object]
+    )
+    _set_object_adapter: ClassVar[TypeAdapter[set[object]]] = TypeAdapter(set[object])
+    _set_str_adapter: ClassVar[TypeAdapter[set[str]]] = TypeAdapter(set[str])
+    _list_object_adapter: ClassVar[TypeAdapter[list[object]]] = TypeAdapter(
+        list[object]
+    )
+    _sortable_dict_adapter: ClassVar[
+        TypeAdapter[dict[t.SortableObjectType, object]]
+    ] = TypeAdapter(dict[t.SortableObjectType, object])
 
     @property
     def logger(self) -> p.Log.StructlogLogger:
@@ -171,7 +178,9 @@ class FlextUtilitiesCache:
     @staticmethod
     def generate_cache_key_for_command(command: object, command_type: type) -> str:
         if isinstance(command, Mapping):
-            command_map = _CACHE_DICT_STR_OBJECT_ADAPTER.validate_python(command)
+            command_map = FlextUtilitiesCache._dict_str_object_adapter.validate_python(
+                command
+            )
             sorted_data = FlextUtilitiesCache.sort_dict_keys(command_map)
             return f"{command_type.__name__}_{hash(str(sorted_data))}"
         command_str = "None" if command is None else str(command)
@@ -233,7 +242,9 @@ class FlextUtilitiesCache:
                 for k, v in component.model_dump().items()
             }
         if isinstance(component, Mapping):
-            dict_component = _CACHE_DICT_STR_OBJECT_ADAPTER.validate_python(component)
+            dict_component = (
+                FlextUtilitiesCache._dict_str_object_adapter.validate_python(component)
+            )
             return {
                 str(k): FlextUtilitiesCache.normalize_component(v)
                 for k, v in dict_component.items()
@@ -242,12 +253,12 @@ class FlextUtilitiesCache:
             return component
         if isinstance(component, set):
             try:
-                set_items = _CACHE_SET_OBJECT_ADAPTER.validate_python(
+                set_items = FlextUtilitiesCache._set_object_adapter.validate_python(
                     component,
                     strict=False,
                 )
             except ValidationError:
-                fallback_items = _CACHE_SET_STR_ADAPTER.validate_python(
+                fallback_items = FlextUtilitiesCache._set_str_adapter.validate_python(
                     component,
                     strict=False,
                 )
@@ -257,7 +268,9 @@ class FlextUtilitiesCache:
             ]
             return tuple(normalized_items)
         if isinstance(component, (list, tuple)):
-            sequence = _CACHE_LIST_OBJECT_ADAPTER.validate_python(component)
+            sequence = FlextUtilitiesCache._list_object_adapter.validate_python(
+                component
+            )
             return [FlextUtilitiesCache.normalize_component(item) for item in sequence]
         return str(component)
 
@@ -295,7 +308,7 @@ class FlextUtilitiesCache:
         if isinstance(data, BaseModel):
             return FlextUtilitiesCache.sort_dict_keys(data.model_dump())
         if isinstance(data, Mapping):
-            data_map = _CACHE_SORTABLE_DICT_ADAPTER.validate_python(data)
+            data_map = FlextUtilitiesCache._sortable_dict_adapter.validate_python(data)
             result: dict[str, object] = {}
             for k in sorted(data_map.keys(), key=FlextUtilitiesCache.sort_key):
                 value = data_map[k]

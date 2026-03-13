@@ -18,7 +18,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from typing import override
+from typing import cast, override
 
 from flext_core import FlextContainer, FlextSettings, c, m, r, s, u
 
@@ -149,7 +149,7 @@ class DependencyInjectionService(s[m.ConfigMap]):
         missing_result = container.get("non_existent")
         typed_db_result = container.get("database", type_cls=DatabaseService)
         invalid_query = (
-            typed_db_result.value.query("INVALID QUERY")
+            cast("DatabaseService", typed_db_result.value).query("INVALID QUERY")
             if typed_db_result.is_success
             else r[m.ConfigMap].fail("database service unavailable")
         )
@@ -164,12 +164,12 @@ class DependencyInjectionService(s[m.ConfigMap]):
         database_result = container.get("database", type_cls=DatabaseService)
         cache_result = container.get("cache", type_cls=CacheService)
         email_result = container.get("email", type_cls=EmailService)
-        db_check = database_result.flat_map(lambda service: service.connect())
+        db_check = database_result.flat_map(lambda svc: svc.connect())
         cache_check = cache_result.flat_map(
-            lambda service: service.set("test_key", "test_value")
+            lambda svc: svc.set("test_key", "test_value")
         )
         email_check = email_result.flat_map(
-            lambda service: service.send("test@example.com", "Test", "Hello")
+            lambda svc: svc.send("test@example.com", "Test", "Hello")
         )
         print(f"✅ database: {db_check.is_success}")
         print(f"✅ cache: {cache_check.is_success}")

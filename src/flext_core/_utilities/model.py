@@ -15,11 +15,9 @@ from typing import ClassVar, TypeVar
 from pydantic import BaseModel, TypeAdapter, ValidationError
 
 from flext_core import FlextRuntime, m, r, t
+from flext_core._models.base import FlextModelFoundation
 
 T_Model = TypeVar("T_Model", bound=BaseModel)
-_MODEL_DICT_STR_OBJECT_ADAPTER = TypeAdapter(dict[str, object])
-_MODEL_LIST_OBJECT_ADAPTER = TypeAdapter(list[object])
-_MODEL_TUPLE_OBJECT_ADAPTER = TypeAdapter(tuple[object, ...])
 
 
 class FlextUtilitiesModel:
@@ -39,14 +37,21 @@ class FlextUtilitiesModel:
 
     """
 
-    _pydantic_scalar_adapter: ClassVar[TypeAdapter[t.Primitives]] = TypeAdapter(
-        t.Primitives
+    _dict_str_object_adapter: ClassVar[TypeAdapter[dict[str, object]]] = TypeAdapter(
+        dict[str, object]
     )
+    _list_object_adapter: ClassVar[TypeAdapter[list[object]]] = TypeAdapter(
+        list[object]
+    )
+    _tuple_object_adapter: ClassVar[TypeAdapter[tuple[object, ...]]] = TypeAdapter(
+        tuple[object, ...]
+    )
+    _V = FlextModelFoundation.Validators
 
     @staticmethod
     def _normalize_str_object_mapping(value: object) -> dict[str, object]:
         try:
-            return _MODEL_DICT_STR_OBJECT_ADAPTER.validate_python(value)
+            return FlextUtilitiesModel._dict_str_object_adapter.validate_python(value)
         except ValidationError:
             return {}
 
@@ -70,7 +75,7 @@ class FlextUtilitiesModel:
         if isinstance(value, (bool, int, float, str)):
             return value
         if isinstance(value, list):
-            list_items = _MODEL_LIST_OBJECT_ADAPTER.validate_python(value)
+            list_items = FlextUtilitiesModel._list_object_adapter.validate_python(value)
             normalized_items: list[t.Primitives] = []
             for item in list_items:
                 if item is None:
@@ -78,7 +83,7 @@ class FlextUtilitiesModel:
                     continue
                 try:
                     normalized_items.append(
-                        FlextUtilitiesModel._pydantic_scalar_adapter.validate_python(
+                        FlextUtilitiesModel._V.primitives_adapter().validate_python(
                             item
                         )
                     )
@@ -86,7 +91,9 @@ class FlextUtilitiesModel:
                     normalized_items.append(str(item))
             return normalized_items
         if isinstance(value, tuple):
-            tuple_items = _MODEL_TUPLE_OBJECT_ADAPTER.validate_python(value)
+            tuple_items = FlextUtilitiesModel._tuple_object_adapter.validate_python(
+                value
+            )
             normalized_tuple_items: list[t.Primitives] = []
             for item in tuple_items:
                 if item is None:
@@ -94,7 +101,7 @@ class FlextUtilitiesModel:
                     continue
                 try:
                     normalized_tuple_items.append(
-                        FlextUtilitiesModel._pydantic_scalar_adapter.validate_python(
+                        FlextUtilitiesModel._V.primitives_adapter().validate_python(
                             item
                         )
                     )
@@ -364,7 +371,9 @@ class FlextUtilitiesModel:
         if isinstance(obj, Mapping):
             try:
                 normalized_mapping: dict[str, object] = {}
-                obj_mapping = _MODEL_DICT_STR_OBJECT_ADAPTER.validate_python(obj)
+                obj_mapping = (
+                    FlextUtilitiesModel._dict_str_object_adapter.validate_python(obj)
+                )
                 for key, value in obj_mapping.items():
                     normalized_mapping_value: object = (
                         FlextRuntime.normalize_to_container(value)

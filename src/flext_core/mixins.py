@@ -14,7 +14,7 @@ import threading
 from collections.abc import Callable, Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from types import ModuleType
-from typing import ClassVar, Unpack, cast, override
+from typing import ClassVar, Unpack, override
 
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
 
@@ -178,6 +178,15 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
                     c.Context.SCOPE_OPERATION, **normal_metadata_context
                 )
 
+    @staticmethod
+    def _normalize_log_payload(
+        payload: Mapping[str, object],
+    ) -> dict[str, t.Container | BaseModel]:
+        normalized_payload: dict[str, t.Container | BaseModel] = {}
+        for key, value in payload.items():
+            normalized_payload[str(key)] = FlextRuntime.normalize_to_container(value)
+        return normalized_payload
+
     @contextmanager
     def track(self, operation_name: str) -> Iterator[Mapping[str, object]]:
         """Track operation performance with timing and automatic context cleanup."""
@@ -275,7 +284,7 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
         self.logger.info(
             "Service initialized",
             return_result=False,
-            **cast("dict[str, t.Container]", service_context.root),
+            **FlextMixins._normalize_log_payload(service_context.root),
         )
 
     def _get_runtime(self) -> m.ServiceRuntime:
@@ -300,41 +309,37 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
             bootstrap_method = getattr(self, "_runtime_bootstrap_options")
             if callable(bootstrap_method):
                 try:
-                    bootstrap_callable = cast(
-                        "Callable[[], p.RuntimeBootstrapOptions | None]",
-                        bootstrap_method,
-                    )
-                    options = bootstrap_callable()
-                    if options is not None:
-                        if options.config_type is not None:
-                            config_type_raw = options.config_type
-                        if options.config_overrides is not None:
-                            overrides = options.config_overrides
-                        if options.context is not None:
-                            initial_ctx = options.context
-                        if options.services is not None:
-                            services_typed: dict[str, t.RegisterableService] = {}
-                            for key, value in options.services.items():
-                                if u.is_registerable_service(value):
-                                    services_typed[str(key)] = value
-                            bootstrap_services = services_typed
-                        bootstrap_factories = options.factories
-                        bootstrap_resources = options.resources
-                        if options.wire_modules is not None:
-                            bootstrap_wire_modules = cast(
-                                "Sequence[ModuleType]",
-                                list(options.wire_modules),
-                            )
+                    options_raw = bootstrap_method()
+                    match options_raw:
+                        case m.RuntimeBootstrapOptions() as options:
+                            if options.config_type is not None:
+                                config_type_raw = options.config_type
+                            if options.config_overrides is not None:
+                                overrides = options.config_overrides
+                            if options.context is not None:
+                                initial_ctx = options.context
+                            if options.services is not None:
+                                services_typed: dict[str, t.RegisterableService] = {}
+                                for key, value in options.services.items():
+                                    if u.is_registerable_service(value):
+                                        services_typed[str(key)] = value
+                                bootstrap_services = services_typed
+                            bootstrap_factories = options.factories
+                            bootstrap_resources = options.resources
+                            if options.wire_modules is not None:
+                                bootstrap_wire_modules = list(options.wire_modules)
+                        case _:
+                            pass
                 except Exception as exc:
                     FlextLogger.create_module_logger(__name__).warning(
                         "Failed to load runtime bootstrap options",
                         exc_info=exc,
                     )
 
-        if config_type_raw is not None and FlextSettings in getattr(
-            config_type_raw, "__mro__", ()
+        if isinstance(config_type_raw, type) and issubclass(
+            config_type_raw, FlextSettings
         ):
-            config_cls_typed = cast("type[FlextSettings]", config_type_raw)
+            config_cls_typed = config_type_raw
         else:
             config_cls_typed = FlextSettings
 
@@ -396,7 +401,10 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
     ) -> None:
         """Log configuration ONCE without binding to context."""
         config_typed: m.ConfigMap = m.ConfigMap(root=dict(config.items()))
-        self.logger.info(message, **cast("dict[str, t.Container]", config_typed.root))
+        self.logger.info(
+            message,
+            **FlextMixins._normalize_log_payload(config_typed.root),
+        )
 
     def _log_with_context(self, level: str, message: str, **extra: t.Scalar) -> None:
         """Log message with automatic context data inclusion."""
@@ -416,7 +424,10 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
             if hasattr(self.logger, level)
             else self.logger.info
         )
-        _ = log_method(message, **cast("dict[str, t.Container]", context_data.root))
+        _ = log_method(
+            message,
+            **FlextMixins._normalize_log_payload(context_data.root),
+        )
 
     def _register_in_container(self, service_name: str) -> r[bool]:
         """Register self in global container for service discovery."""
@@ -596,14 +607,16 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
                             if validation_result.error
                             else f"{base_msg} (validation rule failed)"
                         )
-                        fail_error_data: Mapping[str, t.Container] | None = (
-                            cast(
-                                "Mapping[str, t.Container]",
-                                dict(validation_result.error_data.root),
-                            )
-                            if validation_result.error_data is not None
-                            else {}
-                        )
+                        fail_error_data: Mapping[str, t.Container] | None = {}
+                        if validation_result.error_data is not None:
+                            normalized_error_data: dict[str, t.Container] = {}
+                            for key, value in validation_result.error_data.root.items():
+                                normalized = FlextRuntime.normalize_to_container(value)
+                                if isinstance(normalized, BaseModel):
+                                    normalized_error_data[str(key)] = str(normalized)
+                                else:
+                                    normalized_error_data[str(key)] = normalized
+                            fail_error_data = normalized_error_data
                         return r[TValidation].fail(
                             error_msg,
                             error_code=validation_result.error_code,

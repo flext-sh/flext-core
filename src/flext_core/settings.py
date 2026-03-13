@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import threading
 from collections.abc import Callable, Mapping, Sequence
-from typing import ClassVar, Self, cast
+from typing import ClassVar, Self
 
 from pydantic import (
     BaseModel,
@@ -462,7 +462,11 @@ class FlextSettings(BaseSettings, FlextRuntime):
         if config_type not in getattr(config_class_raw, "__mro__", ()):
             msg = f"Namespace '{namespace}' config class {config_class_raw} is not subclass of {config_type}"
             raise TypeError(msg)
-        return cast("T_Namespace", config_class_raw())
+        config_instance = config_class_raw()
+        if isinstance(config_instance, config_type):
+            return config_instance
+        msg = f"Namespace '{namespace}' config instance {config_instance.__class__.__name__} is not instance of {config_type.__name__}"
+        raise TypeError(msg)
 
 
 __all__ = ["FlextSettings"]

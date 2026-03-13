@@ -59,6 +59,14 @@ class FlextModelFoundation:
             TypeAdapter[Mapping[str, t.MetadataValue]] | None
         ] = None
         _config_adapter: ClassVar[TypeAdapter[Mapping[str, t.Container]] | None] = None
+        _dict_container_adapter: ClassVar[
+            TypeAdapter[dict[str, t.Container]] | None
+        ] = None
+        _list_container_adapter: ClassVar[TypeAdapter[list[t.Container]] | None] = None
+        _tuple_container_adapter: ClassVar[
+            TypeAdapter[tuple[t.Container, ...]] | None
+        ] = None
+        _primitives_adapter: ClassVar[TypeAdapter[t.Primitives] | None] = None
 
         @classmethod
         def config_adapter(cls) -> TypeAdapter[Mapping[str, t.Container]]:
@@ -100,6 +108,34 @@ class FlextModelFoundation:
             if cls._tags_adapter is None:
                 cls._tags_adapter = TypeAdapter(list[str])
             return cls._tags_adapter
+
+        @classmethod
+        def dict_container_adapter(cls) -> TypeAdapter[dict[str, t.Container]]:
+            """Lazy-load dict[str, Container] TypeAdapter on first access."""
+            if cls._dict_container_adapter is None:
+                cls._dict_container_adapter = TypeAdapter(dict[str, t.Container])
+            return cls._dict_container_adapter
+
+        @classmethod
+        def list_container_adapter(cls) -> TypeAdapter[list[t.Container]]:
+            """Lazy-load list[Container] TypeAdapter on first access."""
+            if cls._list_container_adapter is None:
+                cls._list_container_adapter = TypeAdapter(list[t.Container])
+            return cls._list_container_adapter
+
+        @classmethod
+        def tuple_container_adapter(cls) -> TypeAdapter[tuple[t.Container, ...]]:
+            """Lazy-load tuple[Container, ...] TypeAdapter on first access."""
+            if cls._tuple_container_adapter is None:
+                cls._tuple_container_adapter = TypeAdapter(tuple[t.Container, ...])
+            return cls._tuple_container_adapter
+
+        @classmethod
+        def primitives_adapter(cls) -> TypeAdapter[t.Primitives]:
+            """Lazy-load Primitives TypeAdapter on first access."""
+            if cls._primitives_adapter is None:
+                cls._primitives_adapter = TypeAdapter(t.Primitives)
+            return cls._primitives_adapter
 
         @staticmethod
         def ensure_utc_datetime(v: datetime | None) -> datetime | None:

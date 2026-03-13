@@ -221,6 +221,8 @@ class FlextDispatcher:
             return handler.execute
         if callable(handler):
             return handler
+        msg = f"Handler {handler!r} is not callable and does not implement known protocols"
+        raise TypeError(msg)
 
     def _execute_handler(
         self,

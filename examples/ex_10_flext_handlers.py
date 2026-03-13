@@ -225,7 +225,9 @@ class Ex10FlextHandlers(Examples):
         self.check("handler.name_matches", bool(handler.handler_name))
         self.check("handler.mode", handler.mode.value)
         self.check("validate.none.failure", handler.validate_message(None).is_failure)
-        self.check("validate.ok.success", handler.validate_message(message_ok).is_success)
+        self.check(
+            "validate.ok.success", handler.validate_message(message_ok).is_success
+        )
         self.check("validate.blocked_cmd", handler.validate_message("bad").error)
         self.check("validate.blocked_qry", handler.validate_message("bad").error)
         self.check(
