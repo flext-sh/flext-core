@@ -335,7 +335,12 @@ class DomainModelService(s[m.ConfigMap]):
             combine_email_money
         )
         user_result = r[User].ok(
-            User(name="Alice", email=Email(address="alice@example.com"), age=30)
+            User(
+                name="Alice",
+                email=Email(address="alice@example.com"),
+                age=30,
+                domain_events=[],
+            )
         )
 
         def add_order_item(o: Order) -> r[Order]:
@@ -350,7 +355,7 @@ class DomainModelService(s[m.ConfigMap]):
 
         order_result = (
             r[Order]
-            .ok(Order(customer_id="cust-123"))
+            .ok(Order(customer_id="cust-123", domain_events=[]))
             .flat_map(add_order_item)
             .flat_map(Order.confirm)
         )

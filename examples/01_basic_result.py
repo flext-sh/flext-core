@@ -83,7 +83,7 @@ class RailwayService(s[DemonstrationResult]):
             )
             if email_validation.is_failure:
                 return r[User].fail(email_validation.error or "Invalid email")
-            return r.ok(User(name="Demo User", email=email))
+            return r.ok(User(name="Demo User", email=email, domain_events=[]))
 
         return validate_user
 

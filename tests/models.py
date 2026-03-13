@@ -482,6 +482,15 @@ class TestsFlextModels(FlextTestsModels, FlextInfraModels):
         email: str = ""
 
 
+# Rebuild models that use recursive PEP 695 type aliases (e.g. t.ContainerValue)
+# Pydantic cannot resolve these forward references at class definition time.
+TestsFlextModels.DomainTestEntity.model_rebuild()
+TestsFlextModels.UtilityEntityModel.model_rebuild()
+TestsFlextModels.UtilityValueModel.model_rebuild()
+TestsFlextModels.ObjectKeyCase.model_rebuild()
+TestsFlextModels.AutomatedTestScenario.model_rebuild()
+TestsFlextModels.StandardTestCaseModel.model_rebuild()
+
 m = TestsFlextModels
 
 __all__ = [

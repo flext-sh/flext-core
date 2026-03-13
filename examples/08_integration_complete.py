@@ -117,7 +117,9 @@ class IntegrationService(s[m.ConfigMap]):
             email="integration@example.com",
         )
         print(f"✅ Entity created: {user.name}")
-        order = Order(unique_id=u.generate("entity"), customer_id=user.unique_id)
+        order = Order(
+            unique_id=u.generate("entity"), customer_id=user.unique_id, domain_events=[]
+        )
         print(f"✅ Aggregate created: {order.status.value}")
 
     @staticmethod

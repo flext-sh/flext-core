@@ -1077,7 +1077,9 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
             return r[t.Scalar].fail(service_result.error or "Service not found")
 
         @staticmethod
-        def register_service(service_name: str, service: object | BaseModel) -> r[bool]:
+        def register_service(
+            service_name: str, service: t.RegisterableService
+        ) -> r[bool]:
             """Register service in global container using r.
 
             Provides unified service registration pattern across the ecosystem

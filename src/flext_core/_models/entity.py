@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import contextlib
 from collections.abc import Callable, Sequence
-from typing import ClassVar, Self, TypeAlias, override
+from typing import Annotated, ClassVar, Self, TypeAlias, override
 
 from pydantic import BaseModel, Field, computed_field, model_validator
 

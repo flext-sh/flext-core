@@ -59,7 +59,13 @@ class FlextInfraTypes(FlextTypes):
         TomlScalar: TypeAlias = str | int | float | bool | None
         "TOML scalar value (null, string, integer, float, boolean)."
         type TomlValue = (
-            str | int | float | bool | None | dict[str, TomlValue] | list[TomlValue]
+            str
+            | int
+            | float
+            | bool
+            | None
+            | dict[str, TomlScalar | None]
+            | list[TomlScalar | None]
         )
         "Recursive TOML value (scalar, table, or array)."
         TomlConfig: TypeAlias = dict[str, TomlValue]
