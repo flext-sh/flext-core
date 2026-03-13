@@ -287,23 +287,29 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
                 pass
         config_type_raw = getattr(self, "config_type", None)
         config_cls_typed: type[FlextSettings]
-        
+
         overrides: Mapping[str, object] | None = None
         initial_ctx: object | None = None
         bootstrap_services = None
         bootstrap_factories = None
         bootstrap_resources = None
         bootstrap_wire_modules = None
-        
+
         if hasattr(self, "_runtime_bootstrap_options"):
             bootstrap_method = getattr(self, "_runtime_bootstrap_options")
             if callable(bootstrap_method):
                 try:
                     options = bootstrap_method()
                     if options is not None:
-                        if hasattr(options, "config_type") and options.config_type is not None:
+                        if (
+                            hasattr(options, "config_type")
+                            and options.config_type is not None
+                        ):
                             config_type_raw = options.config_type
-                        if hasattr(options, "config_overrides") and options.config_overrides is not None:
+                        if (
+                            hasattr(options, "config_overrides")
+                            and options.config_overrides is not None
+                        ):
                             overrides = options.config_overrides
                         if hasattr(options, "context") and options.context is not None:
                             initial_ctx = options.context
@@ -325,14 +331,16 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
 
         if overrides is None:
             overrides = getattr(self, "config_overrides", None)
-            
+
         runtime_config = config_cls_typed.get_global(overrides=overrides)
 
         if initial_ctx is None:
             initial_ctx = getattr(self, "initial_context", None)
-            
+
         runtime_context: p.Context = (
-            cast("p.Context", initial_ctx) if initial_ctx is not None else FlextContext.create()
+            cast("p.Context", initial_ctx)
+            if initial_ctx is not None
+            else FlextContext.create()
         )
         runtime_config_typed: FlextSettings = runtime_config
         runtime_container = FlextContainer.create().scoped(

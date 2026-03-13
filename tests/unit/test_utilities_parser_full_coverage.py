@@ -238,6 +238,7 @@ def test_parser_parse_helpers_and_primitive_coercion_branches(
     assert primitive_float is not None and primitive_float.is_success
     assert primitive_str is not None and primitive_str.is_success
     from flext_core._utilities.parser import FlextUtilitiesParser
+
     monkeypatch.setattr(
         FlextUtilitiesParser,
         "_coerce_to_float",
@@ -317,7 +318,10 @@ def test_parser_convert_and_norm_branches(monkeypatch: pytest.MonkeyPatch) -> No
     assert config_map_result is True
     original_norm_list = u.norm_list
     from flext_core._utilities.parser import FlextUtilitiesParser
-    monkeypatch.setattr(FlextUtilitiesParser, "norm_list", staticmethod(_norm_list_dict))
+
+    monkeypatch.setattr(
+        FlextUtilitiesParser, "norm_list", staticmethod(_norm_list_dict)
+    )
     try:
         assert parser.norm_in("v", ["x"], case="lower") is False
     finally:
@@ -390,6 +394,7 @@ def test_parser_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> None:
     )
     assert enum_by_member_value is not None and enum_by_member_value.is_success
     from flext_core._utilities.parser import FlextUtilitiesParser
+
     monkeypatch.setattr(
         FlextUtilitiesParser,
         "_coerce_to_int",
