@@ -61,7 +61,7 @@ class UnregisteredCommand(m.Command):
 
 
 class SampleHandler:
-    """Strict handler implementation matching HandleProtocol."""
+    """Strict handler implementation matching Handle."""
 
     message_type = SampleCommand
 
@@ -75,7 +75,7 @@ class SampleHandler:
 
 
 class QueryHandler:
-    """Query handler matching HandleProtocol."""
+    """Query handler matching Handle."""
 
     message_type = SampleQuery
 
@@ -89,7 +89,7 @@ class QueryHandler:
 
 
 class EventHandler:
-    """Event handler matching HandleProtocol."""
+    """Event handler matching Handle."""
 
     message_type = SampleEvent
 

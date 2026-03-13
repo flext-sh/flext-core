@@ -578,16 +578,16 @@ rules:
   - project_kind: core
     facade_family: u
     module_family: other_private
-    source_symbol: DispatchMessageProtocol
+    source_symbol: DispatchMessage
     target_facade_class: FlextDispatcher
-    target_namespace_path: FlextDispatcher.DispatchMessageProtocol
+    target_namespace_path: FlextDispatcher.DispatchMessage
     expected_base_chain: *id006
     forbidden_targets: []
     confidence: 0.5
     pre_checks:
       - type: source_symbol_is_class
         params:
-          symbol: DispatchMessageProtocol
+          symbol: DispatchMessage
       - type: target_facade_exists
         params:
           facade: FlextDispatcher
@@ -602,16 +602,16 @@ rules:
   - project_kind: core
     facade_family: u
     module_family: other_private
-    source_symbol: HandleProtocol
+    source_symbol: Handle
     target_facade_class: FlextDispatcher
-    target_namespace_path: FlextDispatcher.HandleProtocol
+    target_namespace_path: FlextDispatcher.Handle
     expected_base_chain: *id006
     forbidden_targets: []
     confidence: 0.5
     pre_checks:
       - type: source_symbol_is_class
         params:
-          symbol: HandleProtocol
+          symbol: Handle
       - type: target_facade_exists
         params:
           facade: FlextDispatcher
@@ -626,16 +626,16 @@ rules:
   - project_kind: core
     facade_family: u
     module_family: other_private
-    source_symbol: ExecuteProtocol
+    source_symbol: Execute
     target_facade_class: FlextDispatcher
-    target_namespace_path: FlextDispatcher.ExecuteProtocol
+    target_namespace_path: FlextDispatcher.Execute
     expected_base_chain: *id006
     forbidden_targets: []
     confidence: 0.5
     pre_checks:
       - type: source_symbol_is_class
         params:
-          symbol: ExecuteProtocol
+          symbol: Execute
       - type: target_facade_exists
         params:
           facade: FlextDispatcher
@@ -650,16 +650,16 @@ rules:
   - project_kind: core
     facade_family: u
     module_family: other_private
-    source_symbol: MetadataProtocol
+    source_symbol: Metadata
     target_facade_class: FlextExceptions
-    target_namespace_path: FlextExceptions.MetadataProtocol
+    target_namespace_path: FlextExceptions.Metadata
     expected_base_chain: *id006
     forbidden_targets: []
     confidence: 0.5
     pre_checks:
       - type: source_symbol_is_class
         params:
-          symbol: MetadataProtocol
+          symbol: Metadata
       - type: target_facade_exists
         params:
           facade: FlextExceptions
@@ -3698,16 +3698,16 @@ rules:
   - project_kind: core
     facade_family: u
     module_family: other_private
-    source_symbol: FlextInfraRefactorSafetyRunnerProtocol
+    source_symbol: FlextInfraRefactorSafetyRunner
     target_facade_class: FlextRefactorSafety
-    target_namespace_path: FlextRefactorSafety.FlextInfraRefactorSafetyRunnerProtocol
+    target_namespace_path: FlextRefactorSafety.FlextInfraRefactorSafetyRunner
     expected_base_chain: *id006
     forbidden_targets: []
     confidence: 0.7
     pre_checks:
       - type: source_symbol_is_class
         params:
-          symbol: FlextInfraRefactorSafetyRunnerProtocol
+          symbol: FlextInfraRefactorSafetyRunner
       - type: target_facade_exists
         params:
           facade: FlextRefactorSafety
@@ -4538,16 +4538,16 @@ rules:
   - project_kind: core
     facade_family: u
     module_family: other_private
-    source_symbol: _WhalesClientConfigProtocol
+    source_symbol: _WhalesClientConfig
     target_facade_class: FlextDocker
-    target_namespace_path: FlextDocker._WhalesClientConfigProtocol
+    target_namespace_path: FlextDocker._WhalesClientConfig
     expected_base_chain: *id006
     forbidden_targets: []
     confidence: 0.5
     pre_checks:
       - type: source_symbol_is_class
         params:
-          symbol: _WhalesClientConfigProtocol
+          symbol: _WhalesClientConfig
       - type: target_facade_exists
         params:
           facade: FlextDocker
@@ -4562,16 +4562,16 @@ rules:
   - project_kind: core
     facade_family: u
     module_family: other_private
-    source_symbol: _WhalesComposeProtocol
+    source_symbol: _WhalesCompose
     target_facade_class: FlextDocker
-    target_namespace_path: FlextDocker._WhalesComposeProtocol
+    target_namespace_path: FlextDocker._WhalesCompose
     expected_base_chain: *id006
     forbidden_targets: []
     confidence: 0.5
     pre_checks:
       - type: source_symbol_is_class
         params:
-          symbol: _WhalesComposeProtocol
+          symbol: _WhalesCompose
       - type: target_facade_exists
         params:
           facade: FlextDocker
@@ -4586,16 +4586,16 @@ rules:
   - project_kind: core
     facade_family: u
     module_family: other_private
-    source_symbol: _WhalesDockerClientProtocol
+    source_symbol: _WhalesDockerClient
     target_facade_class: FlextDocker
-    target_namespace_path: FlextDocker._WhalesDockerClientProtocol
+    target_namespace_path: FlextDocker._WhalesDockerClient
     expected_base_chain: *id006
     forbidden_targets: []
     confidence: 0.5
     pre_checks:
       - type: source_symbol_is_class
         params:
-          symbol: _WhalesDockerClientProtocol
+          symbol: _WhalesDockerClient
       - type: target_facade_exists
         params:
           facade: FlextDocker

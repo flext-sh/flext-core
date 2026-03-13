@@ -82,7 +82,7 @@ def test_implements_decorator_helper_methods_and_static_wrappers() -> None:
 
 def test_check_implements_protocol_false_non_runtime_protocol() -> None:
 
-    class _NotAProtocol:
+    class _NotA:
         pass
 
     @p.implements(_RequirePing)
@@ -91,7 +91,7 @@ def test_check_implements_protocol_false_non_runtime_protocol() -> None:
             return "pong"
 
     obj = _Thing()
-    assert p.check_implements_protocol(cast("object", obj), _NotAProtocol) is False
+    assert p.check_implements_protocol(cast("object", obj), _NotA) is False
 
 
 def test_protocol_runtime_check() -> None:

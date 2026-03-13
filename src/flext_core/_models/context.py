@@ -313,8 +313,7 @@ class FlextModelsContext:
             if obj is None or isinstance(obj, (str, int, float, bool)):
                 return
             if FlextRuntime.is_dict_like(obj):
-                dict_obj = _normalize_str_object_mapping(obj)
-                for key, val in dict_obj.items():
+                for key, val in obj.items():
                     cls.check_json_serializable(val, f"{path}.{key}")
                 return
             if FlextRuntime.is_list_like(obj) and (not isinstance(obj, (str, bytes))):

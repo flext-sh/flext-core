@@ -10,7 +10,7 @@ from pydantic import BaseModel
 from flext_core import FlextContainer, FlextContext, c, m, r, t
 
 
-class _MonkeyPatchProtocol(Protocol):
+class _MonkeyPatch(Protocol):
     def setattr(
         self,
         target: object,
@@ -58,7 +58,7 @@ def test_narrow_contextvar_invalid_inputs() -> None:
 
 
 def test_narrow_contextvar_exception_branch(
-    monkeypatch: _MonkeyPatchProtocol,
+    monkeypatch: _MonkeyPatch,
 ) -> None:
     FlextContext()
 
@@ -74,7 +74,7 @@ def test_narrow_contextvar_exception_branch(
 
 
 def test_create_overloads_and_auto_correlation(
-    monkeypatch: _MonkeyPatchProtocol,
+    monkeypatch: _MonkeyPatch,
 ) -> None:
     def _generate_id(_key: str) -> str:
         return "corr-1"
@@ -90,7 +90,7 @@ def test_create_overloads_and_auto_correlation(
 
 
 def test_set_set_all_get_validation_and_error_paths(
-    monkeypatch: _MonkeyPatchProtocol,
+    monkeypatch: _MonkeyPatch,
 ) -> None:
     ctx = FlextContext()
     _ = ctx.set("k", "v")
@@ -135,7 +135,7 @@ def test_inactive_and_none_value_paths() -> None:
 
 
 def test_clear_keys_values_items_and_validate_branches(
-    monkeypatch: _MonkeyPatchProtocol,
+    monkeypatch: _MonkeyPatch,
 ) -> None:
     ctx = FlextContext()
     ctx._statistics.operations = {c.Context.OPERATION_CLEAR: 1}
@@ -159,7 +159,7 @@ def test_clear_keys_values_items_and_validate_branches(
 
 
 def test_update_statistics_remove_hook_and_clone_false_result(
-    monkeypatch: _MonkeyPatchProtocol,
+    monkeypatch: _MonkeyPatch,
 ) -> None:
     ctx = FlextContext()
     ctx._statistics.operations = {c.Context.OPERATION_GET: 1}
@@ -204,7 +204,7 @@ def test_export_paths_with_metadata_and_statistics() -> None:
     assert isinstance(exported_model, m.ContextExport)
 
 
-def test_container_and_service_domain_paths(monkeypatch: _MonkeyPatchProtocol) -> None:
+def test_container_and_service_domain_paths(monkeypatch: _MonkeyPatch) -> None:
     FlextContext._container = None
     with pytest.raises(RuntimeError):
         FlextContext.get_container()

@@ -22,7 +22,7 @@ from flext_infra import (
 from flext_infra.deps.detection import FlextInfraDependencyDetectionService
 
 
-class _WorkspaceReportProtocol(Protocol):
+class _WorkspaceReport(Protocol):
     """Protocol for workspace dependency report model contract."""
 
     pip_check: m.Infra.Deps.PipCheckReport | None
@@ -33,7 +33,7 @@ class _WorkspaceReportProtocol(Protocol):
         ...
 
 
-class _DetectorRuntimeProtocol(Protocol):
+class _DetectorRuntime(Protocol):
     """Protocol for detector runtime service dependencies."""
 
     paths: FlextInfraUtilitiesPaths
@@ -57,8 +57,8 @@ class FlextInfraDependencyDetectorRuntime:
 
     def __init__(
         self,
-        detector: _DetectorRuntimeProtocol,
-        workspace_report_factory: Callable[..., _WorkspaceReportProtocol],
+        detector: _DetectorRuntime,
+        workspace_report_factory: Callable[..., _WorkspaceReport],
         dependency_limits_factory: Callable[..., m.Infra.Deps.DependencyLimitsInfo],
         pip_check_factory: Callable[..., m.Infra.Deps.PipCheckReport],
     ) -> None:
@@ -238,8 +238,8 @@ class FlextInfraDependencyDetectorRuntime:
 
 
 def run_detector(
-    detector: _DetectorRuntimeProtocol,
-    workspace_report_factory: Callable[..., _WorkspaceReportProtocol],
+    detector: _DetectorRuntime,
+    workspace_report_factory: Callable[..., _WorkspaceReport],
     dependency_limits_factory: Callable[..., m.Infra.Deps.DependencyLimitsInfo],
     pip_check_factory: Callable[..., m.Infra.Deps.PipCheckReport],
     argv: list[str] | None = None,

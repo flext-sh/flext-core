@@ -592,7 +592,7 @@ class TestFlextSettingsPydantic:
         """Test get_namespace raises TypeError for type mismatch."""
         FlextSettings.register_namespace("test_type", FlextSettings)
         config = u.Tests.ConfigHelpers.create_test_config()
-        with pytest.raises(TypeError, match="is not subclass"):
+        with pytest.raises(TypeError, match="is not instance"):
             config.get_namespace("test_type", threading.Thread)
         instance = config.get_namespace("test_type", BaseSettings)
         assert isinstance(instance, FlextSettings)

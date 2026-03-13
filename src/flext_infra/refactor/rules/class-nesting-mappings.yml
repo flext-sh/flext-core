@@ -83,28 +83,28 @@ class_nesting:
     target_name: ResultHelpers
     confidence: high
     reason: top_level_class_in_private_directory
-  - loose_name: DispatchMessageProtocol
+  - loose_name: DispatchMessage
     current_file: flext-core/src/flext_core/dispatcher.py
     target_namespace: FlextDispatcher
-    target_name: DispatchMessageProtocol
+    target_name: DispatchMessage
     confidence: low
     reason: top_level_class_without_namespace_prefix
-  - loose_name: HandleProtocol
+  - loose_name: Handle
     current_file: flext-core/src/flext_core/dispatcher.py
     target_namespace: FlextDispatcher
-    target_name: HandleProtocol
+    target_name: Handle
     confidence: low
     reason: top_level_class_without_namespace_prefix
-  - loose_name: ExecuteProtocol
+  - loose_name: Execute
     current_file: flext-core/src/flext_core/dispatcher.py
     target_namespace: FlextDispatcher
-    target_name: ExecuteProtocol
+    target_name: Execute
     confidence: low
     reason: top_level_class_without_namespace_prefix
-  - loose_name: MetadataProtocol
+  - loose_name: Metadata
     current_file: flext-core/src/flext_core/exceptions.py
     target_namespace: FlextExceptions
-    target_name: MetadataProtocol
+    target_name: Metadata
     confidence: low
     reason: top_level_class_without_namespace_prefix
   - loose_name: FlextLogger
@@ -863,10 +863,10 @@ class_nesting:
     target_name: FlextInfraRefactorSignaturePropagationRule
     confidence: medium
     reason: top_level_class_without_namespace_prefix
-  - loose_name: FlextInfraRefactorSafetyRunnerProtocol
+  - loose_name: FlextInfraRefactorSafetyRunner
     current_file: flext-core/src/flext_infra/refactor/safety.py
     target_namespace: FlextRefactorSafety
-    target_name: FlextInfraRefactorSafetyRunnerProtocol
+    target_name: FlextInfraRefactorSafetyRunner
     confidence: medium
     reason: top_level_class_without_namespace_prefix
   - loose_name: FlextInfraRefactorCheckpoint
@@ -1073,22 +1073,22 @@ class_nesting:
     target_name: FlextTestsConstants
     confidence: low
     reason: top_level_class_without_namespace_prefix
-  - loose_name: _WhalesClientConfigProtocol
+  - loose_name: _WhalesClientConfig
     current_file: flext-core/src/flext_tests/docker.py
     target_namespace: FlextDocker
-    target_name: _WhalesClientConfigProtocol
+    target_name: _WhalesClientConfig
     confidence: low
     reason: top_level_class_without_namespace_prefix
-  - loose_name: _WhalesComposeProtocol
+  - loose_name: _WhalesCompose
     current_file: flext-core/src/flext_tests/docker.py
     target_namespace: FlextDocker
-    target_name: _WhalesComposeProtocol
+    target_name: _WhalesCompose
     confidence: low
     reason: top_level_class_without_namespace_prefix
-  - loose_name: _WhalesDockerClientProtocol
+  - loose_name: _WhalesDockerClient
     current_file: flext-core/src/flext_tests/docker.py
     target_namespace: FlextDocker
-    target_name: _WhalesDockerClientProtocol
+    target_name: _WhalesDockerClient
     confidence: low
     reason: top_level_class_without_namespace_prefix
   - loose_name: FlextTestsDocker

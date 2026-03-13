@@ -94,7 +94,7 @@ def test_namespace_enforce_cli_fails_on_manual_protocol_violation(
     (module_dir / "service.py").write_text(
         "from __future__ import annotations\n"
         "from typing import Protocol\n\n"
-        "class ExternalProtocol(Protocol):\n"
+        "class External(Protocol):\n"
         "    def call(self) -> str:\n"
         "        ...\n",
         encoding="utf-8",

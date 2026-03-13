@@ -80,10 +80,10 @@ if TYPE_CHECKING:
     from flext_core.context import FlextContext
     from flext_core.decorators import FlextDecorators, d
     from flext_core.dispatcher import (
-        DispatchMessageProtocol,
-        ExecuteProtocol,
+        DispatchMessage,
+        Execute,
         FlextDispatcher,
-        HandleProtocol,
+        Handle,
     )
     from flext_core.exceptions import FlextExceptions, Metadata, e
     from flext_core.handlers import FlextHandlers, h
@@ -119,8 +119,8 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "flext_core._dispatcher.reliability",
         "CircuitBreakerManager",
     ),
-    "DispatchMessageProtocol": ("flext_core.dispatcher", "DispatchMessageProtocol"),
-    "ExecuteProtocol": ("flext_core.dispatcher", "ExecuteProtocol"),
+    "DispatchMessage": ("flext_core.dispatcher", "DispatchMessage"),
+    "Execute": ("flext_core.dispatcher", "Execute"),
     "FactoryDecoratorsDiscovery": (
         "flext_core._decorators.discovery",
         "FactoryDecoratorsDiscovery",
@@ -205,7 +205,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "FlextUtilitiesReliability",
     ),
     "FlextUtilitiesText": ("flext_core._utilities.text", "FlextUtilitiesText"),
-    "HandleProtocol": ("flext_core.dispatcher", "HandleProtocol"),
+    "Handle": ("flext_core.dispatcher", "Handle"),
     "MessageT_contra": ("flext_core.typings", "MessageT_contra"),
     "Metadata": ("flext_core.exceptions", "Metadata"),
     "P": ("flext_core.typings", "P"),
@@ -247,8 +247,8 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
 
 __all__ = [
     "CircuitBreakerManager",
-    "DispatchMessageProtocol",
-    "ExecuteProtocol",
+    "DispatchMessage",
+    "Execute",
     "FactoryDecoratorsDiscovery",
     "FlextConstants",
     "FlextContainer",
@@ -300,7 +300,7 @@ __all__ = [
     "FlextUtilitiesParser",
     "FlextUtilitiesReliability",
     "FlextUtilitiesText",
-    "HandleProtocol",
+    "Handle",
     "MessageT_contra",
     "Metadata",
     "P",

@@ -26,7 +26,7 @@ Part of the [FLEXT](https://github.com/flext-sh/flext) ecosystem.
 - **Dependency Injection**: A lightweight, type-safe DI container (`FlextContainer`) with scoped services and bridge integration.
 - **CQRS Dispatcher**: A strictly typed `FlextDispatcher` for routing commands, queries, and events to their respective handlers.
 - **Domain-Driven Design**: Base classes (`FlextModels`, `FlextService`) and mixins for rich domain modeling.
-- **Protocol-Based Architecture**: Extensive use of Python `Protocol` for loose coupling and improved testability.
+- **Protocol-Based Architecture**: Extensive use of Python `` for loose coupling and improved testability.
 - **Infrastructure Helpers**: Built-in support for structured logging, configuration management, and context propagation.
 
 ## 📦 Installation
@@ -125,7 +125,7 @@ result = dispatcher.dispatch(CreateUser("alice", "alice@example.com"))
 
 FLEXT-Core is designed around Clean Architecture and SOLID principles.
 
-- **Protocols First**: Interfaces are defined using `Protocol` to adhere to the Dependency Inversion Principle.
+- **Protocols First**: Interfaces are defined using `` to adhere to the Dependency Inversion Principle.
 - **Layered Structure**:
   - **Runtime**: Bridges external libraries and provides the DI surface.
   - **Container**: Manages service lifecycles (Singleton, Factory, Scoped).

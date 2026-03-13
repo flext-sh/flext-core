@@ -1,8 +1,8 @@
 [register_and_dispatch]
 constructor.type: 'FlextDispatcher'
-register(HandleProtocol).is_success: True
-register(DispatchMessageProtocol).is_success: True
-register(ExecuteProtocol).is_success: True
+register(Handle).is_success: True
+register(DispatchMessage).is_success: True
+register(Execute).is_success: True
 register(callable).is_success: True
 dispatch(command).is_success: True
 dispatch(command).value: 'created:alice'

@@ -41,7 +41,7 @@ class _ProtocolIntrospection:
     @classmethod
     def check_implements_protocol(
         cls,
-        instance: FlextProtocols.BaseProtocol | t.Container,
+        instance: FlextProtocols.Base | t.Container,
         protocol: type,
     ) -> bool:
         """Check if an instance implements a protocol."""
@@ -186,13 +186,13 @@ class FlextProtocols:
     """
 
     @runtime_checkable
-    class BaseProtocol(Protocol):
+    class Base(Protocol):
         """Base protocol for FLEXT structural types."""
 
         pass
 
     @runtime_checkable
-    class Model(BaseProtocol, Protocol):
+    class Model(Base, Protocol):
         """Structural typing protocol for Pydantic v2 models.
 
         Ensures types have Pydantic signatures without importing BaseModel directly
@@ -287,7 +287,7 @@ class FlextProtocols:
     @classmethod
     def _check_protocol_compliance(
         cls,
-        instance: FlextProtocols.BaseProtocol | t.Container,
+        instance: FlextProtocols.Base | t.Container,
         protocol: type,
     ) -> bool:
         target_cls = instance.__class__
@@ -403,7 +403,7 @@ class FlextProtocols:
         wire_classes: Sequence[type] | None
 
     @runtime_checkable
-    class Result[T](BaseProtocol, Protocol):
+    class Result[T](Base, Protocol):
         """Result type interface for railway-oriented programming.
 
         Used extensively for all operations that can fail. Provides
@@ -565,7 +565,7 @@ class FlextProtocols:
             ...
 
     @runtime_checkable
-    class ResultLike[T_co](BaseProtocol, Protocol):
+    class ResultLike[T_co](Base, Protocol):
         """Result-like protocol for compatibility with r operations.
 
         Used for type compatibility when working with result-like objects.
@@ -611,7 +611,7 @@ class FlextProtocols:
             ...
 
     @runtime_checkable
-    class HasModelDump(BaseProtocol, Protocol):
+    class HasModelDump(Base, Protocol):
         """Protocol for objects that can dump model data.
 
         Used for Pydantic model compatibility and serialization.
@@ -635,7 +635,7 @@ class FlextProtocols:
             ...
 
     @runtime_checkable
-    class Configurable(BaseProtocol, Protocol):
+    class Configurable(Base, Protocol):
         """Protocol for component configuration."""
 
         def configure(self, config: Mapping[str, t.Container] | None = None) -> Self:
@@ -643,7 +643,7 @@ class FlextProtocols:
             ...
 
     @runtime_checkable
-    class Config(HasModelDump, BaseProtocol, Protocol):
+    class Config(HasModelDump, Base, Protocol):
         """Configuration object protocol based on Pydantic BaseSettings pattern.
 
         Reflects real implementations like FlextSettings which uses Pydantic BaseSettings.
@@ -761,7 +761,7 @@ class FlextProtocols:
             ...
 
     @runtime_checkable
-    class Service[T](BaseProtocol, Protocol):
+    class Service[T](Base, Protocol):
         """Base domain service interface.
 
         Reflects real implementations like FlextService which executes
@@ -803,7 +803,7 @@ class FlextProtocols:
             ...
 
     @runtime_checkable
-    class Repository[T](BaseProtocol, Protocol):
+    class Repository[T](Base, Protocol):
         """Data access interface."""
 
         def delete(self, entity_id: str) -> FlextProtocols.Result[bool]:
@@ -838,7 +838,7 @@ class FlextProtocols:
             ...
 
     @runtime_checkable
-    class Handler[MessageT: Model, ResultT](BaseProtocol, Protocol):
+    class Handler[MessageT: Model, ResultT](Base, Protocol):
         """Command/Query handler interface (generic).
 
         Reflects real implementations like FlextHandlers which provide
@@ -866,7 +866,7 @@ class FlextProtocols:
             ...
 
     @runtime_checkable
-    class CommandBus(BaseProtocol, Protocol):
+    class CommandBus(Base, Protocol):
         """Command routing and execution protocol.
 
         Matches FlextDispatcher: strict handler registration and message dispatch.
@@ -895,7 +895,7 @@ class FlextProtocols:
             ...
 
     @runtime_checkable
-    class Registry[MessageT: Model, ResultT](BaseProtocol, Protocol):
+    class Registry[MessageT: Model, ResultT](Base, Protocol):
         """Handler registry protocol for CQRS handler registration.
 
         Reflects real implementations like FlextRegistry which provides
@@ -953,7 +953,7 @@ class FlextProtocols:
             ...
 
     @runtime_checkable
-    class Middleware(BaseProtocol, Protocol):
+    class Middleware(Base, Protocol):
         """Processing pipeline middleware."""
 
         def process[TResult](
@@ -967,7 +967,7 @@ class FlextProtocols:
             ...
 
     @runtime_checkable
-    class Processor(BaseProtocol, Protocol):
+    class Processor(Base, Protocol):
         """Processor interface for data transformation pipelines.
 
         Processors can be objects with a process() method that takes data
@@ -994,7 +994,7 @@ class FlextProtocols:
             ...
 
     @runtime_checkable
-    class MetricsTracker(BaseProtocol, Protocol):
+    class MetricsTracker(Base, Protocol):
         """Metrics tracking protocol for handler execution metrics.
 
         Reflects real implementations like FlextMixins.CQRS.MetricsTracker which
@@ -1026,7 +1026,7 @@ class FlextProtocols:
             ...
 
     @runtime_checkable
-    class ContextStack(BaseProtocol, Protocol):
+    class ContextStack(Base, Protocol):
         """Execution context stack protocol for CQRS operations.
 
         Reflects real implementations like FlextMixins.CQRS.ContextStack which
@@ -1161,7 +1161,7 @@ class FlextProtocols:
                 ...
 
     @runtime_checkable
-    class Connection(BaseProtocol, Protocol):
+    class Connection(Base, Protocol):
         """External system connection protocol."""
 
         def close_connection(self) -> None:
@@ -1190,7 +1190,7 @@ class FlextProtocols:
             ...
 
     @runtime_checkable
-    class ValidatorSpec(BaseProtocol, Protocol):
+    class ValidatorSpec(Base, Protocol):
         """Protocol for validator specifications with operator composition.
 
         Validators implement __call__ to validate values and support composition
@@ -1223,7 +1223,7 @@ class FlextProtocols:
             ...
 
     @runtime_checkable
-    class Decorator[P, R](BaseProtocol, Protocol):
+    class Decorator[P, R](Base, Protocol):
         """Protocol for decorator factory pattern.
 
         Captures the factory pattern used by all FLEXT decorators:
@@ -1262,7 +1262,7 @@ class FlextProtocols:
             ...
 
     @runtime_checkable
-    class Entry(BaseProtocol, Protocol):
+    class Entry(Base, Protocol):
         """Entry object protocol (read-only)."""
 
         @property
@@ -1296,7 +1296,7 @@ class FlextProtocols:
             ...
 
     @runtime_checkable
-    class CallableWithHints(BaseProtocol, Protocol):
+    class CallableWithHints(Base, Protocol):
         """Protocol for callables that support type hints introspection."""
 
     type AccessibleData = (
@@ -1447,7 +1447,7 @@ class FlextProtocols:
 
     @staticmethod
     def check_implements_protocol(
-        instance: FlextProtocols.BaseProtocol | t.Container,
+        instance: FlextProtocols.Base | t.Container,
         protocol: type,
     ) -> bool:
         """Check if an instance's class implements a protocol.
@@ -1499,7 +1499,7 @@ class FlextProtocols:
             setattr(cls, "__protocols__", tuple(protocols))
 
             def _instance_implements_protocol(
-                self: FlextProtocols.BaseProtocol | t.Container,
+                self: FlextProtocols.Base | t.Container,
                 protocol: type,
             ) -> bool:
                 return FlextProtocols._check_protocol_compliance(self, protocol)

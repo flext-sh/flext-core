@@ -62,7 +62,7 @@ class Ex04FlextDispatcher(Examples):
         aggregate_id: str = "events"
 
     class CreateUserHandler:
-        """HandleProtocol handler for CreateUser commands."""
+        """Handle handler for CreateUser commands."""
 
         message_type: type[p.Routable]
 
@@ -76,7 +76,7 @@ class Ex04FlextDispatcher(Examples):
             return f"created:{typed_message.username}"
 
     class GetUserDispatcher:
-        """DispatchMessageProtocol handler for GetUser queries."""
+        """DispatchMessage handler for GetUser queries."""
 
         message_type: type[p.Routable]
 
@@ -92,7 +92,7 @@ class Ex04FlextDispatcher(Examples):
             )
 
     class DeleteExecutor:
-        """ExecuteProtocol handler for DeleteUser commands."""
+        """Execute handler for DeleteUser commands."""
 
         message_type: type[p.Routable]
 
@@ -146,7 +146,7 @@ class Ex04FlextDispatcher(Examples):
             return f"auto:{typed_message.payload}"
 
     class UserCreatedSubscriber:
-        """Event subscriber implementing HandleProtocol."""
+        """Event subscriber implementing Handle."""
 
         event_type: type[p.Routable]
 
@@ -162,7 +162,7 @@ class Ex04FlextDispatcher(Examples):
             return True
 
     class AuditSubscriber:
-        """Event subscriber implementing DispatchMessageProtocol."""
+        """Event subscriber implementing DispatchMessage."""
 
         event_type: type[p.Routable]
 
@@ -195,15 +195,13 @@ class _Ex04Exercise(Ex04FlextDispatcher):
         dispatcher = FlextDispatcher()
         self.check("constructor.type", type(dispatcher).__name__)
         reg_handle = dispatcher.register_handler(self.CreateUserHandler())
-        self.check("register(HandleProtocol).is_success", reg_handle.is_success)
+        self.check("register(Handle).is_success", reg_handle.is_success)
         reg_dispatch_msg = dispatcher.register_handler(
             self.GetUserDispatcher(), is_event=False
         )
-        self.check(
-            "register(DispatchMessageProtocol).is_success", reg_dispatch_msg.is_success
-        )
+        self.check("register(DispatchMessage).is_success", reg_dispatch_msg.is_success)
         reg_execute = dispatcher.register_handler(self.DeleteExecutor())
-        self.check("register(ExecuteProtocol).is_success", reg_execute.is_success)
+        self.check("register(Execute).is_success", reg_execute.is_success)
         reg_callable = dispatcher.register_handler(self.PingCallable())
         self.check("register(callable).is_success", reg_callable.is_success)
         create_r = dispatcher.dispatch(self.CreateUser(username="alice"))

@@ -21,7 +21,7 @@ from flext_core.loggings import FlextLogger
 
 
 @runtime_checkable
-class DispatchMessageProtocol(Protocol):
+class DispatchMessage(Protocol):
     """Protocol for objects that can dispatch messages."""
 
     __slots__: tuple[()] = ()
@@ -32,7 +32,7 @@ class DispatchMessageProtocol(Protocol):
 
 
 @runtime_checkable
-class HandleProtocol(Protocol):
+class Handle(Protocol):
     """Protocol for objects that can handle messages."""
 
     __slots__: tuple[()] = ()
@@ -43,7 +43,7 @@ class HandleProtocol(Protocol):
 
 
 @runtime_checkable
-class ExecuteProtocol(Protocol):
+class Execute(Protocol):
     """Protocol for objects that can execute messages."""
 
     __slots__: tuple[()] = ()
@@ -55,9 +55,9 @@ class ExecuteProtocol(Protocol):
 
 type _DispatchableHandler = (
     Callable[..., p.ResultLike[object] | object | None]
-    | DispatchMessageProtocol
-    | HandleProtocol
-    | ExecuteProtocol
+    | DispatchMessage
+    | Handle
+    | Execute
 )
 
 type _ResolvedHandlerCallable = Callable[
@@ -174,11 +174,11 @@ class FlextDispatcher:
         """
         route_name: str | None = None
         accepted_message_types = u.compute_accepted_message_types(handler.__class__)
-        if isinstance(handler, DispatchMessageProtocol):
+        if isinstance(handler, DispatchMessage):
             resolved_handler = handler.dispatch_message
-        elif isinstance(handler, HandleProtocol):
+        elif isinstance(handler, Handle):
             resolved_handler = handler.handle
-        elif isinstance(handler, ExecuteProtocol):
+        elif isinstance(handler, Execute):
             resolved_handler = handler.execute
         else:
             resolved_handler = handler

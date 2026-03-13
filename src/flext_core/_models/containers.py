@@ -57,7 +57,7 @@ class FlextModelsContainers:
             ),
         ]
 
-    class _RootDictProtocol[RootValueT](typing.Protocol):
+    class _RootDict[RootValueT](typing.Protocol):
         root: dict[str, RootValueT]
 
     class _RootDictModel[DictValueT](RootModel[dict[str, DictValueT]]):

@@ -853,7 +853,7 @@ class ManualProtocolDetector(p.Infra.Scanner):
 class CyclicImportDetector:
     """Detect cyclic import dependencies within a project."""
 
-    # NOTE: CyclicImportDetector operates at project level, not file level — does not implement ScannerProtocol
+    # NOTE: CyclicImportDetector operates at project level, not file level — does not implement Scanner
 
     @classmethod
     def scan_project(

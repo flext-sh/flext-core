@@ -174,11 +174,11 @@ def test_migrate_protocols_rewrites_references_with_p_alias(tmp_path: Path) -> N
     _ = (project_root / "Makefile").write_text("all:\n\t@true\n", encoding="utf-8")
     _ = (src_pkg / "__init__.py").write_text("", encoding="utf-8")
     _ = (src_pkg / "protocols.py").write_text(
-        "from __future__ import annotations\nfrom typing import Protocol\n\nclass SampleProtocols:\n    pass\n\nclass GreeterProtocol(Protocol):\n    def greet(self) -> str:\n        ...\n\np = SampleProtocols",
+        "from __future__ import annotations\nfrom typing import Protocol\n\nclass SampleProtocols:\n    pass\n\nclass Greeter(Protocol):\n    def greet(self) -> str:\n        ...\n\np = SampleProtocols",
         encoding="utf-8",
     )
     _ = (src_pkg / "consumer.py").write_text(
-        "from sample_pkg.protocols import GreeterProtocol\n\ndef call_greet(protocol: GreeterProtocol) -> str:\n    return protocol.greet()",
+        "from sample_pkg.protocols import Greeter\n\ndef call_greet(protocol: Greeter) -> str:\n    return protocol.greet()",
         encoding="utf-8",
     )
     report = FlextInfraRefactorMigrateToClassMRO(workspace_root=project_root).run(
@@ -189,15 +189,15 @@ def test_migrate_protocols_rewrites_references_with_p_alias(tmp_path: Path) -> N
     consumer_source = (src_pkg / "consumer.py").read_text(encoding="utf-8")
     assert report.errors == ()
     assert (
-        "class GreeterProtocol(Protocol):"
+        "class Greeter(Protocol):"
         not in protocols_source.split("class SampleProtocols:", maxsplit=1)[0]
     )
     assert (
-        "class GreeterProtocol(Protocol):"
+        "class Greeter(Protocol):"
         in protocols_source.split("class SampleProtocols:", maxsplit=1)[1]
     )
     assert "from sample_pkg.protocols import p" in consumer_source
-    assert "def call_greet(protocol: p.GreeterProtocol) -> str:" in consumer_source
+    assert "def call_greet(protocol: p.Greeter) -> str:" in consumer_source
 
 
 def test_mro_scanner_includes_constants_variants_in_all_scopes(tmp_path: Path) -> None:
