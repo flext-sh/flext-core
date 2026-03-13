@@ -120,6 +120,15 @@ class FlextModelsCqrs:
             },
         )
         tag: ClassVar[Literal["query"]] = "query"
+        _pagination_input_adapter: ClassVar[
+            TypeAdapter[
+                FlextModelsCqrs.Pagination
+                | FlextModelsContainers.Dict
+                | Mapping[str, t.Scalar]
+                | None
+            ]
+            | None
+        ] = None
         message_type: Literal["query"] = Field(
             default="query", frozen=True, description="Message type discriminator"
         )
@@ -180,6 +189,24 @@ class FlextModelsCqrs:
                     return result_cls
             return FlextModelsCqrs.Pagination
 
+        @classmethod
+        def _pagination_adapter(
+            cls,
+        ) -> TypeAdapter[
+            FlextModelsCqrs.Pagination
+            | FlextModelsContainers.Dict
+            | Mapping[str, t.Scalar]
+            | None
+        ]:
+            if cls._pagination_input_adapter is None:
+                cls._pagination_input_adapter = TypeAdapter(
+                    FlextModelsCqrs.Pagination
+                    | FlextModelsContainers.Dict
+                    | Mapping[str, t.Scalar]
+                    | None
+                )
+            return cls._pagination_input_adapter
+
         @field_validator("pagination", mode="before")
         @classmethod
         def validate_pagination(
@@ -191,18 +218,7 @@ class FlextModelsCqrs:
         ) -> FlextModelsCqrs.Pagination:
             """Convert pagination to Pagination instance."""
             pagination_cls = cls._resolve_pagination_class()
-            adapter: TypeAdapter[
-                FlextModelsCqrs.Pagination
-                | FlextModelsContainers.Dict
-                | Mapping[str, t.Scalar]
-                | None
-            ] = TypeAdapter(
-                FlextModelsCqrs.Pagination
-                | FlextModelsContainers.Dict
-                | Mapping[str, t.Scalar]
-                | None
-            )
-            parsed_input = adapter.validate_python(v)
+            parsed_input = cls._pagination_adapter().validate_python(v)
             if parsed_input is None:
                 return pagination_cls()
             try:
@@ -401,6 +417,7 @@ class FlextModelsCqrs:
     @staticmethod
     def parse_message(payload: object) -> FlextMessage:
         """Parse a message payload into a FlextMessage instance."""
+        _ = payload
         msg = "parse_message must be implemented by subclasses"
         raise NotImplementedError(msg)
 

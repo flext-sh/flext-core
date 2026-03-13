@@ -18,8 +18,6 @@ from flext_core._models.base import FlextModelFoundation
 from flext_core.result import r
 from flext_core.typings import t
 
-type StrictValue = t.Scalar | t.ConfigurationMapping | list[t.Container] | None
-
 
 class FlextUtilitiesConversion:
     """Utilities for value conversion operations.
@@ -39,7 +37,7 @@ class FlextUtilitiesConversion:
     @overload
     @staticmethod
     def conversion(
-        value: StrictValue,
+        value: t.StrictValue,
         *,
         mode: Literal["to_str"] = "to_str",
         default: str | None = None,
@@ -49,7 +47,7 @@ class FlextUtilitiesConversion:
     @overload
     @staticmethod
     def conversion(
-        value: StrictValue,
+        value: t.StrictValue,
         *,
         mode: Literal["to_str_list"],
         default: list[str] | None = None,
@@ -59,7 +57,7 @@ class FlextUtilitiesConversion:
     @overload
     @staticmethod
     def conversion(
-        value: StrictValue,
+        value: t.StrictValue,
         *,
         mode: Literal["normalize"],
         default: str | None = None,
@@ -68,7 +66,7 @@ class FlextUtilitiesConversion:
 
     @staticmethod
     def conversion(
-        value: StrictValue,
+        value: t.StrictValue,
         *,
         mode: str = "to_str",
         default: str | list[str] | None = None,
@@ -119,7 +117,7 @@ class FlextUtilitiesConversion:
         if mode == "normalize":
             return FlextUtilitiesConversion.normalize(value, case=case)
         if mode == "join":
-            raw_values: list[StrictValue]
+            raw_values: list[t.StrictValue]
             try:
                 raw_values = FlextUtilitiesConversion._V.strict_json_list_adapter().validate_python(
                     value
@@ -159,7 +157,7 @@ class FlextUtilitiesConversion:
         return separator.join(normalized)
 
     @staticmethod
-    def normalize(value: StrictValue, *, case: str | None = None) -> str:
+    def normalize(value: t.StrictValue, *, case: str | None = None) -> str:
         """Normalize string value with optional case conversion.
 
         Args:
@@ -178,7 +176,7 @@ class FlextUtilitiesConversion:
         return str_value
 
     @staticmethod
-    def to_flexible_value(value: StrictValue) -> r[t.Scalar]:
+    def to_flexible_value(value: t.StrictValue) -> r[t.Scalar]:
         """Convert strict value to strict scalar if compatible.
 
         Strict scalar is a subset of strict value that excludes
@@ -208,7 +206,7 @@ class FlextUtilitiesConversion:
             return r[t.Scalar].ok(str(value))
 
     @staticmethod
-    def to_str(value: StrictValue, *, default: str | None = None) -> str:
+    def to_str(value: t.StrictValue, *, default: str | None = None) -> str:
         """Convert value to string.
 
         Args:
@@ -236,7 +234,7 @@ class FlextUtilitiesConversion:
 
     @staticmethod
     def to_str_list(
-        value: StrictValue, *, default: list[str] | None = None
+        value: t.StrictValue, *, default: list[str] | None = None
     ) -> list[str]:
         """Convert value to list of strings.
 
@@ -266,7 +264,7 @@ class FlextUtilitiesConversion:
 
     @staticmethod
     def to_str_list_safe(
-        value: StrictValue, *, filter_list_like: bool = True
+        value: t.StrictValue, *, filter_list_like: bool = True
     ) -> list[str]:
         """Convert value to list[str] with safe nested list handling.
 
@@ -289,7 +287,7 @@ class FlextUtilitiesConversion:
         """
         if value is None:
             return []
-        items: list[StrictValue] = []
+        items: list[t.StrictValue] = []
         value_class = value.__class__
         if value_class is str:
             items = [value]
@@ -302,7 +300,7 @@ class FlextUtilitiesConversion:
                 items = []
         else:
             items = [value]
-        filtered_items: list[StrictValue]
+        filtered_items: list[t.StrictValue]
         if filter_list_like:
             filtered_items = [
                 item
@@ -326,7 +324,7 @@ class FlextUtilitiesConversion:
         return [str(item) for item in filtered_items]
 
     @staticmethod
-    def to_str_list_truthy(value: StrictValue) -> list[str]:
+    def to_str_list_truthy(value: t.StrictValue) -> list[str]:
         """Convert value to list[str] filtering out falsy values."""
         result = FlextUtilitiesConversion.to_str_list_safe(value, filter_list_like=True)
         return [item for item in result if item]

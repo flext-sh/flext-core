@@ -71,7 +71,6 @@ from pydantic import (
     ConfigDict,
     Field,
     PrivateAttr,
-    TypeAdapter,
     ValidationError,
 )
 from structlog.processors import JSONRenderer, StackInfoRenderer, TimeStamper
@@ -611,10 +610,16 @@ class FlextRuntime:
         if not isinstance(value, str):
             return False
         try:
-            TypeAdapter(object).validate_json(value)
+            FlextModelFoundation.Validators.serializable_adapter().validate_json(value)
             return True
         except (ValidationError, TypeError, ValueError):
             return False
+
+    @staticmethod
+    def _is_structlog_processor(
+        value: object,
+    ) -> TypeGuard[structlog.types.Processor]:
+        return callable(value)
 
     @staticmethod
     def normalize_to_container(
@@ -717,7 +722,8 @@ class FlextRuntime:
                     for ik, iv in v.items():
                         inner[str(ik)] = FlextRuntime._normalize_to_metadata_scalar(iv)
                     normalized[str_k] = (
-                        TypeAdapter(dict[str, str | int | float | bool])
+                        FlextModelFoundation.Validators
+                        .metadata_json_dict_adapter()
                         .dump_json(inner)
                         .decode()
                     )
@@ -1077,12 +1083,11 @@ class FlextRuntime:
             StackInfoRenderer(),
         ]
         if additional_processors:
-            validated_processors: list[structlog.types.Processor] = [
-                TypeAdapter(structlog.types.Processor).validate_python(proc)
+            processors.extend(
+                proc
                 for proc in additional_processors
-                if callable(proc)
-            ]
-            processors.extend(validated_processors)
+                if cls._is_structlog_processor(proc)
+            )
         if console_renderer:
             processors.append(module.dev.ConsoleRenderer(colors=True))
         else:

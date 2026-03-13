@@ -713,20 +713,20 @@ class FlextProtocols:
             """Save entity."""
             ...
 
-    class Validation:
-        """Validation protocols for domain rules."""
+    @runtime_checkable
+    class Predicate[T](Protocol):
+        """Protocol for callable predicates that accept a value and return bool.
 
-        @runtime_checkable
-        class Predicate(Protocol):
-            """Protocol for callable predicates that accept a value and return bool.
+        Used in validation utilities for filtering and conditional logic.
+        Supports any callable that accepts a value and returns bool.
 
-            Used in validation utilities for filtering and conditional logic.
-            Supports any callable that accepts a value and returns bool.
-            """
+        Type Parameters:
+            T: The type of value the predicate evaluates.
+        """
 
-            def __call__(self, value: t.Container) -> bool:
-                """Evaluate predicate on value."""
-                ...
+        def __call__(self, value: T) -> bool:
+            """Evaluate predicate on value."""
+            ...
 
     @runtime_checkable
     class Handler[MessageT: Model, ResultT](BaseProtocol, Protocol):

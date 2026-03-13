@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping
-from typing import Annotated, Final, Self
+from typing import Annotated, ClassVar, Final, Self
 
 from pydantic import (
     AliasChoices,
@@ -204,6 +204,10 @@ class FlextModelsConfig:
     class BatchProcessingConfig(FlextModelsCollections.Config):
         """Enhanced batch processing configuration."""
 
+        _batch_list_adapter: ClassVar[
+            TypeAdapter[list[FlextModelsConfig.BatchProcessingConfig]] | None
+        ] = None
+
         batch_size: int = Field(
             default=c.Performance.MAX_BATCH_SIZE,
             le=c.Performance.BatchProcessing.MAX_VALIDATION_SIZE,
@@ -231,12 +235,21 @@ class FlextModelsConfig:
         ]
 
         @classmethod
+        def _batch_adapter(
+            cls,
+        ) -> TypeAdapter[list[FlextModelsConfig.BatchProcessingConfig]]:
+            if cls._batch_list_adapter is None:
+                cls._batch_list_adapter = TypeAdapter(
+                    list[FlextModelsConfig.BatchProcessingConfig]
+                )
+            return cls._batch_list_adapter
+
+        @classmethod
         def validate_batch(
             cls, models: list[object]
         ) -> list[FlextModelsConfig.BatchProcessingConfig]:
             try:
-                validated = TypeAdapter(list[FlextModelsConfig.BatchProcessingConfig])
-                return validated.validate_python(models)
+                return cls._batch_adapter().validate_python(models)
             except ValidationError as exc:
                 item_errors = [
                     f"{'.'.join(str(part) for part in err.get('loc', ()))}: {err.get('msg', 'validation error')}"

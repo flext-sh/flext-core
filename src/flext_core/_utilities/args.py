@@ -24,6 +24,7 @@ from typing import (
 from pydantic import ConfigDict, TypeAdapter, ValidationError, validate_call
 
 from flext_core import p, r
+from flext_core._models.base import FlextModelFoundation
 
 _ValidatedParams = ParamSpec("_ValidatedParams")
 _ValidatedReturn = TypeVar("_ValidatedReturn")
@@ -47,14 +48,14 @@ class FlextUtilitiesArgs:
 
     """
 
-    _enum_type_adapter: TypeAdapter[type[StrEnum]] = TypeAdapter(type[StrEnum])
+    _V = FlextModelFoundation.Validators
 
     @staticmethod
     def _validate_enum_type(candidate: type[Enum] | str) -> r[type[StrEnum]]:
         """Validate that candidate is a StrEnum subclass."""
         try:
             return r[type[StrEnum]].ok(
-                FlextUtilitiesArgs._enum_type_adapter.validate_python(candidate)
+                FlextUtilitiesArgs._V.enum_type_adapter().validate_python(candidate)
             )
         except ValidationError:
             return r[type[StrEnum]].fail("Candidate is not a valid StrEnum type")

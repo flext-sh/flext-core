@@ -13,12 +13,14 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Annotated, override
 
-from pydantic import BeforeValidator, Field, TypeAdapter
+from pydantic import BeforeValidator, Field
 
 from flext_core import c
 from flext_core._models.base import FlextModelFoundation
 from flext_core._models.containers import FlextModelsContainers
 from flext_core.runtime import FlextRuntime
+
+_V = FlextModelFoundation.Validators
 
 
 class _ComparableConfigMap(FlextModelsContainers.ConfigMap):
@@ -43,7 +45,7 @@ def _normalize_event_data(value: object) -> _ComparableConfigMap:
     if isinstance(value, FlextModelsContainers.ConfigMap):
         return _ComparableConfigMap(root=dict(value.items()))
     if isinstance(value, dict):
-        typed_value = TypeAdapter(dict[str, object]).validate_python(value)
+        typed_value = _V.dict_str_metadata_adapter().validate_python(value)
         intermediate = FlextModelsContainers.ConfigMap(
             root={
                 key: FlextRuntime.normalize_to_metadata(item)
@@ -52,7 +54,7 @@ def _normalize_event_data(value: object) -> _ComparableConfigMap:
         )
         return _ComparableConfigMap(root=intermediate.root)
     if isinstance(value, Mapping):
-        typed_mapping = TypeAdapter(dict[str, object]).validate_python(value)
+        typed_mapping = _V.dict_str_metadata_adapter().validate_python(value)
         intermediate = FlextModelsContainers.ConfigMap(
             root={
                 key: FlextRuntime.normalize_to_metadata(item)

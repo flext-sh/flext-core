@@ -18,7 +18,6 @@ from pydantic import (
     BeforeValidator,
     ConfigDict,
     Field,
-    TypeAdapter,
     ValidationError,
     computed_field,
     field_validator,
@@ -31,11 +30,13 @@ from flext_core._models.containers import FlextModelsContainers
 from flext_core._models.entity import FlextModelsEntity
 from flext_core.runtime import FlextRuntime
 
+_V = FlextModelFoundation.Validators
+
 
 def _normalize_str_object_mapping(value: object) -> dict[str, object]:
-    adapter: TypeAdapter[dict[str, object]] = TypeAdapter(dict[str, object])
     try:
-        return adapter.validate_python(value)
+        validated = _V.dict_str_metadata_adapter().validate_python(value)
+        return dict(validated)
     except ValidationError:
         return {}
 
@@ -45,8 +46,8 @@ def _normalize_to_mapping(v: object) -> Mapping[str, object]:
         out: dict[str, object] = {}
         return out
     if isinstance(v, Mapping):
-        adapter: TypeAdapter[dict[str, object]] = TypeAdapter(dict[str, object])
-        return adapter.validate_python(v)
+        validated = _V.dict_str_metadata_adapter().validate_python(v)
+        return dict(validated)
     if isinstance(v, BaseModel):
         return v.model_dump()
     msg = f"Cannot normalize {type(v)} to Mapping"
@@ -59,9 +60,8 @@ def _normalize_metadata_before(v: object | None) -> object | None:
     if isinstance(v, FlextModelFoundation.Metadata):
         return v
     if isinstance(v, Mapping):
-        adapter: TypeAdapter[dict[str, object]] = TypeAdapter(dict[str, object])
         return FlextModelFoundation.Metadata.model_validate({
-            "attributes": adapter.validate_python(v)
+            "attributes": _V.dict_str_metadata_adapter().validate_python(v)
         })
     return v
 
@@ -326,8 +326,9 @@ class FlextModelsContext:
             if normalized is None or isinstance(normalized, (str, int, float, bool)):
                 return normalized
             if isinstance(normalized, Mapping):
-                adapter: TypeAdapter[dict[str, object]] = TypeAdapter(dict[str, object])
-                normalized_map = adapter.validate_python(normalized)
+                normalized_map = _V.dict_str_metadata_adapter().validate_python(
+                    normalized
+                )
                 return {
                     str(key): cls.normalize_to_serializable_value(val)
                     for key, val in normalized_map.items()

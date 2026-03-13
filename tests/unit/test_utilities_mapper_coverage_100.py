@@ -15,14 +15,11 @@ from __future__ import annotations
 import operator
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, cast
+from typing import cast
 
 from pydantic import BaseModel, Field
 
 from flext_core import m, t, u
-
-if TYPE_CHECKING:
-    from flext_core._utilities.mapper import ContainerList
 
 from ..test_utils import assertion_helpers
 from ._models import ComplexModel
@@ -206,7 +203,7 @@ class TestuMapperAccessors:
 
     def test_take_slice(self) -> None:
         """Test take slicing."""
-        items: ContainerList = [1, 2, 3, 4, 5]
+        items: t.ContainerList = [1, 2, 3, 4, 5]
         assert u.take(items, 2) == [1, 2]
         assert u.take(items, 2, from_start=False) == [4, 5]
         d: dict[str, t.Container] = {"a": 1, "b": 2, "c": 3}

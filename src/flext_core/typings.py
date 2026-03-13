@@ -135,6 +135,24 @@ class FlextTypes:
     type ObjectList = Sequence[Container]
     type ModuleExport = Container | ModuleType | type | Callable[..., Container]
 
+    # --- MAPPER / CACHE / CONVERSION CONSOLIDATED TYPES ---
+    # Canonical recursive value type for mapping, caching, normalization flows.
+    # Covers: dict-nesting, list-nesting, tuple-nesting, None sentinels, and Container leaves.
+    type NormalizedValue = (
+        Container
+        | list[FlextTypes.NormalizedValue]
+        | dict[str, FlextTypes.NormalizedValue]
+        | tuple[FlextTypes.NormalizedValue, ...]
+        | None
+    )
+    type ContainerMapping = Mapping[str, FlextTypes.NormalizedValue]
+    type ContainerList = list[FlextTypes.NormalizedValue]
+    type MapperCallable = Callable[
+        [FlextTypes.NormalizedValue], FlextTypes.NormalizedValue
+    ]
+    type StrictValue = Scalar | ConfigurationMapping | list[Container] | None
+    type PaginationMeta = dict[str, int | bool]
+
     class Validation:
         """Validation type aliases with Pydantic constraints."""
 

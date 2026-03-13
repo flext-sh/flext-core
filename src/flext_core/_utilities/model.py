@@ -10,14 +10,11 @@ from __future__ import annotations
 
 import json
 from collections.abc import Mapping
-from typing import TypeVar
 
 from pydantic import BaseModel, ValidationError
 
 from flext_core import FlextRuntime, m, r, t
 from flext_core._models.base import FlextModelFoundation
-
-T_Model = TypeVar("T_Model", bound=BaseModel)
 
 
 class FlextUtilitiesModel:
@@ -76,9 +73,6 @@ class FlextUtilitiesModel:
             )
             normalized_items: list[t.Primitives] = []
             for item in list_items:
-                if item is None:
-                    normalized_items.append("")
-                    continue
                 try:
                     normalized_items.append(
                         FlextUtilitiesModel._V.primitives_adapter().validate_python(
@@ -94,9 +88,6 @@ class FlextUtilitiesModel:
             )
             normalized_tuple_items: list[t.Primitives] = []
             for item in tuple_items:
-                if item is None:
-                    normalized_tuple_items.append("")
-                    continue
                 try:
                     normalized_tuple_items.append(
                         FlextUtilitiesModel._V.primitives_adapter().validate_python(

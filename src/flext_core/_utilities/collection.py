@@ -11,24 +11,15 @@ from __future__ import annotations
 from collections.abc import Callable, Hashable, Mapping, Sequence
 from datetime import datetime
 from enum import StrEnum
-from typing import Protocol, TypeGuard, TypeVar, overload, runtime_checkable
+from typing import TypeGuard, overload
 
 from pydantic import ValidationError
 
-from flext_core import r, t
+from flext_core import p, r, t
 from flext_core._models.base import FlextModelFoundation
 from flext_core._models.containers import FlextModelsContainers
 from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core.typings import R, T, U
-
-_PredicateT_contra = TypeVar("_PredicateT_contra", contravariant=True)
-
-
-@runtime_checkable
-class _Predicate(Protocol[_PredicateT_contra]):
-    """Protocol for callable predicates that accept a value and return bool."""
-
-    def __call__(self, value: _PredicateT_contra) -> bool: ...
 
 
 class FlextUtilitiesCollection:
@@ -666,7 +657,7 @@ class FlextUtilitiesCollection:
 
     @staticmethod
     def find(
-        items: list[T] | tuple[T, ...] | dict[str, T], predicate: _Predicate[T]
+        items: list[T] | tuple[T, ...] | dict[str, T], predicate: p.Predicate[T]
     ) -> r[T]:
         """Find first item matching predicate with generic type support.
 
@@ -687,7 +678,7 @@ class FlextUtilitiesCollection:
     @staticmethod
     def first(
         items: Sequence[T],
-        predicate: _Predicate[T] | None = None,
+        predicate: p.Predicate[T] | None = None,
         default: T | None = None,
     ) -> r[T]:
         """Get first item (optionally matching predicate).
@@ -769,7 +760,7 @@ class FlextUtilitiesCollection:
     @staticmethod
     def last(
         items: Sequence[T],
-        predicate: _Predicate[T] | None = None,
+        predicate: p.Predicate[T] | None = None,
         default: T | None = None,
     ) -> r[T]:
         """Get last item (optionally matching predicate).
@@ -980,7 +971,7 @@ class FlextUtilitiesCollection:
 
     @staticmethod
     def partition(
-        items: Sequence[T], predicate: _Predicate[T]
+        items: Sequence[T], predicate: p.Predicate[T]
     ) -> tuple[list[T], list[T]]:
         """Split items by predicate: (matches, non-matches).
 

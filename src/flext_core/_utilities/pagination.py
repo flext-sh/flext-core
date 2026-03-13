@@ -18,8 +18,6 @@ from pydantic import BaseModel
 
 from flext_core import FlextRuntime, c, r, t
 
-type _PaginationMeta = dict[str, int | bool]
-
 
 class FlextUtilitiesPagination:
     """Pagination utilities for API responses.
@@ -138,7 +136,7 @@ class FlextUtilitiesPagination:
         *,
         page: int,
         page_size: int,
-    ) -> r[dict[str, list[t.Container | BaseModel] | _PaginationMeta]]:
+    ) -> r[dict[str, list[t.Container | BaseModel] | t.PaginationMeta]]:
         """Prepare pagination data structure.
 
         Args:
@@ -156,7 +154,7 @@ class FlextUtilitiesPagination:
         total_count = total if total is not None else len(data)
         total_pages = (total_count + page_size - 1) // page_size
         if page > total_pages > 0:
-            return r[dict[str, list[t.Container | BaseModel] | _PaginationMeta]].fail(
+            return r[dict[str, list[t.Container | BaseModel] | t.PaginationMeta]].fail(
                 f"Page {page} exceeds total pages {total_pages}"
             )
         has_next: bool = page < total_pages
@@ -165,7 +163,7 @@ class FlextUtilitiesPagination:
         for item in data:
             normalized = FlextRuntime.normalize_to_container(item)
             data_list.append(normalized)
-        pagination_meta: _PaginationMeta = {
+        pagination_meta: t.PaginationMeta = {
             "page": page,
             "page_size": page_size,
             "total": total_count,
@@ -173,7 +171,7 @@ class FlextUtilitiesPagination:
             "has_next": has_next,
             "has_prev": has_prev,
         }
-        return r[dict[str, list[t.Container | BaseModel] | _PaginationMeta]].ok({
+        return r[dict[str, list[t.Container | BaseModel] | t.PaginationMeta]].ok({
             "data": data_list,
             "pagination": pagination_meta,
         })

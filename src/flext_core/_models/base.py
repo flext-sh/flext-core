@@ -69,25 +69,35 @@ class FlextModelFoundation:
         ] = None
         _primitives_adapter: ClassVar[TypeAdapter[t.Primitives] | None] = None
         _dict_str_metadata_adapter: ClassVar[
-            TypeAdapter[dict[str, t.MetadataValue]] | None
+            TypeAdapter[dict[str, t.MetadataValue | None]] | None
+        ] = None
+        _list_serializable_adapter: ClassVar[
+            TypeAdapter[list[t.Serializable]] | None
+        ] = None
+        _tuple_serializable_adapter: ClassVar[
+            TypeAdapter[tuple[t.Serializable, ...]] | None
         ] = None
         _set_container_adapter: ClassVar[TypeAdapter[set[t.Container]] | None] = None
         _set_str_adapter: ClassVar[TypeAdapter[set[str]] | None] = None
+        _set_scalar_adapter: ClassVar[TypeAdapter[set[t.Scalar]] | None] = None
         _sortable_dict_adapter: ClassVar[
-            TypeAdapter[dict[t.SortableObjectType, t.MetadataValue]] | None
+            TypeAdapter[dict[t.SortableObjectType, t.Serializable | None]] | None
         ] = None
-        _strict_json_list_adapter: ClassVar[
-            TypeAdapter[
-                list[t.Scalar | t.ConfigurationMapping | list[t.Container] | None]
-            ]
-            | None
-        ] = None
+        _strict_json_list_adapter: ClassVar[TypeAdapter[list[t.StrictValue]] | None] = (
+            None
+        )
         _strict_json_scalar_adapter: ClassVar[TypeAdapter[t.Scalar] | None] = None
+        _scalar_adapter: ClassVar[TypeAdapter[t.Scalar] | None] = None
         _float_adapter: ClassVar[TypeAdapter[float] | None] = None
         _str_adapter: ClassVar[TypeAdapter[str] | None] = None
+        _str_list_adapter: ClassVar[TypeAdapter[list[str]] | None] = None
+        _str_or_bytes_adapter: ClassVar[TypeAdapter[str | bytes] | None] = None
         _enum_type_adapter: ClassVar[TypeAdapter[type[StrEnum]] | None] = None
         _serializable_adapter: ClassVar[TypeAdapter[t.Serializable] | None] = None
         _metadata_json_dict_adapter: ClassVar[
+            TypeAdapter[dict[str, str | int | float | bool]] | None
+        ] = None
+        _flat_metadata_dict_adapter: ClassVar[
             TypeAdapter[dict[str, str | int | float | bool]] | None
         ] = None
         _structlog_processor_adapter: ClassVar[
@@ -166,10 +176,26 @@ class FlextModelFoundation:
         @classmethod
         def dict_str_metadata_adapter(
             cls,
-        ) -> TypeAdapter[dict[str, t.MetadataValue]]:
+        ) -> TypeAdapter[dict[str, t.MetadataValue | None]]:
             if cls._dict_str_metadata_adapter is None:
-                cls._dict_str_metadata_adapter = TypeAdapter(dict[str, t.MetadataValue])
+                cls._dict_str_metadata_adapter = TypeAdapter(
+                    dict[str, t.MetadataValue | None]
+                )
             return cls._dict_str_metadata_adapter
+
+        @classmethod
+        def list_serializable_adapter(cls) -> TypeAdapter[list[t.Serializable]]:
+            if cls._list_serializable_adapter is None:
+                cls._list_serializable_adapter = TypeAdapter(list[t.Serializable])
+            return cls._list_serializable_adapter
+
+        @classmethod
+        def tuple_serializable_adapter(cls) -> TypeAdapter[tuple[t.Serializable, ...]]:
+            if cls._tuple_serializable_adapter is None:
+                cls._tuple_serializable_adapter = TypeAdapter(
+                    tuple[t.Serializable, ...]
+                )
+            return cls._tuple_serializable_adapter
 
         @classmethod
         def set_container_adapter(cls) -> TypeAdapter[set[t.Container]]:
@@ -184,25 +210,27 @@ class FlextModelFoundation:
             return cls._set_str_adapter
 
         @classmethod
+        def set_scalar_adapter(cls) -> TypeAdapter[set[t.Scalar]]:
+            if cls._set_scalar_adapter is None:
+                cls._set_scalar_adapter = TypeAdapter(set[t.Scalar])
+            return cls._set_scalar_adapter
+
+        @classmethod
         def sortable_dict_adapter(
             cls,
-        ) -> TypeAdapter[dict[t.SortableObjectType, t.MetadataValue]]:
+        ) -> TypeAdapter[dict[t.SortableObjectType, t.Serializable | None]]:
             if cls._sortable_dict_adapter is None:
                 cls._sortable_dict_adapter = TypeAdapter(
-                    dict[t.SortableObjectType, t.MetadataValue]
+                    dict[t.SortableObjectType, t.Serializable | None]
                 )
             return cls._sortable_dict_adapter
 
         @classmethod
         def strict_json_list_adapter(
             cls,
-        ) -> TypeAdapter[
-            list[t.Scalar | t.ConfigurationMapping | list[t.Container] | None]
-        ]:
+        ) -> TypeAdapter[list[t.StrictValue]]:
             if cls._strict_json_list_adapter is None:
-                cls._strict_json_list_adapter = TypeAdapter(
-                    list[t.Scalar | t.ConfigurationMapping | list[t.Container] | None]
-                )
+                cls._strict_json_list_adapter = TypeAdapter(list[t.StrictValue])
             return cls._strict_json_list_adapter
 
         @classmethod
@@ -210,6 +238,12 @@ class FlextModelFoundation:
             if cls._strict_json_scalar_adapter is None:
                 cls._strict_json_scalar_adapter = TypeAdapter(t.Scalar)
             return cls._strict_json_scalar_adapter
+
+        @classmethod
+        def scalar_adapter(cls) -> TypeAdapter[t.Scalar]:
+            if cls._scalar_adapter is None:
+                cls._scalar_adapter = TypeAdapter(t.Scalar)
+            return cls._scalar_adapter
 
         @classmethod
         def float_adapter(cls) -> TypeAdapter[float]:
@@ -222,6 +256,18 @@ class FlextModelFoundation:
             if cls._str_adapter is None:
                 cls._str_adapter = TypeAdapter(str)
             return cls._str_adapter
+
+        @classmethod
+        def str_list_adapter(cls) -> TypeAdapter[list[str]]:
+            if cls._str_list_adapter is None:
+                cls._str_list_adapter = TypeAdapter(list[str])
+            return cls._str_list_adapter
+
+        @classmethod
+        def str_or_bytes_adapter(cls) -> TypeAdapter[str | bytes]:
+            if cls._str_or_bytes_adapter is None:
+                cls._str_or_bytes_adapter = TypeAdapter(str | bytes)
+            return cls._str_or_bytes_adapter
 
         @classmethod
         def enum_type_adapter(cls) -> TypeAdapter[type[StrEnum]]:
@@ -244,6 +290,16 @@ class FlextModelFoundation:
                     dict[str, str | int | float | bool]
                 )
             return cls._metadata_json_dict_adapter
+
+        @classmethod
+        def flat_metadata_dict_adapter(
+            cls,
+        ) -> TypeAdapter[dict[str, str | int | float | bool]]:
+            if cls._flat_metadata_dict_adapter is None:
+                cls._flat_metadata_dict_adapter = TypeAdapter(
+                    dict[str, str | int | float | bool]
+                )
+            return cls._flat_metadata_dict_adapter
 
         @classmethod
         def structlog_processor_adapter(

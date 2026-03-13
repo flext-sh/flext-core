@@ -25,7 +25,7 @@ from flext_core import c, e, m, p, r, t, u, x
 from flext_core._models.containers import FlextModelsContainers
 
 
-class FlextHandlers[MessageT_contra = object, ResultT = object](x):
+class FlextHandlers[MessageT_contra, ResultT](x):
     """Abstract CQRS handler with validation and railway-style execution.
 
     Provides the base implementation for Command Query Responsibility Segregation
@@ -121,11 +121,10 @@ class FlextHandlers[MessageT_contra = object, ResultT = object](x):
             handler_name=self._config_model.handler_name,
             handler_mode=handler_mode_literal,
         )
-        object.__setattr__(self, "validate", self.validate_message)
         self._accepted_message_types: list[type] = []
         self._revalidate_pydantic_messages: bool = False
         self._type_warning_emitted: bool = False
-        self._metrics: dict[str, object] = {}
+        self._metrics: dict[str, t.MetadataAttributeValue] = {}
         self._stack: list[m.ExecutionContext | FlextModelsContainers.ConfigMap] = []
 
     def __call__(self, message: MessageT_contra) -> r[ResultT]:
@@ -411,7 +410,7 @@ class FlextHandlers[MessageT_contra = object, ResultT = object](x):
             ...     print(f"Failed: {result.error}")
 
         """
-        validation = self.validate_message(message)
+        validation = self.validate(message)
         if validation.is_failure:
             return r[ResultT].fail(validation.error or "Validation failed")
         return self.handle(message)
@@ -483,7 +482,7 @@ class FlextHandlers[MessageT_contra = object, ResultT = object](x):
         self._stack.append(execution_ctx)
         return r[bool].ok(value=True)
 
-    def record_metric(self, name: str, value: object) -> r[bool]:
+    def record_metric(self, name: str, value: t.MetadataAttributeValue) -> r[bool]:
         """Record a metric value in the current handler state."""
         self._metrics[name] = value
         return r[bool].ok(value=True)
@@ -518,6 +517,28 @@ class FlextHandlers[MessageT_contra = object, ResultT = object](x):
         if data is None:
             return r[bool].fail("Message cannot be None")
         return r[bool].ok(value=True)
+
+    def validate(self, data: MessageT_contra) -> r[bool]:
+        """Validate input data — override in subclasses for domain-specific logic.
+
+        Base implementation delegates to validate_message(). Override in subclasses
+        to add domain-specific validation before execute() processes the message.
+
+        Args:
+            data: Input data to validate
+
+        Returns:
+            r[bool]: Success if valid, failure with error details if invalid
+
+        Example:
+            >>> class MyHandler(FlextHandlers[MyCommand, MyResult]):
+            ...     def validate(self, data: MyCommand) -> r[bool]:
+            ...         if not data.required_field:
+            ...             return r[bool].fail("required_field is missing")
+            ...         return r[bool].ok(True)
+
+        """
+        return self.validate_message(data)
 
     def _record_execution_metrics(
         self, *, success: bool, error: str | None = None
@@ -571,7 +592,7 @@ class FlextHandlers[MessageT_contra = object, ResultT = object](x):
             type_name = message_type.__name__
             error_msg = f"Handler cannot handle message type {type_name}"
             return r[ResultT].fail(error_msg)
-        validation = self.validate_message(message)
+        validation = self.validate(message)
         if validation.is_failure:
             error_detail = validation.error or "Validation failed"
             error_msg = f"Message validation failed: {error_detail}"
