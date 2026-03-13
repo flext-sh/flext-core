@@ -54,8 +54,6 @@ import threading
 import typing
 import uuid
 import warnings
-
-import orjson
 from collections.abc import (
     Callable,
     Mapping,
@@ -66,6 +64,7 @@ from pathlib import Path
 from types import ModuleType, TracebackType
 from typing import Annotated, ClassVar, Self, TypeGuard, override
 
+import orjson
 import structlog
 from dependency_injector import containers, providers, wiring
 from pydantic import (
