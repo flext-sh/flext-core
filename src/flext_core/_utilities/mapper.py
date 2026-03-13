@@ -66,29 +66,10 @@ class FlextUtilitiesMapper:
         return FlextRuntime.get_logger(__name__)
 
     @classmethod
-    def convert_to_json_value(cls, value: object) -> _MappingValue:
-        """Convert any value to JSON-compatible type.
+    def _convert_to_json_recursive(cls, value: object) -> _MappingValue:
+        """Internal helper: recursively convert value to JSON-compatible type.
 
-        **Generic replacement for**: Manual type conversion to JSON values
-
-        Conversion Strategy:
-            1. Primitives (str, int, float, bool, None) → return as-is
-            2. dict-like → recursively convert keys to str, values to JSON
-            3. list-like → recursively convert items to JSON
-            4. Other → convert to str()
-
-        Args:
-            value: object value to convert
-
-        Returns:
-            JSON-compatible value (str, int, float, bool, None, dict, list)
-
-        Example:
-            >>> FlextUtilitiesMapper.convert_to_json_value({"a": 1})
-            {'a': 1}
-            >>> FlextUtilitiesMapper.convert_to_json_value([1, 2, "three"])
-            [1, 2, 'three']
-
+        Used by _apply_transform_steps to handle nested structures.
         """
         narrowed_value: _MappingValue
         if (
@@ -98,7 +79,7 @@ class FlextUtilitiesMapper:
         ):
             narrowed_value = cast("_MappingValue", value)
         elif isinstance(value, BaseModel):
-            narrowed_value = cast("_MappingValue", value.model_dump())
+            narrowed_value = cast("_MappingValue", value.model_dump(mode="json"))
         else:
             narrowed_value = str(value)
         if FlextUtilitiesGuards.is_primitive(narrowed_value):
@@ -107,7 +88,7 @@ class FlextUtilitiesMapper:
             result_dict: dict[str, _MappingValue] = {}
             for key, val in narrowed_value.items():
                 val_typed = FlextUtilitiesMapper.narrow_to_container(val)
-                result_dict[str(key)] = FlextUtilitiesMapper.convert_to_json_value(
+                result_dict[str(key)] = FlextUtilitiesMapper._convert_to_json_recursive(
                     val_typed
                 )
             return result_dict
@@ -116,7 +97,7 @@ class FlextUtilitiesMapper:
         ):
             result_list: ContainerList = []
             for item in narrowed_value:
-                converted_item = cls.convert_to_json_value(item)
+                converted_item = cls._convert_to_json_recursive(item)
                 result_list.append(converted_item)
             return result_list
         return narrowed_value
@@ -227,10 +208,12 @@ class FlextUtilitiesMapper:
             result, strip_empty=strip_empty
         )
         if to_json:
-            return {
-                str(key): FlextUtilitiesMapper.convert_to_json_value(val)
-                for key, val in result.items()
-            }
+            json_result: dict[str, _MappingValue] = {}
+            for key, val in result.items():
+                json_result[str(key)] = FlextUtilitiesMapper._convert_to_json_recursive(
+                    val
+                )  # type: ignore
+            return json_result
         return result
 
     @staticmethod

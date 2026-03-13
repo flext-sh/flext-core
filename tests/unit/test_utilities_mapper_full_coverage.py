@@ -208,21 +208,21 @@ def test_invert_and_json_conversion_branches(mapper: type[u]) -> None:
     assert mapper.invert_dict({"a": "x", "b": "x"}, handle_collisions="first") == {
         "x": "a",
     }
-    assert mapper.convert_to_json_value(None) is None
+    assert mapper._convert_to_json_recursive(None) is None
 
     class Model(BaseModel):
         x: int
 
     model = Model(x=1)
-    assert mapper.convert_to_json_value(model) == model
-    unknown = mapper.convert_to_json_value(Path("/tmp"))
-    assert unknown == Path("/tmp")
+    assert mapper._convert_to_json_recursive(model) == {"x": 1}
+    unknown = mapper._convert_to_json_recursive(Path("/tmp"))
+    assert unknown == "/tmp"
     as_json = {
-        str(key): mapper.convert_to_json_value(val)
+        str(key): mapper._convert_to_json_recursive(val)
         for key, val in {"x": Path("/tmp")}.items()
     }
-    assert as_json["x"] == Path("/tmp")
-    list_json = mapper.convert_to_json_value(
+    assert as_json["x"] == "/tmp"
+    list_json = mapper._convert_to_json_recursive(
         cast("Sequence[object]", [{"a": 1}, {"b": object()}]),
     )
     assert isinstance(list_json, list)
@@ -438,9 +438,9 @@ def test_transform_option_extract_and_step_helpers(
     assert mapper._apply_strip_none({"a": None}, strip_none=False) == {"a": None}
     assert mapper._apply_strip_empty({"a": ""}, strip_empty=False) == {"a": ""}
     assert {
-        str(key): mapper.convert_to_json_value(val)
+        str(key): mapper._convert_to_json_recursive(val)
         for key, val in {"a": Path("/tmp")}.items()
-    }["a"] == Path("/tmp")
+    }["a"] == "/tmp"
 
 
 def test_build_apply_transform_and_process_error_paths(
@@ -720,11 +720,11 @@ def test_conversion_and_extract_success_branches(mapper: type[u]) -> None:
         def __str__(self) -> str:
             return "plain"
 
-    assert mapper.convert_to_json_value(cast("object", Plain())) == "plain"
-    assert mapper.convert_to_json_value(
+    assert mapper._convert_to_json_recursive(cast("object", Plain())) == "plain"
+    assert mapper._convert_to_json_recursive(
         cast("object", {1: Plain()}),
     ) == {"1": "plain"}
-    assert mapper.convert_to_json_value(
+    assert mapper._convert_to_json_recursive(
         cast("object", [1, {"k": Plain()}]),
     ) == [1, {"k": "plain"}]
     assert mapper.ensure_str(None, "d") == "d"

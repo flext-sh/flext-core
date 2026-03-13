@@ -287,10 +287,10 @@ class TestuMapperConversions:
         assert u.ensure_str_or_none(None).is_failure
 
     def test_convert_to_json_value(self) -> None:
-        """Test convert_to_json_value converts BaseModel objects to dict."""
+        """Test _convert_to_json_recursive converts BaseModel objects to dict."""
         obj = SimpleObj(name="test", value=1)
         payload = {"obj": obj}
-        res = u.convert_to_json_value(cast("dict[str, object]", payload))
+        res = u._convert_to_json_recursive(cast("dict[str, object]", payload))
         assert isinstance(res, dict)
         assert "obj" in res
         assert res["obj"] == {"name": "test", "value": 1}
@@ -321,9 +321,9 @@ class TestuMapperConversions:
         assert res["when"] == "2026-03-12T10:30:45+00:00"
 
     def test_convert_dict_to_json(self) -> None:
-        """Test convert_dict_to_json - use convert_to_json_value for arbitrary objects."""
+        """Test convert_dict_to_json - use _convert_to_json_recursive for arbitrary objects."""
         d: dict[str, object] = {"a": SimpleObj(name="test", value=1)}
-        res = u.convert_to_json_value(d)
+        res = u._convert_to_json_recursive(d)
         if isinstance(res, dict):
             assert res["a"] == {"name": "test", "value": 1}
         else:
@@ -331,9 +331,9 @@ class TestuMapperConversions:
             raise AssertionError(msg)
 
     def test_convert_list_to_json(self) -> None:
-        """Test convert_list_to_json - use convert_to_json_value for arbitrary lists."""
+        """Test convert_list_to_json - use _convert_to_json_recursive for arbitrary lists."""
         test_list: list[dict[str, object]] = [{"a": SimpleObj(name="test", value=1)}]
-        res = u.convert_to_json_value(test_list)
+        res = u._convert_to_json_recursive(test_list)
         if isinstance(res, list) and isinstance(res[0], dict):
             assert res[0]["a"] == {"name": "test", "value": 1}
         else:
