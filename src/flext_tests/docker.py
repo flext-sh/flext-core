@@ -18,7 +18,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import contextlib
-import json
 import socket
 import time
 from collections.abc import Mapping, Sequence
@@ -353,8 +352,9 @@ class FlextTestsDocker:
         """Save dirty container state to persistent storage."""
         try:
             self._state_file.parent.mkdir(parents=True, exist_ok=True)
-            with self._state_file.open("w") as f:
-                json.dump({"dirty_containers": list(self._dirty_containers)}, f)
+            data = {"dirty_containers": list(self._dirty_containers)}
+            json_bytes = TypeAdapter(dict[str, object]).dump_json(data)
+            self._state_file.write_bytes(json_bytes)
         except (OSError, TypeError) as exc:
             self.logger.warning("Failed to save dirty state", error=str(exc))
 
