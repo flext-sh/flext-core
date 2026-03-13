@@ -66,26 +66,6 @@ class FlextUtilitiesMapper:
         return FlextRuntime.get_logger(__name__)
 
     @classmethod
-    def convert_dict_to_json(cls, data: ContainerMapping) -> dict[str, _MappingValue]:
-        """Convert dict with any values to JSON-compatible dict.
-
-        **Generic replacement for**: Manual dict-to-JSON conversion loops
-
-        Args:
-            data: Source dictionary with any values (must have string keys)
-
-        Returns:
-            Dictionary with all values converted to JSON-compatible types
-
-        Example:
-            >>> data = {"name": "test", "value": CustomObject()}
-            >>> result = FlextUtilitiesMapper.convert_dict_to_json(data)
-            >>> # {"name": "test", "value": "str(CustomObject())"}
-
-        """
-        return {key: cls.convert_to_json_value(value) for key, value in data.items()}
-
-    @classmethod
     def convert_list_to_json(
         cls, data: Sequence[_MappingValue]
     ) -> list[dict[str, _MappingValue]]:
@@ -105,9 +85,12 @@ class FlextUtilitiesMapper:
 
         """
         return [
-            FlextUtilitiesMapper.convert_dict_to_json(
-                FlextUtilitiesMapper._narrow_to_string_keyed_dict(item)
-            )
+            {
+                str(key): FlextUtilitiesMapper.convert_to_json_value(val)
+                for key, val in FlextUtilitiesMapper._narrow_to_string_keyed_dict(
+                    item
+                ).items()
+            }
             for item in data
             if isinstance(item, Mapping)
         ]
@@ -331,7 +314,10 @@ class FlextUtilitiesMapper:
             result, strip_empty=strip_empty
         )
         if to_json:
-            return FlextUtilitiesMapper.convert_dict_to_json(result)
+            return {
+                str(key): FlextUtilitiesMapper.convert_to_json_value(val)
+                for key, val in result.items()
+            }
         return result
 
     @staticmethod

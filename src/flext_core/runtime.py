@@ -1208,9 +1208,7 @@ class FlextRuntime:
         _payload: T | None = PrivateAttr(default=None)
         error: str | None = Field(default=None)
         error_code: str | None = Field(default=None)
-        error_data: FlextModelsContainers.ConfigMap = Field(
-            default_factory=lambda: FlextModelsContainers.ConfigMap(root={})
-        )
+        error_data: FlextModelsContainers.ConfigMap | None = Field(default=None)
 
         _exception: BaseException | None = PrivateAttr(default=None)
         _result_logger: p.Log.StructlogLogger | None = PrivateAttr(default=None)

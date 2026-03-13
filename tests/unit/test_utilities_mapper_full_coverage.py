@@ -217,7 +217,10 @@ def test_invert_and_json_conversion_branches(mapper: type[u]) -> None:
     assert mapper.convert_to_json_value(model) == model
     unknown = mapper.convert_to_json_value(Path("/tmp"))
     assert unknown == Path("/tmp")
-    as_json = mapper.convert_dict_to_json({"x": Path("/tmp")})
+    as_json = {
+        str(key): mapper.convert_to_json_value(val)
+        for key, val in {"x": Path("/tmp")}.items()
+    }
     assert as_json["x"] == Path("/tmp")
     list_json = mapper.convert_list_to_json(
         cast("Sequence[object]", [{"a": 1}, {"b": object()}]),
@@ -424,7 +427,10 @@ def test_transform_option_extract_and_step_helpers(
     assert mapper._apply_exclude_keys({"a": 1, "b": 2}, exclude_keys={"a"}) == {"b": 2}
     assert mapper._apply_strip_none({"a": None}, strip_none=False) == {"a": None}
     assert mapper._apply_strip_empty({"a": ""}, strip_empty=False) == {"a": ""}
-    assert mapper.convert_dict_to_json({"a": Path("/tmp")})["a"] == Path("/tmp")
+    assert {
+        str(key): mapper.convert_to_json_value(val)
+        for key, val in {"a": Path("/tmp")}.items()
+    }["a"] == Path("/tmp")
 
 
 def test_build_apply_transform_and_process_error_paths(

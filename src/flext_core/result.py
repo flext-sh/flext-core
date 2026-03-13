@@ -37,10 +37,10 @@ class FlextResult[T_co](FlextRuntime.RuntimeResult[T_co]):
         | BaseModel
         | FlextModelsContainers.ConfigMap
         | None,
-    ) -> FlextModelsContainers.ConfigMap:
+    ) -> FlextModelsContainers.ConfigMap | None:
         """Convert error_data to ConfigMap, matching RuntimeResult.fail() logic."""
         if error_data is None:
-            return FlextModelsContainers.ConfigMap(root={})
+            return None
         if isinstance(error_data, FlextModelsContainers.ConfigMap):
             return error_data
         if isinstance(error_data, BaseModel):
