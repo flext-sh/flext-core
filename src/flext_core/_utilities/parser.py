@@ -598,11 +598,16 @@ class FlextUtilitiesParser:
         if value is None:
             return default
         if isinstance(value, list):
-            return [str(cast("object", item)) for item in value]
+            return [str(item) for item in cast("list[object]", value)]
         if isinstance(value, str):
             return [value] if value else default
         if isinstance(value, (tuple, set, frozenset)):
-            return [str(cast("object", item)) for item in value]
+            return [
+                str(item)
+                for item in cast(
+                    "tuple[object, ...] | set[object] | frozenset[object]", value
+                )
+            ]
         return [str(value)]
 
     @staticmethod
@@ -1072,7 +1077,7 @@ class FlextUtilitiesParser:
             mapping_key = self._extract_key_from_mapping(
                 cast("Mapping[str, object]", obj)
             )
-            key = mapping_key.unwrap_or(type(obj).__name__)
+            key = mapping_key.unwrap_or(type(cast("object", obj)).__name__)
         elif (attr_key := self._extract_key_from_attributes(obj)).is_success:
             key = attr_key.value
         elif hasattr(obj, "__class__"):

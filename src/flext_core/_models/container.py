@@ -46,13 +46,8 @@ def _normalize_metadata(value: _MetadataInput) -> FlextModelFoundation.Metadata:
     if not isinstance(value, Mapping):
         msg = f"metadata must be None, dict, or FlextModelFoundation.Metadata, got {value.__class__.__name__}"
         raise TypeError(msg)
-    items_iter = value.items()
-    normalized_attrs: dict[str, object] = {
-        str(key): FlextRuntime.normalize_to_metadata(raw_value)
-        for key, raw_value in items_iter
-    }
     return FlextModelFoundation.Metadata.model_validate({
-        "attributes": normalized_attrs
+        "attributes": dict(value.items())
     })
 
 

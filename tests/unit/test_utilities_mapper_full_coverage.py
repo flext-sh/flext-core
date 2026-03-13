@@ -424,7 +424,7 @@ def test_transform_option_extract_and_step_helpers(
     assert mapper._apply_exclude_keys({"a": 1, "b": 2}, exclude_keys={"a"}) == {"b": 2}
     assert mapper._apply_strip_none({"a": None}, strip_none=False) == {"a": None}
     assert mapper._apply_strip_empty({"a": ""}, strip_empty=False) == {"a": ""}
-    assert mapper._apply_to_json({"a": Path("/tmp")}, to_json=True)["a"] == Path("/tmp")
+    assert mapper.convert_dict_to_json({"a": Path("/tmp")})["a"] == Path("/tmp")
 
 
 def test_build_apply_transform_and_process_error_paths(

@@ -9,6 +9,8 @@ from __future__ import annotations
 
 from typing import override
 
+from pydantic import Field
+
 from flext_core import FlextConstants, FlextHandlers, FlextModels, r
 
 from ...models import m
@@ -105,6 +107,8 @@ class CreateUserCommandHandler(
 ):
     """Test handler for CreateUserCommand."""
 
+    created_users: list[dict[str, object]] = Field(default_factory=list)
+
     def __init__(self) -> None:
         """Initialize create user command handler."""
         config = FlextModels.Handler(
@@ -114,7 +118,6 @@ class CreateUserCommandHandler(
             handler_mode=FlextConstants.Cqrs.HandlerType.COMMAND,
         )
         super().__init__(config=config)
-        self.created_users: list[dict[str, object]] = []
 
     def get_command_type(self) -> FlextCommandType:
         """Get command type this handler processes."""

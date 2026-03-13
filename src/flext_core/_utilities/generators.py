@@ -264,14 +264,14 @@ class FlextUtilitiesGenerators:
             try:
                 return dict(typing.cast("Mapping[str, object]", value))
             except (TypeError, ValueError, AttributeError) as e:
-                msg = f"Failed to convert Mapping {type(value).__name__}: {e}"
+                msg = f"Failed to convert Mapping {type(typing.cast('object', value)).__name__}: {e}"
                 raise TypeError(msg) from e
         if isinstance(value, BaseModel):
             try:
                 dumped = value.model_dump()
                 return typing.cast("dict[str, object]", dumped)
             except (AttributeError, TypeError, ValueError) as e:
-                msg = f"Failed to convert BaseModel {type(value).__name__} to dict: {e}"
+                msg = f"Failed to convert BaseModel {type(typing.cast('object', value)).__name__} to dict: {e}"
                 raise TypeError(msg) from e
         msg = f"Cannot convert {value.__class__.__name__} to dict"
         raise TypeError(msg)

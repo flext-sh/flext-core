@@ -66,7 +66,8 @@ class FlextInfraDependencyPathSync:
             normalized = normalized.removeprefix(prefix)
         return normalized
 
-    def _target_path(self, dep_name: str, *, is_root: bool, mode: str) -> str:
+    @staticmethod
+    def _target_path(dep_name: str, *, is_root: bool, mode: str) -> str:
         """Compute target path for dependency based on mode and location."""
         if mode == c.Infra.ReportKeys.WORKSPACE:
             return dep_name if is_root else f"../{dep_name}"
@@ -150,18 +151,21 @@ class FlextInfraDependencyPathSync:
             project_section[c.Infra.Toml.DEPENDENCIES] = updated_deps
         return changes
 
-    def _rewrite_poetry(
-        self, doc: TOMLDocument, *, is_root: bool, mode: str
-    ) -> list[str]:
-        tool_raw = self._table_get(doc, c.Infra.Toml.TOOL)
+    @staticmethod
+    def _rewrite_poetry(doc: TOMLDocument, *, is_root: bool, mode: str) -> list[str]:
+        tool_raw = FlextInfraDependencyPathSync._table_get(doc, c.Infra.Toml.TOOL)
         if not isinstance(tool_raw, Table):
             return []
         tool_section: Table = tool_raw
-        poetry_raw = self._table_get(tool_section, c.Infra.Toml.POETRY)
+        poetry_raw = FlextInfraDependencyPathSync._table_get(
+            tool_section, c.Infra.Toml.POETRY
+        )
         if not isinstance(poetry_raw, Table):
             return []
         poetry_section: Table = poetry_raw
-        deps_raw = self._table_get(poetry_section, c.Infra.Toml.DEPENDENCIES)
+        deps_raw = FlextInfraDependencyPathSync._table_get(
+            poetry_section, c.Infra.Toml.DEPENDENCIES
+        )
         if not isinstance(deps_raw, Table):
             return []
         deps: Table = deps_raw
@@ -175,8 +179,10 @@ class FlextInfraDependencyPathSync:
             raw_path = value_map[c.Infra.Toml.PATH]
             if not isinstance(raw_path, str) or not raw_path.strip():
                 continue
-            dep_name = self.extract_dep_name(raw_path)
-            new_path = self._target_path(dep_name, is_root=is_root, mode=mode)
+            dep_name = FlextInfraDependencyPathSync.extract_dep_name(raw_path)
+            new_path = FlextInfraDependencyPathSync._target_path(
+                dep_name, is_root=is_root, mode=mode
+            )
             if raw_path != new_path:
                 changes.append(
                     f"  Poetry: {dep_key}.path = {raw_path!r} -> {new_path!r}"

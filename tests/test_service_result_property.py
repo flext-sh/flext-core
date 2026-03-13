@@ -54,7 +54,7 @@ class TestServiceResultProperty:
         assert isinstance(service, GetUserService)
         user = service.result
         assert isinstance(user, User)
-        assert user.user_id == case.input_value
+        assert user.id == case.input_value
 
     @pytest.mark.parametrize("case", ServiceTestCases.VALIDATE_SUCCESS)
     def test_result_property_with_validation_success(
@@ -94,7 +94,7 @@ class TestServiceResultProperty:
         assert isinstance(service, GetUserService)
         user = service.result
         assert isinstance(user, User)
-        assert user.user_id == case.input_value
+        assert user.id == case.input_value
 
     @pytest.mark.parametrize("case", ServiceTestCases.USER_SUCCESS)
     def test_result_property_lazy_evaluation(self, case: ServiceTestCase) -> None:
@@ -104,7 +104,7 @@ class TestServiceResultProperty:
         assert hasattr(service, "result")
         user = service.result
         assert isinstance(user, User)
-        assert user.user_id == case.input_value
+        assert user.id == case.input_value
 
     @pytest.mark.parametrize("case", ServiceTestCases.USER_SUCCESS)
     def test_v1_execute_still_works(self, case: ServiceTestCase) -> None:
@@ -116,7 +116,7 @@ class TestServiceResultProperty:
         _ = assertion_helpers.assert_flext_result_success(result)
         user = result.value
         assert isinstance(user, User)
-        assert user.user_id == case.input_value
+        assert user.id == case.input_value
 
     def test_v1_error_handling_with_flext_result(self) -> None:
         """V1: Error handling via r pattern."""
@@ -155,7 +155,7 @@ class TestServiceResultProperty:
         assert user_v1_result.is_success
         user_v1 = user_v1_result.value
         assert isinstance(user_v1, User)
-        assert user_v2.user_id == user_v1.user_id
+        assert user_v2.id == user_v1.id
         assert user_v2.name == user_v1.name
         assert user_v2.email == user_v1.email
 
@@ -167,7 +167,7 @@ class TestServiceResultProperty:
         assert hasattr(service, "result")
         user = service.result
         assert isinstance(user, User)
-        assert user.user_id == case.input_value
+        assert user.id == case.input_value
 
     @pytest.mark.parametrize("case", ServiceTestCases.USER_SUCCESS)
     def test_result_property_in_model_dump(self, case: ServiceTestCase) -> None:
@@ -178,7 +178,7 @@ class TestServiceResultProperty:
         assert "user_id" in dump
         user = service.result
         assert isinstance(user, User)
-        assert user.user_id == case.input_value
+        assert user.id == case.input_value
 
     def test_property_behavior_edge_cases(self) -> None:
         """Test property behavior edge cases."""
@@ -187,7 +187,7 @@ class TestServiceResultProperty:
         user2 = service.result
         assert isinstance(user1, User)
         assert isinstance(user2, User)
-        assert user1.user_id == user2.user_id
+        assert user1.id == user2.id
         assert hasattr(service, "result")
         dump = service.model_dump(exclude={"access", "runtime"})
         assert isinstance(dump, dict)

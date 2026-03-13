@@ -259,10 +259,7 @@ class FlextUtilitiesModel:
         if isinstance(value, m.Metadata):
             return m.Metadata.model_validate(value.model_dump())
         if FlextRuntime.is_dict_like(value):
-            attributes: dict[str, object] = {}
-            for key, val in value.items():
-                attributes[str(key)] = FlextRuntime.normalize_to_metadata(val)
-            return m.Metadata.model_validate({"attributes": attributes})
+            return m.Metadata.model_validate({"attributes": dict(value.items())})
         msg = f"metadata must be None, dict, or m.Metadata, got {value.__class__.__name__}"
         raise TypeError(msg)
 

@@ -34,7 +34,7 @@ class GetUserService(s[m.Tests.User]):
         """Get user by ID."""
         return r[m.Tests.User].ok(
             m.Tests.User(
-                user_id=self.user_id,
+                id=self.user_id,
                 name=f"{c.Services.DEFAULT_USER_NAME_PREFIX}{self.user_id}",
                 email=f"user{self.user_id}{c.Services.DEFAULT_EMAIL_DOMAIN}",
             ),
@@ -121,10 +121,10 @@ class UserFactory:
         actual_name = name if name is not None else cls._next_name()
         actual_email = email if email is not None else f"{actual_user_id}@example.com"
         return m.Tests.User(
-            user_id=actual_user_id,
+            id=actual_user_id,
             name=actual_name,
             email=actual_email,
-            is_active=is_active,
+            active=is_active,
         )
 
     @classmethod

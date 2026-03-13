@@ -56,7 +56,7 @@ class FlextModelFoundation:
             TypeAdapter[Annotated[str, Field(strict=True)]] | None
         ] = None
         _metadata_map_adapter: ClassVar[
-            TypeAdapter[Mapping[str, t.Container]] | None
+            TypeAdapter[Mapping[str, t.MetadataValue]] | None
         ] = None
         _config_adapter: ClassVar[TypeAdapter[Mapping[str, t.Container]] | None] = None
 
@@ -77,10 +77,10 @@ class FlextModelFoundation:
         @classmethod
         def metadata_map_adapter(
             cls,
-        ) -> TypeAdapter[Mapping[str, t.Container]]:
+        ) -> TypeAdapter[Mapping[str, t.MetadataValue]]:
             """Lazy-load metadata map TypeAdapter on first access."""
             if cls._metadata_map_adapter is None:
-                cls._metadata_map_adapter = TypeAdapter(Mapping[str, t.Container])
+                cls._metadata_map_adapter = TypeAdapter(Mapping[str, t.MetadataValue])
             return cls._metadata_map_adapter
 
         @classmethod
@@ -274,7 +274,7 @@ class FlextModelFoundation:
             title="Tags",
             examples=[["billing", "critical"]],
         )
-        attributes: Mapping[str, object] = Field(
+        attributes: Mapping[str, t.MetadataValue] = Field(
             default_factory=dict,
             description="Arbitrary metadata attributes stored as key-value pairs.",
             title="Attributes",
@@ -288,8 +288,8 @@ class FlextModelFoundation:
         @classmethod
         def _validate_attributes(
             cls,
-            value: t.Container | Mapping[str, t.Container] | None,
-        ) -> Mapping[str, t.Container]:
+            value: t.MetadataValue | Mapping[str, t.MetadataValue] | BaseModel | None,
+        ) -> Mapping[str, t.MetadataValue]:
             if value is None:
                 return {}
             try:

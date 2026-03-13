@@ -306,13 +306,6 @@ class FlextUtilitiesMapper:
         return result
 
     @staticmethod
-    def _apply_to_json(result: ContainerMapping, *, to_json: bool) -> ContainerMapping:
-        """Apply to JSON step."""
-        if to_json:
-            return FlextUtilitiesMapper.convert_dict_to_json(result)
-        return result
-
-    @staticmethod
     def _apply_transform_steps(
         result: ContainerMapping,
         *,
@@ -337,7 +330,9 @@ class FlextUtilitiesMapper:
         result = FlextUtilitiesMapper._apply_strip_empty(
             result, strip_empty=strip_empty
         )
-        return FlextUtilitiesMapper._apply_to_json(result, to_json=to_json)
+        if to_json:
+            return FlextUtilitiesMapper.convert_dict_to_json(result)
+        return result
 
     @staticmethod
     def _build_apply_chunk(
