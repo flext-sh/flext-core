@@ -548,11 +548,13 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
                             "handler_mode": popped.handler_mode,
                         })
                     if isinstance(popped, m.ConfigMap):
-                        cm_result: dict[str, t.Scalar] = {}
-                        for ck, cv in popped.root.items():
-                            if u.Guards.is_scalar(cv):
-                                cm_result[str(ck)] = cv
-                        return r[dict[str, t.Scalar]].ok(cm_result)
+                        return r[dict[str, t.Scalar]].ok(
+                            dict(
+                                (str(ck), cv)
+                                for ck, cv in popped.root.items()
+                                if u.is_scalar(cv)
+                            )
+                        )
                     return r[dict[str, t.Scalar]].ok(popped)
                 return r[dict[str, t.Scalar]].ok({})
 
@@ -565,8 +567,6 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
                 if isinstance(ctx, m.ExecutionContext):
                     self._stack.append(ctx)
                     return r[bool].ok(value=True)
-                if not u.is_mapping(ctx):
-                    return r[bool].fail("Unsupported context type for push_context")
                 ctx_mapping: dict[str, t.Scalar] = {str(k): v for k, v in ctx.items()}
                 handler_name_raw: t.Scalar | None = ctx_mapping.get(
                     "handler_name", "unknown"
