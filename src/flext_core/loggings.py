@@ -111,7 +111,9 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
                 if context_vars
                 else {}
             )
-            context_obj: dict[str, t.Container] = dict(context_map.items())
+            context_obj: dict[str, t.NormalizedValue | BaseModel] = dict(
+                context_map.items()
+            )
             return m.ConfigMap(root=context_obj)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError):
             return m.ConfigMap(root={})
@@ -761,7 +763,9 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
                     "exception_message": str(exception),
                 }
             )
-            merged_root: dict[str, t.NormalizedValue] = dict(context_dict.root)
+            merged_root: dict[str, t.NormalizedValue | BaseModel] = dict(
+                context_dict.root
+            )
             merged_root.update(dict(exception_data.root))
             context_dict = m.ConfigMap(root=merged_root)
             if include_stack_trace:
@@ -855,9 +859,9 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
     @override
     def exception(
         self,
-        msg: str | t.Scalar,
-        *args: _LogArg,
-        **kw: t.Container | BaseModel | Exception | bool | None,
+        msg: str,
+        *args: t.Container,
+        **kw: t.Container | Exception,
     ) -> r[bool] | None:
         """Log exception with conditional stack trace (DEBUG only)."""
         message = str(msg)

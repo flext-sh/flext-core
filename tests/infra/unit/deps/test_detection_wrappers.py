@@ -74,7 +74,7 @@ class _StubService:
             limits_path,
             include_mypy,
         )
-        return r[dm.TypingsReport].ok(dm.TypingsReport())
+        return r[dm.TypingsReport].ok(dm.TypingsReport(required_packages=[], hinted=[], missing_modules=[], current=[], to_add=[], to_remove=[]))
 
     def load_dependency_limits(self, limits_path: Path | None = None) -> dict[str, str]:
         self.called["load_dependency_limits"] = (limits_path,)
@@ -83,7 +83,7 @@ class _StubService:
 
 class TestModuleLevelWrappers:
     def test_classify_issues_wrapper(self) -> None:
-        tm.that(classify_issues([]).dep001, eq=[])
+        assert classify_issues([]).dep001 == []
 
     def test_build_project_report_wrapper(self) -> None:
         tm.that(build_project_report("proj", []).project, eq="proj")
@@ -95,7 +95,7 @@ class TestModuleLevelWrappers:
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         monkeypatch.setattr(detection, "_service", _StubService())
-        tm.that(load_dependency_limits(), eq={})
+        assert load_dependency_limits() == {}
 
 
 def test_discover_projects_wrapper(
@@ -105,7 +105,7 @@ def test_discover_projects_wrapper(
     monkeypatch.setattr(detection, "_service", stub)
     result = detection.discover_project_paths(tmp_path)
     tm.that(result.is_success, eq=True)
-    tm.that(stub.called["discover_project_paths"][1], eq=None)
+    assert stub.called["discover_project_paths"][1] is None
 
 
 def test_run_deptry_wrapper(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

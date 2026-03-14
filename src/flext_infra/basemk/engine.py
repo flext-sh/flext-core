@@ -15,16 +15,16 @@ from jinja2 import (
 )
 
 from flext_core import r, s
-from flext_infra import c, m
+from flext_infra import c, m, t
 
 
 class _TemplateRenderer(Protocol):
-    def render(self, **kwargs: object) -> str: ...
+    def render(self, **kwargs: t.Infra.InfraValue) -> str: ...
 
 
 def _render_template(
     template: _TemplateRenderer,
-    context: Mapping[str, object],
+    context: Mapping[str, t.Infra.InfraValue],
 ) -> str:
     return template.render(**context)
 

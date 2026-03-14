@@ -198,7 +198,10 @@ class FlextUtilitiesParser:
         if str_result.is_failure:
             return r[str].fail(str_result.error or "String conversion failed")
         str_repr = str_result.value
-        if str_repr and str_repr != f"<{obj.__class__.__name__} object>":
+        obj_class_name = (
+            obj.__class__.__name__ if hasattr(obj, "__class__") else "Unknown"
+        )
+        if str_repr and str_repr != f"<{obj_class_name} object>":
             return r[str].ok(str_repr)
         return r[str].fail("String conversion did not yield a usable key")
 
@@ -788,7 +791,7 @@ class FlextUtilitiesParser:
     ) -> list[str] | set[str] | dict[str, str]:
         """Normalize list/dict (builder: norm().list())."""
         if isinstance(items, FlextModelsContainers.ConfigMap):
-            dict_items: Mapping[str, t.NormalizedValue] = items.root
+            dict_items: Mapping[str, t.NormalizedValue | BaseModel] = items.root
             if filter_truthy:
                 dict_items = {k: v for k, v in dict_items.items() if v}
             return {

@@ -38,7 +38,9 @@ def _normalize_string_list(value: object, field: str) -> list[str]:
     return FlextInfraUtilitiesYaml.normalize_string_list(value, field)
 
 
-def _normalize_str_object_mapping(value: object) -> dict[str, object]:
+def _normalize_str_object_mapping(
+    value: t.Infra.InfraValue,
+) -> dict[str, object]:
     try:
         adapter: TypeAdapter[dict[str, object]] = TypeAdapter(dict[str, object])
         return adapter.validate_python(value)
