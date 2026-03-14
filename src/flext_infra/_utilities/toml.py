@@ -73,10 +73,16 @@ class FlextInfraUtilitiesToml:
 
     @staticmethod
     def normalize_container_value(
-        value: t.Infra.InfraValue | Item | TOMLDocument | dict[str, t.Infra.InfraValue] | None,
+        value: t.Infra.InfraValue
+        | Item
+        | TOMLDocument
+        | dict[str, t.Infra.InfraValue]
+        | None,
     ) -> t.Infra.InfraValue | None:
         """Normalize TOML items/documents to a concrete container value."""
-        normalized: t.Infra.InfraValue | Item | dict[str, t.Infra.InfraValue] | None = value
+        normalized: t.Infra.InfraValue | Item | dict[str, t.Infra.InfraValue] | None = (
+            value
+        )
         if isinstance(value, (TOMLDocument, Item)):
             normalized = value.unwrap()
         if isinstance(normalized, Item):

@@ -546,9 +546,9 @@ class FlextInfraRefactorClassNestingAnalyzer:
                 per_file_counts[normalized_file] += 1
         return m.Infra.Refactor.ClassNestingReport(
             violations_count=len(violations),
-            confidence_counts=dict(confidence_counts),
+            confidence_counts=dict(confidence_counts.items()),
             violations=violations,
-            per_file_counts=dict(per_file_counts),
+            per_file_counts=dict(per_file_counts.items()),
         )
 
     @classmethod
@@ -701,12 +701,12 @@ class FlextInfraRefactorViolationAnalyzer:
             for file_name, total, counts in ranked_files[:25]
         ]
         helper_report = m.Infra.Refactor.HelperClassificationReport(
-            totals=dict(helper_totals),
+            totals=dict(helper_totals.items()),
             suggestions=helper_suggestions,
             manual_review=helper_manual_review,
         )
         return m.Infra.Refactor.ViolationAnalysisReport(
-            totals=dict(totals),
+            totals=dict(totals.items()),
             files=per_file,
             top_files=hottest_files,
             files_scanned=len(files),
@@ -727,7 +727,7 @@ class FlextInfraRefactorViolationAnalyzer:
         if module is None:
             return m.Infra.Refactor.HelperFileAnalysis(
                 suggestions=suggestions,
-                totals=dict(totals),
+                totals=dict(totals.items()),
                 manual_review=manual_review,
             )
         import_collector = ImportDependencyCollector()
@@ -747,7 +747,7 @@ class FlextInfraRefactorViolationAnalyzer:
                 manual_review.append(classification)
         return m.Infra.Refactor.HelperFileAnalysis(
             suggestions=suggestions,
-            totals=dict(totals),
+            totals=dict(totals.items()),
             manual_review=manual_review,
         )
 

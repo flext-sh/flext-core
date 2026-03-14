@@ -121,7 +121,7 @@ class FlextInfraConfigFixer(s):
             all_fixes.extend(fixes)
         if all_fixes and (not dry_run):
             try:
-                typed_tool_data[c.Infra.Toml.PYREFLY] = dict(pyrefly)
+                typed_tool_data[c.Infra.Toml.PYREFLY] = dict(pyrefly.items())
                 doc_data[c.Infra.Toml.TOOL] = typed_tool_data
                 new_doc = tomlkit.document()
                 for key, value in doc_data.items():

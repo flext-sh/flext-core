@@ -827,7 +827,7 @@ class FlextTestsBuilders:
             if value is None:
                 final_value = dict(kwargs)
             elif isinstance(value, Mapping):
-                merged: dict[str, t.Tests.object] = dict(value)
+                merged: dict[str, t.Tests.object] = dict(value.items())
                 merged.update(kwargs)
                 final_value = merged
             else:
@@ -1386,7 +1386,7 @@ class FlextTestsBuilders:
                     input_data_list=list(inputs),
                     expected_results=list(expected),
                 )
-                return [dict(case) for case in raw_cases]
+                return [dict(case.items()) for case in raw_cases]
 
         class Data:
             """Data generation helpers - tb.Tests.Data.*.
@@ -1422,7 +1422,7 @@ class FlextTestsBuilders:
                             items.append((new_key, value))
                     return dict(items)
 
-                return _flatten(dict(nested))
+                return _flatten(dict(nested.items()))
 
             @staticmethod
             def id() -> str:

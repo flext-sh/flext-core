@@ -273,7 +273,7 @@ class FlextInfraRefactorConstants:
     TYPED_DICT_MIN_ARGS: int = 2
     "Minimum positional args expected in TypedDict(name, fields, ...)."
 
-    NAMESPACE_FACADE_FAMILIES: ClassVar[dict[str, str]] = dict(FAMILY_SUFFIXES)
+    NAMESPACE_FACADE_FAMILIES: ClassVar[dict[str, str]] = dict(FAMILY_SUFFIXES.items())
     NAMESPACE_FACADE_FILE_PATTERNS: ClassVar[dict[str, str]] = dict(FAMILY_FILES)
     NAMESPACE_CONSTANT_PATTERN: ClassVar[re.Pattern[str]] = re.compile(
         r"^_?[A-Z][A-Z0-9_]+$",

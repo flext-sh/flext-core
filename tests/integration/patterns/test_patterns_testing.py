@@ -39,7 +39,7 @@ def _to_general_mapping(
 ) -> dict[str, t.Container]:
     if value is None:
         return {}
-    return dict(value)
+    return dict(value.items())
 
 
 def _to_string_list(value: Sequence[t.Container] | None) -> list[str]:

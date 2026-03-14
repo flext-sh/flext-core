@@ -85,7 +85,7 @@ class FlextInfraRefactorLooseClassScanner:
             "files_scanned": len(discovered_files),
             "classes_scanned": classes_scanned,
             c.Infra.ReportKeys.VIOLATIONS_COUNT: len(violations),
-            "confidence_counts": dict(counters),
+            "confidence_counts": dict(counters.items()),
             "required_targets": targets_found,
             c.Infra.ReportKeys.VIOLATIONS: violations,
         })

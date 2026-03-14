@@ -98,9 +98,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
             config: Optional handler configuration model
 
         """
-        super().__init__(
-            config_type=None, config_overrides=None, initial_context=None
-        )
+        super().__init__(config_type=None, config_overrides=None, initial_context=None)
         if config is not None:
             self._config_model = config
         else:

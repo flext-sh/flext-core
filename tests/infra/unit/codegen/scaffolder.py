@@ -73,7 +73,7 @@ class TestScaffoldProjectCreatesSrcModules:
         tm.that(len(result.files_skipped), eq=2)
         created_names = sorted(Path(f).name for f in result.files_created)
         tm.that(created_names, eq=["protocols.py", "typings.py", "utilities.py"])
-        
+
 
 class TestScaffoldProjectCreatesTestsModules:
     def test_creates_tests_modules_when_tests_dir_exists(

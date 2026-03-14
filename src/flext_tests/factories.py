@@ -618,7 +618,7 @@ class FlextTestsFactories(s[t.Tests.object]):
                 }
                 if params.overrides:
                     user_overrides: MutableMapping[str, t.Tests.object] = dict(
-                        params.overrides
+                        params.overrides.items()
                     )
                     merge_result = u.merge(
                         {k: _to_guard_input(v) for k, v in user_data.items()},
@@ -650,7 +650,7 @@ class FlextTestsFactories(s[t.Tests.object]):
                 }
                 if params.overrides:
                     config_overrides: MutableMapping[str, t.Tests.object] = dict(
-                        params.overrides
+                        params.overrides.items()
                     )
                     merge_result = u.merge(
                         {k: _to_guard_input(v) for k, v in config_data.items()},
@@ -675,7 +675,7 @@ class FlextTestsFactories(s[t.Tests.object]):
                 if params.overrides:
                     overrides_mapping = params.overrides
                     overrides_dict: MutableMapping[str, t.Tests.TestResultValue] = dict(
-                        overrides_mapping
+                        overrides_mapping.items()
                     )
                     svc_data.update(overrides_dict)
                 return m.Tests.Service.model_validate(svc_data)
@@ -1109,7 +1109,7 @@ class FlextTestsFactories(s[t.Tests.object]):
 
         """
         captured_overrides: MutableMapping[str, t.Tests.TestResultValue] = dict(
-            overrides
+            overrides.items()
         )
 
         class TestService(s[t.Tests.object]):
@@ -1263,7 +1263,7 @@ class FlextTestsFactories(s[t.Tests.object]):
             or c.Tests.Factory.user_email(u.Tests.Factory.generate_short_id(8)),
             "active": c.Tests.Factory.DEFAULT_USER_ACTIVE,
         }
-        overrides_dict: MutableMapping[str, t.Tests.object] = dict(overrides)
+        overrides_dict: MutableMapping[str, t.Tests.object] = dict(overrides.items())
         merge_result = u.merge(
             {k: _to_guard_input(v) for k, v in user_data.items()},
             {k: _to_guard_input(v) for k, v in overrides_dict.items()},

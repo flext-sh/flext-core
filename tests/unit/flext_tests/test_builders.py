@@ -21,7 +21,7 @@ from tests.test_utils import assertion_helpers
 def _as_builder_dict(value: object) -> t.Tests.Builders.BuilderDict:
     assert isinstance(value, Mapping)
     typed_mapping = cast("Mapping[str, t.Tests.object]", value)
-    return cast("t.Tests.Builders.BuilderDict", dict(typed_mapping))
+    return cast("t.Tests.Builders.BuilderDict", dict(typed_mapping.items()))
 
 
 def _as_builder_result(

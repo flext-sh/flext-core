@@ -74,7 +74,16 @@ class _StubService:
             limits_path,
             include_mypy,
         )
-        return r[dm.TypingsReport].ok(dm.TypingsReport(required_packages=[], hinted=[], missing_modules=[], current=[], to_add=[], to_remove=[]))
+        return r[dm.TypingsReport].ok(
+            dm.TypingsReport(
+                required_packages=[],
+                hinted=[],
+                missing_modules=[],
+                current=[],
+                to_add=[],
+                to_remove=[],
+            )
+        )
 
     def load_dependency_limits(self, limits_path: Path | None = None) -> dict[str, str]:
         self.called["load_dependency_limits"] = (limits_path,)

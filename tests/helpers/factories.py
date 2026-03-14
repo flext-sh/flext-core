@@ -498,7 +498,11 @@ class GenericModelFactory:
         status: str = "active",
     ) -> m.Service:
         """Create ServiceSnapshot."""
-        return m.Service.model_validate({"name": name, "version": version, "status": status})
+        return m.Service(
+            name=name,
+            version=version,
+            status=status,
+        )
 
     @staticmethod
     def configuration_snapshot(
@@ -507,7 +511,11 @@ class GenericModelFactory:
         environment: str | None = None,
     ) -> m.Configuration:
         """Create ConfigurationSnapshot."""
-        return m.Configuration.model_validate({"config": m.Dict(config or {}), "source": source, "environment": environment})
+        return m.Configuration.model_validate({
+            "config": m.Dict(config or {}),
+            "source": source,
+            "environment": environment,
+        })
 
     @staticmethod
     def health_status(
@@ -516,7 +524,12 @@ class GenericModelFactory:
         checks: dict[str, bool] | None = None,
     ) -> m.Health:
         """Create HealthStatus."""
-        return m.Health.model_validate({"healthy": healthy, "checks": m.Dict({str(key): value for key, value in (checks or {}).items()})})
+        return m.Health.model_validate({
+            "healthy": healthy,
+            "checks": m.Dict({
+                str(key): value for key, value in (checks or {}).items()
+            }),
+        })
 
     @staticmethod
     def operation_progress(
@@ -525,12 +538,16 @@ class GenericModelFactory:
         skipped: int = 0,
     ) -> m.Operation:
         """Create OperationProgress."""
-        return m.Operation.model_validate({"success_count": success, "failure_count": failure, "skipped_count": skipped})
+        return m.Operation(
+            success_count=success,
+            failure_count=failure,
+            skipped_count=skipped,
+        )
 
     @staticmethod
     def conversion_progress() -> m.Conversion:
         """Create ConversionProgress."""
-        return m.Conversion.model_validate({})
+        return m.Conversion()
 
 
 def reset_all_factories() -> None:

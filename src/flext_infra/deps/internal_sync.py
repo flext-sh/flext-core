@@ -347,7 +347,9 @@ class FlextInfraInternalDependencySyncService:
         return r[Mapping[str, m.Infra.Github.RepoUrls]].ok(result)
 
     @staticmethod
-    def _normalize_str_object_mapping(value: t.Infra.InfraValue) -> dict[str, t.Infra.InfraValue]:
+    def _normalize_str_object_mapping(
+        value: t.Infra.InfraValue,
+    ) -> dict[str, t.Infra.InfraValue]:
         try:
             adapter: TypeAdapter[dict[str, object]] = TypeAdapter(dict[str, object])
             return adapter.validate_python(value)

@@ -178,7 +178,7 @@ class FlextTestsDomains:
                 "body": None,
             },
         }
-        payload = dict(payloads.get(data_type, {}))
+        payload = dict(payloads.get(data_type, {}).items())
         payload.update(custom_fields)
         return payload
 
