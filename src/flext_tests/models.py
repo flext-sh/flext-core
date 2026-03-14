@@ -36,7 +36,7 @@ class FlextTestsModels(
 
     def __init_subclass__(
         cls,
-        **kwargs: Mapping[str, object],
+        **kwargs: Mapping[str, t.Tests.object],
     ) -> None:
         """Warn when FlextTestsModels is subclassed directly."""
         super().__init_subclass__(**kwargs)
@@ -533,7 +533,7 @@ class FlextTestsModels(
                 ),
             ]
             validate_fn: Annotated[
-                Callable[[object], bool] | None,
+                Callable[[t.Tests.object], bool] | None,
                 Field(
                     default=None,
                     alias="validate",
