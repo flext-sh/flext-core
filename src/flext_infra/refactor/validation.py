@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import orjson
+from pydantic import JsonValue
 
 from flext_infra import c, m, t, u
 from flext_infra.refactor.analysis import FlextInfraRefactorViolationAnalyzer
@@ -125,7 +126,7 @@ class FlextInfraRefactorRuleDefinitionValidator:
 
     def validate_rule_definition(
         self,
-        rule_def: Mapping[str, object],
+        rule_def: Mapping[str, JsonValue],
     ) -> str | None:
         """Validate a rule definition and return error message if invalid."""
         rule_id = str(rule_def.get(c.Infra.ReportKeys.ID, c.Infra.Defaults.UNKNOWN))

@@ -110,7 +110,12 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
                     normalized[key] = None
                     continue
                 normalized_value = FlextRuntime.normalize_to_container(value)
-                normalized[key] = FlextContext._to_normalized(normalized_value)
+                if isinstance(normalized_value, BaseModel):
+                    normalized[key] = FlextRuntime.normalize_to_container(
+                        FlextRuntime.normalize_to_metadata(normalized_value)
+                    )
+                else:
+                    normalized[key] = normalized_value
             return normalized
         except (TypeError, ValueError, AttributeError, KeyError) as exc:
             FlextContext._logger.debug(
@@ -500,9 +505,7 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
                 f"Context key '{key}' has None value in scope '{scope}'"
             )
 
-        normalized = FlextContext._to_normalized(
-            FlextRuntime.normalize_to_container(value)
-        )
+        normalized = FlextRuntime.normalize_to_container(value)
         return r[t.Container | BaseModel].ok(normalized)
 
     def get_metadata(self, key: str) -> r[t.Container | BaseModel]:
@@ -649,7 +652,7 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
                 FlextContext._logger.debug(
                     "Context export payload validation failed", exc_info=exc
                 )
-        if exported_map is not None:
+        if exported_map is not None and isinstance(other, FlextContext):
             for scope_name, scope_payload in exported_map.items():
                 if scope_name not in {
                     c.Context.SCOPE_GLOBAL,
@@ -670,6 +673,8 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
                     scope_data = None
                 if scope_data is not None:
                     self._set_in_contextvar(scope_name, scope_data)
+        elif exported_map is not None:
+            self._set_in_contextvar(c.Context.SCOPE_GLOBAL, exported_map)
         return self
 
     def remove(self, key: str, scope: str = c.Context.SCOPE_GLOBAL) -> None:

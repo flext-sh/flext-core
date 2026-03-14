@@ -22,7 +22,7 @@ class FlextInfraRefactorRuleLoader:
         """Initialize with path to the refactor engine configuration file."""
         self.config_path = config_path
 
-    def load_config(self) -> r[Mapping[str, object]]:
+    def load_config(self) -> r[Mapping[str, JsonValue]]:
         """Load and validate the refactor engine configuration."""
         try:
             loaded = u.Infra.safe_load_yaml(self.config_path)
@@ -33,9 +33,9 @@ class FlextInfraRefactorRuleLoader:
             scope_map = self._normalize_str_object_mapping(scope_raw)
             scope = m.Infra.Refactor.EngineConfig.model_validate(scope_map)
             normalized["refactor_engine"] = scope.model_dump(mode="python")
-            return r[Mapping[str, object]].ok(normalized)
+            return r[Mapping[str, JsonValue]].ok(normalized)
         except (OSError, TypeError, ValueError) as exc:
-            return r[Mapping[str, object]].fail(f"Failed to load config: {exc}")
+            return r[Mapping[str, JsonValue]].fail(f"Failed to load config: {exc}")
 
     def extract_engine_file_filters(
         self,

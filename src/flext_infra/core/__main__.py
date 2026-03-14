@@ -34,7 +34,7 @@ from flext_infra.core.stub_chain import FlextInfraStubSupplyChain
 
 
 def _extract_reports_written(
-    payload: m.Infra.Core.InventoryReport | Mapping[str, object],
+    payload: m.Infra.Core.InventoryReport | Mapping[str, JsonValue],
 ) -> list[str]:
     if isinstance(payload, Mapping):
         raw = payload.get("reports_written", [])
@@ -51,7 +51,7 @@ def _extract_reports_written(
 
 
 def _extract_diag_entries(
-    payload: m.Infra.Core.PytestDiagnostics | Mapping[str, object],
+    payload: m.Infra.Core.PytestDiagnostics | Mapping[str, JsonValue],
     key: str,
 ) -> list[str]:
     if isinstance(payload, Mapping):

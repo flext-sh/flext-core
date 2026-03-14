@@ -11,6 +11,7 @@ import sys
 from collections.abc import Mapping
 from pathlib import Path
 
+from pydantic import JsonValue
 from tomlkit.items import Item, Table
 from tomlkit.toml_document import TOMLDocument
 
@@ -75,7 +76,7 @@ class FlextInfraDependencyPathSync:
 
     @staticmethod
     def _mapping_str_value(
-        mapping: Table | Mapping[str, object], key: str
+        mapping: Table | Mapping[str, JsonValue], key: str
     ) -> str | None:
         if key not in mapping:
             return None

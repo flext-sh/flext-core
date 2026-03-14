@@ -12,7 +12,9 @@ from io import StringIO
 from pathlib import Path
 
 from flext_infra import c
-from flext_infra.refactor._models_namespace_enforcer import FlextInfraNamespaceEnforcerModels as nem
+from flext_infra.refactor._models_namespace_enforcer import (
+    FlextInfraNamespaceEnforcerModels as nem,
+)
 from flext_infra.refactor.dependency_analyzer import (
     FlextInfraRefactorDependencyAnalyzerFacade,
     load_python_module,

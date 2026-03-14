@@ -30,9 +30,24 @@ class FlextUtilitiesCollection:
     @staticmethod
     def _coerce_guard_value(value: t.NormalizedValue) -> t.NormalizedValue:
         try:
-            return FlextUtilitiesCollection._V.serializable_adapter().validate_python(
-                value
+            validated = (
+                FlextUtilitiesCollection._V.serializable_adapter().validate_python(
+                    value
+                )
             )
+            if isinstance(validated, (str, int, float, bool, datetime)):
+                return validated
+            if isinstance(validated, list):
+                normalized_list: list[t.NormalizedValue] = []
+                for item in validated:
+                    if isinstance(item, (str, int, float, bool, datetime)):
+                        normalized_list.append(item)
+                    else:
+                        normalized_list.append(str(item))
+                return normalized_list
+            if isinstance(validated, dict):
+                return validated
+            return str(validated)
         except ValidationError:
             return str(value)
 

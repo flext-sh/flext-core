@@ -318,9 +318,7 @@ class FlextRegistry(s[bool]):
                     normalized_root[k] = str(v)
                 else:
                     normalized_root[k] = str(v) if v is not None else ""
-            validated_metadata = FlextModelsContainers.ConfigMap(
-                root=normalized_root
-            )
+            validated_metadata = FlextModelsContainers.ConfigMap(root=normalized_root)
         if validated_metadata is not None:
             metadata_dict = validated_metadata
             metadata_keys_str: str = ",".join(metadata_dict.keys())

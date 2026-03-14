@@ -2066,7 +2066,9 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _narrow_untyped_dict(
-        raw: Mapping[str, t.NormalizedValue | t.MetadataValue | t.ContainerValue | BaseModel],
+        raw: Mapping[
+            str, t.NormalizedValue | t.MetadataValue | t.ContainerValue | BaseModel
+        ],
     ) -> dict[str, t.NormalizedValue]:
         """Convert a dict with heterogeneous values to NormalizedValue dict.
 
@@ -2076,9 +2078,7 @@ class FlextUtilitiesMapper:
         result: dict[str, t.NormalizedValue] = {}
         for k in list(raw.keys()):
             v = raw[k]
-            if isinstance(v, BaseModel):
-                result[str(k)] = FlextUtilitiesMapper.narrow_to_container(v)
-            elif isinstance(v, (*t.CONTAINER_TYPES, list, dict, tuple)):
+            if isinstance(v, (BaseModel, *t.CONTAINER_TYPES, list, dict, tuple)):
                 result[str(k)] = FlextUtilitiesMapper.narrow_to_container(v)
             elif v is not None:
                 result[str(k)] = str(v)
@@ -2086,7 +2086,9 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _narrow_untyped_list(
-        raw: list[t.NormalizedValue | t.MetadataValue | t.ContainerValue | BaseModel],
+        raw: Sequence[
+            t.NormalizedValue | t.MetadataValue | t.ContainerValue | BaseModel
+        ],
     ) -> list[t.NormalizedValue]:
         """Convert a list with heterogeneous values to NormalizedValue list.
 
@@ -2095,9 +2097,7 @@ class FlextUtilitiesMapper:
         """
         result: list[t.NormalizedValue] = []
         for item in raw:
-            if isinstance(item, BaseModel):
-                result.append(FlextUtilitiesMapper.narrow_to_container(item))
-            elif isinstance(item, (*t.CONTAINER_TYPES, list, dict, tuple)):
+            if isinstance(item, (BaseModel, *t.CONTAINER_TYPES, list, dict, tuple)):
                 result.append(FlextUtilitiesMapper.narrow_to_container(item))
             elif item is not None:
                 result.append(str(item))

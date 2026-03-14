@@ -511,7 +511,7 @@ class FlextExceptions:
         )
         for key, val in named_params.items():
             if val is not None:
-                param_values[key] = FlextRuntime.normalize_to_container(val)
+                param_values[key] = FlextRuntime.normalize_to_metadata(val)
         resolved = (
             existing_params
             if existing_params is not None

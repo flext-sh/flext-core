@@ -6,7 +6,7 @@ import fnmatch
 from collections.abc import Callable, Mapping
 from pathlib import Path
 
-from pydantic import TypeAdapter
+from pydantic import JsonValue, TypeAdapter
 
 from flext_core import r
 from flext_infra import c, m, t, u
@@ -157,7 +157,7 @@ class FlextInfraRefactorEngine:
             for rule in self.rules
         ]
 
-    def load_config(self) -> r[Mapping[str, object]]:
+    def load_config(self) -> r[Mapping[str, JsonValue]]:
         """Load YAML configuration for this engine instance."""
         result = self.rule_loader.load_config()
         if result.is_success:

@@ -52,7 +52,6 @@ from pydantic import BaseModel
 
 from flext_core import FlextExceptions as e, FlextRuntime, T_Model, c, m, p, r, t
 from flext_core._models.containers import FlextModelsContainers
-from flext_core._utilities.guards import FlextUtilitiesGuards
 
 
 def _duck_dump_get_parameter(
@@ -562,11 +561,15 @@ class FlextUtilitiesConfiguration:
         return FlextUtilitiesConfiguration._resolve_parameter(obj, parameter)
 
     @staticmethod
-    def _resolve_parameter(
-        obj: p.HasModelDump
-        | BaseModel
-        | p.Base
-        | Mapping[str, t.NormalizedValue | BaseModel],
+    def _resolve_from_mapping(
+        obj: Mapping[str, t.NormalizedValue | BaseModel],
+        parameter: str,
+    ) -> tuple[bool, t.NormalizedValue | BaseModel]:
+        return FlextUtilitiesConfiguration._try_get_from_dict_like(obj, parameter)
+
+    @staticmethod
+    def _resolve_from_obj(
+        obj: p.HasModelDump | BaseModel | p.Base,
         parameter: str,
     ) -> t.NormalizedValue | BaseModel:
         if isinstance(obj, p.HasModelDump):
@@ -575,41 +578,58 @@ class FlextUtilitiesConfiguration:
             )
             if found:
                 return value
+        found_d, duck_v = FlextUtilitiesConfiguration._try_get_from_duck_model_dump(
+            obj, parameter
+        )
+        if found_d:
+            return duck_v
+        found_a, attr_v = FlextUtilitiesConfiguration._try_get_attr(obj, parameter)
+        if found_a:
+            return attr_v
+        class_name = obj.__class__.__name__
+        msg = f"Parameter '{parameter}' is not defined in {class_name}"
+        raise e.NotFoundError(msg)
+
+    @staticmethod
+    def _resolve_parameter(
+        obj: p.HasModelDump
+        | BaseModel
+        | p.Base
+        | Mapping[str, t.NormalizedValue | BaseModel],
+        parameter: str,
+    ) -> t.NormalizedValue | BaseModel:
         if isinstance(obj, BaseModel):
-            base_obj: p.HasModelDump | BaseModel | p.Base = obj
-            found_d, duck_v = (
-                FlextUtilitiesConfiguration._try_get_from_duck_model_dump(
-                    base_obj, parameter
-                )
-            )
-            if found_d:
-                return duck_v
-            found_a, attr_v = FlextUtilitiesConfiguration._try_get_attr(
-                base_obj, parameter
-            )
-            if found_a:
-                return attr_v
-            msg = f"Parameter '{parameter}' is not defined in {obj.__class__.__name__}"
-            raise e.NotFoundError(msg)
-        if isinstance(obj, dict):
-            typed_dict: Mapping[str, t.NormalizedValue | BaseModel] = obj
-            found_m, map_v = FlextUtilitiesConfiguration._try_get_from_dict_like(
-                typed_dict, parameter
-            )
-            if found_m:
-                return map_v
-        remaining_obj: p.HasModelDump | BaseModel | p.Base = obj
-        found_duck2, dv2 = FlextUtilitiesConfiguration._try_get_from_duck_model_dump(
-            remaining_obj, parameter
+            return FlextUtilitiesConfiguration._resolve_from_obj(obj, parameter)
+        if isinstance(obj, p.HasModelDump):
+            return FlextUtilitiesConfiguration._resolve_from_obj(obj, parameter)
+        # Mapping branch: obj is p.Base | Mapping[str, NormalizedValue | BaseModel]
+        # Use _resolve_from_mapping for Mapping, fallback to _resolve_from_obj
+        # Attempt to resolve from mapping-like objects using attribute access
+
+        def _default_get(_k: str) -> t.NormalizedValue | BaseModel | None:
+            return None
+
+        get_method: Callable[[str], t.NormalizedValue | BaseModel | None] = getattr(
+            obj, "get", _default_get
         )
-        if found_duck2:
-            return dv2
-        found_attr2, av2 = FlextUtilitiesConfiguration._try_get_attr(
-            remaining_obj, parameter
-        )
-        if found_attr2:
-            return av2
-        class_name = remaining_obj.__class__.__name__
+        raw_val: t.NormalizedValue | BaseModel | None = get_method(parameter)
+        if raw_val is not None:
+            if isinstance(raw_val, (str, int, float, bool, datetime, Path)):
+                return raw_val
+            if isinstance(raw_val, BaseModel):
+                return raw_val
+            return str(raw_val)
+        # p.Base fallback via duck model_dump or attr
+        base_obj: p.HasModelDump | BaseModel | p.Base = obj
+        if isinstance(base_obj, BaseModel):
+            return FlextUtilitiesConfiguration._resolve_from_obj(base_obj, parameter)
+        if isinstance(base_obj, p.HasModelDump):
+            return FlextUtilitiesConfiguration._resolve_from_obj(base_obj, parameter)
+        # Final fallback: direct attr access
+        found_a, attr_v = FlextUtilitiesConfiguration._try_get_attr(base_obj, parameter)
+        if found_a:
+            return attr_v
+        class_name = str(type(obj).__name__)
         msg = f"Parameter '{parameter}' is not defined in {class_name}"
         raise e.NotFoundError(msg)
 

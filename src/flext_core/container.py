@@ -826,11 +826,12 @@ class FlextContainer(p.DI):
                 service_type=dispatcher.__class__.__name__,
             )
             self._services[dispatcher_name] = registration
-            provider = FlextRuntime.DependencyIntegration.register_object(
-                self._di_services, dispatcher_name, dispatcher
-            )
-            setattr(self._di_bridge, dispatcher_name, provider)
-            setattr(self._di_container, dispatcher_name, provider)
+            if not hasattr(self._di_services, dispatcher_name):
+                provider = FlextRuntime.DependencyIntegration.register_object(
+                    self._di_services, dispatcher_name, dispatcher
+                )
+                setattr(self._di_bridge, dispatcher_name, provider)
+                setattr(self._di_container, dispatcher_name, provider)
 
     def register_existing_providers(self) -> None:
         """Hydrate the dynamic container with current registrations."""

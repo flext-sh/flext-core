@@ -730,19 +730,21 @@ class FlextDecorators:
                     retry_args: tuple[t.NormalizedValue | BaseModel, ...] = tuple(
                         FlextRuntime.normalize_to_container(a)
                         if isinstance(
-                            a, (str, int, float, bool, datetime, Path, BaseModel, list, dict)
+                            a, (str, int, float, bool, datetime, Path, BaseModel)
                         )
-                        else str(a) if a is not None else ""
+                        else str(a)
+                        if a is not None
+                        else ""
                         for a in args
                     )
                     retry_kwargs: dict[str, t.NormalizedValue | BaseModel] = {}
                     for key, value in kwargs.items():
                         if isinstance(
                             value,
-                            (str, int, float, bool, datetime, Path, BaseModel, list, dict),
+                            (str, int, float, bool, datetime, Path, BaseModel),
                         ):
-                            retry_kwargs[str(key)] = FlextRuntime.normalize_to_container(
-                                value
+                            retry_kwargs[str(key)] = (
+                                FlextRuntime.normalize_to_container(value)
                             )
                         elif value is not None:
                             retry_kwargs[str(key)] = str(value)
@@ -1002,7 +1004,11 @@ class FlextDecorators:
         first_arg = args[0] if args else None
         if isinstance(first_arg, FlextLogger):
             return first_arg
-        if first_arg is not None and FlextDecorators._has_flext_logger(first_arg):
+        if (
+            first_arg is not None
+            and isinstance(first_arg, BaseModel)
+            and FlextDecorators._has_flext_logger(first_arg)
+        ):
             return first_arg.logger
         return FlextLogger(func.__module__)
 
