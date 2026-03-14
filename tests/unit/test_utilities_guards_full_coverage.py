@@ -15,7 +15,9 @@ from flext_core import c, m, r, t, u
 from ._models import _Model
 
 
-def _is_type_obj(value: t.NormalizedValue, type_spec: str | type | tuple[type, ...]) -> bool:
+def _is_type_obj(
+    value: t.NormalizedValue, type_spec: str | type | tuple[type, ...]
+) -> bool:
     """Call is_type with arbitrary object for negative-case testing."""
     fn: Callable[[object, str | type | tuple[type, ...]], bool] = getattr(
         u,
@@ -97,7 +99,9 @@ def test_non_empty_and_normalize_branches() -> None:
     assert u.normalize_to_metadata_value("x") == "x"
     dict_scalar_out = u.normalize_to_metadata_value({"k": 1})
     assert dict_scalar_out == {"k": 1}
-    dict_complex_out = u.normalize_to_metadata_value(cast("t.NormalizedValue", {"k": object()}))
+    dict_complex_out = u.normalize_to_metadata_value(
+        cast("t.NormalizedValue", {"k": object()})
+    )
     assert isinstance(dict_complex_out, dict) and "k" in dict_complex_out
     list_out = u.normalize_to_metadata_value(cast("object", [1, object()]))
     assert isinstance(list_out, list)

@@ -18,7 +18,7 @@ from flext_tests import c, t, tb
 from tests.test_utils import assertion_helpers
 
 
-def _as_builder_dict(value) -> t.Tests.Builders.BuilderDict:
+def _as_builder_dict(value: t.Tests.object) -> t.Tests.Builders.BuilderDict:
     assert isinstance(value, Mapping)
     typed_mapping = cast("Mapping[str, t.Tests.object]", value)
     return cast("t.Tests.Builders.BuilderDict", dict(typed_mapping.items()))
@@ -31,7 +31,9 @@ def _as_builder_result(
     return cast("r[t.Tests.Builders.BuilderDict]", value)
 
 
-def _as_parametrized_cases(value) -> list[t.Tests.Builders.ParametrizedCase]:
+def _as_parametrized_cases(
+    value: t.Tests.object,
+) -> list[t.Tests.Builders.ParametrizedCase]:
     assert isinstance(value, list)
     return cast("list[t.Tests.Builders.ParametrizedCase]", value)
 
@@ -458,7 +460,7 @@ class TestFlextTestsBuilders:
             [("valid", "test@example.com"), ("invalid", "not-email")],
         )
         data = _as_builder_dict(builder.build())
-        cases = cast("list", data["cases"])
+        cases = cast("list[t.Tests.Builders.ParametrizedCase]", data["cases"])
         assert len(cases) == 2
 
     def test_batch_with_results(self) -> None:

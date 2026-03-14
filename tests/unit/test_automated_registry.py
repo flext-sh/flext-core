@@ -24,7 +24,7 @@ class _ProcessCapable(Protocol):
 
 @runtime_checkable
 class _ExecuteCapable(Protocol):
-    def execute(self) -> None: ...
+    def execute(self) -> FlextResult[bool]: ...
 
 
 @runtime_checkable
@@ -169,15 +169,15 @@ class TestAutomatedFlextRegistry:
         For now, it provides a generic implementation that can be adapted.
         """
         try:
-            if isinstance(instance, _ProcessCapable):
+            is_process = isinstance(instance, _ProcessCapable)
+            is_execute = isinstance(instance, _ExecuteCapable)
+            is_handle = isinstance(instance, _HandleCapable)
+            if is_process:
                 instance.process(input_data)
-                return r[bool].ok(True)
-            if isinstance(instance, _ExecuteCapable):
+            elif is_execute:
                 instance.execute()
-                return r[bool].ok(True)
-            if isinstance(instance, _HandleCapable):
+            elif is_handle:
                 instance.handle(input_data)
-                return r[bool].ok(True)
             return r[bool].ok(True)
         except Exception as e:
             return r[bool].fail(f"FlextRegistry operation failed: {e}")

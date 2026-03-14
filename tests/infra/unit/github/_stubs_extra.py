@@ -235,23 +235,23 @@ class StubUtilities:
         _git_branch_returns: r[str] | None = None
 
         @classmethod
-        def git_current_branch(cls, *_a, **_kw: t.Scalar) -> r[str]:
+        def git_current_branch(cls, *_a: t.Scalar, **_kw: t.Scalar) -> r[str]:
             return cls._git_branch_returns or r[str].ok("feature")
 
         @classmethod
-        def git_has_changes(cls, *_a, **_kw: t.Scalar) -> r[bool]:
+        def git_has_changes(cls, *_a: t.Scalar, **_kw: t.Scalar) -> r[bool]:
             return r[bool].ok(True)
 
         @classmethod
-        def git_checkout(cls, *_a, **_kw: t.Scalar) -> r[bool]:
+        def git_checkout(cls, *_a: t.Scalar, **_kw: t.Scalar) -> r[bool]:
             return r[bool].ok(True)
 
         @classmethod
-        def git_add(cls, *_a, **_kw: t.Scalar) -> r[bool]:
+        def git_add(cls, *_a: t.Scalar, **_kw: t.Scalar) -> r[bool]:
             return r[bool].ok(True)
 
         @classmethod
-        def git_commit(cls, *_a, **_kw: t.Scalar) -> r[bool]:
+        def git_commit(cls, *_a: t.Scalar, **_kw: t.Scalar) -> r[bool]:
             return r[bool].ok(True)
 
 

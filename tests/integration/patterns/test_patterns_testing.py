@@ -152,7 +152,9 @@ class MockScenario:
         )
         priority_data = data.get("priority")
         self.priority = _to_string(
-            priority_data if isinstance(priority_data, (str, int, float, bool, datetime, Path)) else None,
+            priority_data
+            if isinstance(priority_data, (str, int, float, bool, datetime, Path))
+            else None,
             default="normal",
         )
 
@@ -209,7 +211,10 @@ class GivenWhenThenBuilder:
 
     def build(self) -> MockScenario:
         """Build the final mock scenario object."""
-        data: dict[str, FlextTypes.Container | Mapping[str, FlextTypes.Container] | Sequence[str]] = {
+        data: dict[
+            str,
+            FlextTypes.Container | Mapping[str, FlextTypes.Container] | Sequence[str],
+        ] = {
             "given": self._given,
             "when": self._when,
             "then": self._then,

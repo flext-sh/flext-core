@@ -93,9 +93,7 @@ def test_unwrap_item_toml_item(doc: TOMLDocument) -> None:
         (tomlkit.item(42), []),
     ],
 )
-def test_as_string_list(
-    value: tomlkit.items.Item | None, expected: list[str]
-) -> None:
+def test_as_string_list(value: tomlkit.items.Item | None, expected: list[str]) -> None:
     tm.that(as_string_list(value), eq=expected)
 
 

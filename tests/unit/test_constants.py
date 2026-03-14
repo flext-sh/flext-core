@@ -25,7 +25,7 @@ from typing import Annotated, ClassVar
 import pytest
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_tests import c, tm, u
+from flext_tests import c, t as test_t, tm, u
 
 
 class ConstantPathScenario(BaseModel):
@@ -238,7 +238,7 @@ class TestFlextConstants:
     )
     def test_type_safety_constant_types(
         self,
-        value,
+        value: test_t.Tests.object,
         expected_type: type,
     ) -> None:
         """Test that constants have correct types."""

@@ -24,15 +24,15 @@ if TYPE_CHECKING:
 _CLS = FlextInfraReleaseOrchestrator
 
 
-def _noop_branches(*args, **kwargs: t.Scalar) -> r[bool]:
+def _noop_branches(*args: t.Scalar, **kwargs: t.Scalar) -> r[bool]:
     return r[bool].ok(True)
 
 
-def _noop_dispatch(*args, **kwargs: t.Scalar) -> r[bool]:
+def _noop_dispatch(*args: t.Scalar, **kwargs: t.Scalar) -> r[bool]:
     return r[bool].ok(True)
 
 
-def _noop_bump(*args, **kwargs: t.Scalar) -> r[bool]:
+def _noop_bump(*args: t.Scalar, **kwargs: t.Scalar) -> r[bool]:
     return r[bool].ok(True)
 
 

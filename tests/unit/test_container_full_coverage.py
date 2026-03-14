@@ -598,7 +598,9 @@ def test_container_remaining_branch_paths_in_sync_factory_and_getters(
     # n1 is NOT registered in FlextSettings, so get_namespace_config returns None
     # and sync_config_to_di skips it (continue branch).
     class _CfgNoMethod(_FalseConfig):
-        _namespace_registry: ClassVar[dict[str, type[_BaseSettings]]] = {"n1": _BaseSettings}
+        _namespace_registry: ClassVar[dict[str, type[_BaseSettings]]] = {
+            "n1": _BaseSettings
+        }
 
     c._config = _CfgNoMethod()
     c.sync_config_to_di()
@@ -617,13 +619,19 @@ def test_container_remaining_branch_paths_in_sync_factory_and_getters(
     try:
 
         class _CfgFallback(_FalseConfig):
-            _namespace_registry: ClassVar[dict[str, type[_BaseSettings]]] = {"n2": _NsModel}
+            _namespace_registry: ClassVar[dict[str, type[_BaseSettings]]] = {
+                "n2": _NsModel
+            }
 
         class _CfgBadNamespace(_FalseConfig):
-            _namespace_registry: ClassVar[dict[str, type[_BaseSettings]]] = {"n3": _NsModel}
+            _namespace_registry: ClassVar[dict[str, type[_BaseSettings]]] = {
+                "n3": _NsModel
+            }
 
         class _CfgGoodNamespace(_FalseConfig):
-            _namespace_registry: ClassVar[dict[str, type[_BaseSettings]]] = {"n4": _NsModel}
+            _namespace_registry: ClassVar[dict[str, type[_BaseSettings]]] = {
+                "n4": _NsModel
+            }
 
         c._config = _CfgFallback()
         captured: dict[str, Callable[..., object]] = {}

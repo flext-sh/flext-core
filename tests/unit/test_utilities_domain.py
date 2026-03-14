@@ -66,7 +66,10 @@ def _convert_to_general_value(obj: object) -> t.Tests.object:
     if isinstance(obj, (list, tuple)):
         return cast(
             "t.Tests.object",
-            [_convert_to_general_value(elem) for elem in cast("list[t.Tests.object]", obj)],
+            [
+                _convert_to_general_value(elem)
+                for elem in cast("list[t.Tests.object]", obj)
+            ],
         )
     return str(obj)
 

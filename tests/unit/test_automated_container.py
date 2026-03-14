@@ -6,7 +6,7 @@ type-system-architecture.md rules with real functionality testing.
 
 from __future__ import annotations
 
-from collections.abc import Container, Mapping
+from collections.abc import Mapping
 
 import pytest
 
@@ -105,7 +105,7 @@ class TestAutomatedFlextContainer:
         """Test performance characteristics of container."""
         instance = fixture_factory.create_test_container_instance()
 
-        def operation() -> FlextResult[Container]:
+        def operation() -> FlextResult[t.Container]:
             return self._execute_container_operation(
                 instance,
                 {"performance_test": True},

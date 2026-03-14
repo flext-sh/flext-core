@@ -302,7 +302,9 @@ class ChunkScenario(BaseModel):
         ),
     ]
     size: Annotated[int, Field(description="Chunk size")]
-    expected_result: Annotated[list[list[int]], Field(description="Expected chunked output")]
+    expected_result: Annotated[
+        list[list[int]], Field(description="Expected chunked output")
+    ]
 
 
 class BatchScenario(BaseModel):

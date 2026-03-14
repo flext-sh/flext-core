@@ -4,10 +4,8 @@ from __future__ import annotations
 
 import argparse
 from collections.abc import Callable
-from typing import Annotated
 
 import pytest
-from pydantic import BaseModel, Field
 
 from flext_core import r, t
 from flext_infra.docs import __main__ as docs_main
@@ -16,17 +14,16 @@ from flext_infra.docs.builder import FlextInfraDocBuilder
 from flext_infra.docs.generator import FlextInfraDocGenerator
 from flext_infra.docs.validator import FlextInfraDocValidator
 from flext_tests import tm
+from tests.infra.models import m
 
-
-class _Report(BaseModel):
-    result: Annotated[str, Field(default="OK")]
+_R = m.Infra.Docs.DocsPhaseReport
 
 
 def _cli_args(
-    extra_defaults: dict[str, object | None],
+    extra_defaults: dict[str, t.Scalar | None],
     **overrides: t.Scalar,
 ) -> argparse.Namespace:
-    defaults: dict[str, object | None] = {
+    defaults: dict[str, t.Scalar | None] = {
         "root": ".",
         "project": None,
         "projects": None,
@@ -49,12 +46,12 @@ def _val_args(**overrides: t.Scalar) -> argparse.Namespace:
     return _cli_args({"check": "all", "apply": False}, **overrides)
 
 
-def _stub_ok(val: list) -> Callable[..., r[list]]:
-    return lambda *_a, **_kw: r[list].ok(val)
+def _stub_ok(val: list[_R]) -> Callable[..., r[list[_R]]]:
+    return lambda *_a, **_kw: r[list[_R]].ok(val)
 
 
-def _stub_fail(err: str) -> Callable[..., r[list]]:
-    return lambda *_a, **_kw: r[list].fail(err)
+def _stub_fail(err: str) -> Callable[..., r[list[_R]]]:
+    return lambda *_a, **_kw: r[list[_R]].fail(err)
 
 
 _SILENT_OUTPUT = type("O", (), {"error": staticmethod(lambda *a: None)})()
@@ -64,14 +61,14 @@ class TestRunBuild:
     def test_run_build_success_no_failures(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        report = _Report(result="OK")
+        report = _R(phase="test", scope="test", result="OK")
         monkeypatch.setattr(FlextInfraDocBuilder, "build", _stub_ok([report]))
         tm.that(_run_build(_build_args()), eq=0)
 
     def test_run_build_success_with_failures(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        report = _Report(result="FAIL")
+        report = _R(phase="test", scope="test", result="FAIL")
         monkeypatch.setattr(FlextInfraDocBuilder, "build", _stub_ok([report]))
         tm.that(_run_build(_build_args()), eq=1)
 
@@ -98,9 +95,9 @@ class TestRunGenerate:
     ) -> None:
         captured_kwargs: dict[str, t.Scalar] = {}
 
-        def mock_gen(*_a, **kw: t.Scalar) -> r[list]:
+        def mock_gen(*_a: t.Scalar, **kw: t.Scalar) -> r[list[_R]]:
             captured_kwargs.update(kw)
-            return r[list].ok([])
+            return r[list[_R]].ok([])
 
         monkeypatch.setattr(FlextInfraDocGenerator, "generate", mock_gen)
         _run_generate(_gen_args(apply=True))
@@ -111,14 +108,14 @@ class TestRunValidate:
     def test_run_validate_success_no_failures(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        report = _Report(result="OK")
+        report = _R(phase="test", scope="test", result="OK")
         monkeypatch.setattr(FlextInfraDocValidator, "validate", _stub_ok([report]))
         tm.that(_run_validate(_val_args()), eq=0)
 
     def test_run_validate_success_with_failures(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        report = _Report(result="FAIL")
+        report = _R(phase="test", scope="test", result="FAIL")
         monkeypatch.setattr(FlextInfraDocValidator, "validate", _stub_ok([report]))
         tm.that(_run_validate(_val_args()), eq=1)
 
@@ -134,9 +131,9 @@ class TestRunValidate:
     ) -> None:
         captured_kwargs: dict[str, t.Scalar] = {}
 
-        def mock_val(*_a, **kw: t.Scalar) -> r[list]:
+        def mock_val(*_a: t.Scalar, **kw: t.Scalar) -> r[list[_R]]:
             captured_kwargs.update(kw)
-            return r[list].ok([])
+            return r[list[_R]].ok([])
 
         monkeypatch.setattr(FlextInfraDocValidator, "validate", mock_val)
         _run_validate(_val_args(check="links"))

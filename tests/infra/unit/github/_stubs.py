@@ -13,7 +13,7 @@ from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Annotated, ClassVar, override
 
-from pydantic import Field
+from pydantic import Field, JsonValue
 
 from flext_core import FlextModels, r
 from flext_infra import (
@@ -156,7 +156,7 @@ class StubJsonIo(FlextInfraUtilitiesIo):
     @override
     def write_json(
         path: Path,
-        payload,
+        payload: JsonValue | Mapping[str, JsonValue] | Sequence[JsonValue],
         *,
         sort_keys: bool = False,
         ensure_ascii: bool = False,

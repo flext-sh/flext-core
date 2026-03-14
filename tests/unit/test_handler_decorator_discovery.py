@@ -237,7 +237,7 @@ class TestHandlerDecoratorMetadata:
     def test_decorator_preserves_function_identity(self) -> None:
         """Decorator should return the same function (pass-through)."""
 
-        def original_handler(self, cmd: UserCreateCommand) -> r[str]:
+        def original_handler(self: FlextService, cmd: UserCreateCommand) -> r[str]:
             return r[str].ok("handled")
 
         decorated = _test_handler(command=UserCreateCommand)(original_handler)
@@ -500,7 +500,7 @@ class TestHandlerDiscoveryEdgeCases:
         class TestService:
             @_test_handler(command=UserCreateCommand, priority=10)
             @_test_handler(command=UserDeleteCommand, priority=20)
-            def handle(self, cmd) -> r[str]:
+            def handle(self, cmd: UserDeleteCommand) -> r[str]:
                 return r[str].ok("ok")
 
         method = TestService.handle

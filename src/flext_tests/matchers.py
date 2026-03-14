@@ -58,7 +58,7 @@ import warnings
 from collections.abc import Iterator, Mapping, MutableMapping, Sequence, Sized
 from contextlib import contextmanager
 from pathlib import Path
-from typing import TypeGuard, overload
+from typing import TypeGuard, cast, overload
 
 from pydantic import BaseModel, RootModel, TypeAdapter, ValidationError
 
@@ -72,11 +72,15 @@ _GUARD_PAYLOAD_DICT_ADAPTER = TypeAdapter(dict[str, t.Tests.object])
 _GUARD_PAYLOAD_LIST_ADAPTER = TypeAdapter(list[t.Tests.object])
 
 
-def _is_non_string_sequence(value: t.Tests.Matcher.MatcherKwargValue | None) -> TypeGuard[Sequence[t.Tests.object]]:
+def _is_non_string_sequence(
+    value: t.Tests.Matcher.MatcherKwargValue | t.Tests.object | None,
+) -> TypeGuard[Sequence[t.Tests.object]]:
     return isinstance(value, Sequence) and (not isinstance(value, str | bytes))
 
 
-def _to_test_payload(value: t.Tests.Matcher.MatcherKwargValue | None) -> t.Tests.object:
+def _to_test_payload(
+    value: t.Tests.Matcher.MatcherKwargValue | t.Tests.object | None,
+) -> t.Tests.object:
     if value is None or isinstance(value, (str, int, float, bool, bytes, BaseModel)):
         return value
     if isinstance(value, Mapping):
@@ -94,7 +98,9 @@ def _to_test_payload(value: t.Tests.Matcher.MatcherKwargValue | None) -> t.Tests
     return str(value)
 
 
-def _as_guard_input(value: t.Tests.Matcher.MatcherKwargValue | None) -> t.Tests.object:
+def _as_guard_input(
+    value: t.Tests.Matcher.MatcherKwargValue | t.Tests.object | None,
+) -> t.Tests.object:
     if isinstance(value, BaseModel | str | int | float | bool | Path):
         return value
     if value is None:
@@ -117,7 +123,7 @@ def _as_guard_input(value: t.Tests.Matcher.MatcherKwargValue | None) -> t.Tests.
 
 
 def _check_has_lacks(
-    value: t.Tests.Matcher.MatcherKwargValue | None,
+    value: t.Tests.Matcher.MatcherKwargValue | t.Tests.object | None,
     has: t.Tests.Matcher.MatcherKwargValue | None,
     lacks: t.Tests.Matcher.MatcherKwargValue | None,
     msg: str | None,
@@ -465,7 +471,9 @@ class FlextTestsMatchers:
             raise AssertionError(
                 params.msg or c.Tests.Matcher.ERR_OK_FAILED.format(error=result.error)
             )
-        result_value: TResult | t.Tests.object = result.value
+        result_value: t.Tests.Matcher.MatcherKwargValue = cast(
+            "t.Tests.Matcher.MatcherKwargValue", result.value
+        )
         extracted_payload: t.Tests.object | None = None
         if params.path is not None:
             if isinstance(params.path, str):
@@ -562,7 +570,7 @@ class FlextTestsMatchers:
                 )
             )
         _check_has_lacks(result_value, params.has, params.lacks, params.msg)
-        result_value_obj = result.value if params.path is None else result_value
+        result_value_obj = result_value if params.path is None else result_value
         result_payload = _to_test_payload(result_value_obj)
         if params.len is not None and (
             not u.Tests.Length.validate(result_payload, params.len)
@@ -606,9 +614,13 @@ class FlextTestsMatchers:
                     )
                 )
         if params.path is None:
-            result_payload = _to_test_payload(result.value)
+            result_payload = _to_test_payload(
+                cast("t.Tests.Matcher.MatcherKwargValue", result.value)
+            )
         else:
-            result_payload = extracted_payload or _to_test_payload(result.value)
+            result_payload = extracted_payload or _to_test_payload(
+                cast("t.Tests.Matcher.MatcherKwargValue", result.value)
+            )
         if params.where is not None and (not params.where(result_payload)):
             raise AssertionError(
                 params.msg
@@ -725,7 +737,10 @@ class FlextTestsMatchers:
                         )
 
     @staticmethod
-    def that(value: t.Tests.Matcher.MatcherKwargValue, **kwargs: t.Tests.Matcher.MatcherKwargValue) -> None:
+    def that(
+        value: t.Tests.Matcher.MatcherKwargValue,
+        **kwargs: t.Tests.Matcher.MatcherKwargValue,
+    ) -> None:
         r"""Super-powered universal value assertion - ALL validations in ONE method.
 
         This is the PRIMARY assertion method. All other assertion methods
@@ -1068,7 +1083,7 @@ class FlextTestsMatchers:
                 elif callable(sorted_param):
                     user_key_fn = sorted_param
 
-                    def comparable_key(x) -> tuple[str, str]:
+                    def comparable_key(x: t.Tests.object) -> tuple[str, str]:
                         """Wrap user key to return comparable tuple."""
                         result = user_key_fn(_to_test_payload(x))
                         type_name = type(result).__name__
@@ -1095,7 +1110,7 @@ class FlextTestsMatchers:
             except ValidationError:
                 pass
             if params.keys is not None:
-                key_set: set = set(params.keys)
+                key_set: set[str] = set(params.keys)
                 missing = key_set - set(mapping_value.keys())
                 if missing:
                     raise AssertionError(
@@ -1103,7 +1118,7 @@ class FlextTestsMatchers:
                         or c.Tests.Matcher.ERR_KEYS_MISSING.format(keys=list(missing))
                     )
             if params.lacks_keys is not None:
-                lacks_key_set: set = set(params.lacks_keys)
+                lacks_key_set: set[str] = set(params.lacks_keys)
                 present = lacks_key_set & set(mapping_value.keys())
                 if present:
                     raise AssertionError(

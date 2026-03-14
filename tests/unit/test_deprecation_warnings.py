@@ -20,6 +20,7 @@ import pytest
 from flext_core import FlextRuntime, FlextUtilities, m
 from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core._utilities.mapper import FlextUtilitiesMapper
+from flext_tests import t as test_t
 
 pytestmark = [pytest.mark.unit]
 
@@ -53,7 +54,15 @@ class TestRuntimeDeprecatedNormalizeMethods:
 
     def test_normalize_to_general_value_functional_equivalence(self) -> None:
         """Deprecated path must return same result as non-deprecated path."""
-        test_cases: list = ["str", 42, math.pi, True, None, {"k": "v"}, [1, 2]]
+        test_cases: list[test_t.Tests.object] = [
+            "str",
+            42,
+            math.pi,
+            True,
+            None,
+            {"k": "v"},
+            [1, 2],
+        ]
         for val in test_cases:
             with warnings.catch_warnings(record=True):
                 warnings.simplefilter("always")

@@ -93,7 +93,7 @@ class _ErrorsModel(BaseModel):
     @override
     def model_validate(
         cls,
-        obj,
+        obj: t.Tests.object,
         *,
         strict: bool | None = None,
         extra: str | None = None,
@@ -114,7 +114,7 @@ class _PlainErrorModel(BaseModel):
     @override
     def model_validate(
         cls,
-        obj,
+        obj: t.Tests.object,
         *,
         strict: bool | None = None,
         extra: str | None = None,

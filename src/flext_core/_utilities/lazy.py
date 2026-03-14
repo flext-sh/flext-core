@@ -12,8 +12,10 @@ from __future__ import annotations
 import importlib
 import sys
 from collections.abc import Mapping
+from typing import TYPE_CHECKING
 
-from flext_core.typings import t
+if TYPE_CHECKING:
+    from flext_core.typings import t
 
 
 def lazy_getattr(

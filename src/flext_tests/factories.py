@@ -341,7 +341,10 @@ class FlextTestsFactories(s[t.Tests.object]):
 
         """
         try:
-            validate_data: dict[str, t.Tests.object | type[T]] = {"type_": type_, **kwargs}
+            validate_data: dict[str, t.Tests.object | type[T]] = {
+                "type_": type_,
+                **kwargs,
+            }
             if "kwargs" in validate_data:
                 validate_data["call_kwargs"] = validate_data.pop("kwargs")
             params = m.Tests.GenericFactoryParams.model_validate(validate_data)

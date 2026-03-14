@@ -52,7 +52,9 @@ class TestFormattingRunRuffFix:
         target.write_text("x=1\n", encoding="utf-8")
         calls: list[list[str]] = []
 
-        def _raise_missing(_self: FlextInfraUtilitiesSubprocess, cmd: list[str]) -> None:
+        def _raise_missing(
+            _self: FlextInfraUtilitiesSubprocess, cmd: list[str]
+        ) -> None:
             calls.append(cmd)
             msg = "ruff not found"
             raise FileNotFoundError(msg)

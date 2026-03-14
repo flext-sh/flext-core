@@ -174,10 +174,7 @@ def test_parser_pipeline_and_pattern_branches(monkeypatch: pytest.MonkeyPatch) -
     assert "<object object" in parser3.get_object_key(
         object(),
     )
-    assert (
-        parser3.get_object_key(_OddNoStr())
-        == "_OddNoStr"
-    )
+    assert parser3.get_object_key(_OddNoStr()) == "_OddNoStr"
     invalid_type = parser3._extract_pattern_components(
         cast("tuple[str, str, int]", cast("object", ("a", 1, 0))),
     )

@@ -109,7 +109,9 @@ class _ContainerForLogger:
         self.factories: dict[str, t.Tests.object] = {}
         self.register_calls: list[tuple[str, str]] = []
 
-    def get_typed(self, _key: str, _tp: type[t.Container | BaseModel]) -> r[t.Container | BaseModel]:
+    def get_typed(
+        self, _key: str, _tp: type[t.Container | BaseModel]
+    ) -> r[t.Container | BaseModel]:
         if self.success:
             return r[t.Container | BaseModel].ok(self.logger or "logger")
         return r[t.Container | BaseModel].fail("missing")
@@ -506,7 +508,9 @@ def test_mixins_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> None:
     assert isinstance(logger_obj, FlextLogger)
 
     class _BrokenContainer:
-        def get_typed(self, _key: str, _tp: type[t.Container | BaseModel]) -> r[t.Container | BaseModel]:
+        def get_typed(
+            self, _key: str, _tp: type[t.Container | BaseModel]
+        ) -> r[t.Container | BaseModel]:
             msg = "boom"
             raise RuntimeError(msg)
 

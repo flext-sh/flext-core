@@ -572,7 +572,8 @@ def _generate_file(
     if docstring_source:
         out.extend([docstring_source, ""])
 
-    if current_pkg == c.Infra.Packages.CORE_UNDERSCORE:
+    is_core_internal = current_pkg.startswith(c.Infra.Packages.CORE_UNDERSCORE + ".")
+    if current_pkg == c.Infra.Packages.CORE_UNDERSCORE or is_core_internal:
         lazy_import = (
             "from flext_core._utilities.lazy import"
             " cleanup_submodule_namespace, lazy_getattr"

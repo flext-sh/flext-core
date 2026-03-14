@@ -79,7 +79,9 @@ class _TakeCallable(Protocol):
 
 
 class _BuildApplyConvertCallable(Protocol):
-    def __call__(self, current: tuple[str, ...] | str | int, operations: Mapping[str, object]) -> None: ...
+    def __call__(
+        self, current: tuple[str, ...] | str | int, operations: Mapping[str, object]
+    ) -> None: ...
 
 
 class _ExtractTransformOptionsCallable(Protocol):
@@ -87,11 +89,17 @@ class _ExtractTransformOptionsCallable(Protocol):
 
 
 class _BuildApplyOpCallable(Protocol):
-    def __call__(self, current: tuple[str, str] | tuple[int, int, int] | list[_GroupModel], operations: Mapping[str, object]) -> None: ...
+    def __call__(
+        self,
+        current: tuple[str, str] | tuple[int, int, int] | list[_GroupModel],
+        operations: Mapping[str, object],
+    ) -> None: ...
 
 
 class _TransformCallable(Protocol):
-    def __call__(self, source: BadMapping, **kwargs: Mapping[str, str]) -> r[Mapping[str, t.NormalizedValue]]: ...
+    def __call__(
+        self, source: BadMapping, **kwargs: Mapping[str, str]
+    ) -> r[Mapping[str, t.NormalizedValue]]: ...
 
 
 class _MapDictKeysCallable(Protocol):
@@ -112,7 +120,9 @@ class _BuildFlagsCallable(Protocol):
     ) -> r[Mapping[str, bool]]: ...
 
 
-def _at_obj(items: ExplodingLenList, index: int | str, *, default: int | None = None) -> None:
+def _at_obj(
+    items: ExplodingLenList, index: int | str, *, default: int | None = None
+) -> None:
     """Call Mapper.at with arbitrary object for error-path testing."""
     fn: _AtCallable = getattr(u, "at")
     return fn(items, index, default=default)
@@ -177,7 +187,9 @@ def _build_apply_group_obj(
     return fn(current, operations)
 
 
-def _transform_obj(source: BadMapping, **kwargs: Mapping[str, str]) -> r[Mapping[str, t.NormalizedValue]]:
+def _transform_obj(
+    source: BadMapping, **kwargs: Mapping[str, str]
+) -> r[Mapping[str, t.NormalizedValue]]:
     fn: _TransformCallable = getattr(u, "transform")
     return fn(source, **kwargs)
 
@@ -533,7 +545,15 @@ def test_filter_map_normalize_convert_helpers(mapper: type[u]) -> None:
 def test_convert_default_fallback_matrix(
     mapper: type[u],
     value: str | int,
-    convert_spec: type[int | float | list[t.Scalar] | dict[str, t.Scalar] | tuple[t.Scalar, ...] | set[t.Scalar]] | Callable[..., object],
+    convert_spec: type[
+        int
+        | float
+        | list[t.Scalar]
+        | dict[str, t.Scalar]
+        | tuple[t.Scalar, ...]
+        | set[t.Scalar]
+    ]
+    | Callable[..., object],
     expected: float | list[t.Scalar] | dict[str, t.Scalar] | tuple[t.Scalar, ...],
 ) -> None:
     operations = cast("Mapping[str, object]", {"convert": convert_spec})

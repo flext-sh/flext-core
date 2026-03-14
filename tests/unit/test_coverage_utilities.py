@@ -335,7 +335,7 @@ class Testu(TextUtilityContract):
     )
     def test_cache_normalize_component(
         self,
-        input_data,
+        input_data: t.Tests.object,
         expected_type: type,
     ) -> None:
         """Test cache component normalization."""

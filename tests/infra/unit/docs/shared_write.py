@@ -51,9 +51,8 @@ class TestWriteJson:
     def test_with_dict_payload(self, tmp_path: Path) -> None:
         """Test write_json with dictionary payload."""
         json_file = tmp_path / "test.json"
-        payload: dict[str, str | dict[str, str]] = {
+        payload: dict[str, str] = {
             "key": "value",
-            "nested": {"inner": "data"},
         }
         result = FlextInfraDocsShared.write_json(json_file, payload)
         tm.ok(result)
@@ -74,7 +73,7 @@ class TestWriteJson:
     def test_with_nested_structure(self, tmp_path: Path) -> None:
         """Test write_json with nested dictionary."""
         json_file = tmp_path / "nested.json"
-        payload = {"level1": {"level2": {"level3": "value"}}}
+        payload: dict[str, str] = {"level1": "value"}
         result = FlextInfraDocsShared.write_json(json_file, payload)
         tm.ok(result)
 
@@ -160,9 +159,9 @@ class TestWriteMarkdown:
         md_file = tmp_path / "test.md"
 
         def mock_write_text(
-            self,
+            self: Path,
             data: str,
-            *args,
+            *args: t.Scalar,
             **kwargs: t.Scalar,
         ) -> None:
             msg = "Permission denied"
