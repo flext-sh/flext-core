@@ -299,16 +299,16 @@ class FlextGenericModels:
         """
 
         converted: list[t.NormalizedValue | BaseModel] = Field(
-            default_factory=lambda: [], description="Converted items"
+            default_factory=list, description="Converted items"
         )
         errors: list[str] = Field(
-            default_factory=lambda: [], description="Error messages"
+            default_factory=list, description="Error messages"
         )
         warnings: list[str] = Field(
-            default_factory=lambda: [], description="Warning messages"
+            default_factory=list, description="Warning messages"
         )
         skipped: list[t.NormalizedValue | BaseModel] = Field(
-            default_factory=lambda: [], description="Skipped items"
+            default_factory=list, description="Skipped items"
         )
         start_time: Annotated[
             datetime | None, Field(default=None, description="Start time")
@@ -382,9 +382,13 @@ class FlextGenericModels:
             if key not in self.metadata.root:
                 self.metadata.root[key] = []
             raw_items = self.metadata.root.get(key, [])
-            items = raw_items if isinstance(raw_items, list) else []
-            items.append(item)
-            self.metadata.root[key] = items
+            normalized_item: t.NormalizedValue = (
+                item if not isinstance(item, BaseModel) else str(item)
+            )
+            if isinstance(raw_items, list):
+                raw_items.append(normalized_item)
+            else:
+                self.metadata.root[key] = [normalized_item]
 
         def _upsert_skip_reason(
             self, item: t.NormalizedValue | BaseModel, reason: str

@@ -11,6 +11,7 @@ from __future__ import annotations
 from collections.abc import Callable, Hashable, Mapping, Sequence
 from datetime import datetime
 from enum import StrEnum
+from pathlib import Path
 from typing import TypeGuard, overload
 
 from pydantic import ValidationError
