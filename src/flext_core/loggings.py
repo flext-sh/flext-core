@@ -672,6 +672,10 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
     ) -> t.Scalar:
         if value is None:
             return ""
+        if isinstance(value, Exception):
+            return str(value)
+        if isinstance(value, (list, tuple, dict, Mapping)):
+            return str(value)
         if u.is_scalar(value):
             return value
         return str(value)
