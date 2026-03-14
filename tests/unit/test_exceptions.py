@@ -651,7 +651,7 @@ class Teste:
 
     def test_exception_serialization(self) -> None:
         """Test exception serialization to dict."""
-        metadata_obj = u.Tests.ExceptionHelpers.create_metadata_object({
+        u.Tests.ExceptionHelpers.create_metadata_object({
             "field": "email",
             "value": "invalid",
         })
