@@ -220,7 +220,7 @@ class FlextInfraUtilitiesRefactor:
             raise ValueError(msg) from None
 
     @staticmethod
-    def string_list(value: t.Infra.InfraValue | None) -> list[str]:
+    def string_list(value: object | None) -> list[str]:
         """Normalize policy fields that should contain string collections."""
         if value is None:
             return []
@@ -244,8 +244,8 @@ class FlextInfraUtilitiesRefactor:
 
     @staticmethod
     def mapping_list(
-        value: t.Infra.InfraValue | None,
-    ) -> list[dict[str, t.Infra.InfraValue]]:
+        value: object | None,
+    ) -> list[dict[str, object]]:
         """Normalize policy fields that should contain mapping collections."""
         if value is None:
             return []
@@ -266,7 +266,7 @@ class FlextInfraUtilitiesRefactor:
 
     @staticmethod
     def has_required_fields(
-        entry: t.Infra.InfraValue,
+        entry: object,
         required_fields: list[str],
     ) -> bool:
         if not isinstance(entry, dict):

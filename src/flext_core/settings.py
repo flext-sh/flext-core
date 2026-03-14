@@ -169,7 +169,7 @@ class FlextSettings(BaseSettings, FlextRuntime):
     max_batch_size: Annotated[
         int, Field(default=c.Performance.MAX_BATCH_SIZE, description="Max batch size")
     ]
-    api_key: Annotated[str | None, Field(default=None, description="API key")] = None
+    api_key: Annotated[str | None, Field(default=None, description="API key")]
     exception_failure_level: Annotated[
         c.Exceptions.FailureLevel,
         Field(
@@ -510,7 +510,7 @@ class FlextSettings(BaseSettings, FlextRuntime):
             msg = f"Namespace '{namespace}' not registered"
             raise ValueError(msg)
         config_instance = config_class_raw()
-        if isinstance(config_instance, config_type):
+        if u.is_instance_of(config_instance, config_type):
             return config_instance
         msg = f"Namespace '{namespace}' config instance {config_instance.__class__.__name__} is not instance of {config_type.__name__}"
         raise TypeError(msg)

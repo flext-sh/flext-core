@@ -187,7 +187,7 @@ class FlextModelsContext:
 
             Architecture:
                 structlog.contextvars.get_contextvars() returns a mapping;
-                we control stored values via set(). Key presence
+                we control stored values via set() (Any). Key presence
                 is checked then the value is returned; T is bounded to Any.
 
             """
@@ -376,11 +376,11 @@ class FlextModelsContext:
             None.
             """
             working_value: dict[str, t.NormalizedValue]
-            normalized_mapping: Mapping[str, t.NormalizedValue | BaseModel]
+            normalized_mapping: Mapping[str, t.NormalizedValue]
             if v is None:
                 return {}
             if isinstance(v, FlextModelFoundation.Metadata):
-                normalized_metadata: dict[str, t.NormalizedValue | BaseModel] = {
+                normalized_metadata = {
                     key: FlextRuntime.normalize_to_container(value)
                     for key, value in v.attributes.items()
                 }
@@ -500,11 +500,11 @@ class FlextModelsContext:
             None.
             """
             working_value: dict[str, t.NormalizedValue]
-            normalized_mapping: Mapping[str, t.NormalizedValue | BaseModel]
+            normalized_mapping: Mapping[str, t.NormalizedValue]
             if v is None:
                 return {}
             if isinstance(v, FlextModelFoundation.Metadata):
-                normalized_metadata: dict[str, t.NormalizedValue | BaseModel] = {
+                normalized_metadata = {
                     key: FlextRuntime.normalize_to_container(value)
                     for key, value in v.attributes.items()
                 }

@@ -17,7 +17,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping
 from types import ModuleType
-from typing import ClassVar, Unpack, override
+from typing import Any, ClassVar, Unpack, override
 
 from pydantic import BaseModel, ConfigDict
 
@@ -452,10 +452,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
             return r[FlextModelsContainers.ConfigMap].ok(context_dict)
         return r[FlextModelsContainers.ConfigMap].ok(popped)
 
-    def push_context(
-        self,
-        ctx: m.ExecutionContext | Mapping[str, t.NormalizedValue | BaseModel],
-    ) -> r[bool]:
+    def push_context(self, ctx: m.ExecutionContext | Mapping[str, Any]) -> r[bool]:
         """Push execution context onto the local handler stack."""
         if isinstance(ctx, m.ExecutionContext):
             self._stack.append(ctx)
@@ -521,8 +518,13 @@ class FlextHandlers[MessageT_contra, ResultT](x):
             return r[bool].fail("Message cannot be None")
         return r[bool].ok(value=True)
 
-    def validate(self, value: MessageT_contra) -> r[bool]:
-        """Validate input — override in subclasses for domain-specific logic."""
+    @override
+    def validate(self, value: MessageT_contra) -> r[bool]:  # type: ignore[override]
+        """Validate input — override in subclasses for domain-specific logic.
+
+        Note: This is a domain-specific instance method for handler validation logic,
+        separate from BaseModel.validate (which is a classmethod).
+        """
         return self.validate_message(value)
 
     def _record_execution_metrics(
@@ -689,13 +691,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
         @staticmethod
         def scan_module(
             module: ModuleType,
-        ) -> list[
-            tuple[
-                str,
-                Callable[..., t.Scalar | None],
-                m.DecoratorConfig,
-            ]
-        ]:
+        ) -> list[tuple[str, Callable[..., Any | None], m.DecoratorConfig]]:
             """Scan module for functions decorated with @handler().
 
             Introspects the module to find all functions with handler configuration

@@ -54,7 +54,7 @@ class FlextInfraUtilitiesToml:
         return FlextInfraUtilitiesToml._CONTAINER_LIST_ADAPTER
 
     @staticmethod
-    def as_toml_mapping(value: t.Container) -> t.Infra.ContainerDict | None:
+    def as_toml_mapping(value: object) -> t.Infra.ContainerDict | None:
         """Check if value is a MutableMapping and return it typed, otherwise None."""
         if not isinstance(value, dict):
             return None
@@ -66,14 +66,17 @@ class FlextInfraUtilitiesToml:
             )
         except ValidationError:
             return None
-        return normalized_value
+        result: t.Infra.ContainerDict = {
+            str(key): normalized_value[key] for key in normalized_value
+        }
+        return result
 
     @staticmethod
     def normalize_container_value(
-        value: t.Container | Item | TOMLDocument | t.Infra.ContainerDict | None,
-    ) -> t.Container | t.Infra.ContainerDict | None:
+        value: object | Item | TOMLDocument | dict[str, object] | None,
+    ) -> object | None:
         """Normalize TOML items/documents to a concrete container value."""
-        normalized: t.Container | Item | t.Infra.ContainerDict | None = value
+        normalized: object | Item | dict[str, object] | None = value
         if isinstance(value, (TOMLDocument, Item)):
             normalized = value.unwrap()
         if isinstance(normalized, Item):
@@ -82,8 +85,8 @@ class FlextInfraUtilitiesToml:
 
     @staticmethod
     def as_container_list(
-        value: t.Container | Item | None,
-    ) -> list[t.Container]:
+        value: object | Item | None,
+    ) -> list[object]:
         """Validate and normalize list-like values to typed container list."""
         normalized = FlextInfraUtilitiesToml.normalize_container_value(value)
         if normalized is None:
@@ -99,13 +102,13 @@ class FlextInfraUtilitiesToml:
 
     @staticmethod
     def unwrap_item(
-        value: t.Container | Item | None,
-    ) -> t.Container | t.Infra.ContainerDict | None:
+        value: object | Item | None,
+    ) -> object | None:
         """Unwrap a tomlkit Item to get the underlying value."""
         return FlextInfraUtilitiesToml.normalize_container_value(value)
 
     @staticmethod
-    def as_string_list(value: t.Container | Item | None) -> list[str]:
+    def as_string_list(value: object | Item | None) -> list[str]:
         """Convert TOML value to list of strings."""
         normalized = FlextInfraUtilitiesToml.normalize_container_value(value)
         if normalized is None or isinstance(normalized, str):
@@ -138,7 +141,7 @@ class FlextInfraUtilitiesToml:
         promote it to an explicit table so that tomlkit serializes sub-tables
         under the correct parent path instead of creating bare top-level sections.
         """
-        existing: t.Container | Item | None = None
+        existing: object | None = None
         if key in parent:
             existing = parent[key]
         if isinstance(existing, Table):
@@ -157,10 +160,12 @@ class FlextInfraUtilitiesToml:
     @staticmethod
     def get(
         container: TOMLDocument | Table,
-        key: str,
-    ) -> t.Container | t.Infra.ContainerDict | list[t.Container] | None:
+        key: object,
+    ) -> object | None:
         """Retrieve and normalize a value from a TOML container by key."""
-        raw_value: t.Container | t.Infra.ContainerDict | None = None
+        if not isinstance(key, str):
+            return None
+        raw_value: object | None = None
         if key in container:
             raw_value = FlextInfraUtilitiesToml.normalize_container_value(
                 container[key],
@@ -173,9 +178,21 @@ class FlextInfraUtilitiesToml:
         ):
             return raw_value
         if isinstance(raw_value, dict):
-            return raw_value
+            try:
+                return FlextInfraUtilitiesToml._get_container_dict_adapter().validate_python(
+                    raw_value
+                )
+            except ValidationError:
+                return None
         if isinstance(raw_value, list):
-            return raw_value
+            try:
+                return FlextInfraUtilitiesToml._get_container_list_adapter().validate_python(
+                    raw_value
+                )
+            except ValidationError:
+                return None
+        if not isinstance(raw_value, (dict, list)):
+            return None
         return None
 
     @staticmethod

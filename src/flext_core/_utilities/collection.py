@@ -11,7 +11,6 @@ from __future__ import annotations
 from collections.abc import Callable, Hashable, Mapping, Sequence
 from datetime import datetime
 from enum import StrEnum
-from pathlib import Path
 from typing import TypeGuard, overload
 
 from pydantic import ValidationError
@@ -30,19 +29,12 @@ class FlextUtilitiesCollection:
 
     @staticmethod
     def _coerce_guard_value(value: t.NormalizedValue) -> t.NormalizedValue:
-        if value is None or isinstance(
-            value, (tuple, str, int, float, bool, datetime, Path)
-        ):
-            return value
-        if isinstance(value, (list, dict)):
-            try:
-                FlextUtilitiesCollection._V.serializable_adapter().validate_python(
-                    value
-                )
-                return value
-            except ValidationError:
-                return str(value)
-        return str(value)
+        try:
+            return FlextUtilitiesCollection._V.serializable_adapter().validate_python(
+                value
+            )
+        except ValidationError:
+            return str(value)
 
     @staticmethod
     def _coerce_value_to_bool(value: t.NormalizedValue) -> bool:

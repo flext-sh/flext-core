@@ -35,7 +35,9 @@ class EnsureFormattingToolingPhase:
             current = u.Infra.unwrap_item(u.Infra.get(tomlsort, key))
             if isinstance(value, list) and isinstance(current, list):
                 try:
-                    current_values = TypeAdapter(list[str]).validate_python(current)
+                    current_values = TypeAdapter(list[str]).validate_python([
+                        str(x) for x in current
+                    ])
                 except ValidationError:
                     current_values: list[str] = []
                 if sorted(str(i) for i in current_values) != sorted(

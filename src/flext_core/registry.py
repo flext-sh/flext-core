@@ -55,20 +55,29 @@ class FlextRegistry(s[bool]):
         success indicators for batch handler operations.
         """
 
-        registered: list[m.RegistrationDetails] = Field(
-            default_factory=list,
-            description="Successfully registered handlers with registration details.",
-        )
-        skipped: list[str] = Field(
-            default_factory=list,
-            description="Handler identifiers that were skipped (already registered)",
-            examples=[["CreateUserCommand", "UpdateUserCommand"]],
-        )
-        errors: list[str] = Field(
-            default_factory=list,
-            description="Error messages for failed registrations",
-            examples=[["Handler validation failed", "Duplicate registration"]],
-        )
+        registered: Annotated[
+            list[m.RegistrationDetails],
+            Field(
+                default_factory=list,
+                description="Successfully registered handlers with registration details.",
+            ),
+        ]
+        skipped: Annotated[
+            list[str],
+            Field(
+                default_factory=list,
+                description="Handler identifiers that were skipped (already registered)",
+                examples=[["CreateUserCommand", "UpdateUserCommand"]],
+            ),
+        ]
+        errors: Annotated[
+            list[str],
+            Field(
+                default_factory=list,
+                description="Error messages for failed registrations",
+                examples=[["Handler validation failed", "Duplicate registration"]],
+            ),
+        ]
 
         @computed_field
         def is_failure(self) -> bool:
@@ -95,7 +104,7 @@ class FlextRegistry(s[bool]):
     _class_plugin_storage: ClassVar[dict[str, t.RegistrablePlugin]] = {}
     _class_registered_keys: ClassVar[set[str]] = set()
 
-    dispatcher: Annotated[p.CommandBus | None, Field(default=None, exclude=True)] = None
+    dispatcher: Annotated[p.CommandBus | None, Field(default=None, exclude=True)]
 
     @override
     def model_post_init(self, __context: t.Container | None, /) -> None:

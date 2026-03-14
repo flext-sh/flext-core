@@ -19,7 +19,7 @@ from pathlib import Path
 
 from pydantic import TypeAdapter, ValidationError
 
-from flext_infra import c, t
+from flext_infra import c
 from flext_infra._utilities.parsing import FlextInfraUtilitiesParsing
 from flext_infra.codegen._models import FlextInfraCodegenModels
 from flext_infra.codegen.census import FlextInfraCodegenCensus
@@ -762,9 +762,7 @@ class FlextInfraUtilitiesCodegen:
         inventory_json = directory / "inventory-after.json"
         validate_json = directory / "validate-after.json"
         baseline_json = directory / "baseline-used.json"
-        report_adapter: TypeAdapter[dict[str, t.Infra.InfraValue]] = TypeAdapter(
-            dict[str, t.Infra.InfraValue]
-        )
+        report_adapter: TypeAdapter[dict[str, object]] = TypeAdapter(dict[str, object])
         report_json.write_text(
             report_adapter.dump_json(report, by_alias=True).decode(
                 c.Infra.Encoding.DEFAULT
@@ -772,11 +770,11 @@ class FlextInfraUtilitiesCodegen:
             encoding=c.Infra.Encoding.DEFAULT,
         )
         report_text.write_text(render_text, encoding=c.Infra.Encoding.DEFAULT)
-        census_payload: list[dict[str, t.Infra.InfraValue]] = [
+        census_payload: list[dict[str, object]] = [
             item.model_dump() for item in census_reports
         ]
-        census_adapter: TypeAdapter[list[dict[str, t.Infra.InfraValue]]] = TypeAdapter(
-            list[dict[str, t.Infra.InfraValue]]
+        census_adapter: TypeAdapter[list[dict[str, object]]] = TypeAdapter(
+            list[dict[str, object]]
         )
         census_json.write_text(
             census_adapter.dump_json(census_payload, by_alias=True).decode(
@@ -894,9 +892,7 @@ class FlextInfraUtilitiesCodegen:
                 modified = raw.get("modified_files")
                 if isinstance(modified, list):
                     filtered: set[str] = set()
-                    modified_items = TypeAdapter(
-                        list[t.Infra.InfraValue]
-                    ).validate_python(modified)
+                    modified_items = TypeAdapter(list[object]).validate_python(modified)
                     for entry in modified_items:
                         if not isinstance(entry, str):
                             continue
@@ -1055,28 +1051,24 @@ class FlextInfraUtilitiesCodegen:
         return -1
 
     @staticmethod
-    def extract_duplicate_groups(payload: dict[str, t.Infra.InfraValue]) -> int:
+    def extract_duplicate_groups(payload: dict[str, object]) -> int:
         if "duplicate_groups" in payload:
             return FlextInfraUtilitiesCodegen.as_int(payload.get("duplicate_groups"))
         duplicates = payload.get("duplicates")
         if isinstance(duplicates, list):
-            duplicate_items = TypeAdapter(list[t.Infra.InfraValue]).validate_python(
-                duplicates
-            )
+            duplicate_items = TypeAdapter(list[object]).validate_python(duplicates)
             return len(duplicate_items)
         return -1
 
     @staticmethod
-    def extract_projects_total(payload: dict[str, t.Infra.InfraValue]) -> int:
+    def extract_projects_total(payload: dict[str, object]) -> int:
         totals = FlextInfraUtilitiesCodegen.dict_or_empty(payload.get("totals"))
         value = totals.get(c.Infra.ReportKeys.PROJECTS)
         if value is not None:
             return FlextInfraUtilitiesCodegen.as_int(value)
         projects = payload.get("projects")
         if isinstance(projects, list):
-            project_items = TypeAdapter(list[t.Infra.InfraValue]).validate_python(
-                projects
-            )
+            project_items = TypeAdapter(list[object]).validate_python(projects)
             return len(project_items)
         return 0
 
@@ -1091,7 +1083,7 @@ class FlextInfraUtilitiesCodegen:
         return FlextInfraUtilitiesCodegen.as_int(totals.get("failed"))
 
     @staticmethod
-    def as_int(value: t.Infra.InfraValue | None) -> int:
+    def as_int(value: object) -> int:
         if isinstance(value, bool):
             return int(value)
         if isinstance(value, int):
@@ -1106,23 +1098,21 @@ class FlextInfraUtilitiesCodegen:
         return 0
 
     @staticmethod
-    def dict_or_empty(value: t.Infra.InfraValue) -> dict[str, t.Infra.InfraValue]:
+    def dict_or_empty(value: object) -> dict[str, object]:
         if not isinstance(value, dict):
             return {}
-        return TypeAdapter(dict[str, t.Infra.InfraValue]).validate_python(value)
+        return TypeAdapter(dict[str, object]).validate_python(value)
 
     @staticmethod
-    def dict_list(value: t.Infra.InfraValue) -> list[dict[str, t.Infra.InfraValue]]:
+    def dict_list(value: object) -> list[dict[str, object]]:
         if not isinstance(value, list):
             return []
-        result: list[dict[str, t.Infra.InfraValue]] = []
-        value_items = TypeAdapter(list[t.Infra.InfraValue]).validate_python(value)
+        result: list[dict[str, object]] = []
+        value_items = TypeAdapter(list[object]).validate_python(value)
         for item in value_items:
             if not isinstance(item, dict):
                 continue
-            result.append(
-                TypeAdapter(dict[str, t.Infra.InfraValue]).validate_python(item)
-            )
+            result.append(TypeAdapter(dict[str, object]).validate_python(item))
         return result
 
 

@@ -433,7 +433,7 @@ class FlextTestsTypes(FlextTypes):
             )
 
         @staticmethod
-        def is_test_result_value(value: t.Tests.object) -> bool:
+        def is_test_result_value(value: object) -> bool:
             """Check if value is a valid TestResultValue."""
             if value is None:
                 return True

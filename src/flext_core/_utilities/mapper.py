@@ -186,9 +186,7 @@ class FlextUtilitiesMapper:
             return current
         convert_callable_raw: t.MapperCallable = convert_func_result.value
         convert_default = ops.get("convert_default")
-        fallback: t.NormalizedValue = (
-            convert_default if not callable(convert_default) else current
-        )
+        fallback: t.NormalizedValue = convert_default
 
         def convert_callable(value: t.NormalizedValue) -> t.NormalizedValue:
             return FlextUtilitiesMapper.narrow_to_container(convert_callable_raw(value))
@@ -245,7 +243,7 @@ class FlextUtilitiesMapper:
         ensure_default_raw = ops.get("ensure_default")
         ensure_default_val: t.NormalizedValue = (
             FlextUtilitiesMapper.narrow_to_container(ensure_default_raw)
-            if ensure_default_raw is not None and not callable(ensure_default_raw)
+            if ensure_default_raw is not None
             else None
         )
         default_map: t.ContainerMapping = {
@@ -595,8 +593,8 @@ class FlextUtilitiesMapper:
             current, "mapping"
         ):
             return current
-        transform_opts_raw = ops["transform"]
-        if not isinstance(transform_opts_raw, Mapping) or callable(transform_opts_raw):
+        transform_opts_raw: t.NormalizedValue = ops["transform"]
+        if not isinstance(transform_opts_raw, Mapping):
             return current
         transform_opts = FlextUtilitiesMapper._narrow_to_configuration_dict(
             FlextUtilitiesMapper.narrow_to_container(transform_opts_raw)
@@ -837,26 +835,20 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _get_str_from_dict(
-        ops: Mapping[str, t.NormalizedValue | t.MapperCallable],
-        key: str,
-        default: str = "",
+        ops: Mapping[str, t.NormalizedValue], key: str, default: str = ""
     ) -> str:
         """Safely extract str value from ConfigurationDict."""
         value = ops.get(key, default)
         if isinstance(value, str):
             return str(value)
-        if callable(value):
-            return default
         return str(value) if value is not None else default
 
     @staticmethod
     def _narrow_to_configuration_dict(
         value: t.NormalizedValue | Mapping[str, t.NormalizedValue],
-    ) -> Mapping[str, t.NormalizedValue]:
+    ) -> dict[str, t.NormalizedValue]:
         """Safely narrow object to ConfigurationDict with runtime validation."""
-        if isinstance(value, Mapping) and FlextUtilitiesGuards.is_configuration_dict(
-            value
-        ):
+        if FlextUtilitiesGuards.is_configuration_dict(value):
             normalized_dict: dict[str, t.NormalizedValue] = {}
             for key, item in value.items():
                 normalized_dict[str(key)] = FlextUtilitiesMapper.narrow_to_container(
@@ -874,10 +866,10 @@ class FlextUtilitiesMapper:
         if isinstance(value, m.ConfigMap):
             return value
         if isinstance(value, Mapping):
-            narrowed_dict = FlextUtilitiesMapper._narrow_to_configuration_dict(value)
-            root_dict: dict[str, t.NormalizedValue | BaseModel] = dict(narrowed_dict)
             coerced_result = r[m.ConfigMap].create_from_callable(
-                lambda: m.ConfigMap(root=root_dict)
+                lambda: m.ConfigMap(
+                    root=FlextUtilitiesMapper._narrow_to_configuration_dict(value)
+                )
             )
             if coerced_result.is_success:
                 val: m.ConfigMap = coerced_result.value
@@ -1763,7 +1755,7 @@ class FlextUtilitiesMapper:
                         if default_value is not None:
                             result[name] = default_value
             else:
-                field_name: str = str(spec_item)
+                field_name: str = spec_item
                 if isinstance(obj, Mapping):
                     if field_name in obj:
                         result[field_name] = FlextUtilitiesMapper.narrow_to_container(
@@ -2039,13 +2031,13 @@ class FlextUtilitiesMapper:
     ) -> t.NormalizedValue:
         """Safely narrow any value to t.NormalizedValue (strict container type).
 
-        Uses FlextUtilitiesGuards.is_container for type narrowing.
+        Uses t.CONTAINER_TYPES for isinstance checks.
         BaseModel instances are converted to dict mapping via model_dump().
         If value is not a valid container, returns string representation.
         """
         if value is None:
             return None
-        if FlextUtilitiesGuards.is_container(value):
+        if isinstance(value, t.CONTAINER_TYPES):
             return value
         if isinstance(value, BaseModel):
             model_dict = value.model_dump()
@@ -2095,7 +2087,7 @@ class FlextUtilitiesMapper:
             Normalized metadata attribute dict
 
         """
-        field_overrides_config: dict[str, t.NormalizedValue | BaseModel] = {
+        field_overrides_config: t.ContainerMapping = {
             k: FlextRuntime.normalize_to_container(v)
             for k, v in specific_fields.items()
         }
@@ -2289,7 +2281,7 @@ class FlextUtilitiesMapper:
             transformer = identity_transformer
         result: dict[str, t.NormalizedValue] = {}
         if primary_data is not None:
-            primary_source: Mapping[str, t.NormalizedValue | BaseModel] | None = None
+            primary_source: Mapping[str, t.NormalizedValue] | None = None
             if isinstance(primary_data, m.ConfigMap):
                 primary_source = primary_data.root
             else:
@@ -2311,7 +2303,7 @@ class FlextUtilitiesMapper:
                 )
                 result.update(transformed_primary)
         if secondary_data is not None and merge_strategy != "primary_only":
-            secondary_source: Mapping[str, t.NormalizedValue | BaseModel] | None = None
+            secondary_source: Mapping[str, t.NormalizedValue] | None = None
             if isinstance(secondary_data, m.ConfigMap):
                 secondary_source = secondary_data.root
             else:

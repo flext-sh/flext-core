@@ -233,11 +233,8 @@ class FlextUtilitiesConfiguration:
             model_dump_attr = getattr(obj, "model_dump", None)
             if model_dump_attr is None or not callable(model_dump_attr):
                 return FlextUtilitiesConfiguration._NOT_FOUND
-            dumped = model_dump_attr()
-            if not isinstance(dumped, dict):
-                return FlextUtilitiesConfiguration._NOT_FOUND
             obj_dict: t.NormalizedValue | BaseModel = (
-                FlextRuntime.normalize_to_container(dumped)  # pyright: ignore[reportUnknownArgumentType]
+                FlextRuntime.normalize_to_container(model_dump_attr())
             )
             if FlextUtilitiesGuards.is_mapping(obj_dict) and parameter in obj_dict:
                 raw_value = obj_dict[parameter]
@@ -552,31 +549,21 @@ class FlextUtilitiesConfiguration:
             )
             if found:
                 return value
-        elif isinstance(obj, Mapping):
+        if isinstance(obj, Mapping):
             found, value = FlextUtilitiesConfiguration._try_get_from_dict_like(
-                obj,  # pyright: ignore[reportUnknownArgumentType]
-                parameter,
+                obj, parameter
             )
             if found:
                 return value
-        elif isinstance(obj, BaseModel):
-            pass
-        else:
-            if hasattr(obj, "model_dump") and callable(getattr(obj, "model_dump")):
-                found, duck_value = (
-                    FlextUtilitiesConfiguration._try_get_from_duck_model_dump(
-                        obj, parameter
-                    )
-                )
-                if found:
-                    return duck_value
-            if hasattr(obj, "__dict__") or hasattr(obj, "__getattr__"):
-                found, attr_val = FlextUtilitiesConfiguration._try_get_attr(
-                    obj, parameter
-                )
-                if found:
-                    return attr_val
-        class_name = obj.__class__.__name__  # pyright: ignore[reportUnknownMemberType]
+        found, duck_value = FlextUtilitiesConfiguration._try_get_from_duck_model_dump(
+            obj, parameter
+        )
+        if found:
+            return duck_value
+        found, attr_val = FlextUtilitiesConfiguration._try_get_attr(obj, parameter)
+        if found:
+            return attr_val
+        class_name = obj.__class__.__name__
         msg = f"Parameter '{parameter}' is not defined in {class_name}"
         raise e.NotFoundError(msg)
 

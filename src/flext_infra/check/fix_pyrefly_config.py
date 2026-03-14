@@ -247,22 +247,22 @@ class FlextInfraConfigFixer(s):
 
     def _remove_ignore_sub_config_tk(
         self,
-        pyrefly: MutableMapping[str, t.GeneralValueType],
+        pyrefly: MutableMapping[str, object],
     ) -> list[str]:
         fixes: list[str] = []
         sub_configs = pyrefly.get(c.Infra.Toml.SUB_CONFIG)
         if not isinstance(sub_configs, list):
             return []
-        new_configs: list[t.GeneralValueType] = []
-        configs: list[t.GeneralValueType] = []
+        new_configs: list[object] = []
+        configs: list[object] = []
         with contextlib.suppress(ValidationError):
-            configs = TypeAdapter(list[t.GeneralValueType]).validate_python(sub_configs)
+            configs = TypeAdapter(list[object]).validate_python(sub_configs)
         for conf in configs:
-            conf_out: t.GeneralValueType = conf
+            conf_out: object = conf
             if isinstance(conf, Mapping):
                 try:
-                    conf_map: Mapping[str, t.GeneralValueType] = TypeAdapter(
-                        dict[str, t.GeneralValueType]
+                    conf_map: Mapping[str, object] = TypeAdapter(
+                        dict[str, object]
                     ).validate_python(conf)
                     conf_out = dict(conf_map)
                 except ValidationError:

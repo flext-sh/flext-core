@@ -729,7 +729,7 @@ class FlextDecorators:
                 try:
                     retry_args = args
                     retry_kwargs: dict[str, t.NormalizedValue | BaseModel] = {
-                        str(key): FlextRuntime.normalize_to_container(value)  # type: ignore[arg-type]
+                        str(key): FlextRuntime.normalize_to_container(value)
                         for key, value in kwargs.items()
                     }
                     retry_result = FlextDecorators._execute_retry_loop(
@@ -828,7 +828,7 @@ class FlextDecorators:
     @staticmethod
     def _execute_retry_loop(
         func: Callable[..., R],
-        args: tuple[t.NormalizedValue | BaseModel, ...],
+        args: P.args,
         kwargs: Mapping[str, t.NormalizedValue | BaseModel],
         logger: FlextLogger,
         *,
@@ -978,9 +978,7 @@ class FlextDecorators:
         return isinstance(logger_value, FlextLogger)
 
     @staticmethod
-    def _resolve_logger(
-        args: tuple[t.NormalizedValue | BaseModel, ...], func: Callable[P, R]
-    ) -> FlextLogger:
+    def _resolve_logger(args: P.args, func: Callable[P, R]) -> FlextLogger:
         """Resolve logger from first argument or create module logger.
 
         Returns:

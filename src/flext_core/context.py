@@ -80,10 +80,8 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
             mapping_value: Mapping[str, t.NormalizedValue]
             if isinstance(ctx_value, BaseModel):
                 mapping_value = dict(ctx_value.model_dump().items())
-            elif isinstance(ctx_value, Mapping):
-                mapping_value = dict(ctx_value.items())
             else:
-                return {}
+                mapping_value = dict(ctx_value.items())
             for key, value in mapping_value.items():
                 if str(key) != key:
                     return {}
@@ -375,7 +373,7 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
             normalized_metadata_map: dict[str, t.NormalizedValue] = {}
             for k, v in metadata_dict_export.items():
                 metadata_value: t.NormalizedValue | BaseModel = v
-                if isinstance(v, Mapping):
+                if hasattr(v, "items") and callable(getattr(v, "items", None)):
                     metadata_value = m.ConfigMap(root=dict(v.items()))
                 normalized_metadata_map[k] = FlextRuntime.normalize_to_container(
                     FlextRuntime.normalize_to_metadata(metadata_value)

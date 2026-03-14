@@ -40,7 +40,7 @@ class FlextInfraDependencyDetectionService:
 
     @staticmethod
     def to_infra_value(
-        value: t.Infra.InfraValue,
+        value: object,
     ) -> str | int | float | bool | dict[str, object] | list[object] | None:
         """Convert container value to namespaced infra value."""
         if value is None or isinstance(value, (str, int, float, bool)):
@@ -63,12 +63,10 @@ class FlextInfraDependencyDetectionService:
             return converted
         if isinstance(value, Mapping):
             try:
-                mapping_value = TypeAdapter(
-                    dict[t.Infra.InfraValue, t.Infra.InfraValue]
-                ).validate_python(value)
+                mapping_value = TypeAdapter(dict[object, object]).validate_python(value)
             except ValidationError:
                 return None
-            converted_map: dict[str, t.Infra.InfraValue] = {}
+            converted_map: dict[str, object] = {}
             for key, item in mapping_value.items():
                 converted_item = FlextInfraDependencyDetectionService.to_infra_value(
                     item
@@ -225,7 +223,9 @@ class FlextInfraDependencyDetectionService:
         typings = optional.get(c.Infra.Directories.TYPINGS)
         if isinstance(typings, list):
             try:
-                typed_typings = TypeAdapter(list[str]).validate_python(typings)
+                typed_typings = TypeAdapter(list[str]).validate_python([
+                    str(s) for s in typings
+                ])
             except ValidationError:
                 typed_typings: list[str] = []
             for spec in typed_typings:
@@ -239,7 +239,9 @@ class FlextInfraDependencyDetectionService:
                 )
         elif isinstance(typings, Mapping):
             try:
-                typed_typings_map = TypeAdapter(dict[str, str]).validate_python(typings)
+                typed_typings_map = TypeAdapter(dict[str, str]).validate_python({
+                    k: str(v) for k, v in typings.items()
+                })
             except ValidationError:
                 typed_typings_map: dict[str, str] = {}
             names.update(typed_typings_map.keys())
@@ -261,7 +263,9 @@ class FlextInfraDependencyDetectionService:
             excluded = typing_libraries.get(c.Infra.Toml.EXCLUDE)
             if isinstance(excluded, list):
                 try:
-                    typed_excluded = TypeAdapter(list[str]).validate_python(excluded)
+                    typed_excluded = TypeAdapter(list[str]).validate_python([
+                        str(e) for e in excluded
+                    ])
                 except ValidationError:
                     typed_excluded: list[str] = []
                 exclude_set = set(typed_excluded)
@@ -338,9 +342,9 @@ class FlextInfraDependencyDetectionService:
                 and (root in module_to_package)
             ):
                 try:
-                    module_to_package_map = TypeAdapter(dict[str, str]).validate_python(
-                        module_to_package
-                    )
+                    module_to_package_map = TypeAdapter(dict[str, str]).validate_python({
+                        k: str(v) for k, v in module_to_package.items()
+                    })
                 except ValidationError:
                     module_to_package_map: dict[str, str] = {}
                 value = module_to_package_map.get(root)

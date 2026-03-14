@@ -12,7 +12,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import override
 
-from pydantic import BaseModel, JsonValue, TypeAdapter, ValidationError
+from pydantic import BaseModel, TypeAdapter, ValidationError
 
 from flext_core import r, s, t
 from flext_infra import (
@@ -423,30 +423,30 @@ class FlextInfraWorkspaceChecker(s):
         return result.value if result.is_success else Path.cwd().resolve()
 
     @staticmethod
-    def _to_mapping(value: JsonValue) -> dict[str, JsonValue]:
-        if not isinstance(value, dict):
+    def _to_mapping(value: object) -> dict[str, object]:
+        if not isinstance(value, Mapping):
             return {}
-        return TypeAdapter(dict[str, JsonValue]).validate_python(value)
+        return TypeAdapter(dict[str, object]).validate_python(value)
 
     @classmethod
     def _to_mapping_list(
         cls,
-        value: JsonValue,
-    ) -> list[dict[str, JsonValue]]:
+        value: object,
+    ) -> list[dict[str, object]]:
         if not isinstance(value, list):
             return []
-        typed_items = TypeAdapter(list[JsonValue]).validate_python(value)
-        normalized: list[dict[str, JsonValue]] = []
+        typed_items = TypeAdapter(list[object]).validate_python(value)
+        normalized: list[dict[str, object]] = []
         for raw_item in typed_items:
             try:
-                typed_item = TypeAdapter(dict[str, JsonValue]).validate_python(raw_item)
+                typed_item = TypeAdapter(dict[str, object]).validate_python(raw_item)
             except ValidationError:
                 continue
             normalized.append(typed_item)
         return normalized
 
     @staticmethod
-    def _as_int(value: JsonValue | None, default: int = 0) -> int:
+    def _as_int(value: object, default: int = 0) -> int:
         if isinstance(value, int):
             return value
         if isinstance(value, float):
@@ -459,38 +459,38 @@ class FlextInfraWorkspaceChecker(s):
         return default
 
     @staticmethod
-    def _as_str(value: JsonValue | None, default: str = "") -> str:
+    def _as_str(value: object, default: str = "") -> str:
         return value if isinstance(value, str) else default
 
     @staticmethod
     def _nested_mapping(
-        data: dict[str, JsonValue],
+        data: dict[str, object],
         *keys: str,
-    ) -> dict[str, JsonValue]:
-        current: JsonValue = data
+    ) -> dict[str, object]:
+        current: object = data
         for key in keys:
-            if not isinstance(current, dict):
+            if not isinstance(current, Mapping):
                 return {}
-            typed_current = TypeAdapter(dict[str, JsonValue]).validate_python(current)
+            typed_current = TypeAdapter(dict[str, object]).validate_python(current)
             if key not in typed_current:
                 return {}
-            child: JsonValue = typed_current[key]
+            child: object = typed_current[key]
             if child is None:
                 return {}
             current = child
-        if not isinstance(current, dict):
+        if not isinstance(current, Mapping):
             return {}
-        return TypeAdapter(dict[str, JsonValue]).validate_python(current)
+        return TypeAdapter(dict[str, object]).validate_python(current)
 
     @classmethod
     def _nested_int(
         cls,
-        data: dict[str, JsonValue],
+        data: dict[str, object],
         *keys: str,
         default: int = 0,
     ) -> int:
         target = cls._nested_mapping(data, *keys[:-1])
-        raw: JsonValue | None = target.get(keys[-1])
+        raw: object = target.get(keys[-1])
         if raw is None:
             return default
         return cls._as_int(raw, default)
@@ -498,7 +498,7 @@ class FlextInfraWorkspaceChecker(s):
     @classmethod
     def _result_exit_code(cls, result: p.Infra.CommandOutput) -> int:
         try:
-            payload = TypeAdapter(dict[str, t.Scalar]).validate_python(
+            payload = TypeAdapter(dict[str, object]).validate_python(
                 vars(result),
             )
         except (TypeError, ValidationError, AttributeError):
@@ -562,11 +562,11 @@ class FlextInfraWorkspaceChecker(s):
         bandit_data: dict[str, object] = {}
         try:
             parsed = self._json.parse(result.stdout or "{}")
-             if parsed.is_success and isinstance(parsed.value, dict):
-                 bandit_data = self._to_mapping(parsed.value)
-             raw_results: list[dict[str, JsonValue]] = self._to_mapping_list(
-                 bandit_data.get("results", []),
-             )
+            if parsed.is_success and isinstance(parsed.value, Mapping):
+                bandit_data = self._to_mapping(parsed.value)
+            raw_results: list[dict[str, object]] = self._to_mapping_list(
+                bandit_data.get("results", []),
+            )
             issues.extend(
                 m.Infra.Check.Issue(
                     file=self._as_str(raw_item.get("filename", "?"), "?"),
@@ -843,9 +843,9 @@ class FlextInfraWorkspaceChecker(s):
             try:
                 raw_text = json_file.read_text(encoding=c.Infra.Encoding.DEFAULT)
                 parsed = self._json.parse(raw_text)
-                if parsed.is_success and isinstance(parsed.value, dict):
+                if parsed.is_success and isinstance(parsed.value, Mapping):
                     parsed_map = self._to_mapping(parsed.value)
-                    error_items: list[dict[str, JsonValue]] = self._to_mapping_list(
+                    error_items: list[dict[str, object]] = self._to_mapping_list(
                         parsed_map.get("errors", [])
                     )
                 elif parsed.is_success and isinstance(parsed.value, list):
@@ -908,15 +908,15 @@ class FlextInfraWorkspaceChecker(s):
             project_dir,
             timeout=c.Infra.Timeouts.LONG,
         )
-         issues: list[m.Infra.Check.Issue] = []
-         pyright_parse_result = self._json.parse(result.stdout or "{}")
-         pyright_data: dict[str, JsonValue] = self._to_mapping(
-             pyright_parse_result.value if pyright_parse_result.is_success else {},
-         )
-         try:
-             raw_diagnostics: list[dict[str, JsonValue]] = self._to_mapping_list(
-                 pyright_data.get("generalDiagnostics", []),
-             )
+        issues: list[m.Infra.Check.Issue] = []
+        pyright_parse_result = self._json.parse(result.stdout or "{}")
+        pyright_data: dict[str, object] = self._to_mapping(
+            pyright_parse_result.value if pyright_parse_result.is_success else {},
+        )
+        try:
+            raw_diagnostics: list[dict[str, object]] = self._to_mapping_list(
+                pyright_data.get("generalDiagnostics", []),
+            )
             issues.extend(
                 m.Infra.Check.Issue(
                     file=str(diag.get("file", "?")),
@@ -1020,7 +1020,7 @@ class FlextInfraWorkspaceChecker(s):
         )
         issues: list[m.Infra.Check.Issue] = []
         ruff_parse_result = self._json.parse(result.stdout or "[]")
-        ruff_data: t.GeneralValueType | list = (
+        ruff_data: object = (
             ruff_parse_result.value if ruff_parse_result.is_success else []
         )
         try:

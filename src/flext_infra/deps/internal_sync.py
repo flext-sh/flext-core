@@ -21,6 +21,9 @@ from flext_infra import (
     p,
     u,
 )
+from flext_infra.typings import FlextInfraTypes
+
+t = FlextInfraTypes
 
 
 class FlextInfraInternalDependencySyncService:

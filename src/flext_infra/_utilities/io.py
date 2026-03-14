@@ -16,7 +16,7 @@ from pathlib import Path
 from pydantic import BaseModel, JsonValue, TypeAdapter, ValidationError
 
 from flext_core import r
-from flext_infra import c, t
+from flext_infra import c
 
 
 class FlextInfraUtilitiesIo:
@@ -67,7 +67,7 @@ class FlextInfraUtilitiesIo:
     @staticmethod
     def write_json(
         path: Path,
-        payload: t.Container,
+        payload: object,
         *,
         sort_keys: bool = False,
         ensure_ascii: bool = False,
@@ -90,7 +90,7 @@ class FlextInfraUtilitiesIo:
         """
         try:
             path.parent.mkdir(parents=True, exist_ok=True)
-            raw_payload: t.Container | dict[str, t.Container] = (
+            raw_payload: object = (
                 payload.model_dump() if isinstance(payload, BaseModel) else payload
             )
             parser: TypeAdapter[JsonValue] = TypeAdapter(JsonValue)
@@ -154,7 +154,7 @@ class FlextInfraUtilitiesIo:
 
     @staticmethod
     def serialize(
-        data: t.Container,
+        data: object,
         *,
         sort_keys: bool = False,
         ensure_ascii: bool = False,
@@ -173,7 +173,7 @@ class FlextInfraUtilitiesIo:
 
         """
         try:
-            raw_data: t.Container | dict[str, t.Container] = (
+            raw_data: object = (
                 data.model_dump() if isinstance(data, BaseModel) else data
             )
             parser: TypeAdapter[JsonValue] = TypeAdapter(JsonValue)

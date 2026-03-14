@@ -259,9 +259,7 @@ class FlextUtilitiesCache:
         return str(component)
 
     @staticmethod
-    def sort_dict_keys(
-        data: t.NormalizedValue | t.Serializable | BaseModel,
-    ) -> object:
+    def sort_dict_keys(data: t.NormalizedValue | BaseModel) -> t.NormalizedValue:
         """Sort dictionary keys recursively for consistent representations.
 
         Business Rule: Recursive Key Sorting for Cache Consistency
@@ -297,7 +295,7 @@ class FlextUtilitiesCache:
             data_map = FlextUtilitiesCache._V.sortable_dict_adapter().validate_python(
                 data
             )
-            result: dict[str, object] = {}
+            result: dict[str, t.NormalizedValue] = {}
             for k in sorted(data_map.keys(), key=FlextUtilitiesCache.sort_key):
                 value = data_map[k]
                 if value is None:

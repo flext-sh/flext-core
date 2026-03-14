@@ -14,7 +14,7 @@ from pathlib import Path
 
 import tomlkit
 from pydantic import TypeAdapter, ValidationError
-from tomlkit.items import Table
+from tomlkit.items import Item, Table
 
 from flext_core import r
 from flext_infra import c, t
@@ -90,22 +90,22 @@ class FlextInfraUtilitiesTomlParse:
     @staticmethod
     def project_dev_groups(doc: tomlkit.TOMLDocument) -> dict[str, list[str]]:
         """Extract optional-dependencies groups from project table."""
-        if c.Infra.Toml.PROJECT not in doc:
-            return {}
-        project_raw = doc[c.Infra.Toml.PROJECT]
+        project_raw: object | None = None
+        if c.Infra.Toml.PROJECT in doc:
+            project_raw = doc[c.Infra.Toml.PROJECT]
         if not isinstance(project_raw, (Table, dict)):
             return {}
-        if c.Infra.Toml.OPTIONAL_DEPENDENCIES not in project_raw:
-            return {}
-        optional_raw = project_raw[c.Infra.Toml.OPTIONAL_DEPENDENCIES]
+        optional_raw: object | None = None
+        if c.Infra.Toml.OPTIONAL_DEPENDENCIES in project_raw:
+            optional_raw = project_raw[c.Infra.Toml.OPTIONAL_DEPENDENCIES]
         if not isinstance(optional_raw, (Table, dict)):
             return {}
-        opt_deps: Table | dict[str, t.Container] = optional_raw
+        opt_deps: Table | dict[str, object] = optional_raw
 
         def _group_values(group_key: str) -> list[str]:
-            if group_key not in opt_deps:
-                return []
-            value = opt_deps[group_key]
+            value: object | Item | None = None
+            if group_key in opt_deps:
+                value = opt_deps[group_key]
             return FlextInfraUtilitiesToml.as_string_list(value)
 
         return {

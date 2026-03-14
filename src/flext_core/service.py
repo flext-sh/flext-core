@@ -81,35 +81,29 @@ class FlextService[
     # --- Service Bootstrap Configuration ---
     config_type: Annotated[
         type[FlextSettings] | None, Field(default=None, exclude=True)
-    ] = None
+    ]
     config_overrides: Annotated[
         Mapping[str, t.Scalar] | None, Field(default=None, exclude=True)
-    ] = None
-    initial_context: Annotated[
-        FlextContext | None, Field(default=None, exclude=True)
-    ] = None
-    subproject: Annotated[str | None, Field(default=None, exclude=True)] = None
+    ]
+    initial_context: Annotated[FlextContext | None, Field(default=None, exclude=True)]
+    subproject: Annotated[str | None, Field(default=None, exclude=True)]
     services: Annotated[
         Mapping[str, t.RegisterableService] | None, Field(default=None, exclude=True)
-    ] = None
+    ]
     factories: Annotated[
         Mapping[str, t.FactoryCallable] | None, Field(default=None, exclude=True)
-    ] = None
+    ]
     resources: Annotated[
         Mapping[str, t.ResourceCallable] | None, Field(default=None, exclude=True)
-    ] = None
+    ]
     container_overrides: Annotated[
         Mapping[str, t.Scalar] | None, Field(default=None, exclude=True)
-    ] = None
+    ]
     wire_modules: Annotated[
         Sequence[ModuleType] | None, Field(default=None, exclude=True)
-    ] = None
-    wire_packages: Annotated[
-        Sequence[str] | None, Field(default=None, exclude=True)
-    ] = None
-    wire_classes: Annotated[
-        Sequence[type] | None, Field(default=None, exclude=True)
-    ] = None
+    ]
+    wire_packages: Annotated[Sequence[str] | None, Field(default=None, exclude=True)]
+    wire_classes: Annotated[Sequence[type] | None, Field(default=None, exclude=True)]
 
     # --- Internal State ---
     _execution_result: r[TDomainResult] | None = PrivateAttr(default=None)
@@ -209,16 +203,18 @@ class FlextService[
             bootstrap_opts.config_type if bootstrap_opts is not None else None
         )
         config_type_val: type[FlextSettings] | None
-        if config_type_raw is not None and issubclass(config_type_raw, FlextSettings):
+        if (
+            config_type_raw is not None
+            and isinstance(config_type_raw, type)
+            and issubclass(config_type_raw, FlextSettings)
+        ):
             config_type_val = config_type_raw
         else:
             config_type_val = config_type
         ctx_raw = self.initial_context or (
             bootstrap_opts.context if bootstrap_opts is not None else None
         )
-        context_val: p.Context | None = (
-            ctx_raw if isinstance(ctx_raw, p.Context) else None
-        )
+        context_val: p.Context | None = ctx_raw if u.is_context(ctx_raw) else None
         config_overrides = self.config_overrides or (
             bootstrap_opts.config_overrides if bootstrap_opts is not None else None
         )

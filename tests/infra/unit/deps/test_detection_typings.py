@@ -47,8 +47,8 @@ class TestLoadDependencyLimits:
             _StubToml([r[t.Infra.TomlConfig].ok({"key": "value", "num": 42})]),
         )
         result = service.load_dependency_limits(Path("/fake/limits.toml"))
-        tm.that(result["key"], eq="value")
-        tm.that(result["num"], eq=42)
+        assert result.get("key") == "value"
+        assert result.get("num") == 42
 
     def test_failure_returns_empty(self, monkeypatch: pytest.MonkeyPatch) -> None:
         service = FlextInfraDependencyDetectionService()
@@ -69,8 +69,8 @@ class TestLoadDependencyLimits:
             _StubToml([r[t.Infra.TomlConfig].ok({"good": "val", "bad": ["x"]})]),
         )
         result = service.load_dependency_limits(Path("/fake/limits.toml"))
-        tm.that("good" in result, eq=True)
-        tm.that("bad" in result, eq=True)
+        assert "good" in result
+        assert "bad" in result
 
     def test_none_value_preserved(self, monkeypatch: pytest.MonkeyPatch) -> None:
         service = FlextInfraDependencyDetectionService()
@@ -80,7 +80,7 @@ class TestLoadDependencyLimits:
             _StubToml([r[t.Infra.TomlConfig].ok({"key": None})]),
         )
         result = service.load_dependency_limits(Path("/fake/limits.toml"))
-        tm.that("key" in result, eq=True)
+        assert "key" in result
         tm.that(result["key"], eq=None)
 
 

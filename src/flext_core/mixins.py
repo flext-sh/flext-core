@@ -122,18 +122,18 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
             default=None,
             description="Configuration class to initialize the service.",
         ),
-    ] = None
+    ]
     config_overrides: Annotated[
-        Mapping[str, t.Scalar] | None,
+        dict[str, t.NormalizedValue] | None,
         Field(
             default=None,
             description="Configuration overrides applied at instantiation.",
         ),
-    ] = None
+    ]
     initial_context: Annotated[
         FlextContext | None,
         Field(default=None, description="Initial FlextContext for the service scope."),
-    ] = None
+    ]
 
     @staticmethod
     def _clear_operation_context() -> None:
@@ -353,7 +353,8 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
                         if options.services is not None:
                             services_typed: dict[str, t.RegisterableService] = {}
                             for key, value in options.services.items():
-                                services_typed[str(key)] = value
+                                if u.is_registerable_service(value):
+                                    services_typed[str(key)] = value
                             bootstrap_services = services_typed
                         bootstrap_factories = options.factories
                         bootstrap_resources = options.resources
@@ -575,12 +576,20 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
                     self._stack.append(ctx)
                     return r[bool].ok(value=True)
                 ctx_mapping: dict[str, t.Scalar] = {str(k): v for k, v in ctx.items()}
-                handler_name_raw: t.Scalar = ctx_mapping.get("handler_name", "unknown")
-                handler_name: str = str(handler_name_raw)
-                handler_mode_raw: t.Scalar = ctx_mapping.get(
+                handler_name_raw: t.Scalar | None = ctx_mapping.get(
+                    "handler_name", "unknown"
+                )
+                handler_name: str = (
+                    str(handler_name_raw) if handler_name_raw is not None else "unknown"
+                )
+                handler_mode_raw: t.Scalar | None = ctx_mapping.get(
                     "handler_mode", "operation"
                 )
-                handler_mode_str: str = str(handler_mode_raw)
+                handler_mode_str: str = (
+                    str(handler_mode_raw)
+                    if handler_mode_raw is not None
+                    else "operation"
+                )
                 handler_mode_literal: c.Cqrs.HandlerTypeLiteral = (
                     "command"
                     if handler_mode_str == "command"
