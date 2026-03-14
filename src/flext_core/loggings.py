@@ -173,17 +173,17 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         try:
             if scope not in cls._scoped_contexts:
                 cls._scoped_contexts[scope] = {}
-            current_context: dict[str, t.Container | BaseModel] = {
+            current_context: dict[str, t.Container] = {
                 key: cls._to_container_value(value)
                 for key, value in cls._scoped_contexts[scope].items()
             }
-            incoming_context: dict[str, t.Container | BaseModel] = {
+            incoming_context: dict[str, t.Container] = {
                 key: cls._to_container_value(value) for key, value in context.items()
             }
-            current_context_obj: dict[str, t.Container | BaseModel] = dict(
+            current_context_obj: dict[str, t.NormalizedValue] = dict(
                 current_context.items()
             )
-            incoming_context_obj: dict[str, t.Container | BaseModel] = dict(
+            incoming_context_obj: dict[str, t.NormalizedValue] = dict(
                 incoming_context.items()
             )
             merge_result = u.merge(
@@ -647,8 +647,18 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             return f"{message} | args={args!r}"
 
     @staticmethod
-    def _to_container_value(value: _LogArg | t.Container) -> t.Container:
+    def _to_container_value(
+        value: _LogArg | t.Container | t.NormalizedValue | BaseModel,
+    ) -> t.Container:
         """Normalize value to Container (internal helper)."""
+        if isinstance(value, Exception):
+            return str(value)
+        if value is None:
+            return ""
+        if u.is_scalar(value) or isinstance(value, Path):
+            return value
+        if isinstance(value, BaseModel):
+            return value.model_dump_json()
         normalized = FlextRuntime.normalize_to_container(value)
         if u.is_scalar(normalized) or isinstance(normalized, Path):
             return normalized
@@ -657,14 +667,18 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         return str(normalized)
 
     @staticmethod
-    def _to_scalar_value(value: _LogArg | t.Container | None) -> t.Scalar:
+    def _to_scalar_value(
+        value: _LogArg | t.Container | t.NormalizedValue | BaseModel | None,
+    ) -> t.Scalar:
+        if value is None:
+            return ""
         if u.is_scalar(value):
             return value
         return str(value)
 
     @staticmethod
     def _to_container_context(
-        context: Mapping[str, _LogArg | t.Container],
+        context: Mapping[str, _LogArg | t.Container | t.NormalizedValue | BaseModel],
     ) -> dict[str, t.Container]:
         """Convert mapping to container context using normalization."""
         return {
