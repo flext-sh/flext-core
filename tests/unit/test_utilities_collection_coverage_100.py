@@ -23,7 +23,7 @@ from typing import Annotated, ClassVar, cast
 import pytest
 from pydantic import BaseModel, ConfigDict, Field, SkipValidation
 
-from flext_core import FlextRuntime, m, r
+from flext_core import FlextRuntime, m, p, r
 from flext_tests import t, u
 
 from ..test_utils import assertion_helpers
@@ -296,13 +296,13 @@ class ChunkScenario(BaseModel):
     model_config = ConfigDict(frozen=True)
     name: Annotated[str, Field(description="Chunk scenario name")]
     items: Annotated[
-        list | tuple[object, ...],
+        list[int],
         Field(
             description="Input items for chunking",
         ),
     ]
     size: Annotated[int, Field(description="Chunk size")]
-    expected_result: Annotated[list[list], Field(description="Expected chunked output")]
+    expected_result: Annotated[list[list[int]], Field(description="Expected chunked output")]
 
 
 class BatchScenario(BaseModel):
@@ -310,7 +310,7 @@ class BatchScenario(BaseModel):
 
     model_config = ConfigDict(frozen=True)
     name: Annotated[str, Field(description="Batch scenario name")]
-    items: Annotated[list, Field(description="Input items for batch")]
+    items: Annotated[list[int], Field(description="Input items for batch")]
     operation: Annotated[
         Callable[..., object], Field(description="Batch operation callable")
     ]
@@ -953,7 +953,7 @@ class TestuCollectionFind:
     def test_find(self, scenario: FindScenario) -> None:
         """Test find with various scenarios."""
         result = u.find(
-            scenario.items, cast("Callable[[t.Tests.object], bool]", scenario.predicate)
+            scenario.items, cast("p.Predicate[t.Tests.object]", scenario.predicate)
         )
         if scenario.expected_result is None:
             assert result.is_failure
@@ -1085,7 +1085,7 @@ class TestuCollectionBatch:
         """Test batch with flattening."""
         items = [[1, 2], [3, 4], 5]
 
-        def flatten_op(value) -> int | r[int]:
+        def flatten_op(value: list[int] | int) -> int | r[int]:
             return cast("int | r[int]", value)
 
         result = u.batch(

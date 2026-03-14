@@ -3,23 +3,25 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from types import ModuleType
 from typing import cast, override
 
 import pytest
 
 from flext_core import FlextHandlers, FlextRegistry, c, h, m, p, r, t
+from flext_tests import t as test_t
 
 
 class _Handler(FlextHandlers[object, object]):
     """Test handler implementation."""
 
     @override
-    def handle(self, message) -> r[t.Container]:
+    def handle(self, message: test_t.Tests.object) -> r[t.Container]:
         if isinstance(message, (str, int, float, bool)):
             return r[t.Container].ok(message)
         return r[t.Container].fail("unsupported message")
 
-    def __call__(self, message) -> r[t.Container]:
+    def __call__(self, message: test_t.Tests.object) -> r[t.Container]:
         return self.handle(message)
 
 
@@ -59,7 +61,7 @@ def test_execute_and_register_handler_failure_paths(
 
     class _FailDispatcher:
         def register_handler(
-            self, *_args, is_event: bool = False
+            self, *_args: t.HandlerLike, is_event: bool = False
         ) -> r[m.RegistrationResult]:
             return r[m.RegistrationResult].fail("dispatcher-fail")
 
@@ -74,7 +76,7 @@ def test_execute_and_register_handler_failure_paths(
 
     class _OkDispatcher:
         def register_handler(
-            self, *_args, is_event: bool = False
+            self, *_args: t.HandlerLike, is_event: bool = False
         ) -> r[m.RegistrationResult]:
             return r[m.RegistrationResult].ok(
                 m.RegistrationResult(
@@ -119,8 +121,8 @@ def test_create_auto_discover_and_mode_mapping(monkeypatch: pytest.MonkeyPatch) 
         )
 
     def fake_scan(
-        _module,
-    ) -> list[tuple[str, Callable[..., object], m.DecoratorConfig]]:
+        _module: ModuleType,
+    ) -> list[tuple[str, Callable[..., test_t.Tests.object], m.DecoratorConfig]]:
         cfg = m.DecoratorConfig(command=str, middleware=[])
         return [("x", discovered_handler.handle, cfg)]
 
@@ -168,13 +170,13 @@ def test_summary_error_paths_and_bindings_failures(
 
     class _FailBindingDispatcher:
         def register_handler(
-            self, *_args, is_event: bool = False
+            self, *_args: t.HandlerLike, is_event: bool = False
         ) -> r[m.RegistrationResult]:
             return r[m.RegistrationResult].fail("bind-fail")
 
     class _RaiseBindingDispatcher:
         def register_handler(
-            self, *_args, is_event: bool = False
+            self, *_args: t.HandlerLike, is_event: bool = False
         ) -> r[m.RegistrationResult]:
             msg = "bind-ex"
             raise RuntimeError(msg)

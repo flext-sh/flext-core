@@ -91,6 +91,7 @@ class TestWorkspaceCheckerSARIFReport:
         gate_exec = GateExecution(result=gate, issues=[], raw_output="")
         project = ProjectResult(project="p", gates={"lint": gate_exec})
         report = checker.generate_sarif_report([project], ["lint"])
+        assert isinstance(report, dict)
         tm.that("runs" in report, eq=True)
 
     def test_sarif_report_with_issues(self) -> None:
@@ -104,6 +105,7 @@ class TestWorkspaceCheckerSARIFReport:
         gate_exec = GateExecution(result=gate, issues=[issue], raw_output="")
         project = ProjectResult(project="p", gates={"lint": gate_exec})
         report = checker.generate_sarif_report([project], ["lint"])
+        assert isinstance(report, dict)
         tm.that("runs" in report, eq=True)
 
 
@@ -118,6 +120,7 @@ class TestWorkspaceCheckerSARIFReportEdgeCases:
         exec1 = GateExecution(result=gate, issues=[], raw_output="")
         project = ProjectResult(project="p", gates={"lint": exec1})
         report = checker.generate_sarif_report([project], ["format"])
+        assert isinstance(report, dict)
         tm.that("runs" in report, eq=True)
 
     def test_markdown_report_with_max_display_issues(self) -> None:

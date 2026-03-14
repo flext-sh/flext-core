@@ -26,7 +26,7 @@ import math
 
 import pytest
 
-from flext_core import FlextResult, m, r, t
+from flext_core import m, r, t
 
 
 class _ResultAssertions:

@@ -129,7 +129,7 @@ def test_basemk_engine_render_all_handles_template_error(
 ) -> None:
     """Test engine.render_all() handles TemplateError gracefully."""
 
-    def mock_get_template(*args, **kwargs: t.Scalar):
+    def mock_get_template(*args: t.Scalar, **kwargs: t.Scalar) -> None:
         msg = "Template not found"
         raise TemplateError(msg)
 

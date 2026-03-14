@@ -127,7 +127,7 @@ class FlextTestsBuilders:
         return str(value)
 
     @staticmethod
-    def _to_payload_value(value) -> t.Tests.object:
+    def _to_payload_value(value: t.Tests.object) -> t.Tests.object:
         if value is None or isinstance(value, (*t.PRIMITIVES_TYPES, bytes, BaseModel)):
             return value
         if isinstance(value, Mapping):
@@ -687,7 +687,7 @@ class FlextTestsBuilders:
         """
         self._ensure_data_initialized()
         parts = path.split(".")
-        current = self._data
+        current: t.Tests.Builders.BuilderValue = self._data
         for part in parts:
             if not isinstance(current, Mapping):
                 return default

@@ -189,12 +189,12 @@ class UpdateUserCommandHandler(
         return "update_user"
 
     @override
-    def can_handle(self, message_type) -> bool:
+    def can_handle(self, message_type: type) -> bool:
         """Check if can handle command."""
         return message_type == UpdateUserCommand or str(message_type) == "update_user"
 
     @override
-    def validate_input(self, value) -> r[bool]:
+    def validate_input(self, value: UpdateUserCommand) -> r[bool]:
         """Validate command using command's validate_command method."""
         if isinstance(value, UpdateUserCommand):
             return value.validate_command()
@@ -233,12 +233,12 @@ class FailingCommandHandler(FlextHandlers[FailingCommand, bool]):
         return "failing"
 
     @override
-    def can_handle(self, message_type) -> bool:
+    def can_handle(self, message_type: type) -> bool:
         """Check if can handle command."""
         return message_type == FailingCommand or str(message_type) == "failing"
 
     @override
-    def validate_input(self, value) -> r[bool]:
+    def validate_input(self, value: FailingCommand) -> r[bool]:
         """Validate command using command's validate_command method."""
         if isinstance(value, FailingCommand):
             return value.validate_command()

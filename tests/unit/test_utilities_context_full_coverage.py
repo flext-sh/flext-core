@@ -13,6 +13,7 @@ from datetime import UTC, datetime
 from unittest.mock import MagicMock
 
 from flext_core import FlextContext, m, u
+from flext_tests import t
 
 from ._models import _FakeConfig
 
@@ -78,7 +79,7 @@ class _FakeContext:
     def clone(self) -> _FakeContext:
         return _FakeContext()
 
-    def set(self, key: str, value) -> None:
+    def set(self, key: str, value: t.Scalar) -> None:
         _ = (key, value)
 
     def get(self, key: str) -> None:

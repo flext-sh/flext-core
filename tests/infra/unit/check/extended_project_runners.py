@@ -81,7 +81,7 @@ class TestJsonWriteFailure:
         (proj_dir / "pyproject.toml").write_text("[tool.poetry]\n")
 
         class _FakeJson:
-            def write_json(self, *_a, **_kw: t.Scalar) -> r[bool]:
+            def write_json(self, *_a: t.Scalar, **_kw: t.Scalar) -> r[bool]:
                 return r[bool].fail("write error")
 
         monkeypatch.setattr(checker, "_json", _FakeJson())

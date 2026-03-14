@@ -40,7 +40,7 @@ class TestWorkspaceCheckerRunGo:
         (proj_dir / "go.mod").write_text("module test")
         call_count = [0]
 
-        def _fake_run(*_a, **_kw: t.Scalar) -> SimpleNamespace:
+        def _fake_run(*_a: t.Scalar, **_kw: t.Scalar) -> SimpleNamespace:
             call_count[0] += 1
             if call_count[0] == 1:
                 return h.stub_run(stdout="main.go:10:5: error message", returncode=1)
@@ -61,7 +61,7 @@ class TestWorkspaceCheckerRunGo:
         (proj_dir / "main.go").write_text("package main")
         call_count = [0]
 
-        def _fake_run(*_a, **_kw: t.Scalar) -> SimpleNamespace:
+        def _fake_run(*_a: t.Scalar, **_kw: t.Scalar) -> SimpleNamespace:
             call_count[0] += 1
             if call_count[0] == 1:
                 return h.stub_run()
@@ -82,7 +82,7 @@ class TestWorkspaceCheckerRunGo:
         (proj_dir / "go.mod").write_text("module test")
         call_count = [0]
 
-        def _fake_run(*_a, **_kw: t.Scalar) -> SimpleNamespace:
+        def _fake_run(*_a: t.Scalar, **_kw: t.Scalar) -> SimpleNamespace:
             call_count[0] += 1
             if call_count[0] == 1:
                 return h.stub_run(stderr="go vet failed", returncode=1)

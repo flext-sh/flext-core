@@ -79,7 +79,7 @@ class TestFlextModelsEntity:
             name: Annotated[str, Field(description="User name for equality test")]
 
             @override
-            def __eq__(self, other) -> bool:
+            def __eq__(self, other: object) -> bool:
                 if not isinstance(other, User):
                     return NotImplemented
                 return self.unique_id == other.unique_id

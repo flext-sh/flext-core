@@ -105,7 +105,7 @@ class TestWorkspaceCheckerInitOSError:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        def _raise_oserror(*_args, **_kwargs: t.Scalar) -> None:
+        def _raise_oserror(*_args: t.Scalar, **_kwargs: t.Scalar) -> None:
             msg = "Permission denied"
             raise OSError(msg)
 

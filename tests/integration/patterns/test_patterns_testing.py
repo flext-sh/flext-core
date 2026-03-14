@@ -150,7 +150,11 @@ class MockScenario:
             and not isinstance(tags_data, str | bytes)
             else None,
         )
-        self.priority = _to_string(data.get("priority"), default="normal")
+        priority_data = data.get("priority")
+        self.priority = _to_string(
+            priority_data if isinstance(priority_data, (str, int, float, bool, datetime, Path)) else None,
+            default="normal",
+        )
 
 
 class GivenWhenThenBuilder:
@@ -205,7 +209,7 @@ class GivenWhenThenBuilder:
 
     def build(self) -> MockScenario:
         """Build the final mock scenario object."""
-        data: dict[str, tt.Tests.object] = {
+        data: dict[str, FlextTypes.Container | Mapping[str, FlextTypes.Container] | Sequence[str]] = {
             "given": self._given,
             "when": self._when,
             "then": self._then,
@@ -474,15 +478,15 @@ class FixtureBuilder:
 
 
 def arrange_act_assert(
-    _arrange_func: Callable[[], object],
+    _arrange_func: Callable[[], tt.Tests.object],
     _act_func: Callable[[tt.Tests.object], tt.Tests.object],
     _assert_func: Callable[[tt.Tests.object, tt.Tests.object], None],
-) -> Callable[[Callable[[], object]], Callable[[], object]]:
+) -> Callable[[Callable[[], tt.Tests.object]], Callable[[], tt.Tests.object]]:
     """Decorator for AAA pattern testing."""
 
     def decorator(
-        _test_func: Callable[[], object],
-    ) -> Callable[[], object]:
+        _test_func: Callable[[], tt.Tests.object],
+    ) -> Callable[[], tt.Tests.object]:
 
         def wrapper() -> (
             BaseModel
@@ -765,10 +769,11 @@ class TestComprehensiveIntegration:
         assert isinstance(tags_value, list)
         assert "integration" in tags_value
         setup_data = suite["setup_data"]
+        empty_setup: dict[str, tt.Tests.object] = {}
         typed_setup_data = (
             {str(key): item for key, item in setup_data.items()}
             if isinstance(setup_data, dict)
-            else {}
+            else empty_setup
         )
         if "environment" in typed_setup_data:
             env_value = typed_setup_data["environment"]

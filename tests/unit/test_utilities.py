@@ -26,7 +26,7 @@ from typing import ClassVar, cast
 import pytest
 
 from flext_core import FlextSettings, c, m, r
-from flext_tests import u
+from flext_tests import t, u
 
 from .contracts.text_contract import TextUtilityContract
 
@@ -125,7 +125,7 @@ class Testu(TextUtilityContract):
     def test_type_guard_string(
         self,
         description: str,
-        value,
+        value: t.Tests.object,
         expected: bool,
     ) -> None:
         """Test string type guards."""
@@ -139,7 +139,7 @@ class Testu(TextUtilityContract):
     def test_type_guard_dict(
         self,
         description: str,
-        value,
+        value: t.Tests.object,
         expected: bool,
     ) -> None:
         """Test dict type guards."""
@@ -153,7 +153,7 @@ class Testu(TextUtilityContract):
     def test_type_guard_list(
         self,
         description: str,
-        value,
+        value: t.Tests.object,
         expected: bool,
     ) -> None:
         """Test list type guards."""
@@ -264,7 +264,7 @@ class Testu(TextUtilityContract):
     )
     def test_cache_normalize_component(
         self,
-        input_data,
+        input_data: t.Tests.object,
         expected_type: type | tuple[type, ...],
     ) -> None:
         """Test cache component normalization."""
@@ -307,7 +307,7 @@ class Testu(TextUtilityContract):
 
             cache_obj = TestWithCache()
             result = u.has_cache_attributes(
-                cast("object", cast("object", cache_obj)),
+                cast("object", cache_obj),
             )
             assert result is expected
         else:
@@ -317,7 +317,7 @@ class Testu(TextUtilityContract):
 
             no_cache_obj = TestNoCache()
             result = u.has_cache_attributes(
-                cast("object", cast("object", no_cache_obj)),
+                cast("object", no_cache_obj),
             )
             assert result is expected
 

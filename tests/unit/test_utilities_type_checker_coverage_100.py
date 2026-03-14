@@ -32,11 +32,11 @@ T = TypeVar("T")
 TMessage = TypeVar("TMessage")
 
 
-def _type_origin(value) -> t.TypeHintSpecifier:
+def _type_origin(value: t.TypeHintSpecifier) -> t.TypeHintSpecifier:
     return cast("t.TypeOriginSpecifier", value)
 
 
-def _message_type(value: type[dict | int | str]) -> t.MessageTypeSpecifier:
+def _message_type(value: type[dict[str, t.Tests.object] | int | str]) -> t.MessageTypeSpecifier:
     return cast("t.MessageTypeSpecifier", value)
 
 
@@ -77,7 +77,7 @@ class ObjectHandler(h[object, t.Container]):
     """Handler for object messages (universal)."""
 
     @override
-    def handle(self, message) -> r[t.Container]:
+    def handle(self, message: object) -> r[t.Container]:
         """Handle any message."""
         if isinstance(message, (str, int, float, bool)):
             return r[t.Container].ok(message)

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import pytest
 import tomlkit
+import tomlkit.items
 from tomlkit.toml_document import TOMLDocument
 
 from flext_infra import u
@@ -85,15 +86,15 @@ def test_unwrap_item_toml_item(doc: TOMLDocument) -> None:
 @pytest.mark.parametrize(
     ("value", "expected"),
     [
-        (["a", "b", "c"], ["a", "b", "c"]),
+        (tomlkit.item(["a", "b", "c"]), ["a", "b", "c"]),
         (None, []),
-        ("test", []),
-        ({"key": "value"}, []),
-        (42, []),
+        (tomlkit.item("test"), []),
+        (tomlkit.item({"key": "value"}), []),
+        (tomlkit.item(42), []),
     ],
 )
 def test_as_string_list(
-    value: list[str] | str | dict[str, str] | int | None, expected: list[str]
+    value: tomlkit.items.Item | None, expected: list[str]
 ) -> None:
     tm.that(as_string_list(value), eq=expected)
 

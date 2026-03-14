@@ -30,7 +30,7 @@ _expected_validation_errors: tuple[type[Exception], ...] = (ValidationError, Typ
 def _service_reg_with_metadata(
     name: str,
     service: str,
-    metadata,
+    metadata: t.Tests.object,
 ) -> m.ServiceRegistration:
     """Create ServiceRegistration with arbitrary metadata for validation testing."""
     return m.ServiceRegistration.model_validate({
@@ -43,7 +43,7 @@ def _service_reg_with_metadata(
 def _factory_reg_with_metadata(
     name: str,
     factory: Callable[[], t.Scalar],
-    metadata,
+    metadata: t.Tests.object,
 ) -> m.FactoryRegistration:
     """Create FactoryRegistration with arbitrary metadata for validation testing."""
     return m.FactoryRegistration.model_validate({
@@ -93,7 +93,7 @@ class TestFlextModelsContainer:
     def test_is_dict_like_static_method(self) -> None:
         """Test dict-like checking using utilities."""
 
-        def is_dict_like(value) -> bool:
+        def is_dict_like(value: t.Tests.object) -> bool:
             """Check if value is dict-like."""
             return isinstance(value, Mapping)
 
@@ -110,7 +110,7 @@ class TestFlextModelsContainer:
     )
     def test_service_registration_metadata_validation(
         self,
-        metadata_value,
+        metadata_value: t.Tests.object,
         should_pass: bool,
     ) -> None:
         """Test ServiceRegistration metadata validation with various types."""
@@ -158,7 +158,7 @@ class TestFlextModelsContainer:
     )
     def test_factory_registration_metadata_validation(
         self,
-        metadata_value,
+        metadata_value: t.Tests.object,
         should_pass: bool,
     ) -> None:
         """Test FactoryRegistration metadata validation with various types."""

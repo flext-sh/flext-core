@@ -38,6 +38,7 @@ from flext_core import (
     FlextRuntime,
     c,
     m,
+    p,
     r,
     s,
 )
@@ -962,7 +963,7 @@ class TestFlextRuntime:
         ):
 
             def custom_processor(
-                logger,
+                logger: p.Log.StructlogLogger,
                 method_name: str,
                 event_dict: dict[str, t.Tests.object],
             ) -> dict[str, t.Tests.object]:

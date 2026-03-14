@@ -46,7 +46,7 @@ def _to_payload_value(value: object) -> t.Tests.object:
     return str(value)
 
 
-def _to_guard_input(value: t.Tests.object):
+def _to_guard_input(value: t.Tests.object) -> t.Tests.object:
     if value is None or isinstance(value, (*t.PRIMITIVES_TYPES, BaseModel)):
         return value
     if isinstance(value, Mapping):
@@ -341,7 +341,7 @@ class FlextTestsFactories(s[t.Tests.object]):
 
         """
         try:
-            validate_data: dict[str, t.Tests.object] = {"type_": type_, **kwargs}
+            validate_data: dict[str, t.Tests.object | type[T]] = {"type_": type_, **kwargs}
             if "kwargs" in validate_data:
                 validate_data["call_kwargs"] = validate_data.pop("kwargs")
             params = m.Tests.GenericFactoryParams.model_validate(validate_data)
@@ -497,7 +497,7 @@ class FlextTestsFactories(s[t.Tests.object]):
                     raw_items.append(final_item)
         items.extend(raw_items)
         if params.unique and items:
-            seen: set = set()
+            seen: set[int] = set()
             unique_items: builtins.list[t.Tests.object] = []
             for item in items:
                 item_hash = (

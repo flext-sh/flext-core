@@ -60,7 +60,7 @@ class FlextTestsModels(
             container_id: str = ""
 
             @override
-            def model_post_init(self, __context, /) -> None:
+            def model_post_init(self, __context: object, /) -> None:
                 """Validate container info after initialization."""
                 super().model_post_init(__context)
                 if not self.name:
@@ -78,7 +78,7 @@ class FlextTestsModels(
             port: int
 
             @override
-            def model_post_init(self, __context, /) -> None:
+            def model_post_init(self, __context: object, /) -> None:
                 """Validate container config after initialization."""
                 super().model_post_init(__context)
                 if not self.compose_file.exists():

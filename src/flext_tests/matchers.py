@@ -72,11 +72,11 @@ _GUARD_PAYLOAD_DICT_ADAPTER = TypeAdapter(dict[str, t.Tests.object])
 _GUARD_PAYLOAD_LIST_ADAPTER = TypeAdapter(list[t.Tests.object])
 
 
-def _is_non_string_sequence(value) -> TypeGuard[Sequence]:
+def _is_non_string_sequence(value: t.Tests.object) -> TypeGuard[Sequence[t.Tests.object]]:
     return isinstance(value, Sequence) and (not isinstance(value, str | bytes))
 
 
-def _to_test_payload(value) -> t.Tests.object:
+def _to_test_payload(value: t.Tests.Matcher.MatcherKwargValue | None) -> t.Tests.object:
     if value is None or isinstance(value, (str, int, float, bool, bytes, BaseModel)):
         return value
     if isinstance(value, Mapping):
@@ -94,7 +94,7 @@ def _to_test_payload(value) -> t.Tests.object:
     return str(value)
 
 
-def _as_guard_input(value) -> t.Tests.object:
+def _as_guard_input(value: t.Tests.object) -> t.Tests.object:
     if isinstance(value, BaseModel | str | int | float | bool | Path):
         return value
     if value is None:
@@ -117,9 +117,9 @@ def _as_guard_input(value) -> t.Tests.object:
 
 
 def _check_has_lacks(
-    value,
-    has: Sequence | None,
-    lacks: Sequence | None,
+    value: t.Tests.object,
+    has: Sequence[t.Tests.object] | t.Tests.object | None,
+    lacks: Sequence[t.Tests.object] | t.Tests.object | None,
     msg: str | None,
     *,
     as_str: bool = False,
@@ -725,7 +725,7 @@ class FlextTestsMatchers:
                         )
 
     @staticmethod
-    def that(value, **kwargs: t.Tests.Matcher.MatcherKwargValue) -> None:
+    def that(value: t.Tests.Matcher.MatcherKwargValue, **kwargs: t.Tests.Matcher.MatcherKwargValue) -> None:
         r"""Super-powered universal value assertion - ALL validations in ONE method.
 
         This is the PRIMARY assertion method. All other assertion methods
@@ -993,7 +993,7 @@ class FlextTestsMatchers:
             if params.all_ is not None:
                 if isinstance(params.all_, type):
 
-                    def _all_match(t: type, seq: Sequence) -> bool:
+                    def _all_match(t: type, seq: Sequence[t.Tests.object]) -> bool:
                         return all(
                             isinstance(x, t)
                             or (hasattr(type(x), "__mro__") and t in type(x).__mro__)

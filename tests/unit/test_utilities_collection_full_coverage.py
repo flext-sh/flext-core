@@ -46,7 +46,7 @@ class _BadCopyDict(UserDict[str, object]):
         raise TypeError(msg)
 
 
-class _ListSubclass(UserList):
+class _ListSubclass(UserList[int]):
     pass
 
 
@@ -81,15 +81,15 @@ def test_batch_fail_collect_flatten_and_progress() -> None:
     def _success_list(_item: int) -> list[int]:
         return [1, 2]
 
-    def _failure_result(_item: int):
+    def _failure_result(_item: int) -> NoReturn:
         msg = "err"
         raise ValueError(msg)
 
-    def _hard_failure(_item: int):
+    def _hard_failure(_item: int) -> NoReturn:
         msg = "hard"
         raise ValueError(msg)
 
-    def _raise_value_error(_item: int):
+    def _raise_value_error(_item: int) -> NoReturn:
         msg = "x"
         raise ValueError(msg)
 
@@ -131,8 +131,8 @@ def test_batch_fail_collect_flatten_and_progress() -> None:
 
 
 def test_process_outer_exception_and_coercion_branches() -> None:
-    processed: r[list] = u.process(
-        cast("list", _BadSequence()),
+    processed: r[list[str]] = u.process(
+        cast("list[str]", _BadSequence()),
         lambda x: x,
     )
     assert processed.is_failure

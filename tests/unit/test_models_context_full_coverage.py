@@ -89,7 +89,7 @@ def test_context_data_normalize_and_json_checks() -> None:
     assert check_result is None
     with pytest.raises(TypeError):
         FlextModelsContext.ContextData.check_json_serializable(
-            cast("object", {"bad"()})
+            cast("object", {object()})
         )
     obj = object()
     with pytest.raises(TypeError):
@@ -156,7 +156,7 @@ def test_context_export_serializable_and_validators() -> None:
     assert check_result is None
     with pytest.raises(TypeError):
         _ = FlextModelsContext.ContextData.check_json_serializable(
-            cast("object", {"x"()})
+            cast("object", {object()})
         )
     with pytest.raises(TypeError):
         _ = FlextModelsContext.ContextExport.validate_dict_serializable(

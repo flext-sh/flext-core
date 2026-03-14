@@ -38,7 +38,7 @@ class _ExplodingSubclassMeta(type):
 
 class _ExplodingInstanceMeta(type):
     @override
-    def __instancecheck__(cls, instance) -> bool:
+    def __instancecheck__(cls, instance: object) -> bool:
         _ = instance
         msg = "no instance check"
         raise TypeError(msg)

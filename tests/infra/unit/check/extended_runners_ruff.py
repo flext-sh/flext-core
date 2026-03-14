@@ -158,7 +158,7 @@ class TestRunCommand:
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
 
         def _fake_run_raw(
-            _self, _cmd: list[str], **_kw: t.Scalar
+            _self: FlextInfraUtilitiesSubprocess, _cmd: list[str], **_kw: t.Scalar
         ) -> r[m.Infra.Core.CommandOutput]:
             return r[m.Infra.Core.CommandOutput].ok(
                 m.Infra.Core.CommandOutput(stdout="output", stderr="", exit_code=0)
@@ -175,7 +175,7 @@ class TestRunCommand:
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
 
         def _fake_run_raw(
-            _self, _cmd: list[str], **_kw: t.Scalar
+            _self: FlextInfraUtilitiesSubprocess, _cmd: list[str], **_kw: t.Scalar
         ) -> r[m.Infra.Core.CommandOutput]:
             return r[m.Infra.Core.CommandOutput].fail("execution failed")
 

@@ -15,7 +15,7 @@ class _FakeResult:
     def __init__(
         self,
         success: bool,
-        value=None,
+        value: list[m.Infra.Workspace.ProjectInfo] | m.Infra.Core.CommandOutput | None = None,
         error: str | None = None,
     ) -> None:
         self.is_success = success

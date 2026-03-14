@@ -47,7 +47,7 @@ class _LoggerLike:
         return None
 
 
-def _sample_handler(value):
+def _sample_handler(value: t.NormalizedValue) -> t.NormalizedValue:
     return value
 
 
@@ -82,7 +82,7 @@ def test_is_handler_type_branches() -> None:
     class _DuckHandler:
         value: str = "ok"
 
-        def handle(self, _value) -> None:
+        def handle(self, _value: t.NormalizedValue) -> None:
             return None
 
     assert u.is_handler_type(cast("object", _BaseModelSubclass))
@@ -97,7 +97,7 @@ def test_non_empty_and_normalize_branches() -> None:
     assert u.normalize_to_metadata_value("x") == "x"
     dict_scalar_out = u.normalize_to_metadata_value({"k": 1})
     assert dict_scalar_out == {"k": 1}
-    dict_complex_out = u.normalize_to_metadata_value(cast("object", {"k"()}))
+    dict_complex_out = u.normalize_to_metadata_value(cast("t.NormalizedValue", {"k": object()}))
     assert isinstance(dict_complex_out, dict) and "k" in dict_complex_out
     list_out = u.normalize_to_metadata_value(cast("object", [1, object()]))
     assert isinstance(list_out, list)
@@ -142,7 +142,7 @@ def test_protocol_and_simple_guard_helpers() -> None:
     assert u.is_handler_callable(cast("object", _sample_handler))
     assert u.is_mapping({"k": "v"})
 
-    def _identity(value):
+    def _identity(value: t.NormalizedValue) -> t.NormalizedValue:
         return value
 
     assert _is_type_obj(_identity, "callable")
@@ -205,10 +205,10 @@ def test_guard_in_has_empty_none_helpers() -> None:
     assert u.guard("x", validator=None, return_value=False)
     assert u.guard("x", validator=None, return_value=True) == "x"
 
-    def _always_false(_v) -> bool:
+    def _always_false(_v: t.NormalizedValue) -> bool:
         return False
 
-    def _raise_error(_v) -> bool:
+    def _raise_error(_v: t.NormalizedValue) -> bool:
         _ = _v
         msg = "test error"
         raise TypeError(msg)
@@ -321,7 +321,7 @@ def test_guards_bool_identity_branch_via_isinstance_fallback(
     original_isinstance = builtins.isinstance
 
     def _patched_isinstance(
-        obj,
+        obj: object,
         classinfo: type | tuple[type, ...],
     ) -> bool:
         if obj is True and classinfo == (str, int, float, bool, type(None), datetime):
@@ -341,7 +341,7 @@ def test_guards_issubclass_typeerror_when_class_not_treated_as_callable(
     class _Candidate:
         pass
 
-    def _patched_callable(value) -> bool:
+    def _patched_callable(value: t.NormalizedValue) -> bool:
         if value is _Candidate:
             return False
         return original_callable(value)
@@ -368,7 +368,7 @@ def test_guards_issubclass_success_when_callable_is_patched(
     class _ModelSub:
         value: str = "ok"
 
-    def _patched_callable(value) -> bool:
+    def _patched_callable(value: t.NormalizedValue) -> bool:
         if value is _ModelSub:
             return False
         return original_callable(value)

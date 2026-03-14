@@ -39,12 +39,14 @@ class FlextInfraCodegenFixer(s):
 
     _workspace_root: Path
     _dry_run: bool
+    _rules_only: bool
 
     def __init__(
         self,
         workspace_root: Path,
         *,
         dry_run: bool = False,
+        rules_only: bool = False,
     ) -> None:
         """Initialize codegen fixer with workspace root."""
         super().__init__(
@@ -62,6 +64,7 @@ class FlextInfraCodegenFixer(s):
         )
         self._workspace_root = workspace_root
         self._dry_run = dry_run
+        self._rules_only = rules_only
 
     # ------------------------------------------------------------------
     # AST analysis helpers (no file I/O, tree mutation for analysis only)
@@ -421,7 +424,7 @@ class FlextInfraCodegenFixer(s):
             violations_skipped=violations_skipped,
             files_modified=files_modified,
         )
-        if self._dry_run:
+        if self._dry_run or self._rules_only:
             return m.Infra.Codegen.AutoFixResult(
                 project=project_path.name,
                 violations_fixed=violations_fixed,
