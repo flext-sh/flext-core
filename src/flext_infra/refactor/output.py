@@ -5,7 +5,7 @@ from __future__ import annotations
 from operator import itemgetter
 
 from flext_infra import c, m
-from flext_infra.refactor import _models_namespace_enforcer as nem
+from flext_infra.refactor._models_namespace_enforcer import FlextInfraNamespaceEnforcerModels as nem
 
 
 class FlextInfraRefactorOutputRenderer:
@@ -13,7 +13,7 @@ class FlextInfraRefactorOutputRenderer:
 
     @staticmethod
     def render_namespace_enforcement_report(
-        report: nem.NamespaceWorkspaceEnforcementReport,
+        report: nem.WorkspaceEnforcementReport,
     ) -> str:
         """Render a human-readable namespace enforcement report."""
         max_loose = c.Infra.Refactor.NAMESPACE_MAX_RENDERED_LOOSE_OBJECTS

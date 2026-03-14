@@ -13,7 +13,7 @@ from pydantic import TypeAdapter, ValidationError
 
 from flext_core import r
 from flext_infra import c, m, p, u
-from flext_infra.refactor import _models_namespace_enforcer as nem
+from flext_infra.refactor._models_namespace_enforcer import FlextInfraNamespaceEnforcerModels as nem
 
 
 class ImportCollector(cst.CSTVisitor):
@@ -260,10 +260,10 @@ class NamespaceFacadeScanner:
         *,
         project_root: Path,
         project_name: str,
-        parse_failures: list[nem.NamespaceParseFailureViolation] | None = None,
-    ) -> list[nem.NamespaceFacadeStatus]:
+        parse_failures: list[nem.ParseFailureViolation] | None = None,
+    ) -> list[nem.FacadeStatus]:
         """Scan a project for namespace facade classes and return their status."""
-        results: list[nem.NamespaceFacadeStatus] = []
+        results: list[nem.FacadeStatus] = []
         class_stem = cls.project_class_stem(project_name=project_name)
         for family, suffix in c.Infra.Refactor.NAMESPACE_FACADE_FAMILIES.items():
             expected_class = f"{class_stem}{suffix}"
@@ -275,7 +275,7 @@ class NamespaceFacadeScanner:
                 _parse_failures=parse_failures,
             )
             results.append(
-                nem.NamespaceFacadeStatus.create(
+                nem.FacadeStatus.create(
                     family=family,
                     exists=bool(found_class),
                     class_name=found_class,
@@ -293,7 +293,7 @@ class NamespaceFacadeScanner:
         family: str,
         expected_class: str,
         suffix: str,
-        _parse_failures: list[nem.NamespaceParseFailureViolation] | None,
+        _parse_failures: list[nem.ParseFailureViolation] | None,
     ) -> tuple[str, str, int]:
         file_pattern = c.Infra.Refactor.NAMESPACE_FACADE_FILE_PATTERNS[family]
         src_dir = project_root / c.Infra.Paths.DEFAULT_SRC_DIR
@@ -347,7 +347,7 @@ class LooseObjectDetector(p.Infra.Scanner):
         self,
         *,
         project_name: str,
-        parse_failures: list[nem.NamespaceParseFailureViolation] | None = None,
+        parse_failures: list[nem.ParseFailureViolation] | None = None,
     ) -> None:
         """Initialize scanner with project configuration."""
         super().__init__()
@@ -384,8 +384,8 @@ class LooseObjectDetector(p.Infra.Scanner):
         *,
         file_path: Path,
         project_name: str,
-        parse_failures: list[nem.NamespaceParseFailureViolation] | None = None,
-    ) -> list[nem.NamespaceLooseObjectViolation]:
+        parse_failures: list[nem.ParseFailureViolation] | None = None,
+    ) -> list[nem.LooseObjectViolation]:
         """Scan a file and return typed namespace violations."""
         return cls.scan_file_impl(
             file_path=file_path,
@@ -399,8 +399,8 @@ class LooseObjectDetector(p.Infra.Scanner):
         *,
         file_path: Path,
         project_name: str,
-        _parse_failures: list[nem.NamespaceParseFailureViolation] | None = None,
-    ) -> list[nem.NamespaceLooseObjectViolation]:
+        _parse_failures: list[nem.ParseFailureViolation] | None = None,
+    ) -> list[nem.LooseObjectViolation]:
         """Scan a file for loose top-level objects outside namespace classes."""
         if file_path.name in c.Infra.Refactor.NAMESPACE_PROTECTED_FILES:
             return []
@@ -410,7 +410,7 @@ class LooseObjectDetector(p.Infra.Scanner):
         if tree is None:
             return []
         namespace_classes = cls._find_namespace_classes(tree=tree)
-        violations: list[nem.NamespaceLooseObjectViolation] = []
+        violations: list[nem.LooseObjectViolation] = []
         class_stem = NamespaceFacadeScanner.project_class_stem(
             project_name=project_name,
         )
@@ -433,7 +433,7 @@ class LooseObjectDetector(p.Infra.Scanner):
         namespace_classes: set[str],
         file_path: Path,
         class_stem: str,
-    ) -> nem.NamespaceLooseObjectViolation | None:
+    ) -> nem.LooseObjectViolation | None:
         if isinstance(stmt, (ast.Import, ast.ImportFrom)):
             return None
         if isinstance(stmt, ast.Expr) and isinstance(stmt.value, ast.Constant):
@@ -449,7 +449,7 @@ class LooseObjectDetector(p.Infra.Scanner):
                 return None
             if stmt.name.startswith("_"):
                 return None
-            return nem.NamespaceLooseObjectViolation.create(
+            return nem.LooseObjectViolation.create(
                 file=str(file_path),
                 line=stmt.lineno,
                 name=stmt.name,
@@ -463,7 +463,7 @@ class LooseObjectDetector(p.Infra.Scanner):
             if name.startswith("_"):
                 return None
             if c.Infra.Refactor.NAMESPACE_CONSTANT_PATTERN.match(name):
-                return nem.NamespaceLooseObjectViolation.create(
+                return nem.LooseObjectViolation.create(
                     file=str(file_path),
                     line=stmt.lineno,
                     name=name,
@@ -482,7 +482,7 @@ class LooseObjectDetector(p.Infra.Scanner):
                 if name.startswith("_"):
                     return None
                 if c.Infra.Refactor.NAMESPACE_CONSTANT_PATTERN.match(name):
-                    return nem.NamespaceLooseObjectViolation.create(
+                    return nem.LooseObjectViolation.create(
                         file=str(file_path),
                         line=stmt.lineno,
                         name=name,
@@ -492,7 +492,7 @@ class LooseObjectDetector(p.Infra.Scanner):
         if isinstance(stmt, ast.TypeAlias):
             name = stmt.name.id if hasattr(stmt.name, "id") else ""
             if name and name not in cls.ALLOWED_TOP_LEVEL:
-                return nem.NamespaceLooseObjectViolation.create(
+                return nem.LooseObjectViolation.create(
                     file=str(file_path),
                     line=stmt.lineno,
                     name=name,
@@ -524,7 +524,7 @@ class ImportAliasDetector(p.Infra.Scanner):
     def __init__(
         self,
         *,
-        parse_failures: list[nem.NamespaceParseFailureViolation] | None = None,
+        parse_failures: list[nem.ParseFailureViolation] | None = None,
     ) -> None:
         """Initialize scanner with project configuration."""
         super().__init__()
@@ -559,8 +559,8 @@ class ImportAliasDetector(p.Infra.Scanner):
         cls,
         *,
         file_path: Path,
-        parse_failures: list[nem.NamespaceParseFailureViolation] | None = None,
-    ) -> list[nem.NamespaceImportAliasViolation]:
+        parse_failures: list[nem.ParseFailureViolation] | None = None,
+    ) -> list[nem.ImportAliasViolation]:
         """Scan a file and return typed namespace violations."""
         return cls.scan_file_impl(
             file_path=file_path,
@@ -572,13 +572,13 @@ class ImportAliasDetector(p.Infra.Scanner):
         cls,
         *,
         file_path: Path,
-        _parse_failures: list[nem.NamespaceParseFailureViolation] | None = None,
-    ) -> list[nem.NamespaceImportAliasViolation]:
+        _parse_failures: list[nem.ParseFailureViolation] | None = None,
+    ) -> list[nem.ImportAliasViolation]:
         """Scan a file for deep import paths that should use aliases."""
         tree = u.Infra.parse_module_ast(file_path)
         if tree is None:
             return []
-        violations: list[nem.NamespaceImportAliasViolation] = []
+        violations: list[nem.ImportAliasViolation] = []
         for stmt in tree.body:
             if not isinstance(stmt, ast.ImportFrom):
                 continue
@@ -597,7 +597,7 @@ class ImportAliasDetector(p.Infra.Scanner):
                     )
                     current = f"from {stmt.module} import {import_names}"
                     violations.append(
-                        nem.NamespaceImportAliasViolation.create(
+                        nem.ImportAliasViolation.create(
                             file=str(file_path),
                             line=stmt.lineno,
                             current_import=current,
@@ -613,7 +613,7 @@ class InternalImportDetector(p.Infra.Scanner):
     def __init__(
         self,
         *,
-        parse_failures: list[nem.NamespaceParseFailureViolation] | None = None,
+        parse_failures: list[nem.ParseFailureViolation] | None = None,
     ) -> None:
         """Initialize scanner with project configuration."""
         super().__init__()
@@ -648,8 +648,8 @@ class InternalImportDetector(p.Infra.Scanner):
         cls,
         *,
         file_path: Path,
-        parse_failures: list[nem.NamespaceParseFailureViolation] | None = None,
-    ) -> list[nem.NamespaceInternalImportViolation]:
+        parse_failures: list[nem.ParseFailureViolation] | None = None,
+    ) -> list[nem.InternalImportViolation]:
         """Scan a file and return typed namespace violations."""
         return cls.scan_file_impl(
             file_path=file_path,
@@ -661,13 +661,13 @@ class InternalImportDetector(p.Infra.Scanner):
         cls,
         *,
         file_path: Path,
-        _parse_failures: list[nem.NamespaceParseFailureViolation] | None = None,
-    ) -> list[nem.NamespaceInternalImportViolation]:
+        _parse_failures: list[nem.ParseFailureViolation] | None = None,
+    ) -> list[nem.InternalImportViolation]:
         """Scan a file for private module or symbol imports."""
         tree = u.Infra.parse_module_ast(file_path)
         if tree is None:
             return []
-        violations: list[nem.NamespaceInternalImportViolation] = []
+        violations: list[nem.InternalImportViolation] = []
         for stmt in tree.body:
             if not isinstance(stmt, ast.ImportFrom):
                 continue
@@ -688,7 +688,7 @@ class InternalImportDetector(p.Infra.Scanner):
                 else "private symbol import"
             )
             violations.append(
-                nem.NamespaceInternalImportViolation.create(
+                nem.InternalImportViolation.create(
                     file=str(file_path),
                     line=stmt.lineno,
                     current_import=current_import,
@@ -707,7 +707,7 @@ class ManualProtocolDetector(p.Infra.Scanner):
     def __init__(
         self,
         *,
-        parse_failures: list[nem.NamespaceParseFailureViolation] | None = None,
+        parse_failures: list[nem.ParseFailureViolation] | None = None,
     ) -> None:
         """Initialize scanner with project configuration."""
         super().__init__()
@@ -742,8 +742,8 @@ class ManualProtocolDetector(p.Infra.Scanner):
         cls,
         *,
         file_path: Path,
-        parse_failures: list[nem.NamespaceParseFailureViolation] | None = None,
-    ) -> list[nem.NamespaceManualProtocolViolation]:
+        parse_failures: list[nem.ParseFailureViolation] | None = None,
+    ) -> list[nem.ManualProtocolViolation]:
         """Scan a file and return typed namespace violations."""
         return cls.scan_file_impl(
             file_path=file_path,
@@ -755,8 +755,8 @@ class ManualProtocolDetector(p.Infra.Scanner):
         cls,
         *,
         file_path: Path,
-        _parse_failures: list[nem.NamespaceParseFailureViolation] | None = None,
-    ) -> list[nem.NamespaceManualProtocolViolation]:
+        _parse_failures: list[nem.ParseFailureViolation] | None = None,
+    ) -> list[nem.ManualProtocolViolation]:
         """Scan a file for Protocol classes outside canonical locations."""
         in_canonical_file = file_path.name in cls.CANONICAL_FILE_NAMES
         in_canonical_dir = cls.CANONICAL_DIR_NAME in file_path.parts
@@ -767,13 +767,13 @@ class ManualProtocolDetector(p.Infra.Scanner):
         tree = u.Infra.parse_module_ast(file_path)
         if tree is None:
             return []
-        violations: list[nem.NamespaceManualProtocolViolation] = []
+        violations: list[nem.ManualProtocolViolation] = []
         for stmt in tree.body:
             if not isinstance(stmt, ast.ClassDef):
                 continue
             if cls.is_protocol_class(stmt):
                 violations.append(
-                    nem.NamespaceManualProtocolViolation.create(
+                    nem.ManualProtocolViolation.create(
                         file=str(file_path),
                         line=stmt.lineno,
                         name=stmt.name,
@@ -811,8 +811,8 @@ class CyclicImportDetector:
         cls,
         *,
         project_root: Path,
-        _parse_failures: list[nem.NamespaceParseFailureViolation] | None = None,
-    ) -> list[nem.NamespaceCyclicImportViolation]:
+        _parse_failures: list[nem.ParseFailureViolation] | None = None,
+    ) -> list[nem.CyclicImportViolation]:
         """Scan a project for cyclic import dependencies."""
         scan_dirs = [
             project_root / directory_name
@@ -853,7 +853,7 @@ class CyclicImportDetector:
                         root_pkg = imported.split(".")[0]
                         if root_pkg in package_roots:
                             graph[module_name].add(imported)
-        violations: list[nem.NamespaceCyclicImportViolation] = []
+        violations: list[nem.CyclicImportViolation] = []
         try:
             _ = list(TopologicalSorter(graph).static_order())
         except CycleError as exc:
@@ -869,7 +869,7 @@ class CyclicImportDetector:
                     for module_name in normalized_cycle
                 )
                 violations.append(
-                    nem.NamespaceCyclicImportViolation.create(
+                    nem.CyclicImportViolation.create(
                         cycle=normalized_cycle,
                         files=cycle_files,
                     ),
@@ -924,7 +924,7 @@ class RuntimeAliasDetector(p.Infra.Scanner):
         self,
         *,
         project_name: str,
-        parse_failures: list[nem.NamespaceParseFailureViolation] | None = None,
+        parse_failures: list[nem.ParseFailureViolation] | None = None,
     ) -> None:
         """Initialize scanner with project configuration."""
         super().__init__()
@@ -962,8 +962,8 @@ class RuntimeAliasDetector(p.Infra.Scanner):
         *,
         file_path: Path,
         project_name: str,
-        parse_failures: list[nem.NamespaceParseFailureViolation] | None = None,
-    ) -> list[nem.NamespaceRuntimeAliasViolation]:
+        parse_failures: list[nem.ParseFailureViolation] | None = None,
+    ) -> list[nem.RuntimeAliasViolation]:
         """Scan a file and return typed namespace violations."""
         return cls.scan_file_impl(
             file_path=file_path,
@@ -977,8 +977,8 @@ class RuntimeAliasDetector(p.Infra.Scanner):
         *,
         file_path: Path,
         project_name: str,
-        _parse_failures: list[nem.NamespaceParseFailureViolation] | None = None,
-    ) -> list[nem.NamespaceRuntimeAliasViolation]:
+        _parse_failures: list[nem.ParseFailureViolation] | None = None,
+    ) -> list[nem.RuntimeAliasViolation]:
         """Scan a file for missing or duplicate runtime alias assignments."""
         if file_path.name not in c.Infra.Refactor.NAMESPACE_FILE_TO_FAMILY:
             return []
@@ -987,7 +987,7 @@ class RuntimeAliasDetector(p.Infra.Scanner):
         tree = u.Infra.parse_module_ast(file_path)
         if tree is None:
             return []
-        violations: list[nem.NamespaceRuntimeAliasViolation] = []
+        violations: list[nem.RuntimeAliasViolation] = []
         _ = project_name
         family = cls._family_for_file(file_name=file_path.name)
         if not family:
@@ -1005,7 +1005,7 @@ class RuntimeAliasDetector(p.Infra.Scanner):
         matches = [a for a in alias_assignments if a[1] == expected_alias]
         if len(matches) == 0:
             violations.append(
-                nem.NamespaceRuntimeAliasViolation.create(
+                nem.RuntimeAliasViolation.create(
                     file=str(file_path),
                     kind="missing",
                     alias=expected_alias,
@@ -1014,7 +1014,7 @@ class RuntimeAliasDetector(p.Infra.Scanner):
             )
         elif len(matches) > 1:
             violations.append(
-                nem.NamespaceRuntimeAliasViolation.create(
+                nem.RuntimeAliasViolation.create(
                     file=str(file_path),
                     line=matches[1][0],
                     kind="duplicate",
@@ -1035,7 +1035,7 @@ class FutureAnnotationsDetector(p.Infra.Scanner):
     def __init__(
         self,
         *,
-        parse_failures: list[nem.NamespaceParseFailureViolation] | None = None,
+        parse_failures: list[nem.ParseFailureViolation] | None = None,
     ) -> None:
         """Initialize scanner with project configuration."""
         super().__init__()
@@ -1067,8 +1067,8 @@ class FutureAnnotationsDetector(p.Infra.Scanner):
         cls,
         *,
         file_path: Path,
-        parse_failures: list[nem.NamespaceParseFailureViolation] | None = None,
-    ) -> list[nem.NamespaceFutureAnnotationsViolation]:
+        parse_failures: list[nem.ParseFailureViolation] | None = None,
+    ) -> list[nem.FutureAnnotationsViolation]:
         """Scan a file and return typed namespace violations."""
         return cls.scan_file_impl(
             file_path=file_path,
@@ -1080,8 +1080,8 @@ class FutureAnnotationsDetector(p.Infra.Scanner):
         cls,
         *,
         file_path: Path,
-        _parse_failures: list[nem.NamespaceParseFailureViolation] | None = None,
-    ) -> list[nem.NamespaceFutureAnnotationsViolation]:
+        _parse_failures: list[nem.ParseFailureViolation] | None = None,
+    ) -> list[nem.FutureAnnotationsViolation]:
         """Scan a file for missing future annotations import."""
         if file_path.name == "py.typed":
             return []
@@ -1106,7 +1106,7 @@ class FutureAnnotationsDetector(p.Infra.Scanner):
             if isinstance(stmt, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)):
                 break
         return [
-            nem.NamespaceFutureAnnotationsViolation.create(
+            nem.FutureAnnotationsViolation.create(
                 file=str(file_path),
             ),
         ]
@@ -1118,7 +1118,7 @@ class ManualTypingAliasDetector(p.Infra.Scanner):
     def __init__(
         self,
         *,
-        parse_failures: list[nem.NamespaceParseFailureViolation] | None = None,
+        parse_failures: list[nem.ParseFailureViolation] | None = None,
     ) -> None:
         """Initialize scanner with project configuration."""
         super().__init__()
@@ -1150,8 +1150,8 @@ class ManualTypingAliasDetector(p.Infra.Scanner):
         cls,
         *,
         file_path: Path,
-        parse_failures: list[nem.NamespaceParseFailureViolation] | None = None,
-    ) -> list[nem.NamespaceManualTypingAliasViolation]:
+        parse_failures: list[nem.ParseFailureViolation] | None = None,
+    ) -> list[nem.ManualTypingAliasViolation]:
         """Scan a file and return typed namespace violations."""
         return cls.scan_file_impl(
             file_path=file_path,
@@ -1163,8 +1163,8 @@ class ManualTypingAliasDetector(p.Infra.Scanner):
         cls,
         *,
         file_path: Path,
-        _parse_failures: list[nem.NamespaceParseFailureViolation] | None = None,
-    ) -> list[nem.NamespaceManualTypingAliasViolation]:
+        _parse_failures: list[nem.ParseFailureViolation] | None = None,
+    ) -> list[nem.ManualTypingAliasViolation]:
         """Scan a file for type aliases outside canonical locations."""
         if file_path.suffix != ".py":
             return []
@@ -1181,12 +1181,12 @@ class ManualTypingAliasDetector(p.Infra.Scanner):
             return []
         source = parsed.source
         tree = parsed.tree
-        violations: list[nem.NamespaceManualTypingAliasViolation] = []
+        violations: list[nem.ManualTypingAliasViolation] = []
         for stmt in tree.body:
             if isinstance(stmt, ast.TypeAlias):
                 alias_name = stmt.name.id
                 violations.append(
-                    nem.NamespaceManualTypingAliasViolation.create(
+                    nem.ManualTypingAliasViolation.create(
                         file=str(file_path),
                         line=stmt.lineno,
                         name=alias_name,
@@ -1198,7 +1198,7 @@ class ManualTypingAliasDetector(p.Infra.Scanner):
                 annotation_src = ast.get_source_segment(source, stmt.annotation) or ""
                 if "TypeAlias" in annotation_src:
                     violations.append(
-                        nem.NamespaceManualTypingAliasViolation.create(
+                        nem.ManualTypingAliasViolation.create(
                             file=str(file_path),
                             line=stmt.lineno,
                             name=stmt.target.id,
@@ -1214,7 +1214,7 @@ class CompatibilityAliasDetector(p.Infra.Scanner):
     def __init__(
         self,
         *,
-        parse_failures: list[nem.NamespaceParseFailureViolation] | None = None,
+        parse_failures: list[nem.ParseFailureViolation] | None = None,
     ) -> None:
         """Initialize scanner with project configuration."""
         super().__init__()
@@ -1249,8 +1249,8 @@ class CompatibilityAliasDetector(p.Infra.Scanner):
         cls,
         *,
         file_path: Path,
-        parse_failures: list[nem.NamespaceParseFailureViolation] | None = None,
-    ) -> list[nem.NamespaceCompatibilityAliasViolation]:
+        parse_failures: list[nem.ParseFailureViolation] | None = None,
+    ) -> list[nem.CompatibilityAliasViolation]:
         """Scan a file and return typed namespace violations."""
         return cls.scan_file_impl(
             file_path=file_path,
@@ -1262,15 +1262,15 @@ class CompatibilityAliasDetector(p.Infra.Scanner):
         cls,
         *,
         file_path: Path,
-        _parse_failures: list[nem.NamespaceParseFailureViolation] | None = None,
-    ) -> list[nem.NamespaceCompatibilityAliasViolation]:
+        _parse_failures: list[nem.ParseFailureViolation] | None = None,
+    ) -> list[nem.CompatibilityAliasViolation]:
         """Scan a file for compatibility aliases that may be removable."""
         if file_path.suffix != ".py":
             return []
         tree = u.Infra.parse_module_ast(file_path)
         if tree is None:
             return []
-        violations: list[nem.NamespaceCompatibilityAliasViolation] = []
+        violations: list[nem.CompatibilityAliasViolation] = []
         for stmt in tree.body:
             if not isinstance(stmt, ast.Assign):
                 continue
@@ -1293,7 +1293,7 @@ class CompatibilityAliasDetector(p.Infra.Scanner):
                 continue
             if alias_name[0].isupper() and target_name[0].isupper():
                 violations.append(
-                    nem.NamespaceCompatibilityAliasViolation.create(
+                    nem.CompatibilityAliasViolation.create(
                         file=str(file_path),
                         line=stmt.lineno,
                         alias_name=alias_name,
@@ -1311,7 +1311,7 @@ class FlextInfraRefactorDependencyAnalyzerFacade:
         file_path: Path,
         *,
         stage: str = "scan",
-        parse_failures: list[nem.NamespaceParseFailureViolation] | None = None,
+        parse_failures: list[nem.ParseFailureViolation] | None = None,
     ) -> m.Infra.Refactor.ParsedPythonModule | None:
         """Load and parse a Python source file, recording failures if provided."""
         try:
@@ -1319,7 +1319,7 @@ class FlextInfraRefactorDependencyAnalyzerFacade:
         except UnicodeDecodeError as exc:
             if parse_failures is not None:
                 parse_failures.append(
-                    nem.NamespaceParseFailureViolation.create(
+                    nem.ParseFailureViolation.create(
                         file=str(file_path),
                         stage=stage,
                         error_type=type(exc).__name__,
@@ -1330,7 +1330,7 @@ class FlextInfraRefactorDependencyAnalyzerFacade:
         except OSError as exc:
             if parse_failures is not None:
                 parse_failures.append(
-                    nem.NamespaceParseFailureViolation.create(
+                    nem.ParseFailureViolation.create(
                         file=str(file_path),
                         stage=stage,
                         error_type=type(exc).__name__,
@@ -1343,7 +1343,7 @@ class FlextInfraRefactorDependencyAnalyzerFacade:
         except SyntaxError as exc:
             if parse_failures is not None:
                 parse_failures.append(
-                    nem.NamespaceParseFailureViolation.create(
+                    nem.ParseFailureViolation.create(
                         file=str(file_path),
                         stage=stage,
                         error_type=type(exc).__name__,

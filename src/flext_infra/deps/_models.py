@@ -9,6 +9,12 @@ from pydantic import ConfigDict, Field
 
 from flext_core import FlextModels
 
+type _DeptryIssueMap = Mapping[str, str | int | float | bool | None]
+
+
+def _empty_deptry_issues() -> list[_DeptryIssueMap]:
+    return []
+
 
 class FlextInfraDepsModels:
     """Models for dependency detection and modernization reporting."""
@@ -485,22 +491,22 @@ class FlextInfraDepsModels:
     class DeptryIssueGroups(FlextModels.ArbitraryTypesModel):
         """Deptry issue grouping model by error code (DEP001-DEP004)."""
 
-        dep001: Annotated[
-            list[Mapping[str, str | int | float | bool | None]],
-            Field(description="DEP001 issues"),
-        ] = Field(default_factory=list)
-        dep002: Annotated[
-            list[Mapping[str, str | int | float | bool | None]],
-            Field(description="DEP002 issues"),
-        ] = Field(default_factory=list)
-        dep003: Annotated[
-            list[Mapping[str, str | int | float | bool | None]],
-            Field(description="DEP003 issues"),
-        ] = Field(default_factory=list)
-        dep004: Annotated[
-            list[Mapping[str, str | int | float | bool | None]],
-            Field(description="DEP004 issues"),
-        ] = Field(default_factory=list)
+        dep001: list[_DeptryIssueMap] = Field(
+            default_factory=_empty_deptry_issues,
+            description="DEP001 issues",
+        )
+        dep002: list[_DeptryIssueMap] = Field(
+            default_factory=_empty_deptry_issues,
+            description="DEP002 issues",
+        )
+        dep003: list[_DeptryIssueMap] = Field(
+            default_factory=_empty_deptry_issues,
+            description="DEP003 issues",
+        )
+        dep004: list[_DeptryIssueMap] = Field(
+            default_factory=_empty_deptry_issues,
+            description="DEP004 issues",
+        )
 
     class DeptryReport(FlextModels.ArbitraryTypesModel):
         """Deptry analysis report with categorized issue modules."""

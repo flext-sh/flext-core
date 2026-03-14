@@ -55,6 +55,33 @@ from flext_core._models.containers import FlextModelsContainers
 from flext_core._utilities.guards import FlextUtilitiesGuards
 
 
+def _duck_dump_get_parameter(
+    obj: p.HasModelDump | BaseModel | p.Base,
+    parameter: str,
+) -> tuple[bool, t.NormalizedValue | BaseModel]:
+    """Get parameter from duck-typed model_dump() result.
+
+    Instead of iterating the dump dict (which has Unknown types from getattr),
+    directly look up the parameter using subscript access.
+    """
+    model_dump_fn = getattr(obj, "model_dump", None)
+    if model_dump_fn is None or not callable(model_dump_fn):
+        return (False, "")
+    raw = model_dump_fn()
+    get_fn = getattr(raw, "get", None)
+    if get_fn is None or not callable(get_fn):
+        return (False, "")
+    sentinel = object()
+    val = get_fn(parameter, sentinel)
+    if val is sentinel:
+        return (False, "")
+    if val is None or isinstance(val, (str, int, float, bool, datetime, Path)):
+        return (True, val)
+    if isinstance(val, BaseModel):
+        return (True, val)
+    return (True, str(val))
+
+
 class FlextUtilitiesConfiguration:
     """Configuration utilities for parameter access and manipulation.
 
@@ -231,38 +258,7 @@ class FlextUtilitiesConfiguration:
         parameter: str,
     ) -> tuple[bool, t.NormalizedValue | BaseModel]:
         try:
-            model_dump_attr = getattr(obj, "model_dump", None)
-            if model_dump_attr is None or not callable(model_dump_attr):
-                return FlextUtilitiesConfiguration._NOT_FOUND
-            dump_result = model_dump_attr()
-            dump_normalized: t.NormalizedValue | BaseModel
-            if isinstance(dump_result, (str, int, float, bool, datetime, Path)):
-                dump_normalized = dump_result
-            elif isinstance(dump_result, BaseModel):
-                dump_normalized = dump_result
-            elif isinstance(dump_result, Mapping):
-                typed_dump: dict[str, t.NormalizedValue] = {}
-                for dk_raw, dv_raw in dump_result.items():
-                    dk_str = str(dk_raw)
-                    if isinstance(
-                        dv_raw, (str, int, float, bool, datetime, Path)
-                    ):
-                        typed_dump[dk_str] = dv_raw
-                    elif dv_raw is None:
-                        typed_dump[dk_str] = None
-                    else:
-                        typed_dump[dk_str] = str(dv_raw)
-                dump_normalized = typed_dump
-            else:
-                dump_normalized = str(dump_result)
-            obj_dict: t.NormalizedValue | BaseModel = dump_normalized
-            if FlextUtilitiesGuards.is_mapping(obj_dict) and parameter in obj_dict:
-                raw_value = obj_dict[parameter]
-                if raw_value is None or isinstance(raw_value, (str, int, float, bool)):
-                    return (True, raw_value)
-                if isinstance(raw_value, BaseModel):
-                    return (True, raw_value)
-                return (True, str(raw_value))
+            return _duck_dump_get_parameter(obj, parameter)
         except (AttributeError, TypeError, ValueError, RuntimeError):
             pass
         return FlextUtilitiesConfiguration._NOT_FOUND
@@ -563,61 +559,58 @@ class FlextUtilitiesConfiguration:
             e.NotFoundError: If parameter is not defined
 
         """
+        return FlextUtilitiesConfiguration._resolve_parameter(obj, parameter)
+
+    @staticmethod
+    def _resolve_parameter(
+        obj: p.HasModelDump
+        | BaseModel
+        | p.Base
+        | Mapping[str, t.NormalizedValue | BaseModel],
+        parameter: str,
+    ) -> t.NormalizedValue | BaseModel:
         if isinstance(obj, p.HasModelDump):
             found, value = FlextUtilitiesConfiguration._try_get_from_model_dump(
                 obj, parameter
             )
             if found:
                 return value
-            duck_obj: p.HasModelDump | BaseModel | p.Base = obj
-            found2, duck_val = FlextUtilitiesConfiguration._try_get_from_duck_model_dump(
-                duck_obj, parameter
-            )
-            if found2:
-                return duck_val
-            found3, attr_v = FlextUtilitiesConfiguration._try_get_attr(
-                duck_obj, parameter
-            )
-            if found3:
-                return attr_v
-            class_name = duck_obj.__class__.__name__
-            msg = f"Parameter '{parameter}' is not defined in {class_name}"
-            raise e.NotFoundError(msg)
-        if isinstance(obj, Mapping):
-            map_obj: Mapping[str, t.NormalizedValue | BaseModel] = obj
-            found, value = FlextUtilitiesConfiguration._try_get_from_dict_like(
-                map_obj, parameter
-            )
-            if found:
-                return value
         if isinstance(obj, BaseModel):
             base_obj: p.HasModelDump | BaseModel | p.Base = obj
-            found4, duck_v2 = FlextUtilitiesConfiguration._try_get_from_duck_model_dump(
+            found_d, duck_v = (
+                FlextUtilitiesConfiguration._try_get_from_duck_model_dump(
+                    base_obj, parameter
+                )
+            )
+            if found_d:
+                return duck_v
+            found_a, attr_v = FlextUtilitiesConfiguration._try_get_attr(
                 base_obj, parameter
             )
-            if found4:
-                return duck_v2
-            found5, attr_v2 = FlextUtilitiesConfiguration._try_get_attr(
-                base_obj, parameter
-            )
-            if found5:
-                return attr_v2
-            class_name2 = base_obj.__class__.__name__
-            msg = f"Parameter '{parameter}' is not defined in {class_name2}"
+            if found_a:
+                return attr_v
+            msg = f"Parameter '{parameter}' is not defined in {obj.__class__.__name__}"
             raise e.NotFoundError(msg)
-        plain_obj: p.HasModelDump | BaseModel | p.Base = obj
-        found6, duck_v3 = FlextUtilitiesConfiguration._try_get_from_duck_model_dump(
-            plain_obj, parameter
+        if isinstance(obj, dict):
+            typed_dict: Mapping[str, t.NormalizedValue | BaseModel] = obj
+            found_m, map_v = FlextUtilitiesConfiguration._try_get_from_dict_like(
+                typed_dict, parameter
+            )
+            if found_m:
+                return map_v
+        remaining_obj: p.HasModelDump | BaseModel | p.Base = obj
+        found_duck2, dv2 = FlextUtilitiesConfiguration._try_get_from_duck_model_dump(
+            remaining_obj, parameter
         )
-        if found6:
-            return duck_v3
-        found7, attr_v3 = FlextUtilitiesConfiguration._try_get_attr(
-            plain_obj, parameter
+        if found_duck2:
+            return dv2
+        found_attr2, av2 = FlextUtilitiesConfiguration._try_get_attr(
+            remaining_obj, parameter
         )
-        if found7:
-            return attr_v3
-        class_name3 = plain_obj.__class__.__name__
-        msg = f"Parameter '{parameter}' is not defined in {class_name3}"
+        if found_attr2:
+            return av2
+        class_name = remaining_obj.__class__.__name__
+        msg = f"Parameter '{parameter}' is not defined in {class_name}"
         raise e.NotFoundError(msg)
 
     @staticmethod

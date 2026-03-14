@@ -2065,12 +2065,17 @@ class FlextUtilitiesMapper:
         )
 
     @staticmethod
-    def _narrow_dict_to_container(
-        raw: Mapping[str, t.NormalizedValue | t.MetadataValue | BaseModel],
+    def _narrow_untyped_dict(
+        raw: Mapping[str, t.NormalizedValue | t.MetadataValue | t.ContainerValue | BaseModel],
     ) -> dict[str, t.NormalizedValue]:
-        """Convert a mapping with heterogeneous values to NormalizedValue dict."""
+        """Convert a dict with heterogeneous values to NormalizedValue dict.
+
+        Accepts any dict narrowed from isinstance(value, dict).
+        Each value is individually narrowed via isinstance.
+        """
         result: dict[str, t.NormalizedValue] = {}
-        for k, v in raw.items():
+        for k in list(raw.keys()):
+            v = raw[k]
             if isinstance(v, BaseModel):
                 result[str(k)] = FlextUtilitiesMapper.narrow_to_container(v)
             elif isinstance(v, (*t.CONTAINER_TYPES, list, dict, tuple)):
@@ -2080,10 +2085,14 @@ class FlextUtilitiesMapper:
         return result
 
     @staticmethod
-    def _narrow_list_to_container(
-        raw: Sequence[t.NormalizedValue | t.MetadataValue | BaseModel],
+    def _narrow_untyped_list(
+        raw: list[t.NormalizedValue | t.MetadataValue | t.ContainerValue | BaseModel],
     ) -> list[t.NormalizedValue]:
-        """Convert a sequence with heterogeneous values to NormalizedValue list."""
+        """Convert a list with heterogeneous values to NormalizedValue list.
+
+        Accepts any list narrowed from isinstance(value, list).
+        Each item is individually narrowed via isinstance.
+        """
         result: list[t.NormalizedValue] = []
         for item in raw:
             if isinstance(item, BaseModel):
@@ -2098,11 +2107,11 @@ class FlextUtilitiesMapper:
     def narrow_to_container(
         value: t.NormalizedValue
         | t.MetadataValue
-        | t.RegisterableService
-        | t.RegistrablePlugin
+        | t.ContainerValue
         | BaseModel
         | Mapping[str, t.NormalizedValue]
         | Mapping[str, t.NormalizedValue | BaseModel]
+        | Mapping[str, t.Scalar | Sequence[t.Scalar]]
         | p.HasModelDump
         | p.ValidatorSpec
         | None,
@@ -2124,13 +2133,15 @@ class FlextUtilitiesMapper:
                 for k, v in model_dict.items()
             }
         if isinstance(value, dict):
-            return FlextUtilitiesMapper._narrow_dict_to_container(value)
-        if isinstance(value, Mapping):
-            return FlextUtilitiesMapper._narrow_dict_to_container(dict(value))
+            return FlextUtilitiesMapper._narrow_untyped_dict(value)
         if isinstance(value, list):
-            return FlextUtilitiesMapper._narrow_list_to_container(value)
+            return FlextUtilitiesMapper._narrow_untyped_list(value)
         if isinstance(value, tuple):
-            return FlextUtilitiesMapper._narrow_list_to_container(list(value))
+            return FlextUtilitiesMapper._narrow_untyped_list(list(value))
+        if isinstance(value, Mapping):
+            return FlextUtilitiesMapper._narrow_untyped_dict(dict(value.items()))
+        if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+            return FlextUtilitiesMapper._narrow_untyped_list(list(value))
         return str(value)
 
     @staticmethod

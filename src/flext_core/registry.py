@@ -182,12 +182,16 @@ class FlextRegistry(s[bool]):
         | None,
     ) -> t.Container | BaseModel | None:
         """Safe conversion using centralized utilities."""
-        normalized = u.narrow_to_container(value)
-        if normalized is None:
+        if value is None:
             return None
-        if isinstance(normalized, (str, int, float, bool, Path, BaseModel)):
-            return normalized
-        return str(normalized)
+        if isinstance(value, (*t.CONTAINER_TYPES, BaseModel)):
+            return value
+        if isinstance(value, (list, dict, tuple, Mapping)):
+            normalized = u.narrow_to_container(value)
+            if isinstance(normalized, (str, int, float, bool, Path, BaseModel)):
+                return normalized
+            return str(normalized) if normalized is not None else None
+        return str(value)
 
     def _get_handler_mode(self, value: t.Container | BaseModel) -> c.Cqrs.HandlerType:
         """Safe conversion to HandlerType."""

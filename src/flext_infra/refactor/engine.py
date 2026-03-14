@@ -122,7 +122,7 @@ class FlextInfraRefactorEngine:
                     iter_result.error or f"File iteration failed for {project}"
                 )
                 continue
-            for py_file in iter_result.value_or([]):
+            for py_file in iter_result.value:
                 relative_path = py_file.relative_to(project)
                 relative_path_str = str(relative_path)
                 if not (
@@ -163,7 +163,7 @@ class FlextInfraRefactorEngine:
         if result.is_success:
             config_dict: dict[str, t.Infra.InfraValue] = TypeAdapter(
                 dict[str, t.Infra.InfraValue]
-            ).validate_python(dict(result.unwrap().items()))
+            ).validate_python(dict(result.value.items()))
             self.config = config_dict
             output.info(f"Loaded config from {self.config_path}")
         return result
@@ -178,7 +178,7 @@ class FlextInfraRefactorEngine:
         )
         if rules_result.is_failure:
             return r[list[FlextInfraRefactorRule]].fail(rules_result.error or "")
-        loaded_rules, loaded_file_rules = rules_result.unwrap()
+        loaded_rules, loaded_file_rules = rules_result.value
         self.rules = loaded_rules
         self.file_rules = loaded_file_rules
         output.info(f"Loaded {len(self.rules)} rules")
@@ -321,7 +321,7 @@ class FlextInfraRefactorEngine:
                         refactored_code=None,
                     ),
                 ]
-            stash_ref = stash_result.unwrap_or("")
+            stash_ref = stash_result.value
         scan_dirs = frozenset(self.rule_loader.extract_project_scan_dirs(self.config))
         iter_result = u.Infra.iter_python_files(
             workspace_root=project_path,
@@ -349,10 +349,9 @@ class FlextInfraRefactorEngine:
         )
         ignore_patterns = {str(item) for item in ignore_items}
         allowed_extensions = {str(item) for item in extension_items}
-        iter_files: list[Path] = iter_result.value_or([])
         files = [
             file_path
-            for file_path in iter_files
+            for file_path in iter_result.value
             if (
                 fnmatch.fnmatch(str(file_path.relative_to(project_path)), pattern)
                 or fnmatch.fnmatch(file_path.name, pattern)

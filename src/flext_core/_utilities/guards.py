@@ -72,38 +72,7 @@ class FlextUtilitiesGuards:
         """Check if value is int."""
         return isinstance(value, int)
 
-    type _GuardInput = (
-        t.NormalizedValue
-        | t.MetadataValue
-        | t.ContainerValue
-        | t.RegisterableService
-        | t.RegistrablePlugin
-        | t.FactoryCallable
-        | t.ResourceCallable
-        | BaseModel
-        | p.Context
-        | p.Config
-        | p.Log.StructlogLogger
-        | Callable[[], p.Log.StructlogLogger]
-        | p.CommandBus
-        | p.HasModelDump
-        | Mapping[str, t.NormalizedValue]
-        | Mapping[str, t.MetadataValue]
-        | Mapping[str, t.NormalizedValue | BaseModel]
-        | Mapping[str, t.Container | t.ContainerValue]
-        | Sequence[t.NormalizedValue]
-        | Sequence[t.MetadataValue]
-        | Sequence[t.Container | t.ContainerValue]
-        | tuple[type, ...]
-        | tuple[t.TypeHintSpecifier, ...]
-        | t.TypeHintSpecifier
-        | p.ValidatorSpec
-        | p.ResultLike[t.Container | BaseModel]
-        | Callable[..., t.NormalizedValue]
-        | Callable[..., t.Container | BaseModel]
-        | Callable[[t.NormalizedValue], bool]
-        | None
-    )
+    type _GuardInput = object
 
     @staticmethod
     def _is_list_or_tuple(

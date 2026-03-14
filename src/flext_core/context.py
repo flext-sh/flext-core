@@ -500,7 +500,9 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
                 f"Context key '{key}' has None value in scope '{scope}'"
             )
 
-        normalized = FlextRuntime.normalize_to_container(value)
+        normalized = FlextContext._to_normalized(
+            FlextRuntime.normalize_to_container(value)
+        )
         return r[t.Container | BaseModel].ok(normalized)
 
     def get_metadata(self, key: str) -> r[t.Container | BaseModel]:
