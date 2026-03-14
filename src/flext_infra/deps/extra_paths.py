@@ -249,9 +249,6 @@ class FlextInfraExtraPathsManager:
         return r[int].ok(0)
 
 
-sync_one = FlextInfraExtraPathsManager.sync_one_path
-
-
 def main() -> int:
     """Execute extra paths synchronization from command line."""
     manager = FlextInfraExtraPathsManager()

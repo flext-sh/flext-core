@@ -19,7 +19,9 @@ from typing import (
     Annotated,
     Literal,
     ParamSpec,
+    Protocol,
     TypeVar,
+    runtime_checkable,
 )
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -83,7 +85,10 @@ class FlextTypes:
     # --- RECURSIVE TYPES (PEP 695 - Annotation-only, NEVER with isinstance) ---
 
     type Serializable = (
-        Scalar | list[FlextTypes.Serializable] | dict[str, FlextTypes.Serializable]
+        Container
+        | list[FlextTypes.Serializable]
+        | Mapping[str, FlextTypes.Serializable]
+        | None
     )
     type ContainerValue = (
         Scalar | list[FlextTypes.ContainerValue] | dict[str, FlextTypes.ContainerValue]
@@ -110,12 +115,25 @@ class FlextTypes:
     type FileContent = str | bytes | Sequence[Sequence[str]]
     type GeneralValueTypeMapping = Mapping[str, Scalar]
 
+    @runtime_checkable
+    class DispatchableService(Protocol):
+        """Structural protocol for service objects stored in the DI container.
+
+        Matches FlextDispatcher and similar dispatch-capable services
+        that are not BaseModel or Callable but expose typed dispatch methods.
+        """
+
+        def dispatch(self, message: BaseModel) -> BaseModel:
+            """Dispatch a message and return the result."""
+            ...
+
     type RegisterableService = (
         Container
         | BaseModel
         | Mapping[str, Container | FlextTypes.ContainerValue]
         | Sequence[Container | FlextTypes.ContainerValue]
         | Callable[..., Container | BaseModel]
+        | FlextTypes.DispatchableService
     )
     type FactoryCallable = Callable[[], RegisterableService]
     type ResourceCallable = Callable[[], RegisterableService]

@@ -46,7 +46,13 @@ class FlextUtilitiesCollection:
                         normalized_list.append(str(item))
                 return normalized_list
             if isinstance(validated, dict):
-                return validated
+                normalized_dict: dict[str, t.NormalizedValue] = {}
+                for dict_key, dict_val in validated.items():
+                    if isinstance(dict_val, (str, int, float, bool, datetime)):
+                        normalized_dict[dict_key] = dict_val
+                    else:
+                        normalized_dict[dict_key] = str(dict_val)
+                return normalized_dict
             return str(validated)
         except ValidationError:
             return str(value)

@@ -19,6 +19,7 @@ from __future__ import annotations
 import uuid
 from collections.abc import Mapping
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import Annotated, Literal
 
 from pydantic import BaseModel, Field
@@ -418,11 +419,23 @@ class FlextGenericModels:
             item: t.NormalizedValue | BaseModel,
         ) -> None:
             raw_items = self.metadata.root.get(key)
-            existing: list[t.NormalizedValue | BaseModel] = (
-                raw_items if isinstance(raw_items, list) else []
-            )
-            existing.append(item)
-            self.metadata.root[key] = existing
+            result_list: list[t.NormalizedValue] = []
+            if isinstance(raw_items, list):
+                for raw_item in raw_items:
+                    if isinstance(
+                        raw_item,
+                        (str, int, float, bool, datetime, Path, list, dict, tuple),
+                    ):
+                        result_list.append(raw_item)
+                    elif raw_item is not None:
+                        result_list.append(str(raw_item))
+            if isinstance(
+                item, (str, int, float, bool, datetime, Path, list, dict, tuple)
+            ):
+                result_list.append(item)
+            elif item is not None:
+                result_list.append(str(item))
+            self.metadata.root[key] = result_list
 
         def _upsert_skip_reason(
             self, item: t.NormalizedValue | BaseModel, reason: str

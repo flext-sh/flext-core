@@ -262,7 +262,7 @@ class FlextService[
         cls,
         *,
         config_type: type[FlextSettings] | None = None,
-        config_overrides: Mapping[str, t.Scalar] | None = None,
+        config_overrides: Mapping[str, t.NormalizedValue] | None = None,
         context: p.Context | None = None,
         subproject: str | None = None,
         services: Mapping[str, t.RegisterableService] | None = None,

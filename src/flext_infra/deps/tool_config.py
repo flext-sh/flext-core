@@ -62,10 +62,4 @@ class FlextInfraDependencyToolConfig:
         return FlextInfraDependencyToolConfig._load_tool_config_cached()
 
 
-load_tool_config = FlextInfraDependencyToolConfig.load_tool_config
-
-
-__all__ = [
-    "FlextInfraDependencyToolConfig",
-    "load_tool_config",
-]
+__all__ = ["FlextInfraDependencyToolConfig"]

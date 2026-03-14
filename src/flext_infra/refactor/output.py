@@ -255,14 +255,4 @@ class FlextInfraRefactorOutputRenderer:
         return "\n".join(lines)
 
 
-render_namespace_enforcement_report = (
-    FlextInfraRefactorOutputRenderer.render_namespace_enforcement_report
-)
-render_census_report = FlextInfraRefactorOutputRenderer.render_census_report
-
-
-__all__ = [
-    "FlextInfraRefactorOutputRenderer",
-    "render_census_report",
-    "render_namespace_enforcement_report",
-]
+__all__ = ["FlextInfraRefactorOutputRenderer"]

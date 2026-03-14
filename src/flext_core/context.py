@@ -111,9 +111,13 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
                     continue
                 normalized_value = FlextRuntime.normalize_to_container(value)
                 if isinstance(normalized_value, BaseModel):
-                    normalized[key] = FlextRuntime.normalize_to_container(
+                    metadata_normalized = FlextRuntime.normalize_to_container(
                         FlextRuntime.normalize_to_metadata(normalized_value)
                     )
+                    if isinstance(metadata_normalized, (*t.CONTAINER_TYPES,)):
+                        normalized[key] = metadata_normalized
+                    else:
+                        normalized[key] = str(metadata_normalized)
                 else:
                     normalized[key] = normalized_value
             return normalized

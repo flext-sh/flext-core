@@ -10,7 +10,7 @@ import libcst as cst
 
 from flext_infra import c, m, u
 from flext_infra.refactor.mro_migrator import FlextInfraRefactorMROMigrationTransformer
-from flext_infra.refactor.mro_resolver import CONSTANT_PATTERN
+from flext_infra.refactor.mro_resolver import FlextInfraRefactorMROResolver
 from flext_infra.refactor.rule import FlextInfraRefactorRule
 
 
@@ -81,7 +81,7 @@ class FlextInfraRefactorMROClassMigrationRule(FlextInfraRefactorRule):
 
     @staticmethod
     def _is_constant_candidate(symbol: str) -> bool:
-        return CONSTANT_PATTERN.match(symbol) is not None
+        return FlextInfraRefactorMROResolver.CONSTANT_PATTERN.match(symbol) is not None
 
     @staticmethod
     def _is_final_annotation(annotation: ast.expr) -> bool:

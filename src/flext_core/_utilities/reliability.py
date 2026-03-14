@@ -15,6 +15,8 @@ import contextvars
 import threading
 import time
 from collections.abc import Callable, Mapping
+from datetime import datetime
+from pathlib import Path
 from typing import TypeGuard
 
 from pydantic import ValidationError
@@ -483,7 +485,14 @@ class FlextUtilitiesReliability:
                                 f"Pipeline step {i} failed: {err_msg}"
                             )
                         continue
-                    current = op_result.value
+                    result_value = op_result.value
+                    if isinstance(
+                        result_value,
+                        (str, int, float, bool, datetime, Path, list, dict, tuple),
+                    ) or result_value is None:
+                        current = result_value
+                    else:
+                        current = str(result_value)
                 else:
                     current = op_result
             except (

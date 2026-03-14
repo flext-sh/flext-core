@@ -1174,7 +1174,7 @@ class ManualTypingAliasDetector(p.Infra.Scanner):
             return []
         if c.Infra.Refactor.NAMESPACE_CANONICAL_TYPINGS_DIR in file_path.parts:
             return []
-        parsed = load_python_module(
+        parsed = FlextInfraRefactorDependencyAnalyzerFacade.load_python_module(
             file_path,
             stage="manual-typing-alias-scan",
             parse_failures=_parse_failures,
@@ -1367,9 +1367,6 @@ class FlextInfraRefactorDependencyAnalyzerFacade:
     CompatibilityAliasDetector = CompatibilityAliasDetector
 
 
-load_python_module = FlextInfraRefactorDependencyAnalyzerFacade.load_python_module
-
-
 __all__ = [
     "CompatibilityAliasDetector",
     "CyclicImportDetector",
@@ -1383,5 +1380,4 @@ __all__ = [
     "ManualTypingAliasDetector",
     "NamespaceFacadeScanner",
     "RuntimeAliasDetector",
-    "load_python_module",
 ]

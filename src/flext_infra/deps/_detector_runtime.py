@@ -255,7 +255,4 @@ class FlextInfraDependencyDetectorRuntime:
         return runtime.run(argv=argv)
 
 
-run_detector = FlextInfraDependencyDetectorRuntime.run_detector
-
-
-__all__ = ["FlextInfraDependencyDetectorRuntime", "run_detector"]
+__all__ = ["FlextInfraDependencyDetectorRuntime"]

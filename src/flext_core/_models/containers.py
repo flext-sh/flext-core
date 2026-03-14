@@ -108,8 +108,8 @@ class FlextModelsContainers:
             self.root.update(other)
 
         @override
-        def __iter__(self) -> Iterator[str]:
-            return iter(self.root)
+        def __iter__(self) -> Iterator[tuple[str, DictValueT]]:
+            yield from self.root.items()
 
         def values(self) -> ValuesView[DictValueT]:
             return self.root.values()

@@ -23,7 +23,6 @@ from flext_infra import (
 from flext_infra.refactor.output import FlextInfraRefactorOutputRenderer
 
 type RCensusReport = r[m.Infra.Refactor.CensusReport]
-CI = c.Infra.Refactor.Census
 
 
 class FlextInfraRefactorCensus:
@@ -38,7 +37,9 @@ class FlextInfraRefactorCensus:
         self, root: Path, *, target: m.Infra.Refactor.MROFamilyTarget | None = None
     ) -> RCensusReport:
         """Execute the workspace census."""
-        target = target or u.Infra.build_mro_target(CI.DEFAULT_FAMILY)
+        target = target or u.Infra.build_mro_target(
+            c.Infra.Refactor.Census.DEFAULT_FAMILY
+        )
         t0 = time.monotonic()
         output.header(f"Usage Census — family={target.family} ({target.class_suffix})")
 

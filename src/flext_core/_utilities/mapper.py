@@ -1614,6 +1614,8 @@ class FlextUtilitiesMapper:
                 current = data
             elif isinstance(data, Mapping):
                 current = FlextUtilitiesMapper.narrow_to_container(data)
+            elif isinstance(data, (*t.CONTAINER_TYPES,)):
+                current = data
             else:
                 current = FlextUtilitiesMapper.narrow_to_container(data)
             found_none_prefix = "found_none:"
@@ -2078,9 +2080,11 @@ class FlextUtilitiesMapper:
         result: dict[str, t.NormalizedValue] = {}
         for k in list(raw.keys()):
             v = raw[k]
-            if isinstance(v, (BaseModel, *t.CONTAINER_TYPES, list, dict, tuple)):
+            if v is None:
+                result[str(k)] = None
+            elif isinstance(v, (BaseModel, *t.CONTAINER_TYPES, list, dict, tuple)):
                 result[str(k)] = FlextUtilitiesMapper.narrow_to_container(v)
-            elif v is not None:
+            else:
                 result[str(k)] = str(v)
         return result
 

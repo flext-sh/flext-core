@@ -12,7 +12,6 @@ from __future__ import annotations
 import inspect
 import sys
 from collections.abc import Callable, Mapping, Sequence
-from pathlib import Path
 from typing import Annotated, ClassVar, Literal, Self, override
 
 from pydantic import BaseModel, Field, PrivateAttr, computed_field
@@ -186,11 +185,6 @@ class FlextRegistry(s[bool]):
             return None
         if isinstance(value, (*t.CONTAINER_TYPES, BaseModel)):
             return value
-        if isinstance(value, (list, dict, tuple, Mapping)):
-            normalized = u.narrow_to_container(value)
-            if isinstance(normalized, (str, int, float, bool, Path, BaseModel)):
-                return normalized
-            return str(normalized) if normalized is not None else None
         return str(value)
 
     def _get_handler_mode(self, value: t.Container | BaseModel) -> c.Cqrs.HandlerType:

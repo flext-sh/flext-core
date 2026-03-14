@@ -17,10 +17,9 @@ from flext_infra.refactor._models_namespace_enforcer import (
 )
 from flext_infra.refactor.dependency_analyzer import (
     FlextInfraRefactorDependencyAnalyzerFacade,
-    load_python_module,
 )
 
-da = FlextInfraRefactorDependencyAnalyzerFacade
+load_python_module = FlextInfraRefactorDependencyAnalyzerFacade.load_python_module
 
 
 class NamespaceEnforcementRewriter:
@@ -86,7 +85,9 @@ class NamespaceEnforcementRewriter:
         if len(package_dirs) == 0:
             return
         primary_package = package_dirs[0]
-        stem = da.NamespaceFacadeScanner.project_class_stem(project_name=project_name)
+        stem = FlextInfraRefactorDependencyAnalyzerFacade.NamespaceFacadeScanner.project_class_stem(
+            project_name=project_name
+        )
         for status in facade_statuses:
             if status.exists:
                 continue
@@ -301,7 +302,9 @@ class NamespaceEnforcementRewriter:
                 continue
             if stmt.name not in protocol_names:
                 continue
-            if not da.ManualProtocolDetector.is_protocol_class(stmt):
+            if not FlextInfraRefactorDependencyAnalyzerFacade.ManualProtocolDetector.is_protocol_class(
+                stmt
+            ):
                 continue
             block = ast.get_source_segment(source, stmt)
             if block is None:
@@ -564,7 +567,7 @@ class NamespaceEnforcementRewriter:
         if len(blocks) == 0:
             return
         project_name = project_root.name
-        class_stem = da.NamespaceFacadeScanner.project_class_stem(
+        class_stem = FlextInfraRefactorDependencyAnalyzerFacade.NamespaceFacadeScanner.project_class_stem(
             project_name=project_name,
         )
         protocols_class = f"{class_stem}Protocols"

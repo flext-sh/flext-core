@@ -270,27 +270,4 @@ class FlextInfraUtilitiesToml:
         return r[bool].ok(True)
 
 
-unwrap_item = FlextInfraUtilitiesToml.unwrap_item
-as_string_list = FlextInfraUtilitiesToml.as_string_list
-array = FlextInfraUtilitiesToml.array
-ensure_table = FlextInfraUtilitiesToml.ensure_table
-toml_get = FlextInfraUtilitiesToml.get
-table_string_keys = FlextInfraUtilitiesToml.table_string_keys
-read_doc = FlextInfraUtilitiesToml.read
-as_toml_mapping = FlextInfraUtilitiesToml.as_toml_mapping
-normalize_container_value = FlextInfraUtilitiesToml.normalize_container_value
-as_container_list = FlextInfraUtilitiesToml.as_container_list
-
-__all__ = [
-    "FlextInfraUtilitiesToml",
-    "array",
-    "as_container_list",
-    "as_string_list",
-    "as_toml_mapping",
-    "ensure_table",
-    "normalize_container_value",
-    "read_doc",
-    "table_string_keys",
-    "toml_get",
-    "unwrap_item",
-]
+__all__ = ["FlextInfraUtilitiesToml"]

@@ -35,10 +35,8 @@ from datetime import datetime
 from pathlib import Path
 
 from pydantic import ConfigDict
-from src.flext_core._models.containers import FlextModelsContainers
 
-from flext_core import FlextModelsContainers, m, r, t
-from flext_core._models.containers import FlextModelsContainers
+from flext_core import m, r, t
 
 
 class Examples:
@@ -193,7 +191,7 @@ class Examples:
     @staticmethod
     def bind_status(
         value: r[t.Container],
-    ) -> FlextModelsContainers.ConfigMap:
+    ) -> m.ConfigMap:
         """Return a summary ConfigMap when *value* is a ``r``."""
         match value:
             case r() as result:

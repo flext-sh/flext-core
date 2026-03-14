@@ -65,15 +65,15 @@ def _duck_dump_get_parameter(
     """
     model_dump_fn = getattr(obj, "model_dump", None)
     if model_dump_fn is None or not callable(model_dump_fn):
-        return (False, "")
+        return (False, None)
     raw = model_dump_fn()
     get_fn = getattr(raw, "get", None)
     if get_fn is None or not callable(get_fn):
-        return (False, "")
+        return (False, None)
     sentinel = object()
     val = get_fn(parameter, sentinel)
     if val is sentinel:
-        return (False, "")
+        return (False, None)
     if val is None or isinstance(val, (str, int, float, bool, datetime, Path)):
         return (True, val)
     if isinstance(val, BaseModel):
@@ -609,11 +609,14 @@ class FlextUtilitiesConfiguration:
         def _default_get(_k: str) -> t.NormalizedValue | BaseModel | None:
             return None
 
-        get_method: Callable[[str], t.NormalizedValue | BaseModel | None] = getattr(
-            obj, "get", _default_get
-        )
-        raw_val: t.NormalizedValue | BaseModel | None = get_method(parameter)
-        if raw_val is not None:
+        contains_method = getattr(obj, "__contains__", None)
+        if callable(contains_method) and parameter in obj:
+            get_method: Callable[[str], t.NormalizedValue | BaseModel | None] = getattr(
+                obj, "get", _default_get
+            )
+            raw_val: t.NormalizedValue | BaseModel | None = get_method(parameter)
+            if raw_val is None:
+                return raw_val
             if isinstance(raw_val, (str, int, float, bool, datetime, Path)):
                 return raw_val
             if isinstance(raw_val, BaseModel):

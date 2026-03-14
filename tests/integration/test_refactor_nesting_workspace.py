@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from pathlib import Path
 
 from flext_infra import m
@@ -72,11 +73,13 @@ class TestWorkspaceLevelRefactor:
             assert result.is_success
             violations_raw = result.value.get("violations", [])
             if isinstance(violations_raw, list):
-                all_violations.extend(
-                    v_item
-                    for v_item in violations_raw
-                    if isinstance(v_item, m.Infra.Refactor.LooseClassViolation)
-                )
+                for v_item in violations_raw:
+                    if isinstance(v_item, m.Infra.Refactor.LooseClassViolation):
+                        all_violations.append(v_item)
+                    elif isinstance(v_item, Mapping):
+                        all_violations.append(
+                            m.Infra.Refactor.LooseClassViolation.model_validate(v_item)
+                        )
         assert len(all_violations) >= 3
         for v in all_violations:
             assert v.confidence in {"high", "medium", "low"}
