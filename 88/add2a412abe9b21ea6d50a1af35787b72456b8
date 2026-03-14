@@ -1,0 +1,149 @@
+tests/integration/test_integration.py
+  8c2d749dcca16b1c 35,55
+tests/unit/test_context.py
+  8c2d749dcca16b1c 185
+tests/unit/test_mixins_full_coverage.py
+  8c2d749dcca16b1c 13,59-60,65,109,210,437,442
+tests/unit/test_automated_context.py
+  8c2d749dcca16b1c 89
+tests/unit/test_context_coverage_100.py
+  8c2d749dcca16b1c 20,56-57
+tests/unit/test_runtime.py
+  8c2d749dcca16b1c 44,967-968
+tests/integration/patterns/test_advanced_patterns.py
+  8c2d749dcca16b1c 21,72-74,207-208,272,371,375,429,549,649
+tests/unit/test_handlers.py
+  8c2d749dcca16b1c 24,85,285,287,293,304,570
+tests/unit/flext_tests/test_matchers.py
+  8c2d749dcca16b1c 140,162
+tests/integration/test_config_integration.py
+  8c2d749dcca16b1c 29,39,45
+tests/unit/test_coverage_exceptions.py
+  8c2d749dcca16b1c 25,215,261-262,264-265,439,443,446
+tests/unit/test_models_context_full_coverage.py
+  8c2d749dcca16b1c 27
+tests/unit/test_models_container.py
+  8c2d749dcca16b1c 25,77,225
+tests/unit/test_runtime_coverage_100.py
+  8c2d749dcca16b1c 19,294-295
+tests/integration/patterns/test_patterns_commands.py
+  8c2d749dcca16b1c 15,54,104,115,119,151,153,159,164,170,183,205,212,216,221,370,379,388,425,461-462
+tests/unit/test_decorators_full_coverage.py
+  8c2d749dcca16b1c 9,191,208,231,247,265,271,277,293,308,495,500,556,571
+tests/unit/test_utilities_cache_coverage_100.py
+  8c2d749dcca16b1c 27,235,244,246,358,366,376,380,590,610-611
+tests/unit/flext_tests/test_builders.py
+  8c2d749dcca16b1c 103,117,243,251,305,315
+tests/unit/test_automated_handlers.py
+  8c2d749dcca16b1c 15,71,89
+tests/unit/test_context_full_coverage.py
+  8c2d749dcca16b1c 11,102
+src/flext_infra/codegen/lazy_init.py
+  f44ccb4be7de79e9 593-594
+  8c2d749dcca16b1c 582
+tests/integration/patterns/test_architectural_patterns.py
+  8c2d749dcca16b1c 19,71,88,91,94,259,265-266
+tests/utilities.py
+  8c2d749dcca16b1c 22,166
+tests/infra/unit/github/_stubs_extra.py
+  8c2d749dcca16b1c 131,142,167,176,204,217
+tests/integration/test_migration_validation.py
+  8c2d749dcca16b1c 42,228,231,235,239
+tests/infra/helpers.py
+  8c2d749dcca16b1c 24,143,159,167,181,189
+tests/unit/test_runtime_full_coverage.py
+  8c2d749dcca16b1c 22,901
+tests/unit/test_result.py
+  8c2d749dcca16b1c 757
+tests/unit/test_automated_container.py
+  8c2d749dcca16b1c 94
+tests/integration/patterns/test_patterns_logging.py
+  8c2d749dcca16b1c 16,35,43,63,70,91,115
+tests/unit/test_models_collections_full_coverage.py
+  8c2d749dcca16b1c 15,29
+tests/integration/patterns/_models.py
+  8c2d749dcca16b1c 9-10,38
+tests/unit/test_coverage_utilities.py
+  8c2d749dcca16b1c 31,157
+tests/unit/test_utilities_collection_full_coverage.py
+  8c2d749dcca16b1c 13,61,67-68,73
+tests/infra/unit/check/_stubs.py
+  8c2d749dcca16b1c 20,32-33,48
+tests/unit/test_utilities_type_checker_coverage_100.py
+  8c2d749dcca16b1c 29,61,67-68,70,187,222
+tests/unit/test_coverage_models.py
+  8c2d749dcca16b1c 32,556
+tests/unit/test_automated_exceptions.py
+  8c2d749dcca16b1c 94
+tests/infra/unit/docs/main_entry.py
+  8c2d749dcca16b1c 104,114,125,132,139,146,153,160,167,174
+tests/unit/test_models.py
+  8c2d749dcca16b1c 35,59,734,736,755
+tests/unit/test_utilities_mapper_full_coverage.py
+  8c2d749dcca16b1c 15,22,317,324,333,559,630,691,819,892
+tests/unit/test_utilities_configuration_coverage_100.py
+  8c2d749dcca16b1c 28,235,244
+tests/helpers/factories.py
+  8c2d749dcca16b1c 16,509
+tests/unit/test_automated_mixins.py
+  8c2d749dcca16b1c 91
+tests/unit/test_utilities_domain.py
+  8c2d749dcca16b1c 63
+tests/unit/test_utilities_mapper_coverage_100.py
+  8c2d749dcca16b1c 23,290,309,326-327,340-341,343,410-411,417,421,447,453,462-463,471-472,476
+tests/unit/_models.py
+  8c2d749dcca16b1c 16,101,122,217,250
+tests/integration/patterns/test_patterns_testing.py
+  8c2d749dcca16b1c 226,814,823-824
+tests/unit/test_container_full_coverage.py
+  8c2d749dcca16b1c 17,369,470,617,636,639,642
+tests/infra/unit/deps/test_detection_typings_flow.py
+  8c2d749dcca16b1c 45-46
+tests/unit/test_loggings_full_coverage.py
+  8c2d749dcca16b1c 13,50,62,224,350,404,423,496
+tests/unit/test_result_full_coverage.py
+  8c2d749dcca16b1c 12,18
+tests/unit/test_utilities_collection_coverage_100.py
+  8c2d749dcca16b1c 27,142,153,173,177,179,191,195,198,214,217,227,231,236,933
+tests/unit/test_exceptions.py
+  8c2d749dcca16b1c 32,1057,1266,1290,1304,1347
+tests/unit/test_automated_decorators.py
+  8c2d749dcca16b1c 92
+tests/conftest.py
+  8c2d749dcca16b1c 28,198,505,538,540
+tests/unit/test_utilities_args_full_coverage.py
+  8c2d749dcca16b1c 11,45
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "88add2a412abe9b21ea6d50a1af35787b72456b8",
+  "prompts": {
+    "8c2d749dcca16b1c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d0c09b0b-3db3-411a-ac46-126453ea6fa0",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 358,
+      "total_deletions": 320,
+      "accepted_lines": 290,
+      "overriden_lines": 0
+    },
+    "f44ccb4be7de79e9": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3128366fbffe7X7sFMYo9Xddq5",
+        "model": "anthropic/claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 46,
+      "total_deletions": 13,
+      "accepted_lines": 13,
+      "overriden_lines": 0
+    }
+  }
+}
