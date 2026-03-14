@@ -24,7 +24,7 @@ from typing import Annotated, ClassVar, cast
 import pytest
 from pydantic import BaseModel, Field
 
-from flext_core import FlextExceptions, FlextRuntime, c, m, p, u
+from flext_core import FlextExceptions, FlextRuntime, c, m, p, r, u
 from flext_tests import t
 from tests._models import (
     BadConfigForTest,
@@ -64,11 +64,11 @@ class _ResultAssertions:
         assert getattr(result, "value") == expected
 
     @staticmethod
-    def assert_result_success(result: FlextResult[bool]) -> None:
+    def assert_result_success(result: r[bool]) -> None:
         assert hasattr(result, "is_success") and getattr(result, "is_success")
 
     @staticmethod
-    def assert_result_failure(result: FlextResult[bool]) -> None:
+    def assert_result_failure(result: r[bool]) -> None:
         assert hasattr(result, "is_failure") and getattr(result, "is_failure")
 
     assert_success = assert_result_success

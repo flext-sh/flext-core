@@ -233,7 +233,7 @@ class BadMapping(Mapping[str, object]):
     """BadMapping class."""
 
     @override
-    def __getitem__(self, key: str):
+    def __getitem__(self, key: str) -> Never:
         """__getitem__ method."""
         msg = f"missing {key}"
         raise KeyError(msg)
