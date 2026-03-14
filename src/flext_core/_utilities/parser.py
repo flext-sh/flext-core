@@ -198,7 +198,10 @@ class FlextUtilitiesParser:
         if str_result.is_failure:
             return r[str].fail(str_result.error or "String conversion failed")
         str_repr = str_result.value
-        if str_repr and str_repr != f"<{obj.__class__.__name__} object>":
+        if str_repr and (
+            hasattr(obj, "__class__")
+            and str_repr != f"<{obj.__class__.__name__} object>"
+        ):
             return r[str].ok(str_repr)
         return r[str].fail("String conversion did not yield a usable key")
 
@@ -788,7 +791,7 @@ class FlextUtilitiesParser:
     ) -> list[str] | set[str] | dict[str, str]:
         """Normalize list/dict (builder: norm().list())."""
         if isinstance(items, FlextModelsContainers.ConfigMap):
-            dict_items: Mapping[str, t.NormalizedValue] = items.root
+            dict_items: Mapping[str, t.NormalizedValue | BaseModel] = items.root
             if filter_truthy:
                 dict_items = {k: v for k, v in dict_items.items() if v}
             return {
@@ -796,7 +799,7 @@ class FlextUtilitiesParser:
                 for k, v in dict_items.items()
             }
         if isinstance(items, BaseModel):
-            dumped: dict[str, t.NormalizedValue] = {
+            dumped: dict[str, t.NormalizedValue | BaseModel] = {
                 str(k): FlextRuntime.normalize_to_container(v)
                 for k, v in items.model_dump().items()
             }
@@ -814,7 +817,7 @@ class FlextUtilitiesParser:
                 DeprecationWarning,
                 stacklevel=2,
             )
-            dict_items_raw: dict[str, t.NormalizedValue] = {
+            dict_items_raw: dict[str, t.NormalizedValue | BaseModel] = {
                 str(k): FlextRuntime.normalize_to_container(v) for k, v in items.items()
             }
             if filter_truthy:

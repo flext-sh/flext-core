@@ -98,7 +98,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
             config: Optional handler configuration model
 
         """
-        super().__init__()
+        super().__init__(config_type=None, config_overrides=None, initial_context=None)
         if config is not None:
             self._config_model = config
         else:
@@ -521,7 +521,6 @@ class FlextHandlers[MessageT_contra, ResultT](x):
             return r[bool].fail("Message cannot be None")
         return r[bool].ok(value=True)
 
-    @override
     def validate(self, value: MessageT_contra) -> r[bool]:
         """Validate input — override in subclasses for domain-specific logic."""
         return self.validate_message(value)
@@ -693,7 +692,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
         ) -> list[
             tuple[
                 str,
-                Callable[..., r[t.NormalizedValue | BaseModel] | None],
+                Callable[..., t.Scalar | None],
                 m.DecoratorConfig,
             ]
         ]:

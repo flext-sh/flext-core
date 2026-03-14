@@ -141,7 +141,7 @@ class FlextInfraUtilitiesToml:
         promote it to an explicit table so that tomlkit serializes sub-tables
         under the correct parent path instead of creating bare top-level sections.
         """
-        existing: object | None = None
+        existing: t.Container | Item | None = None
         if key in parent:
             existing = parent[key]
         if isinstance(existing, Table):

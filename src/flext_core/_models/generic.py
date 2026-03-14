@@ -298,16 +298,18 @@ class FlextGenericModels:
         Used by: flext-ldif conversion, data transformations, ETL.
         """
 
-        converted: list[t.NormalizedValue | BaseModel] = Field(
-            default_factory=list, description="Converted items"
-        )
+        converted: Annotated[
+            list[t.NormalizedValue | BaseModel],
+            Field(default_factory=list, description="Converted items"),
+        ] = []
         errors: list[str] = Field(default_factory=list, description="Error messages")
         warnings: list[str] = Field(
             default_factory=list, description="Warning messages"
         )
-        skipped: list[t.NormalizedValue | BaseModel] = Field(
-            default_factory=list, description="Skipped items"
-        )
+        skipped: Annotated[
+            list[t.NormalizedValue | BaseModel],
+            Field(default_factory=list, description="Skipped items"),
+        ] = []
         start_time: Annotated[
             datetime | None, Field(default=None, description="Start time")
         ] = None

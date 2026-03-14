@@ -23,7 +23,7 @@ from typing import TypeGuard
 import pytest
 from hypothesis import HealthCheck, given, settings, strategies as st
 
-from flext_core import FlextTypes, FlextUtilities, P, R
+from flext_core import FlextTypes, FlextUtilities, P, R, t
 from flext_tests import t as tt
 
 from ._models import (
@@ -35,20 +35,20 @@ from ._models import (
 
 
 def _to_general_mapping(
-    value: Mapping[str, tt.Tests.object] | None,
-) -> dict[str, tt.Tests.object]:
+    value: Mapping[str, t.Container] | None,
+) -> dict[str, t.Container]:
     if value is None:
         return {}
     return dict(value)
 
 
-def _to_string_list(value: Sequence[tt.Tests.object] | None) -> list[str]:
+def _to_string_list(value: Sequence[t.Container] | None) -> list[str]:
     if value is None:
         return []
     return [str(item) for item in value]
 
 
-def _to_string(value: tt.Tests.object | None, *, default: str) -> str:
+def _to_string(value: t.Container | None, *, default: str) -> str:
     if isinstance(value, str):
         return value
     if value is None:
@@ -119,7 +119,11 @@ pytestmark = [pytest.mark.unit, pytest.mark.architecture, pytest.mark.advanced]
 class MockScenario:
     """Mock scenario object for testing purposes."""
 
-    def __init__(self, name: str, data: dict[str, tt.Tests.object]) -> None:
+    def __init__(
+        self,
+        name: str,
+        data: Mapping[str, t.Container | Mapping[str, t.Container] | Sequence[str]],
+    ) -> None:
         """Initialize mock scenario with name and test data."""
         super().__init__()
         self.name = name
@@ -745,9 +749,13 @@ class TestComprehensiveIntegration:
         assert isinstance(tags_value, list)
         assert "integration" in tags_value
         setup_data = suite["setup_data"]
-        typed_setup_data = _as_object_dict(setup_data)
+        typed_setup_data = (
+            {str(key): item for key, item in setup_data.items()}
+            if isinstance(setup_data, dict)
+            else {}
+        )
         if "environment" in typed_setup_data:
-            env_value: tt.Tests.object = typed_setup_data["environment"]
+            env_value = typed_setup_data["environment"]
             assert env_value == "test"
 
 
