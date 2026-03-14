@@ -40,7 +40,7 @@ class FlextInfraDependencyDetectionService:
 
     @staticmethod
     def to_infra_value(
-        value: object,
+        value: t.Infra.InfraValue,
     ) -> str | int | float | bool | dict[str, object] | list[object] | None:
         """Convert container value to namespaced infra value."""
         if value is None or isinstance(value, (str, int, float, bool)):

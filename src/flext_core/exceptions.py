@@ -646,12 +646,12 @@ class FlextExceptions:
             self.message = message
             self.error_code = error_code
             final_kwargs: m.ConfigMap = (
-                m.ConfigMap(root=dict(merged_kwargs))
+                m.ConfigMap(root=dict(merged_kwargs.items()))
                 if merged_kwargs
                 else m.ConfigMap(root={})
             )
             if context:
-                final_kwargs.update(dict(context))
+                final_kwargs.update(dict(context.items()))
             if extra_kwargs:
                 normalized_extra = {
                     k: FlextRuntime.normalize_to_metadata(v)

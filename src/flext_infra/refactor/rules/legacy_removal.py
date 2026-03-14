@@ -101,7 +101,7 @@ class FlextInfraRefactorLegacyRemovalRule(FlextInfraRefactorRule):
         return (tree, changes)
 
     @staticmethod
-    def _normalize_string_items(value: object) -> list[str]:
+    def _normalize_string_items(value: t.Infra.InfraValue) -> list[str]:
         if not isinstance(value, (list, tuple, set)):
             return []
         try:

@@ -58,7 +58,7 @@ class FlextInfraUtilitiesYaml:
 
         """
         raw = path.read_text(encoding=c.Infra.Encoding.DEFAULT)
-        parsed: object | None = safe_load(raw)
+        parsed: t.Infra.InfraValue | None = safe_load(raw)
         if parsed is None:
             return {}
         if not isinstance(parsed, Mapping):
@@ -73,7 +73,7 @@ class FlextInfraUtilitiesYaml:
             raise TypeError(msg) from exc
 
     @staticmethod
-    def normalize_string_list(value: object, field: str) -> list[str]:
+    def normalize_string_list(value: t.Infra.InfraValue, field: str) -> list[str]:
         """Validate and normalize a list[str] config field.
 
         Args:

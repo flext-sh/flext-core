@@ -12,8 +12,8 @@ from __future__ import annotations
 import typing
 from collections.abc import (
     Callable,
-    Generator,
     ItemsView,
+    Iterator,
     KeysView,
     Mapping,
     ValuesView,
@@ -108,8 +108,8 @@ class FlextModelsContainers:
             self.root.update(other)
 
         @override
-        def __iter__(self) -> Generator[tuple[str, DictValueT]]:
-            yield from ((key, value) for key, value in self.root.items())
+        def __iter__(self) -> Iterator[str]:
+            return iter(self.root)
 
         def values(self) -> ValuesView[DictValueT]:
             return self.root.values()

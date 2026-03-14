@@ -85,6 +85,7 @@ from structlog.stdlib import add_log_level
 from flext_core import T, c, p, t
 from flext_core._models.base import FlextModelFoundation
 from flext_core._models.containers import FlextModelsContainers
+from flext_core._utilities.deprecation import FlextUtilitiesDeprecation
 
 type RuntimeAtomic = t.Container | BaseModel
 type RuntimeData = (
@@ -645,6 +646,9 @@ class FlextRuntime:
 
         """
         if val is None:
+            FlextUtilitiesDeprecation.warn_polymorphic_input(
+                val, "normalize_to_container", "t.Container | BaseModel"
+            )
             return ""
         if FlextRuntime._is_scalar(val) or isinstance(val, Path):
             return val
@@ -936,7 +940,7 @@ class FlextRuntime:
             """
             configuration_provider = providers.Configuration()
             if config:
-                configuration_provider.from_dict(dict(config))
+                configuration_provider.from_dict(dict(config.items()))
             if isinstance(
                 di_container,
                 FlextRuntime.DependencyIntegration.DynamicContainerWithConfig,
@@ -954,7 +958,7 @@ class FlextRuntime:
         ) -> providers.Configuration:
             """Bind configuration directly to an existing provider."""
             if config:
-                configuration_provider.from_dict(dict(config))
+                configuration_provider.from_dict(dict(config.items()))
             return configuration_provider
 
         @staticmethod

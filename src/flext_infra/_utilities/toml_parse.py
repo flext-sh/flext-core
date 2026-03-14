@@ -90,20 +90,20 @@ class FlextInfraUtilitiesTomlParse:
     @staticmethod
     def project_dev_groups(doc: tomlkit.TOMLDocument) -> dict[str, list[str]]:
         """Extract optional-dependencies groups from project table."""
-        project_raw: object | None = None
+        project_raw: t.Infra.InfraValue | None = None
         if c.Infra.Toml.PROJECT in doc:
             project_raw = doc[c.Infra.Toml.PROJECT]
         if not isinstance(project_raw, (Table, dict)):
             return {}
-        optional_raw: object | None = None
+        optional_raw: t.Infra.InfraValue | None = None
         if c.Infra.Toml.OPTIONAL_DEPENDENCIES in project_raw:
             optional_raw = project_raw[c.Infra.Toml.OPTIONAL_DEPENDENCIES]
         if not isinstance(optional_raw, (Table, dict)):
             return {}
-        opt_deps: Table | dict[str, object] = optional_raw
+        opt_deps: Table | dict[str, t.Infra.InfraValue] = optional_raw
 
         def _group_values(group_key: str) -> list[str]:
-            value: object | Item | None = None
+            value: t.Infra.InfraValue | Item | None = None
             if group_key in opt_deps:
                 value = opt_deps[group_key]
             return FlextInfraUtilitiesToml.as_string_list(value)

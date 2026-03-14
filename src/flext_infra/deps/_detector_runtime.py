@@ -222,7 +222,7 @@ class FlextInfraDependencyDetectorRuntime:
                     )
                 except ValidationError:
                     continue
-                raw_count_obj: object = deptry_payload.get("raw_count", 0)
+                raw_count_obj: t.Infra.InfraValue = deptry_payload.get("raw_count", 0)
                 if isinstance(raw_count_obj, int):
                     total_issues += raw_count_obj
         if not args.quiet:

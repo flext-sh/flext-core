@@ -66,7 +66,7 @@ class FlextInfraUtilitiesPatterns:
     """Match inline code spans for stripping before analysis."""
 
     @staticmethod
-    def _is_compiled_pattern(value: object) -> TypeGuard[re.Pattern[str]]:
+    def _is_compiled_pattern(value: t.Infra.InfraValue) -> TypeGuard[re.Pattern[str]]:
         return isinstance(value, re.Pattern)
 
     @staticmethod
@@ -85,7 +85,7 @@ class FlextInfraUtilitiesPatterns:
             True
 
         """
-        pattern_obj: object = getattr(FlextInfraUtilitiesPatterns, pattern_name, None)
+        pattern_obj: t.Infra.InfraValue = getattr(FlextInfraUtilitiesPatterns, pattern_name, None)
         if not FlextInfraUtilitiesPatterns._is_compiled_pattern(pattern_obj):
             return False
         return pattern_obj.search(text) is not None

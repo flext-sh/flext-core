@@ -1083,7 +1083,7 @@ class FlextInfraUtilitiesCodegen:
         return FlextInfraUtilitiesCodegen.as_int(totals.get("failed"))
 
     @staticmethod
-    def as_int(value: object) -> int:
+    def as_int(value: t.Infra.InfraValue) -> int:
         if isinstance(value, bool):
             return int(value)
         if isinstance(value, int):
@@ -1098,13 +1098,13 @@ class FlextInfraUtilitiesCodegen:
         return 0
 
     @staticmethod
-    def dict_or_empty(value: object) -> dict[str, object]:
+    def dict_or_empty(value: t.Infra.InfraValue) -> dict[str, t.Infra.InfraValue]:
         if not isinstance(value, dict):
             return {}
         return TypeAdapter(dict[str, object]).validate_python(value)
 
     @staticmethod
-    def dict_list(value: object) -> list[dict[str, object]]:
+    def dict_list(value: t.Infra.InfraValue) -> list[dict[str, t.Infra.InfraValue]]:
         if not isinstance(value, list):
             return []
         result: list[dict[str, object]] = []

@@ -37,13 +37,13 @@ class FlextInfraRefactorRuleLoader:
 
     def extract_engine_file_filters(
         self,
-        config: object,
+        config: t.Infra.InfraValue,
     ) -> tuple[list[str], list[str]]:
         """Extract ignore patterns and file extensions from engine config."""
         scope = self._resolve_engine_config(config)
         return (list(scope.ignore_patterns), list(scope.file_extensions))
 
-    def extract_project_scan_dirs(self, config: object) -> list[str]:
+    def extract_project_scan_dirs(self, config: t.Infra.InfraValue) -> list[str]:
         """Extract project scan directories from engine config."""
         scope = self._resolve_engine_config(config)
         return list(scope.project_scan_dirs)
@@ -132,7 +132,7 @@ class FlextInfraRefactorRuleLoader:
 
     def _resolve_engine_config(
         self,
-        config: object,
+        config: t.Infra.InfraValue,
     ) -> m.Infra.Refactor.EngineConfig:
         config_map = self._normalize_str_object_mapping(config)
         scope_raw = config_map.get("refactor_engine")
@@ -141,7 +141,7 @@ class FlextInfraRefactorRuleLoader:
 
     @staticmethod
     def _coerce_rule_definitions(
-        value: object | None,
+        value: t.Infra.InfraValue | None,
     ) -> list[dict[str, object]]:
         try:
             list_adapter: TypeAdapter[list[object]] = TypeAdapter(list[object])
@@ -159,7 +159,7 @@ class FlextInfraRefactorRuleLoader:
         return definitions
 
     @staticmethod
-    def _normalize_str_object_mapping(value: object) -> dict[str, object]:
+    def _normalize_str_object_mapping(value: t.Infra.InfraValue) -> dict[str, t.Infra.InfraValue]:
         try:
             adapter: TypeAdapter[dict[str, object]] = TypeAdapter(dict[str, object])
             return adapter.validate_python(value)

@@ -54,7 +54,7 @@ class FlextInfraUtilitiesToml:
         return FlextInfraUtilitiesToml._CONTAINER_LIST_ADAPTER
 
     @staticmethod
-    def as_toml_mapping(value: object) -> t.Infra.ContainerDict | None:
+    def as_toml_mapping(value: t.Infra.InfraValue) -> t.Infra.ContainerDict | None:
         """Check if value is a MutableMapping and return it typed, otherwise None."""
         if not isinstance(value, dict):
             return None
@@ -73,10 +73,10 @@ class FlextInfraUtilitiesToml:
 
     @staticmethod
     def normalize_container_value(
-        value: object | Item | TOMLDocument | dict[str, object] | None,
-    ) -> object | None:
+        value: t.Infra.InfraValue | Item | TOMLDocument | dict[str, t.Infra.InfraValue] | None,
+    ) -> t.Infra.InfraValue | None:
         """Normalize TOML items/documents to a concrete container value."""
-        normalized: object | Item | dict[str, object] | None = value
+        normalized: t.Infra.InfraValue | Item | dict[str, t.Infra.InfraValue] | None = value
         if isinstance(value, (TOMLDocument, Item)):
             normalized = value.unwrap()
         if isinstance(normalized, Item):
@@ -85,8 +85,8 @@ class FlextInfraUtilitiesToml:
 
     @staticmethod
     def as_container_list(
-        value: object | Item | None,
-    ) -> list[object]:
+        value: t.Infra.InfraValue | Item | None,
+    ) -> list[t.Infra.InfraValue]:
         """Validate and normalize list-like values to typed container list."""
         normalized = FlextInfraUtilitiesToml.normalize_container_value(value)
         if normalized is None:
@@ -102,8 +102,8 @@ class FlextInfraUtilitiesToml:
 
     @staticmethod
     def unwrap_item(
-        value: object | Item | None,
-    ) -> object | None:
+        value: t.Infra.InfraValue | Item | None,
+    ) -> t.Infra.InfraValue | None:
         """Unwrap a tomlkit Item to get the underlying value."""
         return FlextInfraUtilitiesToml.normalize_container_value(value)
 
@@ -141,7 +141,7 @@ class FlextInfraUtilitiesToml:
         promote it to an explicit table so that tomlkit serializes sub-tables
         under the correct parent path instead of creating bare top-level sections.
         """
-        existing: object | None = None
+        existing: t.Infra.InfraValue | None = None
         if key in parent:
             existing = parent[key]
         if isinstance(existing, Table):
@@ -160,12 +160,12 @@ class FlextInfraUtilitiesToml:
     @staticmethod
     def get(
         container: TOMLDocument | Table,
-        key: object,
-    ) -> object | None:
+        key: t.Infra.InfraValue,
+    ) -> t.Infra.InfraValue | None:
         """Retrieve and normalize a value from a TOML container by key."""
         if not isinstance(key, str):
             return None
-        raw_value: object | None = None
+        raw_value: t.Infra.InfraValue | None = None
         if key in container:
             raw_value = FlextInfraUtilitiesToml.normalize_container_value(
                 container[key],

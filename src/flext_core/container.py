@@ -406,8 +406,9 @@ class FlextContainer(p.DI):
         """
         if config is None:
             return self
+        config_map: Mapping[str, t.Container] = config
         processed_dict = m.ConfigMap(root={})
-        for key, value in config.items():
+        for key, value in config_map.items():
             processed_dict[str(key)] = FlextRuntime.normalize_to_container(value)
         merged = m.ConfigMap(root=dict(self._user_overrides.items()))
         merged.update(dict(processed_dict.items()))

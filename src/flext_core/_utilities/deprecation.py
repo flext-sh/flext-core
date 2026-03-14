@@ -42,6 +42,36 @@ class FlextUtilitiesDeprecation:
             cls._warned_once.add(identifier)
             warnings.warn(message, DeprecationWarning, stacklevel=2)
 
+    @classmethod
+    def warn_polymorphic_input(
+        cls,
+        value: object,
+        context: str,
+        preferred: str,
+        *,
+        removal_version: str = "0.14.0",
+    ) -> None:
+        """Emit deprecation warning for overly polymorphic inputs.
+
+        Use at system boundaries where broad union types (NormalizedValue,
+        RuntimeData, RegisterableService) accept inputs that should migrate
+        to narrower types (Container, Scalar, ConfigMap).
+
+        Args:
+            value: The actual value received.
+            context: Name of the function/parameter accepting the value.
+            preferred: Preferred narrower type name.
+            removal_version: Version when broad acceptance will be removed.
+
+        """
+        type_name = type(value).__name__
+        identifier = f"polymorphic_{context}_{type_name}"
+        cls.warn_once(
+            identifier,
+            f"Passing {type_name} to {context} is deprecated. "
+            f"Prefer {preferred}. Broad union acceptance will be removed in {removal_version}.",
+        )
+
     @staticmethod
     def deprecated(
         replacement: str | None = None,

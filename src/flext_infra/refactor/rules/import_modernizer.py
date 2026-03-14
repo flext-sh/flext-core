@@ -20,7 +20,7 @@ from flext_infra.refactor.transformers.lazy_import_fixer import (
 
 
 def _parse_forbidden_rules(
-    value: object,
+    value: t.Infra.InfraValue,
 ) -> list[m.Infra.Refactor.RuleConfigs.ImportModernizerRuleConfig]:
     try:
         raw_items = TypeAdapter(list[t.Infra.RuleConfig]).validate_python(value)

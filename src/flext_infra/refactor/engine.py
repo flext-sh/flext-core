@@ -53,8 +53,8 @@ class FlextInfraRefactorEngine:
     def __init__(self, config_path: Path | None = None) -> None:
         """Initialize engine state and config file path."""
         self.config_path = config_path or self._default_config_path()
-        config_map: dict[str, object] = {}
-        self.config: object = config_map
+        config_map: dict[str, t.Infra.InfraValue] = {}
+        self.config: t.Infra.InfraValue = config_map
         self.rules: list[FlextInfraRefactorRule] = []
         self.file_rules: list[ClassNestingRefactorRule] = []
         self.rule_filters: list[str] = []

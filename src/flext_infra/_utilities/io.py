@@ -67,7 +67,7 @@ class FlextInfraUtilitiesIo:
     @staticmethod
     def write_json(
         path: Path,
-        payload: object,
+        payload: t.Infra.InfraValue,
         *,
         sort_keys: bool = False,
         ensure_ascii: bool = False,
@@ -90,7 +90,7 @@ class FlextInfraUtilitiesIo:
         """
         try:
             path.parent.mkdir(parents=True, exist_ok=True)
-            raw_payload: object = (
+            raw_payload: t.Infra.InfraValue = (
                 payload.model_dump() if isinstance(payload, BaseModel) else payload
             )
             parser: TypeAdapter[JsonValue] = TypeAdapter(JsonValue)
@@ -154,7 +154,7 @@ class FlextInfraUtilitiesIo:
 
     @staticmethod
     def serialize(
-        data: object,
+        data: t.Infra.InfraValue,
         *,
         sort_keys: bool = False,
         ensure_ascii: bool = False,
@@ -173,7 +173,7 @@ class FlextInfraUtilitiesIo:
 
         """
         try:
-            raw_data: object = (
+            raw_data: t.Infra.InfraValue = (
                 data.model_dump() if isinstance(data, BaseModel) else data
             )
             parser: TypeAdapter[JsonValue] = TypeAdapter(JsonValue)
