@@ -320,8 +320,8 @@ class FlextInfraUtilitiesCodegen:
 
         """
         lines: list[str] = ["if TYPE_CHECKING:"]
+        lines.append("    from flext_core.typings import FlextTypes")
         if not groups:
-            lines.append("    pass")
             return lines
 
         def _emit_module(mod: str) -> None:
@@ -384,12 +384,12 @@ class FlextInfraUtilitiesCodegen:
             lazy_import = "from flext_core._utilities.lazy import cleanup_submodule_namespace, lazy_getattr"
         else:
             lazy_import = (
-                "from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr"
+                "from flext_core import FlextTypes, cleanup_submodule_namespace, lazy_getattr"
             )
         out.extend([
             "from __future__ import annotations",
             "",
-            "from typing import TYPE_CHECKING, Any",
+            "from typing import TYPE_CHECKING",
             "",
             lazy_import,
             "",
@@ -413,7 +413,7 @@ class FlextInfraUtilitiesCodegen:
         out.extend(f'    "{exp}",' for exp in sorted(exports))
         out.extend(["]", "", ""])
         out.extend([
-            "def __getattr__(name: str) -> t.ModuleExport:",
+            "def __getattr__(name: str) -> FlextTypes.ModuleExport:",
             '    """Lazy-load module attributes on first access (PEP 562)."""',
             "    return lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)",
             "",

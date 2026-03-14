@@ -25,7 +25,8 @@ from typing import TypeVar, cast, get_origin, override
 
 import pytest
 
-from flext_core import h, r, t, u
+from flext_core import h, r, u
+from flext_tests import t
 
 T = TypeVar("T")
 TMessage = TypeVar("TMessage")
@@ -57,16 +58,16 @@ class IntHandler(h[int, int]):
         return r[int].ok(message * 2)
 
 
-class DictHandler(h[dict[str, object], dict[str, object]]):
+class DictHandler(h[dict[str, t.Tests.object], dict[str, t.Tests.object]]):
     """Handler for dict messages."""
 
     @override
     def handle(
         self,
-        message: dict[str, object],
-    ) -> r[dict[str, object]]:
+        message: dict[str, t.Tests.object],
+    ) -> r[dict[str, t.Tests.object]]:
         """Handle dict message."""
-        return r[dict[str, object]].ok({
+        return r[dict[str, t.Tests.object]].ok({
             "processed": True,
             **message,
         })
@@ -183,7 +184,7 @@ class TestuTypeChecker:
         accepted: tuple[t.MessageTypeSpecifier, ...] = (_message_type(dict),)
         assert u.can_handle_message_type(accepted, str) is False
         assert u.can_handle_message_type(accepted, dict) is True
-        dict_type: type[dict[str, object]] = dict
+        dict_type: type[dict[str, t.Tests.object]] = dict
         assert u.can_handle_message_type(accepted, dict_type) is True
 
     def test_can_handle_message_type_empty_accepted(self) -> None:
@@ -218,7 +219,7 @@ class TestuTypeChecker:
     def test_evaluate_type_compatibility_dict_types(self) -> None:
         """Test _evaluate_type_compatibility with dict types."""
         assert u._evaluate_type_compatibility(_type_origin(dict), dict) is True
-        dict_type: type[dict[str, object]] = dict
+        dict_type: type[dict[str, t.Tests.object]] = dict
         assert u._evaluate_type_compatibility(_type_origin(dict), dict_type) is True
 
     def test_evaluate_type_compatibility_subclass(self) -> None:

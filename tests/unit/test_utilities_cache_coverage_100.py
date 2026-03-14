@@ -23,8 +23,8 @@ from typing import Annotated, ClassVar, cast, override
 import pytest
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import t, u
-from flext_tests import tm
+from flext_core import u
+from flext_tests import t, tm
 
 from ..test_utils import assertion_helpers
 from ._models import CacheTestModel, NestedModel
@@ -232,7 +232,7 @@ class TestuCacheNormalizeComponent:
         model = CacheTestModel(name="test", value=42)
         result = u.normalize_component(model)
         assert isinstance(result, dict)
-        result_dict: dict[str, object] = result
+        result_dict: dict[str, t.Tests.object] = result
         assert result_dict["name"] == "test"
         assert result_dict["value"] == 42
 
@@ -241,9 +241,9 @@ class TestuCacheNormalizeComponent:
         model = NestedModel(inner=CacheTestModel(name="inner", value=10), count=5)
         result = u.normalize_component(model)
         assert isinstance(result, dict)
-        result_dict: dict[str, object] = result
+        result_dict: dict[str, t.Tests.object] = result
         assert isinstance(result_dict["inner"], dict)
-        inner_dict: dict[str, object] = result_dict["inner"]
+        inner_dict: dict[str, t.Tests.object] = result_dict["inner"]
         assert inner_dict["name"] == "inner"
         assert inner_dict["value"] == 10
         assert result_dict["count"] == 5
@@ -355,7 +355,7 @@ class TestuCacheSortDictKeys:
         data = {"c": 3, "a": 1, "b": 2}
         result = u.sort_dict_keys(data)
         assert isinstance(result, dict)
-        result_dict: dict[str, object] = result
+        result_dict: dict[str, t.Tests.object] = result
         assert list(result_dict.keys()) == ["a", "b", "c"]
 
     def test_sort_dict_keys_with_none_values(self) -> None:
@@ -363,7 +363,7 @@ class TestuCacheSortDictKeys:
         data: dict[str, str | int | None] = {"key1": "value", "key2": None, "key3": 42}
         result = u.sort_dict_keys(data)
         assert isinstance(result, dict)
-        result_dict: dict[str, object] = result
+        result_dict: dict[str, t.Tests.object] = result
         assert result_dict["key1"] == "value"
         assert result_dict["key2"] == {}
         assert result_dict["key3"] == 42
@@ -373,11 +373,11 @@ class TestuCacheSortDictKeys:
         data = {"z": {"c": 3, "a": 1, "b": 2}, "a": {"x": 10, "y": 20}}
         result = u.sort_dict_keys(data)
         assert isinstance(result, dict)
-        result_dict: dict[str, object] = result
+        result_dict: dict[str, t.Tests.object] = result
         assert list(result_dict.keys()) == ["a", "z"]
         nested = result_dict["z"]
         assert isinstance(nested, dict)
-        nested_dict: dict[str, object] = nested
+        nested_dict: dict[str, t.Tests.object] = nested
         assert list(nested_dict.keys()) == ["a", "b", "c"]
 
     def test_sort_dict_keys_non_dict(self) -> None:
@@ -587,7 +587,7 @@ class TestuCacheHasCacheAttributes:
 
         class TestObject:
             def __init__(self) -> None:
-                self._cache: dict[str, object] = {}  # Test double
+                self._cache: dict[str, t.Tests.object] = {}  # Test double
 
         obj = TestObject()
         assert u.has_cache_attributes(cast("object", obj)) is True
@@ -607,8 +607,8 @@ class TestuCacheHasCacheAttributes:
 
         class TestObject:
             def __init__(self) -> None:
-                self._cache: dict[str, object] = {}
-                self.cache: dict[str, object] = {}
+                self._cache: dict[str, t.Tests.object] = {}
+                self.cache: dict[str, t.Tests.object] = {}
 
         obj = TestObject()
         assert u.has_cache_attributes(cast("object", obj)) is True

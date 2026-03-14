@@ -18,7 +18,8 @@ import pytest
 from pydantic import BaseModel
 
 import flext_core.runtime as runtime_module
-from flext_core import FlextRuntime, c, m, r, t, u
+from flext_core import FlextRuntime, c, m, r, u
+from flext_tests import t
 
 runtime_tests: ModuleType = import_module("tests.unit.test_runtime")
 runtime_cov_tests: ModuleType = import_module("tests.unit.test_runtime_coverage_100")
@@ -897,7 +898,7 @@ def test_runtime_result_remaining_paths() -> None:
 
 
 def test_runtime_integration_tracking_paths(monkeypatch: pytest.MonkeyPatch) -> None:
-    events: list[tuple[str, dict[str, object]]] = []
+    events: list[tuple[str, dict[str, t.Tests.object]]] = []
 
     class Logger:
         def info(self, message: str, **kwargs: t.Scalar) -> None:

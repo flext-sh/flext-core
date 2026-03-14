@@ -15,7 +15,8 @@ from typing import Never, cast, overload, override
 
 import structlog
 
-from flext_core import FlextRuntime, t
+from flext_core import FlextRuntime
+from flext_tests import t
 
 
 class TestRuntimeDictLike:
@@ -290,8 +291,8 @@ class TestRuntimeTypeChecking:
         def custom_processor(
             logger,
             method_name: str,
-            event_dict: dict[str, object],
-        ) -> dict[str, object]:
+            event_dict: dict[str, t.Tests.object],
+        ) -> dict[str, t.Tests.object]:
             event_dict["custom"] = True
             return event_dict
 

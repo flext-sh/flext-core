@@ -28,9 +28,10 @@ from test_pep695_alias import FlextResult
 from test_unwrap import FlextResult
 from tomlkit.container import Container
 
-from flext_core import FlextMixins, FlextResult, r, t
+from flext_core import FlextMixins, FlextResult, r
 from flext_core.mixins import FlextMixins
 from flext_core.result import FlextResult
+from flext_tests import t
 from tests import m
 from tests.conftest import test_framework
 from tests.test_utils import assertion_helpers, fixture_factory
@@ -87,7 +88,7 @@ class TestAutomatedFlextMixins:
             input_data = (
                 test_scenario.input
                 if isinstance(test_scenario.input, dict)
-                else dict[str, object]()
+                else dict[str, t.Tests.object]()
             )
             result = self._execute_mixins_operation(instance, input_data)
             if test_scenario.expected_success:

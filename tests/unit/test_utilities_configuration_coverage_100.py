@@ -24,7 +24,8 @@ from typing import Annotated, ClassVar, cast
 import pytest
 from pydantic import BaseModel, Field
 
-from flext_core import FlextExceptions, FlextRuntime, c, m, p, t, u
+from flext_core import FlextExceptions, FlextRuntime, c, m, p, u
+from flext_tests import t
 from tests._models import (
     BadConfigForTest,
     ConfigModelForTest,
@@ -231,7 +232,7 @@ class TestFlextUtilitiesConfiguration:
         """Tests for get_parameter method."""
 
         @staticmethod
-        def _create_test_dict() -> dict[str, object]:
+        def _create_test_dict() -> dict[str, t.Tests.object]:
             """Factory for test dict."""
             return {
                 TestConfigConstants.ParameterNames.NAME.value: TestConfigConstants.TestValues.TEST_NAME,
@@ -240,7 +241,7 @@ class TestFlextUtilitiesConfiguration:
             }
 
         @staticmethod
-        def _create_boundary_dict() -> dict[str, object]:
+        def _create_boundary_dict() -> dict[str, t.Tests.object]:
             """Factory for boundary values dict."""
             return {
                 TestConfigConstants.ParameterNames.EMPTY_STRING.value: TestConfigConstants.TestValues.EMPTY_STRING,

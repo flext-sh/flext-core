@@ -29,9 +29,10 @@ from test_pep695_alias import FlextResult
 from test_unwrap import FlextResult
 from tomlkit.container import Container
 
-from flext_core import FlextDecorators, FlextResult, r, t
+from flext_core import FlextDecorators, FlextResult, r
 from flext_core.decorators import FlextDecorators
 from flext_core.result import FlextResult
+from flext_tests import t
 from tests import m
 from tests.conftest import test_framework
 from tests.test_utils import assertion_helpers, fixture_factory
@@ -88,7 +89,7 @@ class TestAutomatedFlextDecorators:
             input_data = (
                 test_scenario.input
                 if isinstance(test_scenario.input, dict)
-                else dict[str, object]()
+                else dict[str, t.Tests.object]()
             )
             result = self._execute_decorators_operation(
                 instance,

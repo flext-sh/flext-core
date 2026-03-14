@@ -6,7 +6,7 @@ import time
 import warnings
 from collections.abc import Callable
 from types import SimpleNamespace
-from typing import Annotated, Any, cast
+from typing import Annotated, cast
 
 import pytest
 from pydantic import BaseModel, Field
@@ -188,7 +188,7 @@ def test_execute_retry_loop_covers_default_linear_and_never_ran(
         flaky,
         (),
         {},
-        cast("Any", fake_logger),
+        cast("FlextLogger", fake_logger),
         retry_config=cfg,
     )
     assert isinstance(result_exc, Exception)
@@ -205,7 +205,7 @@ def test_execute_retry_loop_covers_default_linear_and_never_ran(
         lambda *_args, **_kwargs: "x",
         (),
         {},
-        cast("Any", fake_logger),
+        cast("FlextLogger", fake_logger),
         retry_config=None,
     )
     assert isinstance(result_none, RuntimeError)
@@ -228,7 +228,7 @@ def test_handle_retry_exhaustion_falsey_exception_reaches_timeout_error() -> Non
             fn,
             2,
             None,
-            cast("Any", fake_logger),
+            cast("FlextLogger", fake_logger),
         )
 
 
@@ -244,7 +244,7 @@ def test_bind_operation_context_without_ensure_correlation_and_bind_failure(
     monkeypatch.setattr("flext_core.decorators.FlextLogger.bind_context", _bind_context)
     cid = d._bind_operation_context(
         operation="op",
-        logger=cast("Any", fake_logger),
+        logger=cast("FlextLogger", fake_logger),
         function_name="fn",
         ensure_correlation=False,
     )
@@ -262,19 +262,19 @@ def test_clear_operation_scope_and_handle_log_result_paths(
 
     monkeypatch.setattr("flext_core.decorators.FlextLogger.clear_scope", _clear_scope)
     d._clear_operation_scope(
-        logger=cast("Any", fake_logger),
+        logger=cast("FlextLogger", fake_logger),
         function_name="fn",
         operation="op",
     )
     d._handle_log_result(
         result=r[bool].fail("x", error_code="E1"),
-        logger=cast("Any", fake_logger),
+        logger=cast("FlextLogger", fake_logger),
         fallback_message="fallback",
         kwargs=m.ConfigMap(root={"extra": {"k": "v"}}),
     )
     d._handle_log_result(
         result=r[bool].fail("y", error_code="E2"),
-        logger=cast("Any", fake_logger),
+        logger=cast("FlextLogger", fake_logger),
         fallback_message="fallback2",
         kwargs=m.ConfigMap(root={"extra": "not-a-dict"}),
     )
@@ -290,7 +290,7 @@ def test_handle_log_result_without_fallback_logger_and_non_dict_like_extra(
 
     d._handle_log_result(
         result=r[bool].fail("x"),
-        logger=cast("Any", _NoFallback()),
+        logger=cast("FlextLogger", _NoFallback()),
         fallback_message="m",
         kwargs=m.ConfigMap(root={"extra": {"k": "v"}}),
     )
@@ -305,7 +305,7 @@ def test_handle_log_result_without_fallback_logger_and_non_dict_like_extra(
     )
     d._handle_log_result(
         result=r[bool].fail("x", error_code="E"),
-        logger=cast("Any", fake_logger),
+        logger=cast("FlextLogger", fake_logger),
         fallback_message="fallback",
         kwargs=m.ConfigMap(root={"extra": {"k": "v"}}),
     )
@@ -492,12 +492,12 @@ def test_railway_and_retry_additional_paths(monkeypatch: pytest.MonkeyPatch) -> 
 
     assert already_result().is_success
 
-    @d.railway(error_code=cast("Any", 123))
+    @d.railway(error_code=cast("str", 123))
     def fails() -> int:
         msg = "x"
         raise RuntimeError(msg)
 
-    fail_result = cast("Any", fails())
+    fail_result = cast("r[int]", fails())
     assert fail_result.is_failure
     fake_logger = _FakeLogger()
 
@@ -553,7 +553,7 @@ def test_execute_retry_exponential_and_handle_exhaustion_raise_last_exception(
         always_fails,
         (),
         {},
-        cast("Any", fake_logger),
+        cast("FlextLogger", fake_logger),
         retry_config=cfg,
     )
     assert isinstance(result, Exception)
@@ -568,7 +568,7 @@ def test_execute_retry_exponential_and_handle_exhaustion_raise_last_exception(
             fn,
             2,
             "ERR",
-            cast("Any", fake_logger),
+            cast("FlextLogger", fake_logger),
         )
 
 

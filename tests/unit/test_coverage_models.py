@@ -29,6 +29,7 @@ from pydantic import Field, ValidationError, field_validator
 
 from flext_core import m
 from flext_core._models.domain_event import _ComparableConfigMap
+from flext_tests import t
 
 
 class ModelScenarios:
@@ -552,7 +553,7 @@ class TestModelSerialization:
         class ShoppingCart(m.AggregateRoot):
             """Shopping cart aggregate."""
 
-            items: list[dict[str, object]]
+            items: list[dict[str, t.Tests.object]]
             total: float
 
         cart = ShoppingCart(

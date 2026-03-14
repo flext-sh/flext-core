@@ -8,6 +8,7 @@ import pytest
 
 import flext_core._utilities.args as args_module
 from flext_core import c, m, r, u
+from flext_tests import t
 
 
 def _annotated_func(mode: Annotated[c.Cqrs.HandlerType, "meta"]) -> None:
@@ -41,7 +42,7 @@ def test_args_get_enum_params_branches() -> None:
 def test_args_get_enum_params_annotated_unwrap_branch(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    def _mock_get_type_hints(_func) -> dict[str, object]:
+    def _mock_get_type_hints(_func) -> dict[str, t.Tests.object]:
         return {"mode": Annotated[c.Cqrs.HandlerType, "meta"]}
 
     monkeypatch.setattr(

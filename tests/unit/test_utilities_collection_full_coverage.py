@@ -10,6 +10,7 @@ from typing import cast, override
 import pytest
 
 from flext_core import c, m, r, u
+from flext_tests import t
 
 
 class _Color(StrEnum):
@@ -57,19 +58,19 @@ def test_find_mapping_no_match_and_merge_error_paths() -> None:
     not_found = u.find({"a": 1}, lambda value: value == 2)
     assert not_found.is_failure
     nested = u._merge_deep_single_key(
-        cast("dict[str, object]", {"x": _BadCopyDict({"a": 1})}),
+        cast("dict[str, t.Tests.object]", {"x": _BadCopyDict({"a": 1})}),
         "x",
         cast("object", {"b": 2}),
     )
     assert nested.is_success
     deep = u.merge(
-        cast("dict[str, object]", {"x": _BadCopyDict({"a": 1})}),
-        cast("dict[str, object]", {"x": {"b": 2}}),
+        cast("dict[str, t.Tests.object]", {"x": _BadCopyDict({"a": 1})}),
+        cast("dict[str, t.Tests.object]", {"x": {"b": 2}}),
         strategy="deep",
     )
     assert deep.is_success
     broken = u.merge(
-        cast("dict[str, object]", None),
+        cast("dict[str, t.Tests.object]", None),
         {"x": 1},
         strategy="deep",
     )

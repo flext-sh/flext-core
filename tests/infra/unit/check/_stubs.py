@@ -17,6 +17,7 @@ from flext_infra.check.services import (
 )
 
 from ...models import m
+from ...typings import t
 
 
 class Spy:
@@ -28,8 +29,8 @@ class Spy:
         side_effect: list | None = None,
     ) -> None:
         self.call_count: int = 0
-        self.call_args: tuple[tuple[object, ...], dict[str, object]] | None = None
-        self.call_args_list: list[tuple[tuple[object, ...], dict[str, object]]] = []
+        self.call_args: tuple[tuple[object, ...], dict[str, t.Infra.InfraValue]] | None = None
+        self.call_args_list: list[tuple[tuple[object, ...], dict[str, t.Infra.InfraValue]]] = []
         self.called: bool = False
         self._return_value = return_value
         self._side_effect = list(side_effect) if side_effect else None
@@ -44,7 +45,7 @@ class Spy:
         return self._return_value
 
     @property
-    def kwargs(self) -> dict[str, object]:
+    def kwargs(self) -> dict[str, t.Infra.InfraValue]:
         """Return kwargs from last call."""
         if self.call_args is None:
             return {}

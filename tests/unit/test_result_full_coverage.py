@@ -8,13 +8,14 @@ from __future__ import annotations
 
 from typing import cast
 
-from flext_core import FlextRuntime, r, t
+from flext_core import FlextRuntime, r
+from flext_tests import t
 
 from ._models import _ErrorsModel, _PlainErrorModel, _TargetModel
 
 
 class _ValidationLikeError(ValueError):
-    def errors(self) -> list[dict[str, object]]:
+    def errors(self) -> list[dict[str, t.Tests.object]]:
         return [{"loc": ["value"], "msg": "bad value"}]
 
 

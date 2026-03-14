@@ -100,7 +100,7 @@ class TestFlextTestsBuilders:
         assert result is builder
         data = _as_builder_dict(builder.build())
         assert "validation_fields" in data
-        fields = cast("dict[str, object]", data["validation_fields"])
+        fields = cast("dict[str, t.Tests.object]", data["validation_fields"])
         valid_emails = cast("list[str]", fields["valid_emails"])
         assert len(valid_emails) == 5
         assert valid_emails[0] == "user0@example.com"
@@ -114,7 +114,7 @@ class TestFlextTestsBuilders:
         builder.with_validation_fields(count=3)
         data = _as_builder_dict(builder.build())
         validation_fields = cast(
-            "dict[str, object]",
+            "dict[str, t.Tests.object]",
             data["validation_fields"],
         )
         valid_emails = cast("list[str]", validation_fields["valid_emails"])
@@ -240,7 +240,7 @@ class TestFlextTestsBuilders:
         builder = tb()
         builder.add("users", factory="users", count=3)
         data = _as_builder_dict(builder.build())
-        users = cast("list[dict[str, object]]", data["users"])
+        users = cast("list[dict[str, t.Tests.object]]", data["users"])
         assert len(users) == 3
 
     def test_add_with_mapping(self) -> None:
@@ -248,7 +248,7 @@ class TestFlextTestsBuilders:
         builder = tb()
         builder.add("config", mapping={"env": "test", "debug": True})
         data = _as_builder_dict(builder.build())
-        config = cast("dict[str, object]", data["config"])
+        config = cast("dict[str, t.Tests.object]", data["config"])
         assert config["env"] == "test"
         assert config["debug"] is True
 
@@ -302,7 +302,7 @@ class TestFlextTestsBuilders:
         builder = tb()
         builder.set("a.b.c", 42)
         flattened_raw = builder.build(flatten=True)
-        flattened = cast("dict[str, object]", flattened_raw)
+        flattened = cast("dict[str, t.Tests.object]", flattened_raw)
         assert isinstance(flattened, dict)
         assert "a.b.c" in flattened
         assert flattened["a.b.c"] == 42
@@ -312,7 +312,7 @@ class TestFlextTestsBuilders:
         builder = tb()
         builder.add("a", 1).add("b", None).add("c", 3)
         filtered_raw = builder.build(filter_none=True)
-        filtered = cast("dict[str, object]", filtered_raw)
+        filtered = cast("dict[str, t.Tests.object]", filtered_raw)
         assert "a" in filtered
         assert "b" not in filtered
         assert "c" in filtered

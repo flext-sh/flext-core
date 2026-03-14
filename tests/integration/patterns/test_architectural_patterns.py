@@ -15,7 +15,8 @@ import time
 import pytest
 from pydantic import BaseModel
 
-from flext_core import FlextConstants, m, r, t
+from flext_core import FlextConstants, m, r
+from flext_tests import t
 from tests.test_utils import assertion_helpers
 
 
@@ -67,7 +68,7 @@ class TestEnterprisePatterns:
             def __init__(self) -> None:
                 """Initialize builder."""
                 super().__init__()
-                self._config: dict[str, object] = {}
+                self._config: dict[str, t.Tests.object] = {}
 
             def with_database(self, host: str, port: int) -> ConfigurationBuilder:
                 """Add database configuration."""
@@ -84,13 +85,13 @@ class TestEnterprisePatterns:
                 self._config["cache"] = {"enabled": enabled}
                 return self
 
-            def build(self) -> r[dict[str, object]]:
+            def build(self) -> r[dict[str, t.Tests.object]]:
                 """Build the configuration."""
                 if not self._config:
-                    return r[dict[str, object]].fail(
+                    return r[dict[str, t.Tests.object]].fail(
                         "Configuration cannot be empty",
                     )
-                return r[dict[str, object]].ok(self._config.copy())
+                return r[dict[str, t.Tests.object]].ok(self._config.copy())
 
         config_result = (
             ConfigurationBuilder()
@@ -255,14 +256,14 @@ class TestEventDrivenPatterns:
     @pytest.mark.architecture
     def test_observer_pattern_implementation(self) -> None:
         """Test Observer pattern implementation."""
-        observers: list[dict[str, object]] = []
+        observers: list[dict[str, t.Tests.object]] = []
 
         def notify_all(state: str) -> None:
             for observer in observers:
                 observer["state"] = state
 
-        obs1: dict[str, object] = {"name": "Observer1", "state": None}
-        obs2: dict[str, object] = {"name": "Observer2", "state": None}
+        obs1: dict[str, t.Tests.object] = {"name": "Observer1", "state": None}
+        obs2: dict[str, t.Tests.object] = {"name": "Observer2", "state": None}
         observers.extend([obs1, obs2])
         notify_all("new_state")
         assert obs1["state"] == "new_state"

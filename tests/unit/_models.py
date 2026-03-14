@@ -13,7 +13,7 @@ from flext_tests import t
 class _ValidationLikeError(Exception):
     """Validation-like error for tests."""
 
-    def errors(self) -> list[dict[str, object]]:
+    def errors(self) -> list[dict[str, t.Tests.object]]:
         return [{"loc": ["value"], "msg": "bad value"}]
 
 
@@ -98,7 +98,7 @@ class _ErrorsModel(BaseModel):
         strict: bool | None = None,
         extra: str | None = None,
         from_attributes: bool | None = None,
-        context: dict[str, object] | None = None,
+        context: dict[str, t.Tests.object] | None = None,
         by_alias: bool | None = None,
         by_name: bool | None = None,
     ) -> Never:
@@ -119,7 +119,7 @@ class _PlainErrorModel(BaseModel):
         strict: bool | None = None,
         extra: str | None = None,
         from_attributes: bool | None = None,
-        context: dict[str, object] | None = None,
+        context: dict[str, t.Tests.object] | None = None,
         by_alias: bool | None = None,
         by_name: bool | None = None,
     ) -> Never:
@@ -214,7 +214,7 @@ class _FakeConfig(BaseModel):
     timeout: int = 10
 
     @property
-    def data(self) -> dict[str, object]:
+    def data(self) -> dict[str, t.Tests.object]:
         return {"timeout": self.timeout}
 
 
@@ -247,7 +247,7 @@ class ComplexModel(BaseModel):
     """Complex test model."""
 
     id: int
-    data: dict[str, object]
+    data: dict[str, t.Tests.object]
     items: list[str]
 
 

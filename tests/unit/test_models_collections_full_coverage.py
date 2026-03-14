@@ -11,7 +11,8 @@ from typing import Annotated, cast
 import pytest
 from pydantic import Field
 
-from flext_core import c, m, r, t, u
+from flext_core import c, m, r, u
+from flext_tests import t
 
 
 class _Stats(m.Statistics):
@@ -25,7 +26,7 @@ class _Rules(m.Rules):
 
 class _Results(m.Results):
     value: int | bool | None = None
-    data: Annotated[dict[str, object], Field(default_factory=dict)]
+    data: Annotated[dict[str, t.Tests.object], Field(default_factory=dict)]
 
 
 def _default_tags() -> list[str]:

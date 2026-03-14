@@ -27,7 +27,8 @@ from typing import Annotated, ClassVar, cast, override
 import pytest
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import FlextExceptions, m, p, r, t, u
+from flext_core import FlextExceptions, m, p, r, u
+from flext_tests import t
 
 from ..test_utils import assertion_helpers
 from .contracts.text_contract import TextUtilityContract
@@ -153,7 +154,7 @@ class UtilityScenarios:
     @staticmethod
     def create_mock_config(**kwargs: t.Scalar) -> p.HasModelDump:
         """Create mock config object."""
-        result: dict[str, object] = {}
+        result: dict[str, t.Tests.object] = {}
         for key, value in kwargs.items():
             result[str(key)] = value
         return cast("p.HasModelDump", cast("object", m.ConfigMap(root=result)))
@@ -367,7 +368,7 @@ class Testu(TextUtilityContract):
         if isinstance(obj, BaseModel):
             result = u.clear_object_cache(obj)
         else:
-            obj_dict: dict[str, object] = {}
+            obj_dict: dict[str, t.Tests.object] = {}
             if hasattr(obj, "__dict__"):
                 for k, v in obj.__dict__.items():
                     obj_dict[str(k)] = (

@@ -32,6 +32,7 @@ from __future__ import annotations
 import pytest
 
 from flext_core import FlextContainer, __version__, r, u
+from flext_tests import t
 from tests.test_utils import assertion_helpers
 
 from ..conftest import FunctionalExternalService
@@ -51,7 +52,7 @@ class TestLibraryIntegration:
     def test_all_exports_work(
         self,
         clean_container: FlextContainer,
-        sample_data: dict[str, object],
+        sample_data: dict[str, t.Tests.object],
     ) -> None:
         """Test comprehensive integration of core library exports.
 

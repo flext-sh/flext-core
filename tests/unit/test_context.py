@@ -182,7 +182,7 @@ class TestFlextContext:
     def test_context_nested_data(self, test_context: FlextContext) -> None:
         """Test context with nested data structures."""
         context = test_context
-        nested_data: dict[str, object] = {
+        nested_data: dict[str, tests_t.Tests.object] = {
             "user": {
                 "id": "123",
                 "profile": {"name": "John Doe", "email": "john@example.com"},

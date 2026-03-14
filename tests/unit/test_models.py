@@ -32,7 +32,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_valida
 
 from flext_core import c, m
 from flext_core._models.domain_event import _ComparableConfigMap
-from flext_tests import tm, u
+from flext_tests import t, tm, u
 
 
 class ModelType(StrEnum):
@@ -56,7 +56,7 @@ class ModelCreationScenario(BaseModel):
     model_type: Annotated[
         ModelType, Field(description="Model type under creation test")
     ]
-    field_data: Annotated[dict[str, object], Field(description="Model input payload")]
+    field_data: Annotated[dict[str, t.Tests.object], Field(description="Model input payload")]
     expected_checks: Annotated[
         list[str], Field(description="Expected validation check labels")
     ]
@@ -731,9 +731,9 @@ class TestFlextModels:
         class TestAggregate(m.AggregateRoot):
             name: str
             handler_called: bool = False
-            handler_data: Annotated[dict[str, object], Field(default_factory=dict)]
+            handler_data: Annotated[dict[str, t.Tests.object], Field(default_factory=dict)]
 
-            def _apply_test_event(self, data: dict[str, object]) -> None:
+            def _apply_test_event(self, data: dict[str, t.Tests.object]) -> None:
                 self.handler_called = True
                 self.handler_data = data
 
@@ -752,7 +752,7 @@ class TestFlextModels:
         class TestAggregate(m.AggregateRoot):
             name: str
 
-            def _apply_failing_event(self, data: dict[str, object]) -> None:
+            def _apply_failing_event(self, data: dict[str, t.Tests.object]) -> None:
                 error_msg = "Handler failed"
                 raise ValueError(error_msg)
 

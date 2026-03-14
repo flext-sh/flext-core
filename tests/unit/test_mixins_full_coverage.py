@@ -9,7 +9,8 @@ from typing import cast, override
 import pytest
 from pydantic import BaseModel
 
-from flext_core import FlextLogger, FlextMixins, c, m, p, r, t, u, x
+from flext_core import FlextLogger, FlextMixins, c, m, p, r, u, x
+from flext_tests import t
 
 from ._models import _SvcModel
 
@@ -55,13 +56,13 @@ def _validation_fail_no(v) -> r[bool]:
 class _RuntimeContainer:
     def __init__(self) -> None:
         super().__init__()
-        self.configured: dict[str, object] | None = None
-        self.wired: dict[str, object] | None = None
+        self.configured: dict[str, t.Tests.object] | None = None
+        self.wired: dict[str, t.Tests.object] | None = None
 
     def scoped(self, **_kwargs: t.Scalar) -> _RuntimeContainer:
         return self
 
-    def configure(self, overrides: dict[str, object]) -> None:
+    def configure(self, overrides: dict[str, t.Tests.object]) -> None:
         self.configured = overrides
 
     def wire_modules(self, **kwargs: t.Scalar) -> None:
@@ -105,7 +106,7 @@ class _ContainerForLogger:
         super().__init__()
         self.success: bool = success
         self.logger: t.Container | BaseModel | None = logger
-        self.factories: dict[str, object] = {}
+        self.factories: dict[str, t.Tests.object] = {}
         self.register_calls: list[tuple[str, str]] = []
 
     def get_typed(self, _key: str, _tp) -> r[t.Container | BaseModel]:
@@ -206,7 +207,7 @@ def test_mixins_runtime_bootstrap_and_track_paths(
     assert runtime is not None
     assert runtime_container.wired is not None
     with service.track("op") as metrics:
-        cast("dict[str, object]", metrics)["duration_ms"] = 2.0
+        cast("dict[str, t.Tests.object]", metrics)["duration_ms"] = 2.0
     assert hasattr(service, "_stats_op")
     try:
         with service.track("op_fail"):
@@ -433,12 +434,12 @@ def test_mixins_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> None:
         pass
 
     model_service = _ModelService()
-    captured: dict[str, object] = {}
+    captured: dict[str, t.Tests.object] = {}
 
     class _RegContainer:
         def __init__(self) -> None:
             super().__init__()
-            self._services: dict[str, object] = {}
+            self._services: dict[str, t.Tests.object] = {}
 
         def has_service(self, name: str) -> bool:
             return name in self._services

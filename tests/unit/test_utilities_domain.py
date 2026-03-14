@@ -60,7 +60,7 @@ def _convert_to_general_value(obj: object) -> t.Tests.object:
             "t.Tests.object",
             {
                 str(key): _convert_to_general_value(val)
-                for key, val in cast("dict[str, object]", obj).items()
+                for key, val in cast("dict[str, t.Tests.object]", obj).items()
             },
         )
     if isinstance(obj, (list, tuple)):

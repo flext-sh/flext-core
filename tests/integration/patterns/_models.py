@@ -6,6 +6,8 @@ from collections.abc import ItemsView, Mapping, ValuesView
 
 from pydantic import RootModel
 
+from flext_tests import t
+
 
 class _StringDictModel(RootModel[dict[str, str]]):
     def __getitem__(self, key: str) -> str:
@@ -33,7 +35,7 @@ class _StringDictModel(RootModel[dict[str, str]]):
         return self.root.items()
 
 
-class _ContainerDictModel(RootModel[dict[str, object]]):
+class _ContainerDictModel(RootModel[dict[str, t.Tests.object]]):
     def __getitem__(self, key: str) -> object:
         return self.root[key]
 

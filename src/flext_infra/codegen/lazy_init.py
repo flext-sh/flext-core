@@ -579,17 +579,19 @@ def _generate_file(
         )
     else:
         lazy_import = (
-            "from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr"
+            "from flext_core import FlextTypes, cleanup_submodule_namespace, lazy_getattr"
         )
 
     out.extend([
         "from __future__ import annotations",
         "",
-        "from typing import TYPE_CHECKING, Any",
+        "from typing import TYPE_CHECKING",
         "",
         lazy_import,
         "",
     ])
+    # Inject t import inside TYPE_CHECKING for -> t.ModuleExport annotation
+    # (from __future__ annotations makes it string-only at runtime, avoiding circular imports)
     out.extend(_generate_type_checking(groups))
     out.append("")
     for name, value in sorted(inline_constants.items()):
@@ -609,7 +611,7 @@ def _generate_file(
     out.extend(f'    "{exp}",' for exp in sorted(exports))
     out.extend(["]", "", ""])
     out.extend([
-        "def __getattr__(name: str) -> t.ModuleExport:",
+        "def __getattr__(name: str) -> FlextTypes.ModuleExport:",
         '    """Lazy-load module attributes on first access (PEP 562)."""',
         "    return lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)",
         "",

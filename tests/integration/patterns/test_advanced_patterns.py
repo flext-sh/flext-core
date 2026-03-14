@@ -17,7 +17,8 @@ from collections.abc import Callable
 
 import pytest
 
-from flext_core import r, t, u
+from flext_core import r, u
+from flext_tests import t
 
 from ...models import m
 
@@ -68,9 +69,9 @@ class GivenWhenThenBuilder:
         """Initialize givenwhenthenbuilder:."""
         super().__init__()
         self.name = name
-        self._given: dict[str, object] = {}
-        self._when: dict[str, object] = {}
-        self._then: dict[str, object] = {}
+        self._given: dict[str, t.Tests.object] = {}
+        self._when: dict[str, t.Tests.object] = {}
+        self._then: dict[str, t.Tests.object] = {}
         self._tags: list[str] = []
         self._priority = "normal"
 
@@ -203,8 +204,8 @@ class FlextTestBuilder:
     def __init__(self) -> None:
         """Initialize flexttestbuilder:."""
         super().__init__()
-        self._data: dict[str, object] = {}
-        self._validation_rules: dict[str, object] = {}
+        self._data: dict[str, t.Tests.object] = {}
+        self._validation_rules: dict[str, t.Tests.object] = {}
 
     def with_id(self, id_: str) -> FlextTestBuilder:
         """with_id method.
@@ -268,7 +269,7 @@ class FlextTestBuilder:
         self._validation_rules = kwargs
         return self
 
-    def build(self) -> dict[str, object]:
+    def build(self) -> dict[str, t.Tests.object]:
         """Build method.
 
         Returns:
@@ -367,11 +368,11 @@ class AssertionBuilder:
 
     def __init__(
         self,
-        data: list | dict[str, object] | str | tuple[object, ...],
+        data: list | dict[str, t.Tests.object] | str | tuple[t.Tests.object, ...],
     ) -> None:
         """Initialize assertionbuilder:."""
         super().__init__()
-        self.data: list | dict[str, object] | str | tuple[object, ...] = data
+        self.data: list | dict[str, t.Tests.object] | str | tuple[t.Tests.object, ...] = data
         self._assertions: list[Callable[[], None]] = []
 
     def assert_equals(self, expected: dict[str, bool | int | str]) -> AssertionBuilder:
@@ -425,7 +426,7 @@ class AssertionBuilder:
         self,
         condition: Callable[
             [
-                list | dict[str, object] | str | tuple[object, ...],
+                list | dict[str, t.Tests.object] | str | tuple[t.Tests.object, ...],
             ],
             bool,
         ],
@@ -545,7 +546,7 @@ class TestAdvancedPatterns:
 
     def test_assertion_builder_pattern(self) -> None:
         """Test assertion builder pattern."""
-        test_data: dict[str, object] = {
+        test_data: dict[str, t.Tests.object] = {
             "name": "John",
             "age": 30,
             "active": True,
@@ -645,7 +646,7 @@ class TestAdvancedPatterns:
         assert main_data.get("id") == "main-123"
         nested_data = main_data.get("nested_data")
         assert nested_data is not None
-        nested_mapping: dict[str, object] = (
+        nested_mapping: dict[str, t.Tests.object] = (
             nested_data if isinstance(nested_data, dict) else {}
         )
         nested_dict = nested_mapping.get("id")

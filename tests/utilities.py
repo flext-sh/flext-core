@@ -17,9 +17,9 @@ from collections import UserDict, UserList
 from collections.abc import Callable, Iterator
 from typing import Never, override
 
-from flext_core import r, t
+from flext_core import r
 from flext_infra import FlextInfraUtilities
-from flext_tests import FlextTestsUtilities
+from flext_tests import FlextTestsUtilities, t
 
 from .test_utils import assertion_helpers
 
@@ -163,7 +163,7 @@ class TestsFlextUtilities(FlextTestsUtilities, FlextInfraUtilities):
             class BadModelDump:
                 """Object with model_dump that raises."""
 
-                model_dump: Callable[[], dict[str, object]] = staticmethod(
+                model_dump: Callable[[], dict[str, t.Tests.object]] = staticmethod(
                     lambda: (_ for _ in ()).throw(RuntimeError("Bad model_dump")),
                 )
 

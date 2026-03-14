@@ -21,7 +21,8 @@ from typing import ClassVar
 import pytest
 from pydantic import ValidationError
 
-from flext_core import m, t, u
+from flext_core import m, u
+from flext_tests import t
 
 _expected_validation_errors: tuple[type[Exception], ...] = (ValidationError, TypeError)
 
@@ -73,7 +74,7 @@ class ContainerModelsScenarios:
         (123, False),
         ([1, 2, 3], False),
     ]
-    CONTAINER_CONFIG_VALUES: ClassVar[list[dict[str, object]]] = [
+    CONTAINER_CONFIG_VALUES: ClassVar[list[dict[str, t.Tests.object]]] = [
         {},
         {"enable_singleton": False},
         {"enable_factory_caching": False},
@@ -221,7 +222,7 @@ class TestFlextModelsContainer:
     )
     def test_container_config_creation(
         self,
-        config_dict: dict[str, object],
+        config_dict: dict[str, t.Tests.object],
     ) -> None:
         """Test ContainerConfig creation with various configurations."""
         config = m.ContainerConfig.model_validate(config_dict)

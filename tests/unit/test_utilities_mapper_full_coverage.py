@@ -12,13 +12,14 @@ import pytest
 from pydantic import BaseModel, Field
 
 from flext_core import m, p, r, u
+from flext_tests import t
 
 
 class _PortModel(BaseModel):
     """Model with port/nested for mapper take/extract tests."""
 
     port: int = 0
-    nested: Annotated[dict[str, object], Field(default_factory=dict)]
+    nested: Annotated[dict[str, t.Tests.object], Field(default_factory=dict)]
 
 
 class _AtCallable(Protocol):
@@ -313,14 +314,14 @@ def test_invert_and_json_conversion_branches(mapper: type[u]) -> None:
     assert model.model_dump(mode="json") == {"x": 1}
     path_val = Path("/tmp")
     assert path_val.as_posix() == "/tmp"
-    as_json: dict[str, object] = {}
+    as_json: dict[str, t.Tests.object] = {}
     for key, val in {"x": Path("/tmp")}.items():
         if isinstance(val, Path):
             as_json[str(key)] = val.as_posix()
         else:
             as_json[str(key)] = val
     assert as_json["x"] == "/tmp"
-    list_json: list[dict[str, object]] = [{"a": 1}, {"b": "opaque"}]
+    list_json: list[dict[str, t.Tests.object]] = [{"a": 1}, {"b": "opaque"}]
     assert isinstance(list_json, list)
     assert list_json[0]["a"] == 1
 
@@ -329,7 +330,7 @@ def test_invert_and_json_conversion_branches(mapper: type[u]) -> None:
         "path": Path("/tmp"),
         "when": datetime(2026, 3, 12, 10, 30, 45, tzinfo=UTC),
     }
-    safe_json: dict[str, object] = {}
+    safe_json: dict[str, t.Tests.object] = {}
     for key, val in payload.items():
         if isinstance(val, BaseModel):
             safe_json[key] = val.model_dump(mode="json")
@@ -555,7 +556,7 @@ def test_build_apply_transform_and_process_error_paths(
         _strip_none: bool,
         _strip_empty: bool,
         _to_json: bool,
-    ) -> dict[str, object]:
+    ) -> dict[str, t.Tests.object]:
         raise RuntimeError(msg)
 
     msg = "explode transform"
@@ -626,7 +627,7 @@ def test_field_and_fields_multi_branches(mapper: type[u]) -> None:
 def test_construct_transform_and_deep_eq_branches(mapper: type[u]) -> None:
     constructed_none = mapper.construct({"x": {"field": "a", "default": 9}}, None)
     assert constructed_none["x"] == 9
-    source: dict[str, object] = {"name": "alice", "n": 3}
+    source: dict[str, t.Tests.object] = {"name": "alice", "n": 3}
     spec = cast(
         "Mapping[str, object]",
         {
@@ -687,7 +688,7 @@ def test_process_context_data_and_related_convenience(
     mapper: type[u],
     merge_strategy: str,
 ) -> None:
-    primary: dict[str, object] = {"a": 1, "drop": "x"}
+    primary: dict[str, t.Tests.object] = {"a": 1, "drop": "x"}
     secondary = {"b": 2}
     result = mapper.process_context_data(
         primary_data=primary,
@@ -815,7 +816,7 @@ def test_conversion_and_extract_success_branches(mapper: type[u]) -> None:
             return "plain"
 
     assert str(Plain()) == "plain"
-    plain_dict: dict[str, object] = {"1": str(Plain())}
+    plain_dict: dict[str, t.Tests.object] = {"1": str(Plain())}
     assert plain_dict == {"1": "plain"}
     plain_list: list = [1, {"k": str(Plain())}]
     assert plain_list == [1, {"k": "plain"}]
@@ -888,7 +889,7 @@ def test_accessor_take_pick_as_or_flat_and_agg_branches(mapper: type[u]) -> None
     assert mapper.flat([[1, 2], [3]]) == [1, 2, 3]
     assert mapper._extract_field_value({"x": 1}, "x") == 1
     assert mapper.agg([{"v": 1}, {"v": 2}], "v") == 3
-    mixed_items: tuple[dict[str, object], ...] = ({"v": 1}, {"v": "no"})
+    mixed_items: tuple[dict[str, t.Tests.object], ...] = ({"v": 1}, {"v": "no"})
     assert mapper.agg(mixed_items, "v") == 1
     assert mapper.agg([1, 2, 3], lambda x: x, fn=max) == 3
 

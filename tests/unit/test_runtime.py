@@ -40,8 +40,8 @@ from flext_core import (
     m,
     r,
     s,
-    t,
 )
+from flext_tests import t
 
 
 class RuntimeOperationType(StrEnum):
@@ -964,8 +964,8 @@ class TestFlextRuntime:
             def custom_processor(
                 logger,
                 method_name: str,
-                event_dict: dict[str, object],
-            ) -> dict[str, object]:
+                event_dict: dict[str, t.Tests.object],
+            ) -> dict[str, t.Tests.object]:
                 event_dict["custom"] = True
                 return event_dict
 

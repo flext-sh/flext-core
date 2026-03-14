@@ -9,13 +9,14 @@ import pytest
 import structlog.contextvars
 from pydantic import BaseModel
 
-from flext_core import m, t
+from flext_core import m
 from flext_core._models.base import FlextModelFoundation
 from flext_core._models.context import (
     FlextModelsContext,
     _normalize_statistics_before,
     _normalize_to_mapping,
 )
+from flext_tests import t
 
 
 class _ModelWithNoCallableDump:
@@ -23,7 +24,7 @@ class _ModelWithNoCallableDump:
 
 
 class _MappingLike(Mapping[str, object]):
-    def __init__(self, data: dict[str, object]) -> None:
+    def __init__(self, data: dict[str, t.Tests.object]) -> None:
         super().__init__()
         self._data = data
 

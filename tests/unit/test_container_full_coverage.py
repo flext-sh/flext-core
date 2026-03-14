@@ -13,7 +13,8 @@ from beartype._cave._cavefast import ModuleType
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings as _BaseSettings
 
-from flext_core import FlextContainer, FlextContext, FlextSettings, m, r, t
+from flext_core import FlextContainer, FlextContext, FlextSettings, m, r
+from flext_tests import t
 
 
 class _MonkeyPatch(Protocol):
@@ -365,7 +366,7 @@ def test_scoped_config_context_branches(monkeypatch: _MonkeyPatch) -> None:
     )
     c._config = FlextSettings(app_name="base")
     c._context = FlextContext()
-    captured: dict[str, object] = {}
+    captured: dict[str, t.Tests.object] = {}
 
     def _fake_create_scoped_instance(**kwargs: t.Scalar) -> FlextContainer:
         captured.update(kwargs)
@@ -466,7 +467,7 @@ def test_sync_config_registers_namespace_factories_and_fallbacks(
     try:
 
         class _Cfg(_FalseConfig):
-            _namespace_registry: ClassVar[dict[str, object]] = {
+            _namespace_registry: ClassVar[dict[str, t.Tests.object]] = {
                 "alpha"(),
                 "beta"(),
             }
@@ -613,7 +614,7 @@ def test_container_remaining_branch_paths_in_sync_factory_and_getters(
     # n1 is NOT registered in FlextSettings, so get_namespace_config returns None
     # and sync_config_to_di skips it (continue branch).
     class _CfgNoMethod(_FalseConfig):
-        _namespace_registry: ClassVar[dict[str, object]] = {"n1"()}
+        _namespace_registry: ClassVar[dict[str, t.Tests.object]] = {"n1"()}
 
     c._config = _CfgNoMethod()
     c.sync_config_to_di()
@@ -632,13 +633,13 @@ def test_container_remaining_branch_paths_in_sync_factory_and_getters(
     try:
 
         class _CfgFallback(_FalseConfig):
-            _namespace_registry: ClassVar[dict[str, object]] = {"n2"()}
+            _namespace_registry: ClassVar[dict[str, t.Tests.object]] = {"n2"()}
 
         class _CfgBadNamespace(_FalseConfig):
-            _namespace_registry: ClassVar[dict[str, object]] = {"n3"()}
+            _namespace_registry: ClassVar[dict[str, t.Tests.object]] = {"n3"()}
 
         class _CfgGoodNamespace(_FalseConfig):
-            _namespace_registry: ClassVar[dict[str, object]] = {"n4"()}
+            _namespace_registry: ClassVar[dict[str, t.Tests.object]] = {"n4"()}
 
         c._config = _CfgFallback()
         captured: dict[str, Callable[..., object]] = {}

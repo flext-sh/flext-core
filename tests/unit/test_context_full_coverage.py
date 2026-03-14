@@ -7,7 +7,8 @@ from typing import Protocol
 import pytest
 from pydantic import BaseModel
 
-from flext_core import FlextContainer, FlextContext, c, m, r, t
+from flext_core import FlextContainer, FlextContext, c, m, r
+from flext_tests import t
 
 
 class _MonkeyPatch(Protocol):
@@ -98,7 +99,7 @@ def test_set_set_all_get_validation_and_error_paths(
     assert ctx.set(m.ConfigMap(root={})).is_success
 
     class _BadVar:
-        def get(self) -> dict[str, object]:
+        def get(self) -> dict[str, t.Tests.object]:
             return {}
 
         def set(self, _v) -> None:

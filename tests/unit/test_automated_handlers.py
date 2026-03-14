@@ -11,7 +11,8 @@ from collections.abc import Mapping
 
 import pytest
 
-from flext_core import h, r, t
+from flext_core import h, r
+from flext_tests import t
 from tests import m
 from tests.test_utils import assertion_helpers, fixture_factory
 
@@ -67,7 +68,7 @@ class TestAutomatedFlextHandlers:
             input_data = (
                 test_scenario.input
                 if isinstance(test_scenario.input, dict)
-                else dict[str, object]()
+                else dict[str, t.Tests.object]()
             )
             result = self._execute_handlers_operation(instance, input_data)
             if test_scenario.expected_success:
@@ -85,7 +86,7 @@ class TestAutomatedFlextHandlers:
     def test_automated_handlers_error_handling(self) -> None:
         """Test comprehensive error handling for handlers."""
         instance = fixture_factory.create_test_handlers_instance()
-        error_inputs: list[dict[str, object] | None] = [
+        error_inputs: list[dict[str, t.Tests.object] | None] = [
             None,
             {},
             {"invalid": "data"},

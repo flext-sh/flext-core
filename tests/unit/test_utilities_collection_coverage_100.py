@@ -18,13 +18,13 @@ from __future__ import annotations
 
 from collections.abc import Callable, Sequence
 from enum import StrEnum
-from typing import Annotated, Any, ClassVar, cast
+from typing import Annotated, ClassVar, cast
 
 import pytest
 from pydantic import BaseModel, ConfigDict, Field, SkipValidation
 
 from flext_core import FlextRuntime, m, r
-from flext_tests import u
+from flext_tests import t, u
 
 from ..test_utils import assertion_helpers
 
@@ -139,7 +139,7 @@ class MapScenario(BaseModel):
     model_config = ConfigDict(frozen=True)
     name: Annotated[str, Field(description="Map scenario name")]
     items: Annotated[
-        list[Any] | tuple[Any, ...] | dict[str, Any] | set[Any] | frozenset[Any],
+        list[t.Tests.object] | tuple[t.Tests.object, ...] | dict[str, t.Tests.object] | set[t.Tests.object] | frozenset[t.Tests.object],
         (
             Field(
                 description="Collection input for map operation",
@@ -147,10 +147,10 @@ class MapScenario(BaseModel):
         ),
     ]
     mapper: Annotated[
-        Callable[[Any], Any], Field(description="Mapper callable under test")
+        Callable[[t.Tests.object], t.Tests.object], Field(description="Mapper callable under test")
     ]
     expected_result: Annotated[
-        (list[Any] | tuple[Any, ...] | dict[str, Any] | set[Any] | frozenset[Any]),
+        (list[t.Tests.object] | tuple[t.Tests.object, ...] | dict[str, t.Tests.object] | set[t.Tests.object] | frozenset[t.Tests.object]),
         Field(description="Expected mapped output"),
     ]
     default_error: Annotated[
@@ -170,13 +170,13 @@ class FindScenario(BaseModel):
     model_config = ConfigDict(frozen=True)
     name: Annotated[str, Field(description="Find scenario name")]
     items: Annotated[
-        list[Any] | tuple[Any, ...] | dict[str, Any],
+        list[t.Tests.object] | tuple[t.Tests.object, ...] | dict[str, t.Tests.object],
         Field(description="Input items for find"),
     ]
     predicate: Annotated[
-        Callable[[Any], bool], Field(description="Predicate callable under test")
+        Callable[[t.Tests.object], bool], Field(description="Predicate callable under test")
     ]
-    expected_result: Annotated[object | None, Field(description="Expected found value")]
+    expected_result: Annotated[t.Tests.object | None, Field(description="Expected found value")]
     return_key: Annotated[
         bool, Field(default=False, description="Whether to return dictionary key")
     ] = False
@@ -188,20 +188,20 @@ class FilterScenario(BaseModel):
     model_config = ConfigDict(frozen=True)
     name: Annotated[str, Field(description="Filter scenario name")]
     items: Annotated[
-        list[Any] | tuple[Any, ...] | dict[str, Any],
+        list[t.Tests.object] | tuple[t.Tests.object, ...] | dict[str, t.Tests.object],
         Field(description="Input items for filter"),
     ]
     predicate: Annotated[
-        Callable[[Any], bool], Field(description="Predicate callable under test")
+        Callable[[t.Tests.object], bool], Field(description="Predicate callable under test")
     ]
     expected_result: Annotated[
-        list[Any] | tuple[Any, ...] | dict[str, Any],
+        list[t.Tests.object] | tuple[t.Tests.object, ...] | dict[str, t.Tests.object],
         Field(
             description="Expected filtered output",
         ),
     ]
     mapper: Annotated[
-        Callable[[Any], Any] | None,
+        Callable[[t.Tests.object], t.Tests.object] | None,
         Field(default=None, description="Optional mapping callable"),
     ] = None
 
@@ -211,10 +211,10 @@ class CountScenario(BaseModel):
 
     model_config = ConfigDict(frozen=True)
     name: Annotated[str, Field(description="Count scenario name")]
-    items: Annotated[Sequence[Any], Field(description="Input items for count")]
+    items: Annotated[Sequence[t.Tests.object], Field(description="Input items for count")]
     expected_count: Annotated[int, Field(description="Expected item count")]
     predicate: Annotated[
-        Callable[[Any], bool] | None,
+        Callable[[t.Tests.object], bool] | None,
         Field(default=None, description="Optional predicate filter"),
     ] = None
 
@@ -224,16 +224,16 @@ class ProcessScenario(BaseModel):
 
     model_config = ConfigDict(frozen=True)
     name: Annotated[str, Field(description="Process scenario name")]
-    items: Annotated[Sequence[Any], Field(description="Input items for process")]
+    items: Annotated[Sequence[t.Tests.object], Field(description="Input items for process")]
     processor: Annotated[
-        Callable[[Any], Any], Field(description="Processor callable under test")
+        Callable[[t.Tests.object], t.Tests.object], Field(description="Processor callable under test")
     ]
-    expected_result: Annotated[object, Field(description="Expected processing result")]
+    expected_result: Annotated[t.Tests.object, Field(description="Expected processing result")]
     on_error: Annotated[
         str, Field(default="collect", description="Error handling mode")
     ] = "collect"
     predicate: Annotated[
-        Callable[[Any], bool] | None,
+        Callable[[t.Tests.object], bool] | None,
         Field(default=None, description="Optional predicate filter"),
     ] = None
     filter_keys: Annotated[
@@ -930,7 +930,7 @@ class TestuCollectionFind:
     )
     def test_find(self, scenario: FindScenario) -> None:
         """Test find with various scenarios."""
-        result = u.find(scenario.items, cast("Any", scenario.predicate))
+        result = u.find(scenario.items, cast("Callable[[t.Tests.object], bool]", scenario.predicate))
         if scenario.expected_result is None:
             assert result.is_failure
         else:

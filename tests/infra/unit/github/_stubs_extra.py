@@ -128,7 +128,7 @@ class StubSyncer:
             if sync_returns is not None
             else r[list[m.Infra.Github.SyncOperation]].ok([])
         )
-        self.sync_workspace_calls: list[dict[str, object]] = []
+        self.sync_workspace_calls: list[dict[str, t.Infra.InfraValue]] = []
 
     def sync_workspace(
         self,
@@ -139,7 +139,7 @@ class StubSyncer:
         apply: bool = False,
         prune: bool = False,
     ) -> r[list[m.Infra.Github.SyncOperation]]:
-        kwargs: dict[str, object] = {
+        kwargs: dict[str, t.Infra.InfraValue] = {
             "workspace_root": workspace_root,
             "source_workflow": source_workflow,
             "report_path": report_path,
@@ -164,7 +164,7 @@ class StubLinter:
                 m.Infra.Github.WorkflowLintResult(status="ok", exit_code=0),
             )
         )
-        self.lint_calls: list[dict[str, object]] = []
+        self.lint_calls: list[dict[str, t.Infra.InfraValue]] = []
 
     def lint(
         self,
@@ -173,7 +173,7 @@ class StubLinter:
         report_path: Path | None = None,
         strict: bool = False,
     ) -> r[m.Infra.Github.WorkflowLintResult]:
-        kwargs: dict[str, object] = {
+        kwargs: dict[str, t.Infra.InfraValue] = {
             "root": root,
             "report_path": report_path,
             "strict": strict,
@@ -201,7 +201,7 @@ class StubWorkspaceManager:
                 ),
             )
         )
-        self.orchestrate_calls: list[dict[str, object]] = []
+        self.orchestrate_calls: list[dict[str, t.Infra.InfraValue]] = []
 
     def orchestrate(
         self,
@@ -214,7 +214,7 @@ class StubWorkspaceManager:
         fail_fast: bool = False,
         pr_args: dict[str, str] | None = None,
     ) -> r[m.Infra.Github.PrOrchestrationResult]:
-        kwargs: dict[str, object] = {
+        kwargs: dict[str, t.Infra.InfraValue] = {
             "workspace_root": workspace_root,
             "projects": projects,
             "include_root": include_root,

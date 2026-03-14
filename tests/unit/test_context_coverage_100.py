@@ -17,7 +17,7 @@ from pydantic import BaseModel, ValidationError
 from flext_core import FlextConstants, FlextContext
 from flext_core._models.base import FlextModelFoundation
 from flext_core._models.context import FlextModelsContext
-from flext_tests import u
+from flext_tests import t, u
 
 
 class TestContext100Coverage:
@@ -53,8 +53,8 @@ class TestContext100Coverage:
         """Test merge with dictionary."""
         context1 = FlextContext()
         context1.set("key1", "value1").value
-        merge_data: dict[str, object] = {"key2": "value2", "key3": "value3"}
-        converted_data: dict[str, object] = {
+        merge_data: dict[str, t.Tests.object] = {"key2": "value2", "key3": "value3"}
+        converted_data: dict[str, t.Tests.object] = {
             k: v
             if isinstance(v, (str, int, float, bool, type(None), list, dict))
             else str(v)

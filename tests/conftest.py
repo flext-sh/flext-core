@@ -24,8 +24,8 @@ from flext_core import (
     FlextSettings,
     m,
     r,
-    t,
 )
+from flext_tests import t
 
 from .helpers.scenarios import (
     ParserScenario,
@@ -195,7 +195,7 @@ class FlextTestAutomationFramework:
 
     @staticmethod
     def parametrize_real_data(
-        *test_cases: dict[str, object],
+        *test_cases: dict[str, t.Tests.object],
     ) -> pytest.MarkDecorator:
         """Parametrize test with real data following architecture rules.
 
@@ -502,7 +502,7 @@ def mock_external_service() -> FunctionalExternalService:
 
 
 @pytest.fixture
-def sample_data() -> dict[str, object]:
+def sample_data() -> dict[str, t.Tests.object]:
     """Provide sample test data for integration tests."""
     return {
         "string": "test_value",
@@ -535,9 +535,9 @@ def temp_file(temp_dir: Path) -> Path:
 
 
 @pytest.fixture
-def flext_result_success() -> r[dict[str, object]]:
+def flext_result_success() -> r[dict[str, t.Tests.object]]:
     """Successful r fixture available to all FLEXT projects."""
-    return r[dict[str, object]].ok({"success": True})
+    return r[dict[str, t.Tests.object]].ok({"success": True})
 
 
 @pytest.fixture

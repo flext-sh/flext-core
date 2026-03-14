@@ -223,7 +223,7 @@ class GivenWhenThenBuilder:
 
     def build(self) -> MockScenario:
         """Build the final mock scenario object."""
-        data: dict[str, object] = {
+        data: dict[str, tt.Tests.object] = {
             "given": self._given,
             "when": self._when,
             "then": self._then,
@@ -811,7 +811,7 @@ class TestRealWorldScenarios:
         _ = fixture_builder.add_fixture("api_base_url", "https://api.test.com")
         _ = fixture_builder.add_fixture("timeout", 30)
         with fixture_builder.setup_context()():
-            test_request: dict[str, object] = {
+            test_request: dict[str, tt.Tests.object] = {
                 "method": "POST",
                 "url": "https://api.example.com/users",
                 "correlation_id": "corr_12345678",
@@ -820,8 +820,8 @@ class TestRealWorldScenarios:
             }
 
             def process_api_request(
-                request: dict[str, object],
-            ) -> dict[str, object]:
+                request: dict[str, tt.Tests.object],
+            ) -> dict[str, tt.Tests.object]:
                 return {
                     "status": "success",
                     "method": request["method"],

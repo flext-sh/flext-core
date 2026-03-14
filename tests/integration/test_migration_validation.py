@@ -38,8 +38,8 @@ from flext_core import (
     FlextTypes,
     FlextUtilities,
     r,
-    t,
 )
+from flext_tests import t
 
 
 class TestMigrationScenario1:
@@ -225,18 +225,18 @@ class TestMigrationComplexity:
             def process_data(
                 self,
                 data: dict[str, str],
-            ) -> r[dict[str, object]]:
+            ) -> r[dict[str, t.Tests.object]]:
                 """Typical data processing method."""
                 if not data:
-                    return r[dict[str, object]].fail(
+                    return r[dict[str, t.Tests.object]].fail(
                         "Data required",
                     )
                 self.logger.info("Processing data", size=len(data))
-                processed: dict[str, object] = {
+                processed: dict[str, t.Tests.object] = {
                     "original": str(data),
                     "processed": True,
                 }
-                return r[dict[str, object]].ok(processed)
+                return r[dict[str, t.Tests.object]].ok(processed)
 
         app = ApplicationExample()
         result = app.process_data({"key": "value"})

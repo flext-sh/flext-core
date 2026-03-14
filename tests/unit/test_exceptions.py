@@ -28,8 +28,8 @@ from typing import Annotated, ClassVar, cast, override
 import pytest
 from pydantic import ConfigDict, Field
 
-from flext_core import FlextConstants, FlextRuntime, c, e, m, t
-from flext_tests import u
+from flext_core import FlextConstants, FlextRuntime, c, e, m
+from flext_tests import t, u
 
 
 class ExceptionScenarioType(StrEnum):
@@ -1054,7 +1054,7 @@ class Teste:
                 return 1
 
         dict_like = DictLike()
-        dict_like_converted: dict[str, object] = {
+        dict_like_converted: dict[str, t.Tests.object] = {
             k: FlextRuntime.normalize_to_metadata_value(
                 str(v)
                 if not isinstance(v, (str, int, float, bool, type(None), list, dict))
@@ -1263,7 +1263,7 @@ class Teste:
                 return 2
 
         dict_like = DictLike()
-        dict_like_converted: dict[str, object] = {
+        dict_like_converted: dict[str, t.Tests.object] = {
             k: FlextRuntime.normalize_to_metadata_value(
                 str(v)
                 if not isinstance(v, (str, int, float, bool, type(None), list, dict))
@@ -1287,7 +1287,7 @@ class Teste:
         class DictLike(Mapping[str, object]):
             @override
             def __getitem__(self, key: str) -> object:
-                mapping: dict[str, object] = {"key1": "value1", "key2": 123}
+                mapping: dict[str, t.Tests.object] = {"key1": "value1", "key2": 123}
                 if key in mapping:
                     return mapping[key]
                 raise KeyError(key)
@@ -1301,7 +1301,7 @@ class Teste:
                 return 2
 
         dict_like = DictLike()
-        dict_like_converted: dict[str, object] = {
+        dict_like_converted: dict[str, t.Tests.object] = {
             k: FlextRuntime.normalize_to_metadata_value(
                 str(v)
                 if not isinstance(v, (str, int, float, bool, type(None), list, dict))
@@ -1344,7 +1344,7 @@ class Teste:
                 return 1
 
         dict_like = DictLike()
-        dict_like_converted: dict[str, object] = {
+        dict_like_converted: dict[str, t.Tests.object] = {
             k: FlextRuntime.normalize_to_metadata_value(
                 str(v)
                 if not isinstance(v, (str, int, float, bool, type(None), list, dict))

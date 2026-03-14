@@ -9,7 +9,8 @@ from typing import ClassVar, cast, override
 
 import pytest
 
-from flext_core import FlextLogger, FlextRuntime, FlextSettings, c, m, p, r, t, u
+from flext_core import FlextLogger, FlextRuntime, FlextSettings, c, m, p, r, u
+from flext_tests import t
 
 
 class _FakeBindable:
@@ -46,7 +47,7 @@ class _FakeBindable:
 
 class _ContextVars:
     def __init__(self) -> None:
-        self.store: dict[str, object] = {}
+        self.store: dict[str, t.Tests.object] = {}
 
     def bind_contextvars(self, **kwargs: t.Scalar) -> None:
         self.store.update(kwargs)
@@ -58,7 +59,7 @@ class _ContextVars:
     def clear_contextvars(self) -> None:
         self.store.clear()
 
-    def get_contextvars(self) -> dict[str, object]:
+    def get_contextvars(self) -> dict[str, t.Tests.object]:
         return dict(self.store)
 
 
@@ -220,7 +221,7 @@ def test_loggings_instance_and_message_format_paths(
         co_qualname = "MyType.run"
 
     class _Frame:
-        f_locals: ClassVar[dict[str, object]] = {}
+        f_locals: ClassVar[dict[str, t.Tests.object]] = {}
         f_code = _Code()
 
     assert (
@@ -346,7 +347,7 @@ def test_loggings_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> Non
     class _Container:
         pass
 
-    captured: dict[str, object] = {}
+    captured: dict[str, t.Tests.object] = {}
 
     def _for_container(
         cls: type,
@@ -400,7 +401,7 @@ def test_loggings_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> Non
         co_qualname = "MyClass.run"
 
     class _UpperFrame:
-        f_locals: ClassVar[dict[str, object]] = {}
+        f_locals: ClassVar[dict[str, t.Tests.object]] = {}
         f_code = _CodeUpper()
 
     monkeypatch.setattr(c.Validation, "LEVEL_PREFIX_PARTS_COUNT", 2)
@@ -419,7 +420,7 @@ def test_loggings_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> Non
     class _CallerFrame:
         f_code = _CodeMethod()
         f_lineno = 40
-        f_locals: ClassVar[dict[str, object]] = {}
+        f_locals: ClassVar[dict[str, t.Tests.object]] = {}
 
     def _calling_frame() -> types.FrameType:
         return cast("types.FrameType", cast("object", _CallerFrame()))
@@ -492,7 +493,7 @@ def test_loggings_uncovered_level_trace_path_and_exception_guards(
     class _Container:
         pass
 
-    captured: dict[str, object] = {}
+    captured: dict[str, t.Tests.object] = {}
 
     def _for_container(
         cls: type,

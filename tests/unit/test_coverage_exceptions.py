@@ -21,7 +21,8 @@ from typing import Annotated, ClassVar, cast
 import pytest
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import FlextConstants, FlextExceptions, c, r, t
+from flext_core import FlextConstants, FlextExceptions, c, r
+from flext_tests import t
 
 from ..test_utils import assertion_helpers
 
@@ -174,7 +175,7 @@ class ExceptionScenarios:
         ),
     ]
     FACTORY_CREATION: ClassVar[
-        list[tuple[str, dict[str, object], type[FlextExceptions.BaseError]]]
+        list[tuple[str, dict[str, t.Tests.object], type[FlextExceptions.BaseError]]]
     ] = [
         (
             "ValidationError",
@@ -211,7 +212,7 @@ class TestFlextExceptionsHierarchy:
         """Test creating exceptions with various scenarios."""
         if scenario.kwargs:
             type_kwargs: dict[str, type] = {}
-            metadata_kwargs: dict[str, object] = {}
+            metadata_kwargs: dict[str, t.Tests.object] = {}
             for key, value in scenario.kwargs.items():
                 if (
                     scenario.exception_type == FlextExceptions.TypeError
@@ -257,11 +258,11 @@ class TestExceptionIntegration:
         """Test exception handling in railway pattern."""
 
         def validate_and_process(
-            data: dict[str, object],
-        ) -> r[dict[str, object]]:
+            data: dict[str, t.Tests.object],
+        ) -> r[dict[str, t.Tests.object]]:
             if not data.get("id"):
-                return r[dict[str, object]].fail("Missing id")
-            return r[dict[str, object]].ok(data)
+                return r[dict[str, t.Tests.object]].fail("Missing id")
+            return r[dict[str, t.Tests.object]].ok(data)
 
         assert validate_and_process({}).is_failure
         assert validate_and_process({"id": "123"}).is_success
@@ -435,14 +436,14 @@ class TestExceptionFactory:
     def test_create_error_auto_detection(
         self,
         message: str,
-        kwargs: dict[str, object],
+        kwargs: dict[str, t.Tests.object],
         expected_type: type[FlextExceptions.BaseError],
     ) -> None:
         """Test smart error type detection in create()."""
-        converted_kwargs: dict[str, object] = {
+        converted_kwargs: dict[str, t.Tests.object] = {
             k: cast("t.MetadataAttributeValue", v) for k, v in kwargs.items()
         }
-        kwargs_typed: dict[str, object] = converted_kwargs
+        kwargs_typed: dict[str, t.Tests.object] = converted_kwargs
         create_error = cast(
             "Callable[..., FlextExceptions.BaseError]",
             FlextExceptions.create,

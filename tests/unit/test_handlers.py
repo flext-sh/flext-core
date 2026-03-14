@@ -20,8 +20,8 @@ from typing import Annotated, ClassVar, override
 import pytest
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import FlextExceptions, c, h, m, r, t, x
-from flext_tests import FlextTestsUtilities, u
+from flext_core import FlextExceptions, c, h, m, r, x
+from flext_tests import FlextTestsUtilities, t, u
 
 from ..test_utils import assertion_helpers
 
@@ -82,7 +82,7 @@ class HandlerConfigScenario(BaseModel):
         int | None, Field(default=None, description="Maximum retry count")
     ] = None
     metadata: Annotated[
-        dict[str, object] | None,
+        dict[str, t.Tests.object] | None,
         Field(default=None, description="Handler metadata payload"),
     ] = None
 
@@ -282,15 +282,15 @@ class TestFlextHandlers:
         assert isinstance(handler, x)
 
     def test_handlers_run_pipeline_with_dict_message_command_id(self) -> None:
-        """Test _run_pipeline with dict[str, object] message having command_id."""
+        """Test _run_pipeline with dict[str, t.Tests.object] message having command_id."""
 
-        class DictHandler(h[dict[str, object], str]):
+        class DictHandler(h[dict[str, t.Tests.object], str]):
             @override
             def __init__(self, config: m.Handler) -> None:
                 super().__init__(config=config)
 
             @override
-            def handle(self, message: dict[str, object]) -> r[str]:
+            def handle(self, message: dict[str, t.Tests.object]) -> r[str]:
                 return r[str].ok(f"processed_{message}")
 
         config_raw = FlextTestsUtilities.Tests.HandlerHelpers.create_handler_config(
@@ -301,7 +301,7 @@ class TestFlextHandlers:
         )
         config = config_raw
         handler = DictHandler(config=config)
-        dict_message: dict[str, object] = {
+        dict_message: dict[str, t.Tests.object] = {
             "command_id": "cmd_123",
             "data": "test_data",
         }
@@ -567,7 +567,7 @@ class TestFlextHandlers:
             "Test Push Context",
         )
         handler = ConcreteTestHandler(config=config)
-        context_typed: dict[str, object] = {
+        context_typed: dict[str, t.Tests.object] = {
             "user_id": "123",
             "operation": "test",
         }
