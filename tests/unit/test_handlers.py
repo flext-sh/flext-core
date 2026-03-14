@@ -69,22 +69,11 @@ class HandlerConfigScenario(BaseModel):
     name: Annotated[str, Field(description="Handler config scenario name")]
     handler_id: Annotated[str, Field(description="Handler identifier")]
     handler_name: Annotated[str, Field(description="Handler display name")]
-    handler_type: Annotated[
-        str | None, Field(default=None, description="Handler type name")
-    ]
-    handler_mode: Annotated[
-        str | None, Field(default=None, description="Handler mode name")
-    ]
-    command_timeout: Annotated[
-        int | None, Field(default=None, description="Command timeout in seconds")
-    ]
-    max_command_retries: Annotated[
-        int | None, Field(default=None, description="Maximum retry count")
-    ]
-    metadata: Annotated[
-        dict[str, object] | None,
-        Field(default=None, description="Handler metadata payload"),
-    ]
+    handler_type: Annotated[str | None, Field(default=None, description="Handler type name")] = None
+    handler_mode: Annotated[str | None, Field(default=None, description="Handler mode name")] = None
+    command_timeout: Annotated[int | None, Field(default=None, description="Command timeout in seconds")] = None
+    max_command_retries: Annotated[int | None, Field(default=None, description="Maximum retry count")] = None
+    metadata: Annotated[dict[str, object] | None, Field(default=None, description="Handler metadata payload")] = None
 
 
 class HandlerTypeScenario(BaseModel):

@@ -49,12 +49,8 @@ class ParseSequenceScenario(BaseModel):
     expected_success: Annotated[
         bool, Field(description="Whether parsing should succeed")
     ]
-    expected_count: Annotated[
-        int | None, Field(default=None, description="Expected parsed item count")
-    ]
-    expected_error: Annotated[
-        str | None, Field(default=None, description="Expected error message fragment")
-    ]
+    expected_count: Annotated[int | None, Field(default=None, description="Expected parsed item count")] = None
+    expected_error: Annotated[str | None, Field(default=None, description="Expected error message fragment")] = None
 
 
 class CoerceListValidatorScenario(BaseModel):
@@ -66,9 +62,7 @@ class CoerceListValidatorScenario(BaseModel):
     expected_success: Annotated[
         bool, Field(description="Whether coercion should succeed")
     ]
-    expected_error: Annotated[
-        str | None, Field(default=None, description="Expected error message fragment")
-    ]
+    expected_error: Annotated[str | None, Field(default=None, description="Expected error message fragment")] = None
 
 
 class ParseMappingScenario(BaseModel):
@@ -82,12 +76,8 @@ class ParseMappingScenario(BaseModel):
     expected_success: Annotated[
         bool, Field(description="Whether parsing should succeed")
     ]
-    expected_count: Annotated[
-        int | None, Field(default=None, description="Expected parsed entry count")
-    ]
-    expected_error: Annotated[
-        str | None, Field(default=None, description="Expected error message fragment")
-    ]
+    expected_count: Annotated[int | None, Field(default=None, description="Expected parsed entry count")] = None
+    expected_error: Annotated[str | None, Field(default=None, description="Expected error message fragment")] = None
 
 
 class CollectionScenarios:

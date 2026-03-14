@@ -40,7 +40,7 @@ class ServiceScenario(BaseModel):
     service: Annotated[
         str | int | float | bool, Field(description="Service value to register")
     ]
-    description: Annotated[str, Field(default="", description="Scenario description")]
+    description: Annotated[str, Field(default="", description="Scenario description")] = ""
 
 
 class TypedRetrievalScenario(BaseModel):
@@ -55,7 +55,7 @@ class TypedRetrievalScenario(BaseModel):
     should_pass: Annotated[
         bool, Field(description="Whether typed retrieval should succeed")
     ]
-    description: Annotated[str, Field(default="", description="Scenario description")]
+    description: Annotated[str, Field(default="", description="Scenario description")] = ""
 
 
 class ContainerScenarios:

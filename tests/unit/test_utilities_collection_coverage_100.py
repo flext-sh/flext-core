@@ -57,12 +57,8 @@ class ParseSequenceScenario(BaseModel):
     expected_success: Annotated[
         bool, Field(description="Whether parsing should succeed")
     ]
-    expected_count: Annotated[
-        int | None, Field(default=None, description="Expected parsed values count")
-    ]
-    error_contains: Annotated[
-        str | None, Field(default=None, description="Expected error message fragment")
-    ]
+    expected_count: Annotated[int | None, Field(default=None, description="Expected parsed values count")] = None
+    error_contains: Annotated[str | None, Field(default=None, description="Expected error message fragment")] = None
 
 
 class CoerceListScenario(BaseModel):
@@ -77,16 +73,9 @@ class CoerceListScenario(BaseModel):
     expected_success: Annotated[
         bool, Field(description="Whether coercion should succeed")
     ]
-    expected_count: Annotated[
-        int | None, Field(default=None, description="Expected result count")
-    ]
-    error_type: Annotated[
-        type[Exception] | None,
-        Field(default=None, description="Expected exception type"),
-    ]
-    error_contains: Annotated[
-        str | None, Field(default=None, description="Expected error message fragment")
-    ]
+    expected_count: Annotated[int | None, Field(default=None, description="Expected result count")] = None
+    error_type: Annotated[type[Exception] | None, Field(default=None, description="Expected exception type")] = None
+    error_contains: Annotated[str | None, Field(default=None, description="Expected error message fragment")] = None
 
 
 class ParseMappingScenario(BaseModel):
@@ -101,12 +90,8 @@ class ParseMappingScenario(BaseModel):
     expected_success: Annotated[
         bool, Field(description="Whether parsing should succeed")
     ]
-    expected_keys: Annotated[
-        list[str] | None, Field(default=None, description="Expected output keys")
-    ]
-    error_contains: Annotated[
-        str | None, Field(default=None, description="Expected error message fragment")
-    ]
+    expected_keys: Annotated[list[str] | None, Field(default=None, description="Expected output keys")] = None
+    error_contains: Annotated[str | None, Field(default=None, description="Expected error message fragment")] = None
 
 
 class CoerceDictScenario(BaseModel):
@@ -121,16 +106,9 @@ class CoerceDictScenario(BaseModel):
     expected_success: Annotated[
         bool, Field(description="Whether coercion should succeed")
     ]
-    expected_keys: Annotated[
-        list[str] | None, Field(default=None, description="Expected output keys")
-    ]
-    error_type: Annotated[
-        type[Exception] | None,
-        Field(default=None, description="Expected exception type"),
-    ]
-    error_contains: Annotated[
-        str | None, Field(default=None, description="Expected error message fragment")
-    ]
+    expected_keys: Annotated[list[str] | None, Field(default=None, description="Expected output keys")] = None
+    error_type: Annotated[type[Exception] | None, Field(default=None, description="Expected exception type")] = None
+    error_contains: Annotated[str | None, Field(default=None, description="Expected error message fragment")] = None
 
 
 class MapScenario(BaseModel):
@@ -153,15 +131,9 @@ class MapScenario(BaseModel):
         (list[Any] | tuple[Any, ...] | dict[str, Any] | set[Any] | frozenset[Any]),
         Field(description="Expected mapped output"),
     ]
-    default_error: Annotated[
-        str, Field(default="Operation failed", description="Default error message")
-    ]
-    expected_failure: Annotated[
-        bool, Field(default=False, description="Whether map should fail")
-    ]
-    error_contains: Annotated[
-        str | None, Field(default=None, description="Expected error message fragment")
-    ]
+    default_error: Annotated[str, Field(default="Operation failed", description="Default error message")] = "Operation failed"
+    expected_failure: Annotated[bool, Field(default=False, description="Whether map should fail")] = False
+    error_contains: Annotated[str | None, Field(default=None, description="Expected error message fragment")] = None
 
 
 class FindScenario(BaseModel):
@@ -177,9 +149,7 @@ class FindScenario(BaseModel):
         Callable[[Any], bool], Field(description="Predicate callable under test")
     ]
     expected_result: Annotated[object | None, Field(description="Expected found value")]
-    return_key: Annotated[
-        bool, Field(default=False, description="Whether to return dictionary key")
-    ]
+    return_key: Annotated[bool, Field(default=False, description="Whether to return dictionary key")] = False
 
 
 class FilterScenario(BaseModel):
@@ -200,10 +170,7 @@ class FilterScenario(BaseModel):
             description="Expected filtered output",
         ),
     ]
-    mapper: Annotated[
-        Callable[[Any], Any] | None,
-        Field(default=None, description="Optional mapping callable"),
-    ]
+    mapper: Annotated[Callable[[Any], Any] | None, Field(default=None, description="Optional mapping callable")] = None
 
 
 class CountScenario(BaseModel):
@@ -213,10 +180,7 @@ class CountScenario(BaseModel):
     name: Annotated[str, Field(description="Count scenario name")]
     items: Annotated[Sequence[Any], Field(description="Input items for count")]
     expected_count: Annotated[int, Field(description="Expected item count")]
-    predicate: Annotated[
-        Callable[[Any], bool] | None,
-        Field(default=None, description="Optional predicate filter"),
-    ]
+    predicate: Annotated[Callable[[Any], bool] | None, Field(default=None, description="Optional predicate filter")] = None
 
 
 class ProcessScenario(BaseModel):
@@ -229,27 +193,12 @@ class ProcessScenario(BaseModel):
         Callable[[Any], Any], Field(description="Processor callable under test")
     ]
     expected_result: Annotated[object, Field(description="Expected processing result")]
-    on_error: Annotated[
-        str, Field(default="collect", description="Error handling mode")
-    ]
-    predicate: Annotated[
-        Callable[[Any], bool] | None,
-        Field(default=None, description="Optional predicate filter"),
-    ]
-    filter_keys: Annotated[
-        set[str] | None,
-        Field(default=None, description="Keys to include when processing mappings"),
-    ]
-    exclude_keys: Annotated[
-        set[str] | None,
-        Field(default=None, description="Keys to exclude when processing mappings"),
-    ]
-    expected_failure: Annotated[
-        bool, Field(default=False, description="Whether processing should fail")
-    ]
-    error_contains: Annotated[
-        str | None, Field(default=None, description="Expected error message fragment")
-    ]
+    on_error: Annotated[str, Field(default="collect", description="Error handling mode")] = "collect"
+    predicate: Annotated[Callable[[Any], bool] | None, Field(default=None, description="Optional predicate filter")] = None
+    filter_keys: Annotated[set[str] | None, Field(default=None, description="Keys to include when processing mappings")] = None
+    exclude_keys: Annotated[set[str] | None, Field(default=None, description="Keys to exclude when processing mappings")] = None
+    expected_failure: Annotated[bool, Field(default=False, description="Whether processing should fail")] = False
+    error_contains: Annotated[str | None, Field(default=None, description="Expected error message fragment")] = None
 
 
 class GroupScenario(BaseModel):
@@ -295,26 +244,12 @@ class BatchScenario(BaseModel):
         Callable[[object], object], Field(description="Batch operation callable")
     ]
     expected_result: Annotated[object, Field(description="Expected batch result")]
-    size: Annotated[int, Field(default=100, description="Batch size")]
-    on_error: Annotated[
-        str, Field(default="collect", description="Error handling mode")
-    ]
-    pre_validate: Annotated[
-        Callable[[object], bool] | None,
-        Field(
-            default=None,
-            description="Optional pre-validation callable",
-        ),
-    ]
-    flatten: Annotated[
-        bool, Field(default=False, description="Whether to flatten nested results")
-    ]
-    expected_failure: Annotated[
-        bool, Field(default=False, description="Whether batch should fail")
-    ]
-    error_contains: Annotated[
-        str | None, Field(default=None, description="Expected error message fragment")
-    ]
+    size: Annotated[int, Field(default=100, description="Batch size")] = 100
+    on_error: Annotated[str, Field(default="collect", description="Error handling mode")] = "collect"
+    pre_validate: Annotated[Callable[[object], bool] | None, Field(default=None, description="Optional pre-validation callable",)] = None
+    flatten: Annotated[bool, Field(default=False, description="Whether to flatten nested results")] = False
+    expected_failure: Annotated[bool, Field(default=False, description="Whether batch should fail")] = False
+    error_contains: Annotated[str | None, Field(default=None, description="Expected error message fragment")] = None
 
 
 class CollectionUtilitiesScenarios:

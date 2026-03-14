@@ -103,27 +103,9 @@ class RuntimeTestCase(BaseModel):
     operation: Annotated[
         RuntimeOperationType, Field(description="Runtime operation type")
     ]
-    test_input: Annotated[
-        object | None,
-        Field(
-            default=None,
-            description="Optional test input",
-        ),
-    ]
-    expected_result: Annotated[
-        bool | tuple[object, ...] | object,
-        Field(
-            default=None,
-            description="Expected operation result",
-        ),
-    ]
-    should_reset_config: Annotated[
-        bool,
-        Field(
-            default=False,
-            description="Whether structlog config should be reset before test",
-        ),
-    ]
+    test_input: Annotated[object | None, Field(default=None, description="Optional test input",)] = None
+    expected_result: Annotated[bool | tuple[object, ...] | object, Field(default=None, description="Expected operation result",)] = None
+    should_reset_config: Annotated[bool, Field(default=False, description="Whether structlog config should be reset before test",)] = False
 
 
 class RuntimeScenarios:

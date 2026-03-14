@@ -25,35 +25,11 @@ class ValidationScenario(BaseModel):
     name: Annotated[str, Field(description="Unique scenario name")]
     validator_type: Annotated[str, Field(description="Validator category under test")]
     input_value: Annotated[object, Field(description="Input value passed to validator")]
-    input_params: Annotated[
-        object | None,
-        Field(
-            default=None,
-            description="Optional validator parameters for scenario execution",
-        ),
-    ]
-    should_succeed: Annotated[
-        bool,
-        Field(default=True, description="Whether scenario expects validation success"),
-    ]
-    expected_value: Annotated[
-        object | None,
-        Field(
-            default=None,
-            description="Expected normalized value when validation succeeds",
-        ),
-    ]
-    expected_error_contains: Annotated[
-        str | None,
-        Field(
-            default=None,
-            description="Expected error substring when validation fails",
-        ),
-    ]
-    description: Annotated[
-        str | None,
-        Field(default=None, description="Human-readable scenario description"),
-    ]
+    input_params: Annotated[object | None, Field(default=None, description="Optional validator parameters for scenario execution",)] = None
+    should_succeed: Annotated[bool, Field(default=True, description="Whether scenario expects validation success")] = True
+    expected_value: Annotated[object | None, Field(default=None, description="Expected normalized value when validation succeeds",)] = None
+    expected_error_contains: Annotated[str | None, Field(default=None, description="Expected error substring when validation fails",)] = None
+    description: Annotated[str | None, Field(default=None, description="Human-readable scenario description")] = None
 
 
 class ParserScenario(BaseModel):
@@ -64,23 +40,10 @@ class ParserScenario(BaseModel):
     name: Annotated[str, Field(description="Unique parser scenario name")]
     parser_method: Annotated[str, Field(description="Parser method to execute")]
     input_data: Annotated[str, Field(description="Raw parser input data")]
-    expected_output: Annotated[
-        object | None,
-        Field(
-            default=None,
-            description="Expected parsed output for successful scenarios",
-        ),
-    ]
-    should_succeed: Annotated[
-        bool, Field(default=True, description="Whether parser scenario expects success")
-    ]
-    error_contains: Annotated[
-        str | None, Field(default=None, description="Expected parser error substring")
-    ]
-    description: Annotated[
-        str | None,
-        Field(default=None, description="Human-readable scenario description"),
-    ]
+    expected_output: Annotated[object | None, Field(default=None, description="Expected parsed output for successful scenarios",)] = None
+    should_succeed: Annotated[bool, Field(default=True, description="Whether parser scenario expects success")] = True
+    error_contains: Annotated[str | None, Field(default=None, description="Expected parser error substring")] = None
+    description: Annotated[str | None, Field(default=None, description="Human-readable scenario description")] = None
 
 
 class ReliabilityScenario(BaseModel):
@@ -99,14 +62,8 @@ class ReliabilityScenario(BaseModel):
     expected_state: Annotated[
         str, Field(description="Expected strategy terminal state")
     ]
-    should_succeed: Annotated[
-        bool,
-        Field(default=True, description="Whether scenario expects successful outcome"),
-    ]
-    description: Annotated[
-        str | None,
-        Field(default=None, description="Human-readable scenario description"),
-    ]
+    should_succeed: Annotated[bool, Field(default=True, description="Whether scenario expects successful outcome")] = True
+    description: Annotated[str | None, Field(default=None, description="Human-readable scenario description")] = None
 
 
 class ValidationScenarios:

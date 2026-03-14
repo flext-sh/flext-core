@@ -40,16 +40,6 @@ def test_render_all_has_no_scripts_path_references() -> None:
 
 
 def test_generator_renders_with_config_override() -> None:
-    config = im.Infra.Basemk.BaseMkConfig({
-        "project_name": "sample-project",
-        "python_version": "3.11",
-        "core_stack": "python",
-        "package_manager": "pip",
-        "source_dir": "lib",
-        "tests_dir": "tests/unit",
-        "lint_gates": ["mypy", "ruff"],
-        "test_command": "tox",
-    })
     config = im.Infra.Basemk.BaseMkConfig(
         project_name="sample-project",
         python_version="3.13",

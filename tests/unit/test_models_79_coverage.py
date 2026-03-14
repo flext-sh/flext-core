@@ -30,9 +30,7 @@ class FindUserQuery(BaseModel):
 
 class OptionalFieldCommand(BaseModel):
     required_field: Annotated[str, Field(description="Required command field")]
-    optional_field: Annotated[
-        str | None, Field(default=None, description="Optional command field")
-    ]
+    optional_field: Annotated[str | None, Field(default=None, description="Optional command field")] = None
 
 
 class PagedQuery(BaseModel):

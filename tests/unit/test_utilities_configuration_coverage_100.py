@@ -91,7 +91,7 @@ class DataclassConfigForTest(BaseModel):
     """Test dataclass configuration."""
 
     name: Annotated[str, Field(description="Config object name")]
-    value: Annotated[int, Field(default=42, description="Config object value")]
+    value: Annotated[int, Field(default=42, description="Config object value")] = 42
 
 
 class SingletonWithoutGetGlobalForTest:

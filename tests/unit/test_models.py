@@ -60,7 +60,7 @@ class ModelCreationScenario(BaseModel):
     expected_checks: Annotated[
         list[str], Field(description="Expected validation check labels")
     ]
-    description: Annotated[str, Field(default="", description="Scenario description")]
+    description: Annotated[str, Field(default="", description="Scenario description")] = ""
 
 
 class SampleAggregate(m.AggregateRoot):

@@ -69,12 +69,8 @@ class ParseScenario(BaseModel):
     name: Annotated[str, Field(description="Parse scenario name")]
     value: Annotated[str | Status, Field(description="Input value to parse")]
     expected_success: Annotated[bool, Field(description="Whether parse should succeed")]
-    expected_status: Annotated[
-        Status | None, Field(default=None, description="Expected parsed enum status")
-    ]
-    expected_error: Annotated[
-        str | None, Field(default=None, description="Expected error message fragment")
-    ]
+    expected_status: Annotated[Status | None, Field(default=None, description="Expected parsed enum status")] = None
+    expected_error: Annotated[str | None, Field(default=None, description="Expected error message fragment")] = None
 
 
 class ParseOrDefaultScenario(BaseModel):
@@ -98,12 +94,8 @@ class CoerceValidatorScenario(BaseModel):
     expected_success: Annotated[
         bool, Field(description="Whether coercion should succeed")
     ]
-    expected_status: Annotated[
-        Status | None, Field(default=None, description="Expected coerced status")
-    ]
-    expected_error: Annotated[
-        str | None, Field(default=None, description="Expected error message fragment")
-    ]
+    expected_status: Annotated[Status | None, Field(default=None, description="Expected coerced status")] = None
+    expected_error: Annotated[str | None, Field(default=None, description="Expected error message fragment")] = None
 
 
 class EnumScenarios:

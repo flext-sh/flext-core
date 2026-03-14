@@ -37,9 +37,9 @@ from ._stubs_extra import (
 class StubCommandOutput(FlextModels.ArbitraryTypesModel):
     """Stub command output matching p.Infra.CommandOutput protocol."""
 
-    exit_code: Annotated[int, Field(default=0, description="Command exit code")]
-    stdout: Annotated[str, Field(default="", description="Captured stdout")]
-    stderr: Annotated[str, Field(default="", description="Captured stderr")]
+    exit_code: Annotated[int, Field(default=0, description="Command exit code")] = 0
+    stdout: Annotated[str, Field(default="", description="Captured stdout")] = ""
+    stderr: Annotated[str, Field(default="", description="Captured stderr")] = ""
 
 
 class StubRunner:
@@ -239,15 +239,11 @@ class StubTemplates(FlextInfraUtilitiesTemplates):
 class StubProjectInfo(m.Infra.Workspace.ProjectInfo):
     """Stub for p.Infra.ProjectInfo protocol."""
 
-    name: Annotated[str, Field(default="test-project", description="Project name")]
-    path: Annotated[
-        Path, Field(default=Path("/tmp/test-project"), description="Project path")
-    ]
-    stack: Annotated[
-        str, Field(default="python", description="Primary technology stack")
-    ]
-    has_tests: Annotated[bool, Field(default=False, description="Project has tests")]
-    has_src: Annotated[bool, Field(default=True, description="Project has source")]
+    name: Annotated[str, Field(default="test-project", description="Project name")] = "test-project"
+    path: Annotated[Path, Field(default=Path("/tmp/test-project"), description="Project path")] = Path("/tmp/test-project")
+    stack: Annotated[str, Field(default="python", description="Primary technology stack")] = "python"
+    has_tests: Annotated[bool, Field(default=False, description="Project has tests")] = False
+    has_src: Annotated[bool, Field(default=True, description="Project has source")] = True
 
 
 __all__ = [

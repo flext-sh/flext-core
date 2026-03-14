@@ -14,11 +14,11 @@ from tests.infra.typings import t
 class _TomlStub:
     """Typed stub implementing TomlReader protocol for testing."""
 
-    def __init__(self, values: list[r[dict[str, t.Infra.TomlValue]]]) -> None:
+    def __init__(self, values: list[r[t.Infra.TomlConfig]]) -> None:
         self._values = values
         self._index = 0
 
-    def read_plain(self, path: Path) -> r[dict[str, t.Infra.TomlValue]]:
+    def read_plain(self, path: Path) -> r[t.Infra.TomlConfig]:
         """Return next pre-configured result."""
         _ = path
         item = self._values[self._index]
@@ -28,7 +28,7 @@ class _TomlStub:
 
 def _set_toml_stub(
     service: FlextInfraInternalDependencySyncService,
-    values: list[r[dict[str, t.Infra.TomlValue]]],
+    values: list[r[t.Infra.TomlConfig]],
 ) -> None:
     service.toml = _TomlStub(values)
 

@@ -121,11 +121,9 @@ class FlextTestAutomationFramework:
                 model_config = ConfigDict(extra="allow")
                 name: str
 
-            entity = TestEntity({
-                "unique_id": unique_id,
-                "name": name,
-                **kwargs,
-            })
+            entity = TestEntity(unique_id=unique_id, name=name)
+            for key, value in kwargs.items():
+                setattr(entity, key, value)
             return r[m.Entity].ok(entity)
         except Exception as e:
             return r[m.Entity].fail(f"Entity creation failed: {e}")

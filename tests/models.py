@@ -172,7 +172,7 @@ class TestsFlextModels(FlextTestsModels, FlextInfraModels):
         remove_empty: bool = True
         validator: Callable[[str], bool] | None = None
         use_legacy: bool = False
-        description: Annotated[str, Field(default="", exclude=True)]
+        description: Annotated[str, Field(default="", exclude=True)] = ""
 
     class SplitEscapeCase(BaseModel):
         """Test case for split_on_char_with_escape method."""
@@ -184,7 +184,7 @@ class TestsFlextModels(FlextTestsModels, FlextInfraModels):
         escape_char: str = "\\"
         expected: list[str] | None = None
         expected_error: str | None = None
-        description: Annotated[str, Field(default="", exclude=True)]
+        description: Annotated[str, Field(default="", exclude=True)] = ""
 
     class NormalizeWhitespaceCase(BaseModel):
         """Test case for normalize_whitespace method."""
@@ -196,7 +196,7 @@ class TestsFlextModels(FlextTestsModels, FlextInfraModels):
         replacement: str = " "
         expected: str | None = None
         expected_error: str | None = None
-        description: Annotated[str, Field(default="", exclude=True)]
+        description: Annotated[str, Field(default="", exclude=True)] = ""
 
     class RegexPipelineCase(BaseModel):
         """Test case for apply_regex_pipeline method."""
@@ -207,7 +207,7 @@ class TestsFlextModels(FlextTestsModels, FlextInfraModels):
         patterns: list[tuple[str, str] | tuple[str, str, int]]
         expected: str | None = None
         expected_error: str | None = None
-        description: Annotated[str, Field(default="", exclude=True)]
+        description: Annotated[str, Field(default="", exclude=True)] = ""
 
     class ObjectKeyCase(BaseModel):
         """Test case for get_object_key method."""
@@ -217,7 +217,7 @@ class TestsFlextModels(FlextTestsModels, FlextInfraModels):
         obj: t.ContainerValue
         expected_contains: list[str] | None = None
         expected_exact: str | None = None
-        description: Annotated[str, Field(default="", exclude=True)]
+        description: Annotated[str, Field(default="", exclude=True)] = ""
 
     class AutomatedTestScenario(BaseModel):
         """Pydantic v2 model for automated test scenarios."""

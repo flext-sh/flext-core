@@ -51,34 +51,12 @@ class TestsFlextServiceBase(FlextTestsServiceBase[T]):
         handler_id: Annotated[
             str, Field(description="Unique handler identifier for test case")
         ]
-        handler_name: Annotated[
-            str | None,
-            Field(default=None, description="Optional display name for handler"),
-        ]
-        handler_type: Annotated[
-            FlextConstants.Cqrs.HandlerType,
-            Field(
-                default=FlextConstants.Cqrs.HandlerType.COMMAND,
-                description="Handler type used for test case configuration",
-            ),
-        ]
-        expected_result: Annotated[
-            FlextTypes.Container | None,
-            Field(
-                default=None,
-                description="Expected handler result when execution succeeds",
-            ),
-        ]
-        should_fail: Annotated[
-            bool, Field(default=False, description="Whether test case expects failure")
-        ]
-        error_message: Annotated[
-            str | None,
-            Field(default=None, description="Expected error message for failures"),
-        ]
-        description: Annotated[
-            str, Field(default="", description="Human-readable test case description")
-        ]
+        handler_name: Annotated[str | None, Field(default=None, description="Optional display name for handler")] = None
+        handler_type: Annotated[FlextConstants.Cqrs.HandlerType, Field(default=FlextConstants.Cqrs.HandlerType.COMMAND, description="Handler type used for test case configuration",)] = FlextConstants.Cqrs.HandlerType.COMMAND
+        expected_result: Annotated[FlextTypes.Container | None, Field(default=None, description="Expected handler result when execution succeeds",)] = None
+        should_fail: Annotated[bool, Field(default=False, description="Whether test case expects failure")] = False
+        error_message: Annotated[str | None, Field(default=None, description="Expected error message for failures")] = None
+        description: Annotated[str, Field(default="", description="Human-readable test case description")] = ""
 
         def create_handler(
             self,

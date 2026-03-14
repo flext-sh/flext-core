@@ -13,22 +13,20 @@ from tests.infra.typings import t
 
 def _set_toml_stub(
     service: FlextInfraInternalDependencySyncService,
-    values: list[r[dict[str, t.Infra.TomlValue]]],
+    values: list[r[t.Infra.TomlConfig]],
 ) -> None:
     state = {"index": 0}
 
-    def _read(_path: Path) -> r[dict[str, t.Infra.TomlValue]]:
+    def _read(_path: Path) -> r[t.Infra.TomlConfig]:
         item = values[state["index"]]
         state["index"] += 1
         return item
 
     class _TomlReaderStub:
-        def __init__(
-            self, fn: Callable[[Path], r[dict[str, t.Infra.TomlValue]]]
-        ) -> None:
+        def __init__(self, fn: Callable[[Path], r[t.Infra.TomlConfig]]) -> None:
             self._fn = fn
 
-        def read_plain(self, path: Path) -> r[dict[str, t.Infra.TomlValue]]:
+        def read_plain(self, path: Path) -> r[t.Infra.TomlConfig]:
             return self._fn(path)
 
     service.toml = _TomlReaderStub(_read)

@@ -10,7 +10,6 @@ from pathlib import Path
 
 import pytest
 
-from flext_core import r
 from flext_infra.check.services import FlextInfraWorkspaceChecker
 from flext_tests import tm
 
@@ -75,7 +74,7 @@ class TestWorkspaceCheckerRunMypy:
             _env: dict[str, str] | None = None,
         ) -> m.Infra.Core.CommandOutput:
             del _cmd, _cwd, _timeout, _env
-            return r[m.Infra.Core.CommandOutput].ok(_run_result(json_line, 1))
+            return _run_result(json_line, 1)
 
         monkeypatch.setattr(checker, "_existing_check_dirs", _existing_dirs)
         monkeypatch.setattr(checker, "_dirs_with_py", _src_python_dirs)

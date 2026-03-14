@@ -161,8 +161,8 @@ def _build_flags_obj(
 class AttrObject(BaseModel):
     """AttrObject class."""
 
-    name: Annotated[str, Field(default="name", description="Attribute object name")]
-    value: Annotated[int, Field(default=1, description="Attribute object value")]
+    name: Annotated[str, Field(default="name", description="Attribute object name")] = "name"
+    value: Annotated[int, Field(default=1, description="Attribute object value")] = 1
 
 
 class BadString:

@@ -54,16 +54,10 @@ class UtilityTestCase(BaseModel):
     operation: Annotated[
         UtilityOperationType, Field(description="Utility operation under test")
     ]
-    input_data: Annotated[
-        object | None, Field(default=None, description="Input data for operation")
-    ]
-    expected_type: Annotated[
-        type | None, Field(default=None, description="Expected output type")
-    ]
-    should_succeed: Annotated[
-        bool, Field(default=True, description="Whether operation should succeed")
-    ]
-    description: Annotated[str, Field(default="", description="Scenario description")]
+    input_data: Annotated[object | None, Field(default=None, description="Input data for operation")] = None
+    expected_type: Annotated[type | None, Field(default=None, description="Expected output type")] = None
+    should_succeed: Annotated[bool, Field(default=True, description="Whether operation should succeed")] = True
+    description: Annotated[str, Field(default="", description="Scenario description")] = ""
 
 
 class UtilityScenarios:

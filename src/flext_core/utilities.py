@@ -10,10 +10,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
 from typing import override
 
-from flext_core import FlextRuntime, p, t
+from flext_core import FlextRuntime, t
 from flext_core._utilities.args import FlextUtilitiesArgs
 from flext_core._utilities.cache import FlextUtilitiesCache
 from flext_core._utilities.checker import FlextUtilitiesChecker
@@ -77,13 +76,7 @@ class FlextUtilities(
 
     @staticmethod
     @override
-    def empty(
-        items: Sequence[t.NormalizedValue]
-        | Mapping[str, t.NormalizedValue]
-        | str
-        | p.Result[t.NormalizedValue]
-        | None,
-    ) -> bool:
+    def empty(items: t.NormalizedValue | None) -> bool:
         return FlextUtilitiesResultHelpers.empty(items)
 
 

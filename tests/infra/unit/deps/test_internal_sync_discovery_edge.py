@@ -12,22 +12,20 @@ from tests.infra.typings import t
 
 def _set_toml_sequence(
     service: FlextInfraInternalDependencySyncService,
-    values: list[r[dict[str, t.Infra.TomlValue]]],
+    values: list[r[t.Infra.TomlConfig]],
 ) -> None:
     state = {"index": 0}
 
-    def _next(_path: Path) -> r[dict[str, t.Infra.TomlValue]]:
+    def _next(_path: Path) -> r[t.Infra.TomlConfig]:
         item = values[state["index"]]
         state["index"] += 1
         return item
 
     class _TomlReaderStub:
-        def __init__(
-            self, fn: Callable[[Path], r[dict[str, t.Infra.TomlValue]]]
-        ) -> None:
+        def __init__(self, fn: Callable[[Path], r[t.Infra.TomlConfig]]) -> None:
             self._fn = fn
 
-        def read_plain(self, path: Path) -> r[dict[str, t.Infra.TomlValue]]:
+        def read_plain(self, path: Path) -> r[t.Infra.TomlConfig]:
             return self._fn(path)
 
     service.toml = _TomlReaderStub(_next)
@@ -37,7 +35,7 @@ class TestCollectInternalDepsEdgeCases:
     def test_collect_internal_deps_variants(self, tmp_path: Path) -> None:
         (tmp_path / "pyproject.toml").write_text("x")
 
-        def _collect(value: r[dict[str, t.Infra.TomlValue]]) -> r[Mapping[str, Path]]:
+        def _collect(value: r[t.Infra.TomlConfig]) -> r[Mapping[str, Path]]:
             service = FlextInfraInternalDependencySyncService()
             _set_toml_sequence(service, [value])
             result = service.collect_internal_deps(tmp_path)

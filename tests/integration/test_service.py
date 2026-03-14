@@ -26,7 +26,7 @@ class UserServiceEntity(BaseModel):
     unique_id: Annotated[str, Field(description="Unique user identifier")]
     name: Annotated[str, Field(description="User display name")]
     email: Annotated[str, Field(description="User email address")]
-    active: Annotated[bool, Field(default=True, description="Whether user is active")]
+    active: Annotated[bool, Field(default=True, description="Whether user is active")] = True
 
 
 def _empty_user_map() -> dict[str, UserServiceEntity]:

@@ -100,17 +100,13 @@ class ResultHelpers:
 
     @staticmethod
     def ensure_result(
-        value: t.NormalizedValue | BaseModel | p.Result[t.Container | BaseModel],
+        value: t.NormalizedValue | BaseModel,
     ) -> r[t.NormalizedValue | BaseModel]:
         """Wrap value in r if not already a Result.
 
         Generic replacement for:
         if not isinstance(val, r): val = r.ok(val)
         """
-        if isinstance(value, r):
-            if value.is_success:
-                return r[t.NormalizedValue | BaseModel].ok(value.value)
-            return r[t.NormalizedValue | BaseModel].fail(value.error)
         return r[t.NormalizedValue | BaseModel].ok(value)
 
 

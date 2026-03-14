@@ -435,7 +435,7 @@ class TestuMapperAdvanced:
         """Test extraction via model_dump."""
 
         class Dumpable(BaseModel):
-            a: Annotated[int, Field(default=1, description="Dumpable value")]
+            a: Annotated[int, Field(default=1, description="Dumpable value")] = 1
 
         obj = Dumpable()
         assert u.extract(obj, "a").value == 1

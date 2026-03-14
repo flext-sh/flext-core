@@ -31,9 +31,7 @@ class ResultOperationScenario(BaseModel):
     initial_value: Annotated[int | None, Field(description="Initial result value")]
     operations: Annotated[list[str], Field(description="Operation chain to apply")]
     expected_success: Annotated[bool, Field(description="Expected success state")]
-    expected_value: Annotated[
-        int | None, Field(default=None, description="Expected resulting value")
-    ]
+    expected_value: Annotated[int | None, Field(default=None, description="Expected resulting value")] = None
 
 
 class ExceptionTypeScenario(BaseModel):

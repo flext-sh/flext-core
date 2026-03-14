@@ -15,20 +15,20 @@ class _TomlReaderStub:
 
     def __init__(
         self,
-        fn: Callable[[Path], r[dict[str, t.Infra.TomlValue]]],
+        fn: Callable[[Path], r[t.Infra.TomlConfig]],
     ) -> None:
         self._fn = fn
 
-    def read_plain(self, path: Path) -> r[dict[str, t.Infra.TomlValue]]:
+    def read_plain(self, path: Path) -> r[t.Infra.TomlConfig]:
         """Delegate to the callable provided at construction."""
         return self._fn(path)
 
 
 def _set_toml_stub(
     service: FlextInfraInternalDependencySyncService,
-    value: r[dict[str, t.Infra.TomlValue]],
+    value: r[t.Infra.TomlConfig],
 ) -> None:
-    def _reader(_path: Path) -> r[dict[str, object]]:
+    def _reader(_path: Path) -> r[t.Infra.TomlConfig]:
         return value
 
     service.toml = _TomlReaderStub(fn=_reader)
@@ -36,7 +36,7 @@ def _set_toml_stub(
 
 def _set_toml_sequence(
     service: FlextInfraInternalDependencySyncService,
-    values: list[r[dict[str, t.Infra.TomlValue]]],
+    values: list[r[t.Infra.TomlConfig]],
 ) -> None:
     state = {"index": 0}
 

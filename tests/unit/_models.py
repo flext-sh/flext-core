@@ -155,7 +155,7 @@ class ConfigModelForTest(BaseModel):
     model_config = ConfigDict(validate_assignment=True, extra="forbid")
 
     name: str = "default_config"
-    timeout: Annotated[int, Field(default=30, ge=0)]
+    timeout: Annotated[int, Field(default=30, ge=0)] = 30
     enabled: bool = True
 
 
