@@ -25,7 +25,7 @@ from typing import Never, cast, override
 
 from pydantic import BaseModel, TypeAdapter, ValidationError
 
-from flext_core import s, r
+from flext_core import r, s
 from flext_tests import c, m, t, u
 
 _TEST_CONTAINER_LIST_ADAPTER: TypeAdapter[list[t.Tests.object]] = TypeAdapter(

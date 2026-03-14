@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import override
 
 import tomlkit
-from pydantic import BaseModel, TypeAdapter
+from pydantic import BaseModel, JsonValue, TypeAdapter
 from tomlkit.exceptions import ParseError
 from tomlkit.items import Item, Table
 from tomlkit.toml_document import TOMLDocument
@@ -16,7 +16,7 @@ from flext_core import r, s, t
 from flext_infra import FlextInfraUtilitiesDiscovery, c, m, p
 from flext_infra.basemk.generator import FlextInfraBaseMkGenerator
 
-_OBJECT_LIST_ADAPTER = TypeAdapter(list)
+_OBJECT_LIST_ADAPTER: TypeAdapter[list[JsonValue]] = TypeAdapter(list[JsonValue])
 
 
 class FlextInfraProjectMigrator(s):
@@ -84,9 +84,9 @@ class FlextInfraProjectMigrator(s):
                 c.Infra.Toml.DEPENDENCIES,
             )
             if isinstance(deps, list):
-                deps_list = _OBJECT_LIST_ADAPTER.validate_python(deps)
+                deps_list: list[JsonValue] = _OBJECT_LIST_ADAPTER.validate_python(deps)
                 for dep_raw in deps_list:
-                    dep = str(dep_raw)
+                    dep: str = str(dep_raw)
                     if str(dep).strip().startswith(c.Infra.Packages.CORE):
                         return True
         tool = FlextInfraProjectMigrator._toml_get(document, c.Infra.Toml.TOOL)
@@ -353,7 +353,9 @@ class FlextInfraProjectMigrator(s):
         dependencies_raw = self._toml_get(project_table, c.Infra.Toml.DEPENDENCIES)
         dependencies: list[str] = []
         if isinstance(dependencies_raw, list):
-            dependency_items = _OBJECT_LIST_ADAPTER.validate_python(dependencies_raw)
+            dependency_items: list[JsonValue] = _OBJECT_LIST_ADAPTER.validate_python(
+                dependencies_raw
+            )
             dependencies = [str(dep_raw) for dep_raw in dependency_items]
         dependency_spec = "flext-core @ ../flext-core"
         if dependency_spec not in dependencies:

@@ -329,7 +329,7 @@ class FlextModelsContext:
         def normalize_to_serializable_value(
             cls, val: t.NormalizedValue | BaseModel
         ) -> t.NormalizedValue:
-            normalized = cls.normalize_to_general_value(val)
+            normalized = cls.normalize_to_container(val)
             if normalized is None or isinstance(normalized, (str, int, float, bool)):
                 return normalized
             if isinstance(
@@ -404,7 +404,7 @@ class FlextModelsContext:
             return dict(working_value)
 
         @staticmethod
-        def normalize_to_general_value(
+        def normalize_to_container(
             val: t.NormalizedValue | BaseModel,
         ) -> t.NormalizedValue | BaseModel:
             """Normalize to container; raises TypeError for non-normalizable types."""
@@ -420,6 +420,12 @@ class FlextModelsContext:
                 return str(val)
             msg = f"Non-normalizable type {type(val).__name__}"
             raise TypeError(msg)
+
+        @staticmethod
+        def normalize_to_general_value(
+            val: t.NormalizedValue | BaseModel,
+        ) -> t.NormalizedValue | BaseModel:
+            return FlextModelsContext.ContextData.normalize_to_container(val)
 
     class ContextExport(FlextModelsEntity.Value):
         """Typed snapshot returned by export_snapshot.

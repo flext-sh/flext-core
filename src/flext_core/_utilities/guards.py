@@ -77,9 +77,16 @@ class FlextUtilitiesGuards:
         | t.MetadataValue
         | t.RegisterableService
         | t.RegistrablePlugin
+        | t.FactoryCallable
+        | t.ResourceCallable
         | BaseModel
+        | p.Context
+        | p.Config
+        | p.Log.StructlogLogger
+        | p.HasModelDump
         | Mapping[str, t.NormalizedValue]
         | Mapping[str, t.MetadataValue]
+        | Mapping[str, t.NormalizedValue | BaseModel]
         | Sequence[t.NormalizedValue]
         | Sequence[t.MetadataValue]
         | tuple[type, ...]
@@ -199,7 +206,7 @@ class FlextUtilitiesGuards:
 
     @staticmethod
     def is_configuration_dict(
-        value: dict[str, t.NormalizedValue] | Mapping[str, t.NormalizedValue] | m.Dict,
+        value: FlextUtilitiesGuards._GuardInput,
     ) -> TypeGuard[m.Dict]:
         """Check if value is a valid m.Dict mapping.
 
@@ -694,16 +701,15 @@ class FlextUtilitiesGuards:
                 typed_value_s, condition, context_name, error_msg
             )
         if callable(condition):
-            predicate: Callable[[T], bool] = condition
             return FlextUtilitiesGuards._guard_check_predicate(
-                value, predicate, context_name, error_msg
+                value, condition, context_name, error_msg
             )
         return error_msg or f"{context_name} invalid guard condition type"
 
     @staticmethod
-    def _guard_check_predicate[T: FlextUtilitiesGuards._GuardInput](
-        value: T,
-        condition: Callable[[T], bool],
+    def _guard_check_predicate(
+        value: FlextUtilitiesGuards._GuardInput,
+        condition: Callable[..., FlextUtilitiesGuards._GuardInput | bool],
         context_name: str,
         error_msg: str | None,
     ) -> str:
@@ -1253,11 +1259,7 @@ class FlextUtilitiesGuards:
             return FlextUtilitiesGuards._check_protocol(value, protocol_name)
 
         # Handle direct type check with support for generic origins
-        check_type = (
-            getattr(type_spec, "__origin__", None) or type_spec
-            if isinstance(type_spec, type)
-            else type_spec
-        )
+        check_type = getattr(type_spec, "__origin__", None) or type_spec
         try:
             return isinstance(value, check_type)
         except TypeError:

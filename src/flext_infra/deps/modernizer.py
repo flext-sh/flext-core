@@ -24,7 +24,7 @@ from flext_infra.deps._phases import (
     EnsureRuffConfigPhase,
     InjectCommentsPhase,
 )
-from flext_infra.deps.tool_config import load_tool_config
+from flext_infra.deps.tool_config import FlextInfraDependencyToolConfig
 
 
 class FlextInfraPyprojectModernizer:
@@ -36,7 +36,7 @@ class FlextInfraPyprojectModernizer:
         """Initialize pyproject modernizer."""
         self.root = root or self.ROOT
         self._runner: p.Infra.CommandRunner = FlextInfraUtilitiesSubprocess()
-        tool_config_result = load_tool_config()
+        tool_config_result = FlextInfraDependencyToolConfig.load_tool_config()
         if tool_config_result.is_failure:
             msg = tool_config_result.error or "failed to load deps tool config"
             raise ValueError(msg)

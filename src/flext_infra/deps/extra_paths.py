@@ -205,6 +205,17 @@ class FlextInfraExtraPathsManager:
                 )
         return r[bool].ok(changed)
 
+    @staticmethod
+    def sync_one_path(
+        pyproject_path: Path,
+        *,
+        dry_run: bool = False,
+        is_root: bool = False,
+    ) -> r[bool]:
+        """Synchronize a single pyproject.toml path without instance wiring."""
+        manager = FlextInfraExtraPathsManager()
+        return manager.sync_one(pyproject_path, dry_run=dry_run, is_root=is_root)
+
     def sync_extra_paths(
         self,
         *,
@@ -238,27 +249,7 @@ class FlextInfraExtraPathsManager:
         return r[int].ok(0)
 
 
-_manager = FlextInfraExtraPathsManager()
-
-
-def sync_one(
-    pyproject_path: Path,
-    *,
-    dry_run: bool = False,
-    is_root: bool = False,
-) -> r[bool]:
-    """Synchronize pyproject.toml extra_paths at specified location.
-
-    Args:
-        pyproject_path: Path to pyproject.toml file.
-        dry_run: If True, simulate changes without writing.
-        is_root: If True, treat as root project workspace.
-
-    Returns:
-        Result[bool]: Success flag indicating sync completion.
-
-    """
-    return _manager.sync_one(pyproject_path, dry_run=dry_run, is_root=is_root)
+sync_one = FlextInfraExtraPathsManager.sync_one_path
 
 
 def main() -> int:

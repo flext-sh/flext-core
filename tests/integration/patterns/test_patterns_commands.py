@@ -142,9 +142,9 @@ class CreateUserCommandHandler(
     @override
     def validate_input(self, value: CreateUserCommand) -> r[bool]:
         """Validate command using command's validate_command method."""
-        if isinstance(value, CreateUserCommand):
-            return value.validate_command()
-        return r[bool].fail("Cannot handle this command type")
+        if type(value).__name__ != "CreateUserCommand":
+            return r[bool].fail("Cannot handle this command type")
+        return value.validate_command()
 
     @override
     def handle(
@@ -196,9 +196,9 @@ class UpdateUserCommandHandler(
     @override
     def validate_input(self, value: UpdateUserCommand) -> r[bool]:
         """Validate command using command's validate_command method."""
-        if isinstance(value, UpdateUserCommand):
-            return value.validate_command()
-        return r[bool].fail("Cannot handle this command type")
+        if type(value).__name__ != "UpdateUserCommand":
+            return r[bool].fail("Cannot handle this command type")
+        return value.validate_command()
 
     @override
     def handle(
@@ -240,9 +240,9 @@ class FailingCommandHandler(FlextHandlers[FailingCommand, bool]):
     @override
     def validate_input(self, value: FailingCommand) -> r[bool]:
         """Validate command using command's validate_command method."""
-        if isinstance(value, FailingCommand):
-            return value.validate_command()
-        return r[bool].fail("Cannot handle this command type")
+        if type(value).__name__ != "FailingCommand":
+            return r[bool].fail("Cannot handle this command type")
+        return value.validate_command()
 
     @override
     def handle(self, message: FailingCommand) -> r[bool]:

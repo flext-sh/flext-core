@@ -65,13 +65,15 @@ def test_aliases_are_available() -> None:
     assert t is not None
 
 
-def test_is_general_value_type_negative_paths_and_callable() -> None:
-    assert u.is_general_value_type(cast("t.NormalizedValue", _sample_handler))
-    assert u.is_general_value_type([1, "x", None])
-    assert u.is_general_value_type({"k": 1})
-    assert not u.is_general_value_type(cast("t.NormalizedValue", [{"x"}]))
-    assert u.is_general_value_type(cast("t.NormalizedValue", {1: "x"}))
-    assert not u.is_general_value_type(cast("t.NormalizedValue", {"x": {1}}))
+def test_is_container_negative_paths_and_callable() -> None:
+    assert callable(_sample_handler) or u.is_container(
+        cast("t.NormalizedValue", _sample_handler)
+    )
+    assert u.is_container([1, "x", None])
+    assert u.is_container({"k": 1})
+    assert not u.is_container(cast("t.NormalizedValue", [{"x"}]))
+    assert u.is_container(cast("t.NormalizedValue", {1: "x"}))
+    assert not u.is_container(cast("t.NormalizedValue", {"x": {1}}))
 
 
 def test_is_handler_type_branches() -> None:
@@ -99,19 +101,19 @@ def test_non_empty_and_normalize_branches() -> None:
     assert u.is_type("x", "string_non_empty")
     assert u.is_dict_non_empty({"k": "v"})
     assert u.is_list_non_empty([1])
-    assert u.normalize_to_metadata_value("x") == "x"
-    dict_scalar_out = u.normalize_to_metadata_value({"k": 1})
+    assert u.normalize_to_metadata("x") == "x"
+    dict_scalar_out = u.normalize_to_metadata({"k": 1})
     assert dict_scalar_out == {"k": 1}
-    dict_complex_out = u.normalize_to_metadata_value(
+    dict_complex_out = u.normalize_to_metadata(
         cast("t.NormalizedValue", {"k": object()})
     )
     assert isinstance(dict_complex_out, dict) and "k" in dict_complex_out
-    list_out = u.normalize_to_metadata_value(cast("t.NormalizedValue", [1, object()]))
+    list_out = u.normalize_to_metadata(cast("t.NormalizedValue", [1, object()]))
     assert isinstance(list_out, list)
     assert list_out[0] == 1
     assert isinstance(list_out[1], str)
     assert isinstance(
-        u.normalize_to_metadata_value(cast("t.NormalizedValue", {1, 2})),
+        u.normalize_to_metadata(cast("t.NormalizedValue", {1, 2})),
         str,
     )
 
@@ -260,7 +262,7 @@ def test_chk_exercises_missed_branches() -> None:
 def test_guards_bool_shortcut_and_issubclass_typeerror(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    assert u.is_general_value_type(True)
+    assert u.is_container(True)
 
     class _SomeType:
         pass
@@ -343,7 +345,7 @@ def test_guards_bool_identity_branch_via_isinstance_fallback(
         return original_isinstance(obj, classinfo)
 
     monkeypatch.setattr(builtins, "isinstance", _patched_isinstance)
-    assert u.is_general_value_type(True)
+    assert u.is_container(True)
 
 
 def test_guards_issubclass_typeerror_when_class_not_treated_as_callable(

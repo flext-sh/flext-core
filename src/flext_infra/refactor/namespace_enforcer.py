@@ -10,7 +10,7 @@ from flext_infra.refactor.dependency_analyzer import (
     FlextInfraRefactorDependencyAnalyzerFacade,
 )
 from flext_infra.refactor.namespace_rewriter import NamespaceEnforcementRewriter
-from flext_infra.refactor.output import render_namespace_enforcement_report
+from flext_infra.refactor.output import FlextInfraRefactorOutputRenderer
 
 da = FlextInfraRefactorDependencyAnalyzerFacade
 NamespaceEnforcementModels = m.Infra.Refactor.NamespaceEnforcementModels
@@ -285,7 +285,9 @@ class FlextInfraNamespaceEnforcer:
         report: nem.NamespaceWorkspaceEnforcementReport,
     ) -> str:
         """Render a workspace enforcement report as plain text."""
-        return render_namespace_enforcement_report(report)
+        return FlextInfraRefactorOutputRenderer.render_namespace_enforcement_report(
+            report
+        )
 
 
 __all__ = [

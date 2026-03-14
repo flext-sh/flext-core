@@ -7,7 +7,7 @@ from pathlib import Path
 import tomlkit
 
 from flext_infra import u
-from flext_infra.deps import extra_paths
+from flext_infra.deps.extra_paths import FlextInfraExtraPathsManager
 
 
 class EnsureExtraPathsPhase:
@@ -21,7 +21,11 @@ class EnsureExtraPathsPhase:
         is_root: bool,
         dry_run: bool = False,
     ) -> list[str]:
-        result = extra_paths.sync_one(path, dry_run=dry_run, is_root=is_root)
+        result = FlextInfraExtraPathsManager.sync_one_path(
+            path,
+            dry_run=dry_run,
+            is_root=is_root,
+        )
         if result.is_failure:
             u.Infra.warning(f"extra_paths sync failed for {path}: {result.error}")
             return []

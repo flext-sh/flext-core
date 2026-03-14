@@ -40,7 +40,7 @@ class FlextInfraDependencyDetectionService:
 
     @staticmethod
     def to_infra_value(
-        value: t.Infra.InfraValue,
+        value: object,
     ) -> t.Infra.InfraValue:
         """Convert container value to namespaced infra value."""
         if value is None or isinstance(value, (str, int, float, bool)):
@@ -65,7 +65,9 @@ class FlextInfraDependencyDetectionService:
             return converted
         if isinstance(value, Mapping):
             try:
-                mapping_value = TypeAdapter(dict[object, object]).validate_python(value)
+                mapping_value = TypeAdapter(
+                    dict[str, t.Infra.InfraValue]
+                ).validate_python(value)
             except ValidationError:
                 return None
             converted_map: dict[str, t.Infra.InfraValue] = {}
@@ -494,97 +496,16 @@ _service = FlextInfraDependencyDetectionService()
 _to_infra_value = FlextInfraDependencyDetectionService.to_infra_value
 dm = m.Infra.Deps
 
-
-def discover_project_paths(
-    workspace_root: Path,
-    projects_filter: list[str] | None = None,
-) -> r[list[Path]]:
-    """Discover project paths with pyproject.toml in workspace."""
-    return _service.discover_project_paths(
-        workspace_root, projects_filter=projects_filter
-    )
-
-
-def run_deptry(
-    project_path: Path,
-    venv_bin: Path,
-    *,
-    config_path: Path | None = None,
-    json_output_path: Path | None = None,
-    extend_exclude: list[str] | None = None,
-) -> r[tuple[list[t.Infra.IssueMap], int]]:
-    """Run deptry analysis on a project and parse JSON output."""
-    return _service.run_deptry(
-        project_path,
-        venv_bin,
-        config_path=config_path,
-        json_output_path=json_output_path,
-        extend_exclude=extend_exclude,
-    )
-
-
-def run_pip_check(workspace_root: Path, venv_bin: Path) -> r[tuple[list[str], int]]:
-    """Run pip check to detect dependency conflicts in workspace."""
-    return _service.run_pip_check(workspace_root, venv_bin)
-
-
-def classify_issues(issues: list[t.Infra.IssueMap]) -> m.Infra.Deps.DeptryIssueGroups:
-    """Classify deptry issues by error code (DEP001-DEP004)."""
-    return _service.classify_issues(issues)
-
-
-def build_project_report(
-    project_name: str,
-    deptry_issues: list[t.Infra.IssueMap],
-) -> m.Infra.Deps.ProjectDependencyReport:
-    """Build a project dependency report from classified deptry issues."""
-    return _service.build_project_report(project_name, deptry_issues)
-
-
-def load_dependency_limits(
-    limits_path: Path | None = None,
-) -> Mapping[str, t.Infra.TomlValue]:
-    """Load dependency limits configuration from TOML file."""
-    return _service.load_dependency_limits(limits_path)
-
-
-def run_mypy_stub_hints(
-    project_path: Path,
-    venv_bin: Path,
-    *,
-    timeout: int = c.Infra.Timeouts.DEFAULT,
-) -> r[tuple[list[str], list[str]]]:
-    """Run mypy to detect missing type stubs and hinted packages."""
-    return _service.run_mypy_stub_hints(project_path, venv_bin, timeout=timeout)
-
-
-def module_to_types_package(
-    module_name: str,
-    limits: Mapping[str, t.Infra.TomlValue],
-) -> str | None:
-    """Map a module name to its corresponding types-* package."""
-    return _service.module_to_types_package(module_name, limits)
-
-
-def get_current_typings_from_pyproject(project_path: Path) -> list[str]:
-    """Extract currently declared typing packages from project pyproject.toml."""
-    return _service.get_current_typings_from_pyproject(project_path)
-
-
-def get_required_typings(
-    project_path: Path,
-    venv_bin: Path,
-    limits_path: Path | None = None,
-    *,
-    include_mypy: bool = True,
-) -> r[m.Infra.Deps.TypingsReport]:
-    """Analyze project and generate typing stubs requirements report."""
-    return _service.get_required_typings(
-        project_path,
-        venv_bin,
-        limits_path=limits_path,
-        include_mypy=include_mypy,
-    )
+discover_project_paths = _service.discover_project_paths
+run_deptry = _service.run_deptry
+run_pip_check = _service.run_pip_check
+classify_issues = _service.classify_issues
+build_project_report = _service.build_project_report
+load_dependency_limits = _service.load_dependency_limits
+run_mypy_stub_hints = _service.run_mypy_stub_hints
+module_to_types_package = _service.module_to_types_package
+get_current_typings_from_pyproject = _service.get_current_typings_from_pyproject
+get_required_typings = _service.get_required_typings
 
 
 __all__ = [

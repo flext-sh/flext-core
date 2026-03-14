@@ -21,7 +21,7 @@ import sys
 from collections.abc import Mapping
 from pathlib import Path
 
-from pydantic import TypeAdapter, ValidationError
+from pydantic import JsonValue, TypeAdapter, ValidationError
 
 from flext_core import FlextRuntime
 from flext_infra import c, m, output, t, u
@@ -40,7 +40,9 @@ def _extract_reports_written(
         raw = payload.get("reports_written", [])
         if isinstance(raw, list):
             try:
-                typed_items = TypeAdapter(list).validate_python(raw)
+                typed_items: list[JsonValue] = TypeAdapter(
+                    list[JsonValue]
+                ).validate_python(raw)
             except ValidationError:
                 return []
             return [item for item in typed_items if isinstance(item, str)]
@@ -56,7 +58,9 @@ def _extract_diag_entries(
         raw = payload.get(key, [])
         if isinstance(raw, list):
             try:
-                typed_items = TypeAdapter(list).validate_python(raw)
+                typed_items: list[JsonValue] = TypeAdapter(
+                    list[JsonValue]
+                ).validate_python(raw)
             except ValidationError:
                 return []
             return [item for item in typed_items if isinstance(item, str)]

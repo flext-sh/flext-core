@@ -237,22 +237,25 @@ class FlextInfraDependencyDetectorRuntime:
             return r[int].ok(0)
         return r[int].ok(0 if total_issues == 0 and pip_ok else 1)
 
+    @staticmethod
+    def run_detector(
+        detector: _DetectorRuntime,
+        workspace_report_factory: Callable[..., _WorkspaceReport],
+        dependency_limits_factory: Callable[..., m.Infra.Deps.DependencyLimitsInfo],
+        pip_check_factory: Callable[..., m.Infra.Deps.PipCheckReport],
+        argv: list[str] | None = None,
+    ) -> r[int]:
+        """Execute dependency detection and generate workspace report."""
+        runtime = FlextInfraDependencyDetectorRuntime(
+            detector=detector,
+            workspace_report_factory=workspace_report_factory,
+            dependency_limits_factory=dependency_limits_factory,
+            pip_check_factory=pip_check_factory,
+        )
+        return runtime.run(argv=argv)
 
-def run_detector(
-    detector: _DetectorRuntime,
-    workspace_report_factory: Callable[..., _WorkspaceReport],
-    dependency_limits_factory: Callable[..., m.Infra.Deps.DependencyLimitsInfo],
-    pip_check_factory: Callable[..., m.Infra.Deps.PipCheckReport],
-    argv: list[str] | None = None,
-) -> r[int]:
-    """Execute dependency detection and generate workspace report (backward compatible)."""
-    runtime = FlextInfraDependencyDetectorRuntime(
-        detector=detector,
-        workspace_report_factory=workspace_report_factory,
-        dependency_limits_factory=dependency_limits_factory,
-        pip_check_factory=pip_check_factory,
-    )
-    return runtime.run(argv=argv)
+
+run_detector = FlextInfraDependencyDetectorRuntime.run_detector
 
 
 __all__ = ["FlextInfraDependencyDetectorRuntime", "run_detector"]

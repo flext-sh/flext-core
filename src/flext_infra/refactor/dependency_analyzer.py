@@ -251,54 +251,6 @@ class DependencyAnalyzer:
         )
 
 
-def load_python_module(
-    file_path: Path,
-    *,
-    stage: str = "scan",
-    parse_failures: list[nem.NamespaceParseFailureViolation] | None = None,
-) -> m.Infra.Refactor.ParsedPythonModule | None:
-    """Load and parse a Python source file, recording failures if provided."""
-    try:
-        source = file_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
-    except UnicodeDecodeError as exc:
-        if parse_failures is not None:
-            parse_failures.append(
-                nem.NamespaceParseFailureViolation.create(
-                    file=str(file_path),
-                    stage=stage,
-                    error_type=type(exc).__name__,
-                    detail=str(exc),
-                ),
-            )
-        return None
-    except OSError as exc:
-        if parse_failures is not None:
-            parse_failures.append(
-                nem.NamespaceParseFailureViolation.create(
-                    file=str(file_path),
-                    stage=stage,
-                    error_type=type(exc).__name__,
-                    detail=str(exc),
-                ),
-            )
-        return None
-    # given source text is needed by callers for source-segment checks
-    try:
-        tree = ast.parse(source)
-    except SyntaxError as exc:
-        if parse_failures is not None:
-            parse_failures.append(
-                nem.NamespaceParseFailureViolation.create(
-                    file=str(file_path),
-                    stage=stage,
-                    error_type=type(exc).__name__,
-                    detail=str(exc),
-                ),
-            )
-        return None
-    return m.Infra.Refactor.ParsedPythonModule(source=source, tree=tree)
-
-
 class NamespaceFacadeScanner:
     """Scan projects for namespace facade class patterns."""
 
@@ -1354,6 +1306,53 @@ class CompatibilityAliasDetector(p.Infra.Scanner):
 class FlextInfraRefactorDependencyAnalyzerFacade:
     """Facade grouping all dependency analysis detectors and scanners."""
 
+    @staticmethod
+    def load_python_module(
+        file_path: Path,
+        *,
+        stage: str = "scan",
+        parse_failures: list[nem.NamespaceParseFailureViolation] | None = None,
+    ) -> m.Infra.Refactor.ParsedPythonModule | None:
+        """Load and parse a Python source file, recording failures if provided."""
+        try:
+            source = file_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
+        except UnicodeDecodeError as exc:
+            if parse_failures is not None:
+                parse_failures.append(
+                    nem.NamespaceParseFailureViolation.create(
+                        file=str(file_path),
+                        stage=stage,
+                        error_type=type(exc).__name__,
+                        detail=str(exc),
+                    ),
+                )
+            return None
+        except OSError as exc:
+            if parse_failures is not None:
+                parse_failures.append(
+                    nem.NamespaceParseFailureViolation.create(
+                        file=str(file_path),
+                        stage=stage,
+                        error_type=type(exc).__name__,
+                        detail=str(exc),
+                    ),
+                )
+            return None
+        try:
+            tree = ast.parse(source)
+        except SyntaxError as exc:
+            if parse_failures is not None:
+                parse_failures.append(
+                    nem.NamespaceParseFailureViolation.create(
+                        file=str(file_path),
+                        stage=stage,
+                        error_type=type(exc).__name__,
+                        detail=str(exc),
+                    ),
+                )
+            return None
+        return m.Infra.Refactor.ParsedPythonModule(source=source, tree=tree)
+
     NamespaceFacadeScanner = NamespaceFacadeScanner
     LooseObjectDetector = LooseObjectDetector
     ImportAliasDetector = ImportAliasDetector
@@ -1364,6 +1363,9 @@ class FlextInfraRefactorDependencyAnalyzerFacade:
     FutureAnnotationsDetector = FutureAnnotationsDetector
     ManualTypingAliasDetector = ManualTypingAliasDetector
     CompatibilityAliasDetector = CompatibilityAliasDetector
+
+
+load_python_module = FlextInfraRefactorDependencyAnalyzerFacade.load_python_module
 
 
 __all__ = [
@@ -1379,4 +1381,5 @@ __all__ = [
     "ManualTypingAliasDetector",
     "NamespaceFacadeScanner",
     "RuntimeAliasDetector",
+    "load_python_module",
 ]

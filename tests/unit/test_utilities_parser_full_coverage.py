@@ -308,7 +308,11 @@ def test_parser_convert_and_norm_branches(monkeypatch: pytest.MonkeyPatch) -> No
     )
     assert parser.conv_str_list(5) == ["5"]
     assert parser.norm_str("abc") == "abc"
-    assert parser.norm_list({"a": "", "b": "B"}, case="lower", filter_truthy=True) == {
+    assert parser.norm_list(
+        m.ConfigMap(root={"a": "", "b": "B"}),
+        case="lower",
+        filter_truthy=True,
+    ) == {
         "b": "b",
     }
     assert parser.norm_list(["A", "b"], case="lower", to_set=True) == {"a", "b"}
@@ -421,7 +425,4 @@ def test_parser_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> None:
         )
         < 1e-09
     )
-    assert (
-        parser.norm_in("a", cast("list[str]", cast("object", {"A": "1"})), case="lower")
-        is True
-    )
+    assert parser.norm_in("a", m.ConfigMap(root={"A": "1"}), case="lower") is True

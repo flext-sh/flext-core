@@ -4,29 +4,19 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from pathlib import Path
-from typing import Protocol, override
+from typing import override
 
 from jinja2 import (
     Environment,
     FileSystemLoader,
     StrictUndefined,
+    Template,
     TemplateError,
     select_autoescape,
 )
 
 from flext_core import r, s
-from flext_infra import c, m, t
-
-
-class _TemplateRenderer(Protocol):
-    def render(self, **kwargs: t.Infra.InfraValue) -> str: ...
-
-
-def _render_template(
-    template: _TemplateRenderer,
-    context: Mapping[str, t.Infra.InfraValue],
-) -> str:
-    return template.render(**context)
+from flext_infra import c, m
 
 
 class FlextInfraBaseMkTemplateEngine(s[str]):
@@ -82,6 +72,13 @@ class FlextInfraBaseMkTemplateEngine(s[str]):
             test_command=c.Infra.Toml.PYTEST,
         )
 
+    @staticmethod
+    def _render_template(
+        template: Template,
+        context: Mapping[str, object],
+    ) -> str:
+        return template.render(**context)
+
     @override
     def execute(self) -> r[str]:
         return self.render_all()
@@ -96,10 +93,8 @@ class FlextInfraBaseMkTemplateEngine(s[str]):
         sections: list[str] = []
         try:
             for template_name in c.Infra.Basemk.TEMPLATE_ORDER:
-                template: _TemplateRenderer = self._environment.get_template(
-                    template_name,
-                )
-                rendered = _render_template(template, context)
+                template = self._environment.get_template(template_name)
+                rendered = self._render_template(template, context)
                 sections.append(rendered.rstrip("\n"))
             content = "\n\n".join(sections).rstrip("\n") + "\n"
             return r[str].ok(content)

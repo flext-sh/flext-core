@@ -91,13 +91,13 @@ class TypeGuardsScenarios:
         TypeGuardScenario(name="none_value", value="", expected_result=False),
     ]
 
-    # Scenarios for normalize_to_metadata_value (deprecated → normalize_to_container):
+    # Scenarios for normalize_to_metadata:
     # - Scalars: preserved as their original type
     # - None → "" (empty string)
     # - dict → m.Dict (BaseModel RootModel)
     # - list → m.ObjectList (BaseModel RootModel)
     # - unknown → str(val)
-    NORMALIZE_TO_METADATA_VALUE: ClassVar[list[NormalizeScenario]] = [
+    NORMALIZE_TO_METADATA: ClassVar[list[NormalizeScenario]] = [
         NormalizeScenario(name="string_value", value="test", expected_type=str),
         NormalizeScenario(
             name="int_value",
@@ -189,7 +189,7 @@ class TestuTypeGuardsIsListNonEmpty:
         if scenario.value == "has_items":
             value = [1, 2, 3]
         elif scenario.value == "empty":
-            value = list[int]()
+            value = list[t.NormalizedValue]()
         elif scenario.value in {"has_empty", "has_none"}:
             value = [""]
         elif scenario.value == "string" or isinstance(scenario.value, int):
@@ -197,13 +197,13 @@ class TestuTypeGuardsIsListNonEmpty:
         else:
             value = None
 
-        assert FlextUtilitiesGuards.is_general_value_type(value)
+        assert FlextUtilitiesGuards.is_container(value)
         result = u.is_type(value, "list_non_empty")
         assert result == scenario.expected_result
 
 
-class TestuTypeGuardsNormalizeToMetadataValue:
-    """Test normalize_to_metadata_value (deprecated → normalize_to_container).
+class TestuTypeGuardsNormalizeToMetadata:
+    """Test normalize_to_metadata.
 
     normalize_to_container behavior:
     - Scalars: preserved as original type (int→int, float→float, bool→bool)
@@ -216,14 +216,14 @@ class TestuTypeGuardsNormalizeToMetadataValue:
 
     @pytest.mark.parametrize(
         "scenario",
-        TypeGuardsScenarios.NORMALIZE_TO_METADATA_VALUE,
+        TypeGuardsScenarios.NORMALIZE_TO_METADATA,
         ids=lambda s: s.name,
     )
-    def test_normalize_to_metadata_value(self, scenario: NormalizeScenario) -> None:
-        """Test normalize_to_metadata_value with scalar scenarios."""
+    def test_normalize_to_metadata(self, scenario: NormalizeScenario) -> None:
+        """Test normalize_to_metadata with scalar scenarios."""
         value = scenario.value
-        assert FlextUtilitiesGuards.is_general_value_type(value)
-        result = u.normalize_to_metadata_value(value)
+        assert FlextUtilitiesGuards.is_container(value)
+        result = u.normalize_to_metadata(value)
         assert isinstance(result, scenario.expected_type), (
             f"{scenario.name}: expected {scenario.expected_type.__name__}, "
             f"got {type(result).__name__}"
@@ -232,57 +232,57 @@ class TestuTypeGuardsNormalizeToMetadataValue:
             assert result == scenario.expected_value
 
     def test_normalize_none_to_empty_string(self) -> None:
-        """Test normalize_to_metadata_value: None → empty string."""
-        result = u.normalize_to_metadata_value(None)
+        """Test normalize_to_metadata: None -> empty string."""
+        result = u.normalize_to_metadata(None)
         assert isinstance(result, str)
         assert result == ""
 
     def test_normalize_dict_to_pydantic_model(self) -> None:
         test_dict: m.ConfigMap = m.ConfigMap(root={"key": "value", "num": 42})
-        result = u.normalize_to_metadata_value(test_dict)
+        result = u.normalize_to_metadata(test_dict)
         assert isinstance(result, str)
 
     def test_normalize_list_to_pydantic_model(self) -> None:
         test_list = [1, 2, 3]
-        result = u.normalize_to_metadata_value(test_list)
+        result = u.normalize_to_metadata(test_list)
         assert isinstance(result, list)
 
     def test_normalize_dict_with_primitives(self) -> None:
         test_dict: m.ConfigMap = m.ConfigMap(root={"a": 1, "b": "test", "c": True})
-        result = u.normalize_to_metadata_value(test_dict)
+        result = u.normalize_to_metadata(test_dict)
         assert isinstance(result, str)
 
     def test_normalize_dict_with_nested_dict(self) -> None:
         inner = m.ConfigMap(root={"nested": "value"})
         outer = m.ConfigMap(root={"key": inner})
-        result = u.normalize_to_metadata_value(outer)
+        result = u.normalize_to_metadata(outer)
         assert isinstance(result, str)
 
     def test_normalize_dict_with_list_value(self) -> None:
         test_dict = {"key": [1, 2, 3]}
-        result = u.normalize_to_metadata_value(test_dict)
+        result = u.normalize_to_metadata(test_dict)
         assert isinstance(result, dict)
         assert isinstance(result["key"], list)
 
     def test_normalize_dict_with_non_string_key(self) -> None:
         test_dict = {123: "value", "key": "test"}
-        result = u.normalize_to_metadata_value(cast("RuntimeData", test_dict))
+        result = u.normalize_to_metadata(cast("RuntimeData", test_dict))
         assert isinstance(result, dict)
         assert "123" in result
 
     def test_normalize_list_with_primitives(self) -> None:
         test_list = ["a", 1, True]
-        result = u.normalize_to_metadata_value(test_list)
+        result = u.normalize_to_metadata(test_list)
         assert isinstance(result, list)
 
     def test_normalize_list_with_nested_list(self) -> None:
         test_list: list[t.NormalizedValue] = [[1, 2], [3, 4]]
-        result = u.normalize_to_metadata_value(test_list)
+        result = u.normalize_to_metadata(test_list)
         assert isinstance(result, list)
 
     def test_normalize_list_with_dict(self) -> None:
         test_list = [{"key": "value"}]
-        result = u.normalize_to_metadata_value(test_list)
+        result = u.normalize_to_metadata(test_list)
         assert isinstance(result, list)
 
     def test_normalize_list_with_complex_items(self) -> None:
@@ -293,12 +293,12 @@ class TestuTypeGuardsNormalizeToMetadataValue:
             {"dict": "value"},
             [1, 2, 3],
         ]
-        result = u.normalize_to_metadata_value(test_list)
+        result = u.normalize_to_metadata(test_list)
         assert isinstance(result, list)
 
     def test_normalize_tuple_to_pydantic_model(self) -> None:
         test_tuple = (1, 2, 3)
-        result = u.normalize_to_metadata_value(test_tuple)
+        result = u.normalize_to_metadata(test_tuple)
         assert isinstance(result, list)
 
     def test_normalize_dict_with_complex_nested_structure(self) -> None:
@@ -309,11 +309,11 @@ class TestuTypeGuardsNormalizeToMetadataValue:
             "nested_list": [1, 2, {"inner": "dict"}],
             "complex": {"a": [1, 2]},
         }
-        result = u.normalize_to_metadata_value(test_dict)
+        result = u.normalize_to_metadata(test_dict)
         assert isinstance(result, dict)
 
     def test_normalize_custom_object(self) -> None:
-        """Test normalize_to_metadata_value: custom object → str(obj)."""
+        """Test normalize_to_metadata: custom object -> str(obj)."""
 
         class CustomObject:
             @override
@@ -321,13 +321,13 @@ class TestuTypeGuardsNormalizeToMetadataValue:
                 return "custom_object"
 
         obj = CustomObject()
-        result = u.normalize_to_metadata_value(cast("RuntimeData", obj))
+        result = u.normalize_to_metadata(cast("RuntimeData", obj))
         assert isinstance(result, str)
         assert result == "custom_object"
 
     def test_normalize_float_pi(self) -> None:
-        """Test normalize_to_metadata_value: float math.pi → float."""
-        result = u.normalize_to_metadata_value(math.pi)
+        """Test normalize_to_metadata: float math.pi -> float."""
+        result = u.normalize_to_metadata(math.pi)
         assert isinstance(result, float)
         assert result == math.pi
 
@@ -336,7 +336,7 @@ class TestuTypeGuardsNormalizeToMetadataValue:
             name: str = "test"
 
         model = SampleModel()
-        result = u.normalize_to_metadata_value(model)
+        result = u.normalize_to_metadata(model)
         assert isinstance(result, str)
         assert "test" in result
 
@@ -345,6 +345,6 @@ __all__ = [
     "TestuTypeGuardsIsDictNonEmpty",
     "TestuTypeGuardsIsListNonEmpty",
     "TestuTypeGuardsIsStringNonEmpty",
-    "TestuTypeGuardsNormalizeToMetadataValue",
+    "TestuTypeGuardsNormalizeToMetadata",
     "TypeGuardsScenarios",
 ]

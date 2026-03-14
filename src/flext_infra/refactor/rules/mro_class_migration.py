@@ -38,9 +38,9 @@ class FlextInfraRefactorMROClassMigrationRule(FlextInfraRefactorRule):
                 continue
             if not isinstance(stmt.target, ast.Name):
                 continue
-            if not _is_constant_candidate(stmt.target.id):
+            if not self._is_constant_candidate(stmt.target.id):
                 continue
-            if not _is_final_annotation(stmt.annotation):
+            if not self._is_final_annotation(stmt.annotation):
                 continue
             candidates.append(
                 m.Infra.Refactor.MROSymbolCandidate(
@@ -50,7 +50,7 @@ class FlextInfraRefactorMROClassMigrationRule(FlextInfraRefactorRule):
             )
         if len(candidates) == 0:
             return (tree, [])
-        constants_class = _first_constants_class_name(module_ast)
+        constants_class = self._first_constants_class_name(module_ast)
         scan_result = m.Infra.Refactor.MROScanReport(
             file=str(_file_path),
             module="",
@@ -70,33 +70,33 @@ class FlextInfraRefactorMROClassMigrationRule(FlextInfraRefactorRule):
         syms = ", ".join(migration.moved_symbols)
         return (updated_module, [f"migrated constants into facade class: {syms}"])
 
+    @staticmethod
+    def _first_constants_class_name(tree: ast.Module) -> str:
+        for stmt in tree.body:
+            if isinstance(stmt, ast.ClassDef) and stmt.name.endswith(
+                c.Infra.Refactor.CONSTANTS_CLASS_SUFFIX,
+            ):
+                return stmt.name
+        return ""
 
-def _first_constants_class_name(tree: ast.Module) -> str:
-    for stmt in tree.body:
-        if isinstance(stmt, ast.ClassDef) and stmt.name.endswith(
-            c.Infra.Refactor.CONSTANTS_CLASS_SUFFIX,
-        ):
-            return stmt.name
-    return ""
+    @staticmethod
+    def _is_constant_candidate(symbol: str) -> bool:
+        return CONSTANT_PATTERN.match(symbol) is not None
 
-
-def _is_constant_candidate(symbol: str) -> bool:
-    return CONSTANT_PATTERN.match(symbol) is not None
-
-
-def _is_final_annotation(annotation: ast.expr) -> bool:
-    final_name = c.Infra.Refactor.FINAL_ANNOTATION_NAME
-    if isinstance(annotation, ast.Name):
-        return annotation.id == final_name
-    if isinstance(annotation, ast.Attribute):
-        return annotation.attr == final_name
-    if isinstance(annotation, ast.Subscript):
-        base = annotation.value
-        if isinstance(base, ast.Name):
-            return base.id == final_name
-        if isinstance(base, ast.Attribute):
-            return base.attr == final_name
-    return False
+    @staticmethod
+    def _is_final_annotation(annotation: ast.expr) -> bool:
+        final_name = c.Infra.Refactor.FINAL_ANNOTATION_NAME
+        if isinstance(annotation, ast.Name):
+            return annotation.id == final_name
+        if isinstance(annotation, ast.Attribute):
+            return annotation.attr == final_name
+        if isinstance(annotation, ast.Subscript):
+            base = annotation.value
+            if isinstance(base, ast.Name):
+                return base.id == final_name
+            if isinstance(base, ast.Attribute):
+                return base.attr == final_name
+        return False
 
 
 __all__ = ["FlextInfraRefactorMROClassMigrationRule"]

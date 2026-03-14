@@ -6,6 +6,8 @@ import fnmatch
 from collections.abc import Callable, Mapping
 from pathlib import Path
 
+from pydantic import TypeAdapter
+
 from flext_core import r
 from flext_infra import c, m, t, u
 from flext_infra.refactor.rule import (
@@ -159,7 +161,10 @@ class FlextInfraRefactorEngine:
         """Load YAML configuration for this engine instance."""
         result = self.rule_loader.load_config()
         if result.is_success:
-            self.config = result.value
+            config_dict: dict[str, t.Infra.InfraValue] = TypeAdapter(
+                dict[str, t.Infra.InfraValue]
+            ).validate_python(dict(result.value.items()))
+            self.config = config_dict
             output.info(f"Loaded config from {self.config_path}")
         return result
 

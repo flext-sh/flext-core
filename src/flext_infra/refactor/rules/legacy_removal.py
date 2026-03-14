@@ -25,6 +25,21 @@ from flext_infra.refactor.transformers.import_bypass_remover import (
 class FlextInfraRefactorLegacyRemovalRule(FlextInfraRefactorRule):
     """Remove aliases, deprecated classes, wrappers and import bypass blocks."""
 
+    _CONFIG_ADAPTER: TypeAdapter[dict[str, t.Infra.InfraValue]] | None = None
+
+    @staticmethod
+    def _get_config_adapter() -> TypeAdapter[dict[str, t.Infra.InfraValue]]:
+        """Get or create TypeAdapter for dict[str, t.Infra.InfraValue]."""
+        if FlextInfraRefactorLegacyRemovalRule._CONFIG_ADAPTER is None:
+            FlextInfraRefactorLegacyRemovalRule._CONFIG_ADAPTER = TypeAdapter(
+                dict[str, t.Infra.InfraValue],
+            )
+        return FlextInfraRefactorLegacyRemovalRule._CONFIG_ADAPTER
+
+    def _typed_config(self) -> dict[str, t.Infra.InfraValue]:
+        """Get self.config validated as dict[str, InfraValue]."""
+        return self._get_config_adapter().validate_python(self.config)
+
     @staticmethod
     def _is_forwarding_compatible(
         *,
@@ -105,7 +120,9 @@ class FlextInfraRefactorLegacyRemovalRule(FlextInfraRefactorRule):
         if not isinstance(value, (list, tuple, set)):
             return []
         try:
-            items = TypeAdapter(list).validate_python(value)
+            items: list[t.Infra.InfraValue] = TypeAdapter(
+                list[t.Infra.InfraValue]
+            ).validate_python(value)
         except ValidationError:
             return []
         output: list[str] = [item for item in items if isinstance(item, str)]
@@ -222,11 +239,14 @@ class FlextInfraRefactorLegacyRemovalRule(FlextInfraRefactorRule):
         )
 
     def _remove_aliases(self, tree: cst.Module) -> tuple[cst.Module, list[str]]:
-        allow_aliases_raw = self.config.get("allow_aliases", [])
-        allow_target_suffixes_raw = self.config.get("allow_target_suffixes", [])
-        allow_aliases = set(self._normalize_string_items(allow_aliases_raw))
+        typed_config = self._typed_config()
+        allow_aliases = set(
+            self._normalize_string_items(typed_config.get("allow_aliases", []))
+        )
         allow_target_suffixes = tuple(
-            self._normalize_string_items(allow_target_suffixes_raw),
+            self._normalize_string_items(
+                typed_config.get("allow_target_suffixes", [])
+            ),
         )
         transformer = FlextInfraRefactorAliasRemover(
             allow_aliases=allow_aliases,

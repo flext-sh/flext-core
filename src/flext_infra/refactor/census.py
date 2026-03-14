@@ -18,9 +18,9 @@ from flext_infra import (
     c,
     m,
     output,
-    render_census_report,
     u,
 )
+from flext_infra.refactor.output import FlextInfraRefactorOutputRenderer
 
 type RCensusReport = r[m.Infra.Refactor.CensusReport]
 CI = c.Infra.Refactor.Census
@@ -32,7 +32,7 @@ class FlextInfraRefactorCensus:
     @staticmethod
     def render_text(report: m.Infra.Refactor.CensusReport) -> str:
         """Render the census report cleanly."""
-        return render_census_report(report)
+        return FlextInfraRefactorOutputRenderer.render_census_report(report)
 
     def run(
         self, root: Path, *, target: m.Infra.Refactor.MROFamilyTarget | None = None

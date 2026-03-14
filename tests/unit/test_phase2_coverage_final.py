@@ -82,8 +82,6 @@ class TestPhase2FinalCoveragePush:
 
         def double_string(s: str) -> r[str]:
             """Double the string or fail."""
-            if not isinstance(s, str):
-                return r[str].fail("Not a string")
             if len(s) > 10:
                 return r[str].fail("Too long")
             return r[str].ok(s + s)
@@ -101,9 +99,7 @@ class TestPhase2FinalCoveragePush:
 
         def upper_func(v: str) -> str:
             """Convert to uppercase."""
-            if isinstance(v, str):
-                return v.upper()
-            return v
+            return v.upper()
 
         result = r[str].ok("input").flat_map(failing_op).map(upper_func)
         _ = assertion_helpers.assert_flext_result_failure(result)

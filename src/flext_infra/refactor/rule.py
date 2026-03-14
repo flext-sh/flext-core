@@ -26,7 +26,9 @@ class FlextInfraRefactorRuleLoader:
         """Load and validate the refactor engine configuration."""
         try:
             loaded = u.Infra.safe_load_yaml(self.config_path)
-            normalized = dict(loaded.items())
+            normalized: dict[str, t.Infra.InfraValue] = TypeAdapter(
+                dict[str, t.Infra.InfraValue]
+            ).validate_python(dict(loaded.items()))
             scope_raw = normalized.get("refactor_engine")
             scope_map = self._normalize_str_object_mapping(scope_raw)
             scope = m.Infra.Refactor.EngineConfig.model_validate(scope_map)
@@ -66,7 +68,9 @@ class FlextInfraRefactorRuleLoader:
             unknown_rules: list[str] = []
             for rule_file in sorted(rules_dir.glob("*.yml")):
                 try:
-                    rule_config = dict(u.Infra.safe_load_yaml(rule_file).items())
+                    rule_config: dict[str, t.Infra.InfraValue] = TypeAdapter(
+                        dict[str, t.Infra.InfraValue]
+                    ).validate_python(dict(u.Infra.safe_load_yaml(rule_file).items()))
                 except (OSError, TypeError):
                     continue
                 typed_rules = self._coerce_rule_definitions(
@@ -161,7 +165,7 @@ class FlextInfraRefactorRuleLoader:
 
     @staticmethod
     def _normalize_str_object_mapping(
-        value: t.Infra.InfraValue,
+        value: t.Infra.InfraValue | None,
     ) -> dict[str, t.Infra.InfraValue]:
         try:
             adapter: TypeAdapter[dict[str, t.Infra.InfraValue]] = TypeAdapter(

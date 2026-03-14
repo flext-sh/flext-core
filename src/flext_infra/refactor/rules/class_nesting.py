@@ -203,21 +203,29 @@ class ClassNestingRefactorRule:
         class_nesting_raw = loaded.get(c.Infra.ReportKeys.CLASS_NESTING)
         if isinstance(class_nesting_raw, list):
             try:
-                typed_class_nesting = TypeAdapter(list).validate_python(
-                    class_nesting_raw
-                )
-                config[c.Infra.ReportKeys.CLASS_NESTING] = self._coerce_entries(
-                    u.Infra.mapping_list(typed_class_nesting),
-                )
+                typed_class_nesting: list[t.Infra.InfraValue] = TypeAdapter(
+                    list[t.Infra.InfraValue]
+                ).validate_python(class_nesting_raw)
+                coerced_nesting: list[t.Infra.InfraValue] = [
+                    dict(e) for e in self._coerce_entries(
+                        u.Infra.mapping_list(typed_class_nesting),
+                    )
+                ]
+                config[c.Infra.ReportKeys.CLASS_NESTING] = coerced_nesting
             except ValidationError:
                 config[c.Infra.ReportKeys.CLASS_NESTING] = []
         helper_raw = loaded.get(c.Infra.ReportKeys.HELPER_CONSOLIDATION)
         if isinstance(helper_raw, list):
             try:
-                typed_helper_entries = TypeAdapter(list).validate_python(helper_raw)
-                config[c.Infra.ReportKeys.HELPER_CONSOLIDATION] = self._coerce_entries(
-                    u.Infra.mapping_list(typed_helper_entries),
-                )
+                typed_helper_entries: list[t.Infra.InfraValue] = TypeAdapter(
+                    list[t.Infra.InfraValue]
+                ).validate_python(helper_raw)
+                coerced_helpers: list[t.Infra.InfraValue] = [
+                    dict(e) for e in self._coerce_entries(
+                        u.Infra.mapping_list(typed_helper_entries),
+                    )
+                ]
+                config[c.Infra.ReportKeys.HELPER_CONSOLIDATION] = coerced_helpers
             except ValidationError:
                 config[c.Infra.ReportKeys.HELPER_CONSOLIDATION] = []
         self._cached_config = config
@@ -424,14 +432,17 @@ class ClassNestingRefactorRule:
         for rule in rules:
             if rule.get(c.Infra.ReportKeys.SOURCE_SYMBOL, "") != source_symbol:
                 continue
-            payload["expected_base_chain"] = u.Infra.string_list(
+            base_chain: list[t.Infra.InfraValue] = list(u.Infra.string_list(
                 rule.get("expected_base_chain"),
-            )
+            ))
+            payload["expected_base_chain"] = base_chain
             post_checks_raw = rule.get(c.Infra.ReportKeys.POST_CHECKS, [])
-            post_checks: list[str] = []
+            post_checks: list[t.Infra.InfraValue] = []
             if not isinstance(post_checks_raw, list):
                 continue
-            typed_post_checks = TypeAdapter(list).validate_python(post_checks_raw)
+            typed_post_checks: list[t.Infra.InfraValue] = TypeAdapter(
+                list[t.Infra.InfraValue]
+            ).validate_python(post_checks_raw)
             checks = u.Infra.mapping_list(typed_post_checks)
             for check in checks:
                 check_type = check.get("type")

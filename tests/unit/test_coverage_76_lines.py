@@ -119,12 +119,10 @@ class TestResultTransformations:
         """Test flat_map chains multiple results."""
 
         def increment_wrapper(x: int) -> r[int]:
-            if isinstance(x, int):
-                result = r[int].ok(x + 1)
-                if result.is_success:
-                    return r[int].ok(result.value)
-                return r[int].fail(result.error or "Increment failed")
-            return r[int].fail("Invalid input")
+            result = r[int].ok(x + 1)
+            if result.is_success:
+                return r[int].ok(result.value)
+            return r[int].fail(result.error or "Increment failed")
 
         result = r[int].ok(1).flat_map(increment_wrapper)
         assert result.value == 2

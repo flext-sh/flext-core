@@ -188,13 +188,11 @@ class TestCoveragePush75Percent:
             result = r[int](initial_result._result)
         for op in scenario.operations:
             if op == "map":
-                result = result.map(lambda x: x * 2 if isinstance(x, int) else x)
+                result = result.map(lambda x: x * 2)
             elif op == "flat_map":
 
                 def flat_map_func(x: int) -> r[int]:
-                    if isinstance(x, int):
-                        return r[int].ok(x * 2)
-                    return r[int].fail("error")
+                    return r[int].ok(x * 2)
 
                 result = result.flat_map(flat_map_func)
             elif op == "flat_map_fail":

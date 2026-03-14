@@ -53,7 +53,8 @@ class FlextInfraConfigFixer(s):
 
     @staticmethod
     def _to_array(items_list: list[str]) -> items.Array:
-        serialized_result = FlextInfraUtilitiesIo().serialize(items_list)
+        items_infra: list[t.Infra.InfraValue] = list(items_list)
+        serialized_result = FlextInfraUtilitiesIo().serialize(items_infra)
         if serialized_result.is_failure:
             return tomlkit.array()
         inline_doc = tomlkit.parse(f"items = {serialized_result.value}\n")
@@ -174,7 +175,7 @@ class FlextInfraConfigFixer(s):
 
     def _ensure_project_excludes_tk(
         self,
-        pyrefly: MutableMapping[str, object],
+        pyrefly: MutableMapping[str, t.Infra.InfraValue],
     ) -> list[str]:
         fixes: list[str] = []
         excludes = pyrefly.get(c.Infra.Toml.PROJECT_EXCLUDES)
@@ -197,7 +198,7 @@ class FlextInfraConfigFixer(s):
 
     def _fix_search_paths_tk(
         self,
-        pyrefly: MutableMapping[str, object],
+        pyrefly: MutableMapping[str, t.Infra.InfraValue],
         project_dir: Path,
     ) -> list[str]:
         fixes: list[str] = []
@@ -248,7 +249,7 @@ class FlextInfraConfigFixer(s):
 
     def _remove_ignore_sub_config_tk(
         self,
-        pyrefly: MutableMapping[str, object],
+        pyrefly: MutableMapping[str, t.Infra.InfraValue],
     ) -> list[str]:
         fixes: list[str] = []
         sub_configs = pyrefly.get(c.Infra.Toml.SUB_CONFIG)

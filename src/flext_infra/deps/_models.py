@@ -4,10 +4,9 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from pydantic import ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import FlextModels
-from flext_infra.typings import t
 
 
 class RuffFormatConfig(FlextModels.ArbitraryTypesModel):
@@ -494,21 +493,18 @@ class ModernizerFileChanges(FlextModels.ArbitraryTypesModel):
     ]
 
 
-class DeptryIssueGroups(FlextModels.ArbitraryTypesModel):
+_DeptryScalar = str | int | float | bool | None
+
+
+class DeptryIssueGroups(BaseModel):
     """Deptry issue grouping model by error code (DEP001-DEP004)."""
 
-    dep001: Annotated[list[t.Infra.IssueMap], Field(default_factory=list)] = Field(
-        default_factory=list
-    )
-    dep002: Annotated[list[t.Infra.IssueMap], Field(default_factory=list)] = Field(
-        default_factory=list
-    )
-    dep003: Annotated[list[t.Infra.IssueMap], Field(default_factory=list)] = Field(
-        default_factory=list
-    )
-    dep004: Annotated[list[t.Infra.IssueMap], Field(default_factory=list)] = Field(
-        default_factory=list
-    )
+    model_config = ConfigDict(extra="forbid")
+
+    dep001: list[str] = Field(default_factory=list)
+    dep002: list[str] = Field(default_factory=list)
+    dep003: list[str] = Field(default_factory=list)
+    dep004: list[str] = Field(default_factory=list)
 
 
 class DeptryReport(FlextModels.ArbitraryTypesModel):

@@ -91,6 +91,7 @@ type RuntimeAtomic = t.Container | BaseModel
 type RuntimeData = (
     t.NormalizedValue
     | t.MetadataValue
+    | t.ContainerValue
     | Mapping[str, t.NormalizedValue | BaseModel]
     | Sequence[t.NormalizedValue]
     | p.HasModelDump

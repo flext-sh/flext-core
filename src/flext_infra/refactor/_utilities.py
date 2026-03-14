@@ -38,6 +38,17 @@ class FlextInfraUtilitiesRefactor:
         name = u.Infra.dotted_name(cst_expr)
     """
 
+    _CONTAINER_DICT_ADAPTER: TypeAdapter[dict[str, t.Infra.InfraValue]] | None = None
+
+    @staticmethod
+    def _get_container_dict_adapter() -> TypeAdapter[dict[str, t.Infra.InfraValue]]:
+        """Get or create TypeAdapter for dict[str, t.Infra.InfraValue]."""
+        if FlextInfraUtilitiesRefactor._CONTAINER_DICT_ADAPTER is None:
+            FlextInfraUtilitiesRefactor._CONTAINER_DICT_ADAPTER = TypeAdapter(
+                dict[str, t.Infra.InfraValue],
+            )
+        return FlextInfraUtilitiesRefactor._CONTAINER_DICT_ADAPTER
+
     @staticmethod
     def capture_output(cmd: Sequence[str]) -> r[str]:
         """Run *cmd* and return stripped stdout as ``r[str]``."""
@@ -228,7 +239,9 @@ class FlextInfraUtilitiesRefactor:
             return [value]
         if isinstance(value, list):
             try:
-                value_items = TypeAdapter(list).validate_python(value)
+                value_items: list[t.Infra.InfraValue] = TypeAdapter(
+                    list[t.Infra.InfraValue]
+                ).validate_python(value)
             except ValidationError as exc:
                 msg = "expected list[str] value"
                 raise ValueError(msg) from exc
@@ -251,7 +264,9 @@ class FlextInfraUtilitiesRefactor:
             return []
         if isinstance(value, list):
             try:
-                value_items = TypeAdapter(list).validate_python(value)
+                value_items: list[t.Infra.InfraValue] = TypeAdapter(
+                    list[t.Infra.InfraValue]
+                ).validate_python(value)
             except ValidationError as exc:
                 msg = "expected list[dict[str, t.Infra.InfraValue]] value"
                 raise ValueError(msg) from exc
@@ -404,9 +419,12 @@ class FlextInfraUtilitiesRefactor:
         except (OSError, TypeError) as exc:
             msg = f"failed to read policy document: {policy_path}"
             raise ValueError(msg) from exc
-        loaded_dict: t.Infra.ContainerDict = TypeAdapter(
-            t.Infra.ContainerDict,
-        ).validate_python(dict(loaded.items()))
+        raw_dict: dict[str, object] = dict(loaded.items())
+        loaded_dict: t.Infra.ContainerDict = (
+            FlextInfraUtilitiesRefactor._get_container_dict_adapter().validate_python(
+                raw_dict
+            )
+        )
         schema_path = policy_path.with_name("class-policy-v2.schema.json")
         if not FlextInfraUtilitiesRefactor.policy_document_schema_valid(
             loaded_dict,

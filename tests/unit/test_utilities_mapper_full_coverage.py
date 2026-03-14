@@ -342,12 +342,7 @@ def test_general_value_helpers_and_logger(mapper: type[u]) -> None:
         def __str__(self) -> str:
             return "stable"
 
-    assert (
-        mapper.narrow_to_general_value_type(
-            cast("t.NormalizedValue", Stable()),
-        )
-        == "stable"
-    )
+    assert mapper.narrow_to_container(cast("t.NormalizedValue", Stable())) == "stable"
     assert mapper._get_str_from_dict({"k": 2}, "k", default="") == "2"
     assert mapper._get_str_from_dict({"k": None}, "k", default="d") == "d"
     callable_result = mapper._get_callable_from_dict({"x": 1}, "x")

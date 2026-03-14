@@ -19,28 +19,6 @@ from flext_infra.refactor.transformers.lazy_import_fixer import (
 )
 
 
-def _parse_forbidden_rules(
-    value: t.Infra.InfraValue,
-) -> list[m.Infra.Refactor.RuleConfigs.ImportModernizerRuleConfig]:
-    try:
-        raw_items = TypeAdapter(list[t.Infra.RuleConfig]).validate_python(value)
-    except ValidationError:
-        return []
-    normalized: list[t.Infra.RuleConfig] = [
-        {
-            "module": item_mapping.get("module", ""),
-            "symbol_mapping": item_mapping.get("symbol_mapping", {}),
-        }
-        for item_mapping in raw_items
-    ]
-    try:
-        return TypeAdapter(
-            list[m.Infra.Refactor.RuleConfigs.ImportModernizerRuleConfig],
-        ).validate_python(normalized)
-    except ValidationError:
-        return []
-
-
 class FlextInfraRefactorImportModernizerRule(FlextInfraRefactorRule):
     """Modernize forbidden imports and map symbols to runtime aliases."""
 
@@ -68,7 +46,7 @@ class FlextInfraRefactorImportModernizerRule(FlextInfraRefactorRule):
             return (tree, [])
         imports_to_remove: list[str] = []
         symbols_to_replace: dict[str, str] = {}
-        for rule_config in _parse_forbidden_rules(forbidden):
+        for rule_config in self._parse_forbidden_rules(forbidden):
             imports_to_remove.append(rule_config.module)
             symbols_to_replace.update(rule_config.symbol_mapping)
         transformer = FlextInfraRefactorImportModernizer(
@@ -79,6 +57,28 @@ class FlextInfraRefactorImportModernizerRule(FlextInfraRefactorRule):
         )
         wrapper = MetadataWrapper(tree)
         return (wrapper.visit(transformer), transformer.changes)
+
+    @staticmethod
+    def _parse_forbidden_rules(
+        value: object,
+    ) -> list[m.Infra.Refactor.RuleConfigs.ImportModernizerRuleConfig]:
+        try:
+            raw_items = TypeAdapter(list[t.Infra.RuleConfig]).validate_python(value)
+        except ValidationError:
+            return []
+        normalized: list[t.Infra.RuleConfig] = [
+            {
+                "module": item_mapping.get("module", ""),
+                "symbol_mapping": item_mapping.get("symbol_mapping", {}),
+            }
+            for item_mapping in raw_items
+        ]
+        try:
+            return TypeAdapter(
+                list[m.Infra.Refactor.RuleConfigs.ImportModernizerRuleConfig],
+            ).validate_python(normalized)
+        except ValidationError:
+            return []
 
     def _bound_name_from_import_alias(self, alias: cst.ImportAlias) -> str:
         if alias.asname is not None and isinstance(alias.asname.name, cst.Name):

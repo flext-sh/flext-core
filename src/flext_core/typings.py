@@ -60,9 +60,15 @@ class FlextTypes:
     # --- RUNTIME isinstance() TUPLES ---
     # PEP 695 `type` aliases are TypeAliasType and CANNOT be used with isinstance().
     # Use these tuples for ALL runtime isinstance() checks.
-    PRIMITIVES_TYPES: tuple[type, ...] = (str, int, float, bool)
-    SCALAR_TYPES: tuple[type, ...] = (str, int, float, bool, datetime)
-    CONTAINER_TYPES: tuple[type, ...] = (
+    PRIMITIVES_TYPES: tuple[
+        type[str], type[int], type[float], type[bool]
+    ] = (str, int, float, bool)
+    SCALAR_TYPES: tuple[
+        type[str], type[int], type[float], type[bool], type[datetime]
+    ] = (str, int, float, bool, datetime)
+    CONTAINER_TYPES: tuple[
+        type[str], type[int], type[float], type[bool], type[datetime], type[Path]
+    ] = (
         str,
         int,
         float,

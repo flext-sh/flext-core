@@ -702,8 +702,7 @@ class Teste:
         """Test ValidationError with context - tests lines 243-244."""
         context_raw: dict[str, t.NormalizedValue] = {"key1": "value1", "key2": 123}
         context: dict[str, t.MetadataValue] = {
-            k: FlextRuntime.normalize_to_metadata_value(v)
-            for k, v in context_raw.items()
+            k: FlextRuntime.normalize_to_metadata(v) for k, v in context_raw.items()
         }
         error = e.ValidationError(
             "Validation failed",
@@ -746,8 +745,7 @@ class Teste:
             "auto_correlation": True,
         }
         context: dict[str, t.MetadataValue] = {
-            k: FlextRuntime.normalize_to_metadata_value(v)
-            for k, v in context_raw.items()
+            k: FlextRuntime.normalize_to_metadata(v) for k, v in context_raw.items()
         }
         error = e.NotFoundError(
             "Not found",
@@ -1055,7 +1053,7 @@ class Teste:
 
         dict_like = DictLike()
         dict_like_converted: dict[str, t.Tests.object] = {
-            k: FlextRuntime.normalize_to_metadata_value(
+            k: FlextRuntime.normalize_to_metadata(
                 str(v)
                 if not isinstance(v, (str, int, float, bool, type(None), list, dict))
                 else cast("t.NormalizedValue", v),
@@ -1264,7 +1262,7 @@ class Teste:
 
         dict_like = DictLike()
         dict_like_converted: dict[str, t.Tests.object] = {
-            k: FlextRuntime.normalize_to_metadata_value(
+            k: FlextRuntime.normalize_to_metadata(
                 str(v)
                 if not isinstance(v, (str, int, float, bool, type(None), list, dict))
                 else cast("t.NormalizedValue", v),
@@ -1302,7 +1300,7 @@ class Teste:
 
         dict_like = DictLike()
         dict_like_converted: dict[str, t.Tests.object] = {
-            k: FlextRuntime.normalize_to_metadata_value(
+            k: FlextRuntime.normalize_to_metadata(
                 str(v)
                 if not isinstance(v, (str, int, float, bool, type(None), list, dict))
                 else cast("t.NormalizedValue", v),
@@ -1345,7 +1343,7 @@ class Teste:
 
         dict_like = DictLike()
         dict_like_converted: dict[str, t.Tests.object] = {
-            k: FlextRuntime.normalize_to_metadata_value(
+            k: FlextRuntime.normalize_to_metadata(
                 str(v)
                 if not isinstance(v, (str, int, float, bool, type(None), list, dict))
                 else cast("t.NormalizedValue", v),

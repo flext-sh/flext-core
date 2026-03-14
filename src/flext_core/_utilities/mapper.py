@@ -165,7 +165,7 @@ class FlextUtilitiesMapper:
         current_list: t.ContainerList = [
             FlextUtilitiesMapper.narrow_to_container(item) for item in current_items
         ]
-        chunked: list[t.ContainerList] = []
+        chunked: list[t.NormalizedValue] = []
         for i in range(0, len(current_list), chunk_size):
             chunk: t.ContainerList = current_list[i : i + chunk_size]
             chunked.append(chunk)
@@ -185,8 +185,12 @@ class FlextUtilitiesMapper:
         if convert_func_result.is_failure:
             return current
         convert_callable_raw: t.MapperCallable = convert_func_result.value
-        convert_default = ops.get("convert_default")
-        fallback: t.NormalizedValue = convert_default
+        convert_default_raw = ops.get("convert_default")
+        fallback: t.NormalizedValue = (
+            convert_default_raw
+            if not callable(convert_default_raw)
+            else None
+        )
 
         def convert_callable(value: t.NormalizedValue) -> t.NormalizedValue:
             return FlextUtilitiesMapper.narrow_to_container(convert_callable_raw(value))
@@ -243,7 +247,7 @@ class FlextUtilitiesMapper:
         ensure_default_raw = ops.get("ensure_default")
         ensure_default_val: t.NormalizedValue = (
             FlextUtilitiesMapper.narrow_to_container(ensure_default_raw)
-            if ensure_default_raw is not None
+            if ensure_default_raw is not None and not callable(ensure_default_raw)
             else None
         )
         default_map: t.ContainerMapping = {
@@ -488,14 +492,17 @@ class FlextUtilitiesMapper:
         if not isinstance(current, (list, tuple)):
             return current
         current_items: Sequence[t.NormalizedValue] = current
-        slice_spec = ops["slice"]
+        slice_spec_raw = ops["slice"]
+        slice_spec: t.NormalizedValue = (
+            slice_spec_raw if not callable(slice_spec_raw) else None
+        )
         min_slice_length = 2
         if (
             isinstance(slice_spec, (list, tuple))
             and len(slice_spec) >= min_slice_length
         ):
-            start_raw = slice_spec[0]
-            end_raw = slice_spec[1]
+            start_raw: t.NormalizedValue = slice_spec[0]
+            end_raw: t.NormalizedValue = slice_spec[1]
             start: int | None = start_raw if isinstance(start_raw, int) else None
             end: int | None = end_raw if isinstance(end_raw, int) else None
             if isinstance(current, list):
@@ -593,7 +600,10 @@ class FlextUtilitiesMapper:
             current, "mapping"
         ):
             return current
-        transform_opts_raw: t.NormalizedValue = ops["transform"]
+        transform_opts_val = ops["transform"]
+        transform_opts_raw: t.NormalizedValue = (
+            transform_opts_val if not callable(transform_opts_val) else None
+        )
         if not isinstance(transform_opts_raw, Mapping):
             return current
         transform_opts = FlextUtilitiesMapper._narrow_to_configuration_dict(
@@ -658,7 +668,11 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _extract_field_value(
-        item: t.NormalizedValue, field_name: str
+        item: t.NormalizedValue
+        | BaseModel
+        | Mapping[str, t.NormalizedValue]
+        | Mapping[str, t.NormalizedValue | BaseModel],
+        field_name: str,
     ) -> t.NormalizedValue:
         """Extract field value from item (dict or object).
 
@@ -835,7 +849,9 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _get_str_from_dict(
-        ops: Mapping[str, t.NormalizedValue], key: str, default: str = ""
+        ops: Mapping[str, t.NormalizedValue | t.MapperCallable],
+        key: str,
+        default: str = "",
     ) -> str:
         """Safely extract str value from ConfigurationDict."""
         value = ops.get(key, default)
@@ -866,10 +882,11 @@ class FlextUtilitiesMapper:
         if isinstance(value, m.ConfigMap):
             return value
         if isinstance(value, Mapping):
+            narrowed_dict: dict[str, t.NormalizedValue | BaseModel] = dict(
+                FlextUtilitiesMapper._narrow_to_configuration_dict(value)
+            )
             coerced_result = r[m.ConfigMap].create_from_callable(
-                lambda: m.ConfigMap(
-                    root=FlextUtilitiesMapper._narrow_to_configuration_dict(value)
-                )
+                lambda: m.ConfigMap(root=narrowed_dict)
             )
             if coerced_result.is_success:
                 val: m.ConfigMap = coerced_result.value
@@ -970,9 +987,20 @@ class FlextUtilitiesMapper:
         else:
             field_name: str = field
             for item in items_list:
-                if not isinstance(item, (Mapping, BaseModel)):
+                if isinstance(item, BaseModel):
+                    val_raw = FlextUtilitiesMapper._extract_field_value(
+                        item, field_name
+                    )
+                elif isinstance(item, Mapping):
+                    mapped_item: Mapping[str, t.NormalizedValue] = {
+                        str(k): FlextUtilitiesMapper.narrow_to_container(v)
+                        for k, v in item.items()
+                    }
+                    val_raw = FlextUtilitiesMapper._extract_field_value(
+                        mapped_item, field_name
+                    )
+                else:
                     continue
-                val_raw = FlextUtilitiesMapper._extract_field_value(item, field_name)
                 if isinstance(val_raw, int | float):
                     numeric_values.append(val_raw)
         agg_fn: Callable[[list[int | float]], int | float] = (
@@ -1324,11 +1352,12 @@ class FlextUtilitiesMapper:
         constructed: dict[str, t.NormalizedValue] = {}
         for target_key, target_spec in spec.items():
             try:
-                target_spec_mapping: t.ContainerMapping | None = None
+                target_spec_mapping: Mapping[str, t.NormalizedValue] | None = None
                 if isinstance(target_spec, Mapping):
                     target_spec_mapping = target_spec
                     if "value" in target_spec_mapping:
-                        constructed[target_key] = target_spec_mapping["value"]
+                        value_item: t.NormalizedValue = target_spec_mapping["value"]
+                        constructed[target_key] = value_item
                         continue
                 if isinstance(target_spec, str):
                     source_field = target_spec
@@ -1344,7 +1373,9 @@ class FlextUtilitiesMapper:
                     field_default = target_spec_mapping.get("default")
                     field_ops = target_spec_mapping.get("ops")
                 else:
-                    constructed[target_key] = target_spec
+                    constructed[target_key] = (
+                        target_spec if not callable(target_spec) else None
+                    )
                     continue
                 if source is None:
                     constructed[target_key] = field_default
@@ -2027,7 +2058,12 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def narrow_to_container(
-        value: t.NormalizedValue | BaseModel | Mapping[str, t.NormalizedValue] | None,
+        value: t.NormalizedValue
+        | BaseModel
+        | Mapping[str, t.NormalizedValue]
+        | Mapping[str, t.NormalizedValue | BaseModel]
+        | p.HasModelDump
+        | None,
     ) -> t.NormalizedValue:
         """Safely narrow any value to t.NormalizedValue (strict container type).
 
@@ -2056,7 +2092,12 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def narrow_to_general_value_type(
-        value: t.NormalizedValue | BaseModel | Mapping[str, t.NormalizedValue] | None,
+        value: t.NormalizedValue
+        | BaseModel
+        | Mapping[str, t.NormalizedValue]
+        | Mapping[str, t.NormalizedValue | BaseModel]
+        | p.HasModelDump
+        | None,
     ) -> t.NormalizedValue:
         """Deprecated alias; use narrow_to_container. Planned removal: v0.12."""
         warnings.warn(
@@ -2239,7 +2280,7 @@ class FlextUtilitiesMapper:
             primary_data=user_context,
             secondary_data=extra_kwargs,
             field_overrides={"error_type": "ValidationError"},
-            transformer=FlextRuntime.normalize_to_metadata_value,
+            transformer=FlextRuntime.normalize_to_metadata,
         )
 
         # Configuration merging

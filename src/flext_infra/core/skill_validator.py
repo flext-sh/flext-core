@@ -28,28 +28,6 @@ from flext_infra import (
 from flext_infra._utilities.yaml import FlextInfraUtilitiesYaml
 
 
-def _safe_load_yaml(path: Path) -> Mapping[str, object]:
-    """Load YAML file safely; delegates to ``u.Infra``."""
-    return FlextInfraUtilitiesYaml.safe_load_yaml(path)
-
-
-def _normalize_string_list(value: object, field: str) -> list[str]:
-    """Validate and normalize a list[str] config field; delegates to ``u.Infra``."""
-    return FlextInfraUtilitiesYaml.normalize_string_list(value, field)
-
-
-def _normalize_str_object_mapping(
-    value: t.Infra.InfraValue,
-) -> dict[str, t.Infra.InfraValue]:
-    try:
-        adapter: TypeAdapter[dict[str, t.Infra.InfraValue]] = TypeAdapter(
-            dict[str, t.Infra.InfraValue]
-        )
-        return adapter.validate_python(value)
-    except ValidationError:
-        return {}
-
-
 class FlextInfraSkillValidator:
     """Validates workspace skills using rules.yml policy gates.
 
@@ -72,6 +50,46 @@ class FlextInfraSkillValidator:
         if candidate.is_absolute():
             return candidate
         return (root / candidate).resolve()
+
+    @staticmethod
+    def _safe_load_yaml(path: Path) -> Mapping[str, object]:
+        """Load YAML file safely; delegates to ``u.Infra``."""
+        return FlextInfraUtilitiesYaml.safe_load_yaml(path)
+
+    @staticmethod
+    def _normalize_string_list(value: object, field: str) -> list[str]:
+        """Validate and normalize a list[str] config field; delegates to ``u.Infra``."""
+        if value is None:
+            return []
+        if isinstance(value, list):
+            try:
+                typed_items: list[JsonValue] = TypeAdapter(
+                    list[JsonValue]
+                ).validate_python(value)
+            except ValidationError as exc:
+                msg = f"{field} must be list[str]: {exc}"
+                raise TypeError(msg) from exc
+            out: list[str] = []
+            for item in typed_items:
+                if not isinstance(item, str):
+                    msg = f"{field} must be list[str]"
+                    raise TypeError(msg)
+                out.append(item)
+            return out
+        msg = f"{field} must be list[str]"
+        raise TypeError(msg)
+
+    @staticmethod
+    def _normalize_str_object_mapping(
+        value: object,
+    ) -> dict[str, t.Infra.InfraValue]:
+        try:
+            adapter: TypeAdapter[dict[str, t.Infra.InfraValue]] = TypeAdapter(
+                dict[str, t.Infra.InfraValue]
+            )
+            return adapter.validate_python(value)
+        except ValidationError:
+            return {}
 
     def validate(
         self,
@@ -104,18 +122,18 @@ class FlextInfraSkillValidator:
                         summary=f"no rules.yml for {skill_name}",
                     ),
                 )
-            rules = _safe_load_yaml(rules_path)
+            rules = self._safe_load_yaml(rules_path)
             scan_targets_raw = rules.get("scan_targets", {})
-            scan_targets = _normalize_str_object_mapping(scan_targets_raw)
+            scan_targets = self._normalize_str_object_mapping(scan_targets_raw)
             if not scan_targets and scan_targets_raw not in ({}, None):
                 return r[m.Infra.Core.ValidationReport].fail(
                     f"scan_targets must be a mapping: {rules_path}",
                 )
-            include_globs = _normalize_string_list(
+            include_globs = self._normalize_string_list(
                 scan_targets.get("include", ["**/*.py"]),
                 "scan_targets.include",
             ) or ["**/*"]
-            exclude_globs = _normalize_string_list(
+            exclude_globs = self._normalize_string_list(
                 scan_targets.get(c.Infra.Toml.EXCLUDE, []),
                 "scan_targets.exclude",
             )
@@ -128,7 +146,7 @@ class FlextInfraSkillValidator:
             counts: MutableMapping[str, int] = {}
             violations: list[str] = []
             for rule_obj_raw in rules_list:
-                rule_obj = _normalize_str_object_mapping(rule_obj_raw)
+                rule_obj = self._normalize_str_object_mapping(rule_obj_raw)
                 if not rule_obj:
                     continue
                 rule_id = str(rule_obj.get(c.Infra.ReportKeys.ID, "")).strip()
@@ -160,7 +178,7 @@ class FlextInfraSkillValidator:
             total = sum(counts.values())
             passed = total == 0 if mode == c.Infra.Modes.STRICT else True
             if mode != c.Infra.Modes.STRICT:
-                baseline_obj = _normalize_str_object_mapping(
+                baseline_obj = self._normalize_str_object_mapping(
                     rules.get(c.Infra.Modes.BASELINE, {}),
                 )
                 if baseline_obj:
@@ -180,10 +198,10 @@ class FlextInfraSkillValidator:
                     if baseline_path.exists():
                         bl_data_result = self._json.read_json(baseline_path)
                         if bl_data_result.is_success:
-                            bl_data = _normalize_str_object_mapping(
+                            bl_data = self._normalize_str_object_mapping(
                                 bl_data_result.value
                             )
-                            bl_counts_raw_map = _normalize_str_object_mapping(
+                            bl_counts_raw_map = self._normalize_str_object_mapping(
                                 bl_data.get("counts", {}),
                             )
                             bl_counts: dict[str, int] = {}

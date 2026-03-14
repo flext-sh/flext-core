@@ -396,49 +396,51 @@ class FlextInfraPrManager:
             c.Infra.ReportKeys.TAG: tag,
         })
 
+    @staticmethod
+    def selector(pr_number: str, head: str) -> str:
+        """Resolve PR selector from number or head branch."""
+        return pr_number or head
 
-def _selector(pr_number: str, head: str) -> str:
-    return pr_number or head
-
-
-def _parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="PR lifecycle management")
-    _ = parser.add_argument("--repo-root", type=Path, default=Path())
-    _ = parser.add_argument(
-        "--action",
-        default=c.Infra.ReportKeys.STATUS,
-        choices=[
-            c.Infra.ReportKeys.STATUS,
-            c.Infra.Cli.GhCmd.CREATE,
-            c.Infra.Cli.GhCmd.VIEW,
-            c.Infra.Verbs.CHECKS,
-            c.Infra.Cli.GhCmd.MERGE,
-            c.Infra.Verbs.CLOSE,
-        ],
-    )
-    _ = parser.add_argument("--base", default=c.Infra.Git.MAIN)
-    _ = parser.add_argument("--head", default="")
-    _ = parser.add_argument("--number", default="")
-    _ = parser.add_argument("--title", default="")
-    _ = parser.add_argument("--body", default="")
-    _ = parser.add_argument("--draft", type=int, default=0)
-    _ = parser.add_argument("--merge-method", default=c.Infra.Cli.GhCmd.SQUASH)
-    _ = parser.add_argument("--auto", type=int, default=0)
-    _ = parser.add_argument("--delete-branch", type=int, default=0)
-    _ = parser.add_argument("--checks-strict", type=int, default=0)
-    _ = parser.add_argument("--release-on-merge", type=int, default=1)
-    return parser.parse_args()
+    @staticmethod
+    def parse_args() -> argparse.Namespace:
+        """Build and parse CLI arguments for PR actions."""
+        parser = argparse.ArgumentParser(description="PR lifecycle management")
+        _ = parser.add_argument("--repo-root", type=Path, default=Path())
+        _ = parser.add_argument(
+            "--action",
+            default=c.Infra.ReportKeys.STATUS,
+            choices=[
+                c.Infra.ReportKeys.STATUS,
+                c.Infra.Cli.GhCmd.CREATE,
+                c.Infra.Cli.GhCmd.VIEW,
+                c.Infra.Verbs.CHECKS,
+                c.Infra.Cli.GhCmd.MERGE,
+                c.Infra.Verbs.CLOSE,
+            ],
+        )
+        _ = parser.add_argument("--base", default=c.Infra.Git.MAIN)
+        _ = parser.add_argument("--head", default="")
+        _ = parser.add_argument("--number", default="")
+        _ = parser.add_argument("--title", default="")
+        _ = parser.add_argument("--body", default="")
+        _ = parser.add_argument("--draft", type=int, default=0)
+        _ = parser.add_argument("--merge-method", default=c.Infra.Cli.GhCmd.SQUASH)
+        _ = parser.add_argument("--auto", type=int, default=0)
+        _ = parser.add_argument("--delete-branch", type=int, default=0)
+        _ = parser.add_argument("--checks-strict", type=int, default=0)
+        _ = parser.add_argument("--release-on-merge", type=int, default=1)
+        return parser.parse_args()
 
 
 def main() -> int:
     """Dispatch requested PR action and return its exit code."""
-    args = _parse_args()
+    args = FlextInfraPrManager.parse_args()
     repo_root = args.repo_root.resolve()
     manager = FlextInfraPrManager()
     head_result = u.Infra.git_current_branch(repo_root)
     head = args.head or head_result.unwrap_or(c.Infra.Git.HEAD)
     base = args.base
-    selector = _selector(args.number, head)
+    selector = FlextInfraPrManager.selector(args.number, head)
     if args.action == c.Infra.ReportKeys.STATUS:
         result = manager.status(repo_root, base, head)
         if result.is_success:

@@ -812,8 +812,8 @@ if TYPE_CHECKING:
         test_guards_handler_type_issubclass_typeerror_branch_direct,
         test_guards_issubclass_success_when_callable_is_patched,
         test_guards_issubclass_typeerror_when_class_not_treated_as_callable,
+        test_is_container_negative_paths_and_callable,
         test_is_flexible_value_covers_all_branches,
-        test_is_general_value_type_negative_paths_and_callable,
         test_is_handler_type_branches,
         test_is_type_non_empty_unknown_and_tuple_and_fallback,
         test_is_type_protocol_fallback_branches,
@@ -914,7 +914,7 @@ if TYPE_CHECKING:
         TestuTypeGuardsIsDictNonEmpty,
         TestuTypeGuardsIsListNonEmpty,
         TestuTypeGuardsIsStringNonEmpty,
-        TestuTypeGuardsNormalizeToMetadataValue,
+        TestuTypeGuardsNormalizeToMetadata,
         TypeGuardsScenarios,
     )
     from tests.unit.test_version import TestFlextVersion
@@ -1928,9 +1928,9 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_utilities_type_guards_coverage_100",
         "TestuTypeGuardsIsStringNonEmpty",
     ),
-    "TestuTypeGuardsNormalizeToMetadataValue": (
+    "TestuTypeGuardsNormalizeToMetadata": (
         "tests.unit.test_utilities_type_guards_coverage_100",
-        "TestuTypeGuardsNormalizeToMetadataValue",
+        "TestuTypeGuardsNormalizeToMetadata",
     ),
     "TextLike": ("tests.unit.test_utilities_enum_full_coverage", "TextLike"),
     "TextUtilityContract": (
@@ -2691,9 +2691,9 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_utilities_collection_full_coverage",
         "test_is_general_value_list_accepts_list_subclass",
     ),
-    "test_is_general_value_type_negative_paths_and_callable": (
+    "test_is_container_negative_paths_and_callable": (
         "tests.unit.test_utilities_guards_full_coverage",
-        "test_is_general_value_type_negative_paths_and_callable",
+        "test_is_container_negative_paths_and_callable",
     ),
     "test_is_handler_type_branches": (
         "tests.unit.test_utilities_guards_full_coverage",
@@ -3742,7 +3742,7 @@ __all__ = [
     "TestuTypeGuardsIsDictNonEmpty",
     "TestuTypeGuardsIsListNonEmpty",
     "TestuTypeGuardsIsStringNonEmpty",
-    "TestuTypeGuardsNormalizeToMetadataValue",
+    "TestuTypeGuardsNormalizeToMetadata",
     "TextLike",
     "TextUtilityContract",
     "TimeoutEnforcerScenarios",
@@ -3954,9 +3954,9 @@ __all__ = [
     "test_invalid_handler_mode_init_raises",
     "test_invalid_registration_attempts",
     "test_invert_and_json_conversion_branches",
+    "test_is_container_negative_paths_and_callable",
     "test_is_flexible_value_covers_all_branches",
     "test_is_general_value_list_accepts_list_subclass",
-    "test_is_general_value_type_negative_paths_and_callable",
     "test_is_handler_type_branches",
     "test_is_type_non_empty_unknown_and_tuple_and_fallback",
     "test_is_type_protocol_fallback_branches",
