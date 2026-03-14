@@ -81,7 +81,7 @@ class TestValidateValueImmutable:
         obj = PlainObj()
         assert (
             u.validate_value_object_immutable(
-                cast("RuntimeData", cast("RuntimeData", obj)),
+                cast("RuntimeData", obj),
             )
             is False
         )
@@ -114,13 +114,13 @@ def test_validate_value_object_immutable_exception_and_no_setattr_branch() -> No
 
     assert (
         u.validate_value_object_immutable(
-            cast("RuntimeData", cast("RuntimeData", _BrokenConfig())),
+            cast("RuntimeData", _BrokenConfig()),
         )
         is False
     )
     assert (
         u.validate_value_object_immutable(
-            cast("RuntimeData", cast("RuntimeData", _NoSetattrVisible())),
+            cast("RuntimeData", _NoSetattrVisible()),
         )
         is False
     )

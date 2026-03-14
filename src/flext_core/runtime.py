@@ -87,7 +87,6 @@ from flext_core._models.base import FlextModelFoundation
 from flext_core._models.containers import FlextModelsContainers
 from flext_core._utilities.deprecation import FlextUtilitiesDeprecation
 
-type RuntimeAtomic = t.Container | BaseModel
 type RuntimeData = (
     t.NormalizedValue
     | t.MetadataValue

@@ -13,13 +13,12 @@ from __future__ import annotations
 import sys
 from collections.abc import Mapping
 from pathlib import Path
-from typing import Final, TextIO, TypeAlias
+from typing import Final, TextIO
 
+from flext_core.typings import MetricValue
 from flext_infra import t
 from flext_infra._utilities.terminal import FlextInfraUtilitiesTerminal
 from flext_infra.constants import FlextInfraConstants as c
-
-MetricValue: TypeAlias = t.Infra.MetricValue
 
 
 class OutputBackend:

@@ -476,9 +476,10 @@ class TestuDomain:
             id_attr=_require_payload_str(test_case.get("id_attr", "unique_id")),
         )
         expected = test_case.get("expected_result")
-        if isinstance(expected, type):
-            assert isinstance(operation_result, expected), (
-                f"Expected type {expected}, got {type(operation_result)}"
+        expected_type = cast("type[t.Tests.object] | None", expected)
+        if isinstance(expected_type, type):
+            assert isinstance(operation_result, expected_type), (
+                f"Expected type {expected_type}, got {type(operation_result)}"
             )
         else:
             assert operation_result == expected
@@ -495,9 +496,10 @@ class TestuDomain:
             _require_payload_mapping(test_case["input_data"]),
         )
         expected = test_case.get("expected_result")
-        if isinstance(expected, type):
-            assert isinstance(operation_result, expected), (
-                f"Expected {expected}, got {type(operation_result)}: {operation_result}"
+        expected_type = cast("type[t.Tests.object] | None", expected)
+        if isinstance(expected_type, type):
+            assert isinstance(operation_result, expected_type), (
+                f"Expected {expected_type}, got {type(operation_result)}: {operation_result}"
             )
         else:
             assert operation_result == expected, (
@@ -556,7 +558,7 @@ class TestuDomain:
         """Test validation with config that raises TypeError using u directly."""
         obj = u.Tests.BadObjects.BadConfigTypeError()
         try:
-            obj_value = cast("object", cast("object", obj))
+            obj_value = cast("object", obj)
             result = u.validate_value_object_immutable(obj_value)
             assert isinstance(result, bool)
         except TypeError:
