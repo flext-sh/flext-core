@@ -1928,8 +1928,8 @@ class FlextTestsModels(
             DICT_ADAPTER: ClassVar[TypeAdapter[dict[str, t.Tests.object]]] = (
                 TypeAdapter(dict[str, t.Tests.object])
             )
-            LIST_ADAPTER: ClassVar[TypeAdapter[list[t.Tests.object]]] = (
-                TypeAdapter(list[t.Tests.object])
+            LIST_ADAPTER: ClassVar[TypeAdapter[list[t.Tests.object]]] = TypeAdapter(
+                list[t.Tests.object]
             )
 
         class Chain[TResult](FlextModels.Value):

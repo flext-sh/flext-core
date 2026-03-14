@@ -187,9 +187,7 @@ class FlextUtilitiesMapper:
         convert_callable_raw: t.MapperCallable = convert_func_result.value
         convert_default_raw = ops.get("convert_default")
         fallback: t.NormalizedValue = (
-            convert_default_raw
-            if not callable(convert_default_raw)
-            else None
+            convert_default_raw if not callable(convert_default_raw) else None
         )
 
         def convert_callable(value: t.NormalizedValue) -> t.NormalizedValue:
@@ -991,14 +989,18 @@ class FlextUtilitiesMapper:
                     val_raw = FlextUtilitiesMapper._extract_field_value(
                         item, field_name
                     )
-                elif isinstance(item, Mapping):
-                    mapped_item: Mapping[str, t.NormalizedValue] = {
-                        str(k): FlextUtilitiesMapper.narrow_to_container(v)
-                        for k, v in item.items()
-                    }
-                    val_raw = FlextUtilitiesMapper._extract_field_value(
-                        mapped_item, field_name
-                    )
+                elif hasattr(item, "__getitem__") and hasattr(item, "__contains__"):
+                    # Extract from mapping-like via key lookup
+                    raw_val: t.NormalizedValue = None
+                    dict_item: dict[str, t.NormalizedValue] = {}
+                    if isinstance(item, dict):
+                        for dk, dv in item.items():
+                            dict_item[str(dk)] = (
+                                FlextUtilitiesMapper.narrow_to_container(dv)
+                            )
+                    if field_name in dict_item:
+                        raw_val = dict_item[field_name]
+                    val_raw = raw_val
                 else:
                     continue
                 if isinstance(val_raw, int | float):
@@ -1353,8 +1355,11 @@ class FlextUtilitiesMapper:
         for target_key, target_spec in spec.items():
             try:
                 target_spec_mapping: Mapping[str, t.NormalizedValue] | None = None
-                if isinstance(target_spec, Mapping):
-                    target_spec_mapping = target_spec
+                if isinstance(target_spec, dict):
+                    target_spec_mapping = {
+                        str(k): FlextUtilitiesMapper.narrow_to_container(v)
+                        for k, v in target_spec.items()
+                    }
                     if "value" in target_spec_mapping:
                         value_item: t.NormalizedValue = target_spec_mapping["value"]
                         constructed[target_key] = value_item
@@ -1373,9 +1378,12 @@ class FlextUtilitiesMapper:
                     field_default = target_spec_mapping.get("default")
                     field_ops = target_spec_mapping.get("ops")
                 else:
-                    constructed[target_key] = (
-                        target_spec if not callable(target_spec) else None
+                    fallback_val: t.NormalizedValue = (
+                        FlextUtilitiesMapper.narrow_to_container(target_spec)
+                        if not callable(target_spec)
+                        else None
                     )
+                    constructed[target_key] = fallback_val
                     continue
                 if source is None:
                     constructed[target_key] = field_default
@@ -1607,7 +1615,7 @@ class FlextUtilitiesMapper:
             elif isinstance(data, Mapping):
                 current = FlextUtilitiesMapper.narrow_to_container(data)
             else:
-                current = data
+                current = FlextUtilitiesMapper.narrow_to_container(data)
             found_none_prefix = "found_none:"
             for i, part in enumerate(parts):
                 if current is None:
@@ -1785,7 +1793,7 @@ class FlextUtilitiesMapper:
                         default_value = field_config.get("default")
                         if default_value is not None:
                             result[name] = default_value
-            else:
+            elif isinstance(spec_item, str):
                 field_name: str = spec_item
                 if isinstance(obj, Mapping):
                     if field_name in obj:
@@ -2063,6 +2071,7 @@ class FlextUtilitiesMapper:
         | Mapping[str, t.NormalizedValue]
         | Mapping[str, t.NormalizedValue | BaseModel]
         | p.HasModelDump
+        | p.ValidatorSpec
         | None,
     ) -> t.NormalizedValue:
         """Safely narrow any value to t.NormalizedValue (strict container type).
@@ -2129,7 +2138,9 @@ class FlextUtilitiesMapper:
 
         """
         field_overrides_config: t.ContainerMapping = {
-            k: FlextRuntime.normalize_to_container(v)
+            k: FlextUtilitiesMapper.narrow_to_container(
+                FlextRuntime.normalize_to_container(v)
+            )
             for k, v in specific_fields.items()
         }
         raw_result: t.ContainerMapping = FlextUtilitiesMapper.process_context_data(

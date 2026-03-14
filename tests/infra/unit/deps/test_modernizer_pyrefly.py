@@ -58,7 +58,10 @@ def test_ensure_pyrefly_config_phase_apply_python_version() -> None:
     pyrefly = tool["pyrefly"]
     tm.that(isinstance(pyrefly, MutableMapping), eq=True)
     if isinstance(pyrefly, MutableMapping):
-        tm.that(cast("t.Tests.Matcher.MatcherKwargValue", pyrefly["python-version"]), eq="3.13")
+        tm.that(
+            cast("t.Tests.Matcher.MatcherKwargValue", pyrefly["python-version"]),
+            eq="3.13",
+        )
 
 
 def test_ensure_pyrefly_config_phase_apply_ignore_errors() -> None:
@@ -76,7 +79,13 @@ def test_ensure_pyrefly_config_phase_apply_ignore_errors() -> None:
     pyrefly = tool["pyrefly"]
     tm.that(isinstance(pyrefly, MutableMapping), eq=True)
     if isinstance(pyrefly, MutableMapping):
-        tm.that(cast("t.Tests.Matcher.MatcherKwargValue", pyrefly["ignore-errors-in-generated-code"]), eq=True)
+        tm.that(
+            cast(
+                "t.Tests.Matcher.MatcherKwargValue",
+                pyrefly["ignore-errors-in-generated-code"],
+            ),
+            eq=True,
+        )
 
 
 def test_ensure_pyrefly_config_phase_apply_search_path() -> None:

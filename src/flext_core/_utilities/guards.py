@@ -432,12 +432,16 @@ class FlextUtilitiesGuards:
         return bool(hasattr(value, "bind") and hasattr(value, "info"))
 
     @staticmethod
-    def is_factory(value: FlextUtilitiesGuards._GuardInput) -> TypeGuard[t.FactoryCallable]:
+    def is_factory(
+        value: FlextUtilitiesGuards._GuardInput,
+    ) -> TypeGuard[t.FactoryCallable]:
         """Check if *value* is a factory callable."""
         return callable(value)
 
     @staticmethod
-    def is_resource(value: FlextUtilitiesGuards._GuardInput) -> TypeGuard[t.ResourceCallable]:
+    def is_resource(
+        value: FlextUtilitiesGuards._GuardInput,
+    ) -> TypeGuard[t.ResourceCallable]:
         """Check if *value* is a resource callable."""
         return callable(value)
 
@@ -514,7 +518,9 @@ class FlextUtilitiesGuards:
         return bool(hasattr(value, "bind") and hasattr(value, "info"))
 
     @staticmethod
-    def is_instance_of[T](value: FlextUtilitiesGuards._GuardInput, type_cls: type[T]) -> TypeGuard[T]:
+    def is_instance_of[T](
+        value: FlextUtilitiesGuards._GuardInput, type_cls: type[T]
+    ) -> TypeGuard[T]:
         """Check if value is an instance of type_cls, handling generics.
 
         Args:

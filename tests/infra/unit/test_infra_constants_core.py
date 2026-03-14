@@ -107,11 +107,17 @@ class TestFlextInfraConstantsExcludedNamespace:
     """Tests for Excluded namespace constants."""
 
     def test_common_excluded_dirs_is_string(self) -> None:
-        excluded = cast("t.Tests.Matcher.MatcherKwargValue", infra_c.Infra.Excluded.COMMON_EXCLUDED_DIRS)
+        excluded = cast(
+            "t.Tests.Matcher.MatcherKwargValue",
+            infra_c.Infra.Excluded.COMMON_EXCLUDED_DIRS,
+        )
         tm.that(excluded, is_=str)
 
     def test_common_excluded_dirs_contains_standard_dirs(self) -> None:
-        excluded = cast("t.Tests.Matcher.MatcherKwargValue", infra_c.Infra.Excluded.COMMON_EXCLUDED_DIRS)
+        excluded = cast(
+            "t.Tests.Matcher.MatcherKwargValue",
+            infra_c.Infra.Excluded.COMMON_EXCLUDED_DIRS,
+        )
         tm.that(excluded, contains=".git")
         tm.that(excluded, contains=".venv")
         tm.that(excluded, contains="__pycache__")
@@ -124,7 +130,13 @@ class TestFlextInfraConstantsExcludedNamespace:
         tm.that(doc_excluded.issuperset(common), eq=True)
 
     def test_doc_excluded_dirs_includes_site(self) -> None:
-        tm.that(cast("t.Tests.Matcher.MatcherKwargValue", infra_c.Infra.Excluded.DOC_EXCLUDED_DIRS), contains="site")
+        tm.that(
+            cast(
+                "t.Tests.Matcher.MatcherKwargValue",
+                infra_c.Infra.Excluded.DOC_EXCLUDED_DIRS,
+            ),
+            contains="site",
+        )
 
     def test_pyproject_skip_dirs_includes_common(self) -> None:
         skip_dirs = infra_c.Infra.Excluded.PYPROJECT_SKIP_DIRS
@@ -132,7 +144,10 @@ class TestFlextInfraConstantsExcludedNamespace:
         tm.that(skip_dirs.issuperset(common), eq=True)
 
     def test_pyproject_skip_dirs_includes_flext_dirs(self) -> None:
-        skip_dirs = cast("t.Tests.Matcher.MatcherKwargValue", infra_c.Infra.Excluded.PYPROJECT_SKIP_DIRS)
+        skip_dirs = cast(
+            "t.Tests.Matcher.MatcherKwargValue",
+            infra_c.Infra.Excluded.PYPROJECT_SKIP_DIRS,
+        )
         tm.that(skip_dirs, contains=".flext-deps")
         tm.that(skip_dirs, contains=".sisyphus")
 
@@ -142,9 +157,33 @@ class TestFlextInfraConstantsExcludedNamespace:
         tm.that(check_excluded.issuperset(common), eq=True)
 
     def test_check_excluded_dirs_includes_flext_deps(self) -> None:
-        tm.that(cast("t.Tests.Matcher.MatcherKwargValue", infra_c.Infra.Excluded.CHECK_EXCLUDED_DIRS), contains=".flext-deps")
+        tm.that(
+            cast(
+                "t.Tests.Matcher.MatcherKwargValue",
+                infra_c.Infra.Excluded.CHECK_EXCLUDED_DIRS,
+            ),
+            contains=".flext-deps",
+        )
 
     def test_excluded_dirs_are_strings(self) -> None:
-        tm.that(cast("t.Tests.Matcher.MatcherKwargValue", infra_c.Infra.Excluded.DOC_EXCLUDED_DIRS), is_=str)
-        tm.that(cast("t.Tests.Matcher.MatcherKwargValue", infra_c.Infra.Excluded.PYPROJECT_SKIP_DIRS), is_=str)
-        tm.that(cast("t.Tests.Matcher.MatcherKwargValue", infra_c.Infra.Excluded.CHECK_EXCLUDED_DIRS), is_=str)
+        tm.that(
+            cast(
+                "t.Tests.Matcher.MatcherKwargValue",
+                infra_c.Infra.Excluded.DOC_EXCLUDED_DIRS,
+            ),
+            is_=str,
+        )
+        tm.that(
+            cast(
+                "t.Tests.Matcher.MatcherKwargValue",
+                infra_c.Infra.Excluded.PYPROJECT_SKIP_DIRS,
+            ),
+            is_=str,
+        )
+        tm.that(
+            cast(
+                "t.Tests.Matcher.MatcherKwargValue",
+                infra_c.Infra.Excluded.CHECK_EXCLUDED_DIRS,
+            ),
+            is_=str,
+        )

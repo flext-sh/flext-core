@@ -98,7 +98,9 @@ class TestToInfraValue:
         assert result == {"key": "value", "num": 42}
 
     def test_mapping_with_unconvertible(self) -> None:
-        assert _to_infra_value(cast("t.Infra.InfraValue", {"key": Path("/tmp")})) is None
+        assert (
+            _to_infra_value(cast("t.Infra.InfraValue", {"key": Path("/tmp")})) is None
+        )
 
     def test_unsupported_type(self) -> None:
         assert _to_infra_value(cast("t.Infra.InfraValue", Path("/tmp"))) is None

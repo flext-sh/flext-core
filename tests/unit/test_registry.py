@@ -262,9 +262,7 @@ class RegistryScenarios:
         count: int,
     ) -> list[t.HandlerLike]:
         """Create test handlers."""
-        handlers: list[t.HandlerLike] = [
-            ConcreteTestHandler() for _ in range(count)
-        ]
+        handlers: list[t.HandlerLike] = [ConcreteTestHandler() for _ in range(count)]
         return handlers
 
     @staticmethod

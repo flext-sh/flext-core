@@ -207,7 +207,8 @@ class ClassNestingRefactorRule:
                     list[t.Infra.InfraValue]
                 ).validate_python(class_nesting_raw)
                 coerced_nesting: list[t.Infra.InfraValue] = [
-                    dict(e) for e in self._coerce_entries(
+                    dict(e)
+                    for e in self._coerce_entries(
                         u.Infra.mapping_list(typed_class_nesting),
                     )
                 ]
@@ -221,7 +222,8 @@ class ClassNestingRefactorRule:
                     list[t.Infra.InfraValue]
                 ).validate_python(helper_raw)
                 coerced_helpers: list[t.Infra.InfraValue] = [
-                    dict(e) for e in self._coerce_entries(
+                    dict(e)
+                    for e in self._coerce_entries(
                         u.Infra.mapping_list(typed_helper_entries),
                     )
                 ]
@@ -432,9 +434,11 @@ class ClassNestingRefactorRule:
         for rule in rules:
             if rule.get(c.Infra.ReportKeys.SOURCE_SYMBOL, "") != source_symbol:
                 continue
-            base_chain: list[t.Infra.InfraValue] = list(u.Infra.string_list(
-                rule.get("expected_base_chain"),
-            ))
+            base_chain: list[t.Infra.InfraValue] = list(
+                u.Infra.string_list(
+                    rule.get("expected_base_chain"),
+                )
+            )
             payload["expected_base_chain"] = base_chain
             post_checks_raw = rule.get(c.Infra.ReportKeys.POST_CHECKS, [])
             post_checks: list[t.Infra.InfraValue] = []

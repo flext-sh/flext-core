@@ -71,11 +71,7 @@ def test_execute_and_register_handler_failure_paths(
         "_dispatcher",
         cast("p.CommandBus", cast("object", _FailDispatcher())),
     )
-    reg_result = registry.register_handler(
-        _as_registry_handler(
-            _Handler()
-        )
-    )
+    reg_result = registry.register_handler(_as_registry_handler(_Handler()))
     assert reg_result.is_failure
     assert reg_result.error == "dispatcher-fail"
 
@@ -109,11 +105,7 @@ def test_execute_and_register_handler_failure_paths(
         "_create_registration_details",
         _create_registration_details_none,
     )
-    fallback = registry.register_handler(
-        _as_registry_handler(
-            _Handler()
-        )
-    )
+    fallback = registry.register_handler(_as_registry_handler(_Handler()))
     assert fallback.is_success
     assert fallback.value.registration_id != ""
 
@@ -174,11 +166,7 @@ def test_summary_error_paths_and_bindings_failures(
         "register_handler",
         _register_handler_fail,
     )
-    batch = registry.register_handlers([
-        _as_registry_handler(
-            _Handler()
-        )
-    ])
+    batch = registry.register_handlers([_as_registry_handler(_Handler())])
     assert batch.is_failure
 
     class _FailBindingDispatcher:
@@ -199,22 +187,14 @@ def test_summary_error_paths_and_bindings_failures(
         "_dispatcher",
         cast("p.CommandBus", cast("object", _FailBindingDispatcher())),
     )
-    failed = registry.register_bindings({
-        str: _as_registry_handler(
-            _Handler()
-        )
-    })
+    failed = registry.register_bindings({str: _as_registry_handler(_Handler())})
     assert failed.is_failure
     setattr(
         registry,
         "_dispatcher",
         cast("p.CommandBus", cast("object", _RaiseBindingDispatcher())),
     )
-    raised = registry.register_bindings({
-        str: _as_registry_handler(
-            _Handler()
-        )
-    })
+    raised = registry.register_bindings({str: _as_registry_handler(_Handler())})
     assert raised.is_failure
 
 

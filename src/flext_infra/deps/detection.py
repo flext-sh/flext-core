@@ -105,8 +105,20 @@ class FlextInfraDependencyDetectionService:
         issues: list[t.Infra.IssueMap],
     ) -> m.Infra.Deps.DeptryIssueGroups:
         """Classify deptry issues by error code (DEP001-DEP004)."""
-        groups = m.Infra.Deps.DeptryIssueGroups()
+        groups = m.Infra.Deps.DeptryIssueGroups.model_validate({
+            "dep001": [],
+            "dep002": [],
+            "dep003": [],
+            "dep004": [],
+        })
         for item in issues:
+            normalized_item: dict[str, str] = {}
+            for key, raw_value in item.items():
+                if raw_value is None:
+                    normalized_item[str(key)] = ""
+                    continue
+                if isinstance(raw_value, (str, int, float, bool)):
+                    normalized_item[str(key)] = str(raw_value)
             error_obj = item.get(c.Infra.Toml.ERROR)
             if not isinstance(error_obj, Mapping):
                 continue
@@ -118,13 +130,13 @@ class FlextInfraDependencyDetectionService:
                 continue
             code = error_data.get(c.Infra.Toml.CODE)
             if code == "DEP001":
-                groups.dep001.append(item)
+                groups.dep001.append(normalized_item)
             elif code == "DEP002":
-                groups.dep002.append(item)
+                groups.dep002.append(normalized_item)
             elif code == "DEP003":
-                groups.dep003.append(item)
+                groups.dep003.append(normalized_item)
             elif code == "DEP004":
-                groups.dep004.append(item)
+                groups.dep004.append(normalized_item)
         return groups
 
     @staticmethod
@@ -147,9 +159,9 @@ class FlextInfraDependencyDetectionService:
         """Build a project dependency report from classified deptry issues."""
         classified = self.classify_issues(deptry_issues)
 
-        def _module_name(item: t.Infra.IssueMap) -> str | None:
+        def _module_name(item: Mapping[str, str]) -> str | None:
             val = item.get(c.Infra.Toml.MODULE)
-            return str(val) if val is not None else None
+            return val or None
 
         missing: list[str] = []
         unused: list[str] = []

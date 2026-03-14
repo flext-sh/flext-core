@@ -14,9 +14,9 @@ from flext_infra.codegen._utilities import FlextInfraUtilitiesCodegen
 from flext_infra.codegen.lazy_init import FlextInfraCodegenLazyInit
 from flext_tests import tm
 
-_scan_ast_public_defs: Callable[
-    [ast.Module, str, dict[str, tuple[str, str]]], None
-] = getattr(FlextInfraCodegenLazyInit, "_scan_ast_public_defs")
+_scan_ast_public_defs: Callable[[ast.Module, str, dict[str, tuple[str, str]]], None] = (
+    getattr(FlextInfraCodegenLazyInit, "_scan_ast_public_defs")
+)
 _should_bubble_up: Callable[[str], bool] = getattr(
     FlextInfraCodegenLazyInit, "_should_bubble_up"
 )

@@ -8,7 +8,10 @@ import pytest
 
 from flext_core import r
 from flext_infra.github import pr as pr_module
-from flext_infra.github.pr import _parse_args, _selector, main
+from flext_infra.github.pr import FlextInfraPrManager, main
+
+_parse_args = FlextInfraPrManager.parse_args
+_selector = FlextInfraPrManager.selector
 from flext_tests import tm
 from tests.infra.helpers import h
 from tests.infra.typings import t

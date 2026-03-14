@@ -244,9 +244,7 @@ class FlextInfraRefactorLegacyRemovalRule(FlextInfraRefactorRule):
             self._normalize_string_items(typed_config.get("allow_aliases", []))
         )
         allow_target_suffixes = tuple(
-            self._normalize_string_items(
-                typed_config.get("allow_target_suffixes", [])
-            ),
+            self._normalize_string_items(typed_config.get("allow_target_suffixes", [])),
         )
         transformer = FlextInfraRefactorAliasRemover(
             allow_aliases=allow_aliases,

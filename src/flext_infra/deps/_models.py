@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import Annotated
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -493,18 +494,19 @@ class ModernizerFileChanges(FlextModels.ArbitraryTypesModel):
     ]
 
 
-_DeptryScalar = str | int | float | bool | None
-
-
 class DeptryIssueGroups(BaseModel):
-    """Deptry issue grouping model by error code (DEP001-DEP004)."""
-
-    model_config = ConfigDict(extra="forbid")
-
-    dep001: list[str] = Field(default_factory=list)
-    dep002: list[str] = Field(default_factory=list)
-    dep003: list[str] = Field(default_factory=list)
-    dep004: list[str] = Field(default_factory=list)
+    dep001: list[Mapping[str, str]] = Field(
+        default_factory=list,
+    )
+    dep002: list[Mapping[str, str]] = Field(
+        default_factory=list,
+    )
+    dep003: list[Mapping[str, str]] = Field(
+        default_factory=list,
+    )
+    dep004: list[Mapping[str, str]] = Field(
+        default_factory=list,
+    )
 
 
 class DeptryReport(FlextModels.ArbitraryTypesModel):

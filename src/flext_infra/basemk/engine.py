@@ -2,21 +2,23 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
 from pathlib import Path
-from typing import override
+from typing import Protocol, override
 
 from jinja2 import (
     Environment,
     FileSystemLoader,
     StrictUndefined,
-    Template,
     TemplateError,
     select_autoescape,
 )
 
 from flext_core import r, s
 from flext_infra import c, m
+
+
+class _TemplateRenderer(Protocol):
+    def render(self, *, config: object, lint_gates_csv: str) -> str: ...
 
 
 class FlextInfraBaseMkTemplateEngine(s[str]):
@@ -74,10 +76,11 @@ class FlextInfraBaseMkTemplateEngine(s[str]):
 
     @staticmethod
     def _render_template(
-        template: Template,
-        context: Mapping[str, object],
+        template: _TemplateRenderer,
+        config: m.Infra.Basemk.BaseMkConfig,
+        lint_gates_csv: str,
     ) -> str:
-        return template.render(**context)
+        return template.render(config=config, lint_gates_csv=lint_gates_csv)
 
     @override
     def execute(self) -> r[str]:
@@ -86,15 +89,18 @@ class FlextInfraBaseMkTemplateEngine(s[str]):
     def render_all(self, config: m.Infra.Basemk.BaseMkConfig | None = None) -> r[str]:
         """Render all base.mk templates in order with the given configuration."""
         active_config = config or self._default_config()
-        context: Mapping[str, object] = {
-            c.Infra.ReportKeys.CONFIG: active_config,
-            "lint_gates_csv": ",".join(active_config.lint_gates),
-        }
+        lint_gates_csv = ",".join(active_config.lint_gates)
         sections: list[str] = []
         try:
             for template_name in c.Infra.Basemk.TEMPLATE_ORDER:
-                template = self._environment.get_template(template_name)
-                rendered = self._render_template(template, context)
+                template: _TemplateRenderer = self._environment.get_template(
+                    template_name,
+                )
+                rendered = self._render_template(
+                    template,
+                    active_config,
+                    lint_gates_csv,
+                )
                 sections.append(rendered.rstrip("\n"))
             content = "\n\n".join(sections).rstrip("\n") + "\n"
             return r[str].ok(content)

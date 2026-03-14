@@ -10,11 +10,10 @@ from pathlib import Path
 
 import pytest
 
-from flext_infra.core.skill_validator import (
-    FlextInfraSkillValidator,
-    _normalize_string_list,
-    _safe_load_yaml,
-)
+from flext_infra.core.skill_validator import FlextInfraSkillValidator
+
+_safe_load_yaml = FlextInfraSkillValidator._safe_load_yaml
+_normalize_string_list = FlextInfraSkillValidator._normalize_string_list
 from flext_tests import tm
 
 
