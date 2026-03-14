@@ -337,7 +337,9 @@ class TestuMapperConversions:
             raise AssertionError(msg)
 
     def test_convert_list_to_json(self) -> None:
-        test_list: list[dict[str, t.Tests.object]] = [{"a": SimpleObj(name="test", value=1)}]
+        test_list: list[dict[str, t.Tests.object]] = [
+            {"a": SimpleObj(name="test", value=1)}
+        ]
         res: list[dict[str, t.Tests.object]] = []
         for item in test_list:
             item_dict: dict[str, t.Tests.object] = {}

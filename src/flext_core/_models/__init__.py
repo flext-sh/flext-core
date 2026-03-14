@@ -37,6 +37,7 @@ if TYPE_CHECKING:
     from flext_core._models.handler import FlextModelsHandler
     from flext_core._models.service import FlextModelsService, FlextModelsService as s
     from flext_core._models.settings import FlextModelsConfig
+    from flext_core.typings import FlextTypes
 
 # Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
@@ -84,7 +85,7 @@ __all__ = [
 ]
 
 
-def __getattr__(name: str) -> t.ModuleExport:
+def __getattr__(name: str) -> FlextTypes.ModuleExport:
     """Lazy-load module attributes on first access (PEP 562)."""
     return lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)
 

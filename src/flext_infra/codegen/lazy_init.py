@@ -522,8 +522,8 @@ def _generate_type_checking(groups: Mapping[str, list[tuple[str, str]]]) -> list
     following isort conventions.
     """
     lines: list[str] = ["if TYPE_CHECKING:"]
+    lines.append("    from flext_core.typings import FlextTypes")
     if not groups:
-        lines.append("    pass")
         return lines
 
     def _emit_module(mod: str) -> None:
@@ -579,7 +579,7 @@ def _generate_file(
         )
     else:
         lazy_import = (
-            "from flext_core import FlextTypes, cleanup_submodule_namespace, lazy_getattr"
+            "from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr"
         )
 
     out.extend([
@@ -590,8 +590,6 @@ def _generate_file(
         lazy_import,
         "",
     ])
-    # Inject t import inside TYPE_CHECKING for -> t.ModuleExport annotation
-    # (from __future__ annotations makes it string-only at runtime, avoiding circular imports)
     out.extend(_generate_type_checking(groups))
     out.append("")
     for name, value in sorted(inline_constants.items()):

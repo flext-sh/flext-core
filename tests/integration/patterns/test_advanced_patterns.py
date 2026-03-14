@@ -372,7 +372,9 @@ class AssertionBuilder:
     ) -> None:
         """Initialize assertionbuilder:."""
         super().__init__()
-        self.data: list | dict[str, t.Tests.object] | str | tuple[t.Tests.object, ...] = data
+        self.data: (
+            list | dict[str, t.Tests.object] | str | tuple[t.Tests.object, ...]
+        ) = data
         self._assertions: list[Callable[[], None]] = []
 
     def assert_equals(self, expected: dict[str, bool | int | str]) -> AssertionBuilder:

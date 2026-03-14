@@ -22,6 +22,8 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
+    from flext_core.typings import FlextTypes
+    from tests.integration.patterns.test_advanced_patterns import TestFunction
     from tests.integration.patterns.test_architectural_patterns import (
         TestEnterprisePatterns,
         TestEventDrivenPatterns,
@@ -173,6 +175,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.integration.patterns.test_patterns_logging",
         "TestFlextLoggerUsage",
     ),
+    "TestFunction": (
+        "tests.integration.patterns.test_advanced_patterns",
+        "TestFunction",
+    ),
     "TestPerformanceAnalysis": (
         "tests.integration.patterns.test_patterns_testing",
         "TestPerformanceAnalysis",
@@ -239,6 +245,7 @@ __all__ = [
     "TestFlextLogger",
     "TestFlextLoggerIntegration",
     "TestFlextLoggerUsage",
+    "TestFunction",
     "TestPerformanceAnalysis",
     "TestPropertyBasedPatterns",
     "TestRealWorldScenarios",
@@ -252,7 +259,7 @@ __all__ = [
 ]
 
 
-def __getattr__(name: str) -> t.ModuleExport:
+def __getattr__(name: str) -> FlextTypes.ModuleExport:
     """Lazy-load module attributes on first access (PEP 562)."""
     return lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)
 

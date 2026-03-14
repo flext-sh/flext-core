@@ -91,6 +91,7 @@ if TYPE_CHECKING:
     from examples.ex_02_flext_settings import Ex02FlextSettings
     from examples.ex_03_flext_logger import Ex03FlextLogger
     from examples.ex_04_flext_dispatcher import Ex04FlextDispatcher
+    from examples.ex_05_flext_mixins import Ex05FlextMixins, Ex05FlextMixins as x
     from examples.ex_06_flext_context import Ex06FlextContext
     from examples.ex_07_flext_exceptions import (
         Ex07FlextExceptions,
@@ -117,6 +118,7 @@ if TYPE_CHECKING:
         em,
     )
     from examples.shared import Examples
+    from flext_core.typings import FlextTypes
 
 # Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
@@ -154,6 +156,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "Ex04UnknownQuery": ("examples._models.ex04", "Ex04UnknownQuery"),
     "Ex04UserCreated": ("examples._models.ex04", "Ex04UserCreated"),
     "Ex05BadProcessor": ("examples._models.ex05", "Ex05BadProcessor"),
+    "Ex05FlextMixins": ("examples.ex_05_flext_mixins", "Ex05FlextMixins"),
     "Ex05GoodProcessor": ("examples._models.ex05", "Ex05GoodProcessor"),
     "Ex05HandlerBad": ("examples._models.ex05", "Ex05HandlerBad"),
     "Ex05HandlerLike": ("examples._models.ex05", "Ex05HandlerLike"),
@@ -209,6 +212,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "main": ("examples.logging_config_once_pattern", "main"),
     "r": ("examples._models.ex01", "Ex01DemonstrationResult"),
     "s": ("examples._models.ex02", "Ex02DatabaseService"),
+    "x": ("examples.ex_05_flext_mixins", "Ex05FlextMixins"),
 }
 
 __all__ = [
@@ -243,6 +247,7 @@ __all__ = [
     "Ex04UnknownQuery",
     "Ex04UserCreated",
     "Ex05BadProcessor",
+    "Ex05FlextMixins",
     "Ex05GoodProcessor",
     "Ex05HandlerBad",
     "Ex05HandlerLike",
@@ -298,10 +303,11 @@ __all__ = [
     "main",
     "r",
     "s",
+    "x",
 ]
 
 
-def __getattr__(name: str) -> t.ModuleExport:
+def __getattr__(name: str) -> FlextTypes.ModuleExport:
     """Lazy-load module attributes on first access (PEP 562)."""
     return lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)
 

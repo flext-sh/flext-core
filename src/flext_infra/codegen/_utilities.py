@@ -384,7 +384,7 @@ class FlextInfraUtilitiesCodegen:
             lazy_import = "from flext_core._utilities.lazy import cleanup_submodule_namespace, lazy_getattr"
         else:
             lazy_import = (
-                "from flext_core import FlextTypes, cleanup_submodule_namespace, lazy_getattr"
+                "from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr"
             )
         out.extend([
             "from __future__ import annotations",

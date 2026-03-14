@@ -31,6 +31,8 @@ if TYPE_CHECKING:
     )
     from tests.fixtures.namespace_validator.rule2_valid_types import FlextTestTypes, t
 
+    from flext_core.typings import FlextTypes
+
 # Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "DEFAULT_TIMEOUT": (
@@ -88,7 +90,7 @@ __all__ = [
 ]
 
 
-def __getattr__(name: str) -> t.ModuleExport:
+def __getattr__(name: str) -> FlextTypes.ModuleExport:
     """Lazy-load module attributes on first access (PEP 562)."""
     return lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)
 

@@ -116,7 +116,9 @@ class CreateUserCommandHandler(
 ):
     """Test handler for CreateUserCommand."""
 
-    created_users: Annotated[list[dict[str, t.Tests.object]], Field(default_factory=list)]
+    created_users: Annotated[
+        list[dict[str, t.Tests.object]], Field(default_factory=list)
+    ]
 
     def __init__(self) -> None:
         """Initialize create user command handler."""
@@ -459,7 +461,9 @@ class TestFlextCommandResults:
     def test_success_result_creation(self) -> None:
         """Test creating successful command result."""
         result_data: dict[str, t.Tests.object] = {"id": "123", "username": "test"}
-        command_result: r[dict[str, t.Tests.object]] = r[dict[str, t.Tests.object]].ok(result_data)
+        command_result: r[dict[str, t.Tests.object]] = r[dict[str, t.Tests.object]].ok(
+            result_data
+        )
         if not command_result.is_success:
             msg = f"Expected True, got {command_result.is_success}"
             raise AssertionError(msg)

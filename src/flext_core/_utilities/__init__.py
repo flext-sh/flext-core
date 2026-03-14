@@ -41,6 +41,7 @@ if TYPE_CHECKING:
     from flext_core._utilities.reliability import FlextUtilitiesReliability
     from flext_core._utilities.result_helpers import ResultHelpers
     from flext_core._utilities.text import FlextUtilitiesText
+    from flext_core.typings import FlextTypes
 
 # Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
@@ -119,7 +120,7 @@ __all__ = [
 ]
 
 
-def __getattr__(name: str) -> t.ModuleExport:
+def __getattr__(name: str) -> FlextTypes.ModuleExport:
     """Lazy-load module attributes on first access (PEP 562)."""
     return lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)
 

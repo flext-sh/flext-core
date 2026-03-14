@@ -17,6 +17,7 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
+    from flext_core.typings import FlextTypes
     from flext_infra.deps._phases.consolidate_groups import ConsolidateGroupsPhase
     from flext_infra.deps._phases.ensure_coverage import EnsureCoverageConfigPhase
     from flext_infra.deps._phases.ensure_extra_paths import EnsureExtraPathsPhase
@@ -187,7 +188,7 @@ __all__ = [
 ]
 
 
-def __getattr__(name: str) -> t.ModuleExport:
+def __getattr__(name: str) -> FlextTypes.ModuleExport:
     """Lazy-load module attributes on first access (PEP 562)."""
     return lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)
 

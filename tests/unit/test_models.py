@@ -56,7 +56,9 @@ class ModelCreationScenario(BaseModel):
     model_type: Annotated[
         ModelType, Field(description="Model type under creation test")
     ]
-    field_data: Annotated[dict[str, t.Tests.object], Field(description="Model input payload")]
+    field_data: Annotated[
+        dict[str, t.Tests.object], Field(description="Model input payload")
+    ]
     expected_checks: Annotated[
         list[str], Field(description="Expected validation check labels")
     ]
@@ -731,7 +733,9 @@ class TestFlextModels:
         class TestAggregate(m.AggregateRoot):
             name: str
             handler_called: bool = False
-            handler_data: Annotated[dict[str, t.Tests.object], Field(default_factory=dict)]
+            handler_data: Annotated[
+                dict[str, t.Tests.object], Field(default_factory=dict)
+            ]
 
             def _apply_test_event(self, data: dict[str, t.Tests.object]) -> None:
                 self.handler_called = True

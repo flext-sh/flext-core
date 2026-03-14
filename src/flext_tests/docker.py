@@ -24,14 +24,13 @@ from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import ClassVar
 
-from algar_oud_mig import t
-from algar_oud_mig.typings import t
 from docker import DockerClient as DockerSDKClient, from_env as docker_from_env
 from docker.errors import DockerException, NotFound
 from docker.models.containers import Container
 from pydantic import TypeAdapter, ValidationError
 from python_on_whales import DockerClient as WhalesDockerClient
 
+from flext_core import FlextLogger, r
 from flext_tests import c, m, t
 
 docker: WhalesDockerClient = WhalesDockerClient(client_type="docker")

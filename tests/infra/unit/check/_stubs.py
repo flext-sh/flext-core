@@ -29,8 +29,12 @@ class Spy:
         side_effect: list | None = None,
     ) -> None:
         self.call_count: int = 0
-        self.call_args: tuple[tuple[object, ...], dict[str, t.Infra.InfraValue]] | None = None
-        self.call_args_list: list[tuple[tuple[object, ...], dict[str, t.Infra.InfraValue]]] = []
+        self.call_args: (
+            tuple[tuple[object, ...], dict[str, t.Infra.InfraValue]] | None
+        ) = None
+        self.call_args_list: list[
+            tuple[tuple[object, ...], dict[str, t.Infra.InfraValue]]
+        ] = []
         self.called: bool = False
         self._return_value = return_value
         self._side_effect = list(side_effect) if side_effect else None
