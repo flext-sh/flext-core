@@ -25,6 +25,7 @@ from .test_utils import assertion_helpers
 
 
 class TestsFlextUtilities(FlextTestsUtilities, FlextInfraUtilities):
+    __test__ = False
     """Utilities for flext-core tests - extends FlextTestsUtilities.
 
     Architecture: Extends FlextTestsUtilities with flext-core-specific utility

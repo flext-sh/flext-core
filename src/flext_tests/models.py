@@ -1938,7 +1938,7 @@ class FlextTestsModels(
             result: Annotated[r[TResult], Field(description="r being chained")]
 
         class TestScope(FlextModels.ArbitraryTypesModel):
-            """Runtime scope snapshot used by test helpers."""
+            __test__ = False
 
             config: Annotated[
                 Mapping[str, t.Tests.object],

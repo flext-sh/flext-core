@@ -1614,10 +1614,8 @@ class FlextUtilitiesMapper:
                 current = data
             elif isinstance(data, Mapping):
                 current = FlextUtilitiesMapper.narrow_to_container(data)
-            elif isinstance(data, (*t.CONTAINER_TYPES,)):
-                current = data
             else:
-                current = FlextUtilitiesMapper.narrow_to_container(data)
+                current = data
             found_none_prefix = "found_none:"
             for i, part in enumerate(parts):
                 if current is None:

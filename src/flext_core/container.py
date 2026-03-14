@@ -823,7 +823,7 @@ class FlextContainer(p.DI):
             registration = m.ServiceRegistration(
                 name=dispatcher_name,
                 service=dispatcher,
-                service_type=dispatcher.__class__.__name__,
+                service_type=type(dispatcher).__name__,
             )
             self._services[dispatcher_name] = registration
             if not hasattr(self._di_services, dispatcher_name):

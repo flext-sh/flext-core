@@ -73,7 +73,7 @@ class FlextModelsContainer:
             ),
         ]
         service: Annotated[
-            t.RegisterableService,
+            t.RegisterableService | t.DispatchableService,
             SkipValidation,
             Field(..., description="Service instance (protocols, models, callables)"),
         ]

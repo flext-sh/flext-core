@@ -63,36 +63,102 @@ if TYPE_CHECKING:
     from flext_infra.deps.tool_config import FlextInfraDependencyToolConfig
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
-    "ConsolidateGroupsPhase": ("flext_infra.deps._phases.consolidate_groups", "ConsolidateGroupsPhase"),
-    "EnsureCoverageConfigPhase": ("flext_infra.deps._phases.ensure_coverage", "EnsureCoverageConfigPhase"),
-    "EnsureExtraPathsPhase": ("flext_infra.deps._phases.ensure_extra_paths", "EnsureExtraPathsPhase"),
-    "EnsureFormattingToolingPhase": ("flext_infra.deps._phases.ensure_formatting", "EnsureFormattingToolingPhase"),
-    "EnsureMypyConfigPhase": ("flext_infra.deps._phases.ensure_mypy", "EnsureMypyConfigPhase"),
-    "EnsureNamespaceToolingPhase": ("flext_infra.deps._phases.ensure_namespace", "EnsureNamespaceToolingPhase"),
-    "EnsurePydanticMypyConfigPhase": ("flext_infra.deps._phases.ensure_pydantic_mypy", "EnsurePydanticMypyConfigPhase"),
-    "EnsurePyreflyConfigPhase": ("flext_infra.deps._phases.ensure_pyrefly", "EnsurePyreflyConfigPhase"),
-    "EnsurePyrightConfigPhase": ("flext_infra.deps._phases.ensure_pyright", "EnsurePyrightConfigPhase"),
-    "EnsurePytestConfigPhase": ("flext_infra.deps._phases.ensure_pytest", "EnsurePytestConfigPhase"),
-    "EnsureRuffConfigPhase": ("flext_infra.deps._phases.ensure_ruff", "EnsureRuffConfigPhase"),
-    "FlextInfraDependencyDetectionService": ("flext_infra.deps.detection", "FlextInfraDependencyDetectionService"),
-    "FlextInfraDependencyPathSync": ("flext_infra.deps.path_sync", "FlextInfraDependencyPathSync"),
-    "FlextInfraDependencyToolConfig": ("flext_infra.deps.tool_config", "FlextInfraDependencyToolConfig"),
-    "FlextInfraExtraPathsManager": ("flext_infra.deps.extra_paths", "FlextInfraExtraPathsManager"),
-    "FlextInfraInternalDependencySyncService": ("flext_infra.deps.internal_sync", "FlextInfraInternalDependencySyncService"),
-    "FlextInfraPyprojectModernizer": ("flext_infra.deps.modernizer", "FlextInfraPyprojectModernizer"),
-    "FlextInfraRuntimeDevDependencyDetector": ("flext_infra.deps.detector", "FlextInfraRuntimeDevDependencyDetector"),
-    "FlextInfraUtilitiesToml": ("flext_infra.deps.extra_paths", "FlextInfraUtilitiesToml"),
-    "InjectCommentsPhase": ("flext_infra.deps._phases.inject_comments", "InjectCommentsPhase"),
+    "ConsolidateGroupsPhase": (
+        "flext_infra.deps._phases.consolidate_groups",
+        "ConsolidateGroupsPhase",
+    ),
+    "EnsureCoverageConfigPhase": (
+        "flext_infra.deps._phases.ensure_coverage",
+        "EnsureCoverageConfigPhase",
+    ),
+    "EnsureExtraPathsPhase": (
+        "flext_infra.deps._phases.ensure_extra_paths",
+        "EnsureExtraPathsPhase",
+    ),
+    "EnsureFormattingToolingPhase": (
+        "flext_infra.deps._phases.ensure_formatting",
+        "EnsureFormattingToolingPhase",
+    ),
+    "EnsureMypyConfigPhase": (
+        "flext_infra.deps._phases.ensure_mypy",
+        "EnsureMypyConfigPhase",
+    ),
+    "EnsureNamespaceToolingPhase": (
+        "flext_infra.deps._phases.ensure_namespace",
+        "EnsureNamespaceToolingPhase",
+    ),
+    "EnsurePydanticMypyConfigPhase": (
+        "flext_infra.deps._phases.ensure_pydantic_mypy",
+        "EnsurePydanticMypyConfigPhase",
+    ),
+    "EnsurePyreflyConfigPhase": (
+        "flext_infra.deps._phases.ensure_pyrefly",
+        "EnsurePyreflyConfigPhase",
+    ),
+    "EnsurePyrightConfigPhase": (
+        "flext_infra.deps._phases.ensure_pyright",
+        "EnsurePyrightConfigPhase",
+    ),
+    "EnsurePytestConfigPhase": (
+        "flext_infra.deps._phases.ensure_pytest",
+        "EnsurePytestConfigPhase",
+    ),
+    "EnsureRuffConfigPhase": (
+        "flext_infra.deps._phases.ensure_ruff",
+        "EnsureRuffConfigPhase",
+    ),
+    "FlextInfraDependencyDetectionService": (
+        "flext_infra.deps.detection",
+        "FlextInfraDependencyDetectionService",
+    ),
+    "FlextInfraDependencyPathSync": (
+        "flext_infra.deps.path_sync",
+        "FlextInfraDependencyPathSync",
+    ),
+    "FlextInfraDependencyToolConfig": (
+        "flext_infra.deps.tool_config",
+        "FlextInfraDependencyToolConfig",
+    ),
+    "FlextInfraExtraPathsManager": (
+        "flext_infra.deps.extra_paths",
+        "FlextInfraExtraPathsManager",
+    ),
+    "FlextInfraInternalDependencySyncService": (
+        "flext_infra.deps.internal_sync",
+        "FlextInfraInternalDependencySyncService",
+    ),
+    "FlextInfraPyprojectModernizer": (
+        "flext_infra.deps.modernizer",
+        "FlextInfraPyprojectModernizer",
+    ),
+    "FlextInfraRuntimeDevDependencyDetector": (
+        "flext_infra.deps.detector",
+        "FlextInfraRuntimeDevDependencyDetector",
+    ),
+    "FlextInfraUtilitiesToml": (
+        "flext_infra.deps.extra_paths",
+        "FlextInfraUtilitiesToml",
+    ),
+    "InjectCommentsPhase": (
+        "flext_infra.deps._phases.inject_comments",
+        "InjectCommentsPhase",
+    ),
     "argparse": ("flext_infra.deps.internal_sync", "argparse"),
     "build_project_report": ("flext_infra.deps.detection", "build_project_report"),
     "classify_issues": ("flext_infra.deps.detection", "classify_issues"),
     "discover_project_paths": ("flext_infra.deps.detection", "discover_project_paths"),
     "dm": ("flext_infra.deps.detection", "dm"),
-    "get_current_typings_from_pyproject": ("flext_infra.deps.detection", "get_current_typings_from_pyproject"),
+    "get_current_typings_from_pyproject": (
+        "flext_infra.deps.detection",
+        "get_current_typings_from_pyproject",
+    ),
     "get_required_typings": ("flext_infra.deps.detection", "get_required_typings"),
     "load_dependency_limits": ("flext_infra.deps.detection", "load_dependency_limits"),
     "main": ("flext_infra.deps.path_sync", "main"),
-    "module_to_types_package": ("flext_infra.deps.detection", "module_to_types_package"),
+    "module_to_types_package": (
+        "flext_infra.deps.detection",
+        "module_to_types_package",
+    ),
     "run_deptry": ("flext_infra.deps.detection", "run_deptry"),
     "run_mypy_stub_hints": ("flext_infra.deps.detection", "run_mypy_stub_hints"),
     "run_pip_check": ("flext_infra.deps.detection", "run_pip_check"),

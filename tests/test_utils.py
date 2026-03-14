@@ -36,8 +36,8 @@ from .models import TestsFlextModels
 
 T = TypeVar("T")
 T_co = TypeVar("T_co", covariant=True)
-TestResult = r[T]
-TestResultCo = r[T_co]
+FlextTestResult = r[T]
+FlextTestResultCo = r[T_co]
 type StandardTestCase = TestsFlextModels.StandardTestCaseModel
 
 

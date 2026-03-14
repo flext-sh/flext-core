@@ -117,13 +117,14 @@ class FlextTypes:
 
     @runtime_checkable
     class DispatchableService(Protocol):
-        """Structural protocol for service objects stored in the DI container.
+        """Structural protocol for dispatch-capable service objects in the DI container.
 
-        Matches FlextDispatcher and similar dispatch-capable services
-        that are not BaseModel or Callable but expose typed dispatch methods.
+        Matches FlextDispatcher and similar services that expose a dispatch method.
+        Parameter uses Protocol bound since dispatch implementations accept varying
+        message protocols (Routable, Command, Query).
         """
 
-        def dispatch(self, message: BaseModel) -> BaseModel:
+        def dispatch(self, message: Protocol, /) -> BaseModel:
             """Dispatch a message and return the result."""
             ...
 

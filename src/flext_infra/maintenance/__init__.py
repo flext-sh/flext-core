@@ -23,7 +23,10 @@ if TYPE_CHECKING:
     )
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
-    "FlextInfraPythonVersionEnforcer": ("flext_infra.maintenance.python_version", "FlextInfraPythonVersionEnforcer"),
+    "FlextInfraPythonVersionEnforcer": (
+        "flext_infra.maintenance.python_version",
+        "FlextInfraPythonVersionEnforcer",
+    ),
     "logger": ("flext_infra.maintenance.python_version", "logger"),
 }
 
