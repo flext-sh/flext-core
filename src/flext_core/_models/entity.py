@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import contextlib
 from collections.abc import Callable, Sequence
-from typing import Annotated, Any, ClassVar, Self, TypeAlias, override
+from typing import Annotated, ClassVar, Self, TypeAlias, override
 
 from pydantic import BaseModel, Field, computed_field, model_validator
 
@@ -61,7 +61,7 @@ class FlextModelsEntity:
         ]
 
         @override
-        def __eq__(self, other: object) -> bool:
+        def __eq__(self, other) -> bool:
             """Identity-based equality for entities."""
             if not isinstance(other, BaseModel):
                 return NotImplemented
@@ -188,7 +188,7 @@ class FlextModelsEntity:
             return r[list[FlextModelsDomainEvent.Entry]].ok(events)
 
         @override
-        def model_post_init(self, __context: Any, /) -> None:
+        def model_post_init(self, __context, /) -> None:
             """Post-initialization hook to set updated_at timestamp."""
             if self.updated_at is None:
                 self.updated_at = FlextRuntime.generate_datetime_utc()
@@ -197,7 +197,7 @@ class FlextModelsEntity:
         """Base class for value objects - immutable and compared by value."""
 
         @override
-        def __eq__(self: Self, other: object) -> bool:
+        def __eq__(self: Self, other) -> bool:
             """Compare by value."""
             if not isinstance(other, BaseModel):
                 return NotImplemented

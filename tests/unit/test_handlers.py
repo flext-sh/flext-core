@@ -363,7 +363,7 @@ class TestFlextHandlers:
                 super().__init__(config=config)
 
             @override
-            def validate(self, value: object) -> r[bool]:
+            def validate_input(self, value: object) -> r[bool]:
                 _ = value
                 return r[bool].fail("Validation failed for test")
 

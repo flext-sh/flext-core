@@ -123,7 +123,7 @@ class FlextUtilitiesGuards:
     def _is_sequence(
         value: t.NormalizedValue,
     ) -> TypeGuard[Sequence[t.NormalizedValue]]:
-        """Check if value is Sequence of Any."""
+        """Check if value is Sequence of NormalizedValue."""
         return isinstance(value, (list, tuple, range))
 
     @staticmethod
@@ -161,10 +161,10 @@ class FlextUtilitiesGuards:
 
     @staticmethod
     def is_config_value(value: t.NormalizedValue) -> TypeGuard[t.NormalizedValue]:
-        """Check if value is a valid Any.
+        """Check if value is a valid config value.
 
-        Any = str | int | float | bool | datetime | None |
-                          Sequence[scalar] | Mapping[str, scalar]
+        ConfigValue = str | int | float | bool | datetime | None |
+                      Sequence[scalar] | Mapping[str, scalar]
 
         This TypeGuard enables type narrowing for simple config values.
 
@@ -172,7 +172,7 @@ class FlextUtilitiesGuards:
             value: Object to check
 
         Returns:
-            TypeGuard[Any]: True if value matches config value type
+            TypeGuard[t.NormalizedValue]: True if value matches config value type
 
         """
         if value is None:
@@ -235,7 +235,7 @@ class FlextUtilitiesGuards:
     ) -> TypeGuard[m.ConfigMap]:
         """Check if value is a valid m.ConfigMap.
 
-        m.ConfigMap = Mapping[str, Any]
+        m.ConfigMap = Mapping[str, t.NormalizedValue | BaseModel]
 
         This TypeGuard enables explicit narrowing for m.ConfigMap.
         Uses structural typing to validate at runtime.
@@ -348,7 +348,7 @@ class FlextUtilitiesGuards:
     ) -> TypeGuard[t.HandlerLike]:
         """Check if value is a valid t.HandlerLike.
 
-        t.HandlerLike = Callable[..., Any | None]
+        t.HandlerLike = Callable[..., BaseModel]
 
         This TypeGuard enables type narrowing for t.HandlerLike.
         Uses structural typing to validate at runtime.

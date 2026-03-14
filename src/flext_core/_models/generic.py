@@ -417,12 +417,12 @@ class FlextGenericModels:
             key: Literal["failed_items", "warning_items"],
             item: t.NormalizedValue | BaseModel,
         ) -> None:
-            if key not in self.metadata.root:
-                self.metadata.root[key] = []  # type: ignore[assignment]
-            raw_items = self.metadata.root.get(key, [])
-            items = raw_items if isinstance(raw_items, list) else []
-            items.append(item)  # type: ignore[arg-type]
-            self.metadata.root[key] = items  # type: ignore[assignment]
+            raw_items = self.metadata.root.get(key)
+            existing: list[t.NormalizedValue | BaseModel] = (
+                raw_items if isinstance(raw_items, list) else []
+            )
+            existing.append(item)
+            self.metadata.root[key] = existing
 
         def _upsert_skip_reason(
             self, item: t.NormalizedValue | BaseModel, reason: str

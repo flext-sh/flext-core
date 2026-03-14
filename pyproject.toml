@@ -202,7 +202,7 @@ unannotated-return = true
 disable_error_code = [
   "prop-decorator",
 ]
-mypy_path = ["src"]
+mypy_path = [ "src" ]
 plugins = [
   "pydantic.mypy",
 ]
@@ -636,6 +636,7 @@ preserve_quotes = true
 section_whitelines = 1
 whitelines = 1
 
+
 [tool.pytest.ini_options]
 addopts = [ "--strict-markers" ]
 enable_assertion_pass_hook = true
@@ -665,6 +666,7 @@ python_files = [ "*_test.py", "*_tests.py", "test_*.py" ]
 # [MANAGED] ruff
 
 # [MANAGED] pyrefly
+
 
 [tool.coverage.report]
 fail_under = 45

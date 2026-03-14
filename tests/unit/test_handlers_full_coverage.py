@@ -24,14 +24,14 @@ class _Handler(FlextHandlers[object, t.Container]):
 
 class _QueryHandler(_Handler):
     @override
-    def validate(self, value: object) -> r[bool]:
+    def validate_input(self, value: object) -> r[bool]:
         _ = value
         return r[bool].ok(True)
 
 
 class _EventHandler(_Handler):
     @override
-    def validate(self, value: object) -> r[bool]:
+    def validate_input(self, value: object) -> r[bool]:
         _ = value
         return r[bool].ok(True)
 

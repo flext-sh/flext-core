@@ -1131,7 +1131,7 @@ class FlextTestsUtilities(FlextUtilities):
                 """
                 entity = entity_class(name=name, value=value)
                 if remove_id and hasattr(entity, "unique_id"):
-                    del entity.unique_id
+                    delattr(entity, "unique_id")
                 return entity
 
             @staticmethod

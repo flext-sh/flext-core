@@ -137,7 +137,7 @@ class CreateUserCommandHandler(
         return message_type == CreateUserCommand or str(message_type) == "create_user"
 
     @override
-    def validate(self, value: object) -> r[bool]:
+    def validate_input(self, value: object) -> r[bool]:
         """Validate command using command's validate_command method."""
         if isinstance(value, CreateUserCommand):
             return value.validate_command()
@@ -191,7 +191,7 @@ class UpdateUserCommandHandler(
         return message_type == UpdateUserCommand or str(message_type) == "update_user"
 
     @override
-    def validate(self, value: object) -> r[bool]:
+    def validate_input(self, value: object) -> r[bool]:
         """Validate command using command's validate_command method."""
         if isinstance(value, UpdateUserCommand):
             return value.validate_command()
@@ -235,7 +235,7 @@ class FailingCommandHandler(FlextHandlers[FailingCommand, bool]):
         return message_type == FailingCommand or str(message_type) == "failing"
 
     @override
-    def validate(self, value: object) -> r[bool]:
+    def validate_input(self, value: object) -> r[bool]:
         """Validate command using command's validate_command method."""
         if isinstance(value, FailingCommand):
             return value.validate_command()
@@ -441,7 +441,7 @@ class TestFlextCommandHandler:
             target_user_id="123",
             updates={"name": "test"},
         )
-        result = CreateUserCommandHandler().validate(wrong_command)
+        result = CreateUserCommandHandler().validate_input(wrong_command)
         if not result.is_failure:
             msg = f"Expected True, got {result.is_failure}"
             raise AssertionError(msg)
