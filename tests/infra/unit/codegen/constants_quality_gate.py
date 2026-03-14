@@ -101,5 +101,4 @@ class TestConstantsQualityGateVerdict:
         assert "verdict" in report
         
 
-
 __all__: list[str] = []

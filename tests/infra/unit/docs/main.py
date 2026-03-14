@@ -180,7 +180,7 @@ class TestRunFix:
         apply: bool,
         expected: bool,
     ) -> None:
-        captured_kwargs: dict[str, object] = {}
+        captured_kwargs: dict[str, t.Scalar] = {}
 
         def mock_fix(
             _self: object,
@@ -193,4 +193,4 @@ class TestRunFix:
 
         monkeypatch.setattr(FlextInfraDocFixer, "fix", mock_fix)
         _run_fix(_fix_args(apply=apply))
-        tm.that(captured_kwargs.get("apply"), eq=expected)
+        assert captured_kwargs.get("apply") == expected

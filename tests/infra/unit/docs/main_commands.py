@@ -96,7 +96,7 @@ class TestRunGenerate:
     def test_run_generate_with_apply_flag(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        captured_kwargs: dict[str, object] = {}
+        captured_kwargs: dict[str, t.Scalar] = {}
 
         def mock_gen(*_a: object, **kw: t.Scalar) -> r[list[object]]:
             captured_kwargs.update(kw)
@@ -104,7 +104,7 @@ class TestRunGenerate:
 
         monkeypatch.setattr(FlextInfraDocGenerator, "generate", mock_gen)
         _run_generate(_gen_args(apply=True))
-        tm.that(captured_kwargs.get("apply"), eq=True)
+        assert captured_kwargs.get("apply") is True
 
 
 class TestRunValidate:
@@ -132,7 +132,7 @@ class TestRunValidate:
     def test_run_validate_with_check_parameter(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        captured_kwargs: dict[str, object] = {}
+        captured_kwargs: dict[str, t.Scalar] = {}
 
         def mock_val(*_a: object, **kw: t.Scalar) -> r[list[object]]:
             captured_kwargs.update(kw)
@@ -140,4 +140,4 @@ class TestRunValidate:
 
         monkeypatch.setattr(FlextInfraDocValidator, "validate", mock_val)
         _run_validate(_val_args(check="links"))
-        tm.that(captured_kwargs.get("check"), eq="links")
+        assert captured_kwargs.get("check") == "links"

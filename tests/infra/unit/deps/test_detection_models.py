@@ -21,7 +21,9 @@ class TestFlextInfraDependencyDetectionModels:
         assert groups.dep004 == []
 
     def test_deptry_report_creation(self) -> None:
-        report = dm.DeptryReport()
+        report = dm.DeptryReport(
+            missing=[], unused=[], transitive=[], dev_in_runtime=[], raw_count=0
+        )
         tm.that(report.missing, eq=[])
         tm.that(report.unused, eq=[])
         tm.that(report.transitive, eq=[])
@@ -29,13 +31,22 @@ class TestFlextInfraDependencyDetectionModels:
         tm.that(report.raw_count, eq=0)
 
     def test_project_dependency_report_creation(self) -> None:
-        deptry = dm.DeptryReport()
+        deptry = dm.DeptryReport(
+            missing=[], unused=[], transitive=[], dev_in_runtime=[], raw_count=0
+        )
         report = dm.ProjectDependencyReport(project="test-project", deptry=deptry)
         tm.that(report.project, eq="test-project")
         tm.that(report.deptry, eq=deptry)
 
     def test_typings_report_creation(self) -> None:
-        report = dm.TypingsReport()
+        report = dm.TypingsReport(
+            required_packages=[],
+            hinted=[],
+            missing_modules=[],
+            current=[],
+            to_add=[],
+            to_remove=[],
+        )
         tm.that(report.required_packages, eq=[])
         tm.that(report.hinted, eq=[])
         tm.that(report.missing_modules, eq=[])
@@ -59,41 +70,41 @@ class TestFlextInfraDependencyDetectionService:
 
 class TestToInfraValue:
     def test_none_value(self) -> None:
-        tm.that(_to_infra_value(None), eq=None)
+        assert _to_infra_value(None) is None
 
     def test_string_value(self) -> None:
-        tm.that(_to_infra_value("hello"), eq="hello")
+        assert _to_infra_value("hello") == "hello"
 
     def test_int_value(self) -> None:
-        tm.that(_to_infra_value(42), eq=42)
+        assert _to_infra_value(42) == 42
 
     def test_float_value(self) -> None:
-        tm.that(_to_infra_value(math.pi), eq=math.pi)
+        assert _to_infra_value(math.pi) == math.pi
 
     def test_bool_value(self) -> None:
-        tm.that(_to_infra_value(True), eq=True)
+        assert _to_infra_value(True) is True
 
     def test_list_of_valid_values(self) -> None:
-        tm.that(_to_infra_value(["a", 1, True]), eq=["a", 1, True])
+        assert _to_infra_value(["a", 1, True]) == ["a", 1, True]
 
     def test_list_with_unconvertible(self) -> None:
-        tm.that(_to_infra_value([Path("/tmp")]), eq=None)
+        assert _to_infra_value([Path("/tmp")]) is None
 
     def test_mapping_value(self) -> None:
         result = _to_infra_value({"key": "value", "num": 42})
-        tm.that(isinstance(result, Mapping), eq=True)
-        tm.that(result, eq={"key": "value", "num": 42})
+        assert isinstance(result, Mapping)
+        assert result == {"key": "value", "num": 42}
 
     def test_mapping_with_unconvertible(self) -> None:
-        tm.that(_to_infra_value({"key": Path("/tmp")}), eq=None)
+        assert _to_infra_value({"key": Path("/tmp")}) is None
 
     def test_unsupported_type(self) -> None:
-        tm.that(_to_infra_value(Path("/tmp")), eq=None)
+        assert _to_infra_value(Path("/tmp")) is None
 
     def test_list_with_none_item(self) -> None:
-        tm.that(_to_infra_value([None, "a"]), eq=[None, "a"])
+        assert _to_infra_value([None, "a"]) == [None, "a"]
 
     def test_mapping_with_none_value(self) -> None:
         result = _to_infra_value({"key": None})
-        tm.that(isinstance(result, Mapping), eq=True)
-        tm.that(result, eq={"key": None})
+        assert isinstance(result, Mapping)
+        assert result == {"key": None}

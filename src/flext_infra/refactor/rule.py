@@ -9,7 +9,7 @@ from pathlib import Path
 from pydantic import TypeAdapter, ValidationError
 
 from flext_core import r
-from flext_infra import c, m, u
+from flext_infra import c, m, t, u
 from flext_infra.refactor._base_rule import FlextInfraRefactorRule
 from flext_infra.refactor.rules.class_nesting import ClassNestingRefactorRule
 from flext_infra.refactor.validation import FlextInfraRefactorRuleDefinitionValidator
@@ -37,13 +37,13 @@ class FlextInfraRefactorRuleLoader:
 
     def extract_engine_file_filters(
         self,
-        config: object,
+        config: t.Infra.InfraValue,
     ) -> tuple[list[str], list[str]]:
         """Extract ignore patterns and file extensions from engine config."""
         scope = self._resolve_engine_config(config)
         return (list(scope.ignore_patterns), list(scope.file_extensions))
 
-    def extract_project_scan_dirs(self, config: object) -> list[str]:
+    def extract_project_scan_dirs(self, config: t.Infra.InfraValue) -> list[str]:
         """Extract project scan directories from engine config."""
         scope = self._resolve_engine_config(config)
         return list(scope.project_scan_dirs)
@@ -132,7 +132,7 @@ class FlextInfraRefactorRuleLoader:
 
     def _resolve_engine_config(
         self,
-        config: object,
+        config: t.Infra.InfraValue,
     ) -> m.Infra.Refactor.EngineConfig:
         config_map = self._normalize_str_object_mapping(config)
         scope_raw = config_map.get("refactor_engine")
@@ -141,8 +141,8 @@ class FlextInfraRefactorRuleLoader:
 
     @staticmethod
     def _coerce_rule_definitions(
-        value: object | None,
-    ) -> list[dict[str, object]]:
+        value: t.Infra.InfraValue | None,
+    ) -> list[dict[str, t.Infra.InfraValue]]:
         try:
             list_adapter: TypeAdapter[list[object]] = TypeAdapter(list[object])
             entries = list_adapter.validate_python(value)
@@ -159,9 +159,13 @@ class FlextInfraRefactorRuleLoader:
         return definitions
 
     @staticmethod
-    def _normalize_str_object_mapping(value: object) -> dict[str, object]:
+    def _normalize_str_object_mapping(
+        value: t.Infra.InfraValue,
+    ) -> dict[str, t.Infra.InfraValue]:
         try:
-            adapter: TypeAdapter[dict[str, object]] = TypeAdapter(dict[str, object])
+            adapter: TypeAdapter[dict[str, t.Infra.InfraValue]] = TypeAdapter(
+                dict[str, t.Infra.InfraValue]
+            )
             return adapter.validate_python(value)
         except ValidationError:
             return {}
