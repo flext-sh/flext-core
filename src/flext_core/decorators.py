@@ -729,7 +729,7 @@ class FlextDecorators:
                 try:
                     retry_args = args
                     retry_kwargs: dict[str, t.NormalizedValue | BaseModel] = {
-                        str(key): FlextRuntime.normalize_to_container(value)
+                        str(key): FlextRuntime.normalize_to_container(value)  # type: ignore[arg-type]
                         for key, value in kwargs.items()
                     }
                     retry_result = FlextDecorators._execute_retry_loop(
