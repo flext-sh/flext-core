@@ -72,7 +72,7 @@ _GUARD_PAYLOAD_DICT_ADAPTER = TypeAdapter(dict[str, t.Tests.object])
 _GUARD_PAYLOAD_LIST_ADAPTER = TypeAdapter(list[t.Tests.object])
 
 
-def _is_non_string_sequence(value: t.Tests.object) -> TypeGuard[Sequence[t.Tests.object]]:
+def _is_non_string_sequence(value: t.Tests.Matcher.MatcherKwargValue | None) -> TypeGuard[Sequence[t.Tests.object]]:
     return isinstance(value, Sequence) and (not isinstance(value, str | bytes))
 
 
@@ -94,7 +94,7 @@ def _to_test_payload(value: t.Tests.Matcher.MatcherKwargValue | None) -> t.Tests
     return str(value)
 
 
-def _as_guard_input(value: t.Tests.object) -> t.Tests.object:
+def _as_guard_input(value: t.Tests.Matcher.MatcherKwargValue | None) -> t.Tests.object:
     if isinstance(value, BaseModel | str | int | float | bool | Path):
         return value
     if value is None:
@@ -117,9 +117,9 @@ def _as_guard_input(value: t.Tests.object) -> t.Tests.object:
 
 
 def _check_has_lacks(
-    value: t.Tests.object,
-    has: Sequence[t.Tests.object] | t.Tests.object | None,
-    lacks: Sequence[t.Tests.object] | t.Tests.object | None,
+    value: t.Tests.Matcher.MatcherKwargValue | None,
+    has: t.Tests.Matcher.MatcherKwargValue | None,
+    lacks: t.Tests.Matcher.MatcherKwargValue | None,
     msg: str | None,
     *,
     as_str: bool = False,
