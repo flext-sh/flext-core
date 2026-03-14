@@ -610,7 +610,7 @@ class FlextUtilitiesConfiguration:
             return None
 
         contains_method = getattr(obj, "__contains__", None)
-        if callable(contains_method) and parameter in obj:
+        if callable(contains_method) and contains_method(parameter):
             get_method: Callable[[str], t.NormalizedValue | BaseModel | None] = getattr(
                 obj, "get", _default_get
             )

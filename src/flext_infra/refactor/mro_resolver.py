@@ -466,7 +466,10 @@ class FlextInfraRefactorMROMigrationScanner:
     ) -> m.Infra.Refactor.MROSymbolCandidate | None:
         if isinstance(stmt, ast.TypeAlias):
             symbol = stmt.name.id
-            if FlextInfraRefactorMROResolver.TYPE_CANDIDATE_PATTERN.match(symbol) is None:
+            if (
+                FlextInfraRefactorMROResolver.TYPE_CANDIDATE_PATTERN.match(symbol)
+                is None
+            ):
                 return None
             return m.Infra.Refactor.MROSymbolCandidate(
                 symbol=symbol,
@@ -479,7 +482,10 @@ class FlextInfraRefactorMROMigrationScanner:
             if not isinstance(stmt.target, ast.Name):
                 return None
             symbol = stmt.target.id
-            if FlextInfraRefactorMROResolver.TYPE_CANDIDATE_PATTERN.match(symbol) is None:
+            if (
+                FlextInfraRefactorMROResolver.TYPE_CANDIDATE_PATTERN.match(symbol)
+                is None
+            ):
                 return None
             if not FlextInfraRefactorMROMigrationScanner._is_type_alias_annotation(
                 annotation=stmt.annotation,
@@ -496,7 +502,10 @@ class FlextInfraRefactorMROMigrationScanner:
             if len(stmt.targets) != 1 or not isinstance(stmt.targets[0], ast.Name):
                 return None
             symbol = stmt.targets[0].id
-            if FlextInfraRefactorMROResolver.TYPE_CANDIDATE_PATTERN.match(symbol) is None:
+            if (
+                FlextInfraRefactorMROResolver.TYPE_CANDIDATE_PATTERN.match(symbol)
+                is None
+            ):
                 return None
             if not FlextInfraRefactorMROMigrationScanner._is_typing_factory_call(
                 expr=stmt.value,

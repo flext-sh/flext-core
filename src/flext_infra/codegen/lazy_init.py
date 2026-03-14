@@ -110,37 +110,31 @@ class FlextInfraCodegenLazyInit(s[int]):
         return errors
 
     def _find_package_dirs(self) -> list[Path]:
-        """Find all package directories that need ``__init__.py``.
+        """Find all package directories across every workspace project.
 
-        Scans ``src/``, ``tests/``, ``examples/``, ``scripts/`` for
-        directories containing ``.py`` files besides ``__init__.py``.
+        Uses ``u.Infra.iter_python_files`` with automatic project discovery
+        to scan ``src/``, ``tests/``, ``examples/``, ``scripts/`` in every
+        project that has a ``pyproject.toml`` + ``Makefile``.
 
         Returns:
             Sorted by depth (deepest first) for bottom-up processing.
 
         """
-        root_dirs = ("src", "tests", "examples", "scripts")
         pkg_dirs: set[Path] = set()
-        for root_name in root_dirs:
-            root = self._root / root_name
-            if not root.is_dir():
+        files_result = u.Infra.iter_python_files(
+            workspace_root=self._root,
+        )
+        if files_result.is_failure:
+            return []
+        for py_file in files_result.value:
+            if any(
+                part.startswith(".") or part in {"vendor", "node_modules", ".venv"}
+                for part in py_file.parts
+            ):
                 continue
-            files_result = u.Infra.iter_python_files(
-                workspace_root=self._root,
-                project_roots=[self._root],
-                src_dirs=frozenset({root_name}),
-            )
-            if files_result.is_failure:
-                continue
-            for py_file in files_result.value:
-                if any(
-                    part.startswith(".") or part in {"vendor", "node_modules", ".venv"}
-                    for part in py_file.parts
-                ):
-                    continue
-                parent = py_file.parent
-                if self._dir_has_py_files(parent):
-                    pkg_dirs.add(parent)
+            parent = py_file.parent
+            if self._dir_has_py_files(parent):
+                pkg_dirs.add(parent)
         return sorted(pkg_dirs, key=lambda p: len(p.parts), reverse=True)
 
     def _process_directory(

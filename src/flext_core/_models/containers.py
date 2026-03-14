@@ -13,7 +13,6 @@ import typing
 from collections.abc import (
     Callable,
     ItemsView,
-    Iterator,
     KeysView,
     Mapping,
     ValuesView,
@@ -108,7 +107,7 @@ class FlextModelsContainers:
             self.root.update(other)
 
         @override
-        def __iter__(self) -> Iterator[tuple[str, DictValueT]]:
+        def __iter__(self) -> typing.Generator[tuple[str, DictValueT]]:
             yield from self.root.items()
 
         def values(self) -> ValuesView[DictValueT]:

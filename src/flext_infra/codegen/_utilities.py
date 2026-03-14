@@ -587,7 +587,6 @@ class FlextInfraUtilitiesCodegen(FlextInfraCodegenTransforms):
         if inline_constants:
             out.append("")
         out.extend([
-            "# Lazy import mapping: export_name -> (module_path, attr_name)",
             "_LAZY_IMPORTS: dict[str, tuple[str, str]] = {",
         ])
         for exp in sorted(exports):

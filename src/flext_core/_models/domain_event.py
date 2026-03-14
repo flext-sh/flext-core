@@ -23,7 +23,9 @@ from flext_core._models.containers import FlextModelsContainers
 _V = FlextModelFoundation.Validators
 
 
-def _metadata_to_normalized(item: t.NormalizedValue | t.MetadataValue | None) -> t.NormalizedValue:
+def _metadata_to_normalized(
+    item: t.NormalizedValue | t.MetadataValue | None,
+) -> t.NormalizedValue:
     if item is None:
         return None
     if isinstance(item, str):

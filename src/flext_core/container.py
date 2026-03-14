@@ -820,10 +820,9 @@ class FlextContainer(p.DI):
         if not self.has_service("command_bus"):
             dispatcher = FlextDispatcher()
             dispatcher_name = "command_bus"
-            service_marker: t.RegisterableService = dispatcher.__class__.__name__
             registration = m.ServiceRegistration(
                 name=dispatcher_name,
-                service=service_marker,
+                service=dispatcher,
                 service_type=dispatcher.__class__.__name__,
             )
             self._services[dispatcher_name] = registration

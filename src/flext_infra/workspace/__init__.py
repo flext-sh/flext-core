@@ -30,19 +30,10 @@ if TYPE_CHECKING:
     from flext_infra.workspace.sync import FlextInfraSyncService, main
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
-    "FlextInfraOrchestratorService": (
-        "flext_infra.workspace.orchestrator",
-        "FlextInfraOrchestratorService",
-    ),
-    "FlextInfraProjectMigrator": (
-        "flext_infra.workspace.migrator",
-        "FlextInfraProjectMigrator",
-    ),
+    "FlextInfraOrchestratorService": ("flext_infra.workspace.orchestrator", "FlextInfraOrchestratorService"),
+    "FlextInfraProjectMigrator": ("flext_infra.workspace.migrator", "FlextInfraProjectMigrator"),
     "FlextInfraSyncService": ("flext_infra.workspace.sync", "FlextInfraSyncService"),
-    "FlextInfraWorkspaceDetector": (
-        "flext_infra.workspace.detector",
-        "FlextInfraWorkspaceDetector",
-    ),
+    "FlextInfraWorkspaceDetector": ("flext_infra.workspace.detector", "FlextInfraWorkspaceDetector"),
     "WorkspaceMode": ("flext_infra.workspace.detector", "WorkspaceMode"),
     "main": ("flext_infra.workspace.sync", "main"),
     "s": ("flext_infra.workspace.orchestrator", "FlextInfraOrchestratorService"),

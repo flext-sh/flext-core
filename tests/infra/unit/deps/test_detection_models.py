@@ -8,9 +8,10 @@ from typing import cast
 from flext_infra import t
 from flext_infra.deps.detection import (
     FlextInfraDependencyDetectionService,
-    _to_infra_value,
     dm,
 )
+
+_to_infra_value = FlextInfraDependencyDetectionService.to_infra_value
 from flext_tests import tm
 
 

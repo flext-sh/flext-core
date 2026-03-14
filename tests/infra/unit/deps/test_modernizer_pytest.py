@@ -9,7 +9,8 @@ import tomlkit
 
 from flext_infra import m
 from flext_infra.deps._phases import EnsurePytestConfigPhase
-from flext_infra.deps.tool_config import load_tool_config
+from flext_infra.deps.tool_config import FlextInfraDependencyToolConfig
+load_tool_config = FlextInfraDependencyToolConfig.load_tool_config
 from flext_tests import t, tm
 
 

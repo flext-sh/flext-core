@@ -507,6 +507,7 @@ class FlextInfraDependencyDetectionService:
 
 
 _service = FlextInfraDependencyDetectionService()
+dm = m.Infra.Deps
 
 
 def discover_project_paths(

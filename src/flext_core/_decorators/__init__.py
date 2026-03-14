@@ -21,10 +21,7 @@ if TYPE_CHECKING:
     from flext_core.typings import FlextTypes
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
-    "FactoryDecoratorsDiscovery": (
-        "flext_core._decorators.discovery",
-        "FactoryDecoratorsDiscovery",
-    ),
+    "FactoryDecoratorsDiscovery": ("flext_core._decorators.discovery", "FactoryDecoratorsDiscovery"),
 }
 
 __all__ = [

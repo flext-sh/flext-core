@@ -486,10 +486,13 @@ class FlextUtilitiesReliability:
                             )
                         continue
                     result_value = op_result.value
-                    if isinstance(
-                        result_value,
-                        (str, int, float, bool, datetime, Path, list, dict, tuple),
-                    ) or result_value is None:
+                    if (
+                        isinstance(
+                            result_value,
+                            (str, int, float, bool, datetime, Path, list, dict, tuple),
+                        )
+                        or result_value is None
+                    ):
                         current = result_value
                     else:
                         current = str(result_value)
