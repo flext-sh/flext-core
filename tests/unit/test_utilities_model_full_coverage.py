@@ -10,14 +10,14 @@ from typing import cast
 
 from pydantic import BaseModel
 
-from flext_core import c, m, r, u
+from flext_core import c, m, r, t, u
 
 from ._models import _BadCopyModel, _Cfg
 
 
 def test_merge_defaults_and_dump_paths() -> None:
     assert c.Errors.UNKNOWN_ERROR
-    assert isinstance(m.Categories(), m.Categories)
+    assert isinstance(m.Categories(categories={}), m.Categories)
     assert r[int].ok(1).is_success
     merged = u.merge_defaults(_Cfg, {"x": 1, "y": "a"}, {"x": 2})
     assert merged.is_success
@@ -39,7 +39,12 @@ def test_update_success_path_returns_ok_result() -> None:
 
 def test_normalize_to_pydantic_dict_and_value_branches() -> None:
     assert u.normalize_to_pydantic_dict(None) == {}
-    data = m.ConfigMap(root={"a": 1, "b": _Cfg(x=1), "c": [1, _Cfg(x=2)]})
+    data = m.ConfigMap(
+        root=cast(
+            "dict[str, t.NormalizedValue | BaseModel]",
+            {"a": 1, "b": _Cfg(x=1), "c": [1, _Cfg(x=2)]},
+        )
+    )
     normalized = u.normalize_to_pydantic_dict(data)
     assert normalized["a"] == 1
     assert isinstance(normalized["b"], str)
@@ -47,7 +52,12 @@ def test_normalize_to_pydantic_dict_and_value_branches() -> None:
     assert u._normalize_to_pydantic_value(True) is True
     assert u._normalize_to_pydantic_value(1) == 1
     assert u._normalize_to_pydantic_value("x") == "x"
-    list_value = u._normalize_to_pydantic_value([1, _Cfg(x=3), None])
+    list_value = u._normalize_to_pydantic_value(
+        cast(
+            "t.NormalizedValue",
+            [1, _Cfg(x=3), None],
+        )
+    )
     assert isinstance(list_value, list)
     assert list_value[0] == 1
     assert isinstance(list_value[1], str)

@@ -1,15 +1,8 @@
 """Service base for FLEXT tests.
 
-Provides two base classes:
-1. FlextTestsServiceBase - Simple base for test classes (pytest-friendly)
-2. FlextTestsUtilityBase - Extends FlextService for utility classes
-
-IMPORTANT: Test classes should use FlextTestsServiceBase (alias: s) which
-does NOT extend FlextService (Pydantic model) because pytest cannot collect
+Provides FlextTestsServiceBase — simple base for test classes (pytest-friendly).
+Does NOT extend FlextService (Pydantic model) because pytest cannot collect
 Pydantic models as test classes.
-
-Utility classes (factories, builders, validators) should use
-FlextTestsUtilityBase (alias: s) which extends FlextService and provides a default execute().
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -17,11 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import override
-
-from pydantic import BaseModel
-
-from flext_core import FlextService, r, t
+from flext_core import r
 
 
 class FlextTestsServiceBase[T]:
@@ -75,26 +64,6 @@ class FlextTestsServiceBase[T]:
         return result.value
 
 
-class FlextTestsUtilityBase[
-    TValue: t.NormalizedValue | BaseModel | list[t.NormalizedValue | BaseModel]
-](FlextService[TValue]):
-    """Base class for FLEXT test utility classes (factories, builders, validators).
-
-    Architecture: Extends FlextService for service functionality.
-    This is NOT for test classes - use FlextTestsServiceBase for tests.
-
-    Utility classes inheriting from this base get:
-    - Full FlextService functionality
-    - Generic type parameter support
-    """
-
-    @override
-    def execute(self) -> r[TValue]:
-        """Default utility execution — subclasses should override with specific logic."""
-        return r[TValue].fail(f"{type(self).__name__} must implement execute()")
-
-
 s = FlextTestsServiceBase
-ts = FlextTestsServiceBase
 
-__all__ = ["FlextTestsServiceBase", "FlextTestsUtilityBase", "s", "ts"]
+__all__ = ["FlextTestsServiceBase", "s"]

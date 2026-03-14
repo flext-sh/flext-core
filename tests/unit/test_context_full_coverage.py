@@ -105,7 +105,8 @@ def test_inactive_and_none_value_paths() -> None:
     assert ctx.has("k") is False
     ctx.remove("k")
     ctx.clear()
-    assert ctx.merge(m.ConfigMap(root={"k": "v"}).root) is ctx
+    merge_data: dict[str, t.NormalizedValue] = {"k": "v"}
+    assert ctx.merge(merge_data) is ctx
     assert ctx.validate_context().is_failure
     assert ctx.keys() == []
     assert ctx.values() == []

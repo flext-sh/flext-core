@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterator, Mapping
-from typing import cast, override
+from collections.abc import Mapping
+from typing import cast
 
 import pytest
 import structlog.contextvars
@@ -21,24 +21,6 @@ from flext_tests import t
 
 class _ModelWithNoCallableDump:
     model_dump = "bad"
-
-
-class _MappingLike(Mapping[str, object]):
-    def __init__(self, data: dict[str, t.Tests.object]) -> None:
-        super().__init__()
-        self._data = data
-
-    @override
-    def __iter__(self) -> Iterator[str]:
-        return iter(self._data)
-
-    @override
-    def __len__(self) -> int:
-        return len(self._data)
-
-    @override
-    def __getitem__(self, key: str) -> object:
-        return self._data[key]
 
 
 def test_to_general_value_dict_removed() -> None:
@@ -79,25 +61,25 @@ def test_structlog_proxy_context_var_default_when_key_missing(
 
 
 def test_context_data_normalize_and_json_checks() -> None:
-    nested = {"a": [{"b": 1}]}
+    nested: t.NormalizedValue = cast("t.NormalizedValue", {"a": [{"b": 1}]})
     normalized = FlextModelsContext.ContextData.normalize_to_general_value(nested)
     # normalize_to_general_value now delegates to normalize_to_container → m.Dict
     assert hasattr(normalized, "root")
     check_result = FlextModelsContext.ContextData.check_json_serializable(
-        cast("object", {"k": [1, "x"]})
+        cast("t.NormalizedValue | BaseModel", {"k": [1, "x"]})
     )
     assert check_result is None
     with pytest.raises(TypeError):
         FlextModelsContext.ContextData.check_json_serializable(
-            cast("object", {object()})
+            cast("t.NormalizedValue | BaseModel", {object()})
         )
-    obj = object()
+    obj = cast("t.NormalizedValue | BaseModel", object())
     with pytest.raises(TypeError):
         FlextModelsContext.ContextData.normalize_to_general_value(obj)
 
 
 def test_context_data_validate_dict_serializable_error_paths() -> None:
-    with pytest.raises(TypeError) as exc_info:
+    with pytest.raises(ValueError) as exc_info:
         _ = FlextModelsContext.ContextData.validate_dict_serializable(
             cast("m.Dict | Mapping[str, t.Scalar] | BaseModel | None", "123")
         )
@@ -134,15 +116,15 @@ def test_context_data_validate_dict_serializable_none_and_mapping() -> None:
 @pytest.mark.parametrize(
     ("input_value", "expected_result"),
     [
-        (m.Dict(root={"a": 1}), m.Dict(root={"a": 1})),
-        (m.Dict(root={"nested": {"b": 2}}), m.Dict(root={"nested": {"b": 2}})),
-        (m.Dict(root={}), m.Dict(root={})),
+        (m.Dict(root={"a": 1}), {"a": 1}),
+        (m.Dict(root={"nested": {"b": 2}}), {"nested": {"b": 2}}),
+        (m.Dict(root={}), {}),
     ],
     ids=["simple-dict", "nested-dict", "empty-dict"],
 )
 def test_context_data_validate_dict_serializable_real_dicts(
     input_value: m.Dict,
-    expected_result: m.Dict,
+    expected_result: dict[str, t.NormalizedValue],
 ) -> None:
     """Test validate_dict_serializable with real dict inputs."""
     result = FlextModelsContext.ContextData.validate_dict_serializable(input_value)
@@ -151,12 +133,12 @@ def test_context_data_validate_dict_serializable_real_dicts(
 
 def test_context_export_serializable_and_validators() -> None:
     check_result = FlextModelsContext.ContextData.check_json_serializable(
-        cast("object", {"k": [1, True]})
+        cast("t.NormalizedValue | BaseModel", {"k": [1, True]})
     )
     assert check_result is None
     with pytest.raises(TypeError):
         _ = FlextModelsContext.ContextData.check_json_serializable(
-            cast("object", {object()})
+            cast("t.NormalizedValue | BaseModel", {object()})
         )
     with pytest.raises(TypeError):
         _ = FlextModelsContext.ContextExport.validate_dict_serializable(
@@ -193,7 +175,7 @@ def test_context_export_validate_dict_serializable_mapping_and_models() -> None:
         as_mapping
     )
     assert result_mapping == {"k": "v"}
-    with pytest.raises(TypeError):
+    with pytest.raises(ValueError):
         _ = FlextModelsContext.ContextExport.validate_dict_serializable(
             cast(
                 "m.Dict | Mapping[str, t.Scalar] | BaseModel | None",
@@ -227,7 +209,7 @@ def test_context_export_statistics_validator_and_computed_fields() -> None:
     stats_model = _normalize_statistics_before(StatsModel())
     assert stats_model == {"a": 1}
     with pytest.raises(ValueError, match="Cannot normalize"):
-        _ = _normalize_statistics_before(cast("object", "x"))
+        _ = _normalize_statistics_before(cast("t.NormalizedValue | BaseModel", "x"))
     exported = m.ContextExport(data={"k": "v"}, statistics={"sets": 1})
     assert exported.total_data_items == 1
     assert exported.has_statistics is True
@@ -245,7 +227,7 @@ def test_scope_data_validators_and_errors() -> None:
     result_scope = _normalize_to_mapping(ScopeModel())
     assert result_scope == {"a": 1}
     with pytest.raises(ValueError, match="Cannot normalize"):
-        _ = _normalize_to_mapping(cast("object", 123))
+        _ = _normalize_to_mapping(cast("t.NormalizedValue | BaseModel", 123))
     result_none2 = _normalize_to_mapping(None)
     assert result_none2 == {}
     result_dict2 = _normalize_to_mapping({"a": 1})
@@ -253,7 +235,7 @@ def test_scope_data_validators_and_errors() -> None:
     result_scope2 = _normalize_to_mapping(ScopeModel())
     assert result_scope2 == {"a": 1}
     with pytest.raises(ValueError, match="Cannot normalize"):
-        _ = _normalize_to_mapping(cast("object", 123))
+        _ = _normalize_to_mapping(cast("t.NormalizedValue | BaseModel", 123))
 
 
 def test_statistics_and_custom_fields_validators() -> None:
@@ -268,7 +250,7 @@ def test_statistics_and_custom_fields_validators() -> None:
     result_none1 = _normalize_to_mapping(None)
     assert result_none1 == {}
     with pytest.raises(ValueError, match="Cannot normalize"):
-        _ = _normalize_to_mapping(cast("object", "bad"))
+        _ = _normalize_to_mapping(cast("t.NormalizedValue | BaseModel", "bad"))
     result_x2 = _normalize_to_mapping({"x": 1})
     assert result_x2 == {"x": 1}
     result_payload2 = _normalize_to_mapping(Payload())
@@ -276,7 +258,7 @@ def test_statistics_and_custom_fields_validators() -> None:
     result_none2 = _normalize_to_mapping(None)
     assert result_none2 == {}
     with pytest.raises(ValueError, match="Cannot normalize"):
-        _ = _normalize_to_mapping(cast("object", "bad"))
+        _ = _normalize_to_mapping(cast("t.NormalizedValue | BaseModel", "bad"))
 
 
 def test_context_data_metadata_normalizer_removed() -> None:

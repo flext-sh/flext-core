@@ -19,14 +19,14 @@ class TestInventoryServiceCore:
     def test_init_creates_service(self) -> None:
         """Service initializes with required attributes."""
         service = FlextInfraInventoryService()
-        tm.that(service is not None, eq=True)
+        tm.that(service, none=False)
         tm.that(hasattr(service, "_json"), eq=True)
 
     def test_generate_empty_workspace(self, tmp_path: Path) -> None:
         """Empty workspace returns success with zero scripts."""
         service = FlextInfraInventoryService()
         report = tm.ok(service.generate(tmp_path))
-        tm.that(isinstance(report, m.Infra.Core.InventoryReport), eq=True)
+        tm.that(report, is_=m.Infra.Core.InventoryReport)
         tm.that(report.total_scripts, eq=0)
 
     def test_generate_with_output_dir(self, tmp_path: Path) -> None:
@@ -121,7 +121,7 @@ class TestInventoryServiceReports:
         output_dir = tmp_path / "reports"
         output_dir.mkdir()
         report = tm.ok(service.generate(tmp_path, output_dir=output_dir))
-        tm.that(isinstance(report.reports_written, list), eq=True)
+        tm.that(report.reports_written, is_=list)
 
     def test_generate_creates_inventory_report(self, tmp_path: Path) -> None:
         """Inventory report is created with scripts."""

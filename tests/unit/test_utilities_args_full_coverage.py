@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Annotated
+from typing import Annotated, cast
 
 import pytest
 
@@ -45,7 +45,9 @@ def test_args_get_enum_params_annotated_unwrap_branch(
     def _mock_get_type_hints(
         _func: t.TypeHintSpecifier,
     ) -> dict[str, t.TypeHintSpecifier]:
-        return {"mode": Annotated[c.Cqrs.HandlerType, "meta"]}
+        return {
+            "mode": cast("t.TypeHintSpecifier", Annotated[c.Cqrs.HandlerType, "meta"])
+        }
 
     monkeypatch.setattr(
         args_module,

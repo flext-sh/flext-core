@@ -12,7 +12,7 @@ from flext_core import FlextHandlers, FlextRegistry, c, h, m, p, r, t
 from flext_tests import t as test_t
 
 
-class _Handler(FlextHandlers[object, object]):
+class _Handler(FlextHandlers[test_t.Tests.object, t.Container]):
     """Test handler implementation."""
 
     @override
@@ -21,6 +21,7 @@ class _Handler(FlextHandlers[object, object]):
             return r[t.Container].ok(message)
         return r[t.Container].fail("unsupported message")
 
+    @override
     def __call__(self, message: test_t.Tests.object) -> r[t.Container]:
         return self.handle(message)
 

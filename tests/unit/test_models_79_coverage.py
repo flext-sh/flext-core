@@ -94,10 +94,10 @@ class TestFlextModelsEntity:
         """Test entity versioning."""
 
         class Order(m.Entity):
-            domain_events: list[m.DomainEvent] = Field(default_factory=list)
             total: Decimal
 
-        order = Order(unique_id="order-1", total=Decimal("99.99"))
+        events: list[m.DomainEvent] = []
+        order = Order(unique_id="order-1", total=Decimal("99.99"), domain_events=events)
         initial_version = order.version
         assert initial_version >= 1
 
@@ -161,7 +161,9 @@ class TestFlextModelsAggregateRoot:
         class BankAccount(m.AggregateRoot):
             balance: Decimal
 
-        account = BankAccount(unique_id="acc-1", balance=Decimal("1000.00"))
+        account = BankAccount(
+            unique_id="acc-1", balance=Decimal("1000.00"), domain_events=[]
+        )
         result = account.add_domain_event(
             "MoneyDeposited",
             m.ConfigMap(root={"amount": 100}),
@@ -174,7 +176,7 @@ class TestFlextModelsAggregateRoot:
         class Order(m.AggregateRoot):
             total: Decimal
 
-        order = Order(unique_id="order-1", total=Decimal("99.99"))
+        order = Order(unique_id="order-1", total=Decimal("99.99"), domain_events=[])
         result = order.add_domain_event("OrderPlaced", m.ConfigMap(root={}))
         assert result.is_success
 
@@ -184,7 +186,7 @@ class TestFlextModelsAggregateRoot:
         class Order(m.AggregateRoot):
             status: str = "pending"
 
-        order = Order(unique_id="order-1", status="pending")
+        order = Order(unique_id="order-1", status="pending", domain_events=[])
         result = order.add_domain_event(
             "OrderCreated",
             m.ConfigMap(root={"timestamp": "2025-01-01"}),
@@ -319,12 +321,12 @@ class TestFlextModelsIntegration:
         """Test flow: Command -> Entity -> Event -> Query."""
 
         class User(m.Entity):
-            domain_events: list[m.DomainEvent] = Field(default_factory=list)
             name: str
 
+        events: list[m.DomainEvent] = []
         cmd = CreateUserCmd(user_id="user-1", name="Alice")
         assert cmd.user_id == "user-1"
-        user = User(unique_id="user-1", name="Alice")
+        user = User(unique_id="user-1", name="Alice", domain_events=events)
         assert user.name == "Alice"
         query = GetUserQuery(user_id="user-1")
         assert query.user_id == "user-1"
@@ -336,7 +338,9 @@ class TestFlextModelsIntegration:
             items_count: int = 0
             status: str = "new"
 
-        order = Order(unique_id="order-1", status="new", items_count=0)
+        order = Order(
+            unique_id="order-1", status="new", items_count=0, domain_events=[]
+        )
         assert order.status == "new"
         event_result = order.add_domain_event(
             "ItemAdded",

@@ -32,7 +32,7 @@ class TestCoreModuleInit:
 
     def test_core_lazy_imports_work(self) -> None:
         """Test that lazy imports resolve to real classes."""
-        tm.that(FlextInfraBaseMkValidator is not None, eq=True)
+        tm.that(FlextInfraBaseMkValidator, none=False)
         tm.that(hasattr(FlextInfraBaseMkValidator, "validate"), eq=True)
 
 

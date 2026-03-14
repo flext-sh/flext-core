@@ -157,7 +157,7 @@ def test_mixins_result_and_model_conversion_paths(
     model = _SvcModel(value="ok")
     assert x.normalize_to_container(model) is model
 
-    class _BadMap(Mapping[str, object]):
+    class _BadMap(Mapping[str, t.NormalizedValue]):
         @override
         def __iter__(self) -> Iterator[str]:
             return iter(["k"])
@@ -167,7 +167,7 @@ def test_mixins_result_and_model_conversion_paths(
             return 1
 
         @override
-        def __getitem__(self, _key: str) -> t.Tests.object:
+        def __getitem__(self, _key: str) -> t.NormalizedValue:
             msg = "boom"
             raise RuntimeError(msg)
 
@@ -185,13 +185,12 @@ def test_mixins_runtime_bootstrap_and_track_paths(
     )
 
     class _Service(x):
-        @override
         @classmethod
         def _runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
             return cast(
                 "p.RuntimeBootstrapOptions",
                 cast(
-                    "object",
+                    "t.Tests.object",
                     SimpleNamespace(
                         config_type=None,
                         config_overrides=None,
@@ -413,12 +412,11 @@ def test_mixins_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> None:
     )
 
     class _WireService(x):
-        @override
         @classmethod
         def _runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
             return cast(
                 "p.RuntimeBootstrapOptions",
-                cast("object", {"wire_packages": ["pkg", 1]}),
+                cast("t.Tests.object", {"wire_packages": ["pkg", 1]}),
             )
 
     _ = _WireService()._get_runtime()

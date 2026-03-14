@@ -97,7 +97,10 @@ def test_parser_safe_length_and_parse_delimited_error_paths(
     sample = "ok"
     assert sample == "ok"
     assert isinstance(c.Processing.PATTERN_TUPLE_MIN_LENGTH, int)
-    assert parser._safe_text_length(_LenRaises("x")) == "unknown"
+    assert (
+        parser._safe_text_length(cast("t.NormalizedValue", _LenRaises("x")))
+        == "unknown"
+    )
     monkeypatch.setattr(parser, "_safe_text_length", _raise_type_error_value)
     result = parser.parse_delimited("a,b", ",")
     assert result.is_success
@@ -152,7 +155,7 @@ def test_parser_pipeline_and_pattern_branches(monkeypatch: pytest.MonkeyPatch) -
     fail = parser2.apply_regex_pipeline("abc", [("a", "b")])
     assert fail.is_failure
     str_conversion_result = u()._extract_key_from_str_conversion(
-        _StrRaises(),
+        cast("t.NormalizedValue", _StrRaises()),
     )
     assert str_conversion_result.is_failure
 
@@ -172,9 +175,9 @@ def test_parser_pipeline_and_pattern_branches(monkeypatch: pytest.MonkeyPatch) -
 
     monkeypatch.setattr("builtins.hasattr", _patched_hasattr)
     assert "<object object" in parser3.get_object_key(
-        object(),
+        cast("t.NormalizedValue", object()),
     )
-    assert parser3.get_object_key(_OddNoStr()) == "_OddNoStr"
+    assert parser3.get_object_key(cast("t.NormalizedValue", _OddNoStr())) == "_OddNoStr"
     invalid_type = parser3._extract_pattern_components(
         cast("tuple[str, str, int]", cast("object", ("a", 1, 0))),
     )
@@ -202,7 +205,7 @@ def test_parser_parse_helpers_and_primitive_coercion_branches(
     assert parser._parse_normalize_str("abc", case="none") == "abc"
     assert parser._parse_result_error(r[int].ok(1), default="fallback") == "fallback"
     model_result = parser._parse_model(
-        cast("object", {"name": "ok", "count": 2, "payload": "obj"}),
+        cast("t.NormalizedValue", {"name": "ok", "count": 2, "payload": "obj"}),
         _Model,
         "field: ",
         strict=False,
@@ -286,16 +289,19 @@ def test_parser_convert_and_norm_branches(monkeypatch: pytest.MonkeyPatch) -> No
     assert parser._convert_to_str(None, default="d") == "d"
     assert (
         parser._convert_to_str(
-            _BadStr(),
+            cast("t.NormalizedValue", _BadStr()),
             default="d",
         )
         == "d"
     )
     assert parser._convert_to_bool(True, default=False) is True
-    assert parser._convert_to_bool(object(), default=True) is True
+    assert (
+        parser._convert_to_bool(cast("t.NormalizedValue", object()), default=True)
+        is True
+    )
     assert (
         parser.conv_str(
-            _BadConv(),
+            cast("t.NormalizedValue", _BadConv()),
             default="d",
         )
         == "d"
@@ -351,13 +357,13 @@ def test_parser_internal_helpers_additional_coverage() -> None:
     parser = u()
     mapped = parser._extract_key_from_mapping({"name": "n1", "id": "i1"})
     attrs = parser._extract_key_from_attributes(
-        type("Obj", (), {"id": "x1"})(),
+        cast("t.NormalizedValue", type("Obj", (), {"id": "x1"})()),
     )
     assert mapped.is_success and mapped.value == "n1"
     assert attrs.is_success and attrs.value == "x1"
     split = parser._process_escape_splitting("a\\,b,c", ",", "\\")
     assert split.is_success
-    split_val = cast("tuple[list[str], int]", split.value)
+    split_val: tuple[list[str], int] = split.value
     assert split_val[0] == ["a,b", "c"]
     assert split_val[1] == 1
     handled_none = parser._handle_pipeline_edge_cases(None, [("a", "b")])
@@ -407,10 +413,11 @@ def test_parser_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> None:
     assert failed_str is not None and failed_str.is_failure
     assert parser.convert("x", bool, cast("bool", cast("object", "d"))) == "d"
     assert parser._convert_to_int(5, default=7) == 5
-    assert parser._convert_to_float(object(), default=1.5)
+    assert parser._convert_to_float(cast("t.NormalizedValue", object()), default=1.5)
     assert (
         abs(
-            parser._convert_to_float(object(), default=1.5) - 1.5,
+            parser._convert_to_float(cast("t.NormalizedValue", object()), default=1.5)
+            - 1.5,
         )
         < 1e-09
     )

@@ -11,7 +11,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from itertools import count
-from typing import ClassVar, override
+from typing import ClassVar, cast, override
+
+from pydantic import BaseModel
 
 from flext_core import r, s, t
 
@@ -502,6 +504,7 @@ class GenericModelFactory:
             name=name,
             version=version,
             status=status,
+            metadata=m.Dict({}),
         )
 
     @staticmethod
@@ -511,8 +514,12 @@ class GenericModelFactory:
         environment: str | None = None,
     ) -> m.Configuration:
         """Create ConfigurationSnapshot."""
+        config_root = cast(
+            "dict[str, t.NormalizedValue | BaseModel]",
+            dict(config) if config else {},
+        )
         return m.Configuration.model_validate({
-            "config": m.Dict(config or {}),
+            "config": m.Dict(config_root),
             "source": source,
             "environment": environment,
         })
@@ -542,12 +549,19 @@ class GenericModelFactory:
             success_count=success,
             failure_count=failure,
             skipped_count=skipped,
+            metadata=m.Dict({}),
         )
 
     @staticmethod
     def conversion_progress() -> m.Conversion:
         """Create ConversionProgress."""
-        return m.Conversion()
+        return m.Conversion(
+            converted=[],
+            errors=[],
+            warnings=[],
+            skipped=[],
+            metadata=m.Dict({}),
+        )
 
 
 def reset_all_factories() -> None:

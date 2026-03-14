@@ -37,8 +37,7 @@ class TestRuntimeDictLike:
                 return None
 
         obj = BadDictLike()
-        obj_typed = cast("object", obj)
-        result = FlextRuntime.is_dict_like(obj_typed)
+        result = FlextRuntime.is_dict_like(cast("t.NormalizedValue", obj))
         assert result is False
 
     def test_is_dict_like_with_exception_on_items_typeerror(self) -> None:
@@ -56,8 +55,7 @@ class TestRuntimeDictLike:
                 return None
 
         obj = BadDictLike()
-        obj_typed = cast("object", obj)
-        result = FlextRuntime.is_dict_like(obj_typed)
+        result = FlextRuntime.is_dict_like(cast("t.NormalizedValue", obj))
         assert result is False
 
     def test_is_dict_like_with_userdict(self) -> None:
@@ -73,8 +71,7 @@ class TestRuntimeDictLike:
             pass
 
         obj = NotDictLike()
-        obj_typed = cast("object", obj)
-        result = FlextRuntime.is_dict_like(obj_typed)
+        result = FlextRuntime.is_dict_like(cast("t.NormalizedValue", obj))
         assert result is False
 
     def test_is_dict_like_with_missing_keys(self) -> None:
@@ -88,8 +85,7 @@ class TestRuntimeDictLike:
                 return None
 
         obj = NotDictLike()
-        obj_typed = cast("object", obj)
-        result = FlextRuntime.is_dict_like(obj_typed)
+        result = FlextRuntime.is_dict_like(cast("t.NormalizedValue", obj))
         assert result is False
 
     def test_is_dict_like_with_missing_items(self) -> None:
@@ -103,8 +99,7 @@ class TestRuntimeDictLike:
                 return None
 
         obj = NotDictLike()
-        obj_typed = cast("object", obj)
-        result = FlextRuntime.is_dict_like(obj_typed)
+        result = FlextRuntime.is_dict_like(cast("t.NormalizedValue", obj))
         assert result is False
 
     def test_is_dict_like_with_missing_get(self) -> None:
@@ -118,8 +113,7 @@ class TestRuntimeDictLike:
                 return []
 
         obj = NotDictLike()
-        obj_typed = cast("object", obj)
-        result = FlextRuntime.is_dict_like(obj_typed)
+        result = FlextRuntime.is_dict_like(cast("t.NormalizedValue", obj))
         assert result is False
 
 

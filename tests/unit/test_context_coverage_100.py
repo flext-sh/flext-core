@@ -53,14 +53,8 @@ class TestContext100Coverage:
         """Test merge with dictionary."""
         context1 = FlextContext()
         context1.set("key1", "value1").value
-        merge_data: dict[str, t.Tests.object] = {"key2": "value2", "key3": "value3"}
-        converted_data: dict[str, t.Tests.object] = {
-            k: v
-            if isinstance(v, (str, int, float, bool, type(None), list, dict))
-            else str(v)
-            for k, v in merge_data.items()
-        }
-        merged = context1.merge(converted_data)
+        merge_data: dict[str, t.NormalizedValue] = {"key2": "value2", "key3": "value3"}
+        merged = context1.merge(merge_data)
         assert isinstance(merged, FlextContext)
         result2 = merged.get("key2")
         result3 = merged.get("key3")
@@ -363,6 +357,7 @@ class TestContext100Coverage:
         scope_data = FlextModelsContext.ContextScopeData(
             scope_name="global",
             data={},
+            metadata={},
         )
         assert isinstance(scope_data.data, dict)
         assert scope_data.data == {}
@@ -385,6 +380,7 @@ class TestContext100Coverage:
         """Test ContextScopeData._validate_metadata with None."""
         scope_data = FlextModelsContext.ContextScopeData(
             scope_name="global",
+            data={},
             metadata={},
         )
         assert isinstance(scope_data.metadata, dict)

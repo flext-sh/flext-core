@@ -30,7 +30,11 @@ import pytest
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import FlextContainer, FlextContext, m
-from flext_tests import FlextTestsUtilities, t as tests_t, u
+from flext_tests import FlextTestsUtilities, u
+
+type SetGetInputValue = str | int | float | bool | list[int] | dict[str, str]
+type SetGetExpectedValue = str | int | float | bool
+type NestedDictValue = dict[str, dict[str, dict[str, dict[str, str]]]]
 
 
 class ContextOperationScenario(BaseModel):
@@ -48,17 +52,15 @@ class ContextOperationScenario(BaseModel):
 class ContextScenarios:
     """Centralized context test scenarios using FlextConstants."""
 
-    SET_GET_CASES: ClassVar[
-        list[tuple[str, tests_t.Tests.object, tests_t.Tests.object]]
-    ] = [
+    SET_GET_CASES: ClassVar[list[tuple[str, SetGetInputValue, SetGetExpectedValue]]] = [
         ("string_key", "string_value", "string_value"),
         ("int_key", 42, 42),
         ("bool_key", True, True),
-        ("list_key", [1, 2, 3], [1, 2, 3]),
-        ("dict_key", {"nested": "value"}, {"nested": "value"}),
+        ("list_key", [1, 2, 3], "[1,2,3]"),
+        ("dict_key", {"nested": "value"}, '{"nested":"value"}'),
         ("empty_string", "", ""),
-        ("empty_dict", {}, {}),
-        ("empty_list", [], []),
+        ("empty_dict", {}, "{}"),
+        ("empty_list", [], "[]"),
         ("zero", 0, 0),
         ("false_val", False, False),
     ]
@@ -66,7 +68,7 @@ class ContextScenarios:
         ("special_chars", "key!@#$%^&*()"),
         ("long_key", "k" * 1000),
     ]
-    EDGE_CASE_VALUES: ClassVar[list[tuple[str, tests_t.Tests.object]]] = [
+    EDGE_CASE_VALUES: ClassVar[list[tuple[str, str | NestedDictValue]]] = [
         ("long_value", "v" * 10000),
         (
             "complex_nested",
@@ -115,17 +117,15 @@ class TestFlextContext:
         self,
         test_context: FlextContext,
         key: str,
-        value: tests_t.Tests.object,
-        expected: tests_t.Tests.object,
+        value: SetGetInputValue,
+        expected: SetGetExpectedValue,
     ) -> None:
         """Test context set/get value operations."""
         context = test_context
         if isinstance(value, (dict, list)):
-            set_result = context.set(m.ConfigMap(root={key: value}))
-        elif isinstance(value, (str, int, float, bool)):
-            set_result = context.set(key, value)
+            set_result = context.set(m.ConfigMap.model_validate({key: value}))
         else:
-            set_result = context.set(key, str(value))
+            set_result = context.set(key, value)
         _ = u.Tests.Result.assert_success(set_result)
         expected_value = expected
         FlextTestsUtilities.Tests.ContextHelpers.assert_context_get_success(
@@ -182,22 +182,21 @@ class TestFlextContext:
     def test_context_nested_data(self, test_context: FlextContext) -> None:
         """Test context with nested data structures."""
         context = test_context
-        nested_data: dict[str, tests_t.Tests.object] = {
+        nested_data: dict[str, dict[str, str | dict[str, str]]] = {
             "user": {
                 "id": "123",
                 "profile": {"name": "John Doe", "email": "john@example.com"},
             },
         }
-        context.set(m.ConfigMap(root={"nested": nested_data})).value
+        context.set(m.ConfigMap.model_validate({"nested": nested_data})).value
         result = context.get("nested")
         _ = u.Tests.Result.assert_success(result)
         retrieved = result.value
-        assert isinstance(retrieved, m.Dict)
-        user_data = retrieved.get("user")
-        assert isinstance(user_data, m.Dict)
-        profile_data = user_data.get("profile")
-        assert isinstance(profile_data, m.Dict)
-        assert profile_data.get("name") == "John Doe"
+        assert isinstance(retrieved, str)
+        assert (
+            retrieved
+            == '{"user":{"id":"123","profile":{"name":"John Doe","email":"john@example.com"}}}'
+        )
 
     def test_context_merge(self, test_context: FlextContext) -> None:
         """Test context merging."""
@@ -353,6 +352,7 @@ class TestFlextContext:
     ) -> None:
         """Test context keys with special characters."""
         context = test_context
+        _ = key_name
         context.set(special_key, "special_value").value
         FlextTestsUtilities.Tests.ContextHelpers.assert_context_get_success(
             context,
@@ -368,15 +368,22 @@ class TestFlextContext:
         self,
         test_context: FlextContext,
         value_name: str,
-        special_value: tests_t.Tests.object,
+        special_value: str | NestedDictValue,
     ) -> None:
         """Test context with special values."""
         context = test_context
         converted_value: str | m.ConfigMap
+        expected_value: str
         if isinstance(special_value, dict):
-            converted_value = m.ConfigMap(root={f"{value_name}_key": special_value})
+            converted_value = m.ConfigMap.model_validate({
+                f"{value_name}_key": special_value
+            })
+            expected_value = (
+                '{"level1":{"level2":{"level3":{"value":"deeply_nested"}}}}'
+            )
         else:
             converted_value = str(special_value)
+            expected_value = special_value
         if isinstance(converted_value, m.ConfigMap):
             context.set(converted_value).value
         else:
@@ -386,7 +393,7 @@ class TestFlextContext:
         actual = result.value
         assert (
             actual.model_dump() if isinstance(actual, m.Dict) else actual
-        ) == special_value
+        ) == expected_value
 
     def test_context_edge_case_duplicate_keys_overwrite(
         self,

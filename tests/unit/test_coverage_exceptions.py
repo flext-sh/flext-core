@@ -463,10 +463,10 @@ class TestExceptionMetrics:
         FlextExceptions.record_exception(FlextExceptions.ConfigurationError)
         metrics = FlextExceptions.get_metrics()
         assert metrics["total_exceptions"] == 3
-        exception_counts = metrics.get("exception_counts")
-        if isinstance(exception_counts, dict):
-            assert exception_counts.get("FlextExceptions.ValidationError") == 2
-            assert exception_counts.get("FlextExceptions.ConfigurationError") == 1
+        raw_counts = metrics.root.get("exception_counts")
+        exception_counts = cast("dict[str, int]", raw_counts)
+        assert exception_counts.get("FlextExceptions.ValidationError") == 2
+        assert exception_counts.get("FlextExceptions.ConfigurationError") == 1
         assert metrics["unique_exception_types"] == 2
 
     def test_clear_metrics(self) -> None:

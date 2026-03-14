@@ -51,22 +51,41 @@ class UtilityOperationType(StrEnum):
 class UtilityTestCase(BaseModel):
     """Test case for utility operations."""
 
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
     operation: Annotated[
         UtilityOperationType, Field(description="Utility operation under test")
     ]
-    input_data: Annotated[
-        object | None, Field(default=None, description="Input data for operation")
-    ] = None
-    expected_type: Annotated[
-        type | None, Field(default=None, description="Expected output type")
-    ] = None
-    should_succeed: Annotated[
-        bool, Field(default=True, description="Whether operation should succeed")
-    ] = True
-    description: Annotated[
-        str, Field(default="", description="Scenario description")
-    ] = ""
+    input_data: t.NormalizedValue = Field(
+        default=None, description="Input data for operation"
+    )
+    expected_type: type | None = Field(default=None, description="Expected output type")
+    should_succeed: bool = Field(
+        default=True, description="Whether operation should succeed"
+    )
+    description: str = Field(default="", description="Scenario description")
+
+
+class _TestCachedObject:
+    """Mock object with cache attributes."""
+
+    def __init__(self) -> None:
+        self._cache: m.ConfigMap = m.ConfigMap(root={"key": "value"})
+        self._simple_cache: str = "cached_value"
+
+
+class _TestUncachedObject:
+    """Mock object without cache attributes."""
+
+    def __init__(self) -> None:
+        pass
+
+
+class _CustomObject:
+    """Custom serializable object."""
+
+    @override
+    def __str__(self) -> str:
+        return "custom_object"
 
 
 class UtilityScenarios:
@@ -145,7 +164,7 @@ class UtilityScenarios:
         ("generate_saga_id", None),
         ("generate_event_id", None),
     ]
-    CACHE_NORMALIZATION_CASES: ClassVar[list[tuple[object, type]]] = [
+    CACHE_NORMALIZATION_CASES: ClassVar[list[tuple[t.NormalizedValue, type]]] = [
         ({"a": 1, "b": 2}, dict),
         ([1, 2, 3], list),
         (None, type(None)),
@@ -154,46 +173,26 @@ class UtilityScenarios:
     @staticmethod
     def create_mock_config(**kwargs: t.Scalar) -> p.HasModelDump:
         """Create mock config object."""
-        result: dict[str, t.Tests.object] = {}
+        result: dict[str, t.NormalizedValue | BaseModel] = {}
         for key, value in kwargs.items():
             result[str(key)] = value
-        return cast("p.HasModelDump", cast("object", m.ConfigMap(root=result)))
+        config_map: p.HasModelDump = m.ConfigMap(root=result)
+        return config_map
 
     @staticmethod
-    def create_mock_cached_object() -> (
-        UtilityScenarios.create_mock_cached_object.TestCachedObject
-    ):
+    def create_mock_cached_object() -> _TestCachedObject:
         """Create mock object with cache attributes."""
-
-        class TestCachedObject:
-            def __init__(self) -> None:
-                self._cache: m.ConfigMap = m.ConfigMap(root={"key": "value"})
-                self._simple_cache: str = "cached_value"
-
-        return TestCachedObject()
+        return _TestCachedObject()
 
     @staticmethod
-    def create_mock_uncached_object() -> (
-        UtilityScenarios.create_mock_uncached_object.TestUncachedObject
-    ):
+    def create_mock_uncached_object() -> _TestUncachedObject:
         """Create mock object without cache attributes."""
-
-        class TestUncachedObject:
-            def __init__(self) -> None:
-                pass
-
-        return TestUncachedObject()
+        return _TestUncachedObject()
 
     @staticmethod
-    def create_custom_object() -> UtilityScenarios.create_custom_object.CustomObject:
+    def create_custom_object() -> _CustomObject:
         """Create custom serializable object."""
-
-        class CustomObject:
-            @override
-            def __str__(self) -> str:
-                return "custom_object"
-
-        return CustomObject()
+        return _CustomObject()
 
     @staticmethod
     def create_flaky_operation() -> tuple[list[int], Callable[[], r[str]]]:
@@ -335,7 +334,7 @@ class Testu(TextUtilityContract):
     )
     def test_cache_normalize_component(
         self,
-        input_data: t.Tests.object,
+        input_data: t.NormalizedValue,
         expected_type: type,
     ) -> None:
         """Test cache component normalization."""
@@ -368,7 +367,7 @@ class Testu(TextUtilityContract):
         if isinstance(obj, BaseModel):
             result = u.clear_object_cache(obj)
         else:
-            obj_dict: dict[str, t.Tests.object] = {}
+            obj_dict: dict[str, t.NormalizedValue | BaseModel] = {}
             if hasattr(obj, "__dict__"):
                 for k, v in obj.__dict__.items():
                     obj_dict[str(k)] = (
@@ -379,18 +378,18 @@ class Testu(TextUtilityContract):
                         )
                         else str(v)
                     )
-            result = u.clear_object_cache(obj_dict)
+            result = u.clear_object_cache(m.ConfigMap(root=obj_dict))
         _ = assertion_helpers.assert_flext_result_success(result)
 
     def test_cache_has_attributes_true(self) -> None:
         """Test detecting cache attributes on object with cache."""
         obj = UtilityScenarios.create_mock_cached_object()
-        assert u.has_cache_attributes(obj) is True
+        assert u.has_cache_attributes(cast("t.NormalizedValue", obj)) is True
 
     def test_cache_has_attributes_false(self) -> None:
         """Test detecting cache attributes on object without cache."""
         obj = UtilityScenarios.create_mock_uncached_object()
-        assert u.has_cache_attributes(obj) is False
+        assert u.has_cache_attributes(cast("t.NormalizedValue", obj)) is False
 
     def test_reliability_timeout_success(self) -> None:
         """Test timeout with successful operation."""

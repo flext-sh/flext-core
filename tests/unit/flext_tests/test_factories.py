@@ -43,7 +43,10 @@ class TestFactoriesHelpers:
 
         """
         if isinstance(result, r):
-            unwrapped = result.value
+            typed_r = cast(
+                "r[_BaseModel | list[_BaseModel] | Mapping[str, _BaseModel]]", result
+            )
+            unwrapped = typed_r.value
             if isinstance(unwrapped, _BaseModel):
                 return unwrapped
             if isinstance(unwrapped, list) and unwrapped:
@@ -463,7 +466,7 @@ class TestsFlextTestsFactoriesModel:
         assert isinstance(result, r)
         typed_result = cast("r[_BaseModel]", result)
         _ = assertion_helpers.assert_flext_result_success(typed_result)
-        assert isinstance(result.value, m.Tests.User)
+        assert isinstance(typed_result.value, m.Tests.User)
 
     def test_model_as_dict(self) -> None:
         """Test model returned as dict."""
@@ -552,15 +555,15 @@ class TestsFlextTestsFactoriesModel:
             as_result=True,
         )
         if isinstance(result_raw, r):
-            result = result_raw
+            result_typed: r[_BaseModel] = cast("r[_BaseModel]", result_raw)
         elif isinstance(result_raw, _BaseModel):
             msg = f"Expected r[BaseModel], got BaseModel: {type(result_raw)}"
             raise AssertionError(msg)
         else:
             msg = f"Expected r[BaseModel], got {type(result_raw)}"
             raise AssertionError(msg)
-        assert isinstance(result, r)
-        assert result.is_failure
+        assert isinstance(result_typed, r)
+        assert result_typed.is_failure
 
 
 class TestsFlextTestsFactoriesRes:

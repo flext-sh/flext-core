@@ -6,8 +6,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from pydantic import Field
-
 from flext_core import c, m
 
 
@@ -18,7 +16,6 @@ class TestEntityCoverageEdgeCases:
         """entity_id returns unique_id (line 82)."""
 
         class TestEntity(m.Entity):
-            domain_events: list[m.DomainEvent] = Field(default_factory=list)
             name: str
 
         entity = TestEntity(unique_id="test-id-123", name="test")
@@ -29,7 +26,6 @@ class TestEntityCoverageEdgeCases:
         """Logger property returns FlextRuntime.get_logger (line 87)."""
 
         class TestEntity(m.Entity):
-            domain_events: list[m.DomainEvent] = Field(default_factory=list)
             name: str
 
         entity = TestEntity(unique_id="test-id", name="test")
@@ -41,7 +37,6 @@ class TestEntityCoverageEdgeCases:
         """uncommitted_events returns list(domain_events) (line 110)."""
 
         class TestEntity(m.Entity):
-            domain_events: list[m.DomainEvent] = Field(default_factory=list)
             name: str
 
         entity = TestEntity(unique_id="test-id", name="test")
@@ -61,7 +56,6 @@ class TestEntityCoverageEdgeCases:
         """add_domain_event fails exceeding max limit (line 139)."""
 
         class TestEntry(m.Entity):
-            domain_events: list[m.DomainEvent] = Field(default_factory=list)
             name: str
 
         entry = TestEntry(unique_id="test-id", name="test")

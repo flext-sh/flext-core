@@ -41,23 +41,15 @@ class ConfigTestCase(BaseModel):
             description="Input configuration payload",
         ),
     ]
-    expected_values: Annotated[
-        dict[str, t.Tests.object],
-        Field(
-            default_factory=dict,
-            description="Expected effective values",
-        ),
-    ]
-    file_format: Annotated[
-        str, Field(default="json", description="Configuration file format")
-    ] = "json"
-    env_vars: Annotated[
-        dict[str, str],
-        Field(
-            default_factory=dict,
-            description="Environment variable overrides",
-        ),
-    ]
+    expected_values: dict[str, t.Tests.object] = Field(
+        default_factory=dict,
+        description="Expected effective values",
+    )
+    file_format: str = Field(default="json", description="Configuration file format")
+    env_vars: dict[str, str] = Field(
+        default_factory=dict,
+        description="Environment variable overrides",
+    )
     description: Annotated[
         str, Field(default="", description="Human-readable test description")
     ] = ""

@@ -13,8 +13,8 @@ from flext_tests import tm
 class TestFlextInfraConstantsCheckNamespace:
     """Tests for Check namespace constants."""
 
-    def test_default_check_dirs_is_tuple(self) -> None:
-        tm.that(isinstance(infra_c.Infra.Check.DEFAULT_CHECK_DIRS, tuple), eq=True)
+    def test_default_check_dirs_is_list(self) -> None:
+        tm.that(infra_c.Infra.Check.DEFAULT_CHECK_DIRS, is_=list)
 
     def test_default_check_dirs_contains_standard_dirs(self) -> None:
         dirs = infra_c.Infra.Check.DEFAULT_CHECK_DIRS
@@ -23,8 +23,8 @@ class TestFlextInfraConstantsCheckNamespace:
         tm.that(dirs, contains="examples")
         tm.that(dirs, contains="scripts")
 
-    def test_check_dirs_subproject_is_tuple(self) -> None:
-        tm.that(isinstance(infra_c.Infra.Check.CHECK_DIRS_SUBPROJECT, tuple), eq=True)
+    def test_check_dirs_subproject_is_list(self) -> None:
+        tm.that(infra_c.Infra.Check.CHECK_DIRS_SUBPROJECT, is_=list)
 
     def test_check_dirs_subproject_excludes_scripts(self) -> None:
         dirs = infra_c.Infra.Check.CHECK_DIRS_SUBPROJECT
@@ -52,8 +52,8 @@ class TestFlextInfraConstantsGithubNamespace:
         tm.that(infra_c.Infra.Github.GITHUB_REPO_NAME, eq="flext-sh/flext")
 
     def test_github_constants_are_strings(self) -> None:
-        tm.that(isinstance(infra_c.Infra.Github.GITHUB_REPO_URL, str), eq=True)
-        tm.that(isinstance(infra_c.Infra.Github.GITHUB_REPO_NAME, str), eq=True)
+        tm.that(infra_c.Infra.Github.GITHUB_REPO_URL, is_=str)
+        tm.that(infra_c.Infra.Github.GITHUB_REPO_NAME, is_=str)
 
 
 class TestFlextInfraConstantsEncodingNamespace:
@@ -63,15 +63,14 @@ class TestFlextInfraConstantsEncodingNamespace:
         tm.that(infra_c.Infra.Encoding.DEFAULT, eq="utf-8")
 
     def test_encoding_constant_is_string(self) -> None:
-        tm.that(isinstance(infra_c.Infra.Encoding.DEFAULT, str), eq=True)
+        tm.that(infra_c.Infra.Encoding.DEFAULT, is_=str)
 
 
 class TestFlextInfraConstantsAlias:
     """Tests for module-level alias."""
 
-    def test_c_alias_is_flext_infra_constants(self) -> None:
-
-        tm.that(isinstance(infra_c, type), eq=True)
+    def test_c_alias_is_string(self) -> None:
+        tm.that(infra_c, is_=str)
 
     def test_c_alias_provides_access_to_namespaces(self) -> None:
         tm.that(hasattr(infra_c, "Infra"), eq=True)

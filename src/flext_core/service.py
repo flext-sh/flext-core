@@ -16,7 +16,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from collections.abc import Mapping, Sequence
 from types import ModuleType
-from typing import Annotated, override
+from typing import override
 
 from pydantic import (
     BaseModel,
@@ -80,9 +80,7 @@ class FlextService[
     )
     # --- Service Bootstrap Configuration ---
     config_type: type[FlextSettings] | None = Field(default=None, exclude=True)
-    config_overrides: Mapping[str, t.Scalar] | None = Field(
-        default=None, exclude=True
-    )
+    config_overrides: Mapping[str, t.Scalar] | None = Field(default=None, exclude=True)
     initial_context: FlextContext | None = Field(default=None, exclude=True)
     subproject: str | None = Field(default=None, exclude=True)
     services: Mapping[str, t.RegisterableService] | None = Field(
@@ -229,8 +227,13 @@ class FlextService[
         container_overrides = self.container_overrides or (
             bootstrap_opts.container_overrides if bootstrap_opts is not None else None
         )
-        wire_modules = self.wire_modules or (
+        raw_wire_modules = self.wire_modules or (
             bootstrap_opts.wire_modules if bootstrap_opts is not None else None
+        )
+        wire_modules: Sequence[ModuleType] | None = (
+            [mod for mod in raw_wire_modules if isinstance(mod, ModuleType)]
+            if raw_wire_modules is not None
+            else None
         )
         wire_packages = self.wire_packages or (
             bootstrap_opts.wire_packages if bootstrap_opts is not None else None

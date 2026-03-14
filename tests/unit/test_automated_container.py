@@ -7,6 +7,7 @@ type-system-architecture.md rules with real functionality testing.
 from __future__ import annotations
 
 from collections.abc import Mapping
+from typing import cast
 
 import pytest
 
@@ -129,8 +130,9 @@ class TestAutomatedFlextContainer:
         if callable(cleanup):
             cleanup_result = cleanup()
             if isinstance(cleanup_result, r):
+                typed_cleanup = cast("r[t.Tests.object]", cleanup_result)
                 _ = assertion_helpers.assert_flext_result_success(
-                    cleanup_result,
+                    typed_cleanup,
                     "FlextContainer cleanup failed",
                 )
 
@@ -149,30 +151,33 @@ class TestAutomatedFlextContainer:
             if callable(process):
                 result = process(dict(input_data))
                 if isinstance(result, r):
-                    if result.is_success:
-                        return r[t.Container].ok(str(result.value))
+                    typed_result = cast("r[t.Tests.object]", result)
+                    if typed_result.is_success:
+                        return r[t.Container].ok(str(typed_result.value))
                     return r[t.Container].fail(
-                        result.error or "FlextContainer process failed"
+                        typed_result.error or "FlextContainer process failed"
                     )
                 return r[t.Container].ok(str(result))
             execute = getattr(instance, "execute", None)
             if callable(execute):
                 result = execute(dict(input_data))
                 if isinstance(result, r):
-                    if result.is_success:
-                        return r[t.Container].ok(str(result.value))
+                    typed_result = cast("r[t.Tests.object]", result)
+                    if typed_result.is_success:
+                        return r[t.Container].ok(str(typed_result.value))
                     return r[t.Container].fail(
-                        result.error or "FlextContainer execute failed"
+                        typed_result.error or "FlextContainer execute failed"
                     )
                 return r[t.Container].ok(str(result))
             handle = getattr(instance, "handle", None)
             if callable(handle):
                 result = handle(dict(input_data))
                 if isinstance(result, r):
-                    if result.is_success:
-                        return r[t.Container].ok(str(result.value))
+                    typed_result = cast("r[t.Tests.object]", result)
+                    if typed_result.is_success:
+                        return r[t.Container].ok(str(typed_result.value))
                     return r[t.Container].fail(
-                        result.error or "FlextContainer handle failed"
+                        typed_result.error or "FlextContainer handle failed"
                     )
                 return r[t.Container].ok(str(result))
             return r[t.Container].ok(str(instance))

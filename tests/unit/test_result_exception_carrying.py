@@ -21,6 +21,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Sized
+from typing import cast
 
 import pytest
 from pydantic import BaseModel, ValidationError
@@ -82,7 +83,9 @@ class TestFailWithException:
         )
         assert result.is_failure
         assert result.error == error_msg
-        assert result.error_data == m.ConfigMap(root=error_data)
+        assert result.error_data == m.ConfigMap(
+            root=cast("dict[str, t.NormalizedValue | BaseModel]", error_data)
+        )
         assert result.exception is exc
 
     def test_fail_with_none_error_and_exception(self) -> None:

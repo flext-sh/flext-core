@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import time
 from collections.abc import Mapping
+from typing import cast
 
 import pytest
 
@@ -126,8 +127,9 @@ class TestAutomatedFlextHandlers:
         if callable(cleanup):
             cleanup_result = cleanup()
             if isinstance(cleanup_result, r):
+                typed_cleanup = cast("r[t.Tests.object]", cleanup_result)
                 _ = assertion_helpers.assert_flext_result_success(
-                    cleanup_result,
+                    typed_cleanup,
                     "h cleanup failed",
                 )
 

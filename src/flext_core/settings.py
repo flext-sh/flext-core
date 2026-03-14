@@ -333,14 +333,14 @@ class FlextSettings(BaseSettings, FlextRuntime):
                 default=c.Platform.ENV_PREFIX,
                 description="Environment variable prefix for settings resolution",
             ),
-        ]
+        ] = c.Platform.ENV_PREFIX
         env_file: Annotated[
             str | None,
             Field(
                 default=None,
                 description="Path to .env file for environment variable loading",
             ),
-        ]
+        ] = None
 
         def create_config(self) -> BaseSettings:
             """Create configuration instance."""

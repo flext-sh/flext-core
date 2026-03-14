@@ -13,13 +13,14 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import operator
+from collections.abc import Mapping
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Annotated, cast
 
 from pydantic import BaseModel, Field
 
-from flext_core import m, u
+from flext_core import m, t as core_t, u
 from flext_tests import t
 
 from ..test_utils import assertion_helpers
@@ -80,10 +81,6 @@ class _IntConvertOp(BaseModel):
     """Converter that wraps int() builtin for type-safe convert testing."""
 
     def __call__(self, value: float | bool | str) -> int:
-        if isinstance(value, (int, float, bool)):
-            return int(value)
-        if isinstance(value, str):
-            return int(value)
         return int(value)
 
 
@@ -129,14 +126,16 @@ class TestuMapperExtract:
 
     def test_extract_array_index(self) -> None:
         """Test array indexing."""
-        data = {"items": [1, 2, 3]}
+        data: dict[str, core_t.NormalizedValue] = {"items": [1, 2, 3]}
         result = u.extract(data, "items[1]")
         _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value == 2
 
     def test_extract_array_index_nested(self) -> None:
         """Test nested array indexing."""
-        data = {"users": [{"name": "alice"}, {"name": "bob"}]}
+        data: dict[str, core_t.NormalizedValue] = {
+            "users": [{"name": "alice"}, {"name": "bob"}]
+        }
         result = u.extract(data, "users[1].name")
         _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value == "bob"
@@ -157,7 +156,7 @@ class TestuMapperExtract:
 
     def test_extract_array_index_error(self) -> None:
         """Test invalid array index."""
-        data = {"items": [1]}
+        data: dict[str, core_t.NormalizedValue] = {"items": [1]}
         result = u.extract(data, "items[5]", required=True)
         _ = assertion_helpers.assert_flext_result_failure(result)
         msg = str(result.error)
@@ -286,21 +285,20 @@ class TestuMapperConversions:
 
     def test_convert_to_json_value(self) -> None:
         obj = SimpleObj(name="test", value=1)
-        payload = {"obj": obj}
+        payload: dict[str, t.Tests.object] = {"obj": obj}
         res: dict[str, t.Tests.object] = {}
         for key, val in payload.items():
             if isinstance(val, BaseModel):
                 res[key] = val.model_dump(mode="json")
             else:
                 res[key] = val
-        assert isinstance(res, dict)
         assert "obj" in res
         assert res["obj"] == {"name": "test", "value": 1}
 
     def test_convert_to_json_safe(self) -> None:
         obj = SimpleObj(name="test", value=1)
         now = datetime(2026, 3, 12, 10, 30, 45, tzinfo=UTC)
-        payload = {
+        payload: dict[str, t.Tests.object] = {
             "obj": obj,
             "path": Path("/tmp/example"),
             "when": now,
@@ -317,7 +315,6 @@ class TestuMapperConversions:
             else:
                 res[key] = val
 
-        assert isinstance(res, dict)
         assert res["obj"] == {"name": "test", "value": 1}
         assert res["path"] == "/tmp/example"
         assert res["when"] == "2026-03-12T10:30:45+00:00"
@@ -330,11 +327,7 @@ class TestuMapperConversions:
                 res[key] = val.model_dump(mode="json")
             else:
                 res[key] = val
-        if isinstance(res, dict):
-            assert res["a"] == {"name": "test", "value": 1}
-        else:
-            msg = "Expected dict result"
-            raise AssertionError(msg)
+        assert res["a"] == {"name": "test", "value": 1}
 
     def test_convert_list_to_json(self) -> None:
         test_list: list[dict[str, t.Tests.object]] = [
@@ -349,11 +342,7 @@ class TestuMapperConversions:
                 else:
                     item_dict[key] = val
             res.append(item_dict)
-        if isinstance(res, list) and isinstance(res[0], dict):
-            assert res[0]["a"] == {"name": "test", "value": 1}
-        else:
-            msg = "Expected list of dicts result"
-            raise AssertionError(msg)
+        assert res[0]["a"] == {"name": "test", "value": 1}
 
 
 class TestuMapperBuild:
@@ -361,26 +350,32 @@ class TestuMapperBuild:
 
     def test_build_pipeline(self) -> None:
         """Test build pipeline."""
-        ops = {
-            "ensure": "list",
-            "map": _DOUBLE_OP,
-            "filter": _GT_TWO_OP,
-        }
+        ops = cast(
+            "Mapping[str, core_t.NormalizedValue | core_t.MapperCallable]",
+            {
+                "ensure": "list",
+                "map": _DOUBLE_OP,
+                "filter": _GT_TWO_OP,
+            },
+        )
         res = u.build([1, 2, 3, 4], ops=ops)
         assert res == [6, 8]
 
     def test_build_all_ops(self) -> None:
         """Test all build operations."""
-        input_data = [1, 2, 1, 3, 4]
-        ops = {
-            "ensure": "list",
-            "filter": _GT_TWO_OP,
-            "map": _TIMES_TEN_OP,
-            "process": _PLUS_FIVE_OP,
-            "sort": True,
-            "unique": True,
-            "slice": (0, 2),
-        }
+        input_data: list[core_t.NormalizedValue] = [1, 2, 1, 3, 4]
+        ops = cast(
+            "Mapping[str, core_t.NormalizedValue | core_t.MapperCallable]",
+            {
+                "ensure": "list",
+                "filter": _GT_TWO_OP,
+                "map": _TIMES_TEN_OP,
+                "process": _PLUS_FIVE_OP,
+                "sort": True,
+                "unique": True,
+                "slice": (0, 2),
+            },
+        )
         res = u.build(input_data, ops=ops)
         assert res == [35, 45]
 
@@ -392,7 +387,10 @@ class TestuMapperBuild:
 
     def test_build_group(self) -> None:
         """Test build group - keys are converted to strings for ConfigurationDict."""
-        ops = {"group": _GROUP_LEN_OP}
+        ops = cast(
+            "Mapping[str, core_t.NormalizedValue | core_t.MapperCallable]",
+            {"group": _GROUP_LEN_OP},
+        )
         res = u.build(["cat", "dog", "ant"], ops=ops)
         assert res == {"3": ["cat", "dog", "ant"]}
 
@@ -409,25 +407,26 @@ class TestuMapperBuild:
 
     def test_fields_multi(self) -> None:
         """Test fields multi extraction."""
-        data: dict[str, t.Tests.object] = {"a": 1, "b": 2}
-        spec: dict[str, t.Tests.object] = {"a": None, "b": None}
+        data: dict[str, core_t.NormalizedValue] = {"a": 1, "b": 2}
+        spec: dict[str, core_t.NormalizedValue] = {"a": None, "b": None}
         res = u.fields_multi(data, spec)
         assert res == {"a": 1, "b": 2}
 
     def test_construct(self) -> None:
         """Test construct."""
-        source: dict[str, t.Tests.object] = {
+        source: dict[str, core_t.NormalizedValue | BaseModel] = {
             "user_name": "john",
             "user_age": 30,
         }
-        spec: dict[str, t.Tests.object] = {
-            "name": "user_name",
-            "age": "user_age",
-            "role": {"value": "REDACTED_LDAP_BIND_PASSWORD"},
-        }
-        res = u.construct(
-            spec, m.ConfigMap(root=cast("dict[str, t.Container | BaseModel]", source))
+        spec: Mapping[str, core_t.NormalizedValue | core_t.MapperCallable] = cast(
+            "Mapping[str, core_t.NormalizedValue | core_t.MapperCallable]",
+            {
+                "name": "user_name",
+                "age": "user_age",
+                "role": {"value": "REDACTED_LDAP_BIND_PASSWORD"},
+            },
         )
+        res = u.construct(spec, m.ConfigMap(root=source))
         assert res == {"name": "john", "age": 30, "role": "REDACTED_LDAP_BIND_PASSWORD"}
 
 
@@ -446,45 +445,64 @@ class TestuMapperAdvanced:
 
     def test_convert_exception(self) -> None:
         """Test build convert exception handling."""
-        ops: dict[str, t.Tests.object] = {
-            "convert": _INT_CONVERT_OP,
-            "convert_default": 0,
-        }
+        ops = cast(
+            "Mapping[str, core_t.NormalizedValue | core_t.MapperCallable]",
+            {
+                "convert": _INT_CONVERT_OP,
+                "convert_default": 0,
+            },
+        )
         res = u.build("invalid", ops=ops)
         assert res == 0
-        ops_default: dict[str, t.Tests.object] = {
-            "convert": _INT_CONVERT_OP,
-            "convert_default": 10,
-        }
+        ops_default = cast(
+            "Mapping[str, core_t.NormalizedValue | core_t.MapperCallable]",
+            {
+                "convert": _INT_CONVERT_OP,
+                "convert_default": 10,
+            },
+        )
         res = u.build("invalid", ops=ops_default)
         assert res == 10
 
     def test_transform_options(self) -> None:
         """Test build transform options."""
-        data: dict[str, t.Tests.object] = {"a": "UPPER", "b": None, "c": ""}
-        ops: dict[str, t.Tests.object] = {
-            "transform": {"normalize": True, "strip_none": True, "strip_empty": True},
-        }
+        data: dict[str, core_t.NormalizedValue] = {"a": "UPPER", "b": None, "c": ""}
+        ops = cast(
+            "Mapping[str, core_t.NormalizedValue | core_t.MapperCallable]",
+            {
+                "transform": {
+                    "normalize": True,
+                    "strip_none": True,
+                    "strip_empty": True,
+                },
+            },
+        )
         res = u.build(data, ops=ops)
         assert res == {"a": "UPPER"}
 
     def test_build_sort_complex(self) -> None:
         """Test build sort with callable and string."""
-        data: list[dict[str, t.Tests.object]] = [{"a": 2}, {"a": 1}]
-        ops_sort: dict[str, t.Tests.object] = {"sort": "a"}
+        data: list[core_t.NormalizedValue] = [{"a": 2}, {"a": 1}]
+        ops_sort = cast(
+            "Mapping[str, core_t.NormalizedValue | core_t.MapperCallable]",
+            {"sort": "a"},
+        )
         res = u.build(data, ops=ops_sort)
         assert isinstance(res, list) and len(res) > 0
         assert isinstance(res[0], dict) and res[0].get("a") == 1
-        ops_getter: dict[str, t.Tests.object] = {
-            "sort": _GET_KEY_A_OP,
-        }
+        ops_getter = cast(
+            "Mapping[str, core_t.NormalizedValue | core_t.MapperCallable]",
+            {
+                "sort": _GET_KEY_A_OP,
+            },
+        )
         res = u.build(data, ops=ops_getter)
         assert isinstance(res, list) and len(res) > 0
         assert isinstance(res[0], dict) and res[0].get("a") == 1
 
     def test_build_unique(self) -> None:
         """Test build unique."""
-        data: list[int] = [1, 2, 1, 3]
+        data: list[core_t.NormalizedValue] = [1, 2, 1, 3]
         res = u.build(data, ops={"unique": True})
         assert res == [1, 2, 3]
 

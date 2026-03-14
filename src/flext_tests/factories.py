@@ -25,10 +25,12 @@ from typing import Never, cast, override
 
 from pydantic import BaseModel, TypeAdapter, ValidationError
 
-from flext_core import r
-from flext_tests import FlextTestsUtilityBase as s, c, m, t, u
+from flext_core import FlextService, r
+from flext_tests import c, m, t, u
 
-_TEST_CONTAINER_LIST_ADAPTER = TypeAdapter(list)
+_TEST_CONTAINER_LIST_ADAPTER: TypeAdapter[list[t.Tests.object]] = TypeAdapter(
+    list[t.Tests.object]
+)
 _TEST_CONTAINER_DICT_ADAPTER = TypeAdapter(dict[str, t.Tests.object])
 
 
@@ -43,6 +45,23 @@ def _to_payload_value(value: object) -> t.Tests.object:
     if isinstance(value, Sequence) and (not isinstance(value, str | bytes)):
         sequence_value = _TEST_CONTAINER_LIST_ADAPTER.validate_python(value)
         return [_to_payload_value(item) for item in sequence_value]
+    return str(value)
+
+
+def _to_merge_value(value: t.Tests.object) -> t.NormalizedValue:
+    """Convert _Testobject to NormalizedValue for merge operations."""
+    if value is None:
+        return None
+    if isinstance(value, (str, int, float, bool)):
+        return value
+    if isinstance(value, BaseModel):
+        return str(value)
+    if isinstance(value, bytes):
+        return value.decode("utf-8", errors="replace")
+    if isinstance(value, Mapping):
+        return {str(k): _to_merge_value(v) for k, v in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_to_merge_value(item) for item in value]
     return str(value)
 
 
@@ -63,7 +82,36 @@ def _to_guard_input(value: t.Tests.object) -> t.Tests.object:
     return str(value)
 
 
-class FlextTestsFactories(s[t.Tests.object]):
+def _extract_from_result_obj(result_obj: r[BaseModel]) -> BaseModel | None:
+    """Extract BaseModel from a single r[BaseModel]."""
+    if result_obj.is_failure:
+        return None
+    return result_obj.value
+
+
+def _extract_from_model_result(
+    model_result: BaseModel
+    | builtins.list[BaseModel]
+    | Mapping[str, BaseModel]
+    | r[BaseModel]
+    | r[builtins.list[BaseModel]]
+    | r[Mapping[str, BaseModel]],
+) -> BaseModel | None:
+    """Extract a single BaseModel from various result shapes."""
+    if isinstance(model_result, list):
+        return model_result[0] if model_result else None
+    if not isinstance(model_result, r):
+        if isinstance(model_result, Mapping):
+            return next(iter(model_result.values()), None)
+        return model_result
+    # model_result is r[...] -- dispatch to typed helpers
+    # We need overloaded dispatch since isinstance(r) erases the type param
+    # Try each typed extraction; they handle failure internally
+    result_base: r[BaseModel] = cast("r[BaseModel]", model_result)
+    return _extract_from_result_obj(result_base)
+
+
+class FlextTestsFactories(FlextService[t.NormalizedValue | BaseModel]):
     """Comprehensive test data factories extending FlextService.
 
     Provides factory methods for creating test objects, services, and domain
@@ -624,16 +672,14 @@ class FlextTestsFactories(s[t.Tests.object]):
                         params.overrides.items()
                     )
                     merge_result = u.merge(
-                        {k: _to_guard_input(v) for k, v in user_data.items()},
-                        {k: _to_guard_input(v) for k, v in user_overrides.items()},
+                        {k: _to_merge_value(v) for k, v in user_data.items()},
+                        {k: _to_merge_value(v) for k, v in user_overrides.items()},
                         strategy="deep",
                     )
                     if merge_result.is_success:
-                        merged_user = cast(
-                            "dict[str, t.NormalizedValue]", merge_result.value
-                        )
                         user_data = {
-                            str(k): _to_payload_value(v) for k, v in merged_user.items()
+                            str(k): _to_payload_value(v)
+                            for k, v in merge_result.value.items()
                         }
                 return m.Tests.User.model_validate(user_data)
             if params.kind == "config":
@@ -658,17 +704,14 @@ class FlextTestsFactories(s[t.Tests.object]):
                         params.overrides.items()
                     )
                     merge_result = u.merge(
-                        {k: _to_guard_input(v) for k, v in config_data.items()},
-                        {k: _to_guard_input(v) for k, v in config_overrides.items()},
+                        {k: _to_merge_value(v) for k, v in config_data.items()},
+                        {k: _to_merge_value(v) for k, v in config_overrides.items()},
                         strategy="deep",
                     )
                     if merge_result.is_success:
-                        merged_config = cast(
-                            "dict[str, t.NormalizedValue]", merge_result.value
-                        )
                         config_data = {
                             str(k): _to_payload_value(v)
-                            for k, v in merged_config.items()
+                            for k, v in merge_result.value.items()
                         }
                 return m.Tests.Config.model_validate(config_data)
             if params.kind == "service":
@@ -688,10 +731,17 @@ class FlextTestsFactories(s[t.Tests.object]):
                     svc_data.update(overrides_dict)
                 return m.Tests.Service.model_validate(svc_data)
             if params.kind == "entity":
+
+                def _entity_factory(
+                    *, name: str, value: t.Tests.object, **kwargs: t.Tests.object
+                ) -> m.Tests.Entity:
+                    _ = kwargs
+                    return m.Tests.Entity(name=name, value=value)
+
                 return u.Tests.DomainHelpers.create_test_entity_instance(
                     name=params.name or c.Tests.Factory.DEFAULT_ENTITY_NAME,
                     value=params.value,
-                    entity_class=m.Tests.Entity,
+                    entity_class=_entity_factory,
                 )
             value_data = params.data or "default_value"
             value_count = params.value_count or 1
@@ -1120,7 +1170,7 @@ class FlextTestsFactories(s[t.Tests.object]):
             overrides.items()
         )
 
-        class TestService(s[t.Tests.object]):
+        class TestService(FlextService[t.NormalizedValue | BaseModel]):
             """Generic test service."""
 
             name: str | None = None
@@ -1153,17 +1203,26 @@ class FlextTestsFactories(s[t.Tests.object]):
                 self._overrides = override_fields
 
             @override
-            def execute(self) -> r[t.Tests.object]:
+            def execute(self) -> r[t.NormalizedValue | BaseModel]:
                 """Execute test operation."""
                 if service_type == "user":
                     merged_overrides = {**overrides}
                     if self._overrides is not None:
                         merged_overrides.update(self._overrides)
-                    return u.Tests.Factory.execute_user_service(merged_overrides)
-                if service_type == "complex":
+                    raw_result = u.Tests.Factory.execute_user_service(merged_overrides)
+                elif service_type == "complex":
                     validation_result = self._validate_business_rules_complex()
-                    return u.Tests.Factory.execute_complex_service(validation_result)
-                return u.Tests.Factory.execute_default_service(service_type)
+                    raw_result = u.Tests.Factory.execute_complex_service(
+                        validation_result
+                    )
+                else:
+                    raw_result = u.Tests.Factory.execute_default_service(service_type)
+                if raw_result.is_failure:
+                    return r[t.NormalizedValue | BaseModel].fail(raw_result.error or "")
+                payload: t.NormalizedValue | BaseModel = _to_merge_value(
+                    raw_result.value
+                )
+                return r[t.NormalizedValue | BaseModel].ok(payload)
 
             @override
             def validate_business_rules(self) -> r[bool]:
@@ -1230,20 +1289,7 @@ class FlextTestsFactories(s[t.Tests.object]):
         | r[builtins.list[BaseModel]]
         | r[Mapping[str, BaseModel]],
     ) -> BaseModel | None:
-        if isinstance(model_result, BaseModel):
-            return model_result
-        if isinstance(model_result, list):
-            return model_result[0] if model_result else None
-        if isinstance(model_result, Mapping):
-            return next(iter(model_result.values()), None)
-        if model_result.is_failure:
-            return None
-        result_value = model_result.value
-        if isinstance(result_value, BaseModel):
-            return result_value
-        if isinstance(result_value, list):
-            return result_value[0] if result_value else None
-        return next(iter(result_value.values()), None)
+        return _extract_from_model_result(model_result)
 
     @staticmethod
     def create_user(
@@ -1273,17 +1319,18 @@ class FlextTestsFactories(s[t.Tests.object]):
         }
         overrides_dict: MutableMapping[str, t.Tests.object] = dict(overrides.items())
         merge_result = u.merge(
-            {k: _to_guard_input(v) for k, v in user_data.items()},
-            {k: _to_guard_input(v) for k, v in overrides_dict.items()},
+            {k: _to_merge_value(v) for k, v in user_data.items()},
+            {k: _to_merge_value(v) for k, v in overrides_dict.items()},
             strategy="deep",
         )
         if merge_result.is_success:
-            merged_data = cast("dict[str, t.NormalizedValue]", merge_result.value)
-            user_data = {str(k): _to_payload_value(v) for k, v in merged_data.items()}
+            user_data = {
+                str(k): _to_payload_value(v) for k, v in merge_result.value.items()
+            }
         return m.Tests.User.model_validate(user_data)
 
     @override
-    def execute(self) -> r[t.Tests.object]:
+    def execute(self) -> r[t.NormalizedValue | BaseModel]:
         """Execute factory service operation.
 
         Returns default test data when invoked as a service.
@@ -1292,7 +1339,7 @@ class FlextTestsFactories(s[t.Tests.object]):
             r with factory name
 
         """
-        return r[t.Tests.object].ok("FlextTestsFactories")
+        return r[t.NormalizedValue | BaseModel].ok("FlextTestsFactories")
 
 
 tt = FlextTestsFactories

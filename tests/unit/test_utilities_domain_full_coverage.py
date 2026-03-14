@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections import UserDict
+from collections.abc import Iterator
 from datetime import UTC, datetime
 from typing import Annotated, cast, override
 
@@ -53,7 +53,7 @@ class TestDomainHashValue:
             unique_id: str = "test"
             tags: Annotated[list[str], Field(default_factory=lambda: ["a", "b"])]
 
-        entity = EntityWithList()
+        entity = EntityWithList(tags=["a", "b"])
         result = u.hash_value_object_by_value(entity)
         assert isinstance(result, int)
 
@@ -81,7 +81,7 @@ class TestValidateValueImmutable:
         obj = PlainObj()
         assert (
             u.validate_value_object_immutable(
-                cast("RuntimeData", cast("RuntimeData", obj)),
+                cast("RuntimeData", obj),
             )
             is False
         )
@@ -94,13 +94,24 @@ class TestValidateValueImmutable:
 
 def test_validate_value_object_immutable_exception_and_no_setattr_branch() -> None:
 
-    class _BrokenConfigDict(UserDict[str, bool]):
-        @override
+    class _BrokenConfigDict:
+        """Dict-like object whose get() raises TypeError."""
+
         def get(self, key: str, default: bool | None = None) -> bool:
             _ = key
             _ = default
             msg = "bad config"
             raise TypeError(msg)
+
+        def __getitem__(self, key: str) -> bool:
+            msg = "bad config"
+            raise TypeError(msg)
+
+        def __iter__(self) -> Iterator[str]:
+            return iter(())
+
+        def __len__(self) -> int:
+            return 0
 
     class _BrokenConfig:
         model_config: _BrokenConfigDict = _BrokenConfigDict()
@@ -114,13 +125,13 @@ def test_validate_value_object_immutable_exception_and_no_setattr_branch() -> No
 
     assert (
         u.validate_value_object_immutable(
-            cast("RuntimeData", cast("RuntimeData", _BrokenConfig())),
+            cast("RuntimeData", _BrokenConfig()),
         )
         is False
     )
     assert (
         u.validate_value_object_immutable(
-            cast("RuntimeData", cast("RuntimeData", _NoSetattrVisible())),
+            cast("RuntimeData", _NoSetattrVisible()),
         )
         is False
     )

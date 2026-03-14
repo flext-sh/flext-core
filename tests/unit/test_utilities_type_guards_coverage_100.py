@@ -16,13 +16,14 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import math
-from typing import Annotated, ClassVar, override
+from typing import Annotated, ClassVar, cast, override
 
 import pytest
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import m, t, u
 from flext_core._utilities.guards import FlextUtilitiesGuards
+from flext_core.runtime import RuntimeData
 
 
 class TypeGuardScenario(BaseModel):
@@ -184,7 +185,7 @@ class TestuTypeGuardsIsListNonEmpty:
     )
     def test_is_list_non_empty(self, scenario: TypeGuardScenario) -> None:
         """Test is_list_non_empty with various inputs."""
-        value: t.Scalar | list[t.Scalar] | None
+        value: t.NormalizedValue = None
         if scenario.value == "has_items":
             value = [1, 2, 3]
         elif scenario.value == "empty":
@@ -265,7 +266,7 @@ class TestuTypeGuardsNormalizeToMetadataValue:
 
     def test_normalize_dict_with_non_string_key(self) -> None:
         test_dict = {123: "value", "key": "test"}
-        result = u.normalize_to_metadata_value(test_dict)
+        result = u.normalize_to_metadata_value(cast("RuntimeData", test_dict))
         assert isinstance(result, dict)
         assert "123" in result
 
@@ -275,7 +276,7 @@ class TestuTypeGuardsNormalizeToMetadataValue:
         assert isinstance(result, list)
 
     def test_normalize_list_with_nested_list(self) -> None:
-        test_list = [[1, 2], [3, 4]]
+        test_list: list[t.NormalizedValue] = [[1, 2], [3, 4]]
         result = u.normalize_to_metadata_value(test_list)
         assert isinstance(result, list)
 
@@ -285,7 +286,13 @@ class TestuTypeGuardsNormalizeToMetadataValue:
         assert isinstance(result, list)
 
     def test_normalize_list_with_complex_items(self) -> None:
-        test_list = ["string", 42, True, {"dict": "value"}, [1, 2, 3]]
+        test_list: list[t.NormalizedValue] = [
+            "string",
+            42,
+            True,
+            {"dict": "value"},
+            [1, 2, 3],
+        ]
         result = u.normalize_to_metadata_value(test_list)
         assert isinstance(result, list)
 
@@ -295,7 +302,7 @@ class TestuTypeGuardsNormalizeToMetadataValue:
         assert isinstance(result, list)
 
     def test_normalize_dict_with_complex_nested_structure(self) -> None:
-        test_dict = {
+        test_dict: dict[str, t.NormalizedValue] = {
             "str": "value",
             "int": 42,
             "nested_dict": {"inner": "value"},
@@ -314,7 +321,7 @@ class TestuTypeGuardsNormalizeToMetadataValue:
                 return "custom_object"
 
         obj = CustomObject()
-        result = u.normalize_to_metadata_value(obj)
+        result = u.normalize_to_metadata_value(cast("RuntimeData", obj))
         assert isinstance(result, str)
         assert result == "custom_object"
 

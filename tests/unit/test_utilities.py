@@ -129,7 +129,7 @@ class Testu(TextUtilityContract):
         expected: bool,
     ) -> None:
         """Test string type guards."""
-        result = u.is_type(cast("object", value), "string_non_empty")
+        result = u.is_type(cast("t.NormalizedValue", value), "string_non_empty")
         assert result is expected, f"{description}: expected {expected}, got {result}"
 
     @pytest.mark.parametrize(
@@ -143,7 +143,7 @@ class Testu(TextUtilityContract):
         expected: bool,
     ) -> None:
         """Test dict type guards."""
-        result = u.is_type(cast("object", value), "dict_non_empty")
+        result = u.is_type(cast("t.NormalizedValue", value), "dict_non_empty")
         assert result is expected, f"{description}: expected {expected}, got {result}"
 
     @pytest.mark.parametrize(
@@ -157,7 +157,7 @@ class Testu(TextUtilityContract):
         expected: bool,
     ) -> None:
         """Test list type guards."""
-        result = u.is_type(cast("object", value), "list_non_empty")
+        result = u.is_type(cast("t.NormalizedValue", value), "list_non_empty")
         assert result is expected, f"{description}: expected {expected}, got {result}"
 
     @pytest.mark.parametrize(
@@ -268,7 +268,7 @@ class Testu(TextUtilityContract):
         expected_type: type | tuple[type, ...],
     ) -> None:
         """Test cache component normalization."""
-        normalized = u.normalize_component(cast("object", input_data))
+        normalized = u.normalize_component(cast("t.NormalizedValue", input_data))
         if isinstance(expected_type, tuple):
             assert isinstance(normalized, expected_type)
         else:
@@ -307,7 +307,7 @@ class Testu(TextUtilityContract):
 
             cache_obj = TestWithCache()
             result = u.has_cache_attributes(
-                cast("object", cache_obj),
+                cast("t.NormalizedValue", cache_obj),
             )
             assert result is expected
         else:
@@ -317,7 +317,7 @@ class Testu(TextUtilityContract):
 
             no_cache_obj = TestNoCache()
             result = u.has_cache_attributes(
-                cast("object", no_cache_obj),
+                cast("t.NormalizedValue", no_cache_obj),
             )
             assert result is expected
 

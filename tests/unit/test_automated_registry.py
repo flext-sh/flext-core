@@ -12,6 +12,7 @@ from typing import Protocol, runtime_checkable
 import pytest
 
 from flext_core import FlextRegistry, FlextResult, r
+from flext_tests import t
 from tests import m
 from tests.conftest import test_framework
 from tests.test_utils import assertion_helpers, fixture_factory
@@ -20,11 +21,6 @@ from tests.test_utils import assertion_helpers, fixture_factory
 @runtime_checkable
 class _ProcessCapable(Protocol):
     def process(self, input_data: Mapping[str, object]) -> None: ...
-
-
-@runtime_checkable
-class _ExecuteCapable(Protocol):
-    def execute(self) -> FlextResult[bool]: ...
 
 
 @runtime_checkable
@@ -85,7 +81,12 @@ class TestAutomatedFlextRegistry:
         """Comprehensive test scenarios for registry functionality."""
         try:
             instance = fixture_factory.create_test_registry_instance()
-            result = self._execute_registry_operation(instance, test_scenario.input)
+            scenario_input: Mapping[str, t.Tests.object] = (
+                test_scenario.input
+                if isinstance(test_scenario.input, dict)
+                else {"value": test_scenario.input}
+            )
+            result = self._execute_registry_operation(instance, scenario_input)
             if test_scenario.expected_success:
                 _ = assertion_helpers.assert_flext_result_success(
                     result,
@@ -170,14 +171,13 @@ class TestAutomatedFlextRegistry:
         """
         try:
             is_process = isinstance(instance, _ProcessCapable)
-            is_execute = isinstance(instance, _ExecuteCapable)
             is_handle = isinstance(instance, _HandleCapable)
             if is_process:
                 instance.process(input_data)
-            elif is_execute:
-                instance.execute()
             elif is_handle:
                 instance.handle(input_data)
+            else:
+                instance.execute()
             return r[bool].ok(True)
         except Exception as e:
             return r[bool].fail(f"FlextRegistry operation failed: {e}")

@@ -14,7 +14,7 @@ from typing import NoReturn, cast, override
 import pytest
 from pydantic import BaseModel
 
-from flext_core import m, u
+from flext_core import m, t, u
 
 from ._models import _GoodModel
 
@@ -22,7 +22,7 @@ generators_module = importlib.import_module("flext_core._utilities.generators")
 runtime_module = importlib.import_module("flext_core.runtime")
 
 
-class _BrokenMapping(Mapping[str, object]):
+class _BrokenMapping(Mapping[str, t.NormalizedValue]):
     @override
     def __getitem__(self, key: str) -> NoReturn:
         raise KeyError(key)
@@ -36,7 +36,7 @@ class _BrokenMapping(Mapping[str, object]):
         return 0
 
     @override
-    def items(self) -> ItemsView[str, object]:
+    def items(self) -> ItemsView[str, t.NormalizedValue]:
         msg = "boom"
         raise TypeError(msg)
 
@@ -52,15 +52,18 @@ def test_normalize_context_to_dict_error_paths() -> None:
     with pytest.raises(TypeError, match="Failed to dump BaseModel"):
         u._normalize_context_to_dict(
             cast(
-                "Mapping[str, object] | BaseModel | None",
-                cast("object", _BrokenModel()),
+                "Mapping[str, t.NormalizedValue] | BaseModel | None",
+                cast("BaseModel", _BrokenModel()),
             ),
         )
     with pytest.raises(TypeError, match="Context cannot be None"):
         u._normalize_context_to_dict(None)
     with pytest.raises(TypeError, match="Failed to dump BaseModel int"):
         u._normalize_context_to_dict(
-            cast("Mapping[str, object] | BaseModel | None", cast("object", 42)),
+            cast(
+                "Mapping[str, t.NormalizedValue] | BaseModel | None",
+                cast("BaseModel", 42),
+            ),
         )
 
 
@@ -105,9 +108,9 @@ def test_enrich_and_ensure_trace_context_branches(
 def test_ensure_dict_branches(monkeypatch: pytest.MonkeyPatch) -> None:
     _ = monkeypatch
 
-    class _IterFailMapping(Mapping[str, object]):
+    class _IterFailMapping(Mapping[str, t.NormalizedValue]):
         @override
-        def __getitem__(self, key: str) -> object:
+        def __getitem__(self, key: str) -> t.NormalizedValue:
             raise KeyError(key)
 
         @override
@@ -167,7 +170,7 @@ def test_generate_special_paths_and_dynamic_subclass(
 
 
 def test_generators_additional_missed_paths() -> None:
-    mapping_ctx: Mapping[str, object] = {"a": 1}
+    mapping_ctx: Mapping[str, t.NormalizedValue] = {"a": 1}
     normalized = u._normalize_context_to_dict(mapping_ctx)
     assert normalized == {"a": 1}
     ensured = u.ensure_dict(_GoodModel(value=3))
@@ -178,7 +181,7 @@ def test_generators_additional_missed_paths() -> None:
 
 def test_generators_mapping_non_dict_normalization_path() -> None:
 
-    class _SimpleMapping(Mapping[str, object]):
+    class _SimpleMapping(Mapping[str, t.NormalizedValue]):
         @override
         def __getitem__(self, key: str) -> int:
             if key == "a":

@@ -16,7 +16,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from enum import StrEnum
-from typing import Annotated, ClassVar, ParamSpec, TypeVar
+from typing import Annotated, ClassVar, ParamSpec, TypeVar, cast
 
 import pytest
 from pydantic import (
@@ -28,7 +28,7 @@ from pydantic import (
 )
 
 from flext_core import FlextConstants, P, R, ResultT, T, T_co, T_contra, U, e, t
-from flext_tests import tm
+from flext_tests import t as test_t, tm
 
 
 class TypeVarCategory(StrEnum):
@@ -147,7 +147,7 @@ class TestFlextTypings:
         """Test core TypeVar definitions are properly exported."""
         if test_case.expected_not_none:
             tm.that(
-                test_case.type_var,
+                cast("test_t.Tests.object", test_case.type_var),
                 none=False,
                 msg=f"{test_case.name} must not be None",
             )
@@ -166,7 +166,7 @@ class TestFlextTypings:
         """Test covariant TypeVar definitions are properly exported."""
         if test_case.expected_not_none:
             tm.that(
-                test_case.type_var,
+                cast("test_t.Tests.object", test_case.type_var),
                 none=False,
                 msg=f"{test_case.name} must not be None",
             )
@@ -175,7 +175,11 @@ class TestFlextTypings:
                 eq=True,
                 msg=f"{test_case.name} must be a valid TypeVar or ParamSpec",
             )
-            tm.that(test_case.type_var, none=False, msg="Covariant TypeVar must exist")
+            tm.that(
+                cast("test_t.Tests.object", test_case.type_var),
+                none=False,
+                msg="Covariant TypeVar must exist",
+            )
 
     @pytest.mark.parametrize(
         "test_case",
@@ -186,7 +190,7 @@ class TestFlextTypings:
         """Test contravariant TypeVar definitions are properly exported."""
         if test_case.expected_not_none:
             tm.that(
-                test_case.type_var,
+                cast("test_t.Tests.object", test_case.type_var),
                 none=False,
                 msg=f"{test_case.name} must not be None",
             )
@@ -196,7 +200,9 @@ class TestFlextTypings:
                 msg=f"{test_case.name} must be a valid TypeVar or ParamSpec",
             )
             tm.that(
-                test_case.type_var, none=False, msg="Contravariant TypeVar must exist"
+                cast("test_t.Tests.object", test_case.type_var),
+                none=False,
+                msg="Contravariant TypeVar must exist",
             )
 
     @pytest.mark.parametrize(
@@ -208,12 +214,12 @@ class TestFlextTypings:
         """Test CQRS type aliases are properly defined."""
         if test_case.expected_not_none:
             tm.that(
-                test_case.type_var,
+                cast("test_t.Tests.object", test_case.type_var),
                 none=False,
                 msg=f"{test_case.name} alias must not be None",
             )
             tm.that(
-                test_case.type_var,
+                cast("test_t.Tests.object", test_case.type_var),
                 eq=object,
                 msg=f"{test_case.name} must equal object",
             )
@@ -227,11 +233,15 @@ class TestFlextTypings:
         """Test ParamSpec is properly defined and exported."""
         if test_case.expected_not_none:
             tm.that(
-                test_case.type_var,
+                cast("test_t.Tests.object", test_case.type_var),
                 none=False,
                 msg=f"{test_case.name} must not be None",
             )
-            tm.that(test_case.type_var, none=False, msg="ParamSpec must exist")
+            tm.that(
+                cast("test_t.Tests.object", test_case.type_var),
+                none=False,
+                msg="ParamSpec must exist",
+            )
 
     def test_flexttypes_accessible(self) -> None:
         """Test t namespace is accessible with real validation."""
@@ -248,12 +258,12 @@ class TestFlextTypings:
         """Test that all public exports can be imported and are valid."""
         core_typevars = [T, U, e, R, ResultT, T_co, T_contra, P]
         for tv in core_typevars:
-            tm.that(tv, none=False, msg="TypeVar must be importable and not None")
+            assert tv is not None, "TypeVar must be importable and not None"
 
     def test_module_structure(self) -> None:
         """Test that t has expected structure with real validation."""
         for tv in [T, U, P, R]:
-            tm.that(tv, none=False, msg="TypeVar must not be None")
+            assert tv is not None, "TypeVar must not be None"
         cqrs_aliases = [
             object,
             object,

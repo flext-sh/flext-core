@@ -18,8 +18,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from types import ModuleType
-from typing import override
+from typing import cast, override
 
 from flext_core import (
     FlextContainer,
@@ -30,6 +31,7 @@ from flext_core import (
     m,
     r,
     s,
+    t,
 )
 from flext_core._models.service import FlextModelsService
 from flext_tests import tm, u
@@ -192,7 +194,10 @@ class TestServicesIntegrationViaDI:
             ) -> FlextModelsService.RuntimeBootstrapOptions:
                 return FlextModelsService.RuntimeBootstrapOptions(
                     config_overrides={"app_name": "service_app"},
-                    services={"logger": FlextLogger.create_module_logger("service")},
+                    services=cast(
+                        "Mapping[str, t.RegisterableService] | None",
+                        {"logger": FlextLogger.create_module_logger("service")},
+                    ),
                 )
 
             @override

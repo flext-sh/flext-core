@@ -86,11 +86,9 @@ class TestCompleteFlextSystemIntegration:
         assert failure_result.unwrap_or("") == ""
 
         def operacao_que_pode_falhar(data: str) -> r[str]:
-            if isinstance(data, str) and "invalido" in data:
+            if "invalido" in data:
                 return r[str].fail("dados_invalidos")
-            if isinstance(data, str):
-                return r[str].ok(f"validado_{data}")
-            return r[str].fail("tipo_invalido")
+            return r[str].ok(f"validado_{data}")
 
         flat_map_success = success_result.flat_map(operacao_que_pode_falhar)
         assert flat_map_success.is_success is True
@@ -218,21 +216,15 @@ class TestCompleteFlextSystemIntegration:
         assert resultado_recuperado.value == "valor_recuperado"
 
         def operacao_1(data: str) -> r[str]:
-            if isinstance(data, str):
-                return r[str].ok(f"etapa1_{data}")
-            return r[str].fail("tipo_invalido")
+            return r[str].ok(f"etapa1_{data}")
 
         def operacao_2(data: str) -> r[str]:
-            if isinstance(data, str):
-                if "erro" in data:
-                    return r[str].fail("erro_na_etapa2")
-                return r[str].ok(f"etapa2_{data}")
-            return r[str].fail("tipo_invalido")
+            if "erro" in data:
+                return r[str].fail("erro_na_etapa2")
+            return r[str].ok(f"etapa2_{data}")
 
         def operacao_3(data: str) -> r[str]:
-            if isinstance(data, str):
-                return r[str].ok(f"final_{data}")
-            return r[str].fail("tipo_invalido")
+            return r[str].ok(f"final_{data}")
 
         pipeline_sucesso = (
             r[str]

@@ -85,11 +85,11 @@ class ConcreteTestHandler(h[t.Tests.object, t.Tests.object]):
     """Concrete implementation of h for testing."""
 
     @override
-    def handle(self, message: t.Tests.object) -> r[str]:
+    def handle(self, message: t.Tests.object) -> r[t.Tests.object]:
         """Handle the message."""
-        return r[str].ok(f"processed_{message}")
+        return r[t.Tests.object].ok(f"processed_{message}")
 
-    def __call__(self, message: t.Tests.object) -> r[str]:
+    def __call__(self, message: t.Tests.object) -> r[t.Tests.object]:
         """Make handler callable for registry validation."""
         return self.handle(message)
 

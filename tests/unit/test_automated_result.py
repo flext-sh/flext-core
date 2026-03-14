@@ -65,7 +65,12 @@ class TestAutomatedr:
         """Comprehensive test scenarios for result functionality."""
         try:
             instance = fixture_factory.create_test_result_instance()
-            result = self._execute_result_operation(instance, test_scenario.input)
+            scenario_input: Mapping[str, t.Tests.object] = (
+                test_scenario.input
+                if isinstance(test_scenario.input, dict)
+                else {"value": test_scenario.input}
+            )
+            result = self._execute_result_operation(instance, scenario_input)
             if test_scenario.expected_success:
                 assert result.is_success, f"Expected success but got failure: {result}"
         except Exception:

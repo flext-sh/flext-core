@@ -408,7 +408,7 @@ class FlextProtocols:
         factories: Mapping[str, t.FactoryCallable] | None
         resources: Mapping[str, t.ResourceCallable] | None
         container_overrides: Mapping[str, t.Scalar] | None
-        wire_modules: Sequence[ModuleType] | None
+        wire_modules: Sequence[ModuleType | str] | None
         wire_packages: Sequence[str] | None
         wire_classes: Sequence[type] | None
 

@@ -139,9 +139,9 @@ class StubSyncer:
         prune: bool = False,
     ) -> r[list[m.Infra.Github.SyncOperation]]:
         kwargs: dict[str, t.Infra.InfraValue] = {
-            "workspace_root": workspace_root,
-            "source_workflow": source_workflow,
-            "report_path": report_path,
+            "workspace_root": str(workspace_root),
+            "source_workflow": str(source_workflow) if source_workflow else None,
+            "report_path": str(report_path) if report_path else None,
             "apply": apply,
             "prune": prune,
         }
@@ -173,8 +173,8 @@ class StubLinter:
         strict: bool = False,
     ) -> r[m.Infra.Github.WorkflowLintResult]:
         kwargs: dict[str, t.Infra.InfraValue] = {
-            "root": root,
-            "report_path": report_path,
+            "root": str(root),
+            "report_path": str(report_path) if report_path else None,
             "strict": strict,
         }
         self.lint_calls.append(kwargs)
@@ -213,14 +213,20 @@ class StubWorkspaceManager:
         fail_fast: bool = False,
         pr_args: dict[str, str] | None = None,
     ) -> r[m.Infra.Github.PrOrchestrationResult]:
+        infra_projects: list[t.Infra.InfraValue] | None = (
+            [str(p) for p in projects] if projects else None
+        )
+        infra_pr_args: dict[str, t.Infra.InfraValue] | None = (
+            dict[str, t.Infra.InfraValue](pr_args) if pr_args else None
+        )
         kwargs: dict[str, t.Infra.InfraValue] = {
-            "workspace_root": workspace_root,
-            "projects": projects,
+            "workspace_root": str(workspace_root),
+            "projects": infra_projects,
             "include_root": include_root,
             "branch": branch,
             "checkpoint": checkpoint,
             "fail_fast": fail_fast,
-            "pr_args": pr_args,
+            "pr_args": infra_pr_args,
         }
         self.orchestrate_calls.append(kwargs)
         return self._orchestrate_returns

@@ -292,4 +292,9 @@ if __name__ == "__main__":
     sys.exit(main())
 
 
-__all__ = ["FlextInfraExtraPathsManager", "main", "sync_one"]
+__all__ = [
+    "FlextInfraExtraPathsManager",
+    "FlextInfraUtilitiesToml",
+    "main",
+    "sync_one",
+]

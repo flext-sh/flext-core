@@ -5,7 +5,7 @@ import tomlkit
 import tomlkit.items
 from tomlkit.toml_document import TOMLDocument
 
-from flext_infra import u
+from flext_infra import t, u
 from flext_tests import tb, tm
 
 array = u.Infra.array
@@ -72,9 +72,7 @@ def test_dedupe_specs(
         ({"key": "value"}, {"key": "value"}),
     ],
 )
-def test_unwrap_item(
-    value: str | dict[str, str] | None, expected: str | dict[str, str] | None
-) -> None:
+def test_unwrap_item(value: t.Infra.InfraValue, expected: t.Infra.InfraValue) -> None:
     tm.that(unwrap_item(value), eq=expected)
 
 
@@ -83,14 +81,36 @@ def test_unwrap_item_toml_item(doc: TOMLDocument) -> None:
     tm.that(unwrap_item(doc["key"]), eq="value")
 
 
+def _toml_item(value: str | int | list[str]) -> tomlkit.items.Item:
+    """Create a tomlkit item with known types to avoid Unknown in overloads."""
+    if isinstance(value, str):
+        return tomlkit.items.String.from_raw(value)
+    if isinstance(value, int):
+        return tomlkit.items.Integer(
+            value, trivia=tomlkit.items.Trivia(), raw=str(value)
+        )
+    # list[str] -> construct Array from String items
+    str_items: list[tomlkit.items.Item] = [
+        tomlkit.items.String.from_raw(v) for v in value
+    ]
+    return tomlkit.items.Array(str_items, trivia=tomlkit.items.Trivia())
+
+
+def _toml_table_item() -> tomlkit.items.Item:
+    """Create a tomlkit table item."""
+    tbl = tomlkit.table()
+    tbl["key"] = "value"
+    return tbl
+
+
 @pytest.mark.parametrize(
     ("value", "expected"),
     [
-        (tomlkit.item(["a", "b", "c"]), ["a", "b", "c"]),
+        (_toml_item(["a", "b", "c"]), ["a", "b", "c"]),
         (None, []),
-        (tomlkit.item("test"), []),
-        (tomlkit.item({"key": "value"}), []),
-        (tomlkit.item(42), []),
+        (_toml_item("test"), []),
+        (_toml_table_item(), []),
+        (_toml_item(42), []),
     ],
 )
 def test_as_string_list(value: tomlkit.items.Item | None, expected: list[str]) -> None:
@@ -99,11 +119,11 @@ def test_as_string_list(value: tomlkit.items.Item | None, expected: list[str]) -
 
 def test_as_string_list_toml_item(doc: TOMLDocument) -> None:
     doc["items"] = ["a", "b"]
-    items_item: tomlkit.items.Item = tomlkit.item(["a", "b"])
-    tm.that(as_string_list(items_item), eq=["a", "b"])
+    items_array: tomlkit.items.Item = _toml_item(["a", "b"])
+    tm.that(as_string_list(items_array), eq=["a", "b"])
     doc["value"] = 42
-    int_item: tomlkit.items.Item = tomlkit.item(42)
-    tm.that(as_string_list(int_item), eq=[])
+    int_val: tomlkit.items.Item = _toml_item(42)
+    tm.that(as_string_list(int_val), eq=[])
 
 
 @pytest.mark.parametrize(

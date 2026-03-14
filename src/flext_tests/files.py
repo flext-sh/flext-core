@@ -26,14 +26,14 @@ from contextlib import contextmanager
 from datetime import UTC, datetime
 from pathlib import Path
 from types import TracebackType
-from typing import ClassVar, Literal, Self, TypeGuard, TypeVar, cast, overload
+from typing import ClassVar, Literal, Self, TypeGuard, TypeVar, overload
 
 from pydantic import BaseModel, TypeAdapter, ValidationError
 from yaml import YAMLError, dump as yaml_dump, safe_load as yaml_safe_load
 
 from flext_core import FlextModelsContainers, FlextResult, FlextRuntime, r
+from flext_core.runtime import RuntimeData
 from flext_tests import c, m, s, t, u
-from flext_tests.typings import _Testobject
 
 TModel = TypeVar("TModel", bound=BaseModel)
 _FormatLiteral = Literal["auto", "text", "bin", "json", "yaml", "csv"]
@@ -43,6 +43,68 @@ _ErrorModeLiteral = Literal["stop", "skip", "collect"]
 TestsFileContent = t.Tests.FileContent
 _YAMLError = YAMLError
 _OBJECT_LIST_ADAPTER = TypeAdapter(list[t.Tests.object])
+_OBJECT_DICT_ADAPTER = TypeAdapter(dict[str, t.Tests.object])
+
+
+_SCALAR_PATH: tuple[type, ...] = (str, int, float, bool, datetime, Path)
+
+
+def _to_runtime_data(value: t.Tests.object) -> RuntimeData:
+    """Narrow t.Tests.Testobject to RuntimeData for normalize_to_general_value calls.
+
+    Converts bytes to str and ensures the value is RuntimeData-compatible.
+    The key difference between t.Tests.Testobject and RuntimeData is that t.Tests.Testobject
+    includes `bytes` which is not in RuntimeData.
+    """
+    if value is None:
+        return None
+    if isinstance(value, (str, int, float, bool, datetime, Path)):
+        return value
+    if isinstance(value, BaseModel):
+        return value
+    if isinstance(value, bytes):
+        return value.decode("utf-8", errors="replace")
+    if isinstance(value, Mapping):
+        return {str(k): _to_normalized_or_model(v) for k, v in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_to_normalized_leaf(item) for item in value]
+    return str(value)
+
+
+def _to_normalized_or_model(value: t.Tests.object) -> t.NormalizedValue | BaseModel:
+    """Convert t.Tests.Testobject to NormalizedValue | BaseModel for Mapping values."""
+    if value is None:
+        return None
+    if isinstance(value, (str, int, float, bool, datetime, Path)):
+        return value
+    if isinstance(value, BaseModel):
+        return value
+    if isinstance(value, bytes):
+        return value.decode("utf-8", errors="replace")
+    if isinstance(value, Mapping):
+        return FlextModelsContainers.ConfigMap(
+            root={str(k): _to_normalized_or_model(v) for k, v in value.items()}
+        )
+    if isinstance(value, (list, tuple)):
+        return [_to_normalized_leaf(item) for item in value]
+    return str(value)
+
+
+def _to_normalized_leaf(value: t.Tests.object) -> t.NormalizedValue:
+    """Convert t.Tests.Testobject to NormalizedValue (no BaseModel) for list contexts."""
+    if value is None:
+        return None
+    if isinstance(value, (str, int, float, bool, datetime, Path)):
+        return value
+    if isinstance(value, bytes):
+        return value.decode("utf-8", errors="replace")
+    if isinstance(value, BaseModel):
+        return str(value)
+    if isinstance(value, Mapping):
+        return {str(k): _to_normalized_leaf(v) for k, v in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_to_normalized_leaf(item) for item in value]
+    return str(value)
 
 
 def _yaml_safe_load(
@@ -71,7 +133,7 @@ def _is_batch_content(content_raw: object) -> TypeGuard[t.Tests.object]:
 class FlextTestsFiles(s[t.Tests.TestResultValue]):
     """Manages test files for FLEXT ecosystem testing.
 
-    Extends FlextTestsUtilityBase for consistent service patterns.
+    Extends FlextTestsServiceBase for consistent service patterns.
 
     Provides generalist file operations with powerful optional parameters:
     - `create()`: Create any file type with auto-detection
@@ -200,13 +262,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             for name, data_raw in content.items():
                 data: t.Tests.object = data_raw
                 filename = name if "." in name else f"{name}{default_ext}"
-                if "." not in name and (
-                    u.is_type(data, "dict")
-                    or (
-                        hasattr(type(data), "__mro__")
-                        and BaseModel in type(data).__mro__
-                    )
-                ):
+                if "." not in name and (isinstance(data, (Mapping, BaseModel))):
                     filename = f"{name}.json"
                 else:
                     is_nested_sequence = "." not in name and manager._is_nested_rows(
@@ -218,17 +274,21 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                     m.Tests.CreateKwargsParams.model_validate(kwargs)
                 )
                 if kwargs_result.is_success:
-                    validated_kwargs: m.Tests.CreateKwargsParams = cast(
-                        "m.Tests.CreateKwargsParams", kwargs_result.value
-                    )
+                    validated_kwargs: m.Tests.CreateKwargsParams = kwargs_result.value
                 else:
                     default_result = r[m.Tests.CreateKwargsParams].ok(
-                        m.Tests.CreateKwargsParams()
+                        m.Tests.CreateKwargsParams(
+                            directory=None,
+                            fmt="auto",
+                            enc="utf-8",
+                            indent=2,
+                            delim=",",
+                            headers=None,
+                            readonly=False,
+                        )
                     )
                     if default_result.is_success:
-                        validated_kwargs = cast(
-                            "m.Tests.CreateKwargsParams", default_result.value
-                        )
+                        validated_kwargs = default_result.value
                     else:
                         raise ValueError(
                             f"Failed to create default kwargs: {default_result.error}"
@@ -479,7 +539,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                             m.ConfigMap(
                                 root={
                                     str(k): FlextRuntime.normalize_to_general_value(
-                                        self._to_config_map_value(v)
+                                        _to_runtime_data(self._to_config_map_value(v))
                                     )
                                     if v is None
                                     or type(v)
@@ -539,9 +599,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             operation_result = process_one(item)
             if isinstance(operation_result, r):
                 if operation_result.is_success:
-                    success_value: Path | t.Tests.object = cast(
-                        "Path", operation_result.value
-                    )
+                    success_value: Path | t.Tests.object = operation_result.value
                     results.append(success_value)
                     continue
                 error_message = operation_result.error or "Unknown error"
@@ -1137,6 +1195,15 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             if model_cls is not None:
                 return self._validate_model_content(model_cls, content)
             return r[str | bytes | m.ConfigMap | list[list[str]]].ok(content)
+        except UnicodeDecodeError as e:
+            if model_cls is not None:
+                invalid_encoding_result: r[TModel] = r[TModel].fail(
+                    c.Tests.Files.ERROR_ENCODING.format(error=e)
+                )
+                return invalid_encoding_result
+            return r[str | bytes | m.ConfigMap | list[list[str]]].fail(
+                c.Tests.Files.ERROR_ENCODING.format(error=e)
+            )
         except ValueError as e:
             if model_cls is not None:
                 invalid_json_result: r[TModel] = r[TModel].fail(
@@ -1154,15 +1221,6 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                 return invalid_yaml_result
             return r[str | bytes | m.ConfigMap | list[list[str]]].fail(
                 c.Tests.Files.ERROR_INVALID_YAML.format(error=e)
-            )
-        except UnicodeDecodeError as e:
-            if model_cls is not None:
-                invalid_encoding_result: r[TModel] = r[TModel].fail(
-                    c.Tests.Files.ERROR_ENCODING.format(error=e)
-                )
-                return invalid_encoding_result
-            return r[str | bytes | m.ConfigMap | list[list[str]]].fail(
-                c.Tests.Files.ERROR_ENCODING.format(error=e)
             )
         except OSError as e:
             if model_cls is not None:
@@ -1197,23 +1255,35 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             return (dict1, dict2)
         filter_keys_set = set(keys) if keys is not None else None
         exclude_keys_set = set(exclude_keys) if exclude_keys is not None else None
+        config_root1: dict[str, t.NormalizedValue | BaseModel] = {
+            str(k): FlextRuntime.normalize_to_general_value(
+                _to_runtime_data(self._to_config_map_value(self._to_payload_value(v)))
+            )
+            for k, v in dict1.items()
+        }
+        config_root2: dict[str, t.NormalizedValue | BaseModel] = {
+            str(k): FlextRuntime.normalize_to_general_value(
+                _to_runtime_data(self._to_config_map_value(self._to_payload_value(v)))
+            )
+            for k, v in dict2.items()
+        }
         result1 = u.transform(
-            m.ConfigMap(root=dict(dict1.items())),
+            m.ConfigMap(root=config_root1),
             filter_keys=filter_keys_set,
             exclude_keys=exclude_keys_set,
         )
         result2 = u.transform(
-            m.ConfigMap(root=dict(dict2.items())),
+            m.ConfigMap(root=config_root2),
             filter_keys=filter_keys_set,
             exclude_keys=exclude_keys_set,
         )
         if result1.is_success and result2.is_success:
-            filtered1: Mapping[str, t.Tests.object] = cast(
-                "Mapping[str, t.Tests.object]", result1.value
-            )
-            filtered2: Mapping[str, t.Tests.object] = cast(
-                "Mapping[str, t.Tests.object]", result2.value
-            )
+            filtered1: Mapping[str, t.Tests.object] = {
+                str(k): self._to_payload_value(v) for k, v in result1.value.items()
+            }
+            filtered2: Mapping[str, t.Tests.object] = {
+                str(k): self._to_payload_value(v) for k, v in result2.value.items()
+            }
             return (filtered1, filtered2)
         return (dict1, dict2)
 
@@ -1226,10 +1296,10 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         | FlextResult[Sequence[Sequence[str]]]
         | FlextResult[bytes]
         | FlextResult[str]
-        | Mapping[str, _Testobject]
+        | Mapping[str, t.Tests.Testobject]
         | Path
         | Sequence[Sequence[str]]
-        | Sequence[_Testobject]
+        | Sequence[t.Tests.Testobject]
         | bool
         | bytes
         | datetime
@@ -1242,15 +1312,15 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         if isinstance(value, BaseModel):
             return value
         if self._is_mapping(value):
-            mapping_value: Mapping[str, object] = value
-            return m.ConfigMap(
-                root={
-                    str(key): FlextRuntime.normalize_to_general_value(
+            coerce_root: dict[str, t.NormalizedValue | BaseModel] = {
+                str(key): FlextRuntime.normalize_to_general_value(
+                    _to_runtime_data(
                         self._to_config_map_value(self._to_payload_value(item))
                     )
-                    for key, item in mapping_value.items()
-                }
-            )
+                )
+                for key, item in value.items()
+            }
+            return m.ConfigMap(root=coerce_root)
         if self._is_nested_rows(value):
             rows: list[list[str]] = []
             sequence_value: Sequence[t.Tests.object] = (
@@ -1270,15 +1340,15 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         if isinstance(value, str | bytes):
             return value
         if self._is_mapping(value):
-            mapping_value = {str(key): item for key, item in value.items()}
-            return m.ConfigMap(
-                root={
-                    str(key): FlextRuntime.normalize_to_general_value(
+            read_root: dict[str, t.NormalizedValue | BaseModel] = {
+                str(key): FlextRuntime.normalize_to_general_value(
+                    _to_runtime_data(
                         self._to_config_map_value(self._to_payload_value(item))
                     )
-                    for key, item in mapping_value.items()
-                }
-            )
+                )
+                for key, item in value.items()
+            }
+            return m.ConfigMap(root=read_root)
         if self._is_nested_rows(value):
             sequence_value: Sequence[t.Tests.object] = (
                 value if isinstance(value, (list, tuple)) else ()
@@ -1360,7 +1430,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             if content.is_failure:
                 error_msg = content.error or "r failure"
                 raise ValueError(f"Cannot create file from failed r: {error_msg}")
-            resolved_value = content.value
+            resolved_value: t.Tests.object = getattr(content, "value", None)
             return self._coerce_file_content(resolved_value)
         return self._coerce_file_content(content)
 
@@ -1460,14 +1530,15 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                         else dict(m.ConfigMap(root={}).root)
                     )
                 if self._is_mapping(parsed_raw):
-                    parsed_content = m.ConfigMap(
-                        root={
-                            str(key): FlextRuntime.normalize_to_general_value(
+                    parse_root: dict[str, t.NormalizedValue | BaseModel] = {
+                        str(key): FlextRuntime.normalize_to_general_value(
+                            _to_runtime_data(
                                 self._to_config_map_value(self._to_payload_value(v))
                             )
-                            for key, v in parsed_raw.items()
-                        }
-                    )
+                        )
+                        for key, v in parsed_raw.items()
+                    }
+                    parsed_content = m.ConfigMap(root=parse_root)
                     key_count = len(parsed_content.root)
                 elif isinstance(parsed_raw, list):
                     parsed_list = _OBJECT_LIST_ADAPTER.validate_python(parsed_raw)
@@ -1560,8 +1631,10 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         if isinstance(value, Path | datetime):
             return str(value)
         if isinstance(value, Mapping):
-            mapping_value = {str(key): item for key, item in value.items()}
-            return self._mapping_to_payload(mapping_value)
+            mapping_obj: Mapping[str, t.Tests.object] = (
+                _OBJECT_DICT_ADAPTER.validate_python(value)
+            )
+            return self._mapping_to_payload(mapping_obj)
         if isinstance(value, Sequence) and (not isinstance(value, str | bytes)):
             try:
                 sequence_value = _OBJECT_LIST_ADAPTER.validate_python(value)
@@ -1592,24 +1665,31 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         dict1, dict2 = parsed
         filter_keys_set = set(keys) if keys is not None else None
         exclude_keys_set = set(exclude_keys) if exclude_keys is not None else None
+        left_root: dict[str, t.NormalizedValue | BaseModel] = {
+            str(k): FlextRuntime.normalize_to_general_value(
+                _to_runtime_data(self._to_config_map_value(self._to_payload_value(v)))
+            )
+            for k, v in dict1.items()
+        }
+        right_root: dict[str, t.NormalizedValue | BaseModel] = {
+            str(k): FlextRuntime.normalize_to_general_value(
+                _to_runtime_data(self._to_config_map_value(self._to_payload_value(v)))
+            )
+            for k, v in dict2.items()
+        }
         left_result = u.transform(
-            m.ConfigMap(root=dict(dict1.items())),
+            m.ConfigMap(root=left_root),
             filter_keys=filter_keys_set,
             exclude_keys=exclude_keys_set,
         )
         right_result = u.transform(
-            m.ConfigMap(root=dict(dict2.items())),
+            m.ConfigMap(root=right_root),
             filter_keys=filter_keys_set,
             exclude_keys=exclude_keys_set,
         )
         if left_result.is_failure or right_result.is_failure:
             return r[bool].ok(False)
-        return r[bool].ok(
-            u.deep_eq(
-                cast("Mapping[str, t.Tests.object]", left_result.value),
-                cast("Mapping[str, t.Tests.object]", right_result.value),
-            )
-        )
+        return r[bool].ok(u.deep_eq(left_result.value, right_result.value))
 
     def _try_parse_both(
         self, content1: str, content2: str, fmt: str

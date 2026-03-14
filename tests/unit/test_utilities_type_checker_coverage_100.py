@@ -32,8 +32,8 @@ T = TypeVar("T")
 TMessage = TypeVar("TMessage")
 
 
-def _type_origin(value: t.TypeHintSpecifier) -> t.TypeHintSpecifier:
-    return cast("t.TypeOriginSpecifier", value)
+def _type_origin(value: t.TypeHintSpecifier) -> t.TypeOriginSpecifier:
+    return value
 
 
 def _message_type(

@@ -14,24 +14,23 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import ast
-import builtins as _builtins_module
-import operator
-from collections.abc import Sequence
 from pathlib import Path
 from typing import override
 
 from pydantic import BaseModel
 
 from flext_core import r, s, t
-from flext_infra import FlextInfraUtilitiesDiscovery, c, m, u
-from flext_infra.codegen.lazy_init import FlextInfraCodegenLazyInit
-from flext_infra.codegen.transforms import FlextInfraCodegenTransforms
-from flext_infra.core.namespace_validator import FlextInfraNamespaceValidator
-from flext_infra.refactor.engine import FlextInfraRefactorEngine
-from flext_infra.refactor.migrate_to_class_mro import (
+from flext_infra import (
+    FlextInfraCodegenLazyInit,
+    FlextInfraNamespaceValidator,
+    FlextInfraRefactorEngine,
     FlextInfraRefactorMigrateToClassMRO,
+    FlextInfraUtilitiesDiscovery,
+    NamespaceEnforcementRewriter,
+    c,
+    m,
+    u,
 )
-from flext_infra.refactor.namespace_rewriter import NamespaceEnforcementRewriter
 
 
 class FlextInfraCodegenFixer(s):
@@ -67,305 +66,10 @@ class FlextInfraCodegenFixer(s):
         self._rules_only = rules_only
 
     # ------------------------------------------------------------------
-    # AST analysis helpers (no file I/O, tree mutation for analysis only)
-    # ------------------------------------------------------------------
-
-    @classmethod
-    def _all_deps_resolvable(cls, node: ast.stmt, target_tree: ast.Module) -> bool:
-        """Check if all names used in node are available in the target module.
-
-        Called AFTER _copy_required_imports to verify the copy succeeded.
-        A name is available if it's imported or defined in the target module.
-        """
-        names_used = FlextInfraCodegenTransforms.get_top_level_names_in_node(node)
-        node_name = FlextInfraCodegenTransforms.get_node_name(node)
-        type_params = FlextInfraCodegenTransforms.get_type_param_names(node)
-        names_used = frozenset(
-            n for n in names_used if n != node_name and n not in type_params
-        )
-        if not names_used:
-            return True
-        available: set[str] = set(dir(_builtins_module))
-        for stmt in target_tree.body:
-            if isinstance(stmt, ast.Import):
-                for alias in stmt.names:
-                    imported_name = alias.asname or alias.name
-                    available.add(imported_name.split(".")[0])
-            elif isinstance(stmt, ast.ImportFrom):
-                for alias in stmt.names:
-                    imported_name = alias.asname or alias.name
-                    if imported_name != "*":
-                        available.add(imported_name)
-            else:
-                name = FlextInfraCodegenTransforms.get_node_name(stmt)
-                if name:
-                    available.add(name)
-        return all(n in available for n in names_used)
-
-    @classmethod
-    def _copy_required_imports(
-        cls,
-        node: ast.stmt,
-        source_tree: ast.Module,
-        target_tree: ast.Module,
-    ) -> None:
-        """Copy imports needed by node from source_tree to target_tree.
-
-        Mutates target_tree for analysis accumulation only — the tree is
-        never written to disk via ast.unparse.
-        """
-        names_used = FlextInfraCodegenTransforms.get_top_level_names_in_node(node)
-        node_name = FlextInfraCodegenTransforms.get_node_name(node)
-        type_params = FlextInfraCodegenTransforms.get_type_param_names(node)
-        names_used = frozenset(
-            n for n in names_used if n != node_name and n not in type_params
-        )
-        if not names_used:
-            return
-        source_imports: dict[str, ast.stmt] = {}
-        for stmt in source_tree.body:
-            if isinstance(stmt, ast.Import):
-                for alias in stmt.names:
-                    imported_name = alias.asname or alias.name
-                    top_name = imported_name.split(".")[0]
-                    source_imports[top_name] = stmt
-            elif isinstance(stmt, ast.ImportFrom):
-                for alias in stmt.names:
-                    imported_name = alias.asname or alias.name
-                    if imported_name != "*":
-                        source_imports[imported_name] = stmt
-        target_available: set[str] = set()
-        for stmt in target_tree.body:
-            if isinstance(stmt, ast.Import):
-                for alias in stmt.names:
-                    imported_name = alias.asname or alias.name
-                    target_available.add(imported_name.split(".")[0])
-            elif isinstance(stmt, ast.ImportFrom):
-                for alias in stmt.names:
-                    imported_name = alias.asname or alias.name
-                    if imported_name != "*":
-                        target_available.add(imported_name)
-        seen_modules: set[str] = set()
-        imports_to_add: list[ast.stmt] = []
-        for name in sorted(names_used):
-            if name in target_available:
-                continue
-            if name not in source_imports:
-                continue
-            import_stmt = source_imports[name]
-            import_key = ast.unparse(import_stmt)
-            if import_key in seen_modules:
-                continue
-            seen_modules.add(import_key)
-            imports_to_add.append(import_stmt)
-        if not imports_to_add:
-            return
-        last_import_idx = 0
-        for i, stmt in enumerate(target_tree.body):
-            if isinstance(stmt, (ast.Import, ast.ImportFrom)) or (
-                isinstance(stmt, ast.Expr) and isinstance(stmt.value, ast.Constant)
-            ):
-                last_import_idx = i + 1
-        for i, imp in enumerate(imports_to_add):
-            target_tree.body.insert(last_import_idx + i, imp)
-
-    @classmethod
-    def _needs_first_party_import(
-        cls,
-        node: ast.stmt,
-        source_tree: ast.Module,
-        target_tree: ast.Module,
-    ) -> bool:
-        """Check if moving node to target would require a first-party import.
-
-        First-party imports (from flext_*) into typings.py create circular
-        import chains because typings.py is imported by result.py, runtime.py,
-        and other foundational modules. If the node depends on names that come
-        from first-party imports and those names are NOT already available in
-        the target module, moving the node is unsafe.
-        """
-        names_used = FlextInfraCodegenTransforms.get_top_level_names_in_node(node)
-        node_name = FlextInfraCodegenTransforms.get_node_name(node)
-        type_params = FlextInfraCodegenTransforms.get_type_param_names(node)
-        names_used = frozenset(
-            n for n in names_used if n != node_name and n not in type_params
-        )
-        if not names_used:
-            return False
-        target_available: set[str] = set(dir(_builtins_module))
-        for stmt in target_tree.body:
-            if isinstance(stmt, ast.Import):
-                target_available.update(
-                    (alias.asname or alias.name).split(".")[0] for alias in stmt.names
-                )
-            elif isinstance(stmt, ast.ImportFrom):
-                for alias in stmt.names:
-                    imported = alias.asname or alias.name
-                    if imported != "*":
-                        target_available.add(imported)
-            else:
-                found = FlextInfraCodegenTransforms.get_node_name(stmt)
-                if found:
-                    target_available.add(found)
-        missing = names_used - target_available
-        if not missing:
-            return False
-        for stmt in source_tree.body:
-            if isinstance(stmt, ast.ImportFrom) and stmt.module:
-                if stmt.module.startswith("flext"):
-                    for alias in stmt.names:
-                        imported = alias.asname or alias.name
-                        if imported in missing:
-                            return True
-            elif isinstance(stmt, ast.Import):
-                for alias in stmt.names:
-                    top = (alias.asname or alias.name).split(".")[0]
-                    if top.startswith("flext") and top in missing:
-                        return True
-        return False
-
-    # ------------------------------------------------------------------
-    # Text-based write helpers (format-preserving, no ast.unparse)
-    # ------------------------------------------------------------------
-
-    @staticmethod
-    def _insert_import_text(source: str, import_stmt: str) -> str:
-        """Insert an import statement after module docstring/imports."""
-        return u.Infra.insert_import_statement(source, import_stmt)
-
-    @classmethod
-    def _collect_import_texts_for_nodes(
-        cls,
-        nodes: Sequence[ast.stmt],
-        source_lines: list[str],
-        source_tree: ast.Module,
-        target_text: str,
-    ) -> list[str]:
-        """Collect import text lines from source needed by moved nodes.
-
-        Returns import statement strings that should be added to the target
-        file. Skips imports already present in the target text.
-        """
-        all_names: set[str] = set()
-        for node in nodes:
-            names = FlextInfraCodegenTransforms.get_top_level_names_in_node(node)
-            node_name = FlextInfraCodegenTransforms.get_node_name(node)
-            type_params = FlextInfraCodegenTransforms.get_type_param_names(node)
-            all_names.update(
-                n for n in names if n != node_name and n not in type_params
-            )
-        if not all_names:
-            return []
-        import_texts: list[str] = []
-        seen: set[str] = set()
-        for stmt in source_tree.body:
-            if not isinstance(stmt, (ast.Import, ast.ImportFrom)):
-                continue
-            provided: set[str] = set()
-            if isinstance(stmt, ast.Import):
-                provided.update(
-                    (alias.asname or alias.name).split(".")[0] for alias in stmt.names
-                )
-            else:
-                for alias in stmt.names:
-                    imported = alias.asname or alias.name
-                    if imported != "*":
-                        provided.add(imported)
-            if not (provided & all_names):
-                continue
-            start = stmt.lineno
-            end = stmt.end_lineno or start
-            text = "\n".join(source_lines[start - 1 : end]).strip()
-            if text not in seen and text not in target_text:
-                seen.add(text)
-                import_texts.append(text)
-        return import_texts
-
-    def _write_changes(
-        self,
-        *,
-        source_path: Path,
-        target_path: Path,
-        nodes_moved: Sequence[ast.stmt],
-        moved_names: list[str],
-        source_tree: ast.Module,
-        pkg_name: str,
-        target_module: str,
-    ) -> None:
-        """Apply moves via text operations (format-preserving, no ast.unparse).
-
-        Follows the pattern from refactor/analysis.py rewrite_source().
-        Steps: extract definitions by line range, remove from source,
-        add re-export import to source, add imports+definitions to target,
-        normalize both files with ruff.
-        """
-        if self._dry_run:
-            return
-        encoding = c.Infra.Encoding.DEFAULT
-        source_text = source_path.read_text(encoding=encoding)
-        source_lines = source_text.splitlines()
-        target_text = target_path.read_text(encoding=encoding)
-
-        # 1. Extract node definitions by line range
-        extracted: list[str] = []
-        ranges: list[tuple[int, int]] = []
-        for node in nodes_moved:
-            start = node.lineno
-            end = node.end_lineno or node.lineno
-            block = "\n".join(source_lines[start - 1 : end])
-            extracted.append(block)
-            ranges.append((start, end))
-
-        # 2. Collect required imports for target
-        import_texts = self._collect_import_texts_for_nodes(
-            nodes_moved,
-            source_lines,
-            source_tree,
-            target_text,
-        )
-
-        # 3. Remove nodes from source (reverse order preserves line numbers)
-        for start, end in sorted(ranges, key=operator.itemgetter(0), reverse=True):
-            del source_lines[start - 1 : end]
-
-        # 4. Add re-export import to source
-        source_result = "\n".join(source_lines)
-        re_export = f"from {pkg_name}.{target_module} import " + ", ".join(
-            sorted(moved_names)
-        )
-        source_result = self._insert_import_text(source_result, re_export)
-        if source_text.endswith("\n") and not source_result.endswith("\n"):
-            source_result += "\n"
-
-        # 5. Add imports + definitions to target
-        target_result = target_text
-        for imp in import_texts:
-            target_result = self._insert_import_text(target_result, imp)
-        for block in extracted:
-            target_result = target_result.rstrip() + "\n\n\n" + block + "\n"
-
-        # 6. Write files
-        source_path.write_text(source_result, encoding=encoding)
-        target_path.write_text(target_result, encoding=encoding)
-
-        # 7. Normalize with ruff
-        u.Infra.run_ruff_fix(source_path)
-        u.Infra.run_ruff_fix(target_path)
-
-    # ------------------------------------------------------------------
     # File system helpers
     # ------------------------------------------------------------------
 
-    @staticmethod
-    def _find_package_dir(project_root: Path) -> Path | None:
-        """Find the first Python package under src/."""
-        src_dir = project_root / c.Infra.Paths.DEFAULT_SRC_DIR
-        if not src_dir.is_dir():
-            return None
-        for child in sorted(src_dir.iterdir()):
-            if child.is_dir() and (child / c.Infra.Files.INIT_PY).exists():
-                return child
-        return None
+    _find_package_dir = staticmethod(u.Infra.find_package_dir)
 
     # ------------------------------------------------------------------
     # Entry points
@@ -599,7 +303,7 @@ class FlextInfraCodegenFixer(s):
             for file_path in py_files
             if c.Infra.Paths.DEFAULT_SRC_DIR in file_path.parts
         ]
-        before_snapshot = self._snapshot_files(file_paths=src_files)
+        before_snapshot = u.Infra.snapshot_files(file_paths=src_files)
         NamespaceEnforcementRewriter.rewrite_import_alias_violations(py_files=src_files)
         NamespaceEnforcementRewriter.rewrite_runtime_alias_violations(
             py_files=src_files
@@ -607,7 +311,7 @@ class FlextInfraCodegenFixer(s):
         NamespaceEnforcementRewriter.rewrite_missing_future_annotations(
             py_files=src_files
         )
-        changed_paths = self._detect_changed_files(
+        changed_paths = u.Infra.detect_changed_files(
             before_snapshot=before_snapshot,
             file_paths=src_files,
         )
@@ -685,92 +389,8 @@ class FlextInfraCodegenFixer(s):
                 continue
             if path.name == c.Infra.Files.INIT_PY:
                 continue
-            if self._prune_stale_all_assignment(path=path):
+            if u.Infra.prune_stale_all_assignment(path=path):
                 files_modified.add(str(path))
-
-    @staticmethod
-    def _prune_stale_all_assignment(*, path: Path) -> bool:
-        try:
-            source = path.read_text(encoding=c.Infra.Encoding.DEFAULT)
-        except (OSError, UnicodeDecodeError):
-            return False
-        # NOTE: source text needed below - cannot delegate to u.Infra.parse_module_ast
-        tree = u.Infra.parse_ast_from_source(source)
-        if tree is None:
-            return False
-        assignment: ast.Assign | None = None
-        exports: list[str] = []
-        for stmt in tree.body:
-            if not isinstance(stmt, ast.Assign) or len(stmt.targets) != 1:
-                continue
-            target = stmt.targets[0]
-            if not isinstance(target, ast.Name) or target.id != "__all__":
-                continue
-            if not isinstance(stmt.value, (ast.List, ast.Tuple)):
-                continue
-            names: list[str] = []
-            is_literal_list = True
-            for element in stmt.value.elts:
-                if isinstance(element, ast.Constant) and isinstance(element.value, str):
-                    names.append(element.value)
-                    continue
-                is_literal_list = False
-                break
-            if not is_literal_list:
-                continue
-            assignment = stmt
-            exports = names
-            break
-        if assignment is None or len(exports) == 0:
-            return False
-        available: set[str] = set()
-        for stmt in tree.body:
-            if isinstance(stmt, ast.ClassDef):
-                available.add(stmt.name)
-                continue
-            if isinstance(stmt, ast.FunctionDef):
-                available.add(stmt.name)
-                continue
-            if isinstance(stmt, ast.AsyncFunctionDef):
-                available.add(stmt.name)
-                continue
-            if isinstance(stmt, ast.Import):
-                for alias in stmt.names:
-                    imported = alias.asname or alias.name
-                    available.add(imported.split(".")[0])
-                continue
-            if isinstance(stmt, ast.ImportFrom):
-                for alias in stmt.names:
-                    imported = alias.asname or alias.name
-                    if imported != "*":
-                        available.add(imported)
-                continue
-            found_name = FlextInfraCodegenTransforms.get_node_name(stmt)
-            if found_name:
-                available.add(found_name)
-        filtered = [
-            name for name in exports if name in available or name.startswith("__")
-        ]
-        if filtered == exports:
-            return False
-        block = "__all__ = [\n" + "\n".join(f'    "{name}",' for name in filtered)
-        if len(filtered) == 0:
-            block = "__all__ = []"
-        else:
-            block += "\n]"
-        lines = source.splitlines()
-        if assignment.lineno <= 0 or assignment.end_lineno is None:
-            return False
-        start = assignment.lineno - 1
-        end = assignment.end_lineno
-        updated_lines = [*lines[:start], block, *lines[end:]]
-        updated = "\n".join(updated_lines)
-        if source.endswith("\n"):
-            updated += "\n"
-        if updated == source:
-            return False
-        path.write_text(updated, encoding=c.Infra.Encoding.DEFAULT)
-        return True
 
     def _normalize_rewritten_python_files(self, *, files_modified: set[str]) -> None:
         for file_path in sorted(files_modified):
@@ -785,63 +405,18 @@ class FlextInfraCodegenFixer(s):
         project_path: Path,
         files_modified: set[str],
     ) -> None:
-        before_snapshot = self._snapshot_init_files(project_path=project_path)
+        before_snapshot = u.Infra.snapshot_init_files(
+            project_path=project_path,
+        )
         _ = FlextInfraCodegenLazyInit(workspace_root=project_path).run(check_only=False)
-        after_snapshot = self._snapshot_init_files(project_path=project_path)
+        after_snapshot = u.Infra.snapshot_init_files(
+            project_path=project_path,
+        )
         for path_str, updated in after_snapshot.items():
             previous = before_snapshot.get(path_str)
             if previous == updated:
                 continue
             files_modified.add(path_str)
-
-    @staticmethod
-    def _snapshot_init_files(*, project_path: Path) -> dict[str, str]:
-        snapshot: dict[str, str] = {}
-        for root_name in c.Infra.Refactor.MRO_SCAN_DIRECTORIES:
-            root = project_path / root_name
-            if not root.is_dir():
-                continue
-            for init_file in u.Infra.iter_directory_python_files(
-                root,
-                pattern=c.Infra.Files.INIT_PY,
-            ):
-                try:
-                    snapshot[str(init_file)] = init_file.read_text(
-                        encoding=c.Infra.Encoding.DEFAULT,
-                    )
-                except OSError:
-                    continue
-        return snapshot
-
-    @staticmethod
-    def _snapshot_files(*, file_paths: Sequence[Path]) -> dict[str, str]:
-        snapshot: dict[str, str] = {}
-        for file_path in file_paths:
-            try:
-                snapshot[str(file_path)] = file_path.read_text(
-                    encoding=c.Infra.Encoding.DEFAULT,
-                )
-            except OSError:
-                continue
-        return snapshot
-
-    @staticmethod
-    def _detect_changed_files(
-        *,
-        before_snapshot: dict[str, str],
-        file_paths: Sequence[Path],
-    ) -> set[str]:
-        changed: set[str] = set()
-        for file_path in file_paths:
-            path_key = str(file_path)
-            previous = before_snapshot.get(path_key)
-            try:
-                current = file_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
-            except OSError:
-                continue
-            if previous != current:
-                changed.add(path_key)
-        return changed
 
     def run(self) -> list[m.Infra.Codegen.AutoFixResult]:
         """Run auto-fix on all projects in workspace.
@@ -882,7 +457,7 @@ class FlextInfraCodegenFixer(s):
         tree = u.Infra.parse_module_ast(source_file)
         if tree is None:
             return
-        finals = FlextInfraCodegenTransforms.find_standalone_finals(tree)
+        finals = u.Infra.find_standalone_finals(tree)
         if not finals:
             return
         target_path = pkg_dir / "constants.py"
@@ -917,9 +492,7 @@ class FlextInfraCodegenFixer(s):
             target_name = ""
             if isinstance(node.target, ast.Name):
                 target_name = node.target.id
-            if FlextInfraCodegenTransforms.name_exists_in_module(
-                target_name, target_tree
-            ):
+            if u.Infra.name_exists_in_module(target_name, target_tree):
                 violations_skipped.append(
                     m.Infra.Codegen.CensusViolation(
                         module=str(source_file),
@@ -930,8 +503,8 @@ class FlextInfraCodegenFixer(s):
                     ),
                 )
                 continue
-            self._copy_required_imports(node, tree, target_tree)
-            if not self._all_deps_resolvable(node, target_tree):
+            u.Infra.copy_required_imports(node, tree, target_tree)
+            if not u.Infra.all_deps_resolvable(node, target_tree):
                 violations_skipped.append(
                     m.Infra.Codegen.CensusViolation(
                         module=str(source_file),
@@ -943,7 +516,7 @@ class FlextInfraCodegenFixer(s):
                 )
                 continue
             # Insert into target_tree for analysis accumulation
-            insert_idx = FlextInfraCodegenTransforms.find_insert_position(target_tree)
+            insert_idx = u.Infra.find_insert_position(target_tree)
             target_tree.body.insert(insert_idx, node)
             violations_fixed.append(
                 m.Infra.Codegen.CensusViolation(
@@ -957,7 +530,7 @@ class FlextInfraCodegenFixer(s):
             actually_moved.append(node)
             moved_names.append(target_name)
         if actually_moved:
-            self._write_changes(
+            u.Infra.write_changes(
                 source_path=source_file,
                 target_path=target_path,
                 nodes_moved=actually_moved,
@@ -965,6 +538,7 @@ class FlextInfraCodegenFixer(s):
                 source_tree=tree,
                 pkg_name=pkg_name,
                 target_module="constants",
+                dry_run=self._dry_run,
             )
             files_modified.add(str(source_file))
             files_modified.add(str(target_path))
@@ -982,8 +556,8 @@ class FlextInfraCodegenFixer(s):
         tree = u.Infra.parse_module_ast(source_file)
         if tree is None:
             return
-        typevars = FlextInfraCodegenTransforms.find_standalone_typevars(tree)
-        typealiases = FlextInfraCodegenTransforms.find_standalone_typealiases(tree)
+        typevars = u.Infra.find_standalone_typevars(tree)
+        typealiases = u.Infra.find_standalone_typealiases(tree)
         if not typevars and not typealiases:
             return
         target_path = pkg_dir / "typings.py"
@@ -1012,7 +586,7 @@ class FlextInfraCodegenFixer(s):
                 continue
             nodes_to_move.append(tv_node)
         for alias_node in typealiases:
-            target_name = FlextInfraCodegenTransforms.get_node_name(alias_node)
+            target_name = u.Infra.get_node_name(alias_node)
             if target_name.startswith("_"):
                 violations_skipped.append(
                     m.Infra.Codegen.CensusViolation(
@@ -1031,12 +605,10 @@ class FlextInfraCodegenFixer(s):
         actually_moved: list[ast.stmt] = []
         moved_names: list[str] = []
         for move_node in nodes_to_move:
-            target_name = FlextInfraCodegenTransforms.get_node_name(move_node)
+            target_name = u.Infra.get_node_name(move_node)
             if not target_name:
                 continue
-            if FlextInfraCodegenTransforms.name_exists_in_module(
-                target_name, target_tree
-            ):
+            if u.Infra.name_exists_in_module(target_name, target_tree):
                 violations_skipped.append(
                     m.Infra.Codegen.CensusViolation(
                         module=str(source_file),
@@ -1047,7 +619,11 @@ class FlextInfraCodegenFixer(s):
                     ),
                 )
                 continue
-            if self._needs_first_party_import(move_node, tree, target_tree):
+            if u.Infra.needs_first_party_import(
+                move_node,
+                tree,
+                target_tree,
+            ):
                 violations_skipped.append(
                     m.Infra.Codegen.CensusViolation(
                         module=str(source_file),
@@ -1058,8 +634,15 @@ class FlextInfraCodegenFixer(s):
                     ),
                 )
                 continue
-            self._copy_required_imports(move_node, tree, target_tree)
-            if not self._all_deps_resolvable(move_node, target_tree):
+            u.Infra.copy_required_imports(
+                move_node,
+                tree,
+                target_tree,
+            )
+            if not u.Infra.all_deps_resolvable(
+                move_node,
+                target_tree,
+            ):
                 violations_skipped.append(
                     m.Infra.Codegen.CensusViolation(
                         module=str(source_file),
@@ -1071,7 +654,7 @@ class FlextInfraCodegenFixer(s):
                 )
                 continue
             # Insert into target_tree for analysis accumulation
-            insert_idx = FlextInfraCodegenTransforms.find_insert_position(target_tree)
+            insert_idx = u.Infra.find_insert_position(target_tree)
             target_tree.body.insert(insert_idx, move_node)
             kind = "TypeVar" if isinstance(move_node, ast.Assign) else "TypeAlias"
             violations_fixed.append(
@@ -1086,7 +669,7 @@ class FlextInfraCodegenFixer(s):
             actually_moved.append(move_node)
             moved_names.append(target_name)
         if actually_moved:
-            self._write_changes(
+            u.Infra.write_changes(
                 source_path=source_file,
                 target_path=target_path,
                 nodes_moved=actually_moved,
@@ -1094,6 +677,7 @@ class FlextInfraCodegenFixer(s):
                 source_tree=tree,
                 pkg_name=pkg_name,
                 target_module=c.Infra.Directories.TYPINGS,
+                dry_run=self._dry_run,
             )
             files_modified.add(str(source_file))
             files_modified.add(str(target_path))

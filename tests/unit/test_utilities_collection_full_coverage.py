@@ -52,25 +52,25 @@ class _ListSubclass(UserList[int]):
 
 def test_find_mapping_no_match_and_merge_error_paths() -> None:
     assert c.Errors.UNKNOWN_ERROR
-    assert isinstance(m.Categories(), m.Categories)
+    assert isinstance(m.Categories(categories={}), m.Categories)
     assert r[int].ok(1).is_success
     assert isinstance(m.ConfigMap({"a": 1}), m.ConfigMap)
     not_found = u.find({"a": 1}, lambda value: value == 2)
     assert not_found.is_failure
     nested = u._merge_deep_single_key(
-        cast("dict[str, t.Tests.object]", {"x": _BadCopyDict({"a": 1})}),
+        cast("dict[str, t.NormalizedValue]", {"x": _BadCopyDict({"a": 1})}),
         "x",
-        cast("object", {"b": 2}),
+        cast("t.NormalizedValue", {"b": 2}),
     )
     assert nested.is_success
     deep = u.merge(
-        cast("dict[str, t.Tests.object]", {"x": _BadCopyDict({"a": 1})}),
-        cast("dict[str, t.Tests.object]", {"x": {"b": 2}}),
+        cast("dict[str, t.NormalizedValue]", {"x": _BadCopyDict({"a": 1})}),
+        cast("dict[str, t.NormalizedValue]", {"x": {"b": 2}}),
         strategy="deep",
     )
     assert deep.is_success
     broken = u.merge(
-        cast("dict[str, t.Tests.object]", None),
+        cast("dict[str, t.NormalizedValue]", None),
         {"x": 1},
         strategy="deep",
     )
@@ -190,4 +190,4 @@ def test_collection_batch_failure_error_capture_and_parse_sequence_outer_error()
 def test_is_general_value_list_accepts_list_subclass() -> None:
     value = _ListSubclass([1, 2, 3])
 
-    assert u._is_general_value_list(value) is False
+    assert u._is_general_value_list(cast("t.NormalizedValue", value)) is False

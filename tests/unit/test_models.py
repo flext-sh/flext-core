@@ -25,14 +25,14 @@ import json
 import threading
 from collections.abc import Callable
 from enum import StrEnum
-from typing import Annotated, ClassVar
+from typing import Annotated, ClassVar, cast
 
 import pytest
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 
-from flext_core import c, m
+from flext_core import c, m, t
 from flext_core._models.domain_event import _ComparableConfigMap
-from flext_tests import t, tm, u
+from flext_tests import t as test_t, tm, u
 
 
 class ModelType(StrEnum):
@@ -57,7 +57,7 @@ class ModelCreationScenario(BaseModel):
         ModelType, Field(description="Model type under creation test")
     ]
     field_data: Annotated[
-        dict[str, t.Tests.object], Field(description="Model input payload")
+        dict[str, test_t.Tests.object], Field(description="Model input payload")
     ]
     expected_checks: Annotated[
         list[str], Field(description="Expected validation check labels")
@@ -101,7 +101,11 @@ class TestFlextModels:
     def test_models_initialization(self) -> None:
         """Test models initialization with real validation."""
         models = m()
-        tm.that(models, none=False, msg="m instance must not be None")
+        tm.that(
+            cast("test_t.Tests.object", models),
+            none=False,
+            msg="m instance must not be None",
+        )
         assert isinstance(
             models,
             m,
@@ -111,7 +115,6 @@ class TestFlextModels:
         """Test entity creation and validation."""
 
         class TestEntity(m.Entity):
-            domain_events: list[m.DomainEvent] = Field(default_factory=list)
             name: str
             email: str
 
@@ -123,7 +126,9 @@ class TestFlextModels:
                     raise ValueError(error_msg)
                 return v
 
-        entity = TestEntity(name="Test User", email="test@example.com")
+        entity = TestEntity(
+            name="Test User", email="test@example.com", domain_events=[]
+        )
         tm.that(entity.name, eq="Test User", msg="Entity name must match input")
         tm.that(
             entity.email,
@@ -152,7 +157,7 @@ class TestFlextModels:
         )
         error_msg = "Invalid email"
         with pytest.raises(ValueError, match=error_msg):
-            _ = TestEntity(name="Test User", email="invalid-email")
+            _ = TestEntity(name="Test User", email="invalid-email", domain_events=[])
 
     def test_models_value_object_creation(self) -> None:
         """Test value object creation and immutability."""
@@ -253,10 +258,9 @@ class TestFlextModels:
         """Test version management in entities."""
 
         class VersionedEntity(m.Entity):
-            domain_events: list[m.DomainEvent] = Field(default_factory=list)
             name: str
 
-        entity = VersionedEntity(name="Test")
+        entity = VersionedEntity(name="Test", domain_events=[])
         initial_version = entity.version
         tm.that(initial_version, gt=0, msg="Initial version must be positive")
         entity.increment_version()
@@ -275,10 +279,9 @@ class TestFlextModels:
         """Test timestamped functionality."""
 
         class TimestampedEntity(m.Entity):
-            domain_events: list[m.DomainEvent] = Field(default_factory=list)
             name: str
 
-        entity = TimestampedEntity(name="Test")
+        entity = TimestampedEntity(name="Test", domain_events=[])
         initial_created = entity.created_at
         tm.that(
             initial_created,
@@ -302,7 +305,6 @@ class TestFlextModels:
         """Test validation patterns."""
 
         class ValidatedEntity(m.Entity):
-            domain_events: list[m.DomainEvent] = Field(default_factory=list)
             name: str
             email: str
 
@@ -322,7 +324,9 @@ class TestFlextModels:
                     raise ValueError(error_msg)
                 return v
 
-        entity = ValidatedEntity(name="Test", email="test@example.com")
+        entity = ValidatedEntity(
+            name="Test", email="test@example.com", domain_events=[]
+        )
         tm.that(entity.name, eq="Test", msg="Validated entity name must match input")
         tm.that(
             entity.email,
@@ -331,21 +335,20 @@ class TestFlextModels:
         )
         tm.that("@" in entity.email, eq=True, msg="Validated email must contain @")
         with pytest.raises(ValueError, match="Name is required"):
-            _ = ValidatedEntity(name="", email="test@example.com")
+            _ = ValidatedEntity(name="", email="test@example.com", domain_events=[])
         with pytest.raises(ValueError, match="Invalid email"):
-            _ = ValidatedEntity(name="Test", email="invalid")
+            _ = ValidatedEntity(name="Test", email="invalid", domain_events=[])
 
     def test_models_thread_safety(self) -> None:
         """Test thread safety of models."""
 
         class ThreadSafeEntity(m.Entity):
-            domain_events: list[m.DomainEvent] = Field(default_factory=list)
             counter: int = 0
 
             def increment(self) -> None:
                 self.counter += 1
 
-        entity = ThreadSafeEntity()
+        entity = ThreadSafeEntity(domain_events=[])
 
         def worker() -> None:
             for _ in range(100):
@@ -397,12 +400,11 @@ class TestFlextModels:
         """Test Entity equality and hash based on identity."""
 
         class TestEntity(m.Entity):
-            domain_events: list[m.DomainEvent] = Field(default_factory=list)
             name: str
 
-        entity1 = TestEntity(name="test", unique_id="123")
-        entity2 = TestEntity(name="test", unique_id="123")
-        entity3 = TestEntity(name="test", unique_id="456")
+        entity1 = TestEntity(name="test", unique_id="123", domain_events=[])
+        entity2 = TestEntity(name="test", unique_id="123", domain_events=[])
+        entity3 = TestEntity(name="test", unique_id="456", domain_events=[])
         tm.that(
             entity1 == entity2,
             eq=True,
@@ -431,10 +433,9 @@ class TestFlextModels:
         """Test domain event functionality in Entity."""
 
         class TestEntity(m.Entity):
-            domain_events: list[m.DomainEvent] = Field(default_factory=list)
             name: str
 
-        entity = TestEntity(name="test")
+        entity = TestEntity(name="test", domain_events=[])
         tm.that(
             len(entity.domain_events),
             eq=0,
@@ -478,10 +479,9 @@ class TestFlextModels:
         """Test domain event validation."""
 
         class TestEntity(m.Entity):
-            domain_events: list[m.DomainEvent] = Field(default_factory=list)
             name: str
 
-        entity = TestEntity(name="test")
+        entity = TestEntity(name="test", domain_events=[])
         result = entity.add_domain_event("", m.ConfigMap(root={"data": "value"}))
         _ = u.Tests.Result.assert_failure(result)
         tm.that(result.error, none=False, msg="Failure result must have error message")
@@ -506,20 +506,18 @@ class TestFlextModels:
         """Test Entity initial version state."""
 
         class TestEntity(m.Entity):
-            domain_events: list[m.DomainEvent] = Field(default_factory=list)
             name: str
 
-        entity = TestEntity(name="test")
+        entity = TestEntity(name="test", domain_events=[])
         assert entity.version == 1
 
     def test_timestampable_mixin_serialization(self) -> None:
         """Test timestamp serialization in JSON output."""
 
         class TestEntity(m.Entity):
-            domain_events: list[m.DomainEvent] = Field(default_factory=list)
             name: str
 
-        entity = TestEntity(name="test")
+        entity = TestEntity(name="test", domain_events=[])
         json_data = entity.model_dump_json()
         assert '"created_at"' in json_data
         parsed = json.loads(json_data)
@@ -530,10 +528,9 @@ class TestFlextModels:
         """Test update_timestamp method."""
 
         class TestEntity(m.Entity):
-            domain_events: list[m.DomainEvent] = Field(default_factory=list)
             name: str
 
-        entity = TestEntity(name="test")
+        entity = TestEntity(name="test", domain_events=[])
         original_updated = entity.updated_at
         entity.update_timestamp()
         assert entity.updated_at is not None
@@ -543,10 +540,9 @@ class TestFlextModels:
         """Test VersionableMixin functionality."""
 
         class TestEntity(m.Entity):
-            domain_events: list[m.DomainEvent] = Field(default_factory=list)
             name: str
 
-        entity = TestEntity(name="test")
+        entity = TestEntity(name="test", domain_events=[])
         assert entity.version == 1
         entity.increment_version()
         assert entity.version == 2
@@ -559,7 +555,7 @@ class TestFlextModels:
         class TestAggregate(m.AggregateRoot):
             name: str
 
-        aggregate = TestAggregate(name="test")
+        aggregate = TestAggregate(name="test", domain_events=[])
         assert all(
             hasattr(aggregate, attr) for attr in ["unique_id", "version", "created_at"]
         )
@@ -579,7 +575,7 @@ class TestFlextModels:
             value: int
             _invariants: ClassVar[list[Callable[[], bool]]] = [passing_invariant]
 
-        aggregate = TestAggregate(name="test", value=10)
+        aggregate = TestAggregate(name="test", value=10, domain_events=[])
         aggregate.check_invariants()
 
         def failing_invariant() -> bool:
@@ -590,7 +586,7 @@ class TestFlextModels:
             _invariants: ClassVar[list[Callable[[], bool]]] = [failing_invariant]
 
         with pytest.raises(ValidationError, match="Invariant violated"):
-            _ = FailingAggregate(name="test")
+            _ = FailingAggregate(name="test", domain_events=[])
 
     def test_value_object_immutability(self) -> None:
         """Test Value object immutability and equality."""
@@ -641,6 +637,8 @@ class TestFlextModels:
         query = m.Query(
             query_type="find_users",
             filters=m.Dict(root={"active": "true"}),
+            pagination=m.Pagination(),
+            query_id="q-test-1",
         )
         assert hasattr(query, "query_id")
         assert query.query_id is not None
@@ -654,7 +652,7 @@ class TestFlextModels:
         class TestAggregate(m.AggregateRoot):
             name: str
 
-        aggregate = TestAggregate(name="test")
+        aggregate = TestAggregate(name="test", domain_events=[])
         _ = aggregate.add_domain_event("event1", m.ConfigMap(root={"data": "value1"}))
         _ = aggregate.add_domain_event("event2", m.ConfigMap(root={"data": "value2"}))
         assert len(aggregate.domain_events) == 2
@@ -670,7 +668,7 @@ class TestFlextModels:
         class TestAggregate(m.AggregateRoot):
             name: str
 
-        aggregate = TestAggregate(name="test")
+        aggregate = TestAggregate(name="test", domain_events=[])
         result = aggregate.mark_events_as_committed()
         _ = u.Tests.Result.assert_success(result)
         committed_events = result.value
@@ -682,7 +680,7 @@ class TestFlextModels:
         class TestAggregate(m.AggregateRoot):
             name: str
 
-        aggregate = TestAggregate(name="test")
+        aggregate = TestAggregate(name="test", domain_events=[])
         events = [
             ("event1", m.ConfigMap(root={"data": "value1"})),
             ("event2", m.ConfigMap(root={"data": "value2"})),
@@ -701,7 +699,7 @@ class TestFlextModels:
         class TestAggregate(m.AggregateRoot):
             name: str
 
-        aggregate = TestAggregate(name="test")
+        aggregate = TestAggregate(name="test", domain_events=[])
         result = aggregate.add_domain_events_bulk([])
         _ = u.Tests.Result.assert_success(result)
         invalid_empty_name = [("", m.ConfigMap(root={"data": "value"}))]
@@ -717,7 +715,7 @@ class TestFlextModels:
         class TestAggregate(m.AggregateRoot):
             name: str
 
-        aggregate = TestAggregate(name="test")
+        aggregate = TestAggregate(name="test", domain_events=[])
         max_events = c.Validation.MAX_UNCOMMITTED_EVENTS
         events = [
             (f"event{i}", m.ConfigMap(root={"data": f"value{i}"}))
@@ -734,14 +732,14 @@ class TestFlextModels:
             name: str
             handler_called: bool = False
             handler_data: Annotated[
-                dict[str, t.Tests.object], Field(default_factory=dict)
+                dict[str, test_t.Tests.object], Field(default_factory=dict)
             ]
 
-            def _apply_test_event(self, data: dict[str, t.Tests.object]) -> None:
+            def _apply_test_event(self, data: dict[str, test_t.Tests.object]) -> None:
                 self.handler_called = True
                 self.handler_data = data
 
-        aggregate = TestAggregate(name="test")
+        aggregate = TestAggregate(name="test", domain_events=[], handler_data={})
         result = aggregate.add_domain_event(
             "user_action",
             m.ConfigMap(root={"event_type": "test_event", "key": "value"}),
@@ -756,11 +754,13 @@ class TestFlextModels:
         class TestAggregate(m.AggregateRoot):
             name: str
 
-            def _apply_failing_event(self, data: dict[str, t.Tests.object]) -> None:
+            def _apply_failing_event(
+                self, data: dict[str, test_t.Tests.object]
+            ) -> None:
                 error_msg = "Handler failed"
                 raise ValueError(error_msg)
 
-        aggregate = TestAggregate(name="test")
+        aggregate = TestAggregate(name="test", domain_events=[])
         result = aggregate.add_domain_event(
             "failing_event",
             m.ConfigMap(root={"data": "value"}),
@@ -785,7 +785,9 @@ class TestFlextModels:
 
     def test_command_model_creation(self) -> None:
         """Test Command model creation with correct fields."""
-        command = m.Command(command_type="CreateOrder", issuer_id="issuer-123")
+        command = m.Command(
+            command_type="CreateOrder", issuer_id="issuer-123", command_id="cmd-test-1"
+        )
         assert command.command_type == "CreateOrder"
         assert command.issuer_id == "issuer-123"
         assert command.message_type == c.Cqrs.HandlerType.COMMAND
@@ -809,6 +811,8 @@ class TestFlextModels:
         request = m.ProcessingRequest(
             data=m.ConfigMap(root={"input": "data"}),
             enable_validation=True,
+            operation_id="op-test-1",
+            context=m.ConfigMap(root={}),
         )
         assert getattr(request.data, "root", request.data) == {"input": "data"}
         assert request.enable_validation is True
@@ -845,6 +849,7 @@ class TestFlextModels:
             handler_name="my_handler",
             input_data=m.ConfigMap(root={"key": "value"}),
             retry_on_failure=True,
+            execution_context=m.ConfigMap(root={}),
         )
         assert config.handler_name == "my_handler"
         assert getattr(config.input_data, "root", config.input_data) == {"key": "value"}
@@ -866,7 +871,7 @@ class TestFlextModels:
         )
         tm.that(retry.backoff_multiplier, eq=2.0, msg="backoff_multiplier must be 2.0")
         tm.that(
-            retry.retry_on_exceptions,
+            cast("test_t.Tests.object", retry.retry_on_exceptions),
             is_=list,
             none=False,
             empty=True,
@@ -990,7 +995,11 @@ class TestFlextModels:
 
     def test_cqrs_handler_model_creation(self) -> None:
         """Test Cqrs.Handler model creation."""
-        handler_config = m.HandlerExecutionConfig(handler_name="CreateUserHandler")
+        handler_config = m.HandlerExecutionConfig(
+            handler_name="CreateUserHandler",
+            input_data=m.ConfigMap(root={}),
+            execution_context=m.ConfigMap(root={}),
+        )
         assert handler_config.handler_name == "CreateUserHandler"
 
     def test_pagination_model_creation(self) -> None:
@@ -1007,6 +1016,7 @@ class TestFlextModels:
             filters=m.Dict(root={"user_id": "user-456"}),
             pagination=pagination,
             query_type="GetOrdersByUser",
+            query_id="q-test-2",
         )
         assert query.filters["user_id"] == "user-456"
         assert query.query_type == "GetOrdersByUser"
@@ -1028,10 +1038,11 @@ class TestFlextModels:
 
     def test_context_export_model_creation(self) -> None:
         """Test ContextExport model creation."""
+        stats: dict[str, t.NormalizedValue] = {"sets": 10, "gets": 20}
         export = m.ContextExport(
             data=m.Dict(root={"key": "value"}).root,
             metadata=m.Metadata(attributes={"version": "1.0"}),
-            statistics=m.Dict(root={"sets": 10, "gets": 20}).root,
+            statistics=stats,
         )
         assert export.data["key"] == "value"
         assert export.statistics["sets"] == 10

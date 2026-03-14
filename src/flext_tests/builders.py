@@ -15,13 +15,12 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from datetime import datetime
 from pathlib import Path
-from typing import Literal, Self, TypeGuard, overload
+from typing import Literal, Self, TypeGuard, cast, overload
 
 from pydantic import BaseModel, TypeAdapter, ValidationError
 
 from flext_core import FlextResult, r
 from flext_tests import c, m, t, tt, u
-from flext_tests.typings import _Testobject
 
 _TEST_CONTAINER_DICT_ADAPTER = TypeAdapter(dict[str, t.Tests.object])
 _TEST_CONTAINER_LIST_ADAPTER = TypeAdapter(list[t.Tests.object])
@@ -83,9 +82,9 @@ class FlextTestsBuilders:
         | FlextResult[Mapping[str, BaseModel]]
         | FlextResult[list[BaseModel]]
         | Mapping[str, BaseModel]
-        | Mapping[str, _Testobject]
+        | Mapping[str, t.Tests.object]
         | Path
-        | Sequence[_Testobject]
+        | Sequence[t.Tests.object]
         | bool
         | bytes
         | datetime
@@ -256,8 +255,9 @@ class FlextTestsBuilders:
                 value_val = cls_kwargs.get("value", "")
 
                 def entity_factory(
-                    *, name: str, value: t.Tests.object
+                    *, name: str, value: t.Tests.object, **kwargs: t.Tests.object
                 ) -> m.Tests.Entity:
+                    _ = kwargs
                     return entity_cls(name=name, value=value)
 
                 resolved_value = u.Tests.DomainHelpers.create_test_entity_instance(
@@ -436,16 +436,21 @@ class FlextTestsBuilders:
                     payload_value = self._to_payload_value(v)
                     if not self._is_result_obj(payload_value):
                         resolved_dict[str(k)] = payload_value
-                merge_result = u.merge(
+                merge_base = cast(
+                    "dict[str, t.NormalizedValue]",
                     {
                         key: self._to_guard_input(val)
                         for key, val in existing_dict.items()
                     },
+                )
+                merge_other = cast(
+                    "dict[str, t.NormalizedValue]",
                     {
                         key: self._to_guard_input(val)
                         for key, val in resolved_dict.items()
                     },
                 )
+                merge_result = u.merge(merge_base, merge_other)
                 if merge_result.is_success:
                     resolved_value = self._to_payload_value(merge_result.value)
             else:
@@ -763,8 +768,14 @@ class FlextTestsBuilders:
             k: v for k, v in other_data.items() if t.Guards.is_general_value(v)
         }
         merge_result = u.merge(
-            {k: self._to_guard_input(v) for k, v in self_dict.items()},
-            {k: self._to_guard_input(v) for k, v in other_dict.items()},
+            cast(
+                "dict[str, t.NormalizedValue]",
+                {k: self._to_guard_input(v) for k, v in self_dict.items()},
+            ),
+            cast(
+                "dict[str, t.NormalizedValue]",
+                {k: self._to_guard_input(v) for k, v in other_dict.items()},
+            ),
             strategy=params.strategy,
         )
         if merge_result.is_success:
@@ -1456,16 +1467,22 @@ class FlextTestsBuilders:
                 result: MutableMapping[str, t.Tests.object] = {}
                 for d in dicts:
                     merge_result = u.merge(
-                        {
-                            k: FlextTestsBuilders._to_guard_input(v)
-                            for k, v in result.items()
-                        },
-                        {
-                            str(k): FlextTestsBuilders._to_guard_input(
-                                FlextTestsBuilders._to_payload_value(v)
-                            )
-                            for k, v in d.items()
-                        },
+                        cast(
+                            "dict[str, t.NormalizedValue]",
+                            {
+                                k: FlextTestsBuilders._to_guard_input(v)
+                                for k, v in result.items()
+                            },
+                        ),
+                        cast(
+                            "dict[str, t.NormalizedValue]",
+                            {
+                                str(k): FlextTestsBuilders._to_guard_input(
+                                    FlextTestsBuilders._to_payload_value(v)
+                                )
+                                for k, v in d.items()
+                            },
+                        ),
                     )
                     if merge_result.is_success:
                         result = {
@@ -1505,7 +1522,10 @@ class FlextTestsBuilders:
             ) -> list[T]:
                 """Create batch entities - DELEGATES to u.Tests.DomainHelpers."""
 
-                def entity_factory(*, name: str, value: t.Tests.object) -> T:
+                def entity_factory(
+                    *, name: str, value: t.Tests.object, **kwargs: t.Tests.object
+                ) -> T:
+                    _ = kwargs
                     return entity_class(name=name, value=value)
 
                 result: r[list[T]] = u.Tests.DomainHelpers.create_test_entities_batch(
@@ -1541,7 +1561,10 @@ class FlextTestsBuilders:
             ) -> T:
                 """Create entity - DELEGATES to u.Tests.DomainHelpers."""
 
-                def entity_factory(*, name: str, value: t.Tests.object) -> T:
+                def entity_factory(
+                    *, name: str, value: t.Tests.object, **kwargs: t.Tests.object
+                ) -> T:
+                    _ = kwargs
                     return entity_class(name=name, value=value)
 
                 return u.Tests.DomainHelpers.create_test_entity_instance(

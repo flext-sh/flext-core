@@ -6,7 +6,7 @@ import sys
 from types import ModuleType
 
 import pytest
-from pydantic import TypeAdapter, ValidationError
+from pydantic import TypeAdapter
 
 from flext_core import c, m
 
@@ -55,12 +55,13 @@ def test_query_validate_pagination_dict_and_default() -> None:
 
 
 def test_handler_builder_fluent_methods() -> None:
-    with pytest.raises(ValidationError):
-        _ = m.Handler(
-            handler_type=c.Cqrs.HandlerType.QUERY,
-            handler_id="h-1",
-            handler_name="handler",
-        )
+    handler = m.Handler(
+        handler_type=c.Cqrs.HandlerType.QUERY,
+        handler_id="h-1",
+        handler_name="handler",
+    )
+    assert handler.handler_type == c.Cqrs.HandlerType.QUERY
+    assert handler.handler_id == "h-1"
 
 
 def test_cqrs_query_resolve_deeper_and_int_pagination(

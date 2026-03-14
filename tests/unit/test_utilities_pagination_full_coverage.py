@@ -11,10 +11,6 @@ from collections.abc import Mapping
 from flext_core import c, m, r, t, u
 
 
-class _Obj:
-    pass
-
-
 def test_pagination_response_string_fallbacks() -> None:
     assert c.Errors.UNKNOWN_ERROR
     assert isinstance(m.Categories(), m.Categories)

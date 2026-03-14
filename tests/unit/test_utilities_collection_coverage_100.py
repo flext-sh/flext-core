@@ -23,7 +23,7 @@ from typing import Annotated, ClassVar, cast
 import pytest
 from pydantic import BaseModel, ConfigDict, Field, SkipValidation
 
-from flext_core import FlextRuntime, m, p, r
+from flext_core import FlextRuntime, p, r
 from flext_tests import t, u
 
 from ..test_utils import assertion_helpers
@@ -72,7 +72,8 @@ class CoerceListScenario(BaseModel):
     name: Annotated[str, Field(description="Coerce list scenario name")]
     enum_cls: Annotated[type[StrEnum], Field(description="Enum class for coercion")]
     value: Annotated[
-        Annotated[object, SkipValidation], Field(description="Input value to coerce")
+        Annotated[t.NormalizedValue, SkipValidation],
+        Field(description="Input value to coerce"),
     ]
     expected_success: Annotated[
         bool, Field(description="Whether coercion should succeed")
@@ -116,7 +117,8 @@ class CoerceDictScenario(BaseModel):
     name: Annotated[str, Field(description="Coerce dict scenario name")]
     enum_cls: Annotated[type[StrEnum], Field(description="Enum class for coercion")]
     value: Annotated[
-        Annotated[object, SkipValidation], Field(description="Input value to coerce")
+        Annotated[t.NormalizedValue, SkipValidation],
+        Field(description="Input value to coerce"),
     ]
     expected_success: Annotated[
         bool, Field(description="Whether coercion should succeed")
@@ -1105,9 +1107,9 @@ class TestuCollectionMerge:
 
     def test_merge_deep(self) -> None:
         """Test deep merge."""
-        base = m.ConfigMap(root={"a": 1, "b": {"x": 1}})
-        other = m.ConfigMap(root={"b": {"y": 2}, "c": 3})
-        result = u.merge(base.root, other.root)
+        base_data: dict[str, t.NormalizedValue] = {"a": 1, "b": {"x": 1}}
+        other_data: dict[str, t.NormalizedValue] = {"b": {"y": 2}, "c": 3}
+        result = u.merge(base_data, other_data)
         _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value["a"] == 1
         assert result.value["c"] == 3
@@ -1115,9 +1117,9 @@ class TestuCollectionMerge:
 
     def test_merge_override(self) -> None:
         """Test override merge."""
-        base = m.ConfigMap(root={"a": 1, "b": {"x": 1}})
-        other = m.ConfigMap(root={"b": {"y": 2}, "c": 3})
-        result = u.merge(base.root, other.root, strategy="override")
+        base_data: dict[str, t.NormalizedValue] = {"a": 1, "b": {"x": 1}}
+        other_data: dict[str, t.NormalizedValue] = {"b": {"y": 2}, "c": 3}
+        result = u.merge(base_data, other_data, strategy="override")
         _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value["a"] == 1
         assert result.value["c"] == 3

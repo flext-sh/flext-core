@@ -11,6 +11,7 @@ from collections.abc import Mapping
 import pytest
 
 from flext_core import FlextResult, FlextRuntime, r
+from flext_tests import t
 from tests import m
 from tests.conftest import test_framework
 from tests.test_utils import assertion_helpers, fixture_factory
@@ -64,7 +65,12 @@ class TestAutomatedFlextRuntime:
         """Comprehensive test scenarios for runtime functionality."""
         try:
             instance = fixture_factory.create_test_runtime_instance()
-            result = self._execute_runtime_operation(instance, test_scenario.input)
+            scenario_input: Mapping[str, t.Tests.object] = (
+                test_scenario.input
+                if isinstance(test_scenario.input, dict)
+                else {"value": test_scenario.input}
+            )
+            result = self._execute_runtime_operation(instance, scenario_input)
             if test_scenario.expected_success:
                 _ = assertion_helpers.assert_flext_result_success(
                     result,

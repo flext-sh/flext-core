@@ -26,7 +26,7 @@ from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
 from re import Pattern
-from typing import Protocol, override
+from typing import Protocol, cast, override
 
 from pydantic import BaseModel, RootModel, TypeAdapter, ValidationError
 
@@ -36,12 +36,13 @@ from flext_core import (
     FlextSettings,
     FlextUtilities,
     r,
-    t as core_t,
 )
 from flext_tests import c, m, p, t
 
 _PAYLOAD_MAPPING_ADAPTER = TypeAdapter(dict[str, t.Tests.object])
-_PAYLOAD_SEQUENCE_ADAPTER = TypeAdapter(list)
+_PAYLOAD_SEQUENCE_ADAPTER: TypeAdapter[list[t.Tests.object]] = TypeAdapter(
+    list[t.Tests.object]
+)
 
 
 def _to_scalar(
@@ -55,7 +56,7 @@ def _to_scalar(
     | float
     | str
     | None,
-) -> core_t.Scalar:
+) -> t.Scalar:
     """Convert a value to ScalarValue for config overrides.
 
     Args:
@@ -65,9 +66,11 @@ def _to_scalar(
         ScalarValue (str | int | float | bool | datetime | None)
 
     """
-    if isinstance(value, t.PRIMITIVES_TYPES):
-        scalar_value: core_t.Scalar = value
+    if isinstance(value, (str, int, float, bool)):
+        scalar_value: t.Scalar = value
         return scalar_value
+    if isinstance(value, datetime):
+        return value
     return str(value)
 
 
@@ -88,9 +91,11 @@ def _to_payload(
 
     """
     if isinstance(value, RootModel):
-        return _to_payload(value.root)
+        # isinstance erases generic type parameter; cast restores it
+        root_model = cast("RootModel[t.Tests.object]", value)
+        return _to_payload(root_model.root)
     if value is None or isinstance(
-        value, (*t.PRIMITIVES_TYPES, bytes, datetime, Path, BaseModel)
+        value, (str, int, float, bool, bytes, datetime, Path, BaseModel)
     ):
         payload_value: t.Tests.object = value
         return payload_value
@@ -105,7 +110,9 @@ def _to_payload(
         return payload_map
     if isinstance(value, (list, tuple, set)):
         try:
-            iterable_items = _PAYLOAD_SEQUENCE_ADAPTER.validate_python(value)
+            iterable_items: list[t.Tests.object] = (
+                _PAYLOAD_SEQUENCE_ADAPTER.validate_python(value)
+            )
         except ValidationError:
             return []
         payload_items: list[t.Tests.object] = [
@@ -115,9 +122,34 @@ def _to_payload(
     return str(value)
 
 
-def _to_config_map_value(value: t.Tests.object) -> t.Tests.object:
-    """Convert value to container."""
-    if value is None or isinstance(value, (*t.PRIMITIVES_TYPES, BaseModel)):
+def _to_normalized_value(value: t.Tests.object) -> t.NormalizedValue:
+    """Convert _Testobject to pure NormalizedValue (no BaseModel in output)."""
+    if value is None:
+        return None
+    if isinstance(value, (str, int, float, bool)):
+        return value
+    if isinstance(value, datetime):
+        return value
+    if isinstance(value, Path):
+        return value
+    if isinstance(value, bytes):
+        return value.decode(errors="ignore")
+    if isinstance(value, BaseModel):
+        return str(value)
+    if isinstance(value, Mapping):
+        return {str(k): _to_normalized_value(v) for k, v in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_to_normalized_value(item) for item in value]
+    return str(value)
+
+
+def _to_config_map_value(value: t.Tests.object) -> t.NormalizedValue | BaseModel:
+    """Convert value to NormalizedValue or BaseModel for AccessibleData compatibility."""
+    if value is None:
+        return None
+    if isinstance(value, (str, int, float, bool)):
+        return value
+    if isinstance(value, BaseModel):
         return value
     if isinstance(value, bytes):
         return value.decode(errors="ignore")
@@ -126,10 +158,10 @@ def _to_config_map_value(value: t.Tests.object) -> t.Tests.object:
     if isinstance(value, Path):
         return str(value)
     if isinstance(value, Mapping):
-        return {str(k): _to_config_map_value(v) for k, v in value.items()}
-    if isinstance(value, (list, tuple, set)):
-        return [_to_config_map_value(item) for item in value]
-    return value
+        return {str(k): _to_normalized_value(v) for k, v in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_to_normalized_value(item) for item in value]
+    return str(value)
 
 
 class _EntityFactory[TEntity](Protocol):
@@ -787,7 +819,7 @@ class FlextTestsUtilities(FlextUtilities):
                     New FlextSettings instance
 
                 """
-                scalar_overrides: dict[str, core_t.Scalar] = {
+                scalar_overrides: dict[str, t.Scalar] = {
                     str(key): _to_scalar(value) for key, value in kwargs.items()
                 }
                 return FlextSettings.get_global(overrides=scalar_overrides)
@@ -1222,11 +1254,12 @@ class FlextTestsUtilities(FlextUtilities):
                     raise ValueError(msg)
                 all_args = {**input_data, **kwargs}
                 result = op_method(**all_args)
+                if isinstance(result, RootModel):
+                    root_result = cast("RootModel[t.Tests.object]", result)
+                    return _to_payload(root_result)
                 if isinstance(result, (BaseModel, Path)):
                     return _to_payload(result)
-                if isinstance(result, RootModel):
-                    return _to_payload(result)
-                if isinstance(result, (*t.PRIMITIVES_TYPES, bytes, datetime)):
+                if isinstance(result, (str, int, float, bool, bytes, datetime)):
                     payload_scalar: t.Tests.object = result
                     return _to_payload(payload_scalar)
                 if isinstance(result, type):
@@ -1423,14 +1456,12 @@ class FlextTestsUtilities(FlextUtilities):
                     return fmt
                 if isinstance(content, bytes):
                     return c.Tests.Files.Format.BIN
-                if FlextUtilities.is_type(content, "mapping"):
+                if isinstance(content, Mapping):
                     ext = Path(name).suffix.lower()
                     if ext in {".yaml", ".yml"}:
                         return c.Tests.Files.Format.YAML
                     return c.Tests.Files.Format.JSON
-                if FlextUtilities.is_type(content, "list") and all(
-                    FlextUtilities.is_type(row, "list") for row in content
-                ):
+                if isinstance(content, list):
                     return c.Tests.Files.Format.CSV
                 return c.Tests.Files.get_format(Path(name).suffix)
 
@@ -1800,6 +1831,7 @@ class FlextTestsUtilities(FlextUtilities):
                         raise AssertionError(f"Failed at {result.path}: {result.reason}")
 
                 """
+                source_obj: dict[str, t.NormalizedValue | BaseModel]
                 if isinstance(obj, BaseModel):
                     dumped = obj.model_dump(mode="python")
                     source_obj = {
@@ -1848,6 +1880,7 @@ class FlextTestsUtilities(FlextUtilities):
                     expected=_to_payload(obj),
                     actual=_to_payload(obj),
                     matched=True,
+                    reason="",
                 )
 
         class Length:

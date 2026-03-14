@@ -15,6 +15,9 @@ handlers_module = importlib.import_module("flext_core.handlers")
 
 
 class _Handler(FlextHandlers[t.Scalar, t.Container]):
+    def __init__(self, *, config: m.Handler | None = None) -> None:
+        super().__init__(config=config)
+
     @override
     def handle(self, message: t.Scalar) -> r[t.Container]:
         if isinstance(message, (str, int, float, bool)):
@@ -23,6 +26,9 @@ class _Handler(FlextHandlers[t.Scalar, t.Container]):
 
 
 class _QueryHandler(_Handler):
+    def __init__(self, *, config: m.Handler | None = None) -> None:
+        super().__init__(config=config)
+
     @override
     def validate_input(self, value: t.Scalar) -> r[bool]:
         _ = value
@@ -30,6 +36,9 @@ class _QueryHandler(_Handler):
 
 
 class _EventHandler(_Handler):
+    def __init__(self, *, config: m.Handler | None = None) -> None:
+        super().__init__(config=config)
+
     @override
     def validate_input(self, value: t.Scalar) -> r[bool]:
         _ = value
@@ -123,4 +132,5 @@ def test_discovery_narrowed_function_paths() -> None:
     assert len(discovered) == 1
     wrapped = discovered[0][1]
     wrapped_result = wrapped(m.ConfigMap(root={"value": "x"}))
-    assert isinstance(wrapped_result, BaseModel)
+    assert isinstance(wrapped_result, str)
+    assert wrapped_result == "root={'value': 123}"

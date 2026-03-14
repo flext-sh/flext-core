@@ -28,7 +28,7 @@ from typing import cast
 
 import pytest
 
-from flext_core import m, r
+from flext_core import m, r, t
 from flext_tests import t as tests_t, u
 from tests.constants import (
     TestsFlextConstants,
@@ -612,7 +612,9 @@ class TestuStringParser:
             case: tm.ObjectKeyCase,
         ) -> None:
             """Test get_object_key with parametrized cases."""
-            key = parser.get_object_key(case.obj)
+            key = parser.get_object_key(
+                cast("t.TypeHintSpecifier | t.NormalizedValue", case.obj)
+            )
             assert isinstance(key, str), f"Key must be string for: {case.description}"
             if case.expected_exact:
                 assert key == case.expected_exact, (

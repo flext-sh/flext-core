@@ -9,8 +9,8 @@ from __future__ import annotations
 import ast
 from pathlib import Path
 
+from flext_infra.codegen._utilities import FlextInfraUtilitiesCodegen
 from flext_infra.codegen.lazy_init import (
-    _extract_inline_constants,
     _extract_version_exports,
     _merge_child_exports,
     _scan_ast_public_defs,
@@ -52,13 +52,13 @@ class TestScanAstPublicDefs:
 
 
 class TestExtractInlineConstants:
-    """Test _extract_inline_constants function."""
+    """Test extract_inline_constants function."""
 
     def test_multiple_constants(self) -> None:
         """Test extracting multiple string constants."""
         code = '__version__ = "1.0.0"\n__author__ = "Test"\n__license__ = "MIT"'
         tree = ast.parse(code)
-        constants = _extract_inline_constants(tree)
+        constants = FlextInfraUtilitiesCodegen.extract_inline_constants(tree)
         tm.that(len(constants), eq=3)
         tm.that(constants["__version__"], eq="1.0.0")
 
@@ -66,7 +66,7 @@ class TestExtractInlineConstants:
         """Test ignores non-string constant values."""
         code = '__version__ = "1.0.0"\n__count__ = 42\n__enabled__ = True'
         tree = ast.parse(code)
-        constants = _extract_inline_constants(tree)
+        constants = FlextInfraUtilitiesCodegen.extract_inline_constants(tree)
         tm.that(constants, contains="__version__")
         tm.that(constants, excludes="__count__")
 

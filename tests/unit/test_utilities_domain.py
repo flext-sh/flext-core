@@ -37,8 +37,9 @@ def _build_domain_test_entity(
     *,
     name: str,
     value: t.Tests.object,
+    **_kwargs: t.Tests.object,
 ) -> m.DomainTestEntity:
-    return m.DomainTestEntity(name=name, value=cast("int", value))
+    return m.DomainTestEntity(name=name, value=cast("int", value), domain_events=[])
 
 
 def _convert_to_general_value(obj: object) -> t.Tests.object:
@@ -561,7 +562,7 @@ class TestuDomain:
         """Test validation with config that raises TypeError using u directly."""
         obj = u.Tests.BadObjects.BadConfigTypeError()
         try:
-            obj_value = cast("object", cast("object", obj))
+            obj_value = cast("t.NormalizedValue", obj)
             result = u.validate_value_object_immutable(obj_value)
             assert isinstance(result, bool)
         except TypeError:

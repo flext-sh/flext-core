@@ -23,7 +23,7 @@ from typing import Annotated, ClassVar, cast, override
 import pytest
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import u
+from flext_core import t as core_t, u
 from flext_tests import t, tm
 
 from ..test_utils import assertion_helpers
@@ -223,7 +223,12 @@ class TestuCacheNormalizeComponent:
     )
     def test_normalize_component(self, scenario: NormalizeComponentScenario) -> None:
         """Test normalize_component with various scenarios."""
-        result = u.normalize_component(cast("t.Tests.object", scenario.component))
+        result = u.normalize_component(
+            cast(
+                "core_t.NormalizedValue | BaseModel | set[core_t.NormalizedValue]",
+                scenario.component,
+            )
+        )
         assert isinstance(result, scenario.expected_type)
         if scenario.expected_value is not None:
             assert result == scenario.expected_value
@@ -233,7 +238,7 @@ class TestuCacheNormalizeComponent:
         model = CacheTestModel(name="test", value=42)
         result = u.normalize_component(model)
         assert isinstance(result, dict)
-        result_dict: dict[str, t.Tests.object] = result
+        result_dict: dict[str, core_t.NormalizedValue] = result
         assert result_dict["name"] == "test"
         assert result_dict["value"] == 42
 
@@ -242,9 +247,9 @@ class TestuCacheNormalizeComponent:
         model = NestedModel(inner=CacheTestModel(name="inner", value=10), count=5)
         result = u.normalize_component(model)
         assert isinstance(result, dict)
-        result_dict: dict[str, t.Tests.object] = result
+        result_dict: dict[str, core_t.NormalizedValue] = result
         assert isinstance(result_dict["inner"], dict)
-        inner_dict: dict[str, t.Tests.object] = result_dict["inner"]
+        inner_dict: dict[str, core_t.NormalizedValue] = result_dict["inner"]
         assert inner_dict["name"] == "inner"
         assert inner_dict["value"] == 10
         assert result_dict["count"] == 5
@@ -253,7 +258,10 @@ class TestuCacheNormalizeComponent:
         """Test normalize_component converts set to tuple."""
         component = {3, 1, 2}
         result = u.normalize_component(
-            cast("t.Tests.object | BaseModel", component),
+            cast(
+                "core_t.NormalizedValue | BaseModel | set[core_t.NormalizedValue]",
+                component,
+            ),
         )
         assert isinstance(result, tuple)
         result_tuple = result
@@ -268,7 +276,10 @@ class TestuCacheNormalizeComponent:
         """Test normalize_component with set containing nested values."""
         component = {1, "test", math.pi, None}
         result = u.normalize_component(
-            cast("t.Tests.object | BaseModel", component),
+            cast(
+                "core_t.NormalizedValue | BaseModel | set[core_t.NormalizedValue]",
+                component,
+            ),
         )
         tm.that(
             result, is_=(tuple, list), none=False, msg="Result must be tuple or list"
@@ -283,17 +294,17 @@ class TestuCacheNormalizeComponent:
 
     def test_normalize_sequence_with_nested_values(self) -> None:
         """Test normalize_component with Sequence containing nested values."""
-        component_raw: list[t.Tests.object] = [
+        component_raw: list[core_t.NormalizedValue] = [
             1,
             "test",
             {"nested": "dict"},
             [1, 2, 3],
         ]
-        component: Sequence[t.Tests.object] = cast(
-            "Sequence[t.Tests.object]",
+        component: Sequence[core_t.NormalizedValue] = cast(
+            "Sequence[core_t.NormalizedValue]",
             component_raw,
         )
-        result = u.normalize_component(component)
+        result = u.normalize_component(cast("core_t.NormalizedValue", component))
         tm.that(result, is_=list, none=False, msg="Result must be list")
         result_list = cast("list[t.Tests.object]", result)
         tm.that(len(result_list), eq=4, msg="Result list must have 4 items")
@@ -313,7 +324,11 @@ class TestuCacheNormalizeComponent:
                 return "custom_object"
 
         obj = CustomObject()
-        result = u.normalize_component(cast("t.Tests.object | BaseModel", obj))
+        result = u.normalize_component(
+            cast(
+                "core_t.NormalizedValue | BaseModel | set[core_t.NormalizedValue]", obj
+            )
+        )
         assert isinstance(result, str)
         assert result == "custom_object"
 
@@ -356,7 +371,7 @@ class TestuCacheSortDictKeys:
         data = {"c": 3, "a": 1, "b": 2}
         result = u.sort_dict_keys(data)
         assert isinstance(result, dict)
-        result_dict: dict[str, t.Tests.object] = result
+        result_dict: dict[str, core_t.NormalizedValue] = result
         assert list(result_dict.keys()) == ["a", "b", "c"]
 
     def test_sort_dict_keys_with_none_values(self) -> None:
@@ -364,7 +379,7 @@ class TestuCacheSortDictKeys:
         data: dict[str, str | int | None] = {"key1": "value", "key2": None, "key3": 42}
         result = u.sort_dict_keys(data)
         assert isinstance(result, dict)
-        result_dict: dict[str, t.Tests.object] = result
+        result_dict: dict[str, core_t.NormalizedValue] = result
         assert result_dict["key1"] == "value"
         assert result_dict["key2"] == {}
         assert result_dict["key3"] == 42
@@ -374,11 +389,11 @@ class TestuCacheSortDictKeys:
         data = {"z": {"c": 3, "a": 1, "b": 2}, "a": {"x": 10, "y": 20}}
         result = u.sort_dict_keys(data)
         assert isinstance(result, dict)
-        result_dict: dict[str, t.Tests.object] = result
+        result_dict: dict[str, core_t.NormalizedValue] = result
         assert list(result_dict.keys()) == ["a", "z"]
         nested = result_dict["z"]
         assert isinstance(nested, dict)
-        nested_dict: dict[str, t.Tests.object] = nested
+        nested_dict: dict[str, core_t.NormalizedValue] = nested
         assert list(nested_dict.keys()) == ["a", "b", "c"]
 
     def test_sort_dict_keys_non_dict(self) -> None:
@@ -404,7 +419,7 @@ class TestuCacheClearObjectCache:
 
         obj = TestObject()
         assert len(obj._cache) == 2
-        result = u.clear_object_cache(obj)
+        result = u.clear_object_cache(cast("core_t.NormalizedValue", obj))
         _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value is True
         assert len(obj._cache) == 0
@@ -419,7 +434,7 @@ class TestuCacheClearObjectCache:
 
         obj = TestObject()
         assert obj._cached_value == "cached_value"
-        result = u.clear_object_cache(obj)
+        result = u.clear_object_cache(cast("core_t.NormalizedValue", obj))
         _ = assertion_helpers.assert_flext_result_success(result)
         assert getattr(obj, "_cached_value", None) is None
 
@@ -433,7 +448,7 @@ class TestuCacheClearObjectCache:
 
         obj = TestObject()
         assert obj._cache == "simple_string_cache"
-        result = u.clear_object_cache(obj)
+        result = u.clear_object_cache(cast("core_t.NormalizedValue", obj))
         _ = assertion_helpers.assert_flext_result_success(result)
         assert getattr(obj, "_cache", None) is None
 
@@ -456,7 +471,7 @@ class TestuCacheClearObjectCache:
         assert len(obj._cache) == 1
         assert obj._cached_value == "value"
         assert len(obj._cached_at) == 1
-        result = u.clear_object_cache(obj)
+        result = u.clear_object_cache(cast("core_t.NormalizedValue", obj))
         _ = assertion_helpers.assert_flext_result_success(result)
         assert len(obj._cache) == 0
         assert getattr(obj, "_cached_value", None) is None
@@ -471,7 +486,7 @@ class TestuCacheClearObjectCache:
             data: str = "value"
 
         obj = TestObject()
-        result = u.clear_object_cache(obj)
+        result = u.clear_object_cache(cast("core_t.NormalizedValue", obj))
         _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value is True
 
@@ -484,7 +499,7 @@ class TestuCacheClearObjectCache:
             _cache: dict[str, str] | None = None
 
         obj = TestObject()
-        result = u.clear_object_cache(obj)
+        result = u.clear_object_cache(cast("core_t.NormalizedValue", obj))
         _ = assertion_helpers.assert_flext_result_success(result)
 
     def test_clear_object_cache_error_handling(self) -> None:
@@ -497,7 +512,7 @@ class TestuCacheClearObjectCache:
                 raise RuntimeError(error_msg)
 
         obj = BadObject()
-        result = u.clear_object_cache(cast("t.Tests.object | BaseModel", obj))
+        result = u.clear_object_cache(cast("core_t.NormalizedValue", obj))
         _ = assertion_helpers.assert_flext_result_failure(result)
         assert result.error is not None and "Failed to clear caches" in result.error
 
@@ -516,7 +531,7 @@ class TestuCacheClearObjectCache:
                 super().__setattr__(name, value)
 
         obj = BadObject()
-        result = u.clear_object_cache(cast("t.Tests.object | BaseModel", obj))
+        result = u.clear_object_cache(cast("core_t.NormalizedValue", obj))
         _ = assertion_helpers.assert_flext_result_failure(result)
         assert result.error is not None and "Failed to clear caches" in result.error
 
@@ -535,7 +550,7 @@ class TestuCacheClearObjectCache:
                 return super().__getattribute__(name)
 
         obj = BadObject()
-        result = u.clear_object_cache(cast("t.Tests.object | BaseModel", obj))
+        result = u.clear_object_cache(cast("core_t.NormalizedValue", obj))
         _ = assertion_helpers.assert_flext_result_failure(result)
         assert result.error is not None and "Failed to clear caches" in result.error
 
@@ -553,7 +568,7 @@ class TestuCacheClearObjectCache:
                 self._cache = BadCache({"key": "value"})
 
         obj = BadObject()
-        result = u.clear_object_cache(cast("t.Tests.object | BaseModel", obj))
+        result = u.clear_object_cache(cast("core_t.NormalizedValue", obj))
         _ = assertion_helpers.assert_flext_result_failure(result)
         assert result.error is not None and "Failed to clear caches" in result.error
 
@@ -574,7 +589,7 @@ class TestuCacheClearObjectCache:
         cache_before = getattr(model, "_cache", None)
         assert cache_before is not None
         assert len(cache_before) == 1
-        result = u.clear_object_cache(model)
+        result = u.clear_object_cache(cast("core_t.NormalizedValue", model))
         _ = assertion_helpers.assert_flext_result_success(result)
         cache_after = getattr(model, "_cache", None)
         assert cache_after == {}
@@ -591,7 +606,7 @@ class TestuCacheHasCacheAttributes:
                 self._cache: dict[str, t.Tests.object] = {}  # Test double
 
         obj = TestObject()
-        assert u.has_cache_attributes(cast("t.Tests.object", obj)) is True
+        assert u.has_cache_attributes(cast("core_t.NormalizedValue", obj)) is True
 
     def test_has_cache_attributes_false(self) -> None:
         """Test has_cache_attributes returns False when no cache."""
@@ -601,7 +616,7 @@ class TestuCacheHasCacheAttributes:
                 self.data = "value"
 
         obj = TestObject()
-        assert u.has_cache_attributes(cast("t.Tests.object", obj)) is False
+        assert u.has_cache_attributes(cast("core_t.NormalizedValue", obj)) is False
 
     def test_has_cache_attributes_multiple(self) -> None:
         """Test has_cache_attributes with multiple cache attributes."""
@@ -612,7 +627,7 @@ class TestuCacheHasCacheAttributes:
                 self.cache: dict[str, t.Tests.object] = {}
 
         obj = TestObject()
-        assert u.has_cache_attributes(cast("t.Tests.object", obj)) is True
+        assert u.has_cache_attributes(cast("core_t.NormalizedValue", obj)) is True
 
 
 class TestuCacheGenerateCacheKey:

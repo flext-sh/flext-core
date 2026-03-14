@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Annotated, override
+from typing import Annotated, cast, override
 
 from pydantic import Field
 
@@ -135,12 +135,12 @@ class CreateUserCommandHandler(
         return "create_user"
 
     @override
-    def can_handle(self, message_type: type[CreateUserCommand]) -> bool:
+    def can_handle(self, message_type: type) -> bool:
         """Check if can handle command."""
         return message_type == CreateUserCommand or str(message_type) == "create_user"
 
     @override
-    def validate_input(self, value: UpdateUserCommand) -> r[bool]:
+    def validate_input(self, value: CreateUserCommand) -> r[bool]:
         """Validate command using command's validate_command method."""
         if isinstance(value, CreateUserCommand):
             return value.validate_command()
@@ -444,7 +444,9 @@ class TestFlextCommandHandler:
             target_user_id="123",
             updates={"name": "test"},
         )
-        result = CreateUserCommandHandler().validate_input(wrong_command)
+        result = CreateUserCommandHandler().validate_input(
+            cast("CreateUserCommand", wrong_command)
+        )
         if not result.is_failure:
             msg = f"Expected True, got {result.is_failure}"
             raise AssertionError(msg)

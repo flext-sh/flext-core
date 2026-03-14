@@ -101,7 +101,7 @@ class TestMainRouting:
 
 
 def _capture_audit(
-    store: dict[str, t.Infra.InfraValue],
+    store: dict[str, t.Scalar],
 ) -> Callable[..., r[list[m.Infra.Docs.DocsPhaseReport]]]:
     def _fn(*a: t.Scalar, **kw: t.Scalar) -> r[list[m.Infra.Docs.DocsPhaseReport]]:
         store.update(kw)
@@ -111,7 +111,7 @@ def _capture_audit(
 
 
 def _capture_simple(
-    store: dict[str, t.Infra.InfraValue],
+    store: dict[str, t.Scalar],
 ) -> Callable[..., r[list[m.Infra.Docs.DocsPhaseReport]]]:
     def _fn(*a: t.Scalar, **kw: t.Scalar) -> r[list[m.Infra.Docs.DocsPhaseReport]]:
         store.update(kw)
@@ -122,56 +122,56 @@ def _capture_simple(
 
 class TestMainWithFlags:
     def test_audit_custom_root(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        kw: dict[str, t.Infra.InfraValue] = {}
+        kw: dict[str, t.Scalar] = {}
         monkeypatch.setattr(sys, "argv", ["prog", "audit", "--root", "/custom/path"])
         monkeypatch.setattr(FlextInfraDocAuditor, "audit", _capture_audit(kw))
         main()
         tm.that(str(kw.get("root", "")).endswith("custom/path"), eq=True)
 
     def test_audit_project_filter(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        kw: dict[str, t.Infra.InfraValue] = {}
+        kw: dict[str, t.Scalar] = {}
         monkeypatch.setattr(sys, "argv", ["prog", "audit", "--project", "test-proj"])
         monkeypatch.setattr(FlextInfraDocAuditor, "audit", _capture_audit(kw))
         main()
         tm.that(kw.get("project"), eq="test-proj")
 
     def test_audit_strict_flag(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        kw: dict[str, t.Infra.InfraValue] = {}
+        kw: dict[str, t.Scalar] = {}
         monkeypatch.setattr(sys, "argv", ["prog", "audit", "--strict", "0"])
         monkeypatch.setattr(FlextInfraDocAuditor, "audit", _capture_audit(kw))
         main()
         tm.that(kw.get("strict"), eq=False)
 
     def test_fix_apply_flag(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        kw: dict[str, t.Infra.InfraValue] = {}
+        kw: dict[str, t.Scalar] = {}
         monkeypatch.setattr(sys, "argv", ["prog", "fix", "--apply"])
         monkeypatch.setattr(FlextInfraDocFixer, "fix", _capture_simple(kw))
         main()
         tm.that(kw.get("apply"), eq=True)
 
     def test_generate_apply_flag(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        kw: dict[str, t.Infra.InfraValue] = {}
+        kw: dict[str, t.Scalar] = {}
         monkeypatch.setattr(sys, "argv", ["prog", "generate", "--apply"])
         monkeypatch.setattr(FlextInfraDocGenerator, "generate", _capture_simple(kw))
         main()
         tm.that(kw.get("apply"), eq=True)
 
     def test_validate_apply_flag(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        kw: dict[str, t.Infra.InfraValue] = {}
+        kw: dict[str, t.Scalar] = {}
         monkeypatch.setattr(sys, "argv", ["prog", "validate", "--apply"])
         monkeypatch.setattr(FlextInfraDocValidator, "validate", _capture_simple(kw))
         main()
         tm.that(kw.get("apply"), eq=True)
 
     def test_audit_check_parameter(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        kw: dict[str, t.Infra.InfraValue] = {}
+        kw: dict[str, t.Scalar] = {}
         monkeypatch.setattr(sys, "argv", ["prog", "audit", "--check", "links"])
         monkeypatch.setattr(FlextInfraDocAuditor, "audit", _capture_audit(kw))
         main()
         tm.that(kw.get("check"), eq="links")
 
     def test_validate_check_parameter(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        kw: dict[str, t.Infra.InfraValue] = {}
+        kw: dict[str, t.Scalar] = {}
         monkeypatch.setattr(sys, "argv", ["prog", "validate", "--check", "links"])
         monkeypatch.setattr(FlextInfraDocValidator, "validate", _capture_simple(kw))
         main()

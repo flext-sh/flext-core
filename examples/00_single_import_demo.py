@@ -104,7 +104,7 @@ class UserService:
     def _activate_user(user: UserProfile) -> r[UserProfile]:
         """Activate user using domain business logic - railway pattern."""
 
-        def return_user(_) -> UserProfile:
+        def return_user(_: None) -> UserProfile:
             """Return the user after activation."""
             return user
 
@@ -217,12 +217,12 @@ def demonstrate_exceptions() -> None:
     def format_exception_message(error: str) -> str:
         return f"Converted exception to result: {error}"
 
-    def process_scenario(field, value) -> r[str]:
+    def process_scenario(field: str, value: str) -> r[str]:
         msg_str = str(msg)
         field_str = str(field)
         value_str = str(value)
 
-        def format_error_after_validation(_) -> str:
+        def format_error_after_validation(_: str) -> str:
             """Format error message after validation."""
             return format_error_message(field_str, value_str)
 
@@ -246,7 +246,7 @@ def identity_result(r_obj: r[str]) -> r[str]:
     return r_obj
 
 
-def ignore_and_return_none(_) -> r[None]:
+def ignore_and_return_none(_: UserProfile) -> r[None]:
     """Ignore input and return None."""
     return r.ok(None)
 

@@ -802,5 +802,4 @@ class FlextTestsConstants(FlextConstants):
 
 
 c = FlextTestsConstants
-tc = FlextTestsConstants
-__all__ = ["FlextTestsConstants", "c", "tc"]
+__all__ = ["FlextTestsConstants", "c"]

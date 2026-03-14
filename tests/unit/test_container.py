@@ -117,7 +117,11 @@ class TestFlextContainer:
 
     def test_container_initialization(self, clean_container: FlextContainer) -> None:
         """Test container initialization creates valid instance using fixtures."""
-        tm.that(clean_container, none=False, msg="Container must not be None")
+        tm.that(
+            cast("t.Tests.object", clean_container),
+            none=False,
+            msg="Container must not be None",
+        )
         assert isinstance(clean_container, FlextContainer), (
             "Container must be FlextContainer instance"
         )
@@ -126,8 +130,16 @@ class TestFlextContainer:
         """Test that FlextContainer returns singleton instance."""
         container1 = FlextContainer()
         container2 = FlextContainer()
-        tm.that(container1, none=False, msg="Container1 must not be None")
-        tm.that(container2, none=False, msg="Container2 must not be None")
+        tm.that(
+            cast("t.Tests.object", container1),
+            none=False,
+            msg="Container1 must not be None",
+        )
+        tm.that(
+            cast("t.Tests.object", container2),
+            none=False,
+            msg="Container2 must not be None",
+        )
         tm.that(
             container1 is container2,
             eq=True,
@@ -474,7 +486,11 @@ class TestFlextContainer:
         """Test container configuration."""
         container = FlextContainer()
         container.configure(config)
-        tm.that(container, none=False, msg="Container must not be None after configure")
+        tm.that(
+            cast("t.Tests.object", container),
+            none=False,
+            msg="Container must not be None after configure",
+        )
         config_result = container.get_config()
         tm.that(
             config_result,
@@ -526,7 +542,11 @@ class TestFlextContainer:
         """Test accessing config via property."""
         container = FlextContainer()
         config = container.config
-        tm.that(config, none=False, msg="Container config property must not be None")
+        tm.that(
+            cast("t.Tests.object", config),
+            none=False,
+            msg="Container config property must not be None",
+        )
         tm.that(
             hasattr(config, "app_name") or hasattr(config, "enable_singleton"),
             eq=True,

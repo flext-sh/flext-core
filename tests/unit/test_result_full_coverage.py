@@ -52,9 +52,11 @@ def test_map_flat_map_and_then_paths() -> None:
     flat_ok = r[int].ok(1).flat_map(lambda _: runtime_ok)
     assert flat_ok.is_success
     assert flat_ok.value == 20
-    runtime_fail: FlextRuntime.RuntimeResult[int] = FlextRuntime.RuntimeResult(
+    runtime_fail: FlextRuntime.RuntimeResult[int] = FlextRuntime.RuntimeResult[int](
         error="inner",
         is_success=False,
+        error_code=None,
+        error_data=None,
     )
     flat_fail = r[int].ok(1).flat_map(lambda _: runtime_fail)
     assert flat_fail.is_failure
@@ -106,9 +108,11 @@ def test_lash_runtime_result_paths() -> None:
     lash_ok: r[int] = failed_for_lash.lash(lambda _e: runtime_ok)
     assert lash_ok.is_success
     assert lash_ok.value == 99
-    runtime_fail: FlextRuntime.RuntimeResult[int] = FlextRuntime.RuntimeResult(
+    runtime_fail: FlextRuntime.RuntimeResult[int] = FlextRuntime.RuntimeResult[int](
         error="recovery failed",
         is_success=False,
+        error_code=None,
+        error_data=None,
     )
     failed_for_lash_2: r[int] = cast("r[int]", r.fail("x"))
     lash_fail: r[int] = failed_for_lash_2.lash(lambda _e: runtime_fail)

@@ -11,6 +11,7 @@ from collections.abc import Mapping
 import pytest
 
 from flext_core import FlextDispatcher, FlextResult, r
+from flext_tests import t
 from tests import m
 from tests.conftest import test_framework
 from tests.test_utils import assertion_helpers, fixture_factory
@@ -64,9 +65,14 @@ class TestAutomatedFlextDispatcher:
         """Comprehensive test scenarios for dispatcher functionality."""
         try:
             instance = fixture_factory.create_test_dispatcher_instance()
+            scenario_input: Mapping[str, t.Tests.object] = (
+                test_scenario.input
+                if isinstance(test_scenario.input, dict)
+                else {"value": test_scenario.input}
+            )
             result = self._execute_dispatcher_operation(
                 instance,
-                test_scenario.input,
+                scenario_input,
             )
             if test_scenario.expected_success:
                 assert result.is_success, f"Expected success but got failure: {result}"

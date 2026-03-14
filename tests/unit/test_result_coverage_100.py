@@ -163,14 +163,10 @@ class TestrCoverage:
         """Test chaining multiple map operations."""
 
         def double(x: int) -> int:
-            if isinstance(x, int):
-                return x * 2
-            return 0
+            return x * 2
 
         def add_three(x: int) -> int:
-            if isinstance(x, int):
-                return x + 3
-            return 0
+            return x + 3
 
         def to_str(x: int) -> str:
             return str(x)
@@ -182,9 +178,7 @@ class TestrCoverage:
         """Test flat_map chaining results."""
 
         def double_in_result(x: int) -> r[int]:
-            if isinstance(x, int):
-                return r[int].ok(x * 2)
-            return r[int].fail("Not int")
+            return r[int].ok(x * 2)
 
         result = r[int].ok(5).flat_map(double_in_result)
         _ResultAssertions.assert_success(result)
@@ -204,9 +198,7 @@ class TestrCoverage:
         """Test that flat_map skips on initial failure."""
 
         def double_in_result(x: int) -> r[int]:
-            if isinstance(x, int):
-                return r[int].ok(x * 2)
-            return r[int].fail("Not int")
+            return r[int].ok(x * 2)
 
         result = r[int].fail("error").flat_map(double_in_result)
         _ResultAssertions.assert_failure(result)
@@ -274,14 +266,10 @@ class TestrCoverage:
         """Test flow_through chains multiple operations."""
 
         def double(x: int) -> r[int]:
-            if isinstance(x, int):
-                return r[int].ok(x * 2)
-            return r[int].fail("Not an int")
+            return r[int].ok(x * 2)
 
         def add_ten(x: int) -> r[int]:
-            if isinstance(x, int):
-                return r[int].ok(x + 10)
-            return r[int].fail("Not an int")
+            return r[int].ok(x + 10)
 
         result = r[int].ok(5).flow_through(double, add_ten)
         _ResultAssertions.assert_success(result)
@@ -290,17 +278,17 @@ class TestrCoverage:
     def test_flow_through_stops_on_failure(self) -> None:
         """Test flow_through stops processing on failure."""
 
-        def double(x: str | int) -> r[str | int]:
-            if isinstance(x, int):
-                return r[str | int].ok(x * 2)
-            return r[str | int].fail("Not an int")
+        def double(x: str) -> r[str]:
+            if x.isdigit():
+                return r[str].ok(str(int(x) * 2))
+            return r[str].fail("Not a numeric string")
 
-        def add_ten(x: str | int) -> r[str | int]:
-            return r[str | int].fail("Should not reach here")
+        def add_ten(x: str) -> r[str]:
+            return r[str].fail("Should not reach here")
 
         result = r[str].ok("test").flow_through(double, add_ten)
         _ResultAssertions.assert_failure(result)
-        assert result.error == "Not an int"
+        assert result.error == "Not a numeric string"
 
     def test_safe_decorator_success(self) -> None:
         """Test safe decorator wraps successful function."""
@@ -359,9 +347,7 @@ class TestrCoverage:
         """Test traverse with successful mapping."""
 
         def double(x: int) -> r[int]:
-            if isinstance(x, int):
-                return r[int].ok(x * 2)
-            return r[int].fail("Not int")
+            return r[int].ok(x * 2)
 
         items = [1, 2, 3]
         result = r[list[int]].traverse(items, double)
@@ -371,11 +357,9 @@ class TestrCoverage:
         """Test traverse stops on first failure."""
 
         def double(x: int) -> r[int]:
-            if isinstance(x, int):
-                if x == 2:
-                    return r[int].fail("Found 2")
-                return r[int].ok(x * 2)
-            return r[int].fail("Not int")
+            if x == 2:
+                return r[int].fail("Found 2")
+            return r[int].ok(x * 2)
 
         items = [1, 2, 3]
         result = r[list[int]].traverse(items, double)
@@ -506,19 +490,13 @@ class TestrCoverage:
         """Test complex chaining of operations."""
 
         def double(x: int) -> int:
-            if isinstance(x, int):
-                return x * 2
-            return 0
+            return x * 2
 
         def add_three(x: int) -> r[int]:
-            if isinstance(x, int):
-                return r[int].ok(x + 3)
-            return r[int].fail("Not int")
+            return r[int].ok(x + 3)
 
         def is_gt_10(x: int) -> bool:
-            if isinstance(x, int):
-                return x > 10
-            return False
+            return x > 10
 
         def to_str(x: int) -> str:
             return str(x)

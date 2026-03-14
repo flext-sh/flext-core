@@ -15,12 +15,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Annotated, ClassVar
+from typing import Annotated, ClassVar, cast
 
 import pytest
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import FlextRuntime, m
+from flext_core.runtime import RuntimeData
 
 
 class _TestConfig(m.Config):
@@ -88,13 +89,13 @@ class TestFlextModelsCollectionsCategories:
 
     def test_categories_initialization(self) -> None:
         """Test Categories initialization."""
-        categories: m.Categories = m.Categories()
+        categories: m.Categories = m.Categories(categories={})
         assert categories.categories == {}
         assert len(categories) == 0
 
     def test_categories_get_empty(self) -> None:
         """Test get with empty category."""
-        categories: m.Categories = m.Categories()
+        categories: m.Categories = m.Categories(categories={})
         assert categories.get("nonexistent") == []
 
     @pytest.mark.parametrize(
@@ -104,7 +105,7 @@ class TestFlextModelsCollectionsCategories:
     )
     def test_categories_operations(self, scenario: CategoryOperationScenario) -> None:
         """Test category operations with various scenarios."""
-        categories: m.Categories = m.Categories()
+        categories: m.Categories = m.Categories(categories={})
         if scenario.operation == "add":
             categories.add_entries(scenario.category, scenario.entries)
             assert categories.get(scenario.category) == scenario.entries
@@ -119,26 +120,26 @@ class TestFlextModelsCollectionsCategories:
 
     def test_categories_add_entries_existing_category(self) -> None:
         """Test add_entries with existing category."""
-        categories: m.Categories = m.Categories()
+        categories: m.Categories = m.Categories(categories={})
         categories.add_entries("users", ["user1"])
         categories.add_entries("users", ["user2", "user3"])
         assert categories.get("users") == ["user1", "user2", "user3"]
 
     def test_categories_has_category(self) -> None:
         """Test has_category via categories dict."""
-        categories: m.Categories = m.Categories()
+        categories: m.Categories = m.Categories(categories={})
         assert "users" not in categories.categories
         categories.add_entries("users", ["user1"])
         assert categories.has_category("users")
 
     def test_categories_remove_category_nonexistent(self) -> None:
         """Test remove_category with nonexistent category."""
-        categories: m.Categories = m.Categories()
+        categories: m.Categories = m.Categories(categories={})
         categories.remove_category("nonexistent")
 
     def test_categories_category_names(self) -> None:
         """Test category_names method."""
-        categories: m.Categories = m.Categories()
+        categories: m.Categories = m.Categories(categories={})
         categories.add_entries("users", ["user1"])
         categories.add_entries("groups", ["group1"])
         names = list(categories.category_names)
@@ -147,14 +148,14 @@ class TestFlextModelsCollectionsCategories:
 
     def test_categories_total_entries(self) -> None:
         """Test total_entries computed field."""
-        categories: m.Categories = m.Categories()
+        categories: m.Categories = m.Categories(categories={})
         categories.add_entries("users", ["user1", "user2"])
         categories.add_entries("groups", ["group1"])
         assert categories.total_entries == 3
 
     def test_categories_summary(self) -> None:
         """Test summary computed field."""
-        categories: m.Categories = m.Categories()
+        categories: m.Categories = m.Categories(categories={})
         categories.add_entries("users", ["user1", "user2"])
         categories.add_entries("groups", ["group1"])
         summary: dict[str, int] = {
@@ -165,7 +166,7 @@ class TestFlextModelsCollectionsCategories:
 
     def test_categories_dict_like_operations(self) -> None:
         """Test dict-like operations."""
-        categories: m.Categories = m.Categories()
+        categories: m.Categories = m.Categories(categories={})
         categories.add_entries("users", ["user1"])
         assert ("users", ["user1"]) in categories.categories.items()
         assert "users" in categories.categories
@@ -179,7 +180,7 @@ class TestFlextModelsCollectionsCategories:
 
     def test_categories_get_with_default(self) -> None:
         """Test get method with default."""
-        categories: m.Categories = m.Categories()
+        categories: m.Categories = m.Categories(categories={})
         assert categories.get("nonexistent", ["default"]) == ["default"]
         assert categories.get("nonexistent") == []
 
@@ -192,7 +193,7 @@ class TestFlextModelsCollectionsCategories:
 
     def test_categories_to_mapping(self) -> None:
         """Test to_mapping method."""
-        categories: m.Categories = m.Categories()
+        categories: m.Categories = m.Categories(categories={})
         categories.add_entries("users", ["user1"])
         result = categories.to_mapping()
         assert result == {"users": ["user1"]}
@@ -218,7 +219,7 @@ class TestFlextModelsCollectionsStatistics:
         stats1 = TestStats(count=10)
         stats2 = TestStats(count=20)
         result = TestStats.aggregate([stats1, stats2])
-        assert FlextRuntime.is_dict_like(result)
+        assert FlextRuntime.is_dict_like(cast("RuntimeData", result))
         assert result["count"] == 30
 
     def test_statistics_aggregate_lists(self) -> None:
@@ -230,7 +231,7 @@ class TestFlextModelsCollectionsStatistics:
         stats1 = TestStats(items=["a", "b"])
         stats2 = TestStats(items=["c"])
         result = TestStats.aggregate([stats1, stats2])
-        assert FlextRuntime.is_dict_like(result)
+        assert FlextRuntime.is_dict_like(cast("RuntimeData", result))
         assert result["items"] == ["a", "b", "c"]
 
     def test_statistics_aggregate_mixed(self) -> None:
@@ -244,7 +245,7 @@ class TestFlextModelsCollectionsStatistics:
         stats1 = TestStats(count=10, items=["a"], name="first")
         stats2 = TestStats(count=20, items=["b"], name="second")
         result = TestStats.aggregate([stats1, stats2])
-        assert FlextRuntime.is_dict_like(result)
+        assert FlextRuntime.is_dict_like(cast("RuntimeData", result))
         assert result["count"] == 30
         assert result["items"] == ["a", "b"]
         assert result["name"] == "second"
@@ -259,7 +260,7 @@ class TestFlextModelsCollectionsStatistics:
         stats1 = TestStats(count=10, name="first")
         stats2 = TestStats(count=None, name=None)
         result = TestStats.aggregate([stats1, stats2])
-        assert FlextRuntime.is_dict_like(result)
+        assert FlextRuntime.is_dict_like(cast("RuntimeData", result))
         assert result["count"] == 10
         assert result["name"] == "first"
 
@@ -343,7 +344,7 @@ class TestFlextModelsCollectionsResults:
         result1 = TestResult(processed=10)
         result2 = TestResult(processed=20)
         aggregated_raw = TestResult.aggregate([result1, result2])
-        assert FlextRuntime.is_dict_like(aggregated_raw)
+        assert FlextRuntime.is_dict_like(cast("RuntimeData", aggregated_raw))
         aggregated = aggregated_raw
         assert aggregated["processed"] == 30
 
@@ -356,7 +357,7 @@ class TestFlextModelsCollectionsResults:
         result1 = TestResult(errors=["error1"])
         result2 = TestResult(errors=["error2"])
         aggregated_raw = TestResult.aggregate([result1, result2])
-        assert FlextRuntime.is_dict_like(aggregated_raw)
+        assert FlextRuntime.is_dict_like(cast("RuntimeData", aggregated_raw))
         aggregated = aggregated_raw
         assert aggregated["errors"] == ["error1", "error2"]
 
@@ -369,7 +370,7 @@ class TestFlextModelsCollectionsResults:
         result1 = TestResult(metadata={"key1": "value1"})
         result2 = TestResult(metadata={"key2": "value2"})
         aggregated_raw = TestResult.aggregate([result1, result2])
-        assert FlextRuntime.is_dict_like(aggregated_raw)
+        assert FlextRuntime.is_dict_like(cast("RuntimeData", aggregated_raw))
         aggregated = aggregated_raw
         assert aggregated["metadata"] == {"key1": "value1", "key2": "value2"}
 
@@ -384,7 +385,7 @@ class TestFlextModelsCollectionsResults:
         result1 = TestResult(processed=10, errors=["a"], status="ok")
         result2 = TestResult(processed=20, errors=["b"], status="done")
         aggregated_raw = TestResult.aggregate([result1, result2])
-        assert FlextRuntime.is_dict_like(aggregated_raw)
+        assert FlextRuntime.is_dict_like(cast("RuntimeData", aggregated_raw))
         aggregated = aggregated_raw
         assert aggregated["processed"] == 30
         assert aggregated["errors"] == ["a", "b"]
@@ -400,7 +401,7 @@ class TestFlextModelsCollectionsResults:
         result1 = TestResult(processed=10, status="ok")
         result2 = TestResult(processed=None, status=None)
         aggregated_raw = TestResult.aggregate([result1, result2])
-        assert FlextRuntime.is_dict_like(aggregated_raw)
+        assert FlextRuntime.is_dict_like(cast("RuntimeData", aggregated_raw))
         aggregated = aggregated_raw
         assert aggregated["processed"] == 10
         assert aggregated["status"] == "ok"

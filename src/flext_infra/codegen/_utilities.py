@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import ast
+import operator
 import shutil
 import subprocess
 import sys
@@ -20,12 +21,16 @@ from pathlib import Path
 from pydantic import TypeAdapter, ValidationError
 
 from flext_infra import c, t
+from flext_infra._utilities.formatting import FlextInfraUtilitiesFormatting
+from flext_infra._utilities.iteration import FlextInfraUtilitiesIteration
 from flext_infra._utilities.parsing import FlextInfraUtilitiesParsing
 from flext_infra.codegen._models import FlextInfraCodegenModels
 from flext_infra.codegen.census import FlextInfraCodegenCensus
+from flext_infra.codegen.transforms import FlextInfraCodegenTransforms
+from flext_infra.refactor._utilities import FlextInfraUtilitiesRefactor
 
 
-class FlextInfraUtilitiesCodegen:
+class FlextInfraUtilitiesCodegen(FlextInfraCodegenTransforms):
     """Code generation helpers for lazy-init and AST operations.
 
     Usage via namespace::
@@ -42,22 +47,184 @@ class FlextInfraUtilitiesCodegen:
     )
 
     @staticmethod
+    def find_package_dir(project_root: Path) -> Path | None:
+        src_dir = project_root / c.Infra.Paths.DEFAULT_SRC_DIR
+        if not src_dir.is_dir():
+            return None
+        for child in sorted(src_dir.iterdir()):
+            if child.is_dir() and (child / c.Infra.Files.INIT_PY).exists():
+                return child
+        return None
+
+    @staticmethod
+    def _snapshot_init_files(*, project_path: Path) -> dict[str, str]:
+        snapshot: dict[str, str] = {}
+        for root_name in c.Infra.Refactor.MRO_SCAN_DIRECTORIES:
+            root = project_path / root_name
+            if not root.is_dir():
+                continue
+            for init_file in FlextInfraUtilitiesIteration.iter_directory_python_files(
+                root,
+                pattern=c.Infra.Files.INIT_PY,
+            ):
+                try:
+                    snapshot[str(init_file)] = init_file.read_text(
+                        encoding=c.Infra.Encoding.DEFAULT,
+                    )
+                except OSError:
+                    continue
+        return snapshot
+
+    @staticmethod
+    def _snapshot_files(*, file_paths: Sequence[Path]) -> dict[str, str]:
+        snapshot: dict[str, str] = {}
+        for file_path in file_paths:
+            try:
+                snapshot[str(file_path)] = file_path.read_text(
+                    encoding=c.Infra.Encoding.DEFAULT,
+                )
+            except OSError:
+                continue
+        return snapshot
+
+    @staticmethod
+    def _detect_changed_files(
+        *,
+        before_snapshot: dict[str, str],
+        file_paths: Sequence[Path],
+    ) -> set[str]:
+        changed: set[str] = set()
+        for file_path in file_paths:
+            path_key = str(file_path)
+            previous = before_snapshot.get(path_key)
+            try:
+                current = file_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
+            except OSError:
+                continue
+            if previous != current:
+                changed.add(path_key)
+        return changed
+
+    @staticmethod
+    def _write_changes(
+        *,
+        source_path: Path,
+        target_path: Path,
+        nodes_moved: Sequence[ast.stmt],
+        moved_names: list[str],
+        source_tree: ast.Module,
+        pkg_name: str,
+        target_module: str,
+        dry_run: bool,
+    ) -> None:
+        if dry_run:
+            return
+        encoding = c.Infra.Encoding.DEFAULT
+        source_text = source_path.read_text(encoding=encoding)
+        source_lines = source_text.splitlines()
+        target_text = target_path.read_text(encoding=encoding)
+
+        extracted: list[str] = []
+        ranges: list[tuple[int, int]] = []
+        for node in nodes_moved:
+            start = node.lineno
+            end = node.end_lineno or node.lineno
+            block = "\n".join(source_lines[start - 1 : end])
+            extracted.append(block)
+            ranges.append((start, end))
+
+        import_texts = FlextInfraCodegenTransforms.collect_import_texts_for_nodes(
+            nodes_moved,
+            source_lines,
+            source_tree,
+            target_text,
+        )
+
+        for start, end in sorted(ranges, key=operator.itemgetter(0), reverse=True):
+            del source_lines[start - 1 : end]
+
+        source_result = "\n".join(source_lines)
+        re_export = f"from {pkg_name}.{target_module} import " + ", ".join(
+            sorted(moved_names)
+        )
+        source_result = FlextInfraUtilitiesRefactor.insert_import_statement(
+            source_result,
+            re_export,
+        )
+        if source_text.endswith("\n") and not source_result.endswith("\n"):
+            source_result += "\n"
+
+        target_result = target_text
+        for imp in import_texts:
+            target_result = FlextInfraUtilitiesRefactor.insert_import_statement(
+                target_result,
+                imp,
+            )
+        for block in extracted:
+            target_result = target_result.rstrip() + "\n\n\n" + block + "\n"
+
+        source_path.write_text(source_result, encoding=encoding)
+        target_path.write_text(target_result, encoding=encoding)
+
+        FlextInfraUtilitiesFormatting.run_ruff_fix(source_path)
+        FlextInfraUtilitiesFormatting.run_ruff_fix(target_path)
+
+    @staticmethod
+    def snapshot_init_files(*, project_path: Path) -> dict[str, str]:
+        return FlextInfraUtilitiesCodegen._snapshot_init_files(
+            project_path=project_path
+        )
+
+    @staticmethod
+    def snapshot_files(*, file_paths: Sequence[Path]) -> dict[str, str]:
+        return FlextInfraUtilitiesCodegen._snapshot_files(file_paths=file_paths)
+
+    @staticmethod
+    def detect_changed_files(
+        *,
+        before_snapshot: dict[str, str],
+        file_paths: Sequence[Path],
+    ) -> set[str]:
+        return FlextInfraUtilitiesCodegen._detect_changed_files(
+            before_snapshot=before_snapshot,
+            file_paths=file_paths,
+        )
+
+    @staticmethod
+    def write_changes(
+        *,
+        source_path: Path,
+        target_path: Path,
+        nodes_moved: Sequence[ast.stmt],
+        moved_names: list[str],
+        source_tree: ast.Module,
+        pkg_name: str,
+        target_module: str,
+        dry_run: bool,
+    ) -> None:
+        FlextInfraUtilitiesCodegen._write_changes(
+            source_path=source_path,
+            target_path=target_path,
+            nodes_moved=nodes_moved,
+            moved_names=moved_names,
+            source_tree=source_tree,
+            pkg_name=pkg_name,
+            target_module=target_module,
+            dry_run=dry_run,
+        )
+
+    @staticmethod
     def infer_package(path: Path) -> str:
-        """Infer the package name from a ``src/<pkg>/__init__.py`` path.
-
-        Args:
-            path: Path to an ``__init__.py`` file.
-
-        Returns:
-            Dotted package name, or empty string if not under ``src/``.
-
-        """
         abs_path = str(path.absolute())
-        src_idx = abs_path.rfind("/src/")
-        if src_idx != -1:
-            rel = abs_path[src_idx + 5 :]
-            pkg_parts = rel.split("/")[:-1]
-            return ".".join(pkg_parts)
+        for root_dir in ("/src/", "/tests/", "/examples/", "/scripts/"):
+            idx = abs_path.rfind(root_dir)
+            if idx != -1:
+                rel = abs_path[idx + len(root_dir) :]
+                pkg_parts = rel.split("/")[:-1]
+                if root_dir == "/src/":
+                    return ".".join(pkg_parts)
+                root_name = root_dir.strip("/")
+                return ".".join([root_name, *pkg_parts]) if pkg_parts else root_name
         return ""
 
     @staticmethod
@@ -359,6 +526,7 @@ class FlextInfraUtilitiesCodegen:
         filtered: Mapping[str, tuple[str, str]],
         inline_constants: Mapping[str, str],
         current_pkg: str,
+        eager_typevar_names: frozenset[str] = frozenset(),
     ) -> str:
         """Generate the complete ``__init__.py`` content.
 
@@ -373,9 +541,14 @@ class FlextInfraUtilitiesCodegen:
             Complete generated ``__init__.py`` file content.
 
         """
+        lazy_filtered: dict[str, tuple[str, str]] = {
+            name: val
+            for name, val in filtered.items()
+            if name not in eager_typevar_names
+        }
         groups: dict[str, list[tuple[str, str]]] = defaultdict(list)
-        for export_name in sorted(filtered):
-            mod, attr = filtered[export_name]
+        for export_name in sorted(lazy_filtered):
+            mod, attr = lazy_filtered[export_name]
             groups[mod].append((export_name, attr))
         out: list[str] = [c.Infra.Codegen.AUTOGEN_HEADER]
         if docstring_source:
@@ -395,8 +568,18 @@ class FlextInfraUtilitiesCodegen:
             "from typing import TYPE_CHECKING",
             "",
             lazy_import,
-            "",
         ])
+        if eager_typevar_names:
+            typings_mod = f"{current_pkg}.typings"
+            sorted_tvars = sorted(eager_typevar_names)
+            eager_line = f"from {typings_mod} import " + ", ".join(sorted_tvars)
+            if len(eager_line) > c.Infra.Codegen.MAX_LINE_LENGTH:
+                out.append(f"from {typings_mod} import (")
+                out.extend(f"    {tv}," for tv in sorted_tvars)
+                out.append(")")
+            else:
+                out.append(eager_line)
+        out.append("")
         out.extend(FlextInfraUtilitiesCodegen.generate_type_checking(groups))
         out.append("")
         for name, value in sorted(inline_constants.items()):
@@ -408,8 +591,8 @@ class FlextInfraUtilitiesCodegen:
             "_LAZY_IMPORTS: dict[str, tuple[str, str]] = {",
         ])
         for exp in sorted(exports):
-            if exp in filtered:
-                mod, attr = filtered[exp]
+            if exp in lazy_filtered:
+                mod, attr = lazy_filtered[exp]
                 out.append(f'    "{exp}": ("{mod}", "{attr}"),')
         out.extend(["}", ""])
         out.append("__all__ = [")
@@ -456,8 +639,6 @@ class FlextInfraUtilitiesCodegen:
             )
         except (OSError, UnicodeDecodeError, ValueError):
             return (None, str(resolved), "baseline parse failed")
-        if not isinstance(payload, dict):
-            return (None, str(resolved), "baseline payload is not a JSON object")
         try:
             raw = FlextInfraUtilitiesCodegen._container_mapping_adapter.validate_python(
                 payload,
@@ -520,9 +701,11 @@ class FlextInfraUtilitiesCodegen:
         projects_total = len(census_reports)
         projects_passed = sum(1 for item in census_reports if int(item.total) == 0)
         projects_failed = projects_total - projects_passed
+        violations_by_rule: dict[str, t.Infra.InfraValue] = dict(by_rule)
+        modified_python_files_value: list[t.Infra.InfraValue] = list(modified_files)
         return {
             "total_violations": total_violations,
-            "violations_by_rule": by_rule,
+            "violations_by_rule": violations_by_rule,
             "duplicate_groups": duplicate_groups,
             "projects_total": projects_total,
             "projects_passed": projects_passed,
@@ -536,7 +719,7 @@ class FlextInfraUtilitiesCodegen:
             "import_parse_errors": FlextInfraUtilitiesCodegen.as_int(
                 import_scan.get("parse_error_count"),
             ),
-            "modified_python_files": modified_files,
+            "modified_python_files": modified_python_files_value,
         }
 
     @staticmethod
@@ -889,24 +1072,22 @@ class FlextInfraUtilitiesCodegen:
                 )
             except (OSError, UnicodeDecodeError, ValueError):
                 return []
-            if isinstance(payload, dict):
-                try:
-                    raw = FlextInfraUtilitiesCodegen._container_mapping_adapter.validate_python(
-                        payload,
-                    )
-                except ValidationError:
-                    return []
-                modified = raw.get("modified_files")
-                if isinstance(modified, list):
-                    filtered: set[str] = set()
-                    modified_items = TypeAdapter(list).validate_python(modified)
-                    for entry in modified_items:
-                        if not isinstance(entry, str):
-                            continue
-                        if not entry.endswith(c.Infra.Extensions.PYTHON):
-                            continue
-                        filtered.add(entry)
-                    return sorted(filtered)
+            try:
+                raw = FlextInfraUtilitiesCodegen._container_mapping_adapter.validate_python(
+                    payload,
+                )
+            except ValidationError:
+                return []
+            modified = raw.get("modified_files")
+            if isinstance(modified, list):
+                filtered: set[str] = set()
+                for entry in modified:
+                    if not isinstance(entry, str):
+                        continue
+                    if not entry.endswith(c.Infra.Extensions.PYTHON):
+                        continue
+                    filtered.add(entry)
+                return sorted(filtered)
         return []
 
     @staticmethod
@@ -1029,11 +1210,13 @@ class FlextInfraUtilitiesCodegen:
                 and node.module is None
                 and (node.level == 0)
             )
+        invalid_import_from_value: list[t.Infra.InfraValue] = list(invalid_import_from)
+        parse_errors_value: list[t.Infra.InfraValue] = list(parse_errors)
         return {
             "invalid_import_from_count": len(invalid_import_from),
             "parse_error_count": len(parse_errors),
-            "invalid_import_from": invalid_import_from,
-            "parse_errors": parse_errors,
+            "invalid_import_from": invalid_import_from_value,
+            "parse_errors": parse_errors_value,
         }
 
     @staticmethod
@@ -1063,8 +1246,7 @@ class FlextInfraUtilitiesCodegen:
             return FlextInfraUtilitiesCodegen.as_int(payload.get("duplicate_groups"))
         duplicates = payload.get("duplicates")
         if isinstance(duplicates, list):
-            duplicate_items = TypeAdapter(list).validate_python(duplicates)
-            return len(duplicate_items)
+            return sum(1 for _ in duplicates)
         return -1
 
     @staticmethod
@@ -1075,8 +1257,7 @@ class FlextInfraUtilitiesCodegen:
             return FlextInfraUtilitiesCodegen.as_int(value)
         projects = payload.get("projects")
         if isinstance(projects, list):
-            project_items = TypeAdapter(list).validate_python(projects)
-            return len(project_items)
+            return sum(1 for _ in projects)
         return 0
 
     @staticmethod
@@ -1115,8 +1296,7 @@ class FlextInfraUtilitiesCodegen:
         if not isinstance(value, list):
             return []
         result: list[dict[str, t.Infra.InfraValue]] = []
-        value_items = TypeAdapter(list).validate_python(value)
-        for item in value_items:
+        for item in value:
             if not isinstance(item, dict):
                 continue
             result.append(

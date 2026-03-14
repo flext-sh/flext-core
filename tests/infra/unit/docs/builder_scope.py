@@ -96,7 +96,6 @@ class TestBuilderScope:
         )
         mock_output = SimpleNamespace(exit_code=0, stdout="Build successful", stderr="")
         command_output = m.Infra.Core.CommandOutput(
-            command="mkdocs build --strict",
             exit_code=mock_output.exit_code,
             stdout=mock_output.stdout,
             stderr=mock_output.stderr,

@@ -42,6 +42,7 @@ from flext_core import (
     r,
     s,
 )
+from flext_core.runtime import RuntimeData
 from flext_tests import t
 
 
@@ -103,14 +104,14 @@ class RuntimeTestCase(BaseModel):
         RuntimeOperationType, Field(description="Runtime operation type")
     ]
     test_input: Annotated[
-        t.NormalizedValue | type | ModuleType | None,
+        object,
         Field(
             default=None,
             description="Optional test input",
         ),
     ] = None
     expected_result: Annotated[
-        bool | tuple[type, ...] | type | ModuleType | None,
+        object,
         Field(
             default=None,
             description="Expected operation result",
@@ -586,7 +587,7 @@ class TestFlextRuntime:
         for type compatibility while preserving runtime behavior.
         """
         assert not isinstance(test_case.test_input, type)
-        result = FlextRuntime.is_dict_like(test_case.test_input)
+        result = FlextRuntime.is_dict_like(cast("RuntimeData", test_case.test_input))
         assert result == test_case.expected_result
 
     @pytest.mark.parametrize(
@@ -602,7 +603,7 @@ class TestFlextRuntime:
         for type compatibility while preserving runtime behavior.
         """
         assert not isinstance(test_case.test_input, type)
-        result = FlextRuntime.is_list_like(test_case.test_input)
+        result = FlextRuntime.is_list_like(cast("RuntimeData", test_case.test_input))
         assert result == test_case.expected_result
 
     @pytest.mark.parametrize(
@@ -617,7 +618,7 @@ class TestFlextRuntime:
         correctly returns False for None values.
         """
         assert not isinstance(test_case.test_input, type)
-        result = FlextRuntime.is_valid_json(test_case.test_input)
+        result = FlextRuntime.is_valid_json(cast("RuntimeData", test_case.test_input))
         assert result == test_case.expected_result
 
     @pytest.mark.parametrize(
@@ -632,7 +633,9 @@ class TestFlextRuntime:
         correctly returns False for None values.
         """
         assert not isinstance(test_case.test_input, type)
-        result = FlextRuntime.is_valid_identifier(test_case.test_input)
+        result = FlextRuntime.is_valid_identifier(
+            cast("RuntimeData", test_case.test_input)
+        )
         assert result == test_case.expected_result
 
     @pytest.mark.parametrize(

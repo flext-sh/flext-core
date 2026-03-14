@@ -138,8 +138,8 @@ class CacheTestModel(BaseModel):
 
     name: str
     value: int
-    tags: Annotated[list[str], Field(default_factory=list)]
-    meta: Annotated[dict[str, str], Field(default_factory=dict)]
+    tags: list[str] = []
+    meta: dict[str, str] = {}
 
 
 class NestedModel(BaseModel):

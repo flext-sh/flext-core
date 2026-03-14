@@ -22,7 +22,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from typing import cast
 
-from flext_core import c, m, r, u
+from flext_core import c, m, r, t, u
 from flext_core._models.base import FlextModelFoundation
 
 
@@ -61,7 +61,7 @@ def test_normalize_to_list_wraps_scalar() -> None:
 
 
 def test_normalize_to_list_passes_list_through() -> None:
-    result = m.Validators.normalize_to_list(cast("object", [1, 2, 3]))
+    result = m.Validators.normalize_to_list(cast("t.NormalizedValue", [1, 2, 3]))
     assert result == [1, 2, 3]
 
 
@@ -72,7 +72,7 @@ def test_normalize_to_list_wraps_int() -> None:
 
 def test_validate_config_dict_normalizes_dict() -> None:
     result = m.Validators.validate_config_dict(
-        cast("object", {"key": "value"}),
+        cast("t.NormalizedValue", {"key": "value"}),
     )
     assert isinstance(result, dict)
     assert result["key"] == "value"
@@ -80,7 +80,7 @@ def test_validate_config_dict_normalizes_dict() -> None:
 
 def test_validate_tags_list_normalizes() -> None:
     result = m.Validators.validate_tags_list(
-        cast("object", ["tag1", "  TAG1  ", "tag2"]),
+        cast("t.NormalizedValue", ["tag1", "  TAG1  ", "tag2"]),
     )
     assert isinstance(result, list)
     assert len(result) <= 3
@@ -88,7 +88,7 @@ def test_validate_tags_list_normalizes() -> None:
 
 def test_validate_tags_list_from_string() -> None:
     result = m.Validators.validate_tags_list(
-        cast("object", ["hello", "world"]),
+        cast("t.NormalizedValue", ["hello", "world"]),
     )
     assert "hello" in result
     assert "world" in result
@@ -102,7 +102,7 @@ def test_facade_binding_is_correct() -> None:
 def test_basic_imports_work() -> None:
     """Smoke test: all standard imports resolve."""
     assert c.Errors.UNKNOWN_ERROR
-    assert isinstance(m.Categories(), m.Categories)
+    assert isinstance(m.Categories(categories={}), m.Categories)
     assert r[int].ok(1).is_success
     assert isinstance(m.ConfigMap({"k": 1}), m.ConfigMap)
     assert u.to_str(1) == "1"

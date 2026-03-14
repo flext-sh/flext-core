@@ -15,9 +15,13 @@ from typing import override
 from pydantic import BaseModel
 
 from flext_core import r, s, t
-from flext_infra import FlextInfraUtilitiesDiscovery, c, m, u
-from flext_infra.codegen.transforms import FlextInfraCodegenTransforms
-from flext_infra.core.namespace_validator import FlextInfraNamespaceValidator
+from flext_infra import (
+    FlextInfraNamespaceValidator,
+    FlextInfraUtilitiesDiscovery,
+    c,
+    m,
+    u,
+)
 
 __all__ = ["FlextInfraCodegenScaffolder"]
 
@@ -42,16 +46,7 @@ class FlextInfraCodegenScaffolder(s):
         )
         self._workspace_root = workspace_root
 
-    @staticmethod
-    def _find_package_dir(project_root: Path) -> Path | None:
-        """Find the first Python package under src/."""
-        src_dir = project_root / c.Infra.Paths.DEFAULT_SRC_DIR
-        if not src_dir.is_dir():
-            return None
-        for child in sorted(src_dir.iterdir()):
-            if child.is_dir() and (child / c.Infra.Files.INIT_PY).exists():
-                return child
-        return None
+    _find_package_dir = staticmethod(u.Infra.find_package_dir)
 
     @override
     def execute(
@@ -147,7 +142,7 @@ class FlextInfraCodegenScaffolder(s):
                 continue
             class_name = f"{test_prefix}{prefix}{suffix}"
             docstring = f"{doc_suffix} for {prefix.lower()}."
-            content = FlextInfraCodegenTransforms.generate_module_skeleton(
+            content = u.Infra.generate_module_skeleton(
                 class_name=class_name,
                 base_class=base_class,
                 docstring=docstring,

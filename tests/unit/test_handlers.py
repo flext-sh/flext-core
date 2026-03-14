@@ -567,7 +567,7 @@ class TestFlextHandlers:
             "Test Push Context",
         )
         handler = ConcreteTestHandler(config=config)
-        context_typed: dict[str, t.Tests.object] = {
+        context_typed: dict[str, t.NormalizedValue] = {
             "user_id": "123",
             "operation": "test",
         }

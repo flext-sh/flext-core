@@ -14,12 +14,14 @@ from __future__ import annotations
 
 import math
 import warnings
+from typing import cast
 
 import pytest
 
 from flext_core import FlextRuntime, FlextUtilities, m
 from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core._utilities.mapper import FlextUtilitiesMapper
+from flext_core.runtime import RuntimeData
 from flext_tests import t as test_t
 
 pytestmark = [pytest.mark.unit]
@@ -66,8 +68,12 @@ class TestRuntimeDeprecatedNormalizeMethods:
         for val in test_cases:
             with warnings.catch_warnings(record=True):
                 warnings.simplefilter("always")
-                deprecated_result = FlextRuntime.normalize_to_general_value(val)
-            strict_result = FlextRuntime.normalize_to_container(val)
+                deprecated_result = FlextRuntime.normalize_to_general_value(
+                    cast("RuntimeData", val),
+                )
+            strict_result = FlextRuntime.normalize_to_container(
+                cast("RuntimeData", val),
+            )
             assert type(deprecated_result) is type(strict_result), (
                 f"Type mismatch for {val!r}: "
                 f"{type(deprecated_result)} vs {type(strict_result)}"
@@ -170,7 +176,9 @@ class TestStrictContainerNormalization:
 
     def test_normalize_to_container_unknown_becomes_str(self) -> None:
         """Unknown objects are converted to string representation."""
-        result = FlextRuntime.normalize_to_container(object())
+        result = FlextRuntime.normalize_to_container(
+            cast("RuntimeData", object()),
+        )
         assert isinstance(result, str)
 
     def test_normalize_to_metadata_returns_metadata_value(self) -> None:

@@ -124,13 +124,10 @@ class FlextModelsCollections:
         model_config = ConfigDict(
             strict=True, validate_default=True, validate_assignment=True
         )
-        categories: Annotated[
-            dict[str, list[t.MetadataValue]],
-            Field(
-                default_factory=dict,
-                description="Map of category name to list of items",
-            ),
-        ]
+        categories: dict[str, list[t.MetadataValue]] = Field(
+            default_factory=dict,
+            description="Map of category name to list of items",
+        )
 
         def __len__(self) -> int:
             return sum(len(entries) for entries in self.categories.values())

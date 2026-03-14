@@ -15,27 +15,55 @@ from flext_core._models.settings import FlextModelsConfig
 
 
 def test_models_settings_branch_paths() -> None:
+    class _ValidatorSpecStub:
+        def __call__(self, value: t.Container) -> bool:
+            _ = value
+            return True
+
+        def __and__(self, other: object) -> _ValidatorSpecStub:
+            _ = other
+            return self
+
+        def __invert__(self) -> _ValidatorSpecStub:
+            return self
+
+        def __or__(self, other: object) -> _ValidatorSpecStub:
+            _ = other
+            return self
+
     assert c.Errors.UNKNOWN_ERROR
-    assert isinstance(m.Categories(), m.Categories)
+    assert isinstance(m.Categories(categories={}), m.Categories)
     assert r[int].ok(1).is_success
     assert isinstance(m.ConfigMap({"k": 1}), m.ConfigMap)
     assert u.to_str(1) == "1"
     assert isinstance(FlextModelsConfig._get_log_level_from_config(), int)
     with pytest.raises(ValueError, match="HTTP status code validation failed"):
-        FlextModelsConfig.RetryConfiguration(retry_on_status_codes=[9999])
+        FlextModelsConfig.RetryConfiguration(
+            retry_on_exceptions=[],
+            retry_on_status_codes=[9999],
+        )
     with pytest.raises(ValueError, match="max_delay_seconds"):
         FlextModelsConfig.RetryConfiguration(
+            retry_on_exceptions=[],
+            retry_on_status_codes=[],
             initial_delay_seconds=2.0,
             max_delay_seconds=1.0,
         )
-    with pytest.raises(TypeError, match="Validator must be callable"):
-        FlextModelsConfig.ValidationConfiguration(custom_validators=[1])
+    validator = _ValidatorSpecStub()
+    validation_config = FlextModelsConfig.ValidationConfiguration(
+        custom_validators=[validator]
+    )
+    assert validation_config.custom_validators == [validator]
     with pytest.raises(ValueError, match="less than or equal to 1000"):
         FlextModelsConfig.BatchProcessingConfig(batch_size=100000, data_items=[])
 
 
 def test_models_settings_context_validator_and_non_standard_status_input() -> None:
-    req = FlextModelsConfig.ProcessingRequest(context=m.ConfigMap(root={}))
+    req = FlextModelsConfig.ProcessingRequest(
+        operation_id="op-1",
+        data=m.ConfigMap(root={}),
+        context=m.ConfigMap(root={}),
+    )
     assert "trace_id" in req.context
 
     class _CodeObj:

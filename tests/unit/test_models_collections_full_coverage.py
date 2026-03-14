@@ -26,7 +26,7 @@ class _Rules(m.Rules):
 
 class _Results(m.Results):
     value: int | bool | None = None
-    data: Annotated[dict[str, t.Tests.object], Field(default_factory=dict)]
+    data: dict[str, t.Tests.object] = Field(default_factory=dict)
 
 
 def _default_tags() -> list[str]:
@@ -43,7 +43,7 @@ class _Config(m.Config):
 
 
 def test_categories_clear_and_symbols_are_available() -> None:
-    categories = m.Categories()
+    categories = m.Categories(categories={})
     categories.add_entries("x", ["a"])
     categories.clear()
     assert categories.categories == {}

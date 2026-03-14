@@ -32,9 +32,9 @@ if TYPE_CHECKING:
     from flext_tests._validator.settings import FlextValidatorSettings
     from flext_tests._validator.tests import FlextValidatorTests
     from flext_tests._validator.types import FlextValidatorTypes
-    from flext_tests.base import FlextTestsServiceBase, FlextTestsUtilityBase, s, ts
+    from flext_tests.base import FlextTestsServiceBase, s
     from flext_tests.builders import FlextTestsBuilders, tb
-    from flext_tests.constants import FlextTestsConstants, c, tc
+    from flext_tests.constants import FlextTestsConstants, c
     from flext_tests.docker import FlextTestsDocker, tk
     from flext_tests.domains import FlextTestsDomains, td
     from flext_tests.factories import FlextTestsFactories, tt
@@ -59,7 +59,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextTestsServiceBase": ("flext_tests.base", "FlextTestsServiceBase"),
     "FlextTestsTypes": ("flext_tests.typings", "FlextTestsTypes"),
     "FlextTestsUtilities": ("flext_tests.utilities", "FlextTestsUtilities"),
-    "FlextTestsUtilityBase": ("flext_tests.base", "FlextTestsUtilityBase"),
     "FlextTestsValidator": ("flext_tests.validator", "FlextTestsValidator"),
     "FlextValidatorBypass": ("flext_tests._validator.bypass", "FlextValidatorBypass"),
     "FlextValidatorImports": (
@@ -80,12 +79,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "s": ("flext_tests.base", "s"),
     "t": ("flext_tests.typings", "t"),
     "tb": ("flext_tests.builders", "tb"),
-    "tc": ("flext_tests.constants", "tc"),
     "td": ("flext_tests.domains", "td"),
     "tf": ("flext_tests.files", "tf"),
     "tk": ("flext_tests.docker", "tk"),
     "tm": ("flext_tests.matchers", "tm"),
-    "ts": ("flext_tests.base", "ts"),
     "tt": ("flext_tests.factories", "tt"),
     "tv": ("flext_tests.validator", "tv"),
     "u": ("flext_tests.utilities", "u"),
@@ -105,7 +102,6 @@ __all__ = [
     "FlextTestsServiceBase",
     "FlextTestsTypes",
     "FlextTestsUtilities",
-    "FlextTestsUtilityBase",
     "FlextTestsValidator",
     "FlextValidatorBypass",
     "FlextValidatorImports",
@@ -120,12 +116,10 @@ __all__ = [
     "s",
     "t",
     "tb",
-    "tc",
     "td",
     "tf",
     "tk",
     "tm",
-    "ts",
     "tt",
     "tv",
     "u",

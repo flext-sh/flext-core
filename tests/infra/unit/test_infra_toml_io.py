@@ -12,7 +12,7 @@ from pathlib import Path
 import tomlkit
 from tomlkit.items import Table
 
-from flext_infra import FlextInfraUtilitiesToml
+from flext_infra import FlextInfraUtilitiesToml, t
 from flext_tests import tm
 
 
@@ -27,12 +27,6 @@ class TestFlextInfraTomlRead:
         service = FlextInfraUtilitiesToml()
         doc = service.read(toml_file)
         tm.that(doc, none=False)
-        if doc is None:
-            msg = "expected parsed TOML document"
-            raise AssertionError(msg)
-        section_obj = doc["section"]
-        assert isinstance(section_obj, Table)
-        section = section_obj
         if doc is None:
             msg = "expected parsed TOML document"
             raise AssertionError(msg)
@@ -148,12 +142,6 @@ class TestFlextInfraTomlDocument:
         verify_section_obj = verify_doc["section"]
         assert isinstance(verify_section_obj, Table)
         verify_section = verify_section_obj
-        if verify_doc is None:
-            msg = "expected persisted TOML document"
-            raise AssertionError(msg)
-        verify_section_obj = verify_doc["section"]
-        assert isinstance(verify_section_obj, Table)
-        verify_section = verify_section_obj
         tm.that(verify_section["key"], eq="new")
 
 
@@ -176,7 +164,7 @@ class TestFlextInfraTomlHelpers:
         tm.that(table["key"], eq="value")
 
     def test_as_toml_mapping_and_get_helpers(self) -> None:
-        mapping = {"key": "value"}
+        mapping: dict[str, t.Infra.InfraValue] = {"key": "value"}
         tm.that(FlextInfraUtilitiesToml.as_toml_mapping(mapping), eq=mapping)
         tm.that(FlextInfraUtilitiesToml.as_toml_mapping("bad"), none=True)
         doc = tomlkit.document()

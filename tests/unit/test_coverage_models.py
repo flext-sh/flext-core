@@ -25,7 +25,7 @@ from datetime import datetime
 from typing import override
 
 import pytest
-from pydantic import Field, ValidationError, field_validator
+from pydantic import ValidationError, field_validator
 
 from flext_core import m
 from flext_core._models.domain_event import _ComparableConfigMap
@@ -132,13 +132,12 @@ class TestEntities:
         """Test creating an entity."""
 
         class Person(m.Entity):
-            domain_events: list[m.DomainEvent] = Field(default_factory=list)
             """Person entity."""
 
             name: str
             age: int
 
-        person = Person(name="Alice", age=30)
+        person = Person(name="Alice", age=30, domain_events=[])
         assert person.name == "Alice"
         assert person.unique_id is not None
         assert person.created_at is not None
@@ -148,14 +147,13 @@ class TestEntities:
         """Test entities are compared by identity."""
 
         class Account(m.Entity):
-            domain_events: list[m.DomainEvent] = Field(default_factory=list)
             """Account entity."""
 
             name: str
             balance: float
 
-        account1 = Account(name="Checking", balance=100.0)
-        account2 = Account(name="Checking", balance=100.0)
+        account1 = Account(name="Checking", balance=100.0, domain_events=[])
+        account2 = Account(name="Checking", balance=100.0, domain_events=[])
         assert account1.unique_id != account2.unique_id
         assert account1 != account2
 
@@ -163,12 +161,11 @@ class TestEntities:
         """Test entity creation and update timestamps."""
 
         class Document(m.Entity):
-            domain_events: list[m.DomainEvent] = Field(default_factory=list)
             """Document entity."""
 
             title: str
 
-        doc = Document(title="Test Doc")
+        doc = Document(title="Test Doc", domain_events=[])
         assert doc.created_at is not None
         assert doc.updated_at is not None
         assert doc.created_at <= doc.updated_at
@@ -177,7 +174,6 @@ class TestEntities:
         """Test entity field validation."""
 
         class User(m.Entity):
-            domain_events: list[m.DomainEvent] = Field(default_factory=list)
             """User entity with validation."""
 
             email: str
@@ -191,22 +187,21 @@ class TestEntities:
                     raise ValueError(error_msg)
                 return v
 
-        user = User(email="user@example.com", username="alice")
+        user = User(email="user@example.com", username="alice", domain_events=[])
         assert user.username == "alice"
         with pytest.raises(ValidationError):
-            User(email="user@example.com", username="ab")
+            User(email="user@example.com", username="ab", domain_events=[])
 
     def test_entity_model_dump_serialization(self) -> None:
         """Test entity serialization using Pydantic model_dump."""
 
         class Product(m.Entity):
-            domain_events: list[m.DomainEvent] = Field(default_factory=list)
             """Product entity."""
 
             name: str
             price: float
 
-        product = Product(name="Widget", price=19.99)
+        product = Product(name="Widget", price=19.99, domain_events=[])
         product_dict = product.model_dump()
         assert isinstance(product_dict, dict)
         assert product_dict["name"] == "Widget"
@@ -228,7 +223,7 @@ class TestAggregateRoots:
             order_number: str
             status: str
 
-        order = Order(order_number="ORD-001", status="pending")
+        order = Order(order_number="ORD-001", status="pending", domain_events=[])
         assert order.order_number == "ORD-001"
         assert order.unique_id is not None
 
@@ -241,7 +236,7 @@ class TestAggregateRoots:
             balance: float
             currency: str
 
-        account = Account(balance=1000.0, currency="USD")
+        account = Account(balance=1000.0, currency="USD", domain_events=[])
         assert account.balance >= 0.0
 
     def test_aggregate_root_lifecycle(self) -> None:
@@ -253,7 +248,7 @@ class TestAggregateRoots:
             name: str
             status: str
 
-        project = Project(name="New Project", status="planning")
+        project = Project(name="New Project", status="planning", domain_events=[])
         assert project.status == "planning"
         assert project.created_at is not None
 
@@ -270,7 +265,9 @@ class TestCommands:
             email: str
             username: str
 
-        cmd = CreateUserCommand(email="user@example.com", username="alice")
+        cmd = CreateUserCommand(
+            email="user@example.com", username="alice", command_id="cmd-test-1"
+        )
         assert cmd.email == "user@example.com"
         assert cmd.command_id is not None
 
@@ -283,7 +280,9 @@ class TestCommands:
             name: str
             bio: str
 
-        cmd = UpdateProfileCommand(name="Alice", bio="Developer")
+        cmd = UpdateProfileCommand(
+            name="Alice", bio="Developer", command_id="cmd-test-2"
+        )
         original_name = cmd.name
         cmd.name = "Bob"
         assert cmd.name == "Bob"
@@ -306,10 +305,12 @@ class TestCommands:
                     raise ValueError(error_msg)
                 return v
 
-        cmd = DepositCommand(account_id="ACC-001", amount=100.0)
+        cmd = DepositCommand(
+            account_id="ACC-001", amount=100.0, command_id="cmd-test-3"
+        )
         assert math.isclose(cmd.amount, 100.0)
         with pytest.raises(ValidationError):
-            DepositCommand(account_id="ACC-001", amount=-50.0)
+            DepositCommand(account_id="ACC-001", amount=-50.0, command_id="cmd-test-4")
 
 
 class GetUserQuery(m.Query):
@@ -340,6 +341,8 @@ class TestQueries:
         query = GetUserQuery(
             filters=m.Dict(root={"user_id": "USER-001"}),
             query_type="get_user",
+            pagination=m.Pagination(),
+            query_id="q-test-1",
         )
         assert query.filters["user_id"] == "USER-001"
         assert query.query_id is not None
@@ -347,7 +350,13 @@ class TestQueries:
 
     def test_query_mutation_behavior(self) -> None:
         """Test query mutation behavior with validate_assignment."""
-        query = ListAccountsQuery(page=1, limit=10)
+        query = ListAccountsQuery(
+            page=1,
+            limit=10,
+            filters=m.Dict(root={}),
+            pagination=m.Pagination(),
+            query_id="q-test-2",
+        )
         original_page = query.page
         query.page = 2
         assert query.page == 2
@@ -359,6 +368,9 @@ class TestQueries:
             keyword="laptop",
             category="electronics",
             min_price=500.0,
+            filters=m.Dict(root={}),
+            pagination=m.Pagination(),
+            query_id="q-test-3",
         )
         assert query.keyword == "laptop"
         assert query.category == "electronics"
@@ -459,7 +471,6 @@ class TestModelValidation:
         """Test model validation error handling."""
 
         class ValidatedEntity(m.Entity):
-            domain_events: list[m.DomainEvent] = Field(default_factory=list)
             """Entity with validation."""
 
             email: str
@@ -473,16 +484,15 @@ class TestModelValidation:
                     raise ValueError(error_msg)
                 return v
 
-        entity = ValidatedEntity(email="user@example.com", age=30)
+        entity = ValidatedEntity(email="user@example.com", age=30, domain_events=[])
         assert entity.age == 30
         with pytest.raises(ValidationError):
-            ValidatedEntity(email="user@example.com", age=200)
+            ValidatedEntity(email="user@example.com", age=200, domain_events=[])
 
     def test_multiple_field_validation(self) -> None:
         """Test multiple field validators."""
 
         class Profile(m.Entity):
-            domain_events: list[m.DomainEvent] = Field(default_factory=list)
             """Profile with multiple validators."""
 
             username: str
@@ -505,7 +515,12 @@ class TestModelValidation:
                     raise ValueError(error_msg)
                 return v
 
-        profile = Profile(username="alice", email="alice@example.com", bio="Developer")
+        profile = Profile(
+            username="alice",
+            email="alice@example.com",
+            bio="Developer",
+            domain_events=[],
+        )
         assert profile.username == "alice"
 
 
@@ -516,13 +531,12 @@ class TestModelSerialization:
         """Test model_dump serialization."""
 
         class Task(m.Entity):
-            domain_events: list[m.DomainEvent] = Field(default_factory=list)
             """Task entity."""
 
             title: str
             completed: bool
 
-        task = Task(title="Complete tests", completed=False)
+        task = Task(title="Complete tests", completed=False, domain_events=[])
         dumped = task.model_dump()
         assert dumped["title"] == "Complete tests"
         assert dumped["completed"] is False
@@ -542,6 +556,7 @@ class TestModelSerialization:
             recipient="user@example.com",
             subject="Test",
             body="Message body",
+            command_id="cmd-test-5",
         )
         dumped = cmd.model_dump()
         assert dumped["recipient"] == "user@example.com"
@@ -562,6 +577,7 @@ class TestModelSerialization:
                 {"product_id": "P2", "quantity": 1},
             ],
             total=99.99,
+            domain_events=[],
         )
         dumped = cart.model_dump()
         assert len(dumped["items"]) == 2
@@ -575,13 +591,12 @@ class TestModelIntegration:
         """Test entity model validation via model_validate."""
 
         class Customer(m.Entity):
-            domain_events: list[m.DomainEvent] = Field(default_factory=list)
             """Customer entity."""
 
             name: str
             email: str
 
-        customer = Customer(name="John", email="john@example.com")
+        customer = Customer(name="John", email="john@example.com", domain_events=[])
         dumped = customer.model_dump()
         customer_dict = {
             k: dumped[k] for k in type(customer).model_fields if k in dumped
@@ -600,7 +615,9 @@ class TestModelIntegration:
             email: str
             password: str
 
-        cmd = RegisterUserCommand(email="user@example.com", password="secure123")
+        cmd = RegisterUserCommand(
+            email="user@example.com", password="secure123", command_id="cmd-test-6"
+        )
         assert cmd.email == "user@example.com"
 
 

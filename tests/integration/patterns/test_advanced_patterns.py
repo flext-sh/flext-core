@@ -14,10 +14,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable
+from typing import cast
 
 import pytest
 
-from flext_core import r, u
+from flext_core import r, t as core_t, u
 from flext_tests import t
 
 from ...models import m
@@ -155,7 +156,7 @@ class GivenWhenThenBuilder:
 
         given_mapped = u.transform_values(
             u.map_dict_keys(
-                self._given,
+                cast("core_t.ContainerMapping", self._given),
                 {k: str(k) for k in self._given},
                 keep_unmapped=True,
             ).value,
@@ -166,7 +167,7 @@ class GivenWhenThenBuilder:
         }
         when_mapped = u.transform_values(
             u.map_dict_keys(
-                self._when,
+                cast("core_t.ContainerMapping", self._when),
                 {k: str(k) for k in self._when},
                 keep_unmapped=True,
             ).value,
@@ -177,7 +178,7 @@ class GivenWhenThenBuilder:
         }
         then_mapped = u.transform_values(
             u.map_dict_keys(
-                self._then,
+                cast("core_t.ContainerMapping", self._then),
                 {k: str(k) for k in self._then},
                 keep_unmapped=True,
             ).value,

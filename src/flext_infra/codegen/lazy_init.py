@@ -19,16 +19,12 @@ from __future__ import annotations
 
 import ast
 import contextlib
-from collections import defaultdict
 from collections.abc import Mapping
 from pathlib import Path
 from typing import override
 
 from flext_core import r, s
-from flext_infra import u
-from flext_infra._utilities.output import output
-from flext_infra._utilities.subprocess import FlextInfraUtilitiesSubprocess
-from flext_infra.constants import FlextInfraConstants as c
+from flext_infra import FlextInfraUtilitiesSubprocess, c, output, u
 
 # ---------------------------------------------------------------------------
 # Service class
@@ -161,7 +157,7 @@ class FlextInfraCodegenLazyInit(s[int]):
 
         """
         init_path = pkg_dir / "__init__.py"
-        current_pkg = _infer_package(init_path)
+        current_pkg = u.Infra.infer_package(init_path)
         if not current_pkg:
             return (None, {})
 
@@ -267,21 +263,6 @@ def _dir_has_py_files(pkg_dir: Path) -> bool:
     )
 
 
-def _infer_package(path: Path) -> str:
-    """Infer dotted package name from a path under ``src/``, ``tests/``, etc."""
-    abs_path = str(path.absolute())
-    for root_dir in ("/src/", "/tests/", "/examples/", "/scripts/"):
-        idx = abs_path.rfind(root_dir)
-        if idx != -1:
-            rel = abs_path[idx + len(root_dir) :]
-            pkg_parts = rel.split("/")[:-1]
-            if root_dir == "/src/":
-                return ".".join(pkg_parts)
-            root_name = root_dir.strip("/")
-            return ".".join([root_name, *pkg_parts]) if pkg_parts else root_name
-    return ""
-
-
 # ---------------------------------------------------------------------------
 # Source-file scanning (the core of auto-discovery)
 # ---------------------------------------------------------------------------
@@ -350,7 +331,7 @@ def _build_sibling_export_index(
             continue
 
         # Prefer __all__ when available
-        has_all, all_exports = _extract_exports(sibling_tree)
+        has_all, all_exports = u.Infra.extract_exports(sibling_tree)
         if has_all and all_exports:
             for name in all_exports:
                 index[name] = (mod_path, name)
@@ -358,25 +339,6 @@ def _build_sibling_export_index(
             _scan_ast_public_defs(sibling_tree, mod_path, index)
 
     return index
-
-
-def _extract_exports(tree: ast.Module) -> tuple[bool, list[str]]:
-    """Extract ``__all__`` entries from the AST."""
-    exports: list[str] = []
-    has_all = False
-    for node in tree.body:
-        if isinstance(node, ast.Assign):
-            for target in node.targets:
-                if isinstance(target, ast.Name) and target.id == "__all__":
-                    has_all = True
-                    if isinstance(node.value, (ast.List, ast.Tuple)):
-                        exports.extend(
-                            elt.value
-                            for elt in node.value.elts
-                            if isinstance(elt, ast.Constant)
-                            and isinstance(elt.value, str)
-                        )
-    return (has_all, exports)
 
 
 def _scan_ast_public_defs(
@@ -398,21 +360,6 @@ def _scan_ast_public_defs(
         for name in names:
             if not name.startswith("_"):
                 index[name] = (mod_path, name)
-
-
-def _extract_inline_constants(tree: ast.Module) -> dict[str, str]:
-    """Extract inline constant assignments like ``__version__ = '1.0.0'``."""
-    constants: dict[str, str] = {}
-    for node in tree.body:
-        if isinstance(node, ast.Assign) and len(node.targets) == 1:
-            target = node.targets[0]
-            if (
-                isinstance(target, ast.Name)
-                and isinstance(node.value, ast.Constant)
-                and isinstance(node.value.value, str)
-            ):
-                constants[target.id] = node.value.value
-    return constants
 
 
 _TYPEVAR_CALL_NAMES: frozenset[str] = frozenset({
@@ -519,7 +466,7 @@ def _extract_version_exports(
     if tree is None:
         return ({}, {})
 
-    inline = _extract_inline_constants(tree)
+    inline = u.Infra.extract_inline_constants(tree)
     ver_mod = f"{current_pkg}.__version__" if current_pkg else "__version__"
 
     lazy: dict[str, tuple[str, str]] = {}
@@ -558,46 +505,6 @@ def _resolve_aliases(lazy_map: dict[str, tuple[str, str]]) -> None:
 # ---------------------------------------------------------------------------
 
 
-def _generate_type_checking(groups: Mapping[str, list[tuple[str, str]]]) -> list[str]:
-    """Generate the ``if TYPE_CHECKING`` import block.
-
-    Groups imports by top-level package with blank lines between groups,
-    following isort conventions.
-    """
-    lines: list[str] = ["if TYPE_CHECKING:"]
-    lines.append("    from flext_core.typings import FlextTypes")
-    if not groups:
-        return lines
-
-    def _emit_module(mod: str) -> None:
-        items = groups[mod]
-        sorted_items = sorted(items, key=lambda x: (x[1], x[0] != x[1]))
-        parts: list[str] = []
-        for export_name, attr_name in sorted_items:
-            if export_name == attr_name:
-                parts.append(export_name)
-            else:
-                parts.append(f"{attr_name} as {export_name}")
-        joined = ", ".join(parts)
-        line = f"    from {mod} import {joined}"
-        if len(line) > c.Infra.Codegen.MAX_LINE_LENGTH:
-            lines.append(f"    from {mod} import (")
-            lines.extend(f"        {part}," for part in parts)
-            lines.append("    )")
-        else:
-            lines.append(line)
-
-    sorted_mods = sorted(groups, key=str.lower)
-    prev_top: str | None = None
-    for mod in sorted_mods:
-        top = mod.split(".")[0]
-        if prev_top is not None and top != prev_top:
-            lines.append("")
-        _emit_module(mod)
-        prev_top = top
-    return lines
-
-
 def _generate_file(
     docstring_source: str,
     exports: list[str],
@@ -607,79 +514,14 @@ def _generate_file(
     eager_typevar_names: frozenset[str] = frozenset(),
 ) -> str:
     """Generate the complete ``__init__.py`` content."""
-    lazy_filtered: dict[str, tuple[str, str]] = {
-        name: val for name, val in filtered.items() if name not in eager_typevar_names
-    }
-    groups: dict[str, list[tuple[str, str]]] = defaultdict(list)
-    for export_name in sorted(lazy_filtered):
-        mod, attr = lazy_filtered[export_name]
-        groups[mod].append((export_name, attr))
-
-    out: list[str] = [c.Infra.Codegen.AUTOGEN_HEADER]
-    if docstring_source:
-        out.extend([docstring_source, ""])
-
-    is_core_internal = current_pkg.startswith(c.Infra.Packages.CORE_UNDERSCORE + ".")
-    if current_pkg == c.Infra.Packages.CORE_UNDERSCORE or is_core_internal:
-        lazy_import = (
-            "from flext_core._utilities.lazy import"
-            " cleanup_submodule_namespace, lazy_getattr"
-        )
-    else:
-        lazy_import = (
-            "from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr"
-        )
-
-    out.extend([
-        "from __future__ import annotations",
-        "",
-        "from typing import TYPE_CHECKING",
-        "",
-        lazy_import,
-    ])
-    if eager_typevar_names:
-        typings_mod = f"{current_pkg}.typings"
-        sorted_tvars = sorted(eager_typevar_names)
-        eager_line = f"from {typings_mod} import " + ", ".join(sorted_tvars)
-        if len(eager_line) > c.Infra.Codegen.MAX_LINE_LENGTH:
-            out.append(f"from {typings_mod} import (")
-            out.extend(f"    {tv}," for tv in sorted_tvars)
-            out.append(")")
-        else:
-            out.append(eager_line)
-    out.append("")
-    out.extend(_generate_type_checking(groups))
-    out.append("")
-    for name, value in sorted(inline_constants.items()):
-        out.append(f'{name} = "{value}"')
-    if inline_constants:
-        out.append("")
-    out.extend([
-        "_LAZY_IMPORTS: dict[str, tuple[str, str]] = {",
-    ])
-    for exp in sorted(exports):
-        if exp in lazy_filtered:
-            mod, attr = lazy_filtered[exp]
-            out.append(f'    "{exp}": ("{mod}", "{attr}"),')
-    out.extend(["}", ""])
-    out.append("__all__ = [")
-    out.extend(f'    "{exp}",' for exp in sorted(exports))
-    out.extend(["]", "", ""])
-    out.extend([
-        "def __getattr__(name: str) -> FlextTypes.ModuleExport:",
-        '    """Lazy-load module attributes on first access (PEP 562)."""',
-        "    return lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)",
-        "",
-        "",
-        "def __dir__() -> list[str]:",
-        '    """Return list of available attributes for dir() and autocomplete."""',
-        "    return sorted(__all__)",
-        "",
-        "",
-        "cleanup_submodule_namespace(__name__, _LAZY_IMPORTS)",
-        "",
-    ])
-    return "\n".join(out)
+    return u.Infra.generate_file(
+        docstring_source,
+        exports,
+        filtered,
+        inline_constants,
+        current_pkg,
+        eager_typevar_names,
+    )
 
 
 # ---------------------------------------------------------------------------

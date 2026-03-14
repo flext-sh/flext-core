@@ -12,6 +12,7 @@ import pytest
 from pydantic import BaseModel, Field
 
 from flext_core import FlextContainer, FlextContext, FlextLogger, c, d, e, m, r, t
+from flext_tests import t as test_t
 
 
 class _FakeLogger:
@@ -193,13 +194,17 @@ def test_execute_retry_loop_covers_default_linear_and_never_ran(
     )
     assert isinstance(result_exc, Exception)
     assert calls["n"] == 2
-    monkeypatch.setattr(
-        "flext_core.decorators.m.RetryConfiguration",
-        lambda **_kw: SimpleNamespace(
+
+    def _fake_retry_config(**_kw: test_t.Tests.object) -> SimpleNamespace:
+        return SimpleNamespace(
             max_retries=0,
             initial_delay_seconds=0.1,
             exponential_backoff=False,
-        ),
+        )
+
+    monkeypatch.setattr(
+        "flext_core.decorators.m.RetryConfiguration",
+        _fake_retry_config,
     )
     result_none = d._execute_retry_loop(
         lambda *_args, **_kwargs: "x",

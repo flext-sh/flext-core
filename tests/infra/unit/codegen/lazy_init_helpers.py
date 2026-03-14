@@ -9,37 +9,36 @@ from __future__ import annotations
 import ast
 from pathlib import Path
 
+from flext_infra.codegen._utilities import FlextInfraUtilitiesCodegen
 from flext_infra.codegen.lazy_init import (
     _build_sibling_export_index,
-    _extract_exports,
-    _infer_package,
     _read_existing_docstring,
 )
 from flext_tests import tm
 
 
 class TestInferPackage:
-    """Test _infer_package function."""
+    """Test infer_package function."""
 
     def test_src_path(self) -> None:
         """Test inference from src/ path."""
         path = Path("/workspace/src/test_pkg/__init__.py")
-        tm.that(_infer_package(path), eq="test_pkg")
+        tm.that(FlextInfraUtilitiesCodegen.infer_package(path), eq="test_pkg")
 
     def test_deeply_nested_src_path(self) -> None:
         """Test inference from deeply nested src/ path."""
         path = Path("/workspace/src/a/b/c/d/__init__.py")
-        tm.that(_infer_package(path), eq="a.b.c.d")
+        tm.that(FlextInfraUtilitiesCodegen.infer_package(path), eq="a.b.c.d")
 
     def test_tests_path(self) -> None:
         """Test inference from tests/ path."""
         path = Path("/workspace/tests/unit/__init__.py")
-        tm.that(_infer_package(path), eq="tests.unit")
+        tm.that(FlextInfraUtilitiesCodegen.infer_package(path), eq="tests.unit")
 
     def test_without_src_directory(self) -> None:
         """Test when path doesn't contain /src/."""
         path = Path("/workspace/lib/test/__init__.py")
-        tm.that(_infer_package(path), eq="")
+        tm.that(FlextInfraUtilitiesCodegen.infer_package(path), eq="")
 
 
 class TestReadExistingDocstring:
@@ -143,13 +142,13 @@ class TestBuildSiblingExportIndex:
 
 
 class TestExtractExports:
-    """Test _extract_exports function."""
+    """Test extract_exports function."""
 
     def test_with_list_all(self) -> None:
         """Test __all__ as list."""
         code = '__all__ = ["Foo", "Bar"]'
         tree = ast.parse(code)
-        has_all, exports = _extract_exports(tree)
+        has_all, exports = FlextInfraUtilitiesCodegen.extract_exports(tree)
         tm.that(has_all, eq=True)
         tm.that(exports, eq=["Foo", "Bar"])
 
@@ -157,7 +156,7 @@ class TestExtractExports:
         """Test __all__ as tuple."""
         code = '__all__ = ("Foo", "Bar")'
         tree = ast.parse(code)
-        has_all, exports = _extract_exports(tree)
+        has_all, exports = FlextInfraUtilitiesCodegen.extract_exports(tree)
         tm.that(has_all, eq=True)
         tm.that(exports, eq=["Foo", "Bar"])
 
@@ -165,7 +164,7 @@ class TestExtractExports:
         """Test ignores non-string elements."""
         code = '__all__ = ["Foo", 123, "Bar"]'
         tree = ast.parse(code)
-        has_all, exports = _extract_exports(tree)
+        has_all, exports = FlextInfraUtilitiesCodegen.extract_exports(tree)
         tm.that(has_all, eq=True)
         tm.that(exports, eq=["Foo", "Bar"])
 
@@ -173,6 +172,6 @@ class TestExtractExports:
         """Test when __all__ is missing."""
         code = "x = 1"
         tree = ast.parse(code)
-        has_all, exports = _extract_exports(tree)
+        has_all, exports = FlextInfraUtilitiesCodegen.extract_exports(tree)
         tm.that(has_all, eq=False)
         tm.that(exports, eq=[])

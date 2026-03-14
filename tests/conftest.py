@@ -10,9 +10,9 @@ import math
 import queue
 import tempfile
 import threading
-from collections.abc import Callable, Generator
+from collections.abc import Callable, Generator, Mapping
 from pathlib import Path
-from typing import TypeVar
+from typing import TypeVar, cast
 
 import pytest
 from pydantic import ConfigDict
@@ -129,7 +129,11 @@ class FlextTestAutomationFramework:
                 model_config = ConfigDict(extra="allow")
                 name: str
 
-            entity = TestEntity(unique_id=unique_id, name=name)
+            entity = TestEntity(
+                unique_id=unique_id,
+                name=name,
+                domain_events=[],
+            )
             for key, value in kwargs.items():
                 setattr(entity, key, value)
             return r[m.Entity].ok(entity)
@@ -241,8 +245,19 @@ class FlextScenarioRunner:
 
         """
         try:
-            if hasattr(scenario, "input_params") and scenario.input_params:
-                result = validator_func(scenario.input_value, **scenario.input_params)
+            params = scenario.input_params
+            if isinstance(params, Mapping):
+                str_params: dict[str, object] = {
+                    str(k): v
+                    for k, v in cast(
+                        "Mapping[str, object]",
+                        params,
+                    ).items()
+                }
+                result: r[TResult] = validator_func(
+                    scenario.input_value,
+                    **str_params,
+                )
             else:
                 result = validator_func(scenario.input_value)
             return result

@@ -16,11 +16,12 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from enum import StrEnum
-from typing import Annotated, ClassVar
+from typing import Annotated, ClassVar, cast
 
 import pytest
 from pydantic import BaseModel, ConfigDict, Field
 
+from flext_core import t
 from flext_tests import u
 
 
@@ -261,12 +262,12 @@ class TestuCollectionCoerceListValidator:
         """Test coerce_list_validator with various scenarios."""
         validator = u.coerce_list_validator(Status)
         if scenario.expected_success:
-            result = validator(scenario.value)
+            result = validator(cast("t.NormalizedValue", scenario.value))
             assert isinstance(result, list)
             assert all(isinstance(item, Status) for item in result)
         else:
             with pytest.raises(Exception) as exc_info:
-                validator(scenario.value)
+                validator(cast("t.NormalizedValue", scenario.value))
             expected_error = scenario.expected_error
             assert expected_error is not None
             assert isinstance(exc_info.value, (TypeError, ValueError))

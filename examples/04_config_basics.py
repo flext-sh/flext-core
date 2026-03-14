@@ -345,7 +345,7 @@ def main() -> r[bool]:
         features = metadata.get("config_features", [])
         advanced_features = metadata.get("advanced_features", [])
 
-        def _sequence_len(x) -> int:
+        def _sequence_len(x: t.ContainerValue) -> int:
             try:
                 return len(_CONTAINER_LIST_ADAPTER.validate_python(x))
             except ValidationError:

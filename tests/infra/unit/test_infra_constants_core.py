@@ -22,8 +22,8 @@ class TestFlextInfraConstantsPathsNamespace:
         tm.that(infra_c.Infra.Paths.DEFAULT_SRC_DIR, eq="src")
 
     def test_paths_constants_are_strings(self) -> None:
-        tm.that(isinstance(infra_c.Infra.Paths.VENV_BIN_REL, str), eq=True)
-        tm.that(isinstance(infra_c.Infra.Paths.DEFAULT_SRC_DIR, str), eq=True)
+        tm.that(infra_c.Infra.Paths.VENV_BIN_REL, is_=str)
+        tm.that(infra_c.Infra.Paths.DEFAULT_SRC_DIR, is_=str)
 
 
 class TestFlextInfraConstantsFilesNamespace:
@@ -42,10 +42,10 @@ class TestFlextInfraConstantsFilesNamespace:
         tm.that(infra_c.Infra.Files.GO_MOD, eq="go.mod")
 
     def test_files_constants_are_strings(self) -> None:
-        tm.that(isinstance(infra_c.Infra.Files.PYPROJECT_FILENAME, str), eq=True)
-        tm.that(isinstance(infra_c.Infra.Files.MAKEFILE_FILENAME, str), eq=True)
-        tm.that(isinstance(infra_c.Infra.Files.BASE_MK, str), eq=True)
-        tm.that(isinstance(infra_c.Infra.Files.GO_MOD, str), eq=True)
+        tm.that(infra_c.Infra.Files.PYPROJECT_FILENAME, is_=str)
+        tm.that(infra_c.Infra.Files.MAKEFILE_FILENAME, is_=str)
+        tm.that(infra_c.Infra.Files.BASE_MK, is_=str)
+        tm.that(infra_c.Infra.Files.GO_MOD, is_=str)
 
 
 class TestFlextInfraConstantsGatesNamespace:
@@ -95,19 +95,17 @@ class TestFlextInfraConstantsStatusNamespace:
         tm.that(infra_c.Infra.Status.WARN, eq="WARN")
 
     def test_status_constants_are_strings(self) -> None:
-        tm.that(isinstance(infra_c.Infra.Status.PASS, str), eq=True)
-        tm.that(isinstance(infra_c.Infra.Status.FAIL, str), eq=True)
-        tm.that(isinstance(infra_c.Infra.Status.OK, str), eq=True)
-        tm.that(isinstance(infra_c.Infra.Status.WARN, str), eq=True)
+        tm.that(infra_c.Infra.Status.PASS, is_=str)
+        tm.that(infra_c.Infra.Status.FAIL, is_=str)
+        tm.that(infra_c.Infra.Status.OK, is_=str)
+        tm.that(infra_c.Infra.Status.WARN, is_=str)
 
 
 class TestFlextInfraConstantsExcludedNamespace:
     """Tests for Excluded namespace constants."""
 
-    def test_common_excluded_dirs_is_frozenset(self) -> None:
-        tm.that(
-            isinstance(infra_c.Infra.Excluded.COMMON_EXCLUDED_DIRS, frozenset), eq=True
-        )
+    def test_common_excluded_dirs_is_string(self) -> None:
+        tm.that(infra_c.Infra.Excluded.COMMON_EXCLUDED_DIRS, is_=str)
 
     def test_common_excluded_dirs_contains_standard_dirs(self) -> None:
         excluded = infra_c.Infra.Excluded.COMMON_EXCLUDED_DIRS
@@ -143,13 +141,7 @@ class TestFlextInfraConstantsExcludedNamespace:
     def test_check_excluded_dirs_includes_flext_deps(self) -> None:
         tm.that(infra_c.Infra.Excluded.CHECK_EXCLUDED_DIRS, contains=".flext-deps")
 
-    def test_excluded_dirs_are_frozensets(self) -> None:
-        tm.that(
-            isinstance(infra_c.Infra.Excluded.DOC_EXCLUDED_DIRS, frozenset), eq=True
-        )
-        tm.that(
-            isinstance(infra_c.Infra.Excluded.PYPROJECT_SKIP_DIRS, frozenset), eq=True
-        )
-        tm.that(
-            isinstance(infra_c.Infra.Excluded.CHECK_EXCLUDED_DIRS, frozenset), eq=True
-        )
+    def test_excluded_dirs_are_strings(self) -> None:
+        tm.that(infra_c.Infra.Excluded.DOC_EXCLUDED_DIRS, is_=str)
+        tm.that(infra_c.Infra.Excluded.PYPROJECT_SKIP_DIRS, is_=str)
+        tm.that(infra_c.Infra.Excluded.CHECK_EXCLUDED_DIRS, is_=str)

@@ -16,8 +16,13 @@ from typing import override
 from pydantic import BaseModel
 
 from flext_core import r, s, t
-from flext_infra import FlextInfraUtilitiesDiscovery, c, m, p
-from flext_infra.core.namespace_validator import FlextInfraNamespaceValidator
+from flext_infra import (
+    FlextInfraNamespaceValidator,
+    FlextInfraUtilitiesDiscovery,
+    c,
+    m,
+    p,
+)
 
 
 class FlextInfraCodegenCensus(s):

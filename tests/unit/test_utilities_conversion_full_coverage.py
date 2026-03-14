@@ -6,13 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections import UserList
-
 from flext_core import c, m, r, u
-
-
-class _SeqLike(UserList[int]):
-    pass
 
 
 def test_conversion_string_and_join_paths() -> None:
