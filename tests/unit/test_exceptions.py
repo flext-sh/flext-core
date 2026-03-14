@@ -1239,15 +1239,15 @@ class Teste:
     def test_create_with_dict_like_metadata_normalization(self) -> None:
         """Test create normalizes dict-like metadata values - tests lines 1376-1379."""
 
-        class DictLike(Mapping[str, object]):
-            _obj
+        class DictLike(Mapping[str, t.Tests.object]):
+            _obj: t.Tests.object
 
             @override
             def __init__(self) -> None:
-                self._obj = object()
+                self._obj = str(id(self))
 
             @override
-            def __getitem__(self, key: str) -> object | str:
+            def __getitem__(self, key: str) -> t.Tests.object:
                 if key == "key1":
                     return "value1"
                 if key == "key2":
@@ -1322,15 +1322,15 @@ class Teste:
     def test_create_with_dict_like_metadata_normalize_values(self) -> None:
         """Test create normalizes dict-like metadata values - tests line 1379."""
 
-        class DictLike(Mapping[str, object]):
-            _obj
+        class DictLike(Mapping[str, t.Tests.object]):
+            _obj: t.Tests.object
 
             @override
             def __init__(self) -> None:
-                self._obj = object()
+                self._obj = str(id(self))
 
             @override
-            def __getitem__(self, key: str) -> object:
+            def __getitem__(self, key: str) -> t.Tests.object:
                 if key == "key1":
                     return self._obj
                 raise KeyError(key)

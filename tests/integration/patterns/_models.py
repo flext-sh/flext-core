@@ -16,7 +16,7 @@ class _StringDictModel(RootModel[dict[str, str]]):
     def __setitem__(self, key: str, value: str) -> None:
         self.root[key] = value
 
-    def __contains__(self, key) -> bool:
+    def __contains__(self, key: str) -> bool:
         return key in self.root
 
     def get(self, key: str, default: str = "") -> str:

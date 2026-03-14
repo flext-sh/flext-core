@@ -28,7 +28,7 @@ class _AtCallable(Protocol):
         items,
         index: int | str,
         *,
-        default = None,
+        default=None,
     ) -> None: ...
 
 
@@ -42,7 +42,7 @@ class _TakeCallable(Protocol):
         data_or_items,
         key_or_index,
         *,
-        default = None,
+        default=None,
     ) -> None: ...
 
 
@@ -80,7 +80,7 @@ class _BuildFlagsCallable(Protocol):
     ) -> r[Mapping[str, bool]]: ...
 
 
-def _at_obj(items: ExplodingLenList, index: int | str, *, default = None) -> None:
+def _at_obj(items: ExplodingLenList, index: int | str, *, default=None) -> None:
     """Call Mapper.at with arbitrary object for error-path testing."""
     fn: _AtCallable = getattr(u, "at")
     return fn(items, index, default=default)
@@ -93,7 +93,7 @@ def _extract_field_obj(item: AttrObject, field_name: str) -> None:
 
 
 def _take_obj(
-    data_or_items: test_remaining_uncovered_branches.MaybeModel | _PortModel | int, key_or_index: int | str, *, default = None
+    data_or_items: test_remaining_uncovered_branches.MaybeModel | _PortModel | int, key_or_index: int | str, *, default=None
 ) -> None:
     fn: _TakeCallable = getattr(u, "take")
     return fn(data_or_items, key_or_index, default=default)
@@ -264,7 +264,7 @@ def test_type_guards_and_narrowing_failures(mapper: type[u]) -> None:
 
 def test_narrow_to_string_keyed_dict_and_mapping_paths(mapper: type[u]) -> None:
     converted = mapper._narrow_to_string_keyed_dict(
-        cast("object", {1: "x", "b"()}),
+        cast("object", {1: "x", "b": "y"}),
     )
     assert "1" in converted
     assert isinstance(converted["b"], str)
@@ -797,7 +797,7 @@ def test_map_flags_collect_and_invert_branches(mapper: type[u]) -> None:
 
     class BadGet(UserDict[str, bool]):
         @override
-        def get(self, key: str, default = None) -> bool:
+        def get(self, key: str, default=None) -> bool:
             msg = "bad get"
             raise RuntimeError(msg)
 
@@ -1006,7 +1006,7 @@ def test_remaining_uncovered_branches(
         def items(self) -> list[tuple[str, int]]:
             return [("k", 1)]
 
-        def get(self, key: str, default = None):
+        def get(self, key: str, default: int | None = None) -> int | None:
             return 1 if key == "k" else default
 
     # CallableDictLike is not a Mapping/ConfigMap, so process_context_data
