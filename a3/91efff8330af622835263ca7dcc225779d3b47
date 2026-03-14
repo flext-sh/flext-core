@@ -1,0 +1,40 @@
+src/flext_infra/codegen/_utilities.py
+  f44ccb4be7de79e9 416
+src/flext_infra/codegen/lazy_init.py
+  f44ccb4be7de79e9 612
+src/flext_tests/typings.py
+  8c2d749dcca16b1c 189
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "a391efff8330af622835263ca7dcc225779d3b47",
+  "prompts": {
+    "8c2d749dcca16b1c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d0c09b0b-3db3-411a-ac46-126453ea6fa0",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 1,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    },
+    "f44ccb4be7de79e9": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3128366fbffe7X7sFMYo9Xddq5",
+        "model": "anthropic/claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 2,
+      "total_deletions": 2,
+      "accepted_lines": 2,
+      "overriden_lines": 0
+    }
+  }
+}
