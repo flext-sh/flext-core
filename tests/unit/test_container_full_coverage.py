@@ -5,6 +5,7 @@ from __future__ import annotations
 import sys
 import types
 from collections.abc import Callable, Mapping
+from pathlib import Path
 from types import ModuleType
 from typing import ClassVar, Protocol, Self, cast
 
@@ -20,19 +21,23 @@ class _MonkeyPatch(Protocol):
     def setattr(
         self,
         target: type[FlextContainer | FlextSettings] | FlextContainer | str,
-        name=None,
-        value=None,
+        name: t.Tests.object | str | None = None,
+        value: t.Tests.object | None = None,
         raising: bool = True,
     ) -> None: ...
     def setitem(
         self, dic: dict[str, ModuleType], name: str, value: ModuleType
     ) -> None: ...
-    def delitem(self, dic, name, raising: bool = True) -> None: ...
-    def delattr(self, target, name, raising: bool = True) -> None: ...
+    def delitem(
+        self, dic: dict[str, ModuleType], name: str, raising: bool = True
+    ) -> None: ...
+    def delattr(
+        self, target: t.Tests.object | str, name: str, raising: bool = True
+    ) -> None: ...
     def setenv(self, name: str, value: str, prepend: str | None = None) -> None: ...
     def delenv(self, name: str, raising: bool = True) -> None: ...
-    def syspath_prepend(self, path) -> None: ...
-    def chdir(self, path) -> None: ...
+    def syspath_prepend(self, path: str | Path) -> None: ...
+    def chdir(self, path: str | Path) -> None: ...
 
 
 class _FalseConfig:
@@ -87,7 +92,7 @@ class _BridgeGoodProvide:
 
 
 def _scan_factory_module(
-    _module,
+    _module: ModuleType,
 ) -> list[tuple[str, m.FactoryDecoratorConfig]]:
     return [
         (
@@ -98,7 +103,7 @@ def _scan_factory_module(
 
 
 def _scan_factory_module_captured(
-    _module,
+    _module: ModuleType,
 ) -> list[tuple[str, m.FactoryDecoratorConfig]]:
     return [
         (
@@ -116,17 +121,17 @@ def _has_service_false(_name: str) -> bool:
     return False
 
 
-def _raise_register_object(*_args, **_kwargs: t.Scalar) -> None:
+def _raise_register_object(*_args: t.Scalar, **_kwargs: t.Scalar) -> None:
     msg = "boom"
     raise RuntimeError(msg)
 
 
-def _raise_register_factory(*_args, **_kwargs: t.Scalar) -> None:
+def _raise_register_factory(*_args: t.Scalar, **_kwargs: t.Scalar) -> None:
     msg = "boom"
     raise RuntimeError(msg)
 
 
-def _raise_register_resource(*_args, **_kwargs: t.Scalar) -> None:
+def _raise_register_resource(*_args: t.Scalar, **_kwargs: t.Scalar) -> None:
     msg = "boom"
     raise RuntimeError(msg)
 
@@ -157,14 +162,16 @@ def test_create_auto_register_factories_path(monkeypatch: _MonkeyPatch) -> None:
         _scan_factory_module,
     )
 
-    def _register(name: str, _impl, *, kind: str = "service") -> FlextContainer:
+    def _register(
+        name: str, _impl: t.RegisterableService, *, kind: str = "service"
+    ) -> FlextContainer:
         if kind == "factory":
             called.append(name)
         return container
 
     monkeypatch.setattr(container, "register", _register)
 
-    def _call_container(*_args, **_kwargs: t.Scalar) -> FlextContainer:
+    def _call_container(*_args: t.Scalar, **_kwargs: t.Scalar) -> FlextContainer:
         return container
 
     monkeypatch.setattr(
@@ -229,12 +236,12 @@ def test_sync_config_namespace_paths(monkeypatch: _MonkeyPatch) -> None:
         max_services=10,
         max_factories=10,
     )
-    monkeypatch.setattr(type(c._config), "_namespace_registry", {"x"()})
+    monkeypatch.setattr(type(c._config), "_namespace_registry", {"x": _BaseSettings})
     monkeypatch.setattr(c, "has_service", _has_service_false)
 
     def _capture_register(
         _name: str,
-        _impl,
+        _impl: t.RegisterableService,
         *,
         kind: str = "service",
     ) -> FlextContainer:
@@ -411,7 +418,7 @@ def test_create_auto_register_factory_wrapper_callable_and_non_callable(
     def capture_register(
         self: FlextContainer,
         name: str,
-        impl,
+        impl: t.RegisterableService,
         *,
         kind: str = "service",
         singleton: bool = False,
@@ -466,9 +473,9 @@ def test_sync_config_registers_namespace_factories_and_fallbacks(
     try:
 
         class _Cfg(_FalseConfig):
-            _namespace_registry: ClassVar[dict[str, t.Tests.object]] = {
-                "alpha"(),
-                "beta"(),
+            _namespace_registry: ClassVar[dict[str, type[_BaseSettings]]] = {
+                "alpha": _NsAlpha,
+                "beta": _NsBeta,
             }
 
         c._config = _Cfg()
@@ -484,7 +491,7 @@ def test_sync_config_registers_namespace_factories_and_fallbacks(
 
         def _register(
             name: str,
-            impl,
+            impl: t.RegisterableService,
             *,
             kind: str = "service",
         ) -> FlextContainer:
@@ -613,7 +620,7 @@ def test_container_remaining_branch_paths_in_sync_factory_and_getters(
     # n1 is NOT registered in FlextSettings, so get_namespace_config returns None
     # and sync_config_to_di skips it (continue branch).
     class _CfgNoMethod(_FalseConfig):
-        _namespace_registry: ClassVar[dict[str, t.Tests.object]] = {"n1"()}
+        _namespace_registry: ClassVar[dict[str, type[_BaseSettings]]] = {"n1": _BaseSettings}
 
     c._config = _CfgNoMethod()
     c.sync_config_to_di()
@@ -632,13 +639,13 @@ def test_container_remaining_branch_paths_in_sync_factory_and_getters(
     try:
 
         class _CfgFallback(_FalseConfig):
-            _namespace_registry: ClassVar[dict[str, t.Tests.object]] = {"n2"()}
+            _namespace_registry: ClassVar[dict[str, type[_BaseSettings]]] = {"n2": _NsModel}
 
         class _CfgBadNamespace(_FalseConfig):
-            _namespace_registry: ClassVar[dict[str, t.Tests.object]] = {"n3"()}
+            _namespace_registry: ClassVar[dict[str, type[_BaseSettings]]] = {"n3": _NsModel}
 
         class _CfgGoodNamespace(_FalseConfig):
-            _namespace_registry: ClassVar[dict[str, t.Tests.object]] = {"n4"()}
+            _namespace_registry: ClassVar[dict[str, type[_BaseSettings]]] = {"n4": _NsModel}
 
         c._config = _CfgFallback()
         captured: dict[str, Callable[..., object]] = {}
@@ -646,7 +653,7 @@ def test_container_remaining_branch_paths_in_sync_factory_and_getters(
 
         def _capture_register(
             name: str,
-            impl,
+            impl: t.RegisterableService,
             *,
             kind: str = "service",
         ) -> FlextContainer:
@@ -702,7 +709,7 @@ def test_container_remaining_branch_paths_in_sync_factory_and_getters(
 
         def _track_register(
             _name: str,
-            impl,
+            impl: t.RegisterableService,
             *,
             kind: str = "service",
         ) -> FlextContainer:

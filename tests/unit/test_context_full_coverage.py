@@ -2,30 +2,11 @@
 
 from __future__ import annotations
 
-from typing import Protocol
-
 import pytest
 from pydantic import BaseModel
 
 from flext_core import FlextContainer, FlextContext, c, m, r
 from flext_tests import t
-
-
-class _MonkeyPatch(Protocol):
-    def setattr(
-        self,
-        target: type[FlextContext] | FlextContext | str,
-        name=None,
-        value=None,
-        raising: bool = True,
-    ) -> None: ...
-    def setitem(self, dic, name, value) -> None: ...
-    def delitem(self, dic, name, raising: bool = True) -> None: ...
-    def delattr(self, target, name, raising: bool = True) -> None: ...
-    def setenv(self, name: str, value: str, prepend: str | None = None) -> None: ...
-    def delenv(self, name: str, raising: bool = True) -> None: ...
-    def syspath_prepend(self, path) -> None: ...
-    def chdir(self, path) -> None: ...
 
 
 class _ContainerStub:
@@ -59,11 +40,11 @@ def test_narrow_contextvar_invalid_inputs() -> None:
 
 
 def test_narrow_contextvar_exception_branch(
-    monkeypatch: _MonkeyPatch,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     FlextContext()
 
-    def _raise_type_error(_value):
+    def _raise_type_error(_value: t.Tests.object) -> None:
         msg = "bad"
         raise TypeError(msg)
 
@@ -75,7 +56,7 @@ def test_narrow_contextvar_exception_branch(
 
 
 def test_create_overloads_and_auto_correlation(
-    monkeypatch: _MonkeyPatch,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     def _generate_id(_key: str) -> str:
         return "corr-1"
@@ -91,7 +72,7 @@ def test_create_overloads_and_auto_correlation(
 
 
 def test_set_set_all_get_validation_and_error_paths(
-    monkeypatch: _MonkeyPatch,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     ctx = FlextContext()
     _ = ctx.set("k", "v")
@@ -102,7 +83,7 @@ def test_set_set_all_get_validation_and_error_paths(
         def get(self) -> dict[str, t.Tests.object]:
             return {}
 
-        def set(self, _v) -> None:
+        def set(self, _v: t.Tests.object) -> None:
             msg = "boom"
             raise TypeError(msg)
 
@@ -136,7 +117,7 @@ def test_inactive_and_none_value_paths() -> None:
 
 
 def test_clear_keys_values_items_and_validate_branches(
-    monkeypatch: _MonkeyPatch,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     ctx = FlextContext()
     ctx._statistics.operations = {c.Context.OPERATION_CLEAR: 1}
@@ -160,7 +141,7 @@ def test_clear_keys_values_items_and_validate_branches(
 
 
 def test_update_statistics_remove_hook_and_clone_false_result(
-    monkeypatch: _MonkeyPatch,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     ctx = FlextContext()
     ctx._statistics.operations = {c.Context.OPERATION_GET: 1}
@@ -173,7 +154,7 @@ def test_update_statistics_remove_hook_and_clone_false_result(
     def _fail_set(
         self: FlextContext,
         key_or_data: str | m.ConfigMap,
-        value=None,
+        value: t.Container | None = None,
         scope: str = "current",
     ) -> r[bool]:
         _ = self, key_or_data, value, scope
@@ -205,7 +186,7 @@ def test_export_paths_with_metadata_and_statistics() -> None:
     assert isinstance(exported_model, m.ContextExport)
 
 
-def test_container_and_service_domain_paths(monkeypatch: _MonkeyPatch) -> None:
+def test_container_and_service_domain_paths(monkeypatch: pytest.MonkeyPatch) -> None:
     FlextContext._container = None
     with pytest.raises(RuntimeError):
         FlextContext.get_container()

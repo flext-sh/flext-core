@@ -38,8 +38,14 @@ class FlextInfraCodegenFixer(s):
     """AST-based auto-fixer for namespace violations (Rules 1-2)."""
 
     _workspace_root: Path
+    _dry_run: bool
 
-    def __init__(self, workspace_root: Path) -> None:
+    def __init__(
+        self,
+        workspace_root: Path,
+        *,
+        dry_run: bool = False,
+    ) -> None:
         """Initialize codegen fixer with workspace root."""
         super().__init__(
             config_type=None,
@@ -55,6 +61,7 @@ class FlextInfraCodegenFixer(s):
             wire_classes=None,
         )
         self._workspace_root = workspace_root
+        self._dry_run = dry_run
 
     # ------------------------------------------------------------------
     # AST analysis helpers (no file I/O, tree mutation for analysis only)
@@ -406,6 +413,14 @@ class FlextInfraCodegenFixer(s):
             label=f"codegen-fix:{project_path.name}",
         )
         stash_ref = checkpoint_result.value if checkpoint_result.is_success else ""
+        if not self._dry_run:
+            self._apply_ns_rules(
+                src_dir=src_dir,
+                pkg_dir=pkg_dir,
+                violations_fixed=violations_fixed,
+                violations_skipped=violations_skipped,
+                files_modified=files_modified,
+            )
         report = self._apply_project_mro_migrations(
             project_path=project_path,
             files_modified=files_modified,
@@ -440,6 +455,37 @@ class FlextInfraCodegenFixer(s):
             violations_skipped=violations_skipped,
             files_modified=sorted(files_modified),
         )
+
+    def _apply_ns_rules(
+        self,
+        *,
+        src_dir: Path,
+        pkg_dir: Path,
+        violations_fixed: list[m.Infra.Codegen.CensusViolation],
+        violations_skipped: list[m.Infra.Codegen.CensusViolation],
+        files_modified: set[str],
+    ) -> None:
+        """Apply NS-001 and NS-002 rules to all Python files in src_dir."""
+        excluded = {"constants.py", "typings.py", "__init__.py"}
+        for py_file in sorted(src_dir.rglob("*.py")):
+            if py_file.name in excluded:
+                continue
+            if py_file.name.startswith("_"):
+                continue
+            self._fix_rule1(
+                source_file=py_file,
+                pkg_dir=pkg_dir,
+                violations_fixed=violations_fixed,
+                violations_skipped=violations_skipped,
+                files_modified=files_modified,
+            )
+            self._fix_rule2(
+                source_file=py_file,
+                pkg_dir=pkg_dir,
+                violations_fixed=violations_fixed,
+                violations_skipped=violations_skipped,
+                files_modified=files_modified,
+            )
 
     def _apply_project_mro_migrations(
         self,

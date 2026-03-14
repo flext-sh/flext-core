@@ -38,14 +38,14 @@ class ConcreteTestHandler(h[str, str]):
         return r[str].ok(f"processed_{message}")
 
 
-class ValidationTestHandler(h[object, str]):
+class ValidationTestHandler(h[t.Tests.object, str]):
     """Handler that accepts any object for validation testing."""
 
     def __init__(self, *, config: m.Handler | None = None) -> None:
         super().__init__(config=config)
 
     @override
-    def handle(self, message) -> r[str]:
+    def handle(self, message: t.Tests.object) -> r[str]:
         """Handle the message."""
         return r[str].ok(f"processed_{message}")
 
@@ -125,7 +125,7 @@ class HandlerScenarios:
             handler_mode=c.Cqrs.HandlerType.SAGA,
         ),
     ]
-    VALIDATION_TYPES: ClassVar[list[tuple[str, object]]] = [
+    VALIDATION_TYPES: ClassVar[list[tuple[str, t.Tests.object]]] = [
         ("str", "test_message"),
         ("int", 42),
         ("float", math.pi),
@@ -332,7 +332,7 @@ class TestFlextHandlers:
                 super().__init__(config=config)
 
             @override
-            def can_handle(self, message_type) -> bool:
+            def can_handle(self, message_type: type[str]) -> bool:
                 _ = message_type
                 return False
 
@@ -363,7 +363,7 @@ class TestFlextHandlers:
                 super().__init__(config=config)
 
             @override
-            def validate_input(self, value) -> r[bool]:
+            def validate_input(self, value: str) -> r[bool]:
                 _ = value
                 return r[bool].fail("Validation failed for test")
 
@@ -539,7 +539,7 @@ class TestFlextHandlers:
     def test_handlers_message_validation_types(
         self,
         type_name: str,
-        message,
+        message: t.Tests.object,
     ) -> None:
         """Test message validation with various types."""
         config = FlextTestsUtilities.Tests.HandlerHelpers.create_handler_config(

@@ -15,7 +15,7 @@ from typing import Never, cast, overload, override
 
 import structlog
 
-from flext_core import FlextRuntime
+from flext_core import FlextRuntime, p
 from flext_tests import t
 
 
@@ -26,18 +26,18 @@ class TestRuntimeDictLike:
         """Test is_dict_like when items() raises AttributeError."""
 
         class BadDictLike:
-            def keys(self) -> list:
+            def keys(self) -> list[str]:
                 return []
 
             def items(self) -> Never:
                 msg = "items not available"
                 raise AttributeError(msg)
 
-            def get(self, key) -> None:
+            def get(self, key: str) -> None:
                 return None
 
         obj = BadDictLike()
-        obj_typed = cast("object", cast("object", obj))
+        obj_typed = cast("object", obj)
         result = FlextRuntime.is_dict_like(obj_typed)
         assert result is False
 
@@ -45,18 +45,18 @@ class TestRuntimeDictLike:
         """Test is_dict_like when items() raises TypeError."""
 
         class BadDictLike:
-            def keys(self) -> list:
+            def keys(self) -> list[str]:
                 return []
 
             def items(self) -> Never:
                 msg = "items failed"
                 raise TypeError(msg)
 
-            def get(self, key) -> None:
+            def get(self, key: str) -> None:
                 return None
 
         obj = BadDictLike()
-        obj_typed = cast("object", cast("object", obj))
+        obj_typed = cast("object", obj)
         result = FlextRuntime.is_dict_like(obj_typed)
         assert result is False
 
@@ -73,7 +73,7 @@ class TestRuntimeDictLike:
             pass
 
         obj = NotDictLike()
-        obj_typed = cast("object", cast("object", obj))
+        obj_typed = cast("object", obj)
         result = FlextRuntime.is_dict_like(obj_typed)
         assert result is False
 
@@ -81,14 +81,14 @@ class TestRuntimeDictLike:
         """Test is_dict_like with object missing keys attribute."""
 
         class NotDictLike:
-            def items(self) -> list:
+            def items(self) -> list[tuple[str, str]]:
                 return []
 
-            def get(self, key) -> None:
+            def get(self, key: str) -> None:
                 return None
 
         obj = NotDictLike()
-        obj_typed = cast("object", cast("object", obj))
+        obj_typed = cast("object", obj)
         result = FlextRuntime.is_dict_like(obj_typed)
         assert result is False
 
@@ -96,14 +96,14 @@ class TestRuntimeDictLike:
         """Test is_dict_like with object missing items attribute."""
 
         class NotDictLike:
-            def keys(self) -> list:
+            def keys(self) -> list[str]:
                 return []
 
-            def get(self, key) -> None:
+            def get(self, key: str) -> None:
                 return None
 
         obj = NotDictLike()
-        obj_typed = cast("object", cast("object", obj))
+        obj_typed = cast("object", obj)
         result = FlextRuntime.is_dict_like(obj_typed)
         assert result is False
 
@@ -111,14 +111,14 @@ class TestRuntimeDictLike:
         """Test is_dict_like with object missing get attribute."""
 
         class NotDictLike:
-            def keys(self) -> list:
+            def keys(self) -> list[str]:
                 return []
 
             def items(self) -> list[tuple[str, str]]:
                 return []
 
         obj = NotDictLike()
-        obj_typed = cast("object", cast("object", obj))
+        obj_typed = cast("object", obj)
         result = FlextRuntime.is_dict_like(obj_typed)
         assert result is False
 
@@ -237,16 +237,16 @@ class TestRuntimeTypeChecking:
     def test_is_sequence_type_with_sequence_subclass(self) -> None:
         """Test is_sequence_type with type that is Sequence subclass."""
 
-        class MySequence(Sequence):
+        class MySequence(Sequence[str]):
             @overload
-            def __getitem__(self, index: int) -> None: ...
+            def __getitem__(self, index: int) -> str: ...
 
             @overload
-            def __getitem__(self, index: slice) -> Sequence: ...
+            def __getitem__(self, index: slice) -> Sequence[str]: ...
 
             @override
-            def __getitem__(self, index: int | slice) -> Sequence | None:
-                return None if isinstance(index, int) else MySequence()
+            def __getitem__(self, index: int | slice) -> Sequence[str] | str:
+                return "" if isinstance(index, int) else MySequence()
 
             @override
             def __len__(self) -> int:
@@ -289,7 +289,7 @@ class TestRuntimeTypeChecking:
         FlextRuntime._structlog_configured = False
 
         def custom_processor(
-            logger,
+            logger: p.Log.StructlogLogger | None,
             method_name: str,
             event_dict: dict[str, t.Tests.object],
         ) -> dict[str, t.Tests.object]:

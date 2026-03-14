@@ -134,7 +134,7 @@ def test_invalid_registration_attempts(dispatcher: FlextDispatcher) -> None:
     assert dispatcher.register_handler(_force_handler("not-a-handler")).is_failure
     assert dispatcher.register_handler(_force_handler({"some": "dict"})).is_failure
 
-    def nameless_handler(msg: SampleCommand) -> str:
+    def nameless_handler(msg: m.Command) -> str:
         return "ok"
 
     assert dispatcher.register_handler(_force_handler(nameless_handler)).is_failure

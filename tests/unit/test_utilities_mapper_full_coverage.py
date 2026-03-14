@@ -11,43 +11,75 @@ from typing import Annotated, Never, Protocol, cast, override
 import pytest
 from pydantic import BaseModel, Field
 
-from flext_core import m, p, r, u
-from flext_tests import t
+from flext_core import m, p, r, t, u
+from flext_tests import t as test_t
 
 
 class _PortModel(BaseModel):
     """Model with port/nested for mapper take/extract tests."""
 
     port: int = 0
-    nested: Annotated[dict[str, t.Tests.object], Field(default_factory=dict)]
+    nested: Annotated[dict[str, test_t.Tests.object], Field(default_factory=dict)]
+
+
+class _MaybeModel(BaseModel):
+    """Model with optional field for take tests."""
+
+    x: str | None = None
+
+
+class _GroupModel(BaseModel):
+    """Model with optional kind for group tests."""
+
+    kind: str | None = None
+
+
+class _BadItems(UserDict[str, object]):
+    """UserDict that explodes on items() for error-path testing."""
+
+    @override
+    def items(self) -> ItemsView[str, object]:
+        """items method."""
+        msg = "bad items"
+        raise RuntimeError(msg)
+
+
+class _BadIter(UserList[str]):
+    """UserList that explodes on __iter__ for error-path testing."""
+
+    @override
+    def __iter__(self) -> Iterator[str]:
+        """__iter__ method."""
+        msg = "bad iter"
+        raise RuntimeError(msg)
 
 
 class _AtCallable(Protocol):
     def __call__(
         self,
-        items,
+        items: ExplodingLenList,
         index: int | str,
         *,
-        default=None,
+        default: int | None = None,
     ) -> None: ...
 
 
 class _ExtractFieldCallable(Protocol):
-    def __call__(self, item, field_name: str) -> None: ...
+    def __call__(self, item: AttrObject, field_name: str) -> None: ...
 
 
 class _TakeCallable(Protocol):
     def __call__(
         self,
-        data_or_items,
-        key_or_index,
+        data_or_items: _MaybeModel | _PortModel | int,
+        key_or_index: int | str,
         *,
-        default=None,
+        default: str | None = None,
     ) -> None: ...
 
 
 class _BuildApplyConvertCallable(Protocol):
-    def __call__(self, current, operations: Mapping[str, object]) -> None: ...
+    def __call__(self, current: tuple[str] | str | int, operations: Mapping[str, object]) -> None: ...
 
 
 class _ExtractTransformOptionsCallable(Protocol):
@@ -55,17 +87,17 @@ class _ExtractTransformOptionsCallable(Protocol):
 
 
 class _BuildApplyOpCallable(Protocol):
-    def __call__(self, current, operations: Mapping[str, object]) -> None: ...
+    def __call__(self, current: tuple[str, str] | tuple[int, int, int] | list[_GroupModel], operations: Mapping[str, object]) -> None: ...
 
 
 class _TransformCallable(Protocol):
-    def __call__(self, source, **kwargs) -> r: ...
+    def __call__(self, source: BadMapping, **kwargs: Mapping[str, str]) -> r[Mapping[str, t.NormalizedValue]]: ...
 
 
 class _MapDictKeysCallable(Protocol):
     def __call__(
         self,
-        source,
+        source: _BadItems,
         key_map: Mapping[str, str],
         *,
         keep_unmapped: bool = True,
@@ -75,12 +107,12 @@ class _MapDictKeysCallable(Protocol):
 class _BuildFlagsCallable(Protocol):
     def __call__(
         self,
-        active_flags,
+        active_flags: _BadIter,
         flag_mapping: Mapping[str, str],
     ) -> r[Mapping[str, bool]]: ...
 
 
-def _at_obj(items: ExplodingLenList, index: int | str, *, default=None) -> None:
+def _at_obj(items: ExplodingLenList, index: int | str, *, default: int | None = None) -> None:
     """Call Mapper.at with arbitrary object for error-path testing."""
     fn: _AtCallable = getattr(u, "at")
     return fn(items, index, default=default)
@@ -93,10 +125,10 @@ def _extract_field_obj(item: AttrObject, field_name: str) -> None:
 
 
 def _take_obj(
-    data_or_items: test_remaining_uncovered_branches.MaybeModel | _PortModel | int,
+    data_or_items: _MaybeModel | _PortModel | int,
     key_or_index: int | str,
     *,
-    default=None,
+    default: str | None = None,
 ) -> None:
     fn: _TakeCallable = getattr(u, "take")
     return fn(data_or_items, key_or_index, default=default)
@@ -138,20 +170,20 @@ def _build_apply_slice_obj(
 
 
 def _build_apply_group_obj(
-    current: list[test_remaining_uncovered_branches.GroupModel],
+    current: list[_GroupModel],
     operations: Mapping[str, object],
 ) -> None:
     fn: _BuildApplyOpCallable = getattr(u, "_build_apply_group")
     return fn(current, operations)
 
 
-def _transform_obj(source: BadMapping, **kwargs) -> r:
+def _transform_obj(source: BadMapping, **kwargs: Mapping[str, str]) -> r[Mapping[str, t.NormalizedValue]]:
     fn: _TransformCallable = getattr(u, "transform")
     return fn(source, **kwargs)
 
 
 def _map_dict_keys_obj(
-    source: test_map_flags_collect_and_invert_branches.BadItems,
+    source: _BadItems,
     key_map: Mapping[str, str],
     *,
     keep_unmapped: bool = True,
@@ -161,7 +193,7 @@ def _map_dict_keys_obj(
 
 
 def _build_flags_obj(
-    active_flags: test_map_flags_collect_and_invert_branches.BadIter,
+    active_flags: _BadIter,
     flag_mapping: Mapping[str, str],
 ) -> r[Mapping[str, bool]]:
     """Call build_flags_dict with arbitrary object for error-path testing."""
@@ -197,24 +229,24 @@ class BadBool:
         raise ValueError(msg)
 
 
-def _parse_int(value) -> int:
-    return int(cast("str", value))
+def _parse_int(value: str) -> int:
+    return int(value)
 
 
-def _plus_one(value) -> int:
-    return cast("int", value) + 1
+def _plus_one(value: int) -> int:
+    return value + 1
 
 
-def _times_two(value) -> int:
-    return cast("int", value) * 2
+def _times_two(value: int) -> int:
+    return value * 2
 
 
-def _raise_value_error(_value):
+def _raise_value_error(_value: t.Scalar) -> Never:
     msg = "x"
     raise ValueError(msg)
 
 
-def _normalize_not_dict(_value) -> str:
+def _normalize_not_dict(_value: t.NormalizedValue) -> str:
     return "not-a-dict"
 
 
@@ -229,7 +261,7 @@ def test_bad_string_and_bad_bool_raise_value_error() -> None:
         _ = bool(BadBool())
 
 
-class ExplodingLenList(UserList):
+class ExplodingLenList(UserList[int]):
     """ExplodingLenList class."""
 
     @override
@@ -324,14 +356,14 @@ def test_invert_and_json_conversion_branches(mapper: type[u]) -> None:
     assert model.model_dump(mode="json") == {"x": 1}
     path_val = Path("/tmp")
     assert path_val.as_posix() == "/tmp"
-    as_json: dict[str, t.Tests.object] = {}
+    as_json: dict[str, test_t.Tests.object] = {}
     for key, val in {"x": Path("/tmp")}.items():
         if isinstance(val, Path):
             as_json[str(key)] = val.as_posix()
         else:
             as_json[str(key)] = val
     assert as_json["x"] == "/tmp"
-    list_json: list[dict[str, t.Tests.object]] = [{"a": 1}, {"b": "opaque"}]
+    list_json: list[dict[str, test_t.Tests.object]] = [{"a": 1}, {"b": "opaque"}]
     assert isinstance(list_json, list)
     assert list_json[0]["a"] == 1
 
@@ -340,7 +372,7 @@ def test_invert_and_json_conversion_branches(mapper: type[u]) -> None:
         "path": Path("/tmp"),
         "when": datetime(2026, 3, 12, 10, 30, 45, tzinfo=UTC),
     }
-    safe_json: dict[str, t.Tests.object] = {}
+    safe_json: dict[str, test_t.Tests.object] = {}
     for key, val in payload.items():
         if isinstance(val, BaseModel):
             safe_json[key] = val.model_dump(mode="json")
@@ -500,9 +532,9 @@ def test_filter_map_normalize_convert_helpers(mapper: type[u]) -> None:
 )
 def test_convert_default_fallback_matrix(
     mapper: type[u],
-    value,
-    convert_spec: Callable[..., object] | type,
-    expected,
+    value: str | int,
+    convert_spec: Callable[..., object] | type[int] | type[float] | type[list[t.Scalar]] | type[dict[str, t.Scalar]] | type[tuple[t.Scalar, ...]] | type[set[t.Scalar]],
+    expected: int | float | list[t.Scalar] | dict[str, t.Scalar] | tuple[t.Scalar, ...],
 ) -> None:
     operations = cast("Mapping[str, object]", {"convert": convert_spec})
     assert _build_apply_convert_obj(value, operations) == expected
@@ -566,7 +598,7 @@ def test_build_apply_transform_and_process_error_paths(
         _strip_none: bool,
         _strip_empty: bool,
         _to_json: bool,
-    ) -> dict[str, t.Tests.object]:
+    ) -> dict[str, test_t.Tests.object]:
         raise RuntimeError(msg)
 
     msg = "explode transform"
@@ -637,7 +669,7 @@ def test_field_and_fields_multi_branches(mapper: type[u]) -> None:
 def test_construct_transform_and_deep_eq_branches(mapper: type[u]) -> None:
     constructed_none = mapper.construct({"x": {"field": "a", "default": 9}}, None)
     assert constructed_none["x"] == 9
-    source: dict[str, t.Tests.object] = {"name": "alice", "n": 3}
+    source: dict[str, test_t.Tests.object] = {"name": "alice", "n": 3}
     spec = cast(
         "Mapping[str, object]",
         {
@@ -698,7 +730,7 @@ def test_process_context_data_and_related_convenience(
     mapper: type[u],
     merge_strategy: str,
 ) -> None:
-    primary: dict[str, t.Tests.object] = {"a": 1, "drop": "x"}
+    primary: dict[str, test_t.Tests.object] = {"a": 1, "drop": "x"}
     secondary = {"b": 2}
     result = mapper.process_context_data(
         primary_data=primary,
@@ -781,25 +813,13 @@ def test_map_flags_collect_and_invert_branches(mapper: type[u]) -> None:
     assert mapped.is_success
     assert mapped.value == {"new": 1, "x": 2}
 
-    class BadItems(UserDict[str, object]):
-        @override
-        def items(self) -> ItemsView[str, object]:
-            msg = "bad items"
-            raise RuntimeError(msg)
-
-    fail_map = _map_dict_keys_obj(BadItems(), {})
+    fail_map = _map_dict_keys_obj(_BadItems(), {})
     assert fail_map.is_failure
     flags = mapper.build_flags_dict(["read"], {"read": "can_read", "w": "can_write"})
     assert flags.is_success
     assert flags.value == {"can_read": True, "can_write": False}
 
-    class BadIter(UserList[str]):
-        @override
-        def __iter__(self) -> Iterator[str]:
-            msg = "bad iter"
-            raise RuntimeError(msg)
-
-    fail_flags = _build_flags_obj(BadIter(), {})
+    fail_flags = _build_flags_obj(_BadIter(), {})
     assert fail_flags.is_failure
     active = mapper.collect_active_keys({"r": True, "w": False}, {"r": "R", "w": "W"})
     assert active.is_success
@@ -807,7 +827,7 @@ def test_map_flags_collect_and_invert_branches(mapper: type[u]) -> None:
 
     class BadGet(UserDict[str, bool]):
         @override
-        def get(self, key: str, default=None) -> bool:
+        def get(self, key: str, default: bool | None = None) -> bool:
             msg = "bad get"
             raise RuntimeError(msg)
 
@@ -826,9 +846,9 @@ def test_conversion_and_extract_success_branches(mapper: type[u]) -> None:
             return "plain"
 
     assert str(Plain()) == "plain"
-    plain_dict: dict[str, t.Tests.object] = {"1": str(Plain())}
+    plain_dict: dict[str, test_t.Tests.object] = {"1": str(Plain())}
     assert plain_dict == {"1": "plain"}
-    plain_list: list = [1, {"k": str(Plain())}]
+    plain_list: list[int | dict[str, str]] = [1, {"k": str(Plain())}]
     assert plain_list == [1, {"k": "plain"}]
     assert mapper.ensure_str(None, "d") == "d"
     assert mapper.ensure_str("x") == "x"
@@ -899,7 +919,7 @@ def test_accessor_take_pick_as_or_flat_and_agg_branches(mapper: type[u]) -> None
     assert mapper.flat([[1, 2], [3]]) == [1, 2, 3]
     assert mapper._extract_field_value({"x": 1}, "x") == 1
     assert mapper.agg([{"v": 1}, {"v": 2}], "v") == 3
-    mixed_items: tuple[dict[str, t.Tests.object], ...] = ({"v": 1}, {"v": "no"})
+    mixed_items: tuple[dict[str, test_t.Tests.object], ...] = ({"v": 1}, {"v": "no"})
     assert mapper.agg(mixed_items, "v") == 1
     assert mapper.agg([1, 2, 3], lambda x: x, fn=max) == 3
 
@@ -989,18 +1009,12 @@ def test_remaining_uncovered_branches(
     assert terminal_default.is_success
     assert terminal_default.value == "fallback"
 
-    class MaybeModel(BaseModel):
-        x: str | None = None
-
-    assert _take_obj(MaybeModel(x=None), "x", default="d") == "d"
+    assert _take_obj(_MaybeModel(x=None), "x", default="d") == "d"
     assert mapper.as_("nope", int, default=9) == 9
     assert mapper.agg([{"v": "x"}], "v") == 0
     assert mapper._apply_map_keys({"a": 1}, map_keys={"a": "A"}) == {"A": 1}
 
-    class GroupModel(BaseModel):
-        kind: str | None = None
-
-    grouped = _build_apply_group_obj([GroupModel(kind=None)], {"group": "kind"})
+    grouped = _build_apply_group_obj([_GroupModel(kind=None)], {"group": "kind"})
     assert grouped == {"": [{"kind": None}]}
     assert mapper._build_apply_sort([2, 1], {"sort": 5}) == [2, 1]
 

@@ -72,7 +72,11 @@ def _to_scalar(
 
 
 def _to_payload(
-    value: t.Tests.object | RootModel[t.Tests.object] | set[t.Tests.object] | None,
+    value: t.Tests.object
+    | RootModel[t.Tests.object]
+    | set[t.Tests.object]
+    | type
+    | None,
 ) -> t.Tests.object:
     """Convert a value to tesobject.
 
@@ -1217,7 +1221,19 @@ class FlextTestsUtilities(FlextUtilities):
                     msg = f"Unknown operation: {operation}"
                     raise ValueError(msg)
                 all_args = {**input_data, **kwargs}
-                return _to_payload(op_method(**all_args))
+                result = op_method(**all_args)
+                if isinstance(result, (BaseModel, Path)):
+                    return _to_payload(result)
+                if isinstance(result, RootModel):
+                    return _to_payload(result)
+                if isinstance(result, (*t.PRIMITIVES_TYPES, bytes, datetime)):
+                    payload_scalar: t.Tests.object = result
+                    return _to_payload(payload_scalar)
+                if isinstance(result, type):
+                    return _to_payload(result)
+                if result is None:
+                    return _to_payload(result)
+                return _to_payload(str(result))
 
         class ExceptionHelpers:
             """Helpers for exception testing."""

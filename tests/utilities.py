@@ -46,7 +46,7 @@ class TestsFlextUtilities(FlextTestsUtilities, FlextInfraUtilities):
             @staticmethod
             def execute_and_assert_parser_result(
                 operation: Callable[[], r[t.Container]],
-                expected_value=None,
+                expected_value: t.Container | None = None,
                 expected_error: str | None = None,
                 description: str = "",
             ) -> None:
@@ -87,7 +87,7 @@ class TestsFlextUtilities(FlextTestsUtilities, FlextInfraUtilities):
 
                 def split(
                     self,
-                    *_args,
+                    *_args: str,
                     **_kwargs: t.Scalar,
                 ) -> list[str]:
                     """Raise error on split attempt."""
@@ -151,11 +151,11 @@ class TestsFlextUtilities(FlextTestsUtilities, FlextInfraUtilities):
                     msg = "Bad dict get"
                     raise RuntimeError(msg)
 
-            class BadList(UserList):
+            class BadList(UserList[t.Tests.object]):
                 """List that raises on iteration."""
 
                 @override
-                def __iter__(self) -> Iterator:
+                def __iter__(self) -> Iterator[t.Tests.object]:
                     """Raise error on iteration."""
                     msg = "Bad list iteration"
                     raise RuntimeError(msg)
@@ -218,7 +218,7 @@ class TestsFlextUtilities(FlextTestsUtilities, FlextInfraUtilities):
             @staticmethod
             def assert_success_with_value(
                 result: r[t.Container],
-                expected_value,
+                expected_value: t.Container,
                 description: str = "",
             ) -> None:
                 """Assert result is success with specific value.

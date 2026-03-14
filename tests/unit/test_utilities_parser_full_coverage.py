@@ -39,53 +39,53 @@ class _Status(StrEnum):
     INACTIVE = "inactive"
 
 
-def _raise_type_error_value(_value) -> str:
+def _raise_type_error_value(_value: t.Scalar) -> str:
     msg = "x"
     raise TypeError(msg)
 
 
-def _fail_components(*_args, **_kwargs: t.Scalar) -> r[list[str]]:
+def _fail_components(*_args: t.Scalar, **_kwargs: t.Scalar) -> r[list[str]]:
     return r[list[str]].fail("forced")
 
 
-def _safe_length_abc(_value) -> str:
+def _safe_length_abc(_value: t.Scalar) -> str:
     return "abc"
 
 
-def _fail_escape_split(*_args) -> r[tuple[list[str], int]]:
+def _fail_escape_split(*_args: t.Scalar) -> r[tuple[list[str], int]]:
     return r[tuple[list[str], int]].fail("split fail")
 
 
-def _fail_pipeline_continue(*_args, **_kwargs: t.Scalar) -> r[str]:
+def _fail_pipeline_continue(*_args: t.Scalar, **_kwargs: t.Scalar) -> r[str]:
     return r[str].fail("Continue pipeline", error_code="PIPELINE_CONTINUE")
 
 
-def _raise_runtime_boom(*_args, **_kwargs: t.Scalar) -> str:
+def _raise_runtime_boom(*_args: t.Scalar, **_kwargs: t.Scalar) -> str:
     msg = "boom"
     raise RuntimeError(msg)
 
 
-def _raise_value_error_float(_value) -> r[float]:
+def _raise_value_error_float(_value: t.Scalar) -> r[float]:
     msg = "boom"
     raise ValueError(msg)
 
 
-def _raise_type_error_bool(_value) -> r[bool]:
+def _raise_type_error_bool(_value: t.Scalar) -> r[bool]:
     msg = "boom"
     raise TypeError(msg)
 
 
-def _raise_value_error_int(_value) -> r[int]:
+def _raise_value_error_int(_value: t.Scalar) -> r[int]:
     msg = "boom"
     raise ValueError(msg)
 
 
-def _raise_type_error_str(_value) -> r[str]:
+def _raise_type_error_str(_value: t.Scalar) -> r[str]:
     msg = "boom"
     raise TypeError(msg)
 
 
-def _norm_list_dict(*_args, **_kwargs: t.Scalar) -> dict[str, str]:
+def _norm_list_dict(*_args: t.Scalar, **_kwargs: t.Scalar) -> dict[str, str]:
     return {"k": "v"}
 
 
@@ -151,7 +151,7 @@ def test_parser_pipeline_and_pattern_branches(monkeypatch: pytest.MonkeyPatch) -
     fail = parser2.apply_regex_pipeline("abc", [("a", "b")])
     assert fail.is_failure
     str_conversion_result = u()._extract_key_from_str_conversion(
-        cast("object", cast("object", _StrRaises())),
+        _StrRaises(),
     )
     assert str_conversion_result.is_failure
 
@@ -164,17 +164,17 @@ def test_parser_pipeline_and_pattern_branches(monkeypatch: pytest.MonkeyPatch) -
     parser3 = u()
     original_hasattr = hasattr
 
-    def _patched_hasattr(obj, name: str) -> bool:
+    def _patched_hasattr(obj: t.Tests.object, name: str) -> bool:
         if name == "__class__":
             return False
         return original_hasattr(obj, name)
 
     monkeypatch.setattr("builtins.hasattr", _patched_hasattr)
     assert "<object object" in parser3.get_object_key(
-        cast("object", object()),
+        object(),
     )
     assert (
-        parser3.get_object_key(cast("object", cast("object", _OddNoStr())))
+        parser3.get_object_key(_OddNoStr())
         == "_OddNoStr"
     )
     invalid_type = parser3._extract_pattern_components(
@@ -288,16 +288,16 @@ def test_parser_convert_and_norm_branches(monkeypatch: pytest.MonkeyPatch) -> No
     assert parser._convert_to_str(None, default="d") == "d"
     assert (
         parser._convert_to_str(
-            cast("object", cast("object", _BadStr())),
+            _BadStr(),
             default="d",
         )
         == "d"
     )
     assert parser._convert_to_bool(True, default=False) is True
-    assert parser._convert_to_bool(cast("object", object()), default=True) is True
+    assert parser._convert_to_bool(object(), default=True) is True
     assert (
         parser.conv_str(
-            cast("object", cast("object", _BadConv())),
+            _BadConv(),
             default="d",
         )
         == "d"
@@ -353,7 +353,7 @@ def test_parser_internal_helpers_additional_coverage() -> None:
     parser = u()
     mapped = parser._extract_key_from_mapping({"name": "n1", "id": "i1"})
     attrs = parser._extract_key_from_attributes(
-        cast("object", cast("object", type("Obj", (), {"id": "x1"})())),
+        type("Obj", (), {"id": "x1"})(),
     )
     assert mapped.is_success and mapped.value == "n1"
     assert attrs.is_success and attrs.value == "x1"
@@ -408,10 +408,10 @@ def test_parser_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> None:
     assert failed_str is not None and failed_str.is_failure
     assert parser.convert("x", bool, cast("bool", cast("object", "d"))) == "d"
     assert parser._convert_to_int(5, default=7) == 5
-    assert parser._convert_to_float(cast("object", object()), default=1.5)
+    assert parser._convert_to_float(object(), default=1.5)
     assert (
         abs(
-            parser._convert_to_float(cast("object", object()), default=1.5) - 1.5,
+            parser._convert_to_float(object(), default=1.5) - 1.5,
         )
         < 1e-09
     )

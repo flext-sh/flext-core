@@ -244,7 +244,10 @@ def _handle_scaffold(args: argparse.Namespace) -> int:
 
 def _handle_auto_fix(args: argparse.Namespace) -> int:
     """Handle the ``auto-fix`` subcommand."""
-    fixer = FlextInfraCodegenFixer(workspace_root=args.workspace.resolve())
+    fixer = FlextInfraCodegenFixer(
+        workspace_root=args.workspace.resolve(),
+        dry_run=args.dry_run,
+    )
     if args.dry_run:
         output.info("Dry-run mode: no files will be modified")
     results = fixer.run()

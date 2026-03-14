@@ -15,12 +15,12 @@ from flext_tests import t
 from ._models import _SvcModel
 
 
-def _noop(*_a, **_k: t.Scalar) -> None:
+def _noop(*_a: t.Scalar, **_k: t.Scalar) -> None:
     """Typed no-op for protocol stubs."""
     return
 
 
-def _return_true(*_a, **_k: t.Scalar) -> bool:
+def _return_true(*_a: t.Scalar, **_k: t.Scalar) -> bool:
     """Typed return-True for protocol stubs."""
     return True
 
@@ -38,17 +38,17 @@ def _mock_register_fail(_name: str) -> r[bool]:
     )
 
 
-def _validation_ok_true(v) -> r[bool]:
+def _validation_ok_true(v: t.NormalizedValue) -> r[bool]:
     """Validator that always returns ok(True)."""
     return r[bool].ok(True)
 
 
-def _validation_ok_false(v) -> r[bool]:
+def _validation_ok_false(v: t.NormalizedValue) -> r[bool]:
     """Validator that always returns ok(False)."""
     return r[bool].ok(False)
 
 
-def _validation_fail_no(v) -> r[bool]:
+def _validation_fail_no(v: t.NormalizedValue) -> r[bool]:
     """Validator that always returns fail('no')."""
     return r[bool].fail("no")
 
@@ -75,7 +75,7 @@ class _RuntimeContainer:
         return False
 
     def register(
-        self, _name: str, _value, *, kind: str = "service"
+        self, _name: str, _value: t.Tests.object, *, kind: str = "service"
     ) -> _RuntimeContainer:
         return self
 
@@ -85,8 +85,8 @@ class _RuntimeContainer:
     def get_config(self) -> m.ConfigMap:
         return m.ConfigMap(root={})
 
-    def get(self, _key: str, **_kwargs) -> r:
-        return r.fail("not implemented")
+    def get(self, _key: str, **_kwargs: t.Scalar) -> r[t.Tests.object]:
+        return r[t.Tests.object].fail("not implemented")
 
     @property
     def context(self) -> None:
@@ -109,7 +109,7 @@ class _ContainerForLogger:
         self.factories: dict[str, t.Tests.object] = {}
         self.register_calls: list[tuple[str, str]] = []
 
-    def get_typed(self, _key: str, _tp) -> r[t.Container | BaseModel]:
+    def get_typed(self, _key: str, _tp: type[t.Container | BaseModel]) -> r[t.Container | BaseModel]:
         if self.success:
             return r[t.Container | BaseModel].ok(self.logger or "logger")
         return r[t.Container | BaseModel].fail("missing")
@@ -118,14 +118,14 @@ class _ContainerForLogger:
         self,
         _key: str,
         *,
-        type_cls=None,
+        type_cls: type[t.Container | BaseModel] | None = None,
     ) -> r[t.Container | BaseModel]:
         _ = type_cls
         if self.success:
             return r[t.Container | BaseModel].ok(self.logger or "logger")
         return r[t.Container | BaseModel].fail("missing")
 
-    def register_factory(self, key: str, factory) -> r[bool]:
+    def register_factory(self, key: str, factory: t.FactoryCallable) -> r[bool]:
         _ = key
         _ = factory
         msg = "register_factory path should not be used"
@@ -134,7 +134,7 @@ class _ContainerForLogger:
     def register(
         self,
         name: str,
-        value,
+        value: t.Tests.object,
         *,
         kind: str = "service",
     ) -> _ContainerForLogger:
@@ -232,7 +232,7 @@ def test_mixins_container_registration_and_logger_paths(
         def has_service(self, _name: str) -> bool:
             return True
 
-        def register(self, _name: str, _value) -> _AlreadyContainer:
+        def register(self, _name: str, _value: t.Tests.object) -> _AlreadyContainer:
             return self
 
     monkeypatch.setattr(
@@ -246,7 +246,7 @@ def test_mixins_container_registration_and_logger_paths(
         def has_service(self, _name: str) -> bool:
             return False
 
-        def register(self, _name: str, _value) -> _FailContainer:
+        def register(self, _name: str, _value: t.Tests.object) -> _FailContainer:
             return self
 
     monkeypatch.setattr(_Service, "container", property(lambda _self: _FailContainer()))
@@ -277,10 +277,10 @@ def test_mixins_container_registration_and_logger_paths(
 def test_mixins_context_logging_and_cqrs_paths(monkeypatch: pytest.MonkeyPatch) -> None:
 
     class _LocalLogger:
-        def info(self, *_args, **_kwargs: t.Scalar) -> None:
+        def info(self, *_args: t.Scalar, **_kwargs: t.Scalar) -> None:
             return None
 
-        def warning(self, *_args, **_kwargs: t.Scalar) -> None:
+        def warning(self, *_args: t.Scalar, **_kwargs: t.Scalar) -> None:
             return None
 
     class _Service(x):
@@ -334,16 +334,13 @@ def test_mixins_validation_and_protocol_paths() -> None:
     assert fail_result.is_failure
     assert (
         x.ProtocolValidation.is_handler(
-            cast(
-                "object",
-                cast("object", SimpleNamespace(handle=_noop)),
-            ),
+            cast("t.Tests.object", SimpleNamespace(handle=_noop)),
         )
         is False
     )
     assert (
         x.ProtocolValidation.is_service(
-            cast("p.Service", cast("object", SimpleNamespace())),
+            cast("p.Service[bool]", cast("t.Tests.object", SimpleNamespace())),
         )
         is False
     )
@@ -354,7 +351,7 @@ def test_mixins_validation_and_protocol_paths() -> None:
     )
     assert x.ProtocolValidation.is_command_bus(cmd_bus) is True
     unknown = x.ProtocolValidation.validate_protocol_compliance(
-        cast("m.ConfigMap", m.ConfigMap(root={})),
+        m.ConfigMap(root={}),
         "Nope",
     )
     service_like = SimpleNamespace(
@@ -363,7 +360,7 @@ def test_mixins_validation_and_protocol_paths() -> None:
         is_valid=_return_true,
     )
     known = x.ProtocolValidation.validate_protocol_compliance(
-        cast("m.ConfigMap", m.ConfigMap.model_construct(root=service_like.__dict__)),
+        m.ConfigMap.model_construct(root=service_like.__dict__),
         "Service",
     )
     assert unknown.is_failure
@@ -444,7 +441,7 @@ def test_mixins_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> None:
         def has_service(self, name: str) -> bool:
             return name in self._services
 
-        def register(self, name: str, value) -> _RegContainer:
+        def register(self, name: str, value: t.Tests.object) -> _RegContainer:
             self._services[name] = value
             captured["name"] = name
             captured["value"] = value
@@ -462,7 +459,7 @@ def test_mixins_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> None:
     assert isinstance(captured["value"], _ModelMarker)
 
     class _WarnLogger:
-        def warning(self, *_args, **_kwargs: t.Scalar) -> None:
+        def warning(self, *_args: t.Scalar, **_kwargs: t.Scalar) -> None:
             return None
 
     class _WarnService(x):
@@ -509,7 +506,7 @@ def test_mixins_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> None:
     assert isinstance(logger_obj, FlextLogger)
 
     class _BrokenContainer:
-        def get_typed(self, _key: str, _tp) -> r[t.Container | BaseModel]:
+        def get_typed(self, _key: str, _tp: type[t.Container | BaseModel]) -> r[t.Container | BaseModel]:
             msg = "boom"
             raise RuntimeError(msg)
 
