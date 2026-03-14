@@ -1,0 +1,25 @@
+src/flext_core/_models/entity.py
+  8c2d749dcca16b1c 64,191,200
+src/flext_tests/utilities.py
+  8c2d749dcca16b1c 1134
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "783bbaca383e24bdafe2b6080f7139d783a2979b",
+  "prompts": {
+    "8c2d749dcca16b1c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d0c09b0b-3db3-411a-ac46-126453ea6fa0",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 4,
+      "total_deletions": 4,
+      "accepted_lines": 4,
+      "overriden_lines": 0
+    }
+  }
+}
