@@ -1,0 +1,25 @@
+src/flext_infra/basemk/engine.py
+  8b19191836992eb9 18,22,27
+src/flext_infra/core/skill_validator.py
+  8b19191836992eb9 42-43
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "08ab6cb231e5b43a6eed31811986cd8c4917cc89",
+  "prompts": {
+    "8b19191836992eb9": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_31295cae9ffepQZI05eIyWGI0M",
+        "model": "anthropic/claude-haiku-4-5"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 13,
+      "total_deletions": 11,
+      "accepted_lines": 7,
+      "overriden_lines": 0
+    }
+  }
+}
