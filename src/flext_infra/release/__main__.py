@@ -121,7 +121,19 @@ def main() -> int:
     else:
         version = args.version or "0.0.0"
     tag = _resolve_tag(args, version)
-    service = FlextInfraReleaseOrchestrator()
+    service = FlextInfraReleaseOrchestrator(
+        config_type=None,
+        config_overrides=None,
+        initial_context=None,
+        subproject=None,
+        services=None,
+        factories=None,
+        resources=None,
+        container_overrides=None,
+        wire_modules=None,
+        wire_packages=None,
+        wire_classes=None,
+    )
     result = service.run_release(
         root=root,
         version=version,

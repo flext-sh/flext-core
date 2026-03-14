@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import tomlkit
+from pydantic import TypeAdapter, ValidationError
 from tomlkit.items import Item, Table
 
 from flext_infra import c, u
@@ -33,7 +34,15 @@ class EnsureFormattingToolingPhase:
         }.items():
             current = u.Infra.unwrap_item(u.Infra.get(tomlsort, key))
             if isinstance(value, list) and isinstance(current, list):
-                if sorted(str(i) for i in current) != sorted(str(i) for i in value):
+                try:
+                    current_values = TypeAdapter(list[str]).validate_python([
+                        str(x) for x in current
+                    ])
+                except ValidationError:
+                    current_values: list[str] = []
+                if sorted(str(i) for i in current_values) != sorted(
+                    str(i) for i in value
+                ):
                     tomlsort[key] = u.Infra.array(sorted(str(item) for item in value))
                     changes.append(f"tool.tomlsort.{key} set")
             elif current != value:

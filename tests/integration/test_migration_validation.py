@@ -19,7 +19,7 @@ from __future__ import annotations
 
 from typing import override
 
-from pydantic import BaseModel as PydanticBaseModel
+from pydantic import BaseModel as PydanticBaseModel, PrivateAttr
 
 from flext_core import (
     FlextConstants,
@@ -112,9 +112,13 @@ class TestMigrationScenario4:
         class UserService(FlextService[None]):
             """User service extending FlextService."""
 
+            _logger: FlextLogger = PrivateAttr(
+                default_factory=lambda: FlextLogger(__name__)
+            )
+
+            @override
             def model_post_init(self, __context: t.Container | None, /) -> None:
                 super().model_post_init(__context)
-                self._logger = FlextLogger(__name__)
 
             @override
             def execute(self, **_kwargs: t.Scalar) -> r[None]:

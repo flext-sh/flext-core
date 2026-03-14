@@ -21,7 +21,19 @@ class _CommandB(m.Command):
 
 class _ProtocolHandler(FlextHandlers[BaseModel, object]):
     def __init__(self, label: str, message_type: type[object]) -> None:
-        super().__init__()
+        super().__init__(
+            config_type=None,
+            config_overrides=None,
+            initial_context=None,
+            subproject=None,
+            services=None,
+            factories=None,
+            resources=None,
+            container_overrides=None,
+            wire_modules=None,
+            wire_packages=None,
+            wire_classes=None,
+        )
         self._label = label
         self.message_type = message_type
 

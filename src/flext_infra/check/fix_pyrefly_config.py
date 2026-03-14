@@ -13,10 +13,10 @@ from pathlib import Path
 from typing import override
 
 import tomlkit
-from pydantic import TypeAdapter, ValidationError
+from pydantic import BaseModel, TypeAdapter, ValidationError
 from tomlkit import items
 
-from flext_core import FlextLogger, r, s
+from flext_core import FlextLogger, r, s, t
 from flext_infra import (
     FlextInfraUtilitiesDiscovery,
     FlextInfraUtilitiesIo,
@@ -28,12 +28,24 @@ from flext_infra._utilities.output import output
 _logger = FlextLogger.create_module_logger(__name__)
 
 
-class FlextInfraConfigFixer(s[list[str]]):
+class FlextInfraConfigFixer(s):
     """Fix pyrefly configuration across workspace projects."""
 
     def __init__(self, workspace_root: Path | None = None) -> None:
         """Initialize pyrefly config fixer."""
-        super().__init__()
+        super().__init__(
+            config_type=None,
+            config_overrides=None,
+            initial_context=None,
+            subproject=None,
+            services=None,
+            factories=None,
+            resources=None,
+            container_overrides=None,
+            wire_modules=None,
+            wire_packages=None,
+            wire_classes=None,
+        )
         self._path_resolver = FlextInfraUtilitiesPaths()
         self._discovery = FlextInfraUtilitiesDiscovery()
         self._workspace_root = self._resolve_workspace_root(workspace_root)
@@ -53,8 +65,12 @@ class FlextInfraConfigFixer(s[list[str]]):
         return arr
 
     @override
-    def execute(self) -> r[list[str]]:
-        return r[list[str]].fail("Use run() directly")
+    def execute(
+        self,
+    ) -> r[t.NormalizedValue | BaseModel | list[t.NormalizedValue | BaseModel]]:
+        return r[
+            t.NormalizedValue | BaseModel | list[t.NormalizedValue | BaseModel]
+        ].fail("Use run() directly")
 
     def find_pyproject_files(
         self,

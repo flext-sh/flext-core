@@ -12,7 +12,9 @@ from __future__ import annotations
 from pathlib import Path
 from typing import override
 
-from flext_core import r, s
+from pydantic import BaseModel
+
+from flext_core import r, s, t
 from flext_infra import FlextInfraUtilitiesDiscovery, c, m, u
 from flext_infra.codegen.transforms import FlextInfraCodegenTransforms
 from flext_infra.core.namespace_validator import FlextInfraNamespaceValidator
@@ -20,12 +22,24 @@ from flext_infra.core.namespace_validator import FlextInfraNamespaceValidator
 __all__ = ["FlextInfraCodegenScaffolder"]
 
 
-class FlextInfraCodegenScaffolder(s[list[m.Infra.Codegen.ScaffoldResult]]):
+class FlextInfraCodegenScaffolder(s):
     """Generates missing base modules in src/ and tests/ directories."""
 
     def __init__(self, workspace_root: Path) -> None:
         """Initialize scaffolder with workspace root."""
-        super().__init__()
+        super().__init__(
+            config_type=None,
+            config_overrides=None,
+            initial_context=None,
+            subproject=None,
+            services=None,
+            factories=None,
+            resources=None,
+            container_overrides=None,
+            wire_modules=None,
+            wire_packages=None,
+            wire_classes=None,
+        )
         self._workspace_root = workspace_root
 
     @staticmethod
@@ -40,9 +54,12 @@ class FlextInfraCodegenScaffolder(s[list[m.Infra.Codegen.ScaffoldResult]]):
         return None
 
     @override
-    def execute(self) -> r[list[m.Infra.Codegen.ScaffoldResult]]:
-        """Execute scaffolding across all workspace projects."""
-        return r[list[m.Infra.Codegen.ScaffoldResult]].ok(self.run())
+    def execute(
+        self,
+    ) -> r[t.NormalizedValue | BaseModel | list[t.NormalizedValue | BaseModel]]:
+        return r[
+            t.NormalizedValue | BaseModel | list[t.NormalizedValue | BaseModel]
+        ].fail("Use run() directly")
 
     def run(self) -> list[m.Infra.Codegen.ScaffoldResult]:
         """Scaffold missing base modules for all projects in workspace.

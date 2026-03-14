@@ -29,8 +29,11 @@ def _make_gate_exec(
     issues: list[CheckIssue] | None = None,
 ) -> GateExecution:
     return GateExecution(
-        result=m.Infra.Check.GateResult(gate=gate, project=project, passed=passed),
+        result=m.Infra.Check.GateResult(
+            gate=gate, project=project, passed=passed, errors=[], duration=0.0
+        ),
         issues=issues or [],
+        raw_output="",
     )
 
 

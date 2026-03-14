@@ -32,8 +32,11 @@ def _make_gate_exec(
 ) -> GateExecution:
     """Helper to create a _GateExecution."""
     return GateExecution(
-        result=m.Infra.Check.GateResult(gate=gate, project=project, passed=passed),
+        result=m.Infra.Check.GateResult(
+            gate=gate, project=project, passed=passed, errors=[], duration=0.0
+        ),
         issues=issues or [],
+        raw_output="",
     )
 
 
@@ -155,7 +158,14 @@ class TestRunProjectsBehavior:
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
-        issue = CheckIssue(file="test.py", line=1, column=1, code="E1", message="error")
+        issue = CheckIssue(
+            file="test.py",
+            line=1,
+            column=1,
+            code="E1",
+            message="error",
+            severity="error",
+        )
         gate_exec = _make_gate_exec(passed=True, issues=[issue])
         project = ProjectResult(project="p1", gates={"lint": gate_exec})
         monkeypatch.setattr(checker, "_check_project", _check_project_stub(project))
@@ -171,7 +181,14 @@ class TestRunProjectsBehavior:
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
-        issue = CheckIssue(file="test.py", line=1, column=1, code="E1", message="error")
+        issue = CheckIssue(
+            file="test.py",
+            line=1,
+            column=1,
+            code="E1",
+            message="error",
+            severity="error",
+        )
         exec_with = _make_gate_exec(passed=True, issues=[issue])
         exec_without = _make_gate_exec(passed=True)
         project1 = ProjectResult(project="p1", gates={"lint": exec_with})

@@ -25,7 +25,7 @@ from datetime import datetime
 from typing import override
 
 import pytest
-from pydantic import ValidationError, field_validator
+from pydantic import Field, ValidationError, field_validator
 
 from flext_core import m
 from flext_core._models.domain_event import _ComparableConfigMap
@@ -131,6 +131,7 @@ class TestEntities:
         """Test creating an entity."""
 
         class Person(m.Entity):
+            domain_events: list[m.DomainEvent] = Field(default_factory=list)
             """Person entity."""
 
             name: str
@@ -146,6 +147,7 @@ class TestEntities:
         """Test entities are compared by identity."""
 
         class Account(m.Entity):
+            domain_events: list[m.DomainEvent] = Field(default_factory=list)
             """Account entity."""
 
             name: str
@@ -160,6 +162,7 @@ class TestEntities:
         """Test entity creation and update timestamps."""
 
         class Document(m.Entity):
+            domain_events: list[m.DomainEvent] = Field(default_factory=list)
             """Document entity."""
 
             title: str
@@ -173,6 +176,7 @@ class TestEntities:
         """Test entity field validation."""
 
         class User(m.Entity):
+            domain_events: list[m.DomainEvent] = Field(default_factory=list)
             """User entity with validation."""
 
             email: str
@@ -195,6 +199,7 @@ class TestEntities:
         """Test entity serialization using Pydantic model_dump."""
 
         class Product(m.Entity):
+            domain_events: list[m.DomainEvent] = Field(default_factory=list)
             """Product entity."""
 
             name: str
@@ -453,6 +458,7 @@ class TestModelValidation:
         """Test model validation error handling."""
 
         class ValidatedEntity(m.Entity):
+            domain_events: list[m.DomainEvent] = Field(default_factory=list)
             """Entity with validation."""
 
             email: str
@@ -475,6 +481,7 @@ class TestModelValidation:
         """Test multiple field validators."""
 
         class Profile(m.Entity):
+            domain_events: list[m.DomainEvent] = Field(default_factory=list)
             """Profile with multiple validators."""
 
             username: str
@@ -508,6 +515,7 @@ class TestModelSerialization:
         """Test model_dump serialization."""
 
         class Task(m.Entity):
+            domain_events: list[m.DomainEvent] = Field(default_factory=list)
             """Task entity."""
 
             title: str
@@ -566,6 +574,7 @@ class TestModelIntegration:
         """Test entity model validation via model_validate."""
 
         class Customer(m.Entity):
+            domain_events: list[m.DomainEvent] = Field(default_factory=list)
             """Customer entity."""
 
             name: str

@@ -2437,7 +2437,9 @@ class FlextUtilitiesMapper:
 
         """
         if isinstance(key_or_n, str):
-            if FlextUtilitiesGuards.is_configuration_mapping(data_or_items):
+            if isinstance(
+                data_or_items, Mapping
+            ) and FlextUtilitiesGuards.is_configuration_mapping(data_or_items):
                 data: p.AccessibleData = data_or_items
             elif isinstance(data_or_items, BaseModel):
                 data = data_or_items

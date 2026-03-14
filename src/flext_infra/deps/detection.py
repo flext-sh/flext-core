@@ -80,6 +80,23 @@ class FlextInfraDependencyDetectionService:
         return None
 
     @staticmethod
+    def _mapping_from_value(
+        value: t.Infra.TomlValue | t.Infra.InfraValue | None,
+    ) -> t.Infra.TomlConfig:
+        if value is None:
+            return {}
+        mapped_value = u.Infra.as_toml_mapping(value)
+        if mapped_value is None:
+            return {}
+        normalized: t.Infra.TomlConfig = {}
+        for key, raw_value in mapped_value.items():
+            converted = FlextInfraDependencyDetectionService.to_infra_value(raw_value)
+            if converted is None and raw_value is not None:
+                continue
+            normalized[key] = converted
+        return normalized
+
+    @staticmethod
     def classify_issues(
         issues: list[t.Infra.IssueMap],
     ) -> m.Infra.Deps.DeptryIssueGroups:
@@ -193,34 +210,41 @@ class FlextInfraDependencyDetectionService:
         if not data:
             return []
         names: set[str] = set()
-        tool = data.get(c.Infra.Toml.TOOL)
-        if tool is not None and isinstance(tool, Mapping):
-            poetry = tool.get(c.Infra.Toml.POETRY)
-            if poetry is not None and isinstance(poetry, Mapping):
-                group = poetry.get(c.Infra.Toml.GROUP)
-                if group is not None and isinstance(group, Mapping):
-                    typings_group = group.get(c.Infra.Directories.TYPINGS)
-                    if typings_group is not None and isinstance(typings_group, Mapping):
-                        deps = typings_group.get(c.Infra.Toml.DEPENDENCIES)
-                        if deps is not None and isinstance(deps, Mapping):
-                            names.update(str(key) for key in deps)
-        project = data.get(c.Infra.Toml.PROJECT)
-        if project is not None and isinstance(project, Mapping):
-            optional = project.get(c.Infra.Toml.OPTIONAL_DEPENDENCIES)
-            if optional is not None and isinstance(optional, Mapping):
-                typings = optional.get(c.Infra.Directories.TYPINGS)
-                if isinstance(typings, list):
-                    for spec in typings:
-                        if isinstance(spec, str):
-                            names.add(
-                                spec
-                                .split("[")[0]
-                                .split(">=")[0]
-                                .split("==")[0]
-                                .strip(),
-                            )
-                elif typings is not None and isinstance(typings, Mapping):
-                    names.update(str(key) for key in typings)
+        tool = self._mapping_from_value(data.get(c.Infra.Toml.TOOL))
+        poetry = self._mapping_from_value(tool.get(c.Infra.Toml.POETRY))
+        group = self._mapping_from_value(poetry.get(c.Infra.Toml.GROUP))
+        typings_group = self._mapping_from_value(group.get(c.Infra.Directories.TYPINGS))
+        deps = self._mapping_from_value(typings_group.get(c.Infra.Toml.DEPENDENCIES))
+        names.update(str(key) for key in deps)
+        project = self._mapping_from_value(data.get(c.Infra.Toml.PROJECT))
+        optional = self._mapping_from_value(
+            project.get(c.Infra.Toml.OPTIONAL_DEPENDENCIES)
+        )
+        typings = optional.get(c.Infra.Directories.TYPINGS)
+        if isinstance(typings, list):
+            try:
+                typed_typings = TypeAdapter(list[str]).validate_python([
+                    str(s) for s in typings
+                ])
+            except ValidationError:
+                typed_typings: list[str] = []
+            for spec in typed_typings:
+                spec_text = str(spec)
+                names.add(
+                    spec_text
+                    .split("[", maxsplit=1)[0]
+                    .split(">=", maxsplit=1)[0]
+                    .split("==", maxsplit=1)[0]
+                    .strip(),
+                )
+        elif isinstance(typings, Mapping):
+            try:
+                typed_typings_map = TypeAdapter(dict[str, str]).validate_python({
+                    k: str(v) for k, v in typings.items()
+                })
+            except ValidationError:
+                typed_typings_map: dict[str, str] = {}
+            names.update(typed_typings_map.keys())
         return sorted(names)
 
     def get_required_typings(
@@ -238,7 +262,13 @@ class FlextInfraDependencyDetectionService:
         if typing_libraries is not None and isinstance(typing_libraries, Mapping):
             excluded = typing_libraries.get(c.Infra.Toml.EXCLUDE)
             if isinstance(excluded, list):
-                exclude_set = {str(item) for item in excluded}
+                try:
+                    typed_excluded = TypeAdapter(list[str]).validate_python([
+                        str(e) for e in excluded
+                    ])
+                except ValidationError:
+                    typed_excluded: list[str] = []
+                exclude_set = set(typed_excluded)
         hinted: list[str] = []
         missing_modules: list[str] = []
         if include_mypy:
@@ -311,7 +341,15 @@ class FlextInfraDependencyDetectionService:
                 and isinstance(module_to_package, Mapping)
                 and (root in module_to_package)
             ):
-                value = module_to_package[root]
+                try:
+                    module_to_package_map = TypeAdapter(dict[str, str]).validate_python({
+                        k: str(v) for k, v in module_to_package.items()
+                    })
+                except ValidationError:
+                    module_to_package_map: dict[str, str] = {}
+                value = module_to_package_map.get(root)
+                if value is None:
+                    return None
                 return str(value)
         return self.DEFAULT_MODULE_TO_TYPES_PACKAGE.get(root.lower())
 

@@ -89,9 +89,9 @@ class TestBuildProjectReport:
 class TestDetectionUncoveredLines:
     def test_module_to_types_package_with_custom_limits(self) -> None:
         service = FlextInfraDependencyDetectionService()
-        limits = {
-            "typing_libraries": {"module_to_package": {"custom_module": "types-custom"}}
-        }
+        module_to_package: dict[str, object] = {"custom_module": "types-custom"}
+        typing_libraries: dict[str, object] = {"module_to_package": module_to_package}
+        limits: dict[str, it.Infra.TomlValue] = {"typing_libraries": typing_libraries}
         tm.that(
             service.module_to_types_package("custom_module", limits), eq="types-custom"
         )

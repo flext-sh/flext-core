@@ -12,9 +12,9 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import override
 
-from pydantic import TypeAdapter, ValidationError
+from pydantic import BaseModel, TypeAdapter, ValidationError
 
-from flext_core import r, s
+from flext_core import r, s, t
 from flext_infra import (
     FlextInfraUtilitiesIo,
     FlextInfraUtilitiesPaths,
@@ -29,12 +29,24 @@ from flext_infra.check._constants import FlextInfraCheckConstants
 from flext_infra.check.fix_pyrefly_config import FlextInfraConfigFixer
 
 
-class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
+class FlextInfraWorkspaceChecker(s):
     """Run workspace quality gates and generate reports."""
 
     def __init__(self, workspace_root: Path | None = None) -> None:
         """Initialize workspace checker services and paths."""
-        super().__init__()
+        super().__init__(
+            config_type=None,
+            config_overrides=None,
+            initial_context=None,
+            subproject=None,
+            services=None,
+            factories=None,
+            resources=None,
+            container_overrides=None,
+            wire_modules=None,
+            wire_packages=None,
+            wire_classes=None,
+        )
         self._path_resolver = FlextInfraUtilitiesPaths()
         self._path_resolver = FlextInfraUtilitiesPaths()
         self._reporting = FlextInfraUtilitiesReporting()
@@ -146,8 +158,12 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
         return r[list[str]].ok(resolved)
 
     @override
-    def execute(self) -> r[list[m.Infra.Check.ProjectResult]]:
-        return r[list[m.Infra.Check.ProjectResult]].fail(
+    def execute(
+        self,
+    ) -> r[t.NormalizedValue | BaseModel | list[t.NormalizedValue | BaseModel]]:
+        return r[
+            t.NormalizedValue | BaseModel | list[t.NormalizedValue | BaseModel]
+        ].fail(
             "Use run() or run_projects() directly",
         )
 
@@ -419,7 +435,15 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
     ) -> list[dict[str, object]]:
         if not isinstance(value, list):
             return []
-        return [cls._to_mapping(item) for item in value if isinstance(item, Mapping)]
+        typed_items = TypeAdapter(list[object]).validate_python(value)
+        normalized: list[dict[str, object]] = []
+        for raw_item in typed_items:
+            try:
+                typed_item = TypeAdapter(dict[str, object]).validate_python(raw_item)
+            except ValidationError:
+                continue
+            normalized.append(typed_item)
+        return normalized
 
     @staticmethod
     def _as_int(value: object, default: int = 0) -> int:
@@ -447,13 +471,16 @@ class FlextInfraWorkspaceChecker(s[list[m.Infra.Check.ProjectResult]]):
         for key in keys:
             if not isinstance(current, Mapping):
                 return {}
-            child: object = current.get(key)
+            typed_current = TypeAdapter(dict[str, object]).validate_python(current)
+            if key not in typed_current:
+                return {}
+            child: object = typed_current[key]
             if child is None:
                 return {}
             current = child
         if not isinstance(current, Mapping):
             return {}
-        return dict(current)
+        return TypeAdapter(dict[str, object]).validate_python(current)
 
     @classmethod
     def _nested_int(

@@ -386,13 +386,10 @@ class ProjectTypeOverrideConfig(FlextModels.ArbitraryTypesModel):
     """Per-project-type override settings."""
 
     model_config = ConfigDict(extra="forbid")
-    pyright: Annotated[
-        dict[str, str],
-        Field(
-            default_factory=dict,
-            description="Pyright override settings for this project type.",
-        ),
-    ]
+    pyright: dict[str, str] = Field(
+        default_factory=dict,
+        description="Pyright override settings for this project type.",
+    )
 
 
 class ProjectTypeOverridesConfig(FlextModels.ArbitraryTypesModel):
@@ -401,34 +398,24 @@ class ProjectTypeOverridesConfig(FlextModels.ArbitraryTypesModel):
     model_config = ConfigDict(extra="forbid")
     core: Annotated[
         ProjectTypeOverrideConfig,
-        Field(
-            default_factory=ProjectTypeOverrideConfig,
-        ),
-    ]
+        Field(),
+    ] = Field(default_factory=lambda: ProjectTypeOverrideConfig())
     domain: Annotated[
         ProjectTypeOverrideConfig,
-        Field(
-            default_factory=ProjectTypeOverrideConfig,
-        ),
-    ]
+        Field(),
+    ] = Field(default_factory=lambda: ProjectTypeOverrideConfig())
     platform: Annotated[
         ProjectTypeOverrideConfig,
-        Field(
-            default_factory=ProjectTypeOverrideConfig,
-        ),
-    ]
+        Field(),
+    ] = Field(default_factory=lambda: ProjectTypeOverrideConfig())
     integration: Annotated[
         ProjectTypeOverrideConfig,
-        Field(
-            default_factory=ProjectTypeOverrideConfig,
-        ),
-    ]
+        Field(),
+    ] = Field(default_factory=lambda: ProjectTypeOverrideConfig())
     app: Annotated[
         ProjectTypeOverrideConfig,
-        Field(
-            default_factory=ProjectTypeOverrideConfig,
-        ),
-    ]
+        Field(),
+    ] = Field(default_factory=lambda: ProjectTypeOverrideConfig())
 
 
 class DependencyLimitsInfo(FlextModels.ArbitraryTypesModel):
@@ -463,10 +450,12 @@ class ToolConfigDocument(FlextModels.ArbitraryTypesModel):
         ProjectTypeOverridesConfig,
         Field(
             alias="project-type-overrides",
-            default_factory=ProjectTypeOverridesConfig,
             description="Per-project-type configuration overrides.",
         ),
-    ]
+    ] = Field(
+        default_factory=lambda: ProjectTypeOverridesConfig(),
+        alias="project-type-overrides",
+    )
 
 
 class DependencyReport(FlextModels.ArbitraryTypesModel):
@@ -513,10 +502,18 @@ def _empty_issue_list() -> list[t.Infra.IssueMap]:
 class DeptryIssueGroups(FlextModels.ArbitraryTypesModel):
     """Deptry issue grouping model by error code (DEP001-DEP004)."""
 
-    dep001: Annotated[list[t.Infra.IssueMap], Field(default_factory=_empty_issue_list)]
-    dep002: Annotated[list[t.Infra.IssueMap], Field(default_factory=_empty_issue_list)]
-    dep003: Annotated[list[t.Infra.IssueMap], Field(default_factory=_empty_issue_list)]
-    dep004: Annotated[list[t.Infra.IssueMap], Field(default_factory=_empty_issue_list)]
+    dep001: Annotated[
+        list[t.Infra.IssueMap], Field(default_factory=_empty_issue_list)
+    ] = Field(default_factory=_empty_issue_list)
+    dep002: Annotated[
+        list[t.Infra.IssueMap], Field(default_factory=_empty_issue_list)
+    ] = Field(default_factory=_empty_issue_list)
+    dep003: Annotated[
+        list[t.Infra.IssueMap], Field(default_factory=_empty_issue_list)
+    ] = Field(default_factory=_empty_issue_list)
+    dep004: Annotated[
+        list[t.Infra.IssueMap], Field(default_factory=_empty_issue_list)
+    ] = Field(default_factory=_empty_issue_list)
 
 
 class DeptryReport(FlextModels.ArbitraryTypesModel):

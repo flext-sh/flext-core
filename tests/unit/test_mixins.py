@@ -69,8 +69,13 @@ class ServiceMixinScenario(BaseModel):
     scenario_type: Annotated[
         ServiceMixinScenarioType, Field(description="Service mixin scenario type")
     ]
-    needs_init: Annotated[bool, Field(default=False, description="Whether service initialization is required")] = False
-    operation_context: Annotated[str | None, Field(default=None, description="Optional operation context name")] = None
+    needs_init: Annotated[
+        bool,
+        Field(default=False, description="Whether service initialization is required"),
+    ] = False
+    operation_context: Annotated[
+        str | None, Field(default=None, description="Optional operation context name")
+    ] = None
 
 
 class ModelConversionScenario(BaseModel):

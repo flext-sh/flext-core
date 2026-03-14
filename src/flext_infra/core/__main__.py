@@ -21,6 +21,8 @@ import sys
 from collections.abc import Mapping
 from pathlib import Path
 
+from pydantic import TypeAdapter, ValidationError
+
 from flext_core import FlextRuntime
 from flext_infra import c, m, output, t, u
 from flext_infra.core.basemk_validator import FlextInfraBaseMkValidator
@@ -37,7 +39,11 @@ def _extract_reports_written(
     if isinstance(payload, Mapping):
         raw = payload.get("reports_written", [])
         if isinstance(raw, list):
-            return [item for item in raw if isinstance(item, str)]
+            try:
+                typed_items = TypeAdapter(list[object]).validate_python(raw)
+            except ValidationError:
+                return []
+            return [item for item in typed_items if isinstance(item, str)]
         return []
     return payload.reports_written
 
@@ -49,7 +55,11 @@ def _extract_diag_entries(
     if isinstance(payload, Mapping):
         raw = payload.get(key, [])
         if isinstance(raw, list):
-            return [item for item in raw if isinstance(item, str)]
+            try:
+                typed_items = TypeAdapter(list[object]).validate_python(raw)
+            except ValidationError:
+                return []
+            return [item for item in typed_items if isinstance(item, str)]
         return []
     if key == "failed_cases":
         return payload.failed_cases

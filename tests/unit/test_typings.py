@@ -49,7 +49,10 @@ class TypeVarTestCase(BaseModel):
     name: Annotated[str, Field(description="Type variable test case name")]
     category: Annotated[TypeVarCategory, Field(description="Type variable category")]
     type_var: Annotated[object, Field(description="Type variable object under test")]
-    expected_not_none: Annotated[bool, Field(default=True, description="Whether object is expected to be non-none",)] = True
+    expected_not_none: Annotated[
+        bool,
+        Field(default=True, description="Whether object is expected to be non-none"),
+    ] = True
 
 
 class TypeScenarios:

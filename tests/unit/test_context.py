@@ -40,7 +40,9 @@ class ContextOperationScenario(BaseModel):
     name: Annotated[str, Field(description="Context operation scenario name")]
     key: Annotated[str, Field(description="Context key under test")]
     value: Annotated[object, Field(description="Context value under test")]
-    expected_success: Annotated[bool, Field(default=True, description="Whether operation should succeed")] = True
+    expected_success: Annotated[
+        bool, Field(default=True, description="Whether operation should succeed")
+    ] = True
 
 
 class ContextScenarios:

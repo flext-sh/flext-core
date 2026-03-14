@@ -87,7 +87,13 @@ from flext_core._models.base import FlextModelFoundation
 from flext_core._models.containers import FlextModelsContainers
 
 type RuntimeAtomic = t.Container | BaseModel
-type RuntimeData = t.NormalizedValue | p.HasModelDump
+type RuntimeData = (
+    t.NormalizedValue
+    | t.MetadataValue
+    | Mapping[str, t.NormalizedValue | BaseModel]
+    | Sequence[t.NormalizedValue]
+    | p.HasModelDump
+)
 
 
 class FlextRuntime:

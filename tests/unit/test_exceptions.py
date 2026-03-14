@@ -75,9 +75,17 @@ class ExceptionScenario(m.Value):
     scenario_type: Annotated[
         ExceptionScenarioType, Field(description="Exception scenario type")
     ]
-    exception_type: Annotated[type[e.BaseError] | None, Field(default=None, description="Exception class for the scenario",)] = None
-    should_raise: Annotated[bool, Field(default=False, description="Whether scenario should raise")] = False
-    error_factory_type: Annotated[str | None, Field(default=None, description="Factory type name for create() tests",)] = None
+    exception_type: Annotated[
+        type[e.BaseError] | None,
+        Field(default=None, description="Exception class for the scenario"),
+    ] = None
+    should_raise: Annotated[
+        bool, Field(default=False, description="Whether scenario should raise")
+    ] = False
+    error_factory_type: Annotated[
+        str | None,
+        Field(default=None, description="Factory type name for create() tests"),
+    ] = None
 
 
 class ExceptionTypeScenario(m.Value):

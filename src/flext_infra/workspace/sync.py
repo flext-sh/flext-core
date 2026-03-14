@@ -38,7 +38,19 @@ class FlextInfraSyncService(s[m.Infra.Workspace.SyncResult]):
         canonical_root: Path | None = None,
     ) -> None:
         """Initialize the sync service."""
-        super().__init__()
+        super().__init__(
+            config_type=None,
+            config_overrides=None,
+            initial_context=None,
+            subproject=None,
+            services=None,
+            factories=None,
+            resources=None,
+            container_overrides=None,
+            wire_modules=None,
+            wire_packages=None,
+            wire_classes=None,
+        )
         self._generator = generator or FlextInfraBaseMkGenerator()
         self._canonical_root = canonical_root
 

@@ -86,8 +86,14 @@ class TestFlextUtilitiesArgs:
         expected_success: Annotated[
             bool, Field(description="Whether parsing should succeed")
         ]
-        expected_status: Annotated[TestFlextUtilitiesArgs.StatusEnum | None, Field(default=None, description="Expected parsed status enum",)] = None
-        expected_error: Annotated[str | None, Field(default=None, description="Expected error message fragment")] = None
+        expected_status: Annotated[
+            TestFlextUtilitiesArgs.StatusEnum | None,
+            Field(default=None, description="Expected parsed status enum"),
+        ] = None
+        expected_error: Annotated[
+            str | None,
+            Field(default=None, description="Expected error message fragment"),
+        ] = None
 
     class ValidatedScenario(BaseModel):
         """Validated decorator test scenario."""
@@ -101,8 +107,14 @@ class TestFlextUtilitiesArgs:
         expected_success: Annotated[
             bool, Field(description="Whether validation should succeed")
         ]
-        expected_result: Annotated[str | None, Field(default=None, description="Expected validated result value")] = None
-        expected_error: Annotated[str | None, Field(default=None, description="Expected error message fragment")] = None
+        expected_result: Annotated[
+            str | None,
+            Field(default=None, description="Expected validated result value"),
+        ] = None
+        expected_error: Annotated[
+            str | None,
+            Field(default=None, description="Expected error message fragment"),
+        ] = None
 
     class Scenarios:
         """Centralized test scenarios."""

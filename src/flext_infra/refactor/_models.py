@@ -38,7 +38,7 @@ class FlextInfraRefactorModels(
         ]
         error: Annotated[
             str | None, Field(default=None, description="Error message on failure")
-        ]
+        ] = None
         changes: Annotated[
             list[str],
             Field(
@@ -110,8 +110,10 @@ class FlextInfraRefactorModels(
         ]
         status: Annotated[
             str, Field(default="running", description="Checkpoint status")
-        ]
-        stash_ref: Annotated[str, Field(default="", description="Git stash reference")]
+        ] = "running"
+        stash_ref: Annotated[
+            str, Field(default="", description="Git stash reference")
+        ] = ""
         processed_targets: Annotated[
             list[str],
             Field(
@@ -125,7 +127,7 @@ class FlextInfraRefactorModels(
                 default_factory=lambda: datetime.now(UTC).isoformat(),
                 description="ISO 8601 timestamp of last update",
             ),
-        ]
+        ] = Field(default_factory=lambda: datetime.now(UTC).isoformat())
 
     class ClassOccurrence(FlextModels.ArbitraryTypesModel):
         """A single class definition occurrence within a source file."""
@@ -202,10 +204,10 @@ class FlextInfraRefactorModels(
 
         loose_name: Annotated[
             str, Field(default="", description="Original loose class name")
-        ]
+        ] = ""
         current_file: Annotated[
             str, Field(default="", description="File containing class")
-        ]
+        ] = ""
         target_namespace: Annotated[
             str,
             Field(
@@ -213,18 +215,20 @@ class FlextInfraRefactorModels(
                 description="Target namespace class name",
             ),
         ]
-        target_name: Annotated[str, Field(default="", description="Target class name")]
+        target_name: Annotated[
+            str, Field(default="", description="Target class name")
+        ] = ""
         confidence: Annotated[str, Field(min_length=1, description="Confidence level")]
         reason: Annotated[
             str, Field(default="", description="Optional mapping rationale")
-        ]
+        ] = ""
         rewrite_scope: Annotated[
             str | None,
             Field(
                 default=None,
                 description="Rewrite scope (file/project/workspace)",
             ),
-        ]
+        ] = None
 
     class ClassNestingViolation(FlextModels.ArbitraryTypesModel):
         """Normalized class-nesting violation with rewrite metadata."""
@@ -240,15 +244,17 @@ class FlextInfraRefactorModels(
                 default="",
                 description="Expected namespace class",
             ),
-        ]
-        confidence: Annotated[str, Field(default="low", description="Confidence level")]
+        ] = ""
+        confidence: Annotated[
+            str, Field(default="low", description="Confidence level")
+        ] = "low"
         rewrite_scope: Annotated[
             str,
             Field(
                 default="file",
                 description="Rewrite scope",
             ),
-        ]
+        ] = "file"
 
     class ClassNestingPolicy(FlextModels.FrozenStrictModel):
         """Validated policy contract used by class-nesting transformers."""
@@ -617,7 +623,7 @@ class FlextInfraRefactorModels(
                 ge=0,
                 description="Syntax error count",
             ),
-        ]
+        ] = 0
         parse_encoding_errors: Annotated[
             int,
             Field(
@@ -625,10 +631,10 @@ class FlextInfraRefactorModels(
                 ge=0,
                 description="Encoding error count",
             ),
-        ]
+        ] = 0
         parse_io_errors: Annotated[
             int, Field(default=0, ge=0, description="I/O error count")
-        ]
+        ] = 0
 
     # -- Namespace Enforcer Models ---------------------------------------------
 
@@ -674,14 +680,14 @@ class FlextInfraRefactorModels(
                 default="Flext",
                 description="Class name prefix for facade (e.g. 'Flext')",
             ),
-        ]
+        ] = "Flext"
         core_project: Annotated[
             str,
             Field(
                 default="flext-core",
                 description="Core project directory name",
             ),
-        ]
+        ] = "flext-core"
 
     # -- Census Models ---------------------------------------------------------
 

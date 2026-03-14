@@ -34,7 +34,19 @@ class FlextInfraBaseMkTemplateEngine(s[str]):
 
     def __init__(self) -> None:
         """Initialize the template engine with Jinja2 environment."""
-        super().__init__()
+        super().__init__(
+            config_type=None,
+            config_overrides=None,
+            initial_context=None,
+            subproject=None,
+            services=None,
+            factories=None,
+            resources=None,
+            container_overrides=None,
+            wire_modules=None,
+            wire_packages=None,
+            wire_classes=None,
+        )
         template_root = Path(__file__).resolve().parent / "templates"
         self._environment = Environment(
             loader=FileSystemLoader(str(template_root)),

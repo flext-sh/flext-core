@@ -14,14 +14,13 @@ from flext_infra.github.workflows import FlextInfraWorkflowSyncer, SyncOperation
 from flext_tests import tm
 from tests.infra.unit.github._stubs import (
     StubJsonIo,
-    StubProjectInfo,
     StubSelector,
     StubTemplates,
 )
 
 
-def _as_project(info: StubProjectInfo) -> m.Infra.Workspace.ProjectInfo:
-    return m.Infra.Workspace.ProjectInfo(info.model_dump())
+def _as_project(info: m.Infra.Workspace.ProjectInfo) -> m.Infra.Workspace.ProjectInfo:
+    return info
 
 
 def _syncer(

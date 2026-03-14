@@ -13,11 +13,11 @@ from ...typings import t
 
 
 class _StubToml:
-    def __init__(self, values: list[r[dict[str, t.Infra.TomlValue]]]) -> None:
+    def __init__(self, values: list[r[t.Infra.TomlConfig]]) -> None:
         self._values = values
         self._idx = 0
 
-    def read_plain(self, path: Path) -> r[dict[str, t.Infra.TomlValue]]:
+    def read_plain(self, path: Path) -> r[t.Infra.TomlConfig]:
         _ = path
         value = self._values[self._idx]
         if self._idx < len(self._values) - 1:

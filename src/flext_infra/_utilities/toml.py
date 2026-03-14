@@ -15,7 +15,7 @@ from pydantic import BaseModel, TypeAdapter, ValidationError
 from tomlkit.items import Array, Item, Table
 from tomlkit.toml_document import TOMLDocument
 
-from flext_core import FlextLogger, r, u
+from flext_core import FlextLogger, r
 from flext_infra import c, t
 
 
@@ -58,10 +58,17 @@ class FlextInfraUtilitiesToml:
         """Check if value is a MutableMapping and return it typed, otherwise None."""
         if not isinstance(value, dict):
             return None
-        for item in value.values():
-            if not u.is_general_value_type(item):
-                return None
-        result: t.Infra.ContainerDict = value
+        try:
+            normalized_value = (
+                FlextInfraUtilitiesToml._get_container_dict_adapter().validate_python(
+                    value
+                )
+            )
+        except ValidationError:
+            return None
+        result: t.Infra.ContainerDict = {
+            str(key): normalized_value[key] for key in normalized_value
+        }
         return result
 
     @staticmethod
@@ -107,7 +114,13 @@ class FlextInfraUtilitiesToml:
         if normalized is None or isinstance(normalized, str):
             return []
         if isinstance(normalized, list):
-            return [str(raw) for raw in normalized]
+            try:
+                typed_items = FlextInfraUtilitiesToml._get_container_list_adapter().validate_python(
+                    normalized
+                )
+            except ValidationError:
+                return []
+            return [str(raw) for raw in typed_items]
         return [
             str(raw) for raw in FlextInfraUtilitiesToml.as_container_list(normalized)
         ]
@@ -164,28 +177,22 @@ class FlextInfraUtilitiesToml:
             (str, int, float, bool, type(None), BaseModel, Path),
         ):
             return raw_value
-        if not isinstance(raw_value, (dict, list)):
-            return None
-        normalized = FlextInfraUtilitiesToml.normalize_container_value(raw_value)
-        if isinstance(normalized, dict):
+        if isinstance(raw_value, dict):
             try:
                 return FlextInfraUtilitiesToml._get_container_dict_adapter().validate_python(
-                    normalized
+                    raw_value
                 )
             except ValidationError:
                 return None
-        if isinstance(normalized, list):
+        if isinstance(raw_value, list):
             try:
                 return FlextInfraUtilitiesToml._get_container_list_adapter().validate_python(
-                    normalized
+                    raw_value
                 )
             except ValidationError:
                 return None
-        if isinstance(
-            normalized,
-            (str, int, float, bool, type(None), BaseModel, Path),
-        ):
-            return normalized
+        if not isinstance(raw_value, (dict, list)):
+            return None
         return None
 
     @staticmethod

@@ -21,8 +21,8 @@ from tests.infra.helpers import h
 from tests.infra.models import m
 
 
-def _audit_args(**overrides: t.Scalar) -> argparse.Namespace:
-    defaults: dict[str, object | None] = {
+def _audit_args(**overrides: t.Scalar | None) -> argparse.Namespace:
+    defaults: dict[str, t.Scalar | None] = {
         "root": ".",
         "project": None,
         "projects": None,
@@ -34,8 +34,8 @@ def _audit_args(**overrides: t.Scalar) -> argparse.Namespace:
     return h.ns(**defaults)
 
 
-def _fix_args(**overrides: t.Scalar) -> argparse.Namespace:
-    defaults: dict[str, object | None] = {
+def _fix_args(**overrides: t.Scalar | None) -> argparse.Namespace:
+    defaults: dict[str, t.Scalar | None] = {
         "root": ".",
         "project": None,
         "projects": None,
@@ -100,7 +100,7 @@ _SILENT = type("O", (), {"error": staticmethod(lambda *a: None)})()
 
 
 def _capturing(
-    captured: dict[str, object],
+    captured: dict[str, t.Scalar],
 ) -> Callable[..., r[list[m.Infra.Docs.DocsPhaseReport]]]:
     def _fn(
         _self: object,
@@ -153,11 +153,11 @@ class TestRunAudit:
     def test_run_audit_forwards_arguments(
         self,
         monkeypatch: pytest.MonkeyPatch,
-        kwargs: dict[str, object],
+        kwargs: dict[str, t.Scalar],
         field: str,
-        expected: object,
+        expected: t.Scalar,
     ) -> None:
-        captured_kwargs: dict[str, object] = {}
+        captured_kwargs: dict[str, t.Scalar] = {}
         monkeypatch.setattr(FlextInfraDocAuditor, "audit", _capturing(captured_kwargs))
         _run_audit(_audit_args(**kwargs))
         tm.that(captured_kwargs.get(field), eq=expected)

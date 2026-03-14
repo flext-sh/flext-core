@@ -30,7 +30,9 @@ class FindUserQuery(BaseModel):
 
 class OptionalFieldCommand(BaseModel):
     required_field: Annotated[str, Field(description="Required command field")]
-    optional_field: Annotated[str | None, Field(default=None, description="Optional command field")] = None
+    optional_field: Annotated[
+        str | None, Field(default=None, description="Optional command field")
+    ] = None
 
 
 class PagedQuery(BaseModel):
@@ -92,6 +94,7 @@ class TestFlextModelsEntity:
         """Test entity versioning."""
 
         class Order(m.Entity):
+            domain_events: list[m.DomainEvent] = Field(default_factory=list)
             total: Decimal
 
         order = Order(unique_id="order-1", total=Decimal("99.99"))
@@ -316,6 +319,7 @@ class TestFlextModelsIntegration:
         """Test flow: Command -> Entity -> Event -> Query."""
 
         class User(m.Entity):
+            domain_events: list[m.DomainEvent] = Field(default_factory=list)
             name: str
 
         cmd = CreateUserCmd(user_id="user-1", name="Alice")

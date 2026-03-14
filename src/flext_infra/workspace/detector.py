@@ -35,7 +35,19 @@ class FlextInfraWorkspaceDetector(s[WorkspaceMode]):
 
     def __init__(self) -> None:
         """Initialize the workspace detector."""
-        super().__init__()
+        super().__init__(
+            config_type=None,
+            config_overrides=None,
+            initial_context=None,
+            subproject=None,
+            services=None,
+            factories=None,
+            resources=None,
+            container_overrides=None,
+            wire_modules=None,
+            wire_packages=None,
+            wire_classes=None,
+        )
 
     @staticmethod
     def _repo_name_from_url(url: str) -> str:

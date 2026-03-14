@@ -74,10 +74,14 @@ class FlextUtilitiesGuards:
 
     type _GuardInput = (
         t.NormalizedValue
+        | t.MetadataValue
         | BaseModel
         | Mapping[str, t.NormalizedValue]
+        | Mapping[str, t.MetadataValue]
         | Sequence[t.NormalizedValue]
+        | Sequence[t.MetadataValue]
         | tuple[type, ...]
+        | tuple[t.TypeHintSpecifier, ...]
         | t.TypeHintSpecifier
         | p.ValidatorSpec
         | Callable[..., t.NormalizedValue]
@@ -192,7 +196,7 @@ class FlextUtilitiesGuards:
 
     @staticmethod
     def is_configuration_dict(
-        value: FlextUtilitiesGuards._GuardInput | Mapping[str, t.NormalizedValue],
+        value: dict[str, t.NormalizedValue] | Mapping[str, t.NormalizedValue] | m.Dict,
     ) -> TypeGuard[m.Dict]:
         """Check if value is a valid m.Dict mapping.
 
@@ -212,18 +216,22 @@ class FlextUtilitiesGuards:
             ...     config["key"] = "value"
 
         """
-        if not isinstance(value, dict):
+        if isinstance(value, m.Dict):
+            candidate: Mapping[str, t.NormalizedValue | BaseModel] = value.root
+        elif isinstance(value, dict):
+            candidate = value
+        else:
             return False
-        typed_value: dict[str, t.NormalizedValue] = value
-        for item_value in typed_value.values():
-            item_value_typed: t.NormalizedValue = item_value
-            if not FlextUtilitiesGuards.is_container(item_value_typed):
+        for item_key, item_value in candidate.items():
+            if not isinstance(item_key, str):
+                return False
+            if not FlextUtilitiesGuards.is_container(item_value):
                 return False
         return True
 
     @staticmethod
     def is_configuration_mapping(
-        value: FlextUtilitiesGuards._GuardInput | Mapping[str, t.NormalizedValue],
+        value: Mapping[str, t.NormalizedValue] | m.ConfigMap | m.Dict,
     ) -> TypeGuard[m.ConfigMap]:
         """Check if value is a valid m.ConfigMap.
 
@@ -245,12 +253,16 @@ class FlextUtilitiesGuards:
             ...     items = config.items()
 
         """
-        if not isinstance(value, Mapping):
+        if isinstance(value, (m.ConfigMap, m.Dict)):
+            candidate: Mapping[str, t.NormalizedValue | BaseModel] = value.root
+        elif isinstance(value, Mapping):
+            candidate = value
+        else:
             return False
-        typed_value: Mapping[str, t.NormalizedValue] = value
-        for item_value in typed_value.values():
-            item_value_typed: t.NormalizedValue = item_value
-            if not FlextUtilitiesGuards.is_container(item_value_typed):
+        for item_key, item_value in candidate.items():
+            if not isinstance(item_key, str):
+                return False
+            if not FlextUtilitiesGuards.is_container(item_value):
                 return False
         return True
 
@@ -632,7 +644,7 @@ class FlextUtilitiesGuards:
         return single_item_list
 
     @staticmethod
-    def _guard_check_condition[T](
+    def _guard_check_condition[T: FlextUtilitiesGuards._GuardInput](
         value: T,
         condition: type[T]
         | tuple[type[T], ...]
@@ -685,7 +697,7 @@ class FlextUtilitiesGuards:
         return error_msg or f"{context_name} invalid guard condition type"
 
     @staticmethod
-    def _guard_check_predicate[T](
+    def _guard_check_predicate[T: FlextUtilitiesGuards._GuardInput](
         value: T,
         condition: Callable[[T], bool],
         context_name: str,
@@ -1111,7 +1123,7 @@ class FlextUtilitiesGuards:
             )
 
     @staticmethod
-    def guard_result[T](
+    def guard_result[T: FlextUtilitiesGuards._GuardInput](
         value: T,
         *conditions: type[T]
         | tuple[type[T], ...]

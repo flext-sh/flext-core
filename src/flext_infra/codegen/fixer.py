@@ -20,7 +20,9 @@ from collections.abc import Sequence
 from pathlib import Path
 from typing import override
 
-from flext_core import r, s
+from pydantic import BaseModel
+
+from flext_core import r, s, t
 from flext_infra import FlextInfraUtilitiesDiscovery, c, m, u
 from flext_infra.codegen.lazy_init import FlextInfraCodegenLazyInit
 from flext_infra.codegen.transforms import FlextInfraCodegenTransforms
@@ -32,14 +34,26 @@ from flext_infra.refactor.migrate_to_class_mro import (
 from flext_infra.refactor.namespace_rewriter import NamespaceEnforcementRewriter
 
 
-class FlextInfraCodegenFixer(s[list[m.Infra.Codegen.AutoFixResult]]):
+class FlextInfraCodegenFixer(s):
     """AST-based auto-fixer for namespace violations (Rules 1-2)."""
 
     _workspace_root: Path
 
     def __init__(self, workspace_root: Path) -> None:
         """Initialize codegen fixer with workspace root."""
-        super().__init__()
+        super().__init__(
+            config_type=None,
+            config_overrides=None,
+            initial_context=None,
+            subproject=None,
+            services=None,
+            factories=None,
+            resources=None,
+            container_overrides=None,
+            wire_modules=None,
+            wire_packages=None,
+            wire_classes=None,
+        )
         self._workspace_root = workspace_root
 
     # ------------------------------------------------------------------
@@ -347,9 +361,12 @@ class FlextInfraCodegenFixer(s[list[m.Infra.Codegen.AutoFixResult]]):
     # ------------------------------------------------------------------
 
     @override
-    def execute(self) -> r[list[m.Infra.Codegen.AutoFixResult]]:
-        """Execute auto-fix across all workspace projects."""
-        return r[list[m.Infra.Codegen.AutoFixResult]].ok(self.run())
+    def execute(
+        self,
+    ) -> r[t.NormalizedValue | BaseModel | list[t.NormalizedValue | BaseModel]]:
+        return r[
+            t.NormalizedValue | BaseModel | list[t.NormalizedValue | BaseModel]
+        ].fail("Use run() directly")
 
     def fix_project(self, project_path: Path) -> m.Infra.Codegen.AutoFixResult:
         """Auto-fix namespace violations in a single project.

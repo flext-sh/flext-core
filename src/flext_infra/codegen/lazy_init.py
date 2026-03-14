@@ -46,7 +46,19 @@ class FlextInfraCodegenLazyInit(s[int]):
 
     def __init__(self, workspace_root: Path) -> None:
         """Initialize lazy init generator with workspace root."""
-        super().__init__()
+        super().__init__(
+            config_type=None,
+            config_overrides=None,
+            initial_context=None,
+            subproject=None,
+            services=None,
+            factories=None,
+            resources=None,
+            container_overrides=None,
+            wire_modules=None,
+            wire_packages=None,
+            wire_classes=None,
+        )
         self._root: Path = workspace_root
 
     @override

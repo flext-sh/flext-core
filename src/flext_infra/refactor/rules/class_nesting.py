@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import libcst as cst
+from pydantic import TypeAdapter, ValidationError
 
 from flext_infra import c, m, t, u
 from flext_infra.refactor.rules.class_reconstructor import (
@@ -201,14 +202,26 @@ class ClassNestingRefactorRule:
             config["confidence_threshold"] = confidence_threshold
         class_nesting_raw = loaded.get(c.Infra.ReportKeys.CLASS_NESTING)
         if isinstance(class_nesting_raw, list):
-            config[c.Infra.ReportKeys.CLASS_NESTING] = self._coerce_entries(
-                u.Infra.mapping_list(class_nesting_raw),
-            )
+            try:
+                typed_class_nesting = TypeAdapter(list[object]).validate_python(
+                    class_nesting_raw
+                )
+                config[c.Infra.ReportKeys.CLASS_NESTING] = self._coerce_entries(
+                    u.Infra.mapping_list(typed_class_nesting),
+                )
+            except ValidationError:
+                config[c.Infra.ReportKeys.CLASS_NESTING] = []
         helper_raw = loaded.get(c.Infra.ReportKeys.HELPER_CONSOLIDATION)
         if isinstance(helper_raw, list):
-            config[c.Infra.ReportKeys.HELPER_CONSOLIDATION] = self._coerce_entries(
-                u.Infra.mapping_list(helper_raw),
-            )
+            try:
+                typed_helper_entries = TypeAdapter(list[object]).validate_python(
+                    helper_raw
+                )
+                config[c.Infra.ReportKeys.HELPER_CONSOLIDATION] = self._coerce_entries(
+                    u.Infra.mapping_list(typed_helper_entries),
+                )
+            except ValidationError:
+                config[c.Infra.ReportKeys.HELPER_CONSOLIDATION] = []
         self._cached_config = config
         return config
 
@@ -420,7 +433,10 @@ class ClassNestingRefactorRule:
             post_checks: list[str] = []
             if not isinstance(post_checks_raw, list):
                 continue
-            checks = u.Infra.mapping_list(post_checks_raw)
+            typed_post_checks = TypeAdapter(list[object]).validate_python(
+                post_checks_raw
+            )
+            checks = u.Infra.mapping_list(typed_post_checks)
             for check in checks:
                 check_type = check.get("type")
                 if isinstance(check_type, str):

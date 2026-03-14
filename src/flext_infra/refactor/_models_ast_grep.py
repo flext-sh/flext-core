@@ -48,11 +48,13 @@ class FlextInfraRefactorAstGrepModels:
         line: Annotated[int, Field(ge=1, description="Source line number")]
         kind: Annotated[
             str, Field(default="constant", description="constant|typevar|typealias")
-        ]
-        class_name: Annotated[str, Field(default="", description="Target class name")]
+        ] = "constant"
+        class_name: Annotated[
+            str, Field(default="", description="Target class name")
+        ] = ""
         facade_name: Annotated[
             str, Field(default="", description="Facade alias/import name")
-        ]
+        ] = ""
 
     class MROImportRewrite(FlextModels.ArbitraryTypesModel):
         """Unified import rewrite payload for MRO reference updates."""
@@ -65,13 +67,13 @@ class FlextInfraRefactorAstGrepModels:
         ]
         as_name: Annotated[
             str | None, Field(default=None, description="Optional alias")
-        ]
+        ] = None
         symbol: Annotated[
             str, Field(default="", description="Resolved symbol in facade")
-        ]
+        ] = ""
         facade_name: Annotated[
             str, Field(default="", description="Facade alias/import name")
-        ]
+        ] = ""
 
     class MROScanReport(FlextModels.ArbitraryTypesModel):
         """Scan result for one constants module candidate file."""
@@ -86,17 +88,17 @@ class FlextInfraRefactorAstGrepModels:
                 default="",
                 description="First constants class name",
             ),
-        ]
+        ] = ""
         facade_alias: Annotated[
             str, Field(default="c", description="Facade alias letter")
-        ]
+        ] = "c"
         candidates: Annotated[
             tuple[FlextInfraRefactorAstGrepModels.MROSymbolCandidate, ...],
             Field(
                 default_factory=tuple,
                 description="Module-level symbol candidates",
             ),
-        ]
+        ] = Field(default_factory=tuple)
 
     class MROFileMigration(FlextModels.ArbitraryTypesModel):
         """Migration summary for one transformed file."""

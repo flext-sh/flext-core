@@ -40,7 +40,7 @@ def _set_toml_sequence(
 ) -> None:
     state = {"index": 0}
 
-    def _next(_path: Path) -> r[dict[str, t.Infra.TomlValue]]:
+    def _next(_path: Path) -> r[t.Infra.TomlConfig]:
         item = values[state["index"]]
         state["index"] += 1
         return item

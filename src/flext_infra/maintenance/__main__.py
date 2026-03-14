@@ -35,7 +35,19 @@ def main(argv: list[str] | None = None) -> int:
         help="Verbose output",
     )
     args = parser.parse_args(argv)
-    service = FlextInfraPythonVersionEnforcer()
+    service = FlextInfraPythonVersionEnforcer(
+        config_type=None,
+        config_overrides=None,
+        initial_context=None,
+        subproject=None,
+        services=None,
+        factories=None,
+        resources=None,
+        container_overrides=None,
+        wire_modules=None,
+        wire_packages=None,
+        wire_classes=None,
+    )
     result = service.execute(check_only=args.check, verbose=args.verbose)
     if result.is_success:
         return result.unwrap()

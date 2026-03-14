@@ -13,17 +13,31 @@ from collections.abc import Sequence
 from pathlib import Path
 from typing import override
 
-from flext_core import r, s
+from pydantic import BaseModel
+
+from flext_core import r, s, t
 from flext_infra import FlextInfraUtilitiesDiscovery, c, m, p
 from flext_infra.core.namespace_validator import FlextInfraNamespaceValidator
 
 
-class FlextInfraCodegenCensus(s[list[m.Infra.Codegen.CensusReport]]):
+class FlextInfraCodegenCensus(s):
     """Read-only census service for namespace violation counting."""
 
     def __init__(self, workspace_root: Path) -> None:
         """Initialize census service with workspace root."""
-        super().__init__()
+        super().__init__(
+            config_type=None,
+            config_overrides=None,
+            initial_context=None,
+            subproject=None,
+            services=None,
+            factories=None,
+            resources=None,
+            container_overrides=None,
+            wire_modules=None,
+            wire_packages=None,
+            wire_classes=None,
+        )
         self._workspace_root: Path = workspace_root
 
     @staticmethod
@@ -58,9 +72,12 @@ class FlextInfraCodegenCensus(s[list[m.Infra.Codegen.CensusReport]]):
         )
 
     @override
-    def execute(self) -> r[list[m.Infra.Codegen.CensusReport]]:
-        """Execute census across all workspace projects."""
-        return r[list[m.Infra.Codegen.CensusReport]].ok(self.run())
+    def execute(
+        self,
+    ) -> r[t.NormalizedValue | BaseModel | list[t.NormalizedValue | BaseModel]]:
+        return r[
+            t.NormalizedValue | BaseModel | list[t.NormalizedValue | BaseModel]
+        ].fail("Use run() directly")
 
     def run(
         self,

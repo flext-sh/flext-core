@@ -63,7 +63,7 @@ class TestMain:
     ) -> None:
         linter = StubLinter(
             lint_returns=r[m.Infra.Github.WorkflowLintResult].ok(
-                m.Infra.Github.WorkflowLintResult({"status": "ok"}),
+                m.Infra.Github.WorkflowLintResult(status="ok"),
             )
         )
         monkeypatch.setattr(github_main, "FlextInfraWorkflowLinter", lambda: linter)
@@ -144,7 +144,7 @@ class TestMain:
         )
         linter = StubLinter(
             lint_returns=r[m.Infra.Github.WorkflowLintResult].ok(
-                m.Infra.Github.WorkflowLintResult({"status": "ok"}),
+                m.Infra.Github.WorkflowLintResult(status="ok"),
             )
         )
         monkeypatch.setattr(github_main, "FlextInfraWorkflowLinter", lambda: linter)

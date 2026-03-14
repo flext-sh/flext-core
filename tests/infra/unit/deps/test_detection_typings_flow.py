@@ -42,9 +42,9 @@ class TestModuleAndTypingsFlow:
         service = FlextInfraDependencyDetectionService()
         tm.that(service.module_to_types_package("yaml", {}), eq="types-pyyaml")
         tm.that(service.module_to_types_package("flext_core", {}), eq=None)
-        limits = {
-            "typing_libraries": {"module_to_package": {"yaml": "custom-types-yaml"}}
-        }
+        module_to_package: dict[str, object] = {"yaml": "custom-types-yaml"}
+        typing_libraries: dict[str, object] = {"module_to_package": module_to_package}
+        limits: dict[str, t.Infra.TomlValue] = {"typing_libraries": typing_libraries}
         tm.that(service.module_to_types_package("yaml", limits), eq="custom-types-yaml")
         tm.that(service.module_to_types_package("unknown_module", {}), eq=None)
         tm.that(service.module_to_types_package("yaml.parser", {}), eq="types-pyyaml")
@@ -70,7 +70,7 @@ class TestModuleAndTypingsFlow:
         monkeypatch.setattr(
             service,
             "toml",
-            _StubToml([r[t.Infra.TomlConfig].ok(payload)]),
+            _StubToml([r[dict[str, t.Infra.TomlValue]].ok(payload)]),
         )
         got = service.get_current_typings_from_pyproject(tmp_path)
         tm.that(got, eq=[])
@@ -80,20 +80,20 @@ class TestModuleAndTypingsFlow:
     ) -> None:
         service = FlextInfraDependencyDetectionService()
         values: list[r[dict[str, t.Infra.TomlValue]]] = [
-            r[t.Infra.TomlConfig].ok({
+            r[dict[str, t.Infra.TomlValue]].ok({
                 "project": {
                     "optional-dependencies": {
                         "typings": ["types-pyyaml>=6.0", "types-requests[extra]==2.28"]
                     }
                 }
             }),
-            r[t.Infra.TomlConfig].ok({
+            r[dict[str, t.Infra.TomlValue]].ok({
                 "project": {
                     "optional-dependencies": {"typings": {"types-pyyaml": ">=6.0"}}
                 }
             }),
-            r[t.Infra.TomlConfig].fail("not found"),
-            r[t.Infra.TomlConfig].ok({}),
+            r[dict[str, t.Infra.TomlValue]].fail("not found"),
+            r[dict[str, t.Infra.TomlValue]].ok({}),
         ]
         monkeypatch.setattr(service, "toml", _StubToml(values))
         tm.that(service.get_current_typings_from_pyproject(tmp_path), eq=[])
@@ -116,8 +116,8 @@ class TestModuleAndTypingsFlow:
             service,
             "toml",
             _StubToml([
-                r[t.Infra.TomlConfig].ok({}),
-                r[t.Infra.TomlConfig].ok({
+                r[dict[str, t.Infra.TomlValue]].ok({}),
+                r[dict[str, t.Infra.TomlValue]].ok({
                     "project": {"optional-dependencies": {"typings": []}}
                 }),
             ]),
@@ -127,8 +127,8 @@ class TestModuleAndTypingsFlow:
             service,
             "toml",
             _StubToml([
-                r[t.Infra.TomlConfig].ok({}),
-                r[t.Infra.TomlConfig].ok({}),
+                r[dict[str, t.Infra.TomlValue]].ok({}),
+                r[dict[str, t.Infra.TomlValue]].ok({}),
             ]),
         )
         tm.ok(service.get_required_typings(tmp_path, venv_bin, include_mypy=False))
@@ -140,6 +140,6 @@ class TestModuleAndTypingsFlow:
         monkeypatch.setattr(
             service,
             "toml",
-            _StubToml([r[t.Infra.TomlConfig].ok({})]),
+            _StubToml([r[dict[str, t.Infra.TomlValue]].ok({})]),
         )
         tm.fail(service.get_required_typings(tmp_path, venv_bin))

@@ -13,7 +13,10 @@ from tests.infra.typings import t
 
 class _FakeResult:
     def __init__(
-        self, success: bool, value: t.Infra.TomlValue = None, error: str | None = None
+        self,
+        success: bool,
+        value: object | None = None,
+        error: str | None = None,
     ) -> None:
         self.is_success = success
         self.is_failure = not success

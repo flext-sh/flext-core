@@ -119,7 +119,9 @@ class TestWorkspaceCheckerBuildGateResult:
 
     def test_build_gate_result_success(self, tmp_path: Path) -> None:
         checker = FlextInfraWorkspaceChecker(workspace_root=tmp_path)
-        issue = CheckIssue(file="a.py", line=1, column=1, code="E1", message="Error")
+        issue = CheckIssue(
+            file="a.py", line=1, column=1, code="E1", message="Error", severity="error"
+        )
         result = checker._build_gate_result(
             gate="lint",
             project="p1",

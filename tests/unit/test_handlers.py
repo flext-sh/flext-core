@@ -69,11 +69,22 @@ class HandlerConfigScenario(BaseModel):
     name: Annotated[str, Field(description="Handler config scenario name")]
     handler_id: Annotated[str, Field(description="Handler identifier")]
     handler_name: Annotated[str, Field(description="Handler display name")]
-    handler_type: Annotated[str | None, Field(default=None, description="Handler type name")] = None
-    handler_mode: Annotated[str | None, Field(default=None, description="Handler mode name")] = None
-    command_timeout: Annotated[int | None, Field(default=None, description="Command timeout in seconds")] = None
-    max_command_retries: Annotated[int | None, Field(default=None, description="Maximum retry count")] = None
-    metadata: Annotated[dict[str, object] | None, Field(default=None, description="Handler metadata payload")] = None
+    handler_type: Annotated[
+        str | None, Field(default=None, description="Handler type name")
+    ] = None
+    handler_mode: Annotated[
+        str | None, Field(default=None, description="Handler mode name")
+    ] = None
+    command_timeout: Annotated[
+        int | None, Field(default=None, description="Command timeout in seconds")
+    ] = None
+    max_command_retries: Annotated[
+        int | None, Field(default=None, description="Maximum retry count")
+    ] = None
+    metadata: Annotated[
+        dict[str, object] | None,
+        Field(default=None, description="Handler metadata payload"),
+    ] = None
 
 
 class HandlerTypeScenario(BaseModel):
@@ -352,8 +363,8 @@ class TestFlextHandlers:
                 super().__init__(config=config)
 
             @override
-            def validate(self, data: object) -> r[bool]:
-                _ = data
+            def validate(self, value: object) -> r[bool]:
+                _ = value
                 return r[bool].fail("Validation failed for test")
 
             @override

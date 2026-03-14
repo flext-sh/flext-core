@@ -27,7 +27,7 @@ class FlextInfraCoreModels:
         exit_code: Annotated[int, Field(description="Command exit code")]
         duration: Annotated[
             float, Field(default=0.0, ge=0.0, description="Duration in seconds")
-        ]
+        ] = 0.0
 
     class ValidationReport(FlextModels.ArbitraryTypesModel):
         """Validation report model with violations and summary."""

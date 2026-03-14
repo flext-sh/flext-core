@@ -60,7 +60,9 @@ class ModelCreationScenario(BaseModel):
     expected_checks: Annotated[
         list[str], Field(description="Expected validation check labels")
     ]
-    description: Annotated[str, Field(default="", description="Scenario description")] = ""
+    description: Annotated[
+        str, Field(default="", description="Scenario description")
+    ] = ""
 
 
 class SampleAggregate(m.AggregateRoot):
@@ -107,6 +109,7 @@ class TestFlextModels:
         """Test entity creation and validation."""
 
         class TestEntity(m.Entity):
+            domain_events: list[m.DomainEvent] = Field(default_factory=list)
             name: str
             email: str
 
@@ -248,6 +251,7 @@ class TestFlextModels:
         """Test version management in entities."""
 
         class VersionedEntity(m.Entity):
+            domain_events: list[m.DomainEvent] = Field(default_factory=list)
             name: str
 
         entity = VersionedEntity(name="Test")
@@ -269,6 +273,7 @@ class TestFlextModels:
         """Test timestamped functionality."""
 
         class TimestampedEntity(m.Entity):
+            domain_events: list[m.DomainEvent] = Field(default_factory=list)
             name: str
 
         entity = TimestampedEntity(name="Test")
@@ -295,6 +300,7 @@ class TestFlextModels:
         """Test validation patterns."""
 
         class ValidatedEntity(m.Entity):
+            domain_events: list[m.DomainEvent] = Field(default_factory=list)
             name: str
             email: str
 
@@ -331,6 +337,7 @@ class TestFlextModels:
         """Test thread safety of models."""
 
         class ThreadSafeEntity(m.Entity):
+            domain_events: list[m.DomainEvent] = Field(default_factory=list)
             counter: int = 0
 
             def increment(self) -> None:
@@ -388,6 +395,7 @@ class TestFlextModels:
         """Test Entity equality and hash based on identity."""
 
         class TestEntity(m.Entity):
+            domain_events: list[m.DomainEvent] = Field(default_factory=list)
             name: str
 
         entity1 = TestEntity(name="test", unique_id="123")
@@ -421,6 +429,7 @@ class TestFlextModels:
         """Test domain event functionality in Entity."""
 
         class TestEntity(m.Entity):
+            domain_events: list[m.DomainEvent] = Field(default_factory=list)
             name: str
 
         entity = TestEntity(name="test")
@@ -467,6 +476,7 @@ class TestFlextModels:
         """Test domain event validation."""
 
         class TestEntity(m.Entity):
+            domain_events: list[m.DomainEvent] = Field(default_factory=list)
             name: str
 
         entity = TestEntity(name="test")
@@ -494,6 +504,7 @@ class TestFlextModels:
         """Test Entity initial version state."""
 
         class TestEntity(m.Entity):
+            domain_events: list[m.DomainEvent] = Field(default_factory=list)
             name: str
 
         entity = TestEntity(name="test")
@@ -503,6 +514,7 @@ class TestFlextModels:
         """Test timestamp serialization in JSON output."""
 
         class TestEntity(m.Entity):
+            domain_events: list[m.DomainEvent] = Field(default_factory=list)
             name: str
 
         entity = TestEntity(name="test")
@@ -516,6 +528,7 @@ class TestFlextModels:
         """Test update_timestamp method."""
 
         class TestEntity(m.Entity):
+            domain_events: list[m.DomainEvent] = Field(default_factory=list)
             name: str
 
         entity = TestEntity(name="test")
@@ -528,6 +541,7 @@ class TestFlextModels:
         """Test VersionableMixin functionality."""
 
         class TestEntity(m.Entity):
+            domain_events: list[m.DomainEvent] = Field(default_factory=list)
             name: str
 
         entity = TestEntity(name="test")

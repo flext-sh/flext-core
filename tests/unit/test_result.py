@@ -59,8 +59,13 @@ class ResultScenario(BaseModel):
         ResultOperationType, Field(description="Result operation type")
     ]
     value: Annotated[object, Field(description="Input value for result operation")]
-    is_success_expected: Annotated[bool, Field(default=True, description="Expected success state")] = True
-    expected_result: Annotated[object | None, Field(default=None, description="Optional expected result payload",)] = None
+    is_success_expected: Annotated[
+        bool, Field(default=True, description="Expected success state")
+    ] = True
+    expected_result: Annotated[
+        object | None,
+        Field(default=None, description="Optional expected result payload"),
+    ] = None
 
     def __init__(
         self,

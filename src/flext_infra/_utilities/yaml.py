@@ -12,6 +12,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from pathlib import Path
 
+from pydantic import TypeAdapter, ValidationError
 from yaml import safe_load
 
 from flext_infra.constants import FlextInfraConstants as c
@@ -26,6 +27,21 @@ class FlextInfraUtilitiesYaml:
 
         data = u.Infra.safe_load_yaml(path)
     """
+
+    _LIST_ADAPTER: TypeAdapter[list[object]] | None = None
+    _MAPPING_ADAPTER: TypeAdapter[dict[str, object]] | None = None
+
+    @staticmethod
+    def _get_list_adapter() -> TypeAdapter[list[object]]:
+        if FlextInfraUtilitiesYaml._LIST_ADAPTER is None:
+            FlextInfraUtilitiesYaml._LIST_ADAPTER = TypeAdapter(list[object])
+        return FlextInfraUtilitiesYaml._LIST_ADAPTER
+
+    @staticmethod
+    def _get_mapping_adapter() -> TypeAdapter[dict[str, object]]:
+        if FlextInfraUtilitiesYaml._MAPPING_ADAPTER is None:
+            FlextInfraUtilitiesYaml._MAPPING_ADAPTER = TypeAdapter(dict[str, object])
+        return FlextInfraUtilitiesYaml._MAPPING_ADAPTER
 
     @staticmethod
     def safe_load_yaml(path: Path) -> Mapping[str, object]:
@@ -48,8 +64,13 @@ class FlextInfraUtilitiesYaml:
         if not isinstance(parsed, Mapping):
             msg = f"rules.yml must be a mapping: {path}"
             raise TypeError(msg)
-        normalized: dict[str, object] = dict(parsed.items())
-        return normalized
+        try:
+            return FlextInfraUtilitiesYaml._get_mapping_adapter().validate_python(
+                parsed
+            )
+        except ValidationError as exc:
+            msg = f"rules.yml must be a mapping: {path}: {exc}"
+            raise TypeError(msg) from exc
 
     @staticmethod
     def normalize_string_list(value: object, field: str) -> list[str]:
@@ -69,8 +90,15 @@ class FlextInfraUtilitiesYaml:
         if value is None:
             return []
         if isinstance(value, list):
+            try:
+                typed_items = (
+                    FlextInfraUtilitiesYaml._get_list_adapter().validate_python(value)
+                )
+            except ValidationError as exc:
+                msg = f"{field} must be list[str]: {exc}"
+                raise TypeError(msg) from exc
             out: list[str] = []
-            for item in value:
+            for item in typed_items:
                 if not isinstance(item, str):
                     msg = f"{field} must be list[str]"
                     raise TypeError(msg)

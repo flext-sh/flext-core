@@ -7,19 +7,19 @@ from pathlib import Path
 from typing import override
 
 import tomlkit
-from pydantic import TypeAdapter
+from pydantic import BaseModel, TypeAdapter
 from tomlkit.exceptions import ParseError
 from tomlkit.items import Item, Table
 from tomlkit.toml_document import TOMLDocument
 
-from flext_core import r, s
+from flext_core import r, s, t
 from flext_infra import FlextInfraUtilitiesDiscovery, c, m, p
 from flext_infra.basemk.generator import FlextInfraBaseMkGenerator
 
 _OBJECT_LIST_ADAPTER = TypeAdapter(list[object])
 
 
-class FlextInfraProjectMigrator(s[list[m.Infra.Workspace.MigrationResult]]):
+class FlextInfraProjectMigrator(s):
     """Migrate projects to standardized base.mk, Makefile, and pyproject structure."""
 
     def __init__(
@@ -29,7 +29,19 @@ class FlextInfraProjectMigrator(s[list[m.Infra.Workspace.MigrationResult]]):
         generator: FlextInfraBaseMkGenerator | None = None,
     ) -> None:
         """Initialize migrator with optional custom discovery and generator services."""
-        super().__init__()
+        super().__init__(
+            config_type=None,
+            config_overrides=None,
+            initial_context=None,
+            subproject=None,
+            services=None,
+            factories=None,
+            resources=None,
+            container_overrides=None,
+            wire_modules=None,
+            wire_packages=None,
+            wire_classes=None,
+        )
         self._discovery: p.Infra.Discovery = discovery or FlextInfraUtilitiesDiscovery()
         self._generator = generator or FlextInfraBaseMkGenerator()
 
@@ -114,8 +126,12 @@ class FlextInfraProjectMigrator(s[list[m.Infra.Workspace.MigrationResult]]):
         )
 
     @override
-    def execute(self) -> r[list[m.Infra.Workspace.MigrationResult]]:
-        return r[list[m.Infra.Workspace.MigrationResult]].fail(
+    def execute(
+        self,
+    ) -> r[t.NormalizedValue | BaseModel | list[t.NormalizedValue | BaseModel]]:
+        return r[
+            t.NormalizedValue | BaseModel | list[t.NormalizedValue | BaseModel]
+        ].fail(
             "Use migrate() method directly",
         )
 

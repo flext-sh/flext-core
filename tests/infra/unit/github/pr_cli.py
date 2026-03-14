@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import argparse
-from pathlib import Path
 
 import pytest
 
@@ -15,9 +14,9 @@ from tests.infra.helpers import h
 from tests.infra.typings import t
 from tests.infra.unit.github._stubs import StubPrManager, StubUtilities
 
-_DEFAULTS: dict[str, object] = {
+_DEFAULTS: dict[str, t.Scalar | None] = {
     "action": "status",
-    "repo_root": Path("/tmp/test"),
+    "repo_root": "/tmp/test",
     "base": "main",
     "head": "feature",
     "number": "",
@@ -32,7 +31,7 @@ _DEFAULTS: dict[str, object] = {
 }
 
 
-def _args(**overrides: t.Scalar) -> argparse.Namespace:
+def _args(**overrides: t.Scalar | None) -> argparse.Namespace:
     return h.ns(**{**_DEFAULTS, **overrides})
 
 

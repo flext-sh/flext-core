@@ -15,7 +15,9 @@ from collections.abc import Sequence
 from pathlib import Path
 from typing import override
 
-from flext_core import FlextLogger, r, s
+from pydantic import BaseModel
+
+from flext_core import FlextLogger, r, s, t
 from flext_infra import (
     FlextInfraUtilitiesReporting,
     FlextInfraUtilitiesSubprocess,
@@ -28,7 +30,7 @@ from flext_infra import (
 logger = FlextLogger.create_module_logger(__name__)
 
 
-class FlextInfraOrchestratorService(s[list[m.Infra.Core.CommandOutput]]):
+class FlextInfraOrchestratorService(s):
     """Infrastructure service for multi-project make orchestration.
 
     Executes a make verb across a list of projects sequentially, capturing
@@ -39,14 +41,30 @@ class FlextInfraOrchestratorService(s[list[m.Infra.Core.CommandOutput]]):
 
     def __init__(self) -> None:
         """Initialize the orchestrator service."""
-        super().__init__()
+        super().__init__(
+            config_type=None,
+            config_overrides=None,
+            initial_context=None,
+            subproject=None,
+            services=None,
+            factories=None,
+            resources=None,
+            container_overrides=None,
+            wire_modules=None,
+            wire_packages=None,
+            wire_classes=None,
+        )
         self._runner: p.Infra.CommandRunner = FlextInfraUtilitiesSubprocess()
         self._reporting: FlextInfraUtilitiesReporting = FlextInfraUtilitiesReporting()
 
     @override
-    def execute(self) -> r[list[m.Infra.Core.CommandOutput]]:
+    def execute(
+        self,
+    ) -> r[t.NormalizedValue | BaseModel | list[t.NormalizedValue | BaseModel]]:
         """Not used; call orchestrate() directly instead."""
-        return r[list[m.Infra.Core.CommandOutput]].fail(
+        return r[
+            t.NormalizedValue | BaseModel | list[t.NormalizedValue | BaseModel]
+        ].fail(
             "Use orchestrate() method directly",
         )
 

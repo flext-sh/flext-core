@@ -45,20 +45,20 @@ class TestFlextInfraDocScope:
     def test_scope_path_required(self) -> None:
         """Test FlextInfraDocScope requires path."""
         with pytest.raises(Exception):
-            m.Infra.Docs.FlextInfraDocScope(
-                name="test",
-                path=None,
-                report_dir=Path("/tmp"),
-            )
+            m.Infra.Docs.FlextInfraDocScope.model_validate({
+                "name": "test",
+                "path": None,
+                "report_dir": "/tmp",
+            })
 
     def test_scope_report_dir_required(self, tmp_path: Path) -> None:
         """Test FlextInfraDocScope requires report_dir."""
         with pytest.raises(Exception):
-            m.Infra.Docs.FlextInfraDocScope(
-                name="test",
-                path=tmp_path,
-                report_dir=None,
-            )
+            m.Infra.Docs.FlextInfraDocScope.model_validate({
+                "name": "test",
+                "path": str(tmp_path),
+                "report_dir": None,
+            })
 
 
 class TestBuildScopes:

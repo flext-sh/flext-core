@@ -137,10 +137,10 @@ class CreateUserCommandHandler(
         return message_type == CreateUserCommand or str(message_type) == "create_user"
 
     @override
-    def validate(self, data: object) -> r[bool]:
+    def validate(self, value: object) -> r[bool]:
         """Validate command using command's validate_command method."""
-        if isinstance(data, CreateUserCommand):
-            return data.validate_command()
+        if isinstance(value, CreateUserCommand):
+            return value.validate_command()
         return r[bool].fail("Cannot handle this command type")
 
     @override
@@ -191,10 +191,10 @@ class UpdateUserCommandHandler(
         return message_type == UpdateUserCommand or str(message_type) == "update_user"
 
     @override
-    def validate(self, data: object) -> r[bool]:
+    def validate(self, value: object) -> r[bool]:
         """Validate command using command's validate_command method."""
-        if isinstance(data, UpdateUserCommand):
-            return data.validate_command()
+        if isinstance(value, UpdateUserCommand):
+            return value.validate_command()
         return r[bool].fail("Cannot handle this command type")
 
     @override
@@ -235,10 +235,10 @@ class FailingCommandHandler(FlextHandlers[FailingCommand, bool]):
         return message_type == FailingCommand or str(message_type) == "failing"
 
     @override
-    def validate(self, data: object) -> r[bool]:
+    def validate(self, value: object) -> r[bool]:
         """Validate command using command's validate_command method."""
-        if isinstance(data, FailingCommand):
-            return data.validate_command()
+        if isinstance(value, FailingCommand):
+            return value.validate_command()
         return r[bool].fail("Cannot handle this command type")
 
     @override

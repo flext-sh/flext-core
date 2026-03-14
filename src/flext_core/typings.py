@@ -141,7 +141,7 @@ class FlextTypes:
     type NormalizedValue = (
         Container
         | list[FlextTypes.NormalizedValue]
-        | dict[str, FlextTypes.NormalizedValue]
+        | Mapping[str, FlextTypes.NormalizedValue]
         | tuple[FlextTypes.NormalizedValue, ...]
         | None
     )

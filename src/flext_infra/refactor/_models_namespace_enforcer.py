@@ -164,13 +164,18 @@ class NamespaceManualProtocolViolation(FlextModels.ArbitraryTypesModel):
     name: Annotated[str, Field(min_length=1)]
     suggestion: Annotated[
         str, Field(default="Move to protocols.py/protocols/*.py/_protocols.py")
-    ]
+    ] = "Move to protocols.py/protocols/*.py/_protocols.py"
 
     @classmethod
     def create(cls, *, file: str, line: int, name: str, suggestion: str = "") -> Self:
         if len(suggestion) > 0:
             return cls(file=file, line=line, name=name, suggestion=suggestion)
-        return cls(file=file, line=line, name=name)
+        return cls(
+            file=file,
+            line=line,
+            name=name,
+            suggestion="Move to protocols.py/protocols/*.py/_protocols.py",
+        )
 
 
 class NamespaceCyclicImportViolation(FlextModels.ArbitraryTypesModel):
@@ -391,7 +396,7 @@ class NamespaceWorkspaceEnforcementReport(FlextModels.ArbitraryTypesModel):
         Field(
             default_factory=_empty_project_reports,
         ),
-    ]
+    ] = Field(default_factory=_empty_project_reports)
     total_facades_missing: Annotated[int, Field(default=0, ge=0)]
     total_loose_objects: Annotated[int, Field(default=0, ge=0)]
     total_import_violations: Annotated[int, Field(default=0, ge=0)]

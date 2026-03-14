@@ -35,7 +35,9 @@ class ResultChainingScenario(BaseModel):
         list[str], Field(description="Operation names applied in sequence")
     ]
     expected_success: Annotated[bool, Field(description="Expected success state")]
-    expected_value: Annotated[str | None, Field(default=None, description="Expected resulting value")] = None
+    expected_value: Annotated[
+        str | None, Field(default=None, description="Expected resulting value")
+    ] = None
 
 
 class CoverageScenarios:

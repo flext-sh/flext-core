@@ -24,7 +24,7 @@ import logging
 from collections.abc import Callable
 from enum import StrEnum
 from types import ModuleType
-from typing import Annotated, ClassVar, cast, override
+from typing import Annotated, ClassVar, cast
 
 import pytest
 import structlog
@@ -38,12 +38,11 @@ from flext_core import (
     FlextRuntime,
     c,
     m,
-    p,
     r,
     s,
     t,
 )
-from flext_core._models.service import FlextModelsService
+from flext_core.runtime import RuntimeData
 
 
 class RuntimeOperationType(StrEnum):
@@ -103,9 +102,27 @@ class RuntimeTestCase(BaseModel):
     operation: Annotated[
         RuntimeOperationType, Field(description="Runtime operation type")
     ]
-    test_input: Annotated[object | None, Field(default=None, description="Optional test input",)] = None
-    expected_result: Annotated[bool | tuple[object, ...] | object, Field(default=None, description="Expected operation result",)] = None
-    should_reset_config: Annotated[bool, Field(default=False, description="Whether structlog config should be reset before test",)] = False
+    test_input: Annotated[
+        RuntimeData | type | None,
+        Field(
+            default=None,
+            description="Optional test input",
+        ),
+    ] = None
+    expected_result: Annotated[
+        bool | tuple[object, ...] | object,
+        Field(
+            default=None,
+            description="Expected operation result",
+        ),
+    ] = None
+    should_reset_config: Annotated[
+        bool,
+        Field(
+            default=False,
+            description="Whether structlog config should be reset before test",
+        ),
+    ] = False
 
 
 class RuntimeScenarios:
@@ -568,8 +585,8 @@ class TestFlextRuntime:
         test_case.test_input may be None or various types, so we cast to object
         for type compatibility while preserving runtime behavior.
         """
-        test_input_typed = cast("object", test_case.test_input)
-        result = FlextRuntime.is_dict_like(test_input_typed)
+        assert not isinstance(test_case.test_input, type)
+        result = FlextRuntime.is_dict_like(test_case.test_input)
         assert result == test_case.expected_result
 
     @pytest.mark.parametrize(
@@ -584,8 +601,8 @@ class TestFlextRuntime:
         test_case.test_input may be None or various types, so we cast to object
         for type compatibility while preserving runtime behavior.
         """
-        test_input_typed = cast("object", test_case.test_input)
-        result = FlextRuntime.is_list_like(test_input_typed)
+        assert not isinstance(test_case.test_input, type)
+        result = FlextRuntime.is_list_like(test_case.test_input)
         assert result == test_case.expected_result
 
     @pytest.mark.parametrize(
@@ -599,9 +616,8 @@ class TestFlextRuntime:
         Business Rule: None is a valid test input - validates that is_valid_json
         correctly returns False for None values.
         """
-        result = FlextRuntime.is_valid_json(
-            cast("object", test_case.test_input),
-        )
+        assert not isinstance(test_case.test_input, type)
+        result = FlextRuntime.is_valid_json(test_case.test_input)
         assert result == test_case.expected_result
 
     @pytest.mark.parametrize(
@@ -615,9 +631,8 @@ class TestFlextRuntime:
         Business Rule: None is a valid test input - validates that is_valid_identifier
         correctly returns False for None values.
         """
-        result = FlextRuntime.is_valid_identifier(
-            cast("object", test_case.test_input),
-        )
+        assert not isinstance(test_case.test_input, type)
+        result = FlextRuntime.is_valid_identifier(test_case.test_input)
         assert result == test_case.expected_result
 
     @pytest.mark.parametrize(
@@ -632,12 +647,7 @@ class TestFlextRuntime:
             class TestObj:
                 attr = "value"
 
-            test_obj = TestObj()
-            test_obj_cast: object = cast(
-                "object",
-                cast("object", test_obj),
-            )
-            result = FlextRuntime.safe_get_attribute(test_obj_cast, "attr")
+            result = FlextRuntime.safe_get_attribute(TestObj, "attr")
             assert result == "value"
         elif (
             test_case.operation
@@ -647,13 +657,8 @@ class TestFlextRuntime:
             class TestObjDefault:
                 pass
 
-            test_obj_default_obj = TestObjDefault()
-            test_obj_default_cast: object = cast(
-                "object",
-                cast("object", test_obj_default_obj),
-            )
             result = FlextRuntime.safe_get_attribute(
-                test_obj_default_cast,
+                TestObjDefault,
                 "missing",
                 "default",
             )
@@ -666,11 +671,7 @@ class TestFlextRuntime:
             class TestObjNoDefault:
                 pass
 
-            test_obj_no_default = cast(
-                "object",
-                cast("object", TestObjNoDefault()),
-            )
-            result = FlextRuntime.safe_get_attribute(test_obj_no_default, "missing")
+            result = FlextRuntime.safe_get_attribute(TestObjNoDefault, "missing")
             assert result is None
 
     @pytest.mark.parametrize(
@@ -829,12 +830,7 @@ class TestFlextRuntime:
                 config=m.ConfigMap(root={"flags": {"enabled": True}}),
                 services={"static_value": 7},
                 factories={"token_factory": token_factory},
-                resources={
-                    "api_client": cast(
-                        "Callable[[], object]",
-                        lambda: {"connected": True},
-                    ),
-                },
+                resources={"api_client": lambda: {"connected": True}},
                 wire_modules=[module],
                 factory_cache=False,
             )
@@ -881,12 +877,7 @@ class TestFlextRuntime:
                 config_overrides={"app_name": "runtime-service"},
                 services={"feature_flag": True},
                 factories={"token_factory": token_factory},
-                resources={
-                    "api_client": cast(
-                        "Callable[[], object]",
-                        lambda: {"connected": True},
-                    ),
-                },
+                resources={"api_client": lambda: {"connected": True}},
                 wire_modules=[module],
             )
             runtime = runtime_raw
@@ -910,19 +901,22 @@ class TestFlextRuntime:
 
             class RuntimeAwareComponent(FlextMixins):
                 @classmethod
-                @override
-                def _runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
+                def _runtime_bootstrap_options(cls) -> m.RuntimeBootstrapOptions:
 
-                    def counter_factory() -> object:
-                        return cast("object", {"count": 1})
+                    def counter_factory() -> dict[str, int]:
+                        return {"count": 1}
 
-                    return FlextModelsService.RuntimeBootstrapOptions(
+                    return m.RuntimeBootstrapOptions(
                         config_overrides={"app_name": "runtime-aware"},
                         services={"preseed": {"enabled": True}},
                         factories={"counter": counter_factory},
                     )
 
-            component = RuntimeAwareComponent()
+            component = RuntimeAwareComponent(
+                config_type=None,
+                config_overrides=None,
+                initial_context=None,
+            )
             runtime_first = component._get_runtime()
             runtime_second = component._get_runtime()
             assert runtime_first is runtime_second
@@ -976,11 +970,8 @@ class TestFlextRuntime:
                 event_dict["custom"] = True
                 return event_dict
 
-            processor_typed: object = cast(
-                "object",
-                custom_processor,
-            )
-            FlextRuntime.configure_structlog(additional_processors=[processor_typed])
+            _ = custom_processor
+            FlextRuntime.configure_structlog(additional_processors=["custom_processor"])
             assert FlextRuntime._structlog_configured is True
         elif test_case.operation == RuntimeOperationType.CONFIGURE_STRUCTLOG_IDEMPOTENT:
             FlextRuntime.configure_structlog()

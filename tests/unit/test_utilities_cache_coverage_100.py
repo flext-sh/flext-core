@@ -36,9 +36,14 @@ class NormalizeComponentScenario(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     name: Annotated[str, Field(description="Normalize scenario name")]
-    component: Annotated[object, Field(default=None, description="Input component to normalize",)] = None
+    component: Annotated[
+        object, Field(default=None, description="Input component to normalize")
+    ] = None
     expected_type: Annotated[type, Field(description="Expected normalized value type")]
-    expected_value: Annotated[object | None, Field(default=None, description="Optional expected normalized value",)] = None
+    expected_value: Annotated[
+        object | None,
+        Field(default=None, description="Optional expected normalized value"),
+    ] = None
 
 
 class SortKeyScenario(BaseModel):
@@ -66,7 +71,9 @@ class ClearCacheScenario(BaseModel):
     expected_success: Annotated[
         bool, Field(description="Expected clear operation success flag")
     ]
-    cache_attr_name: Annotated[str | None, Field(default=None, description="Optional cache attribute name",)] = None
+    cache_attr_name: Annotated[
+        str | None, Field(default=None, description="Optional cache attribute name")
+    ] = None
 
 
 class CacheScenarios:

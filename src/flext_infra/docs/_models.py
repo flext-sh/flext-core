@@ -19,16 +19,16 @@ class _DocsPhaseItemModel(BaseModel):
     phase: Annotated[
         str, Field(description="Docs phase: audit, fix, build, generate, validate")
     ]
-    file: Annotated[str, Field(default="", description="Relative file path")]
-    issue_type: Annotated[str, Field(default="", description="Audit issue type")]
-    severity: Annotated[str, Field(default="", description="Audit issue severity")]
-    message: Annotated[str, Field(default="", description="Item detail message")]
-    links: Annotated[int, Field(default=0, ge=0, description="Applied link fixes")]
-    toc: Annotated[int, Field(default=0, ge=0, description="Applied TOC updates")]
-    path: Annotated[str, Field(default="", description="Generated file path")]
+    file: Annotated[str, Field(default="", description="Relative file path")] = ""
+    issue_type: Annotated[str, Field(default="", description="Audit issue type")] = ""
+    severity: Annotated[str, Field(default="", description="Audit issue severity")] = ""
+    message: Annotated[str, Field(default="", description="Item detail message")] = ""
+    links: Annotated[int, Field(default=0, ge=0, description="Applied link fixes")] = 0
+    toc: Annotated[int, Field(default=0, ge=0, description="Applied TOC updates")] = 0
+    path: Annotated[str, Field(default="", description="Generated file path")] = ""
     written: Annotated[
         bool, Field(default=False, description="Generated file write flag")
-    ]
+    ] = False
 
 
 def _new_docs_phase_items() -> list[BaseModel]:
@@ -61,7 +61,7 @@ class FlextInfraDocsModels:
         path: Annotated[str, Field(description="File path")]
         written: Annotated[
             bool, Field(default=False, description="Whether file was written")
-        ]
+        ] = False
 
     class DocsPhaseItem(_DocsPhaseItemModel):
         """Unified item payload for docs phase reports."""
@@ -76,56 +76,60 @@ class FlextInfraDocsModels:
             ),
         ]
         scope: Annotated[str, Field(description="Scope name")]
-        result: Annotated[str, Field(default="", description="Result status")]
-        reason: Annotated[str, Field(default="", description="Result reason")]
+        result: Annotated[str, Field(default="", description="Result status")] = ""
+        reason: Annotated[str, Field(default="", description="Result reason")] = ""
         message: Annotated[
             str, Field(default="", description="Human-readable summary message")
-        ]
+        ] = ""
         site_dir: Annotated[
             str, Field(default="", description="Built site directory path")
-        ]
+        ] = ""
         checks: Annotated[
             list[str], Field(default_factory=list, description="Executed checks")
-        ]
-        strict: Annotated[bool, Field(default=False, description="Strict-mode flag")]
+        ] = Field(default_factory=list)
+        strict: Annotated[
+            bool, Field(default=False, description="Strict-mode flag")
+        ] = False
         passed: Annotated[
             bool, Field(default=False, description="Whether phase passed")
-        ]
+        ] = False
         changed_files: Annotated[
             int, Field(default=0, ge=0, description="Changed files count")
-        ]
-        applied: Annotated[bool, Field(default=False, description="Apply mode flag")]
+        ] = 0
+        applied: Annotated[
+            bool, Field(default=False, description="Apply mode flag")
+        ] = False
         generated: Annotated[
             int, Field(default=0, ge=0, description="Generated files count")
-        ]
+        ] = 0
         source: Annotated[
             str,
             Field(
                 default="",
                 description="Source marker for generated content",
             ),
-        ]
+        ] = ""
         missing_adr_skills: Annotated[
             list[str],
             Field(
                 default_factory=list,
                 description="Missing ADR skill references",
             ),
-        ]
+        ] = Field(default_factory=list)
         todo_written: Annotated[
             bool,
             Field(
                 default=False,
                 description="Whether TODOS.md was written",
             ),
-        ]
+        ] = False
         items: Annotated[
             Sequence[BaseModel],
             Field(
                 default_factory=_new_docs_phase_items,
                 description="Phase-specific item payloads",
             ),
-        ]
+        ] = Field(default_factory=_new_docs_phase_items)
 
 
 __all__ = ["FlextInfraDocsModels"]

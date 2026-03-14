@@ -54,13 +54,31 @@ class RegistryTestCase(BaseModel):
     operation: Annotated[
         RegistryOperationType, Field(description="Registry operation type")
     ]
-    handler_count: Annotated[int, Field(default=1, description="Number of handlers to generate")] = 1
-    should_succeed: Annotated[bool, Field(default=True, description="Expected operation success")] = True
-    error_pattern: Annotated[str | None, Field(default=None, description="Expected error message pattern",)] = None
-    with_bindings: Annotated[bool, Field(default=False, description="Whether bindings are included")] = False
-    with_function_map: Annotated[bool, Field(default=False, description="Whether function map is included",)] = False
-    with_summary: Annotated[bool, Field(default=False, description="Whether summary is included")] = False
-    duplicate_registration: Annotated[bool, Field(default=False, description="Whether registration is intentionally duplicated",)] = False
+    handler_count: Annotated[
+        int, Field(default=1, description="Number of handlers to generate")
+    ] = 1
+    should_succeed: Annotated[
+        bool, Field(default=True, description="Expected operation success")
+    ] = True
+    error_pattern: Annotated[
+        str | None, Field(default=None, description="Expected error message pattern")
+    ] = None
+    with_bindings: Annotated[
+        bool, Field(default=False, description="Whether bindings are included")
+    ] = False
+    with_function_map: Annotated[
+        bool, Field(default=False, description="Whether function map is included")
+    ] = False
+    with_summary: Annotated[
+        bool, Field(default=False, description="Whether summary is included")
+    ] = False
+    duplicate_registration: Annotated[
+        bool,
+        Field(
+            default=False,
+            description="Whether registration is intentionally duplicated",
+        ),
+    ] = False
 
 
 class ConcreteTestHandler(h[object, object]):

@@ -144,7 +144,7 @@ class FlextModelsContainers:
         ) -> t.NormalizedValue | BaseModel | None:
             value = self.root.get(key, default)
             if isinstance(value, Mapping) and not isinstance(value, BaseModel):
-                return FlextModelsContainers.Dict(root=dict(value.items()))
+                return dict(value.items())
             return value
 
     class ConfigMap(_RootDictModel[t.NormalizedValue | BaseModel]):

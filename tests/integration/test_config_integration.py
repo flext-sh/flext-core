@@ -47,7 +47,9 @@ class ConfigTestCase(BaseModel):
             description="Expected effective values",
         ),
     ]
-    file_format: Annotated[str, Field(default="json", description="Configuration file format")] = "json"
+    file_format: Annotated[
+        str, Field(default="json", description="Configuration file format")
+    ] = "json"
     env_vars: Annotated[
         dict[str, str],
         Field(
@@ -55,7 +57,9 @@ class ConfigTestCase(BaseModel):
             description="Environment variable overrides",
         ),
     ]
-    description: Annotated[str, Field(default="", description="Human-readable test description")] = ""
+    description: Annotated[
+        str, Field(default="", description="Human-readable test description")
+    ] = ""
 
     def create_temp_file(self, temp_dir: Path) -> Path:
         """Create temporary config file."""
@@ -77,9 +81,15 @@ class ThreadSafetyTest(BaseModel):
 
     model_config = ConfigDict(frozen=True)
 
-    thread_count: Annotated[int, Field(default=5, description="Number of concurrent threads")] = 5
-    operations_per_thread: Annotated[int, Field(default=10, description="Operations per thread",)] = 10
-    description: Annotated[str, Field(default="", description="Thread safety scenario description")] = ""
+    thread_count: Annotated[
+        int, Field(default=5, description="Number of concurrent threads")
+    ] = 5
+    operations_per_thread: Annotated[
+        int, Field(default=10, description="Operations per thread")
+    ] = 10
+    description: Annotated[
+        str, Field(default="", description="Thread safety scenario description")
+    ] = ""
 
 
 class ConfigTestFactories:

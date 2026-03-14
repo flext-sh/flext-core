@@ -141,7 +141,7 @@ class TestFlextModelsCollectionsCategories:
         categories: m.Categories = m.Categories()
         categories.add_entries("users", ["user1"])
         categories.add_entries("groups", ["group1"])
-        names: list[str] = categories.category_names
+        names = list(categories.category_names)
         assert all(name in names for name in ["users", "groups"])
         assert len(names) == 2
 
@@ -344,7 +344,7 @@ class TestFlextModelsCollectionsResults:
         result2 = TestResult(processed=20)
         aggregated_raw = TestResult.aggregate([result1, result2])
         assert FlextRuntime.is_dict_like(aggregated_raw)
-        aggregated: m.ConfigMap = aggregated_raw
+        aggregated = aggregated_raw
         assert aggregated["processed"] == 30
 
     def test_results_aggregate_lists(self) -> None:
@@ -357,7 +357,7 @@ class TestFlextModelsCollectionsResults:
         result2 = TestResult(errors=["error2"])
         aggregated_raw = TestResult.aggregate([result1, result2])
         assert FlextRuntime.is_dict_like(aggregated_raw)
-        aggregated: m.ConfigMap = aggregated_raw
+        aggregated = aggregated_raw
         assert aggregated["errors"] == ["error1", "error2"]
 
     def test_results_aggregate_dicts(self) -> None:
@@ -370,7 +370,7 @@ class TestFlextModelsCollectionsResults:
         result2 = TestResult(metadata={"key2": "value2"})
         aggregated_raw = TestResult.aggregate([result1, result2])
         assert FlextRuntime.is_dict_like(aggregated_raw)
-        aggregated: m.ConfigMap = aggregated_raw
+        aggregated = aggregated_raw
         assert aggregated["metadata"] == {"key1": "value1", "key2": "value2"}
 
     def test_results_aggregate_mixed(self) -> None:
@@ -385,7 +385,7 @@ class TestFlextModelsCollectionsResults:
         result2 = TestResult(processed=20, errors=["b"], status="done")
         aggregated_raw = TestResult.aggregate([result1, result2])
         assert FlextRuntime.is_dict_like(aggregated_raw)
-        aggregated: m.ConfigMap = aggregated_raw
+        aggregated = aggregated_raw
         assert aggregated["processed"] == 30
         assert aggregated["errors"] == ["a", "b"]
         assert aggregated["status"] == "done"
@@ -401,7 +401,7 @@ class TestFlextModelsCollectionsResults:
         result2 = TestResult(processed=None, status=None)
         aggregated_raw = TestResult.aggregate([result1, result2])
         assert FlextRuntime.is_dict_like(aggregated_raw)
-        aggregated: m.ConfigMap = aggregated_raw
+        aggregated = aggregated_raw
         assert aggregated["processed"] == 10
         assert aggregated["status"] == "ok"
 

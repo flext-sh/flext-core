@@ -171,8 +171,10 @@ class TestRunCLIExtended:
     def test_with_relative_reports_dir(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        gate = m.Infra.Check.GateResult(gate="lint", project="p", passed=True)
-        gate_exec = GateExecution(result=gate, issues=[])
+        gate = m.Infra.Check.GateResult(
+            gate="lint", project="p", passed=True, errors=[], duration=0.0
+        )
+        gate_exec = GateExecution(result=gate, issues=[], raw_output="")
         project = ProjectResult(project="p", gates={"lint": gate_exec})
         ok_result = r[list[ProjectResult]].ok([project])
         monkeypatch.setattr(

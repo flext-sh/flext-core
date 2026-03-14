@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
+import tomlkit
 from tomlkit.items import Table
 
 from flext_core import r
@@ -41,6 +42,15 @@ class FlextInfraPyprojectModernizer:
             raise ValueError(msg)
         self._tool_config = tool_config_result.value
 
+    @staticmethod
+    def _table_child(parent: tomlkit.TOMLDocument | Table, key: str) -> Table | None:
+        if key not in parent:
+            return None
+        child_value = parent[key]
+        if isinstance(child_value, Table):
+            return child_value
+        return None
+
     def _classify_project(self, project_dir: Path) -> r[str]:
         """Classify project kind for pyright/coverage config selection."""
         kind = ProjectClassifier(project_dir).classify().project_kind
@@ -76,33 +86,31 @@ class FlextInfraPyprojectModernizer:
             if kind_result.is_success:
                 project_kind = kind_result.value
         changes: list[str] = []
-        tool_item_raw: object | None = doc.get(c.Infra.Toml.TOOL, None)
-        if isinstance(tool_item_raw, Table):
-            poetry_item_raw: object | None = tool_item_raw.get(
-                c.Infra.Toml.POETRY, None
-            )
-            if isinstance(poetry_item_raw, Table):
-                group_item_raw: object | None = poetry_item_raw.get(
-                    c.Infra.Toml.GROUP, None
-                )
-                if isinstance(group_item_raw, Table):
-                    poetry_item = poetry_item_raw
-                    group_item = group_item_raw
-                    empty_groups: list[str] = []
-                    for name in u.Infra.table_string_keys(group_item):
-                        group_dep_item: object | None = group_item.get(name, None)
-                        if isinstance(group_dep_item, Table):
-                            deps_item: object | None = group_dep_item.get(
-                                c.Infra.Toml.DEPENDENCIES, None
-                            )
-                            if isinstance(deps_item, Table) and len(deps_item) == 0:
-                                empty_groups.append(name)
-                    for name in empty_groups:
-                        del group_item[name]
-                        changes.append(f"removed empty poetry group '{name}'")
-                    if len(group_item) == 0:
-                        del poetry_item[c.Infra.Toml.GROUP]
-                        changes.append("removed empty poetry group container")
+        tool_item = self._table_child(doc, c.Infra.Toml.TOOL)
+        if tool_item is None:
+            tool_item = tomlkit.table()
+            doc[c.Infra.Toml.TOOL] = tool_item
+        poetry_item = self._table_child(tool_item, c.Infra.Toml.POETRY)
+        if poetry_item is not None:
+            group_item = self._table_child(poetry_item, c.Infra.Toml.GROUP)
+            if group_item is not None:
+                empty_groups: list[str] = []
+                for name in u.Infra.table_string_keys(group_item):
+                    group_dep_item = self._table_child(group_item, name)
+                    if group_dep_item is None:
+                        continue
+                    deps_item = self._table_child(
+                        group_dep_item,
+                        c.Infra.Toml.DEPENDENCIES,
+                    )
+                    if deps_item is not None and len(deps_item) == 0:
+                        empty_groups.append(name)
+                for name in empty_groups:
+                    del group_item[name]
+                    changes.append(f"removed empty poetry group '{name}'")
+                if len(group_item) == 0:
+                    del poetry_item[c.Infra.Toml.GROUP]
+                    changes.append("removed empty poetry group container")
         changes.extend(ConsolidateGroupsPhase().apply(doc, canonical_dev))
         changes.extend(EnsurePytestConfigPhase(self._tool_config).apply(doc))
         changes.extend(

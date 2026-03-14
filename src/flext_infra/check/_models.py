@@ -27,7 +27,7 @@ class FlextInfraCheckModels:
                 default=c.Infra.Toml.ERROR,
                 description="Issue severity level",
             ),
-        ]
+        ] = c.Infra.Toml.ERROR
 
         @computed_field
         @property
@@ -53,7 +53,7 @@ class FlextInfraCheckModels:
                 default_factory=lambda: list[FlextInfraCheckModels.Issue](),
                 description="Detected issues",
             ),
-        ]
+        ] = Field(default_factory=lambda: list[FlextInfraCheckModels.Issue]())
         raw_output: Annotated[str, Field(default="", description="Raw tool output")]
 
     class GateResult(FlextModels.ArbitraryTypesModel):
@@ -68,7 +68,7 @@ class FlextInfraCheckModels:
                 default_factory=lambda: list[str](),
                 description="Gate error messages",
             ),
-        ]
+        ] = Field(default_factory=lambda: list[str]())
         duration: Annotated[
             float, Field(default=0.0, ge=0.0, description="Duration in seconds")
         ]
@@ -88,7 +88,9 @@ class FlextInfraCheckModels:
                 ](),
                 description="Gate name to execution mapping",
             ),
-        ]
+        ] = Field(
+            default_factory=lambda: dict[str, FlextInfraCheckModels.GateExecution]()
+        )
 
         @computed_field
         @property
@@ -112,14 +114,14 @@ class FlextInfraCheckModels:
                 default_factory=lambda: list[str](),
                 description="Gates executed in this run",
             ),
-        ]
+        ] = Field(default_factory=lambda: list[str]())
         projects: Annotated[
             list[FlextInfraCheckModels.ProjectResult],
             Field(
                 default_factory=lambda: list[FlextInfraCheckModels.ProjectResult](),
                 description="Per-project check results",
             ),
-        ]
+        ] = Field(default_factory=lambda: list[FlextInfraCheckModels.ProjectResult]())
 
     # -- SARIF 2.1.0 report models -----------------------------------------
 
@@ -153,7 +155,7 @@ class FlextInfraCheckModels:
                     default="%SRCROOT%",
                     description="URI base identifier",
                 ),
-            ]
+            ] = "%SRCROOT%"
 
             @model_serializer(mode="plain")
             def _serialize(self) -> dict[str, object]:
@@ -205,21 +207,23 @@ class FlextInfraCheckModels:
                     default="",
                     description="Tool documentation URL",
                 ),
-            ]
+            ] = ""
             rules: Annotated[
                 list[FlextInfraCheckModels.Sarif.Rule],
                 Field(
                     default_factory=lambda: list[FlextInfraCheckModels.Sarif.Rule](),
                     description="Rule descriptors",
                 ),
-            ]
+            ] = Field(default_factory=lambda: list[FlextInfraCheckModels.Sarif.Rule]())
             results: Annotated[
                 list[FlextInfraCheckModels.Sarif.Result],
                 Field(
                     default_factory=lambda: list[FlextInfraCheckModels.Sarif.Result](),
                     description="Run results",
                 ),
-            ]
+            ] = Field(
+                default_factory=lambda: list[FlextInfraCheckModels.Sarif.Result]()
+            )
 
             @model_serializer(mode="plain")
             def _serialize(self) -> dict[str, object]:
@@ -250,15 +254,17 @@ class FlextInfraCheckModels:
                     alias="$schema",
                     description="SARIF schema URI",
                 ),
-            ]
-            version: Annotated[str, Field(default="2.1.0", description="SARIF version")]
+            ] = "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/main/Schemata/sarif-schema-2.1.0.json"
+            version: Annotated[
+                str, Field(default="2.1.0", description="SARIF version")
+            ] = "2.1.0"
             runs: Annotated[
                 list[FlextInfraCheckModels.Sarif.Run],
                 Field(
                     default_factory=lambda: list[FlextInfraCheckModels.Sarif.Run](),
                     description="SARIF runs",
                 ),
-            ]
+            ] = Field(default_factory=lambda: list[FlextInfraCheckModels.Sarif.Run]())
 
 
 __all__ = ["FlextInfraCheckModels"]
