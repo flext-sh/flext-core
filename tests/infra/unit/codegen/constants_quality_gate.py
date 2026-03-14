@@ -99,6 +99,6 @@ class TestConstantsQualityGateVerdict:
         report = gate.run()
         assert isinstance(report, dict)
         assert "verdict" in report
-        
+
 
 __all__: list[str] = []

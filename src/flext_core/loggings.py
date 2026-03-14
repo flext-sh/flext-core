@@ -688,7 +688,10 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
 
     @classmethod
     def _to_scalar_context(
-        cls, context: Mapping[str, _LogArg | t.Container | None]
+        cls,
+        context: Mapping[
+            str, _LogArg | t.Container | t.NormalizedValue | BaseModel | None
+        ],
     ) -> dict[str, t.Scalar]:
         return {key: cls._to_scalar_value(value) for key, value in context.items()}
 

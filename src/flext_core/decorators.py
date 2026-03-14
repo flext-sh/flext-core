@@ -828,7 +828,7 @@ class FlextDecorators:
     @staticmethod
     def _execute_retry_loop(
         func: Callable[..., R],
-        args: P.args,
+        args: tuple[t.NormalizedValue | BaseModel, ...],
         kwargs: Mapping[str, t.NormalizedValue | BaseModel],
         logger: FlextLogger,
         *,

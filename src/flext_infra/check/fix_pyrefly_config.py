@@ -253,16 +253,18 @@ class FlextInfraConfigFixer(s):
         sub_configs = pyrefly.get(c.Infra.Toml.SUB_CONFIG)
         if not isinstance(sub_configs, list):
             return []
-        new_configs: list[object] = []
-        configs: list[object] = []
+        new_configs: list[t_infra.Infra.InfraValue] = []
+        configs: list[t_infra.Infra.InfraValue] = []
         with contextlib.suppress(ValidationError):
-            configs = TypeAdapter(list[object]).validate_python(sub_configs)
+            configs = TypeAdapter(list[t_infra.Infra.InfraValue]).validate_python(
+                sub_configs
+            )
         for conf in configs:
-            conf_out: object = conf
+            conf_out: t_infra.Infra.InfraValue = conf
             if isinstance(conf, Mapping):
                 try:
-                    conf_map: Mapping[str, object] = TypeAdapter(
-                        dict[str, object]
+                    conf_map: Mapping[str, t_infra.Infra.InfraValue] = TypeAdapter(
+                        dict[str, t_infra.Infra.InfraValue]
                     ).validate_python(conf)
                     conf_out = dict(conf_map)
                 except ValidationError:

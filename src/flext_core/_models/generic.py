@@ -421,7 +421,7 @@ class FlextGenericModels:
                 self.metadata.root[key] = []  # type: ignore[assignment]
             raw_items = self.metadata.root.get(key, [])
             items = raw_items if isinstance(raw_items, list) else []
-            items.append(item)
+            items.append(item)  # type: ignore[arg-type]
             self.metadata.root[key] = items  # type: ignore[assignment]
 
         def _upsert_skip_reason(

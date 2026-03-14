@@ -24,6 +24,7 @@ from flext_infra import (
     m,
     output,
     p,
+    t as t_infra,
 )
 from flext_infra.check._constants import FlextInfraCheckConstants
 from flext_infra.check.fix_pyrefly_config import FlextInfraConfigFixer
@@ -423,30 +424,34 @@ class FlextInfraWorkspaceChecker(s):
         return result.value if result.is_success else Path.cwd().resolve()
 
     @staticmethod
-    def _to_mapping(value: object) -> dict[str, object]:
+    def _to_mapping(
+        value: t_infra.Infra.InfraValue,
+    ) -> dict[str, t_infra.Infra.InfraValue]:
         if not isinstance(value, Mapping):
             return {}
-        return TypeAdapter(dict[str, object]).validate_python(value)
+        return TypeAdapter(dict[str, t_infra.Infra.InfraValue]).validate_python(value)
 
     @classmethod
     def _to_mapping_list(
         cls,
-        value: object,
-    ) -> list[dict[str, object]]:
+        value: t_infra.Infra.InfraValue,
+    ) -> list[dict[str, t_infra.Infra.InfraValue]]:
         if not isinstance(value, list):
             return []
-        typed_items = TypeAdapter(list[object]).validate_python(value)
-        normalized: list[dict[str, object]] = []
+        typed_items = TypeAdapter(list[t_infra.Infra.InfraValue]).validate_python(value)
+        normalized: list[dict[str, t_infra.Infra.InfraValue]] = []
         for raw_item in typed_items:
             try:
-                typed_item = TypeAdapter(dict[str, object]).validate_python(raw_item)
+                typed_item = TypeAdapter(
+                    dict[str, t_infra.Infra.InfraValue]
+                ).validate_python(raw_item)
             except ValidationError:
                 continue
             normalized.append(typed_item)
         return normalized
 
     @staticmethod
-    def _as_int(value: object, default: int = 0) -> int:
+    def _as_int(value: t_infra.Infra.InfraValue, default: int = 0) -> int:
         if isinstance(value, int):
             return value
         if isinstance(value, float):
@@ -459,12 +464,12 @@ class FlextInfraWorkspaceChecker(s):
         return default
 
     @staticmethod
-    def _as_str(value: object, default: str = "") -> str:
+    def _as_str(value: t_infra.Infra.InfraValue, default: str = "") -> str:
         return value if isinstance(value, str) else default
 
     @staticmethod
     def _nested_mapping(
-        data: dict[str, object],
+        data: dict[str, t_infra.Infra.InfraValue],
         *keys: str,
     ) -> dict[str, object]:
         current: object = data
