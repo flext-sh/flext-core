@@ -376,7 +376,7 @@ class FlextRuntime:
             return FlextRuntime.create_instance(class_type)
 
     @staticmethod
-    def _is_scalar(value: RuntimeData) -> TypeGuard[t.Scalar]:
+    def _is_scalar(value: RuntimeData | t.ContainerValue) -> TypeGuard[t.Scalar]:
         """Check if value is a scalar type accepted by t.Scalar."""
         return isinstance(value, t.SCALAR_TYPES)
 
@@ -481,7 +481,7 @@ class FlextRuntime:
                 return False
 
     @staticmethod
-    def _has_dict_protocol(obj: RuntimeData) -> bool:
+    def _has_dict_protocol(obj: RuntimeData | t.ContainerValue) -> bool:
         if not (hasattr(obj, "keys") and hasattr(obj, "items") and hasattr(obj, "get")):
             return False
         try:
@@ -495,7 +495,7 @@ class FlextRuntime:
 
     @staticmethod
     def is_dict_like(
-        value: RuntimeData,
+        value: RuntimeData | t.ContainerValue,
     ) -> TypeGuard[FlextModelsContainers.ConfigMap | Mapping[str, t.NormalizedValue]]:
         """Type guard to check if value is dict-like.
 
@@ -522,7 +522,7 @@ class FlextRuntime:
 
     @staticmethod
     def is_list_like(
-        value: RuntimeData,
+        value: RuntimeData | t.ContainerValue,
     ) -> TypeGuard[Sequence[t.NormalizedValue]]:
         """Type guard to check if value is list-like."""
         return isinstance(value, (list, tuple)) and not isinstance(value, (str, bytes))
@@ -633,7 +633,7 @@ class FlextRuntime:
 
     @staticmethod
     def normalize_to_container(
-        val: RuntimeData,
+        val: RuntimeData | t.ContainerValue,
     ) -> t.Container | BaseModel:
         """Normalize any value to t.Container | BaseModel.
 
@@ -1127,7 +1127,9 @@ class FlextRuntime:
             wrapper_arg = wrapper_class_factory()
         else:
             wrapper_arg = module.make_filtering_bound_logger(level_to_use)
-        factory_to_use: Callable[..., object] | None
+        factory_to_use: (
+            Callable[[], p.Log.StructlogLogger] | structlog.PrintLoggerFactory | None
+        )
         if logger_factory is not None:
             factory_to_use = logger_factory
         elif async_logging:

@@ -376,11 +376,11 @@ class FlextModelsContext:
             None.
             """
             working_value: dict[str, t.NormalizedValue]
-            normalized_mapping: Mapping[str, t.NormalizedValue]
+            normalized_mapping: Mapping[str, t.NormalizedValue | BaseModel]
             if v is None:
                 return {}
             if isinstance(v, FlextModelFoundation.Metadata):
-                normalized_metadata = {
+                normalized_metadata: dict[str, t.NormalizedValue | BaseModel] = {
                     key: FlextRuntime.normalize_to_container(value)
                     for key, value in v.attributes.items()
                 }
@@ -500,11 +500,11 @@ class FlextModelsContext:
             None.
             """
             working_value: dict[str, t.NormalizedValue]
-            normalized_mapping: Mapping[str, t.NormalizedValue]
+            normalized_mapping: Mapping[str, t.NormalizedValue | BaseModel]
             if v is None:
                 return {}
             if isinstance(v, FlextModelFoundation.Metadata):
-                normalized_metadata = {
+                normalized_metadata: dict[str, t.NormalizedValue | BaseModel] = {
                     key: FlextRuntime.normalize_to_container(value)
                     for key, value in v.attributes.items()
                 }
