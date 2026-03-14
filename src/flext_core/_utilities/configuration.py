@@ -552,20 +552,29 @@ class FlextUtilitiesConfiguration:
             )
             if found:
                 return value
-        if isinstance(obj, Mapping):
+        elif isinstance(obj, Mapping):
             found, value = FlextUtilitiesConfiguration._try_get_from_dict_like(
                 obj, parameter
             )
             if found:
                 return value
-        found, duck_value = FlextUtilitiesConfiguration._try_get_from_duck_model_dump(
-            obj, parameter
-        )
-        if found:
-            return duck_value
-        found, attr_val = FlextUtilitiesConfiguration._try_get_attr(obj, parameter)
-        if found:
-            return attr_val
+        elif isinstance(obj, BaseModel):
+            pass
+        else:
+            if hasattr(obj, "model_dump") and callable(getattr(obj, "model_dump")):
+                found, duck_value = (
+                    FlextUtilitiesConfiguration._try_get_from_duck_model_dump(
+                        obj, parameter
+                    )
+                )
+                if found:
+                    return duck_value
+            if hasattr(obj, "__dict__") or hasattr(obj, "__getattr__"):
+                found, attr_val = FlextUtilitiesConfiguration._try_get_attr(
+                    obj, parameter
+                )
+                if found:
+                    return attr_val
         class_name = obj.__class__.__name__
         msg = f"Parameter '{parameter}' is not defined in {class_name}"
         raise e.NotFoundError(msg)

@@ -595,8 +595,8 @@ class FlextUtilitiesMapper:
             current, "mapping"
         ):
             return current
-        transform_opts_raw: t.NormalizedValue = ops["transform"]
-        if not isinstance(transform_opts_raw, Mapping):
+        transform_opts_raw = ops["transform"]
+        if not isinstance(transform_opts_raw, Mapping) or callable(transform_opts_raw):
             return current
         transform_opts = FlextUtilitiesMapper._narrow_to_configuration_dict(
             FlextUtilitiesMapper.narrow_to_container(transform_opts_raw)
@@ -852,7 +852,7 @@ class FlextUtilitiesMapper:
     @staticmethod
     def _narrow_to_configuration_dict(
         value: t.NormalizedValue | Mapping[str, t.NormalizedValue],
-    ) -> dict[str, t.NormalizedValue]:
+    ) -> Mapping[str, t.NormalizedValue]:
         """Safely narrow object to ConfigurationDict with runtime validation."""
         if FlextUtilitiesGuards.is_configuration_dict(value):
             normalized_dict: dict[str, t.NormalizedValue] = {}
@@ -872,10 +872,9 @@ class FlextUtilitiesMapper:
         if isinstance(value, m.ConfigMap):
             return value
         if isinstance(value, Mapping):
+            narrowed_dict = FlextUtilitiesMapper._narrow_to_configuration_dict(value)
             coerced_result = r[m.ConfigMap].create_from_callable(
-                lambda: m.ConfigMap(
-                    root=FlextUtilitiesMapper._narrow_to_configuration_dict(value)
-                )
+                lambda: m.ConfigMap(root=narrowed_dict)
             )
             if coerced_result.is_success:
                 val: m.ConfigMap = coerced_result.value
