@@ -145,7 +145,7 @@ class GivenWhenThenBuilder:
 
         """
 
-        def convert_dict_value(value) -> str | int | bool:
+        def convert_dict_value(value: t.Tests.object) -> str | int | bool:
             """Convert object to str | int | bool."""
             if isinstance(value, (str, int, bool)):
                 return value
@@ -227,7 +227,7 @@ class FlextTestBuilder:
         self._data["correlation_id"] = correlation_id
         return self
 
-    def with_metadata(self, **kwargs) -> FlextTestBuilder:
+    def with_metadata(self, **kwargs: t.Tests.object) -> FlextTestBuilder:
         """with_metadata method.
 
         Returns:
@@ -259,7 +259,7 @@ class FlextTestBuilder:
         self._data.setdefault("updated_at", "2023-01-01T00:00:00+00:00")
         return self
 
-    def with_validation_rules(self, **kwargs) -> FlextTestBuilder:
+    def with_validation_rules(self, **kwargs: t.Tests.object) -> FlextTestBuilder:
         """with_validation_rules method.
 
         Returns:
@@ -368,12 +368,12 @@ class AssertionBuilder:
 
     def __init__(
         self,
-        data: list | dict[str, t.Tests.object] | str | tuple[t.Tests.object, ...],
+        data: list[t.Tests.object] | dict[str, t.Tests.object] | str | tuple[t.Tests.object, ...],
     ) -> None:
         """Initialize assertionbuilder:."""
         super().__init__()
         self.data: (
-            list | dict[str, t.Tests.object] | str | tuple[t.Tests.object, ...]
+            list[t.Tests.object] | dict[str, t.Tests.object] | str | tuple[t.Tests.object, ...]
         ) = data
         self._assertions: list[Callable[[], None]] = []
 
@@ -428,7 +428,7 @@ class AssertionBuilder:
         self,
         condition: Callable[
             [
-                list | dict[str, t.Tests.object] | str | tuple[t.Tests.object, ...],
+                list[t.Tests.object] | dict[str, t.Tests.object] | str | tuple[t.Tests.object, ...],
             ],
             bool,
         ],

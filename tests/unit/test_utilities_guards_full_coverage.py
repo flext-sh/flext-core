@@ -15,7 +15,7 @@ from flext_core import c, m, r, t, u
 from ._models import _Model
 
 
-def _is_type_obj(value, type_spec: str | type | tuple[type, ...]) -> bool:
+def _is_type_obj(value: t.NormalizedValue, type_spec: str | type | tuple[type, ...]) -> bool:
     """Call is_type with arbitrary object for negative-case testing."""
     fn: Callable[[object, str | type | tuple[type, ...]], bool] = getattr(
         u,
@@ -31,19 +31,19 @@ def _is_flexible_value_obj(value: dict[int, str] | set[int]) -> bool:
 
 
 class _LoggerLike:
-    def debug(self, *_args, **_kwargs: t.Scalar) -> None:
+    def debug(self, *_args: t.Scalar, **_kwargs: t.Scalar) -> None:
         return None
 
-    def info(self, *_args, **_kwargs: t.Scalar) -> None:
+    def info(self, *_args: t.Scalar, **_kwargs: t.Scalar) -> None:
         return None
 
-    def warning(self, *_args, **_kwargs: t.Scalar) -> None:
+    def warning(self, *_args: t.Scalar, **_kwargs: t.Scalar) -> None:
         return None
 
-    def error(self, *_args, **_kwargs: t.Scalar) -> None:
+    def error(self, *_args: t.Scalar, **_kwargs: t.Scalar) -> None:
         return None
 
-    def exception(self, *_args, **_kwargs: t.Scalar) -> None:
+    def exception(self, *_args: t.Scalar, **_kwargs: t.Scalar) -> None:
         return None
 
 

@@ -528,7 +528,7 @@ class TestFlextHandlers:
             handler_mode=handler_mode,
         )
         handler = ConcreteTestHandler(config=config)
-        result = handler.validate("test_message")
+        result = handler.validate_input("test_message")
         _ = u.Tests.Result.assert_success(result)
 
     @pytest.mark.parametrize(
@@ -602,7 +602,7 @@ class TestFlextHandlers:
             "Test None Message",
         )
         handler = ValidationTestHandler(config=config)
-        result = handler.validate(None)
+        result = handler.validate_input(None)
         _ = u.Tests.Result.assert_failure(result)
 
     def test_handlers_pydantic_model_validation(self) -> None:
@@ -617,7 +617,7 @@ class TestFlextHandlers:
         )
         handler = ValidationTestHandler(config=config)
         msg = TestMessage(value="test")
-        result = handler.validate(msg)
+        result = handler.validate_input(msg)
         _ = u.Tests.Result.assert_success(result)
 
     def test_handlers_dataclass_message_validation(self) -> None:
@@ -633,18 +633,16 @@ class TestFlextHandlers:
         )
         handler = ValidationTestHandler(config=config)
         msg = DataClassMessage(value="test", number=42)
-        result = handler.validate(msg)
+        result = handler.validate_input(msg)
         _ = u.Tests.Result.assert_success(result)
 
     def test_handlers_slots_message_validation(self) -> None:
         """Test __slots__ message validation."""
 
-        class SlotsMessage:
-            __slots__ = ("number", "value")
-
-            def __init__(self, value: str, number: int) -> None:
-                self.value = value
-                self.number = number
+        class SlotsMessage(BaseModel):
+            model_config = ConfigDict(frozen=True)
+            value: str
+            number: int
 
         config = FlextTestsUtilities.Tests.HandlerHelpers.create_handler_config(
             "test_slots_message",
@@ -652,7 +650,7 @@ class TestFlextHandlers:
         )
         handler = ValidationTestHandler(config=config)
         msg = SlotsMessage(value="test", number=42)
-        result = handler.validate(msg)
+        result = handler.validate_input(msg)
         _ = u.Tests.Result.assert_success(result)
 
 

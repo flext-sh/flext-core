@@ -11,6 +11,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import TypeVar, override
 
+from pydantic import BaseModel
+
 from flext_core import (
     FlextContainer,
     FlextContext,
@@ -116,7 +118,7 @@ class AssertionHelpers:
 
     @staticmethod
     def assert_entity_properties(
-        entity,
+        entity: BaseModel,
         expected_props: Mapping[str, t.ContainerValue],
         context: str = "",
     ) -> None:
@@ -264,7 +266,7 @@ class TestFixtureFactory:
     def create_test_service_result(
         *,
         success: bool = True,
-        value=None,
+        value: str | None = None,
         error: str = "Test error",
     ) -> TestResult[str]:
         """Create test service result fixture."""

@@ -39,7 +39,7 @@ class _BadItems(UserDict[str, object]):
 
     @override
     def items(self) -> ItemsView[str, object]:
-        """items method."""
+        """Items method."""
         msg = "bad items"
         raise RuntimeError(msg)
 
@@ -79,7 +79,7 @@ class _TakeCallable(Protocol):
 
 
 class _BuildApplyConvertCallable(Protocol):
-    def __call__(self, current: tuple[str] | str | int, operations: Mapping[str, object]) -> None: ...
+    def __call__(self, current: tuple[str, ...] | str | int, operations: Mapping[str, object]) -> None: ...
 
 
 class _ExtractTransformOptionsCallable(Protocol):
@@ -135,7 +135,7 @@ def _take_obj(
 
 
 def _build_apply_convert_obj(
-    current: tuple[str], operations: Mapping[str, object]
+    current: tuple[str, ...] | str | int, operations: Mapping[str, object]
 ) -> None:
     fn: _BuildApplyConvertCallable = getattr(u, "_build_apply_convert")
     return fn(current, operations)
@@ -229,8 +229,8 @@ class BadBool:
         raise ValueError(msg)
 
 
-def _parse_int(value: str) -> int:
-    return int(value)
+def _parse_int(value: t.NormalizedValue | BaseModel) -> int:
+    return int(cast("str", value))
 
 
 def _plus_one(value: int) -> int:
@@ -533,8 +533,8 @@ def test_filter_map_normalize_convert_helpers(mapper: type[u]) -> None:
 def test_convert_default_fallback_matrix(
     mapper: type[u],
     value: str | int,
-    convert_spec: Callable[..., object] | type[int] | type[float] | type[list[t.Scalar]] | type[dict[str, t.Scalar]] | type[tuple[t.Scalar, ...]] | type[set[t.Scalar]],
-    expected: int | float | list[t.Scalar] | dict[str, t.Scalar] | tuple[t.Scalar, ...],
+    convert_spec: type[int | float | list[t.Scalar] | dict[str, t.Scalar] | tuple[t.Scalar, ...] | set[t.Scalar]] | Callable[..., object],
+    expected: float | list[t.Scalar] | dict[str, t.Scalar] | tuple[t.Scalar, ...],
 ) -> None:
     operations = cast("Mapping[str, object]", {"convert": convert_spec})
     assert _build_apply_convert_obj(value, operations) == expected
@@ -1033,13 +1033,13 @@ def test_remaining_uncovered_branches(
         def get(self, key: str, default: int | None = None) -> int | None:
             return 1 if key == "k" else default
 
-    # CallableDictLike is not a Mapping/ConfigMap, so process_context_data
-    # treats it as non-dict data and returns empty result (no TypeError).
+    # CallableDictLike is a BaseModel, so process_context_data extracts its
+    # dict representation via model_dump() and merges both instances.
     callable_result = mapper.process_context_data(
         primary_data=CallableDictLike(),
         secondary_data=CallableDictLike(),
     )
-    assert callable_result == {}
+    assert callable_result == {"k": 1}
     obj_fields = mapper.fields(
         cast("object", AttrObject(name="n", value=3)),
         {"name": 0, "missing": 7},

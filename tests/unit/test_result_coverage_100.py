@@ -31,14 +31,12 @@ from flext_core import FlextResult, m, r, t
 
 class _ResultAssertions:
     @staticmethod
-    def assert_success(result) -> None:
+    def assert_success[T](result: r[T]) -> None:
         assert isinstance(result, r)
         assert result.is_success
 
     @staticmethod
-    def assert_failure(
-        result: FlextResult[int] | FlextResult[list[int]] | FlextResult[str],
-    ) -> None:
+    def assert_failure[T](result: r[T]) -> None:
         assert isinstance(result, r)
         assert not result.is_success
 
@@ -48,8 +46,8 @@ class _ResultAssertions:
         assert result.value == expected
 
     @staticmethod
-    def assert_failure_with_error(
-        result: FlextResult[int] | FlextResult[list[int]] | FlextResult[str],
+    def assert_failure_with_error[T](
+        result: r[T],
         expected_error: str,
     ) -> None:
         _ResultAssertions.assert_failure(result)
@@ -73,8 +71,8 @@ class TestrCoverage:
     )
     def test_ok_creates_success_with_various_types(
         self,
-        value,
-        expected,
+        value: t.GeneralValueType,
+        expected: t.GeneralValueType,
     ) -> None:
         """Test creating success results with different value types."""
         result = r[t.GeneralValueType].ok(value)
@@ -164,17 +162,17 @@ class TestrCoverage:
     def test_map_chain_multiple(self) -> None:
         """Test chaining multiple map operations."""
 
-        def double(x) -> int:
+        def double(x: int) -> int:
             if isinstance(x, int):
                 return x * 2
             return 0
 
-        def add_three(x) -> int:
+        def add_three(x: int) -> int:
             if isinstance(x, int):
                 return x + 3
             return 0
 
-        def to_str(x) -> str:
+        def to_str(x: int) -> str:
             return str(x)
 
         result = r[int].ok(5).map(double).map(add_three).map(to_str)
@@ -183,7 +181,7 @@ class TestrCoverage:
     def test_flat_map_success(self) -> None:
         """Test flat_map chaining results."""
 
-        def double_in_result(x) -> r[int]:
+        def double_in_result(x: int) -> r[int]:
             if isinstance(x, int):
                 return r[int].ok(x * 2)
             return r[int].fail("Not int")
@@ -195,7 +193,7 @@ class TestrCoverage:
     def test_flat_map_failure_propagates(self) -> None:
         """Test that flat_map propagates failure from inner result."""
 
-        def failing_op(x) -> r[str]:
+        def failing_op(x: int) -> r[str]:
             return r[str].fail("Inner failed")
 
         result = r[int].ok(5).flat_map(failing_op)
@@ -205,7 +203,7 @@ class TestrCoverage:
     def test_flat_map_initial_failure_skips(self) -> None:
         """Test that flat_map skips on initial failure."""
 
-        def double_in_result(x) -> r[int]:
+        def double_in_result(x: int) -> r[int]:
             if isinstance(x, int):
                 return r[int].ok(x * 2)
             return r[int].fail("Not int")
@@ -275,12 +273,12 @@ class TestrCoverage:
     def test_flow_through_chain_success(self) -> None:
         """Test flow_through chains multiple operations."""
 
-        def double(x) -> r[int]:
+        def double(x: int) -> r[int]:
             if isinstance(x, int):
                 return r[int].ok(x * 2)
             return r[int].fail("Not an int")
 
-        def add_ten(x) -> r[int]:
+        def add_ten(x: int) -> r[int]:
             if isinstance(x, int):
                 return r[int].ok(x + 10)
             return r[int].fail("Not an int")
@@ -292,13 +290,13 @@ class TestrCoverage:
     def test_flow_through_stops_on_failure(self) -> None:
         """Test flow_through stops processing on failure."""
 
-        def double(x) -> r[int]:
+        def double(x: str | int) -> r[str | int]:
             if isinstance(x, int):
-                return r[int].ok(x * 2)
-            return r[int].fail("Not an int")
+                return r[str | int].ok(x * 2)
+            return r[str | int].fail("Not an int")
 
-        def add_ten(x) -> r[int]:
-            return r[int].fail("Should not reach here")
+        def add_ten(x: str | int) -> r[str | int]:
+            return r[str | int].fail("Should not reach here")
 
         result = r[str].ok("test").flow_through(double, add_ten)
         _ResultAssertions.assert_failure(result)
@@ -360,7 +358,7 @@ class TestrCoverage:
     def test_traverse_success(self) -> None:
         """Test traverse with successful mapping."""
 
-        def double(x) -> r[int]:
+        def double(x: int) -> r[int]:
             if isinstance(x, int):
                 return r[int].ok(x * 2)
             return r[int].fail("Not int")
@@ -372,7 +370,7 @@ class TestrCoverage:
     def test_traverse_failure_propagates(self) -> None:
         """Test traverse stops on first failure."""
 
-        def double(x) -> r[int]:
+        def double(x: int) -> r[int]:
             if isinstance(x, int):
                 if x == 2:
                     return r[int].fail("Found 2")
@@ -416,7 +414,7 @@ class TestrCoverage:
 
     def test_with_resource_with_cleanup(self) -> None:
         """Test with_resource executes cleanup even on success."""
-        cleanups_called = []
+        cleanups_called: list[bool] = []
 
         def factory() -> m.ConfigMap:
             return m.ConfigMap(root={"id": 1})
@@ -424,7 +422,7 @@ class TestrCoverage:
         def operation(resource: m.ConfigMap) -> r[str]:
             return r[str].ok("success")
 
-        def cleanup(resource) -> None:
+        def cleanup(resource: m.ConfigMap) -> None:
             cleanups_called.append(True)
 
         result = r[str].with_resource(factory, operation, cleanup=cleanup)
@@ -507,22 +505,22 @@ class TestrCoverage:
     def test_complex_chaining_scenario(self) -> None:
         """Test complex chaining of operations."""
 
-        def double(x) -> int:
+        def double(x: int) -> int:
             if isinstance(x, int):
                 return x * 2
             return 0
 
-        def add_three(x) -> r[int]:
+        def add_three(x: int) -> r[int]:
             if isinstance(x, int):
                 return r[int].ok(x + 3)
             return r[int].fail("Not int")
 
-        def is_gt_10(x) -> bool:
+        def is_gt_10(x: int) -> bool:
             if isinstance(x, int):
                 return x > 10
             return False
 
-        def to_str(x) -> str:
+        def to_str(x: int) -> str:
             return str(x)
 
         result = (

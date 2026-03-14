@@ -24,9 +24,9 @@ from typing import Annotated, ClassVar, cast
 import pytest
 from pydantic import BaseModel, Field
 
-from flext_core import FlextExceptions, FlextRuntime, c, m, p, r, u
+from flext_core import FlextExceptions, FlextRuntime, c, m, p, u
 from flext_tests import t
-from tests._models import (
+from tests.unit._models import (
     BadConfigForTest,
     ConfigModelForTest,
     InvalidModelForTest,
@@ -37,9 +37,9 @@ from tests._models import (
 class _Assertions:
     @staticmethod
     def that(
-        value,
+        value: t.Tests.object,
         *,
-        eq=None,
+        eq: t.Tests.object = None,
         none: bool | None = None,
         contains: str | None = None,
         msg: str = "",
@@ -57,18 +57,18 @@ class _Assertions:
 
 class _ResultAssertions:
     @staticmethod
-    def assert_success_with_value(
-        result: FlextRuntime.RuntimeResult[bool], expected: bool
+    def assert_success_with_value[T](
+        result: FlextRuntime.RuntimeResult[T], expected: T
     ) -> None:
         assert hasattr(result, "is_success") and getattr(result, "is_success")
         assert getattr(result, "value") == expected
 
     @staticmethod
-    def assert_result_success(result: r[bool]) -> None:
+    def assert_result_success[T](result: FlextRuntime.RuntimeResult[T]) -> None:
         assert hasattr(result, "is_success") and getattr(result, "is_success")
 
     @staticmethod
-    def assert_result_failure(result: r[bool]) -> None:
+    def assert_result_failure[T](result: FlextRuntime.RuntimeResult[T]) -> None:
         assert hasattr(result, "is_failure") and getattr(result, "is_failure")
 
     assert_success = assert_result_success
@@ -271,7 +271,7 @@ class TestFlextUtilitiesConfiguration:
         def test_from_dict(
             self,
             param_name: str,
-            expected_value,
+            expected_value: t.Tests.object,
         ) -> None:
             """Test get_parameter from dict-like object."""
             config_dict = self._create_test_dict()
@@ -319,7 +319,7 @@ class TestFlextUtilitiesConfiguration:
         def test_from_pydantic_model(
             self,
             param_name: str,
-            expected_value,
+            expected_value: t.Tests.object,
         ) -> None:
             """Test get_parameter from Pydantic model."""
             config = ConfigModelForTest(
@@ -374,7 +374,7 @@ class TestFlextUtilitiesConfiguration:
         def test_from_attribute_access(
             self,
             param_name: str,
-            expected_value,
+            expected_value: t.Tests.object,
         ) -> None:
             """Test get_parameter from object attribute access."""
             config = DataclassConfigForTest(
@@ -434,7 +434,7 @@ class TestFlextUtilitiesConfiguration:
         def test_boundary_values(
             self,
             param_name: str,
-            expected_value,
+            expected_value: t.Tests.object,
         ) -> None:
             """Test get_parameter with boundary values."""
             config_dict = self._create_boundary_dict()
@@ -462,7 +462,7 @@ class TestFlextUtilitiesConfiguration:
         def test_on_pydantic_model_success(
             self,
             param_name: str,
-            value,
+            value: t.Tests.object,
             expected_success: bool,
         ) -> None:
             """Test set_parameter on Pydantic model with validation."""
@@ -496,7 +496,7 @@ class TestFlextUtilitiesConfiguration:
         def test_on_pydantic_model_validation_error(
             self,
             param_name: str,
-            value,
+            value: t.Tests.object,
         ) -> None:
             """Test set_parameter handles Pydantic validation errors."""
             config = ConfigModelForTest(name=TestConfigConstants.TestValues.TEST_NAME)
@@ -542,7 +542,7 @@ class TestFlextUtilitiesConfiguration:
         def test_boundary_values(
             self,
             param_name: str,
-            value,
+            value: t.Tests.object,
         ) -> None:
             """Test set_parameter with boundary values."""
             config = ConfigModelForTest(name=TestConfigConstants.TestValues.TEST_NAME)
@@ -574,7 +574,7 @@ class TestFlextUtilitiesConfiguration:
         def test_get_singleton_success(
             self,
             param_name: str,
-            expected_value,
+            expected_value: t.Tests.object,
         ) -> None:
             """Test get_singleton from singleton class."""
             result = u.get_singleton(SingletonClassForTest, param_name)

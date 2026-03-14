@@ -10,6 +10,7 @@ import pytest
 
 from flext_core import c, m, r, t, u
 from flext_core._utilities.parser import FlextUtilitiesParser
+from flext_tests import t as test_t
 
 from ._models import _Model
 
@@ -164,7 +165,7 @@ def test_parser_pipeline_and_pattern_branches(monkeypatch: pytest.MonkeyPatch) -
     parser3 = u()
     original_hasattr = hasattr
 
-    def _patched_hasattr(obj: t.Tests.object, name: str) -> bool:
+    def _patched_hasattr(obj: test_t.Tests.object, name: str) -> bool:
         if name == "__class__":
             return False
         return original_hasattr(obj, name)

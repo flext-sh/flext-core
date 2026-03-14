@@ -5,9 +5,8 @@ from __future__ import annotations
 import sys
 import types
 from collections.abc import Callable, Mapping
-from pathlib import Path
 from types import ModuleType
-from typing import ClassVar, Protocol, Self, cast
+from typing import ClassVar, Self, cast
 
 import pytest
 from pydantic import BaseModel
@@ -16,28 +15,7 @@ from pydantic_settings import BaseSettings as _BaseSettings
 from flext_core import FlextContainer, FlextContext, FlextSettings, m, r
 from flext_tests import t
 
-
-class _MonkeyPatch(Protocol):
-    def setattr(
-        self,
-        target: type[FlextContainer | FlextSettings] | FlextContainer | str,
-        name: t.Tests.object | str | None = None,
-        value: t.Tests.object | None = None,
-        raising: bool = True,
-    ) -> None: ...
-    def setitem(
-        self, dic: dict[str, ModuleType], name: str, value: ModuleType
-    ) -> None: ...
-    def delitem(
-        self, dic: dict[str, ModuleType], name: str, raising: bool = True
-    ) -> None: ...
-    def delattr(
-        self, target: t.Tests.object | str, name: str, raising: bool = True
-    ) -> None: ...
-    def setenv(self, name: str, value: str, prepend: str | None = None) -> None: ...
-    def delenv(self, name: str, raising: bool = True) -> None: ...
-    def syspath_prepend(self, path: str | Path) -> None: ...
-    def chdir(self, path: str | Path) -> None: ...
+_MonkeyPatch = pytest.MonkeyPatch
 
 
 class _FalseConfig:

@@ -278,9 +278,8 @@ class FlextInfraCodegenFixer(s):
                 import_texts.append(text)
         return import_texts
 
-    @classmethod
     def _write_changes(
-        cls,
+        self,
         *,
         source_path: Path,
         target_path: Path,
@@ -297,6 +296,8 @@ class FlextInfraCodegenFixer(s):
         add re-export import to source, add imports+definitions to target,
         normalize both files with ruff.
         """
+        if self._dry_run:
+            return
         encoding = c.Infra.Encoding.DEFAULT
         source_text = source_path.read_text(encoding=encoding)
         source_lines = source_text.splitlines()
@@ -313,7 +314,7 @@ class FlextInfraCodegenFixer(s):
             ranges.append((start, end))
 
         # 2. Collect required imports for target
-        import_texts = cls._collect_import_texts_for_nodes(
+        import_texts = self._collect_import_texts_for_nodes(
             nodes_moved,
             source_lines,
             source_tree,
@@ -329,14 +330,14 @@ class FlextInfraCodegenFixer(s):
         re_export = f"from {pkg_name}.{target_module} import " + ", ".join(
             sorted(moved_names)
         )
-        source_result = cls._insert_import_text(source_result, re_export)
+        source_result = self._insert_import_text(source_result, re_export)
         if source_text.endswith("\n") and not source_result.endswith("\n"):
             source_result += "\n"
 
         # 5. Add imports + definitions to target
         target_result = target_text
         for imp in import_texts:
-            target_result = cls._insert_import_text(target_result, imp)
+            target_result = self._insert_import_text(target_result, imp)
         for block in extracted:
             target_result = target_result.rstrip() + "\n\n\n" + block + "\n"
 
@@ -413,13 +414,19 @@ class FlextInfraCodegenFixer(s):
             label=f"codegen-fix:{project_path.name}",
         )
         stash_ref = checkpoint_result.value if checkpoint_result.is_success else ""
-        if not self._dry_run:
-            self._apply_ns_rules(
-                src_dir=src_dir,
-                pkg_dir=pkg_dir,
+        self._apply_ns_rules(
+            src_dir=src_dir,
+            pkg_dir=pkg_dir,
+            violations_fixed=violations_fixed,
+            violations_skipped=violations_skipped,
+            files_modified=files_modified,
+        )
+        if self._dry_run:
+            return m.Infra.Codegen.AutoFixResult(
+                project=project_path.name,
                 violations_fixed=violations_fixed,
                 violations_skipped=violations_skipped,
-                files_modified=files_modified,
+                files_modified=sorted(files_modified),
             )
         report = self._apply_project_mro_migrations(
             project_path=project_path,
