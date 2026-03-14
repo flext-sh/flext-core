@@ -31,7 +31,7 @@ from pydantic import TypeAdapter, ValidationError
 from python_on_whales import DockerClient as WhalesDockerClient
 
 from flext_core import FlextLogger, r
-from flext_tests import c, m
+from flext_tests import c, m, t
 
 docker: WhalesDockerClient = WhalesDockerClient(client_type="docker")
 logger: FlextLogger = FlextLogger(__name__)
@@ -128,7 +128,7 @@ class FlextTestsDocker:
         return str(host_port)
 
     @staticmethod
-    def _normalize_bindings(bindings: object) -> list[dict[str, str]]:
+    def _normalize_bindings(bindings: t.Tests.object) -> list[dict[str, str]]:
         try:
             return _HOST_BINDINGS_ADAPTER.validate_python(bindings)
         except ValidationError:
