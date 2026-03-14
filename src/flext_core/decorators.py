@@ -727,11 +727,25 @@ class FlextDecorators:
                     retry_on_status_codes=[],
                 )
                 try:
-                    retry_args = args
-                    retry_kwargs: dict[str, t.NormalizedValue | BaseModel] = {
-                        str(key): FlextRuntime.normalize_to_container(value)
-                        for key, value in kwargs.items()
-                    }
+                    retry_args: tuple[t.NormalizedValue | BaseModel, ...] = tuple(
+                        FlextRuntime.normalize_to_container(a)
+                        if isinstance(
+                            a, (str, int, float, bool, datetime, Path, BaseModel, list, dict)
+                        )
+                        else str(a) if a is not None else ""
+                        for a in args
+                    )
+                    retry_kwargs: dict[str, t.NormalizedValue | BaseModel] = {}
+                    for key, value in kwargs.items():
+                        if isinstance(
+                            value,
+                            (str, int, float, bool, datetime, Path, BaseModel, list, dict),
+                        ):
+                            retry_kwargs[str(key)] = FlextRuntime.normalize_to_container(
+                                value
+                            )
+                        elif value is not None:
+                            retry_kwargs[str(key)] = str(value)
                     retry_result = FlextDecorators._execute_retry_loop(
                         retry_func,
                         retry_args,

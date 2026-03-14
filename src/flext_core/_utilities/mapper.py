@@ -2065,6 +2065,36 @@ class FlextUtilitiesMapper:
         )
 
     @staticmethod
+    def _narrow_dict_to_container(
+        raw: Mapping[str, t.NormalizedValue | t.MetadataValue | BaseModel],
+    ) -> dict[str, t.NormalizedValue]:
+        """Convert a mapping with heterogeneous values to NormalizedValue dict."""
+        result: dict[str, t.NormalizedValue] = {}
+        for k, v in raw.items():
+            if isinstance(v, BaseModel):
+                result[str(k)] = FlextUtilitiesMapper.narrow_to_container(v)
+            elif isinstance(v, (*t.CONTAINER_TYPES, list, dict, tuple)):
+                result[str(k)] = FlextUtilitiesMapper.narrow_to_container(v)
+            elif v is not None:
+                result[str(k)] = str(v)
+        return result
+
+    @staticmethod
+    def _narrow_list_to_container(
+        raw: Sequence[t.NormalizedValue | t.MetadataValue | BaseModel],
+    ) -> list[t.NormalizedValue]:
+        """Convert a sequence with heterogeneous values to NormalizedValue list."""
+        result: list[t.NormalizedValue] = []
+        for item in raw:
+            if isinstance(item, BaseModel):
+                result.append(FlextUtilitiesMapper.narrow_to_container(item))
+            elif isinstance(item, (*t.CONTAINER_TYPES, list, dict, tuple)):
+                result.append(FlextUtilitiesMapper.narrow_to_container(item))
+            elif item is not None:
+                result.append(str(item))
+        return result
+
+    @staticmethod
     def narrow_to_container(
         value: t.NormalizedValue
         | t.MetadataValue
@@ -2093,25 +2123,14 @@ class FlextUtilitiesMapper:
                 str(k): FlextUtilitiesMapper.narrow_to_container(v)
                 for k, v in model_dict.items()
             }
+        if isinstance(value, dict):
+            return FlextUtilitiesMapper._narrow_dict_to_container(value)
         if isinstance(value, Mapping):
-            result_dict: dict[str, t.NormalizedValue] = {}
-            for mk in value:
-                mv = value[mk]
-                if isinstance(mv, (*t.CONTAINER_TYPES, list, dict, tuple)):
-                    result_dict[str(mk)] = FlextUtilitiesMapper.narrow_to_container(mv)
-                elif isinstance(mv, BaseModel):
-                    result_dict[str(mk)] = FlextUtilitiesMapper.narrow_to_container(mv)
-                elif mv is not None:
-                    result_dict[str(mk)] = str(mv)
-            return result_dict
-        if isinstance(value, (list, tuple)) and not isinstance(value, str):
-            norm_list: list[t.NormalizedValue] = []
-            for seq_item in value:
-                if isinstance(seq_item, (*t.CONTAINER_TYPES, list, dict, tuple, BaseModel)):
-                    norm_list.append(FlextUtilitiesMapper.narrow_to_container(seq_item))
-                elif seq_item is not None:
-                    norm_list.append(str(seq_item))
-            return norm_list
+            return FlextUtilitiesMapper._narrow_dict_to_container(dict(value))
+        if isinstance(value, list):
+            return FlextUtilitiesMapper._narrow_list_to_container(value)
+        if isinstance(value, tuple):
+            return FlextUtilitiesMapper._narrow_list_to_container(list(value))
         return str(value)
 
     @staticmethod

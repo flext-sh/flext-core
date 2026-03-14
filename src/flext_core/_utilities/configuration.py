@@ -45,6 +45,7 @@ from __future__ import annotations
 import logging
 import os
 from collections.abc import Callable, Mapping
+from datetime import datetime
 from pathlib import Path
 
 from pydantic import BaseModel
@@ -239,8 +240,19 @@ class FlextUtilitiesConfiguration:
                 dump_normalized = dump_result
             elif isinstance(dump_result, BaseModel):
                 dump_normalized = dump_result
-            elif isinstance(dump_result, dict):
-                dump_normalized = FlextRuntime.normalize_to_container(dump_result)
+            elif isinstance(dump_result, Mapping):
+                typed_dump: dict[str, t.NormalizedValue] = {}
+                for dk_raw, dv_raw in dump_result.items():
+                    dk_str = str(dk_raw)
+                    if isinstance(
+                        dv_raw, (str, int, float, bool, datetime, Path)
+                    ):
+                        typed_dump[dk_str] = dv_raw
+                    elif dv_raw is None:
+                        typed_dump[dk_str] = None
+                    else:
+                        typed_dump[dk_str] = str(dv_raw)
+                dump_normalized = typed_dump
             else:
                 dump_normalized = str(dump_result)
             obj_dict: t.NormalizedValue | BaseModel = dump_normalized
@@ -557,32 +569,55 @@ class FlextUtilitiesConfiguration:
             )
             if found:
                 return value
+            duck_obj: p.HasModelDump | BaseModel | p.Base = obj
+            found2, duck_val = FlextUtilitiesConfiguration._try_get_from_duck_model_dump(
+                duck_obj, parameter
+            )
+            if found2:
+                return duck_val
+            found3, attr_v = FlextUtilitiesConfiguration._try_get_attr(
+                duck_obj, parameter
+            )
+            if found3:
+                return attr_v
+            class_name = duck_obj.__class__.__name__
+            msg = f"Parameter '{parameter}' is not defined in {class_name}"
+            raise e.NotFoundError(msg)
         if isinstance(obj, Mapping):
-            typed_mapping: Mapping[str, t.NormalizedValue | BaseModel] = obj
+            map_obj: Mapping[str, t.NormalizedValue | BaseModel] = obj
             found, value = FlextUtilitiesConfiguration._try_get_from_dict_like(
-                typed_mapping, parameter
+                map_obj, parameter
             )
             if found:
                 return value
-        narrowed_obj: p.HasModelDump | BaseModel | p.Base
         if isinstance(obj, BaseModel):
-            narrowed_obj = obj
-        elif isinstance(obj, p.HasModelDump):
-            narrowed_obj = obj
-        else:
-            narrowed_obj = obj
-        found, duck_value = FlextUtilitiesConfiguration._try_get_from_duck_model_dump(
-            narrowed_obj, parameter
+            base_obj: p.HasModelDump | BaseModel | p.Base = obj
+            found4, duck_v2 = FlextUtilitiesConfiguration._try_get_from_duck_model_dump(
+                base_obj, parameter
+            )
+            if found4:
+                return duck_v2
+            found5, attr_v2 = FlextUtilitiesConfiguration._try_get_attr(
+                base_obj, parameter
+            )
+            if found5:
+                return attr_v2
+            class_name2 = base_obj.__class__.__name__
+            msg = f"Parameter '{parameter}' is not defined in {class_name2}"
+            raise e.NotFoundError(msg)
+        plain_obj: p.HasModelDump | BaseModel | p.Base = obj
+        found6, duck_v3 = FlextUtilitiesConfiguration._try_get_from_duck_model_dump(
+            plain_obj, parameter
         )
-        if found:
-            return duck_value
-        found, attr_val = FlextUtilitiesConfiguration._try_get_attr(
-            narrowed_obj, parameter
+        if found6:
+            return duck_v3
+        found7, attr_v3 = FlextUtilitiesConfiguration._try_get_attr(
+            plain_obj, parameter
         )
-        if found:
-            return attr_val
-        class_name = narrowed_obj.__class__.__name__
-        msg = f"Parameter '{parameter}' is not defined in {class_name}"
+        if found7:
+            return attr_v3
+        class_name3 = plain_obj.__class__.__name__
+        msg = f"Parameter '{parameter}' is not defined in {class_name3}"
         raise e.NotFoundError(msg)
 
     @staticmethod

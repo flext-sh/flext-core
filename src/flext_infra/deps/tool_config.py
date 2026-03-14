@@ -10,16 +10,16 @@ from yaml import YAMLError, safe_load
 
 from flext_core import r
 from flext_infra import c, t
-from flext_infra.deps._models import ToolConfigDocument
+from flext_infra.deps._models import FlextInfraDepsModels
 
 
 class FlextInfraDependencyToolConfig:
     """Load and cache dependency tool configuration."""
 
-    _cache: r[ToolConfigDocument] | None = None
+    _cache: r[FlextInfraDepsModels.ToolConfigDocument] | None = None
 
     @staticmethod
-    def _load_tool_config_cached() -> r[ToolConfigDocument]:
+    def _load_tool_config_cached() -> r[FlextInfraDepsModels.ToolConfigDocument]:
         """Load, validate, and cache tool_config.yml."""
         if FlextInfraDependencyToolConfig._cache is not None:
             return FlextInfraDependencyToolConfig._cache
@@ -33,14 +33,14 @@ class FlextInfraDependencyToolConfig:
             )
             parsed_raw: t.Infra.TomlValue | None = safe_load(raw_text)
             if not isinstance(parsed_raw, Mapping):
-                result = r[ToolConfigDocument].fail(
+                result = r[FlextInfraDepsModels.ToolConfigDocument].fail(
                     "tool_config.yml must contain a top-level mapping",
                 )
                 FlextInfraDependencyToolConfig._cache = result
                 return result
             payload: t.Infra.TomlConfig = dict(parsed_raw.items())
-            validated = ToolConfigDocument.model_validate(payload)
-            result = r[ToolConfigDocument].ok(validated)
+            validated = FlextInfraDepsModels.ToolConfigDocument.model_validate(payload)
+            result = r[FlextInfraDepsModels.ToolConfigDocument].ok(validated)
             FlextInfraDependencyToolConfig._cache = result
             return result
         except (
@@ -50,14 +50,14 @@ class FlextInfraDependencyToolConfig:
             ValidationError,
             TypeError,
         ) as exc:
-            result = r[ToolConfigDocument].fail(
+            result = r[FlextInfraDepsModels.ToolConfigDocument].fail(
                 f"failed to load tool_config.yml: {exc}",
             )
             FlextInfraDependencyToolConfig._cache = result
             return result
 
     @staticmethod
-    def load_tool_config() -> r[ToolConfigDocument]:
+    def load_tool_config() -> r[FlextInfraDepsModels.ToolConfigDocument]:
         """Public cached accessor for tool_config.yml."""
         return FlextInfraDependencyToolConfig._load_tool_config_cached()
 
