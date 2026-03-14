@@ -28,11 +28,11 @@ from pydantic import BaseModel, TypeAdapter, ValidationError
 from flext_core import r
 from flext_tests import FlextTestsUtilityBase as s, c, m, t, u
 
-_TEST_CONTAINER_LIST_ADAPTER = TypeAdapter(list[object])
-_TEST_CONTAINER_DICT_ADAPTER = TypeAdapter(dict[str, object])
+_TEST_CONTAINER_LIST_ADAPTER = TypeAdapter(list[t.Tests.object])
+_TEST_CONTAINER_DICT_ADAPTER = TypeAdapter(dict[str, t.Tests.object])
 
 
-def _to_payload_value(value: object) -> t.Tests.object:
+def _to_payload_value(value: t.Tests.object) -> t.Tests.object:
     if value is None:
         return None
     if isinstance(value, str | int | float | bool | bytes | BaseModel):
@@ -46,7 +46,7 @@ def _to_payload_value(value: object) -> t.Tests.object:
     return str(value)
 
 
-def _to_guard_input(value: t.Tests.object) -> object:
+def _to_guard_input(value: t.Tests.object) -> t.Tests.object:
     if value is None or isinstance(value, (*t.PRIMITIVES_TYPES, BaseModel)):
         return value
     if isinstance(value, Mapping):
@@ -341,7 +341,7 @@ class FlextTestsFactories(s[t.Tests.object]):
 
         """
         try:
-            validate_data: dict[str, object] = {"type_": type_, **kwargs}
+            validate_data: dict[str, t.Tests.object] = {"type_": type_, **kwargs}
             if "kwargs" in validate_data:
                 validate_data["call_kwargs"] = validate_data.pop("kwargs")
             params = m.Tests.GenericFactoryParams.model_validate(validate_data)
@@ -793,7 +793,7 @@ class FlextTestsFactories(s[t.Tests.object]):
         *,
         error_message: str = c.Tests.Factory.ERROR_DEFAULT,
         result_value: t.Tests.TestResultValue = c.Tests.Factory.SUCCESS_MESSAGE,
-    ) -> Callable[..., object]:
+    ) -> Callable[..., t.Tests.object]:
         """Unified operation factory - creates callable test operations.
 
         This is the preferred way to create test operations. Use tt.op() instead of

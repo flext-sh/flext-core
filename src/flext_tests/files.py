@@ -41,20 +41,20 @@ _OperationLiteral = Literal["create", "read", "delete"]
 _ErrorModeLiteral = Literal["stop", "skip", "collect"]
 TestsFileContent = t.Tests.FileContent
 _YAMLError = YAMLError
-_OBJECT_LIST_ADAPTER = TypeAdapter(list[object])
+_OBJECT_LIST_ADAPTER = TypeAdapter(list[t.Tests.object])
 
 
-def _yaml_safe_load(raw: str) -> object | list[object]:
+def _yaml_safe_load(raw: str) -> t.Tests.object | list[t.Tests.object]:
     return yaml_safe_load(raw)
 
 
-def _yaml_dump(value: object, *, indent: int) -> str:
+def _yaml_dump(value: t.Tests.object, *, indent: int) -> str:
     return str(
         yaml_dump(value, default_flow_style=False, allow_unicode=True, indent=indent)
     )
 
 
-def _is_batch_content(content_raw: object) -> TypeGuard[t.Tests.object]:
+def _is_batch_content(content_raw: t.Tests.object) -> TypeGuard[t.Tests.object]:
     try:
         _ = m.Tests.CreateParams.model_validate({
             "content": content_raw,
@@ -242,7 +242,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             yield paths
 
     @staticmethod
-    def _is_mapping(value: object) -> TypeGuard[Mapping[str, object]]:
+    def _is_mapping(value: t.Tests.object) -> TypeGuard[Mapping[str, t.Tests.object]]:
         return isinstance(value, Mapping)
 
     @staticmethod
@@ -818,25 +818,25 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                 _ = file_path.write_bytes(str(actual_content).encode(params.enc))
         elif actual_fmt == c.Tests.Files.Format.JSON:
             if isinstance(actual_content, Mapping):
-                data: dict[str, object] = {
+                data: dict[str, t.Tests.object] = {
                     str(key): value for key, value in actual_content.items()
                 }
             else:
-                empty_data: dict[str, object] = {}
+                empty_data: dict[str, t.Tests.object] = {}
                 data = {"value": actual_content} if actual_content else empty_data
             json_str = (
-                TypeAdapter(dict[str, object])
+                TypeAdapter(dict[str, t.Tests.object])
                 .dump_json(data, indent=params.indent)
                 .decode()
             )
             _ = file_path.write_text(json_str, encoding=params.enc)
         elif actual_fmt == c.Tests.Files.Format.YAML:
             if isinstance(actual_content, Mapping):
-                data_yaml: dict[str, object] = {
+                data_yaml: dict[str, t.Tests.object] = {
                     str(key): value for key, value in actual_content.items()
                 }
             else:
-                empty_data_y: dict[str, object] = {}
+                empty_data_y: dict[str, t.Tests.object] = {}
                 data_yaml = (
                     {"value": actual_content} if actual_content else empty_data_y
                 )
@@ -1105,7 +1105,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                 )
             elif actual_fmt == c.Tests.Files.Format.JSON:
                 text = params.path.read_text(encoding=params.enc)
-                parsed_json = TypeAdapter(dict[str, object]).validate_json(
+                parsed_json = TypeAdapter(dict[str, t.Tests.object]).validate_json(
                     text.encode()
                 )
                 content = self._coerce_read_content(parsed_json)
@@ -1175,11 +1175,11 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
 
     def _apply_key_filtering(
         self,
-        dict1: Mapping[str, object],
-        dict2: Mapping[str, object],
+        dict1: Mapping[str, t.Tests.object],
+        dict2: Mapping[str, t.Tests.object],
         keys: list[str] | None,
         exclude_keys: list[str] | None,
-    ) -> tuple[Mapping[str, object], Mapping[str, object]]:
+    ) -> tuple[Mapping[str, t.Tests.object], Mapping[str, t.Tests.object]]:
         """Apply key filtering to both dicts if specified."""
         if keys is None and exclude_keys is None:
             return (dict1, dict2)
@@ -1200,14 +1200,14 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         return (dict1, dict2)
 
     def _coerce_file_content(
-        self, value: object
+        self, value: t.Tests.object
     ) -> str | bytes | m.ConfigMap | Sequence[Sequence[str]] | BaseModel:
         if isinstance(value, str | bytes):
             return value
         if isinstance(value, BaseModel):
             return value
         if self._is_mapping(value):
-            mapping_value: Mapping[str, object] = value
+            mapping_value: Mapping[str, t.Tests.object] = value
             return m.ConfigMap(
                 root={
                     str(key): FlextRuntime.normalize_to_general_value(
@@ -1230,7 +1230,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         return str(value)
 
     def _coerce_read_content(
-        self, value: object
+        self, value: t.Tests.object
     ) -> str | bytes | m.ConfigMap | list[list[str]]:
         if isinstance(value, str | bytes):
             return value
@@ -1329,7 +1329,9 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             return self._coerce_file_content(resolved_value)
         return self._coerce_file_content(content)
 
-    def _is_nested_rows(self, value: object) -> TypeGuard[Sequence[Sequence[object]]]:
+    def _is_nested_rows(
+        self, value: t.Tests.object
+    ) -> TypeGuard[Sequence[Sequence[t.Tests.object]]]:
         if not isinstance(value, Sequence) or isinstance(value, str | bytes):
             return False
         try:
@@ -1344,7 +1346,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         return True
 
     def _mapping_to_payload(
-        self, mapping: Mapping[str, object]
+        self, mapping: Mapping[str, t.Tests.object]
     ) -> Mapping[str, t.Tests.object]:
         payload: dict[str, t.Tests.object] = {}
         for key, value in mapping.items():
@@ -1405,13 +1407,15 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                 if fmt == "json":
                     if text.strip():
                         try:
-                            parsed_raw: object | list[object] = TypeAdapter(
-                                dict[str, object]
-                            ).validate_json(text.encode())
-                        except ValidationError:
-                            parsed_raw = TypeAdapter(list[object]).validate_json(
-                                text.encode()
+                            parsed_raw: t.Tests.object | list[t.Tests.object] = (
+                                TypeAdapter(dict[str, t.Tests.object]).validate_json(
+                                    text.encode()
+                                )
                             )
+                        except ValidationError:
+                            parsed_raw = TypeAdapter(
+                                list[t.Tests.object]
+                            ).validate_json(text.encode())
                     else:
                         parsed_raw = m.ConfigMap(root={}).root
                 else:
@@ -1481,7 +1485,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         self._created_dirs.append(temp_dir)
         return temp_dir
 
-    def _to_config_map_value(self, value: t.Tests.object) -> object:
+    def _to_config_map_value(self, value: t.Tests.object) -> t.Tests.object:
         if value is None or isinstance(value, (*t.PRIMITIVES_TYPES, BaseModel, Path)):
             return value
         if isinstance(value, bytes):
@@ -1503,7 +1507,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             ]
         return str(value)
 
-    def _to_payload_value(self, value: object) -> t.Tests.object:
+    def _to_payload_value(self, value: t.Tests.object) -> t.Tests.object:
         if value is None:
             return None
         if isinstance(value, str):
@@ -1536,45 +1540,16 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
 
     def _try_deep_compare(
         self,
-        content1_raw: str,
-        content2_raw: str,
+        content1: str,
+        content2: str,
         keys: list[str] | None,
         exclude_keys: list[str] | None,
-    ) -> r[bool] | None:
-        """Try to parse and deeply compare content as JSON or YAML.
-
-        Returns None if content cannot be parsed as structured data.
-        """
-        parsed = self._try_parse_both(content1_raw, content2_raw, "json")
-        if parsed is None:
-            parsed = self._try_parse_both(content1_raw, content2_raw, "yaml")
-        if parsed is None:
-            return None
-        dict1, dict2 = parsed
-        filter_keys_set = set(keys) if keys is not None else None
-        exclude_keys_set = set(exclude_keys) if exclude_keys is not None else None
-        left_result = u.transform(
-            m.ConfigMap(root=dict(dict1.items())),
-            filter_keys=filter_keys_set,
-            exclude_keys=exclude_keys_set,
-        )
-        right_result = u.transform(
-            m.ConfigMap(root=dict(dict2.items())),
-            filter_keys=filter_keys_set,
-            exclude_keys=exclude_keys_set,
-        )
-        if left_result.is_failure or right_result.is_failure:
-            return r[bool].ok(False)
-        return r[bool].ok(u.deep_eq(left_result.value, right_result.value))
-
-    def _try_parse_both(
-        self, content1: str, content2: str, fmt: str
-    ) -> tuple[Mapping[str, object], Mapping[str, object]] | None:
+    ) -> tuple[Mapping[str, t.Tests.object], Mapping[str, t.Tests.object]] | None:
         """Try to parse both contents as dicts in given format."""
         try:
             match fmt:
                 case "json":
-                    adapter = TypeAdapter(dict[str, object])
+                    adapter = TypeAdapter(dict[str, t.Tests.object])
                     dict1_raw = adapter.validate_json(content1.encode())
                     dict2_raw = adapter.validate_json(content2.encode())
                 case "yaml":
