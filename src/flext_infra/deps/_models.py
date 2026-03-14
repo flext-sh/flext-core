@@ -500,19 +500,19 @@ class DeptryIssueGroups(FlextModels.ArbitraryTypesModel):
     dep001: Annotated[
         list[Mapping[str, str | int | float | bool | None]],
         Field(description="DEP001 issues"),
-    ] = Field(default_factory=list)
+    ] = Field(default_factory=lambda: [])
     dep002: Annotated[
         list[Mapping[str, str | int | float | bool | None]],
         Field(description="DEP002 issues"),
-    ] = Field(default_factory=list)
+    ] = Field(default_factory=lambda: [])
     dep003: Annotated[
         list[Mapping[str, str | int | float | bool | None]],
         Field(description="DEP003 issues"),
-    ] = Field(default_factory=list)
+    ] = Field(default_factory=lambda: [])
     dep004: Annotated[
         list[Mapping[str, str | int | float | bool | None]],
         Field(description="DEP004 issues"),
-    ] = Field(default_factory=list)
+    ] = Field(default_factory=lambda: [])
 
 
 class DeptryReport(FlextModels.ArbitraryTypesModel):

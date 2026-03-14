@@ -35,8 +35,6 @@ from flext_core.typings import RegistryBindingKey
 
 type RegistrablePlugin = t.RegistrablePlugin
 
-_RegistrationDetails = FlextModelsHandler.RegistrationDetails
-
 
 class FlextRegistry(s[bool]):
     """Application-layer registry for CQRS handlers.
@@ -58,7 +56,7 @@ class FlextRegistry(s[bool]):
         success indicators for batch handler operations.
         """
 
-        registered: list[_RegistrationDetails] = Field(
+        registered: list[m.RegistrationDetails] = Field(
             default_factory=list,
             description="Successfully registered handlers with registration details.",
         )
@@ -360,7 +358,7 @@ class FlextRegistry(s[bool]):
         self,
         handler: t.HandlerLike,
         _metadata: m.ConfigMap | m.Metadata | None = None,
-    ) -> r[_RegistrationDetails]:
+    ) -> r[m.RegistrationDetails]:
         """Register a handler instance or callable.
 
         Re-registration is ignored and treated as success to guarantee
@@ -368,7 +366,7 @@ class FlextRegistry(s[bool]):
         the same handler.
 
         Returns:
-            r[_RegistrationDetails]: Success result with registration details.
+            r[m.RegistrationDetails]: Success result with registration details.
 
         """
         handler_id = str(getattr(handler, "handler_id", id(handler)))
@@ -388,13 +386,13 @@ class FlextRegistry(s[bool]):
         )
 
         if registration_result.is_failure:
-            return r[_RegistrationDetails].fail(
+            return r[m.RegistrationDetails].fail(
                 registration_result.error or "Dispatcher registration failed"
             )
 
         self._registered_keys.add(handler_id)
-        return r[_RegistrationDetails].ok(
-            _RegistrationDetails(
+        return r[m.RegistrationDetails].ok(
+            m.RegistrationDetails(
                 registration_id=handler_id,
                 handler_mode=handler_mode,
                 status=status,
@@ -504,7 +502,7 @@ class FlextRegistry(s[bool]):
     def _add_successful_registration(
         self,
         key: str,
-        registration: _RegistrationDetails,
+        registration: m.RegistrationDetails,
         summary: FlextRegistry.Summary,
     ) -> None:
         """Add successful registration to summary."""
@@ -513,7 +511,7 @@ class FlextRegistry(s[bool]):
 
     def _create_registration_details(
         self, reg_result: m.RegistrationResult, key: str
-    ) -> _RegistrationDetails:
+    ) -> m.RegistrationDetails:
         """Create RegistrationDetails from registration result (DRY helper).
 
         Args:
@@ -532,7 +530,7 @@ class FlextRegistry(s[bool]):
             handler_mode = c.Cqrs.HandlerType.EVENT
         timestamp = getattr(reg_result, "timestamp", "")
         status = reg_result.status
-        return _RegistrationDetails(
+        return m.RegistrationDetails(
             registration_id=key,
             handler_mode=self._get_handler_mode(handler_mode),
             timestamp=timestamp,
