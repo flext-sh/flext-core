@@ -323,7 +323,7 @@ class ParameterizedTestBuilder:
 class AssertionBuilder:
     """Builder for complex test assertions."""
 
-    def __init__(self, data: object) -> None:
+    def __init__(self, data: tt.Tests.object) -> None:
         """Initialize test assertion builder with data to test."""
         super().__init__()
         self._data = data
@@ -342,7 +342,7 @@ class AssertionBuilder:
         assert len(self._data) == length
         return self
 
-    def contains(self, item: object) -> AssertionBuilder:
+    def contains(self, item: tt.Tests.object) -> AssertionBuilder:
         """Assert that the data contains the specified item."""
         data = self._data
         if _is_object_mapping(data):
@@ -364,7 +364,7 @@ class AssertionBuilder:
 
     def satisfies(
         self,
-        predicate: Callable[[object], bool],
+        predicate: Callable[[tt.Tests.object], bool],
         message: str = "",
     ) -> AssertionBuilder:
         """Assert that the data satisfies the given predicate."""
@@ -471,8 +471,8 @@ class FixtureBuilder:
 
 def arrange_act_assert(
     _arrange_func: Callable[[], object],
-    _act_func: Callable[[object], object],
-    _assert_func: Callable[[object, object], None],
+    _act_func: Callable[[tt.Tests.object], tt.Tests.object],
+    _assert_func: Callable[[tt.Tests.object, tt.Tests.object], None],
 ) -> Callable[[Callable[[], object]], Callable[[], object]]:
     """Decorator for AAA pattern testing."""
 
@@ -664,7 +664,7 @@ class TestAdvancedPatterns:
         """Demonstrate assertion builder pattern."""
         test_data = ["apple", "banana", "cherry"]
 
-        def check_all_strings(x: object) -> bool:
+        def check_all_strings(x: tt.Tests.object) -> bool:
             """Check if all items in a list are strings."""
             values = _as_object_dict({"items": x}).get("items")
             values_list = _as_object_list(values)
@@ -680,10 +680,10 @@ class TestAdvancedPatterns:
     def test_arrange_act_assert_decorator(self) -> None:
         """Demonstrate Arrange-Act-Assert pattern decorator."""
 
-        def arrange_data(*_args: object) -> dict[str, list[int]]:
+        def arrange_data(*_args: tt.Tests.object) -> dict[str, list[int]]:
             return {"numbers": [1, 2, 3, 4, 5]}
 
-        def act_on_data(data: object) -> object:
+        def act_on_data(data: tt.Tests.object) -> tt.Tests.object:
             payload = _as_object_dict(data)
             if "numbers" in payload:
                 numbers = _as_int_list(payload["numbers"])
@@ -693,8 +693,8 @@ class TestAdvancedPatterns:
             return 0
 
         def assert_result(
-            result: object,
-            original_data: object,
+            result: tt.Tests.object,
+            original_data: tt.Tests.object,
         ) -> None:
             assert result == 15
             payload = _as_object_dict(original_data)
@@ -798,17 +798,17 @@ class TestRealWorldScenarios:
 
             result = process_api_request(test_request)
 
-            def check_status_success(x: object) -> bool:
+            def check_status_success(x: tt.Tests.object) -> bool:
                 """Check if status is success."""
                 payload = _as_object_dict(x)
                 return payload.get("status") == "success"
 
-            def check_correlation_id(x: object) -> bool:
+            def check_correlation_id(x: tt.Tests.object) -> bool:
                 """Check if correlation_id exists."""
                 payload = _as_object_dict(x)
                 return "correlation_id" in payload
 
-            def check_valid_method(x: object) -> bool:
+            def check_valid_method(x: tt.Tests.object) -> bool:
                 """Check if method is valid HTTP method."""
                 payload = _as_object_dict(x)
                 method = payload.get("method")

@@ -29,7 +29,7 @@ class TestViolationPattern:
         )
         tm.that(match is not None, eq=True)
         assert match is not None
-        tm.that(set(match.groupdict().keys()), eq={"rule", "module", "line", "message"})
+        assert set(match.groupdict().keys()) == {"rule", "module", "line", "message"}
 
 
 _CV = FlextInfraModels.Infra.Codegen.CensusViolation

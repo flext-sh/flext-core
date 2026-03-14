@@ -97,8 +97,9 @@ class TestConstantsQualityGateVerdict:
         """Quality gate runs on real empty workspace without errors."""
         gate = FlextInfraCodegenConstantsQualityGate(workspace_root=tmp_path)
         report = gate.run()
-        tm.that(report, is_=dict)
-        tm.that(report, keys=["verdict"])
+        assert isinstance(report, dict)
+        assert "verdict" in report
+        
 
 
 __all__: list[str] = []

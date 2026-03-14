@@ -71,7 +71,7 @@ class TestScaffoldProjectCreatesSrcModules:
         result = scaffolder.scaffold_project(project)
         tm.that(len(result.files_created), eq=3)
         tm.that(len(result.files_skipped), eq=2)
-        created_names = {Path(f).name for f in result.files_created}
+        created_names = sorted(Path(f).name for f in result.files_created)
         tm.that(created_names, eq={"typings.py", "protocols.py", "utilities.py"})
 
 

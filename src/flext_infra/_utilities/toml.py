@@ -54,7 +54,7 @@ class FlextInfraUtilitiesToml:
         return FlextInfraUtilitiesToml._CONTAINER_LIST_ADAPTER
 
     @staticmethod
-    def as_toml_mapping(value: object) -> t.Infra.ContainerDict | None:
+    def as_toml_mapping(value: t.Container) -> t.Infra.ContainerDict | None:
         """Check if value is a MutableMapping and return it typed, otherwise None."""
         if not isinstance(value, dict):
             return None
@@ -66,10 +66,7 @@ class FlextInfraUtilitiesToml:
             )
         except ValidationError:
             return None
-        result: t.Infra.ContainerDict = {
-            str(key): normalized_value[key] for key in normalized_value
-        }
-        return result
+        return normalized_value
 
     @staticmethod
     def normalize_container_value(
@@ -160,12 +157,10 @@ class FlextInfraUtilitiesToml:
     @staticmethod
     def get(
         container: TOMLDocument | Table,
-        key: object,
-    ) -> object | None:
+        key: str,
+    ) -> t.Container | t.Infra.ContainerDict | list[t.Container] | None:
         """Retrieve and normalize a value from a TOML container by key."""
-        if not isinstance(key, str):
-            return None
-        raw_value: object | None = None
+        raw_value: t.Container | t.Infra.ContainerDict | None = None
         if key in container:
             raw_value = FlextInfraUtilitiesToml.normalize_container_value(
                 container[key],
@@ -178,21 +173,9 @@ class FlextInfraUtilitiesToml:
         ):
             return raw_value
         if isinstance(raw_value, dict):
-            try:
-                return FlextInfraUtilitiesToml._get_container_dict_adapter().validate_python(
-                    raw_value
-                )
-            except ValidationError:
-                return None
+            return raw_value
         if isinstance(raw_value, list):
-            try:
-                return FlextInfraUtilitiesToml._get_container_list_adapter().validate_python(
-                    raw_value
-                )
-            except ValidationError:
-                return None
-        if not isinstance(raw_value, (dict, list)):
-            return None
+            return raw_value
         return None
 
     @staticmethod

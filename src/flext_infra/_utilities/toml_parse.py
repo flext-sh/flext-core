@@ -14,7 +14,7 @@ from pathlib import Path
 
 import tomlkit
 from pydantic import TypeAdapter, ValidationError
-from tomlkit.items import Item, Table
+from tomlkit.items import Table
 
 from flext_core import r
 from flext_infra import c, t

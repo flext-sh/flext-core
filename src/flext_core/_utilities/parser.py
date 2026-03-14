@@ -791,7 +791,7 @@ class FlextUtilitiesParser:
     ) -> list[str] | set[str] | dict[str, str]:
         """Normalize list/dict (builder: norm().list())."""
         if isinstance(items, FlextModelsContainers.ConfigMap):
-            dict_items: Mapping[str, t.NormalizedValue | BaseModel] = items.root
+            dict_items: Mapping[str, t.NormalizedValue] = items.root
             if filter_truthy:
                 dict_items = {k: v for k, v in dict_items.items() if v}
             return {
@@ -799,7 +799,7 @@ class FlextUtilitiesParser:
                 for k, v in dict_items.items()
             }
         if isinstance(items, BaseModel):
-            dumped: dict[str, t.NormalizedValue | BaseModel] = {
+            dumped: dict[str, t.NormalizedValue] = {
                 str(k): FlextRuntime.normalize_to_container(v)
                 for k, v in items.model_dump().items()
             }
@@ -1060,7 +1060,7 @@ class FlextUtilitiesParser:
         self._parser_log.debug(
             "Starting object key extraction",
             operation="get_object_key",
-            obj_type=obj.__class__.__name__,
+            obj_type=obj.__class__.__name__ if hasattr(obj, "__class__") else "unknown",
             has_name_attr=hasattr(obj, "__name__"),
         )
         if isinstance(obj, str):
@@ -1070,7 +1070,7 @@ class FlextUtilitiesParser:
             if isinstance(dunder_name, str):
                 key = dunder_name
             else:
-                key = obj.__class__.__name__
+                key = obj.__class__.__name__ if hasattr(obj, "__class__") else "unknown"
         elif isinstance(obj, Mapping):
             obj_mapping: Mapping[str, t.NormalizedValue] = {
                 str(k): v for k, v in obj.items()
@@ -1080,11 +1080,11 @@ class FlextUtilitiesParser:
         elif (attr_key := self._extract_key_from_attributes(obj)).is_success:
             key = attr_key.value
         elif hasattr(obj, "__class__"):
-            key = obj.__class__.__name__
+            key = obj.__class__.__name__ if hasattr(obj, "__class__") else "unknown"
         elif (str_key := self._extract_key_from_str_conversion(obj)).is_success:
             key = str_key.value
         else:
-            key = obj.__class__.__name__
+            key = obj.__class__.__name__ if hasattr(obj, "__class__") else "unknown"
         return key
 
     def normalize_whitespace(
