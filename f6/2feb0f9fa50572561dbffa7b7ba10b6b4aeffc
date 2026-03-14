@@ -1,0 +1,31 @@
+tests/infra/unit/github/pr_cli.py
+  8c2d749dcca16b1c 11-14
+src/flext_tests/builders.py
+  8c2d749dcca16b1c 63-70,140-141,307-308,313,339,345,630-631
+src/flext_core/_utilities/mapper.py
+  8c2d749dcca16b1c 992-997,1000-1003,1358-1362,1381-1382,1386,1618,1796,2074,2141-2142
+src/flext_infra/deps/_models.py
+  8c2d749dcca16b1c 5,498-509
+tests/infra/unit/core/skill_validator.py
+  8c2d749dcca16b1c 13-16
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "f62feb0f9fa50572561dbffa7b7ba10b6b4aeffc",
+  "prompts": {
+    "8c2d749dcca16b1c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d0c09b0b-3db3-411a-ac46-126453ea6fa0",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 162,
+      "total_deletions": 126,
+      "accepted_lines": 63,
+      "overriden_lines": 3
+    }
+  }
+}
