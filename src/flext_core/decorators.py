@@ -828,7 +828,7 @@ class FlextDecorators:
     @staticmethod
     def _execute_retry_loop(
         func: Callable[..., R],
-        args: P.args,
+        args: tuple[t.NormalizedValue | BaseModel, ...],
         kwargs: Mapping[str, t.NormalizedValue | BaseModel],
         logger: FlextLogger,
         *,
@@ -978,7 +978,9 @@ class FlextDecorators:
         return isinstance(logger_value, FlextLogger)
 
     @staticmethod
-    def _resolve_logger(args: P.args, func: Callable[P, R]) -> FlextLogger:
+    def _resolve_logger(
+        args: tuple[t.NormalizedValue | BaseModel, ...], func: Callable[P, R]
+    ) -> FlextLogger:
         """Resolve logger from first argument or create module logger.
 
         Returns:

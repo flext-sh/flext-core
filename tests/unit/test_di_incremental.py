@@ -300,7 +300,10 @@ class TestServiceBootstrapWithDI:
 
         class TestService(s[str]):
             @classmethod
-            def _runtime_bootstrap_options(cls):
+            @override
+            def _runtime_bootstrap_options(
+                cls,
+            ) -> FlextModelsService.RuntimeBootstrapOptions:
                 return FlextModelsService.RuntimeBootstrapOptions(
                     services={"custom_service": "custom_value"},
                     factories={"custom_factory": lambda: {"custom": "data"}},
