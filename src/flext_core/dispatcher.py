@@ -115,7 +115,10 @@ class FlextDispatcher:
         if not handler_entry:
             msg_type = message.__class__
             for auto_h, resolved_handler, accepted in self._auto_handlers:
-                if u.can_handle_message_type(accepted, msg_type):
+                can_handle_fn = getattr(auto_h, "can_handle", None)
+                if u.can_handle_message_type(accepted, msg_type) or (
+                    callable(can_handle_fn) and can_handle_fn(msg_type)
+                ):
                     handler_entry = (auto_h, resolved_handler)
                     break
         if not handler_entry:
@@ -164,9 +167,11 @@ class FlextDispatcher:
         handlers = self._event_subscribers.get(route_name, [])
         evt_type = event.__class__
         for auto_h, resolved_handler, accepted in self._auto_handlers:
-            if u.can_handle_message_type(accepted, evt_type) and (
-                all(existing_handler != auto_h for existing_handler, _ in handlers)
-            ):
+            can_handle_fn = getattr(auto_h, "can_handle", None)
+            if (
+                u.can_handle_message_type(accepted, evt_type)
+                or (callable(can_handle_fn) and can_handle_fn(evt_type))
+            ) and all(existing_handler != auto_h for existing_handler, _ in handlers):
                 handlers.append((auto_h, resolved_handler))
         if not handlers:
             return r[bool].ok(value=True)

@@ -10,7 +10,9 @@ from flext_core import FlextDispatcher, m, p, r, t
 from flext_core.dispatcher import _DispatchableHandler
 
 
-def _force_handler(obj: Callable[[m.Command], str] | str | dict[str, str]) -> _DispatchableHandler:
+def _force_handler(
+    obj: Callable[[m.Command], str] | str | dict[str, str],
+) -> _DispatchableHandler:
     """Return a no-op _DispatchableHandler for error-path testing.
 
     For non-callable objects (str, dict), returns a wrapper with no route
@@ -18,7 +20,7 @@ def _force_handler(obj: Callable[[m.Command], str] | str | dict[str, str]) -> _D
     """
 
     def _wrapper(
-        *_args,
+        *_args: t.Container,
         **_kwargs: t.Scalar,
     ) -> p.ResultLike[t.Container] | t.Container | None:
         return "invalid"

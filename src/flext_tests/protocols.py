@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import builtins
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence, Sized
 from pathlib import Path
 from typing import Protocol, Self, runtime_checkable
 
@@ -625,7 +625,7 @@ class FlextTestsProtocols(FlextProtocols):
                 Structural typing for objects that can validate lengths.
                 """
 
-                def validate(self, value, spec: int | tuple[int, int]) -> bool:
+                def validate(self, value: Sized, spec: int | tuple[int, int]) -> bool:
                     """Validate length against spec.
 
                     Args:
@@ -649,7 +649,7 @@ class FlextTestsProtocols(FlextProtocols):
                     """Finish chain and return value (for success)."""
                     ...
 
-                def eq(self, expected, msg: str | None = None) -> Self:
+                def eq(self, expected: t.Tests.object, msg: str | None = None) -> Self:
                     """Assert value equals expected."""
                     ...
 
@@ -663,7 +663,7 @@ class FlextTestsProtocols(FlextProtocols):
                     """Assert result is failure."""
                     ...
 
-                def has(self, item, msg: str | None = None) -> Self:
+                def has(self, item: t.Tests.object, msg: str | None = None) -> Self:
                     """Assert value/error contains item."""
                     ...
 
@@ -682,7 +682,7 @@ class FlextTestsProtocols(FlextProtocols):
                 Structural typing for objects that can manage test execution scopes.
                 """
 
-                def exit_scope(self, scope) -> None:
+                def exit_scope(self, scope: t.Tests.object) -> None:
                     """Exit test execution scope and cleanup.
 
                     Args:

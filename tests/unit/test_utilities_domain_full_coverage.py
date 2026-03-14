@@ -96,7 +96,7 @@ def test_validate_value_object_immutable_exception_and_no_setattr_branch() -> No
 
     class _BrokenConfigDict(UserDict[str, bool]):
         @override
-        def get(self, key: str, default=None) -> bool:
+        def get(self, key: str, default: bool | None = None) -> bool:
             _ = key
             _ = default
             msg = "bad config"

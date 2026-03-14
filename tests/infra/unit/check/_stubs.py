@@ -37,9 +37,13 @@ class Spy:
         ] = []
         self.called: bool = False
         self._return_value: t.Infra.InfraValue = return_value
-        self._side_effect: list[t.Infra.InfraValue] | None = list(side_effect) if side_effect else None
+        self._side_effect: list[t.Infra.InfraValue] | None = (
+            list(side_effect) if side_effect else None
+        )
 
-    def __call__(self, *args: t.Infra.InfraValue, **kwargs: t.Infra.InfraValue) -> t.Infra.InfraValue:
+    def __call__(
+        self, *args: t.Infra.InfraValue, **kwargs: t.Infra.InfraValue
+    ) -> t.Infra.InfraValue:
         self.called = True
         self.call_count += 1
         self.call_args = (args, kwargs)

@@ -71,7 +71,9 @@ def _to_scalar(
     return str(value)
 
 
-def _to_payload(value) -> t.Tests.object:
+def _to_payload(
+    value: t.Tests.object | RootModel[t.Tests.object] | set[t.Tests.object] | None,
+) -> t.Tests.object:
     """Convert a value to tesobject.
 
     Args:
@@ -109,7 +111,7 @@ def _to_payload(value) -> t.Tests.object:
     return str(value)
 
 
-def _to_config_map_value(value: t.Tests.object):
+def _to_config_map_value(value: t.Tests.object) -> t.Tests.object:
     """Convert value to container."""
     if value is None or isinstance(value, (*t.PRIMITIVES_TYPES, BaseModel)):
         return value
@@ -331,7 +333,7 @@ class FlextTestsUtilities(FlextUtilities):
             @staticmethod
             @contextmanager
             def temporary_attribute(
-                target, attribute: str, value: t.Tests.object
+                target: BaseModel, attribute: str, value: t.Tests.object
             ) -> Generator[None]:
                 """Temporarily set attribute on target object.
 
@@ -1143,7 +1145,8 @@ class FlextTestsUtilities(FlextUtilities):
                 """
                 entity = entity_class(name=name, value=value)
                 if remove_id and hasattr(entity, "unique_id"):
-                    del entity.unique_id
+                    attr_name = "unique_id"
+                    delattr(entity, attr_name)
                 return entity
 
             @staticmethod

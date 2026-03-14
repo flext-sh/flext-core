@@ -731,7 +731,7 @@ def assert_validates(
 def assert_rejects(
     model_class: type,
     field_name: str,
-    value,
+    value: t.Tests.object,
     error_type: type[Exception] | None = None,
 ) -> str:
     """Assert that a value is rejected during validation.

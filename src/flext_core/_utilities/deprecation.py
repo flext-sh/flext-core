@@ -15,6 +15,8 @@ import warnings
 from collections.abc import Callable
 from typing import ClassVar
 
+from pydantic import BaseModel
+
 from flext_core import t
 from flext_core.typings import P, R
 
@@ -45,7 +47,7 @@ class FlextUtilitiesDeprecation:
     @classmethod
     def warn_polymorphic_input(
         cls,
-        value,
+        value: t.NormalizedValue | BaseModel | None,
         context: str,
         preferred: str,
         *,

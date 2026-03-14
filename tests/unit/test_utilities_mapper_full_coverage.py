@@ -6,7 +6,7 @@ from collections import UserDict, UserList
 from collections.abc import Callable, ItemsView, Iterator, Mapping
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Annotated, Protocol, cast, override
+from typing import Annotated, Never, Protocol, cast, override
 
 import pytest
 from pydantic import BaseModel, Field
@@ -93,7 +93,10 @@ def _extract_field_obj(item: AttrObject, field_name: str) -> None:
 
 
 def _take_obj(
-    data_or_items: test_remaining_uncovered_branches.MaybeModel | _PortModel | int, key_or_index: int | str, *, default=None
+    data_or_items: test_remaining_uncovered_branches.MaybeModel | _PortModel | int,
+    key_or_index: int | str,
+    *,
+    default=None,
 ) -> None:
     fn: _TakeCallable = getattr(u, "take")
     return fn(data_or_items, key_or_index, default=default)
@@ -113,7 +116,9 @@ def _extract_transform_options_obj(
     return fn(transform_opts)
 
 
-def _build_apply_sort_obj(current: tuple[str, str], operations: Mapping[str, object]) -> None:
+def _build_apply_sort_obj(
+    current: tuple[str, str], operations: Mapping[str, object]
+) -> None:
     fn: _BuildApplyOpCallable = getattr(u, "_build_apply_sort")
     return fn(current, operations)
 
@@ -125,12 +130,17 @@ def _build_apply_unique_obj(
     return fn(current, operations)
 
 
-def _build_apply_slice_obj(current: tuple[int, int, int], operations: Mapping[str, object]) -> None:
+def _build_apply_slice_obj(
+    current: tuple[int, int, int], operations: Mapping[str, object]
+) -> None:
     fn: _BuildApplyOpCallable = getattr(u, "_build_apply_slice")
     return fn(current, operations)
 
 
-def _build_apply_group_obj(current: list[test_remaining_uncovered_branches.GroupModel], operations: Mapping[str, object]) -> None:
+def _build_apply_group_obj(
+    current: list[test_remaining_uncovered_branches.GroupModel],
+    operations: Mapping[str, object],
+) -> None:
     fn: _BuildApplyOpCallable = getattr(u, "_build_apply_group")
     return fn(current, operations)
 

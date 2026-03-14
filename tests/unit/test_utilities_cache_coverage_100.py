@@ -283,19 +283,19 @@ class TestuCacheNormalizeComponent:
 
     def test_normalize_sequence_with_nested_values(self) -> None:
         """Test normalize_component with Sequence containing nested values."""
-        component_raw: list = [
+        component_raw: list[t.Tests.object] = [
             1,
             "test",
             {"nested": "dict"},
             [1, 2, 3],
         ]
-        component: Sequence = cast(
-            "Sequence",
+        component: Sequence[t.Tests.object] = cast(
+            "Sequence[t.Tests.object]",
             component_raw,
         )
         result = u.normalize_component(component)
         tm.that(result, is_=list, none=False, msg="Result must be list")
-        result_list = cast("list", result)
+        result_list = cast("list[t.Tests.object]", result)
         tm.that(len(result_list), eq=4, msg="Result list must have 4 items")
         tm.that(result_list[0], eq=1, msg="First item must be 1")
         tm.that(result_list[1], eq="test", msg="Second item must be 'test'")
@@ -510,7 +510,7 @@ class TestuCacheClearObjectCache:
                 self._cache = object()
 
             @override
-            def __setattr__(self, name: str, value) -> None:
+            def __setattr__(self, name: str, value: t.Tests.object | None) -> None:
                 if name == "_cache" and value is None:
                     raise TypeError(error_msg)
                 super().__setattr__(name, value)

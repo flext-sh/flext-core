@@ -45,13 +45,17 @@ class _ContainerDictModel(RootModel[dict[str, t.Tests.object]]):
     def __contains__(self, key: str) -> bool:
         return key in self.root
 
-    def get(self, key: str, default: t.Tests.object | None = None) -> t.Tests.object | None:
+    def get(
+        self, key: str, default: t.Tests.object | None = None
+    ) -> t.Tests.object | None:
         return self.root.get(key, default)
 
     def update(self, payload: Mapping[str, t.Tests.object]) -> None:
         self.root.update(payload)
 
-    def setdefault(self, key: str, default: t.Tests.object | None = None) -> t.Tests.object:
+    def setdefault(
+        self, key: str, default: t.Tests.object | None = None
+    ) -> t.Tests.object:
         return self.root.setdefault(key, default)
 
     def values(self) -> ValuesView[t.Tests.object]:
