@@ -299,14 +299,16 @@ class FlextGenericModels:
         """
 
         converted: list[t.NormalizedValue | BaseModel] = Field(
-            default_factory=list, description="Converted items"
+            default_factory=lambda: [], description="Converted items"
         )
-        errors: list[str] = Field(default_factory=list, description="Error messages")
+        errors: list[str] = Field(
+            default_factory=lambda: [], description="Error messages"
+        )
         warnings: list[str] = Field(
-            default_factory=list, description="Warning messages"
+            default_factory=lambda: [], description="Warning messages"
         )
         skipped: list[t.NormalizedValue | BaseModel] = Field(
-            default_factory=list, description="Skipped items"
+            default_factory=lambda: [], description="Skipped items"
         )
         start_time: Annotated[
             datetime | None, Field(default=None, description="Start time")

@@ -854,13 +854,14 @@ class FlextUtilitiesMapper:
         value: t.NormalizedValue | Mapping[str, t.NormalizedValue],
     ) -> Mapping[str, t.NormalizedValue]:
         """Safely narrow object to ConfigurationDict with runtime validation."""
-        if FlextUtilitiesGuards.is_configuration_dict(value):
-            normalized_dict: dict[str, t.NormalizedValue] = {}
-            for key, item in value.items():
-                normalized_dict[str(key)] = FlextUtilitiesMapper.narrow_to_container(
-                    item
-                )
-            return normalized_dict
+        if isinstance(value, Mapping):
+            if FlextUtilitiesGuards.is_configuration_dict(value):
+                normalized_dict: dict[str, t.NormalizedValue] = {}
+                for key, item in value.items():
+                    normalized_dict[str(key)] = (
+                        FlextUtilitiesMapper.narrow_to_container(item)
+                    )
+                return normalized_dict
         error_msg = f"Cannot narrow {value.__class__.__name__} to ConfigurationDict"
         raise TypeError(error_msg)
 
