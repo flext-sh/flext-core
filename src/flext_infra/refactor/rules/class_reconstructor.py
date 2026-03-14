@@ -103,9 +103,12 @@ class PreCheckGate:
             loaded = u.Infra.safe_load_yaml(self._policy_path)
         except (OSError, TypeError):
             return {}
-        if not self._schema_valid(dict(loaded.items())):
+        loaded_dict: dict[str, t.Infra.InfraValue] = TypeAdapter(
+            dict[str, t.Infra.InfraValue]
+        ).validate_python(dict(loaded.items()))
+        if not self._schema_valid(loaded_dict):
             return {}
-        policy_matrix = u.Infra.mapping_list(loaded.get("policy_matrix"))
+        policy_matrix = u.Infra.mapping_list(loaded_dict.get("policy_matrix"))
         by_family: dict[str, m.Infra.Refactor.ClassNestingPolicy] = {}
         for raw in policy_matrix:
             try:

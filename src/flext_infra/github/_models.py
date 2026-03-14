@@ -9,22 +9,23 @@ from pydantic import ConfigDict, Field
 from flext_core import FlextModels
 
 
-class GithubPrExecutionResultModel(FlextModels.ArbitraryTypesModel):
-    """Base model for PR execution result typing."""
-
-    display: Annotated[str, Field(min_length=1, description="Repository display name")]
-    status: Annotated[str, Field(min_length=1, description="Execution status")]
-    elapsed: Annotated[int, Field(ge=0, description="Elapsed time in seconds")]
-    exit_code: Annotated[int, Field(description="Process exit code")]
-    log_path: Annotated[
-        str | None, Field(default=None, description="Log file path")
-    ] = None
-
-
 class FlextInfraGithubModels:
     """Models for GitHub PR orchestration and repository management."""
 
-    class PrExecutionResult(GithubPrExecutionResultModel):
+    class _PrExecutionResultModel(FlextModels.ArbitraryTypesModel):
+        """Base model for PR execution result typing."""
+
+        display: Annotated[
+            str, Field(min_length=1, description="Repository display name")
+        ]
+        status: Annotated[str, Field(min_length=1, description="Execution status")]
+        elapsed: Annotated[int, Field(ge=0, description="Elapsed time in seconds")]
+        exit_code: Annotated[int, Field(description="Process exit code")]
+        log_path: Annotated[
+            str | None, Field(default=None, description="Log file path")
+        ] = None
+
+    class PrExecutionResult(_PrExecutionResultModel):
         """Result of a single PR operation on a repository."""
 
     class PrOrchestrationResult(FlextModels.ArbitraryTypesModel):
@@ -34,7 +35,7 @@ class FlextInfraGithubModels:
         success: Annotated[int, Field(ge=0, description="Successful executions")]
         fail: Annotated[int, Field(ge=0, description="Failed executions")]
         results: Annotated[
-            tuple[GithubPrExecutionResultModel, ...],
+            tuple[FlextInfraGithubModels._PrExecutionResultModel, ...],
             Field(
                 default_factory=tuple,
                 description="Per-repository results",

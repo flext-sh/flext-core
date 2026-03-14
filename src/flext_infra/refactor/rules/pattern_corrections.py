@@ -6,8 +6,9 @@ from pathlib import Path
 from typing import override
 
 import libcst as cst
+from pydantic import TypeAdapter
 
-from flext_infra import c, u
+from flext_infra import c, t, u
 from flext_infra.refactor.rule import FlextInfraRefactorRule
 
 
@@ -306,7 +307,10 @@ class FlextInfraRefactorPatternCorrectionsRule(FlextInfraRefactorRule):
             updated = tree.visit(dict_to_mapping_transformer)
             return (updated, dict_to_mapping_transformer.changes)
         if fix_action == "remove_redundant_casts":
-            raw_types = self.config.get("redundant_type_targets", [])
+            typed_cfg: dict[str, t.Infra.InfraValue] = TypeAdapter(
+                dict[str, t.Infra.InfraValue]
+            ).validate_python(self.config)
+            raw_types = typed_cfg.get("redundant_type_targets", [])
             removable_types = set(u.Infra.string_list(raw_types))
             cast_remover = RedundantCastRemover(removable_types=removable_types)
             updated = tree.visit(cast_remover)

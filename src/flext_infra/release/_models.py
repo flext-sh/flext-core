@@ -10,17 +10,18 @@ from pydantic import Field
 from flext_core import FlextModels
 
 
-class _BuildRecord(FlextModels.ArbitraryTypesModel):
-    project: Annotated[str, Field(min_length=1, description="Project name")]
-    path: Annotated[str, Field(min_length=1, description="Project absolute path")]
-    exit_code: Annotated[
-        int, Field(ge=0, description="Exit code returned by make build")
-    ]
-    log: Annotated[str, Field(min_length=1, description="Build log file path")]
-
-
 class FlextInfraReleaseModels:
     """Models for release management."""
+
+    class _BuildRecord(FlextModels.ArbitraryTypesModel):
+        """Base model for build result data."""
+
+        project: Annotated[str, Field(min_length=1, description="Project name")]
+        path: Annotated[str, Field(min_length=1, description="Project absolute path")]
+        exit_code: Annotated[
+            int, Field(ge=0, description="Exit code returned by make build")
+        ]
+        log: Annotated[str, Field(min_length=1, description="Build log file path")]
 
     class ReleaseSpec(FlextModels.ArbitraryTypesModel):
         """Release descriptor with version, tag, and bump metadata."""
@@ -43,7 +44,7 @@ class FlextInfraReleaseModels:
             int, Field(ge=0, description="Total projects with non-zero exit")
         ]
         records: Annotated[
-            Sequence[_BuildRecord],
+            Sequence[FlextInfraReleaseModels._BuildRecord],
             Field(
                 default_factory=list,
                 description="Per-project build records",

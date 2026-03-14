@@ -198,9 +198,7 @@ class FlextUtilitiesParser:
         if str_result.is_failure:
             return r[str].fail(str_result.error or "String conversion failed")
         str_repr = str_result.value
-        obj_class_name = (
-            obj.__class__.__name__ if hasattr(obj, "__class__") else "Unknown"
-        )
+        obj_class_name: str = type(obj).__name__
         if str_repr and str_repr != f"<{obj_class_name} object>":
             return r[str].ok(str_repr)
         return r[str].fail("String conversion did not yield a usable key")
@@ -795,18 +793,24 @@ class FlextUtilitiesParser:
             if filter_truthy:
                 dict_items = {k: v for k, v in dict_items.items() if v}
             return {
-                k: FlextUtilitiesParser.norm_str(v, case=case)
+                k: FlextUtilitiesParser.norm_str(
+                    str(v) if isinstance(v, BaseModel) else v,
+                    case=case,
+                )
                 for k, v in dict_items.items()
             }
         if isinstance(items, BaseModel):
-            dumped: dict[str, t.NormalizedValue] = {
+            dumped: dict[str, t.Container | BaseModel] = {
                 str(k): FlextRuntime.normalize_to_container(v)
                 for k, v in items.model_dump().items()
             }
             if filter_truthy:
                 dumped = {k: v for k, v in dumped.items() if v}
             return {
-                k: FlextUtilitiesParser.norm_str(v, case=case)
+                k: FlextUtilitiesParser.norm_str(
+                    str(v) if isinstance(v, BaseModel) else v,
+                    case=case,
+                )
                 for k, v in dumped.items()
             }
         if isinstance(items, Mapping):
@@ -817,13 +821,16 @@ class FlextUtilitiesParser:
                 DeprecationWarning,
                 stacklevel=2,
             )
-            dict_items_raw: dict[str, t.NormalizedValue] = {
+            dict_items_raw: dict[str, t.Container | BaseModel] = {
                 str(k): FlextRuntime.normalize_to_container(v) for k, v in items.items()
             }
             if filter_truthy:
                 dict_items_raw = {k: v for k, v in dict_items_raw.items() if v}
             return {
-                k: FlextUtilitiesParser.norm_str(v, case=case)
+                k: FlextUtilitiesParser.norm_str(
+                    str(v) if isinstance(v, BaseModel) else v,
+                    case=case,
+                )
                 for k, v in dict_items_raw.items()
             }
         list_items: list[str] = items
@@ -1057,34 +1064,33 @@ class FlextUtilitiesParser:
             True
 
         """
+        obj_type_name: str = type(obj).__name__
         self._parser_log.debug(
             "Starting object key extraction",
             operation="get_object_key",
-            obj_type=obj.__class__.__name__,
+            obj_type=obj_type_name,
             has_name_attr=hasattr(obj, "__name__"),
         )
         if isinstance(obj, str):
             key = obj
         elif hasattr(obj, "__name__"):
             dunder_name = getattr(obj, "__name__", None)
-            if isinstance(dunder_name, str):
-                key = dunder_name
-            else:
-                key = obj.__class__.__name__
+            key = dunder_name if isinstance(dunder_name, str) else obj_type_name
         elif isinstance(obj, Mapping):
-            obj_mapping: Mapping[str, t.NormalizedValue] = {
-                str(k): v for k, v in obj.items()
+            str_keyed: dict[str, t.NormalizedValue] = {
+                str(k): v
+                for k, v in obj.items()  # pyright: Mapping.items() is safe
             }
-            mapping_key = self._extract_key_from_mapping(obj_mapping)
-            key = mapping_key.unwrap_or(type(obj).__name__)
+            mapping_key = self._extract_key_from_mapping(str_keyed)
+            key = mapping_key.unwrap_or(obj_type_name)
         elif (attr_key := self._extract_key_from_attributes(obj)).is_success:
             key = attr_key.value
         elif hasattr(obj, "__class__"):
-            key = obj.__class__.__name__
+            key = type(obj).__name__
         elif (str_key := self._extract_key_from_str_conversion(obj)).is_success:
             key = str_key.value
         else:
-            key = obj.__class__.__name__
+            key = type(obj).__name__
         return key
 
     def normalize_whitespace(

@@ -10,7 +10,7 @@ import libcst as cst
 from libcst.metadata import MetadataWrapper, QualifiedNameProvider
 from pydantic import TypeAdapter, ValidationError
 
-from flext_infra import m, u
+from flext_infra import m, t, u
 from flext_infra.refactor.rule import FlextInfraRefactorRule
 from flext_infra.refactor.transformers.symbol_propagator import (
     FlextInfraRefactorSymbolPropagator,
@@ -26,9 +26,12 @@ class FlextInfraRefactorSymbolPropagationRule(FlextInfraRefactorRule):
         tree: cst.Module,
         _file_path: Path | None = None,
     ) -> tuple[cst.Module, list[str]]:
-        target_modules_raw = self.config.get("target_modules", [])
-        module_renames_raw = self.config.get("module_renames", {})
-        symbol_renames_raw = self.config.get("import_symbol_renames", {})
+        typed_cfg: dict[str, t.Infra.InfraValue] = TypeAdapter(
+            dict[str, t.Infra.InfraValue]
+        ).validate_python(self.config)
+        target_modules_raw = typed_cfg.get("target_modules", [])
+        module_renames_raw = typed_cfg.get("module_renames", {})
+        symbol_renames_raw = typed_cfg.get("import_symbol_renames", {})
         target_modules = set(u.Infra.string_list(target_modules_raw))
         module_renames: dict[str, str]
         try:

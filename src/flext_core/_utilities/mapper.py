@@ -990,16 +990,16 @@ class FlextUtilitiesMapper:
                         item, field_name
                     )
                 elif hasattr(item, "__getitem__") and hasattr(item, "__contains__"):
-                    # Extract from mapping-like via key lookup
+                    # Extract from mapping-like via attribute access
                     raw_val: t.NormalizedValue = None
-                    dict_item: dict[str, t.NormalizedValue] = {}
-                    if isinstance(item, dict):
-                        for dk, dv in item.items():
-                            dict_item[str(dk)] = (
-                                FlextUtilitiesMapper.narrow_to_container(dv)
-                            )
-                    if field_name in dict_item:
-                        raw_val = dict_item[field_name]
+                    try:
+                        get_method = getattr(item, "get", None)
+                        if callable(get_method):
+                            field_result = get_method(field_name)
+                            if isinstance(field_result, (int, float)):
+                                raw_val = field_result
+                    except (TypeError, KeyError, AttributeError):
+                        pass
                     val_raw = raw_val
                 else:
                     continue
@@ -1355,11 +1355,11 @@ class FlextUtilitiesMapper:
         for target_key, target_spec in spec.items():
             try:
                 target_spec_mapping: Mapping[str, t.NormalizedValue] | None = None
-                if isinstance(target_spec, dict):
-                    target_spec_mapping = {
-                        str(k): FlextUtilitiesMapper.narrow_to_container(v)
-                        for k, v in target_spec.items()
-                    }
+                if callable(target_spec):
+                    pass
+                elif isinstance(target_spec, Mapping):
+                    spec_mapping: Mapping[str, t.NormalizedValue] = target_spec
+                    target_spec_mapping = spec_mapping
                     if "value" in target_spec_mapping:
                         value_item: t.NormalizedValue = target_spec_mapping["value"]
                         constructed[target_key] = value_item
@@ -2067,6 +2067,7 @@ class FlextUtilitiesMapper:
     @staticmethod
     def narrow_to_container(
         value: t.NormalizedValue
+        | t.MetadataValue
         | BaseModel
         | Mapping[str, t.NormalizedValue]
         | Mapping[str, t.NormalizedValue | BaseModel]
@@ -2143,10 +2144,16 @@ class FlextUtilitiesMapper:
             )
             for k, v in specific_fields.items()
         }
+
+        def _metadata_transformer(value: t.NormalizedValue) -> t.NormalizedValue:
+            return FlextUtilitiesMapper.narrow_to_container(
+                FlextRuntime.normalize_to_metadata(value)
+            )
+
         raw_result: t.ContainerMapping = FlextUtilitiesMapper.process_context_data(
             primary_data=context,
             secondary_data=extra_kwargs,
-            transformer=lambda value: FlextRuntime.normalize_to_metadata(value),
+            transformer=_metadata_transformer,
             field_overrides=field_overrides_config,
             merge_strategy="merge",
         )
@@ -2335,7 +2342,10 @@ class FlextUtilitiesMapper:
         if primary_data is not None:
             primary_source: Mapping[str, t.NormalizedValue] | None = None
             if isinstance(primary_data, m.ConfigMap):
-                primary_source = primary_data.root
+                primary_source = {
+                    k: FlextUtilitiesMapper.narrow_to_container(v)
+                    for k, v in primary_data.root.items()
+                }
             else:
                 primary_general = FlextUtilitiesMapper.narrow_to_container(primary_data)
                 if FlextRuntime.is_dict_like(primary_general) and isinstance(
@@ -2357,7 +2367,10 @@ class FlextUtilitiesMapper:
         if secondary_data is not None and merge_strategy != "primary_only":
             secondary_source: Mapping[str, t.NormalizedValue] | None = None
             if isinstance(secondary_data, m.ConfigMap):
-                secondary_source = secondary_data.root
+                secondary_source = {
+                    k: FlextUtilitiesMapper.narrow_to_container(v)
+                    for k, v in secondary_data.root.items()
+                }
             else:
                 secondary_general = FlextUtilitiesMapper.narrow_to_container(
                     secondary_data

@@ -159,9 +159,11 @@ class FlextInfraDependencyDetectionService:
         """Build a project dependency report from classified deptry issues."""
         classified = self.classify_issues(deptry_issues)
 
-        def _module_name(item: Mapping[str, str]) -> str | None:
+        def _module_name(item: Mapping[str, t.Infra.InfraValue]) -> str | None:
             val = item.get(c.Infra.Toml.MODULE)
-            return val or None
+            if val is None:
+                return None
+            return str(val)
 
         missing: list[str] = []
         unused: list[str] = []

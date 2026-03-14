@@ -136,9 +136,9 @@ class FlextInfraWorkspaceChecker(s):
                     results=sarif_results,
                 ),
             )
-        return TypeAdapter(JsonValue).validate_python(
-            m.Infra.Check.Sarif.Report(runs=sarif_runs).model_dump(by_alias=True),
-        )
+        sarif_report = m.Infra.Check.Sarif.Report(runs=sarif_runs)
+        sarif_dict: dict[str, JsonValue] = sarif_report.model_dump(by_alias=True)
+        return sarif_dict
 
     @staticmethod
     def parse_gate_csv(raw: str) -> list[str]:

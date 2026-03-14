@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING
 
 import orjson
 
-from flext_infra import c, m, u
+from flext_infra import c, m, t, u
 from flext_infra.refactor.analysis import FlextInfraRefactorViolationAnalyzer
 from flext_infra.refactor.mro_resolver import FlextInfraRefactorMROMigrationScanner
 
@@ -32,7 +32,7 @@ class PostCheckGate:
     def validate(
         self,
         result: m.Infra.Refactor.Result,
-        expected: Mapping[str, object],
+        expected: t.Infra.ContainerDict,
     ) -> tuple[bool, list[str]]:
         """Validate a refactor result against expected post-checks and gates."""
         errors: list[str] = []

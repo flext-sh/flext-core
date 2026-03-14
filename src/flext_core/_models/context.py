@@ -376,22 +376,21 @@ class FlextModelsContext:
             None.
             """
             working_value: dict[str, t.NormalizedValue]
-            normalized_mapping: Mapping[str, t.NormalizedValue]
+            normalized_mapping: Mapping[str, t.NormalizedValue | BaseModel]
             if v is None:
                 return {}
             if isinstance(v, FlextModelFoundation.Metadata):
-                normalized_metadata = {
+                normalized_metadata: dict[str, t.NormalizedValue | BaseModel] = {
                     key: FlextRuntime.normalize_to_container(value)
                     for key, value in v.attributes.items()
                 }
-                normalized_mapping = FlextModelsContainers.ConfigMap(
-                    root=normalized_metadata
-                ).root
+                normalized_mapping = normalized_metadata
             elif isinstance(v, BaseModel):
                 dump_result = v.model_dump()
-                normalized_mapping = FlextModelsContainers.ConfigMap(
-                    root=dict(dump_result.items())
-                ).root
+                normalized_mapping = {
+                    str(k): FlextRuntime.normalize_to_container(dv)
+                    for k, dv in dump_result.items()
+                }
             else:
                 normalized_mapping = dict(v)
             working_value = {
@@ -506,22 +505,21 @@ class FlextModelsContext:
             None.
             """
             working_value: dict[str, t.NormalizedValue]
-            normalized_mapping: Mapping[str, t.NormalizedValue]
+            normalized_mapping: Mapping[str, t.NormalizedValue | BaseModel]
             if v is None:
                 return {}
             if isinstance(v, FlextModelFoundation.Metadata):
-                normalized_metadata = {
+                normalized_metadata_2: dict[str, t.NormalizedValue | BaseModel] = {
                     key: FlextRuntime.normalize_to_container(value)
                     for key, value in v.attributes.items()
                 }
-                normalized_mapping = FlextModelsContainers.ConfigMap(
-                    root=normalized_metadata
-                ).root
+                normalized_mapping = normalized_metadata_2
             elif isinstance(v, BaseModel):
                 dump_result = v.model_dump()
-                normalized_mapping = FlextModelsContainers.ConfigMap(
-                    root=dict(dump_result.items())
-                ).root
+                normalized_mapping = {
+                    str(k): FlextRuntime.normalize_to_container(dv)
+                    for k, dv in dump_result.items()
+                }
             else:
                 normalized_mapping = dict(v)
             working_value = {

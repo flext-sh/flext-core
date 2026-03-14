@@ -50,6 +50,27 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
     _logger: ClassVar[FlextLogger] = FlextLogger(__name__)
 
     @staticmethod
+    def _to_normalized(value: t.Container | BaseModel) -> t.NormalizedValue:
+        """Narrow ``Container | BaseModel`` to ``NormalizedValue``.
+
+        BaseModel instances are converted via ``model_dump()`` so the result
+        is always a plain ``NormalizedValue`` (no BaseModel).
+        """
+        if isinstance(value, BaseModel):
+            raw = value.model_dump()
+            if isinstance(raw, Mapping):
+                result: dict[str, t.NormalizedValue] = {}
+                for k, v in raw.items():
+                    container_val = FlextRuntime.normalize_to_container(v)
+                    if isinstance(container_val, BaseModel):
+                        result[str(k)] = str(container_val)
+                    else:
+                        result[str(k)] = container_val
+                return result
+            return str(raw)
+        return value
+
+    @staticmethod
     def _empty_hooks() -> dict[
         str, list[Callable[[t.Scalar], t.NormalizedValue | BaseModel | None]]
     ]:
@@ -80,18 +101,15 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
             mapping_value: Mapping[str, t.NormalizedValue]
             if isinstance(ctx_value, BaseModel):
                 mapping_value = dict(ctx_value.model_dump().items())
-            else:
+            elif isinstance(ctx_value, Mapping):
                 mapping_value = dict(ctx_value.items())
+            else:
+                return {}
             for key, value in mapping_value.items():
                 if str(key) != key:
                     return {}
                 normalized_value = FlextRuntime.normalize_to_container(value)
-                if isinstance(normalized_value, BaseModel):
-                    normalized[key] = FlextRuntime.normalize_to_container(
-                        FlextRuntime.normalize_to_metadata(normalized_value)
-                    )
-                else:
-                    normalized[key] = normalized_value
+                normalized[key] = FlextContext._to_normalized(normalized_value)
             return normalized
         except (TypeError, ValueError, AttributeError, KeyError) as exc:
             FlextContext._logger.debug(
@@ -277,8 +295,10 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
         if value is None:
             return r[bool].fail("Value cannot be None")
         value_for_guard: t.NormalizedValue = (
-            FlextRuntime.normalize_to_container(
-                FlextRuntime.normalize_to_metadata(value)
+            FlextContext._to_normalized(
+                FlextRuntime.normalize_to_container(
+                    FlextRuntime.normalize_to_metadata(value)
+                )
             )
             if isinstance(value, BaseModel)
             else value
@@ -370,11 +390,13 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
             metadata_dict_export = self._get_all_metadata()
         metadata_for_model: m.ConfigMap | None = None
         if metadata_dict_export:
-            normalized_metadata_map: dict[str, t.NormalizedValue] = {}
+            normalized_metadata_map: dict[str, t.NormalizedValue | BaseModel] = {}
             for k, v in metadata_dict_export.items():
                 metadata_value: t.NormalizedValue | BaseModel = v
-                if hasattr(v, "items") and callable(getattr(v, "items", None)):
-                    metadata_value = m.ConfigMap(root=dict(v.items()))
+                if isinstance(v, Mapping):
+                    metadata_value = m.ConfigMap(
+                        root=dict(v.items()),
+                    )
                 normalized_metadata_map[k] = FlextRuntime.normalize_to_container(
                     FlextRuntime.normalize_to_metadata(metadata_value)
                 )
@@ -385,12 +407,20 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
         if as_dict:
             result_dict: dict[str, t.NormalizedValue] = dict(all_scopes.items())
             if include_statistics and stats_dict_export:
-                result_dict["statistics"] = dict(stats_dict_export.items())
+                stats_items: dict[str, t.NormalizedValue] = {
+                    sk: FlextContext._to_normalized(sv)
+                    for sk, sv in stats_dict_export.items()
+                }
+                result_dict["statistics"] = stats_items
             if include_metadata and metadata_dict_export:
                 metadata_container: m.ConfigMap = m.ConfigMap(
                     root=dict(metadata_dict_export.items())
                 )
-                result_dict["metadata"] = dict(metadata_container.items())
+                meta_items: dict[str, t.NormalizedValue] = {
+                    mk: FlextContext._to_normalized(mv)
+                    for mk, mv in metadata_container.items()
+                }
+                result_dict["metadata"] = meta_items
             return result_dict
         metadata_root: m.ConfigMap | None = (
             m.ConfigMap(
@@ -413,8 +443,10 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
             if metadata_root
             else None,
             statistics={
-                key: FlextRuntime.normalize_to_container(
-                    FlextRuntime.normalize_to_metadata(value)
+                key: FlextContext._to_normalized(
+                    FlextRuntime.normalize_to_container(
+                        FlextRuntime.normalize_to_metadata(value)
+                    )
                 )
                 for key, value in statistics_mapping.items()
             },
@@ -590,7 +622,10 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
             return self
         export_callable = getattr(other, "export", None)
         if callable(export_callable):
-            exported = export_callable(as_dict=True)
+            exported_raw = export_callable(as_dict=True)
+            exported: Mapping[str, t.NormalizedValue | BaseModel] = (
+                exported_raw if isinstance(exported_raw, Mapping) else {}
+            )
             try:
                 if isinstance(exported, Mapping):
                     exported_map = m.ConfigMap(root=dict(exported.items()))

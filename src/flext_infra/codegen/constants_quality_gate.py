@@ -77,11 +77,15 @@ class FlextInfraCodegenConstantsQualityGate:
             before_load_error=before_load_error,
         )
         verdict = u.Infra.quality_gate_compute_verdict(checks, improvement)
+        checks_infra: list[t.Infra.InfraValue] = list(checks)
+        projects_infra: list[t.Infra.InfraValue] = list(
+            u.Infra.quality_gate_project_findings(census_reports)
+        )
         report: dict[str, t.Infra.InfraValue] = {
             "workspace": str(self._workspace_root),
             "generated_at": datetime.now(UTC).isoformat(),
             "verdict": verdict,
-            "checks": checks,
+            "checks": checks_infra,
             "baseline": {
                 "source": before_source,
                 "load_error": before_load_error,
@@ -90,7 +94,7 @@ class FlextInfraCodegenConstantsQualityGate:
             "before": before_metrics,
             "after": after_metrics,
             "improvement": improvement,
-            "projects": u.Infra.quality_gate_project_findings(census_reports),
+            "projects": projects_infra,
         }
         report["artifacts"] = u.Infra.quality_gate_write_artifacts(
             workspace_root=self._workspace_root,

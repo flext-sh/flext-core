@@ -63,7 +63,8 @@ class FlextTestsBuilders:
             if isinstance(value, (str, int, float, bool, BaseModel, list)):
                 nv = value
             elif isinstance(value, tuple):
-                nv = list[t.Tests.object](value)
+                converted: list[t.Tests.object] = [v for v in value]  # noqa: C416
+                nv = converted
             elif isinstance(value, dict):
                 nv = dict(value)
             else:
@@ -327,13 +328,17 @@ class FlextTestsBuilders:
         if params.as_cls is not None:
             try:
                 inst = params.as_cls(*(params.cls_args or ()), **data)
-                bv = (
-                    inst
-                    if isinstance(
-                        inst, (str, int, float, bool, list, dict, BaseModel, type(None))
-                    )
-                    else None
-                )
+                bv: t.Tests.object
+                if isinstance(inst, (str, int, float, bool, BaseModel)):
+                    bv = inst
+                elif isinstance(inst, list):
+                    bv = [v for v in inst]  # noqa: C416
+                elif isinstance(inst, dict):
+                    bv = {str(k): v for k, v in inst.items()}
+                elif inst is None:
+                    bv = None
+                else:
+                    bv = None
                 return bv if params.unwrap else r[t.Tests.object].ok(bv)
             except self._EXC as e:
                 return fail(str(e))
@@ -429,24 +434,38 @@ class FlextTestsBuilders:
         }
 
     @staticmethod
-    def _extract_model[T: BaseModel](result: t.Tests.object, expected: type[T]) -> T:
+    def _extract_model[T: BaseModel](
+        result: (
+            BaseModel
+            | list[BaseModel]
+            | Mapping[str, BaseModel]
+            | r[BaseModel]
+            | r[list[BaseModel]]
+            | r[Mapping[str, BaseModel]]
+        ),
+        expected: type[T],
+    ) -> T:
         """Extract a BaseModel from various tt.model() return shapes."""
         if isinstance(result, expected):
             return result
-        if (
-            isinstance(result, r)
-            and result.is_success
-            and isinstance(result.value, expected)
-        ):
-            return result.value
-        if (
-            isinstance(result, list)
-            and len(result) == 1
-            and isinstance(result[0], expected)
-        ):
-            return result[0]
-        if isinstance(result, dict) and len(result) == 1:
-            val = next(iter(result.values()))
+        if isinstance(result, r) and result.is_success:
+            rv: BaseModel | list[BaseModel] | Mapping[str, BaseModel] = result.value
+            if isinstance(rv, expected):
+                return rv
+            if isinstance(rv, list) and len(rv) == 1:
+                first_from_r: BaseModel = rv[0]
+                if isinstance(first_from_r, expected):
+                    return first_from_r
+            if isinstance(rv, Mapping) and len(rv) == 1:
+                val_from_r: BaseModel = next(iter(rv.values()))
+                if isinstance(val_from_r, expected):
+                    return val_from_r
+        if isinstance(result, list) and len(result) == 1:
+            first: BaseModel = result[0]
+            if isinstance(first, expected):
+                return first
+        if isinstance(result, Mapping) and len(result) == 1:
+            val: BaseModel = next(iter(result.values()))
             if isinstance(val, expected):
                 return val
         raise TypeError(f"Expected {expected.__name__}, got {type(result)}")
@@ -593,18 +612,26 @@ class FlextTestsBuilders:
         kw = params.cls_kwargs or {}
         if issubclass(cls_type, m.Tests.Entity):
             ec = cls_type
+
+            def _make_entity(*, name: str, value: t.Tests.object) -> m.Tests.Entity:
+                return ec(name=name, value=value)
+
             return u.Tests.DomainHelpers.create_test_entity_instance(
                 name=str(kw.get("name", "")),
                 value=kw.get("value", ""),
-                entity_class=lambda *, name, value, **k: ec(name=name, value=value),
+                entity_class=_make_entity,
             )
         if issubclass(cls_type, m.Tests.Value):
             vc = cls_type
             cv = kw.get("count", 1)
+
+            def _make_value(*, data: str, count: int) -> m.Tests.Value:
+                return vc(data=data, count=count)
+
             return u.Tests.DomainHelpers.create_test_value_object_instance(
                 data=str(kw.get("data", "")),
                 count=int(cv) if isinstance(cv, (int, float)) else 1,
-                value_class=lambda *, data, count: vc(data=data, count=count),
+                value_class=_make_value,
             )
         args = params.cls_args or ()
         return u.Tests.to_payload(
@@ -629,7 +656,7 @@ class FlextTestsBuilders:
             if isinstance(v, (str, int, float, bool, type(None), list)):
                 filtered[k] = v
             elif isinstance(v, tuple):
-                filtered[k] = list(v)
+                filtered[k] = [i for i in v]  # noqa: C416
             elif isinstance(v, dict):
                 filtered[k] = v
         mk: Literal["user", "config", "service", "entity", "value"]

@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import ConfigDict, Field
 
 from flext_core import FlextModels
 
@@ -494,19 +494,25 @@ class ModernizerFileChanges(FlextModels.ArbitraryTypesModel):
     ]
 
 
-class DeptryIssueGroups(BaseModel):
-    dep001: list[Mapping[str, str]] = Field(
-        default_factory=list,
-    )
-    dep002: list[Mapping[str, str]] = Field(
-        default_factory=list,
-    )
-    dep003: list[Mapping[str, str]] = Field(
-        default_factory=list,
-    )
-    dep004: list[Mapping[str, str]] = Field(
-        default_factory=list,
-    )
+class DeptryIssueGroups(FlextModels.ArbitraryTypesModel):
+    """Deptry issue grouping model by error code (DEP001-DEP004)."""
+
+    dep001: Annotated[
+        list[Mapping[str, str | int | float | bool | None]],
+        Field(description="DEP001 issues"),
+    ] = Field(default_factory=list)
+    dep002: Annotated[
+        list[Mapping[str, str | int | float | bool | None]],
+        Field(description="DEP002 issues"),
+    ] = Field(default_factory=list)
+    dep003: Annotated[
+        list[Mapping[str, str | int | float | bool | None]],
+        Field(description="DEP003 issues"),
+    ] = Field(default_factory=list)
+    dep004: Annotated[
+        list[Mapping[str, str | int | float | bool | None]],
+        Field(description="DEP004 issues"),
+    ] = Field(default_factory=list)
 
 
 class DeptryReport(FlextModels.ArbitraryTypesModel):

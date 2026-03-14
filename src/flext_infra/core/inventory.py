@@ -56,11 +56,12 @@ class FlextInfraInventoryService:
                     and path.suffix in {c.Infra.Extensions.PYTHON, ".sh"}
                 )
             now = datetime.now(UTC).isoformat()
+            scripts_infra: list[t.Infra.InfraValue] = list(scripts)
             inventory: t.Infra.ContainerDict = {
                 "generated_at": now,
                 "repo_root": str(root),
                 "total_scripts": len(scripts),
-                "scripts": scripts,
+                "scripts": scripts_infra,
             }
             wiring: t.Infra.ContainerDict = {
                 "generated_at": now,

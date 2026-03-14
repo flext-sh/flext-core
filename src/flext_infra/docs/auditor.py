@@ -183,9 +183,7 @@ class FlextInfraDocAuditor:
             issues.extend(self.broken_link_issues(scope))
         if "forbidden-terms" in checks:
             issues.extend(self.forbidden_term_issues(scope))
-        sorted_checks: JsonValue = TypeAdapter(JsonValue).validate_python(
-            sorted(checks)
-        )
+        sorted_checks: list[str] = sorted(checks)
         summary: JsonValue = {
             c.Infra.ReportKeys.SCOPE: scope.name,
             "issues": len(issues),
