@@ -18,6 +18,7 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
     from flext_core.typings import FlextTypes
+    from flext_infra._utilities.cli import FlextInfraUtilitiesCli
     from flext_infra._utilities.discovery import FlextInfraUtilitiesDiscovery
     from flext_infra._utilities.formatting import FlextInfraUtilitiesFormatting
     from flext_infra._utilities.git import FlextInfraUtilitiesGit
@@ -44,6 +45,7 @@ if TYPE_CHECKING:
     from flext_infra._utilities.yaml import FlextInfraUtilitiesYaml
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
+    "FlextInfraUtilitiesCli": ("flext_infra._utilities.cli", "FlextInfraUtilitiesCli"),
     "FlextInfraUtilitiesDiscovery": ("flext_infra._utilities.discovery", "FlextInfraUtilitiesDiscovery"),
     "FlextInfraUtilitiesFormatting": ("flext_infra._utilities.formatting", "FlextInfraUtilitiesFormatting"),
     "FlextInfraUtilitiesGit": ("flext_infra._utilities.git", "FlextInfraUtilitiesGit"),
@@ -69,6 +71,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
 }
 
 __all__ = [
+    "FlextInfraUtilitiesCli",
     "FlextInfraUtilitiesDiscovery",
     "FlextInfraUtilitiesFormatting",
     "FlextInfraUtilitiesGit",
