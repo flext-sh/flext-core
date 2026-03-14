@@ -91,10 +91,7 @@ class RegistryDispatcherService(s[m.ConfigMap]):
         dispatcher = FlextDispatcher()
         create_handler = CreateUserHandler()
         dispatcher.register_handler(create_handler)
-        command = CreateUserCommand({
-            "name": "Alice",
-            "email": "alice@example.com",
-        })
+        command = CreateUserCommand(name="Alice", email="alice@example.com")
         dispatch_result = dispatcher.dispatch(command)
         if dispatch_result.is_success:
             event_value = dispatch_result.value
@@ -123,14 +120,13 @@ class RegistryDispatcherService(s[m.ConfigMap]):
         get_handler = GetUserHandler()
         dispatcher.register_handler(create_handler)
         dispatcher.register_handler(get_handler)
-        command: CreateUserCommand = CreateUserCommand({
-            "name": "Bob",
-            "email": "bob@example.com",
-        })
+        command: CreateUserCommand = CreateUserCommand(
+            name="Bob", email="bob@example.com"
+        )
         command_result = dispatcher.dispatch(command)
         if command_result.is_success:
             print("✅ Command dispatched successfully")
-        query: GetUserQuery = GetUserQuery({"user_id": "user-123"})
+        query: GetUserQuery = GetUserQuery(user_id="user-123")
         query_result = dispatcher.dispatch(query)
         if query_result.is_success:
             user_data = query_result.value

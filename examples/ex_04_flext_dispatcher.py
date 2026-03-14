@@ -4,7 +4,9 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_core import FlextDispatcher, m, p, r
+from pydantic import BaseModel
+
+from flext_core import FlextDispatcher, m, p, r, t
 
 from .shared import Examples
 
@@ -70,9 +72,9 @@ class Ex04FlextDispatcher(Examples):
             """Bind handler to CreateUser message type."""
             self.message_type = Ex04FlextDispatcher.CreateUser
 
-        def handle(self, message: p.Routable) -> object:
+        def handle(self, message: p.Routable) -> t.Container | BaseModel:
             """Create a deterministic response for CreateUser."""
-            typed_message = Ex04FlextDispatcher.CreateUser(message)
+            typed_message = Ex04FlextDispatcher.CreateUser.model_validate(message)
             return f"created:{typed_message.username}"
 
     class GetUserDispatcher:
@@ -84,9 +86,9 @@ class Ex04FlextDispatcher(Examples):
             """Bind dispatcher to GetUser query type."""
             self.message_type = Ex04FlextDispatcher.GetUser
 
-        def dispatch_message(self, message: p.Routable) -> object:
+        def dispatch_message(self, message: p.Routable) -> t.Container | BaseModel:
             """Return deterministic user payload for GetUser."""
-            typed_message = Ex04FlextDispatcher.GetUser(message)
+            typed_message = Ex04FlextDispatcher.GetUser.model_validate(message)
             return m.ConfigMap(
                 root={"state": "active", "username": typed_message.username}
             )
@@ -100,9 +102,9 @@ class Ex04FlextDispatcher(Examples):
             """Bind executor to DeleteUser command type."""
             self.message_type = Ex04FlextDispatcher.DeleteUser
 
-        def execute(self, message: p.Routable) -> object:
+        def execute(self, message: p.Routable) -> t.Container | BaseModel:
             """Create deterministic deletion output."""
-            typed_message = Ex04FlextDispatcher.DeleteUser(message)
+            typed_message = Ex04FlextDispatcher.DeleteUser.model_validate(message)
             return f"deleted:{typed_message.username}"
 
     class FailingDeleteCallable:
@@ -116,7 +118,7 @@ class Ex04FlextDispatcher(Examples):
 
         def __call__(self, message: p.Routable) -> r[str]:
             """Reject deletion to exercise dispatcher failure handling."""
-            typed_message = Ex04FlextDispatcher.FailingDelete(message)
+            typed_message = Ex04FlextDispatcher.FailingDelete.model_validate(message)
             return r[str].fail(f"deletion blocked for {typed_message.username}")
 
     class PingCallable:
@@ -130,7 +132,7 @@ class Ex04FlextDispatcher(Examples):
 
         def __call__(self, message: p.Routable) -> str:
             """Return a bare pong value to test automatic wrapping."""
-            typed_message = Ex04FlextDispatcher.Ping(message)
+            typed_message = Ex04FlextDispatcher.Ping.model_validate(message)
             return f"pong:{typed_message.value}"
 
     class AutoHandler:
@@ -140,9 +142,9 @@ class Ex04FlextDispatcher(Examples):
             """Report support for AutoCommand class or instance."""
             return bool(message)
 
-        def handle(self, message: p.Routable) -> object:
+        def handle(self, message: p.Routable) -> t.Container | BaseModel:
             """Handle discovered command and return a synthetic payload."""
-            typed_message = Ex04FlextDispatcher.AutoCommand(message)
+            typed_message = Ex04FlextDispatcher.AutoCommand.model_validate(message)
             return f"auto:{typed_message.payload}"
 
     class UserCreatedSubscriber:
@@ -155,9 +157,9 @@ class Ex04FlextDispatcher(Examples):
             self.event_type = Ex04FlextDispatcher.UserCreated
             self.events: list[str] = []
 
-        def handle(self, message: p.Routable) -> object:
+        def handle(self, message: p.Routable) -> t.Container | BaseModel:
             """Store event entries when receiving UserCreated."""
-            typed_message = Ex04FlextDispatcher.UserCreated(message)
+            typed_message = Ex04FlextDispatcher.UserCreated.model_validate(message)
             self.events.append(f"user:{typed_message.username}")
             return True
 
@@ -171,9 +173,9 @@ class Ex04FlextDispatcher(Examples):
             self.event_type = Ex04FlextDispatcher.UserCreated
             self.events: list[str] = []
 
-        def dispatch_message(self, message: p.Routable) -> object:
+        def dispatch_message(self, message: p.Routable) -> t.Container | BaseModel:
             """Store audit entries when receiving UserCreated."""
-            typed_message = Ex04FlextDispatcher.UserCreated(message)
+            typed_message = Ex04FlextDispatcher.UserCreated.model_validate(message)
             self.events.append(f"audit:{typed_message.username}")
             return True
 

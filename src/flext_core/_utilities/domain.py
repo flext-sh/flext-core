@@ -11,6 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core import FlextRuntime, c, p, t
+from flext_core.runtime import RuntimeData
 
 
 class FlextUtilitiesDomain:
@@ -23,15 +24,15 @@ class FlextUtilitiesDomain:
 
     @staticmethod
     def same_type(
-        obj_a: t.NormalizedValue | p.HasModelDump,
-        obj_b: t.NormalizedValue | p.HasModelDump,
+        obj_a: RuntimeData,
+        obj_b: RuntimeData,
     ) -> bool:
         return type(obj_a) is type(obj_b)
 
     @staticmethod
     def compare_entities_by_id(
-        entity_a: p.HasModelDump,
-        entity_b: p.HasModelDump,
+        entity_a: RuntimeData,
+        entity_b: RuntimeData,
         id_attr: str = c.Mixins.FIELD_ID,
     ) -> bool:
         """Compare two entities by their unique ID attribute.
@@ -61,8 +62,8 @@ class FlextUtilitiesDomain:
 
     @staticmethod
     def compare_value_objects_by_value(
-        obj_a: t.NormalizedValue | p.HasModelDump,
-        obj_b: t.NormalizedValue | p.HasModelDump,
+        obj_a: RuntimeData,
+        obj_b: RuntimeData,
     ) -> bool:
         """Compare two value objects by their values (all attributes).
 
@@ -90,9 +91,7 @@ class FlextUtilitiesDomain:
             return repr(obj_a) == repr(obj_b)
 
     @staticmethod
-    def hash_entity_by_id(
-        entity: p.HasModelDump, id_attr: str = c.Mixins.FIELD_ID
-    ) -> int:
+    def hash_entity_by_id(entity: RuntimeData, id_attr: str = c.Mixins.FIELD_ID) -> int:
         """Generate hash for entity based on unique ID and type.
 
         Generic hashing for DDD entities - uses identity (ID + type), not value.
@@ -115,7 +114,7 @@ class FlextUtilitiesDomain:
         return hash((entity.__class__.__name__, entity_id))
 
     @staticmethod
-    def hash_value_object_by_value(obj: t.NormalizedValue | p.HasModelDump) -> int:
+    def hash_value_object_by_value(obj: RuntimeData) -> int:
         """Generate hash for value object based on all attribute values.
 
         Generic hashing for DDD Value Objects - uses values, not identity.
@@ -146,7 +145,7 @@ class FlextUtilitiesDomain:
 
     @staticmethod
     def validate_entity_has_id(
-        entity: p.HasModelDump, id_attr: str = c.Mixins.FIELD_ID
+        entity: RuntimeData, id_attr: str = c.Mixins.FIELD_ID
     ) -> bool:
         """Validate that entity has a non-None unique ID.
 
@@ -163,7 +162,7 @@ class FlextUtilitiesDomain:
 
     @staticmethod
     def validate_value_object_immutable(
-        obj: t.NormalizedValue | p.HasModelDump,
+        obj: RuntimeData,
     ) -> bool:
         """Check if value object appears to be immutable (frozen).
 

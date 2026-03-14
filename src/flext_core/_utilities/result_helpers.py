@@ -17,20 +17,7 @@ class ResultHelpers:
         return any(bool(v) for v in values)
 
     @staticmethod
-    def empty(
-        items: Sequence[t.NormalizedValue]
-        | Mapping[str, t.NormalizedValue]
-        | str
-        | p.Result[t.NormalizedValue]
-        | None,
-    ) -> bool:
-        if FlextUtilitiesGuards.is_result_like(items):
-            if items.is_failure:
-                return True
-            result_value = items.value
-            if not FlextUtilitiesGuards.is_container(result_value):
-                return True
-            return FlextUtilitiesGuards.empty(result_value)
+    def empty(items: t.NormalizedValue | None) -> bool:
         if items is None:
             return True
         if not FlextUtilitiesGuards.is_container(items):
@@ -113,14 +100,14 @@ class ResultHelpers:
 
     @staticmethod
     def ensure_result(
-        value: t.NormalizedValue | BaseModel | p.ResultLike[t.Container | BaseModel],
+        value: t.NormalizedValue | BaseModel | p.Result[t.Container | BaseModel],
     ) -> r[t.NormalizedValue | BaseModel]:
         """Wrap value in r if not already a Result.
 
         Generic replacement for:
         if not isinstance(val, r): val = r.ok(val)
         """
-        if FlextUtilitiesGuards.is_result_like(value):
+        if isinstance(value, r):
             if value.is_success:
                 return r[t.NormalizedValue | BaseModel].ok(value.value)
             return r[t.NormalizedValue | BaseModel].fail(value.error)

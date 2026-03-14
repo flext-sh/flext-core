@@ -130,7 +130,7 @@ class Ex05GoodProcessor(BaseModel):
     @override
     def validate(cls, value: object) -> Ex05GoodProcessor:
         """Validate processor payload."""
-        return cls(value)
+        return cls.model_validate(value)
 
 
 class Ex05BadProcessor(BaseModel):

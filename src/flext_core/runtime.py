@@ -78,7 +78,6 @@ from pydantic import (
     ConfigDict,
     Field,
     PrivateAttr,
-    ValidationError,
 )
 from structlog.processors import JSONRenderer, StackInfoRenderer, TimeStamper
 from structlog.stdlib import add_log_level
@@ -513,9 +512,7 @@ class FlextRuntime:
             case _:
                 if value is None:
                     return False
-                if FlextRuntime._has_dict_protocol(value):
-                    return True
-                return False
+                return bool(FlextRuntime._has_dict_protocol(value))
 
     @staticmethod
     def is_list_like(
@@ -578,9 +575,10 @@ class FlextRuntime:
 
     @staticmethod
     def _is_sequence_type_class(candidate: type) -> bool:
-        if candidate in {list, tuple, range}:
+        candidate_name = getattr(candidate, "__name__", "")
+        if candidate_name in {"list", "tuple", "range"}:
             return True
-        if candidate in {str, bytes, bytearray, memoryview, dict}:
+        if candidate_name in {"str", "bytes", "bytearray", "memoryview", "dict"}:
             return False
         candidate_mro = getattr(candidate, "__mro__", ())
         if any(getattr(base, "__name__", "") == "Sequence" for base in candidate_mro):
@@ -665,7 +663,7 @@ class FlextRuntime:
             return str(value)
 
         if FlextRuntime.is_dict_like(val):
-            normalized_dict: dict[str, t.NormalizedValue] = {}
+            normalized_dict: dict[str, t.NormalizedValue | BaseModel] = {}
             if isinstance(val, FlextModelsContainers.ConfigMap):
                 for key, item in val.root.items():
                     normalized_item = FlextRuntime.normalize_to_container(item)
@@ -1436,7 +1434,12 @@ class FlextRuntime:
             if value is None:
                 msg = "Cannot create success result with None value"
                 raise ValueError(msg)
-            instance = cls(is_success=True)
+            instance = cls(
+                is_success=True,
+                error=None,
+                error_code=None,
+                error_data=FlextModelsContainers.ConfigMap(root={}),
+            )
             setattr(instance, "_payload", value)
             return instance
 
@@ -1725,7 +1728,7 @@ class FlextRuntime:
         context_dict = FlextModelsContainers.ConfigMap(root={})
         if isinstance(context, Mapping):
             try:
-                parsed_context: dict[str, str] = {
+                parsed_context: dict[str, t.NormalizedValue | BaseModel] = {
                     str(k): str(v) for k, v in context.items()
                 }
             except (TypeError, ValueError, AttributeError, RuntimeError) as exc:

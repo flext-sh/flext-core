@@ -337,9 +337,10 @@ class Ex10FlextHandlers(Examples):
         stack = h.CQRS.ContextStack()
         self.check(
             "cqrs.push_context.mapping",
-            stack.push_context(
-                m.ConfigMap(root={"handler_name": ctx_name, "handler_mode": "command"})
-            ).is_success,
+            stack.push_context({
+                "handler_name": ctx_name,
+                "handler_mode": "command",
+            }).is_success,
         )
         current_context = stack.current_context()
         self.check(
