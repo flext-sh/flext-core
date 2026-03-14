@@ -205,16 +205,13 @@ class FlextModelsHandler:
                 examples=["command", "query", "event"],
             ),
         ] = c.Cqrs.HandlerType.COMMAND
-        timestamp: Annotated[
-            str,
-            Field(
-                default_factory=lambda: c.Cqrs.DEFAULT_TIMESTAMP,
-                description="ISO 8601 timestamp recording when the registration entry was created.",
-                title="Registration Timestamp",
-                examples=["2025-01-01T00:00:00Z", "2025-10-12T15:30:00+00:00"],
-                pattern=c.Platform.PATTERN_ISO8601_TIMESTAMP,
-            ),
-        ]
+        timestamp: str = Field(
+            default_factory=lambda: c.Cqrs.DEFAULT_TIMESTAMP,
+            description="ISO 8601 timestamp recording when the registration entry was created.",
+            title="Registration Timestamp",
+            examples=["2025-01-01T00:00:00Z", "2025-10-12T15:30:00+00:00"],
+            pattern=c.Platform.PATTERN_ISO8601_TIMESTAMP,
+        )
         status: Annotated[
             c.Cqrs.CommonStatus,
             Field(
