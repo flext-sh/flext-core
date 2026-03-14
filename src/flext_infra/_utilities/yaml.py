@@ -15,7 +15,7 @@ from pathlib import Path
 from pydantic import TypeAdapter, ValidationError
 from yaml import safe_load
 
-from flext_infra.constants import FlextInfraConstants as c
+from flext_infra import c, t
 
 
 class FlextInfraUtilitiesYaml:
@@ -58,7 +58,7 @@ class FlextInfraUtilitiesYaml:
 
         """
         raw = path.read_text(encoding=c.Infra.Encoding.DEFAULT)
-        parsed: object | None = safe_load(raw)
+        parsed: t.Container | None = safe_load(raw)
         if parsed is None:
             return {}
         if not isinstance(parsed, Mapping):
@@ -73,7 +73,7 @@ class FlextInfraUtilitiesYaml:
             raise TypeError(msg) from exc
 
     @staticmethod
-    def normalize_string_list(value: object, field: str) -> list[str]:
+    def normalize_string_list(value: t.Container, field: str) -> list[str]:
         """Validate and normalize a list[str] config field.
 
         Args:

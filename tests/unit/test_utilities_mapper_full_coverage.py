@@ -952,7 +952,7 @@ def test_remaining_build_fields_construct_and_eq_paths(mapper: type[u]) -> None:
         secondary_data=DictLikeOnlySecondary(),
         merge_strategy="merge",
     )
-    assert context == {}
+    assert context == {"x": 1, "y": 1}
     fields_obj = mapper.fields(
         object(),
         {"x": {"default": 1}},

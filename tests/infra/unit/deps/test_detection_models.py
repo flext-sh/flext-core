@@ -15,10 +15,10 @@ from flext_tests import tm
 class TestFlextInfraDependencyDetectionModels:
     def test_deptry_issue_groups_creation(self) -> None:
         groups = dm.DeptryIssueGroups()
-        tm.that(groups.dep001, eq=[])
-        tm.that(groups.dep002, eq=[])
-        tm.that(groups.dep003, eq=[])
-        tm.that(groups.dep004, eq=[])
+        assert groups.dep001 == []
+        assert groups.dep002 == []
+        assert groups.dep003 == []
+        assert groups.dep004 == []
 
     def test_deptry_report_creation(self) -> None:
         report = dm.DeptryReport()

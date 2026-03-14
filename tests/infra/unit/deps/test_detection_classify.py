@@ -52,10 +52,10 @@ class TestClassifyIssues:
             {"error": {"code": "DEP999"}, "module": "foo"}
         ]
         groups = service.classify_issues(issues)
-        tm.that(groups.dep001, eq=[])
-        tm.that(groups.dep002, eq=[])
-        tm.that(groups.dep003, eq=[])
-        tm.that(groups.dep004, eq=[])
+        assert groups.dep001 == []
+        assert groups.dep002 == []
+        assert groups.dep003 == []
+        assert groups.dep004 == []
 
     def test_multiple_issues(self) -> None:
         service = FlextInfraDependencyDetectionService()
@@ -89,8 +89,10 @@ class TestBuildProjectReport:
 class TestDetectionUncoveredLines:
     def test_module_to_types_package_with_custom_limits(self) -> None:
         service = FlextInfraDependencyDetectionService()
-        module_to_package: dict[str, object] = {"custom_module": "types-custom"}
-        typing_libraries: dict[str, object] = {"module_to_package": module_to_package}
+        typing_libraries = FlextInfraDependencyDetectionService.to_infra_value({
+            "module_to_package": {"custom_module": "types-custom"}
+        })
+        assert typing_libraries is not None
         limits: dict[str, it.Infra.TomlValue] = {"typing_libraries": typing_libraries}
         tm.that(
             service.module_to_types_package("custom_module", limits), eq="types-custom"

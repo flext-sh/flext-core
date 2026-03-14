@@ -73,10 +73,10 @@ class FlextInfraUtilitiesToml:
 
     @staticmethod
     def normalize_container_value(
-        value: object | Item | TOMLDocument | dict[str, object] | None,
-    ) -> object | None:
+        value: t.Container | Item | TOMLDocument | t.Infra.ContainerDict | None,
+    ) -> t.Container | t.Infra.ContainerDict | None:
         """Normalize TOML items/documents to a concrete container value."""
-        normalized: object | Item | dict[str, object] | None = value
+        normalized: t.Container | Item | t.Infra.ContainerDict | None = value
         if isinstance(value, (TOMLDocument, Item)):
             normalized = value.unwrap()
         if isinstance(normalized, Item):
@@ -85,8 +85,8 @@ class FlextInfraUtilitiesToml:
 
     @staticmethod
     def as_container_list(
-        value: object | Item | None,
-    ) -> list[object]:
+        value: t.Container | Item | None,
+    ) -> list[t.Container]:
         """Validate and normalize list-like values to typed container list."""
         normalized = FlextInfraUtilitiesToml.normalize_container_value(value)
         if normalized is None:
@@ -102,13 +102,13 @@ class FlextInfraUtilitiesToml:
 
     @staticmethod
     def unwrap_item(
-        value: object | Item | None,
-    ) -> object | None:
+        value: t.Container | Item | None,
+    ) -> t.Container | t.Infra.ContainerDict | None:
         """Unwrap a tomlkit Item to get the underlying value."""
         return FlextInfraUtilitiesToml.normalize_container_value(value)
 
     @staticmethod
-    def as_string_list(value: object | Item | None) -> list[str]:
+    def as_string_list(value: t.Container | Item | None) -> list[str]:
         """Convert TOML value to list of strings."""
         normalized = FlextInfraUtilitiesToml.normalize_container_value(value)
         if normalized is None or isinstance(normalized, str):

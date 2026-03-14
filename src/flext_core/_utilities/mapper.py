@@ -875,8 +875,9 @@ class FlextUtilitiesMapper:
             return value
         if isinstance(value, Mapping):
             narrowed_dict = FlextUtilitiesMapper._narrow_to_configuration_dict(value)
+            root_dict: dict[str, t.NormalizedValue | BaseModel] = dict(narrowed_dict)
             coerced_result = r[m.ConfigMap].create_from_callable(
-                lambda: m.ConfigMap(root=narrowed_dict)
+                lambda: m.ConfigMap(root=root_dict)
             )
             if coerced_result.is_success:
                 val: m.ConfigMap = coerced_result.value
@@ -1762,7 +1763,7 @@ class FlextUtilitiesMapper:
                         if default_value is not None:
                             result[name] = default_value
             else:
-                field_name: str = spec_item
+                field_name: str = str(spec_item)
                 if isinstance(obj, Mapping):
                     if field_name in obj:
                         result[field_name] = FlextUtilitiesMapper.narrow_to_container(
@@ -2094,7 +2095,7 @@ class FlextUtilitiesMapper:
             Normalized metadata attribute dict
 
         """
-        field_overrides_config: t.ContainerMapping = {
+        field_overrides_config: dict[str, t.NormalizedValue | BaseModel] = {
             k: FlextRuntime.normalize_to_container(v)
             for k, v in specific_fields.items()
         }

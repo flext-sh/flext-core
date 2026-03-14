@@ -26,15 +26,17 @@ class TestSafeLoadYaml:
         f = tmp_path / "test.yml"
         f.write_text("key: value\nlist:\n  - item1\n  - item2")
         result = _safe_load_yaml(f)
-        tm.that(result["key"], eq="value")
-        tm.that(result["list"], eq=["item1", "item2"])
+        assert result.get("key") == "value"
+        list_value = result.get("list")
+        assert isinstance(list_value, list)
+        assert list_value == ["item1", "item2"]
 
     def test_empty_and_null(self, tmp_path: Path) -> None:
         """Empty/null YAML returns empty dict."""
         (tmp_path / "empty.yml").write_text("")
-        tm.that(_safe_load_yaml(tmp_path / "empty.yml"), eq={})
+        assert dict(_safe_load_yaml(tmp_path / "empty.yml")) == {}
         (tmp_path / "null.yml").write_text("null")
-        tm.that(_safe_load_yaml(tmp_path / "null.yml"), eq={})
+        assert dict(_safe_load_yaml(tmp_path / "null.yml")) == {}
 
     def test_non_dict_raises_type_error(self, tmp_path: Path) -> None:
         """Non-dict YAML raises TypeError."""
@@ -165,7 +167,7 @@ class TestSkillValidatorAstGrepCount:
             ["**/*.py"],
             [],
         )
-        tm.that(isinstance(count, int), eq=True)
+        assert isinstance(count, int)
 
     def test_custom_count_empty_or_missing(self, tmp_path: Path) -> None:
         """Empty/nonexistent custom script returns 0."""

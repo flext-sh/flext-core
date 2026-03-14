@@ -362,7 +362,7 @@ def test_mixins_validation_and_protocol_paths() -> None:
         is_valid=_return_true,
     )
     known = x.ProtocolValidation.validate_protocol_compliance(
-        cast("m.ConfigMap", m.ConfigMap(root=service_like.__dict__)),
+        cast("m.ConfigMap", m.ConfigMap.model_construct(root=service_like.__dict__)),
         "Service",
     )
     assert unknown.is_failure

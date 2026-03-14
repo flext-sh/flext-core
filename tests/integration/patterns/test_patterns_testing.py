@@ -24,6 +24,7 @@ import pytest
 from hypothesis import HealthCheck, given, settings, strategies as st
 
 from flext_core import FlextTypes, FlextUtilities, P, R
+from flext_tests import t as tt
 
 from ._models import (
     FixtureCaseDict,
@@ -34,20 +35,20 @@ from ._models import (
 
 
 def _to_general_mapping(
-    value: object | None,
-) -> dict[str, object]:
-    if not isinstance(value, dict):
+    value: Mapping[str, tt.Tests.object] | None,
+) -> dict[str, tt.Tests.object]:
+    if value is None:
         return {}
-    return {str(key): item for key, item in value.items()}
+    return dict(value)
 
 
-def _to_string_list(value: object | None) -> list[str]:
-    if not isinstance(value, list):
+def _to_string_list(value: Sequence[tt.Tests.object] | None) -> list[str]:
+    if value is None:
         return []
     return [str(item) for item in value]
 
 
-def _to_string(value: object | None, *, default: str) -> str:
+def _to_string(value: tt.Tests.object | None, *, default: str) -> str:
     if isinstance(value, str):
         return value
     if value is None:
@@ -55,38 +56,40 @@ def _to_string(value: object | None, *, default: str) -> str:
     return str(value)
 
 
-def _as_object_dict(value: object) -> dict[str, object]:
+def _as_object_dict(value: tt.Tests.object) -> dict[str, tt.Tests.object]:
     if not _is_object_mapping(value):
         return {}
-    output: dict[str, object] = {}
+    output: dict[str, tt.Tests.object] = {}
     for key, item in value.items():
         output[str(key)] = item
     return output
 
 
-def _as_object_list(value: object) -> list[object] | None:
+def _as_object_list(value: tt.Tests.object) -> list[tt.Tests.object] | None:
     if not _is_object_list(value):
         return None
     return list(value)
 
 
 def _is_object_mapping(
-    value: object,
-) -> TypeGuard[Mapping[object, object]]:
+    value: tt.Tests.object,
+) -> TypeGuard[Mapping[str, tt.Tests.object]]:
     return isinstance(value, Mapping)
 
 
-def _is_object_list(value: object) -> TypeGuard[list[object]]:
+def _is_object_list(value: tt.Tests.object) -> TypeGuard[list[tt.Tests.object]]:
     return isinstance(value, list)
 
 
 def _is_object_container_sequence(
-    value: object,
-) -> TypeGuard[list[object] | tuple[object, ...] | set[object]]:
+    value: tt.Tests.object,
+) -> TypeGuard[
+    list[tt.Tests.object] | tuple[tt.Tests.object, ...] | set[tt.Tests.object]
+]:
     return isinstance(value, (list, tuple, set))
 
 
-def _as_int_list(value: object) -> list[int] | None:
+def _as_int_list(value: tt.Tests.object) -> list[int] | None:
     object_list = _as_object_list(value)
     if object_list is None:
         return None
@@ -116,19 +119,30 @@ pytestmark = [pytest.mark.unit, pytest.mark.architecture, pytest.mark.advanced]
 class MockScenario:
     """Mock scenario object for testing purposes."""
 
-    def __init__(self, name: str, data: dict[str, object]) -> None:
+    def __init__(self, name: str, data: dict[str, tt.Tests.object]) -> None:
         """Initialize mock scenario with name and test data."""
         super().__init__()
         self.name = name
-        mapper = FlextUtilities
-        self.given = _to_general_mapping(mapper.get(data, "given", default=None))
-        self.when = _to_general_mapping(mapper.get(data, "when", default=None))
-        self.then = _to_general_mapping(mapper.get(data, "then", default=None))
-        self.tags = _to_string_list(mapper.get(data, "tags", default=()))
-        self.priority = _to_string(
-            mapper.get(data, "priority", default="normal"),
-            default="normal",
+        given_data = data.get("given")
+        when_data = data.get("when")
+        then_data = data.get("then")
+        tags_data = data.get("tags")
+        self.given = _to_general_mapping(
+            given_data if isinstance(given_data, Mapping) else None,
         )
+        self.when = _to_general_mapping(
+            when_data if isinstance(when_data, Mapping) else None,
+        )
+        self.then = _to_general_mapping(
+            then_data if isinstance(then_data, Mapping) else None,
+        )
+        self.tags = _to_string_list(
+            tags_data
+            if isinstance(tags_data, Sequence)
+            and not isinstance(tags_data, str | bytes)
+            else None,
+        )
+        self.priority = _to_string(data.get("priority"), default="normal")
 
 
 class GivenWhenThenBuilder:
@@ -731,8 +745,9 @@ class TestComprehensiveIntegration:
         assert isinstance(tags_value, list)
         assert "integration" in tags_value
         setup_data = suite["setup_data"]
-        if isinstance(setup_data, dict) and "environment" in setup_data:
-            env_value: object = setup_data["environment"]
+        typed_setup_data = _as_object_dict(setup_data)
+        if "environment" in typed_setup_data:
+            env_value: tt.Tests.object = typed_setup_data["environment"]
             assert env_value == "test"
 
 
