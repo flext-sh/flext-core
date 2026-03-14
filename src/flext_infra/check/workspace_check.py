@@ -471,31 +471,33 @@ class FlextInfraWorkspaceChecker(s):
     def _nested_mapping(
         data: dict[str, t_infra.Infra.InfraValue],
         *keys: str,
-    ) -> dict[str, object]:
-        current: object = data
+    ) -> dict[str, t_infra.Infra.InfraValue]:
+        current: t_infra.Infra.InfraValue = data
         for key in keys:
             if not isinstance(current, Mapping):
                 return {}
-            typed_current = TypeAdapter(dict[str, object]).validate_python(current)
+            typed_current = TypeAdapter(
+                dict[str, t_infra.Infra.InfraValue]
+            ).validate_python(current)
             if key not in typed_current:
                 return {}
-            child: object = typed_current[key]
+            child: t_infra.Infra.InfraValue = typed_current[key]
             if child is None:
                 return {}
             current = child
         if not isinstance(current, Mapping):
             return {}
-        return TypeAdapter(dict[str, object]).validate_python(current)
+        return TypeAdapter(dict[str, t_infra.Infra.InfraValue]).validate_python(current)
 
     @classmethod
     def _nested_int(
         cls,
-        data: dict[str, object],
+        data: dict[str, t_infra.Infra.InfraValue],
         *keys: str,
         default: int = 0,
     ) -> int:
         target = cls._nested_mapping(data, *keys[:-1])
-        raw: object = target.get(keys[-1])
+        raw: t_infra.Infra.InfraValue = target.get(keys[-1])
         if raw is None:
             return default
         return cls._as_int(raw, default)
@@ -1025,7 +1027,7 @@ class FlextInfraWorkspaceChecker(s):
         )
         issues: list[m.Infra.Check.Issue] = []
         ruff_parse_result = self._json.parse(result.stdout or "[]")
-        ruff_data: object = (
+        ruff_data: t_infra.Infra.InfraValue = (
             ruff_parse_result.value if ruff_parse_result.is_success else []
         )
         try:
