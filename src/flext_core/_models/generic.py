@@ -301,9 +301,7 @@ class FlextGenericModels:
         converted: list[t.NormalizedValue | BaseModel] = Field(
             default_factory=list, description="Converted items"
         )
-        errors: list[str] = Field(
-            default_factory=list, description="Error messages"
-        )
+        errors: list[str] = Field(default_factory=list, description="Error messages")
         warnings: list[str] = Field(
             default_factory=list, description="Warning messages"
         )

@@ -91,19 +91,6 @@ class UserService:
 
     def __init__(self) -> None:
         """Initialize with centralized logger and metrics."""
-        super().__init__(
-            config_type=None,
-            config_overrides=None,
-            initial_context=None,
-            subproject=None,
-            services=None,
-            factories=None,
-            resources=None,
-            container_overrides=None,
-            wire_modules=None,
-            wire_packages=None,
-            wire_classes=None,
-        )
         self.logger = FlextLogger.create_module_logger(__name__)
         self.operation_count = 0
 

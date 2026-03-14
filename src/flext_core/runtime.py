@@ -1343,7 +1343,7 @@ class FlextRuntime:
         ) -> None:
             """Context manager exit."""
 
-        def __or__(self, default: T) -> T:
+        def __or__[D](self, default: D) -> T | D:
             """Operator overload for default values."""
             return self.unwrap_or(default)
 
@@ -1574,7 +1574,7 @@ class FlextRuntime:
                 raise RuntimeError(msg)
             return self.value
 
-        def unwrap_or(self, default: T) -> T:
+        def unwrap_or[D](self, default: D) -> T | D:
             """Return the success value or the default if failed."""
             if self.is_success:
                 return self.value

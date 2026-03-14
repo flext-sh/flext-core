@@ -1544,19 +1544,18 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         content2: str,
         keys: list[str] | None,
         exclude_keys: list[str] | None,
-    ) -> tuple[Mapping[str, t.Tests.object], Mapping[str, t.Tests.object]] | None:
-        """Try to parse both contents as dicts in given format."""
+    ) -> r[bool] | None:
         try:
-            match fmt:
-                case "json":
-                    adapter = TypeAdapter(dict[str, t.Tests.object])
-                    dict1_raw = adapter.validate_json(content1.encode())
-                    dict2_raw = adapter.validate_json(content2.encode())
-                case "yaml":
-                    dict1_raw = _yaml_safe_load(content1)
-                    dict2_raw = _yaml_safe_load(content2)
-                case _:
-                    return None
+            adapter = TypeAdapter(dict[str, t.Tests.object])
+            dict1_raw = adapter.validate_json(content1.encode())
+            dict2_raw = adapter.validate_json(content2.encode())
+        except (ValueError, TypeError):
+            try:
+                dict1_raw = _yaml_safe_load(content1)
+                dict2_raw = _yaml_safe_load(content2)
+            except (ValueError, _YAMLError, TypeError):
+                return None
+        try:
             if self._is_mapping(dict1_raw) and self._is_mapping(dict2_raw):
                 dict1 = {
                     str(key): self._to_config_map_value(self._to_payload_value(value))
@@ -1566,9 +1565,12 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                     str(key): self._to_config_map_value(self._to_payload_value(value))
                     for key, value in dict2_raw.items()
                 }
-                return (dict1, dict2)
+                filtered1, filtered2 = self._apply_key_filtering(
+                    dict1, dict2, keys, exclude_keys
+                )
+                return r[bool].ok(filtered1 == filtered2)
         except (ValueError, _YAMLError, TypeError):
-            pass
+            return None
         return None
 
 

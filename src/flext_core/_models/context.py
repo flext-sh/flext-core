@@ -187,7 +187,7 @@ class FlextModelsContext:
 
             Architecture:
                 structlog.contextvars.get_contextvars() returns a mapping;
-                we control stored values via set() (Any). Key presence
+                we control stored values via set(). Key presence
                 is checked then the value is returned; T is bounded to Any.
 
             """
