@@ -351,7 +351,9 @@ class FlextInfraInternalDependencySyncService:
         value: t.Infra.InfraValue,
     ) -> dict[str, t.Infra.InfraValue]:
         try:
-            adapter: TypeAdapter[dict[str, object]] = TypeAdapter(dict[str, object])
+            adapter: TypeAdapter[dict[str, t.Infra.InfraValue]] = TypeAdapter(
+                dict[str, t.Infra.InfraValue]
+            )
             return adapter.validate_python(value)
         except ValidationError:
             return {}

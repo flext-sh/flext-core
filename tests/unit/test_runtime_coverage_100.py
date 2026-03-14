@@ -32,7 +32,7 @@ class TestRuntimeDictLike:
                 msg = "items not available"
                 raise AttributeError(msg)
 
-            def get(self, key):
+            def get(self, key) -> None:
                 return None
 
         obj = BadDictLike()
@@ -51,7 +51,7 @@ class TestRuntimeDictLike:
                 msg = "items failed"
                 raise TypeError(msg)
 
-            def get(self, key):
+            def get(self, key) -> None:
                 return None
 
         obj = BadDictLike()
@@ -83,7 +83,7 @@ class TestRuntimeDictLike:
             def items(self) -> list:
                 return []
 
-            def get(self, key):
+            def get(self, key) -> None:
                 return None
 
         obj = NotDictLike()
@@ -98,7 +98,7 @@ class TestRuntimeDictLike:
             def keys(self) -> list:
                 return []
 
-            def get(self, key):
+            def get(self, key) -> None:
                 return None
 
         obj = NotDictLike()
@@ -238,13 +238,13 @@ class TestRuntimeTypeChecking:
 
         class MySequence(Sequence):
             @overload
-            def __getitem__(self, index: int): ...
+            def __getitem__(self, index: int) -> None: ...
 
             @overload
             def __getitem__(self, index: slice) -> Sequence: ...
 
             @override
-            def __getitem__(self, index: int | slice) | Sequence:
+            def __getitem__(self, index: int | slice) -> Sequence | None:
                 return None if isinstance(index, int) else MySequence()
 
             @override

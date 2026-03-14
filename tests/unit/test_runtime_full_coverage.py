@@ -268,7 +268,7 @@ def test_normalization_edge_branches() -> None:
 
     class DictLike(Mapping[str, object]):
         @override
-        def __getitem__(self, key: str):
+        def __getitem__(self, key: str) -> int:
             if key == "x":
                 return 1
             raise KeyError(key)

@@ -159,7 +159,9 @@ class UtilityScenarios:
         return cast("p.HasModelDump", cast("object", m.ConfigMap(root=result)))
 
     @staticmethod
-    def create_mock_cached_object():
+    def create_mock_cached_object() -> (
+        UtilityScenarios.create_mock_cached_object.TestCachedObject
+    ):
         """Create mock object with cache attributes."""
 
         class TestCachedObject:
@@ -170,7 +172,9 @@ class UtilityScenarios:
         return TestCachedObject()
 
     @staticmethod
-    def create_mock_uncached_object():
+    def create_mock_uncached_object() -> (
+        UtilityScenarios.create_mock_uncached_object.TestUncachedObject
+    ):
         """Create mock object without cache attributes."""
 
         class TestUncachedObject:
@@ -180,7 +184,7 @@ class UtilityScenarios:
         return TestUncachedObject()
 
     @staticmethod
-    def create_custom_object():
+    def create_custom_object() -> UtilityScenarios.create_custom_object.CustomObject:
         """Create custom serializable object."""
 
         class CustomObject:

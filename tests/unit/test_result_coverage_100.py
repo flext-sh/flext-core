@@ -25,8 +25,18 @@ from __future__ import annotations
 import math
 
 import pytest
+from src.flext_core.result import FlextResult
+from test_alias import FlextResult
+from test_alias2 import FlextResult
+from test_alias3 import FlextResult
+from test_alias4 import FlextResult
+from test_alias5 import FlextResult
+from test_alias_subclass import FlextResult
+from test_pep695_alias import FlextResult
+from test_unwrap import FlextResult
 
-from flext_core import m, r, t
+from flext_core import FlextResult, m, r, t
+from flext_core.result import FlextResult
 
 
 class _ResultAssertions:
@@ -36,7 +46,9 @@ class _ResultAssertions:
         assert result.is_success
 
     @staticmethod
-    def assert_failure(result) -> None:
+    def assert_failure(
+        result: FlextResult[int] | FlextResult[list[int]] | FlextResult[str],
+    ) -> None:
         assert isinstance(result, r)
         assert not result.is_success
 
@@ -46,7 +58,10 @@ class _ResultAssertions:
         assert result.value == expected
 
     @staticmethod
-    def assert_failure_with_error(result, expected_error: str) -> None:
+    def assert_failure_with_error(
+        result: FlextResult[int] | FlextResult[list[int]] | FlextResult[str],
+        expected_error: str,
+    ) -> None:
         _ResultAssertions.assert_failure(result)
         assert isinstance(result, r)
         assert result.error == expected_error
@@ -411,7 +426,7 @@ class TestrCoverage:
 
     def test_with_resource_with_cleanup(self) -> None:
         """Test with_resource executes cleanup even on success."""
-        cleanups_called = list()
+        cleanups_called = []
 
         def factory() -> m.ConfigMap:
             return m.ConfigMap(root={"id": 1})

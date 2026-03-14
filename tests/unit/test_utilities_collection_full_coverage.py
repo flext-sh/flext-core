@@ -77,7 +77,7 @@ def test_find_mapping_no_match_and_merge_error_paths() -> None:
 
 
 def test_batch_fail_collect_flatten_and_progress() -> None:
-    def _success_list(_item: int):
+    def _success_list(_item: int) -> list[int]:
         return [1, 2]
 
     def _failure_result(_item: int):
@@ -92,7 +92,7 @@ def test_batch_fail_collect_flatten_and_progress() -> None:
         msg = "x"
         raise ValueError(msg)
 
-    def _identity(item: int):
+    def _identity(item: int) -> int:
         return item
 
     flattened = u.batch(

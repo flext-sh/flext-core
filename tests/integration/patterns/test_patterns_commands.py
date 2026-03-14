@@ -132,12 +132,12 @@ class CreateUserCommandHandler(
         return "create_user"
 
     @override
-    def can_handle(self, message_type) -> bool:
+    def can_handle(self, message_type: type[CreateUserCommand]) -> bool:
         """Check if can handle command."""
         return message_type == CreateUserCommand or str(message_type) == "create_user"
 
     @override
-    def validate_input(self, value) -> r[bool]:
+    def validate_input(self, value: UpdateUserCommand) -> r[bool]:
         """Validate command using command's validate_command method."""
         if isinstance(value, CreateUserCommand):
             return value.validate_command()

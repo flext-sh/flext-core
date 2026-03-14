@@ -29,7 +29,7 @@ class _WorkspaceReport(Protocol):
     pip_check: m.Infra.Deps.PipCheckReport | None
     dependency_limits: m.Infra.Deps.DependencyLimitsInfo | None
 
-    def model_dump(self) -> dict[str, object]:
+    def model_dump(self) -> dict[str, t.Infra.InfraValue]:
         """Serialize report model payload."""
         ...
 
@@ -97,7 +97,7 @@ class FlextInfraDependencyDetectorRuntime:
         apply_typings = bool(args.apply_typings)
         do_typings = bool(args.typings) or apply_typings
         limits_path = Path(args.limits) if args.limits else limits_default
-        projects_report: dict[str, dict[str, object]] = {}
+        projects_report: dict[str, dict[str, t.Infra.InfraValue]] = {}
         report_model = self._workspace_report_factory(
             workspace=str(root),
             projects=projects_report,
@@ -218,9 +218,9 @@ class FlextInfraDependencyDetectorRuntime:
             deptry_obj = payload.get(c.Infra.Toml.DEPTRY)
             if isinstance(deptry_obj, dict):
                 try:
-                    deptry_payload = TypeAdapter(dict[str, object]).validate_python(
-                        deptry_obj
-                    )
+                    deptry_payload = TypeAdapter(
+                        dict[str, t.Infra.InfraValue]
+                    ).validate_python(deptry_obj)
                 except ValidationError:
                     continue
                 raw_count_obj: t.Infra.InfraValue = deptry_payload.get("raw_count", 0)

@@ -28,11 +28,11 @@ class _AtCallable(Protocol):
         index: int | str,
         *,
         default = None,
-    ): ...
+    ) -> None: ...
 
 
 class _ExtractFieldCallable(Protocol):
-    def __call__(self, item, field_name: str): ...
+    def __call__(self, item, field_name: str) -> None: ...
 
 
 class _TakeCallable(Protocol):
@@ -42,11 +42,11 @@ class _TakeCallable(Protocol):
         key_or_index,
         *,
         default = None,
-    ): ...
+    ) -> None: ...
 
 
 class _BuildApplyConvertCallable(Protocol):
-    def __call__(self, current, operations: Mapping[str, object]): ...
+    def __call__(self, current, operations: Mapping[str, object]) -> None: ...
 
 
 class _ExtractTransformOptionsCallable(Protocol):
@@ -54,7 +54,7 @@ class _ExtractTransformOptionsCallable(Protocol):
 
 
 class _BuildApplyOpCallable(Protocol):
-    def __call__(self, current, operations: Mapping[str, object]): ...
+    def __call__(self, current, operations: Mapping[str, object]) -> None: ...
 
 
 class _TransformCallable(Protocol):
@@ -79,28 +79,28 @@ class _BuildFlagsCallable(Protocol):
     ) -> r[Mapping[str, bool]]: ...
 
 
-def _at_obj(items, index: int | str, *, default = None):
+def _at_obj(items: ExplodingLenList, index: int | str, *, default = None) -> None:
     """Call Mapper.at with arbitrary object for error-path testing."""
     fn: _AtCallable = getattr(u, "at")
     return fn(items, index, default=default)
 
 
-def _extract_field_obj(item, field_name: str):
+def _extract_field_obj(item: AttrObject, field_name: str) -> None:
     """Call _extract_field_value with arbitrary object for testing."""
     fn: _ExtractFieldCallable = getattr(u, "_extract_field_value")
     return fn(item, field_name)
 
 
 def _take_obj(
-    data_or_items, key_or_index, *, default = None
-):
+    data_or_items: test_remaining_uncovered_branches.MaybeModel | _PortModel | int, key_or_index: int | str, *, default = None
+) -> None:
     fn: _TakeCallable = getattr(u, "take")
     return fn(data_or_items, key_or_index, default=default)
 
 
 def _build_apply_convert_obj(
-    current, operations: Mapping[str, object]
-):
+    current: tuple[str], operations: Mapping[str, object]
+) -> None:
     fn: _BuildApplyConvertCallable = getattr(u, "_build_apply_convert")
     return fn(current, operations)
 
@@ -112,35 +112,35 @@ def _extract_transform_options_obj(
     return fn(transform_opts)
 
 
-def _build_apply_sort_obj(current, operations: Mapping[str, object]):
+def _build_apply_sort_obj(current: tuple[str, str], operations: Mapping[str, object]) -> None:
     fn: _BuildApplyOpCallable = getattr(u, "_build_apply_sort")
     return fn(current, operations)
 
 
 def _build_apply_unique_obj(
-    current, operations: Mapping[str, object]
-):
+    current: tuple[int, int, int], operations: Mapping[str, object]
+) -> None:
     fn: _BuildApplyOpCallable = getattr(u, "_build_apply_unique")
     return fn(current, operations)
 
 
-def _build_apply_slice_obj(current, operations: Mapping[str, object]):
+def _build_apply_slice_obj(current: tuple[int, int, int], operations: Mapping[str, object]) -> None:
     fn: _BuildApplyOpCallable = getattr(u, "_build_apply_slice")
     return fn(current, operations)
 
 
-def _build_apply_group_obj(current, operations: Mapping[str, object]):
+def _build_apply_group_obj(current: list[test_remaining_uncovered_branches.GroupModel], operations: Mapping[str, object]) -> None:
     fn: _BuildApplyOpCallable = getattr(u, "_build_apply_group")
     return fn(current, operations)
 
 
-def _transform_obj(source, **kwargs) -> r:
+def _transform_obj(source: BadMapping, **kwargs) -> r:
     fn: _TransformCallable = getattr(u, "transform")
     return fn(source, **kwargs)
 
 
 def _map_dict_keys_obj(
-    source,
+    source: test_map_flags_collect_and_invert_branches.BadItems,
     key_map: Mapping[str, str],
     *,
     keep_unmapped: bool = True,
@@ -150,7 +150,7 @@ def _map_dict_keys_obj(
 
 
 def _build_flags_obj(
-    active_flags,
+    active_flags: test_map_flags_collect_and_invert_branches.BadIter,
     flag_mapping: Mapping[str, str],
 ) -> r[Mapping[str, bool]]:
     """Call build_flags_dict with arbitrary object for error-path testing."""
@@ -190,11 +190,11 @@ def _parse_int(value) -> int:
     return int(cast("str", value))
 
 
-def _plus_one(value):
+def _plus_one(value) -> int:
     return cast("int", value) + 1
 
 
-def _times_two(value):
+def _times_two(value) -> int:
     return cast("int", value) * 2
 
 
@@ -650,7 +650,7 @@ def test_construct_transform_and_deep_eq_branches(mapper: type[u]) -> None:
             return 1
 
         @override
-        def __getitem__(self, key: str):
+        def __getitem__(self, key: str) -> str:
             if key == "field":
                 msg = "boom"
                 raise RuntimeError(msg)

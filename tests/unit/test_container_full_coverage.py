@@ -5,9 +5,11 @@ from __future__ import annotations
 import sys
 import types
 from collections.abc import Callable, Mapping
+from types import ModuleType
 from typing import ClassVar, Protocol, Self, cast
 
 import pytest
+from beartype._cave._cavefast import ModuleType
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings as _BaseSettings
 
@@ -17,12 +19,14 @@ from flext_core import FlextContainer, FlextContext, FlextSettings, m, r, t
 class _MonkeyPatch(Protocol):
     def setattr(
         self,
-        target,
+        target: type[FlextContainer | FlextSettings] | FlextContainer | str,
         name=None,
         value=None,
         raising: bool = True,
     ) -> None: ...
-    def setitem(self, dic, name, value) -> None: ...
+    def setitem(
+        self, dic: dict[str, ModuleType], name: str, value: ModuleType
+    ) -> None: ...
     def delitem(self, dic, name, raising: bool = True) -> None: ...
     def delattr(self, target, name, raising: bool = True) -> None: ...
     def setenv(self, name: str, value: str, prepend: str | None = None) -> None: ...

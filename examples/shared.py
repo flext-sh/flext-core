@@ -35,8 +35,10 @@ from datetime import datetime
 from pathlib import Path
 
 from pydantic import ConfigDict
+from src.flext_core._models.containers import FlextModelsContainers
 
-from flext_core import m, r, t
+from flext_core import FlextModelsContainers, m, r, t
+from flext_core._models.containers import FlextModelsContainers
 
 
 class Examples:
@@ -65,7 +67,7 @@ class Examples:
         max_u64 = (1 << 64) - 1
         return raw / max_u64
 
-    def check(self, label: str, value) -> None:
+    def check(self, label: str, value: int) -> None:
         """Append ``label: <serialised value>`` to the results buffer."""
         self._results.append(f"{label}: {self.ser(value)}")
 
@@ -181,7 +183,7 @@ class Examples:
         cleaned: bool = False
 
     @staticmethod
-    def bind_probe(result_obj: r[int], delta: int):
+    def bind_probe(result_obj: r[int], delta: int) -> int | str:
         """Safely attempt ``result_obj.bind(lambda n: r[int].ok(n + delta))``."""
         try:
             return result_obj.flat_map(lambda n: r[int].ok(n + delta)).unwrap_or(-1)
@@ -191,7 +193,7 @@ class Examples:
     @staticmethod
     def bind_status(
         value: r[t.Container],
-    ):
+    ) -> FlextModelsContainers.ConfigMap:
         """Return a summary ConfigMap when *value* is a ``r``."""
         match value:
             case r() as result:

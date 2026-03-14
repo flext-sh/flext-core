@@ -19,7 +19,7 @@ from pathlib import Path
 from pydantic import TypeAdapter, ValidationError
 
 from flext_core import FlextLogger, r
-from flext_infra import FlextInfraUtilitiesPatterns, c, m, output, u
+from flext_infra import FlextInfraUtilitiesPatterns, c, m, output, t, u
 from flext_infra.docs.shared import FlextInfraDocsShared
 
 logger = FlextLogger.create_module_logger(__name__)
@@ -64,7 +64,9 @@ class FlextInfraDocAuditor:
         by_scope_raw: Mapping[str, object] = {}
         if isinstance(by_scope_raw_value, Mapping):
             try:
-                by_scope_raw = TypeAdapter(dict[str, object]).validate_python(
+                by_scope_raw = TypeAdapter(
+                    dict[str, t.Infra.InfraValue]
+                ).validate_python(
                     by_scope_raw_value,
                     strict=True,
                 )

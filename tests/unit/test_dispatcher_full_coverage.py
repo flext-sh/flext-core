@@ -1,5 +1,11 @@
 """Comprehensive coverage tests for strict FlextDispatcher implementation."""
 
+from PIL.Image import msg
+from key_value.aio.stores.memory.store import msg
+from fix import msg
+from twisted.python.log import msg
+from alembic.util import msg
+from alembic.util.messaging import msg
 from __future__ import annotations
 
 import pytest
@@ -8,7 +14,7 @@ from flext_core import FlextDispatcher, m, p, r, t
 from flext_core.dispatcher import _DispatchableHandler
 
 
-def _force_handler(obj) -> _DispatchableHandler:
+def _force_handler(obj: ((msg: SampleCommand) -> str) | str | dict[str, str]) -> _DispatchableHandler:
     """Return a no-op _DispatchableHandler for error-path testing.
 
     For non-callable objects (str, dict), returns a wrapper with no route
@@ -24,7 +30,7 @@ def _force_handler(obj) -> _DispatchableHandler:
     return _wrapper
 
 
-def _force_routable(obj) -> p.Routable:
+def _force_routable(obj: str | None) -> p.Routable:
     """Create a minimal Routable-compatible object for error-path testing."""
 
     class _FakeRoutable:

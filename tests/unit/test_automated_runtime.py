@@ -9,8 +9,21 @@ from __future__ import annotations
 from collections.abc import Mapping
 
 import pytest
+from docker.images.support.quality.simple.flext_core import FlextRuntime
+from src.flext_core.result import FlextResult
+from src.flext_core.runtime import FlextRuntime
+from test_alias import FlextResult
+from test_alias2 import FlextResult
+from test_alias3 import FlextResult
+from test_alias4 import FlextResult
+from test_alias5 import FlextResult
+from test_alias_subclass import FlextResult
+from test_pep695_alias import FlextResult
+from test_unwrap import FlextResult
 
-from flext_core import r
+from flext_core import FlextResult, FlextRuntime, r
+from flext_core.result import FlextResult
+from flext_core.runtime import FlextRuntime
 from tests import m
 from tests.conftest import test_framework
 from tests.test_utils import assertion_helpers, fixture_factory
@@ -109,7 +122,7 @@ class TestAutomatedFlextRuntime:
         """Test performance characteristics of runtime."""
         instance = fixture_factory.create_test_runtime_instance()
 
-        def operation():
+        def operation() -> FlextResult[bool]:
             return self._execute_runtime_operation(instance, {"performance_test": True})
 
         result = test_framework.execute_with_timeout(operation, timeout_seconds=1.0)
@@ -137,7 +150,7 @@ class TestAutomatedFlextRuntime:
 
     def _execute_runtime_operation(
         self,
-        instance,
+        instance: type[FlextRuntime],
         input_data: Mapping[str, object],
     ) -> r[bool]:
         """Execute a test operation on runtime instance.
@@ -153,6 +166,6 @@ class TestAutomatedFlextRuntime:
             return r[bool].fail(f"FlextRuntime operation failed: {e}")
 
     @pytest.fixture
-    def test_runtime_instance(self):
+    def test_runtime_instance(self) -> type[FlextRuntime]:
         """Fixture for runtime test instance."""
         return fixture_factory.create_test_runtime_instance()

@@ -10,8 +10,21 @@ from collections.abc import Mapping
 from typing import Protocol, runtime_checkable
 
 import pytest
+from docker.images.support.quality.simple.flext_core import FlextRegistry
+from src.flext_core.registry import FlextRegistry
+from src.flext_core.result import FlextResult
+from test_alias import FlextResult
+from test_alias2 import FlextResult
+from test_alias3 import FlextResult
+from test_alias4 import FlextResult
+from test_alias5 import FlextResult
+from test_alias_subclass import FlextResult
+from test_pep695_alias import FlextResult
+from test_unwrap import FlextResult
 
-from flext_core import r
+from flext_core import FlextRegistry, FlextResult, r
+from flext_core.registry import FlextRegistry
+from flext_core.result import FlextResult
 from tests import m
 from tests.conftest import test_framework
 from tests.test_utils import assertion_helpers, fixture_factory
@@ -19,17 +32,17 @@ from tests.test_utils import assertion_helpers, fixture_factory
 
 @runtime_checkable
 class _ProcessCapable(Protocol):
-    def process(self, input_data: Mapping[str, object]): ...
+    def process(self, input_data: Mapping[str, object]) -> None: ...
 
 
 @runtime_checkable
 class _ExecuteCapable(Protocol):
-    def execute(self): ...
+    def execute(self) -> None: ...
 
 
 @runtime_checkable
 class _HandleCapable(Protocol):
-    def handle(self, input_data: Mapping[str, object]): ...
+    def handle(self, input_data: Mapping[str, object]) -> None: ...
 
 
 @runtime_checkable
@@ -130,7 +143,7 @@ class TestAutomatedFlextRegistry:
         """Test performance characteristics of registry."""
         instance = fixture_factory.create_test_registry_instance()
 
-        def operation():
+        def operation() -> FlextResult[bool]:
             return self._execute_registry_operation(
                 instance,
                 {"performance_test": True},
@@ -160,7 +173,7 @@ class TestAutomatedFlextRegistry:
 
     def _execute_registry_operation(
         self,
-        instance,
+        instance: FlextRegistry,
         input_data: Mapping[str, object],
     ) -> r[bool]:
         """Execute a test operation on registry instance.
@@ -183,6 +196,6 @@ class TestAutomatedFlextRegistry:
             return r[bool].fail(f"FlextRegistry operation failed: {e}")
 
     @pytest.fixture
-    def test_registry_instance(self):
+    def test_registry_instance(self) -> FlextRegistry:
         """Fixture for registry test instance."""
         return fixture_factory.create_test_registry_instance()

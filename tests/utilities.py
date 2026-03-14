@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from collections import UserDict, UserList
 from collections.abc import Callable, Iterator
-from typing import override
+from typing import Never, override
 
 from flext_core import r, t
 from flext_infra import FlextInfraUtilities
@@ -170,7 +170,7 @@ class TestsFlextUtilities(FlextTestsUtilities, FlextInfraUtilities):
             class BadConfig:
                 """Config object that raises on attribute access."""
 
-                def get_attribute(self, name: str):
+                def get_attribute(self, name: str) -> Never:
                     """Raise error on attribute access."""
                     msg = f"Bad config: {name}"
                     raise AttributeError(msg)

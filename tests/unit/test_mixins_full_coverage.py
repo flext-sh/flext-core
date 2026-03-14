@@ -88,11 +88,11 @@ class _RuntimeContainer:
         return r.fail("not implemented")
 
     @property
-    def context(self):
+    def context(self) -> None:
         return None
 
     @property
-    def config(self):
+    def config(self) -> None:
         return None
 
 

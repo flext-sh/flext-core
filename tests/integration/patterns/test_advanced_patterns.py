@@ -374,7 +374,7 @@ class AssertionBuilder:
         self.data: list | dict[str, object] | str | tuple[object, ...] = data
         self._assertions: list[Callable[[], None]] = []
 
-    def assert_equals(self, expected) -> AssertionBuilder:
+    def assert_equals(self, expected: dict[str, bool | int | str]) -> AssertionBuilder:
         """assert_equals method.
 
         Returns:
@@ -388,7 +388,7 @@ class AssertionBuilder:
         self._assertions.append(assertion)
         return self
 
-    def assert_contains(self, item) -> AssertionBuilder:
+    def assert_contains(self, item: int | str) -> AssertionBuilder:
         """assert_contains method.
 
         Returns:

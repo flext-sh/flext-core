@@ -14,7 +14,13 @@ from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from typing import Protocol, Self, runtime_checkable
 
+from meltano.core.utils import compose
 from pydantic import BaseModel
+from returns.functions import compose
+from ruamel.yaml import compose
+from ruamel.yaml.main import compose
+from yaml import compose
+from zipp.compat.py313 import compose
 
 from flext_core import FlextProtocols, T, r
 from flext_tests import t

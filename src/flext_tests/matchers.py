@@ -68,8 +68,8 @@ from flext_tests import c, m, t, u
 
 _TEST_PAYLOAD_DICT_ADAPTER = TypeAdapter(dict[str, t.Tests.object])
 _TEST_PAYLOAD_LIST_ADAPTER = TypeAdapter(list[t.Tests.object])
-_GUARD_PAYLOAD_DICT_ADAPTER = TypeAdapter(dict[str, object])
-_GUARD_PAYLOAD_LIST_ADAPTER = TypeAdapter(list)
+_GUARD_PAYLOAD_DICT_ADAPTER = TypeAdapter(dict[str, t.Tests.object])
+_GUARD_PAYLOAD_LIST_ADAPTER = TypeAdapter(list[t.Tests.object])
 
 
 def _is_non_string_sequence(value) -> TypeGuard[Sequence]:
@@ -491,7 +491,7 @@ class FlextTestsMatchers:
                         result_value
                     )
                 except ValidationError:
-                    fallback_map: dict[str, object] = {}
+                    fallback_map: dict[str, t.Tests.object] = {}
                     extract_source = fallback_map
             else:
                 raise AssertionError(

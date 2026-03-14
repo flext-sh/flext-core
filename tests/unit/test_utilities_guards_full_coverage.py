@@ -24,7 +24,7 @@ def _is_type_obj(value, type_spec: str | type | tuple[type, ...]) -> bool:
     return fn(value, type_spec)
 
 
-def _is_flexible_value_obj(value) -> bool:
+def _is_flexible_value_obj(value: dict[int, str] | set[int]) -> bool:
     """Call is_flexible_value with arbitrary object for negative-case testing."""
     fn: Callable[, bool] = getattr(u, "is_flexible_value")
     return fn(value)
@@ -51,7 +51,7 @@ def _sample_handler(value):
     return value
 
 
-def _return_false(_value) -> bool:
+def _return_false(_value: str) -> bool:
     return False
 
 
@@ -82,7 +82,7 @@ def test_is_handler_type_branches() -> None:
     class _DuckHandler:
         value: str = "ok"
 
-        def handle(self, _value):
+        def handle(self, _value) -> None:
             return None
 
     assert u.is_handler_type(cast("object", _BaseModelSubclass))

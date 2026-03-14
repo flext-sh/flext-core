@@ -9,8 +9,23 @@ from __future__ import annotations
 from collections.abc import Mapping
 
 import pytest
+from docker.images.support.quality.simple.flext_core import FlextService
+from src.flext_core._models.containers import FlextModelsContainers
+from src.flext_core.result import FlextResult
+from src.flext_core.service import FlextService
+from test_alias import FlextResult
+from test_alias2 import FlextResult
+from test_alias3 import FlextResult
+from test_alias4 import FlextResult
+from test_alias5 import FlextResult
+from test_alias_subclass import FlextResult
+from test_pep695_alias import FlextResult
+from test_unwrap import FlextResult
 
-from flext_core import r
+from flext_core import FlextModelsContainers, FlextResult, FlextService, r
+from flext_core._models.containers import FlextModelsContainers
+from flext_core.result import FlextResult
+from flext_core.service import FlextService
 from tests import m
 from tests.conftest import test_framework
 from tests.test_utils import assertion_helpers, fixture_factory
@@ -109,7 +124,7 @@ class TestAutomatedFlextService:
         """Test performance characteristics of service."""
         instance = fixture_factory.create_test_service_instance()
 
-        def operation():
+        def operation() -> FlextResult[bool]:
             return self._execute_service_operation(instance, {"performance_test": True})
 
         result = test_framework.execute_with_timeout(operation, timeout_seconds=1.0)
@@ -137,7 +152,7 @@ class TestAutomatedFlextService:
 
     def _execute_service_operation(
         self,
-        instance,
+        instance: FlextService[FlextModelsContainers.ConfigMap],
         input_data: Mapping[str, object],
     ) -> r[bool]:
         """Execute a test operation on service instance.
@@ -153,6 +168,6 @@ class TestAutomatedFlextService:
             return r[bool].fail(f"FlextService operation failed: {e}")
 
     @pytest.fixture
-    def test_service_instance(self):
+    def test_service_instance(self) -> FlextService[FlextModelsContainers.ConfigMap]:
         """Fixture for service test instance."""
         return fixture_factory.create_test_service_instance()

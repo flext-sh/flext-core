@@ -142,13 +142,13 @@ class FlextInfraRefactorRuleLoader:
     @staticmethod
     def _coerce_rule_definitions(
         value: t.Infra.InfraValue | None,
-    ) -> list[dict[str, object]]:
+    ) -> list[dict[str, t.Infra.InfraValue]]:
         try:
             list_adapter: TypeAdapter[list] = TypeAdapter(list)
             entries = list_adapter.validate_python(value)
         except ValidationError:
             return []
-        definitions: list[dict[str, object]] = []
+        definitions: list[dict[str, t.Infra.InfraValue]] = []
         for item in entries:
             normalized = FlextInfraRefactorRuleLoader._normalize_str_object_mapping(
                 item
@@ -163,7 +163,9 @@ class FlextInfraRefactorRuleLoader:
         value: t.Infra.InfraValue,
     ) -> dict[str, t.Infra.InfraValue]:
         try:
-            adapter: TypeAdapter[dict[str, object]] = TypeAdapter(dict[str, object])
+            adapter: TypeAdapter[dict[str, t.Infra.InfraValue]] = TypeAdapter(
+                dict[str, t.Infra.InfraValue]
+            )
             return adapter.validate_python(value)
         except ValidationError:
             return {}

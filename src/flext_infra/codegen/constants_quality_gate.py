@@ -28,7 +28,7 @@ class FlextInfraCodegenConstantsQualityGate:
         self._before_report = before_report
         self._baseline_file = baseline_file
 
-    def run(self) -> dict[str, object]:
+    def run(self) -> dict[str, t.Infra.InfraValue]:
         """Execute quality gate and return structured report payload."""
         before_payload, before_source, before_load_error = (
             u.Infra.quality_gate_load_before_payload(
@@ -78,7 +78,7 @@ class FlextInfraCodegenConstantsQualityGate:
             before_load_error=before_load_error,
         )
         verdict = u.Infra.quality_gate_compute_verdict(checks, improvement)
-        report: dict[str, object] = {
+        report: dict[str, t.Infra.InfraValue] = {
             "workspace": str(self._workspace_root),
             "generated_at": datetime.now(UTC).isoformat(),
             "verdict": verdict,
@@ -104,7 +104,7 @@ class FlextInfraCodegenConstantsQualityGate:
         return report
 
     @classmethod
-    def render_text(cls, report: dict[str, object]) -> str:
+    def render_text(cls, report: dict[str, t.Infra.InfraValue]) -> str:
         """Render compact human-readable summary."""
         checks = u.Infra.dict_list(report.get("checks"))
         before = u.Infra.dict_or_empty(report.get("before"))

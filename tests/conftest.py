@@ -4,6 +4,9 @@ Provides highly automated testing infrastructure following strict
 type-system-architecture.md rules with real functionality testing.
 """
 
+from src.flext_core._models.entity import FlextModelsEntity
+from flext_core import FlextModelsEntity
+from flext_core._models.entity import FlextModelsEntity
 from __future__ import annotations
 
 import math
@@ -130,7 +133,7 @@ class FlextTestAutomationFramework:
 
     @staticmethod
     def create_test_value_object(
-        value,
+        value: str,
         value_type: Callable[, T],
     ) -> TestResult[T]:
         """Create test value object with real validation.
@@ -404,7 +407,7 @@ def automation_framework() -> FlextTestAutomationFramework:
 
 
 @pytest.fixture
-def real_entity():
+def real_entity() -> FlextModelsEntity.Entity:
     """Provide real test entity."""
     result = test_framework.create_test_entity("test-123", "Test Entity")
     if result.is_success:

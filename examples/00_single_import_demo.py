@@ -20,6 +20,42 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
+from tests.conftest import error_scenarios
+from fix import msg
+from twisted.python.log import msg
+from PIL.Image import msg
+from key_value.aio.stores.memory.store import msg
+from alembic.util import msg
+from alembic.util.messaging import msg
+from paramiko.agent import value
+from weasyprint.pdf.metadata import value
+from tomlkit import value
+from tomlkit.api import value
+from cbor2 import value
+from pyarrow import field
+from attr import field
+from attrs import field
+from pyarrow.__lib_pxi.types import field
+from dataclasses import field
+from pyarrow.compute import field
+from psycopg2.sql import Literal
+from dotenv.variables import Literal
+from pyparsing import Literal
+from sqlalchemy.util.typing import Literal
+from beartype.typing import Literal
+from pygments.token import Literal
+from psycopg.sql import Literal
+from typing_extensions import Literal
+from pyparsing.core import Literal
+from typing import Literal
+from python_multipart.decoders import SupportsWrite
+from _typeshed import SupportsWrite
+from posixpath import sep
+from sqlalchemy.sql import values
+from sqlalchemy import values
+from tests.integration.patterns._models import values
+from sqlalchemy.sql.expression import values
+from sqlalchemy.sql._selectable_constructors import values
 from __future__ import annotations
 
 from collections.abc import Callable, Sequence, Set as AbstractSet
@@ -155,7 +191,7 @@ class UserService:
         return user
 
     def _validate_and_transform(
-        self, user_data: m.ConfigMap, _
+        self, user_data: m.ConfigMap, _: bool
     ) -> r[UserProfile]:
         """Validate and transform user data for flat_map."""
         return validate_transform_user(user_data)
@@ -211,7 +247,10 @@ def demonstrate_exceptions() -> None:
     def format_exception_message(error: str) -> str:
         return f"Converted exception to result: {error}"
 
-    def process_scenario(msg, field, value) -> r[str]:
+    def process_scenario(msg: Overload[
+  (*values: object, *, sep: str | None = ' ', end: str | None = '\n', file: SupportsWrite[str] | None = None, flush: Literal[False] = False) -> None
+  (*values: object, *, sep: str | None = ' ', end: str | None = '\n', file: _SupportsWriteAndFlush[str] | None = None, flush: bool) -> None
+], field, value) -> r[str]:
         msg_str = str(msg)
         field_str = str(field)
         value_str = str(value)
@@ -224,7 +263,7 @@ def demonstrate_exceptions() -> None:
             format_error_after_validation
         )
 
-    def process_exception(error) -> r[str]:
+    def process_exception(error: str) -> r[str]:
         error_str = str(error)
         return r.ok(format_exception_message(error_str))
 

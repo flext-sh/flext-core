@@ -32,15 +32,15 @@ class FlextInfraUtilitiesToml:
 
     logger = FlextLogger(__name__)
 
-    _CONTAINER_DICT_ADAPTER: TypeAdapter[dict[str, object]] | None = None
+    _CONTAINER_DICT_ADAPTER: TypeAdapter[dict[str, t.Infra.InfraValue]] | None = None
     _CONTAINER_LIST_ADAPTER: TypeAdapter[list] | None = None
 
     @staticmethod
-    def _get_container_dict_adapter() -> TypeAdapter[dict[str, object]]:
-        """Get or create TypeAdapter for dict[str, object]."""
+    def _get_container_dict_adapter() -> TypeAdapter[dict[str, t.Infra.InfraValue]]:
+        """Get or create TypeAdapter for dict[str, t.Infra.InfraValue]."""
         if FlextInfraUtilitiesToml._CONTAINER_DICT_ADAPTER is None:
             FlextInfraUtilitiesToml._CONTAINER_DICT_ADAPTER = TypeAdapter(
-                dict[str, object],
+                dict[str, t.Infra.InfraValue],
             )
         return FlextInfraUtilitiesToml._CONTAINER_DICT_ADAPTER
 

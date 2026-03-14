@@ -13,12 +13,40 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
+from datetime import datetime
+from pathlib import Path
 from typing import Literal, Self, TypeGuard, overload
+from zipfile import Path
+from zipfile._path import Path
 
+from anyio import Path
+from anyio._core._fileio import Path
+from click import Path
+from click.types import Path
+from fastapi import Path
+from fastapi.param_functions import Path
+from fastapi.params import Path
+from jsonpath_ng.ext.iterable import Path
+from matplotlib.path import Path
 from pydantic import BaseModel, TypeAdapter, ValidationError
+from src.flext_core.result import FlextResult
+from src.flext_tests.typings import _Testobject
+from test_alias import FlextResult
+from test_alias2 import FlextResult
+from test_alias3 import FlextResult
+from test_alias4 import FlextResult
+from test_alias5 import FlextResult
+from test_alias_subclass import FlextResult
+from test_pep695_alias import FlextResult
+from test_unwrap import FlextResult
+from tomlkit import datetime
+from tomlkit.api import datetime
+from zipp import Path
 
-from flext_core import r
+from flext_core import FlextResult, r
+from flext_core.result import FlextResult
 from flext_tests import c, m, t, tt, u
+from flext_tests.typings import _Testobject
 
 _TEST_CONTAINER_DICT_ADAPTER = TypeAdapter(dict[str, t.Tests.object])
 _TEST_CONTAINER_LIST_ADAPTER = TypeAdapter(list[t.Tests.object])
@@ -74,7 +102,23 @@ class FlextTestsBuilders:
         self._data = dict(data)
 
     @staticmethod
-    def _is_result_obj(value) -> TypeGuard[r[t.Tests.object]]:
+    def _is_result_obj(
+        value: BaseModel
+        | FlextResult[BaseModel]
+        | FlextResult[Mapping[str, BaseModel]]
+        | FlextResult[list[BaseModel]]
+        | Mapping[str, BaseModel]
+        | Mapping[str, _Testobject]
+        | Path
+        | Sequence[_Testobject]
+        | bool
+        | bytes
+        | datetime
+        | float
+        | list[BaseModel]
+        | str
+        | None,
+    ) -> TypeGuard[r[t.Tests.object]]:
         return isinstance(value, r)
 
     @staticmethod

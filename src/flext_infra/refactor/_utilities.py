@@ -253,15 +253,17 @@ class FlextInfraUtilitiesRefactor:
             try:
                 value_items = TypeAdapter(list).validate_python(value)
             except ValidationError as exc:
-                msg = "expected list[dict[str, object]] value"
+                msg = "expected list[dict[str, t.Infra.InfraValue]] value"
                 raise ValueError(msg) from exc
-            normalized: list[dict[str, object]] = []
+            normalized: list[dict[str, t.Infra.InfraValue]] = []
             for item in value_items:
                 if not isinstance(item, dict):
                     continue
-                normalized.append(TypeAdapter(dict[str, object]).validate_python(item))
+                normalized.append(
+                    TypeAdapter(dict[str, t.Infra.InfraValue]).validate_python(item)
+                )
             return normalized
-        msg = "expected list[dict[str, object]] value"
+        msg = "expected list[dict[str, t.Infra.InfraValue]] value"
         raise ValueError(msg)
 
     @staticmethod
@@ -338,14 +340,14 @@ class FlextInfraUtilitiesRefactor:
 
     @staticmethod
     def policy_document_schema_valid(
-        loaded: dict[str, object],
+        loaded: dict[str, t.Infra.InfraValue],
         schema_path: Path,
     ) -> bool:
         schema_result = FlextInfraUtilitiesIo.read_json(schema_path)
         if schema_result.is_failure:
             return False
         raw_schema: Mapping[str, object] = schema_result.value
-        schema: dict[str, object] = dict(raw_schema.items())
+        schema: dict[str, t.Infra.InfraValue] = dict(raw_schema.items())
         top_required = FlextInfraUtilitiesRefactor.string_list(
             schema.get("required", [])
         )
@@ -355,7 +357,7 @@ class FlextInfraUtilitiesRefactor:
         if not isinstance(definitions_raw, dict):
             return False
         try:
-            definitions = TypeAdapter(dict[str, object]).validate_python(
+            definitions = TypeAdapter(dict[str, t.Infra.InfraValue]).validate_python(
                 definitions_raw
             )
         except ValidationError:
@@ -366,8 +368,12 @@ class FlextInfraUtilitiesRefactor:
             return False
         if not isinstance(class_rule_raw, dict):
             return False
-        policy_entry = TypeAdapter(dict[str, object]).validate_python(policy_entry_raw)
-        class_rule = TypeAdapter(dict[str, object]).validate_python(class_rule_raw)
+        policy_entry = TypeAdapter(dict[str, t.Infra.InfraValue]).validate_python(
+            policy_entry_raw
+        )
+        class_rule = TypeAdapter(dict[str, t.Infra.InfraValue]).validate_python(
+            class_rule_raw
+        )
         policy_entry_required = FlextInfraUtilitiesRefactor.string_list(
             policy_entry.get("required", []),
         )

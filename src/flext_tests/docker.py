@@ -24,14 +24,15 @@ from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import ClassVar
 
+from algar_oud_mig import t
+from algar_oud_mig.typings import t
 from docker import DockerClient as DockerSDKClient, from_env as docker_from_env
 from docker.errors import DockerException, NotFound
 from docker.models.containers import Container
 from pydantic import TypeAdapter, ValidationError
 from python_on_whales import DockerClient as WhalesDockerClient
 
-from flext_core import FlextLogger, r
-from flext_tests import c, m
+from flext_tests import c, m, t
 
 docker: WhalesDockerClient = WhalesDockerClient(client_type="docker")
 logger: FlextLogger = FlextLogger(__name__)
@@ -128,7 +129,7 @@ class FlextTestsDocker:
         return str(host_port)
 
     @staticmethod
-    def _normalize_bindings(bindings) -> list[dict[str, str]]:
+    def _normalize_bindings(bindings: object) -> list[dict[str, str]]:
         try:
             return _HOST_BINDINGS_ADAPTER.validate_python(bindings)
         except ValidationError:
@@ -220,8 +221,8 @@ class FlextTestsDocker:
         try:
             client = self.get_client()
             container = client.containers.get(container_name)
-            ports_raw: Mapping[str, object] = TypeAdapter(
-                Mapping[str, object]
+            ports_raw: Mapping[str, t.Tests.object] = TypeAdapter(
+                Mapping[str, t.Tests.object]
             ).validate_python(container.ports)
             ports: dict[str, str] = {}
             for container_port, host_bindings in ports_raw.items():
@@ -352,8 +353,10 @@ class FlextTestsDocker:
         """Save dirty container state to persistent storage."""
         try:
             self._state_file.parent.mkdir(parents=True, exist_ok=True)
-            data: dict[str, object] = {"dirty_containers": list(self._dirty_containers)}
-            json_bytes = TypeAdapter(dict[str, object]).dump_json(data)
+            data: dict[str, t.Tests.object] = {
+                "dirty_containers": list(self._dirty_containers)
+            }
+            json_bytes = TypeAdapter(dict[str, t.Tests.object]).dump_json(data)
             self._state_file.write_bytes(json_bytes)
         except (OSError, TypeError) as exc:
             self.logger.warning("Failed to save dirty state", error=str(exc))

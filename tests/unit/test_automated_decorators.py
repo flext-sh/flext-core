@@ -6,11 +6,32 @@ type-system-architecture.md rules with real functionality testing.
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Container, Mapping
 
 import pytest
+from beartype.typing import Container
+from dependency_injector.containers import Container
+from dependency_injector.providers import Container
+from docker.images.support.quality.simple.flext_core import FlextDecorators
+from docker.models.containers import Container
+from matplotlib.container import Container
+from python_on_whales import Container
+from python_on_whales.components.container.cli_wrapper import Container
+from src.flext_core.decorators import FlextDecorators
+from src.flext_core.result import FlextResult
+from test_alias import FlextResult
+from test_alias2 import FlextResult
+from test_alias3 import FlextResult
+from test_alias4 import FlextResult
+from test_alias5 import FlextResult
+from test_alias_subclass import FlextResult
+from test_pep695_alias import FlextResult
+from test_unwrap import FlextResult
+from tomlkit.container import Container
 
-from flext_core import r, t
+from flext_core import FlextDecorators, FlextResult, r, t
+from flext_core.decorators import FlextDecorators
+from flext_core.result import FlextResult
 from tests import m
 from tests.conftest import test_framework
 from tests.test_utils import assertion_helpers, fixture_factory
@@ -117,7 +138,7 @@ class TestAutomatedFlextDecorators:
         """Test performance characteristics of decorators."""
         instance = fixture_factory.create_test_decorators_instance()
 
-        def operation():
+        def operation() -> FlextResult[Container]:
             return self._execute_decorators_operation(
                 instance,
                 {"performance_test": True},
@@ -148,7 +169,7 @@ class TestAutomatedFlextDecorators:
 
     def _execute_decorators_operation(
         self,
-        instance,
+        instance: type[FlextDecorators],
         input_data: Mapping[str, object],
     ) -> r[t.Container]:
         """Execute a test operation on decorators instance.
@@ -192,6 +213,6 @@ class TestAutomatedFlextDecorators:
             return r[t.Container].fail(f"FlextDecorators operation failed: {e}")
 
     @pytest.fixture
-    def test_decorators_instance(self):
+    def test_decorators_instance(self) -> type[FlextDecorators]:
         """Fixture for decorators test instance."""
         return fixture_factory.create_test_decorators_instance()

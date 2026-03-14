@@ -19,6 +19,7 @@ from collections.abc import (
     Generator,
     Mapping,
     MutableMapping,
+    Sequence,
     Sized,
 )
 from contextlib import contextmanager
@@ -39,11 +40,22 @@ from flext_core import (
 )
 from flext_tests import c, m, p, t
 
-_PAYLOAD_MAPPING_ADAPTER = TypeAdapter(dict[str, object])
+_PAYLOAD_MAPPING_ADAPTER = TypeAdapter(dict[str, t.Tests.object])
 _PAYLOAD_SEQUENCE_ADAPTER = TypeAdapter(list)
 
 
-def _to_scalar(value) -> core_t.Scalar:
+def _to_scalar(
+    value: BaseModel
+    | Mapping[str, _Testobject]
+    | Path
+    | Sequence[_Testobject]
+    | bool
+    | bytes
+    | datetime
+    | float
+    | str
+    | None,
+) -> core_t.Scalar:
     """Convert a value to ScalarValue for config overrides.
 
     Args:

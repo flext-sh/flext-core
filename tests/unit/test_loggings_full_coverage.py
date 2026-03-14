@@ -368,7 +368,7 @@ def test_loggings_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> Non
     assert captured["level"] is None
     sentinel = object()
 
-    def _get_logger(_name: str | None = None):
+    def _get_logger(_name: str | None = None) -> object:
         return sentinel
 
     monkeypatch.setattr(FlextRuntime, "get_logger", staticmethod(_get_logger))

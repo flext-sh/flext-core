@@ -81,7 +81,7 @@ class _FakeContext:
     def set(self, key: str, value) -> None:
         _ = (key, value)
 
-    def get(self, key: str):
+    def get(self, key: str) -> None:
         _ = key
 
 

@@ -7,7 +7,7 @@ from typing import Annotated
 from pydantic import ConfigDict, Field, computed_field, model_serializer
 
 from flext_core import FlextModels
-from flext_infra import c
+from flext_infra import c, t
 
 
 class FlextInfraCheckModels:
@@ -137,7 +137,7 @@ class FlextInfraCheckModels:
             ]
 
             @model_serializer(mode="plain")
-            def _serialize(self) -> dict[str, object]:
+            def _serialize(self) -> dict[str, t.Infra.InfraValue]:
                 return {
                     "id": self.id,
                     "shortDescription": {"text": self.short_description},
@@ -158,7 +158,7 @@ class FlextInfraCheckModels:
             ] = "%SRCROOT%"
 
             @model_serializer(mode="plain")
-            def _serialize(self) -> dict[str, object]:
+            def _serialize(self) -> dict[str, t.Infra.InfraValue]:
                 return {
                     "physicalLocation": {
                         "artifactLocation": {
@@ -186,7 +186,7 @@ class FlextInfraCheckModels:
             ]
 
             @model_serializer(mode="plain")
-            def _serialize(self) -> dict[str, object]:
+            def _serialize(self) -> dict[str, t.Infra.InfraValue]:
                 return {
                     "ruleId": self.rule_id,
                     "level": self.level,
@@ -226,7 +226,7 @@ class FlextInfraCheckModels:
             )
 
             @model_serializer(mode="plain")
-            def _serialize(self) -> dict[str, object]:
+            def _serialize(self) -> dict[str, t.Infra.InfraValue]:
                 return {
                     "tool": {
                         "driver": {

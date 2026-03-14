@@ -505,7 +505,7 @@ class FlextInfraWorkspaceChecker(s):
     @classmethod
     def _result_exit_code(cls, result: p.Infra.CommandOutput) -> int:
         try:
-            payload = TypeAdapter(dict[str, object]).validate_python(
+            payload = TypeAdapter(dict[str, t_infra.Infra.InfraValue]).validate_python(
                 vars(result),
             )
         except (TypeError, ValidationError, AttributeError):
@@ -566,13 +566,15 @@ class FlextInfraWorkspaceChecker(s):
             project_dir,
         )
         issues: list[m.Infra.Check.Issue] = []
-        bandit_data: dict[str, object] = {}
+        bandit_data: dict[str, t_infra.Infra.InfraValue] = {}
         try:
             parsed = self._json.parse(result.stdout or "{}")
             if parsed.is_success and isinstance(parsed.value, Mapping):
                 bandit_data = self._to_mapping(parsed.value)
-            raw_results: list[dict[str, object]] = self._to_mapping_list(
-                bandit_data.get("results", []),
+            raw_results: list[dict[str, t_infra.Infra.InfraValue]] = (
+                self._to_mapping_list(
+                    bandit_data.get("results", []),
+                )
             )
             issues.extend(
                 m.Infra.Check.Issue(
@@ -789,7 +791,9 @@ class FlextInfraWorkspaceChecker(s):
             if not stripped:
                 continue
             try:
-                line_data = TypeAdapter(dict[str, object]).validate_json(
+                line_data = TypeAdapter(
+                    dict[str, t_infra.Infra.InfraValue]
+                ).validate_json(
                     stripped,
                 )
             except ValidationError:
@@ -852,8 +856,8 @@ class FlextInfraWorkspaceChecker(s):
                 parsed = self._json.parse(raw_text)
                 if parsed.is_success and isinstance(parsed.value, Mapping):
                     parsed_map = self._to_mapping(parsed.value)
-                    error_items: list[dict[str, object]] = self._to_mapping_list(
-                        parsed_map.get("errors", [])
+                    error_items: list[dict[str, t_infra.Infra.InfraValue]] = (
+                        self._to_mapping_list(parsed_map.get("errors", []))
                     )
                 elif parsed.is_success and isinstance(parsed.value, list):
                     error_items = self._to_mapping_list(parsed.value)
@@ -917,12 +921,14 @@ class FlextInfraWorkspaceChecker(s):
         )
         issues: list[m.Infra.Check.Issue] = []
         pyright_parse_result = self._json.parse(result.stdout or "{}")
-        pyright_data: dict[str, object] = self._to_mapping(
+        pyright_data: dict[str, t_infra.Infra.InfraValue] = self._to_mapping(
             pyright_parse_result.value if pyright_parse_result.is_success else {},
         )
         try:
-            raw_diagnostics: list[dict[str, object]] = self._to_mapping_list(
-                pyright_data.get("generalDiagnostics", []),
+            raw_diagnostics: list[dict[str, t_infra.Infra.InfraValue]] = (
+                self._to_mapping_list(
+                    pyright_data.get("generalDiagnostics", []),
+                )
             )
             issues.extend(
                 m.Infra.Check.Issue(

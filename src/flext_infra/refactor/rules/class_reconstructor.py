@@ -115,7 +115,7 @@ class PreCheckGate:
             by_family[policy.family_name] = policy
         return by_family
 
-    def _schema_valid(self, loaded: dict[str, object]) -> bool:
+    def _schema_valid(self, loaded: dict[str, t.Infra.InfraValue]) -> bool:
         schema_result = u.Infra.read_json(self._schema_path)
         if schema_result.is_failure:
             return True

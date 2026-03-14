@@ -96,15 +96,15 @@ class FlextInfraConfigFixer(s):
         tool_data = doc_data.get(c.Infra.Toml.TOOL)
         if not isinstance(tool_data, dict):
             return r[list[str]].ok([])
-        typed_tool_data = TypeAdapter(dict[str, object]).validate_python(
+        typed_tool_data = TypeAdapter(dict[str, t.Infra.InfraValue]).validate_python(
             tool_data,
         )
         pyrefly_data = typed_tool_data.get(c.Infra.Toml.PYREFLY)
         if not isinstance(pyrefly_data, Mapping):
             return r[list[str]].ok([])
         try:
-            pyrefly: MutableMapping[str, object] = TypeAdapter(
-                dict[str, object]
+            pyrefly: MutableMapping[str, t.Infra.InfraValue] = TypeAdapter(
+                dict[str, t.Infra.InfraValue]
             ).validate_python(pyrefly_data)
         except ValidationError:
             return r[list[str]].ok([])

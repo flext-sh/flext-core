@@ -33,16 +33,18 @@ def _safe_load_yaml(path: Path) -> Mapping[str, object]:
     return FlextInfraUtilitiesYaml.safe_load_yaml(path)
 
 
-def _normalize_string_list(value, field: str) -> list[str]:
+def _normalize_string_list(value: object, field: str) -> list[str]:
     """Validate and normalize a list[str] config field; delegates to ``u.Infra``."""
     return FlextInfraUtilitiesYaml.normalize_string_list(value, field)
 
 
 def _normalize_str_object_mapping(
     value: t.Infra.InfraValue,
-) -> dict[str, object]:
+) -> dict[str, t.Infra.InfraValue]:
     try:
-        adapter: TypeAdapter[dict[str, object]] = TypeAdapter(dict[str, object])
+        adapter: TypeAdapter[dict[str, t.Infra.InfraValue]] = TypeAdapter(
+            dict[str, t.Infra.InfraValue]
+        )
         return adapter.validate_python(value)
     except ValidationError:
         return {}

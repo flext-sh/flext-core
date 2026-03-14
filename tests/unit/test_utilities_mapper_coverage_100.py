@@ -40,7 +40,7 @@ class _DoubleOp(BaseModel):
 
 
 class _GreaterThanTwoOp(BaseModel):
-    def __call__(self, value):
+    def __call__(self, value) -> bool:
         if isinstance(value, (int, float)):
             return value > 2
         return False
@@ -61,7 +61,7 @@ class _PlusFiveOp(BaseModel):
 
 
 class _GroupLenOp(BaseModel):
-    def __call__(self, value):
+    def __call__(self, value) -> int:
         if isinstance(value, str):
             return len(value)
         return 0

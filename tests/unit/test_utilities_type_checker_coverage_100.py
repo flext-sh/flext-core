@@ -35,7 +35,7 @@ def _type_origin(value) -> t.TypeHintSpecifier:
     return cast("t.TypeOriginSpecifier", value)
 
 
-def _message_type(value) -> t.MessageTypeSpecifier:
+def _message_type(value: type[dict | int | str]) -> t.MessageTypeSpecifier:
     return cast("t.MessageTypeSpecifier", value)
 
 

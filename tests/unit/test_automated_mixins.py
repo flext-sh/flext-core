@@ -6,11 +6,31 @@ type-system-architecture.md rules with real functionality testing.
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Container, Mapping
 
 import pytest
+from beartype.typing import Container
+from dependency_injector.containers import Container
+from dependency_injector.providers import Container
+from docker.models.containers import Container
+from matplotlib.container import Container
+from python_on_whales import Container
+from python_on_whales.components.container.cli_wrapper import Container
+from src.flext_core.mixins import FlextMixins
+from src.flext_core.result import FlextResult
+from test_alias import FlextResult
+from test_alias2 import FlextResult
+from test_alias3 import FlextResult
+from test_alias4 import FlextResult
+from test_alias5 import FlextResult
+from test_alias_subclass import FlextResult
+from test_pep695_alias import FlextResult
+from test_unwrap import FlextResult
+from tomlkit.container import Container
 
-from flext_core import r, t
+from flext_core import FlextMixins, FlextResult, r, t
+from flext_core.mixins import FlextMixins
+from flext_core.result import FlextResult
 from tests import m
 from tests.conftest import test_framework
 from tests.test_utils import assertion_helpers, fixture_factory
@@ -114,7 +134,7 @@ class TestAutomatedFlextMixins:
         """Test performance characteristics of mixins."""
         instance = fixture_factory.create_test_mixins_instance()
 
-        def operation():
+        def operation() -> FlextResult[Container]:
             return self._execute_mixins_operation(instance, {"performance_test": True})
 
         result = test_framework.execute_with_timeout(operation, timeout_seconds=1.0)
@@ -142,7 +162,7 @@ class TestAutomatedFlextMixins:
 
     def _execute_mixins_operation(
         self,
-        instance,
+        instance: type[FlextMixins],
         input_data: Mapping[str, object],
     ) -> r[t.Container]:
         """Execute a test operation on mixins instance.
@@ -186,6 +206,6 @@ class TestAutomatedFlextMixins:
             return r[t.Container].fail(f"FlextMixins operation failed: {e}")
 
     @pytest.fixture
-    def test_mixins_instance(self):
+    def test_mixins_instance(self) -> type[FlextMixins]:
         """Fixture for mixins test instance."""
         return fixture_factory.create_test_mixins_instance()

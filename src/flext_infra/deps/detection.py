@@ -41,7 +41,7 @@ class FlextInfraDependencyDetectionService:
     @staticmethod
     def to_infra_value(
         value: t.Infra.InfraValue,
-    ) -> str | int | float | bool | dict[str, object] | list | None:
+    ) -> str | int | float | bool | dict[str, t.Infra.InfraValue] | list | None:
         """Convert container value to namespaced infra value."""
         if value is None or isinstance(value, (str, int, float, bool)):
             return value
@@ -66,7 +66,7 @@ class FlextInfraDependencyDetectionService:
                 mapping_value = TypeAdapter(dict[object, object]).validate_python(value)
             except ValidationError:
                 return None
-            converted_map: dict[str, object] = {}
+            converted_map: dict[str, t.Infra.InfraValue] = {}
             for key, item in mapping_value.items():
                 converted_item = FlextInfraDependencyDetectionService.to_infra_value(
                     item
@@ -107,7 +107,9 @@ class FlextInfraDependencyDetectionService:
             if not isinstance(error_obj, Mapping):
                 continue
             try:
-                error_data = TypeAdapter(dict[str, object]).validate_python(error_obj)
+                error_data = TypeAdapter(dict[str, t.Infra.InfraValue]).validate_python(
+                    error_obj
+                )
             except ValidationError:
                 continue
             code = error_data.get(c.Infra.Toml.CODE)

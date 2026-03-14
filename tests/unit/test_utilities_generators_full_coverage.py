@@ -180,7 +180,7 @@ def test_generators_mapping_non_dict_normalization_path() -> None:
 
     class _SimpleMapping(Mapping[str, object]):
         @override
-        def __getitem__(self, key: str):
+        def __getitem__(self, key: str) -> int:
             if key == "a":
                 return 1
             raise KeyError(key)

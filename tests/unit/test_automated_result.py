@@ -6,11 +6,29 @@ type-system-architecture.md rules with real functionality testing.
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Container, Mapping
 
 import pytest
+from beartype.typing import Container
+from dependency_injector.containers import Container
+from dependency_injector.providers import Container
+from docker.models.containers import Container
+from matplotlib.container import Container
+from python_on_whales import Container
+from python_on_whales.components.container.cli_wrapper import Container
+from src.flext_core.result import FlextResult
+from test_alias import FlextResult
+from test_alias2 import FlextResult
+from test_alias3 import FlextResult
+from test_alias4 import FlextResult
+from test_alias5 import FlextResult
+from test_alias_subclass import FlextResult
+from test_pep695_alias import FlextResult
+from test_unwrap import FlextResult
+from tomlkit.container import Container
 
-from flext_core import r
+from flext_core import FlextResult, r
+from flext_core.result import FlextResult
 from tests import m
 from tests.conftest import test_framework
 from tests.test_utils import assertion_helpers, fixture_factory
@@ -99,7 +117,7 @@ class TestAutomatedr:
         """Test performance characteristics of result."""
         instance = fixture_factory.create_test_result_instance()
 
-        def operation():
+        def operation() -> FlextResult[bool]:
             return self._execute_result_operation(instance, {"performance_test": True})
 
         result = test_framework.execute_with_timeout(operation, timeout_seconds=1.0)
@@ -127,7 +145,7 @@ class TestAutomatedr:
 
     def _execute_result_operation(
         self,
-        instance,
+        instance: type[FlextResult[Container]],
         input_data: Mapping[str, object],
     ) -> r[bool]:
         """Execute a test operation on result instance.
@@ -143,6 +161,6 @@ class TestAutomatedr:
             return r[bool].fail(f"r operation failed: {e}")
 
     @pytest.fixture
-    def test_result_instance(self):
+    def test_result_instance(self) -> type[FlextResult[Container]]:
         """Fixture for result test instance."""
         return fixture_factory.create_test_result_instance()

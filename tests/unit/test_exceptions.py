@@ -1040,7 +1040,7 @@ class Teste:
 
         class DictLike(Mapping[str, object]):
             @override
-            def __getitem__(self, key: str):
+            def __getitem__(self, key: str) -> str:
                 if key == "key1":
                     return "value1"
                 raise KeyError(key)
@@ -1247,7 +1247,7 @@ class Teste:
                 self._obj = object()
 
             @override
-            def __getitem__(self, key: str):
+            def __getitem__(self, key: str) -> object | str:
                 if key == "key1":
                     return "value1"
                 if key == "key2":
@@ -1286,7 +1286,7 @@ class Teste:
 
         class DictLike(Mapping[str, object]):
             @override
-            def __getitem__(self, key: str):
+            def __getitem__(self, key: str) -> object:
                 mapping: dict[str, object] = {"key1": "value1", "key2": 123}
                 if key in mapping:
                     return mapping[key]
@@ -1330,7 +1330,7 @@ class Teste:
                 self._obj = object()
 
             @override
-            def __getitem__(self, key: str):
+            def __getitem__(self, key: str) -> object:
                 if key == "key1":
                     return self._obj
                 raise KeyError(key)
@@ -1487,7 +1487,7 @@ class Teste:
 
         class DictLike(Mapping[str, object]):
             @override
-            def __getitem__(self, key: str):
+            def __getitem__(self, key: str) -> str:
                 if key == "key":
                     return "value"
                 raise KeyError(key)

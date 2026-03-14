@@ -9,8 +9,21 @@ from __future__ import annotations
 from collections.abc import Mapping
 
 import pytest
+from docker.images.support.quality.simple.flext_core import FlextDispatcher
+from src.flext_core.dispatcher import FlextDispatcher
+from src.flext_core.result import FlextResult
+from test_alias import FlextResult
+from test_alias2 import FlextResult
+from test_alias3 import FlextResult
+from test_alias4 import FlextResult
+from test_alias5 import FlextResult
+from test_alias_subclass import FlextResult
+from test_pep695_alias import FlextResult
+from test_unwrap import FlextResult
 
-from flext_core import r
+from flext_core import FlextDispatcher, FlextResult, r
+from flext_core.dispatcher import FlextDispatcher
+from flext_core.result import FlextResult
 from tests import m
 from tests.conftest import test_framework
 from tests.test_utils import assertion_helpers, fixture_factory
@@ -102,7 +115,7 @@ class TestAutomatedFlextDispatcher:
         """Test performance characteristics of dispatcher."""
         instance = fixture_factory.create_test_dispatcher_instance()
 
-        def operation():
+        def operation() -> FlextResult[bool]:
             return self._execute_dispatcher_operation(
                 instance,
                 {"performance_test": True},
@@ -133,7 +146,7 @@ class TestAutomatedFlextDispatcher:
 
     def _execute_dispatcher_operation(
         self,
-        instance,
+        instance: FlextDispatcher,
         input_data: Mapping[str, object],
     ) -> r[bool]:
         """Execute a test operation on dispatcher instance.
@@ -150,6 +163,6 @@ class TestAutomatedFlextDispatcher:
             return r[bool].fail(f"FlextDispatcher operation failed: {e}")
 
     @pytest.fixture
-    def test_dispatcher_instance(self):
+    def test_dispatcher_instance(self) -> FlextDispatcher:
         """Fixture for dispatcher test instance."""
         return fixture_factory.create_test_dispatcher_instance()

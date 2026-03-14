@@ -20,7 +20,7 @@ class TestFormattingRunRuffFix:
 
         def _fake_run_checked(
             _self: FlextInfraUtilitiesSubprocess, cmd: list[str]
-        ):
+        ) -> object:
             calls.append(cmd)
             return object()
 
@@ -52,9 +52,7 @@ class TestFormattingRunRuffFix:
         target.write_text("x=1\n", encoding="utf-8")
         calls: list[list[str]] = []
 
-        def _raise_missing(
-            _self: FlextInfraUtilitiesSubprocess, cmd: list[str]
-        ):
+        def _raise_missing(_self: FlextInfraUtilitiesSubprocess, cmd: list[str]):
             calls.append(cmd)
             msg = "ruff not found"
             raise FileNotFoundError(msg)

@@ -9,8 +9,10 @@ from __future__ import annotations
 from collections.abc import Mapping
 
 import pytest
+from src.flext_core.utilities import FlextUtilities
 
-from flext_core import r
+from flext_core import FlextUtilities, r
+from flext_core.utilities import FlextUtilities
 from tests import m
 from tests.conftest import test_framework
 from tests.test_utils import assertion_helpers, fixture_factory
@@ -140,7 +142,7 @@ class TestAutomatedFlextUtilities:
 
     def _execute_utilities_operation(
         self,
-        instance,
+        instance: type[FlextUtilities],
         input_data: Mapping[str, object],
     ) -> r[bool]:
         """Execute a test operation on utilities instance.
@@ -156,6 +158,6 @@ class TestAutomatedFlextUtilities:
             return r[bool].fail(f"FlextUtilities operation failed: {e}")
 
     @pytest.fixture
-    def test_utilities_instance(self):
+    def test_utilities_instance(self) -> type[FlextUtilities]:
         """Fixture for utilities test instance."""
         return fixture_factory.create_test_utilities_instance()

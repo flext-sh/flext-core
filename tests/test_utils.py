@@ -7,7 +7,24 @@ type-system-architecture.md rules with zero duplication.
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping
+from datetime import datetime
+from pathlib import Path
 from typing import TypeVar, override
+from zipfile import Path
+from zipfile._path import Path
+
+from anyio import Path
+from anyio._core._fileio import Path
+from click import Path
+from click.types import Path
+from fastapi import Path
+from fastapi.param_functions import Path
+from fastapi.params import Path
+from jsonpath_ng.ext.iterable import Path
+from matplotlib.path import Path
+from tomlkit import datetime
+from tomlkit.api import datetime
+from zipp import Path
 
 from flext_core import (
     FlextContainer,
@@ -45,7 +62,7 @@ class TestDataFactory:
         unique_id: str,
         name: str,
         **kwargs: t.Scalar,
-    ):
+    ) -> dict[str, bool | datetime | float | int | str]:
         """Create standardized entity test data."""
         return {"unique_id": unique_id, "name": name, **kwargs}
 
@@ -131,7 +148,7 @@ class AssertionHelpers:
         operation_func: Callable[[], r[t.Container]],
         test_case: StandardTestCase,
         context: str = "",
-    ):
+    ) -> Path | bool | datetime | float | int | str:
         """Execute operation and assert result matches test case."""
         try:
             result = operation_func()

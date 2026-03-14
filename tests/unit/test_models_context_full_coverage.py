@@ -36,7 +36,7 @@ class _MappingLike(Mapping[str, object]):
         return len(self._data)
 
     @override
-    def __getitem__(self, key: str):
+    def __getitem__(self, key: str) -> object:
         return self._data[key]
 
 

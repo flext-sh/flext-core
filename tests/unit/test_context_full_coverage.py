@@ -13,7 +13,7 @@ from flext_core import FlextContainer, FlextContext, c, m, r, t
 class _MonkeyPatch(Protocol):
     def setattr(
         self,
-        target,
+        target: type[FlextContext] | FlextContext | str,
         name=None,
         value=None,
         raising: bool = True,

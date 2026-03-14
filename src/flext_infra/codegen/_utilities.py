@@ -35,8 +35,10 @@ class FlextInfraUtilitiesCodegen:
         pkg = u.Infra.infer_package(path)
     """
 
-    _container_mapping_adapter: TypeAdapter[dict[str, object]] = TypeAdapter(
-        dict[str, object],
+    _container_mapping_adapter: TypeAdapter[dict[str, t.Infra.InfraValue]] = (
+        TypeAdapter(
+            dict[str, t.Infra.InfraValue],
+        )
     )
 
     @staticmethod
@@ -431,7 +433,7 @@ class FlextInfraUtilitiesCodegen:
         workspace_root: Path,
         before_report: Path | None,
         baseline_file: Path | None,
-    ) -> tuple[dict[str, object] | None, str, str]:
+    ) -> tuple[dict[str, t.Infra.InfraValue] | None, str, str]:
         baseline_path = before_report or baseline_file
         if baseline_path is None:
             return (None, "", "")
@@ -463,8 +465,8 @@ class FlextInfraUtilitiesCodegen:
 
     @staticmethod
     def quality_gate_before_metrics(
-        before_payload: dict[str, object] | None,
-    ) -> dict[str, object]:
+        before_payload: dict[str, t.Infra.InfraValue] | None,
+    ) -> dict[str, t.Infra.InfraValue]:
         if before_payload is None:
             return {
                 "total_violations": -1,
@@ -496,9 +498,9 @@ class FlextInfraUtilitiesCodegen:
         *,
         census_reports: Sequence[FlextInfraCodegenModels.CensusReport],
         duplicate_groups: int,
-        import_scan: dict[str, object],
+        import_scan: dict[str, t.Infra.InfraValue],
         modified_files: list[str],
-    ) -> dict[str, object]:
+    ) -> dict[str, t.Infra.InfraValue]:
         by_rule: dict[str, int] = dict.fromkeys(
             c.Infra.Codegen.QualityGate.RULE_KEYS, 0
         )
@@ -536,9 +538,9 @@ class FlextInfraUtilitiesCodegen:
 
     @staticmethod
     def quality_gate_improvement(
-        before_metrics: dict[str, object],
-        after_metrics: dict[str, object],
-    ) -> dict[str, object]:
+        before_metrics: dict[str, t.Infra.InfraValue],
+        after_metrics: dict[str, t.Infra.InfraValue],
+    ) -> dict[str, t.Infra.InfraValue]:
         before_violations = FlextInfraUtilitiesCodegen.as_int(
             before_metrics.get("total_violations"),
         )
@@ -569,13 +571,13 @@ class FlextInfraUtilitiesCodegen:
     @staticmethod
     def quality_gate_build_checks(
         *,
-        after_metrics: dict[str, object],
-        improvement: dict[str, object],
-        pyrefly_check: dict[str, object],
-        ruff_check: dict[str, object],
+        after_metrics: dict[str, t.Infra.InfraValue],
+        improvement: dict[str, t.Infra.InfraValue],
+        pyrefly_check: dict[str, t.Infra.InfraValue],
+        ruff_check: dict[str, t.Infra.InfraValue],
         before_available: bool,
         before_load_error: str,
-    ) -> list[dict[str, object]]:
+    ) -> list[dict[str, t.Infra.InfraValue]]:
         checks: list[FlextInfraCodegenModels.QualityGateCheck] = []
         violations_total = FlextInfraUtilitiesCodegen.as_int(
             after_metrics.get("total_violations"),
@@ -682,8 +684,8 @@ class FlextInfraUtilitiesCodegen:
 
     @staticmethod
     def quality_gate_compute_verdict(
-        checks: Sequence[dict[str, object]],
-        improvement: dict[str, object],
+        checks: Sequence[dict[str, t.Infra.InfraValue]],
+        improvement: dict[str, t.Infra.InfraValue],
     ) -> str:
         if all(bool(item.get("passed", False)) for item in checks):
             return "PASS"
@@ -728,7 +730,7 @@ class FlextInfraUtilitiesCodegen:
     @staticmethod
     def quality_gate_project_findings(
         census_reports: Sequence[FlextInfraCodegenModels.CensusReport],
-    ) -> list[dict[str, object]]:
+    ) -> list[dict[str, t.Infra.InfraValue]]:
         findings: list[FlextInfraCodegenModels.QualityGateProjectFinding] = [
             FlextInfraCodegenModels.QualityGateProjectFinding(
                 project=entry.project,
@@ -748,12 +750,12 @@ class FlextInfraUtilitiesCodegen:
     def quality_gate_write_artifacts(
         *,
         workspace_root: Path,
-        report: dict[str, object],
+        report: dict[str, t.Infra.InfraValue],
         render_text: str,
         census_reports: Sequence[FlextInfraCodegenModels.CensusReport],
         duplicate_groups: int,
-        before_payload: dict[str, object] | None,
-    ) -> dict[str, object]:
+        before_payload: dict[str, t.Infra.InfraValue] | None,
+    ) -> dict[str, t.Infra.InfraValue]:
         directory = workspace_root / c.Infra.Codegen.QualityGate.REPORT_DIR
         directory.mkdir(parents=True, exist_ok=True)
         report_json = directory / "latest.json"
@@ -762,7 +764,9 @@ class FlextInfraUtilitiesCodegen:
         inventory_json = directory / "inventory-after.json"
         validate_json = directory / "validate-after.json"
         baseline_json = directory / "baseline-used.json"
-        report_adapter: TypeAdapter[dict[str, object]] = TypeAdapter(dict[str, object])
+        report_adapter: TypeAdapter[dict[str, t.Infra.InfraValue]] = TypeAdapter(
+            dict[str, t.Infra.InfraValue]
+        )
         report_json.write_text(
             report_adapter.dump_json(report, by_alias=True).decode(
                 c.Infra.Encoding.DEFAULT
@@ -770,11 +774,11 @@ class FlextInfraUtilitiesCodegen:
             encoding=c.Infra.Encoding.DEFAULT,
         )
         report_text.write_text(render_text, encoding=c.Infra.Encoding.DEFAULT)
-        census_payload: list[dict[str, object]] = [
+        census_payload: list[dict[str, t.Infra.InfraValue]] = [
             item.model_dump() for item in census_reports
         ]
-        census_adapter: TypeAdapter[list[dict[str, object]]] = TypeAdapter(
-            list[dict[str, object]]
+        census_adapter: TypeAdapter[list[dict[str, t.Infra.InfraValue]]] = TypeAdapter(
+            list[dict[str, t.Infra.InfraValue]]
         )
         census_json.write_text(
             census_adapter.dump_json(census_payload, by_alias=True).decode(
@@ -782,8 +786,8 @@ class FlextInfraUtilitiesCodegen:
             ),
             encoding=c.Infra.Encoding.DEFAULT,
         )
-        inventory_adapter: TypeAdapter[dict[str, object]] = TypeAdapter(
-            dict[str, object]
+        inventory_adapter: TypeAdapter[dict[str, t.Infra.InfraValue]] = TypeAdapter(
+            dict[str, t.Infra.InfraValue]
         )
         inventory_json.write_text(
             inventory_adapter.dump_json(
@@ -791,8 +795,8 @@ class FlextInfraUtilitiesCodegen:
             ).decode(c.Infra.Encoding.DEFAULT),
             encoding=c.Infra.Encoding.DEFAULT,
         )
-        validate_adapter: TypeAdapter[dict[str, object]] = TypeAdapter(
-            dict[str, object]
+        validate_adapter: TypeAdapter[dict[str, t.Infra.InfraValue]] = TypeAdapter(
+            dict[str, t.Infra.InfraValue]
         )
         validate_json.write_text(
             validate_adapter.dump_json(
@@ -806,8 +810,8 @@ class FlextInfraUtilitiesCodegen:
             encoding=c.Infra.Encoding.DEFAULT,
         )
         if before_payload is not None:
-            baseline_adapter: TypeAdapter[dict[str, object]] = TypeAdapter(
-                dict[str, object]
+            baseline_adapter: TypeAdapter[dict[str, t.Infra.InfraValue]] = TypeAdapter(
+                dict[str, t.Infra.InfraValue]
             )
             baseline_json.write_text(
                 baseline_adapter.dump_json(before_payload, by_alias=True).decode(
@@ -924,7 +928,7 @@ class FlextInfraUtilitiesCodegen:
     def quality_gate_run_pyrefly_check(
         workspace_root: Path,
         modified_files: list[str],
-    ) -> dict[str, object]:
+    ) -> dict[str, t.Infra.InfraValue]:
         if not modified_files:
             return {
                 "passed": True,
@@ -953,7 +957,7 @@ class FlextInfraUtilitiesCodegen:
     def quality_gate_run_ruff_check(
         workspace_root: Path,
         modified_files: list[str],
-    ) -> dict[str, object]:
+    ) -> dict[str, t.Infra.InfraValue]:
         if not modified_files:
             return {
                 "passed": True,
@@ -976,7 +980,7 @@ class FlextInfraUtilitiesCodegen:
     def run_external_check(
         workspace_root: Path,
         cmd: list[str],
-    ) -> dict[str, object]:
+    ) -> dict[str, t.Infra.InfraValue]:
         try:
             result = subprocess.run(
                 cmd,
@@ -1004,7 +1008,7 @@ class FlextInfraUtilitiesCodegen:
     def quality_gate_scan_import_nodes(
         workspace_root: Path,
         modified_files: list[str],
-    ) -> dict[str, object]:
+    ) -> dict[str, t.Infra.InfraValue]:
         invalid_import_from: list[str] = []
         parse_errors: list[str] = []
         for rel_path in modified_files:
@@ -1030,7 +1034,7 @@ class FlextInfraUtilitiesCodegen:
         }
 
     @staticmethod
-    def extract_total_violations(payload: dict[str, object]) -> int:
+    def extract_total_violations(payload: dict[str, t.Infra.InfraValue]) -> int:
         if "total_violations" in payload:
             return FlextInfraUtilitiesCodegen.as_int(payload.get("total_violations"))
         totals = FlextInfraUtilitiesCodegen.dict_or_empty(payload.get("totals"))
@@ -1051,7 +1055,7 @@ class FlextInfraUtilitiesCodegen:
         return -1
 
     @staticmethod
-    def extract_duplicate_groups(payload: dict[str, object]) -> int:
+    def extract_duplicate_groups(payload: dict[str, t.Infra.InfraValue]) -> int:
         if "duplicate_groups" in payload:
             return FlextInfraUtilitiesCodegen.as_int(payload.get("duplicate_groups"))
         duplicates = payload.get("duplicates")
@@ -1061,7 +1065,7 @@ class FlextInfraUtilitiesCodegen:
         return -1
 
     @staticmethod
-    def extract_projects_total(payload: dict[str, object]) -> int:
+    def extract_projects_total(payload: dict[str, t.Infra.InfraValue]) -> int:
         totals = FlextInfraUtilitiesCodegen.dict_or_empty(payload.get("totals"))
         value = totals.get(c.Infra.ReportKeys.PROJECTS)
         if value is not None:
@@ -1073,12 +1077,12 @@ class FlextInfraUtilitiesCodegen:
         return 0
 
     @staticmethod
-    def extract_projects_passed(payload: dict[str, object]) -> int:
+    def extract_projects_passed(payload: dict[str, t.Infra.InfraValue]) -> int:
         totals = FlextInfraUtilitiesCodegen.dict_or_empty(payload.get("totals"))
         return FlextInfraUtilitiesCodegen.as_int(totals.get("passed"))
 
     @staticmethod
-    def extract_projects_failed(payload: dict[str, object]) -> int:
+    def extract_projects_failed(payload: dict[str, t.Infra.InfraValue]) -> int:
         totals = FlextInfraUtilitiesCodegen.dict_or_empty(payload.get("totals"))
         return FlextInfraUtilitiesCodegen.as_int(totals.get("failed"))
 
@@ -1101,18 +1105,20 @@ class FlextInfraUtilitiesCodegen:
     def dict_or_empty(value: t.Infra.InfraValue) -> dict[str, t.Infra.InfraValue]:
         if not isinstance(value, dict):
             return {}
-        return TypeAdapter(dict[str, object]).validate_python(value)
+        return TypeAdapter(dict[str, t.Infra.InfraValue]).validate_python(value)
 
     @staticmethod
     def dict_list(value: t.Infra.InfraValue) -> list[dict[str, t.Infra.InfraValue]]:
         if not isinstance(value, list):
             return []
-        result: list[dict[str, object]] = []
+        result: list[dict[str, t.Infra.InfraValue]] = []
         value_items = TypeAdapter(list).validate_python(value)
         for item in value_items:
             if not isinstance(item, dict):
                 continue
-            result.append(TypeAdapter(dict[str, object]).validate_python(item))
+            result.append(
+                TypeAdapter(dict[str, t.Infra.InfraValue]).validate_python(item)
+            )
         return result
 
 

@@ -30,7 +30,7 @@ class FlextInfraUtilitiesYaml:
     """
 
     _LIST_ADAPTER: TypeAdapter[list] | None = None
-    _MAPPING_ADAPTER: TypeAdapter[dict[str, object]] | None = None
+    _MAPPING_ADAPTER: TypeAdapter[dict[str, t.Infra.InfraValue]] | None = None
 
     @staticmethod
     def _get_list_adapter() -> TypeAdapter[list]:
@@ -39,9 +39,11 @@ class FlextInfraUtilitiesYaml:
         return FlextInfraUtilitiesYaml._LIST_ADAPTER
 
     @staticmethod
-    def _get_mapping_adapter() -> TypeAdapter[dict[str, object]]:
+    def _get_mapping_adapter() -> TypeAdapter[dict[str, t.Infra.InfraValue]]:
         if FlextInfraUtilitiesYaml._MAPPING_ADAPTER is None:
-            FlextInfraUtilitiesYaml._MAPPING_ADAPTER = TypeAdapter(dict[str, object])
+            FlextInfraUtilitiesYaml._MAPPING_ADAPTER = TypeAdapter(
+                dict[str, t.Infra.InfraValue]
+            )
         return FlextInfraUtilitiesYaml._MAPPING_ADAPTER
 
     @staticmethod

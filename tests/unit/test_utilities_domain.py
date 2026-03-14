@@ -41,7 +41,7 @@ def _build_domain_test_entity(
     return m.DomainTestEntity(name=name, value=cast("int", value))
 
 
-def _convert_to_general_value(obj) -> t.Tests.object:
+def _convert_to_general_value(obj: object) -> t.Tests.object:
     """Convert object to object (handles Pydantic models).
 
     Args:

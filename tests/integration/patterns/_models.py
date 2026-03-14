@@ -34,7 +34,7 @@ class _StringDictModel(RootModel[dict[str, str]]):
 
 
 class _ContainerDictModel(RootModel[dict[str, object]]):
-    def __getitem__(self, key: str):
+    def __getitem__(self, key: str) -> object:
         return self.root[key]
 
     def __setitem__(self, key: str, value) -> None:
@@ -43,7 +43,7 @@ class _ContainerDictModel(RootModel[dict[str, object]]):
     def __contains__(self, key) -> bool:
         return key in self.root
 
-    def get(self, key: str, default = None) | None:
+    def get(self, key: str, default=None) -> None | None:
         return self.root.get(key, default)
 
     def update(self, payload: Mapping[str, object]) -> None:
