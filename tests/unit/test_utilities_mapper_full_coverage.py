@@ -438,8 +438,8 @@ def test_extract_field_value_and_ensure_variants(mapper: type[u]) -> None:
 
 
 def test_filter_map_normalize_convert_helpers(mapper: type[u]) -> None:
-    plus_one = cast("Callable[, object]", _plus_one)
-    times_two = cast("Callable[, object]", _times_two)
+    plus_one = cast("Callable[..., object]", _plus_one)
+    times_two = cast("Callable[..., object]", _times_two)
     assert mapper._build_apply_filter(1, {"filter": 1}, 0) == 1
     assert mapper._build_apply_filter(
         {"a": 1, "b": 0},
@@ -490,7 +490,7 @@ def test_filter_map_normalize_convert_helpers(mapper: type[u]) -> None:
 def test_convert_default_fallback_matrix(
     mapper: type[u],
     value,
-    convert_spec: Callable[, object] | type,
+    convert_spec: Callable[..., object] | type,
     expected,
 ) -> None:
     operations = cast("Mapping[str, object]", {"convert": convert_spec})

@@ -533,7 +533,7 @@ class FlextTestsModels(
                 ),
             ]
             validate_fn: Annotated[
-                Callable[, bool] | None,
+                Callable[..., bool] | None,
                 Field(
                     default=None,
                     alias="validate",

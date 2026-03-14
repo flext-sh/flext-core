@@ -321,12 +321,12 @@ def test_mixins_context_logging_and_cqrs_paths(monkeypatch: pytest.MonkeyPatch) 
 
 
 def test_mixins_validation_and_protocol_paths() -> None:
-    validators: list[Callable[, r[bool]]] = [
+    validators: list[Callable[..., r[bool]]] = [
         _validation_ok_false,
     ]
     bad_true = x.Validation.validate_with_result("v", validators)
     assert bad_true.is_failure
-    fail_validators: list[Callable[, r[bool]]] = [
+    fail_validators: list[Callable[..., r[bool]]] = [
         _validation_fail_no,
     ]
     fail_result = x.Validation.validate_with_result("v", fail_validators)

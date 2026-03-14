@@ -186,7 +186,7 @@ class FlextTestsTypes(FlextTypes):
 
             type ScalarValue = t.Scalar
             "Scalar values that can be serialized directly."
-            type SerializableValue = object
+            type SerializableValue = _Testobject
             "Values that can be serialized to JSON/YAML."
             type ReadResult[T] = (
                 T

@@ -26,7 +26,7 @@ def _is_type_obj(value, type_spec: str | type | tuple[type, ...]) -> bool:
 
 def _is_flexible_value_obj(value: dict[int, str] | set[int]) -> bool:
     """Call is_flexible_value with arbitrary object for negative-case testing."""
-    fn: Callable[, bool] = getattr(u, "is_flexible_value")
+    fn: Callable[..., bool] = getattr(u, "is_flexible_value")
     return fn(value)
 
 

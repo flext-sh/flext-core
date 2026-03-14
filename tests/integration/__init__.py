@@ -18,7 +18,6 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
-    from tests.integration.patterns.test_advanced_patterns import TestFunction
     from tests.integration.patterns.test_architectural_patterns import (
         TestEnterprisePatterns,
         TestEventDrivenPatterns,
@@ -42,6 +41,7 @@ if TYPE_CHECKING:
         TestFlextLoggerIntegration,
         TestFlextLoggerUsage,
         TestFlextLogLevel,
+        assert_result_success,
         make_result_logger,
     )
     from tests.integration.patterns.test_patterns_testing import (
@@ -318,10 +318,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.integration.test_config_integration",
         "TestFlextSettingsSingletonIntegration",
     ),
-    "TestFunction": (
-        "tests.integration.patterns.test_advanced_patterns",
-        "TestFunction",
-    ),
     "TestIdempotency": (
         "tests.integration.test_refactor_nesting_idempotency",
         "TestIdempotency",
@@ -408,6 +404,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.integration.patterns.test_patterns_testing",
         "arrange_act_assert",
     ),
+    "assert_result_success": (
+        "tests.integration.patterns.test_patterns_logging",
+        "assert_result_success",
+    ),
     "c": ("tests.integration.test_refactor_policy_mro", "FlextLdapConstants"),
     "m": ("tests.integration.test_refactor_policy_mro", "FlextLdapModels"),
     "make_result_logger": (
@@ -490,7 +490,6 @@ __all__ = [
     "TestFlextLoggerUsage",
     "TestFlextServiceIntegration",
     "TestFlextSettingsSingletonIntegration",
-    "TestFunction",
     "TestIdempotency",
     "TestIntegrationWithRealCommandServices",
     "TestLibraryIntegration",
@@ -514,6 +513,7 @@ __all__ = [
     "UserQueryService",
     "UserServiceEntity",
     "arrange_act_assert",
+    "assert_result_success",
     "c",
     "m",
     "make_result_logger",
@@ -529,7 +529,7 @@ __all__ = [
 ]
 
 
-def __getattr__(name: str):
+def __getattr__(name: str) -> t.ModuleExport:
     """Lazy-load module attributes on first access (PEP 562)."""
     return lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)
 

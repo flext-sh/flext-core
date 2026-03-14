@@ -169,8 +169,8 @@ class Ex05FlextMixins(Examples):
         def _validator_fail(_value) -> r[bool]:
             return r[bool].fail("bad-input")
 
-        validators_ok: list[Callable[, r[bool]]] = [_validator_ok]
-        validators_fail: list[Callable[, r[bool]]] = [_validator_fail]
+        validators_ok: list[Callable[..., r[bool]]] = [_validator_ok]
+        validators_fail: list[Callable[..., r[bool]]] = [_validator_fail]
         validation_ok = x.Validation.validate_with_result("abc", validators_ok)
         validation_fail = x.Validation.validate_with_result("abc", validators_fail)
         self.check("validation.ok", validation_ok.is_success)

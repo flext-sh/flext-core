@@ -79,12 +79,7 @@ if TYPE_CHECKING:
     from flext_core.container import FlextContainer
     from flext_core.context import FlextContext
     from flext_core.decorators import FlextDecorators, d
-    from flext_core.dispatcher import (
-        DispatchMessage,
-        Execute,
-        FlextDispatcher,
-        Handle,
-    )
+    from flext_core.dispatcher import DispatchMessage, Execute, FlextDispatcher, Handle
     from flext_core.exceptions import FlextExceptions, Metadata, e
     from flext_core.handlers import FlextHandlers, h
     from flext_core.loggings import FlextLogger
@@ -97,8 +92,9 @@ if TYPE_CHECKING:
     from flext_core.service import FlextService, s
     from flext_core.settings import FlextSettings
     from flext_core.typings import (
+        TV,
+        EnumT,
         FlextTypes,
-        MessageT_contra,
         P,
         R,
         ResultT,
@@ -106,8 +102,9 @@ if TYPE_CHECKING:
         T_co,
         T_contra,
         T_Model,
-        T_Namespace,
         T_Settings,
+        TRuntime,
+        TV_co,
         U,
         t,
     )
@@ -120,6 +117,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "CircuitBreakerManager",
     ),
     "DispatchMessage": ("flext_core.dispatcher", "DispatchMessage"),
+    "EnumT": ("flext_core.typings", "EnumT"),
     "Execute": ("flext_core.dispatcher", "Execute"),
     "FactoryDecoratorsDiscovery": (
         "flext_core._decorators.discovery",
@@ -206,7 +204,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     ),
     "FlextUtilitiesText": ("flext_core._utilities.text", "FlextUtilitiesText"),
     "Handle": ("flext_core.dispatcher", "Handle"),
-    "MessageT_contra": ("flext_core.typings", "MessageT_contra"),
     "Metadata": ("flext_core.exceptions", "Metadata"),
     "P": ("flext_core.typings", "P"),
     "R": ("flext_core.typings", "R"),
@@ -215,8 +212,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "ResultT": ("flext_core.typings", "ResultT"),
     "RetryPolicy": ("flext_core._dispatcher.reliability", "RetryPolicy"),
     "T": ("flext_core.typings", "T"),
+    "TRuntime": ("flext_core.typings", "TRuntime"),
+    "TV": ("flext_core.typings", "TV"),
+    "TV_co": ("flext_core.typings", "TV_co"),
     "T_Model": ("flext_core.typings", "T_Model"),
-    "T_Namespace": ("flext_core.typings", "T_Namespace"),
     "T_Settings": ("flext_core.typings", "T_Settings"),
     "T_co": ("flext_core.typings", "T_co"),
     "T_contra": ("flext_core.typings", "T_contra"),
@@ -246,8 +245,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
 }
 
 __all__ = [
+    "TV",
     "CircuitBreakerManager",
     "DispatchMessage",
+    "EnumT",
     "Execute",
     "FactoryDecoratorsDiscovery",
     "FlextConstants",
@@ -301,7 +302,6 @@ __all__ = [
     "FlextUtilitiesReliability",
     "FlextUtilitiesText",
     "Handle",
-    "MessageT_contra",
     "Metadata",
     "P",
     "R",
@@ -310,8 +310,9 @@ __all__ = [
     "ResultT",
     "RetryPolicy",
     "T",
+    "TRuntime",
+    "TV_co",
     "T_Model",
-    "T_Namespace",
     "T_Settings",
     "T_co",
     "T_contra",
@@ -341,7 +342,7 @@ __all__ = [
 ]
 
 
-def __getattr__(name: str):
+def __getattr__(name: str) -> t.ModuleExport:
     """Lazy-load module attributes on first access (PEP 562)."""
     return lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)
 

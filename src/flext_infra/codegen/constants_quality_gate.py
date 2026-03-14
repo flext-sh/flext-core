@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from pathlib import Path
 
-from flext_infra import c, u
+from flext_infra import c, t, u
 from flext_infra.codegen.census import FlextInfraCodegenCensus
 
 

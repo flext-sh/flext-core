@@ -4,9 +4,6 @@ Provides highly automated testing infrastructure following strict
 type-system-architecture.md rules with real functionality testing.
 """
 
-from src.flext_core._models.entity import FlextModelsEntity
-from flext_core import FlextModelsEntity
-from flext_core._models.entity import FlextModelsEntity
 from __future__ import annotations
 
 import math
@@ -20,7 +17,15 @@ from typing import TypeVar
 import pytest
 from pydantic import ConfigDict
 
-from flext_core import FlextContainer, FlextContext, FlextSettings, m, r, t
+from flext_core import (
+    FlextContainer,
+    FlextContext,
+    FlextModelsEntity,
+    FlextSettings,
+    m,
+    r,
+    t,
+)
 
 from .helpers.scenarios import (
     ParserScenario,
@@ -134,7 +139,7 @@ class FlextTestAutomationFramework:
     @staticmethod
     def create_test_value_object(
         value: str,
-        value_type: Callable[, T],
+        value_type: Callable[..., T],
     ) -> TestResult[T]:
         """Create test value object with real validation.
 

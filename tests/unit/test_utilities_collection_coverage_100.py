@@ -280,9 +280,7 @@ class ChunkScenario(BaseModel):
         ),
     ]
     size: Annotated[int, Field(description="Chunk size")]
-    expected_result: Annotated[
-        list[list], Field(description="Expected chunked output")
-    ]
+    expected_result: Annotated[list[list], Field(description="Expected chunked output")]
 
 
 class BatchScenario(BaseModel):
@@ -292,7 +290,7 @@ class BatchScenario(BaseModel):
     name: Annotated[str, Field(description="Batch scenario name")]
     items: Annotated[list, Field(description="Input items for batch")]
     operation: Annotated[
-        Callable[, object], Field(description="Batch operation callable")
+        Callable[..., object], Field(description="Batch operation callable")
     ]
     expected_result: Annotated[object, Field(description="Expected batch result")]
     size: Annotated[int, Field(default=100, description="Batch size")] = 100
@@ -300,7 +298,7 @@ class BatchScenario(BaseModel):
         str, Field(default="collect", description="Error handling mode")
     ] = "collect"
     pre_validate: Annotated[
-        Callable[, bool] | None,
+        Callable[..., bool] | None,
         Field(default=None, description="Optional pre-validation callable"),
     ] = None
     flatten: Annotated[

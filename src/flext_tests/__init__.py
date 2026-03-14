@@ -27,7 +27,11 @@ if TYPE_CHECKING:
     from flext_tests._validator.bypass import FlextValidatorBypass
     from flext_tests._validator.imports import FlextValidatorImports
     from flext_tests._validator.layer import FlextValidatorLayer
-    from flext_tests._validator.models import FlextValidatorModels, vm
+    from flext_tests._validator.models import (
+        FlextValidatorModels,
+        FlextValidatorModels as m,
+        vm,
+    )
     from flext_tests._validator.settings import FlextValidatorSettings
     from flext_tests._validator.tests import FlextValidatorTests
     from flext_tests._validator.types import FlextValidatorTypes
@@ -39,7 +43,6 @@ if TYPE_CHECKING:
     from flext_tests.factories import FlextTestsFactories, tt
     from flext_tests.files import FlextTestsFiles, tf
     from flext_tests.matchers import FlextTestsMatchers, tm
-    from flext_tests.models import FlextTestsModels, m
     from flext_tests.protocols import FlextTestsProtocols, p
     from flext_tests.typings import FlextTestsTypes, t
     from flext_tests.utilities import FlextTestsUtilities, u
@@ -54,7 +57,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextTestsFactories": ("flext_tests.factories", "FlextTestsFactories"),
     "FlextTestsFiles": ("flext_tests.files", "FlextTestsFiles"),
     "FlextTestsMatchers": ("flext_tests.matchers", "FlextTestsMatchers"),
-    "FlextTestsModels": ("flext_tests.models", "FlextTestsModels"),
     "FlextTestsProtocols": ("flext_tests.protocols", "FlextTestsProtocols"),
     "FlextTestsServiceBase": ("flext_tests.base", "FlextTestsServiceBase"),
     "FlextTestsTypes": ("flext_tests.typings", "FlextTestsTypes"),
@@ -75,7 +77,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextValidatorTests": ("flext_tests._validator.tests", "FlextValidatorTests"),
     "FlextValidatorTypes": ("flext_tests._validator.types", "FlextValidatorTypes"),
     "c": ("flext_tests.constants", "c"),
-    "m": ("flext_tests.models", "m"),
+    "m": ("flext_tests._validator.models", "FlextValidatorModels"),
     "p": ("flext_tests.protocols", "p"),
     "s": ("flext_tests.base", "s"),
     "t": ("flext_tests.typings", "t"),
@@ -100,7 +102,6 @@ __all__ = [
     "FlextTestsFactories",
     "FlextTestsFiles",
     "FlextTestsMatchers",
-    "FlextTestsModels",
     "FlextTestsProtocols",
     "FlextTestsServiceBase",
     "FlextTestsTypes",
@@ -133,7 +134,7 @@ __all__ = [
 ]
 
 
-def __getattr__(name: str):
+def __getattr__(name: str) -> t.ModuleExport:
     """Lazy-load module attributes on first access (PEP 562)."""
     return lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)
 

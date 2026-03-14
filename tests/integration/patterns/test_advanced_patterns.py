@@ -21,7 +21,7 @@ from flext_core import r, t, u
 
 from ...models import m
 
-TestFunction = Callable[, None]
+TestFunction = Callable[..., None]
 
 
 def mark_test_pattern[F: Callable[..., None]](pattern: str) -> Callable[[F], F]:

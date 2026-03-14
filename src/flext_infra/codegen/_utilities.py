@@ -413,7 +413,7 @@ class FlextInfraUtilitiesCodegen:
         out.extend(f'    "{exp}",' for exp in sorted(exports))
         out.extend(["]", "", ""])
         out.extend([
-            "def __getattr__(name: str):",
+            "def __getattr__(name: str) -> t.ModuleExport:",
             '    """Lazy-load module attributes on first access (PEP 562)."""',
             "    return lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)",
             "",
