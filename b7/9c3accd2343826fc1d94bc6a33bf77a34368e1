@@ -1,0 +1,74 @@
+src/flext_infra/check/workspace_check.py
+  8c2d749dcca16b1c 139-141
+src/flext_infra/refactor/rules/pattern_corrections.py
+  8c2d749dcca16b1c 9,11,310-313
+src/flext_infra/refactor/rules/class_reconstructor.py
+  8c2d749dcca16b1c 106-109,111
+src/flext_infra/_utilities/_models.py
+  e014ffffe67c7aec 22-33,42,45,50
+src/flext_core/context.py
+  8c2d749dcca16b1c 53-72,104,106-107,112,298,300,393,396,398,410-414,419-423,446,448,625-627
+src/flext_infra/release/_models.py
+  e014ffffe67c7aec 16-18,47
+src/flext_core/_models/context.py
+  8c2d749dcca16b1c 379,383,390-393,508,512,516,519-522
+tests/infra/unit/core/skill_validator.py
+  8c2d749dcca16b1c 14
+src/flext_infra/codegen/constants_quality_gate.py
+  8c2d749dcca16b1c 80-83,88,97
+tests/infra/unit/github/pr_cli.py
+  8c2d749dcca16b1c 17-18
+src/flext_infra/core/inventory.py
+  8c2d749dcca16b1c 59,64
+src/flext_infra/docs/auditor.py
+  8c2d749dcca16b1c 186
+src/flext_infra/deps/_models.py
+  8c2d749dcca16b1c 497-515
+src/flext_infra/refactor/validation.py
+  8c2d749dcca16b1c 18,35
+src/flext_tests/builders.py
+  8c2d749dcca16b1c 66-67,331-341,438-446,451-468,616-618,622,628-630,634,659
+src/flext_core/_utilities/mapper.py
+  8c2d749dcca16b1c 993,995-1002,1358-1362,2070,2147-2152,2156,2345-2348,2370-2373
+src/flext_infra/github/_models.py
+  e014ffffe67c7aec 15-20,27-28,38
+src/flext_infra/refactor/rules/symbol_propagation.py
+  8c2d749dcca16b1c 13,29-34
+src/flext_infra/docs/_models.py
+  8c2d749dcca16b1c 140
+src/flext_core/_utilities/parser.py
+  8c2d749dcca16b1c 201,797-798,803,811-812,824,831-832,1067,1071,1080,1082,1084-1085,1089,1093
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "b79c3accd2343826fc1d94bc6a33bf77a34368e1",
+  "prompts": {
+    "8c2d749dcca16b1c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d0c09b0b-3db3-411a-ac46-126453ea6fa0",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 290,
+      "total_deletions": 183,
+      "accepted_lines": 213,
+      "overriden_lines": 1
+    },
+    "e014ffffe67c7aec": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3117e1ba3ffelGhmZrSdP7dDcI",
+        "model": "anthropic/claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 46,
+      "total_deletions": 38,
+      "accepted_lines": 30,
+      "overriden_lines": 0
+    }
+  }
+}
