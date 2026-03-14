@@ -14,13 +14,7 @@ from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from typing import Protocol, Self, runtime_checkable
 
-from meltano.core.utils import compose
 from pydantic import BaseModel
-from returns.functions import compose
-from ruamel.yaml import compose
-from ruamel.yaml.main import compose
-from yaml import compose
-from zipp.compat.py313 import compose
 
 from flext_core import FlextProtocols, T, r
 from flext_tests import t
@@ -340,9 +334,9 @@ class FlextTestsProtocols(FlextProtocols):
                 Uses structural typing - any object with compose/client_config.
                 """
 
-                compose
-                "Compose API access (python-on-whales style)."
-                client_config: Mapping[str, object]
+                compose: t.Tests.object
+                """Compose API access (python-on-whales style)."""
+                client_config: Mapping[str, t.Tests.object]
                 "Client configuration (python-on-whales style)."
 
                 def down(

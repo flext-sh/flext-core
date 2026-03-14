@@ -9,7 +9,7 @@ from __future__ import annotations
 import importlib
 from collections.abc import ItemsView, Iterator, Mapping
 from datetime import UTC, datetime, tzinfo
-from typing import cast, override
+from typing import NoReturn, cast, override
 
 import pytest
 from pydantic import BaseModel
@@ -24,7 +24,7 @@ runtime_module = importlib.import_module("flext_core.runtime")
 
 class _BrokenMapping(Mapping[str, object]):
     @override
-    def __getitem__(self, key: str):
+    def __getitem__(self, key: str) -> NoReturn:
         raise KeyError(key)
 
     @override
@@ -107,7 +107,7 @@ def test_ensure_dict_branches(monkeypatch: pytest.MonkeyPatch) -> None:
 
     class _IterFailMapping(Mapping[str, object]):
         @override
-        def __getitem__(self, key: str):
+        def __getitem__(self, key: str) -> object:
             raise KeyError(key)
 
         @override

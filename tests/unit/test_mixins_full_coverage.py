@@ -165,7 +165,7 @@ def test_mixins_result_and_model_conversion_paths(
             return 1
 
         @override
-        def __getitem__(self, _key: str):
+        def __getitem__(self, _key: str) -> t.Tests.object:
             msg = "boom"
             raise RuntimeError(msg)
 

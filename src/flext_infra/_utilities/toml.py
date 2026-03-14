@@ -11,7 +11,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import tomlkit
-from pydantic import BaseModel, TypeAdapter, ValidationError
+from pydantic import BaseModel, JsonValue, TypeAdapter, ValidationError
 from tomlkit.items import Array, Item, Table
 from tomlkit.toml_document import TOMLDocument
 
@@ -33,7 +33,7 @@ class FlextInfraUtilitiesToml:
     logger = FlextLogger(__name__)
 
     _CONTAINER_DICT_ADAPTER: TypeAdapter[dict[str, t.Infra.InfraValue]] | None = None
-    _CONTAINER_LIST_ADAPTER: TypeAdapter[list] | None = None
+    _CONTAINER_LIST_ADAPTER: TypeAdapter[list[JsonValue]] | None = None
 
     @staticmethod
     def _get_container_dict_adapter() -> TypeAdapter[dict[str, t.Infra.InfraValue]]:
@@ -45,11 +45,11 @@ class FlextInfraUtilitiesToml:
         return FlextInfraUtilitiesToml._CONTAINER_DICT_ADAPTER
 
     @staticmethod
-    def _get_container_list_adapter() -> TypeAdapter[list]:
-        """Get or create TypeAdapter for lisobject]."""
+    def _get_container_list_adapter() -> TypeAdapter[list[JsonValue]]:
+        """Get or create TypeAdapter for list[JsonValue]."""
         if FlextInfraUtilitiesToml._CONTAINER_LIST_ADAPTER is None:
             FlextInfraUtilitiesToml._CONTAINER_LIST_ADAPTER = TypeAdapter(
-                list,
+                list[JsonValue],
             )
         return FlextInfraUtilitiesToml._CONTAINER_LIST_ADAPTER
 

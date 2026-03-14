@@ -404,7 +404,9 @@ class FlextInfraUtilitiesRefactor:
         except (OSError, TypeError) as exc:
             msg = f"failed to read policy document: {policy_path}"
             raise ValueError(msg) from exc
-        loaded_dict = dict(loaded.items())
+        loaded_dict: t.Infra.ContainerDict = TypeAdapter(
+            t.Infra.ContainerDict,
+        ).validate_python(dict(loaded.items()))
         schema_path = policy_path.with_name("class-policy-v2.schema.json")
         if not FlextInfraUtilitiesRefactor.policy_document_schema_valid(
             loaded_dict,

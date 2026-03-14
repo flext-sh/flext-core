@@ -114,7 +114,7 @@ class TestRuntimeDictLike:
             def keys(self) -> list:
                 return []
 
-            def items(self) -> list[tuple[object, object]]:
+            def items(self) -> list[tuple[str, str]]:
                 return []
 
         obj = NotDictLike()
@@ -220,7 +220,7 @@ class TestRuntimeTypeChecking:
 
         class BadType:
             @override
-            def __getattribute__(self, name: str):
+            def __getattribute__(self, name: str) -> object:
                 if name == "__name__":
                     msg = "Cannot access __name__"
                     raise AttributeError(msg)
@@ -259,7 +259,7 @@ class TestRuntimeTypeChecking:
 
         class BadType:
             @override
-            def __getattribute__(self, name: str):
+            def __getattribute__(self, name: str) -> object:
                 if name == "__name__":
                     msg = "Cannot access __name__"
                     raise AttributeError(msg)

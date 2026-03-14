@@ -421,7 +421,7 @@ def real_entity() -> FlextModelsEntity.Entity:
 
 
 @pytest.fixture
-def real_value_object():
+def real_value_object() -> str:
     """Provide real test value object."""
     result = test_framework.create_test_value_object("test value", str)
     if result.is_success:
@@ -704,7 +704,9 @@ def out_of_range() -> list[tuple[int, int, int]]:
     return [(-1, 0, 10), (11, 0, 10), (100, 0, 50), (-100, 0, 10)]
 
 
-def assert_validates(model_class: type, field_name: str, value):
+def assert_validates(
+    model_class: type, field_name: str, value: t.Tests.object
+) -> t.Tests.object:
     """Validate a value against a model field and return the validated value.
 
     Args:

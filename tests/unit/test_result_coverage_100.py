@@ -25,18 +25,8 @@ from __future__ import annotations
 import math
 
 import pytest
-from src.flext_core.result import FlextResult
-from test_alias import FlextResult
-from test_alias2 import FlextResult
-from test_alias3 import FlextResult
-from test_alias4 import FlextResult
-from test_alias5 import FlextResult
-from test_alias_subclass import FlextResult
-from test_pep695_alias import FlextResult
-from test_unwrap import FlextResult
 
 from flext_core import FlextResult, m, r, t
-from flext_core.result import FlextResult
 
 
 class _ResultAssertions:

@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from pydantic import TypeAdapter, ValidationError
+from pydantic import JsonValue, TypeAdapter, ValidationError
 
 from flext_core import FlextLogger, r
 from flext_infra import c, m, u
@@ -148,20 +148,24 @@ class FlextInfraDocValidator:
                 status = c.Infra.Status.FAIL
                 message = f"missing adr references in skills: {', '.join(missing)}"
         wrote_todo = self._maybe_write_todo(scope, apply_mode=apply_mode)
+        adr_skills_json: JsonValue = TypeAdapter(JsonValue).validate_python(
+            missing_adr_skills,
+        )
+        payload: JsonValue = {
+            c.Infra.ReportKeys.SUMMARY: {
+                c.Infra.ReportKeys.SCOPE: scope.name,
+                "result": status,
+                c.Infra.ReportKeys.MESSAGE: message,
+                "apply": apply_mode,
+            },
+            "details": {
+                "missing_adr_skills": adr_skills_json,
+                "todo_written": wrote_todo,
+            },
+        }
         _ = u.Infra.write_json(
             scope.report_dir / "validate-summary.json",
-            {
-                c.Infra.ReportKeys.SUMMARY: {
-                    c.Infra.ReportKeys.SCOPE: scope.name,
-                    "result": status,
-                    c.Infra.ReportKeys.MESSAGE: message,
-                    "apply": apply_mode,
-                },
-                "details": {
-                    "missing_adr_skills": missing_adr_skills,
-                    "todo_written": wrote_todo,
-                },
-            },
+            payload,
         )
         _ = FlextInfraDocsShared.write_markdown(
             scope.report_dir / "validate-report.md",

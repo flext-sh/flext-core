@@ -10,21 +10,6 @@ from collections.abc import Callable, Mapping
 from datetime import datetime
 from pathlib import Path
 from typing import TypeVar, override
-from zipfile import Path
-from zipfile._path import Path
-
-from anyio import Path
-from anyio._core._fileio import Path
-from click import Path
-from click.types import Path
-from fastapi import Path
-from fastapi.param_functions import Path
-from fastapi.params import Path
-from jsonpath_ng.ext.iterable import Path
-from matplotlib.path import Path
-from tomlkit import datetime
-from tomlkit.api import datetime
-from zipp import Path
 
 from flext_core import (
     FlextContainer,
@@ -68,9 +53,9 @@ class TestDataFactory:
 
     @staticmethod
     def create_value_object_data(
-        value,
+        value: t.Scalar,
         **kwargs: t.Scalar,
-    ):
+    ) -> dict[str, bool | datetime | float | int | str]:
         """Create standardized value object test data."""
         return {"value": value, **kwargs}
 

@@ -25,21 +25,21 @@ class Spy:
 
     def __init__(
         self,
-        return_value=None,
-        side_effect: list | None = None,
+        return_value: t.Infra.InfraValue = None,
+        side_effect: list[t.Infra.InfraValue] | None = None,
     ) -> None:
         self.call_count: int = 0
         self.call_args: (
-            tuple[tuple[object, ...], dict[str, t.Infra.InfraValue]] | None
+            tuple[tuple[t.Infra.InfraValue, ...], dict[str, t.Infra.InfraValue]] | None
         ) = None
         self.call_args_list: list[
-            tuple[tuple[object, ...], dict[str, t.Infra.InfraValue]]
+            tuple[tuple[t.Infra.InfraValue, ...], dict[str, t.Infra.InfraValue]]
         ] = []
         self.called: bool = False
-        self._return_value = return_value
-        self._side_effect = list(side_effect) if side_effect else None
+        self._return_value: t.Infra.InfraValue = return_value
+        self._side_effect: list[t.Infra.InfraValue] | None = list(side_effect) if side_effect else None
 
-    def __call__(self, *args, **kwargs):
+    def __call__(self, *args: t.Infra.InfraValue, **kwargs: t.Infra.InfraValue) -> t.Infra.InfraValue:
         self.called = True
         self.call_count += 1
         self.call_args = (args, kwargs)

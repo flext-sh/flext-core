@@ -55,7 +55,7 @@ class FlextInfraTypes(FlextTypes):
         type MutableStrMap = MutableMapping[str, str]
         "Mutable string-to-string mapping for accumulation patterns."
         type InfraValue = (
-            str | int | float | bool | None | dict[str, InfraValue] | list[InfraValue]
+            str | int | float | bool | None | dict[str, FlextInfraTypes.Infra.InfraValue] | list[FlextInfraTypes.Infra.InfraValue]
         )
         "Recursive infrastructure value: primitive, nested dict/list, or null."
         type ContainerDict = dict[str, InfraValue]

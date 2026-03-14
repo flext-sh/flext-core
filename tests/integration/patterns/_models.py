@@ -36,25 +36,25 @@ class _StringDictModel(RootModel[dict[str, str]]):
 
 
 class _ContainerDictModel(RootModel[dict[str, t.Tests.object]]):
-    def __getitem__(self, key: str) -> object:
+    def __getitem__(self, key: str) -> t.Tests.object:
         return self.root[key]
 
-    def __setitem__(self, key: str, value) -> None:
+    def __setitem__(self, key: str, value: t.Tests.object) -> None:
         self.root[key] = value
 
-    def __contains__(self, key) -> bool:
+    def __contains__(self, key: str) -> bool:
         return key in self.root
 
-    def get(self, key: str, default=None) -> None | None:
+    def get(self, key: str, default: t.Tests.object | None = None) -> t.Tests.object | None:
         return self.root.get(key, default)
 
-    def update(self, payload: Mapping[str, object]) -> None:
+    def update(self, payload: Mapping[str, t.Tests.object]) -> None:
         self.root.update(payload)
 
-    def setdefault(self, key: str, default):
+    def setdefault(self, key: str, default: t.Tests.object | None = None) -> t.Tests.object:
         return self.root.setdefault(key, default)
 
-    def values(self) -> ValuesView:
+    def values(self) -> ValuesView[t.Tests.object]:
         return self.root.values()
 
     def items(self) -> ItemsView[str, object]:

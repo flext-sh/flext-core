@@ -7,7 +7,7 @@ import os
 from collections.abc import Mapping, MutableMapping
 from pathlib import Path
 
-from pydantic import TypeAdapter, ValidationError
+from pydantic import JsonValue, TypeAdapter, ValidationError
 
 from flext_core import FlextLogger, r
 from flext_infra import (
@@ -41,16 +41,18 @@ class FlextInfraDependencyDetectionService:
     @staticmethod
     def to_infra_value(
         value: t.Infra.InfraValue,
-    ) -> str | int | float | bool | dict[str, t.Infra.InfraValue] | list | None:
+    ) -> t.Infra.InfraValue:
         """Convert container value to namespaced infra value."""
         if value is None or isinstance(value, (str, int, float, bool)):
             return value
         if isinstance(value, list):
             try:
-                sequence = TypeAdapter(list).validate_python(value)
+                sequence: list[JsonValue] = TypeAdapter(
+                    list[JsonValue],
+                ).validate_python(value)
             except ValidationError:
                 return None
-            converted: list = []
+            converted: list[t.Infra.InfraValue] = []
             for item in sequence:
                 converted_item = FlextInfraDependencyDetectionService.to_infra_value(
                     item

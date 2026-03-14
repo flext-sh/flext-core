@@ -9,10 +9,8 @@ from __future__ import annotations
 from collections.abc import Mapping
 
 import pytest
-from src.flext_core.utilities import FlextUtilities
 
 from flext_core import FlextUtilities, r
-from flext_core.utilities import FlextUtilities
 from tests import m
 from tests.conftest import test_framework
 from tests.test_utils import assertion_helpers, fixture_factory

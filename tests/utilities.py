@@ -142,11 +142,11 @@ class TestsFlextUtilities(FlextTestsUtilities, FlextInfraUtilities):
                 """Create object that fails on str()."""
                 return TestsFlextUtilities.Tests.CoreBadObjects.BadStrObject()
 
-            class BadDict(UserDict[str, object]):
+            class BadDict(UserDict[str, t.Tests.object]):
                 """Dict that raises on get()."""
 
                 @override
-                def __getitem__(self, key: str):
+                def __getitem__(self, key: str) -> Never:
                     """Raise error on get attempt."""
                     msg = "Bad dict get"
                     raise RuntimeError(msg)

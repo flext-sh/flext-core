@@ -16,7 +16,7 @@ import argparse
 from collections.abc import Mapping
 from pathlib import Path
 
-from pydantic import TypeAdapter, ValidationError
+from pydantic import JsonValue, TypeAdapter, ValidationError
 
 from flext_core import FlextLogger, r
 from flext_infra import FlextInfraUtilitiesPatterns, c, m, output, t, u
@@ -61,7 +61,7 @@ class FlextInfraDocAuditor:
             return (None, {})
         default_budget = audit_gate_value.get("max_issues_default")
         by_scope_raw_value = audit_gate_value.get("max_issues_by_scope")
-        by_scope_raw: Mapping[str, object] = {}
+        by_scope_raw: dict[str, JsonValue] = {}
         if isinstance(by_scope_raw_value, Mapping):
             try:
                 by_scope_raw = TypeAdapter(
@@ -183,14 +183,17 @@ class FlextInfraDocAuditor:
             issues.extend(self.broken_link_issues(scope))
         if "forbidden-terms" in checks:
             issues.extend(self.forbidden_term_issues(scope))
-        summary: Mapping[str, object] = {
+        sorted_checks: JsonValue = TypeAdapter(JsonValue).validate_python(
+            sorted(checks)
+        )
+        summary: JsonValue = {
             c.Infra.ReportKeys.SCOPE: scope.name,
             "issues": len(issues),
-            c.Infra.Verbs.CHECKS: sorted(checks),
+            c.Infra.Verbs.CHECKS: sorted_checks,
             c.Infra.Modes.STRICT: strict,
             "report_dir": scope.report_dir.as_posix(),
         }
-        issues_payload: list[Mapping[str, object]] = [
+        issues_payload: JsonValue = [
             {
                 c.Infra.ReportKeys.FILE: issue.file,
                 "issue_type": issue.issue_type,
@@ -199,7 +202,7 @@ class FlextInfraDocAuditor:
             }
             for issue in issues
         ]
-        summary_payload: Mapping[str, object] = {
+        summary_payload: JsonValue = {
             c.Infra.ReportKeys.SUMMARY: summary,
             "issues": issues_payload,
         }

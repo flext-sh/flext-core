@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections import UserDict, UserList
 from collections.abc import Iterator, Mapping
 from enum import StrEnum
-from typing import cast, override
+from typing import NoReturn, cast, override
 
 import pytest
 
@@ -176,7 +176,7 @@ def test_collection_batch_failure_error_capture_and_parse_sequence_outer_error()
     assert failed.is_failure
 
     class _ExplodingMeta(type):
-        def __call__(cls, _value):
+        def __call__(cls, _value: str) -> NoReturn:
             msg = "parse exploded"
             raise ValueError(msg)
 

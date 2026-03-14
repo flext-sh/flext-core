@@ -38,7 +38,7 @@ class WorkspaceScenario(m.Value):
     """Single scenario for workspace state testing using m.Value."""
 
     name: str
-    structure
+    structure: dict[str, dict[str, str]]
     should_be_valid: bool = True
     description: str | None = None
 

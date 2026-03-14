@@ -10,9 +10,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 
-from pydantic import BaseModel
+from pydantic import BaseModel, JsonValue
 
 from flext_core import r
 from flext_infra import (
@@ -110,7 +111,10 @@ class FlextInfraDocsShared:
         )
 
     @staticmethod
-    def write_json(path: Path, payload: BaseModel | object) -> r[bool]:
+    def write_json(
+        path: Path,
+        payload: JsonValue | BaseModel | Mapping[str, JsonValue] | Sequence[JsonValue],
+    ) -> r[bool]:
         """Write JSON payload to path."""
         return u.Infra.write_json(path, payload)
 

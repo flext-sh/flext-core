@@ -46,9 +46,9 @@ _PAYLOAD_SEQUENCE_ADAPTER = TypeAdapter(list)
 
 def _to_scalar(
     value: BaseModel
-    | Mapping[str, _Testobject]
+    | Mapping[str, t.Tests.object]
     | Path
-    | Sequence[_Testobject]
+    | Sequence[t.Tests.object]
     | bool
     | bytes
     | datetime

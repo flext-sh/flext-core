@@ -6,7 +6,7 @@ import fnmatch
 from collections.abc import Callable, Mapping
 from pathlib import Path
 
-from pydantic import TypeAdapter, ValidationError
+from pydantic import JsonValue, TypeAdapter, ValidationError
 
 from flext_core import r
 from flext_infra import c, m, t, u
@@ -144,8 +144,9 @@ class FlextInfraRefactorRuleLoader:
         value: t.Infra.InfraValue | None,
     ) -> list[dict[str, t.Infra.InfraValue]]:
         try:
-            list_adapter: TypeAdapter[list] = TypeAdapter(list)
-            entries = list_adapter.validate_python(value)
+            entries: list[JsonValue] = TypeAdapter(
+                list[JsonValue],
+            ).validate_python(value)
         except ValidationError:
             return []
         definitions: list[dict[str, t.Infra.InfraValue]] = []

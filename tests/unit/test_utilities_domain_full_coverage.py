@@ -16,6 +16,7 @@ from typing import Annotated, cast, override
 from pydantic import BaseModel, Field
 
 from flext_core import u
+from flext_core.runtime import RuntimeData
 
 from ._models import _FrozenEntity, _SampleEntity
 
@@ -80,7 +81,7 @@ class TestValidateValueImmutable:
         obj = PlainObj()
         assert (
             u.validate_value_object_immutable(
-                cast("object", cast("object", obj)),
+                cast("RuntimeData", cast("RuntimeData", obj)),
             )
             is False
         )
@@ -106,20 +107,20 @@ def test_validate_value_object_immutable_exception_and_no_setattr_branch() -> No
 
     class _NoSetattrVisible:
         @override
-        def __getattribute__(self, name: str):
+        def __getattribute__(self, name: str) -> object:
             if name == "__setattr__":
                 raise AttributeError(name)
             return object.__getattribute__(self, name)
 
     assert (
         u.validate_value_object_immutable(
-            cast("object", cast("object", _BrokenConfig())),
+            cast("RuntimeData", cast("RuntimeData", _BrokenConfig())),
         )
         is False
     )
     assert (
         u.validate_value_object_immutable(
-            cast("object", cast("object", _NoSetattrVisible())),
+            cast("RuntimeData", cast("RuntimeData", _NoSetattrVisible())),
         )
         is False
     )

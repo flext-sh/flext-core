@@ -12,7 +12,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import override
 
-from pydantic import BaseModel, TypeAdapter, ValidationError
+from pydantic import BaseModel, JsonValue, TypeAdapter, ValidationError
 
 from flext_core import r, s, t
 from flext_infra import (
@@ -87,7 +87,7 @@ class FlextInfraWorkspaceChecker(s):
     def generate_sarif_report(
         results: list[m.Infra.Check.ProjectResult],
         gates: list[str],
-    ) -> Mapping[str, object]:
+    ) -> JsonValue:
         """Generate a SARIF payload from gate results."""
         sarif_runs: list[m.Infra.Check.Sarif.Run] = []
         for gate in gates:
@@ -136,7 +136,9 @@ class FlextInfraWorkspaceChecker(s):
                     results=sarif_results,
                 ),
             )
-        return m.Infra.Check.Sarif.Report(runs=sarif_runs).model_dump(by_alias=True)
+        return TypeAdapter(JsonValue).validate_python(
+            m.Infra.Check.Sarif.Report(runs=sarif_runs).model_dump(by_alias=True),
+        )
 
     @staticmethod
     def parse_gate_csv(raw: str) -> list[str]:

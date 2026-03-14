@@ -10,8 +10,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
-from collections.abc import Mapping
 from pathlib import Path
+
+from pydantic import JsonValue
 
 from flext_core import FlextLogger, r
 from flext_infra import (
@@ -135,11 +136,11 @@ class FlextInfraDocFixer:
                         toc=item.toc,
                     ),
                 )
-        changes_payload: list[Mapping[str, object]] = [
+        changes_payload: JsonValue = [
             {c.Infra.ReportKeys.FILE: item.file, "links": item.links, "toc": item.toc}
             for item in items
         ]
-        payload: Mapping[str, object] = {
+        payload: JsonValue = {
             c.Infra.ReportKeys.SUMMARY: {
                 c.Infra.ReportKeys.SCOPE: scope.name,
                 "changed_files": len(items),

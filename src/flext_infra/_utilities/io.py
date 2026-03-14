@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import operator
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 
 from pydantic import BaseModel, JsonValue, TypeAdapter, ValidationError
@@ -67,7 +67,7 @@ class FlextInfraUtilitiesIo:
     @staticmethod
     def write_json(
         path: Path,
-        payload: t.Infra.InfraValue,
+        payload: JsonValue | BaseModel | Mapping[str, JsonValue] | Sequence[JsonValue],
         *,
         sort_keys: bool = False,
         ensure_ascii: bool = False,
@@ -79,7 +79,7 @@ class FlextInfraUtilitiesIo:
 
         Args:
             path: Destination file path.
-            payload: Data to serialize as JSON.
+            payload: Data to serialize as JSON (Pydantic JsonValue or BaseModel).
             sort_keys: If True, sort dictionary keys alphabetically.
             ensure_ascii: If True, escape non-ASCII characters.
             indent: JSON indentation level (default 2).
@@ -90,11 +90,16 @@ class FlextInfraUtilitiesIo:
         """
         try:
             path.parent.mkdir(parents=True, exist_ok=True)
-            raw_payload: t.Infra.InfraValue = (
-                payload.model_dump() if isinstance(payload, BaseModel) else payload
-            )
+            if isinstance(payload, BaseModel):
+                materialized = payload.model_dump()
+            elif isinstance(payload, Mapping):
+                materialized = dict(payload)
+            elif isinstance(payload, Sequence) and not isinstance(payload, str):
+                materialized = list(payload)
+            else:
+                materialized = payload
             parser: TypeAdapter[JsonValue] = TypeAdapter(JsonValue)
-            validated_payload: JsonValue = parser.validate_python(raw_payload)
+            validated_payload: JsonValue = parser.validate_python(materialized)
             normalized_payload: JsonValue = (
                 FlextInfraUtilitiesIo._sort_json_keys(validated_payload)
                 if sort_keys

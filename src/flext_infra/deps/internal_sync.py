@@ -10,7 +10,7 @@ import shutil
 from collections.abc import Mapping, MutableMapping
 from pathlib import Path
 
-from pydantic import TypeAdapter, ValidationError
+from pydantic import JsonValue, TypeAdapter, ValidationError
 
 from flext_core import FlextLogger, r
 from flext_infra import (
@@ -366,8 +366,9 @@ class FlextInfraInternalDependencySyncService:
         except ValidationError:
             if not isinstance(value, list):
                 return []
-            value_adapter: TypeAdapter[list] = TypeAdapter(list)
-            raw_items = value_adapter.validate_python(value)
+            raw_items: list[JsonValue] = TypeAdapter(
+                list[JsonValue],
+            ).validate_python(value)
             return [str(item) for item in raw_items]
 
     def resolve_ref(self, project_root: Path) -> str:

@@ -9,7 +9,6 @@ from types import ModuleType
 from typing import ClassVar, Protocol, Self, cast
 
 import pytest
-from beartype._cave._cavefast import ModuleType
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings as _BaseSettings
 
