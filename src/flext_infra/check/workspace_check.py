@@ -1035,8 +1035,10 @@ class FlextInfraWorkspaceChecker(s):
                 issues.extend(
                     m.Infra.Check.Issue(
                         file=str(entry.get("filename", "?")),
-                        line=self._nested_int(dict(entry), "location", "row"),
-                        column=self._nested_int(dict(entry), "location", "column"),
+                        line=self._nested_int(dict(entry.items()), "location", "row"),
+                        column=self._nested_int(
+                            dict(entry.items()), "location", "column"
+                        ),
                         code=str(entry.get("code", "")),
                         message=str(entry.get("message", "")),
                     )

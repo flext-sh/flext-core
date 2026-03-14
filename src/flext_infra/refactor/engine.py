@@ -7,7 +7,7 @@ from collections.abc import Callable, Mapping
 from pathlib import Path
 
 from flext_core import r
-from flext_infra import c, m, u
+from flext_infra import c, m, t, u
 from flext_infra.refactor.rule import (
     FlextInfraRefactorRule,
     FlextInfraRefactorRuleLoader,

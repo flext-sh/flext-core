@@ -9,7 +9,7 @@ from pathlib import Path
 from pydantic import TypeAdapter, ValidationError
 
 from flext_core import r
-from flext_infra import c, m, u
+from flext_infra import c, m, t, u
 from flext_infra.refactor._base_rule import FlextInfraRefactorRule
 from flext_infra.refactor.rules.class_nesting import ClassNestingRefactorRule
 from flext_infra.refactor.validation import FlextInfraRefactorRuleDefinitionValidator
@@ -26,7 +26,7 @@ class FlextInfraRefactorRuleLoader:
         """Load and validate the refactor engine configuration."""
         try:
             loaded = u.Infra.safe_load_yaml(self.config_path)
-            normalized = dict(loaded)
+            normalized = dict(loaded.items())
             scope_raw = normalized.get("refactor_engine")
             scope_map = self._normalize_str_object_mapping(scope_raw)
             scope = m.Infra.Refactor.EngineConfig.model_validate(scope_map)
@@ -66,7 +66,7 @@ class FlextInfraRefactorRuleLoader:
             unknown_rules: list[str] = []
             for rule_file in sorted(rules_dir.glob("*.yml")):
                 try:
-                    rule_config = dict(u.Infra.safe_load_yaml(rule_file))
+                    rule_config = dict(u.Infra.safe_load_yaml(rule_file).items())
                 except (OSError, TypeError):
                     continue
                 typed_rules = self._coerce_rule_definitions(
@@ -159,7 +159,9 @@ class FlextInfraRefactorRuleLoader:
         return definitions
 
     @staticmethod
-    def _normalize_str_object_mapping(value: t.Infra.InfraValue) -> dict[str, t.Infra.InfraValue]:
+    def _normalize_str_object_mapping(
+        value: t.Infra.InfraValue,
+    ) -> dict[str, t.Infra.InfraValue]:
         try:
             adapter: TypeAdapter[dict[str, object]] = TypeAdapter(dict[str, object])
             return adapter.validate_python(value)

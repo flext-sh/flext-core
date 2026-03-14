@@ -12,6 +12,8 @@ from __future__ import annotations
 import re
 from typing import ClassVar, TypeGuard
 
+from flext_infra.typings import t
+
 
 class FlextInfraUtilitiesPatterns:
     """Centralized regex patterns for infrastructure operations.
@@ -85,7 +87,9 @@ class FlextInfraUtilitiesPatterns:
             True
 
         """
-        pattern_obj: t.Infra.InfraValue = getattr(FlextInfraUtilitiesPatterns, pattern_name, None)
+        pattern_obj: t.Infra.InfraValue = getattr(
+            FlextInfraUtilitiesPatterns, pattern_name, None
+        )
         if not FlextInfraUtilitiesPatterns._is_compiled_pattern(pattern_obj):
             return False
         return pattern_obj.search(text) is not None

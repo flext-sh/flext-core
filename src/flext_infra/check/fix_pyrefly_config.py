@@ -16,12 +16,13 @@ import tomlkit
 from pydantic import BaseModel, TypeAdapter, ValidationError
 from tomlkit import items
 
-from flext_core import FlextLogger, r, s, t
+from flext_core import FlextLogger, r, s
 from flext_infra import (
     FlextInfraUtilitiesDiscovery,
     FlextInfraUtilitiesIo,
     FlextInfraUtilitiesPaths,
     c,
+    t,
 )
 from flext_infra._utilities.output import output
 
@@ -253,20 +254,18 @@ class FlextInfraConfigFixer(s):
         sub_configs = pyrefly.get(c.Infra.Toml.SUB_CONFIG)
         if not isinstance(sub_configs, list):
             return []
-        new_configs: list[t_infra.Infra.InfraValue] = []
-        configs: list[t_infra.Infra.InfraValue] = []
+        new_configs: list[t.Infra.InfraValue] = []
+        configs: list[t.Infra.InfraValue] = []
         with contextlib.suppress(ValidationError):
-            configs = TypeAdapter(list[t_infra.Infra.InfraValue]).validate_python(
-                sub_configs
-            )
+            configs = TypeAdapter(list[t.Infra.InfraValue]).validate_python(sub_configs)
         for conf in configs:
-            conf_out: t_infra.Infra.InfraValue = conf
+            conf_out: t.Infra.InfraValue = conf
             if isinstance(conf, Mapping):
                 try:
-                    conf_map: Mapping[str, t_infra.Infra.InfraValue] = TypeAdapter(
-                        dict[str, t_infra.Infra.InfraValue]
+                    conf_map: Mapping[str, t.Infra.InfraValue] = TypeAdapter(
+                        dict[str, t.Infra.InfraValue]
                     ).validate_python(conf)
-                    conf_out = dict(conf_map)
+                    conf_out = dict(conf_map.items())
                 except ValidationError:
                     conf_map = {}
             else:

@@ -307,7 +307,7 @@ class FlextTestsBuilders:
                 items_processed = [params.items_map(item) for item in items_processed]
             resolved_value = items_processed
         elif params.entries is not None:
-            entries_processed: dict[str, t.Tests.object] = dict(params.entries)
+            entries_processed: dict[str, t.Tests.object] = dict(params.entries.items())
             if params.entries_filter is not None:
                 entries_processed = {
                     k: v
@@ -326,7 +326,9 @@ class FlextTestsBuilders:
         elif params.model is not None:
             empty_model_data: dict[str, t.Tests.object] = {}
             data_dict = (
-                dict(params.model_data) if params.model_data else empty_model_data
+                dict(params.model_data.items())
+                if params.model_data
+                else empty_model_data
             )
             model_kind_str = self._get_model_kind(params.model)
             filtered_dict: dict[str, t.Tests.TestResultValue] = {}
@@ -358,7 +360,7 @@ class FlextTestsBuilders:
                     ):
                         resolved_value = list(result_val)
                     elif isinstance(result_val, Mapping):
-                        resolved_value = dict(result_val)
+                        resolved_value = dict(result_val.items())
                 else:
                     resolved_value = None
             elif isinstance(model_result, (list, dict)):
@@ -371,7 +373,7 @@ class FlextTestsBuilders:
                 else not (params.production or False),
             )
         elif params.mapping is not None:
-            resolved_value = dict(params.mapping)
+            resolved_value = dict(params.mapping.items())
         elif params.sequence is not None:
             resolved_value = list(params.sequence)
         elif params.value is not None:
