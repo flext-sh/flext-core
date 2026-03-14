@@ -1,0 +1,75 @@
+src/flext_infra/refactor/_utilities.py
+  8b19191836992eb9 223,247-248,269
+src/flext_infra/refactor/rule.py
+  8b19191836992eb9 12,46,135
+src/flext_infra/deps/detection.py
+  8b19191836992eb9 43,67,71
+src/flext_core/handlers.py
+  2c4592ce462760cc 101
+src/flext_infra/refactor/engine.py
+  8b19191836992eb9 10
+src/flext_infra/check/workspace_check.py
+  2c4592ce462760cc 449,462
+  768584885e26f144 15,426-427,429,434-435,438-439,442,467,469-470,472,474,477,481,483,565,567,846,848,913,917
+src/flext_core/loggings.py
+  b854e58a05e824ae 106,114,176,180,183,186,651,654-655
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "a8d287196f79b763b95f5bed16e8a3398c8773ec",
+  "prompts": {
+    "2c4592ce462760cc": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3129818beffe4rlgmBkdqtIBDK",
+        "model": "anthropic/claude-haiku-4-5"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 4,
+      "total_deletions": 8,
+      "accepted_lines": 4,
+      "overriden_lines": 0
+    },
+    "768584885e26f144": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_312952234ffei0h5mznZHOK5ZA",
+        "model": "anthropic/claude-haiku-4-5"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 34,
+      "total_deletions": 34,
+      "accepted_lines": 24,
+      "overriden_lines": 0
+    },
+    "8b19191836992eb9": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_31295cae9ffepQZI05eIyWGI0M",
+        "model": "anthropic/claude-haiku-4-5"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 38,
+      "total_deletions": 28,
+      "accepted_lines": 19,
+      "overriden_lines": 0
+    },
+    "b854e58a05e824ae": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_31294ceaaffeU7uo8qJDFVJgdj",
+        "model": "anthropic/claude-haiku-4-5"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 13,
+      "total_deletions": 7,
+      "accepted_lines": 9,
+      "overriden_lines": 0
+    }
+  }
+}
