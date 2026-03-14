@@ -10,6 +10,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import override
+
 from flext_core import FlextRuntime
 from flext_core._utilities.args import FlextUtilitiesArgs
 from flext_core._utilities.cache import FlextUtilitiesCache
@@ -71,6 +73,22 @@ class FlextUtilities(
         value = u.get(data, "key")
         mapped = u.map(items, fn)
     """
+
+    @staticmethod
+    @override
+    def compare_entities_by_id(
+        entity_a: t.NormalizedValue | BaseModel,
+        entity_b: t.NormalizedValue | BaseModel,
+        id_attr: str = "unique_id",
+    ) -> bool:
+        return FlextRuntime.compare_entities_by_id(entity_a, entity_b, id_attr=id_attr)
+
+    @staticmethod
+    @override
+    def hash_entity_by_id(
+        entity: t.NormalizedValue | BaseModel, id_attr: str = "unique_id"
+    ) -> int:
+        return FlextRuntime.hash_entity_by_id(entity, id_attr=id_attr)
 
 
 u = FlextUtilities

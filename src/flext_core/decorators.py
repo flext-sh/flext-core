@@ -20,6 +20,8 @@ from functools import wraps
 from pathlib import Path
 from typing import Literal, Protocol, TypeGuard, overload
 
+from pydantic import BaseModel
+
 from flext_core import (
     FlextContainer,
     FlextContext,
@@ -772,6 +774,8 @@ class FlextDecorators:
     class _HasLogger(Protocol):
         logger: FlextLogger
 
+    type _LoggerCarrier = _HasLogger | FlextLogger | t.Container | BaseModel
+
     @staticmethod
     def _bind_operation_context(
         *,
@@ -963,14 +967,18 @@ class FlextDecorators:
         )
 
     @staticmethod
-    def _has_flext_logger(value: object) -> TypeGuard[_HasLogger]:
+    def _has_flext_logger(
+        value: t.NormalizedValue | BaseModel,
+    ) -> TypeGuard[_HasLogger]:
         if not hasattr(value, "logger"):
             return False
         logger_value = getattr(value, "logger", None)
         return isinstance(logger_value, FlextLogger)
 
     @staticmethod
-    def _resolve_logger(args: tuple[object, ...], func: Callable[P, R]) -> FlextLogger:
+    def _resolve_logger(
+        args: tuple[t.NormalizedValue | BaseModel, ...], func: Callable[P, R]
+    ) -> FlextLogger:
         """Resolve logger from first argument or create module logger.
 
         Returns:
