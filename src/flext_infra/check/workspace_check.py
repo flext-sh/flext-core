@@ -423,30 +423,32 @@ class FlextInfraWorkspaceChecker(s):
         return result.value if result.is_success else Path.cwd().resolve()
 
     @staticmethod
-    def _to_mapping(value: object) -> dict[str, object]:
+    def _to_mapping(value: Mapping[str, t.Scalar]) -> Mapping[str, t.Scalar]:
         if not isinstance(value, Mapping):
             return {}
-        return TypeAdapter(dict[str, object]).validate_python(value)
+        return TypeAdapter(dict[str, t.Scalar]).validate_python(value)
 
     @classmethod
     def _to_mapping_list(
         cls,
-        value: object,
-    ) -> list[dict[str, object]]:
+        value: list[Mapping[str, t.Scalar]],
+    ) -> list[Mapping[str, t.Scalar]]:
         if not isinstance(value, list):
             return []
-        typed_items = TypeAdapter(list[object]).validate_python(value)
-        normalized: list[dict[str, object]] = []
+        typed_items = TypeAdapter(list[Mapping[str, t.Scalar]]).validate_python(value)
+        normalized: list[Mapping[str, t.Scalar]] = []
         for raw_item in typed_items:
             try:
-                typed_item = TypeAdapter(dict[str, object]).validate_python(raw_item)
+                typed_item = TypeAdapter(dict[str, t.Scalar]).validate_python(raw_item)
             except ValidationError:
                 continue
             normalized.append(typed_item)
         return normalized
 
     @staticmethod
-    def _as_int(value: object, default: int = 0) -> int:
+    def _as_int(
+        value: t.Scalar | t.Container | BaseModel | None, default: int = 0
+    ) -> int:
         if isinstance(value, int):
             return value
         if isinstance(value, float):
@@ -459,38 +461,40 @@ class FlextInfraWorkspaceChecker(s):
         return default
 
     @staticmethod
-    def _as_str(value: object, default: str = "") -> str:
+    def _as_str(
+        value: t.Scalar | t.Container | BaseModel | None, default: str = ""
+    ) -> str:
         return value if isinstance(value, str) else default
 
     @staticmethod
     def _nested_mapping(
-        data: dict[str, object],
+        data: Mapping[str, t.Scalar],
         *keys: str,
-    ) -> dict[str, object]:
-        current: object = data
+    ) -> Mapping[str, t.Scalar]:
+        current: t.Scalar | Mapping[str, t.Scalar] = data
         for key in keys:
             if not isinstance(current, Mapping):
                 return {}
-            typed_current = TypeAdapter(dict[str, object]).validate_python(current)
+            typed_current = TypeAdapter(dict[str, t.Scalar]).validate_python(current)
             if key not in typed_current:
                 return {}
-            child: object = typed_current[key]
+            child: t.Scalar | Mapping[str, t.Scalar] = typed_current[key]
             if child is None:
                 return {}
             current = child
         if not isinstance(current, Mapping):
             return {}
-        return TypeAdapter(dict[str, object]).validate_python(current)
+        return TypeAdapter(dict[str, t.Scalar]).validate_python(current)
 
     @classmethod
     def _nested_int(
         cls,
-        data: dict[str, object],
+        data: Mapping[str, t.Scalar],
         *keys: str,
         default: int = 0,
     ) -> int:
         target = cls._nested_mapping(data, *keys[:-1])
-        raw: object = target.get(keys[-1])
+        raw: t.Scalar | None = target.get(keys[-1])
         if raw is None:
             return default
         return cls._as_int(raw, default)
@@ -498,7 +502,7 @@ class FlextInfraWorkspaceChecker(s):
     @classmethod
     def _result_exit_code(cls, result: p.Infra.CommandOutput) -> int:
         try:
-            payload = TypeAdapter(dict[str, object]).validate_python(
+            payload = TypeAdapter(dict[str, t.Scalar]).validate_python(
                 vars(result),
             )
         except (TypeError, ValidationError, AttributeError):
@@ -1020,7 +1024,7 @@ class FlextInfraWorkspaceChecker(s):
         )
         issues: list[m.Infra.Check.Issue] = []
         ruff_parse_result = self._json.parse(result.stdout or "[]")
-        ruff_data: object = (
+        ruff_data: t.GeneralValueType | list = (
             ruff_parse_result.value if ruff_parse_result.is_success else []
         )
         try:
