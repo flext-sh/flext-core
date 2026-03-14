@@ -1068,7 +1068,7 @@ class FlextTestsMatchers:
                 elif callable(sorted_param):
                     user_key_fn = sorted_param
 
-                    def comparable_key(x: t.Tests.object) -> tuple[str, str]:
+                    def comparable_key(x) -> tuple[str, str]:
                         """Wrap user key to return comparable tuple."""
                         result = user_key_fn(_to_test_payload(x))
                         type_name = type(result).__name__
@@ -1095,7 +1095,7 @@ class FlextTestsMatchers:
             except ValidationError:
                 pass
             if params.keys is not None:
-                key_set: set[str] = set(params.keys)
+                key_set: set = set(params.keys)
                 missing = key_set - set(mapping_value.keys())
                 if missing:
                     raise AssertionError(
@@ -1103,7 +1103,7 @@ class FlextTestsMatchers:
                         or c.Tests.Matcher.ERR_KEYS_MISSING.format(keys=list(missing))
                     )
             if params.lacks_keys is not None:
-                lacks_key_set: set[str] = set(params.lacks_keys)
+                lacks_key_set: set = set(params.lacks_keys)
                 present = lacks_key_set & set(mapping_value.keys())
                 if present:
                     raise AssertionError(

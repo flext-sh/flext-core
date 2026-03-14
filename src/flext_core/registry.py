@@ -30,7 +30,9 @@ from flext_core import (
     u,
 )
 from flext_core._models.containers import FlextModelsContainers
-from flext_core.typings import RegistrablePlugin, RegistryBindingKey
+from flext_core.typings import RegistryBindingKey
+
+type RegistrablePlugin = t.RegistrablePlugin
 
 
 class FlextRegistry(s[bool]):

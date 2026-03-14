@@ -26,28 +26,26 @@ from contextlib import contextmanager
 from datetime import UTC, datetime
 from pathlib import Path
 from types import TracebackType
-from typing import ClassVar, Literal, Self, TypeGuard, overload
+from typing import ClassVar, Literal, Self, TypeGuard, TypeVar, overload
 
 from pydantic import BaseModel, TypeAdapter, ValidationError
 from yaml import YAMLError, dump as yaml_dump, safe_load as yaml_safe_load
 
 from flext_core import FlextModelsContainers, FlextResult, FlextRuntime, r
-from flext_core.typings import TModel
 from flext_tests import c, m, s, t, u
 from flext_tests.typings import _Testobject
 
+TModel = TypeVar("TModel", bound=BaseModel)
 _FormatLiteral = Literal["auto", "text", "bin", "json", "yaml", "csv"]
 _CompareModeLiteral = Literal["content", "size", "hash", "lines"]
 _OperationLiteral = Literal["create", "read", "delete"]
 _ErrorModeLiteral = Literal["stop", "skip", "collect"]
 TestsFileContent = t.Tests.FileContent
 _YAMLError = YAMLError
-_OBJECT_LIST_ADAPTER = TypeAdapter(list[t.Tests.object])
+_OBJECT_LIST_ADAPTER = TypeAdapter(list)
 
 
-def _yaml_safe_load(
-    raw: str,
-) -> dict[str, t.Tests.object] | list[t.Tests.object] | None:
+def _yaml_safe_load(raw: str) -> list | None:
     return yaml_safe_load(raw)
 
 
@@ -245,7 +243,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             yield paths
 
     @staticmethod
-    def _is_mapping(value: object) -> TypeGuard[Mapping[str, object]]:
+    def _is_mapping(value) -> TypeGuard[Mapping[str, object]]:
         return isinstance(value, Mapping)
 
     @staticmethod
@@ -528,7 +526,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                     return r[Path].fail(f"Unknown operation: {params.operation}")
 
         items_list: list[tuple[str, t.Tests.object]] = list(files_dict.items())
-        results: list[Path | t.Tests.object] = []
+        results: list = []
         errors: list[tuple[int, str]] = []
         total = len(items_list)
         for index, item in enumerate(items_list):
@@ -1115,9 +1113,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             elif actual_fmt == c.Tests.Files.Format.YAML:
                 text = params.path.read_text(encoding=params.enc)
                 parsed_yaml = _yaml_safe_load(text)
-                content = self._coerce_read_content(
-                    parsed_yaml if isinstance(parsed_yaml, dict) else None
-                )
+                content = self._coerce_read_content(parsed_yaml)
             elif actual_fmt == c.Tests.Files.Format.CSV:
                 content = u.Tests.Files.read_csv(
                     params.path,
@@ -1240,9 +1236,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             )
         if self._is_nested_rows(value):
             rows: list[list[str]] = []
-            sequence_value: Sequence[t.Tests.object] = (
-                value if isinstance(value, (list, tuple)) else ()
-            )
+            sequence_value: Sequence = value if isinstance(value, (list, tuple)) else ()
             rows.extend(
                 [str(cell) for cell in row]
                 for row in sequence_value
@@ -1267,9 +1261,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                 }
             )
         if self._is_nested_rows(value):
-            sequence_value: Sequence[t.Tests.object] = (
-                value if isinstance(value, (list, tuple)) else ()
-            )
+            sequence_value: Sequence = value if isinstance(value, (list, tuple)) else ()
             return [
                 [str(cell) for cell in row]
                 for row in sequence_value
@@ -1351,7 +1343,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             return self._coerce_file_content(resolved_value)
         return self._coerce_file_content(content)
 
-    def _is_nested_rows(self, value: object) -> TypeGuard[Sequence[Sequence[str]]]:
+    def _is_nested_rows(self, value) -> TypeGuard[Sequence[Sequence]]:
         if not isinstance(value, Sequence) or isinstance(value, str | bytes):
             return False
         try:
@@ -1427,22 +1419,18 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                 if fmt == "json":
                     if text.strip():
                         try:
-                            parsed_raw: (
-                                dict[str, t.Tests.object] | list[t.Tests.object] | None
-                            ) = TypeAdapter(dict[str, t.Tests.object]).validate_json(
-                                text.encode()
-                            )
-                        except ValidationError:
-                            parsed_raw = TypeAdapter(
-                                list[t.Tests.object]
+                            parsed_raw: list = TypeAdapter(
+                                dict[str, t.Tests.object]
                             ).validate_json(text.encode())
+                        except ValidationError:
+                            parsed_raw = TypeAdapter(list).validate_json(text.encode())
                     else:
-                        parsed_raw = dict(m.ConfigMap(root={}).root)
+                        parsed_raw = m.ConfigMap(root={}).root
                 else:
                     parsed_raw = (
                         _yaml_safe_load(text)
                         if text.strip()
-                        else dict(m.ConfigMap(root={}).root)
+                        else m.ConfigMap(root={}).root
                     )
                 if self._is_mapping(parsed_raw):
                     parsed_content = m.ConfigMap(
@@ -1505,7 +1493,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         self._created_dirs.append(temp_dir)
         return temp_dir
 
-    def _to_config_map_value(self, value: t.Tests.object) -> t.Tests.object:
+    def _to_config_map_value(self, value: t.Tests.object):
         if value is None or isinstance(value, (*t.PRIMITIVES_TYPES, BaseModel, Path)):
             return value
         if isinstance(value, bytes):

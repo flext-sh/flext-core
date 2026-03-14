@@ -19,22 +19,11 @@ from typing import (
     Annotated,
     Literal,
     ParamSpec,
-    TypeAlias,
     TypeVar,
 )
 
-from pydantic import (
-    BaseModel,
-    ConfigDict,
-    Field,
-)
+from pydantic import BaseModel, ConfigDict, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
-
-from flext_core import (
-    T,
-    t,
-)
-from flext_infra import t
 
 EnumT = TypeVar("EnumT", bound=StrEnum)
 MessageT_contra = TypeVar("MessageT_contra", contravariant=True)
@@ -200,15 +189,3 @@ __all__ = [
     "U",
     "t",
 ]
-
-
-type RegistrablePlugin = t.RegistrablePlugin
-
-
-type RuntimeAtomic = t.Container | BaseModel
-
-
-MetricValue: TypeAlias = t.Infra.MetricValue
-
-
-TModel = TypeVar("TModel", bound=BaseModel)

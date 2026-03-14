@@ -8,7 +8,7 @@ import pytest
 import tomlkit
 from tomlkit.toml_document import TOMLDocument
 
-from flext_core import r, t
+from flext_core import r
 from flext_infra import m
 from flext_infra.deps import path_sync as path_sync_module
 from flext_tests import tm
