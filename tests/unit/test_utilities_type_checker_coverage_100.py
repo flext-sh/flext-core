@@ -105,6 +105,13 @@ class NonCallableHandle:
     handle: str = "not a method"
 
 
+class _BadSignatureCallable:
+    __signature__ = "bad-signature"
+
+    def __call__(self, x: int) -> str:
+        return str(x)
+
+
 class GenericHandler[TMessage]:
     """Generic handler without h base."""
 
@@ -318,9 +325,7 @@ class TestuTypeChecker:
             """Test function."""
             return str(x)
 
-        signature = u._get_method_signature(
-            cast("t.HandlerCallable", test_func),
-        )
+        signature = u._get_method_signature(test_func)
         assert signature.is_success
         signature_value = signature.value
         assert len(signature_value.parameters) == 1
@@ -328,9 +333,7 @@ class TestuTypeChecker:
 
     def test_get_method_signature_non_callable(self) -> None:
         """Test _get_method_signature with non-callable."""
-        signature = u._get_method_signature(
-            cast("t.HandlerCallable", "not callable"),
-        )
+        signature = u._get_method_signature(_BadSignatureCallable())
         assert signature.is_failure
 
     def test_get_type_hints_safe_valid_method(self) -> None:
@@ -343,10 +346,7 @@ class TestuTypeChecker:
                 """Handle message."""
                 return message
 
-        hints = u._get_type_hints_safe(
-            cast("t.HandlerCallable", TestClass.handle),
-            TestClass,
-        )
+        hints = u._get_type_hints_safe(TestClass.handle, TestClass)
         assert "message" in hints
         message_type = hints.get("message")
         assert message_type is not None
@@ -362,10 +362,7 @@ class TestuTypeChecker:
                 """Handle message."""
                 return message
 
-        hints = u._get_type_hints_safe(
-            cast("t.HandlerCallable", TestClass.handle),
-            TestClass,
-        )
+        hints = u._get_type_hints_safe(TestClass.handle, TestClass)
         assert isinstance(hints, dict)
 
     def test_handle_type_or_origin_check_with_origin(self) -> None:

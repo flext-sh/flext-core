@@ -19,8 +19,9 @@ class _OnlySelfHandler:
 
 
 class _UnknownHintHandler:
-    def handle(self, message: MissingType) -> None:
-        return None
+    def handle(self, message: MissingType) -> str:
+        _ = message
+        return "ok"
 
 
 class MissingType:
@@ -59,11 +60,8 @@ def test_checker_logger_and_safe_type_hints_fallback() -> None:
     checker = u()
     logger = checker.logger
     assert hasattr(logger, "info")
-    hints = u._get_type_hints_safe(
-        cast("t.HandlerCallable", _UnknownHintHandler.handle),
-        _UnknownHintHandler,
-    )
-    assert hints == {"message": MissingType, "return": type(None)}
+    hints = u._get_type_hints_safe(_UnknownHintHandler.handle, _UnknownHintHandler)
+    assert hints == {"message": MissingType, "return": str}
 
 
 def test_extract_message_type_from_parameter_branches() -> None:

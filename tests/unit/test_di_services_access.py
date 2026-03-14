@@ -185,8 +185,11 @@ class TestServicesIntegrationViaDI:
         FlextContainer.reset_for_testing()
 
         class ServiceWithDI(s[str]):
+            @override
             @classmethod
-            def _runtime_bootstrap_options(cls):
+            def _runtime_bootstrap_options(
+                cls,
+            ) -> FlextModelsService.RuntimeBootstrapOptions:
                 return FlextModelsService.RuntimeBootstrapOptions(
                     config_overrides={"app_name": "service_app"},
                     services={"logger": FlextLogger.create_module_logger("service")},
@@ -199,7 +202,7 @@ class TestServicesIntegrationViaDI:
                 logger_result = self.container.get("logger")
                 _ = u.Tests.Result.assert_success(logger_result)
                 logger = logger_result.value
-                tm.that(logger, none=False, msg="Logger must be accessible via DI")
+                assert logger is not None, "Logger must be accessible via DI"
                 assert hasattr(logger, "info") and callable(getattr(logger, "info")), (
                     "Logger must be accessible via DI"
                 )

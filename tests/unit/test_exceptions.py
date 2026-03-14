@@ -859,9 +859,7 @@ class Teste:
         """Test TypeError._normalize_type."""
         type_map: dict[str, type] = {"str": str, "int": int}
         extra_kwargs_raw = {"expected_type": "str"}
-        extra_kwargs: dict[str, t.Container] = {
-            k: cast("t.MetadataAttributeValue", v) for k, v in extra_kwargs_raw.items()
-        }
+        extra_kwargs: dict[str, t.Container] = dict(extra_kwargs_raw)
         result = e.TypeError._normalize_type(
             None,
             type_map,
@@ -870,11 +868,8 @@ class Teste:
         )
         assert result is str
         assert "expected_type" not in extra_kwargs
-        extra_kwargs_type_raw = {"expected_type": int}
-        extra_kwargs_type: dict[str, t.Container] = cast(
-            "dict[str, t.MetadataAttributeValue]",
-            extra_kwargs_type_raw,
-        )
+        extra_kwargs_type_raw = {"expected_type": "int"}
+        extra_kwargs_type: dict[str, t.Container] = dict(extra_kwargs_type_raw)
         result = e.TypeError._normalize_type(
             None,
             type_map,

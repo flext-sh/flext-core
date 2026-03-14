@@ -941,17 +941,15 @@ def test_remaining_build_fields_construct_and_eq_paths(mapper: type[u]) -> None:
     assert mapper.deep_eq({"a": {"x": 1}}, {"a": {"x": 1}}) is True
     assert mapper.deep_eq({"a": [1, 2]}, {"a": [1, 2]}) is True
 
-    class DictLikeOnly:
-        def keys(self) -> list[str]:
-            return ["x"]
+    class DictLikeOnly(BaseModel):
+        x: int = 1
 
-    class DictLikeOnlySecondary:
-        def keys(self) -> list[str]:
-            return ["y"]
+    class DictLikeOnlySecondary(BaseModel):
+        y: int = 1
 
     context = mapper.process_context_data(
-        primary_data=cast("object", DictLikeOnly()),
-        secondary_data=cast("object", DictLikeOnlySecondary()),
+        primary_data=DictLikeOnly(),
+        secondary_data=DictLikeOnlySecondary(),
         merge_strategy="merge",
     )
     assert context == {}
@@ -995,7 +993,9 @@ def test_remaining_uncovered_branches(
     assert grouped == {"": [{"kind": None}]}
     assert mapper._build_apply_sort([2, 1], {"sort": 5}) == [2, 1]
 
-    class CallableDictLike:
+    class CallableDictLike(BaseModel):
+        k: int = 1
+
         def __call__(self) -> None:
             return None
 
@@ -1011,8 +1011,8 @@ def test_remaining_uncovered_branches(
     # CallableDictLike is not a Mapping/ConfigMap, so process_context_data
     # treats it as non-dict data and returns empty result (no TypeError).
     callable_result = mapper.process_context_data(
-        primary_data=cast("object", CallableDictLike()),
-        secondary_data=cast("object", CallableDictLike()),
+        primary_data=CallableDictLike(),
+        secondary_data=CallableDictLike(),
     )
     assert callable_result == {}
     obj_fields = mapper.fields(

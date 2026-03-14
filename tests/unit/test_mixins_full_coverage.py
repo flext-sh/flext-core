@@ -482,19 +482,19 @@ def test_mixins_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> None:
     warn_service._init_service("svc_warn")
     monkeypatch.delattr(x.CQRS.MetricsTracker, "_metrics", raising=False)
     tracker = x.CQRS.MetricsTracker()
-    delattr(tracker, "_metrics")
+    del tracker._metrics
     assert tracker.record_metric("a", 1).is_success
-    delattr(tracker, "_metrics")
+    del tracker._metrics
     assert tracker.get_metrics().is_success
     monkeypatch.delattr(x.CQRS.ContextStack, "_stack", raising=False)
     stack = x.CQRS.ContextStack()
-    delattr(stack, "_stack")
+    del stack._stack
     assert stack.push_context({"handler_name": "h", "handler_mode": "event"}).is_success
     object.__setattr__(stack, "_stack", [{"k": "v"}])
     popped_dict = stack.pop_context()
     assert popped_dict.is_success
     assert popped_dict.value == {"k": "v"}
-    delattr(stack, "_stack")
+    del stack._stack
     assert stack.current_context() is None
     object.__setattr__(stack, "_stack", [{"k": "v"}])
     assert stack.current_context() is None
@@ -529,7 +529,7 @@ def test_mixins_context_stack_pop_initializes_missing_stack_attr(
 ) -> None:
     monkeypatch.delattr(x.CQRS.ContextStack, "_stack", raising=False)
     stack = x.CQRS.ContextStack()
-    delattr(stack, "_stack")
+    del stack._stack
     popped = stack.pop_context()
     assert popped.is_success
     assert popped.value == {}

@@ -292,7 +292,7 @@ def test_configure_with_resource_register_and_factory_error_paths(
     c.register("x2", lambda: "v", kind="factory")
     setattr(c._di_resources, "dup", object())
     c.register("dup", lambda: "v", kind="resource")
-    delattr(c._di_resources, "dup")
+    del c._di_resources.dup
     monkeypatch.setattr(
         "flext_core.container.FlextRuntime.DependencyIntegration.register_resource",
         _raise_register_resource,

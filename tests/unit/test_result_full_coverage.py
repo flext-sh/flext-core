@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import cast
 
-from flext_core import FlextRuntime, r
+from flext_core import FlextRuntime, r, t
 
 from ._models import _ErrorsModel, _PlainErrorModel, _TargetModel
 
@@ -25,8 +25,8 @@ def test_validation_like_error_structure() -> None:
 
 
 def test_type_guards_result() -> None:
-    ok_res = r[str].ok("ok")
-    fail_res: r[str] = cast("r[str]", r.fail("x"))
+    ok_res = FlextRuntime.RuntimeResult[t.Container].ok("ok")
+    fail_res = FlextRuntime.RuntimeResult[t.Container].fail("x")
     assert r.is_success_result(ok_res)
     assert r.is_failure_result(fail_res)
 

@@ -133,15 +133,15 @@ def test_context_data_validate_dict_serializable_none_and_mapping() -> None:
 @pytest.mark.parametrize(
     ("input_value", "expected_result"),
     [
-        ({"a": 1}, {"a": 1}),
-        ({"nested": {"b": 2}}, {"nested": {"b": 2}}),
-        ({}, {}),
+        (m.Dict(root={"a": 1}), m.Dict(root={"a": 1})),
+        (m.Dict(root={"nested": {"b": 2}}), m.Dict(root={"nested": {"b": 2}})),
+        (m.Dict(root={}), m.Dict(root={})),
     ],
     ids=["simple-dict", "nested-dict", "empty-dict"],
 )
 def test_context_data_validate_dict_serializable_real_dicts(
-    input_value: dict[str, t.Scalar | Mapping[str, t.Scalar]],
-    expected_result: dict[str, t.Scalar | Mapping[str, t.Scalar]],
+    input_value: m.Dict,
+    expected_result: m.Dict,
 ) -> None:
     """Test validate_dict_serializable with real dict inputs."""
     result = FlextModelsContext.ContextData.validate_dict_serializable(input_value)

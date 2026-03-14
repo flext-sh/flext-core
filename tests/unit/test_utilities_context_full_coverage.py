@@ -12,7 +12,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from unittest.mock import MagicMock
 
-from flext_core import m, u
+from flext_core import FlextContext, m, u
 
 from ._models import _FakeConfig
 
@@ -104,7 +104,7 @@ class TestCloneRuntime:
     def test_clone_runtime_uses_provided_context(self) -> None:
         """When context is provided, cloned runtime uses it."""
         runtime = _FakeRuntime()
-        new_context = m.Context()
+        new_context = FlextContext.create()
         cloned = u.clone_runtime(runtime, context=new_context)
         assert cloned._context is new_context
 

@@ -186,7 +186,9 @@ class FlextUtilitiesMapper:
             return current
         convert_callable_raw: t.MapperCallable = convert_func_result.value
         convert_default = ops.get("convert_default")
-        fallback: t.NormalizedValue = convert_default
+        fallback: t.NormalizedValue = (
+            convert_default if not callable(convert_default) else current
+        )
 
         def convert_callable(value: t.NormalizedValue) -> t.NormalizedValue:
             return FlextUtilitiesMapper.narrow_to_container(convert_callable_raw(value))
@@ -243,7 +245,7 @@ class FlextUtilitiesMapper:
         ensure_default_raw = ops.get("ensure_default")
         ensure_default_val: t.NormalizedValue = (
             FlextUtilitiesMapper.narrow_to_container(ensure_default_raw)
-            if ensure_default_raw is not None
+            if ensure_default_raw is not None and not callable(ensure_default_raw)
             else None
         )
         default_map: t.ContainerMapping = {
@@ -835,12 +837,16 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _get_str_from_dict(
-        ops: Mapping[str, t.NormalizedValue], key: str, default: str = ""
+        ops: Mapping[str, t.NormalizedValue | t.MapperCallable],
+        key: str,
+        default: str = "",
     ) -> str:
         """Safely extract str value from ConfigurationDict."""
         value = ops.get(key, default)
         if isinstance(value, str):
             return str(value)
+        if callable(value):
+            return default
         return str(value) if value is not None else default
 
     @staticmethod
@@ -2281,7 +2287,7 @@ class FlextUtilitiesMapper:
             transformer = identity_transformer
         result: dict[str, t.NormalizedValue] = {}
         if primary_data is not None:
-            primary_source: Mapping[str, t.NormalizedValue] | None = None
+            primary_source: Mapping[str, t.NormalizedValue | BaseModel] | None = None
             if isinstance(primary_data, m.ConfigMap):
                 primary_source = primary_data.root
             else:
@@ -2303,7 +2309,7 @@ class FlextUtilitiesMapper:
                 )
                 result.update(transformed_primary)
         if secondary_data is not None and merge_strategy != "primary_only":
-            secondary_source: Mapping[str, t.NormalizedValue] | None = None
+            secondary_source: Mapping[str, t.NormalizedValue | BaseModel] | None = None
             if isinstance(secondary_data, m.ConfigMap):
                 secondary_source = secondary_data.root
             else:

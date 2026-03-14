@@ -440,7 +440,7 @@ def test_configure_structlog_edge_paths(monkeypatch: pytest.MonkeyPatch) -> None
     calls.clear()
     fake_module._print_access = 0
     with contextlib.suppress(AttributeError):
-        delattr(fake_module, "PrintLoggerFactory")
+        object.__delattr__(fake_module, "PrintLoggerFactory")
 
     def _print_logger_factory(**_kwargs: t.Scalar) -> t.Scalar:
         return ""
