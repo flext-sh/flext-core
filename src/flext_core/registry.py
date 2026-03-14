@@ -104,7 +104,7 @@ class FlextRegistry(s[bool]):
     _class_plugin_storage: ClassVar[dict[str, t.RegistrablePlugin]] = {}
     _class_registered_keys: ClassVar[set[str]] = set()
 
-    dispatcher: Annotated[p.CommandBus | None, Field(default=None, exclude=True)]
+    dispatcher: Annotated[p.CommandBus | None, Field(default=None, exclude=True)] = None
 
     @override
     def model_post_init(self, __context: t.Container | None, /) -> None:

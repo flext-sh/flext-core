@@ -169,7 +169,7 @@ class FlextSettings(BaseSettings, FlextRuntime):
     max_batch_size: Annotated[
         int, Field(default=c.Performance.MAX_BATCH_SIZE, description="Max batch size")
     ]
-    api_key: Annotated[str | None, Field(default=None, description="API key")]
+    api_key: Annotated[str | None, Field(default=None, description="API key")] = None
     exception_failure_level: Annotated[
         c.Exceptions.FailureLevel,
         Field(

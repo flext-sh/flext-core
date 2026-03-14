@@ -1307,13 +1307,13 @@ class FlextRuntime:
             populate_by_name=True,
         )
 
-        is_success: Annotated[bool, Field(default=True)]
+        is_success: Annotated[bool, Field(default=True)] = True
         _payload: T | None = PrivateAttr(default=None)
-        error: Annotated[str | None, Field(default=None)]
-        error_code: Annotated[str | None, Field(default=None)]
+        error: Annotated[str | None, Field(default=None)] = None
+        error_code: Annotated[str | None, Field(default=None)] = None
         error_data: Annotated[
             FlextModelsContainers.ConfigMap | None, Field(default=None)
-        ]
+        ] = None
 
         _exception: BaseException | None = PrivateAttr(default=None)
         _result_logger: p.Log.StructlogLogger | None = PrivateAttr(default=None)
