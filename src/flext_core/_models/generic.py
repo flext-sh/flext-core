@@ -80,13 +80,10 @@ class FlextGenericModels:
         version: Annotated[
             str, Field(default="1.0.0", description="Schema version")
         ] = "1.0.0"
-        metadata: Annotated[
-            FlextModelsContainers.Dict,
-            Field(
-                default_factory=FlextModelsContainers.Dict,
-                description="Additional metadata",
-            ),
-        ]
+        metadata: FlextModelsContainers.Dict = Field(
+            default_factory=FlextModelsContainers.Dict,
+            description="Additional metadata",
+        )
         message: Annotated[
             t.NormalizedValue | BaseModel,
             Field(default=None, description="Message payload"),
@@ -133,13 +130,10 @@ class FlextGenericModels:
         cpu_usage_percent: Annotated[
             float | None, Field(default=None, description="CPU %")
         ] = None
-        metadata: Annotated[
-            FlextModelsContainers.Dict,
-            Field(
-                default_factory=FlextModelsContainers.Dict,
-                description="Service metadata",
-            ),
-        ]
+        metadata: FlextModelsContainers.Dict = Field(
+            default_factory=FlextModelsContainers.Dict,
+            description="Service metadata",
+        )
 
     class Configuration(FlextModelFoundation.FrozenStrictModel):
         """Configuration snapshot.
@@ -147,20 +141,14 @@ class FlextGenericModels:
         Used by: CLI config info, debug, auditing.
         """
 
-        config: Annotated[
-            FlextModelsContainers.Dict,
-            Field(
-                default_factory=FlextModelsContainers.Dict,
-                description="Config key-value pairs",
-            ),
-        ]
-        captured_at: Annotated[
-            datetime,
-            Field(
-                default_factory=lambda: datetime.now(UTC),
-                description="Capture timestamp",
-            ),
-        ]
+        config: FlextModelsContainers.Dict = Field(
+            default_factory=FlextModelsContainers.Dict,
+            description="Config key-value pairs",
+        )
+        captured_at: datetime = Field(
+            default_factory=lambda: datetime.now(UTC),
+            description="Capture timestamp",
+        )
         source: Annotated[
             str | None, Field(default=None, description="Config source")
         ] = None
@@ -173,17 +161,13 @@ class FlextGenericModels:
         checksum: Annotated[str | None, Field(default=None, description="Checksum")] = (
             None
         )
-        validation_errors: Annotated[
-            list[str],
-            Field(default_factory=list, description="Validation errors"),
-        ]
-        metadata: Annotated[
-            FlextModelsContainers.Dict,
-            Field(
-                default_factory=FlextModelsContainers.Dict,
-                description="Config metadata",
-            ),
-        ]
+        validation_errors: list[str] = Field(
+            default_factory=list, description="Validation errors"
+        )
+        metadata: FlextModelsContainers.Dict = Field(
+            default_factory=FlextModelsContainers.Dict,
+            description="Config metadata",
+        )
 
     class Health(FlextModelFoundation.FrozenStrictModel):
         """Health check result.
@@ -194,27 +178,18 @@ class FlextGenericModels:
         healthy: Annotated[bool, Field(default=True, description="Overall health")] = (
             True
         )
-        checks: Annotated[
-            FlextModelsContainers.Dict,
-            Field(
-                default_factory=FlextModelsContainers.Dict,
-                description="Check results",
-            ),
-        ]
-        details: Annotated[
-            FlextModelsContainers.Dict,
-            Field(
-                default_factory=FlextModelsContainers.Dict,
-                description="Check details",
-            ),
-        ]
-        checked_at: Annotated[
-            datetime,
-            Field(
-                default_factory=lambda: datetime.now(UTC),
-                description="Check timestamp",
-            ),
-        ]
+        checks: FlextModelsContainers.Dict = Field(
+            default_factory=FlextModelsContainers.Dict,
+            description="Check results",
+        )
+        details: FlextModelsContainers.Dict = Field(
+            default_factory=FlextModelsContainers.Dict,
+            description="Check details",
+        )
+        checked_at: datetime = Field(
+            default_factory=lambda: datetime.now(UTC),
+            description="Check timestamp",
+        )
         service_name: Annotated[
             str | None, Field(default=None, description="Service name")
         ] = None
@@ -227,13 +202,10 @@ class FlextGenericModels:
         environment: Annotated[
             str | None, Field(default=None, description="Environment")
         ] = None
-        metadata: Annotated[
-            FlextModelsContainers.Dict,
-            Field(
-                default_factory=FlextModelsContainers.Dict,
-                description="Health metadata",
-            ),
-        ]
+        metadata: FlextModelsContainers.Dict = Field(
+            default_factory=FlextModelsContainers.Dict,
+            description="Health metadata",
+        )
 
     """Progress trackers - mutable, accumulate during operation."""
 
@@ -277,13 +249,10 @@ class FlextGenericModels:
         operation_name: Annotated[
             str | None, Field(default=None, description="Operation name")
         ] = None
-        metadata: Annotated[
-            FlextModelsContainers.Dict,
-            Field(
-                default_factory=FlextModelsContainers.Dict,
-                description="Operation metadata",
-            ),
-        ]
+        metadata: FlextModelsContainers.Dict = Field(
+            default_factory=FlextModelsContainers.Dict,
+            description="Operation metadata",
+        )
 
         def record_failure(self) -> None:
             """Record a failed operation."""
@@ -329,22 +298,16 @@ class FlextGenericModels:
         Used by: flext-ldif conversion, data transformations, ETL.
         """
 
-        converted: Annotated[
-            list[t.NormalizedValue | BaseModel],
-            Field(default_factory=list, description="Converted items"),
-        ]
-        errors: Annotated[
-            list[str],
-            Field(default_factory=list, description="Error messages"),
-        ]
-        warnings: Annotated[
-            list[str],
-            Field(default_factory=list, description="Warning messages"),
-        ]
-        skipped: Annotated[
-            list[t.NormalizedValue | BaseModel],
-            Field(default_factory=list, description="Skipped items"),
-        ]
+        converted: list[t.NormalizedValue | BaseModel] = Field(
+            default_factory=list, description="Converted items"
+        )
+        errors: list[str] = Field(default_factory=list, description="Error messages")
+        warnings: list[str] = Field(
+            default_factory=list, description="Warning messages"
+        )
+        skipped: list[t.NormalizedValue | BaseModel] = Field(
+            default_factory=list, description="Skipped items"
+        )
         start_time: Annotated[
             datetime | None, Field(default=None, description="Start time")
         ] = None
@@ -360,13 +323,10 @@ class FlextGenericModels:
         total_input_count: Annotated[
             int | None, Field(default=None, description="Total input count")
         ] = None
-        metadata: Annotated[
-            FlextModelsContainers.Dict,
-            Field(
-                default_factory=FlextModelsContainers.Dict,
-                description="Conversion metadata",
-            ),
-        ]
+        metadata: FlextModelsContainers.Dict = Field(
+            default_factory=FlextModelsContainers.Dict,
+            description="Conversion metadata",
+        )
 
         def add_converted(self, item: t.NormalizedValue | BaseModel) -> None:
             """Add a successfully converted item."""
