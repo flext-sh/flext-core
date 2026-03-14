@@ -17,7 +17,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping
 from types import ModuleType
-from typing import Any, ClassVar, Unpack, override
+from typing import ClassVar, Unpack, override
 
 from pydantic import BaseModel, ConfigDict
 
@@ -452,7 +452,10 @@ class FlextHandlers[MessageT_contra, ResultT](x):
             return r[FlextModelsContainers.ConfigMap].ok(context_dict)
         return r[FlextModelsContainers.ConfigMap].ok(popped)
 
-    def push_context(self, ctx: m.ExecutionContext | Mapping[str, Any]) -> r[bool]:
+    def push_context(
+        self,
+        ctx: m.ExecutionContext | Mapping[str, t.NormalizedValue | BaseModel],
+    ) -> r[bool]:
         """Push execution context onto the local handler stack."""
         if isinstance(ctx, m.ExecutionContext):
             self._stack.append(ctx)
@@ -687,7 +690,13 @@ class FlextHandlers[MessageT_contra, ResultT](x):
         @staticmethod
         def scan_module(
             module: ModuleType,
-        ) -> list[tuple[str, Callable[..., Any | None], m.DecoratorConfig]]:
+        ) -> list[
+            tuple[
+                str,
+                Callable[..., r[t.NormalizedValue | BaseModel] | None],
+                m.DecoratorConfig,
+            ]
+        ]:
             """Scan module for functions decorated with @handler().
 
             Introspects the module to find all functions with handler configuration
