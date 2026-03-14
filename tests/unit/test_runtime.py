@@ -962,7 +962,7 @@ class TestFlextRuntime:
         ):
 
             def custom_processor(
-                logger: object,
+                logger,
                 method_name: str,
                 event_dict: dict[str, object],
             ) -> dict[str, object]:

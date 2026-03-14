@@ -61,7 +61,7 @@ class FlextModelsEntity:
         ]
 
         @override
-        def __eq__(self, other) -> bool:
+        def __eq__(self, other: object) -> bool:
             """Identity-based equality for entities."""
             if not isinstance(other, BaseModel):
                 return NotImplemented
@@ -188,7 +188,7 @@ class FlextModelsEntity:
             return r[list[FlextModelsDomainEvent.Entry]].ok(events)
 
         @override
-        def model_post_init(self, __context, /) -> None:
+        def model_post_init(self, __context: object, /) -> None:
             """Post-initialization hook to set updated_at timestamp."""
             if self.updated_at is None:
                 self.updated_at = FlextRuntime.generate_datetime_utc()
@@ -197,7 +197,7 @@ class FlextModelsEntity:
         """Base class for value objects - immutable and compared by value."""
 
         @override
-        def __eq__(self: Self, other) -> bool:
+        def __eq__(self: Self, other: object) -> bool:
             """Compare by value."""
             if not isinstance(other, BaseModel):
                 return NotImplemented

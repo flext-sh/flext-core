@@ -21,7 +21,7 @@ from flext_core import r, t, u
 
 from ...models import m
 
-TestFunction = Callable[[object], None]
+TestFunction = Callable[, None]
 
 
 def mark_test_pattern[F: Callable[..., None]](pattern: str) -> Callable[[F], F]:
@@ -144,7 +144,7 @@ class GivenWhenThenBuilder:
 
         """
 
-        def convert_dict_value(value: object) -> str | int | bool:
+        def convert_dict_value(value) -> str | int | bool:
             """Convert object to str | int | bool."""
             if isinstance(value, (str, int, bool)):
                 return value
@@ -226,7 +226,7 @@ class FlextTestBuilder:
         self._data["correlation_id"] = correlation_id
         return self
 
-    def with_metadata(self, **kwargs: object) -> FlextTestBuilder:
+    def with_metadata(self, **kwargs) -> FlextTestBuilder:
         """with_metadata method.
 
         Returns:
@@ -258,7 +258,7 @@ class FlextTestBuilder:
         self._data.setdefault("updated_at", "2023-01-01T00:00:00+00:00")
         return self
 
-    def with_validation_rules(self, **kwargs: object) -> FlextTestBuilder:
+    def with_validation_rules(self, **kwargs) -> FlextTestBuilder:
         """with_validation_rules method.
 
         Returns:
@@ -367,14 +367,14 @@ class AssertionBuilder:
 
     def __init__(
         self,
-        data: list[object] | dict[str, object] | str | tuple[object, ...],
+        data: list | dict[str, object] | str | tuple[object, ...],
     ) -> None:
         """Initialize assertionbuilder:."""
         super().__init__()
-        self.data: list[object] | dict[str, object] | str | tuple[object, ...] = data
+        self.data: list | dict[str, object] | str | tuple[object, ...] = data
         self._assertions: list[Callable[[], None]] = []
 
-    def assert_equals(self, expected: object) -> AssertionBuilder:
+    def assert_equals(self, expected) -> AssertionBuilder:
         """assert_equals method.
 
         Returns:
@@ -388,7 +388,7 @@ class AssertionBuilder:
         self._assertions.append(assertion)
         return self
 
-    def assert_contains(self, item: object) -> AssertionBuilder:
+    def assert_contains(self, item) -> AssertionBuilder:
         """assert_contains method.
 
         Returns:
@@ -425,7 +425,7 @@ class AssertionBuilder:
         self,
         condition: Callable[
             [
-                list[object] | dict[str, object] | str | tuple[object, ...],
+                list | dict[str, object] | str | tuple[object, ...],
             ],
             bool,
         ],
@@ -651,10 +651,10 @@ class TestAdvancedPatterns:
         nested_dict = nested_mapping.get("id")
         assert nested_dict is not None or "id" in nested_mapping
         if "id" in nested_mapping:
-            id_value: object = nested_mapping["id"]
+            id_value = nested_mapping["id"]
             assert id_value == "nested-456"
         if "name" in nested_mapping:
-            name_value: object = nested_mapping["name"]
+            name_value = nested_mapping["name"]
             assert name_value == "Jane"
 
     def test_fluent_interface_pattern(self) -> None:

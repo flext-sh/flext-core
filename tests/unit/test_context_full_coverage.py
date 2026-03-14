@@ -13,18 +13,18 @@ from flext_core import FlextContainer, FlextContext, c, m, r, t
 class _MonkeyPatch(Protocol):
     def setattr(
         self,
-        target: object,
-        name: object = None,
-        value: object = None,
+        target,
+        name=None,
+        value=None,
         raising: bool = True,
     ) -> None: ...
-    def setitem(self, dic: object, name: object, value: object) -> None: ...
-    def delitem(self, dic: object, name: object, raising: bool = True) -> None: ...
-    def delattr(self, target: object, name: object, raising: bool = True) -> None: ...
+    def setitem(self, dic, name, value) -> None: ...
+    def delitem(self, dic, name, raising: bool = True) -> None: ...
+    def delattr(self, target, name, raising: bool = True) -> None: ...
     def setenv(self, name: str, value: str, prepend: str | None = None) -> None: ...
     def delenv(self, name: str, raising: bool = True) -> None: ...
-    def syspath_prepend(self, path: object) -> None: ...
-    def chdir(self, path: object) -> None: ...
+    def syspath_prepend(self, path) -> None: ...
+    def chdir(self, path) -> None: ...
 
 
 class _ContainerStub:
@@ -62,7 +62,7 @@ def test_narrow_contextvar_exception_branch(
 ) -> None:
     FlextContext()
 
-    def _raise_type_error(_value: object) -> object:
+    def _raise_type_error(_value):
         msg = "bad"
         raise TypeError(msg)
 
@@ -101,7 +101,7 @@ def test_set_set_all_get_validation_and_error_paths(
         def get(self) -> dict[str, object]:
             return {}
 
-        def set(self, _v: object) -> None:
+        def set(self, _v) -> None:
             msg = "boom"
             raise TypeError(msg)
 
@@ -172,7 +172,7 @@ def test_update_statistics_remove_hook_and_clone_false_result(
     def _fail_set(
         self: FlextContext,
         key_or_data: str | m.ConfigMap,
-        value: object | None = None,
+        value=None,
         scope: str = "current",
     ) -> r[bool]:
         _ = self, key_or_data, value, scope

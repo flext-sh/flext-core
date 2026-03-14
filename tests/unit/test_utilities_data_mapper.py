@@ -158,7 +158,7 @@ class TestMapperCollectActiveKeys:
         class BadDictGet:
             """Dict that raises on get()."""
 
-            def get(self, key: str, default: object = None) -> bool:
+            def get(self, key: str, default=None) -> bool:
                 """Raise error on get attempt - test error handling."""
                 msg = "Bad dict get"
                 raise RuntimeError(msg)

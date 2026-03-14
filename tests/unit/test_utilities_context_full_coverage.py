@@ -78,12 +78,11 @@ class _FakeContext:
     def clone(self) -> _FakeContext:
         return _FakeContext()
 
-    def set(self, key: str, value: object) -> None:
+    def set(self, key: str, value) -> None:
         _ = (key, value)
 
-    def get(self, key: str) -> object:
+    def get(self, key: str):
         _ = key
-        return None
 
 
 class TestCloneRuntime:

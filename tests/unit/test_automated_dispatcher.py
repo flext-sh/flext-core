@@ -102,7 +102,7 @@ class TestAutomatedFlextDispatcher:
         """Test performance characteristics of dispatcher."""
         instance = fixture_factory.create_test_dispatcher_instance()
 
-        def operation() -> object:
+        def operation():
             return self._execute_dispatcher_operation(
                 instance,
                 {"performance_test": True},
@@ -122,7 +122,7 @@ class TestAutomatedFlextDispatcher:
             result,
             "FlextDispatcher resource test",
         )
-        instance_obj: object = instance
+        instance_obj = instance
         if hasattr(instance_obj, "cleanup"):
             cleanup_result = getattr(instance_obj, "cleanup")()
             if cleanup_result:
@@ -133,7 +133,7 @@ class TestAutomatedFlextDispatcher:
 
     def _execute_dispatcher_operation(
         self,
-        instance: object,
+        instance,
         input_data: Mapping[str, object],
     ) -> r[bool]:
         """Execute a test operation on dispatcher instance.
@@ -150,6 +150,6 @@ class TestAutomatedFlextDispatcher:
             return r[bool].fail(f"FlextDispatcher operation failed: {e}")
 
     @pytest.fixture
-    def test_dispatcher_instance(self) -> object:
+    def test_dispatcher_instance(self):
         """Fixture for dispatcher test instance."""
         return fixture_factory.create_test_dispatcher_instance()

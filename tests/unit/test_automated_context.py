@@ -104,7 +104,7 @@ class TestAutomatedFlextContext:
         """Test performance characteristics of context."""
         instance = fixture_factory.create_test_context_instance()
 
-        def operation() -> object:
+        def operation():
             return self._execute_context_operation(instance, {"performance_test": True})
 
         result = test_framework.execute_with_timeout(operation, timeout_seconds=1.0)

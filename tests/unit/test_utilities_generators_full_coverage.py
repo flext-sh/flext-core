@@ -24,7 +24,7 @@ runtime_module = importlib.import_module("flext_core.runtime")
 
 class _BrokenMapping(Mapping[str, object]):
     @override
-    def __getitem__(self, key: str) -> object:
+    def __getitem__(self, key: str):
         raise KeyError(key)
 
     @override
@@ -107,7 +107,7 @@ def test_ensure_dict_branches(monkeypatch: pytest.MonkeyPatch) -> None:
 
     class _IterFailMapping(Mapping[str, object]):
         @override
-        def __getitem__(self, key: str) -> object:
+        def __getitem__(self, key: str):
             raise KeyError(key)
 
         @override
@@ -180,7 +180,7 @@ def test_generators_mapping_non_dict_normalization_path() -> None:
 
     class _SimpleMapping(Mapping[str, object]):
         @override
-        def __getitem__(self, key: str) -> object:
+        def __getitem__(self, key: str):
             if key == "a":
                 return 1
             raise KeyError(key)

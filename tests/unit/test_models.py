@@ -813,7 +813,7 @@ class TestFlextModels:
     def test_handler_registration_model_creation(self) -> None:
         """Test HandlerRegistration model with correct fields."""
 
-        def dummy_handler(value: object) -> object:
+        def dummy_handler(value):
             return value
 
         reg = m.Registration(

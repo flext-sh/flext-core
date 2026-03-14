@@ -300,7 +300,7 @@ class TestuTypeGuardsNormalizeToMetadataValue:
             "int": 42,
             "nested_dict": {"inner": "value"},
             "nested_list": [1, 2, {"inner": "dict"}],
-            "complex": object(),
+            "complex"(),
         }
         result = u.normalize_to_metadata_value(test_dict)
         assert isinstance(result, dict)

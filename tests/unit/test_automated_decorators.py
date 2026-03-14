@@ -117,7 +117,7 @@ class TestAutomatedFlextDecorators:
         """Test performance characteristics of decorators."""
         instance = fixture_factory.create_test_decorators_instance()
 
-        def operation() -> object:
+        def operation():
             return self._execute_decorators_operation(
                 instance,
                 {"performance_test": True},
@@ -148,7 +148,7 @@ class TestAutomatedFlextDecorators:
 
     def _execute_decorators_operation(
         self,
-        instance: object,
+        instance,
         input_data: Mapping[str, object],
     ) -> r[t.Container]:
         """Execute a test operation on decorators instance.
@@ -192,6 +192,6 @@ class TestAutomatedFlextDecorators:
             return r[t.Container].fail(f"FlextDecorators operation failed: {e}")
 
     @pytest.fixture
-    def test_decorators_instance(self) -> object:
+    def test_decorators_instance(self):
         """Fixture for decorators test instance."""
         return fixture_factory.create_test_decorators_instance()

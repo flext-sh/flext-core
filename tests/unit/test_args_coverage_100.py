@@ -453,7 +453,7 @@ class TestFlextUtilitiesArgs:
             """Test get_enum_params when get_type_hints raises exception."""
 
             class BadFunction:
-                __annotations__ = {"invalid": object()}
+                __annotations__ = {"invalid"()}
 
             params = u.get_enum_params(BadFunction)
             assert params == {}

@@ -30,7 +30,7 @@ from pydantic import Field, TypeAdapter, ValidationError
 
 from flext_core import FlextConstants, FlextService, FlextSettings, c, m, r, t
 
-_CONTAINER_LIST_ADAPTER = TypeAdapter(list[object])
+_CONTAINER_LIST_ADAPTER = TypeAdapter(list)
 
 
 class AppConfig(FlextSettings):
@@ -345,7 +345,7 @@ def main() -> r[bool]:
         features = metadata.get("config_features", [])
         advanced_features = metadata.get("advanced_features", [])
 
-        def _sequence_len(x: object) -> int:
+        def _sequence_len(x) -> int:
             try:
                 return len(_CONTAINER_LIST_ADAPTER.validate_python(x))
             except ValidationError:

@@ -128,7 +128,7 @@ class Ex05GoodProcessor(BaseModel):
 
     @classmethod
     @override
-    def validate(cls, value: object) -> Ex05GoodProcessor:
+    def validate(cls, value) -> Ex05GoodProcessor:
         """Validate processor payload."""
         return cls.model_validate(value)
 
@@ -151,11 +151,11 @@ class Ex10ProtocolHandler(BaseModel):
 
     model_config = ConfigDict(frozen=False)
 
-    def handle(self, message: object) -> r[str]:
+    def handle(self, message) -> r[str]:
         """Echo handled message."""
         return r[str].ok(str(message))
 
-    def check_data(self, data: object) -> r[bool]:
+    def check_data(self, data) -> r[bool]:
         """Check data is present."""
         return r[bool].ok(data is not None)
 
@@ -188,15 +188,15 @@ class Ex10CommandBusStub(BaseModel):
 
     model_config = ConfigDict(frozen=False)
 
-    def dispatch(self, message: object) -> r[str]:
+    def dispatch(self, message) -> r[str]:
         """Dispatch command message."""
         return r[str].ok(str(message))
 
-    def publish(self, event: object) -> None:
+    def publish(self, event) -> None:
         """Publish event message."""
         del event
 
-    def register_handler(self, _handler: object) -> r[bool]:
+    def register_handler(self, _handler) -> r[bool]:
         """Register a command handler."""
         return r[bool].ok(True)
 
@@ -248,15 +248,15 @@ class Ex11CommandBusStub(BaseModel):
 
     model_config = ConfigDict(frozen=False)
 
-    def dispatch(self, message: object) -> r[str]:
+    def dispatch(self, message) -> r[str]:
         """Dispatch message."""
         return r[str].ok(str(message))
 
-    def publish(self, _event: object) -> None:
+    def publish(self, _event) -> None:
         """Publish event."""
         return
 
-    def register_handler(self, _handler: object) -> r[bool]:
+    def register_handler(self, _handler) -> r[bool]:
         """Register handler."""
         return r[bool].ok(True)
 

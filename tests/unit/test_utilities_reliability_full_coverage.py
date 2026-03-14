@@ -70,7 +70,7 @@ def test_utilities_reliability_compose_returns_non_result_directly(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
 
-    def _always_ok(*_args: object, **_kwargs: t.Scalar) -> r[int]:
+    def _always_ok(*_args, **_kwargs: t.Scalar) -> r[int]:
         return r[int].ok(7)
 
     monkeypatch.setattr(

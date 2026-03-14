@@ -23,7 +23,7 @@ class Ex05UserModel(m.Value):
 
     @field_validator("status", mode="before")
     @classmethod
-    def normalize_status(cls, value: object) -> Ex05StatusEnum:
+    def normalize_status(cls, value) -> Ex05StatusEnum:
         if isinstance(value, Ex05StatusEnum):
             return value
         if isinstance(value, str):
@@ -49,7 +49,7 @@ class Ex05GoodProcessor(m.Value):
 
     @classmethod
     @override
-    def validate(cls, value: object) -> Ex05GoodProcessor:
+    def validate(cls, value) -> Ex05GoodProcessor:
         return cls.model_validate(value)
 
 

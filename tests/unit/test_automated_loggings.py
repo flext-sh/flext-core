@@ -104,7 +104,7 @@ class TestAutomatedFlextLoggings:
         """Test performance characteristics of loggings."""
         instance = fixture_factory.create_test_loggings_instance()
 
-        def operation() -> object:
+        def operation():
             return self._execute_loggings_operation(
                 instance,
                 {"performance_test": True},
@@ -135,7 +135,7 @@ class TestAutomatedFlextLoggings:
 
     def _execute_loggings_operation(
         self,
-        instance: object,
+        instance,
         input_data: Mapping[str, object],
     ) -> r[t.Container]:
         """Execute a test operation on loggings instance.
@@ -179,6 +179,6 @@ class TestAutomatedFlextLoggings:
             return r[t.Container].fail(f"FlextLoggings operation failed: {e}")
 
     @pytest.fixture
-    def test_loggings_instance(self) -> object:
+    def test_loggings_instance(self):
         """Fixture for loggings test instance."""
         return fixture_factory.create_test_loggings_instance()

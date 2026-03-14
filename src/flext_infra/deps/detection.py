@@ -41,16 +41,16 @@ class FlextInfraDependencyDetectionService:
     @staticmethod
     def to_infra_value(
         value: t.Infra.InfraValue,
-    ) -> str | int | float | bool | dict[str, object] | list[object] | None:
+    ) -> str | int | float | bool | dict[str, object] | list | None:
         """Convert container value to namespaced infra value."""
         if value is None or isinstance(value, (str, int, float, bool)):
             return value
         if isinstance(value, list):
             try:
-                sequence = TypeAdapter(list[object]).validate_python(value)
+                sequence = TypeAdapter(list).validate_python(value)
             except ValidationError:
                 return None
-            converted: list[object] = []
+            converted: list = []
             for item in sequence:
                 converted_item = FlextInfraDependencyDetectionService.to_infra_value(
                     item

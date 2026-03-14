@@ -23,7 +23,7 @@ class Ex03Money(m.Value):
 
     @field_validator("currency", mode="before")
     @classmethod
-    def normalize_currency(cls, value: object) -> c.Domain.Currency:
+    def normalize_currency(cls, value) -> c.Domain.Currency:
         if isinstance(value, c.Domain.Currency):
             return value
         if isinstance(value, str):

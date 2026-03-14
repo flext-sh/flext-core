@@ -98,7 +98,7 @@ class UserService:
     def _activate_user(user: UserProfile) -> r[UserProfile]:
         """Activate user using domain business logic - railway pattern."""
 
-        def return_user(_: object) -> UserProfile:
+        def return_user(_) -> UserProfile:
             """Return the user after activation."""
             return user
 
@@ -155,7 +155,7 @@ class UserService:
         return user
 
     def _validate_and_transform(
-        self, user_data: m.ConfigMap, _: object
+        self, user_data: m.ConfigMap, _
     ) -> r[UserProfile]:
         """Validate and transform user data for flat_map."""
         return validate_transform_user(user_data)
@@ -211,12 +211,12 @@ def demonstrate_exceptions() -> None:
     def format_exception_message(error: str) -> str:
         return f"Converted exception to result: {error}"
 
-    def process_scenario(msg: object, field: object, value: object) -> r[str]:
+    def process_scenario(msg, field, value) -> r[str]:
         msg_str = str(msg)
         field_str = str(field)
         value_str = str(value)
 
-        def format_error_after_validation(_: object) -> str:
+        def format_error_after_validation(_) -> str:
             """Format error message after validation."""
             return format_error_message(field_str, value_str)
 
@@ -224,7 +224,7 @@ def demonstrate_exceptions() -> None:
             format_error_after_validation
         )
 
-    def process_exception(error: object) -> r[str]:
+    def process_exception(error) -> r[str]:
         error_str = str(error)
         return r.ok(format_exception_message(error_str))
 
@@ -240,7 +240,7 @@ def identity_result(r_obj: r[str]) -> r[str]:
     return r_obj
 
 
-def ignore_and_return_none(_: object) -> r[None]:
+def ignore_and_return_none(_) -> r[None]:
     """Ignore input and return None."""
     return r.ok(None)
 

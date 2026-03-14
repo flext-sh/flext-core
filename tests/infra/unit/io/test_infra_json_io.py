@@ -74,7 +74,7 @@ class TestFlextInfraJsonService:
         self,
         tmp_path: Path,
         path_parts: tuple[str, ...],
-        payload: object,
+        payload,
         sort_keys: bool,
         ensure_ascii: bool,
         expected: str,

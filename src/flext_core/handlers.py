@@ -452,7 +452,9 @@ class FlextHandlers[MessageT_contra, ResultT](x):
             return r[FlextModelsContainers.ConfigMap].ok(context_dict)
         return r[FlextModelsContainers.ConfigMap].ok(popped)
 
-    def push_context(self, ctx: m.ExecutionContext | Mapping[str, t.NormalizedValue]) -> r[bool]:
+    def push_context(
+        self, ctx: m.ExecutionContext | Mapping[str, t.NormalizedValue]
+    ) -> r[bool]:
         """Push execution context onto the local handler stack."""
         if isinstance(ctx, m.ExecutionContext):
             self._stack.append(ctx)

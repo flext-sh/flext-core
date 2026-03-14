@@ -23,7 +23,7 @@ from flext_tests import tm
 _CWD = "/home/marlonsc/flext/flext-core"
 
 
-def _ns(**kwargs: object) -> argparse.Namespace:
+def _ns(**kwargs) -> argparse.Namespace:
     """Create a simple namespace from keyword arguments."""
     return argparse.Namespace(**kwargs)
 

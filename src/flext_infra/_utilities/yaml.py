@@ -29,13 +29,13 @@ class FlextInfraUtilitiesYaml:
         data = u.Infra.safe_load_yaml(path)
     """
 
-    _LIST_ADAPTER: TypeAdapter[list[object]] | None = None
+    _LIST_ADAPTER: TypeAdapter[list] | None = None
     _MAPPING_ADAPTER: TypeAdapter[dict[str, object]] | None = None
 
     @staticmethod
-    def _get_list_adapter() -> TypeAdapter[list[object]]:
+    def _get_list_adapter() -> TypeAdapter[list]:
         if FlextInfraUtilitiesYaml._LIST_ADAPTER is None:
-            FlextInfraUtilitiesYaml._LIST_ADAPTER = TypeAdapter(list[object])
+            FlextInfraUtilitiesYaml._LIST_ADAPTER = TypeAdapter(list)
         return FlextInfraUtilitiesYaml._LIST_ADAPTER
 
     @staticmethod

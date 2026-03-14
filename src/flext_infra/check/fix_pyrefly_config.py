@@ -180,9 +180,9 @@ class FlextInfraConfigFixer(s):
         excludes = pyrefly.get(c.Infra.Toml.PROJECT_EXCLUDES)
         current: list[str] = []
         if isinstance(excludes, list):
-            exclude_items: list[object] = []
+            exclude_items: list = []
             with contextlib.suppress(ValidationError):
-                exclude_items = TypeAdapter(list[object]).validate_python(excludes)
+                exclude_items = TypeAdapter(list).validate_python(excludes)
             current = [str(value) for value in exclude_items]
         stripped_to_add: list[str] = []
         for glob in c.Infra.Check.REQUIRED_EXCLUDES:
@@ -206,9 +206,9 @@ class FlextInfraConfigFixer(s):
             return []
         if project_dir == self._workspace_root:
             new_paths: list[str] = []
-            search_items: list[object] = []
+            search_items: list = []
             with contextlib.suppress(ValidationError):
-                search_items = TypeAdapter(list[object]).validate_python(search_path)
+                search_items = TypeAdapter(list).validate_python(search_path)
             for path_item in search_items:
                 if not isinstance(path_item, str):
                     continue
@@ -225,10 +225,10 @@ class FlextInfraConfigFixer(s):
             if fixes:
                 pyrefly[c.Infra.Toml.SEARCH_PATH] = self._to_array(new_paths)
         search_raw = pyrefly.get(c.Infra.Toml.SEARCH_PATH)
-        current_paths: list[object] = []
+        current_paths: list = []
         if isinstance(search_raw, list):
             try:
-                current_paths = TypeAdapter(list[object]).validate_python(search_raw)
+                current_paths = TypeAdapter(list).validate_python(search_raw)
             except ValidationError:
                 current_paths = []
         nonexistent = [

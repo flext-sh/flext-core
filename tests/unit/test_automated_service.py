@@ -109,7 +109,7 @@ class TestAutomatedFlextService:
         """Test performance characteristics of service."""
         instance = fixture_factory.create_test_service_instance()
 
-        def operation() -> object:
+        def operation():
             return self._execute_service_operation(instance, {"performance_test": True})
 
         result = test_framework.execute_with_timeout(operation, timeout_seconds=1.0)
@@ -126,7 +126,7 @@ class TestAutomatedFlextService:
             result,
             "FlextService resource test",
         )
-        instance_obj: object = instance
+        instance_obj = instance
         if hasattr(instance_obj, "cleanup"):
             cleanup_result = getattr(instance_obj, "cleanup")()
             if cleanup_result:
@@ -137,7 +137,7 @@ class TestAutomatedFlextService:
 
     def _execute_service_operation(
         self,
-        instance: object,
+        instance,
         input_data: Mapping[str, object],
     ) -> r[bool]:
         """Execute a test operation on service instance.
@@ -153,6 +153,6 @@ class TestAutomatedFlextService:
             return r[bool].fail(f"FlextService operation failed: {e}")
 
     @pytest.fixture
-    def test_service_instance(self) -> object:
+    def test_service_instance(self):
         """Fixture for service test instance."""
         return fixture_factory.create_test_service_instance()

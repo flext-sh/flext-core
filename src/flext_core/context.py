@@ -16,7 +16,7 @@ import enum
 from collections.abc import Callable, Generator, Mapping
 from contextlib import contextmanager
 from datetime import datetime
-from typing import Annotated, ClassVar, Final, Self, overload, override
+from typing import Annotated, ClassVar, Final, Self, overload
 
 from pydantic import BaseModel, Field, PrivateAttr
 

@@ -31,11 +31,11 @@ T = TypeVar("T")
 TMessage = TypeVar("TMessage")
 
 
-def _type_origin(value: object) -> t.TypeHintSpecifier:
+def _type_origin(value) -> t.TypeHintSpecifier:
     return cast("t.TypeOriginSpecifier", value)
 
 
-def _message_type(value: object) -> t.MessageTypeSpecifier:
+def _message_type(value) -> t.MessageTypeSpecifier:
     return cast("t.MessageTypeSpecifier", value)
 
 
@@ -76,7 +76,7 @@ class ObjectHandler(h[object, t.Container]):
     """Handler for object messages (universal)."""
 
     @override
-    def handle(self, message: object) -> r[t.Container]:
+    def handle(self, message) -> r[t.Container]:
         """Handle any message."""
         if isinstance(message, (str, int, float, bool)):
             return r[t.Container].ok(message)
@@ -431,7 +431,7 @@ class TestuTypeChecker:
         accepted = (str,)
         result = u.can_handle_message_type(
             accepted,
-            cast("str | type[object]", None),
+            cast("str | type", None),
         )
         assert isinstance(result, bool)
 

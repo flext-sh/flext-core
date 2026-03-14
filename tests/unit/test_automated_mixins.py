@@ -114,7 +114,7 @@ class TestAutomatedFlextMixins:
         """Test performance characteristics of mixins."""
         instance = fixture_factory.create_test_mixins_instance()
 
-        def operation() -> object:
+        def operation():
             return self._execute_mixins_operation(instance, {"performance_test": True})
 
         result = test_framework.execute_with_timeout(operation, timeout_seconds=1.0)
@@ -142,7 +142,7 @@ class TestAutomatedFlextMixins:
 
     def _execute_mixins_operation(
         self,
-        instance: object,
+        instance,
         input_data: Mapping[str, object],
     ) -> r[t.Container]:
         """Execute a test operation on mixins instance.
@@ -186,6 +186,6 @@ class TestAutomatedFlextMixins:
             return r[t.Container].fail(f"FlextMixins operation failed: {e}")
 
     @pytest.fixture
-    def test_mixins_instance(self) -> object:
+    def test_mixins_instance(self):
         """Fixture for mixins test instance."""
         return fixture_factory.create_test_mixins_instance()

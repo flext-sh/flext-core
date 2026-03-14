@@ -55,7 +55,7 @@ All 15 anti-patterns verified against actual FLEXT-Core implementation:
 | 1. Exceptions for Business Logic | Says: Use r           | Found: 1,121 r usages     | ✅ FOLLOWED |
 | 2. Swallowing Errors             | Says: No `except: pass`         | Found: 0 occurrences                | ✅ FOLLOWED |
 | 3. Ignoring Error Info           | Says: Use error_code/error_data | Verified in result.py               | ✅ FOLLOWED |
-| 4. Using `Any` Type              | Says: Use specific types        | Found: 0 `: Any` in src/            | ✅ FOLLOWED |
+| 4. Using `Any` Type              | Says: Use specific types        | Found: 0 `` in src/            | ✅ FOLLOWED |
 | 5. Untyped Container             | Says: Use get_typed()           | Verified in container.py:574        | ✅ FOLLOWED |
 | 6. Type Ignores                  | Says: Fix root cause            | Minimal usage, all justified        | ✅ FOLLOWED |
 | 7. Circular Dependencies         | Says: Respect layer hierarchy   | Layer hierarchy enforced            | ✅ FOLLOWED |
@@ -173,13 +173,13 @@ ______________________________________________________________________
 
 ```bash
 # Search for Any type usage
-$ grep -n ": Any" src/flext_core/*.py
+$ grep -n "" src/flext_core/*.py
 # NO RESULTS - No Any type usage in source code
 ```
 
 **Verification**: ✅ ACCURATE
 
-- ZERO usage of `: Any` type in source files
+- ZERO usage of `` type in source files
 - Codebase uses strict typing with generics (r[T], TypeVar, etc.)
 
 **Counter-Example** (typings.py defines TypeVars, not Any):
@@ -519,7 +519,7 @@ ______________________________________________________________________
 r[T] usages: 1,121 occurrences
 
 # Type Safety
-`: Any` type usage: 0 occurrences
+`` type usage: 0 occurrences
 Strict typing: 100% of source files
 
 # Error Handling

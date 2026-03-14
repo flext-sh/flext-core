@@ -411,7 +411,7 @@ class FlextInfraUtilitiesCodegen:
         out.extend(f'    "{exp}",' for exp in sorted(exports))
         out.extend(["]", "", ""])
         out.extend([
-            "def __getattr__(name: str) -> Any:",
+            "def __getattr__(name: str):",
             '    """Lazy-load module attributes on first access (PEP 562)."""',
             "    return lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)",
             "",
@@ -892,7 +892,7 @@ class FlextInfraUtilitiesCodegen:
                 modified = raw.get("modified_files")
                 if isinstance(modified, list):
                     filtered: set[str] = set()
-                    modified_items = TypeAdapter(list[object]).validate_python(modified)
+                    modified_items = TypeAdapter(list).validate_python(modified)
                     for entry in modified_items:
                         if not isinstance(entry, str):
                             continue
@@ -1056,7 +1056,7 @@ class FlextInfraUtilitiesCodegen:
             return FlextInfraUtilitiesCodegen.as_int(payload.get("duplicate_groups"))
         duplicates = payload.get("duplicates")
         if isinstance(duplicates, list):
-            duplicate_items = TypeAdapter(list[object]).validate_python(duplicates)
+            duplicate_items = TypeAdapter(list).validate_python(duplicates)
             return len(duplicate_items)
         return -1
 
@@ -1068,7 +1068,7 @@ class FlextInfraUtilitiesCodegen:
             return FlextInfraUtilitiesCodegen.as_int(value)
         projects = payload.get("projects")
         if isinstance(projects, list):
-            project_items = TypeAdapter(list[object]).validate_python(projects)
+            project_items = TypeAdapter(list).validate_python(projects)
             return len(project_items)
         return 0
 
@@ -1108,7 +1108,7 @@ class FlextInfraUtilitiesCodegen:
         if not isinstance(value, list):
             return []
         result: list[dict[str, object]] = []
-        value_items = TypeAdapter(list[object]).validate_python(value)
+        value_items = TypeAdapter(list).validate_python(value)
         for item in value_items:
             if not isinstance(item, dict):
                 continue

@@ -159,7 +159,7 @@ class UtilityScenarios:
         return cast("p.HasModelDump", cast("object", m.ConfigMap(root=result)))
 
     @staticmethod
-    def create_mock_cached_object() -> object:
+    def create_mock_cached_object():
         """Create mock object with cache attributes."""
 
         class TestCachedObject:
@@ -170,7 +170,7 @@ class UtilityScenarios:
         return TestCachedObject()
 
     @staticmethod
-    def create_mock_uncached_object() -> object:
+    def create_mock_uncached_object():
         """Create mock object without cache attributes."""
 
         class TestUncachedObject:
@@ -180,7 +180,7 @@ class UtilityScenarios:
         return TestUncachedObject()
 
     @staticmethod
-    def create_custom_object() -> object:
+    def create_custom_object():
         """Create custom serializable object."""
 
         class CustomObject:
@@ -330,7 +330,7 @@ class Testu(TextUtilityContract):
     )
     def test_cache_normalize_component(
         self,
-        input_data: object | None,
+        input_data,
         expected_type: type,
     ) -> None:
         """Test cache component normalization."""

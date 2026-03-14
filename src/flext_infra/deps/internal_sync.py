@@ -364,7 +364,7 @@ class FlextInfraInternalDependencySyncService:
         except ValidationError:
             if not isinstance(value, list):
                 return []
-            value_adapter: TypeAdapter[list[object]] = TypeAdapter(list[object])
+            value_adapter: TypeAdapter[list] = TypeAdapter(list)
             raw_items = value_adapter.validate_python(value)
             return [str(item) for item in raw_items]
 

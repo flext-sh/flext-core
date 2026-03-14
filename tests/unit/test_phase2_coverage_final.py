@@ -80,7 +80,7 @@ class TestPhase2FinalCoveragePush:
     def test_flext_result_flat_map_chaining(self) -> None:
         """Test r flat_map chaining."""
 
-        def double_string(s: object) -> r[str]:
+        def double_string(s) -> r[str]:
             """Double the string or fail."""
             if not isinstance(s, str):
                 return r[str].fail("Not a string")
@@ -95,11 +95,11 @@ class TestPhase2FinalCoveragePush:
     def test_flext_result_error_propagation(self) -> None:
         """Test r error propagation in chain."""
 
-        def failing_op(s: object) -> r[str]:
+        def failing_op(s) -> r[str]:
             """Operation that fails."""
             return r[str].fail("operation failed")
 
-        def upper_func(v: object) -> object:
+        def upper_func(v):
             """Convert to uppercase."""
             if isinstance(v, str):
                 return v.upper()

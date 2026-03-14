@@ -68,7 +68,7 @@ class TestCreateBranches:
         mock_project = SimpleNamespace(name="proj1", path=workspace_root / "proj1")
         fake_sel._resolve_result = r[list[SimpleNamespace]].ok([mock_project])
 
-        def _selection_factory(*a: object, **kw: t.Scalar) -> FakeSelection:
+        def _selection_factory(*a, **kw: t.Scalar) -> FakeSelection:
             del a, kw
             return fake_sel
 

@@ -53,7 +53,7 @@ class TestRuntimeDeprecatedNormalizeMethods:
 
     def test_normalize_to_general_value_functional_equivalence(self) -> None:
         """Deprecated path must return same result as non-deprecated path."""
-        test_cases: list[object] = ["str", 42, math.pi, True, None, {"k": "v"}, [1, 2]]
+        test_cases: list = ["str", 42, math.pi, True, None, {"k": "v"}, [1, 2]]
         for val in test_cases:
             with warnings.catch_warnings(record=True):
                 warnings.simplefilter("always")

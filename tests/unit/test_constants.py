@@ -238,7 +238,7 @@ class TestFlextConstants:
     )
     def test_type_safety_constant_types(
         self,
-        value: object,
+        value,
         expected_type: type,
     ) -> None:
         """Test that constants have correct types."""

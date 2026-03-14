@@ -33,7 +33,7 @@ def _safe_load_yaml(path: Path) -> Mapping[str, object]:
     return FlextInfraUtilitiesYaml.safe_load_yaml(path)
 
 
-def _normalize_string_list(value: object, field: str) -> list[str]:
+def _normalize_string_list(value, field: str) -> list[str]:
     """Validate and normalize a list[str] config field; delegates to ``u.Infra``."""
     return FlextInfraUtilitiesYaml.normalize_string_list(value, field)
 
@@ -120,7 +120,7 @@ class FlextInfraSkillValidator:
             rules_list_obj = rules.get(c.Infra.ReportKeys.RULES, [])
             if not isinstance(rules_list_obj, list):
                 return r[m.Infra.Core.ValidationReport].fail("rules must be a list")
-            rules_list_adapter: TypeAdapter[list[object]] = TypeAdapter(list[object])
+            rules_list_adapter: TypeAdapter[list] = TypeAdapter(list)
             rules_list = rules_list_adapter.validate_python(rules_list_obj)
             counts: MutableMapping[str, int] = {}
             violations: list[str] = []

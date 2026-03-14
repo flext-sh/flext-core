@@ -118,7 +118,7 @@ class TestResultTransformations:
     def test_result_flat_map_chains_results(self) -> None:
         """Test flat_map chains multiple results."""
 
-        def increment_wrapper(x: object) -> r[int]:
+        def increment_wrapper(x) -> r[int]:
             if isinstance(x, int):
                 result = r[int].ok(x + 1)
                 if result.is_success:

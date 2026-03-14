@@ -24,29 +24,29 @@ class _PortModel(BaseModel):
 class _AtCallable(Protocol):
     def __call__(
         self,
-        items: object,
+        items,
         index: int | str,
         *,
-        default: object = None,
-    ) -> object: ...
+        default = None,
+    ): ...
 
 
 class _ExtractFieldCallable(Protocol):
-    def __call__(self, item: object, field_name: str) -> object: ...
+    def __call__(self, item, field_name: str): ...
 
 
 class _TakeCallable(Protocol):
     def __call__(
         self,
-        data_or_items: object,
-        key_or_index: object,
+        data_or_items,
+        key_or_index,
         *,
-        default: object = None,
-    ) -> object: ...
+        default = None,
+    ): ...
 
 
 class _BuildApplyConvertCallable(Protocol):
-    def __call__(self, current: object, operations: Mapping[str, object]) -> object: ...
+    def __call__(self, current, operations: Mapping[str, object]): ...
 
 
 class _ExtractTransformOptionsCallable(Protocol):
@@ -54,17 +54,17 @@ class _ExtractTransformOptionsCallable(Protocol):
 
 
 class _BuildApplyOpCallable(Protocol):
-    def __call__(self, current: object, operations: Mapping[str, object]) -> object: ...
+    def __call__(self, current, operations: Mapping[str, object]): ...
 
 
 class _TransformCallable(Protocol):
-    def __call__(self, source: object, **kwargs: object) -> r[object]: ...
+    def __call__(self, source, **kwargs) -> r: ...
 
 
 class _MapDictKeysCallable(Protocol):
     def __call__(
         self,
-        source: object,
+        source,
         key_map: Mapping[str, str],
         *,
         keep_unmapped: bool = True,
@@ -74,33 +74,33 @@ class _MapDictKeysCallable(Protocol):
 class _BuildFlagsCallable(Protocol):
     def __call__(
         self,
-        active_flags: object,
+        active_flags,
         flag_mapping: Mapping[str, str],
     ) -> r[Mapping[str, bool]]: ...
 
 
-def _at_obj(items: object, index: int | str, *, default: object = None) -> object:
+def _at_obj(items, index: int | str, *, default = None):
     """Call Mapper.at with arbitrary object for error-path testing."""
     fn: _AtCallable = getattr(u, "at")
     return fn(items, index, default=default)
 
 
-def _extract_field_obj(item: object, field_name: str) -> object:
+def _extract_field_obj(item, field_name: str):
     """Call _extract_field_value with arbitrary object for testing."""
     fn: _ExtractFieldCallable = getattr(u, "_extract_field_value")
     return fn(item, field_name)
 
 
 def _take_obj(
-    data_or_items: object, key_or_index: object, *, default: object = None
-) -> object:
+    data_or_items, key_or_index, *, default = None
+):
     fn: _TakeCallable = getattr(u, "take")
     return fn(data_or_items, key_or_index, default=default)
 
 
 def _build_apply_convert_obj(
-    current: object, operations: Mapping[str, object]
-) -> object:
+    current, operations: Mapping[str, object]
+):
     fn: _BuildApplyConvertCallable = getattr(u, "_build_apply_convert")
     return fn(current, operations)
 
@@ -112,35 +112,35 @@ def _extract_transform_options_obj(
     return fn(transform_opts)
 
 
-def _build_apply_sort_obj(current: object, operations: Mapping[str, object]) -> object:
+def _build_apply_sort_obj(current, operations: Mapping[str, object]):
     fn: _BuildApplyOpCallable = getattr(u, "_build_apply_sort")
     return fn(current, operations)
 
 
 def _build_apply_unique_obj(
-    current: object, operations: Mapping[str, object]
-) -> object:
+    current, operations: Mapping[str, object]
+):
     fn: _BuildApplyOpCallable = getattr(u, "_build_apply_unique")
     return fn(current, operations)
 
 
-def _build_apply_slice_obj(current: object, operations: Mapping[str, object]) -> object:
+def _build_apply_slice_obj(current, operations: Mapping[str, object]):
     fn: _BuildApplyOpCallable = getattr(u, "_build_apply_slice")
     return fn(current, operations)
 
 
-def _build_apply_group_obj(current: object, operations: Mapping[str, object]) -> object:
+def _build_apply_group_obj(current, operations: Mapping[str, object]):
     fn: _BuildApplyOpCallable = getattr(u, "_build_apply_group")
     return fn(current, operations)
 
 
-def _transform_obj(source: object, **kwargs: object) -> r[object]:
+def _transform_obj(source, **kwargs) -> r:
     fn: _TransformCallable = getattr(u, "transform")
     return fn(source, **kwargs)
 
 
 def _map_dict_keys_obj(
-    source: object,
+    source,
     key_map: Mapping[str, str],
     *,
     keep_unmapped: bool = True,
@@ -150,7 +150,7 @@ def _map_dict_keys_obj(
 
 
 def _build_flags_obj(
-    active_flags: object,
+    active_flags,
     flag_mapping: Mapping[str, str],
 ) -> r[Mapping[str, bool]]:
     """Call build_flags_dict with arbitrary object for error-path testing."""
@@ -186,24 +186,24 @@ class BadBool:
         raise ValueError(msg)
 
 
-def _parse_int(value: object) -> int:
+def _parse_int(value) -> int:
     return int(cast("str", value))
 
 
-def _plus_one(value: object) -> object:
+def _plus_one(value):
     return cast("int", value) + 1
 
 
-def _times_two(value: object) -> object:
+def _times_two(value):
     return cast("int", value) * 2
 
 
-def _raise_value_error(_value: object) -> object:
+def _raise_value_error(_value):
     msg = "x"
     raise ValueError(msg)
 
 
-def _normalize_not_dict(_value: object) -> str:
+def _normalize_not_dict(_value) -> str:
     return "not-a-dict"
 
 
@@ -218,7 +218,7 @@ def test_bad_string_and_bad_bool_raise_value_error() -> None:
         _ = bool(BadBool())
 
 
-class ExplodingLenList(UserList[object]):
+class ExplodingLenList(UserList):
     """ExplodingLenList class."""
 
     @override
@@ -232,7 +232,7 @@ class BadMapping(Mapping[str, object]):
     """BadMapping class."""
 
     @override
-    def __getitem__(self, key: str) -> object:
+    def __getitem__(self, key: str):
         """__getitem__ method."""
         msg = f"missing {key}"
         raise KeyError(msg)
@@ -263,7 +263,7 @@ def test_type_guards_and_narrowing_failures(mapper: type[u]) -> None:
 
 def test_narrow_to_string_keyed_dict_and_mapping_paths(mapper: type[u]) -> None:
     converted = mapper._narrow_to_string_keyed_dict(
-        cast("object", {1: "x", "b": object()}),
+        cast("object", {1: "x", "b"()}),
     )
     assert "1" in converted
     assert isinstance(converted["b"], str)
@@ -438,8 +438,8 @@ def test_extract_field_value_and_ensure_variants(mapper: type[u]) -> None:
 
 
 def test_filter_map_normalize_convert_helpers(mapper: type[u]) -> None:
-    plus_one = cast("Callable[[object], object]", _plus_one)
-    times_two = cast("Callable[[object], object]", _times_two)
+    plus_one = cast("Callable[, object]", _plus_one)
+    times_two = cast("Callable[, object]", _times_two)
     assert mapper._build_apply_filter(1, {"filter": 1}, 0) == 1
     assert mapper._build_apply_filter(
         {"a": 1, "b": 0},
@@ -489,9 +489,9 @@ def test_filter_map_normalize_convert_helpers(mapper: type[u]) -> None:
 )
 def test_convert_default_fallback_matrix(
     mapper: type[u],
-    value: object,
-    convert_spec: Callable[[object], object] | type,
-    expected: object,
+    value,
+    convert_spec: Callable[, object] | type,
+    expected,
 ) -> None:
     operations = cast("Mapping[str, object]", {"convert": convert_spec})
     assert _build_apply_convert_obj(value, operations) == expected
@@ -650,7 +650,7 @@ def test_construct_transform_and_deep_eq_branches(mapper: type[u]) -> None:
             return 1
 
         @override
-        def __getitem__(self, key: str) -> object:
+        def __getitem__(self, key: str):
             if key == "field":
                 msg = "boom"
                 raise RuntimeError(msg)
@@ -796,7 +796,7 @@ def test_map_flags_collect_and_invert_branches(mapper: type[u]) -> None:
 
     class BadGet(UserDict[str, bool]):
         @override
-        def get(self, key: str, default: object = None) -> bool:
+        def get(self, key: str, default = None) -> bool:
             msg = "bad get"
             raise RuntimeError(msg)
 
@@ -817,7 +817,7 @@ def test_conversion_and_extract_success_branches(mapper: type[u]) -> None:
     assert str(Plain()) == "plain"
     plain_dict: dict[str, object] = {"1": str(Plain())}
     assert plain_dict == {"1": "plain"}
-    plain_list: list[object] = [1, {"k": str(Plain())}]
+    plain_list: list = [1, {"k": str(Plain())}]
     assert plain_list == [1, {"k": "plain"}]
     assert mapper.ensure_str(None, "d") == "d"
     assert mapper.ensure_str("x") == "x"
@@ -1005,7 +1005,7 @@ def test_remaining_uncovered_branches(
         def items(self) -> list[tuple[str, int]]:
             return [("k", 1)]
 
-        def get(self, key: str, default: object = None) -> object:
+        def get(self, key: str, default = None):
             return 1 if key == "k" else default
 
     # CallableDictLike is not a Mapping/ConfigMap, so process_context_data

@@ -30,7 +30,7 @@ class FlextInfraUtilitiesScanning:
         """Run a scanner across multiple files and collect results.
 
         Args:
-            scanner: Any object implementing p.Infra.Scanner.
+            scanner object implementing p.Infra.Scanner.
             files: Sequence of file paths to scan.
 
         Returns:

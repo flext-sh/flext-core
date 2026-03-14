@@ -54,15 +54,19 @@ class FlextInfraTypes(FlextTypes):
         "Immutable string-to-string mapping (env vars, keyword renames)."
         type MutableStrMap = MutableMapping[str, str]
         "Mutable string-to-string mapping for accumulation patterns."
-        type ContainerDict = dict[str, object]
-        "Dict with string keys and container values (project reports, etc.)."
+        type InfraValue = (
+            str | int | float | bool | None | dict[str, InfraValue] | list[InfraValue]
+        )
+        "Recursive infrastructure value: primitive, nested dict/list, or null."
+        type ContainerDict = dict[str, InfraValue]
+        "Dict with string keys and infra values (project reports, etc.)."
         TomlScalar: TypeAlias = str | int | float | bool | None
         "TOML scalar value (null, string, integer, float, boolean)."
         TomlValue: TypeAlias = (
-            str | int | float | bool | None | dict[str, object] | list[object]
+            str | int | float | bool | None | dict[str, InfraValue] | list[InfraValue]
         )
         "Recursive TOML value (scalar, table, or array)."
-        TomlConfig: TypeAlias = dict[str, object]
+        TomlConfig: TypeAlias = dict[str, InfraValue]
         "Top-level TOML document mapping."
         type ContainerReport = dict[str, ContainerDict]
         "Nested container dict (project-level reports)."
@@ -76,8 +80,6 @@ class FlextInfraTypes(FlextTypes):
         "Optional environment variable mapping for subprocess execution."
         type PathLike = str | Path
         "Flexible path representation (str or Path)."
-        type InfraValue = object
-        "Recursive infrastructure value: primitive, nested list/mapping, or null."
         type IssueMap = Mapping[str, InfraValue]
         "Dependency issue mapping: string-keyed mapping of infra values."
         type RuleConfig = dict[str, InfraValue]

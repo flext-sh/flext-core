@@ -38,12 +38,12 @@ def test_main_project_obj_not_dict_first_loop(
     (project_dir / "pyproject.toml").touch()
 
     def _discover_projects(
-        _self: object,
+        _self,
         _root: Path,
     ) -> r[list[m.Infra.Workspace.ProjectInfo]]:
         return r[list[m.Infra.Workspace.ProjectInfo]].ok([_project(project_dir)])
 
-    def _read_document(_self: object, _path: Path) -> r[TOMLDocument]:
+    def _read_document(_self, _path: Path) -> r[TOMLDocument]:
         return r[TOMLDocument].ok(tomlkit.parse('[project]\nvalue = "not-a-dict"\n'))
 
     monkeypatch.setattr(sys, "argv", ["sync-paths"])
@@ -64,14 +64,14 @@ def test_main_project_obj_not_dict_second_loop(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     def _discover_projects(
-        _self: object,
+        _self,
         _root: Path,
     ) -> r[list[m.Infra.Workspace.ProjectInfo]]:
         return r[list[m.Infra.Workspace.ProjectInfo]].ok([
             _project(tmp_path / "test-project")
         ])
 
-    def _read_document(_self: object, _path: Path) -> r[TOMLDocument]:
+    def _read_document(_self, _path: Path) -> r[TOMLDocument]:
         return r[TOMLDocument].ok(tomlkit.parse('[project]\nvalue = "not-a-dict"\n'))
 
     monkeypatch.setattr(sys, "argv", ["sync-paths"])

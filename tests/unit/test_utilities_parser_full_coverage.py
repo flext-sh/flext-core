@@ -39,53 +39,53 @@ class _Status(StrEnum):
     INACTIVE = "inactive"
 
 
-def _raise_type_error_value(_value: object) -> str:
+def _raise_type_error_value(_value) -> str:
     msg = "x"
     raise TypeError(msg)
 
 
-def _fail_components(*_args: object, **_kwargs: t.Scalar) -> r[list[str]]:
+def _fail_components(*_args, **_kwargs: t.Scalar) -> r[list[str]]:
     return r[list[str]].fail("forced")
 
 
-def _safe_length_abc(_value: object) -> str:
+def _safe_length_abc(_value) -> str:
     return "abc"
 
 
-def _fail_escape_split(*_args: object) -> r[tuple[list[str], int]]:
+def _fail_escape_split(*_args) -> r[tuple[list[str], int]]:
     return r[tuple[list[str], int]].fail("split fail")
 
 
-def _fail_pipeline_continue(*_args: object, **_kwargs: t.Scalar) -> r[str]:
+def _fail_pipeline_continue(*_args, **_kwargs: t.Scalar) -> r[str]:
     return r[str].fail("Continue pipeline", error_code="PIPELINE_CONTINUE")
 
 
-def _raise_runtime_boom(*_args: object, **_kwargs: t.Scalar) -> str:
+def _raise_runtime_boom(*_args, **_kwargs: t.Scalar) -> str:
     msg = "boom"
     raise RuntimeError(msg)
 
 
-def _raise_value_error_float(_value: object) -> r[float]:
+def _raise_value_error_float(_value) -> r[float]:
     msg = "boom"
     raise ValueError(msg)
 
 
-def _raise_type_error_bool(_value: object) -> r[bool]:
+def _raise_type_error_bool(_value) -> r[bool]:
     msg = "boom"
     raise TypeError(msg)
 
 
-def _raise_value_error_int(_value: object) -> r[int]:
+def _raise_value_error_int(_value) -> r[int]:
     msg = "boom"
     raise ValueError(msg)
 
 
-def _raise_type_error_str(_value: object) -> r[str]:
+def _raise_type_error_str(_value) -> r[str]:
     msg = "boom"
     raise TypeError(msg)
 
 
-def _norm_list_dict(*_args: object, **_kwargs: t.Scalar) -> dict[str, str]:
+def _norm_list_dict(*_args, **_kwargs: t.Scalar) -> dict[str, str]:
     return {"k": "v"}
 
 
@@ -93,7 +93,7 @@ def test_parser_safe_length_and_parse_delimited_error_paths(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     parser = u()
-    sample: object = "ok"
+    sample = "ok"
     assert sample == "ok"
     assert isinstance(c.Processing.PATTERN_TUPLE_MIN_LENGTH, int)
     assert parser._safe_text_length(_LenRaises("x")) == "unknown"
@@ -164,7 +164,7 @@ def test_parser_pipeline_and_pattern_branches(monkeypatch: pytest.MonkeyPatch) -
     parser3 = u()
     original_hasattr = hasattr
 
-    def _patched_hasattr(obj: object, name: str) -> bool:
+    def _patched_hasattr(obj, name: str) -> bool:
         if name == "__class__":
             return False
         return original_hasattr(obj, name)

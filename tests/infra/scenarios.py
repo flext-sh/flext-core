@@ -38,7 +38,7 @@ class WorkspaceScenario(m.Value):
     """Single scenario for workspace state testing using m.Value."""
 
     name: str
-    structure: object
+    structure
     should_be_valid: bool = True
     description: str | None = None
 

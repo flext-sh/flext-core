@@ -74,7 +74,7 @@ class FlextTestsBuilders:
         self._data = dict(data)
 
     @staticmethod
-    def _is_result_obj(value: object) -> TypeGuard[r[t.Tests.object]]:
+    def _is_result_obj(value) -> TypeGuard[r[t.Tests.object]]:
         return isinstance(value, r)
 
     @staticmethod
@@ -108,7 +108,7 @@ class FlextTestsBuilders:
         return str(value)
 
     @staticmethod
-    def _to_payload_value(value: object) -> t.Tests.object:
+    def _to_payload_value(value) -> t.Tests.object:
         if value is None or isinstance(value, (*t.PRIMITIVES_TYPES, bytes, BaseModel)):
             return value
         if isinstance(value, Mapping):
@@ -220,13 +220,13 @@ class FlextTestsBuilders:
             cls_type = params.cls
 
             def is_entity_class(
-                cls: type[object],
+                cls: type,
             ) -> TypeGuard[type[m.Tests.Entity]]:
                 """Type guard to check if class is Entity subclass."""
                 return issubclass(cls, m.Tests.Entity)
 
             def is_value_class(
-                cls: type[object],
+                cls: type,
             ) -> TypeGuard[type[m.Tests.Value]]:
                 """Type guard to check if class is Value subclass."""
                 return issubclass(cls, m.Tests.Value)
@@ -668,7 +668,7 @@ class FlextTestsBuilders:
         """
         self._ensure_data_initialized()
         parts = path.split(".")
-        current: object = self._data
+        current = self._data
         for part in parts:
             if not isinstance(current, Mapping):
                 return default

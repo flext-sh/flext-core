@@ -160,9 +160,9 @@ class TestWriteMarkdown:
         md_file = tmp_path / "test.md"
 
         def mock_write_text(
-            self: object,
+            self,
             data: str,
-            *args: object,
+            *args,
             **kwargs: t.Scalar,
         ) -> None:
             msg = "Permission denied"

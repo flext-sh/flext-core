@@ -125,7 +125,7 @@ class Testu(TextUtilityContract):
     def test_type_guard_string(
         self,
         description: str,
-        value: object,
+        value,
         expected: bool,
     ) -> None:
         """Test string type guards."""
@@ -139,7 +139,7 @@ class Testu(TextUtilityContract):
     def test_type_guard_dict(
         self,
         description: str,
-        value: object,
+        value,
         expected: bool,
     ) -> None:
         """Test dict type guards."""
@@ -153,7 +153,7 @@ class Testu(TextUtilityContract):
     def test_type_guard_list(
         self,
         description: str,
-        value: object,
+        value,
         expected: bool,
     ) -> None:
         """Test list type guards."""
@@ -264,7 +264,7 @@ class Testu(TextUtilityContract):
     )
     def test_cache_normalize_component(
         self,
-        input_data: object,
+        input_data,
         expected_type: type | tuple[type, ...],
     ) -> None:
         """Test cache component normalization."""

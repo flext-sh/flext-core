@@ -45,7 +45,7 @@ class ValidationTestHandler(h[object, str]):
         super().__init__(config=config)
 
     @override
-    def handle(self, message: object) -> r[str]:
+    def handle(self, message) -> r[str]:
         """Handle the message."""
         return r[str].ok(f"processed_{message}")
 
@@ -332,7 +332,7 @@ class TestFlextHandlers:
                 super().__init__(config=config)
 
             @override
-            def can_handle(self, message_type: object) -> bool:
+            def can_handle(self, message_type) -> bool:
                 _ = message_type
                 return False
 
@@ -363,7 +363,7 @@ class TestFlextHandlers:
                 super().__init__(config=config)
 
             @override
-            def validate_input(self, value: object) -> r[bool]:
+            def validate_input(self, value) -> r[bool]:
                 _ = value
                 return r[bool].fail("Validation failed for test")
 
@@ -539,7 +539,7 @@ class TestFlextHandlers:
     def test_handlers_message_validation_types(
         self,
         type_name: str,
-        message: object,
+        message,
     ) -> None:
         """Test message validation with various types."""
         config = FlextTestsUtilities.Tests.HandlerHelpers.create_handler_config(
@@ -547,7 +547,7 @@ class TestFlextHandlers:
             f"Test {type_name.title()} Message",
         )
         handler = ValidationTestHandler(config=config)
-        result = handler.validate(message)
+        result = handler.validate_input(message)
         _ = assertion_helpers.assert_flext_result_success(result)
 
     def test_handlers_record_metric(self) -> None:

@@ -41,7 +41,7 @@ def test_args_get_enum_params_branches() -> None:
 def test_args_get_enum_params_annotated_unwrap_branch(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    def _mock_get_type_hints(_func: object) -> dict[str, object]:
+    def _mock_get_type_hints(_func) -> dict[str, object]:
         return {"mode": Annotated[c.Cqrs.HandlerType, "meta"]}
 
     monkeypatch.setattr(

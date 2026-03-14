@@ -137,7 +137,7 @@ def test_basemk_main_with_generation_failure(
 ) -> None:
     """Test main() handles generation failure."""
 
-    def mock_generate(*args: object, **kwargs: t.Scalar) -> r[str]:
+    def mock_generate(*args, **kwargs: t.Scalar) -> r[str]:
         return r[str].fail("Generation failed")
 
     monkeypatch.setattr(FlextInfraBaseMkGenerator, "generate", mock_generate)
@@ -160,7 +160,7 @@ def test_basemk_main_with_write_failure(
     """Test main() handles write failure gracefully."""
     output_file = tmp_path / "base.mk"
 
-    def mock_write(*args: object, **kwargs: t.Scalar) -> r[bool]:
+    def mock_write(*args, **kwargs: t.Scalar) -> r[bool]:
         return r[bool].fail("Write failed")
 
     monkeypatch.setattr(FlextInfraBaseMkGenerator, "write", mock_write)

@@ -41,7 +41,7 @@ class RealSubprocessRunner(s[str]):
             return r[bool].fail(f"command '{cmd[0]}' is not in the safe allowlist")
         return r[bool].ok(True)
 
-    def _failure_message[T_Result: object](self, result: r[T_Result]) -> str:
+    def _failure_message[T_Result](self, result: r[T_Result]) -> str:
         return str(result.error) if result.error else "subprocess execution failed"
 
     def run_safe(self, cmd: list[str]) -> r[str]:

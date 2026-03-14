@@ -46,7 +46,7 @@ class TestsFlextUtilities(FlextTestsUtilities, FlextInfraUtilities):
             @staticmethod
             def execute_and_assert_parser_result(
                 operation: Callable[[], r[t.Container]],
-                expected_value: object | None = None,
+                expected_value=None,
                 expected_error: str | None = None,
                 description: str = "",
             ) -> None:
@@ -87,7 +87,7 @@ class TestsFlextUtilities(FlextTestsUtilities, FlextInfraUtilities):
 
                 def split(
                     self,
-                    *_args: object,
+                    *_args,
                     **_kwargs: t.Scalar,
                 ) -> list[str]:
                     """Raise error on split attempt."""
@@ -146,16 +146,16 @@ class TestsFlextUtilities(FlextTestsUtilities, FlextInfraUtilities):
                 """Dict that raises on get()."""
 
                 @override
-                def __getitem__(self, key: str) -> object:
+                def __getitem__(self, key: str):
                     """Raise error on get attempt."""
                     msg = "Bad dict get"
                     raise RuntimeError(msg)
 
-            class BadList(UserList[object]):
+            class BadList(UserList):
                 """List that raises on iteration."""
 
                 @override
-                def __iter__(self) -> Iterator[object]:
+                def __iter__(self) -> Iterator:
                     """Raise error on iteration."""
                     msg = "Bad list iteration"
                     raise RuntimeError(msg)
@@ -170,7 +170,7 @@ class TestsFlextUtilities(FlextTestsUtilities, FlextInfraUtilities):
             class BadConfig:
                 """Config object that raises on attribute access."""
 
-                def get_attribute(self, name: str) -> object:
+                def get_attribute(self, name: str):
                     """Raise error on attribute access."""
                     msg = f"Bad config: {name}"
                     raise AttributeError(msg)
@@ -218,7 +218,7 @@ class TestsFlextUtilities(FlextTestsUtilities, FlextInfraUtilities):
             @staticmethod
             def assert_success_with_value(
                 result: r[t.Container],
-                expected_value: object,
+                expected_value,
                 description: str = "",
             ) -> None:
                 """Assert result is success with specific value.

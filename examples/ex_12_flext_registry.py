@@ -20,7 +20,7 @@ class _CommandB(m.Command):
 
 
 class _ProtocolHandler(FlextHandlers[BaseModel, object]):
-    def __init__(self, label: str, message_type: type[object]) -> None:
+    def __init__(self, label: str, message_type: type) -> None:
         super().__init__()
         self._label = label
         self.message_type = message_type
@@ -30,13 +30,13 @@ class _ProtocolHandler(FlextHandlers[BaseModel, object]):
         return message_type is self.message_type
 
     @override
-    def handle(self, message: BaseModel) -> r[object]:
+    def handle(self, message: BaseModel) -> r:
         value = ""
         if hasattr(message, "value"):
             value = str(getattr(message, "value"))
         if hasattr(message, "amount"):
             value = str(getattr(message, "amount"))
-        return r[object].ok(f"{self._label}:{value}")
+        return r.ok(f"{self._label}:{value}")
 
 
 @FlextHandlers.handler(_CommandA, priority=3)

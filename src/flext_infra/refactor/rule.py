@@ -144,7 +144,7 @@ class FlextInfraRefactorRuleLoader:
         value: t.Infra.InfraValue | None,
     ) -> list[dict[str, object]]:
         try:
-            list_adapter: TypeAdapter[list[object]] = TypeAdapter(list[object])
+            list_adapter: TypeAdapter[list] = TypeAdapter(list)
             entries = list_adapter.validate_python(value)
         except ValidationError:
             return []

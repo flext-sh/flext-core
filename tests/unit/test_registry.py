@@ -85,11 +85,11 @@ class ConcreteTestHandler(h[object, object]):
     """Concrete implementation of h for testing."""
 
     @override
-    def handle(self, message: object) -> r[str]:
+    def handle(self, message) -> r[str]:
         """Handle the message."""
         return r[str].ok(f"processed_{message}")
 
-    def __call__(self, message: object) -> r[str]:
+    def __call__(self, message) -> r[str]:
         """Make handler callable for registry validation."""
         return self.handle(message)
 
@@ -267,17 +267,17 @@ class RegistryScenarios:
     @staticmethod
     def create_bindings(
         handlers: Sequence[t.HandlerLike],
-    ) -> list[tuple[type[object], t.HandlerLike]]:
+    ) -> list[tuple[type, t.HandlerLike]]:
         """Create test bindings using str message type."""
         return [(str, handler) for handler in handlers]
 
     @staticmethod
     def create_function_map(
         handlers: Sequence[t.HandlerLike],
-    ) -> dict[type[object], t.HandlerLike]:
+    ) -> dict[type, t.HandlerLike]:
         """Create test function map using str message type."""
         result: dict[
-            type[object],
+            type,
             t.HandlerLike,
         ] = {}
         for idx, handler in enumerate(handlers):

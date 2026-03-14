@@ -140,8 +140,8 @@ class _ServiceLike:
     def context(self) -> p.Context:
         return self._inner.context
 
-    def execute(self) -> s.RuntimeResult[object]:
-        return s.RuntimeResult[object].ok("service-like")
+    def execute(self) -> s.RuntimeResult:
+        return s.RuntimeResult.ok("service-like")
 
     def validate_business_rules(self) -> s.RuntimeResult[bool]:
         return s.RuntimeResult[bool].ok(True)
@@ -294,12 +294,12 @@ class Ex11FlextService(Examples):
         self.check("ProtocolValidation.processor_ok", processor_ok.is_success)
         self.check("ProtocolValidation.processor_bad", processor_bad.error)
 
-        def _validator_len(data: object) -> r[bool]:
+        def _validator_len(data) -> r[bool]:
             if isinstance(data, str) and len(data) >= 3:
                 return r[bool].ok(True)
             return r[bool].fail("too-short")
 
-        def _validator_upper(data: object) -> r[bool]:
+        def _validator_upper(data) -> r[bool]:
             if isinstance(data, str) and data.isupper():
                 return r[bool].ok(True)
             return r[bool].fail("not-upper")
@@ -496,7 +496,7 @@ class Ex11FlextService(Examples):
         valid_container_value = self.rand_str(4)
         self.check(
             "RuntimeResult.ok.none_raises",
-            s.RuntimeResult[object].ok(valid_container_value).is_success,
+            s.RuntimeResult.ok(valid_container_value).is_success,
         )
         self.check("RuntimeResult.ok.none_type", type(valid_container_value).__name__)
 
@@ -617,7 +617,7 @@ class Ex11FlextService(Examples):
         failing = _FailingService()
         try:
             self.check("result.failure.raises", False)
-            failing_result: object = getattr(failing, "result")
+            failing_result = getattr(failing, "result")
             self.check("result.failure.value", failing_result)
         except FlextExceptions.BaseError as exc:
             self.check("result.failure.raises", True)

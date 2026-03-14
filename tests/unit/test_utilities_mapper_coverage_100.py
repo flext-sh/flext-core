@@ -33,42 +33,42 @@ class SimpleObj(BaseModel):
 
 
 class _DoubleOp(BaseModel):
-    def __call__(self, value: object) -> object:
+    def __call__(self, value):
         if isinstance(value, (int, float)):
             return value * 2
         return value
 
 
 class _GreaterThanTwoOp(BaseModel):
-    def __call__(self, value: object) -> object:
+    def __call__(self, value):
         if isinstance(value, (int, float)):
             return value > 2
         return False
 
 
 class _TimesTenOp(BaseModel):
-    def __call__(self, value: object) -> object:
+    def __call__(self, value):
         if isinstance(value, (int, float)):
             return value * 10
         return value
 
 
 class _PlusFiveOp(BaseModel):
-    def __call__(self, value: object) -> object:
+    def __call__(self, value):
         if isinstance(value, (int, float)):
             return value + 5
         return value
 
 
 class _GroupLenOp(BaseModel):
-    def __call__(self, value: object) -> object:
+    def __call__(self, value):
         if isinstance(value, str):
             return len(value)
         return 0
 
 
 class _GetKeyAOp(BaseModel):
-    def __call__(self, value: object) -> object:
+    def __call__(self, value):
         if isinstance(value, dict):
             inner = value.get("a")
             return inner if inner is not None else 0
@@ -78,7 +78,7 @@ class _GetKeyAOp(BaseModel):
 class _IntConvertOp(BaseModel):
     """Converter that wraps int() builtin for type-safe convert testing."""
 
-    def __call__(self, value: object) -> object:
+    def __call__(self, value):
         if isinstance(value, (int, float, bool)):
             return int(value)
         if isinstance(value, str):

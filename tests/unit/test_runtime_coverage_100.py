@@ -25,14 +25,14 @@ class TestRuntimeDictLike:
         """Test is_dict_like when items() raises AttributeError."""
 
         class BadDictLike:
-            def keys(self) -> list[object]:
+            def keys(self) -> list:
                 return []
 
             def items(self) -> Never:
                 msg = "items not available"
                 raise AttributeError(msg)
 
-            def get(self, key: object) -> object:
+            def get(self, key):
                 return None
 
         obj = BadDictLike()
@@ -44,14 +44,14 @@ class TestRuntimeDictLike:
         """Test is_dict_like when items() raises TypeError."""
 
         class BadDictLike:
-            def keys(self) -> list[object]:
+            def keys(self) -> list:
                 return []
 
             def items(self) -> Never:
                 msg = "items failed"
                 raise TypeError(msg)
 
-            def get(self, key: object) -> object:
+            def get(self, key):
                 return None
 
         obj = BadDictLike()
@@ -80,10 +80,10 @@ class TestRuntimeDictLike:
         """Test is_dict_like with object missing keys attribute."""
 
         class NotDictLike:
-            def items(self) -> list[object]:
+            def items(self) -> list:
                 return []
 
-            def get(self, key: object) -> object:
+            def get(self, key):
                 return None
 
         obj = NotDictLike()
@@ -95,10 +95,10 @@ class TestRuntimeDictLike:
         """Test is_dict_like with object missing items attribute."""
 
         class NotDictLike:
-            def keys(self) -> list[object]:
+            def keys(self) -> list:
                 return []
 
-            def get(self, key: object) -> object:
+            def get(self, key):
                 return None
 
         obj = NotDictLike()
@@ -110,7 +110,7 @@ class TestRuntimeDictLike:
         """Test is_dict_like with object missing get attribute."""
 
         class NotDictLike:
-            def keys(self) -> list[object]:
+            def keys(self) -> list:
                 return []
 
             def items(self) -> list[tuple[object, object]]:
@@ -219,7 +219,7 @@ class TestRuntimeTypeChecking:
 
         class BadType:
             @override
-            def __getattribute__(self, name: str) -> object:
+            def __getattribute__(self, name: str):
                 if name == "__name__":
                     msg = "Cannot access __name__"
                     raise AttributeError(msg)
@@ -236,15 +236,15 @@ class TestRuntimeTypeChecking:
     def test_is_sequence_type_with_sequence_subclass(self) -> None:
         """Test is_sequence_type with type that is Sequence subclass."""
 
-        class MySequence(Sequence[object]):
+        class MySequence(Sequence):
             @overload
-            def __getitem__(self, index: int) -> object: ...
+            def __getitem__(self, index: int): ...
 
             @overload
-            def __getitem__(self, index: slice) -> Sequence[object]: ...
+            def __getitem__(self, index: slice) -> Sequence: ...
 
             @override
-            def __getitem__(self, index: int | slice) -> object | Sequence[object]:
+            def __getitem__(self, index: int | slice) | Sequence:
                 return None if isinstance(index, int) else MySequence()
 
             @override
@@ -258,7 +258,7 @@ class TestRuntimeTypeChecking:
 
         class BadType:
             @override
-            def __getattribute__(self, name: str) -> object:
+            def __getattribute__(self, name: str):
                 if name == "__name__":
                     msg = "Cannot access __name__"
                     raise AttributeError(msg)
@@ -288,7 +288,7 @@ class TestRuntimeTypeChecking:
         FlextRuntime._structlog_configured = False
 
         def custom_processor(
-            logger: object,
+            logger,
             method_name: str,
             event_dict: dict[str, object],
         ) -> dict[str, object]:

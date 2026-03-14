@@ -203,7 +203,7 @@ class ClassNestingRefactorRule:
         class_nesting_raw = loaded.get(c.Infra.ReportKeys.CLASS_NESTING)
         if isinstance(class_nesting_raw, list):
             try:
-                typed_class_nesting = TypeAdapter(list[object]).validate_python(
+                typed_class_nesting = TypeAdapter(list).validate_python(
                     class_nesting_raw
                 )
                 config[c.Infra.ReportKeys.CLASS_NESTING] = self._coerce_entries(
@@ -214,7 +214,7 @@ class ClassNestingRefactorRule:
         helper_raw = loaded.get(c.Infra.ReportKeys.HELPER_CONSOLIDATION)
         if isinstance(helper_raw, list):
             try:
-                typed_helper_entries = TypeAdapter(list[object]).validate_python(
+                typed_helper_entries = TypeAdapter(list).validate_python(
                     helper_raw
                 )
                 config[c.Infra.ReportKeys.HELPER_CONSOLIDATION] = self._coerce_entries(
@@ -433,7 +433,7 @@ class ClassNestingRefactorRule:
             post_checks: list[str] = []
             if not isinstance(post_checks_raw, list):
                 continue
-            typed_post_checks = TypeAdapter(list[object]).validate_python(
+            typed_post_checks = TypeAdapter(list).validate_python(
                 post_checks_raw
             )
             checks = u.Infra.mapping_list(typed_post_checks)

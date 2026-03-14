@@ -125,7 +125,7 @@ def test_import_modernizer_skips_when_runtime_alias_name_is_blocked() -> None:
 def test_import_modernizer_skips_rewrite_when_runtime_alias_shadowed_in_function() -> (
     None
 ):
-    source = "from flext_core.constants import PLATFORM\n\ndef compute(c: object) -> object:\n    return PLATFORM\n"
+    source = "from flext_core.constants import PLATFORM\n\ndef compute(c):\n    return PLATFORM\n"
     tree = cst.parse_module(source)
     rule = FlextInfraRefactorImportModernizerRule({
         "id": "modernize-constants-import",

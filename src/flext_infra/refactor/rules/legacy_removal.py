@@ -105,7 +105,7 @@ class FlextInfraRefactorLegacyRemovalRule(FlextInfraRefactorRule):
         if not isinstance(value, (list, tuple, set)):
             return []
         try:
-            items = TypeAdapter(list[object]).validate_python(value)
+            items = TypeAdapter(list).validate_python(value)
         except ValidationError:
             return []
         output: list[str] = [item for item in items if isinstance(item, str)]

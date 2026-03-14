@@ -14,12 +14,12 @@ from flext_core import FlextLogger, FlextMixins, c, m, p, r, t, u, x
 from ._models import _SvcModel
 
 
-def _noop(*_a: object, **_k: t.Scalar) -> None:
+def _noop(*_a, **_k: t.Scalar) -> None:
     """Typed no-op for protocol stubs."""
     return
 
 
-def _return_true(*_a: object, **_k: t.Scalar) -> bool:
+def _return_true(*_a, **_k: t.Scalar) -> bool:
     """Typed return-True for protocol stubs."""
     return True
 
@@ -37,17 +37,17 @@ def _mock_register_fail(_name: str) -> r[bool]:
     )
 
 
-def _validation_ok_true(v: object) -> r[bool]:
+def _validation_ok_true(v) -> r[bool]:
     """Validator that always returns ok(True)."""
     return r[bool].ok(True)
 
 
-def _validation_ok_false(v: object) -> r[bool]:
+def _validation_ok_false(v) -> r[bool]:
     """Validator that always returns ok(False)."""
     return r[bool].ok(False)
 
 
-def _validation_fail_no(v: object) -> r[bool]:
+def _validation_fail_no(v) -> r[bool]:
     """Validator that always returns fail('no')."""
     return r[bool].fail("no")
 
@@ -74,7 +74,7 @@ class _RuntimeContainer:
         return False
 
     def register(
-        self, _name: str, _value: object, *, kind: str = "service"
+        self, _name: str, _value, *, kind: str = "service"
     ) -> _RuntimeContainer:
         return self
 
@@ -84,15 +84,15 @@ class _RuntimeContainer:
     def get_config(self) -> m.ConfigMap:
         return m.ConfigMap(root={})
 
-    def get(self, _key: str, **_kwargs: object) -> r[object]:
-        return r[object].fail("not implemented")
+    def get(self, _key: str, **_kwargs) -> r:
+        return r.fail("not implemented")
 
     @property
-    def context(self) -> object:
+    def context(self):
         return None
 
     @property
-    def config(self) -> object:
+    def config(self):
         return None
 
 
@@ -108,7 +108,7 @@ class _ContainerForLogger:
         self.factories: dict[str, object] = {}
         self.register_calls: list[tuple[str, str]] = []
 
-    def get_typed(self, _key: str, _tp: object) -> r[t.Container | BaseModel]:
+    def get_typed(self, _key: str, _tp) -> r[t.Container | BaseModel]:
         if self.success:
             return r[t.Container | BaseModel].ok(self.logger or "logger")
         return r[t.Container | BaseModel].fail("missing")
@@ -117,14 +117,14 @@ class _ContainerForLogger:
         self,
         _key: str,
         *,
-        type_cls: object | None = None,
+        type_cls=None,
     ) -> r[t.Container | BaseModel]:
         _ = type_cls
         if self.success:
             return r[t.Container | BaseModel].ok(self.logger or "logger")
         return r[t.Container | BaseModel].fail("missing")
 
-    def register_factory(self, key: str, factory: object) -> r[bool]:
+    def register_factory(self, key: str, factory) -> r[bool]:
         _ = key
         _ = factory
         msg = "register_factory path should not be used"
@@ -133,7 +133,7 @@ class _ContainerForLogger:
     def register(
         self,
         name: str,
-        value: object,
+        value,
         *,
         kind: str = "service",
     ) -> _ContainerForLogger:
@@ -164,7 +164,7 @@ def test_mixins_result_and_model_conversion_paths(
             return 1
 
         @override
-        def __getitem__(self, _key: str) -> object:
+        def __getitem__(self, _key: str):
             msg = "boom"
             raise RuntimeError(msg)
 
@@ -231,7 +231,7 @@ def test_mixins_container_registration_and_logger_paths(
         def has_service(self, _name: str) -> bool:
             return True
 
-        def register(self, _name: str, _value: object) -> _AlreadyContainer:
+        def register(self, _name: str, _value) -> _AlreadyContainer:
             return self
 
     monkeypatch.setattr(
@@ -245,7 +245,7 @@ def test_mixins_container_registration_and_logger_paths(
         def has_service(self, _name: str) -> bool:
             return False
 
-        def register(self, _name: str, _value: object) -> _FailContainer:
+        def register(self, _name: str, _value) -> _FailContainer:
             return self
 
     monkeypatch.setattr(_Service, "container", property(lambda _self: _FailContainer()))
@@ -276,10 +276,10 @@ def test_mixins_container_registration_and_logger_paths(
 def test_mixins_context_logging_and_cqrs_paths(monkeypatch: pytest.MonkeyPatch) -> None:
 
     class _LocalLogger:
-        def info(self, *_args: object, **_kwargs: t.Scalar) -> None:
+        def info(self, *_args, **_kwargs: t.Scalar) -> None:
             return None
 
-        def warning(self, *_args: object, **_kwargs: t.Scalar) -> None:
+        def warning(self, *_args, **_kwargs: t.Scalar) -> None:
             return None
 
     class _Service(x):
@@ -321,12 +321,12 @@ def test_mixins_context_logging_and_cqrs_paths(monkeypatch: pytest.MonkeyPatch) 
 
 
 def test_mixins_validation_and_protocol_paths() -> None:
-    validators: list[Callable[[object], r[bool]]] = [
+    validators: list[Callable[, r[bool]]] = [
         _validation_ok_false,
     ]
     bad_true = x.Validation.validate_with_result("v", validators)
     assert bad_true.is_failure
-    fail_validators: list[Callable[[object], r[bool]]] = [
+    fail_validators: list[Callable[, r[bool]]] = [
         _validation_fail_no,
     ]
     fail_result = x.Validation.validate_with_result("v", fail_validators)
@@ -342,7 +342,7 @@ def test_mixins_validation_and_protocol_paths() -> None:
     )
     assert (
         x.ProtocolValidation.is_service(
-            cast("p.Service[object]", cast("object", SimpleNamespace())),
+            cast("p.Service", cast("object", SimpleNamespace())),
         )
         is False
     )
@@ -443,7 +443,7 @@ def test_mixins_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> None:
         def has_service(self, name: str) -> bool:
             return name in self._services
 
-        def register(self, name: str, value: object) -> _RegContainer:
+        def register(self, name: str, value) -> _RegContainer:
             self._services[name] = value
             captured["name"] = name
             captured["value"] = value
@@ -461,7 +461,7 @@ def test_mixins_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> None:
     assert isinstance(captured["value"], _ModelMarker)
 
     class _WarnLogger:
-        def warning(self, *_args: object, **_kwargs: t.Scalar) -> None:
+        def warning(self, *_args, **_kwargs: t.Scalar) -> None:
             return None
 
     class _WarnService(x):
@@ -508,7 +508,7 @@ def test_mixins_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> None:
     assert isinstance(logger_obj, FlextLogger)
 
     class _BrokenContainer:
-        def get_typed(self, _key: str, _tp: object) -> r[t.Container | BaseModel]:
+        def get_typed(self, _key: str, _tp) -> r[t.Container | BaseModel]:
             msg = "boom"
             raise RuntimeError(msg)
 

@@ -480,7 +480,7 @@ def arrange_act_assert(
         _test_func: Callable[[], object],
     ) -> Callable[[], object]:
 
-        def wrapper() -> object:
+        def wrapper():
             data = _arrange_func()
             result = _act_func(data)
             _assert_func(result, data)

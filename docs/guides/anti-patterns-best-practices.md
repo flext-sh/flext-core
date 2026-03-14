@@ -209,7 +209,7 @@ ______________________________________________________________________
 from typing import Any
 
 
-def process_data(data: Any) -> Any:
+def process_data(data):
     """Returns Any - type checker can't help."""
     return data.something()  # IDE doesn't know what methods are available
 ```

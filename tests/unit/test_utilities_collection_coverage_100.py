@@ -274,14 +274,14 @@ class ChunkScenario(BaseModel):
     model_config = ConfigDict(frozen=True)
     name: Annotated[str, Field(description="Chunk scenario name")]
     items: Annotated[
-        list[object] | tuple[object, ...],
+        list | tuple[object, ...],
         Field(
             description="Input items for chunking",
         ),
     ]
     size: Annotated[int, Field(description="Chunk size")]
     expected_result: Annotated[
-        list[list[object]], Field(description="Expected chunked output")
+        list[list], Field(description="Expected chunked output")
     ]
 
 
@@ -290,9 +290,9 @@ class BatchScenario(BaseModel):
 
     model_config = ConfigDict(frozen=True)
     name: Annotated[str, Field(description="Batch scenario name")]
-    items: Annotated[list[object], Field(description="Input items for batch")]
+    items: Annotated[list, Field(description="Input items for batch")]
     operation: Annotated[
-        Callable[[object], object], Field(description="Batch operation callable")
+        Callable[, object], Field(description="Batch operation callable")
     ]
     expected_result: Annotated[object, Field(description="Expected batch result")]
     size: Annotated[int, Field(default=100, description="Batch size")] = 100
@@ -300,7 +300,7 @@ class BatchScenario(BaseModel):
         str, Field(default="collect", description="Error handling mode")
     ] = "collect"
     pre_validate: Annotated[
-        Callable[[object], bool] | None,
+        Callable[, bool] | None,
         Field(default=None, description="Optional pre-validation callable"),
     ] = None
     flatten: Annotated[
@@ -1063,7 +1063,7 @@ class TestuCollectionBatch:
         """Test batch with flattening."""
         items = [[1, 2], [3, 4], 5]
 
-        def flatten_op(value: object) -> int | r[int]:
+        def flatten_op(value) -> int | r[int]:
             return cast("int | r[int]", value)
 
         result = u.batch(

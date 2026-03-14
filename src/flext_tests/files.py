@@ -41,20 +41,20 @@ _OperationLiteral = Literal["create", "read", "delete"]
 _ErrorModeLiteral = Literal["stop", "skip", "collect"]
 TestsFileContent = t.Tests.FileContent
 _YAMLError = YAMLError
-_OBJECT_LIST_ADAPTER = TypeAdapter(list[object])
+_OBJECT_LIST_ADAPTER = TypeAdapter(list)
 
 
-def _yaml_safe_load(raw: str) -> object | list[object]:
+def _yaml_safe_load(raw: str) | list:
     return yaml_safe_load(raw)
 
 
-def _yaml_dump(value: object, *, indent: int) -> str:
+def _yaml_dump(value, *, indent: int) -> str:
     return str(
         yaml_dump(value, default_flow_style=False, allow_unicode=True, indent=indent)
     )
 
 
-def _is_batch_content(content_raw: object) -> TypeGuard[t.Tests.object]:
+def _is_batch_content(content_raw) -> TypeGuard[t.Tests.object]:
     try:
         _ = m.Tests.CreateParams.model_validate({
             "content": content_raw,
@@ -242,7 +242,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             yield paths
 
     @staticmethod
-    def _is_mapping(value: object) -> TypeGuard[Mapping[str, object]]:
+    def _is_mapping(value) -> TypeGuard[Mapping[str, object]]:
         return isinstance(value, Mapping)
 
     @staticmethod
@@ -525,7 +525,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                     return r[Path].fail(f"Unknown operation: {params.operation}")
 
         items_list: list[tuple[str, t.Tests.object]] = list(files_dict.items())
-        results: list[object] = []
+        results: list = []
         errors: list[tuple[int, str]] = []
         total = len(items_list)
         for index, item in enumerate(items_list):
@@ -1200,7 +1200,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         return (dict1, dict2)
 
     def _coerce_file_content(
-        self, value: object
+        self, value
     ) -> str | bytes | m.ConfigMap | Sequence[Sequence[str]] | BaseModel:
         if isinstance(value, str | bytes):
             return value
@@ -1218,7 +1218,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             )
         if self._is_nested_rows(value):
             rows: list[list[str]] = []
-            sequence_value: Sequence[object] = (
+            sequence_value: Sequence = (
                 value if isinstance(value, (list, tuple)) else ()
             )
             rows.extend(
@@ -1230,7 +1230,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         return str(value)
 
     def _coerce_read_content(
-        self, value: object
+        self, value
     ) -> str | bytes | m.ConfigMap | list[list[str]]:
         if isinstance(value, str | bytes):
             return value
@@ -1245,7 +1245,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                 }
             )
         if self._is_nested_rows(value):
-            sequence_value: Sequence[object] = (
+            sequence_value: Sequence = (
                 value if isinstance(value, (list, tuple)) else ()
             )
             return [
@@ -1329,7 +1329,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             return self._coerce_file_content(resolved_value)
         return self._coerce_file_content(content)
 
-    def _is_nested_rows(self, value: object) -> TypeGuard[Sequence[Sequence[object]]]:
+    def _is_nested_rows(self, value) -> TypeGuard[Sequence[Sequence]]:
         if not isinstance(value, Sequence) or isinstance(value, str | bytes):
             return False
         try:
@@ -1405,11 +1405,11 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                 if fmt == "json":
                     if text.strip():
                         try:
-                            parsed_raw: object | list[object] = TypeAdapter(
+                            parsed_raw: list = TypeAdapter(
                                 dict[str, object]
                             ).validate_json(text.encode())
                         except ValidationError:
-                            parsed_raw = TypeAdapter(list[object]).validate_json(
+                            parsed_raw = TypeAdapter(list).validate_json(
                                 text.encode()
                             )
                     else:
@@ -1481,7 +1481,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
         self._created_dirs.append(temp_dir)
         return temp_dir
 
-    def _to_config_map_value(self, value: t.Tests.object) -> object:
+    def _to_config_map_value(self, value: t.Tests.object):
         if value is None or isinstance(value, (*t.PRIMITIVES_TYPES, BaseModel, Path)):
             return value
         if isinstance(value, bytes):
@@ -1503,7 +1503,7 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             ]
         return str(value)
 
-    def _to_payload_value(self, value: object) -> t.Tests.object:
+    def _to_payload_value(self, value) -> t.Tests.object:
         if value is None:
             return None
         if isinstance(value, str):

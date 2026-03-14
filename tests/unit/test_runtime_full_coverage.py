@@ -268,7 +268,7 @@ def test_normalization_edge_branches() -> None:
 
     class DictLike(Mapping[str, object]):
         @override
-        def __getitem__(self, key: str) -> object:
+        def __getitem__(self, key: str):
             if key == "x":
                 return 1
             raise KeyError(key)
@@ -396,7 +396,7 @@ def test_configure_structlog_edge_paths(monkeypatch: pytest.MonkeyPatch) -> None
         def reset_defaults(self) -> None:
             return None
 
-        def make_filtering_bound_logger(self, level: int) -> type[object]:
+        def make_filtering_bound_logger(self, level: int) -> type:
             _ = level
             return dict
 
@@ -600,7 +600,7 @@ def test_model_support_and_hash_compare_paths() -> None:
         )
         is False
     )
-    obj: object = object()
+    obj = object()
     assert FlextRuntime.hash_entity_by_id(obj) == hash(
         id(obj),
     )

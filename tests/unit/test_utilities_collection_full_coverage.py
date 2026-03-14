@@ -45,7 +45,7 @@ class _BadCopyDict(UserDict[str, object]):
         raise TypeError(msg)
 
 
-class _ListSubclass(UserList[object]):
+class _ListSubclass(UserList):
     pass
 
 
@@ -77,22 +77,22 @@ def test_find_mapping_no_match_and_merge_error_paths() -> None:
 
 
 def test_batch_fail_collect_flatten_and_progress() -> None:
-    def _success_list(_item: int) -> object:
+    def _success_list(_item: int):
         return [1, 2]
 
-    def _failure_result(_item: int) -> object:
+    def _failure_result(_item: int):
         msg = "err"
         raise ValueError(msg)
 
-    def _hard_failure(_item: int) -> object:
+    def _hard_failure(_item: int):
         msg = "hard"
         raise ValueError(msg)
 
-    def _raise_value_error(_item: int) -> object:
+    def _raise_value_error(_item: int):
         msg = "x"
         raise ValueError(msg)
 
-    def _identity(item: int) -> object:
+    def _identity(item: int):
         return item
 
     flattened = u.batch(
@@ -130,8 +130,8 @@ def test_batch_fail_collect_flatten_and_progress() -> None:
 
 
 def test_process_outer_exception_and_coercion_branches() -> None:
-    processed: r[list[object]] = u.process(
-        cast("list[object]", _BadSequence()),
+    processed: r[list] = u.process(
+        cast("list", _BadSequence()),
         lambda x: x,
     )
     assert processed.is_failure
@@ -175,7 +175,7 @@ def test_collection_batch_failure_error_capture_and_parse_sequence_outer_error()
     assert failed.is_failure
 
     class _ExplodingMeta(type):
-        def __call__(cls, _value: object) -> object:
+        def __call__(cls, _value):
             msg = "parse exploded"
             raise ValueError(msg)
 

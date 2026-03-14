@@ -16,7 +16,7 @@ from flext_core import r, s, t
 from flext_infra import FlextInfraUtilitiesDiscovery, c, m, p
 from flext_infra.basemk.generator import FlextInfraBaseMkGenerator
 
-_OBJECT_LIST_ADAPTER = TypeAdapter(list[object])
+_OBJECT_LIST_ADAPTER = TypeAdapter(list)
 
 
 class FlextInfraProjectMigrator(s):

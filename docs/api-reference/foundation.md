@@ -135,7 +135,7 @@ from flext_core import c, e
 class ValidationException(e.BaseError):
     """Raised when domain validation fails."""
 
-    def __init__(self, field: str, value: object):
+    def __init__(self, field: str, value):
         super().__init__(
             error_code=c.Errors.VALIDATION_ERROR,
             message=f"Invalid value for {field}: {value}",

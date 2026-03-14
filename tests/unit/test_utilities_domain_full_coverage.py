@@ -95,7 +95,7 @@ def test_validate_value_object_immutable_exception_and_no_setattr_branch() -> No
 
     class _BrokenConfigDict(UserDict[str, bool]):
         @override
-        def get(self, key: str, default: object = None) -> bool:
+        def get(self, key: str, default=None) -> bool:
             _ = key
             _ = default
             msg = "bad config"
@@ -106,7 +106,7 @@ def test_validate_value_object_immutable_exception_and_no_setattr_branch() -> No
 
     class _NoSetattrVisible:
         @override
-        def __getattribute__(self, name: str) -> object:
+        def __getattribute__(self, name: str):
             if name == "__setattr__":
                 raise AttributeError(name)
             return object.__getattribute__(self, name)

@@ -24,8 +24,8 @@ class Spy:
 
     def __init__(
         self,
-        return_value: object = None,
-        side_effect: list[object] | None = None,
+        return_value=None,
+        side_effect: list | None = None,
     ) -> None:
         self.call_count: int = 0
         self.call_args: tuple[tuple[object, ...], dict[str, object]] | None = None
@@ -34,7 +34,7 @@ class Spy:
         self._return_value = return_value
         self._side_effect = list(side_effect) if side_effect else None
 
-    def __call__(self, *args: object, **kwargs: object) -> object:
+    def __call__(self, *args, **kwargs):
         self.called = True
         self.call_count += 1
         self.call_args = (args, kwargs)

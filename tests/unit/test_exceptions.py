@@ -1040,7 +1040,7 @@ class Teste:
 
         class DictLike(Mapping[str, object]):
             @override
-            def __getitem__(self, key: str) -> object:
+            def __getitem__(self, key: str):
                 if key == "key1":
                     return "value1"
                 raise KeyError(key)
@@ -1240,14 +1240,14 @@ class Teste:
         """Test create normalizes dict-like metadata values - tests lines 1376-1379."""
 
         class DictLike(Mapping[str, object]):
-            _obj: object
+            _obj
 
             @override
             def __init__(self) -> None:
                 self._obj = object()
 
             @override
-            def __getitem__(self, key: str) -> object:
+            def __getitem__(self, key: str):
                 if key == "key1":
                     return "value1"
                 if key == "key2":
@@ -1286,7 +1286,7 @@ class Teste:
 
         class DictLike(Mapping[str, object]):
             @override
-            def __getitem__(self, key: str) -> object:
+            def __getitem__(self, key: str):
                 mapping: dict[str, object] = {"key1": "value1", "key2": 123}
                 if key in mapping:
                     return mapping[key]
@@ -1323,14 +1323,14 @@ class Teste:
         """Test create normalizes dict-like metadata values - tests line 1379."""
 
         class DictLike(Mapping[str, object]):
-            _obj: object
+            _obj
 
             @override
             def __init__(self) -> None:
                 self._obj = object()
 
             @override
-            def __getitem__(self, key: str) -> object:
+            def __getitem__(self, key: str):
                 if key == "key1":
                     return self._obj
                 raise KeyError(key)
@@ -1487,7 +1487,7 @@ class Teste:
 
         class DictLike(Mapping[str, object]):
             @override
-            def __getitem__(self, key: str) -> object:
+            def __getitem__(self, key: str):
                 if key == "key":
                     return "value"
                 raise KeyError(key)

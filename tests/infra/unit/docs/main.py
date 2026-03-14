@@ -50,8 +50,8 @@ def _ok(
     val: list[m.Infra.Docs.DocsPhaseReport],
 ) -> Callable[..., r[list[m.Infra.Docs.DocsPhaseReport]]]:
     def _fn(
-        _self: object,
-        *_a: object,
+        _self,
+        *_a,
         **_kw: t.Scalar,
     ) -> r[list[m.Infra.Docs.DocsPhaseReport]]:
         _ = (_self, _a, _kw)
@@ -62,8 +62,8 @@ def _ok(
 
 def _fail_report(err: str) -> Callable[..., r[list[m.Infra.Docs.DocsPhaseReport]]]:
     def _fn(
-        _self: object,
-        *_a: object,
+        _self,
+        *_a,
         **_kw: t.Scalar,
     ) -> r[list[m.Infra.Docs.DocsPhaseReport]]:
         _ = (_self, _a, _kw)
@@ -72,26 +72,26 @@ def _fail_report(err: str) -> Callable[..., r[list[m.Infra.Docs.DocsPhaseReport]
     return _fn
 
 
-def _ok_list(val: list[object]) -> Callable[..., r[list[object]]]:
+def _ok_list(val: list) -> Callable[..., r[list]]:
     def _fn(
-        _self: object,
-        *_a: object,
+        _self,
+        *_a,
         **_kw: t.Scalar,
-    ) -> r[list[object]]:
+    ) -> r[list]:
         _ = (_self, _a, _kw)
-        return r[list[object]].ok(val)
+        return r[list].ok(val)
 
     return _fn
 
 
-def _fail_list(err: str) -> Callable[..., r[list[object]]]:
+def _fail_list(err: str) -> Callable[..., r[list]]:
     def _fn(
-        _self: object,
-        *_a: object,
+        _self,
+        *_a,
         **_kw: t.Scalar,
-    ) -> r[list[object]]:
+    ) -> r[list]:
         _ = (_self, _a, _kw)
-        return r[list[object]].fail(err)
+        return r[list].fail(err)
 
     return _fn
 
@@ -103,8 +103,8 @@ def _capturing(
     captured: dict[str, t.Scalar],
 ) -> Callable[..., r[list[m.Infra.Docs.DocsPhaseReport]]]:
     def _fn(
-        _self: object,
-        *_a: object,
+        _self,
+        *_a,
         **kw: t.Scalar,
     ) -> r[list[m.Infra.Docs.DocsPhaseReport]]:
         _ = (_self, _a)
@@ -183,13 +183,13 @@ class TestRunFix:
         captured_kwargs: dict[str, t.Scalar] = {}
 
         def mock_fix(
-            _self: object,
-            *_a: object,
+            _self,
+            *_a,
             **kw: t.Scalar,
-        ) -> r[list[object]]:
+        ) -> r[list]:
             _ = (_self, _a)
             captured_kwargs.update(kw)
-            return r[list[object]].ok([])
+            return r[list].ok([])
 
         monkeypatch.setattr(FlextInfraDocFixer, "fix", mock_fix)
         _run_fix(_fix_args(apply=apply))

@@ -81,7 +81,7 @@ class TestTEMPLATECategory:
     def test_template_operation_performance(self) -> None:
         """Test TEMPLATE operation performance with real execution."""
 
-        def operation() -> object:
+        def operation():
             result = u.TEMPLATE.process_large_dataset()
             return test_framework.assert_result_success(result)
 

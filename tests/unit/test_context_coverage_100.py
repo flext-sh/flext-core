@@ -247,7 +247,7 @@ class TestContext100Coverage:
 
     def test_context_data_validate_dict_serializable_non_dict(self) -> None:
         """Test ContextData.validate_dict_serializable with non-dict."""
-        invalid_metadata: object = 123
+        invalid_metadata = 123
         exc_types: tuple[type[Exception], ...] = (TypeError, ValidationError)
         with pytest.raises(exc_types):
             FlextModelsContext.ContextData.model_validate({
@@ -297,7 +297,7 @@ class TestContext100Coverage:
 
     def test_context_export_validate_dict_serializable_non_dict(self) -> None:
         """Test ContextExport.validate_dict_serializable with non-dict."""
-        invalid_data: object = 123
+        invalid_data = 123
         with pytest.raises(TypeError):
             FlextModelsContext.ContextExport.model_validate({"data": invalid_data})
 
@@ -405,7 +405,7 @@ class TestContext100Coverage:
 
     def test_context_statistics_validate_operations_with_none(self) -> None:
         """Test ContextStatistics._validate_operations with None."""
-        none_operations: object = None
+        none_operations = None
         stats = FlextModelsContext.ContextStatistics.model_validate({
             "operations": none_operations,
         })
@@ -427,7 +427,7 @@ class TestContext100Coverage:
 
     def test_context_metadata_validate_custom_fields_with_none(self) -> None:
         """Test ContextMetadata._validate_custom_fields with None."""
-        none_custom_fields: object = None
+        none_custom_fields = None
         metadata = FlextModelsContext.ContextMetadata.model_validate({
             "custom_fields": none_custom_fields,
         })

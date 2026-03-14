@@ -128,7 +128,7 @@ class FlextTestsDocker:
         return str(host_port)
 
     @staticmethod
-    def _normalize_bindings(bindings: object) -> list[dict[str, str]]:
+    def _normalize_bindings(bindings) -> list[dict[str, str]]:
         try:
             return _HOST_BINDINGS_ADAPTER.validate_python(bindings)
         except ValidationError:

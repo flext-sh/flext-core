@@ -58,7 +58,7 @@ def test_legacy_wrapper_forwarding_keywords_is_inlined_as_alias() -> None:
 
 
 def test_legacy_wrapper_forwarding_varargs_is_inlined_as_alias() -> None:
-    source = "def run(a: int, *args: object, **kwargs: t.Scalar) -> int:\n    return execute(a, *args, **kwargs)\n"
+    source = "def run(a: int, *args, **kwargs: t.Scalar) -> int:\n    return execute(a, *args, **kwargs)\n"
     tree = cst.parse_module(source)
     rule = FlextInfraRefactorLegacyRemovalRule({"id": "remove-wrapper-functions"})
     updated_tree, _ = rule.apply(tree)

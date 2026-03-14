@@ -156,7 +156,7 @@ class StubJsonIo(FlextInfraUtilitiesIo):
     @override
     def write_json(
         path: Path,
-        payload: object,
+        payload,
         *,
         sort_keys: bool = False,
         ensure_ascii: bool = False,

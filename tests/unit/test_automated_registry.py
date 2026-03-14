@@ -19,17 +19,17 @@ from tests.test_utils import assertion_helpers, fixture_factory
 
 @runtime_checkable
 class _ProcessCapable(Protocol):
-    def process(self, input_data: Mapping[str, object]) -> object: ...
+    def process(self, input_data: Mapping[str, object]): ...
 
 
 @runtime_checkable
 class _ExecuteCapable(Protocol):
-    def execute(self) -> object: ...
+    def execute(self): ...
 
 
 @runtime_checkable
 class _HandleCapable(Protocol):
-    def handle(self, input_data: Mapping[str, object]) -> object: ...
+    def handle(self, input_data: Mapping[str, object]): ...
 
 
 @runtime_checkable
@@ -130,7 +130,7 @@ class TestAutomatedFlextRegistry:
         """Test performance characteristics of registry."""
         instance = fixture_factory.create_test_registry_instance()
 
-        def operation() -> object:
+        def operation():
             return self._execute_registry_operation(
                 instance,
                 {"performance_test": True},
@@ -160,7 +160,7 @@ class TestAutomatedFlextRegistry:
 
     def _execute_registry_operation(
         self,
-        instance: object,
+        instance,
         input_data: Mapping[str, object],
     ) -> r[bool]:
         """Execute a test operation on registry instance.
@@ -183,6 +183,6 @@ class TestAutomatedFlextRegistry:
             return r[bool].fail(f"FlextRegistry operation failed: {e}")
 
     @pytest.fixture
-    def test_registry_instance(self) -> object:
+    def test_registry_instance(self):
         """Fixture for registry test instance."""
         return fixture_factory.create_test_registry_instance()

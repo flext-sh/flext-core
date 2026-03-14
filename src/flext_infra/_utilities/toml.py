@@ -33,7 +33,7 @@ class FlextInfraUtilitiesToml:
     logger = FlextLogger(__name__)
 
     _CONTAINER_DICT_ADAPTER: TypeAdapter[dict[str, object]] | None = None
-    _CONTAINER_LIST_ADAPTER: TypeAdapter[list[object]] | None = None
+    _CONTAINER_LIST_ADAPTER: TypeAdapter[list] | None = None
 
     @staticmethod
     def _get_container_dict_adapter() -> TypeAdapter[dict[str, object]]:
@@ -45,11 +45,11 @@ class FlextInfraUtilitiesToml:
         return FlextInfraUtilitiesToml._CONTAINER_DICT_ADAPTER
 
     @staticmethod
-    def _get_container_list_adapter() -> TypeAdapter[list[object]]:
+    def _get_container_list_adapter() -> TypeAdapter[list]:
         """Get or create TypeAdapter for lisobject]."""
         if FlextInfraUtilitiesToml._CONTAINER_LIST_ADAPTER is None:
             FlextInfraUtilitiesToml._CONTAINER_LIST_ADAPTER = TypeAdapter(
-                list[object],
+                list,
             )
         return FlextInfraUtilitiesToml._CONTAINER_LIST_ADAPTER
 
@@ -114,7 +114,7 @@ class FlextInfraUtilitiesToml:
         return FlextInfraUtilitiesToml.normalize_container_value(value)
 
     @staticmethod
-    def as_string_list(value: object | Item | None) -> list[str]:
+    def as_string_list(value: Item | None) -> list[str]:
         """Convert TOML value to list of strings."""
         normalized = FlextInfraUtilitiesToml.normalize_container_value(value)
         if normalized is None or isinstance(normalized, str):

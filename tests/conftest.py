@@ -130,8 +130,8 @@ class FlextTestAutomationFramework:
 
     @staticmethod
     def create_test_value_object(
-        value: object,
-        value_type: Callable[[object], T],
+        value,
+        value_type: Callable[, T],
     ) -> TestResult[T]:
         """Create test value object with real validation.
 
@@ -404,7 +404,7 @@ def automation_framework() -> FlextTestAutomationFramework:
 
 
 @pytest.fixture
-def real_entity() -> object:
+def real_entity():
     """Provide real test entity."""
     result = test_framework.create_test_entity("test-123", "Test Entity")
     if result.is_success:
@@ -413,7 +413,7 @@ def real_entity() -> object:
 
 
 @pytest.fixture
-def real_value_object() -> object:
+def real_value_object():
     """Provide real test value object."""
     result = test_framework.create_test_value_object("test value", str)
     if result.is_success:
@@ -696,7 +696,7 @@ def out_of_range() -> list[tuple[int, int, int]]:
     return [(-1, 0, 10), (11, 0, 10), (100, 0, 50), (-100, 0, 10)]
 
 
-def assert_validates(model_class: type, field_name: str, value: object) -> object:
+def assert_validates(model_class: type, field_name: str, value):
     """Validate a value against a model field and return the validated value.
 
     Args:
@@ -721,7 +721,7 @@ def assert_validates(model_class: type, field_name: str, value: object) -> objec
 def assert_rejects(
     model_class: type,
     field_name: str,
-    value: object,
+    value,
     error_type: type[Exception] | None = None,
 ) -> str:
     """Assert that a value is rejected during validation.

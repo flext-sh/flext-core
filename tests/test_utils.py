@@ -45,15 +45,15 @@ class TestDataFactory:
         unique_id: str,
         name: str,
         **kwargs: t.Scalar,
-    ) -> object:
+    ):
         """Create standardized entity test data."""
         return {"unique_id": unique_id, "name": name, **kwargs}
 
     @staticmethod
     def create_value_object_data(
-        value: object,
+        value,
         **kwargs: t.Scalar,
-    ) -> object:
+    ):
         """Create standardized value object test data."""
         return {"value": value, **kwargs}
 
@@ -114,7 +114,7 @@ class AssertionHelpers:
 
     @staticmethod
     def assert_entity_properties(
-        entity: object,
+        entity,
         expected_props: Mapping[str, t.ContainerValue],
         context: str = "",
     ) -> None:
@@ -131,7 +131,7 @@ class AssertionHelpers:
         operation_func: Callable[[], r[t.Container]],
         test_case: StandardTestCase,
         context: str = "",
-    ) -> object:
+    ):
         """Execute operation and assert result matches test case."""
         try:
             result = operation_func()
@@ -262,7 +262,7 @@ class TestFixtureFactory:
     def create_test_service_result(
         *,
         success: bool = True,
-        value: object | None = None,
+        value=None,
         error: str = "Test error",
     ) -> TestResult[str]:
         """Create test service result fixture."""

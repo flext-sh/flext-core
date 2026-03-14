@@ -135,8 +135,8 @@ class TestBuilderScope:
     ) -> None:
         """Test build returns failure when scope building fails."""
 
-        def mock_build_scopes(*args: object, **kwargs: t.Scalar) -> r[list[object]]:
-            return r[list[object]].fail("Scope error")
+        def mock_build_scopes(*args, **kwargs: t.Scalar) -> r[list]:
+            return r[list].fail("Scope error")
 
         monkeypatch.setattr(FlextInfraDocsShared, "build_scopes", mock_build_scopes)
         result = builder.build(tmp_path)

@@ -71,10 +71,10 @@ class ResultScenario(BaseModel):
         self,
         name: str,
         operation_type: ResultOperationType,
-        value: object,
+        value,
         *,
         is_success_expected: bool = True,
-        expected_result: object | None = None,
+        expected_result=None,
     ) -> None:
         super().__init__(
             name=name,
@@ -559,8 +559,8 @@ class Testr:
 
     def test_with_resource(self) -> None:
         """Test with_resource manages resource lifecycle."""
-        resource_created = list[object]()
-        resource_cleaned = list[object]()
+        resource_created = list()
+        resource_cleaned = list()
 
         def factory() -> list[str]:
             resource_created.append("created")

@@ -191,7 +191,7 @@ class TestCoveragePush75Percent:
                 result = result.map(lambda x: x * 2 if isinstance(x, int) else x)
             elif op == "flat_map":
 
-                def flat_map_func(x: object) -> r[int]:
+                def flat_map_func(x) -> r[int]:
                     if isinstance(x, int):
                         return r[int].ok(x * 2)
                     return r[int].fail("error")

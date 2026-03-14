@@ -15,7 +15,7 @@ from flext_core import c, m, r, t, u
 from ._models import _Model
 
 
-def _is_type_obj(value: object, type_spec: str | type | tuple[type, ...]) -> bool:
+def _is_type_obj(value, type_spec: str | type | tuple[type, ...]) -> bool:
     """Call is_type with arbitrary object for negative-case testing."""
     fn: Callable[[object, str | type | tuple[type, ...]], bool] = getattr(
         u,
@@ -24,34 +24,34 @@ def _is_type_obj(value: object, type_spec: str | type | tuple[type, ...]) -> boo
     return fn(value, type_spec)
 
 
-def _is_flexible_value_obj(value: object) -> bool:
+def _is_flexible_value_obj(value) -> bool:
     """Call is_flexible_value with arbitrary object for negative-case testing."""
-    fn: Callable[[object], bool] = getattr(u, "is_flexible_value")
+    fn: Callable[, bool] = getattr(u, "is_flexible_value")
     return fn(value)
 
 
 class _LoggerLike:
-    def debug(self, *_args: object, **_kwargs: t.Scalar) -> None:
+    def debug(self, *_args, **_kwargs: t.Scalar) -> None:
         return None
 
-    def info(self, *_args: object, **_kwargs: t.Scalar) -> None:
+    def info(self, *_args, **_kwargs: t.Scalar) -> None:
         return None
 
-    def warning(self, *_args: object, **_kwargs: t.Scalar) -> None:
+    def warning(self, *_args, **_kwargs: t.Scalar) -> None:
         return None
 
-    def error(self, *_args: object, **_kwargs: t.Scalar) -> None:
+    def error(self, *_args, **_kwargs: t.Scalar) -> None:
         return None
 
-    def exception(self, *_args: object, **_kwargs: t.Scalar) -> None:
+    def exception(self, *_args, **_kwargs: t.Scalar) -> None:
         return None
 
 
-def _sample_handler(value: object) -> object:
+def _sample_handler(value):
     return value
 
 
-def _return_false(_value: object) -> bool:
+def _return_false(_value) -> bool:
     return False
 
 
@@ -82,7 +82,7 @@ def test_is_handler_type_branches() -> None:
     class _DuckHandler:
         value: str = "ok"
 
-        def handle(self, _value: object) -> object:
+        def handle(self, _value):
             return None
 
     assert u.is_handler_type(cast("object", _BaseModelSubclass))
@@ -97,7 +97,7 @@ def test_non_empty_and_normalize_branches() -> None:
     assert u.normalize_to_metadata_value("x") == "x"
     dict_scalar_out = u.normalize_to_metadata_value({"k": 1})
     assert dict_scalar_out == {"k": 1}
-    dict_complex_out = u.normalize_to_metadata_value(cast("object", {"k": object()}))
+    dict_complex_out = u.normalize_to_metadata_value(cast("object", {"k"()}))
     assert isinstance(dict_complex_out, dict) and "k" in dict_complex_out
     list_out = u.normalize_to_metadata_value(cast("object", [1, object()]))
     assert isinstance(list_out, list)
@@ -142,7 +142,7 @@ def test_protocol_and_simple_guard_helpers() -> None:
     assert u.is_handler_callable(cast("object", _sample_handler))
     assert u.is_mapping({"k": "v"})
 
-    def _identity(value: object) -> object:
+    def _identity(value):
         return value
 
     assert _is_type_obj(_identity, "callable")
@@ -205,10 +205,10 @@ def test_guard_in_has_empty_none_helpers() -> None:
     assert u.guard("x", validator=None, return_value=False)
     assert u.guard("x", validator=None, return_value=True) == "x"
 
-    def _always_false(_v: object) -> bool:
+    def _always_false(_v) -> bool:
         return False
 
-    def _raise_error(_v: object) -> bool:
+    def _raise_error(_v) -> bool:
         _ = _v
         msg = "test error"
         raise TypeError(msg)
@@ -256,8 +256,8 @@ def test_guards_bool_shortcut_and_issubclass_typeerror(
     original_issubclass = builtins.issubclass
 
     def _fake_issubclass(
-        cls: type[object],
-        classinfo: type[object] | tuple[type[object], ...],
+        cls: type,
+        classinfo: type | tuple[type, ...],
     ) -> bool:
         if cls is _SomeType and classinfo is BaseModel:
             msg = "boom"
@@ -300,8 +300,8 @@ def test_guards_handler_type_issubclass_typeerror_branch_direct() -> None:
         pass
 
     def _explode(
-        cls: type[object],
-        classinfo: type[object] | tuple[type[object], ...],
+        cls: type,
+        classinfo: type | tuple[type, ...],
     ) -> bool:
         if cls is _Candidate and classinfo is BaseModel:
             msg = "boom"
@@ -321,8 +321,8 @@ def test_guards_bool_identity_branch_via_isinstance_fallback(
     original_isinstance = builtins.isinstance
 
     def _patched_isinstance(
-        obj: object,
-        classinfo: type[object] | tuple[type[object], ...],
+        obj,
+        classinfo: type | tuple[type, ...],
     ) -> bool:
         if obj is True and classinfo == (str, int, float, bool, type(None), datetime):
             return False
@@ -341,14 +341,14 @@ def test_guards_issubclass_typeerror_when_class_not_treated_as_callable(
     class _Candidate:
         pass
 
-    def _patched_callable(value: object) -> bool:
+    def _patched_callable(value) -> bool:
         if value is _Candidate:
             return False
         return original_callable(value)
 
     def _patched_issubclass(
-        cls: type[object],
-        classinfo: type[object] | tuple[type[object], ...],
+        cls: type,
+        classinfo: type | tuple[type, ...],
     ) -> bool:
         if cls is _Candidate and classinfo is BaseModel:
             msg = "boom"
@@ -368,7 +368,7 @@ def test_guards_issubclass_success_when_callable_is_patched(
     class _ModelSub:
         value: str = "ok"
 
-    def _patched_callable(value: object) -> bool:
+    def _patched_callable(value) -> bool:
         if value is _ModelSub:
             return False
         return original_callable(value)

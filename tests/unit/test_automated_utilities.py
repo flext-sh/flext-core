@@ -129,7 +129,7 @@ class TestAutomatedFlextUtilities:
             result,
             "FlextUtilities resource test",
         )
-        instance_obj: object = instance
+        instance_obj = instance
         if hasattr(instance_obj, "cleanup"):
             cleanup_result = getattr(instance_obj, "cleanup")()
             if cleanup_result:
@@ -140,7 +140,7 @@ class TestAutomatedFlextUtilities:
 
     def _execute_utilities_operation(
         self,
-        instance: object,
+        instance,
         input_data: Mapping[str, object],
     ) -> r[bool]:
         """Execute a test operation on utilities instance.
@@ -156,6 +156,6 @@ class TestAutomatedFlextUtilities:
             return r[bool].fail(f"FlextUtilities operation failed: {e}")
 
     @pytest.fixture
-    def test_utilities_instance(self) -> object:
+    def test_utilities_instance(self):
         """Fixture for utilities test instance."""
         return fixture_factory.create_test_utilities_instance()

@@ -99,7 +99,7 @@ class TestAutomatedFlextSettings:
         """Test performance characteristics of settings."""
         instance = fixture_factory.create_test_settings_instance()
 
-        def operation() -> object:
+        def operation():
             return self._execute_settings_operation(
                 instance,
                 {"performance_test": True},
@@ -119,7 +119,7 @@ class TestAutomatedFlextSettings:
             result,
             "FlextSettings resource test",
         )
-        instance_obj: object = instance
+        instance_obj = instance
         if hasattr(instance_obj, "cleanup"):
             cleanup_result = getattr(instance_obj, "cleanup")()
             if cleanup_result:
@@ -130,7 +130,7 @@ class TestAutomatedFlextSettings:
 
     def _execute_settings_operation(
         self,
-        instance: object,
+        instance,
         input_data: Mapping[str, object],
     ) -> r[bool]:
         """Execute a test operation on settings instance.
@@ -146,6 +146,6 @@ class TestAutomatedFlextSettings:
             return r[bool].fail(f"FlextSettings operation failed: {e}")
 
     @pytest.fixture
-    def test_settings_instance(self) -> object:
+    def test_settings_instance(self):
         """Fixture for settings test instance."""
         return fixture_factory.create_test_settings_instance()

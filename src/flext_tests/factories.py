@@ -28,11 +28,11 @@ from pydantic import BaseModel, TypeAdapter, ValidationError
 from flext_core import r
 from flext_tests import FlextTestsUtilityBase as s, c, m, t, u
 
-_TEST_CONTAINER_LIST_ADAPTER = TypeAdapter(list[object])
+_TEST_CONTAINER_LIST_ADAPTER = TypeAdapter(list)
 _TEST_CONTAINER_DICT_ADAPTER = TypeAdapter(dict[str, object])
 
 
-def _to_payload_value(value: object) -> t.Tests.object:
+def _to_payload_value(value) -> t.Tests.object:
     if value is None:
         return None
     if isinstance(value, str | int | float | bool | bytes | BaseModel):
@@ -46,7 +46,7 @@ def _to_payload_value(value: object) -> t.Tests.object:
     return str(value)
 
 
-def _to_guard_input(value: t.Tests.object) -> object:
+def _to_guard_input(value: t.Tests.object):
     if value is None or isinstance(value, (*t.PRIMITIVES_TYPES, BaseModel)):
         return value
     if isinstance(value, Mapping):
@@ -497,7 +497,7 @@ class FlextTestsFactories(s[t.Tests.object]):
                     raw_items.append(final_item)
         items.extend(raw_items)
         if params.unique and items:
-            seen: set[object] = set()
+            seen: set = set()
             unique_items: builtins.list[t.Tests.object] = []
             for item in items:
                 item_hash = (

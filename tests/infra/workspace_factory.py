@@ -30,7 +30,7 @@ class WorkspaceFactory(m.Config):
     encoding: Annotated[str, Field(default="utf-8")]
 
     @override
-    def model_post_init(self, __context: object) -> None:
+    def model_post_init(self, __context) -> None:
         """Post-init to set defaults from c.Infra.Tests if available."""
         super().model_post_init(__context)
         if not self.default_python:

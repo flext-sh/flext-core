@@ -69,14 +69,14 @@ from flext_tests import c, m, t, u
 _TEST_PAYLOAD_DICT_ADAPTER = TypeAdapter(dict[str, t.Tests.object])
 _TEST_PAYLOAD_LIST_ADAPTER = TypeAdapter(list[t.Tests.object])
 _GUARD_PAYLOAD_DICT_ADAPTER = TypeAdapter(dict[str, object])
-_GUARD_PAYLOAD_LIST_ADAPTER = TypeAdapter(list[object])
+_GUARD_PAYLOAD_LIST_ADAPTER = TypeAdapter(list)
 
 
-def _is_non_string_sequence(value: object) -> TypeGuard[Sequence[object]]:
+def _is_non_string_sequence(value) -> TypeGuard[Sequence]:
     return isinstance(value, Sequence) and (not isinstance(value, str | bytes))
 
 
-def _to_test_payload(value: object) -> t.Tests.object:
+def _to_test_payload(value) -> t.Tests.object:
     if value is None or isinstance(value, (str, int, float, bool, bytes, BaseModel)):
         return value
     if isinstance(value, Mapping):
@@ -94,7 +94,7 @@ def _to_test_payload(value: object) -> t.Tests.object:
     return str(value)
 
 
-def _as_guard_input(value: object) -> t.Tests.object:
+def _as_guard_input(value) -> t.Tests.object:
     if isinstance(value, BaseModel | str | int | float | bool | Path):
         return value
     if value is None:
@@ -117,9 +117,9 @@ def _as_guard_input(value: object) -> t.Tests.object:
 
 
 def _check_has_lacks(
-    value: object,
-    has: object | Sequence[object] | None,
-    lacks: object | Sequence[object] | None,
+    value,
+    has: Sequence | None,
+    lacks: Sequence | None,
     msg: str | None,
     *,
     as_str: bool = False,
@@ -562,7 +562,7 @@ class FlextTestsMatchers:
                 )
             )
         _check_has_lacks(result_value, params.has, params.lacks, params.msg)
-        result_value_obj: object = result.value if params.path is None else result_value
+        result_value_obj = result.value if params.path is None else result_value
         result_payload = _to_test_payload(result_value_obj)
         if params.len is not None and (
             not u.Tests.Length.validate(result_payload, params.len)
@@ -725,7 +725,7 @@ class FlextTestsMatchers:
                         )
 
     @staticmethod
-    def that(value: object, **kwargs: t.Tests.Matcher.MatcherKwargValue) -> None:
+    def that(value, **kwargs: t.Tests.Matcher.MatcherKwargValue) -> None:
         r"""Super-powered universal value assertion - ALL validations in ONE method.
 
         This is the PRIMARY assertion method. All other assertion methods
@@ -820,7 +820,7 @@ class FlextTestsMatchers:
                 raise ValueError(
                     f"Parameter validation failed: {filtered_exc}"
                 ) from filtered_exc
-        subject: object = value
+        subject = value
         if FlextUtilitiesGuards.is_result_like(subject):
             result_obj = subject
             actual_value: t.Tests.object | str = ""
@@ -993,7 +993,7 @@ class FlextTestsMatchers:
             if params.all_ is not None:
                 if isinstance(params.all_, type):
 
-                    def _all_match(t: type, seq: Sequence[object]) -> bool:
+                    def _all_match(t: type, seq: Sequence) -> bool:
                         return all(
                             isinstance(x, t)
                             or (hasattr(type(x), "__mro__") and t in type(x).__mro__)
@@ -1068,7 +1068,7 @@ class FlextTestsMatchers:
                 elif callable(sorted_param):
                     user_key_fn = sorted_param
 
-                    def comparable_key(x: object) -> tuple[str, str]:
+                    def comparable_key(x) -> tuple[str, str]:
                         """Wrap user key to return comparable tuple."""
                         result = user_key_fn(_to_test_payload(x))
                         type_name = type(result).__name__
@@ -1095,7 +1095,7 @@ class FlextTestsMatchers:
             except ValidationError:
                 pass
             if params.keys is not None:
-                key_set: set[object] = set(params.keys)
+                key_set: set = set(params.keys)
                 missing = key_set - set(mapping_value.keys())
                 if missing:
                     raise AssertionError(
@@ -1103,7 +1103,7 @@ class FlextTestsMatchers:
                         or c.Tests.Matcher.ERR_KEYS_MISSING.format(keys=list(missing))
                     )
             if params.lacks_keys is not None:
-                lacks_key_set: set[object] = set(params.lacks_keys)
+                lacks_key_set: set = set(params.lacks_keys)
                 present = lacks_key_set & set(mapping_value.keys())
                 if present:
                     raise AssertionError(
@@ -1143,7 +1143,7 @@ class FlextTestsMatchers:
                                 or f"Key {key!r}: expected {expected_obj!r}, got {mapping_value[key]!r}"
                             )
         if params.attrs is not None:
-            attrs_target: object = value
+            attrs_target = value
             if isinstance(params.attrs, str):
                 attr_list: list[str] = [params.attrs]
             else:
@@ -1154,7 +1154,7 @@ class FlextTestsMatchers:
                         params.msg or f"Object missing attribute: {attr}"
                     )
         if params.methods is not None:
-            methods_target: object = value
+            methods_target = value
             if isinstance(params.methods, str):
                 method_list: list[str] = [params.methods]
             else:
@@ -1169,7 +1169,7 @@ class FlextTestsMatchers:
                         params.msg or f"Object attribute {method} is not callable"
                     )
         if params.attr_eq is not None:
-            attr_eq_target: object = value
+            attr_eq_target = value
             if isinstance(params.attr_eq, tuple) and len(params.attr_eq) == 2:
                 attr, expected_val = params.attr_eq
                 if not hasattr(attr_eq_target, attr):

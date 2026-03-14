@@ -67,7 +67,7 @@ def get_user(user_id: str) -> None:  # Wrong return type (should be r)
     pass
 
 
-def get_user(user_id: str) -> Any:  # NO Any type
+def get_user(user_id: str):  # NO Any type
     pass
 ```
 
@@ -165,7 +165,7 @@ from flext_core import FlextContainer
 class r:  # PascalCase for classes
     """Result monad."""
 
-    def unwrap(self) -> Any:  # snake_case for methods
+    def unwrap(self):  # snake_case for methods
         pass
 
 
@@ -474,7 +474,7 @@ make validate  # In flext-core directory
 
 | Violation             | Issue                 | Fix                          |
 | --------------------- | --------------------- | ---------------------------- |
-| `Type is: Any`        | Using Any type        | Use specific type or TypeVar |
+| `Type is`        | Using Any type        | Use specific type or TypeVar |
 | `Unused import`       | Dead code             | Remove unused import         |
 | `Line too long`       | Exceeds 79 chars      | Break into multiple lines    |
 | `Missing return type` | Incomplete annotation | Add `-> ReturnType`          |

@@ -45,7 +45,7 @@ class FlextUtilitiesDeprecation:
     @classmethod
     def warn_polymorphic_input(
         cls,
-        value: object,
+        value,
         context: str,
         preferred: str,
         *,

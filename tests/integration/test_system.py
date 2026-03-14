@@ -85,7 +85,7 @@ class TestCompleteFlextSystemIntegration:
         assert failure_result.error == "erro_de_processamento"
         assert failure_result.unwrap_or("") == ""
 
-        def operacao_que_pode_falhar(data: object) -> r[str]:
+        def operacao_que_pode_falhar(data) -> r[str]:
             if isinstance(data, str) and "invalido" in data:
                 return r[str].fail("dados_invalidos")
             if isinstance(data, str):
@@ -217,19 +217,19 @@ class TestCompleteFlextSystemIntegration:
         assert resultado_recuperado.is_success is True
         assert resultado_recuperado.value == "valor_recuperado"
 
-        def operacao_1(data: object) -> r[str]:
+        def operacao_1(data) -> r[str]:
             if isinstance(data, str):
                 return r[str].ok(f"etapa1_{data}")
             return r[str].fail("tipo_invalido")
 
-        def operacao_2(data: object) -> r[str]:
+        def operacao_2(data) -> r[str]:
             if isinstance(data, str):
                 if "erro" in data:
                     return r[str].fail("erro_na_etapa2")
                 return r[str].ok(f"etapa2_{data}")
             return r[str].fail("tipo_invalido")
 
-        def operacao_3(data: object) -> r[str]:
+        def operacao_3(data) -> r[str]:
             if isinstance(data, str):
                 return r[str].ok(f"final_{data}")
             return r[str].fail("tipo_invalido")

@@ -74,7 +74,7 @@ class _BrokenDumpModel(BaseModel):
     value: int = 1
 
     @override
-    def __getattribute__(self, name: str) -> object | t.Tests.Matcher.PredicateSpec:
+    def __getattribute__(self, name: str) | t.Tests.Matcher.PredicateSpec:
         if name == "model_dump":
 
             def _broken_dump(
@@ -93,7 +93,7 @@ class _ErrorsModel(BaseModel):
     @override
     def model_validate(
         cls,
-        obj: object,
+        obj,
         *,
         strict: bool | None = None,
         extra: str | None = None,
@@ -114,7 +114,7 @@ class _PlainErrorModel(BaseModel):
     @override
     def model_validate(
         cls,
-        obj: object,
+        obj,
         *,
         strict: bool | None = None,
         extra: str | None = None,

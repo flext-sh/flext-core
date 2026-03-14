@@ -29,8 +29,8 @@ class TestAuditorScopeFailure:
         """Test audit() when scope building fails."""
         auditor = FlextInfraDocAuditor()
 
-        def mock_build_scopes(*args: object, **kwargs: t.Scalar) -> r[list[object]]:
-            return r[list[object]].fail("scope build error")
+        def mock_build_scopes(*args, **kwargs: t.Scalar) -> r[list]:
+            return r[list].fail("scope build error")
 
         monkeypatch.setattr(FlextInfraDocsShared, "build_scopes", mock_build_scopes)
         result = auditor.audit(tmp_path)
@@ -48,7 +48,7 @@ class TestAuditorMainCli:
         """Test main() CLI entry point with audit failure."""
 
         def mock_audit(
-            *args: object, **kwargs: t.Scalar
+            *args, **kwargs: t.Scalar
         ) -> r[list[m.Infra.Docs.DocsPhaseReport]]:
             return r[list[m.Infra.Docs.DocsPhaseReport]].fail("audit error")
 
@@ -73,7 +73,7 @@ class TestAuditorMainCli:
         )
 
         def mock_audit(
-            *args: object, **kwargs: t.Scalar
+            *args, **kwargs: t.Scalar
         ) -> r[list[m.Infra.Docs.DocsPhaseReport]]:
             return r[list[m.Infra.Docs.DocsPhaseReport]].ok([failed_report])
 
@@ -98,7 +98,7 @@ class TestAuditorMainCli:
         )
 
         def mock_audit(
-            *args: object, **kwargs: t.Scalar
+            *args, **kwargs: t.Scalar
         ) -> r[list[m.Infra.Docs.DocsPhaseReport]]:
             return r[list[m.Infra.Docs.DocsPhaseReport]].ok([passed_report])
 
@@ -123,7 +123,7 @@ class TestAuditorMainCli:
         )
 
         def mock_audit(
-            *args: object, **kwargs: t.Scalar
+            *args, **kwargs: t.Scalar
         ) -> r[list[m.Infra.Docs.DocsPhaseReport]]:
             return r[list[m.Infra.Docs.DocsPhaseReport]].ok([passed_report])
 
@@ -164,7 +164,7 @@ class TestAuditorMainCli:
         )
 
         def mock_audit(
-            *args: object, **kwargs: t.Scalar
+            *args, **kwargs: t.Scalar
         ) -> r[list[m.Infra.Docs.DocsPhaseReport]]:
             return r[list[m.Infra.Docs.DocsPhaseReport]].ok([passed_report])
 

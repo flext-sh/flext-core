@@ -186,7 +186,7 @@ class TestFlextSettingsSingletonIntegration:
         container = FlextContainer()
         config_result = container.get("config")
         if config_result.is_success:
-            retrieved_config: object = config_result.value
+            retrieved_config = config_result.value
             assert retrieved_config is global_config
 
     def test_environment_variable_override(self) -> None:

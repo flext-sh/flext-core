@@ -40,7 +40,7 @@ def _extract_reports_written(
         raw = payload.get("reports_written", [])
         if isinstance(raw, list):
             try:
-                typed_items = TypeAdapter(list[object]).validate_python(raw)
+                typed_items = TypeAdapter(list).validate_python(raw)
             except ValidationError:
                 return []
             return [item for item in typed_items if isinstance(item, str)]
@@ -56,7 +56,7 @@ def _extract_diag_entries(
         raw = payload.get(key, [])
         if isinstance(raw, list):
             try:
-                typed_items = TypeAdapter(list[object]).validate_python(raw)
+                typed_items = TypeAdapter(list).validate_python(raw)
             except ValidationError:
                 return []
             return [item for item in typed_items if isinstance(item, str)]

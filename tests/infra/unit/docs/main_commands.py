@@ -49,12 +49,12 @@ def _val_args(**overrides: t.Scalar) -> argparse.Namespace:
     return _cli_args({"check": "all", "apply": False}, **overrides)
 
 
-def _stub_ok(val: list[object]) -> Callable[..., r[list[object]]]:
-    return lambda *_a, **_kw: r[list[object]].ok(val)
+def _stub_ok(val: list) -> Callable[..., r[list]]:
+    return lambda *_a, **_kw: r[list].ok(val)
 
 
-def _stub_fail(err: str) -> Callable[..., r[list[object]]]:
-    return lambda *_a, **_kw: r[list[object]].fail(err)
+def _stub_fail(err: str) -> Callable[..., r[list]]:
+    return lambda *_a, **_kw: r[list].fail(err)
 
 
 _SILENT_OUTPUT = type("O", (), {"error": staticmethod(lambda *a: None)})()
@@ -98,9 +98,9 @@ class TestRunGenerate:
     ) -> None:
         captured_kwargs: dict[str, t.Scalar] = {}
 
-        def mock_gen(*_a: object, **kw: t.Scalar) -> r[list[object]]:
+        def mock_gen(*_a, **kw: t.Scalar) -> r[list]:
             captured_kwargs.update(kw)
-            return r[list[object]].ok([])
+            return r[list].ok([])
 
         monkeypatch.setattr(FlextInfraDocGenerator, "generate", mock_gen)
         _run_generate(_gen_args(apply=True))
@@ -134,9 +134,9 @@ class TestRunValidate:
     ) -> None:
         captured_kwargs: dict[str, t.Scalar] = {}
 
-        def mock_val(*_a: object, **kw: t.Scalar) -> r[list[object]]:
+        def mock_val(*_a, **kw: t.Scalar) -> r[list]:
             captured_kwargs.update(kw)
-            return r[list[object]].ok([])
+            return r[list].ok([])
 
         monkeypatch.setattr(FlextInfraDocValidator, "validate", mock_val)
         _run_validate(_val_args(check="links"))

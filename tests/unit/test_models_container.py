@@ -29,7 +29,7 @@ _expected_validation_errors: tuple[type[Exception], ...] = (ValidationError, Typ
 def _service_reg_with_metadata(
     name: str,
     service: str,
-    metadata: object,
+    metadata,
 ) -> m.ServiceRegistration:
     """Create ServiceRegistration with arbitrary metadata for validation testing."""
     return m.ServiceRegistration.model_validate({
@@ -42,7 +42,7 @@ def _service_reg_with_metadata(
 def _factory_reg_with_metadata(
     name: str,
     factory: Callable[[], t.Scalar],
-    metadata: object,
+    metadata,
 ) -> m.FactoryRegistration:
     """Create FactoryRegistration with arbitrary metadata for validation testing."""
     return m.FactoryRegistration.model_validate({
@@ -52,9 +52,9 @@ def _factory_reg_with_metadata(
     })
 
 
-def _normalize_metadata_obj(value: object) -> m.Metadata:
+def _normalize_metadata_obj(value) -> m.Metadata:
     """Call ensure_metadata with arbitrary object for error-path testing."""
-    fn: Callable[[object], m.Metadata] = getattr(u, "ensure_metadata")
+    fn: Callable[, m.Metadata] = getattr(u, "ensure_metadata")
     return fn(value)
 
 
@@ -92,7 +92,7 @@ class TestFlextModelsContainer:
     def test_is_dict_like_static_method(self) -> None:
         """Test dict-like checking using utilities."""
 
-        def is_dict_like(value: object) -> bool:
+        def is_dict_like(value) -> bool:
             """Check if value is dict-like."""
             return isinstance(value, Mapping)
 
@@ -109,7 +109,7 @@ class TestFlextModelsContainer:
     )
     def test_service_registration_metadata_validation(
         self,
-        metadata_value: object,
+        metadata_value,
         should_pass: bool,
     ) -> None:
         """Test ServiceRegistration metadata validation with various types."""
@@ -157,7 +157,7 @@ class TestFlextModelsContainer:
     )
     def test_factory_registration_metadata_validation(
         self,
-        metadata_value: object,
+        metadata_value,
         should_pass: bool,
     ) -> None:
         """Test FactoryRegistration metadata validation with various types."""

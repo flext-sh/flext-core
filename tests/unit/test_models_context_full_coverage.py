@@ -36,7 +36,7 @@ class _MappingLike(Mapping[str, object]):
         return len(self._data)
 
     @override
-    def __getitem__(self, key: str) -> object:
+    def __getitem__(self, key: str):
         return self._data[key]
 
 
@@ -88,7 +88,7 @@ def test_context_data_normalize_and_json_checks() -> None:
     assert check_result is None
     with pytest.raises(TypeError):
         FlextModelsContext.ContextData.check_json_serializable(
-            cast("object", {"bad": object()})
+            cast("object", {"bad"()})
         )
     obj = object()
     with pytest.raises(TypeError):
@@ -155,7 +155,7 @@ def test_context_export_serializable_and_validators() -> None:
     assert check_result is None
     with pytest.raises(TypeError):
         _ = FlextModelsContext.ContextData.check_json_serializable(
-            cast("object", {"x": object()})
+            cast("object", {"x"()})
         )
     with pytest.raises(TypeError):
         _ = FlextModelsContext.ContextExport.validate_dict_serializable(

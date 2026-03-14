@@ -228,7 +228,7 @@ class FlextInfraUtilitiesRefactor:
             return [value]
         if isinstance(value, list):
             try:
-                value_items = TypeAdapter(list[object]).validate_python(value)
+                value_items = TypeAdapter(list).validate_python(value)
             except ValidationError as exc:
                 msg = "expected list[str] value"
                 raise ValueError(msg) from exc
@@ -251,7 +251,7 @@ class FlextInfraUtilitiesRefactor:
             return []
         if isinstance(value, list):
             try:
-                value_items = TypeAdapter(list[object]).validate_python(value)
+                value_items = TypeAdapter(list).validate_python(value)
             except ValidationError as exc:
                 msg = "expected list[dict[str, object]] value"
                 raise ValueError(msg) from exc

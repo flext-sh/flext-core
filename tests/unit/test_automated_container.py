@@ -104,7 +104,7 @@ class TestAutomatedFlextContainer:
         """Test performance characteristics of container."""
         instance = fixture_factory.create_test_container_instance()
 
-        def operation() -> object:
+        def operation():
             return self._execute_container_operation(
                 instance,
                 {"performance_test": True},
@@ -135,7 +135,7 @@ class TestAutomatedFlextContainer:
 
     def _execute_container_operation(
         self,
-        instance: object,
+        instance,
         input_data: Mapping[str, object],
     ) -> r[t.Container]:
         """Execute a test operation on container instance.
@@ -179,6 +179,6 @@ class TestAutomatedFlextContainer:
             return r[t.Container].fail(f"FlextContainer operation failed: {e}")
 
     @pytest.fixture
-    def test_container_instance(self) -> object:
+    def test_container_instance(self):
         """Fixture for container test instance."""
         return fixture_factory.create_test_container_instance()

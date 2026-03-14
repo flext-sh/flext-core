@@ -99,7 +99,7 @@ class TestAutomatedr:
         """Test performance characteristics of result."""
         instance = fixture_factory.create_test_result_instance()
 
-        def operation() -> object:
+        def operation():
             return self._execute_result_operation(instance, {"performance_test": True})
 
         result = test_framework.execute_with_timeout(operation, timeout_seconds=1.0)
@@ -116,7 +116,7 @@ class TestAutomatedr:
             result,
             "r resource test",
         )
-        instance_obj: object = instance
+        instance_obj = instance
         if hasattr(instance_obj, "cleanup"):
             cleanup_result = getattr(instance_obj, "cleanup")()
             if cleanup_result:
@@ -127,7 +127,7 @@ class TestAutomatedr:
 
     def _execute_result_operation(
         self,
-        instance: object,
+        instance,
         input_data: Mapping[str, object],
     ) -> r[bool]:
         """Execute a test operation on result instance.
@@ -143,6 +143,6 @@ class TestAutomatedr:
             return r[bool].fail(f"r operation failed: {e}")
 
     @pytest.fixture
-    def test_result_instance(self) -> object:
+    def test_result_instance(self):
         """Fixture for result test instance."""
         return fixture_factory.create_test_result_instance()

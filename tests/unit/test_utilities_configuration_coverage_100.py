@@ -37,9 +37,9 @@ from ._models import (
 class _Assertions:
     @staticmethod
     def that(
-        value: object,
+        value,
         *,
-        eq: object | None = None,
+        eq=None,
         none: bool | None = None,
         contains: str | None = None,
         msg: str = "",
@@ -57,16 +57,16 @@ class _Assertions:
 
 class _ResultAssertions:
     @staticmethod
-    def assert_success_with_value(result: object, expected: object) -> None:
+    def assert_success_with_value(result, expected) -> None:
         assert hasattr(result, "is_success") and getattr(result, "is_success")
         assert getattr(result, "value") == expected
 
     @staticmethod
-    def assert_result_success(result: object) -> None:
+    def assert_result_success(result) -> None:
         assert hasattr(result, "is_success") and getattr(result, "is_success")
 
     @staticmethod
-    def assert_result_failure(result: object) -> None:
+    def assert_result_failure(result) -> None:
         assert hasattr(result, "is_failure") and getattr(result, "is_failure")
 
     assert_success = assert_result_success
@@ -269,7 +269,7 @@ class TestFlextUtilitiesConfiguration:
         def test_from_dict(
             self,
             param_name: str,
-            expected_value: object,
+            expected_value,
         ) -> None:
             """Test get_parameter from dict-like object."""
             config_dict = self._create_test_dict()
@@ -317,7 +317,7 @@ class TestFlextUtilitiesConfiguration:
         def test_from_pydantic_model(
             self,
             param_name: str,
-            expected_value: object,
+            expected_value,
         ) -> None:
             """Test get_parameter from Pydantic model."""
             config = ConfigModelForTest(
@@ -372,7 +372,7 @@ class TestFlextUtilitiesConfiguration:
         def test_from_attribute_access(
             self,
             param_name: str,
-            expected_value: object,
+            expected_value,
         ) -> None:
             """Test get_parameter from object attribute access."""
             config = DataclassConfigForTest(
@@ -432,7 +432,7 @@ class TestFlextUtilitiesConfiguration:
         def test_boundary_values(
             self,
             param_name: str,
-            expected_value: object,
+            expected_value,
         ) -> None:
             """Test get_parameter with boundary values."""
             config_dict = self._create_boundary_dict()
@@ -460,7 +460,7 @@ class TestFlextUtilitiesConfiguration:
         def test_on_pydantic_model_success(
             self,
             param_name: str,
-            value: object,
+            value,
             expected_success: bool,
         ) -> None:
             """Test set_parameter on Pydantic model with validation."""
@@ -494,7 +494,7 @@ class TestFlextUtilitiesConfiguration:
         def test_on_pydantic_model_validation_error(
             self,
             param_name: str,
-            value: object,
+            value,
         ) -> None:
             """Test set_parameter handles Pydantic validation errors."""
             config = ConfigModelForTest(name=TestConfigConstants.TestValues.TEST_NAME)
@@ -540,7 +540,7 @@ class TestFlextUtilitiesConfiguration:
         def test_boundary_values(
             self,
             param_name: str,
-            value: object,
+            value,
         ) -> None:
             """Test set_parameter with boundary values."""
             config = ConfigModelForTest(name=TestConfigConstants.TestValues.TEST_NAME)
@@ -572,7 +572,7 @@ class TestFlextUtilitiesConfiguration:
         def test_get_singleton_success(
             self,
             param_name: str,
-            expected_value: object,
+            expected_value,
         ) -> None:
             """Test get_singleton from singleton class."""
             result = u.get_singleton(SingletonClassForTest, param_name)

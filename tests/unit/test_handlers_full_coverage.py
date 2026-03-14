@@ -16,7 +16,7 @@ handlers_module = importlib.import_module("flext_core.handlers")
 
 class _Handler(FlextHandlers[object, t.Container]):
     @override
-    def handle(self, message: object) -> r[t.Container]:
+    def handle(self, message) -> r[t.Container]:
         if isinstance(message, (str, int, float, bool)):
             return r[t.Container].ok(message)
         return r[t.Container].fail("unsupported message")
@@ -24,14 +24,14 @@ class _Handler(FlextHandlers[object, t.Container]):
 
 class _QueryHandler(_Handler):
     @override
-    def validate_input(self, value: object) -> r[bool]:
+    def validate_input(self, value) -> r[bool]:
         _ = value
         return r[bool].ok(True)
 
 
 class _EventHandler(_Handler):
     @override
-    def validate_input(self, value: object) -> r[bool]:
+    def validate_input(self, value) -> r[bool]:
         _ = value
         return r[bool].ok(True)
 

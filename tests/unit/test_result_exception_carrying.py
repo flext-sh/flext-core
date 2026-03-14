@@ -38,7 +38,7 @@ class TestFailNoExceptionBackwardCompat:
         assert result.is_failure
         assert result.error == error_msg
         assert result.exception is None
-        result_as_obj: object = result
+        result_as_obj = result
         assert hasattr(result_as_obj, "is_success")
         assert hasattr(result_as_obj, "is_failure")
 

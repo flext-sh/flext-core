@@ -24,15 +24,15 @@ if TYPE_CHECKING:
 _CLS = FlextInfraReleaseOrchestrator
 
 
-def _noop_branches(*args: object, **kwargs: t.Scalar) -> r[bool]:
+def _noop_branches(*args, **kwargs: t.Scalar) -> r[bool]:
     return r[bool].ok(True)
 
 
-def _noop_dispatch(*args: object, **kwargs: t.Scalar) -> r[bool]:
+def _noop_dispatch(*args, **kwargs: t.Scalar) -> r[bool]:
     return r[bool].ok(True)
 
 
-def _noop_bump(*args: object, **kwargs: t.Scalar) -> r[bool]:
+def _noop_bump(*args, **kwargs: t.Scalar) -> r[bool]:
     return r[bool].ok(True)
 
 
@@ -155,7 +155,7 @@ class TestReleaseOrchestratorExecute:
         def fake_dispatch(
             _self: FlextInfraReleaseOrchestrator,
             phase: str,
-            *args: object,
+            *args,
             **kwargs: t.Scalar,
         ) -> r[bool]:
             nonlocal call_count

@@ -17,18 +17,18 @@ from flext_core import FlextContainer, FlextContext, FlextSettings, m, r, t
 class _MonkeyPatch(Protocol):
     def setattr(
         self,
-        target: object,
-        name: object = None,
-        value: object = None,
+        target,
+        name=None,
+        value=None,
         raising: bool = True,
     ) -> None: ...
-    def setitem(self, dic: object, name: object, value: object) -> None: ...
-    def delitem(self, dic: object, name: object, raising: bool = True) -> None: ...
-    def delattr(self, target: object, name: object, raising: bool = True) -> None: ...
+    def setitem(self, dic, name, value) -> None: ...
+    def delitem(self, dic, name, raising: bool = True) -> None: ...
+    def delattr(self, target, name, raising: bool = True) -> None: ...
     def setenv(self, name: str, value: str, prepend: str | None = None) -> None: ...
     def delenv(self, name: str, raising: bool = True) -> None: ...
-    def syspath_prepend(self, path: object) -> None: ...
-    def chdir(self, path: object) -> None: ...
+    def syspath_prepend(self, path) -> None: ...
+    def chdir(self, path) -> None: ...
 
 
 class _FalseConfig:
@@ -83,7 +83,7 @@ class _BridgeGoodProvide:
 
 
 def _scan_factory_module(
-    _module: object,
+    _module,
 ) -> list[tuple[str, m.FactoryDecoratorConfig]]:
     return [
         (
@@ -94,7 +94,7 @@ def _scan_factory_module(
 
 
 def _scan_factory_module_captured(
-    _module: object,
+    _module,
 ) -> list[tuple[str, m.FactoryDecoratorConfig]]:
     return [
         (
@@ -112,17 +112,17 @@ def _has_service_false(_name: str) -> bool:
     return False
 
 
-def _raise_register_object(*_args: object, **_kwargs: t.Scalar) -> None:
+def _raise_register_object(*_args, **_kwargs: t.Scalar) -> None:
     msg = "boom"
     raise RuntimeError(msg)
 
 
-def _raise_register_factory(*_args: object, **_kwargs: t.Scalar) -> None:
+def _raise_register_factory(*_args, **_kwargs: t.Scalar) -> None:
     msg = "boom"
     raise RuntimeError(msg)
 
 
-def _raise_register_resource(*_args: object, **_kwargs: t.Scalar) -> None:
+def _raise_register_resource(*_args, **_kwargs: t.Scalar) -> None:
     msg = "boom"
     raise RuntimeError(msg)
 
@@ -153,14 +153,14 @@ def test_create_auto_register_factories_path(monkeypatch: _MonkeyPatch) -> None:
         _scan_factory_module,
     )
 
-    def _register(name: str, _impl: object, *, kind: str = "service") -> FlextContainer:
+    def _register(name: str, _impl, *, kind: str = "service") -> FlextContainer:
         if kind == "factory":
             called.append(name)
         return container
 
     monkeypatch.setattr(container, "register", _register)
 
-    def _call_container(*_args: object, **_kwargs: t.Scalar) -> FlextContainer:
+    def _call_container(*_args, **_kwargs: t.Scalar) -> FlextContainer:
         return container
 
     monkeypatch.setattr(
@@ -225,12 +225,12 @@ def test_sync_config_namespace_paths(monkeypatch: _MonkeyPatch) -> None:
         max_services=10,
         max_factories=10,
     )
-    monkeypatch.setattr(type(c._config), "_namespace_registry", {"x": object()})
+    monkeypatch.setattr(type(c._config), "_namespace_registry", {"x"()})
     monkeypatch.setattr(c, "has_service", _has_service_false)
 
     def _capture_register(
         _name: str,
-        _impl: object,
+        _impl,
         *,
         kind: str = "service",
     ) -> FlextContainer:
@@ -407,7 +407,7 @@ def test_create_auto_register_factory_wrapper_callable_and_non_callable(
     def capture_register(
         self: FlextContainer,
         name: str,
-        impl: object,
+        impl,
         *,
         kind: str = "service",
         singleton: bool = False,
@@ -463,8 +463,8 @@ def test_sync_config_registers_namespace_factories_and_fallbacks(
 
         class _Cfg(_FalseConfig):
             _namespace_registry: ClassVar[dict[str, object]] = {
-                "alpha": object(),
-                "beta": object(),
+                "alpha"(),
+                "beta"(),
             }
 
         c._config = _Cfg()
@@ -480,7 +480,7 @@ def test_sync_config_registers_namespace_factories_and_fallbacks(
 
         def _register(
             name: str,
-            impl: object,
+            impl,
             *,
             kind: str = "service",
         ) -> FlextContainer:
@@ -609,7 +609,7 @@ def test_container_remaining_branch_paths_in_sync_factory_and_getters(
     # n1 is NOT registered in FlextSettings, so get_namespace_config returns None
     # and sync_config_to_di skips it (continue branch).
     class _CfgNoMethod(_FalseConfig):
-        _namespace_registry: ClassVar[dict[str, object]] = {"n1": object()}
+        _namespace_registry: ClassVar[dict[str, object]] = {"n1"()}
 
     c._config = _CfgNoMethod()
     c.sync_config_to_di()
@@ -628,13 +628,13 @@ def test_container_remaining_branch_paths_in_sync_factory_and_getters(
     try:
 
         class _CfgFallback(_FalseConfig):
-            _namespace_registry: ClassVar[dict[str, object]] = {"n2": object()}
+            _namespace_registry: ClassVar[dict[str, object]] = {"n2"()}
 
         class _CfgBadNamespace(_FalseConfig):
-            _namespace_registry: ClassVar[dict[str, object]] = {"n3": object()}
+            _namespace_registry: ClassVar[dict[str, object]] = {"n3"()}
 
         class _CfgGoodNamespace(_FalseConfig):
-            _namespace_registry: ClassVar[dict[str, object]] = {"n4": object()}
+            _namespace_registry: ClassVar[dict[str, object]] = {"n4"()}
 
         c._config = _CfgFallback()
         captured: dict[str, Callable[..., object]] = {}
@@ -642,7 +642,7 @@ def test_container_remaining_branch_paths_in_sync_factory_and_getters(
 
         def _capture_register(
             name: str,
-            impl: object,
+            impl,
             *,
             kind: str = "service",
         ) -> FlextContainer:
@@ -698,7 +698,7 @@ def test_container_remaining_branch_paths_in_sync_factory_and_getters(
 
         def _track_register(
             _name: str,
-            impl: object,
+            impl,
             *,
             kind: str = "service",
         ) -> FlextContainer:

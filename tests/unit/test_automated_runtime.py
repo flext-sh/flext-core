@@ -109,7 +109,7 @@ class TestAutomatedFlextRuntime:
         """Test performance characteristics of runtime."""
         instance = fixture_factory.create_test_runtime_instance()
 
-        def operation() -> object:
+        def operation():
             return self._execute_runtime_operation(instance, {"performance_test": True})
 
         result = test_framework.execute_with_timeout(operation, timeout_seconds=1.0)
@@ -126,7 +126,7 @@ class TestAutomatedFlextRuntime:
             result,
             "FlextRuntime resource test",
         )
-        instance_obj: object = instance
+        instance_obj = instance
         if hasattr(instance_obj, "cleanup"):
             cleanup_result = getattr(instance_obj, "cleanup")()
             if cleanup_result:
@@ -137,7 +137,7 @@ class TestAutomatedFlextRuntime:
 
     def _execute_runtime_operation(
         self,
-        instance: object,
+        instance,
         input_data: Mapping[str, object],
     ) -> r[bool]:
         """Execute a test operation on runtime instance.
@@ -153,6 +153,6 @@ class TestAutomatedFlextRuntime:
             return r[bool].fail(f"FlextRuntime operation failed: {e}")
 
     @pytest.fixture
-    def test_runtime_instance(self) -> object:
+    def test_runtime_instance(self):
         """Fixture for runtime test instance."""
         return fixture_factory.create_test_runtime_instance()

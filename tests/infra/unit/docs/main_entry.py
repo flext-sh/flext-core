@@ -22,11 +22,11 @@ from flext_tests import tm
 from tests.infra.models import m
 
 
-def _ok_empty(*a: object, **kw: t.Scalar) -> r[list[object]]:
-    return r[list[object]].ok([])
+def _ok_empty(*a, **kw: t.Scalar) -> r[list]:
+    return r[list].ok([])
 
 
-def _ok_audit(*a: object, **kw: t.Scalar) -> r[list[m.Infra.Docs.DocsPhaseReport]]:
+def _ok_audit(*a, **kw: t.Scalar) -> r[list[m.Infra.Docs.DocsPhaseReport]]:
     return r[list[m.Infra.Docs.DocsPhaseReport]].ok([])
 
 
@@ -102,7 +102,7 @@ class TestMainRouting:
 def _capture_audit(
     store: dict[str, object],
 ) -> Callable[..., r[list[m.Infra.Docs.DocsPhaseReport]]]:
-    def _fn(*a: object, **kw: t.Scalar) -> r[list[m.Infra.Docs.DocsPhaseReport]]:
+    def _fn(*a, **kw: t.Scalar) -> r[list[m.Infra.Docs.DocsPhaseReport]]:
         store.update(kw)
         return r[list[m.Infra.Docs.DocsPhaseReport]].ok([])
 
@@ -111,10 +111,10 @@ def _capture_audit(
 
 def _capture_simple(
     store: dict[str, object],
-) -> Callable[..., r[list[object]]]:
-    def _fn(*a: object, **kw: t.Scalar) -> r[list[object]]:
+) -> Callable[..., r[list]]:
+    def _fn(*a, **kw: t.Scalar) -> r[list]:
         store.update(kw)
-        return r[list[object]].ok([])
+        return r[list].ok([])
 
     return _fn
 

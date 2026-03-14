@@ -40,14 +40,14 @@ from flext_core import (
 from flext_tests import c, m, p, t
 
 _PAYLOAD_MAPPING_ADAPTER = TypeAdapter(dict[str, object])
-_PAYLOAD_SEQUENCE_ADAPTER = TypeAdapter(list[object])
+_PAYLOAD_SEQUENCE_ADAPTER = TypeAdapter(list)
 
 
-def _to_scalar(value: object) -> core_t.Scalar:
+def _to_scalar(value) -> core_t.Scalar:
     """Convert a value to ScalarValue for config overrides.
 
     Args:
-        value: Any value to convert
+        value value to convert
 
     Returns:
         ScalarValue (str | int | float | bool | datetime | None)
@@ -59,11 +59,11 @@ def _to_scalar(value: object) -> core_t.Scalar:
     return str(value)
 
 
-def _to_payload(value: object) -> t.Tests.object:
+def _to_payload(value) -> t.Tests.object:
     """Convert a value to tesobject.
 
     Args:
-        value: Any value to convert
+        value value to convert
 
     Returns:
         object suitable for test assertions
@@ -97,7 +97,7 @@ def _to_payload(value: object) -> t.Tests.object:
     return str(value)
 
 
-def _to_config_map_value(value: t.Tests.object) -> object:
+def _to_config_map_value(value: t.Tests.object):
     """Convert value to container."""
     if value is None or isinstance(value, (*t.PRIMITIVES_TYPES, BaseModel)):
         return value
@@ -319,7 +319,7 @@ class FlextTestsUtilities(FlextUtilities):
             @staticmethod
             @contextmanager
             def temporary_attribute(
-                target: object, attribute: str, value: t.Tests.object
+                target, attribute: str, value: t.Tests.object
             ) -> Generator[None]:
                 """Temporarily set attribute on target object.
 
@@ -1131,7 +1131,7 @@ class FlextTestsUtilities(FlextUtilities):
                 """
                 entity = entity_class(name=name, value=value)
                 if remove_id and hasattr(entity, "unique_id"):
-                    delattr(entity, "unique_id")
+                    del entity.unique_id
                 return entity
 
             @staticmethod
@@ -1275,7 +1275,7 @@ class FlextTestsUtilities(FlextUtilities):
 
                 """
                 parts = pattern_attr.split(".")
-                current: object = c
+                current = c
                 for part in parts:
                     current = getattr(current, part)
                 pattern_str = str(current)
@@ -1294,7 +1294,7 @@ class FlextTestsUtilities(FlextUtilities):
 
                 """
                 parts = path.split(".")
-                current: object = c
+                current = c
                 for part in parts:
                     current = getattr(current, part)
                 return _to_payload(current)

@@ -107,7 +107,7 @@ class TestAutomatedFlextExceptions:
         """Test performance characteristics of exceptions."""
         instance = fixture_factory.create_test_exceptions_instance()
 
-        def operation() -> object:
+        def operation():
             return self._execute_exceptions_operation(
                 instance,
                 {"performance_test": True},
@@ -138,7 +138,7 @@ class TestAutomatedFlextExceptions:
 
     def _execute_exceptions_operation(
         self,
-        instance: object,
+        instance,
         input_data: Mapping[str, object],
     ) -> r[t.Container]:
         """Execute a test operation on exceptions instance.
@@ -182,6 +182,6 @@ class TestAutomatedFlextExceptions:
             return r[t.Container].fail(f"FlextExceptions operation failed: {e}")
 
     @pytest.fixture
-    def test_exceptions_instance(self) -> object:
+    def test_exceptions_instance(self):
         """Fixture for exceptions test instance."""
         return fixture_factory.create_test_exceptions_instance()

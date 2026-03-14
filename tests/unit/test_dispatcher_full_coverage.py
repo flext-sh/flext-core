@@ -8,7 +8,7 @@ from flext_core import FlextDispatcher, m, p, r, t
 from flext_core.dispatcher import _DispatchableHandler
 
 
-def _force_handler(obj: object) -> _DispatchableHandler:
+def _force_handler(obj) -> _DispatchableHandler:
     """Return a no-op _DispatchableHandler for error-path testing.
 
     For non-callable objects (str, dict), returns a wrapper with no route
@@ -16,7 +16,7 @@ def _force_handler(obj: object) -> _DispatchableHandler:
     """
 
     def _wrapper(
-        *_args: object,
+        *_args,
         **_kwargs: t.Scalar,
     ) -> p.ResultLike[t.Container] | t.Container | None:
         return "invalid"
@@ -24,7 +24,7 @@ def _force_handler(obj: object) -> _DispatchableHandler:
     return _wrapper
 
 
-def _force_routable(obj: object) -> p.Routable:
+def _force_routable(obj) -> p.Routable:
     """Create a minimal Routable-compatible object for error-path testing."""
 
     class _FakeRoutable:

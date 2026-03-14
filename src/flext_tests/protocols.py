@@ -334,7 +334,7 @@ class FlextTestsProtocols(FlextProtocols):
                 Uses structural typing - any object with compose/client_config.
                 """
 
-                compose: object
+                compose
                 "Compose API access (python-on-whales style)."
                 client_config: Mapping[str, object]
                 "Client configuration (python-on-whales style)."
@@ -625,7 +625,7 @@ class FlextTestsProtocols(FlextProtocols):
                 Structural typing for objects that can validate lengths.
                 """
 
-                def validate(self, value: object, spec: int | tuple[int, int]) -> bool:
+                def validate(self, value, spec: int | tuple[int, int]) -> bool:
                     """Validate length against spec.
 
                     Args:
@@ -649,7 +649,7 @@ class FlextTestsProtocols(FlextProtocols):
                     """Finish chain and return value (for success)."""
                     ...
 
-                def eq(self, expected: object, msg: str | None = None) -> Self:
+                def eq(self, expected, msg: str | None = None) -> Self:
                     """Assert value equals expected."""
                     ...
 
@@ -663,7 +663,7 @@ class FlextTestsProtocols(FlextProtocols):
                     """Assert result is failure."""
                     ...
 
-                def has(self, item: object, msg: str | None = None) -> Self:
+                def has(self, item, msg: str | None = None) -> Self:
                     """Assert value/error contains item."""
                     ...
 
@@ -682,7 +682,7 @@ class FlextTestsProtocols(FlextProtocols):
                 Structural typing for objects that can manage test execution scopes.
                 """
 
-                def exit_scope(self, scope: object) -> None:
+                def exit_scope(self, scope) -> None:
                     """Exit test execution scope and cleanup.
 
                     Args:
@@ -1014,7 +1014,7 @@ class FlextTestsProtocols(FlextProtocols):
                 functions used with sorted().
 
                 Example:
-                    def get_id(obj: object) -> int:
+                    def get_id(obj) -> int:
                         return obj.id  # int supports __lt__
 
                     sorted(items, key=get_id)  # OK - int satisfies SupportsLessThan

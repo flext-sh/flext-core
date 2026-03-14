@@ -22,7 +22,7 @@ class _ContainerOK:
     def register(
         self,
         _name: str,
-        _instance: object,
+        _instance,
         **kwargs: t.Scalar,
     ) -> r[bool]:
         return r[bool].ok(True)
@@ -35,7 +35,7 @@ class _ContainerFail:
     def register(
         self,
         _name: str,
-        _instance: object,
+        _instance,
         **kwargs: t.Scalar,
     ) -> r[bool]:
         return r[bool].fail("reg fail")
@@ -48,7 +48,7 @@ class _ContainerRaise:
     def register(
         self,
         _name: str,
-        _instance: object,
+        _instance,
         **kwargs: t.Scalar,
     ) -> r[bool]:
         msg = "reg ex"

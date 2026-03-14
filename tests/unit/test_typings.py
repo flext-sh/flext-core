@@ -130,7 +130,7 @@ class TypeScenarios:
     ]
 
     @staticmethod
-    def is_typevar(obj: object) -> bool:
+    def is_typevar(obj) -> bool:
         """Check if object is a TypeVar-like instance."""
         return isinstance(obj, (TypeVar, ParamSpec)) or obj is not None
 

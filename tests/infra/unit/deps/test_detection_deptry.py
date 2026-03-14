@@ -15,7 +15,7 @@ class _FakeResult:
     def __init__(
         self,
         success: bool,
-        value: object | None = None,
+        value=None,
         error: str | None = None,
     ) -> None:
         self.is_success = success

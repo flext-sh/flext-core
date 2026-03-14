@@ -41,7 +41,7 @@ def _build_domain_test_entity(
     return m.DomainTestEntity(name=name, value=cast("int", value))
 
 
-def _convert_to_general_value(obj: object) -> t.Tests.object:
+def _convert_to_general_value(obj) -> t.Tests.object:
     """Convert object to object (handles Pydantic models).
 
     Args:
@@ -66,7 +66,7 @@ def _convert_to_general_value(obj: object) -> t.Tests.object:
     if isinstance(obj, (list, tuple)):
         return cast(
             "t.Tests.object",
-            [_convert_to_general_value(elem) for elem in cast("list[object]", obj)],
+            [_convert_to_general_value(elem) for elem in cast("list", obj)],
         )
     return str(obj)
 
@@ -88,7 +88,7 @@ def _require_payload_mapping(
 
 
 def _as_test_payload(
-    value: object | type[t.Primitives],
+    value: type[t.Primitives],
 ) -> t.Tests.object:
     return cast("t.Tests.object", value)
 
@@ -475,7 +475,7 @@ class TestuDomain:
             _require_payload_mapping(test_case["input_data"]),
             id_attr=_require_payload_str(test_case.get("id_attr", "unique_id")),
         )
-        expected: object = test_case.get("expected_result")
+        expected = test_case.get("expected_result")
         if isinstance(expected, type):
             assert isinstance(operation_result, expected), (
                 f"Expected type {expected}, got {type(operation_result)}"
@@ -494,7 +494,7 @@ class TestuDomain:
             _require_payload_str(test_case["operation"]),
             _require_payload_mapping(test_case["input_data"]),
         )
-        expected: object = test_case.get("expected_result")
+        expected = test_case.get("expected_result")
         if isinstance(expected, type):
             assert isinstance(operation_result, expected), (
                 f"Expected {expected}, got {type(operation_result)}: {operation_result}"

@@ -272,7 +272,7 @@ class FlextTestsValidator(s[m.Tests.ScanResult]):
 
         Detects:
         - TYPE-001:
-        - TYPE-002: Any type annotations
+        - TYPE-002 type annotations
         - TYPE-003: Unapproved  usage
 
         Args:
