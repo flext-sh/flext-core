@@ -13,6 +13,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
+from datetime import datetime
+from pathlib import Path
 from typing import Literal, Self, TypeGuard, overload
 
 from pydantic import BaseModel, TypeAdapter, ValidationError
@@ -74,27 +76,35 @@ class FlextTestsBuilders:
         self._data = dict(data)
 
     @staticmethod
-    def _is_result_obj(value: object) -> TypeGuard[r[t.Tests.object]]:
+    def _is_result_obj(value: t.Tests.object) -> TypeGuard[r[t.Tests.object]]:
         return isinstance(value, r)
 
     @staticmethod
-    def _to_guard_input(value: t.Tests.object) -> t.Tests.object:
-        if value is None or isinstance(value, (*t.PRIMITIVES_TYPES, BaseModel)):
+    def _to_guard_input(value: t.Tests.object) -> t.NormalizedValue:
+        if value is None:
+            return None
+        if isinstance(value, (str, int, float, bool)):
             return value
+        if isinstance(value, datetime):
+            return value
+        if isinstance(value, Path):
+            return value
+        if isinstance(value, BaseModel):
+            return str(value)
         if isinstance(value, Mapping):
             try:
                 mapping_value = _TEST_CONTAINER_DICT_ADAPTER.validate_python(value)
-                return {
-                    key: FlextTestsBuilders._to_guard_input(
+                result: dict[str, t.NormalizedValue] = {}
+                for key, item in mapping_value.items():
+                    result[key] = FlextTestsBuilders._to_guard_input(
                         FlextTestsBuilders._to_payload_value(item)
                     )
-                    for key, item in mapping_value.items()
-                }
+                return result
             except ValidationError:
                 return {}
-        if isinstance(value, bytes):
+        if isinstance(value, (bytes, str)):
             return str(value)
-        if isinstance(value, Sequence) and (not isinstance(value, str | bytes)):
+        if isinstance(value, Sequence):  # pyright: ignore[reportUnnecessaryIsInstance]
             try:
                 sequence_values = _TEST_CONTAINER_LIST_ADAPTER.validate_python(value)
                 return [
@@ -108,7 +118,7 @@ class FlextTestsBuilders:
         return str(value)
 
     @staticmethod
-    def _to_payload_value(value: object) -> t.Tests.object:
+    def _to_payload_value(value: t.Tests.object) -> t.Tests.object:
         if value is None or isinstance(value, (*t.PRIMITIVES_TYPES, bytes, BaseModel)):
             return value
         if isinstance(value, Mapping):
@@ -220,13 +230,13 @@ class FlextTestsBuilders:
             cls_type = params.cls
 
             def is_entity_class(
-                cls: type[object],
+                cls: type[t.Tests.object],
             ) -> TypeGuard[type[m.Tests.Entity]]:
                 """Type guard to check if class is Entity subclass."""
                 return issubclass(cls, m.Tests.Entity)
 
             def is_value_class(
-                cls: type[object],
+                cls: type[t.Tests.object],
             ) -> TypeGuard[type[m.Tests.Value]]:
                 """Type guard to check if class is Value subclass."""
                 return issubclass(cls, m.Tests.Value)
@@ -239,7 +249,7 @@ class FlextTestsBuilders:
                 def entity_factory(
                     *, name: str, value: t.Tests.object
                 ) -> m.Tests.Entity:
-                    return entity_cls(name=name, value=value)
+                    return entity_cls(name=name, value=value, domain_events=[])
 
                 resolved_value = u.Tests.DomainHelpers.create_test_entity_instance(
                     name=str(name_val) if name_val else "",
@@ -415,16 +425,13 @@ class FlextTestsBuilders:
                     payload_value = self._to_payload_value(v)
                     if not self._is_result_obj(payload_value):
                         resolved_dict[str(k)] = payload_value
-                merge_result = u.merge(
-                    {
-                        key: self._to_guard_input(val)
-                        for key, val in existing_dict.items()
-                    },
-                    {
-                        key: self._to_guard_input(val)
-                        for key, val in resolved_dict.items()
-                    },
-                )
+                existing_normalized: dict[str, t.NormalizedValue] = {}
+                for key, val in existing_dict.items():
+                    existing_normalized[key] = self._to_guard_input(val)
+                resolved_normalized: dict[str, t.NormalizedValue] = {}
+                for key, val in resolved_dict.items():
+                    resolved_normalized[key] = self._to_guard_input(val)
+                merge_result = u.merge(existing_normalized, resolved_normalized)
                 if merge_result.is_success:
                     resolved_value = self._to_payload_value(merge_result.value)
             else:
@@ -666,7 +673,7 @@ class FlextTestsBuilders:
         """
         self._ensure_data_initialized()
         parts = path.split(".")
-        current: object = self._data
+        current: t.Tests.object = self._data
         for part in parts:
             if not isinstance(current, Mapping):
                 return default
@@ -1485,7 +1492,7 @@ class FlextTestsBuilders:
                 """Create batch entities - DELEGATES to u.Tests.DomainHelpers."""
 
                 def entity_factory(*, name: str, value: t.Tests.object) -> T:
-                    return entity_class(name=name, value=value)
+                    return entity_class(name=name, value=value, domain_events=[])
 
                 result: r[list[T]] = u.Tests.DomainHelpers.create_test_entities_batch(
                     names=list(names), values=list(values), entity_class=entity_factory
@@ -1521,7 +1528,7 @@ class FlextTestsBuilders:
                 """Create entity - DELEGATES to u.Tests.DomainHelpers."""
 
                 def entity_factory(*, name: str, value: t.Tests.object) -> T:
-                    return entity_class(name=name, value=value)
+                    return entity_class(name=name, value=value, domain_events=[])
 
                 return u.Tests.DomainHelpers.create_test_entity_instance(
                     name=name, value=value, entity_class=entity_factory
