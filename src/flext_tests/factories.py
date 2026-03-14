@@ -21,7 +21,7 @@ from __future__ import annotations
 
 import builtins
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
-from typing import Never, override
+from typing import Never, cast, override
 
 from pydantic import BaseModel, TypeAdapter, ValidationError
 
@@ -629,9 +629,11 @@ class FlextTestsFactories(s[t.Tests.object]):
                         strategy="deep",
                     )
                     if merge_result.is_success:
+                        merged_user = cast(
+                            "dict[str, t.NormalizedValue]", merge_result.value
+                        )
                         user_data = {
-                            str(k): _to_payload_value(v)
-                            for k, v in merge_result.value.items()
+                            str(k): _to_payload_value(v) for k, v in merged_user.items()
                         }
                 return m.Tests.User.model_validate(user_data)
             if params.kind == "config":
@@ -661,9 +663,12 @@ class FlextTestsFactories(s[t.Tests.object]):
                         strategy="deep",
                     )
                     if merge_result.is_success:
+                        merged_config = cast(
+                            "dict[str, t.NormalizedValue]", merge_result.value
+                        )
                         config_data = {
                             str(k): _to_payload_value(v)
-                            for k, v in merge_result.value.items()
+                            for k, v in merged_config.items()
                         }
                 return m.Tests.Config.model_validate(config_data)
             if params.kind == "service":
@@ -1273,9 +1278,8 @@ class FlextTestsFactories(s[t.Tests.object]):
             strategy="deep",
         )
         if merge_result.is_success:
-            user_data = {
-                str(k): _to_payload_value(v) for k, v in merge_result.value.items()
-            }
+            merged_data = cast("dict[str, t.NormalizedValue]", merge_result.value)
+            user_data = {str(k): _to_payload_value(v) for k, v in merged_data.items()}
         return m.Tests.User.model_validate(user_data)
 
     @override

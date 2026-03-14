@@ -120,7 +120,6 @@ if TYPE_CHECKING:
     from examples.shared import Examples
     from flext_core.typings import FlextTypes
 
-# Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "DatabaseService": ("examples.logging_config_once_pattern", "DatabaseService"),
     "Ex00UserInput": ("examples._models.ex00", "Ex00UserInput"),

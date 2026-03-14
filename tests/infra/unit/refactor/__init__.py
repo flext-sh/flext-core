@@ -77,7 +77,6 @@ if TYPE_CHECKING:
         test_refactor_project_integrates_safety_manager,
     )
 
-# Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "EngineSafetyStub": (
         "tests.infra.unit.refactor.test_infra_refactor_safety",

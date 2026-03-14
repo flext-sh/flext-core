@@ -91,7 +91,6 @@ if TYPE_CHECKING:
         TestGeneratedFilesAreValidPython,
     )
 
-# Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "TestAllDirectoriesScanned": (
         "tests.infra.unit.codegen.lazy_init_tests",

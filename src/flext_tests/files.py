@@ -1606,8 +1606,8 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
             return r[bool].ok(False)
         return r[bool].ok(
             u.deep_eq(
-                cast(Mapping[str, t.Tests.object], left_result.value),
-                cast(Mapping[str, t.Tests.object], right_result.value),
+                cast("Mapping[str, t.Tests.object]", left_result.value),
+                cast("Mapping[str, t.Tests.object]", right_result.value),
             )
         )
 

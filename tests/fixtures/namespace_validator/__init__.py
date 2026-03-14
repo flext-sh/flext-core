@@ -33,7 +33,6 @@ if TYPE_CHECKING:
 
     from flext_core.typings import FlextTypes
 
-# Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "DEFAULT_TIMEOUT": (
         "tests.fixtures.namespace_validator.rule1_loose_constant",

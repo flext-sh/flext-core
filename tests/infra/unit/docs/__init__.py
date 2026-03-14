@@ -70,7 +70,6 @@ if TYPE_CHECKING:
         validator,
     )
 
-# Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "TestAdrHelpers": ("tests.infra.unit.docs.validator_internals", "TestAdrHelpers"),
     "TestAuditorBrokenLinks": (

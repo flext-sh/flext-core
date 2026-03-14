@@ -22,7 +22,6 @@ if TYPE_CHECKING:
         logger,
     )
 
-# Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextInfraPythonVersionEnforcer": (
         "flext_infra.maintenance.python_version",

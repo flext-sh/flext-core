@@ -89,7 +89,6 @@ if TYPE_CHECKING:
     from examples._models.shared import SharedHandle, SharedPerson
     from flext_core.typings import FlextTypes
 
-# Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "Ex00UserInput": ("examples._models.ex00", "Ex00UserInput"),
     "Ex00UserProfile": ("examples._models.ex00", "Ex00UserProfile"),

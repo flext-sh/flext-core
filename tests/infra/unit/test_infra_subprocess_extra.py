@@ -91,7 +91,7 @@ class TestFlextInfraCommandRunnerExtra:
         runner = FlextInfraUtilitiesSubprocess()
         output_file = tmp_path / "output.txt"
 
-        def mock_run(*args, **kwargs: t.Scalar):
+        def mock_run(*args: t.Scalar, **kwargs: t.Scalar) -> None:
             msg = "Invalid argument"
             raise ValueError(msg)
 

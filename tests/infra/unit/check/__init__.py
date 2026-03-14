@@ -126,7 +126,6 @@ if TYPE_CHECKING:
         test_workspace_check_main_returns_error_without_projects,
     )
 
-# Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "CheckProjectStub": (
         "tests.infra.unit.check.extended_run_projects",

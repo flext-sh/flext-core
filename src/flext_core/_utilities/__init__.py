@@ -43,7 +43,6 @@ if TYPE_CHECKING:
     from flext_core._utilities.text import FlextUtilitiesText
     from flext_core.typings import FlextTypes
 
-# Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextUtilitiesArgs": ("flext_core._utilities.args", "FlextUtilitiesArgs"),
     "FlextUtilitiesCache": ("flext_core._utilities.cache", "FlextUtilitiesCache"),

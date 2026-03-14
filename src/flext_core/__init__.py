@@ -22,6 +22,23 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from flext_core._utilities.lazy import cleanup_submodule_namespace, lazy_getattr
+from flext_core.typings import (
+    TV,
+    EnumT,
+    MessageT_contra,
+    P,
+    R,
+    ResultT,
+    T,
+    T_co,
+    T_contra,
+    T_Model,
+    T_Namespace,
+    T_Settings,
+    TRuntime,
+    TV_co,
+    U,
+)
 
 if TYPE_CHECKING:
     from flext_core.__version__ import (
@@ -91,33 +108,15 @@ if TYPE_CHECKING:
     from flext_core.runtime import FlextRuntime
     from flext_core.service import FlextService, s
     from flext_core.settings import FlextSettings
-    from flext_core.typings import (
-        TV,
-        EnumT,
-        FlextTypes,
-        P,
-        R,
-        ResultT,
-        T,
-        T_co,
-        T_contra,
-        T_Model,
-        T_Settings,
-        TRuntime,
-        TV_co,
-        U,
-        t,
-    )
+    from flext_core.typings import FlextTypes, RegistryBindingKey, t
     from flext_core.utilities import FlextUtilities, u, validate_pydantic_model
 
-# Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "CircuitBreakerManager": (
         "flext_core._dispatcher.reliability",
         "CircuitBreakerManager",
     ),
     "DispatchMessage": ("flext_core.dispatcher", "DispatchMessage"),
-    "EnumT": ("flext_core.typings", "EnumT"),
     "Execute": ("flext_core.dispatcher", "Execute"),
     "FactoryDecoratorsDiscovery": (
         "flext_core._decorators.discovery",
@@ -205,22 +204,11 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextUtilitiesText": ("flext_core._utilities.text", "FlextUtilitiesText"),
     "Handle": ("flext_core.dispatcher", "Handle"),
     "Metadata": ("flext_core.exceptions", "Metadata"),
-    "P": ("flext_core.typings", "P"),
-    "R": ("flext_core.typings", "R"),
     "RateLimiterManager": ("flext_core._dispatcher.reliability", "RateLimiterManager"),
+    "RegistryBindingKey": ("flext_core.typings", "RegistryBindingKey"),
     "ResultHelpers": ("flext_core._utilities.result_helpers", "ResultHelpers"),
-    "ResultT": ("flext_core.typings", "ResultT"),
     "RetryPolicy": ("flext_core._dispatcher.reliability", "RetryPolicy"),
-    "T": ("flext_core.typings", "T"),
-    "TRuntime": ("flext_core.typings", "TRuntime"),
-    "TV": ("flext_core.typings", "TV"),
-    "TV_co": ("flext_core.typings", "TV_co"),
-    "T_Model": ("flext_core.typings", "T_Model"),
-    "T_Settings": ("flext_core.typings", "T_Settings"),
-    "T_co": ("flext_core.typings", "T_co"),
-    "T_contra": ("flext_core.typings", "T_contra"),
     "TimeoutEnforcer": ("flext_core._dispatcher.timeout", "TimeoutEnforcer"),
-    "U": ("flext_core.typings", "U"),
     "__all__": ("flext_core.__version__", "__all__"),
     "__author__": ("flext_core.__version__", "__author__"),
     "__author_email__": ("flext_core.__version__", "__author_email__"),
@@ -302,10 +290,12 @@ __all__ = [
     "FlextUtilitiesReliability",
     "FlextUtilitiesText",
     "Handle",
+    "MessageT_contra",
     "Metadata",
     "P",
     "R",
     "RateLimiterManager",
+    "RegistryBindingKey",
     "ResultHelpers",
     "ResultT",
     "RetryPolicy",
@@ -313,6 +303,7 @@ __all__ = [
     "TRuntime",
     "TV_co",
     "T_Model",
+    "T_Namespace",
     "T_Settings",
     "T_co",
     "T_contra",

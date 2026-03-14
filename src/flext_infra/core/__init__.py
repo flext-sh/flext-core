@@ -30,7 +30,6 @@ if TYPE_CHECKING:
     from flext_infra.core.skill_validator import FlextInfraSkillValidator
     from flext_infra.core.stub_chain import FlextInfraStubSupplyChain
 
-# Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextInfraBaseMkValidator": (
         "flext_infra.core.basemk_validator",

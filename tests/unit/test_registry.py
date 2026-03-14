@@ -28,8 +28,8 @@ from typing import Annotated, ClassVar, cast, override
 import pytest
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import FlextRegistry, c, h, m, r, t
-from flext_tests import FlextTestsUtilities, u
+from flext_core import FlextRegistry, c, h, m, r
+from flext_tests import FlextTestsUtilities, t, u
 
 
 class RegistryOperationType(StrEnum):
@@ -81,15 +81,15 @@ class RegistryTestCase(BaseModel):
     ] = False
 
 
-class ConcreteTestHandler(h[object, object]):
+class ConcreteTestHandler(h[t.Tests.object, t.Tests.object]):
     """Concrete implementation of h for testing."""
 
     @override
-    def handle(self, message) -> r[str]:
+    def handle(self, message: t.Tests.object) -> r[str]:
         """Handle the message."""
         return r[str].ok(f"processed_{message}")
 
-    def __call__(self, message) -> r[str]:
+    def __call__(self, message: t.Tests.object) -> r[str]:
         """Make handler callable for registry validation."""
         return self.handle(message)
 

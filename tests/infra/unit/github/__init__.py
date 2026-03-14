@@ -62,7 +62,6 @@ if TYPE_CHECKING:
         TestWriteReport,
     )
 
-# Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "TestCheckpoint": ("tests.infra.unit.github.pr_workspace", "TestCheckpoint"),
     "TestChecks": ("tests.infra.unit.github.pr_operations", "TestChecks"),

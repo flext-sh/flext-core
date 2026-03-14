@@ -37,7 +37,6 @@ if TYPE_CHECKING:
         TestScanModels as m,
     )
 
-# Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "MockScanner": ("tests.infra.unit._utilities.test_scanning", "MockScanner"),
     "TestDiscoveryDiscoverProjects": (

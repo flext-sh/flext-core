@@ -292,7 +292,6 @@ if TYPE_CHECKING:
     from flext_infra.workspace.orchestrator import FlextInfraOrchestratorService
     from flext_infra.workspace.sync import FlextInfraSyncService
 
-# Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "CensusImportDiscoveryVisitor": (
         "flext_infra.refactor.transformers.census_visitors",

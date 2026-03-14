@@ -21,7 +21,6 @@ if TYPE_CHECKING:
     from flext_infra.basemk.engine import FlextInfraBaseMkTemplateEngine
     from flext_infra.basemk.generator import FlextInfraBaseMkGenerator
 
-# Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextInfraBaseMkGenerator": (
         "flext_infra.basemk.generator",

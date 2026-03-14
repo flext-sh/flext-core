@@ -39,7 +39,6 @@ if TYPE_CHECKING:
     from flext_core._models.settings import FlextModelsConfig
     from flext_core.typings import FlextTypes
 
-# Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextGenericModels": ("flext_core._models.generic", "FlextGenericModels"),
     "FlextModelFoundation": ("flext_core._models.base", "FlextModelFoundation"),

@@ -33,7 +33,6 @@ if TYPE_CHECKING:
         TestShouldUseUnicode,
     )
 
-# Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "ANSI_RE": ("tests.infra.unit.io.test_infra_output_formatting", "ANSI_RE"),
     "TestFlextInfraJsonService": (

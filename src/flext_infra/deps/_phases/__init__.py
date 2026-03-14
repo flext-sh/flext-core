@@ -26,7 +26,6 @@ if TYPE_CHECKING:
     from flext_infra.deps._phases.ensure_ruff import EnsureRuffConfigPhase
     from flext_infra.deps._phases.inject_comments import InjectCommentsPhase
 
-# Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "ConsolidateGroupsPhase": (
         "flext_infra.deps._phases.consolidate_groups",

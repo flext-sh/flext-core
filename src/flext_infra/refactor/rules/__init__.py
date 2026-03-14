@@ -41,7 +41,6 @@ if TYPE_CHECKING:
         FlextInfraRefactorSymbolPropagationRule,
     )
 
-# Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "ClassNestingRefactorRule": (
         "flext_infra.refactor.rules.class_nesting",

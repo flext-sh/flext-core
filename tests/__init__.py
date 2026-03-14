@@ -2130,7 +2130,6 @@ if TYPE_CHECKING:
     from tests.unit.test_version import TestFlextVersion
     from tests.utilities import TestsFlextUtilities, u
 
-# Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "AlgarOudMigConstants": (
         "tests.integration.test_refactor_policy_mro",

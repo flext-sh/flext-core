@@ -23,7 +23,6 @@ if TYPE_CHECKING:
         TestPerformanceBenchmarks,
     )
 
-# Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "PerformanceBenchmark": (
         "tests.benchmark.test_container_performance",

@@ -25,7 +25,6 @@ if TYPE_CHECKING:
         run_cli,
     )
 
-# Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "CheckIssue": ("flext_infra.check.services", "CheckIssue"),
     "FlextInfraConfigFixer": ("flext_infra.check.services", "FlextInfraConfigFixer"),

@@ -25,7 +25,6 @@ if TYPE_CHECKING:
     from flext_infra.docs.shared import FlextInfraDocsShared
     from flext_infra.docs.validator import FlextInfraDocValidator
 
-# Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextInfraDocAuditor": ("flext_infra.docs.auditor", "FlextInfraDocAuditor"),
     "FlextInfraDocBuilder": ("flext_infra.docs.builder", "FlextInfraDocBuilder"),

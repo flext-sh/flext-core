@@ -357,8 +357,9 @@ def test_parser_internal_helpers_additional_coverage() -> None:
     assert attrs.is_success and attrs.value == "x1"
     split = parser._process_escape_splitting("a\\,b,c", ",", "\\")
     assert split.is_success
-    assert split.value[0] == ["a,b", "c"]
-    assert split.value[1] == 1
+    split_val = cast("tuple[list[str], int]", split.value)
+    assert split_val[0] == ["a,b", "c"]
+    assert split_val[1] == 1
     handled_none = parser._handle_pipeline_edge_cases(None, [("a", "b")])
     handled_empty = parser._handle_pipeline_edge_cases("", [("a", "b")])
     handled_patterns = parser._handle_pipeline_edge_cases("abc", [])

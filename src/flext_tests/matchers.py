@@ -267,7 +267,7 @@ class FlextTestsMatchers:
         if not result.is_success:
             error_msg = msg or f"Expected success but got failure: {result.error}"
             raise AssertionError(error_msg)
-        return result.value
+        return cast("TResult", result.value)
 
     @staticmethod
     def check[TResult](result: r[TResult]) -> m.Tests.Chain[TResult]:
@@ -514,7 +514,9 @@ class FlextTestsMatchers:
                         path=path_str, error=extracted.error
                     )
                 )
-            extracted_payload = _to_test_payload(extracted.value)
+            extracted_payload = _to_test_payload(
+                cast("t.Tests.Matcher.MatcherKwargValue", extracted.value)
+            )
             result_value = extracted_payload
         has_validation = (
             params.eq is not None
@@ -570,8 +572,7 @@ class FlextTestsMatchers:
                 )
             )
         _check_has_lacks(result_value, params.has, params.lacks, params.msg)
-        result_value_obj = result_value if params.path is None else result_value
-        result_payload = _to_test_payload(result_value_obj)
+        result_payload = _to_test_payload(result_value)
         if params.len is not None and (
             not u.Tests.Length.validate(result_payload, params.len)
         ):
@@ -737,8 +738,8 @@ class FlextTestsMatchers:
                         )
 
     @staticmethod
-    def that(
-        value: t.Tests.Matcher.MatcherKwargValue,
+    def that[V](
+        value: V,
         **kwargs: t.Tests.Matcher.MatcherKwargValue,
     ) -> None:
         r"""Super-powered universal value assertion - ALL validations in ONE method.
@@ -865,7 +866,9 @@ class FlextTestsMatchers:
             else:
                 actual_value = result_obj.error or ""
             subject = _to_test_payload(actual_value)
-        subject_payload = _to_test_payload(subject)
+        subject_payload = _to_test_payload(
+            cast("t.Tests.Matcher.MatcherKwargValue", subject)
+        )
         has_validation = (
             raw_eq is not None
             or raw_ne is not None

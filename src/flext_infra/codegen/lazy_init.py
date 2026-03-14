@@ -190,12 +190,17 @@ class FlextInfraCodegenLazyInit(s[int]):
         for infra_name in ("cleanup_submodule_namespace", "lazy_getattr"):
             lazy_map.pop(infra_name, None)
 
+        # 6b. Detect TypeVars — must be eager, not lazy
+        eager_tvars = frozenset(
+            _detect_eager_typevar_names(pkg_dir) & set(lazy_map),
+        )
+
         # 7. Remove inline constants from lazy map (inlined directly)
         for k in inline_constants:
             lazy_map.pop(k, None)
 
-        # 8. Build final exports list
-        exports = sorted(set(lazy_map) | set(inline_constants))
+        # 8. Build final exports list (includes both lazy and eager)
+        exports = sorted(set(lazy_map) | set(inline_constants) | eager_tvars)
         if not exports:
             return (None, dict(lazy_map))
 
@@ -210,6 +215,7 @@ class FlextInfraCodegenLazyInit(s[int]):
             lazy_map,
             inline_constants,
             current_pkg,
+            eager_tvars,
         )
 
     def _write_init(
@@ -220,6 +226,7 @@ class FlextInfraCodegenLazyInit(s[int]):
         lazy_map: dict[str, tuple[str, str]],
         inline_constants: dict[str, str],
         current_pkg: str,
+        eager_typevar_names: frozenset[str] = frozenset(),
     ) -> tuple[int, dict[str, tuple[str, str]]]:
         """Write the generated ``__init__.py`` and run ruff fix."""
         try:
@@ -229,6 +236,7 @@ class FlextInfraCodegenLazyInit(s[int]):
                 lazy_map,
                 inline_constants,
                 current_pkg,
+                eager_typevar_names,
             )
             init_path.write_text(generated, encoding=c.Infra.Encoding.DEFAULT)
             _run_ruff_fix(init_path)
@@ -407,6 +415,41 @@ def _extract_inline_constants(tree: ast.Module) -> dict[str, str]:
     return constants
 
 
+_TYPEVAR_CALL_NAMES: frozenset[str] = frozenset({
+    "TypeVar",
+    "ParamSpec",
+    "TypeVarTuple",
+})
+
+
+def _detect_eager_typevar_names(pkg_dir: Path) -> set[str]:
+    """Detect module-level TypeVar/ParamSpec names in typings.py.
+
+    These MUST be exported eagerly (not via lazy __getattr__) because
+    Python needs them available at class definition time for Generic[T].
+    """
+    typings_file = pkg_dir / "typings.py"
+    if not typings_file.exists():
+        return set()
+    tree = u.Infra.parse_module_ast(typings_file)
+    if tree is None:
+        return set()
+    names: set[str] = set()
+    for node in tree.body:
+        if not isinstance(node, ast.Assign):
+            continue
+        if not (
+            isinstance(node.value, ast.Call)
+            and isinstance(node.value.func, ast.Name)
+            and node.value.func.id in _TYPEVAR_CALL_NAMES
+        ):
+            continue
+        for target in node.targets:
+            if isinstance(target, ast.Name) and not target.id.startswith("_"):
+                names.add(target.id)
+    return names
+
+
 # ---------------------------------------------------------------------------
 # Child-directory export merging (bottom-up)
 # ---------------------------------------------------------------------------
@@ -561,11 +604,15 @@ def _generate_file(
     filtered: Mapping[str, tuple[str, str]],
     inline_constants: Mapping[str, str],
     current_pkg: str,
+    eager_typevar_names: frozenset[str] = frozenset(),
 ) -> str:
     """Generate the complete ``__init__.py`` content."""
+    lazy_filtered: dict[str, tuple[str, str]] = {
+        name: val for name, val in filtered.items() if name not in eager_typevar_names
+    }
     groups: dict[str, list[tuple[str, str]]] = defaultdict(list)
-    for export_name in sorted(filtered):
-        mod, attr = filtered[export_name]
+    for export_name in sorted(lazy_filtered):
+        mod, attr = lazy_filtered[export_name]
         groups[mod].append((export_name, attr))
 
     out: list[str] = [c.Infra.Codegen.AUTOGEN_HEADER]
@@ -589,8 +636,18 @@ def _generate_file(
         "from typing import TYPE_CHECKING",
         "",
         lazy_import,
-        "",
     ])
+    if eager_typevar_names:
+        typings_mod = f"{current_pkg}.typings"
+        sorted_tvars = sorted(eager_typevar_names)
+        eager_line = f"from {typings_mod} import " + ", ".join(sorted_tvars)
+        if len(eager_line) > c.Infra.Codegen.MAX_LINE_LENGTH:
+            out.append(f"from {typings_mod} import (")
+            out.extend(f"    {tv}," for tv in sorted_tvars)
+            out.append(")")
+        else:
+            out.append(eager_line)
+    out.append("")
     out.extend(_generate_type_checking(groups))
     out.append("")
     for name, value in sorted(inline_constants.items()):
@@ -598,12 +655,11 @@ def _generate_file(
     if inline_constants:
         out.append("")
     out.extend([
-        "# Lazy import mapping: export_name -> (module_path, attr_name)",
         "_LAZY_IMPORTS: dict[str, tuple[str, str]] = {",
     ])
     for exp in sorted(exports):
-        if exp in filtered:
-            mod, attr = filtered[exp]
+        if exp in lazy_filtered:
+            mod, attr = lazy_filtered[exp]
             out.append(f'    "{exp}": ("{mod}", "{attr}"),')
     out.extend(["}", ""])
     out.append("__all__ = [")

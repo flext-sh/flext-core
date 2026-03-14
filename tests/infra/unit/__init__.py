@@ -986,7 +986,6 @@ if TYPE_CHECKING:
         test_sync_success_scenarios,
     )
 
-# Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "CheckProjectStub": (
         "tests.infra.unit.check.extended_run_projects",

@@ -33,7 +33,6 @@ if TYPE_CHECKING:
         FlextValidatorTypes as t,
     )
 
-# Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextValidatorBypass": ("flext_tests._validator.bypass", "FlextValidatorBypass"),
     "FlextValidatorImports": (

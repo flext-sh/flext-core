@@ -14,6 +14,7 @@ from typing import Annotated, override
 
 from pydantic import Field
 
+from flext_core import t
 from flext_infra.constants import FlextInfraConstants
 from flext_tests import m
 
@@ -30,7 +31,7 @@ class WorkspaceFactory(m.Config):
     encoding: Annotated[str, Field(default="utf-8")]
 
     @override
-    def model_post_init(self, __context) -> None:
+    def model_post_init(self, __context: dict[str, t.Scalar] | None) -> None:
         """Post-init to set defaults from c.Infra.Tests if available."""
         super().model_post_init(__context)
         if not self.default_python:

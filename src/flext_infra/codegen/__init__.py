@@ -28,7 +28,6 @@ if TYPE_CHECKING:
     from flext_infra.codegen.scaffolder import FlextInfraCodegenScaffolder
     from flext_infra.codegen.transforms import FlextInfraCodegenTransforms
 
-# Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextInfraCodegenCensus": (
         "flext_infra.codegen.census",

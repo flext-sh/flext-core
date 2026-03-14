@@ -64,7 +64,6 @@ if TYPE_CHECKING:
         test_basemk_main_with_write_failure,
     )
 
-# Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "TestFlextInfraBaseMk": ("tests.infra.unit.basemk.init", "TestFlextInfraBaseMk"),
     "test_basemk_build_config_with_none": (

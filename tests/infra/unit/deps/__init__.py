@@ -261,7 +261,6 @@ if TYPE_CHECKING:
         test_rewrite_poetry_with_non_dict_value,
     )
 
-# Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "TestBuildProjectReport": (
         "tests.infra.unit.deps.test_detection_classify",

@@ -17,7 +17,6 @@ if TYPE_CHECKING:
         TestInfraServiceRetrieval,
     )
 
-# Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "TestInfraContainerFunctions": (
         "tests.infra.unit.container.test_infra_container",

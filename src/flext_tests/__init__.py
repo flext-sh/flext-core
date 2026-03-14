@@ -46,7 +46,6 @@ if TYPE_CHECKING:
     from flext_tests.utilities import FlextTestsUtilities, u
     from flext_tests.validator import FlextTestsValidator, tv
 
-# Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextTestsBuilders": ("flext_tests.builders", "FlextTestsBuilders"),
     "FlextTestsConstants": ("flext_tests.constants", "FlextTestsConstants"),

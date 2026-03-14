@@ -480,7 +480,8 @@ class TestuDomain:
         )
         expected = test_case.get("expected_result")
         if isinstance(expected, type):
-            assert isinstance(operation_result, expected), (
+            expected_type = cast("type[t.Tests.object]", expected)
+            assert isinstance(operation_result, expected_type), (
                 f"Expected type {expected}, got {type(operation_result)}"
             )
         else:
@@ -499,7 +500,8 @@ class TestuDomain:
         )
         expected = test_case.get("expected_result")
         if isinstance(expected, type):
-            assert isinstance(operation_result, expected), (
+            expected_type = cast("type[t.Tests.object]", expected)
+            assert isinstance(operation_result, expected_type), (
                 f"Expected {expected}, got {type(operation_result)}: {operation_result}"
             )
         else:

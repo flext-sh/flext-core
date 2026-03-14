@@ -29,7 +29,6 @@ if TYPE_CHECKING:
     )
     from flext_infra.workspace.sync import FlextInfraSyncService, main
 
-# Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextInfraOrchestratorService": (
         "flext_infra.workspace.orchestrator",

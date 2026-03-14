@@ -90,7 +90,7 @@ def test_workspace_migrator_makefile_read_error(
     makefile.write_text("test")
     migrator = _build_migrator(_project(tmp_path, name="test-proj"), "base")
 
-    def _read_fail(*args, **kwargs: t.Scalar) -> str:
+    def _read_fail(*args: t.Scalar, **kwargs: t.Scalar) -> str:
         msg = "Read failed"
         raise OSError(msg)
 
@@ -108,7 +108,7 @@ def test_workspace_migrator_pyproject_write_error(
     pyproject.write_text("[tool.poetry]\n")
     migrator = _build_migrator(_project(tmp_path, name="test-proj"), "base")
 
-    def _write_fail(*args, **kwargs: t.Scalar) -> None:
+    def _write_fail(*args: t.Scalar, **kwargs: t.Scalar) -> None:
         msg = "Write failed"
         raise OSError(msg)
 

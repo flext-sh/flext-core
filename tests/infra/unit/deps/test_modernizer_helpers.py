@@ -99,9 +99,11 @@ def test_as_string_list(value: tomlkit.items.Item | None, expected: list[str]) -
 
 def test_as_string_list_toml_item(doc: TOMLDocument) -> None:
     doc["items"] = ["a", "b"]
-    tm.that(as_string_list(doc["items"]), eq=["a", "b"])
+    items_item: tomlkit.items.Item = tomlkit.item(["a", "b"])
+    tm.that(as_string_list(items_item), eq=["a", "b"])
     doc["value"] = 42
-    tm.that(as_string_list(doc["value"]), eq=[])
+    int_item: tomlkit.items.Item = tomlkit.item(42)
+    tm.that(as_string_list(int_item), eq=[])
 
 
 @pytest.mark.parametrize(

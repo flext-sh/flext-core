@@ -54,7 +54,6 @@ if TYPE_CHECKING:
     from flext_infra.deps.path_sync import FlextInfraDependencyPathSync, main
     from flext_infra.deps.tool_config import load_tool_config
 
-# Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "ConsolidateGroupsPhase": (
         "flext_infra.deps._phases.consolidate_groups",

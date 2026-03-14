@@ -59,7 +59,6 @@ if TYPE_CHECKING:
         TestFlextTestsUtilitiesTestContext,
     )
 
-# Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "TestAssertExists": ("tests.unit.flext_tests.test_files", "TestAssertExists"),
     "TestBatchOperations": ("tests.unit.flext_tests.test_files", "TestBatchOperations"),

@@ -155,7 +155,7 @@ class TestReleaseOrchestratorExecute:
         def fake_dispatch(
             _self: FlextInfraReleaseOrchestrator,
             phase: str,
-            *args,
+            *args: t.Scalar,
             **kwargs: t.Scalar,
         ) -> r[bool]:
             nonlocal call_count

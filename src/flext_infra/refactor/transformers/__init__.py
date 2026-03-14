@@ -60,7 +60,6 @@ if TYPE_CHECKING:
         FlextInfraRefactorSymbolPropagator,
     )
 
-# Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "CensusImportDiscoveryVisitor": (
         "flext_infra.refactor.transformers.census_visitors",

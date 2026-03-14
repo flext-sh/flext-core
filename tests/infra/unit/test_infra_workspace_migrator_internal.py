@@ -36,7 +36,7 @@ class TestMigratorInternalMakefile:
         proj = _project(tmp_path, "test-proj")
         migrator = _build_migrator(proj, "base")
 
-        def _read_fail(*_a, **_kw: t.Scalar) -> str:
+        def _read_fail(*_a: t.Scalar, **_kw: t.Scalar) -> str:
             msg = "Read failed"
             raise OSError(msg)
 
@@ -63,7 +63,7 @@ class TestMigratorInternalPyproject:
         proj = _project(tmp_path, "test-proj")
         migrator = _build_migrator(proj, "base")
 
-        def _write_fail(*_a, **_kw: t.Scalar) -> None:
+        def _write_fail(*_a: t.Scalar, **_kw: t.Scalar) -> None:
             msg = "Write failed"
             raise OSError(msg)
 

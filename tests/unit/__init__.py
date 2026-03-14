@@ -919,7 +919,6 @@ if TYPE_CHECKING:
     )
     from tests.unit.test_version import TestFlextVersion
 
-# Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "AttrObject": ("tests.unit.test_utilities_mapper_full_coverage", "AttrObject"),
     "AutoCommand": ("tests.unit.test_dispatcher_minimal", "AutoCommand"),

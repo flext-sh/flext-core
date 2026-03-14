@@ -55,7 +55,6 @@ if TYPE_CHECKING:
     from flext_infra._utilities.versioning import FlextInfraUtilitiesVersioning
     from flext_infra._utilities.yaml import FlextInfraUtilitiesYaml
 
-# Lazy import mapping: export_name -> (module_path, attr_name)
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextInfraUtilitiesDiscovery": (
         "flext_infra._utilities.discovery",
