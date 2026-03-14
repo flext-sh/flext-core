@@ -1,5 +1,12 @@
+"""Coverage tests for current utilities reliability APIs."""
+
 from __future__ import annotations
 
+from typing import Never
+
+import pytest
+
+import flext_core._utilities.reliability as reliability_module
 from flext_core import c, m, r, t, u
 
 
@@ -7,41 +14,47 @@ def test_utilities_reliability_branches() -> None:
     assert c.Errors.UNKNOWN_ERROR
     assert isinstance(m.Categories(), m.Categories)
     assert r[int].ok(1).is_success
-    assert isinstance(t.ConfigMap.model_validate({"k": 1}), t.ConfigMap)
+    assert isinstance(m.ConfigMap({"k": 1}), m.ConfigMap)
 
-    fail = u.Reliability.retry(
-        lambda: r[int].fail("e"), max_attempts=1, delay_seconds=0.0
+    def _always_fail() -> r[t.Container]:
+        return r[t.Container].fail("e")
+
+    fail: r[t.Container] = u.retry(
+        _always_fail,
+        max_attempts=1,
+        delay_seconds=0.0,
     )
     assert fail.is_failure
-
-    delay_default = u.Reliability.calculate_delay(0, None)
+    delay_default = u.calculate_delay(0, None)
     assert isinstance(delay_default, float)
-
-    with_cleanup = u.Reliability.with_retry(
+    assert u.with_retry(
         lambda: (_ for _ in ()).throw(ValueError("x")),
         max_attempts=2,
         cleanup_func=lambda: None,
-    )
-    assert with_cleanup.is_failure
-
-    assert u.Reliability.pipe("x").is_success
-    assert u.Reliability._is_general_value_type(None) is True
-    assert callable(u.Reliability.compose(lambda x: x, mode="pipe"))
+    ).is_failure
+    assert u.pipe("x").is_success
+    assert callable(u.compose(lambda x: x, mode="pipe"))
 
 
 def test_utilities_reliability_uncovered_retry_compose_and_sequence_paths(
-    monkeypatch,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     sleep_calls: list[float] = []
+
+    def _record_sleep(seconds: float) -> None:
+        sleep_calls.append(seconds)
+
     monkeypatch.setattr(
-        "flext_core._utilities.reliability.time.sleep",
-        lambda seconds: sleep_calls.append(seconds),
+        reliability_module.time,
+        "sleep",
+        _record_sleep,
     )
 
-    def _raise_once() -> r[int]:
-        raise ValueError("boom")
+    def _raise_once() -> r[Never]:
+        msg = "boom"
+        raise ValueError(msg)
 
-    failed = u.Reliability.retry(
+    failed: r[Never] = u.retry(
         _raise_once,
         max_attempts=2,
         delay_seconds=0.01,
@@ -49,20 +62,21 @@ def test_utilities_reliability_uncovered_retry_compose_and_sequence_paths(
     )
     assert failed.is_failure
     assert len(sleep_calls) == 1
-
-    exhausted = u.Reliability.with_retry(lambda: r[int].ok(1), max_attempts=0)
+    exhausted = u.with_retry(lambda: r[int].ok(1), max_attempts=0)
     assert exhausted.is_failure
 
-    assert u.Reliability._is_general_value_type((1, 2, 3)) is True
 
+def test_utilities_reliability_compose_returns_non_result_directly(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
 
-def test_utilities_reliability_compose_returns_non_result_directly(monkeypatch) -> None:
-    import flext_core._utilities.reliability as reliability_module
+    def _always_ok(*_args: object, **_kwargs: t.Scalar) -> r[int]:
+        return r[int].ok(7)
 
     monkeypatch.setattr(
         reliability_module.FlextUtilitiesReliability,
         "pipe",
-        staticmethod(lambda *_args, **_kwargs: 7),
+        staticmethod(_always_ok),
     )
     piped = reliability_module.FlextUtilitiesReliability.compose(
         lambda value: value,

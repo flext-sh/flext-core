@@ -1,7 +1,6 @@
 # API References Combined Audit Report
 
 <!-- TOC START -->
-
 - [Executive Summary](#executive-summary)
 - [Current State by File](#current-state-by-file)
   - [foundation.md (Layers 0, 0.5, 1)](#foundationmd-layers-0-05-1)
@@ -9,7 +8,6 @@
   - [application.md (Layer 3)](#applicationmd-layer-3)
   - [infrastructure.md (Layer 4)](#infrastructuremd-layer-4)
 - [Recommended Fixes](#recommended-fixes)
-
 <!-- TOC END -->
 
 **Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency
@@ -35,8 +33,8 @@ ______________________________________________________________________
 
 ### foundation.md (Layers 0, 0.5, 1)
 
-- **Strengths**: Clear coverage of `FlextConstants`, `t`, `p`, `FlextResult`, `FlextContainer`, and `FlextExceptions` with minimal imports.
-- **Gaps**: Add a short example for `FlextResult.map_error`/`flat_map`, confirm constants/types examples point to active symbols, and include a one-liner showing the alias import pattern (`from flext_core import u, t, c, m, p, r, e, d, s, x, h`).
+- **Strengths**: Clear coverage of `FlextConstants`, `t`, `p`, `r`, `FlextContainer`, and `FlextExceptions` with minimal imports.
+- **Gaps**: Add a short example for `r.map_error`/`flat_map`, confirm constants/types examples point to active symbols, and include a one-liner showing the alias import pattern (`from flext_core import u, t, c, m, p, r, e, d, s, x, h`).
 
 ### domain.md (Layer 2)
 

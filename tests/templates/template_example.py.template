@@ -2,7 +2,7 @@
 
 This template provides:
 - Real functionality testing (no mocks)
-- FlextResult[T] patterns throughout
+- r[T] patterns throughout
 - 2-level namespace maximum compliance
 - Zero circular dependency patterns
 - Automated test execution with proper error handling
@@ -11,7 +11,7 @@ Usage:
     1. Copy this template to create new test files
     2. Replace TEMPLATE placeholders with actual test logic
     3. Use automation_framework fixtures for common operations
-    4. Follow FlextResult[T] patterns for all operations that can fail
+    4. Follow r[T] patterns for all operations that can fail
 """
 
 from __future__ import annotations
@@ -29,7 +29,7 @@ class TestTEMPLATECategory:
     """Test TEMPLATE functionality with real operations.
 
     Follows strict type-system-architecture.md rules:
-    - Uses FlextResult[T] for all operations that can fail
+    - Uses r[T] for all operations that can fail
     - Tests real functionality, not mocked behavior
     - Maintains 2-level namespace maximum
     - Zero circular dependencies
@@ -54,7 +54,7 @@ class TestTEMPLATECategory:
         # Use real operation through facade (never direct implementation)
         result = u.TEMPLATE.process_data(test_data["input"])
 
-        # Always use FlextResult assertion patterns
+        # Always use r assertion patterns
         actual_output = test_framework.assert_result_success(
             result,
             f"TEMPLATE operation failed for input: {test_data['input']}",
@@ -132,7 +132,7 @@ class TestTEMPLATECategory:
         )
 
     def test_template_error_propagation(self) -> None:
-        """Test TEMPLATE error propagation through FlextResult chain."""
+        """Test TEMPLATE error propagation through r chain."""
 
         # Create failing operation
         def failing_operation() -> r[str]:

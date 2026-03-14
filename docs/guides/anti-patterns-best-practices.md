@@ -1,7 +1,6 @@
 # Anti-Patterns and Best Practices
 
 <!-- TOC START -->
-
 - [Table of Contents](#table-of-contents)
 - [Error Handling Anti-Patterns](#error-handling-anti-patterns)
   - [Anti-Pattern 1: Using Exceptions for Business Logic](#anti-pattern-1-using-exceptions-for-business-logic)
@@ -19,7 +18,7 @@
   - [Anti-Pattern 10: Creating New Containers](#anti-pattern-10-creating-new-containers)
   - [Anti-Pattern 11: Not Checking Container Results](#anti-pattern-11-not-checking-container-results)
 - [Model Anti-Patterns](#model-anti-patterns)
-  - [Anti-Pattern 12: Validation in Models Without FlextResult](#anti-pattern-12-validation-in-models-without-flextresult)
+  - [Anti-Pattern 12: Validation in Models Without r](#anti-pattern-12-validation-in-models-without-flextresult)
   - [Anti-Pattern 13: Mutable Value Objects](#anti-pattern-13-mutable-value-objects)
 - [Configuration Anti-Patterns](#configuration-anti-patterns)
   - [Anti-Pattern 14: Hardcoded Configuration](#anti-pattern-14-hardcoded-configuration)
@@ -33,7 +32,6 @@
   - [Configuration](#configuration)
 - [Next Steps](#next-steps)
 - [See Also](#see-also)
-
 <!-- TOC END -->
 
 **Status**: Production Ready | **Version**: 0.10.0 | **Focus**: Common FLEXT-Core mistakes and solutions
@@ -67,6 +65,7 @@ def validate_user(data: dict) -> User:
         raise ValueError("Password too short")  # Business error
     return User(**data)
 
+
 # Caller must handle exceptions
 try:
     user = validate_user(data)
@@ -82,19 +81,21 @@ except ValueError as e:
 - Performance cost of exception handling
 - Difficult to compose with other operations
 
-**Solution**: Use FlextResult railway pattern
+**Solution**: Use r railway pattern
 
 ```python
 # ✅ CORRECT - Railway pattern
-from flext_core import FlextResult
+from flext_core import r
 
-def validate_user(data: dict) -> FlextResult[User]:
-    """Returns FlextResult wrapping success or failure."""
+
+def validate_user(data: dict) -> r[User]:
+    """Returns r wrapping success or failure."""
     if "email" not in data:
-        return FlextResult[User].fail("Email is required")
+        return r[User].fail("Email is required")
     if len(data.get("password", "")) < 8:
-        return FlextResult[User].fail("Password too short")
-    return FlextResult[User].ok(User(**data))
+        return r[User].fail("Password too short")
+    return r[User].ok(User(**data))
+
 
 # Caller handles results
 result = validate_user(data)
@@ -139,21 +140,22 @@ def load_config() -> dict:
 
 ```python
 # ✅ CORRECT - Explicit error handling
-from flext_core import FlextResult
+from flext_core import r
 
-def load_config() -> FlextResult[dict]:
+
+def load_config() -> r[dict]:
     """Loads config with explicit error handling."""
     try:
         with open("config.json") as f:
-            return FlextResult[dict].ok(json.load(f))
+            return r[dict].ok(json.load(f))
     except FileNotFoundError:
-        return FlextResult[dict].fail(
+        return r[dict].fail(
             "Config file not found",
             error_code="CONFIG_NOT_FOUND",
             error_data={"filename": "config.json"},
         )
     except json.JSONDecodeError as e:
-        return FlextResult[dict].fail(
+        return r[dict].fail(
             f"Invalid JSON in config: {e}",
             error_code="CONFIG_PARSE_ERROR",
         )
@@ -172,7 +174,7 @@ def load_config() -> FlextResult[dict]:
 
 ```python
 # ❌ ANTI-PATTERN - Missing context
-result = FlextResult[dict].fail("An error occurred")
+result = r[dict].fail("An error occurred")
 # No error code, no metadata - hard to debug
 ```
 
@@ -182,7 +184,7 @@ result = FlextResult[dict].fail("An error occurred")
 # ✅ CORRECT - Rich error context
 from flext_core import FlextConstants
 
-result = FlextResult[dict].fail(
+result = r[dict].fail(
     "Database connection failed after 3 retries",
     error_code=FlextConstants.Errors.DATABASE_ERROR,
     error_data={
@@ -206,6 +208,7 @@ ______________________________________________________________________
 # ❌ ANTI-PATTERN - Disables type checking
 from typing import Any
 
+
 def process_data(data: Any) -> Any:
     """Returns Any - type checker can't help."""
     return data.something()  # IDE doesn't know what methods are available
@@ -226,15 +229,18 @@ from typing import TypeVar, Generic
 
 T = TypeVar("T")
 
+
 def process_data(data: dict[str, object]) -> dict[str, object]:
     """Specific types - type checker validates."""
     return data  # IDE knows dict methods
+
 
 # Or with generics
 class Container(Generic[T]):
     def process(self, data: T) -> T:
         """Generic preserves type."""
         return data
+
 
 # Type checker knows exact type when used
 container = Container[str]()
@@ -288,6 +294,7 @@ def calculate_total(items: list[Item]) -> Decimal:
 # ✅ CORRECT - Proper typing
 from decimal import Decimal
 
+
 def calculate_total(items: list[Item]) -> Decimal:
     total = Decimal("0")  # Correct type from start
     for item in items:
@@ -303,7 +310,7 @@ ______________________________________________________________________
 
 **Problem**: Modules importing each other violates layer hierarchy.
 
-```
+```python
 config.py imports → result.py
     ↓
 result.py imports ← config.py
@@ -313,11 +320,11 @@ result.py imports ← config.py
 ```python
 # config.py
 # ❌ ANTI-PATTERN - Imports from higher layer
-from flext_core.result import FlextResult  # config is higher than result
+from flext_core import r  # config is higher than result
 
 # result.py
 # ❌ ANTI-PATTERN - Imports from lower layer
-from flext_core.settings import FlextSettings  # result is lower than config
+from flext_core import FlextSettings  # result is lower than config
 ```
 
 **Why it's wrong**:
@@ -329,10 +336,10 @@ from flext_core.settings import FlextSettings  # result is lower than config
 
 **Solution**: Respect layer hierarchy (only import downward)
 
-```
+```python
 Layer 0: FlextConstants, t, p (no imports from other layers)
 Layer 0.5: FlextRuntime (imports Layer 0 only)
-Layer 1: FlextResult, FlextContainer (imports Layer 0, 0.5 only)
+Layer 1: r, FlextContainer (imports Layer 0, 0.5 only)
 Layer 2: FlextModels, FlextService (imports Layer 0-1 only)
 Layer 3: h, FlextDispatcher (imports Layer 0-2 only)
 Layer 4: FlextSettings, FlextLogger (imports all lower layers)
@@ -341,12 +348,12 @@ Layer 4: FlextSettings, FlextLogger (imports all lower layers)
 ```python
 # ✅ CORRECT - Respect hierarchy
 # config.py (Layer 4) - can import from all lower layers
-from flext_core.result import FlextResult
-from flext_core.constants import FlextConstants
+from flext_core import r
+from flext_core import FlextConstants
 
 # result.py (Layer 1) - imports only from Layer 0
-from flext_core.constants import FlextConstants
-from flext_core.typings import t
+from flext_core import FlextConstants
+from flext_core import t
 ```
 
 ### Anti-Pattern 8: Multiple Exports per Module
@@ -359,14 +366,17 @@ from flext_core.typings import t
 class FlextModels:
     pass
 
+
 class DomainModel:  # Second export - WRONG!
     pass
 
-class ValueObject:  # Third export - WRONG!
+
+class Value:  # Third export - WRONG!
     pass
 
+
 # In __init__.py
-from flext_core.models import FlextModels, DomainModel, ValueObject
+from flext_core import FlextModels, DomainModel, Value
 # Violates single class per module rule
 ```
 
@@ -384,16 +394,20 @@ from flext_core.models import FlextModels, DomainModel, ValueObject
 # flext_core/models.py
 class FlextModels:
     """Single main class per module."""
+
     class Value:
         """Nested helper - OK."""
+
         pass
 
     class Entity:
         """Nested helper - OK."""
+
         pass
 
+
 # In __init__.py
-from flext_core.models import FlextModels
+from flext_core import FlextModels
 # Clear, single responsibility
 ```
 
@@ -440,22 +454,29 @@ class FlextMeltano:
 # ✅ CORRECT - Separated concerns
 class MeltanoConfig:
     """Handles configuration only."""
-    def load(self, path: str) -> FlextResult[dict]:
+
+    def load(self, path: str) -> r[dict]:
         pass
+
 
 class MeltanoValidator:
     """Handles validation only."""
-    def validate_config(self, config: dict) -> FlextResult[bool]:
+
+    def validate_config(self, config: dict) -> r[bool]:
         pass
+
 
 class MeltanoStreamManager:
     """Handles stream operations."""
-    def load_streams(self, config: dict) -> FlextResult[list]:
+
+    def load_streams(self, config: dict) -> r[list]:
         pass
+
 
 class MeltanoExecutor:
     """Handles execution (tap, target, dbt)."""
-    def run_tap(self, config: dict) -> FlextResult[bool]:
+
+    def run_tap(self, config: dict) -> r[bool]:
         pass
 ```
 
@@ -473,9 +494,11 @@ def service_a():
     container = FlextContainer()  # New container
     return container.get("logger")
 
+
 def service_b():
     container = FlextContainer()  # DIFFERENT container!
     return container.get("logger")
+
 
 # service_a and service_b get different logger instances!
 ```
@@ -495,9 +518,11 @@ def service_a():
     container = FlextContainer.get_global()  # Same instance
     return container.get("logger")
 
+
 def service_b():
     container = FlextContainer.get_global()  # Same instance!
     return container.get("logger")
+
 
 # Both get same logger instance
 assert service_a() is service_b()
@@ -535,7 +560,7 @@ container = FlextContainer.get_global()
 logger_result = container.get("logger")
 if logger_result.is_failure:
     print(f"Logger not available: {logger_result.error}")
-    return FlextResult[bool].fail("Logger unavailable")
+    return r[bool].fail("Logger unavailable")
 
 logger = logger_result.value
 logger.info("Service started")
@@ -545,13 +570,14 @@ ______________________________________________________________________
 
 ## Model Anti-Patterns
 
-### Anti-Pattern 12: Validation in Models Without FlextResult
+### Anti-Pattern 12: Validation in Models Without r
 
 **Problem**: Models validate but don't report errors properly.
 
 ```python
 # ❌ ANTI-PATTERN - Validation via exceptions
 from pydantic import BaseModel
+
 
 class User(BaseModel):
     email: str
@@ -569,6 +595,7 @@ class User(BaseModel):
             raise ValueError("Age must be positive")  # Pydantic exception
         return v
 
+
 # Usage - Pydantic raises ValidationError
 try:
     user = User(email="invalid", age=-5)
@@ -576,28 +603,31 @@ except ValidationError as e:
     print(f"Validation failed: {e}")
 ```
 
-**Solution**: Wrap Pydantic validation in FlextResult
+**Solution**: Wrap Pydantic validation in r
 
 ```python
-# ✅ CORRECT - FlextResult for validation
-from flext_core import FlextResult
+# ✅ CORRECT - r for validation
+from flext_core import r
 from pydantic import BaseModel, ValidationError
+
 
 class User(BaseModel):
     email: str
     age: int
 
-def create_user(data: dict) -> FlextResult[User]:
-    """Create user with FlextResult validation."""
+
+def create_user(data: dict) -> r[User]:
+    """Create user with r validation."""
     try:
         user = User(**data)
-        return FlextResult[User].ok(user)
+        return r[User].ok(user)
     except ValidationError as e:
-        return FlextResult[User].fail(
+        return r[User].fail(
             f"User validation failed: {e}",
             error_code="USER_VALIDATION_ERROR",
             error_data={"validation_errors": str(e)},
         )
+
 
 # Usage
 result = create_user({"email": "invalid", "age": -5})
@@ -615,9 +645,11 @@ else:
 # ❌ ANTI-PATTERN - Mutable value object
 from flext_core import FlextModels
 
+
 class Money(FlextModels.Value):
     amount: float  # Mutable!
     currency: str
+
 
 money = Money(amount=100.0, currency="USD")
 money.amount = 50.0  # Can be changed - violates value semantics!
@@ -643,10 +675,12 @@ from flext_core import FlextModels
 from pydantic import ConfigDict
 from decimal import Decimal
 
+
 class Money(FlextModels.Value):
     model_config = ConfigDict(frozen=True)  # Immutable
     amount: Decimal
     currency: str
+
 
 money = Money(amount=Decimal("100"), currency="USD")
 money.amount = Decimal("50")  # TypeError: frozen object cannot be modified
@@ -690,6 +724,7 @@ def connect_database():
 from flext_core import FlextSettings
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+
 class DatabaseConfig(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="DB_")
 
@@ -699,7 +734,9 @@ class DatabaseConfig(BaseSettings):
     user: str
     password: str  # SecretStr recommended
 
+
 db_config = DatabaseConfig()  # Loads from environment variables
+
 
 def connect_database():
     connection = psycopg2.connect(
@@ -748,6 +785,7 @@ from flext_core import FlextSettings
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings
 
+
 class AppConfig(BaseSettings):
     timeout: int = Field(gt=0, description="Timeout in seconds")
     log_level: str = Field(pattern="^(DEBUG|INFO|WARNING|ERROR)$")
@@ -759,6 +797,7 @@ class AppConfig(BaseSettings):
         if v > 3600:
             raise ValueError("Timeout cannot exceed 1 hour")
         return v
+
 
 # Pydantic validates automatically on construction
 try:
@@ -778,7 +817,7 @@ ______________________________________________________________________
 
 ### Error Handling
 
-- ✅ Use `FlextResult` for business logic errors
+- ✅ Use `r` for business logic errors
 - ✅ Include error codes and metadata
 - ✅ Never swallow errors silently
 - ❌ Don't use exceptions for normal errors
@@ -803,7 +842,7 @@ ______________________________________________________________________
 ### Dependency Injection
 
 - ✅ Use `FlextContainer.get_global()`
-- ✅ Check `FlextResult` before using services
+- ✅ Check `r` before using services
 - ✅ Register services during initialization
 - ❌ Don't create multiple containers
 - ❌ Don't assume service exists
@@ -811,7 +850,7 @@ ______________________________________________________________________
 ### Models
 
 - ✅ Use `FlextModels` for DDD patterns
-- ✅ Wrap validation in `FlextResult`
+- ✅ Wrap validation in `r`
 - ✅ Make value objects immutable
 - ❌ Don't mix mutable and value semantics
 - ❌ Don't validate without error handling
@@ -843,8 +882,11 @@ ______________________________________________________________________
 - Configuration Guide - Configuration best practices
 - Clean Architecture - Architecture patterns
 - Development Standards - Development standards
-- **FLEXT CLAUDE.md**: Architecture principles and zero-tolerance standards
+- **FLEXT AGENTS.md**: Architecture principles and zero-tolerance standards
 
 ______________________________________________________________________
 
 **Updated**: 2025-12-07 | **Version**: 0.10.0 | **Based on**: Actual FLEXT ecosystem patterns and lessons learned
+
+```
+```

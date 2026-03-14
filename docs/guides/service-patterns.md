@@ -1,7 +1,6 @@
 # Service Patterns Guide
 
 <!-- TOC START -->
-
 - [Canonical Rules](#canonical-rules)
 - [Overview](#overview)
 - [Execution Patterns](#execution-patterns)
@@ -26,7 +25,6 @@
 - [Next Steps](#next-steps)
 - [See Also](#see-also)
 - [References](#references)
-
 <!-- TOC END -->
 
 **Status**: Production Ready | **Version**: 0.10.0 | **Pattern**: Services
@@ -41,8 +39,8 @@ explicit execution (V1) to zero-ceremony patterns (V2).
 
 ## Canonical Rules
 
-- Follow root governance in `CLAUDE.md`.
-- Keep service examples returning `FlextResult[T]` and matching layer boundaries.
+- Follow root governance in `AGENTS.md`.
+- Keep service examples returning `r[T]` and matching layer boundaries.
 - Keep runtime/DI guidance aligned with `dependency-injection-advanced.md`.
 
 ______________________________________________________________________
@@ -51,18 +49,19 @@ ______________________________________________________________________
 
 `FlextService[T]` is the foundation for domain services in FLEXT-Core. A service
 is essentially a **Pydantic model with an `execute()` method** that returns
-`FlextResult[T]`.
+`r[T]`.
 
 ```python
-from flext_core import FlextService, FlextResult
+from flext_core import FlextService, r
+
 
 class CreateUserService(FlextService[User]):
     name: str
     email: str
 
-    def execute(self) -> FlextResult[User]:
+    def execute(self) -> r[User]:
         user = User(name=self.name, email=self.email)
-        return FlextResult[User].ok(user)
+        return r[User].ok(user)
 ```
 
 ______________________________________________________________________
@@ -89,7 +88,7 @@ else:
 **Characteristics:**
 
 - ✅ Railway pattern explicit – full control over errors
-- ✅ Type-safe with `FlextResult[T]`
+- ✅ Type-safe with `r[T]`
 - ✅ 100% backward compatible
 - ⚠️ Verbose (`.execute().value` on every use)
 
@@ -134,8 +133,9 @@ class AutoUserService(FlextService[User]):
     name: str
     email: str
 
-    def execute(self) -> FlextResult[User]:
-        return FlextResult[User].ok(User(name=self.name, email=self.email))
+    def execute(self) -> r[User]:
+        return r[User].ok(User(name=self.name, email=self.email))
+
 
 # Instantiation returns User directly (not service instance)
 user = AutoUserService(name="Alice", email="alice@example.com")
@@ -171,7 +171,7 @@ All properties are **lazy-loaded** – no overhead if unused.
 class ProcessOrderService(FlextService[Order]):
     order_id: str
 
-    def execute(self) -> FlextResult[Order]:
+    def execute(self) -> r[Order]:
         # Logging (via FlextMixins)
         self.logger.info(f"Processing order {self.order_id}")
 
@@ -181,7 +181,7 @@ class ProcessOrderService(FlextService[Order]):
         # Dependency resolution (via FlextMixins)
         repo_result = self.container.get("order_repository")
         if repo_result.is_failure:
-            return FlextResult[Order].fail("Repository unavailable")
+            return r[Order].fail("Repository unavailable")
 
         repo = repo_result.value
         return repo.find_by_id(self.order_id)
@@ -196,15 +196,16 @@ ______________________________________________________________________
 Chain services using `flat_map`:
 
 ```python
-def process_user(name: str, email: str) -> FlextResult[User]:
+def process_user(name: str, email: str) -> r[User]:
     return (
-        ValidateEmailService(email=email).execute()
+        ValidateEmailService(email=email)
+        .execute()
         .flat_map(lambda _: ValidateNameService(name=name).execute())
         .flat_map(lambda _: CreateUserService(name=name, email=email).execute())
     )
 ```
 
-**Note**: Use `.flat_map()` for chaining operations. This is the standard FLEXT pattern and works seamlessly with all FlextResult operations.
+**Note**: Use `.flat_map()` for chaining operations. This is the standard FLEXT pattern and works seamlessly with all r operations.
 
 ### Service Factories
 
@@ -223,6 +224,7 @@ def create_notification_service(
         case _:
             return NoOpNotificationService(message=message)
 
+
 # Usage
 service = create_notification_service("email", "Hello!")
 result = service.execute()
@@ -235,8 +237,9 @@ ______________________________________________________________________
 Services are called by CQRS handlers for domain operations:
 
 ```python
-from flext_core.handlers import FlextHandlers
-from flext_core.result import r
+from flext_core import FlextHandlers
+from flext_core import r
+
 
 class CreateUserHandler(FlextHandlers[CreateUserCommand, User]):
     def handle(self, command: CreateUserCommand) -> r[User]:
@@ -265,6 +268,7 @@ def test_create_user_service_success():
     assert user.name == "Alice"
     assert user.email == "alice@example.com"
 
+
 def test_create_user_service_invalid_email():
     service = CreateUserService(name="Alice", email="invalid")
     result = service.execute()
@@ -277,7 +281,7 @@ def test_create_user_service_invalid_email():
 
 ```python
 def test_service_with_container(container: FlextContainer):
-    container.register("email_validator", MockEmailValidator())
+    _ = container.register("email_validator", MockEmailValidator())
 
     service = CreateUserService(name="Alice", email="alice@example.com")
     result = service.execute()
@@ -319,13 +323,13 @@ ______________________________________________________________________
 ### DO ✅
 
 - Keep services focused (single responsibility)
-- Return `FlextResult` from `execute()` (railway pattern)
+- Return `r` from `execute()` (railway pattern)
 - Use lazy infrastructure properties (`self.config`, `self.logger`)
-- Validate inputs early with `FlextResult.fail()`
+- Validate inputs early with `r.fail()`
 
 ### DON'T ❌
 
-- Raise exceptions in `execute()` (use `FlextResult.fail()`)
+- Raise exceptions in `execute()` (use `r.fail()`)
 - Access infrastructure in `__init__` (properties are lazy)
 - Mix V1 and V2 patterns in the same module
 
@@ -346,15 +350,18 @@ ______________________________________________________________________
 - Railway-Oriented Programming - Result composition patterns
 - Error Handling Guide - Comprehensive error handling
 - API Reference: FlextService - Complete service API
-- **FLEXT CLAUDE.md**: Architecture principles and development workflow
+- **FLEXT AGENTS.md**: Architecture principles and development workflow
 
 ## References
 
 - `flext_core/service.py` – Service base class
 - `flext_core/mixins.py` – Infrastructure properties
-- `flext_core/result.py` – FlextResult monad
+- `flext_core/result.py` – r monad
 - CQRS Architecture
 
 ______________________________________________________________________
 
 **Example from FLEXT Ecosystem**: See `src/flext_tests/test_service.py` for comprehensive service pattern examples and test cases.
+
+```
+```

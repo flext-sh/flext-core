@@ -7,13 +7,11 @@
 > Project profile: `flext-core`
 
 <!-- TOC START -->
-
 - [Quick Diagnosis](#quick-diagnosis)
   - [Health Check Commands](#health-check-commands)
   - [System Status](#system-status)
 - [Common Issues](#common-issues)
   - [1. Import Errors](#1-import-errors)
-  - [r](#r)
   - [2. Type Checking Errors](#2-type-checking-errors)
   - [3. Test Failures](#3-test-failures)
   - [4. Configuration Issues](#4-configuration-issues)
@@ -40,7 +38,6 @@
 - [Prevention](#prevention)
   - [Best Practices](#best-practices)
 - [Resources](#resources)
-
 <!-- TOC END -->
 
 This guide covers common issues, their solutions, and debugging techniques for FLEXT applications and libraries.
@@ -115,11 +112,12 @@ poetry env info
 poetry install
 ```
 
-### r
+#### Debug Python Path
 
 ```python
 # Debug import issues
 import sys
+
 print("Python path:")
 for path in sys.path:
     print(f"  {path}")
@@ -127,6 +125,7 @@ for path in sys.path:
 print("\nTrying to import flext_core...")
 try:
     import flext_core
+
     print(f"Success: {flext_core.__file__}")
 except ImportError as e:
     print(f"Failed: {e}")
@@ -150,9 +149,10 @@ error: Argument 1 to "process" has incompatible type "str"; expected "dict[str, 
 def process(data):
     return data
 
+
 # ✅ CORRECT
-def process(data: dict[str, object]) -> FlextResult[ProcessedData]:
-    return FlextResult.ok(ProcessedData(**data))
+def process(data: dict[str, object]) -> r[ProcessedData]:
+    return r.ok(ProcessedData(**data))
 ```
 
 **Run MyPy with details:**
@@ -237,7 +237,7 @@ from flext_core import FlextModels
 from flext_core import FlextProcessors
 from flext_core import p
 from flext_core import FlextRegistry
-from flext_core import FlextResult
+from flext_core import r
 from flext_core import FlextRuntime
 from flext_core import FlextService
 from flext_core import t
@@ -269,7 +269,7 @@ from flext_core import FlextModels
 from flext_core import FlextProcessors
 from flext_core import p
 from flext_core import FlextRegistry
-from flext_core import FlextResult
+from flext_core import r
 from flext_core import FlextRuntime
 from flext_core import FlextService
 from flext_core import t
@@ -277,7 +277,7 @@ from flext_core import u
 
 # Print all FLEXT environment variables
 for key, value in os.environ.items():
-    if key.startswith('FLEXT_'):
+    if key.startswith("FLEXT_"):
         print(f"{key}={value}")
 
 # Load and print configuration
@@ -316,6 +316,7 @@ if result.is_failure:
 
 ```python
 import logging
+
 logging.basicConfig(level=logging.DEBUG)
 
 # Your LDIF processing code
@@ -334,10 +335,10 @@ def validate_ldif_content(content: str) -> t.StringList:
     if not content.startswith("dn:"):
         issues.append("Missing DN line")
 
-    lines = content.split('\n')
+    lines = content.split("\n")
     for i, line in enumerate(lines):
-        if line and not line.startswith(('dn:', ' ', '\t')) and ':' not in line:
-            issues.append(f"Invalid line {i+1}: {line}")
+        if line and not line.startswith(("dn:", " ", "\t")) and ":" not in line:
+            issues.append(f"Invalid line {i + 1}: {line}")
 
     return issues
 ```
@@ -362,7 +363,7 @@ config = FlextLdifSettings(
     source_server="oid",
     target_server="oud",
     preserve_oid_modifiers=True,
-    handle_schema_extensions=True
+    handle_schema_extensions=True,
 )
 
 print(f"Config: {config.dict()}")
@@ -372,9 +373,7 @@ print(f"Config: {config.dict()}")
 
 ```python
 config = FlextLdifSettings(
-    servers_enabled=True,
-    source_server="oid",
-    target_server="oud"
+    servers_enabled=True, source_server="oid", target_server="oud"
 )
 ```
 
@@ -412,6 +411,7 @@ else:
 import psutil
 import os
 
+
 def profile_memory():
     process = psutil.Process(os.getpid())
     initial_memory = process.memory_info().rss
@@ -422,6 +422,7 @@ def profile_memory():
     memory_used = final_memory - initial_memory
 
     print(f"Memory used: {memory_used / 1024 / 1024:.2f} MB")
+
 
 profile_memory()
 ```
@@ -434,7 +435,7 @@ from flext_ldif import FlextLdifSettings
 # Reduce batch size for memory-constrained environments
 config = FlextLdifSettings(
     batch_size=100,  # Instead of default 1000
-    parallel_processing=False  # Disable for memory issues
+    parallel_processing=False,  # Disable for memory issues
 )
 ```
 
@@ -443,7 +444,7 @@ config = FlextLdifSettings(
 ```python
 config = FlextLdifSettings(
     parallel_processing=True,
-    max_workers=4  # Adjust based on CPU cores
+    max_workers=4,  # Adjust based on CPU cores
 )
 ```
 
@@ -468,7 +469,7 @@ from flext_core import FlextModels
 from flext_core import FlextProcessors
 from flext_core import p
 from flext_core import FlextRegistry
-from flext_core import FlextResult
+from flext_core import r
 from flext_core import FlextRuntime
 from flext_core import FlextService
 from flext_core import t
@@ -476,8 +477,7 @@ from flext_core import u
 
 # Configure logging
 logging.basicConfig(
-    level=logging.DEBUG,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.DEBUG, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 
 # Use FLEXT logger
@@ -506,23 +506,24 @@ from flext_core import FlextModels
 from flext_core import FlextProcessors
 from flext_core import p
 from flext_core import FlextRegistry
-from flext_core import FlextResult
+from flext_core import r
 from flext_core import FlextRuntime
 from flext_core import FlextService
 from flext_core import t
 from flext_core import u
 
-def safe_operation(data: dict) -> FlextResult[dict]:
+
+def safe_operation(data: dict) -> r[dict]:
     try:
         # Your operation here
         result = process_data(data)
-        return FlextResult.ok(result)
+        return r.ok(result)
     except ValidationError as e:
         logger.error(f"Validation error: {e}")
-        return FlextResult.fail(f"Validation failed: {e}")
+        return r.fail(f"Validation failed: {e}")
     except Exception as e:
         logger.error(f"Unexpected error: {e}", exc_info=True)
-        return FlextResult.fail(f"Operation failed: {e}")
+        return r.fail(f"Operation failed: {e}")
 ```
 
 ### 3. Debug Mode
@@ -543,7 +544,7 @@ from flext_core import FlextModels
 from flext_core import FlextProcessors
 from flext_core import p
 from flext_core import FlextRegistry
-from flext_core import FlextResult
+from flext_core import r
 from flext_core import FlextRuntime
 from flext_core import FlextService
 from flext_core import t
@@ -571,7 +572,7 @@ def debug_ldif_processing(content: str):
         return
 
     # Step 2: Check DN format
-    lines = content.split('\n')
+    lines = content.split("\n")
     dn_line = lines[0] if lines else ""
     print(f"DN line: {repr(dn_line)}")
 
@@ -581,6 +582,7 @@ def debug_ldif_processing(content: str):
 
     # Step 3: Try parsing
     from flext_ldif import FlextLdif
+
     ldif = FlextLdif()
 
     result = ldif.parse(content)
@@ -626,6 +628,7 @@ def debug_ldif_processing(content: str):
 import psutil
 import os
 
+
 def monitor_memory():
     process = psutil.Process(os.getpid())
     memory_info = process.memory_info()
@@ -637,6 +640,7 @@ def monitor_memory():
     if memory_info.rss > 500 * 1024 * 1024:  # 500MB
         print("WARNING: High memory usage detected")
 
+
 monitor_memory()
 ```
 
@@ -647,6 +651,7 @@ monitor_memory()
 import psutil
 import time
 
+
 def monitor_cpu():
     process = psutil.Process(os.getpid())
 
@@ -655,6 +660,7 @@ def monitor_cpu():
         cpu_percent = process.cpu_percent()
         print(f"CPU usage: {cpu_percent}%")
         time.sleep(1)
+
 
 monitor_cpu()
 ```
@@ -679,13 +685,15 @@ monitor_cpu()
    cd flext-core && make validate
    ```
 
+````
+
 1. **Check Logs**
 
    ```bash
    # Enable debug logging
    export FLEXT_LOG_LEVEL=DEBUG
    python your_script.py
-   ```
+````
 
 ### Community Support
 
@@ -718,6 +726,8 @@ When reporting issues, include:
    make info
    ```
 
+````
+
 1. **Error Details**
 
    ```python
@@ -727,7 +737,7 @@ When reporting issues, include:
        # Your code here
    except Exception as e:
        traceback.print_exc()
-   ```
+````
 
 1. **Minimal Reproduction**
 
@@ -735,6 +745,8 @@ When reporting issues, include:
    # Minimal code that reproduces the issue
    from flext_core import FlextBus
    ```
+
+````
 
 from flext_core import FlextSettings
 from flext_core import FlextConstants
@@ -750,7 +762,7 @@ from flext_core import FlextModels
 from flext_core import FlextProcessors
 from flext_core import p
 from flext_core import FlextRegistry
-from flext_core import FlextResult
+from flext_core import r
 from flext_core import FlextRuntime
 from flext_core import FlextService
 from flext_core import t
@@ -758,7 +770,7 @@ from flext_core import u
 
 ### Your minimal example here
 
-4. **Expected vs Actual Behavior**
+1. **Expected vs Actual Behavior**
 
 - What you expected to happen
 - What actually happened
@@ -768,40 +780,42 @@ from flext_core import u
 
 ### Best Practices
 
-1. **Always Use FlextResult**
+1. **Always Use r**
 
 ```python
 # ✅ GOOD
-def process(data: dict) -> FlextResult[ProcessedData]:
-    return FlextResult.ok(ProcessedData(**data))
+def process(data: dict) -> r[ProcessedData]:
+    return r.ok(ProcessedData(**data))
 
 # ❌ BAD
 def process(data: dict) -> ProcessedData:
     return ProcessedData(**data)
-```
+````
 
-2. **Validate Input Early**
+1. **Validate Input Early**
 
    ```python
-   def process_data(data: dict) -> FlextResult[dict]:
+   def process_data(data: dict) -> r[dict]:
        if not data:
-           return FlextResult.fail("Data required")
+           return r.fail("Data required")
 
        # Process data
-       return FlextResult.ok(processed_data)
+       return r.ok(processed_data)
    ```
+
+````
 
 1. **Use Type Hints**
 
    ```python
    # ✅ GOOD
-   def process(items: list[Item]) -> FlextResult[list[ProcessedItem]]:
+   def process(items: list[Item]) -> r[list[ProcessedItem]]:
        pass
 
    # ❌ BAD
    def process(items):
        pass
-   ```
+````
 
 1. **Test Thoroughly**
 
@@ -816,6 +830,8 @@ def process(data: dict) -> ProcessedData:
        assert result.is_failure
    ```
 
+```
+
 ## Resources
 
 - FLEXT Core Documentation
@@ -824,3 +840,4 @@ def process(data: dict) -> ProcessedData:
 - Testing Guide
 - [GitHub Issues](https://github.com/flext-sh/flext/issues)
 - [GitHub Discussions](https://github.com/flext-sh/flext/discussions)
+```

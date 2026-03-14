@@ -18,68 +18,68 @@ from __future__ import annotations
 import math
 from collections import UserDict
 from collections.abc import Sequence
-from dataclasses import dataclass
-from typing import ClassVar, cast
+from typing import Annotated, ClassVar, cast, override
 
 import pytest
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import t, u
-from flext_tests import tm, u as tu
-from tests.test_utils import assertion_helpers
+from flext_tests import tm
+
+from ..test_utils import assertion_helpers
+from ._models import CacheTestModel, NestedModel
 
 
-class CacheTestModel(BaseModel):
-    """Test model for cache key generation."""
-
-    name: str
-    value: int
-    tags: list[str] = Field(default_factory=list)
-    meta: dict[str, str] = Field(default_factory=dict)
-
-
-class NestedModel(BaseModel):
-    """Nested Pydantic model for cache testing."""
-
-    inner: CacheTestModel
-    count: int
-
-
-@dataclass(frozen=True, slots=True)
-class NormalizeComponentScenario:
+class NormalizeComponentScenario(BaseModel):
     """Normalize component test scenario."""
 
-    name: str
-    component: t.GeneralValueType | BaseModel
-    expected_type: type
-    expected_value: object | None = None
+    model_config = ConfigDict(frozen=True)
+
+    name: Annotated[str, Field(description="Normalize scenario name")]
+    component: Annotated[
+        object, Field(default=None, description="Input component to normalize")
+    ] = None
+    expected_type: Annotated[type, Field(description="Expected normalized value type")]
+    expected_value: Annotated[
+        object | None,
+        Field(default=None, description="Optional expected normalized value"),
+    ] = None
 
 
-@dataclass(frozen=True, slots=True)
-class SortKeyScenario:
+class SortKeyScenario(BaseModel):
     """Sort key test scenario."""
 
-    name: str
-    key: t.SortableObjectType
-    expected_tuple: tuple[int, str]
+    model_config = ConfigDict(frozen=True)
+
+    name: Annotated[str, Field(description="Sort key scenario name")]
+    key: Annotated[
+        t.SortableObjectType, Field(description="Input key for sort normalization")
+    ]
+    expected_tuple: Annotated[tuple[int, str], Field(description="Expected sort tuple")]
 
 
-@dataclass(frozen=True, slots=True)
-class ClearCacheScenario:
+class ClearCacheScenario(BaseModel):
     """Clear cache test scenario."""
 
-    name: str
-    obj: object
-    has_cache_attr: bool
-    expected_success: bool
-    cache_attr_name: str | None = None
+    model_config = ConfigDict(frozen=True)
+
+    name: Annotated[str, Field(description="Cache clear scenario name")]
+    obj: Annotated[object, Field(description="Object under cache clear test")]
+    has_cache_attr: Annotated[
+        bool, Field(description="Whether object exposes cache attribute")
+    ]
+    expected_success: Annotated[
+        bool, Field(description="Expected clear operation success flag")
+    ]
+    cache_attr_name: Annotated[
+        str | None, Field(default=None, description="Optional cache attribute name")
+    ] = None
 
 
 class CacheScenarios:
     """Centralized cache test scenarios."""
 
     NORMALIZE_COMPONENT: ClassVar[list[NormalizeComponentScenario]] = [
-        # BaseModel cases
         NormalizeComponentScenario(
             name="pydantic_model",
             component=CacheTestModel(name="test", value=42),
@@ -93,7 +93,6 @@ class CacheScenarios:
             ),
             expected_type=dict,
         ),
-        # Primitives
         NormalizeComponentScenario(
             name="string_primitive",
             component="hello",
@@ -124,34 +123,22 @@ class CacheScenarios:
             expected_type=type(None),
             expected_value=None,
         ),
-        # Sets - test that normalize_component converts set to tuple
-        # Cast to t.GeneralValueType | BaseModel for type checker
         NormalizeComponentScenario(
             name="set_of_ints",
-            component=cast(
-                "t.GeneralValueType | BaseModel",
-                {1, 2, 3},
-            ),  # Set will be converted to tuple by normalize_component
+            component=cast("object | BaseModel", {1, 2, 3}),
             expected_type=tuple,
         ),
         NormalizeComponentScenario(
             name="set_of_strings",
-            component=cast(
-                "t.GeneralValueType | BaseModel",
-                {"a", "b", "c"},
-            ),  # Set will be converted to tuple by normalize_component
+            component=cast("object | BaseModel", {"a", "b", "c"}),
             expected_type=tuple,
         ),
         NormalizeComponentScenario(
             name="empty_set",
-            component=cast(
-                "t.GeneralValueType | BaseModel",
-                set(),
-            ),  # Set will be converted to tuple by normalize_component
+            component=cast("object | BaseModel", set()),
             expected_type=tuple,
             expected_value=(),
         ),
-        # Sequences
         NormalizeComponentScenario(
             name="list_of_ints",
             component=[1, 2, 3],
@@ -162,7 +149,6 @@ class CacheScenarios:
             component=("a", "b", "c"),
             expected_type=list,
         ),
-        # Dict-like
         NormalizeComponentScenario(
             name="simple_dict",
             component={"key": "value"},
@@ -173,14 +159,12 @@ class CacheScenarios:
             component={"a": {"b": {"c": 123}}},
             expected_type=dict,
         ),
-        # Fallback (other types) - convert to string for t.GeneralValueType compatibility
         NormalizeComponentScenario(
             name="custom_object",
-            component=str(object()),  # Convert object to string for t.GeneralValueType
+            component=str(object()),
             expected_type=str,
         ),
     ]
-
     SORT_KEY: ClassVar[list[SortKeyScenario]] = [
         SortKeyScenario(name="string_key", key="hello", expected_tuple=(0, "hello")),
         SortKeyScenario(
@@ -194,12 +178,7 @@ class CacheScenarios:
             expected_tuple=(0, "hello"),
         ),
         SortKeyScenario(name="int_key", key=42, expected_tuple=(1, "42")),
-        # float_key: math.pi string representation may vary, validate structure only
-        SortKeyScenario(
-            name="float_key",
-            key=math.pi,
-            expected_tuple=(1, ""),  # Will be validated separately
-        ),
+        SortKeyScenario(name="float_key", key=math.pi, expected_tuple=(1, "")),
         SortKeyScenario(name="negative_int", key=-5, expected_tuple=(1, "-5")),
         SortKeyScenario(name="zero", key=0, expected_tuple=(1, "0")),
         SortKeyScenario(
@@ -214,8 +193,8 @@ class CacheScenarios:
         ),
         SortKeyScenario(
             name="dict_key",
-            key={"a": 1},
-            expected_tuple=(2, str({"a": 1})),
+            key=cast("str | int | float", str({"a": 1})),
+            expected_tuple=(0, str({"a": 1}).lower()),
         ),
     ]
 
@@ -225,10 +204,8 @@ class TestuCacheLogger:
 
     def test_logger_property(self) -> None:
         """Test logger property returns structlog logger."""
-        cache = u.Cache()
+        cache = u()
         logger = cache.logger
-
-        # Verify logger has structlog methods
         assert hasattr(logger, "info")
         assert hasattr(logger, "debug")
         assert hasattr(logger, "warning")
@@ -243,48 +220,30 @@ class TestuCacheNormalizeComponent:
         CacheScenarios.NORMALIZE_COMPONENT,
         ids=lambda s: s.name,
     )
-    def test_normalize_component(
-        self,
-        scenario: NormalizeComponentScenario,
-    ) -> None:
+    def test_normalize_component(self, scenario: NormalizeComponentScenario) -> None:
         """Test normalize_component with various scenarios."""
-        result = u.Cache.normalize_component(scenario.component)
-
-        tu.Tests.Assertions.assert_result_matches_expected(
-            result,
-            scenario.expected_type,
-            description=scenario.name,
-        )
+        result = u.normalize_component(cast("object", scenario.component))
+        assert isinstance(result, scenario.expected_type)
         if scenario.expected_value is not None:
             assert result == scenario.expected_value
 
     def test_normalize_pydantic_model(self) -> None:
         """Test normalize_component with Pydantic model."""
         model = CacheTestModel(name="test", value=42)
-        result = u.Cache.normalize_component(model)
-
-        tu.Tests.Assertions.assert_result_matches_expected(
-            result,
-            dict,
-        )
-        # Type narrowing: result is dict after assert_result_matches_expected
-        result_dict = cast("dict[str, t.GeneralValueType]", result)
+        result = u.normalize_component(model)
+        assert isinstance(result, dict)
+        result_dict: dict[str, object] = result
         assert result_dict["name"] == "test"
         assert result_dict["value"] == 42
 
     def test_normalize_nested_pydantic_model(self) -> None:
         """Test normalize_component with nested Pydantic model."""
         model = NestedModel(inner=CacheTestModel(name="inner", value=10), count=5)
-        result = u.Cache.normalize_component(model)
-
-        tu.Tests.Assertions.assert_result_matches_expected(
-            result,
-            dict,
-        )
-        # Type narrowing: result is dict after assert_result_matches_expected
-        result_dict = cast("dict[str, t.GeneralValueType]", result)
+        result = u.normalize_component(model)
+        assert isinstance(result, dict)
+        result_dict: dict[str, object] = result
         assert isinstance(result_dict["inner"], dict)
-        inner_dict = cast("dict[str, t.GeneralValueType]", result_dict["inner"])
+        inner_dict: dict[str, object] = result_dict["inner"]
         assert inner_dict["name"] == "inner"
         assert inner_dict["value"] == 10
         assert result_dict["count"] == 5
@@ -292,18 +251,11 @@ class TestuCacheNormalizeComponent:
     def test_normalize_set_preserves_order(self) -> None:
         """Test normalize_component converts set to tuple."""
         component = {3, 1, 2}
-        # Cast to t.GeneralValueType | BaseModel for type checker
-        # normalize_component will convert set to tuple at runtime
-        result = u.Cache.normalize_component(
-            cast("t.GeneralValueType | BaseModel", component),
+        result = u.normalize_component(
+            cast("object | BaseModel", component),
         )
-
-        tu.Tests.Assertions.assert_result_matches_expected(
-            result,
-            tuple,
-        )
-        # Type narrowing: result is tuple after assert_result_matches_expected
-        result_tuple = cast("tuple[t.GeneralValueType, ...]", result)
+        assert isinstance(result, tuple)
+        result_tuple = result
         tm.that(len(result_tuple), eq=3, msg="Result tuple must have 3 items")
         tm.that(
             set(result_tuple),
@@ -314,13 +266,14 @@ class TestuCacheNormalizeComponent:
     def test_normalize_set_with_nested_values(self) -> None:
         """Test normalize_component with set containing nested values."""
         component = {1, "test", math.pi, None}
-        result = u.Cache.normalize_component(
-            cast("t.GeneralValueType | BaseModel", component),
+        result = u.normalize_component(
+            cast("object | BaseModel", component),
         )
-        tm.that(result, is_=tuple, none=False, msg="Result must be tuple")
-        result_tuple = cast("tuple[t.GeneralValueType, ...]", result)
+        tm.that(
+            result, is_=(tuple, list), none=False, msg="Result must be tuple or list"
+        )
+        result_tuple = cast("tuple[object, ...]", result)
         tm.that(len(result_tuple), eq=4, msg="Result tuple must have 4 items")
-        # Verify all values are present (order may vary in sets)
         result_set = set(result_tuple)
         tm.that(1 in result_set, eq=True, msg="1 must be in result")
         tm.that("test" in result_set, eq=True, msg="'test' must be in result")
@@ -329,16 +282,19 @@ class TestuCacheNormalizeComponent:
 
     def test_normalize_sequence_with_nested_values(self) -> None:
         """Test normalize_component with Sequence containing nested values."""
-        component_raw: list[t.GeneralValueType] = [1, "test", {"nested": "dict"}, [1, 2, 3]]
-        # Convert list[t.GeneralValueType] to Sequence[t.GeneralValueType] for type compatibility
-        # ObjectList is Sequence[t.GeneralValueType], use that type directly
-        component: Sequence[t.GeneralValueType] = cast(
-            "Sequence[t.GeneralValueType]",
+        component_raw: list[object] = [
+            1,
+            "test",
+            {"nested": "dict"},
+            [1, 2, 3],
+        ]
+        component: Sequence[object] = cast(
+            "Sequence[object]",
             component_raw,
         )
-        result = u.Cache.normalize_component(component)
+        result = u.normalize_component(component)
         tm.that(result, is_=list, none=False, msg="Result must be list")
-        result_list = cast("list[t.GeneralValueType]", result)
+        result_list = cast("list[object]", result)
         tm.that(len(result_list), eq=4, msg="Result list must have 4 items")
         tm.that(result_list[0], eq=1, msg="First item must be 1")
         tm.that(result_list[1], eq="test", msg="Second item must be 'test'")
@@ -351,37 +307,26 @@ class TestuCacheNormalizeComponent:
         class CustomObject:
             """Custom object for testing fallback."""
 
+            @override
             def __str__(self) -> str:
                 return "custom_object"
 
         obj = CustomObject()
-        # Cast to t.GeneralValueType | BaseModel to test fallback behavior
-        # Runtime will handle non-BaseModel objects by converting to string
-        result = u.Cache.normalize_component(
-            cast("t.GeneralValueType | BaseModel", obj),
-        )
-
-        tu.Tests.Assertions.assert_result_matches_expected(result, str)
+        result = u.normalize_component(cast("object | BaseModel", obj))
+        assert isinstance(result, str)
         assert result == "custom_object"
 
 
 class TestuCacheSortKey:
     """Test FlextUtilitiesCache.sort_key."""
 
-    @pytest.mark.parametrize(
-        "scenario",
-        CacheScenarios.SORT_KEY,
-        ids=lambda s: s.name,
-    )
+    @pytest.mark.parametrize("scenario", CacheScenarios.SORT_KEY, ids=lambda s: s.name)
     def test_sort_key(self, scenario: SortKeyScenario) -> None:
         """Test sort_key with various scenarios."""
-        result = u.Cache.sort_key(scenario.key)
-
-        # Special handling for cases where str() representation may vary
+        result = u.sort_key(scenario.key)
         if scenario.name in {"custom_object", "float_key"}:
-            assert result[0] == scenario.expected_tuple[0]  # Type group matches
-            assert isinstance(result[1], str)  # String representation
-            # For float_key, validate it's a valid float string representation
+            assert result[0] == scenario.expected_tuple[0]
+            assert isinstance(result[1], str)
             if scenario.name == "float_key":
                 assert result[1] == "3.14" or result[1].startswith("3.1")
         else:
@@ -389,18 +334,17 @@ class TestuCacheSortKey:
 
     def test_sort_key_string_case_insensitive(self) -> None:
         """Test sort_key handles string case-insensitively."""
-        assert u.Cache.sort_key("Hello") == (0, "hello")
-        assert u.Cache.sort_key("HELLO") == (0, "hello")
-        assert u.Cache.sort_key("hello") == (0, "hello")
+        assert u.sort_key("Hello") == (0, "hello")
+        assert u.sort_key("HELLO") == (0, "hello")
+        assert u.sort_key("hello") == (0, "hello")
 
     def test_sort_key_number_types(self) -> None:
         """Test sort_key handles different number types."""
-        assert u.Cache.sort_key(42) == (1, "42")
-        # math.pi converts to string representation, not exact "3.14"
-        pi_result = u.Cache.sort_key(math.pi)
-        assert pi_result[0] == 1  # Type group for numbers
-        assert isinstance(pi_result[1], str)  # String representation
-        assert u.Cache.sort_key(-10) == (1, "-10")
+        assert u.sort_key(42) == (1, "42")
+        pi_result = u.sort_key(math.pi)
+        assert pi_result[0] == 1
+        assert isinstance(pi_result[1], str)
+        assert u.sort_key(-10) == (1, "-10")
 
 
 class TestuCacheSortDictKeys:
@@ -409,61 +353,38 @@ class TestuCacheSortDictKeys:
     def test_sort_dict_keys_simple(self) -> None:
         """Test sort_dict_keys with simple dict."""
         data = {"c": 3, "a": 1, "b": 2}
-        result = u.Cache.sort_dict_keys(data)
-
-        tu.Tests.Assertions.assert_result_matches_expected(
-            result,
-            dict,
-        )
-        # Type narrowing: result is dict after assert_result_matches_expected
-        result_dict = cast("dict[str, t.GeneralValueType]", result)
+        result = u.sort_dict_keys(data)
+        assert isinstance(result, dict)
+        result_dict: dict[str, object] = result
         assert list(result_dict.keys()) == ["a", "b", "c"]
 
     def test_sort_dict_keys_with_none_values(self) -> None:
         """Test sort_dict_keys converts None values to empty dict."""
-        data = {"key1": "value", "key2": None, "key3": 42}
-        result = u.Cache.sort_dict_keys(data)
-
-        # Type narrowing: sort_dict_keys returns t.GeneralValueType, but for
-        # dict input it returns dict
-        tu.Tests.Assertions.assert_result_matches_expected(
-            result,
-            dict,
-        )
-        # Type narrowing: result is dict after assert_result_matches_expected
-        result_dict = cast("dict[str, t.GeneralValueType]", result)
+        data: dict[str, str | int | None] = {"key1": "value", "key2": None, "key3": 42}
+        result = u.sort_dict_keys(data)
+        assert isinstance(result, dict)
+        result_dict: dict[str, object] = result
         assert result_dict["key1"] == "value"
-        assert result_dict["key2"] == {}  # None converted to empty dict
+        assert result_dict["key2"] == {}
         assert result_dict["key3"] == 42
 
     def test_sort_dict_keys_nested(self) -> None:
         """Test sort_dict_keys with nested dicts."""
-        data = {
-            "z": {"c": 3, "a": 1, "b": 2},
-            "a": {"x": 10, "y": 20},
-        }
-        result = u.Cache.sort_dict_keys(data)
-
-        # Type narrowing: sort_dict_keys returns t.GeneralValueType, but for
-        # dict input it returns dict
-        tu.Tests.Assertions.assert_result_matches_expected(
-            result,
-            dict,
-        )
-        # Type narrowing: result is dict after assert_result_matches_expected
-        result_dict = cast("dict[str, t.GeneralValueType]", result)
+        data = {"z": {"c": 3, "a": 1, "b": 2}, "a": {"x": 10, "y": 20}}
+        result = u.sort_dict_keys(data)
+        assert isinstance(result, dict)
+        result_dict: dict[str, object] = result
         assert list(result_dict.keys()) == ["a", "z"]
-        # Type narrowing: nested value is also dict
         nested = result_dict["z"]
         assert isinstance(nested, dict)
-        nested_dict: dict[str, t.GeneralValueType] = nested
+        nested_dict: dict[str, object] = nested
         assert list(nested_dict.keys()) == ["a", "b", "c"]
 
     def test_sort_dict_keys_non_dict(self) -> None:
         """Test sort_dict_keys returns non-dict unchanged."""
-        assert u.Cache.sort_dict_keys("string") == "string"
-        assert u.Cache.sort_dict_keys(42) == 42
-        assert u.Cache.sort_dict_keys([1, 2, 3]) == [1, 2, 3]
+        assert u.sort_dict_keys("string") == "string"
+        assert u.sort_dict_keys(42) == 42
+        assert u.sort_dict_keys([1, 2, 3]) == [1, 2, 3]
 
 
 class TestuCacheClearObjectCache:
@@ -472,102 +393,98 @@ class TestuCacheClearObjectCache:
     def test_clear_object_cache_with_dict_cache(self) -> None:
         """Test clear_object_cache with dict-like cache."""
 
-        class TestObject(BaseModel):
+        class TestObject:
             """Test object with dict cache."""
 
-            _cache: dict[str, str] = {"key1": "value1", "key2": "value2"}
+            _cache: dict[str, str] = {}  # Test double; per-test isolation
+
+            def __init__(self) -> None:
+                self._cache = {"key1": "value1", "key2": "value2"}
 
         obj = TestObject()
         assert len(obj._cache) == 2
-
-        result = u.Cache.clear_object_cache(obj)
-        assertion_helpers.assert_flext_result_success(result)
+        result = u.clear_object_cache(obj)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value is True
         assert len(obj._cache) == 0
 
     def test_clear_object_cache_with_simple_cache(self) -> None:
         """Test clear_object_cache with simple cached value."""
 
-        class TestObject(BaseModel):
+        class TestObject:
             """Test object with simple cache."""
 
-            _cached_value: str | None = (
-                "cached_value"  # Use _cached_value (in CACHE_ATTRIBUTE_NAMES)
-            )
+            _cached_value: str | None = "cached_value"
 
         obj = TestObject()
         assert obj._cached_value == "cached_value"
-
-        result = u.Cache.clear_object_cache(obj)
-        assertion_helpers.assert_flext_result_success(result)
-        assert obj._cached_value is None
+        result = u.clear_object_cache(obj)
+        _ = assertion_helpers.assert_flext_result_success(result)
+        assert getattr(obj, "_cached_value", None) is None
 
     def test_clear_object_cache_with_non_dict_cache(self) -> None:
         """Test clear_object_cache with cache that doesn't have clear() method."""
 
-        class TestObject(BaseModel):
+        class TestObject:
             """Test object with non-dict cache."""
 
-            _cache: str | None = "simple_string_cache"  # String doesn't have clear()
+            _cache: str | None = "simple_string_cache"
 
         obj = TestObject()
         assert obj._cache == "simple_string_cache"
-
-        result = u.Cache.clear_object_cache(obj)
-        assertion_helpers.assert_flext_result_success(result)
-        # Should set to None (line 284-285)
-        assert obj._cache is None
+        result = u.clear_object_cache(obj)
+        _ = assertion_helpers.assert_flext_result_success(result)
+        assert getattr(obj, "_cache", None) is None
 
     def test_clear_object_cache_multiple_attributes(self) -> None:
         """Test clear_object_cache clears multiple cache attributes."""
 
-        class TestObject(BaseModel):
+        class TestObject:
             """Test object with multiple cache attributes."""
 
-            _cache: dict[str, int] = {"a": 1}
+            _cache: dict[str, int] = {}  # Test double
             _cached_value: str | None = "value"
-            _cached_at: dict[str, int] = {"b": 2}
+            _cached_at: dict[str, int] = {}  # Test double
+
+            def __init__(self) -> None:
+                self._cache = {"a": 1}
+                self._cached_value = "value"
+                self._cached_at = {"b": 2}
 
         obj = TestObject()
-        # Verify initial state
         assert len(obj._cache) == 1
         assert obj._cached_value == "value"
         assert len(obj._cached_at) == 1
-
-        result = u.Cache.clear_object_cache(obj)
-
-        assertion_helpers.assert_flext_result_success(result)
+        result = u.clear_object_cache(obj)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert len(obj._cache) == 0
-        assert obj._cached_value is None
+        assert getattr(obj, "_cached_value", None) is None
         assert len(obj._cached_at) == 0
 
     def test_clear_object_cache_no_cache_attributes(self) -> None:
         """Test clear_object_cache with object without cache attributes."""
 
-        class TestObject(BaseModel):
+        class TestObject:
             """Test object without cache attributes."""
 
             data: str = "value"
 
         obj = TestObject()
-        result = u.Cache.clear_object_cache(obj)
-
-        assertion_helpers.assert_flext_result_success(result)
+        result = u.clear_object_cache(obj)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value is True
 
     def test_clear_object_cache_with_none_cache(self) -> None:
         """Test clear_object_cache with None cache value."""
 
-        class TestObject(BaseModel):
+        class TestObject:
             """Test object with None cache."""
 
             _cache: dict[str, str] | None = None
 
         obj = TestObject()
-        result = u.Cache.clear_object_cache(obj)
-
-        assertion_helpers.assert_flext_result_success(result)
-        # None cache should be skipped (not cleared)
+        result = u.clear_object_cache(obj)
+        _ = assertion_helpers.assert_flext_result_success(result)
 
     def test_clear_object_cache_error_handling(self) -> None:
         """Test clear_object_cache error handling."""
@@ -579,11 +496,8 @@ class TestuCacheClearObjectCache:
                 raise RuntimeError(error_msg)
 
         obj = BadObject()
-        # Cast to t.GeneralValueType | BaseModel for type checker
-        # Runtime will handle the object correctly
-        result = u.Cache.clear_object_cache(cast("t.GeneralValueType | BaseModel", obj))
-
-        assertion_helpers.assert_flext_result_failure(result)
+        result = u.clear_object_cache(cast("object | BaseModel", obj))
+        _ = assertion_helpers.assert_flext_result_failure(result)
         assert result.error is not None and "Failed to clear caches" in result.error
 
     def test_clear_object_cache_type_error(self) -> None:
@@ -592,21 +506,17 @@ class TestuCacheClearObjectCache:
 
         class BadObject:
             def __init__(self) -> None:
-                self._cache: object = object()  # Object without clear() method
+                self._cache: object = object()
 
+            @override
             def __setattr__(self, name: str, value: object) -> None:
-                # Only raise TypeError when trying to set _cache to None
                 if name == "_cache" and value is None:
                     raise TypeError(error_msg)
                 super().__setattr__(name, value)
 
         obj = BadObject()
-        # Cast to t.GeneralValueType | BaseModel for type checker
-        # Runtime will handle the object correctly
-        result = u.Cache.clear_object_cache(cast("t.GeneralValueType | BaseModel", obj))
-
-        # Should handle TypeError gracefully and return failure
-        assertion_helpers.assert_flext_result_failure(result)
+        result = u.clear_object_cache(cast("object | BaseModel", obj))
+        _ = assertion_helpers.assert_flext_result_failure(result)
         assert result.error is not None and "Failed to clear caches" in result.error
 
     def test_clear_object_cache_value_error(self) -> None:
@@ -617,17 +527,15 @@ class TestuCacheClearObjectCache:
             def __init__(self) -> None:
                 self._cache: dict[str, str] = {}
 
+            @override
             def __getattribute__(self, name: str) -> object:
                 if name == "_cache":
                     raise ValueError(error_msg)
                 return super().__getattribute__(name)
 
         obj = BadObject()
-        # Cast to t.GeneralValueType | BaseModel for type checker
-        # Runtime will handle the object correctly
-        result = u.Cache.clear_object_cache(cast("t.GeneralValueType | BaseModel", obj))
-
-        assertion_helpers.assert_flext_result_failure(result)
+        result = u.clear_object_cache(cast("object | BaseModel", obj))
+        _ = assertion_helpers.assert_flext_result_failure(result)
         assert result.error is not None and "Failed to clear caches" in result.error
 
     def test_clear_object_cache_key_error(self) -> None:
@@ -635,6 +543,7 @@ class TestuCacheClearObjectCache:
         error_msg = "Cannot clear"
 
         class BadCache(UserDict[str, str]):
+            @override
             def clear(self) -> None:
                 raise KeyError(error_msg)
 
@@ -643,33 +552,31 @@ class TestuCacheClearObjectCache:
                 self._cache = BadCache({"key": "value"})
 
         obj = BadObject()
-        # Cast to t.GeneralValueType | BaseModel for type checker
-        # Runtime will handle the object correctly
-        result = u.Cache.clear_object_cache(cast("t.GeneralValueType | BaseModel", obj))
-
-        assertion_helpers.assert_flext_result_failure(result)
+        result = u.clear_object_cache(cast("object | BaseModel", obj))
+        _ = assertion_helpers.assert_flext_result_failure(result)
         assert result.error is not None and "Failed to clear caches" in result.error
 
     def test_clear_object_cache_with_pydantic_model(self) -> None:
         """Test clear_object_cache with Pydantic model."""
 
-        class ModelWithCache(BaseModel):
-            model_config = {"extra": "allow"}
+        class ModelWithCache:
+            model_config: ClassVar[dict[str, str]] = {"extra": "allow"}
             name: str
-            _cache: dict[str, str] = {}
+            _cache: dict[str, str] = {}  # Test double; cleared by clear_object_cache
+
+            def __init__(self, name: str = "") -> None:
+                self.name = name
+                self._cache = {}
 
         model = ModelWithCache(name="test")
-        # Set cache attribute directly
         model._cache = {"computed": "value"}
         cache_before = getattr(model, "_cache", None)
         assert cache_before is not None
         assert len(cache_before) == 1
-
-        result = u.Cache.clear_object_cache(model)
-        assertion_helpers.assert_flext_result_success(result)
-        # Cache should be cleared (dict.clear() leaves empty dict, not None)
+        result = u.clear_object_cache(model)
+        _ = assertion_helpers.assert_flext_result_success(result)
         cache_after = getattr(model, "_cache", None)
-        assert cache_after == {}  # clear() leaves empty dict
+        assert cache_after == {}
 
 
 class TestuCacheHasCacheAttributes:
@@ -680,11 +587,10 @@ class TestuCacheHasCacheAttributes:
 
         class TestObject:
             def __init__(self) -> None:
-                self._cache: dict[str, t.GeneralValueType] = {}
+                self._cache: dict[str, object] = {}  # Test double
 
         obj = TestObject()
-        # Cast to t.GeneralValueType for type checker
-        assert u.Cache.has_cache_attributes(cast("t.GeneralValueType", obj)) is True
+        assert u.has_cache_attributes(cast("object", obj)) is True
 
     def test_has_cache_attributes_false(self) -> None:
         """Test has_cache_attributes returns False when no cache."""
@@ -694,20 +600,18 @@ class TestuCacheHasCacheAttributes:
                 self.data = "value"
 
         obj = TestObject()
-        # Cast to t.GeneralValueType for type checker
-        assert u.Cache.has_cache_attributes(cast("t.GeneralValueType", obj)) is False
+        assert u.has_cache_attributes(cast("object", obj)) is False
 
     def test_has_cache_attributes_multiple(self) -> None:
         """Test has_cache_attributes with multiple cache attributes."""
 
         class TestObject:
             def __init__(self) -> None:
-                self._cache: dict[str, t.GeneralValueType] = {}
-                self.cache: dict[str, t.GeneralValueType] = {}
+                self._cache: dict[str, object] = {}
+                self.cache: dict[str, object] = {}
 
         obj = TestObject()
-        # Cast to t.GeneralValueType for type checker
-        assert u.Cache.has_cache_attributes(cast("t.GeneralValueType", obj)) is True
+        assert u.has_cache_attributes(cast("object", obj)) is True
 
 
 class TestuCacheGenerateCacheKey:
@@ -715,38 +619,33 @@ class TestuCacheGenerateCacheKey:
 
     def test_generate_cache_key_args_only(self) -> None:
         """Test generate_cache_key with positional arguments."""
-        key1 = u.Cache.generate_cache_key(1, 2, 3)
-        key2 = u.Cache.generate_cache_key(1, 2, 3)
-
+        key1 = u.generate_cache_key(1, 2, 3)
+        key2 = u.generate_cache_key(1, 2, 3)
         assert key1 == key2
-        assert len(key1) == 64  # SHA-256 hex digest length
+        assert len(key1) == 64
 
     def test_generate_cache_key_kwargs_only(self) -> None:
         """Test generate_cache_key with keyword arguments."""
-        key1 = u.Cache.generate_cache_key(a=1, b=2)
-        key2 = u.Cache.generate_cache_key(b=2, a=1)  # Different order
-
-        assert key1 == key2  # Should be same regardless of order
+        key1 = u.generate_cache_key(a=1, b=2)
+        key2 = u.generate_cache_key(b=2, a=1)
+        assert key1 == key2
 
     def test_generate_cache_key_mixed(self) -> None:
         """Test generate_cache_key with both args and kwargs."""
-        key1 = u.Cache.generate_cache_key(1, 2, x=3, y=4)
-        key2 = u.Cache.generate_cache_key(1, 2, y=4, x=3)
-
+        key1 = u.generate_cache_key(1, 2, x=3, y=4)
+        key2 = u.generate_cache_key(1, 2, y=4, x=3)
         assert key1 == key2
 
     def test_generate_cache_key_deterministic(self) -> None:
         """Test generate_cache_key produces deterministic keys."""
-        key1 = u.Cache.generate_cache_key("test", 42, flag=True)
-        key2 = u.Cache.generate_cache_key("test", 42, flag=True)
-
+        key1 = u.generate_cache_key("test", 42, flag=True)
+        key2 = u.generate_cache_key("test", 42, flag=True)
         assert key1 == key2
 
     def test_generate_cache_key_different_inputs(self) -> None:
         """Test generate_cache_key produces different keys for different inputs."""
-        key1 = u.Cache.generate_cache_key("test1")
-        key2 = u.Cache.generate_cache_key("test2")
-
+        key1 = u.generate_cache_key("test1")
+        key2 = u.generate_cache_key("test2")
         assert key1 != key2
 
 

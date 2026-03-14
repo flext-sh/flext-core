@@ -1,88 +1,126 @@
+"""Full coverage tests for FlextModelFoundation.Validators.
+
+Tests all staticmethod validators available on m.Validators (which is
+FlextModelFoundation.Validators):
+  - strip_whitespace
+  - ensure_utc_datetime
+  - normalize_to_list
+  - validate_non_empty_string
+  - validate_email
+  - validate_url
+  - validate_semver
+  - validate_uuid_string
+  - validate_config_dict
+  - validate_tags_list
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
+
 from __future__ import annotations
 
-from pydantic import BaseModel
+from datetime import UTC, datetime
+from typing import cast
 
-from flext_core import c, m, r, t, u
-
-
-class _Simple(BaseModel):
-    x: int
+from flext_core import c, m, r, u
+from flext_core._models.base import FlextModelFoundation
 
 
-class _BadInvariant:
-    def check_invariants(self) -> None:
-        raise ValueError("bad invariant")
+def test_strip_whitespace_trims_leading_trailing() -> None:
+    assert m.Validators.strip_whitespace("  hello  ") == "hello"
 
 
-class _BrokenDumpModel(BaseModel):
-    value: int = 1
-
-    def model_dump(self, **kwargs: object) -> dict[str, object]:
-        _ = kwargs
-        raise RuntimeError("dump failed")
+def test_strip_whitespace_preserves_clean() -> None:
+    assert m.Validators.strip_whitespace("already") == "already"
 
 
-def test_models_validation_branch_paths() -> None:
+def test_strip_whitespace_returns_empty_on_spaces() -> None:
+    assert m.Validators.strip_whitespace("   ") == ""
+
+
+def test_ensure_utc_datetime_adds_tzinfo_when_naive() -> None:
+    naive = datetime(2025, 1, 1, 12, 0, 0, tzinfo=UTC)
+    result = m.Validators.ensure_utc_datetime(naive)
+    assert result is not None
+    assert result.tzinfo is UTC
+
+
+def test_ensure_utc_datetime_preserves_aware() -> None:
+    aware = datetime(2025, 1, 1, 12, 0, 0, tzinfo=UTC)
+    result = m.Validators.ensure_utc_datetime(aware)
+    assert result is aware
+
+
+def test_ensure_utc_datetime_returns_none_on_none() -> None:
+    assert m.Validators.ensure_utc_datetime(None) is None
+
+
+def test_normalize_to_list_wraps_scalar() -> None:
+    result = m.Validators.normalize_to_list("single")
+    assert result == ["single"]
+
+
+def test_normalize_to_list_passes_list_through() -> None:
+    result = m.Validators.normalize_to_list(cast("object", [1, 2, 3]))
+    assert result == [1, 2, 3]
+
+
+def test_normalize_to_list_wraps_int() -> None:
+    result = m.Validators.normalize_to_list(42)
+    assert result == [42]
+
+
+def test_validate_config_dict_normalizes_dict() -> None:
+    result = m.Validators.validate_config_dict(
+        cast("object", {"key": "value"}),
+    )
+    assert isinstance(result, dict)
+    assert result["key"] == "value"
+
+
+def test_validate_tags_list_normalizes() -> None:
+    result = m.Validators.validate_tags_list(
+        cast("object", ["tag1", "  TAG1  ", "tag2"]),
+    )
+    assert isinstance(result, list)
+    assert len(result) <= 3
+
+
+def test_validate_tags_list_from_string() -> None:
+    result = m.Validators.validate_tags_list(
+        cast("object", ["hello", "world"]),
+    )
+    assert "hello" in result
+    assert "world" in result
+
+
+def test_facade_binding_is_correct() -> None:
+    """m.Validators IS FlextModelFoundation.Validators."""
+    assert issubclass(m.Validators, FlextModelFoundation.Validators)
+
+
+def test_basic_imports_work() -> None:
+    """Smoke test: all standard imports resolve."""
     assert c.Errors.UNKNOWN_ERROR
     assert isinstance(m.Categories(), m.Categories)
     assert r[int].ok(1).is_success
-    assert isinstance(t.ConfigMap.model_validate({"k": 1}), t.ConfigMap)
-    assert u.Conversion.to_str(1) == "1"
-
-    msg = m.Validation._validation_failure_message(None, "fallback")
-    assert msg.endswith("fallback)")
-
-    slow = m.Validation.validate_performance(_Simple(x=1), max_validation_time_ms=-1)
-    assert slow.is_failure
-
-    ff = m.Validation.validate_batch([1], lambda _: r[int].fail("x"), fail_fast=True)
-    assert ff.is_failure
-
-    cqrs_ok = m.Validation.validate_cqrs_patterns(
-        1, "command", [lambda v: r[int].ok(v)]
-    )
-    assert cqrs_ok.is_success
-
-    missing = m.Validation._validate_event_structure({"event_type": "e"})
-    assert missing.is_failure
-
-    has_attr = m.Validation._event_has_attr({"k": 1}, "k")
-    assert has_attr is True
-
-    none_entity = m.Validation.validate_entity_relationships(None)
-    assert none_entity.is_failure
-
-    bad_uri = m.Validation.validate_uri(None)
-    assert bad_uri.is_failure
-
-    bad_port = m.Validation.validate_port_number(None)
-    assert bad_port.is_failure
-
-    req_none = m.Validation.validate_required_string(None)
-    assert req_none.is_failure
-
-    bad_choice = m.Validation.validate_choice("x", [])
-    assert bad_choice.is_failure
-
-    too_long = m.Validation.validate_length("abc", max_length=1)
-    assert too_long.is_failure
-
-    bad_pattern = m.Validation.validate_pattern("a", "[")
-    assert bad_pattern.is_failure
+    assert isinstance(m.ConfigMap({"k": 1}), m.ConfigMap)
+    assert u.to_str(1) == "1"
 
 
-def test_models_validation_uncovered_exception_and_event_paths(monkeypatch) -> None:
-    failed_perf = m.Validation.validate_performance(_BrokenDumpModel(value=1))
-    assert failed_perf.is_failure
-
-    assert m.Validation._event_has_attr(object(), "missing") is False
-
-    import flext_core._models.validation as validation_models
-
-    monkeypatch.setattr(
-        validation_models,
-        "urlparse",
-        lambda _uri: (_ for _ in ()).throw(ValueError("bad uri")),
-    )
-    bad_uri = m.Validation.validate_uri("http://ok")
-    assert bad_uri.is_failure
+__all__ = [
+    "test_basic_imports_work",
+    "test_ensure_utc_datetime_adds_tzinfo_when_naive",
+    "test_ensure_utc_datetime_preserves_aware",
+    "test_ensure_utc_datetime_returns_none_on_none",
+    "test_facade_binding_is_correct",
+    "test_normalize_to_list_passes_list_through",
+    "test_normalize_to_list_wraps_int",
+    "test_normalize_to_list_wraps_scalar",
+    "test_strip_whitespace_preserves_clean",
+    "test_strip_whitespace_returns_empty_on_spaces",
+    "test_strip_whitespace_trims_leading_trailing",
+    "test_validate_config_dict_normalizes_dict",
+    "test_validate_tags_list_from_string",
+    "test_validate_tags_list_normalizes",
+]

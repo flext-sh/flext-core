@@ -22,11 +22,11 @@ Part of the [FLEXT](https://github.com/flext-sh/flext) ecosystem.
 
 ## 🚀 Key Features
 
-- **Railway-Oriented Programming**: handling errors as values using `FlextResult[T, E]`, eliminating unexpected exceptions in business logic.
+- **Railway-Oriented Programming**: handling errors as values using `r[T, E]`, eliminating unexpected exceptions in business logic.
 - **Dependency Injection**: A lightweight, type-safe DI container (`FlextContainer`) with scoped services and bridge integration.
 - **CQRS Dispatcher**: A strictly typed `FlextDispatcher` for routing commands, queries, and events to their respective handlers.
 - **Domain-Driven Design**: Base classes (`FlextModels`, `FlextService`) and mixins for rich domain modeling.
-- **Protocol-Based Architecture**: Extensive use of Python `Protocol` for loose coupling and improved testability.
+- **Protocol-Based Architecture**: Extensive use of Python `` for loose coupling and improved testability.
 - **Infrastructure Helpers**: Built-in support for structured logging, configuration management, and context propagation.
 
 ## 📦 Installation
@@ -47,15 +47,17 @@ poetry add flext-core
 
 ### Railway-Oriented Results
 
-Replace exception handling with `FlextResult` for predictable control flow.
+Replace exception handling with `r` for predictable control flow.
 
 ```python
-from flext_core import FlextResult as r
+from flext_core import r
+
 
 def divide(a: int, b: int) -> r[float]:
     if b == 0:
         return r[float].fail("Division by zero")
     return r[float].ok(a / b)
+
 
 result = divide(10, 2)
 if result.is_success:
@@ -75,10 +77,12 @@ from flext_core import FlextContainer, Provide, inject, FlextService
 container = FlextContainer.get_global()
 container.register_factory("db_client", lambda: DatabaseClient())
 
+
 # 2. Inject into functions
 @inject
 def get_user(user_id: str, db=Provide["db_client"]):
     return db.query(user_id)
+
 
 # 3. Inject into Services
 class UserService(FlextService):
@@ -94,7 +98,8 @@ Decouple your business logic using the `FlextDispatcher`.
 
 ```python
 from dataclasses import dataclass
-from flext_core import FlextDispatcher, FlextResult as r
+from flext_core import FlextDispatcher, r
+
 
 # 1. Define a Command
 @dataclass
@@ -102,10 +107,12 @@ class CreateUser:
     username: str
     email: str
 
+
 # 2. Define a Handler
 def handle_create_user(cmd: CreateUser) -> r[str]:
     # Business logic here...
     return r[str].ok(f"User {cmd.username} created")
+
 
 # 3. Register and Dispatch
 dispatcher = FlextDispatcher()
@@ -118,7 +125,7 @@ result = dispatcher.dispatch(CreateUser("alice", "alice@example.com"))
 
 FLEXT-Core is designed around Clean Architecture and SOLID principles.
 
-- **Protocols First**: Interfaces are defined using `Protocol` to adhere to the Dependency Inversion Principle.
+- **Protocols First**: Interfaces are defined using `` to adhere to the Dependency Inversion Principle.
 - **Layered Structure**:
   - **Runtime**: Bridges external libraries and provides the DI surface.
   - **Container**: Manages service lifecycles (Singleton, Factory, Scoped).

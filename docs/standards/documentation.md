@@ -1,7 +1,6 @@
 # Documentation Standards
 
 <!-- TOC START -->
-
 - [Documentation Structure](#documentation-structure)
   - [Every Feature Needs](#every-feature-needs)
 - [Overview](#overview)
@@ -81,7 +80,6 @@
   - [Spelling](#spelling)
 - [Examples of Excellent Documentation](#examples-of-excellent-documentation)
 - [Summary](#summary)
-
 <!-- TOC END -->
 
 **Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency
@@ -109,8 +107,9 @@ One paragraph explaining what this feature does and why use it.
 
 ```python
 # Working example
-```
 ````
+
+```markdown
 
 ## API Reference
 
@@ -135,6 +134,7 @@ One paragraph explaining what this feature does and why use it.
 ### Issue: Something breaks
 
 **Solution**: How to fix it
+```
 
 ````
 
@@ -144,13 +144,13 @@ One paragraph explaining what this feature does and why use it.
 
 ```python
 # ✅ CORRECT - Complete, working example
-from flext_core import FlextResult
+from flext_core import r
 
-def divide(a: float, b: float) -> FlextResult[float]:
+def divide(a: float, b: float) -> r[float]:
     """Divide two numbers safely."""
     if b == 0:
-        return FlextResult[float].fail("Division by zero")
-    return FlextResult[float].ok(a / b)
+        return r[float].fail("Division by zero")
+    return r[float].ok(a / b)
 
 result = divide(10, 2)
 if result.is_success:
@@ -164,8 +164,8 @@ else:
 **Rule**: Import ONLY what each example uses.
 
 ```python
-# ✅ CORRECT - Only FlextResult
-from flext_core import FlextResult
+# ✅ CORRECT - Only r
+from flext_core import r
 
 # ❌ WRONG - Unnecessary imports
 from flext_core import (
@@ -182,7 +182,7 @@ from flext_core import (
     FlextModels,
     p,
     FlextRegistry,
-    FlextResult,  # Only this one!
+    r,  # Only this one!
     FlextRuntime,
     FlextService,
     t,
@@ -267,12 +267,12 @@ Always use proper code fence language:
 ```markdown
 # ✅ CORRECT - Verified claim
 
-FlextResult has three methods: ok(), fail(), and unwrap().
+r has three methods: ok(), fail(), and unwrap().
 (Then show all three working)
 
 # ❌ WRONG - Unverified claim
 
-FlextResult makes your code 100% bug-free.
+r makes your code 100% bug-free.
 (This is false and unsupported)
 ```
 
@@ -478,19 +478,20 @@ Before publishing documentation:
 
 ```python
 # Working example
-```
 ````
+
+```markdown
 
 **Raises/Errors:**
 
 - Error1: When this happens
 - Error2: When that happens
 
-````
+```
 
 ### For Classes
 
-```markdown
+````markdown
 ## ClassName
 
 **Purpose**: One sentence explaining what this class does.
@@ -498,8 +499,11 @@ Before publishing documentation:
 **Inherits from**: Parent class if applicable
 
 **Usage:**
+
 ```python
 # Basic usage example
+````
+
 ````
 
 ### Methods
@@ -514,7 +518,8 @@ Each method documented as above.
 **Type**: DataType
 
 **Description**: What does this property represent?
-```
+
+````
 
 ## Writing Guidelines
 
@@ -523,11 +528,11 @@ Each method documented as above.
 ```markdown
 # ✅ CORRECT
 
-FlextResult[T] returns either Ok(value) or Fail(error).
+r[T] returns either Ok(value) or Fail(error).
 
 # ❌ VAGUE
 
-FlextResult is cool and handles errors.
+r is cool and handles errors.
 ```
 
 ### Be Concise
@@ -583,14 +588,14 @@ Services can be registered with the container.
 
 ```python
 # ✅ CONSISTENT - Same style across all examples
-result = FlextResult[int].ok(42)
+result = r[int].ok(42)
 if result.is_success:
     value = result.value
 
 # ❌ INCONSISTENT - Different styles
-result = FlextResult.ok(42)  # First example
-res = FlextResult[int].ok(42)  # Second example
-r = FlextResult[int].ok(42)  # Third example
+result = r.ok(42)  # First example
+res = r[int].ok(42)  # Second example
+r = r[int].ok(42)  # Third example
 ```
 
 ## Maintenance
@@ -621,9 +626,9 @@ r = FlextResult[int].ok(42)  # Third example
 ```python
 # ✅ CORRECT - Commented
 result = (
-    validate_email(email)      # Validate email format
-    .flat_map(check_available) # Check if available
-    .map(send_confirmation)    # Send confirmation
+    validate_email(email)  # Validate email format
+    .flat_map(check_available)  # Check if available
+    .map(send_confirmation)  # Send confirmation
 )
 
 # ❌ WRONG - No explanation
@@ -698,3 +703,10 @@ FLEXT-Core documentation standards:
 - ✅ Pass quality gate before publishing
 
 Documentation is part of the product. Maintain the same standards as the code.
+
+```
+
+```
+
+```
+```

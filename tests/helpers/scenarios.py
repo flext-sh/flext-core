@@ -10,66 +10,106 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import ClassVar
+from typing import Annotated, ClassVar
 
-from flext_core.models import m
-from flext_core.typings import t
+from pydantic import BaseModel, ConfigDict, Field
 
-# =========================================================================
-# Scenario Dataclasses
-# =========================================================================
+from flext_core import m
 
 
-@dataclass(frozen=True, slots=True)
-class ValidationScenario:
+class ValidationScenario(BaseModel):
     """Single scenario for validation testing."""
 
-    name: str
-    validator_type: str  # "network", "string", "numeric"
-    input_value: t.GeneralValueType
-    input_params: dict[str, object] | None = None
-    should_succeed: bool = True
-    expected_value: t.GeneralValueType | None = None
-    expected_error_contains: str | None = None
-    description: str | None = None
+    model_config = ConfigDict(frozen=True)
+
+    name: Annotated[str, Field(description="Unique scenario name")]
+    validator_type: Annotated[str, Field(description="Validator category under test")]
+    input_value: Annotated[object, Field(description="Input value passed to validator")]
+    input_params: Annotated[
+        object | None,
+        Field(
+            default=None,
+            description="Optional validator parameters for scenario execution",
+        ),
+    ] = None
+    should_succeed: Annotated[
+        bool,
+        Field(default=True, description="Whether scenario expects validation success"),
+    ] = True
+    expected_value: Annotated[
+        object | None,
+        Field(
+            default=None,
+            description="Expected normalized value when validation succeeds",
+        ),
+    ] = None
+    expected_error_contains: Annotated[
+        str | None,
+        Field(
+            default=None, description="Expected error substring when validation fails"
+        ),
+    ] = None
+    description: Annotated[
+        str | None,
+        Field(default=None, description="Human-readable scenario description"),
+    ] = None
 
 
-@dataclass(frozen=True, slots=True)
-class ParserScenario:
+class ParserScenario(BaseModel):
     """Single scenario for parser testing."""
 
-    name: str
-    parser_method: str
-    input_data: str
-    expected_output: t.GeneralValueType | None = None
-    should_succeed: bool = True
-    error_contains: str | None = None
-    description: str | None = None
+    model_config = ConfigDict(frozen=True)
+
+    name: Annotated[str, Field(description="Unique parser scenario name")]
+    parser_method: Annotated[str, Field(description="Parser method to execute")]
+    input_data: Annotated[str, Field(description="Raw parser input data")]
+    expected_output: Annotated[
+        object | None,
+        Field(
+            default=None, description="Expected parsed output for successful scenarios"
+        ),
+    ] = None
+    should_succeed: Annotated[
+        bool, Field(default=True, description="Whether parser scenario expects success")
+    ] = True
+    error_contains: Annotated[
+        str | None, Field(default=None, description="Expected parser error substring")
+    ] = None
+    description: Annotated[
+        str | None,
+        Field(default=None, description="Human-readable scenario description"),
+    ] = None
 
 
-@dataclass(frozen=True, slots=True)
-class ReliabilityScenario:
+class ReliabilityScenario(BaseModel):
     """Single scenario for reliability testing (circuit breaker, retry)."""
 
-    name: str
-    strategy: str  # "retry", "circuit_breaker", "timeout"
-    config: m.ConfigMap
-    simulate_failures: int
-    expected_state: str
-    should_succeed: bool = True
-    description: str | None = None
+    model_config = ConfigDict(frozen=True)
 
-
-# =========================================================================
-# Centralized Validation Scenarios
-# =========================================================================
+    name: Annotated[str, Field(description="Unique reliability scenario name")]
+    strategy: Annotated[str, Field(description="Reliability strategy under test")]
+    config: Annotated[
+        m.ConfigMap, Field(description="Reliability configuration payload")
+    ]
+    simulate_failures: Annotated[
+        int, Field(description="Number of failures to simulate")
+    ]
+    expected_state: Annotated[
+        str, Field(description="Expected strategy terminal state")
+    ]
+    should_succeed: Annotated[
+        bool,
+        Field(default=True, description="Whether scenario expects successful outcome"),
+    ] = True
+    description: Annotated[
+        str | None,
+        Field(default=None, description="Human-readable scenario description"),
+    ] = None
 
 
 class ValidationScenarios:
     """Centralized validation scenarios - single source of truth."""
 
-    # Network Validators
     URI_SCENARIOS: ClassVar[list[ValidationScenario]] = [
         ValidationScenario(
             name="uri_valid_http",
@@ -169,7 +209,6 @@ class ValidationScenarios:
             description="Custom scheme with allowlist",
         ),
     ]
-
     PORT_SCENARIOS: ClassVar[list[ValidationScenario]] = [
         ValidationScenario(
             name="port_valid_80",
@@ -244,7 +283,6 @@ class ValidationScenarios:
             description="Port above maximum",
         ),
     ]
-
     HOSTNAME_SCENARIOS: ClassVar[list[ValidationScenario]] = [
         ValidationScenario(
             name="hostname_simple",
@@ -279,8 +317,6 @@ class ValidationScenarios:
             description="Hostname with hyphen",
         ),
     ]
-
-    # String Validators
     REQUIRED_SCENARIOS: ClassVar[list[ValidationScenario]] = [
         ValidationScenario(
             name="required_valid",
@@ -339,7 +375,6 @@ class ValidationScenarios:
             description="Single character string",
         ),
     ]
-
     CHOICE_SCENARIOS: ClassVar[list[ValidationScenario]] = [
         ValidationScenario(
             name="choice_valid_single",
@@ -363,7 +398,7 @@ class ValidationScenarios:
             name="choice_invalid",
             validator_type="string",
             input_value="invalid",
-            input_params={"valid_choices": {"option1", "option2"}},
+            input_params={"valid_choices": ["option1", "option2"]},
             should_succeed=False,
             expected_error_contains="Must be one of",
             description="Invalid choice",
@@ -373,7 +408,7 @@ class ValidationScenarios:
             validator_type="string",
             input_value="OPTION1",
             input_params={
-                "valid_choices": {"option1", "option2"},
+                "valid_choices": ["option1", "option2"],
                 "case_sensitive": True,
             },
             should_succeed=False,
@@ -385,7 +420,7 @@ class ValidationScenarios:
             validator_type="string",
             input_value="option1",
             input_params={
-                "valid_choices": {"option1", "option2"},
+                "valid_choices": ["option1", "option2"],
                 "case_sensitive": False,
             },
             should_succeed=True,
@@ -393,7 +428,6 @@ class ValidationScenarios:
             description="Case-insensitive choice",
         ),
     ]
-
     LENGTH_SCENARIOS: ClassVar[list[ValidationScenario]] = [
         ValidationScenario(
             name="length_exact",
@@ -441,13 +475,12 @@ class ValidationScenarios:
             description="Zero-length string allowed",
         ),
     ]
-
     PATTERN_SCENARIOS: ClassVar[list[ValidationScenario]] = [
         ValidationScenario(
             name="pattern_email_valid",
             validator_type="string",
             input_value="test@example.com",
-            input_params={"pattern": r"^[\w\.-]+@[\w\.-]+\.\w+$"},
+            input_params={"pattern": "^[\\w\\.-]+@[\\w\\.-]+\\.\\w+$"},
             should_succeed=True,
             expected_value="test@example.com",
             description="Valid email pattern",
@@ -456,7 +489,7 @@ class ValidationScenarios:
             name="pattern_digits_only",
             validator_type="string",
             input_value="12345",
-            input_params={"pattern": r"^\d+$"},
+            input_params={"pattern": "^\\d+$"},
             should_succeed=True,
             expected_value="12345",
             description="Digits-only pattern",
@@ -465,7 +498,7 @@ class ValidationScenarios:
             name="pattern_alphanumeric",
             validator_type="string",
             input_value="abc123",
-            input_params={"pattern": r"^[a-zA-Z0-9]+$"},
+            input_params={"pattern": "^[a-zA-Z0-9]+$"},
             should_succeed=True,
             expected_value="abc123",
             description="Alphanumeric pattern",
@@ -474,14 +507,12 @@ class ValidationScenarios:
             name="pattern_mismatch",
             validator_type="string",
             input_value="invalid@",
-            input_params={"pattern": r"^[\w\.-]+@[\w\.-]+\.\w+$"},
+            input_params={"pattern": "^[\\w\\.-]+@[\\w\\.-]+\\.\\w+$"},
             should_succeed=False,
             expected_error_contains="format is invalid",
             description="Pattern mismatch",
         ),
     ]
-
-    # Numeric Validators
     NON_NEGATIVE_SCENARIOS: ClassVar[list[ValidationScenario]] = [
         ValidationScenario(
             name="non_negative_zero",
@@ -524,7 +555,6 @@ class ValidationScenarios:
             description="None rejection",
         ),
     ]
-
     POSITIVE_SCENARIOS: ClassVar[list[ValidationScenario]] = [
         ValidationScenario(
             name="positive_one",
@@ -575,7 +605,6 @@ class ValidationScenarios:
             description="None rejection",
         ),
     ]
-
     RANGE_SCENARIOS: ClassVar[list[ValidationScenario]] = [
         ValidationScenario(
             name="range_within_bounds",
@@ -652,11 +681,6 @@ class ValidationScenarios:
     ]
 
 
-# =========================================================================
-# Centralized Parser Scenarios
-# =========================================================================
-
-
 class ParserScenarios:
     """Centralized parser scenarios - single source of truth."""
 
@@ -686,11 +710,6 @@ class ParserScenarios:
     ]
 
 
-# =========================================================================
-# Centralized Reliability Scenarios
-# =========================================================================
-
-
 class ReliabilityScenarios:
     """Centralized reliability scenarios - single source of truth."""
 
@@ -698,7 +717,9 @@ class ReliabilityScenarios:
         ReliabilityScenario(
             name="retry_immediate_success",
             strategy="retry",
-            config={"max_retries": 3, "backoff_type": "constant", "backoff_ms": 10},
+            config=m.ConfigMap(
+                root={"max_retries": 3, "backoff_type": "constant", "backoff_ms": 10},
+            ),
             simulate_failures=0,
             expected_state="success",
             should_succeed=True,
@@ -707,7 +728,9 @@ class ReliabilityScenarios:
         ReliabilityScenario(
             name="retry_after_one_failure",
             strategy="retry",
-            config={"max_retries": 3, "backoff_type": "constant", "backoff_ms": 10},
+            config=m.ConfigMap(
+                root={"max_retries": 3, "backoff_type": "constant", "backoff_ms": 10},
+            ),
             simulate_failures=1,
             expected_state="success",
             should_succeed=True,
@@ -716,19 +739,20 @@ class ReliabilityScenarios:
         ReliabilityScenario(
             name="retry_exhausted",
             strategy="retry",
-            config={"max_retries": 2, "backoff_type": "constant", "backoff_ms": 10},
+            config=m.ConfigMap(
+                root={"max_retries": 2, "backoff_type": "constant", "backoff_ms": 10},
+            ),
             simulate_failures=5,
             expected_state="exhausted",
             should_succeed=False,
             description="All retries exhausted",
         ),
     ]
-
     CIRCUIT_BREAKER_SCENARIOS: ClassVar[list[ReliabilityScenario]] = [
         ReliabilityScenario(
             name="circuit_initial_closed",
             strategy="circuit_breaker",
-            config={"failure_threshold": 5, "timeout_ms": 1000},
+            config=m.ConfigMap(root={"failure_threshold": 5, "timeout_ms": 1000}),
             simulate_failures=0,
             expected_state="closed",
             should_succeed=True,
@@ -737,7 +761,7 @@ class ReliabilityScenarios:
         ReliabilityScenario(
             name="circuit_open_on_threshold",
             strategy="circuit_breaker",
-            config={"failure_threshold": 2, "timeout_ms": 1000},
+            config=m.ConfigMap(root={"failure_threshold": 2, "timeout_ms": 1000}),
             simulate_failures=3,
             expected_state="open",
             should_succeed=False,

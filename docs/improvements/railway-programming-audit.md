@@ -1,7 +1,6 @@
 # Railway-Oriented Programming Guide - Audit Report
 
 <!-- TOC START -->
-
 - [Audit Summary](#audit-summary)
   - [✅ Accurate Documentation (7 methods)](#accurate-documentation-7-methods)
   - [❌ Missing Critical Methods (13 methods)](#missing-critical-methods-13-methods)
@@ -25,7 +24,6 @@
   - [Verified Instance Methods ✅](#verified-instance-methods)
   - [Still Need to Find](#still-need-to-find)
 - [Conclusion](#conclusion)
-
 <!-- TOC END -->
 
 **Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency
@@ -43,13 +41,13 @@ ______________________________________________________________________
 
 These methods are correctly documented with accurate line references:
 
-1. **FlextResult.ok()** - Line 313 ✅
+1. **r.ok()** - Line 313 ✅
 
    - Documented accurately
    - Example correct
    - Source reference valid
 
-1. **FlextResult.fail()** - Line 343 ✅
+1. **r.fail()** - Line 343 ✅
 
    - Documented accurately
    - Error code and error_data parameters covered
@@ -92,36 +90,23 @@ These **production-ready methods** exist in source but are **NOT documented**:
 #### Factory Methods
 
 1. **from_exception()** - Line 1014
-
-   - **Purpose**: Create FlextResult from function that might raise
+   - **Purpose**: Create r from function that might raise
    - **Missing From**: All guides
    - **Impact**: HIGH - Alternative to from_callable
 
-1. **from_maybe()** - Line 1068
-
-   - **Purpose**: Convert returns.maybe.Maybe to FlextResult
-   - **Missing From**: Railway guide, API reference
-   - **Impact**: MEDIUM - Interoperability with returns library
-
-1. **from_io_result()** - Line 1689
-
-   - **Purpose**: Convert returns.io types to FlextResult
-   - **Missing From**: All guides
-   - **Impact**: MEDIUM - IO monad integration
-
 #### Collection Operations
 
-4. **sequence()** - Line 1126
+1. **sequence()** - Line 1126
 
-   - **Purpose**: Convert list\[FlextResult[T]\] → FlextResult\[list[T]\]
+   - **Purpose**: Convert list\[r[T]\] → r\[list[T]\]
    - **Missing From**: Railway guide
    - **Impact**: HIGH - Essential for batch operations
    - **Example Needed**:
 
    ```python
-   results = [FlextResult.ok(1), FlextResult.ok(2), FlextResult.ok(3)]
-   combined = FlextResult.sequence(results)
-   # FlextResult[list[int]].ok([1, 2, 3])
+   results = [r.ok(1), r.ok(2), r.ok(3)]
+   combined = r.sequence(results)
+   # r[list[int]].ok([1, 2, 3])
    ```
 
 1. **collect_successes()** - Line 1144
@@ -144,7 +129,7 @@ These **production-ready methods** exist in source but are **NOT documented**:
 
 #### Advanced Composition
 
-8. **batch_process()** - Line 1167
+1. **batch_process()** - Line 1167
 
    - **Purpose**: Process items in batches with error handling
    - **Missing From**: Railway guide
@@ -231,7 +216,7 @@ ______________________________________________________________________
 
 1. **Add Missing Factory Methods Section**
 
-   - Document from_exception, from_maybe, from_io_result
+   - Document from_exception
    - Show when to use each
    - Provide examples
 
@@ -255,7 +240,7 @@ ______________________________________________________________________
 
 ### Medium Priority
 
-5. **Verify Advanced Methods**
+1. **Verify Advanced Methods**
 
    - Check flow_through() existence
    - Verify lash(), alt(), with_resource()
@@ -270,7 +255,7 @@ ______________________________________________________________________
 
 ### Low Priority
 
-7. **Add Performance Section**
+1. **Add Performance Section**
 
    - Document parallel_map performance
    - Batch processing guidelines
@@ -318,7 +303,6 @@ ______________________________________________________________________
    6.1 from_callable() ✅
    6.2 from_exception() ❌ MISSING
    6.3 safe_call() ❌ MISSING
-   6.4 from_maybe() / from_io_result() ❌ MISSING
 
 7. Collection Operations (NEW)
    7.1 sequence() ❌ MISSING
@@ -391,7 +375,6 @@ ______________________________________________________________________
 - flat_map() - Line 575
 - filter() - Line 996
 - from_exception() - Line 1014
-- from_maybe() - Line 1068
 - sequence() - Line 1126
 - collect_successes() - Line 1144
 - collect_failures() - Line 1151
@@ -403,7 +386,6 @@ ______________________________________________________________________
 - accumulate_errors() - Line 1327
 - parallel_map() - Line 1352
 - validate_all() - Line 1454
-- from_io_result() - Line 1689
 
 ### Verified Instance Methods ✅
 

@@ -1,0 +1,46 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Class Nesting Mappings Schema",
+  "description": "Schema for validating class nesting refactoring mappings",
+  "type": "object",
+  "required": ["class_nesting"],
+  "properties": {
+    "class_nesting": {
+      "type": "array",
+      "description": "List of class nesting mappings",
+      "items": {
+        "type": "object",
+        "required": ["loose_name", "current_file", "target_namespace"],
+        "properties": {
+          "loose_name": {
+            "type": "string",
+            "description": "Original class name (before refactoring)"
+          },
+          "current_file": {
+            "type": "string",
+            "description": "Path to file containing the class (relative to workspace root)"
+          },
+          "target_namespace": {
+            "type": "string",
+            "description": "Target namespace class (e.g., FlextDispatcher, FlextUtilities)"
+          },
+          "target_name": {
+            "type": "string",
+            "description": "Name of the class after nesting (defaults to loose_name if not specified)"
+          },
+          "confidence": {
+            "type": "string",
+            "enum": ["high", "medium", "low"],
+            "description": "Confidence level for auto-applying this transformation"
+          },
+          "reason": {
+            "type": "string",
+            "description": "Optional explanation for the mapping decision"
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

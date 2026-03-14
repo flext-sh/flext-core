@@ -1,14 +1,12 @@
 # Clean Architecture
 
 <!-- TOC START -->
-
 - [Layer Hierarchy](#layer-hierarchy)
 - [Dependency Rules](#dependency-rules)
 - [Layer Responsibilities](#layer-responsibilities)
 - [Next Steps](#next-steps)
 - [See Also](#see-also)
 - [Verification Commands](#verification-commands)
-
 <!-- TOC END -->
 
 **Status**: Production Ready | **Version**: 0.10.0 | **Date**: 2025-12-07
@@ -54,10 +52,10 @@ describes the dependency rules and per-layer responsibilities.
 
 ```python
 # ✅ Correct: application layer depends on domain + foundation
-from flext_core import FlextDispatcher, FlextResult
+from flext_core import FlextDispatcher, r
 
 # ❌ Forbidden: foundation pulling from application
-from flext_core.dispatcher import FlextDispatcher  # not allowed inside result.py
+from flext_core import FlextDispatcher  # not allowed inside result.py
 ```
 
 ## Layer Responsibilities
@@ -73,7 +71,7 @@ from flext_core.dispatcher import FlextDispatcher  # not allowed inside result.p
 
 - **L1 – Foundation & Bridge**
 
-  - `result.py` delivers the railway-oriented `FlextResult` that propagates
+  - `result.py` delivers the railway-oriented `r` that propagates
     errors without raising.
   - `exceptions.py` centralizes typed exceptions surfaced by dispatcher
     orchestration.
@@ -132,4 +130,7 @@ Run from `flext-core/`:
 make lint
 make type-check
 make test-fast
+```
+
+```
 ```

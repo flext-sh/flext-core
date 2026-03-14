@@ -14,16 +14,14 @@ SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
-from flext_core.typings import t
 
-from dataclasses import dataclass
 from enum import StrEnum
-from typing import ClassVar, cast
+from typing import Annotated, ClassVar
 
 import pytest
+from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import t
-from flext_core.result import r
 from flext_tests import u
 
 
@@ -43,55 +41,69 @@ class Priority(StrEnum):
     HIGH = "high"
 
 
-@dataclass(frozen=True, slots=True)
-class IsMemberScenario:
+class IsMemberScenario(BaseModel):
     """Is member test scenario."""
 
-    name: str
-    value: object
-    expected: bool
+    model_config = ConfigDict(frozen=True)
+    name: Annotated[str, Field(description="Is member scenario name")]
+    value: Annotated[object, Field(description="Input value to validate")]
+    expected: Annotated[bool, Field(description="Expected membership result")]
 
 
-@dataclass(frozen=True, slots=True)
-class IsSubsetScenario:
+class IsSubsetScenario(BaseModel):
     """Is subset test scenario."""
 
-    name: str
-    valid_members: frozenset[Status]
-    value: object
-    expected: bool
+    model_config = ConfigDict(frozen=True)
+    name: Annotated[str, Field(description="Is subset scenario name")]
+    valid_members: Annotated[
+        frozenset[Status], Field(description="Allowed enum members")
+    ]
+    value: Annotated[object, Field(description="Input value to validate")]
+    expected: Annotated[bool, Field(description="Expected subset membership result")]
 
 
-@dataclass(frozen=True, slots=True)
-class ParseScenario:
+class ParseScenario(BaseModel):
     """Parse test scenario."""
 
-    name: str
-    value: str | Status
-    expected_success: bool
-    expected_status: Status | None
-    expected_error: str | None
+    model_config = ConfigDict(frozen=True)
+    name: Annotated[str, Field(description="Parse scenario name")]
+    value: Annotated[str | Status, Field(description="Input value to parse")]
+    expected_success: Annotated[bool, Field(description="Whether parse should succeed")]
+    expected_status: Annotated[
+        Status | None, Field(default=None, description="Expected parsed enum status")
+    ] = None
+    expected_error: Annotated[
+        str | None, Field(default=None, description="Expected error message fragment")
+    ] = None
 
 
-@dataclass(frozen=True, slots=True)
-class ParseOrDefaultScenario:
+class ParseOrDefaultScenario(BaseModel):
     """Parse or default test scenario."""
 
-    name: str
-    value: str | Status | None
-    default: Status
-    expected: Status
+    model_config = ConfigDict(frozen=True)
+    name: Annotated[str, Field(description="Parse or default scenario name")]
+    value: Annotated[str | Status | None, Field(description="Input value to parse")]
+    default: Annotated[Status, Field(description="Default enum value")]
+    expected: Annotated[Status, Field(description="Expected output enum value")]
 
 
-@dataclass(frozen=True, slots=True)
-class CoerceValidatorScenario:
+class CoerceValidatorScenario(BaseModel):
     """Coerce validator test scenario."""
 
-    name: str
-    value: t.FlexibleValue
-    expected_success: bool
-    expected_status: Status | None
-    expected_error: str | None
+    model_config = ConfigDict(frozen=True)
+    name: Annotated[str, Field(description="Coerce validator scenario name")]
+    value: Annotated[
+        t.Primitives | Status | None, Field(description="Input value for coercion")
+    ]
+    expected_success: Annotated[
+        bool, Field(description="Whether coercion should succeed")
+    ]
+    expected_status: Annotated[
+        Status | None, Field(default=None, description="Expected coerced status")
+    ] = None
+    expected_error: Annotated[
+        str | None, Field(default=None, description="Expected error message fragment")
+    ] = None
 
 
 class EnumScenarios:
@@ -104,7 +116,6 @@ class EnumScenarios:
         IsMemberScenario(name="invalid_type", value=123, expected=False),
         IsMemberScenario(name="none", value=None, expected=False),
     ]
-
     IS_SUBSET: ClassVar[list[IsSubsetScenario]] = [
         IsSubsetScenario(
             name="valid_enum_in_subset",
@@ -137,7 +148,6 @@ class EnumScenarios:
             expected=False,
         ),
     ]
-
     PARSE: ClassVar[list[ParseScenario]] = [
         ParseScenario(
             name="valid_string",
@@ -158,10 +168,9 @@ class EnumScenarios:
             value="invalid",
             expected_success=False,
             expected_status=None,
-            expected_error="Invalid Status",
+            expected_error="Cannot parse",
         ),
     ]
-
     PARSE_OR_DEFAULT: ClassVar[list[ParseOrDefaultScenario]] = [
         ParseOrDefaultScenario(
             name="valid_string",
@@ -188,7 +197,6 @@ class EnumScenarios:
             expected=Status.PENDING,
         ),
     ]
-
     COERCE_VALIDATOR: ClassVar[list[CoerceValidatorScenario]] = [
         CoerceValidatorScenario(
             name="valid_string",
@@ -227,13 +235,12 @@ class TestuEnumIsMember:
     @pytest.mark.parametrize("scenario", EnumScenarios.IS_MEMBER, ids=lambda s: s.name)
     def test_is_member(self, scenario: IsMemberScenario) -> None:
         """Test is_member with various scenarios."""
-        # Convert object to t.GeneralValueType for type compatibility
-        value_typed: t.GeneralValueType = (
+        value_typed: bool | float | int | str | Status = (
             scenario.value
-            if isinstance(scenario.value, (str, int, float, bool, type(None)))
+            if isinstance(scenario.value, (str, int, float, bool, Status))
             else str(scenario.value)
         )
-        result = u.Enum.is_member(Status, value_typed)
+        result = u.is_member(Status, value_typed)
         assert result == scenario.expected
 
 
@@ -243,17 +250,12 @@ class TestuEnumIsSubset:
     @pytest.mark.parametrize("scenario", EnumScenarios.IS_SUBSET, ids=lambda s: s.name)
     def test_is_subset(self, scenario: IsSubsetScenario) -> None:
         """Test is_subset with various scenarios."""
-        # Convert object to t.GeneralValueType for type compatibility
-        value_typed: t.GeneralValueType = (
+        value_typed: bool | float | int | str | Status = (
             scenario.value
-            if isinstance(scenario.value, (str, int, float, bool, type(None)))
+            if isinstance(scenario.value, (str, int, float, bool, Status))
             else str(scenario.value)
         )
-        result = u.Enum.is_subset(
-            Status,
-            scenario.valid_members,
-            value_typed,
-        )
+        result = u.is_subset(Status, scenario.valid_members, value_typed)
         assert result == scenario.expected
 
 
@@ -263,32 +265,16 @@ class TestuEnumParse:
     @pytest.mark.parametrize("scenario", EnumScenarios.PARSE, ids=lambda s: s.name)
     def test_parse(self, scenario: ParseScenario) -> None:
         """Test parse with various scenarios."""
-        result = u.Enum.parse(Status, scenario.value)
-
+        result = u.parse(scenario.value, Status)
         if scenario.expected_success:
-            # Type annotation: Status is StrEnum, compatible with t.GeneralValueType
-            # Use explicit type annotation to help mypy infer TValue
-            expected_status_cast: t.GeneralValueType = cast(
-                "t.GeneralValueType",
-                scenario.expected_status,
-            )
-            # Type annotation: mypy cannot infer TValue from StrEnum, specify explicitly
-            # Cast result to r[t.GeneralValueType] and expected_value to t.GeneralValueType
-            result_typed: r[t.GeneralValueType] = cast(
-                "r[t.GeneralValueType]",
-                result,
-            )
-            expected_typed: t.GeneralValueType = expected_status_cast
-            u.Tests.Result.assert_success_with_value(
-                result_typed,
-                expected_typed,
-            )
+            assert result.is_success
+            assert result.value == scenario.expected_status
         else:
-            u.Tests.Result.assert_result_failure(result)
+            _ = u.Tests.Result.assert_failure(result)
             assert (
                 result.error is not None
                 and scenario.expected_error is not None
-                and scenario.expected_error in result.error
+                and (scenario.expected_error in result.error)
             )
 
 
@@ -302,11 +288,7 @@ class TestuEnumParseOrDefault:
     )
     def test_parse_or_default(self, scenario: ParseOrDefaultScenario) -> None:
         """Test parse_or_default with various scenarios."""
-        result = u.Enum.parse_or_default(
-            Status,
-            scenario.value,
-            scenario.default,
-        )
+        result = u.parse_or_default(Status, scenario.value, scenario.default)
         assert result == scenario.expected
 
 
@@ -320,14 +302,18 @@ class TestuEnumCoerceValidator:
     )
     def test_coerce_validator(self, scenario: CoerceValidatorScenario) -> None:
         """Test coerce_validator with various scenarios."""
-        validator = u.Enum.coerce_validator(Status)
-
+        validator = u.coerce_validator(Status)
+        value: bool | float | int | str | Status = (
+            scenario.value
+            if isinstance(scenario.value, (str, int, float, bool, Status))
+            else str(scenario.value)
+        )
         if scenario.expected_success:
-            result = validator(scenario.value)
+            result = validator(value)
             assert result == scenario.expected_status
         else:
             with pytest.raises(ValueError) as exc_info:
-                validator(scenario.value)
+                _ = validator(value)
             error_str = str(exc_info.value) if exc_info.value else ""
             assert (
                 scenario.expected_error is not None
@@ -340,28 +326,27 @@ class TestuEnumCoerceByNameValidator:
 
     def test_coerce_by_name_validator_by_name(self) -> None:
         """Test coerce_by_name_validator with member name."""
-        validator = u.Enum.coerce_by_name_validator(Status)
+        validator = u.coerce_by_name_validator(Status)
         result = validator("ACTIVE")
         assert result == Status.ACTIVE
 
     def test_coerce_by_name_validator_by_value(self) -> None:
         """Test coerce_by_name_validator with member value."""
-        validator = u.Enum.coerce_by_name_validator(Status)
+        validator = u.coerce_by_name_validator(Status)
         result = validator("active")
         assert result == Status.ACTIVE
 
     def test_coerce_by_name_validator_direct_enum(self) -> None:
         """Test coerce_by_name_validator with direct enum."""
-        validator = u.Enum.coerce_by_name_validator(Status)
+        validator = u.coerce_by_name_validator(Status)
         result = validator(Status.PENDING)
         assert result == Status.PENDING
 
     def test_coerce_by_name_validator_invalid(self) -> None:
         """Test coerce_by_name_validator with invalid value."""
-        validator = u.Enum.coerce_by_name_validator(Status)
-
+        validator = u.coerce_by_name_validator(Status)
         with pytest.raises(ValueError) as exc_info:
-            validator("invalid")
+            _ = validator("invalid")
         assert "Invalid Status" in str(exc_info.value)
 
 
@@ -370,7 +355,7 @@ class TestuEnumMetadata:
 
     def test_values(self) -> None:
         """Test values method."""
-        values = u.Enum.values(Status)
+        values = u.values(Status)
         assert isinstance(values, frozenset)
         assert "active" in values
         assert "pending" in values
@@ -378,7 +363,7 @@ class TestuEnumMetadata:
 
     def test_names(self) -> None:
         """Test names method."""
-        names = u.Enum.names(Status)
+        names = u.names(Status)
         assert isinstance(names, frozenset)
         assert "ACTIVE" in names
         assert "PENDING" in names
@@ -386,7 +371,7 @@ class TestuEnumMetadata:
 
     def test_members(self) -> None:
         """Test members method."""
-        members = u.Enum.members(Status)
+        members = u.members(Status)
         assert isinstance(members, frozenset)
         assert Status.ACTIVE in members
         assert Status.PENDING in members
@@ -394,7 +379,6 @@ class TestuEnumMetadata:
 
     def test_metadata_caching(self) -> None:
         """Test that metadata methods are cached."""
-        values1 = u.Enum.values(Status)
-        values2 = u.Enum.values(Status)
-        # Should return same object due to caching
+        values1 = u.values(Status)
+        values2 = u.values(Status)
         assert values1 is values2

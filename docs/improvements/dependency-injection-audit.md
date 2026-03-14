@@ -1,7 +1,6 @@
 # Dependency Injection Guide - Audit Report
 
 <!-- TOC START -->
-
 - [Audit Summary](#audit-summary)
   - [✅ Verified Methods (All Accurate)](#verified-methods-all-accurate)
   - [✅ Additional Methods Found (Not Critical)](#additional-methods-found-not-critical)
@@ -25,7 +24,6 @@
   - [Medium Priority](#medium-priority)
   - [Low Priority](#low-priority)
 - [Conclusion](#conclusion)
-
 <!-- TOC END -->
 
 **Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency
@@ -52,7 +50,7 @@ All documented methods exist and line numbers are accurate:
 1. **register()** - Line 315 ✅
 
    - Instance registration documented
-   - FlextResult return type correct
+   - r return type correct
    - Examples valid
 
 1. **register_factory()** - Line 389 ✅
@@ -64,7 +62,7 @@ All documented methods exist and line numbers are accurate:
 1. **get()** - Line 491 ✅
 
    - Basic retrieval documented
-   - Returns FlextResult[object]
+   - Returns r[object]
    - Untyped retrieval pattern shown
 
 1. **get_typed()** - Line 574 ✅
@@ -124,7 +122,7 @@ ______________________________________________________________________
 1. **Clear Examples**: All examples are practical and realistic
 1. **Type Safety**: v0.9.9 generic support well explained
 1. **Patterns**: Real-world patterns (initialization, testing, lifecycle)
-1. **Integration**: FlextResult integration clearly shown
+1. **Integration**: r integration clearly shown
 1. **Best Practices**: DO/DON'T sections are valuable
 
 ______________________________________________________________________
@@ -148,8 +146,8 @@ BREAKING CHANGES (Phase 4 - v0.9.9):
 
 - register[T]() now uses generic type T instead of object
 - register_factory[T]() now uses Callable[[], T] instead of Callable[[], object]
-- get_typed[T]() now returns FlextResult[T] instead of FlextResult[object]
-```
+- get_typed[T]() now returns r[T] instead of r[object]
+
 
 Add migration guide from v0.9.8 to v0.9.9.
 
@@ -177,6 +175,7 @@ ______________________________________________________________________
 Add a decision tree for choosing methods:
 
 ```
+
 Need a service?
 ├─ Service always exists? → get_typed()
 ├─ Service might not exist? → get_with_fallback()
@@ -188,13 +187,14 @@ Registering services?
 ├─ Expensive creation? → register_factory()
 ├─ Multiple services? → batch_register()
 └─ Auto-detect dependencies? → auto_wire()
+
 ```
 
 ### 2. Common Pitfalls
 
 Expand the anti-patterns section:
 
-- Not checking FlextResult (already documented ✅)
+- Not checking r (already documented ✅)
 - Creating multiple containers (already documented ✅)
 - **NEW**: Circular dependencies in auto_wire
 - **NEW**: Registering services too late
@@ -221,7 +221,7 @@ ______________________________________________________________________
 
 ### External References
 
-- ⚠️ Link to CLAUDE.md could be more specific (which section?)
+- ⚠️ Link to AGENTS.md could be more specific (which section?)
 - ✅ Examples reference is generic but works
 
 ______________________________________________________________________
@@ -271,13 +271,13 @@ ______________________________________________________________________
 
 ### Medium Priority
 
-4. Add performance considerations section
+1. Add performance considerations section
 1. Create v0.9.8 → v0.9.9 migration guide
 1. Expand testing patterns section
 
 ### Low Priority
 
-7. Add more real-world examples
+1. Add more real-world examples
 1. Create comparison table of all methods
 1. Add troubleshooting section
 
@@ -290,3 +290,5 @@ The Dependency Injection guide is **highly accurate and well-written**. Unlike t
 **Status**: ✅ PRODUCTION READY with minor enhancements recommended
 
 **Next**: Audit Domain-Driven Design guide
+
+```

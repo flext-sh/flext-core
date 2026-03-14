@@ -1,0 +1,32 @@
+"""{{ description }}
+
+Runtime alias: {{ runtime_alias }} = {{ facade_name }}
+"""
+
+from __future__ import annotations
+
+from typing import Final
+from pydantic import BaseModel, Field
+
+
+class {{ facade_name }}(BaseModel):
+    """{{ docstring }}
+    
+    Runtime alias: {{ runtime_alias }} = {{ facade_name }}
+    """
+    
+{% for section in sections %}
+    class {{ section.name }}:
+        """{{ section.description }}"""
+        {% for constant in section.constants %}
+        {{ constant.name }}: Final[{{ constant.type }}] = {{ constant.value | repr }}{% if constant.description %}  # {{ constant.description }}{% endif %}
+        {% endfor %}
+    
+    # Runtime alias
+    {{ section.name }} = {{ section.name }}
+    
+{% endfor %}
+
+
+# Runtime alias
+{{ runtime_alias }} = {{ facade_name }}

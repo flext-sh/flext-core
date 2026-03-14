@@ -1,14 +1,12 @@
 # Architecture Overview
 
 <!-- TOC START -->
-
 - [Layered Topology](#layered-topology)
 - [Layer Catalog (source-aligned)](#layer-catalog-source-aligned)
 - [Key Execution Flows](#key-execution-flows)
 - [Next Steps](#next-steps)
 - [Related Documentation](#related-documentation)
 - [Verification Commands](#verification-commands)
-
 <!-- TOC END -->
 
 **Status**: Production Ready | **Version**: 0.10.0 | **Date**: 2025-12-07
@@ -67,7 +65,7 @@ Canonical references:
 
   - `runtime.py` wraps structlog and dependency-injector factories so higher
     layers can configure logging and DI without depending on third-party types.
-  - `result.py` delivers the railway-oriented `FlextResult`; `exceptions.py`
+  - `result.py` delivers the railway-oriented `r`; `exceptions.py`
     contains the CQRS exception hierarchy consumed by handlers.
   - `registry.py` offers the shared registration helpers reused by dispatcher,
     container, and decorators.
@@ -100,7 +98,7 @@ Canonical references:
   enforcement, then executes the registered handler with structured logging and
   optional query caching.
 - **Dependency injection** — `FlextContainer` hosts a dependency-injector
-  container. Registrations and resolutions return `FlextResult` so handler
+  container. Registrations and resolutions return `r` so handler
   wiring can surface errors without raising exceptions.
 - **Domain validation** — `FlextModels` exposes Pydantic entities, values, and
   aggregates. Domain events collected on aggregates can be published through
@@ -143,4 +141,7 @@ Run from `flext-core/`:
 make lint
 make type-check
 make test-fast
+```
+
+```
 ```

@@ -1,0 +1,70 @@
+[imports]
+import.e_is_FlextExceptions: True
+import.r_ok: True
+import.constant: 'UNKNOWN_ERROR'
+style.raise_msg: 'boom'
+
+[base_error]
+base.class: 'BaseError'
+base.message: 'base boom'
+base.error_code: 'E_BASE'
+base.correlation_id: 'corr-base-1'
+base.auto_log: False
+base.meta.scope: 'demo'
+base.meta.channel: 'example'
+base.meta.operation: 'create'
+base.to_dict.type: 'BaseError'
+base.to_dict.message: 'base boom'
+base.to_dict.error_code: 'E_BASE'
+base.to_dict.has_timestamp: True
+base.auto_corr.prefix: True
+
+[subclasses]
+ValidationError.field: 'email'
+ValidationError.value: 'bad'
+ConfigurationError.config_key: 'db.host'
+ConfigurationError.config_source: 'env'
+ConnectionError.host: '127.0.0.1'
+ConnectionError.port: 5432
+ConnectionError.timeout: 3.5
+TimeoutError.timeout_seconds: 2.0
+TimeoutError.operation: 'sync'
+AuthenticationError.auth_method: 'token'
+AuthenticationError.user_id: 'u-1'
+AuthorizationError.user_id: 'u-2'
+AuthorizationError.resource: 'invoice:7'
+AuthorizationError.permission: 'read'
+NotFoundError.resource_type: 'User'
+NotFoundError.resource_id: '404'
+ConflictError.resource_type: 'User'
+ConflictError.resource_id: '13'
+ConflictError.conflict_reason: 'duplicate'
+RateLimitError.limit: 100
+RateLimitError.window_seconds: 60
+RateLimitError.retry_after: 1.5
+CircuitBreakerError.service_name: 'billing'
+CircuitBreakerError.failure_count: 5
+CircuitBreakerError.reset_timeout: 30.0
+TypeError.expected_type: 'str'
+TypeError.actual_type: 'int'
+OperationError.operation: 'publish'
+OperationError.reason: 'quota'
+AttributeAccessError.attribute_name: 'secret'
+AttributeAccessError.attribute_context: 'UserModel'
+
+[factories_helpers]
+create_error.ValidationError: 'ValidationError'
+create_error.AttributeError: 'AttributeAccessError'
+create.type: 'ValidationError'
+create.error_code: 'E_DYNAMIC'
+create.metadata.caller: ''
+create.correlation_id: 'corr-dyn-1'
+__call__.type: 'ValidationError'
+__call__.error_code: 'E_CALL'
+
+[metrics]
+metrics.total_exceptions: 3
+metrics.has_exception_counts: True
+metrics.summary_nonempty: True
+metrics.unique_types: 2
+metrics.cleared_total: 0

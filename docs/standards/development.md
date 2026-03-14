@@ -1,7 +1,6 @@
 # Development Standards
 
 <!-- TOC START -->
-
 - [🎯 Mission & Authority](#mission-authority)
 - [📋 Quality Imperatives](#quality-imperatives)
   - [Zero Tolerance Standards](#zero-tolerance-standards)
@@ -33,7 +32,6 @@
   - [Target Metrics (1.0.0 Release)](#target-metrics-100-release)
   - [Coverage by Layer](#coverage-by-layer)
 - [🔗 Related Documentation](#related-documentation)
-
 <!-- TOC END -->
 
 **Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency
@@ -48,7 +46,7 @@ This document outlines the development standards, patterns, and quality requirem
 
 **CORE RESPONSIBILITIES**:
 
-- ✅ **Railway Pattern Foundation**: FlextResult[T] with .data/.value compatibility
+- ✅ **Railway Pattern Foundation**: r[T] with .data/.value compatibility
 - ✅ **Dependency Injection**: FlextContainer.get_global() with type safety
 - ✅ **Domain Models**: FlextModels.Entity/Value/AggregateRoot for DDD patterns
 - ✅ **Service Architecture**: FlextService with Pydantic Generic[T] base
@@ -106,7 +104,7 @@ Inner layers know NOTHING about outer layers.
 
 1. **Foundation Layer** (No Dependencies):
 
-   - FlextResult[T] - Railway pattern
+   - r[T] - Railway pattern
    - FlextContainer - Dependency injection
    - t - Type system
    - FlextConstants - Centralized constants
@@ -136,7 +134,7 @@ Inner layers know NOTHING about outer layers.
 ```
 src/flext_core/
 ├── __init__.py          # Public API exports ONLY
-├── result.py           # Railway pattern (FlextResult)
+├── result.py           # Railway pattern (r)
 ├── container.py        # DI singleton (FlextContainer)
 ├── typings.py          # Type system (t)
 ├── constants.py        # Constants (FlextConstants)
@@ -152,13 +150,13 @@ src/flext_core/
 
 ```python
 # ✅ CORRECT - Direct imports (import only what you need)
-from flext_core import FlextResult, FlextService, FlextModels
+from flext_core import r, FlextService, FlextModels
 
 # ❌ WRONG - Star imports in production
 from flext_core import *
 
 # ❌ WRONG - Relative imports in public APIs
-from .result import FlextResult
+from .result import r
 ```
 
 ## 🔧 Development Workflow
@@ -238,13 +236,14 @@ pytest tests/unit/test_container.py::TestFlextContainer::test_singleton -v
 
 ```python
 # ✅ CORRECT - Type hints, proper naming
-def process_user(user_id: str) -> FlextResult[User]:
+def process_user(user_id: str) -> r[User]:
     """Process user with validation."""
     if not user_id:
-        return FlextResult[User].fail("User ID required")
+        return r[User].fail("User ID required")
 
     user = self.user_repository.get(user_id)
-    return FlextResult[User].ok(user)
+    return r[User].ok(user)
+
 
 # ❌ WRONG - Missing types, poor naming
 def do_stuff(x):
@@ -258,13 +257,14 @@ def do_stuff(x):
 **1. Railway Pattern (MANDATORY for all operations):**
 
 ```python
-# ✅ CORRECT - Always return FlextResult
-def create_user(name: str, email: str) -> FlextResult[User]:
+# ✅ CORRECT - Always return r
+def create_user(name: str, email: str) -> r[User]:
     if not name or not email:
-        return FlextResult[User].fail("Name and email required")
+        return r[User].fail("Name and email required")
 
     user = User(id=f"user_{name}", name=name, email=email)
-    return FlextResult[User].ok(user)
+    return r[User].ok(user)
+
 
 # ❌ WRONG - Using exceptions for control flow
 def create_user(name: str, email: str) -> User:
@@ -287,6 +287,7 @@ class UserService(FlextService):
         result = self.container.get("logger")
         return result.value if result.is_success else FlextLogger(__name__)
 
+
 # ❌ WRONG - Manual DI or no DI
 class UserService:
     def __init__(self, logger: Logger):
@@ -302,13 +303,13 @@ class Order(FlextModels.AggregateRoot):
     items: list[OrderItem]
     total: Decimal
 
-    def add_item(self, item: OrderItem) -> FlextResult[bool]:
+    def add_item(self, item: OrderItem) -> r[bool]:
         if self.status != OrderStatus.PENDING:
-            return FlextResult[bool].fail("Can only modify pending orders")
+            return r[bool].fail("Can only modify pending orders")
 
         self.items.append(item)
         self.add_domain_event("ItemAdded", {"item_id": item.entity_id})
-        return FlextResult[bool].| ok(value=True)
+        return r[bool].| ok(value=True)
 
 # ❌ WRONG - Anemic model
 class Order:
@@ -324,7 +325,7 @@ class Order:
 
 **Stability Guarantees:**
 
-- **FlextResult[T]**: Dual `.value`/`.data` access maintained
+- **r[T]**: Dual `.value`/`.data` access maintained
 - **FlextContainer**: Singleton pattern preserved
 - **FlextModels**: DDD patterns locked
 - **Public APIs**: Zero breaking changes in 1.x series
@@ -377,7 +378,7 @@ tests/
 ```python
 def test_flext_result_ok():
     """Test successful result creation."""
-    result = FlextResult[str].ok("success")
+    result = r[str].ok("success")
 
     assert result.is_success
     assert not result.is_failure
@@ -505,3 +506,6 @@ def test_container_singleton():
 ______________________________________________________________________
 
 **FLEXT-Core Development Standards** - Ensuring the highest quality foundation for the entire FLEXT ecosystem.
+
+```
+```

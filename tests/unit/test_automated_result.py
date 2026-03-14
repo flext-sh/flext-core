@@ -6,20 +6,22 @@ type-system-architecture.md rules with real functionality testing.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+
 import pytest
 
-from flext_core import FlextTypes as t, r
+from flext_core import r
+from tests import m
 from tests.conftest import test_framework
-from tests.models import AutomatedTestScenario
 from tests.test_utils import assertion_helpers, fixture_factory
 
 
-class TestAutomatedFlextResult:
-    """Automated tests for FlextResult functionality.
+class TestAutomatedr:
+    """Automated tests for r functionality.
 
     Generated for 100% coverage with:
     - Real functionality testing (no mocks)
-    - FlextResult[T] patterns
+    - r[T] patterns
     - Type safety compliance
     - Zero circular dependencies
     """
@@ -27,85 +29,68 @@ class TestAutomatedFlextResult:
     @pytest.mark.parametrize(
         "test_scenario",
         [
-            {
-                "description": "basic_functionality",
-                "input": {},
-                "expected_success": True,
-            },
-            {
-                "description": "edge_case_handling",
-                "input": {"edge": True},
-                "expected_success": True,
-            },
-            {
-                "description": "error_conditions",
-                "input": {"invalid": True},
-                "expected_success": False,
-            },
-            {
-                "description": "boundary_conditions",
-                "input": {"boundary": True},
-                "expected_success": True,
-            },
-            {
-                "description": "complex_scenarios",
-                "input": {"complex": True},
-                "expected_success": True,
-            },
+            m.AutomatedTestScenario(
+                description="basic_functionality",
+                input={},
+                expected_success=True,
+            ),
+            m.AutomatedTestScenario(
+                description="edge_case_handling",
+                input={"edge": True},
+                expected_success=True,
+            ),
+            m.AutomatedTestScenario(
+                description="error_conditions",
+                input={"invalid": True},
+                expected_success=False,
+            ),
+            m.AutomatedTestScenario(
+                description="boundary_conditions",
+                input={"boundary": True},
+                expected_success=True,
+            ),
+            m.AutomatedTestScenario(
+                description="complex_scenarios",
+                input={"complex": True},
+                expected_success=True,
+            ),
         ],
-        ids=lambda case: case["description"],
+        ids=lambda case: case.description,
     )
     def test_automated_result_comprehensive_scenarios(
-        self, test_scenario: AutomatedTestScenario
+        self,
+        test_scenario: m.AutomatedTestScenario,
     ) -> None:
         """Comprehensive test scenarios for result functionality."""
         try:
-            # Create test instance using fixture factory
             instance = fixture_factory.create_test_result_instance()
-
-            # Execute operation with test data
-            result = self._execute_result_operation(instance, test_scenario["input"])
-
-            # Assert using automated assertion helpers
-            if test_scenario["expected_success"]:
-                assertion_helpers.assert_flext_result_success(
-                    result,
-                    f"FlextResult operation failed: {test_scenario['description']}",
-                )
-            else:
-                assertion_helpers.assert_flext_result_failure(
-                    result,
-                    f"FlextResult operation should fail: {test_scenario['description']}",
-                )
-
-        except Exception as e:
-            if not test_scenario["expected_success"]:
-                # Expected failure occurred
-                pass
-            else:
-                # Unexpected error
-                pytest.fail(f"Unexpected error in result test: {e}")
+            result = self._execute_result_operation(instance, test_scenario.input)
+            if test_scenario.expected_success:
+                assert result.is_success, f"Expected success but got failure: {result}"
+        except Exception:
+            if test_scenario.expected_success:
+                raise
 
     def test_automated_result_type_safety(self) -> None:
         """Test type safety compliance for result."""
         instance = fixture_factory.create_test_result_instance()
-
-        # Test with correct types
         result = self._execute_result_operation(instance, {"type_safe": True})
-        assertion_helpers.assert_flext_result_success(
-            result, "FlextResult type safety test"
+        _ = assertion_helpers.assert_flext_result_success(
+            result,
+            "r type safety test",
         )
 
     def test_automated_result_error_handling(self) -> None:
         """Test comprehensive error handling for result."""
         instance = fixture_factory.create_test_result_instance()
-
-        # Test various error conditions
-        error_inputs = [None, {}, {"invalid": "data"}, {"malformed": True}]
-
+        error_inputs = [
+            None,
+            dict[str, str](),
+            {"invalid": "data"},
+            {"malformed": True},
+        ]
         for error_input in error_inputs:
             result = self._execute_result_operation(instance, error_input or {})
-            # Errors should be handled gracefully (either success or proper failure)
             assert result.is_success or result.is_failure, (
                 f"Unexpected result state: {result}"
             )
@@ -117,47 +102,47 @@ class TestAutomatedFlextResult:
         def operation() -> object:
             return self._execute_result_operation(instance, {"performance_test": True})
 
-        # Execute with timeout
         result = test_framework.execute_with_timeout(operation, timeout_seconds=1.0)
-        assertion_helpers.assert_flext_result_success(
-            result, "FlextResult performance test exceeded timeout"
+        _ = assertion_helpers.assert_flext_result_success(
+            result,
+            "r performance test exceeded timeout",
         )
 
     def test_automated_result_resource_management(self) -> None:
         """Test resource management and cleanup for result."""
         instance = fixture_factory.create_test_result_instance()
-
-        # Test normal operation
         result = self._execute_result_operation(instance, {"resource_test": True})
-        assertion_helpers.assert_flext_result_success(
-            result, "FlextResult resource test"
+        _ = assertion_helpers.assert_flext_result_success(
+            result,
+            "r resource test",
         )
-
-        # Test cleanup (if applicable)
-        if hasattr(instance, "cleanup"):
-            cleanup_result = instance.cleanup()
+        instance_obj: object = instance
+        if hasattr(instance_obj, "cleanup"):
+            cleanup_result = getattr(instance_obj, "cleanup")()
             if cleanup_result:
-                assertion_helpers.assert_flext_result_success(
-                    cleanup_result, "FlextResult cleanup failed"
+                _ = assertion_helpers.assert_flext_result_success(
+                    cleanup_result,
+                    "r cleanup failed",
                 )
 
     def _execute_result_operation(
-        self, instance: t.GeneralValueType, input_data: dict[str, t.GeneralValueType]
-    ) -> r[t.GeneralValueType]:
+        self,
+        instance: object,
+        input_data: Mapping[str, object],
+    ) -> r[bool]:
         """Execute a test operation on result instance.
 
         This method should be customized based on the actual result API.
         For now, it provides a generic implementation that can be adapted.
         """
         try:
-            # Generic operation - return instance as success
-            if isinstance(instance, dict):
-                return r[t.GeneralValueType].ok(instance)
-            return r[t.GeneralValueType].ok(instance)
+            _ = instance
+            _ = input_data
+            return r[bool].ok(True)
         except Exception as e:
-            return r[t.GeneralValueType].fail(f"FlextResult operation failed: {e}")
+            return r[bool].fail(f"r operation failed: {e}")
 
     @pytest.fixture
-    def test_result_instance(self) -> t.GeneralValueType:
+    def test_result_instance(self) -> object:
         """Fixture for result test instance."""
         return fixture_factory.create_test_result_instance()

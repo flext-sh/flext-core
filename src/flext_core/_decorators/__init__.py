@@ -1,3 +1,6 @@
+# AUTO-GENERATED FILE — DO NOT EDIT MANUALLY.
+# Regenerate with: make codegen
+#
 """Factory decorator discovery utilities.
 
 This module provides factory discovery functionality that can be used by
@@ -9,7 +12,34 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core._decorators.discovery import FactoryDecoratorsDiscovery
-from flext_core.models import m
+from typing import TYPE_CHECKING, Any
 
-__all__ = ["FactoryDecoratorsDiscovery", "m"]
+from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
+
+if TYPE_CHECKING:
+    from flext_core._decorators.discovery import FactoryDecoratorsDiscovery
+
+# Lazy import mapping: export_name -> (module_path, attr_name)
+_LAZY_IMPORTS: dict[str, tuple[str, str]] = {
+    "FactoryDecoratorsDiscovery": (
+        "flext_core._decorators.discovery",
+        "FactoryDecoratorsDiscovery",
+    ),
+}
+
+__all__ = [
+    "FactoryDecoratorsDiscovery",
+]
+
+
+def __getattr__(name: str) -> Any:
+    """Lazy-load module attributes on first access (PEP 562)."""
+    return lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)
+
+
+def __dir__() -> list[str]:
+    """Return list of available attributes for dir() and autocomplete."""
+    return sorted(__all__)
+
+
+cleanup_submodule_namespace(__name__, _LAZY_IMPORTS)

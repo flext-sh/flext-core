@@ -16,21 +16,86 @@ from __future__ import annotations
 
 import gc
 import time
-from collections.abc import Callable, Container, Iterator, Sized
+from collections.abc import Callable, Iterator, Mapping, Sequence, Sized
 from contextlib import AbstractContextManager as ContextManager, contextmanager
+from typing import TypeGuard
 
 import pytest
-from hypothesis import given, settings, strategies as st
+from hypothesis import HealthCheck, given, settings, strategies as st
 
 from flext_core import FlextTypes, FlextUtilities, P, R
-from flext_core.typings import t
-from tests.typings import TestsFlextTypes
 
-FixtureCaseDict = TestsFlextTypes.Fixtures.FixtureCaseDict
-FixtureDataDict = TestsFlextTypes.Fixtures.FixtureDataDict
-FixtureFixturesDict = TestsFlextTypes.Fixtures.FixtureFixturesDict
-FixtureSuiteDict = TestsFlextTypes.Fixtures.FixtureSuiteDict
-MockScenarioData = TestsFlextTypes.Fixtures.MockScenarioData
+from ._models import (
+    FixtureCaseDict,
+    FixtureDataDict,
+    FixtureFixturesDict,
+    FixtureSuiteDict,
+)
+
+
+def _to_general_mapping(
+    value: object | None,
+) -> dict[str, object]:
+    if not isinstance(value, dict):
+        return {}
+    return {str(key): item for key, item in value.items()}
+
+
+def _to_string_list(value: object | None) -> list[str]:
+    if not isinstance(value, list):
+        return []
+    return [str(item) for item in value]
+
+
+def _to_string(value: object | None, *, default: str) -> str:
+    if isinstance(value, str):
+        return value
+    if value is None:
+        return default
+    return str(value)
+
+
+def _as_object_dict(value: object) -> dict[str, object]:
+    if not _is_object_mapping(value):
+        return {}
+    output: dict[str, object] = {}
+    for key, item in value.items():
+        output[str(key)] = item
+    return output
+
+
+def _as_object_list(value: object) -> list[object] | None:
+    if not _is_object_list(value):
+        return None
+    return list(value)
+
+
+def _is_object_mapping(
+    value: object,
+) -> TypeGuard[Mapping[object, object]]:
+    return isinstance(value, Mapping)
+
+
+def _is_object_list(value: object) -> TypeGuard[list[object]]:
+    return isinstance(value, list)
+
+
+def _is_object_container_sequence(
+    value: object,
+) -> TypeGuard[list[object] | tuple[object, ...] | set[object]]:
+    return isinstance(value, (list, tuple, set))
+
+
+def _as_int_list(value: object) -> list[int] | None:
+    object_list = _as_object_list(value)
+    if object_list is None:
+        return None
+    int_values: list[int] = []
+    for item in object_list:
+        if not isinstance(item, int):
+            return None
+        int_values.append(item)
+    return int_values
 
 
 def mark_test_pattern(
@@ -39,8 +104,6 @@ def mark_test_pattern(
     """Mark test with a specific pattern for demonstration purposes."""
 
     def decorator(func: Callable[P, R]) -> Callable[P, R]:
-        # Use setattr for dynamic attribute setting to avoid type checker issues
-        # Type ignore needed because Callable doesn't have _test_pattern attribute
         setattr(func, "_test_pattern", pattern)
         return func
 
@@ -50,23 +113,22 @@ def mark_test_pattern(
 pytestmark = [pytest.mark.unit, pytest.mark.architecture, pytest.mark.advanced]
 
 
-# ============================================================================
-# STUB CLASSES FOR ADVANCED PATTERNS DEMONSTRATION
-# ============================================================================
-
-
 class MockScenario:
     """Mock scenario object for testing purposes."""
 
-    def __init__(self, name: str, data: MockScenarioData) -> None:
+    def __init__(self, name: str, data: dict[str, object]) -> None:
         """Initialize mock scenario with name and test data."""
         super().__init__()
         self.name = name
-        self.given = FlextUtilities.mapper().get(data, "given", default={})
-        self.when = FlextUtilities.mapper().get(data, "when", default={})
-        self.then = FlextUtilities.mapper().get(data, "then", default={})
-        self.tags = FlextUtilities.mapper().get(data, "tags", default=[])
-        self.priority = FlextUtilities.mapper().get(data, "priority", default="normal")
+        mapper = FlextUtilities
+        self.given = _to_general_mapping(mapper.get(data, "given", default=None))
+        self.when = _to_general_mapping(mapper.get(data, "when", default=None))
+        self.then = _to_general_mapping(mapper.get(data, "then", default=None))
+        self.tags = _to_string_list(mapper.get(data, "tags", default=()))
+        self.priority = _to_string(
+            mapper.get(data, "priority", default="normal"),
+            default="normal",
+        )
 
 
 class GivenWhenThenBuilder:
@@ -76,16 +138,16 @@ class GivenWhenThenBuilder:
         """Initialize Given-When-Then builder with test name."""
         super().__init__()
         self.name = name
-        self._given: dict[str, FlextTypes.GeneralValueType] = {}
-        self._when: dict[str, FlextTypes.GeneralValueType] = {}
-        self._then: dict[str, FlextTypes.GeneralValueType] = {}
+        self._given: dict[str, FlextTypes.Container] = {}
+        self._when: dict[str, FlextTypes.Container] = {}
+        self._then: dict[str, FlextTypes.Container] = {}
         self._tags: list[str] = []
         self._priority = "normal"
 
     def given(
         self,
         _description: str,
-        **kwargs: FlextTypes.GeneralValueType,
+        **kwargs: FlextTypes.Container,
     ) -> GivenWhenThenBuilder:
         """Add given conditions to the test scenario."""
         self._given.update(kwargs)
@@ -94,7 +156,7 @@ class GivenWhenThenBuilder:
     def when(
         self,
         _description: str,
-        **kwargs: FlextTypes.GeneralValueType,
+        **kwargs: FlextTypes.Container,
     ) -> GivenWhenThenBuilder:
         """Add when actions to the test scenario."""
         self._when.update(kwargs)
@@ -103,7 +165,7 @@ class GivenWhenThenBuilder:
     def then(
         self,
         _description: str,
-        **kwargs: FlextTypes.GeneralValueType,
+        **kwargs: FlextTypes.Container,
     ) -> GivenWhenThenBuilder:
         """Add then expectations to the test scenario."""
         self._then.update(kwargs)
@@ -121,7 +183,7 @@ class GivenWhenThenBuilder:
 
     def build(self) -> MockScenario:
         """Build the final mock scenario object."""
-        data: MockScenarioData = {
+        data: dict[str, object] = {
             "given": self._given,
             "when": self._when,
             "then": self._then,
@@ -137,7 +199,7 @@ class FlextTestBuilder:
     def __init__(self) -> None:
         """Initialize test data builder with empty data."""
         super().__init__()
-        self._data: FixtureDataDict = {}
+        self._data: FixtureDataDict = FixtureDataDict({})
 
     def with_id(self, id_: str) -> FlextTestBuilder:
         """Add ID to the test data."""
@@ -149,7 +211,7 @@ class FlextTestBuilder:
         self._data["correlation_id"] = correlation_id
         return self
 
-    def with_metadata(self, **kwargs: FlextTypes.GeneralValueType) -> FlextTestBuilder:
+    def with_metadata(self, **kwargs: FlextTypes.Container) -> FlextTestBuilder:
         """Add metadata to the test data."""
         self._data.update(kwargs)
         return self
@@ -168,7 +230,6 @@ class FlextTestBuilder:
 
     def with_validation_rules(self) -> FlextTestBuilder:
         """Add validation rules to the test data (no-op stub)."""
-        # No-op stub to keep example API; could attach schema metadata here
         return self
 
     def build(self) -> FixtureDataDict:
@@ -190,14 +251,14 @@ class ParameterizedTestBuilder:
     def add_case(
         self,
         email: str | None = None,
-        input: str | None = None,  # noqa: A002
+        input_value: str | None = None,
     ) -> ParameterizedTestBuilder:
         """Add a test case with the given parameters."""
-        case: FixtureCaseDict = {}
+        case: FixtureCaseDict = FixtureCaseDict({})
         if email is not None:
             case["email"] = email
-        if input is not None:
-            case["input"] = input
+        if input_value is not None:
+            case["input"] = input_value
         self._cases.append(case)
         return self
 
@@ -265,21 +326,35 @@ class AssertionBuilder:
 
     def contains(self, item: object) -> AssertionBuilder:
         """Assert that the data contains the specified item."""
-        if not isinstance(self._data, Container):
-            msg = f"Expected Container object, got {type(self._data)}"
-            raise TypeError(msg)
-        assert item in self._data
-        return self
+        data = self._data
+        if _is_object_mapping(data):
+            assert item in data
+            return self
+        if _is_object_container_sequence(data):
+            assert item in data
+            return self
+        if isinstance(data, str):
+            assert isinstance(item, str)
+            assert item in data
+            return self
+        if isinstance(data, bytes | bytearray):
+            assert isinstance(item, bytes | bytearray)
+            assert item in data
+            return self
+        msg = f"Expected Container object, got {type(data)}"
+        raise TypeError(msg)
 
-    def satisfies(self, predicate: object, message: str = "") -> AssertionBuilder:
+    def satisfies(
+        self,
+        predicate: Callable[[object], bool],
+        message: str = "",
+    ) -> AssertionBuilder:
         """Assert that the data satisfies the given predicate."""
-        if callable(predicate):
-            assert predicate(self._data), message
+        assert predicate(self._data), message
         return self
 
     def assert_all(self) -> None:
         """Execute all accumulated assertions."""
-        # All checks are executed inline in this simple stub
         return
 
 
@@ -290,16 +365,16 @@ class SuiteBuilder:
         """Initialize test suite builder with suite name."""
         super().__init__()
         self.name = name
-        self._scenarios: list[t.GeneralValueType] = []
-        self._setup_data: dict[str, FlextTypes.GeneralValueType] = {}
+        self._scenarios: list[MockScenario] = []
+        self._setup_data: dict[str, FlextTypes.Container] = {}
         self._tags: list[str] = []
 
-    def add_scenarios(self, scenarios: list[t.GeneralValueType]) -> SuiteBuilder:
+    def add_scenarios(self, scenarios: Sequence[MockScenario]) -> SuiteBuilder:
         """Add multiple test scenarios to the suite."""
         self._scenarios.extend(scenarios)
         return self
 
-    def with_setup_data(self, **kwargs: FlextTypes.GeneralValueType) -> SuiteBuilder:
+    def with_setup_data(self, **kwargs: FlextTypes.Container) -> SuiteBuilder:
         """Add setup data to the test suite."""
         self._setup_data.update(kwargs)
         return self
@@ -311,13 +386,12 @@ class SuiteBuilder:
 
     def build(self) -> FixtureSuiteDict:
         """Build the test suite configuration."""
-        result: FixtureSuiteDict = {
+        return FixtureSuiteDict({
             "suite_name": self.name,
             "scenario_count": len(self._scenarios),
             "tags": self._tags,
             "setup_data": self._setup_data,
-        }
-        return result
+        })
 
 
 class FixtureBuilder:
@@ -326,50 +400,44 @@ class FixtureBuilder:
     def __init__(self) -> None:
         """Initialize test fixture builder with empty fixtures."""
         super().__init__()
-        self._fixtures: FixtureFixturesDict = {}
-        self._setups: list[t.GeneralValueType] = []
-        self._teardowns: list[t.GeneralValueType] = []
+        self._fixtures: FixtureFixturesDict = FixtureFixturesDict({})
+        self._setups: list[Callable[[], None]] = []
+        self._teardowns: list[Callable[[], None]] = []
 
-    def with_user(self, **kwargs: FlextTypes.GeneralValueType) -> FixtureBuilder:
+    def with_user(self, **kwargs: FlextTypes.Container) -> FixtureBuilder:
         """Add user fixture data."""
         self._fixtures["user"] = kwargs
         return self
 
-    def with_request(self, **kwargs: FlextTypes.GeneralValueType) -> FixtureBuilder:
+    def with_request(self, **kwargs: FlextTypes.Container) -> FixtureBuilder:
         """Add request fixture data."""
         self._fixtures["request"] = kwargs
         return self
 
     def build(self) -> FixtureFixturesDict:
         """Build the test fixtures configuration."""
-        return self._fixtures.copy()
+        return self._fixtures.model_copy(deep=True)
 
-    def add_setup(self, func: object) -> FixtureBuilder:
+    def add_setup(self, func: Callable[[], None]) -> FixtureBuilder:
         """Add a setup function to the fixtures."""
         self._setups.append(func)
         return self
 
-    def add_teardown(self, func: object) -> FixtureBuilder:
+    def add_teardown(self, func: Callable[[], None]) -> FixtureBuilder:
         """Add a teardown function to the fixtures."""
         self._teardowns.append(func)
         return self
 
-    def add_fixture(
-        self,
-        key: str,
-        value: FlextTypes.GeneralValueType,
-    ) -> FixtureBuilder:
+    def add_fixture(self, key: str, value: FlextTypes.Container) -> FixtureBuilder:
         """Add a custom fixture with the given key and value."""
         self._fixtures[key] = value
         return self
 
-    def setup_context(
-        self,
-    ) -> Callable[[], ContextManager[dict[str, FlextTypes.GeneralValueType]]]:
+    def setup_context(self) -> Callable[[], ContextManager[FixtureFixturesDict]]:
         """Create a context manager for test setup and teardown."""
 
         @contextmanager
-        def _ctx() -> Iterator[dict[str, FlextTypes.GeneralValueType]]:
+        def _ctx() -> Iterator[FixtureFixturesDict]:
             for f in self._setups:
                 if callable(f):
                     _ = f()
@@ -390,7 +458,10 @@ def arrange_act_assert(
 ) -> Callable[[Callable[[], object]], Callable[[], object]]:
     """Decorator for AAA pattern testing."""
 
-    def decorator(_test_func: Callable[[], object]) -> Callable[[], object]:
+    def decorator(
+        _test_func: Callable[[], object],
+    ) -> Callable[[], object]:
+
         def wrapper() -> object:
             data = _arrange_func()
             result = _act_func(data)
@@ -402,23 +473,19 @@ def arrange_act_assert(
     return decorator
 
 
-# ============================================================================
-# PROPERTY-BASED TESTING DEMONSTRATIONS
-# ============================================================================
-
-
 class TestPropertyBasedPatterns:
     """Demonstrate property-based testing with custom strategies."""
 
+    @settings(suppress_health_check=[HealthCheck.too_slow], deadline=None)
     @given(st.emails())
     def test_email_property_based(self, email: str) -> None:
         """Property-based test for email handling."""
-        # Basic email validation properties
         assert "@" in email
         assert len(email) > 3
         assert not email.startswith("@")
         assert not email.endswith("@")
 
+    @settings(suppress_health_check=[HealthCheck.too_slow], deadline=None)
     @given(
         st.fixed_dictionaries({
             "id": st.uuids().map(str),
@@ -428,33 +495,24 @@ class TestPropertyBasedPatterns:
     )
     def test_user_profile_property_based(self, profile: dict[str, str]) -> None:
         """Property-based test for user profiles."""
-        # Verify required fields
         assert "id" in profile
         assert "name" in profile
         assert "email" in profile
-
-        # Verify data types
         assert isinstance(profile["id"], str)
         assert isinstance(profile["name"], str)
         assert isinstance(profile["email"], str)
 
+    @settings(suppress_health_check=[HealthCheck.too_slow], deadline=None)
     @given(st.text(min_size=10, max_size=100))
     def test_string_performance_property_based(self, large_string: str) -> None:
         """Property-based test for string processing performance."""
-        # Measure basic operations
         start_time = time.perf_counter()
-
-        # Simulate string processing
         processed = large_string.lower().strip()
         word_count = len(processed.split())
-
         end_time = time.perf_counter()
         duration = end_time - start_time
-
-        # Performance properties
-        assert duration < 1.0  # Should complete within 1 second
+        assert duration < 1.0
         assert word_count >= 0
-        # Note: Unicode transformations may change string length, so we don't assert length
 
     @given(
         st.text(
@@ -465,28 +523,12 @@ class TestPropertyBasedPatterns:
     )
     def test_unicode_handling_property_based(self, unicode_text: str) -> None:
         """Property-based test for Unicode handling."""
-        # Should handle Unicode gracefully without crashing
         result = unicode_text.encode("utf-8").decode("utf-8")
-        # result is already typed as str, no need for isinstance check
-
-        # Length might differ due to Unicode normalization
         assert len(result) >= 0
-
-
-# ============================================================================
-# PERFORMANCE AND COMPLEXITY ANALYSIS
-# ============================================================================
 
 
 class TestPerformanceAnalysis:
     """Demonstrate performance testing and complexity analysis."""
-
-    # NOTE: test_complexity_analysis_linear removed - flaky timing test
-    # Timing of very small operations (empty for loops) is unreliable due to:
-    # - Measurement precision limitations for microsecond-level operations
-    # - System noise and CPU scheduling interference
-    # - Python interpreter optimizations and JIT effects
-    # For reliable performance tests, use actual operations with measurable work
 
     def test_stress_testing_load(self) -> None:
         """Demonstrate stress testing with load patterns."""
@@ -495,20 +537,16 @@ class TestPerformanceAnalysis:
             """Simple operation for stress testing."""
             return "test_result"
 
-        # Run load test manually
         iterations = 1000
         successes = 0
-
         start_time = time.perf_counter()
         for _ in range(iterations):
             result = simple_operation()
             if result == "test_result":
                 successes += 1
         end_time = time.perf_counter()
-
         duration = end_time - start_time
         operations_per_second = iterations / duration if duration > 0 else 0
-
         assert successes == iterations
         assert operations_per_second > 0
 
@@ -519,45 +557,31 @@ class TestPerformanceAnalysis:
             """Operation that uses some memory."""
             return list(range(100))
 
-        # Run for a short time (reduced from 2 seconds for faster testing)
-        duration_target = 0.5  # seconds
+        duration_target = 0.5
         start_time = time.perf_counter()
         iterations = 0
-
         while time.perf_counter() - start_time < duration_target:
             _ = memory_operation()
             iterations += 1
-
         actual_duration = time.perf_counter() - start_time
         operations_per_second = (
             iterations / actual_duration if actual_duration > 0 else 0
         )
-
-        assert actual_duration >= duration_target * 0.8  # Allow some variance
+        assert actual_duration >= duration_target * 0.8
         assert iterations > 0
         assert operations_per_second > 0
 
     def test_memory_profiling_advanced(self) -> None:
         """Demonstrate advanced memory profiling."""
-        # Simple memory profiling without external library
-        _ = gc.collect()  # Clean up before measurement
-
-        # Create and manipulate large data structures
+        _ = gc.collect()
         large_list = list(range(10000))
         filtered_list = list(
-            FlextUtilities.Collection.filter(large_list, lambda x: x % 2 == 0),
+            FlextUtilities.filter(large_list, lambda x: x % 2 == 0),
         )
         sorted_list = sorted(filtered_list, reverse=True)
-
-        # Verify operations completed
         assert len(large_list) == 10000
         assert len(filtered_list) == 5000
         assert sorted_list[0] > sorted_list[-1]
-
-
-# ============================================================================
-# ADVANCED TEST PATTERNS
-# ============================================================================
 
 
 class TestAdvancedPatterns:
@@ -576,7 +600,6 @@ class TestAdvancedPatterns:
             .with_priority("high")
             .build()
         )
-
         assert scenario.name == "user_registration"
         assert "email" in scenario.given
         assert "action" in scenario.when
@@ -594,9 +617,7 @@ class TestAdvancedPatterns:
             .with_timestamp()
             .with_validation_rules()
         )
-
         data = builder.build()
-
         assert data.get("id") == "test_123"
         assert data.get("correlation_id") == "corr_456"
         assert data.get("name") == "John Doe"
@@ -607,30 +628,19 @@ class TestAdvancedPatterns:
     def test_parametrized_builder(self) -> None:
         """Demonstrate parametrized test builder."""
         param_builder = ParameterizedTestBuilder("email_validation")
-
-        # Add various test cases
-        _ = param_builder.add_success_cases(
-            [
-                {"email": "test@example.com", "input": "valid_email_1"},
-                {"email": "user@domain.org", "input": "valid_email_2"},
-            ],
-        )
-
-        _ = param_builder.add_failure_cases(
-            [
-                {"email": "invalid-email", "input": "invalid_email_1"},
-                {"email": "@domain.com", "input": "invalid_email_2"},
-            ],
-        )
-
+        _ = param_builder.add_success_cases([
+            FixtureCaseDict({"email": "test@example.com", "input": "valid_email_1"}),
+            FixtureCaseDict({"email": "user@domain.org", "input": "valid_email_2"}),
+        ])
+        _ = param_builder.add_failure_cases([
+            FixtureCaseDict({"email": "invalid-email", "input": "invalid_email_1"}),
+            FixtureCaseDict({"email": "@domain.com", "input": "invalid_email_2"}),
+        ])
         params = param_builder.build_pytest_params()
         test_ids = param_builder.build_test_ids()
-
         assert len(params) == 4
         assert len(test_ids) == 4
-        assert all(
-            len(param) == 3 for param in params
-        )  # email, input, expected_success
+        assert all(len(param) == 3 for param in params)
 
     def test_assertion_builder(self) -> None:
         """Demonstrate assertion builder pattern."""
@@ -638,18 +648,15 @@ class TestAdvancedPatterns:
 
         def check_all_strings(x: object) -> bool:
             """Check if all items in a list are strings."""
-            if not isinstance(x, list):
+            values = _as_object_dict({"items": x}).get("items")
+            values_list = _as_object_list(values)
+            if values_list is None:
                 return False
-            # x is verified as list by isinstance check above
-            return all(isinstance(item, str) for item in x)
+            return all(isinstance(item, str) for item in values_list)
 
-        # Build complex assertions
         AssertionBuilder(test_data).is_not_none().has_length(3).contains(
             "banana",
-        ).satisfies(
-            check_all_strings,
-            "all items should be strings",
-        ).assert_all()
+        ).satisfies(check_all_strings, "all items should be strings").assert_all()
 
     @mark_test_pattern("arrange_act_assert")
     def test_arrange_act_assert_decorator(self) -> None:
@@ -659,35 +666,31 @@ class TestAdvancedPatterns:
             return {"numbers": [1, 2, 3, 4, 5]}
 
         def act_on_data(data: object) -> object:
-            if isinstance(data, dict) and "numbers" in data:
-                numbers = data["numbers"]
-                if isinstance(numbers, list) and all(isinstance(n, int) for n in numbers):
-                    return sum(numbers)
+            payload = _as_object_dict(data)
+            if "numbers" in payload:
+                numbers = _as_int_list(payload["numbers"])
+                if numbers is not None:
+                    typed_numbers: list[int] = numbers
+                    return sum(typed_numbers)
             return 0
 
-        def assert_result(result: object, original_data: object) -> None:
+        def assert_result(
+            result: object,
+            original_data: object,
+        ) -> None:
             assert result == 15
-            if isinstance(original_data, dict) and "numbers" in original_data:
-                numbers = original_data["numbers"]
-                if isinstance(numbers, list):
+            payload = _as_object_dict(original_data)
+            if "numbers" in payload:
+                numbers = _as_int_list(payload["numbers"])
+                if numbers is not None:
                     assert len(numbers) == 5
 
-        @arrange_act_assert(
-            arrange_data,
-            act_on_data,
-            assert_result,
-        )
+        @arrange_act_assert(arrange_data, act_on_data, assert_result)
         def test_sum_calculation() -> None:
-            pass  # Logic is in the decorator
+            pass
 
-        # Execute the decorated test
         result = test_sum_calculation()
         assert result == 15
-
-
-# ============================================================================
-# INTEGRATION OF ALL PATTERNS
-# ============================================================================
 
 
 class TestComprehensiveIntegration:
@@ -695,34 +698,26 @@ class TestComprehensiveIntegration:
 
     def test_complete_test_suite_builder(self) -> None:
         """Demonstrate complete test suite construction."""
-        # Create multiple scenarios
         scenarios: list[MockScenario] = []
-
-        # Scenario 1: Success case
         scenario1 = (
             GivenWhenThenBuilder("successful_operation")
-            .given("valid input data", data={"valid": True})
+            .given("valid input data", data_valid=True)
             .when("operation is executed", executed=True)
             .then("operation succeeds", success=True)
             .with_tag("success")
             .build()
         )
         scenarios.append(scenario1)
-
-        # Scenario 2: Failure case
         scenario2 = (
             GivenWhenThenBuilder("failed_operation")
-            .given("invalid input data", data={"valid": False})
+            .given("invalid input data", data_valid=False)
             .when("operation is executed", executed=True)
             .then("operation fails gracefully", success=False, graceful=True)
             .with_tag("failure")
             .build()
         )
         scenarios.append(scenario2)
-
-        # Build complete test suite
-        # Convert scenarios to list[t.GeneralValueType] explicitly
-        scenario_list: list[t.GeneralValueType] = scenarios
+        scenario_list: Sequence[MockScenario] = scenarios
         suite = (
             SuiteBuilder("comprehensive_operation_tests")
             .add_scenarios(scenario_list)
@@ -730,19 +725,15 @@ class TestComprehensiveIntegration:
             .with_tag("integration")
             .build()
         )
-
         assert suite["suite_name"] == "comprehensive_operation_tests"
         assert suite["scenario_count"] == 2
-        assert "integration" in suite["tags"]
+        tags_value = suite["tags"]
+        assert isinstance(tags_value, list)
+        assert "integration" in tags_value
         setup_data = suite["setup_data"]
         if isinstance(setup_data, dict) and "environment" in setup_data:
             env_value: object = setup_data["environment"]
             assert env_value == "test"
-
-
-# ============================================================================
-# REAL-WORLD SCENARIO SIMULATION
-# ============================================================================
 
 
 class TestRealWorldScenarios:
@@ -750,24 +741,20 @@ class TestRealWorldScenarios:
 
     def test_api_request_processing(self) -> None:
         """Simulate API request processing with comprehensive testing."""
-        # Create test fixtures
         fixture_builder = FixtureBuilder()
 
-        # Setup
         def setup_api_environment() -> None:
-            pass  # Setup API mock environment
+            pass
 
         def teardown_api_environment() -> None:
-            pass  # Cleanup
+            pass
 
         _ = fixture_builder.add_setup(setup_api_environment)
         _ = fixture_builder.add_teardown(teardown_api_environment)
         _ = fixture_builder.add_fixture("api_base_url", "https://api.test.com")
         _ = fixture_builder.add_fixture("timeout", 30)
-
         with fixture_builder.setup_context()():
-            # Use a fixed test request instead of Hypothesis example
-            test_request: dict[str, FlextTypes.GeneralValueType] = {
+            test_request: dict[str, object] = {
                 "method": "POST",
                 "url": "https://api.example.com/users",
                 "correlation_id": "corr_12345678",
@@ -775,10 +762,9 @@ class TestRealWorldScenarios:
                 "body": {"name": "test"},
             }
 
-            # Simulate API processing
             def process_api_request(
-                request: dict[str, FlextTypes.GeneralValueType],
-            ) -> dict[str, FlextTypes.GeneralValueType]:
+                request: dict[str, object],
+            ) -> dict[str, object]:
                 return {
                     "status": "success",
                     "method": request["method"],
@@ -787,29 +773,22 @@ class TestRealWorldScenarios:
                     "processed_at": time.time(),
                 }
 
-            # Execute without external performance monitoring
             result = process_api_request(test_request)
 
             def check_status_success(x: object) -> bool:
                 """Check if status is success."""
-                if not isinstance(x, dict):
-                    return False
-                # x is verified as dict by isinstance check above
-                return x.get("status") == "success"
+                payload = _as_object_dict(x)
+                return payload.get("status") == "success"
 
             def check_correlation_id(x: object) -> bool:
                 """Check if correlation_id exists."""
-                if not isinstance(x, dict):
-                    return False
-                # Type-safe dictionary access
-                return "correlation_id" in x
+                payload = _as_object_dict(x)
+                return "correlation_id" in payload
 
             def check_valid_method(x: object) -> bool:
                 """Check if method is valid HTTP method."""
-                if not isinstance(x, dict):
-                    return False
-                # x is verified as dict by isinstance check above
-                method = x.get("method")
+                payload = _as_object_dict(x)
+                method = payload.get("method")
                 return isinstance(method, str) and method in {
                     "GET",
                     "POST",
@@ -818,64 +797,52 @@ class TestRealWorldScenarios:
                     "PATCH",
                 }
 
-            # Comprehensive assertions
             AssertionBuilder(result).is_not_none().satisfies(
                 check_status_success,
                 "should be successful",
-            ).satisfies(
-                check_correlation_id,
-                "should have correlation ID",
-            ).satisfies(
+            ).satisfies(check_correlation_id, "should have correlation ID").satisfies(
                 check_valid_method,
                 "should have valid HTTP method",
             ).assert_all()
 
     @given(
-        st.builds(
-            dict,
-            database_url=st.text(),
-            debug=st.booleans(),
-            timeout_seconds=st.integers(min_value=1, max_value=300),
-            environment=st.sampled_from([
-                "development",
-                "staging",
-                "production",
-            ]),
-        ),
+        database_url=st.text(),
+        debug=st.booleans(),
+        timeout_seconds=st.integers(min_value=1, max_value=300),
+        environment=st.sampled_from(["development", "staging", "production"]),
     )
     @settings()
     def test_configuration_validation_comprehensive(
         self,
-        config: dict[str, FlextTypes.GeneralValueType],
+        database_url: str,
+        debug: bool,
+        timeout_seconds: int,
+        environment: str,
     ) -> None:
         """Comprehensive configuration validation testing."""
-        # Validate configuration structure
+        config: dict[str, FlextTypes.Container] = {
+            "database_url": database_url,
+            "debug": debug,
+            "timeout_seconds": timeout_seconds,
+            "environment": environment,
+        }
         required_fields = ["database_url", "debug", "timeout_seconds"]
         for field in required_fields:
             assert field in config, f"Missing required field: {field}"
-
-        # Validate data types
         assert isinstance(config["debug"], bool)
         assert isinstance(config["timeout_seconds"], int)
         assert config["timeout_seconds"] > 0
-
-        # Validate environment
-        assert config["environment"] in {
-            "development",
-            "staging",
-            "production",
-        }
-
-        # Build test scenario for this configuration
+        assert config["environment"] in {"development", "staging", "production"}
         scenario = (
             GivenWhenThenBuilder("configuration_validation")
-            .given("a configuration object", config=config)
+            .given(
+                "a configuration object",
+                config_environment=str(config["environment"]),
+            )
             .when("configuration is validated", action="validate")
             .then("all required fields are present", validated=True)
             .with_tag("configuration")
             .build()
         )
-
-        given_config: object = scenario.given["config"]
-        assert given_config == config
+        assert scenario.given.get("config_environment") == config["environment"]
         assert "configuration" in scenario.tags

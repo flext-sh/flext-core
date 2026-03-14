@@ -1,11 +1,9 @@
 # FLEXT-Core Documentation Index
 
 <!-- TOC START -->
-
 - [Quick Navigation](#quick-navigation)
 - [Repository Structure (docs)](#repository-structure-docs)
 - [Notes on Accuracy and Duplication](#notes-on-accuracy-and-duplication)
-
 <!-- TOC END -->
 
 **Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency
@@ -43,3 +41,6 @@ docs/
 - Prefer linking to authoritative guides instead of repeating the same content across files.
 - Align terminology with the dispatcher-centric CQRS architecture: `FlextDispatcher`, handler registry, middleware, and domain-event publishing.
 - Update dates and version references only when `pyproject.toml` changes to avoid drift.
+
+```
+```

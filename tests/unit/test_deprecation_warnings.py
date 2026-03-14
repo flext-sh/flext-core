@@ -1,0 +1,187 @@
+"""Tests for deprecation warnings on compatibility methods.
+
+Verifies that ALL deprecated compatibility paths emit DeprecationWarning
+with clear messaging pointing to their modern replacement.
+
+Every deprecated method and alias is tested here so that deprecation
+notices remain visible in test output until removal (planned: v0.12).
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
+
+from __future__ import annotations
+
+import math
+import warnings
+
+import pytest
+
+from flext_core import FlextRuntime, FlextUtilities, m
+from flext_core._utilities.guards import FlextUtilitiesGuards
+from flext_core._utilities.mapper import FlextUtilitiesMapper
+
+pytestmark = [pytest.mark.unit]
+
+
+class TestRuntimeDeprecatedNormalizeMethods:
+    """Deprecated runtime normalization methods must emit DeprecationWarning."""
+
+    def test_normalize_to_general_value_emits_deprecation(self) -> None:
+        """FlextRuntime.normalize_to_general_value -> normalize_to_container."""
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            result = FlextRuntime.normalize_to_general_value("hello")
+            assert result == "hello"
+            deprecation_warnings = [
+                x for x in w if issubclass(x.category, DeprecationWarning)
+            ]
+            assert len(deprecation_warnings) >= 1
+            assert "normalize_to_container" in str(deprecation_warnings[0].message)
+
+    def test_normalize_to_metadata_value_emits_deprecation(self) -> None:
+        """FlextRuntime.normalize_to_metadata_value -> normalize_to_metadata."""
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            result = FlextRuntime.normalize_to_metadata_value(42)
+            assert result == 42
+            deprecation_warnings = [
+                x for x in w if issubclass(x.category, DeprecationWarning)
+            ]
+            assert len(deprecation_warnings) >= 1
+            assert "normalize_to_metadata" in str(deprecation_warnings[0].message)
+
+    def test_normalize_to_general_value_functional_equivalence(self) -> None:
+        """Deprecated path must return same result as non-deprecated path."""
+        test_cases: list[object] = ["str", 42, math.pi, True, None, {"k": "v"}, [1, 2]]
+        for val in test_cases:
+            with warnings.catch_warnings(record=True):
+                warnings.simplefilter("always")
+                deprecated_result = FlextRuntime.normalize_to_general_value(val)
+            strict_result = FlextRuntime.normalize_to_container(val)
+            assert type(deprecated_result) is type(strict_result), (
+                f"Type mismatch for {val!r}: "
+                f"{type(deprecated_result)} vs {type(strict_result)}"
+            )
+
+
+class TestGuardsDeprecatedMethods:
+    """Deprecated guard methods must emit DeprecationWarning."""
+
+    def test_is_general_value_type_emits_deprecation(self) -> None:
+        """FlextUtilitiesGuards.is_general_value_type -> is_container."""
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            result = FlextUtilitiesGuards.is_general_value_type("test")
+            assert result is True
+            deprecation_warnings = [
+                x for x in w if issubclass(x.category, DeprecationWarning)
+            ]
+            assert len(deprecation_warnings) >= 1
+            assert "is_container" in str(deprecation_warnings[0].message)
+
+
+class TestMapperDeprecatedMethods:
+    """Deprecated mapper methods must emit DeprecationWarning."""
+
+    def test_narrow_to_general_value_type_emits_deprecation(self) -> None:
+        """FlextUtilitiesMapper.narrow_to_general_value_type -> narrow_to_container."""
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            result = FlextUtilitiesMapper.narrow_to_general_value_type("hello")
+            assert result == "hello"
+            deprecation_warnings = [
+                x for x in w if issubclass(x.category, DeprecationWarning)
+            ]
+            assert len(deprecation_warnings) >= 1
+            assert "narrow_to_container" in str(deprecation_warnings[0].message)
+
+    def test_to_general_value_from_object_emits_deprecation(self) -> None:
+        """FlextUtilitiesMapper._to_general_value_from_object -> narrow_to_container."""
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            result = FlextUtilitiesMapper._to_general_value_from_object(99)
+            assert result == 99
+            deprecation_warnings = [
+                x for x in w if issubclass(x.category, DeprecationWarning)
+            ]
+            assert len(deprecation_warnings) >= 1
+            assert "narrow_to_container" in str(deprecation_warnings[0].message)
+
+
+class TestFacadeDeprecatedAliases:
+    """Deprecated facade aliases (u.*) must emit DeprecationWarning via runtime."""
+
+    def test_facade_normalize_to_general_value_emits_deprecation(self) -> None:
+        """FlextUtilities.normalize_to_general_value -> normalize_to_container."""
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            result = FlextUtilities.normalize_to_general_value("facade_test")
+            assert result == "facade_test"
+            deprecation_warnings = [
+                x for x in w if issubclass(x.category, DeprecationWarning)
+            ]
+            assert len(deprecation_warnings) >= 1
+
+    def test_facade_normalize_to_metadata_value_emits_deprecation(self) -> None:
+        """FlextUtilities.normalize_to_metadata_value -> normalize_to_metadata."""
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            result = FlextUtilities.normalize_to_metadata_value("facade_meta")
+            assert result == "facade_meta"
+            deprecation_warnings = [
+                x for x in w if issubclass(x.category, DeprecationWarning)
+            ]
+            assert len(deprecation_warnings) >= 1
+
+
+class TestStrictContainerNormalization:
+    """Non-deprecated normalization methods work correctly with strict types."""
+
+    def test_normalize_to_container_scalar_passthrough(self) -> None:
+        """Scalars pass through normalize_to_container unchanged."""
+        assert FlextRuntime.normalize_to_container("hello") == "hello"
+        assert FlextRuntime.normalize_to_container(42) == 42
+        assert FlextRuntime.normalize_to_container(math.pi) == math.pi
+        assert FlextRuntime.normalize_to_container(True) is True
+
+    def test_normalize_to_container_none_becomes_empty_string(self) -> None:
+        """None normalizes to empty string."""
+        assert FlextRuntime.normalize_to_container(None) == ""
+
+    def test_normalize_to_container_dict_wraps_in_model(self) -> None:
+        """Nested dicts are wrapped in m.Dict RootModel."""
+        result = FlextRuntime.normalize_to_container({"key": "value"})
+        assert isinstance(result, m.Dict)
+
+    def test_normalize_to_container_list_wraps_in_model(self) -> None:
+        """Nested lists are wrapped in m.ObjectList RootModel."""
+        result = FlextRuntime.normalize_to_container([1, 2, 3])
+        assert isinstance(result, m.ObjectList)
+
+    def test_normalize_to_container_unknown_becomes_str(self) -> None:
+        """Unknown objects are converted to string representation."""
+        result = FlextRuntime.normalize_to_container(object())
+        assert isinstance(result, str)
+
+    def test_normalize_to_metadata_returns_metadata_value(self) -> None:
+        for val in ["str", 42, None]:
+            metadata = FlextRuntime.normalize_to_metadata(val)
+            assert isinstance(metadata, (str, int, float, bool, list, dict))
+        list_meta = FlextRuntime.normalize_to_metadata([1])
+        assert isinstance(list_meta, list)
+        dict_meta = FlextRuntime.normalize_to_metadata({"k": "v"})
+        assert isinstance(dict_meta, dict)
+
+    def test_no_deprecation_on_strict_methods(self) -> None:
+        """Non-deprecated methods must NOT emit DeprecationWarning."""
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            _ = FlextRuntime.normalize_to_container("test")
+            _ = FlextRuntime.normalize_to_metadata("test")
+            deprecation_warnings = [
+                x for x in w if issubclass(x.category, DeprecationWarning)
+            ]
+            assert len(deprecation_warnings) == 0, (
+                f"Unexpected DeprecationWarning from strict methods: {deprecation_warnings}"
+            )

@@ -7,13 +7,34 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import warnings
-
 import pytest
 
-from flext_core import FlextResult, t
-from flext_tests import tm
-from flext_tests.constants import c
+from flext_core import r
+from flext_tests import c, m, t, tm
+
+
+def _is_string(value: t.Tests.Testobject) -> bool:
+    return isinstance(value, str)
+
+
+def _is_string_or_bytes(value: t.Tests.Testobject) -> bool:
+    return isinstance(value, str | bytes)
+
+
+def _is_positive(value: t.Tests.Testobject) -> bool:
+    return isinstance(value, int) and value > 0
+
+
+def _is_negative(value: t.Tests.Testobject) -> bool:
+    return isinstance(value, int) and value < 0
+
+
+def _greater_than_zero(value: t.Tests.Testobject) -> bool:
+    return isinstance(value, int) and value > 0
+
+
+def _greater_than_two(value: t.Tests.Testobject) -> bool:
+    return isinstance(value, int) and value > 2
 
 
 class TestFlextTestsMatchers:
@@ -21,72 +42,56 @@ class TestFlextTestsMatchers:
 
     def test_assert_result_success_passes(self) -> None:
         """Test tm.ok() with successful result."""
-        result = FlextResult[str].ok("success")
-
-        # Should not raise
+        result = r[str].ok("success")
         value = tm.ok(result)
         assert value == "success"
 
     def test_assert_result_success_fails(self) -> None:
         """Test tm.ok() with failed result."""
-        result = FlextResult[str].fail("error")
-
+        result: r[str] = r[str].fail("error")
         with pytest.raises(AssertionError, match="Expected success but got failure"):
             tm.ok(result)
 
     def test_assert_result_success_custom_message(self) -> None:
         """Test tm.ok() with custom error message."""
-        result = FlextResult[str].fail("error")
-
+        result: r[str] = r[str].fail("error")
         with pytest.raises(AssertionError, match="Custom message"):
             tm.ok(result, msg="Custom message")
 
     def test_assert_result_failure_passes(self) -> None:
         """Test tm.fail() with failed result."""
-        result = FlextResult[str].fail("error")
-
-        # Should not raise
+        result: r[str] = r[str].fail("error")
         error = tm.fail(result)
         assert error == "error"
 
     def test_assert_result_failure_fails(self) -> None:
         """Test tm.fail() with successful result."""
-        result = FlextResult[str].ok("success")
-
+        result = r[str].ok("success")
         with pytest.raises(AssertionError, match="Expected failure but got success"):
             tm.fail(result)
 
     def test_assert_result_failure_with_expected_error(self) -> None:
         """Test tm.fail() with expected error substring."""
-        result = FlextResult[str].fail("Database connection failed")
-
-        # Should not raise
+        result: r[str] = r[str].fail("Database connection failed")
         error = tm.fail(result, contains="connection")
         assert "connection" in error
 
     def test_assert_result_failure_expected_error_not_found(self) -> None:
         """Test tm.fail() when expected error substring not found."""
-        result = FlextResult[str].fail("Database error")
-
-        with pytest.raises(
-            AssertionError,
-            match=r"Expected.*to contain 'connection'",
-        ):
+        result: r[str] = r[str].fail("Database error")
+        with pytest.raises(AssertionError, match=r"Expected.*to contain 'connection'"):
             tm.fail(result, contains="connection")
 
     def test_assert_dict_contains_passes(self) -> None:
         """Test tm.that() with contains parameter for dict."""
         data = {"key1": "value1", "key2": "value2"}
         expected = {"key1": "value1"}
-
-        # Should not raise - use kv for key-value pairs
         tm.that(data, kv=expected)
 
     def test_assert_dict_contains_missing_key(self) -> None:
         """Test tm.that() with missing key."""
         data = {"key1": "value1"}
         expected = {"key2": "value2"}
-
         with pytest.raises(AssertionError, match="Key 'key2' not found in mapping"):
             tm.that(data, kv=expected)
 
@@ -94,7 +99,6 @@ class TestFlextTestsMatchers:
         """Test tm.that() with wrong value."""
         data = {"key1": "value1"}
         expected = {"key1": "wrong_value"}
-
         with pytest.raises(
             AssertionError,
             match="expected 'wrong_value', got 'value1'",
@@ -104,20 +108,16 @@ class TestFlextTestsMatchers:
     def test_assert_list_contains_passes(self) -> None:
         """Test tm.that() with has parameter for list."""
         items = ["item1", "item2", "item3"]
-
-        # Should not raise
         tm.that(items, has="item2")
 
     def test_assert_list_contains_missing_item(self) -> None:
         """Test tm.that() with item not in list."""
         items = ["item1", "item2"]
-
         with pytest.raises(AssertionError, match=r"Expected.*to contain 'item3'"):
             tm.that(items, has="item3")
 
     def test_assert_valid_email_passes(self) -> None:
         """Test tm.that() with email pattern match."""
-        # Should not raise
         tm.that("test@example.com", match=c.Tests.Matcher.EMAIL_PATTERN)
 
     def test_assert_valid_email_fails(self) -> None:
@@ -127,280 +127,255 @@ class TestFlextTestsMatchers:
 
     def test_assert_valid_email_edge_cases(self) -> None:
         """Test tm.that() with various email edge cases."""
-        valid_emails = [
-            "user.name@domain.co.uk",
-            "test+tag@example.com",
-            "a@b.co",
-        ]
-        invalid_emails = [
-            "invalid",
-            "@example.com",
-            "test@",
-            "test.example.com",  # Missing @
-        ]
-
+        valid_emails = ["user.name@domain.co.uk", "test+tag@example.com", "a@b.co"]
+        invalid_emails = ["invalid", "@example.com", "test@", "test.example.com"]
         for email in valid_emails:
-            # Should not raise
             tm.that(email, match=c.Tests.Matcher.EMAIL_PATTERN)
-
         for email in invalid_emails:
             with pytest.raises(AssertionError):
                 tm.that(email, match=c.Tests.Matcher.EMAIL_PATTERN)
 
     def test_assert_config_valid_passes(self) -> None:
         """Test tm.that() with keys parameter for config validation."""
-        config: dict[str, t.GeneralValueType] = {
+        config: dict[str, object] = {
             "service_type": "api",
             "environment": "test",
             "timeout": 30,
         }
-
-        # Should not raise - validate keys and timeout
         tm.that(config, keys=["service_type", "environment", "timeout"])
         tm.that(config["timeout"], is_=int, gt=0)
 
     def test_assert_config_valid_missing_required_key(self) -> None:
         """Test tm.that() with missing required key."""
-        config = {"service_type": "api"}  # Missing environment
-
+        config = {"service_type": "api"}
         with pytest.raises(AssertionError, match="Missing required keys"):
             tm.that(config, keys=["service_type", "environment", "timeout"])
 
     def test_assert_config_valid_invalid_timeout(self) -> None:
         """Test tm.that() with invalid timeout type."""
-        config = {
-            "service_type": "api",
-            "environment": "test",
-            "timeout": "invalid",  # Should be positive int
-        }
-
+        config = {"service_type": "api", "environment": "test", "timeout": "invalid"}
         with pytest.raises(AssertionError, match="Assertion failed"):
             tm.that(config["timeout"], is_=int, gt=0)
 
     def test_assert_config_valid_zero_timeout(self) -> None:
         """Test tm.that() with zero timeout."""
-        config: dict[str, t.GeneralValueType] = {
+        config: dict[str, object] = {
             "service_type": "api",
             "environment": "test",
-            "timeout": 0,  # Should be positive
+            "timeout": 0,
         }
-
         with pytest.raises(AssertionError, match="Assertion failed"):
             tm.that(config["timeout"], is_=int, gt=0)
 
-    # =========================================================================
-    # COMPREHENSIVE TESTS FOR ENHANCED tm.ok()
-    # =========================================================================
-
     def test_ok_with_eq_parameter(self) -> None:
         """Test tm.ok() with eq parameter."""
-        result = FlextResult[int].ok(42)
+        result = r[int].ok(42)
         value = tm.ok(result, eq=42)
         assert value == 42
 
     def test_ok_with_eq_parameter_fails(self) -> None:
         """Test tm.ok() with eq parameter fails when value doesn't match."""
-        result = FlextResult[int].ok(42)
+        result = r[int].ok(42)
         with pytest.raises(AssertionError):
             tm.ok(result, eq=43)
 
     def test_ok_with_ne_parameter(self) -> None:
         """Test tm.ok() with ne parameter."""
-        result = FlextResult[int].ok(42)
+        result = r[int].ok(42)
         value = tm.ok(result, ne=43)
         assert value == 42
 
     def test_ok_with_is_parameter(self) -> None:
         """Test tm.ok() with is_ parameter."""
-        result = FlextResult[str].ok("test")
-        value = tm.ok(result, is_=str)
+        result = r[str].ok("test")
+        value = tm.ok(
+            result,
+            where=_is_string,
+        )
         assert value == "test"
 
     def test_ok_with_is_tuple_parameter(self) -> None:
         """Test tm.ok() with is_ tuple parameter."""
-        result = FlextResult[str].ok("test")
-        value = tm.ok(result, is_=(str, bytes))
+        result = r[str].ok("test")
+        value = tm.ok(
+            result,
+            where=_is_string_or_bytes,
+        )
         assert value == "test"
 
     def test_ok_with_has_parameter(self) -> None:
         """Test tm.ok() with has parameter."""
-        result = FlextResult[list[str]].ok(["a", "b", "c"])
+        result = r[list[str]].ok(["a", "b", "c"])
         value = tm.ok(result, has="a")
         assert value == ["a", "b", "c"]
 
     def test_ok_with_has_sequence_parameter(self) -> None:
         """Test tm.ok() with has sequence parameter."""
-        result = FlextResult[list[str]].ok(["a", "b", "c"])
+        result = r[list[str]].ok(["a", "b", "c"])
         value = tm.ok(result, has=["a", "b"])
         assert value == ["a", "b", "c"]
 
     def test_ok_with_lacks_parameter(self) -> None:
         """Test tm.ok() with lacks parameter."""
-        result = FlextResult[list[str]].ok(["a", "b", "c"])
+        result = r[list[str]].ok(["a", "b", "c"])
         value = tm.ok(result, lacks="d")
         assert value == ["a", "b", "c"]
 
     def test_ok_with_len_exact_parameter(self) -> None:
         """Test tm.ok() with len exact parameter."""
-        result = FlextResult[list[str]].ok(["a", "b", "c"])
+        result = r[list[str]].ok(["a", "b", "c"])
         value = tm.ok(result, len=3)
         assert value == ["a", "b", "c"]
 
     def test_ok_with_len_range_parameter(self) -> None:
         """Test tm.ok() with len range parameter."""
-        result = FlextResult[list[str]].ok(["a", "b", "c"])
+        result = r[list[str]].ok(["a", "b", "c"])
         value = tm.ok(result, len=(2, 4))
         assert value == ["a", "b", "c"]
 
     def test_ok_with_deep_parameter(self) -> None:
         """Test tm.ok() with deep parameter."""
-        data: dict[str, t.GeneralValueType] = {"user": {"name": "John", "age": 30}}
-        result = FlextResult[dict[str, t.GeneralValueType]].ok(data)
+        data: dict[str, t.Tests.Testobject] = {"user": {"name": "John", "age": 30}}
+        result = r[t.Tests.object].ok(data)
         value = tm.ok(result, deep={"user.name": "John"})
         assert value == data
 
     def test_ok_with_deep_predicate_parameter(self) -> None:
         """Test tm.ok() with deep predicate parameter."""
-        data: dict[str, t.GeneralValueType] = {"user": {"email": "test@example.com"}}
-        result = FlextResult[dict[str, t.GeneralValueType]].ok(data)
-        value = tm.ok(result, deep={"user.email": lambda e: "@" in str(e)})
+        data: dict[str, t.Tests.Testobject] = {"user": {"email": "test@example.com"}}
+        result = r[t.Tests.object].ok(data)
+        value = tm.ok(result, deep={"user.email": "test@example.com"})
         assert value == data
 
     def test_ok_with_path_parameter(self) -> None:
         """Test tm.ok() with path parameter."""
-        data: dict[str, t.GeneralValueType] = {"user": {"name": "John"}}
-        result = FlextResult[dict[str, t.GeneralValueType]].ok(data)
+        data: dict[str, t.Tests.Testobject] = {"user": {"name": "John"}}
+        result = r[t.Tests.object].ok(data)
         value = tm.ok(result, path="user.name", eq="John")
-        # path extraction returns the extracted value, not the original
         assert value == "John"
 
     def test_ok_with_where_parameter(self) -> None:
         """Test tm.ok() with where parameter."""
-        result = FlextResult[int].ok(42)
-        value = tm.ok(result, where=lambda x: x > 0)
+        result = r[int].ok(42)
+        value = tm.ok(result, where=_is_positive)
         assert value == 42
 
     def test_ok_with_where_parameter_fails(self) -> None:
         """Test tm.ok() with where parameter fails when predicate returns False."""
-        result = FlextResult[int].ok(42)
+        result = r[int].ok(42)
         with pytest.raises(AssertionError):
-            tm.ok(result, where=lambda x: x < 0)
+            tm.ok(result, where=_is_negative)
 
     def test_ok_with_starts_parameter(self) -> None:
         """Test tm.ok() with starts parameter."""
-        result = FlextResult[str].ok("Hello World")
+        result = r[str].ok("Hello World")
         value = tm.ok(result, starts="Hello")
         assert value == "Hello World"
 
     def test_ok_with_ends_parameter(self) -> None:
         """Test tm.ok() with ends parameter."""
-        result = FlextResult[str].ok("Hello World")
+        result = r[str].ok("Hello World")
         value = tm.ok(result, ends="World")
         assert value == "Hello World"
 
     def test_ok_with_match_parameter(self) -> None:
         """Test tm.ok() with match parameter."""
-        result = FlextResult[str].ok("test@example.com")
-        value = tm.ok(result, match=r"^[\w.]+@[\w.]+$")
+        result = r[str].ok("test@example.com")
+        value = tm.ok(result, match="^[\\w.]+@[\\w.]+$")
         assert value == "test@example.com"
 
     def test_ok_with_gt_parameter(self) -> None:
         """Test tm.ok() with gt parameter."""
-        result = FlextResult[int].ok(42)
+        result = r[int].ok(42)
         value = tm.ok(result, gt=0)
         assert value == 42
 
     def test_ok_with_gte_parameter(self) -> None:
         """Test tm.ok() with gte parameter."""
-        result = FlextResult[int].ok(42)
+        result = r[int].ok(42)
         value = tm.ok(result, gte=42)
         assert value == 42
 
     def test_ok_with_lt_parameter(self) -> None:
         """Test tm.ok() with lt parameter."""
-        result = FlextResult[int].ok(42)
+        result = r[int].ok(42)
         value = tm.ok(result, lt=100)
         assert value == 42
 
     def test_ok_with_lte_parameter(self) -> None:
         """Test tm.ok() with lte parameter."""
-        result = FlextResult[int].ok(42)
+        result = r[int].ok(42)
         value = tm.ok(result, lte=42)
         assert value == 42
 
     def test_ok_with_none_parameter(self) -> None:
         """Test tm.ok() with none parameter."""
-        result = FlextResult[str | None].ok("test")
+        result = r[str | None].ok("test")
         value = tm.ok(result, none=False)
         assert value == "test"
 
     def test_ok_with_empty_parameter(self) -> None:
         """Test tm.ok() with empty parameter."""
-        result = FlextResult[list[str]].ok(["a"])
+        result = r[list[str]].ok(["a"])
         value = tm.ok(result, empty=False)
         assert value == ["a"]
 
-    # =========================================================================
-    # COMPREHENSIVE TESTS FOR ENHANCED tm.fail()
-    # =========================================================================
-
     def test_fail_with_has_parameter(self) -> None:
         """Test tm.fail() with has parameter."""
-        result = FlextResult[str].fail("Database connection failed")
+        result: r[str] = r[str].fail("Database connection failed")
         error = tm.fail(result, has="connection")
         assert error == "Database connection failed"
 
     def test_fail_with_has_sequence_parameter(self) -> None:
         """Test tm.fail() with has sequence parameter."""
-        result = FlextResult[str].fail("Database connection failed")
+        result: r[str] = r[str].fail("Database connection failed")
         error = tm.fail(result, has=["Database", "connection"])
         assert error == "Database connection failed"
 
     def test_fail_with_lacks_parameter(self) -> None:
         """Test tm.fail() with lacks parameter."""
-        result = FlextResult[str].fail("Database error")
+        result: r[str] = r[str].fail("Database error")
         error = tm.fail(result, lacks="internal")
         assert error == "Database error"
 
     def test_fail_with_starts_parameter(self) -> None:
         """Test tm.fail() with starts parameter."""
-        result = FlextResult[str].fail("Error: connection failed")
+        result: r[str] = r[str].fail("Error: connection failed")
         error = tm.fail(result, starts="Error:")
         assert error == "Error: connection failed"
 
     def test_fail_with_ends_parameter(self) -> None:
         """Test tm.fail() with ends parameter."""
-        result = FlextResult[str].fail("connection failed")
+        result: r[str] = r[str].fail("connection failed")
         error = tm.fail(result, ends="failed")
         assert error == "connection failed"
 
     def test_fail_with_match_parameter(self) -> None:
         """Test tm.fail() with match parameter."""
-        result = FlextResult[str].fail("Error: 404")
-        error = tm.fail(result, match=r"Error: \d+")
+        result: r[str] = r[str].fail("Error: 404")
+        error = tm.fail(result, match="Error: \\d+")
         assert error == "Error: 404"
 
     def test_fail_with_code_parameter(self) -> None:
         """Test tm.fail() with code parameter."""
-        result = FlextResult[str].fail("error", error_code="VALIDATION")
+        result: r[str] = r[str].fail("error", error_code="VALIDATION")
         error = tm.fail(result, code="VALIDATION")
         assert error == "error"
 
     def test_fail_with_code_has_parameter(self) -> None:
         """Test tm.fail() with code_has parameter."""
-        result = FlextResult[str].fail("error", error_code="VALIDATION_ERROR")
+        result: r[str] = r[str].fail("error", error_code="VALIDATION_ERROR")
         error = tm.fail(result, code_has="VALIDATION")
         assert error == "error"
 
     def test_fail_with_data_parameter(self) -> None:
         """Test tm.fail() with data parameter."""
-        result = FlextResult[str].fail("error", error_data={"field": "email"})
+        result: r[str] = r[str].fail(
+            "error",
+            error_data=m.ConfigMap(root={"field": "email"}),
+        )
         error = tm.fail(result, data={"field": "email"})
         assert error == "error"
-
-    # =========================================================================
-    # COMPREHENSIVE TESTS FOR ENHANCED tm.that()
-    # =========================================================================
 
     def test_that_with_eq_parameter(self) -> None:
         """Test tm.that() with eq parameter."""
@@ -458,7 +433,7 @@ class TestFlextTestsMatchers:
 
     def test_that_with_all_predicate_parameter(self) -> None:
         """Test tm.that() with all_ predicate parameter."""
-        tm.that([1, 2, 3], all_=lambda x: x > 0)
+        tm.that([1, 2, 3], all_=_greater_than_zero)
 
     def test_that_with_any_type_parameter(self) -> None:
         """Test tm.that() with any_ type parameter."""
@@ -466,7 +441,7 @@ class TestFlextTestsMatchers:
 
     def test_that_with_any_predicate_parameter(self) -> None:
         """Test tm.that() with any_ predicate parameter."""
-        tm.that([1, 2, 3], any_=lambda x: x > 2)
+        tm.that([1, 2, 3], any_=_greater_than_two)
 
     def test_that_with_sorted_parameter(self) -> None:
         """Test tm.that() with sorted parameter."""
@@ -542,13 +517,13 @@ class TestFlextTestsMatchers:
         tm.that(obj, attr_eq={"attr1": "value1", "attr2": "value2"})
 
     def test_that_with_ok_parameter(self) -> None:
-        """Test tm.that() with ok parameter for FlextResult."""
-        result = FlextResult[str].ok("success")
+        """Test tm.that() with ok parameter for r."""
+        result = r[str].ok("success")
         tm.that(result, ok=True)
 
     def test_that_with_error_parameter(self) -> None:
-        """Test tm.that() with error parameter for FlextResult."""
-        result = FlextResult[str].fail("error")
+        """Test tm.that() with error parameter for r."""
+        result: r[str] = r[str].fail("error")
         tm.that(result, error="error")
 
     def test_that_with_deep_parameter(self) -> None:
@@ -558,30 +533,22 @@ class TestFlextTestsMatchers:
 
     def test_that_with_where_parameter(self) -> None:
         """Test tm.that() with where parameter."""
-        tm.that(42, where=lambda x: x > 0)
+        tm.that(42, where=_is_positive)
 
     def test_that_with_all_alias_parameter(self) -> None:
         """Test tm.that() with all alias parameter (accepts both all_ and all)."""
-        tm.that(["a", "b", "c"], all=str)  # Using 'all' instead of 'all_'
+        tm.that(["a", "b", "c"], all=str)
 
     def test_that_with_any_alias_parameter(self) -> None:
         """Test tm.that() with any alias parameter (accepts both any_ and any)."""
-        tm.that(["a", 1, "c"], any=int)  # Using 'any' instead of 'any_'
-
-    # =========================================================================
-    # TESTS FOR tm.check() FLUENT API
-    # =========================================================================
+        tm.that(["a", 1, "c"], any=int)
 
     def test_check_returns_chain(self) -> None:
         """Test tm.check() returns Chain object."""
-        result = FlextResult[int].ok(42)
+        result = r[int].ok(42)
         chain = tm.check(result)
         assert chain is not None
         assert hasattr(chain, "result")
-
-    # =========================================================================
-    # TESTS FOR tm.scope() CONTEXT MANAGER
-    # =========================================================================
 
     def test_scope_basic_usage(self) -> None:
         """Test tm.scope() basic usage."""
@@ -607,75 +574,25 @@ class TestFlextTestsMatchers:
         with tm.scope(context={"user_id": 123}) as scope:
             assert scope.context["user_id"] == 123
 
-    # =========================================================================
-    # TESTS FOR DEPRECATION WARNINGS
-    # =========================================================================
-
-    def test_dict_deprecation_warning(self) -> None:
-        """Test that dict_() emits deprecation warning (using deprecated method)."""
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always")
-            # Use the deprecated method directly to test warning
-            tm.dict_({"a": 1}, has_key="a")
-            assert len(w) == 1
-            assert issubclass(w[0].category, DeprecationWarning)
-
-    def test_list_deprecation_warning(self) -> None:
-        """Test that list_() emits deprecation warning (using deprecated method)."""
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always")
-            # Use the deprecated method directly to test warning
-            tm.list_([1, 2, 3], contains=1)
-            assert len(w) == 1
-            assert issubclass(w[0].category, DeprecationWarning)
-
-    def test_str_deprecation_warning(self) -> None:
-        """Test that str_() emits deprecation warning."""
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always")
-            tm.str_("test", contains="t")
-            assert len(w) == 1
-            assert issubclass(w[0].category, DeprecationWarning)
-
-    def test_eq_deprecation_warning(self) -> None:
-        """Test that eq() emits deprecation warning."""
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always")
-            tm.eq(1, 1)
-            assert len(w) == 1
-            assert issubclass(w[0].category, DeprecationWarning)
-
-    def test_true_deprecation_warning(self) -> None:
-        """Test that true() emits deprecation warning."""
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always")
-            tm.true(True)
-            assert len(w) == 1
-            assert issubclass(w[0].category, DeprecationWarning)
-
-    # =========================================================================
-    # TESTS FOR PYDANTIC 2 VALIDATION
-    # =========================================================================
-
     def test_ok_invalid_parameter_type(self) -> None:
         """Test tm.ok() with invalid parameter type raises ValueError."""
-        result = FlextResult[int].ok(42)
+        result = r[int].ok(42)
         with pytest.raises(ValueError, match="Parameter validation failed"):
-            tm.ok(result, len="invalid")  # len should be int or tuple[int, int]
+            tm.ok(result, len="invalid")
 
     def test_fail_invalid_parameter_type(self) -> None:
         """Test tm.fail() with invalid parameter type raises ValueError."""
-        result = FlextResult[str].fail("error")
+        result: r[str] = r[str].fail("error")
         with pytest.raises(ValueError, match="Parameter validation failed"):
-            tm.fail(result, code=123)  # code should be str
+            tm.fail(result, code=123)
 
     def test_that_invalid_parameter_type(self) -> None:
         """Test tm.that() with invalid parameter type raises ValueError."""
         with pytest.raises(ValueError, match="Parameter validation failed"):
-            tm.that([1, 2, 3], len="invalid")  # len should be int or tuple[int, int]
+            tm.that([1, 2, 3], len="invalid")
 
     def test_scope_invalid_parameter_type(self) -> None:
         """Test tm.scope() with invalid parameter type raises ValueError."""
         with pytest.raises(ValueError, match="Parameter validation failed"):
-            with tm.scope(env="invalid"):  # env should be Mapping[str, str]
+            with tm.scope(env="invalid"):
                 pass

@@ -6,20 +6,22 @@ type-system-architecture.md rules with real functionality testing.
 
 from __future__ import annotations
 
+import time
+from collections.abc import Mapping
+
 import pytest
 
-from flext_core import FlextHandlers, FlextTypes as t, r
-from tests.conftest import test_framework
-from tests.models import AutomatedTestScenario
+from flext_core import h, r, t
+from tests import m
 from tests.test_utils import assertion_helpers, fixture_factory
 
 
 class TestAutomatedFlextHandlers:
-    """Automated tests for FlextHandlers functionality.
+    """Automated tests for h functionality.
 
     Generated for 100% coverage with:
     - Real functionality testing (no mocks)
-    - FlextResult[T] patterns
+    - r[T] patterns
     - Type safety compliance
     - Zero circular dependencies
     """
@@ -27,85 +29,70 @@ class TestAutomatedFlextHandlers:
     @pytest.mark.parametrize(
         "test_scenario",
         [
-            {
-                "description": "basic_functionality",
-                "input": {},
-                "expected_success": True,
-            },
-            {
-                "description": "edge_case_handling",
-                "input": {"edge": True},
-                "expected_success": True,
-            },
-            {
-                "description": "error_conditions",
-                "input": {"invalid": True},
-                "expected_success": False,
-            },
-            {
-                "description": "boundary_conditions",
-                "input": {"boundary": True},
-                "expected_success": True,
-            },
-            {
-                "description": "complex_scenarios",
-                "input": {"complex": True},
-                "expected_success": True,
-            },
+            m.AutomatedTestScenario(
+                description="basic_functionality",
+                input={},
+                expected_success=True,
+            ),
+            m.AutomatedTestScenario(
+                description="edge_case_handling",
+                input={"edge": True},
+                expected_success=True,
+            ),
+            m.AutomatedTestScenario(
+                description="error_conditions",
+                input={"invalid": True},
+                expected_success=False,
+            ),
+            m.AutomatedTestScenario(
+                description="boundary_conditions",
+                input={"boundary": True},
+                expected_success=True,
+            ),
+            m.AutomatedTestScenario(
+                description="complex_scenarios",
+                input={"complex": True},
+                expected_success=True,
+            ),
         ],
-        ids=lambda case: case["description"],
+        ids=lambda case: case.description,
     )
     def test_automated_handlers_comprehensive_scenarios(
-        self, test_scenario: AutomatedTestScenario
+        self,
+        test_scenario: m.AutomatedTestScenario,
     ) -> None:
         """Comprehensive test scenarios for handlers functionality."""
         try:
-            # Create test instance using fixture factory
             instance = fixture_factory.create_test_handlers_instance()
-
-            # Execute operation with test data
-            result = self._execute_handlers_operation(instance, test_scenario["input"])
-
-            # Assert using automated assertion helpers
-            if test_scenario["expected_success"]:
-                assertion_helpers.assert_flext_result_success(
-                    result,
-                    f"FlextHandlers operation failed: {test_scenario['description']}",
-                )
-            else:
-                assertion_helpers.assert_flext_result_failure(
-                    result,
-                    f"FlextHandlers operation should fail: {test_scenario['description']}",
-                )
-
-        except Exception as e:
-            if not test_scenario["expected_success"]:
-                # Expected failure occurred
-                pass
-            else:
-                # Unexpected error
-                pytest.fail(f"Unexpected error in handlers test: {e}")
+            input_data = (
+                test_scenario.input
+                if isinstance(test_scenario.input, dict)
+                else dict[str, object]()
+            )
+            result = self._execute_handlers_operation(instance, input_data)
+            if test_scenario.expected_success:
+                assert result.is_success, f"Expected success but got failure: {result}"
+        except Exception:
+            if test_scenario.expected_success:
+                raise
 
     def test_automated_handlers_type_safety(self) -> None:
         """Test type safety compliance for handlers."""
         instance = fixture_factory.create_test_handlers_instance()
-
-        # Test with correct types
         result = self._execute_handlers_operation(instance, {"type_safe": True})
-        assertion_helpers.assert_flext_result_success(
-            result, "FlextHandlers type safety test"
-        )
+        _ = assertion_helpers.assert_flext_result_success(result, "h type safety test")
 
     def test_automated_handlers_error_handling(self) -> None:
         """Test comprehensive error handling for handlers."""
         instance = fixture_factory.create_test_handlers_instance()
-
-        # Test various error conditions
-        error_inputs = [None, {}, {"invalid": "data"}, {"malformed": True}]
-
+        error_inputs: list[dict[str, object] | None] = [
+            None,
+            {},
+            {"invalid": "data"},
+            {"malformed": True},
+        ]
         for error_input in error_inputs:
             result = self._execute_handlers_operation(instance, error_input or {})
-            # Errors should be handled gracefully (either success or proper failure)
             assert result.is_success or result.is_failure, (
                 f"Unexpected result state: {result}"
             )
@@ -114,76 +101,70 @@ class TestAutomatedFlextHandlers:
         """Test performance characteristics of handlers."""
         instance = fixture_factory.create_test_handlers_instance()
 
-        def operation() -> object:
+        def operation() -> r[t.Container]:
             return self._execute_handlers_operation(
-                instance, {"performance_test": True}
+                instance,
+                {"performance_test": True},
             )
 
-        # Execute with timeout
-        result = test_framework.execute_with_timeout(operation, timeout_seconds=1.0)
-        assertion_helpers.assert_flext_result_success(
-            result, "FlextHandlers performance test exceeded timeout"
+        start = time.perf_counter()
+        result = operation()
+        elapsed = time.perf_counter() - start
+        assert elapsed < 1.0
+        _ = assertion_helpers.assert_flext_result_success(
+            result,
+            "h performance test exceeded timeout",
         )
 
     def test_automated_handlers_resource_management(self) -> None:
         """Test resource management and cleanup for handlers."""
         instance = fixture_factory.create_test_handlers_instance()
-
-        # Test normal operation
         result = self._execute_handlers_operation(instance, {"resource_test": True})
-        assertion_helpers.assert_flext_result_success(
-            result, "FlextHandlers resource test"
-        )
-
-        # Test cleanup (if applicable)
-        if hasattr(instance, "cleanup"):
-            cleanup_result = instance.cleanup()
-            if cleanup_result:
-                assertion_helpers.assert_flext_result_success(
-                    cleanup_result, "FlextHandlers cleanup failed"
+        _ = assertion_helpers.assert_flext_result_success(result, "h resource test")
+        cleanup = getattr(instance, "cleanup", None)
+        if callable(cleanup):
+            cleanup_result = cleanup()
+            if isinstance(cleanup_result, r):
+                _ = assertion_helpers.assert_flext_result_success(
+                    cleanup_result,
+                    "h cleanup failed",
                 )
 
     def _execute_handlers_operation(
-        self, instance: t.GeneralValueType, input_data: dict[str, t.GeneralValueType]
-    ) -> r[t.GeneralValueType]:
+        self,
+        instance: type[h[object, object]],
+        input_data: Mapping[str, object],
+    ) -> r[t.Container]:
         """Execute a test operation on handlers instance.
 
-        Tests FlextHandlers class methods and utilities.
+        Tests h class methods and utilities.
         """
         try:
-            # Test FlextHandlers class methods
-            if instance is not FlextHandlers:
-                # Instance is not the FlextHandlers class
-                return r[t.GeneralValueType].fail("Invalid handlers instance type")
+            if instance is not h:
+                return r[t.Container].fail("Invalid handlers instance type")
 
-            # instance is the FlextHandlers class itself
-            def test_handler(msg: object) -> r[t.GeneralValueType]:
+            def test_handler(msg: t.Scalar) -> t.Scalar:
                 """Test handler callable."""
-                return r[t.GeneralValueType].ok(msg)
+                return msg
 
             if input_data.get("type_safe"):
-                # Test handler creation from callable
-                handler = instance.create_from_callable(test_handler)
-                return r[t.GeneralValueType].ok(handler)
+                instance.create_from_callable(test_handler)
+                return r[t.Container].ok(True)
             if input_data.get("validation"):
-                # Test validation - just ensure nested classes exist
                 has_validation = hasattr(instance, "Validation")
-                return r[t.GeneralValueType].ok(has_validation)
+                return r[t.Container].ok(has_validation)
             if input_data.get("performance_test"):
-                # Test handler creation performance
-                handler = instance.create_from_callable(test_handler)
-                return r[t.GeneralValueType].ok(handler)
+                instance.create_from_callable(test_handler)
+                return r[t.Container].ok(True)
             if input_data.get("resource_test"):
-                # Test resource handling with multiple handlers
-                handler1 = instance.create_from_callable(test_handler)
-                handler2 = instance.create_from_callable(test_handler)
-                return r[t.GeneralValueType].ok([handler1, handler2])
-            # Generic test - check class availability
-            return r[t.GeneralValueType].ok("FlextHandlers class available")
+                instance.create_from_callable(test_handler)
+                instance.create_from_callable(test_handler)
+                return r[t.Container].ok(True)
+            return r[t.Container].ok("h class available")
         except Exception as e:
-            return r[t.GeneralValueType].fail(f"FlextHandlers operation failed: {e}")
+            return r[t.Container].fail(f"h operation failed: {e}")
 
     @pytest.fixture
-    def test_handlers_instance(self) -> t.GeneralValueType:
+    def test_handlers_instance(self) -> type[h[object, object]]:
         """Fixture for handlers test instance."""
         return fixture_factory.create_test_handlers_instance()

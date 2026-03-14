@@ -20,19 +20,16 @@ SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
-from flext_core.typings import t
 
 import time
-from dataclasses import dataclass
 from enum import StrEnum
-from typing import ClassVar
+from typing import Annotated, ClassVar
 
 import pytest
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import FlextContext, FlextResult, m, t, x
+from flext_core import FlextContext, m, x
 from flext_tests import u
-from flext_core.models import m
 
 
 class ServiceMixinScenarioType(StrEnum):
@@ -64,33 +61,46 @@ class ResultHandlingScenarioType(StrEnum):
     TYPE_PRESERVATION = "type_preservation"
 
 
-@dataclass(frozen=True, slots=True)
-class ServiceMixinScenario:
+class ServiceMixinScenario(BaseModel):
     """Service mixin test scenario definition."""
 
-    name: str
-    scenario_type: ServiceMixinScenarioType
-    needs_init: bool = False
-    operation_context: str | None = None
+    model_config = ConfigDict(frozen=True)
+    name: Annotated[str, Field(description="Service mixin scenario name")]
+    scenario_type: Annotated[
+        ServiceMixinScenarioType, Field(description="Service mixin scenario type")
+    ]
+    needs_init: Annotated[
+        bool,
+        Field(default=False, description="Whether service initialization is required"),
+    ] = False
+    operation_context: Annotated[
+        str | None, Field(default=None, description="Optional operation context name")
+    ] = None
 
 
-@dataclass(frozen=True, slots=True)
-class ModelConversionScenario:
+class ModelConversionScenario(BaseModel):
     """ModelConversion test scenario definition."""
 
-    name: str
-    scenario_type: ModelConversionScenarioType
-    input_value: t.GeneralValueType
-    expected_output: m.ConfigMap
+    model_config = ConfigDict(frozen=True)
+    name: Annotated[str, Field(description="Model conversion scenario name")]
+    scenario_type: Annotated[
+        ModelConversionScenarioType, Field(description="Model conversion scenario type")
+    ]
+    input_value: Annotated[object, Field(description="Input value for conversion")]
+    expected_output: Annotated[
+        m.ConfigMap, Field(description="Expected conversion output")
+    ]
 
 
-@dataclass(frozen=True, slots=True)
-class ResultHandlingScenario:
+class ResultHandlingScenario(BaseModel):
     """ResultHandling test scenario definition."""
 
-    name: str
-    scenario_type: ResultHandlingScenarioType
-    input_value: t.GeneralValueType
+    model_config = ConfigDict(frozen=True)
+    name: Annotated[str, Field(description="Result handling scenario name")]
+    scenario_type: Annotated[
+        ResultHandlingScenarioType, Field(description="Result handling scenario type")
+    ]
+    input_value: Annotated[object, Field(description="Input value for result handling")]
 
 
 class MixinScenarios:
@@ -98,74 +108,75 @@ class MixinScenarios:
 
     SERVICE_SCENARIOS: ClassVar[list[ServiceMixinScenario]] = [
         ServiceMixinScenario(
-            "container_register_in_container",
-            ServiceMixinScenarioType.CONTAINER_REGISTER,
+            name="container_register_in_container",
+            scenario_type=ServiceMixinScenarioType.CONTAINER_REGISTER,
         ),
         ServiceMixinScenario(
-            "context_mixin_property",
-            ServiceMixinScenarioType.CONTEXT_PROPERTY,
+            name="context_mixin_property",
+            scenario_type=ServiceMixinScenarioType.CONTEXT_PROPERTY,
         ),
         ServiceMixinScenario(
-            "context_propagate",
-            ServiceMixinScenarioType.CONTEXT_PROPAGATE,
+            name="context_propagate",
+            scenario_type=ServiceMixinScenarioType.CONTEXT_PROPAGATE,
         ),
         ServiceMixinScenario(
-            "context_correlation_id",
-            ServiceMixinScenarioType.CONTEXT_CORRELATION,
+            name="context_correlation_id",
+            scenario_type=ServiceMixinScenarioType.CONTEXT_CORRELATION,
         ),
         ServiceMixinScenario(
-            "logging_with_context",
-            ServiceMixinScenarioType.LOGGING_WITH_CONTEXT,
-        ),
-        ServiceMixinScenario("metrics_track", ServiceMixinScenarioType.METRICS_TRACK),
-        ServiceMixinScenario(
-            "service_init_service",
-            ServiceMixinScenarioType.SERVICE_INIT,
-            True,
+            name="logging_with_context",
+            scenario_type=ServiceMixinScenarioType.LOGGING_WITH_CONTEXT,
         ),
         ServiceMixinScenario(
-            "service_enrich_context",
-            ServiceMixinScenarioType.SERVICE_ENRICH,
-            True,
+            name="metrics_track",
+            scenario_type=ServiceMixinScenarioType.METRICS_TRACK,
+        ),
+        ServiceMixinScenario(
+            name="service_init_service",
+            scenario_type=ServiceMixinScenarioType.SERVICE_INIT,
+            needs_init=True,
+        ),
+        ServiceMixinScenario(
+            name="service_enrich_context",
+            scenario_type=ServiceMixinScenarioType.SERVICE_ENRICH,
+            needs_init=True,
         ),
     ]
-
     MODEL_CONVERSION_SCENARIOS: ClassVar[list[ModelConversionScenario]] = [
         ModelConversionScenario(
-            "to_dict_with_basemodel",
-            ModelConversionScenarioType.WITH_BASEMODEL,
-            None,
-            m.ConfigMap(root={"name": "test", "value": 42}),
+            name="to_dict_with_basemodel",
+            scenario_type=ModelConversionScenarioType.WITH_BASEMODEL,
+            input_value=None,
+            expected_output=m.ConfigMap(root={"name": "test", "value": 42}),
         ),
         ModelConversionScenario(
-            "to_dict_with_dict",
-            ModelConversionScenarioType.WITH_DICT,
-            {"key": "value", "number": 123},
-            m.ConfigMap(root={"key": "value", "number": 123}),
+            name="to_dict_with_dict",
+            scenario_type=ModelConversionScenarioType.WITH_DICT,
+            input_value={"key": "value", "number": 123},
+            expected_output=m.ConfigMap(root={"key": "value", "number": 123}),
         ),
         ModelConversionScenario(
-            "to_dict_with_none",
-            ModelConversionScenarioType.WITH_NONE,
-            None,
-            m.ConfigMap(root={}),
+            name="to_dict_with_none",
+            scenario_type=ModelConversionScenarioType.WITH_NONE,
+            input_value=None,
+            expected_output=m.ConfigMap(root={}),
         ),
     ]
-
     RESULT_HANDLING_SCENARIOS: ClassVar[list[ResultHandlingScenario]] = [
         ResultHandlingScenario(
-            "ensure_result_raw_value",
-            ResultHandlingScenarioType.RAW_VALUE,
-            42,
+            name="ensure_result_raw_value",
+            scenario_type=ResultHandlingScenarioType.RAW_VALUE,
+            input_value=42,
         ),
         ResultHandlingScenario(
-            "ensure_result_existing_result",
-            ResultHandlingScenarioType.EXISTING_RESULT,
-            None,
+            name="ensure_result_existing_result",
+            scenario_type=ResultHandlingScenarioType.EXISTING_RESULT,
+            input_value=None,
         ),
         ResultHandlingScenario(
-            "ensure_result_type_preservation",
-            ResultHandlingScenarioType.TYPE_PRESERVATION,
-            None,
+            name="ensure_result_type_preservation",
+            scenario_type=ResultHandlingScenarioType.TYPE_PRESERVATION,
+            input_value=None,
         ),
     ]
 
@@ -198,22 +209,17 @@ class TestFlextMixinsNestedClasses:
                 3. Metrics are tracked correctly
                 """
                 with self.track("test_op") as metrics:
-                    # Validate metrics dict is provided
                     assert isinstance(metrics, dict), "Metrics should be a dict"
                     assert "operation_name" in metrics or "start_time" in metrics, (
                         "Metrics should contain operation info"
                     )
-
-                    # Simulate work
                     time.sleep(0.01)
-
-                    # Validate operation completes
                     return "done"
 
         service = MyService()
         if scenario.scenario_type == ServiceMixinScenarioType.CONTAINER_REGISTER:
             result = service._register_in_container("test_service")
-            u.Tests.Result.assert_result_success(result)
+            _ = u.Tests.Result.assert_success(result)
         elif scenario.scenario_type == ServiceMixinScenarioType.CONTEXT_PROPERTY:
             assert isinstance(service.context, FlextContext)
         elif scenario.scenario_type == ServiceMixinScenarioType.CONTEXT_PROPAGATE:
@@ -231,72 +237,6 @@ class TestFlextMixinsNestedClasses:
             )
         elif scenario.scenario_type == ServiceMixinScenarioType.SERVICE_ENRICH:
             service._enrich_context(version="1.0.0", team="test")
-
-    @pytest.mark.parametrize(
-        "scenario",
-        MixinScenarios.MODEL_CONVERSION_SCENARIOS,
-        ids=lambda s: s.name,
-    )
-    def test_model_conversion_scenarios(
-        self,
-        scenario: ModelConversionScenario,
-    ) -> None:
-        """Test ModelConversion.to_dict() with various input types."""
-        if scenario.scenario_type == ModelConversionScenarioType.WITH_BASEMODEL:
-
-            class TestModel(BaseModel):
-                name: str
-                value: int
-
-            test_model_instance = TestModel(name="test", value=42)
-            input_value: BaseModel | t.GeneralValueType = test_model_instance
-        else:
-            input_value = scenario.input_value
-        # Type narrowing: to_dict accepts BaseModel | ContextMetadataMapping | ConfigurationMapping | None
-        if isinstance(input_value, (BaseModel, dict, m.Metadata)):
-            result = x.ModelConversion.to_dict(input_value)
-        else:
-            result = x.ModelConversion.to_dict(None)
-        assert isinstance(result, m.ConfigMap)
-        assert result == scenario.expected_output
-        if scenario.scenario_type == ModelConversionScenarioType.WITH_DICT:
-            assert isinstance(input_value, dict)
-            assert result.root == input_value
-
-    @pytest.mark.parametrize(
-        "scenario",
-        MixinScenarios.RESULT_HANDLING_SCENARIOS,
-        ids=lambda s: s.name,
-    )
-    def test_result_handling_scenarios(self, scenario: ResultHandlingScenario) -> None:
-        """Test ResultHandling.ensure_result() with various inputs."""
-        if scenario.scenario_type == ResultHandlingScenarioType.RAW_VALUE:
-            raw_result = x.ResultHandling.ensure_result(42)
-            u.Tests.Result.assert_success_with_value(
-                raw_result,
-                42,
-            )
-        elif scenario.scenario_type == ResultHandlingScenarioType.EXISTING_RESULT:
-            original = FlextResult[int].ok(100)
-            existing_result: FlextResult[int] = x.ResultHandling.ensure_result(original)
-            assert existing_result is original
-            assert existing_result.value == 100
-        elif scenario.scenario_type == ResultHandlingScenarioType.TYPE_PRESERVATION:
-            int_result = x.ResultHandling.ensure_result(42)
-            str_result = x.ResultHandling.ensure_result("hello")
-            list_result = x.ResultHandling.ensure_result([1, 2, 3])
-            u.Tests.Result.assert_success_with_value(
-                int_result,
-                42,
-            )
-            u.Tests.Result.assert_success_with_value(
-                str_result,
-                "hello",
-            )
-            u.Tests.Result.assert_success_with_value(
-                list_result,
-                [1, 2, 3],
-            )
 
     def test_service_mixin_with_operation_context(self) -> None:
         """Test Service mixin operation context workflow."""

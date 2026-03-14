@@ -1,7 +1,6 @@
 # CQRS Architecture
 
 <!-- TOC START -->
-
 - [Overview](#overview)
 - [FlextHandlers](#flexthandlers)
   - [Current Implementation (V1)](#current-implementation-v1)
@@ -14,8 +13,8 @@
   - [Dispatch Flow](#dispatch-flow)
   - [Handler Registration](#handler-registration)
 - [Integration with FlextService](#integration-with-flextservice)
-- [Modernization Roadmap](#modernization-roadmap)
-  - [Current State (V1)](#current-state-v1)
+- [Modernization Roadmap - Phase Overview](#modernization-roadmap-phase-overview)
+  - [Current State (V1) - Phase Overview](#current-state-v1-phase-overview)
   - [Planned Phases](#planned-phases)
   - [Phase 1: FlextMixins.CQRS](#phase-1-flextmixinscqrs)
   - [Phase 2: Dispatcher DI](#phase-2-dispatcher-di)
@@ -23,8 +22,8 @@
   - [V1 Handler (Current Production)](#v1-handler-current-production)
   - [V2 Handler (Target - Phase 3+)](#v2-handler-target-phase-3)
   - [Migration Path](#migration-path)
-- [Modernization Roadmap](#modernization-roadmap)
-  - [Current State (V1) vs Target (V2)](#current-state-v1-vs-target-v2)
+- [Modernization Roadmap - Detailed Strategy](#modernization-roadmap-detailed-strategy)
+  - [Current State (V1) vs Target (V2) - Detailed](#current-state-v1-vs-target-v2-detailed)
   - [Timeline](#timeline)
   - [Problems Addressed](#problems-addressed)
   - [Solution Strategy](#solution-strategy)
@@ -40,7 +39,6 @@
 - [Next Steps](#next-steps)
 - [See Also](#see-also)
 - [Verification Commands](#verification-commands)
-
 <!-- TOC END -->
 
 **Status**: Production Ready | **Version**: 0.10.0 | **Date**: 2025-12-07
@@ -65,7 +63,7 @@ FLEXT-Core implements CQRS through two primary components:
 - **`FlextHandlers`** (`handlers.py`) – Base class for message handlers
 - **`FlextDispatcher`** (`dispatcher.py`) – Orchestration and routing
 
-Both components follow railway-oriented programming with `FlextResult` and
+Both components follow railway-oriented programming with `r` and
 integrate with the infrastructure provided by `FlextMixins`.
 
 ```
@@ -95,8 +93,9 @@ Handlers derive from `FlextHandlers[MessageT, ResultT]` and implement the
 abstract `handle()` method:
 
 ```python
-from flext_core.handlers import FlextHandlers
-from flext_core.result import r
+from flext_core import FlextHandlers
+from flext_core import r
+
 
 class CreateUserHandler(FlextHandlers[CreateUserCommand, User]):
     def handle(self, command: CreateUserCommand) -> r[User]:
@@ -141,8 +140,8 @@ The current implementation uses manual state management:
 
 ```python
 # Internal state (handlers.py lines 177-178)
-self._context_stack: list[dict[str, t.GeneralValueType]] = []
-self._metrics: dict[str, t.GeneralValueType] = {}
+self._context_stack: list[dict[str, object]] = []
+self._metrics: dict[str, object] = {}
 
 # Methods for state management
 handler.push_context({"operation": "create_user"})
@@ -164,7 +163,7 @@ ______________________________________________________________________
 The dispatcher initializes reliability managers internally:
 
 ```python
-from flext_core.dispatcher import FlextDispatcher
+from flext_core import FlextDispatcher
 
 dispatcher = FlextDispatcher()
 dispatcher.register_handler(CreateUserCommand, CreateUserHandler())
@@ -241,9 +240,9 @@ See Service Patterns Guide for service usage.
 
 ______________________________________________________________________
 
-## Modernization Roadmap
+## Modernization Roadmap - Phase Overview
 
-### Current State (V1)
+### Current State (V1) - Phase Overview
 
 | Component       | Issue                            | Impact                |
 | --------------- | -------------------------------- | --------------------- |
@@ -259,7 +258,7 @@ ______________________________________________________________________
 | 1     | `FlextMixins.CQRS` for metrics    | 🔴 Pending  | Dec 2025 |
 | 2     | Dispatcher DI via FlextContainer  | 🔴 Pending  | Jan 2026 |
 | 3     | Promote mixins to default usage   | 🔴 Pending  | Feb 2026 |
-| 4     | Align with `FlextResult.and_then` | 🔴 Pending  | Mar 2026 |
+| 4     | Align with `r.and_then` | 🔴 Pending  | Mar 2026 |
 | 5     | Zero-ceremony handler scaffolding | 🔴 Pending  | Apr 2026 |
 
 ### Phase 1: FlextMixins.CQRS
@@ -303,7 +302,9 @@ The current handler pattern uses manual metrics and context management:
 class UpdateUserHandler(FlextHandlers[UpdateUserCommand, UserDto]):
     def handle(self, command: UpdateUserCommand) -> r[UserDto]:
         # Manual metrics tracking
-        self._metrics["commands_processed"] = self._metrics.get("commands_processed", 0) + 1
+        self._metrics["commands_processed"] = (
+            self._metrics.get("commands_processed", 0) + 1
+        )
 
         # Manual context management
         self.push_context({"command_id": command.id})
@@ -342,9 +343,9 @@ class UpdateUserHandler(FlextHandlers[UpdateUserCommand, UserDto]):
 
 ______________________________________________________________________
 
-## Modernization Roadmap
+## Modernization Roadmap - Detailed Strategy
 
-### Current State (V1) vs Target (V2)
+### Current State (V1) vs Target (V2) - Detailed
 
 | Aspecto                   | V1 (Atual)                                | V2 (Target)                              |
 | ------------------------- | ----------------------------------------- | ---------------------------------------- |
@@ -428,7 +429,7 @@ ______________________________________________________________________
 | ------------------------------------------------------------------------ | ------- | ----------------------------------------------- | ---------------------------- |
 | Migrate handlers to `self.logger`, `self.track`, and `self.cqrs_metrics` | Phase 3 | Replace manual metrics/context with FlextMixins | `handlers.py`                |
 | Force dispatcher construction via container                              | Phase 2 | Once all call sites migrate                     | `dispatcher.py`              |
-| Update `_dispatcher.reliability` to use `FlextResult.and_then`           | Phase 4 | Naming parity                                   | `_dispatcher/reliability.py` |
+| Update `_dispatcher.reliability` to use `r.and_then`           | Phase 4 | Naming parity                                   | `_dispatcher/reliability.py` |
 | Scaffolding CLI for zero-ceremony handlers                               | Phase 5 | Automatic handler generation                    | CLI tools                    |
 
 ______________________________________________________________________
@@ -541,4 +542,7 @@ Run from `flext-core/`:
 make lint
 make type-check
 make test-fast
+```
+
+```
 ```

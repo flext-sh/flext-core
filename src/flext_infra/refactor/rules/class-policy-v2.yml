@@ -1,0 +1,4897 @@
+version: 2
+engine: class_refactor_policy
+description: Declarative policy matrix for module-family-aware class refactoring.
+policy_matrix:
+  - family_name: _models
+    module_patterns:
+      - _models
+      - _models/*
+    facade_family: m
+    allowed_operations:
+      - class_nesting
+      - helper_consolidation
+      - reorganize_composition_classes_under_models_facade
+      - move_top_level_classes_to_flext_models_namespace
+      - normalize_nested_class_path_within_models_facade
+      - propagate_symbol_references_after_models_relocation
+    forbidden_operations:
+      - move_or_promote_classes_to_utilities_facade
+      - move_or_promote_classes_to_decorators_facade
+      - move_or_promote_classes_to_dispatcher_facade
+      - convert_models_to_static_helper_functions
+    forbidden_targets:
+      - FlextUtilities
+      - FlextDecorators
+      - FlextDispatcher
+      - u.*
+      - d.*
+      - dispatcher.*
+    validation_requirements:
+      pre_checks:
+        - source_symbol_is_class_definition
+        - source_module_family_matches_models
+        - target_facade_alias_is_m
+      post_checks:
+        - no_models_symbol_rewritten_to_u_or_d_or_dispatcher
+        - nested_class_path_resolves_from_m_alias
+        - cross_file_symbol_references_updated_for_models
+      quality_gates:
+        - lsp_diagnostics_clean
+  - family_name: _utilities
+    module_patterns:
+      - _utilities
+      - _utilities/*
+    facade_family: u
+    allowed_operations:
+      - class_nesting
+      - helper_consolidation
+      - consolidate_helper_classes_under_utilities_facade
+      - convert_safe_top_level_helpers_to_static_or_nested_helpers
+      - deduplicate_equivalent_helper_implementations_within_u
+      - propagate_symbol_references_after_utility_relocation
+    forbidden_operations:
+      - alter_helper_state_shape_without_validation
+      - alter_public_helper_signature_without_validation
+      - relocate_utilities_helpers_to_models_or_dispatcher_or_decorators
+      - rewrite_helper_contracts_without_cross_project_update
+    forbidden_targets:
+      - FlextModels
+      - FlextDispatcher
+      - FlextDecorators
+      - m.*
+      - d.*
+      - dispatcher.*
+    validation_requirements:
+      pre_checks:
+        - source_module_family_matches_utilities
+        - helper_state_model_and_signature_snapshotted
+        - target_facade_alias_is_u
+      post_checks:
+        - helper_state_contract_preserved_or_explicitly_migrated
+        - callable_signature_preserved_or_propagated
+        - cross_project_references_rewritten_when_signature_changes
+      quality_gates:
+        - lsp_diagnostics_clean
+  - family_name: _dispatcher
+    module_patterns:
+      - _dispatcher
+      - _dispatcher/*
+    facade_family: dispatcher
+    allowed_operations:
+      - class_nesting
+      - reorganize_classes_under_flext_dispatcher_namespace
+      - normalize_dispatcher_nested_class_paths
+      - consolidate_dispatch_routing_related_classes
+      - propagate_dispatcher_symbol_references_workspace_scope
+    forbidden_operations:
+      - move_dispatcher_classes_to_models_or_utilities_or_decorators
+      - rename_dispatch_contract_symbols_without_propagation
+      - narrow_dispatcher_protocols_without_cross_project_validation
+    forbidden_targets:
+      - FlextModels
+      - FlextUtilities
+      - FlextDecorators
+      - m.*
+      - u.*
+    validation_requirements:
+      pre_checks:
+        - source_module_family_matches_dispatcher
+        - target_namespace_is_flext_dispatcher
+        - rewrite_scope_is_project_or_workspace
+      post_checks:
+        - dispatcher_references_propagated_across_projects
+        - no_stale_dispatcher_imports_left_after_rewrite
+        - dispatcher_callable_contracts_remain_resolvable
+      quality_gates:
+        - lsp_diagnostics_clean
+  - family_name: _decorators
+    module_patterns:
+      - _decorators
+      - _decorators/*
+    facade_family: d
+    allowed_operations:
+      - class_nesting
+      - consolidate_decorator_classes_under_flext_decorators_namespace
+      - normalize_decorator_nesting_paths
+      - propagate_decorator_references_after_relocation
+      - co_locate_related_factory_decorators
+    forbidden_operations:
+      - move_decorator_classes_to_models_or_utilities_or_dispatcher
+      - change_callable_contract_arity_or_return_semantics
+      - rewrite_decorator_protocol_without_contract_validation
+    forbidden_targets:
+      - FlextModels
+      - FlextUtilities
+      - FlextDispatcher
+      - m.*
+      - u.*
+      - dispatcher.*
+    validation_requirements:
+      pre_checks:
+        - source_module_family_matches_decorators
+        - target_namespace_is_flext_decorators
+        - callable_contract_snapshot_created
+      post_checks:
+        - callable_contract_preserved
+        - decorator_invocation_sites_still_type_resolvable
+        - references_rewritten_for_decorator_namespace
+      quality_gates:
+        - lsp_diagnostics_clean
+  - family_name: _runtime
+    module_patterns:
+      - _runtime
+      - _runtime*
+    facade_family: x
+    allowed_operations:
+      - class_nesting
+      - apply_explicitly_whitelisted_runtime_transforms_only
+      - propagate_references_for_whitelisted_runtime_moves
+    forbidden_operations:
+      - any_transform_not_explicitly_whitelisted
+      - implicit_or_heuristic_runtime_relocation
+      - move_runtime_symbols_to_non_runtime_facades
+      - mutate_runtime_contracts_without_whitelist_entry
+    forbidden_targets:
+      - FlextModels
+      - FlextUtilities
+      - FlextDispatcher
+      - FlextDecorators
+      - m.*
+      - u.*
+      - d.*
+      - dispatcher.*
+    validation_requirements:
+      pre_checks:
+        - source_module_family_matches_runtime
+        - transform_id_present_in_runtime_whitelist
+        - target_namespace_matches_whitelist_entry
+      post_checks:
+        - transformed_symbols_match_whitelist_expectations
+        - runtime_alias_access_remains_resolvable
+        - no_non_whitelisted_runtime_changes_detected
+      quality_gates:
+        - lsp_diagnostics_clean
+  - family_name: other_private
+    module_patterns:
+      - _*
+    facade_family: x
+    allowed_operations: []
+    forbidden_operations:
+      - class_nesting
+      - helper_consolidation
+    forbidden_targets:
+      - "*"
+    validation_requirements:
+      pre_checks:
+        - module_family_explicit_policy_required
+      post_checks:
+        - no_transform_applied
+      quality_gates:
+        - lsp_diagnostics_clean
+runtime_whitelist:
+  - transform_id: runtime_metadata_class_nesting
+    source_module_pattern: _models/base.py
+    source_symbol: FlextModelFoundation.Metadata
+    target_namespace: FlextModelFoundation
+    target_name: Metadata
+    rewrite_scope: workspace
+  - transform_id: runtime_lazy_metadata_normalization
+    source_module_pattern: runtime.py
+    source_symbol: _LazyMetadata
+    target_namespace: FlextRuntime
+    target_name: _LazyMetadata
+    rewrite_scope: project
+defaults:
+  enforcement:
+    unknown_family: blocked
+    unknown_operation: blocked
+    runtime_default: blocked
+rules:
+  - project_kind: core
+    facade_family: p
+    module_family: _decorators
+    source_symbol: FactoryDecoratorsDiscovery
+    target_facade_class: FlextDecorators
+    target_namespace_path: FlextDecorators.FactoryDecoratorsDiscovery
+    expected_base_chain: &id001
+      - FlextProtocols
+    forbidden_targets:
+      - FlextModels
+      - FlextUtilities
+      - FlextDispatcher
+      - m.*
+      - u.*
+      - dispatcher.*
+    confidence: 0.9
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FactoryDecoratorsDiscovery
+      - type: target_facade_exists
+        params:
+          facade: FlextDecorators
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id001
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: p
+    module_family: _dispatcher
+    source_symbol: CircuitBreakerManager
+    target_facade_class: FlextDispatcher
+    target_namespace_path: FlextDispatcher.CircuitBreakerManager
+    expected_base_chain: *id001
+    forbidden_targets: &id002
+      - FlextModels
+      - FlextUtilities
+      - FlextDecorators
+      - m.*
+      - u.*
+    confidence: 0.9
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: CircuitBreakerManager
+      - type: target_facade_exists
+        params:
+          facade: FlextDispatcher
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id001
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: p
+    module_family: _dispatcher
+    source_symbol: RateLimiterManager
+    target_facade_class: FlextDispatcher
+    target_namespace_path: FlextDispatcher.RateLimiterManager
+    expected_base_chain: *id001
+    forbidden_targets: *id002
+    confidence: 0.9
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: RateLimiterManager
+      - type: target_facade_exists
+        params:
+          facade: FlextDispatcher
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id001
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: p
+    module_family: _dispatcher
+    source_symbol: RetryPolicy
+    target_facade_class: FlextDispatcher
+    target_namespace_path: FlextDispatcher.RetryPolicy
+    expected_base_chain: *id001
+    forbidden_targets: *id002
+    confidence: 0.9
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: RetryPolicy
+      - type: target_facade_exists
+        params:
+          facade: FlextDispatcher
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id001
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: p
+    module_family: _dispatcher
+    source_symbol: TimeoutEnforcer
+    target_facade_class: FlextDispatcher
+    target_namespace_path: FlextDispatcher.TimeoutEnforcer
+    expected_base_chain: *id001
+    forbidden_targets: *id002
+    confidence: 0.9
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: TimeoutEnforcer
+      - type: target_facade_exists
+        params:
+          facade: FlextDispatcher
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id001
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: m
+    module_family: _models
+    source_symbol: FlextModelFoundation
+    target_facade_class: FlextModels
+    target_namespace_path: FlextModels.FlextModelFoundation
+    expected_base_chain: &id003
+      - FlextModels
+    forbidden_targets: &id004
+      - FlextUtilities
+      - FlextDecorators
+      - FlextDispatcher
+      - u.*
+      - d.*
+      - dispatcher.*
+    confidence: 0.9
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextModelFoundation
+      - type: target_facade_exists
+        params:
+          facade: FlextModels
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id003
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: m
+    module_family: _models
+    source_symbol: _ComparableConfigMap
+    target_facade_class: FlextModels
+    target_namespace_path: FlextModels._ComparableConfigMap
+    expected_base_chain: *id003
+    forbidden_targets: *id004
+    confidence: 0.9
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: _ComparableConfigMap
+      - type: target_facade_exists
+        params:
+          facade: FlextModels
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id003
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: m
+    module_family: _models
+    source_symbol: FlextGenericModels
+    target_facade_class: FlextModels
+    target_namespace_path: FlextModels.FlextGenericModels
+    expected_base_chain: *id003
+    forbidden_targets: *id004
+    confidence: 0.9
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextGenericModels
+      - type: target_facade_exists
+        params:
+          facade: FlextModels
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id003
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: m
+    module_family: _models
+    source_symbol: FlextModelsConfig
+    target_facade_class: FlextModels
+    target_namespace_path: FlextModels.FlextModelsConfig
+    expected_base_chain: *id003
+    forbidden_targets: *id004
+    confidence: 0.9
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextModelsConfig
+      - type: target_facade_exists
+        params:
+          facade: FlextModels
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id003
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: m
+    module_family: _models
+    source_symbol: Metadata
+    target_facade_class: FlextModelFoundation
+    target_namespace_path: FlextModelFoundation.Metadata
+    expected_base_chain: *id003
+    forbidden_targets:
+      - FlextUtilities
+      - FlextDispatcher
+      - FlextDecorators
+      - u.*
+      - d.*
+      - dispatcher.*
+    confidence: 0.9
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: Metadata
+      - type: target_facade_exists
+        params:
+          facade: FlextModelFoundation
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id003
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: _utilities
+    source_symbol: _Predicate
+    target_facade_class: FlextUtilities
+    target_namespace_path: FlextUtilities._Predicate
+    expected_base_chain: &id006
+      - FlextUtilities
+    forbidden_targets: &id007
+      - FlextModels
+      - FlextDispatcher
+      - FlextDecorators
+      - m.*
+      - d.*
+      - dispatcher.*
+    confidence: 0.9
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: _Predicate
+      - type: target_facade_exists
+        params:
+          facade: FlextUtilities
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: _utilities
+    source_symbol: _StrictJsonScalarModel
+    target_facade_class: FlextUtilities
+    target_namespace_path: FlextUtilities._StrictJsonScalarModel
+    expected_base_chain: *id006
+    forbidden_targets: *id007
+    confidence: 0.9
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: _StrictJsonScalarModel
+      - type: target_facade_exists
+        params:
+          facade: FlextUtilities
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: _utilities
+    source_symbol: _Predicate
+    target_facade_class: FlextUtilities
+    target_namespace_path: FlextUtilities._Predicate
+    expected_base_chain: *id006
+    forbidden_targets: *id007
+    confidence: 0.9
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: _Predicate
+      - type: target_facade_exists
+        params:
+          facade: FlextUtilities
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: _utilities
+    source_symbol: ResultHelpers
+    target_facade_class: FlextUtilities
+    target_namespace_path: FlextUtilities.ResultHelpers
+    expected_base_chain: *id006
+    forbidden_targets: *id007
+    confidence: 0.9
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: ResultHelpers
+      - type: target_facade_exists
+        params:
+          facade: FlextUtilities
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: DispatchMessage
+    target_facade_class: FlextDispatcher
+    target_namespace_path: FlextDispatcher.DispatchMessage
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.5
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: DispatchMessage
+      - type: target_facade_exists
+        params:
+          facade: FlextDispatcher
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: Handle
+    target_facade_class: FlextDispatcher
+    target_namespace_path: FlextDispatcher.Handle
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.5
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: Handle
+      - type: target_facade_exists
+        params:
+          facade: FlextDispatcher
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: Execute
+    target_facade_class: FlextDispatcher
+    target_namespace_path: FlextDispatcher.Execute
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.5
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: Execute
+      - type: target_facade_exists
+        params:
+          facade: FlextDispatcher
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: Metadata
+    target_facade_class: FlextExceptions
+    target_namespace_path: FlextExceptions.Metadata
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.5
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: Metadata
+      - type: target_facade_exists
+        params:
+          facade: FlextExceptions
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextLogger
+    target_facade_class: FlextLoggings
+    target_namespace_path: FlextLoggings.FlextLogger
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.5
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextLogger
+      - type: target_facade_exists
+        params:
+          facade: FlextLoggings
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: _ProtocolIntrospection
+    target_facade_class: FlextProtocols
+    target_namespace_path: FlextProtocols._ProtocolIntrospection
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.5
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: _ProtocolIntrospection
+      - type: target_facade_exists
+        params:
+          facade: FlextProtocols
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: _CombinedModelMeta
+    target_facade_class: FlextProtocols
+    target_namespace_path: FlextProtocols._CombinedModelMeta
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.5
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: _CombinedModelMeta
+      - type: target_facade_exists
+        params:
+          facade: FlextProtocols
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: _LazyMetadata
+    target_facade_class: FlextRuntime
+    target_namespace_path: FlextRuntime._LazyMetadata
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.5
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: _LazyMetadata
+      - type: target_facade_exists
+        params:
+          facade: FlextRuntime
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextTypes
+    target_facade_class: FlextTypings
+    target_namespace_path: FlextTypings.FlextTypes
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.5
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextTypes
+      - type: target_facade_exists
+        params:
+          facade: FlextTypings
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraPathsConstants
+    target_facade_class: FlextConstantsModules
+    target_namespace_path: FlextConstantsModules.FlextInfraPathsConstants
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.5
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraPathsConstants
+      - type: target_facade_exists
+        params:
+          facade: FlextConstantsModules
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraVersioningConstants
+    target_facade_class: FlextConstantsModules
+    target_namespace_path: FlextConstantsModules.FlextInfraVersioningConstants
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.5
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraVersioningConstants
+      - type: target_facade_exists
+        params:
+          facade: FlextConstantsModules
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraReportingConstants
+    target_facade_class: FlextConstantsModules
+    target_namespace_path: FlextConstantsModules.FlextInfraReportingConstants
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.5
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraReportingConstants
+      - type: target_facade_exists
+        params:
+          facade: FlextConstantsModules
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraBasemkConstants
+    target_facade_class: FlextBasemkConstants
+    target_namespace_path: FlextBasemkConstants.FlextInfraBasemkConstants
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraBasemkConstants
+      - type: target_facade_exists
+        params:
+          facade: FlextBasemkConstants
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraBaseMkTemplateEngine
+    target_facade_class: FlextBasemkEngine
+    target_namespace_path: FlextBasemkEngine.FlextInfraBaseMkTemplateEngine
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraBaseMkTemplateEngine
+      - type: target_facade_exists
+        params:
+          facade: FlextBasemkEngine
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: _TemplateRenderer
+    target_facade_class: FlextBasemkGenerator
+    target_namespace_path: FlextBasemkGenerator._TemplateRenderer
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: _TemplateRenderer
+      - type: target_facade_exists
+        params:
+          facade: FlextBasemkGenerator
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraBaseMkGenerator
+    target_facade_class: FlextBasemkGenerator
+    target_namespace_path: FlextBasemkGenerator.FlextInfraBaseMkGenerator
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraBaseMkGenerator
+      - type: target_facade_exists
+        params:
+          facade: FlextBasemkGenerator
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraCheckConstants
+    target_facade_class: FlextCheckConstants
+    target_namespace_path: FlextCheckConstants.FlextInfraCheckConstants
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraCheckConstants
+      - type: target_facade_exists
+        params:
+          facade: FlextCheckConstants
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: _CheckIssue
+    target_facade_class: FlextCheckServices
+    target_namespace_path: FlextCheckServices._CheckIssue
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: _CheckIssue
+      - type: target_facade_exists
+        params:
+          facade: FlextCheckServices
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: _GateExecution
+    target_facade_class: FlextCheckServices
+    target_namespace_path: FlextCheckServices._GateExecution
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: _GateExecution
+      - type: target_facade_exists
+        params:
+          facade: FlextCheckServices
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: _ProjectResult
+    target_facade_class: FlextCheckServices
+    target_namespace_path: FlextCheckServices._ProjectResult
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: _ProjectResult
+      - type: target_facade_exists
+        params:
+          facade: FlextCheckServices
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: _RunCommandResult
+    target_facade_class: FlextCheckServices
+    target_namespace_path: FlextCheckServices._RunCommandResult
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: _RunCommandResult
+      - type: target_facade_exists
+        params:
+          facade: FlextCheckServices
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: _RuffLintLocation
+    target_facade_class: FlextCheckServices
+    target_namespace_path: FlextCheckServices._RuffLintLocation
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: _RuffLintLocation
+      - type: target_facade_exists
+        params:
+          facade: FlextCheckServices
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: _RuffLintError
+    target_facade_class: FlextCheckServices
+    target_namespace_path: FlextCheckServices._RuffLintError
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: _RuffLintError
+      - type: target_facade_exists
+        params:
+          facade: FlextCheckServices
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: _PyreflyError
+    target_facade_class: FlextCheckServices
+    target_namespace_path: FlextCheckServices._PyreflyError
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: _PyreflyError
+      - type: target_facade_exists
+        params:
+          facade: FlextCheckServices
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: _PyreflyOutput
+    target_facade_class: FlextCheckServices
+    target_namespace_path: FlextCheckServices._PyreflyOutput
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: _PyreflyOutput
+      - type: target_facade_exists
+        params:
+          facade: FlextCheckServices
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: _MypyJsonError
+    target_facade_class: FlextCheckServices
+    target_namespace_path: FlextCheckServices._MypyJsonError
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: _MypyJsonError
+      - type: target_facade_exists
+        params:
+          facade: FlextCheckServices
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: _PyrightPosition
+    target_facade_class: FlextCheckServices
+    target_namespace_path: FlextCheckServices._PyrightPosition
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: _PyrightPosition
+      - type: target_facade_exists
+        params:
+          facade: FlextCheckServices
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: _PyrightRange
+    target_facade_class: FlextCheckServices
+    target_namespace_path: FlextCheckServices._PyrightRange
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: _PyrightRange
+      - type: target_facade_exists
+        params:
+          facade: FlextCheckServices
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: _PyrightDiagnostic
+    target_facade_class: FlextCheckServices
+    target_namespace_path: FlextCheckServices._PyrightDiagnostic
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: _PyrightDiagnostic
+      - type: target_facade_exists
+        params:
+          facade: FlextCheckServices
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: _PyrightOutput
+    target_facade_class: FlextCheckServices
+    target_namespace_path: FlextCheckServices._PyrightOutput
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: _PyrightOutput
+      - type: target_facade_exists
+        params:
+          facade: FlextCheckServices
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: _BanditIssue
+    target_facade_class: FlextCheckServices
+    target_namespace_path: FlextCheckServices._BanditIssue
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: _BanditIssue
+      - type: target_facade_exists
+        params:
+          facade: FlextCheckServices
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: _BanditOutput
+    target_facade_class: FlextCheckServices
+    target_namespace_path: FlextCheckServices._BanditOutput
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: _BanditOutput
+      - type: target_facade_exists
+        params:
+          facade: FlextCheckServices
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: _SarifMessageText
+    target_facade_class: FlextCheckServices
+    target_namespace_path: FlextCheckServices._SarifMessageText
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: _SarifMessageText
+      - type: target_facade_exists
+        params:
+          facade: FlextCheckServices
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: _SarifRuleDescriptor
+    target_facade_class: FlextCheckServices
+    target_namespace_path: FlextCheckServices._SarifRuleDescriptor
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: _SarifRuleDescriptor
+      - type: target_facade_exists
+        params:
+          facade: FlextCheckServices
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: _SarifArtifactLocation
+    target_facade_class: FlextCheckServices
+    target_namespace_path: FlextCheckServices._SarifArtifactLocation
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: _SarifArtifactLocation
+      - type: target_facade_exists
+        params:
+          facade: FlextCheckServices
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: _SarifRegion
+    target_facade_class: FlextCheckServices
+    target_namespace_path: FlextCheckServices._SarifRegion
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: _SarifRegion
+      - type: target_facade_exists
+        params:
+          facade: FlextCheckServices
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: _SarifPhysicalLocation
+    target_facade_class: FlextCheckServices
+    target_namespace_path: FlextCheckServices._SarifPhysicalLocation
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: _SarifPhysicalLocation
+      - type: target_facade_exists
+        params:
+          facade: FlextCheckServices
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: _SarifLocation
+    target_facade_class: FlextCheckServices
+    target_namespace_path: FlextCheckServices._SarifLocation
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: _SarifLocation
+      - type: target_facade_exists
+        params:
+          facade: FlextCheckServices
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: _SarifResult
+    target_facade_class: FlextCheckServices
+    target_namespace_path: FlextCheckServices._SarifResult
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: _SarifResult
+      - type: target_facade_exists
+        params:
+          facade: FlextCheckServices
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: _SarifToolDriver
+    target_facade_class: FlextCheckServices
+    target_namespace_path: FlextCheckServices._SarifToolDriver
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: _SarifToolDriver
+      - type: target_facade_exists
+        params:
+          facade: FlextCheckServices
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: _SarifTool
+    target_facade_class: FlextCheckServices
+    target_namespace_path: FlextCheckServices._SarifTool
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: _SarifTool
+      - type: target_facade_exists
+        params:
+          facade: FlextCheckServices
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: _SarifRun
+    target_facade_class: FlextCheckServices
+    target_namespace_path: FlextCheckServices._SarifRun
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: _SarifRun
+      - type: target_facade_exists
+        params:
+          facade: FlextCheckServices
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: _SarifReport
+    target_facade_class: FlextCheckServices
+    target_namespace_path: FlextCheckServices._SarifReport
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: _SarifReport
+      - type: target_facade_exists
+        params:
+          facade: FlextCheckServices
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraWorkspaceChecker
+    target_facade_class: FlextCheckServices
+    target_namespace_path: FlextCheckServices.FlextInfraWorkspaceChecker
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraWorkspaceChecker
+      - type: target_facade_exists
+        params:
+          facade: FlextCheckServices
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraConfigFixer
+    target_facade_class: FlextCheckServices
+    target_namespace_path: FlextCheckServices.FlextInfraConfigFixer
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraConfigFixer
+      - type: target_facade_exists
+        params:
+          facade: FlextCheckServices
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraCodegenConstants
+    target_facade_class: FlextCodegenConstants
+    target_namespace_path: FlextCodegenConstants.FlextInfraCodegenConstants
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraCodegenConstants
+      - type: target_facade_exists
+        params:
+          facade: FlextCodegenConstants
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraCodegenCensus
+    target_facade_class: FlextCodegenCensus
+    target_namespace_path: FlextCodegenCensus.FlextInfraCodegenCensus
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraCodegenCensus
+      - type: target_facade_exists
+        params:
+          facade: FlextCodegenCensus
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraCodegenFixer
+    target_facade_class: FlextCodegenFixer
+    target_namespace_path: FlextCodegenFixer.FlextInfraCodegenFixer
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraCodegenFixer
+      - type: target_facade_exists
+        params:
+          facade: FlextCodegenFixer
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraCodegenLazyInit
+    target_facade_class: FlextCodegenLazyInit
+    target_namespace_path: FlextCodegenLazyInit.FlextInfraCodegenLazyInit
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraCodegenLazyInit
+      - type: target_facade_exists
+        params:
+          facade: FlextCodegenLazyInit
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraCodegenScaffolder
+    target_facade_class: FlextCodegenScaffolder
+    target_namespace_path: FlextCodegenScaffolder.FlextInfraCodegenScaffolder
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraCodegenScaffolder
+      - type: target_facade_exists
+        params:
+          facade: FlextCodegenScaffolder
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraCodegenTransforms
+    target_facade_class: FlextCodegenTransforms
+    target_namespace_path: FlextCodegenTransforms.FlextInfraCodegenTransforms
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraCodegenTransforms
+      - type: target_facade_exists
+        params:
+          facade: FlextCodegenTransforms
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraConstants
+    target_facade_class: FlextConstants
+    target_namespace_path: FlextConstants.FlextInfraConstants
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.5
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraConstants
+      - type: target_facade_exists
+        params:
+          facade: FlextConstants
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraCoreConstants
+    target_facade_class: FlextCoreConstants
+    target_namespace_path: FlextCoreConstants.FlextInfraCoreConstants
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraCoreConstants
+      - type: target_facade_exists
+        params:
+          facade: FlextCoreConstants
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraBaseMkValidator
+    target_facade_class: FlextCoreBasemkValidator
+    target_namespace_path: FlextCoreBasemkValidator.FlextInfraBaseMkValidator
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraBaseMkValidator
+      - type: target_facade_exists
+        params:
+          facade: FlextCoreBasemkValidator
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraInventoryService
+    target_facade_class: FlextCoreInventory
+    target_namespace_path: FlextCoreInventory.FlextInfraInventoryService
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraInventoryService
+      - type: target_facade_exists
+        params:
+          facade: FlextCoreInventory
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraNamespaceValidator
+    target_facade_class: FlextCoreNamespaceValidator
+    target_namespace_path: FlextCoreNamespaceValidator.FlextInfraNamespaceValidator
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraNamespaceValidator
+      - type: target_facade_exists
+        params:
+          facade: FlextCoreNamespaceValidator
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: _DiagResult
+    target_facade_class: FlextCorePytestDiag
+    target_namespace_path: FlextCorePytestDiag._DiagResult
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: _DiagResult
+      - type: target_facade_exists
+        params:
+          facade: FlextCorePytestDiag
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraPytestDiagExtractor
+    target_facade_class: FlextCorePytestDiag
+    target_namespace_path: FlextCorePytestDiag.FlextInfraPytestDiagExtractor
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraPytestDiagExtractor
+      - type: target_facade_exists
+        params:
+          facade: FlextCorePytestDiag
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraTextPatternScanner
+    target_facade_class: FlextCoreScanner
+    target_namespace_path: FlextCoreScanner.FlextInfraTextPatternScanner
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraTextPatternScanner
+      - type: target_facade_exists
+        params:
+          facade: FlextCoreScanner
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraSkillValidator
+    target_facade_class: FlextCoreSkillValidator
+    target_namespace_path: FlextCoreSkillValidator.FlextInfraSkillValidator
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraSkillValidator
+      - type: target_facade_exists
+        params:
+          facade: FlextCoreSkillValidator
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraStubSupplyChain
+    target_facade_class: FlextCoreStubChain
+    target_namespace_path: FlextCoreStubChain.FlextInfraStubSupplyChain
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraStubSupplyChain
+      - type: target_facade_exists
+        params:
+          facade: FlextCoreStubChain
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraDepsConstants
+    target_facade_class: FlextDepsConstants
+    target_namespace_path: FlextDepsConstants.FlextInfraDepsConstants
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraDepsConstants
+      - type: target_facade_exists
+        params:
+          facade: FlextDepsConstants
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraDependencyDetectionModels
+    target_facade_class: FlextDepsDetection
+    target_namespace_path: FlextDepsDetection.FlextInfraDependencyDetectionModels
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraDependencyDetectionModels
+      - type: target_facade_exists
+        params:
+          facade: FlextDepsDetection
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraDependencyDetectionService
+    target_facade_class: FlextDepsDetection
+    target_namespace_path: FlextDepsDetection.FlextInfraDependencyDetectionService
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraDependencyDetectionService
+      - type: target_facade_exists
+        params:
+          facade: FlextDepsDetection
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraDependencyDetectorModels
+    target_facade_class: FlextDepsDetector
+    target_namespace_path: FlextDepsDetector.FlextInfraDependencyDetectorModels
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraDependencyDetectorModels
+      - type: target_facade_exists
+        params:
+          facade: FlextDepsDetector
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraRuntimeDevDependencyDetector
+    target_facade_class: FlextDepsDetector
+    target_namespace_path: FlextDepsDetector.FlextInfraRuntimeDevDependencyDetector
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraRuntimeDevDependencyDetector
+      - type: target_facade_exists
+        params:
+          facade: FlextDepsDetector
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraExtraPathsManager
+    target_facade_class: FlextDepsExtraPaths
+    target_namespace_path: FlextDepsExtraPaths.FlextInfraExtraPathsManager
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraExtraPathsManager
+      - type: target_facade_exists
+        params:
+          facade: FlextDepsExtraPaths
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraInternalDependencySyncService
+    target_facade_class: FlextDepsInternalSync
+    target_namespace_path: FlextDepsInternalSync.FlextInfraInternalDependencySyncService
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraInternalDependencySyncService
+      - type: target_facade_exists
+        params:
+          facade: FlextDepsInternalSync
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: ConsolidateGroupsPhase
+    target_facade_class: FlextDepsModernizer
+    target_namespace_path: FlextDepsModernizer.ConsolidateGroupsPhase
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: ConsolidateGroupsPhase
+      - type: target_facade_exists
+        params:
+          facade: FlextDepsModernizer
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: EnsurePytestConfigPhase
+    target_facade_class: FlextDepsModernizer
+    target_namespace_path: FlextDepsModernizer.EnsurePytestConfigPhase
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: EnsurePytestConfigPhase
+      - type: target_facade_exists
+        params:
+          facade: FlextDepsModernizer
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: EnsureMypyConfigPhase
+    target_facade_class: FlextDepsModernizer
+    target_namespace_path: FlextDepsModernizer.EnsureMypyConfigPhase
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: EnsureMypyConfigPhase
+      - type: target_facade_exists
+        params:
+          facade: FlextDepsModernizer
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: EnsurePydanticMypyConfigPhase
+    target_facade_class: FlextDepsModernizer
+    target_namespace_path: FlextDepsModernizer.EnsurePydanticMypyConfigPhase
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: EnsurePydanticMypyConfigPhase
+      - type: target_facade_exists
+        params:
+          facade: FlextDepsModernizer
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: EnsurePyrightConfigPhase
+    target_facade_class: FlextDepsModernizer
+    target_namespace_path: FlextDepsModernizer.EnsurePyrightConfigPhase
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: EnsurePyrightConfigPhase
+      - type: target_facade_exists
+        params:
+          facade: FlextDepsModernizer
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: EnsureRuffConfigPhase
+    target_facade_class: FlextDepsModernizer
+    target_namespace_path: FlextDepsModernizer.EnsureRuffConfigPhase
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: EnsureRuffConfigPhase
+      - type: target_facade_exists
+        params:
+          facade: FlextDepsModernizer
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: EnsurePyreflyConfigPhase
+    target_facade_class: FlextDepsModernizer
+    target_namespace_path: FlextDepsModernizer.EnsurePyreflyConfigPhase
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: EnsurePyreflyConfigPhase
+      - type: target_facade_exists
+        params:
+          facade: FlextDepsModernizer
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: InjectCommentsPhase
+    target_facade_class: FlextDepsModernizer
+    target_namespace_path: FlextDepsModernizer.InjectCommentsPhase
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: InjectCommentsPhase
+      - type: target_facade_exists
+        params:
+          facade: FlextDepsModernizer
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraPyprojectModernizer
+    target_facade_class: FlextDepsModernizer
+    target_namespace_path: FlextDepsModernizer.FlextInfraPyprojectModernizer
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraPyprojectModernizer
+      - type: target_facade_exists
+        params:
+          facade: FlextDepsModernizer
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraDependencyPathSync
+    target_facade_class: FlextDepsPathSync
+    target_namespace_path: FlextDepsPathSync.FlextInfraDependencyPathSync
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraDependencyPathSync
+      - type: target_facade_exists
+        params:
+          facade: FlextDepsPathSync
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraDiscoveryService
+    target_facade_class: FlextDiscovery
+    target_namespace_path: FlextDiscovery.FlextInfraDiscoveryService
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.5
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraDiscoveryService
+      - type: target_facade_exists
+        params:
+          facade: FlextDiscovery
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: _BaseInfraCommand
+    target_facade_class: FlextDispatcher
+    target_namespace_path: FlextDispatcher._BaseInfraCommand
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.5
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: _BaseInfraCommand
+      - type: target_facade_exists
+        params:
+          facade: FlextDispatcher
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraDocsConstants
+    target_facade_class: FlextDocsConstants
+    target_namespace_path: FlextDocsConstants.FlextInfraDocsConstants
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraDocsConstants
+      - type: target_facade_exists
+        params:
+          facade: FlextDocsConstants
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: AuditIssue
+    target_facade_class: FlextDocsAuditor
+    target_namespace_path: FlextDocsAuditor.AuditIssue
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: AuditIssue
+      - type: target_facade_exists
+        params:
+          facade: FlextDocsAuditor
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: AuditReport
+    target_facade_class: FlextDocsAuditor
+    target_namespace_path: FlextDocsAuditor.AuditReport
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: AuditReport
+      - type: target_facade_exists
+        params:
+          facade: FlextDocsAuditor
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraDocAuditor
+    target_facade_class: FlextDocsAuditor
+    target_namespace_path: FlextDocsAuditor.FlextInfraDocAuditor
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraDocAuditor
+      - type: target_facade_exists
+        params:
+          facade: FlextDocsAuditor
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: BuildReport
+    target_facade_class: FlextDocsBuilder
+    target_namespace_path: FlextDocsBuilder.BuildReport
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: BuildReport
+      - type: target_facade_exists
+        params:
+          facade: FlextDocsBuilder
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraDocBuilder
+    target_facade_class: FlextDocsBuilder
+    target_namespace_path: FlextDocsBuilder.FlextInfraDocBuilder
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraDocBuilder
+      - type: target_facade_exists
+        params:
+          facade: FlextDocsBuilder
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FixItem
+    target_facade_class: FlextDocsFixer
+    target_namespace_path: FlextDocsFixer.FixItem
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FixItem
+      - type: target_facade_exists
+        params:
+          facade: FlextDocsFixer
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FixReport
+    target_facade_class: FlextDocsFixer
+    target_namespace_path: FlextDocsFixer.FixReport
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FixReport
+      - type: target_facade_exists
+        params:
+          facade: FlextDocsFixer
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraDocFixer
+    target_facade_class: FlextDocsFixer
+    target_namespace_path: FlextDocsFixer.FlextInfraDocFixer
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraDocFixer
+      - type: target_facade_exists
+        params:
+          facade: FlextDocsFixer
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: GeneratedFile
+    target_facade_class: FlextDocsGenerator
+    target_namespace_path: FlextDocsGenerator.GeneratedFile
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: GeneratedFile
+      - type: target_facade_exists
+        params:
+          facade: FlextDocsGenerator
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: GenerateReport
+    target_facade_class: FlextDocsGenerator
+    target_namespace_path: FlextDocsGenerator.GenerateReport
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: GenerateReport
+      - type: target_facade_exists
+        params:
+          facade: FlextDocsGenerator
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraDocGenerator
+    target_facade_class: FlextDocsGenerator
+    target_namespace_path: FlextDocsGenerator.FlextInfraDocGenerator
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraDocGenerator
+      - type: target_facade_exists
+        params:
+          facade: FlextDocsGenerator
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraDocScope
+    target_facade_class: FlextDocsShared
+    target_namespace_path: FlextDocsShared.FlextInfraDocScope
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraDocScope
+      - type: target_facade_exists
+        params:
+          facade: FlextDocsShared
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraDocsShared
+    target_facade_class: FlextDocsShared
+    target_namespace_path: FlextDocsShared.FlextInfraDocsShared
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraDocsShared
+      - type: target_facade_exists
+        params:
+          facade: FlextDocsShared
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: ValidateReport
+    target_facade_class: FlextDocsValidator
+    target_namespace_path: FlextDocsValidator.ValidateReport
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: ValidateReport
+      - type: target_facade_exists
+        params:
+          facade: FlextDocsValidator
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraDocValidator
+    target_facade_class: FlextDocsValidator
+    target_namespace_path: FlextDocsValidator.FlextInfraDocValidator
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraDocValidator
+      - type: target_facade_exists
+        params:
+          facade: FlextDocsValidator
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraGitService
+    target_facade_class: FlextGit
+    target_namespace_path: FlextGit.FlextInfraGitService
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.5
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraGitService
+      - type: target_facade_exists
+        params:
+          facade: FlextGit
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraGithubConstants
+    target_facade_class: FlextGithubConstants
+    target_namespace_path: FlextGithubConstants.FlextInfraGithubConstants
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraGithubConstants
+      - type: target_facade_exists
+        params:
+          facade: FlextGithubConstants
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraWorkflowLinter
+    target_facade_class: FlextGithubLinter
+    target_namespace_path: FlextGithubLinter.FlextInfraWorkflowLinter
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraWorkflowLinter
+      - type: target_facade_exists
+        params:
+          facade: FlextGithubLinter
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraPrManager
+    target_facade_class: FlextGithubPr
+    target_namespace_path: FlextGithubPr.FlextInfraPrManager
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraPrManager
+      - type: target_facade_exists
+        params:
+          facade: FlextGithubPr
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraPrWorkspaceManager
+    target_facade_class: FlextGithubPrWorkspace
+    target_namespace_path: FlextGithubPrWorkspace.FlextInfraPrWorkspaceManager
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraPrWorkspaceManager
+      - type: target_facade_exists
+        params:
+          facade: FlextGithubPrWorkspace
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: SyncOperation
+    target_facade_class: FlextGithubWorkflows
+    target_namespace_path: FlextGithubWorkflows.SyncOperation
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: SyncOperation
+      - type: target_facade_exists
+        params:
+          facade: FlextGithubWorkflows
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraWorkflowSyncer
+    target_facade_class: FlextGithubWorkflows
+    target_namespace_path: FlextGithubWorkflows.FlextInfraWorkflowSyncer
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraWorkflowSyncer
+      - type: target_facade_exists
+        params:
+          facade: FlextGithubWorkflows
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraJsonService
+    target_facade_class: FlextJsonIo
+    target_namespace_path: FlextJsonIo.FlextInfraJsonService
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.5
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraJsonService
+      - type: target_facade_exists
+        params:
+          facade: FlextJsonIo
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraPythonVersionEnforcer
+    target_facade_class: FlextMaintenancePythonVersion
+    target_namespace_path: FlextMaintenancePythonVersion.FlextInfraPythonVersionEnforcer
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraPythonVersionEnforcer
+      - type: target_facade_exists
+        params:
+          facade: FlextMaintenancePythonVersion
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraModels
+    target_facade_class: FlextModels
+    target_namespace_path: FlextModels.FlextInfraModels
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.5
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraModels
+      - type: target_facade_exists
+        params:
+          facade: FlextModels
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraOutput
+    target_facade_class: FlextOutput
+    target_namespace_path: FlextOutput.FlextInfraOutput
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.5
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraOutput
+      - type: target_facade_exists
+        params:
+          facade: FlextOutput
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraPathResolver
+    target_facade_class: FlextPaths
+    target_namespace_path: FlextPaths.FlextInfraPathResolver
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.5
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraPathResolver
+      - type: target_facade_exists
+        params:
+          facade: FlextPaths
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraPatterns
+    target_facade_class: FlextPatterns
+    target_namespace_path: FlextPatterns.FlextInfraPatterns
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.5
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraPatterns
+      - type: target_facade_exists
+        params:
+          facade: FlextPatterns
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraProtocols
+    target_facade_class: FlextProtocols
+    target_namespace_path: FlextProtocols.FlextInfraProtocols
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.5
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraProtocols
+      - type: target_facade_exists
+        params:
+          facade: FlextProtocols
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: _HelperFileAnalysis
+    target_facade_class: FlextRefactorAnalysis
+    target_namespace_path: FlextRefactorAnalysis._HelperFileAnalysis
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: _HelperFileAnalysis
+      - type: target_facade_exists
+        params:
+          facade: FlextRefactorAnalysis
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: _ImportDependencyCollector
+    target_facade_class: FlextRefactorAnalysis
+    target_namespace_path: FlextRefactorAnalysis._ImportDependencyCollector
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: _ImportDependencyCollector
+      - type: target_facade_exists
+        params:
+          facade: FlextRefactorAnalysis
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: _FunctionDependencyCollector
+    target_facade_class: FlextRefactorAnalysis
+    target_namespace_path: FlextRefactorAnalysis._FunctionDependencyCollector
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: _FunctionDependencyCollector
+      - type: target_facade_exists
+        params:
+          facade: FlextRefactorAnalysis
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraRefactorViolationAnalyzer
+    target_facade_class: FlextRefactorAnalysis
+    target_namespace_path: FlextRefactorAnalysis.FlextInfraRefactorViolationAnalyzer
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraRefactorViolationAnalyzer
+      - type: target_facade_exists
+        params:
+          facade: FlextRefactorAnalysis
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraRefactorConstants
+    target_facade_class: FlextRefactorConstants
+    target_namespace_path: FlextRefactorConstants.FlextInfraRefactorConstants
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraRefactorConstants
+      - type: target_facade_exists
+        params:
+          facade: FlextRefactorConstants
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraRefactorEngine
+    target_facade_class: FlextRefactorEngine
+    target_namespace_path: FlextRefactorEngine.FlextInfraRefactorEngine
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraRefactorEngine
+      - type: target_facade_exists
+        params:
+          facade: FlextRefactorEngine
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraRefactorMethodInfo
+    target_facade_class: FlextRefactorMethodInfo
+    target_namespace_path: FlextRefactorMethodInfo.FlextInfraRefactorMethodInfo
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraRefactorMethodInfo
+      - type: target_facade_exists
+        params:
+          facade: FlextRefactorMethodInfo
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraRefactorResult
+    target_facade_class: FlextRefactorResult
+    target_namespace_path: FlextRefactorResult.FlextInfraRefactorResult
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraRefactorResult
+      - type: target_facade_exists
+        params:
+          facade: FlextRefactorResult
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraRefactorRule
+    target_facade_class: FlextRefactorRule
+    target_namespace_path: FlextRefactorRule.FlextInfraRefactorRule
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraRefactorRule
+      - type: target_facade_exists
+        params:
+          facade: FlextRefactorRule
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraRefactorClassReconstructorRule
+    target_facade_class: FlextRefactorRulesClassReconstructor
+    target_namespace_path: FlextRefactorRulesClassReconstructor.FlextInfraRefactorClassReconstructorRule
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraRefactorClassReconstructorRule
+      - type: target_facade_exists
+        params:
+          facade: FlextRefactorRulesClassReconstructor
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraRefactorEnsureFutureAnnotationsRule
+    target_facade_class: FlextRefactorRulesEnsureFutureAnnotations
+    target_namespace_path: FlextRefactorRulesEnsureFutureAnnotations.FlextInfraRefactorEnsureFutureAnnotationsRule
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraRefactorEnsureFutureAnnotationsRule
+      - type: target_facade_exists
+        params:
+          facade: FlextRefactorRulesEnsureFutureAnnotations
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraRefactorImportModernizerRule
+    target_facade_class: FlextRefactorRulesImportModernizer
+    target_namespace_path: FlextRefactorRulesImportModernizer.FlextInfraRefactorImportModernizerRule
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraRefactorImportModernizerRule
+      - type: target_facade_exists
+        params:
+          facade: FlextRefactorRulesImportModernizer
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraRefactorLegacyRemovalRule
+    target_facade_class: FlextRefactorRulesLegacyRemoval
+    target_namespace_path: FlextRefactorRulesLegacyRemoval.FlextInfraRefactorLegacyRemovalRule
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraRefactorLegacyRemovalRule
+      - type: target_facade_exists
+        params:
+          facade: FlextRefactorRulesLegacyRemoval
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraRefactorMRORedundancyChecker
+    target_facade_class: FlextRefactorRulesMroRedundancyChecker
+    target_namespace_path: FlextRefactorRulesMroRedundancyChecker.FlextInfraRefactorMRORedundancyChecker
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraRefactorMRORedundancyChecker
+      - type: target_facade_exists
+        params:
+          facade: FlextRefactorRulesMroRedundancyChecker
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: _DictToMappingTransformer
+    target_facade_class: FlextRefactorRulesPatternCorrections
+    target_namespace_path: FlextRefactorRulesPatternCorrections._DictToMappingTransformer
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: _DictToMappingTransformer
+      - type: target_facade_exists
+        params:
+          facade: FlextRefactorRulesPatternCorrections
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: _RedundantCastRemover
+    target_facade_class: FlextRefactorRulesPatternCorrections
+    target_namespace_path: FlextRefactorRulesPatternCorrections._RedundantCastRemover
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: _RedundantCastRemover
+      - type: target_facade_exists
+        params:
+          facade: FlextRefactorRulesPatternCorrections
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraRefactorPatternCorrectionsRule
+    target_facade_class: FlextRefactorRulesPatternCorrections
+    target_namespace_path: FlextRefactorRulesPatternCorrections.FlextInfraRefactorPatternCorrectionsRule
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraRefactorPatternCorrectionsRule
+      - type: target_facade_exists
+        params:
+          facade: FlextRefactorRulesPatternCorrections
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraRefactorSymbolPropagationRule
+    target_facade_class: FlextRefactorRulesSymbolPropagation
+    target_namespace_path: FlextRefactorRulesSymbolPropagation.FlextInfraRefactorSymbolPropagationRule
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraRefactorSymbolPropagationRule
+      - type: target_facade_exists
+        params:
+          facade: FlextRefactorRulesSymbolPropagation
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraRefactorSignaturePropagator
+    target_facade_class: FlextRefactorRulesSymbolPropagation
+    target_namespace_path: FlextRefactorRulesSymbolPropagation.FlextInfraRefactorSignaturePropagator
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraRefactorSignaturePropagator
+      - type: target_facade_exists
+        params:
+          facade: FlextRefactorRulesSymbolPropagation
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraRefactorSignaturePropagationRule
+    target_facade_class: FlextRefactorRulesSymbolPropagation
+    target_namespace_path: FlextRefactorRulesSymbolPropagation.FlextInfraRefactorSignaturePropagationRule
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraRefactorSignaturePropagationRule
+      - type: target_facade_exists
+        params:
+          facade: FlextRefactorRulesSymbolPropagation
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraRefactorSafetyRunner
+    target_facade_class: FlextRefactorSafety
+    target_namespace_path: FlextRefactorSafety.FlextInfraRefactorSafetyRunner
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraRefactorSafetyRunner
+      - type: target_facade_exists
+        params:
+          facade: FlextRefactorSafety
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraRefactorCheckpoint
+    target_facade_class: FlextRefactorSafety
+    target_namespace_path: FlextRefactorSafety.FlextInfraRefactorCheckpoint
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraRefactorCheckpoint
+      - type: target_facade_exists
+        params:
+          facade: FlextRefactorSafety
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraRefactorSafetyManager
+    target_facade_class: FlextRefactorSafety
+    target_namespace_path: FlextRefactorSafety.FlextInfraRefactorSafetyManager
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraRefactorSafetyManager
+      - type: target_facade_exists
+        params:
+          facade: FlextRefactorSafety
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraRefactorClassOccurrence
+    target_facade_class: FlextRefactorScanner
+    target_namespace_path: FlextRefactorScanner.FlextInfraRefactorClassOccurrence
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraRefactorClassOccurrence
+      - type: target_facade_exists
+        params:
+          facade: FlextRefactorScanner
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraRefactorLooseClassViolation
+    target_facade_class: FlextRefactorScanner
+    target_namespace_path: FlextRefactorScanner.FlextInfraRefactorLooseClassViolation
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraRefactorLooseClassViolation
+      - type: target_facade_exists
+        params:
+          facade: FlextRefactorScanner
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: _TopLevelClassCollector
+    target_facade_class: FlextRefactorScanner
+    target_namespace_path: FlextRefactorScanner._TopLevelClassCollector
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: _TopLevelClassCollector
+      - type: target_facade_exists
+        params:
+          facade: FlextRefactorScanner
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraRefactorLooseClassScanner
+    target_facade_class: FlextRefactorScanner
+    target_namespace_path: FlextRefactorScanner.FlextInfraRefactorLooseClassScanner
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraRefactorLooseClassScanner
+      - type: target_facade_exists
+        params:
+          facade: FlextRefactorScanner
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraRefactorAliasRemover
+    target_facade_class: FlextRefactorTransformersAliasRemover
+    target_namespace_path: FlextRefactorTransformersAliasRemover.FlextInfraRefactorAliasRemover
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraRefactorAliasRemover
+      - type: target_facade_exists
+        params:
+          facade: FlextRefactorTransformersAliasRemover
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraRefactorClassReconstructor
+    target_facade_class: FlextRefactorTransformersClassReconstructor
+    target_namespace_path: FlextRefactorTransformersClassReconstructor.FlextInfraRefactorClassReconstructor
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraRefactorClassReconstructor
+      - type: target_facade_exists
+        params:
+          facade: FlextRefactorTransformersClassReconstructor
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraRefactorDeprecatedRemover
+    target_facade_class: FlextRefactorTransformersDeprecatedRemover
+    target_namespace_path: FlextRefactorTransformersDeprecatedRemover.FlextInfraRefactorDeprecatedRemover
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraRefactorDeprecatedRemover
+      - type: target_facade_exists
+        params:
+          facade: FlextRefactorTransformersDeprecatedRemover
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraRefactorImportBypassRemover
+    target_facade_class: FlextRefactorTransformersImportBypassRemover
+    target_namespace_path: FlextRefactorTransformersImportBypassRemover.FlextInfraRefactorImportBypassRemover
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraRefactorImportBypassRemover
+      - type: target_facade_exists
+        params:
+          facade: FlextRefactorTransformersImportBypassRemover
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraRefactorImportModernizer
+    target_facade_class: FlextRefactorTransformersImportModernizer
+    target_namespace_path: FlextRefactorTransformersImportModernizer.FlextInfraRefactorImportModernizer
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraRefactorImportModernizer
+      - type: target_facade_exists
+        params:
+          facade: FlextRefactorTransformersImportModernizer
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraRefactorLazyImportFixer
+    target_facade_class: FlextRefactorTransformersLazyImportFixer
+    target_namespace_path: FlextRefactorTransformersLazyImportFixer.FlextInfraRefactorLazyImportFixer
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraRefactorLazyImportFixer
+      - type: target_facade_exists
+        params:
+          facade: FlextRefactorTransformersLazyImportFixer
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraRefactorMRORemover
+    target_facade_class: FlextRefactorTransformersMroRemover
+    target_namespace_path: FlextRefactorTransformersMroRemover.FlextInfraRefactorMRORemover
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraRefactorMRORemover
+      - type: target_facade_exists
+        params:
+          facade: FlextRefactorTransformersMroRemover
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraRefactorSymbolPropagator
+    target_facade_class: FlextRefactorTransformersSymbolPropagator
+    target_namespace_path: FlextRefactorTransformersSymbolPropagator.FlextInfraRefactorSymbolPropagator
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraRefactorSymbolPropagator
+      - type: target_facade_exists
+        params:
+          facade: FlextRefactorTransformersSymbolPropagator
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraReleaseConstants
+    target_facade_class: FlextReleaseConstants
+    target_namespace_path: FlextReleaseConstants.FlextInfraReleaseConstants
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraReleaseConstants
+      - type: target_facade_exists
+        params:
+          facade: FlextReleaseConstants
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraReleaseOrchestrator
+    target_facade_class: FlextReleaseOrchestrator
+    target_namespace_path: FlextReleaseOrchestrator.FlextInfraReleaseOrchestrator
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraReleaseOrchestrator
+      - type: target_facade_exists
+        params:
+          facade: FlextReleaseOrchestrator
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraReportingService
+    target_facade_class: FlextReporting
+    target_namespace_path: FlextReporting.FlextInfraReportingService
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.5
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraReportingService
+      - type: target_facade_exists
+        params:
+          facade: FlextReporting
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraProjectSelector
+    target_facade_class: FlextSelection
+    target_namespace_path: FlextSelection.FlextInfraProjectSelector
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.5
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraProjectSelector
+      - type: target_facade_exists
+        params:
+          facade: FlextSelection
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraUtilitiesSubprocess
+    target_facade_class: FlextSubprocess
+    target_namespace_path: FlextSubprocess.FlextInfraUtilitiesSubprocess
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.5
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraUtilitiesSubprocess
+      - type: target_facade_exists
+        params:
+          facade: FlextSubprocess
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraTemplateEngine
+    target_facade_class: FlextTemplates
+    target_namespace_path: FlextTemplates.FlextInfraTemplateEngine
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.5
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraTemplateEngine
+      - type: target_facade_exists
+        params:
+          facade: FlextTemplates
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraTomlService
+    target_facade_class: FlextTomlIo
+    target_namespace_path: FlextTomlIo.FlextInfraTomlService
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.5
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraTomlService
+      - type: target_facade_exists
+        params:
+          facade: FlextTomlIo
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraTypes
+    target_facade_class: FlextTypings
+    target_namespace_path: FlextTypings.FlextInfraTypes
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.5
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraTypes
+      - type: target_facade_exists
+        params:
+          facade: FlextTypings
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraUtilities
+    target_facade_class: FlextUtilities
+    target_namespace_path: FlextUtilities.FlextInfraUtilities
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.5
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraUtilities
+      - type: target_facade_exists
+        params:
+          facade: FlextUtilities
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraVersioningService
+    target_facade_class: FlextVersioning
+    target_namespace_path: FlextVersioning.FlextInfraVersioningService
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.5
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraVersioningService
+      - type: target_facade_exists
+        params:
+          facade: FlextVersioning
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraWorkspaceConstants
+    target_facade_class: FlextWorkspaceConstants
+    target_namespace_path: FlextWorkspaceConstants.FlextInfraWorkspaceConstants
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraWorkspaceConstants
+      - type: target_facade_exists
+        params:
+          facade: FlextWorkspaceConstants
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: WorkspaceMode
+    target_facade_class: FlextWorkspaceDetector
+    target_namespace_path: FlextWorkspaceDetector.WorkspaceMode
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: WorkspaceMode
+      - type: target_facade_exists
+        params:
+          facade: FlextWorkspaceDetector
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraWorkspaceDetector
+    target_facade_class: FlextWorkspaceDetector
+    target_namespace_path: FlextWorkspaceDetector.FlextInfraWorkspaceDetector
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraWorkspaceDetector
+      - type: target_facade_exists
+        params:
+          facade: FlextWorkspaceDetector
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraProjectMigrator
+    target_facade_class: FlextWorkspaceMigrator
+    target_namespace_path: FlextWorkspaceMigrator.FlextInfraProjectMigrator
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraProjectMigrator
+      - type: target_facade_exists
+        params:
+          facade: FlextWorkspaceMigrator
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraOrchestratorService
+    target_facade_class: FlextWorkspaceOrchestrator
+    target_namespace_path: FlextWorkspaceOrchestrator.FlextInfraOrchestratorService
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraOrchestratorService
+      - type: target_facade_exists
+        params:
+          facade: FlextWorkspaceOrchestrator
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextInfraSyncService
+    target_facade_class: FlextWorkspaceSync
+    target_namespace_path: FlextWorkspaceSync.FlextInfraSyncService
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.7
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextInfraSyncService
+      - type: target_facade_exists
+        params:
+          facade: FlextWorkspaceSync
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextTestsServiceBase
+    target_facade_class: FlextBase
+    target_namespace_path: FlextBase.FlextTestsServiceBase
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.5
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextTestsServiceBase
+      - type: target_facade_exists
+        params:
+          facade: FlextBase
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextTestsUtilityBase
+    target_facade_class: FlextBase
+    target_namespace_path: FlextBase.FlextTestsUtilityBase
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.5
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextTestsUtilityBase
+      - type: target_facade_exists
+        params:
+          facade: FlextBase
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextTestsBuilders
+    target_facade_class: FlextBuilders
+    target_namespace_path: FlextBuilders.FlextTestsBuilders
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.5
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextTestsBuilders
+      - type: target_facade_exists
+        params:
+          facade: FlextBuilders
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextTestsConstants
+    target_facade_class: FlextConstants
+    target_namespace_path: FlextConstants.FlextTestsConstants
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.5
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextTestsConstants
+      - type: target_facade_exists
+        params:
+          facade: FlextConstants
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: _WhalesClientConfig
+    target_facade_class: FlextDocker
+    target_namespace_path: FlextDocker._WhalesClientConfig
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.5
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: _WhalesClientConfig
+      - type: target_facade_exists
+        params:
+          facade: FlextDocker
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: _WhalesCompose
+    target_facade_class: FlextDocker
+    target_namespace_path: FlextDocker._WhalesCompose
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.5
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: _WhalesCompose
+      - type: target_facade_exists
+        params:
+          facade: FlextDocker
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: _WhalesDockerClient
+    target_facade_class: FlextDocker
+    target_namespace_path: FlextDocker._WhalesDockerClient
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.5
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: _WhalesDockerClient
+      - type: target_facade_exists
+        params:
+          facade: FlextDocker
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextTestsDocker
+    target_facade_class: FlextDocker
+    target_namespace_path: FlextDocker.FlextTestsDocker
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.5
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextTestsDocker
+      - type: target_facade_exists
+        params:
+          facade: FlextDocker
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextTestsDomains
+    target_facade_class: FlextDomains
+    target_namespace_path: FlextDomains.FlextTestsDomains
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.5
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextTestsDomains
+      - type: target_facade_exists
+        params:
+          facade: FlextDomains
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextTestsFactories
+    target_facade_class: FlextFactories
+    target_namespace_path: FlextFactories.FlextTestsFactories
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.5
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextTestsFactories
+      - type: target_facade_exists
+        params:
+          facade: FlextFactories
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextTestsFiles
+    target_facade_class: FlextFiles
+    target_namespace_path: FlextFiles.FlextTestsFiles
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.5
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextTestsFiles
+      - type: target_facade_exists
+        params:
+          facade: FlextFiles
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextTestsMatchers
+    target_facade_class: FlextMatchers
+    target_namespace_path: FlextMatchers.FlextTestsMatchers
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.5
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextTestsMatchers
+      - type: target_facade_exists
+        params:
+          facade: FlextMatchers
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextTestsModels
+    target_facade_class: FlextModels
+    target_namespace_path: FlextModels.FlextTestsModels
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.5
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextTestsModels
+      - type: target_facade_exists
+        params:
+          facade: FlextModels
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextTestsProtocols
+    target_facade_class: FlextProtocols
+    target_namespace_path: FlextProtocols.FlextTestsProtocols
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.5
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextTestsProtocols
+      - type: target_facade_exists
+        params:
+          facade: FlextProtocols
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextTestsTypes
+    target_facade_class: FlextTypings
+    target_namespace_path: FlextTypings.FlextTestsTypes
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.5
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextTestsTypes
+      - type: target_facade_exists
+        params:
+          facade: FlextTypings
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: _EntityFactory
+    target_facade_class: FlextUtilities
+    target_namespace_path: FlextUtilities._EntityFactory
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.5
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: _EntityFactory
+      - type: target_facade_exists
+        params:
+          facade: FlextUtilities
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: _ValueFactory
+    target_facade_class: FlextUtilities
+    target_namespace_path: FlextUtilities._ValueFactory
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.5
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: _ValueFactory
+      - type: target_facade_exists
+        params:
+          facade: FlextUtilities
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextTestsUtilities
+    target_facade_class: FlextUtilities
+    target_namespace_path: FlextUtilities.FlextTestsUtilities
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.5
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextTestsUtilities
+      - type: target_facade_exists
+        params:
+          facade: FlextUtilities
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file
+  - project_kind: core
+    facade_family: u
+    module_family: other_private
+    source_symbol: FlextTestsValidator
+    target_facade_class: FlextValidator
+    target_namespace_path: FlextValidator.FlextTestsValidator
+    expected_base_chain: *id006
+    forbidden_targets: []
+    confidence: 0.5
+    pre_checks:
+      - type: source_symbol_is_class
+        params:
+          symbol: FlextTestsValidator
+      - type: target_facade_exists
+        params:
+          facade: FlextValidator
+    post_checks:
+      - type: imports_resolve
+        params:
+          scope: file
+      - type: mro_valid
+        params:
+          expected: *id006
+    rewrite_scope: file

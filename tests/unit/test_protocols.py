@@ -20,16 +20,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from enum import StrEnum
-from typing import ClassVar
+from typing import Annotated, ClassVar
 
 import pytest
+from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import p, r, t
-from flext_tests.matchers import tm
-from flext_tests.utilities import u
-from flext_core.models import m
+from flext_core import m, p, r
+from flext_tests import tm, u
 
 
 class ProtocolCategoryType(StrEnum):
@@ -43,22 +41,24 @@ class ProtocolCategoryType(StrEnum):
     EXTENSIONS = "extensions"
 
 
-@dataclass(frozen=True, slots=True)
-class ProtocolDefinitionScenario:
+class ProtocolDefinitionScenario(BaseModel):
     """Protocol definition test scenario."""
 
-    name: str
-    protocol_name: str
-    category: ProtocolCategoryType
+    model_config = ConfigDict(frozen=True)
+
+    name: Annotated[str, Field(description="Protocol definition scenario name")]
+    protocol_name: Annotated[str, Field(description="Protocol attribute name")]
+    category: Annotated[ProtocolCategoryType, Field(description="Protocol category")]
 
 
-@dataclass(frozen=True, slots=True)
-class ProtocolAvailabilityScenario:
+class ProtocolAvailabilityScenario(BaseModel):
     """Protocol availability test scenario."""
 
-    name: str
-    category: ProtocolCategoryType
-    protocol_names: list[str]
+    model_config = ConfigDict(frozen=True)
+
+    name: Annotated[str, Field(description="Protocol availability scenario name")]
+    category: Annotated[ProtocolCategoryType, Field(description="Protocol category")]
+    protocol_names: Annotated[list[str], Field(description="Expected protocol names")]
 
 
 class ProtocolScenarios:
@@ -66,82 +66,87 @@ class ProtocolScenarios:
 
     DEFINITION_SCENARIOS: ClassVar[list[ProtocolDefinitionScenario]] = [
         ProtocolDefinitionScenario(
-            "result_protocol",
-            "Result",
-            ProtocolCategoryType.FOUNDATION,
+            name="result_protocol",
+            protocol_name="Result",
+            category=ProtocolCategoryType.FOUNDATION,
         ),
         ProtocolDefinitionScenario(
-            "has_model_fields_protocol",
-            "HasModelFields",
-            ProtocolCategoryType.FOUNDATION,
+            name="has_model_fields_protocol",
+            protocol_name="HasModelFields",
+            category=ProtocolCategoryType.FOUNDATION,
         ),
         ProtocolDefinitionScenario(
-            "has_model_dump_protocol",
-            "HasModelDump",
-            ProtocolCategoryType.FOUNDATION,
+            name="has_model_dump_protocol",
+            protocol_name="HasModelDump",
+            category=ProtocolCategoryType.FOUNDATION,
         ),
         ProtocolDefinitionScenario(
-            "repository_protocol",
-            "Repository",
-            ProtocolCategoryType.DOMAIN,
+            name="repository_protocol",
+            protocol_name="Repository",
+            category=ProtocolCategoryType.DOMAIN,
         ),
         ProtocolDefinitionScenario(
-            "service_protocol",
-            "Service",
-            ProtocolCategoryType.DOMAIN,
+            name="service_protocol",
+            protocol_name="Service",
+            category=ProtocolCategoryType.DOMAIN,
         ),
         ProtocolDefinitionScenario(
-            "configurable_protocol",
-            "Configurable",
-            ProtocolCategoryType.INFRASTRUCTURE,
+            name="configurable_protocol",
+            protocol_name="Configurable",
+            category=ProtocolCategoryType.INFRASTRUCTURE,
         ),
         ProtocolDefinitionScenario(
-            "handler_protocol",
-            "Handler",
-            ProtocolCategoryType.APPLICATION,
+            name="handler_protocol",
+            protocol_name="Handler",
+            category=ProtocolCategoryType.APPLICATION,
         ),
         ProtocolDefinitionScenario(
-            "command_bus_protocol",
-            "CommandBus",
-            ProtocolCategoryType.COMMANDS,
+            name="command_bus_protocol",
+            protocol_name="CommandBus",
+            category=ProtocolCategoryType.COMMANDS,
         ),
         ProtocolDefinitionScenario(
-            "middleware_protocol",
-            "Middleware",
-            ProtocolCategoryType.COMMANDS,
+            name="middleware_protocol",
+            protocol_name="Middleware",
+            category=ProtocolCategoryType.COMMANDS,
         ),
     ]
-
     AVAILABILITY_SCENARIOS: ClassVar[list[ProtocolAvailabilityScenario]] = [
         ProtocolAvailabilityScenario(
-            "all_foundation_protocols_available",
-            ProtocolCategoryType.FOUNDATION,
-            ["Result", "ResultLike", "HasModelFields", "HasModelDump", "Model"],
+            name="all_foundation_protocols_available",
+            category=ProtocolCategoryType.FOUNDATION,
+            protocol_names=[
+                "Result",
+                "ResultLike",
+                "HasModelFields",
+                "HasModelDump",
+                "Model",
+            ],
         ),
         ProtocolAvailabilityScenario(
-            "all_domain_protocols_available",
-            ProtocolCategoryType.DOMAIN,
-            ["Repository", "Service"],
+            name="all_domain_protocols_available",
+            category=ProtocolCategoryType.DOMAIN,
+            protocol_names=["Repository", "Service"],
         ),
         ProtocolAvailabilityScenario(
-            "all_infrastructure_protocols_available",
-            ProtocolCategoryType.INFRASTRUCTURE,
-            ["Configurable"],
+            name="all_infrastructure_protocols_available",
+            category=ProtocolCategoryType.INFRASTRUCTURE,
+            protocol_names=["Configurable"],
         ),
         ProtocolAvailabilityScenario(
-            "all_application_protocols_available",
-            ProtocolCategoryType.APPLICATION,
-            ["Handler"],
+            name="all_application_protocols_available",
+            category=ProtocolCategoryType.APPLICATION,
+            protocol_names=["Handler"],
         ),
         ProtocolAvailabilityScenario(
-            "all_commands_protocols_available",
-            ProtocolCategoryType.COMMANDS,
-            ["CommandBus", "Middleware"],
+            name="all_commands_protocols_available",
+            category=ProtocolCategoryType.COMMANDS,
+            protocol_names=["CommandBus", "Middleware"],
         ),
         ProtocolAvailabilityScenario(
-            "all_extensions_protocols_available",
-            ProtocolCategoryType.EXTENSIONS,
-            ["Middleware"],
+            name="all_extensions_protocols_available",
+            category=ProtocolCategoryType.EXTENSIONS,
+            protocol_names=["Middleware"],
         ),
     ]
 
@@ -157,19 +162,12 @@ class TestFlextProtocols:
     def test_protocol_definition(self, scenario: ProtocolDefinitionScenario) -> None:
         """Test protocol definitions are accessible and valid."""
         protocol = getattr(p, scenario.protocol_name)
-        tm.that(
-            protocol,
-            none=False,
-            msg=f"Protocol {scenario.protocol_name} must exist",
-        )
+        assert protocol is not None, f"Protocol {scenario.protocol_name} must exist"
         tm.that(
             hasattr(protocol, "__protocol_attrs__")
             or hasattr(protocol, "__annotations__"),
             eq=True,
-            msg=(
-                f"Protocol {scenario.protocol_name} must have "
-                f"protocol attributes or annotations"
-            ),
+            msg=f"Protocol {scenario.protocol_name} must have protocol attributes or annotations",
         )
 
     @pytest.mark.parametrize(
@@ -182,17 +180,14 @@ class TestFlextProtocols:
         scenario: ProtocolAvailabilityScenario,
     ) -> None:
         """Test that protocols are available by category with real validation."""
-        # Protocols are directly in p (FlextProtocols), not in nested namespaces
-        # All protocols are accessible directly from p
         for proto_name in scenario.protocol_names:
             tm.that(
                 hasattr(p, proto_name),
                 eq=True,
                 msg=f"Protocol {proto_name} must be found in p (FlextProtocols)",
             )
-            # Validate protocol is not None
             protocol = getattr(p, proto_name)
-            tm.that(protocol, none=False, msg=f"Protocol {proto_name} must not be None")
+            assert protocol is not None, f"Protocol {proto_name} must not be None"
 
     def test_result_protocol_implementation(self) -> None:
         """Test that a class can implement Result protocol."""
@@ -241,15 +236,11 @@ class TestFlextProtocols:
             """Repository for user entities."""
 
             def find_by_id(self, entity_id: str) -> r[m.ConfigMap]:
-                return r[m.ConfigMap].ok({
-                    "id": entity_id,
-                    "name": "Test",
-                })
+                return r[m.ConfigMap].ok(
+                    m.ConfigMap(root={"id": entity_id, "name": "Test"}),
+                )
 
-            def save(
-                self,
-                entity: m.ConfigMap,
-            ) -> r[m.ConfigMap]:
+            def save(self, entity: m.ConfigMap) -> r[m.ConfigMap]:
                 return r[m.ConfigMap].ok(entity)
 
             def delete(self, entity_id: str) -> r[bool]:
@@ -268,9 +259,8 @@ class TestFlextProtocols:
                 eq=True,
                 msg=f"Repository {method} must be callable",
             )
-        # Test actual execution
         find_result = repo.find_by_id("test_id")
-        u.Tests.Result.assert_success(find_result)
+        _ = u.Tests.Result.assert_success(find_result)
         tm.that(find_result.value, has="id", msg="Find result must contain id")
         tm.that(find_result.value, has="name", msg="Find result must contain name")
 
@@ -281,7 +271,7 @@ class TestFlextProtocols:
             """Service for user operations."""
 
             def execute(self) -> r[m.ConfigMap]:
-                return r[m.ConfigMap].ok({"status": "success"})
+                return r[m.ConfigMap].ok(m.ConfigMap(root={"status": "success"}))
 
         service = UserService()
         tm.that(
@@ -295,7 +285,7 @@ class TestFlextProtocols:
             msg="Service execute must be callable",
         )
         result = service.execute()
-        u.Tests.Result.assert_success(result)
+        _ = u.Tests.Result.assert_success(result)
         tm.that(result.value, has="status", msg="Service result must contain status")
         tm.that(
             result.value["status"],
@@ -309,11 +299,8 @@ class TestFlextProtocols:
         class CreateUserHandler:
             """Handler for user creation."""
 
-            def handle(
-                self,
-                command: m.ConfigMap,
-            ) -> r[m.ConfigMap]:
-                return r[m.ConfigMap].ok({"user_id": "123"})
+            def handle(self, command: m.ConfigMap) -> r[m.ConfigMap]:
+                return r[m.ConfigMap].ok(m.ConfigMap(root={"user_id": "123"}))
 
         handler = CreateUserHandler()
         tm.that(
@@ -326,9 +313,9 @@ class TestFlextProtocols:
             eq=True,
             msg="Handler handle must be callable",
         )
-        command = {"name": "Test"}
+        command = m.ConfigMap(root={"name": "Test"})
         result = handler.handle(command)
-        u.Tests.Result.assert_success(result)
+        _ = u.Tests.Result.assert_success(result)
         tm.that(result.value, has="user_id", msg="Handler result must contain user_id")
         tm.that(
             result.value["user_id"],
@@ -345,13 +332,10 @@ class TestFlextProtocols:
             """Service implementing multiple protocols."""
 
             def execute(self) -> r[m.ConfigMap]:
-                return r[m.ConfigMap].ok({})
+                return r[m.ConfigMap].ok(m.ConfigMap(root={}))
 
-            def handle(
-                self,
-                command: m.ConfigMap,
-            ) -> r[m.ConfigMap]:
-                return r[m.ConfigMap].ok({})
+            def handle(self, command: m.ConfigMap) -> r[m.ConfigMap]:
+                return r[m.ConfigMap].ok(m.ConfigMap(root={}))
 
         service = AdvancedService()
         required_methods = ["execute", "handle"]
@@ -366,11 +350,10 @@ class TestFlextProtocols:
                 eq=True,
                 msg=f"AdvancedService {method} must be callable",
             )
-        # Test actual execution
         execute_result = service.execute()
-        u.Tests.Result.assert_success(execute_result)
-        handle_result = service.handle({"command": "test"})
-        u.Tests.Result.assert_success(handle_result)
+        _ = u.Tests.Result.assert_success(execute_result)
+        handle_result = service.handle(m.ConfigMap(root={"command": "test"}))
+        _ = u.Tests.Result.assert_success(handle_result)
 
     def test_protocol_runtime_checkable(self) -> None:
         """Test that protocols support runtime checking."""

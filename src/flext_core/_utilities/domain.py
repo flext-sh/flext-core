@@ -10,13 +10,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Hashable
-from typing import cast
-
-from flext_core.constants import c
-from flext_core.protocols import p
-from flext_core.runtime import FlextRuntime
-from flext_core.typings import t
+from flext_core import FlextRuntime, c, p, t
+from flext_core.runtime import RuntimeData
 
 
 class FlextUtilitiesDomain:
@@ -24,17 +19,20 @@ class FlextUtilitiesDomain:
 
     @property
     def logger(self) -> p.Log.StructlogLogger:
-        """Get logger instance using FlextRuntime (avoids circular imports).
+        """Get structlog logger via FlextRuntime (infrastructure-level, no FlextLogger)."""
+        return FlextRuntime.get_logger(__name__)
 
-        Returns structlog logger instance with all logging methods (debug, info, warning, error, etc).
-        Uses same structure/config as FlextLogger but without circular import.
-        """
-        return cast("p.Log.StructlogLogger", FlextRuntime.get_logger(__name__))
+    @staticmethod
+    def same_type(
+        obj_a: RuntimeData,
+        obj_b: RuntimeData,
+    ) -> bool:
+        return type(obj_a) is type(obj_b)
 
     @staticmethod
     def compare_entities_by_id(
-        entity_a: p.HasModelDump,
-        entity_b: p.HasModelDump,
+        entity_a: RuntimeData,
+        entity_b: RuntimeData,
         id_attr: str = c.Mixins.FIELD_ID,
     ) -> bool:
         """Compare two entities by their unique ID attribute.
@@ -56,46 +54,16 @@ class FlextUtilitiesDomain:
             True
 
         """
-        if not isinstance(entity_b, entity_a.__class__):
+        if not FlextUtilitiesDomain.same_type(entity_b, entity_a):
             return False
-
         id_a = getattr(entity_a, id_attr, None)
         id_b = getattr(entity_b, id_attr, None)
-
         return id_a is not None and id_a == id_b
 
     @staticmethod
-    def hash_entity_by_id(
-        entity: p.HasModelDump,
-        id_attr: str = c.Mixins.FIELD_ID,
-    ) -> int:
-        """Generate hash for entity based on unique ID and type.
-
-        Generic hashing for DDD entities - uses identity (ID + type), not value.
-
-        Args:
-            entity: Entity to hash
-            id_attr: Attribute name for unique ID (default: "unique_id")
-
-        Returns:
-            Hash value based on entity ID and type
-
-        Example:
-            >>> user = User(unique_id="123", name="Alice")
-            >>> hash_val = FlextUtilitiesDomain.hash_entity_by_id(user)
-
-        """
-        entity_id = getattr(entity, id_attr, None)
-        if entity_id is None:
-            return hash(id(entity))  # Fallback to object ID if no unique_id
-
-        # Combine type and ID for hash
-        return hash((entity.__class__.__name__, entity_id))
-
-    @staticmethod
     def compare_value_objects_by_value(
-        obj_a: t.GeneralValueType,
-        obj_b: t.GeneralValueType,
+        obj_a: RuntimeData,
+        obj_b: RuntimeData,
     ) -> bool:
         """Compare two value objects by their values (all attributes).
 
@@ -115,18 +83,38 @@ class FlextUtilitiesDomain:
             True
 
         """
-        if not isinstance(obj_b, obj_a.__class__):
+        if not FlextUtilitiesDomain.same_type(obj_b, obj_a):
             return False
-
-        # Try __dict__ comparison
         try:
             return obj_a.__dict__ == obj_b.__dict__
         except (AttributeError, TypeError):
-            # Fallback to repr comparison
             return repr(obj_a) == repr(obj_b)
 
     @staticmethod
-    def hash_value_object_by_value(obj: t.GeneralValueType) -> int:
+    def hash_entity_by_id(entity: RuntimeData, id_attr: str = c.Mixins.FIELD_ID) -> int:
+        """Generate hash for entity based on unique ID and type.
+
+        Generic hashing for DDD entities - uses identity (ID + type), not value.
+
+        Args:
+            entity: Entity to hash
+            id_attr: Attribute name for unique ID (default: "unique_id")
+
+        Returns:
+            Hash value based on entity ID and type
+
+        Example:
+            >>> user = User(unique_id="123", name="Alice")
+            >>> hash_val = FlextUtilitiesDomain.hash_entity_by_id(user)
+
+        """
+        entity_id = getattr(entity, id_attr, None)
+        if entity_id is None:
+            return hash(id(entity))
+        return hash((entity.__class__.__name__, entity_id))
+
+    @staticmethod
+    def hash_value_object_by_value(obj: RuntimeData) -> int:
         """Generate hash for value object based on all attribute values.
 
         Generic hashing for DDD Value Objects - uses values, not identity.
@@ -142,31 +130,22 @@ class FlextUtilitiesDomain:
             >>> hash_val = FlextUtilitiesDomain.hash_value_object_by_value(addr)
 
         """
-        # Try __dict__
         try:
             obj_dict = obj.__dict__
-            # Filter out non-hashable values and convert to tuple
-            hashable_items: list[tuple[str, t.GeneralValueType]] = []
+            hashable_items: list[tuple[str, t.NormalizedValue]] = []
             for key, value in sorted(obj_dict.items()):
-                # Check for types that are both Hashable and GeneralValueType
+                key_str = str(key)
                 if isinstance(value, (str, int, float, bool, type(None))):
-                    hashable_items.append((key, value))
-                elif isinstance(value, Hashable):
-                    # Other hashables get converted to repr string
-                    hashable_items.append((key, repr(value)))
+                    hashable_items.append((key_str, value))
                 else:
-                    # Use repr for non-hashable values
-                    hashable_items.append((key, repr(value)))
-
+                    hashable_items.append((key_str, value.__class__.__name__))
             return hash(tuple(hashable_items))
         except (AttributeError, TypeError):
-            # Fallback to repr hash
             return hash(repr(obj))
 
     @staticmethod
     def validate_entity_has_id(
-        entity: t.GeneralValueType,
-        id_attr: str = c.Mixins.FIELD_ID,
+        entity: RuntimeData, id_attr: str = c.Mixins.FIELD_ID
     ) -> bool:
         """Validate that entity has a non-None unique ID.
 
@@ -182,7 +161,9 @@ class FlextUtilitiesDomain:
         return bool(entity_id)
 
     @staticmethod
-    def validate_value_object_immutable(obj: t.GeneralValueType) -> bool:
+    def validate_value_object_immutable(
+        obj: RuntimeData,
+    ) -> bool:
         """Check if value object appears to be immutable (frozen).
 
         Args:
@@ -192,7 +173,6 @@ class FlextUtilitiesDomain:
             True if appears immutable (frozen=True or no __setattr__)
 
         """
-        # Check Pydantic frozen config
         if hasattr(obj, "model_config"):
             try:
                 config = getattr(obj, "model_config", {})
@@ -200,17 +180,10 @@ class FlextUtilitiesDomain:
                     return True
             except (AttributeError, TypeError):
                 pass
-
-        # Check if __setattr__ is overridden to prevent mutation
         if hasattr(obj, "__setattr__"):
-            # If __setattr__ is from object class, it's mutable
-            # Custom __setattr__ might enforce immutability
-            setattr_method = getattr(type(obj), "__setattr__", None)
+            setattr_method = getattr(obj.__class__, "__setattr__", None)
             return setattr_method is not object.__setattr__
-
         return False
 
 
-__all__ = [
-    "FlextUtilitiesDomain",
-]
+__all__ = ["FlextUtilitiesDomain"]

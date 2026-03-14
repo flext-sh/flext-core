@@ -9,15 +9,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import inspect
-import warnings
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from enum import StrEnum
 from typing import ClassVar, Literal, TypeGuard, TypeIs, overload
 
-from flext_core._utilities.guards import FlextUtilitiesGuards
-from flext_core.result import r
-from flext_core.typings import t
+from pydantic import ValidationError
+
+from flext_core import r, t
+from flext_core._models.base import FlextModelFoundation
+from flext_core.typings import EnumT
 
 
 class FlextUtilitiesEnum:
@@ -31,68 +31,10 @@ class FlextUtilitiesEnum:
     - Direct integration with Pydantic BeforeValidator
     """
 
-    # Approved modules that can import directly (for testing, internal use)
-    _APPROVED_MODULES: ClassVar[frozenset[str]] = frozenset({
-        "flext_core.utilities",
-        "flext_core._utilities",
-        "tests.",
-    })
-
-    # Cache for metadata methods (manual cache since types aren't hashable for lru_cache)
-    # Note: members_cache uses object to avoid type variance issues with generic E
     _values_cache: ClassVar[dict[type[StrEnum], frozenset[str]]] = {}
     _names_cache: ClassVar[dict[type[StrEnum], frozenset[str]]] = {}
-    _members_cache: ClassVar[dict[type[StrEnum], object]] = {}
-
-    # ─────────────────────────────────────────────────────────────
-    # PRIVATE HELPERS
-    # ─────────────────────────────────────────────────────────────
-
-    @staticmethod
-    def _check_direct_access() -> None:
-        """Warn if accessed from non-approved module."""
-        frame = inspect.currentframe()
-        if frame and frame.f_back and frame.f_back.f_back:
-            caller_module = frame.f_back.f_back.f_globals.get("__name__", "")
-            if not any(
-                caller_module.startswith(approved)
-                for approved in FlextUtilitiesEnum._APPROVED_MODULES
-            ):
-                warnings.warn(
-                    "Direct import from _utilities.enum is deprecated. "
-                    "Use 'from flext_core import u; u.Enum.dispatch(...)' instead.",
-                    DeprecationWarning,
-                    stacklevel=4,
-                )
-
-    @staticmethod
-    def _is_member_by_value[E: StrEnum](value: object, enum_cls: type[E]) -> TypeIs[E]:
-        """Check membership by value (internal helper)."""
-        if isinstance(value, enum_cls):
-            return True
-        if FlextUtilitiesGuards.is_type(value, str):
-            value_map = getattr(enum_cls, "_value2member_map_", {})
-            return value in value_map
-        return False
-
-    @staticmethod
-    def _is_member_by_name[E: StrEnum](name: str, enum_cls: type[E]) -> TypeIs[E]:
-        """Check membership by name (internal helper)."""
-        return name in getattr(enum_cls, "__members__", {})
-
-    @staticmethod
-    def _parse[E: StrEnum](enum_cls: type[E], value: str | E) -> r[E]:
-        """Parse string to enum (internal helper)."""
-        if isinstance(value, enum_cls):
-            return r[E].ok(value)
-        try:
-            return r[E].ok(enum_cls(value))
-        except ValueError:
-            members_dict = getattr(enum_cls, "__members__", {})
-            enum_members = list(members_dict.values())
-            valid = ", ".join(m.value for m in enum_members)
-            enum_name = getattr(enum_cls, "__name__", "Enum")
-            return r[E].fail(f"Invalid {enum_name}: '{value}'. Valid: {valid}")
+    _members_cache: ClassVar[dict[type[StrEnum], frozenset[StrEnum]]] = {}
+    _V = FlextModelFoundation.Validators
 
     @staticmethod
     def _coerce[E: StrEnum](enum_cls: type[E], value: str | E) -> E:
@@ -101,115 +43,127 @@ class FlextUtilitiesEnum:
             return value
         return enum_cls(value)
 
-    # ─────────────────────────────────────────────────────────────
-    # TYPEIS FACTORIES: Generate TypeGuard functions for any StrEnum
-    # ─────────────────────────────────────────────────────────────
+    @staticmethod
+    def _is_member_by_name[E: StrEnum](name: str, enum_cls: type[E]) -> TypeIs[E]:
+        """Check membership by name (internal helper)."""
+        return name in enum_cls.__members__
 
     @staticmethod
-    def is_member[E: StrEnum](
-        enum_cls: type[E],
-        value: t.GeneralValueType,
-    ) -> TypeGuard[E]:
-        """Generic TypeGuard for any StrEnum.
-
-        Example:
-             if FlextUtilitiesEnum.is_member(Status, value):
-                 # value: Status (narrowed)
-                 process_status(value)
-
-        """
+    def _is_member_by_value[E: StrEnum](
+        value: t.Scalar | E, enum_cls: type[E]
+    ) -> TypeIs[E]:
+        """Check membership by value (internal helper)."""
         if isinstance(value, enum_cls):
             return True
-        if FlextUtilitiesGuards.is_type(value, str):
-            # Check if value is in enum's value-to-member mapping
-            value_map = getattr(enum_cls, "_value2member_map_", {})
+        if isinstance(value, str):
+            value_map = enum_cls._value2member_map_
             return value in value_map
         return False
 
     @staticmethod
-    def is_subset[E: StrEnum](
-        enum_cls: type[E],
-        valid_members: frozenset[E],
-        value: t.GeneralValueType,
-    ) -> TypeGuard[E]:
-        """TypeGuard for subset of a StrEnum.
-
-        Example:
-             ACTIVE_STATES = frozenset({Status.ACTIVE, Status.PENDING})
-
-             if FlextUtilitiesEnum.is_subset(Status, ACTIVE_STATES, value):
-                 # value: Status (narrowed to subset)
-                 process_active(value)
-
-        """
-        if isinstance(value, enum_cls) and value in valid_members:
-            return True
-        if isinstance(value, str):
-            try:
-                member = enum_cls(value)
-                return member in valid_members
-            except ValueError:
-                return False
-        return False
-
-    # ─────────────────────────────────────────────────────────────
-    # CONVERSION: String → StrEnum (type-safe)
-    # ─────────────────────────────────────────────────────────────
-
-    @staticmethod
-    def parse[E: StrEnum](enum_cls: type[E], value: str | E) -> r[E]:
-        """Convert string to StrEnum with r.
-
-        Example:
-             result = FlextUtilitiesEnum.parse(Status, "active")
-             if result.is_success:
-                 status: Status = result.value
-
-        """
+    def _parse(enum_cls: type[EnumT], value: str | EnumT) -> r[EnumT]:
+        """Parse string to enum (internal helper)."""
         if isinstance(value, enum_cls):
-            return r[E].ok(value)
+            return r[EnumT].ok(value)
         try:
-            return r[E].ok(enum_cls(value))
+            return r[EnumT].ok(enum_cls(value))
         except ValueError:
-            # enum_cls is a StrEnum type, access members via __members__
-            # Access enum members via __members__ attribute
-            members_dict = getattr(enum_cls, "__members__", {})
+            members_dict = enum_cls.__members__
             enum_members = list(members_dict.values())
             valid = ", ".join(m.value for m in enum_members)
-            enum_name = getattr(enum_cls, "__name__", "Enum")
-            return r[E].fail(f"Invalid {enum_name}: '{value}'. Valid: {valid}")
+            enum_name = enum_cls.__name__
+            return r[EnumT].fail(f"Invalid {enum_name}: '{value}'. Valid: {valid}")
 
     @staticmethod
-    def parse_or_default[E: StrEnum](
-        enum_cls: type[E],
-        value: str | E | None,
-        default: E,
-    ) -> E:
-        """Convert with fallback to default (never fails).
+    def _validate_str(value: t.Scalar | StrEnum) -> r[str]:
+        """Validate strict string input for parsing paths."""
+        try:
+            return r[str].ok(
+                FlextUtilitiesEnum._V.strict_string_adapter().validate_python(value)
+            )
+        except ValidationError:
+            return r[str].fail("Value is not a valid string input")
+
+    @staticmethod
+    def auto_value(name: str) -> str:
+        """Generate lowercase value from enum member name.
+
+        Use in StrEnum with `_generate_next_value_` override.
 
         Example:
-             status = FlextUtilitiesEnum.parse_or_default(
-                 Status, user_input, Status.PENDING
-             )
+            >>> class Status(StrEnum):
+            ...     @staticmethod
+            ...     def _generate_next_value_(name, *_):
+            ...         return FlextUtilitiesEnum.auto_value(name)
+            ...
+            ...     PENDING = auto()
+            ...     RUNNING = auto()
+            >>> Status.PENDING.value
+            'pending'
 
         """
-        if value is None:
-            return default
-        if isinstance(value, enum_cls):
-            return value
-        try:
-            return enum_cls(value)
-        except ValueError:
-            return default
-
-    # ─────────────────────────────────────────────────────────────
-    # PYDANTIC VALIDATORS: BeforeValidator factories
-    # ─────────────────────────────────────────────────────────────
+        return name.lower()
 
     @staticmethod
-    def coerce_validator[E: StrEnum](
+    def bi_map[K, V](data: Mapping[K, V]) -> tuple[dict[K, V], dict[V, K]]:
+        """Create bidirectional mapping from dict.
+
+        Returns (forward, inverse) tuple of dicts.
+        Use for replacing paired Mapping declarations.
+
+        Example:
+            >>> PHASE_MAP = {"1": "schema", "2": "hierarchy"}
+            >>> forward, inverse = FlextUtilitiesEnum.bi_map(PHASE_MAP)
+            >>> forward["1"]
+            'schema'
+            >>> inverse["schema"]
+            '1'
+
+        """
+        forward = dict(data)
+        inverse = {v: k for k, v in data.items()}
+        return (forward, inverse)
+
+    @staticmethod
+    def coerce_by_name_validator[E: StrEnum](
         enum_cls: type[E],
-    ) -> Callable[[t.FlexibleValue], E]:
+    ) -> Callable[[t.Scalar | E], E]:
+        """BeforeValidator that accepts name OR value of enum.
+
+        Accepts:
+             - "ACTIVE" (member name)
+             - "active" (member value)
+             - Status.ACTIVE (direct member)
+
+        Example:
+             StatusByName = Annotated[
+                 Status,
+                 BeforeValidator(FlextUtilitiesEnum.coerce_by_name_validator(Status))
+             ]
+
+        """
+
+        def _coerce(value: t.Scalar | E) -> E:
+            if isinstance(value, enum_cls):
+                return value
+            if isinstance(value, str):
+                members_dict = enum_cls.__members__
+                if value in members_dict:
+                    member = members_dict[value]
+                    if isinstance(member, enum_cls):
+                        return member
+                try:
+                    return enum_cls(value)
+                except ValueError:
+                    pass
+            enum_name = enum_cls.__name__
+            msg = f"Invalid {enum_name}: {value!r}"
+            raise ValueError(msg)
+
+        return _coerce
+
+    @staticmethod
+    def coerce_validator[E: StrEnum](enum_cls: type[E]) -> Callable[[t.Scalar | E], E]:
         """Create BeforeValidator for automatic coercion in Pydantic.
 
         RECOMMENDED PATTERN for Pydantic fields:
@@ -229,7 +183,7 @@ class FlextUtilitiesEnum:
 
         """
 
-        def _coerce(value: t.FlexibleValue) -> E:
+        def _coerce(value: t.Scalar | E) -> E:
             if isinstance(value, enum_cls):
                 return value
             if isinstance(value, str):
@@ -237,153 +191,16 @@ class FlextUtilitiesEnum:
                     return enum_cls(value)
                 except ValueError:
                     pass
-            enum_name = getattr(enum_cls, "__name__", "Enum")
+            enum_name = enum_cls.__name__
             msg = f"Invalid {enum_name}: {value!r}"
             raise ValueError(msg)
 
         return _coerce
-
-    @staticmethod
-    def coerce_by_name_validator[E: StrEnum](
-        enum_cls: type[E],
-    ) -> Callable[[t.FlexibleValue], E]:
-        """BeforeValidator that accepts name OR value of enum.
-
-        Accepts:
-             - "ACTIVE" (member name)
-             - "active" (member value)
-             - Status.ACTIVE (direct member)
-
-        Example:
-             StatusByName = Annotated[
-                 Status,
-                 BeforeValidator(FlextUtilitiesEnum.coerce_by_name_validator(Status))
-             ]
-
-        """
-
-        def _coerce(value: t.FlexibleValue) -> E:
-            if isinstance(value, enum_cls):
-                return value
-            if isinstance(value, str):
-                # Try by name first
-                members_dict = getattr(enum_cls, "__members__", {})
-                if value in members_dict:
-                    member = members_dict[value]
-                    if isinstance(member, enum_cls):
-                        return member
-                # Then by value
-                try:
-                    return enum_cls(value)
-                except ValueError:
-                    pass
-            enum_name = getattr(enum_cls, "__name__", "Enum")
-            msg = f"Invalid {enum_name}: {value!r}"
-            raise ValueError(msg)
-
-        return _coerce
-
-    # ─────────────────────────────────────────────────────────────
-    # METADATA: Information about StrEnums
-    # ─────────────────────────────────────────────────────────────
-
-    @staticmethod
-    def values[E: StrEnum](enum_cls: type[E]) -> frozenset[str]:
-        """Return frozenset of values (cached for performance).
-
-        Business Rule: Returns immutable frozenset of all enum values.
-        Cache ensures same object returned for same enum class (identity preserved).
-        Manual cache dictionary handles enum classes efficiently.
-
-        Audit Implication: Cached results ensure consistent identity across calls,
-        important for set operations and identity checks in audit trails.
-        """
-        # Check cache first
-        if enum_cls in FlextUtilitiesEnum._values_cache:
-            return FlextUtilitiesEnum._values_cache[enum_cls]
-
-        # Type hint: enum_cls is type[E] where E is StrEnum, so __members__ exists
-        # Use getattr for runtime safety, but type checker knows StrEnum has __members__
-        members_dict: dict[str, E] = getattr(enum_cls, "__members__", {})
-        result = frozenset(m.value for m in members_dict.values())
-
-        # Cache result
-        FlextUtilitiesEnum._values_cache[enum_cls] = result
-        return result
-
-    @staticmethod
-    def names[E: StrEnum](enum_cls: type[E]) -> frozenset[str]:
-        """Return frozenset of member names (cached for performance).
-
-        Business Rule: Returns immutable frozenset of all enum member names.
-        Cache ensures same object returned for same enum class (identity preserved).
-        Manual cache dictionary handles enum classes efficiently.
-
-        Audit Implication: Cached results ensure consistent identity across calls.
-        """
-        # Check cache first
-        if enum_cls in FlextUtilitiesEnum._names_cache:
-            return FlextUtilitiesEnum._names_cache[enum_cls]
-
-        # Type hint: enum_cls is type[E] where E is StrEnum, so __members__ exists
-        members_dict: dict[str, E] = getattr(enum_cls, "__members__", {})
-        result = frozenset(members_dict.keys())
-
-        # Cache result
-        FlextUtilitiesEnum._names_cache[enum_cls] = result
-        return result
-
-    @staticmethod
-    def members[E: StrEnum](enum_cls: type[E]) -> frozenset[E]:
-        """Return frozenset of members (cached for performance).
-
-        Business Rule: Returns immutable frozenset of all enum members.
-        Cache ensures same object returned for same enum class (identity preserved).
-        Manual cache dictionary handles enum classes efficiently.
-
-        Audit Implication: Cached results ensure consistent identity across calls.
-        """
-        # Check cache first - retrieve cached members for this enum class
-        # Cache is keyed by enum_cls, so if we find it, it's the correct type
-        cached = FlextUtilitiesEnum._members_cache.get(enum_cls)
-        if cached is not None and isinstance(cached, frozenset):
-            # isinstance narrows to frozenset, key guarantees correct element type
-            return frozenset(cached)
-
-        # Type hint: enum_cls is type[E] where E is StrEnum, so __members__ exists
-        members_dict: dict[str, E] = getattr(enum_cls, "__members__", {})
-        result: frozenset[E] = frozenset(members_dict.values())
-
-        # Cache result - store in dictionary for all future calls with same enum_cls
-        FlextUtilitiesEnum._members_cache[enum_cls] = result
-        return result
-
-    # ─────────────────────────────────────────────────────────────
-    # ADVANCED ENUM VALIDATION - Python 3.13+ discriminated union patterns
-    # ─────────────────────────────────────────────────────────────
-
-    @staticmethod
-    def get_enum_values(enum_class: type[StrEnum]) -> Sequence[str]:
-        """Get all values from StrEnum class.
-
-        Returns immutable sequence for safe iteration.
-        Python 3.13+ collections.abc.Sequence pattern.
-        Uses enum.__members__ for compatibility with all type checkers.
-
-        Args:
-            enum_class: StrEnum class to extract values from
-
-        Returns:
-            Immutable sequence of enum string values
-
-        """
-        return tuple(member.value for member in enum_class.__members__.values())
 
     @staticmethod
     def create_discriminated_union(
-        _discriminator_field: str,
-        *enum_classes: type[StrEnum],
-    ) -> dict[str, type[StrEnum]]:
+        _discriminator_field: str, *enum_classes: type[StrEnum]
+    ) -> Mapping[str, type[StrEnum]]:
         """Create discriminated union mapping for Pydantic models.
 
         Advanced pattern for discriminated unions with multiple enums.
@@ -407,52 +224,8 @@ class FlextUtilitiesEnum:
                 union_map[member.value] = enum_class
         return union_map
 
-    # ─────────────────────────────────────────────────────────────
-    # DRY UTILITIES: Reduce constant declarations
-    # ─────────────────────────────────────────────────────────────
-
     @staticmethod
-    def auto_value(name: str) -> str:
-        """Generate lowercase value from enum member name.
-
-        Use in StrEnum with `_generate_next_value_` override.
-
-        Example:
-            >>> class Status(StrEnum):
-            ...     @staticmethod
-            ...     def _generate_next_value_(name, *_):
-            ...         return FlextUtilitiesEnum.auto_value(name)
-            ...
-            ...     PENDING = auto()
-            ...     RUNNING = auto()
-            >>> Status.PENDING.value
-            'pending'
-
-        """
-        return name.lower()
-
-    @staticmethod
-    def bi_map[K, V](data: dict[K, V]) -> tuple[dict[K, V], dict[V, K]]:
-        """Create bidirectional mapping from dict.
-
-        Returns (forward, inverse) tuple of dicts.
-        Use for replacing paired Mapping declarations.
-
-        Example:
-            >>> PHASE_MAP = {"1": "schema", "2": "hierarchy"}
-            >>> forward, inverse = FlextUtilitiesEnum.bi_map(PHASE_MAP)
-            >>> forward["1"]
-            'schema'
-            >>> inverse["schema"]
-            '1'
-
-        """
-        forward = dict(data)
-        inverse = {v: k for k, v in data.items()}
-        return forward, inverse
-
-    @staticmethod
-    def create_enum(name: str, values: dict[str, str]) -> type[StrEnum]:
+    def create_enum(name: str, values: Mapping[str, str]) -> type[StrEnum]:
         """Create StrEnum dynamically from values dict.
 
         Factory method for reducing StrEnum boilerplate during constants refactoring.
@@ -472,7 +245,7 @@ class FlextUtilitiesEnum:
             ...     "OutputFormat", {"JSON": "json", "YAML": "yaml", "CSV": "csv"}
             ... )
             >>> assert OutputFormat.JSON.value == "json"
-            >>> assert isinstance(OutputFormat.JSON, StrEnum)
+            >>> assert StrEnum in OutputFormat.JSON.__class__.__mro__
 
         Note:
             This method is used during v0.10 → v0.11 constants refactoring
@@ -486,27 +259,10 @@ class FlextUtilitiesEnum:
             {"__members__": {k: StrEnum(k, v) for k, v in values.items()}},
         )
 
-    @staticmethod
-    def is_enum_member[E: StrEnum](
-        value: t.GeneralValueType,
-        enum_cls: type[E],
-    ) -> TypeIs[E]:
-        """Check if value is enum member. Shortcut for is_member()."""
-        return FlextUtilitiesEnum.is_member(enum_cls, value)
-
-    @staticmethod
-    def parse_enum[E: StrEnum](enum_cls: type[E], value: str | E) -> r[E]:
-        """Parse value to enum. Shortcut for parse()."""
-        return FlextUtilitiesEnum.parse(enum_cls, value)
-
-    # ─────────────────────────────────────────────────────────────
-    # GENERALIZED DISPATCH METHOD
-    # ─────────────────────────────────────────────────────────────
-
     @overload
     @staticmethod
     def dispatch[E: StrEnum](
-        value: object,
+        value: t.Scalar | E,
         enum_cls: type[E],
         *,
         mode: Literal["is_member"] = "is_member",
@@ -516,7 +272,7 @@ class FlextUtilitiesEnum:
     @overload
     @staticmethod
     def dispatch[E: StrEnum](
-        value: object,
+        value: t.Scalar | E,
         enum_cls: type[E],
         *,
         mode: Literal["is_name"],
@@ -526,7 +282,7 @@ class FlextUtilitiesEnum:
     @overload
     @staticmethod
     def dispatch[E: StrEnum](
-        value: object,
+        value: t.Scalar | E,
         enum_cls: type[E],
         *,
         mode: Literal["parse"],
@@ -536,7 +292,7 @@ class FlextUtilitiesEnum:
     @overload
     @staticmethod
     def dispatch[E: StrEnum](
-        value: object,
+        value: t.Scalar | E,
         enum_cls: type[E],
         *,
         mode: Literal["coerce"],
@@ -545,7 +301,7 @@ class FlextUtilitiesEnum:
 
     @staticmethod
     def dispatch[E: StrEnum](
-        value: object,
+        value: t.Scalar | E,
         enum_cls: type[E],
         *,
         mode: str = "is_member",
@@ -567,13 +323,11 @@ class FlextUtilitiesEnum:
             Depends on mode - bool (for is_member/is_name), r[E] (for parse), or E (for coerce)
 
         """
-        FlextUtilitiesEnum._check_direct_access()
-
         if mode == "is_member":
-            if by_name and isinstance(value, str):
+            by_name_value = FlextUtilitiesEnum._validate_str(value)
+            if by_name and by_name_value.is_success:
                 is_member_result: bool = FlextUtilitiesEnum._is_member_by_name(
-                    value,
-                    enum_cls,
+                    str(by_name_value.value), enum_cls
                 )
                 return is_member_result
             result_bool: bool = FlextUtilitiesEnum._is_member_by_value(value, enum_cls)
@@ -581,39 +335,179 @@ class FlextUtilitiesEnum:
         if mode == "is_name":
             return FlextUtilitiesEnum._is_member_by_name(str(value), enum_cls)
         if mode == "parse":
-            # Type narrowing: value is object, but parse accepts str | E
-            # We handle this by checking if it's already an enum instance
             if isinstance(value, enum_cls):
                 return FlextUtilitiesEnum._parse(enum_cls, value)
-            if isinstance(value, str):
-                return FlextUtilitiesEnum._parse(enum_cls, value)
-            # For other types, convert to string
+            validated_value = FlextUtilitiesEnum._validate_str(value)
+            if validated_value.is_success:
+                return FlextUtilitiesEnum._parse(enum_cls, str(validated_value.value))
             return FlextUtilitiesEnum._parse(enum_cls, str(value))
         if mode == "coerce":
-            # Type narrowing: value is object, but coerce accepts str | E
-            # coerce always returns E (raises on failure)
-            # Explicit type narrowing for type checker
             if isinstance(value, enum_cls):
-                # Type narrowing: isinstance check ensures value is E
-                # Direct return after isinstance narrowing
                 return value
-            if isinstance(value, str):
-                # Type narrowing: isinstance check ensures value is str
-                coerced: E = FlextUtilitiesEnum._coerce(enum_cls, value)
+            validated_value = FlextUtilitiesEnum._validate_str(value)
+            if validated_value.is_success:
+                coerced: E = FlextUtilitiesEnum._coerce(
+                    enum_cls, str(validated_value.value)
+                )
                 return coerced
-            # For other types, convert to string
-            # Type narrowing: str(value) is str, which is valid for coerce
             value_str: str = str(value)
             coerced_str: E = FlextUtilitiesEnum._coerce(enum_cls, value_str)
             return coerced_str
         error_msg = f"Unknown mode: {mode}"
         raise ValueError(error_msg)
 
+    @staticmethod
+    def get_enum_values(enum_class: type[StrEnum]) -> Sequence[str]:
+        """Get all values from StrEnum class.
 
-# Short alias for convenience
-enum = FlextUtilitiesEnum
+        Returns immutable sequence for safe iteration.
+        Python 3.13+ collections.abc.Sequence pattern.
+        Uses enum.__members__ for compatibility with all type checkers.
 
-__all__ = [
-    "FlextUtilitiesEnum",
-    "enum",
-]
+        Args:
+            enum_class: StrEnum class to extract values from
+
+        Returns:
+            Immutable sequence of enum string values
+
+        """
+        return tuple(member.value for member in enum_class.__members__.values())
+
+    @staticmethod
+    def is_member[E: StrEnum](enum_cls: type[E], value: t.Scalar | E) -> TypeGuard[E]:
+        """Generic TypeGuard for any StrEnum.
+
+        Example:
+             if FlextUtilitiesEnum.is_member(Status, value):
+                 # value: Status (narrowed)
+                 process_status(value)
+
+        """
+        if isinstance(value, enum_cls):
+            return True
+        if isinstance(value, str):
+            value_map = enum_cls._value2member_map_
+            return value in value_map
+        return False
+
+    @staticmethod
+    def is_subset[E: StrEnum](
+        enum_cls: type[E], valid_members: frozenset[E], value: t.Scalar | E
+    ) -> TypeGuard[E]:
+        """TypeGuard for subset of a StrEnum.
+
+        Example:
+             ACTIVE_STATES = frozenset({Status.ACTIVE, Status.PENDING})
+
+             if FlextUtilitiesEnum.is_subset(Status, ACTIVE_STATES, value):
+                 # value: Status (narrowed to subset)
+                 process_active(value)
+
+        """
+        if isinstance(value, enum_cls) and value in valid_members:
+            return True
+        if isinstance(value, str):
+            try:
+                member = enum_cls(value)
+                return member in valid_members
+            except ValueError:
+                return False
+        return False
+
+    @staticmethod
+    def members[E: StrEnum](enum_cls: type[E]) -> frozenset[E]:
+        """Return frozenset of members (cached for performance).
+
+        Business Rule: Returns immutable frozenset of all enum members.
+        Cache ensures same object returned for same enum class (identity preserved).
+        Manual cache dictionary handles enum classes efficiently.
+
+        Audit Implication: Cached results ensure consistent identity across calls.
+        """
+        cached = FlextUtilitiesEnum._members_cache.get(enum_cls)
+        if isinstance(cached, frozenset):
+            return frozenset(enum_cls(member.value) for member in cached)
+        members_dict: Mapping[str, E] = enum_cls.__members__
+        result: frozenset[E] = frozenset(members_dict.values())
+        FlextUtilitiesEnum._members_cache[enum_cls] = result
+        return result
+
+    @staticmethod
+    def names[E: StrEnum](enum_cls: type[E]) -> frozenset[str]:
+        """Return frozenset of member names (cached for performance).
+
+        Business Rule: Returns immutable frozenset of all enum member names.
+        Cache ensures same object returned for same enum class (identity preserved).
+        Manual cache dictionary handles enum classes efficiently.
+
+        Audit Implication: Cached results ensure consistent identity across calls.
+        """
+        if enum_cls in FlextUtilitiesEnum._names_cache:
+            return FlextUtilitiesEnum._names_cache[enum_cls]
+        members_dict: Mapping[str, E] = enum_cls.__members__
+        result = frozenset(members_dict.keys())
+        FlextUtilitiesEnum._names_cache[enum_cls] = result
+        return result
+
+    @staticmethod
+    def parse_enum(enum_cls: type[EnumT], value: str | EnumT) -> r[EnumT]:
+        """Convert string to StrEnum with r.
+
+        Example:
+             result = FlextUtilitiesEnum.parse(Status, "active")
+             if result.is_success:
+                 status: Status = result.value
+
+        """
+        if isinstance(value, enum_cls):
+            return r[EnumT].ok(value)
+        try:
+            return r[EnumT].ok(enum_cls(value))
+        except ValueError:
+            members_dict = enum_cls.__members__
+            enum_members = list(members_dict.values())
+            valid = ", ".join(m.value for m in enum_members)
+            enum_name = enum_cls.__name__
+            return r[EnumT].fail(f"Invalid {enum_name}: '{value}'. Valid: {valid}")
+
+    @staticmethod
+    def parse_or_default[E: StrEnum](
+        enum_cls: type[E], value: str | E | None, default: E
+    ) -> E:
+        """Convert with fallback to default (never fails).
+
+        Example:
+             status = FlextUtilitiesEnum.parse_or_default(
+                 Status, user_input, Status.PENDING
+             )
+
+        """
+        if value is None:
+            return default
+        if isinstance(value, enum_cls):
+            return value
+        try:
+            return enum_cls(value)
+        except ValueError:
+            return default
+
+    @staticmethod
+    def values[E: StrEnum](enum_cls: type[E]) -> frozenset[str]:
+        """Return frozenset of values (cached for performance).
+
+        Business Rule: Returns immutable frozenset of all enum values.
+        Cache ensures same object returned for same enum class (identity preserved).
+        Manual cache dictionary handles enum classes efficiently.
+
+        Audit Implication: Cached results ensure consistent identity across calls,
+        important for set operations and identity checks in audit trails.
+        """
+        if enum_cls in FlextUtilitiesEnum._values_cache:
+            return FlextUtilitiesEnum._values_cache[enum_cls]
+        members_dict: Mapping[str, E] = enum_cls.__members__
+        result = frozenset(m.value for m in members_dict.values())
+        FlextUtilitiesEnum._values_cache[enum_cls] = result
+        return result
+
+
+__all__ = ["FlextUtilitiesEnum"]

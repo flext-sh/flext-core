@@ -1,7 +1,6 @@
 # Anti-Patterns and Best Practices Guide - Audit Report
 
 <!-- TOC START -->
-
 - [Audit Summary](#audit-summary)
   - [✅ Guide Accuracy: 10/10](#guide-accuracy-1010)
   - [✅ Verified Against Source Code](#verified-against-source-code)
@@ -25,7 +24,6 @@
 - [Accuracy Assessment](#accuracy-assessment)
 - [Completeness Assessment](#completeness-assessment)
 - [Conclusion](#conclusion)
-
 <!-- TOC END -->
 
 **Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency
@@ -54,7 +52,7 @@ All 15 anti-patterns verified against actual FLEXT-Core implementation:
 
 | Anti-Pattern                     | Guide Description               | Source Verification                 | Status      |
 | -------------------------------- | ------------------------------- | ----------------------------------- | ----------- |
-| 1. Exceptions for Business Logic | Says: Use FlextResult           | Found: 1,121 FlextResult usages     | ✅ FOLLOWED |
+| 1. Exceptions for Business Logic | Says: Use r           | Found: 1,121 r usages     | ✅ FOLLOWED |
 | 2. Swallowing Errors             | Says: No `except: pass`         | Found: 0 occurrences                | ✅ FOLLOWED |
 | 3. Ignoring Error Info           | Says: Use error_code/error_data | Verified in result.py               | ✅ FOLLOWED |
 | 4. Using `Any` Type              | Says: Use specific types        | Found: 0 `: Any` in src/            | ✅ FOLLOWED |
@@ -64,8 +62,8 @@ All 15 anti-patterns verified against actual FLEXT-Core implementation:
 | 8. Multiple Exports              | Says: One class per module      | 28 Flext classes, 1 per module      | ✅ FOLLOWED |
 | 9. God Objects                   | Says: Decompose                 | models.py has 1 main class + nested | ✅ FOLLOWED |
 | 10. Multiple Containers          | Says: Use get_global()          | Pattern enforced                    | ✅ FOLLOWED |
-| 11. Not Checking Results         | Says: Check FlextResult         | Pattern enforced                    | ✅ FOLLOWED |
-| 12. Validation w/o Result        | Says: Wrap in FlextResult       | Implemented in models.py            | ✅ FOLLOWED |
+| 11. Not Checking Results         | Says: Check r         | Pattern enforced                    | ✅ FOLLOWED |
+| 12. Validation w/o Result        | Says: Wrap in r       | Implemented in models.py            | ✅ FOLLOWED |
 | 13. Mutable Value Objects        | Says: frozen=True               | Found 4 frozen=True uses            | ✅ FOLLOWED |
 | 14. Hardcoded Config             | Says: Use BaseSettings          | config.py uses BaseSettings         | ✅ FOLLOWED |
 | 15. No Config Validation         | Says: Validate on load          | Pydantic validation used            | ✅ FOLLOWED |
@@ -81,13 +79,13 @@ ______________________________________________________________________
 **Guide Claims**:
 
 - ❌ Don't use exceptions for business logic
-- ✅ Use FlextResult railway pattern
+- ✅ Use r railway pattern
 
 **Source Code Evidence**:
 
 ```bash
-# FlextResult usage across codebase
-$ grep -n "FlextResult\[" src/flext_core/*.py | wc -l
+# r usage across codebase
+$ grep -n "r\[" src/flext_core/*.py | wc -l
 1121
 
 # Limited exception usage - only FlextExceptions types
@@ -101,7 +99,7 @@ $ grep -n "raise.*Error" src/flext_core/models.py | head -5
 
 **Verification**: ✅ ACCURATE
 
-- FlextResult used 1,121 times throughout codebase
+- r used 1,121 times throughout codebase
 - Exceptions only used for invariant violations (FlextExceptions types)
 - Railway pattern is the dominant error handling approach
 
@@ -109,7 +107,7 @@ $ grep -n "raise.*Error" src/flext_core/models.py | head -5
 
 ```python
 @classmethod
-def ok(cls, data: T_co) -> FlextResult[T_co]:
+def ok(cls, data: T_co) -> r[T_co]:
     """Create successful result wrapping data."""
     return cls._success(data)
 ```
@@ -150,14 +148,14 @@ def fail(
     error: str,
     error_code: str | None = None,
     error_data: dict[str, object] | None = None,
-) -> FlextResult[Never]:
+) -> r[Never]:
     """Create failed result with error message and optional code/data."""
     return cls._failure(error, error_code, error_data)
 ```
 
 **Verification**: ✅ ACCURATE
 
-- FlextResult.fail() supports error_code and error_data parameters
+- r.fail() supports error_code and error_data parameters
 - Documented pattern matches actual implementation
 
 ______________________________________________________________________
@@ -182,7 +180,7 @@ $ grep -n ": Any" src/flext_core/*.py
 **Verification**: ✅ ACCURATE
 
 - ZERO usage of `: Any` type in source files
-- Codebase uses strict typing with generics (FlextResult[T], TypeVar, etc.)
+- Codebase uses strict typing with generics (r[T], TypeVar, etc.)
 
 **Counter-Example** (typings.py defines TypeVars, not Any):
 
@@ -202,10 +200,10 @@ T = TypeVar("T")
 **Source Code Evidence** (container.py:574):
 
 ```python
-def get_typedT -> FlextResult[T]:
+def get_typedT -> r[T]:
     """Get service with type checking and inference.
 
-    Returns FlextResult[T] with proper type information.
+    Returns r[T] with proper type information.
     """
 ```
 
@@ -253,10 +251,10 @@ ______________________________________________________________________
 ROOT IMPORT PATTERN (ECOSYSTEM STANDARD)
 
 ✅ CORRECT - Always use root imports:
-    from flext_core import FlextResult, FlextContainer
+    from flext_core import r, FlextContainer
 
 ❌ FORBIDDEN - Never use internal module imports (for ecosystem):
-    from flext_core.result import FlextResult  # Breaks ecosystem
+    from flext_core.result import r  # Breaks ecosystem
 """
 ```
 
@@ -273,7 +271,7 @@ Layer 0: constants.py, typings.py, protocols.py
 
 **Verification**: ✅ ACCURATE
 
-- Layer hierarchy documented in CLAUDE.md and enforced
+- Layer hierarchy documented in AGENTS.md and enforced
 - Internal library code uses internal imports (correct)
 - External ecosystem MUST use root imports (documented)
 - No circular dependencies found
@@ -369,21 +367,21 @@ container.py:1032: # For new code, use FlextContainer() directly
 **Guide Claims**:
 
 - ❌ Don't assume service exists: `container.get("x").value`
-- ✅ Check FlextResult before unwrapping
+- ✅ Check r before unwrapping
 
 **Source Code Evidence** (container.py:491):
 
 ```python
-def get(self, identifier: str) -> FlextResult[object]:
-    """Get service with FlextResult error handling.
+def get(self, identifier: str) -> r[object]:
+    """Get service with r error handling.
 
-    Returns FlextResult wrapping service or error.
+    Returns r wrapping service or error.
     """
 ```
 
 **Verification**: ✅ ACCURATE
 
-- Container methods return FlextResult
+- Container methods return r
 - Forces explicit error handling
 - Pattern enforced by API design
 
@@ -391,25 +389,25 @@ ______________________________________________________________________
 
 ### Category 5: Model Anti-Patterns (2 patterns)
 
-#### Anti-Pattern 12: Validation Without FlextResult ✅
+#### Anti-Pattern 12: Validation Without r ✅
 
 **Guide Claims**:
 
 - ❌ Don't let Pydantic raise ValidationError directly
-- ✅ Wrap validation in FlextResult
+- ✅ Wrap validation in r
 
 **Source Code Evidence**:
 
 The guide shows wrapping pattern, and source code demonstrates both approaches:
 
 1. **Pydantic validation** (models.py uses validators for data integrity)
-1. **FlextResult wrapping** (recommended for business logic)
+1. **r wrapping** (recommended for business logic)
 
 **Verification**: ✅ ACCURATE
 
 - Guide correctly shows both patterns
 - Pydantic validators for data constraints (appropriate use)
-- FlextResult for business logic validation (recommended pattern)
+- r for business logic validation (recommended pattern)
 
 #### Anti-Pattern 13: Mutable Value Objects ✅
 
@@ -452,8 +450,10 @@ ______________________________________________________________________
 ```python
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+
 class FlextSettings(BaseSettings):
     """Configuration management with Pydantic validation."""
+
     model_config = SettingsConfigDict(
         env_prefix="FLEXT_",
         # Environment variable support
@@ -499,13 +499,13 @@ Checked all referenced guides:
 - ✅ Railway-Oriented Programming - EXISTS
 - ❌ Clean Architecture - MISSING (should create)
 - ❌ Development Standards - MISSING (should create)
-- ✅ FLEXT CLAUDE.md - EXISTS
+- ✅ FLEXT AGENTS.md - EXISTS
 
 **Recommendation**: Create missing guides referenced in "See Also" section.
 
 ### External References ✅
 
-- ✅ CLAUDE.md references - Accurate
+- ✅ AGENTS.md references - Accurate
 - ✅ Version reference (0.9.9) - Current
 
 ______________________________________________________________________
@@ -516,7 +516,7 @@ ______________________________________________________________________
 
 ```bash
 # Railway Pattern Adoption
-FlextResult[T] usages: 1,121 occurrences
+r[T] usages: 1,121 occurrences
 
 # Type Safety
 `: Any` type usage: 0 occurrences
@@ -524,7 +524,7 @@ Strict typing: 100% of source files
 
 # Error Handling
 Swallowed exceptions (except: pass): 0 occurrences
-Structured error info (error_code/error_data): Built-in to FlextResult
+Structured error info (error_code/error_data): Built-in to r
 
 # Architecture
 Flext-prefixed classes: 28 (one per module)
@@ -572,9 +572,11 @@ ______________________________________________________________________
    Example: Anti-Pattern 1 - See result.py:313 (ok method)
    ```
 
+````
+
 ### Medium Priority
 
-3. **Create Missing Referenced Guides**:
+1. **Create Missing Referenced Guides**:
 
    - `../architecture/clean-architecture.md` - Layer hierarchy
    - `../standards/development.md` - Coding standards
@@ -586,7 +588,7 @@ ______________________________________________________________________
 
 1. **Add Anti-Pattern Detection**:
 
-   ````markdown
+   ```markdown
    ## How to Detect These Anti-Patterns
 
    ### Anti-Pattern 1: Exceptions for Business Logic
@@ -594,13 +596,14 @@ ______________________________________________________________________
    ```bash
    # Search for business logic exceptions
    grep -r "raise ValueError\|raise KeyError" src/
-   ```
-   ````
+````
+
+```
 
 ### Low Priority
 
-6. **Expand Examples**: Add more complex real-world scenarios
-1. **Add Metrics**: Include performance comparisons (exception vs FlextResult)
+1. **Expand Examples**: Add more complex real-world scenarios
+1. **Add Metrics**: Include performance comparisons (exception vs r)
 1. **Add Migration Guide**: How to refactor code with anti-patterns
 
 ______________________________________________________________________
@@ -659,3 +662,4 @@ The Anti-Patterns and Best Practices guide is **EXCELLENT** and serves as a **go
 ______________________________________________________________________
 
 **Next**: Audit Pydantic v2 Patterns guide
+```

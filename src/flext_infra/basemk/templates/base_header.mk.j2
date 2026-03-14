@@ -1,0 +1,37 @@
+# =============================================================================
+# FLEXT BASE MAKEFILE - Shared patterns for all FLEXT projects
+# =============================================================================
+# Usage: Set PROJECT_NAME before including: include ../base.mk
+# Silent by default. Use VERBOSE=1 for detailed output.
+# =============================================================================
+
+# === CONFIGURATION (override before include) ===
+PROJECT_NAME ?= {{ config.project_name }}
+PYTHON_VERSION ?= {{ config.python_version }}
+SRC_DIR ?= {{ config.source_dir }}
+TESTS_DIR ?= {{ config.tests_dir }}
+DOCSTRING_MIN ?= 80
+COMPLEXITY_MAX ?= 10
+CORE_STACK ?= {{ config.core_stack }}
+PYTEST_ARGS ?=
+DIAG ?= 0
+CHECK_GATES ?=
+VALIDATE_GATES ?=
+DOCS_PHASE ?= all
+AUTO_ADJUST ?= 1
+PR_ACTION ?= status
+PR_BASE ?= main
+PR_HEAD ?=
+PR_NUMBER ?=
+PR_TITLE ?=
+PR_BODY ?=
+PR_DRAFT ?= 0
+PR_MERGE_METHOD ?= squash
+PR_AUTO ?= 0
+PR_DELETE_BRANCH ?= 0
+PR_CHECKS_STRICT ?= 0
+PR_RELEASE_ON_MERGE ?= 1
+
+PYTEST_REPORT_ARGS := -ra --durations=25 --durations-min=0.001 --tb=short
+PYTEST_DIAG_ARGS := -rA --durations=0 --tb=long --showlocals
+PYTEST_REPORTS_DIR ?= .reports/tests

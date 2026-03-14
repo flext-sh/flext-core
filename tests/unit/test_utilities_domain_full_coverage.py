@@ -9,55 +9,40 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Hashable
-from datetime import datetime
+from collections import UserDict
+from datetime import UTC, datetime
+from typing import Annotated, cast, override
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, Field
 
-from flext_core import c, t, u
+from flext_core import u
 
-
-class _SampleEntity(BaseModel):
-    """Test entity for domain utility tests."""
-
-    model_config = ConfigDict(frozen=False)
-
-    unique_id: str = "test-123"
-    name: str = "test"
-
-
-class _FrozenEntity(BaseModel):
-    """Frozen entity for immutability tests."""
-
-    model_config = ConfigDict(frozen=True)
-
-    unique_id: str = "frozen-1"
+from ._models import _FrozenEntity, _SampleEntity
 
 
 class TestDomainLogger:
-    """Tests for u.Domain.logger property."""
+    """Tests for u.logger property."""
 
     def test_logger_property_returns_logger(self) -> None:
-        """logger property returns a structlog logger (line 32)."""
-        domain_util = u.Domain()
+        """Logger property returns a structlog logger (line 32)."""
+        domain_util = u()
         logger = domain_util.logger
         assert logger is not None
         assert hasattr(logger, "info")
 
 
-class TestDomainHashValueObject:
-    """Tests for u.Domain.hash_value_object_by_value()."""
+class TestDomainHashValue:
+    """Tests for u.hash_value_object_by_value()."""
 
     def test_hash_with_hashable_non_primitive(self) -> None:
         """Hashable non-primitive value in model_dump is repr'd (line 156)."""
-        # datetime is Hashable but not str/int/float/bool/None
 
         class EntityWithDate(BaseModel):
             unique_id: str = "test"
-            created: datetime = datetime(2025, 1, 1)
+            created: datetime = datetime(2025, 1, 1, tzinfo=UTC)
 
         entity = EntityWithDate()
-        result = u.Domain.hash_value_object_by_value(entity)
+        result = u.hash_value_object_by_value(entity)
         assert isinstance(result, int)
 
     def test_hash_with_non_hashable_value(self) -> None:
@@ -65,26 +50,25 @@ class TestDomainHashValueObject:
 
         class EntityWithList(BaseModel):
             unique_id: str = "test"
-            tags: list[str] = ["a", "b"]
+            tags: Annotated[list[str], Field(default_factory=lambda: ["a", "b"])]
 
         entity = EntityWithList()
-        result = u.Domain.hash_value_object_by_value(entity)
+        result = u.hash_value_object_by_value(entity)
         assert isinstance(result, int)
 
 
-class TestValidateValueObjectImmutable:
-    """Tests for u.Domain.validate_value_object_immutable()."""
+class TestValidateValueImmutable:
+    """Tests for u.validate_value_object_immutable()."""
 
     def test_frozen_model_is_immutable(self) -> None:
         """Pydantic model with frozen=True detected as immutable (lines 197-200)."""
         entity = _FrozenEntity()
-        assert u.Domain.validate_value_object_immutable(entity) is True
+        assert u.validate_value_object_immutable(entity) is True
 
     def test_non_frozen_model_checks_setattr(self) -> None:
         """Non-frozen Pydantic model checks __setattr__ override."""
         entity = _SampleEntity()
-        # Pydantic models override __setattr__, so this should be True
-        result = u.Domain.validate_value_object_immutable(entity)
+        result = u.validate_value_object_immutable(entity)
         assert isinstance(result, bool)
 
     def test_plain_object_is_mutable(self) -> None:
@@ -94,30 +78,48 @@ class TestValidateValueObjectImmutable:
             pass
 
         obj = PlainObj()
-        # PlainObj uses object.__setattr__ → mutable
-        assert u.Domain.validate_value_object_immutable(obj) is False
+        assert (
+            u.validate_value_object_immutable(
+                cast("object", cast("object", obj)),
+            )
+            is False
+        )
 
     def test_object_without_model_config(self) -> None:
         """Object without model_config just checks __setattr__."""
-        result = u.Domain.validate_value_object_immutable("hello")
+        result = u.validate_value_object_immutable("hello")
         assert isinstance(result, bool)
 
 
 def test_validate_value_object_immutable_exception_and_no_setattr_branch() -> None:
-    class _BrokenConfigDict(dict[str, bool]):
+
+    class _BrokenConfigDict(UserDict[str, bool]):
+        @override
         def get(self, key: str, default: object = None) -> bool:
             _ = key
             _ = default
-            raise TypeError("bad config")
+            msg = "bad config"
+            raise TypeError(msg)
 
     class _BrokenConfig:
         model_config: _BrokenConfigDict = _BrokenConfigDict()
 
     class _NoSetattrVisible:
-        def __getattribute__(self, name: str):
+        @override
+        def __getattribute__(self, name: str) -> object:
             if name == "__setattr__":
                 raise AttributeError(name)
             return object.__getattribute__(self, name)
 
-    assert u.Domain.validate_value_object_immutable(_BrokenConfig()) is False
-    assert u.Domain.validate_value_object_immutable(_NoSetattrVisible()) is False
+    assert (
+        u.validate_value_object_immutable(
+            cast("object", cast("object", _BrokenConfig())),
+        )
+        is False
+    )
+    assert (
+        u.validate_value_object_immutable(
+            cast("object", cast("object", _NoSetattrVisible())),
+        )
+        is False
+    )

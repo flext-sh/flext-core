@@ -7,7 +7,6 @@
 > Project profile: `flext-core`
 
 <!-- TOC START -->
-
 - [What is FLEXT](#what-is-flext)
 - [Prerequisites](#prerequisites)
 - [Installation](#installation)
@@ -28,7 +27,6 @@
   - [Build Real Applications](#build-real-applications)
 - [Getting Help](#getting-help)
 - [What's Next](#whats-next)
-
 <!-- TOC END -->
 
 ## What is FLEXT
@@ -116,7 +114,7 @@ from flext_core import FlextModels
 from flext_core import FlextProcessors
 from flext_core import p
 from flext_core import FlextRegistry
-from flext_core import FlextResult
+from flext_core import r
 from flext_core import FlextRuntime
 from flext_core import FlextService
 from flext_core import t
@@ -171,30 +169,33 @@ from flext_core import FlextModels
 from flext_core import FlextProcessors
 from flext_core import p
 from flext_core import FlextRegistry
-from flext_core import FlextResult
+from flext_core import r
 from flext_core import FlextRuntime
 from flext_core import FlextService
 from flext_core import t
 from flext_core import u
 
-def process_ldif_data(content: str) -> FlextResult[str, Exception]:
+
+def process_ldif_data(content: str) -> r[str, Exception]:
     # Parse LDIF
     parse_result = ldif.parse(content)
     if parse_result.is_failure:
-        return FlextResult.failure(parse_result.failure())
+        return r.failure(parse_result.failure())
 
     entries = parse_result.unwrap()
 
     # Process entries
     try:
         processed_data = process_entries(entries)
-        return FlextResult.success(processed_data)
+        return r.success(processed_data)
     except Exception as e:
-        return FlextResult.failure(e)
+        return r.failure(e)
+
 
 def process_entries(entries: list) -> str:
     # Your processing logic here
     return f"Processed {len(entries)} entries"
+
 
 # Usage
 result = process_ldif_data(ldif_content)
@@ -222,30 +223,34 @@ from flext_core import FlextModels
 from flext_core import FlextProcessors
 from flext_core import p
 from flext_core import FlextRegistry
-from flext_core import FlextResult
+from flext_core import r
 from flext_core import FlextRuntime
 from flext_core import FlextService
 from flext_core import t
 from flext_core import u
 from dataclasses import dataclass
 
+
 @dataclass
 class CreateUserCommand:
     username: str
     email: str
 
+
 @dataclass
 class GetUserQuery:
     user_id: str
 
-class UserService:
-    def create_user(self, cmd: CreateUserCommand) -> FlextResult[str, Exception]:
-        # Create user logic
-        return FlextResult.success(f"User {cmd.username} created")
 
-    def get_user(self, query: GetUserQuery) -> FlextResult[str, Exception]:
+class UserService:
+    def create_user(self, cmd: CreateUserCommand) -> r[str, Exception]:
+        # Create user logic
+        return r.success(f"User {cmd.username} created")
+
+    def get_user(self, query: GetUserQuery) -> r[str, Exception]:
         # Get user logic
-        return FlextResult.success(f"User {query.user_id} data")
+        return r.success(f"User {query.user_id} data")
+
 
 # Setup dispatcher
 dispatcher = FlextDispatcher()
@@ -282,7 +287,7 @@ config = FlextLdifSettings(
     default_encoding="utf-8",
     strict_validation=True,
     servers_enabled=True,
-    batch_size=1000
+    batch_size=1000,
 )
 
 # Use configuration
@@ -330,3 +335,6 @@ Now that you have FLEXT installed and running, explore these areas:
 1. **Examples**: Real-world usage examples
 
 Happy coding with FLEXT! 🚀
+
+```
+```

@@ -19,7 +19,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from types import ModuleType
-from typing import cast
+from typing import override
 
 from flext_core import (
     FlextContainer,
@@ -27,12 +27,12 @@ from flext_core import (
     FlextLogger,
     FlextRuntime,
     FlextSettings,
+    m,
     r,
     s,
 )
-from flext_core.typings import t
-from flext_tests.matchers import tm
-from flext_tests.utilities import u
+from flext_core._models.service import FlextModelsService
+from flext_tests import tm, u
 from tests.test_utils import assertion_helpers
 
 
@@ -40,18 +40,15 @@ class TestConfigServiceViaDI:
     """Test FlextSettings accessibility via DI."""
 
     def test_config_via_container_get_global(self) -> None:
-        """Test accessing FlextSettings via container.get_global_instance."""
-        # Config is accessible via singleton pattern
-        config1 = FlextSettings.get_global_instance()
-        config2 = FlextSettings.get_global_instance()
+        """Test accessing FlextSettings via get_global."""
+        config1 = FlextSettings.get_global()
+        config2 = FlextSettings.get_global()
         assert config1 is config2
         assert isinstance(config1, FlextSettings)
 
     def test_config_via_service_runtime(self) -> None:
         """Test FlextSettings accessible via FlextService._create_runtime."""
-        runtime = s._create_runtime(
-            config_overrides={"app_name": "test_app"},
-        )
+        runtime = s._create_runtime(config_overrides={"app_name": "test_app"})
         assert runtime.config is not None
         assert isinstance(runtime.config, FlextSettings)
         assert runtime.config.app_name == "test_app"
@@ -66,11 +63,9 @@ class TestConfigServiceViaDI:
 
     def test_config_injection_via_wiring(self) -> None:
         """Test injecting FlextSettings via @inject decorator."""
-        # Use DependencyIntegration to create container with config
         di_container = FlextRuntime.DependencyIntegration.create_container(
-            config={"app_name": "injected_config"},
+            config=m.ConfigMap(root={"app_name": "injected_config"}),
         )
-
         module = ModuleType("config_injection_module")
 
         @FlextRuntime.DependencyIntegration.inject
@@ -81,12 +76,8 @@ class TestConfigServiceViaDI:
         ) -> str:
             return app_name
 
-        # Type narrowing: ModuleType can have dynamic attributes
         setattr(module, "get_config", get_config)
-
-        # Wire module
         FlextRuntime.DependencyIntegration.wire(di_container, modules=[module])
-
         try:
             func = getattr(module, "get_config")
             result = func()
@@ -116,23 +107,21 @@ class TestLoggerServiceViaDI:
     def test_logger_registration_in_container(self) -> None:
         """Test registering FlextLogger in container for DI."""
         container = FlextContainer()
-
-        # Logger is auto-registered by default, so we can retrieve it directly
-        # or register a custom one with a different name
-        logger_result: r[FlextLogger] = container.get("logger")
+        logger_result = container.get("logger")
         assert logger_result.is_success
         assert isinstance(logger_result.value, FlextLogger)
 
-        # Test registering a custom logger with a different name
         def create_custom_logger() -> FlextLogger:
             return FlextLogger.create_module_logger("service_logger")
 
-        # Register custom logger factory with different name
-        result = container.register_factory("custom_logger", create_custom_logger)
-        assertion_helpers.assert_flext_result_success(result)
-
-        # Retrieve custom logger
-        custom_logger_result: r[FlextLogger] = container.get("custom_logger")
+        returned_container = container.register(
+            "custom_logger",
+            create_custom_logger,
+            kind="factory",
+        )
+        assert returned_container is container
+        assert container.has_service("custom_logger")
+        custom_logger_result = container.get("custom_logger")
         assert custom_logger_result.is_success
         assert isinstance(custom_logger_result.value, FlextLogger)
 
@@ -156,21 +145,18 @@ class TestContextServiceViaDI:
 
     def test_context_registration_in_container(self) -> None:
         """Test registering FlextContext in container for DI."""
-        # Context must be provided during container creation for auto-registration
         container = FlextContainer(_context=FlextContext())
-
-        # Context is auto-registered when provided, so we can retrieve it directly
-        context_result: r[FlextContext] = container.get("context")
+        context_result = container.get("context")
         assert context_result.is_success
         assert isinstance(context_result.value, FlextContext)
-
-        # Test registering a custom context with a different name
         custom_context = FlextContext()
-        result = container.register("custom_context", custom_context)
-        assertion_helpers.assert_flext_result_success(result)
-
-        # Retrieve custom context
-        custom_context_result: r[FlextContext] = container.get("custom_context")
+        returned_container = container.register(
+            "custom_context",
+            custom_context,
+        )
+        assert returned_container is container
+        assert container.has_service("custom_context")
+        custom_context_result = container.get("custom_context")
         assert custom_context_result.is_success
         assert isinstance(custom_context_result.value, FlextContext)
         assert custom_context_result.value is custom_context
@@ -182,98 +168,58 @@ class TestServicesIntegrationViaDI:
     def test_all_services_via_service_runtime(self) -> None:
         """Test all services accessible via single service runtime."""
         custom_context = FlextContext.create()
-
         runtime = s._create_runtime(
             config_overrides={"app_name": "integrated_app"},
             context=custom_context,
         )
-
-        # Verify all services accessible
         assert runtime.config is not None
         assert isinstance(runtime.config, FlextSettings)
         assert runtime.config.app_name == "integrated_app"
-
         assert runtime.context is not None
         assert isinstance(runtime.context, FlextContext)
-
         assert runtime.container is not None
         assert isinstance(runtime.container, FlextContainer)
 
     def test_services_in_service_class(self) -> None:
         """Test services accessible in FlextService subclass."""
+        FlextContainer.reset_for_testing()
 
         class ServiceWithDI(s[str]):
+            @override
             @classmethod
-            def _runtime_bootstrap_options(cls) -> t.RuntimeBootstrapOptions:
-                # Create a factory function that returns a context instance
-                def create_context() -> FlextContext:
-                    """Factory function for creating context instances."""
-                    return FlextContext()
+            def _runtime_bootstrap_options(
+                cls,
+            ) -> FlextModelsService.RuntimeBootstrapOptions:
+                return FlextModelsService.RuntimeBootstrapOptions(
+                    config_overrides={"app_name": "service_app"},
+                    services={"logger": FlextLogger.create_module_logger("service")},
+                )
 
-                return {
-                    "config_overrides": {"app_name": "service_app"},
-                    "services": {
-                        "logger": FlextLogger.create_module_logger("service"),
-                        "custom_context": create_context(),
-                    },
-                }
-
+            @override
             def execute(self) -> r[str]:
-                # Access config
                 app_name = self.config.app_name
                 tm.that(app_name, eq="service_app", msg="Config must be accessible")
-
-                # Access container services
-                # Type narrowing: container.get returns r[T], cast to help mypy
-                container_get_result: object = self.container.get("logger")
-                logger_result = cast("r[t.GeneralValueType]", container_get_result)
-                u.Tests.Result.assert_success(logger_result)
-                logger = cast("FlextLogger", logger_result.value)
-                tm.that(
-                    logger,
-                    is_=FlextLogger,
-                    none=False,
-                    msg="Logger must be accessible via DI",
+                logger_result = self.container.get("logger")
+                _ = u.Tests.Result.assert_success(logger_result)
+                logger = logger_result.value
+                assert logger is not None, "Logger must be accessible via DI"
+                assert hasattr(logger, "info") and callable(getattr(logger, "info")), (
+                    "Logger must be accessible via DI"
                 )
-
-                # Type narrowing: container.get returns r[T], cast to help mypy
-                container_get_result2: object = self.container.get("custom_context")
-                context_result = cast("r[t.GeneralValueType]", container_get_result2)
-                u.Tests.Result.assert_success(context_result)
-                context = cast("FlextContext", context_result.value)
-                tm.that(
-                    context,
-                    is_=FlextContext,
-                    none=False,
-                    msg="Context must be accessible via DI",
-                )
-
                 return r[str].ok(f"app: {app_name}")
 
         service = ServiceWithDI()
         result = service.execute()
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert "app: service_app" in result.value
 
     def test_services_injection_combined(self) -> None:
         """Test injecting multiple services via @inject."""
-        # Use DependencyIntegration to create container with config and services
-        # This ensures config provider is properly configured
-        # Convert services to t.GeneralValueType-compatible dict for type compatibility
-        logger_instance = FlextLogger.create_module_logger("test")
-        context_instance = FlextContext()
-        services_raw: dict[str, t.GeneralValueType] = {
-            "logger": logger_instance,
-            "context": context_instance,
-        }
-        # Cast to t.GeneralValueType dict - services dict accepts any object
-        services = services_raw
+        services = {"logger_name": "test"}
         di_container = FlextRuntime.DependencyIntegration.create_container(
-            config={"app_name": "injected"},
+            config=m.ConfigMap(root={"app_name": "injected"}),
             services=services,
         )
-
-        # Create module with injected function
         module = ModuleType("services_injection_module")
 
         @FlextRuntime.DependencyIntegration.inject
@@ -284,12 +230,8 @@ class TestServicesIntegrationViaDI:
         ) -> dict[str, str]:
             return {"app": app_name}
 
-        # Type narrowing: ModuleType can have dynamic attributes
         setattr(module, "process", process)
-
-        # Wire module
         FlextRuntime.DependencyIntegration.wire(di_container, modules=[module])
-
         try:
             process_func = getattr(module, "process")
             result = process_func()

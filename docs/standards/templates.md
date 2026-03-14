@@ -1,90 +1,88 @@
 # Documentation Templates
 
 <!-- TOC START -->
-
 - [Feature Guide Template](#feature-guide-template)
-- [Overview](#overview)
-- [Basic Usage](#basic-usage)
+- [Overview - Feature Guide Template](#overview-feature-guide-template)
+- [Basic Usage - Feature Guide Template](#basic-usage-feature-guide-template)
   - [Simple Example](#simple-example)
-  - [Common Patterns](#common-patterns)
-- [API Reference](#api-reference)
+  - [Common Patterns - Feature Guide Template](#common-patterns-feature-guide-template)
+- [API Reference - Feature Guide Template](#api-reference-feature-guide-template)
   - [Method/Class 1](#methodclass-1)
   - [Method/Class 2](#methodclass-2)
-- [Best Practices](#best-practices)
+- [Best Practices - Feature Guide Template](#best-practices-feature-guide-template)
   - [✅ DO](#do)
   - [❌ DON'T](#dont)
-- [Common Issues](#common-issues)
+- [Common Issues - Feature Guide Template](#common-issues-feature-guide-template)
   - [Issue: [Problem Description]](#issue-problem-description)
   - [Issue: [Problem Description]](#issue-problem-description)
-- [Advanced Topics](#advanced-topics)
-- [Summary](#summary)
-- [See Also](#see-also)
+- [Advanced Topics - Feature Guide Template](#advanced-topics-feature-guide-template)
+- [Summary - Feature Guide Template](#summary-feature-guide-template)
+- [See Also - Feature Guide Template](#see-also-feature-guide-template)
 - [API Reference Template](#api-reference-template)
-- [[Class/Module Name]](#classmodule-name)
-  - [Class Methods](#class-methods)
-  - [Properties](#properties)
-- [Quality Metrics](#quality-metrics)
-- [Usage Examples](#usage-examples)
-  - [Complete Example](#complete-example)
-- [See Also](#see-also)
+- [[Class/Module Name] - API Reference Template](#classmodule-name-api-reference-template)
+  - [Class Methods - API Reference Template](#class-methods-api-reference-template)
+  - [Properties - API Reference Template](#properties-api-reference-template)
+- [Quality Metrics - API Reference Template](#quality-metrics-api-reference-template)
+- [Usage Examples - API Reference Template](#usage-examples-api-reference-template)
+  - [Complete Example - API Reference Template](#complete-example-api-reference-template)
+- [See Also - API Reference Template](#see-also-api-reference-template)
 - [Troubleshooting Template](#troubleshooting-template)
-- [[Category of Issues]](#category-of-issues)
-  - [Issue: [Problem Description]](#issue-problem-description)
-- [[Another Category]](#another-category)
-  - [Issue: [Problem Description]](#issue-problem-description)
+- [[Category of Issues] - Troubleshooting Template](#category-of-issues-troubleshooting-template)
+  - [Issue: [Problem Description] - Troubleshooting Template](#issue-problem-description-troubleshooting-template)
+- [[Another Category] - Troubleshooting Template](#another-category-troubleshooting-template)
+  - [Issue: [Problem Description] - Troubleshooting Template (Category 2)](#issue-problem-description-troubleshooting-template-category-2)
 - [Architecture Decision Record (ADR) Template](#architecture-decision-record-adr-template)
-- [ADR-\[Number\]: [Title]](#adr-number-title)
-  - [Problem](#problem)
-  - [Decision](#decision)
-  - [Rationale](#rationale)
-  - [Alternatives Considered](#alternatives-considered)
-  - [Consequences](#consequences)
-  - [Related Decisions](#related-decisions)
+- [ADR-[Number]: [Title]](#adr-number-title)
+  - [Problem - ADR Template](#problem-adr-template)
+  - [Decision - ADR Template](#decision-adr-template)
+  - [Rationale - ADR Template](#rationale-adr-template)
+  - [Alternatives Considered - ADR Template](#alternatives-considered-adr-template)
+  - [Consequences - ADR Template](#consequences-adr-template)
+  - [Related Decisions - ADR Template](#related-decisions-adr-template)
 - [Best Practices Guide Template](#best-practices-guide-template)
-- [Principle 1: [Name]](#principle-1-name)
-- [Principle 2: [Name]](#principle-2-name)
-- [Common Patterns](#common-patterns)
-  - [Pattern 1: [Name]](#pattern-1-name)
-  - [Pattern 2: [Name]](#pattern-2-name)
-- [Common Mistakes](#common-mistakes)
-  - [Mistake 1: [What people get wrong]](#mistake-1-what-people-get-wrong)
-- [Summary](#summary)
+- [Principle 1: [Name] - Best Practices Guide Template](#principle-1-name-best-practices-guide-template)
+- [Principle 2: [Name] - Best Practices Guide Template](#principle-2-name-best-practices-guide-template)
+- [Common Patterns - Best Practices Guide Template](#common-patterns-best-practices-guide-template)
+  - [Pattern 1: [Name] - Best Practices Guide Template](#pattern-1-name-best-practices-guide-template)
+  - [Pattern 2: [Name] - Best Practices Guide Template](#pattern-2-name-best-practices-guide-template)
+- [Common Mistakes - Best Practices Guide Template](#common-mistakes-best-practices-guide-template)
+  - [Mistake 1: [What people get wrong] - Best Practices Guide Template](#mistake-1-what-people-get-wrong-best-practices-guide-template)
+- [Summary - Best Practices Guide Template](#summary-best-practices-guide-template)
 - [Quick Reference Card Template](#quick-reference-card-template)
-- [Installation](#installation)
-- [Basic Setup](#basic-setup)
-- [Common Tasks](#common-tasks)
-  - [Task 1](#task-1)
-  - [Task 2](#task-2)
-- [Common Issues](#common-issues)
-- [Resources](#resources)
+- [Installation - Quick Reference Card Template](#installation-quick-reference-card-template)
+- [Basic Setup - Quick Reference Card Template](#basic-setup-quick-reference-card-template)
+- [Common Tasks - Quick Reference Card Template](#common-tasks-quick-reference-card-template)
+  - [Task 1 - Quick Reference Card Template](#task-1-quick-reference-card-template)
+  - [Task 2 - Quick Reference Card Template](#task-2-quick-reference-card-template)
+- [Common Issues - Quick Reference Card Template](#common-issues-quick-reference-card-template)
+- [Resources - Quick Reference Card Template](#resources-quick-reference-card-template)
 - [Configuration Documentation Template](#configuration-documentation-template)
-- [Overview](#overview)
-- [Configuration Methods](#configuration-methods)
-  - [Method 1: Configuration File](#method-1-configuration-file)
-  - [Method 2: Environment Variables](#method-2-environment-variables)
-  - [Method 3: Programmatic](#method-3-programmatic)
-- [Configuration Options](#configuration-options)
-  - [option_name](#optionname)
-- [Environment-Specific](#environment-specific)
-  - [Development](#development)
-  - [Production](#production)
-- [Complete Example](#complete-example)
-- [Comparison/Alternatives Template](#comparisonalternatives-template)
-- [[Feature A] Details](#feature-a-details)
-- [[Feature B] Details](#feature-b-details)
-- [[Feature C] Details](#feature-c-details)
-- [Decision Matrix](#decision-matrix)
+- [Overview - Configuration Documentation Template](#overview-configuration-documentation-template)
+- [Configuration Methods - Configuration Documentation Template](#configuration-methods-configuration-documentation-template)
+  - [Method 1: Configuration File - Configuration Documentation Template](#method-1-configuration-file-configuration-documentation-template)
+  - [Method 2: Environment Variables - Configuration Documentation Template](#method-2-environment-variables-configuration-documentation-template)
+  - [Method 3: Programmatic - Configuration Documentation Template](#method-3-programmatic-configuration-documentation-template)
+- [Configuration Options - Configuration Documentation Template](#configuration-options-configuration-documentation-template)
+  - [option_name - Configuration Documentation Template](#optionname-configuration-documentation-template)
+- [Environment-Specific - Configuration Documentation Template](#environment-specific-configuration-documentation-template)
+  - [Development - Configuration Documentation Template](#development-configuration-documentation-template)
+  - [Production - Configuration Documentation Template](#production-configuration-documentation-template)
+- [Complete Example - Configuration Documentation Template](#complete-example-configuration-documentation-template)
+- [Comparison Alternatives Template](#comparison-alternatives-template)
+- [[Feature A] Details - Comparison/Alternatives Template](#feature-a-details-comparisonalternatives-template)
+- [[Feature B] Details - Comparison/Alternatives Template](#feature-b-details-comparisonalternatives-template)
+- [[Feature C] Details - Comparison/Alternatives Template](#feature-c-details-comparisonalternatives-template)
+- [Decision Matrix - Comparison/Alternatives Template](#decision-matrix-comparisonalternatives-template)
 - [Implementation Guide Template](#implementation-guide-template)
-- [Step 1: [Name]](#step-1-name)
-- [Step 2: [Name]](#step-2-name)
-- [Step 3: [Name]](#step-3-name)
-- [Verification](#verification)
-- [Troubleshooting](#troubleshooting)
-- [What's Next](#whats-next)
+- [Step 1: [Name] - Implementation Guide Template](#step-1-name-implementation-guide-template)
+- [Step 2: [Name] - Implementation Guide Template](#step-2-name-implementation-guide-template)
+- [Step 3: [Name] - Implementation Guide Template](#step-3-name-implementation-guide-template)
+- [Verification - Implementation Guide Template](#verification-implementation-guide-template)
+- [Troubleshooting - Implementation Guide Template](#troubleshooting-implementation-guide-template)
+- [What's Next - Implementation Guide Template](#whats-next-implementation-guide-template)
 - [Tips for Using Templates](#tips-for-using-templates)
 - [Example: Using the Feature Guide Template](#example-using-the-feature-guide-template)
 - [Maintenance](#maintenance)
-
 <!-- TOC END -->
 
 **Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency
@@ -100,7 +98,7 @@ Use for new feature documentation (guides/ directory).
 
 [One sentence: What is this and why use it?]
 
-## Overview
+## Overview - Feature Guide Template
 
 [2-3 paragraphs explaining the feature]
 
@@ -110,7 +108,7 @@ Use for new feature documentation (guides/ directory).
 - Feature 2
 - Feature 3
 
-## Basic Usage
+## Basic Usage - Feature Guide Template
 
 ### Simple Example
 
@@ -118,10 +116,13 @@ Use for new feature documentation (guides/ directory).
 from flext_core import [Import]
 
 # Your example here
-```
 ````
 
-### Common Patterns
+```
+
+```
+
+### Common Patterns - Feature Guide Template
 
 #### Pattern 1: [Name]
 
@@ -135,7 +136,7 @@ from flext_core import [Import]
 # Example
 ```
 
-## API Reference
+## API Reference - Feature Guide Template
 
 ### Method/Class 1
 
@@ -157,7 +158,7 @@ from flext_core import [Import]
 # Example
 ```
 
-## Best Practices
+## Best Practices - Feature Guide Template
 
 ### ✅ DO
 
@@ -171,7 +172,7 @@ from flext_core import [Import]
 - Anti-pattern 2: Why avoid it
 - Anti-pattern 3: Why avoid it
 
-## Common Issues
+## Common Issues - Feature Guide Template
 
 ### Issue: [Problem Description]
 
@@ -189,15 +190,15 @@ from flext_core import [Import]
 
 **Solution:** How to fix it
 
-## Advanced Topics
+## Advanced Topics - Feature Guide Template
 
 [Optional section for advanced patterns]
 
-## Summary
+## Summary - Feature Guide Template
 
 [One paragraph recap of key points]
 
-## See Also
+## See Also - Feature Guide Template
 
 - Related Guide 1
 - Related Guide 2
@@ -214,11 +215,11 @@ Use for API documentation (api-reference/ directory).
 
 [Overview of what this layer provides]
 
-## [Class/Module Name]
+## [Class/Module Name] - API Reference Template
 
 [Purpose and use cases]
 
-### Class Methods
+### Class Methods - API Reference Template
 
 #### method_name(param1: Type, param2: Type) -> ReturnType
 
@@ -226,6 +227,7 @@ Use for API documentation (api-reference/ directory).
 [What does this method do?]
 
 **Parameters:**
+
 - `param1` (Type): [Explanation]
 - `param2` (Type): [Explanation]
 
@@ -233,17 +235,20 @@ Use for API documentation (api-reference/ directory).
 (ReturnType): [What is returned?]
 
 **Example:**
+
 ```python
 from flext_core import [Import]
 
 # Example usage
 ````
 
+````
+
 **See Also:**
 
 - `related_method()`: [Why related]
 
-### Properties
+### Properties - API Reference Template
 
 #### property_name
 
@@ -255,18 +260,18 @@ from flext_core import [Import]
 
 ```python
 obj.property_name  # Access property
-```
+````
 
-## Quality Metrics
+## Quality Metrics - API Reference Template
 
 | Component  | Coverage | Status | Description |
 | ---------- | -------- | ------ | ----------- |
 | `file1.py` | XX%      | ✅/🔄  | Description |
 | `file2.py` | XX%      | ✅/🔄  | Description |
 
-## Usage Examples
+## Usage Examples - API Reference Template
 
-### Complete Example
+### Complete Example - API Reference Template
 
 [Show how multiple components work together]
 
@@ -274,7 +279,7 @@ obj.property_name  # Access property
 # Full working example
 ```
 
-## See Also
+## See Also - API Reference Template
 
 - Related API Reference
 - How-To Guide
@@ -288,14 +293,15 @@ Use for troubleshooting guides (guides/troubleshooting.md or similar).
 ```markdown
 # [System/Component] Troubleshooting
 
-## [Category of Issues]
+## [Category of Issues] - Troubleshooting Template
 
-### Issue: [Problem Description]
+### Issue: [Problem Description] - Troubleshooting Template
 
 **Symptom:**
 [What user observes]
 
 **Common Causes:**
+
 1. Cause 1
 2. Cause 2
 3. Cause 3
@@ -303,15 +309,18 @@ Use for troubleshooting guides (guides/troubleshooting.md or similar).
 **Solutions:**
 
 **Solution 1: [Approach Name]**
+
 ```bash
 # Commands or code
+````
+
 ````
 
 **Solution 2: [Approach Name]**
 
 ```bash
 # Commands or code
-```
+````
 
 **When to check:**
 
@@ -320,9 +329,9 @@ Use for troubleshooting guides (guides/troubleshooting.md or similar).
 
 ______________________________________________________________________
 
-## [Another Category]
+## [Another Category] - Troubleshooting Template
 
-### Issue: [Problem Description]
+### Issue: [Problem Description] - Troubleshooting Template (Category 2)
 
 [Same format as above]
 
@@ -337,29 +346,37 @@ Use for architecture/decisions.md.
 
 **Status:** PROPOSED | ACCEPTED | DEPRECATED | **Date:** YYYY-MM-DD
 
-### Problem
+### Problem - ADR Template
+
 [What challenge are we facing?]
 
-### Decision
+### Decision - ADR Template
+
 [What choice are we making?]
 
-### Rationale
+### Rationale - ADR Template
+
 [Why is this the right choice?]
 
-### Alternatives Considered
+### Alternatives Considered - ADR Template
+
 - Alternative 1: [Why not this?]
 - Alternative 2: [Why not this?]
 
-### Consequences
+### Consequences - ADR Template
+
 **Positive:**
+
 - ✅ Good consequence 1
 - ✅ Good consequence 2
 
 **Negative:**
+
 - ❌ Bad consequence 1
 - ❌ Bad consequence 2
 
-### Related Decisions
+### Related Decisions - ADR Template
+
 - Related ADR
 - Related pattern
 ````
@@ -373,15 +390,18 @@ Use for comprehensive guide on patterns/best practices.
 
 [Intro: Why is this important?]
 
-## Principle 1: [Name]
+## Principle 1: [Name] - Best Practices Guide Template
 
 **When to use:** [Context]
 
 ```python
 # ✅ CORRECT
 # Example showing best practice
-```
 ````
+
+```
+
+```
 
 ```python
 # ❌ WRONG
@@ -390,23 +410,23 @@ Use for comprehensive guide on patterns/best practices.
 
 **Why:** [Explanation of benefits]
 
-## Principle 2: [Name]
+## Principle 2: [Name] - Best Practices Guide Template
 
 [Same structure]
 
-## Common Patterns
+## Common Patterns - Best Practices Guide Template
 
-### Pattern 1: [Name]
-
-[Description and example]
-
-### Pattern 2: [Name]
+### Pattern 1: [Name] - Best Practices Guide Template
 
 [Description and example]
 
-## Common Mistakes
+### Pattern 2: [Name] - Best Practices Guide Template
 
-### Mistake 1: [What people get wrong]
+[Description and example]
+
+## Common Mistakes - Best Practices Guide Template
+
+### Mistake 1: [What people get wrong] - Best Practices Guide Template
 
 ```python
 # ❌ WRONG - What to avoid
@@ -418,7 +438,7 @@ Use for comprehensive guide on patterns/best practices.
 # ✅ CORRECT - How to fix it
 ```
 
-## Summary
+## Summary - Best Practices Guide Template
 
 [Key takeaways]
 
@@ -431,41 +451,44 @@ Use for cheat sheets or quick reference.
 ```markdown
 # [Feature] Quick Reference
 
-## Installation
+## Installation - Quick Reference Card Template
+
 ```bash
 pip install flext-core
 ````
 
-## Basic Setup
+````
+
+## Basic Setup - Quick Reference Card Template
 
 ```python
 from flext_core import [Import]
 
 # Quick setup
-```
+````
 
-## Common Tasks
+## Common Tasks - Quick Reference Card Template
 
-### Task 1
-
-```python
-# Code
-```
-
-### Task 2
+### Task 1 - Quick Reference Card Template
 
 ```python
 # Code
 ```
 
-## Common Issues
+### Task 2 - Quick Reference Card Template
+
+```python
+# Code
+```
+
+## Common Issues - Quick Reference Card Template
 
 | Issue     | Solution |
 | --------- | -------- |
 | Problem 1 | Fix 1    |
 | Problem 2 | Fix 2    |
 
-## Resources
+## Resources - Quick Reference Card Template
 
 - Full Guide
 - API Reference
@@ -480,12 +503,13 @@ Use for documenting configuration options.
 ```markdown
 # [Component] Configuration
 
-## Overview
+## Overview - Configuration Documentation Template
+
 [What can be configured?]
 
-## Configuration Methods
+## Configuration Methods - Configuration Documentation Template
 
-### Method 1: Configuration File
+### Method 1: Configuration File - Configuration Documentation Template
 
 **File:** `config.toml`
 
@@ -495,13 +519,15 @@ key1 = "value"
 key2 = 123
 ````
 
-### Method 2: Environment Variables
+````
+
+### Method 2: Environment Variables - Configuration Documentation Template
 
 ```bash
 export SETTING_NAME=value
-```
+````
 
-### Method 3: Programmatic
+### Method 3: Programmatic - Configuration Documentation Template
 
 ```python
 from flext_core import [Component]
@@ -509,9 +535,9 @@ from flext_core import [Component]
 config = Component
 ```
 
-## Configuration Options
+## Configuration Options - Configuration Documentation Template
 
-### option_name
+### option_name - Configuration Documentation Template
 
 - **Type:** DataType
 - **Default:** default_value
@@ -522,21 +548,21 @@ config = Component
 # Example
 ```
 
-## Environment-Specific
+## Environment-Specific - Configuration Documentation Template
 
-### Development
+### Development - Configuration Documentation Template
 
 ```toml
 [config.development]
 ```
 
-### Production
+### Production - Configuration Documentation Template
 
 ```toml
 [config.production]
 ```
 
-## Complete Example
+## Complete Example - Configuration Documentation Template
 
 ```toml
 # Full working configuration
@@ -544,40 +570,42 @@ config = Component
 
 ````
 
-## Comparison/Alternatives Template
+## Comparison Alternatives Template
 
 Use when comparing similar features.
 
 ```markdown
 # [Feature A] vs [Feature B] vs [Feature C]
 
-| Aspect | [Feature A] | [Feature B] | [Feature C] |
-| -------- | ------------- | ------------- | ------------- | 
-| Use Case | [Description] | [Description] | [Description] |
-| Complexity | Low/Medium/High | Low/Medium/High | Low/Medium/High |
-| Performance | Fast/Moderate/Slow | ... | ... |
-| Learning Curve | Easy/Moderate/Hard | ... | ... |
-| When to Use | [When] | [When] | [When] |
+| Aspect         | [Feature A]        | [Feature B]     | [Feature C]     |
+| -------------- | ------------------ | --------------- | --------------- |
+| Use Case       | [Description]      | [Description]   | [Description]   |
+| Complexity     | Low/Medium/High    | Low/Medium/High | Low/Medium/High |
+| Performance    | Fast/Moderate/Slow | ...             | ...             |
+| Learning Curve | Easy/Moderate/Hard | ...             | ...             |
+| When to Use    | [When]             | [When]          | [When]          |
 
-## [Feature A] Details
+## [Feature A] Details - Comparison/Alternatives Template
 
 ```python
 # Example usage
 ````
 
-## [Feature B] Details
+````
+
+## [Feature B] Details - Comparison/Alternatives Template
+
+```python
+# Example usage
+````
+
+## [Feature C] Details - Comparison/Alternatives Template
 
 ```python
 # Example usage
 ```
 
-## [Feature C] Details
-
-```python
-# Example usage
-```
-
-## Decision Matrix
+## Decision Matrix - Comparison/Alternatives Template
 
 - Choose [Feature A] if you need [criteria]
 - Choose [Feature B] if you need [criteria]
@@ -595,10 +623,11 @@ Use for step-by-step implementation instructions.
 **Time Required:** X hours
 
 **Prerequisites:**
+
 - Prerequisite 1
 - Prerequisite 2
 
-## Step 1: [Name]
+## Step 1: [Name] - Implementation Guide Template
 
 [Description]
 
@@ -606,13 +635,15 @@ Use for step-by-step implementation instructions.
 # Code for step 1
 ````
 
+````
+
 **Verify:**
 
 ```bash
 # How to verify this step worked
-```
+````
 
-## Step 2: [Name]
+## Step 2: [Name] - Implementation Guide Template
 
 [Description]
 
@@ -626,7 +657,7 @@ Use for step-by-step implementation instructions.
 # How to verify this step worked
 ```
 
-## Step 3: [Name]
+## Step 3: [Name] - Implementation Guide Template
 
 [Description]
 
@@ -634,7 +665,7 @@ Use for step-by-step implementation instructions.
 # Code for step 3
 ```
 
-## Verification
+## Verification - Implementation Guide Template
 
 Run the following to verify complete implementation:
 
@@ -644,15 +675,15 @@ Run the following to verify complete implementation:
 
 Expected output:
 
-```
+```json
 [Expected output]
 ```
 
-## Troubleshooting
+## Troubleshooting - Implementation Guide Template
 
 [Common issues during implementation]
 
-## What's Next
+## What's Next - Implementation Guide Template
 
 - Next feature
 - Related topic

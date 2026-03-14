@@ -1,9 +1,7 @@
 # dependency-injector pattern prompt
 
 <!-- TOC START -->
-
 - No sections found
-
 <!-- TOC END -->
 
 Use this prompt whenever you evolve **flext-core** or downstream projects to keep the dependency-injector integration pattern aligned (bridge L0.5/L1 + container L2 + handlers L3), without breaking the ABI or reintroducing ad-hoc registries.
@@ -27,11 +25,14 @@ Implementation rules
 - When changing caching/lifecycles, preserve existing configuration and the public ABI (parameters and returns exposed to consumers).
 - Any new DI surface must be exposed via the bridge/runtime or existing facades, never by direct dependency-injector imports in upper layers.
 - For wiring, use `wire_modules` from the container/bridge and respect modules/classes/handlers already registered by the dispatcher.
+- In implementation code, prefer the canonical facade aliases and MRO surfaces already exported by the project (`c`, `m`, `p`, `t`, `u`, `r`, `d`, `e`, `h`, `s`, `x`). Do not introduce local helper alias layers such as `foo = SomeUtility.bar`; call the facade directly (for example `u.Infra.some_helper(...)`).
+- When a helper already exists on the project facade via MRO, reuse it from that facade instead of importing private utility modules or reaching into implementation details.
 
 Usage in downstream projects
 - In projects consuming flext-core, inject services/resources via the same facades (`FlextContainer`, `wire_modules`, re-exported decorators). Do not create alternative containers or access dependency-injector directly.
 - Honor inherited configuration contracts: defaults via `providers.Configuration` and user overrides applied by `configure(...)`.
 - If you need new capabilities (e.g., a new provider), add it to the flext-core bridge and re-export it before using it in the dependent project.
+- Consume helper behavior from the downstream project's own facade namespace first; parent namespaces should arrive through MRO rather than through duplicated aliases or direct private imports.
 
 Final checklist
 - Ensure `tests/unit/test_container.py` and `tests/unit/test_runtime.py` continue to pass.

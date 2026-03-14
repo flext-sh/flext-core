@@ -1,0 +1,1165 @@
+class_nesting:
+  - loose_name: FactoryDecoratorsDiscovery
+    current_file: flext-core/src/flext_core/_decorators/discovery.py
+    target_namespace: FlextDecorators
+    target_name: FactoryDecoratorsDiscovery
+    confidence: high
+    reason: top_level_class_in_private_directory
+  - loose_name: CircuitBreakerManager
+    current_file: flext-core/src/flext_core/_dispatcher/reliability.py
+    target_namespace: FlextDispatcher
+    target_name: CircuitBreakerManager
+    confidence: high
+    reason: top_level_class_in_private_directory
+  - loose_name: RateLimiterManager
+    current_file: flext-core/src/flext_core/_dispatcher/reliability.py
+    target_namespace: FlextDispatcher
+    target_name: RateLimiterManager
+    confidence: high
+    reason: top_level_class_in_private_directory
+  - loose_name: RetryPolicy
+    current_file: flext-core/src/flext_core/_dispatcher/reliability.py
+    target_namespace: FlextDispatcher
+    target_name: RetryPolicy
+    confidence: high
+    reason: top_level_class_in_private_directory
+  - loose_name: TimeoutEnforcer
+    current_file: flext-core/src/flext_core/_dispatcher/timeout.py
+    target_namespace: FlextDispatcher
+    target_name: TimeoutEnforcer
+    confidence: high
+    reason: top_level_class_in_private_directory
+  - loose_name: FlextModelFoundation
+    current_file: flext-core/src/flext_core/_models/base.py
+    target_namespace: FlextModels
+    target_name: FlextModelFoundation
+    confidence: high
+    reason: top_level_class_in_private_directory
+  - loose_name: _ComparableConfigMap
+    current_file: flext-core/src/flext_core/_models/domain_event.py
+    target_namespace: FlextModels
+    target_name: _ComparableConfigMap
+    confidence: high
+    reason: top_level_class_in_private_directory
+  - loose_name: FlextGenericModels
+    current_file: flext-core/src/flext_core/_models/generic.py
+    target_namespace: FlextModels
+    target_name: FlextGenericModels
+    confidence: high
+    reason: top_level_class_in_private_directory
+  - loose_name: FlextModelsConfig
+    current_file: flext-core/src/flext_core/_models/settings.py
+    target_namespace: FlextModels
+    target_name: FlextModelsConfig
+    confidence: high
+    reason: top_level_class_in_private_directory
+  - loose_name: Metadata
+    current_file: flext-core/src/flext_core/_models/base.py
+    target_namespace: FlextModelFoundation
+    target_name: Metadata
+    confidence: high
+    reason: nested_class_inside_FlextModelFoundation
+  - loose_name: _Predicate
+    current_file: flext-core/src/flext_core/_utilities/collection.py
+    target_namespace: FlextUtilities
+    target_name: _Predicate
+    confidence: high
+    reason: top_level_class_in_private_directory
+  - loose_name: _StrictJsonScalarModel
+    current_file: flext-core/src/flext_core/_utilities/conversion.py
+    target_namespace: FlextUtilities
+    target_name: _StrictJsonScalarModel
+    confidence: high
+    reason: top_level_class_in_private_directory
+  - loose_name: _Predicate
+    current_file: flext-core/src/flext_core/_utilities/mapper.py
+    target_namespace: FlextUtilities
+    target_name: _Predicate
+    confidence: high
+    reason: top_level_class_in_private_directory
+  - loose_name: ResultHelpers
+    current_file: flext-core/src/flext_core/_utilities/result_helpers.py
+    target_namespace: FlextUtilities
+    target_name: ResultHelpers
+    confidence: high
+    reason: top_level_class_in_private_directory
+  - loose_name: DispatchMessage
+    current_file: flext-core/src/flext_core/dispatcher.py
+    target_namespace: FlextDispatcher
+    target_name: DispatchMessage
+    confidence: low
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: Handle
+    current_file: flext-core/src/flext_core/dispatcher.py
+    target_namespace: FlextDispatcher
+    target_name: Handle
+    confidence: low
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: Execute
+    current_file: flext-core/src/flext_core/dispatcher.py
+    target_namespace: FlextDispatcher
+    target_name: Execute
+    confidence: low
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: Metadata
+    current_file: flext-core/src/flext_core/exceptions.py
+    target_namespace: FlextExceptions
+    target_name: Metadata
+    confidence: low
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextLogger
+    current_file: flext-core/src/flext_core/loggings.py
+    target_namespace: FlextLoggings
+    target_name: FlextLogger
+    confidence: low
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: _ProtocolIntrospection
+    current_file: flext-core/src/flext_core/protocols.py
+    target_namespace: FlextProtocols
+    target_name: _ProtocolIntrospection
+    confidence: low
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: _CombinedModelMeta
+    current_file: flext-core/src/flext_core/protocols.py
+    target_namespace: FlextProtocols
+    target_name: _CombinedModelMeta
+    confidence: low
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: _LazyMetadata
+    current_file: flext-core/src/flext_core/runtime.py
+    target_namespace: FlextRuntime
+    target_name: _LazyMetadata
+    confidence: low
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextTypes
+    current_file: flext-core/src/flext_core/typings.py
+    target_namespace: FlextTypings
+    target_name: FlextTypes
+    confidence: low
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraPathsConstants
+    current_file: flext-core/src/flext_infra/_constants_modules.py
+    target_namespace: FlextConstantsModules
+    target_name: FlextInfraPathsConstants
+    confidence: low
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraVersioningConstants
+    current_file: flext-core/src/flext_infra/_constants_modules.py
+    target_namespace: FlextConstantsModules
+    target_name: FlextInfraVersioningConstants
+    confidence: low
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraReportingConstants
+    current_file: flext-core/src/flext_infra/_constants_modules.py
+    target_namespace: FlextConstantsModules
+    target_name: FlextInfraReportingConstants
+    confidence: low
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraBasemkConstants
+    current_file: flext-core/src/flext_infra/basemk/_constants.py
+    target_namespace: FlextBasemkConstants
+    target_name: FlextInfraBasemkConstants
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraBaseMkTemplateEngine
+    current_file: flext-core/src/flext_infra/basemk/engine.py
+    target_namespace: FlextBasemkEngine
+    target_name: FlextInfraBaseMkTemplateEngine
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: _TemplateRenderer
+    current_file: flext-core/src/flext_infra/basemk/generator.py
+    target_namespace: FlextBasemkGenerator
+    target_name: _TemplateRenderer
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraBaseMkGenerator
+    current_file: flext-core/src/flext_infra/basemk/generator.py
+    target_namespace: FlextBasemkGenerator
+    target_name: FlextInfraBaseMkGenerator
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraCheckConstants
+    current_file: flext-core/src/flext_infra/check/_constants.py
+    target_namespace: FlextCheckConstants
+    target_name: FlextInfraCheckConstants
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: _CheckIssue
+    current_file: flext-core/src/flext_infra/check/services.py
+    target_namespace: FlextCheckServices
+    target_name: _CheckIssue
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: _GateExecution
+    current_file: flext-core/src/flext_infra/check/services.py
+    target_namespace: FlextCheckServices
+    target_name: _GateExecution
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: _ProjectResult
+    current_file: flext-core/src/flext_infra/check/services.py
+    target_namespace: FlextCheckServices
+    target_name: _ProjectResult
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: _RunCommandResult
+    current_file: flext-core/src/flext_infra/check/services.py
+    target_namespace: FlextCheckServices
+    target_name: _RunCommandResult
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: _RuffLintLocation
+    current_file: flext-core/src/flext_infra/check/services.py
+    target_namespace: FlextCheckServices
+    target_name: _RuffLintLocation
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: _RuffLintError
+    current_file: flext-core/src/flext_infra/check/services.py
+    target_namespace: FlextCheckServices
+    target_name: _RuffLintError
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: _PyreflyError
+    current_file: flext-core/src/flext_infra/check/services.py
+    target_namespace: FlextCheckServices
+    target_name: _PyreflyError
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: _PyreflyOutput
+    current_file: flext-core/src/flext_infra/check/services.py
+    target_namespace: FlextCheckServices
+    target_name: _PyreflyOutput
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: _MypyJsonError
+    current_file: flext-core/src/flext_infra/check/services.py
+    target_namespace: FlextCheckServices
+    target_name: _MypyJsonError
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: _PyrightPosition
+    current_file: flext-core/src/flext_infra/check/services.py
+    target_namespace: FlextCheckServices
+    target_name: _PyrightPosition
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: _PyrightRange
+    current_file: flext-core/src/flext_infra/check/services.py
+    target_namespace: FlextCheckServices
+    target_name: _PyrightRange
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: _PyrightDiagnostic
+    current_file: flext-core/src/flext_infra/check/services.py
+    target_namespace: FlextCheckServices
+    target_name: _PyrightDiagnostic
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: _PyrightOutput
+    current_file: flext-core/src/flext_infra/check/services.py
+    target_namespace: FlextCheckServices
+    target_name: _PyrightOutput
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: _BanditIssue
+    current_file: flext-core/src/flext_infra/check/services.py
+    target_namespace: FlextCheckServices
+    target_name: _BanditIssue
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: _BanditOutput
+    current_file: flext-core/src/flext_infra/check/services.py
+    target_namespace: FlextCheckServices
+    target_name: _BanditOutput
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: _SarifMessageText
+    current_file: flext-core/src/flext_infra/check/services.py
+    target_namespace: FlextCheckServices
+    target_name: _SarifMessageText
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: _SarifRuleDescriptor
+    current_file: flext-core/src/flext_infra/check/services.py
+    target_namespace: FlextCheckServices
+    target_name: _SarifRuleDescriptor
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: _SarifArtifactLocation
+    current_file: flext-core/src/flext_infra/check/services.py
+    target_namespace: FlextCheckServices
+    target_name: _SarifArtifactLocation
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: _SarifRegion
+    current_file: flext-core/src/flext_infra/check/services.py
+    target_namespace: FlextCheckServices
+    target_name: _SarifRegion
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: _SarifPhysicalLocation
+    current_file: flext-core/src/flext_infra/check/services.py
+    target_namespace: FlextCheckServices
+    target_name: _SarifPhysicalLocation
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: _SarifLocation
+    current_file: flext-core/src/flext_infra/check/services.py
+    target_namespace: FlextCheckServices
+    target_name: _SarifLocation
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: _SarifResult
+    current_file: flext-core/src/flext_infra/check/services.py
+    target_namespace: FlextCheckServices
+    target_name: _SarifResult
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: _SarifToolDriver
+    current_file: flext-core/src/flext_infra/check/services.py
+    target_namespace: FlextCheckServices
+    target_name: _SarifToolDriver
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: _SarifTool
+    current_file: flext-core/src/flext_infra/check/services.py
+    target_namespace: FlextCheckServices
+    target_name: _SarifTool
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: _SarifRun
+    current_file: flext-core/src/flext_infra/check/services.py
+    target_namespace: FlextCheckServices
+    target_name: _SarifRun
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: _SarifReport
+    current_file: flext-core/src/flext_infra/check/services.py
+    target_namespace: FlextCheckServices
+    target_name: _SarifReport
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraWorkspaceChecker
+    current_file: flext-core/src/flext_infra/check/services.py
+    target_namespace: FlextCheckServices
+    target_name: FlextInfraWorkspaceChecker
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraConfigFixer
+    current_file: flext-core/src/flext_infra/check/services.py
+    target_namespace: FlextCheckServices
+    target_name: FlextInfraConfigFixer
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraCodegenConstants
+    current_file: flext-core/src/flext_infra/codegen/_constants.py
+    target_namespace: FlextCodegenConstants
+    target_name: FlextInfraCodegenConstants
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraCodegenCensus
+    current_file: flext-core/src/flext_infra/codegen/census.py
+    target_namespace: FlextCodegenCensus
+    target_name: FlextInfraCodegenCensus
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraCodegenFixer
+    current_file: flext-core/src/flext_infra/codegen/fixer.py
+    target_namespace: FlextCodegenFixer
+    target_name: FlextInfraCodegenFixer
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraCodegenLazyInit
+    current_file: flext-core/src/flext_infra/codegen/lazy_init.py
+    target_namespace: FlextCodegenLazyInit
+    target_name: FlextInfraCodegenLazyInit
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraCodegenScaffolder
+    current_file: flext-core/src/flext_infra/codegen/scaffolder.py
+    target_namespace: FlextCodegenScaffolder
+    target_name: FlextInfraCodegenScaffolder
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraCodegenTransforms
+    current_file: flext-core/src/flext_infra/codegen/transforms.py
+    target_namespace: FlextCodegenTransforms
+    target_name: FlextInfraCodegenTransforms
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraConstants
+    current_file: flext-core/src/flext_infra/constants.py
+    target_namespace: FlextConstants
+    target_name: FlextInfraConstants
+    confidence: low
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraCoreConstants
+    current_file: flext-core/src/flext_infra/core/_constants.py
+    target_namespace: FlextCoreConstants
+    target_name: FlextInfraCoreConstants
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraBaseMkValidator
+    current_file: flext-core/src/flext_infra/core/basemk_validator.py
+    target_namespace: FlextCoreBasemkValidator
+    target_name: FlextInfraBaseMkValidator
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraInventoryService
+    current_file: flext-core/src/flext_infra/core/inventory.py
+    target_namespace: FlextCoreInventory
+    target_name: FlextInfraInventoryService
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraNamespaceValidator
+    current_file: flext-core/src/flext_infra/core/namespace_validator.py
+    target_namespace: FlextCoreNamespaceValidator
+    target_name: FlextInfraNamespaceValidator
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: _DiagResult
+    current_file: flext-core/src/flext_infra/core/pytest_diag.py
+    target_namespace: FlextCorePytestDiag
+    target_name: _DiagResult
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraPytestDiagExtractor
+    current_file: flext-core/src/flext_infra/core/pytest_diag.py
+    target_namespace: FlextCorePytestDiag
+    target_name: FlextInfraPytestDiagExtractor
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraTextPatternScanner
+    current_file: flext-core/src/flext_infra/core/scanner.py
+    target_namespace: FlextCoreScanner
+    target_name: FlextInfraTextPatternScanner
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraSkillValidator
+    current_file: flext-core/src/flext_infra/core/skill_validator.py
+    target_namespace: FlextCoreSkillValidator
+    target_name: FlextInfraSkillValidator
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraStubSupplyChain
+    current_file: flext-core/src/flext_infra/core/stub_chain.py
+    target_namespace: FlextCoreStubChain
+    target_name: FlextInfraStubSupplyChain
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraDepsConstants
+    current_file: flext-core/src/flext_infra/deps/_constants.py
+    target_namespace: FlextDepsConstants
+    target_name: FlextInfraDepsConstants
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraDependencyDetectionModels
+    current_file: flext-core/src/flext_infra/deps/detection.py
+    target_namespace: FlextDepsDetection
+    target_name: FlextInfraDependencyDetectionModels
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraDependencyDetectionService
+    current_file: flext-core/src/flext_infra/deps/detection.py
+    target_namespace: FlextDepsDetection
+    target_name: FlextInfraDependencyDetectionService
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraDependencyDetectorModels
+    current_file: flext-core/src/flext_infra/deps/detector.py
+    target_namespace: FlextDepsDetector
+    target_name: FlextInfraDependencyDetectorModels
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraRuntimeDevDependencyDetector
+    current_file: flext-core/src/flext_infra/deps/detector.py
+    target_namespace: FlextDepsDetector
+    target_name: FlextInfraRuntimeDevDependencyDetector
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraExtraPathsManager
+    current_file: flext-core/src/flext_infra/deps/extra_paths.py
+    target_namespace: FlextDepsExtraPaths
+    target_name: FlextInfraExtraPathsManager
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraInternalDependencySyncService
+    current_file: flext-core/src/flext_infra/deps/internal_sync.py
+    target_namespace: FlextDepsInternalSync
+    target_name: FlextInfraInternalDependencySyncService
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: ConsolidateGroupsPhase
+    current_file: flext-core/src/flext_infra/deps/modernizer.py
+    target_namespace: FlextDepsModernizer
+    target_name: ConsolidateGroupsPhase
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: EnsurePytestConfigPhase
+    current_file: flext-core/src/flext_infra/deps/modernizer.py
+    target_namespace: FlextDepsModernizer
+    target_name: EnsurePytestConfigPhase
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: EnsureMypyConfigPhase
+    current_file: flext-core/src/flext_infra/deps/modernizer.py
+    target_namespace: FlextDepsModernizer
+    target_name: EnsureMypyConfigPhase
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: EnsurePydanticMypyConfigPhase
+    current_file: flext-core/src/flext_infra/deps/modernizer.py
+    target_namespace: FlextDepsModernizer
+    target_name: EnsurePydanticMypyConfigPhase
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: EnsurePyrightConfigPhase
+    current_file: flext-core/src/flext_infra/deps/modernizer.py
+    target_namespace: FlextDepsModernizer
+    target_name: EnsurePyrightConfigPhase
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: EnsureRuffConfigPhase
+    current_file: flext-core/src/flext_infra/deps/modernizer.py
+    target_namespace: FlextDepsModernizer
+    target_name: EnsureRuffConfigPhase
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: EnsurePyreflyConfigPhase
+    current_file: flext-core/src/flext_infra/deps/modernizer.py
+    target_namespace: FlextDepsModernizer
+    target_name: EnsurePyreflyConfigPhase
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: InjectCommentsPhase
+    current_file: flext-core/src/flext_infra/deps/modernizer.py
+    target_namespace: FlextDepsModernizer
+    target_name: InjectCommentsPhase
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraPyprojectModernizer
+    current_file: flext-core/src/flext_infra/deps/modernizer.py
+    target_namespace: FlextDepsModernizer
+    target_name: FlextInfraPyprojectModernizer
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraDependencyPathSync
+    current_file: flext-core/src/flext_infra/deps/path_sync.py
+    target_namespace: FlextDepsPathSync
+    target_name: FlextInfraDependencyPathSync
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraDiscoveryService
+    current_file: flext-core/src/flext_infra/discovery.py
+    target_namespace: FlextDiscovery
+    target_name: FlextInfraDiscoveryService
+    confidence: low
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: _BaseInfraCommand
+    current_file: flext-core/src/flext_infra/dispatcher.py
+    target_namespace: FlextDispatcher
+    target_name: _BaseInfraCommand
+    confidence: low
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraDocsConstants
+    current_file: flext-core/src/flext_infra/docs/_constants.py
+    target_namespace: FlextDocsConstants
+    target_name: FlextInfraDocsConstants
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: AuditIssue
+    current_file: flext-core/src/flext_infra/docs/auditor.py
+    target_namespace: FlextDocsAuditor
+    target_name: AuditIssue
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: AuditReport
+    current_file: flext-core/src/flext_infra/docs/auditor.py
+    target_namespace: FlextDocsAuditor
+    target_name: AuditReport
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraDocAuditor
+    current_file: flext-core/src/flext_infra/docs/auditor.py
+    target_namespace: FlextDocsAuditor
+    target_name: FlextInfraDocAuditor
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: BuildReport
+    current_file: flext-core/src/flext_infra/docs/builder.py
+    target_namespace: FlextDocsBuilder
+    target_name: BuildReport
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraDocBuilder
+    current_file: flext-core/src/flext_infra/docs/builder.py
+    target_namespace: FlextDocsBuilder
+    target_name: FlextInfraDocBuilder
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FixItem
+    current_file: flext-core/src/flext_infra/docs/fixer.py
+    target_namespace: FlextDocsFixer
+    target_name: FixItem
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FixReport
+    current_file: flext-core/src/flext_infra/docs/fixer.py
+    target_namespace: FlextDocsFixer
+    target_name: FixReport
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraDocFixer
+    current_file: flext-core/src/flext_infra/docs/fixer.py
+    target_namespace: FlextDocsFixer
+    target_name: FlextInfraDocFixer
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: GeneratedFile
+    current_file: flext-core/src/flext_infra/docs/generator.py
+    target_namespace: FlextDocsGenerator
+    target_name: GeneratedFile
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: GenerateReport
+    current_file: flext-core/src/flext_infra/docs/generator.py
+    target_namespace: FlextDocsGenerator
+    target_name: GenerateReport
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraDocGenerator
+    current_file: flext-core/src/flext_infra/docs/generator.py
+    target_namespace: FlextDocsGenerator
+    target_name: FlextInfraDocGenerator
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraDocScope
+    current_file: flext-core/src/flext_infra/docs/shared.py
+    target_namespace: FlextDocsShared
+    target_name: FlextInfraDocScope
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraDocsShared
+    current_file: flext-core/src/flext_infra/docs/shared.py
+    target_namespace: FlextDocsShared
+    target_name: FlextInfraDocsShared
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: ValidateReport
+    current_file: flext-core/src/flext_infra/docs/validator.py
+    target_namespace: FlextDocsValidator
+    target_name: ValidateReport
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraDocValidator
+    current_file: flext-core/src/flext_infra/docs/validator.py
+    target_namespace: FlextDocsValidator
+    target_name: FlextInfraDocValidator
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraGitService
+    current_file: flext-core/src/flext_infra/git.py
+    target_namespace: FlextGit
+    target_name: FlextInfraGitService
+    confidence: low
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraGithubConstants
+    current_file: flext-core/src/flext_infra/github/_constants.py
+    target_namespace: FlextGithubConstants
+    target_name: FlextInfraGithubConstants
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraWorkflowLinter
+    current_file: flext-core/src/flext_infra/github/linter.py
+    target_namespace: FlextGithubLinter
+    target_name: FlextInfraWorkflowLinter
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraPrManager
+    current_file: flext-core/src/flext_infra/github/pr.py
+    target_namespace: FlextGithubPr
+    target_name: FlextInfraPrManager
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraPrWorkspaceManager
+    current_file: flext-core/src/flext_infra/github/pr_workspace.py
+    target_namespace: FlextGithubPrWorkspace
+    target_name: FlextInfraPrWorkspaceManager
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: SyncOperation
+    current_file: flext-core/src/flext_infra/github/workflows.py
+    target_namespace: FlextGithubWorkflows
+    target_name: SyncOperation
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraWorkflowSyncer
+    current_file: flext-core/src/flext_infra/github/workflows.py
+    target_namespace: FlextGithubWorkflows
+    target_name: FlextInfraWorkflowSyncer
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraJsonService
+    current_file: flext-core/src/flext_infra/json_io.py
+    target_namespace: FlextJsonIo
+    target_name: FlextInfraJsonService
+    confidence: low
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraPythonVersionEnforcer
+    current_file: flext-core/src/flext_infra/maintenance/python_version.py
+    target_namespace: FlextMaintenancePythonVersion
+    target_name: FlextInfraPythonVersionEnforcer
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraModels
+    current_file: flext-core/src/flext_infra/models.py
+    target_namespace: FlextModels
+    target_name: FlextInfraModels
+    confidence: low
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraOutput
+    current_file: flext-core/src/flext_infra/output.py
+    target_namespace: FlextOutput
+    target_name: FlextInfraOutput
+    confidence: low
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraPathResolver
+    current_file: flext-core/src/flext_infra/paths.py
+    target_namespace: FlextPaths
+    target_name: FlextInfraPathResolver
+    confidence: low
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraPatterns
+    current_file: flext-core/src/flext_infra/patterns.py
+    target_namespace: FlextPatterns
+    target_name: FlextInfraPatterns
+    confidence: low
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraProtocols
+    current_file: flext-core/src/flext_infra/protocols.py
+    target_namespace: FlextProtocols
+    target_name: FlextInfraProtocols
+    confidence: low
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: _HelperFileAnalysis
+    current_file: flext-core/src/flext_infra/refactor/analysis.py
+    target_namespace: FlextRefactorAnalysis
+    target_name: _HelperFileAnalysis
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: _ImportDependencyCollector
+    current_file: flext-core/src/flext_infra/refactor/analysis.py
+    target_namespace: FlextRefactorAnalysis
+    target_name: _ImportDependencyCollector
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: _FunctionDependencyCollector
+    current_file: flext-core/src/flext_infra/refactor/analysis.py
+    target_namespace: FlextRefactorAnalysis
+    target_name: _FunctionDependencyCollector
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraRefactorViolationAnalyzer
+    current_file: flext-core/src/flext_infra/refactor/analysis.py
+    target_namespace: FlextRefactorAnalysis
+    target_name: FlextInfraRefactorViolationAnalyzer
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraRefactorConstants
+    current_file: flext-core/src/flext_infra/refactor/constants.py
+    target_namespace: FlextRefactorConstants
+    target_name: FlextInfraRefactorConstants
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraRefactorEngine
+    current_file: flext-core/src/flext_infra/refactor/engine.py
+    target_namespace: FlextRefactorEngine
+    target_name: FlextInfraRefactorEngine
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraRefactorMethodInfo
+    current_file: flext-core/src/flext_infra/refactor/method_info.py
+    target_namespace: FlextRefactorMethodInfo
+    target_name: FlextInfraRefactorMethodInfo
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraRefactorResult
+    current_file: flext-core/src/flext_infra/refactor/result.py
+    target_namespace: FlextRefactorResult
+    target_name: FlextInfraRefactorResult
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraRefactorRule
+    current_file: flext-core/src/flext_infra/refactor/rule.py
+    target_namespace: FlextRefactorRule
+    target_name: FlextInfraRefactorRule
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraRefactorClassReconstructorRule
+    current_file: flext-core/src/flext_infra/refactor/rules/class_reconstructor.py
+    target_namespace: FlextRefactorRulesClassReconstructor
+    target_name: FlextInfraRefactorClassReconstructorRule
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraRefactorEnsureFutureAnnotationsRule
+    current_file: flext-core/src/flext_infra/refactor/rules/ensure_future_annotations.py
+    target_namespace: FlextRefactorRulesEnsureFutureAnnotations
+    target_name: FlextInfraRefactorEnsureFutureAnnotationsRule
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraRefactorImportModernizerRule
+    current_file: flext-core/src/flext_infra/refactor/rules/import_modernizer.py
+    target_namespace: FlextRefactorRulesImportModernizer
+    target_name: FlextInfraRefactorImportModernizerRule
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraRefactorLegacyRemovalRule
+    current_file: flext-core/src/flext_infra/refactor/rules/legacy_removal.py
+    target_namespace: FlextRefactorRulesLegacyRemoval
+    target_name: FlextInfraRefactorLegacyRemovalRule
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraRefactorMRORedundancyChecker
+    current_file: flext-core/src/flext_infra/refactor/rules/mro_redundancy_checker.py
+    target_namespace: FlextRefactorRulesMroRedundancyChecker
+    target_name: FlextInfraRefactorMRORedundancyChecker
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: _DictToMappingTransformer
+    current_file: flext-core/src/flext_infra/refactor/rules/pattern_corrections.py
+    target_namespace: FlextRefactorRulesPatternCorrections
+    target_name: _DictToMappingTransformer
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: _RedundantCastRemover
+    current_file: flext-core/src/flext_infra/refactor/rules/pattern_corrections.py
+    target_namespace: FlextRefactorRulesPatternCorrections
+    target_name: _RedundantCastRemover
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraRefactorPatternCorrectionsRule
+    current_file: flext-core/src/flext_infra/refactor/rules/pattern_corrections.py
+    target_namespace: FlextRefactorRulesPatternCorrections
+    target_name: FlextInfraRefactorPatternCorrectionsRule
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraRefactorSymbolPropagationRule
+    current_file: flext-core/src/flext_infra/refactor/rules/symbol_propagation.py
+    target_namespace: FlextRefactorRulesSymbolPropagation
+    target_name: FlextInfraRefactorSymbolPropagationRule
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraRefactorSignaturePropagator
+    current_file: flext-core/src/flext_infra/refactor/rules/symbol_propagation.py
+    target_namespace: FlextRefactorRulesSymbolPropagation
+    target_name: FlextInfraRefactorSignaturePropagator
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraRefactorSignaturePropagationRule
+    current_file: flext-core/src/flext_infra/refactor/rules/symbol_propagation.py
+    target_namespace: FlextRefactorRulesSymbolPropagation
+    target_name: FlextInfraRefactorSignaturePropagationRule
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraRefactorSafetyRunner
+    current_file: flext-core/src/flext_infra/refactor/safety.py
+    target_namespace: FlextRefactorSafety
+    target_name: FlextInfraRefactorSafetyRunner
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraRefactorCheckpoint
+    current_file: flext-core/src/flext_infra/refactor/safety.py
+    target_namespace: FlextRefactorSafety
+    target_name: FlextInfraRefactorCheckpoint
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraRefactorSafetyManager
+    current_file: flext-core/src/flext_infra/refactor/safety.py
+    target_namespace: FlextRefactorSafety
+    target_name: FlextInfraRefactorSafetyManager
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraRefactorClassOccurrence
+    current_file: flext-core/src/flext_infra/refactor/scanner.py
+    target_namespace: FlextRefactorScanner
+    target_name: FlextInfraRefactorClassOccurrence
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraRefactorLooseClassViolation
+    current_file: flext-core/src/flext_infra/refactor/scanner.py
+    target_namespace: FlextRefactorScanner
+    target_name: FlextInfraRefactorLooseClassViolation
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: _TopLevelClassCollector
+    current_file: flext-core/src/flext_infra/refactor/scanner.py
+    target_namespace: FlextRefactorScanner
+    target_name: _TopLevelClassCollector
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraRefactorLooseClassScanner
+    current_file: flext-core/src/flext_infra/refactor/scanner.py
+    target_namespace: FlextRefactorScanner
+    target_name: FlextInfraRefactorLooseClassScanner
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraRefactorAliasRemover
+    current_file: flext-core/src/flext_infra/refactor/transformers/alias_remover.py
+    target_namespace: FlextRefactorTransformersAliasRemover
+    target_name: FlextInfraRefactorAliasRemover
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraRefactorClassReconstructor
+    current_file: flext-core/src/flext_infra/refactor/transformers/class_reconstructor.py
+    target_namespace: FlextRefactorTransformersClassReconstructor
+    target_name: FlextInfraRefactorClassReconstructor
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraRefactorDeprecatedRemover
+    current_file: flext-core/src/flext_infra/refactor/transformers/deprecated_remover.py
+    target_namespace: FlextRefactorTransformersDeprecatedRemover
+    target_name: FlextInfraRefactorDeprecatedRemover
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraRefactorImportBypassRemover
+    current_file: flext-core/src/flext_infra/refactor/transformers/import_bypass_remover.py
+    target_namespace: FlextRefactorTransformersImportBypassRemover
+    target_name: FlextInfraRefactorImportBypassRemover
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraRefactorImportModernizer
+    current_file: flext-core/src/flext_infra/refactor/transformers/import_modernizer.py
+    target_namespace: FlextRefactorTransformersImportModernizer
+    target_name: FlextInfraRefactorImportModernizer
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraRefactorLazyImportFixer
+    current_file: flext-core/src/flext_infra/refactor/transformers/lazy_import_fixer.py
+    target_namespace: FlextRefactorTransformersLazyImportFixer
+    target_name: FlextInfraRefactorLazyImportFixer
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraRefactorMRORemover
+    current_file: flext-core/src/flext_infra/refactor/transformers/mro_remover.py
+    target_namespace: FlextRefactorTransformersMroRemover
+    target_name: FlextInfraRefactorMRORemover
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraRefactorSymbolPropagator
+    current_file: flext-core/src/flext_infra/refactor/transformers/symbol_propagator.py
+    target_namespace: FlextRefactorTransformersSymbolPropagator
+    target_name: FlextInfraRefactorSymbolPropagator
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraReleaseConstants
+    current_file: flext-core/src/flext_infra/release/_constants.py
+    target_namespace: FlextReleaseConstants
+    target_name: FlextInfraReleaseConstants
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraReleaseOrchestrator
+    current_file: flext-core/src/flext_infra/release/orchestrator.py
+    target_namespace: FlextReleaseOrchestrator
+    target_name: FlextInfraReleaseOrchestrator
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraReportingService
+    current_file: flext-core/src/flext_infra/reporting.py
+    target_namespace: FlextReporting
+    target_name: FlextInfraReportingService
+    confidence: low
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraProjectSelector
+    current_file: flext-core/src/flext_infra/selection.py
+    target_namespace: FlextSelection
+    target_name: FlextInfraProjectSelector
+    confidence: low
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraUtilitiesSubprocess
+    current_file: flext-core/src/flext_infra/subprocess.py
+    target_namespace: FlextSubprocess
+    target_name: FlextInfraUtilitiesSubprocess
+    confidence: low
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraTemplateEngine
+    current_file: flext-core/src/flext_infra/templates.py
+    target_namespace: FlextTemplates
+    target_name: FlextInfraTemplateEngine
+    confidence: low
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraTomlService
+    current_file: flext-core/src/flext_infra/toml_io.py
+    target_namespace: FlextTomlIo
+    target_name: FlextInfraTomlService
+    confidence: low
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraTypes
+    current_file: flext-core/src/flext_infra/typings.py
+    target_namespace: FlextTypings
+    target_name: FlextInfraTypes
+    confidence: low
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraUtilities
+    current_file: flext-core/src/flext_infra/utilities.py
+    target_namespace: FlextUtilities
+    target_name: FlextInfraUtilities
+    confidence: low
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraVersioningService
+    current_file: flext-core/src/flext_infra/versioning.py
+    target_namespace: FlextVersioning
+    target_name: FlextInfraVersioningService
+    confidence: low
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraWorkspaceConstants
+    current_file: flext-core/src/flext_infra/workspace/_constants.py
+    target_namespace: FlextWorkspaceConstants
+    target_name: FlextInfraWorkspaceConstants
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: WorkspaceMode
+    current_file: flext-core/src/flext_infra/workspace/detector.py
+    target_namespace: FlextWorkspaceDetector
+    target_name: WorkspaceMode
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraWorkspaceDetector
+    current_file: flext-core/src/flext_infra/workspace/detector.py
+    target_namespace: FlextWorkspaceDetector
+    target_name: FlextInfraWorkspaceDetector
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraProjectMigrator
+    current_file: flext-core/src/flext_infra/workspace/migrator.py
+    target_namespace: FlextWorkspaceMigrator
+    target_name: FlextInfraProjectMigrator
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraOrchestratorService
+    current_file: flext-core/src/flext_infra/workspace/orchestrator.py
+    target_namespace: FlextWorkspaceOrchestrator
+    target_name: FlextInfraOrchestratorService
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextInfraSyncService
+    current_file: flext-core/src/flext_infra/workspace/sync.py
+    target_namespace: FlextWorkspaceSync
+    target_name: FlextInfraSyncService
+    confidence: medium
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextTestsServiceBase
+    current_file: flext-core/src/flext_tests/base.py
+    target_namespace: FlextBase
+    target_name: FlextTestsServiceBase
+    confidence: low
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextTestsUtilityBase
+    current_file: flext-core/src/flext_tests/base.py
+    target_namespace: FlextBase
+    target_name: FlextTestsUtilityBase
+    confidence: low
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextTestsBuilders
+    current_file: flext-core/src/flext_tests/builders.py
+    target_namespace: FlextBuilders
+    target_name: FlextTestsBuilders
+    confidence: low
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextTestsConstants
+    current_file: flext-core/src/flext_tests/constants.py
+    target_namespace: FlextConstants
+    target_name: FlextTestsConstants
+    confidence: low
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: _WhalesClientConfig
+    current_file: flext-core/src/flext_tests/docker.py
+    target_namespace: FlextDocker
+    target_name: _WhalesClientConfig
+    confidence: low
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: _WhalesCompose
+    current_file: flext-core/src/flext_tests/docker.py
+    target_namespace: FlextDocker
+    target_name: _WhalesCompose
+    confidence: low
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: _WhalesDockerClient
+    current_file: flext-core/src/flext_tests/docker.py
+    target_namespace: FlextDocker
+    target_name: _WhalesDockerClient
+    confidence: low
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextTestsDocker
+    current_file: flext-core/src/flext_tests/docker.py
+    target_namespace: FlextDocker
+    target_name: FlextTestsDocker
+    confidence: low
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextTestsDomains
+    current_file: flext-core/src/flext_tests/domains.py
+    target_namespace: FlextDomains
+    target_name: FlextTestsDomains
+    confidence: low
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextTestsFactories
+    current_file: flext-core/src/flext_tests/factories.py
+    target_namespace: FlextFactories
+    target_name: FlextTestsFactories
+    confidence: low
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextTestsFiles
+    current_file: flext-core/src/flext_tests/files.py
+    target_namespace: FlextFiles
+    target_name: FlextTestsFiles
+    confidence: low
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextTestsMatchers
+    current_file: flext-core/src/flext_tests/matchers.py
+    target_namespace: FlextMatchers
+    target_name: FlextTestsMatchers
+    confidence: low
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextTestsModels
+    current_file: flext-core/src/flext_tests/models.py
+    target_namespace: FlextModels
+    target_name: FlextTestsModels
+    confidence: low
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextTestsProtocols
+    current_file: flext-core/src/flext_tests/protocols.py
+    target_namespace: FlextProtocols
+    target_name: FlextTestsProtocols
+    confidence: low
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextTestsTypes
+    current_file: flext-core/src/flext_tests/typings.py
+    target_namespace: FlextTypings
+    target_name: FlextTestsTypes
+    confidence: low
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: _EntityFactory
+    current_file: flext-core/src/flext_tests/utilities.py
+    target_namespace: FlextUtilities
+    target_name: _EntityFactory
+    confidence: low
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: _ValueFactory
+    current_file: flext-core/src/flext_tests/utilities.py
+    target_namespace: FlextUtilities
+    target_name: _ValueFactory
+    confidence: low
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextTestsUtilities
+    current_file: flext-core/src/flext_tests/utilities.py
+    target_namespace: FlextUtilities
+    target_name: FlextTestsUtilities
+    confidence: low
+    reason: top_level_class_without_namespace_prefix
+  - loose_name: FlextTestsValidator
+    current_file: flext-core/src/flext_tests/validator.py
+    target_namespace: FlextValidator
+    target_name: FlextTestsValidator
+    confidence: low
+    reason: top_level_class_without_namespace_prefix

@@ -42,7 +42,7 @@ python examples/01_basic_result.py
 **Basic Concepts**:
 
 - **00_single_import_demo.py** — Minimal import verification helper. Demonstrates basic package import.
-- **01_basic_result.py** — Railway-oriented `FlextResult` patterns (map, flat_map, fail paths). **Start here for ROP basics**.
+- **01_basic_result.py** — Railway-oriented `r` patterns (map, flat_map, fail paths). **Start here for ROP basics**.
 
 **Dependency Injection & Configuration**:
 

@@ -1,0 +1,303 @@
+help: ## Show commands
+	$(Q)echo "================================================"
+	$(Q)echo "  $(PROJECT_NAME)"
+	$(Q)echo "================================================"
+	$(Q)echo ""
+	$(Q)echo "Core verbs:"
+	$(Q)printf "  %-14s %s\n" "setup"     "Install dependencies and hooks"
+	$(Q)printf "  %-14s %s\n" "build"     "Build distributable artifacts"
+	$(Q)printf "  %-14s %s\n" "check"     "Run lint gates (CHECK_GATES= to select)"
+	$(Q)printf "  %-14s %s\n" "security"  "Run all security checks"
+	$(Q)printf "  %-14s %s\n" "format"    "Run all formatting"
+	$(Q)printf "  %-14s %s\n" "docs"      "Build docs (DOCS_PHASE= to select)"
+	$(Q)printf "  %-14s %s\n" "test"      "Run pytest (PYTEST_ARGS= for options)"
+	$(Q)printf "  %-14s %s\n" "validate"  "Run validate gates (FIX=1 to auto-fix)"
+	$(Q)printf "  %-14s %s\n" "clean"     "Clean build/test/type artifacts"
+	$(Q)echo ""
+	$(Q)echo "Daemon management:"
+	$(Q)printf "  %-16s %s\n" "daemon-start"   "Start all daemons (mypy + pyright)"
+	$(Q)printf "  %-16s %s\n" "daemon-stop"    "Stop all daemons"
+	$(Q)printf "  %-16s %s\n" "daemon-status"  "Show status of all daemons"
+	$(Q)printf "  %-16s %s\n" "daemon-restart" "Restart all daemons"
+	$(Q)echo "  Also: daemon-{start,stop,status}-{mypy,pyright}"
+	$(Q)echo ""
+	$(Q)echo "Other:"
+	$(Q)printf "  %-14s %s\n" "check-fast" "Parallel lint (make -j4 check-fast)"
+	$(Q)printf "  %-14s %s\n" "pr"         "Manage PRs (PR_ACTION=status)"
+	$(Q)echo ""
+	$(Q)echo "PR variables:"
+	$(Q)echo "  PR_ACTION=status|create|view|checks|merge|close"
+	$(Q)echo "  PR_BASE=main  PR_HEAD=<branch>  PR_NUMBER=<id>"
+	$(Q)echo "  PR_TITLE='...'  PR_BODY='...'  PR_DRAFT=0|1"
+	$(Q)echo "  PR_MERGE_METHOD=squash|merge|rebase  PR_AUTO=0|1"
+	$(Q)echo "  PR_DELETE_BRANCH=0|1  PR_CHECKS_STRICT=0|1"
+	$(Q)echo "  PR_RELEASE_ON_MERGE=0|1"
+
+setup: ## Complete setup
+	$(Q)if [ "$(CORE_STACK)" = "go" ]; then \
+		go mod download; \
+		go mod tidy; \
+		exit 0; \
+	fi
+	$(Q)python -m flext_infra deps internal-sync
+	$(Q)$(POETRY) lock
+	$(Q)$(POETRY) install --all-extras --all-groups
+	$(Q)if git rev-parse --git-dir >/dev/null 2>&1; then \
+		$(POETRY) run pre-commit install; \
+	else \
+		echo "INFO: skipping pre-commit install (no git repository)"; \
+	fi
+
+build: ## Build distributable artifacts
+	$(Q)if [ "$(CORE_STACK)" = "go" ]; then \
+		mkdir -p .reports/build; \
+		build_start=$$(date +%s); \
+		go build -o .reports/build/$(PROJECT_NAME) ./...; \
+		echo "Build complete: $(PROJECT_NAME) ($$(($$(date +%s) - $$build_start))s)"; \
+		exit 0; \
+	fi
+	$(Q)build_start=$$(date +%s); \
+	$(POETRY) build; \
+	echo "Build complete: $(PROJECT_NAME) ($$(($$(date +%s) - $$build_start))s)"
+
+check: ## Run lint gates (CHECK_GATES=lint,format,pyrefly,mypy,pyright,security,markdown,go,type to select)
+	$(Q)if [ "$(CORE_STACK)" = "go" ]; then \
+		gates="$(CHECK_GATES)"; \
+		if [ -n "$$gates" ]; then \
+			for g in $$(echo "$$gates" | tr ',' ' '); do \
+				case "$$g" in \
+					lint|format|security|markdown|go|type) ;; \
+					*) echo "ERROR: unknown CHECK_GATES value '$$g' (allowed: lint,format,security,markdown,go,type)"; exit 2;; \
+				esac; \
+			done; \
+		else \
+			gates="lint,format,security,markdown,go"; \
+		fi; \
+		gates=$$(echo "$$gates" | tr ',' ' ' | sed 's/\btype\b/go/g' | tr ' ' ','); \
+		if echo "$$gates" | grep -qw lint; then \
+			golangci-lint run || { echo "FAIL: lint"; exit 1; }; \
+		fi; \
+		if echo "$$gates" | grep -qw format; then \
+			if [ -n "$$(find . -type f -name '*.go' ! -path './.git/*' ! -path './vendor/*')" ]; then \
+				gofmt_diff=$$(find . -type f -name '*.go' ! -path './.git/*' ! -path './vendor/*' -print0 | xargs -0 gofmt -l); \
+				if [ -n "$$gofmt_diff" ]; then \
+					echo "FAIL: gofmt"; \
+					printf '%s\n' "$$gofmt_diff"; \
+					exit 1; \
+				fi; \
+			fi; \
+		fi; \
+		if echo "$$gates" | grep -qw security; then \
+			gosec ./... || { echo "FAIL: security"; exit 1; }; \
+		fi; \
+		if echo "$$gates" | grep -qw markdown; then \
+			if git rev-parse --git-dir >/dev/null 2>&1; then \
+				md_files=$$(git ls-files -- '*.md' ':!vendor/'); \
+			else \
+				md_files=$$(find . -type f -name '*.md' ! -path './.git/*' ! -path './.reports/*' ! -path './reports/*' ! -path './.venv/*' ! -path './vendor/*' ! -path './node_modules/*' ! -path './dist/*' ! -path './build/*'); \
+			fi; \
+			md_config=""; \
+			if [ -f "$(WORKSPACE_ROOT)/.markdownlint.json" ]; then \
+				md_config="--config $(WORKSPACE_ROOT)/.markdownlint.json"; \
+			elif [ -f ".markdownlint.json" ]; then \
+				md_config="--config .markdownlint.json"; \
+			fi; \
+			if [ -n "$$md_files" ]; then echo "$$md_files" | xargs markdownlint $$md_config || { echo "FAIL: markdown"; exit 1; }; fi; \
+		fi; \
+		if echo "$$gates" | grep -qw go; then \
+			go vet ./... || { echo "FAIL: go"; exit 1; }; \
+		fi; \
+		exit 0; \
+	fi
+	$(Q)gates="$(CHECK_GATES)"; \
+	if [ -n "$$gates" ]; then \
+		for g in $$(echo "$$gates" | tr ',' ' '); do \
+			case "$$g" in \
+				lint|format|pyrefly|mypy|pyright|security|markdown|go|type) ;; \
+				*) echo "ERROR: unknown CHECK_GATES value '$$g' (allowed: lint,format,pyrefly,mypy,pyright,security,markdown,go,type)"; exit 2;; \
+			esac; \
+		done; \
+	else \
+		gates="lint,format,pyrefly,mypy,pyright,security,markdown,go"; \
+	fi; \
+	gates=$$(echo "$$gates" | tr ',' ' ' | sed 's/\btype\b/pyrefly/g' | tr ' ' ','); \
+	project_key="$(PROJECT_NAME)"; \
+	if [ "$(CURDIR)" = "$(WORKSPACE_ROOT)" ]; then \
+		project_key="."; \
+	fi; \
+	FLEXT_WORKSPACE_ROOT="$(WORKSPACE_ROOT)" $(POETRY) run python -m flext_infra check run --gates "$$gates" --reports-dir "$(CURDIR)/.reports/check" --project "$$project_key"; \
+	exit $$?
+
+security: ## Run all security checks
+	$(Q)if [ "$(CORE_STACK)" = "go" ]; then \
+		gosec ./...; \
+		exit 0; \
+	fi
+	$(Q)$(POETRY) run bandit -r $(SRC_DIR) -q -ll
+
+format: ## Run code formatting (ruff/gofmt + markdownlint on tracked files)
+	$(Q)if [ "$(CORE_STACK)" = "go" ]; then \
+		go_files=$$(find . -type f -name '*.go' ! -path './.git/*' ! -path './vendor/*'); \
+		if [ -n "$$go_files" ]; then \
+			printf '%s\n' "$$go_files" | xargs gofmt -w; \
+			if command -v goimports >/dev/null 2>&1; then \
+				printf '%s\n' "$$go_files" | xargs goimports -w; \
+			fi; \
+		fi; \
+	else \
+		$(POETRY) run ruff format . --quiet; \
+		if [ -f go.mod ]; then \
+			go_files=$$(find . -type f -name '*.go' ! -path './.git/*' ! -path './vendor/*'); \
+			if [ -n "$$go_files" ]; then \
+				printf '%s\n' "$$go_files" | xargs gofmt -w; \
+			fi; \
+		fi; \
+	fi
+	$(Q)if git rev-parse --git-dir >/dev/null 2>&1; then \
+		md_files=$$(git ls-files -- '*.md' ':!vendor/' && git ls-files --others --exclude-standard -- '*.md' ':!vendor/'); \
+	else \
+		md_files=$$(find . -type f -name '*.md' ! -path './.git/*' ! -path './.reports/*' ! -path './.venv/*' ! -path './vendor/*' ! -path './node_modules/*' ! -path './dist/*' ! -path './build/*'); \
+	fi; \
+	if [ -n "$$md_files" ]; then \
+		md_config=""; \
+		if [ -f "$(WORKSPACE_ROOT)/.markdownlint.json" ]; then \
+			md_config="--config $(WORKSPACE_ROOT)/.markdownlint.json"; \
+		elif [ -f ".markdownlint.json" ]; then \
+			md_config="--config .markdownlint.json"; \
+		fi; \
+		echo "$$md_files" | xargs markdownlint --fix $$md_config 2>/dev/null || true; \
+	fi
+	$(Q)echo "Format complete: $(PROJECT_NAME)"
+
+docs: ## Build docs
+	$(Q)if python3 -c "import flext_infra.docs" >/dev/null 2>&1; then \
+		echo "PROJECT=$(PROJECT_NAME) PHASE=sync RESULT=OK REASON=docs-module-available"; \
+	else \
+		echo "PROJECT=$(PROJECT_NAME) PHASE=sync RESULT=FAIL REASON=docs-module-missing"; \
+		exit 1; \
+	fi
+	$(Q)if [ "$(DOCS_PHASE)" = "all" ]; then \
+		phases="generate fix audit build validate"; \
+		all_mode=1; \
+	else \
+		phases="$(DOCS_PHASE)"; \
+		all_mode=0; \
+	fi; \
+	for phase in $$phases; do \
+		case "$$phase" in \
+			audit) subcmd="docs audit"; extra="--strict 1" ;; \
+			fix) subcmd="docs fix"; extra="$(if $(filter 1,$(FIX)),--apply,)" ;; \
+			build) subcmd="docs build"; extra="" ;; \
+			generate) subcmd="docs generate"; extra="--apply" ;; \
+			validate) subcmd="docs validate"; extra="$(if $(filter 1,$(FIX)),--apply,)" ;; \
+			*) echo "ERROR: invalid DOCS_PHASE=$$phase"; exit 2 ;; \
+		esac; \
+		if [ "$$phase" = "fix" ] && [ "$$all_mode" = "1" ]; then extra="--apply"; fi; \
+		cmd="python -m flext_infra $$subcmd --root . --output-dir .reports/docs"; \
+		if [ -n "$$extra" ]; then cmd="$$cmd $$extra"; fi; \
+		eval $$cmd || exit $$?; \
+	done
+
+test: ## Run pytest only
+	$(Q)if [ "$(CORE_STACK)" = "go" ]; then \
+		go test -v -race -coverprofile=coverage.out -covermode=atomic ./...; \
+		go tool cover -func=coverage.out; \
+	else \
+		run_id=$$(date -u +%Y%m%dT%H%M%SZ)-$$$$; \
+	report_dir="$(PYTEST_REPORTS_DIR)/$$run_id"; \
+	mkdir -p "$$report_dir"; \
+	log_file="$$report_dir/pytest.log"; \
+	junit_file="$$report_dir/junit.xml"; \
+	coverage_file="$$report_dir/coverage.xml"; \
+	summary_file="$$report_dir/summary.txt"; \
+	failed_file="$$report_dir/failed-tests.txt"; \
+	errors_file="$$report_dir/errors.txt"; \
+	warnings_file="$$report_dir/warnings.txt"; \
+	slowest_file="$$report_dir/slowest-tests.txt"; \
+	skips_file="$$report_dir/skipped-tests.txt"; \
+	command_file="$$report_dir/command.txt"; \
+	interrupted=0; \
+	echo "$(POETRY) run pytest $(TESTS_DIR) $(PYTEST_REPORT_ARGS) $(if $(filter 1,$(DIAG)),$(PYTEST_DIAG_ARGS),) -p no:metadata --junitxml=$$junit_file --cov --cov-report=xml:$$coverage_file $(if $(filter 1,$(DIAG)),-vv,-q) $(PYTEST_ARGS)" > "$$command_file"; \
+	trap 'interrupted=1; trap "" INT TERM' INT TERM; \
+	$(POETRY) run pytest $(TESTS_DIR) \
+		$(PYTEST_REPORT_ARGS) \
+		$(if $(filter 1,$(DIAG)),$(PYTEST_DIAG_ARGS),) \
+		-p no:metadata \
+		--junitxml="$$junit_file" \
+		--cov --cov-report=xml:$$coverage_file \
+		$(if $(filter 1,$(DIAG)),-vv,-q) $(PYTEST_ARGS) 2>&1 | tee "$$log_file"; \
+	rc=$${PIPESTATUS[0]}; \
+	if [ "$$interrupted" = "1" ]; then rc=130; fi; \
+	if [ -f "$$junit_file" ]; then \
+		tests=$$(grep -Eo 'tests="[0-9]+"' "$$junit_file" | head -n 1 | tr -dc '0-9'); \
+		failures=$$(grep -Eo 'failures="[0-9]+"' "$$junit_file" | head -n 1 | tr -dc '0-9'); \
+		errors=$$(grep -Eo 'errors="[0-9]+"' "$$junit_file" | head -n 1 | tr -dc '0-9'); \
+		skipped=$$(grep -Eo 'skipped="[0-9]+"' "$$junit_file" | head -n 1 | tr -dc '0-9'); \
+		duration=$$(grep -Eo 'time="[0-9.]+"' "$$junit_file" | head -n 1 | sed -E 's/time="([0-9.]+)"/\1/'); \
+		tests=$${tests:-0}; failures=$${failures:-0}; errors=$${errors:-0}; skipped=$${skipped:-0}; duration=$${duration:-0}; \
+		passed=$$((tests - failures - errors - skipped)); \
+		if [ $$passed -lt 0 ]; then passed=0; fi; \
+		printf 'junit=%s\ncoverage=%s\ntotal=%s\npassed=%s\nfailed=%s\nerrors=%s\nskipped=%s\nduration_seconds=%s\n' \
+			"$$junit_file" "$$coverage_file" "$$tests" "$$passed" "$$failures" "$$errors" "$$skipped" "$$duration" > "$$summary_file"; \
+	else \
+		echo "junit=not-generated" > "$$summary_file"; \
+		echo "coverage=$$coverage_file" >> "$$summary_file"; \
+		echo "total=0" >> "$$summary_file"; \
+		echo "passed=0" >> "$$summary_file"; \
+		echo "failed=0" >> "$$summary_file"; \
+		echo "errors=0" >> "$$summary_file"; \
+		echo "skipped=0" >> "$$summary_file"; \
+		echo "duration_seconds=0" >> "$$summary_file"; \
+	fi; \
+	counts_file="$$report_dir/counts.env"; \
+	$(VENV_PYTHON) -m flext_infra core pytest-diag \
+		--junit "$$junit_file" --log "$$log_file" \
+		--failed "$$failed_file" --errors "$$errors_file" \
+		--warnings "$$warnings_file" --slowest "$$slowest_file" \
+		--skips "$$skips_file" > "$$counts_file"; \
+	. "$$counts_file"; \
+	if [ "$$rc" -eq 130 ] || [ "$$interrupted" = "1" ]; then run_state="INTERRUPTED"; else run_state="COMPLETED"; fi; \
+	echo "================================================" >&2; \
+	echo "DIAG $$run_state | failed=$$failed_count errors=$$error_count warnings=$$warning_count skipped=$$skipped_count" >&2; \
+	echo "================================================" >&2; \
+	echo "Top test durations (from $$slowest_file):" >&2; \
+	awk 'NR<=10 {print}' "$$slowest_file" >&2; \
+	echo "Error trace excerpt (from $$errors_file):" >&2; \
+	awk 'NR<=40 {print}' "$$errors_file" >&2; \
+	ln -sfn "$$run_id" "$(PYTEST_REPORTS_DIR)/latest"; \
+	echo "Reports: $$report_dir (latest: $(PYTEST_REPORTS_DIR)/latest)" >&2; \
+	echo "Details: $$summary_file | $$failed_file | $$errors_file | $$warnings_file | $$slowest_file | $$skips_file | $$log_file" >&2; \
+	exit $$rc; \
+	fi
+
+validate: ## Run validate gates (VALIDATE_GATES=complexity,docstring to select, FIX=1)
+	$(Q)if [ "$(CORE_STACK)" = "go" ]; then \
+		if [ "$(FIX)" = "1" ]; then \
+			$(MAKE) format; \
+		fi; \
+		go mod verify; \
+		exit 0; \
+	fi
+	$(Q)if [ -n "$(FIX)" ] && [ "$(FIX)" != "1" ]; then \
+		echo "ERROR: FIX must be empty or 1, got '$(FIX)'"; \
+		exit 1; \
+	fi
+	$(Q)if [ "$(FIX)" = "1" ]; then $(POETRY) run ruff check --fix . --quiet; fi
+	$(Q)gates="$(VALIDATE_GATES)"; \
+	if [ -n "$$gates" ]; then \
+		for g in $$(echo "$$gates" | tr ',' ' '); do \
+			case "$$g" in \
+				complexity|docstring) ;; \
+				*) echo "ERROR: unknown VALIDATE_GATES value '$$g' (allowed: complexity,docstring)"; exit 2;; \
+			esac; \
+		done; \
+	else \
+		gates="complexity,docstring"; \
+	fi; \
+	if echo "$$gates" | grep -qw complexity; then \
+		$(POETRY) run radon cc $(SRC_DIR) -n E -a --total-average; \
+		$(POETRY) run radon mi $(SRC_DIR) -n C -s --sort; \
+	fi; \
+	if echo "$$gates" | grep -qw docstring; then \
+		$(POETRY) run interrogate $(SRC_DIR) --fail-under=$(DOCSTRING_MIN) --ignore-init-method --ignore-magic -q; \
+	fi

@@ -1,14 +1,12 @@
 # Application Layer API Reference
 
 <!-- TOC START -->
-
 - [FlextDispatcher - Unified CQRS Dispatcher](#flextdispatcher-unified-cqrs-dispatcher)
 - [h - CQRS Handler Base](#h-cqrs-handler-base)
 - [FlextRegistry - Handler Registration Utilities](#flextregistry-handler-registration-utilities)
 - [FlextDecorators - Cross-Cutting Concerns](#flextdecorators-cross-cutting-concerns)
 - [Quick Start Checklist](#quick-start-checklist)
 - [Verification Commands](#verification-commands)
-
 <!-- TOC END -->
 
 The application layer coordinates domain logic through CQRS-style handlers, reliability policies, and structured observability.
@@ -28,15 +26,18 @@ Primary components in this layer: `FlextDispatcher`, `h`, `FlextRegistry`, and `
 ```python
 from flext_core import FlextDispatcher
 
+
 # Define messages
 class CreateUserCommand:
     def __init__(self, name: str, email: str):
         self.name = name
         self.email = email
 
+
 class GetUserQuery:
     def __init__(self, user_id: str):
         self.user_id = user_id
+
 
 # Create dispatcher and register handlers
 dispatcher = FlextDispatcher()
@@ -57,11 +58,12 @@ user_result = dispatcher.dispatch(GetUserQuery("user-123"))
 
 ## h - CQRS Handler Base
 
-`h` provides the abstract base class for implementing command and query handlers. It supplies validation hooks, context propagation, and `FlextResult`-based error handling.
+`h` provides the abstract base class for implementing command and query handlers. It supplies validation hooks, context propagation, and `r`-based error handling.
 
 ```python
-from flext_core.handlers import h
-from flext_core.result import r
+from flext_core import h
+from flext_core import r
+
 
 class CreateUserHandler(h[CreateUserCommand, bool]):
     def handle(self, message: CreateUserCommand) -> r[bool]:
@@ -97,7 +99,7 @@ summary = registry.register_handlers([
 **Highlights**
 
 - Batch or single registration with duplicate detection
-- Returns `FlextResult` objects describing successes and skips
+- Returns `r` objects describing successes and skips
 - Designed to pair with `FlextDispatcher` for execution
 
 ## FlextDecorators - Cross-Cutting Concerns
@@ -105,8 +107,9 @@ summary = registry.register_handlers([
 `FlextDecorators` packages common cross-cutting behaviors so handlers stay focused on business logic.
 
 ```python
-from flext_core.decorators import FlextDecorators
-from flext_core.result import r
+from flext_core import FlextDecorators
+from flext_core import r
+
 
 @FlextDecorators.retry(attempts=3)
 @FlextDecorators.timeout(seconds=2)
@@ -120,14 +123,14 @@ def handle_create_user(cmd: CreateUserCommand, logger) -> r[bool]:
 
 - Reliability decorators: `@retry`, `@timeout`, `@with_correlation`
 - Dependency injection: `@inject` to resolve services from `FlextContainer`
-- Railway pattern helper: `@railway` to wrap callables with `FlextResult`
+- Railway pattern helper: `@railway` to wrap callables with `r`
 
 ## Quick Start Checklist
 
 1. Define command/query messages and corresponding handlers inheriting `h`.
 1. Register handlers with `FlextDispatcher` or via `FlextRegistry` batch helpers.
 1. Apply `FlextDecorators` for retries, timeouts, context propagation, or DI.
-1. Dispatch messages through `FlextDispatcher.dispatch(...)` and work with `FlextResult` outputs.
+1. Dispatch messages through `FlextDispatcher.dispatch(...)` and work with `r` outputs.
 
 ## Verification Commands
 
@@ -137,4 +140,7 @@ Run from `flext-core/`:
 make lint
 make type-check
 make test-fast
+```
+
+```
 ```

@@ -6,7 +6,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import c, m, r
+from pydantic import Field
+
+from flext_core import c, m
 
 
 class TestEntityCoverageEdgeCases:
@@ -16,6 +18,7 @@ class TestEntityCoverageEdgeCases:
         """entity_id returns unique_id (line 82)."""
 
         class TestEntity(m.Entity):
+            domain_events: list[m.DomainEvent] = Field(default_factory=list)
             name: str
 
         entity = TestEntity(unique_id="test-id-123", name="test")
@@ -23,9 +26,10 @@ class TestEntityCoverageEdgeCases:
         assert entity.entity_id == entity.unique_id
 
     def test_logger_property(self) -> None:
-        """logger property returns FlextRuntime.get_logger (line 87)."""
+        """Logger property returns FlextRuntime.get_logger (line 87)."""
 
         class TestEntity(m.Entity):
+            domain_events: list[m.DomainEvent] = Field(default_factory=list)
             name: str
 
         entity = TestEntity(unique_id="test-id", name="test")
@@ -37,16 +41,18 @@ class TestEntityCoverageEdgeCases:
         """uncommitted_events returns list(domain_events) (line 110)."""
 
         class TestEntity(m.Entity):
+            domain_events: list[m.DomainEvent] = Field(default_factory=list)
             name: str
 
         entity = TestEntity(unique_id="test-id", name="test")
         events = entity.uncommitted_events
         assert isinstance(events, list)
         assert len(events) == 0
-
-        event_result = entity.add_domain_event("test_event", {"key": "value"})
+        event_result = entity.add_domain_event(
+            "test_event",
+            m.ConfigMap(root={"key": "value"}),
+        )
         assert event_result.is_success
-
         events = entity.uncommitted_events
         assert len(events) == 1
         assert events[0].event_type == "test_event"
@@ -55,15 +61,15 @@ class TestEntityCoverageEdgeCases:
         """add_domain_event fails exceeding max limit (line 139)."""
 
         class TestEntry(m.Entity):
+            domain_events: list[m.DomainEvent] = Field(default_factory=list)
             name: str
 
         entry = TestEntry(unique_id="test-id", name="test")
         max_events = c.Validation.MAX_UNCOMMITTED_EVENTS
         for i in range(max_events):
-            result = entry.add_domain_event(f"event_{i}", {})
+            result = entry.add_domain_event(f"event_{i}", m.ConfigMap(root={}))
             assert result.is_success
-
-        fail_result = entry.add_domain_event("overflow_event", {})
+        fail_result = entry.add_domain_event("overflow_event", m.ConfigMap(root={}))
         assert fail_result.is_failure
         error_msg = fail_result.error or ""
         assert "would exceed max events limit" in error_msg
@@ -78,9 +84,7 @@ class TestEntityCoverageEdgeCases:
         assert value.__eq__("not a model") is NotImplemented
         assert value.__eq__(123) is NotImplemented
         assert value.__eq__(None) is NotImplemented
-
         value2 = TestValue(data="test")
         assert value == value2
-
         value3 = TestValue(data="different")
         assert value != value3

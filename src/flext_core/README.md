@@ -28,7 +28,7 @@ FLEXT Core is a foundational framework providing core abstractions for building 
 
 This module provides the core infrastructure components used across the FLEXT ecosystem:
 
-- **Railway-oriented error handling** with `FlextResult[T]`
+- **Railway-oriented error handling** with `r[T]`
 - **Dependency injection container** with type-safe service registration
 - **CQRS implementation** with command/query dispatcher and registry
 - **Domain modeling** with entities, value objects, aggregates, and domain events
@@ -62,7 +62,7 @@ External concerns including logging, configuration, dependency injection, and co
 
 | Component         | Description                                                |
 | ----------------- | ---------------------------------------------------------- |
-| `FlextResult[T]`  | Railway-oriented error handling with monadic operations    |
+| `r[T]`  | Railway-oriented error handling with monadic operations    |
 | `FlextContainer`  | Dependency injection container with type-safe registration |
 | `FlextDispatcher` | Command/query dispatcher with reliability controls         |
 | `FlextContext`    | Hierarchical context management for tracing                |
@@ -75,31 +75,31 @@ External concerns including logging, configuration, dependency injection, and co
 ### Basic Setup
 
 ```python
-from flext_core.settings import FlextSettings
-from flext_core.constants import FlextConstants
-from flext_core.container import FlextContainer
-from flext_core.context import FlextContext
-from flext_core.decorators import FlextDecorators
-from flext_core.dispatcher import FlextDispatcher
-from flext_core.exceptions import FlextExceptions
-from flext_core.handlers import h
-from flext_core.loggings import FlextLogger
-from flext_core.mixins import x
-from flext_core.models import FlextModels
-from flext_core.protocols import p
-from flext_core.registry import FlextRegistry
-from flext_core.result import FlextResult
-from flext_core.runtime import FlextRuntime
-from flext_core.service import FlextService
-from flext_core.typings import t
-from flext_core.utilities import u
+from flext_core import FlextSettings
+from flext_core import FlextConstants
+from flext_core import FlextContainer
+from flext_core import FlextContext
+from flext_core import FlextDecorators
+from flext_core import FlextDispatcher
+from flext_core import FlextExceptions
+from flext_core import h
+from flext_core import FlextLogger
+from flext_core import x
+from flext_core import FlextModels
+from flext_core import p
+from flext_core import FlextRegistry
+from flext_core import r
+from flext_core import FlextRuntime
+from flext_core import FlextService
+from flext_core import t
+from flext_core import u
 
 # Create dispatcher/registry (registry optional for simple flows)
 dispatcher = FlextDispatcher()
 registry = FlextRegistry()
 
 # Railway-oriented error handling
-result = FlextResult.success("operation completed")
+result = r.success("operation completed")
 if result.is_success:
     data = result.value
 ```
@@ -108,7 +108,7 @@ if result.is_success:
 
 ```python
 from flext_core import FlextContainer
-from flext_core.loggings import FlextLogger
+from flext_core import FlextLogger
 
 container = FlextContainer()
 container.register("logger", FlextLogger.create_module_logger(__name__))
@@ -119,16 +119,17 @@ assert logger_result.value is container.get("logger").value
 ### Domain Modeling
 
 ```python
-from flext_core.models import FlextModels
+from flext_core import FlextModels
+
 
 class User(FlextModels.Entity):
     name: str
     email: str
 
-    def validate(self) -> FlextResult[bool]:
+    def validate(self) -> r[bool]:
         if "@" not in self.email:
-            return FlextResult[bool].fail("Invalid email")
-        return FlextResult[bool].ok(True)
+            return r[bool].fail("Invalid email")
+        return r[bool].ok(True)
 ```
 
 ### Domain Events and Dispatcher Integration
@@ -136,8 +137,8 @@ class User(FlextModels.Entity):
 Aggregate roots collect domain events that can be published through the dispatcher after a successful operation:
 
 ```python
-from flext_core.dispatcher import FlextDispatcher
-from flext_core.models import FlextModels
+from flext_core import FlextDispatcher
+from flext_core import FlextModels
 
 
 class InventoryAdjusted(FlextModels.DomainEvent):

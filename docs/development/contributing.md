@@ -1,7 +1,6 @@
 # Contributing to FLEXT-Core
 
 <!-- TOC START -->
-
 - [Code of Conduct](#code-of-conduct)
 - [Canonical Rules](#canonical-rules)
 - [Quick Start](#quick-start)
@@ -33,7 +32,6 @@
 - [Getting Help](#getting-help)
   - [Resources](#resources)
   - [Support Levels](#support-levels)
-
 <!-- TOC END -->
 
 Thank you for your interest in contributing to FLEXT-Core! This guide provides comprehensive instructions for contributing to the project.
@@ -44,7 +42,7 @@ We are committed to providing a welcoming and inclusive environment. Please be r
 
 ## Canonical Rules
 
-- Root project governance lives in `CLAUDE.md` at the workspace root.
+- Root project governance lives in `AGENTS.md` at the workspace root.
 - For `flext-core` changes, follow `rules-flext-core`, `flext-import-rules`, and `flext-strict-typing`.
 - Keep examples and snippets aligned with Python 3.13 typing style (`X | None`, `list[T]`, `dict[K, V]`).
 
@@ -68,7 +66,7 @@ cd flext-core
 make setup
 
 # Verify installation
-python -c "from flext_core import FlextResult; print('✅ FLEXT-Core ready')"
+python -c "from flext_core import r; print('✅ FLEXT-Core ready')"
 ```
 
 ## How to Contribute
@@ -205,7 +203,7 @@ pytest tests/unit/test_result.py --cov=src/flext_core/result.py --cov-report=ter
 
 **Best Practices:**
 
-- Use `FlextResult[T]` for all operations that can fail
+- Use `r[T]` for all operations that can fail
 - Register services with `FlextContainer.get_global()`
 - Follow DDD patterns with `FlextModels.Entity/Value/AggregateRoot`
 - Use `FlextLogger` with context propagation
@@ -226,6 +224,8 @@ pytest tests/unit/test_result.py --cov=src/flext_core/result.py --cov-report=ter
    make install
    ```
 
+````
+
 1. **Type Errors**
 
    ```bash
@@ -234,7 +234,7 @@ pytest tests/unit/test_result.py --cov=src/flext_core/result.py --cov-report=ter
 
    # Check specific files
    mypy src/flext_core/your_module.py
-   ```
+````
 
 1. **Test Failures**
 
@@ -243,8 +243,10 @@ pytest tests/unit/test_result.py --cov=src/flext_core/result.py --cov-report=ter
    pytest tests/ -v --tb=short
 
    # Debug specific test
-   pytest tests/unit/test_result.py::TestFlextResult::test_ok -v -s
+   pytest tests/unit/test_result.py::Testr::test_ok -v -s
    ```
+
+```
 
 ### Documentation Updates
 
@@ -299,17 +301,19 @@ pytest tests/unit/test_result.py --cov=src/flext_core/result.py --cov-report=ter
 **Module Structure:**
 
 ```
+
 src/flext_core/
-├── __init__.py          # Public API exports
-├── result.py           # Railway pattern implementation
-├── container.py        # Dependency injection
-├── models.py           # DDD base classes
-├── service.py          # Domain service base
-├── bus.py             # Message bus
-├── config.py          # Configuration management
-├── loggings.py        # Structured logging
+├── **init**.py # Public API exports
+├── result.py # Railway pattern implementation
+├── container.py # Dependency injection
+├── models.py # DDD base classes
+├── service.py # Domain service base
+├── bus.py # Message bus
+├── config.py # Configuration management
+├── loggings.py # Structured logging
 └── ... (other modules)
-```
+
+````
 
 **Import Guidelines:**
 
@@ -328,7 +332,7 @@ from flext_core import x
 from flext_core import FlextModels
 from flext_core import p
 from flext_core import FlextRegistry
-from flext_core import FlextResult
+from flext_core import r
 from flext_core import FlextRuntime
 from flext_core import FlextService
 from flext_core import t
@@ -338,8 +342,8 @@ from flext_core import u
 from flext_core import *
 
 # ❌ Bad - Relative imports in public APIs
-from .result import FlextResult
-```
+from .result import r
+````
 
 ## Review Process
 
@@ -430,3 +434,6 @@ ______________________________________________________________________
 Thank you for contributing to FLEXT-Core! Your contributions help make this a better framework for the entire ecosystem.
 
 **Happy coding!** 🚀
+
+```
+```

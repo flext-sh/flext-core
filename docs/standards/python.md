@@ -1,7 +1,6 @@
 # Python Coding Standards
 
 <!-- TOC START -->
-
 - [Type Annotations](#type-annotations)
   - [ZERO TOLERANCE: Complete Type Annotations](#zero-tolerance-complete-type-annotations)
   - [Type Hints for Collections](#type-hints-for-collections)
@@ -31,7 +30,6 @@
 - [Quality Gate Checklist](#quality-gate-checklist)
 - [Common Violations and Fixes](#common-violations-and-fixes)
 - [Philosophy](#philosophy)
-
 <!-- TOC END -->
 
 **Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency
@@ -46,23 +44,28 @@ FLEXT-Core enforces **zero-tolerance** quality standards. These are non-negotiab
 
 ```python
 # ✅ CORRECT
-def get_user(user_id: str) -> FlextResult[User]:
+def get_user(user_id: str) -> r[User]:
     """Get user by ID."""
     pass
+
 
 def process_items(items: list[str], multiplier: int = 1) -> list[int]:
     """Process items."""
     return [len(item) * multiplier for item in items]
 
+
 # ❌ WRONG - Any of these:
 def get_user(user_id):  # Missing parameter type
     pass
 
+
 def get_user(user_id: str):  # Missing return type
     pass
 
-def get_user(user_id: str) -> None:  # Wrong return type (should be FlextResult)
+
+def get_user(user_id: str) -> None:  # Wrong return type (should be r)
     pass
+
 
 def get_user(user_id: str) -> Any:  # NO Any type
     pass
@@ -75,12 +78,15 @@ def get_user(user_id: str) -> Any:  # NO Any type
 def process_users(users: list[User]) -> dict[str, User]:
     pass
 
+
 def get_first_or_default(items: list[str], default: str) -> str:
     pass
+
 
 # ❌ WRONG - Vague
 def process_users(users: list):  # Missing element type
     pass
+
 
 def process_users(users: List[User]):  # Use lowercase list not List
     pass
@@ -91,13 +97,15 @@ def process_users(users: List[User]):  # Use lowercase list not List
 ```python
 from typing import TypeVar
 
-T = TypeVar('T')
-U = TypeVar('U')
+T = TypeVar("T")
+U = TypeVar("U")
+
 
 # ✅ CORRECT
 def map_over(items: list[T], func: callable[[T], U]) -> list[U]:
     """Map function over items."""
     return [func(item) for item in items]
+
 
 # ❌ WRONG
 def map_over(items, func):  # No types
@@ -116,12 +124,15 @@ def very_long_function_name(
     parameter_one: str,
     parameter_two: int,
     parameter_three: bool,
-) -> FlextResult[dict]:
+) -> r[dict]:
     """Function with many parameters."""
     pass
 
+
 # ❌ WRONG - Exceeds 79 chars
-def very_long_function_name(parameter_one: str, parameter_two: int, parameter_three: bool) -> FlextResult[dict]:
+def very_long_function_name(
+    parameter_one: str, parameter_two: int, parameter_three: bool
+) -> r[dict]:
     pass
 ```
 
@@ -137,10 +148,10 @@ from typing import TypeVar
 import pydantic
 import structlog
 
-from flext_core import FlextResult, FlextContainer
+from flext_core import r, FlextContainer
 
 # ❌ WRONG - Mixed order
-from flext_core import FlextResult
+from flext_core import r
 import os
 import pydantic
 from datetime import datetime
@@ -151,22 +162,26 @@ from flext_core import FlextContainer
 
 ```python
 # ✅ CORRECT
-class FlextResult:  # PascalCase for classes
+class r:  # PascalCase for classes
     """Result monad."""
 
     def unwrap(self) -> Any:  # snake_case for methods
         pass
 
+
 MAXIMUM_RETRIES = 3  # SCREAMING_SNAKE_CASE for constants
 
 variable_name = "value"  # snake_case for variables
+
 
 # ❌ WRONG
 class flextResult:  # lowercase for class
     pass
 
+
 def UnwrapValue():  # PascalCase for function
     pass
+
 
 max_retries = 3  # lowercase for constants
 
@@ -183,7 +198,7 @@ def create_user(
     name: str,
     email: str,
     age: int,
-) -> FlextResult[User]:
+) -> r[User]:
     """Create new user with validation.
 
     Args:
@@ -192,10 +207,10 @@ def create_user(
         age: User's age (must be >= 18).
 
     Returns:
-        FlextResult[User]: Success with created user or failure with error.
+        r[User]: Success with created user or failure with error.
 
     Raises:
-        None: Uses FlextResult for errors.
+        None: Uses r for errors.
 
     Example:
         >>> result = create_user("Alice", "alice@example.com", 25)
@@ -206,9 +221,11 @@ def create_user(
     # Implementation
     pass
 
+
 # ❌ WRONG - Missing docstring
-def create_user(name: str, email: str, age: int) -> FlextResult[User]:
+def create_user(name: str, email: str, age: int) -> r[User]:
     pass
+
 
 # ❌ WRONG - Poor docstring
 def create_user(name, email, age):
@@ -233,6 +250,7 @@ from flext_core import FlextModels, FlextService
 
 class User(FlextModels.Entity):
     """User entity."""
+
     pass
 ```
 
@@ -241,11 +259,12 @@ class User(FlextModels.Entity):
 ### Railway-Oriented Always
 
 ```python
-# ✅ CORRECT - Return FlextResult
-def validate_email(email: str) -> FlextResult[str]:
+# ✅ CORRECT - Return r
+def validate_email(email: str) -> r[str]:
     if "@" not in email:
-        return FlextResult[str].fail("Invalid email")
-    return FlextResult[str].ok(email)
+        return r[str].fail("Invalid email")
+    return r[str].ok(email)
+
 
 # ❌ WRONG - Raising exceptions
 def validate_email(email: str) -> str:
@@ -261,9 +280,9 @@ def validate_email(email: str) -> str:
 try:
     result = operation()
 except TimeoutError:
-    return FlextResult.fail("Operation timeout")
+    return r.fail("Operation timeout")
 except ValueError as e:
-    return FlextResult.fail(f"Invalid input: {e}")
+    return r.fail(f"Invalid input: {e}")
 
 # ❌ WRONG - Bare except catches everything
 try:
@@ -285,18 +304,23 @@ except Exception:
 def test_create_user_succeeds_with_valid_data():
     pass
 
+
 def test_create_user_fails_when_name_is_empty():
     pass
 
+
 def test_email_validation_accepts_valid_format():
     pass
+
 
 # ❌ WRONG - Vague
 def test_user():
     pass
 
+
 def test_create():
     pass
+
 
 def test_validate():
     pass
@@ -307,16 +331,18 @@ def test_validate():
 ```python
 # ✅ CORRECT - One conceptual assertion
 def test_result_ok_creates_success():
-    result = FlextResult[int].ok(42)
+    result = r[int].ok(42)
     assert result.is_success
 
+
 def test_result_ok_contains_value():
-    result = FlextResult[int].ok(42)
+    result = r[int].ok(42)
     assert result.value == 42
+
 
 # ❌ WRONG - Multiple concepts
 def test_result():
-    result = FlextResult[int].ok(42)
+    result = r[int].ok(42)
     assert result.is_success
     assert result.value == 42
     assert result.data == 42
@@ -371,6 +397,7 @@ def add_user(
     new_users.append(user)
     return new_users
 
+
 # ❌ WRONG - Mutable default
 def add_user(users: list[User] = []) -> list[User]:
     users.append(user)  # Changes default!
@@ -385,8 +412,10 @@ class UserService:
     def __init__(self, logger):
         self.logger = logger
 
+
 # ❌ WRONG - Global state
 _logger = None
+
 
 class UserService:
     def get_logger(self):
@@ -416,11 +445,11 @@ for x in numbers:
 
 ```python
 # ✅ CORRECT - Use context manager
-with open('file.txt', 'r') as f:
+with open("file.txt", "r") as f:
     content = f.read()
 
 # ❌ WRONG - Manual cleanup
-f = open('file.txt', 'r')
+f = open("file.txt", "r")
 content = f.read()
 # File might not close if exception
 ```
@@ -470,3 +499,6 @@ make validate  # In flext-core directory
 - ✅ No exceptions
 
 **If a standard seems wrong, raise an issue.** Standards can evolve, but when they exist, they apply universally.
+
+```
+```

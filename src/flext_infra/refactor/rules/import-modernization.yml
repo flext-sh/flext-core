@@ -1,0 +1,61 @@
+# Regras para modernização de imports
+# Usado por ImportModernizerRule
+
+rules:
+  - id: modernize-constants-import
+    name: "Modernize constants imports"
+    description: "Replace from flext_core.constants import X with from flext_core import c"
+    module: "flext_core.constants"
+    enabled: true
+    severity: error
+    pattern: 'from\s+flext_core\.constants\s+import\s+(\w+)'
+    auto_fix: true
+    fix_action: replace_with_alias
+    replacement: "from flext_core import c"
+    symbol_mapping:
+      PLATFORM: "c.System.PLATFORM"
+      TIMEOUT: "c.Limits.TIMEOUT"
+      MAX_RETRIES: "c.Limits.MAX_RETRIES"
+      DEBUG: "c.System.DEBUG"
+
+  - id: modernize-models-import
+    name: "Modernize models imports"
+    description: "Replace from flext_core.models import X with from flext_core import m"
+    module: "flext_core.models"
+    enabled: true
+    severity: error
+    pattern: 'from\s+flext_core\.models\s+import\s+(\w+)'
+    auto_fix: true
+    fix_action: replace_with_alias
+    replacement: "from flext_core import m"
+    symbol_mapping:
+      User: "m.Core.User"
+      Config: "m.Core.Config"
+      Result: "m.Core.Result"
+      BaseModel: "m.BaseModel"
+
+  - id: modernize-result-import
+    name: "Modernize result imports"
+    description: "Replace from flext_core.result import X with from flext_core import r"
+    module: "flext_core.result"
+    enabled: true
+    severity: error
+    pattern: 'from\s+flext_core\.result\s+import\s+(\w+)'
+    auto_fix: true
+    fix_action: replace_with_alias
+    replacement: "from flext_core import r"
+    symbol_mapping:
+      ok: "r.ok"
+      fail: "r.fail"
+      Result: "r.Result"
+
+  - id: ban-lazy-imports
+    name: "Ban lazy imports"
+    description: "Detect and flag imports inside functions"
+    enabled: true
+    severity: error
+    pattern: 'def\s+\w+\([^)]*\):[^}]*(?:^|\n)\s+(?:import|from)\s+'
+    flags: [multiline]
+    auto_fix: true
+    fix_action: hoist_to_module_top
+    message: "Lazy imports are forbidden. Automatically hoisted to module top when safe."

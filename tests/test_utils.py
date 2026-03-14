@@ -6,9 +6,8 @@ type-system-architecture.md rules with zero duplication.
 
 from __future__ import annotations
 
-from collections.abc import Callable
-from dataclasses import dataclass
-from typing import TypeVar
+from collections.abc import Callable, Mapping
+from typing import TypeVar, override
 
 from flext_core import (
     FlextContainer,
@@ -20,30 +19,22 @@ from flext_core import (
     FlextLogger,
     FlextMixins,
     FlextRegistry,
-    FlextResult,
     FlextRuntime,
     FlextService,
     FlextSettings,
     FlextUtilities,
+    m,
     r,
+    t,
 )
-from flext_core.typings import t
+
+from .models import TestsFlextModels
 
 T = TypeVar("T")
 T_co = TypeVar("T_co", covariant=True)
-TestResult = FlextResult[T]
-TestResultCo = FlextResult[T_co]
-
-
-@dataclass
-class StandardTestCase:
-    """Standardized test case structure for parametrized tests."""
-
-    description: str
-    input_data: dict[str, t.GeneralValueType]
-    expected_result: object
-    expected_success: bool = True
-    error_contains: str | None = None
+TestResult = r[T]
+TestResultCo = r[T_co]
+type StandardTestCase = TestsFlextModels.StandardTestCaseModel
 
 
 class TestDataFactory:
@@ -51,15 +42,18 @@ class TestDataFactory:
 
     @staticmethod
     def create_entity_data(
-        unique_id: str, name: str, **kwargs: t.GeneralValueType
-    ) -> dict[str, t.GeneralValueType]:
+        unique_id: str,
+        name: str,
+        **kwargs: t.Scalar,
+    ) -> object:
         """Create standardized entity test data."""
         return {"unique_id": unique_id, "name": name, **kwargs}
 
     @staticmethod
     def create_value_object_data(
-        value: t.GeneralValueType, **kwargs: t.GeneralValueType
-    ) -> dict[str, t.GeneralValueType]:
+        value: object,
+        **kwargs: t.Scalar,
+    ) -> object:
         """Create standardized value object test data."""
         return {"value": value, **kwargs}
 
@@ -67,14 +61,14 @@ class TestDataFactory:
     def create_operation_test_case(
         operation: str,
         description: str,
-        input_data: dict[str, t.GeneralValueType],
-        expected_result: t.GeneralValueType,
+        input_data: Mapping[str, t.ContainerValue],
+        expected_result: t.ContainerValue,
         *,
         expected_success: bool = True,
         error_contains: str | None = None,
-    ) -> StandardTestCase:
+    ) -> TestsFlextModels.StandardTestCaseModel:
         """Create standardized operation test case."""
-        return StandardTestCase(
+        return TestsFlextModels.StandardTestCaseModel(
             description=description,
             input_data={"operation": operation, **input_data},
             expected_result=expected_result,
@@ -88,43 +82,41 @@ class AssertionHelpers:
 
     @staticmethod
     def assert_flext_result_success[TResult](
-        result: FlextResult[TResult],
+        result: r[TResult],
         context: str = "",
         expected_type: type | None = None,
     ) -> TResult:
-        """Assert FlextResult success with optional type checking."""
+        """Assert r success with optional type checking."""
         assert result.is_success, f"{context}: Expected success, got: {result.error}"
         value = result.value
-
         if expected_type:
             assert isinstance(value, expected_type), (
                 f"{context}: Expected {expected_type.__name__}, got {type(value).__name__}"
             )
-
         return value
 
     @staticmethod
     def assert_flext_result_failure[TResult](
-        result: FlextResult[TResult],
+        result: r[TResult],
         context: str = "",
         error_contains: str | None = None,
     ) -> str:
-        """Assert FlextResult failure with optional error checking."""
+        """Assert r failure with optional error checking."""
         assert result.is_failure, (
             f"{context}: Expected failure, got success: {result.value}"
         )
         error_str = str(result.error)
-
         if error_contains:
             assert error_contains in error_str, (
                 f"{context}: Expected error to contain '{error_contains}', got: {error_str}"
             )
-
         return error_str
 
     @staticmethod
     def assert_entity_properties(
-        entity: object, expected_props: dict[str, t.GeneralValueType], context: str = ""
+        entity: object,
+        expected_props: Mapping[str, t.ContainerValue],
+        context: str = "",
     ) -> None:
         """Assert entity has expected properties."""
         for prop, expected_value in expected_props.items():
@@ -136,31 +128,30 @@ class AssertionHelpers:
 
     @staticmethod
     def assert_operation_result(
-        operation_func: Callable[..., FlextResult[t.GeneralValueType]],
+        operation_func: Callable[[], r[t.Container]],
         test_case: StandardTestCase,
         context: str = "",
-    ) -> t.GeneralValueType:
+    ) -> object:
         """Execute operation and assert result matches test case."""
         try:
             result = operation_func()
-
             if test_case.expected_success:
                 actual_result = AssertionHelpers.assert_flext_result_success(
-                    result, f"{context} - {test_case.description}"
+                    result,
+                    f"{context} - {test_case.description}",
                 )
                 assert actual_result == test_case.expected_result, (
                     f"{context}: Expected {test_case.expected_result}, got {actual_result}"
                 )
                 return actual_result
             return AssertionHelpers.assert_flext_result_failure(
-                result, f"{context} - {test_case.description}", test_case.error_contains
+                result,
+                f"{context} - {test_case.description}",
+                test_case.error_contains,
             )
-
         except Exception as e:
             if not test_case.expected_success:
-                # Expected failure occurred
                 return str(e)
-            # Unexpected failure
             raise AssertionError(f"{context}: Unexpected error: {e}") from e
 
 
@@ -169,32 +160,22 @@ class TestFixtureFactory:
 
     @staticmethod
     def create_test_entity(
-        unique_id: str = "test-123", name: str = "Test Entity"
-    ) -> object:
+        unique_id: str = "test-123",
+        name: str = "Test Entity",
+    ) -> TestsFlextModels.UtilityEntityModel:
         """Create test entity fixture."""
-
-        # Use dataclass instead of Pydantic to avoid circular dependencies
-        @dataclass
-        class TestEntity:
-            unique_id: str
-            name: str
-
-            def __eq__(self, other: object) -> bool:
-                if not isinstance(other, TestEntity):
-                    return NotImplemented
-                return self.unique_id == other.unique_id
-
-        return TestEntity(unique_id=unique_id, name=name)
+        return TestsFlextModels.UtilityEntityModel(
+            unique_id=unique_id,
+            name=name,
+            value=name,
+        )
 
     @staticmethod
-    def create_test_value_object(value: object = "test_value") -> object:
+    def create_test_value_object(
+        value: t.ContainerValue = "test_value",
+    ) -> TestsFlextModels.UtilityValueModel:
         """Create test value object fixture."""
-
-        @dataclass(frozen=True)
-        class TestValueObject:
-            value: object
-
-        return TestValueObject(value=value)
+        return TestsFlextModels.UtilityValueModel(value=value)
 
     @staticmethod
     def create_test_container_instance() -> FlextContainer:
@@ -222,7 +203,7 @@ class TestFixtureFactory:
         return FlextExceptions
 
     @staticmethod
-    def create_test_handlers_instance() -> type[FlextHandlers[t.GeneralValueType, t.GeneralValueType]]:
+    def create_test_handlers_instance() -> type[FlextHandlers[object, object]]:
         """Create test handlers fixture."""
         return FlextHandlers
 
@@ -242,9 +223,9 @@ class TestFixtureFactory:
         return FlextRegistry()
 
     @staticmethod
-    def create_test_result_instance() -> type[FlextResult[t.GeneralValueType]]:
+    def create_test_result_instance() -> type[r[t.Container]]:
         """Create test result fixture."""
-        return FlextResult
+        return r
 
     @staticmethod
     def create_test_runtime_instance() -> type[FlextRuntime]:
@@ -252,15 +233,18 @@ class TestFixtureFactory:
         return FlextRuntime
 
     @staticmethod
-    def create_test_service_instance() -> FlextService[dict[str, str]]:
+    def create_test_service_instance() -> FlextService[m.ConfigMap]:
         """Create test service fixture."""
 
-        class TestFlextService(FlextService[dict[str, str]]):
+        class TestFlextService(FlextService[m.ConfigMap]):
             """Concrete test service implementation."""
 
-            def execute(self) -> r[dict[str, str]]:
+            @override
+            def execute(self) -> r[m.ConfigMap]:
                 """Execute test service operation."""
-                return r[dict[str, str]].ok({"result": "test_service_executed"})
+                return r[m.ConfigMap].ok(
+                    m.ConfigMap(root={"result": "test_service_executed"}),
+                )
 
         return TestFlextService()
 
@@ -276,15 +260,18 @@ class TestFixtureFactory:
 
     @staticmethod
     def create_test_service_result(
-        *, success: bool = True, value: object = None, error: str = "Test error"
-    ) -> TestResult[object]:
+        *,
+        success: bool = True,
+        value: object | None = None,
+        error: str = "Test error",
+    ) -> TestResult[str]:
         """Create test service result fixture."""
         if success:
-            return r[object].ok(value if value is not None else "test_value")
-        return r[object].fail(error)
+            resolved_value = str(value) if value is not None else "test_value"
+            return r[str].ok(resolved_value)
+        return r[str].fail(error)
 
 
-# Global instances for easy importing
 test_data_factory = TestDataFactory()
 assertion_helpers = AssertionHelpers()
 fixture_factory = TestFixtureFactory()

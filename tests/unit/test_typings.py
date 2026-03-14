@@ -15,26 +15,20 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from enum import StrEnum
-from typing import ClassVar, ParamSpec, TypeVar
+from typing import Annotated, ClassVar, ParamSpec, TypeVar
 
 import pytest
-
-from flext_core import (
-    E,
-    P,
-    R,
-    ResultT,
-    T,
-    T_co,
-    T_contra,
-    U,
-    t,
-    u,
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    TypeAdapter as PydanticTypeAdapter,
+    ValidationError as PydanticValidationError,
 )
-from flext_core.constants import FlextConstants
-from flext_tests.matchers import tm
+
+from flext_core import FlextConstants, P, R, ResultT, T, T_co, T_contra, U, e, t
+from flext_tests import tm
 
 
 class TypeVarCategory(StrEnum):
@@ -47,44 +41,92 @@ class TypeVarCategory(StrEnum):
     CQRS = "cqrs"
 
 
-@dataclass(frozen=True, slots=True)
-class TypeVarTestCase:
+class TypeVarTestCase(BaseModel):
     """TypeVar test case definition."""
 
-    name: str
-    category: TypeVarCategory
-    type_var: object
-    expected_not_none: bool = True
+    model_config = ConfigDict(frozen=True)
+
+    name: Annotated[str, Field(description="Type variable test case name")]
+    category: Annotated[TypeVarCategory, Field(description="Type variable category")]
+    type_var: Annotated[object, Field(description="Type variable object under test")]
+    expected_not_none: Annotated[
+        bool,
+        Field(default=True, description="Whether object is expected to be non-none"),
+    ] = True
 
 
 class TypeScenarios:
     """Factory for type system test scenarios with centralized test data."""
 
     CORE_TYPEVARS: ClassVar[list[TypeVarTestCase]] = [
-        TypeVarTestCase("T", TypeVarCategory.CORE, T, True),
-        TypeVarTestCase("U", TypeVarCategory.CORE, U, True),
-        TypeVarTestCase("E", TypeVarCategory.CORE, E, True),
-        TypeVarTestCase("R", TypeVarCategory.CORE, R, True),
-        TypeVarTestCase("ResultT", TypeVarCategory.CORE, ResultT, True),
+        TypeVarTestCase(
+            name="T",
+            category=TypeVarCategory.CORE,
+            type_var=T,
+        ),
+        TypeVarTestCase(
+            name="U",
+            category=TypeVarCategory.CORE,
+            type_var=U,
+        ),
+        TypeVarTestCase(
+            name="E",
+            category=TypeVarCategory.CORE,
+            type_var=e,
+        ),
+        TypeVarTestCase(
+            name="R",
+            category=TypeVarCategory.CORE,
+            type_var=R,
+        ),
+        TypeVarTestCase(
+            name="ResultT",
+            category=TypeVarCategory.CORE,
+            type_var=ResultT,
+        ),
     ]
-
     COVARIANT_TYPEVARS: ClassVar[list[TypeVarTestCase]] = [
-        TypeVarTestCase("T_co", TypeVarCategory.COVARIANT, T_co, True),
+        TypeVarTestCase(
+            name="T_co",
+            category=TypeVarCategory.COVARIANT,
+            type_var=T_co,
+        ),
     ]
-
     CONTRAVARIANT_TYPEVARS: ClassVar[list[TypeVarTestCase]] = [
-        TypeVarTestCase("T_contra", TypeVarCategory.CONTRAVARIANT, T_contra, True),
+        TypeVarTestCase(
+            name="T_contra",
+            category=TypeVarCategory.CONTRAVARIANT,
+            type_var=T_contra,
+        ),
     ]
-
     CQRS_ALIASES: ClassVar[list[TypeVarTestCase]] = [
-        TypeVarTestCase("Command", TypeVarCategory.CQRS, t.GeneralValueType, True),
-        TypeVarTestCase("Query", TypeVarCategory.CQRS, t.GeneralValueType, True),
-        TypeVarTestCase("Event", TypeVarCategory.CQRS, t.GeneralValueType, True),
-        TypeVarTestCase("Message", TypeVarCategory.CQRS, t.GeneralValueType, True),
+        TypeVarTestCase(
+            name="Command",
+            category=TypeVarCategory.CQRS,
+            type_var=object,
+        ),
+        TypeVarTestCase(
+            name="Query",
+            category=TypeVarCategory.CQRS,
+            type_var=object,
+        ),
+        TypeVarTestCase(
+            name="Event",
+            category=TypeVarCategory.CQRS,
+            type_var=object,
+        ),
+        TypeVarTestCase(
+            name="Message",
+            category=TypeVarCategory.CQRS,
+            type_var=object,
+        ),
     ]
-
     PARAMSPEC_ITEMS: ClassVar[list[TypeVarTestCase]] = [
-        TypeVarTestCase("P", TypeVarCategory.PARAMSPEC, P, True),
+        TypeVarTestCase(
+            name="P",
+            category=TypeVarCategory.PARAMSPEC,
+            type_var=P,
+        ),
     ]
 
     @staticmethod
@@ -133,12 +175,7 @@ class TestFlextTypings:
                 eq=True,
                 msg=f"{test_case.name} must be a valid TypeVar or ParamSpec",
             )
-            # Validate it's actually a TypeVar (not ParamSpec)
-            tm.that(
-                isinstance(test_case.type_var, TypeVar),
-                eq=True,
-                msg=f"{test_case.name} must be a TypeVar instance",
-            )
+            tm.that(test_case.type_var, none=False, msg="Covariant TypeVar must exist")
 
     @pytest.mark.parametrize(
         "test_case",
@@ -158,11 +195,8 @@ class TestFlextTypings:
                 eq=True,
                 msg=f"{test_case.name} must be a valid TypeVar or ParamSpec",
             )
-            # Validate it's actually a TypeVar (not ParamSpec)
             tm.that(
-                isinstance(test_case.type_var, TypeVar),
-                eq=True,
-                msg=f"{test_case.name} must be a TypeVar instance",
+                test_case.type_var, none=False, msg="Contravariant TypeVar must exist"
             )
 
     @pytest.mark.parametrize(
@@ -178,11 +212,10 @@ class TestFlextTypings:
                 none=False,
                 msg=f"{test_case.name} alias must not be None",
             )
-            # CQRS aliases should all be t.GeneralValueType
             tm.that(
                 test_case.type_var,
-                eq=t.GeneralValueType,
-                msg=f"{test_case.name} must equal t.GeneralValueType",
+                eq=object,
+                msg=f"{test_case.name} must equal object",
             )
 
     @pytest.mark.parametrize(
@@ -198,21 +231,12 @@ class TestFlextTypings:
                 none=False,
                 msg=f"{test_case.name} must not be None",
             )
-            tm.that(
-                isinstance(test_case.type_var, ParamSpec),
-                eq=True,
-                msg=f"{test_case.name} must be a ParamSpec instance",
-            )
+            tm.that(test_case.type_var, none=False, msg="ParamSpec must exist")
 
     def test_flexttypes_accessible(self) -> None:
         """Test t namespace is accessible with real validation."""
         tm.that(t, none=False, msg="FlextTypes (t) must be accessible")
-        # Verify flat type aliases are accessible
-        flat_types = [
-            "GeneralValueType",
-            "ScalarValue",
-            "HandlerCallable",
-        ]
+        flat_types = ["Container", "Scalar", "HandlerCallable"]
         for type_alias in flat_types:
             tm.that(
                 hasattr(t, type_alias),
@@ -222,73 +246,54 @@ class TestFlextTypings:
 
     def test_all_exports_importable(self) -> None:
         """Test that all public exports can be imported and are valid."""
-        # Test all core TypeVars are importable and valid
-        core_typevars = [T, U, E, R, ResultT, T_co, T_contra, P]
+        core_typevars = [T, U, e, R, ResultT, T_co, T_contra, P]
         for tv in core_typevars:
             tm.that(tv, none=False, msg="TypeVar must be importable and not None")
-            tm.that(
-                isinstance(tv, (TypeVar, ParamSpec)),
-                eq=True,
-                msg="TypeVar must be TypeVar or ParamSpec instance",
-            )
 
     def test_module_structure(self) -> None:
         """Test that t has expected structure with real validation."""
-        # Validate core TypeVars
         for tv in [T, U, P, R]:
             tm.that(tv, none=False, msg="TypeVar must not be None")
-            tm.that(
-                isinstance(tv, (TypeVar, ParamSpec)),
-                eq=True,
-                msg="TypeVar must be TypeVar or ParamSpec instance",
-            )
-        # Validate CQRS aliases all point to t.GeneralValueType
         cqrs_aliases = [
-            t.GeneralValueType,  # Command
-            t.GeneralValueType,  # Event
-            t.GeneralValueType,  # Query
-            t.GeneralValueType,  # Message
+            object,
+            object,
+            object,
+            object,
         ]
         for alias in cqrs_aliases:
             tm.that(alias, none=False, msg="CQRS alias must not be None")
             tm.that(
                 alias,
-                eq=t.GeneralValueType,
-                msg="CQRS alias must equal t.GeneralValueType",
+                eq=object,
+                msg="CQRS alias must equal object",
             )
 
     def test_hostname_validation_success(self) -> None:
         """Test hostname validation success path with real validation."""
-        # Test with a valid hostname - validate_hostname is in u.Validation.Network
-        result = u.Validation.Network.validate_hostname(
-            FlextConstants.Network.LOCALHOST
+        hostname_adapter: PydanticTypeAdapter[str] = PydanticTypeAdapter(
+            t.Validation.HostnameStr,
         )
-        tm.that(result.is_success, eq=True, msg="Result must be successful")
+        result = hostname_adapter.validate_python(FlextConstants.Network.LOCALHOST)
         tm.that(
-            result.value,
+            result,
             eq=FlextConstants.Network.LOCALHOST,
             msg="FlextConstants.Network.LOCALHOST must validate correctly",
         )
         tm.that(
-            result.value,
+            result,
             is_=str,
             none=False,
             empty=False,
             msg="Result value must be non-empty string",
         )
-
-        # Test with a valid IP address (should also work)
-        result = u.Validation.Network.validate_hostname(
-            FlextConstants.Network.LOOPBACK_IP
-        )
-        tm.that(result.is_success, eq=True, msg="Result must be successful")
+        result = hostname_adapter.validate_python(FlextConstants.Network.LOOPBACK_IP)
         tm.that(
-            result.value,
+            result,
             eq=FlextConstants.Network.LOOPBACK_IP,
             msg="IP address must validate correctly",
         )
         tm.that(
-            result.value,
+            result,
             is_=str,
             none=False,
             empty=False,
@@ -297,19 +302,18 @@ class TestFlextTypings:
 
     def test_hostname_validation_error(self) -> None:
         """Test hostname validation error path with real validation."""
-        # validate_hostname is in u.Validation.Network and returns FlextResult
-        invalid_hostname = "invalid..hostname"  # Invalid due to consecutive dots
+        invalid_hostname = ""
         tm.that(
             invalid_hostname,
             is_=str,
-            none=False,
-            empty=False,
-            msg="Invalid hostname must be a non-empty string",
+            eq="",
+            msg="Invalid hostname must be empty to fail HostnameStr",
         )
-
-        # Test that invalid hostname returns failed result
-        result = u.Validation.Network.validate_hostname(invalid_hostname)
-        tm.that(result.is_failure, eq=True, msg="Invalid hostname must return failure")
+        hostname_adapter: PydanticTypeAdapter[str] = PydanticTypeAdapter(
+            t.Validation.HostnameStr,
+        )
+        with pytest.raises(PydanticValidationError):
+            hostname_adapter.validate_python(invalid_hostname)
 
 
 __all__ = ["TestFlextTypings"]

@@ -1,11 +1,10 @@
 # Error Handling Guide
 
 <!-- TOC START -->
-
 - [Canonical Rules](#canonical-rules)
 - [Overview](#overview)
 - [Core Concepts](#core-concepts)
-  - [FlextResult[T] - The Foundation](#flextresultt-the-foundation)
+  - [r[T] - The Foundation](#flextresultt-the-foundation)
   - [Checking Result State](#checking-result-state)
   - [Extracting Values Safely](#extracting-values-safely)
 - [Railway-Oriented Programming](#railway-oriented-programming)
@@ -21,7 +20,7 @@
   - [Domain Errors (Business Logic)](#domain-errors-business-logic)
   - [System Errors (Infrastructure)](#system-errors-infrastructure)
 - [Best Practices](#best-practices)
-  - [1. Always Return FlextResult from Operations That Can Fail](#1-always-return-flextresult-from-operations-that-can-fail)
+  - [1. Always Return r from Operations That Can Fail](#1-always-return-flextresult-from-operations-that-can-fail)
   - [2. Chain Operations with flat_map](#2-chain-operations-with-flatmap)
   - [3. Use Meaningful Error Messages](#3-use-meaningful-error-messages)
   - [4. Handle Errors at Application Boundaries](#4-handle-errors-at-application-boundaries)
@@ -29,22 +28,21 @@
 - [Summary](#summary)
 - [Next Steps](#next-steps)
 - [See Also](#see-also)
-
 <!-- TOC END -->
 
 **Status**: Production Ready | **Version**: 0.10.0 | **Pattern**: Railway-Oriented Programming
 
-Comprehensive guide to error handling strategies in FLEXT-Core using the railway-oriented programming pattern with FlextResult[T].
+Comprehensive guide to error handling strategies in FLEXT-Core using the railway-oriented programming pattern with r[T].
 
 ## Canonical Rules
 
-- Follow root governance in `CLAUDE.md`.
-- Keep examples aligned with strict typing and `FlextResult[T]` flows.
+- Follow root governance in `AGENTS.md`.
+- Keep examples aligned with strict typing and `r[T]` flows.
 - Keep guide links local to `docs/guides/` and architecture references in `docs/architecture/`.
 
 ## Overview
 
-FLEXT-Core provides **functional error handling** through `FlextResult[T]` instead of exceptions. This enables:
+FLEXT-Core provides **functional error handling** through `r[T]` instead of exceptions. This enables:
 
 - Composable error handling through monadic operations
 - Type-safe error propagation
@@ -55,29 +53,29 @@ FLEXT-Core provides **functional error handling** through `FlextResult[T]` inste
 
 ## Core Concepts
 
-### FlextResult[T] - The Foundation
+### r[T] - The Foundation
 
-`FlextResult[T]` is a monad that represents either:
+`r[T]` is a monad that represents either:
 
 - **Success**: Contains a value of type `T`
 - **Failure**: Contains an error message
 
 ```python
-from flext_core import FlextResult
+from flext_core import r
 
 # Success result
-success = FlextResult[int].ok(42)
+success = r[int].ok(42)
 
 # Failure result
-failure = FlextResult[int].fail("Something went wrong")
+failure = r[int].fail("Something went wrong")
 ```
 
 ### Checking Result State
 
 ```python
-from flext_core import FlextResult
+from flext_core import r
 
-result = FlextResult[str].ok("value")
+result = r[str].ok("value")
 
 # Check success state
 if result.is_success:
@@ -97,9 +95,9 @@ if not result.is_success:
 ### Extracting Values Safely
 
 ```python
-from flext_core import FlextResult
+from flext_core import r
 
-result = FlextResult[int].ok(42)
+result = r[int].ok(42)
 
 # Get value (raises on failure)
 value = result.value  # 42
@@ -127,25 +125,29 @@ Think of your program as a railway with two tracks:
 Once on the failure track, you stay on it until explicitly recovered.
 
 ```python
-from flext_core import FlextResult
+from flext_core import r
 
-def validate_email(email: str) -> FlextResult[str]:
+
+def validate_email(email: str) -> r[str]:
     """Validate email format."""
     if "@" not in email:
-        return FlextResult[str].fail("Invalid email format")
-    return FlextResult[str].ok(email)
+        return r[str].fail("Invalid email format")
+    return r[str].ok(email)
 
-def check_email_available(email: str) -> FlextResult[str]:
+
+def check_email_available(email: str) -> r[str]:
     """Check if email is available."""
     reserved = ["REDACTED_LDAP_BIND_PASSWORD@example.com", "test@example.com"]
     if email in reserved:
-        return FlextResult[str].fail("Email already taken")
-    return FlextResult[str].ok(email)
+        return r[str].fail("Email already taken")
+    return r[str].ok(email)
 
-def send_confirmation(email: str) -> FlextResult[str]:
+
+def send_confirmation(email: str) -> r[str]:
     """Send confirmation email."""
     # Pretend this works
-    return FlextResult[str].ok(f"Confirmation sent to {email}")
+    return r[str].ok(f"Confirmation sent to {email}")
+
 
 # Railway: one failure anywhere stops the flow
 email_result = (
@@ -165,36 +167,39 @@ else:
 #### map() - Transform Success Values
 
 ```python
-from flext_core import FlextResult
+from flext_core import r
 
-result = FlextResult[int].ok(5)
+result = r[int].ok(5)
 
 # Transform the success value
-new_result = result.map(lambda x: x * 2)  # FlextResult[int].ok(10)
+new_result = result.map(lambda x: x * 2)  # r[int].ok(10)
 
 # Chain multiple transformations
 result = (
-    FlextResult[int].ok(5)
-    .map(lambda x: x * 2)      # 10
-    .map(lambda x: x + 3)      # 13
-    .map(lambda x: str(x))     # "13"
+    r[int]
+    .ok(5)
+    .map(lambda x: x * 2)  # 10
+    .map(lambda x: x + 3)  # 13
+    .map(lambda x: str(x))  # "13"
 )
 ```
 
 #### flat_map() - Chain Operations
 
 ```python
-from flext_core import FlextResult
+from flext_core import r
 
-def divide(a: float, b: float) -> FlextResult[float]:
+
+def divide(a: float, b: float) -> r[float]:
     if b == 0:
-        return FlextResult[float].fail("Division by zero")
-    return FlextResult[float].ok(a / b)
+        return r[float].fail("Division by zero")
+    return r[float].ok(a / b)
+
 
 # Chain operations, one failure stops the flow
 result = (
-    divide(10, 2)              # FlextResult[float].ok(5.0)
-    .flat_map(lambda x: divide(x, 0))  # FlextResult[float].fail("Division by zero")
+    divide(10, 2)  # r[float].ok(5.0)
+    .flat_map(lambda x: divide(x, 0))  # r[float].fail("Division by zero")
     .flat_map(lambda x: divide(x, 2))  # Never executes (stayed on failure track)
 )
 
@@ -204,30 +209,30 @@ print(result.error)  # "Division by zero"
 #### filter() - Add Success Conditions
 
 ```python
-from flext_core import FlextResult
+from flext_core import r
 
-result = FlextResult[int].ok(15)
+result = r[int].ok(15)
 
 # Add condition to success path
 result = result.filter(
-    lambda x: x > 10,
-    "Value must be greater than 10"
-)  # FlextResult[int].ok(15)
+    lambda x: x > 10, "Value must be greater than 10"
+)  # r[int].ok(15)
 
 # Failing condition
 result = result.filter(
-    lambda x: x < 10,
-    "Value must be less than 10"
-)  # FlextResult[int].fail("Value must be less than 10")
+    lambda x: x < 10, "Value must be less than 10"
+)  # r[int].fail("Value must be less than 10")
 ```
 
 #### map_error() - Transform Error Messages
 
 ```python
-from flext_core import FlextResult
+from flext_core import r
 
-def risky_operation() -> FlextResult[str]:
-    return FlextResult[str].fail("Database connection failed")
+
+def risky_operation() -> r[str]:
+    return r[str].fail("Database connection failed")
+
 
 result = (
     risky_operation()
@@ -243,36 +248,40 @@ print(result.error)  # "[ERROR] Operation failed: Database connection failed"
 ### Pattern 1: Validation Pipeline
 
 ```python
-from flext_core import FlextResult
+from flext_core import r
 
-def validate_username(username: str) -> FlextResult[str]:
+
+def validate_username(username: str) -> r[str]:
     """Validate username."""
     if not username:
-        return FlextResult[str].fail("Username cannot be empty")
+        return r[str].fail("Username cannot be empty")
     if len(username) < 3:
-        return FlextResult[str].fail("Username must be at least 3 characters")
+        return r[str].fail("Username must be at least 3 characters")
     if not username.isalnum():
-        return FlextResult[str].fail("Username must be alphanumeric")
-    return FlextResult[str].ok(username)
+        return r[str].fail("Username must be alphanumeric")
+    return r[str].ok(username)
 
-def validate_email(email: str) -> FlextResult[str]:
+
+def validate_email(email: str) -> r[str]:
     """Validate email."""
     if "@" not in email or "." not in email:
-        return FlextResult[str].fail("Invalid email format")
-    return FlextResult[str].ok(email)
+        return r[str].fail("Invalid email format")
+    return r[str].ok(email)
 
-def validate_password(password: str) -> FlextResult[str]:
+
+def validate_password(password: str) -> r[str]:
     """Validate password."""
     if len(password) < 8:
-        return FlextResult[str].fail("Password must be at least 8 characters")
+        return r[str].fail("Password must be at least 8 characters")
     if not any(c.isupper() for c in password):
-        return FlextResult[str].fail("Password must contain uppercase letter")
+        return r[str].fail("Password must contain uppercase letter")
     if not any(c.isdigit() for c in password):
-        return FlextResult[str].fail("Password must contain digit")
-    return FlextResult[str].ok(password)
+        return r[str].fail("Password must contain digit")
+    return r[str].ok(password)
+
 
 # Use validation pipeline
-def register_user(username: str, email: str, password: str) -> FlextResult[str]:
+def register_user(username: str, email: str, password: str) -> r[str]:
     """Register user with full validation."""
     return (
         validate_username(username)
@@ -280,6 +289,7 @@ def register_user(username: str, email: str, password: str) -> FlextResult[str]:
         .flat_map(lambda ue: validate_password(password).map(lambda p: (*ue, p)))
         .map(lambda upe: f"User {upe[0]} ({upe[1]}) registered")
     )
+
 
 # Test
 result = register_user("alice", "alice@example.com", "SecurePass123")
@@ -292,43 +302,46 @@ else:
 ### Pattern 2: Database Operations
 
 ```python
-from flext_core import FlextResult, FlextLogger
+from flext_core import r, FlextLogger
 
 logger = FlextLogger(__name__)
+
 
 class UserRepository:
     """Repository for user data operations."""
 
-    def get_user_by_id(self, user_id: str) -> FlextResult[dict]:
+    def get_user_by_id(self, user_id: str) -> r[dict]:
         """Get user by ID."""
         try:
             # Simulate database lookup
             users = {"1": {"id": "1", "name": "Alice"}}
             if user_id not in users:
-                return FlextResult[dict].fail(f"User {user_id} not found")
-            return FlextResult[dict].ok(users[user_id])
+                return r[dict].fail(f"User {user_id} not found")
+            return r[dict].ok(users[user_id])
         except Exception as e:
             logger.error(f"Database error: {e}")
-            return FlextResult[dict].fail("Database operation failed")
+            return r[dict].fail("Database operation failed")
 
-    def save_user(self, user: dict) -> FlextResult[dict]:
+    def save_user(self, user: dict) -> r[dict]:
         """Save user to database."""
         try:
             # Validate before saving
             if not user.get("name"):
-                return FlextResult[dict].fail("User name is required")
+                return r[dict].fail("User name is required")
             # Simulate save
             logger.info(f"User {user['id']} saved")
-            return FlextResult[dict].ok(user)
+            return r[dict].ok(user)
         except Exception as e:
             logger.error(f"Save failed: {e}")
-            return FlextResult[dict].fail("Failed to save user")
+            return r[dict].fail("Failed to save user")
+
 
 # Usage
 repo = UserRepository()
 
 result = (
-    repo.get_user_by_id("1")
+    repo
+    .get_user_by_id("1")
     .map(lambda user: {**user, "name": user["name"].upper()})
     .flat_map(repo.save_user)
 )
@@ -342,35 +355,36 @@ else:
 ### Pattern 3: External Service Calls
 
 ```python
-from flext_core import FlextResult
+from flext_core import r
 import requests
 from typing import Any
+
 
 class ExternalService:
     """Integration with external service."""
 
-    def call_api(self, endpoint: str) -> FlextResult[dict]:
+    def call_api(self, endpoint: str) -> r[dict]:
         """Call external API."""
         try:
             response = requests.get(f"https://api.example.com/{endpoint}", timeout=5)
             if response.status_code != 200:
-                return FlextResult[dict].fail(
+                return r[dict].fail(
                     f"API error {response.status_code}: {response.text}"
                 )
-            return FlextResult[dict].ok(response.json())
+            return r[dict].ok(response.json())
         except requests.Timeout:
-            return FlextResult[dict].fail("API request timeout")
+            return r[dict].fail("API request timeout")
         except requests.ConnectionError:
-            return FlextResult[dict].fail("API connection failed")
+            return r[dict].fail("API connection failed")
         except Exception as e:
-            return FlextResult[dict].fail(f"API error: {str(e)}")
+            return r[dict].fail(f"API error: {str(e)}")
 
-    def get_user_data(self, user_id: str) -> FlextResult[dict]:
+    def get_user_data(self, user_id: str) -> r[dict]:
         """Get user data from external service."""
-        return (
-            self.call_api(f"users/{user_id}")
-            .map_error(lambda e: f"Failed to fetch user: {e}")
+        return self.call_api(f"users/{user_id}").map_error(
+            lambda e: f"Failed to fetch user: {e}"
         )
+
 
 # Usage
 service = ExternalService()
@@ -385,13 +399,16 @@ else:
 ### Pattern 4: Error Recovery
 
 ```python
-from flext_core import FlextResult
+from flext_core import r
 
-def risky_operation() -> FlextResult[str]:
-    return FlextResult[str].fail("Primary operation failed")
 
-def fallback_operation() -> FlextResult[str]:
-    return FlextResult[str].ok("Fallback operation succeeded")
+def risky_operation() -> r[str]:
+    return r[str].fail("Primary operation failed")
+
+
+def fallback_operation() -> r[str]:
+    return r[str].ok("Fallback operation succeeded")
+
 
 # Try primary, fall back on failure
 result = risky_operation()
@@ -401,11 +418,13 @@ if result.is_failure:
 
 print(f"Result: {result.value}")  # "Fallback operation succeeded"
 
-# Or use lash pattern (error handling with FlextResult)
-def handle_failure(error: str) -> FlextResult[str]:
+
+# Or use lash pattern (error handling with r)
+def handle_failure(error: str) -> r[str]:
     """Handle failure with fallback."""
     print(f"Failed with: {error}, trying fallback...")
     return fallback_operation()
+
 
 result = risky_operation().lash(handle_failure)
 ```
@@ -413,10 +432,11 @@ result = risky_operation().lash(handle_failure)
 ### Pattern 5: Batch Operations
 
 ```python
-from flext_core import FlextResult
+from flext_core import r
 from typing import List
 
-def process_items(items: List[str]) -> FlextResult[List[str]]:
+
+def process_items(items: List[str]) -> r[List[str]]:
     """Process multiple items, collecting all results."""
     results = []
     errors = []
@@ -430,17 +450,19 @@ def process_items(items: List[str]) -> FlextResult[List[str]]:
 
     # Return success if all processed, failure if any error
     if errors:
-        return FlextResult[List[str]].fail(
+        return r[List[str]].fail(
             f"Failed to process {len(errors)} items: {', '.join(errors)}"
         )
 
-    return FlextResult[List[str]].ok(results)
+    return r[List[str]].ok(results)
 
-def process_item(item: str) -> FlextResult[str]:
+
+def process_item(item: str) -> r[str]:
     """Process single item."""
     if not item:
-        return FlextResult[str].fail("Empty item")
-    return FlextResult[str].ok(f"Processed: {item}")
+        return r[str].fail("Empty item")
+    return r[str].ok(f"Processed: {item}")
+
 
 # Usage
 result = process_items(["item1", "item2", "item3"])
@@ -455,16 +477,18 @@ else:
 ### Domain Errors (Business Logic)
 
 ```python
-from flext_core import FlextResult
+from flext_core import r
 
-def withdraw_from_account(amount: float, balance: float) -> FlextResult[float]:
+
+def withdraw_from_account(amount: float, balance: float) -> r[float]:
     """Withdraw from account - domain error."""
     if amount > balance:
         # Domain error - user can understand this
-        return FlextResult[float].fail(
+        return r[float].fail(
             f"Insufficient funds. Available: {balance}, Requested: {amount}"
         )
-    return FlextResult[float].ok(balance - amount)
+    return r[float].ok(balance - amount)
+
 
 # Usage
 result = withdraw_from_account(100, 50)
@@ -475,32 +499,34 @@ if result.is_failure:
 ### System Errors (Infrastructure)
 
 ```python
-from flext_core import FlextResult
+from flext_core import r
 import os
 
-def read_config_file(path: str) -> FlextResult[str]:
+
+def read_config_file(path: str) -> r[str]:
     """Read configuration - system error."""
     try:
-        with open(path, 'r') as f:
-            return FlextResult[str].ok(f.read())
+        with open(path, "r") as f:
+            return r[str].ok(f.read())
     except FileNotFoundError:
-        return FlextResult[str].fail(f"Configuration file not found: {path}")
+        return r[str].fail(f"Configuration file not found: {path}")
     except PermissionError:
-        return FlextResult[str].fail(f"Permission denied reading: {path}")
+        return r[str].fail(f"Permission denied reading: {path}")
     except Exception as e:
-        return FlextResult[str].fail(f"System error reading config: {str(e)}")
+        return r[str].fail(f"System error reading config: {str(e)}")
 ```
 
 ## Best Practices
 
-### 1. Always Return FlextResult from Operations That Can Fail
+### 1. Always Return r from Operations That Can Fail
 
 ```python
 # ✅ CORRECT
-def find_user(user_id: str) -> FlextResult[dict]:
+def find_user(user_id: str) -> r[dict]:
     if user_id not in users_db:
-        return FlextResult[dict].fail(f"User {user_id} not found")
-    return FlextResult[dict].ok(users_db[user_id])
+        return r[dict].fail(f"User {user_id} not found")
+    return r[dict].ok(users_db[user_id])
+
 
 # ❌ WRONG - Using exceptions
 def find_user(user_id: str) -> dict:
@@ -534,20 +560,19 @@ if validation.is_failure:
 
 ```python
 # ✅ CORRECT - Clear, actionable
-return FlextResult[str].fail(
-    "Invalid email format. Expected format: name@domain.com"
-)
+return r[str].fail("Invalid email format. Expected format: name@domain.com")
 
 # ❌ WRONG - Vague
-return FlextResult[str].fail("Invalid input")
+return r[str].fail("Invalid input")
 ```
 
 ### 4. Handle Errors at Application Boundaries
 
 ```python
-from flext_core import FlextResult, FlextLogger
+from flext_core import r, FlextLogger
 
 logger = FlextLogger(__name__)
+
 
 def api_handler(request) -> dict:
     """Handle API request."""
@@ -559,8 +584,9 @@ def api_handler(request) -> dict:
         logger.error(f"Request failed: {result.error}")
         return {"status": "error", "message": result.error}
 
-def process_request(request) -> FlextResult[dict]:
-    """Business logic - returns FlextResult."""
+
+def process_request(request) -> r[dict]:
+    """Business logic - returns r."""
     # ... implementation
     pass
 ```
@@ -568,29 +594,29 @@ def process_request(request) -> FlextResult[dict]:
 ### 5. Log Errors Appropriately
 
 ```python
-from flext_core import FlextLogger, FlextResult
+from flext_core import FlextLogger, r
 
 logger = FlextLogger(__name__)
 
-def risky_operation() -> FlextResult[str]:
+
+def risky_operation() -> r[str]:
     """Operation that might fail."""
     try:
         result = do_something()
-        return FlextResult[str].ok(result)
+        return r[str].ok(result)
     except Exception as e:
         # Log with context
-        logger.error("Operation failed", extra={
-            "error": str(e),
-            "error_type": type(e).__name__
-        })
-        return FlextResult[str].fail(f"Operation failed: {str(e)}")
+        logger.error(
+            "Operation failed", extra={"error": str(e), "error_type": type(e).__name__}
+        )
+        return r[str].fail(f"Operation failed: {str(e)}")
 ```
 
 ## Summary
 
 Error handling in FLEXT-Core:
 
-- ✅ Use `FlextResult[T]` for all fallible operations
+- ✅ Use `r[T]` for all fallible operations
 - ✅ Chain operations with `flat_map()` and `map()`
 - ✅ Handle errors at application boundaries
 - ✅ Use meaningful error messages
@@ -605,7 +631,7 @@ This approach makes error handling explicit, composable, and maintainable.
 1. **Decorators**: Learn about Error Handling with Decorators for automatic error recovery
 1. **Testing**: See Testing Guide for testing error scenarios without mocks
 1. **Services**: Check Service Patterns for service-level error handling
-1. **API Reference**: Review FlextResult API for complete method reference
+1. **API Reference**: Review r API for complete method reference
 
 ## See Also
 
@@ -613,9 +639,12 @@ This approach makes error handling explicit, composable, and maintainable.
 - Testing Guide - Testing error scenarios with real implementations
 - Service Patterns - Error handling in domain services
 - Dependency Injection Advanced - Error handling with DI
-- API Reference: FlextResult - Complete API documentation
-- **FLEXT CLAUDE.md**: Architecture principles and development workflow
+- API Reference: r - Complete API documentation
+- **FLEXT AGENTS.md**: Architecture principles and development workflow
 
 ______________________________________________________________________
 
 **Example from FLEXT Ecosystem**: See `src/flext_tests/test_result.py` for comprehensive test cases demonstrating all error handling patterns.
+
+```
+```

@@ -15,13 +15,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from enum import StrEnum
-from typing import ClassVar
+from typing import Annotated, ClassVar
 
 import pytest
+from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import t
 from flext_tests import u
 
 
@@ -41,36 +40,54 @@ class Priority(StrEnum):
     HIGH = "high"
 
 
-@dataclass(frozen=True, slots=True)
-class ParseSequenceScenario:
+class ParseSequenceScenario(BaseModel):
     """Parse sequence test scenario."""
 
-    name: str
-    values: list[str | Status]
-    expected_success: bool
-    expected_count: int | None
-    expected_error: str | None
+    model_config = ConfigDict(frozen=True)
+    name: Annotated[str, Field(description="Parse sequence scenario name")]
+    values: Annotated[list[str | Status], Field(description="Input sequence values")]
+    expected_success: Annotated[
+        bool, Field(description="Whether parsing should succeed")
+    ]
+    expected_count: Annotated[
+        int | None, Field(default=None, description="Expected parsed item count")
+    ] = None
+    expected_error: Annotated[
+        str | None, Field(default=None, description="Expected error message fragment")
+    ] = None
 
 
-@dataclass(frozen=True, slots=True)
-class CoerceListValidatorScenario:
+class CoerceListValidatorScenario(BaseModel):
     """Coerce list validator test scenario."""
 
-    name: str
-    value: t.FlexibleValue
-    expected_success: bool
-    expected_error: str | None
+    model_config = ConfigDict(frozen=True)
+    name: Annotated[str, Field(description="Coerce list scenario name")]
+    value: Annotated[object, Field(description="Input value for list coercion")]
+    expected_success: Annotated[
+        bool, Field(description="Whether coercion should succeed")
+    ]
+    expected_error: Annotated[
+        str | None, Field(default=None, description="Expected error message fragment")
+    ] = None
 
 
-@dataclass(frozen=True, slots=True)
-class ParseMappingScenario:
+class ParseMappingScenario(BaseModel):
     """Parse mapping test scenario."""
 
-    name: str
-    mapping: dict[str, str | Status]
-    expected_success: bool
-    expected_count: int | None
-    expected_error: str | None
+    model_config = ConfigDict(frozen=True)
+    name: Annotated[str, Field(description="Parse mapping scenario name")]
+    mapping: Annotated[
+        dict[str, str | Status], Field(description="Input mapping values")
+    ]
+    expected_success: Annotated[
+        bool, Field(description="Whether parsing should succeed")
+    ]
+    expected_count: Annotated[
+        int | None, Field(default=None, description="Expected parsed entry count")
+    ] = None
+    expected_error: Annotated[
+        str | None, Field(default=None, description="Expected error message fragment")
+    ] = None
 
 
 class CollectionScenarios:
@@ -120,7 +137,6 @@ class CollectionScenarios:
             expected_error=None,
         ),
     ]
-
     COERCE_LIST_VALIDATOR: ClassVar[list[CoerceListValidatorScenario]] = [
         CoerceListValidatorScenario(
             name="valid_list_strings",
@@ -171,7 +187,6 @@ class CollectionScenarios:
             expected_error="Expected str",
         ),
     ]
-
     PARSE_MAPPING: ClassVar[list[ParseMappingScenario]] = [
         ParseMappingScenario(
             name="valid_strings",
@@ -221,15 +236,14 @@ class TestuCollectionParseSequence:
     )
     def test_parse_sequence(self, scenario: ParseSequenceScenario) -> None:
         """Test parse_sequence with various scenarios."""
-        result = u.Collection.parse_sequence(Status, scenario.values)
-
+        result = u.parse_sequence(Status, scenario.values)
         if scenario.expected_success:
-            u.Tests.Result.assert_result_success(result)
+            _ = u.Tests.Result.assert_success(result)
             parsed = result.value
             assert len(parsed) == scenario.expected_count
             assert isinstance(parsed, tuple)
         else:
-            u.Tests.Result.assert_result_failure(result)
+            _ = u.Tests.Result.assert_failure(result)
             error_msg = result.error
             assert error_msg is not None and scenario.expected_error is not None
             assert scenario.expected_error in error_msg
@@ -245,20 +259,16 @@ class TestuCollectionCoerceListValidator:
     )
     def test_coerce_list_validator(self, scenario: CoerceListValidatorScenario) -> None:
         """Test coerce_list_validator with various scenarios."""
-        validator = u.Collection.coerce_list_validator(Status)
-
+        validator = u.coerce_list_validator(Status)
         if scenario.expected_success:
             result = validator(scenario.value)
             assert isinstance(result, list)
             assert all(isinstance(item, Status) for item in result)
         else:
-            # Business Rule: pytest.raises accepts Exception types or tuple of Exception types
-            # TypeError and ValueError are both Exception subclasses
             with pytest.raises(Exception) as exc_info:
                 validator(scenario.value)
             expected_error = scenario.expected_error
             assert expected_error is not None
-            # Check that the exception is one of the expected types
             assert isinstance(exc_info.value, (TypeError, ValueError))
             assert expected_error in str(exc_info.value)
 
@@ -273,16 +283,15 @@ class TestuCollectionParseMapping:
     )
     def test_parse_mapping(self, scenario: ParseMappingScenario) -> None:
         """Test parse_mapping with various scenarios."""
-        result = u.Collection.parse_mapping(Status, scenario.mapping)
-
+        result = u.parse_mapping(Status, scenario.mapping)
         if scenario.expected_success:
-            u.Tests.Result.assert_result_success(result)
+            _ = u.Tests.Result.assert_success(result)
             parsed = result.value
             assert len(parsed) == scenario.expected_count
             assert isinstance(parsed, dict)
             assert all(isinstance(v, Status) for v in parsed.values())
         else:
-            u.Tests.Result.assert_result_failure(result)
+            _ = u.Tests.Result.assert_failure(result)
             error_msg = result.error
             assert error_msg is not None and scenario.expected_error is not None
             assert scenario.expected_error in error_msg
@@ -293,42 +302,37 @@ class TestuCollectionCoerceDictValidator:
 
     def test_coerce_dict_validator_valid_strings(self) -> None:
         """Test coerce_dict_validator with valid string values."""
-        validator = u.Collection.coerce_dict_validator(Status)
+        validator = u.coerce_dict_validator(Status)
         result = validator({"user1": "active", "user2": "pending"})
-
         assert isinstance(result, dict)
         assert result["user1"] == Status.ACTIVE
         assert result["user2"] == Status.PENDING
 
     def test_coerce_dict_validator_valid_enums(self) -> None:
         """Test coerce_dict_validator with valid enum values."""
-        validator = u.Collection.coerce_dict_validator(Status)
+        validator = u.coerce_dict_validator(Status)
         result = validator({"user1": Status.ACTIVE, "user2": Status.PENDING})
-
         assert isinstance(result, dict)
         assert result["user1"] == Status.ACTIVE
         assert result["user2"] == Status.PENDING
 
     def test_coerce_dict_validator_invalid_not_dict(self) -> None:
         """Test coerce_dict_validator with non-dict value."""
-        validator = u.Collection.coerce_dict_validator(Status)
-
+        validator = u.coerce_dict_validator(Status)
         with pytest.raises(TypeError) as exc_info:
             validator("not a dict")
         assert "Expected dict" in str(exc_info.value)
 
     def test_coerce_dict_validator_invalid_string(self) -> None:
         """Test coerce_dict_validator with invalid string value."""
-        validator = u.Collection.coerce_dict_validator(Status)
-
+        validator = u.coerce_dict_validator(Status)
         with pytest.raises(ValueError) as exc_info:
             validator({"user1": "invalid"})
         assert "Invalid Status" in str(exc_info.value)
 
     def test_coerce_dict_validator_invalid_type(self) -> None:
         """Test coerce_dict_validator with invalid type value."""
-        validator = u.Collection.coerce_dict_validator(Status)
-
+        validator = u.coerce_dict_validator(Status)
         with pytest.raises(TypeError) as exc_info:
             validator({"user1": 123})
         assert "Expected str" in str(exc_info.value)

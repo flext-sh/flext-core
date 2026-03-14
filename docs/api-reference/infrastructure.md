@@ -1,14 +1,12 @@
 # Infrastructure Layer API Reference
 
 <!-- TOC START -->
-
 - [Configuration Management](#configuration-management)
   - [FlextSettings - Layered Configuration](#flextsettings-layered-configuration)
 - [Logging and Observability](#logging-and-observability)
   - [FlextLogger — Structured Logging](#flextlogger-structured-logging)
   - [FlextContext — Request and Operation Context](#flextcontext-request-and-operation-context)
 - [Verification Commands](#verification-commands)
-
 <!-- TOC END -->
 
 This section summarizes infrastructure components that provide configuration, logging, and context for dispatcher and domain code.
@@ -79,4 +77,7 @@ Run from `flext-core/`:
 make lint
 make type-check
 make test-fast
+```
+
+```
 ```

@@ -1,7 +1,6 @@
 # Architecture Patterns
 
 <!-- TOC START -->
-
 - [Railway-Oriented Programming](#railway-oriented-programming)
 - [Dependency Injection](#dependency-injection)
 - [Domain-Driven Design](#domain-driven-design)
@@ -17,7 +16,6 @@
 - [Summary](#summary)
 - [Next Steps](#next-steps)
 - [See Also](#see-also)
-
 <!-- TOC END -->
 
 **Status**: Production Ready | **Version**: 0.10.0 | **Date**: 2025-12-07
@@ -26,20 +24,23 @@ Common architectural patterns used in FLEXT-Core and best practices for applying
 
 ## Railway-Oriented Programming
 
-**Pattern:** Use `FlextResult[T]` for composable error handling.
+**Pattern:** Use `r[T]` for composable error handling.
 
 ```python
-from flext_core import FlextResult
+from flext_core import r
 
-def validate_email(email: str) -> FlextResult[str]:
+
+def validate_email(email: str) -> r[str]:
     if "@" not in email:
-        return FlextResult[str].fail("Invalid email")
-    return FlextResult[str].ok(email)
+        return r[str].fail("Invalid email")
+    return r[str].ok(email)
 
-def check_available(email: str) -> FlextResult[str]:
+
+def check_available(email: str) -> r[str]:
     if email in reserved_emails:
-        return FlextResult[str].fail("Email taken")
-    return FlextResult[str].ok(email)
+        return r[str].fail("Email taken")
+    return r[str].ok(email)
+
 
 # Railway composition
 result = (
@@ -88,12 +89,14 @@ if logger_result.is_success:
 **Pattern:** Model business logic with Entities, Value Objects, and Services.
 
 ```python
-from flext_core import FlextModels, FlextService, FlextResult
+from flext_core import FlextModels, FlextService, r
+
 
 # Value Object - immutable, compared by value
 class Money(FlextModels.Value):
     amount: float
     currency: str
+
 
 # Entity - has identity
 class Order(FlextModels.Entity):
@@ -101,9 +104,10 @@ class Order(FlextModels.Entity):
     items: list
     total: Money
 
+
 # Service - encapsulates business logic
 class OrderService(FlextService):
-    def place_order(self, customer_id: str, items: list) -> FlextResult[Order]:
+    def place_order(self, customer_id: str, items: list) -> r[Order]:
         # Business logic here
         pass
 ```
@@ -120,7 +124,8 @@ class OrderService(FlextService):
 **Pattern:** Separate read (queries) and write (commands) operations.
 
 ```python
-from flext_core import FlextDispatcher, FlextResult
+from flext_core import FlextDispatcher, r
+
 
 # Command - modifies state
 class CreateUserCommand:
@@ -128,20 +133,25 @@ class CreateUserCommand:
         self.name = name
         self.email = email
 
+
 # Query - reads state
 class GetUserQuery:
     def __init__(self, user_id: str):
         self.user_id = user_id
 
+
 dispatcher = FlextDispatcher()
 
-def create_user_handler(command: CreateUserCommand) -> FlextResult[User]:
+
+def create_user_handler(command: CreateUserCommand) -> r[User]:
     # Create and return user
     ...
 
-def get_user_handler(query: GetUserQuery) -> FlextResult[User]:
+
+def get_user_handler(query: GetUserQuery) -> r[User]:
     # Retrieve and return user (no modification)
     ...
+
 
 dispatcher.register_handler(CreateUserCommand, create_user_handler)
 dispatcher.register_handler(GetUserQuery, get_user_handler)
@@ -162,19 +172,22 @@ result = dispatcher.dispatch(CreateUserCommand("Alice", "alice@example.com"))
 ```python
 from flext_core import FlextModels, FlextService
 
+
 class UserCreatedEvent:
     def __init__(self, user_id: str, email: str):
         self.user_id = user_id
         self.email = email
 
+
 class UserService(FlextService):
-    def create_user(self, name: str, email: str) -> FlextResult[User]:
+    def create_user(self, name: str, email: str) -> r[User]:
         user = User(id="new", name=name, email=email)
 
         # Emit domain event
         self.add_domain_event(UserCreatedEvent(user.entity_id, email))
 
-        return FlextResult[User].ok(user)
+        return r[User].ok(user)
+
 
 # Subscribers listen to events
 class EmailNotificationSubscriber:
@@ -198,29 +211,33 @@ class EmailNotificationSubscriber:
 # Port - defines interface
 class UserRepository:
     """Port: abstraction for user persistence."""
-    def save(self, user: User) -> FlextResult[User]:
+
+    def save(self, user: User) -> r[User]:
         raise NotImplementedError
 
-    def get_by_id(self, user_id: str) -> FlextResult[User]:
+    def get_by_id(self, user_id: str) -> r[User]:
         raise NotImplementedError
+
 
 # Adapter - concrete implementation
 class PostgresUserRepository(UserRepository):
     """Adapter: PostgreSQL implementation."""
-    def save(self, user: User) -> FlextResult[User]:
+
+    def save(self, user: User) -> r[User]:
         # PostgreSQL-specific implementation
         pass
 
-    def get_by_id(self, user_id: str) -> FlextResult[User]:
+    def get_by_id(self, user_id: str) -> r[User]:
         # PostgreSQL query
         pass
+
 
 # Domain doesn't know about implementation
 class UserService(FlextService):
     def __init__(self, repository: UserRepository):
         self.repository = repository
 
-    def create_user(self, user: User) -> FlextResult[User]:
+    def create_user(self, user: User) -> r[User]:
         return self.repository.save(user)
 ```
 
@@ -236,20 +253,21 @@ class UserService(FlextService):
 **Pattern:** Implement multi-tier caching strategy.
 
 ```python
-from flext_core import FlextResult
+from flext_core import r
 import functools
+
 
 class UserService:
     def __init__(self, repository: UserRepository, cache):
         self.repository = repository
         self.cache = cache
 
-    def get_user(self, user_id: str) -> FlextResult[User]:
+    def get_user(self, user_id: str) -> r[User]:
         """Get user with caching."""
         # Check cache first
         cached = self.cache.get(f"user:{user_id}")
         if cached:
-            return FlextResult[User].ok(cached)
+            return r[User].ok(cached)
 
         # Query repository
         result = self.repository.get_by_id(user_id)
@@ -271,40 +289,45 @@ class UserService:
 
 ## Validation Pipeline Pattern
 
-**Pattern:** Chain validations using FlextResult.
+**Pattern:** Chain validations using r.
 
 ```python
-from flext_core import FlextResult
+from flext_core import r
 
-def validate_password(password: str) -> FlextResult[str]:
+
+def validate_password(password: str) -> r[str]:
     if len(password) < 8:
-        return FlextResult[str].fail("Too short")
+        return r[str].fail("Too short")
     if not any(c.isupper() for c in password):
-        return FlextResult[str].fail("Need uppercase")
+        return r[str].fail("Need uppercase")
     if not any(c.isdigit() for c in password):
-        return FlextResult[str].fail("Need digit")
-    return FlextResult[str].ok(password)
+        return r[str].fail("Need digit")
+    return r[str].ok(password)
 
-def validate_email(email: str) -> FlextResult[str]:
+
+def validate_email(email: str) -> r[str]:
     if "@" not in email:
-        return FlextResult[str].fail("Invalid email")
-    return FlextResult[str].ok(email)
+        return r[str].fail("Invalid email")
+    return r[str].ok(email)
 
-def validate_username(username: str) -> FlextResult[str]:
+
+def validate_username(username: str) -> r[str]:
     if len(username) < 3:
-        return FlextResult[str].fail("Too short")
+        return r[str].fail("Too short")
     if not username.isalnum():
-        return FlextResult[str].fail("Only alphanumeric")
-    return FlextResult[str].ok(username)
+        return r[str].fail("Only alphanumeric")
+    return r[str].ok(username)
+
 
 # Pipeline
-def register_user(username: str, email: str, password: str) -> FlextResult[dict]:
+def register_user(username: str, email: str, password: str) -> r[dict]:
     return (
         validate_username(username)
         .flat_map(lambda u: validate_email(email).map(lambda e: (u, e)))
         .flat_map(lambda ue: validate_password(password).map(lambda p: (*ue, p)))
         .map(lambda data: {"username": data[0], "email": data[1], "password": data[2]})
     )
+
 
 # Test
 result = register_user("alice", "alice@example.com", "SecurePass123")
@@ -326,10 +349,11 @@ else:
 **Pattern:** Chain middleware for cross-cutting concerns.
 
 ```python
-from flext_core.decorators import FlextDecorators
+from flext_core import FlextDecorators
 from flext_core import FlextDispatcher
 
 dispatcher = FlextDispatcher()
+
 
 @FlextDecorators.retry(attempts=2)
 @FlextDecorators.timeout(seconds=3)
@@ -337,6 +361,7 @@ dispatcher = FlextDispatcher()
 def guarded_handler(message):
     logger.info("processing", message=type(message).__name__)
     return handle(message)
+
 
 dispatcher.register_handler(MessageType, guarded_handler)
 ```
@@ -357,6 +382,7 @@ dispatcher.register_handler(MessageType, guarded_handler)
 class UserService:
     def get_logger(self):
         return FlextContainer.get_global().get("logger").value
+
 
 # ✅ PREFER - Dependency Injection
 class UserService:
@@ -380,6 +406,7 @@ class ExternalLogger:
     def log_message(self, msg: str, level: str):
         print(f"[{level}] {msg}")
 
+
 # Adapter to make it compatible
 class LoggerAdapter(FlextLogger):
     def __init__(self, external_logger):
@@ -390,6 +417,7 @@ class LoggerAdapter(FlextLogger):
 
     def error(self, message: str, extra: dict = None):
         self.external.log_message(message, "ERROR")
+
 
 # Use
 external = ExternalLogger()
@@ -409,15 +437,17 @@ logger = LoggerAdapter(external)
 ```python
 from abc import ABC, abstractmethod
 
+
 class UserFactory:
     @staticmethod
-    def create_user(user_type: str, **kwargs) -> FlextResult[User]:
+    def create_user(user_type: str, **kwargs) -> r[User]:
         if user_type == "REDACTED_LDAP_BIND_PASSWORD":
-            return FlextResult[User].ok(AdminUser(**kwargs))
+            return r[User].ok(AdminUser(**kwargs))
         elif user_type == "regular":
-            return FlextResult[User].ok(RegularUser(**kwargs))
+            return r[User].ok(RegularUser(**kwargs))
         else:
-            return FlextResult[User].fail(f"Unknown user type: {user_type}")
+            return r[User].fail(f"Unknown user type: {user_type}")
+
 
 # Usage
 result = UserFactory.create_user("REDACTED_LDAP_BIND_PASSWORD", name="Alice")
@@ -435,7 +465,7 @@ if result.is_success:
 
 Key patterns in FLEXT-Core:
 
-- ✅ **Railway-Oriented**: Error composition with FlextResult
+- ✅ **Railway-Oriented**: Error composition with r
 - ✅ **Dependency Injection**: Service management with FlextContainer
 - ✅ **Domain-Driven Design**: Business logic organization
 - ✅ **CQRS**: Separated read/write paths
@@ -462,4 +492,7 @@ Use these patterns to build maintainable, scalable FLEXT-Core applications.
 - Railway-Oriented Programming - Result composition patterns
 - Service Patterns Guide - Domain service implementation
 - Dependency Injection Advanced - DI container patterns
-- **FLEXT CLAUDE.md**: Architecture principles and development workflow
+- **FLEXT AGENTS.md**: Architecture principles and development workflow
+
+```
+```

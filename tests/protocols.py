@@ -13,10 +13,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_tests.protocols import FlextTestsProtocols
+from flext_infra import FlextInfraProtocols
+from flext_tests import FlextTestsProtocols
 
 
-class TestsFlextProtocols(FlextTestsProtocols):
+class TestsFlextProtocols(FlextTestsProtocols, FlextInfraProtocols):
     """Protocol definitions for flext-core tests - extends FlextTestsProtocols.
 
     Architecture: Extends FlextTestsProtocols with flext-core-specific protocol
@@ -29,25 +30,6 @@ class TestsFlextProtocols(FlextTestsProtocols):
     - All generic protocols come from FlextTestsProtocols
     """
 
-    # NOTE: FlextTestsProtocols already extends FlextProtocols.
-    # All FlextProtocols and FlextTestsProtocols classes are accessible through
-    # TestsFlextProtocols via inheritance.
-    #
-    # Available protocols include:
-    # - Foundation: ResultProtocol, ResultLike, ModelProtocol
-    # - Configuration: ConfigProtocol
-    # - Domain: Service, Repository
-    # - Application: Handler, CommandBus, Middleware
-    # - Infrastructure: LoggerProtocol, Connection
-    # - Docker: ContainerProtocol, DockerClientProtocol, ComposeClientProtocol, etc.
-    #
-    # Flext-core-specific protocols can be added here if needed.
 
-
-# Runtime alias for simplified usage
 p = TestsFlextProtocols
-
-__all__ = [
-    "TestsFlextProtocols",
-    "p",
-]
+__all__ = ["TestsFlextProtocols", "p"]

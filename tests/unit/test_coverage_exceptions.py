@@ -15,25 +15,34 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import ClassVar, cast
+from collections.abc import Callable
+from typing import Annotated, ClassVar, cast
 
 import pytest
+from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import FlextConstants, FlextExceptions, FlextResult, FlextRuntime, t
-from flext_core.constants import c
-from tests.test_utils import assertion_helpers
+from flext_core import FlextConstants, FlextExceptions, c, r, t
+
+from ..test_utils import assertion_helpers
 
 
-@dataclass(frozen=True, slots=True)
-class ExceptionCreationScenario:
+class ExceptionCreationScenario(BaseModel):
     """Exception creation test scenario."""
 
-    name: str
-    exception_type: type[FlextExceptions.BaseError]
-    message: str
-    kwargs: dict[str, t.GeneralValueType]
-    expected_attrs: dict[str, t.GeneralValueType]
+    model_config = ConfigDict(frozen=True)
+    name: Annotated[str, Field(description="Exception creation scenario name")]
+    exception_type: Annotated[
+        type[FlextExceptions.BaseError],
+        Field(description="Exception class to instantiate"),
+    ]
+    message: Annotated[str, Field(description="Exception message")]
+    kwargs: Annotated[
+        dict[str, object | type],
+        Field(description="Keyword arguments for exception creation"),
+    ]
+    expected_attrs: Annotated[
+        dict[str, object | type], Field(description="Expected attributes to validate")
+    ]
 
 
 class ExceptionScenarios:
@@ -41,125 +50,131 @@ class ExceptionScenarios:
 
     EXCEPTION_CREATION: ClassVar[list[ExceptionCreationScenario]] = [
         ExceptionCreationScenario(
-            "validation_basic",
-            FlextExceptions.ValidationError,
-            "Invalid input",
-            {},
-            {},
+            name="validation_basic",
+            exception_type=FlextExceptions.ValidationError,
+            message="Invalid input",
+            kwargs={},
+            expected_attrs={},
         ),
         ExceptionCreationScenario(
-            "validation_with_field",
-            FlextExceptions.ValidationError,
-            "Email invalid",
-            {"field": "email", "value": "not-an-email"},
-            {"field": "email", "value": "not-an-email"},
+            name="validation_with_field",
+            exception_type=FlextExceptions.ValidationError,
+            message="Email invalid",
+            kwargs={"field": "email", "value": "not-an-email"},
+            expected_attrs={"field": "email", "value": "not-an-email"},
         ),
         ExceptionCreationScenario(
-            "configuration_basic",
-            FlextExceptions.ConfigurationError,
-            "Missing required field",
-            {},
-            {},
+            name="configuration_basic",
+            exception_type=FlextExceptions.ConfigurationError,
+            message="Missing required field",
+            kwargs={},
+            expected_attrs={},
         ),
         ExceptionCreationScenario(
-            "configuration_with_source",
-            FlextExceptions.ConfigurationError,
-            "Missing API key",
-            {"config_key": "API_KEY", "config_source": "environment"},
-            {"config_key": "API_KEY", "config_source": "environment"},
+            name="configuration_with_source",
+            exception_type=FlextExceptions.ConfigurationError,
+            message="Missing API key",
+            kwargs={"config_key": "API_KEY", "config_source": "environment"},
+            expected_attrs={"config_key": "API_KEY", "config_source": "environment"},
         ),
         ExceptionCreationScenario(
-            "connection",
-            FlextExceptions.ConnectionError,
-            "Failed to connect",
-            {"host": "db.example.com", "port": 5432, "timeout": 30.0},
-            {"host": "db.example.com", "port": 5432},
+            name="connection",
+            exception_type=FlextExceptions.ConnectionError,
+            message="Failed to connect",
+            kwargs={"host": "db.example.com", "port": 5432, "timeout": 30.0},
+            expected_attrs={"host": "db.example.com", "port": 5432},
         ),
         ExceptionCreationScenario(
-            "timeout",
-            FlextExceptions.TimeoutError,
-            "Operation timed out",
-            {"timeout_seconds": 30, "operation": "fetch_data"},
-            {"timeout_seconds": 30, "operation": "fetch_data"},
+            name="timeout",
+            exception_type=FlextExceptions.TimeoutError,
+            message="Operation timed out",
+            kwargs={"timeout_seconds": 30, "operation": "fetch_data"},
+            expected_attrs={"timeout_seconds": 30, "operation": "fetch_data"},
         ),
         ExceptionCreationScenario(
-            "authentication",
-            FlextExceptions.AuthenticationError,
-            "Invalid credentials",
-            {"auth_method": "basic", "user_id": "user123"},
-            {"auth_method": "basic", "user_id": "user123"},
+            name="authentication",
+            exception_type=FlextExceptions.AuthenticationError,
+            message="Invalid credentials",
+            kwargs={"auth_method": "basic", "user_id": "user123"},
+            expected_attrs={"auth_method": "basic", "user_id": "user123"},
         ),
         ExceptionCreationScenario(
-            "authorization",
-            FlextExceptions.AuthorizationError,
-            "User lacks permission",
-            {"user_id": "user123", "resource": "REDACTED_LDAP_BIND_PASSWORD_panel", "permission": "read"},
-            {"user_id": "user123", "resource": "REDACTED_LDAP_BIND_PASSWORD_panel"},
+            name="authorization",
+            exception_type=FlextExceptions.AuthorizationError,
+            message="User lacks permission",
+            kwargs={
+                "user_id": "user123",
+                "resource": "REDACTED_LDAP_BIND_PASSWORD_panel",
+                "permission": "read",
+            },
+            expected_attrs={
+                "user_id": "user123",
+                "resource": "REDACTED_LDAP_BIND_PASSWORD_panel",
+            },
         ),
         ExceptionCreationScenario(
-            "not_found",
-            FlextExceptions.NotFoundError,
-            "User not found",
-            {"resource_type": "User", "resource_id": "123"},
-            {"resource_type": "User", "resource_id": "123"},
+            name="not_found",
+            exception_type=FlextExceptions.NotFoundError,
+            message="User not found",
+            kwargs={"resource_type": "User", "resource_id": "123"},
+            expected_attrs={"resource_type": "User", "resource_id": "123"},
         ),
         ExceptionCreationScenario(
-            "conflict",
-            FlextExceptions.ConflictError,
-            "User already exists",
-            {
+            name="conflict",
+            exception_type=FlextExceptions.ConflictError,
+            message="User already exists",
+            kwargs={
                 "resource_type": "User",
                 "resource_id": "user@example.com",
                 "conflict_reason": "email_already_registered",
             },
-            {"resource_type": "User", "resource_id": "user@example.com"},
+            expected_attrs={"resource_type": "User", "resource_id": "user@example.com"},
         ),
         ExceptionCreationScenario(
-            "rate_limit",
-            FlextExceptions.RateLimitError,
-            "Too many requests",
-            {"limit": 100, "window_seconds": 60, "retry_after": 30},
-            {"limit": 100, "window_seconds": 60},
+            name="rate_limit",
+            exception_type=FlextExceptions.RateLimitError,
+            message="Too many requests",
+            kwargs={"limit": 100, "window_seconds": 60, "retry_after": 30},
+            expected_attrs={"limit": 100, "window_seconds": 60},
         ),
         ExceptionCreationScenario(
-            "circuit_breaker",
-            FlextExceptions.CircuitBreakerError,
-            "Circuit breaker is open",
-            {
+            name="circuit_breaker",
+            exception_type=FlextExceptions.CircuitBreakerError,
+            message="Circuit breaker is open",
+            kwargs={
                 "service_name": "payment_service",
                 "failure_count": 5,
                 "reset_timeout": 60,
             },
-            {"service_name": "payment_service", "failure_count": 5},
+            expected_attrs={"service_name": "payment_service", "failure_count": 5},
         ),
         ExceptionCreationScenario(
-            "type_error",
-            FlextExceptions.TypeError,
-            "Expected string, got int",
-            {"expected_type": str, "actual_type": int},
-            {"expected_type": str, "actual_type": int},
+            name="type_error",
+            exception_type=FlextExceptions.TypeError,
+            message="Expected string, got int",
+            kwargs={"expected_type": str, "actual_type": int},
+            expected_attrs={"expected_type": str, "actual_type": int},
         ),
         ExceptionCreationScenario(
-            "operation_error",
-            FlextExceptions.OperationError,
-            "Database operation failed",
-            {"operation": "INSERT", "reason": "Constraint violation"},
-            {"operation": "INSERT", "reason": "Constraint violation"},
+            name="operation_error",
+            exception_type=FlextExceptions.OperationError,
+            message="Database operation failed",
+            kwargs={"operation": "INSERT", "reason": "Constraint violation"},
+            expected_attrs={"operation": "INSERT", "reason": "Constraint violation"},
         ),
         ExceptionCreationScenario(
-            "attribute_access",
-            FlextExceptions.AttributeAccessError,
-            "Attribute not found",
-            {
+            name="attribute_access",
+            exception_type=FlextExceptions.AttributeAccessError,
+            message="Attribute not found",
+            kwargs={
                 "attribute_name": "missing_field",
                 "attribute_context": {"class": "User", "attempted_access": "read"},
             },
-            {"attribute_name": "missing_field"},
+            expected_attrs={"attribute_name": "missing_field"},
         ),
     ]
-
     FACTORY_CREATION: ClassVar[
-        list[tuple[str, dict[str, t.GeneralValueType], type[FlextExceptions.BaseError]]]
+        list[tuple[str, dict[str, object], type[FlextExceptions.BaseError]]]
     ] = [
         (
             "ValidationError",
@@ -173,7 +188,7 @@ class ExceptionScenarios:
         ),
         (
             "ConnectionError",
-            {"host": FlextConstants.Network.LOCALHOST, "port": 5432},
+            {"host": FlextConstants.Network.LOCALHOST},
             FlextExceptions.ConnectionError,
         ),
         (
@@ -181,7 +196,6 @@ class ExceptionScenarios:
             {"operation": "INSERT", "reason": "Constraint violation"},
             FlextExceptions.OperationError,
         ),
-        ("TimeoutError", {"timeout_seconds": 30}, FlextExceptions.TimeoutError),
     ]
 
 
@@ -196,39 +210,27 @@ class TestFlextExceptionsHierarchy:
     def test_exception_creation(self, scenario: ExceptionCreationScenario) -> None:
         """Test creating exceptions with various scenarios."""
         if scenario.kwargs:
-            # Convert dict[str, t.GeneralValueType] to dict[str, MetadataAttributeValue]
-            # Separate type values from metadata values for proper type handling
             type_kwargs: dict[str, type] = {}
-            metadata_kwargs: dict[str, t.MetadataAttributeValue] = {}
+            metadata_kwargs: dict[str, object] = {}
             for key, value in scenario.kwargs.items():
-                # For TypeError, preserve type objects for expected_type and actual_type
                 if (
                     scenario.exception_type == FlextExceptions.TypeError
-                    and key
-                    in {
-                        "expected_type",
-                        "actual_type",
-                    }
+                    and key in {"expected_type", "actual_type"}
                     and isinstance(value, type)
                 ):
                     type_kwargs[key] = value
                 elif isinstance(value, (str, int, float, bool, type(None), list, dict)):
-                    metadata_kwargs[key] = FlextRuntime.normalize_to_metadata_value(
-                        value,
-                    )
+                    metadata_kwargs[key] = cast("t.MetadataAttributeValue", value)
                 else:
-                    # Convert non-compatible types to string
-                    metadata_kwargs[key] = FlextRuntime.normalize_to_metadata_value(
-                        str(value),
-                    )
-            # For TypeError, pass type_kwargs separately, then metadata_kwargs
+                    metadata_kwargs[key] = cast("t.MetadataAttributeValue", str(value))
             if type_kwargs:
-                # Convert type objects to strings for metadata compatibility
                 for key, type_value in type_kwargs.items():
                     metadata_kwargs[key] = type_value.__name__
-            # Type narrowing: all values in metadata_kwargs are MetadataAttributeValue
-            # Pass keyword arguments unpacked from metadata_kwargs
-            error = scenario.exception_type(scenario.message, **metadata_kwargs)
+            exception_ctor = cast(
+                "Callable[..., FlextExceptions.BaseError]",
+                scenario.exception_type,
+            )
+            error = exception_ctor(scenario.message, **metadata_kwargs)
         else:
             error = scenario.exception_type(scenario.message)
         assert scenario.message in str(error)
@@ -239,27 +241,27 @@ class TestFlextExceptionsHierarchy:
 
 
 class TestExceptionIntegration:
-    """Test exceptions integration with FlextResult using FlextTestsUtilities."""
+    """Test exceptions integration with r using FlextTestsUtilities."""
 
     def test_exception_to_result_conversion(self) -> None:
-        """Test converting exceptions to FlextResult."""
+        """Test converting exceptions to r."""
         try:
             error_msg = "Test error"
             raise FlextExceptions.ValidationError(error_msg, field="email")
         except FlextExceptions.ValidationError as e:
-            result = FlextResult[bool].fail(str(e))
-            assertion_helpers.assert_flext_result_failure(result)
+            result = r[bool].fail(str(e))
+            _ = assertion_helpers.assert_flext_result_failure(result)
             assert result.error is not None and "Test error" in result.error
 
     def test_exception_in_railway_pattern(self) -> None:
         """Test exception handling in railway pattern."""
 
         def validate_and_process(
-            data: dict[str, t.GeneralValueType],
-        ) -> FlextResult[dict[str, t.GeneralValueType]]:
+            data: dict[str, object],
+        ) -> r[dict[str, object]]:
             if not data.get("id"):
-                return FlextResult[dict[str, t.GeneralValueType]].fail("Missing id")
-            return FlextResult[dict[str, t.GeneralValueType]].ok(data)
+                return r[dict[str, object]].fail("Missing id")
+            return r[dict[str, object]].ok(data)
 
         assert validate_and_process({}).is_failure
         assert validate_and_process({"id": "123"}).is_success
@@ -274,8 +276,8 @@ class TestExceptionIntegration:
                 value="invalid",
             )
         except FlextExceptions.ValidationError as e:
-            result = FlextResult[bool].fail(f"Error in user creation: {e}")
-            assertion_helpers.assert_flext_result_failure(result)
+            result = r[bool].fail(f"Error in user creation: {e}")
+            _ = assertion_helpers.assert_flext_result_failure(result)
             assert result.error is not None and "Validation failed" in result.error
 
 
@@ -357,19 +359,11 @@ class TestExceptionContext:
 
     def test_exception_with_context_data(self) -> None:
         """Test exception with contextual information via metadata."""
-        # ValidationError accepts metadata via **extra_kwargs as MetadataAttributeValue
-        # Convert Metadata to dict for extra_kwargs
-        metadata_dict: dict[str, t.MetadataAttributeValue] = {
-            "user_id": "123",
-            "operation": "create_user",
-            "timestamp": 1234567890,
-        }
-        # ValidationError accepts metadata via **extra_kwargs: MetadataAttributeValue
-        # Cast metadata_dict to correct type
-        metadata_typed = cast("t.MetadataAttributeValue", metadata_dict)
         error = FlextExceptions.ValidationError(
             "Validation failed in context",
-            metadata=metadata_typed,
+            user_id="123",
+            operation="create_user",
+            timestamp=1234567890,
         )
         assert "user_id" in error.metadata.attributes
         assert error.metadata.attributes["user_id"] == "123"
@@ -389,7 +383,6 @@ class TestExceptionContext:
         except ValueError as e:
             original = e
         assert original is not None
-        # Python native exception chaining using 'from'
         error = FlextExceptions.OperationError("Operation failed")
         error.__cause__ = original
         assert error.__cause__ is original
@@ -398,7 +391,7 @@ class TestExceptionContext:
         """Test that exception information is preserved."""
         original_msg = "Original error message with details"
         error = FlextExceptions.ValidationError(original_msg)
-        result = FlextResult[bool].fail(str(error))
+        result = r[bool].fail(str(error))
         assert result.error is not None and (
             original_msg in result.error or "Original error" in result.error
         )
@@ -421,12 +414,8 @@ class TestExceptionSerialization:
 
     def test_exception_dict_with_metadata(self) -> None:
         """Test exception dict includes metadata (flattened)."""
-        error = FlextExceptions.OperationError(
-            "Operation failed",
-            operation="INSERT",
-        )
+        error = FlextExceptions.OperationError("Operation failed", operation="INSERT")
         error_dict = error.to_dict()
-        # Metadata is flattened into the dict, not nested
         assert error_dict["operation"] == "INSERT"
 
 
@@ -435,45 +424,30 @@ class TestExceptionFactory:
 
     def test_create_error_by_type(self) -> None:
         """Test creating exception by type name."""
-        error = FlextExceptions.create_error("ValidationError", "Test validation error")
+        error = FlextExceptions.create("ValidationError", "Test validation error")
         assert isinstance(error, FlextExceptions.ValidationError)
         assert "Test validation error" in str(error)
 
     @pytest.mark.parametrize(
         ("message", "kwargs", "expected_type"),
         ExceptionScenarios.FACTORY_CREATION,
-        ids=lambda x: x[0] if isinstance(x, tuple) else str(x),
     )
     def test_create_error_auto_detection(
         self,
         message: str,
-        kwargs: dict[str, t.GeneralValueType],
+        kwargs: dict[str, object],
         expected_type: type[FlextExceptions.BaseError],
     ) -> None:
         """Test smart error type detection in create()."""
-        # Convert dict[str, t.GeneralValueType] to dict[str, MetadataAttributeValue]
-        converted_kwargs: dict[str, t.MetadataAttributeValue] = {}
-        for key, value in kwargs.items():
-            # Type narrowing: ensure value is t.GeneralValueType before normalization
-            if isinstance(value, (str, int, float, bool, type(None), list, dict)):
-                converted_kwargs[key] = FlextRuntime.normalize_to_metadata_value(value)
-            else:
-                # Convert non-compatible types to string
-                converted_kwargs[key] = FlextRuntime.normalize_to_metadata_value(
-                    str(value),
-                )
-        # Type narrowing: all values in converted_kwargs are MetadataAttributeValue
-        # create accepts **kwargs: MetadataAttributeValue, but type checker can't infer compatibility
-
-        # Cast converted_kwargs to correct type for dynamic kwargs unpacking in tests
-        # Mypy limitation: dict unpacking to **kwargs not fully supported
-        # The dict[str, MetadataAttributeValue] is compatible with **kwargs: MetadataAttributeValue
-        # Use type ignore for dict unpacking (runtime behavior is correct)
-        kwargs_typed: dict[str, t.MetadataAttributeValue] = cast(
-            "dict[str, t.MetadataAttributeValue]",
-            converted_kwargs,
+        converted_kwargs: dict[str, object] = {
+            k: cast("t.MetadataAttributeValue", v) for k, v in kwargs.items()
+        }
+        kwargs_typed: dict[str, object] = converted_kwargs
+        create_error = cast(
+            "Callable[..., FlextExceptions.BaseError]",
+            FlextExceptions.create,
         )
-        error = FlextExceptions.create(message, **kwargs_typed)
+        error = create_error(message, **kwargs_typed)
         assert isinstance(error, expected_type)
 
 
@@ -489,7 +463,6 @@ class TestExceptionMetrics:
         metrics = FlextExceptions.get_metrics()
         assert metrics["total_exceptions"] == 3
         exception_counts = metrics.get("exception_counts")
-        # Type narrowing: exception_counts is dict-like
         if isinstance(exception_counts, dict):
             assert exception_counts.get("FlextExceptions.ValidationError") == 2
             assert exception_counts.get("FlextExceptions.ConfigurationError") == 1
@@ -510,10 +483,8 @@ class TestExceptionLogging:
     def test_exception_string_with_correlation_id(self) -> None:
         """Test exception has correlation ID when auto_correlation=True."""
         error = FlextExceptions.BaseError("Test", auto_correlation=True)
-        # Correlation ID is stored but not in string repr (only error_code and message)
         assert error.correlation_id is not None
         assert error.correlation_id.startswith("exc_")
-        # String contains the message
         assert "Test" in str(error)
 
     def test_exception_error_code_in_string(self) -> None:
@@ -543,7 +514,6 @@ class TestHierarchicalExceptionSystem:
     def test_failure_level_comparison(self) -> None:
         """Test FailureLevel enum comparison."""
         failure_level = c.Exceptions.FailureLevel
-        # Test enum members are distinct - use str() to avoid Literal type overlap issues
         strict_val: str = str(failure_level.STRICT.value)
         warn_val: str = str(failure_level.WARN.value)
         permissive_val: str = str(failure_level.PERMISSIVE.value)

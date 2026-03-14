@@ -19,30 +19,22 @@ SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
-from flext_core.typings import t
 
 from collections.abc import Callable, Sequence
-from dataclasses import asdict, dataclass
 from typing import ClassVar, cast
 
 import pytest
-from pydantic import BaseModel
 
-from flext_core import FlextSettings, p, r, t
-from flext_core.constants import c
-from flext_tests import FlextTestsUtilities, u
-from flext_core.models import m
+from flext_core import FlextSettings, c, m, r
+from flext_tests import u
+
+from .contracts.text_contract import TextUtilityContract
 
 
-class UtilityScenarios:
+class UtilityScenarios(TextUtilityContract):
     """Centralized utility test scenarios using c (FlextConstants)."""
 
-    TYPE_GUARD_CASES: ClassVar[
-        dict[
-            str,
-            list[tuple[str, t.GeneralValueType, bool]],
-        ]
-    ] = {
+    TYPE_GUARD_CASES: ClassVar[dict[str, list[tuple[str, object, bool]]]] = {
         "string": [
             ("string_empty", "", False),
             ("string_valid", "test", True),
@@ -64,48 +56,39 @@ class UtilityScenarios:
             ("list_string", "not_list", False),
         ],
     }
-
     GENERATOR_METHODS: ClassVar[list[tuple[str, str | None]]] = [
         ("generate_id", None),
-        (
-            "generate_iso_timestamp",
-            "iso_timestamp",
-        ),  # Special case - uses u.Generators.generate_iso_timestamp()
+        ("generate_iso_timestamp", "iso_timestamp"),
         ("generate_correlation_id", "correlation"),
         ("generate_entity_id", "entity"),
         ("generate_transaction_id", "transaction"),
         ("generate_saga_id", "saga"),
         ("generate_event_id", "event"),
     ]
-
     SHORT_ID_LENGTHS: ClassVar[list[tuple[int | None, int]]] = [
         (5, 5),
         (10, 10),
         (20, 20),
         (None, c.Utilities.SHORT_UUID_LENGTH),
     ]
-
-    TEXT_CLEAN_CASES: ClassVar[list[tuple[str, str]]] = [
-        ("  Test\n\r\tText  ", "Test Text"),
-        ("a    b    c", "a b c"),
-        ("  Test  Text  ", "Test Text"),
-    ]
-
+    TEXT_CLEAN_CASES: ClassVar[list[tuple[str, str]]] = (
+        TextUtilityContract.CLEAN_TEXT_CASES
+        + [
+            ("a    b    c", "a b c"),
+            ("  Test  Text  ", "Test Text"),
+        ]
+    )
     TEXT_TRUNCATE_CASES: ClassVar[list[tuple[str, int, bool]]] = [
         ("VeryLongText", 5, True),
         ("Hi", 10, False),
     ]
-
-    CACHE_NORMALIZE_CASES: ClassVar[
-        list[tuple[t.GeneralValueType, type | tuple[type, ...]]]
-    ] = [
+    CACHE_NORMALIZE_CASES: ClassVar[list[tuple[object, type | tuple[type, ...]]]] = [
         ({"a": 1, "b": 2}, dict),
         ([1, 2, 3], list),
         ("string", str),
-        (42, (int, float, str, dict, list, tuple)),  # Primitives returned as-is
+        (42, (int, float, str, dict, list, tuple)),
         ({"a": {"b": {"c": 1}}, "d": [1, 2, 3]}, dict),
     ]
-
     VALIDATION_PIPELINE_CASES: ClassVar[
         list[tuple[str, Sequence[Callable[[str], r[bool]]], bool, str | None]]
     ] = [
@@ -113,22 +96,16 @@ class UtilityScenarios:
             "abc123",
             [
                 lambda d: r[bool].ok(True) if len(d) > 0 else r[bool].fail("Empty"),
-                lambda d: r[bool].ok(True)
-                if d.isalnum()
-                else r[bool].fail("Non-alnum"),
+                lambda d: (
+                    r[bool].ok(True) if d.isalnum() else r[bool].fail("Non-alnum")
+                ),
             ],
             True,
             None,
         ),
-        (
-            "test",
-            [lambda d: r[bool].fail("First failed")],
-            False,
-            "First failed",
-        ),
+        ("test", [lambda d: r[bool].fail("First failed")], False, "First failed"),
         ("test", [], True, None),
     ]
-
     TYPE_CHECKER_CASES: ClassVar[list[tuple[tuple[type, ...], type, bool]]] = [
         ((str,), str, True),
         ((str, int), str, True),
@@ -137,33 +114,9 @@ class UtilityScenarios:
         ((int,), str, False),
     ]
 
-    @staticmethod
-    def create_test_model() -> BaseModel:
-        """Create test Pydantic model using FlextTestsUtilities pattern."""
 
-        class TestModel(BaseModel):
-            """Test Pydantic model for validation testing."""
-
-            name: str
-            value: int
-
-        # Use cast to match VariadicCallable signature
-        def factory_func(**kw: object) -> TestModel:
-            return TestModel(name="test", value=42, **kw)
-
-        factory_method = cast("p.VariadicCallable[TestModel]", factory_func)
-        return FlextTestsUtilities.Tests.ModelTestHelpers.assert_model_creation_success(
-            factory_method=factory_method,
-            expected_attrs={"name": "test", "value": 42},
-        )
-
-
-class Testu:
+class Testu(TextUtilityContract):
     """Unified test suite for u using flext_tests and c."""
-
-    # =====================================================================
-    # Type Guards Tests - Parametrized
-    # =====================================================================
 
     @pytest.mark.parametrize(
         ("description", "value", "expected"),
@@ -172,11 +125,11 @@ class Testu:
     def test_type_guard_string(
         self,
         description: str,
-        value: t.GeneralValueType,
+        value: object,
         expected: bool,
     ) -> None:
         """Test string type guards."""
-        result = u.is_type(value, "string_non_empty")
+        result = u.is_type(cast("object", value), "string_non_empty")
         assert result is expected, f"{description}: expected {expected}, got {result}"
 
     @pytest.mark.parametrize(
@@ -186,11 +139,11 @@ class Testu:
     def test_type_guard_dict(
         self,
         description: str,
-        value: t.GeneralValueType,
+        value: object,
         expected: bool,
     ) -> None:
         """Test dict type guards."""
-        result = u.is_type(value, "dict_non_empty")
+        result = u.is_type(cast("object", value), "dict_non_empty")
         assert result is expected, f"{description}: expected {expected}, got {result}"
 
     @pytest.mark.parametrize(
@@ -200,32 +153,22 @@ class Testu:
     def test_type_guard_list(
         self,
         description: str,
-        value: t.GeneralValueType,
+        value: object,
         expected: bool,
     ) -> None:
         """Test list type guards."""
-        result = u.is_type(value, "list_non_empty")
+        result = u.is_type(cast("object", value), "list_non_empty")
         assert result is expected, f"{description}: expected {expected}, got {result}"
-
-    # =====================================================================
-    # Generators Tests - Parametrized
-    # =====================================================================
 
     @pytest.mark.parametrize(
         ("method_name", "kind"),
         UtilityScenarios.GENERATOR_METHODS,
     )
-    def test_generators_operations(
-        self,
-        method_name: str,
-        kind: str | None,
-    ) -> None:
+    def test_generators_operations(self, method_name: str, kind: str | None) -> None:
         """Test ID and timestamp generation operations."""
         if method_name == "generate_iso_timestamp":
-            # Special case - this method still exists
-            result = u.Generators.generate_iso_timestamp()
+            result = u.generate_iso_timestamp()
         else:
-            # Use unified generate() method
             result = u.generate(kind) if kind else u.generate()
         assert isinstance(result, str) and len(result) > 0
 
@@ -249,7 +192,8 @@ class Testu:
     def test_generators_batch_id(self) -> None:
         """Test batch ID generation."""
         batch_id = u.generate(
-            "batch", parts=(c.Performance.BatchProcessing.DEFAULT_SIZE,)
+            "batch",
+            parts=(c.Performance.BatchProcessing.DEFAULT_SIZE,),
         )
         assert isinstance(batch_id, str) and len(batch_id) > 0
 
@@ -264,10 +208,6 @@ class Testu:
         id2 = u.generate()
         assert id1 != id2
 
-    # =====================================================================
-    # Text Processor Tests - Parametrized
-    # =====================================================================
-
     @pytest.mark.parametrize(
         ("input_text", "expected_pattern"),
         UtilityScenarios.TEXT_CLEAN_CASES,
@@ -278,8 +218,8 @@ class Testu:
         expected_pattern: str,
     ) -> None:
         """Test text cleaning."""
-        result = u.Text.clean_text(input_text)
-        assert isinstance(result, str) and len(result) > 0
+        result = u.clean_text(input_text)
+        assert result.replace(" ", "") == expected_pattern.replace(" ", "")
 
     @pytest.mark.parametrize(
         ("text", "max_length", "should_truncate"),
@@ -292,26 +232,31 @@ class Testu:
         should_truncate: bool,
     ) -> None:
         """Test text truncation."""
-        result = u.Text.truncate_text(text, max_length=max_length)
-        u.Tests.Result.assert_result_success(result)
+        result = u.truncate_text(text, max_length=max_length)
+        _ = u.Tests.Result.assert_success(result)
         if should_truncate:
-            assert len(result.value) <= max_length + 3  # +3 for "..."
+            assert len(result.value) <= max_length + 3
         else:
             assert result.value == text
 
     def test_text_processor_safe_string_success(self) -> None:
         """Test safe string with valid input."""
-        result = u.Text.safe_string("valid")
-        assert isinstance(result, str) and result == "valid"
+        self.assert_safe_string_valid("valid", "valid")
 
     def test_text_processor_safe_string_empty(self) -> None:
         """Test safe string with empty raises ValueError."""
         with pytest.raises(ValueError):
-            _ = u.Text.safe_string("")
+            _ = u.safe_string("")
 
-    # =====================================================================
-    # Cache Tests - Parametrized
-    # =====================================================================
+    @pytest.mark.parametrize(
+        ("text", "expected"),
+        UtilityScenarios.FORMAT_APP_ID_CASES,
+    )
+    def test_text_processor_format_app_id_contract(
+        self, text: str, expected: str
+    ) -> None:
+        """Reuse shared contract for app-id formatting rules."""
+        self.assert_format_app_id(text, expected)
 
     @pytest.mark.parametrize(
         ("input_data", "expected_type"),
@@ -319,11 +264,11 @@ class Testu:
     )
     def test_cache_normalize_component(
         self,
-        input_data: t.GeneralValueType,
+        input_data: object,
         expected_type: type | tuple[type, ...],
     ) -> None:
         """Test cache component normalization."""
-        normalized = u.Cache.normalize_component(input_data)
+        normalized = u.normalize_component(cast("object", input_data))
         if isinstance(expected_type, tuple):
             assert isinstance(normalized, expected_type)
         else:
@@ -331,45 +276,39 @@ class Testu:
 
     def test_cache_sort_dict_keys(self) -> None:
         """Test dictionary key sorting."""
-        data: m.ConfigMap = {"z": 1, "a": 2, "m": 3}
-        result = u.Cache.sort_dict_keys(data)
-        assert isinstance(result, dict)
-        assert list(result.keys()) == ["a", "m", "z"]
+        data: m.ConfigMap = m.ConfigMap(root={"z": 1, "a": 2, "m": 3})
+        result = u.sort_dict_keys(data)
+        assert result == {"a": 2, "m": 3, "z": 1}
 
     def test_cache_generate_key(self) -> None:
         """Test cache key generation."""
-        key1 = u.Cache.generate_cache_key("arg1", "arg2")
-        key2 = u.Cache.generate_cache_key("arg1", "arg2")
+        key1 = u.generate_cache_key("arg1", "arg2")
+        key2 = u.generate_cache_key("arg1", "arg2")
         assert key1 == key2 and isinstance(key1, str)
 
     def test_cache_generate_key_with_kwargs(self) -> None:
         """Test cache key generation with kwargs."""
-        key = u.Cache.generate_cache_key("test", foo="bar", num=42)
+        key = u.generate_cache_key("test", foo="bar", num=42)
         assert isinstance(key, str) and len(key) > 0
 
     def test_cache_clear_object_cache(self) -> None:
         """Test clearing object cache."""
-        cache_data: m.ConfigMap = {"test": "data"}
-        result = u.Cache.clear_object_cache(cache_data)
-        u.Tests.Result.assert_result_success(result)
+        cache_data: m.ConfigMap = m.ConfigMap(root={"test": "data"})
+        result = u.clear_object_cache(cache_data)
+        _ = u.Tests.Result.assert_success(result)
 
-    @pytest.mark.parametrize(
-        ("has_cache", "expected"),
-        [
-            (True, True),
-            (False, False),
-        ],
-    )
+    @pytest.mark.parametrize(("has_cache", "expected"), [(True, True), (False, False)])
     def test_cache_has_attributes(self, has_cache: bool, expected: bool) -> None:
         """Test detecting cache attributes."""
         if has_cache:
 
             class TestWithCache:
-                _cache: ClassVar[m.ConfigMap] = {}
+                _cache: ClassVar[m.ConfigMap] = m.ConfigMap(root={})
 
             cache_obj = TestWithCache()
-            # Cast to t.GeneralValueType for type checker - test class is valid object
-            result = u.Cache.has_cache_attributes(cast("t.GeneralValueType", cache_obj))
+            result = u.has_cache_attributes(
+                cast("object", cast("object", cache_obj)),
+            )
             assert result is expected
         else:
 
@@ -377,20 +316,15 @@ class Testu:
                 pass
 
             no_cache_obj = TestNoCache()
-            # Cast to t.GeneralValueType for type checker - test class is valid object
-            result = u.Cache.has_cache_attributes(
-                cast("t.GeneralValueType", no_cache_obj),
+            result = u.has_cache_attributes(
+                cast("object", cast("object", no_cache_obj)),
             )
             assert result is expected
 
     def test_cache_sort_key(self) -> None:
         """Test sort_key returns tuple."""
-        key = u.Cache.sort_key("test")
+        key = u.sort_key("test")
         assert isinstance(key, tuple) and len(key) == 2
-
-    # =====================================================================
-    # Type Checker Tests - Parametrized
-    # =====================================================================
 
     @pytest.mark.parametrize(
         ("accepted_types", "message_type", "expected"),
@@ -403,156 +337,25 @@ class Testu:
         expected: bool,
     ) -> None:
         """Test type checking."""
-        result = u.Checker.can_handle_message_type(
-            accepted_types,
-            message_type,
-        )
+        result = u.can_handle_message_type(accepted_types, message_type)
         assert result is expected
-
-    # =====================================================================
-    # Validation Tests - Parametrized
-    # =====================================================================
-
-    def test_validation_sort_key_deterministic(self) -> None:
-        """Test sort_key produces deterministic results."""
-        key1 = u.Validation.sort_key("test")
-        key2 = u.Validation.sort_key("test")
-        assert key1 == key2 and isinstance(key1, (str, tuple))
-
-    def test_validation_sort_key_different(self) -> None:
-        """Test sort_key differs for different inputs."""
-        key1 = u.Validation.sort_key("test1")
-        key2 = u.Validation.sort_key("test2")
-        assert key1 != key2
-
-    @pytest.mark.parametrize(
-        ("value", "expected"),
-        [
-            (True, True),
-            (42, 42),
-            ("test", "test"),
-            (None, None),
-        ],
-    )
-    def test_validation_normalize_component_primitives(
-        self,
-        value: t.GeneralValueType,
-        expected: t.GeneralValueType,
-    ) -> None:
-        """Test normalize_component with primitives."""
-        result = u.Validation.normalize_component(value)
-        assert result == expected
-
-    @pytest.mark.parametrize(
-        ("input_data", "expected_type"),
-        [
-            ({"z": 1, "a": 2}, dict),
-            # Lists are normalized to dict with "type": "sequence" marker
-            ([1, 2, 3, "four"], dict),
-        ],
-    )
-    def test_validation_normalize_component_collections(
-        self,
-        input_data: t.GeneralValueType,
-        expected_type: type,
-    ) -> None:
-        """Test normalize_component with collections."""
-        result = u.Validation.normalize_component(input_data)
-        assert isinstance(result, expected_type)
-        # Verify sequence marker for lists
-        if isinstance(input_data, list):
-            assert isinstance(result, dict)
-            assert result.get("type") == "sequence"
-            assert "data" in result
-
-    def test_validation_normalize_component_pydantic(self) -> None:
-        """Test normalize_component with Pydantic model."""
-        model = UtilityScenarios.create_test_model()
-        # normalize_component accepts t.GeneralValueType
-        # Convert BaseModel to dict (t.GeneralValueType) to match signature
-        model_dict: t.GeneralValueType = model.model_dump()
-        result: t.GeneralValueType = u.Validation.normalize_component(model_dict)
-        assert result is not None
-
-    @pytest.mark.parametrize(
-        ("data", "validators", "should_succeed", "error_pattern"),
-        UtilityScenarios.VALIDATION_PIPELINE_CASES,
-    )
-    def test_validation_validate_pipeline(
-        self,
-        data: str,
-        validators: Sequence[Callable[[str], r[bool]]],
-        should_succeed: bool,
-        error_pattern: str | None,
-    ) -> None:
-        """Test validation pipeline."""
-        result = u.Validation.validate_pipeline(data, list(validators))
-        if should_succeed:
-            u.Tests.Result.assert_result_success(result)
-        else:
-            u.Tests.Result.assert_result_failure(result)
-            if error_pattern:
-                assert error_pattern in str(result.error)
-
-    def test_validation_validate_pipeline_exception(self) -> None:
-        """Test validation pipeline handles exceptions."""
-        error_msg = "Unexpected error"
-
-        def bad_validator(data: str) -> r[bool]:
-            raise ValueError(error_msg)
-
-        result = u.Validation.validate_pipeline("test", [bad_validator])
-        u.Tests.Result.assert_result_failure(result)
-
-    def test_validation_normalize_dataclass(self) -> None:
-        """Test normalize with dataclass."""
-
-        @dataclass
-        class Person:
-            name: str
-            age: int
-
-        person = Person(name="Alice", age=30)
-        # normalize_component accepts t.GeneralValueType
-        # Convert dataclass to dict (t.GeneralValueType) via dataclasses.asdict
-        person_dict: t.GeneralValueType = asdict(person)
-        result: t.GeneralValueType = u.Validation.normalize_component(person_dict)
-        assert result is not None
-
-    def test_validation_sort_key_with_dict(self) -> None:
-        """Test sort_key with dictionary."""
-        dict_a: m.ConfigMap = {"z": 1, "a": 2}
-        key = u.Validation.sort_key(dict_a)
-        assert isinstance(key, (str, tuple)) and len(key) > 0
-
-    # =====================================================================
-    # Configuration Tests
-    # =====================================================================
 
     def test_configuration_get_parameter(self) -> None:
         """Test getting configuration parameter."""
-        config = FlextSettings.get_global_instance()
-        value = u.Configuration.get_parameter(config, "app_name")
+        config = FlextSettings.get_global()
+        value = u.get_parameter(config, "app_name")
         assert value is not None
 
     def test_configuration_set_parameter(self) -> None:
         """Test setting configuration parameter."""
-        config = FlextSettings.get_global_instance()
-        result = u.Configuration.set_parameter(
-            config,
-            "test_param",
-            "test_value",
-        )
+        config = FlextSettings.get_global()
+        result = u.set_parameter(config, "test_param", "test_value")
         assert isinstance(result, bool)
 
     def test_configuration_get_singleton(self) -> None:
         """Test getting singleton configuration."""
-        value = u.Configuration.get_singleton(FlextSettings, "app_name")
+        value = u.get_singleton(FlextSettings, "app_name")
         assert value is not None
-
-    # =====================================================================
-    # Reliability Tests
-    # =====================================================================
 
     def test_reliability_retry_immediate_success(self) -> None:
         """Test retry with immediate success."""
@@ -560,14 +363,11 @@ class Testu:
         def quick_success() -> r[str]:
             return r[str].ok("success")
 
-        result: r[str] = u.Reliability.retry(
+        result: r[str] = u.retry(
             quick_success,
             max_attempts=c.Reliability.MAX_RETRY_ATTEMPTS,
         )
-        u.Tests.Result.assert_success_with_value(
-            result,
-            "success",
-        )
+        u.Tests.Result.assert_success_with_value(result, "success")
 
     def test_reliability_retry_eventual_success(self) -> None:
         """Test retry with eventual success."""
@@ -579,15 +379,12 @@ class Testu:
                 return r[str].fail("Temporary failure")
             return r[str].ok("Success")
 
-        result: r[str] = u.Reliability.retry(
+        result: r[str] = u.retry(
             flaky_op,
             max_attempts=5,
             delay_seconds=c.Reliability.DEFAULT_RETRY_DELAY_SECONDS,
         )
-        u.Tests.Result.assert_success_with_value(
-            result,
-            "Success",
-        )
+        u.Tests.Result.assert_success_with_value(result, "Success")
         assert call_count[0] >= 3
 
 

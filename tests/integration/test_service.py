@@ -8,27 +8,35 @@ SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
-from flext_core.typings import t
 
-from dataclasses import dataclass
+from typing import Annotated, override
 
 import pytest
-from pydantic import PrivateAttr
+from pydantic import BaseModel, Field, PrivateAttr
 
-from flext_core import FlextContainer, FlextResult, FlextService, m, r, t
-from tests.test_utils import assertion_helpers
+from flext_core import FlextContainer, FlextService, m, r
 
 from ..conftest import FunctionalExternalService
+from ..test_utils import assertion_helpers
 
 
-@dataclass
-class UserServiceEntity:
+class UserServiceEntity(BaseModel):
     """Test user entity model using dataclass."""
 
-    unique_id: str
-    name: str
-    email: str
-    active: bool = True
+    unique_id: Annotated[str, Field(description="Unique user identifier")]
+    name: Annotated[str, Field(description="User display name")]
+    email: Annotated[str, Field(description="User email address")]
+    active: Annotated[
+        bool, Field(default=True, description="Whether user is active")
+    ] = True
+
+
+def _empty_user_map() -> dict[str, UserServiceEntity]:
+    return {}
+
+
+def _empty_notifications() -> list[str]:
+    return []
 
 
 class UserQueryService(FlextService[bool]):
@@ -45,18 +53,12 @@ class UserQueryService(FlextService[bool]):
     - This pattern separates status from data retrieval
     """
 
-    _users: dict[str, UserServiceEntity] = PrivateAttr(default_factory=dict)
+    _users: dict[str, UserServiceEntity] = PrivateAttr(default_factory=_empty_user_map)
     _should_fail: bool = PrivateAttr(default=False)
     _call_count: int = PrivateAttr(default_factory=lambda: 0)
 
-    def __init__(
-        self,
-        **data: t.GeneralValueType,
-    ) -> None:
-        """Initialize user query service."""
-        super().__init__(**data)
-
-    def execute(self) -> FlextResult[bool]:
+    @override
+    def execute(self) -> r[bool]:
         """Execute user query service.
 
         Business Rule: Returns bool to indicate service availability and readiness.
@@ -64,33 +66,28 @@ class UserQueryService(FlextService[bool]):
         a failure state. This pattern separates status checking from data retrieval.
 
         Returns:
-            FlextResult[bool]: True if service is ready, failure otherwise.
+            r[bool]: True if service is ready, failure otherwise.
 
         """
         if self._should_fail:
             return r[bool].fail("User service unavailable")
-        # Business Rule: Return True to indicate service is ready
         return r[bool].ok(True)
 
-    def get_user(self, user_id: str) -> FlextResult[UserServiceEntity]:
+    def get_user(self, user_id: str) -> r[UserServiceEntity]:
         """Get user by ID.
 
         Args:
             user_id: User identifier.
 
         Returns:
-            FlextResult[UserServiceEntity]: User entity or failure.
+            r[UserServiceEntity]: User entity or failure.
 
         """
-        # For frozen Pydantic models, use setattr to modify PrivateAttr fields
         self._call_count += 1
-
         if self._should_fail:
             return r[UserServiceEntity].fail("User service unavailable")
-
         if user_id in self._users:
             return r[UserServiceEntity].ok(self._users[user_id])
-        # Create default user entity
         default_user = UserServiceEntity(
             unique_id=user_id,
             name=f"User {user_id}",
@@ -116,7 +113,6 @@ class UserQueryService(FlextService[bool]):
             should_fail: Whether service should fail.
 
         """
-        # For frozen Pydantic models, PrivateAttr fields can be modified directly
         self._should_fail = should_fail
 
     @property
@@ -128,34 +124,27 @@ class UserQueryService(FlextService[bool]):
 class NotificationService(FlextService[str]):
     """Real notification service using FlextService."""
 
-    _sent_notifications: list[str] = PrivateAttr(default_factory=list)
+    _sent_notifications: list[str] = PrivateAttr(default_factory=_empty_notifications)
     _call_count: int = PrivateAttr(default_factory=lambda: 0)
     _should_fail: bool = PrivateAttr(default=False)
 
-    def __init__(
-        self,
-        **data: t.GeneralValueType,
-    ) -> None:
-        """Initialize notification service."""
-        super().__init__(**data)
-
-    def execute(self) -> FlextResult[str]:
+    @override
+    def execute(self) -> r[str]:
         """Execute notification service."""
         if self._should_fail:
             return r[str].fail("Notification service unavailable")
         return r[str].ok("sent")
 
-    def send(self, email: str) -> FlextResult[str]:
+    def send(self, email: str) -> r[str]:
         """Send notification.
 
         Args:
             email: Email address to send notification to.
 
         Returns:
-            FlextResult[str]: Success confirmation or failure.
+            r[str]: Success confirmation or failure.
 
         """
-        # For frozen Pydantic models, PrivateAttr fields can be modified directly
         self._call_count += 1
         if self._should_fail:
             return r[str].fail("Notification service unavailable")
@@ -173,7 +162,6 @@ class NotificationService(FlextService[str]):
             should_fail: Whether service should fail.
 
         """
-        # For frozen Pydantic models, PrivateAttr fields can be modified directly
         self._should_fail = should_fail
 
     @property
@@ -187,13 +175,20 @@ class NotificationService(FlextService[str]):
         return self._call_count
 
 
-# Use the actual class, not the type alias
-class ServiceConfig(m.CollectionsConfig):
+class ServiceConfig(m.Config):
     """Service configuration model with required fields."""
 
     name: str
     version: str
     temp_dir: str | None = None
+
+
+def _build_service_config(*, name: str, version: str, temp_dir: str) -> ServiceConfig:
+    return ServiceConfig(
+        name=name,
+        version=version,
+        temp_dir=temp_dir,
+    )
 
 
 class LifecycleService(FlextService[str]):
@@ -205,32 +200,25 @@ class LifecycleService(FlextService[str]):
     _should_fail_init: bool = PrivateAttr(default=False)
     _should_fail_shutdown: bool = PrivateAttr(default=False)
 
-    def __init__(
-        self,
-        **data: t.GeneralValueType,
-    ) -> None:
-        """Initialize lifecycle service."""
-        super().__init__(**data)
-
-    def execute(self) -> FlextResult[str]:
+    @override
+    def execute(self) -> r[str]:
         """Execute lifecycle service."""
         if self._initialized:
             return r[str].ok("initialized")
         return r[str].ok("ready")
 
-    def initialize(self, config: ServiceConfig) -> FlextResult[str]:
+    def initialize(self, config: ServiceConfig) -> r[str]:
         """Initialize service with config model.
 
         Args:
             config: Configuration model.
 
         Returns:
-            FlextResult[str]: Success or failure.
+            r[str]: Success or failure.
 
         """
         if self._should_fail_init:
             return r[str].fail("Initialization failed")
-        # For frozen Pydantic models, PrivateAttr fields can be modified directly
         self._initialized = True
         self._service_config = config
         return r[str].ok("initialized")
@@ -242,18 +230,17 @@ class LifecycleService(FlextService[str]):
             bool: True if healthy, False otherwise.
 
         """
-        return self._initialized and not self._shutdown_called
+        return self._initialized and (not self._shutdown_called)
 
-    def shutdown(self) -> FlextResult[str]:
+    def shutdown(self) -> r[str]:
         """Shutdown service.
 
         Returns:
-            FlextResult[str]: Success or failure.
+            r[str]: Success or failure.
 
         """
         if self._should_fail_shutdown:
             return r[str].fail("Shutdown failed")
-        # For frozen Pydantic models, PrivateAttr fields can be modified directly
         self._shutdown_called = True
         return r[str].ok("shutdown")
 
@@ -274,7 +261,6 @@ class LifecycleService(FlextService[str]):
             fail_shutdown: Whether shutdown should fail.
 
         """
-        # For frozen Pydantic models, PrivateAttr fields can be modified directly
         self._should_fail_init = fail_init
         self._should_fail_shutdown = fail_shutdown
 
@@ -301,46 +287,30 @@ class TestFlextServiceIntegration:
     """Integration tests for FlextService implementations."""
 
     @pytest.mark.integration
-    def test_user_service_execution(
-        self,
-        clean_container: FlextContainer,
-    ) -> None:
+    def test_user_service_execution(self, clean_container: FlextContainer) -> None:
         """Test user service execution with FlextService.
 
         Args:
             clean_container: Isolated container fixture.
 
         """
-        # Arrange
         user_service = UserQueryService()
-
-        # Act
         result = user_service.execute()
-
-        # Assert
-        assertion_helpers.assert_flext_result_success(result)
-        assert result.value is True  # execute() returns True on success
+        _ = assertion_helpers.assert_flext_result_success(result)
+        assert result.value is True
 
     @pytest.mark.integration
-    def test_user_service_get_user(
-        self,
-        clean_container: FlextContainer,
-    ) -> None:
+    def test_user_service_get_user(self, clean_container: FlextContainer) -> None:
         """Test user service get_user method.
 
         Args:
             clean_container: Isolated container fixture.
 
         """
-        # Arrange
         user_service = UserQueryService()
         user_id = "test_user_123"
-
-        # Act
         result = user_service.get_user(user_id)
-
-        # Assert
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value is not None
         assert result.value.unique_id == user_id
         assert result.value.name == f"User {user_id}"
@@ -358,7 +328,6 @@ class TestFlextServiceIntegration:
             clean_container: Isolated container fixture.
 
         """
-        # Arrange
         user_service = UserQueryService()
         user_id = "custom_user"
         custom_user = UserServiceEntity(
@@ -368,37 +337,25 @@ class TestFlextServiceIntegration:
             active=True,
         )
         user_service.set_user_data(user_id, custom_user)
-
-        # Act
         result = user_service.get_user(user_id)
-
-        # Assert
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value is not None
         assert result.value.unique_id == user_id
         assert result.value.name == "Custom User"
         assert result.value.email == "custom@example.com"
 
     @pytest.mark.integration
-    def test_user_service_failure_mode(
-        self,
-        clean_container: FlextContainer,
-    ) -> None:
+    def test_user_service_failure_mode(self, clean_container: FlextContainer) -> None:
         """Test user service failure mode.
 
         Args:
             clean_container: Isolated container fixture.
 
         """
-        # Arrange
         user_service = UserQueryService()
         user_service.set_failure_mode(should_fail=True)
-
-        # Act
         result = user_service.execute()
-
-        # Assert
-        assertion_helpers.assert_flext_result_failure(result)
+        _ = assertion_helpers.assert_flext_result_failure(result)
         assert result.error == "User service unavailable"
 
     @pytest.mark.integration
@@ -412,36 +369,23 @@ class TestFlextServiceIntegration:
             clean_container: Isolated container fixture.
 
         """
-        # Arrange
         notification_service = NotificationService()
-
-        # Act
         result = notification_service.execute()
-
-        # Assert
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value == "sent"
 
     @pytest.mark.integration
-    def test_notification_service_send(
-        self,
-        clean_container: FlextContainer,
-    ) -> None:
+    def test_notification_service_send(self, clean_container: FlextContainer) -> None:
         """Test notification service send method.
 
         Args:
             clean_container: Isolated container fixture.
 
         """
-        # Arrange
         notification_service = NotificationService()
         email = "test@example.com"
-
-        # Act
         result = notification_service.send(email)
-
-        # Assert
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value == "sent"
         assert email in notification_service.sent_notifications
         assert notification_service.call_count == 1
@@ -457,36 +401,23 @@ class TestFlextServiceIntegration:
             clean_container: Isolated container fixture.
 
         """
-        # Arrange
         notification_service = NotificationService()
         notification_service.set_failure_mode(should_fail=True)
-
-        # Act
         result = notification_service.send("test@example.com")
-
-        # Assert
-        assertion_helpers.assert_flext_result_failure(result)
+        _ = assertion_helpers.assert_flext_result_failure(result)
         assert result.error == "Notification service unavailable"
 
     @pytest.mark.integration
-    def test_lifecycle_service_execution(
-        self,
-        clean_container: FlextContainer,
-    ) -> None:
+    def test_lifecycle_service_execution(self, clean_container: FlextContainer) -> None:
         """Test lifecycle service execution.
 
         Args:
             clean_container: Isolated container fixture.
 
         """
-        # Arrange
         lifecycle_service = LifecycleService()
-
-        # Act
         result = lifecycle_service.execute()
-
-        # Assert
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value == "ready"
         assert lifecycle_service.initialized is False
 
@@ -503,19 +434,14 @@ class TestFlextServiceIntegration:
             temp_directory: Temporary directory fixture.
 
         """
-        # Arrange
         lifecycle_service = LifecycleService()
-        service_config = ServiceConfig(
+        service_config = _build_service_config(
             name="test_service",
             version="1.0.0",
             temp_dir=str(temp_directory),
         )
-
-        # Act
         result = lifecycle_service.initialize(service_config)
-
-        # Assert
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value == "initialized"
         assert lifecycle_service.initialized is True
         assert lifecycle_service.service_config is not None
@@ -534,24 +460,15 @@ class TestFlextServiceIntegration:
             temp_directory: Temporary directory fixture.
 
         """
-        # Arrange
         lifecycle_service = LifecycleService()
-        service_config = ServiceConfig(
+        service_config = _build_service_config(
             name="test_service",
             version="1.0.0",
             temp_dir=str(temp_directory),
         )
-
-        # Act - Before initialization
         health_before = lifecycle_service.health_check()
-
-        # Initialize
         _ = lifecycle_service.initialize(service_config)
-
-        # Act - After initialization
         health_after = lifecycle_service.health_check()
-
-        # Assert
         assert health_before is False
         assert health_after is True
 
@@ -568,20 +485,15 @@ class TestFlextServiceIntegration:
             temp_directory: Temporary directory fixture.
 
         """
-        # Arrange
         lifecycle_service = LifecycleService()
-        service_config = ServiceConfig(
+        service_config = _build_service_config(
             name="test_service",
             version="1.0.0",
             temp_dir=str(temp_directory),
         )
         _ = lifecycle_service.initialize(service_config)
-
-        # Act
         result = lifecycle_service.shutdown()
-
-        # Assert
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value == "shutdown"
         assert lifecycle_service.shutdown_called is True
         assert lifecycle_service.health_check() is False
@@ -599,21 +511,16 @@ class TestFlextServiceIntegration:
             temp_directory: Temporary directory fixture.
 
         """
-        # Arrange
         lifecycle_service = LifecycleService()
-        service_config = ServiceConfig(
+        service_config = _build_service_config(
             name="test_service",
             version="1.0.0",
             temp_dir=str(temp_directory),
         )
-
-        # Test initialization failure
         lifecycle_service.set_failure_mode(fail_init=True)
         init_result = lifecycle_service.initialize(service_config)
         assert init_result.is_success is False
         assert init_result.error == "Initialization failed"
-
-        # Test shutdown failure
         lifecycle_service.set_failure_mode(fail_init=False, fail_shutdown=True)
         _ = lifecycle_service.initialize(service_config)
         shutdown_result = lifecycle_service.shutdown()
@@ -634,11 +541,8 @@ class TestFlextServiceIntegration:
             clean_container: Isolated container fixture.
 
         """
-        # Arrange - Create real services using FlextService
         user_service = UserQueryService()
         notification_service = NotificationService()
-
-        # Configure service behavior with real test data
         user_id = "test_user_123"
         user_entity = UserServiceEntity(
             unique_id=user_id,
@@ -647,38 +551,27 @@ class TestFlextServiceIntegration:
             active=True,
         )
         user_service.set_user_data(user_id, user_entity)
-
-        # Register services in container
-        _ = clean_container.with_service("user_service", user_service)
-        _ = clean_container.with_service("notification_service", notification_service)
-
-        # Act - Retrieve and use services
-        user_service_result = clean_container.get_typed(
+        _ = clean_container.register("user_service", user_service)
+        _ = clean_container.register("notification_service", notification_service)
+        user_service_result = clean_container.get(
             "user_service",
-            UserQueryService,
+            type_cls=UserQueryService,
         )
-        notification_service_result = clean_container.get_typed(
+        notification_service_result = clean_container.get(
             "notification_service",
-            NotificationService,
+            type_cls=NotificationService,
         )
-
         assert user_service_result.is_success
         assert notification_service_result.is_success
         retrieved_user_service = user_service_result.value
         retrieved_notification_service = notification_service_result.value
         assert isinstance(retrieved_user_service, UserQueryService)
         assert isinstance(retrieved_notification_service, NotificationService)
-
-        # Get user entity first
         user_result = retrieved_user_service.get_user(user_id)
         assert user_result.is_success is True
-
-        # Send notification using entity email
         user_entity = user_result.value
         assert user_entity is not None
         notification_result = retrieved_notification_service.send(user_entity.email)
-
-        # Assert
         assert notification_result.is_success is True
         assert user_entity.email in retrieved_notification_service.sent_notifications
 
@@ -695,23 +588,14 @@ class TestFlextServiceIntegration:
             mock_external_service: External service fixture.
 
         """
-        # Arrange
         user_service = UserQueryService()
         user_id = "test_user"
-
-        # Act - Process user data through external service
         user_result = user_service.get_user(user_id)
         assert user_result.is_success is True
-
         user_entity = user_result.value
         assert user_entity is not None
-
-        # Process through external service
         external_result = mock_external_service.process(user_entity.email)
-
-        # Assert
         assert external_result.is_success is True
-        # Mock service prefixes with "processed_"
         expected_processed = f"processed_{user_entity.email}"
         assert expected_processed in mock_external_service.processed_items
         assert mock_external_service.get_call_count() == 1

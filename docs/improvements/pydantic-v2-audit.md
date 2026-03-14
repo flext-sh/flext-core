@@ -1,7 +1,6 @@
 # Pydantic v2 Patterns Guide - Audit Report
 
 <!-- TOC START -->
-
 - [Audit Summary](#audit-summary)
   - [✅ Guide Accuracy: 10/10](#guide-accuracy-1010)
   - [✅ Verified Against Source Code](#verified-against-source-code)
@@ -20,7 +19,7 @@
 - [Quantitative Metrics](#quantitative-metrics)
   - [Pydantic v2 Pattern Adoption](#pydantic-v2-pattern-adoption)
   - [Pydantic v1 Legacy Code](#pydantic-v1-legacy-code)
-- [Integration with FlextResult Pattern ✅](#integration-with-flextresult-pattern)
+- [Integration with r Pattern ✅](#integration-with-flextresult-pattern)
 - [Cross-Reference Verification](#cross-reference-verification)
   - [Internal Links ✅](#internal-links)
   - [External References ✅](#external-references)
@@ -33,7 +32,6 @@
 - [Accuracy Assessment](#accuracy-assessment)
 - [Completeness Assessment](#completeness-assessment)
 - [Conclusion](#conclusion)
-
 <!-- TOC END -->
 
 **Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency
@@ -267,6 +265,7 @@ $ grep -n "Annotated\[" src/flext_core/typings.py | head -5
 ```python
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+
 class FlextSettings(BaseSettings):
     """Configuration management with Pydantic validation."""
 
@@ -339,6 +338,7 @@ class Command(ArbitraryTypesModel, IdentifiableMixin, TimestampableMixin):
         frozen=True,
         description="Message type discriminator - always 'command'",
     )
+
 
 # Query class with different Literal
 class Query(BaseModel):
@@ -431,9 +431,9 @@ ______________________________________________________________________
 
 ______________________________________________________________________
 
-## Integration with FlextResult Pattern ✅
+## Integration with r Pattern ✅
 
-**Guide Claims**: Always wrap Pydantic validation in FlextResult
+**Guide Claims**: Always wrap Pydantic validation in r
 
 **Source Code Evidence**:
 The guide correctly shows the integration pattern. While direct examples aren't pervasive (Pydantic validation errors are typically handled at boundaries), the pattern is recommended and correct.
@@ -454,7 +454,7 @@ Checked all referenced guides:
 
 - ✅ Railway-Oriented Programming - EXISTS
 - ✅ Anti-Patterns and Best Practices - EXISTS
-- ✅ FLEXT CLAUDE.md - EXISTS
+- ✅ FLEXT AGENTS.md - EXISTS
 
 ### External References ✅
 
@@ -502,9 +502,11 @@ ______________________________________________________________________
    "See `src/flext_core/config.py` (674 lines)"
    ```
 
+```
+
 ### Medium Priority
 
-2. **Add Source Line References** (like other audited guides)
+1. **Add Source Line References** (like other audited guides)
 
    - Pattern 2: ConfigDict - config.py:178-200
    - Pattern 3: field_validator - config.py:427, 439, models.py:975+
@@ -520,7 +522,7 @@ ______________________________________________________________________
 
 ### Low Priority
 
-4. **Add Performance Notes**
+1. **Add Performance Notes**
 
    - Pydantic v2 is 5-50x faster than v1
    - Rust-based validation core
@@ -528,7 +530,7 @@ ______________________________________________________________________
 
 1. **Add Validation Error Handling**
 
-   - Expand FlextResult integration examples
+   - Expand r integration examples
    - Show error serialization patterns
    - Document validation error codes
 
@@ -562,7 +564,7 @@ ______________________________________________________________________
 - ✅ Custom types with validation
 - ✅ Discriminated unions
 - ✅ JSON schema generation
-- ✅ FlextResult integration
+- ✅ r integration
 
 **Could Add** (Enhancement Ideas):
 
@@ -600,3 +602,4 @@ The Pydantic v2 Patterns guide is **EXCELLENT** and represents **gold standard**
 ______________________________________________________________________
 
 **Next**: Complete Phase 1.6 - API Reference audits
+```

@@ -13,10 +13,10 @@ from __future__ import annotations
 
 import secrets
 import time
+from collections.abc import Mapping
 
-from flext_core.constants import c
-from flext_core.result import r
-from flext_core.typings import t
+from flext_core import c, r, t
+from flext_core._models.containers import FlextModelsContainers
 
 
 class CircuitBreakerManager:
@@ -28,10 +28,7 @@ class CircuitBreakerManager:
     """
 
     def __init__(
-        self,
-        threshold: int,
-        recovery_timeout: float,
-        success_threshold: int,
+        self, threshold: int, recovery_timeout: float, success_threshold: int
     ) -> None:
         """Initialize circuit breaker manager.
 
@@ -53,108 +50,11 @@ class CircuitBreakerManager:
         self._recovery_failures: dict[str, int] = {}
         self._total_successes: dict[str, int] = {}
 
-    def get_state(self, message_type: str) -> str:
-        """Get current state for message type.
-
-        Returns:
-            Current circuit breaker state for the message type.
-
-        """
-        return self._states.get(
-            message_type,
-            c.Reliability.CircuitBreakerState.CLOSED,
-        )
-
-    def set_state(self, message_type: str, state: str) -> None:
-        """Set state for message type."""
-        self._states[message_type] = state
-
-    def is_open(self, message_type: str) -> bool:
-        """Check if circuit breaker is open for message type.
-
-        Returns:
-            True if circuit breaker is open, False otherwise.
-
-        """
-        return self.get_state(message_type) == c.Reliability.CircuitBreakerState.OPEN
-
-    def record_success(self, message_type: str) -> None:
-        """Record successful operation and update state."""
-        current_state = self.get_state(message_type)
-        self._total_successes[message_type] = (
-            self._total_successes.get(message_type, 0) + 1
-        )
-
-        if current_state == c.Reliability.CircuitBreakerState.HALF_OPEN:
-            success_count = self._success_counts.get(message_type, 0) + 1
-            self._success_counts[message_type] = success_count
-
-            if success_count >= self._success_threshold:
-                self._recovery_successes[message_type] = (
-                    self._recovery_successes.get(message_type, 0) + 1
-                )
-                self.transition_to_closed(message_type)
-
-        elif current_state == c.Reliability.CircuitBreakerState.CLOSED:
-            self._failures[message_type] = 0
-
-    def record_failure(self, message_type: str) -> None:
-        """Record failed operation and update state."""
-        current_state = self.get_state(message_type)
-        current_failures = self._failures.get(message_type, 0) + 1
-        self._failures[message_type] = current_failures
-
-        if current_state == c.Reliability.CircuitBreakerState.HALF_OPEN:
-            self._recovery_failures[message_type] = (
-                self._recovery_failures.get(message_type, 0) + 1
-            )
-            self.transition_to_open(message_type)
-        elif (
-            current_state == c.Reliability.CircuitBreakerState.CLOSED
-            and current_failures >= self._threshold
-        ):
-            self.transition_to_open(message_type)
-
-    def transition_to_state(self, message_type: str, new_state: str) -> None:
-        """Transition to specified state."""
-        self.set_state(message_type, new_state)
-        if new_state == c.Reliability.CircuitBreakerState.CLOSED:
-            self._failures[message_type] = 0
-            self._success_counts[message_type] = 0
-            if message_type in self._opened_at:
-                del self._opened_at[message_type]
-        elif new_state == c.Reliability.CircuitBreakerState.OPEN:
-            self._opened_at[message_type] = time.time()
-            self._success_counts[message_type] = 0
-        elif new_state == c.Reliability.CircuitBreakerState.HALF_OPEN:
-            self._success_counts[message_type] = 0
-
-    def transition_to_closed(self, message_type: str) -> None:
-        """Transition to CLOSED state."""
-        self.transition_to_state(
-            message_type,
-            c.Reliability.CircuitBreakerState.CLOSED,
-        )
-
-    def transition_to_open(self, message_type: str) -> None:
-        """Transition to OPEN state."""
-        self.transition_to_state(
-            message_type,
-            c.Reliability.CircuitBreakerState.OPEN,
-        )
-
-    def transition_to_half_open(self, message_type: str) -> None:
-        """Transition to HALF_OPEN state."""
-        self.transition_to_state(
-            message_type,
-            c.Reliability.CircuitBreakerState.HALF_OPEN,
-        )
-
     def attempt_reset(self, message_type: str) -> None:
         """Attempt recovery if circuit is open."""
         if self.is_open(message_type):
             opened_at = self._opened_at.get(message_type, 0.0)
-            if (time.time() - opened_at) >= self._recovery_timeout:
+            if time.time() - opened_at >= self._recovery_timeout:
                 self.transition_to_half_open(message_type)
 
     def check_before_dispatch(self, message_type: str) -> r[bool]:
@@ -171,7 +71,7 @@ class CircuitBreakerManager:
             return r[bool].fail(
                 f"Circuit breaker is open for message type '{message_type}'",
                 error_code=c.Errors.OPERATION_ERROR,
-                error_data=t.ConfigMap(
+                error_data=FlextModelsContainers.ConfigMap(
                     root={
                         "message_type": message_type,
                         "state": self.get_state(message_type),
@@ -180,24 +80,6 @@ class CircuitBreakerManager:
                 ),
             )
         return r[bool].ok(value=True)
-
-    def get_failure_count(self, message_type: str) -> int:
-        """Get current failure count.
-
-        Returns:
-            Current failure count for the message type.
-
-        """
-        return self._failures.get(message_type, 0)
-
-    def get_threshold(self) -> int:
-        """Get circuit breaker threshold.
-
-        Returns:
-            Circuit breaker failure threshold.
-
-        """
-        return self._threshold
 
     def cleanup(self) -> None:
         """Clear all state."""
@@ -209,7 +91,16 @@ class CircuitBreakerManager:
         self._recovery_failures.clear()
         self._total_successes.clear()
 
-    def get_metrics(self) -> dict[str, t.GeneralValueType]:
+    def get_failure_count(self, message_type: str) -> int:
+        """Get current failure count.
+
+        Returns:
+            Current failure count for the message type.
+
+        """
+        return self._failures.get(message_type, 0)
+
+    def get_metrics(self) -> Mapping[str, t.Scalar]:
         """Collect circuit breaker metrics, including recovery statistics.
 
         Returns:
@@ -224,24 +115,18 @@ class CircuitBreakerManager:
             self._recovery_successes.get(mt, 0) for mt in self._states
         )
         recovery_success_rate = (
-            (
-                total_recovery_successes
-                / total_recovery_attempts
-                * c.PERCENTAGE_MULTIPLIER
-            )
+            total_recovery_successes / total_recovery_attempts * c.PERCENTAGE_MULTIPLIER
             if total_recovery_attempts > 0
             else 0.0
         )
-
         total_failures = sum(self._failures.values())
         total_successes = sum(self._total_successes.values())
         total_operations = total_failures + total_successes
         failure_rate = (
-            (total_failures / total_operations * c.PERCENTAGE_MULTIPLIER)
+            total_failures / total_operations * c.PERCENTAGE_MULTIPLIER
             if total_operations > 0
             else 0.0
         )
-
         return {
             "failures": len(self._failures),
             "states": len(self._states),
@@ -257,15 +142,99 @@ class CircuitBreakerManager:
             "total_operations": total_operations,
         }
 
+    def get_state(self, message_type: str) -> str:
+        """Get current state for message type.
+
+        Returns:
+            Current circuit breaker state for the message type.
+
+        """
+        return self._states.get(message_type, c.Reliability.CircuitBreakerState.CLOSED)
+
+    def get_threshold(self) -> int:
+        """Get circuit breaker threshold."""
+        return self._threshold
+
+    def is_open(self, message_type: str) -> bool:
+        """Check if circuit breaker is open for message type.
+
+        Returns:
+            True if circuit breaker is open, False otherwise.
+
+        """
+        return self.get_state(message_type) == c.Reliability.CircuitBreakerState.OPEN
+
+    def record_failure(self, message_type: str) -> None:
+        """Record failed operation and update state."""
+        current_state = self.get_state(message_type)
+        current_failures = self._failures.get(message_type, 0) + 1
+        self._failures[message_type] = current_failures
+        if current_state == c.Reliability.CircuitBreakerState.HALF_OPEN:
+            self._recovery_failures[message_type] = (
+                self._recovery_failures.get(message_type, 0) + 1
+            )
+            self.transition_to_open(message_type)
+        elif (
+            current_state == c.Reliability.CircuitBreakerState.CLOSED
+            and current_failures >= self._threshold
+        ):
+            self.transition_to_open(message_type)
+
+    def record_success(self, message_type: str) -> None:
+        """Record successful operation and update state."""
+        current_state = self.get_state(message_type)
+        self._total_successes[message_type] = (
+            self._total_successes.get(message_type, 0) + 1
+        )
+        if current_state == c.Reliability.CircuitBreakerState.HALF_OPEN:
+            success_count = self._success_counts.get(message_type, 0) + 1
+            self._success_counts[message_type] = success_count
+            if success_count >= self._success_threshold:
+                self._recovery_successes[message_type] = (
+                    self._recovery_successes.get(message_type, 0) + 1
+                )
+                self.transition_to_closed(message_type)
+        elif current_state == c.Reliability.CircuitBreakerState.CLOSED:
+            self._failures[message_type] = 0
+
+    def set_state(self, message_type: str, state: str) -> None:
+        """Set state for message type."""
+        self._states[message_type] = state
+
+    def transition_to_closed(self, message_type: str) -> None:
+        """Transition to CLOSED state."""
+        self.transition_to_state(message_type, c.Reliability.CircuitBreakerState.CLOSED)
+
+    def transition_to_half_open(self, message_type: str) -> None:
+        """Transition to HALF_OPEN state."""
+        self.transition_to_state(
+            message_type, c.Reliability.CircuitBreakerState.HALF_OPEN
+        )
+
+    def transition_to_open(self, message_type: str) -> None:
+        """Transition to OPEN state."""
+        self.transition_to_state(message_type, c.Reliability.CircuitBreakerState.OPEN)
+
+    def transition_to_state(self, message_type: str, new_state: str) -> None:
+        """Transition to specified state."""
+        self.set_state(message_type, new_state)
+        if new_state == c.Reliability.CircuitBreakerState.CLOSED:
+            self._failures[message_type] = 0
+            self._success_counts[message_type] = 0
+            if message_type in self._opened_at:
+                del self._opened_at[message_type]
+        elif new_state == c.Reliability.CircuitBreakerState.OPEN:
+            self._opened_at[message_type] = time.time()
+            self._success_counts[message_type] = 0
+        elif new_state == c.Reliability.CircuitBreakerState.HALF_OPEN:
+            self._success_counts[message_type] = 0
+
 
 class RateLimiterManager:
     """Enforce per-message rate limits with a sliding window algorithm."""
 
     def __init__(
-        self,
-        max_requests: int,
-        window_seconds: float,
-        jitter_factor: float = 0.1,
+        self, max_requests: int, window_seconds: float, jitter_factor: float = 0.1
     ) -> None:
         """Initialize rate limiter manager.
 
@@ -281,21 +250,6 @@ class RateLimiterManager:
         self._jitter_factor = max(0.0, min(jitter_factor, 1.0))
         self._windows: dict[str, tuple[float, int]] = {}
 
-    def _apply_jitter(self, base_delay: float) -> float:
-        """Apply jitter variance to a delay value.
-
-        Returns:
-            Jittered delay value.
-
-        """
-        if base_delay <= 0.0 or self._jitter_factor <= 0.0:
-            return base_delay
-
-        secure_random = secrets.SystemRandom()
-        variance = (2.0 * secure_random.random() - 1.0) * self._jitter_factor
-        jittered = base_delay * (1.0 + variance)
-        return max(0.0, jittered)
-
     def check_rate_limit(self, message_type: str) -> r[bool]:
         """Return whether dispatch is allowed under the current rate window.
 
@@ -305,18 +259,16 @@ class RateLimiterManager:
         """
         current_time = time.time()
         window_start, count = self._windows.get(message_type, (current_time, 0))
-
         if current_time - window_start >= self._window_seconds:
             window_start = current_time
             count = 0
-
         if count >= self._max_requests:
             elapsed = current_time - window_start
             retry_after = max(0, int(self._window_seconds - elapsed))
             return r[bool].fail(
                 f"Rate limit exceeded for message type '{message_type}'",
                 error_code=c.Errors.OPERATION_ERROR,
-                error_data=t.ConfigMap(
+                error_data=FlextModelsContainers.ConfigMap(
                     root={
                         "message_type": message_type,
                         "limit": self._max_requests,
@@ -326,31 +278,34 @@ class RateLimiterManager:
                     }
                 ),
             )
-
         self._windows[message_type] = (window_start, count + 1)
         return r[bool].ok(value=True)
-
-    def get_max_requests(self) -> int:
-        """Get maximum requests per window.
-
-        Returns:
-            Maximum requests allowed per window.
-
-        """
-        return self._max_requests
-
-    def get_window_seconds(self) -> float:
-        """Get rate limit window duration in seconds.
-
-        Returns:
-            Rate limit window duration in seconds.
-
-        """
-        return self._window_seconds
 
     def cleanup(self) -> None:
         """Clear all rate limit windows."""
         self._windows.clear()
+
+    def get_max_requests(self) -> int:
+        """Get maximum requests per window."""
+        return self._max_requests
+
+    def get_window_seconds(self) -> float:
+        """Get rate limit window duration in seconds."""
+        return self._window_seconds
+
+    def _apply_jitter(self, base_delay: float) -> float:
+        """Apply jitter variance to a delay value.
+
+        Returns:
+            Jittered delay value.
+
+        """
+        if base_delay <= 0.0 or self._jitter_factor <= 0.0:
+            return base_delay
+        secure_random = secrets.SystemRandom()
+        variance = (2.0 * secure_random.random() - 1.0) * self._jitter_factor
+        jittered = base_delay * (1.0 + variance)
+        return max(0.0, jittered)
 
 
 class RetryPolicy:
@@ -371,26 +326,11 @@ class RetryPolicy:
         self._exponential_factor = 2.0
         self._max_delay = c.Reliability.DEFAULT_MAX_DELAY_SECONDS
 
-    def should_retry(self, current_attempt: int) -> bool:
-        """Check if we should retry the operation.
-
-        Returns:
-            True if operation should be retried, False otherwise.
-
-        """
-        return current_attempt < self._max_attempts - 1
-
     @staticmethod
     def is_retriable_error(error: str | None) -> bool:
-        """Check if an error is retriable.
-
-        Returns:
-            True if error is retriable, False otherwise.
-
-        """
+        """Check if an error is retriable."""
         if error is None:
             return False
-
         retriable_patterns = (
             "Temporary failure",
             "timeout",
@@ -400,38 +340,24 @@ class RetryPolicy:
         )
         return any(pattern.lower() in error.lower() for pattern in retriable_patterns)
 
+    def cleanup(self) -> None:
+        """Clear all attempt tracking."""
+        self._attempts.clear()
+
     def get_exponential_delay(self, attempt_number: int) -> float:
-        """Calculate exponential backoff delay for given attempt.
-
-        Returns:
-            Exponential backoff delay in seconds.
-
-        """
+        """Calculate exponential backoff delay for given attempt."""
         if self._base_delay <= 0.0:
             return 0.0
-
-        exponential_delay = self._base_delay * (
-            self._exponential_factor**attempt_number
-        )
+        exponential_delay = self._base_delay * self._exponential_factor**attempt_number
         return min(exponential_delay, self._max_delay)
 
-    def get_retry_delay(self) -> float:
-        """Get base delay between retry attempts.
-
-        Returns:
-            Base delay in seconds between retry attempts.
-
-        """
-        return self._base_delay
-
     def get_max_attempts(self) -> int:
-        """Get maximum retry attempts.
-
-        Returns:
-            Maximum number of retry attempts allowed.
-
-        """
+        """Get maximum retry attempts."""
         return self._max_attempts
+
+    def get_retry_delay(self) -> float:
+        """Get base delay between retry attempts."""
+        return self._base_delay
 
     def record_attempt(self, message_type: str) -> None:
         """Record an attempt for tracking purposes."""
@@ -441,9 +367,9 @@ class RetryPolicy:
         """Reset attempt tracking for a message type."""
         _ = self._attempts.pop(message_type, None)
 
-    def cleanup(self) -> None:
-        """Clear all attempt tracking."""
-        self._attempts.clear()
+    def should_retry(self, current_attempt: int) -> bool:
+        """Check if we should retry the operation."""
+        return current_attempt < self._max_attempts - 1
 
 
 __all__ = ["CircuitBreakerManager", "RateLimiterManager", "RetryPolicy"]

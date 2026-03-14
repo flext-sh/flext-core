@@ -1,0 +1,274 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Class Policy v2 Schema",
+  "description": "Schema for validating class refactoring policy v2 declarations",
+  "type": "object",
+  "required": ["version", "engine", "policy_matrix"],
+  "properties": {
+    "version": {
+      "type": "integer",
+      "description": "Policy version number",
+      "enum": [2]
+    },
+    "engine": {
+      "type": "string",
+      "description": "Policy engine identifier",
+      "enum": ["class_refactor_policy"]
+    },
+    "description": {
+      "type": "string",
+      "description": "Human-readable policy description"
+    },
+    "policy_matrix": {
+      "type": "array",
+      "description": "List of policy definitions per module family",
+      "items": {
+        "$ref": "#/definitions/policyEntry"
+      }
+    },
+    "runtime_whitelist": {
+      "type": "array",
+      "description": "Explicitly allowed transforms for _runtime family",
+      "items": {
+        "$ref": "#/definitions/whitelistEntry"
+      }
+    },
+    "rules": {
+      "type": "array",
+      "description": "Concrete class refactor rules validated by classRule",
+      "items": {
+        "$ref": "#/definitions/classRule"
+      }
+    },
+    "defaults": {
+      "type": "object",
+      "description": "Default enforcement behavior",
+      "properties": {
+        "enforcement": {
+          "type": "object",
+          "properties": {
+            "unknown_family": {
+              "type": "string",
+              "enum": ["blocked", "allowed", "warn"],
+              "default": "blocked"
+            },
+            "unknown_operation": {
+              "type": "string",
+              "enum": ["blocked", "allowed", "warn"],
+              "default": "blocked"
+            },
+            "runtime_default": {
+              "type": "string",
+              "enum": ["blocked", "allowed", "warn"],
+              "default": "blocked"
+            }
+          }
+        }
+      }
+    }
+  },
+  "additionalProperties": false,
+  "definitions": {
+    "policyEntry": {
+      "type": "object",
+      "required": [
+        "family_name",
+        "module_patterns",
+        "facade_family",
+        "allowed_operations",
+        "forbidden_operations",
+        "forbidden_targets",
+        "validation_requirements"
+      ],
+      "properties": {
+        "family_name": {
+          "type": "string",
+          "description": "Module family identifier",
+          "enum": ["_models", "_utilities", "_dispatcher", "_decorators", "_runtime", "other_private"]
+        },
+        "module_patterns": {
+          "type": "array",
+          "description": "Glob patterns matching module paths",
+          "items": {
+            "type": "string"
+          }
+        },
+        "facade_family": {
+          "type": "string",
+          "description": "Facade family alias",
+          "enum": ["c", "t", "p", "m", "u", "d", "dispatcher", "x"]
+        },
+        "allowed_operations": {
+          "type": "array",
+          "description": "Operations permitted for this family",
+          "items": {
+            "type": "string"
+          }
+        },
+        "forbidden_operations": {
+          "type": "array",
+          "description": "Operations explicitly prohibited",
+          "items": {
+            "type": "string"
+          }
+        },
+        "forbidden_targets": {
+          "type": "array",
+          "description": "Target namespaces that cannot be used",
+          "items": {
+            "type": "string"
+          }
+        },
+        "validation_requirements": {
+          "type": "object",
+          "required": ["pre_checks", "post_checks", "quality_gates"],
+          "properties": {
+            "pre_checks": {
+              "type": "array",
+              "description": "Validation checks before transformation",
+              "items": {
+                "type": "string"
+              }
+            },
+            "post_checks": {
+              "type": "array",
+              "description": "Validation checks after transformation",
+              "items": {
+                "type": "string"
+              }
+            },
+            "quality_gates": {
+              "type": "array",
+              "description": "Quality criteria that must pass",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "whitelistEntry": {
+      "type": "object",
+      "required": ["transform_id", "source_module_pattern", "source_symbol", "target_namespace", "target_name", "rewrite_scope"],
+      "properties": {
+        "transform_id": {
+          "type": "string",
+          "description": "Unique identifier for the whitelisted transform"
+        },
+        "source_module_pattern": {
+          "type": "string",
+          "description": "Pattern matching source module path"
+        },
+        "source_symbol": {
+          "type": "string",
+          "description": "Source symbol name to transform"
+        },
+        "target_namespace": {
+          "type": "string",
+          "description": "Target namespace class"
+        },
+        "target_name": {
+          "type": "string",
+          "description": "Name after transformation"
+        },
+        "rewrite_scope": {
+          "type": "string",
+          "description": "Scope of reference propagation",
+          "enum": ["file", "project", "workspace"]
+        }
+      },
+      "additionalProperties": false
+    },
+    "classRule": {
+      "type": "object",
+      "required": ["project_kind", "facade_family", "module_family", "source_symbol", "target_facade_class", "confidence"],
+      "properties": {
+        "project_kind": {
+          "type": "string",
+          "description": "Type of project",
+          "enum": ["core", "domain", "platform", "integration", "app"]
+        },
+        "facade_family": {
+          "type": "string",
+          "description": "Target facade family",
+          "enum": ["c", "t", "p", "m", "u"]
+        },
+        "module_family": {
+          "type": "string",
+          "description": "Source module family",
+          "enum": ["_models", "_utilities", "_dispatcher", "_decorators", "_runtime", "other_private"]
+        },
+        "source_symbol": {
+          "type": "string",
+          "description": "Original symbol name"
+        },
+        "target_facade_class": {
+          "type": "string",
+          "description": "Target facade class name"
+        },
+        "target_namespace_path": {
+          "type": "string",
+          "description": "Full path to target namespace"
+        },
+        "expected_base_chain": {
+          "type": "array",
+          "description": "Expected inheritance chain",
+          "items": {
+            "type": "string"
+          }
+        },
+        "forbidden_targets": {
+          "type": "array",
+          "description": "Targets that cannot be used",
+          "items": {
+            "type": "string"
+          }
+        },
+        "confidence": {
+          "type": "number",
+          "description": "Confidence level (0.0-1.0)",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "pre_checks": {
+          "type": "array",
+          "description": "Pre-transformation checks",
+          "items": {
+            "$ref": "#/definitions/checkEntry"
+          }
+        },
+        "post_checks": {
+          "type": "array",
+          "description": "Post-transformation checks",
+          "items": {
+            "$ref": "#/definitions/checkEntry"
+          }
+        },
+        "rewrite_scope": {
+          "type": "string",
+          "description": "Scope of reference rewriting",
+          "enum": ["file", "project", "workspace"],
+          "default": "file"
+        }
+      },
+      "additionalProperties": false
+    },
+    "checkEntry": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "Check type identifier"
+        },
+        "params": {
+          "type": "object",
+          "description": "Check-specific parameters"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

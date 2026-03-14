@@ -7,7 +7,6 @@
 > Project profile: `flext-core`
 
 <!-- TOC START -->
-
 - [Overview](#overview)
 - [Configuration Sources](#configuration-sources)
 - [Basic Configuration](#basic-configuration)
@@ -34,7 +33,6 @@
 - [Examples](#examples)
   - [Complete Configuration Example](#complete-configuration-example)
 - [Reference](#reference)
-
 <!-- TOC END -->
 
 This guide covers how to configure FLEXT for your specific environment and requirements.
@@ -121,7 +119,7 @@ from flext_core import FlextModels
 from flext_core import FlextProcessors
 from flext_core import p
 from flext_core import FlextRegistry
-from flext_core import FlextResult
+from flext_core import r
 from flext_core import FlextRuntime
 from flext_core import FlextService
 from flext_core import t
@@ -129,18 +127,14 @@ from flext_core import u
 from flext_ldif import FlextLdifSettings
 
 # Core configuration
-config = FlextSettings(
-    log_level="INFO",
-    debug=False,
-    environment="production"
-)
+config = FlextSettings(log_level="INFO", debug=False, environment="production")
 
 # LDIF configuration
 ldif_config = FlextLdifSettings(
     default_encoding="utf-8",
     strict_validation=True,
     servers_enabled=True,
-    batch_size=1000
+    batch_size=1000,
 )
 ```
 
@@ -155,16 +149,14 @@ config = FlextLdifSettings(
     # Server-specific settings
     source_server="oid",
     target_server="oud",
-
     # Migration options
     preserve_oid_modifiers=True,
     handle_schema_extensions=True,
     validate_entries=True,
-
     # Performance settings
     batch_size=1000,
     parallel_processing=True,
-    max_workers=4
+    max_workers=4,
 )
 ```
 
@@ -178,9 +170,7 @@ config = FlextApiSettings(
     timeout=30,
     retry_attempts=3,
     verify_ssl=True,
-    headers={
-        "User-Agent": "FLEXT-API/1.0"
-    }
+    headers={"User-Agent": "FLEXT-API/1.0"},
 )
 ```
 
@@ -193,7 +183,7 @@ config = FlextAuthSettings(
     secret_key="your-secret-key",
     algorithm="HS256",
     access_token_expire_minutes=30,
-    refresh_token_expire_days=7
+    refresh_token_expire_days=7,
 )
 ```
 
@@ -255,7 +245,7 @@ from flext_core import FlextModels
 from flext_core import FlextProcessors
 from flext_core import p
 from flext_core import FlextRegistry
-from flext_core import FlextResult
+from flext_core import r
 from flext_core import FlextRuntime
 from flext_core import FlextService
 from flext_core import t
@@ -289,23 +279,20 @@ from flext_core import FlextModels
 from flext_core import FlextProcessors
 from flext_core import p
 from flext_core import FlextRegistry
-from flext_core import FlextResult
+from flext_core import r
 from flext_core import FlextRuntime
 from flext_core import FlextService
 from flext_core import t
 from flext_core import u
 
 # Base configuration
-base_config = FlextSettings(
-    log_level="INFO",
-    environment="production"
-)
+base_config = FlextSettings(log_level="INFO", environment="production")
 
 # Extended configuration
 extended_config = FlextSettings(
     **base_config.dict(),
     debug=True,  # Override for development
-    custom_setting="value"
+    custom_setting="value",
 )
 ```
 
@@ -337,11 +324,12 @@ from flext_core import FlextModels
 from flext_core import FlextProcessors
 from flext_core import p
 from flext_core import FlextRegistry
-from flext_core import FlextResult
+from flext_core import r
 from flext_core import FlextRuntime
 from flext_core import FlextService
 from flext_core import t
 from flext_core import u
+
 
 def main():
     # Validate configuration at startup
@@ -373,21 +361,22 @@ from flext_core import FlextModels
 from flext_core import FlextProcessors
 from flext_core import p
 from flext_core import FlextRegistry
-from flext_core import FlextResult
+from flext_core import r
 from flext_core import FlextRuntime
 from flext_core import FlextService
 from flext_core import t
 from flext_core import u
 
+
 class MyAppConfig(FlextSettings):
     custom_setting: str = "default_value"
     another_setting: int = 42
 
-    @field_validator('another_setting')
+    @field_validator("another_setting")
     @classmethod
     def validate_another_setting(cls, v):
         if v < 0:
-            raise ValueError('another_setting must be positive')
+            raise ValueError("another_setting must be positive")
         return v
 ```
 
@@ -398,13 +387,11 @@ class FlextLdifSettings(BaseModel):
     """Configuration for LDIF processing."""
 
     default_encoding: str = Field(
-        default="utf-8",
-        description="Default encoding for LDIF files"
+        default="utf-8", description="Default encoding for LDIF files"
     )
 
     strict_validation: bool = Field(
-        default=True,
-        description="Enable strict RFC validation"
+        default=True, description="Enable strict RFC validation"
     )
 ```
 
@@ -448,7 +435,7 @@ from flext_core import FlextModels
 from flext_core import FlextProcessors
 from flext_core import p
 from flext_core import FlextRegistry
-from flext_core import FlextResult
+from flext_core import r
 from flext_core import FlextRuntime
 from flext_core import FlextService
 from flext_core import t
@@ -491,13 +478,14 @@ from flext_core import FlextModels
 from flext_core import FlextProcessors
 from flext_core import p
 from flext_core import FlextRegistry
-from flext_core import FlextResult
+from flext_core import r
 from flext_core import FlextRuntime
 from flext_core import FlextService
 from flext_core import t
 from flext_core import u
 from flext_ldif import FlextLdifSettings
 from flext_api import FlextApiSettings
+
 
 def main():
     # Load configuration from environment
@@ -507,19 +495,20 @@ def main():
     ldif_config = FlextLdifSettings(
         source_server=os.getenv("FLEXT_SOURCE_SERVER", "oid"),
         target_server=os.getenv("FLEXT_TARGET_SERVER", "oud"),
-        batch_size=int(os.getenv("FLEXT_BATCH_SIZE", "1000"))
+        batch_size=int(os.getenv("FLEXT_BATCH_SIZE", "1000")),
     )
 
     # Configure API client
     api_config = FlextApiSettings(
         base_url=os.getenv("FLEXT_API_URL", "http://localhost:8000"),
-        timeout=int(os.getenv("FLEXT_API_TIMEOUT", "30"))
+        timeout=int(os.getenv("FLEXT_API_TIMEOUT", "30")),
     )
 
     print("Configuration loaded successfully")
     print(f"Log level: {config.log_level}")
     print(f"LDIF batch size: {ldif_config.batch_size}")
     print(f"API base URL: {api_config.base_url}")
+
 
 if __name__ == "__main__":
     main()
@@ -531,3 +520,6 @@ if __name__ == "__main__":
 - Environment Variables
 - [Pydantic v2 Documentation](https://docs.pydantic.dev/2.0/)
 - Configuration Best Practices
+
+```
+```

@@ -11,7 +11,7 @@ Tests r functionality including:
 - Operators (|) and boolean conversion
 - Railway composition patterns
 
-Uses Python 3.13 patterns, FlextTestsUtilities, c,
+Uses Python 3.13 patterns, u, c,
 and aggressive parametrization for DRY testing.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -20,15 +20,16 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from enum import StrEnum
-from typing import ClassVar, Never, cast
+from typing import Annotated, ClassVar
 
 import pytest
+from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import c, r, t
-from flext_tests import FlextTestsUtilities, u
-from tests.test_utils import assertion_helpers
+from flext_core import c, m, r
+from flext_tests import t, u
+
+from ..test_utils import assertion_helpers
 
 
 class ResultOperationType(StrEnum):
@@ -48,15 +49,40 @@ class ResultOperationType(StrEnum):
     RAILWAY_COMPOSITION = "railway_composition"
 
 
-@dataclass(frozen=True, slots=True)
-class ResultScenario:
+class ResultScenario(BaseModel):
     """Generic result scenario for r tests."""
 
-    name: str
-    operation_type: ResultOperationType
-    value: t.GeneralValueType
-    is_success_expected: bool = True
-    expected_result: t.GeneralValueType = None
+    model_config = ConfigDict(frozen=True)
+
+    name: Annotated[str, Field(description="Result scenario name")]
+    operation_type: Annotated[
+        ResultOperationType, Field(description="Result operation type")
+    ]
+    value: Annotated[object, Field(description="Input value for result operation")]
+    is_success_expected: Annotated[
+        bool, Field(default=True, description="Expected success state")
+    ] = True
+    expected_result: Annotated[
+        object | None,
+        Field(default=None, description="Optional expected result payload"),
+    ] = None
+
+    def __init__(
+        self,
+        name: str,
+        operation_type: ResultOperationType,
+        value: object,
+        *,
+        is_success_expected: bool = True,
+        expected_result: object | None = None,
+    ) -> None:
+        super().__init__(
+            name=name,
+            operation_type=operation_type,
+            value=value,
+            is_success_expected=is_success_expected,
+            expected_result=expected_result,
+        )
 
 
 class ResultScenarios:
@@ -64,72 +90,122 @@ class ResultScenarios:
 
     STRING_SCENARIOS: ClassVar[list[ResultScenario]] = [
         ResultScenario(
-            "creation_success_string",
-            ResultOperationType.CREATION_SUCCESS,
-            "success",
+            name="creation_success_string",
+            operation_type=ResultOperationType.CREATION_SUCCESS,
+            value="success",
         ),
         ResultScenario(
-            "creation_failure_message",
-            ResultOperationType.CREATION_FAILURE,
-            "error message",
-            False,
+            name="creation_failure_message",
+            operation_type=ResultOperationType.CREATION_FAILURE,
+            value="error message",
+            is_success_expected=False,
         ),
-        ResultScenario("unwrap_or_success", ResultOperationType.UNWRAP_OR, "value"),
         ResultScenario(
-            "unwrap_or_failure",
-            ResultOperationType.UNWRAP_OR,
-            "error",
-            False,
+            name="unwrap_or_success",
+            operation_type=ResultOperationType.UNWRAP_OR,
+            value="value",
         ),
-        ResultScenario("map_failure", ResultOperationType.MAP, "error", False),
         ResultScenario(
-            "flat_map_failure",
-            ResultOperationType.FLAT_MAP,
-            "error",
-            False,
+            name="unwrap_or_failure",
+            operation_type=ResultOperationType.UNWRAP_OR,
+            value="error",
+            is_success_expected=False,
         ),
-        ResultScenario("alt_success", ResultOperationType.ALT, "success"),
-        ResultScenario("alt_failure", ResultOperationType.ALT, "original_error", False),
-        ResultScenario("lash_success", ResultOperationType.LASH, "success"),
-        ResultScenario("lash_failure", ResultOperationType.LASH, "error", False),
-        ResultScenario("or_operator_success", ResultOperationType.OR_OPERATOR, "value"),
         ResultScenario(
-            "or_operator_failure",
-            ResultOperationType.OR_OPERATOR,
-            "error",
-            False,
+            name="map_failure",
+            operation_type=ResultOperationType.MAP,
+            value="error",
+            is_success_expected=False,
+        ),
+        ResultScenario(
+            name="flat_map_failure",
+            operation_type=ResultOperationType.FLAT_MAP,
+            value="error",
+            is_success_expected=False,
+        ),
+        ResultScenario(
+            name="alt_success",
+            operation_type=ResultOperationType.ALT,
+            value="success",
+        ),
+        ResultScenario(
+            name="alt_failure",
+            operation_type=ResultOperationType.ALT,
+            value="original_error",
+            is_success_expected=False,
+        ),
+        ResultScenario(
+            name="lash_success",
+            operation_type=ResultOperationType.LASH,
+            value="success",
+        ),
+        ResultScenario(
+            name="lash_failure",
+            operation_type=ResultOperationType.LASH,
+            value="error",
+            is_success_expected=False,
+        ),
+        ResultScenario(
+            name="or_operator_success",
+            operation_type=ResultOperationType.OR_OPERATOR,
+            value="value",
+        ),
+        ResultScenario(
+            name="or_operator_failure",
+            operation_type=ResultOperationType.OR_OPERATOR,
+            value="error",
+            is_success_expected=False,
         ),
     ]
-
     INT_SCENARIOS: ClassVar[list[ResultScenario]] = [
-        ResultScenario("unwrap_success", ResultOperationType.UNWRAP, 42),
-        ResultScenario("map_success", ResultOperationType.MAP, 5),
-        ResultScenario("flat_map_success", ResultOperationType.FLAT_MAP, 5),
-        ResultScenario("filter_passes", ResultOperationType.FILTER, 10),
-        ResultScenario("filter_fails", ResultOperationType.FILTER, 3, False),
         ResultScenario(
-            "railway_composition",
-            ResultOperationType.RAILWAY_COMPOSITION,
-            5,
+            name="unwrap_success",
+            operation_type=ResultOperationType.UNWRAP,
+            value=42,
+        ),
+        ResultScenario(
+            name="map_success",
+            operation_type=ResultOperationType.MAP,
+            value=5,
+        ),
+        ResultScenario(
+            name="flat_map_success",
+            operation_type=ResultOperationType.FLAT_MAP,
+            value=5,
+        ),
+        ResultScenario(
+            name="filter_passes",
+            operation_type=ResultOperationType.FILTER,
+            value=10,
+        ),
+        ResultScenario(
+            name="filter_fails",
+            operation_type=ResultOperationType.FILTER,
+            value=3,
+            is_success_expected=False,
+        ),
+        ResultScenario(
+            name="railway_composition",
+            operation_type=ResultOperationType.RAILWAY_COMPOSITION,
+            value=5,
         ),
     ]
-
     BOOL_SCENARIOS: ClassVar[list[ResultScenario]] = [
         ResultScenario(
-            "bool_conversion_success",
-            ResultOperationType.BOOL_CONVERSION,
-            True,
+            name="bool_conversion_success",
+            operation_type=ResultOperationType.BOOL_CONVERSION,
+            value=True,
         ),
         ResultScenario(
-            "bool_conversion_failure",
-            ResultOperationType.BOOL_CONVERSION,
-            False,
+            name="bool_conversion_failure",
+            operation_type=ResultOperationType.BOOL_CONVERSION,
+            value=False,
         ),
     ]
 
 
 class Testr:
-    """Comprehensive test suite for r using FlextTestsUtilities."""
+    """Comprehensive test suite for r using u."""
 
     @pytest.mark.parametrize(
         "scenario",
@@ -141,123 +217,70 @@ class Testr:
         op_type = scenario.operation_type
         value = scenario.value
         is_success = scenario.is_success_expected
-
+        assert isinstance(value, str)
         if op_type == ResultOperationType.CREATION_SUCCESS:
-            # Use generic helper to replace 10+ lines of result creation code
-            creation_result: r[t.GeneralValueType] = (
-                FlextTestsUtilities.Tests.GenericHelpers.create_result_from_value(
-                    value,
-                    error_on_none="Value cannot be None",
-                )
-            )
-            # value is already t.GeneralValueType from ResultScenario
-            u.Tests.Result.assert_success_with_value(
-                creation_result,
+            creation_result: r[str] = u.Tests.GenericHelpers.create_result_from_value(
                 value,
+                error_on_none="Value cannot be None",
             )
-
+            u.Tests.Result.assert_success_with_value(creation_result, value)
         elif op_type == ResultOperationType.CREATION_FAILURE:
-            # create_failure_result returns r[object], cast to r[t.GeneralValueType]
-            failure_result_raw = u.Tests.Result.create_failure_result(
-                str(value),
-            )
-            failure_result: r[t.GeneralValueType] = cast(
-                "r[t.GeneralValueType]",
-                failure_result_raw,
-            )
-            u.Tests.Result.assert_failure_with_error(
-                failure_result,
-                str(value),
-            )
-
+            failure_result_raw = u.Tests.Result.create_failure_result(str(value))
+            failure_result: r[str] = failure_result_raw
+            u.Tests.Result.assert_failure_with_error(failure_result, str(value))
         elif op_type == ResultOperationType.UNWRAP_OR:
-            # value is already t.GeneralValueType from ResultScenario
             if is_success:
-                unwrap_result: r[t.GeneralValueType] = (
-                    u.Tests.Result.create_success_result(value)
-                )
+                unwrap_result: r[str] = u.Tests.Result.create_success_result(value)
             else:
                 failure_raw = u.Tests.Result.create_failure_result(str(value))
-                unwrap_result = cast("r[t.GeneralValueType]", failure_raw)
+                unwrap_result = failure_raw
             default = "default"
             assert unwrap_result.unwrap_or(default) == (
                 value if is_success else default
             )
-
         elif op_type == ResultOperationType.MAP:
             map_result: r[str] = r[str].fail(str(value))
             mapped = map_result.map(lambda x: str(x) * 2)
-            u.Tests.Result.assert_failure_with_error(
-                mapped,
-                str(value),
-            )
-
+            u.Tests.Result.assert_failure_with_error(mapped, str(value))
         elif op_type == ResultOperationType.FLAT_MAP:
             failure_raw = u.Tests.Result.create_failure_result(str(value))
-            flat_map_result: r[t.GeneralValueType] = cast(
-                "r[t.GeneralValueType]",
-                failure_raw,
-            )
-            flat_mapped = flat_map_result.flat_map(
-                lambda x: r[str].ok(f"value_{x}"),
-            )
-            u.Tests.Result.assert_failure_with_error(
-                flat_mapped,
-                str(value),
-            )
-
+            flat_map_result: r[str] = failure_raw
+            flat_mapped = flat_map_result.flat_map(lambda x: r[str].ok(f"value_{x}"))
+            u.Tests.Result.assert_failure_with_error(flat_mapped, str(value))
         elif op_type == ResultOperationType.ALT:
-            # value is already t.GeneralValueType from ResultScenario
             if is_success:
-                result_alt: r[t.GeneralValueType] = (
-                    u.Tests.Result.create_success_result(value)
-                )
-            else:
-                failure_raw = u.Tests.Result.create_failure_result(str(value))
-                result_alt = cast("r[t.GeneralValueType]", failure_raw)
-            alt_result = result_alt.alt(lambda e: f"alt_{e}")
-            if is_success:
-                u.Tests.Result.assert_success_with_value(
-                    alt_result,
+                result_alt: r[str] = u.Tests.Result.create_success_result(
                     value,
                 )
             else:
+                failure_raw = u.Tests.Result.create_failure_result(str(value))
+                result_alt = failure_raw
+            alt_result = result_alt.map_error(lambda e: f"alt_{e}")
+            if is_success:
+                u.Tests.Result.assert_success_with_value(alt_result, value)
+            else:
                 error_str_alt: str = f"alt_{value}"
-                u.Tests.Result.assert_failure_with_error(
-                    alt_result,
-                    error_str_alt,
-                )
-
+                u.Tests.Result.assert_failure_with_error(alt_result, error_str_alt)
         elif op_type == ResultOperationType.LASH:
             lash_result_base: r[str] = (
                 r[str].ok(str(value)) if is_success else r[str].fail(str(value))
             )
-            lash_result = lash_result_base.lash(
-                lambda e: r[str].ok(f"recovered_{e}"),
-            )
+            lash_result = lash_result_base.lash(lambda e: r[str].ok(f"recovered_{e}"))
             if is_success:
-                u.Tests.Result.assert_success_with_value(
-                    lash_result,
-                    str(value),
-                )
+                u.Tests.Result.assert_success_with_value(lash_result, str(value))
             else:
                 expected = f"recovered_{value}"
-                u.Tests.Result.assert_success_with_value(
-                    lash_result,
-                    expected,
-                )
-
+                u.Tests.Result.assert_success_with_value(lash_result, expected)
         elif op_type == ResultOperationType.OR_OPERATOR:
-            # value is already t.GeneralValueType from ResultScenario
             if is_success:
-                result_or: r[t.GeneralValueType] = u.Tests.Result.create_success_result(
-                    value
+                result_or: r[str] = u.Tests.Result.create_success_result(
+                    value,
                 )
             else:
                 failure_raw = u.Tests.Result.create_failure_result(str(value))
-                result_or = cast("r[t.GeneralValueType]", failure_raw)
+                result_or = failure_raw
             default = "default"
-            assert (result_or | default) == (value if is_success else default)
+            assert result_or | default == (value if is_success else default)
 
     @pytest.mark.parametrize(
         "scenario",
@@ -269,71 +292,43 @@ class Testr:
         op_type = scenario.operation_type
         value = scenario.value
         is_success = scenario.is_success_expected
-
         if op_type == ResultOperationType.UNWRAP:
             assert isinstance(value, int)
             result = r[int].ok(value)
             assert result.value == value
-
         elif op_type == ResultOperationType.MAP:
             assert isinstance(value, int)
             result = r[int].ok(value)
             mapped = result.map(lambda x: x * 2)
-            u.Tests.Result.assert_success_with_value(
-                mapped,
-                value * 2,
-            )
-
+            u.Tests.Result.assert_success_with_value(mapped, value * 2)
         elif op_type == ResultOperationType.FLAT_MAP:
             assert isinstance(value, int)
             result = r[int].ok(value)
-            flat_mapped = result.flat_map(
-                lambda x: r[str].ok(f"value_{x}"),
-            )
+            flat_mapped = result.flat_map(lambda x: r[str].ok(f"value_{x}"))
             expected = f"value_{value}"
-            # Direct assert to avoid type-var issue with object
-            u.Tests.Result.assert_success_with_value(
-                flat_mapped,
-                expected,
-            )
-
+            u.Tests.Result.assert_success_with_value(flat_mapped, expected)
         elif op_type == ResultOperationType.FILTER:
             assert isinstance(value, int)
             result = r[int].ok(value)
             filtered = result.filter(lambda x: x > 5)
             if is_success:
-                u.Tests.Result.assert_success_with_value(
-                    filtered,
-                    value,
-                )
+                u.Tests.Result.assert_success_with_value(filtered, value)
             else:
-                u.Tests.Result.assert_result_failure(filtered)
-
+                _ = u.Tests.Result.assert_failure(filtered)
         elif op_type == ResultOperationType.RAILWAY_COMPOSITION:
             assert isinstance(value, int)
-            # Use generic helper to test result chain - replaces 10+ lines
-            # Each result typed independently for type safety
             res1 = r[int].ok(value)
             res2 = res1.map(lambda v: v * 2)
             res3 = res2.map(lambda v: f"result_{v}")
             expected = f"result_{value * 2}"
-            # Use generic helper for chain validation with explicit list cast
-            # assert_result_chain expects list[r[Never]], not Sequence
-            result_list: list[r[Never]] = [
-                cast("r[Never]", res1),
-                cast("r[Never]", res2),
-                cast("r[Never]", res3),
-            ]
-            FlextTestsUtilities.Tests.GenericHelpers.assert_result_chain(
+            result_list: list[r[str]] = [res1.map(str), res2.map(str), res3]
+            u.Tests.GenericHelpers.assert_result_chain(
                 result_list,
                 expected_success_count=3,
                 expected_failure_count=0,
                 first_failure_index=None,
             )
-            u.Tests.Result.assert_success_with_value(
-                res3,
-                expected,
-            )
+            u.Tests.Result.assert_success_with_value(res3, expected)
 
     @pytest.mark.parametrize(
         "scenario",
@@ -346,9 +341,7 @@ class Testr:
             result = (
                 u.Tests.Result.create_success_result("value")
                 if scenario.value
-                else u.Tests.Result.create_failure_result(
-                    c.Errors.GENERIC_ERROR,
-                )
+                else u.Tests.Result.create_failure_result(c.Errors.GENERIC_ERROR)
             )
             assert bool(result) is scenario.value
 
@@ -357,71 +350,42 @@ class Testr:
 
         Tests actual chain operations and validates using generic helpers.
         """
-        # Create a real chain of operations
         results: list[r[int]] = []
         initial_value = 5
-
-        # Step 1: Initial value
-        res1 = FlextTestsUtilities.Tests.GenericHelpers.create_result_from_value(
+        res1 = u.Tests.GenericHelpers.create_result_from_value(
             initial_value,
             error_on_none="Initial value cannot be None",
         )
         results.append(res1)
-
-        # Step 2: Transform
         res2 = res1.map(lambda x: x * 2)
         results.append(res2)
-
-        # Step 3: Another transform
         res3 = res2.map(lambda x: x + 10)
         results.append(res3)
-
-        # Validate entire chain using generic helper (replaces 10+ lines)
-        FlextTestsUtilities.Tests.GenericHelpers.assert_result_chain(
+        u.Tests.GenericHelpers.assert_result_chain(
             results,
             expected_success_count=3,
             expected_failure_count=0,
             first_failure_index=None,
         )
-
-        # Verify final value
-        u.Tests.Result.assert_success_with_value(
-            res3,
-            20,  # (5 * 2) + 10
-        )
+        u.Tests.Result.assert_success_with_value(res3, 20)
 
     def test_result_chain_failure_behavior(self) -> None:
         """Test result chain with failure - real behavior and limits."""
         results: list[r[int]] = []
-
-        # Success
         res1 = r[int].ok(10)
         results.append(res1)
-
-        # Success
         res2 = res1.map(lambda x: x * 2)
         results.append(res2)
-
-        # Failure - division by zero limit case
         res3 = res2.flat_map(
             lambda x: r[int].fail("Division by zero") if x == 0 else r[int].ok(x // 2),
         )
         results.append(res3)
-
-        # Should still succeed (20 // 2 = 10)
-        u.Tests.Result.assert_success_with_value(
-            res3,
-            10,
-        )
-
-        # Now test actual failure case
+        u.Tests.Result.assert_success_with_value(res3, 10)
         res4 = res3.flat_map(
             lambda x: r[int].fail("Cannot process zero") if x == 0 else r[int].ok(x),
         )
         results.append(res4)
-
-        # Validate chain - should still be all successful
-        FlextTestsUtilities.Tests.GenericHelpers.assert_result_chain(
+        u.Tests.GenericHelpers.assert_result_chain(
             results,
             expected_success_count=4,
             expected_failure_count=0,
@@ -432,100 +396,58 @@ class Testr:
 
         Replaces 10+ lines of manual test case creation.
         """
-        # Use generic helper to create parametrized cases
-        success_values: list[str] = ["value1", "value2", "value3"]
+        success_values: list[t.Tests.object] = ["value1", "value2", "value3"]
         failure_errors: list[str] = ["error1", "error2"]
         error_codes: list[str | None] = ["CODE1", None]
-
-        # Convert list[str] to list[t.GeneralValueType] for create_parametrized_cases
-        success_values_general: list[t.GeneralValueType] = [
-            cast("t.GeneralValueType", v) for v in success_values
-        ]
-        cases = FlextTestsUtilities.Tests.GenericHelpers.create_parametrized_cases(
-            success_values_general,
+        cases = u.Tests.GenericHelpers.create_parametrized_cases(
+            success_values,
             failure_errors,
             error_codes=error_codes,
         )
-
-        # Verify cases structure
-        assert len(cases) == 5  # 3 success + 2 failure
-
-        # Verify success cases
+        assert len(cases) == 5
         for i, (result, is_success, _value, error) in enumerate(cases[:3]):
             assert is_success is True
-            u.Tests.Result.assert_success_with_value(
-                result,
-                success_values[i],
-            )
+            u.Tests.Result.assert_success_with_value(result, success_values[i])
             assert error is None
-
-        # Verify failure cases
         for i, (result, is_success, _value, error) in enumerate(cases[3:]):
             assert is_success is False
-            u.Tests.Result.assert_result_failure(result)
+            _ = u.Tests.Result.assert_failure(result)
             assert error == failure_errors[i]
 
     def test_result_none_handling_limits(self) -> None:
         """Test None handling limits using generic helper."""
-        # Test with None and default
-        # Business Rule: create_result_from_value infers type from default_on_none
-        # When value is None and default_on_none is provided, type is inferred from default
-        result1: r[str] = (
-            FlextTestsUtilities.Tests.GenericHelpers.create_result_from_value(
-                None,
-                default_on_none="default_value",
-            )
+        result1: r[str] = u.Tests.GenericHelpers.create_result_from_value(
+            None,
+            default_on_none="default_value",
         )
-        u.Tests.Result.assert_success_with_value(
-            result1,
-            "default_value",
+        u.Tests.Result.assert_success_with_value(result1, "default_value")
+        result2: r[str | None] = u.Tests.GenericHelpers.create_result_from_value(
+            None,
+            error_on_none="Value is None",
         )
-
-        # Test with None and error
-        result2: r[str | None] = (
-            FlextTestsUtilities.Tests.GenericHelpers.create_result_from_value(
-                None,
-                error_on_none="Value is None",
-            )
-        )
-        u.Tests.Result.assert_failure_with_error(
-            result2,
-            "Value is None",
-        )
-
-        # Test with actual value
-        result3 = FlextTestsUtilities.Tests.GenericHelpers.create_result_from_value(
-            "actual_value",
-        )
-        u.Tests.Result.assert_success_with_value(
-            result3,
-            "actual_value",
-        )
+        u.Tests.Result.assert_failure_with_error(result2, "Value is None")
+        result3 = u.Tests.GenericHelpers.create_result_from_value("actual_value")
+        u.Tests.Result.assert_success_with_value(result3, "actual_value")
 
     def test_safe_decorator(self) -> None:
         """Test safe decorator wraps function in try/except."""
 
-        # safe expects p.VariadicCallable[T] which is Callable[..., T]
-        # divide is Callable[[int, int], int], compatible at runtime
-        @r.safe
         def divide(a: int, b: int) -> int:
             return a // b
 
-        result: r[int] = divide(10, 2)
-        assertion_helpers.assert_flext_result_success(result)
+        divide_wrapped = r.safe(divide)
+        result: r[int] = divide_wrapped(10, 2)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value == 5
-
-        result_fail: r[int] = divide(10, 0)
+        result_fail: r[int] = divide_wrapped(10, 0)
         assert result_fail.is_failure
 
     def test_map_error(self) -> None:
         """Test map_error transforms error message."""
-        result = r[str].fail("original error")
+        result: r[str] = r[str].fail("original error")
         transformed = result.map_error(lambda e: f"PREFIX: {e}")
         assert transformed.is_failure
         assert transformed.error == "PREFIX: original error"
-
-        # Success should remain unchanged
         success = r[str].ok("value")
         unchanged = success.map_error(lambda e: f"PREFIX: {e}")
         assert unchanged.is_success
@@ -537,13 +459,12 @@ class Testr:
         filtered = result.filter(lambda x: x > 5)
         assert filtered.is_success
         assert filtered.value == 10
-
         filtered_fail = result.filter(lambda x: x > 20)
         assert filtered_fail.is_failure
 
     def test_filter_failure(self) -> None:
         """Test filter with failure result returns unchanged."""
-        result = r[int].fail("error")
+        result: r[int] = r[int].fail("error")
         filtered = result.filter(lambda x: x > 5)
         assert filtered.is_failure
         assert filtered.error == "error"
@@ -583,7 +504,7 @@ class Testr:
         """Test traverse maps over sequence successfully."""
         items = [1, 2, 3]
         result = r.traverse(items, lambda x: r[int].ok(x * 2))
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value == [2, 4, 6]
 
     def test_traverse_failure(self) -> None:
@@ -593,7 +514,7 @@ class Testr:
             items,
             lambda x: r[int].fail("error") if x == 2 else r[int].ok(x),
         )
-        assertion_helpers.assert_flext_result_failure(result)
+        _ = assertion_helpers.assert_flext_result_failure(result)
         assert result.error == "error"
 
     def test_accumulate_errors_all_success(self) -> None:
@@ -620,7 +541,7 @@ class Testr:
             lambda x: r[int].fail("error") if x == 2 else r[int].ok(x),
             fail_fast=True,
         )
-        assertion_helpers.assert_flext_result_failure(result)
+        _ = assertion_helpers.assert_flext_result_failure(result)
         assert result.error == "error"
 
     def test_traverse_fail_fast_false(self) -> None:
@@ -628,18 +549,18 @@ class Testr:
         items = [1, 2, 3]
         result = r.traverse(
             items,
-            lambda x: r[int].fail(f"error_{x}") if x in (2, 3) else r[int].ok(x),
+            lambda x: r[int].fail(f"error_{x}") if x in {2, 3} else r[int].ok(x),
             fail_fast=False,
         )
-        assertion_helpers.assert_flext_result_failure(result)
+        _ = assertion_helpers.assert_flext_result_failure(result)
         assert result.error is not None
         assert "error_2" in str(result.error)
         assert "error_3" in str(result.error)
 
     def test_with_resource(self) -> None:
         """Test with_resource manages resource lifecycle."""
-        resource_created = []
-        resource_cleaned = []
+        resource_created = list[object]()
+        resource_cleaned = list[object]()
 
         def factory() -> list[str]:
             resource_created.append("created")
@@ -653,8 +574,8 @@ class Testr:
             resource_cleaned.append("cleaned")
             resource.clear()
 
-        result = r.with_resource(factory, op, cleanup)
-        assertion_helpers.assert_flext_result_success(result)
+        result: r[str] = r[str].with_resource(factory, op, cleanup)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value == "success"
         assert len(resource_created) == 1
         assert len(resource_cleaned) == 1
@@ -670,27 +591,21 @@ class Testr:
         """Test __repr__ for success result."""
         result = r[str].ok("test")
         repr_str = repr(result)
-        assert "r.ok" in repr_str
+        assert "r[T].ok" in repr_str
         assert "test" in repr_str
 
     def test_repr_failure(self) -> None:
         """Test __repr__ for failure result."""
-        result = r[str].fail("error")
+        result: r[str] = r[str].fail("error")
         repr_str = repr(result)
-        assert "r.fail" in repr_str
+        assert "r[T].fail" in repr_str
         assert "error" in repr_str
 
     def test_value_property_failure(self) -> None:
         """Test value property raises RuntimeError on failure."""
-        result = r[str].fail("error")
+        result: r[str] = r[str].fail("error")
         with pytest.raises(RuntimeError, match="Cannot access value of failed result"):
             _ = result.value
-
-    def test_data_property(self) -> None:
-        """Test data property (alias for value)."""
-        result = r[str].ok("test")
-        assert result.data == "test"
-        assert result.data == result.value
 
     def test_error_property_success(self) -> None:
         """Test error property returns None for success."""
@@ -699,24 +614,22 @@ class Testr:
 
     def test_error_code_property(self) -> None:
         """Test error_code property."""
-        result = r[str].fail("error", error_code="TEST_ERROR")
+        result: r[str] = r[str].fail("error", error_code="TEST_ERROR")
         assert result.error_code == "TEST_ERROR"
-
         success = r[str].ok("test")
         assert success.error_code is None
 
     def test_error_data_property(self) -> None:
         """Test error_data property."""
-        error_data = {"key": "value"}
-        result = r[str].fail("error", error_data=error_data)
+        error_data = m.ConfigMap(root={"key": "value"})
+        result: r[str] = r[str].fail("error", error_data=error_data)
         assert result.error_data == error_data
-
         success = r[str].ok("test")
         assert success.error_data is None
 
     def test_unwrap_failure(self) -> None:
         """Test unwrap raises RuntimeError on failure."""
-        result = r[str].fail("error")
+        result: r[str] = r[str].fail("error")
         with pytest.raises(RuntimeError, match="Cannot access value of failed result"):
             result.value
 
@@ -724,24 +637,20 @@ class Testr:
         """Test flat_map inner function returns Failure."""
         result = r[int].ok(5)
 
-        def failing_func(value: int) -> r[str]:
+        def failing_func(_value: int) -> r[str]:
             return r[str].fail("flat_map failed")
 
         bound = result.flat_map(failing_func)
         assert bound.is_failure
-        # This tests line 303 where inner returns Failure
 
     def test_flow_through_empty(self) -> None:
         """Test flow_through with no functions."""
         result = r[int].ok(5)
-        final: r[int] = result.flow_through()
-        assert final.is_success
-        assert final.value == 5
+        assert result.flow_through() is result
+        assert result.value == 5
 
     def test_ok_with_none_raises(self) -> None:
         """Test ok() raises ValueError for None value."""
-        # ok() rejects None values - this is correct behavior
-        # The test verifies that ValueError is raised
         with pytest.raises(
             ValueError,
             match="Cannot create success result with None value",
@@ -758,13 +667,12 @@ class Testr:
             return r[int].fail("stopped")
 
         def never_called(_x: int) -> r[int]:
-            return r[int].ok(999)  # Should never be called
+            return r[int].ok(999)
 
         result = r[int].ok(5)
         final = result.flow_through(add_one, fail_op, never_called)
         assert final.is_failure
         assert final.error == "stopped"
-        # This tests lines 355-361 (flow_through failure path)
 
     def test_create_from_callable_success(self) -> None:
         """Test create_from_callable with successful callable."""
@@ -773,7 +681,7 @@ class Testr:
             return "success"
 
         result = r.create_from_callable(func)
-        assertion_helpers.assert_flext_result_success(result)
+        _ = assertion_helpers.assert_flext_result_success(result)
         assert result.value == "success"
 
     def test_create_from_callable_none(self) -> None:
@@ -783,7 +691,7 @@ class Testr:
             return None
 
         result = r.create_from_callable(func)
-        assertion_helpers.assert_flext_result_failure(result)
+        _ = assertion_helpers.assert_flext_result_failure(result)
         error_msg = result.error
         assert error_msg is not None
         assert "Callable returned None" in error_msg
@@ -796,14 +704,10 @@ class Testr:
             raise ValueError(error_msg)
 
         result = r.create_from_callable(func)
-        assertion_helpers.assert_flext_result_failure(result)
+        _ = assertion_helpers.assert_flext_result_failure(result)
         error_msg = result.error
         assert error_msg is not None
         assert "Callable failed" in error_msg
-
-    # =========================================================================
-    # New Advanced Methods Tests (map_or, fold, get_or_else)
-    # =========================================================================
 
     def test_map_or_success_without_func(self) -> None:
         """Test map_or returns value on success when func is None."""
@@ -850,23 +754,11 @@ class Testr:
     def test_fold_different_return_types(self) -> None:
         """Test fold can return different types than input."""
         result: r[str] = r[str].ok("hello")
-        response: dict[str, t.GeneralValueType] = result.fold(
+        response: dict[str, object] = result.fold(
             on_success=lambda v: {"status": 200, "data": v},
             on_failure=lambda e: {"status": 400, "error": e},
         )
         assert response == {"status": 200, "data": "hello"}
-
-    def test_get_or_else_success(self) -> None:
-        """Test get_or_else returns value on success."""
-        result: r[str] = r[str].ok("hello")
-        value = result.get_or_else("default")
-        assert value == "hello"
-
-    def test_get_or_else_failure(self) -> None:
-        """Test get_or_else returns default on failure."""
-        result: r[str] = r[str].fail("error")
-        value = result.get_or_else("default")
-        assert value == "default"
 
 
 __all__ = ["Testr"]

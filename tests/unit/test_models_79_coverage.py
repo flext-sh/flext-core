@@ -9,51 +9,46 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from decimal import Decimal
+from typing import Annotated, override
 
-from flext_core import m, t
-from tests.test_utils import assertion_helpers
-from flext_core.models import m
+from pydantic import BaseModel, Field
 
-
-# Define Query and Command classes using dataclasses to avoid Pydantic circular dependencies
-@dataclass
-class CreateUserCommand:
-    user_id: str
-    name: str
-    email: str
+from flext_core import m
+from flext_core._models.domain_event import _ComparableConfigMap
 
 
-@dataclass
-class FindUserQuery:
-    user_id: str
+class CreateUserCommand(BaseModel):
+    user_id: Annotated[str, Field(description="User identifier for create command")]
+    name: Annotated[str, Field(description="User display name for create command")]
+    email: Annotated[str, Field(description="User email for create command")]
 
 
-@dataclass
-class OptionalFieldCommand:
-    required_field: str
-    optional_field: str | None = None
+class FindUserQuery(BaseModel):
+    user_id: Annotated[str, Field(description="User identifier for lookup query")]
 
 
-@dataclass
-class PagedQuery:
-    page: int
-    page_size: int
+class OptionalFieldCommand(BaseModel):
+    required_field: Annotated[str, Field(description="Required command field")]
+    optional_field: Annotated[
+        str | None, Field(default=None, description="Optional command field")
+    ] = None
 
 
-@dataclass
-class CreateUserCmd:
-    user_id: str
-    name: str
+class PagedQuery(BaseModel):
+    page: Annotated[int, Field(description="Requested page number")]
+    page_size: Annotated[int, Field(description="Requested page size")]
 
 
-@dataclass
-class GetUserQuery:
-    user_id: str
+class CreateUserCmd(BaseModel):
+    user_id: Annotated[
+        str, Field(description="User identifier for integration command")
+    ]
+    name: Annotated[str, Field(description="User name for integration command")]
 
 
-# Dataclasses don't need model_rebuild
+class GetUserQuery(BaseModel):
+    user_id: Annotated[str, Field(description="User identifier for integration query")]
 
 
 class TestFlextModelsEntity:
@@ -62,11 +57,12 @@ class TestFlextModelsEntity:
     def test_entity_creation_basic(self) -> None:
         """Test basic entity creation."""
 
-        @dataclass
-        class User:
-            unique_id: str
-            name: str
-            email: str
+        class User(BaseModel):
+            unique_id: Annotated[
+                str, Field(description="Unique identifier for test user")
+            ]
+            name: Annotated[str, Field(description="User name for entity test")]
+            email: Annotated[str, Field(description="User email for entity test")]
 
         user = User(unique_id="user-1", name="Alice", email="alice@example.com")
         assert user.unique_id == "user-1"
@@ -76,63 +72,65 @@ class TestFlextModelsEntity:
     def test_entity_equality(self) -> None:
         """Test entity equality based on ID."""
 
-        @dataclass
-        class User:
-            unique_id: str
-            name: str
+        class User(BaseModel):
+            unique_id: Annotated[
+                str, Field(description="Unique identifier for equality test")
+            ]
+            name: Annotated[str, Field(description="User name for equality test")]
 
+            @override
             def __eq__(self, other: object) -> bool:
                 if not isinstance(other, User):
                     return NotImplemented
                 return self.unique_id == other.unique_id
 
         user1 = User(unique_id="user-1", name="Alice")
-        user2 = User(unique_id="user-1", name="Bob")  # Different name, same ID
+        user2 = User(unique_id="user-1", name="Bob")
         user3 = User(unique_id="user-2", name="Alice")
-
-        assert user1 == user2  # Same ID
-        assert user1 != user3  # Different ID
+        assert user1 == user2
+        assert user1 != user3
 
     def test_entity_version(self) -> None:
         """Test entity versioning."""
 
         class Order(m.Entity):
+            domain_events: list[m.DomainEvent] = Field(default_factory=list)
             total: Decimal
 
         order = Order(unique_id="order-1", total=Decimal("99.99"))
         initial_version = order.version
-        assert initial_version >= 1  # VersionableMixin default is 1
+        assert initial_version >= 1
 
 
-class TestFlextModelsValueObject:
+class TestFlextModelsValue:
     """Test FlextModels.Value functionality."""
 
     def test_value_object_creation(self) -> None:
         """Test value object creation."""
 
-        @dataclass
-        class Email:
-            address: str
+        class Email(BaseModel):
+            address: Annotated[
+                str, Field(description="Email address for value object test")
+            ]
 
         email1 = Email(address="test@example.com")
         email2 = Email(address="test@example.com")
         email3 = Email(address="other@example.com")
-
-        assert email1 == email2  # Same value
-        assert email1 != email3  # Different value
+        assert email1 == email2
+        assert email1 != email3
 
     def test_value_object_immutability(self) -> None:
         """Test that value objects are immutable."""
 
-        @dataclass
-        class Price:
-            amount: Decimal
-            currency: str
+        class Price(BaseModel):
+            amount: Annotated[
+                Decimal, Field(description="Price amount for value object test")
+            ]
+            currency: Annotated[
+                str, Field(description="Currency code for value object test")
+            ]
 
         price = Price(amount=Decimal("10.00"), currency="USD")
-
-        # Value objects are immutable - Pydantic frozen models prevent assignment
-        # Just verify the value is present and correct
         assert price.amount == Decimal("10.00")
         assert price.currency == "USD"
 
@@ -143,11 +141,10 @@ class TestFlextModelsAggregateRoot:
     def test_aggregate_root_creation(self) -> None:
         """Test aggregate root creation."""
 
-        @dataclass
-        class Account:
-            unique_id: str
-            owner_name: str
-            balance: Decimal
+        class Account(BaseModel):
+            unique_id: Annotated[str, Field(description="Unique account identifier")]
+            owner_name: Annotated[str, Field(description="Account owner name")]
+            balance: Annotated[Decimal, Field(description="Account balance")]
 
         account = Account(
             unique_id="acc-1",
@@ -165,10 +162,11 @@ class TestFlextModelsAggregateRoot:
             balance: Decimal
 
         account = BankAccount(unique_id="acc-1", balance=Decimal("1000.00"))
-
-        # Add domain event
-        result = account.add_domain_event("MoneyDeposited", {"amount": 100})
-        assertion_helpers.assert_flext_result_success(result)
+        result = account.add_domain_event(
+            "MoneyDeposited",
+            m.ConfigMap(root={"amount": 100}),
+        )
+        assert result.is_success
 
     def test_aggregate_root_domain_event_validation(self) -> None:
         """Test domain event validation."""
@@ -177,10 +175,8 @@ class TestFlextModelsAggregateRoot:
             total: Decimal
 
         order = Order(unique_id="order-1", total=Decimal("99.99"))
-
-        # Add event with valid empty dict
-        result = order.add_domain_event("OrderPlaced", {})
-        assertion_helpers.assert_flext_result_success(result)
+        result = order.add_domain_event("OrderPlaced", m.ConfigMap(root={}))
+        assert result.is_success
 
     def test_aggregate_root_uncommitted_events(self) -> None:
         """Test uncommitted events tracking."""
@@ -189,10 +185,11 @@ class TestFlextModelsAggregateRoot:
             status: str = "pending"
 
         order = Order(unique_id="order-1", status="pending")
-
-        # Add event
-        result = order.add_domain_event("OrderCreated", {"timestamp": "2025-01-01"})
-        assertion_helpers.assert_flext_result_success(result)
+        result = order.add_domain_event(
+            "OrderCreated",
+            m.ConfigMap(root={"timestamp": "2025-01-01"}),
+        )
+        assert result.is_success
         assert len(order.domain_events) > 0
 
 
@@ -204,7 +201,7 @@ class TestFlextModelsDomainEvent:
         event = m.DomainEvent(
             event_type="UserCreated",
             aggregate_id="user-1",
-            data={"name": "Alice"},
+            data=_ComparableConfigMap(root={"name": "Alice"}),
         )
         assert event.event_type == "UserCreated"
         assert event.aggregate_id == "user-1"
@@ -215,7 +212,7 @@ class TestFlextModelsDomainEvent:
         event = m.DomainEvent(
             event_type="OrderPlaced",
             aggregate_id="order-1",
-            data={"amount": 100},
+            data=_ComparableConfigMap(root={"amount": 100}),
         )
         assert event.created_at is not None
 
@@ -224,7 +221,7 @@ class TestFlextModelsDomainEvent:
         event = m.DomainEvent(
             event_type="ProcessStarted",
             aggregate_id="proc-1",
-            data={},
+            data=_ComparableConfigMap(root={}),
         )
         assert event.data == {}
 
@@ -258,16 +255,14 @@ class TestFlextModelsEdgeCases:
     def test_entity_with_complex_types(self) -> None:
         """Test entity with complex nested types."""
 
-        @dataclass
-        class Address:
-            street: str
-            city: str
+        class Address(BaseModel):
+            street: Annotated[str, Field(description="Street for nested entity test")]
+            city: Annotated[str, Field(description="City for nested entity test")]
 
-        @dataclass
-        class Person:
-            unique_id: str
-            name: str
-            address: Address
+        class Person(BaseModel):
+            unique_id: Annotated[str, Field(description="Unique person identifier")]
+            name: Annotated[str, Field(description="Person name")]
+            address: Annotated[Address, Field(description="Person address")]
 
         addr = Address(street="123 Main", city="Springfield")
         person = Person(unique_id="p-1", name="Homer", address=addr)
@@ -276,28 +271,31 @@ class TestFlextModelsEdgeCases:
     def test_aggregate_root_with_nested_entities(self) -> None:
         """Test aggregate root containing multiple entities."""
 
-        @dataclass
-        class Item:
-            quantity: int
+        class Item(BaseModel):
+            quantity: Annotated[int, Field(description="Item quantity for cart test")]
 
-        @dataclass
-        class ShoppingCart:
-            unique_id: str
-            customer_id: str
+        class ShoppingCart(BaseModel):
+            unique_id: Annotated[
+                str, Field(description="Unique shopping cart identifier")
+            ]
+            customer_id: Annotated[
+                str, Field(description="Customer identifier for cart")
+            ]
 
         cart = ShoppingCart(unique_id="cart-1", customer_id="cust-1")
-        # Aggregate roots typically contain collections of value objects
+        item = Item(quantity=1)
         assert cart.customer_id == "cust-1"
+        assert item.quantity == 1
 
     def test_domain_event_with_large_data(self) -> None:
         """Test domain event with substantial data payload."""
-        large_data: m.ConfigMap = {
-            f"field_{i}": f"value_{i}" for i in range(100)
-        }
+        large_data: m.ConfigMap = m.ConfigMap(
+            root={f"field_{i}": f"value_{i}" for i in range(100)},
+        )
         event = m.DomainEvent(
             event_type="BulkDataImported",
             aggregate_id="import-1",
-            data=dict(large_data),
+            data=_ComparableConfigMap(root=large_data.root),
         )
         assert len(event.data) == 100
 
@@ -321,17 +319,13 @@ class TestFlextModelsIntegration:
         """Test flow: Command -> Entity -> Event -> Query."""
 
         class User(m.Entity):
+            domain_events: list[m.DomainEvent] = Field(default_factory=list)
             name: str
 
-        # Create command
         cmd = CreateUserCmd(user_id="user-1", name="Alice")
         assert cmd.user_id == "user-1"
-
-        # Create entity
         user = User(unique_id="user-1", name="Alice")
         assert user.name == "Alice"
-
-        # Create query
         query = GetUserQuery(user_id="user-1")
         assert query.user_id == "user-1"
 
@@ -342,15 +336,13 @@ class TestFlextModelsIntegration:
             items_count: int = 0
             status: str = "new"
 
-        # Create aggregate
         order = Order(unique_id="order-1", status="new", items_count=0)
         assert order.status == "new"
-
-        # Add domain event
-        event_result = order.add_domain_event("ItemAdded", {"item_id": "item-1"})
+        event_result = order.add_domain_event(
+            "ItemAdded",
+            m.ConfigMap(root={"item_id": "item-1"}),
+        )
         assert event_result.is_success
-
-        # Check domain events
         assert len(order.domain_events) >= 0
 
 
@@ -362,5 +354,5 @@ __all__ = [
     "TestFlextModelsEntity",
     "TestFlextModelsIntegration",
     "TestFlextModelsQuery",
-    "TestFlextModelsValueObject",
+    "TestFlextModelsValue",
 ]

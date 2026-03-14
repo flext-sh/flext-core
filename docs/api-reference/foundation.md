@@ -1,7 +1,6 @@
 # Foundation Layers API Reference
 
 <!-- TOC START -->
-
 - [Architecture Overview](#architecture-overview)
 - [Layer 0: Pure Constants](#layer-0-pure-constants)
   - [FlextConstants - Centralized Defaults](#flextconstants-centralized-defaults)
@@ -10,13 +9,12 @@
 - [Layer 0.5: Runtime Bridge](#layer-05-runtime-bridge)
   - [FlextRuntime — External Library Integration](#flextruntime-external-library-integration)
 - [Layer 1: Foundation (Core Primitives)](#layer-1-foundation-core-primitives)
-  - [FlextResult[T] — Railway-Oriented Programming {#flextresult}](#flextresultt-railway-oriented-programming-flextresult)
+  - [r[T] — Railway-Oriented Programming {#flextresult}](#flextresultt-railway-oriented-programming-flextresult)
   - [FlextContainer — Dependency Injection {#flextcontainer}](#flextcontainer-dependency-injection-flextcontainer)
   - [FlextExceptions — Exception Hierarchy](#flextexceptions-exception-hierarchy)
 - [Short Alias Reference](#short-alias-reference)
 - [Related Documentation](#related-documentation)
 - [Verification Commands](#verification-commands)
-
 <!-- TOC END -->
 
 This reference covers Layers 0, 0.5, and 1: the primitives that support dispatcher-driven CQRS without leaking higher-layer dependencies.
@@ -31,7 +29,7 @@ Canonical references:
 
 - **Layer 0** — Pure constants, typing helpers, and runtime protocols with zero dependencies.
 - **Layer 0.5** — Runtime bridge that adapts external libraries without importing application or domain code.
-- **Layer 1** — Core primitives (`FlextResult`, `FlextContainer`, `FlextExceptions`) that Domain and Application layers rely on.
+- **Layer 1** — Core primitives (`r`, `FlextContainer`, `FlextExceptions`) that Domain and Application layers rely on.
 
 See the Architecture Overview for the full layering model.
 
@@ -98,7 +96,7 @@ ______________________________________________________________________
 
 ## Layer 1: Foundation (Core Primitives)
 
-### FlextResult[T] — Railway-Oriented Programming {#flextresult}
+### r[T] — Railway-Oriented Programming {#flextresult}
 
 Monadic success/failure handling used across services, handlers, and decorators.
 
@@ -106,9 +104,7 @@ Monadic success/failure handling used across services, handlers, and decorators.
 from flext_core import r
 
 result = (
-    r[int].ok(10)
-    .map(lambda value: value * 2)
-    .map(lambda value: f"Result: {value}")
+    r[int].ok(10).map(lambda value: value * 2).map(lambda value: f"Result: {value}")
 )
 ```
 
@@ -135,6 +131,7 @@ Structured exception types with contextual metadata for infrastructure concerns.
 ```python
 from flext_core import c, e
 
+
 class ValidationException(e.BaseError):
     """Raised when domain validation fails."""
 
@@ -152,17 +149,17 @@ FLEXT-Core provides short aliases for frequently used types to keep code concise
 
 ```python
 # ✅ CORRECT - Import short aliases from their modules
-from flext_core.result import r       # FlextResult alias
-from flext_core.typings import t      # FlextTypes alias
-from flext_core.constants import c    # FlextConstants alias
-from flext_core.models import m       # FlextModels alias
-from flext_core.protocols import p    # FlextProtocols alias
-from flext_core.utilities import u    # FlextUtilities alias
-from flext_core.exceptions import e   # FlextExceptions alias
-from flext_core.context import x      # FlextContext alias (via mixins)
-from flext_core.service import s      # FlextService alias
-from flext_core.decorators import d   # FlextDecorators alias
-from flext_core.handlers import h     # FlextHandlers alias
+from flext_core import r  # r alias
+from flext_core import t  # FlextTypes alias
+from flext_core import c  # FlextConstants alias
+from flext_core import m  # FlextModels alias
+from flext_core import p  # FlextProtocols alias
+from flext_core import u  # FlextUtilities alias
+from flext_core import e  # FlextExceptions alias
+from flext_core import x  # FlextContext alias (via mixins)
+from flext_core import s  # FlextService alias
+from flext_core import d  # FlextDecorators alias
+from flext_core import h  # FlextHandlers alias
 ```
 
 **Usage Examples**:
@@ -173,6 +170,7 @@ def process(value: str) -> r[str]:
     if not value:
         return r[str].fail("Empty value")
     return r[str].ok(value.upper())
+
 
 # Type annotations
 config_dict: t.ConfigurationDict = {"key": "value"}
@@ -196,7 +194,7 @@ if u.chk().eq(value, expected):
 
 | Alias | Full Name         | Module       | Purpose                                      |
 | ----- | ----------------- | ------------ | -------------------------------------------- |
-| `r`   | `FlextResult`     | `result`     | Railway-oriented result type                 |
+| `r`   | `r`     | `result`     | Railway-oriented result type                 |
 | `t`   | `FlextTypes`      | `typings`    | Type aliases and TypeVars                    |
 | `c`   | `FlextConstants`  | `constants`  | Immutable constants and defaults             |
 | `m`   | `FlextModels`     | `models`     | Domain models (Entity, Value, AggregateRoot) |
@@ -219,7 +217,7 @@ The foundation layers provide stable, dependency-light building blocks for dispa
 **Within Project**:
 
 - Getting Started - Installation and basic usage
-- Railway-Oriented Programming - FlextResult pattern
+- Railway-Oriented Programming - r pattern
 - Dependency Injection Advanced - FlextContainer usage
 - Architecture Overview - System architecture and layering
 - Domain API Reference - Domain layer APIs
@@ -238,4 +236,7 @@ Run from `flext-core/`:
 make lint
 make type-check
 make test-fast
+```
+
+```
 ```

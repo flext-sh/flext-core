@@ -1,0 +1,21 @@
+# Workspace-level propagation for refactor API/class renames.
+
+rules:
+  - id: propagate-refactor-api-renames
+    name: "Propagate refactor API renames"
+    description: "Propagate renamed refactor classes across imports and callsites"
+    enabled: true
+    severity: error
+    fix_action: propagate_symbol_renames
+    target_modules:
+      - "flext_infra.refactor"
+      - "flext_infra.refactor.rules"
+    import_symbol_renames:
+      LegacyRemovalRule: "FlextInfraRefactorLegacyRemovalRule"
+      ImportModernizerRule: "FlextInfraRefactorImportModernizerRule"
+      EnsureFutureAnnotationsRule: "FlextInfraRefactorEnsureFutureAnnotationsRule"
+      ClassReconstructorRule: "FlextInfraRefactorClassReconstructorRule"
+      MRORedundancyChecker: "FlextInfraRefactorMRORedundancyChecker"
+      FlextRefactorEngine: "FlextInfraRefactorEngine"
+      RefactorResult: "FlextInfraRefactorResult"
+      RefactorRule: "FlextInfraRefactorRule"

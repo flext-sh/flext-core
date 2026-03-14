@@ -1,10 +1,8 @@
 # Domain-Driven Design Guide - Audit Report
 
 <!-- TOC START -->
-
 - [Findings](#findings)
 - [Recommended Actions](#recommended-actions)
-
 <!-- TOC END -->
 
 **Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency
@@ -17,8 +15,8 @@ ______________________________________________________________________
 
 ## Findings
 
-- Entity, Value, and AggregateRoot samples use `m.Value` (no stale `ValueObject` references remain).
-- Service examples return `FlextResult` and align with `service.py` signatures.
+- Entity, Value, and AggregateRoot samples use canonical `m.Value` (no stale `ValueObject` references remain).
+- Service examples return `r` and align with `service.py` signatures.
 - Layer references still mention `FlextBus` integration in historical notes.
 
 ## Recommended Actions

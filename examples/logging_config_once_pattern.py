@@ -15,15 +15,33 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import c, r, s, t
+from typing import override
+
+from flext_core import c, m, r, s, t
 
 
-class DatabaseService(s[dict[str, t.GeneralValueType]]):
+class DatabaseService(s[m.ConfigMap]):
     """Example service showing config log-once pattern."""
 
-    db_config: dict[str, t.GeneralValueType]
+    db_config: m.ConfigMap
 
-    def model_post_init(self, /, __context: object) -> None:
+    @override
+    def execute(self) -> r[m.ConfigMap]:
+        """Execute database operations.
+
+        Returns:
+            r[dict]: Operation results
+
+        """
+        self._with_operation_context(
+            "database_query", operation_type="select", table="users"
+        )
+        self.logger.info("Executing database query")
+        results = m.ConfigMap(root={"users": [{"id": 1, "name": "Alice"}]})
+        return r[m.ConfigMap].ok(results)
+
+    @override
+    def model_post_init(self, /, __context: t.Container | None) -> None:
         """Post-initialization hook.
 
         Args:
@@ -31,118 +49,76 @@ class DatabaseService(s[dict[str, t.GeneralValueType]]):
 
         """
         super().model_post_init(__context)
-
-        # ✅ CORRECT: Log config ONCE, doesn't appear in all subsequent logs
         self._log_config_once(self.db_config, message="Database configuration loaded")
 
-        # ❌ WRONG: DO NOT pass config to _with_operation_context
-        # self._with_operation_context("init", config=config)  # ← This binds config to ALL logs!
 
-    def execute(self, **_kwargs: object) -> r[dict[str, t.GeneralValueType]]:
-        """Execute database operations.
-
-        Returns:
-            r[dict]: Operation results
-
-        """
-        # Set operation context WITHOUT config
-        self._with_operation_context(
-            "database_query",
-            operation_type="select",
-            table="users",
-        )
-
-        # This log will NOT include config - only operation context
-        self.logger.info("Executing database query")
-
-        # Simulate query
-        results: dict[str, t.GeneralValueType] = {"users": [{"id": 1, "name": "Alice"}]}
-
-        return r[dict[str, t.GeneralValueType]].ok(results)
-
-
-class MigrationService(s[dict[str, t.GeneralValueType]]):
+class MigrationService(s[m.ConfigMap]):
     """Example migration service with config log-once pattern."""
 
-    def __init__(self, input_dir: str, output_dir: str, sync: bool) -> None:
-        """Initialize migration service.
+    input_dir: str
+    output_dir: str
+    sync: bool
+
+    @override
+    def model_post_init(self, /, __context: t.Container | None) -> None:
+        """Post-initialization hook.
 
         Args:
-            input_dir: Input directory path
-            output_dir: Output directory path
-            sync: Enable synchronization
+            __context: Pydantic context (unused)
 
         """
-        super().__init__()
-
-        # Build config dict
-        config: dict[str, t.GeneralValueType] = {
-            "input_dir": input_dir,
-            "output_dir": output_dir,
-            "sync": sync,
-            "batch_size": 100,
-            "max_workers": 4,
-        }
-
-        # ✅ CORRECT: Log config ONCE at initialization
+        super().model_post_init(__context)
+        config = m.ConfigMap(
+            root={
+                "input_dir": self.input_dir,
+                "output_dir": self.output_dir,
+                "sync": self.sync,
+                "batch_size": 100,
+                "max_workers": 4,
+            }
+        )
         self._log_config_once(config, message="Migration configuration loaded")
 
-    def execute(self, **_kwargs: object) -> r[dict[str, t.GeneralValueType]]:
+    @override
+    def execute(self) -> r[m.ConfigMap]:
         """Execute migration.
 
         Returns:
             r[dict]: Migration results
 
         """
-        # Set operation context with business data (NOT config)
         self._with_operation_context(
-            "migration_process",
-            total_entries=1000,
-            batch_count=10,
+            "migration_process", total_entries=1000, batch_count=10
         )
-
-        # Config is NOT in this log or any subsequent logs
         self.logger.info("Starting migration process")
-
-        # Simulate migration
         self.logger.info("Processing batch 1 of 10")
         self.logger.info("Processing batch 2 of 10")
-        # Config does NOT repeat in these logs!
-
-        return r[dict[str, t.GeneralValueType]].ok({
-            "migrated": 1000,
-            "failed": 0,
-        })
+        return r[m.ConfigMap].ok(m.ConfigMap(root={"migrated": 1000, "failed": 0}))
 
 
 def main() -> None:
     """Demonstrate config log-once pattern."""
     print("=== Example 1: Database Service ===")
-    db_config: dict[str, t.GeneralValueType] = {
-        "host": c.Network.LOCALHOST,
-        "port": 5432,
-        "database": "mydb",
-        "pool_size": 10,
-    }
-
-    db_service = DatabaseService(db_config=db_config)
+    db_config = m.ConfigMap(
+        root={
+            "host": c.Network.LOCALHOST,
+            "port": 5432,
+            "database": "mydb",
+            "pool_size": 10,
+        }
+    )
+    db_service = DatabaseService.model_construct()
+    setattr(db_service, "db_config", db_config)
     result = db_service.execute()
-
     if result.is_success:
         print(f"✅ Database query successful: {result.value}")
-
     print("\n=== Example 2: Migration Service ===")
     migration_service = MigrationService(
-        input_dir="/data/input",
-        output_dir="/data/output",
-        sync=True,
+        input_dir="/data/input", output_dir="/data/output", sync=True
     )
-
     result = migration_service.execute()
-
     if result.is_success:
         print(f"✅ Migration successful: {result.value}")
-
     print("\n=== Key Observations ===")
     print("1. Config logged ONCE when service initialized")
     print("2. Config does NOT appear in subsequent logs")

@@ -1,0 +1,37 @@
+# === WORKSPACE/STANDALONE DETECTION ===
+BASE_MK_DIR := $(patsubst %/,%,$(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
+PROJECT_ROOT := $(CURDIR)
+
+ifeq ($(FLEXT_STANDALONE),1)
+FLEXT_MODE := standalone
+else
+# Pure Make detection: if base.mk lives in a parent dir, we are inside a workspace.
+# No Python dependency — shell/Make only until venv is ready.
+ifneq ($(BASE_MK_DIR),$(PROJECT_ROOT))
+FLEXT_MODE := workspace
+else
+FLEXT_MODE := standalone
+endif
+endif
+
+ifeq ($(FLEXT_MODE),workspace)
+WORKSPACE_ROOT := $(BASE_MK_DIR)
+WORKSPACE_VENV := $(WORKSPACE_ROOT)/.venv
+ifeq ($(wildcard $(WORKSPACE_VENV)),)
+ACTIVE_VENV := $(PROJECT_ROOT)/.venv
+export POETRY_VIRTUALENVS_PATH := $(PROJECT_ROOT)
+export POETRY_VIRTUALENVS_IN_PROJECT := true
+export POETRY_VIRTUALENVS_CREATE := true
+else
+ACTIVE_VENV := $(WORKSPACE_VENV)
+export POETRY_VIRTUALENVS_PATH := $(WORKSPACE_ROOT)
+export POETRY_VIRTUALENVS_IN_PROJECT := false
+export POETRY_VIRTUALENVS_CREATE := false
+endif
+else
+WORKSPACE_ROOT := $(PROJECT_ROOT)
+ACTIVE_VENV := $(PROJECT_ROOT)/.venv
+export POETRY_VIRTUALENVS_PATH := $(PROJECT_ROOT)
+export POETRY_VIRTUALENVS_IN_PROJECT := true
+export POETRY_VIRTUALENVS_CREATE := true
+endif

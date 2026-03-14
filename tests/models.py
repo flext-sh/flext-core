@@ -14,233 +14,486 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping
-from dataclasses import dataclass, field
-from typing import TypedDict
+from collections.abc import Callable
+from enum import StrEnum
+from typing import Annotated, override
 
-from flext_core import FlextModels, FlextProtocols, FlextTypes
-from flext_core.models import m
-from flext_core.typings import t
-from flext_tests.models import FlextTestsModels
+from pydantic import BaseModel, ConfigDict, Field
+
+from flext_core import FlextModels, t
+from flext_infra import FlextInfraModels
+from flext_tests import FlextTestsModels
 
 
-class TestsFlextModels:
+class TestsFlextModels(FlextTestsModels, FlextInfraModels):
     """Models for flext-core tests - uses composition with FlextTestsModels.
 
     Architecture: Uses composition (not inheritance) with FlextTestsModels and FlextModels
     for flext-core-specific model definitions.
 
     Access patterns:
-    - TestsFlextModels.Tests.* = flext_tests test models (via composition)
-    - TestsFlextModels.Core.* = flext-core-specific test models
-    - TestsFlextModels.Entity, .Value, etc. = FlextModels domain models (via composition)
+    - TestsFlextModels.FlextTestsModels.Tests.* = flext_tests test models (via composition)
+    - TestsFlextModels.* = flext-core-specific test models
+    - TestsFlextModels.FlextModels.Entity, .FlextModels.Value, etc. = FlextModels domain models (via composition)
 
     Rules:
     - Use composition, not inheritance (FlextTestsModels deprecates subclassing)
     - flext-core-specific models go in Core namespace
-    - Generic models accessed via Tests namespace
+    - Generic models accessed via FlextTestsModels.Tests namespace
     """
 
-    # Composition: expose FlextTestsModels namespaces
-    Tests = FlextTestsModels.Tests
+    class ServiceTestType(StrEnum):
+        """Service test type enum for test scenarios."""
 
-    # Composition: expose FlextModels domain model classes
-    Entity = FlextModels.Entity
-    Value = m.Value
-    AggregateRoot = FlextModels.AggregateRoot
-    DomainEvent = FlextModels.DomainEvent
-    Collections = FlextModels.Collections
+        GET_USER = "get_user"
+        VALIDATE = "validate"
+        FAIL = "fail"
 
-    # Type aliases for domain test input
-    type DomainInputValue = (
-        FlextTypes.GeneralValueType | FlextProtocols.HasModelDump | object
-    )
-    type DomainInputMapping = Mapping[str, TestsFlextModels.DomainInputValue]
-    type DomainExpectedResult = (
-        FlextTypes.GeneralValueType | type[FlextTypes.GeneralValueType]
-    )
+    class User(FlextModels.Entity):
+        """Shared user model for tests."""
 
-    class Core:
-        """flext-core-specific test models namespace."""
+        model_config = ConfigDict(frozen=False)
 
-        class DomainTestEntity:
-            """Test entity for domain tests."""
+        user_id: str
+        name: str
+        email: str
+        is_active: bool = True
 
-            def __init__(self, name: str, value: int) -> None:
-                """Initialize test entity with name and value."""
-                self.name = name
-                self.value = value
-                self.unique_id = f"test-{name}-{value}"
+    class ServiceTestCase(BaseModel):
+        """Service execution case model for tests."""
 
-        class DomainTestValue:
-            """Test value object for domain tests."""
+        model_config = ConfigDict(frozen=True)
 
-            _frozen = False
+        service_type: str
+        input_value: str
+        expected_success: bool = True
+        expected_error: str | None = None
+        extra_param: int = 3
+        description: str = ""
 
-            def __init__(self, data: str = "", count: int = 0) -> None:
-                """Initialize test value object with optional data and count."""
-                self._frozen = False
-                self.data = data
-                self.count = count
-                self._frozen = True
+    class DomainTestEntity(FlextModels.Entity):
+        """Test entity for domain tests."""
 
-            def __setattr__(self, name: str, value: object) -> None:
-                """Set attribute with frozen state validation."""
-                if getattr(self, "_frozen", False) and name != "_frozen":
-                    raise AttributeError(
-                        f"{type(self).__name__} object attribute '{name}' is read-only",
-                    )
-                super().__setattr__(name, value)
+        model_config = ConfigDict(frozen=False)
 
-            count: int
+        name: str
+        value: t.ContainerValue
 
-        class CustomEntity:
-            """Custom entity with configurable ID attribute."""
+    class DomainTestValue(FlextModels.Value):
+        """Test value object for domain tests."""
 
-            def __init__(self, custom_id: str | None = None) -> None:
-                """Initialize custom entity with ID."""
-                self.custom_id = custom_id
+        model_config = ConfigDict(frozen=True)
 
-        class SimpleValue:
-            """Simple value object without model_dump."""
+        data: str = ""
+        count: int
 
-            def __init__(self, data: str) -> None:
-                """Initialize simple value object."""
-                self.data = data
+    class CustomEntity:
+        """Custom entity with configurable ID attribute."""
 
-        class ComplexValue:
-            """Value object with non-hashable attributes."""
+        def __init__(self, custom_id: str | None = None) -> None:
+            """Initialize custom entity with ID."""
+            self.custom_id = custom_id
 
-            def __init__(self, data: str, items: list[str]) -> None:
-                """Initialize complex value with non-hashable items."""
-                self.data = data
-                self.items = items  # list is not hashable
+    class SimpleValue:
+        """Simple value object without model_dump."""
 
-        class NoDict:
-            """Object without __dict__, using __slots__."""
+        def __init__(self, data: str) -> None:
+            """Initialize simple value object."""
+            self.data = data
 
-            __slots__ = ("value",)
+    class ComplexValue:
+        """FlextModels.Value object with non-hashable attributes."""
 
-            def __init__(self, value: int) -> None:
-                """Initialize object without __dict__."""
-                object.__setattr__(self, "value", value)
+        def __init__(self, data: str, items: list[str]) -> None:
+            """Initialize complex value with non-hashable items."""
+            self.data = data
+            self.items = items  # list is not hashable
 
-            def __repr__(self) -> str:
-                """Return string representation."""
-                return f"NoDict({getattr(self, 'value', None)})"
+    class NoDict:
+        """Object without __dict__, using __slots__."""
 
-        class MutableObj:
-            """Mutable object for immutability testing."""
+        __slots__ = ("value",)
 
-            def __init__(self, value: int) -> None:
-                """Initialize mutable object."""
-                self.value = value
+        def __init__(self, value: int) -> None:
+            """Initialize object without __dict__."""
+            object.__setattr__(self, "value", value)
 
-        class ImmutableObj:
-            """Immutable object with custom __setattr__."""
+        @override
+        def __repr__(self) -> str:
+            """Return string representation."""
+            return f"NoDict({getattr(self, 'value', None)})"
 
-            _frozen: bool = True
+    class MutableObj:
+        """Mutable object for immutability testing."""
 
-            def __init__(self, value: int) -> None:
-                """Initialize immutable object."""
-                object.__setattr__(self, "value", value)
+        def __init__(self, value: int) -> None:
+            """Initialize mutable object."""
+            self.value = value
 
-            def __setattr__(self, name: str, value: object) -> None:
-                """Prevent attribute setting if frozen."""
-                if self._frozen:
-                    msg = "Object is frozen"
-                    raise AttributeError(msg)
-                object.__setattr__(self, name, value)
+    class ImmutableObj:
+        """Immutable object with custom __setattr__."""
 
-        class NoConfigNoSetattr:
-            """Object without model_config or __setattr__."""
+        _frozen: bool = True
 
-        class NoSetattr:
-            """Object without __setattr__."""
+        def __init__(self, value: int) -> None:
+            """Initialize immutable object."""
+            object.__setattr__(self, "value", value)
 
-        # ParseOptions reference for string parser tests
-        class ParseOptions(m.CollectionsParseOptions):
-            """Parse options - real inheritance."""
+        @override
+        def __setattr__(self, name: str, value: t.ContainerValue) -> None:
+            """Prevent attribute setting if frozen."""
+            if self._frozen:
+                msg = "Object is frozen"
+                raise AttributeError(msg)
+            object.__setattr__(self, name, value)
 
-    # Backward compatibility: expose Core classes at root level
-    DomainTestEntity = Core.DomainTestEntity
-    DomainTestValue = Core.DomainTestValue
-    CustomEntity = Core.CustomEntity
-    SimpleValue = Core.SimpleValue
-    ComplexValue = Core.ComplexValue
-    NoDict = Core.NoDict
-    MutableObj = Core.MutableObj
-    ImmutableObj = Core.ImmutableObj
-    NoConfigNoSetattr = Core.NoConfigNoSetattr
-    NoSetattr = Core.NoSetattr
-    ParseOptions = Core.ParseOptions
+    class NoConfigNoSetattr:
+        """Object without model_config or __setattr__."""
 
-    @dataclass(frozen=True, slots=True)
-    class ParseDelimitedCase:
+    class NoSetattr:
+        """Object without __setattr__."""
+
+    # ParseOptions reference for string parser tests
+    # ParseOptions reference for string parser tests
+    class ParseOptions(FlextModels.ParseOptions):
+        """Parse options - real inheritance."""
+
+    class ParseDelimitedCase(BaseModel):
         """Test case for parse_delimited method."""
+
+        model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
 
         text: str
         delimiter: str
         expected: list[str] | None = None
         expected_error: str | None = None
-        options: m.CollectionsParseOptions | None = None
+        options: FlextModels.ParseOptions | None = None
         strip: bool = True
         remove_empty: bool = True
         validator: Callable[[str], bool] | None = None
         use_legacy: bool = False
-        description: str = field(default="", compare=False)
+        description: Annotated[str, Field(default="", exclude=True)] = ""
 
-    @dataclass(frozen=True, slots=True)
-    class SplitEscapeCase:
+    class SplitEscapeCase(BaseModel):
         """Test case for split_on_char_with_escape method."""
+
+        model_config = ConfigDict(frozen=True)
 
         text: str
         split_char: str
         escape_char: str = "\\"
         expected: list[str] | None = None
         expected_error: str | None = None
-        description: str = field(default="", compare=False)
+        description: Annotated[str, Field(default="", exclude=True)] = ""
 
-    @dataclass(frozen=True, slots=True)
-    class NormalizeWhitespaceCase:
+    class NormalizeWhitespaceCase(BaseModel):
         """Test case for normalize_whitespace method."""
+
+        model_config = ConfigDict(frozen=True)
 
         text: str
         pattern: str = r"\s+"
         replacement: str = " "
         expected: str | None = None
         expected_error: str | None = None
-        description: str = field(default="", compare=False)
+        description: Annotated[str, Field(default="", exclude=True)] = ""
 
-    @dataclass(frozen=True, slots=True)
-    class RegexPipelineCase:
+    class RegexPipelineCase(BaseModel):
         """Test case for apply_regex_pipeline method."""
+
+        model_config = ConfigDict(frozen=True)
 
         text: str
         patterns: list[tuple[str, str] | tuple[str, str, int]]
         expected: str | None = None
         expected_error: str | None = None
-        description: str = field(default="", compare=False)
+        description: Annotated[str, Field(default="", exclude=True)] = ""
 
-    @dataclass(frozen=True, slots=True)
-    class ObjectKeyCase:
+    class ObjectKeyCase(BaseModel):
         """Test case for get_object_key method."""
 
-        obj: object
+        model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
+
+        obj: t.ContainerValue
         expected_contains: list[str] | None = None
         expected_exact: str | None = None
-        description: str = field(default="", compare=False)
+        description: Annotated[str, Field(default="", exclude=True)] = ""
+
+    class AutomatedTestScenario(BaseModel):
+        """Pydantic v2 model for automated test scenarios."""
+
+        model_config = ConfigDict(frozen=True)
+
+        description: str
+        input: t.ContainerValue
+        expected_success: bool
+
+    class StandardTestCaseModel(BaseModel):
+        """Standard operation case model for shared test utilities."""
+
+        description: str
+        input_data: t.ContainerValue
+        expected_result: t.ContainerValue
+        expected_success: bool = True
+        error_contains: str | None = None
+
+    class UtilityEntityModel(FlextModels.Entity):
+        """Shared entity model for generic test fixtures."""
+
+        model_config = ConfigDict(frozen=False)
+
+        name: str
+        value: t.ContainerValue
+
+    class UtilityValueModel(FlextModels.Value):
+        """Shared value model for generic test fixtures."""
+
+        model_config = ConfigDict(frozen=True)
+
+        value: t.ContainerValue
+
+    class BddPhaseDict(BaseModel):
+        """BDD phase (given/when/then) configuration."""
+
+        model_config = ConfigDict(frozen=True)
+
+        description: str
+
+    class BddPhaseData(BaseModel):
+        """BDD phase data (given/when/then)."""
+
+        model_config = ConfigDict(frozen=True)
+
+        description: str
+        assertions: list[str]
+        setup_steps: list[str]
+
+    class MockScenarioData(BaseModel):
+        """Mock scenario test data."""
+
+        model_config = ConfigDict(frozen=True)
+
+        given: dict[str, str | int | bool]
+        when: dict[str, str | int | bool]
+        then: dict[str, str | int | bool]
+        tags: list[str]
+        priority: str
+
+    class NestedDataDict(BaseModel):
+        """Nested test data."""
+
+        model_config = ConfigDict(frozen=True)
+
+        key: str
+        value: str | int | bool
+        metadata: str
+
+    class FixtureDataDict(BaseModel):
+        """Test data for FlextTestBuilder."""
+
+        model_config = ConfigDict(frozen=True)
+
+        id: str
+        correlation_id: str
+        created_at: str
+        updated_at: str
+        name: str
+        email: str
+        environment: str
+        version: str
+        nested_data: dict[str, TestsFlextModels.NestedDataDict]
+
+    class FixtureCaseDict(BaseModel):
+        """Individual test case configuration."""
+
+        model_config = ConfigDict(frozen=True)
+
+        email: str
+        input: str
+
+    class SuccessCaseDict(BaseModel):
+        """Success test case."""
+
+        model_config = ConfigDict(frozen=True)
+
+        email: str
+        input: str
+
+    class FailureCaseDict(BaseModel):
+        """Failure test case."""
+
+        model_config = ConfigDict(frozen=True)
+
+        email: str
+        input: str
+
+    class SetupDataDict(BaseModel):
+        """Setup data for test suite."""
+
+        model_config = ConfigDict(frozen=True)
+
+        initialization_step: str
+        configuration_key: str
+        configuration_value: str
+        environment: str
+
+    class FixtureSuiteDict(BaseModel):
+        """Test suite configuration."""
+
+        model_config = ConfigDict(frozen=True)
+
+        suite_name: str
+        scenario_count: int
+        tags: list[str]
+        setup_data: dict[str, TestsFlextModels.SetupDataDict]
+
+    class UserDataFixtureDict(BaseModel):
+        """User fixture data."""
+
+        model_config = ConfigDict(frozen=True)
+
+        username: str
+        email: str
+        status: str
+
+    class RequestDataFixtureDict(BaseModel):
+        """Request fixture data."""
+
+        model_config = ConfigDict(frozen=True)
+
+        method: str
+        path: str
+        headers: dict[str, str]
+
+    class FixtureFixturesDict(BaseModel):
+        """Test fixtures configuration."""
+
+        model_config = ConfigDict(frozen=True)
+
+        user: dict[str, TestsFlextModels.UserDataFixtureDict]
+        request: dict[str, TestsFlextModels.RequestDataFixtureDict]
+
+    class UserProfileDict(BaseModel):
+        """User profile for property-based testing."""
+
+        model_config = ConfigDict(frozen=True)
+
+        id: str
+        name: str
+        email: str
+
+    class ConfigTestCaseDict(BaseModel):
+        """Configuration test case."""
+
+        model_config = ConfigDict(frozen=True)
+
+        domain: str
+        port: int
+        timeout: float
+        debug: bool
+
+    class PerformanceMetricsDict(BaseModel):
+        """Performance metrics from testing."""
+
+        model_config = ConfigDict(frozen=True)
+
+        total_operations: int
+        time_elapsed: float
+        ops_per_second: float
+        memory_peak_mb: float
+
+    class StressTestResultDict(BaseModel):
+        """Result from stress testing."""
+
+        model_config = ConfigDict(frozen=True)
+
+        iterations: int
+        success_count: int
+        failure_count: int
+        average_time_ms: float
+
+    class AsyncPayloadDict(BaseModel):
+        """Async event payload."""
+
+        model_config = ConfigDict(frozen=True)
+
+        data: str
+        status: str
+
+    class AsyncTestDataDict(BaseModel):
+        """Async test data."""
+
+        model_config = ConfigDict(frozen=True)
+
+        event_type: str
+        timestamp: str
+        payload: dict[str, TestsFlextModels.AsyncPayloadDict]
+
+    class UserPayloadDict(BaseModel):
+        """User command payload."""
+
+        model_config = ConfigDict(frozen=True)
+
+        username: str
+        email: str
+
+    class UpdateFieldDict(BaseModel):
+        """Individual update field."""
+
+        model_config = ConfigDict(frozen=True)
+
+        field_name: str
+        new_value: str | int | bool
+
+    class UpdatePayloadDict(BaseModel):
+        """Update command payload."""
+
+        model_config = ConfigDict(frozen=True)
+
+        target_user_id: str
+        updates: dict[str, TestsFlextModels.UpdateFieldDict]
+
+    class UserDataDict(BaseModel):
+        """User data response."""
+
+        model_config = ConfigDict(frozen=True)
+
+        id: str
+        username: str
+        email: str
+        status: str
+
+    class UpdateResultDict(BaseModel):
+        """Update operation result."""
+
+        model_config = ConfigDict(frozen=True)
+
+        user_id: str
+        updated_fields: list[str]
+        update_count: int
+
+    class CommandPayloadDict(BaseModel):
+        """Generic command payload."""
+
+        model_config = ConfigDict(frozen=True)
+
+        id: str = ""
+        username: str = ""
+        email: str = ""
 
 
-class AutomatedTestScenario(TypedDict):
-    """TypedDict for automated test scenarios."""
+# Rebuild models that use recursive PEP 695 type aliases (e.g. t.ContainerValue)
+# Pydantic cannot resolve these forward references at class definition time.
+TestsFlextModels.DomainTestEntity.model_rebuild()
+TestsFlextModels.UtilityEntityModel.model_rebuild()
+TestsFlextModels.UtilityValueModel.model_rebuild()
+TestsFlextModels.ObjectKeyCase.model_rebuild()
+TestsFlextModels.AutomatedTestScenario.model_rebuild()
+TestsFlextModels.StandardTestCaseModel.model_rebuild()
 
-    description: str
-    input: dict[str, t.GeneralValueType]
-    expected_success: bool
-
+m = TestsFlextModels
 
 __all__ = [
-    "AutomatedTestScenario",
     "TestsFlextModels",
+    "m",
 ]

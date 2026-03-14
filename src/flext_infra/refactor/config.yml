@@ -1,0 +1,130 @@
+# Configuração global do Refactor Engine
+# Regras 100% declarativas - editar este arquivo, não código Python
+
+refactor_engine:
+  version: "1.0.0"
+  description: "Flext Refactor Engine - Declarative code transformation"
+
+  # Runtime aliases padrão do flext
+  runtime_aliases:
+    constants: "c"
+    models: "m"
+    types: "t"
+    utilities: "u"
+    result: "r"
+    protocols: "p"
+    decorators: "d"
+    exceptions: "e"
+
+  # Facades base
+  base_facades:
+    constants: "FlextConstants"
+    models: "FlextModels"
+    types: "FlextTypes"
+    utilities: "FlextUtilities"
+    protocols: "FlextProtocols"
+
+  # Ordenação de métodos em classes (ordem rigorosa)
+  method_order:
+    - category: "magic"
+      patterns: ["^__.+__$"]
+      description: "Magic methods (__init__, __str__, etc)"
+    
+    - category: "property"
+      decorators: ["property", "cached_property", "computed_field"]
+      description: "Properties e computed fields"
+    
+    - category: "staticmethod"
+      decorators: ["staticmethod"]
+      description: "Static methods"
+    
+    - category: "classmethod"
+      decorators: ["classmethod"]
+      description: "Class methods"
+    
+    - category: "public"
+      visibility: "public"
+      description: "Public methods"
+    
+    - category: "protected"
+      visibility: "protected"
+      pattern: "^_[^_].*"
+      description: "Protected methods (single underscore)"
+    
+    - category: "private"
+      visibility: "private"
+      pattern: "^__.+"
+      description: "Private methods (double underscore)"
+
+  # Padrões de código legado para remover
+  legacy_patterns:
+    aliases:
+      - pattern: '^(\w+)\s*=\s*(\w+)$'
+        description: "Compatibility alias: OldName = NewName"
+        examples:
+          - "OldClass = NewClass"
+          - "legacy_func = modern_func"
+    
+    wrappers:
+      - pattern: 'def\s+(\w+)\(.*\):\s*return\s+(\w+)\('
+        description: "Wrapper function: def old(): return new()"
+    
+    deprecated:
+      - pattern: 'class.*Deprecated'
+        description: "Deprecated classes"
+      - pattern: 'warnings\.warn.*DeprecationWarning'
+        description: "Deprecation warnings"
+      - pattern: 'deprecated'
+        description: "Anything marked deprecated"
+    
+    bypasses:
+      - pattern: 'try:.*except.*ImportError.*from.*old'
+        description: "Import bypass: try new except old"
+
+  # Imports proibidos (substituir por runtime aliases)
+  forbidden_imports:
+    - module: "flext_core.constants"
+      symbols: ["PLATFORM", "TIMEOUT", "MAX_RETRIES"]
+      replacement: "from flext_core import c"
+      
+    - module: "flext_core.models"
+      symbols: ["User", "Config", "Result"]
+      replacement: "from flext_core import m"
+      
+    - module: "flext_core.result"
+      symbols: ["ok", "fail", "Result"]
+      replacement: "from flext_core import r"
+
+  # Lazy imports (imports dentro de funções) - proibidos
+  lazy_import_patterns:
+    - "import.*inside.*function"
+    - "def.*\n.*import"
+
+  # Mapeamento de símbolos para aliases
+  symbol_mappings:
+    # Constants
+    PLATFORM: "c.System.PLATFORM"
+    MAX_RETRIES: "c.Limits.MAX_RETRIES"
+    TIMEOUT: "c.Limits.TIMEOUT"
+    
+    # Models
+    User: "m.Core.User"
+    Config: "m.Core.Config"
+    Result: "m.Core.Result"
+
+  # Arquivos e diretórios a ignorar
+  ignore_patterns:
+    - "__pycache__"
+    - ".venv"
+    - ".git"
+
+  # Extensões de arquivo a processar
+  file_extensions:
+    - ".py"
+
+  # Diretórios por projeto para propagação full-blast
+  project_scan_dirs:
+    - "src"
+    - "tests"
+    - "scripts"
+    - "examples"
