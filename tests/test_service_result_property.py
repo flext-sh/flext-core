@@ -52,8 +52,9 @@ class TestServiceResultProperty:
         """V2: .result returns unwrapped domain result directly."""
         service = ServiceTestCases.create_service(case)
         assert isinstance(service, GetUserService)
-        user = service.result
-        assert isinstance(user, User)
+        user_raw = service.result
+        assert isinstance(user_raw, User)
+        user = user_raw
         assert user.id == case.input_value
 
     @pytest.mark.parametrize("case", ServiceTestCases.VALIDATE_SUCCESS)
@@ -92,8 +93,9 @@ class TestServiceResultProperty:
         """V2: Type checkers infer correct type."""
         service = ServiceTestCases.create_service(case)
         assert isinstance(service, GetUserService)
-        user = service.result
-        assert isinstance(user, User)
+        user_raw = service.result
+        assert isinstance(user_raw, User)
+        user = user_raw
         assert user.id == case.input_value
 
     @pytest.mark.parametrize("case", ServiceTestCases.USER_SUCCESS)
@@ -102,8 +104,9 @@ class TestServiceResultProperty:
         service = ServiceTestCases.create_service(case)
         assert isinstance(service, GetUserService)
         assert hasattr(service, "result")
-        user = service.result
-        assert isinstance(user, User)
+        user_raw = service.result
+        assert isinstance(user_raw, User)
+        user = user_raw
         assert user.id == case.input_value
 
     @pytest.mark.parametrize("case", ServiceTestCases.USER_SUCCESS)
@@ -149,8 +152,9 @@ class TestServiceResultProperty:
         service2 = ServiceTestCases.create_service(case)
         assert isinstance(service1, GetUserService)
         assert isinstance(service2, GetUserService)
-        user_v2 = service1.result
-        assert isinstance(user_v2, User)
+        user_v2_raw = service1.result
+        assert isinstance(user_v2_raw, User)
+        user_v2 = user_v2_raw
         user_v1_result = service2.execute()
         assert user_v1_result.is_success
         user_v1 = user_v1_result.value
@@ -165,8 +169,9 @@ class TestServiceResultProperty:
         service = ServiceTestCases.create_service(case)
         assert isinstance(service, GetUserService)
         assert hasattr(service, "result")
-        user = service.result
-        assert isinstance(user, User)
+        user_raw = service.result
+        assert isinstance(user_raw, User)
+        user = user_raw
         assert user.id == case.input_value
 
     @pytest.mark.parametrize("case", ServiceTestCases.USER_SUCCESS)
@@ -176,8 +181,9 @@ class TestServiceResultProperty:
         assert isinstance(service, GetUserService)
         dump = service.model_dump(exclude={"access", "runtime"})
         assert "user_id" in dump
-        user = service.result
-        assert isinstance(user, User)
+        user_raw = service.result
+        assert isinstance(user_raw, User)
+        user = user_raw
         assert user.id == case.input_value
 
     def test_property_behavior_edge_cases(self) -> None:

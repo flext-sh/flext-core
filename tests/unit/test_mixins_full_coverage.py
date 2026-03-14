@@ -203,7 +203,11 @@ def test_mixins_runtime_bootstrap_and_track_paths(
                 ),
             )
 
-    service = _Service()
+    service = _Service(
+        config_type=None,
+        config_overrides=None,
+        initial_context=None,
+    )
     runtime = service._get_runtime()
     assert runtime is not None
     assert runtime_container.wired is not None
@@ -225,7 +229,11 @@ def test_mixins_container_registration_and_logger_paths(
     class _Service(x):
         pass
 
-    service = _Service()
+    service = _Service(
+        config_type=None,
+        config_overrides=None,
+        initial_context=None,
+    )
     ok_register = service._register_in_container("svc")
     assert ok_register.is_success
 
@@ -290,7 +298,11 @@ def test_mixins_context_logging_and_cqrs_paths(monkeypatch: pytest.MonkeyPatch) 
         def _get_or_create_logger(cls) -> FlextLogger:
             return cast("FlextLogger", cast("object", _LocalLogger()))
 
-    service = _Service()
+    service = _Service(
+        config_type=None,
+        config_overrides=None,
+        initial_context=None,
+    )
     config = m.ConfigMap(root={"k": "v"})
     service._log_config_once(config, message="cfg")
     service._with_operation_context(
@@ -419,7 +431,11 @@ def test_mixins_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> None:
                 cast("t.Tests.object", {"wire_packages": ["pkg", 1]}),
             )
 
-    _ = _WireService()._get_runtime()
+    _ = _WireService(
+        config_type=None,
+        config_overrides=None,
+        initial_context=None,
+    )._get_runtime()
     assert runtime_container.wired is None
 
     class _ModelMarker:
@@ -430,7 +446,11 @@ def test_mixins_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> None:
     class _ModelService(_ModelMarker, x):
         pass
 
-    model_service = _ModelService()
+    model_service = _ModelService(
+        config_type=None,
+        config_overrides=None,
+        initial_context=None,
+    )
     captured: dict[str, t.Tests.object] = {}
 
     class _RegContainer:
@@ -471,7 +491,11 @@ def test_mixins_remaining_branch_paths(monkeypatch: pytest.MonkeyPatch) -> None:
     class _LoggerService(x):
         pass
 
-    warn_service = _WarnService()
+    warn_service = _WarnService(
+        config_type=None,
+        config_overrides=None,
+        initial_context=None,
+    )
     monkeypatch.setattr(
         warn_service,
         "_register_in_container",

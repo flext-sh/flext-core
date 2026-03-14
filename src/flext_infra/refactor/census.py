@@ -12,15 +12,15 @@ import time
 from pathlib import Path
 
 from flext_core import r
-from flext_infra import c, m, u
-from flext_infra._utilities.output import output
-from flext_infra.refactor.output import render_census_report
-from flext_infra.refactor.transformers.census_visitors import (
+from flext_infra import (
     CensusImportDiscoveryVisitor,
     CensusUsageCollector,
+    c,
+    m,
+    output,
+    render_census_report,
+    u,
 )
-
-__all__ = ["FlextInfraRefactorCensus"]
 
 type RCensusReport = r[m.Infra.Refactor.CensusReport]
 CI = c.Infra.Refactor.Census
@@ -130,3 +130,6 @@ class FlextInfraRefactorCensus:
             elapsed=time.monotonic() - t0,
         )
         return r[m.Infra.Refactor.CensusReport].ok(rep)
+
+
+__all__ = ["FlextInfraRefactorCensus"]

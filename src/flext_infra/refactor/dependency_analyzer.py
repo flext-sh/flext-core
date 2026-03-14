@@ -13,7 +13,6 @@ from pydantic import TypeAdapter, ValidationError
 
 from flext_core import r
 from flext_infra import c, m, p, u
-from flext_infra._utilities.subprocess import FlextInfraUtilitiesSubprocess
 from flext_infra.refactor import _models_namespace_enforcer as nem
 
 
@@ -220,7 +219,7 @@ class DependencyAnalyzer:
             "--json",
             str(src_path),
         ]
-        capture = FlextInfraUtilitiesSubprocess.capture(cmd)
+        capture = u.Infra.capture(cmd)
         if capture.is_failure:
             return r[list[m.Infra.Refactor.AstGrepMatchEnvelope]].fail(
                 capture.error or "capture failed",

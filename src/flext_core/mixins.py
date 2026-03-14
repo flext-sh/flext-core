@@ -122,18 +122,18 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
             default=None,
             description="Configuration class to initialize the service.",
         ),
-    ]
+    ] = None
     config_overrides: Annotated[
         dict[str, t.NormalizedValue] | None,
         Field(
             default=None,
             description="Configuration overrides applied at instantiation.",
         ),
-    ]
+    ] = None
     initial_context: Annotated[
         FlextContext | None,
         Field(default=None, description="Initial FlextContext for the service scope."),
-    ]
+    ] = None
 
     @staticmethod
     def _clear_operation_context() -> None:

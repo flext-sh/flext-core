@@ -196,7 +196,11 @@ class TestFlextMixinsNestedClasses:
             """Test service for mixin scenarios."""
 
             def __init__(self) -> None:
-                super().__init__()
+                super().__init__(
+                    config_type=None,
+                    config_overrides=None,
+                    initial_context=None,
+                )
                 if scenario.needs_init:
                     self._init_service("MyTestService")
 
@@ -245,7 +249,11 @@ class TestFlextMixinsNestedClasses:
             """Test service with operation context."""
 
             def __init__(self) -> None:
-                super().__init__()
+                super().__init__(
+                    config_type=None,
+                    config_overrides=None,
+                    initial_context=None,
+                )
                 self._init_service()
 
         service = MyService()

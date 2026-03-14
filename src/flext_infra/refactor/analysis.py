@@ -15,10 +15,7 @@ import libcst as cst
 from pydantic import TypeAdapter, ValidationError
 
 from flext_core import r
-from flext_infra.constants import FlextInfraConstants as c
-from flext_infra.models import FlextInfraModels as m
-from flext_infra.refactor.scanner import FlextInfraRefactorLooseClassScanner
-from flext_infra.utilities import FlextInfraUtilities as u
+from flext_infra import FlextInfraRefactorLooseClassScanner, c, m, u
 
 type _ClassNestingMappingIndex = dict[
     tuple[str, str], m.Infra.Refactor.ClassNestingMapping

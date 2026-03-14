@@ -7,16 +7,25 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import ast
+from collections.abc import Callable, Mapping
 from pathlib import Path
 
 from flext_infra.codegen._utilities import FlextInfraUtilitiesCodegen
-from flext_infra.codegen.lazy_init import (
-    _extract_version_exports,
-    _merge_child_exports,
-    _scan_ast_public_defs,
-    _should_bubble_up,
-)
+from flext_infra.codegen.lazy_init import FlextInfraCodegenLazyInit
 from flext_tests import tm
+
+_scan_ast_public_defs: Callable[
+    [ast.Module, str, dict[str, tuple[str, str]]], None
+] = getattr(FlextInfraCodegenLazyInit, "_scan_ast_public_defs")
+_should_bubble_up: Callable[[str], bool] = getattr(
+    FlextInfraCodegenLazyInit, "_should_bubble_up"
+)
+_merge_child_exports: Callable[
+    [Path, dict[str, tuple[str, str]], Mapping[str, dict[str, tuple[str, str]]]], None
+] = getattr(FlextInfraCodegenLazyInit, "_merge_child_exports")
+_extract_version_exports: Callable[
+    [Path, str], tuple[dict[str, str], dict[str, tuple[str, str]]]
+] = getattr(FlextInfraCodegenLazyInit, "_extract_version_exports")
 
 
 class TestScanAstPublicDefs:

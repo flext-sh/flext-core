@@ -837,9 +837,13 @@ def test_small_mapper_convenience_methods(mapper: type[u]) -> None:
         "no": NegativePredicate(),
         "yes": EqualOnePredicate(),
     }
-    found_callable = mapper.find_callable(predicates, 1)
+    found_callable = mapper.find_callable(
+        cast("Mapping[str, p.Predicate[int]]", predicates), 1
+    )
     assert found_callable.is_success and found_callable.value == "yes"
-    not_found_callable = mapper.find_callable({"no": _negative}, 1)
+    not_found_callable = mapper.find_callable(
+        cast("Mapping[str, p.Predicate[int]]", {"no": _negative}), 1
+    )
     assert not_found_callable.is_failure
 
 

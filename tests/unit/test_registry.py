@@ -262,7 +262,10 @@ class RegistryScenarios:
         count: int,
     ) -> list[t.HandlerLike]:
         """Create test handlers."""
-        return [ConcreteTestHandler() for _ in range(count)]
+        handlers: list[t.HandlerLike] = [
+            ConcreteTestHandler() for _ in range(count)
+        ]
+        return handlers
 
     @staticmethod
     def create_bindings(
@@ -388,7 +391,7 @@ class TestFlextRegistry:
     )
     def test_summary_management(self, test_case: RegistryTestCase) -> None:
         """Test registry summary creation and properties."""
-        summary = FlextRegistry.Summary()
+        summary = FlextRegistry.Summary(registered=[], skipped=[], errors=[])
         if test_case.handler_count > 0:
             for i in range(test_case.handler_count):
                 summary.registered.append(

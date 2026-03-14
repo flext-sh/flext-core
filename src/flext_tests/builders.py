@@ -19,7 +19,7 @@ from typing import Literal, Self, TypeGuard, cast, overload
 
 from pydantic import BaseModel, TypeAdapter, ValidationError
 
-from flext_core import FlextResult, r
+from flext_core import r
 from flext_tests import c, m, t, tt, u
 
 _TEST_CONTAINER_DICT_ADAPTER = TypeAdapter(dict[str, t.Tests.object])
@@ -78,9 +78,9 @@ class FlextTestsBuilders:
     @staticmethod
     def _is_result_obj(
         value: BaseModel
-        | FlextResult[BaseModel]
-        | FlextResult[Mapping[str, BaseModel]]
-        | FlextResult[list[BaseModel]]
+        | r[BaseModel]
+        | r[Mapping[str, BaseModel]]
+        | r[list[BaseModel]]
         | Mapping[str, BaseModel]
         | Mapping[str, t.Tests.object]
         | Path

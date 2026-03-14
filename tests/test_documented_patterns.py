@@ -21,7 +21,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import operator
-from typing import Annotated, override
+from typing import Annotated, cast, override
 
 import pytest
 from pydantic import BaseModel, ConfigDict, Field
@@ -347,8 +347,9 @@ class TestPattern2V2Property:
     @pytest.mark.parametrize("case", TestFactories.success_cases())
     def test_v2_property_success(self, case: ServiceTestCase) -> None:
         """V2 Property: Use .result for happy path."""
-        user = case.create_user_service().result
-        assert isinstance(user, User)
+        result_value = case.create_user_service().result
+        assert isinstance(result_value, User)
+        user = cast("User", result_value)
         assert user.unique_id == case.user_id
         assert user.name == f"User {case.user_id}"
 
@@ -399,8 +400,9 @@ class TestPattern4RailwayV2Property:
         case: RailwayTestCase,
     ) -> None:
         """V2 Property: .execute() available for railway pattern."""
-        user_result = _make(GetUserService, user_id="123").result
-        assert isinstance(user_result, User)
+        user_result_raw = _make(GetUserService, user_id="123").result
+        assert isinstance(user_result_raw, User)
+        user_result = cast("User", user_result_raw)
         assert user_result.unique_id == "123"
         result = _make(GetUserService, user_id="123").execute().map(lambda u: u.email)
         _ = assertion_helpers.assert_flext_result_success(result)
@@ -485,8 +487,9 @@ class TestPattern6ErrorHandling:
     def test_error_handling_try_except_v2_property(self) -> None:
         """Error Handling: try/except with V2 Property."""
         try:
-            user_result = _make(GetUserService, user_id="123").result
-            assert isinstance(user_result, User)
+            user_result_raw = _make(GetUserService, user_id="123").result
+            assert isinstance(user_result_raw, User)
+            user_result = cast("User", user_result_raw)
             assert user_result.unique_id == "123"
         except FlextExceptions.BaseError:
             pytest.fail("Should not raise")
@@ -500,8 +503,9 @@ class TestPattern6ErrorHandling:
     def test_error_handling_graceful_degradation(self) -> None:
         """Error Handling: Graceful degradation pattern."""
         try:
-            user_result = _make(GetUserService, user_id="123").result
-            assert isinstance(user_result, User)
+            user_result_raw = _make(GetUserService, user_id="123").result
+            assert isinstance(user_result_raw, User)
+            user_result = cast("User", user_result_raw)
             email = user_result.email
         except FlextExceptions.BaseError:
             email = "fallback@example.com"
@@ -589,8 +593,9 @@ class TestAllPatternsIntegration:
         """All patterns work together seamlessly."""
         v1_result = _make(GetUserService, user_id="123").execute()
         assert v1_result.is_success
-        v2_user_result = _make(GetUserService, user_id="456").result
-        assert isinstance(v2_user_result, User)
+        v2_user_raw = _make(GetUserService, user_id="456").result
+        assert isinstance(v2_user_raw, User)
+        v2_user_result = cast("User", v2_user_raw)
         assert v2_user_result.unique_id == "456"
         assert isinstance(v1_result.value, User)
         assert isinstance(v2_user_result, User)
@@ -622,7 +627,9 @@ class TestAllPatternsIntegration:
 
     def test_complete_real_world_scenario(self) -> None:
         """Complete scenario using multiple patterns."""
-        user = _make(GetUserService, user_id="123").result
+        user_raw = _make(GetUserService, user_id="123").result
+        assert isinstance(user_raw, User)
+        user = cast("User", user_raw)
         email_result = (
             _make(SendEmailService, to=user.email, subject="Welcome")
             .execute()

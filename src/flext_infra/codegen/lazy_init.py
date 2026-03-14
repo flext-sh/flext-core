@@ -21,7 +21,7 @@ import ast
 import contextlib
 from collections.abc import Mapping
 from pathlib import Path
-from typing import override
+from typing import ClassVar, override
 
 from flext_core import r, s
 from flext_infra import FlextInfraUtilitiesSubprocess, c, output, u
@@ -56,6 +56,12 @@ class FlextInfraCodegenLazyInit(s[int]):
             wire_classes=None,
         )
         self._root: Path = workspace_root
+
+    _TYPEVAR_CALL_NAMES: ClassVar[frozenset[str]] = frozenset({
+        "TypeVar",
+        "ParamSpec",
+        "TypeVarTuple",
+    })
 
     @override
     def execute(self) -> r[int]:
@@ -133,7 +139,7 @@ class FlextInfraCodegenLazyInit(s[int]):
                 ):
                     continue
                 parent = py_file.parent
-                if _dir_has_py_files(parent):
+                if self._dir_has_py_files(parent):
                     pkg_dirs.add(parent)
         return sorted(pkg_dirs, key=lambda p: len(p.parts), reverse=True)
 
@@ -162,25 +168,25 @@ class FlextInfraCodegenLazyInit(s[int]):
             return (None, {})
 
         # 1. Read ONLY docstring from existing __init__.py
-        docstring = _read_existing_docstring(init_path)
+        docstring = self._read_existing_docstring(init_path)
         if not docstring:
-            docstring = _default_docstring(pkg_dir.name)
+            docstring = self._default_docstring(pkg_dir.name)
 
         # 2. Build lazy map from sibling .py files
-        lazy_map = _build_sibling_export_index(pkg_dir, current_pkg)
+        lazy_map = self._build_sibling_export_index(pkg_dir, current_pkg)
 
         # 3. Add exports from child subdirectories (already computed)
-        _merge_child_exports(pkg_dir, lazy_map, dir_exports)
+        self._merge_child_exports(pkg_dir, lazy_map, dir_exports)
 
         # 4. Handle __version__.py
-        inline_constants, version_lazy = _extract_version_exports(
+        inline_constants, version_lazy = self._extract_version_exports(
             pkg_dir,
             current_pkg,
         )
         lazy_map.update(version_lazy)
 
         # 5. Handle single-letter aliases via ALIAS_TO_SUFFIX
-        _resolve_aliases(lazy_map)
+        self._resolve_aliases(lazy_map)
 
         # 6. Remove infrastructure names (eagerly imported, not lazy)
         for infra_name in ("cleanup_submodule_namespace", "lazy_getattr"):
@@ -188,7 +194,7 @@ class FlextInfraCodegenLazyInit(s[int]):
 
         # 6b. Detect TypeVars — must be eager, not lazy
         eager_tvars = frozenset(
-            _detect_eager_typevar_names(pkg_dir) & set(lazy_map),
+            self._detect_eager_typevar_names(pkg_dir) & set(lazy_map),
         )
 
         # 7. Remove inline constants from lazy map (inlined directly)
@@ -226,7 +232,7 @@ class FlextInfraCodegenLazyInit(s[int]):
     ) -> tuple[int, dict[str, tuple[str, str]]]:
         """Write the generated ``__init__.py`` and run ruff fix."""
         try:
-            generated = _generate_file(
+            generated = self._generate_file(
                 docstring,
                 exports,
                 lazy_map,
@@ -235,7 +241,7 @@ class FlextInfraCodegenLazyInit(s[int]):
                 eager_typevar_names,
             )
             init_path.write_text(generated, encoding=c.Infra.Encoding.DEFAULT)
-            _run_ruff_fix(init_path)
+            self._run_ruff_fix(init_path)
         except (OSError, ValueError) as exc:
             output.error(f"generating {init_path}: {exc}")
             return (-1, dict(lazy_map))
@@ -248,295 +254,286 @@ class FlextInfraCodegenLazyInit(s[int]):
         output.info(f"  OK: {rel_path} — {len(exports)} exports")
         return (0, dict(lazy_map))
 
+    # ---------------------------------------------------------------------------
+    # Directory / package helpers
+    # ---------------------------------------------------------------------------
 
-# ---------------------------------------------------------------------------
-# Directory / package helpers
-# ---------------------------------------------------------------------------
+    @staticmethod
+    def _dir_has_py_files(pkg_dir: Path) -> bool:
+        """Return True if directory has ``.py`` files besides ``__init__.py``."""
+        return any(
+            f.name != "__init__.py" and f.suffix == ".py"
+            for f in pkg_dir.iterdir()
+            if f.is_file()
+        )
 
+    # ---------------------------------------------------------------------------
+    # Source-file scanning (the core of auto-discovery)
+    # ---------------------------------------------------------------------------
 
-def _dir_has_py_files(pkg_dir: Path) -> bool:
-    """Return True if directory has ``.py`` files besides ``__init__.py``."""
-    return any(
-        f.name != "__init__.py" and f.suffix == ".py"
-        for f in pkg_dir.iterdir()
-        if f.is_file()
-    )
+    @staticmethod
+    def _default_docstring(dir_name: str) -> str:
+        """Generate a default module docstring from directory name."""
+        label = dir_name.replace("_", " ").replace("-", " ").strip()
+        return f'"""{label.capitalize()} package."""'
 
+    @staticmethod
+    def _read_existing_docstring(init_path: Path) -> str:
+        """Read ONLY the docstring from an existing ``__init__.py``.
 
-# ---------------------------------------------------------------------------
-# Source-file scanning (the core of auto-discovery)
-# ---------------------------------------------------------------------------
-
-
-def _default_docstring(dir_name: str) -> str:
-    """Generate a default module docstring from directory name."""
-    label = dir_name.replace("_", " ").replace("-", " ").strip()
-    return f'"""{label.capitalize()} package."""'
-
-
-def _read_existing_docstring(init_path: Path) -> str:
-    """Read ONLY the docstring from an existing ``__init__.py``.
-
-    This is the **only** thing we read from existing ``__init__.py`` files.
-    Everything else is auto-discovered from sibling ``.py`` source files.
-    """
-    if not init_path.exists():
-        return ""
-    try:
-        content = init_path.read_text(encoding="utf-8")
-    except OSError:
-        return ""
-    # NOTE: source text needed below - cannot delegate to u.Infra.parse_module_ast
-    tree = u.Infra.parse_ast_from_source(content)
-    if tree is None:
-        return ""
-    if (
-        tree.body
-        and isinstance(tree.body[0], ast.Expr)
-        and isinstance(tree.body[0].value, ast.Constant)
-        and isinstance(tree.body[0].value.value, str)
-    ):
-        ds = tree.body[0]
-        return "\n".join(content.splitlines()[ds.lineno - 1 : ds.end_lineno])
-    return ""
-
-
-def _build_sibling_export_index(
-    pkg_dir: Path,
-    current_pkg: str,
-) -> dict[str, tuple[str, str]]:
-    """Scan sibling ``.py`` files for exports.
-
-    For each non-private, non-dunder sibling ``.py`` file:
-
-    1. If it has ``__all__`` → use those names.
-    2. If no ``__all__`` → scan AST for public classes/functions/assignments.
-
-    Returns ``{export_name: (module_path, attr_name)}``.
-    """
-    index: dict[str, tuple[str, str]] = {}
-    for py_file in sorted(pkg_dir.glob("*.py")):
-        if py_file.name in {"__init__.py", "__main__.py", "__version__.py"}:
-            continue
-        if py_file.name.startswith("_"):
-            continue
-        if py_file.stem[0:1].isdigit():
-            continue
-
-        mod_stem = py_file.stem
-        mod_path = f"{current_pkg}.{mod_stem}" if current_pkg else mod_stem
-        sibling_tree = u.Infra.parse_module_ast(py_file)
-        if sibling_tree is None:
-            output.warning(f"skipping {py_file.name}: parse failed")
-            continue
-
-        # Prefer __all__ when available
-        has_all, all_exports = u.Infra.extract_exports(sibling_tree)
-        if has_all and all_exports:
-            for name in all_exports:
-                index[name] = (mod_path, name)
-        else:
-            _scan_ast_public_defs(sibling_tree, mod_path, index)
-
-    return index
-
-
-def _scan_ast_public_defs(
-    tree: ast.Module,
-    mod_path: str,
-    index: dict[str, tuple[str, str]],
-) -> None:
-    """Scan AST for public classes, functions, and assignments."""
-    for node in ast.iter_child_nodes(tree):
-        names: list[str] = []
-        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
-            names.append(node.name)
-        elif isinstance(node, ast.Assign):
-            names.extend(
-                target.id for target in node.targets if isinstance(target, ast.Name)
-            )
-        elif isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name):
-            names.append(node.target.id)
-        for name in names:
-            if not name.startswith("_"):
-                index[name] = (mod_path, name)
-
-
-_TYPEVAR_CALL_NAMES: frozenset[str] = frozenset({
-    "TypeVar",
-    "ParamSpec",
-    "TypeVarTuple",
-})
-
-
-def _detect_eager_typevar_names(pkg_dir: Path) -> set[str]:
-    """Detect module-level TypeVar/ParamSpec names in typings.py.
-
-    These MUST be exported eagerly (not via lazy __getattr__) because
-    Python needs them available at class definition time for Generic[T].
-    """
-    typings_file = pkg_dir / "typings.py"
-    if not typings_file.exists():
-        return set()
-    tree = u.Infra.parse_module_ast(typings_file)
-    if tree is None:
-        return set()
-    names: set[str] = set()
-    for node in tree.body:
-        if not isinstance(node, ast.Assign):
-            continue
-        if not (
-            isinstance(node.value, ast.Call)
-            and isinstance(node.value.func, ast.Name)
-            and node.value.func.id in _TYPEVAR_CALL_NAMES
+        This is the **only** thing we read from existing ``__init__.py`` files.
+        Everything else is auto-discovered from sibling ``.py`` source files.
+        """
+        if not init_path.exists():
+            return ""
+        try:
+            content = init_path.read_text(encoding="utf-8")
+        except OSError:
+            return ""
+        # NOTE: source text needed below - cannot delegate to u.Infra.parse_module_ast
+        tree = u.Infra.parse_ast_from_source(content)
+        if tree is None:
+            return ""
+        if (
+            tree.body
+            and isinstance(tree.body[0], ast.Expr)
+            and isinstance(tree.body[0].value, ast.Constant)
+            and isinstance(tree.body[0].value.value, str)
         ):
-            continue
-        for target in node.targets:
-            if isinstance(target, ast.Name) and not target.id.startswith("_"):
-                names.add(target.id)
-    return names
+            ds = tree.body[0]
+            return "\n".join(content.splitlines()[ds.lineno - 1 : ds.end_lineno])
+        return ""
 
+    @staticmethod
+    def _build_sibling_export_index(
+        pkg_dir: Path,
+        current_pkg: str,
+    ) -> dict[str, tuple[str, str]]:
+        """Scan sibling ``.py`` files for exports.
 
-# ---------------------------------------------------------------------------
-# Child-directory export merging (bottom-up)
-# ---------------------------------------------------------------------------
+        For each non-private, non-dunder sibling ``.py`` file:
 
+        1. If it has ``__all__`` → use those names.
+        2. If no ``__all__`` → scan AST for public classes/functions/assignments.
 
-def _should_bubble_up(name: str) -> bool:
-    """Check if an export should bubble up to the parent package.
-
-    Filters out private names, entry points, and ALL_CAPS utility constants.
-    """
-    if name.startswith("_"):
-        return False
-    if name == "main":
-        return False
-    # Skip ALL_CAPS constants (e.g., BLUE, BOLD, SYM_ARROW)
-    return not name.isupper()
-
-
-def _merge_child_exports(
-    pkg_dir: Path,
-    lazy_map: dict[str, tuple[str, str]],
-    dir_exports: Mapping[str, dict[str, tuple[str, str]]],
-) -> None:
-    """Merge child subdirectory exports into parent's lazy map.
-
-    For each immediate subdirectory that has computed exports,
-    add their exports to the parent.  Sibling file exports take
-    precedence over child exports (already in ``lazy_map``).
-    """
-    for subdir in sorted(pkg_dir.iterdir()):
-        if not subdir.is_dir() or subdir.name.startswith("."):
-            continue
-        subdir_key = str(subdir)
-        if subdir_key not in dir_exports:
-            continue
-        sub_exports = dir_exports[subdir_key]
-        for name, (mod, attr) in sub_exports.items():
-            if not _should_bubble_up(name):
+        Returns ``{export_name: (module_path, attr_name)}``.
+        """
+        index: dict[str, tuple[str, str]] = {}
+        for py_file in sorted(pkg_dir.glob("*.py")):
+            if py_file.name in {"__init__.py", "__main__.py", "__version__.py"}:
                 continue
-            # Sibling file exports take precedence
-            if name not in lazy_map:
-                lazy_map[name] = (mod, attr)
+            if py_file.name.startswith("_"):
+                continue
+            if py_file.stem[0:1].isdigit():
+                continue
 
+            mod_stem = py_file.stem
+            mod_path = f"{current_pkg}.{mod_stem}" if current_pkg else mod_stem
+            sibling_tree = u.Infra.parse_module_ast(py_file)
+            if sibling_tree is None:
+                output.warning(f"skipping {py_file.name}: parse failed")
+                continue
 
-# ---------------------------------------------------------------------------
-# Version and alias resolution
-# ---------------------------------------------------------------------------
+            # Prefer __all__ when available
+            has_all, all_exports = u.Infra.extract_exports(sibling_tree)
+            if has_all and all_exports:
+                for name in all_exports:
+                    index[name] = (mod_path, name)
+            else:
+                FlextInfraCodegenLazyInit._scan_ast_public_defs(
+                    sibling_tree,
+                    mod_path,
+                    index,
+                )
 
+        return index
 
-def _extract_version_exports(
-    pkg_dir: Path,
-    current_pkg: str,
-) -> tuple[dict[str, str], dict[str, tuple[str, str]]]:
-    """Extract version-related exports from ``__version__.py``.
+    @staticmethod
+    def _scan_ast_public_defs(
+        tree: ast.Module,
+        mod_path: str,
+        index: dict[str, tuple[str, str]],
+    ) -> None:
+        """Scan AST for public classes, functions, and assignments."""
+        for node in ast.iter_child_nodes(tree):
+            names: list[str] = []
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                names.append(node.name)
+            elif isinstance(node, ast.Assign):
+                names.extend(
+                    target.id for target in node.targets if isinstance(target, ast.Name)
+                )
+            elif isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name):
+                names.append(node.target.id)
+            for name in names:
+                if not name.startswith("_"):
+                    index[name] = (mod_path, name)
 
-    Returns:
-        ``(inline_constants, lazy_entries)``.
-        ``inline_constants``: String constants to inline (``__version__``).
-        ``lazy_entries``: Non-string dunder constants for lazy loading
-        (``__version_info__``).
+    @staticmethod
+    def _detect_eager_typevar_names(pkg_dir: Path) -> set[str]:
+        """Detect module-level TypeVar/ParamSpec names in typings.py.
 
-    """
-    ver_file = pkg_dir / "__version__.py"
-    if not ver_file.exists():
-        return ({}, {})
-    tree = u.Infra.parse_module_ast(ver_file)
-    if tree is None:
-        return ({}, {})
-
-    inline = u.Infra.extract_inline_constants(tree)
-    ver_mod = f"{current_pkg}.__version__" if current_pkg else "__version__"
-
-    lazy: dict[str, tuple[str, str]] = {}
-    for node in tree.body:
-        if isinstance(node, ast.Assign) and len(node.targets) == 1:
-            target = node.targets[0]
-            if (
-                isinstance(target, ast.Name)
-                and target.id.startswith("__")
-                and target.id.endswith("__")
-                and target.id not in inline
+        These MUST be exported eagerly (not via lazy __getattr__) because
+        Python needs them available at class definition time for Generic[T].
+        """
+        typings_file = pkg_dir / "typings.py"
+        if not typings_file.exists():
+            return set()
+        tree = u.Infra.parse_module_ast(typings_file)
+        if tree is None:
+            return set()
+        names: set[str] = set()
+        for node in tree.body:
+            if not isinstance(node, ast.Assign):
+                continue
+            if not (
+                isinstance(node.value, ast.Call)
+                and isinstance(node.value.func, ast.Name)
+                and node.value.func.id in FlextInfraCodegenLazyInit._TYPEVAR_CALL_NAMES
             ):
-                lazy[target.id] = (ver_mod, target.id)
+                continue
+            for target in node.targets:
+                if isinstance(target, ast.Name) and not target.id.startswith("_"):
+                    names.add(target.id)
+        return names
 
-    return (inline, lazy)
+    # ---------------------------------------------------------------------------
+    # Child-directory export merging (bottom-up)
+    # ---------------------------------------------------------------------------
 
+    @staticmethod
+    def _should_bubble_up(name: str) -> bool:
+        """Check if an export should bubble up to the parent package.
 
-def _resolve_aliases(lazy_map: dict[str, tuple[str, str]]) -> None:
-    """Resolve single-letter aliases from ``ALIAS_TO_SUFFIX`` mapping.
+        Filters out private names, entry points, and ALL_CAPS utility constants.
+        """
+        if name.startswith("_"):
+            return False
+        if name == "main":
+            return False
+        # Skip ALL_CAPS constants (e.g., BLUE, BOLD, SYM_ARROW)
+        return not name.isupper()
 
-    For each alias (``c``, ``m``, ``t``, ``u``, ``p``, ``r``, ``d``,
-    ``e``, ``h``, ``s``, ``x``), find a class in the lazy_map whose name
-    ends with the corresponding suffix and create a mapping.
-    """
-    for alias, suffix in c.Infra.Codegen.ALIAS_TO_SUFFIX.items():
-        if alias in lazy_map:
-            continue
-        for name, (mod, _attr) in list(lazy_map.items()):
-            if name.endswith(suffix) and len(name) > 1:
-                lazy_map[alias] = (mod, name)
-                break
+    @staticmethod
+    def _merge_child_exports(
+        pkg_dir: Path,
+        lazy_map: dict[str, tuple[str, str]],
+        dir_exports: Mapping[str, dict[str, tuple[str, str]]],
+    ) -> None:
+        """Merge child subdirectory exports into parent's lazy map.
 
+        For each immediate subdirectory that has computed exports,
+        add their exports to the parent.  Sibling file exports take
+        precedence over child exports (already in ``lazy_map``).
+        """
+        for subdir in sorted(pkg_dir.iterdir()):
+            if not subdir.is_dir() or subdir.name.startswith("."):
+                continue
+            subdir_key = str(subdir)
+            if subdir_key not in dir_exports:
+                continue
+            sub_exports = dir_exports[subdir_key]
+            for name, (mod, attr) in sub_exports.items():
+                if not FlextInfraCodegenLazyInit._should_bubble_up(name):
+                    continue
+                # Sibling file exports take precedence
+                if name not in lazy_map:
+                    lazy_map[name] = (mod, attr)
 
-# ---------------------------------------------------------------------------
-# Code generation
-# ---------------------------------------------------------------------------
+    # ---------------------------------------------------------------------------
+    # Version and alias resolution
+    # ---------------------------------------------------------------------------
 
+    @staticmethod
+    def _extract_version_exports(
+        pkg_dir: Path,
+        current_pkg: str,
+    ) -> tuple[dict[str, str], dict[str, tuple[str, str]]]:
+        """Extract version-related exports from ``__version__.py``.
 
-def _generate_file(
-    docstring_source: str,
-    exports: list[str],
-    filtered: Mapping[str, tuple[str, str]],
-    inline_constants: Mapping[str, str],
-    current_pkg: str,
-    eager_typevar_names: frozenset[str] = frozenset(),
-) -> str:
-    """Generate the complete ``__init__.py`` content."""
-    return u.Infra.generate_file(
-        docstring_source,
-        exports,
-        filtered,
-        inline_constants,
-        current_pkg,
-        eager_typevar_names,
-    )
+        Returns:
+            ``(inline_constants, lazy_entries)``.
+            ``inline_constants``: String constants to inline (``__version__``).
+            ``lazy_entries``: Non-string dunder constants for lazy loading
+            (``__version_info__``).
 
+        """
+        ver_file = pkg_dir / "__version__.py"
+        if not ver_file.exists():
+            return ({}, {})
+        tree = u.Infra.parse_module_ast(ver_file)
+        if tree is None:
+            return ({}, {})
 
-# ---------------------------------------------------------------------------
-# Post-generation cleanup
-# ---------------------------------------------------------------------------
+        inline = u.Infra.extract_inline_constants(tree)
+        ver_mod = f"{current_pkg}.__version__" if current_pkg else "__version__"
 
+        lazy: dict[str, tuple[str, str]] = {}
+        for node in tree.body:
+            if isinstance(node, ast.Assign) and len(node.targets) == 1:
+                target = node.targets[0]
+                if (
+                    isinstance(target, ast.Name)
+                    and target.id.startswith("__")
+                    and target.id.endswith("__")
+                    and target.id not in inline
+                ):
+                    lazy[target.id] = (ver_mod, target.id)
 
-def _run_ruff_fix(path: Path) -> None:
-    """Run ``ruff --fix`` on the given file to auto-fix lint issues."""
-    with contextlib.suppress(FileNotFoundError):
-        runner = FlextInfraUtilitiesSubprocess()
-        runner.run_checked([
-            c.Infra.Cli.RUFF,
-            c.Infra.Cli.RuffCmd.CHECK,
-            "--fix",
-            "--quiet",
-            str(path),
-        ])
+        return (inline, lazy)
+
+    @staticmethod
+    def _resolve_aliases(lazy_map: dict[str, tuple[str, str]]) -> None:
+        """Resolve single-letter aliases from ``ALIAS_TO_SUFFIX`` mapping.
+
+        For each alias (``c``, ``m``, ``t``, ``u``, ``p``, ``r``, ``d``,
+        ``e``, ``h``, ``s``, ``x``), find a class in the lazy_map whose name
+        ends with the corresponding suffix and create a mapping.
+        """
+        for alias, suffix in c.Infra.Codegen.ALIAS_TO_SUFFIX.items():
+            if alias in lazy_map:
+                continue
+            for name, (mod, _attr) in list(lazy_map.items()):
+                if name.endswith(suffix) and len(name) > 1:
+                    lazy_map[alias] = (mod, name)
+                    break
+
+    # ---------------------------------------------------------------------------
+    # Code generation
+    # ---------------------------------------------------------------------------
+
+    @staticmethod
+    def _generate_file(
+        docstring_source: str,
+        exports: list[str],
+        filtered: Mapping[str, tuple[str, str]],
+        inline_constants: Mapping[str, str],
+        current_pkg: str,
+        eager_typevar_names: frozenset[str] = frozenset(),
+    ) -> str:
+        """Generate the complete ``__init__.py`` content."""
+        return u.Infra.generate_file(
+            docstring_source,
+            exports,
+            filtered,
+            inline_constants,
+            current_pkg,
+            eager_typevar_names,
+        )
+
+    # ---------------------------------------------------------------------------
+    # Post-generation cleanup
+    # ---------------------------------------------------------------------------
+
+    @staticmethod
+    def _run_ruff_fix(path: Path) -> None:
+        """Run ``ruff --fix`` on the given file to auto-fix lint issues."""
+        with contextlib.suppress(FileNotFoundError):
+            runner = FlextInfraUtilitiesSubprocess()
+            runner.run_checked([
+                c.Infra.Cli.RUFF,
+                c.Infra.Cli.RuffCmd.CHECK,
+                "--fix",
+                "--quiet",
+                str(path),
+            ])

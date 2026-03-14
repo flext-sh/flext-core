@@ -19,15 +19,16 @@ import sys
 from pathlib import Path
 
 from flext_core import FlextRuntime
-from flext_infra import c, output
-from flext_infra.codegen.census import FlextInfraCodegenCensus
-from flext_infra.codegen.constants_quality_gate import (
+from flext_infra import (
+    FlextInfraCodegenCensus,
     FlextInfraCodegenConstantsQualityGate,
+    FlextInfraCodegenFixer,
+    FlextInfraCodegenLazyInit,
+    FlextInfraCodegenPyTyped,
+    FlextInfraCodegenScaffolder,
+    c,
+    output,
 )
-from flext_infra.codegen.fixer import FlextInfraCodegenFixer
-from flext_infra.codegen.lazy_init import FlextInfraCodegenLazyInit
-from flext_infra.codegen.py_typed import FlextInfraCodegenPyTyped
-from flext_infra.codegen.scaffolder import FlextInfraCodegenScaffolder
 
 
 def main(argv: list[str] | None = None) -> int:

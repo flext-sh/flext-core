@@ -7,18 +7,25 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections import defaultdict
+from collections.abc import Callable, Mapping
 from pathlib import Path
 
 import pytest
 
 import flext_infra.codegen as mod
 from flext_infra.codegen._utilities import FlextInfraUtilitiesCodegen
-from flext_infra.codegen.lazy_init import (
-    _generate_file,
-    _resolve_aliases,
-    _run_ruff_fix,
-)
+from flext_infra.codegen.lazy_init import FlextInfraCodegenLazyInit
 from flext_tests import tm
+
+_resolve_aliases: Callable[[dict[str, tuple[str, str]]], None] = getattr(
+    FlextInfraCodegenLazyInit, "_resolve_aliases"
+)
+_generate_file: Callable[
+    [str, list[str], Mapping[str, tuple[str, str]], Mapping[str, str], str], str
+] = getattr(FlextInfraCodegenLazyInit, "_generate_file")
+_run_ruff_fix: Callable[[Path], None] = getattr(
+    FlextInfraCodegenLazyInit, "_run_ruff_fix"
+)
 
 
 class TestResolveAliases:

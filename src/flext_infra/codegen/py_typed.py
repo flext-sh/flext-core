@@ -17,11 +17,11 @@ from typing import override
 from flext_core import r, s
 from flext_infra import c, output
 
-_PY_TYPED_FILENAME = "py.typed"
-
 
 class FlextInfraCodegenPyTyped(s[int]):
     """Creates and removes PEP 561 ``py.typed`` markers across workspace packages."""
+
+    _PY_TYPED_FILENAME: str = "py.typed"
 
     def __init__(self, workspace_root: Path) -> None:
         """Initialize py.typed marker generator with workspace root."""
@@ -70,8 +70,8 @@ class FlextInfraCodegenPyTyped(s[int]):
                     for part in dirpath.relative_to(self._root).parts
                 ):
                     continue
-                marker = dirpath / _PY_TYPED_FILENAME
-                has_py = _dir_has_py_files(dirpath)
+                marker = dirpath / self._PY_TYPED_FILENAME
+                has_py = self._dir_has_py_files(dirpath)
                 if has_py and not marker.exists():
                     if not check_only:
                         marker.touch()
@@ -86,14 +86,13 @@ class FlextInfraCodegenPyTyped(s[int]):
         )
         return created + removed
 
-
-def _dir_has_py_files(dirpath: Path) -> bool:
-    """Return True if ``dirpath`` contains at least one ``.py`` file (excluding ``__init__.py``)."""
-    return any(
-        f.suffix == c.Infra.Extensions.PYTHON and f.name != c.Infra.Files.INIT_PY
-        for f in dirpath.iterdir()
-        if f.is_file()
-    )
+    @staticmethod
+    def _dir_has_py_files(dirpath: Path) -> bool:
+        return any(
+            f.suffix == c.Infra.Extensions.PYTHON and f.name != c.Infra.Files.INIT_PY
+            for f in dirpath.iterdir()
+            if f.is_file()
+        )
 
 
 __all__ = ["FlextInfraCodegenPyTyped"]

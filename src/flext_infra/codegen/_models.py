@@ -9,10 +9,6 @@ from pydantic import Field
 from flext_core import FlextModels
 
 
-def _new_violations() -> list[FlextInfraCodegenModels.CensusViolation]:
-    return []
-
-
 class FlextInfraCodegenModels:
     """Models for codegen census, scaffold, and auto-fix pipelines."""
 
@@ -46,7 +42,7 @@ class FlextInfraCodegenModels:
         violations: Annotated[
             list[FlextInfraCodegenModels.CensusViolation],
             Field(
-                default_factory=_new_violations,
+                default_factory=list,
                 description="Detected violations",
             ),
         ]
@@ -81,14 +77,14 @@ class FlextInfraCodegenModels:
         violations_fixed: Annotated[
             list[FlextInfraCodegenModels.CensusViolation],
             Field(
-                default_factory=_new_violations,
+                default_factory=list,
                 description="Fixed violations",
             ),
         ]
         violations_skipped: Annotated[
             list[FlextInfraCodegenModels.CensusViolation],
             Field(
-                default_factory=_new_violations,
+                default_factory=list,
                 description="Skipped violations (not auto-fixable)",
             ),
         ]
