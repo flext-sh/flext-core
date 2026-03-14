@@ -2037,13 +2037,13 @@ class FlextUtilitiesMapper:
     ) -> t.NormalizedValue:
         """Safely narrow any value to t.NormalizedValue (strict container type).
 
-        Uses t.CONTAINER_TYPES for isinstance checks.
+        Uses FlextUtilitiesGuards.is_container for type narrowing.
         BaseModel instances are converted to dict mapping via model_dump().
         If value is not a valid container, returns string representation.
         """
         if value is None:
             return None
-        if isinstance(value, t.CONTAINER_TYPES):
+        if FlextUtilitiesGuards.is_container(value):
             return value
         if isinstance(value, BaseModel):
             model_dict = value.model_dump()

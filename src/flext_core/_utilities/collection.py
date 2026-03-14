@@ -29,12 +29,19 @@ class FlextUtilitiesCollection:
 
     @staticmethod
     def _coerce_guard_value(value: t.NormalizedValue) -> t.NormalizedValue:
-        try:
-            return FlextUtilitiesCollection._V.serializable_adapter().validate_python(
-                value
-            )
-        except ValidationError:
-            return str(value)
+        if value is None or isinstance(
+            value, (tuple, str, int, float, bool, datetime, Path)
+        ):
+            return value
+        if isinstance(value, (list, dict)):
+            try:
+                FlextUtilitiesCollection._V.serializable_adapter().validate_python(
+                    value
+                )
+                return value
+            except ValidationError:
+                return str(value)
+        return str(value)
 
     @staticmethod
     def _coerce_value_to_bool(value: t.NormalizedValue) -> bool:
