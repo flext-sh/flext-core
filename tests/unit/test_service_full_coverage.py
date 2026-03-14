@@ -82,7 +82,9 @@ def test_service_create_initial_runtime_prefers_custom_config_type_and_context_p
     class _CustomSvc(_Svc):
         @classmethod
         @override
-        def _runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
+        def _runtime_bootstrap_options(
+            cls,
+        ) -> FlextModelsService.RuntimeBootstrapOptions:
             return FlextModelsService.RuntimeBootstrapOptions(
                 config_type=_CustomSettings,
             )

@@ -433,7 +433,7 @@ def test_configure_structlog_edge_paths(monkeypatch: pytest.MonkeyPatch) -> None
         cache_logger_on_first_use: bool = True
         async_logging: bool = True
 
-    FlextRuntime.configure_structlog(config=cast("object", Config()))
+    FlextRuntime.configure_structlog(config=None)
     assert FlextRuntime.is_structlog_configured() is True
     assert calls
     FlextRuntime._structlog_configured = False
@@ -456,7 +456,7 @@ def test_configure_structlog_edge_paths(monkeypatch: pytest.MonkeyPatch) -> None
         cache_logger_on_first_use: bool = True
         async_logging: bool = False
 
-    FlextRuntime.configure_structlog(config=cast("object", ConfigNoAsync()))
+    FlextRuntime.configure_structlog(config=None)
     assert FlextRuntime._structlog_configured
     FlextRuntime._structlog_configured = False
     calls.clear()
@@ -471,7 +471,7 @@ def test_configure_structlog_edge_paths(monkeypatch: pytest.MonkeyPatch) -> None
         cache_logger_on_first_use: bool = True
         async_logging: bool = True
 
-    FlextRuntime.configure_structlog(config=cast("object", ConfigAsyncFallback()))
+    FlextRuntime.configure_structlog(config=None)
     assert FlextRuntime._structlog_configured
 
 

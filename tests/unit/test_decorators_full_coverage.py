@@ -434,8 +434,8 @@ def test_with_correlation_with_context_track_operation_and_factory(
     assert tracked() == "done"
 
     @d.factory(name="svc.factory", singleton=True, lazy=False)
-    def build(_value: object) -> object:
-        return 7
+    def build(_value: BaseModel) -> BaseModel:
+        return m.ConfigMap(root={"v": 7})
 
     assert hasattr(build, c.Discovery.FACTORY_ATTR)
 

@@ -19,7 +19,7 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_core import FlextContainer, FlextContext, FlextService, FlextSettings, p, r
+from flext_core import FlextContainer, FlextContext, FlextService, FlextSettings, r
 from flext_core._models.service import FlextModelsService
 from flext_tests import u
 
@@ -29,7 +29,7 @@ class ConcreteTestService(FlextService[bool]):
 
     @classmethod
     @override
-    def _runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
+    def _runtime_bootstrap_options(cls) -> FlextModelsService.RuntimeBootstrapOptions:
         """Return bootstrap options for this service."""
         return FlextModelsService.RuntimeBootstrapOptions(
             config_overrides={"app_name": "test_app"},

@@ -25,8 +25,8 @@ def test_validation_like_error_structure() -> None:
 
 
 def test_type_guards_result() -> None:
-    ok_res = r[int].ok(1)
-    fail_res: r[int] = cast("r[int]", r.fail("x"))
+    ok_res = r[str].ok("ok")
+    fail_res: r[str] = cast("r[str]", r.fail("x"))
     assert r.is_success_result(ok_res)
     assert r.is_failure_result(fail_res)
 

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from flext_core import FlextDispatcher, m, p, t
+from flext_core import FlextDispatcher, m, p, r, t
 from flext_core.dispatcher import _DispatchableHandler
 
 
@@ -18,8 +18,8 @@ def _force_handler(obj: object) -> _DispatchableHandler:
     def _wrapper(
         *_args: object,
         **_kwargs: t.Scalar,
-    ) -> p.ResultLike[object] | object | None:
-        return None
+    ) -> p.ResultLike[t.Container] | t.Container | None:
+        return "invalid"
 
     return _wrapper
 
@@ -65,10 +65,10 @@ class SampleHandler:
 
     message_type = SampleCommand
 
-    def handle(self, message: p.Routable) -> object:
+    def handle(self, message: p.Routable) -> r[str]:
         """Handle the message."""
         payload = getattr(message, "payload", "")
-        return f"handled:{payload}"
+        return r[str].ok(f"handled:{payload}")
 
     def can_handle(self, message_type: type) -> bool:
         return message_type is SampleCommand
@@ -79,10 +79,12 @@ class QueryHandler:
 
     message_type = SampleQuery
 
-    def handle(self, message: p.Routable) -> object:
+    def handle(self, message: SampleQuery) -> r[m.ConfigMap]:
         """Handle the query."""
         query_id = getattr(message, "query_id", None)
-        return {"result": "data", "id": query_id}
+        return r[m.ConfigMap].ok(
+            m.ConfigMap(root={"result": "data", "id": str(query_id)}),
+        )
 
     def can_handle(self, message_type: type) -> bool:
         return message_type is SampleQuery
@@ -93,9 +95,10 @@ class EventHandler:
 
     message_type = SampleEvent
 
-    def handle(self, message: SampleEvent) -> object:
+    def handle(self, message: p.Routable) -> r[bool]:
         """Handle the event."""
-        return True
+        _ = message
+        return r[bool].ok(True)
 
     def can_handle(self, message_type: type[SampleEvent]) -> bool:
         return message_type is SampleEvent
@@ -112,11 +115,11 @@ def test_strict_registration_and_dispatch(dispatcher: FlextDispatcher) -> None:
     handler = SampleHandler()
     res = dispatcher.register_handler(handler)
     assert res.is_success
-    cmd = SampleCommand(payload="hello")
+    cmd = SampleCommand(payload="hello", command_id="cmd-1")
     dispatch_res = dispatcher.dispatch(cmd)
     assert dispatch_res.is_success
     assert dispatch_res.value == "handled:hello"
-    unreg_cmd = UnregisteredCommand()
+    unreg_cmd = UnregisteredCommand(command_id="cmd-2")
     fail_res = dispatcher.dispatch(unreg_cmd)
     assert fail_res.is_failure
     assert fail_res.error is not None and "no handler found" in fail_res.error.lower()
@@ -138,7 +141,13 @@ def test_event_publishing_strict(dispatcher: FlextDispatcher) -> None:
     handler = EventHandler()
     registration = dispatcher.register_handler(handler, is_event=True)
     assert registration.is_success
-    evt = SampleEvent(aggregate_id="agg-1", event_type="sample_event")
+    evt = SampleEvent(
+        aggregate_id="agg-1",
+        event_type="sample_event",
+        event_id="evt-1",
+        data=m.Dict(root={}),
+        metadata=m.Dict(root={}),
+    )
     res = dispatcher.publish(evt)
     assert res.is_success
     batch_res = dispatcher.publish([evt, evt])
@@ -152,12 +161,15 @@ def test_handler_attribute_discovery(dispatcher: FlextDispatcher) -> None:
         def can_handle(self, msg_type: type) -> bool:
             return msg_type is SampleCommand
 
-        def handle(self, message: SampleCommand) -> str:
-            return "ok"
+        def handle(self, message: p.Routable) -> r[str]:
+            _ = message
+            return r[str].ok("ok")
 
     res = dispatcher.register_handler(PredicateHandler())
     assert res.is_success
-    assert dispatcher.dispatch(SampleCommand(payload="p")).is_success
+    assert dispatcher.dispatch(
+        SampleCommand(payload="p", command_id="cmd-p")
+    ).is_success
 
 
 def test_callable_registration_with_attribute(dispatcher: FlextDispatcher) -> None:
@@ -169,7 +181,10 @@ def test_callable_registration_with_attribute(dispatcher: FlextDispatcher) -> No
     setattr(func_handler, "message_type", SampleCommand)
     res = dispatcher.register_handler(func_handler)
     assert res.is_success
-    assert dispatcher.dispatch(SampleCommand(payload="x")).value == "func:ok"
+    assert (
+        dispatcher.dispatch(SampleCommand(payload="x", command_id="cmd-x")).value
+        == "func:ok"
+    )
 
 
 def test_dispatch_invalid_input_types(dispatcher: FlextDispatcher) -> None:
@@ -187,7 +202,7 @@ def test_exception_handling_in_dispatch(dispatcher: FlextDispatcher) -> None:
 
     setattr(breaking_handler, "message_type", SampleCommand)
     dispatcher.register_handler(breaking_handler)
-    res = dispatcher.dispatch(SampleCommand(payload="x"))
+    res = dispatcher.dispatch(SampleCommand(payload="x", command_id="cmd-break"))
     assert res.is_failure
     assert isinstance(res.error, str)
     assert "broken" in res.error

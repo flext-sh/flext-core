@@ -10,7 +10,7 @@ import inspect
 from collections import UserDict
 from typing import cast, override
 
-from flext_core import c, m, p, r, t, u
+from flext_core import c, m, r, t, u
 
 
 class _OnlySelfHandler:
@@ -60,7 +60,7 @@ def test_checker_logger_and_safe_type_hints_fallback() -> None:
     logger = checker.logger
     assert hasattr(logger, "info")
     hints = u._get_type_hints_safe(
-        cast("p.HandlerCallable", _UnknownHintHandler.handle),
+        cast("t.HandlerCallable", _UnknownHintHandler.handle),
         _UnknownHintHandler,
     )
     assert hints == {"message": MissingType, "return": type(None)}
@@ -70,7 +70,7 @@ def test_extract_message_type_from_parameter_branches() -> None:
     param = inspect.Parameter("message", inspect.Parameter.POSITIONAL_OR_KEYWORD)
     none_hint = u._extract_message_type_from_parameter(
         param,
-        cast("dict[str, object]", {"message": None}),
+        {"message": None},
         "message",
     )
     assert none_hint.is_failure

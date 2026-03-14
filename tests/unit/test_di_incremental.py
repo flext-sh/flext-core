@@ -28,7 +28,6 @@ from flext_core import (
     FlextRuntime,
     FlextSettings,
     m,
-    p,
     r,
     s,
 )
@@ -301,8 +300,7 @@ class TestServiceBootstrapWithDI:
 
         class TestService(s[str]):
             @classmethod
-            @override
-            def _runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
+            def _runtime_bootstrap_options(cls):
                 return FlextModelsService.RuntimeBootstrapOptions(
                     services={"custom_service": "custom_value"},
                     factories={"custom_factory": lambda: {"custom": "data"}},

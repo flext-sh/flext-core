@@ -290,7 +290,7 @@ class FlextContainer(p.DI):
         if auto_register_factories:
             frame = inspect.currentframe()
             if frame and frame.f_back:
-                caller_globals: Mapping[str, object] = frame.f_back.f_globals
+                caller_globals = frame.f_back.f_globals
                 module_name_raw = caller_globals.get("__name__", "__main__")
                 module_name = str(module_name_raw) if module_name_raw else "__main__"
                 caller_module = sys.modules.get(module_name)

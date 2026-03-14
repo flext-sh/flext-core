@@ -35,7 +35,7 @@ class TestServiceDomain:
     def test_get_service_from_container(self) -> None:
         container = FlextContainer(_context=FlextContext())
         FlextContext.set_container(container)
-        test_service_obj: object = "test_service_value"
+        test_service_obj = "test_service_value"
         FlextContext.Service.register_service("test_service", test_service_obj)
         result = FlextContext.Service.get_service("test_service")
         _ = u.Tests.Result.assert_success(result)

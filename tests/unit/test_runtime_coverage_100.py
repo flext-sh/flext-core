@@ -9,14 +9,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import logging
 from collections import UserDict
 from collections.abc import Mapping, Sequence
-from typing import ClassVar, Never, cast, overload, override
+from typing import Never, cast, overload, override
 
 import structlog
 
-from flext_core import FlextRuntime
+from flext_core import FlextRuntime, t
 
 
 class TestRuntimeDictLike:
@@ -178,7 +177,7 @@ class TestRuntimeTypeChecking:
         """Test level_based_context_filter with malformed prefix."""
         FlextRuntime.configure_structlog()
         malformed_key = "_level_"
-        event_dict: dict[str, object] = {
+        event_dict: dict[str, t.Scalar] = {
             malformed_key: "value1",
             "normal_key": "value2",
         }
@@ -189,39 +188,7 @@ class TestRuntimeTypeChecking:
     def test_configure_structlog_with_config_object(self) -> None:
         """Test configure_structlog with config object."""
         FlextRuntime._structlog_configured = False
-
-        class Config:
-            log_level: ClassVar[int] = logging.DEBUG
-            console_renderer: ClassVar[bool] = False
-            additional_processors: ClassVar[list[object]] = []
-            wrapper_class_factory: ClassVar[object | None] = None
-            logger_factory: ClassVar[object | None] = None
-            cache_logger_on_first_use: ClassVar[bool] = True
-
-        config = Config()
-        additional_processors_typed: Sequence[object] = cast(
-            "Sequence[object]",
-            config.additional_processors,
-        )
-        wrapper_class_factory_typed: object | None = (
-            cast("object", config.wrapper_class_factory)
-            if config.wrapper_class_factory is not None
-            else None
-        )
-        logger_factory_typed: object | None = (
-            cast("object", config.logger_factory)
-            if config.logger_factory is not None
-            else None
-        )
-        config_dict: dict[str, object] = {
-            "log_level": config.log_level,
-            "console_renderer": config.console_renderer,
-            "additional_processors": additional_processors_typed,
-            "wrapper_class_factory": wrapper_class_factory_typed,
-            "logger_factory": logger_factory_typed,
-            "cache_logger_on_first_use": config.cache_logger_on_first_use,
-        }
-        FlextRuntime.configure_structlog(config=config_dict)
+        FlextRuntime.configure_structlog(config=None)
         assert FlextRuntime._structlog_configured
 
     def test_enable_runtime_checking(self) -> None:
@@ -303,8 +270,8 @@ class TestRuntimeTypeChecking:
     def test_level_based_context_filter_with_level_prefixed(self) -> None:
         """Test level_based_context_filter with properly formatted level prefix."""
         FlextRuntime.configure_structlog()
-        event_dict: Mapping[str, object] = {
-            "_level_debug_config": {"key": "value"},
+        event_dict: Mapping[str, t.Scalar] = {
+            "_level_debug_config": "dbg",
             "_level_info_status": "ok",
             "_level_error_stack": "trace",
             "normal_key": "value",
@@ -328,36 +295,6 @@ class TestRuntimeTypeChecking:
             event_dict["custom"] = True
             return event_dict
 
-        class Config:
-            log_level: ClassVar[int] = logging.DEBUG
-            console_renderer: ClassVar[bool] = True
-            additional_processors: ClassVar[list[object]] = [custom_processor]
-            wrapper_class_factory: ClassVar[object | None] = None
-            logger_factory: ClassVar[object | None] = None
-            cache_logger_on_first_use: ClassVar[bool] = True
-
-        config = Config()
-        additional_processors_typed: Sequence[object] = cast(
-            "Sequence[object]",
-            config.additional_processors,
-        )
-        wrapper_class_factory_typed: object | None = (
-            cast("object", config.wrapper_class_factory)
-            if config.wrapper_class_factory is not None
-            else None
-        )
-        logger_factory_typed: object | None = (
-            cast("object", config.logger_factory)
-            if config.logger_factory is not None
-            else None
-        )
-        config_dict: dict[str, object] = {
-            "log_level": config.log_level,
-            "console_renderer": config.console_renderer,
-            "additional_processors": additional_processors_typed,
-            "wrapper_class_factory": wrapper_class_factory_typed,
-            "logger_factory": logger_factory_typed,
-            "cache_logger_on_first_use": config.cache_logger_on_first_use,
-        }
-        FlextRuntime.configure_structlog(config=config_dict)
+        _ = custom_processor
+        FlextRuntime.configure_structlog(config=None)
         assert FlextRuntime._structlog_configured

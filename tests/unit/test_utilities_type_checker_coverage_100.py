@@ -25,7 +25,7 @@ from typing import TypeVar, cast, get_origin, override
 
 import pytest
 
-from flext_core import h, p, r, t, u
+from flext_core import h, r, t, u
 
 T = TypeVar("T")
 TMessage = TypeVar("TMessage")
@@ -319,7 +319,7 @@ class TestuTypeChecker:
             return str(x)
 
         signature = u._get_method_signature(
-            cast("p.HandlerCallable", test_func),
+            cast("t.HandlerCallable", test_func),
         )
         assert signature.is_success
         signature_value = signature.value
@@ -329,7 +329,7 @@ class TestuTypeChecker:
     def test_get_method_signature_non_callable(self) -> None:
         """Test _get_method_signature with non-callable."""
         signature = u._get_method_signature(
-            cast("p.HandlerCallable", "not callable"),
+            cast("t.HandlerCallable", "not callable"),
         )
         assert signature.is_failure
 
@@ -344,7 +344,7 @@ class TestuTypeChecker:
                 return message
 
         hints = u._get_type_hints_safe(
-            cast("p.HandlerCallable", TestClass.handle),
+            cast("t.HandlerCallable", TestClass.handle),
             TestClass,
         )
         assert "message" in hints
@@ -363,7 +363,7 @@ class TestuTypeChecker:
                 return message
 
         hints = u._get_type_hints_safe(
-            cast("p.HandlerCallable", TestClass.handle),
+            cast("t.HandlerCallable", TestClass.handle),
             TestClass,
         )
         assert isinstance(hints, dict)

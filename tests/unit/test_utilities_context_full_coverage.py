@@ -104,7 +104,7 @@ class TestCloneRuntime:
     def test_clone_runtime_uses_provided_context(self) -> None:
         """When context is provided, cloned runtime uses it."""
         runtime = _FakeRuntime()
-        new_context = _FakeContext()
+        new_context = m.Context()
         cloned = u.clone_runtime(runtime, context=new_context)
         assert cloned._context is new_context
 

@@ -28,7 +28,7 @@ from typing import Annotated, ClassVar, cast, override
 import pytest
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import FlextRegistry, c, h, m, p, r
+from flext_core import FlextRegistry, c, h, m, r, t
 from flext_tests import FlextTestsUtilities, u
 
 
@@ -260,25 +260,25 @@ class RegistryScenarios:
     @staticmethod
     def create_handlers(
         count: int,
-    ) -> list[p.Handler[object, object]]:
+    ) -> list[t.HandlerLike]:
         """Create test handlers."""
         return [ConcreteTestHandler() for _ in range(count)]
 
     @staticmethod
     def create_bindings(
-        handlers: Sequence[p.Handler[object, object]],
-    ) -> list[tuple[type[object], p.Handler[object, object]]]:
+        handlers: Sequence[t.HandlerLike],
+    ) -> list[tuple[type[object], t.HandlerLike]]:
         """Create test bindings using str message type."""
         return [(str, handler) for handler in handlers]
 
     @staticmethod
     def create_function_map(
-        handlers: Sequence[p.Handler[object, object]],
-    ) -> dict[type[object], p.Handler[object, object]]:
+        handlers: Sequence[t.HandlerLike],
+    ) -> dict[type[object], t.HandlerLike]:
         """Create test function map using str message type."""
         result: dict[
             type[object],
-            p.Handler[object, object],
+            t.HandlerLike,
         ] = {}
         for idx, handler in enumerate(handlers):
             result[str if idx == 0 else int] = handler
@@ -299,7 +299,7 @@ class TestFlextRegistry:
         if test_case.handler_count == 0:
             result = registry.register_handler(
                 cast(
-                    "p.Handler[object, object]",
+                    "t.HandlerLike",
                     cast("object", None),
                 ),
             )
@@ -416,7 +416,7 @@ class TestFlextRegistry:
         if test_case.handler_count == 0:
             result = registry.register_handler(
                 cast(
-                    "p.Handler[object, object]",
+                    "t.HandlerLike",
                     cast("object", None),
                 ),
             )

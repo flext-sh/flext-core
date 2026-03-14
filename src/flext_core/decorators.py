@@ -503,7 +503,7 @@ class FlextDecorators:
                     RuntimeError,
                     KeyError,
                 ) as exc:
-                    failure_extra: dict[str, object] = {
+                    failure_extra: dict[str, t.NormalizedValue] = {
                         "function": func.__name__,
                         "success": False,
                         "error": str(exc),
@@ -728,8 +728,10 @@ class FlextDecorators:
                 )
                 try:
                     retry_args = args
-                    retry_kwargs_map = m.ConfigMap(dict(kwargs))
-                    retry_kwargs: Mapping[str, object] = dict(retry_kwargs_map.root)
+                    retry_kwargs: dict[str, t.NormalizedValue | BaseModel] = {
+                        str(key): FlextRuntime.normalize_to_container(value)
+                        for key, value in kwargs.items()
+                    }
                     retry_result = FlextDecorators._execute_retry_loop(
                         retry_func,
                         retry_args,
@@ -826,8 +828,8 @@ class FlextDecorators:
     @staticmethod
     def _execute_retry_loop(
         func: Callable[..., R],
-        args: tuple[object, ...],
-        kwargs: Mapping[str, object],
+        args: P.args,
+        kwargs: Mapping[str, t.NormalizedValue | BaseModel],
         logger: FlextLogger,
         *,
         retry_config: m.RetryConfiguration | None = None,
@@ -911,7 +913,7 @@ class FlextDecorators:
             warning_context: dict[str, t.Container | Exception] = {}
             for key, value in fallback_kwargs.root.items():
                 if key == "extra" and FlextRuntime.is_dict_like(value):
-                    extra_items: Mapping[str, object]
+                    extra_items: Mapping[str, t.NormalizedValue | BaseModel]
                     if isinstance(value, m.ConfigMap):
                         extra_items = value.root
                     else:
@@ -976,9 +978,7 @@ class FlextDecorators:
         return isinstance(logger_value, FlextLogger)
 
     @staticmethod
-    def _resolve_logger(
-        args: tuple[t.NormalizedValue | BaseModel, ...], func: Callable[P, R]
-    ) -> FlextLogger:
+    def _resolve_logger(args: P.args, func: Callable[P, R]) -> FlextLogger:
         """Resolve logger from first argument or create module logger.
 
         Returns:

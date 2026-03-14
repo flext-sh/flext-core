@@ -7,6 +7,7 @@ from types import ModuleType
 from typing import cast, override
 
 import pytest
+from pydantic import BaseModel
 
 from flext_core import FlextExceptions, FlextHandlers, c, h, m, r, t
 
@@ -112,13 +113,14 @@ def test_discovery_narrowed_function_paths() -> None:
     decorator = h.handler(str)
 
     @decorator
-    def exposed(value: object) -> object:
+    def exposed(value: BaseModel) -> BaseModel:
         _ = value
-        return 123
+        return m.ConfigMap(root={"value": 123})
 
     module = ModuleType("handlers_discovery")
     setattr(module, "exposed", exposed)
     discovered = h.Discovery.scan_module(module)
     assert len(discovered) == 1
     wrapped = discovered[0][1]
-    assert wrapped("x") == 123
+    wrapped_result = wrapped(m.ConfigMap(root={"value": "x"}))
+    assert isinstance(wrapped_result, BaseModel)

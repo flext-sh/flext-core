@@ -359,15 +359,11 @@ class TestExceptionContext:
 
     def test_exception_with_context_data(self) -> None:
         """Test exception with contextual information via metadata."""
-        metadata_dict: dict[str, object] = {
-            "user_id": "123",
-            "operation": "create_user",
-            "timestamp": 1234567890,
-        }
-        metadata_typed = cast("t.MetadataAttributeValue", metadata_dict)
         error = FlextExceptions.ValidationError(
             "Validation failed in context",
-            metadata=metadata_typed,
+            user_id="123",
+            operation="create_user",
+            timestamp=1234567890,
         )
         assert "user_id" in error.metadata.attributes
         assert error.metadata.attributes["user_id"] == "123"

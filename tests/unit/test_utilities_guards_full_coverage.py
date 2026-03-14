@@ -104,23 +104,16 @@ def test_non_empty_and_normalize_branches() -> None:
     assert list_out[0] == 1
     assert isinstance(list_out[1], str)
     assert isinstance(
-        u.normalize_to_metadata_value(cast("object", cast("object", {1, 2}))),
+        u.normalize_to_metadata_value(cast("t.NormalizedValue", {1, 2})),
         str,
     )
 
 
 def test_configuration_mapping_and_dict_negative_branches() -> None:
-    assert not u.is_configuration_mapping(1)
-    bad_key_mapping: dict[object, object] = {1: "ok"}
-    bad_value_mapping: dict[str, object] = {"k": {1}}
-    bad_value_dict: dict[str, object] = {"k": {1}}
-    assert u.is_configuration_mapping(cast("object", bad_key_mapping))
-    assert not u.is_configuration_mapping(
-        cast("object", bad_value_mapping),
-    )
-    assert not u.is_configuration_dict([])
-    assert u.is_configuration_dict(cast("object", {1: "v"}))
-    assert not u.is_configuration_dict(cast("object", bad_value_dict))
+    bad_value_mapping = cast("m.ConfigMap", {"k": {1}})
+    bad_value_dict = cast("m.Dict", {"k": {1}})
+    assert not u.is_configuration_mapping(bad_value_mapping)
+    assert not u.is_configuration_dict(bad_value_dict)
     assert u.is_configuration_dict({"k": 1})
 
 

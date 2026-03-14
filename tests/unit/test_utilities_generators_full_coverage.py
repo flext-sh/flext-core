@@ -160,7 +160,7 @@ def test_generate_special_paths_and_dynamic_subclass(
     dynamic = u.create_dynamic_type_subclass(
         "DynCls",
         object,
-        m.ConfigMap(root={"value": 10}).root,
+        m.ConfigMap(root={"value": 10}),
     )
     instance = dynamic()
     assert getattr(instance, "value") == 10

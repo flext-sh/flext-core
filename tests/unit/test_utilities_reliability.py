@@ -22,7 +22,7 @@ from typing import Final
 
 import pytest
 
-from flext_core import FlextRuntime, r
+from flext_core import FlextRuntime, r, t
 from flext_tests import u
 
 
@@ -126,11 +126,11 @@ class TestFlextUtilitiesReliability:
         @staticmethod
         def create_delay_config(
             config_type: TestFlextUtilitiesReliability.DelayConfig,
-        ) -> dict[str, object]:
+        ) -> dict[str, t.Scalar]:
             """Create delay configuration for given type."""
             configs: Mapping[
                 TestFlextUtilitiesReliability.DelayConfig,
-                dict[str, object],
+                dict[str, t.Scalar],
             ] = {
                 TestFlextUtilitiesReliability.DelayConfig.EXPONENTIAL: {
                     "initial_delay_seconds": 0.1,
@@ -142,7 +142,7 @@ class TestFlextUtilitiesReliability:
                     "initial_delay_seconds": 0.2,
                     "max_delay_seconds": 0.5,
                     "exponential_backoff": False,
-                    "backoff_multiplier": None,
+                    "backoff_multiplier": 1.0,
                 },
             }
             return configs[config_type]

@@ -19,7 +19,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from types import ModuleType
-from typing import cast, override
+from typing import override
 
 from flext_core import (
     FlextContainer,
@@ -28,7 +28,6 @@ from flext_core import (
     FlextRuntime,
     FlextSettings,
     m,
-    p,
     r,
     s,
 )
@@ -153,7 +152,7 @@ class TestContextServiceViaDI:
         custom_context = FlextContext()
         returned_container = container.register(
             "custom_context",
-            cast("object", custom_context),
+            custom_context,
         )
         assert returned_container is container
         assert container.has_service("custom_context")
@@ -187,8 +186,7 @@ class TestServicesIntegrationViaDI:
 
         class ServiceWithDI(s[str]):
             @classmethod
-            @override
-            def _runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
+            def _runtime_bootstrap_options(cls):
                 return FlextModelsService.RuntimeBootstrapOptions(
                     config_overrides={"app_name": "service_app"},
                     services={"logger": FlextLogger.create_module_logger("service")},
@@ -214,13 +212,7 @@ class TestServicesIntegrationViaDI:
 
     def test_services_injection_combined(self) -> None:
         """Test injecting multiple services via @inject."""
-        logger_instance = FlextLogger.create_module_logger("test")
-        context_instance = FlextContext()
-        services_raw: dict[str, object] = {
-            "logger": cast("object", logger_instance),
-            "context": cast("object", context_instance),
-        }
-        services = services_raw
+        services = {"logger_name": "test"}
         di_container = FlextRuntime.DependencyIntegration.create_container(
             config=m.ConfigMap(root={"app_name": "injected"}),
             services=services,

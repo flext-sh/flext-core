@@ -98,16 +98,13 @@ def test_context_data_normalize_and_json_checks() -> None:
 def test_context_data_validate_dict_serializable_error_paths() -> None:
     with pytest.raises(TypeError) as exc_info:
         _ = FlextModelsContext.ContextData.validate_dict_serializable(
-            cast(
-                "t.Dict | Mapping[str, object] | BaseModel | None",
-                cast("object", 123),
-            )
+            cast("m.Dict | Mapping[str, t.Scalar] | BaseModel | None", "123")
         )
     assert exc_info.value is not None
     with pytest.raises(TypeError) as exc_info2:
         _ = FlextModelsContext.ContextData.validate_dict_serializable(
             cast(
-                "t.Dict | Mapping[str, object] | BaseModel | None",
+                "m.Dict | Mapping[str, t.Scalar] | BaseModel | None",
                 cast("object", _ModelWithNoCallableDump()),
             )
         )
@@ -126,7 +123,7 @@ def test_context_data_validate_dict_serializable_error_paths() -> None:
 def test_context_data_validate_dict_serializable_none_and_mapping() -> None:
     result_none = FlextModelsContext.ContextData.validate_dict_serializable(None)
     assert result_none == {}
-    as_mapping = _MappingLike({"k": "v"})
+    as_mapping: Mapping[str, t.Scalar] = {"k": "v"}
     result_mapping = FlextModelsContext.ContextData.validate_dict_serializable(
         as_mapping
     )
@@ -143,8 +140,8 @@ def test_context_data_validate_dict_serializable_none_and_mapping() -> None:
     ids=["simple-dict", "nested-dict", "empty-dict"],
 )
 def test_context_data_validate_dict_serializable_real_dicts(
-    input_value: dict[str, object],
-    expected_result: dict[str, object],
+    input_value: dict[str, t.Scalar | Mapping[str, t.Scalar]],
+    expected_result: dict[str, t.Scalar | Mapping[str, t.Scalar]],
 ) -> None:
     """Test validate_dict_serializable with real dict inputs."""
     result = FlextModelsContext.ContextData.validate_dict_serializable(input_value)
@@ -163,7 +160,7 @@ def test_context_export_serializable_and_validators() -> None:
     with pytest.raises(TypeError):
         _ = FlextModelsContext.ContextExport.validate_dict_serializable(
             cast(
-                "t.Dict | Mapping[str, object] | BaseModel | None",
+                "m.Dict | Mapping[str, t.Scalar] | BaseModel | None",
                 cast("object", _ModelWithNoCallableDump()),
             )
         )
@@ -180,8 +177,8 @@ def test_context_export_serializable_and_validators() -> None:
     ids=["dict-input", "none-input"],
 )
 def test_context_export_validate_dict_serializable_valid(
-    input_value: dict[str, object] | None,
-    expected_result: dict[str, object],
+    input_value: dict[str, t.Scalar] | None,
+    expected_result: dict[str, t.Scalar],
 ) -> None:
     """Test ContextExport.validate_dict_serializable with valid inputs."""
     result = FlextModelsContext.ContextExport.validate_dict_serializable(input_value)
@@ -190,7 +187,7 @@ def test_context_export_validate_dict_serializable_valid(
 
 def test_context_export_validate_dict_serializable_mapping_and_models() -> None:
     """Test ContextExport.validate_dict_serializable with Mapping and model inputs."""
-    as_mapping = _MappingLike({"k": "v"})
+    as_mapping: Mapping[str, t.Scalar] = {"k": "v"}
     result_mapping = FlextModelsContext.ContextExport.validate_dict_serializable(
         as_mapping
     )
@@ -198,8 +195,8 @@ def test_context_export_validate_dict_serializable_mapping_and_models() -> None:
     with pytest.raises(TypeError):
         _ = FlextModelsContext.ContextExport.validate_dict_serializable(
             cast(
-                "t.Dict | Mapping[str, object] | BaseModel | None",
-                cast("object", 123),
+                "m.Dict | Mapping[str, t.Scalar] | BaseModel | None",
+                "123",
             )
         )
     metadata_input = FlextModelFoundation.Metadata(attributes={"m": 3})

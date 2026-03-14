@@ -380,14 +380,12 @@ class Testu(TextUtilityContract):
     def test_cache_has_attributes_true(self) -> None:
         """Test detecting cache attributes on object with cache."""
         obj = UtilityScenarios.create_mock_cached_object()
-        obj_typed: object = cast("object", obj)
-        assert u.has_cache_attributes(obj_typed) is True
+        assert u.has_cache_attributes(obj) is True
 
     def test_cache_has_attributes_false(self) -> None:
         """Test detecting cache attributes on object without cache."""
         obj = UtilityScenarios.create_mock_uncached_object()
-        obj_typed: object = cast("object", obj)
-        assert u.has_cache_attributes(obj_typed) is False
+        assert u.has_cache_attributes(obj) is False
 
     def test_reliability_timeout_success(self) -> None:
         """Test timeout with successful operation."""

@@ -11,7 +11,7 @@ from __future__ import annotations
 from collections.abc import Callable, Hashable, Mapping, Sequence
 from datetime import datetime
 from enum import StrEnum
-from typing import Any, TypeGuard, overload
+from typing import TypeGuard, overload
 
 from pydantic import ValidationError
 
@@ -138,7 +138,7 @@ class FlextUtilitiesCollection:
         return str(value)
 
     @staticmethod
-    def _to_batch_scalars(values: Sequence[Any]) -> list[t.Scalar | None]:
+    def _to_batch_scalars(values: Sequence[t.NormalizedValue]) -> list[t.Scalar | None]:
         return [FlextUtilitiesCollection._to_batch_scalar(value) for value in values]
 
     @staticmethod
@@ -173,7 +173,7 @@ class FlextUtilitiesCollection:
         _ = progress_interval
         do_flatten = flatten
         error_mode = on_error or "fail"
-        results: list[Any] = []
+        results: list[t.NormalizedValue] = []
         errors: list[tuple[int, str]] = []
         total = len(items)
         for processed, item in enumerate(items, 1):
@@ -540,8 +540,8 @@ class FlextUtilitiesCollection:
 
     @staticmethod
     def extract_callable_mapping[K](
-        mapping: Mapping[K, Callable[[], Any]],
-    ) -> dict[str, Callable[[], Any]]:
+        mapping: Mapping[K, Callable[[], t.NormalizedValue]],
+    ) -> dict[str, Callable[[], t.NormalizedValue]]:
         """Extract mapping of callables for resources/factories.
 
         Helper function to properly type narrow callable mappings for pyright.
@@ -554,7 +554,7 @@ class FlextUtilitiesCollection:
             Dict mapping string keys to callable functions
 
         """
-        result: dict[str, Callable[[], Any]] = {}
+        result: dict[str, Callable[[], t.NormalizedValue]] = {}
         items_iter = mapping.items()
         for item_tuple in items_iter:
             key_obj = item_tuple[0]
@@ -565,8 +565,8 @@ class FlextUtilitiesCollection:
 
     @staticmethod
     def extract_mapping_items[K](
-        mapping: Mapping[K, Any],
-    ) -> list[tuple[str, Any]]:
+        mapping: Mapping[K, t.NormalizedValue],
+    ) -> list[tuple[str, t.NormalizedValue]]:
         """Extract mapping items as typed list for iteration.
 
         Helper function to properly type narrow Mapping.items() for pyright.
@@ -579,7 +579,7 @@ class FlextUtilitiesCollection:
             List of (key, value) tuples with proper typing
 
         """
-        result: list[tuple[str, Any]] = []
+        result: list[tuple[str, t.NormalizedValue]] = []
         items_iter = mapping.items()
         for item_tuple in items_iter:
             key_obj = item_tuple[0]
@@ -831,11 +831,11 @@ class FlextUtilitiesCollection:
 
     @staticmethod
     def merge(
-        base: dict[str, Any],
-        other: dict[str, Any],
+        base: dict[str, t.NormalizedValue],
+        other: dict[str, t.NormalizedValue],
         *,
         strategy: str = "deep",
-    ) -> r[dict[str, Any]]:
+    ) -> r[dict[str, t.NormalizedValue]]:
         """Merge two dictionaries with configurable strategy.
 
         Strategies:
@@ -849,21 +849,21 @@ class FlextUtilitiesCollection:
         """
         try:
             if strategy in {"replace", "override"}:
-                result: dict[str, Any] = dict(base)
+                result: dict[str, t.NormalizedValue] = dict(base)
                 result.update(other)
-                return r[dict[str, Any]].ok(result)
+                return r[dict[str, t.NormalizedValue]].ok(result)
             if strategy == "filter_none":
                 result = dict(base)
                 for key, value in other.items():
                     if value is not None:
                         result[key] = value
-                return r[dict[str, Any]].ok(result)
+                return r[dict[str, t.NormalizedValue]].ok(result)
             if strategy in {"filter_empty", "filter_both"}:
                 result = dict(base)
                 for key, value in other.items():
                     if not FlextUtilitiesCollection._is_empty_value(value):
                         result[key] = value
-                return r[dict[str, Any]].ok(result)
+                return r[dict[str, t.NormalizedValue]].ok(result)
             if strategy == "append":
                 result = dict(base)
                 for key, value in other.items():
@@ -876,7 +876,7 @@ class FlextUtilitiesCollection:
                         result[key] = current_val + value
                     else:
                         result[key] = value
-                return r[dict[str, Any]].ok(result)
+                return r[dict[str, t.NormalizedValue]].ok(result)
             if strategy == "deep":
                 result = base.copy()
                 for key, value in other.items():
@@ -884,13 +884,15 @@ class FlextUtilitiesCollection:
                         result, key, value
                     )
                     if merge_result.is_failure:
-                        return r[dict[str, Any]].fail(
+                        return r[dict[str, t.NormalizedValue]].fail(
                             merge_result.error or "Unknown error"
                         )
-                return r[dict[str, Any]].ok(result)
-            return r[dict[str, Any]].fail(f"Unknown merge strategy: {strategy}")
+                return r[dict[str, t.NormalizedValue]].ok(result)
+            return r[dict[str, t.NormalizedValue]].fail(
+                f"Unknown merge strategy: {strategy}"
+            )
         except (TypeError, ValueError, KeyError, AttributeError) as e:
-            return r[dict[str, Any]].fail(f"Merge failed: {e}")
+            return r[dict[str, t.NormalizedValue]].fail(f"Merge failed: {e}")
 
     @staticmethod
     def mul(*values: float) -> int | float:

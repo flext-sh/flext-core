@@ -11,7 +11,7 @@ from __future__ import annotations
 import warnings
 from collections.abc import Callable, Mapping, Sequence
 from functools import partial
-from typing import Any, overload
+from typing import overload
 
 from pydantic import BaseModel
 
@@ -150,7 +150,8 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _build_apply_chunk(
-        current: t.NormalizedValue, ops: Mapping[str, Any]
+        current: t.NormalizedValue,
+        ops: Mapping[str, t.NormalizedValue | t.MapperCallable],
     ) -> t.NormalizedValue:
         """Helper: Apply chunk operation to split into sublists."""
         if "chunk" not in ops:
@@ -172,7 +173,8 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _build_apply_convert(
-        current: t.NormalizedValue, ops: Mapping[str, Any]
+        current: t.NormalizedValue,
+        ops: Mapping[str, t.NormalizedValue | t.MapperCallable],
     ) -> t.NormalizedValue:
         """Helper: Apply convert operation."""
         if "convert" not in ops:
@@ -231,7 +233,8 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _build_apply_ensure(
-        current: t.NormalizedValue, ops: Mapping[str, Any]
+        current: t.NormalizedValue,
+        ops: Mapping[str, t.NormalizedValue | t.MapperCallable],
     ) -> t.NormalizedValue:
         """Helper: Apply ensure operation."""
         if "ensure" not in ops:
@@ -291,7 +294,7 @@ class FlextUtilitiesMapper:
     @staticmethod
     def _build_apply_filter(
         current: t.NormalizedValue,
-        ops: Mapping[str, Any],
+        ops: Mapping[str, t.NormalizedValue | t.MapperCallable],
         default: t.NormalizedValue,
     ) -> t.NormalizedValue:
         """Helper: Apply filter operation."""
@@ -323,7 +326,8 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _build_apply_group(
-        current: t.NormalizedValue, ops: Mapping[str, Any]
+        current: t.NormalizedValue,
+        ops: Mapping[str, t.NormalizedValue | t.MapperCallable],
     ) -> t.NormalizedValue:
         """Helper: Apply group operation."""
         if "group" not in ops:
@@ -375,7 +379,8 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _build_apply_map(
-        current: t.NormalizedValue, ops: Mapping[str, Any]
+        current: t.NormalizedValue,
+        ops: Mapping[str, t.NormalizedValue | t.MapperCallable],
     ) -> t.NormalizedValue:
         """Helper: Apply map operation."""
         if "map" not in ops:
@@ -404,7 +409,8 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _build_apply_normalize(
-        current: t.NormalizedValue, ops: Mapping[str, Any]
+        current: t.NormalizedValue,
+        ops: Mapping[str, t.NormalizedValue | t.MapperCallable],
     ) -> t.NormalizedValue:
         """Helper: Apply normalize operation."""
         if "normalize" not in ops:
@@ -431,7 +437,7 @@ class FlextUtilitiesMapper:
     @staticmethod
     def _build_apply_process(
         current: t.NormalizedValue,
-        ops: Mapping[str, Any],
+        ops: Mapping[str, t.NormalizedValue | t.MapperCallable],
         default: t.NormalizedValue,
         on_error: str,
     ) -> t.NormalizedValue:
@@ -473,7 +479,8 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _build_apply_slice(
-        current: t.NormalizedValue, ops: Mapping[str, Any]
+        current: t.NormalizedValue,
+        ops: Mapping[str, t.NormalizedValue | t.MapperCallable],
     ) -> t.NormalizedValue:
         """Helper: Apply slice operation."""
         if "slice" not in ops:
@@ -506,7 +513,8 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _build_apply_sort(
-        current: t.NormalizedValue, ops: Mapping[str, Any]
+        current: t.NormalizedValue,
+        ops: Mapping[str, t.NormalizedValue | t.MapperCallable],
     ) -> t.NormalizedValue:
         """Helper: Apply sort operation."""
         if "sort" not in ops:
@@ -576,7 +584,7 @@ class FlextUtilitiesMapper:
     @staticmethod
     def _build_apply_transform(
         current: t.NormalizedValue,
-        ops: Mapping[str, Any],
+        ops: Mapping[str, t.NormalizedValue | t.MapperCallable],
         default: t.NormalizedValue,
         on_error: str,
     ) -> t.NormalizedValue:
@@ -621,7 +629,8 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _build_apply_unique(
-        current: t.NormalizedValue, ops: Mapping[str, Any]
+        current: t.NormalizedValue,
+        ops: Mapping[str, t.NormalizedValue | t.MapperCallable],
     ) -> t.NormalizedValue:
         """Helper: Apply unique operation to remove duplicates."""
         if "unique" not in ops or not ops.get("unique"):
@@ -795,7 +804,7 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _get_callable_from_dict(
-        ops: Mapping[str, Any], key: str
+        ops: Mapping[str, t.NormalizedValue | t.MapperCallable], key: str
     ) -> r[t.MapperCallable]:
         value: t.NormalizedValue | t.MapperCallable = ops.get(key)
         if callable(value):
@@ -826,7 +835,7 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _get_str_from_dict(
-        ops: Mapping[str, object], key: str, default: str = ""
+        ops: Mapping[str, t.NormalizedValue], key: str, default: str = ""
     ) -> str:
         """Safely extract str value from ConfigurationDict."""
         value = ops.get(key, default)
@@ -874,7 +883,7 @@ class FlextUtilitiesMapper:
     def _narrow_to_sequence(
         value: t.NormalizedValue | Sequence[t.NormalizedValue],
     ) -> Sequence[t.NormalizedValue]:
-        """Safely narrow object to Sequence[Any]."""
+        """Safely narrow object to Sequence[t.NormalizedValue]."""
         if isinstance(value, (list, tuple)):
             narrowed_items: t.ContainerList = []
             for item_raw in value:
@@ -1092,7 +1101,7 @@ class FlextUtilitiesMapper:
     def build(
         value: p.AccessibleData,
         *,
-        ops: Mapping[str, Any] | None = None,
+        ops: Mapping[str, t.NormalizedValue | t.MapperCallable] | None = None,
         default: t.NormalizedValue = None,
         on_error: str = "stop",
     ) -> t.NormalizedValue:
@@ -1212,7 +1221,7 @@ class FlextUtilitiesMapper:
     @staticmethod
     def cast_generic[T](
         value: t.NormalizedValue,
-        target_type: Callable[[Any], T] | None = None,
+        target_type: Callable[[t.NormalizedValue | BaseModel], T] | None = None,
         *,
         default: T | None = None,
     ) -> T | t.NormalizedValue:
@@ -1220,7 +1229,7 @@ class FlextUtilitiesMapper:
 
         Args:
             value: Value to cast
-            target_type: Callable/type that converts Any to T (optional)
+            target_type: Callable/type that converts input to T (optional)
             default: Default value if cast fails
 
         Returns:
@@ -1279,7 +1288,7 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def construct(
-        spec: Mapping[str, Any],
+        spec: Mapping[str, t.NormalizedValue | t.MapperCallable],
         source: m.ConfigMap | BaseModel | None = None,
         *,
         on_error: str = "stop",
@@ -1644,7 +1653,7 @@ class FlextUtilitiesMapper:
         *,
         default: t.NormalizedValue = None,
         required: bool = False,
-        ops: Mapping[str, Any] | None = None,
+        ops: Mapping[str, t.NormalizedValue | t.MapperCallable] | None = None,
     ) -> t.NormalizedValue:
         """Extract single field from source with optional DSL processing.
 
@@ -2203,8 +2212,14 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def process_context_data(
-        primary_data: m.ConfigMap | object | None = None,
-        secondary_data: m.ConfigMap | object | None = None,
+        primary_data: m.ConfigMap
+        | BaseModel
+        | Mapping[str, t.NormalizedValue]
+        | None = None,
+        secondary_data: m.ConfigMap
+        | BaseModel
+        | Mapping[str, t.NormalizedValue]
+        | None = None,
         *,
         transformer: t.MapperCallable | None = None,
         field_overrides: t.ContainerMapping | None = None,
@@ -2266,7 +2281,7 @@ class FlextUtilitiesMapper:
             transformer = identity_transformer
         result: dict[str, t.NormalizedValue] = {}
         if primary_data is not None:
-            primary_source: Mapping[str, Any] | None = None
+            primary_source: Mapping[str, t.NormalizedValue] | None = None
             if isinstance(primary_data, m.ConfigMap):
                 primary_source = primary_data.root
             else:
@@ -2288,7 +2303,7 @@ class FlextUtilitiesMapper:
                 )
                 result.update(transformed_primary)
         if secondary_data is not None and merge_strategy != "primary_only":
-            secondary_source: Mapping[str, Any] | None = None
+            secondary_source: Mapping[str, t.NormalizedValue] | None = None
             if isinstance(secondary_data, m.ConfigMap):
                 secondary_source = secondary_data.root
             else:
@@ -2331,7 +2346,9 @@ class FlextUtilitiesMapper:
         return result
 
     @staticmethod
-    def prop(key: str) -> Callable[[m.ConfigMap | BaseModel], Any]:
+    def prop(
+        key: str,
+    ) -> Callable[[m.ConfigMap | BaseModel], t.NormalizedValue]:
         """Create a property accessor function (functional pattern).
 
         Returns a function that extracts a property/attribute from an object.

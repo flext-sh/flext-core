@@ -42,7 +42,6 @@ from flext_core import (
     s,
     t,
 )
-from flext_core.runtime import RuntimeData
 
 
 class RuntimeOperationType(StrEnum):
@@ -96,21 +95,21 @@ class RuntimeOperationType(StrEnum):
 class RuntimeTestCase(BaseModel):
     """Runtime test case definition with parametrization data."""
 
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
 
     name: Annotated[str, Field(description="Runtime test case name")]
     operation: Annotated[
         RuntimeOperationType, Field(description="Runtime operation type")
     ]
     test_input: Annotated[
-        RuntimeData | type | None,
+        t.NormalizedValue | type | ModuleType | None,
         Field(
             default=None,
             description="Optional test input",
         ),
     ] = None
     expected_result: Annotated[
-        bool | tuple[object, ...] | object,
+        bool | tuple[type, ...] | type | ModuleType | None,
         Field(
             default=None,
             description="Expected operation result",

@@ -66,11 +66,12 @@ def test_rules_merge_combines_model_dump_values() -> None:
 
 
 def test_results_internal_conflict_paths_and_combine() -> None:
+    entries: list[t.MetadataValue] = [
+        {"ok": "v", "xs": [1, "a"]},
+        {"ys": [2, 3.5]},
+    ]
     merged_dict = _Results._merge_dicts(
-        cast(
-            "list[object]",
-            [{"ok": "v", "xs": [1, "a", object()]}, {"ys": [2, None, 3.5]}],
-        ),
+        entries,
     )
     assert merged_dict["ok"] == "v"
     assert merged_dict["xs"] == [1, "a"]

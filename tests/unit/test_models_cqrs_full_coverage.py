@@ -56,7 +56,11 @@ def test_query_validate_pagination_dict_and_default() -> None:
 
 def test_handler_builder_fluent_methods() -> None:
     with pytest.raises(ValidationError):
-        _ = m.Handler(handler_type=c.Cqrs.HandlerType.QUERY)
+        _ = m.Handler(
+            handler_type=c.Cqrs.HandlerType.QUERY,
+            handler_id="h-1",
+            handler_name="handler",
+        )
 
 
 def test_cqrs_query_resolve_deeper_and_int_pagination(

@@ -293,7 +293,7 @@ def test_mixins_context_logging_and_cqrs_paths(monkeypatch: pytest.MonkeyPatch) 
     service._log_config_once(config, message="cfg")
     service._with_operation_context(
         "run",
-        params={"k": "v"},
+        params="k=v",
         stack_trace="s",
         normal="n",
     )
@@ -353,10 +353,7 @@ def test_mixins_validation_and_protocol_paths() -> None:
     )
     assert x.ProtocolValidation.is_command_bus(cmd_bus) is True
     unknown = x.ProtocolValidation.validate_protocol_compliance(
-        cast(
-            "p.Handler[object, object]",
-            cast("object", SimpleNamespace()),
-        ),
+        cast("m.ConfigMap", m.ConfigMap(root={})),
         "Nope",
     )
     service_like = SimpleNamespace(
@@ -365,10 +362,7 @@ def test_mixins_validation_and_protocol_paths() -> None:
         is_valid=_return_true,
     )
     known = x.ProtocolValidation.validate_protocol_compliance(
-        cast(
-            "p.Handler[object, object]",
-            cast("object", service_like),
-        ),
+        cast("m.ConfigMap", m.ConfigMap(root=service_like.__dict__)),
         "Service",
     )
     assert unknown.is_failure
