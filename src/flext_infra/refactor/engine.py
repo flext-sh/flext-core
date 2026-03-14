@@ -504,7 +504,7 @@ class FlextInfraRefactorEngine:
 
     def _build_rule(
         self,
-        rule_def: Mapping[str, object],
+        rule_def: Mapping[str, t.Infra.InfraValue],
     ) -> FlextInfraRefactorRule | None:
         rule_id = str(rule_def.get(c.Infra.ReportKeys.ID, c.Infra.Defaults.UNKNOWN))
         fix_action = (

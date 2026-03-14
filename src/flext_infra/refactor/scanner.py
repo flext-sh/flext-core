@@ -80,15 +80,21 @@ class FlextInfraRefactorLooseClassScanner:
                 if viol.class_name in targets_found:
                     targets_found[viol.class_name] = True
         counters = Counter(v.confidence for v in violations)
-        out2: RConfigMapping = r[t.Infra.ContainerDict].ok({
+        violations_infra: list[t.Infra.InfraValue] = [
+            v.model_dump() for v in violations
+        ]
+        confidence_counts: dict[str, t.Infra.InfraValue] = dict(counters)
+        required_targets_infra: dict[str, t.Infra.InfraValue] = dict(targets_found)
+        result_dict: t.Infra.ContainerDict = {
             "rule": c.Infra.ReportKeys.CLASS_NESTING,
             "files_scanned": len(discovered_files),
             "classes_scanned": classes_scanned,
             c.Infra.ReportKeys.VIOLATIONS_COUNT: len(violations),
-            "confidence_counts": dict(counters.items()),
-            "required_targets": targets_found,
-            c.Infra.ReportKeys.VIOLATIONS: violations,
-        })
+            "confidence_counts": confidence_counts,
+            "required_targets": required_targets_infra,
+            c.Infra.ReportKeys.VIOLATIONS: violations_infra,
+        }
+        out2: RConfigMapping = r[t.Infra.ContainerDict].ok(result_dict)
         return out2
 
     def _build_violation(

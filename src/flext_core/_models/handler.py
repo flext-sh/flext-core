@@ -214,7 +214,7 @@ class FlextModelsHandler:
                 examples=["2025-01-01T00:00:00Z", "2025-10-12T15:30:00+00:00"],
                 pattern=c.Platform.PATTERN_ISO8601_TIMESTAMP,
             ),
-        ]
+        ] = Field(default_factory=lambda: c.Cqrs.DEFAULT_TIMESTAMP)
         status: Annotated[
             c.Cqrs.CommonStatus,
             Field(

@@ -47,7 +47,7 @@ class FlextInfraUtilitiesYaml:
         return FlextInfraUtilitiesYaml._MAPPING_ADAPTER
 
     @staticmethod
-    def safe_load_yaml(path: Path) -> Mapping[str, object]:
+    def safe_load_yaml(path: Path) -> Mapping[str, t.Infra.InfraValue]:
         """Load YAML file safely, returning empty mapping on missing/invalid.
 
         Args:

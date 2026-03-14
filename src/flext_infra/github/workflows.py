@@ -13,7 +13,7 @@ from collections.abc import MutableMapping
 from pathlib import Path
 from typing import TypeAlias
 
-from pydantic import JsonValue, TypeAdapter
+from pydantic import JsonValue
 
 from flext_core import r
 from flext_infra import (
@@ -245,19 +245,20 @@ class FlextInfraWorkflowSyncer:
         by_action: MutableMapping[str, int] = {}
         for op in operations:
             by_action[op.action] = by_action.get(op.action, 0) + 1
-        jv = TypeAdapter(JsonValue)
+        summary_dict: dict[str, JsonValue] = dict(by_action)
+        ops_list: list[JsonValue] = [
+            {
+                c.Infra.Toml.PROJECT: op.project,
+                c.Infra.Toml.PATH: op.path,
+                c.Infra.ReportKeys.ACTION: op.action,
+                "reason": op.reason,
+            }
+            for op in operations
+        ]
         payload: JsonValue = {
             "mode": "apply" if apply else "dry-run",
-            c.Infra.ReportKeys.SUMMARY: jv.validate_python(dict(by_action)),
-            "operations": jv.validate_python([
-                {
-                    c.Infra.Toml.PROJECT: op.project,
-                    c.Infra.Toml.PATH: op.path,
-                    c.Infra.ReportKeys.ACTION: op.action,
-                    "reason": op.reason,
-                }
-                for op in operations
-            ]),
+            c.Infra.ReportKeys.SUMMARY: summary_dict,
+            "operations": ops_list,
         }
         self._json.write_json(report_path, payload, sort_keys=True)
 

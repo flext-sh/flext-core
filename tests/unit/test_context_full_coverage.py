@@ -114,7 +114,7 @@ def test_inactive_and_none_value_paths() -> None:
     assert ctx._get_all_scopes() == {}
     ctx2 = FlextContext()
     ctx2._set_in_contextvar(c.Context.SCOPE_GLOBAL, m.ConfigMap(root={"k": None}))
-    assert ctx2.get("k").is_success
+    assert ctx2.get("k").is_failure
 
 
 def test_clear_keys_values_items_and_validate_branches(

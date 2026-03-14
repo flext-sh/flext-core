@@ -30,9 +30,12 @@ from flext_core import (
     u,
 )
 from flext_core._models.containers import FlextModelsContainers
+from flext_core._models.handler import FlextModelsHandler
 from flext_core.typings import RegistryBindingKey
 
 type RegistrablePlugin = t.RegistrablePlugin
+
+_RegistrationDetails = FlextModelsHandler.RegistrationDetails
 
 
 class FlextRegistry(s[bool]):
@@ -55,7 +58,7 @@ class FlextRegistry(s[bool]):
         success indicators for batch handler operations.
         """
 
-        registered: list[m.RegistrationDetails] = Field(
+        registered: list[_RegistrationDetails] = Field(
             default_factory=list,
             description="Successfully registered handlers with registration details.",
         )
@@ -172,7 +175,11 @@ class FlextRegistry(s[bool]):
 
     @staticmethod
     def _narrow_value(
-        value: t.NormalizedValue | BaseModel | None,
+        value: t.NormalizedValue
+        | t.RegisterableService
+        | t.RegistrablePlugin
+        | BaseModel
+        | None,
     ) -> t.Container | BaseModel | None:
         """Safe conversion using centralized utilities."""
         normalized = u.narrow_to_container(value)
@@ -294,7 +301,7 @@ class FlextRegistry(s[bool]):
         """
         validated_metadata: FlextModelsContainers.ConfigMap | None = None
         if metadata is not None:
-            raw_metadata: Mapping[str, t.NormalizedValue]
+            raw_metadata: Mapping[str, t.NormalizedValue | t.MetadataValue | BaseModel]
             if isinstance(metadata, m.Metadata):
                 raw_metadata = metadata.attributes
             else:
@@ -353,7 +360,7 @@ class FlextRegistry(s[bool]):
         self,
         handler: t.HandlerLike,
         _metadata: m.ConfigMap | m.Metadata | None = None,
-    ) -> r[m.RegistrationDetails]:
+    ) -> r[_RegistrationDetails]:
         """Register a handler instance or callable.
 
         Re-registration is ignored and treated as success to guarantee
@@ -361,7 +368,7 @@ class FlextRegistry(s[bool]):
         the same handler.
 
         Returns:
-            r[m.RegistrationDetails]: Success result with registration details.
+            r[_RegistrationDetails]: Success result with registration details.
 
         """
         handler_id = str(getattr(handler, "handler_id", id(handler)))
@@ -381,13 +388,13 @@ class FlextRegistry(s[bool]):
         )
 
         if registration_result.is_failure:
-            return r[m.RegistrationDetails].fail(
+            return r[_RegistrationDetails].fail(
                 registration_result.error or "Dispatcher registration failed"
             )
 
         self._registered_keys.add(handler_id)
-        return r[m.RegistrationDetails].ok(
-            m.RegistrationDetails(
+        return r[_RegistrationDetails].ok(
+            _RegistrationDetails(
                 registration_id=handler_id,
                 handler_mode=handler_mode,
                 status=status,
@@ -497,7 +504,7 @@ class FlextRegistry(s[bool]):
     def _add_successful_registration(
         self,
         key: str,
-        registration: m.RegistrationDetails,
+        registration: _RegistrationDetails,
         summary: FlextRegistry.Summary,
     ) -> None:
         """Add successful registration to summary."""
@@ -506,7 +513,7 @@ class FlextRegistry(s[bool]):
 
     def _create_registration_details(
         self, reg_result: m.RegistrationResult, key: str
-    ) -> m.RegistrationDetails:
+    ) -> _RegistrationDetails:
         """Create RegistrationDetails from registration result (DRY helper).
 
         Args:
@@ -525,7 +532,7 @@ class FlextRegistry(s[bool]):
             handler_mode = c.Cqrs.HandlerType.EVENT
         timestamp = getattr(reg_result, "timestamp", "")
         status = reg_result.status
-        return m.RegistrationDetails(
+        return _RegistrationDetails(
             registration_id=key,
             handler_mode=self._get_handler_mode(handler_mode),
             timestamp=timestamp,

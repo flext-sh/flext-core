@@ -18,7 +18,9 @@ from flext_infra import c, m
 
 
 class _TemplateRenderer(Protocol):
-    def render(self, *, config: object, lint_gates_csv: str) -> str: ...
+    def render(
+        self, *, config: m.Infra.Basemk.BaseMkConfig, lint_gates_csv: str
+    ) -> str: ...
 
 
 class FlextInfraBaseMkTemplateEngine(s[str]):

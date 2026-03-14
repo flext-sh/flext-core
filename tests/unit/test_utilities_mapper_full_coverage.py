@@ -327,7 +327,7 @@ def test_narrow_to_string_keyed_dict_and_mapping_paths(mapper: type[u]) -> None:
     mapped = mapper._narrow_to_configuration_mapping({"x": 1})
     assert isinstance(mapped, m.ConfigMap)
     assert mapped.root["x"] == 1
-    with pytest.raises(TypeError, match="Cannot coerce"):
+    with pytest.raises(TypeError, match="Cannot narrow"):
         _ = mapper._narrow_to_configuration_mapping(
             cast("t.NormalizedValue", {1: BadString()}),
         )

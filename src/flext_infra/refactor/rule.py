@@ -55,7 +55,7 @@ class FlextInfraRefactorRuleLoader:
         rule_filters: list[str],
         validator: FlextInfraRefactorRuleDefinitionValidator,
         build_rule: Callable[
-            [Mapping[str, object]],
+            [Mapping[str, t.Infra.InfraValue]],
             FlextInfraRefactorRule | None,
         ],
         build_file_rules: Callable[[], list[ClassNestingRefactorRule]],

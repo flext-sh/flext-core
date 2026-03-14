@@ -75,6 +75,7 @@ class FlextUtilitiesGuards:
     type _GuardInput = (
         t.NormalizedValue
         | t.MetadataValue
+        | t.ContainerValue
         | t.RegisterableService
         | t.RegistrablePlugin
         | t.FactoryCallable
@@ -83,18 +84,23 @@ class FlextUtilitiesGuards:
         | p.Context
         | p.Config
         | p.Log.StructlogLogger
+        | Callable[[], p.Log.StructlogLogger]
+        | p.CommandBus
         | p.HasModelDump
         | Mapping[str, t.NormalizedValue]
         | Mapping[str, t.MetadataValue]
         | Mapping[str, t.NormalizedValue | BaseModel]
+        | Mapping[str, t.Container | t.ContainerValue]
         | Sequence[t.NormalizedValue]
         | Sequence[t.MetadataValue]
+        | Sequence[t.Container | t.ContainerValue]
         | tuple[type, ...]
         | tuple[t.TypeHintSpecifier, ...]
         | t.TypeHintSpecifier
         | p.ValidatorSpec
         | p.ResultLike[t.Container | BaseModel]
         | Callable[..., t.NormalizedValue]
+        | Callable[..., t.Container | BaseModel]
         | Callable[[t.NormalizedValue], bool]
         | None
     )
@@ -228,14 +234,18 @@ class FlextUtilitiesGuards:
         """
         if isinstance(value, m.Dict):
             candidate: Mapping[str, t.NormalizedValue | BaseModel] = value.root
-        elif isinstance(value, dict):
-            candidate = value
-        else:
+            for item_key, item_value in candidate.items():
+                if not isinstance(item_key, str):
+                    return False
+                if not FlextUtilitiesGuards.is_container(item_value):
+                    return False
+            return True
+        if not FlextUtilitiesGuards._is_mapping(value):
             return False
-        for item_key, item_value in candidate.items():
-            if not isinstance(item_key, str):
+        for mk, mv in value.items():
+            if not isinstance(mk, str):
                 return False
-            if not FlextUtilitiesGuards.is_container(item_value):
+            if not FlextUtilitiesGuards.is_container(mv):
                 return False
         return True
 

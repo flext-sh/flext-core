@@ -14,6 +14,9 @@ from pydantic import BaseModel
 from flext_core import r
 from flext_tests import c, m, t, tt, u
 
+_SCALAR = (str, int, float, bool)
+_KINDS: tuple[str, ...] = ("user", "config", "service", "entity", "value")
+
 
 class FlextTestsBuilders:
     """Ultra-powerful test data builder with fluent interface.
@@ -43,6 +46,8 @@ class FlextTestsBuilders:
         except cls._EXC as e:
             raise ValueError(f"Invalid {name}() parameters: {e}") from e
 
+    # -- Public API --
+
     def add(
         self,
         key: str,
@@ -60,17 +65,16 @@ class FlextTestsBuilders:
         """
         nv: t.Tests.object = value
         if value is not None:
-            if isinstance(value, (str, int, float, bool, BaseModel, list)):
+            if isinstance(value, (*_SCALAR, BaseModel, list)):
                 nv = value
             elif isinstance(value, tuple):
-                converted: list[t.Tests.object] = [v for v in value]  # noqa: C416
-                nv = converted
+                nv = [v for v in value]  # noqa: C416
             elif isinstance(value, dict):
                 nv = dict(value)
             else:
                 nv = str(value)
         params = self._v(m.Tests.AddParams, "add", {"key": key, "value": nv, **kwargs})
-        rv = self._resolve_add_value(params)
+        rv = self._resolve(params)
         if params.transform is not None and rv is not None:
             rv = (
                 [params.transform(u.Tests.to_payload(i)) for i in rv]
@@ -85,7 +89,7 @@ class FlextTestsBuilders:
             raise ValueError(
                 f"Validation failed for key '{params.key}' with value: {rv}"
             )
-        self._store_value(params, rv)
+        self._store(params, rv)
         return self
 
     def batch(
@@ -115,8 +119,7 @@ class FlextTestsBuilders:
         return self
 
     def build(
-        self,
-        **kwargs: t.Tests.object,
+        self, **kwargs: t.Tests.object
     ) -> (
         t.Tests.Builders.BuildOutputValue
         | Sequence[t.Tests.Builders.BuildOutputValue]
@@ -125,12 +128,12 @@ class FlextTestsBuilders:
         """Build the dataset with output type control."""
         params = self._v(m.Tests.BuildParams, "build", kwargs)
         self._data = self._data or {}
-        data = self._process_batch_results(dict(self._data))
+        data = self._to_results(dict(self._data))
         if params.filter_none:
             data = {k: v for k, v in data.items() if v is not None}
         if params.flatten:
             data = dict(
-                self._flatten_dict({
+                self._flat({
                     k: u.Tests.to_payload(v)
                     for k, v in data.items()
                     if not isinstance(v, r)
@@ -187,11 +190,7 @@ class FlextTestsBuilders:
     ) -> T | None: ...
 
     def get[T](
-        self,
-        path: str,
-        default: T | None = None,
-        *,
-        as_type: type[T] | None = None,
+        self, path: str, default: T | None = None, *, as_type: type[T] | None = None
     ) -> t.Tests.Builders.BuilderValue | T | None:
         """Get value from dot-separated path."""
         self._data = self._data or {}
@@ -246,8 +245,7 @@ class FlextTestsBuilders:
         return self
 
     def scenarios(
-        self,
-        *cases: tuple[str, Mapping[str, t.Tests.Builders.BuilderValue]],
+        self, *cases: tuple[str, Mapping[str, t.Tests.Builders.BuilderValue]]
     ) -> list[t.Tests.Builders.ParametrizedCase]:
         """Build pytest.mark.parametrize compatible scenarios."""
         return list(cases)
@@ -262,15 +260,15 @@ class FlextTestsBuilders:
     ) -> Self:
         """Set value at nested path using dot notation."""
         self._data = self._data or {}
-        fv: t.Tests.Builders.BuilderValue
-        if kwargs:
-            fv = (
+        fv: t.Tests.Builders.BuilderValue = (
+            (
                 {**value, **kwargs}
                 if value is not None and isinstance(value, Mapping)
                 else dict(kwargs)
             )
-        else:
-            fv = value
+            if kwargs
+            else value
+        )
         parts = path.split(".")
         if len(parts) == 1:
             self._data[path] = fv
@@ -293,8 +291,7 @@ class FlextTestsBuilders:
         return self
 
     def to_result(
-        self,
-        **kwargs: t.Tests.object,
+        self, **kwargs: t.Tests.object
     ) -> r[t.Tests.Builders.BuilderValue] | t.Tests.Builders.BuilderValue:
         """Build data wrapped in r."""
         params = self._v(m.Tests.ToResultParams, "to_result", kwargs)
@@ -315,30 +312,15 @@ class FlextTestsBuilders:
         if params.map_fn is not None:
             tr = params.map_fn(data)
             return (
-                (
-                    tr
-                    if isinstance(
-                        tr, (str, int, float, bool, list, dict, BaseModel, type(None))
-                    )
-                    else None
-                )
+                u.Tests.coerce_to_test_object(tr)
                 if params.unwrap
                 else r[t.Tests.object].ok(tr)
             )
         if params.as_cls is not None:
             try:
-                inst = params.as_cls(*(params.cls_args or ()), **data)
-                bv: t.Tests.object
-                if isinstance(inst, (str, int, float, bool, BaseModel)):
-                    bv = inst
-                elif isinstance(inst, list):
-                    bv = [v for v in inst]  # noqa: C416
-                elif isinstance(inst, dict):
-                    bv = {str(k): v for k, v in inst.items()}
-                elif inst is None:
-                    bv = None
-                else:
-                    bv = None
+                bv: t.Tests.object = u.Tests.coerce_to_test_object(
+                    params.as_cls(*(params.cls_args or ()), **data)
+                )
                 return bv if params.unwrap else r[t.Tests.object].ok(bv)
             except self._EXC as e:
                 return fail(str(e))
@@ -402,7 +384,7 @@ class FlextTestsBuilders:
 
     # -- Private helpers --
 
-    def _create_config(
+    def _config(
         self, *, production: bool, debug: bool
     ) -> t.Tests.Builders.BuilderValue:
         """Create configuration data via tt.model('config')."""
@@ -411,7 +393,7 @@ class FlextTestsBuilders:
             if production
             else c.Tests.Builders.DEFAULT_ENVIRONMENT_DEVELOPMENT
         )
-        config = self._extract_model(
+        config = u.Tests.extract_model(
             tt.model(
                 "config",
                 service_type=c.Tests.Factory.DEFAULT_SERVICE_TYPE,
@@ -434,44 +416,7 @@ class FlextTestsBuilders:
         }
 
     @staticmethod
-    def _extract_model[T: BaseModel](
-        result: (
-            BaseModel
-            | list[BaseModel]
-            | Mapping[str, BaseModel]
-            | r[BaseModel]
-            | r[list[BaseModel]]
-            | r[Mapping[str, BaseModel]]
-        ),
-        expected: type[T],
-    ) -> T:
-        """Extract a BaseModel from various tt.model() return shapes."""
-        if isinstance(result, expected):
-            return result
-        if isinstance(result, r) and result.is_success:
-            rv: BaseModel | list[BaseModel] | Mapping[str, BaseModel] = result.value
-            if isinstance(rv, expected):
-                return rv
-            if isinstance(rv, list) and len(rv) == 1:
-                first_from_r: BaseModel = rv[0]
-                if isinstance(first_from_r, expected):
-                    return first_from_r
-            if isinstance(rv, Mapping) and len(rv) == 1:
-                val_from_r: BaseModel = next(iter(rv.values()))
-                if isinstance(val_from_r, expected):
-                    return val_from_r
-        if isinstance(result, list) and len(result) == 1:
-            first: BaseModel = result[0]
-            if isinstance(first, expected):
-                return first
-        if isinstance(result, Mapping) and len(result) == 1:
-            val: BaseModel = next(iter(result.values()))
-            if isinstance(val, expected):
-                return val
-        raise TypeError(f"Expected {expected.__name__}, got {type(result)}")
-
-    @staticmethod
-    def _flatten_dict(
+    def _flat(
         data: t.Tests.Builders.BuilderDict, parent_key: str = "", sep: str = "."
     ) -> t.Tests.Builders.BuilderDict:
         """Flatten nested dict using dot notation keys."""
@@ -479,15 +424,13 @@ class FlextTestsBuilders:
         for k, v in data.items():
             nk = f"{parent_key}{sep}{k}" if parent_key else k
             items.extend(
-                FlextTestsBuilders._flatten_dict(v, nk, sep).items()
+                FlextTestsBuilders._flat(v, nk, sep).items()
                 if isinstance(v, dict)
                 else [(nk, v)]
             )
         return dict(items)
 
-    def _generate_from_factory(
-        self, factory: str, count: int
-    ) -> t.Tests.Builders.BuilderValue:
+    def _factory(self, factory: str, count: int) -> t.Tests.Builders.BuilderValue:
         """Generate data using factory methods."""
         cb = c.Tests.Builders
         if factory == "users":
@@ -502,7 +445,7 @@ class FlextTestsBuilders:
                 if isinstance(i, m.Tests.User)
             ]
         if factory == "configs":
-            return self._create_config(production=False, debug=True)
+            return self._config(production=False, debug=True)
         if factory == "services":
             svcs: list[dict[str, str]] = []
             for i in range(count):
@@ -522,37 +465,42 @@ class FlextTestsBuilders:
             ]
         raise ValueError(f"Unknown factory: {factory}")
 
-    def _process_batch_results(
-        self, data: t.Tests.Builders.BuilderDict
-    ) -> t.Tests.Builders.BuilderOutputDict:
-        """Convert batch result markers to actual r objects."""
-        processed: dict[
-            str,
-            t.Tests.object
-            | r[t.Tests.object]
-            | list[t.Tests.object | r[t.Tests.object]]
-            | Mapping[str, t.Tests.object],
-        ] = {}
-        for k, v in data.items():
-            if isinstance(v, list):
-                processed[k] = [self._cm(i) for i in v]
-            elif isinstance(v, dict) and v.get("_is_result_marker"):
-                processed[k] = self._cm(v)
-            else:
-                processed[k] = v
-        return processed
+    def _model(self, params: m.Tests.AddParams) -> t.Tests.object:
+        """Resolve model= parameter in add()."""
+        assert params.model is not None
+        dd: dict[str, t.Tests.object] = (
+            dict(params.model_data.items()) if params.model_data else {}
+        )
+        name = params.model.__name__.lower()
+        mk_str = next((k for k in _KINDS if k in name), None)
+        if mk_str is None:
+            raise ValueError(f"Unknown model kind for {params.model.__name__}")
+        filtered: dict[str, t.Tests.TestResultValue] = {}
+        for k, v in dd.items():
+            if isinstance(v, (*_SCALAR, type(None), list)):
+                filtered[k] = v
+            elif isinstance(v, tuple):
+                filtered[k] = [i for i in v]  # noqa: C416
+            elif isinstance(v, dict):
+                filtered[k] = v
+        mk: Literal["user", "config", "service", "entity", "value"]
+        match mk_str:
+            case "user" | "config" | "service" | "entity" | "value":
+                mk = mk_str
+            case _:
+                mk = "user"
+        result = tt.model(mk, **filtered)
+        if isinstance(result, BaseModel):
+            return result
+        if u.Tests.is_flext_result(result):
+            if result.is_success:
+                rval: BaseModel = result.value
+                if isinstance(rval, BaseModel):
+                    return rval
+            return None
+        return result if isinstance(result, (list, dict)) else None
 
-    @staticmethod
-    def _cm(item: t.Tests.object) -> t.Tests.object | r[t.Tests.object]:
-        """Convert a single result marker dict to r."""
-        if isinstance(item, dict) and item.get("_is_result_marker"):
-            if "_result_ok" in item:
-                return r[t.Tests.object].ok(item["_result_ok"])
-            if "_result_fail" in item:
-                return r[t.Tests.object].fail(str(item["_result_fail"]))
-        return item
-
-    def _resolve_add_value(self, params: m.Tests.AddParams) -> t.Tests.object:
+    def _resolve(self, params: m.Tests.AddParams) -> t.Tests.object:
         """Core resolution logic for add() — returns resolved value."""
         if params.result_ok is not None:
             return {"_result_ok": params.result_ok, "_is_result_marker": True}
@@ -563,7 +511,26 @@ class FlextTestsBuilders:
                 "_is_result_marker": True,
             }
         if params.cls is not None:
-            return self._resolve_cls(params)
+            cls_type, kw = params.cls, params.cls_kwargs or {}
+            if issubclass(cls_type, m.Tests.Entity):
+                return u.Tests.DomainHelpers.create_test_entity_instance(
+                    name=str(kw.get("name", "")),
+                    value=kw.get("value", ""),
+                    entity_class=lambda *, name, value, **_kw: cls_type(
+                        name=name, value=value
+                    ),
+                )
+            if issubclass(cls_type, m.Tests.Value):
+                cv = kw.get("count", 1)
+                return u.Tests.DomainHelpers.create_test_value_object_instance(
+                    data=str(kw.get("data", "")),
+                    count=int(cv) if isinstance(cv, (int, float)) else 1,
+                    value_class=lambda *, data, count: cls_type(data=data, count=count),
+                )
+            args = params.cls_args or ()
+            return u.Tests.to_payload(
+                cls_type.__call__(*args, **kw) if args or kw else cls_type.__call__()
+            )
         if params.items is not None:
             items = list(params.items) if params.items else []
             if params.items_filter is not None:
@@ -583,13 +550,13 @@ class FlextTestsBuilders:
                 entries = {k: params.entries_map(v) for k, v in entries.items()}
             return entries
         if params.factory is not None:
-            return self._generate_from_factory(
+            return self._factory(
                 params.factory, params.count or c.Tests.Factory.DEFAULT_BATCH_COUNT
             )
         if params.model is not None:
-            return self._resolve_model(params)
+            return self._model(params)
         if params.production is not None or params.debug is not None:
-            return self._create_config(
+            return self._config(
                 production=params.production or False,
                 debug=params.debug
                 if params.debug is not None
@@ -599,90 +566,9 @@ class FlextTestsBuilders:
             return dict(params.mapping.items())
         if params.sequence is not None:
             return list(params.sequence)
-        if params.value is not None:
-            return params.value
-        if params.default is not None:
-            return params.default
-        return None
+        return params.value if params.value is not None else params.default
 
-    def _resolve_cls(self, params: m.Tests.AddParams) -> t.Tests.object:
-        """Resolve cls= parameter in add()."""
-        cls_type = params.cls
-        assert cls_type is not None
-        kw = params.cls_kwargs or {}
-        if issubclass(cls_type, m.Tests.Entity):
-            ec = cls_type
-
-            def _make_entity(*, name: str, value: t.Tests.object) -> m.Tests.Entity:
-                return ec(name=name, value=value)
-
-            return u.Tests.DomainHelpers.create_test_entity_instance(
-                name=str(kw.get("name", "")),
-                value=kw.get("value", ""),
-                entity_class=_make_entity,
-            )
-        if issubclass(cls_type, m.Tests.Value):
-            vc = cls_type
-            cv = kw.get("count", 1)
-
-            def _make_value(*, data: str, count: int) -> m.Tests.Value:
-                return vc(data=data, count=count)
-
-            return u.Tests.DomainHelpers.create_test_value_object_instance(
-                data=str(kw.get("data", "")),
-                count=int(cv) if isinstance(cv, (int, float)) else 1,
-                value_class=_make_value,
-            )
-        args = params.cls_args or ()
-        return u.Tests.to_payload(
-            cls_type.__call__(*args, **kw) if args or kw else cls_type.__call__()
-        )
-
-    def _resolve_model(self, params: m.Tests.AddParams) -> t.Tests.object:
-        """Resolve model= parameter in add()."""
-        assert params.model is not None
-        dd: dict[str, t.Tests.object] = (
-            dict(params.model_data.items()) if params.model_data else {}
-        )
-        name = params.model.__name__.lower()
-        mk_str = next(
-            (k for k in ("user", "config", "service", "entity", "value") if k in name),
-            None,
-        )
-        if mk_str is None:
-            raise ValueError(f"Unknown model kind for {params.model.__name__}")
-        filtered: dict[str, t.Tests.TestResultValue] = {}
-        for k, v in dd.items():
-            if isinstance(v, (str, int, float, bool, type(None), list)):
-                filtered[k] = v
-            elif isinstance(v, tuple):
-                filtered[k] = [i for i in v]  # noqa: C416
-            elif isinstance(v, dict):
-                filtered[k] = v
-        mk: Literal["user", "config", "service", "entity", "value"]
-        match mk_str:
-            case "user" | "config" | "service" | "entity" | "value":
-                mk = mk_str
-            case _:
-                mk = "user"
-        result = tt.model(mk, **filtered)
-        if isinstance(result, BaseModel):
-            return result
-        if isinstance(result, r):
-            if result.is_success:
-                val = result.value
-                if isinstance(val, BaseModel):
-                    return val
-                if isinstance(val, (list, tuple)) and not isinstance(val, (str, bytes)):
-                    return list(val)
-                if isinstance(val, Mapping):
-                    return dict(val.items())
-            return None
-        return result if isinstance(result, (list, dict)) else None
-
-    def _store_value(
-        self, params: m.Tests.AddParams, resolved_value: t.Tests.object
-    ) -> None:
+    def _store(self, params: m.Tests.AddParams, resolved_value: t.Tests.object) -> None:
         """Store resolved value into builder data, handling merge."""
         self._data = self._data or {}
         if params.merge and params.key in self._data:
@@ -701,6 +587,35 @@ class FlextTestsBuilders:
                 if mr.is_success:
                     resolved_value = u.Tests.to_payload(mr.value)
         self._data[params.key] = resolved_value
+
+    def _to_results(
+        self, data: t.Tests.Builders.BuilderDict
+    ) -> t.Tests.Builders.BuilderOutputDict:
+        """Convert batch result markers to actual r objects."""
+
+        def cm(item: t.Tests.object) -> t.Tests.object | r[t.Tests.object]:
+            if isinstance(item, dict) and item.get("_is_result_marker"):
+                if "_result_ok" in item:
+                    return r[t.Tests.object].ok(item["_result_ok"])
+                if "_result_fail" in item:
+                    return r[t.Tests.object].fail(str(item["_result_fail"]))
+            return item
+
+        processed: dict[
+            str,
+            t.Tests.object
+            | r[t.Tests.object]
+            | list[t.Tests.object | r[t.Tests.object]]
+            | Mapping[str, t.Tests.object],
+        ] = {}
+        for k, v in data.items():
+            if isinstance(v, list):
+                processed[k] = [cm(i) for i in v]
+            elif isinstance(v, dict) and v.get("_is_result_marker"):
+                processed[k] = cm(v)
+            else:
+                processed[k] = v
+        return processed
 
     # -- Inner namespace: Tests --
 
@@ -769,8 +684,7 @@ class FlextTestsBuilders:
 
             @staticmethod
             def parametrized(
-                success_values: Sequence[t.Tests.object],
-                failure_errors: Sequence[str],
+                success_values: Sequence[t.Tests.object], failure_errors: Sequence[str]
             ) -> list[tuple[str, Mapping[str, t.Tests.object]]]:
                 """Create parametrized cases - DELEGATES to u.Tests.GenericHelpers."""
                 return [
@@ -822,8 +736,8 @@ class FlextTestsBuilders:
             def flatten(
                 nested: Mapping[str, t.Tests.object], separator: str = "."
             ) -> Mapping[str, t.Tests.object]:
-                """Flatten nested dict — delegates to FlextTestsBuilders._flatten_dict."""
-                return FlextTestsBuilders._flatten_dict(
+                """Flatten nested dict — delegates to FlextTestsBuilders._flat."""
+                return FlextTestsBuilders._flat(
                     {str(k): v for k, v in nested.items()}, sep=separator
                 )
 
@@ -895,15 +809,13 @@ class FlextTestsBuilders:
 
             @staticmethod
             def config(**overrides: t.Tests.object) -> m.Tests.Config:
-                return FlextTestsBuilders._extract_model(
+                return u.Tests.extract_model(
                     tt.model("config", **overrides), m.Tests.Config
                 )
 
             @staticmethod
             def entity[T: m.Tests.Entity](
-                entity_class: type[T],
-                name: str = "",
-                value: t.Tests.object = "",
+                entity_class: type[T], name: str = "", value: t.Tests.object = ""
             ) -> T:
                 return u.Tests.DomainHelpers.create_test_entity_instance(
                     name=name,
@@ -915,13 +827,13 @@ class FlextTestsBuilders:
 
             @staticmethod
             def service(**overrides: t.Tests.object) -> m.Tests.Service:
-                return FlextTestsBuilders._extract_model(
+                return u.Tests.extract_model(
                     tt.model("service", **overrides), m.Tests.Service
                 )
 
             @staticmethod
             def user(**overrides: t.Tests.object) -> m.Tests.User:
-                return FlextTestsBuilders._extract_model(
+                return u.Tests.extract_model(
                     tt.model("user", **overrides), m.Tests.User
                 )
 

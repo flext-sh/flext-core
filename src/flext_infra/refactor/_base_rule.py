@@ -12,6 +12,7 @@ from collections.abc import Mapping
 from pathlib import Path
 
 import libcst as cst
+from pydantic import JsonValue
 
 from flext_infra import c
 
@@ -19,7 +20,7 @@ from flext_infra import c
 class FlextInfraRefactorRule:
     """Base class for flext_infra refactor rules."""
 
-    def __init__(self, config: Mapping[str, object]) -> None:
+    def __init__(self, config: Mapping[str, JsonValue]) -> None:
         """Initialize rule metadata from rule config."""
         self.config = dict(config.items())
         rule_id = self.config.get(c.Infra.ReportKeys.ID, c.Infra.Defaults.UNKNOWN)

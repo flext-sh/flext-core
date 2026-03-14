@@ -1615,7 +1615,7 @@ class FlextUtilitiesMapper:
             elif isinstance(data, Mapping):
                 current = FlextUtilitiesMapper.narrow_to_container(data)
             else:
-                current = FlextUtilitiesMapper.narrow_to_container(data)
+                current = data
             found_none_prefix = "found_none:"
             for i, part in enumerate(parts):
                 if current is None:
@@ -2068,6 +2068,8 @@ class FlextUtilitiesMapper:
     def narrow_to_container(
         value: t.NormalizedValue
         | t.MetadataValue
+        | t.RegisterableService
+        | t.RegistrablePlugin
         | BaseModel
         | Mapping[str, t.NormalizedValue]
         | Mapping[str, t.NormalizedValue | BaseModel]

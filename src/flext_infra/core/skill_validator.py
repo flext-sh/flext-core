@@ -52,12 +52,14 @@ class FlextInfraSkillValidator:
         return (root / candidate).resolve()
 
     @staticmethod
-    def _safe_load_yaml(path: Path) -> Mapping[str, object]:
+    def _safe_load_yaml(path: Path) -> Mapping[str, t.Infra.InfraValue]:
         """Load YAML file safely; delegates to ``u.Infra``."""
         return FlextInfraUtilitiesYaml.safe_load_yaml(path)
 
     @staticmethod
-    def _normalize_string_list(value: object, field: str) -> list[str]:
+    def _normalize_string_list(
+        value: t.Infra.InfraValue | None, field: str
+    ) -> list[str]:
         """Validate and normalize a list[str] config field; delegates to ``u.Infra``."""
         if value is None:
             return []
@@ -81,7 +83,7 @@ class FlextInfraSkillValidator:
 
     @staticmethod
     def _normalize_str_object_mapping(
-        value: object,
+        value: Mapping[str, JsonValue] | JsonValue,
     ) -> dict[str, t.Infra.InfraValue]:
         try:
             adapter: TypeAdapter[dict[str, t.Infra.InfraValue]] = TypeAdapter(
@@ -232,7 +234,7 @@ class FlextInfraSkillValidator:
 
     def _run_ast_grep_count(
         self,
-        rule: Mapping[str, object],
+        rule: Mapping[str, t.Infra.InfraValue],
         skill_dir: Path,
         project_path: Path,
         include_globs: list[str],
@@ -281,7 +283,7 @@ class FlextInfraSkillValidator:
 
     def _run_custom_count(
         self,
-        rule: Mapping[str, object],
+        rule: Mapping[str, t.Infra.InfraValue],
         skill_dir: Path,
         project_path: Path,
         mode: str,

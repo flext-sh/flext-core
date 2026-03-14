@@ -415,22 +415,21 @@ class NamespaceWorkspaceEnforcementReport(FlextModels.ArbitraryTypesModel):
 
 
 class FlextInfraNamespaceEnforcerModels:
-    class NamespaceEnforcementModels:
-        FacadeStatus = NamespaceFacadeStatus
-        LooseObjectViolation = NamespaceLooseObjectViolation
-        ImportAliasViolation = NamespaceImportAliasViolation
-        InternalImportViolation = NamespaceInternalImportViolation
-        ManualProtocolViolation = NamespaceManualProtocolViolation
-        CyclicImportViolation = NamespaceCyclicImportViolation
-        RuntimeAliasViolation = NamespaceRuntimeAliasViolation
-        FutureAnnotationsViolation = NamespaceFutureAnnotationsViolation
-        ManualTypingAliasViolation = NamespaceManualTypingAliasViolation
-        CompatibilityAliasViolation = NamespaceCompatibilityAliasViolation
-        ParseFailureViolation = NamespaceParseFailureViolation
-        NamespaceEnforcementReport = NamespaceProjectEnforcementReport
-        ProjectEnforcementReport = NamespaceProjectEnforcementReport
-        ProjectEnforcementWorkspaceReport = NamespaceWorkspaceEnforcementReport
-        WorkspaceEnforcementReport = NamespaceWorkspaceEnforcementReport
+    FacadeStatus = NamespaceFacadeStatus
+    LooseObjectViolation = NamespaceLooseObjectViolation
+    ImportAliasViolation = NamespaceImportAliasViolation
+    InternalImportViolation = NamespaceInternalImportViolation
+    ManualProtocolViolation = NamespaceManualProtocolViolation
+    CyclicImportViolation = NamespaceCyclicImportViolation
+    RuntimeAliasViolation = NamespaceRuntimeAliasViolation
+    FutureAnnotationsViolation = NamespaceFutureAnnotationsViolation
+    ManualTypingAliasViolation = NamespaceManualTypingAliasViolation
+    CompatibilityAliasViolation = NamespaceCompatibilityAliasViolation
+    ParseFailureViolation = NamespaceParseFailureViolation
+    NamespaceEnforcementReport = NamespaceProjectEnforcementReport
+    ProjectEnforcementReport = NamespaceProjectEnforcementReport
+    ProjectEnforcementWorkspaceReport = NamespaceWorkspaceEnforcementReport
+    WorkspaceEnforcementReport = NamespaceWorkspaceEnforcementReport
 
 
 __all__ = ["FlextInfraNamespaceEnforcerModels"]

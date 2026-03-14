@@ -26,7 +26,7 @@ from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
 from re import Pattern
-from typing import Protocol, cast, override
+from typing import Protocol, TypeGuard, cast, override
 
 from pydantic import BaseModel, RootModel, TypeAdapter, ValidationError
 
@@ -164,6 +164,96 @@ def _to_config_map_value(value: t.Tests.object) -> t.NormalizedValue | BaseModel
     return str(value)
 
 
+def _coerce_to_test_object(raw: object) -> t.Tests.object:
+    """Coerce an arbitrary object to t.Tests.object."""
+    if isinstance(raw, (str, int, float, bool, bytes, BaseModel)):
+        return raw
+    if raw is None:
+        return None
+    return str(raw)
+
+
+def _is_flext_result(
+    val: object,
+) -> TypeGuard[r[BaseModel]]:
+    """TypeGuard: narrow any object to r[BaseModel]."""
+    return isinstance(val, r)
+
+
+def _do_extract_model[T: BaseModel](
+    result: (
+        BaseModel
+        | list[BaseModel]
+        | Mapping[str, BaseModel]
+        | r[BaseModel]
+        | r[list[BaseModel]]
+        | r[Mapping[str, BaseModel]]
+    ),
+    expected: type[T],
+) -> T:
+    """Extract a BaseModel from various tt.model() return shapes."""
+    if isinstance(result, expected):
+        return result
+    if _is_flext_result(result) and result.is_success:
+        payload: BaseModel = result.value
+        if isinstance(payload, expected):
+            return payload
+    if isinstance(result, list):
+        for item in result:
+            if isinstance(item, expected):
+                return item
+    if isinstance(result, Mapping) and not isinstance(result, BaseModel):
+        for val in result.values():
+            if isinstance(val, expected):
+                return val
+    raise TypeError(f"Expected {expected.__name__}, got {type(result)}")
+
+
+def _merge_test_dicts(
+    base: Mapping[str, t.Tests.object],
+    override: Mapping[str, t.Tests.object],
+    *,
+    strategy: str = "deep",
+) -> dict[str, t.Tests.object]:
+    """Merge two test dicts via u.merge(), handling payload conversion.
+
+    DRY helper: consolidates the repeated pattern of
+    ``u.merge(to_normalized_dict(...), to_normalized_dict(...))``.
+    """
+    from flext_tests import u as _u  # noqa: PLC0415
+
+    mr = _u.merge(
+        {k: _to_normalized_value(v) for k, v in base.items()},
+        {k: _to_normalized_value(v) for k, v in override.items()},
+        strategy=strategy,
+    )
+    if mr.is_success:
+        return {str(k): _to_payload(v) for k, v in mr.value.items()}
+    return dict(base.items())
+
+
+def _entity_factory_for[T: BaseModel](
+    cls: type[T],
+) -> _EntityFactory[T]:
+    """Build an _EntityFactory lambda for *cls* (DRY helper)."""
+
+    def _factory(*, name: str, value: t.Tests.object, **_kw: t.Tests.object) -> T:
+        return cls(name=name, value=value)  # type: ignore[call-arg]
+
+    return _factory  # type: ignore[return-value]
+
+
+def _value_factory_for[T: BaseModel](
+    cls: type[T],
+) -> _ValueFactory[T]:
+    """Build a _ValueFactory lambda for *cls* (DRY helper)."""
+
+    def _factory(*, data: str, count: int) -> T:
+        return cls(data=data, count=count)  # type: ignore[call-arg]
+
+    return _factory  # type: ignore[return-value]
+
+
 class _EntityFactory[TEntity](Protocol):
     def __call__(self, *, name: str, value: t.Tests.object) -> TEntity: ...
 
@@ -243,6 +333,75 @@ class FlextTestsUtilities(FlextUtilities):
             Uses _to_normalized_value for proper runtime type narrowing.
             """
             return {k: _to_normalized_value(v) for k, v in data.items()}
+
+        @staticmethod
+        def coerce_to_test_object(raw: object) -> t.Tests.object:
+            """Coerce an arbitrary object to t.Tests.object.
+
+            Delegates to module-level _coerce_to_test_object.
+            """
+            return _coerce_to_test_object(raw)
+
+        @staticmethod
+        def is_flext_result(
+            val: object,
+        ) -> TypeGuard[r[BaseModel]]:
+            """TypeGuard: narrow any object to r[BaseModel].
+
+            Delegates to module-level _is_flext_result.
+            """
+            return _is_flext_result(val)
+
+        @staticmethod
+        def extract_model[T: BaseModel](
+            result: (
+                BaseModel
+                | list[BaseModel]
+                | Mapping[str, BaseModel]
+                | r[BaseModel]
+                | r[list[BaseModel]]
+                | r[Mapping[str, BaseModel]]
+            ),
+            expected: type[T],
+        ) -> T:
+            """Extract a BaseModel from various tt.model() return shapes.
+
+            Delegates to module-level _do_extract_model.
+            """
+            return _do_extract_model(result, expected)
+
+        @staticmethod
+        def merge_test_dicts(
+            base: Mapping[str, t.Tests.object],
+            override: Mapping[str, t.Tests.object],
+            *,
+            strategy: str = "deep",
+        ) -> dict[str, t.Tests.object]:
+            """Merge two test dicts via u.merge() (DRY helper).
+
+            Delegates to module-level _merge_test_dicts.
+            """
+            return _merge_test_dicts(base, override, strategy=strategy)
+
+        @staticmethod
+        def entity_factory_for[T: BaseModel](
+            model_cls: type[T],
+        ) -> _EntityFactory[T]:
+            """Build an _EntityFactory for the given class (DRY helper).
+
+            Delegates to module-level _entity_factory_for.
+            """
+            return _entity_factory_for(model_cls)
+
+        @staticmethod
+        def value_factory_for[T: BaseModel](
+            model_cls: type[T],
+        ) -> _ValueFactory[T]:
+            """Build a _ValueFactory for the given class (DRY helper).
+
+            Delegates to module-level _value_factory_for.
+            """
+            return _value_factory_for(model_cls)
 
         class Result:
             """Result helpers for test assertions."""

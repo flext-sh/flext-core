@@ -1076,10 +1076,10 @@ class FlextUtilitiesParser:
         elif hasattr(obj, "__name__"):
             dunder_name = getattr(obj, "__name__", None)
             key = dunder_name if isinstance(dunder_name, str) else obj_type_name
-        elif isinstance(obj, Mapping):
+        elif not callable(obj) and isinstance(obj, Mapping):
+            narrowed_map: Mapping[str, t.NormalizedValue] = obj
             str_keyed: dict[str, t.NormalizedValue] = {
-                str(k): v
-                for k, v in obj.items()  # pyright: Mapping.items() is safe
+                str(mk): mv for mk, mv in narrowed_map.items()
             }
             mapping_key = self._extract_key_from_mapping(str_keyed)
             key = mapping_key.unwrap_or(obj_type_name)

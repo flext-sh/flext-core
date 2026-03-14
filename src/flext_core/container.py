@@ -15,6 +15,8 @@ import inspect
 import sys
 import threading
 from collections.abc import Callable, Mapping, Sequence
+from datetime import datetime
+from pathlib import Path
 from types import ModuleType
 from typing import Literal, Self, overload, override
 
@@ -314,8 +316,24 @@ class FlextContainer(p.DI):
                                 _factory_config: m.FactoryDecoratorConfig = factory_config,
                             ) -> t.RegisterableService:
                                 config_callable = getattr(_factory_config, "fn", None)
+                                raw_result: t.RegisterableService
                                 if callable(config_callable):
-                                    raw_result = config_callable()
+                                    config_raw = config_callable()
+                                    if isinstance(
+                                        config_raw,
+                                        (
+                                            str,
+                                            int,
+                                            float,
+                                            bool,
+                                            datetime,
+                                            Path,
+                                            BaseModel,
+                                        ),
+                                    ):
+                                        raw_result = config_raw
+                                    else:
+                                        raw_result = str(config_raw)
                                 elif config_callable is not None:
                                     return m.ConfigMap(root={})
                                 else:
@@ -621,9 +639,26 @@ class FlextContainer(p.DI):
         self._factories = dict(factories.items()) if factories is not None else {}
         self._resources = dict(resources.items()) if resources is not None else {}
         self._global_config = global_config or self._create_container_config()
-        user_overrides_map = m.ConfigMap(
-            root=dict(user_overrides.items()) if user_overrides is not None else {}
-        )
+        overrides_root: dict[str, t.NormalizedValue | BaseModel] = {}
+        if user_overrides is not None:
+            if isinstance(user_overrides, m.ConfigMap):
+                overrides_root = dict(user_overrides.root)
+            else:
+                for ok, ov in user_overrides.items():
+                    if isinstance(
+                        ov, (str, int, float, bool, datetime, Path, BaseModel)
+                    ):
+                        overrides_root[ok] = ov
+                    elif isinstance(ov, Sequence):
+                        overrides_root[ok] = [
+                            sv
+                            if isinstance(sv, (str, int, float, bool, datetime))
+                            else str(sv)
+                            for sv in ov
+                        ]
+                    else:
+                        overrides_root[ok] = str(ov)
+        user_overrides_map = m.ConfigMap(root=overrides_root)
         self._user_overrides = user_overrides_map
         config_instance: p.Config = (
             config if config is not None else FlextSettings.get_global()
@@ -784,8 +819,19 @@ class FlextContainer(p.DI):
             _ = self.register("context", self._context)
         if not self.has_service("command_bus"):
             dispatcher = FlextDispatcher()
-            if u.is_registerable_service(dispatcher):
-                _ = self.register("command_bus", dispatcher)
+            dispatcher_name = "command_bus"
+            service_marker: t.RegisterableService = dispatcher.__class__.__name__
+            registration = m.ServiceRegistration(
+                name=dispatcher_name,
+                service=service_marker,
+                service_type=dispatcher.__class__.__name__,
+            )
+            self._services[dispatcher_name] = registration
+            provider = FlextRuntime.DependencyIntegration.register_object(
+                self._di_services, dispatcher_name, dispatcher
+            )
+            setattr(self._di_bridge, dispatcher_name, provider)
+            setattr(self._di_container, dispatcher_name, provider)
 
     def register_existing_providers(self) -> None:
         """Hydrate the dynamic container with current registrations."""

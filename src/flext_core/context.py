@@ -50,7 +50,7 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
     _logger: ClassVar[FlextLogger] = FlextLogger(__name__)
 
     @staticmethod
-    def _to_normalized(value: t.Container | BaseModel) -> t.NormalizedValue:
+    def _to_normalized(value: t.NormalizedValue | BaseModel) -> t.NormalizedValue:
         """Narrow ``Container | BaseModel`` to ``NormalizedValue``.
 
         BaseModel instances are converted via ``model_dump()`` so the result
@@ -58,16 +58,14 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
         """
         if isinstance(value, BaseModel):
             raw = value.model_dump()
-            if isinstance(raw, Mapping):
-                result: dict[str, t.NormalizedValue] = {}
-                for k, v in raw.items():
-                    container_val = FlextRuntime.normalize_to_container(v)
-                    if isinstance(container_val, BaseModel):
-                        result[str(k)] = str(container_val)
-                    else:
-                        result[str(k)] = container_val
-                return result
-            return str(raw)
+            result: dict[str, t.NormalizedValue] = {}
+            for k, v in raw.items():
+                container_val = FlextRuntime.normalize_to_container(v)
+                if isinstance(container_val, BaseModel):
+                    result[str(k)] = str(container_val)
+                else:
+                    result[str(k)] = container_val
+            return result
         return value
 
     @staticmethod
@@ -108,6 +106,9 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
             for key, value in mapping_value.items():
                 if str(key) != key:
                     return {}
+                if value is None:
+                    normalized[key] = None
+                    continue
                 normalized_value = FlextRuntime.normalize_to_container(value)
                 normalized[key] = FlextContext._to_normalized(normalized_value)
             return normalized
@@ -620,22 +621,33 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
         """
         if not self._active:
             return self
-        export_callable = getattr(other, "export", None)
-        if callable(export_callable):
-            exported_raw = export_callable(as_dict=True)
-            exported: Mapping[str, t.NormalizedValue | BaseModel] = (
-                exported_raw if isinstance(exported_raw, Mapping) else {}
-            )
+        exported_map: m.ConfigMap | None = None
+        if isinstance(other, FlextContext):
+            exported_result = other.export(as_dict=True)
+            if not isinstance(exported_result, BaseModel):
+                try:
+                    exported_items: dict[str, t.NormalizedValue | BaseModel] = dict(
+                        exported_result.items()
+                    )
+                    exported_map = m.ConfigMap(root=exported_items)
+                except (TypeError, ValueError, AttributeError) as exc:
+                    FlextContext._logger.debug(
+                        "Context export payload validation failed",
+                        exc_info=exc,
+                    )
+        elif isinstance(other, m.ConfigMap):
+            exported_map = other
+        else:
             try:
-                if isinstance(exported, Mapping):
-                    exported_map = m.ConfigMap(root=dict(exported.items()))
-                else:
-                    exported_map = m.ConfigMap(root={})
+                mapping_root: dict[str, t.NormalizedValue | BaseModel] = dict(
+                    other.items()
+                )
+                exported_map = m.ConfigMap(root=mapping_root)
             except (TypeError, ValueError, AttributeError) as exc:
                 FlextContext._logger.debug(
                     "Context export payload validation failed", exc_info=exc
                 )
-                exported_map = m.ConfigMap(root={})
+        if exported_map is not None:
             for scope_name, scope_payload in exported_map.items():
                 if scope_name not in {
                     c.Context.SCOPE_GLOBAL,
@@ -650,15 +662,12 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
                         scope_data = None
                 except (TypeError, ValueError, AttributeError) as exc:
                     FlextContext._logger.debug(
-                        "Context scope payload validation failed", exc_info=exc
+                        "Context scope payload validation failed",
+                        exc_info=exc,
                     )
                     scope_data = None
                 if scope_data is not None:
                     self._set_in_contextvar(scope_name, scope_data)
-        else:
-            self._set_in_contextvar(
-                c.Context.SCOPE_GLOBAL, m.ConfigMap(root=dict(other.items()))
-            )
         return self
 
     def remove(self, key: str, scope: str = c.Context.SCOPE_GLOBAL) -> None:
@@ -823,9 +832,9 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
         custom_fields_raw = data.pop("custom_fields", {})
         custom_fields_dict: dict[str, t.NormalizedValue] = {}
         try:
-            custom_fields_dict = dict(
-                m.ConfigMap(root=dict(custom_fields_raw.items())).items()
-            )
+            cf_map = m.ConfigMap(root=dict(custom_fields_raw.items()))
+            for ck, cv in cf_map.items():
+                custom_fields_dict[ck] = FlextContext._to_normalized(cv)
         except (TypeError, ValueError, AttributeError) as exc:
             FlextContext._logger.debug(
                 "Custom metadata field normalization failed", exc_info=exc
@@ -835,10 +844,14 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
         for k, v in data.items():
             if v is None or v == {}:
                 continue
-            if hasattr(v, "isoformat") and callable(getattr(v, "isoformat", None)):
+            if isinstance(v, datetime):
                 result[k] = v.isoformat()
-            else:
+            elif isinstance(v, (*t.CONTAINER_TYPES, list, dict, tuple)):
                 result[k] = v
+            elif isinstance(v, BaseModel):
+                result[k] = FlextContext._to_normalized(v)
+            else:
+                result[k] = str(v)
         result.update(custom_fields_dict)
         return result
 
@@ -927,6 +940,7 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
             normalized_context: dict[str, t.Container | BaseModel] = {
                 key: FlextRuntime.normalize_to_container(value)
                 for key, value in data.items()
+                if value is not None
             }
             _ = FlextLogger.bind_global_context(**normalized_context)
 
@@ -1281,14 +1295,14 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
             """Get current context as dictionary."""
             context_vars = FlextContext.Variables
             operation_metadata_raw = context_vars.Performance.OPERATION_METADATA.get()
-            operation_metadata_value: t.NormalizedValue = (
-                FlextRuntime.normalize_to_container(
-                    FlextRuntime.normalize_to_metadata(operation_metadata_raw)
+            operation_metadata_value: t.NormalizedValue = ""
+            if operation_metadata_raw is not None:
+                operation_metadata_value = FlextContext._to_normalized(
+                    FlextRuntime.normalize_to_container(
+                        FlextRuntime.normalize_to_metadata(operation_metadata_raw)
+                    )
                 )
-                if operation_metadata_raw is not None
-                else ""
-            )
-            raw_context: dict[str, t.NormalizedValue] = {
+            raw_ctx: dict[str, t.NormalizedValue | BaseModel | None] = {
                 c.Context.KEY_CORRELATION_ID: context_vars.Correlation.CORRELATION_ID.get(),
                 c.Context.KEY_PARENT_CORRELATION_ID: context_vars.Correlation.PARENT_CORRELATION_ID.get(),
                 c.Context.KEY_SERVICE_NAME: context_vars.Service.SERVICE_NAME.get(),
@@ -1304,7 +1318,11 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
                 else None,
                 c.Context.KEY_OPERATION_METADATA: operation_metadata_value,
             }
-            return {k: v for k, v in raw_context.items() if v is not None}
+            return {
+                k: FlextContext._to_normalized(v)
+                for k, v in raw_ctx.items()
+                if v is not None
+            }
 
     class Utilities:
         """Context management utility methods."""

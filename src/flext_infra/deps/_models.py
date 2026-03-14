@@ -110,7 +110,7 @@ class RuffConfig(FlextModels.ArbitraryTypesModel):
             description="Directory/file globs excluded from ruff checks.",
         ),
     ]
-    fix: Annotated[bool, Field(description="Enable automatic ruff fixes.")]
+    fix: Annotated[bool, Field(description="Enable automatic ruff fixes")]
     line_length: Annotated[
         int, Field(alias="line-length", description="Maximum line length.")
     ]

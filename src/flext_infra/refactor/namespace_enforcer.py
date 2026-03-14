@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from flext_infra import c, m, u
+from flext_infra import c, u
 from flext_infra.refactor import _models_namespace_enforcer as nem
 from flext_infra.refactor.dependency_analyzer import (
     FlextInfraRefactorDependencyAnalyzerFacade,
@@ -13,7 +13,7 @@ from flext_infra.refactor.namespace_rewriter import NamespaceEnforcementRewriter
 from flext_infra.refactor.output import FlextInfraRefactorOutputRenderer
 
 da = FlextInfraRefactorDependencyAnalyzerFacade
-NamespaceEnforcementModels = m.Infra.Refactor.NamespaceEnforcementModels
+NamespaceEnforcementModels = nem.FlextInfraNamespaceEnforcerModels
 
 
 class FlextInfraNamespaceEnforcer:
