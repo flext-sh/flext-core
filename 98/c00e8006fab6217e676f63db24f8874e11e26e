@@ -1,0 +1,58 @@
+src/flext_core/dispatcher.py
+  4335a282696f7bcc 118-120,170-174
+src/flext_tests/protocols.py
+  8c2d749dcca16b1c 13,628,652,666,685
+tests/unit/test_utilities_mapper_full_coverage.py
+  8c2d749dcca16b1c 9
+src/flext_core/_utilities/deprecation.py
+  8c2d749dcca16b1c 18-19,50
+src/flext_core/_models/collections.py
+  8c2d749dcca16b1c 281
+src/flext_core/_models/domain_event.py
+  8c2d749dcca16b1c 64
+tests/conftest.py
+  8c2d749dcca16b1c 734
+tests/unit/test_dispatcher_full_coverage.py
+  8c2d749dcca16b1c 23
+tests/unit/test_utilities_cache_coverage_100.py
+  8c2d749dcca16b1c 286,292-293,298,513
+tests/unit/test_utilities_domain_full_coverage.py
+  8c2d749dcca16b1c 99
+src/flext_core/_models/base.py
+  8c2d749dcca16b1c 696
+src/flext_tests/utilities.py
+  8c2d749dcca16b1c 114,336,1148-1149
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "98c00e8006fab6217e676f63db24f8874e11e26e",
+  "prompts": {
+    "4335a282696f7bcc": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_312108fb7ffewP0Ru0wC4ok5dy",
+        "model": "anthropic/claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 9,
+      "total_deletions": 4,
+      "accepted_lines": 8,
+      "overriden_lines": 0
+    },
+    "8c2d749dcca16b1c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d0c09b0b-3db3-411a-ac46-126453ea6fa0",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 26,
+      "total_deletions": 23,
+      "accepted_lines": 24,
+      "overriden_lines": 1
+    }
+  }
+}
