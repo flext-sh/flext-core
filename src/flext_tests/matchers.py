@@ -552,7 +552,9 @@ class FlextTestsMatchers:
                 path_str: str = params.path
             else:
                 path_str = ".".join(params.path)
-            if not (isinstance(result_value, (BaseModel, Mapping))):
+            if not (
+                isinstance(result_value, (BaseModel, Mapping))
+            ):
                 raise AssertionError(
                     params.msg
                     or f"Path extraction requires dict or model, got {type(result_value).__name__}"
@@ -567,7 +569,8 @@ class FlextTestsMatchers:
                         mapping_value
                     )
                     extract_data = {
-                        str(k): _to_extract_value(v) for k, v in validated.items()
+                        str(k): _to_extract_value(v)
+                        for k, v in validated.items()
                     }
                 except ValidationError:
                     extract_data = {}
@@ -894,9 +897,7 @@ class FlextTestsMatchers:
                     f"Parameter validation failed: {filtered_exc}"
                 ) from filtered_exc
         subject = value
-        if isinstance(subject, BaseModel) and FlextUtilitiesGuards.is_result_like(
-            subject
-        ):
+        if isinstance(subject, BaseModel) and FlextUtilitiesGuards.is_result_like(subject):
             result_obj = subject
             actual_value: t.Tests.object | str = ""
             if params.ok is not None:
@@ -1006,7 +1007,9 @@ class FlextTestsMatchers:
             raise AssertionError(error_msg)
         _check_has_lacks(subject_payload, params.has, params.lacks, params.msg)
         value_payload = subject_payload
-        if params.len is not None and (not _length_validate(value_payload, params.len)):
+        if params.len is not None and (
+            not _length_validate(value_payload, params.len)
+        ):
             actual_len = (
                 len(subject_payload) if isinstance(subject_payload, Sized) else 0
             )
@@ -1090,7 +1093,9 @@ class FlextTestsMatchers:
             if params.any_ is not None:
                 if isinstance(params.any_, type):
                     any_type = params.any_
-                    if not any(isinstance(item, any_type) for item in seq_value):
+                    if not any(
+                        isinstance(item, any_type) for item in seq_value
+                    ):
                         raise AssertionError(
                             params.msg or c.Tests.Matcher.ERR_ANY_ITEMS_FAILED
                         )

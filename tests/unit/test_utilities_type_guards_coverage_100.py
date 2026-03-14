@@ -189,7 +189,7 @@ class TestuTypeGuardsIsListNonEmpty:
         if scenario.value == "has_items":
             value = [1, 2, 3]
         elif scenario.value == "empty":
-            value = []
+            value = list[int]()
         elif scenario.value in {"has_empty", "has_none"}:
             value = [""]
         elif scenario.value == "string" or isinstance(scenario.value, int):

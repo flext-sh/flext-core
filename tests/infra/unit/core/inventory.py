@@ -19,7 +19,7 @@ class TestInventoryServiceCore:
     def test_init_creates_service(self) -> None:
         """Service initializes with required attributes."""
         service = FlextInfraInventoryService()
-        tm.that(service, none=False)
+        assert service is not None
         tm.that(hasattr(service, "_json"), eq=True)
 
     def test_generate_empty_workspace(self, tmp_path: Path) -> None:

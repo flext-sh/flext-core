@@ -114,7 +114,7 @@ class FlextInfraUtilitiesToml:
         return FlextInfraUtilitiesToml.normalize_container_value(value)
 
     @staticmethod
-    def as_string_list(value: Item | None) -> list[str]:
+    def as_string_list(value: t.Infra.InfraValue | Item | None) -> list[str]:
         """Convert TOML value to list of strings."""
         normalized = FlextInfraUtilitiesToml.normalize_container_value(value)
         if normalized is None or isinstance(normalized, str):
@@ -147,7 +147,7 @@ class FlextInfraUtilitiesToml:
         promote it to an explicit table so that tomlkit serializes sub-tables
         under the correct parent path instead of creating bare top-level sections.
         """
-        existing: t.Infra.InfraValue | None = None
+        existing: t.Infra.InfraValue | Item | None = None
         if key in parent:
             existing = parent[key]
         if isinstance(existing, Table):

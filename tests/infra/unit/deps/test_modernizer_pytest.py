@@ -3,13 +3,14 @@
 from __future__ import annotations
 
 from collections.abc import MutableMapping
+from typing import cast
 
 import tomlkit
 
 from flext_infra import m
 from flext_infra.deps._phases import EnsurePytestConfigPhase
 from flext_infra.deps.tool_config import load_tool_config
-from flext_tests import tm
+from flext_tests import t, tm
 
 
 def _test_tool_config() -> m.Infra.Deps.ToolConfigDocument:
@@ -53,7 +54,7 @@ class TestEnsurePytestConfigPhase:
         ini_options = pytest_section["ini_options"]
         tm.that(isinstance(ini_options, MutableMapping), eq=True)
         if isinstance(ini_options, MutableMapping):
-            tm.that(ini_options["minversion"], eq="8.0")
+            tm.that(cast("t.Tests.Matcher.MatcherKwargValue", ini_options["minversion"]), eq="8.0")
 
 
 def test_ensure_pytest_config_phase_apply_minversion() -> None:
@@ -74,7 +75,7 @@ def test_ensure_pytest_config_phase_apply_minversion() -> None:
     ini_options = pytest_section["ini_options"]
     tm.that(isinstance(ini_options, MutableMapping), eq=True)
     if isinstance(ini_options, MutableMapping):
-        tm.that(ini_options["minversion"], eq="8.0")
+        tm.that(cast("t.Tests.Matcher.MatcherKwargValue", ini_options["minversion"]), eq="8.0")
 
 
 def test_ensure_pytest_config_phase_apply_python_classes() -> None:

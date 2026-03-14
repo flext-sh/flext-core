@@ -7,56 +7,6 @@ from pydantic import ConfigDict, Field
 from flext_core import FlextModels
 
 
-def _empty_facade_statuses() -> list[NamespaceFacadeStatus]:
-    return []
-
-
-def _empty_loose_objects() -> list[NamespaceLooseObjectViolation]:
-    return []
-
-
-def _empty_import_violations() -> list[NamespaceImportAliasViolation]:
-    return []
-
-
-def _empty_internal_import_violations() -> list[NamespaceInternalImportViolation]:
-    return []
-
-
-def _empty_manual_protocol_violations() -> list[NamespaceManualProtocolViolation]:
-    return []
-
-
-def _empty_cyclic_imports() -> list[NamespaceCyclicImportViolation]:
-    return []
-
-
-def _empty_runtime_alias_violations() -> list[NamespaceRuntimeAliasViolation]:
-    return []
-
-
-def _empty_future_violations() -> list[NamespaceFutureAnnotationsViolation]:
-    return []
-
-
-def _empty_manual_typing_violations() -> list[NamespaceManualTypingAliasViolation]:
-    return []
-
-
-def _empty_compatibility_alias_violations() -> list[
-    NamespaceCompatibilityAliasViolation
-]:
-    return []
-
-
-def _empty_parse_failures() -> list[NamespaceParseFailureViolation]:
-    return []
-
-
-def _empty_project_reports() -> list[NamespaceProjectEnforcementReport]:
-    return []
-
-
 class NamespaceFacadeStatus(FlextModels.ArbitraryTypesModel):
     model_config = ConfigDict(frozen=True)
 
@@ -287,67 +237,67 @@ class NamespaceProjectEnforcementReport(FlextModels.ArbitraryTypesModel):
     facade_statuses: Annotated[
         list[NamespaceFacadeStatus],
         Field(
-            default_factory=_empty_facade_statuses,
+            default_factory=list,
         ),
     ]
     loose_objects: Annotated[
         list[NamespaceLooseObjectViolation],
         Field(
-            default_factory=_empty_loose_objects,
+            default_factory=list,
         ),
     ]
     import_violations: Annotated[
         list[NamespaceImportAliasViolation],
         Field(
-            default_factory=_empty_import_violations,
+            default_factory=list,
         ),
     ]
     internal_import_violations: Annotated[
         list[NamespaceInternalImportViolation],
         Field(
-            default_factory=_empty_internal_import_violations,
+            default_factory=list,
         ),
     ]
     manual_protocol_violations: Annotated[
         list[NamespaceManualProtocolViolation],
         Field(
-            default_factory=_empty_manual_protocol_violations,
+            default_factory=list,
         ),
     ]
     cyclic_imports: Annotated[
         list[NamespaceCyclicImportViolation],
         Field(
-            default_factory=_empty_cyclic_imports,
+            default_factory=list,
         ),
     ]
     runtime_alias_violations: Annotated[
         list[NamespaceRuntimeAliasViolation],
         Field(
-            default_factory=_empty_runtime_alias_violations,
+            default_factory=list,
         ),
     ]
     future_violations: Annotated[
         list[NamespaceFutureAnnotationsViolation],
         Field(
-            default_factory=_empty_future_violations,
+            default_factory=list,
         ),
     ]
     manual_typing_violations: Annotated[
         list[NamespaceManualTypingAliasViolation],
         Field(
-            default_factory=_empty_manual_typing_violations,
+            default_factory=list,
         ),
     ]
     compatibility_alias_violations: Annotated[
         list[NamespaceCompatibilityAliasViolation],
         Field(
-            default_factory=_empty_compatibility_alias_violations,
+            default_factory=list,
         ),
     ]
     parse_failures: Annotated[
         list[NamespaceParseFailureViolation],
         Field(
-            default_factory=_empty_parse_failures,
+            default_factory=list,
         ),
     ]
     files_scanned: Annotated[int, Field(default=0, ge=0)]
@@ -394,9 +344,9 @@ class NamespaceWorkspaceEnforcementReport(FlextModels.ArbitraryTypesModel):
     projects: Annotated[
         list[NamespaceProjectEnforcementReport],
         Field(
-            default_factory=_empty_project_reports,
+            default_factory=list,
         ),
-    ] = Field(default_factory=_empty_project_reports)
+    ] = Field(default_factory=list)
     total_facades_missing: Annotated[int, Field(default=0, ge=0)]
     total_loose_objects: Annotated[int, Field(default=0, ge=0)]
     total_import_violations: Annotated[int, Field(default=0, ge=0)]

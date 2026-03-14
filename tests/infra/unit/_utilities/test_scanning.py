@@ -71,6 +71,7 @@ class TestScanModels:
         result = m.Infra.Utilities.ScanResult(
             file_path=tmp_path / "sample.py",
             detector_name="scanner-x",
+            violations=[],
         )
         payload = result.model_dump()
 
@@ -83,6 +84,7 @@ class TestScanModels:
             line=7,
             message="rule hit",
             severity="medium",
+            rule_id=None,
         )
         result = m.Infra.Utilities.ScanResult(
             file_path=tmp_path / "violating.py",

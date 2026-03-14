@@ -218,6 +218,32 @@ class FlextTestsUtilities(FlextUtilities):
         All test utilities organized under u.Tests.* pattern.
         """
 
+        @staticmethod
+        def to_payload(value: t.Tests.object) -> t.Tests.object:
+            """Convert a value to test payload object.
+
+            Delegates to module-level _to_payload for recursive conversion.
+            """
+            return _to_payload(value)
+
+        @staticmethod
+        def to_normalized_value(value: t.Tests.object) -> t.NormalizedValue:
+            """Convert test payload value to NormalizedValue.
+
+            Delegates to module-level _to_normalized_value.
+            """
+            return _to_normalized_value(value)
+
+        @staticmethod
+        def to_normalized_dict(
+            data: dict[str, t.Tests.object],
+        ) -> dict[str, t.NormalizedValue]:
+            """Convert test payload dict to NormalizedValue dict for u.merge().
+
+            Uses _to_normalized_value for proper runtime type narrowing.
+            """
+            return {k: _to_normalized_value(v) for k, v in data.items()}
+
         class Result:
             """Result helpers for test assertions."""
 

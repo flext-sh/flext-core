@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
 from pathlib import Path
+from collections.abc import Sequence
 from typing import Annotated
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -29,10 +29,6 @@ class _DocsPhaseItemModel(BaseModel):
     written: Annotated[
         bool, Field(default=False, description="Generated file write flag")
     ] = False
-
-
-def _new_docs_phase_items() -> list[BaseModel]:
-    return []
 
 
 class FlextInfraDocsModels:
@@ -123,13 +119,10 @@ class FlextInfraDocsModels:
                 description="Whether TODOS.md was written",
             ),
         ] = False
-        items: Annotated[
-            Sequence[BaseModel],
-            Field(
-                default_factory=_new_docs_phase_items,
-                description="Phase-specific item payloads",
-            ),
-        ] = Field(default_factory=_new_docs_phase_items)
+        items: Sequence[_DocsPhaseItemModel] = Field(
+            default_factory=list,
+            description="Phase-specific item payloads",
+        )
 
 
 __all__ = ["FlextInfraDocsModels"]

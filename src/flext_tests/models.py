@@ -13,13 +13,14 @@ import datetime
 import sys
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from pathlib import Path
-from typing import Annotated, TypeAliasType, override
+from typing import Annotated, ClassVar, TypeAliasType, override
 
 from pydantic import (
     AliasChoices,
     BaseModel,
     ConfigDict,
     Field,
+    TypeAdapter,
     computed_field,
     field_validator,
     model_validator,
@@ -1916,6 +1917,20 @@ class FlextTestsModels(
             reason: Annotated[
                 str, Field(default="", description="Reason for match failure")
             ]
+
+        class Validate:
+            """Centralized TypeAdapters for test data validation.
+
+            All TypeAdapters used across flext_tests modules are defined here.
+            Access via m.Tests.Validate.* with flat aliases.
+            """
+
+            DICT_ADAPTER: ClassVar[TypeAdapter[dict[str, t.Tests.object]]] = (
+                TypeAdapter(dict[str, t.Tests.object])
+            )
+            LIST_ADAPTER: ClassVar[TypeAdapter[list[t.Tests.object]]] = (
+                TypeAdapter(list[t.Tests.object])
+            )
 
         class Chain[TResult](FlextModels.Value):
             """Container for chained result assertions."""

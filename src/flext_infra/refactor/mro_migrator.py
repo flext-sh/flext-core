@@ -13,21 +13,6 @@ from flext_infra.refactor.transformers.mro_private_inline import (
 )
 
 
-def _new_file_migration(
-    *,
-    file: str,
-    module: str,
-    moved_symbols: tuple[str, ...],
-    created_classes: tuple[str, ...],
-) -> m.Infra.Refactor.MROFileMigration:
-    return m.Infra.Refactor.MROFileMigration(
-        file=file,
-        module=module,
-        moved_symbols=moved_symbols,
-        created_classes=created_classes,
-    )
-
-
 class FlextInfraRefactorMROMigrationTransformer:
     """Move module-level constants into the constants facade class."""
 
@@ -42,7 +27,7 @@ class FlextInfraRefactorMROMigrationTransformer:
         if module is None:
             return (
                 source,
-                _new_file_migration(
+                m.Infra.Refactor.MROFileMigration(
                     file=scan_result.file,
                     module=scan_result.module,
                     moved_symbols=(),
@@ -65,7 +50,7 @@ class FlextInfraRefactorMROMigrationTransformer:
         if len(moved_statements) == 0:
             return (
                 source,
-                _new_file_migration(
+                m.Infra.Refactor.MROFileMigration(
                     file=scan_result.file,
                     module=scan_result.module,
                     moved_symbols=(),
@@ -140,7 +125,7 @@ class FlextInfraRefactorMROMigrationTransformer:
                 renames=qualified_renames,
             )
             updated_module = updated_module.visit(qualified_transformer)
-        migration = _new_file_migration(
+        migration = m.Infra.Refactor.MROFileMigration(
             file=scan_result.file,
             module=scan_result.module,
             moved_symbols=tuple(ordered_symbols),

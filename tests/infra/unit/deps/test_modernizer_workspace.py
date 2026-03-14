@@ -3,13 +3,14 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import cast
 from unittest.mock import patch
 
 import tomlkit
 
 from flext_infra import u
 from flext_infra.deps.modernizer import main
-from flext_tests import tm
+from flext_tests import t, tm
 
 
 class TestReadDoc:
@@ -21,7 +22,7 @@ class TestReadDoc:
         result = u.Infra.read(toml_file)
         tm.that(result is None, eq=False)
         if result is not None:
-            tm.that(result["key"], eq="value")
+            tm.that(cast("t.Tests.Matcher.MatcherKwargValue", result["key"]), eq="value")
 
     def testread_doc_nonexistent_file(self, tmp_path: Path) -> None:
         tm.that(u.Infra.read(tmp_path / "nonexistent.toml"), eq=None)

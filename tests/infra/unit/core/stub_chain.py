@@ -27,7 +27,7 @@ class TestStubChainCore:
     def test_init_creates_service(self) -> None:
         """Service initializes with runner attribute."""
         chain = FlextInfraStubSupplyChain()
-        tm.that(chain, none=False)
+        assert chain is not None
         tm.that(hasattr(chain, "_runner"), eq=True)
 
 

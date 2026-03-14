@@ -1,7 +1,7 @@
 """Test data factories for FLEXT ecosystem tests.
 
 Provides comprehensive factory pattern implementation for creating test objects,
-services, and domain models. Extends FlextService for consistent architecture
+services, and domain models. Extends s for consistent architecture
 and integrates with FlextModels for type-safe test data generation.
 
 Key Features:
@@ -25,7 +25,7 @@ from typing import Never, cast, override
 
 from pydantic import BaseModel, TypeAdapter, ValidationError
 
-from flext_core import FlextService, r
+from flext_core import s, r
 from flext_tests import c, m, t, u
 
 _TEST_CONTAINER_LIST_ADAPTER: TypeAdapter[list[t.Tests.object]] = TypeAdapter(
@@ -111,15 +111,15 @@ def _extract_from_model_result(
     return _extract_from_result_obj(result_base)
 
 
-class FlextTestsFactories(FlextService[t.NormalizedValue | BaseModel]):
-    """Comprehensive test data factories extending FlextService.
+class FlextTestsFactories(s[t.NormalizedValue | BaseModel]):
+    """Comprehensive test data factories extending s.
 
     Provides factory methods for creating test objects, services, and domain
     models using the FlextModels foundation. Follows Railway-Oriented Programming
     with r[T] returns for error-safe test data generation.
 
     Architecture:
-        - Extends FlextService for consistent service patterns
+        - Extends s for consistent service patterns
         - Uses FlextModels (m.Value, m.Entity) for domain models
         - Returns r[T] for operations that can fail
         - Provides both static and instance methods
@@ -1170,7 +1170,7 @@ class FlextTestsFactories(FlextService[t.NormalizedValue | BaseModel]):
             overrides.items()
         )
 
-        class TestService(FlextService[t.NormalizedValue | BaseModel]):
+        class TestService(s[t.NormalizedValue | BaseModel]):
             """Generic test service."""
 
             name: str | None = None

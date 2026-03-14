@@ -19,10 +19,6 @@ class _BuildRecord(FlextModels.ArbitraryTypesModel):
     log: Annotated[str, Field(min_length=1, description="Build log file path")]
 
 
-def _empty_build_records() -> list[_BuildRecord]:
-    return []
-
-
 class FlextInfraReleaseModels:
     """Models for release management."""
 
@@ -49,7 +45,7 @@ class FlextInfraReleaseModels:
         records: Annotated[
             Sequence[_BuildRecord],
             Field(
-                default_factory=_empty_build_records,
+                default_factory=list,
                 description="Per-project build records",
             ),
         ]

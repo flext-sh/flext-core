@@ -3,7 +3,9 @@ from __future__ import annotations
 import math
 from collections.abc import Mapping
 from pathlib import Path
+from typing import cast
 
+from flext_infra import t
 from flext_infra.deps.detection import (
     FlextInfraDependencyDetectionService,
     _to_infra_value,
@@ -88,7 +90,7 @@ class TestToInfraValue:
         assert _to_infra_value(["a", 1, True]) == ["a", 1, True]
 
     def test_list_with_unconvertible(self) -> None:
-        assert _to_infra_value([Path("/tmp")]) is None
+        assert _to_infra_value(cast("t.Infra.InfraValue", [Path("/tmp")])) is None
 
     def test_mapping_value(self) -> None:
         result = _to_infra_value({"key": "value", "num": 42})
@@ -96,10 +98,10 @@ class TestToInfraValue:
         assert result == {"key": "value", "num": 42}
 
     def test_mapping_with_unconvertible(self) -> None:
-        assert _to_infra_value({"key": Path("/tmp")}) is None
+        assert _to_infra_value(cast("t.Infra.InfraValue", {"key": Path("/tmp")})) is None
 
     def test_unsupported_type(self) -> None:
-        assert _to_infra_value(Path("/tmp")) is None
+        assert _to_infra_value(cast("t.Infra.InfraValue", Path("/tmp"))) is None
 
     def test_list_with_none_item(self) -> None:
         assert _to_infra_value([None, "a"]) == [None, "a"]

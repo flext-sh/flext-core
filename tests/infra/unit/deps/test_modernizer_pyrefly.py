@@ -3,13 +3,14 @@
 from __future__ import annotations
 
 from collections.abc import MutableMapping
+from typing import cast
 
 import tomlkit
 
 from flext_infra import m
 from flext_infra.deps._phases import EnsurePyreflyConfigPhase
 from flext_infra.deps.tool_config import load_tool_config
-from flext_tests import tm
+from flext_tests import t, tm
 
 
 def _test_tool_config() -> m.Infra.Deps.ToolConfigDocument:
@@ -57,7 +58,7 @@ def test_ensure_pyrefly_config_phase_apply_python_version() -> None:
     pyrefly = tool["pyrefly"]
     tm.that(isinstance(pyrefly, MutableMapping), eq=True)
     if isinstance(pyrefly, MutableMapping):
-        tm.that(pyrefly["python-version"], eq="3.13")
+        tm.that(cast("t.Tests.Matcher.MatcherKwargValue", pyrefly["python-version"]), eq="3.13")
 
 
 def test_ensure_pyrefly_config_phase_apply_ignore_errors() -> None:
@@ -75,7 +76,7 @@ def test_ensure_pyrefly_config_phase_apply_ignore_errors() -> None:
     pyrefly = tool["pyrefly"]
     tm.that(isinstance(pyrefly, MutableMapping), eq=True)
     if isinstance(pyrefly, MutableMapping):
-        tm.that(pyrefly["ignore-errors-in-generated-code"], eq=True)
+        tm.that(cast("t.Tests.Matcher.MatcherKwargValue", pyrefly["ignore-errors-in-generated-code"]), eq=True)
 
 
 def test_ensure_pyrefly_config_phase_apply_search_path() -> None:

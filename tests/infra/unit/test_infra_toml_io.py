@@ -8,12 +8,13 @@ from __future__ import annotations
 
 import stat
 from pathlib import Path
+from typing import cast
 
 import tomlkit
 from tomlkit.items import Table
 
 from flext_infra import FlextInfraUtilitiesToml, t
-from flext_tests import tm
+from flext_tests import t as tt, tm
 
 
 class TestFlextInfraTomlRead:
@@ -26,15 +27,12 @@ class TestFlextInfraTomlRead:
         )
         service = FlextInfraUtilitiesToml()
         doc = service.read(toml_file)
-        tm.that(doc, none=False)
-        if doc is None:
-            msg = "expected parsed TOML document"
-            raise AssertionError(msg)
+        assert doc is not None, "expected parsed TOML document"
         section_obj = doc["section"]
         assert isinstance(section_obj, Table)
         section = section_obj
-        tm.that(section["key"], eq="value")
-        tm.that(section["number"], eq=42)
+        tm.that(cast("tt.Tests.Matcher.MatcherKwargValue", section["key"]), eq="value")
+        tm.that(cast("tt.Tests.Matcher.MatcherKwargValue", section["number"]), eq=42)
 
     def test_read_nonexistent_file(self, tmp_path: Path) -> None:
         toml_file = tmp_path / "missing.toml"
@@ -64,7 +62,7 @@ class TestFlextInfraTomlDocument:
         section_obj = doc["section"]
         assert isinstance(section_obj, Table)
         section = section_obj
-        tm.that(section["key"], eq="value")
+        tm.that(cast("tt.Tests.Matcher.MatcherKwargValue", section["key"]), eq="value")
 
     def test_read_document_nonexistent_file(self, tmp_path: Path) -> None:
         toml_file = tmp_path / "missing.toml"
@@ -135,14 +133,13 @@ class TestFlextInfraTomlDocument:
         section["key"] = "new"
         tm.ok(service.write_document(toml_file, doc))
         verify_doc = service.read(toml_file)
-        tm.that(verify_doc, none=False)
-        if verify_doc is None:
-            msg = "expected persisted TOML document"
-            raise AssertionError(msg)
+        assert verify_doc is not None, "expected persisted TOML document"
         verify_section_obj = verify_doc["section"]
         assert isinstance(verify_section_obj, Table)
         verify_section = verify_section_obj
-        tm.that(verify_section["key"], eq="new")
+        tm.that(
+            cast("tt.Tests.Matcher.MatcherKwargValue", verify_section["key"]), eq="new"
+        )
 
 
 class TestFlextInfraTomlHelpers:
@@ -161,7 +158,7 @@ class TestFlextInfraTomlHelpers:
         existing["key"] = "value"
         parent["section"] = existing
         table = FlextInfraUtilitiesToml.ensure_table(parent, "section")
-        tm.that(table["key"], eq="value")
+        tm.that(cast("tt.Tests.Matcher.MatcherKwargValue", table["key"]), eq="value")
 
     def test_as_toml_mapping_and_get_helpers(self) -> None:
         mapping: dict[str, t.Infra.InfraValue] = {"key": "value"}

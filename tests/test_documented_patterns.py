@@ -21,7 +21,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import operator
-from typing import Annotated, cast, override
+from typing import Annotated, override
 
 import pytest
 from pydantic import BaseModel, ConfigDict, Field
@@ -349,7 +349,7 @@ class TestPattern2V2Property:
         """V2 Property: Use .result for happy path."""
         result_value = case.create_user_service().result
         assert isinstance(result_value, User)
-        user = cast("User", result_value)
+        user = result_value
         assert user.unique_id == case.user_id
         assert user.name == f"User {case.user_id}"
 
@@ -402,7 +402,7 @@ class TestPattern4RailwayV2Property:
         """V2 Property: .execute() available for railway pattern."""
         user_result_raw = _make(GetUserService, user_id="123").result
         assert isinstance(user_result_raw, User)
-        user_result = cast("User", user_result_raw)
+        user_result = user_result_raw
         assert user_result.unique_id == "123"
         result = _make(GetUserService, user_id="123").execute().map(lambda u: u.email)
         _ = assertion_helpers.assert_flext_result_success(result)
@@ -489,7 +489,7 @@ class TestPattern6ErrorHandling:
         try:
             user_result_raw = _make(GetUserService, user_id="123").result
             assert isinstance(user_result_raw, User)
-            user_result = cast("User", user_result_raw)
+            user_result = user_result_raw
             assert user_result.unique_id == "123"
         except FlextExceptions.BaseError:
             pytest.fail("Should not raise")
@@ -505,7 +505,7 @@ class TestPattern6ErrorHandling:
         try:
             user_result_raw = _make(GetUserService, user_id="123").result
             assert isinstance(user_result_raw, User)
-            user_result = cast("User", user_result_raw)
+            user_result = user_result_raw
             email = user_result.email
         except FlextExceptions.BaseError:
             email = "fallback@example.com"
@@ -595,7 +595,7 @@ class TestAllPatternsIntegration:
         assert v1_result.is_success
         v2_user_raw = _make(GetUserService, user_id="456").result
         assert isinstance(v2_user_raw, User)
-        v2_user_result = cast("User", v2_user_raw)
+        v2_user_result = v2_user_raw
         assert v2_user_result.unique_id == "456"
         assert isinstance(v1_result.value, User)
         assert isinstance(v2_user_result, User)
@@ -629,7 +629,7 @@ class TestAllPatternsIntegration:
         """Complete scenario using multiple patterns."""
         user_raw = _make(GetUserService, user_id="123").result
         assert isinstance(user_raw, User)
-        user = cast("User", user_raw)
+        user = user_raw
         email_result = (
             _make(SendEmailService, to=user.email, subject="Welcome")
             .execute()

@@ -9,10 +9,6 @@ from pydantic import AliasPath, ConfigDict, Field
 from flext_core import FlextModels
 
 
-def _empty_str_list() -> list[str]:
-    return []
-
-
 class FlextInfraRefactorAstGrepModels:
     """Mixin containing ast-grep and migration model contracts."""
 
@@ -250,7 +246,7 @@ class FlextInfraRefactorAstGrepModels:
             patterns: Annotated[
                 list[str],
                 Field(
-                    default_factory=_empty_str_list,
+                    default_factory=list,
                     description="Pattern rules",
                 ),
             ]

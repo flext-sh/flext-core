@@ -17,63 +17,6 @@ CONSTANT_PATTERN = re.compile(r"^_?[A-Z][A-Z0-9_]*$")
 TYPE_CANDIDATE_PATTERN = re.compile(r"^_?[A-Za-z][A-Za-z0-9_]*$")
 
 
-def _new_symbol_candidate(
-    *,
-    symbol: str,
-    line: int,
-    kind: str = "constant",
-) -> m.Infra.Refactor.MROSymbolCandidate:
-    return m.Infra.Refactor.MROSymbolCandidate(
-        symbol=symbol,
-        line=line,
-        kind=kind,
-        class_name="",
-        facade_name="",
-    )
-
-
-def _new_scan_report(
-    *,
-    file: str,
-    module: str,
-    constants_class: str,
-    facade_alias: str,
-    candidates: tuple[m.Infra.Refactor.MROSymbolCandidate, ...],
-) -> m.Infra.Refactor.MROScanReport:
-    return m.Infra.Refactor.MROScanReport(
-        file=file,
-        module=module,
-        constants_class=constants_class,
-        facade_alias=facade_alias,
-        candidates=candidates,
-    )
-
-
-def _new_import_rewrite(
-    *,
-    module: str,
-    import_name: str,
-    as_name: str | None,
-    symbol: str,
-    facade_name: str,
-) -> m.Infra.Refactor.MROImportRewrite:
-    return m.Infra.Refactor.MROImportRewrite(
-        module=module,
-        import_name=import_name,
-        as_name=as_name,
-        symbol=symbol,
-        facade_name=facade_name,
-    )
-
-
-def _new_rewrite_result(
-    *,
-    file: str,
-    replacements: int,
-) -> m.Infra.Refactor.MRORewriteResult:
-    return m.Infra.Refactor.MRORewriteResult(file=file, replacements=replacements)
-
-
 class FlextInfraRefactorMROResolver:
     """MRO resolver for c/t/p/m/u facade families."""
 
@@ -334,7 +277,7 @@ class FlextInfraRefactorMROMigrationScanner:
             )
             if candidate is not None:
                 candidates.append(candidate)
-        return _new_scan_report(
+        return m.Infra.Refactor.MROScanReport(
             file=str(file_path),
             module=module,
             constants_class=constants_class,
@@ -367,7 +310,13 @@ class FlextInfraRefactorMROMigrationScanner:
                 annotation=stmt.annotation,
             ):
                 return None
-            return _new_symbol_candidate(symbol=stmt.target.id, line=stmt.lineno)
+            return m.Infra.Refactor.MROSymbolCandidate(
+                symbol=stmt.target.id,
+                line=stmt.lineno,
+                kind="constant",
+                class_name="",
+                facade_name="",
+            )
         if isinstance(stmt, ast.Assign):
             if len(stmt.targets) != 1:
                 return None
@@ -376,7 +325,13 @@ class FlextInfraRefactorMROMigrationScanner:
                 return None
             if not CONSTANT_PATTERN.match(target.id):
                 return None
-            return _new_symbol_candidate(symbol=target.id, line=stmt.lineno)
+            return m.Infra.Refactor.MROSymbolCandidate(
+                symbol=target.id,
+                line=stmt.lineno,
+                kind="constant",
+                class_name="",
+                facade_name="",
+            )
         return None
 
     @staticmethod
@@ -513,10 +468,12 @@ class FlextInfraRefactorMROMigrationScanner:
             symbol = stmt.name.id
             if TYPE_CANDIDATE_PATTERN.match(symbol) is None:
                 return None
-            return _new_symbol_candidate(
+            return m.Infra.Refactor.MROSymbolCandidate(
                 symbol=symbol,
                 line=stmt.lineno,
                 kind="typealias",
+                class_name="",
+                facade_name="",
             )
         if isinstance(stmt, ast.AnnAssign):
             if not isinstance(stmt.target, ast.Name):
@@ -528,10 +485,12 @@ class FlextInfraRefactorMROMigrationScanner:
                 annotation=stmt.annotation,
             ):
                 return None
-            return _new_symbol_candidate(
+            return m.Infra.Refactor.MROSymbolCandidate(
                 symbol=symbol,
                 line=stmt.lineno,
                 kind="typealias",
+                class_name="",
+                facade_name="",
             )
         if isinstance(stmt, ast.Assign):
             if len(stmt.targets) != 1 or not isinstance(stmt.targets[0], ast.Name):
@@ -543,10 +502,12 @@ class FlextInfraRefactorMROMigrationScanner:
                 expr=stmt.value,
             ):
                 return None
-            return _new_symbol_candidate(
+            return m.Infra.Refactor.MROSymbolCandidate(
                 symbol=symbol,
                 line=stmt.lineno,
                 kind="typevar",
+                class_name="",
+                facade_name="",
             )
         return None
 
@@ -578,10 +539,12 @@ class FlextInfraRefactorMROMigrationScanner:
                     break
         if not has_protocol_base:
             return None
-        return _new_symbol_candidate(
+        return m.Infra.Refactor.MROSymbolCandidate(
             symbol=stmt.name,
             line=stmt.lineno,
             kind="protocol",
+            class_name="",
+            facade_name="",
         )
 
     @staticmethod
@@ -693,7 +656,7 @@ class FlextInfraRefactorMROImportRewriter:
                         facade_local_name = default_facade_alias
                         facade_aliases[facade_local_name] = module_name
                         module_facade_alias[module_name] = facade_local_name
-                        facade_import = _new_import_rewrite(
+                        facade_import = m.Infra.Refactor.MROImportRewrite(
                             module=module_name,
                             import_name=default_facade_alias,
                             as_name=None,
@@ -711,17 +674,19 @@ class FlextInfraRefactorMROImportRewriter:
                     if new_symbol is None:
                         kept_names.append(alias)
                         continue
-                    imported_symbols[alias.asname or alias.name] = _new_import_rewrite(
-                        module=module_name,
-                        import_name=default_facade_alias,
-                        as_name=None,
-                        symbol=new_symbol,
-                        facade_name=module_facade_alias.get(
-                            module_name,
-                            default_facade_alias,
-                        ),
+                    imported_symbols[alias.asname or alias.name] = (
+                        m.Infra.Refactor.MROImportRewrite(
+                            module=module_name,
+                            import_name=default_facade_alias,
+                            as_name=None,
+                            symbol=new_symbol,
+                            facade_name=module_facade_alias.get(
+                                module_name,
+                                default_facade_alias,
+                            ),
+                        )
                     )
-                    facade_import = _new_import_rewrite(
+                    facade_import = m.Infra.Refactor.MROImportRewrite(
                         module=module_name,
                         import_name=default_facade_alias,
                         as_name=None
@@ -795,7 +760,7 @@ class FlextInfraRefactorMROImportRewriter:
         rendered = ast.unparse(ast.fix_missing_locations(rewritten))
         if apply_changes and rendered != source:
             _ = file_path.write_text(f"{rendered}\n", encoding=c.Infra.Encoding.DEFAULT)
-        return _new_rewrite_result(
+        return m.Infra.Refactor.MRORewriteResult(
             file=str(file_path),
             replacements=rewriter.replacements,
         )

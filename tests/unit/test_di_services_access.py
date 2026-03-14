@@ -194,10 +194,9 @@ class TestServicesIntegrationViaDI:
             ) -> FlextModelsService.RuntimeBootstrapOptions:
                 return FlextModelsService.RuntimeBootstrapOptions(
                     config_overrides={"app_name": "service_app"},
-                    services=cast(
-                        "Mapping[str, t.RegisterableService] | None",
-                        {"logger": FlextLogger.create_module_logger("service")},
-                    ),
+                    services={
+                        "logger": FlextLogger.create_module_logger("service"),
+                    },
                 )
 
             @override

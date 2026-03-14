@@ -75,6 +75,8 @@ class FlextUtilitiesGuards:
     type _GuardInput = (
         t.NormalizedValue
         | t.MetadataValue
+        | t.RegisterableService
+        | t.RegistrablePlugin
         | BaseModel
         | Mapping[str, t.NormalizedValue]
         | Mapping[str, t.MetadataValue]
@@ -84,6 +86,7 @@ class FlextUtilitiesGuards:
         | tuple[t.TypeHintSpecifier, ...]
         | t.TypeHintSpecifier
         | p.ValidatorSpec
+        | p.ResultLike[t.Container | BaseModel]
         | Callable[..., t.NormalizedValue]
         | Callable[[t.NormalizedValue], bool]
         | None
@@ -267,7 +270,7 @@ class FlextUtilitiesGuards:
         return True
 
     @staticmethod
-    def is_context(value: t.NormalizedValue) -> TypeGuard[p.Context]:
+    def is_context(value: FlextUtilitiesGuards._GuardInput) -> TypeGuard[p.Context]:
         """Check if *value* satisfies ``p.Context`` structurally."""
         return bool(
             hasattr(value, "get") and hasattr(value, "set") and hasattr(value, "clone")
@@ -422,12 +425,12 @@ class FlextUtilitiesGuards:
         return bool(hasattr(value, "bind") and hasattr(value, "info"))
 
     @staticmethod
-    def is_factory(value: t.NormalizedValue) -> TypeGuard[t.FactoryCallable]:
+    def is_factory(value: FlextUtilitiesGuards._GuardInput) -> TypeGuard[t.FactoryCallable]:
         """Check if *value* is a factory callable."""
         return callable(value)
 
     @staticmethod
-    def is_resource(value: t.NormalizedValue) -> TypeGuard[t.ResourceCallable]:
+    def is_resource(value: FlextUtilitiesGuards._GuardInput) -> TypeGuard[t.ResourceCallable]:
         """Check if *value* is a resource callable."""
         return callable(value)
 
@@ -465,7 +468,7 @@ class FlextUtilitiesGuards:
 
     @staticmethod
     def is_registerable_service(
-        value: t.NormalizedValue,
+        value: FlextUtilitiesGuards._GuardInput,
     ) -> TypeGuard[t.RegisterableService]:
         """Check if value is a registerable service for DI container.
 
@@ -504,7 +507,7 @@ class FlextUtilitiesGuards:
         return bool(hasattr(value, "bind") and hasattr(value, "info"))
 
     @staticmethod
-    def is_instance_of[T](value: t.NormalizedValue, type_cls: type[T]) -> TypeGuard[T]:
+    def is_instance_of[T](value: FlextUtilitiesGuards._GuardInput, type_cls: type[T]) -> TypeGuard[T]:
         """Check if value is an instance of type_cls, handling generics.
 
         Args:
@@ -661,7 +664,7 @@ class FlextUtilitiesGuards:
                 )
             return (
                 error_msg
-                or f"{context_name} must be {condition.__name__}, got {value.__class__.__name__}"
+                or f"{context_name} must be {condition.__name__}, got {type(value).__name__}"
             )
         if FlextUtilitiesGuards._is_type_tuple(condition):
             if FlextUtilitiesGuards.is_container(value):
@@ -670,7 +673,7 @@ class FlextUtilitiesGuards:
                 )
             return (
                 error_msg
-                or f"{context_name} type check failed for {value.__class__.__name__}"
+                or f"{context_name} type check failed for {type(value).__name__}"
             )
         if isinstance(condition, p.ValidatorSpec):
             if not FlextUtilitiesGuards.is_container(value):
@@ -691,8 +694,9 @@ class FlextUtilitiesGuards:
                 typed_value_s, condition, context_name, error_msg
             )
         if callable(condition):
+            predicate: Callable[[T], bool] = condition
             return FlextUtilitiesGuards._guard_check_predicate(
-                value, condition, context_name, error_msg
+                value, predicate, context_name, error_msg
             )
         return error_msg or f"{context_name} invalid guard condition type"
 
