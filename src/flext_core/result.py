@@ -71,6 +71,7 @@ class FlextResult[T](FlextRuntime.RuntimeResult[T]):
             except UnwrapFailedError as exc:
                 super().__init__(
                     error_code=error_code,
+                    error=None,
                     is_success=True,
                     error_data=validated_error_data,
                 )

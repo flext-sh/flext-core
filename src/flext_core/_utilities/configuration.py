@@ -233,9 +233,17 @@ class FlextUtilitiesConfiguration:
             model_dump_attr = getattr(obj, "model_dump", None)
             if model_dump_attr is None or not callable(model_dump_attr):
                 return FlextUtilitiesConfiguration._NOT_FOUND
-            obj_dict: t.NormalizedValue | BaseModel = (
-                FlextRuntime.normalize_to_container(model_dump_attr())
-            )
+            dump_result = model_dump_attr()
+            dump_normalized: t.NormalizedValue | BaseModel
+            if isinstance(dump_result, (str, int, float, bool, datetime, Path)):
+                dump_normalized = dump_result
+            elif isinstance(dump_result, BaseModel):
+                dump_normalized = dump_result
+            elif isinstance(dump_result, dict):
+                dump_normalized = FlextRuntime.normalize_to_container(dump_result)
+            else:
+                dump_normalized = str(dump_result)
+            obj_dict: t.NormalizedValue | BaseModel = dump_normalized
             if FlextUtilitiesGuards.is_mapping(obj_dict) and parameter in obj_dict:
                 raw_value = obj_dict[parameter]
                 if raw_value is None or isinstance(raw_value, (str, int, float, bool)):
@@ -550,20 +558,30 @@ class FlextUtilitiesConfiguration:
             if found:
                 return value
         if isinstance(obj, Mapping):
+            typed_mapping: Mapping[str, t.NormalizedValue | BaseModel] = obj
             found, value = FlextUtilitiesConfiguration._try_get_from_dict_like(
-                obj, parameter
+                typed_mapping, parameter
             )
             if found:
                 return value
+        narrowed_obj: p.HasModelDump | BaseModel | p.Base
+        if isinstance(obj, BaseModel):
+            narrowed_obj = obj
+        elif isinstance(obj, p.HasModelDump):
+            narrowed_obj = obj
+        else:
+            narrowed_obj = obj
         found, duck_value = FlextUtilitiesConfiguration._try_get_from_duck_model_dump(
-            obj, parameter
+            narrowed_obj, parameter
         )
         if found:
             return duck_value
-        found, attr_val = FlextUtilitiesConfiguration._try_get_attr(obj, parameter)
+        found, attr_val = FlextUtilitiesConfiguration._try_get_attr(
+            narrowed_obj, parameter
+        )
         if found:
             return attr_val
-        class_name = obj.__class__.__name__
+        class_name = narrowed_obj.__class__.__name__
         msg = f"Parameter '{parameter}' is not defined in {class_name}"
         raise e.NotFoundError(msg)
 

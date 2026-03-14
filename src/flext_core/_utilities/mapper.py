@@ -1615,7 +1615,7 @@ class FlextUtilitiesMapper:
             elif isinstance(data, Mapping):
                 current = FlextUtilitiesMapper.narrow_to_container(data)
             else:
-                current = data
+                current = FlextUtilitiesMapper.narrow_to_container(data)
             found_none_prefix = "found_none:"
             for i, part in enumerate(parts):
                 if current is None:
@@ -2094,12 +2094,24 @@ class FlextUtilitiesMapper:
                 for k, v in model_dict.items()
             }
         if isinstance(value, Mapping):
-            return {
-                str(k): FlextUtilitiesMapper.narrow_to_container(v)
-                for k, v in value.items()
-            }
-        if isinstance(value, Sequence) and not isinstance(value, str):
-            return [FlextUtilitiesMapper.narrow_to_container(item) for item in value]
+            result_dict: dict[str, t.NormalizedValue] = {}
+            for mk in value:
+                mv = value[mk]
+                if isinstance(mv, (*t.CONTAINER_TYPES, list, dict, tuple)):
+                    result_dict[str(mk)] = FlextUtilitiesMapper.narrow_to_container(mv)
+                elif isinstance(mv, BaseModel):
+                    result_dict[str(mk)] = FlextUtilitiesMapper.narrow_to_container(mv)
+                elif mv is not None:
+                    result_dict[str(mk)] = str(mv)
+            return result_dict
+        if isinstance(value, (list, tuple)) and not isinstance(value, str):
+            norm_list: list[t.NormalizedValue] = []
+            for seq_item in value:
+                if isinstance(seq_item, (*t.CONTAINER_TYPES, list, dict, tuple, BaseModel)):
+                    norm_list.append(FlextUtilitiesMapper.narrow_to_container(seq_item))
+                elif seq_item is not None:
+                    norm_list.append(str(seq_item))
+            return norm_list
         return str(value)
 
     @staticmethod

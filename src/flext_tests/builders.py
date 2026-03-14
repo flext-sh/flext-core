@@ -143,7 +143,8 @@ class FlextTestsBuilders:
             )
         hooks: t.Tests.Builders.BuilderOutputDict = {str(k): v for k, v in data.items()}
         if params.validate_with is not None and not params.validate_with(hooks):
-            raise ValueError("Validation failed during build")
+            msg = "Validation failed during build"
+            raise ValueError(msg)
         if params.assert_with is not None:
             params.assert_with(hooks)
         if params.map_result is not None:

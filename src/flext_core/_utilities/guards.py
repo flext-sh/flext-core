@@ -1032,7 +1032,7 @@ class FlextUtilitiesGuards:
                 seq_value: Sequence[t.NormalizedValue] = value
                 return list(seq_value)
             if value is None:
-                return list(str_list_default) if str_list_default else []
+                return list(str_list_default) if str_list_default else list[str]()
             return [value]
         if target_type == "dict":
             dict_default: Mapping[str, t.NormalizedValue] | None = None

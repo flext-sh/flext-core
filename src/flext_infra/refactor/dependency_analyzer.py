@@ -186,7 +186,7 @@ class DependencyAnalyzer:
             src_dirs=frozenset({"src"}),
         )
         return files_result.fold(
-            on_failure=lambda _: [],
+            on_failure=lambda _: list[Path](),
             on_success=lambda v: v,
         )
 

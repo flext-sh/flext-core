@@ -339,14 +339,18 @@ class NamespaceProjectEnforcementReport(FlextModels.ArbitraryTypesModel):
         )
 
 
+def _empty_project_reports() -> list[NamespaceProjectEnforcementReport]:
+    return []
+
+
 class NamespaceWorkspaceEnforcementReport(FlextModels.ArbitraryTypesModel):
     workspace: Annotated[str, Field(min_length=1)]
     projects: Annotated[
         list[NamespaceProjectEnforcementReport],
         Field(
-            default_factory=list,
+            default_factory=_empty_project_reports,
         ),
-    ] = Field(default_factory=list)
+    ] = Field(default_factory=_empty_project_reports)
     total_facades_missing: Annotated[int, Field(default=0, ge=0)]
     total_loose_objects: Annotated[int, Field(default=0, ge=0)]
     total_import_violations: Annotated[int, Field(default=0, ge=0)]

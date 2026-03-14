@@ -80,7 +80,7 @@ class FlextService[
     )
     # --- Service Bootstrap Configuration ---
     config_type: type[FlextSettings] | None = Field(default=None, exclude=True)
-    config_overrides: Mapping[str, t.Scalar] | None = Field(default=None, exclude=True)
+    config_overrides: dict[str, t.NormalizedValue] | None = Field(default=None, exclude=True)
     initial_context: FlextContext | None = Field(default=None, exclude=True)
     subproject: str | None = Field(default=None, exclude=True)
     services: Mapping[str, t.RegisterableService] | None = Field(

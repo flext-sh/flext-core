@@ -122,7 +122,8 @@ class FlextInfraRefactorEngine:
                     iter_result.error or f"File iteration failed for {project}"
                 )
                 continue
-            for py_file in iter_result.value:
+            iter_files = cast("list[Path]", iter_result.value)
+            for py_file in iter_files:
                 relative_path = py_file.relative_to(project)
                 relative_path_str = str(relative_path)
                 if not (
@@ -349,9 +350,10 @@ class FlextInfraRefactorEngine:
         )
         ignore_patterns = {str(item) for item in ignore_items}
         allowed_extensions = {str(item) for item in extension_items}
+        iter_files = cast("list[Path]", iter_result.value)
         files = [
             file_path
-            for file_path in iter_result.value
+            for file_path in iter_files
             if (
                 fnmatch.fnmatch(str(file_path.relative_to(project_path)), pattern)
                 or fnmatch.fnmatch(file_path.name, pattern)
