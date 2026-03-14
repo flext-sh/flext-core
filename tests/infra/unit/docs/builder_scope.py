@@ -95,12 +95,12 @@ class TestBuilderScope:
             name="test", path=tmp_path, report_dir=tmp_path / "reports"
         )
         mock_output = SimpleNamespace(exit_code=0, stdout="Build successful", stderr="")
-        command_output = m.Infra.Core.CommandOutput({
-            "command": "mkdocs build --strict",
-            "exit_code": mock_output.exit_code,
-            "stdout": mock_output.stdout,
-            "stderr": mock_output.stderr,
-        })
+        command_output = m.Infra.Core.CommandOutput(
+            command="mkdocs build --strict",
+            exit_code=mock_output.exit_code,
+            stdout=mock_output.stdout,
+            stderr=mock_output.stderr,
+        )
         mock_runner = _RunnerStub(command_output)
         monkeypatch.setattr(builder, "_runner", mock_runner)
         report = builder._run_mkdocs(scope)
