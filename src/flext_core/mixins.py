@@ -548,13 +548,11 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
                             "handler_mode": popped.handler_mode,
                         })
                     if isinstance(popped, m.ConfigMap):
-                        return r[dict[str, t.Scalar]].ok(
-                            dict(
-                                (str(ck), cv)
-                                for ck, cv in popped.root.items()
-                                if u.is_scalar(cv)
-                            )
-                        )
+                        return r[dict[str, t.Scalar]].ok({
+                            str(ck): cv
+                            for ck, cv in popped.root.items()
+                            if u.is_scalar(cv)
+                        })
                     return r[dict[str, t.Scalar]].ok(popped)
                 return r[dict[str, t.Scalar]].ok({})
 
