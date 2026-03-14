@@ -58,17 +58,11 @@ class FlextInfraTypes(FlextTypes):
         "Dict with string keys and container values (project reports, etc.)."
         TomlScalar: TypeAlias = str | int | float | bool | None
         "TOML scalar value (null, string, integer, float, boolean)."
-        type TomlValue = (
-            str
-            | int
-            | float
-            | bool
-            | None
-            | dict[str, TomlScalar | None]
-            | list[TomlScalar | None]
+        TomlValue: TypeAlias = (
+            str | int | float | bool | None | dict[str, object] | list[object]
         )
         "Recursive TOML value (scalar, table, or array)."
-        TomlConfig: TypeAlias = dict[str, TomlValue]
+        TomlConfig: TypeAlias = dict[str, object]
         "Top-level TOML document mapping."
         type ContainerReport = dict[str, ContainerDict]
         "Nested container dict (project-level reports)."

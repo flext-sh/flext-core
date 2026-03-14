@@ -115,8 +115,8 @@ class FlextUtilitiesDeprecation:
             if original_init is None:
 
                 def noop_init(
-                    self: object,
-                    *args: object,
+                    self: TClass,
+                    *args: t.NormalizedValue,
                     **kwargs: t.Scalar,
                 ) -> None:
                     pass
@@ -125,8 +125,8 @@ class FlextUtilitiesDeprecation:
 
             @functools.wraps(original_init)
             def new_init(
-                self: object,
-                *args: object,
+                self: TClass,
+                *args: t.NormalizedValue,
                 **kwargs: t.Scalar,
             ) -> None:
                 cls_name = getattr(cls, "__name__", cls.__class__.__name__)

@@ -79,7 +79,9 @@ class FlextUtilitiesCache:
         return FlextRuntime.get_logger(__name__)
 
     @staticmethod
-    def clear_object_cache(obj: object) -> r[bool]:
+    def clear_object_cache(
+        obj: BaseModel | p.HasModelDump | t.NormalizedValue,
+    ) -> r[bool]:
         """Clear cache-like attributes on an object.
 
         Business Rule: Safe Cache Invalidation
@@ -131,7 +133,7 @@ class FlextUtilitiesCache:
             return r[bool].fail(f"Failed to clear caches: {e}")
 
     @staticmethod
-    def generate_cache_key(*args: object, **kwargs: t.Scalar) -> str:
+    def generate_cache_key(*args: t.NormalizedValue, **kwargs: t.Scalar) -> str:
         """Generate a deterministic cache key from arguments.
 
         Business Rule: SHA-256 Cache Key Generation
@@ -166,7 +168,10 @@ class FlextUtilitiesCache:
         return hashlib.sha256(key_data.encode()).hexdigest()
 
     @staticmethod
-    def generate_cache_key_for_command(command: object, command_type: type) -> str:
+    def generate_cache_key_for_command(
+        command: BaseModel | Mapping[str, t.NormalizedValue] | t.NormalizedValue,
+        command_type: type,
+    ) -> str:
         if isinstance(command, Mapping):
             command_map = (
                 FlextUtilitiesCache._V.dict_str_metadata_adapter().validate_python(
@@ -183,7 +188,9 @@ class FlextUtilitiesCache:
             return f"{command_type.__name__}_{abs(hash(encoded))}"
 
     @staticmethod
-    def has_cache_attributes(obj: object) -> bool:
+    def has_cache_attributes(
+        obj: BaseModel | p.HasModelDump | t.NormalizedValue,
+    ) -> bool:
         """Check if an object exposes any known cache-related attributes.
 
         Business Rule: Cache Detection
@@ -192,7 +199,7 @@ class FlextUtilitiesCache:
         Useful for deciding whether to attempt cache clearing.
 
         Args:
-            obj: object object
+            obj: target instance
 
         Returns:
             True if any known cache attribute exists, False otherwise
@@ -252,7 +259,7 @@ class FlextUtilitiesCache:
         return str(component)
 
     @staticmethod
-    def sort_dict_keys(data: object) -> object:
+    def sort_dict_keys(data: t.NormalizedValue | BaseModel) -> t.NormalizedValue:
         """Sort dictionary keys recursively for consistent representations.
 
         Business Rule: Recursive Key Sorting for Cache Consistency
@@ -276,7 +283,7 @@ class FlextUtilitiesCache:
         - Preserves object contract
 
         Args:
-            data: object value
+            data: input value
 
         Returns:
             Sorted dict if input is dict-like, unchanged otherwise
@@ -288,7 +295,7 @@ class FlextUtilitiesCache:
             data_map = FlextUtilitiesCache._V.sortable_dict_adapter().validate_python(
                 data
             )
-            result: dict[str, object] = {}
+            result: dict[str, t.NormalizedValue] = {}
             for k in sorted(data_map.keys(), key=FlextUtilitiesCache.sort_key):
                 value = data_map[k]
                 if value is None:

@@ -37,27 +37,34 @@ class FlextUtilitiesModel:
     _V = FlextModelFoundation.Validators
 
     @staticmethod
-    def _normalize_str_object_mapping(value: object) -> dict[str, object]:
+    def _normalize_str_object_mapping(
+        value: t.NormalizedValue
+        | BaseModel
+        | Mapping[str, t.NormalizedValue | BaseModel],
+    ) -> dict[str, t.NormalizedValue | BaseModel]:
         try:
             validated = (
                 FlextUtilitiesModel._V.dict_str_metadata_adapter().validate_python(
                     value
                 )
             )
-            return dict(validated)
+            return {
+                str(k): FlextRuntime.normalize_to_container(v)
+                for k, v in dict(validated).items()
+            }
         except ValidationError:
             return {}
 
     @staticmethod
     def _normalize_to_pydantic_value(
-        value: object,
+        value: t.NormalizedValue | BaseModel,
     ) -> t.Scalar | list[t.Primitives]:
         """Normalize object to Pydantic-safe PydanticConfigValue.
 
         Converts complex types to strings, preserves primitives.
 
         Args:
-            value: object value to normalize
+            value: input value to normalize
 
         Returns:
             t.PydanticConfigValue: Pydantic-safe value
@@ -68,7 +75,9 @@ class FlextUtilitiesModel:
         if isinstance(value, (bool, int, float, str)):
             return value
         if isinstance(value, (list, tuple)):
-            sequence_items: list[object] = list(value)
+            sequence_items: list[t.NormalizedValue | BaseModel] = [
+                FlextRuntime.normalize_to_container(item_value) for item_value in value
+            ]
             normalized_items: list[t.Primitives] = []
             for item in sequence_items:
                 if item is None:
@@ -186,8 +195,8 @@ class FlextUtilitiesModel:
     @staticmethod
     def merge_defaults[M: BaseModel](
         model_cls: type[M],
-        defaults: Mapping[str, object],
-        overrides: Mapping[str, object],
+        defaults: Mapping[str, t.NormalizedValue],
+        overrides: Mapping[str, t.NormalizedValue],
     ) -> r[M]:
         """Merge defaults with overrides and create model.
 
@@ -256,7 +265,18 @@ class FlextUtilitiesModel:
                     nested_mapping = FlextUtilitiesModel._normalize_str_object_mapping(
                         v
                     )
-                    safe_attrs[str_k] = orjson.dumps(nested_mapping).decode()
+                    plain_mapping: dict[str, t.NormalizedValue] = {}
+                    for nested_key, nested_value in nested_mapping.items():
+                        if isinstance(nested_value, BaseModel):
+                            dumped_nested = nested_value.model_dump()
+                            plain_mapping[str(nested_key)] = (
+                                dumped_nested
+                                if isinstance(dumped_nested, dict)
+                                else str(dumped_nested)
+                            )
+                        else:
+                            plain_mapping[str(nested_key)] = nested_value
+                    safe_attrs[str_k] = orjson.dumps(plain_mapping).decode()
                 else:
                     safe_attrs[str_k] = str(v)
             return m.Metadata.model_validate({"attributes": safe_attrs})
@@ -273,10 +293,10 @@ class FlextUtilitiesModel:
         that Pydantic can generate schemas for without recursion issues.
 
         Args:
-            data: EventDataMapping (Mapping[str, object]) or None
+            data: EventDataMapping (Mapping[str, Any]) or None
 
         Returns:
-            Mapping[str, object]: Mapping with Pydantic-safe values
+            Mapping[str, Any]: Mapping with Pydantic-safe values
 
         Example:
             >>> u.normalize_to_pydantic_dict(None)
@@ -312,7 +332,9 @@ class FlextUtilitiesModel:
             return r[M].fail(f"Model update failed: {e}")
 
     @staticmethod
-    def to_config_map(obj: BaseModel | object | None) -> m.ConfigMap:
+    def to_config_map(
+        obj: BaseModel | Mapping[str, t.NormalizedValue] | t.NormalizedValue | None,
+    ) -> m.ConfigMap:
         """Convert BaseModel/dict to ConfigMap (None → empty ConfigMap)."""
         if obj is None:
             return m.ConfigMap(root={})
@@ -321,9 +343,9 @@ class FlextUtilitiesModel:
         if isinstance(obj, BaseModel):
             model_dump_result = obj.model_dump()
             try:
-                normalized_model_dump: dict[str, object] = {}
+                normalized_model_dump: dict[str, t.NormalizedValue | BaseModel] = {}
                 for key, value in model_dump_result.items():
-                    normalized_value: object
+                    normalized_value: t.NormalizedValue | BaseModel
                     if value is None:
                         normalized_value = ""
                     elif isinstance(
@@ -338,14 +360,14 @@ class FlextUtilitiesModel:
                 return m.ConfigMap(root={"value": str(model_dump_result)})
         if isinstance(obj, Mapping):
             try:
-                normalized_mapping: dict[str, object] = {}
+                normalized_mapping: dict[str, t.NormalizedValue | BaseModel] = {}
                 obj_mapping = (
                     FlextUtilitiesModel._V.dict_str_metadata_adapter().validate_python(
                         obj
                     )
                 )
                 for key, value in obj_mapping.items():
-                    normalized_mapping_value: object = (
+                    normalized_mapping_value: t.NormalizedValue | BaseModel = (
                         FlextRuntime.normalize_to_container(value)
                         if isinstance(
                             value, (str, int, float, bool, type(None), BaseModel)
@@ -360,7 +382,7 @@ class FlextUtilitiesModel:
         # Fallback to general value normalization
         normalized = FlextRuntime.normalize_to_container(obj)
         if isinstance(normalized, Mapping):
-            normalized_obj: object = normalized
+            normalized_obj: t.NormalizedValue | BaseModel = normalized
             normalized_map = FlextUtilitiesModel._normalize_str_object_mapping(
                 normalized_obj
             )

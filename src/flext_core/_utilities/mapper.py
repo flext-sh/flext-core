@@ -11,7 +11,7 @@ from __future__ import annotations
 import warnings
 from collections.abc import Callable, Mapping, Sequence
 from functools import partial
-from typing import overload
+from typing import Any, overload
 
 from pydantic import BaseModel
 
@@ -150,7 +150,7 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _build_apply_chunk(
-        current: t.NormalizedValue, ops: Mapping[str, object]
+        current: t.NormalizedValue, ops: Mapping[str, Any]
     ) -> t.NormalizedValue:
         """Helper: Apply chunk operation to split into sublists."""
         if "chunk" not in ops:
@@ -172,7 +172,7 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _build_apply_convert(
-        current: t.NormalizedValue, ops: Mapping[str, object]
+        current: t.NormalizedValue, ops: Mapping[str, Any]
     ) -> t.NormalizedValue:
         """Helper: Apply convert operation."""
         if "convert" not in ops:
@@ -231,7 +231,7 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _build_apply_ensure(
-        current: t.NormalizedValue, ops: Mapping[str, object]
+        current: t.NormalizedValue, ops: Mapping[str, Any]
     ) -> t.NormalizedValue:
         """Helper: Apply ensure operation."""
         if "ensure" not in ops:
@@ -291,7 +291,7 @@ class FlextUtilitiesMapper:
     @staticmethod
     def _build_apply_filter(
         current: t.NormalizedValue,
-        ops: Mapping[str, object],
+        ops: Mapping[str, Any],
         default: t.NormalizedValue,
     ) -> t.NormalizedValue:
         """Helper: Apply filter operation."""
@@ -323,7 +323,7 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _build_apply_group(
-        current: t.NormalizedValue, ops: Mapping[str, object]
+        current: t.NormalizedValue, ops: Mapping[str, Any]
     ) -> t.NormalizedValue:
         """Helper: Apply group operation."""
         if "group" not in ops:
@@ -375,7 +375,7 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _build_apply_map(
-        current: t.NormalizedValue, ops: Mapping[str, object]
+        current: t.NormalizedValue, ops: Mapping[str, Any]
     ) -> t.NormalizedValue:
         """Helper: Apply map operation."""
         if "map" not in ops:
@@ -404,7 +404,7 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _build_apply_normalize(
-        current: t.NormalizedValue, ops: Mapping[str, object]
+        current: t.NormalizedValue, ops: Mapping[str, Any]
     ) -> t.NormalizedValue:
         """Helper: Apply normalize operation."""
         if "normalize" not in ops:
@@ -431,7 +431,7 @@ class FlextUtilitiesMapper:
     @staticmethod
     def _build_apply_process(
         current: t.NormalizedValue,
-        ops: Mapping[str, object],
+        ops: Mapping[str, Any],
         default: t.NormalizedValue,
         on_error: str,
     ) -> t.NormalizedValue:
@@ -473,7 +473,7 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _build_apply_slice(
-        current: t.NormalizedValue, ops: Mapping[str, object]
+        current: t.NormalizedValue, ops: Mapping[str, Any]
     ) -> t.NormalizedValue:
         """Helper: Apply slice operation."""
         if "slice" not in ops:
@@ -506,7 +506,7 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _build_apply_sort(
-        current: t.NormalizedValue, ops: Mapping[str, object]
+        current: t.NormalizedValue, ops: Mapping[str, Any]
     ) -> t.NormalizedValue:
         """Helper: Apply sort operation."""
         if "sort" not in ops:
@@ -576,7 +576,7 @@ class FlextUtilitiesMapper:
     @staticmethod
     def _build_apply_transform(
         current: t.NormalizedValue,
-        ops: Mapping[str, object],
+        ops: Mapping[str, Any],
         default: t.NormalizedValue,
         on_error: str,
     ) -> t.NormalizedValue:
@@ -621,7 +621,7 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _build_apply_unique(
-        current: t.NormalizedValue, ops: Mapping[str, object]
+        current: t.NormalizedValue, ops: Mapping[str, Any]
     ) -> t.NormalizedValue:
         """Helper: Apply unique operation to remove duplicates."""
         if "unique" not in ops or not ops.get("unique"):
@@ -632,10 +632,10 @@ class FlextUtilitiesMapper:
         current_list_unique: t.ContainerList = [
             FlextUtilitiesMapper.narrow_to_container(item) for item in current_items
         ]
-        seen: set[object] = set()
+        seen: set[t.NormalizedValue | str] = set()
         unique_list: t.ContainerList = []
         for item in current_list_unique:
-            item_hashable: object | str = (
+            item_hashable: t.NormalizedValue | str = (
                 item
                 if isinstance(item, (str, int, float, bool)) or item is None
                 else str(item)
@@ -671,7 +671,10 @@ class FlextUtilitiesMapper:
         return None
 
     @staticmethod
-    def _extract_get_value(current: object, key_part: str) -> r[t.NormalizedValue]:
+    def _extract_get_value(
+        current: t.NormalizedValue | BaseModel | Mapping[str, t.NormalizedValue],
+        key_part: str,
+    ) -> r[t.NormalizedValue]:
         """Helper: Get raw value from dict/object/model.
 
         Returns:
@@ -792,7 +795,7 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _get_callable_from_dict(
-        ops: Mapping[str, object], key: str
+        ops: Mapping[str, Any], key: str
     ) -> r[t.MapperCallable]:
         value: t.NormalizedValue | t.MapperCallable = ops.get(key)
         if callable(value):
@@ -807,6 +810,11 @@ class FlextUtilitiesMapper:
         match data:
             case dict() | Mapping():
                 raw_value = data.get(key)
+                if raw_value is None:
+                    return default if default is not None else ""
+                return FlextUtilitiesMapper.narrow_to_container(raw_value)
+            case m.ConfigMap() | m.Dict():
+                raw_value = data.root.get(key)
                 if raw_value is None:
                     return default if default is not None else ""
                 return FlextUtilitiesMapper.narrow_to_container(raw_value)
@@ -828,7 +836,7 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _narrow_to_configuration_dict(
-        value: object,
+        value: t.NormalizedValue | Mapping[str, t.NormalizedValue],
     ) -> dict[str, t.NormalizedValue]:
         """Safely narrow object to ConfigurationDict with runtime validation."""
         if FlextUtilitiesGuards.is_configuration_dict(value):
@@ -842,7 +850,9 @@ class FlextUtilitiesMapper:
         raise TypeError(error_msg)
 
     @staticmethod
-    def _narrow_to_configuration_mapping(value: object) -> m.ConfigMap:
+    def _narrow_to_configuration_mapping(
+        value: t.NormalizedValue | Mapping[str, t.NormalizedValue],
+    ) -> m.ConfigMap:
         """Safely narrow object to ConfigurationMapping with runtime validation."""
         if isinstance(value, m.ConfigMap):
             return value
@@ -862,9 +872,9 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _narrow_to_sequence(
-        value: object,
+        value: t.NormalizedValue | Sequence[t.NormalizedValue],
     ) -> Sequence[t.NormalizedValue]:
-        """Safely narrow object to Sequence[object | None]."""
+        """Safely narrow object to Sequence[Any]."""
         if isinstance(value, (list, tuple)):
             narrowed_items: t.ContainerList = []
             for item_raw in value:
@@ -877,7 +887,7 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _narrow_to_string_keyed_dict(
-        value: object,
+        value: t.NormalizedValue | Mapping[str, t.NormalizedValue],
     ) -> dict[str, t.NormalizedValue]:
         """Narrow object to ConfigurationDict (for conversion purposes).
 
@@ -887,7 +897,7 @@ class FlextUtilitiesMapper:
         if isinstance(value, Mapping):
             result: dict[str, t.NormalizedValue] = {}
             key: str
-            val: object
+            val: t.NormalizedValue
             for key, val in value.items():
                 str_key = str(key)
                 if FlextUtilitiesGuards.is_container(val):
@@ -900,7 +910,7 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _to_general_value_from_object(
-        value: object,
+        value: t.NormalizedValue,
     ) -> t.NormalizedValue:
         """Deprecated: use narrow_to_container instead. Planned removal: v0.12."""
         warnings.warn(
@@ -1082,7 +1092,7 @@ class FlextUtilitiesMapper:
     def build(
         value: p.AccessibleData,
         *,
-        ops: Mapping[str, object] | None = None,
+        ops: Mapping[str, Any] | None = None,
         default: t.NormalizedValue = None,
         on_error: str = "stop",
     ) -> t.NormalizedValue:
@@ -1202,7 +1212,7 @@ class FlextUtilitiesMapper:
     @staticmethod
     def cast_generic[T](
         value: t.NormalizedValue,
-        target_type: Callable[[object], T] | None = None,
+        target_type: Callable[[Any], T] | None = None,
         *,
         default: T | None = None,
     ) -> T | t.NormalizedValue:
@@ -1210,7 +1220,7 @@ class FlextUtilitiesMapper:
 
         Args:
             value: Value to cast
-            target_type: Callable/type that converts object to T (optional)
+            target_type: Callable/type that converts Any to T (optional)
             default: Default value if cast fails
 
         Returns:
@@ -1269,7 +1279,7 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def construct(
-        spec: Mapping[str, object],
+        spec: Mapping[str, Any],
         source: m.ConfigMap | BaseModel | None = None,
         *,
         on_error: str = "stop",
@@ -1634,7 +1644,7 @@ class FlextUtilitiesMapper:
         *,
         default: t.NormalizedValue = None,
         required: bool = False,
-        ops: Mapping[str, object] | None = None,
+        ops: Mapping[str, Any] | None = None,
     ) -> t.NormalizedValue:
         """Extract single field from source with optional DSL processing.
 
@@ -1749,7 +1759,10 @@ class FlextUtilitiesMapper:
         return result
 
     @staticmethod
-    def fields_multi(source: object, spec: Mapping[str, object]) -> t.ContainerMapping:
+    def fields_multi(
+        source: t.NormalizedValue | BaseModel | Mapping[str, t.NormalizedValue],
+        spec: Mapping[str, t.NormalizedValue],
+    ) -> t.ContainerMapping:
         """Extract multiple fields using specification dict.
 
         FLEXT Pattern: Simplified multi-field extraction (split from overloaded fields).
@@ -2005,7 +2018,7 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def narrow_to_container(
-        value: object | None,
+        value: t.NormalizedValue | BaseModel | Mapping[str, t.NormalizedValue] | None,
     ) -> t.NormalizedValue:
         """Safely narrow any value to t.NormalizedValue (strict container type).
 
@@ -2033,7 +2046,9 @@ class FlextUtilitiesMapper:
         return str(value)
 
     @staticmethod
-    def narrow_to_general_value_type(value: object | None) -> t.NormalizedValue:
+    def narrow_to_general_value_type(
+        value: t.NormalizedValue | BaseModel | Mapping[str, t.NormalizedValue] | None,
+    ) -> t.NormalizedValue:
         """Deprecated alias; use narrow_to_container. Planned removal: v0.12."""
         warnings.warn(
             "narrow_to_general_value_type is deprecated; use narrow_to_container. "
@@ -2251,7 +2266,7 @@ class FlextUtilitiesMapper:
             transformer = identity_transformer
         result: dict[str, t.NormalizedValue] = {}
         if primary_data is not None:
-            primary_source: Mapping[str, object] | None = None
+            primary_source: Mapping[str, Any] | None = None
             if isinstance(primary_data, m.ConfigMap):
                 primary_source = primary_data.root
             else:
@@ -2273,7 +2288,7 @@ class FlextUtilitiesMapper:
                 )
                 result.update(transformed_primary)
         if secondary_data is not None and merge_strategy != "primary_only":
-            secondary_source: Mapping[str, object] | None = None
+            secondary_source: Mapping[str, Any] | None = None
             if isinstance(secondary_data, m.ConfigMap):
                 secondary_source = secondary_data.root
             else:
@@ -2316,7 +2331,7 @@ class FlextUtilitiesMapper:
         return result
 
     @staticmethod
-    def prop(key: str) -> Callable[[m.ConfigMap | BaseModel], object]:
+    def prop(key: str) -> Callable[[m.ConfigMap | BaseModel], Any]:
         """Create a property accessor function (functional pattern).
 
         Returns a function that extracts a property/attribute from an object.

@@ -162,8 +162,8 @@ class FlextUtilitiesConfiguration:
 
     @staticmethod
     def _try_get_attr(
-        obj: p.HasModelDump | object, parameter: str
-    ) -> tuple[bool, object]:
+        obj: p.HasModelDump | BaseModel | p.Base, parameter: str
+    ) -> tuple[bool, t.NormalizedValue | BaseModel]:
         """Try to get attribute value from object via hasattr/getattr.
 
         Business Rule: Direct Attribute Access (Fallback Strategy)
@@ -192,8 +192,8 @@ class FlextUtilitiesConfiguration:
 
     @staticmethod
     def _try_get_from_dict_like(
-        obj: Mapping[str, object], parameter: str
-    ) -> tuple[bool, object]:
+        obj: Mapping[str, t.NormalizedValue | BaseModel], parameter: str
+    ) -> tuple[bool, t.NormalizedValue | BaseModel]:
         """Try to get parameter from dict-like object.
 
         Business Rule: Dict-Like Access (Secondary Strategy)
@@ -226,14 +226,16 @@ class FlextUtilitiesConfiguration:
 
     @staticmethod
     def _try_get_from_duck_model_dump(
-        obj: p.HasModelDump | object,
+        obj: p.HasModelDump | BaseModel | p.Base,
         parameter: str,
-    ) -> tuple[bool, object]:
+    ) -> tuple[bool, t.NormalizedValue | BaseModel]:
         try:
             model_dump_attr = getattr(obj, "model_dump", None)
             if model_dump_attr is None or not callable(model_dump_attr):
                 return FlextUtilitiesConfiguration._NOT_FOUND
-            obj_dict: object = FlextRuntime.normalize_to_container(model_dump_attr())
+            obj_dict: t.NormalizedValue | BaseModel = (
+                FlextRuntime.normalize_to_container(model_dump_attr())
+            )
             if FlextUtilitiesGuards.is_mapping(obj_dict) and parameter in obj_dict:
                 raw_value = obj_dict[parameter]
                 if raw_value is None or isinstance(raw_value, (str, int, float, bool)):
@@ -248,7 +250,7 @@ class FlextUtilitiesConfiguration:
     @staticmethod
     def _try_get_from_model_dump(
         obj: p.HasModelDump, parameter: str
-    ) -> tuple[bool, object]:
+    ) -> tuple[bool, t.NormalizedValue | BaseModel]:
         """Try to get parameter from HasModelDump protocol object.
 
         Business Rule: Pydantic Model Access (Primary Strategy)
@@ -490,7 +492,13 @@ class FlextUtilitiesConfiguration:
         }
 
     @staticmethod
-    def get_parameter(obj: p.HasModelDump | object, parameter: str) -> object:
+    def get_parameter(
+        obj: p.HasModelDump
+        | BaseModel
+        | p.Base
+        | Mapping[str, t.NormalizedValue | BaseModel],
+        parameter: str,
+    ) -> t.NormalizedValue | BaseModel:
         """Get parameter value from a configuration object.
 
         Business Rule: Parameter Access Precedence Chain
@@ -560,7 +568,9 @@ class FlextUtilitiesConfiguration:
         raise e.NotFoundError(msg)
 
     @staticmethod
-    def get_singleton(singleton_class: type, parameter: str) -> object:
+    def get_singleton(
+        singleton_class: type, parameter: str
+    ) -> t.NormalizedValue | BaseModel:
         """Get parameter from a singleton configuration instance.
 
         Business Rule: Singleton Configuration Access (FLEXT Pattern)
@@ -679,7 +689,9 @@ class FlextUtilitiesConfiguration:
 
     @staticmethod
     def set_parameter(
-        obj: p.HasModelDump | object, parameter: str, value: t.Scalar | m.ConfigMap
+        obj: p.HasModelDump | BaseModel | p.Base,
+        parameter: str,
+        value: t.Scalar | m.ConfigMap,
     ) -> bool:
         """Set parameter value on a configuration object with validation.
 

@@ -41,116 +41,125 @@ class FlextUtilitiesGuards:
     """
 
     @staticmethod
-    def _is_bool(value: object) -> TypeGuard[bool]:
+    def _is_bool(value: t.NormalizedValue) -> TypeGuard[bool]:
         """Check if value is bool."""
         return isinstance(value, bool)
 
     @staticmethod
-    def _is_bytes(value: object) -> TypeGuard[bytes]:
+    def _is_bytes(value: t.NormalizedValue) -> TypeGuard[bytes]:
         """Check if value is bytes."""
         return isinstance(value, bytes)
 
     @staticmethod
     def _is_callable_key_func(
-        func: object,
-    ) -> TypeGuard[Callable[[object], object]]:
+        func: t.NormalizedValue,
+    ) -> TypeGuard[Callable[[t.NormalizedValue], t.NormalizedValue]]:
         """Check if value is callable and can be used as key function for sorted()."""
         return callable(func)
 
     @staticmethod
-    def _is_dict(value: object) -> TypeGuard[m.Dict]:
+    def _is_dict(value: t.NormalizedValue) -> TypeGuard[m.Dict]:
         """Check if value is a dict-like mapping."""
         return isinstance(value, dict)
 
     @staticmethod
-    def _is_float(value: object) -> TypeGuard[float]:
+    def _is_float(value: t.NormalizedValue) -> TypeGuard[float]:
         """Check if value is float."""
         return isinstance(value, float)
 
     @staticmethod
-    def _is_int(value: object) -> TypeGuard[int]:
+    def _is_int(value: t.NormalizedValue) -> TypeGuard[int]:
         """Check if value is int."""
         return isinstance(value, int)
 
     type _GuardInput = (
-        object | t.TypeHintSpecifier | p.ValidatorSpec | Callable[..., object] | None
+        t.NormalizedValue
+        | BaseModel
+        | Mapping[str, t.NormalizedValue]
+        | Sequence[t.NormalizedValue]
+        | tuple[type, ...]
+        | t.TypeHintSpecifier
+        | p.ValidatorSpec
+        | Callable[..., t.NormalizedValue]
+        | Callable[[t.NormalizedValue], bool]
+        | None
     )
 
     @staticmethod
     def _is_list_or_tuple(
         value: FlextUtilitiesGuards._GuardInput,
-    ) -> TypeGuard[list[object] | tuple[object, ...]]:
+    ) -> TypeGuard[list[t.NormalizedValue] | tuple[t.NormalizedValue, ...]]:
         """Check if value is list or tuple."""
         return isinstance(value, (list, tuple))
 
     @staticmethod
     def _is_mapping(
         value: FlextUtilitiesGuards._GuardInput,
-    ) -> TypeGuard[Mapping[str, object]]:
+    ) -> TypeGuard[Mapping[str, t.NormalizedValue]]:
         return isinstance(value, Mapping)
 
     @staticmethod
     def is_object_list(
         value: FlextUtilitiesGuards._GuardInput,
-    ) -> TypeGuard[list[object]]:
+    ) -> TypeGuard[list[t.NormalizedValue]]:
         return isinstance(value, list)
 
     @staticmethod
     def is_object_tuple(
         value: FlextUtilitiesGuards._GuardInput,
-    ) -> TypeGuard[tuple[object, ...]]:
+    ) -> TypeGuard[tuple[t.NormalizedValue, ...]]:
         return isinstance(value, tuple)
 
     @staticmethod
-    def _is_none(value: object) -> TypeGuard[None]:
+    def _is_none(value: t.NormalizedValue) -> TypeGuard[None]:
         """Check if value is None."""
         return value is None
 
     @staticmethod
     def _is_sequence(
-        value: object,
-    ) -> TypeGuard[Sequence[object]]:
-        """Check if value is Sequence of object."""
+        value: t.NormalizedValue,
+    ) -> TypeGuard[Sequence[t.NormalizedValue]]:
+        """Check if value is Sequence of Any."""
         return isinstance(value, (list, tuple, range))
 
     @staticmethod
     def _is_sequence_not_str(
-        value: object,
-    ) -> TypeGuard[Sequence[object]]:
+        value: t.NormalizedValue,
+    ) -> TypeGuard[Sequence[t.NormalizedValue]]:
         """Check if value is Sequence and not str."""
         return isinstance(value, (list, tuple, range)) and (not isinstance(value, str))
 
     @staticmethod
     def _is_sequence_not_str_bytes(
-        value: object,
-    ) -> TypeGuard[Sequence[object]]:
+        value: t.NormalizedValue,
+    ) -> TypeGuard[Sequence[t.NormalizedValue]]:
         """Check if value is Sequence and not str or bytes."""
         return isinstance(value, (list, tuple, range)) and (
             not isinstance(value, (str, bytes))
         )
 
     @staticmethod
-    def _is_sized(value: object) -> TypeGuard[Sized]:
+    def _is_sized(value: t.NormalizedValue) -> TypeGuard[Sized]:
         """Check if value has __len__ (str, bytes, Sequence, Mapping)."""
         if isinstance(value, (str, bytes, list, tuple, dict)):
             return True
         return hasattr(value, "__len__") and callable(getattr(value, "__len__", None))
 
     @staticmethod
-    def _is_str(value: object) -> TypeGuard[str]:
+    def _is_str(value: t.NormalizedValue) -> TypeGuard[str]:
         """Check if value is str."""
         return isinstance(value, str)
 
     @staticmethod
-    def _is_tuple(value: object) -> TypeGuard[tuple[object, ...]]:
+    def _is_tuple(value: t.NormalizedValue) -> TypeGuard[tuple[t.NormalizedValue, ...]]:
         """Check if value is tuple."""
         return isinstance(value, tuple)
 
     @staticmethod
-    def is_config_value(value: object) -> TypeGuard[object]:
-        """Check if value is a valid object.
+    def is_config_value(value: t.NormalizedValue) -> TypeGuard[t.NormalizedValue]:
+        """Check if value is a valid Any.
 
-        object = str | int | float | bool | datetime | None |
+        Any = str | int | float | bool | datetime | None |
                           Sequence[scalar] | Mapping[str, scalar]
 
         This TypeGuard enables type narrowing for simple config values.
@@ -159,7 +168,7 @@ class FlextUtilitiesGuards:
             value: Object to check
 
         Returns:
-            TypeGuard[object]: True if value matches config value type
+            TypeGuard[Any]: True if value matches config value type
 
         """
         if value is None:
@@ -167,7 +176,7 @@ class FlextUtilitiesGuards:
         if isinstance(value, (str, int, float, bool, datetime)):
             return True
         if FlextUtilitiesGuards._is_list_or_tuple(value):
-            sequence_value: Sequence[object] = value
+            sequence_value: Sequence[t.NormalizedValue] = value
             for item in sequence_value:
                 if not (
                     item is None or isinstance(item, (str, int, float, bool, datetime))
@@ -182,7 +191,9 @@ class FlextUtilitiesGuards:
         return False
 
     @staticmethod
-    def is_configuration_dict(value: object) -> TypeGuard[m.Dict]:
+    def is_configuration_dict(
+        value: FlextUtilitiesGuards._GuardInput | Mapping[str, t.NormalizedValue],
+    ) -> TypeGuard[m.Dict]:
         """Check if value is a valid m.Dict mapping.
 
         This TypeGuard enables explicit narrowing for m.Dict values.
@@ -203,18 +214,20 @@ class FlextUtilitiesGuards:
         """
         if not isinstance(value, dict):
             return False
-        typed_value: dict[str, object] = value
+        typed_value: dict[str, t.NormalizedValue] = value
         for item_value in typed_value.values():
-            item_value_typed: object = item_value
+            item_value_typed: t.NormalizedValue = item_value
             if not FlextUtilitiesGuards.is_container(item_value_typed):
                 return False
         return True
 
     @staticmethod
-    def is_configuration_mapping(value: object) -> TypeGuard[m.ConfigMap]:
+    def is_configuration_mapping(
+        value: FlextUtilitiesGuards._GuardInput | Mapping[str, t.NormalizedValue],
+    ) -> TypeGuard[m.ConfigMap]:
         """Check if value is a valid m.ConfigMap.
 
-        m.ConfigMap = Mapping[str, object]
+        m.ConfigMap = Mapping[str, Any]
 
         This TypeGuard enables explicit narrowing for m.ConfigMap.
         Uses structural typing to validate at runtime.
@@ -234,31 +247,31 @@ class FlextUtilitiesGuards:
         """
         if not isinstance(value, Mapping):
             return False
-        typed_value: Mapping[str, object] = value
+        typed_value: Mapping[str, t.NormalizedValue] = value
         for item_value in typed_value.values():
-            item_value_typed: object = item_value
+            item_value_typed: t.NormalizedValue = item_value
             if not FlextUtilitiesGuards.is_container(item_value_typed):
                 return False
         return True
 
     @staticmethod
-    def is_context(value: object) -> TypeGuard[p.Context]:
+    def is_context(value: t.NormalizedValue) -> TypeGuard[p.Context]:
         """Check if *value* satisfies ``p.Context`` structurally."""
         return bool(
             hasattr(value, "get") and hasattr(value, "set") and hasattr(value, "clone")
         )
 
     @staticmethod
-    def is_dict_non_empty(value: object) -> bool:
+    def is_dict_non_empty(value: t.NormalizedValue) -> bool:
         """Check if value is a non-empty dictionary using duck typing."""
         return FlextUtilitiesGuards._is_mapping(value) and bool(value)
 
     @staticmethod
-    def is_flexible_value(value: object) -> TypeIs[object]:
+    def is_flexible_value(value: t.NormalizedValue) -> TypeIs[t.NormalizedValue]:
         if value is None or FlextUtilitiesGuards.is_scalar(value):
             return True
         if FlextUtilitiesGuards._is_list_or_tuple(value):
-            sequence_value: Sequence[object] = value
+            sequence_value: Sequence[t.NormalizedValue] = value
             for item in sequence_value:
                 if item is not None and (not FlextUtilitiesGuards.is_scalar(item)):
                     return False
@@ -300,7 +313,7 @@ class FlextUtilitiesGuards:
         return isinstance(value, Path)
 
     @staticmethod
-    def is_general_value_type(value: object) -> bool:
+    def is_general_value_type(value: t.NormalizedValue) -> bool:
         """Deprecated alias; use is_container."""
         warnings.warn(
             "is_general_value_type is deprecated; use is_container. "
@@ -312,18 +325,18 @@ class FlextUtilitiesGuards:
 
     @staticmethod
     def is_handler_callable(
-        value: object,
+        value: t.NormalizedValue,
     ) -> TypeGuard[t.HandlerCallable]:
         """Check if value is a valid t.HandlerCallable."""
         return callable(value)
 
     @staticmethod
     def is_handler_type(
-        value: object | t.HandlerCallable,
+        value: t.NormalizedValue | t.HandlerCallable,
     ) -> TypeGuard[t.HandlerLike]:
         """Check if value is a valid t.HandlerLike.
 
-        t.HandlerLike = Callable[..., object | None]
+        t.HandlerLike = Callable[..., Any | None]
 
         This TypeGuard enables type narrowing for t.HandlerLike.
         Uses structural typing to validate at runtime.
@@ -354,29 +367,29 @@ class FlextUtilitiesGuards:
         return hasattr(value, "handle") or hasattr(value, "can_handle")
 
     @staticmethod
-    def is_list(value: object) -> TypeGuard[list[object]]:
+    def is_list(value: t.NormalizedValue) -> TypeGuard[list[t.NormalizedValue]]:
         """Check if value is a list (type guard)."""
         return isinstance(value, list)
 
     @staticmethod
-    def is_list_non_empty(value: object) -> bool:
+    def is_list_non_empty(value: t.NormalizedValue) -> bool:
         """Check if value is a non-empty list using duck typing."""
         if not isinstance(value, Sequence):
             return False
         if isinstance(value, (str, bytes)):
             return False
-        sequence_value: Sequence[object] = value
+        sequence_value: Sequence[t.NormalizedValue] = value
         return len(sequence_value) > 0
 
     @staticmethod
     def is_mapping(
         value: FlextUtilitiesGuards._GuardInput,
-    ) -> TypeGuard[Mapping[str, object]]:
+    ) -> TypeGuard[Mapping[str, t.NormalizedValue]]:
         """Check if *value* is a mapping instance."""
         return isinstance(value, Mapping)
 
     @staticmethod
-    def is_registerable(value: object) -> bool:
+    def is_registerable(value: t.NormalizedValue) -> bool:
         """Check if *value* can be registered in FlextContainer."""
         if isinstance(value, (str, int, float, bool, type(None))):
             return True
@@ -397,12 +410,12 @@ class FlextUtilitiesGuards:
         return bool(hasattr(value, "bind") and hasattr(value, "info"))
 
     @staticmethod
-    def is_factory(value: object) -> TypeGuard[t.FactoryCallable]:
+    def is_factory(value: t.NormalizedValue) -> TypeGuard[t.FactoryCallable]:
         """Check if *value* is a factory callable."""
         return callable(value)
 
     @staticmethod
-    def is_resource(value: object) -> TypeGuard[t.ResourceCallable]:
+    def is_resource(value: t.NormalizedValue) -> TypeGuard[t.ResourceCallable]:
         """Check if *value* is a resource callable."""
         return callable(value)
 
@@ -434,13 +447,13 @@ class FlextUtilitiesGuards:
         return isinstance(value, (str, int, float, bool, datetime))
 
     @staticmethod
-    def is_string_non_empty(value: object) -> TypeGuard[str]:
+    def is_string_non_empty(value: t.NormalizedValue) -> TypeGuard[str]:
         """Check if value is a non-empty string using duck typing."""
         return isinstance(value, str) and bool(value.strip())
 
     @staticmethod
     def is_registerable_service(
-        value: object,
+        value: t.NormalizedValue,
     ) -> TypeGuard[t.RegisterableService]:
         """Check if value is a registerable service for DI container.
 
@@ -479,7 +492,7 @@ class FlextUtilitiesGuards:
         return bool(hasattr(value, "bind") and hasattr(value, "info"))
 
     @staticmethod
-    def is_instance_of[T](value: object, type_cls: type[T]) -> TypeGuard[T]:
+    def is_instance_of[T](value: t.NormalizedValue, type_cls: type[T]) -> TypeGuard[T]:
         """Check if value is an instance of type_cls, handling generics.
 
         Args:
@@ -514,32 +527,39 @@ class FlextUtilitiesGuards:
             raise AttributeError(msg)
         return value
 
-    _PROTOCOL_SPECS: Mapping[str, Callable[[object], bool]] = MappingProxyType({
-        "config": lambda v: (
-            hasattr(v, "app_name") and getattr(v, "app_name", None) is not None
-        ),
-        "context": lambda v: hasattr(v, "request_id") or hasattr(v, "correlation_id"),
-        "container": lambda v: (
-            hasattr(v, "register") and callable(getattr(v, "register", None))
-        ),
-        "command_bus": lambda v: (
-            hasattr(v, "dispatch") and callable(getattr(v, "dispatch", None))
-        ),
-        "handler": lambda v: (
-            hasattr(v, "handle") and callable(getattr(v, "handle", None))
-        ),
-        "logger": lambda v: all(
-            hasattr(v, a) for a in ("debug", "info", "warning", "error", "exception")
-        ),
-        "result": lambda v: all(
-            hasattr(v, a) for a in ("is_success", "is_failure", "value", "error")
-        ),
-        "service": lambda v: hasattr(v, "run") and callable(getattr(v, "run", None)),
-        "middleware": lambda v: (
-            hasattr(v, "before_dispatch")
-            and callable(getattr(v, "before_dispatch", None))
-        ),
-    })
+    _PROTOCOL_SPECS: Mapping[str, Callable[[t.NormalizedValue], bool]] = (
+        MappingProxyType({
+            "config": lambda v: (
+                hasattr(v, "app_name") and getattr(v, "app_name", None) is not None
+            ),
+            "context": lambda v: (
+                hasattr(v, "request_id") or hasattr(v, "correlation_id")
+            ),
+            "container": lambda v: (
+                hasattr(v, "register") and callable(getattr(v, "register", None))
+            ),
+            "command_bus": lambda v: (
+                hasattr(v, "dispatch") and callable(getattr(v, "dispatch", None))
+            ),
+            "handler": lambda v: (
+                hasattr(v, "handle") and callable(getattr(v, "handle", None))
+            ),
+            "logger": lambda v: all(
+                hasattr(v, a)
+                for a in ("debug", "info", "warning", "error", "exception")
+            ),
+            "result": lambda v: all(
+                hasattr(v, a) for a in ("is_success", "is_failure", "value", "error")
+            ),
+            "service": lambda v: (
+                hasattr(v, "run") and callable(getattr(v, "run", None))
+            ),
+            "middleware": lambda v: (
+                hasattr(v, "before_dispatch")
+                and callable(getattr(v, "before_dispatch", None))
+            ),
+        })
+    )
     _PROTOCOL_TYPE_MAP: Mapping[type, str] = MappingProxyType({
         p.Config: "config",
         p.Context: "context",
@@ -574,7 +594,7 @@ class FlextUtilitiesGuards:
     })
 
     @staticmethod
-    def _check_protocol(value: object, name: str) -> bool:
+    def _check_protocol(value: t.NormalizedValue, name: str) -> bool:
         """Check protocol via _PROTOCOL_SPECS mapping."""
         if name == "context":
             return FlextUtilitiesGuards.is_context(value)
@@ -585,30 +605,30 @@ class FlextUtilitiesGuards:
 
     @staticmethod
     def _ensure_to_dict(
-        value: object | None,
-        default: Mapping[str, object] | None,
-    ) -> Mapping[str, object]:
+        value: t.NormalizedValue | None,
+        default: Mapping[str, t.NormalizedValue] | None,
+    ) -> Mapping[str, t.NormalizedValue]:
         if value is None:
             return default if default is not None else {}
         if isinstance(value, Mapping):
-            mapping_value: Mapping[str, object] = value
-            normalized: dict[str, object] = {}
+            mapping_value: Mapping[str, t.NormalizedValue] = value
+            normalized: dict[str, t.NormalizedValue] = {}
             for key, item_value in mapping_value.items():
                 normalized[str(key)] = item_value
             return normalized
-        wrapped_dict: Mapping[str, object] = {"value": value}
+        wrapped_dict: Mapping[str, t.NormalizedValue] = {"value": value}
         return wrapped_dict
 
     @staticmethod
     def _ensure_to_list(
-        value: object | list[object] | None,
-        default: list[object] | None,
-    ) -> list[object]:
+        value: t.NormalizedValue | list[t.NormalizedValue] | None,
+        default: list[t.NormalizedValue] | None,
+    ) -> list[t.NormalizedValue]:
         if value is None:
             return default if default is not None else []
         if isinstance(value, list):
             return list(value)
-        single_item_list: list[object] = [value]
+        single_item_list: list[t.NormalizedValue] = [value]
         return single_item_list
 
     @staticmethod
@@ -645,7 +665,7 @@ class FlextUtilitiesGuards:
                 return (
                     error_msg or f"{context_name} must be a valid configuration value"
                 )
-            typed_value: object = value
+            typed_value: t.NormalizedValue = value
             return FlextUtilitiesGuards._guard_check_validator(
                 typed_value, condition, context_name, error_msg
             )
@@ -654,7 +674,7 @@ class FlextUtilitiesGuards:
                 return (
                     error_msg or f"{context_name} must be a valid configuration value"
                 )
-            typed_value_s: object = value
+            typed_value_s: t.NormalizedValue = value
             return FlextUtilitiesGuards._guard_check_string_shortcut(
                 typed_value_s, condition, context_name, error_msg
             )
@@ -689,7 +709,7 @@ class FlextUtilitiesGuards:
 
     @staticmethod
     def _guard_check_string_shortcut(
-        value: object,
+        value: t.NormalizedValue,
         condition: str,
         context_name: str,
         error_msg: str | None,
@@ -751,7 +771,7 @@ class FlextUtilitiesGuards:
 
     @staticmethod
     def _guard_check_type(
-        value: object,
+        value: t.NormalizedValue,
         condition: type | tuple[type, ...],
         context_name: str,
         error_msg: str | None,
@@ -770,7 +790,7 @@ class FlextUtilitiesGuards:
 
     @staticmethod
     def _guard_check_validator(
-        value: object,
+        value: t.NormalizedValue,
         condition: p.ValidatorSpec,
         context_name: str,
         error_msg: str | None,
@@ -810,22 +830,22 @@ class FlextUtilitiesGuards:
 
     @staticmethod
     def chk(
-        value: object,
+        value: t.NormalizedValue,
         *,
-        eq: object | None = None,
-        ne: object | None = None,
+        eq: t.NormalizedValue | None = None,
+        ne: t.NormalizedValue | None = None,
         gt: float | None = None,
         gte: float | None = None,
         lt: float | None = None,
         lte: float | None = None,
         is_: type | None = None,
         not_: type | None = None,
-        in_: Sequence[object] | None = None,
-        not_in: Sequence[object] | None = None,
+        in_: Sequence[t.NormalizedValue] | None = None,
+        not_in: Sequence[t.NormalizedValue] | None = None,
         none: bool | None = None,
         empty: bool | None = None,
         match: str | None = None,
-        contains: object | None = None,
+        contains: t.NormalizedValue | None = None,
         starts: str | None = None,
         ends: str | None = None,
     ) -> bool:
@@ -914,10 +934,10 @@ class FlextUtilitiesGuards:
                 return False
         elif contains is not None:
             if isinstance(value, (str, bytes, list, tuple, set, frozenset, dict)):
-                iterable_value: Iterable[object] = value
+                iterable_value: Iterable[t.NormalizedValue] = value
                 found = False
                 for item in iterable_value:
-                    item_value: object = item
+                    item_value: t.NormalizedValue = item
                     if item_value == contains:
                         found = True
                         break
@@ -928,7 +948,7 @@ class FlextUtilitiesGuards:
         return True
 
     @staticmethod
-    def empty(items: object | None) -> bool:
+    def empty(items: t.NormalizedValue | None) -> bool:
         """Check if items is empty or None.
 
         Args:
@@ -946,11 +966,16 @@ class FlextUtilitiesGuards:
 
     @staticmethod
     def ensure(
-        value: object,
+        value: t.NormalizedValue,
         *,
         target_type: str = "auto",
-        default: str | list[object] | object | None = None,
-    ) -> str | list[object] | object:
+        default: str | list[t.NormalizedValue] | t.NormalizedValue | None = None,
+    ) -> (
+        str
+        | list[t.NormalizedValue]
+        | t.NormalizedValue
+        | Mapping[str, t.NormalizedValue]
+    ):
         if target_type == "str":
             str_default = default if isinstance(default, str) else ""
             return (
@@ -963,32 +988,32 @@ class FlextUtilitiesGuards:
         if target_type == "str_list":
             str_list_default: list[str] | None = None
             if isinstance(default, list):
-                default_values: list[object] = default
+                default_values: list[t.NormalizedValue] = default
                 str_list_default = [str(item) for item in default_values]
             if isinstance(value, Sequence) and (not isinstance(value, (str, bytes))):
-                seq_value: Sequence[object] = value
+                seq_value: Sequence[t.NormalizedValue] = value
                 return list(seq_value)
             if value is None:
                 return list(str_list_default) if str_list_default else []
             return [value]
         if target_type == "dict":
-            dict_default: Mapping[str, object] | None = None
+            dict_default: Mapping[str, t.NormalizedValue] | None = None
             if FlextUtilitiesGuards._is_mapping(default):
                 dict_default = default
             return FlextUtilitiesGuards._ensure_to_dict(value, dict_default)
         if target_type == "auto" and isinstance(value, Mapping):
-            mapping_value: Mapping[str, object] = value
-            normalized_auto: dict[str, object] = {}
+            mapping_value: Mapping[str, t.NormalizedValue] = value
+            normalized_auto: dict[str, t.NormalizedValue] = {}
             for key, item_value in mapping_value.items():
                 normalized_auto[str(key)] = item_value
             return normalized_auto
-        list_default: list[object] | None = None
+        list_default: list[t.NormalizedValue] | None = None
         if FlextUtilitiesGuards.is_object_list(default):
             list_default = default
         return FlextUtilitiesGuards._ensure_to_list(value, list_default)
 
     @staticmethod
-    def extract_mapping_or_none(value: object) -> r[m.ConfigMap]:
+    def extract_mapping_or_none(value: t.NormalizedValue) -> r[m.ConfigMap]:
         """Extract a mapping from a value or return None.
 
         Used for type narrowing when a generic parameter could be a Mapping
@@ -1010,13 +1035,16 @@ class FlextUtilitiesGuards:
 
     @staticmethod
     def guard(
-        value: object,
-        validator: Callable[[object], bool] | type | tuple[type, ...] | None = None,
+        value: t.NormalizedValue,
+        validator: Callable[[t.NormalizedValue], bool]
+        | type
+        | tuple[type, ...]
+        | None = None,
         *,
-        default: object | None = None,
+        default: t.NormalizedValue | None = None,
         return_value: bool = False,
     ) -> t.Container | bool | r[t.Container]:
-        guarded_value: object = value
+        guarded_value: t.NormalizedValue = value
         try:
             if isinstance(validator, type):
                 if isinstance(value, validator):
@@ -1114,14 +1142,14 @@ class FlextUtilitiesGuards:
         return value if return_value else r[T].ok(value)
 
     @staticmethod
-    def has(obj: object, key: str) -> bool:
+    def has(obj: t.NormalizedValue, key: str) -> bool:
         """Check if object has attribute/key."""
         if isinstance(obj, dict):
             return key in obj
         return hasattr(obj, key)
 
     @staticmethod
-    def in_(value: object, container: object) -> bool:
+    def in_(value: t.NormalizedValue, container: t.NormalizedValue) -> bool:
         """Check if value is in container."""
         if isinstance(container, (list, tuple, set, dict)):
             try:
@@ -1131,7 +1159,7 @@ class FlextUtilitiesGuards:
         return False
 
     @staticmethod
-    def is_pydantic_model(value: object) -> TypeGuard[p.HasModelDump]:
+    def is_pydantic_model(value: t.NormalizedValue) -> TypeGuard[p.HasModelDump]:
         """Type guard to check if value is a Pydantic model with model_dump method."""
         return (
             isinstance(value, BaseModel)
@@ -1140,7 +1168,9 @@ class FlextUtilitiesGuards:
         )
 
     @staticmethod
-    def is_type(value: object, type_spec: str | type | tuple[type, ...]) -> bool:
+    def is_type(
+        value: t.NormalizedValue, type_spec: str | type | tuple[type, ...]
+    ) -> bool:
         """Generic type checking function that unifies all guard checks.
 
         Provides a single entry point for all type checking operations,
@@ -1219,7 +1249,7 @@ class FlextUtilitiesGuards:
             return False
 
     @staticmethod
-    def none_(*values: object) -> bool:
+    def none_(*values: t.NormalizedValue) -> bool:
         """Check if all values are None.
 
         Args:
@@ -1302,7 +1332,7 @@ class FlextUtilitiesGuards:
 
 
 def validate_pydantic_model[T: BaseModel](
-    model_class: type[T], data: Mapping[str, object]
+    model_class: type[T], data: Mapping[str, t.NormalizedValue]
 ) -> r[T]:
     """Validate data using Pydantic v2 model and return r.
 

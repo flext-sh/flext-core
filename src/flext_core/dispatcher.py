@@ -26,7 +26,9 @@ class DispatchMessage(Protocol):
 
     __slots__: tuple[()] = ()
 
-    def dispatch_message(self, message: p.Routable) -> object:
+    def dispatch_message(
+        self, message: p.Routable
+    ) -> p.ResultLike[t.Container | BaseModel] | t.Container | BaseModel | None:
         """Dispatch a message."""
         ...
 
@@ -37,7 +39,9 @@ class Handle(Protocol):
 
     __slots__: tuple[()] = ()
 
-    def handle(self, message: p.Routable) -> object:
+    def handle(
+        self, message: p.Routable
+    ) -> p.ResultLike[t.Container | BaseModel] | t.Container | BaseModel | None:
         """Handle a message."""
         ...
 
@@ -48,20 +52,25 @@ class Execute(Protocol):
 
     __slots__: tuple[()] = ()
 
-    def execute(self, message: p.Routable) -> object:
+    def execute(
+        self, message: p.Routable
+    ) -> p.ResultLike[t.Container | BaseModel] | t.Container | BaseModel | None:
         """Execute a message."""
         ...
 
 
 type _DispatchableHandler = (
-    Callable[..., p.ResultLike[object] | object | None]
+    Callable[
+        ...,
+        p.ResultLike[t.Container | BaseModel] | t.Container | BaseModel | None,
+    ]
     | DispatchMessage
     | Handle
     | Execute
 )
 
 type _ResolvedHandlerCallable = Callable[
-    [p.Routable], p.ResultLike[object] | object | None
+    [p.Routable], p.ResultLike[t.Container | BaseModel] | t.Container | BaseModel | None
 ]
 type _RegisteredHandler = tuple[_DispatchableHandler, _ResolvedHandlerCallable]
 type _AutoHandlerRegistration = tuple[
@@ -125,9 +134,17 @@ class FlextDispatcher:
         This is the canonical ergonomic API for examples and application code that
         expects a concrete payload type and should avoid ad-hoc narrowing logic.
         """
-        return self.dispatch(message).flat_map(
-            lambda value: u.parse(value, expected_type)
-        )
+
+        def _coerce(value: t.Container | BaseModel) -> r[DispatchValueT]:
+            if isinstance(value, expected_type):
+                return r[DispatchValueT].ok(value)
+            if isinstance(value, BaseModel):
+                return r[DispatchValueT].fail(
+                    f"Expected {expected_type.__name__}, got {value.__class__.__name__}"
+                )
+            return u.parse(value, expected_type)
+
+        return self.dispatch(message).flat_map(_coerce)
 
     def publish(self, event: p.Routable | list[p.Routable]) -> r[bool]:
         """Publish events to all registered subscribers.

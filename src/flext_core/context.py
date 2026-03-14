@@ -50,14 +50,14 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
     _logger: ClassVar[FlextLogger] = FlextLogger(__name__)
 
     initial_data: Annotated[
-        m.ContextData | object | None,
+        m.ContextData | m.ConfigMap | None,
         Field(default=None, description="Initial data for context scopes."),
     ]
 
     @staticmethod
     def _narrow_contextvar_to_configuration_dict(
-        ctx_value: m.ConfigMap | object | None,
-    ) -> Mapping[str, object]:
+        ctx_value: m.ConfigMap | Mapping[str, t.NormalizedValue] | BaseModel | None,
+    ) -> Mapping[str, t.NormalizedValue]:
         """Return contextvar payload as ConfigMap with safe default."""
         if ctx_value is None:
             return {}
@@ -70,8 +70,8 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
             return {}
 
         try:
-            normalized: dict[str, object] = {}
-            mapping_value: Mapping[str, object] = ctx_value
+            normalized: dict[str, t.NormalizedValue] = {}
+            mapping_value: Mapping[str, t.NormalizedValue] = ctx_value
             for key, value in mapping_value.items():
                 if str(key) != key:
                     return {}
@@ -86,15 +86,15 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
             return {}
 
     _metadata: m.Metadata = PrivateAttr()
-    _hooks: dict[str, list[Callable[[t.Scalar], object]]] = PrivateAttr(
-        default_factory=dict
-    )
+    _hooks: dict[
+        str, list[Callable[[t.Scalar], t.NormalizedValue | BaseModel | None]]
+    ] = PrivateAttr(default_factory=dict)
     _statistics: m.ContextStatistics = PrivateAttr(default_factory=m.ContextStatistics)
     _active: bool = PrivateAttr(default=True)
     _suspended: bool = PrivateAttr(default=False)
     _scope_vars: dict[str, contextvars.ContextVar[m.ConfigMap | None]] = PrivateAttr()
 
-    def __init__(self, **data: object) -> None:
+    def __init__(self, **data: t.NormalizedValue | BaseModel) -> None:
         """Initialize FlextContext with optional initial data.
 
         ARCHITECTURAL NOTE: FlextContext now uses Python's contextvars for storage,
@@ -211,7 +211,9 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
                 initial_data=m.ContextData(data=m.Dict(root=initial_data_dict.root))
             )
         data_map = (
-            m.ConfigMap(initial_data)
+            initial_data
+            if isinstance(initial_data, m.ConfigMap)
+            else m.ConfigMap(initial_data)
             if initial_data is not None
             else m.ConfigMap(root={})
         )
@@ -226,7 +228,9 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
         return cls(initial_data=m.ContextData(data=m.Dict(root=data_map.root)))
 
     @staticmethod
-    def _propagate_to_logger(key: str, value: object, scope: str) -> None:
+    def _propagate_to_logger(
+        key: str, value: t.NormalizedValue | BaseModel, scope: str
+    ) -> None:
         """Propagate context changes to FlextLogger (DRY helper).
 
         Args:
@@ -240,7 +244,7 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
             _ = FlextLogger.bind_global_context(**{key: normalized})
 
     @staticmethod
-    def _validate_set_inputs(key: str, value: object) -> r[bool]:
+    def _validate_set_inputs(key: str, value: t.NormalizedValue | BaseModel) -> r[bool]:
         """Validate inputs for set operation.
 
         Args:
@@ -315,7 +319,7 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
         include_statistics: bool = False,
         include_metadata: bool = False,
         as_dict: bool = True,
-    ) -> m.ContextExport | Mapping[str, object]:
+    ) -> m.ContextExport | Mapping[str, t.NormalizedValue]:
         """Export context data for serialization or debugging.
 
         Args:
@@ -333,14 +337,14 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
         stats_dict_export: m.ConfigMap | None = None
         if include_statistics and self._statistics:
             stats_dict_export = m.ConfigMap(root=self._statistics.model_dump())
-        metadata_dict_export: Mapping[str, object] | None = None
+        metadata_dict_export: Mapping[str, t.NormalizedValue] | None = None
         if include_metadata:
             metadata_dict_export = self._get_all_metadata()
         metadata_for_model: m.ConfigMap | None = None
         if metadata_dict_export:
-            normalized_metadata_map: dict[str, object] = {}
+            normalized_metadata_map: dict[str, t.NormalizedValue] = {}
             for k, v in metadata_dict_export.items():
-                metadata_value: object = v
+                metadata_value: t.NormalizedValue | BaseModel = v
                 if hasattr(v, "items") and callable(getattr(v, "items", None)):
                     metadata_value = m.ConfigMap(v)
                 normalized_metadata_map[k] = FlextRuntime.normalize_to_container(
@@ -351,11 +355,11 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
             root=dict((stats_dict_export or m.ConfigMap(root={})).items())
         )
         if as_dict:
-            result_dict: dict[str, object] = dict(all_scopes.items())
+            result_dict: dict[str, t.NormalizedValue] = dict(all_scopes.items())
             if include_statistics and stats_dict_export:
                 result_dict["statistics"] = stats_dict_export
             if include_metadata and metadata_dict_export:
-                metadata_container: object = m.ConfigMap(
+                metadata_container: m.ConfigMap = m.ConfigMap(
                     root=dict(metadata_dict_export.items())
                 )
                 result_dict["metadata"] = metadata_container
@@ -462,7 +466,7 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
         """
         if key not in self._metadata.attributes:
             return r[t.Container | BaseModel].fail(f"Metadata key '{key}' not found")
-        raw_value: object = self._metadata.attributes[key]
+        raw_value: t.MetadataValue = self._metadata.attributes[key]
         normalized_value: t.Container | BaseModel = FlextRuntime.normalize_to_container(
             raw_value
         )
@@ -486,7 +490,7 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
         scope_data = self._get_from_contextvar(scope)
         return key in scope_data
 
-    def items(self) -> list[tuple[str, object]]:
+    def items(self) -> list[tuple[str, t.NormalizedValue]]:
         """Get all items (key-value pairs) in the context.
 
         ARCHITECTURAL NOTE: Uses Python contextvars for storage.
@@ -497,7 +501,7 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
         """
         if not self._active:
             return []
-        all_items: list[tuple[str, object]] = []
+        all_items: list[tuple[str, t.NormalizedValue]] = []
         for ctx_var in self._scope_vars.values():
             scope_dict = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
             all_items.extend(scope_dict.items())
@@ -534,7 +538,9 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
             all_keys.update(scope_dict.keys())
         return list(all_keys)
 
-    def merge(self, other: FlextContext | object) -> Self:
+    def merge(
+        self, other: FlextContext | m.ConfigMap | Mapping[str, t.NormalizedValue]
+    ) -> Self:
         """Merge another context or dictionary into this context.
 
         ARCHITECTURAL NOTE: Uses Python contextvars for storage, delegates to
@@ -687,7 +693,7 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
                     return r[bool].fail("Invalid key found in context")
         return r[bool].ok(value=True)
 
-    def values(self) -> list[object]:
+    def values(self) -> list[t.NormalizedValue]:
         """Get all values in the context.
 
         ARCHITECTURAL NOTE: Uses Python contextvars for storage.
@@ -698,13 +704,15 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
         """
         if not self._active:
             return []
-        all_values: list[object] = []
+        all_values: list[t.NormalizedValue] = []
         for ctx_var in self._scope_vars.values():
             scope_dict = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
             all_values.extend(scope_dict.values())
         return all_values
 
-    def _execute_hooks(self, event: str, event_data: object | m.ConfigMap) -> None:
+    def _execute_hooks(
+        self, event: str, event_data: t.NormalizedValue | m.ConfigMap
+    ) -> None:
         """Execute hooks for an event (DRY helper).
 
         Args:
@@ -726,7 +734,7 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
                     hook_data = str(event_data)
                 _ = hook(hook_data)
 
-    def _get_all_metadata(self) -> Mapping[str, object]:
+    def _get_all_metadata(self) -> Mapping[str, t.NormalizedValue]:
         """Get all metadata from the context.
 
         ARCHITECTURAL NOTE: Uses Python contextvars for storage.
@@ -738,7 +746,7 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
         """
         data = dict(self._metadata.model_dump().items())
         custom_fields_raw = data.pop("custom_fields", {})
-        custom_fields_dict: dict[str, object] = {}
+        custom_fields_dict: dict[str, t.NormalizedValue] = {}
         try:
             custom_fields_dict = dict(m.ConfigMap(custom_fields_raw).items())
         except (TypeError, ValueError, AttributeError) as exc:
@@ -746,7 +754,7 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
                 "Custom metadata field normalization failed", exc_info=exc
             )
             custom_fields_dict = {}
-        result: dict[str, object] = {}
+        result: dict[str, t.NormalizedValue] = {}
         for k, v in data.items():
             if v is None or v == {}:
                 continue
@@ -757,7 +765,7 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
         result.update(custom_fields_dict)
         return result
 
-    def _get_all_scopes(self) -> Mapping[str, Mapping[str, object]]:
+    def _get_all_scopes(self) -> Mapping[str, Mapping[str, t.NormalizedValue]]:
         """Get all scope registrations.
 
         ARCHITECTURAL NOTE: Uses Python contextvars for storage.
@@ -768,7 +776,7 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
         """
         if not self._active:
             return {}
-        scopes: dict[str, dict[str, object]] = {}
+        scopes: dict[str, dict[str, t.NormalizedValue]] = {}
         for scope_name, ctx_var in self._scope_vars.items():
             scope_dict = self._narrow_contextvar_to_configuration_dict(ctx_var.get())
             if scope_dict:
@@ -839,7 +847,9 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
             }
             _ = FlextLogger.bind_global_context(**normalized_context)
 
-    def _set_single(self, key: str, value: object | None, scope: str) -> r[bool]:
+    def _set_single(
+        self, key: str, value: t.NormalizedValue | BaseModel | None, scope: str
+    ) -> r[bool]:
         """Set a single key-value pair in the context."""
         if value is _SENTINEL or value is None:
             return r[bool].fail("Value is required for single-key set")
@@ -1184,10 +1194,10 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
         """Context serialization and deserialization utilities."""
 
         @staticmethod
-        def get_full_context() -> Mapping[str, object]:
+        def get_full_context() -> Mapping[str, t.NormalizedValue]:
             """Get current context as dictionary."""
             context_vars = FlextContext.Variables
-            raw_context: dict[str, object | None] = {
+            raw_context: dict[str, t.NormalizedValue] = {
                 c.Context.KEY_CORRELATION_ID: context_vars.Correlation.CORRELATION_ID.get(),
                 c.Context.KEY_PARENT_CORRELATION_ID: context_vars.Correlation.PARENT_CORRELATION_ID.get(),
                 c.Context.KEY_SERVICE_NAME: context_vars.Service.SERVICE_NAME.get(),

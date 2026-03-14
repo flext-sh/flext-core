@@ -130,18 +130,18 @@ class FlextInfraUtilitiesTomlParse:
         return FlextInfraUtilitiesTomlParse.dedupe_specs(merged)
 
     @staticmethod
-    def read_plain(path: Path) -> r[t.Infra.ContainerDict]:
+    def read_plain(path: Path) -> r[t.Infra.TomlConfig]:
         """Read and parse a TOML file as a plain dict with r error handling."""
         if not path.exists():
-            return r[t.Infra.ContainerDict].ok({})
+            return r[t.Infra.TomlConfig].ok({})
         try:
             data_raw = tomllib.loads(
                 path.read_text(encoding=c.Infra.Encoding.DEFAULT),
             )
-            data: t.Infra.ContainerDict = data_raw
-            return r[t.Infra.ContainerDict].ok(data)
+            data: t.Infra.TomlConfig = data_raw
+            return r[t.Infra.TomlConfig].ok(data)
         except (tomllib.TOMLDecodeError, OSError) as exc:
-            return r[t.Infra.ContainerDict].fail(f"TOML read error: {exc}")
+            return r[t.Infra.TomlConfig].fail(f"TOML read error: {exc}")
 
 
 __all__ = ["FlextInfraUtilitiesTomlParse"]

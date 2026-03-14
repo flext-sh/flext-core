@@ -19,6 +19,7 @@ from types import ModuleType
 from typing import Annotated, override
 
 from pydantic import (
+    BaseModel,
     ConfigDict,
     Field,
     PrivateAttr,
@@ -42,7 +43,13 @@ from flext_core import (
 )
 
 
-class FlextService[TDomainResult: object = object](x, ABC):
+class FlextService[
+    TDomainResult: t.NormalizedValue
+    | BaseModel
+    | list[t.NormalizedValue | BaseModel] = t.NormalizedValue
+    | BaseModel
+    | list[t.NormalizedValue | BaseModel]
+](x, ABC):
     """Base class for domain services in FLEXT applications.
 
     Subclasses implement ``execute`` to run business logic and return

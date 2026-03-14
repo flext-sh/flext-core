@@ -21,9 +21,9 @@ from typing import (
     get_type_hints,
 )
 
-from pydantic import ConfigDict, TypeAdapter, ValidationError, validate_call
+from pydantic import BaseModel, ConfigDict, TypeAdapter, ValidationError, validate_call
 
-from flext_core import p, r
+from flext_core import p, r, t
 from flext_core._models.base import FlextModelFoundation
 
 _ValidatedParams = ParamSpec("_ValidatedParams")
@@ -97,8 +97,9 @@ class FlextUtilitiesArgs:
 
     @staticmethod
     def parse_kwargs[E: StrEnum](
-        kwargs: Mapping[str, object], enum_fields: Mapping[str, type[E]]
-    ) -> r[Mapping[str, object]]:
+        kwargs: Mapping[str, t.NormalizedValue | BaseModel],
+        enum_fields: Mapping[str, type[E]],
+    ) -> r[Mapping[str, t.NormalizedValue | BaseModel]]:
         """Parse kwargs converting specific fields to StrEnums.
 
         Example:
@@ -124,8 +125,10 @@ class FlextUtilitiesArgs:
                     valid = ", ".join(m.value for m in enum_members)
                     errors.append(f"{field}: '{value}' not in [{valid}]")
         if errors:
-            return r[Mapping[str, object]].fail(f"Invalid values: {'; '.join(errors)}")
-        return r[Mapping[str, object]].ok(parsed)
+            return r[Mapping[str, t.NormalizedValue | BaseModel]].fail(
+                f"Invalid values: {'; '.join(errors)}"
+            )
+        return r[Mapping[str, t.NormalizedValue | BaseModel]].ok(parsed)
 
     @staticmethod
     def validated(

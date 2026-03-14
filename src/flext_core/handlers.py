@@ -17,7 +17,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping
 from types import ModuleType
-from typing import ClassVar, Unpack, override
+from typing import Any, ClassVar, Unpack, override
 
 from pydantic import BaseModel, ConfigDict
 
@@ -198,7 +198,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
             handler_config: Optional m configuration
 
         Returns:
-            FlextHandlers[object, object]: Handler instance wrapping the callable
+            FlextHandlers[t.Scalar, t.Scalar]: Handler instance wrapping the callable
 
         Raises:
             e.ValidationError: If invalid mode is provided
@@ -234,7 +234,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
                     if isinstance(result, r):
                         return result
                     if isinstance(result, set):
-                        return r[t.Scalar].fail("Result must be compatible with object")
+                        return r[t.Scalar].fail("Result must be compatible with Scalar")
                     return r[t.Scalar].ok(result)
                 except (
                     ValueError,
@@ -452,7 +452,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
             return r[FlextModelsContainers.ConfigMap].ok(context_dict)
         return r[FlextModelsContainers.ConfigMap].ok(popped)
 
-    def push_context(self, ctx: m.ExecutionContext | Mapping[str, object]) -> r[bool]:
+    def push_context(self, ctx: m.ExecutionContext | Mapping[str, Any]) -> r[bool]:
         """Push execution context onto the local handler stack."""
         if isinstance(ctx, m.ExecutionContext):
             self._stack.append(ctx)
@@ -636,7 +636,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
             the @handler() decorator without scanning all items.
 
             Args:
-                module: Module object to check for handlers
+                module: Module to check for handlers
 
             Returns:
                 True if module has at least one handler, False otherwise
@@ -687,14 +687,14 @@ class FlextHandlers[MessageT_contra, ResultT](x):
         @staticmethod
         def scan_module(
             module: ModuleType,
-        ) -> list[tuple[str, Callable[..., object | None], m.DecoratorConfig]]:
+        ) -> list[tuple[str, Callable[..., Any | None], m.DecoratorConfig]]:
             """Scan module for functions decorated with @handler().
 
             Introspects the module to find all functions with handler configuration
             metadata, returning them sorted by priority for consistent ordering.
 
             Args:
-                module: Module object to scan for handler decorators
+                module: Module to scan for handler decorators
 
             Returns:
                 List of tuples (function_name, function, DecoratorConfig) sorted by priority

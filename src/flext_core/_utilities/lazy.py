@@ -13,13 +13,15 @@ import importlib
 import sys
 from collections.abc import Mapping
 
+from flext_core.typings import t
+
 
 def lazy_getattr(
     name: str,
     lazy_imports: Mapping[str, tuple[str, str]],
-    module_globals: dict[str, object],
+    module_globals: dict[str, t.ModuleExport],
     module_name: str,
-) -> object:
+) -> t.ModuleExport:
     """Lazy-load a module attribute on first access (PEP 562).
 
     Args:

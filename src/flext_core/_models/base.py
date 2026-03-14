@@ -317,7 +317,7 @@ class FlextModelFoundation:
             return _ensure_utc_datetime(v)
 
         @staticmethod
-        def normalize_to_list(v: object) -> list[t.Container]:
+        def normalize_to_list(v: t.NormalizedValue | BaseModel) -> list[t.Container]:
             """Normalize value to list format."""
             try:
                 return FlextModelFoundation.Validators.list_adapter().validate_python(v)
@@ -333,7 +333,7 @@ class FlextModelFoundation:
 
         @staticmethod
         def validate_config_dict(
-            v: object,
+            v: t.NormalizedValue | BaseModel,
         ) -> Mapping[str, t.Container]:
             """Validate configuration dictionary structure."""
             try:
@@ -352,7 +352,7 @@ class FlextModelFoundation:
             return out
 
         @staticmethod
-        def validate_tags_list(v: object) -> list[str]:
+        def validate_tags_list(v: t.NormalizedValue | BaseModel) -> list[str]:
             """Validate and normalize tags list."""
             try:
                 raw_tags: Sequence[t.Container] = (
@@ -458,7 +458,7 @@ class FlextModelFoundation:
                 title="Created At",
                 examples=["2026-03-03T10:00:00+00:00"],
             ),
-        ]
+        ] = Field(default_factory=lambda: datetime.now(UTC))
         updated_at: Annotated[
             datetime,
             Field(
@@ -467,7 +467,7 @@ class FlextModelFoundation:
                 title="Updated At",
                 examples=["2026-03-03T10:05:00+00:00"],
             ),
-        ]
+        ] = Field(default_factory=lambda: datetime.now(UTC))
         version: Annotated[
             str,
             Field(
@@ -503,7 +503,7 @@ class FlextModelFoundation:
                 title="Tags",
                 examples=[["billing", "critical"]],
             ),
-        ]
+        ] = Field(default_factory=list)
         attributes: Annotated[
             Mapping[str, t.MetadataValue],
             Field(
@@ -512,7 +512,7 @@ class FlextModelFoundation:
                 title="Attributes",
                 examples=[{"source": "api", "priority": "high"}],
             ),
-        ]
+        ] = Field(default_factory=dict)
         metadata_value: Annotated[
             t.Scalar | None,
             Field(default=None, description="Scalar metadata value."),
@@ -526,18 +526,16 @@ class FlextModelFoundation:
         ) -> Mapping[str, t.MetadataValue]:
             if value is None:
                 return {}
-            try:
-                result = FlextModelsContainers.Dict(value).root
-            except ValidationError:
-                if not isinstance(value, BaseModel):
-                    msg = "attributes must be dict-like"
-                    raise TypeError(msg) from None
-                dumped = value.model_dump()
-                try:
-                    result = FlextModelsContainers.Dict(dumped).root
-                except ValidationError as exc:
-                    msg = "attributes BaseModel must dump to mapping"
-                    raise TypeError(msg) from exc
+            if isinstance(value, BaseModel):
+                result = value.model_dump()
+                if not isinstance(result, Mapping):
+                    msg = "BaseModel must dump to mapping"
+                    raise TypeError(msg)
+            elif isinstance(value, Mapping):
+                result = dict(value.items())
+            else:
+                msg = "attributes must be dict-like"
+                raise TypeError(msg)
             for key in result:
                 if key.startswith("_"):
                     msg = f"Keys starting with '_' are reserved: {key}"
@@ -590,12 +588,12 @@ class FlextModelFoundation:
             ),
         ]
         metadata: Annotated[
-            FlextModelFoundation.Metadata,
+            BaseModel | None,
             Field(
-                default_factory=lambda: FlextModelFoundation.Metadata(),
+                default=None,
                 description="Structured metadata associated with this event message.",
             ),
-        ]
+        ] = None
 
     MessageUnion = Annotated[
         CommandMessage | QueryMessage | EventMessage, Discriminator("message_type")
@@ -607,12 +605,12 @@ class FlextModelFoundation:
         result_type: Literal["success"] = "success"
         value: t.Container
         metadata: Annotated[
-            FlextModelFoundation.Metadata,
+            BaseModel | None,
             Field(
-                default_factory=lambda: FlextModelFoundation.Metadata(),
+                default=None,
                 description="Structured metadata attached to a successful operation result.",
             ),
-        ]
+        ] = None
 
     class FailureResult(BaseModel):
         """Failure result for discriminated union."""
@@ -721,7 +719,7 @@ class FlextModelFoundation:
                 min_length=1,
                 frozen=False,
             ),
-        ]
+        ] = Field(default_factory=lambda: str(uuid.uuid4()))
 
         def regenerate_id(self) -> None:
             """Regenerate the unique_id with a new UUID."""
@@ -740,7 +738,7 @@ class FlextModelFoundation:
                 description="Creation timestamp (UTC)",
                 frozen=True,
             ),
-        ]
+        ] = Field(default_factory=lambda: datetime.now(UTC))
         updated_at: Annotated[
             UTCDatetime | None,
             Field(default=None, description="Last update timestamp (UTC)"),

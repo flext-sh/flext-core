@@ -14,7 +14,7 @@ from collections.abc import Callable, Mapping, Sequence
 from types import ModuleType
 from typing import Annotated, Self
 
-from pydantic import Field, model_validator
+from pydantic import BaseModel, Field, model_validator
 from pydantic_settings import BaseSettings
 
 from flext_core import c, p, t
@@ -43,24 +43,18 @@ class FlextModelsService:
     class TraceContext(FlextModelFoundation.FrozenStrictModel):
         """Trace context for distributed tracing."""
 
-        trace_id: Annotated[
-            str,
-            Field(
-                default_factory=lambda: str(uuid.uuid4()),
-                description="Distributed trace identifier shared across related service calls.",
-                title="Trace Id",
-                examples=["c8f2d73e-9870-4cba-b873-5b4a3f7b95f4"],
-            ),
-        ]
-        span_id: Annotated[
-            str,
-            Field(
-                default_factory=lambda: str(uuid.uuid4()),
-                description="Span identifier for the current service operation within a trace.",
-                title="Span Id",
-                examples=["9fd8d2fd-a4bc-4b15-9e8a-47f6c7dd6a11"],
-            ),
-        ]
+        trace_id: str = Field(
+            default_factory=lambda: str(uuid.uuid4()),
+            description="Distributed trace identifier shared across related service calls.",
+            title="Trace Id",
+            examples=["c8f2d73e-9870-4cba-b873-5b4a3f7b95f4"],
+        )
+        span_id: str = Field(
+            default_factory=lambda: str(uuid.uuid4()),
+            description="Span identifier for the current service operation within a trace.",
+            title="Span Id",
+            examples=["9fd8d2fd-a4bc-4b15-9e8a-47f6c7dd6a11"],
+        )
         parent_span_id: str | None = None
 
     class ServiceRetryConfiguration(
@@ -309,7 +303,10 @@ class FlextModelsService:
             ),
         ]
         operation_callable: Annotated[
-            Callable[[object], p.ResultLike[object]],
+            Callable[
+                [t.NormalizedValue | BaseModel],
+                p.ResultLike[t.NormalizedValue | BaseModel],
+            ],
             Field(description="Callable operation returning result"),
         ]
         arguments: FlextModelsService.ServiceParameters | None = None

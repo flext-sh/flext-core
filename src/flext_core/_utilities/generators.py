@@ -20,7 +20,7 @@ from typing import TypeGuard
 
 from pydantic import BaseModel
 
-from flext_core import c, m, r
+from flext_core import c, m, r, t
 
 
 class FlextUtilitiesGenerators:
@@ -105,7 +105,7 @@ class FlextUtilitiesGenerators:
     @staticmethod
     def _generate_prefixed_id(
         prefix: str,
-        *parts: object,
+        *parts: t.NormalizedValue,
         length: int = c.Utilities.SHORT_UUID_LENGTH,
     ) -> str:
         """Factory method for generating prefixed IDs with UUID.
@@ -137,21 +137,21 @@ class FlextUtilitiesGenerators:
 
     @staticmethod
     def _is_config_mapping(
-        value: object,
-    ) -> TypeGuard[Mapping[str, object]]:
+        value: t.NormalizedValue,
+    ) -> TypeGuard[Mapping[str, t.NormalizedValue]]:
         return isinstance(value, Mapping)
 
     @staticmethod
     def _normalize_context_to_dict(
-        context: Mapping[str, object] | BaseModel | None,
-    ) -> Mapping[str, object]:
+        context: Mapping[str, t.NormalizedValue] | BaseModel | None,
+    ) -> Mapping[str, t.NormalizedValue]:
         """Normalize context to dict - fast fail validation.
 
         Args:
             context: Context to normalize
 
         Returns:
-            Mapping[str, object]: Normalized context dict
+            Mapping[str, t.NormalizedValue]: Normalized context dict
 
         Raises:
             TypeError: If context cannot be normalized
@@ -168,7 +168,7 @@ class FlextUtilitiesGenerators:
                 raise TypeError(msg) from e
         try:
             model_data = context.model_dump()
-            model_data_typed: dict[str, object] = model_data
+            model_data_typed: dict[str, t.NormalizedValue] = model_data
             return model_data_typed
         except (AttributeError, TypeError, ValueError) as e:
             msg = f"Failed to dump BaseModel {type(context).__name__}: {type(e).__name__}: {e}"
@@ -212,9 +212,9 @@ class FlextUtilitiesGenerators:
 
     @staticmethod
     def ensure_dict(
-        value: object | None,
-        default: Mapping[str, object] | None = None,
-    ) -> Mapping[str, object]:
+        value: t.NormalizedValue | BaseModel | Mapping[str, t.NormalizedValue] | None,
+        default: Mapping[str, t.NormalizedValue] | None = None,
+    ) -> Mapping[str, t.NormalizedValue]:
         """Ensure value is a dict, converting from Pydantic models or dict-like.
 
         This generic helper consolidates duplicate dict normalization logic
@@ -233,7 +233,7 @@ class FlextUtilitiesGenerators:
             default: Default value to return if value is None (optional)
 
         Returns:
-            Mapping[str, object]: Normalized dict or default
+            Mapping[str, t.NormalizedValue]: Normalized dict or default
 
         Example:
             >>> from flext_core._utilities.guards import FlextUtilitiesGuards
@@ -256,18 +256,17 @@ class FlextUtilitiesGenerators:
             msg = "Value cannot be None"
             raise TypeError(msg)
         if isinstance(value, dict):
-            value_typed: dict[str, object] = value
-            return value_typed
+            return value
         if isinstance(value, Mapping):
             try:
-                return dict(value)
+                return {str(key): item_value for key, item_value in value.items()}
             except (TypeError, ValueError, AttributeError) as e:
                 msg = f"Failed to convert Mapping {type(value).__name__}: {e}"
                 raise TypeError(msg) from e
         if isinstance(value, BaseModel):
             try:
                 dumped = value.model_dump()
-                dumped_typed: dict[str, object] = dumped
+                dumped_typed: dict[str, t.NormalizedValue] = dumped
                 return dumped_typed
             except (AttributeError, TypeError, ValueError) as e:
                 msg = f"Failed to convert BaseModel {type(value).__name__} to dict: {e}"
@@ -277,7 +276,7 @@ class FlextUtilitiesGenerators:
 
     @staticmethod
     def ensure_trace_context_dict(
-        context: Mapping[str, object] | BaseModel | None,
+        context: Mapping[str, t.NormalizedValue] | BaseModel | None,
         *,
         include_correlation_id: bool = False,
         include_timestamp: bool = False,
@@ -333,7 +332,7 @@ class FlextUtilitiesGenerators:
         kind: str | None = None,
         *,
         prefix: str | None = None,
-        parts: tuple[object, ...] | None = None,
+        parts: tuple[t.NormalizedValue, ...] | None = None,
         length: int | None = None,
         include_timestamp: bool = False,
         separator: str = "_",
@@ -371,7 +370,7 @@ class FlextUtilitiesGenerators:
         if kind == "id" and actual_prefix is None:
             return FlextUtilitiesGenerators._generate_id()
         if actual_prefix is not None:
-            all_parts: list[object] = []
+            all_parts: list[t.NormalizedValue] = []
             if include_timestamp:
                 timestamp = int(datetime.now(UTC).timestamp())
                 all_parts.append(timestamp)
@@ -422,7 +421,9 @@ class FlextUtilitiesGenerators:
         return datetime.now(UTC).replace(microsecond=0).isoformat()
 
     @staticmethod
-    def generate_operation_id(message_type: str, message: object) -> str:
+    def generate_operation_id(
+        message_type: str, message: BaseModel | t.NormalizedValue
+    ) -> str:
         """Generate unique operation ID for dispatch operations.
 
         Args:

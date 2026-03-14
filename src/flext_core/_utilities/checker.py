@@ -33,12 +33,12 @@ class FlextUtilitiesChecker:
         return FlextRuntime.get_logger(__name__)
 
     @staticmethod
-    def _is_subclass_of(candidate: object, parent: type) -> bool:
+    def _is_subclass_of(candidate: t.TypeHintSpecifier, parent: type) -> bool:
         """Safe subclass check that never raises TypeError."""
         return isinstance(candidate, type) and issubclass(candidate, parent)
 
     @classmethod
-    def _is_dict_type(cls, candidate: object) -> bool:
+    def _is_dict_type(cls, candidate: t.TypeHintSpecifier) -> bool:
         """Check if candidate is ``dict`` or a subclass of ``dict``."""
         return cls._is_subclass_of(candidate, dict)
 
@@ -85,7 +85,7 @@ class FlextUtilitiesChecker:
             True if object type (accepts everything), False otherwise
 
         """
-        return expected_type is object
+        return expected_type is object or str(expected_type) == "typing.Any"
 
     @classmethod
     def _evaluate_type_compatibility(
@@ -131,7 +131,9 @@ class FlextUtilitiesChecker:
 
         """
         message_types: list[t.MessageTypeSpecifier] = []
-        raw_bases: object = getattr(handler_class, "__orig_bases__", ())
+        raw_bases: tuple[t.TypeHintSpecifier, ...] = getattr(
+            handler_class, "__orig_bases__", ()
+        )
         if FlextUtilitiesGuards.is_object_tuple(raw_bases):
             for base in raw_bases:
                 origin = get_origin(base)
@@ -171,12 +173,14 @@ class FlextUtilitiesChecker:
         """
         if not hasattr(handler_class, c.Mixins.METHOD_HANDLE):
             return r[t.MessageTypeSpecifier].fail("Handler has no handle method")
-        handle_method_raw = getattr(handler_class, c.Mixins.METHOD_HANDLE)
+        handle_method_raw: t.ModuleExport = getattr(
+            handler_class, c.Mixins.METHOD_HANDLE
+        )
         if not callable(handle_method_raw):
             return r[t.MessageTypeSpecifier].fail(
                 "Handler handle attribute is not callable"
             )
-        handle_method: Callable[..., object] = handle_method_raw
+        handle_method: Callable[..., t.ModuleExport] = handle_method_raw
         signature_result = cls._get_method_signature(handle_method)
         if signature_result.is_failure:
             signature_error = signature_result.error or "Invalid handle signature"
@@ -193,7 +197,7 @@ class FlextUtilitiesChecker:
     def _extract_message_type_from_parameter(
         cls,
         parameter: inspect.Parameter,
-        type_hints: Mapping[str, object],
+        type_hints: Mapping[str, t.TypeHintSpecifier | None],
         param_name: str,
     ) -> r[t.MessageTypeSpecifier]:
         """Extract message type from parameter hints or annotation."""
@@ -219,7 +223,7 @@ class FlextUtilitiesChecker:
 
     @classmethod
     def _get_method_signature(
-        cls, handle_method: Callable[..., object]
+        cls, handle_method: Callable[..., t.ModuleExport]
     ) -> r[inspect.Signature]:
         """Extract signature from handle method."""
         try:
@@ -229,8 +233,8 @@ class FlextUtilitiesChecker:
 
     @classmethod
     def _get_type_hints_safe(
-        cls, handle_method: Callable[..., object], handler_class: type
-    ) -> Mapping[str, object]:
+        cls, handle_method: Callable[..., t.ModuleExport], handler_class: type
+    ) -> Mapping[str, t.TypeHintSpecifier | None]:
         """Safely extract type hints from handle method."""
         try:
             return get_type_hints(
@@ -356,7 +360,7 @@ class FlextUtilitiesChecker:
             return msg
         route_attrs = ("command_type", "query_type", "event_type")
         for attr in route_attrs:
-            attr_val: object = getattr(msg, attr, None)
+            attr_val: t.NormalizedValue | None = getattr(msg, attr, None)
             if isinstance(attr_val, str) and attr_val:
                 return attr_val
         if isinstance(msg, type) and issubclass(msg, BaseModel):

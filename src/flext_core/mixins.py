@@ -14,7 +14,13 @@ import threading
 from collections.abc import Callable, Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from types import ModuleType
-from typing import Annotated, ClassVar, TypeGuard, Unpack, override
+from typing import (
+    Annotated,
+    ClassVar,
+    TypeGuard,
+    Unpack,
+    override,
+)
 
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, ValidationError
 
@@ -118,7 +124,7 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
         ),
     ]
     config_overrides: Annotated[
-        dict[str, object] | None,
+        dict[str, t.NormalizedValue] | None,
         Field(
             default=None,
             description="Configuration overrides applied at instantiation.",
@@ -189,7 +195,7 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
 
     @staticmethod
     def _normalize_log_payload(
-        payload: Mapping[str, object],
+        payload: Mapping[str, t.NormalizedValue | BaseModel],
     ) -> dict[str, t.Container | BaseModel]:
         normalized_payload: dict[str, t.Container | BaseModel] = {}
         for key, value in payload.items():
@@ -197,7 +203,9 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
         return normalized_payload
 
     @contextmanager
-    def track(self, operation_name: str) -> Iterator[Mapping[str, object]]:
+    def track(
+        self, operation_name: str
+    ) -> Iterator[Mapping[str, t.NormalizedValue | BaseModel]]:
         """Track operation performance with timing and automatic context cleanup."""
         stats_attr = f"_stats_{operation_name}"
         stats: m.ConfigMap = (
@@ -213,7 +221,7 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
         ) + 1
         try:
             with FlextContext.Performance.timed_operation(operation_name) as metrics:
-                metrics_map: dict[str, object] = (
+                metrics_map: dict[str, t.NormalizedValue | BaseModel] = (
                     {
                         str(k): FlextRuntime.normalize_to_container(v)
                         for k, v in metrics.items()
@@ -307,14 +315,14 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
         config_type_raw = getattr(self, "config_type", None)
         config_cls_typed: type[FlextSettings]
 
-        overrides: Mapping[str, object] | None = None
+        overrides: Mapping[str, t.NormalizedValue] | None = None
         initial_ctx: p.Context | None = None
         bootstrap_services: Mapping[str, t.RegisterableService] | None = None
         bootstrap_factories: Mapping[str, t.FactoryCallable] | None = None
         bootstrap_resources: Mapping[str, t.ResourceCallable] | None = None
         bootstrap_wire_modules: Sequence[ModuleType] | None = None
         bootstrap_wire_packages: Sequence[str] | None = None
-        bootstrap_wire_classes: Sequence[type[object]] | None = None
+        bootstrap_wire_classes: Sequence[type] | None = None
 
         if hasattr(self, "_runtime_bootstrap_options"):
             bootstrap_method = getattr(self, "_runtime_bootstrap_options")
@@ -418,7 +426,9 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
         return self._runtime
 
     @staticmethod
-    def _is_flext_settings_type(candidate: object) -> TypeGuard[type[FlextSettings]]:
+    def _is_flext_settings_type(
+        candidate: type | t.NormalizedValue | BaseModel,
+    ) -> TypeGuard[type[FlextSettings]]:
         return isinstance(candidate, type) and callable(
             getattr(candidate, "get_global", None)
         )
@@ -645,7 +655,7 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
         """Runtime protocol compliance validation utilities."""
 
         @staticmethod
-        def is_command_bus(obj: object) -> bool:
+        def is_command_bus(obj: p.Base | t.NormalizedValue | BaseModel) -> bool:
             """Check if *obj* satisfies ``p.CommandBus`` structurally."""
             return (
                 hasattr(obj, "dispatch")
@@ -657,7 +667,7 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
             )
 
         @staticmethod
-        def is_handler(obj: object) -> bool:
+        def is_handler(obj: p.Base | t.NormalizedValue | BaseModel) -> bool:
             """Check if *obj* satisfies ``p.Handler`` structurally."""
             return (
                 hasattr(obj, "handle")
@@ -667,7 +677,7 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
             )
 
         @staticmethod
-        def is_service(obj: object) -> bool:
+        def is_service(obj: p.Base | t.NormalizedValue | BaseModel) -> bool:
             """Check if *obj* satisfies ``p.Service`` structurally."""
             return (
                 hasattr(obj, "execute")
@@ -678,7 +688,9 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
             )
 
         @staticmethod
-        def validate_processor_protocol(obj: object) -> r[bool]:
+        def validate_processor_protocol(
+            obj: p.Base | t.NormalizedValue | BaseModel,
+        ) -> r[bool]:
             """Validate *obj* has ``model_dump``, ``process``, and ``validate``."""
             required_methods = ["model_dump", "process", "validate"]
             for method_name in required_methods:
@@ -693,7 +705,10 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
             return r[bool].ok(value=True)
 
         @staticmethod
-        def validate_protocol_compliance(obj: object, protocol_name: str) -> r[bool]:
+        def validate_protocol_compliance(
+            obj: p.Base | t.NormalizedValue | BaseModel,
+            protocol_name: str,
+        ) -> r[bool]:
             """Validate *obj* compliance with named protocol via duck-typing."""
             protocol_required_attrs: Mapping[str, Sequence[str]] = {
                 "Handler": ["handle", "can_handle"],

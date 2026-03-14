@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import contextlib
 from collections.abc import Callable, Sequence
-from typing import Annotated, ClassVar, Self, TypeAlias, override
+from typing import Annotated, Any, ClassVar, Self, TypeAlias, override
 
 from pydantic import BaseModel, Field, computed_field, model_validator
 
@@ -188,7 +188,7 @@ class FlextModelsEntity:
             return r[list[FlextModelsDomainEvent.Entry]].ok(events)
 
         @override
-        def model_post_init(self, __context: object, /) -> None:
+        def model_post_init(self, __context: Any, /) -> None:
             """Post-initialization hook to set updated_at timestamp."""
             if self.updated_at is None:
                 self.updated_at = FlextRuntime.generate_datetime_utc()

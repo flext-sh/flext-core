@@ -49,7 +49,7 @@ class _ProtocolIntrospection:
         registered_protocols = cls.get_class_protocols(instance.__class__)
         if protocol in registered_protocols:
             return True
-        protocol_annotations: Mapping[str, object] = (
+        protocol_annotations: Mapping[str, type | str] = (
             protocol.__annotations__ if hasattr(protocol, "__annotations__") else {}
         )
         raw_attrs_candidate = getattr(protocol, "__protocol_attrs__", ())
@@ -117,7 +117,7 @@ class _ProtocolIntrospection:
         target_cls: type, protocol: type, class_name: str
     ) -> None:
         """Validate that a class implements all required protocol members."""
-        protocol_annotations: Mapping[str, object] = (
+        protocol_annotations: Mapping[str, type | str] = (
             protocol.__annotations__ if hasattr(protocol, "__annotations__") else {}
         )
         raw_attrs_candidate = getattr(protocol, "__protocol_attrs__", ())
@@ -142,7 +142,7 @@ class _ProtocolIntrospection:
         }
         all_annotations: set[str] = set()
         for base in target_cls.mro():
-            base_annotations: Mapping[str, object] = (
+            base_annotations: Mapping[str, type | str] = (
                 base.__annotations__ if hasattr(base, "__annotations__") else {}
             )
             all_annotations.update(base_annotations.keys())
@@ -203,15 +203,21 @@ class FlextProtocols:
         in typings.py, preventing circular dependencies.
         """
 
-        model_config: ClassVar[Mapping[str, object]]
-        model_fields: ClassVar[Mapping[str, object]]
+        model_config: ClassVar[Mapping[str, t.Container]]
+        model_fields: ClassVar[Mapping[str, type | str]]
 
-        def model_dump(self, **kwargs: object) -> Mapping[str, object]:
+        def model_dump(
+            self, **kwargs: t.Container
+        ) -> Mapping[str, t.NormalizedValue | BaseModel]:
             """Dump model to dictionary."""
             ...
 
         @classmethod
-        def model_validate(cls, obj: object, **kwargs: object) -> Self:
+        def model_validate(
+            cls,
+            obj: t.NormalizedValue | BaseModel,
+            **kwargs: t.Container,
+        ) -> Self:
             """Validate object against model."""
             ...
 
@@ -259,7 +265,7 @@ class FlextProtocols:
         if target_cls not in cls._class_annotations_cache:
             all_annotations: set[str] = set()
             for base in target_cls.mro():
-                base_annotations: Mapping[str, object] = (
+                base_annotations: Mapping[str, type | str] = (
                     base.__annotations__ if hasattr(base, "__annotations__") else {}
                 )
                 all_annotations.update(base_annotations.keys())
@@ -268,7 +274,7 @@ class FlextProtocols:
 
     @classmethod
     def _get_protocol_required_members(cls, protocol: type) -> frozenset[str]:
-        protocol_annotations: Mapping[str, object] = (
+        protocol_annotations: Mapping[str, type | str] = (
             protocol.__annotations__ if hasattr(protocol, "__annotations__") else {}
         )
         required_members: set[str] = set(protocol_annotations.keys())
@@ -354,8 +360,8 @@ class FlextProtocols:
         Defined in protocols.py to keep all protocol definitions together.
         Full context protocol p.Context extends this minimal interface.
 
-        Methods use generic return types (object) for structural compatibility
-        with p.Context which uses ResultLike[T] (also covariant with object).
+        Methods use generic return types (Any) for structural compatibility
+        with p.Context which uses ResultLike[T] (also covariant with Any).
         """
 
         def clone(self) -> Self:
@@ -572,7 +578,7 @@ class FlextProtocols:
     class ResultLike[T_co](Base, Protocol):
         """Result-like protocol for compatibility with r operations.
 
-        Used for type compatibility when working with result-like objects.
+        Used for type compatibility when working with result-like items.
         """
 
         @property
@@ -616,7 +622,7 @@ class FlextProtocols:
 
     @runtime_checkable
     class HasModelDump(Base, Protocol):
-        """Protocol for objects that can dump model data.
+        """Protocol for items that can dump model data.
 
         Used for Pydantic model compatibility and serialization.
         """
@@ -627,7 +633,7 @@ class FlextProtocols:
 
     @runtime_checkable
     class HasModelFields(HasModelDump, Protocol):
-        """Protocol for objects with model fields.
+        """Protocol for items with model fields.
 
         Extends HasModelDump with model fields access.
         Used for Pydantic model introspection.
@@ -648,10 +654,10 @@ class FlextProtocols:
 
     @runtime_checkable
     class Config(HasModelDump, Base, Protocol):
-        """Configuration object protocol based on Pydantic BaseSettings pattern.
+        """Configuration protocol based on Pydantic BaseSettings pattern.
 
         Reflects real implementations like FlextSettings which uses Pydantic BaseSettings.
-        Configuration objects use direct field access (Pydantic standard) rather than
+        Configuration items use direct field access (Pydantic standard) rather than
         explicit get/set methods. Supports cloning via model_copy() and optional
         override methods.
         """
@@ -974,7 +980,7 @@ class FlextProtocols:
     class Processor(Base, Protocol):
         """Processor interface for data transformation pipelines.
 
-        Processors can be objects with a process() method that takes data
+        Processors can be items with a process() method that takes data
         and returns a result (which will be normalized to Result).
         Accepts t.Container, BaseModel, or Result for processing.
 
@@ -1142,7 +1148,7 @@ class FlextProtocols:
 
         @runtime_checkable
         class Metadata(Protocol):
-            """Metadata object protocol."""
+            """Metadata protocol."""
 
             @property
             def attributes(self) -> FlextModelsContainers.ConfigMap:
@@ -1267,7 +1273,7 @@ class FlextProtocols:
 
     @runtime_checkable
     class Entry(Base, Protocol):
-        """Entry object protocol (read-only)."""
+        """Entry protocol (read-only)."""
 
         @property
         def attributes(self) -> Mapping[str, Sequence[str]]:
@@ -1305,8 +1311,8 @@ class FlextProtocols:
 
     type AccessibleData = (
         FlextModelsContainers.ConfigMap
-        | Mapping[str, object]
-        | object
+        | Mapping[str, t.NormalizedValue | BaseModel]
+        | t.NormalizedValue
         | BaseModel
         | "FlextProtocols.HasModelDump"
         | "FlextProtocols.ValidatorSpec"
@@ -1322,7 +1328,7 @@ class FlextProtocols:
         | CommandBus
     )
     type ServiceFactory = t.FactoryCallable
-    'Factory callable returning any registerable service type.\n\n    Broader than t.FactoryCallable (which returns object).\n    Supports factories that create protocols like Log,             ..., Config, etc.\n\n    Usage:\n        def create_logger() -> FlextLogger:\n            return FlextLogger.create_module_logger("app")\n\n        container.register_factory("logger", create_logger)  # OK\n    '
+    'Factory callable returning any registerable service type.\n\n    Broader than t.FactoryCallable (which returns RegisterableService).\n    Supports factories that create protocols like Log,             ..., Config, etc.\n\n    Usage:\n        def create_logger() -> FlextLogger:\n            return FlextLogger.create_module_logger("app")\n\n        container.register_factory("logger", create_logger)  # OK\n    '
 
     class ProtocolModelMeta(_CombinedModelMeta):
         """Metaclass combining Pydantic with Protocol structural typing.
@@ -1346,7 +1352,10 @@ class FlextProtocols:
             cls,
             name: str,
             bases: tuple[type, ...],
-            namespace: Mapping[str, object],
+            namespace: Mapping[
+                str,
+                t.Container | BaseModel | type | Callable[..., t.Container | BaseModel],
+            ],
             **_kwargs: t.Scalar,
         ) -> type:
             """Create a new class with protocol validation.
@@ -1460,7 +1469,7 @@ class FlextProtocols:
         """Check if an instance's class implements a protocol.
 
         Args:
-            instance: The object to check.
+            instance: The item to check.
             protocol: The protocol to check against.
 
         Returns:

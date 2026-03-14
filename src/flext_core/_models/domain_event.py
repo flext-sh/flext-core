@@ -10,17 +10,51 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
+from datetime import datetime
 from typing import Annotated, override
 
-from pydantic import BeforeValidator, Field
+from pydantic import BaseModel, BeforeValidator, Field
 
-from flext_core import c
+from flext_core import c, t
 from flext_core._models.base import FlextModelFoundation
 from flext_core._models.containers import FlextModelsContainers
-from flext_core.runtime import FlextRuntime
 
 _V = FlextModelFoundation.Validators
+
+
+def _metadata_to_normalized(item: t.MetadataValue | None) -> t.NormalizedValue:
+    if item is None:
+        return None
+    if isinstance(item, str):
+        return item
+    if isinstance(item, int):
+        return item
+    if isinstance(item, float):
+        return item
+    if isinstance(item, bool):
+        return item
+    if isinstance(item, datetime):
+        return item
+    if isinstance(item, Mapping):
+        normalized_map: dict[str, t.NormalizedValue] = {}
+        for key, value in item.items():
+            normalized_map[str(key)] = _metadata_to_normalized(
+                value
+                if isinstance(value, (str, int, float, bool, datetime))
+                else str(value)
+            )
+        return normalized_map
+    if isinstance(item, Sequence) and not isinstance(item, (str, bytes, bytearray)):
+        return [
+            _metadata_to_normalized(
+                value
+                if isinstance(value, (str, int, float, bool, datetime))
+                else str(value)
+            )
+            for value in item
+        ]
+    return str(item)
 
 
 class _ComparableConfigMap(FlextModelsContainers.ConfigMap):
@@ -31,14 +65,20 @@ class _ComparableConfigMap(FlextModelsContainers.ConfigMap):
         if isinstance(other, dict):
             return self.root == other
         if isinstance(other, Mapping):
-            other_mapping = FlextModelsContainers.ConfigMap(other).root
+            typed_other = _V.dict_str_metadata_adapter().validate_python(other)
+            other_mapping = FlextModelsContainers.ConfigMap(
+                root={
+                    key: _metadata_to_normalized(value)
+                    for key, value in typed_other.items()
+                }
+            ).root
             return self.root == other_mapping
         return super().__eq__(other)
 
     __hash__ = FlextModelsContainers.ConfigMap.__hash__
 
 
-def _normalize_event_data(value: object) -> _ComparableConfigMap:
+def _normalize_event_data(value: t.NormalizedValue | BaseModel) -> _ComparableConfigMap:
     """BeforeValidator: normalize event data to _ComparableConfigMap."""
     if isinstance(value, _ComparableConfigMap):
         return value
@@ -48,8 +88,7 @@ def _normalize_event_data(value: object) -> _ComparableConfigMap:
         typed_value = _V.dict_str_metadata_adapter().validate_python(value)
         intermediate = FlextModelsContainers.ConfigMap(
             root={
-                key: FlextRuntime.normalize_to_metadata(item)
-                for key, item in typed_value.items()
+                key: _metadata_to_normalized(item) for key, item in typed_value.items()
             }
         )
         return _ComparableConfigMap(root=intermediate.root)
@@ -57,7 +96,7 @@ def _normalize_event_data(value: object) -> _ComparableConfigMap:
         typed_mapping = _V.dict_str_metadata_adapter().validate_python(value)
         intermediate = FlextModelsContainers.ConfigMap(
             root={
-                key: FlextRuntime.normalize_to_metadata(item)
+                key: _metadata_to_normalized(item)
                 for key, item in typed_mapping.items()
             }
         )
@@ -78,7 +117,9 @@ class FlextModelsDomainEvent:
     ComparableConfigMap = _ComparableConfigMap
 
     @staticmethod
-    def _normalize_event_data(value: object) -> _ComparableConfigMap:
+    def _normalize_event_data(
+        value: t.NormalizedValue | BaseModel,
+    ) -> _ComparableConfigMap:
         """BeforeValidator: normalize event data to _ComparableConfigMap."""
         return _normalize_event_data(value)
 
@@ -91,7 +132,9 @@ class FlextModelsDomainEvent:
             return _ComparableConfigMap(root={})
         return _ComparableConfigMap(
             root={
-                str(key): FlextRuntime.normalize_to_metadata(value)
+                str(key): (
+                    value if isinstance(value, (str, int, float, bool)) else str(value)
+                )
                 for key, value in data.items()
             }
         )

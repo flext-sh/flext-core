@@ -11,7 +11,7 @@ from __future__ import annotations
 from collections.abc import Callable, Hashable, Mapping, Sequence
 from datetime import datetime
 from enum import StrEnum
-from typing import TypeGuard, overload
+from typing import Any, TypeGuard, overload
 
 from pydantic import ValidationError
 
@@ -28,7 +28,7 @@ class FlextUtilitiesCollection:
     _V = FlextModelFoundation.Validators
 
     @staticmethod
-    def _coerce_guard_value(value: object) -> object:
+    def _coerce_guard_value(value: t.NormalizedValue) -> t.NormalizedValue:
         try:
             return FlextUtilitiesCollection._V.serializable_adapter().validate_python(
                 value
@@ -37,7 +37,7 @@ class FlextUtilitiesCollection:
             return str(value)
 
     @staticmethod
-    def _coerce_value_to_bool(value: object) -> bool:
+    def _coerce_value_to_bool(value: t.NormalizedValue) -> bool:
         """Coerce a value to bool."""
         if isinstance(value, bool):
             return value
@@ -46,26 +46,28 @@ class FlextUtilitiesCollection:
         return bool(value)
 
     @staticmethod
-    def _coerce_value_to_float(value: object) -> float:
+    def _coerce_value_to_float(value: t.NormalizedValue) -> float:
         """Coerce a value to float."""
         if isinstance(value, float):
             return value
         return float(str(value))
 
     @staticmethod
-    def _coerce_value_to_int(value: object) -> int:
+    def _coerce_value_to_int(value: t.NormalizedValue) -> int:
         """Coerce a value to int."""
         if isinstance(value, int) and (not isinstance(value, bool)):
             return value
         return int(str(value))
 
     @staticmethod
-    def _coerce_value_to_str(value: object) -> str:
+    def _coerce_value_to_str(value: t.NormalizedValue) -> str:
         """Coerce a value to string."""
         return str(value)
 
     @staticmethod
-    def _normalize_mapping_items(data: object) -> list[tuple[str, object]]:
+    def _normalize_mapping_items(
+        data: t.NormalizedValue,
+    ) -> list[tuple[str, t.NormalizedValue]]:
         normalized_mapping = (
             FlextUtilitiesCollection._V.dict_str_metadata_adapter().validate_python(
                 data
@@ -74,13 +76,13 @@ class FlextUtilitiesCollection:
         return list(normalized_mapping.items())
 
     @staticmethod
-    def _normalize_sequence_items(data: object) -> list[t.Container]:
+    def _normalize_sequence_items(data: t.NormalizedValue) -> list[t.Container]:
         return FlextUtilitiesCollection._V.list_container_adapter().validate_python(
             data
         )
 
     @staticmethod
-    def _is_empty_value(value: object) -> bool:
+    def _is_empty_value(value: t.NormalizedValue) -> bool:
         """Check if value is considered empty (empty string, empty list, etc.)."""
         if value is None:
             return True
@@ -94,21 +96,21 @@ class FlextUtilitiesCollection:
 
     @staticmethod
     def _is_general_value_dict(
-        value: object,
-    ) -> TypeGuard[dict[str, object]]:
+        value: t.NormalizedValue,
+    ) -> TypeGuard[dict[str, t.NormalizedValue]]:
         """Type guard to narrow dict to object dict."""
         return isinstance(value, dict)
 
     @staticmethod
     def _is_general_value_list(
-        value: object,
-    ) -> TypeGuard[list[object]]:
+        value: t.NormalizedValue,
+    ) -> TypeGuard[list[t.NormalizedValue]]:
         """Type guard to narrow list to object list."""
         return isinstance(value, list)
 
     @staticmethod
     def _merge_deep_single_key(
-        result: dict[str, object], key: str, value: object
+        result: dict[str, t.NormalizedValue], key: str, value: t.NormalizedValue
     ) -> r[bool]:
         """Merge single key in deep merge strategy."""
         current_val = result.get(key)
@@ -128,7 +130,7 @@ class FlextUtilitiesCollection:
         return r[bool].ok(value=True)
 
     @staticmethod
-    def _to_batch_scalar(value: object) -> t.Scalar:
+    def _to_batch_scalar(value: t.NormalizedValue) -> t.Scalar:
         if value is None:
             return ""
         if isinstance(value, (str, int, float, bool, datetime)):
@@ -136,7 +138,7 @@ class FlextUtilitiesCollection:
         return str(value)
 
     @staticmethod
-    def _to_batch_scalars(values: Sequence[object]) -> list[t.Scalar | None]:
+    def _to_batch_scalars(values: Sequence[Any]) -> list[t.Scalar | None]:
         return [FlextUtilitiesCollection._to_batch_scalar(value) for value in values]
 
     @staticmethod
@@ -171,7 +173,7 @@ class FlextUtilitiesCollection:
         _ = progress_interval
         do_flatten = flatten
         error_mode = on_error or "fail"
-        results: list[object] = []
+        results: list[Any] = []
         errors: list[tuple[int, str]] = []
         total = len(items)
         for processed, item in enumerate(items, 1):
@@ -283,10 +285,10 @@ class FlextUtilitiesCollection:
         return [list(items[i : i + size]) for i in range(0, len(items), size)]
 
     @staticmethod
-    def coerce_dict_to_bool() -> Callable[[object], Mapping[str, bool]]:
+    def coerce_dict_to_bool() -> Callable[[t.NormalizedValue], Mapping[str, bool]]:
         """Create validator that coerces dict values to bool."""
 
-        def validator(data: object) -> Mapping[str, bool]:
+        def validator(data: t.NormalizedValue) -> Mapping[str, bool]:
             try:
                 normalized_map = FlextUtilitiesCollection._V.dict_str_metadata_adapter().validate_python(
                     data
@@ -304,10 +306,10 @@ class FlextUtilitiesCollection:
     @staticmethod
     def coerce_dict_to_enum[E: StrEnum](
         enum_type: type[E],
-    ) -> Callable[[dict[str, object]], dict[str, E]]:
+    ) -> Callable[[dict[str, t.NormalizedValue]], dict[str, E]]:
         """Create validator that coerces dict values to a StrEnum type."""
 
-        def validator(data: dict[str, object]) -> dict[str, E]:
+        def validator(data: dict[str, t.NormalizedValue]) -> dict[str, E]:
             result: dict[str, E] = {}
             for k, v in data.items():
                 if isinstance(v, enum_type):
@@ -324,10 +326,10 @@ class FlextUtilitiesCollection:
         return validator
 
     @staticmethod
-    def coerce_dict_to_float() -> Callable[[object], Mapping[str, float]]:
+    def coerce_dict_to_float() -> Callable[[t.NormalizedValue], Mapping[str, float]]:
         """Create validator that coerces dict values to float."""
 
-        def validator(data: object) -> Mapping[str, float]:
+        def validator(data: t.NormalizedValue) -> Mapping[str, float]:
             try:
                 normalized_map = FlextUtilitiesCollection._V.dict_str_metadata_adapter().validate_python(
                     data
@@ -343,10 +345,10 @@ class FlextUtilitiesCollection:
         return validator
 
     @staticmethod
-    def coerce_dict_to_int() -> Callable[[object], Mapping[str, int]]:
+    def coerce_dict_to_int() -> Callable[[t.NormalizedValue], Mapping[str, int]]:
         """Create validator that coerces dict values to int."""
 
-        def validator(data: object) -> Mapping[str, int]:
+        def validator(data: t.NormalizedValue) -> Mapping[str, int]:
             try:
                 normalized_map = FlextUtilitiesCollection._V.dict_str_metadata_adapter().validate_python(
                     data
@@ -362,10 +364,10 @@ class FlextUtilitiesCollection:
         return validator
 
     @staticmethod
-    def coerce_dict_to_str() -> Callable[[object], Mapping[str, str]]:
+    def coerce_dict_to_str() -> Callable[[t.NormalizedValue], Mapping[str, str]]:
         """Create validator that coerces dict values to str."""
 
-        def validator(data: object) -> Mapping[str, str]:
+        def validator(data: t.NormalizedValue) -> Mapping[str, str]:
             try:
                 normalized_map = FlextUtilitiesCollection._V.dict_str_metadata_adapter().validate_python(
                     data
@@ -383,7 +385,7 @@ class FlextUtilitiesCollection:
     @staticmethod
     def coerce_dict_validator[E: StrEnum](
         enum_cls: type[E],
-    ) -> Callable[[object], dict[str, E]]:
+    ) -> Callable[[t.NormalizedValue], dict[str, E]]:
         """Create validator that coerces dict values to a StrEnum type.
 
         Raises:
@@ -392,7 +394,7 @@ class FlextUtilitiesCollection:
 
         """
 
-        def validator(data: object) -> dict[str, E]:
+        def validator(data: t.NormalizedValue) -> dict[str, E]:
             try:
                 normalized_map = FlextUtilitiesCollection._V.dict_str_metadata_adapter().validate_python(
                     data
@@ -419,10 +421,10 @@ class FlextUtilitiesCollection:
         return validator
 
     @staticmethod
-    def coerce_list_to_bool() -> Callable[[Sequence[object]], list[bool]]:
+    def coerce_list_to_bool() -> Callable[[Sequence[t.NormalizedValue]], list[bool]]:
         """Create validator that coerces sequence values to bool."""
 
-        def validator(data: Sequence[object]) -> list[bool]:
+        def validator(data: Sequence[t.NormalizedValue]) -> list[bool]:
             return [FlextUtilitiesCollection._coerce_value_to_bool(v) for v in data]
 
         return validator
@@ -430,10 +432,10 @@ class FlextUtilitiesCollection:
     @staticmethod
     def coerce_list_to_enum[E: StrEnum](
         enum_type: type[E],
-    ) -> Callable[[Sequence[object]], list[E]]:
+    ) -> Callable[[Sequence[t.NormalizedValue]], list[E]]:
         """Create validator that coerces sequence values to a StrEnum type."""
 
-        def validator(data: Sequence[object]) -> list[E]:
+        def validator(data: Sequence[t.NormalizedValue]) -> list[E]:
             result: list[E] = []
             for v in data:
                 if isinstance(v, enum_type):
@@ -450,28 +452,28 @@ class FlextUtilitiesCollection:
         return validator
 
     @staticmethod
-    def coerce_list_to_float() -> Callable[[Sequence[object]], list[float]]:
+    def coerce_list_to_float() -> Callable[[Sequence[t.NormalizedValue]], list[float]]:
         """Create validator that coerces sequence values to float."""
 
-        def validator(data: Sequence[object]) -> list[float]:
+        def validator(data: Sequence[t.NormalizedValue]) -> list[float]:
             return [FlextUtilitiesCollection._coerce_value_to_float(v) for v in data]
 
         return validator
 
     @staticmethod
-    def coerce_list_to_int() -> Callable[[Sequence[object]], list[int]]:
+    def coerce_list_to_int() -> Callable[[Sequence[t.NormalizedValue]], list[int]]:
         """Create validator that coerces sequence values to int."""
 
-        def validator(data: Sequence[object]) -> list[int]:
+        def validator(data: Sequence[t.NormalizedValue]) -> list[int]:
             return [FlextUtilitiesCollection._coerce_value_to_int(v) for v in data]
 
         return validator
 
     @staticmethod
-    def coerce_list_to_str() -> Callable[[Sequence[object]], list[str]]:
+    def coerce_list_to_str() -> Callable[[Sequence[t.NormalizedValue]], list[str]]:
         """Create validator that coerces sequence values to str."""
 
-        def validator(data: Sequence[object]) -> list[str]:
+        def validator(data: Sequence[t.NormalizedValue]) -> list[str]:
             return [FlextUtilitiesCollection._coerce_value_to_str(v) for v in data]
 
         return validator
@@ -479,7 +481,7 @@ class FlextUtilitiesCollection:
     @staticmethod
     def coerce_list_validator[E: StrEnum](
         enum_cls: type[E],
-    ) -> Callable[[object], list[E]]:
+    ) -> Callable[[t.NormalizedValue], list[E]]:
         """Create validator that coerces list values to a StrEnum type.
 
         Raises:
@@ -488,7 +490,7 @@ class FlextUtilitiesCollection:
 
         """
 
-        def validator(data: object) -> list[E]:
+        def validator(data: t.NormalizedValue) -> list[E]:
             if isinstance(data, str):
                 msg = f"Expected sequence, got {data.__class__.__name__}"
                 raise TypeError(msg)
@@ -538,8 +540,8 @@ class FlextUtilitiesCollection:
 
     @staticmethod
     def extract_callable_mapping[K](
-        mapping: Mapping[K, Callable[[], object]],
-    ) -> dict[str, Callable[[], object]]:
+        mapping: Mapping[K, Callable[[], Any]],
+    ) -> dict[str, Callable[[], Any]]:
         """Extract mapping of callables for resources/factories.
 
         Helper function to properly type narrow callable mappings for pyright.
@@ -552,7 +554,7 @@ class FlextUtilitiesCollection:
             Dict mapping string keys to callable functions
 
         """
-        result: dict[str, Callable[[], object]] = {}
+        result: dict[str, Callable[[], Any]] = {}
         items_iter = mapping.items()
         for item_tuple in items_iter:
             key_obj = item_tuple[0]
@@ -563,8 +565,8 @@ class FlextUtilitiesCollection:
 
     @staticmethod
     def extract_mapping_items[K](
-        mapping: Mapping[K, object],
-    ) -> list[tuple[str, object]]:
+        mapping: Mapping[K, Any],
+    ) -> list[tuple[str, Any]]:
         """Extract mapping items as typed list for iteration.
 
         Helper function to properly type narrow Mapping.items() for pyright.
@@ -577,7 +579,7 @@ class FlextUtilitiesCollection:
             List of (key, value) tuples with proper typing
 
         """
-        result: list[tuple[str, object]] = []
+        result: list[tuple[str, Any]] = []
         items_iter = mapping.items()
         for item_tuple in items_iter:
             key_obj = item_tuple[0]
@@ -829,11 +831,11 @@ class FlextUtilitiesCollection:
 
     @staticmethod
     def merge(
-        base: dict[str, object],
-        other: dict[str, object],
+        base: dict[str, Any],
+        other: dict[str, Any],
         *,
         strategy: str = "deep",
-    ) -> r[dict[str, object]]:
+    ) -> r[dict[str, Any]]:
         """Merge two dictionaries with configurable strategy.
 
         Strategies:
@@ -847,21 +849,21 @@ class FlextUtilitiesCollection:
         """
         try:
             if strategy in {"replace", "override"}:
-                result: dict[str, object] = dict(base)
+                result: dict[str, Any] = dict(base)
                 result.update(other)
-                return r[dict[str, object]].ok(result)
+                return r[dict[str, Any]].ok(result)
             if strategy == "filter_none":
                 result = dict(base)
                 for key, value in other.items():
                     if value is not None:
                         result[key] = value
-                return r[dict[str, object]].ok(result)
+                return r[dict[str, Any]].ok(result)
             if strategy in {"filter_empty", "filter_both"}:
                 result = dict(base)
                 for key, value in other.items():
                     if not FlextUtilitiesCollection._is_empty_value(value):
                         result[key] = value
-                return r[dict[str, object]].ok(result)
+                return r[dict[str, Any]].ok(result)
             if strategy == "append":
                 result = dict(base)
                 for key, value in other.items():
@@ -874,7 +876,7 @@ class FlextUtilitiesCollection:
                         result[key] = current_val + value
                     else:
                         result[key] = value
-                return r[dict[str, object]].ok(result)
+                return r[dict[str, Any]].ok(result)
             if strategy == "deep":
                 result = base.copy()
                 for key, value in other.items():
@@ -882,13 +884,13 @@ class FlextUtilitiesCollection:
                         result, key, value
                     )
                     if merge_result.is_failure:
-                        return r[dict[str, object]].fail(
+                        return r[dict[str, Any]].fail(
                             merge_result.error or "Unknown error"
                         )
-                return r[dict[str, object]].ok(result)
-            return r[dict[str, object]].fail(f"Unknown merge strategy: {strategy}")
+                return r[dict[str, Any]].ok(result)
+            return r[dict[str, Any]].fail(f"Unknown merge strategy: {strategy}")
         except (TypeError, ValueError, KeyError, AttributeError) as e:
-            return r[dict[str, object]].fail(f"Merge failed: {e}")
+            return r[dict[str, Any]].fail(f"Merge failed: {e}")
 
     @staticmethod
     def mul(*values: float) -> int | float:

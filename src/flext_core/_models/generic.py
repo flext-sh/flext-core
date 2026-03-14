@@ -21,8 +21,9 @@ from collections.abc import Mapping
 from datetime import UTC, datetime
 from typing import Annotated, Literal
 
-from pydantic import Field
+from pydantic import BaseModel, Field
 
+from flext_core import t
 from flext_core._models.base import FlextModelFoundation
 from flext_core._models.containers import FlextModelsContainers
 
@@ -87,7 +88,8 @@ class FlextGenericModels:
             ),
         ]
         message: Annotated[
-            object | None, Field(default=None, description="Message payload")
+            t.NormalizedValue | BaseModel,
+            Field(default=None, description="Message payload"),
         ] = None
         message_type: Annotated[str, Field(default="", description="Message type")] = ""
         dispatch_type: Annotated[
@@ -328,7 +330,7 @@ class FlextGenericModels:
         """
 
         converted: Annotated[
-            list[object],
+            list[t.NormalizedValue | BaseModel],
             Field(default_factory=list, description="Converted items"),
         ]
         errors: Annotated[
@@ -340,7 +342,7 @@ class FlextGenericModels:
             Field(default_factory=list, description="Warning messages"),
         ]
         skipped: Annotated[
-            list[object],
+            list[t.NormalizedValue | BaseModel],
             Field(default_factory=list, description="Skipped items"),
         ]
         start_time: Annotated[
@@ -366,23 +368,29 @@ class FlextGenericModels:
             ),
         ]
 
-        def add_converted(self, item: object) -> None:
+        def add_converted(self, item: t.NormalizedValue | BaseModel) -> None:
             """Add a successfully converted item."""
             self.converted.append(item)
 
-        def add_error(self, error: str, item: object | None = None) -> None:
+        def add_error(
+            self, error: str, item: t.NormalizedValue | BaseModel | None = None
+        ) -> None:
             """Add an error with optional failed item."""
             self.errors.append(error)
             if item is not None:
                 self._append_metadata_item("failed_items", item)
 
-        def add_skipped(self, item: object, reason: str | None = None) -> None:
+        def add_skipped(
+            self, item: t.NormalizedValue | BaseModel, reason: str | None = None
+        ) -> None:
             """Add a skipped item with optional reason."""
             self.skipped.append(item)
             if reason:
                 self._upsert_skip_reason(item, reason)
 
-        def add_warning(self, warning: str, item: object | None = None) -> None:
+        def add_warning(
+            self, warning: str, item: t.NormalizedValue | BaseModel | None = None
+        ) -> None:
             """Add a warning with optional item."""
             self.warnings.append(warning)
             if item is not None:
@@ -407,7 +415,7 @@ class FlextGenericModels:
         def _append_metadata_item(
             self,
             key: Literal["failed_items", "warning_items"],
-            item: object,
+            item: t.NormalizedValue | BaseModel,
         ) -> None:
             if key not in self.metadata.root:
                 self.metadata.root[key] = []
@@ -416,7 +424,9 @@ class FlextGenericModels:
             items.append(item)
             self.metadata.root[key] = items
 
-        def _upsert_skip_reason(self, item: object, reason: str) -> None:
+        def _upsert_skip_reason(
+            self, item: t.NormalizedValue | BaseModel, reason: str
+        ) -> None:
             raw_reasons = self.metadata.root.get("skip_reasons", {})
             reasons: dict[str, str] = {}
             if isinstance(raw_reasons, Mapping):

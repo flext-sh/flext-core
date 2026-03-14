@@ -83,7 +83,7 @@ class FlextModelsContainer:
                 default_factory=FlextRuntime.generate_datetime_utc,
                 description="UTC timestamp when service was registered",
             ),
-        ]
+        ] = Field(default_factory=FlextRuntime.generate_datetime_utc)
         metadata: Annotated[
             FlextModelFoundation.Metadata | FlextModelsContainers.ConfigMap | None,
             Field(
@@ -104,7 +104,7 @@ class FlextModelsContainer:
                 default_factory=list,
                 description="Service tags for categorization",
             ),
-        ]
+        ] = Field(default_factory=list)
 
         @field_validator("metadata", mode="before")
         @classmethod
@@ -129,9 +129,19 @@ class FlextModelsContainer:
             if callable(v):
                 return v
             if isinstance(v, Mapping):
-                return FlextModelsContainers.ConfigMap(root=dict(v.items()))
+                normalized_mapping: dict[str, t.NormalizedValue | BaseModel] = {}
+                for key, item in v.items():
+                    normalized_mapping[str(key)] = FlextRuntime.normalize_to_container(
+                        item
+                    )
+                return FlextModelsContainers.ConfigMap(root=normalized_mapping)
             if isinstance(v, Sequence) and (not isinstance(v, (str, bytes, bytearray))):
-                return FlextModelsContainers.ObjectList(root=list(v))
+                normalized_sequence: list[t.Container] = []
+                for item in v:
+                    normalized_item = FlextRuntime.normalize_to_container(item)
+                    container_item: t.Container = str(normalized_item)
+                    normalized_sequence.append(container_item)
+                return FlextModelsContainers.ObjectList(root=normalized_sequence)
             if hasattr(v, "__dict__"):
                 return v
             if hasattr(v, "bind") and hasattr(v, "info"):
@@ -168,7 +178,7 @@ class FlextModelsContainer:
                 default_factory=FlextRuntime.generate_datetime_utc,
                 description="UTC timestamp when factory was registered",
             ),
-        ]
+        ] = Field(default_factory=FlextRuntime.generate_datetime_utc)
         is_singleton: Annotated[
             bool,
             Field(
@@ -235,7 +245,7 @@ class FlextModelsContainer:
                 default_factory=FlextRuntime.generate_datetime_utc,
                 description="UTC timestamp when resource was registered",
             ),
-        ]
+        ] = Field(default_factory=FlextRuntime.generate_datetime_utc)
         metadata: Annotated[
             FlextModelFoundation.Metadata | FlextModelsContainers.ConfigMap | None,
             Field(

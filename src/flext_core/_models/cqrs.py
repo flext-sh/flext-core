@@ -24,7 +24,7 @@ from pydantic import (
     field_validator,
 )
 
-from flext_core import c, t
+from flext_core import c, p, t
 from flext_core._models.base import FlextModelFoundation
 from flext_core._models.containers import FlextModelsContainers
 from flext_core.runtime import FlextRuntime
@@ -197,7 +197,7 @@ class FlextModelsCqrs:
             min_qualname_parts = 2
             if not models_module or len(parts) < min_qualname_parts:
                 return FlextModelsCqrs.Pagination
-            obj: object | None = getattr(models_module, parts[0], None)
+            obj: p.Base | BaseModel | None = getattr(models_module, parts[0], None)
             for part in parts[1:-1]:
                 if obj and hasattr(obj, part):
                     obj = getattr(obj, part)
@@ -486,7 +486,9 @@ class FlextModelsCqrs:
     ]
 
     @staticmethod
-    def parse_message(payload: object) -> FlextMessage:
+    def parse_message(
+        payload: p.Base | BaseModel | Mapping[str, t.NormalizedValue],
+    ) -> FlextMessage:
         """Parse a message payload into a FlextMessage instance."""
         _ = payload
         msg = "parse_message must be implemented by subclasses"

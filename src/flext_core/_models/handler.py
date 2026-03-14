@@ -59,8 +59,8 @@ class FlextModelsHandler:
         @field_validator("handler", mode="before")
         @classmethod
         def validate_handler(
-            cls, v: t.HandlerCallable | object
-        ) -> t.HandlerCallable | object:
+            cls, v: t.HandlerCallable | p.Base | BaseModel
+        ) -> t.HandlerCallable | p.Base | BaseModel:
             if not callable(v):
                 msg = f"Handler must be callable, got {v.__class__.__name__}"
                 raise TypeError(msg)
@@ -114,7 +114,7 @@ class FlextModelsHandler:
             "message_type",
         })
 
-        def __getitem__(self, key: str) -> object:
+        def __getitem__(self, key: str) -> t.NormalizedValue | BaseModel:
             if key in self._GETITEM_FIELDS:
                 return getattr(self, key)
             raise KeyError(key)
@@ -127,7 +127,9 @@ class FlextModelsHandler:
         """
 
         handler: Annotated[
-            t.HandlerCallable | p.Handler[p.Model, object] | BaseModel,
+            t.HandlerCallable
+            | p.Handler[p.Model, t.NormalizedValue | BaseModel]
+            | BaseModel,
             Field(
                 description="Handler instance (callable, object, or FlextHandlers)",
             ),

@@ -19,7 +19,9 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_core import FlextService, r
+from pydantic import BaseModel
+
+from flext_core import FlextService, r, t
 
 
 class FlextTestsServiceBase[T]:
@@ -73,7 +75,9 @@ class FlextTestsServiceBase[T]:
         return result.value
 
 
-class FlextTestsUtilityBase[TValue: object](FlextService[TValue]):
+class FlextTestsUtilityBase[
+    TValue: t.NormalizedValue | BaseModel | list[t.NormalizedValue | BaseModel]
+](FlextService[TValue]):
     """Base class for FLEXT test utility classes (factories, builders, validators).
 
     Architecture: Extends FlextService for service functionality.

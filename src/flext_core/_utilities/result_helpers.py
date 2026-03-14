@@ -3,7 +3,9 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, Sequence
 from typing import TypeVar
 
-from flext_core import p, r
+from pydantic import BaseModel
+
+from flext_core import p, r, t
 from flext_core._utilities.guards import FlextUtilitiesGuards
 
 T = TypeVar("T")
@@ -11,12 +13,16 @@ T = TypeVar("T")
 
 class ResultHelpers:
     @staticmethod
-    def any_(*values: object) -> bool:
+    def any_(*values: t.NormalizedValue) -> bool:
         return any(bool(v) for v in values)
 
     @staticmethod
     def empty(
-        items: Sequence[object] | Mapping[str, object] | str | p.Result[object] | None,
+        items: Sequence[t.NormalizedValue]
+        | Mapping[str, t.NormalizedValue]
+        | str
+        | p.Result[t.NormalizedValue]
+        | None,
     ) -> bool:
         if FlextUtilitiesGuards.is_result_like(items):
             if items.is_failure:
@@ -42,7 +48,7 @@ class ResultHelpers:
         return default
 
     @staticmethod
-    def not_(value: object) -> bool:
+    def not_(value: t.NormalizedValue) -> bool:
         return not bool(value)
 
     @staticmethod
@@ -106,7 +112,9 @@ class ResultHelpers:
         return [result.value for result in results if result.is_success]
 
     @staticmethod
-    def ensure_result(value: object) -> r[object]:
+    def ensure_result(
+        value: t.NormalizedValue | BaseModel | p.ResultLike[t.Container | BaseModel],
+    ) -> r[t.NormalizedValue | BaseModel]:
         """Wrap value in r if not already a Result.
 
         Generic replacement for:
@@ -114,9 +122,9 @@ class ResultHelpers:
         """
         if FlextUtilitiesGuards.is_result_like(value):
             if value.is_success:
-                return r[object].ok(value.value)
-            return r[object].fail(value.error)
-        return r[object].ok(value)
+                return r[t.NormalizedValue | BaseModel].ok(value.value)
+            return r[t.NormalizedValue | BaseModel].fail(value.error)
+        return r[t.NormalizedValue | BaseModel].ok(value)
 
 
 __all__ = ["ResultHelpers"]

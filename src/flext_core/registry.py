@@ -181,7 +181,7 @@ class FlextRegistry(s[bool]):
 
     @staticmethod
     def _narrow_value(
-        value: object | None,
+        value: t.NormalizedValue | BaseModel | None,
     ) -> t.Container | BaseModel | None:
         """Safe conversion using centralized utilities."""
         normalized = u.narrow_to_container(value)
@@ -191,14 +191,14 @@ class FlextRegistry(s[bool]):
             return normalized
         return str(normalized)
 
-    def _get_handler_mode(self, value: object) -> c.Cqrs.HandlerType:
+    def _get_handler_mode(self, value: t.Container | BaseModel) -> c.Cqrs.HandlerType:
         """Safe conversion to HandlerType."""
         result = u.parse_enum(c.Cqrs.HandlerType, str(value))
         if result.is_success:
             return result.value
         return c.Cqrs.HandlerType.COMMAND
 
-    def _get_status(self, value: object) -> c.Cqrs.CommonStatus:
+    def _get_status(self, value: t.Container | BaseModel) -> c.Cqrs.CommonStatus:
         """Safe conversion to CommonStatus."""
         result = u.parse_enum(c.Cqrs.CommonStatus, str(value))
         if result.is_success:
@@ -303,14 +303,16 @@ class FlextRegistry(s[bool]):
         """
         validated_metadata: FlextModelsContainers.ConfigMap | None = None
         if metadata is not None:
-            raw_metadata: object
+            raw_metadata: Mapping[str, t.NormalizedValue]
             if isinstance(metadata, m.Metadata):
                 raw_metadata = metadata.attributes
             else:
-                raw_metadata = metadata
-            validated_metadata = FlextModelsContainers.ConfigMap(raw_metadata)
+                raw_metadata = metadata.root
+            validated_metadata = FlextModelsContainers.ConfigMap(
+                root=dict(raw_metadata)
+            )
         if validated_metadata is not None:
-            metadata_dict = FlextModelsContainers.ConfigMap(validated_metadata)
+            metadata_dict = validated_metadata
             metadata_keys_str: str = ",".join(metadata_dict.keys())
             self.logger.debug(
                 "Registering service with metadata",

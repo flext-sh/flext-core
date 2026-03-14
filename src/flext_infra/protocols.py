@@ -16,6 +16,7 @@ from typing import Protocol, runtime_checkable
 
 from flext_core import FlextProtocols, r
 from flext_infra.models import m
+from flext_infra.typings import t
 
 
 class FlextInfraProtocols(FlextProtocols):
@@ -142,7 +143,7 @@ class FlextInfraProtocols(FlextProtocols):
         class TomlReader(Protocol):
             """Contract for TOML file readers used by dependency services."""
 
-            def read_plain(self, path: Path) -> r[dict[str, object]]:
+            def read_plain(self, path: Path) -> r[t.Infra.TomlConfig]:
                 """Read and parse a TOML file as a plain dict with r error handling."""
                 ...
 

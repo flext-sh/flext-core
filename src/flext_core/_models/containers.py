@@ -10,7 +10,14 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import typing
-from collections.abc import Callable, ItemsView, Iterator, KeysView, Mapping, ValuesView
+from collections.abc import (
+    Callable,
+    Generator,
+    ItemsView,
+    KeysView,
+    Mapping,
+    ValuesView,
+)
 from datetime import datetime
 from pathlib import Path
 from typing import Annotated, ClassVar, override
@@ -101,15 +108,13 @@ class FlextModelsContainers:
             self.root.update(other)
 
         @override
-        def __iter__(self) -> Iterator[str]:
-            return iter(self.root)
+        def __iter__(self) -> Generator[tuple[str, DictValueT]]:
+            yield from ((key, value) for key, value in self.root.items())
 
         def values(self) -> ValuesView[DictValueT]:
             return self.root.values()
 
-    Mapping.register(_RootDictModel)  # type: ignore[attr-defined]  # ABCMeta.register exists at runtime
-
-    class Dict(_RootDictModel[object]):
+    class Dict(_RootDictModel[t.NormalizedValue | BaseModel]):
         """Generic dictionary container. Use ``m.Dict``."""
 
         # Used by: flext-core CQRS/message payloads (`_models/base.py`, `_models/cqrs.py`),
@@ -119,7 +124,7 @@ class FlextModelsContainers:
         # Pydantic models instead of generic key-value dictionaries.
 
         root: Annotated[
-            dict[str, object],
+            dict[str, t.NormalizedValue | BaseModel],
             Field(
                 default_factory=dict,
                 title="Dictionary Payload",
@@ -131,7 +136,18 @@ class FlextModelsContainers:
             ),
         ]
 
-    class ConfigMap(_RootDictModel[object]):
+        @override
+        def get(
+            self,
+            key: str,
+            default: t.NormalizedValue | BaseModel | None = None,
+        ) -> t.NormalizedValue | BaseModel | None:
+            value = self.root.get(key, default)
+            if isinstance(value, Mapping) and not isinstance(value, BaseModel):
+                return FlextModelsContainers.Dict(root=dict(value.items()))
+            return value
+
+    class ConfigMap(_RootDictModel[t.NormalizedValue | BaseModel]):
         """Configuration map container. Use ``m.ConfigMap``."""
 
         # Used by: flext-core container/context/runtime/logging/exceptions, flext-tests
@@ -140,7 +156,7 @@ class FlextModelsContainers:
         # be replaced by explicit domain settings models over time.
 
         root: Annotated[
-            dict[str, object],
+            dict[str, t.NormalizedValue | BaseModel],
             Field(
                 default_factory=dict,
                 title="Configuration Map",

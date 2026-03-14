@@ -45,21 +45,21 @@ class FlextUtilitiesReliability:
 
     @staticmethod
     def _is_match_mapper(
-        value: object | Callable[[object], object],
-    ) -> TypeGuard[Callable[[object], object]]:
+        value: t.NormalizedValue | Callable[[t.NormalizedValue], t.NormalizedValue],
+    ) -> TypeGuard[Callable[[t.NormalizedValue], t.NormalizedValue]]:
         return callable(value)
 
     @staticmethod
     def _is_match_predicate(
-        value: type | object | Callable[[object], bool],
-    ) -> TypeGuard[Callable[[object], bool]]:
+        value: type | t.NormalizedValue | Callable[[t.NormalizedValue], bool],
+    ) -> TypeGuard[Callable[[t.NormalizedValue], bool]]:
         return callable(value) and (not isinstance(value, type))
 
     @staticmethod
     def _normalize_operation_mapping[TKey, TValue](
         value: Mapping[TKey, TValue],
-    ) -> dict[str, object]:
-        normalized: dict[str, object] = {}
+    ) -> dict[str, t.NormalizedValue]:
+        normalized: dict[str, t.NormalizedValue] = {}
         for raw_key, raw_value in value.items():
             normalized_value = (
                 raw_value
@@ -71,8 +71,8 @@ class FlextUtilitiesReliability:
 
     @staticmethod
     def _resolve_match_output(
-        candidate: object | Callable[[object], object],
-        value: object,
+        candidate: t.NormalizedValue | Callable[[t.NormalizedValue], t.NormalizedValue],
+        value: t.NormalizedValue,
     ) -> t.Container:
         raw = candidate(value) if callable(candidate) else candidate
         if FlextUtilitiesGuards.is_container(raw):
@@ -80,7 +80,7 @@ class FlextUtilitiesReliability:
         return str(raw)
 
     @staticmethod
-    def calculate_delay(attempt: int, config: Mapping[str, object] | None) -> float:
+    def calculate_delay(attempt: int, config: Mapping[str, t.Scalar] | None) -> float:
         """Calculate delay for retry attempt using configuration.
 
         Args:
@@ -131,7 +131,10 @@ class FlextUtilitiesReliability:
         return float(delay)
 
     @staticmethod
-    def chain(value: object, *funcs: Callable[[object], object]) -> object:
+    def chain(
+        value: t.NormalizedValue,
+        *funcs: Callable[[t.NormalizedValue], t.NormalizedValue],
+    ) -> t.NormalizedValue:
         """Chain operations (mnemonic: chain = pipeline).
 
         Business Rule: Execute a sequence of functions in order, passing each
@@ -155,14 +158,15 @@ class FlextUtilitiesReliability:
             )
 
         """
-        current: object = value
+        current: t.NormalizedValue = value
         for func in funcs:
             current = func(current)
         return current
 
     @staticmethod
     def compose(
-        *funcs: Callable[[object], object], mode: str = "pipe"
+        *funcs: Callable[[t.NormalizedValue], t.NormalizedValue],
+        mode: str = "pipe",
     ) -> Callable[[t.Container], t.Container | r[t.Container]]:
         """Compose multiple functions into a single function.
 
@@ -222,9 +226,10 @@ class FlextUtilitiesReliability:
 
     @staticmethod
     def flow(
-        value: object,
-        *ops: Mapping[str, object] | Callable[[object], object],
-    ) -> object:
+        value: t.NormalizedValue,
+        *ops: Mapping[str, t.NormalizedValue]
+        | Callable[[t.NormalizedValue], t.NormalizedValue],
+    ) -> t.NormalizedValue:
         """Flow operations using DSL or functions (mnemonic: flow = fluent pipeline).
 
         Generic replacement for: build() + chain() combinations
@@ -246,10 +251,10 @@ class FlextUtilitiesReliability:
             )
 
         """
-        current: object = value
+        current: t.NormalizedValue = value
         for op in ops:
             if isinstance(op, Mapping):
-                op_dict: dict[str, object]
+                op_dict: dict[str, t.NormalizedValue]
                 try:
                     op_dict = dict(
                         FlextUtilitiesReliability._V.dict_str_metadata_adapter().validate_python(
@@ -354,12 +359,14 @@ class FlextUtilitiesReliability:
 
     @staticmethod
     def match(
-        value: object,
+        value: t.NormalizedValue,
         *cases: tuple[
-            type | object | Callable[[object], bool],
-            object | Callable[[object], object],
+            type | t.NormalizedValue | Callable[[t.NormalizedValue], bool],
+            t.NormalizedValue | Callable[[t.NormalizedValue], t.NormalizedValue],
         ],
-        default: object | Callable[[object], object] | None = None,
+        default: t.NormalizedValue
+        | Callable[[t.NormalizedValue], t.NormalizedValue]
+        | None = None,
     ) -> r[t.Container]:
         """Pattern match on a value with type, value, or predicate matching.
 
@@ -400,7 +407,7 @@ class FlextUtilitiesReliability:
             'big'
 
         """
-        input_value: object = value
+        input_value: t.NormalizedValue = value
         for pattern, result in cases:
             if isinstance(pattern, type) and isinstance(input_value, pattern):
                 return r[t.Container].ok(
@@ -429,8 +436,8 @@ class FlextUtilitiesReliability:
 
     @staticmethod
     def pipe(
-        value: object,
-        *operations: Callable[[object], object],
+        value: t.NormalizedValue,
+        *operations: Callable[[t.NormalizedValue], t.NormalizedValue],
         on_error: str = "stop",
     ) -> r[t.Container]:
         """Functional pipeline with railway-oriented error handling.
@@ -464,7 +471,7 @@ class FlextUtilitiesReliability:
             return r[t.Container].fail(
                 f"Value is not a Container type: {type(value).__name__}"
             )
-        current: object = value
+        current: t.NormalizedValue = value
         for i, op in enumerate(operations):
             try:
                 op_result = op(current)

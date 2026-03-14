@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping
-from typing import Annotated, ClassVar, Final, Self
+from typing import Annotated, Any, ClassVar, Final, Self
 
 from pydantic import (
     AliasChoices,
@@ -213,7 +213,7 @@ class FlextModelsConfig:
         validate_on_assignment: bool = True
         validate_on_read: bool = False
         custom_validators: Annotated[
-            list[object],
+            list[Any],
             Field(
                 default_factory=list,
                 max_length=c.Validation.MAX_CUSTOM_VALIDATORS,
@@ -223,7 +223,7 @@ class FlextModelsConfig:
 
         @field_validator("custom_validators", mode="after")
         @classmethod
-        def validate_additional_validators(cls, v: list[object]) -> list[object]:
+        def validate_additional_validators(cls, v: list[Any]) -> list[Any]:
             """Validate custom validators are callable."""
             for validator in v:
                 if not callable(validator):
@@ -264,7 +264,7 @@ class FlextModelsConfig:
         ] = c.Defaults.TIMEOUT
         continue_on_error: bool = True
         data_items: Annotated[
-            list[object],
+            list[t.NormalizedValue | BaseModel],
             Field(
                 default_factory=list,
                 max_length=c.Performance.BatchProcessing.MAX_ITEMS,
@@ -286,7 +286,7 @@ class FlextModelsConfig:
 
         @classmethod
         def validate_batch(
-            cls, models: list[object]
+            cls, models: list[t.NormalizedValue | BaseModel]
         ) -> list[FlextModelsConfig.BatchProcessingConfig]:
             try:
                 return cls._batch_adapter().validate_python(models)
@@ -533,7 +533,7 @@ class FlextModelsConfig:
             ),
         ] = True
         additional_processors: Annotated[
-            list[p.VariadicCallable[object]],
+            list[p.VariadicCallable[Any]],
             Field(
                 default_factory=list,
                 description="Optional extra processors after standard FLEXT processors",
@@ -547,7 +547,7 @@ class FlextModelsConfig:
             ),
         ] = None
         logger_factory: Annotated[
-            p.VariadicCallable[object] | None,
+            p.VariadicCallable[Any] | None,
             Field(
                 default=None,
                 description="Custom logger factory for structlog",
@@ -648,7 +648,7 @@ class FlextModelsConfig:
             ),
         ]
         metadata: Annotated[
-            object | None,
+            t.NormalizedValue | BaseModel | None,
             Field(
                 default=None,
                 description="Optional execution context metadata",
@@ -681,7 +681,7 @@ class FlextModelsConfig:
         """
 
         config_overrides: Annotated[
-            Mapping[str, object] | None,
+            Mapping[str, t.NormalizedValue | BaseModel] | None,
             Field(default=None, description="Optional configuration overrides"),
         ] = None
         context: Annotated[
@@ -693,22 +693,22 @@ class FlextModelsConfig:
             Field(default=None, description="Optional subproject name"),
         ] = None
         services: Annotated[
-            Mapping[str, object] | None,
+            Mapping[str, Any] | None,
             Field(default=None, description="Optional container services mapping"),
         ] = None
         factories: Annotated[
-            Mapping[str, Callable[[], object]] | None,
+            Mapping[str, t.ResourceCallable] | None,
             Field(default=None, description="Optional container factories mapping"),
         ] = None
         container_services: Annotated[
-            Mapping[str, object] | None,
+            Mapping[str, Any] | None,
             Field(
                 default=None,
                 description="Optional container services (alias for services)",
             ),
         ] = None
         container_factories: Annotated[
-            Mapping[str, Callable[[], object]] | None,
+            Mapping[str, t.ResourceCallable] | None,
             Field(
                 default=None,
                 description="Optional container factories (alias for factories)",
@@ -723,7 +723,7 @@ class FlextModelsConfig:
         """
 
         config_overrides: Annotated[
-            Mapping[str, object] | None,
+            Mapping[str, t.NormalizedValue | BaseModel] | None,
             Field(default=None, description="Optional configuration overrides"),
         ] = None
         service_name: Annotated[
@@ -739,11 +739,11 @@ class FlextModelsConfig:
             Field(default=None, description="Optional correlation ID for tracing"),
         ] = None
         container_services: Annotated[
-            Mapping[str, object] | None,
+            Mapping[str, Any] | None,
             Field(default=None, description="Optional container services mapping"),
         ] = None
         container_factories: Annotated[
-            Mapping[str, Callable[[], object]] | None,
+            Mapping[str, t.ResourceCallable] | None,
             Field(default=None, description="Optional container factories mapping"),
         ] = None
 
@@ -812,7 +812,7 @@ class FlextModelsConfig:
             Field(default=None, description="Field name that failed validation"),
         ] = None
         value: Annotated[
-            object | None,
+            Any | None,
             Field(default=None, description="Value that failed validation"),
         ] = None
 
@@ -969,11 +969,11 @@ class FlextModelsConfig:
             Field(default=None, description="Actual type class"),
         ] = None
         context: Annotated[
-            Mapping[str, object] | None,
+            Mapping[str, Any] | None,
             Field(default=None, description="Additional context for error"),
         ] = None
         metadata: Annotated[
-            FlextModelFoundation.Metadata | Mapping[str, object] | None,
+            FlextModelFoundation.Metadata | Mapping[str, Any] | None,
             Field(default=None, description="Metadata for error"),
         ] = None
 
@@ -985,7 +985,7 @@ class FlextModelsConfig:
             Field(default=None, description="Expected value description"),
         ] = None
         actual_value: Annotated[
-            object | None,
+            Any | None,
             Field(default=None, description="Actual value that caused error"),
         ] = None
 
@@ -1112,11 +1112,11 @@ class FlextModelsConfig:
 
         model_config = ConfigDict(arbitrary_types_allowed=True)
         func: Annotated[
-            p.VariadicCallable[object],
+            p.VariadicCallable[Any],
             Field(description="Function to execute"),
         ]
         args: Annotated[
-            tuple[object, ...],
+            tuple[Any, ...],
             Field(
                 default_factory=tuple,
                 description="Positional arguments for function",
