@@ -120,7 +120,7 @@ class TestRunDeptry:
         result = service.run_deptry(project, venv_bin)
         tm.that(result.is_success, eq=True)
         if result.is_success:
-            tm.that(result.value, eq=([], 0))
+            assert result.value == ([], 0)
 
     def test_runner_failure(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
@@ -155,7 +155,7 @@ class TestRunDeptry:
             result = service.run_deptry(project, venv_bin, json_output_path=out_file)
             tm.that(result.is_success, eq=True)
             if result.is_success:
-                tm.that(result.value, eq=([], 0))
+                assert result.value == ([], 0)
 
     def test_with_extend_exclude_and_cleanup(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
