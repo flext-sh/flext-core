@@ -25,10 +25,10 @@ class FlextInfraExtraPathsManager:
     ROOT = u.Infra.resolve_workspace_root(__file__)
     _STRING_LIST_ADAPTER: TypeAdapter[list[str]] = TypeAdapter(list[str])
 
-    def __init__(self, root: Path | None = None) -> None:
+    def __init__(self, workspace_root: Path | None = None) -> None:
         """Initialize the extra paths manager with path resolver and TOML service."""
         super().__init__()
-        self.root = root or self.ROOT
+        self.root = workspace_root or self.ROOT
         self.resolver = FlextInfraUtilitiesPaths()
         self.toml = FlextInfraUtilitiesToml()
 

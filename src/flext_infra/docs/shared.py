@@ -33,7 +33,7 @@ class FlextInfraDocsShared:
 
     @staticmethod
     def _selected_project_names(
-        root: Path,
+        workspace_root: Path,
         project: str | None,
         projects: str | None,
     ) -> list[str]:
@@ -48,7 +48,7 @@ class FlextInfraDocsShared:
                 ]
             return requested
         result: r[list[m.Infra.Workspace.ProjectInfo]] = _discovery.discover_projects(
-            root,
+            workspace_root,
         )
         return result.fold(
             on_failure=lambda _: [],
@@ -57,7 +57,7 @@ class FlextInfraDocsShared:
 
     @staticmethod
     def build_scopes(
-        root: Path,
+        workspace_root: Path,
         project: str | None,
         projects: str | None,
         output_dir: str,
@@ -67,17 +67,17 @@ class FlextInfraDocsShared:
             scopes: list[m.Infra.Docs.FlextInfraDocScope] = [
                 m.Infra.Docs.FlextInfraDocScope(
                     name=c.Infra.ReportKeys.ROOT,
-                    path=root,
-                    report_dir=(root / output_dir).resolve(),
+                    path=workspace_root,
+                    report_dir=(workspace_root / output_dir).resolve(),
                 ),
             ]
             names = FlextInfraDocsShared._selected_project_names(
-                root,
+                workspace_root,
                 project,
                 projects,
             )
             for name in names:
-                path = (root / name).resolve()
+                path = (workspace_root / name).resolve()
                 if (
                     not path.exists()
                     or not (path / c.Infra.Files.PYPROJECT_FILENAME).exists()
@@ -97,10 +97,10 @@ class FlextInfraDocsShared:
             )
 
     @staticmethod
-    def iter_markdown_files(root: Path) -> list[Path]:
+    def iter_markdown_files(workspace_root: Path) -> list[Path]:
         """Recursively collect markdown files under the docs scope."""
-        docs_root = root / c.Infra.Directories.DOCS
-        search_root = docs_root if docs_root.is_dir() else root
+        docs_root = workspace_root / c.Infra.Directories.DOCS
+        search_root = docs_root if docs_root.is_dir() else workspace_root
         return sorted(
             path
             for path in search_root.rglob("*.md")

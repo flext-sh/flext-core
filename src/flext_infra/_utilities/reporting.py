@@ -56,7 +56,7 @@ class FlextInfraUtilitiesReporting:
 
     @staticmethod
     def get_report_path(
-        root: Path | str,
+        workspace_root: Path | str,
         scope: str,
         verb: str,
         filename: str,
@@ -64,7 +64,7 @@ class FlextInfraUtilitiesReporting:
         """Build a standardized report file path (no I/O).
 
         Args:
-            root: Workspace or project root.
+            workspace_root: Workspace or project root.
             scope: ``"project"`` or ``"workspace"``.
             verb: Action verb (check, test, validate, docs, …).
             filename: Report filename.
@@ -73,14 +73,17 @@ class FlextInfraUtilitiesReporting:
             Absolute Path to the report file.
 
         """
-        return FlextInfraUtilitiesReporting.get_report_dir(root, scope, verb) / filename
+        return (
+            FlextInfraUtilitiesReporting.get_report_dir(workspace_root, scope, verb)
+            / filename
+        )
 
     @staticmethod
-    def ensure_report_dir(root: Path | str, scope: str, verb: str) -> r[Path]:
+    def ensure_report_dir(workspace_root: Path | str, scope: str, verb: str) -> r[Path]:
         """Ensure report directory exists, creating it if necessary.
 
         Args:
-            root: Workspace or project root.
+            workspace_root: Workspace or project root.
             scope: ``"project"`` or ``"workspace"``.
             verb: Action verb (check, test, validate, docs, …).
 
@@ -90,7 +93,7 @@ class FlextInfraUtilitiesReporting:
         """
         try:
             report_dir = FlextInfraUtilitiesReporting.get_report_dir(
-                root,
+                workspace_root,
                 scope,
                 verb,
             )

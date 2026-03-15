@@ -14,16 +14,12 @@ from pathlib import Path
 from typing import override
 
 from flext_core import FlextLogger, r, s
-from flext_infra import (
-    FlextInfraReleaseReporting,
-    FlextInfraUtilitiesReporting,
-    FlextInfraUtilitiesSelection,
-    FlextInfraUtilitiesSubprocess,
-    FlextInfraUtilitiesVersioning,
-    c,
-    m,
-    u,
-)
+from flext_infra import c, m, u
+from flext_infra._utilities.reporting import FlextInfraUtilitiesReporting
+from flext_infra._utilities.selection import FlextInfraUtilitiesSelection
+from flext_infra._utilities.subprocess import FlextInfraUtilitiesSubprocess
+from flext_infra._utilities.versioning import FlextInfraUtilitiesVersioning
+from flext_infra.release._reporting import FlextInfraReleaseReporting
 
 logger = FlextLogger.create_module_logger(__name__)
 
@@ -380,9 +376,9 @@ class FlextInfraReleaseOrchestrator(s[bool]):
     ) -> r[bool]:
         """Generate release notes from Git history."""
         previous_result = self._previous_tag(root, tag)
-        previous = previous_result.value if previous_result.is_success else ""
+        previous: str = str(previous_result.value) if previous_result.is_success else ""
         changes_result = self._collect_changes(root, previous, tag)
-        changes = changes_result.value if changes_result.is_success else ""
+        changes: str = str(changes_result.value) if changes_result.is_success else ""
         selector = FlextInfraUtilitiesSelection()
         projects_result = selector.resolve_projects(root, project_names)
         project_list: list[m.Infra.Workspace.ProjectInfo] = (

@@ -32,9 +32,9 @@ class FlextInfraPyprojectModernizer:
 
     ROOT = u.Infra.resolve_workspace_root(__file__)
 
-    def __init__(self, root: Path | None = None) -> None:
+    def __init__(self, workspace_root: Path | None = None) -> None:
         """Initialize pyproject modernizer."""
-        self.root = root or self.ROOT
+        self.root = workspace_root or self.ROOT
         self._runner: p.Infra.CommandRunner = FlextInfraUtilitiesSubprocess()
         tool_config_result = FlextInfraDependencyToolConfig.load_tool_config()
         if tool_config_result.is_failure:

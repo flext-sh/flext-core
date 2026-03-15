@@ -38,10 +38,12 @@ class FlextInfraDocAuditor:
         return lower.startswith(("http://", "https://", "mailto:", "tel:", "data:"))
 
     @staticmethod
-    def load_audit_budgets(root: Path) -> tuple[int | None, Mapping[str, int]]:
+    def load_audit_budgets(
+        workspace_root: Path,
+    ) -> tuple[int | None, Mapping[str, int]]:
         """Load audit issue budgets from architecture config."""
         config_path: Path | None = None
-        for candidate in [root, *root.parents]:
+        for candidate in [workspace_root, *workspace_root.parents]:
             path = candidate / "docs/architecture/architecture_config.json"
             if path.exists():
                 config_path = path
