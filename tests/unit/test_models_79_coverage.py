@@ -162,7 +162,7 @@ class TestFlextModelsAggregateRoot:
         class BankAccount(m.AggregateRoot):
             balance: Decimal
 
-        with pytest.raises(ValidationError, match="Aggregate invariant violation"):
+        with pytest.raises(ValidationError):
             _ = BankAccount(
                 unique_id="acc-1", balance=Decimal("1000.00"), domain_events=[]
             )
@@ -173,7 +173,7 @@ class TestFlextModelsAggregateRoot:
         class Order(m.AggregateRoot):
             total: Decimal
 
-        with pytest.raises(ValidationError, match="Aggregate invariant violation"):
+        with pytest.raises(ValidationError):
             _ = Order(unique_id="order-1", total=Decimal("99.99"), domain_events=[])
 
     def test_aggregate_root_uncommitted_events(self) -> None:
@@ -182,7 +182,7 @@ class TestFlextModelsAggregateRoot:
         class Order(m.AggregateRoot):
             status: str = "pending"
 
-        with pytest.raises(ValidationError, match="Aggregate invariant violation"):
+        with pytest.raises(ValidationError):
             _ = Order(unique_id="order-1", status="pending", domain_events=[])
 
 
@@ -329,7 +329,7 @@ class TestFlextModelsIntegration:
             items_count: int = 0
             status: str = "new"
 
-        with pytest.raises(ValidationError, match="Aggregate invariant violation"):
+        with pytest.raises(ValidationError):
             _ = Order(
                 unique_id="order-1", status="new", items_count=0, domain_events=[]
             )

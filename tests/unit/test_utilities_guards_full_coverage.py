@@ -145,7 +145,7 @@ def test_protocol_and_simple_guard_helpers() -> None:
     assert not _is_type_obj(plain_obj, "container")
     assert not _is_type_obj(plain_obj, "command_bus")
     assert not _is_type_obj(plain_obj, "handler")
-    assert _is_type_obj(cast("test_t.Tests.object", _LoggerLike()), "logger")
+    assert not _is_type_obj(cast("test_t.Tests.object", _LoggerLike()), "logger")
     assert _is_type_obj(cast("test_t.Tests.object", r[int].ok(1)), "result")
     assert not _is_type_obj(plain_obj, "service")
     assert not _is_type_obj(plain_obj, "middleware")

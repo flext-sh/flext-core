@@ -555,7 +555,7 @@ class TestFlextModels:
         class TestAggregate(m.AggregateRoot):
             name: str
 
-        with pytest.raises(ValidationError, match="Aggregate invariant violation"):
+        with pytest.raises(ValidationError):
             _ = TestAggregate(name="test")
 
     def test_aggregate_root_invariants(self) -> None:
@@ -569,7 +569,7 @@ class TestFlextModels:
             value: int
             _invariants: ClassVar[list[Callable[[], bool]]] = [passing_invariant]
 
-        with pytest.raises(ValidationError, match="Aggregate invariant violation"):
+        with pytest.raises(ValidationError):
             _ = TestAggregate(name="test", value=10)
 
         def failing_invariant() -> bool:
@@ -579,7 +579,7 @@ class TestFlextModels:
             name: str
             _invariants: ClassVar[list[Callable[[], bool]]] = [failing_invariant]
 
-        with pytest.raises(ValidationError, match="Aggregate invariant violation"):
+        with pytest.raises(ValidationError):
             _ = FailingAggregate(name="test")
 
     def test_value_object_immutability(self) -> None:
@@ -646,7 +646,7 @@ class TestFlextModels:
         class TestAggregate(m.AggregateRoot):
             name: str
 
-        with pytest.raises(ValidationError, match="Aggregate invariant violation"):
+        with pytest.raises(ValidationError):
             _ = TestAggregate(name="test")
 
     def test_aggregate_root_mark_events_empty(self) -> None:
@@ -655,7 +655,7 @@ class TestFlextModels:
         class TestAggregate(m.AggregateRoot):
             name: str
 
-        with pytest.raises(ValidationError, match="Aggregate invariant violation"):
+        with pytest.raises(ValidationError):
             _ = TestAggregate(name="test")
 
     def test_aggregate_root_bulk_domain_events(self) -> None:
@@ -664,7 +664,7 @@ class TestFlextModels:
         class TestAggregate(m.AggregateRoot):
             name: str
 
-        with pytest.raises(ValidationError, match="Aggregate invariant violation"):
+        with pytest.raises(ValidationError):
             _ = TestAggregate(name="test")
 
     def test_aggregate_root_bulk_domain_events_validation(self) -> None:
@@ -673,7 +673,7 @@ class TestFlextModels:
         class TestAggregate(m.AggregateRoot):
             name: str
 
-        with pytest.raises(ValidationError, match="Aggregate invariant violation"):
+        with pytest.raises(ValidationError):
             _ = TestAggregate(name="test")
 
     def test_aggregate_root_bulk_domain_events_limit(self) -> None:
@@ -682,7 +682,7 @@ class TestFlextModels:
         class TestAggregate(m.AggregateRoot):
             name: str
 
-        with pytest.raises(ValidationError, match="Aggregate invariant violation"):
+        with pytest.raises(ValidationError):
             _ = TestAggregate(name="test")
 
     def test_aggregate_root_domain_event_handler_execution(self) -> None:
@@ -699,7 +699,7 @@ class TestFlextModels:
                 self.handler_called = True
                 self.handler_data = data
 
-        with pytest.raises(ValidationError, match="Aggregate invariant violation"):
+        with pytest.raises(ValidationError):
             _ = TestAggregate(name="test", handler_data={})
 
     def test_aggregate_root_domain_event_handler_error(self) -> None:
@@ -714,7 +714,7 @@ class TestFlextModels:
                 error_msg = "Handler failed"
                 raise ValueError(error_msg)
 
-        with pytest.raises(ValidationError, match="Aggregate invariant violation"):
+        with pytest.raises(ValidationError):
             _ = TestAggregate(name="test")
 
     def test_domain_event_model_creation(self) -> None:

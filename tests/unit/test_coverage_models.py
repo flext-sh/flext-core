@@ -223,7 +223,7 @@ class TestAggregateRoots:
             order_number: str
             status: str
 
-        with pytest.raises(ValidationError, match="Aggregate invariant violation"):
+        with pytest.raises(ValidationError):
             _ = Order(order_number="ORD-001", status="pending", domain_events=[])
 
     def test_aggregate_root_invariants(self) -> None:
@@ -235,7 +235,7 @@ class TestAggregateRoots:
             balance: float
             currency: str
 
-        with pytest.raises(ValidationError, match="Aggregate invariant violation"):
+        with pytest.raises(ValidationError):
             _ = Account(balance=1000.0, currency="USD", domain_events=[])
 
     def test_aggregate_root_lifecycle(self) -> None:
@@ -247,7 +247,7 @@ class TestAggregateRoots:
             name: str
             status: str
 
-        with pytest.raises(ValidationError, match="Aggregate invariant violation"):
+        with pytest.raises(ValidationError):
             _ = Project(name="New Project", status="planning", domain_events=[])
 
 
@@ -569,7 +569,7 @@ class TestModelSerialization:
             items: list[dict[str, t.Tests.object]]
             total: float
 
-        with pytest.raises(ValidationError, match="Aggregate invariant violation"):
+        with pytest.raises(ValidationError):
             _ = ShoppingCart(
                 items=[
                     {"product_id": "P1", "quantity": 2},

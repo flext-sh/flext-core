@@ -225,7 +225,7 @@ def main(argv: list[str] | None = None) -> int:
     _ = parser.add_argument("--skip-check", action="store_true")
     args = parser.parse_args(argv)
     cli = u.Infra.resolve(args)
-    return FlextInfraPyprojectModernizer(root=cli.workspace).run(args, cli)
+    return FlextInfraPyprojectModernizer(workspace_root=cli.workspace).run(args, cli)
 
 
 if __name__ == "__main__":

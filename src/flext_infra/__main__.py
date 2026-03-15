@@ -28,8 +28,8 @@ from collections.abc import Mapping
 from types import MappingProxyType
 from typing import ClassVar, override
 
-from flext_core import FlextRuntime, r, s
-from flext_infra import c, output
+from flext_core import r, s
+from flext_infra import c, output, u
 
 
 class FlextInfraMainCLI(s[int]):
@@ -69,7 +69,7 @@ class FlextInfraMainCLI(s[int]):
     @override
     def execute(self) -> r[int]:
         """Execute the CLI dispatcher and return exit code."""
-        return r[int].ok(self.main())
+        return r[int].ok(main_inner())
 
     @staticmethod
     def _print_help() -> None:
@@ -79,31 +79,31 @@ class FlextInfraMainCLI(s[int]):
         for group in sorted(FlextInfraMainCLI.GROUPS):
             output.info(f"  {group:<16}{FlextInfraMainCLI.DESCRIPTIONS.get(group, '')}")
 
-    @staticmethod
-    def main() -> int:
-        """Dispatch to the appropriate group CLI."""
-        FlextRuntime.ensure_structlog_configured()
-        if len(sys.argv) < c.Infra.MIN_ARGV or sys.argv[1] in {"-h", "--help"}:
-            FlextInfraMainCLI._print_help()
-            return (
-                0
-                if len(sys.argv) >= c.Infra.MIN_ARGV and sys.argv[1] in {"-h", "--help"}
-                else 1
-            )
-        group = sys.argv[1]
-        if group not in FlextInfraMainCLI.GROUPS:
-            output.error(f"unknown group '{group}'")
-            FlextInfraMainCLI._print_help()
-            return 1
-        sys.argv = [f"flext-infra {group}"] + sys.argv[2:]
-        module = importlib.import_module(FlextInfraMainCLI.GROUPS[group])
-        exit_code = module.main()
-        return int(exit_code) if exit_code is not None else 0
+
+def main_inner(argv: list[str] | None = None) -> int:
+    """Dispatch to the appropriate group CLI."""
+    args = argv if argv is not None else sys.argv
+    if len(args) < c.Infra.MIN_ARGV or args[1] in {"-h", "--help"}:
+        FlextInfraMainCLI._print_help()
+        return (
+            0
+            if len(args) >= c.Infra.MIN_ARGV and args[1] in {"-h", "--help"}
+            else 1
+        )
+    group = args[1]
+    if group not in FlextInfraMainCLI.GROUPS:
+        output.error(f"unknown group '{group}'")
+        FlextInfraMainCLI._print_help()
+        return 1
+    sys.argv = [f"flext-infra {group}"] + args[2:]
+    module = importlib.import_module(FlextInfraMainCLI.GROUPS[group])
+    exit_code = module.main()
+    return int(exit_code) if exit_code is not None else 0
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     """Run the top-level flext-infra CLI dispatcher."""
-    return FlextInfraMainCLI.main()
+    return u.Infra.run_cli(main_inner, argv)
 
 
 if __name__ == "__main__":
