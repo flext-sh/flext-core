@@ -22,7 +22,6 @@ from pathlib import Path
 
 from pydantic import JsonValue, TypeAdapter, ValidationError
 
-from flext_core import FlextRuntime
 from flext_infra import c, m, output, t, u
 from flext_infra.core.basemk_validator import FlextInfraBaseMkValidator
 from flext_infra.core.inventory import FlextInfraInventoryService
@@ -214,9 +213,8 @@ def _run_stub_validate(cli: u.Infra.CliArgs, project: list[str] | None) -> int:
     return 1
 
 
-def main() -> int:
+def _main_inner(argv: list[str] | None = None) -> int:
     """Run core infrastructure services."""
-    FlextRuntime.ensure_structlog_configured()
     parser = u.Infra.create_parser(
         prog="flext_infra core",
         description="Core infrastructure services",
@@ -290,7 +288,7 @@ def main() -> int:
     stv.add_argument("--project", action="append", help="Project to validate")
     _ = stv.add_argument("--all", action="store_true", help="Validate all projects")
 
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     cli = u.Infra.resolve(args)
 
     commands = {
@@ -324,6 +322,11 @@ def main() -> int:
         parser.print_help()
         return 1
     return handler()
+
+
+def main() -> int:
+    """Run core infrastructure services."""
+    return u.Infra.run_cli(_main_inner)
 
 
 if __name__ == "__main__":
