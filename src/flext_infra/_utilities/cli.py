@@ -10,11 +10,18 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import json
 from argparse import ArgumentParser, Namespace
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from pathlib import Path
 
+from pydantic import BaseModel
+
+from flext_core import r
 from flext_core.models import FlextModels
+from flext_infra import t
+from flext_infra._utilities.output import output
+from flext_infra.models import FlextInfraModels as m
 
 
 class FlextInfraUtilitiesCli:
@@ -252,6 +259,132 @@ class FlextInfraUtilitiesCli:
             project=project,
             projects=projects,
         )
+
+    @staticmethod
+    def run_cli(
+        main_fn: Callable[[list[str] | None], int],
+        argv: list[str] | None = None,
+    ) -> int:
+        from flext_core import FlextRuntime
+        from flext_infra._utilities.output import output
+
+        try:
+            FlextRuntime.ensure_structlog_configured()
+            return main_fn(argv)
+        except SystemExit as exc:
+            exit_value = exc.code
+            if isinstance(exit_value, int):
+                return exit_value
+            if exit_value is None:
+                return 0
+            output.error(str(exit_value))
+            return 1
+        except Exception as exc:
+            output.error(str(exc))
+            return 1
+
+    @staticmethod
+    def exit_code[T](
+        result: r[T],
+        *,
+        failure_msg: str = "operation failed",
+    ) -> int:
+        from flext_infra._utilities.output import output
+
+        if result.is_success:
+            return 0
+        output.error(result.error or failure_msg)
+        return 1
+
+    @staticmethod
+    def emit(
+        data: BaseModel | Mapping[str, t.Scalar],
+        *,
+        text_fn: Callable[..., str] | None = None,
+        cli: FlextInfraUtilitiesCli.CliArgs,
+    ) -> None:
+        """Emit formatted data to stdout based on output format.
+
+        Outputs machine-readable payload to stdout. Diagnostic/status messages
+        go to stderr via the output module.
+
+        Args:
+            data: BaseModel instance or mapping of scalar values to emit.
+            text_fn: Optional formatter function for text output. If provided
+                and output_format is "text", used to format data. Otherwise,
+                str(data) is used.
+            cli: CliArgs instance specifying output format and other options.
+
+        """
+        if cli.output_format == "json":
+            # JSON output: use model_dump_json() for BaseModel, json.dumps() for Mapping
+            if isinstance(data, BaseModel):
+                output.write(data.model_dump_json())
+            else:
+                output.write(json.dumps(data))
+        elif cli.output_format == "text":
+            # Text output: use text_fn if provided, otherwise str(data)
+            if text_fn is not None:
+                output.write(text_fn(data))
+            else:
+                output.write(str(data))
+
+    @staticmethod
+    def iter_projects(
+        cli: FlextInfraUtilitiesCli.CliArgs,
+    ) -> r[list[m.Infra.Workspace.ProjectInfo]]:
+        """Discover and filter projects based on CLI arguments.
+
+        Calls discover_projects() and filters by project_names() if specified.
+        Returns sorted list of ProjectInfo wrapped in r[T].
+
+        Args:
+            cli: CliArgs instance with workspace and project selection.
+
+        Returns:
+            Result containing sorted list of ProjectInfo, or failure if discovery fails.
+
+        """
+        # Discover all projects in workspace
+        discovery_result = FlextInfraUtilitiesCli._discover_projects_impl(cli.workspace)
+        if discovery_result.is_failure:
+            return discovery_result
+
+        projects = discovery_result.value
+        project_names = cli.project_names()
+
+        # Filter by project names if specified
+        if project_names is not None:
+            filtered = [p for p in projects if p.name in project_names]
+            return r[list[m.Infra.Workspace.ProjectInfo]].ok(
+                sorted(filtered, key=lambda p: p.name)
+            )
+
+        # Return all projects sorted
+        return r[list[m.Infra.Workspace.ProjectInfo]].ok(
+            sorted(projects, key=lambda p: p.name)
+        )
+
+    @staticmethod
+    def _discover_projects_impl(
+        workspace: Path,
+    ) -> r[list[m.Infra.Workspace.ProjectInfo]]:
+        """Internal implementation that delegates to discovery module.
+
+        This method exists to allow iter_projects() to call the discovery
+        method without circular imports or tight coupling.
+
+        Args:
+            workspace: Workspace root path.
+
+        Returns:
+            Result containing list of ProjectInfo or failure message.
+
+        """
+        # Import here to avoid circular imports at module level
+        from flext_infra._utilities.discovery import FlextInfraUtilitiesDiscovery
+
+        return FlextInfraUtilitiesDiscovery.discover_projects(workspace)
 
 
 __all__ = ["FlextInfraUtilitiesCli"]
