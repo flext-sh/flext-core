@@ -10,9 +10,8 @@ from types import SimpleNamespace
 import pytest
 import tomlkit
 
-from flext_infra import u
-from flext_infra._utilities.cli import FlextInfraUtilitiesCli
-from flext_infra.deps.modernizer import FlextInfraPyprojectModernizer, main
+from flext_infra import FlextInfraPyprojectModernizer, u
+from flext_infra.deps.modernizer import main
 from flext_tests import tm
 
 
@@ -109,8 +108,7 @@ class TestModernizerRunAndMain:
         monkeypatch.setattr(modernizer, "find_pyproject_files", _find_files)
         monkeypatch.setattr(u.Infra, "read", _read_doc)
         tm.that(
-            modernizer.run(args, FlextInfraUtilitiesCli.CliArgs(workspace=tmp_path))
-            in {0, 1},
+            modernizer.run(args, u.Infra.CliArgs(workspace=tmp_path)) in {0, 1},
             eq=True,
         )
 
@@ -141,7 +139,7 @@ class TestModernizerRunAndMain:
         tm.that(
             modernizer.run(
                 args,
-                FlextInfraUtilitiesCli.CliArgs(workspace=tmp_path, apply=True),
+                u.Infra.CliArgs(workspace=tmp_path, apply=True),
             ),
             eq=0,
         )
@@ -180,11 +178,11 @@ class TestModernizerRunAndMain:
             _ = (cwd, timeout, env)
             return SimpleNamespace(is_failure=False, value=SimpleNamespace(exit_code=1))
 
-        monkeypatch.setattr(modernizer._runner, "run_raw", _run_ok)
+        monkeypatch.setattr(u.Infra, "run_raw", _run_ok)
         tm.that(modernizer._run_poetry_check([pyproject]), eq=0)
-        monkeypatch.setattr(modernizer._runner, "run_raw", _run_fail)
+        monkeypatch.setattr(u.Infra, "run_raw", _run_fail)
         tm.that(modernizer._run_poetry_check([pyproject]), eq=1)
-        monkeypatch.setattr(modernizer._runner, "run_raw", _run_non_zero)
+        monkeypatch.setattr(u.Infra, "run_raw", _run_non_zero)
         tm.that(modernizer._run_poetry_check([pyproject]), eq=1)
 
     def test_main_cli_paths(self, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -199,14 +197,14 @@ class TestModernizerRunAndMain:
         def _run_zero(
             _self: FlextInfraPyprojectModernizer,
             _args: argparse.Namespace,
-            _cli: FlextInfraUtilitiesCli.CliArgs,
+            _cli: u.Infra.CliArgs,
         ) -> int:
             return 0
 
         def _run_forty_two(
             _self: FlextInfraPyprojectModernizer,
             _args: argparse.Namespace,
-            _cli: FlextInfraUtilitiesCli.CliArgs,
+            _cli: u.Infra.CliArgs,
         ) -> int:
             return 42
 

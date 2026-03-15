@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
-from flext_infra.deps._phases import InjectCommentsPhase
+from flext_infra import InjectCommentsPhase
 from flext_tests import tm
-
-from ... import h
+from tests.infra import h
 
 
 class TestInjectCommentsPhase:

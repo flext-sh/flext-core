@@ -8,9 +8,8 @@ from pathlib import Path
 import pytest
 import tomlkit
 
-from flext_infra._utilities.cli import FlextInfraUtilitiesCli
+from flext_infra import FlextInfraPyprojectModernizer, FlextInfraUtilitiesCli
 from flext_infra.deps import modernizer as modernizer_module
-from flext_infra.deps.modernizer import FlextInfraPyprojectModernizer
 from flext_tests import t, tm
 
 

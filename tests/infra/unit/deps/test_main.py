@@ -19,7 +19,7 @@ import pytest
 from flext_infra.deps import __main__ as deps_main
 from flext_infra.deps.__main__ import _SUBCOMMAND_MODULES, _main_impl, main
 from flext_tests import tm
-from tests.infra.typings import t
+from tests.infra import t
 
 
 def _fake_module(return_value: t.Infra.TomlValue = 0) -> ModuleType:

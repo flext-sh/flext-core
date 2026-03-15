@@ -6,10 +6,9 @@ import pytest
 
 import flext_infra.deps.internal_sync as _internal_sync_mod
 from flext_core import r
-from flext_infra.deps.internal_sync import FlextInfraInternalDependencySyncService
+from flext_infra import FlextInfraInternalDependencySyncService
 from flext_tests import tm
-from tests.infra import h
-from tests.infra.typings import t
+from tests.infra import h, t
 
 
 class TestWorkspaceRootFromEnv:

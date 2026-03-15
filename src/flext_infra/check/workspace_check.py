@@ -16,10 +16,6 @@ from pydantic import BaseModel, JsonValue, TypeAdapter, ValidationError
 
 from flext_core import r, s, t
 from flext_infra import (
-    FlextInfraUtilitiesIo,
-    FlextInfraUtilitiesPaths,
-    FlextInfraUtilitiesReporting,
-    FlextInfraUtilitiesSubprocess,
     c,
     m,
     output,
@@ -49,13 +45,8 @@ class FlextInfraWorkspaceChecker(s):
             wire_packages=None,
             wire_classes=None,
         )
-        self._path_resolver = FlextInfraUtilitiesPaths()
-        self._path_resolver = FlextInfraUtilitiesPaths()
-        self._reporting = FlextInfraUtilitiesReporting()
-        self._json = FlextInfraUtilitiesIo()
-        self._runner: p.Infra.CommandRunner = FlextInfraUtilitiesSubprocess()
         self._workspace_root = self._resolve_workspace_root(workspace_root)
-        report_dir = self._reporting.get_report_dir(
+        report_dir = u.Infra.get_report_dir(
             self._workspace_root,
             c.Infra.Toml.PROJECT,
             c.Infra.Verbs.CHECK,
@@ -423,7 +414,7 @@ class FlextInfraWorkspaceChecker(s):
     def _resolve_workspace_root(self, workspace_root: Path | None) -> Path:
         if workspace_root is not None:
             return workspace_root.resolve()
-        result = self._path_resolver.workspace_root()
+        result = u.Infra.workspace_root()
         return result.value if result.is_success else Path.cwd().resolve()
 
     @staticmethod
@@ -527,7 +518,7 @@ class FlextInfraWorkspaceChecker(s):
         timeout: int = c.Infra.Timeouts.DEFAULT,
         env: Mapping[str, str] | None = None,
     ) -> m.Infra.Core.CommandOutput:
-        result = self._runner.run_raw(cmd, cwd=cwd, timeout=timeout, env=env)
+        result = u.Infra.run_raw(cmd, cwd=cwd, timeout=timeout, env=env)
         if result.is_failure:
             return m.Infra.Core.CommandOutput(
                 stdout="",

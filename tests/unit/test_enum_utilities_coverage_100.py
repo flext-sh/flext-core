@@ -22,7 +22,7 @@ import pytest
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import t
-from flext_tests import u
+from flext_tests import tm, u
 
 
 class Status(StrEnum):
@@ -241,7 +241,7 @@ class TestuEnumIsMember:
             else str(scenario.value)
         )
         result = u.is_member(Status, value_typed)
-        assert result == scenario.expected
+        tm.that(result, eq=scenario.expected)
 
 
 class TestuEnumIsSubset:
@@ -256,7 +256,7 @@ class TestuEnumIsSubset:
             else str(scenario.value)
         )
         result = u.is_subset(Status, scenario.valid_members, value_typed)
-        assert result == scenario.expected
+        tm.that(result, eq=scenario.expected)
 
 
 class TestuEnumParse:
@@ -267,8 +267,8 @@ class TestuEnumParse:
         """Test parse with various scenarios."""
         result = u.parse(scenario.value, Status)
         if scenario.expected_success:
-            assert result.is_success
-            assert result.value == scenario.expected_status
+            tm.ok(result)
+            tm.that(result.value, eq=scenario.expected_status)
         else:
             _ = u.Tests.Result.assert_failure(result)
             assert (
@@ -289,7 +289,7 @@ class TestuEnumParseOrDefault:
     def test_parse_or_default(self, scenario: ParseOrDefaultScenario) -> None:
         """Test parse_or_default with various scenarios."""
         result = u.parse_or_default(Status, scenario.value, scenario.default)
-        assert result == scenario.expected
+        tm.that(result, eq=scenario.expected)
 
 
 class TestuEnumCoerceValidator:
@@ -310,7 +310,7 @@ class TestuEnumCoerceValidator:
         )
         if scenario.expected_success:
             result = validator(value)
-            assert result == scenario.expected_status
+            tm.that(result, eq=scenario.expected_status)
         else:
             with pytest.raises(ValueError) as exc_info:
                 _ = validator(value)
@@ -328,19 +328,19 @@ class TestuEnumCoerceByNameValidator:
         """Test coerce_by_name_validator with member name."""
         validator = u.coerce_by_name_validator(Status)
         result = validator("ACTIVE")
-        assert result == Status.ACTIVE
+        tm.that(result, eq=Status.ACTIVE)
 
     def test_coerce_by_name_validator_by_value(self) -> None:
         """Test coerce_by_name_validator with member value."""
         validator = u.coerce_by_name_validator(Status)
         result = validator("active")
-        assert result == Status.ACTIVE
+        tm.that(result, eq=Status.ACTIVE)
 
     def test_coerce_by_name_validator_direct_enum(self) -> None:
         """Test coerce_by_name_validator with direct enum."""
         validator = u.coerce_by_name_validator(Status)
         result = validator(Status.PENDING)
-        assert result == Status.PENDING
+        tm.that(result, eq=Status.PENDING)
 
     def test_coerce_by_name_validator_invalid(self) -> None:
         """Test coerce_by_name_validator with invalid value."""
@@ -356,29 +356,29 @@ class TestuEnumMetadata:
     def test_values(self) -> None:
         """Test values method."""
         values = u.values(Status)
-        assert isinstance(values, frozenset)
-        assert "active" in values
-        assert "pending" in values
-        assert "inactive" in values
+        tm.that(values, is_=frozenset)
+        tm.that(values, contains="active")
+        tm.that(values, contains="pending")
+        tm.that(values, contains="inactive")
 
     def test_names(self) -> None:
         """Test names method."""
         names = u.names(Status)
-        assert isinstance(names, frozenset)
-        assert "ACTIVE" in names
-        assert "PENDING" in names
-        assert "INACTIVE" in names
+        tm.that(names, is_=frozenset)
+        tm.that(names, contains="ACTIVE")
+        tm.that(names, contains="PENDING")
+        tm.that(names, contains="INACTIVE")
 
     def test_members(self) -> None:
         """Test members method."""
         members = u.members(Status)
-        assert isinstance(members, frozenset)
-        assert Status.ACTIVE in members
-        assert Status.PENDING in members
-        assert Status.INACTIVE in members
+        tm.that(members, is_=frozenset)
+        tm.that(members, contains=Status.ACTIVE)
+        tm.that(members, contains=Status.PENDING)
+        tm.that(members, contains=Status.INACTIVE)
 
     def test_metadata_caching(self) -> None:
         """Test that metadata methods are cached."""
         values1 = u.values(Status)
         values2 = u.values(Status)
-        assert values1 is values2
+        tm.that(values1 is values2, eq=True)

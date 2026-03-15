@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import tomlkit
 
-from flext_infra.deps._phases import ConsolidateGroupsPhase
+from flext_infra import ConsolidateGroupsPhase
 from flext_tests import tm
 
 

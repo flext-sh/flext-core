@@ -4,8 +4,7 @@ import tomlkit
 
 from flext_infra.deps.extra_paths import FlextInfraExtraPathsManager
 from flext_tests import tm
-
-from ...helpers import h
+from tests.infra import h
 
 
 def _manager() -> FlextInfraExtraPathsManager:

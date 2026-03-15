@@ -20,7 +20,7 @@ from typing import Annotated, ClassVar
 import pytest
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_tests import u
+from flext_tests import tm, u
 
 
 class ExtractPageParamsScenario(BaseModel):
@@ -324,8 +324,8 @@ class TestuPaginationExtractPageParams:
         if scenario.expected_success:
             _ = u.Tests.Result.assert_success(result)
             page, page_size = result.value
-            assert page == scenario.expected_page
-            assert page_size == scenario.expected_page_size
+            tm.that(page, eq=scenario.expected_page)
+            tm.that(page_size, eq=scenario.expected_page_size)
         else:
             u.Tests.Result.assert_failure_with_error(
                 result,
@@ -377,8 +377,8 @@ class TestuPaginationPreparePaginationData:
         if scenario.expected_success:
             _ = u.Tests.Result.assert_success(result)
             data = result.value
-            assert "data" in data
-            assert "pagination" in data
+            tm.that(data, contains="data")
+            tm.that(data, contains="pagination")
             pagination = data["pagination"]
             assert isinstance(pagination, dict)
             assert pagination["page"] == scenario.page
@@ -419,8 +419,8 @@ class TestuPaginationBuildPaginationResponse:
         )
         _ = u.Tests.Result.assert_success(result)
         response = result.value
-        assert "data" in response
-        assert "pagination" in response
+        tm.that(response, contains="data")
+        tm.that(response, contains="pagination")
         assert response["message"] == "Success"
 
     def test_build_pagination_response_no_message(self) -> None:
@@ -439,8 +439,8 @@ class TestuPaginationBuildPaginationResponse:
         result = u.build_pagination_response(pagination_data)
         _ = u.Tests.Result.assert_success(result)
         response = result.value
-        assert "data" in response
-        assert "pagination" in response
+        tm.that(response, contains="data")
+        tm.that(response, contains="pagination")
         assert "message" not in response
 
     def test_build_pagination_response_missing_data(self) -> None:
@@ -477,7 +477,7 @@ class TestuPaginationBuildPaginationResponse:
         result = u.build_pagination_response(pagination_data)
         _ = u.Tests.Result.assert_success(result)
         response = result.value
-        assert "data" in response
+        tm.that(response, contains="data")
 
 
 class TestuPaginationExtractPaginationConfig:

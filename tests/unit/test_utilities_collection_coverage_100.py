@@ -24,7 +24,7 @@ import pytest
 from pydantic import BaseModel, ConfigDict, Field, SkipValidation
 
 from flext_core import FlextRuntime, p, r
-from flext_tests import t, u
+from flext_tests import t, tm, u
 
 from ..test_utils import assertion_helpers
 
@@ -759,24 +759,24 @@ class TestuCollectionParseSequence:
         result = u.parse_sequence(scenario.enum_cls, scenario.values)
         if scenario.expected_success:
             _ = assertion_helpers.assert_flext_result_success(result)
-            assert result.value is not None
+            tm.that(result.value, none=False)
             if scenario.expected_count is not None:
-                assert len(result.value) == scenario.expected_count
+                tm.that(len(result.value), eq=scenario.expected_count)
             for val in result.value:
-                assert isinstance(val, scenario.enum_cls)
+                tm.that(val, is_=scenario.enum_cls)
         else:
             _ = assertion_helpers.assert_flext_result_failure(result)
-            assert result.error is not None
+            tm.that(result.error, none=False)
             if scenario.error_contains:
-                assert scenario.error_contains in result.error
+                tm.that(scenario.error_contains, in_=result.error)
 
     def test_parse_sequence_with_custom_enum(self) -> None:
         """Test parse_sequence with custom enum class."""
         result = u.parse_sequence(FixturePriority, ["low", "medium", "high"])
         _ = assertion_helpers.assert_flext_result_success(result)
-        assert result.value is not None
-        assert len(result.value) == 3
-        assert all(isinstance(v, FixturePriority) for v in result.value)
+        tm.that(result.value, none=False)
+        tm.that(len(result.value), eq=3)
+        tm.that(all(isinstance(v, FixturePriority) for v in result.value), eq=True)
 
     def test_parse_sequence_error_message_format(self) -> None:
         """Test parse_sequence error message format."""
@@ -785,8 +785,8 @@ class TestuCollectionParseSequence:
             ["active", "invalid1", "invalid2"],
         )
         _ = assertion_helpers.assert_flext_result_failure(result)
-        assert result.error is not None
-        assert "Invalid" in result.error
+        tm.that(result.error, none=False)
+        tm.that("Invalid", in_=result.error)
         assert "invalid1" in result.error or "invalid2" in result.error
 
 
@@ -805,9 +805,9 @@ class TestuCollectionCoerceListValidator:
             result = validator(scenario.value)
             u.Tests.Assertions.assert_result_matches_expected(result, list)
             if scenario.expected_count is not None:
-                assert len(result) == scenario.expected_count
+                tm.that(len(result), eq=scenario.expected_count)
             for val in result:
-                assert isinstance(val, scenario.enum_cls)
+                tm.that(val, is_=scenario.enum_cls)
         else:
             with pytest.raises(
                 scenario.error_type or Exception,
@@ -826,12 +826,12 @@ class TestuCollectionCoerceListValidator:
             "statuses": ["active", "pending"]
         })
         dumped1 = model1.model_dump()
-        assert len(dumped1["statuses"]) == 2
+        tm.that(len(dumped1["statuses"]), eq=2)
         model2: TestModel = TestModel.model_validate({
             "statuses": [FixtureStatus.ACTIVE, FixtureStatus.PENDING],
         })
         dumped2 = model2.model_dump()
-        assert len(dumped2["statuses"]) == 2
+        tm.that(len(dumped2["statuses"]), eq=2)
 
 
 class TestuCollectionParseMapping:
@@ -847,16 +847,16 @@ class TestuCollectionParseMapping:
         result = u.parse_mapping(scenario.enum_cls, scenario.mapping)
         if scenario.expected_success:
             _ = assertion_helpers.assert_flext_result_success(result)
-            assert result.value is not None
+            tm.that(result.value, none=False)
             if scenario.expected_keys is not None:
-                assert set(result.value.keys()) == set(scenario.expected_keys)
+                tm.that(set(result.value.keys()), eq=set(scenario.expected_keys))
             for val in result.value.values():
-                assert isinstance(val, scenario.enum_cls)
+                tm.that(val, is_=scenario.enum_cls)
         else:
             _ = assertion_helpers.assert_flext_result_failure(result)
-            assert result.error is not None
+            tm.that(result.error, none=False)
             if scenario.error_contains:
-                assert scenario.error_contains in result.error
+                tm.that(scenario.error_contains, in_=result.error)
 
     def test_parse_mapping_with_custom_enum(self) -> None:
         """Test parse_mapping with custom enum class."""
@@ -865,9 +865,11 @@ class TestuCollectionParseMapping:
             {"task1": "low", "task2": "medium", "task3": "high"},
         )
         _ = assertion_helpers.assert_flext_result_success(result)
-        assert result.value is not None
-        assert len(result.value) == 3
-        assert all(isinstance(v, FixturePriority) for v in result.value.values())
+        tm.that(result.value, none=False)
+        tm.that(len(result.value), eq=3)
+        tm.that(
+            all(isinstance(v, FixturePriority) for v in result.value.values()), eq=True
+        )
 
     def test_parse_mapping_error_message_format(self) -> None:
         """Test parse_mapping error message format."""
@@ -876,8 +878,8 @@ class TestuCollectionParseMapping:
             {"user1": "active", "user2": "invalid1", "user3": "invalid2"},
         )
         _ = assertion_helpers.assert_flext_result_failure(result)
-        assert result.error is not None
-        assert "Invalid" in result.error
+        tm.that(result.error, none=False)
+        tm.that("Invalid", in_=result.error)
         assert "invalid1" in result.error or "invalid2" in result.error
 
 
@@ -896,9 +898,9 @@ class TestuCollectionCoerceDictValidator:
             result = validator(scenario.value)
             u.Tests.Assertions.assert_result_matches_expected(result, dict)
             if scenario.expected_keys is not None:
-                assert set(result.keys()) == set(scenario.expected_keys)
+                tm.that(set(result.keys()), eq=set(scenario.expected_keys))
             for val in result.values():
-                assert isinstance(val, scenario.enum_cls)
+                tm.that(val, is_=scenario.enum_cls)
         else:
             with pytest.raises(
                 scenario.error_type or Exception,
@@ -918,7 +920,7 @@ class TestuCollectionCoerceDictValidator:
         model1 = TestModel.model_validate({
             "user_statuses": {"user1": "active", "user2": "pending"},
         })
-        assert len(model1.user_statuses) == 2
+        tm.that(len(model1.user_statuses), eq=2)
         assert all(isinstance(s, FixtureStatus) for s in model1.user_statuses.values())
         model2 = TestModel.model_validate({
             "user_statuses": {
@@ -926,7 +928,7 @@ class TestuCollectionCoerceDictValidator:
                 "user2": FixtureStatus.PENDING,
             },
         })
-        assert len(model2.user_statuses) == 2
+        tm.that(len(model2.user_statuses), eq=2)
         assert all(isinstance(s, FixtureStatus) for s in model2.user_statuses.values())
 
 
@@ -981,7 +983,7 @@ class TestuCollectionFilter:
             scenario.predicate,
             mapper=scenario.mapper,
         )
-        assert result == scenario.expected_result
+        tm.that(result, eq=scenario.expected_result)
 
 
 class TestuCollectionCount:
@@ -995,7 +997,7 @@ class TestuCollectionCount:
     def test_count(self, scenario: CountScenario) -> None:
         """Test count with various scenarios."""
         result = u.count(scenario.items, scenario.predicate)
-        assert result == scenario.expected_count
+        tm.that(result, eq=scenario.expected_count)
 
 
 class TestuCollectionProcess:
@@ -1019,10 +1021,10 @@ class TestuCollectionProcess:
         if scenario.expected_failure:
             _ = assertion_helpers.assert_flext_result_failure(result)
             if scenario.error_contains:
-                assert scenario.error_contains in str(result.error)
+                tm.that(scenario.error_contains, in_=str(result.error))
         else:
             _ = assertion_helpers.assert_flext_result_success(result)
-            assert result.value == scenario.expected_result
+            tm.that(result.value, eq=scenario.expected_result)
 
 
 class TestuCollectionGroup:
@@ -1036,7 +1038,7 @@ class TestuCollectionGroup:
     def test_group(self, scenario: GroupScenario) -> None:
         """Test group with various scenarios."""
         result = u.group(scenario.items, scenario.key)
-        assert result == scenario.expected_result
+        tm.that(result, eq=scenario.expected_result)
 
 
 class TestuCollectionChunk:
@@ -1050,7 +1052,7 @@ class TestuCollectionChunk:
     def test_chunk(self, scenario: ChunkScenario) -> None:
         """Test chunk with various scenarios."""
         result = u.chunk(scenario.items, scenario.size)
-        assert result == scenario.expected_result
+        tm.that(result, eq=scenario.expected_result)
 
 
 class TestuCollectionBatch:
@@ -1062,10 +1064,10 @@ class TestuCollectionBatch:
         result = u.batch(items, lambda x: x * 2, size=2)
         _ = assertion_helpers.assert_flext_result_success(result)
         data = result.value
-        assert data.total == 5
-        assert data.success_count == 5
-        assert data.results == [2, 4, 6, 8, 10]
-        assert data.errors == []
+        tm.that(data.total, eq=5)
+        tm.that(data.success_count, eq=5)
+        tm.that(data.results, eq=[2, 4, 6, 8, 10])
+        tm.that(data.errors, eq=[])
 
     def test_batch_with_errors_collect(self) -> None:
         """Test batch with errors (collect mode)."""
@@ -1080,10 +1082,10 @@ class TestuCollectionBatch:
         result = u.batch(items, op, on_error="collect")
         _ = assertion_helpers.assert_flext_result_success(result)
         data = result.value
-        assert data.total == 4
-        assert data.success_count == 3
-        assert len(data.errors) == 1
-        assert "Zero" in data.errors[0][1]
+        tm.that(data.total, eq=4)
+        tm.that(data.success_count, eq=3)
+        tm.that(len(data.errors), eq=1)
+        tm.that("Zero", in_=data.errors[0][1])
 
     def test_batch_flatten(self) -> None:
         """Test batch with flattening."""
@@ -1099,7 +1101,7 @@ class TestuCollectionBatch:
         )
         _ = assertion_helpers.assert_flext_result_success(result)
         data = result.value
-        assert data.results == [1, 2, 3, 4, 5]
+        tm.that(data.results, eq=[1, 2, 3, 4, 5])
 
 
 class TestuCollectionMerge:
@@ -1111,9 +1113,9 @@ class TestuCollectionMerge:
         other_data: dict[str, t.NormalizedValue] = {"b": {"y": 2}, "c": 3}
         result = u.merge(base_data, other_data)
         _ = assertion_helpers.assert_flext_result_success(result)
-        assert result.value["a"] == 1
-        assert result.value["c"] == 3
-        assert isinstance(result.value["b"], dict)
+        tm.that(result.value["a"], eq=1)
+        tm.that(result.value["c"], eq=3)
+        tm.that(result.value["b"], is_=dict)
 
     def test_merge_override(self) -> None:
         """Test override merge."""
@@ -1121,9 +1123,9 @@ class TestuCollectionMerge:
         other_data: dict[str, t.NormalizedValue] = {"b": {"y": 2}, "c": 3}
         result = u.merge(base_data, other_data, strategy="override")
         _ = assertion_helpers.assert_flext_result_success(result)
-        assert result.value["a"] == 1
-        assert result.value["c"] == 3
-        assert isinstance(result.value["b"], dict)
+        tm.that(result.value["a"], eq=1)
+        tm.that(result.value["c"], eq=3)
+        tm.that(result.value["b"], is_=dict)
 
 
 __all__ = [

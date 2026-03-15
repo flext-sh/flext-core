@@ -183,7 +183,7 @@ class TestrCoverage:
 
         result = r[int].ok(5).flat_map(double_in_result)
         _ResultAssertions.assert_success(result)
-        assert result.value == 10
+        tm.ok(result, eq=10)
 
     def test_flat_map_failure_propagates(self) -> None:
         """Test that flat_map propagates failure from inner result."""
@@ -193,7 +193,7 @@ class TestrCoverage:
 
         result = r[int].ok(5).flat_map(failing_op)
         _ResultAssertions.assert_failure(result)
-        assert result.error == "Inner failed"
+        tm.fail(result, has="Inner failed")
 
     def test_flat_map_initial_failure_skips(self) -> None:
         """Test that flat_map skips on initial failure."""
@@ -203,7 +203,7 @@ class TestrCoverage:
 
         result = r[int].fail("error").flat_map(double_in_result)
         _ResultAssertions.assert_failure(result)
-        assert result.error == "error"
+        tm.fail(result, has="error")
 
     def test_filter_success_when_predicate_true(self) -> None:
         """Test filter passes when predicate is true."""
@@ -222,7 +222,7 @@ class TestrCoverage:
         """Test that filter skips on failure."""
         result: r[int] = r[int].fail("error").filter(lambda x: x > 3)
         _ResultAssertions.assert_failure(result)
-        assert result.error == "error"
+        tm.fail(result, has="error")
 
     def test_alt_maps_error_message(self) -> None:
         """Test alt maps error message on failure."""
@@ -274,7 +274,7 @@ class TestrCoverage:
 
         result = r[int].ok(5).flow_through(double, add_ten)
         _ResultAssertions.assert_success(result)
-        assert result.value == 20
+        tm.ok(result, eq=20)
 
     def test_flow_through_stops_on_failure(self) -> None:
         """Test flow_through stops processing on failure."""
@@ -289,7 +289,7 @@ class TestrCoverage:
 
         result = r[str].ok("test").flow_through(double, add_ten)
         _ResultAssertions.assert_failure(result)
-        assert result.error == "Not a numeric string"
+        tm.fail(result, has="Not a numeric string")
 
     def test_safe_decorator_success(self) -> None:
         """Test safe decorator wraps successful function."""
@@ -311,7 +311,7 @@ class TestrCoverage:
         wrapped_func = r.safe(failing_func)
         result: r[str] = wrapped_func()
         _ResultAssertions.assert_failure(result)
-        assert result.error is not None and error_msg in result.error
+        tm.fail(result, has=error_msg)
 
     def test_create_from_callable_success(self) -> None:
         """Test create_from_callable with successful callable."""
@@ -331,7 +331,7 @@ class TestrCoverage:
 
         result = r[str].create_from_callable(failing_func)
         _ResultAssertions.assert_failure(result)
-        assert result.error is not None and error_msg in result.error
+        tm.fail(result, has=error_msg)
 
     def test_create_from_callable_with_error_code(self) -> None:
         """Test create_from_callable with error code."""
@@ -342,7 +342,7 @@ class TestrCoverage:
 
         result = r[str].create_from_callable(failing_func, error_code="TEST_ERROR")
         _ResultAssertions.assert_failure(result)
-        assert result.error_code == "TEST_ERROR"
+        tm.fail(result, code="TEST_ERROR")
 
     def test_traverse_success(self) -> None:
         """Test traverse with successful mapping."""
@@ -395,7 +395,7 @@ class TestrCoverage:
 
         result = r[str].with_resource(factory, operation)
         _ResultAssertions.assert_success_with_value(result, "success")
-        assert len(resources_created) == 1
+        tm.that(len(resources_created), eq=1)
 
     def test_with_resource_with_cleanup(self) -> None:
         """Test with_resource executes cleanup even on success."""
@@ -412,12 +412,12 @@ class TestrCoverage:
 
         result = r[str].with_resource(factory, operation, cleanup=cleanup)
         _ResultAssertions.assert_success(result)
-        assert len(cleanups_called) == 1
+        tm.that(len(cleanups_called), eq=1)
 
     def test_bool_success_is_true(self) -> None:
         """Test that success result is truthy."""
         result = r[str].ok("test")
-        assert bool(result) is True
+        tm.that(bool(result), eq=True)
 
     def test_bool_failure_is_false(self) -> None:
         """Test that failure result is falsy."""
