@@ -1137,7 +1137,7 @@ class FlextRuntime:
             wrapper_arg = wrapper_class_factory()
         else:
             wrapper_arg = module.make_filtering_bound_logger(level_to_use)
-        factory_to_use: Callable[..., t.NormalizedValue | BaseModel] | None
+        factory_to_use: Callable[..., object] | object | None
         if logger_factory is not None:
             factory_to_use = logger_factory
         elif async_logging:

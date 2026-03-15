@@ -15,7 +15,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 import json
+=======
+import argparse
+>>>>>>> Stashed changes
 =======
 import argparse
 >>>>>>> Stashed changes
@@ -216,6 +220,9 @@ def _main_inner(argv: list[str] | None) -> int:
         dest="output_format",
         help="Output format (default: text)",
     )
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 
     args = parser.parse_args(argv)
