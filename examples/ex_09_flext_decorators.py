@@ -203,7 +203,7 @@ class Ex09FlextDecorators(Examples):
         missing_provided_value = self.rand_str(8)
 
         @d.inject(missing=f"svc.{self.rand_str(6)}")
-        def missing_with_default(*, missing=None) -> str:
+        def missing_with_default(*, missing: str | None = None) -> str:
             """Keep running when dependency is not registered."""
             return missing_default_value if missing is None else missing_provided_value
 

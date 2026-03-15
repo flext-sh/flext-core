@@ -106,4 +106,4 @@ class TestDetectorReportFlags:
         tmp_path: Path,
     ) -> None:
         detector = _setup(monkeypatch, tmp_path, _DepsStub(tmp_path / "proj-a", 0, 0))
-        tm.that(tm.ok(detector.run(["--json", "--no-pip-check"])), eq=0)
+        tm.that(tm.ok(detector.run(["--format", "json", "--no-pip-check"])), eq=0)

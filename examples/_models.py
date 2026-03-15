@@ -10,10 +10,10 @@ from flext_core import m, r
 class _ProtocolHandler(BaseModel):
     model_config = ConfigDict(frozen=False)
 
-    def handle(self, message) -> r[str]:
+    def handle(self, message: BaseModel) -> r[str]:
         return r[str].ok(str(message))
 
-    def check_data(self, data) -> r[bool]:
+    def check_data(self, data: BaseModel | None) -> r[bool]:
         return r[bool].ok(data is not None)
 
 
@@ -39,13 +39,13 @@ class _CommandBusStub(BaseModel):
 
     model_config = ConfigDict(frozen=False)
 
-    def dispatch(self, message) -> r[str]:
+    def dispatch(self, message: BaseModel) -> r[str]:
         return r[str].ok(str(message))
 
-    def publish(self, event) -> None:
+    def publish(self, event: BaseModel) -> None:
         pass
 
-    def register_handler(self, _handler) -> r[bool]:
+    def register_handler(self, _handler: BaseModel) -> r[bool]:
         return r[bool].ok(True)
 
 

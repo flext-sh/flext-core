@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import argparse
 from pathlib import Path
 
 import pytest
@@ -16,22 +15,13 @@ from flext_infra.workspace.sync import FlextInfraSyncService
 from flext_tests import tm
 
 
-def _ns(**kwargs: str | float | bool | list[str] | Path | None) -> argparse.Namespace:
-    return argparse.Namespace(**kwargs)
+def _cli(workspace: Path) -> FlextInfraUtilitiesCli.CliArgs:
+    return FlextInfraUtilitiesCli.CliArgs(workspace=workspace)
 
 
 def _cmd_out(code: int) -> m.Infra.Core.CommandOutput:
     return m.Infra.Core.CommandOutput(
         stdout="", stderr="", exit_code=code, duration=0.0
-    )
-
-
-def _orch_args(projects: list[str] | None = None) -> argparse.Namespace:
-    return _ns(
-        projects=["p-a", "p-b"] if projects is None else projects,
-        verb="check",
-        fail_fast=False,
-        make_arg=[],
     )
 
 
@@ -58,7 +48,7 @@ class TestRunDetect:
             return result
 
         monkeypatch.setattr(FlextInfraWorkspaceDetector, "detect", _detect_stub)
-        tm.that(workspace_main._run_detect(_ns(project_root=tmp_path)), eq=expected)
+        tm.that(workspace_main._run_detect(_cli(tmp_path)), eq=expected)
 
 
 class TestRunSync:
@@ -85,10 +75,7 @@ class TestRunSync:
             return result
 
         monkeypatch.setattr(FlextInfraSyncService, "sync", _sync_stub)
-        tm.that(
-            workspace_main._run_sync(_ns(project_root=tmp_path, canonical_root=None)),
-            eq=expected,
-        )
+        tm.that(workspace_main._run_sync(_cli(tmp_path), None), eq=expected)
 
 
 class TestRunOrchestrate:
@@ -108,10 +95,26 @@ class TestRunOrchestrate:
             "orchestrate",
             _orchestrate_success,
         )
-        tm.that(workspace_main._run_orchestrate(_orch_args()), eq=0)
+        tm.that(
+            workspace_main._run_orchestrate(
+                ["p-a", "p-b"],
+                "check",
+                fail_fast=False,
+                make_args=[],
+            ),
+            eq=0,
+        )
 
     def test_no_projects(self) -> None:
-        tm.that(workspace_main._run_orchestrate(_orch_args([])), eq=1)
+        tm.that(
+            workspace_main._run_orchestrate(
+                [],
+                "check",
+                fail_fast=False,
+                make_args=[],
+            ),
+            eq=1,
+        )
 
     def test_with_failures(self, monkeypatch: pytest.MonkeyPatch) -> None:
         def _orchestrate_partial(
@@ -129,7 +132,15 @@ class TestRunOrchestrate:
             "orchestrate",
             _orchestrate_partial,
         )
-        tm.that(workspace_main._run_orchestrate(_orch_args()), eq=1)
+        tm.that(
+            workspace_main._run_orchestrate(
+                ["p-a", "p-b"],
+                "check",
+                fail_fast=False,
+                make_args=[],
+            ),
+            eq=1,
+        )
 
     def test_orchestration_failure(self, monkeypatch: pytest.MonkeyPatch) -> None:
         def _orchestrate_failure(
@@ -147,7 +158,15 @@ class TestRunOrchestrate:
             "orchestrate",
             _orchestrate_failure,
         )
-        tm.that(workspace_main._run_orchestrate(_orch_args(["p-a"])), eq=1)
+        tm.that(
+            workspace_main._run_orchestrate(
+                ["p-a"],
+                "check",
+                fail_fast=False,
+                make_args=[],
+            ),
+            eq=1,
+        )
 
 
 class TestRunMigrate:
@@ -221,29 +240,37 @@ class TestRunMigrate:
         )
 
 
-def _capture(monkeypatch: pytest.MonkeyPatch) -> list[argparse.Namespace]:
-    captured: list[argparse.Namespace] = []
+def _capture(
+    monkeypatch: pytest.MonkeyPatch,
+) -> list[tuple[list[str], str, bool, list[str]]]:
+    captured: list[tuple[list[str], str, bool, list[str]]] = []
 
-    def _capture_orchestrate(args: argparse.Namespace) -> int:
-        captured.append(args)
+    def _capture_orchestrate(
+        projects: list[str],
+        verb: str,
+        *,
+        fail_fast: bool,
+        make_args: list[str],
+    ) -> int:
+        captured.append((projects, verb, fail_fast, make_args))
         return 0
 
     monkeypatch.setattr(workspace_main, "_run_orchestrate", _capture_orchestrate)
     return captured
 
 
-def _ok_main(_args: argparse.Namespace) -> int:
+def _ok_main(*_args: object, **_kwargs: object) -> int:
     return 0
 
 
 class TestMainCli:
     def test_detect(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(workspace_main, "_run_detect", _ok_main)
-        tm.that(workspace_main.main(["detect", "--project-root", str(tmp_path)]), eq=0)
+        tm.that(workspace_main.main(["detect", "--workspace", str(tmp_path)]), eq=0)
 
     def test_sync(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(workspace_main, "_run_sync", _ok_main)
-        tm.that(workspace_main.main(["sync", "--project-root", str(tmp_path)]), eq=0)
+        tm.that(workspace_main.main(["sync", "--workspace", str(tmp_path)]), eq=0)
 
     def test_orchestrate(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(workspace_main, "_run_orchestrate", _ok_main)
@@ -251,9 +278,7 @@ class TestMainCli:
 
     def test_migrate(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(workspace_main, "_run_migrate", _ok_main)
-        tm.that(
-            workspace_main.main(["migrate", "--workspace-root", str(tmp_path)]), eq=0
-        )
+        tm.that(workspace_main.main(["migrate", "--workspace", str(tmp_path)]), eq=0)
 
     def test_no_command(self) -> None:
         tm.that(workspace_main.main([]), eq=1)
@@ -261,7 +286,7 @@ class TestMainCli:
     def test_fail_fast(self, monkeypatch: pytest.MonkeyPatch) -> None:
         captured = _capture(monkeypatch)
         workspace_main.main(["orchestrate", "--verb", "check", "--fail-fast", "p-a"])
-        tm.that(captured[0].fail_fast, eq=True)
+        tm.that(captured[0][2], eq=True)
 
     def test_make_args(self, monkeypatch: pytest.MonkeyPatch) -> None:
         captured = _capture(monkeypatch)
@@ -275,4 +300,4 @@ class TestMainCli:
             "PARALLEL=4",
             "p-a",
         ])
-        tm.that(captured[0].make_arg, has=["VERBOSE=1", "PARALLEL=4"])
+        tm.that(captured[0][3], has=["VERBOSE=1", "PARALLEL=4"])

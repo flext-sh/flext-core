@@ -14,7 +14,7 @@ class Ex11HandlerLikeService(FlextSettings):
 
     @classmethod
     @override
-    def validate(cls, value) -> Ex11HandlerLikeService:
+    def validate(cls, value: m.ConfigMap) -> Ex11HandlerLikeService:
         """Validate service payload."""
         return cls.model_validate(value)
 
@@ -22,7 +22,7 @@ class Ex11HandlerLikeService(FlextSettings):
         """Check whether message type is handled."""
         return bool(message_type)
 
-    def handle(self, message) -> r[str]:
+    def handle(self, message: m.Command) -> r[str]:
         """Handle service message."""
         return r[str].ok(str(message))
 
@@ -60,11 +60,11 @@ class Ex11ProcessorProtocolBad(m.Value):
 class Ex11CommandBusStub(m.Value):
     model_config = ConfigDict(frozen=False)
 
-    def dispatch(self, message) -> r[str]:
+    def dispatch(self, message: m.Command) -> r[str]:
         return r[str].ok(str(message))
 
-    def publish(self, _event) -> None:
+    def publish(self, _event: m.DomainEvent) -> None:
         return
 
-    def register_handler(self, _handler) -> r[bool]:
+    def register_handler(self, _handler: m.Value) -> r[bool]:
         return r[bool].ok(True)

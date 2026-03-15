@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from flext_infra import u
 from flext_infra.deps.detector import FlextInfraRuntimeDevDependencyDetector
 from flext_tests import tm
 
@@ -52,7 +53,7 @@ class TestFlextInfraRuntimeDevDependencyDetectorInit:
 
     def test_project_filter_with_single_project(self, tmp_path: Path) -> None:
         parser = FlextInfraRuntimeDevDependencyDetector.parser(tmp_path / "limits.toml")
-        args = parser.parse_args(["--project", "test-proj"])
+        args = u.Infra.resolve(parser.parse_args(["--project", "test-proj"]))
         tm.that(
             FlextInfraRuntimeDevDependencyDetector.project_filter(args),
             eq=["test-proj"],
@@ -60,7 +61,9 @@ class TestFlextInfraRuntimeDevDependencyDetectorInit:
 
     def test_project_filter_with_multiple_projects(self, tmp_path: Path) -> None:
         parser = FlextInfraRuntimeDevDependencyDetector.parser(tmp_path / "limits.toml")
-        args = parser.parse_args(["--projects", "proj-a,proj-b,proj-c"])
+        args = u.Infra.resolve(
+            parser.parse_args(["--projects", "proj-a,proj-b,proj-c"])
+        )
         tm.that(
             FlextInfraRuntimeDevDependencyDetector.project_filter(args),
             eq=["proj-a", "proj-b", "proj-c"],
@@ -68,5 +71,5 @@ class TestFlextInfraRuntimeDevDependencyDetectorInit:
 
     def test_project_filter_with_no_filter(self, tmp_path: Path) -> None:
         parser = FlextInfraRuntimeDevDependencyDetector.parser(tmp_path / "limits.toml")
-        args = parser.parse_args([])
+        args = u.Infra.resolve(parser.parse_args([]))
         tm.that(FlextInfraRuntimeDevDependencyDetector.project_filter(args), eq=None)

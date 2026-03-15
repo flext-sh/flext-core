@@ -119,7 +119,14 @@ class TestFlextInfraRuntimeDevDependencyDetectorRunReport:
             _DepsStub(tmp_path / "proj-a", 0, 0),
             json_service=types.SimpleNamespace(write_json=_write_json),
         )
-        tm.ok(detector.run(["--output", str(custom_output), "--no-pip-check"]))
+        tm.ok(
+            detector.run([
+                "--output",
+                str(custom_output),
+                "--no-pip-check",
+                "--apply",
+            ])
+        )
         tm.that(len(call_paths), eq=1)
         tm.that(call_paths[0], eq=str(custom_output))
 
@@ -154,7 +161,7 @@ class TestFlextInfraRuntimeDevDependencyDetectorRunReport:
         )
         tm.that(
             "failed to create report directory"
-            in tm.fail(detector.run(["--no-pip-check"])),
+            in tm.fail(detector.run(["--no-pip-check", "--apply"])),
             eq=True,
         )
 
@@ -194,5 +201,5 @@ class TestFlextInfraRuntimeDevDependencyDetectorRunReport:
             json_service=json_service,
             reporting_service=reporting,
         )
-        error = tm.fail(detector.run(["--no-pip-check"]))
+        error = tm.fail(detector.run(["--no-pip-check", "--apply"]))
         tm.that("write failed" in error or "failed to write report" in error, eq=True)

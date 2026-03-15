@@ -11,6 +11,7 @@ import pytest
 import tomlkit
 
 from flext_infra import u
+from flext_infra._utilities.cli import FlextInfraUtilitiesCli
 from flext_infra.deps.modernizer import FlextInfraPyprojectModernizer, main
 from flext_tests import tm
 
@@ -103,7 +104,11 @@ class TestModernizerRunAndMain:
 
         monkeypatch.setattr(modernizer, "find_pyproject_files", _find_files)
         monkeypatch.setattr(u.Infra, "read", _read_doc)
-        tm.that(modernizer.run(args) in {0, 1}, eq=True)
+        tm.that(
+            modernizer.run(args, FlextInfraUtilitiesCli.CliArgs(workspace=tmp_path))
+            in {0, 1},
+            eq=True,
+        )
 
     def test_run_with_poetry_check(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
@@ -129,7 +134,13 @@ class TestModernizerRunAndMain:
         monkeypatch.setattr(modernizer, "find_pyproject_files", _find_files)
         monkeypatch.setattr(u.Infra, "read", _read_doc)
         monkeypatch.setattr(modernizer, "_run_poetry_check", _check)
-        tm.that(modernizer.run(args), eq=0)
+        tm.that(
+            modernizer.run(
+                args,
+                FlextInfraUtilitiesCli.CliArgs(workspace=tmp_path, apply=True),
+            ),
+            eq=0,
+        )
 
     def test_run_poetry_check_paths(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
@@ -174,12 +185,16 @@ class TestModernizerRunAndMain:
 
     def test_main_cli_paths(self, monkeypatch: pytest.MonkeyPatch) -> None:
         def _run_zero(
-            _self: FlextInfraPyprojectModernizer, _args: argparse.Namespace
+            _self: FlextInfraPyprojectModernizer,
+            _args: argparse.Namespace,
+            _cli: FlextInfraUtilitiesCli.CliArgs,
         ) -> int:
             return 0
 
         def _run_forty_two(
-            _self: FlextInfraPyprojectModernizer, _args: argparse.Namespace
+            _self: FlextInfraPyprojectModernizer,
+            _args: argparse.Namespace,
+            _cli: FlextInfraUtilitiesCli.CliArgs,
         ) -> int:
             return 42
 

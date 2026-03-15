@@ -12,7 +12,7 @@ from tests.infra.unit.deps.test_detector_detect import _DepsStub, _setup_detecto
 
 
 class TestDetectorRunFailures:
-    def test_run_with_workspace_root_resolution_failure(
+    def test_run_without_workspace_root_resolution_path(
         self,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
@@ -24,13 +24,8 @@ class TestDetectorRunFailures:
             workspace_root_from_file=_workspace_root_from_file
         )
         monkeypatch.setattr(detector_module, "FlextInfraUtilitiesPaths", lambda: paths)
-        error = tm.fail(
-            detector_module.FlextInfraRuntimeDevDependencyDetector().run([])
-        )
-        tm.that(
-            "root not found" in error or "workspace root resolution failed" in error,
-            eq=True,
-        )
+        result = detector_module.FlextInfraRuntimeDevDependencyDetector().run([])
+        tm.that(tm.ok(result), eq=2)
 
     def test_run_with_project_discovery_failure(
         self,

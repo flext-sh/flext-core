@@ -90,22 +90,24 @@ class TestMainHelpAndErrors:
     def test_main_with_help_flag(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test main with -h flag returns 0."""
         monkeypatch.setattr(sys, "argv", ["prog", "-h"])
-        result = main()
-        tm.that(result, eq=0)
+        with pytest.raises(SystemExit) as exc:
+            _ = main()
+        tm.that(exc.value.code, eq=0)
 
     def test_main_with_no_arguments(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        """Test main with no arguments returns 1."""
+        """Test main with no arguments returns 0 after help."""
         monkeypatch.setattr(sys, "argv", ["prog"])
         result = main()
-        tm.that(result, eq=1)
+        tm.that(result, eq=0)
 
     def test_main_with_unknown_subcommand(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """Test main with unknown subcommand returns 1."""
+        """Test main with unknown subcommand raises parser error."""
         monkeypatch.setattr(sys, "argv", ["prog", "unknown"])
-        result = main()
-        tm.that(result, eq=1)
+        with pytest.raises(SystemExit) as exc:
+            _ = main()
+        tm.that(exc.value.code, eq=2)
 
 
 class TestMainReturnValues:
@@ -129,6 +131,6 @@ class TestMainReturnValues:
         expected: int,
     ) -> None:
         """Test main normalizes subcommand return values."""
-        _patch_dispatch(monkeypatch, ["prog", "detect"], return_val)
+        _patch_dispatch(monkeypatch, ["prog", "detect", "--workspace", "."], return_val)
         result = main()
         tm.that(result, eq=expected)

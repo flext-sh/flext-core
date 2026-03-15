@@ -55,7 +55,7 @@ class TestMainSubcommandDispatch:
         monkeypatch: pytest.MonkeyPatch,
         name: str,
     ) -> None:
-        _patch_dispatch(monkeypatch, ["prog", name])
+        _patch_dispatch(monkeypatch, ["prog", name, "--workspace", "."])
         tm.that(main(), eq=0)
 
 
@@ -74,7 +74,7 @@ class TestMainModuleImport:
         subcommand: str,
         expected_module: str,
     ) -> None:
-        monkeypatch.setattr(sys, "argv", ["prog", subcommand])
+        monkeypatch.setattr(sys, "argv", ["prog", subcommand, "--workspace", "."])
         monkeypatch.setattr(main_mod, "FlextRuntime", _NO_STRUCTLOG)
         imported: list[str] = []
         fake = _fake_module(0)
@@ -116,7 +116,7 @@ class TestMainStructlogConfiguration:
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         called: list[bool] = []
-        monkeypatch.setattr(sys, "argv", ["prog", "detect"])
+        monkeypatch.setattr(sys, "argv", ["prog", "detect", "--workspace", "."])
         monkeypatch.setattr(
             main_mod,
             "FlextRuntime",
@@ -139,7 +139,7 @@ class TestMainStructlogConfiguration:
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         order: list[str] = []
-        monkeypatch.setattr(sys, "argv", ["prog", "detect"])
+        monkeypatch.setattr(sys, "argv", ["prog", "detect", "--workspace", "."])
         monkeypatch.setattr(
             main_mod,
             "FlextRuntime",
@@ -169,7 +169,7 @@ class TestMainExceptionHandling:
         self,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        monkeypatch.setattr(sys, "argv", ["prog", "detect"])
+        monkeypatch.setattr(sys, "argv", ["prog", "detect", "--workspace", "."])
         monkeypatch.setattr(main_mod, "FlextRuntime", _NO_STRUCTLOG)
         error_mod = ModuleType("error_mod")
 
@@ -191,5 +191,5 @@ class TestMainExceptionHandling:
 
 def test_string_zero_return_value(monkeypatch: pytest.MonkeyPatch) -> None:
     """Test string '0' return value normalization (edge case)."""
-    _patch_dispatch(monkeypatch, ["prog", "detect"], "0")
+    _patch_dispatch(monkeypatch, ["prog", "detect", "--workspace", "."], "0")
     tm.that(main(), eq=0)

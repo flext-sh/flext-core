@@ -29,7 +29,7 @@ class Ex00UserInput(m.Value):
 
     @field_validator("name", "email", mode="before")
     @classmethod
-    def validate_non_empty_text(cls, value) -> str:
+    def validate_non_empty_text(cls, value: str) -> str:
         """Validate text input."""
         if not isinstance(value, str):
             msg = "Expected text input"
