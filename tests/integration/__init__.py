@@ -1,15 +1,7 @@
 # AUTO-GENERATED FILE — DO NOT EDIT MANUALLY.
 # Regenerate with: make codegen
 #
-"""Integration tests for FLEXT Core components.
-
-Integration tests focus on testing component interactions and
-how different modules work together in realistic scenarios using
-advanced Python 3.13 patterns and comprehensive edge case testing.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
+"""Integration package."""
 
 from __future__ import annotations
 
@@ -19,6 +11,7 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
     from flext_core.typings import FlextTypes
+    from tests.integration import patterns
     from tests.integration.patterns.test_advanced_patterns import TestFunction
     from tests.integration.patterns.test_architectural_patterns import (
         TestEnterprisePatterns,
@@ -424,6 +417,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "mark_test_pattern",
     ),
     "p": ("tests.integration.test_refactor_policy_mro", "FlextLdapProtocols"),
+    "patterns": ("tests.integration.patterns", ""),
     "pytestmark": ("tests.integration.test_service", "pytestmark"),
     "s": ("tests.integration.test_service", "UserQueryService"),
     "t": ("tests.integration.test_refactor_policy_mro", "FlextLdapTypes"),
@@ -525,6 +519,7 @@ __all__ = [
     "make_result_logger",
     "mark_test_pattern",
     "p",
+    "patterns",
     "pytestmark",
     "s",
     "t",

@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
+    from examples import _models
     from examples._models.ex00 import Ex00UserInput, Ex00UserProfile
     from examples._models.ex01 import (
         Ex01DemonstrationResult,
@@ -203,6 +204,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "SharedPerson": ("examples._models.shared", "SharedPerson"),
     "UserInput": ("examples.models", "UserInput"),
     "UserProfile": ("examples.models", "UserProfile"),
+    "_models": ("examples._models", ""),
     "d": ("examples.ex_09_flext_decorators", "Ex09FlextDecorators"),
     "e": ("examples.ex_07_flext_exceptions", "Ex07FlextExceptions"),
     "em": ("examples.models", "em"),
@@ -294,6 +296,7 @@ __all__ = [
     "SharedPerson",
     "UserInput",
     "UserProfile",
+    "_models",
     "d",
     "e",
     "em",

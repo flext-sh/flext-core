@@ -1,14 +1,7 @@
 # AUTO-GENERATED FILE — DO NOT EDIT MANUALLY.
 # Regenerate with: make codegen
 #
-"""Unit tests for flext-core modules.
-
-Unit tests validate individual components using advanced Python 3.13 patterns,
-factories, and comprehensive edge case testing for maximum code reuse.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
+"""Unit package."""
 
 from __future__ import annotations
 
@@ -18,6 +11,7 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
     from flext_core.typings import FlextTypes
+    from tests.unit import contracts, flext_tests
     from tests.unit.conftest_infra import (
         infra_git,
         infra_git_repo,
@@ -1962,6 +1956,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "ValidatePaginationParamsScenario",
     ),
     "c": ("tests.unit.test_constants", "TestFlextConstants"),
+    "contracts": ("tests.unit.contracts", ""),
     "create_compare_entities_cases": (
         "tests.unit.test_utilities_domain",
         "create_compare_entities_cases",
@@ -1989,6 +1984,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "d": ("tests.unit.test_automated_decorators", "TestAutomatedFlextDecorators"),
     "dispatcher": ("tests.unit.test_dispatcher_full_coverage", "dispatcher"),
     "e": ("tests.unit.test_automated_exceptions", "TestAutomatedExceptions"),
+    "flext_tests": ("tests.unit.flext_tests", ""),
     "generators_module": (
         "tests.unit.test_utilities_generators_full_coverage",
         "generators_module",
@@ -3760,6 +3756,7 @@ __all__ = [
     "UnregisteredCommand",
     "ValidatePaginationParamsScenario",
     "c",
+    "contracts",
     "create_compare_entities_cases",
     "create_compare_value_objects_cases",
     "create_hash_entity_cases",
@@ -3769,6 +3766,7 @@ __all__ = [
     "d",
     "dispatcher",
     "e",
+    "flext_tests",
     "generators_module",
     "h",
     "handlers_module",

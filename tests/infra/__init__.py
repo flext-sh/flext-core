@@ -1,13 +1,7 @@
 # AUTO-GENERATED FILE — DO NOT EDIT MANUALLY.
 # Regenerate with: make codegen
 #
-"""FLEXT infra tests module.
-
-Provides MRO-based test infrastructure classes extending flext_tests base classes.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
+"""Infra package."""
 
 from __future__ import annotations
 
@@ -17,6 +11,7 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
     from flext_core.typings import FlextTypes
+    from tests.infra import unit
     from tests.infra.constants import FlextInfraTestConstants, c
     from tests.infra.fixtures import (
         real_docs_project,
@@ -42,6 +37,20 @@ if TYPE_CHECKING:
         WorkspaceScenarios,
     )
     from tests.infra.typings import FlextInfraTestTypes, t
+    from tests.infra.unit import (
+        basemk,
+        check,
+        codegen,
+        container,
+        core,
+        deps,
+        discovery,
+        docs,
+        github,
+        io,
+        refactor,
+        release,
+    )
     from tests.infra.unit._utilities.test_discovery_consolidated import (
         TestDiscoveryDiscoverProjects,
         TestDiscoveryFindAllPyprojectFiles,
@@ -2362,6 +2371,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "as_string_list",
     ),
     "auditor": ("tests.infra.unit.docs.auditor", "auditor"),
+    "basemk": ("tests.infra.unit.basemk", ""),
     "builder": ("tests.infra.unit.docs.builder", "builder"),
     "c": ("tests.infra.constants", "c"),
     "canonical_dev_dependencies": (
@@ -2369,10 +2379,17 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "canonical_dev_dependencies",
     ),
     "census": ("tests.infra.unit.codegen.census", "census"),
+    "check": ("tests.infra.unit.check", ""),
+    "codegen": ("tests.infra.unit.codegen", ""),
+    "container": ("tests.infra.unit.container", ""),
+    "core": ("tests.infra.unit.core", ""),
     "dedupe_specs": ("tests.infra.unit.deps.test_modernizer_helpers", "dedupe_specs"),
     "dep_name": ("tests.infra.unit.deps.test_modernizer_helpers", "dep_name"),
+    "deps": ("tests.infra.unit.deps", ""),
     "detector": ("tests.infra.unit.test_infra_workspace_detector", "detector"),
+    "discovery": ("tests.infra.unit.discovery", ""),
     "doc": ("tests.infra.unit.deps.test_modernizer_helpers", "doc"),
+    "docs": ("tests.infra.unit.docs", ""),
     "engine": ("tests.infra.unit.test_infra_templates", "engine"),
     "ensure_table": ("tests.infra.unit.deps.test_modernizer_helpers", "ensure_table"),
     "extract_dep_name": (
@@ -2382,7 +2399,9 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "fixer": ("tests.infra.unit.codegen.autofix", "fixer"),
     "gen": ("tests.infra.unit.docs.generator_internals", "gen"),
     "git_repo": ("tests.infra.unit.test_infra_git", "git_repo"),
+    "github": ("tests.infra.unit.github", ""),
     "h": ("tests.infra.helpers", "h"),
+    "io": ("tests.infra.unit.io", ""),
     "is_external": ("tests.infra.unit.docs.auditor", "is_external"),
     "m": ("tests.infra.models", "m"),
     "normalize_link": ("tests.infra.unit.docs.auditor", "normalize_link"),
@@ -2409,6 +2428,8 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "real_python_package": ("tests.infra.fixtures", "real_python_package"),
     "real_toml_project": ("tests.infra.fixtures", "real_toml_project"),
     "real_workspace": ("tests.infra.fixtures", "real_workspace"),
+    "refactor": ("tests.infra.unit.refactor", ""),
+    "release": ("tests.infra.unit.release", ""),
     "rewrite_dep_paths": (
         "tests.infra.unit.deps.test_path_sync_rewrite_deps",
         "rewrite_dep_paths",
@@ -3394,6 +3415,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "test_workspace_root_fallback",
     ),
     "u": ("tests.infra.utilities", "u"),
+    "unit": ("tests.infra.unit", ""),
     "unwrap_item": ("tests.infra.unit.deps.test_modernizer_helpers", "unwrap_item"),
     "v": ("tests.infra.unit.core.basemk_validator", "v"),
     "validator": ("tests.infra.unit.docs.validator_internals", "validator"),
@@ -3820,21 +3842,31 @@ __all__ = [
     "array",
     "as_string_list",
     "auditor",
+    "basemk",
     "builder",
     "c",
     "canonical_dev_dependencies",
     "census",
+    "check",
+    "codegen",
+    "container",
+    "core",
     "dedupe_specs",
     "dep_name",
+    "deps",
     "detector",
+    "discovery",
     "doc",
+    "docs",
     "engine",
     "ensure_table",
     "extract_dep_name",
     "fixer",
     "gen",
     "git_repo",
+    "github",
     "h",
+    "io",
     "is_external",
     "m",
     "normalize_link",
@@ -3849,6 +3881,8 @@ __all__ = [
     "real_python_package",
     "real_toml_project",
     "real_workspace",
+    "refactor",
+    "release",
     "rewrite_dep_paths",
     "run_lint",
     "run_pr",
@@ -4105,6 +4139,7 @@ __all__ = [
     "test_workspace_root_doc_construction",
     "test_workspace_root_fallback",
     "u",
+    "unit",
     "unwrap_item",
     "v",
     "validator",

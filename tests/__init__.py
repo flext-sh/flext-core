@@ -1,14 +1,7 @@
 # AUTO-GENERATED FILE — DO NOT EDIT MANUALLY.
 # Regenerate with: make codegen
 #
-"""flext-core comprehensive test suite.
-
-This package contains all tests for flext-core components.
-Uses flext_tests directly for all generic test infrastructure.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
+"""Tests package."""
 
 from __future__ import annotations
 
@@ -18,6 +11,7 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
     from flext_core.typings import FlextTypes
+    from tests import benchmark, helpers, infra, integration
     from tests.base import TestsFlextServiceBase
     from tests.benchmark.test_container_memory import (
         TestContainerMemory,
@@ -89,6 +83,7 @@ if TYPE_CHECKING:
         ValidationScenario,
         ValidationScenarios,
     )
+    from tests.infra import unit
     from tests.infra.constants import FlextInfraTestConstants
     from tests.infra.fixtures import (
         real_docs_project,
@@ -114,6 +109,20 @@ if TYPE_CHECKING:
         WorkspaceScenarios,
     )
     from tests.infra.typings import FlextInfraTestTypes, t
+    from tests.infra.unit import (
+        basemk,
+        check,
+        codegen,
+        container,
+        core,
+        deps,
+        discovery,
+        docs,
+        github,
+        io,
+        refactor,
+        release,
+    )
     from tests.infra.unit._utilities.test_discovery_consolidated import (
         TestDiscoveryDiscoverProjects,
         TestDiscoveryFindAllPyprojectFiles,
@@ -1091,6 +1100,7 @@ if TYPE_CHECKING:
         FullScenario,
         MinimalScenario,
     )
+    from tests.integration import patterns
     from tests.integration.patterns.test_advanced_patterns import TestFunction
     from tests.integration.patterns.test_architectural_patterns import (
         TestEnterprisePatterns,
@@ -1229,6 +1239,7 @@ if TYPE_CHECKING:
         test_data_factory,
     )
     from tests.typings import T, T_co, T_contra, TestsFlextTypes
+    from tests.unit import contracts, flext_tests
     from tests.unit.conftest_infra import (
         infra_git,
         infra_git_repo,
@@ -4893,6 +4904,8 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "assert_validates": ("tests.conftest", "assert_validates"),
     "assertion_helpers": ("tests.test_utils", "assertion_helpers"),
     "auditor": ("tests.infra.unit.docs.auditor", "auditor"),
+    "basemk": ("tests.infra.unit.basemk", ""),
+    "benchmark": ("tests.benchmark", ""),
     "builder": ("tests.infra.unit.docs.builder", "builder"),
     "c": ("tests.constants", "c"),
     "canonical_dev_dependencies": (
@@ -4900,7 +4913,12 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "canonical_dev_dependencies",
     ),
     "census": ("tests.infra.unit.codegen.census", "census"),
+    "check": ("tests.infra.unit.check", ""),
     "clean_container": ("tests.conftest", "clean_container"),
+    "codegen": ("tests.infra.unit.codegen", ""),
+    "container": ("tests.infra.unit.container", ""),
+    "contracts": ("tests.unit.contracts", ""),
+    "core": ("tests.infra.unit.core", ""),
     "create_compare_entities_cases": (
         "tests.unit.test_utilities_domain",
         "create_compare_entities_cases",
@@ -4928,9 +4946,12 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "d": ("tests.unit.test_automated_decorators", "TestAutomatedFlextDecorators"),
     "dedupe_specs": ("tests.infra.unit.deps.test_modernizer_helpers", "dedupe_specs"),
     "dep_name": ("tests.infra.unit.deps.test_modernizer_helpers", "dep_name"),
+    "deps": ("tests.infra.unit.deps", ""),
     "detector": ("tests.infra.unit.test_infra_workspace_detector", "detector"),
+    "discovery": ("tests.infra.unit.discovery", ""),
     "dispatcher": ("tests.unit.test_dispatcher_full_coverage", "dispatcher"),
     "doc": ("tests.infra.unit.deps.test_modernizer_helpers", "doc"),
+    "docs": ("tests.infra.unit.docs", ""),
     "e": ("tests.unit.test_automated_exceptions", "TestAutomatedExceptions"),
     "empty_strings": ("tests.conftest", "empty_strings"),
     "engine": ("tests.infra.unit.test_infra_templates", "engine"),
@@ -4943,6 +4964,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "fixture_factory": ("tests.test_utils", "fixture_factory"),
     "flext_result_failure": ("tests.conftest", "flext_result_failure"),
     "flext_result_success": ("tests.conftest", "flext_result_success"),
+    "flext_tests": ("tests.unit.flext_tests", ""),
     "gen": ("tests.infra.unit.docs.generator_internals", "gen"),
     "generators_module": (
         "tests.unit.test_utilities_generators_full_coverage",
@@ -4950,8 +4972,11 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     ),
     "get_memory_usage": ("tests.benchmark.test_container_memory", "get_memory_usage"),
     "git_repo": ("tests.infra.unit.test_infra_git", "git_repo"),
+    "github": ("tests.infra.unit.github", ""),
     "h": ("tests.infra.helpers", "h"),
     "handlers_module": ("tests.unit.test_handlers_full_coverage", "handlers_module"),
+    "helpers": ("tests.helpers", ""),
+    "infra": ("tests.infra", ""),
     "infra_git": ("tests.unit.conftest_infra", "infra_git"),
     "infra_git_repo": ("tests.unit.conftest_infra", "infra_git_repo"),
     "infra_io": ("tests.unit.conftest_infra", "infra_io"),
@@ -4974,9 +4999,11 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "infra_toml": ("tests.unit.conftest_infra", "infra_toml"),
     "infra_workflow_linter": ("tests.unit.conftest_infra", "infra_workflow_linter"),
     "infra_workflow_syncer": ("tests.unit.conftest_infra", "infra_workflow_syncer"),
+    "integration": ("tests.integration", ""),
     "invalid_hostnames": ("tests.conftest", "invalid_hostnames"),
     "invalid_port_numbers": ("tests.conftest", "invalid_port_numbers"),
     "invalid_uris": ("tests.conftest", "invalid_uris"),
+    "io": ("tests.infra.unit.io", ""),
     "is_external": ("tests.infra.unit.docs.auditor", "is_external"),
     "m": ("tests.models", "m"),
     "make_result_logger": (
@@ -4997,6 +5024,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "out_of_range": ("tests.conftest", "out_of_range"),
     "p": ("tests.protocols", "p"),
     "parser_scenarios": ("tests.conftest", "parser_scenarios"),
+    "patterns": ("tests.integration.patterns", ""),
     "project_dev_groups": (
         "tests.infra.unit.deps.test_modernizer_helpers",
         "project_dev_groups",
@@ -5016,6 +5044,8 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "real_python_package": ("tests.infra.fixtures", "real_python_package"),
     "real_toml_project": ("tests.infra.fixtures", "real_toml_project"),
     "real_workspace": ("tests.infra.fixtures", "real_workspace"),
+    "refactor": ("tests.infra.unit.refactor", ""),
+    "release": ("tests.infra.unit.release", ""),
     "reliability_scenarios": ("tests.conftest", "reliability_scenarios"),
     "reset_all_factories": ("tests.helpers.factories", "reset_all_factories"),
     "reset_global_container": ("tests.conftest", "reset_global_container"),
@@ -7434,6 +7464,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "test_workspace_root_fallback",
     ),
     "u": ("tests.utilities", "u"),
+    "unit": ("tests.infra.unit", ""),
     "unwrap_item": ("tests.infra.unit.deps.test_modernizer_helpers", "unwrap_item"),
     "v": ("tests.infra.unit.core.basemk_validator", "v"),
     "valid_hostnames": ("tests.conftest", "valid_hostnames"),
@@ -8320,11 +8351,18 @@ __all__ = [
     "assert_validates",
     "assertion_helpers",
     "auditor",
+    "basemk",
+    "benchmark",
     "builder",
     "c",
     "canonical_dev_dependencies",
     "census",
+    "check",
     "clean_container",
+    "codegen",
+    "container",
+    "contracts",
+    "core",
     "create_compare_entities_cases",
     "create_compare_value_objects_cases",
     "create_hash_entity_cases",
@@ -8334,9 +8372,12 @@ __all__ = [
     "d",
     "dedupe_specs",
     "dep_name",
+    "deps",
     "detector",
+    "discovery",
     "dispatcher",
     "doc",
+    "docs",
     "e",
     "empty_strings",
     "engine",
@@ -8346,12 +8387,16 @@ __all__ = [
     "fixture_factory",
     "flext_result_failure",
     "flext_result_success",
+    "flext_tests",
     "gen",
     "generators_module",
     "get_memory_usage",
     "git_repo",
+    "github",
     "h",
     "handlers_module",
+    "helpers",
+    "infra",
     "infra_git",
     "infra_git_repo",
     "infra_io",
@@ -8368,9 +8413,11 @@ __all__ = [
     "infra_toml",
     "infra_workflow_linter",
     "infra_workflow_syncer",
+    "integration",
     "invalid_hostnames",
     "invalid_port_numbers",
     "invalid_uris",
+    "io",
     "is_external",
     "m",
     "make_result_logger",
@@ -8382,6 +8429,7 @@ __all__ = [
     "out_of_range",
     "p",
     "parser_scenarios",
+    "patterns",
     "project_dev_groups",
     "pyright_content",
     "pytestmark",
@@ -8392,6 +8440,8 @@ __all__ = [
     "real_python_package",
     "real_toml_project",
     "real_workspace",
+    "refactor",
+    "release",
     "reliability_scenarios",
     "reset_all_factories",
     "reset_global_container",
@@ -9016,6 +9066,7 @@ __all__ = [
     "test_workspace_root_doc_construction",
     "test_workspace_root_fallback",
     "u",
+    "unit",
     "unwrap_item",
     "v",
     "valid_hostnames",

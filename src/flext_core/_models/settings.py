@@ -173,12 +173,12 @@ class FlextModelsConfig:
                 if isinstance(item, int):
                     codes_for_validation.append(item)
                 else:
-                    parsed_code = r[int].ok(0).map(lambda _, i=item: int(str(i)))
-                    if parsed_code.is_failure:
-                        parse_error = parsed_code.error or "invalid status code"
-                        msg = f"retry_on_status_codes item must be int or str: {parse_error}"
-                        raise TypeError(msg)
-                    codes_for_validation.append(parsed_code.value)
+                    try:
+                        parsed_code = int(str(item))
+                    except (TypeError, ValueError) as parse_exc:
+                        msg = f"retry_on_status_codes item must be int or str: {parse_exc}"
+                        raise TypeError(msg) from parse_exc
+                    codes_for_validation.append(parsed_code)
             result = FlextRuntime.validate_http_status_codes(codes_for_validation)
             if result.is_failure:
                 base_msg = "HTTP status code validation failed"
