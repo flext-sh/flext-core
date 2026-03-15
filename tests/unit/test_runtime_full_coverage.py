@@ -572,11 +572,9 @@ def test_runtime_result_all_missed_branches() -> None:
     flowed = none_success.flow_through(_ok_plus_one)
     assert flowed is none_success
 
-    with pytest.raises(
-        ValueError,
-        match="Cannot create success result with None value",
-    ):
-        FlextRuntime.RuntimeResult[int | None].ok(None)
+    none_ok = FlextRuntime.RuntimeResult[int | None].ok(None)
+    assert none_ok.is_success
+    assert none_ok.value is None
     none_error: FlextRuntime.RuntimeResult[int] = FlextRuntime.RuntimeResult[int].fail(
         None,
     )
