@@ -137,9 +137,7 @@ class FlextUtilitiesGuards:
     @staticmethod
     def _is_sized(value: t.NormalizedValue) -> TypeGuard[Sized]:
         """Check if value has __len__ (str, bytes, Sequence, Mapping)."""
-        if isinstance(value, (str, bytes, list, tuple, dict)):
-            return True
-        return hasattr(value, "__len__") and callable(getattr(value, "__len__", None))
+        return isinstance(value, Sized)
 
     @staticmethod
     def _is_str(value: t.NormalizedValue) -> TypeGuard[str]:
@@ -543,35 +541,15 @@ class FlextUtilitiesGuards:
 
     _PROTOCOL_SPECS: Mapping[str, Callable[[t.NormalizedValue], bool]] = (
         MappingProxyType({
-            "config": lambda v: (
-                hasattr(v, "app_name") and getattr(v, "app_name", None) is not None
-            ),
-            "context": lambda v: (
-                hasattr(v, "request_id") or hasattr(v, "correlation_id")
-            ),
-            "container": lambda v: (
-                hasattr(v, "register") and callable(getattr(v, "register", None))
-            ),
-            "command_bus": lambda v: (
-                hasattr(v, "dispatch") and callable(getattr(v, "dispatch", None))
-            ),
-            "handler": lambda v: (
-                hasattr(v, "handle") and callable(getattr(v, "handle", None))
-            ),
-            "logger": lambda v: all(
-                hasattr(v, a)
-                for a in ("debug", "info", "warning", "error", "exception")
-            ),
-            "result": lambda v: all(
-                hasattr(v, a) for a in ("is_success", "is_failure", "value", "error")
-            ),
-            "service": lambda v: (
-                hasattr(v, "run") and callable(getattr(v, "run", None))
-            ),
-            "middleware": lambda v: (
-                hasattr(v, "before_dispatch")
-                and callable(getattr(v, "before_dispatch", None))
-            ),
+            "config": lambda v: isinstance(v, p.Config),
+            "context": lambda v: isinstance(v, p.Context),
+            "container": lambda v: isinstance(v, p.DI),
+            "command_bus": lambda v: isinstance(v, p.CommandBus),
+            "handler": lambda v: isinstance(v, p.Handler),
+            "logger": lambda v: isinstance(v, p.Log.StructlogLogger),
+            "result": lambda v: isinstance(v, p.Result),
+            "service": lambda v: isinstance(v, p.Service),
+            "middleware": lambda v: isinstance(v, p.Middleware),
         })
     )
     _PROTOCOL_TYPE_MAP: Mapping[type, str] = MappingProxyType({
@@ -585,27 +563,71 @@ class FlextUtilitiesGuards:
         p.Service: "service",
         p.Middleware: "middleware",
     })
-    _STRING_METHOD_MAP: Mapping[str, str] = MappingProxyType({
-        "str": "_is_str",
-        "dict": "_is_dict",
-        "list": "is_list",
-        "tuple": "_is_tuple",
-        "sequence": "_is_sequence",
-        "mapping": "_is_mapping",
-        "list_or_tuple": "_is_list_or_tuple",
-        "sequence_not_str": "_is_sequence_not_str",
-        "sequence_not_str_bytes": "_is_sequence_not_str_bytes",
-        "sized": "_is_sized",
-        "callable": "_is_callable_key_func",
-        "bytes": "_is_bytes",
-        "int": "_is_int",
-        "float": "_is_float",
-        "bool": "_is_bool",
-        "none": "_is_none",
-        "string_non_empty": "is_string_non_empty",
-        "dict_non_empty": "is_dict_non_empty",
-        "list_non_empty": "is_list_non_empty",
+    _STRING_METHOD_MAP: frozenset[str] = frozenset({
+        "str",
+        "dict",
+        "list",
+        "tuple",
+        "sequence",
+        "mapping",
+        "list_or_tuple",
+        "sequence_not_str",
+        "sequence_not_str_bytes",
+        "sized",
+        "callable",
+        "bytes",
+        "int",
+        "float",
+        "bool",
+        "none",
+        "string_non_empty",
+        "dict_non_empty",
+        "list_non_empty",
     })
+
+    @staticmethod
+    def _run_string_type_check(type_name: str, value: t.NormalizedValue) -> bool:
+        match type_name:
+            case "str":
+                return bool(FlextUtilitiesGuards._is_str(value))
+            case "dict":
+                return bool(FlextUtilitiesGuards._is_dict(value))
+            case "list":
+                return bool(FlextUtilitiesGuards.is_list(value))
+            case "tuple":
+                return bool(FlextUtilitiesGuards._is_tuple(value))
+            case "sequence":
+                return bool(FlextUtilitiesGuards._is_sequence(value))
+            case "mapping":
+                return bool(FlextUtilitiesGuards._is_mapping(value))
+            case "list_or_tuple":
+                return bool(FlextUtilitiesGuards._is_list_or_tuple(value))
+            case "sequence_not_str":
+                return bool(FlextUtilitiesGuards._is_sequence_not_str(value))
+            case "sequence_not_str_bytes":
+                return bool(FlextUtilitiesGuards._is_sequence_not_str_bytes(value))
+            case "sized":
+                return bool(FlextUtilitiesGuards._is_sized(value))
+            case "callable":
+                return bool(FlextUtilitiesGuards._is_callable_key_func(value))
+            case "bytes":
+                return bool(FlextUtilitiesGuards._is_bytes(value))
+            case "int":
+                return bool(FlextUtilitiesGuards._is_int(value))
+            case "float":
+                return bool(FlextUtilitiesGuards._is_float(value))
+            case "bool":
+                return bool(FlextUtilitiesGuards._is_bool(value))
+            case "none":
+                return bool(FlextUtilitiesGuards._is_none(value))
+            case "string_non_empty":
+                return bool(FlextUtilitiesGuards.is_string_non_empty(value))
+            case "dict_non_empty":
+                return bool(FlextUtilitiesGuards.is_dict_non_empty(value))
+            case "list_non_empty":
+                return bool(FlextUtilitiesGuards.is_list_non_empty(value))
+            case _:
+                return False
 
     @staticmethod
     def _check_protocol(value: t.NormalizedValue, name: str) -> bool:
@@ -1234,17 +1256,17 @@ class FlextUtilitiesGuards:
             if type_name in FlextUtilitiesGuards._PROTOCOL_SPECS:
                 return FlextUtilitiesGuards._check_protocol(value, type_name)
             if type_name in FlextUtilitiesGuards._STRING_METHOD_MAP:
-                method_name = FlextUtilitiesGuards._STRING_METHOD_MAP[type_name]
-                method = getattr(FlextUtilitiesGuards, method_name)
                 if type_name in {
                     "string_non_empty",
                     "dict_non_empty",
                     "list_non_empty",
                 }:
                     if FlextUtilitiesGuards.is_container(value):
-                        return bool(method(value))
+                        return FlextUtilitiesGuards._run_string_type_check(
+                            type_name, value
+                        )
                     return False
-                return bool(method(value))
+                return FlextUtilitiesGuards._run_string_type_check(type_name, value)
             return False
         if isinstance(type_spec, tuple):
             return isinstance(value, type_spec)

@@ -22,7 +22,7 @@ from pydantic import (
     ValidationError as PydanticValidationError,
 )
 
-from flext_core import FlextRuntime, c, m, t
+from flext_core import FlextRuntime, c, m, r, t
 from flext_core._models.base import FlextModelFoundation
 
 
@@ -497,9 +497,14 @@ class FlextExceptions:
             else None
         )
         correlation_id_raw = extra_kwargs.pop("correlation_id", None)
-        correlation_id_str = (
+        correlation_id_result = (
             e._safe_optional_str(correlation_id_raw)
             if isinstance(correlation_id_raw, (str, int, float, bool, datetime))
+            else None
+        )
+        correlation_id_str = (
+            correlation_id_result.unwrap()
+            if correlation_id_result is not None and correlation_id_result.is_success
             else None
         )
         normalized_extra_kwargs: dict[str, t.MetadataValue] = {
@@ -511,7 +516,7 @@ class FlextExceptions:
         )
         for key, val in named_params.items():
             if val is not None:
-                param_values[key] = FlextRuntime.normalize_to_metadata(val)
+                param_values[key] = FlextRuntime.normalize_to_container(val)
         resolved = (
             existing_params
             if existing_params is not None
@@ -556,13 +561,13 @@ class FlextExceptions:
             return None
 
     @staticmethod
-    def _safe_int(value: t.Scalar | None) -> int | None:
-        """Extract optional strict integer from dynamic values."""
+    def _safe_int(value: t.Scalar | None) -> r[int]:
+        """Extract strict integer from dynamic values."""
         if value is None:
-            return None
+            return r[int].fail("Integer value is missing")
         if isinstance(value, int) and (not isinstance(value, bool)):
-            return value
-        return None
+            return r[int].ok(value)
+        return r[int].fail("Value is not an integer")
 
     @staticmethod
     def _safe_metadata(
@@ -610,22 +615,22 @@ class FlextExceptions:
         return None
 
     @staticmethod
-    def _safe_number(value: t.Scalar | None) -> int | float | None:
-        """Extract optional strict numeric value from dynamic values."""
+    def _safe_number(value: t.Scalar | None) -> r[int | float]:
+        """Extract strict numeric value from dynamic values."""
         if value is None:
-            return None
+            return r[int | float].fail("Numeric value is missing")
         if isinstance(value, (int, float)) and (not isinstance(value, bool)):
-            return value
-        return None
+            return r[int | float].ok(value)
+        return r[int | float].fail("Value is not numeric")
 
     @staticmethod
-    def _safe_optional_str(value: t.Container | type | None) -> str | None:
-        """Extract optional strict string from dynamic values."""
+    def _safe_optional_str(value: t.Container | type | None) -> r[str]:
+        """Extract strict string from dynamic values."""
         if value is None:
-            return None
+            return r[str].fail("String value is missing")
         if isinstance(value, str):
-            return value
-        return None
+            return r[str].ok(value)
+        return r[str].fail("Value is not a string")
 
     class BaseError(Exception):
         """Base exception with correlation metadata and error codes.
@@ -1182,6 +1187,7 @@ class FlextExceptions:
                 context,
                 normalized_extra_kwargs,
             )
+            preserved_corr_id_result = e._safe_optional_str(preserved_corr_id)
             super().__init__(
                 message,
                 error_code=error_code,
@@ -1189,7 +1195,11 @@ class FlextExceptions:
                 metadata=normalized_metadata,
                 correlation_id=correlation_id
                 if correlation_id is not None
-                else e._safe_optional_str(preserved_corr_id),
+                else (
+                    preserved_corr_id_result.unwrap()
+                    if preserved_corr_id_result.is_success
+                    else None
+                ),
             )
             self.expected_type = normalized_expected_type
             self.actual_type = normalized_actual_type
@@ -1249,13 +1259,16 @@ class FlextExceptions:
             """Resolve type-like input to canonical string name."""
             if type_value is None:
                 return None
-            string_value = e._safe_optional_str(type_value)
-            if string_value is not None:
-                return string_value
+            string_value_result = e._safe_optional_str(type_value)
+            if string_value_result.is_success:
+                return string_value_result.unwrap()
             qualname_value = (
                 type_value.__qualname__ if hasattr(type_value, "__qualname__") else None
             )
-            return e._safe_optional_str(qualname_value)
+            qualname_result = e._safe_optional_str(qualname_value)
+            if qualname_result.is_success:
+                return qualname_result.unwrap()
+            return None
 
     class OperationError(BaseError):
         """Exception raised for general operation failures."""
@@ -1443,9 +1456,14 @@ class FlextExceptions:
         Returns typed values: correlation_id as str | None, metadata as m.Metadata | Mapping | None.
         """
         correlation_id_raw = kwargs.get("correlation_id")
-        correlation_id = (
+        correlation_id_result = (
             e._safe_optional_str(correlation_id_raw)
             if isinstance(correlation_id_raw, (str, int, float, bool, datetime))
+            else None
+        )
+        correlation_id = (
+            correlation_id_result.unwrap()
+            if correlation_id_result is not None and correlation_id_result.is_success
             else None
         )
         metadata_raw = kwargs.get("metadata")
@@ -1522,9 +1540,14 @@ class FlextExceptions:
             }
         }
         correlation_id_raw = merged_kwargs.get("correlation_id")
-        correlation_id = (
+        correlation_id_result = (
             e._safe_optional_str(correlation_id_raw)
             if isinstance(correlation_id_raw, (str, int, float, bool, datetime))
+            else None
+        )
+        correlation_id = (
+            correlation_id_result.unwrap()
+            if correlation_id_result is not None and correlation_id_result.is_success
             else None
         )
         auto_log_raw = merged_kwargs.get("auto_log")

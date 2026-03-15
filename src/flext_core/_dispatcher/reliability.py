@@ -17,8 +17,9 @@ from collections.abc import Mapping
 
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
 
-from flext_core import c, r, t
+from flext_core import c, t
 from flext_core._models.containers import FlextModelsContainers
+from flext_core.result import r
 
 
 class CircuitBreakerManager(BaseModel):
@@ -36,13 +37,23 @@ class CircuitBreakerManager(BaseModel):
     success_threshold: int = Field(
         description="Successes needed to close from half-open"
     )
-    _failures: dict[str, int] = PrivateAttr(default_factory=dict)
-    _states: dict[str, str] = PrivateAttr(default_factory=dict)
-    _opened_at: dict[str, float] = PrivateAttr(default_factory=dict)
-    _success_counts: dict[str, int] = PrivateAttr(default_factory=dict)
-    _recovery_successes: dict[str, int] = PrivateAttr(default_factory=dict)
-    _recovery_failures: dict[str, int] = PrivateAttr(default_factory=dict)
-    _total_successes: dict[str, int] = PrivateAttr(default_factory=dict)
+    _failures: dict[str, int] = PrivateAttr(default_factory=lambda: dict[str, int]())
+    _states: dict[str, str] = PrivateAttr(default_factory=lambda: dict[str, str]())
+    _opened_at: dict[str, float] = PrivateAttr(
+        default_factory=lambda: dict[str, float]()
+    )
+    _success_counts: dict[str, int] = PrivateAttr(
+        default_factory=lambda: dict[str, int]()
+    )
+    _recovery_successes: dict[str, int] = PrivateAttr(
+        default_factory=lambda: dict[str, int]()
+    )
+    _recovery_failures: dict[str, int] = PrivateAttr(
+        default_factory=lambda: dict[str, int]()
+    )
+    _total_successes: dict[str, int] = PrivateAttr(
+        default_factory=lambda: dict[str, int]()
+    )
 
     def __init__(
         self, threshold: int, recovery_timeout: float, success_threshold: int
@@ -254,7 +265,9 @@ class RateLimiterManager(BaseModel):
         default=0.1,
         description="Jitter variance as fraction between 0.0 and 1.0",
     )
-    _windows: dict[str, tuple[float, int]] = PrivateAttr(default_factory=dict)
+    _windows: dict[str, tuple[float, int]] = PrivateAttr(
+        default_factory=lambda: dict[str, tuple[float, int]]()
+    )
 
     def __init__(
         self, max_requests: int, window_seconds: float, jitter_factor: float = 0.1
@@ -343,7 +356,7 @@ class RetryPolicy(BaseModel):
     retry_delay: float = Field(
         description="Base delay in seconds between retry attempts"
     )
-    _attempts: dict[str, int] = PrivateAttr(default_factory=dict)
+    _attempts: dict[str, int] = PrivateAttr(default_factory=lambda: dict[str, int]())
     _exponential_factor: float = PrivateAttr(default=2.0)
     _max_delay: float = PrivateAttr(default=c.Reliability.DEFAULT_MAX_DELAY_SECONDS)
 

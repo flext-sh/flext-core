@@ -31,11 +31,16 @@ class FactoryDecoratorsDiscovery:
     @staticmethod
     def has_factories(module: ModuleType) -> bool:
         """Check if module has any factory-decorated functions."""
-        return any(
-            hasattr(getattr(module, name, None), c.Discovery.FACTORY_ATTR)
-            for name in dir(module)
-            if not name.startswith("_") and callable(getattr(module, name, None))
-        )
+        for name in dir(module):
+            if name.startswith("_"):
+                continue
+            try:
+                candidate = object.__getattribute__(module, name)
+            except AttributeError:
+                continue
+            if callable(candidate) and hasattr(candidate, c.Discovery.FACTORY_ATTR):
+                return True
+        return False
 
     @staticmethod
     def scan_module(module: ModuleType) -> list[tuple[str, m.FactoryDecoratorConfig]]:
@@ -61,10 +66,17 @@ class FactoryDecoratorsDiscovery:
         for name in dir(module):
             if name.startswith("_"):
                 continue
-            func = getattr(module, name, None)
+            try:
+                func = object.__getattribute__(module, name)
+            except AttributeError:
+                continue
             if callable(func) and hasattr(func, c.Discovery.FACTORY_ATTR):
-                config: m.FactoryDecoratorConfig = getattr(
-                    func, c.Discovery.FACTORY_ATTR
-                )
+                try:
+                    config_raw = object.__getattribute__(func, c.Discovery.FACTORY_ATTR)
+                except AttributeError:
+                    continue
+                if not isinstance(config_raw, m.FactoryDecoratorConfig):
+                    continue
+                config: m.FactoryDecoratorConfig = config_raw
                 factories.append((name, config))
         return sorted(factories, key=operator.itemgetter(0))

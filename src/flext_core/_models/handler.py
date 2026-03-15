@@ -115,9 +115,19 @@ class FlextModelsHandler:
         })
 
         def __getitem__(self, key: str) -> t.NormalizedValue | BaseModel:
-            if key in self._GETITEM_FIELDS:
-                return getattr(self, key)
-            raise KeyError(key)
+            match key:
+                case "handler_name":
+                    return self.handler_name
+                case "status":
+                    return self.status
+                case "mode":
+                    return self.mode
+                case "handler_mode":
+                    return self.handler_mode
+                case "message_type":
+                    return self.message_type
+                case _:
+                    raise KeyError(key)
 
     class RegistrationRequest(FlextModelFoundation.ArbitraryTypesModel):
         """Request model for dynamic handler registration.

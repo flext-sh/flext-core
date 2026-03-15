@@ -119,15 +119,17 @@ class FlextUtilitiesCache:
             cache_attributes = c.Utilities.CACHE_ATTRIBUTE_NAMES
             cleared_count = 0
             for attr_name in cache_attributes:
-                if hasattr(obj, attr_name):
-                    cache_attr = getattr(obj, attr_name)
-                    if cache_attr is not None:
-                        if hasattr(cache_attr, "clear") and callable(cache_attr.clear):
-                            _ = cache_attr.clear()
-                            cleared_count += 1
-                        else:
-                            setattr(obj, attr_name, None)
-                            cleared_count += 1
+                try:
+                    cache_attr = object.__getattribute__(obj, attr_name)
+                except AttributeError:
+                    continue
+                if cache_attr is not None:
+                    if hasattr(cache_attr, "clear") and callable(cache_attr.clear):
+                        _ = cache_attr.clear()
+                        cleared_count += 1
+                    else:
+                        setattr(obj, attr_name, None)
+                        cleared_count += 1
             return r[bool].ok(value=True)
         except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
             return r[bool].fail(f"Failed to clear caches: {e}")

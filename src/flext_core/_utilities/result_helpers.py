@@ -64,12 +64,15 @@ class ResultHelpers:
         default: T | None = None,
         catch: type[Exception] | tuple[type[Exception], ...] = Exception,
     ) -> r[T]:
-        try:
-            return r[T].ok(func())
-        except catch as exc:
-            if default is not None:
-                return r[T].ok(default)
-            return r[T].fail(str(exc))
+        func_result = r[T].create_from_callable(func)
+        if func_result.is_success:
+            return r[T].ok(func_result.value)
+        exc = getattr(func_result, "_exception", None)
+        if exc is not None and not isinstance(exc, catch):
+            raise exc
+        if default is not None:
+            return r[T].ok(default)
+        return r[T].fail(func_result.error or "Callable failed")
 
     @staticmethod
     def val(result: p.Result[T], *, default: T | None = None) -> r[T]:

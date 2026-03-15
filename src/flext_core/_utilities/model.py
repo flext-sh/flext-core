@@ -11,7 +11,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 
 import orjson
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel
 
 from flext_core import FlextRuntime, m, r, t
 from flext_core._models.base import FlextModelFoundation
@@ -42,18 +42,18 @@ class FlextUtilitiesModel:
         | BaseModel
         | Mapping[str, t.NormalizedValue | BaseModel],
     ) -> dict[str, t.NormalizedValue | BaseModel]:
-        try:
-            validated = (
-                FlextUtilitiesModel._V.dict_str_metadata_adapter().validate_python(
-                    value
-                )
+        normalized_result = r[dict[str, t.NormalizedValue]].create_from_callable(
+            lambda: FlextUtilitiesModel._V.dict_str_metadata_adapter().validate_python(
+                value
             )
-            return {
-                str(k): FlextRuntime.normalize_to_container(v)
-                for k, v in dict(validated).items()
-            }
-        except ValidationError:
+        )
+        if normalized_result.is_failure:
             return {}
+        validated = normalized_result.value
+        return {
+            str(k): FlextRuntime.normalize_to_container(v)
+            for k, v in dict(validated).items()
+        }
 
     @staticmethod
     def _normalize_to_pydantic_value(
@@ -158,11 +158,10 @@ class FlextUtilitiesModel:
                  params: CreateParams = result.value
 
         """
-        try:
-            instance = model_cls(**kwargs)
-            return r[M].ok(instance)
-        except (ValidationError, TypeError, ValueError) as e:
-            return r[M].fail(f"Model validation failed: {e}")
+        instance_result = r[M].create_from_callable(lambda: model_cls(**kwargs))
+        if instance_result.is_failure:
+            return r[M].fail(f"Model validation failed: {instance_result.error}")
+        return r[M].ok(instance_result.value)
 
     @staticmethod
     def load[T_Model: BaseModel](
@@ -186,11 +185,12 @@ class FlextUtilitiesModel:
             ...     user: UserModel = result.value
 
         """
-        try:
-            instance = model_cls.model_validate(data, strict=strict)
-            return r[T_Model].ok(instance)
-        except ValidationError as e:
-            return r[T_Model].fail(f"Model validation failed: {e}")
+        instance_result = r[T_Model].create_from_callable(
+            lambda: model_cls.model_validate(data, strict=strict)
+        )
+        if instance_result.is_failure:
+            return r[T_Model].fail(f"Model validation failed: {instance_result.error}")
+        return r[T_Model].ok(instance_result.value)
 
     @staticmethod
     def merge_defaults[M: BaseModel](
@@ -213,11 +213,12 @@ class FlextUtilitiesModel:
 
         """
         merged = {**defaults, **overrides}
-        try:
-            instance = model_cls.model_validate(merged)
-            return r[M].ok(instance)
-        except (ValidationError, TypeError, ValueError) as e:
-            return r[M].fail(f"Model validation failed: {e}")
+        instance_result = r[M].create_from_callable(
+            lambda: model_cls.model_validate(merged)
+        )
+        if instance_result.is_failure:
+            return r[M].fail(f"Model validation failed: {instance_result.error}")
+        return r[M].ok(instance_result.value)
 
     @staticmethod
     def ensure_metadata(
@@ -326,11 +327,12 @@ class FlextUtilitiesModel:
              # result.value = UserModel with status=Status.INACTIVE
 
         """
-        try:
-            updated_instance = instance.model_copy(update=updates)
-            return r[M].ok(updated_instance)
-        except (AttributeError, TypeError, ValueError) as e:
-            return r[M].fail(f"Model update failed: {e}")
+        updated_result = r[M].create_from_callable(
+            lambda: instance.model_copy(update=updates)
+        )
+        if updated_result.is_failure:
+            return r[M].fail(f"Model update failed: {updated_result.error}")
+        return r[M].ok(updated_result.value)
 
     @staticmethod
     def to_config_map(
@@ -343,42 +345,46 @@ class FlextUtilitiesModel:
             return obj
         if isinstance(obj, BaseModel):
             model_dump_result = obj.model_dump()
-            try:
-                normalized_model_dump: dict[str, t.NormalizedValue | BaseModel] = {}
-                for key, value in model_dump_result.items():
-                    normalized_value: t.NormalizedValue | BaseModel
-                    if value is None:
-                        normalized_value = ""
-                    elif isinstance(
-                        value, (str, int, float, bool, type(None), BaseModel)
-                    ):
-                        normalized_value = FlextRuntime.normalize_to_container(value)
-                    else:
-                        normalized_value = str(value)
-                    normalized_model_dump[str(key)] = normalized_value
-                return m.ConfigMap(normalized_model_dump)
-            except (TypeError, ValueError, AttributeError):
+            normalized_model_dump: dict[str, t.NormalizedValue | BaseModel] = {}
+            for key, value in model_dump_result.items():
+                normalized_value: t.NormalizedValue | BaseModel
+                if value is None:
+                    normalized_value = ""
+                elif isinstance(value, (str, int, float, bool, type(None), BaseModel)):
+                    normalized_value = FlextRuntime.normalize_to_container(value)
+                else:
+                    normalized_value = str(value)
+                normalized_model_dump[str(key)] = normalized_value
+            config_map_result = r[m.ConfigMap].create_from_callable(
+                lambda: m.ConfigMap(normalized_model_dump)
+            )
+            if config_map_result.is_failure:
                 return m.ConfigMap(root={"value": str(model_dump_result)})
+            return config_map_result.value
         if isinstance(obj, Mapping):
-            try:
-                normalized_mapping: dict[str, t.NormalizedValue | BaseModel] = {}
-                obj_mapping = (
+            obj_mapping_result = r[dict[str, t.NormalizedValue]].create_from_callable(
+                lambda: (
                     FlextUtilitiesModel._V.dict_str_metadata_adapter().validate_python(
                         obj
                     )
                 )
-                for key, value in obj_mapping.items():
-                    normalized_mapping_value: t.NormalizedValue | BaseModel = (
-                        FlextRuntime.normalize_to_container(value)
-                        if isinstance(
-                            value, (str, int, float, bool, type(None), BaseModel)
-                        )
-                        else str(value)
-                    )
-                    normalized_mapping[str(key)] = normalized_mapping_value
-                return m.ConfigMap(normalized_mapping)
-            except (TypeError, ValueError, AttributeError):
+            )
+            if obj_mapping_result.is_failure:
                 return m.ConfigMap(root={})
+            normalized_mapping: dict[str, t.NormalizedValue | BaseModel] = {}
+            for key, value in obj_mapping_result.value.items():
+                normalized_mapping_value: t.NormalizedValue | BaseModel = (
+                    FlextRuntime.normalize_to_container(value)
+                    if isinstance(value, (str, int, float, bool, type(None), BaseModel))
+                    else str(value)
+                )
+                normalized_mapping[str(key)] = normalized_mapping_value
+            config_map_result = r[m.ConfigMap].create_from_callable(
+                lambda: m.ConfigMap(normalized_mapping)
+            )
+            if config_map_result.is_failure:
+                return m.ConfigMap(root={})
+            return config_map_result.value
 
         # Fallback to general value normalization
         normalized = FlextRuntime.normalize_to_container(obj)

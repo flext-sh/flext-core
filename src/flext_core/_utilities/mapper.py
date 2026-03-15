@@ -346,9 +346,11 @@ class FlextUtilitiesMapper:
             grouped: dict[str, t.ContainerList] = {}
             for orig_item, item in zip(current_items, current_list, strict=False):
                 if isinstance(orig_item, BaseModel):
-                    if not hasattr(orig_item, group_spec):
+                    has_attr, key_raw = FlextUtilitiesMapper._try_get_attr(
+                        orig_item, group_spec
+                    )
+                    if not has_attr:
                         continue
-                    key_raw = getattr(orig_item, group_spec)
                 elif isinstance(item, Mapping):
                     key_raw = item.get(group_spec)
                 else:
@@ -538,8 +540,11 @@ class FlextUtilitiesMapper:
                 if isinstance(item, Mapping):
                     return str(item.get(field_name, ""))
                 if isinstance(item, BaseModel):
-                    if hasattr(item, field_name):
-                        return str(getattr(item, field_name))
+                    has_attr, attr_val = FlextUtilitiesMapper._try_get_attr(
+                        item, field_name
+                    )
+                    if has_attr:
+                        return str(attr_val)
                     return ""
                 return ""
 
@@ -684,12 +689,20 @@ class FlextUtilitiesMapper:
                 )
                 dict_item[str(key)] = coerced_value
             return dict_item.get(field_name)
-        if hasattr(item, field_name):
-            attr_value = getattr(item, field_name)
+        has_attr, attr_value = FlextUtilitiesMapper._try_get_attr(item, field_name)
+        if has_attr:
             if FlextUtilitiesGuards.is_container(attr_value):
                 return attr_value
             return str(attr_value)
         return None
+
+    @staticmethod
+    def _try_get_attr(obj: object, attr_name: str) -> tuple[bool, object]:
+        try:
+            attr_value = object.__getattribute__(obj, attr_name)
+        except AttributeError:
+            return (False, None)
+        return (True, attr_value)
 
     @staticmethod
     def _extract_get_value(
@@ -712,8 +725,8 @@ class FlextUtilitiesMapper:
                     return r[t.NormalizedValue].fail(f"found_none:{key_part}")
                 return r[t.NormalizedValue].ok(narrowed)
             return r[t.NormalizedValue].fail(f"Key '{key_part}' not found in Mapping")
-        if hasattr(current, key_part):
-            attr_val = getattr(current, key_part)
+        has_attr, attr_val = FlextUtilitiesMapper._try_get_attr(current, key_part)
+        if has_attr:
             if attr_val is None:
                 return r[t.NormalizedValue].fail(f"found_none:{key_part}")
             if FlextUtilitiesGuards.is_container(attr_val):
@@ -840,8 +853,8 @@ class FlextUtilitiesMapper:
                     return default if default is not None else ""
                 return FlextUtilitiesMapper.narrow_to_container(raw_value)
             case _:
-                if hasattr(data, key):
-                    attr_val = getattr(data, key)
+                has_attr, attr_val = FlextUtilitiesMapper._try_get_attr(data, key)
+                if has_attr:
                     return FlextUtilitiesMapper.narrow_to_container(attr_val)
                 return default if default is not None else ""
 
@@ -1786,9 +1799,13 @@ class FlextUtilitiesMapper:
                         else:
                             result[name] = field_config
                     elif hasattr(obj, name):
-                        result[name] = FlextUtilitiesMapper.narrow_to_container(
-                            getattr(obj, name)
+                        has_attr, attr_value = FlextUtilitiesMapper._try_get_attr(
+                            obj, name
                         )
+                        if has_attr:
+                            result[name] = FlextUtilitiesMapper.narrow_to_container(
+                                attr_value
+                            )
                     elif isinstance(field_config, Mapping):
                         default_value = field_config.get("default")
                         if default_value is not None:
@@ -1801,9 +1818,13 @@ class FlextUtilitiesMapper:
                             obj[field_name]
                         )
                 elif hasattr(obj, field_name):
-                    result[field_name] = FlextUtilitiesMapper.narrow_to_container(
-                        getattr(obj, field_name)
+                    has_attr, attr_value = FlextUtilitiesMapper._try_get_attr(
+                        obj, field_name
                     )
+                    if has_attr:
+                        result[field_name] = FlextUtilitiesMapper.narrow_to_container(
+                            attr_value
+                        )
         return result
 
     @staticmethod

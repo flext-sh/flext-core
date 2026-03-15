@@ -143,7 +143,7 @@ class FlextUtilitiesChecker:
                         message_types.append(args[0])
         if message_types:
             return message_types
-        for base in getattr(handler_class, "__bases__", ()):
+        for base in handler_class.__bases__:
             meta = getattr(base, "__pydantic_generic_metadata__", None)
             if meta is None:
                 continue
@@ -173,9 +173,11 @@ class FlextUtilitiesChecker:
         """
         if not hasattr(handler_class, c.Mixins.METHOD_HANDLE):
             return r[t.MessageTypeSpecifier].fail("Handler has no handle method")
-        handle_method_raw: t.ModuleExport = getattr(
-            handler_class, c.Mixins.METHOD_HANDLE
-        )
+        if c.Mixins.METHOD_HANDLE != "handle":
+            return r[t.MessageTypeSpecifier].fail(
+                f"Unsupported handler method: {c.Mixins.METHOD_HANDLE}"
+            )
+        handle_method_raw: t.ModuleExport = handler_class.handle
         if not callable(handle_method_raw):
             return r[t.MessageTypeSpecifier].fail(
                 "Handler handle attribute is not callable"

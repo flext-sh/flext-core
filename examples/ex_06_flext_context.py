@@ -43,7 +43,7 @@ class Ex06FlextContext(Examples):
         merged = ctx.clone().merge(m.ConfigMap(root={"k4": "merged"}).root)
         self.check("merge.get", merged.get("k4").unwrap_or("missing"))
         self.check("clone.get", ctx.clone().get("k1").unwrap_or("missing"))
-        self.check("validate.success", ctx.validate().is_success)
+        self.check("validate.success", ctx.validate_context().is_success)
         ctx.set_metadata("meta_key", "meta_value")
         self.check("get_metadata", ctx.get_metadata("meta_key").unwrap_or("missing"))
         exported_min = ctx.export(as_dict=False)

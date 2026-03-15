@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import sys
 from collections.abc import Mapping
+from types import ModuleType
 from typing import Annotated, ClassVar, Literal, Self
 
 from pydantic import (
@@ -19,12 +20,11 @@ from pydantic import (
     Discriminator,
     Field,
     TypeAdapter,
-    ValidationError,
     computed_field,
     field_validator,
 )
 
-from flext_core import c, p, t
+from flext_core import c, p, r, t
 from flext_core._models.base import FlextModelFoundation
 from flext_core._models.containers import FlextModelsContainers
 from flext_core.runtime import FlextRuntime
@@ -182,12 +182,21 @@ class FlextModelsCqrs:
             min_qualname_parts = 2
             if not models_module or len(parts) < min_qualname_parts:
                 return FlextModelsCqrs.Pagination
-            obj: p.Base | BaseModel | None = getattr(models_module, parts[0], None)
+            obj: p.Base | BaseModel | type | ModuleType | None = (
+                models_module.__dict__.get(parts[0])
+            )
             for part in parts[1:-1]:
-                if obj and hasattr(obj, part):
-                    obj = getattr(obj, part)
-            if obj and hasattr(obj, "Pagination"):
-                pagination_cls_attr = getattr(obj, "Pagination", None)
+                if obj is None:
+                    break
+                if isinstance(obj, ModuleType):
+                    obj = obj.__dict__.get(part)
+                    continue
+                if isinstance(obj, type):
+                    obj = obj.__dict__.get(part)
+                    continue
+                obj = None
+            if isinstance(obj, type):
+                pagination_cls_attr = obj.__dict__.get("Pagination")
                 if (
                     pagination_cls_attr is not None
                     and isinstance(pagination_cls_attr, type)
@@ -223,14 +232,18 @@ class FlextModelsCqrs:
             parsed_input = cls._pagination_adapter().validate_python(v)
             if parsed_input is None:
                 return pagination_cls()
-            try:
-                if isinstance(parsed_input, FlextModelsContainers.Dict):
-                    return pagination_cls.model_validate(parsed_input.root)
-                if isinstance(parsed_input, FlextModelsCqrs.Pagination):
-                    return pagination_cls.model_validate(parsed_input.model_dump())
-                return pagination_cls.model_validate(dict(parsed_input))
-            except (ValidationError, TypeError, ValueError):
+            validate_result = r[BaseModel].create_from_callable(
+                lambda: (
+                    pagination_cls.model_validate(parsed_input.root)
+                    if isinstance(parsed_input, FlextModelsContainers.Dict)
+                    else pagination_cls.model_validate(parsed_input.model_dump())
+                    if isinstance(parsed_input, FlextModelsCqrs.Pagination)
+                    else pagination_cls.model_validate(dict(parsed_input))
+                )
+            )
+            if validate_result.is_failure:
                 return pagination_cls()
+            return validate_result.value
 
     class Bus(BaseModel):
         """Dispatcher configuration model for CQRS routing."""

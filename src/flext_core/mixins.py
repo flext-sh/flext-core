@@ -325,7 +325,7 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
         bootstrap_wire_classes: Sequence[type] | None = None
 
         if hasattr(self, "_runtime_bootstrap_options"):
-            bootstrap_method = getattr(self, "_runtime_bootstrap_options")
+            bootstrap_method = self._runtime_bootstrap_options
             if callable(bootstrap_method):
                 try:
                     options_raw = bootstrap_method()

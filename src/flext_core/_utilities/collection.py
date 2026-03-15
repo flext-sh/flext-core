@@ -29,33 +29,55 @@ class FlextUtilitiesCollection:
 
     @staticmethod
     def _coerce_guard_value(value: t.NormalizedValue) -> t.NormalizedValue:
-        try:
-            validated = (
-                FlextUtilitiesCollection._V.serializable_adapter().validate_python(
-                    value
+        validated_result = r[t.Serializable].create_from_callable(
+            lambda: FlextUtilitiesCollection._V.serializable_adapter().validate_python(
+                value
+            )
+        )
+        if validated_result.is_failure:
+            return str(value)
+        validated = validated_result.value
+        if isinstance(validated, (str, int, float, bool, datetime)):
+            return validated
+        if isinstance(validated, list):
+            normalized_list: list[t.NormalizedValue] = []
+            for item in validated:
+                if isinstance(item, (str, int, float, bool, datetime)):
+                    normalized_list.append(item)
+                else:
+                    normalized_list.append(str(item))
+            return normalized_list
+        if isinstance(validated, dict):
+            normalized_dict: dict[str, t.NormalizedValue] = {}
+            for dict_key, dict_val in validated.items():
+                if isinstance(dict_val, (str, int, float, bool, datetime)):
+                    normalized_dict[dict_key] = dict_val
+                else:
+                    normalized_dict[dict_key] = str(dict_val)
+            return normalized_dict
+        return str(validated)
+
+    @staticmethod
+    def _validate_dict_str_metadata(
+        data: t.NormalizedValue,
+    ) -> r[dict[str, t.NormalizedValue]]:
+        return r[dict[str, t.NormalizedValue]].create_from_callable(
+            lambda: (
+                FlextUtilitiesCollection._V.dict_str_metadata_adapter().validate_python(
+                    data
                 )
             )
-            if isinstance(validated, (str, int, float, bool, datetime)):
-                return validated
-            if isinstance(validated, list):
-                normalized_list: list[t.NormalizedValue] = []
-                for item in validated:
-                    if isinstance(item, (str, int, float, bool, datetime)):
-                        normalized_list.append(item)
-                    else:
-                        normalized_list.append(str(item))
-                return normalized_list
-            if isinstance(validated, dict):
-                normalized_dict: dict[str, t.NormalizedValue] = {}
-                for dict_key, dict_val in validated.items():
-                    if isinstance(dict_val, (str, int, float, bool, datetime)):
-                        normalized_dict[dict_key] = dict_val
-                    else:
-                        normalized_dict[dict_key] = str(dict_val)
-                return normalized_dict
-            return str(validated)
-        except ValidationError:
-            return str(value)
+        )
+
+    @staticmethod
+    def _validate_list_container(data: t.NormalizedValue) -> r[list[t.Container]]:
+        return r[list[t.Container]].create_from_callable(
+            lambda: (
+                FlextUtilitiesCollection._V.list_container_adapter().validate_python(
+                    data
+                )
+            )
+        )
 
     @staticmethod
     def _coerce_value_to_bool(value: t.NormalizedValue) -> bool:
@@ -202,48 +224,26 @@ class FlextUtilitiesCollection:
             if pre_validate is not None and (not pre_validate(item_typed)):
                 results.append(None)
                 continue
-            try:
-                result_raw = operation(item)
-                if FlextUtilitiesGuards.is_result_like(result_raw):
-                    is_success = bool(getattr(result_raw, "is_success", False))
-                    result_value = getattr(result_raw, "value", None)
-                    result_error = getattr(result_raw, "error", None)
-                    if is_success:
-                        if do_flatten and FlextUtilitiesGuards.is_object_list(
-                            result_value
-                        ):
-                            for inner_item in result_value:
-                                if FlextUtilitiesGuards.is_container(inner_item):
-                                    results.append(
-                                        FlextUtilitiesCollection._coerce_guard_value(
-                                            inner_item
-                                        )
-                                    )
-                                else:
-                                    results.append(str(inner_item))
-                            continue
-                        value = FlextUtilitiesCollection._coerce_guard_value(
-                            result_value
-                        )
-                        if (
-                            do_flatten
-                            and FlextUtilitiesCollection._is_general_value_list(value)
-                        ):
-                            results.extend(value)
-                        else:
-                            results.append(value)
-                    else:
-                        error_msg = result_error or "Unknown error"
-                        if error_mode == "fail":
-                            return r[FlextModelsContainers.BatchResultDict].fail(
-                                f"Batch processing failed: {error_msg}"
-                            )
-                        if error_mode == "collect":
-                            errors.append((processed - 1, str(error_msg)))
-                    continue
-                try:
-                    if do_flatten and FlextUtilitiesGuards.is_object_list(result_raw):
-                        for inner_item in result_raw:
+            operation_result = r[T].ok(item_typed).map(operation)
+            if operation_result.is_failure:
+                operation_error = operation_result.error or "Unknown error"
+                if error_mode == "fail":
+                    return r[FlextModelsContainers.BatchResultDict].fail(
+                        f"Batch processing failed: {operation_error}"
+                    )
+                if error_mode == "collect":
+                    errors.append((processed - 1, operation_error))
+                if progress is not None and processed % progress_interval == 0:
+                    progress(processed, total)
+                continue
+            result_raw = operation_result.value
+            if isinstance(result_raw, r):
+                is_success = bool(getattr(result_raw, "is_success", False))
+                result_value = getattr(result_raw, "value", None)
+                result_error = getattr(result_raw, "error", None)
+                if is_success:
+                    if do_flatten and FlextUtilitiesGuards.is_object_list(result_value):
+                        for inner_item in result_value:
                             if FlextUtilitiesGuards.is_container(inner_item):
                                 results.append(
                                     FlextUtilitiesCollection._coerce_guard_value(
@@ -252,28 +252,51 @@ class FlextUtilitiesCollection:
                                 )
                             else:
                                 results.append(str(inner_item))
+                        if progress is not None and processed % progress_interval == 0:
+                            progress(processed, total)
                         continue
-                    if FlextUtilitiesGuards.is_container(result_raw):
-                        direct_result = FlextUtilitiesCollection._coerce_guard_value(
-                            result_raw
+                    value = FlextUtilitiesCollection._coerce_guard_value(result_value)
+                    if do_flatten and FlextUtilitiesCollection._is_general_value_list(
+                        value
+                    ):
+                        results.extend(value)
+                    else:
+                        results.append(value)
+                else:
+                    error_msg = result_error or "Unknown error"
+                    if error_mode == "fail":
+                        return r[FlextModelsContainers.BatchResultDict].fail(
+                            f"Batch processing failed: {error_msg}"
+                        )
+                    if error_mode == "collect":
+                        errors.append((processed - 1, str(error_msg)))
+                if progress is not None and processed % progress_interval == 0:
+                    progress(processed, total)
+                continue
+
+            if do_flatten and isinstance(result_raw, list):
+                for inner_item in result_raw:
+                    if FlextUtilitiesGuards.is_container(inner_item):
+                        results.append(
+                            FlextUtilitiesCollection._coerce_guard_value(inner_item)
                         )
                     else:
-                        direct_result = str(result_raw)
-                except (TypeError, ValueError):
-                    direct_result = str(result_raw)
-                if do_flatten and FlextUtilitiesCollection._is_general_value_list(
-                    direct_result
-                ):
-                    results.extend(direct_result)
-                else:
-                    results.append(direct_result)
-            except (TypeError, ValueError, RuntimeError, AttributeError, KeyError) as e:
-                if error_mode == "fail":
-                    return r[FlextModelsContainers.BatchResultDict].fail(
-                        f"Batch processing failed: {e}"
-                    )
-                if error_mode == "collect":
-                    errors.append((processed - 1, str(e)))
+                        results.append(str(inner_item))
+                if progress is not None and processed % progress_interval == 0:
+                    progress(processed, total)
+                continue
+            direct_source: t.NormalizedValue
+            if isinstance(result_raw, (str, int, float, bool, datetime, list, dict)):
+                direct_source = result_raw
+            else:
+                direct_source = str(result_raw)
+            direct_result = FlextUtilitiesCollection._coerce_guard_value(direct_source)
+            if do_flatten and FlextUtilitiesCollection._is_general_value_list(
+                direct_result
+            ):
+                results.extend(direct_result)
+            else:
+                results.append(direct_result)
             if progress is not None and processed % progress_interval == 0:
                 progress(processed, total)
         result_dict = FlextModelsContainers.BatchResultDict(

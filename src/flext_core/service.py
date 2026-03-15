@@ -401,11 +401,14 @@ class FlextService[
 
     def is_valid(self) -> bool:
         """Check if service is in valid state for execution."""
-        try:
-            return self.validate_business_rules().is_success
-        except (ValueError, TypeError, KeyError, AttributeError, RuntimeError) as exc:
+        validation_result = (
+            r[bool].ok(True).map(lambda _: self.validate_business_rules().is_success)
+        )
+        if validation_result.is_failure:
+            exc = getattr(validation_result, "_exception", None)
             self.logger.debug("Service business rule validation failed", exc_info=exc)
             return False
+        return validation_result.value
 
     def validate_business_rules(self) -> r[bool]:
         """Validate business rules with extensible validation pipeline.

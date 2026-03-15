@@ -30,13 +30,13 @@ class _ProtocolHandler(FlextHandlers[BaseModel, object]):
         return message_type is self.message_type
 
     @override
-    def handle(self, message: BaseModel) -> r:
+    def handle(self, message: BaseModel) -> r[str]:
         value = ""
         if hasattr(message, "value"):
             value = str(getattr(message, "value"))
         if hasattr(message, "amount"):
             value = str(getattr(message, "amount"))
-        return r.ok(f"{self._label}:{value}")
+        return r[str].ok(f"{self._label}:{value}")
 
 
 @FlextHandlers.handler(_CommandA, priority=3)

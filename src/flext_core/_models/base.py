@@ -25,13 +25,12 @@ from pydantic import (
     Discriminator,
     Field,
     TypeAdapter,
-    ValidationError,
     field_serializer,
     field_validator,
     model_validator,
 )
 
-from flext_core import c, t
+from flext_core import c, r, t
 from flext_core._models.containers import FlextModelsContainers
 
 
@@ -315,12 +314,16 @@ class FlextModelFoundation:
         @staticmethod
         def normalize_to_list(v: t.NormalizedValue | BaseModel) -> list[t.Container]:
             """Normalize value to list format."""
-            try:
-                return FlextModelFoundation.Validators.list_adapter().validate_python(v)
-            except ValidationError:
-                if isinstance(v, (str, int, float, bool, datetime)):
-                    return [v]
-                return [str(v)]
+            list_result = r[list[t.Container]].create_from_callable(
+                lambda: FlextModelFoundation.Validators.list_adapter().validate_python(
+                    v
+                )
+            )
+            if list_result.is_success:
+                return list_result.value
+            if isinstance(v, (str, int, float, bool, datetime)):
+                return [v]
+            return [str(v)]
 
         @staticmethod
         def strip_whitespace(v: str) -> str:
@@ -332,13 +335,15 @@ class FlextModelFoundation:
             v: t.NormalizedValue | BaseModel,
         ) -> Mapping[str, t.Container]:
             """Validate configuration dictionary structure."""
-            try:
-                normalized = (
+            normalize_result = r[Mapping[str, t.Container]].create_from_callable(
+                lambda: (
                     FlextModelFoundation.Validators.config_adapter().validate_python(v)
                 )
-            except ValidationError as exc:
+            )
+            if normalize_result.is_failure:
                 msg = "Configuration must be a dictionary"
-                raise TypeError(msg) from exc
+                raise TypeError(msg)
+            normalized = normalize_result.value
             out: dict[str, t.Container] = {}
             for key, item in normalized.items():
                 if key.startswith("_"):
@@ -350,27 +355,31 @@ class FlextModelFoundation:
         @staticmethod
         def validate_tags_list(v: t.NormalizedValue | BaseModel) -> list[str]:
             """Validate and normalize tags list."""
-            try:
-                raw_tags: Sequence[t.Container] = (
-                    FlextModelFoundation.Validators.list_adapter().validate_python(v)
+            raw_tags_result = r[Sequence[t.Container]].create_from_callable(
+                lambda: FlextModelFoundation.Validators.list_adapter().validate_python(
+                    v
                 )
-            except ValidationError as exc:
+            )
+            if raw_tags_result.is_failure:
                 msg = "Tags must be a list"
-                raise TypeError(msg) from exc
+                raise TypeError(msg)
+            raw_tags = raw_tags_result.value
             normalized: list[str] = []
             seen: set[str] = set()
             for tag in raw_tags:
-                try:
-                    clean_tag = (
+                clean_tag_result = r[str].create_from_callable(
+                    lambda: (
                         FlextModelFoundation.Validators
                         .strict_string_adapter()
                         .validate_python(tag)
                         .strip()
                         .lower()
                     )
-                except ValidationError as exc:
+                )
+                if clean_tag_result.is_failure:
                     msg = "Tag must be string"
-                    raise TypeError(msg) from exc
+                    raise TypeError(msg)
+                clean_tag = clean_tag_result.value
                 if clean_tag and clean_tag not in seen:
                     normalized.append(clean_tag)
                     seen.add(clean_tag)

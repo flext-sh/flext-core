@@ -197,8 +197,8 @@ class Examples:
 
     @staticmethod
     def bind_status(
-        value: r[t.Container],
-    ) -> m.ConfigMap:
+        value: r[t.Container] | t.Container,
+    ) -> m.ConfigMap | t.Container:
         """Return a summary ConfigMap when *value* is a ``r``."""
         match value:
             case r() as result:

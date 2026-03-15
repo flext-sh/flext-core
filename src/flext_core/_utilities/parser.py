@@ -153,10 +153,12 @@ class FlextUtilitiesParser:
 
         """
         for attr in ("name", "id"):
-            if hasattr(obj, attr):
-                attr_value = getattr(obj, attr)
-                if isinstance(attr_value, str):
-                    return r[str].ok(attr_value)
+            try:
+                attr_value = object.__getattribute__(obj, attr)
+            except AttributeError:
+                continue
+            if isinstance(attr_value, str):
+                return r[str].ok(attr_value)
         return r[str].fail("No key attribute found")
 
     @staticmethod
@@ -257,14 +259,15 @@ class FlextUtilitiesParser:
         default: t.NormalizedValue = None,
     ) -> t.NormalizedValue:
         """Get attribute safely (avoids circular import with u.get)."""
-        if hasattr(obj, attr):
-            attr_value = getattr(obj, attr)
-            return (
-                attr_value
-                if FlextUtilitiesGuards.is_container(attr_value)
-                else str(attr_value)
-            )
-        return default
+        try:
+            attr_value = object.__getattribute__(obj, attr)
+        except AttributeError:
+            return default
+        return (
+            attr_value
+            if FlextUtilitiesGuards.is_container(attr_value)
+            else str(attr_value)
+        )
 
     @staticmethod
     def _parse_model[TModel: BaseModel](

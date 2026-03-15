@@ -64,23 +64,27 @@ class FlextUtilitiesContext:
         """
         cloned: T = runtime.__class__.__new__(runtime.__class__)
         if hasattr(runtime, "_dispatcher"):
-            dispatcher_attr = "_dispatcher"
-            setattr(cloned, dispatcher_attr, getattr(runtime, dispatcher_attr))
+            object.__setattr__(
+                cloned,
+                "_dispatcher",
+                object.__getattribute__(runtime, "_dispatcher"),
+            )
         if hasattr(runtime, "_registry"):
-            registry_attr = "_registry"
-            setattr(cloned, registry_attr, getattr(runtime, registry_attr))
+            object.__setattr__(
+                cloned,
+                "_registry",
+                object.__getattribute__(runtime, "_registry"),
+            )
         if hasattr(runtime, "_context"):
-            context_attr = "_context"
-            cloned_context = context or getattr(runtime, context_attr)
-            setattr(cloned, context_attr, cloned_context)
+            cloned_context = context or object.__getattribute__(runtime, "_context")
+            object.__setattr__(cloned, "_context", cloned_context)
         if hasattr(runtime, "_config"):
-            config_attr = "_config"
-            runtime_config = getattr(runtime, config_attr)
+            runtime_config = object.__getattribute__(runtime, "_config")
             if config_overrides:
                 cloned_config = runtime_config.model_copy(update=config_overrides)
-                setattr(cloned, config_attr, cloned_config)
+                object.__setattr__(cloned, "_config", cloned_config)
             else:
-                setattr(cloned, config_attr, runtime_config)
+                object.__setattr__(cloned, "_config", runtime_config)
         return cloned
 
     @staticmethod

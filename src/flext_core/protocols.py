@@ -39,6 +39,17 @@ if TYPE_CHECKING:
 class _ProtocolIntrospection:
     """Internal helpers for protocol detection and compliance checks."""
 
+    @staticmethod
+    def _get_protocol_attrs(protocol: type) -> tuple[str, ...]:
+        try:
+            raw_attrs_candidate = protocol.__protocol_attrs__
+        except AttributeError:
+            return ()
+        try:
+            return tuple(raw_attrs_candidate)
+        except TypeError:
+            return ()
+
     @classmethod
     def check_implements_protocol(
         cls,
@@ -52,14 +63,7 @@ class _ProtocolIntrospection:
         protocol_annotations: Mapping[str, type | str] = (
             protocol.__annotations__ if hasattr(protocol, "__annotations__") else {}
         )
-        raw_attrs_candidate = getattr(protocol, "__protocol_attrs__", ())
-        raw_attrs: set[str] = set[str]()
-        iterable_attrs: Sequence[str] = ()
-        try:
-            iterable_attrs = tuple(raw_attrs_candidate)
-        except TypeError:
-            iterable_attrs = ()
-        raw_attrs = set(iterable_attrs)
+        raw_attrs = set(cls._get_protocol_attrs(protocol))
         protocol_methods: set[str] = set()
         protocol_methods.update(raw_attrs)
         required_members: set[str] = set(protocol_annotations.keys())
@@ -92,11 +96,10 @@ class _ProtocolIntrospection:
     @staticmethod
     def get_class_protocols(target_cls: type) -> tuple[type, ...]:
         """Get the protocols a class implements."""
-        protocols_candidate = getattr(target_cls, "__protocols__", ())
-        iterable_protocols: Sequence[type] = ()
+        iterable_protocols: Sequence[type]
         try:
-            iterable_protocols = tuple(protocols_candidate)
-        except TypeError:
+            iterable_protocols = tuple(target_cls.__protocols__)
+        except (AttributeError, TypeError):
             return ()
         try:
             typed_protocols = list(iterable_protocols)
@@ -120,14 +123,7 @@ class _ProtocolIntrospection:
         protocol_annotations: Mapping[str, type | str] = (
             protocol.__annotations__ if hasattr(protocol, "__annotations__") else {}
         )
-        raw_attrs_candidate = getattr(protocol, "__protocol_attrs__", ())
-        raw_attrs: set[str] = set[str]()
-        iterable_attrs: Sequence[str] = ()
-        try:
-            iterable_attrs = tuple(raw_attrs_candidate)
-        except TypeError:
-            iterable_attrs = ()
-        raw_attrs = set(iterable_attrs)
+        raw_attrs = set(_ProtocolIntrospection._get_protocol_attrs(protocol))
         protocol_methods: set[str] = set()
         protocol_methods.update(raw_attrs)
         required_members: set[str] = set(protocol_annotations.keys())
@@ -251,13 +247,9 @@ class FlextProtocols:
     @classmethod
     def _get_protocol_members(cls, protocol: type) -> frozenset[str]:
         if protocol not in cls._protocol_members_cache:
-            raw_attrs_candidate = getattr(protocol, "__protocol_attrs__", ())
-            iterable_attrs: Sequence[str] = ()
-            try:
-                iterable_attrs = tuple(raw_attrs_candidate)
-            except TypeError:
-                iterable_attrs = ()
-            cls._protocol_members_cache[protocol] = frozenset(iterable_attrs)
+            cls._protocol_members_cache[protocol] = frozenset(
+                _ProtocolIntrospection._get_protocol_attrs(protocol)
+            )
         return cls._protocol_members_cache[protocol]
 
     @classmethod

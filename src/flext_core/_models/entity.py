@@ -218,11 +218,11 @@ class FlextModelsEntity:
 
         @model_validator(mode="after")
         def validate_aggregate_consistency(self) -> Self:
-            try:
-                self.check_invariants()
-            except (AttributeError, TypeError, ValueError, RuntimeError, KeyError) as e:
-                msg = f"Aggregate invariant violation: {e}"
-                raise ValueError(msg) from e
+            invariant_result = r[None].ok(None).map(lambda _: self.check_invariants())
+            if invariant_result.is_failure:
+                error_msg = invariant_result.error or "invariant check failed"
+                msg = f"Aggregate invariant violation: {error_msg}"
+                raise ValueError(msg)
             if len(self.domain_events) > c.Validation.MAX_UNCOMMITTED_EVENTS:
                 max_events = c.Validation.MAX_UNCOMMITTED_EVENTS
                 event_count = len(self.domain_events)

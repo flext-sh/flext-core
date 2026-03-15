@@ -191,7 +191,7 @@ class FlextUtilitiesConfiguration:
     def _try_get_attr(
         obj: p.HasModelDump | BaseModel | p.Base, parameter: str
     ) -> tuple[bool, t.NormalizedValue | BaseModel]:
-        """Try to get attribute value from object via hasattr/getattr.
+        """Try to get attribute value from object via direct attribute access.
 
         Business Rule: Direct Attribute Access (Fallback Strategy)
         ==========================================================
@@ -201,7 +201,7 @@ class FlextUtilitiesConfiguration:
         - Object has simple attributes (plain Python classes)
 
         Type Safety:
-        - Uses hasattr() before getattr() to avoid AttributeError
+        - Uses direct attribute access with AttributeError handling
         - Cast to object preserves union type safety
         - Returns sentinel tuple to distinguish "not found" from "None value"
 
@@ -213,9 +213,11 @@ class FlextUtilitiesConfiguration:
             (True, value) if attribute exists, (False, None) if not
 
         """
-        if hasattr(obj, parameter):
-            return (True, getattr(obj, parameter))
-        return FlextUtilitiesConfiguration._NOT_FOUND
+        try:
+            value = object.__getattribute__(obj, parameter)
+        except AttributeError:
+            return FlextUtilitiesConfiguration._NOT_FOUND
+        return (True, value)
 
     @staticmethod
     def _try_get_from_dict_like(

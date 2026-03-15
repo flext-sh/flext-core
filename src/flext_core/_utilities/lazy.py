@@ -42,7 +42,11 @@ def lazy_getattr(
     if name in lazy_imports:
         module_path, attr_name = lazy_imports[name]
         module = importlib.import_module(module_path)
-        value = getattr(module, attr_name)
+        module_dict = vars(module)
+        if attr_name not in module_dict:
+            msg = f"module {module_path!r} has no attribute {attr_name!r}"
+            raise AttributeError(msg)
+        value = module_dict[attr_name]
         module_globals[name] = value
         return value
     msg = f"module {module_name!r} has no attribute {name!r}"

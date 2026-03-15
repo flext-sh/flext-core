@@ -23,7 +23,7 @@ from pydantic import (
     model_validator,
 )
 
-from flext_core import c, p, t
+from flext_core import c, p, r, t
 from flext_core._models.base import FlextModelFoundation
 from flext_core._models.collections import FlextModelsCollections
 from flext_core._models.containers import FlextModelsContainers
@@ -173,11 +173,12 @@ class FlextModelsConfig:
                 if isinstance(item, int):
                     codes_for_validation.append(item)
                 else:
-                    try:
-                        codes_for_validation.append(int(str(item)))
-                    except (TypeError, ValueError) as exc:
-                        msg = f"retry_on_status_codes item must be int or str: {exc}"
-                        raise TypeError(msg) from exc
+                    parsed_code = r[int].ok(0).map(lambda _: int(str(item)))
+                    if parsed_code.is_failure:
+                        parse_error = parsed_code.error or "invalid status code"
+                        msg = f"retry_on_status_codes item must be int or str: {parse_error}"
+                        raise TypeError(msg)
+                    codes_for_validation.append(parsed_code.value)
             result = FlextRuntime.validate_http_status_codes(codes_for_validation)
             if result.is_failure:
                 base_msg = "HTTP status code validation failed"
@@ -290,15 +291,20 @@ class FlextModelsConfig:
         def validate_batch(
             cls, models: list[t.NormalizedValue | BaseModel]
         ) -> list[FlextModelsConfig.BatchProcessingConfig]:
-            try:
-                return cls._batch_adapter().validate_python(models)
-            except ValidationError as exc:
+            batch_result = r[
+                list[FlextModelsConfig.BatchProcessingConfig]
+            ].create_from_callable(lambda: cls._batch_adapter().validate_python(models))
+            if batch_result.is_success:
+                return batch_result.value
+            exc = getattr(batch_result, "_exception", None)
+            if isinstance(exc, ValidationError):
                 item_errors = [
                     f"{'.'.join(str(part) for part in err.get('loc', ()))}: {err.get('msg', 'validation error')}"
                     for err in exc.errors()
                 ]
                 msg = f"Batch validation failed: {'; '.join(item_errors)}"
-                raise ValueError(msg) from exc
+                raise ValueError(msg)
+            raise ValueError(batch_result.error or "Batch validation failed")
 
         @model_validator(mode="after")
         def validate_cross_fields(self) -> Self:

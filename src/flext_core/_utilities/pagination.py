@@ -84,18 +84,25 @@ class FlextUtilitiesPagination:
         page_size_str = str(default_page_size)
         if "page_size" in query_params:
             page_size_str = query_params["page_size"]
-        try:
-            page = int(page_str)
-            page_size = int(page_size_str)
-            if page < 1:
-                return r[tuple[int, int]].fail("Page must be >= 1")
-            if page_size < 1:
-                return r[tuple[int, int]].fail("Page size must be >= 1")
-            if page_size > max_page_size:
-                return r[tuple[int, int]].fail(f"Page size must be <= {max_page_size}")
-            return r[tuple[int, int]].ok((page, page_size))
-        except ValueError as e:
-            return r[tuple[int, int]].fail(f"Invalid page parameters: {e}")
+        page_result = r[int].ok(0).map(lambda _: int(page_str))
+        if page_result.is_failure:
+            return r[tuple[int, int]].fail(
+                f"Invalid page parameters: {page_result.error}"
+            )
+        page_size_result = r[int].ok(0).map(lambda _: int(page_size_str))
+        if page_size_result.is_failure:
+            return r[tuple[int, int]].fail(
+                f"Invalid page parameters: {page_size_result.error}"
+            )
+        page = page_result.value
+        page_size = page_size_result.value
+        if page < 1:
+            return r[tuple[int, int]].fail("Page must be >= 1")
+        if page_size < 1:
+            return r[tuple[int, int]].fail("Page size must be >= 1")
+        if page_size > max_page_size:
+            return r[tuple[int, int]].fail(f"Page size must be <= {max_page_size}")
+        return r[tuple[int, int]].ok((page, page_size))
 
     @staticmethod
     def extract_pagination_config(

@@ -14,11 +14,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import argparse
+import json
 import sys
 from pathlib import Path
 
-from flext_core import FlextRuntime
 from flext_infra import (
     FlextInfraCodegenCensus,
     FlextInfraCodegenConstantsQualityGate,
@@ -32,9 +31,8 @@ from flext_infra import (
 )
 
 
-def main(argv: list[str] | None = None) -> int:
+def _main_inner(argv: list[str] | None) -> int:
     """Run codegen service CLI."""
-    FlextRuntime.ensure_structlog_configured()
     parser, subs = u.Infra.create_subcommand_parser(
         "flext-infra codegen",
         "Code generation tools for workspace standardization",
@@ -51,148 +49,9 @@ def main(argv: list[str] | None = None) -> int:
         include_format=True,
         include_check=True,
     )
-<<<<<<< Updated upstream
     baseline_group = subs["constants-quality-gate"].add_mutually_exclusive_group(
         required=False,
     )
-=======
-    subparsers = parser.add_subparsers(dest="command", required=True)
-
-    lazy_parser = subparsers.add_parser(
-        "lazy-init",
-        help="Generate/refresh PEP 562 lazy-import __init__.py files",
-    )
-    _ = lazy_parser.add_argument(
-        "--workspace",
-        type=Path,
-        default=Path.cwd(),
-        help="Workspace root directory (default: cwd)",
-    )
-    _ = lazy_parser.add_argument(
-        "--check",
-        action="store_true",
-        help="Check mode — report unmapped exports without writing files",
-    )
-
-    census_parser = subparsers.add_parser(
-        "census",
-        help="Count namespace violations across workspace projects",
-    )
-    _ = census_parser.add_argument(
-        "--workspace",
-        type=Path,
-        default=Path.cwd(),
-        help="Workspace root directory (default: cwd)",
-    )
-    _ = census_parser.add_argument(
-        "--format",
-        choices=["json", "text"],
-        default="text",
-        dest="output_format",
-        help="Output format (default: text)",
-    )
-
-    scaffold_parser = subparsers.add_parser(
-        "scaffold",
-        help="Generate missing base modules in src/ and tests/",
-    )
-    _ = scaffold_parser.add_argument(
-        "--workspace",
-        type=Path,
-        default=Path.cwd(),
-        help="Workspace root directory (default: cwd)",
-    )
-    scaffold_mode = scaffold_parser.add_mutually_exclusive_group(required=False)
-    _ = scaffold_mode.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="Report what would be created without writing files",
-    )
-    _ = scaffold_mode.add_argument(
-        "--apply",
-        action="store_true",
-        help="Apply changes",
-    )
-
-    fix_parser = subparsers.add_parser(
-        "auto-fix",
-        help="Auto-fix namespace violations (move Finals/TypeVars)",
-    )
-    _ = fix_parser.add_argument(
-        "--workspace",
-        type=Path,
-        default=Path.cwd(),
-        help="Workspace root directory (default: cwd)",
-    )
-    fix_mode = fix_parser.add_mutually_exclusive_group(required=False)
-    _ = fix_mode.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="Report what would be fixed without modifying files",
-    )
-    _ = fix_mode.add_argument(
-        "--apply",
-        action="store_true",
-        help="Apply changes",
-    )
-
-    py_typed_parser = subparsers.add_parser(
-        "py-typed",
-        help="Create/remove PEP 561 py.typed markers in package directories",
-    )
-    _ = py_typed_parser.add_argument(
-        "--workspace",
-        type=Path,
-        default=Path.cwd(),
-        help="Workspace root directory (default: cwd)",
-    )
-    _ = py_typed_parser.add_argument(
-        "--check",
-        action="store_true",
-        help="Check mode — report changes without writing files",
-    )
-
-    pipeline_parser = subparsers.add_parser(
-        "pipeline",
-        help="Run full codegen pipeline: py-typed → census → scaffold → auto-fix → lazy-init → census",
-    )
-    _ = pipeline_parser.add_argument(
-        "--workspace",
-        type=Path,
-        default=Path.cwd(),
-        help="Workspace root directory (default: cwd)",
-    )
-    pipeline_mode = pipeline_parser.add_mutually_exclusive_group(required=False)
-    _ = pipeline_mode.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="Report changes without modifying files",
-    )
-    _ = pipeline_mode.add_argument(
-        "--apply",
-        action="store_true",
-        help="Apply changes",
-    )
-    _ = pipeline_parser.add_argument(
-        "--format",
-        choices=["json", "text"],
-        default="text",
-        dest="output_format",
-        help="Output format (default: text)",
-    )
-
-    quality_parser = subparsers.add_parser(
-        "constants-quality-gate",
-        help="Run constants migration quality gate and before/after diff",
-    )
-    _ = quality_parser.add_argument(
-        "--workspace",
-        type=Path,
-        default=Path.cwd(),
-        help="Workspace root directory (default: cwd)",
-    )
-    baseline_group = quality_parser.add_mutually_exclusive_group(required=False)
->>>>>>> Stashed changes
     _ = baseline_group.add_argument(
         "--before-report",
         type=Path,
@@ -205,25 +64,6 @@ def main(argv: list[str] | None = None) -> int:
         default=None,
         help="Path to baseline JSON payload for comparison",
     )
-<<<<<<< Updated upstream
-=======
-    _ = quality_parser.add_argument(
-        "--format",
-        choices=["json", "text"],
-        default="text",
-        dest="output_format",
-        help="Output format (default: text)",
-    )
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
 
     args = parser.parse_args(argv)
     cli = u.Infra.resolve(args)
@@ -249,56 +89,51 @@ def main(argv: list[str] | None = None) -> int:
     return 1
 
 
-<<<<<<< Updated upstream
+def main(argv: list[str] | None = None) -> int:
+    """Run codegen service CLI with centralized bootstrap."""
+    return u.Infra.run_cli(_main_inner, argv)
+
+
 def _handle_lazy_init(cli: u.Infra.CliArgs) -> int:
     generator = FlextInfraCodegenLazyInit(workspace_root=cli.workspace)
     unmapped = generator.run(check_only=cli.check)
     if cli.check and unmapped > 0:
-=======
-def _handle_lazy_init(args: argparse.Namespace) -> int:
-    workspace = args.workspace.resolve()
-    generator = FlextInfraCodegenLazyInit(workspace_root=workspace)
-    unmapped = generator.run(check_only=args.check)
-    if args.check and unmapped > 0:
->>>>>>> Stashed changes
         output.warning(f"{unmapped} files have unmapped exports")
     return 0
 
 
-<<<<<<< Updated upstream
 def _handle_py_typed(cli: u.Infra.CliArgs) -> int:
     service = FlextInfraCodegenPyTyped(workspace_root=cli.workspace)
     service.run(check_only=cli.check)
-=======
-def _handle_py_typed(args: argparse.Namespace) -> int:
-    workspace = args.workspace.resolve()
-    service = FlextInfraCodegenPyTyped(workspace_root=workspace)
-    service.run(check_only=args.check)
->>>>>>> Stashed changes
     return 0
+
+
+def _render_census_text(reports: list) -> str:
+    """Render census reports as text."""
+    lines = []
+    total_v = sum(rpt.total for rpt in reports)
+    total_f = sum(rpt.fixable for rpt in reports)
+    for rpt in reports:
+        if rpt.total > 0:
+            lines.append(
+                f"  {rpt.project}: {rpt.total} violations ({rpt.fixable} fixable)"
+            )
+    lines.append(
+        f"Total: {total_v} violations ({total_f} fixable) across {len(reports)} projects"
+    )
+    return "\n".join(lines)
 
 
 def _handle_census(cli: u.Infra.CliArgs) -> int:
     """Handle the ``census`` subcommand."""
     census = FlextInfraCodegenCensus(workspace_root=cli.workspace)
     reports = census.run()
-    if cli.output_format == "json":
-        _ = {
-            c.Infra.ReportKeys.PROJECTS: [rpt.model_dump() for rpt in reports],
-            "total_violations": sum(rpt.total for rpt in reports),
-            "total_fixable": sum(rpt.fixable for rpt in reports),
-        }
-    else:
-        total_v = sum(rpt.total for rpt in reports)
-        total_f = sum(rpt.fixable for rpt in reports)
-        for rpt in reports:
-            if rpt.total > 0:
-                output.info(
-                    f"  {rpt.project}: {rpt.total} violations ({rpt.fixable} fixable)",
-                )
-        output.info(
-            f"Total: {total_v} violations ({total_f} fixable) across {len(reports)} projects",
-        )
+    data = {
+        c.Infra.ReportKeys.PROJECTS: [rpt.model_dump() for rpt in reports],
+        "total_violations": sum(rpt.total for rpt in reports),
+        "total_fixable": sum(rpt.fixable for rpt in reports),
+    }
+    u.Infra.emit(data, text_fn=lambda d: _render_census_text(reports), cli=cli)
     return 0
 
 
@@ -341,6 +176,25 @@ def _handle_auto_fix(cli: u.Infra.CliArgs) -> int:
     return 0
 
 
+def _render_pipeline_text(
+    reports_before: list,
+    scaffold_results: list,
+    fix_results: list,
+    reports_after: list,
+) -> str:
+    """Render pipeline results as text."""
+    before_v = sum(r.total for r in reports_before)
+    after_v = sum(r.total for r in reports_after)
+    lines = [
+        f"Census before: {before_v} violations",
+        f"Scaffold: {sum(len(r.files_created) for r in scaffold_results)} files created",
+        f"Auto-fix: {sum(len(r.violations_fixed) for r in fix_results)} violations fixed",
+        f"Census after: {after_v} violations",
+        f"Improvement: {before_v - after_v} violations resolved",
+    ]
+    return "\n".join(lines)
+
+
 def _handle_pipeline(cli: u.Infra.CliArgs) -> int:
     py_typed = FlextInfraCodegenPyTyped(workspace_root=cli.workspace)
     py_typed.run()
@@ -353,37 +207,31 @@ def _handle_pipeline(cli: u.Infra.CliArgs) -> int:
     generator = FlextInfraCodegenLazyInit(workspace_root=cli.workspace)
     generator.run(check_only=cli.dry_run)
     reports_after = census.run()
-    if cli.output_format == "json":
-        _ = {
-            "census_before": {
-                "total_violations": sum(r.total for r in reports_before),
-                "total_fixable": sum(r.fixable for r in reports_before),
-            },
-            "scaffold": {
-                "total_created": sum(len(r.files_created) for r in scaffold_results),
-                "total_skipped": sum(len(r.files_skipped) for r in scaffold_results),
-            },
-            "auto_fix": {
-                "total_fixed": sum(len(r.violations_fixed) for r in fix_results),
-                "total_skipped": sum(len(r.violations_skipped) for r in fix_results),
-            },
-            "census_after": {
-                "total_violations": sum(r.total for r in reports_after),
-                "total_fixable": sum(r.fixable for r in reports_after),
-            },
-        }
-    else:
-        before_v = sum(r.total for r in reports_before)
-        after_v = sum(r.total for r in reports_after)
-        output.info(f"Census before: {before_v} violations")
-        output.info(
-            f"Scaffold: {sum(len(r.files_created) for r in scaffold_results)} files created",
-        )
-        output.info(
-            f"Auto-fix: {sum(len(r.violations_fixed) for r in fix_results)} violations fixed",
-        )
-        output.info(f"Census after: {after_v} violations")
-        output.info(f"Improvement: {before_v - after_v} violations resolved")
+    data = {
+        "census_before": {
+            "total_violations": sum(r.total for r in reports_before),
+            "total_fixable": sum(r.fixable for r in reports_before),
+        },
+        "scaffold": {
+            "total_created": sum(len(r.files_created) for r in scaffold_results),
+            "total_skipped": sum(len(r.files_skipped) for r in scaffold_results),
+        },
+        "auto_fix": {
+            "total_fixed": sum(len(r.violations_fixed) for r in fix_results),
+            "total_skipped": sum(len(r.violations_skipped) for r in fix_results),
+        },
+        "census_after": {
+            "total_violations": sum(r.total for r in reports_after),
+            "total_fixable": sum(r.fixable for r in reports_after),
+        },
+    }
+    u.Infra.emit(
+        data,
+        text_fn=lambda d: _render_pipeline_text(
+            reports_before, scaffold_results, fix_results, reports_after
+        ),
+        cli=cli,
+    )
     return 0
 
 
