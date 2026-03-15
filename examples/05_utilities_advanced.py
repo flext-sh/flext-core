@@ -45,7 +45,7 @@ class UserModel(m.ArbitraryTypesModel):
     age: int = Field(ge=0, le=150)
 
 
-TEST_DATA: Mapping[str, object] = {
+TEST_DATA: Mapping[str, str | int | dict[str, str]] = {
     "name": "John Doe",
     "status": "active",
     "age": 30,
@@ -148,7 +148,7 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
     def _demonstrate_model_utilities() -> None:
         """Show Model utilities."""
         print("\n=== Model Utilities ===")
-        user_data: dict[str, object] = {
+        user_data: dict[str, str | int] = {
             "name": "Alice",
             "status": "active",
             "age": 25,
@@ -167,8 +167,11 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
             f"✅ Model from kwargs: {user_from_kwargs.name} ({user_from_kwargs.status.value})"
             f" [r={'ok' if kwargs_result.is_success else 'fail'}]"
         )
-        defaults: Mapping[str, object] = {"status": StatusEnum.PENDING, "age": 0}
-        overrides: Mapping[str, object] = {"name": "Charlie"}
+        defaults: Mapping[str, StatusEnum | int] = {
+            "status": StatusEnum.PENDING,
+            "age": 0,
+        }
+        overrides: Mapping[str, str] = {"name": "Charlie"}
         merge_result = u.merge_defaults(UserModel, defaults, overrides)
         merged_user = UserModel(name="Charlie", status=StatusEnum.PENDING, age=0)
         print(

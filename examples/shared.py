@@ -31,6 +31,7 @@ from __future__ import annotations
 import hashlib
 import string
 import sys
+from collections.abc import Mapping
 from datetime import datetime
 from pathlib import Path
 
@@ -65,7 +66,11 @@ class Examples:
         max_u64 = (1 << 64) - 1
         return raw / max_u64
 
-    def check(self, label: str, value: int) -> None:
+    def check(
+        self,
+        label: str,
+        value: t.NormalizedValue | Path | datetime | Mapping[str, bool | str],
+    ) -> None:
         """Append ``label: <serialised value>`` to the results buffer."""
         self._results.append(f"{label}: {self.ser(value)}")
 
@@ -117,7 +122,9 @@ class Examples:
             self._results.append("")
         self._results.append(f"[{name}]")
 
-    def ser(self, v: t.NormalizedValue | Path | datetime) -> str:
+    def ser(
+        self, v: t.NormalizedValue | Path | datetime | Mapping[str, bool | str]
+    ) -> str:
         """Deterministic, human-readable serialisation for golden-file output.
 
         Handles ``None``, bools, numbers, strings, lists, dicts, types,

@@ -35,10 +35,16 @@ if TYPE_CHECKING:
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextValidatorBypass": ("flext_tests._validator.bypass", "FlextValidatorBypass"),
-    "FlextValidatorImports": ("flext_tests._validator.imports", "FlextValidatorImports"),
+    "FlextValidatorImports": (
+        "flext_tests._validator.imports",
+        "FlextValidatorImports",
+    ),
     "FlextValidatorLayer": ("flext_tests._validator.layer", "FlextValidatorLayer"),
     "FlextValidatorModels": ("flext_tests._validator.models", "FlextValidatorModels"),
-    "FlextValidatorSettings": ("flext_tests._validator.settings", "FlextValidatorSettings"),
+    "FlextValidatorSettings": (
+        "flext_tests._validator.settings",
+        "FlextValidatorSettings",
+    ),
     "FlextValidatorTests": ("flext_tests._validator.tests", "FlextValidatorTests"),
     "FlextValidatorTypes": ("flext_tests._validator.types", "FlextValidatorTypes"),
     "m": ("flext_tests._validator.models", "FlextValidatorModels"),

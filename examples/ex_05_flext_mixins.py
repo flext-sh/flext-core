@@ -25,7 +25,7 @@ class Ex05FlextMixins(Examples):
             except ValueError as exc:
                 return str(exc)
 
-        def run_track_success(self) -> Mapping[str, object]:
+        def run_track_success(self) -> Mapping[str, bool | str]:
             """Run a tracked operation that succeeds."""
             with self.track("demo_success") as metrics:
                 has_duration = "duration_ms" in metrics
@@ -37,7 +37,7 @@ class Ex05FlextMixins(Examples):
 
         @classmethod
         @override
-        def validate(cls, value) -> Ex05FlextMixins.HandlerLike:
+        def validate(cls, value: m.ConfigMap) -> Ex05FlextMixins.HandlerLike:
             """Validate using Pydantic model_validate."""
             return cls.model_validate(value)
 
@@ -45,7 +45,7 @@ class Ex05FlextMixins(Examples):
             """Report capability for handler protocol."""
             return bool(message_type)
 
-        def handle(self, message) -> r[str]:
+        def handle(self, message: m.Command) -> r[str]:
             """Handle data and return result."""
             return r[str].ok(str(message))
 
@@ -61,7 +61,7 @@ class Ex05FlextMixins(Examples):
 
         @classmethod
         @override
-        def validate(cls, value) -> Ex05FlextMixins.GoodProcessor:
+        def validate(cls, value: m.ConfigMap) -> Ex05FlextMixins.GoodProcessor:
             """Validate for Pydantic compatibility."""
             del value
             return cls()
@@ -162,11 +162,11 @@ class Ex05FlextMixins(Examples):
             "context_stack.current_context.after_pop", stack.current_context() is None
         )
 
-        def _validator_ok(value) -> r[bool]:
+        def _validator_ok(value: str) -> r[bool]:
             text = str(value)
             return r[bool].ok(text.startswith("a"))
 
-        def _validator_fail(_value) -> r[bool]:
+        def _validator_fail(_value: str) -> r[bool]:
             return r[bool].fail("bad-input")
 
         validators_ok: list[Callable[..., r[bool]]] = [_validator_ok]

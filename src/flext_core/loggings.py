@@ -20,7 +20,7 @@ import warnings
 from collections.abc import Iterator, Mapping
 from contextlib import contextmanager, suppress
 from pathlib import Path
-from typing import ClassVar, Literal, Self, overload, override
+from typing import ClassVar, Self, override
 
 from pydantic import BaseModel
 from structlog.typing import Context
@@ -923,26 +923,6 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
             FlextLogger._report_internal_logging_failure("exception", exc)
             return r[bool].fail(f"Exception logging failed: {exc}")
 
-    @overload
-    def log(
-        self,
-        level: str,
-        message: str,
-        *args: _LogArg,
-        _return_result: Literal[True],
-        **context: t.Container,
-    ) -> r[bool]: ...
-
-    @overload
-    def log(
-        self,
-        level: str,
-        message: str,
-        *args: _LogArg,
-        _return_result: Literal[False] = ...,
-        **context: t.Container,
-    ) -> None: ...
-
     def log(
         self,
         level: str,
@@ -979,24 +959,6 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
     def new(self, **context: t.Container) -> Self:
         """Create new logger with context - implements BindableLogger protocol."""
         return self.bind(**context)
-
-    @overload
-    def trace(
-        self,
-        message: str,
-        *args: _LogArg,
-        _return_result: Literal[True],
-        **kwargs: t.Container,
-    ) -> r[bool]: ...
-
-    @overload
-    def trace(
-        self,
-        message: str,
-        *args: _LogArg,
-        _return_result: Literal[False] = ...,
-        **kwargs: t.Container,
-    ) -> None: ...
 
     def trace(
         self,

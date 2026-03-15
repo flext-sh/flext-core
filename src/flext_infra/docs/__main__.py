@@ -13,8 +13,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from argparse import ArgumentParser
 import sys
+from argparse import ArgumentParser
 
 from flext_core import FlextRuntime
 from flext_infra import c, output, u

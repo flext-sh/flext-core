@@ -92,59 +92,203 @@ if TYPE_CHECKING:
     )
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
-    "TestAllDirectoriesScanned": ("tests.infra.unit.codegen.lazy_init_tests", "TestAllDirectoriesScanned"),
-    "TestBuildSiblingExportIndex": ("tests.infra.unit.codegen.lazy_init_helpers", "TestBuildSiblingExportIndex"),
-    "TestCensusReportModel": ("tests.infra.unit.codegen.census_models", "TestCensusReportModel"),
-    "TestCensusViolationModel": ("tests.infra.unit.codegen.census_models", "TestCensusViolationModel"),
-    "TestCheckOnlyMode": ("tests.infra.unit.codegen.lazy_init_tests", "TestCheckOnlyMode"),
-    "TestConstantsQualityGateCLIDispatch": ("tests.infra.unit.codegen.constants_quality_gate", "TestConstantsQualityGateCLIDispatch"),
-    "TestConstantsQualityGateVerdict": ("tests.infra.unit.codegen.constants_quality_gate", "TestConstantsQualityGateVerdict"),
+    "TestAllDirectoriesScanned": (
+        "tests.infra.unit.codegen.lazy_init_tests",
+        "TestAllDirectoriesScanned",
+    ),
+    "TestBuildSiblingExportIndex": (
+        "tests.infra.unit.codegen.lazy_init_helpers",
+        "TestBuildSiblingExportIndex",
+    ),
+    "TestCensusReportModel": (
+        "tests.infra.unit.codegen.census_models",
+        "TestCensusReportModel",
+    ),
+    "TestCensusViolationModel": (
+        "tests.infra.unit.codegen.census_models",
+        "TestCensusViolationModel",
+    ),
+    "TestCheckOnlyMode": (
+        "tests.infra.unit.codegen.lazy_init_tests",
+        "TestCheckOnlyMode",
+    ),
+    "TestConstantsQualityGateCLIDispatch": (
+        "tests.infra.unit.codegen.constants_quality_gate",
+        "TestConstantsQualityGateCLIDispatch",
+    ),
+    "TestConstantsQualityGateVerdict": (
+        "tests.infra.unit.codegen.constants_quality_gate",
+        "TestConstantsQualityGateVerdict",
+    ),
     "TestEdgeCases": ("tests.infra.unit.codegen.lazy_init_tests", "TestEdgeCases"),
-    "TestExcludedDirectories": ("tests.infra.unit.codegen.lazy_init_tests", "TestExcludedDirectories"),
-    "TestExcludedProjects": ("tests.infra.unit.codegen.census_models", "TestExcludedProjects"),
-    "TestExtractExports": ("tests.infra.unit.codegen.lazy_init_helpers", "TestExtractExports"),
-    "TestExtractInlineConstants": ("tests.infra.unit.codegen.lazy_init_transforms", "TestExtractInlineConstants"),
-    "TestExtractVersionExports": ("tests.infra.unit.codegen.lazy_init_transforms", "TestExtractVersionExports"),
-    "TestFixabilityClassification": ("tests.infra.unit.codegen.census", "TestFixabilityClassification"),
-    "TestFlextInfraCodegenLazyInit": ("tests.infra.unit.codegen.lazy_init_service", "TestFlextInfraCodegenLazyInit"),
-    "TestGenerateFile": ("tests.infra.unit.codegen.lazy_init_generation", "TestGenerateFile"),
-    "TestGenerateTypeChecking": ("tests.infra.unit.codegen.lazy_init_generation", "TestGenerateTypeChecking"),
-    "TestGeneratedClassNamingConvention": ("tests.infra.unit.codegen.scaffolder_naming", "TestGeneratedClassNamingConvention"),
-    "TestGeneratedFilesAreValidPython": ("tests.infra.unit.codegen.scaffolder_naming", "TestGeneratedFilesAreValidPython"),
+    "TestExcludedDirectories": (
+        "tests.infra.unit.codegen.lazy_init_tests",
+        "TestExcludedDirectories",
+    ),
+    "TestExcludedProjects": (
+        "tests.infra.unit.codegen.census_models",
+        "TestExcludedProjects",
+    ),
+    "TestExtractExports": (
+        "tests.infra.unit.codegen.lazy_init_helpers",
+        "TestExtractExports",
+    ),
+    "TestExtractInlineConstants": (
+        "tests.infra.unit.codegen.lazy_init_transforms",
+        "TestExtractInlineConstants",
+    ),
+    "TestExtractVersionExports": (
+        "tests.infra.unit.codegen.lazy_init_transforms",
+        "TestExtractVersionExports",
+    ),
+    "TestFixabilityClassification": (
+        "tests.infra.unit.codegen.census",
+        "TestFixabilityClassification",
+    ),
+    "TestFlextInfraCodegenLazyInit": (
+        "tests.infra.unit.codegen.lazy_init_service",
+        "TestFlextInfraCodegenLazyInit",
+    ),
+    "TestGenerateFile": (
+        "tests.infra.unit.codegen.lazy_init_generation",
+        "TestGenerateFile",
+    ),
+    "TestGenerateTypeChecking": (
+        "tests.infra.unit.codegen.lazy_init_generation",
+        "TestGenerateTypeChecking",
+    ),
+    "TestGeneratedClassNamingConvention": (
+        "tests.infra.unit.codegen.scaffolder_naming",
+        "TestGeneratedClassNamingConvention",
+    ),
+    "TestGeneratedFilesAreValidPython": (
+        "tests.infra.unit.codegen.scaffolder_naming",
+        "TestGeneratedFilesAreValidPython",
+    ),
     "TestHandleLazyInit": ("tests.infra.unit.codegen.main", "TestHandleLazyInit"),
-    "TestInferPackage": ("tests.infra.unit.codegen.lazy_init_helpers", "TestInferPackage"),
-    "TestMainCommandDispatch": ("tests.infra.unit.codegen.main", "TestMainCommandDispatch"),
+    "TestInferPackage": (
+        "tests.infra.unit.codegen.lazy_init_helpers",
+        "TestInferPackage",
+    ),
+    "TestMainCommandDispatch": (
+        "tests.infra.unit.codegen.main",
+        "TestMainCommandDispatch",
+    ),
     "TestMainEntryPoint": ("tests.infra.unit.codegen.main", "TestMainEntryPoint"),
-    "TestMergeChildExports": ("tests.infra.unit.codegen.lazy_init_transforms", "TestMergeChildExports"),
-    "TestParseViolationInvalid": ("tests.infra.unit.codegen.census", "TestParseViolationInvalid"),
-    "TestParseViolationValid": ("tests.infra.unit.codegen.census", "TestParseViolationValid"),
-    "TestProcessDirectory": ("tests.infra.unit.codegen.lazy_init_process", "TestProcessDirectory"),
-    "TestReadExistingDocstring": ("tests.infra.unit.codegen.lazy_init_helpers", "TestReadExistingDocstring"),
-    "TestResolveAliases": ("tests.infra.unit.codegen.lazy_init_generation", "TestResolveAliases"),
-    "TestRunRuffFix": ("tests.infra.unit.codegen.lazy_init_generation", "TestRunRuffFix"),
-    "TestScaffoldProjectCreatesSrcModules": ("tests.infra.unit.codegen.scaffolder", "TestScaffoldProjectCreatesSrcModules"),
-    "TestScaffoldProjectCreatesTestsModules": ("tests.infra.unit.codegen.scaffolder", "TestScaffoldProjectCreatesTestsModules"),
-    "TestScaffoldProjectIdempotency": ("tests.infra.unit.codegen.scaffolder", "TestScaffoldProjectIdempotency"),
-    "TestScaffoldProjectNoop": ("tests.infra.unit.codegen.scaffolder", "TestScaffoldProjectNoop"),
-    "TestScanAstPublicDefs": ("tests.infra.unit.codegen.lazy_init_transforms", "TestScanAstPublicDefs"),
-    "TestShouldBubbleUp": ("tests.infra.unit.codegen.lazy_init_transforms", "TestShouldBubbleUp"),
-    "TestViolationPattern": ("tests.infra.unit.codegen.census_models", "TestViolationPattern"),
-    "c": ("tests.infra.unit.codegen.lazy_init_transforms", "TestExtractInlineConstants"),
+    "TestMergeChildExports": (
+        "tests.infra.unit.codegen.lazy_init_transforms",
+        "TestMergeChildExports",
+    ),
+    "TestParseViolationInvalid": (
+        "tests.infra.unit.codegen.census",
+        "TestParseViolationInvalid",
+    ),
+    "TestParseViolationValid": (
+        "tests.infra.unit.codegen.census",
+        "TestParseViolationValid",
+    ),
+    "TestProcessDirectory": (
+        "tests.infra.unit.codegen.lazy_init_process",
+        "TestProcessDirectory",
+    ),
+    "TestReadExistingDocstring": (
+        "tests.infra.unit.codegen.lazy_init_helpers",
+        "TestReadExistingDocstring",
+    ),
+    "TestResolveAliases": (
+        "tests.infra.unit.codegen.lazy_init_generation",
+        "TestResolveAliases",
+    ),
+    "TestRunRuffFix": (
+        "tests.infra.unit.codegen.lazy_init_generation",
+        "TestRunRuffFix",
+    ),
+    "TestScaffoldProjectCreatesSrcModules": (
+        "tests.infra.unit.codegen.scaffolder",
+        "TestScaffoldProjectCreatesSrcModules",
+    ),
+    "TestScaffoldProjectCreatesTestsModules": (
+        "tests.infra.unit.codegen.scaffolder",
+        "TestScaffoldProjectCreatesTestsModules",
+    ),
+    "TestScaffoldProjectIdempotency": (
+        "tests.infra.unit.codegen.scaffolder",
+        "TestScaffoldProjectIdempotency",
+    ),
+    "TestScaffoldProjectNoop": (
+        "tests.infra.unit.codegen.scaffolder",
+        "TestScaffoldProjectNoop",
+    ),
+    "TestScanAstPublicDefs": (
+        "tests.infra.unit.codegen.lazy_init_transforms",
+        "TestScanAstPublicDefs",
+    ),
+    "TestShouldBubbleUp": (
+        "tests.infra.unit.codegen.lazy_init_transforms",
+        "TestShouldBubbleUp",
+    ),
+    "TestViolationPattern": (
+        "tests.infra.unit.codegen.census_models",
+        "TestViolationPattern",
+    ),
+    "c": (
+        "tests.infra.unit.codegen.lazy_init_transforms",
+        "TestExtractInlineConstants",
+    ),
     "census": ("tests.infra.unit.codegen.census", "census"),
     "fixer": ("tests.infra.unit.codegen.autofix", "fixer"),
-    "test_codegen_dir_returns_all_exports": ("tests.infra.unit.codegen.init", "test_codegen_dir_returns_all_exports"),
-    "test_codegen_getattr_raises_attribute_error": ("tests.infra.unit.codegen.init", "test_codegen_getattr_raises_attribute_error"),
-    "test_codegen_init_getattr_raises_attribute_error": ("tests.infra.unit.codegen.lazy_init_generation", "test_codegen_init_getattr_raises_attribute_error"),
-    "test_codegen_lazy_imports_work": ("tests.infra.unit.codegen.init", "test_codegen_lazy_imports_work"),
-    "test_codegen_pipeline_end_to_end": ("tests.infra.unit.codegen.pipeline", "test_codegen_pipeline_end_to_end"),
-    "test_files_modified_tracks_affected_files": ("tests.infra.unit.codegen.autofix_workspace", "test_files_modified_tracks_affected_files"),
-    "test_flexcore_excluded_from_run": ("tests.infra.unit.codegen.autofix_workspace", "test_flexcore_excluded_from_run"),
-    "test_in_context_typevar_not_flagged": ("tests.infra.unit.codegen.autofix", "test_in_context_typevar_not_flagged"),
-    "test_project_without_src_returns_empty": ("tests.infra.unit.codegen.autofix_workspace", "test_project_without_src_returns_empty"),
-    "test_standalone_final_detected_as_fixable": ("tests.infra.unit.codegen.autofix", "test_standalone_final_detected_as_fixable"),
-    "test_standalone_typealias_detected_as_fixable": ("tests.infra.unit.codegen.autofix", "test_standalone_typealias_detected_as_fixable"),
-    "test_standalone_typevar_detected_as_fixable": ("tests.infra.unit.codegen.autofix", "test_standalone_typevar_detected_as_fixable"),
-    "test_syntax_error_files_skipped": ("tests.infra.unit.codegen.autofix", "test_syntax_error_files_skipped"),
+    "test_codegen_dir_returns_all_exports": (
+        "tests.infra.unit.codegen.init",
+        "test_codegen_dir_returns_all_exports",
+    ),
+    "test_codegen_getattr_raises_attribute_error": (
+        "tests.infra.unit.codegen.init",
+        "test_codegen_getattr_raises_attribute_error",
+    ),
+    "test_codegen_init_getattr_raises_attribute_error": (
+        "tests.infra.unit.codegen.lazy_init_generation",
+        "test_codegen_init_getattr_raises_attribute_error",
+    ),
+    "test_codegen_lazy_imports_work": (
+        "tests.infra.unit.codegen.init",
+        "test_codegen_lazy_imports_work",
+    ),
+    "test_codegen_pipeline_end_to_end": (
+        "tests.infra.unit.codegen.pipeline",
+        "test_codegen_pipeline_end_to_end",
+    ),
+    "test_files_modified_tracks_affected_files": (
+        "tests.infra.unit.codegen.autofix_workspace",
+        "test_files_modified_tracks_affected_files",
+    ),
+    "test_flexcore_excluded_from_run": (
+        "tests.infra.unit.codegen.autofix_workspace",
+        "test_flexcore_excluded_from_run",
+    ),
+    "test_in_context_typevar_not_flagged": (
+        "tests.infra.unit.codegen.autofix",
+        "test_in_context_typevar_not_flagged",
+    ),
+    "test_project_without_src_returns_empty": (
+        "tests.infra.unit.codegen.autofix_workspace",
+        "test_project_without_src_returns_empty",
+    ),
+    "test_standalone_final_detected_as_fixable": (
+        "tests.infra.unit.codegen.autofix",
+        "test_standalone_final_detected_as_fixable",
+    ),
+    "test_standalone_typealias_detected_as_fixable": (
+        "tests.infra.unit.codegen.autofix",
+        "test_standalone_typealias_detected_as_fixable",
+    ),
+    "test_standalone_typevar_detected_as_fixable": (
+        "tests.infra.unit.codegen.autofix",
+        "test_standalone_typevar_detected_as_fixable",
+    ),
+    "test_syntax_error_files_skipped": (
+        "tests.infra.unit.codegen.autofix",
+        "test_syntax_error_files_skipped",
+    ),
 }
 
 __all__ = [
