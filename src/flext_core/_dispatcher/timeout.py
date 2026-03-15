@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import concurrent.futures
 from collections.abc import Mapping
+from typing import override
 
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
 
@@ -47,6 +48,7 @@ class TimeoutEnforcer(BaseModel):
             executor_workers=executor_workers,
         )
 
+    @override
     def model_post_init(self, __context: object, /) -> None:
         self.executor_workers = max(
             self.executor_workers, c.Reliability.RETRY_COUNT_MIN

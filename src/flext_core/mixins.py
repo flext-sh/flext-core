@@ -70,6 +70,7 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
     """
 
     _runtime: m.ServiceRuntime | None = PrivateAttr(default=None)
+    _operation_stats: dict[str, m.ConfigMap] = PrivateAttr(default_factory=dict)
 
     _logger_cache: ClassVar[dict[str, FlextLogger]] = {}
     _cache_lock: ClassVar[threading.Lock] = threading.Lock()
@@ -207,8 +208,6 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
         self, operation_name: str
     ) -> Iterator[Mapping[str, t.NormalizedValue | BaseModel]]:
         """Track operation performance with timing and automatic context cleanup."""
-        if not hasattr(self, "_operation_stats"):
-            self._operation_stats: dict[str, m.ConfigMap] = {}
         stats: m.ConfigMap = self._operation_stats.get(
             operation_name,
             m.ConfigMap(
