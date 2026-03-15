@@ -53,7 +53,7 @@ class FlextInfraDocBuilder:
 
     def build(
         self,
-        root: Path,
+        workspace_root: Path,
         *,
         project: str | None = None,
         projects: str | None = None,
@@ -62,7 +62,7 @@ class FlextInfraDocBuilder:
         """Build MkDocs sites across project scopes.
 
         Args:
-            root: Workspace root directory.
+            workspace_root: Workspace root directory.
             project: Single project name filter.
             projects: Comma-separated project names.
             output_dir: Report output directory.
@@ -72,7 +72,7 @@ class FlextInfraDocBuilder:
 
         """
         scopes_result = FlextInfraDocsShared.build_scopes(
-            workspace_root=root,
+            workspace_root=workspace_root,
             project=project,
             projects=projects,
             output_dir=output_dir,

@@ -13,8 +13,6 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import cast
 
-import pytest
-
 from flext_core import m, r
 from flext_tests import u
 

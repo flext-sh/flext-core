@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import sys
 
+from flext_infra import __main__ as main_mod
 from flext_infra.__main__ import FlextInfraMainCLI
 
 
@@ -15,7 +16,7 @@ def test_main_returns_error_when_no_args() -> None:
     original_argv = sys.argv.copy()
     try:
         sys.argv = ["flext-infra"]
-        result = FlextInfraMainCLI.main()
+        result = main_mod.main_inner()
     finally:
         sys.argv = original_argv
     assert result == 1
@@ -25,7 +26,7 @@ def test_main_help_flag_returns_zero() -> None:
     original_argv = sys.argv.copy()
     try:
         sys.argv = ["flext-infra", "--help"]
-        result = FlextInfraMainCLI.main()
+        result = main_mod.main_inner()
     finally:
         sys.argv = original_argv
     assert result == 0
@@ -35,7 +36,7 @@ def test_main_unknown_group_returns_error() -> None:
     original_argv = sys.argv.copy()
     try:
         sys.argv = ["flext-infra", "unknown"]
-        result = FlextInfraMainCLI.main()
+        result = main_mod.main_inner()
     finally:
         sys.argv = original_argv
     assert result == 1

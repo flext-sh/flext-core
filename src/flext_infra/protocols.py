@@ -81,7 +81,7 @@ class FlextInfraProtocols(FlextProtocols):
 
             def sync(
                 self,
-                project_root: Path,
+                workspace_root: Path,
                 *,
                 config: m.Infra.Basemk.BaseMkConfig | None = None,
                 canonical_root: Path | None = None,

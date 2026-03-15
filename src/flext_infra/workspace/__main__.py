@@ -34,7 +34,7 @@ def _run_sync(cli: u.Infra.CliArgs, canonical_root: str | None) -> int:
     """Execute base.mk sync."""
     canonical_path = Path(canonical_root) if canonical_root else None
     service = FlextInfraSyncService(canonical_root=canonical_path)
-    result = service.sync(project_root=cli.workspace, canonical_root=canonical_path)
+    result = service.sync(workspace_root=cli.workspace, canonical_root=canonical_path)
     return u.Infra.exit_code(result, failure_msg="sync failed")
 
 

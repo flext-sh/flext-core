@@ -96,7 +96,7 @@ class FlextInfraSyncService(s[m.Infra.Workspace.SyncResult]):
         _source: str | None = None,
         _target: str | None = None,
         *,
-        project_root: Path | None = None,
+        workspace_root: Path | None = None,
         config: m.Infra.Basemk.BaseMkConfig | None = None,
         canonical_root: Path | None = None,
     ) -> r[m.Infra.Workspace.SyncResult]:
@@ -107,7 +107,7 @@ class FlextInfraSyncService(s[m.Infra.Workspace.SyncResult]):
         changed. Also ensures required .gitignore entries exist.
 
         Args:
-            project_root: Project root directory. Required.
+            workspace_root: Workspace root directory. Required.
             config: Optional base.mk generation configuration.
             canonical_root: Workspace root with canonical base.mk.
 
@@ -115,9 +115,9 @@ class FlextInfraSyncService(s[m.Infra.Workspace.SyncResult]):
             r with SyncResult on success, error message on failure.
 
         """
-        if project_root is None:
-            return r[m.Infra.Workspace.SyncResult].fail("project_root is required")
-        resolved = project_root.resolve()
+        if workspace_root is None:
+            return r[m.Infra.Workspace.SyncResult].fail("workspace_root is required")
+        resolved = workspace_root.resolve()
         if not resolved.is_dir():
             return r[m.Infra.Workspace.SyncResult].fail(
                 f"project root does not exist: {resolved}",
@@ -165,7 +165,7 @@ class FlextInfraSyncService(s[m.Infra.Workspace.SyncResult]):
 
     def _ensure_gitignore_entries(
         self,
-        project_root: Path,
+        workspace_root: Path,
         required: list[str],
     ) -> r[bool]:
         """Idempotently add missing .gitignore entries.
@@ -174,14 +174,14 @@ class FlextInfraSyncService(s[m.Infra.Workspace.SyncResult]):
         Never removes or reorders existing entries.
 
         Args:
-            project_root: Root directory of the project.
+            workspace_root: Root directory of the project.
             required: List of gitignore patterns that must be present.
 
         Returns:
             r with True if file was changed, False otherwise.
 
         """
-        gitignore = project_root / c.Infra.Files.GITIGNORE
+        gitignore = workspace_root / c.Infra.Files.GITIGNORE
         try:
             existing_lines: list[str] = []
             if gitignore.exists():
@@ -206,7 +206,7 @@ class FlextInfraSyncService(s[m.Infra.Workspace.SyncResult]):
 
     def _sync_basemk(
         self,
-        project_root: Path,
+        workspace_root: Path,
         config: m.Infra.Basemk.BaseMkConfig | None,
         *,
         canonical_root: Path | None = None,
@@ -226,7 +226,7 @@ class FlextInfraSyncService(s[m.Infra.Workspace.SyncResult]):
             and canonical_basemk.exists()
             and (
                 canonical_basemk.resolve()
-                != (project_root / c.Infra.Files.BASE_MK).resolve()
+                != (workspace_root / c.Infra.Files.BASE_MK).resolve()
             )
         ):
             content = canonical_basemk.read_text(encoding=c.Infra.Encoding.DEFAULT)
@@ -235,7 +235,7 @@ class FlextInfraSyncService(s[m.Infra.Workspace.SyncResult]):
             if gen_result.is_failure:
                 return r[bool].fail(gen_result.error or "base.mk generation failed")
             content = gen_result.value
-        target_path = project_root / c.Infra.Files.BASE_MK
+        target_path = workspace_root / c.Infra.Files.BASE_MK
         content_hash = self._sha256_content(content)
         if target_path.exists():
             existing_hash = self._sha256_file(target_path)
@@ -262,7 +262,7 @@ def main() -> int:
     service = FlextInfraSyncService(
         canonical_root=getattr(args, "canonical_root", None)
     )
-    result = service.sync(project_root=cli.workspace)
+    result = service.sync(workspace_root=cli.workspace)
     if result.is_success:
         return 0
     output.error(result.error or "sync failed")
