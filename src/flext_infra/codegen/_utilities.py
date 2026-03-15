@@ -23,7 +23,6 @@ from flext_infra import c, t
 from flext_infra._utilities.formatting import FlextInfraUtilitiesFormatting
 from flext_infra._utilities.iteration import FlextInfraUtilitiesIteration
 from flext_infra._utilities.parsing import FlextInfraUtilitiesParsing
-from flext_infra._utilities.subprocess import FlextInfraUtilitiesSubprocess
 from flext_infra.codegen._models import FlextInfraCodegenModels
 from flext_infra.codegen.census import FlextInfraCodegenCensus
 from flext_infra.codegen.transforms import FlextInfraCodegenTransforms
@@ -1296,3 +1295,4 @@ class FlextInfraUtilitiesCodegen(FlextInfraCodegenTransforms):
 
 
 __all__ = ["FlextInfraUtilitiesCodegen"]
+from flext_infra._utilities.subprocess import FlextInfraUtilitiesSubprocess  # noqa: E402 — must be after __all__ to break circular import chain

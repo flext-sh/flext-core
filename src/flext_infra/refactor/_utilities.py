@@ -21,7 +21,6 @@ from flext_core import r
 from flext_infra import c, m, t
 from flext_infra._utilities.io import FlextInfraUtilitiesIo
 from flext_infra._utilities.parsing import FlextInfraUtilitiesParsing
-from flext_infra._utilities.subprocess import FlextInfraUtilitiesSubprocess
 from flext_infra._utilities.yaml import FlextInfraUtilitiesYaml
 
 
@@ -710,3 +709,4 @@ class FlextInfraUtilitiesRefactor:
 
 
 __all__ = ["FlextInfraUtilitiesRefactor"]
+from flext_infra._utilities.subprocess import FlextInfraUtilitiesSubprocess  # noqa: E402 — must be after __all__ to break circular import chain
