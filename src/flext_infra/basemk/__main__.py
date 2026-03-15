@@ -32,6 +32,12 @@ def main(argv: list[str] | None = None) -> int:
         help="Generate base.mk content from templates",
     )
     _ = generate_parser.add_argument(
+        "--workspace",
+        type=Path,
+        default=Path.cwd(),
+        help="Workspace root directory (default: cwd)",
+    )
+    _ = generate_parser.add_argument(
         "--output",
         type=Path,
         help="Write generated content to file path (defaults to stdout)",

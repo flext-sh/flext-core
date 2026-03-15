@@ -622,6 +622,7 @@ class FlextRuntime:
         if not isinstance(value, str):
             return False
         try:
+            # Bridge-level: orjson used for JSON validation at infrastructure boundary
             orjson.loads(value)
             return True
         except (TypeError, ValueError):
@@ -1132,7 +1133,7 @@ class FlextRuntime:
             wrapper_arg = wrapper_class_factory()
         else:
             wrapper_arg = module.make_filtering_bound_logger(level_to_use)
-        factory_to_use: Callable[..., object] | None
+        factory_to_use: Callable[..., t.NormalizedValue | BaseModel] | None
         if logger_factory is not None:
             factory_to_use = logger_factory
         elif async_logging:

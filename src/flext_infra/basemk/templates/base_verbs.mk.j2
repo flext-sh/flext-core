@@ -193,7 +193,7 @@ docs: ## Build docs
 			*) echo "ERROR: invalid DOCS_PHASE=$$phase"; exit 2 ;; \
 		esac; \
 		if [ "$$phase" = "fix" ] && [ "$$all_mode" = "1" ]; then extra="--apply"; fi; \
-		cmd="python -m flext_infra $$subcmd --root . --output-dir .reports/docs"; \
+		cmd="python -m flext_infra $$subcmd --workspace . --output-dir .reports/docs"; \
 		if [ -n "$$extra" ]; then cmd="$$cmd $$extra"; fi; \
 		eval $$cmd || exit $$?; \
 	done

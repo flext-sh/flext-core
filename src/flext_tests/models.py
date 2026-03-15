@@ -1938,6 +1938,8 @@ class FlextTestsModels(
             result: Annotated[r[TResult], Field(description="r being chained")]
 
         class TestScope(FlextModels.ArbitraryTypesModel):
+            """Scope container for test configuration and runtime state."""
+
             __test__ = False
 
             config: Annotated[

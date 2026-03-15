@@ -994,7 +994,9 @@ class FlextDecorators:
         return isinstance(logger_value, FlextLogger)
 
     @staticmethod
-    def _resolve_logger(args: tuple[object, ...], func: Callable[P, R]) -> FlextLogger:
+    def _resolve_logger(
+        args: tuple[t.NormalizedValue | BaseModel, ...], func: Callable[P, R]
+    ) -> FlextLogger:
         """Resolve logger from first argument or create module logger.
 
         Returns:

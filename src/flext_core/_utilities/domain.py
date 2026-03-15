@@ -27,7 +27,7 @@ class FlextUtilitiesDomain:
         obj_a: RuntimeData,
         obj_b: RuntimeData,
     ) -> bool:
-        return type(obj_a) is type(obj_b)
+        return isinstance(obj_a, type(obj_b))
 
     @staticmethod
     def compare_entities_by_id(

@@ -35,7 +35,7 @@ from tests.constants import (
 )
 from tests.models import m as tm
 from tests.utilities import (
-    FlextTestsUtilities,
+    FlextCoreTestsUtilities,
 )
 
 _object = tests_t.Tests.object
@@ -436,7 +436,7 @@ class TestuStringParser:
 
         def test_exception_handling(self, parser: u) -> None:
             """Test parsing exception handling with bad object."""
-            bad_obj = FlextTestsUtilities.Tests.CoreBadObjects.create_for_split()
+            bad_obj = FlextCoreTestsUtilities.Tests.CoreBadObjects.create_for_split()
             bad_str = cast("str", cast("object", bad_obj))
             result = parser.parse_delimited(
                 bad_str,
@@ -471,7 +471,7 @@ class TestuStringParser:
 
         def test_exception_handling(self, parser: u) -> None:
             """Test split exception handling with bad object."""
-            bad_obj = FlextTestsUtilities.Tests.CoreBadObjects.create_for_index()
+            bad_obj = FlextCoreTestsUtilities.Tests.CoreBadObjects.create_for_index()
             bad_str = cast("str", cast("object", bad_obj))
             result = parser.split_on_char_with_escape(
                 bad_str,
@@ -509,7 +509,7 @@ class TestuStringParser:
 
         def test_exception_handling(self, parser: u) -> None:
             """Test normalization exception handling with bad object."""
-            bad_obj = FlextTestsUtilities.Tests.CoreBadObjects.create_for_str()
+            bad_obj = FlextCoreTestsUtilities.Tests.CoreBadObjects.create_for_str()
             bad_str = cast("str", cast("object", bad_obj))
             result = parser.normalize_whitespace(bad_str)
             assert result.is_failure

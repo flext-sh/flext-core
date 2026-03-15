@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import argparse
+from argparse import Namespace
 from pathlib import Path
 
 import tomlkit
@@ -157,9 +157,10 @@ class FlextInfraPyprojectModernizer:
             _ = path.write_text(rendered, encoding=c.Infra.Encoding.DEFAULT)
         return changes
 
-    def run(self, args: argparse.Namespace) -> int:
+    def run(self, args: Namespace, cli: u.Infra.CliArgs) -> int:
         """Run pyproject modernization for the workspace."""
-        dry_run = bool(args.dry_run or args.audit)
+        check_mode = bool(args.audit or cli.check)
+        dry_run = bool((not cli.apply) or check_mode)
         files = self.find_pyproject_files()
         root_doc = u.Infra.read(self.root / c.Infra.Files.PYPROJECT_FILENAME)
         if root_doc is None:
@@ -189,7 +190,7 @@ class FlextInfraPyprojectModernizer:
             )
             if dry_run:
                 u.Infra.info("(dry-run — no files modified)")
-        if args.audit and total > 0:
+        if check_mode and total > 0:
             return 1
         if not dry_run and (not args.skip_check):
             return self._run_poetry_check(files)
@@ -213,13 +214,18 @@ class FlextInfraPyprojectModernizer:
 
 def main(argv: list[str] | None = None) -> int:
     """Run the pyproject modernizer CLI."""
-    parser = argparse.ArgumentParser(description="Modernize workspace pyproject files")
+    parser = u.Infra.create_parser(
+        "flext-infra deps modernize",
+        "Modernize workspace pyproject files",
+        include_apply=True,
+        include_check=True,
+    )
     _ = parser.add_argument("--audit", action="store_true")
-    _ = parser.add_argument("--dry-run", action="store_true")
     _ = parser.add_argument("--skip-comments", action="store_true")
     _ = parser.add_argument("--skip-check", action="store_true")
     args = parser.parse_args(argv)
-    return FlextInfraPyprojectModernizer().run(args)
+    cli = u.Infra.resolve(args)
+    return FlextInfraPyprojectModernizer(root=cli.workspace).run(args, cli)
 
 
 if __name__ == "__main__":

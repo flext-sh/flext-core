@@ -51,11 +51,9 @@ if TYPE_CHECKING:
     from flext_infra.deps.extra_paths import (
         FlextInfraExtraPathsManager,
         FlextInfraUtilitiesToml,
-        sync_one,
     )
     from flext_infra.deps.internal_sync import (
         FlextInfraInternalDependencySyncService,
-        argparse,
         shutil,
     )
     from flext_infra.deps.modernizer import FlextInfraPyprojectModernizer, u
@@ -143,7 +141,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "flext_infra.deps._phases.inject_comments",
         "InjectCommentsPhase",
     ),
-    "argparse": ("flext_infra.deps.internal_sync", "argparse"),
     "build_project_report": ("flext_infra.deps.detection", "build_project_report"),
     "classify_issues": ("flext_infra.deps.detection", "classify_issues"),
     "discover_project_paths": ("flext_infra.deps.detection", "discover_project_paths"),
@@ -164,7 +161,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "run_pip_check": ("flext_infra.deps.detection", "run_pip_check"),
     "s": ("flext_infra.deps.detection", "FlextInfraDependencyDetectionService"),
     "shutil": ("flext_infra.deps.internal_sync", "shutil"),
-    "sync_one": ("flext_infra.deps.extra_paths", "sync_one"),
     "u": ("flext_infra.deps.modernizer", "u"),
 }
 
@@ -189,7 +185,6 @@ __all__ = [
     "FlextInfraRuntimeDevDependencyDetector",
     "FlextInfraUtilitiesToml",
     "InjectCommentsPhase",
-    "argparse",
     "build_project_report",
     "classify_issues",
     "discover_project_paths",
@@ -204,7 +199,6 @@ __all__ = [
     "run_pip_check",
     "s",
     "shutil",
-    "sync_one",
     "u",
 ]
 

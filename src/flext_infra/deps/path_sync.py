@@ -6,7 +6,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import argparse
 import sys
 from collections.abc import Mapping
 from pathlib import Path
@@ -50,6 +49,10 @@ class FlextInfraDependencyPathSync:
     def __init__(self) -> None:
         """Initialize the dependency path sync service with TOML service."""
         self._toml = FlextInfraUtilitiesToml()
+        self._root = self.ROOT
+
+    def set_workspace_root(self, root: Path) -> None:
+        self._root = root
 
     @staticmethod
     def detect_mode(project_root: Path) -> str:
@@ -220,39 +223,24 @@ class FlextInfraDependencyPathSync:
                 return r[list[str]].fail(write_result.error or "failed to write TOML")
         return r[list[str]].ok(changes)
 
-    def run(self, argv: list[str] | None = None) -> int:
-        """Execute dependency path rewriting from command line."""
-        parser = argparse.ArgumentParser(
-            description="Rewrite internal FLEXT dependency paths for workspace/standalone mode.",
-        )
-        _ = parser.add_argument(
-            "--mode",
-            choices=["workspace", "standalone", "auto"],
-            default="auto",
-            help="Target mode (default: auto-detect)",
-        )
-        _ = parser.add_argument(
-            "--dry-run",
-            action="store_true",
-            help="Print changes without writing",
-        )
-        _ = parser.add_argument(
-            "--project",
-            action="append",
-            dest="projects",
-            metavar="DIR",
-            help="Specific project(s) to process (default: all)",
-        )
-        args = parser.parse_args(argv)
-        mode = args.mode
+    def run(self, *, cli: u.Infra.CliArgs, mode: str) -> int:
+        self.set_workspace_root(cli.workspace)
+        dry_run = not cli.apply
+        selected_projects: list[str] = []
+        if cli.project:
+            selected_projects.append(cli.project)
+        if cli.projects:
+            selected_projects.extend(
+                name.strip() for name in cli.projects.split(",") if name.strip()
+            )
 
         if mode == "auto":
-            mode = self.detect_mode(self.ROOT)
+            mode = self.detect_mode(self._root)
             output.info(f"[sync-dep-paths] auto-detected mode: {mode}")
 
         total_changes = 0
         internal_names: set[str] = set()
-        root_pyproject = self.ROOT / c.Infra.Files.PYPROJECT_FILENAME
+        root_pyproject = self._root / c.Infra.Files.PYPROJECT_FILENAME
 
         if root_pyproject.exists():
             root_data_result = self._toml.read_document(root_pyproject)
@@ -264,13 +252,13 @@ class FlextInfraDependencyPathSync:
                     if root_name is not None:
                         internal_names.add(root_name)
 
-        if not args.projects and root_pyproject.exists():
+        if not selected_projects and root_pyproject.exists():
             changes_result = self.rewrite_dep_paths(
                 root_pyproject,
                 mode=mode,
                 internal_names=internal_names,
                 is_root=True,
-                dry_run=args.dry_run,
+                dry_run=dry_run,
             )
             if changes_result.is_failure:
                 root_error = changes_result.error or "sync_dep_paths_root_failed"
@@ -282,26 +270,26 @@ class FlextInfraDependencyPathSync:
                 return 1
             changes: list[str] = changes_result.value
             if changes:
-                prefix = "[DRY-RUN] " if args.dry_run else ""
+                prefix = "[DRY-RUN] " if dry_run else ""
                 output.info(f"{prefix}{root_pyproject}:")
                 for change in changes:
                     output.info(change)
                 total_changes += len(changes)
 
-        discover_result = FlextInfraUtilitiesDiscovery().discover_projects(self.ROOT)
+        discover_result = FlextInfraUtilitiesDiscovery().discover_projects(self._root)
         if discover_result.is_failure:
             discovery_error = discover_result.error or "sync_dep_paths_discovery_failed"
             self._log.error(
                 "sync_dep_paths_discovery_failed",
-                root=str(self.ROOT),
+                root=str(self._root),
                 error=discovery_error,
             )
             return 1
 
         projects_list: list[m.Infra.Workspace.ProjectInfo] = discover_result.value
         all_project_dirs = [project.path for project in projects_list]
-        if args.projects:
-            project_dirs = [self.ROOT / project for project in args.projects]
+        if selected_projects:
+            project_dirs = [self._root / project for project in selected_projects]
         else:
             project_dirs = all_project_dirs
 
@@ -329,7 +317,7 @@ class FlextInfraDependencyPathSync:
                 mode=mode,
                 internal_names=internal_names,
                 is_root=False,
-                dry_run=args.dry_run,
+                dry_run=dry_run,
             )
             if changes_result.is_failure:
                 project_error = changes_result.error or "sync_dep_paths_project_failed"
@@ -341,7 +329,7 @@ class FlextInfraDependencyPathSync:
                 return 1
             project_changes: list[str] = changes_result.value
             if project_changes:
-                prefix = "[DRY-RUN] " if args.dry_run else ""
+                prefix = "[DRY-RUN] " if dry_run else ""
                 output.info(f"{prefix}{pyproject}:")
                 for change in project_changes:
                     output.info(change)
@@ -352,14 +340,28 @@ class FlextInfraDependencyPathSync:
                 "[sync-dep-paths] No changes needed - all paths already match target mode."
             )
         else:
-            action = "would change" if args.dry_run else "changed"
+            action = "would change" if dry_run else "changed"
             output.info(f"[sync-dep-paths] {action} {total_changes} path(s).")
         return 0
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     """Entry point for path sync CLI."""
-    return FlextInfraDependencyPathSync().run()
+    parser = u.Infra.create_parser(
+        "flext-infra deps path-sync",
+        "Rewrite internal FLEXT dependency paths for workspace/standalone mode.",
+        include_apply=True,
+        include_project=True,
+    )
+    _ = parser.add_argument(
+        "--mode",
+        choices=["workspace", "standalone", "auto"],
+        default="auto",
+        help="Target mode (default: auto-detect)",
+    )
+    args = parser.parse_args(argv)
+    cli = u.Infra.resolve(args)
+    return FlextInfraDependencyPathSync().run(cli=cli, mode=args.mode)
 
 
 if __name__ == "__main__":

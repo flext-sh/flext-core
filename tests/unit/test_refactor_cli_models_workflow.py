@@ -66,7 +66,7 @@ def test_ultrawork_models_cli_runs_dry_run_copy(tmp_path: Path) -> None:
             argv=[
                 "--workspace",
                 str(workspace),
-                "--dry-run-copy-workspace",
+                "--dry-run",
                 "--normalize-remaining",
             ],
         )

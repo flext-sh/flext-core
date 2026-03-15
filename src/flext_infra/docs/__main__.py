@@ -13,9 +13,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import argparse
 import sys
-from pathlib import Path
 
 from flext_core import FlextRuntime
 from flext_infra import c, output, u
@@ -26,16 +24,22 @@ from flext_infra.docs.generator import FlextInfraDocGenerator
 from flext_infra.docs.validator import FlextInfraDocValidator
 
 
-def _run_audit(cli: u.Infra.CliArgs, args: argparse.Namespace) -> int:
+def _run_audit(
+    cli: u.Infra.CliArgs,
+    *,
+    check: bool = False,
+    strict: bool = False,
+    output_dir: str = "",
+) -> int:
     """Execute documentation audit."""
     auditor = FlextInfraDocAuditor()
     result = auditor.audit(
         root=cli.workspace,
         project=cli.project,
         projects=cli.projects,
-        output_dir=args.output_dir,
-        check=args.check,
-        strict=bool(args.strict),
+        output_dir=output_dir,
+        check="all" if check else "",
+        strict=strict,
     )
     if result.is_failure:
         output.error(result.error or "audit failed")
@@ -44,14 +48,14 @@ def _run_audit(cli: u.Infra.CliArgs, args: argparse.Namespace) -> int:
     return 1 if failures else 0
 
 
-def _run_fix(cli: u.Infra.CliArgs, args: argparse.Namespace) -> int:
+def _run_fix(cli: u.Infra.CliArgs, *, output_dir: str = "") -> int:
     """Execute documentation fix."""
     fixer = FlextInfraDocFixer()
     result = fixer.fix(
         root=cli.workspace,
         project=cli.project,
         projects=cli.projects,
-        output_dir=args.output_dir,
+        output_dir=output_dir,
         apply=cli.apply,
     )
     if result.is_failure:
@@ -60,14 +64,14 @@ def _run_fix(cli: u.Infra.CliArgs, args: argparse.Namespace) -> int:
     return 0
 
 
-def _run_build(cli: u.Infra.CliArgs, args: argparse.Namespace) -> int:
+def _run_build(cli: u.Infra.CliArgs, *, output_dir: str = "") -> int:
     """Execute documentation build."""
     builder = FlextInfraDocBuilder()
     result = builder.build(
         root=cli.workspace,
         project=cli.project,
         projects=cli.projects,
-        output_dir=args.output_dir,
+        output_dir=output_dir,
     )
     if result.is_failure:
         output.error(result.error or "build failed")
@@ -76,14 +80,14 @@ def _run_build(cli: u.Infra.CliArgs, args: argparse.Namespace) -> int:
     return 1 if failures else 0
 
 
-def _run_generate(cli: u.Infra.CliArgs, args: argparse.Namespace) -> int:
+def _run_generate(cli: u.Infra.CliArgs, *, output_dir: str = "") -> int:
     """Execute documentation generation."""
     generator = FlextInfraDocGenerator()
     result = generator.generate(
         root=cli.workspace,
         project=cli.project,
         projects=cli.projects,
-        output_dir=args.output_dir,
+        output_dir=output_dir,
         apply=cli.apply,
     )
     if result.is_failure:
@@ -92,15 +96,20 @@ def _run_generate(cli: u.Infra.CliArgs, args: argparse.Namespace) -> int:
     return 0
 
 
-def _run_validate(cli: u.Infra.CliArgs, args: argparse.Namespace) -> int:
+def _run_validate(
+    cli: u.Infra.CliArgs,
+    *,
+    check: bool = False,
+    output_dir: str = "",
+) -> int:
     """Execute documentation validation."""
     validator = FlextInfraDocValidator()
     result = validator.validate(
         root=cli.workspace,
         project=cli.project,
         projects=cli.projects,
-        output_dir=args.output_dir,
-        check=args.check,
+        output_dir=output_dir,
+        check="all" if check else "",
         apply=cli.apply,
     )
     if result.is_failure:
@@ -113,76 +122,96 @@ def _run_validate(cli: u.Infra.CliArgs, args: argparse.Namespace) -> int:
 def main() -> int:
     """Run documentation services: audit, fix, build, generate, validate."""
     FlextRuntime.ensure_structlog_configured()
-    parser = argparse.ArgumentParser(description="Documentation management services")
+    parser = u.Infra.create_parser(
+        "flext-infra docs",
+        "Documentation management services",
+        include_apply=False,
+    )
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
 
-    audit_parser = subparsers.add_parser("audit", help="Audit documentation")
-    _ = audit_parser.add_argument(
-        "--workspace", type=Path, default=Path.cwd(), help="Workspace root"
+    audit_base = u.Infra.create_parser(
+        "flext-infra docs audit",
+        "Audit documentation",
+        include_apply=True,
+        include_project=True,
+        include_check=True,
     )
-    _ = audit_parser.add_argument("--project")
-    _ = audit_parser.add_argument("--projects")
-    _ = audit_parser.add_argument("--dry-run", action="store_true")
-    _ = audit_parser.add_argument("--apply", action="store_true")
-    _ = audit_parser.add_argument("--check", default="all")
-    _ = audit_parser.add_argument("--strict", type=int, default=1)
+    audit_parser = subparsers.add_parser(
+        "audit",
+        help="Audit documentation",
+        parents=[audit_base],
+        add_help=False,
+    )
+    _ = audit_parser.add_argument("--strict", action="store_true", help="Strict mode")
     _ = audit_parser.add_argument(
         "--output-dir",
         default=f"{c.Infra.Reporting.REPORTS_DIR_NAME}/docs",
     )
 
-    fix_parser = subparsers.add_parser("fix", help="Fix documentation issues")
-    _ = fix_parser.add_argument(
-        "--workspace", type=Path, default=Path.cwd(), help="Workspace root"
+    fix_base = u.Infra.create_parser(
+        "flext-infra docs fix",
+        "Fix documentation issues",
+        include_apply=True,
+        include_project=True,
     )
-    _ = fix_parser.add_argument("--project")
-    _ = fix_parser.add_argument("--projects")
-    _ = fix_parser.add_argument("--dry-run", action="store_true")
-    _ = fix_parser.add_argument("--apply", action="store_true")
+    fix_parser = subparsers.add_parser(
+        "fix",
+        help="Fix documentation issues",
+        parents=[fix_base],
+        add_help=False,
+    )
     _ = fix_parser.add_argument(
         "--output-dir",
         default=f"{c.Infra.Reporting.REPORTS_DIR_NAME}/docs",
     )
 
+    build_base = u.Infra.create_parser(
+        f"flext-infra docs {c.Infra.Directories.BUILD}",
+        "Build MkDocs sites",
+        include_apply=True,
+        include_project=True,
+    )
     build_parser = subparsers.add_parser(
-        c.Infra.Directories.BUILD, help="Build MkDocs sites"
+        c.Infra.Directories.BUILD,
+        help="Build MkDocs sites",
+        parents=[build_base],
+        add_help=False,
     )
-    _ = build_parser.add_argument(
-        "--workspace", type=Path, default=Path.cwd(), help="Workspace root"
-    )
-    _ = build_parser.add_argument("--project")
-    _ = build_parser.add_argument("--projects")
-    _ = build_parser.add_argument("--dry-run", action="store_true")
-    _ = build_parser.add_argument("--apply", action="store_true")
     _ = build_parser.add_argument(
         "--output-dir",
         default=f"{c.Infra.Reporting.REPORTS_DIR_NAME}/docs",
     )
 
-    gen_parser = subparsers.add_parser("generate", help="Generate project docs")
-    _ = gen_parser.add_argument(
-        "--workspace", type=Path, default=Path.cwd(), help="Workspace root"
+    generate_base = u.Infra.create_parser(
+        "flext-infra docs generate",
+        "Generate project docs",
+        include_apply=True,
+        include_project=True,
     )
-    _ = gen_parser.add_argument("--project")
-    _ = gen_parser.add_argument("--projects")
-    _ = gen_parser.add_argument("--dry-run", action="store_true")
-    _ = gen_parser.add_argument("--apply", action="store_true")
+    gen_parser = subparsers.add_parser(
+        "generate",
+        help="Generate project docs",
+        parents=[generate_base],
+        add_help=False,
+    )
     _ = gen_parser.add_argument(
         "--output-dir",
         default=f"{c.Infra.Reporting.REPORTS_DIR_NAME}/docs",
     )
 
+    validate_base = u.Infra.create_parser(
+        f"flext-infra docs {c.Infra.Verbs.VALIDATE}",
+        "Validate documentation",
+        include_apply=True,
+        include_project=True,
+        include_check=True,
+    )
     val_parser = subparsers.add_parser(
-        c.Infra.Verbs.VALIDATE, help="Validate documentation"
+        c.Infra.Verbs.VALIDATE,
+        help="Validate documentation",
+        parents=[validate_base],
+        add_help=False,
     )
-    _ = val_parser.add_argument(
-        "--workspace", type=Path, default=Path.cwd(), help="Workspace root"
-    )
-    _ = val_parser.add_argument("--project")
-    _ = val_parser.add_argument("--projects")
-    _ = val_parser.add_argument("--dry-run", action="store_true")
-    _ = val_parser.add_argument("--apply", action="store_true")
-    _ = val_parser.add_argument("--check", default="all")
     _ = val_parser.add_argument(
         "--output-dir",
         default=f"{c.Infra.Reporting.REPORTS_DIR_NAME}/docs",
@@ -191,16 +220,34 @@ def main() -> int:
     args = parser.parse_args()
     cli = u.Infra.resolve(args)
 
-    handlers = {
-        "audit": _run_audit,
-        "fix": _run_fix,
-        c.Infra.Directories.BUILD: _run_build,
-        "generate": _run_generate,
-        c.Infra.Verbs.VALIDATE: _run_validate,
-    }
-    handler = handlers.get(args.command)
-    if handler:
-        return handler(cli, args)
+    if args.command == "audit":
+        return _run_audit(
+            cli,
+            check=cli.check,
+            strict=bool(getattr(args, "strict", False)),
+            output_dir=str(getattr(args, "output_dir", "")),
+        )
+    if args.command == "fix":
+        return _run_fix(
+            cli,
+            output_dir=str(getattr(args, "output_dir", "")),
+        )
+    if args.command == c.Infra.Directories.BUILD:
+        return _run_build(
+            cli,
+            output_dir=str(getattr(args, "output_dir", "")),
+        )
+    if args.command == "generate":
+        return _run_generate(
+            cli,
+            output_dir=str(getattr(args, "output_dir", "")),
+        )
+    if args.command == c.Infra.Verbs.VALIDATE:
+        return _run_validate(
+            cli,
+            check=cli.check,
+            output_dir=str(getattr(args, "output_dir", "")),
+        )
     parser.print_help()
     return 1
 

@@ -8,9 +8,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import json
 from collections.abc import Mapping
 
-import orjson
 from pydantic import BaseModel, ValidationError
 
 from flext_core import FlextRuntime, m, r, t
@@ -276,7 +276,7 @@ class FlextUtilitiesModel:
                             )
                         else:
                             plain_mapping[str(nested_key)] = nested_value
-                    safe_attrs[str_k] = orjson.dumps(plain_mapping).decode()
+                    safe_attrs[str_k] = json.dumps(plain_mapping)
                 else:
                     safe_attrs[str_k] = str(v)
             return m.Metadata.model_validate({"attributes": safe_attrs})

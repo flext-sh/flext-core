@@ -503,10 +503,3 @@ class FlextModelsCqrs:
 
 
 __all__ = ["FlextModelsCqrs"]
-
-FlextModelsCqrs.Command.model_rebuild()
-FlextModelsCqrs.Pagination.model_rebuild()
-FlextModelsCqrs.Query.model_rebuild()
-FlextModelsCqrs.Bus.model_rebuild()
-FlextModelsCqrs.Handler.model_rebuild()
-FlextModelsCqrs.Event.model_rebuild()

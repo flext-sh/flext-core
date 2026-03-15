@@ -9,11 +9,12 @@ import tomlkit
 
 from flext_infra import m
 from flext_infra.deps._phases import EnsurePytestConfigPhase
+from flext_infra.deps.tool_config import FlextInfraDependencyToolConfig
 from flext_tests import t, tm
 
 
 def _test_tool_config() -> m.Infra.Deps.ToolConfigDocument:
-    result = load_tool_config()
+    result = FlextInfraDependencyToolConfig.load_tool_config()
     tm.that(result.is_failure, eq=False)
     if result.is_failure:
         msg = "failed to load tool config"

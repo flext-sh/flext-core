@@ -117,7 +117,7 @@ class Examples:
             self._results.append("")
         self._results.append(f"[{name}]")
 
-    def ser(self, v) -> str:
+    def ser(self, v: object) -> str:
         """Deterministic, human-readable serialisation for golden-file output.
 
         Handles ``None``, bools, numbers, strings, lists, dicts, types,

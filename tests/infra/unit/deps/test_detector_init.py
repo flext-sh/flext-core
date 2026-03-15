@@ -28,7 +28,8 @@ class TestFlextInfraRuntimeDevDependencyDetectorInit:
             "test",
             "--no-pip-check",
             "--dry-run",
-            "--json",
+            "--format",
+            "json",
             "-o",
             "/tmp/out.json",
             "-q",
@@ -41,7 +42,7 @@ class TestFlextInfraRuntimeDevDependencyDetectorInit:
         tm.that(args.project, eq="test")
         tm.that(args.no_pip_check, eq=True)
         tm.that(args.dry_run, eq=True)
-        tm.that(args.json_stdout, eq=True)
+        tm.that(args.output_format, eq="json")
         tm.that(args.output, eq="/tmp/out.json")
         tm.that(args.quiet, eq=True)
         tm.that(args.no_fail, eq=True)

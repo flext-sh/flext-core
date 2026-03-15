@@ -370,7 +370,7 @@ class FlextInfraRefactorCliSupport:
         )
         mode_group = parser.add_mutually_exclusive_group(required=True)
         _ = mode_group.add_argument("--project", "-p", type=Path)
-        _ = mode_group.add_argument("--workspace-root", "-w", type=Path)
+        _ = mode_group.add_argument("--workspace", "-w", type=Path)
         _ = mode_group.add_argument("--file", "-f", type=Path)
         _ = mode_group.add_argument("--files", nargs="+", type=Path)
         _ = mode_group.add_argument("--list-rules", "-l", action="store_true")
@@ -452,9 +452,9 @@ class FlextInfraRefactorCliSupport:
                         for ignore_pattern in ignore_patterns
                     )
                 ]
-            elif args.workspace_root:
+            elif args.workspace:
                 files_to_analyze = engine.collect_workspace_files(
-                    args.workspace_root,
+                    args.workspace,
                     pattern=args.pattern,
                 )
             elif args.file:
@@ -485,9 +485,9 @@ class FlextInfraRefactorCliSupport:
                 dry_run=args.dry_run,
                 pattern=args.pattern,
             )
-        elif args.workspace_root:
+        elif args.workspace:
             results = engine.refactor_workspace(
-                args.workspace_root,
+                args.workspace,
                 dry_run=args.dry_run,
                 pattern=args.pattern,
             )

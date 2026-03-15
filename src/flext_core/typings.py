@@ -124,7 +124,7 @@ class FlextTypes:
         message protocols (Routable, Command, Query).
         """
 
-        def dispatch(self, message: Protocol, /) -> BaseModel:
+        def dispatch(self, message: BaseModel, /) -> BaseModel:
             """Dispatch a message and return the result."""
             ...
 

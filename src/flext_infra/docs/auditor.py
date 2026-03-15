@@ -4,7 +4,7 @@ Audits documentation for broken links and forbidden terms,
 returning structured r reports.
 
 Usage:
-    python -m flext_infra docs audit --root flext-core
+    python -m flext_infra docs audit --workspace flext-core
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -12,7 +12,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import argparse
 from collections.abc import Mapping
 from pathlib import Path
 
@@ -323,25 +322,28 @@ class FlextInfraDocAuditor:
 
 def main() -> int:
     """CLI entry point for the documentation auditor."""
-    parser = argparse.ArgumentParser(description="Audit documentation for issues")
-    _ = parser.add_argument("--root", default=".")
-    _ = parser.add_argument("--project")
-    _ = parser.add_argument("--projects")
+    parser = u.Infra.create_parser(
+        "flext-infra docs audit",
+        "Audit documentation for issues",
+        include_apply=True,
+        include_project=True,
+        include_check=True,
+    )
+    _ = parser.add_argument("--strict", action="store_true", help="Strict mode")
     _ = parser.add_argument(
         "--output-dir",
         default=c.Infra.Docs.DEFAULT_DOCS_OUTPUT_DIR,
     )
-    _ = parser.add_argument("--check", default="all")
-    _ = parser.add_argument("--strict", type=int, default=1)
     args = parser.parse_args()
+    cli = u.Infra.resolve(args)
     auditor = FlextInfraDocAuditor()
     result = auditor.audit(
-        root=Path(args.root).resolve(),
-        project=args.project,
-        projects=args.projects,
+        root=cli.workspace,
+        project=cli.project,
+        projects=cli.projects,
         output_dir=args.output_dir,
-        check=args.check,
-        strict=bool(args.strict),
+        check="all" if cli.check else "none",
+        strict=bool(getattr(args, "strict", False)),
     )
     if result.is_failure:
         output.error(result.error or "audit failed")

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import argparse
 import sys
 from pathlib import Path
 
@@ -26,9 +25,10 @@ class FlextInfraExtraPathsManager:
     ROOT = u.Infra.resolve_workspace_root(__file__)
     _STRING_LIST_ADAPTER: TypeAdapter[list[str]] = TypeAdapter(list[str])
 
-    def __init__(self) -> None:
+    def __init__(self, root: Path | None = None) -> None:
         """Initialize the extra paths manager with path resolver and TOML service."""
         super().__init__()
+        self.root = root or self.ROOT
         self.resolver = FlextInfraUtilitiesPaths()
         self.toml = FlextInfraUtilitiesToml()
 
@@ -142,7 +142,7 @@ class FlextInfraExtraPathsManager:
         doc_result = self.toml.read_document(pyproject_path)
         if doc_result.is_failure:
             return r[bool].fail(doc_result.error or f"failed to read {pyproject_path}")
-        doc = doc_result.value
+        doc: TOMLDocument = doc_result.value
         dep_paths = self.get_dep_paths(doc, is_root=is_root)
         pyright_extra = (
             c.Infra.Deps.PYRIGHT_BASE_ROOT + dep_paths
@@ -229,7 +229,7 @@ class FlextInfraExtraPathsManager:
                 sync_result = self.sync_one(
                     pyproject,
                     dry_run=dry_run,
-                    is_root=project_dir == self.ROOT,
+                    is_root=project_dir == self.root,
                 )
                 if sync_result.is_failure:
                     return r[int].fail(
@@ -238,7 +238,7 @@ class FlextInfraExtraPathsManager:
                 if sync_result.value and (not dry_run):
                     u.Infra.info(f"Updated {pyproject}")
             return r[int].ok(0)
-        pyproject = self.ROOT / c.Infra.Files.PYPROJECT_FILENAME
+        pyproject = self.root / c.Infra.Files.PYPROJECT_FILENAME
         if not pyproject.exists():
             return r[int].fail(f"Missing {pyproject}")
         sync_result = self.sync_one(pyproject, dry_run=dry_run, is_root=True)
@@ -249,27 +249,41 @@ class FlextInfraExtraPathsManager:
         return r[int].ok(0)
 
 
-def main() -> int:
+def _resolve_project_dirs(
+    cli: u.Infra.CliArgs,
+) -> list[Path] | None:
+    projects_raw: list[str] = []
+    if cli.project:
+        projects_raw.append(cli.project)
+    if cli.projects:
+        projects_raw.extend(name.strip() for name in cli.projects.split(","))
+    projects = [name for name in projects_raw if name]
+    if not projects:
+        return None
+    resolved: list[Path] = []
+    for project in projects:
+        project_path = Path(project)
+        if not project_path.is_absolute():
+            project_path = cli.workspace / project_path
+        resolved.append(project_path)
+    return resolved
+
+
+def main(argv: list[str] | None = None) -> int:
     """Execute extra paths synchronization from command line."""
-    manager = FlextInfraExtraPathsManager()
-    parser = argparse.ArgumentParser()
-    _ = parser.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="Print would-be changes only",
+    parser = u.Infra.create_parser(
+        "flext-infra deps extra-paths",
+        "Synchronize pyright and mypy extraPaths from path dependencies",
+        include_apply=True,
+        include_project=True,
     )
-    _ = parser.add_argument(
-        "--project",
-        action="append",
-        dest="projects",
-        metavar="DIR",
-        help="Project directory to sync (can be repeated); default is workspace root only",
+    args = parser.parse_args(argv)
+    cli = u.Infra.resolve(args)
+    manager = FlextInfraExtraPathsManager(root=cli.workspace)
+    project_dirs = _resolve_project_dirs(cli)
+    result = manager.sync_extra_paths(
+        dry_run=(not cli.apply), project_dirs=project_dirs
     )
-    args = parser.parse_args()
-    project_dirs: list[Path] | None = None
-    if args.projects:
-        project_dirs = [manager.ROOT / project for project in args.projects]
-    result = manager.sync_extra_paths(dry_run=args.dry_run, project_dirs=project_dirs)
     if result.is_success:
         return result.value
     u.Infra.error(result.error or "sync failed")
@@ -284,5 +298,4 @@ __all__ = [
     "FlextInfraExtraPathsManager",
     "FlextInfraUtilitiesToml",
     "main",
-    "sync_one",
 ]

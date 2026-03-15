@@ -18,11 +18,9 @@ from flext_infra import (
     c,
     m,
     p,
+    t,
     u,
 )
-from flext_infra.typings import FlextInfraTypes
-
-t = FlextInfraTypes
 
 
 class FlextInfraInternalDependencySyncService:
@@ -276,10 +274,12 @@ class FlextInfraInternalDependencySyncService:
         remote = u.Infra.git_run(
             ["config", "--get", "remote.origin.url"], cwd=project_root
         )
-        return remote.fold(
-            on_failure=lambda _: None,
-            on_success=lambda v: self.owner_from_remote_url(v.strip()),
-        )
+        if remote.is_failure:
+            return None
+        remote_val = remote.value
+        if isinstance(remote_val, str):
+            return self.owner_from_remote_url(remote_val.strip())
+        return None
 
     def is_workspace_mode(self, project_root: Path) -> tuple[bool, Path | None]:
         """Determine workspace mode and return resolved workspace root."""
@@ -294,7 +294,8 @@ class FlextInfraInternalDependencySyncService:
             cwd=project_root,
         )
         if superproject.is_success:
-            value = superproject.value.strip()
+            sp_val = superproject.value
+            value = sp_val.strip() if isinstance(sp_val, str) else ""
             if value:
                 return (True, Path(value))
         heuristic_workspace_root = self.workspace_root_from_parents(project_root)
@@ -379,12 +380,14 @@ class FlextInfraInternalDependencySyncService:
                     return value
         branch = u.Infra.git_current_branch(project_root)
         if branch.is_success:
-            current = branch.value.strip()
+            branch_val = branch.value
+            current = branch_val.strip() if isinstance(branch_val, str) else ""
             if current and current != c.Infra.Git.HEAD:
                 return current
         tag = u.Infra.git_run(["describe", "--tags", "--exact-match"], cwd=project_root)
         if tag.is_success:
-            return tag.value.strip()
+            tag_val = tag.value
+            return tag_val.strip() if isinstance(tag_val, str) else c.Infra.Git.MAIN
         return c.Infra.Git.MAIN
 
     def synthesized_repo_map(
@@ -436,4 +439,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-__all__ = ["FlextInfraInternalDependencySyncService", "argparse", "main", "shutil", "u"]
+__all__ = ["FlextInfraInternalDependencySyncService", "main", "shutil"]

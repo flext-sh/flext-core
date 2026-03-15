@@ -1,66 +1,56 @@
 from __future__ import annotations
 
 import argparse
-import types
 from pathlib import Path
 
 import pytest
 
 from flext_core import r
+from flext_infra._utilities.cli import FlextInfraUtilitiesCli
 from flext_infra.deps import internal_sync
-from flext_infra.deps.internal_sync import FlextInfraInternalDependencySyncService, main
+from flext_infra.deps.internal_sync import main
 from flext_tests import tm
 from tests.infra import h
 
 
 class TestMain:
-    def test_main_success(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        def _parse_args(self: argparse.ArgumentParser) -> types.SimpleNamespace:
-            _ = self
-            return types.SimpleNamespace(project_root=Path("/tmp/test"))
-
-        def _sync(
-            self: FlextInfraInternalDependencySyncService,
-            _project_root: Path,
-        ) -> r[int]:
-            _ = self
-            _ = _project_root
-            return r[int].ok(0)
+    def test_main_success(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        cli_args = FlextInfraUtilitiesCli.CliArgs(workspace=tmp_path)
 
         monkeypatch.setattr(
-            internal_sync.argparse.ArgumentParser,
+            argparse.ArgumentParser,
             "parse_args",
-            _parse_args,
+            lambda _self, _args=None, _ns=None: argparse.Namespace(workspace=tmp_path),
+        )
+        monkeypatch.setattr(
+            FlextInfraUtilitiesCli, "resolve", staticmethod(lambda _a: cli_args)
         )
         monkeypatch.setattr(
             internal_sync.FlextInfraInternalDependencySyncService,
             "sync",
-            _sync,
+            lambda _self, _root: r[int].ok(0),
         )
         tm.that(main(), eq=0)
 
-    def test_main_failure(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        def _parse_args(self: argparse.ArgumentParser) -> types.SimpleNamespace:
-            _ = self
-            return types.SimpleNamespace(project_root=Path("/tmp/test"))
-
-        def _sync(
-            self: FlextInfraInternalDependencySyncService,
-            _project_root: Path,
-        ) -> r[int]:
-            _ = self
-            _ = _project_root
-            return r[int].fail("sync failed")
+    def test_main_failure(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        cli_args = FlextInfraUtilitiesCli.CliArgs(workspace=tmp_path)
 
         monkeypatch.setattr(
-            internal_sync.argparse.ArgumentParser,
+            argparse.ArgumentParser,
             "parse_args",
-            _parse_args,
+            lambda _self, _args=None, _ns=None: argparse.Namespace(workspace=tmp_path),
+        )
+        monkeypatch.setattr(
+            FlextInfraUtilitiesCli, "resolve", staticmethod(lambda _a: cli_args)
         )
         monkeypatch.setattr(
             internal_sync.FlextInfraInternalDependencySyncService,
             "sync",
-            _sync,
+            lambda _self, _root: r[int].fail("sync failed"),
         )
         tm.that(main(), eq=1)
         tm.that(hasattr(h, "assert_ok"), eq=True)

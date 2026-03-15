@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import argparse
+
 import fcntl
 import hashlib
 import tempfile
@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import override
 
 from flext_core import r, s
-from flext_infra import c, m
+from flext_infra import c, m, u
 from flext_infra._utilities.output import output
 from flext_infra.basemk.generator import FlextInfraBaseMkGenerator
 
@@ -247,12 +247,10 @@ class FlextInfraSyncService(s[m.Infra.Workspace.SyncResult]):
 
 def main() -> int:
     """CLI entry point for workspace sync."""
-    parser = argparse.ArgumentParser(description="Workspace base.mk sync")
-    _ = parser.add_argument(
-        "--project-root",
-        type=Path,
-        default=Path(),
-        help="Project root directory",
+    parser = u.Infra.create_parser(
+        "flext-infra workspace sync",
+        "Workspace base.mk sync",
+        include_apply=False,
     )
     _ = parser.add_argument(
         "--canonical-root",
@@ -261,8 +259,11 @@ def main() -> int:
         help="Canonical workspace root",
     )
     args = parser.parse_args()
-    service = FlextInfraSyncService(canonical_root=args.canonical_root)
-    result = service.sync(project_root=args.project_root)
+    cli = u.Infra.resolve(args)
+    service = FlextInfraSyncService(
+        canonical_root=getattr(args, "canonical_root", None)
+    )
+    result = service.sync(project_root=cli.workspace)
     if result.is_success:
         return 0
     output.error(result.error or "sync failed")

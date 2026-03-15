@@ -72,7 +72,7 @@ class FlextUtilitiesGuards:
         """Check if value is int."""
         return isinstance(value, int)
 
-    type _GuardInput = object
+    type _GuardInput = t.NormalizedValue | BaseModel
 
     @staticmethod
     def _is_list_or_tuple(

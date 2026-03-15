@@ -147,7 +147,7 @@ endef
 define AUTO_SYNC_BASE_AND_SCRIPTS
 if [ "$(FLEXT_MODE)" = "workspace" ] && [ "$(CURDIR)" != "$(WORKSPACE_ROOT)" ]; then \
 	python -m flext_infra workspace sync \
-		--project-root "$(CURDIR)"; \
+		--workspace "$(CURDIR)"; \
 elif [ "$(FLEXT_MODE)" = "standalone" ]; then \
 	echo "INFO: [preflight] Standalone mode: skipping workspace dependency sync."; \
 fi
@@ -353,7 +353,7 @@ docs: ## Build docs
 			*) echo "ERROR: invalid DOCS_PHASE=$$phase"; exit 2 ;; \
 		esac; \
 		if [ "$$phase" = "fix" ] && [ "$$all_mode" = "1" ]; then extra="--apply"; fi; \
-		cmd="python -m flext_infra $$subcmd --root . --output-dir .reports/docs"; \
+		cmd="python -m flext_infra $$subcmd --workspace . --output-dir .reports/docs"; \
 		if [ -n "$$extra" ]; then cmd="$$cmd $$extra"; fi; \
 		eval $$cmd || exit $$?; \
 	done

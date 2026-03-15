@@ -14,7 +14,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import argparse
 import sys
 from pathlib import Path
 
@@ -28,149 +27,76 @@ from flext_infra import (
     FlextInfraCodegenScaffolder,
     c,
     output,
+    u,
 )
 
 
 def main(argv: list[str] | None = None) -> int:
     """Run codegen service CLI."""
     FlextRuntime.ensure_structlog_configured()
-    parser = argparse.ArgumentParser(
-        description="Code generation tools for workspace standardization",
+    parser = u.Infra.create_parser(
+        "flext-infra codegen",
+        "Code generation tools for workspace standardization",
+        include_apply=True,
+        include_format=True,
+        include_check=True,
+    )
+    shared_parser = u.Infra.create_parser(
+        "flext-infra codegen",
+        "Code generation tools for workspace standardization",
+        include_apply=True,
+        include_format=True,
+        include_check=True,
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    lazy_parser = subparsers.add_parser(
+    _ = subparsers.add_parser(
         "lazy-init",
+        parents=[shared_parser],
+        add_help=False,
         help="Generate/refresh PEP 562 lazy-import __init__.py files",
     )
-    _ = lazy_parser.add_argument(
-        "--workspace",
-        type=Path,
-        default=Path.cwd(),
-        help="Workspace root directory (default: cwd)",
-    )
-    _ = lazy_parser.add_argument(
-        "--check",
-        action="store_true",
-        help="Check mode — report unmapped exports without writing files",
-    )
 
-    census_parser = subparsers.add_parser(
+    _ = subparsers.add_parser(
         "census",
+        parents=[shared_parser],
+        add_help=False,
         help="Count namespace violations across workspace projects",
     )
-    _ = census_parser.add_argument(
-        "--workspace",
-        type=Path,
-        default=Path.cwd(),
-        help="Workspace root directory (default: cwd)",
-    )
-    _ = census_parser.add_argument(
-        "--format",
-        choices=["json", "text"],
-        default="text",
-        dest="output_format",
-        help="Output format (default: text)",
-    )
 
-    scaffold_parser = subparsers.add_parser(
+    _ = subparsers.add_parser(
         "scaffold",
+        parents=[shared_parser],
+        add_help=False,
         help="Generate missing base modules in src/ and tests/",
     )
-    _ = scaffold_parser.add_argument(
-        "--workspace",
-        type=Path,
-        default=Path.cwd(),
-        help="Workspace root directory (default: cwd)",
-    )
-    scaffold_mode = scaffold_parser.add_mutually_exclusive_group(required=False)
-    _ = scaffold_mode.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="Report what would be created without writing files",
-    )
-    _ = scaffold_mode.add_argument(
-        "--apply",
-        action="store_true",
-        help="Apply changes",
-    )
 
-    fix_parser = subparsers.add_parser(
+    _ = subparsers.add_parser(
         "auto-fix",
+        parents=[shared_parser],
+        add_help=False,
         help="Auto-fix namespace violations (move Finals/TypeVars)",
     )
-    _ = fix_parser.add_argument(
-        "--workspace",
-        type=Path,
-        default=Path.cwd(),
-        help="Workspace root directory (default: cwd)",
-    )
-    fix_mode = fix_parser.add_mutually_exclusive_group(required=False)
-    _ = fix_mode.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="Report what would be fixed without modifying files",
-    )
-    _ = fix_mode.add_argument(
-        "--apply",
-        action="store_true",
-        help="Apply changes",
-    )
 
-    py_typed_parser = subparsers.add_parser(
+    _ = subparsers.add_parser(
         "py-typed",
+        parents=[shared_parser],
+        add_help=False,
         help="Create/remove PEP 561 py.typed markers in package directories",
     )
-    _ = py_typed_parser.add_argument(
-        "--workspace",
-        type=Path,
-        default=Path.cwd(),
-        help="Workspace root directory (default: cwd)",
-    )
-    _ = py_typed_parser.add_argument(
-        "--check",
-        action="store_true",
-        help="Check mode — report changes without writing files",
-    )
 
-    pipeline_parser = subparsers.add_parser(
+    _ = subparsers.add_parser(
         "pipeline",
+        parents=[shared_parser],
+        add_help=False,
         help="Run full codegen pipeline: py-typed → census → scaffold → auto-fix → lazy-init → census",
-    )
-    _ = pipeline_parser.add_argument(
-        "--workspace",
-        type=Path,
-        default=Path.cwd(),
-        help="Workspace root directory (default: cwd)",
-    )
-    pipeline_mode = pipeline_parser.add_mutually_exclusive_group(required=False)
-    _ = pipeline_mode.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="Report changes without modifying files",
-    )
-    _ = pipeline_mode.add_argument(
-        "--apply",
-        action="store_true",
-        help="Apply changes",
-    )
-    _ = pipeline_parser.add_argument(
-        "--format",
-        choices=["json", "text"],
-        default="text",
-        dest="output_format",
-        help="Output format (default: text)",
     )
 
     quality_parser = subparsers.add_parser(
         "constants-quality-gate",
+        parents=[shared_parser],
+        add_help=False,
         help="Run constants migration quality gate and before/after diff",
-    )
-    _ = quality_parser.add_argument(
-        "--workspace",
-        type=Path,
-        default=Path.cwd(),
-        help="Workspace root directory (default: cwd)",
     )
     baseline_group = quality_parser.add_mutually_exclusive_group(required=False)
     _ = baseline_group.add_argument(
@@ -185,54 +111,50 @@ def main(argv: list[str] | None = None) -> int:
         default=None,
         help="Path to baseline JSON payload for comparison",
     )
-    _ = quality_parser.add_argument(
-        "--format",
-        choices=["json", "text"],
-        default="text",
-        dest="output_format",
-        help="Output format (default: text)",
-    )
 
     args = parser.parse_args(argv)
+    cli = u.Infra.resolve(args)
     if args.command == "lazy-init":
-        return _handle_lazy_init(args)
+        return _handle_lazy_init(cli)
     if args.command == "py-typed":
-        return _handle_py_typed(args)
+        return _handle_py_typed(cli)
     if args.command == "census":
-        return _handle_census(args)
+        return _handle_census(cli)
     if args.command == "scaffold":
-        return _handle_scaffold(args)
+        return _handle_scaffold(cli)
     if args.command == "auto-fix":
-        return _handle_auto_fix(args)
+        return _handle_auto_fix(cli)
     if args.command == "pipeline":
-        return _handle_pipeline(args)
+        return _handle_pipeline(cli)
     if args.command == "constants-quality-gate":
-        return _handle_constants_quality_gate(args)
+        return _handle_constants_quality_gate(
+            cli,
+            before_report=getattr(args, "before_report", None),
+            baseline_file=getattr(args, "baseline_file", None),
+        )
     output.error(f"unknown command: {args.command}")
     return 1
 
 
-def _handle_lazy_init(args: argparse.Namespace) -> int:
-    workspace = args.workspace.resolve()
-    generator = FlextInfraCodegenLazyInit(workspace_root=workspace)
-    unmapped = generator.run(check_only=args.check)
-    if args.check and unmapped > 0:
+def _handle_lazy_init(cli: u.Infra.CliArgs) -> int:
+    generator = FlextInfraCodegenLazyInit(workspace_root=cli.workspace)
+    unmapped = generator.run(check_only=cli.check)
+    if cli.check and unmapped > 0:
         output.warning(f"{unmapped} files have unmapped exports")
     return 0
 
 
-def _handle_py_typed(args: argparse.Namespace) -> int:
-    workspace = args.workspace.resolve()
-    service = FlextInfraCodegenPyTyped(workspace_root=workspace)
-    service.run(check_only=args.check)
+def _handle_py_typed(cli: u.Infra.CliArgs) -> int:
+    service = FlextInfraCodegenPyTyped(workspace_root=cli.workspace)
+    service.run(check_only=cli.check)
     return 0
 
 
-def _handle_census(args: argparse.Namespace) -> int:
+def _handle_census(cli: u.Infra.CliArgs) -> int:
     """Handle the ``census`` subcommand."""
-    census = FlextInfraCodegenCensus(workspace_root=args.workspace.resolve())
+    census = FlextInfraCodegenCensus(workspace_root=cli.workspace)
     reports = census.run()
-    if args.output_format == "json":
+    if cli.output_format == "json":
         _ = {
             c.Infra.ReportKeys.PROJECTS: [rpt.model_dump() for rpt in reports],
             "total_violations": sum(rpt.total for rpt in reports),
@@ -252,10 +174,10 @@ def _handle_census(args: argparse.Namespace) -> int:
     return 0
 
 
-def _handle_scaffold(args: argparse.Namespace) -> int:
+def _handle_scaffold(cli: u.Infra.CliArgs) -> int:
     """Handle the ``scaffold`` subcommand."""
-    scaffolder = FlextInfraCodegenScaffolder(workspace_root=args.workspace.resolve())
-    if args.dry_run:
+    scaffolder = FlextInfraCodegenScaffolder(workspace_root=cli.workspace)
+    if not cli.apply:
         output.info("Dry-run mode: no files will be created")
     results = scaffolder.run()
     total_created = sum(len(res.files_created) for res in results)
@@ -269,13 +191,13 @@ def _handle_scaffold(args: argparse.Namespace) -> int:
     return 0
 
 
-def _handle_auto_fix(args: argparse.Namespace) -> int:
+def _handle_auto_fix(cli: u.Infra.CliArgs) -> int:
     """Handle the ``auto-fix`` subcommand."""
     fixer = FlextInfraCodegenFixer(
-        workspace_root=args.workspace.resolve(),
-        dry_run=args.dry_run,
+        workspace_root=cli.workspace,
+        dry_run=not cli.apply,
     )
-    if args.dry_run:
+    if not cli.apply:
         output.info("Dry-run mode: no files will be modified")
     results = fixer.run()
     total_fixed = sum(len(res.violations_fixed) for res in results)
@@ -291,20 +213,19 @@ def _handle_auto_fix(args: argparse.Namespace) -> int:
     return 0
 
 
-def _handle_pipeline(args: argparse.Namespace) -> int:
-    workspace = args.workspace.resolve()
-    py_typed = FlextInfraCodegenPyTyped(workspace_root=workspace)
+def _handle_pipeline(cli: u.Infra.CliArgs) -> int:
+    py_typed = FlextInfraCodegenPyTyped(workspace_root=cli.workspace)
     py_typed.run()
-    census = FlextInfraCodegenCensus(workspace_root=workspace)
+    census = FlextInfraCodegenCensus(workspace_root=cli.workspace)
     reports_before = census.run()
-    scaffolder = FlextInfraCodegenScaffolder(workspace_root=workspace)
+    scaffolder = FlextInfraCodegenScaffolder(workspace_root=cli.workspace)
     scaffold_results = scaffolder.run()
-    fixer = FlextInfraCodegenFixer(workspace_root=workspace)
+    fixer = FlextInfraCodegenFixer(workspace_root=cli.workspace, dry_run=not cli.apply)
     fix_results = fixer.run()
-    generator = FlextInfraCodegenLazyInit(workspace_root=workspace)
-    generator.run(check_only=args.dry_run)
+    generator = FlextInfraCodegenLazyInit(workspace_root=cli.workspace)
+    generator.run(check_only=not cli.apply)
     reports_after = census.run()
-    if args.output_format == "json":
+    if cli.output_format == "json":
         _ = {
             "census_before": {
                 "total_violations": sum(r.total for r in reports_before),
@@ -338,15 +259,20 @@ def _handle_pipeline(args: argparse.Namespace) -> int:
     return 0
 
 
-def _handle_constants_quality_gate(args: argparse.Namespace) -> int:
+def _handle_constants_quality_gate(
+    cli: u.Infra.CliArgs,
+    *,
+    before_report: Path | None,
+    baseline_file: Path | None,
+) -> int:
     """Handle the ``constants-quality-gate`` subcommand."""
     gate = FlextInfraCodegenConstantsQualityGate(
-        workspace_root=args.workspace.resolve(),
-        before_report=args.before_report,
-        baseline_file=args.baseline_file,
+        workspace_root=cli.workspace,
+        before_report=before_report,
+        baseline_file=baseline_file,
     )
     report = gate.run()
-    if args.output_format == "json":
+    if cli.output_format == "json":
         pass
     verdict = str(report.get("verdict", "FAIL"))
     return 0 if FlextInfraCodegenConstantsQualityGate.is_success_verdict(verdict) else 1

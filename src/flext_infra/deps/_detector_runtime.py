@@ -19,6 +19,7 @@ from flext_infra import (
     m,
     p,
     t,
+    u,
 )
 from flext_infra.deps.detection import FlextInfraDependencyDetectionService
 
@@ -48,7 +49,7 @@ class _DetectorRuntime(Protocol):
     def parser(default_limits_path: Path) -> argparse.ArgumentParser: ...
 
     @staticmethod
-    def project_filter(args: argparse.Namespace) -> list[str] | None:
+    def project_filter(cli: u.Infra.CliArgs) -> list[str] | None:
         """Resolve project filter list from parsed args."""
         ...
 
@@ -71,17 +72,15 @@ class FlextInfraDependencyDetectorRuntime:
     def run(self, argv: list[str] | None = None) -> r[int]:
         """Execute dependency detection and generate workspace report."""
         detector = self._detector
-        root_result = detector.paths.workspace_root_from_file(__file__)
-        if root_result.is_failure:
-            return r[int].fail(root_result.error or "workspace root resolution failed")
-        root: Path = root_result.value
-        venv_bin = root / c.Infra.Paths.VENV_BIN_REL
         limits_default = Path(__file__).resolve().parent / "dependency_limits.toml"
         parser = detector.parser(limits_default)
         args = parser.parse_args(argv)
+        cli = u.Infra.resolve(args)
+        root: Path = cli.workspace
+        venv_bin = root / c.Infra.Paths.VENV_BIN_REL
         projects_result = detector.deps.discover_project_paths(
             root,
-            projects_filter=detector.project_filter(args),
+            projects_filter=detector.project_filter(cli),
         )
         if projects_result.is_failure:
             return r[int].fail(projects_result.error or "project discovery failed")
@@ -147,7 +146,7 @@ class FlextInfraDependencyDetectorRuntime:
                     typings_report.model_dump()
                 )
                 to_add: list[str] = typings_report.to_add
-                if apply_typings and to_add and (not args.dry_run):
+                if apply_typings and to_add and cli.apply:
                     env = {
                         **os.environ,
                         "VIRTUAL_ENV": str(venv_bin.parent),
@@ -191,12 +190,12 @@ class FlextInfraDependencyDetectorRuntime:
             pip_ok = pip_exit == 0
             report_model.pip_check = self._pip_check_factory(ok=pip_ok, lines=pip_lines)
         report_payload = report_model.model_dump()
-        if args.json_stdout:
+        if cli.output_format == "json":
             return r[int].ok(0)
         out_path: Path | None = None
         if args.output:
             out_path = Path(args.output)
-        elif not args.dry_run:
+        elif cli.apply:
             report_dir = detector.reporting.get_report_dir(
                 root,
                 c.Infra.Toml.PROJECT,
@@ -207,7 +206,7 @@ class FlextInfraDependencyDetectorRuntime:
             except OSError as exc:
                 return r[int].fail(f"failed to create report directory: {exc}")
             out_path = report_dir / "detect-runtime-dev-latest.json"
-        if out_path is not None and (not args.dry_run):
+        if out_path is not None and cli.apply:
             write_result = detector.json.write_json(out_path, report_payload)
             if write_result.is_failure:
                 return r[int].fail(write_result.error or "failed to write report")

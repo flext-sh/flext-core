@@ -138,7 +138,10 @@ class FlextInfraUtilitiesCli:
 
         # Get project selection flags
         project = getattr(args, "project", None)
-        projects = getattr(args, "projects", None)
+        raw_projects = getattr(args, "projects", None)
+        projects = (
+            ",".join(raw_projects) if isinstance(raw_projects, list) else raw_projects
+        )
 
         # Resolve workspace path
         workspace_path: Path = args.workspace.resolve()

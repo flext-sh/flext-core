@@ -302,7 +302,7 @@ class FlextInfraSkillValidator:
             if script.suffix == c.Infra.Extensions.PYTHON
             else [str(script)]
         )
-        cmd.extend(["--root", str(project_path)])
+        cmd.extend(["--workspace", str(project_path)])
         if bool(rule.get("pass_mode")):
             cmd.extend(["--mode", mode])
         result_wrapper = self._runner.run_raw(

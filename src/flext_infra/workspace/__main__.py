@@ -100,12 +100,24 @@ def main(argv: list[str] | None = None) -> int:
     )
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
 
-    subparsers.add_parser(
+    detect_parser = subparsers.add_parser(
         "detect",
         help="Detect workspace or standalone mode",
     )
+    _ = detect_parser.add_argument(
+        "--workspace",
+        type=Path,
+        default=Path.cwd(),
+        help="Workspace root directory (default: cwd)",
+    )
 
     sync_parser = subparsers.add_parser("sync", help="Sync base.mk to project root")
+    _ = sync_parser.add_argument(
+        "--workspace",
+        type=Path,
+        default=Path.cwd(),
+        help="Workspace root directory (default: cwd)",
+    )
     _ = sync_parser.add_argument(
         "--canonical-root",
         type=str,
@@ -116,6 +128,12 @@ def main(argv: list[str] | None = None) -> int:
     orch_parser = subparsers.add_parser(
         "orchestrate",
         help="Run make verb across projects",
+    )
+    _ = orch_parser.add_argument(
+        "--workspace",
+        type=Path,
+        default=Path.cwd(),
+        help="Workspace root directory (default: cwd)",
     )
     _ = orch_parser.add_argument("--verb", required=True, help="Make verb to execute")
     _ = orch_parser.add_argument(
@@ -140,9 +158,10 @@ def main(argv: list[str] | None = None) -> int:
         help="Migrate workspace projects to flext_infra tooling",
     )
     _ = migrate_parser.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="Preview migration changes without writing files",
+        "--workspace",
+        type=Path,
+        default=Path.cwd(),
+        help="Workspace root directory (default: cwd)",
     )
 
     args = parser.parse_args(argv)
@@ -160,16 +179,6 @@ def main(argv: list[str] | None = None) -> int:
             make_args=args.make_arg,
         )
     if args.command == "migrate":
-        dry_run = getattr(args, "dry_run", False)
-        if dry_run:
-            cli = u.Infra.CliArgs(
-                workspace=cli.workspace,
-                apply=False,
-                output_format=cli.output_format,
-                check=cli.check,
-                project=cli.project,
-                projects=cli.projects,
-            )
         return _run_migrate(cli)
     parser.print_help()
     return 1

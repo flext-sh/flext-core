@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 
 from flext_core import r
+from flext_infra._utilities.cli import FlextInfraUtilitiesCli
 from flext_infra.models import FlextInfraModels as m
 from flext_infra.workspace import __main__ as workspace_main
 from flext_infra.workspace.detector import FlextInfraWorkspaceDetector, WorkspaceMode
@@ -181,7 +182,9 @@ class TestRunMigrate:
 
         monkeypatch.setattr(FlextInfraProjectMigrator, "migrate", _migrate_stub)
         tm.that(
-            workspace_main._run_migrate(_ns(workspace_root=tmp_path, dry_run=False)),
+            workspace_main._run_migrate(
+                FlextInfraUtilitiesCli.CliArgs(workspace=tmp_path, apply=True)
+            ),
             eq=expected,
         )
 
@@ -211,7 +214,9 @@ class TestRunMigrate:
             _migrate_with_errors,
         )
         tm.that(
-            workspace_main._run_migrate(_ns(workspace_root=tmp_path, dry_run=False)),
+            workspace_main._run_migrate(
+                FlextInfraUtilitiesCli.CliArgs(workspace=tmp_path, apply=True)
+            ),
             eq=1,
         )
 
