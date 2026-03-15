@@ -709,4 +709,6 @@ class FlextInfraUtilitiesRefactor:
 
 
 __all__ = ["FlextInfraUtilitiesRefactor"]
-from flext_infra._utilities.subprocess import FlextInfraUtilitiesSubprocess  # noqa: E402 — must be after __all__ to break circular import chain
+from flext_infra._utilities.subprocess import (
+    FlextInfraUtilitiesSubprocess,
+)

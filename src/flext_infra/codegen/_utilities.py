@@ -1295,4 +1295,6 @@ class FlextInfraUtilitiesCodegen(FlextInfraCodegenTransforms):
 
 
 __all__ = ["FlextInfraUtilitiesCodegen"]
-from flext_infra._utilities.subprocess import FlextInfraUtilitiesSubprocess  # noqa: E402 — must be after __all__ to break circular import chain
+from flext_infra._utilities.subprocess import (
+    FlextInfraUtilitiesSubprocess,
+)

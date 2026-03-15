@@ -349,6 +349,8 @@ split-on-trailing-comma = true
   "T201",
   "TID252",
 ]
+"src/flext_infra/codegen/_utilities.py" = ["E402"]
+"src/flext_infra/refactor/_utilities.py" = ["E402"]
 "**/*exceptions*" = [
   "A001",
   "S105",
