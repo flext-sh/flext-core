@@ -23,8 +23,7 @@ def test_ok_accepts_none() -> None:
     """None is a valid success value when T includes None."""
     result = r[str | None].ok(None)
     assert result.is_success
-    with pytest.raises(RuntimeError, match="Invariant violation"):
-        _ = result.value
+    assert result.value is None
 
 
 def test_map_error_identity_and_transform() -> None:

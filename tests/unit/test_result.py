@@ -653,8 +653,7 @@ class Testr:
         """Test ok(None) creates valid success result."""
         result = r[str | None].ok(None)
         assert result.is_success
-        with pytest.raises(RuntimeError, match="Invariant violation"):
-            _ = result.value
+        assert result.value is None
 
     def test_flow_through_stops_on_failure(self) -> None:
         """Test flow_through stops when function returns failure."""

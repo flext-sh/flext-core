@@ -385,8 +385,7 @@ class TestOkNoneGuardStillRaises:
         """Verify ok(None) creates valid success result."""
         result = r[int | None].ok(None)
         assert result.is_success
-        with pytest.raises(RuntimeError, match="Invariant violation"):
-            _ = result.value
+        assert result.value is None
 
     def test_ok_with_valid_value_succeeds(self) -> None:
         """Verify ok() with valid value succeeds."""

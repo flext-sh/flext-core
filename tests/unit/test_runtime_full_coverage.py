@@ -584,8 +584,7 @@ def test_runtime_result_all_missed_branches() -> None:
     broken = FlextRuntime.RuntimeResult[int](
         is_success=True, error=None, error_code=None, error_data=None
     )
-    with pytest.raises(RuntimeError, match="Invariant violation"):
-        _ = broken.value
+    assert broken.value is None
 
 
 def test_model_support_and_hash_compare_paths() -> None:

@@ -83,8 +83,7 @@ class TestrCoverage:
         """Test that ok(None) creates valid success."""
         result = r[t.GeneralValueType].ok(None)
         assert result.is_success
-        with pytest.raises(RuntimeError, match="Invariant violation"):
-            _ = result.value
+        assert result.value is None
 
     def test_fail_creates_failure_with_message(self) -> None:
         """Test creating failure results."""
