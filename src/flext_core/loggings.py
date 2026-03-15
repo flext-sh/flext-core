@@ -808,7 +808,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         msg: str,
         *args: t.Container,
         **kw: t.Container | BaseModel | Exception,
-    ) -> r[bool] | None:
+    ) -> r[bool]:
         """Log critical message - Logger.Log implementation.
 
         Business Rule: Logs a critical-level message with optional context. Uses _log
@@ -833,7 +833,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         msg: str,
         *args: t.Container,
         **kw: t.Container | BaseModel | Exception,
-    ) -> r[bool] | None:
+    ) -> r[bool]:
         """Log debug message - Logger.Log implementation.
 
         Business Rule: Logs a debug-level message with optional context. Uses _log
@@ -858,7 +858,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         msg: str,
         *args: t.Container,
         **kw: t.Container | BaseModel | Exception,
-    ) -> r[bool] | None:
+    ) -> r[bool]:
         """Log error message - Logger.Log implementation.
 
         Business Rule: Logs an error-level message with optional context. Uses _log
@@ -883,7 +883,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         msg: str,
         *args: t.Container,
         **kw: t.Container | Exception,
-    ) -> r[bool] | None:
+    ) -> r[bool]:
         """Log exception with conditional stack trace (DEBUG only)."""
         message = str(msg)
         filtered_args: tuple[t.Scalar, ...] = tuple(
@@ -929,7 +929,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         message: str,
         *args: _LogArg,
         **context: t.Container,
-    ) -> r[bool] | None:
+    ) -> r[bool]:
         """Log message with specified level - Logger.Log implementation.
 
         Business Rule: Logs a message with specified level, converting level string
@@ -965,7 +965,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         message: str,
         *args: _LogArg,
         **kwargs: t.Container,
-    ) -> r[bool] | None:
+    ) -> r[bool]:
         """Log trace message - Logger.Log implementation."""
         try:
             try:
@@ -1009,7 +1009,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         msg: str,
         *args: t.Container,
         **kw: t.Container | BaseModel | Exception,
-    ) -> r[bool] | None:
+    ) -> r[bool]:
         """Log info message - Logger.Log implementation."""
         return self._log_standard_level(
             c.Settings.LogLevel.INFO,
@@ -1024,7 +1024,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         msg: str,
         *args: t.Container,
         **kw: t.Container | BaseModel | Exception,
-    ) -> r[bool] | None:
+    ) -> r[bool]:
         """Log warning message - Logger.Log implementation."""
         return self._log_standard_level(
             c.Settings.LogLevel.WARNING,
@@ -1039,7 +1039,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         message: str,
         *args: _LogArg,
         **context: t.Container | BaseModel | Exception | bool | None,
-    ) -> r[bool] | None:
+    ) -> r[bool]:
         """Internal logging method - consolidates all log level methods.
 
         Business Rule: Internal method that consolidates all log level methods (debug,
@@ -1078,7 +1078,7 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         msg: str,
         *args: t.Container,
         **kw: t.Container | BaseModel | Exception,
-    ) -> r[bool] | None:
+    ) -> r[bool]:
         message = msg
         filtered_args: tuple[t.Scalar, ...] = tuple(
             FlextLogger._to_scalar_value(arg)
