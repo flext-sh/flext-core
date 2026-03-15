@@ -47,7 +47,7 @@ class TimeoutEnforcer(BaseModel):
             executor_workers=executor_workers,
         )
 
-    def model_post_init(self, __context: object) -> None:
+    def model_post_init(self, __context: object, /) -> None:
         self.executor_workers = max(
             self.executor_workers, c.Reliability.RETRY_COUNT_MIN
         )
