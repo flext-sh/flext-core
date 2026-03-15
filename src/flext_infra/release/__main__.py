@@ -14,7 +14,6 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from flext_core import FlextRuntime
 from flext_infra import (
     FlextInfraUtilitiesPaths,
     FlextInfraUtilitiesVersioning,
@@ -74,7 +73,11 @@ def _resolve_tag(tag_arg: str, version: str) -> str:
 
 def main() -> int:
     """Orchestrate the release process through configured phases."""
-    FlextRuntime.ensure_structlog_configured()
+    return u.Infra.run_cli(_main_impl)
+
+
+def _main_impl(argv: list[str] | None = None) -> int:
+    """Implementation of release orchestration."""
     parser = u.Infra.create_parser(
         prog="release",
         description="Release orchestration",
@@ -91,13 +94,12 @@ def main() -> int:
     _ = parser.add_argument("--next-bump", default="minor")
     _ = parser.add_argument("--create-branches", type=int, default=1)
     _ = parser.add_argument("--projects", nargs="*", default=[])
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     cli = u.Infra.resolve(args)
     resolver = FlextInfraUtilitiesPaths()
     root_result = resolver.workspace_root(cli.workspace)
     if root_result.is_failure:
-        output.error(root_result.error or "workspace root resolution failed")
-        return 1
+        return u.Infra.exit_code(root_result)
     root = root_result.value
     phases = (
         [
@@ -140,17 +142,14 @@ def main() -> int:
         tag=tag,
         phases=phases,
         project_names=args.projects or None,
-        dry_run=cli.apply,
+        dry_run=cli.dry_run,
         push=args.push,
         dev_suffix=args.dev_suffix,
         create_branches=args.create_branches == 1,
         next_dev=args.next_dev,
         next_bump=args.next_bump,
     )
-    if result.is_failure:
-        output.error(result.error or "release failed")
-        return 1
-    return 0
+    return u.Infra.exit_code(result)
 
 
 if __name__ == "__main__":
