@@ -18,6 +18,20 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
     from flext_core.typings import FlextTypes
+    from flext_infra import (
+        _utilities,
+        basemk,
+        check,
+        codegen,
+        core,
+        deps,
+        docs,
+        github,
+        maintenance,
+        refactor,
+        release,
+        workspace,
+    )
     from flext_infra.__version__ import (
         __all__,
         __author__,
@@ -141,6 +155,7 @@ if TYPE_CHECKING:
     )
     from flext_infra.models import FlextInfraModels, m
     from flext_infra.protocols import FlextInfraProtocols, p
+    from flext_infra.refactor import rules, transformers
     from flext_infra.refactor.analysis import (
         FlextInfraRefactorClassNestingAnalyzer,
         FlextInfraRefactorViolationAnalyzer,
@@ -803,20 +818,29 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "__url__": ("flext_infra.__version__", "__url__"),
     "__version__": ("flext_infra.__version__", "__version__"),
     "__version_info__": ("flext_infra.__version__", "__version_info__"),
+    "_utilities": ("flext_infra._utilities", ""),
+    "basemk": ("flext_infra.basemk", ""),
     "build_parser": ("flext_infra.check.workspace_check", "build_parser"),
     "build_project_report": ("flext_infra.deps.detection", "build_project_report"),
     "c": ("flext_infra.constants", "c"),
+    "check": ("flext_infra.check", ""),
     "classify_issues": ("flext_infra.deps.detection", "classify_issues"),
+    "codegen": ("flext_infra.codegen", ""),
+    "core": ("flext_infra.core", ""),
+    "deps": ("flext_infra.deps", ""),
     "discover_project_paths": ("flext_infra.deps.detection", "discover_project_paths"),
     "dm": ("flext_infra.deps.detection", "dm"),
+    "docs": ("flext_infra.docs", ""),
     "get_current_typings_from_pyproject": (
         "flext_infra.deps.detection",
         "get_current_typings_from_pyproject",
     ),
     "get_required_typings": ("flext_infra.deps.detection", "get_required_typings"),
+    "github": ("flext_infra.github", ""),
     "load_dependency_limits": ("flext_infra.deps.detection", "load_dependency_limits"),
     "logger": ("flext_infra.maintenance.python_version", "logger"),
     "m": ("flext_infra.models", "m"),
+    "maintenance": ("flext_infra.maintenance", ""),
     "module_to_types_package": (
         "flext_infra.deps.detection",
         "module_to_types_package",
@@ -824,6 +848,9 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "output": ("flext_infra._utilities.output", "output"),
     "p": ("flext_infra.protocols", "p"),
     "r": ("flext_infra.check.services", "ProjectResult"),
+    "refactor": ("flext_infra.refactor", ""),
+    "release": ("flext_infra.release", ""),
+    "rules": ("flext_infra.refactor.rules", ""),
     "run_cli": ("flext_infra.check.workspace_check", "run_cli"),
     "run_deptry": ("flext_infra.deps.detection", "run_deptry"),
     "run_mypy_stub_hints": ("flext_infra.deps.detection", "run_mypy_stub_hints"),
@@ -831,7 +858,9 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "s": ("flext_infra.core.inventory", "FlextInfraInventoryService"),
     "shutil": ("flext_infra.deps.internal_sync", "shutil"),
     "t": ("flext_infra.typings", "t"),
+    "transformers": ("flext_infra.refactor.transformers", ""),
     "u": ("flext_infra.utilities", "u"),
+    "workspace": ("flext_infra.workspace", ""),
 }
 
 __all__ = [
@@ -993,21 +1022,33 @@ __all__ = [
     "__url__",
     "__version__",
     "__version_info__",
+    "_utilities",
+    "basemk",
     "build_parser",
     "build_project_report",
     "c",
+    "check",
     "classify_issues",
+    "codegen",
+    "core",
+    "deps",
     "discover_project_paths",
     "dm",
+    "docs",
     "get_current_typings_from_pyproject",
     "get_required_typings",
+    "github",
     "load_dependency_limits",
     "logger",
     "m",
+    "maintenance",
     "module_to_types_package",
     "output",
     "p",
     "r",
+    "refactor",
+    "release",
+    "rules",
     "run_cli",
     "run_deptry",
     "run_mypy_stub_hints",
@@ -1015,7 +1056,9 @@ __all__ = [
     "s",
     "shutil",
     "t",
+    "transformers",
     "u",
+    "workspace",
 ]
 
 

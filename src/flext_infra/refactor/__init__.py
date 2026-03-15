@@ -11,6 +11,7 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
     from flext_core.typings import FlextTypes
+    from flext_infra.refactor import rules, transformers
     from flext_infra.refactor.analysis import (
         FlextInfraRefactorClassNestingAnalyzer,
         FlextInfraRefactorViolationAnalyzer,
@@ -387,6 +388,8 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "flext_infra.refactor.dependency_analyzer",
         "RuntimeAliasDetector",
     ),
+    "rules": ("flext_infra.refactor.rules", ""),
+    "transformers": ("flext_infra.refactor.transformers", ""),
     "u": (
         "flext_infra.refactor.transformers.policy",
         "FlextInfraRefactorTransformerPolicyUtilities",
@@ -458,6 +461,8 @@ __all__ = [
     "PreCheckGate",
     "ProjectClassifier",
     "RuntimeAliasDetector",
+    "rules",
+    "transformers",
     "u",
 ]
 

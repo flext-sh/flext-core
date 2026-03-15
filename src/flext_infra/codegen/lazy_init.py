@@ -170,7 +170,7 @@ class FlextInfraCodegenLazyInit(s[int]):
         lazy_map = self._build_sibling_export_index(pkg_dir, current_pkg)
 
         # 3. Add exports from child subdirectories (already computed)
-        self._merge_child_exports(pkg_dir, lazy_map, dir_exports)
+        self._merge_child_exports(pkg_dir, current_pkg, lazy_map, dir_exports)
 
         # 4. Handle __version__.py
         inline_constants, version_lazy = self._extract_version_exports(
@@ -411,6 +411,7 @@ class FlextInfraCodegenLazyInit(s[int]):
     @staticmethod
     def _merge_child_exports(
         pkg_dir: Path,
+        current_pkg: str,
         lazy_map: dict[str, tuple[str, str]],
         dir_exports: Mapping[str, dict[str, tuple[str, str]]],
     ) -> None:
@@ -426,6 +427,11 @@ class FlextInfraCodegenLazyInit(s[int]):
             subdir_key = str(subdir)
             if subdir_key not in dir_exports:
                 continue
+            if subdir.name not in lazy_map:
+                submodule = (
+                    f"{current_pkg}.{subdir.name}" if current_pkg else subdir.name
+                )
+                lazy_map[subdir.name] = (submodule, "")
             sub_exports = dir_exports[subdir_key]
             for name, (mod, attr) in sub_exports.items():
                 if not FlextInfraCodegenLazyInit._should_bubble_up(name):

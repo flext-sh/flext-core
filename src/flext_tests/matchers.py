@@ -93,14 +93,14 @@ def _to_test_payload(
             mapping_value = _TEST_PAYLOAD_DICT_ADAPTER.validate_python(value)
             return {key: _to_test_payload(item) for key, item in mapping_value.items()}
         except ValidationError:
-            return {}
+            return cast("t.Tests.object", dict(value))
     if _is_non_string_sequence(value):
         try:
             sequence_value = _TEST_PAYLOAD_LIST_ADAPTER.validate_python(value)
             return [_to_test_payload(seq_item) for seq_item in sequence_value]
         except ValidationError:
-            return []
-    return str(value)
+            return cast("t.Tests.object", list(value))
+    return cast("t.Tests.object", value)
 
 
 def _to_normalized(value: t.Tests.object) -> t.NormalizedValue:
@@ -157,16 +157,14 @@ def _as_guard_input(
             mapping_value = _GUARD_PAYLOAD_DICT_ADAPTER.validate_python(value)
             return {key: _as_guard_input(item) for key, item in mapping_value.items()}
         except ValidationError:
-            empty_map: dict[str, t.Tests.object] = {}
-            return empty_map
+            return cast("t.Tests.object", {str(k): v for k, v in value.items()})
     if _is_non_string_sequence(value):
         try:
             sequence_value = _GUARD_PAYLOAD_LIST_ADAPTER.validate_python(value)
             return [_as_guard_input(seq_item) for seq_item in sequence_value]
         except ValidationError:
-            empty_seq: list[t.Tests.object] = []
-            return empty_seq
-    return str(value)
+            return cast("t.Tests.object", list(value))
+    return cast("t.Tests.object", value)
 
 
 def _to_chk_value(
@@ -879,14 +877,17 @@ class FlextTestsMatchers:
         """
         raw_eq = kwargs.get("eq") if "eq" in kwargs else None
         raw_ne = kwargs.get("ne") if "ne" in kwargs else None
+        raw_has = kwargs.get("has") if "has" in kwargs else None
+        raw_contains = kwargs.get("contains") if "contains" in kwargs else None
         try:
             params = m.Tests.ThatParams.model_validate(kwargs)
-        except (TypeError, ValueError, AttributeError) as exc:
+        except (TypeError, ValueError, AttributeError):
+            non_serializable_keys = {"eq", "ne", "has", "contains", "lacks", "excludes"}
             filtered_kwargs = {
-                key: val for key, val in kwargs.items() if key not in {"eq", "ne"}
+                key: val
+                for key, val in kwargs.items()
+                if key not in non_serializable_keys
             }
-            if filtered_kwargs == kwargs:
-                raise ValueError(f"Parameter validation failed: {exc}") from exc
             try:
                 params = m.Tests.ThatParams.model_validate(filtered_kwargs)
             except (TypeError, ValueError, AttributeError) as filtered_exc:
@@ -1004,7 +1005,12 @@ class FlextTestsMatchers:
                 or f"Assertion failed: {c.Tests.Matcher.ERR_TYPE_FAILED.format(expected=f'not {params.not_}', actual=type(subject_payload).__name__)}"
             )
             raise AssertionError(error_msg)
-        _check_has_lacks(subject_payload, params.has, params.lacks, params.msg)
+        effective_has = (
+            raw_has
+            if raw_has is not None
+            else (raw_contains if raw_contains is not None else params.has)
+        )
+        _check_has_lacks(subject_payload, effective_has, params.lacks, params.msg)
         value_payload = subject_payload
         if params.len is not None and (not _length_validate(value_payload, params.len)):
             actual_len = (

@@ -18,6 +18,7 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
     from flext_core.typings import FlextTypes
+    from flext_infra.deps import _phases
     from flext_infra.deps._phases.consolidate_groups import ConsolidateGroupsPhase
     from flext_infra.deps._phases.ensure_coverage import EnsureCoverageConfigPhase
     from flext_infra.deps._phases.ensure_extra_paths import EnsureExtraPathsPhase
@@ -154,6 +155,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "flext_infra.deps._phases.inject_comments",
         "InjectCommentsPhase",
     ),
+    "_phases": ("flext_infra.deps._phases", ""),
     "build_project_report": ("flext_infra.deps.detection", "build_project_report"),
     "classify_issues": ("flext_infra.deps.detection", "classify_issues"),
     "discover_project_paths": ("flext_infra.deps.detection", "discover_project_paths"),
@@ -201,6 +203,7 @@ __all__ = [
     "FlextInfraUtilitiesReporting",
     "FlextInfraUtilitiesSubprocess",
     "InjectCommentsPhase",
+    "_phases",
     "build_project_report",
     "classify_issues",
     "discover_project_paths",

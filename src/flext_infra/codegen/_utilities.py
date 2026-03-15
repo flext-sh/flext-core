@@ -492,7 +492,18 @@ class FlextInfraUtilitiesCodegen(FlextInfraCodegenTransforms):
 
         def _emit_module(mod: str) -> None:
             items = groups[mod]
-            sorted_items = sorted(items, key=lambda x: (x[1], x[0] != x[1]))
+            alias_items = sorted(
+                (item for item in items if not item[1]), key=operator.itemgetter(0)
+            )
+            sorted_items = sorted(
+                (item for item in items if item[1]),
+                key=lambda x: (x[1], x[0] != x[1]),
+            )
+            for export_name, _ in alias_items:
+                alias_line = f"    import {mod} as {export_name}"
+                lines.append(alias_line)
+            if not sorted_items:
+                return
             parts: list[str] = []
             for export_name, attr_name in sorted_items:
                 if export_name == attr_name:

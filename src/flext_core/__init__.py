@@ -41,6 +41,7 @@ from flext_core.typings import (
 )
 
 if TYPE_CHECKING:
+    from flext_core import _decorators, _dispatcher, _models, _utilities
     from flext_core.__version__ import (
         __all__,
         __author__,
@@ -218,6 +219,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "__url__": ("flext_core.__version__", "__url__"),
     "__version__": ("flext_core.__version__", "__version__"),
     "__version_info__": ("flext_core.__version__", "__version_info__"),
+    "_decorators": ("flext_core._decorators", ""),
+    "_dispatcher": ("flext_core._dispatcher", ""),
+    "_models": ("flext_core._models", ""),
+    "_utilities": ("flext_core._utilities", ""),
     "c": ("flext_core.constants", "c"),
     "d": ("flext_core.decorators", "d"),
     "e": ("flext_core.exceptions", "e"),
@@ -318,6 +323,10 @@ __all__ = [
     "__url__",
     "__version__",
     "__version_info__",
+    "_decorators",
+    "_dispatcher",
+    "_models",
+    "_utilities",
     "c",
     "d",
     "e",

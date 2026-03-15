@@ -25,6 +25,7 @@ from flext_core.lazy import cleanup_submodule_namespace, lazy_getattr
 
 if TYPE_CHECKING:
     from flext_core.typings import FlextTypes
+    from flext_tests import _validator
     from flext_tests._validator.bypass import FlextValidatorBypass
     from flext_tests._validator.imports import FlextValidatorImports
     from flext_tests._validator.layer import FlextValidatorLayer
@@ -73,6 +74,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     ),
     "FlextValidatorTests": ("flext_tests._validator.tests", "FlextValidatorTests"),
     "FlextValidatorTypes": ("flext_tests._validator.types", "FlextValidatorTypes"),
+    "_validator": ("flext_tests._validator", ""),
     "c": ("flext_tests.constants", "c"),
     "m": ("flext_tests.models", "m"),
     "p": ("flext_tests.protocols", "p"),
@@ -110,6 +112,7 @@ __all__ = [
     "FlextValidatorSettings",
     "FlextValidatorTests",
     "FlextValidatorTypes",
+    "_validator",
     "c",
     "m",
     "p",
