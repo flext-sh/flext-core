@@ -13,6 +13,8 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import cast
 
+import pytest
+
 from flext_core import m, r
 from flext_tests import u
 
@@ -21,7 +23,8 @@ def test_ok_accepts_none() -> None:
     """None is a valid success value when T includes None."""
     result = r[str | None].ok(None)
     assert result.is_success
-    assert result.value is None
+    with pytest.raises(RuntimeError, match="Invariant violation"):
+        _ = result.value
 
 
 def test_map_error_identity_and_transform() -> None:

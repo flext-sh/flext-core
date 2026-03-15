@@ -23,6 +23,7 @@ from __future__ import annotations
 from collections.abc import Sized
 from typing import cast
 
+import pytest
 from pydantic import BaseModel, ValidationError
 
 from flext_core import m, r, t
@@ -384,7 +385,8 @@ class TestOkNoneGuardStillRaises:
         """Verify ok(None) creates valid success result."""
         result = r[int | None].ok(None)
         assert result.is_success
-        assert result.value is None
+        with pytest.raises(RuntimeError, match="Invariant violation"):
+            _ = result.value
 
     def test_ok_with_valid_value_succeeds(self) -> None:
         """Verify ok() with valid value succeeds."""

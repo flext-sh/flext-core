@@ -9,7 +9,7 @@ from unittest.mock import patch
 import tomlkit
 
 from flext_infra import u
-from flext_infra.deps.modernizer import main
+from flext_infra.deps.modernizer import FlextInfraPyprojectModernizer, main
 from flext_tests import t, tm
 
 
@@ -73,10 +73,24 @@ class TestParser:
     """Tests CLI parser helper."""
 
     def test_parser_args(self) -> None:
-        with patch(
-            "flext_infra.deps.modernizer.FlextInfraPyprojectModernizer.run",
-            return_value=0,
-        ) as run_mock:
+        class _ModernizerAdapter(FlextInfraPyprojectModernizer):
+            def __init__(
+                self,
+                root: Path | None = None,
+                workspace_root: Path | None = None,
+            ) -> None:
+                super().__init__(workspace_root=workspace_root or root)
+
+        with (
+            patch(
+                "flext_infra.deps.modernizer.FlextInfraPyprojectModernizer",
+                _ModernizerAdapter,
+            ),
+            patch(
+                "flext_infra.deps.modernizer.FlextInfraPyprojectModernizer.run",
+                return_value=0,
+            ) as run_mock,
+        ):
             exit_code = main([
                 "--audit",
                 "--dry-run",

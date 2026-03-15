@@ -385,9 +385,9 @@ class FlextInfraReleaseOrchestrator(s[bool]):
         changes: str = str(changes_result.value) if changes_result.is_success else ""
         selector = FlextInfraUtilitiesSelection()
         projects_result = selector.resolve_projects(workspace_root, project_names)
-        project_list: list[m.Infra.Workspace.ProjectInfo] = (
-            projects_result.value if projects_result.is_success else []
-        )
+        project_list: list[m.Infra.Workspace.ProjectInfo] = []
+        if projects_result.is_success:
+            project_list = projects_result.value  # type: ignore[assignment]
         return FlextInfraReleaseReporting.generate_notes(
             version,
             tag,
@@ -428,7 +428,8 @@ class FlextInfraReleaseOrchestrator(s[bool]):
         selector = FlextInfraUtilitiesSelection()
         projects_result = selector.resolve_projects(workspace_root, project_names)
         if projects_result.is_success:
-            for project in projects_result.value:
+            projects: list[m.Infra.Workspace.ProjectInfo] = projects_result.value  # type: ignore[assignment]
+            for project in projects:
                 pyproject = project.path / c.Infra.Files.PYPROJECT_FILENAME
                 if pyproject.exists():
                     files.append(pyproject)

@@ -476,9 +476,9 @@ if TYPE_CHECKING:
         TestSubcommandMapping,
     )
     from tests.infra.unit.deps.test_main_dispatch import (
+        TestMainDelegation,
         TestMainExceptionHandling,
         TestMainModuleImport,
-        TestMainStructlogConfiguration,
         TestMainSubcommandDispatch,
         TestMainSysArgvModification,
         test_string_zero_return_value,
@@ -1733,6 +1733,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.infra.unit.codegen.main",
         "TestMainCommandDispatch",
     ),
+    "TestMainDelegation": (
+        "tests.infra.unit.deps.test_main_dispatch",
+        "TestMainDelegation",
+    ),
     "TestMainEdgeCases": (
         "tests.infra.unit.deps.test_path_sync_main_edges",
         "TestMainEdgeCases",
@@ -1758,10 +1762,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "TestMainReturnValues": ("tests.infra.unit.deps.test_main", "TestMainReturnValues"),
     "TestMainRouting": ("tests.infra.unit.docs.main_entry", "TestMainRouting"),
     "TestMainScan": ("tests.infra.unit.core.main", "TestMainScan"),
-    "TestMainStructlogConfiguration": (
-        "tests.infra.unit.deps.test_main_dispatch",
-        "TestMainStructlogConfiguration",
-    ),
     "TestMainSubcommandDispatch": (
         "tests.infra.unit.deps.test_main_dispatch",
         "TestMainSubcommandDispatch",
@@ -3624,6 +3624,7 @@ __all__ = [
     "TestMainCli",
     "TestMainCliRouting",
     "TestMainCommandDispatch",
+    "TestMainDelegation",
     "TestMainEdgeCases",
     "TestMainEntryPoint",
     "TestMainExceptionHandling",
@@ -3634,7 +3635,6 @@ __all__ = [
     "TestMainReturnValues",
     "TestMainRouting",
     "TestMainScan",
-    "TestMainStructlogConfiguration",
     "TestMainSubcommandDispatch",
     "TestMainSysArgvModification",
     "TestMainWithFlags",

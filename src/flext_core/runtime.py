@@ -588,7 +588,7 @@ class FlextRuntime:
             return True
         if candidate_name in {"str", "bytes", "bytearray", "memoryview", "dict"}:
             return False
-        candidate_mro = candidate.__mro__
+        candidate_mro = getattr(candidate, "__mro__", ())
         if any(getattr(base, "__name__", "") == "Sequence" for base in candidate_mro):
             return True
         required_members = ("__iter__", "__len__", "__getitem__", "count", "index")
@@ -783,8 +783,8 @@ class FlextRuntime:
     def safe_get_attribute(
         obj: RuntimeData | type | ModuleType,
         attr: str,
-        default: t.ModuleExport | None = None,
-    ) -> t.ModuleExport | None:
+        default: t.NormalizedValue | BaseModel | None = None,
+    ) -> t.NormalizedValue | BaseModel | None:
         """Safe attribute access without raising AttributeError.
 
         Business Rule: Accesses object attributes safely using getattr() with
@@ -805,10 +805,7 @@ class FlextRuntime:
             Attribute value or default
 
         """
-        obj_vars = vars(obj) if hasattr(obj, "__dict__") else {}
-        if attr not in obj_vars:
-            return default
-        return obj_vars[attr]
+        return getattr(obj, attr) if hasattr(obj, attr) else default
 
     @staticmethod
     def structlog() -> ModuleType:
@@ -1379,7 +1376,11 @@ class FlextRuntime:
             if not self.is_success:
                 msg = f"Cannot access value of failed result: {self.error}"
                 raise RuntimeError(msg)
-            return self._payload
+            payload = self._payload
+            if payload is None:
+                msg = "Invariant violation: success result has None payload"
+                raise RuntimeError(msg)
+            return payload
 
         @classmethod
         def fail[U](

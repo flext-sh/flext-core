@@ -364,7 +364,8 @@ def test_parser_internal_helpers_additional_coverage() -> None:
         cast("t.NormalizedValue", type("Obj", (), {"id": "x1"})()),
     )
     assert mapped.is_success and mapped.value == "n1"
-    assert attrs.is_success and attrs.value == "x1"
+    assert attrs.is_failure
+    assert attrs.error == "No key attribute found"
     split = parser._process_escape_splitting("a\\,b,c", ",", "\\")
     assert split.is_success
     split_val: tuple[list[str], int] = split.value

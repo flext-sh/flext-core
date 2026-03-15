@@ -628,13 +628,10 @@ class FlextHandlers[MessageT_contra, ResultT](x):
                 ...     service._setup_dispatcher()
 
             """
-            for name in dir(target_class):
-                candidate = vars(target_class).get(name)
-                if candidate is None:
-                    continue
-                if hasattr(candidate, c.Discovery.HANDLER_ATTR):
-                    return True
-            return False
+            return any(
+                hasattr(getattr(target_class, name, None), c.Discovery.HANDLER_ATTR)
+                for name in dir(target_class)
+            )
 
         @staticmethod
         def has_handlers_module(module: ModuleType) -> bool:
@@ -655,15 +652,11 @@ class FlextHandlers[MessageT_contra, ResultT](x):
                 ...     dispatcher.auto_register_handlers_from_module(my_module)
 
             """
-            for name in dir(module):
-                if name.startswith("_"):
-                    continue
-                candidate = vars(module).get(name)
-                if candidate is None:
-                    continue
-                if callable(candidate) and hasattr(candidate, c.Discovery.HANDLER_ATTR):
-                    return True
-            return False
+            return any(
+                hasattr(getattr(module, name, None), c.Discovery.HANDLER_ATTR)
+                for name in dir(module)
+                if not name.startswith("_") and callable(getattr(module, name, None))
+            )
 
         @staticmethod
         def scan_class(
@@ -688,21 +681,18 @@ class FlextHandlers[MessageT_contra, ResultT](x):
             """
             handlers: list[tuple[str, m.DecoratorConfig]] = []
             for name in dir(target_class):
-                method = vars(target_class).get(name)
-                if method is None:
-                    continue
+                method = getattr(target_class, name, None)
                 if hasattr(method, c.Discovery.HANDLER_ATTR):
-                    config_raw = vars(method).get(c.Discovery.HANDLER_ATTR)
-                    if not isinstance(config_raw, m.DecoratorConfig):
-                        continue
-                    config: m.DecoratorConfig = config_raw
+                    config: m.DecoratorConfig = getattr(
+                        method, c.Discovery.HANDLER_ATTR
+                    )
                     handlers.append((name, config))
             return sorted(handlers, key=lambda x: x[1].priority, reverse=True)
 
         @staticmethod
         def scan_module(
             module: ModuleType,
-        ) -> list[tuple[str, Callable[..., r[t.Scalar]], m.DecoratorConfig]]:
+        ) -> list[tuple[str, Callable[..., t.Scalar | None], m.DecoratorConfig]]:
             """Scan module for functions decorated with @handler().
 
             Introspects the module to find all functions with handler configuration
@@ -723,26 +713,21 @@ class FlextHandlers[MessageT_contra, ResultT](x):
             handlers: list[
                 tuple[
                     str,
-                    Callable[..., r[t.Scalar]],
+                    Callable[..., t.Scalar | None],
                     m.DecoratorConfig,
                 ]
             ] = []
             for name in dir(module):
                 if name.startswith("_"):
                     continue
-                func = vars(module).get(name)
-                if func is None:
-                    continue
+                func = getattr(module, name, None)
                 if not u.is_handler_callable(func):
                     continue
                 if not hasattr(func, c.Discovery.HANDLER_ATTR):
                     continue
                 if not callable(func):
                     continue
-                config_raw = vars(func).get(c.Discovery.HANDLER_ATTR)
-                if not isinstance(config_raw, m.DecoratorConfig):
-                    continue
-                config: m.DecoratorConfig = config_raw
+                config: m.DecoratorConfig = getattr(func, c.Discovery.HANDLER_ATTR)
                 callable_func: Callable[..., t.Container | BaseModel | None] = func
 
                 def narrowed_func(
@@ -751,16 +736,16 @@ class FlextHandlers[MessageT_contra, ResultT](x):
                         ..., t.Container | BaseModel | None
                     ] = callable_func,
                     **kwargs: t.Scalar,
-                ) -> r[t.Scalar]:
+                ) -> t.Scalar | None:
                     fn_candidate = kwargs.get("fn", captured_callable)
                     if not callable(fn_candidate):
-                        return r[t.Scalar].fail("Handler candidate is not callable")
+                        return ""
                     result = fn_candidate(message)
                     if result is None:
-                        return r[t.Scalar].fail("Handler returned None")
+                        return None
                     if isinstance(result, str | int | float | bool):
-                        return r[t.Scalar].ok(result)
-                    return r[t.Scalar].ok(str(result))
+                        return result
+                    return str(result)
 
                 setattr(narrowed_func, c.Discovery.HANDLER_ATTR, config)
                 handlers.append((name, narrowed_func, config))

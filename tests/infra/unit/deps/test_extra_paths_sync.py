@@ -27,6 +27,15 @@ def _manager() -> FlextInfraExtraPathsManager:
     return FlextInfraExtraPathsManager()
 
 
+class _ManagerAdapter(FlextInfraExtraPathsManager):
+    def __init__(
+        self,
+        root: Path | None = None,
+        workspace_root: Path | None = None,
+    ) -> None:
+        super().__init__(workspace_root=workspace_root or root)
+
+
 @pytest.mark.parametrize(
     ("mode", "dry_run", "project_dirs", "expect_fail", "expect_has"),
     [
@@ -126,6 +135,7 @@ def test_main_success_modes(
     argv: list[str],
     expected_exit: int,
 ) -> None:
+    monkeypatch.setattr(extra_paths, "FlextInfraExtraPathsManager", _ManagerAdapter)
     monkeypatch.setattr(FlextInfraExtraPathsManager, "ROOT", tmp_path)
     if mode == "root":
         _ = _create_pyproject(tmp_path, pyright_content)
@@ -150,6 +160,7 @@ def test_main_success_modes(
 
 def test_main_sync_failure(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(sys, "argv", ["extra_paths.py"])
+    monkeypatch.setattr(extra_paths, "FlextInfraExtraPathsManager", _ManagerAdapter)
 
     def _fail_sync(
         _self: FlextInfraExtraPathsManager,

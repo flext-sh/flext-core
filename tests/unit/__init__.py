@@ -558,7 +558,7 @@ if TYPE_CHECKING:
         test_create_from_callable_and_repr,
         test_flow_through_short_circuits_on_failure,
         test_map_error_identity_and_transform,
-        test_ok_raises_on_none,
+        test_ok_accepts_none,
         test_with_resource_cleanup_runs,
     )
     from tests.unit.test_result_coverage_100 import TestrCoverage
@@ -2991,9 +2991,9 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_utilities_checker_full_coverage",
         "test_object_dict_and_type_error_fallback_paths",
     ),
-    "test_ok_raises_on_none": (
+    "test_ok_accepts_none": (
         "tests.unit.test_result_additional",
-        "test_ok_raises_on_none",
+        "test_ok_accepts_none",
     ),
     "test_operation_progress_start_operation_sets_runtime_fields": (
         "tests.unit.test_models_generic_full_coverage",
@@ -4031,7 +4031,7 @@ __all__ = [
     "test_normalize_to_pydantic_dict_and_value_branches",
     "test_not_found_error_correlation_id_selection_and_extra_kwargs",
     "test_object_dict_and_type_error_fallback_paths",
-    "test_ok_raises_on_none",
+    "test_ok_accepts_none",
     "test_operation_progress_start_operation_sets_runtime_fields",
     "test_options_merge_conflict_paths_and_empty_merge_options",
     "test_pagination_response_string_fallbacks",
