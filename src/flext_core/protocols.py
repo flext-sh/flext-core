@@ -40,7 +40,7 @@ class _ProtocolIntrospection:
     """Internal helpers for protocol detection and compliance checks."""
 
     @staticmethod
-    def _get_protocol_attrs(protocol: type) -> tuple[str, ...]:
+    def get_protocol_attrs(protocol: type) -> tuple[str, ...]:
         try:
             raw_attrs_candidate = protocol.__protocol_attrs__
         except AttributeError:
@@ -63,7 +63,7 @@ class _ProtocolIntrospection:
         protocol_annotations: Mapping[str, type | str] = (
             protocol.__annotations__ if hasattr(protocol, "__annotations__") else {}
         )
-        raw_attrs = set(cls._get_protocol_attrs(protocol))
+        raw_attrs = set(cls.get_protocol_attrs(protocol))
         protocol_methods: set[str] = set()
         protocol_methods.update(raw_attrs)
         required_members: set[str] = set(protocol_annotations.keys())
