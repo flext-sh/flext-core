@@ -14,7 +14,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from flext_core import FlextRuntime
+from flext_core import r
 from flext_infra import u
 from flext_infra.workspace.detector import FlextInfraWorkspaceDetector
 from flext_infra.workspace.migrator import FlextInfraProjectMigrator
@@ -26,10 +26,7 @@ def _run_detect(cli: u.Infra.CliArgs) -> int:
     """Execute workspace detection."""
     detector = FlextInfraWorkspaceDetector()
     result = detector.detect(cli.workspace)
-    if result.is_success:
-        return 0
-    u.Infra.error(result.error or "detection failed")
-    return 1
+    return u.Infra.exit_code(result, failure_msg="detection failed")
 
 
 def _run_sync(cli: u.Infra.CliArgs, canonical_root: str | None) -> int:
@@ -37,10 +34,7 @@ def _run_sync(cli: u.Infra.CliArgs, canonical_root: str | None) -> int:
     canonical_path = Path(canonical_root) if canonical_root else None
     service = FlextInfraSyncService(canonical_root=canonical_path)
     result = service.sync(project_root=cli.workspace, canonical_root=canonical_path)
-    if result.is_success:
-        return 0
-    u.Infra.error(result.error or "sync failed")
-    return 1
+    return u.Infra.exit_code(result, failure_msg="sync failed")
 
 
 def _run_orchestrate(
@@ -49,8 +43,10 @@ def _run_orchestrate(
     """Execute multi-project orchestration."""
     projects = [p for p in projects if p]
     if not projects:
-        u.Infra.error("no projects specified")
-        return 1
+        return u.Infra.exit_code(
+            r[str].fail("no projects specified"),
+            failure_msg="no projects specified",
+        )
     service = FlextInfraOrchestratorService()
     result = service.orchestrate(
         projects=projects,
@@ -62,16 +58,14 @@ def _run_orchestrate(
         outputs = result.value
         failures = [o for o in outputs if o.exit_code != 0]
         return max((o.exit_code for o in failures), default=0)
-    u.Infra.error(result.error or "orchestration failed")
-    return 1
+    return u.Infra.exit_code(result, failure_msg="orchestration failed")
 
 
 def _run_migrate(cli: u.Infra.CliArgs) -> int:
     service = FlextInfraProjectMigrator()
     result = service.migrate(workspace_root=cli.workspace, dry_run=cli.dry_run)
     if result.is_failure:
-        u.Infra.error(result.error or "migration failed")
-        return 1
+        return u.Infra.exit_code(result, failure_msg="migration failed")
     failed_projects = 0
     for migration in result.value:
         u.Infra.info(f"{migration.project}:")
@@ -93,7 +87,6 @@ def _run_migrate(cli: u.Infra.CliArgs) -> int:
 
 def main(argv: list[str] | None = None) -> int:
     """Run workspace utilities: detect mode, sync base.mk, orchestrate projects."""
-    FlextRuntime.ensure_structlog_configured()
     parser = u.Infra.create_parser(
         "flext_infra workspace",
         "Workspace management utilities",
@@ -185,4 +178,4 @@ def main(argv: list[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(u.Infra.run_cli(main))
