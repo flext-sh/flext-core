@@ -79,6 +79,7 @@ if TYPE_CHECKING:
         TestFlextTestsUtilitiesTestContext,
     )
     from tests.unit.test_args_coverage_100 import TestFlextUtilitiesArgs
+    from tests.unit.test_automated_architecture import TestAutomatedArchitecture
     from tests.unit.test_automated_container import TestAutomatedFlextContainer
     from tests.unit.test_automated_context import TestAutomatedFlextContext
     from tests.unit.test_automated_decorators import (
@@ -1085,6 +1086,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "TestAltPropagatesException",
     ),
     "TestAssertExists": ("tests.unit.flext_tests.test_files", "TestAssertExists"),
+    "TestAutomatedArchitecture": (
+        "tests.unit.test_automated_architecture",
+        "TestAutomatedArchitecture",
+    ),
     "TestAutomatedExceptions": (
         "tests.unit.test_automated_exceptions",
         "TestAutomatedExceptions",
@@ -3500,6 +3505,7 @@ __all__ = [
     "TestAggregateRoots",
     "TestAltPropagatesException",
     "TestAssertExists",
+    "TestAutomatedArchitecture",
     "TestAutomatedExceptions",
     "TestAutomatedFlextContainer",
     "TestAutomatedFlextContext",
