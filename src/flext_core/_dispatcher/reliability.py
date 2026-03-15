@@ -273,7 +273,7 @@ class RateLimiterManager(BaseModel):
             jitter_factor=jitter_factor,
         )
 
-    def model_post_init(self, __context: object) -> None:
+    def model_post_init(self, __context: object, /) -> None:
         self.jitter_factor = max(0.0, min(self.jitter_factor, 1.0))
 
     def check_rate_limit(self, message_type: str) -> r[bool]:
@@ -357,7 +357,7 @@ class RetryPolicy(BaseModel):
         """
         super().__init__(max_attempts=max_attempts, retry_delay=retry_delay)
 
-    def model_post_init(self, __context: object) -> None:
+    def model_post_init(self, __context: object, /) -> None:
         self.max_attempts = max(self.max_attempts, c.Reliability.RETRY_COUNT_MIN)
         self.retry_delay = max(self.retry_delay, c.INITIAL_TIME)
 
