@@ -1,157 +1,100 @@
-"""Automated tests for settings module - configuration.
-
-Generated automatically for 100% coverage following strict
-type-system-architecture.md rules with real functionality testing.
-"""
+"""Real FlextSettings API tests using flext_tests infrastructure."""
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Generator
+from time import perf_counter
 
 import pytest
+from hypothesis import given, settings, strategies as st
+from pydantic_settings import BaseSettings
 
-from flext_core import FlextResult, FlextSettings, r
-from flext_tests import t
-from tests import m
-from tests.conftest import test_framework
-from tests.test_utils import assertion_helpers, fixture_factory
+from flext_core import FlextSettings, c
+from flext_tests import tb, tm, tt
 
 
 class TestAutomatedFlextSettings:
-    """Automated tests for FlextSettings functionality.
+    @pytest.fixture(autouse=True)
+    def _reset_settings_state(self) -> Generator[None]:
+        FlextSettings.reset_for_testing()
+        yield
+        FlextSettings.reset_for_testing()
 
-    Generated for 100% coverage with:
-    - Real functionality testing (no mocks)
-    - r[T] patterns
-    - Type safety compliance
-    - Zero circular dependencies
-    """
+    def test_get_global_and_apply_override(self) -> None:
+        with tm.scope(config={"debug": False}):
+            settings_obj = FlextSettings.get_global()
+        tm.that(settings_obj, is_=FlextSettings)
+        tm.that(settings_obj.apply_override("debug", True), eq=True)
+        tm.that(settings_obj.debug, eq=True)
+        tm.that(settings_obj.apply_override("invalid_key", "x"), eq=False)
 
-    @pytest.mark.parametrize(
-        "test_scenario",
-        [
-            m.AutomatedTestScenario(
-                description="basic_functionality",
-                input={},
-                expected_success=True,
+    def test_for_context_overrides(self) -> None:
+        scoped = FlextSettings.for_context("ctx-1", debug=True, max_workers=99)
+        tm.that(scoped.debug, eq=True)
+        tm.that(scoped.max_workers, eq=99)
+
+    def test_register_namespace_and_get_namespace(self) -> None:
+        class DemoNamespace(BaseSettings):
+            enabled: bool = True
+
+        namespace = f"ns_{tb.Tests.Data.short_id(6)}"
+        FlextSettings.register_namespace(namespace, DemoNamespace)
+        settings_obj = FlextSettings.get_global()
+        ns_cfg = settings_obj.get_namespace(namespace, DemoNamespace)
+        tm.that(ns_cfg.enabled, eq=True)
+
+    def test_effective_log_level_property(self) -> None:
+        settings_obj = FlextSettings.get_global(
+            overrides={"debug": True, "trace": False}
+        )
+        tm.that(settings_obj.effective_log_level, eq=c.Settings.LogLevel.INFO)
+
+    def test_reset_for_testing_creates_new_instance(self) -> None:
+        first = FlextSettings.get_global()
+        FlextSettings.reset_for_testing()
+        second = FlextSettings.get_global()
+        tm.that(first is second, eq=False)
+
+    @given(
+        pair=st.one_of(
+            st.tuples(st.just("debug"), st.booleans()),
+            st.tuples(st.just("trace"), st.booleans()),
+            st.tuples(st.just("max_workers"), st.integers(min_value=1, max_value=256)),
+            st.tuples(
+                st.just("log_level"),
+                st.sampled_from([
+                    c.Settings.LogLevel.DEBUG,
+                    c.Settings.LogLevel.INFO,
+                    c.Settings.LogLevel.WARNING,
+                    c.Settings.LogLevel.ERROR,
+                ]),
             ),
-            m.AutomatedTestScenario(
-                description="edge_case_handling",
-                input={"edge": True},
-                expected_success=True,
-            ),
-            m.AutomatedTestScenario(
-                description="error_conditions",
-                input={"invalid": True},
-                expected_success=False,
-            ),
-            m.AutomatedTestScenario(
-                description="boundary_conditions",
-                input={"boundary": True},
-                expected_success=True,
-            ),
-            m.AutomatedTestScenario(
-                description="complex_scenarios",
-                input={"complex": True},
-                expected_success=True,
-            ),
-        ],
-        ids=lambda case: case.description,
+            st.tuples(st.just("invalid_key"), st.text(min_size=1, max_size=10)),
+        )
     )
-    def test_automated_settings_comprehensive_scenarios(
+    @settings(max_examples=50)
+    def test_apply_override_returns_bool_property(
         self,
-        test_scenario: m.AutomatedTestScenario,
+        pair: tuple[str, bool | int | str | c.Settings.LogLevel],
     ) -> None:
-        """Comprehensive test scenarios for settings functionality."""
-        try:
-            instance = fixture_factory.create_test_settings_instance()
-            scenario_input: Mapping[str, t.Tests.object] = (
-                test_scenario.input
-                if isinstance(test_scenario.input, dict)
-                else {"value": test_scenario.input}
-            )
-            result = self._execute_settings_operation(instance, scenario_input)
-            if test_scenario.expected_success:
-                assert result.is_success, f"Expected success but got failure: {result}"
-        except Exception:
-            if test_scenario.expected_success:
-                raise
+        key, value = pair
+        FlextSettings.reset_for_testing()
+        settings_obj = FlextSettings.get_global()
+        if key == "trace" and value is True:
+            tm.that(settings_obj.apply_override("debug", True), eq=True)
+        outcome = settings_obj.apply_override(key, value)
+        tm.that(outcome, is_=bool)
 
-    def test_automated_settings_type_safety(self) -> None:
-        """Test type safety compliance for settings."""
-        instance = fixture_factory.create_test_settings_instance()
-        result = self._execute_settings_operation(instance, {"type_safe": True})
-        _ = assertion_helpers.assert_flext_result_success(
-            result,
-            "FlextSettings type safety test",
-        )
-
-    def test_automated_settings_error_handling(self) -> None:
-        """Test comprehensive error handling for settings."""
-        instance = fixture_factory.create_test_settings_instance()
-        error_inputs = [
-            None,
-            dict[str, str](),
-            {"invalid": "data"},
-            {"malformed": True},
-        ]
-        for error_input in error_inputs:
-            result = self._execute_settings_operation(instance, error_input or {})
-            assert result.is_success or result.is_failure, (
-                f"Unexpected result state: {result}"
-            )
-
-    def test_automated_settings_performance(self) -> None:
-        """Test performance characteristics of settings."""
-        instance = fixture_factory.create_test_settings_instance()
-
-        def operation() -> FlextResult[bool]:
-            return self._execute_settings_operation(
-                instance,
-                {"performance_test": True},
-            )
-
-        result = test_framework.execute_with_timeout(operation, timeout_seconds=1.0)
-        _ = assertion_helpers.assert_flext_result_success(
-            result,
-            "FlextSettings performance test exceeded timeout",
-        )
-
-    def test_automated_settings_resource_management(self) -> None:
-        """Test resource management and cleanup for settings."""
-        instance = fixture_factory.create_test_settings_instance()
-        result = self._execute_settings_operation(instance, {"resource_test": True})
-        _ = assertion_helpers.assert_flext_result_success(
-            result,
-            "FlextSettings resource test",
-        )
-        instance_obj = instance
-        if hasattr(instance_obj, "cleanup"):
-            cleanup_result = getattr(instance_obj, "cleanup")()
-            if cleanup_result:
-                _ = assertion_helpers.assert_flext_result_success(
-                    cleanup_result,
-                    "FlextSettings cleanup failed",
-                )
-
-    def _execute_settings_operation(
-        self,
-        instance: type[FlextSettings],
-        input_data: Mapping[str, object],
-    ) -> r[bool]:
-        """Execute a test operation on settings instance.
-
-        This method should be customized based on the actual settings API.
-        For now, it provides a generic implementation that can be adapted.
-        """
-        try:
-            _ = instance
-            _ = input_data
-            return r[bool].ok(True)
-        except Exception as e:
-            return r[bool].fail(f"FlextSettings operation failed: {e}")
-
-    @pytest.fixture
-    def test_settings_instance(self) -> type[FlextSettings]:
-        """Fixture for settings test instance."""
-        return fixture_factory.create_test_settings_instance()
+    @pytest.mark.performance
+    def test_apply_override_benchmark(self) -> None:
+        settings_obj = FlextSettings.get_global()
+        keys = ["debug", "trace", "max_workers"]
+        formatter = tt.op("format")
+        tm.that(callable(formatter), eq=True)
+        start = perf_counter()
+        for idx in range(400):
+            key = keys[idx % len(keys)]
+            value = True if key in {"debug", "trace"} else len(str(formatter("w", idx)))
+            tm.that(settings_obj.apply_override(key, value), eq=True)
+            _ = settings_obj.effective_log_level
+        tm.that(perf_counter() - start, gte=0.0)

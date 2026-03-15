@@ -1,167 +1,81 @@
-"""Automated tests for utilities module - utility functions.
-
-Generated automatically for 100% coverage following strict
-type-system-architecture.md rules with real functionality testing.
-"""
+"""Real API tests for FlextUtilities facade."""
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from time import perf_counter
 
 import pytest
+from hypothesis import given, strategies as st
 
-from flext_core import FlextUtilities, r
-from flext_tests import t
-from tests import m
-from tests.conftest import test_framework
-from tests.test_utils import assertion_helpers, fixture_factory
+from flext_core import FlextUtilities as u_cls, t
+from flext_tests import tb, tm, tt
 
 
 class TestAutomatedFlextUtilities:
-    """Automated tests for FlextUtilities functionality.
-
-    Generated for 100% coverage with:
-    - Real functionality testing (no mocks)
-    - r[T] patterns
-    - Type safety compliance
-    - Zero circular dependencies
-    """
-
     @pytest.mark.parametrize(
-        "test_scenario",
+        ("value", "expected"),
         [
-            m.AutomatedTestScenario(
-                description="basic_functionality",
-                input={},
-                expected_success=True,
-            ),
-            m.AutomatedTestScenario(
-                description="edge_case_handling",
-                input={"edge": True},
-                expected_success=True,
-            ),
-            m.AutomatedTestScenario(
-                description="error_conditions",
-                input={"invalid": True},
-                expected_success=False,
-            ),
-            m.AutomatedTestScenario(
-                description="boundary_conditions",
-                input={"boundary": True},
-                expected_success=True,
-            ),
-            m.AutomatedTestScenario(
-                description="complex_scenarios",
-                input={"complex": True},
-                expected_success=True,
-            ),
+            (None, True),
+            ("", True),
+            ([], True),
+            ({}, True),
+            ("x", False),
+            ([1], False),
+            ({"a": 1}, False),
+            (0, True),
         ],
-        ids=lambda case: case.description,
     )
-    def test_automated_utilities_comprehensive_scenarios(
-        self,
-        test_scenario: m.AutomatedTestScenario,
+    def test_empty(self, value: t.NormalizedValue | None, expected: bool) -> None:
+        tm.that(u_cls.empty(value), eq=expected)
+
+    def test_generate_ulid_and_uuid(self) -> None:
+        generated_ulid = u_cls.generate("ulid")
+        generated_uuid = u_cls.generate()
+        tm.that(generated_ulid, is_=str, none=False)
+        tm.that(generated_uuid, is_=str, none=False)
+        tm.that(len(generated_ulid), gt=0)
+        tm.that(len(generated_uuid), gt=0)
+
+    def test_type_guards_and_collection_helpers(self) -> None:
+        model = tb.Tests.Model.user()
+        numbers = [1, 2, 3]
+        tm.that(u_cls.is_base_model(model), eq=True)
+        tm.that(u_cls.is_scalar(42), eq=True)
+        tm.that(u_cls.is_config_value({"alpha": 1}), eq=True)
+
+        mapped = u_cls.map(numbers, lambda v: v * 2)
+        chunks = u_cls.chunk(numbers, 2)
+        unique = u_cls.unique([1, 1, 2, 3, 3])
+        tm.that(mapped, eq=[2, 4, 6])
+        tm.that(chunks, eq=[[1, 2], [3]])
+        tm.that(unique, eq=[1, 2, 3])
+
+    @given(
+        st.one_of(
+            st.none(),
+            st.text(),
+            st.lists(st.integers()),
+            st.dictionaries(st.text(), st.integers()),
+        )
+    )
+    def test_hypothesis_empty_returns_bool(
+        self, value: t.NormalizedValue | None
     ) -> None:
-        """Comprehensive test scenarios for utilities functionality."""
-        try:
-            instance = fixture_factory.create_test_utilities_instance()
-            scenario_input: Mapping[str, t.Tests.object] = (
-                test_scenario.input
-                if isinstance(test_scenario.input, dict)
-                else {"value": test_scenario.input}
-            )
-            result = self._execute_utilities_operation(instance, scenario_input)
-            if test_scenario.expected_success:
-                _ = assertion_helpers.assert_flext_result_success(
-                    result,
-                    f"FlextUtilities operation failed: {test_scenario.description}",
-                )
-            else:
-                _ = assertion_helpers.assert_flext_result_failure(
-                    result,
-                    f"FlextUtilities operation should fail: {test_scenario.description}",
-                )
-        except Exception as e:
-            if not test_scenario.expected_success:
-                pass
-            else:
-                pytest.fail(f"Unexpected error in utilities test: {e}")
+        result = u_cls.empty(value)
+        tm.that(result, is_=bool)
 
-    def test_automated_utilities_type_safety(self) -> None:
-        """Test type safety compliance for utilities."""
-        instance = fixture_factory.create_test_utilities_instance()
-        result = self._execute_utilities_operation(instance, {"type_safe": True})
-        _ = assertion_helpers.assert_flext_result_success(
-            result,
-            "FlextUtilities type safety test",
-        )
+    @given(st.text())
+    def test_hypothesis_generate_always_non_empty(self, _value: str) -> None:
+        generated = u_cls.generate("ulid")
+        tm.that(generated, is_=str, none=False)
+        tm.that(len(generated), gt=0)
 
-    def test_automated_utilities_error_handling(self) -> None:
-        """Test comprehensive error handling for utilities."""
-        instance = fixture_factory.create_test_utilities_instance()
-        error_inputs: list[Mapping[str, object] | None] = [
-            None,
-            dict[str, str](),
-            {"invalid": "data"},
-            {"malformed": True},
-        ]
-        for error_input in error_inputs:
-            result = self._execute_utilities_operation(instance, error_input or {})
-            assert result.is_success or result.is_failure, (
-                f"Unexpected result state: {result}"
-            )
-
-    def test_automated_utilities_performance(self) -> None:
-        """Test performance characteristics of utilities."""
-        instance = fixture_factory.create_test_utilities_instance()
-
-        def operation() -> r[bool]:
-            return self._execute_utilities_operation(
-                instance,
-                {"performance_test": True},
-            )
-
-        result = test_framework.execute_with_timeout(operation, timeout_seconds=1.0)
-        _ = assertion_helpers.assert_flext_result_success(
-            result,
-            "FlextUtilities performance test exceeded timeout",
-        )
-
-    def test_automated_utilities_resource_management(self) -> None:
-        """Test resource management and cleanup for utilities."""
-        instance = fixture_factory.create_test_utilities_instance()
-        result = self._execute_utilities_operation(instance, {"resource_test": True})
-        _ = assertion_helpers.assert_flext_result_success(
-            result,
-            "FlextUtilities resource test",
-        )
-        instance_obj = instance
-        if hasattr(instance_obj, "cleanup"):
-            cleanup_result = getattr(instance_obj, "cleanup")()
-            if cleanup_result:
-                _ = assertion_helpers.assert_flext_result_success(
-                    cleanup_result,
-                    "FlextUtilities cleanup failed",
-                )
-
-    def _execute_utilities_operation(
-        self,
-        instance: type[FlextUtilities],
-        input_data: Mapping[str, object],
-    ) -> r[bool]:
-        """Execute a test operation on utilities instance.
-
-        This method should be customized based on the actual utilities API.
-        For now, it provides a generic implementation that can be adapted.
-        """
-        try:
-            _ = instance
-            _ = input_data
-            return r[bool].ok(True)
-        except Exception as e:
-            return r[bool].fail(f"FlextUtilities operation failed: {e}")
-
-    @pytest.fixture
-    def test_utilities_instance(self) -> type[FlextUtilities]:
-        """Fixture for utilities test instance."""
-        return fixture_factory.create_test_utilities_instance()
+    def test_benchmark_generate(self) -> None:
+        users = tt.batch("user", count=3)
+        tm.that(len(users), gt=0)
+        start = perf_counter()
+        for _ in range(2000):
+            generated = u_cls.generate("ulid")
+            tm.that(len(generated), gt=0)
+        elapsed = perf_counter() - start
+        tm.that(elapsed, gt=0.0)

@@ -1,170 +1,88 @@
-"""Automated tests for context module - context management.
-
-Generated automatically for 100% coverage following strict
-type-system-architecture.md rules with real functionality testing.
-"""
+"""Real FlextContext API tests using flext_tests infrastructure."""
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from time import perf_counter
 
 import pytest
+from hypothesis import given, settings, strategies as st
 
-from flext_core import FlextContext, FlextResult, r
-from flext_tests import t
-from tests import m
-from tests.conftest import test_framework
-from tests.test_utils import assertion_helpers, fixture_factory
+from flext_core import FlextContext
+from flext_tests import tb, tm, tt
 
 
 class TestAutomatedFlextContext:
-    """Automated tests for FlextContext functionality.
+    def test_create_set_get_has_remove_clear(self) -> None:
+        _ = tb().add("seed", "yes").build()
+        ctx = FlextContext.create()
+        tm.ok(ctx.set("alpha", "value"), eq=True)
+        tm.ok(ctx.get("alpha"), eq="value")
+        tm.that(ctx.has("alpha"), eq=True)
+        ctx.remove("alpha")
+        tm.that(ctx.has("alpha"), eq=False)
+        ctx.clear()
+        tm.that(ctx.keys(), length=0)
 
-    Generated for 100% coverage with:
-    - Real functionality testing (no mocks)
-    - r[T] patterns
-    - Type safety compliance
-    - Zero circular dependencies
-    """
+    def test_create_metadata_overload_and_validate(self) -> None:
+        ctx = FlextContext.create(
+            operation_id="op-1",
+            user_id="user-1",
+        )
+        tm.ok(ctx.get("operation_id"), eq="op-1")
+        tm.ok(ctx.get("user_id"), eq="user-1")
+        tm.ok(ctx.validate_context(), eq=True)
 
-    @pytest.mark.parametrize(
-        "test_scenario",
-        [
-            m.AutomatedTestScenario(
-                description="basic_functionality",
-                input={},
-                expected_success=True,
+    def test_clone_merge_export_items_values(self) -> None:
+        ctx = FlextContext.create()
+        _ = ctx.set("k1", "v1")
+        _ = ctx.set("k2", 2)
+        cloned = ctx.clone()
+        tm.ok(cloned.get("k1"), eq="v1")
+        extra = {"k3": "v3"}
+        merged = cloned.merge(extra)
+        tm.that(merged is cloned, eq=True)
+        tm.ok(cloned.get("k3"), eq="v3")
+        exported = cloned.export()
+        tm.that(exported, is_=dict)
+        tm.that(exported, has=["global"])
+        tm.that(cloned.keys(), has=["k1", "k2", "k3"])
+        tm.that(cloned.values(), length_gte=3)
+        tm.that(cloned.items(), length_gte=3)
+
+    @given(
+        key=st.text(
+            min_size=1,
+            max_size=30,
+            alphabet=st.characters(whitelist_categories=("Ll", "Lu", "Nd")),
+        ),
+        value=st.one_of(
+            st.text(
+                min_size=1,
+                max_size=30,
+                alphabet=st.characters(whitelist_categories=("Ll", "Lu", "Nd")),
             ),
-            m.AutomatedTestScenario(
-                description="edge_case_handling",
-                input={"edge": True},
-                expected_success=True,
-            ),
-            m.AutomatedTestScenario(
-                description="error_conditions",
-                input={"invalid": True},
-                expected_success=False,
-            ),
-            m.AutomatedTestScenario(
-                description="boundary_conditions",
-                input={"boundary": True},
-                expected_success=True,
-            ),
-            m.AutomatedTestScenario(
-                description="complex_scenarios",
-                input={"complex": True},
-                expected_success=True,
-            ),
-        ],
-        ids=lambda case: case.description,
+            st.integers(min_value=0, max_value=1000),
+            st.booleans(),
+        ),
     )
-    def test_automated_context_comprehensive_scenarios(
-        self,
-        test_scenario: m.AutomatedTestScenario,
+    @settings(max_examples=50)
+    def test_set_get_roundtrip_property(
+        self, key: str, value: str | int | bool
     ) -> None:
-        """Comprehensive test scenarios for context functionality."""
-        try:
-            instance = fixture_factory.create_test_context_instance()
-            input_data = (
-                test_scenario.input
-                if isinstance(test_scenario.input, dict)
-                else dict[str, t.Tests.object]()
-            )
-            result = self._execute_context_operation(instance, input_data)
-            if test_scenario.expected_success:
-                assert result.is_success, f"Expected success but got failure: {result}"
-        except Exception:
-            if test_scenario.expected_success:
-                raise
+        ctx = FlextContext.create()
+        tm.ok(ctx.set(key, value), eq=True)
+        tm.ok(ctx.get(key), eq=value)
 
-    def test_automated_context_type_safety(self) -> None:
-        """Test type safety compliance for context."""
-        instance = fixture_factory.create_test_context_instance()
-        result = self._execute_context_operation(instance, {"type_safe": True})
-        _ = assertion_helpers.assert_flext_result_success(
-            result,
-            "FlextContext type safety test",
-        )
-
-    def test_automated_context_error_handling(self) -> None:
-        """Test comprehensive error handling for context."""
-        instance = fixture_factory.create_test_context_instance()
-        error_inputs: list[Mapping[str, object] | None] = [
-            None,
-            dict[str, str](),
-            {"invalid": "data"},
-            {"malformed": True},
-        ]
-        for error_input in error_inputs:
-            result = self._execute_context_operation(instance, error_input or {})
-            assert result.is_success or result.is_failure, (
-                f"Unexpected result state: {result}"
-            )
-
-    def test_automated_context_performance(self) -> None:
-        """Test performance characteristics of context."""
-        instance = fixture_factory.create_test_context_instance()
-
-        def operation() -> FlextResult[t.Container]:
-            return self._execute_context_operation(instance, {"performance_test": True})
-
-        result = test_framework.execute_with_timeout(operation, timeout_seconds=1.0)
-        _ = assertion_helpers.assert_flext_result_success(
-            result,
-            "FlextContext performance test exceeded timeout",
-        )
-
-    def test_automated_context_resource_management(self) -> None:
-        """Test resource management and cleanup for context."""
-        instance = fixture_factory.create_test_context_instance()
-        result = self._execute_context_operation(instance, {"resource_test": True})
-        _ = assertion_helpers.assert_flext_result_success(
-            result,
-            "FlextContext resource test",
-        )
-        cleanup_fn = getattr(instance, "cleanup", None)
-        if callable(cleanup_fn):
-            cleanup_result = cleanup_fn()
-            if isinstance(cleanup_result, r):
-                assert cleanup_result.is_success, "FlextContext cleanup failed"
-
-    def _execute_context_operation(
-        self,
-        instance: FlextContext,
-        input_data: Mapping[str, object],
-    ) -> r[t.Container]:
-        """Execute a test operation on context instance.
-
-        Tests actual FlextContext API methods like set, get, validate, etc.
-        """
-        try:
-            if input_data.get("type_safe"):
-                instance.set("test_key", "test_value")
-                value = instance.get("test_key")
-                return r[t.Container].ok(str(value))
-            if input_data.get("validate"):
-                validation_result = instance.validate_context()
-                if validation_result.is_success:
-                    return r[t.Container].ok(str(validation_result.value))
-                return r[t.Container].fail(
-                    validation_result.error or "Context validation failed"
-                )
-            if input_data.get("performance_test"):
-                instance.set("perf_test", "data")
-                _ = instance.get("perf_test")
-                return r[t.Container].ok("performance_test_ok")
-            if input_data.get("resource_test"):
-                cloned = instance.clone()
-                cloned.set("cloned_key", "cloned_value")
-                return r[t.Container].ok("resource_test_ok")
-            result = instance.validate_context()
-            if result.is_success:
-                return r[t.Container].ok(str(result.value))
-            return r[t.Container].fail(result.error or "Context validation failed")
-        except Exception as e:
-            return r[t.Container].fail(f"FlextContext operation failed: {e}")
-
-    @pytest.fixture
-    def test_context_instance(self) -> FlextContext:
-        """Fixture for context test instance."""
-        return fixture_factory.create_test_context_instance()
+    @pytest.mark.performance
+    def test_set_get_benchmark_cycle(self) -> None:
+        ctx = FlextContext.create()
+        keys = ["a", "b", "c", "d", "e"]
+        value_factory = tt.op("format")
+        tm.that(callable(value_factory), eq=True)
+        start = perf_counter()
+        for i in range(400):
+            key = str(keys[i % len(keys)])
+            value = str(value_factory("v", i))
+            tm.ok(ctx.set(key, value), eq=True)
+            tm.ok(ctx.get(key), eq=value)
+        tm.that(perf_counter() - start, gte=0.0)

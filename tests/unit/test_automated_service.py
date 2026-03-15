@@ -1,164 +1,89 @@
-"""Automated tests for service module - service layer.
-
-Generated automatically for 100% coverage following strict
-type-system-architecture.md rules with real functionality testing.
-"""
-
 from __future__ import annotations
 
 from collections.abc import Mapping
+from time import perf_counter
+from typing import override
 
-import pytest
+from hypothesis import given, strategies as st
 
-from flext_core import FlextModelsContainers, FlextResult, FlextService, r
-from flext_tests import t
-from tests import m
-from tests.conftest import test_framework
-from tests.test_utils import assertion_helpers, fixture_factory
+from flext_core import FlextContainer, FlextContext, FlextSettings, r, s
+from flext_tests import tb, tm, tt
+
+
+class _SuccessService(s[str]):
+    __test__ = False
+
+    @override
+    def execute(self) -> r[str]:
+        return r[str].ok("done")
+
+
+class _FailService(s[str]):
+    __test__ = False
+
+    @override
+    def execute(self) -> r[str]:
+        return r[str].fail("error occurred")
+
+
+class _DynamicService(s[str]):
+    __test__ = False
+    value: str
+
+    @override
+    def execute(self) -> r[str]:
+        return r[str].ok(self.value)
 
 
 class TestAutomatedFlextService:
-    """Automated tests for FlextService functionality.
+    def test_execute_success(self) -> None:
+        service = _SuccessService()
+        tm.ok(service.execute(), eq="done")
 
-    Generated for 100% coverage with:
-    - Real functionality testing (no mocks)
-    - r[T] patterns
-    - Type safety compliance
-    - Zero circular dependencies
-    """
+    def test_execute_failure(self) -> None:
+        service = _FailService()
+        tm.fail(service.execute(), has="error")
 
-    @pytest.mark.parametrize(
-        "test_scenario",
-        [
-            m.AutomatedTestScenario(
-                description="basic_functionality",
-                input={},
-                expected_success=True,
-            ),
-            m.AutomatedTestScenario(
-                description="edge_case_handling",
-                input={"edge": True},
-                expected_success=True,
-            ),
-            m.AutomatedTestScenario(
-                description="error_conditions",
-                input={"invalid": True},
-                expected_success=False,
-            ),
-            m.AutomatedTestScenario(
-                description="boundary_conditions",
-                input={"boundary": True},
-                expected_success=True,
-            ),
-            m.AutomatedTestScenario(
-                description="complex_scenarios",
-                input={"complex": True},
-                expected_success=True,
-            ),
-        ],
-        ids=lambda case: case.description,
-    )
-    def test_automated_service_comprehensive_scenarios(
-        self,
-        test_scenario: m.AutomatedTestScenario,
-    ) -> None:
-        """Comprehensive test scenarios for service functionality."""
-        try:
-            instance = fixture_factory.create_test_service_instance()
-            scenario_input: Mapping[str, t.Tests.object] = (
-                test_scenario.input
-                if isinstance(test_scenario.input, dict)
-                else {"value": test_scenario.input}
-            )
-            result = self._execute_service_operation(instance, scenario_input)
-            if test_scenario.expected_success:
-                _ = assertion_helpers.assert_flext_result_success(
-                    result,
-                    f"FlextService operation failed: {test_scenario.description}",
-                )
-            else:
-                _ = assertion_helpers.assert_flext_result_failure(
-                    result,
-                    f"FlextService operation should fail: {test_scenario.description}",
-                )
-        except Exception as e:
-            if not test_scenario.expected_success:
-                pass
-            else:
-                pytest.fail(f"Unexpected error in service test: {e}")
+    def test_validate_business_rules(self) -> None:
+        service = _SuccessService()
+        tm.ok(service.validate_business_rules(), eq=True)
 
-    def test_automated_service_type_safety(self) -> None:
-        """Test type safety compliance for service."""
-        instance = fixture_factory.create_test_service_instance()
-        result = self._execute_service_operation(instance, {"type_safe": True})
-        _ = assertion_helpers.assert_flext_result_success(
-            result,
-            "FlextService type safety test",
-        )
+    def test_is_valid(self) -> None:
+        tm.that(_SuccessService().is_valid(), is_=bool)
+        tm.that(_FailService().is_valid(), eq=True)
 
-    def test_automated_service_error_handling(self) -> None:
-        """Test comprehensive error handling for service."""
-        instance = fixture_factory.create_test_service_instance()
-        error_inputs = [
-            None,
-            dict[str, str](),
-            {"invalid": "data"},
-            {"malformed": True},
-        ]
-        for error_input in error_inputs:
-            result = self._execute_service_operation(instance, error_input or {})
-            assert result.is_success or result.is_failure, (
-                f"Unexpected result state: {result}"
-            )
+    def test_get_service_info(self) -> None:
+        service = _SuccessService()
+        info = service.get_service_info()
+        tm.that(info, is_=Mapping)
+        tm.that(info, has="service_type")
 
-    def test_automated_service_performance(self) -> None:
-        """Test performance characteristics of service."""
-        instance = fixture_factory.create_test_service_instance()
+    def test_result_property(self) -> None:
+        tm.that(_SuccessService().result, eq="done")
 
-        def operation() -> FlextResult[bool]:
-            return self._execute_service_operation(instance, {"performance_test": True})
+    def test_runtime_properties(self) -> None:
+        service = _SuccessService()
+        tm.that(isinstance(service.config, FlextSettings), eq=True)
+        tm.that(isinstance(service.container, FlextContainer), eq=True)
+        tm.that(isinstance(service.context, FlextContext), eq=True)
 
-        result = test_framework.execute_with_timeout(operation, timeout_seconds=1.0)
-        _ = assertion_helpers.assert_flext_result_success(
-            result,
-            "FlextService performance test exceeded timeout",
-        )
+    @given(st.text(min_size=1))
+    def test_execute_hypothesis(self, value: str) -> None:
+        service = _DynamicService(value=value)
+        result = service.execute()
+        tm.that(result.is_success or result.is_failure, eq=True)
 
-    def test_automated_service_resource_management(self) -> None:
-        """Test resource management and cleanup for service."""
-        instance = fixture_factory.create_test_service_instance()
-        result = self._execute_service_operation(instance, {"resource_test": True})
-        _ = assertion_helpers.assert_flext_result_success(
-            result,
-            "FlextService resource test",
-        )
-        instance_obj = instance
-        if hasattr(instance_obj, "cleanup"):
-            cleanup_result = getattr(instance_obj, "cleanup")()
-            if cleanup_result:
-                _ = assertion_helpers.assert_flext_result_success(
-                    cleanup_result,
-                    "FlextService cleanup failed",
-                )
-
-    def _execute_service_operation(
-        self,
-        instance: FlextService[FlextModelsContainers.ConfigMap],
-        input_data: Mapping[str, object],
-    ) -> r[bool]:
-        """Execute a test operation on service instance.
-
-        This method should be customized based on the actual service API.
-        For now, it provides a generic implementation that can be adapted.
-        """
-        try:
-            _ = instance
-            _ = input_data
-            return r[bool].ok(True)
-        except Exception as e:
-            return r[bool].fail(f"FlextService operation failed: {e}")
-
-    @pytest.fixture
-    def test_service_instance(self) -> FlextService[FlextModelsContainers.ConfigMap]:
-        """Fixture for service test instance."""
-        return fixture_factory.create_test_service_instance()
+    def test_execute_benchmark(self) -> None:
+        service = _SuccessService()
+        iterations = 1000
+        op = tt.op("simple")
+        _ = op()
+        tm.ok(tb.Tests.Result.ok("seed"), eq="seed")
+        start = perf_counter()
+        result = r[str].ok("init")
+        for _ in range(iterations):
+            result = service.execute()
+        elapsed = perf_counter() - start
+        tm.ok(result, eq="done")
+        tm.that(elapsed, is_=float)
+        tm.that(elapsed, gte=0.0)

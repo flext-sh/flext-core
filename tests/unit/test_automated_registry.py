@@ -1,188 +1,86 @@
-"""Automated tests for registry module - handler registration.
-
-Generated automatically for 100% coverage following strict
-type-system-architecture.md rules with real functionality testing.
-"""
+"""Real API tests for flext_core.registry using flext_tests."""
 
 from __future__ import annotations
 
-from collections.abc import Mapping
-from typing import Protocol, runtime_checkable
+from collections.abc import Callable
 
 import pytest
+from hypothesis import given, settings, strategies as st
 
-from flext_core import FlextRegistry, FlextResult, r
-from flext_tests import t
-from tests import m
-from tests.conftest import test_framework
-from tests.test_utils import assertion_helpers, fixture_factory
+from flext_core import FlextRegistry, m, r
+from flext_tests import tb, tm
 
 
-@runtime_checkable
-class _ProcessCapable(Protocol):
-    def process(self, input_data: Mapping[str, object]) -> None: ...
+class _RegistryHandlerCallable:
+    message_type = "tests.registry.handler"
+
+    def __call__(self, _message: m.Command) -> m.ConfigMap:
+        return m.ConfigMap(root={"handled": "yes"})
 
 
-@runtime_checkable
-class _HandleCapable(Protocol):
-    def handle(self, input_data: Mapping[str, object]) -> None: ...
-
-
-@runtime_checkable
-class _CleanupCapable(Protocol):
-    def cleanup(self) -> r[bool] | None: ...
+_registry_handler = _RegistryHandlerCallable()
 
 
 class TestAutomatedFlextRegistry:
-    """Automated tests for FlextRegistry functionality.
+    def test_create_registry_and_execute(self) -> None:
+        registry = FlextRegistry.create()
+        tm.that(registry, is_=FlextRegistry)
+        tm.ok(registry.execute(), eq=True)
 
-    Generated for 100% coverage with:
-    - Real functionality testing (no mocks)
-    - r[T] patterns
-    - Type safety compliance
-    - Zero circular dependencies
-    """
+    def test_register_service_with_metadata(self) -> None:
+        registry = FlextRegistry.create()
+        service = "service_impl"
+        metadata = m.ConfigMap(root={"owner": "tests"})
+        result = registry.register("sample_service", service, metadata=metadata)
+        tm.ok(result, eq=True)
+
+    def test_register_handler(self) -> None:
+        registry = FlextRegistry.create()
+        details = tm.ok(registry.register_handler(_registry_handler))
+        tm.that(details.registration_id, none=False)
 
     @pytest.mark.parametrize(
-        "test_scenario",
-        [
-            m.AutomatedTestScenario(
-                description="basic_functionality",
-                input={},
-                expected_success=True,
-            ),
-            m.AutomatedTestScenario(
-                description="edge_case_handling",
-                input={"edge": True},
-                expected_success=True,
-            ),
-            m.AutomatedTestScenario(
-                description="error_conditions",
-                input={"invalid": True},
-                expected_success=False,
-            ),
-            m.AutomatedTestScenario(
-                description="boundary_conditions",
-                input={"boundary": True},
-                expected_success=True,
-            ),
-            m.AutomatedTestScenario(
-                description="complex_scenarios",
-                input={"complex": True},
-                expected_success=True,
-            ),
-        ],
-        ids=lambda case: case.description,
+        ("category", "name"),
+        tb.Tests.Batch.scenarios(("validators", "email"), ("validators", "phone")),
+        ids=lambda case: f"{case[0]}-{case[1]}",
     )
-    def test_automated_registry_comprehensive_scenarios(
-        self,
-        test_scenario: m.AutomatedTestScenario,
+    def test_register_get_list_unregister_plugin(
+        self, category: str, name: str
     ) -> None:
-        """Comprehensive test scenarios for registry functionality."""
-        try:
-            instance = fixture_factory.create_test_registry_instance()
-            scenario_input: Mapping[str, t.Tests.object] = (
-                test_scenario.input
-                if isinstance(test_scenario.input, dict)
-                else {"value": test_scenario.input}
-            )
-            result = self._execute_registry_operation(instance, scenario_input)
-            if test_scenario.expected_success:
-                _ = assertion_helpers.assert_flext_result_success(
-                    result,
-                    f"FlextRegistry operation failed: {test_scenario.description}",
-                )
-            else:
-                _ = assertion_helpers.assert_flext_result_failure(
-                    result,
-                    f"FlextRegistry operation should fail: {test_scenario.description}",
-                )
-        except Exception as e:
-            if not test_scenario.expected_success:
-                pass
-            else:
-                pytest.fail(f"Unexpected error in registry test: {e}")
+        registry = FlextRegistry.create()
+        plugin = "plugin_impl"
+        tm.ok(registry.register_plugin(category, name, plugin), eq=True)
+        tm.ok(registry.get_plugin(category, name), none=False)
+        listed = tm.ok(registry.list_plugins(category))
+        tm.that(listed, has=name)
+        tm.ok(registry.unregister_plugin(category, name), eq=True)
+        tm.fail(registry.get_plugin(category, name), has="not found")
 
-    def test_automated_registry_type_safety(self) -> None:
-        """Test type safety compliance for registry."""
-        instance = fixture_factory.create_test_registry_instance()
-        result = self._execute_registry_operation(instance, {"type_safe": True})
-        _ = assertion_helpers.assert_flext_result_success(
-            result,
-            "FlextRegistry type safety test",
+    @given(
+        name=st.text(
+            alphabet=st.characters(min_codepoint=97, max_codepoint=122),
+            min_size=1,
+            max_size=20,
         )
+    )
+    @settings(max_examples=40)
+    def test_hypothesis_plugin_roundtrip(self, name: str) -> None:
+        registry = FlextRegistry.create()
+        category = "validators"
+        plugin = "plugin_impl"
+        tm.ok(registry.register_plugin(category, name, plugin), eq=True)
+        tm.ok(registry.get_plugin(category, name), none=False)
 
-    def test_automated_registry_error_handling(self) -> None:
-        """Test comprehensive error handling for registry."""
-        instance = fixture_factory.create_test_registry_instance()
-        error_inputs = [
-            None,
-            dict[str, str](),
-            {"invalid": "data"},
-            {"malformed": True},
-        ]
-        for error_input in error_inputs:
-            result = self._execute_registry_operation(instance, error_input or {})
-            assert result.is_success or result.is_failure, (
-                f"Unexpected result state: {result}"
-            )
+    @pytest.mark.performance
+    def test_registry_plugin_benchmark(self, benchmark: Callable[..., object]) -> None:
+        def register_and_read() -> r[bool]:
+            registry = FlextRegistry.create()
+            plugin = "plugin_impl"
+            _ = registry.register_plugin("bench", "p1", plugin)
+            fetched = registry.get_plugin("bench", "p1")
+            if fetched.is_failure:
+                return r[bool].fail(fetched.error or "failed")
+            return r[bool].ok(value=True)
 
-    def test_automated_registry_performance(self) -> None:
-        """Test performance characteristics of registry."""
-        instance = fixture_factory.create_test_registry_instance()
-
-        def operation() -> FlextResult[bool]:
-            return self._execute_registry_operation(
-                instance,
-                {"performance_test": True},
-            )
-
-        result = test_framework.execute_with_timeout(operation, timeout_seconds=1.0)
-        _ = assertion_helpers.assert_flext_result_success(
-            result,
-            "FlextRegistry performance test exceeded timeout",
-        )
-
-    def test_automated_registry_resource_management(self) -> None:
-        """Test resource management and cleanup for registry."""
-        instance = fixture_factory.create_test_registry_instance()
-        result = self._execute_registry_operation(instance, {"resource_test": True})
-        _ = assertion_helpers.assert_flext_result_success(
-            result,
-            "FlextRegistry resource test",
-        )
-        if isinstance(instance, _CleanupCapable):
-            cleanup_result = instance.cleanup()
-            if cleanup_result:
-                _ = assertion_helpers.assert_flext_result_success(
-                    cleanup_result,
-                    "FlextRegistry cleanup failed",
-                )
-
-    def _execute_registry_operation(
-        self,
-        instance: FlextRegistry,
-        input_data: Mapping[str, object],
-    ) -> r[bool]:
-        """Execute a test operation on registry instance.
-
-        This method should be customized based on the actual registry API.
-        For now, it provides a generic implementation that can be adapted.
-        """
-        try:
-            is_process = isinstance(instance, _ProcessCapable)
-            is_handle = isinstance(instance, _HandleCapable)
-            if is_process:
-                instance.process(input_data)
-            elif is_handle:
-                instance.handle(input_data)
-            else:
-                instance.execute()
-            return r[bool].ok(True)
-        except Exception as e:
-            return r[bool].fail(f"FlextRegistry operation failed: {e}")
-
-    @pytest.fixture
-    def test_registry_instance(self) -> FlextRegistry:
-        """Fixture for registry test instance."""
-        return fixture_factory.create_test_registry_instance()
+        tm.ok(register_and_read(), eq=True)
+        _ = benchmark(register_and_read)

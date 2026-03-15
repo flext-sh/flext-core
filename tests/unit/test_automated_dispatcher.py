@@ -1,161 +1,74 @@
-"""Automated tests for dispatcher module - message dispatching.
-
-Generated automatically for 100% coverage following strict
-type-system-architecture.md rules with real functionality testing.
-"""
-
 from __future__ import annotations
 
-from collections.abc import Mapping
+from time import perf_counter
 
-import pytest
-
-from flext_core import FlextDispatcher, FlextResult, r
-from flext_tests import t
-from tests import m
-from tests.conftest import test_framework
-from tests.test_utils import assertion_helpers, fixture_factory
+from flext_core import FlextDispatcher, FlextHandlers, m, r
+from flext_tests import tb, tm, tt
 
 
 class TestAutomatedFlextDispatcher:
-    """Automated tests for FlextDispatcher functionality.
+    def test_constructor(self) -> None:
+        dispatcher = FlextDispatcher()
+        tm.that(dispatcher.__class__.__name__, eq="FlextDispatcher")
 
-    Generated for 100% coverage with:
-    - Real functionality testing (no mocks)
-    - r[T] patterns
-    - Type safety compliance
-    - Zero circular dependencies
-    """
-
-    @pytest.mark.parametrize(
-        "test_scenario",
-        [
-            m.AutomatedTestScenario(
-                description="basic_functionality",
-                input={},
-                expected_success=True,
-            ),
-            m.AutomatedTestScenario(
-                description="edge_case_handling",
-                input={"edge": True},
-                expected_success=True,
-            ),
-            m.AutomatedTestScenario(
-                description="error_conditions",
-                input={"invalid": True},
-                expected_success=False,
-            ),
-            m.AutomatedTestScenario(
-                description="boundary_conditions",
-                input={"boundary": True},
-                expected_success=True,
-            ),
-            m.AutomatedTestScenario(
-                description="complex_scenarios",
-                input={"complex": True},
-                expected_success=True,
-            ),
-        ],
-        ids=lambda case: case.description,
-    )
-    def test_automated_dispatcher_comprehensive_scenarios(
-        self,
-        test_scenario: m.AutomatedTestScenario,
-    ) -> None:
-        """Comprehensive test scenarios for dispatcher functionality."""
-        try:
-            instance = fixture_factory.create_test_dispatcher_instance()
-            scenario_input: Mapping[str, t.Tests.object] = (
-                test_scenario.input
-                if isinstance(test_scenario.input, dict)
-                else {"value": test_scenario.input}
-            )
-            result = self._execute_dispatcher_operation(
-                instance,
-                scenario_input,
-            )
-            if test_scenario.expected_success:
-                assert result.is_success, f"Expected success but got failure: {result}"
-        except Exception:
-            if test_scenario.expected_success:
-                raise
-
-    def test_automated_dispatcher_type_safety(self) -> None:
-        """Test type safety compliance for dispatcher."""
-        instance = fixture_factory.create_test_dispatcher_instance()
-        result = self._execute_dispatcher_operation(instance, {"type_safe": True})
-        _ = assertion_helpers.assert_flext_result_success(
-            result,
-            "FlextDispatcher type safety test",
+    def test_register_and_dispatch(self) -> None:
+        dispatcher = FlextDispatcher()
+        handler = FlextHandlers.create_from_callable(
+            handler_callable=lambda value: str(value),
+            handler_name="stringer",
         )
+        tm.ok(dispatcher.register_handler(handler), eq=True)
+        command = m.Command(command_type="auto_route", command_id="cmd-1")
+        tm.ok(dispatcher.dispatch(command), eq=str(command))
 
-    def test_automated_dispatcher_error_handling(self) -> None:
-        """Test comprehensive error handling for dispatcher."""
-        instance = fixture_factory.create_test_dispatcher_instance()
-        error_inputs = [
-            None,
-            dict[str, str](),
-            {"invalid": "data"},
-            {"malformed": True},
-        ]
-        for error_input in error_inputs:
-            result = self._execute_dispatcher_operation(instance, error_input or {})
-            assert result.is_success or result.is_failure, (
-                f"Unexpected result state: {result}"
-            )
+    def test_dispatch_unregistered_fails(self) -> None:
+        dispatcher = FlextDispatcher()
+        command = m.Command(command_type="missing", command_id="cmd-2")
+        tm.fail(dispatcher.dispatch(command), has="No handler found")
 
-    def test_automated_dispatcher_performance(self) -> None:
-        """Test performance characteristics of dispatcher."""
-        instance = fixture_factory.create_test_dispatcher_instance()
-
-        def operation() -> FlextResult[bool]:
-            return self._execute_dispatcher_operation(
-                instance,
-                {"performance_test": True},
-            )
-
-        result = test_framework.execute_with_timeout(operation, timeout_seconds=1.0)
-        _ = assertion_helpers.assert_flext_result_success(
-            result,
-            "FlextDispatcher performance test exceeded timeout",
+    def test_dispatch_typed(self) -> None:
+        dispatcher = FlextDispatcher()
+        handler = FlextHandlers.create_from_callable(
+            handler_callable=lambda value: str(value),
+            handler_name="typed",
         )
+        tm.ok(dispatcher.register_handler(handler), eq=True)
+        command = m.Command(command_type="typed_route", command_id="cmd-3")
+        tm.ok(dispatcher.dispatch_typed(command, str), has="typed_route")
 
-    def test_automated_dispatcher_resource_management(self) -> None:
-        """Test resource management and cleanup for dispatcher."""
-        instance = fixture_factory.create_test_dispatcher_instance()
-        result = self._execute_dispatcher_operation(instance, {"resource_test": True})
-        _ = assertion_helpers.assert_flext_result_success(
-            result,
-            "FlextDispatcher resource test",
+    def test_publish_event(self) -> None:
+        dispatcher = FlextDispatcher()
+        event_handler = FlextHandlers.create_from_callable(
+            handler_callable=lambda value: str(value),
+            handler_name="event_handler",
         )
-        instance_obj = instance
-        if hasattr(instance_obj, "cleanup"):
-            cleanup_result = getattr(instance_obj, "cleanup")()
-            if cleanup_result:
-                _ = assertion_helpers.assert_flext_result_success(
-                    cleanup_result,
-                    "FlextDispatcher cleanup failed",
-                )
+        tm.ok(dispatcher.register_handler(event_handler), eq=True)
+        tm.ok(tb.Tests.Result.ok("payload"), eq="payload")
+        event_data = m.Dict.model_validate({"item": "created"})
+        event_metadata = m.Dict.model_validate({})
+        event = m.Event(
+            event_type="item_created",
+            aggregate_id="agg-1",
+            event_id="evt-1",
+            data=event_data,
+            metadata=event_metadata,
+        )
+        tm.ok(dispatcher.publish(event), eq=True)
 
-    def _execute_dispatcher_operation(
-        self,
-        instance: FlextDispatcher,
-        input_data: Mapping[str, object],
-    ) -> r[bool]:
-        """Execute a test operation on dispatcher instance.
-
-        This method should be customized based on the actual dispatcher API.
-        For now, it provides a generic implementation that can be adapted.
-        """
-        try:
-            _ = input_data
-            if hasattr(instance, "__class__"):
-                return r[bool].ok(True)
-            return r[bool].ok(True)
-        except Exception as e:
-            return r[bool].fail(f"FlextDispatcher operation failed: {e}")
-
-    @pytest.fixture
-    def test_dispatcher_instance(self) -> FlextDispatcher:
-        """Fixture for dispatcher test instance."""
-        return fixture_factory.create_test_dispatcher_instance()
+    def test_dispatch_benchmark(self) -> None:
+        dispatcher = FlextDispatcher()
+        handler = FlextHandlers.create_from_callable(
+            handler_callable=lambda value: str(value),
+            handler_name="bench",
+        )
+        tm.ok(dispatcher.register_handler(handler), eq=True)
+        command = m.Command(command_type="bench_route", command_id="cmd-4")
+        op = tt.op("simple")
+        _ = op()
+        start = perf_counter()
+        result = r[str].ok("init")
+        for _ in range(1000):
+            result = dispatcher.dispatch_typed(command, str)
+        elapsed = perf_counter() - start
+        tm.ok(result, has="bench_route")
+        tm.that(elapsed, gte=0.0)

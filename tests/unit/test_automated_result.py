@@ -1,154 +1,147 @@
-"""Automated tests for result module - result patterns.
-
-Generated automatically for 100% coverage following strict
-type-system-architecture.md rules with real functionality testing.
-"""
+"""Tests for result module real API via flext_tests."""
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+import math
+from collections.abc import Callable
 
 import pytest
+from hypothesis import given, settings, strategies as st
 
-from flext_core import FlextResult, r
-from flext_tests import t
-from tests import m
-from tests.conftest import test_framework
-from tests.test_utils import assertion_helpers, fixture_factory
+from flext_core import r
+from flext_tests import tm, tt
+
+type SampleValue = str | int | float | bool | None
 
 
-class TestAutomatedr:
-    """Automated tests for r functionality.
-
-    Generated for 100% coverage with:
-    - Real functionality testing (no mocks)
-    - r[T] patterns
-    - Type safety compliance
-    - Zero circular dependencies
-    """
+class TestAutomatedResult:
+    """Real functionality tests for FlextResult (r[T])."""
 
     @pytest.mark.parametrize(
-        "test_scenario",
+        ("value", "expected"),
         [
-            m.AutomatedTestScenario(
-                description="basic_functionality",
-                input={},
-                expected_success=True,
-            ),
-            m.AutomatedTestScenario(
-                description="edge_case_handling",
-                input={"edge": True},
-                expected_success=True,
-            ),
-            m.AutomatedTestScenario(
-                description="error_conditions",
-                input={"invalid": True},
-                expected_success=False,
-            ),
-            m.AutomatedTestScenario(
-                description="boundary_conditions",
-                input={"boundary": True},
-                expected_success=True,
-            ),
-            m.AutomatedTestScenario(
-                description="complex_scenarios",
-                input={"complex": True},
-                expected_success=True,
-            ),
+            ("hello", "hello"),
+            (42, 42),
+            (math.pi, math.pi),
+            (True, True),
+            (None, None),
         ],
-        ids=lambda case: case.description,
     )
-    def test_automated_result_comprehensive_scenarios(
-        self,
-        test_scenario: m.AutomatedTestScenario,
+    def test_ok_preserves_value(
+        self, value: SampleValue, expected: SampleValue
     ) -> None:
-        """Comprehensive test scenarios for result functionality."""
-        try:
-            instance = fixture_factory.create_test_result_instance()
-            scenario_input: Mapping[str, t.Tests.object] = (
-                test_scenario.input
-                if isinstance(test_scenario.input, dict)
-                else {"value": test_scenario.input}
+        result = r[SampleValue].ok(value)
+        if expected is None:
+            tm.that(result.is_success, eq=True)
+            tm.that(result.value, eq=None)
+            return
+        tm.ok(result, eq=expected)
+
+    def test_fail_with_error_code_and_data(self) -> None:
+        config_model = tt.model("config")
+        tm.that(hasattr(config_model, "model_dump"), eq=True)
+        error_data = {"debug": True, "source": "tests"}
+        result = r[str].fail("bad", error_code="E001", error_data=error_data)
+        tm.fail(result, has="bad", code="E001", data={"debug": True})
+        tm.that(result.is_failure, eq=True)
+
+    def test_map_flat_map_filter_fold_flow_unwrap(self) -> None:
+        mapped = r[int].ok(5).map(lambda x: x * 2)
+        tm.ok(mapped, eq=10)
+        chained = mapped.flat_map(lambda x: r[int].ok(x + 1)).filter(lambda x: x > 10)
+        tm.ok(chained, eq=11)
+        folded = chained.fold(lambda err: f"error:{err}", lambda val: f"ok:{val}")
+        tm.that(folded, eq="ok:11")
+
+        def add_two(x: int) -> r[int]:
+            return r[int].ok(x + 2)
+
+        def mul_three(x: int) -> r[int]:
+            return r[int].ok(x * 3)
+
+        flowed = r[int].ok(2).flow_through(add_two, mul_three)
+        tm.ok(flowed, eq=12)
+        tm.that(r[int].fail("x").unwrap_or(77), eq=77)
+
+    def test_lash_tap_recover_and_properties(self) -> None:
+        seen: list[int] = []
+        recovered = (
+            r[int]
+            .fail("broken")
+            .lash(lambda _: r[int].ok(9))
+            .tap(lambda v: seen.append(v))
+        )
+        tm.ok(recovered, eq=9)
+        tm.that(seen, eq=[9])
+        fallback = r[int].fail("oops").recover(lambda err: len(err))
+        tm.ok(fallback, eq=4)
+        tm.that(recovered.is_success, eq=True)
+        tm.that(recovered.is_failure, eq=False)
+        tm.that(recovered.error, eq=None)
+
+    def test_traverse_and_accumulate_errors(self) -> None:
+        items = [1, 2, 3]
+        traversed = r[int].traverse(items, lambda x: r[int].ok(x * 10))
+        tm.ok(traversed, eq=[10, 20, 30])
+        generated_ok = tt.res("ok", value=1)
+        generated_fail = tt.res("fail", error="boom")
+        tm.that(isinstance(generated_ok, list), eq=False)
+        tm.that(isinstance(generated_fail, list), eq=False)
+        accumulated = r[int].accumulate_errors(r[int].ok(1), r[int].fail("boom"))
+        tm.fail(accumulated, has="boom")
+
+    def test_safe_decorator_wraps_exceptions(self) -> None:
+        @r.safe
+        def parse_int(raw: str) -> int:
+            return int(raw)
+
+        tm.ok(parse_int("12"), eq=12)
+        tm.fail(parse_int("NaN"), has="invalid literal")
+
+    @given(x=st.integers(min_value=-1000, max_value=1000))
+    @settings(max_examples=50)
+    def test_identity_law(self, x: int) -> None:
+        left = r[int].ok(x).map(lambda v: v)
+        right = r[int].ok(x)
+        tm.ok(left, eq=right.value)
+        tm.that(left.is_success, eq=right.is_success)
+
+    @given(x=st.integers(min_value=-1000, max_value=1000))
+    @settings(max_examples=50)
+    def test_composition_law(self, x: int) -> None:
+        def f(v: int) -> int:
+            return v + 3
+
+        def g(v: int) -> int:
+            return v * 2
+
+        left = r[int].ok(x).map(f).map(g)
+        right = r[int].ok(x).map(lambda v: g(f(v)))
+        tm.ok(left, eq=right.value)
+
+    @given(x=st.integers(min_value=-1000, max_value=1000))
+    @settings(max_examples=50)
+    def test_left_unit_law(self, x: int) -> None:
+        def f(v: int) -> r[int]:
+            return r[int].ok(v * 4)
+
+        left = r[int].ok(x).flat_map(f)
+        right = f(x)
+        tm.ok(left, eq=right.value)
+
+    @given(err=st.text(min_size=1, max_size=50))
+    @settings(max_examples=50)
+    def test_error_propagation(self, err: str) -> None:
+        propagated = r[int].fail(err).map(lambda v: v + 1)
+        tm.fail(propagated, has=err)
+        tm.that(propagated.is_failure, eq=True)
+
+    @pytest.mark.performance
+    def test_result_chain_benchmark(self, benchmark: Callable[..., object]) -> None:
+        def chain() -> r[int]:
+            return (
+                r[int].ok(42).map(lambda x: x + 1).flat_map(lambda x: r[int].ok(x * 2))
             )
-            result = self._execute_result_operation(instance, scenario_input)
-            if test_scenario.expected_success:
-                assert result.is_success, f"Expected success but got failure: {result}"
-        except Exception:
-            if test_scenario.expected_success:
-                raise
 
-    def test_automated_result_type_safety(self) -> None:
-        """Test type safety compliance for result."""
-        instance = fixture_factory.create_test_result_instance()
-        result = self._execute_result_operation(instance, {"type_safe": True})
-        _ = assertion_helpers.assert_flext_result_success(
-            result,
-            "r type safety test",
-        )
-
-    def test_automated_result_error_handling(self) -> None:
-        """Test comprehensive error handling for result."""
-        instance = fixture_factory.create_test_result_instance()
-        error_inputs = [
-            None,
-            dict[str, str](),
-            {"invalid": "data"},
-            {"malformed": True},
-        ]
-        for error_input in error_inputs:
-            result = self._execute_result_operation(instance, error_input or {})
-            assert result.is_success or result.is_failure, (
-                f"Unexpected result state: {result}"
-            )
-
-    def test_automated_result_performance(self) -> None:
-        """Test performance characteristics of result."""
-        instance = fixture_factory.create_test_result_instance()
-
-        def operation() -> FlextResult[bool]:
-            return self._execute_result_operation(instance, {"performance_test": True})
-
-        result = test_framework.execute_with_timeout(operation, timeout_seconds=1.0)
-        _ = assertion_helpers.assert_flext_result_success(
-            result,
-            "r performance test exceeded timeout",
-        )
-
-    def test_automated_result_resource_management(self) -> None:
-        """Test resource management and cleanup for result."""
-        instance = fixture_factory.create_test_result_instance()
-        result = self._execute_result_operation(instance, {"resource_test": True})
-        _ = assertion_helpers.assert_flext_result_success(
-            result,
-            "r resource test",
-        )
-        instance_obj = instance
-        if hasattr(instance_obj, "cleanup"):
-            cleanup_result = getattr(instance_obj, "cleanup")()
-            if cleanup_result:
-                _ = assertion_helpers.assert_flext_result_success(
-                    cleanup_result,
-                    "r cleanup failed",
-                )
-
-    def _execute_result_operation(
-        self,
-        instance: type[FlextResult[t.Container]],
-        input_data: Mapping[str, object],
-    ) -> r[bool]:
-        """Execute a test operation on result instance.
-
-        This method should be customized based on the actual result API.
-        For now, it provides a generic implementation that can be adapted.
-        """
-        try:
-            _ = instance
-            _ = input_data
-            return r[bool].ok(True)
-        except Exception as e:
-            return r[bool].fail(f"r operation failed: {e}")
-
-    @pytest.fixture
-    def test_result_instance(self) -> type[FlextResult[t.Container]]:
-        """Fixture for result test instance."""
-        return fixture_factory.create_test_result_instance()
+        _ = benchmark(chain)
+        tm.ok(chain(), eq=86)

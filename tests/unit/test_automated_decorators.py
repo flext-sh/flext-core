@@ -1,203 +1,131 @@
-"""Automated tests for decorators module - decorator patterns.
-
-Generated automatically for 100% coverage following strict
-type-system-architecture.md rules with real functionality testing.
-"""
+"""Real API tests for flext_core.decorators using flext_tests."""
 
 from __future__ import annotations
 
-from collections.abc import Mapping
-from typing import cast
+import time
+from collections.abc import Callable
 
 import pytest
+from hypothesis import given, settings, strategies as st
 
-from flext_core import FlextDecorators, FlextResult, r
-from flext_tests import t
-from tests import m
-from tests.conftest import test_framework
-from tests.test_utils import assertion_helpers, fixture_factory
+from flext_core import FlextDecorators, e
+from flext_tests import tb, tm, tt
 
 
 class TestAutomatedFlextDecorators:
-    """Automated tests for FlextDecorators functionality.
-
-    Generated for 100% coverage with:
-    - Real functionality testing (no mocks)
-    - r[T] patterns
-    - Type safety compliance
-    - Zero circular dependencies
-    """
-
     @pytest.mark.parametrize(
-        "test_scenario",
-        [
-            m.AutomatedTestScenario(
-                description="basic_functionality",
-                input={},
-                expected_success=True,
-            ),
-            m.AutomatedTestScenario(
-                description="edge_case_handling",
-                input={"edge": True},
-                expected_success=True,
-            ),
-            m.AutomatedTestScenario(
-                description="error_conditions",
-                input={"invalid": True},
-                expected_success=False,
-            ),
-            m.AutomatedTestScenario(
-                description="boundary_conditions",
-                input={"boundary": True},
-                expected_success=True,
-            ),
-            m.AutomatedTestScenario(
-                description="complex_scenarios",
-                input={"complex": True},
-                expected_success=True,
-            ),
-        ],
-        ids=lambda case: case.description,
+        ("case", "values"),
+        tb.Tests.Batch.scenarios(("small", (1, 2, 3)), ("larger", (5, 7, 12))),
+        ids=lambda case: case[0],
     )
-    def test_automated_decorators_comprehensive_scenarios(
-        self,
-        test_scenario: m.AutomatedTestScenario,
+    def test_railway_wraps_success(
+        self, case: str, values: tuple[int, int, int]
     ) -> None:
-        """Comprehensive test scenarios for decorators functionality."""
-        try:
-            instance = fixture_factory.create_test_decorators_instance()
-            input_data = (
-                test_scenario.input
-                if isinstance(test_scenario.input, dict)
-                else dict[str, t.Tests.object]()
-            )
-            result = self._execute_decorators_operation(
-                instance,
-                input_data,
-            )
-            if test_scenario.expected_success:
-                _ = assertion_helpers.assert_flext_result_success(
-                    result,
-                    f"FlextDecorators operation failed: {test_scenario.description}",
-                )
+        @FlextDecorators.railway()
+        def add(a: int, b: int) -> int:
+            return a + b
+
+        left, right, expected = values
+        result = add(left, right)
+        tm.ok(result, eq=expected)
+        tm.that(case, none=False)
+
+    def test_railway_wraps_exception(self) -> None:
+        @FlextDecorators.railway(error_code="CALC_ERR")
+        def parse(raw: str) -> int:
+            return int(raw)
+
+        result = parse("nan")
+        tm.fail(result, has="invalid literal", code="CALC_ERR")
+
+    def test_retry_retries_on_failure(self) -> None:
+        call_count = 0
+
+        @FlextDecorators.retry(max_attempts=3, delay_seconds=0.001)
+        def flaky() -> str:
+            nonlocal call_count
+            call_count += 1
+            if call_count < 3:
+                msg = "not yet"
+                raise ValueError(msg)
+            return "ok"
+
+        result = flaky()
+        tm.that(call_count, eq=3)
+        tm.that(result, eq="ok")
+
+    def test_timeout_enforces_deadline(self) -> None:
+        @FlextDecorators.timeout(timeout_seconds=0.001)
+        def slow() -> str:
+            time.sleep(0.01)
+            return "done"
+
+        with pytest.raises(e.TimeoutError):
+            slow()
+
+    def test_deprecated_emits_warning(self) -> None:
+        @FlextDecorators.deprecated("Use new_api")
+        def old_api() -> str:
+            return "legacy"
+
+        with pytest.warns(DeprecationWarning, match="Use new_api"):
+            value = old_api()
+        tm.that(value, eq="legacy")
+
+    def test_log_operation_and_track_operation(self) -> None:
+        @FlextDecorators.log_operation(operation_name="logged_op")
+        def logged() -> str:
+            return "logged"
+
+        @FlextDecorators.track_operation(operation_name="tracked_op")
+        def tracked() -> str:
+            return "tracked"
+
+        tm.that(logged(), eq="logged")
+        tm.that(tracked(), eq="tracked")
+
+    def test_combined_uses_railway(self) -> None:
+        @FlextDecorators.combined(operation_name="combined", use_railway=True)
+        def multiply(a: int, b: int) -> int:
+            return a * b
+
+        result = multiply(3, 4)
+        tm.ok(result, eq=12)
+
+    @given(a=st.integers(), b=st.integers(min_value=1, max_value=1000))
+    @settings(max_examples=50)
+    def test_hypothesis_railway_division_always_returns_result(
+        self, a: int, b: int
+    ) -> None:
+        @FlextDecorators.railway(error_code="DIV")
+        def divide(x: int, y: int) -> float:
+            return x / y
+
+        result = divide(a, b)
+        tm.ok(result)
+
+    @pytest.mark.performance
+    @pytest.mark.parametrize(
+        "mode",
+        tb.Tests.Batch.scenarios(("raw", "raw"), ("railway", "railway")),
+        ids=lambda case: case[0],
+    )
+    def test_railway_benchmark_overhead(
+        self, mode: str, benchmark: Callable[..., object]
+    ) -> None:
+        raw_add = tt.op("add")
+
+        @FlextDecorators.railway()
+        def wrapped_add(a: int, b: int) -> int:
+            return a + b
+
+        if mode == "raw":
+            raw_value = raw_add(21, 21)
+            if isinstance(raw_value, int):
+                tm.that(raw_value, eq=42)
             else:
-                _ = assertion_helpers.assert_flext_result_failure(
-                    result,
-                    f"FlextDecorators operation should fail: {test_scenario.description}",
-                )
-        except Exception as e:
-            if not test_scenario.expected_success:
-                pass
-            else:
-                pytest.fail(f"Unexpected error in decorators test: {e}")
-
-    def test_automated_decorators_type_safety(self) -> None:
-        """Test type safety compliance for decorators."""
-        instance = fixture_factory.create_test_decorators_instance()
-        result = self._execute_decorators_operation(instance, {"type_safe": True})
-        _ = assertion_helpers.assert_flext_result_success(
-            result,
-            "FlextDecorators type safety test",
-        )
-
-    def test_automated_decorators_error_handling(self) -> None:
-        """Test comprehensive error handling for decorators."""
-        instance = fixture_factory.create_test_decorators_instance()
-        error_inputs = [
-            None,
-            dict[str, str](),
-            {"invalid": "data"},
-            {"malformed": True},
-        ]
-        for error_input in error_inputs:
-            result = self._execute_decorators_operation(instance, error_input or {})
-            assert result.is_success or result.is_failure, (
-                f"Unexpected result state: {result}"
-            )
-
-    def test_automated_decorators_performance(self) -> None:
-        """Test performance characteristics of decorators."""
-        instance = fixture_factory.create_test_decorators_instance()
-
-        def operation() -> FlextResult[t.Container]:
-            return self._execute_decorators_operation(
-                instance,
-                {"performance_test": True},
-            )
-
-        result = test_framework.execute_with_timeout(operation, timeout_seconds=1.0)
-        _ = assertion_helpers.assert_flext_result_success(
-            result,
-            "FlextDecorators performance test exceeded timeout",
-        )
-
-    def test_automated_decorators_resource_management(self) -> None:
-        """Test resource management and cleanup for decorators."""
-        instance = fixture_factory.create_test_decorators_instance()
-        result = self._execute_decorators_operation(instance, {"resource_test": True})
-        _ = assertion_helpers.assert_flext_result_success(
-            result,
-            "FlextDecorators resource test",
-        )
-        cleanup = getattr(instance, "cleanup", None)
-        if callable(cleanup):
-            cleanup_result = cleanup()
-            if isinstance(cleanup_result, r):
-                typed_cleanup = cast("r[t.Tests.object]", cleanup_result)
-                _ = assertion_helpers.assert_flext_result_success(
-                    typed_cleanup,
-                    "FlextDecorators cleanup failed",
-                )
-
-    def _execute_decorators_operation(
-        self,
-        instance: type[FlextDecorators],
-        input_data: Mapping[str, object],
-    ) -> r[t.Container]:
-        """Execute a test operation on decorators instance.
-
-        This method should be customized based on the actual decorators API.
-        For now, it provides a generic implementation that can be adapted.
-        """
-        try:
-            process = getattr(instance, "process", None)
-            if callable(process):
-                result = process(dict(input_data))
-                if isinstance(result, r):
-                    typed_result = cast("r[t.Tests.object]", result)
-                    if typed_result.is_success:
-                        return r[t.Container].ok(str(typed_result.value))
-                    return r[t.Container].fail(
-                        typed_result.error or "FlextDecorators process failed"
-                    )
-                return r[t.Container].ok(str(result))
-            execute = getattr(instance, "execute", None)
-            if callable(execute):
-                result = execute(dict(input_data))
-                if isinstance(result, r):
-                    typed_result = cast("r[t.Tests.object]", result)
-                    if typed_result.is_success:
-                        return r[t.Container].ok(str(typed_result.value))
-                    return r[t.Container].fail(
-                        typed_result.error or "FlextDecorators execute failed"
-                    )
-                return r[t.Container].ok(str(result))
-            handle = getattr(instance, "handle", None)
-            if callable(handle):
-                result = handle(dict(input_data))
-                if isinstance(result, r):
-                    typed_result = cast("r[t.Tests.object]", result)
-                    if typed_result.is_success:
-                        return r[t.Container].ok(str(typed_result.value))
-                    return r[t.Container].fail(
-                        typed_result.error or "FlextDecorators handle failed"
-                    )
-                return r[t.Container].ok(str(result))
-            return r[t.Container].ok(str(instance))
-        except Exception as e:
-            return r[t.Container].fail(f"FlextDecorators operation failed: {e}")
-
-    @pytest.fixture
-    def test_decorators_instance(self) -> type[FlextDecorators]:
-        """Fixture for decorators test instance."""
-        return fixture_factory.create_test_decorators_instance()
+                tm.that(False, eq=True)
+            _ = benchmark(lambda: raw_add(21, 21))
+            return
+        tm.ok(wrapped_add(21, 21), eq=42)
+        _ = benchmark(lambda: wrapped_add(21, 21))

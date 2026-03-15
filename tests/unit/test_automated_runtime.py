@@ -1,164 +1,95 @@
-"""Automated tests for runtime module - runtime services.
-
-Generated automatically for 100% coverage following strict
-type-system-architecture.md rules with real functionality testing.
-"""
+"""Real API tests for FlextRuntime."""
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from pathlib import Path
+from time import perf_counter
 
 import pytest
+from hypothesis import given, strategies as st
+from pydantic import BaseModel
 
-from flext_core import FlextResult, FlextRuntime, r
-from flext_tests import t
-from tests import m
-from tests.conftest import test_framework
-from tests.test_utils import assertion_helpers, fixture_factory
+from flext_core import FlextRuntime
+from flext_tests import tb, tm, tt
 
 
 class TestAutomatedFlextRuntime:
-    """Automated tests for FlextRuntime functionality.
+    def test_is_base_model_and_collections(self) -> None:
+        model = tb.Tests.Model.user()
+        tm.that(FlextRuntime.is_base_model(model), eq=True)
+        tm.that(FlextRuntime.is_base_model("value"), eq=False)
 
-    Generated for 100% coverage with:
-    - Real functionality testing (no mocks)
-    - r[T] patterns
-    - Type safety compliance
-    - Zero circular dependencies
-    """
+        dict_like = {"alpha": 1}
+        list_like = [1, 2, 3]
+        tm.that(FlextRuntime.is_dict_like(dict_like), eq=True)
+        tm.that(FlextRuntime.is_dict_like(list_like), eq=False)
+        tm.that(FlextRuntime.is_list_like(list_like), eq=True)
+        tm.that(FlextRuntime.is_list_like("abc"), eq=False)
 
     @pytest.mark.parametrize(
-        "test_scenario",
-        [
-            m.AutomatedTestScenario(
-                description="basic_functionality",
-                input={},
-                expected_success=True,
-            ),
-            m.AutomatedTestScenario(
-                description="edge_case_handling",
-                input={"edge": True},
-                expected_success=True,
-            ),
-            m.AutomatedTestScenario(
-                description="error_conditions",
-                input={"invalid": True},
-                expected_success=False,
-            ),
-            m.AutomatedTestScenario(
-                description="boundary_conditions",
-                input={"boundary": True},
-                expected_success=True,
-            ),
-            m.AutomatedTestScenario(
-                description="complex_scenarios",
-                input={"complex": True},
-                expected_success=True,
-            ),
-        ],
-        ids=lambda case: case.description,
+        ("value", "expected"),
+        [("valid_name", True), ("invalid-name", False)],
     )
-    def test_automated_runtime_comprehensive_scenarios(
-        self,
-        test_scenario: m.AutomatedTestScenario,
+    def test_is_valid_identifier(self, value: str, expected: bool) -> None:
+        tm.that(FlextRuntime.is_valid_identifier(value), eq=expected)
+
+    @pytest.mark.parametrize(
+        ("value", "expected"),
+        [('{"key":"value"}', True), ("not-json", False)],
+    )
+    def test_is_valid_json(self, value: str, expected: bool) -> None:
+        tm.that(FlextRuntime.is_valid_json(value), eq=expected)
+
+    def test_normalize_container_and_metadata(self) -> None:
+        payload = {"path": Path("/tmp/test"), "num": 7}
+        normalized_container = FlextRuntime.normalize_to_container(payload)
+        normalized_metadata = FlextRuntime.normalize_to_metadata(payload)
+        tm.that(FlextRuntime.is_base_model(normalized_container), eq=True)
+        tm.that(FlextRuntime.is_dict_like(normalized_metadata), eq=True)
+
+    def test_safe_get_attribute_and_structlog_state(self) -> None:
+        class RuntimeProbe(BaseModel):
+            marker: str = "ok"
+
+        probe = RuntimeProbe()
+        tm.that(FlextRuntime.safe_get_attribute(probe, "marker"), eq="ok")
+        tm.that(
+            FlextRuntime.safe_get_attribute(probe, "missing", default="fallback"),
+            eq="fallback",
+        )
+
+        FlextRuntime.reset_structlog_state_for_testing()
+        tm.that(FlextRuntime.is_structlog_configured(), eq=False)
+        FlextRuntime.ensure_structlog_configured()
+        tm.that(FlextRuntime.is_structlog_configured(), eq=True)
+
+    @given(st.text())
+    def test_hypothesis_identifier_guard_returns_bool(self, value: str) -> None:
+        result = FlextRuntime.is_valid_identifier(value)
+        tm.that(result, is_=bool)
+
+    @given(
+        st.one_of(
+            st.integers(),
+            st.text(),
+            st.floats(allow_nan=False, allow_infinity=False),
+            st.booleans(),
+        )
+    )
+    def test_hypothesis_type_guards_return_bool(
+        self, value: float | str | bool
     ) -> None:
-        """Comprehensive test scenarios for runtime functionality."""
-        try:
-            instance = fixture_factory.create_test_runtime_instance()
-            scenario_input: Mapping[str, t.Tests.object] = (
-                test_scenario.input
-                if isinstance(test_scenario.input, dict)
-                else {"value": test_scenario.input}
-            )
-            result = self._execute_runtime_operation(instance, scenario_input)
-            if test_scenario.expected_success:
-                _ = assertion_helpers.assert_flext_result_success(
-                    result,
-                    f"FlextRuntime operation failed: {test_scenario.description}",
-                )
-            else:
-                _ = assertion_helpers.assert_flext_result_failure(
-                    result,
-                    f"FlextRuntime operation should fail: {test_scenario.description}",
-                )
-        except Exception as e:
-            if not test_scenario.expected_success:
-                pass
-            else:
-                pytest.fail(f"Unexpected error in runtime test: {e}")
+        tm.that(FlextRuntime.is_dict_like(value), is_=bool)
+        tm.that(FlextRuntime.is_list_like(value), is_=bool)
+        tm.that(FlextRuntime.is_valid_json(value), is_=bool)
 
-    def test_automated_runtime_type_safety(self) -> None:
-        """Test type safety compliance for runtime."""
-        instance = fixture_factory.create_test_runtime_instance()
-        result = self._execute_runtime_operation(instance, {"type_safe": True})
-        _ = assertion_helpers.assert_flext_result_success(
-            result,
-            "FlextRuntime type safety test",
-        )
-
-    def test_automated_runtime_error_handling(self) -> None:
-        """Test comprehensive error handling for runtime."""
-        instance = fixture_factory.create_test_runtime_instance()
-        error_inputs = [
-            None,
-            dict[str, str](),
-            {"invalid": "data"},
-            {"malformed": True},
-        ]
-        for error_input in error_inputs:
-            result = self._execute_runtime_operation(instance, error_input or {})
-            assert result.is_success or result.is_failure, (
-                f"Unexpected result state: {result}"
-            )
-
-    def test_automated_runtime_performance(self) -> None:
-        """Test performance characteristics of runtime."""
-        instance = fixture_factory.create_test_runtime_instance()
-
-        def operation() -> FlextResult[bool]:
-            return self._execute_runtime_operation(instance, {"performance_test": True})
-
-        result = test_framework.execute_with_timeout(operation, timeout_seconds=1.0)
-        _ = assertion_helpers.assert_flext_result_success(
-            result,
-            "FlextRuntime performance test exceeded timeout",
-        )
-
-    def test_automated_runtime_resource_management(self) -> None:
-        """Test resource management and cleanup for runtime."""
-        instance = fixture_factory.create_test_runtime_instance()
-        result = self._execute_runtime_operation(instance, {"resource_test": True})
-        _ = assertion_helpers.assert_flext_result_success(
-            result,
-            "FlextRuntime resource test",
-        )
-        instance_obj = instance
-        if hasattr(instance_obj, "cleanup"):
-            cleanup_result = getattr(instance_obj, "cleanup")()
-            if cleanup_result:
-                _ = assertion_helpers.assert_flext_result_success(
-                    cleanup_result,
-                    "FlextRuntime cleanup failed",
-                )
-
-    def _execute_runtime_operation(
-        self,
-        instance: type[FlextRuntime],
-        input_data: Mapping[str, object],
-    ) -> r[bool]:
-        """Execute a test operation on runtime instance.
-
-        This method should be customized based on the actual runtime API.
-        For now, it provides a generic implementation that can be adapted.
-        """
-        try:
-            _ = instance
-            _ = input_data
-            return r[bool].ok(True)
-        except Exception as e:
-            return r[bool].fail(f"FlextRuntime operation failed: {e}")
-
-    @pytest.fixture
-    def test_runtime_instance(self) -> type[FlextRuntime]:
-        """Fixture for runtime test instance."""
-        return fixture_factory.create_test_runtime_instance()
+    def test_benchmark_type_guards(self) -> None:
+        models = tt.batch("user", count=8)
+        dict_like = {"alpha": 1, "beta": 2}
+        start = perf_counter()
+        for _ in range(800):
+            for model in models:
+                _ = FlextRuntime.is_base_model(model)
+                _ = FlextRuntime.is_dict_like(dict_like)
+        elapsed = perf_counter() - start
+        tm.that(elapsed, gt=0.0)

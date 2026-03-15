@@ -1,197 +1,110 @@
-"""Automated tests for mixins module - reusable mixins.
-
-Generated automatically for 100% coverage following strict
-type-system-architecture.md rules with real functionality testing.
-"""
+"""Real API tests for flext_core.mixins through FlextService."""
 
 from __future__ import annotations
 
-from collections.abc import Mapping
-from typing import cast
+from collections.abc import Callable
+from typing import override
 
 import pytest
+from hypothesis import given, settings, strategies as st
 
-from flext_core import FlextMixins, FlextResult, r
-from flext_tests import t
-from tests import m
-from tests.conftest import test_framework
-from tests.test_utils import assertion_helpers, fixture_factory
+from flext_core import FlextMixins, r, s
+from flext_tests import tb, tm, tt
+
+
+class _MixinTestService(s[str]):
+    __test__ = False
+
+    @override
+    def execute(self) -> r[str]:
+        return r[str].ok("mixin_test")
 
 
 class TestAutomatedFlextMixins:
-    """Automated tests for FlextMixins functionality.
-
-    Generated for 100% coverage with:
-    - Real functionality testing (no mocks)
-    - r[T] patterns
-    - Type safety compliance
-    - Zero circular dependencies
-    """
+    def test_service_exposes_mixins_properties(self) -> None:
+        svc = _MixinTestService()
+        tm.ok(svc.execute(), eq="mixin_test")
+        tm.that(svc.config.version, none=False)
+        tm.that(callable(svc.container.register), eq=True)
+        tm.that(str(svc.context), none=False)
+        tm.that(callable(svc.logger.info), eq=True)
 
     @pytest.mark.parametrize(
-        "test_scenario",
-        [
-            m.AutomatedTestScenario(
-                description="basic_functionality",
-                input={},
-                expected_success=True,
-            ),
-            m.AutomatedTestScenario(
-                description="edge_case_handling",
-                input={"edge": True},
-                expected_success=True,
-            ),
-            m.AutomatedTestScenario(
-                description="error_conditions",
-                input={"invalid": True},
-                expected_success=False,
-            ),
-            m.AutomatedTestScenario(
-                description="boundary_conditions",
-                input={"boundary": True},
-                expected_success=True,
-            ),
-            m.AutomatedTestScenario(
-                description="complex_scenarios",
-                input={"complex": True},
-                expected_success=True,
-            ),
-        ],
-        ids=lambda case: case.description,
+        "operation_name",
+        tb.Tests.Batch.scenarios(("track_a", "track_a"), ("track_b", "track_b")),
+        ids=lambda case: case[0],
     )
-    def test_automated_mixins_comprehensive_scenarios(
-        self,
-        test_scenario: m.AutomatedTestScenario,
-    ) -> None:
-        """Comprehensive test scenarios for mixins functionality."""
-        try:
-            instance = fixture_factory.create_test_mixins_instance()
-            input_data = (
-                test_scenario.input
-                if isinstance(test_scenario.input, dict)
-                else dict[str, t.Tests.object]()
-            )
-            result = self._execute_mixins_operation(instance, input_data)
-            if test_scenario.expected_success:
-                _ = assertion_helpers.assert_flext_result_success(
-                    result,
-                    f"FlextMixins operation failed: {test_scenario.description}",
-                )
+    def test_track_context_manager(self, operation_name: str) -> None:
+        svc = _MixinTestService()
+        with svc.track(operation_name) as metrics:
+            tm.that(metrics, is_=dict)
+            tm.that(metrics, has="operation_count")
+
+    def test_cqrs_metrics_tracker(self) -> None:
+        tracker = FlextMixins.CQRS.MetricsTracker()
+        tm.ok(tracker.record_metric("latency_ms", 15), eq=True)
+        metrics = tm.ok(tracker.get_metrics())
+        tm.that(metrics.root, kv=("latency_ms", 15))
+
+    def test_cqrs_context_stack_push_pop(self) -> None:
+        stack = FlextMixins.CQRS.ContextStack()
+        tm.ok(
+            stack.push_context({"handler_name": "h1", "handler_mode": "command"}),
+            eq=True,
+        )
+        popped = tm.ok(stack.pop_context())
+        tm.that(popped, kv=("handler_name", "h1"))
+
+    def test_validate_with_result(self) -> None:
+        def not_empty(value: str) -> r[bool]:
+            if value.strip() == "":
+                return r[bool].fail("empty")
+            return r[bool].ok(value=True)
+
+        result = FlextMixins.Validation.validate_with_result("valid", [not_empty])
+        tm.ok(result, eq="valid")
+        tm.fail(
+            FlextMixins.Validation.validate_with_result("", [not_empty]), has="empty"
+        )
+
+    @given(
+        data=st.text(
+            alphabet=st.characters(min_codepoint=97, max_codepoint=122),
+            min_size=1,
+            max_size=30,
+        )
+    )
+    @settings(max_examples=40)
+    def test_hypothesis_validation_roundtrip(self, data: str) -> None:
+        def has_text(value: str) -> r[bool]:
+            if value.strip() == "":
+                return r[bool].fail("blank")
+            return r[bool].ok(value=True)
+
+        tm.ok(FlextMixins.Validation.validate_with_result(data, [has_text]), eq=data)
+
+    @pytest.mark.performance
+    @pytest.mark.parametrize(
+        "mode",
+        tb.Tests.Batch.scenarios(("raw", "raw"), ("track", "track")),
+        ids=lambda case: case[0],
+    )
+    def test_track_benchmark(self, mode: str, benchmark: Callable[..., object]) -> None:
+        svc = _MixinTestService()
+        simple = tt.op("simple")
+
+        if mode == "raw":
+            raw_value = simple()
+            if isinstance(raw_value, str):
+                tm.that(raw_value, eq="success")
             else:
-                _ = assertion_helpers.assert_flext_result_failure(
-                    result,
-                    f"FlextMixins operation should fail: {test_scenario.description}",
-                )
-        except Exception as e:
-            if not test_scenario.expected_success:
-                pass
-            else:
-                pytest.fail(f"Unexpected error in mixins test: {e}")
+                tm.that(False, eq=True)
+            _ = benchmark(simple)
+            return
 
-    def test_automated_mixins_type_safety(self) -> None:
-        """Test type safety compliance for mixins."""
-        instance = fixture_factory.create_test_mixins_instance()
-        result = self._execute_mixins_operation(instance, {"type_safe": True})
-        _ = assertion_helpers.assert_flext_result_success(
-            result,
-            "FlextMixins type safety test",
-        )
+        def tracked_call() -> str:
+            with svc.track("bench"):
+                return "success"
 
-    def test_automated_mixins_error_handling(self) -> None:
-        """Test comprehensive error handling for mixins."""
-        instance = fixture_factory.create_test_mixins_instance()
-        error_inputs = [
-            None,
-            dict[str, str](),
-            {"invalid": "data"},
-            {"malformed": True},
-        ]
-        for error_input in error_inputs:
-            result = self._execute_mixins_operation(instance, error_input or {})
-            assert result.is_success or result.is_failure, (
-                f"Unexpected result state: {result}"
-            )
-
-    def test_automated_mixins_performance(self) -> None:
-        """Test performance characteristics of mixins."""
-        instance = fixture_factory.create_test_mixins_instance()
-
-        def operation() -> FlextResult[t.Container]:
-            return self._execute_mixins_operation(instance, {"performance_test": True})
-
-        result = test_framework.execute_with_timeout(operation, timeout_seconds=1.0)
-        _ = assertion_helpers.assert_flext_result_success(
-            result,
-            "FlextMixins performance test exceeded timeout",
-        )
-
-    def test_automated_mixins_resource_management(self) -> None:
-        """Test resource management and cleanup for mixins."""
-        instance = fixture_factory.create_test_mixins_instance()
-        result = self._execute_mixins_operation(instance, {"resource_test": True})
-        _ = assertion_helpers.assert_flext_result_success(
-            result,
-            "FlextMixins resource test",
-        )
-        cleanup = getattr(instance, "cleanup", None)
-        if callable(cleanup):
-            cleanup_result = cleanup()
-            if isinstance(cleanup_result, r):
-                typed_cleanup = cast("r[t.Tests.object]", cleanup_result)
-                _ = assertion_helpers.assert_flext_result_success(
-                    typed_cleanup,
-                    "FlextMixins cleanup failed",
-                )
-
-    def _execute_mixins_operation(
-        self,
-        instance: type[FlextMixins],
-        input_data: Mapping[str, object],
-    ) -> r[t.Container]:
-        """Execute a test operation on mixins instance.
-
-        This method should be customized based on the actual mixins API.
-        For now, it provides a generic implementation that can be adapted.
-        """
-        try:
-            process = getattr(instance, "process", None)
-            if callable(process):
-                result = process(dict(input_data))
-                if isinstance(result, r):
-                    typed_result = cast("r[t.Tests.object]", result)
-                    if typed_result.is_success:
-                        return r[t.Container].ok(str(typed_result.value))
-                    return r[t.Container].fail(
-                        typed_result.error or "FlextMixins process failed"
-                    )
-                return r[t.Container].ok(str(result))
-            execute = getattr(instance, "execute", None)
-            if callable(execute):
-                result = execute(dict(input_data))
-                if isinstance(result, r):
-                    typed_result = cast("r[t.Tests.object]", result)
-                    if typed_result.is_success:
-                        return r[t.Container].ok(str(typed_result.value))
-                    return r[t.Container].fail(
-                        typed_result.error or "FlextMixins execute failed"
-                    )
-                return r[t.Container].ok(str(result))
-            handle = getattr(instance, "handle", None)
-            if callable(handle):
-                result = handle(dict(input_data))
-                if isinstance(result, r):
-                    typed_result = cast("r[t.Tests.object]", result)
-                    if typed_result.is_success:
-                        return r[t.Container].ok(str(typed_result.value))
-                    return r[t.Container].fail(
-                        typed_result.error or "FlextMixins handle failed"
-                    )
-                return r[t.Container].ok(str(result))
-            return r[t.Container].ok(str(instance))
-        except Exception as e:
-            return r[t.Container].fail(f"FlextMixins operation failed: {e}")
-
-    @pytest.fixture
-    def test_mixins_instance(self) -> type[FlextMixins]:
-        """Fixture for mixins test instance."""
-        return fixture_factory.create_test_mixins_instance()
+        tm.that(tracked_call(), eq="success")
+        _ = benchmark(tracked_call)

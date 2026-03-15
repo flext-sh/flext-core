@@ -1,193 +1,170 @@
-"""Automated tests for exceptions module - error handling.
-
-Generated automatically for 100% coverage following strict
-type-system-architecture.md rules with real functionality testing.
-"""
+"""Tests for exceptions module real API via flext_tests."""
 
 from __future__ import annotations
 
-from collections.abc import Mapping
-from typing import cast
+from collections.abc import Callable
 
 import pytest
+from hypothesis import given, settings, strategies as st
 
-from flext_core import FlextExceptions, FlextResult, r
-from flext_tests import t
-from tests import m
-from tests.conftest import test_framework
-from tests.test_utils import assertion_helpers, fixture_factory
+from flext_core import FlextExceptions
+from flext_tests import tm, tt
+
+EXCEPTION_CLASSES: tuple[type[FlextExceptions.BaseError], ...] = (
+    FlextExceptions.BaseError,
+    FlextExceptions.ValidationError,
+    FlextExceptions.ConfigurationError,
+    FlextExceptions.ConnectionError,
+    FlextExceptions.TimeoutError,
+    FlextExceptions.AuthenticationError,
+    FlextExceptions.AuthorizationError,
+    FlextExceptions.NotFoundError,
+    FlextExceptions.ConflictError,
+    FlextExceptions.RateLimitError,
+    FlextExceptions.CircuitBreakerError,
+    FlextExceptions.TypeError,
+    FlextExceptions.OperationError,
+)
 
 
-class TestAutomatedFlextExceptions:
-    """Automated tests for FlextExceptions functionality.
+class TestAutomatedExceptions:
+    """Real functionality tests for FlextExceptions."""
 
-    Generated for 100% coverage with:
-    - Real functionality testing (no mocks)
-    - r[T] patterns
-    - Type safety compliance
-    - Zero circular dependencies
-    """
+    def test_base_error_init_to_dict_and_string(self) -> None:
+        cfg = tt.model("config")
+        tm.that(hasattr(cfg, "model_dump"), eq=True)
+        ctx = {"source": "test", "debug": True}
+        err = FlextExceptions.BaseError(
+            "boom",
+            error_code="E-BASE",
+            context=ctx,
+            correlation_id="corr-001",
+            auto_log=True,
+        )
+        payload = err.to_dict()
+        tm.that(payload, keys=["message", "error_code", "correlation_id", "timestamp"])
+        tm.that(payload["message"], eq="boom")
+        tm.that(payload["error_code"], eq="E-BASE")
+        tm.that(payload["correlation_id"], eq="corr-001")
+        tm.that(str(err), has="[E-BASE] boom")
+        tm.that(err.auto_log, eq=True)
+
+    @pytest.mark.parametrize("exc_cls", EXCEPTION_CLASSES)
+    def test_exception_hierarchy(self, exc_cls: type[Exception]) -> None:
+        tm.that(issubclass(exc_cls, FlextExceptions.BaseError), eq=True)
+        instance = exc_cls("x")
+        tm.that(str(instance), has="x")
 
     @pytest.mark.parametrize(
-        "test_scenario",
+        ("factory", "expected_field", "expected_value"),
         [
-            m.AutomatedTestScenario(
-                description="basic_functionality",
-                input={},
-                expected_success=True,
+            (
+                lambda: FlextExceptions.ValidationError("bad", field="email"),
+                "field",
+                "email",
             ),
-            m.AutomatedTestScenario(
-                description="edge_case_handling",
-                input={"edge": True},
-                expected_success=True,
+            (
+                lambda: FlextExceptions.ConfigurationError("bad", config_key="db_url"),
+                "config_key",
+                "db_url",
             ),
-            m.AutomatedTestScenario(
-                description="error_conditions",
-                input={"invalid": True},
-                expected_success=False,
+            (
+                lambda: FlextExceptions.TimeoutError("late", operation="dispatch"),
+                "operation",
+                "dispatch",
             ),
-            m.AutomatedTestScenario(
-                description="boundary_conditions",
-                input={"boundary": True},
-                expected_success=True,
-            ),
-            m.AutomatedTestScenario(
-                description="complex_scenarios",
-                input={"complex": True},
-                expected_success=True,
+            (
+                lambda: FlextExceptions.NotFoundError("missing", resource_id="42"),
+                "resource_id",
+                "42",
             ),
         ],
-        ids=lambda case: case.description,
     )
-    def test_automated_exceptions_comprehensive_scenarios(
+    def test_specialized_exception_fields(
         self,
-        test_scenario: m.AutomatedTestScenario,
+        factory: Callable[[], FlextExceptions.BaseError],
+        expected_field: str,
+        expected_value: str,
     ) -> None:
-        """Comprehensive test scenarios for exceptions functionality."""
-        try:
-            instance = fixture_factory.create_test_exceptions_instance()
-            input_data = (
-                test_scenario.input
-                if isinstance(test_scenario.input, dict)
-                else dict[str, t.Tests.object]()
-            )
-            result = self._execute_exceptions_operation(
-                instance,
-                input_data,
-            )
-            if test_scenario.expected_success:
-                assert result.is_success, f"Expected success but got failure: {result}"
-        except Exception:
-            if test_scenario.expected_success:
-                raise
+        err = factory()
+        payload = err.to_dict()
+        tm.that(payload[expected_field], eq=expected_value)
+        tm.that(payload["message"], is_=str, len=(1, 200))
 
-    def test_automated_exceptions_type_safety(self) -> None:
-        """Test type safety compliance for exceptions."""
-        instance = fixture_factory.create_test_exceptions_instance()
-        result = self._execute_exceptions_operation(instance, {"type_safe": True})
-        _ = assertion_helpers.assert_flext_result_success(
-            result,
-            "FlextExceptions type safety test",
+    def test_correlation_id_propagation(self) -> None:
+        target = FlextExceptions.OperationError(
+            "failed op",
+            operation="sync",
+            correlation_id="cid-123",
         )
+        tm.that(target.correlation_id, eq="cid-123")
+        tm.that(target.to_dict()["correlation_id"], eq="cid-123")
 
-    def test_automated_exceptions_error_handling(self) -> None:
-        """Test comprehensive error handling for exceptions."""
-        instance = fixture_factory.create_test_exceptions_instance()
-        error_inputs = [
-            None,
-            dict[str, str](),
-            {"invalid": "data"},
-            {"malformed": True},
-        ]
-        for error_input in error_inputs:
-            result = self._execute_exceptions_operation(instance, error_input or {})
-            assert result.is_success or result.is_failure, (
-                f"Unexpected result state: {result}"
-            )
+    def test_auto_correlation_generation(self) -> None:
+        err = FlextExceptions.BaseError("auto", auto_correlation=True)
+        tm.that(err.correlation_id, is_=str)
+        tm.that(err.correlation_id, starts="exc_")
 
-    def test_automated_exceptions_performance(self) -> None:
-        """Test performance characteristics of exceptions."""
-        instance = fixture_factory.create_test_exceptions_instance()
+    def test_auto_log_flag_is_respected(self) -> None:
+        err = FlextExceptions.BaseError("flag", auto_log=False)
+        tm.that(err.auto_log, eq=False)
 
-        def operation() -> FlextResult[t.Container]:
-            return self._execute_exceptions_operation(
-                instance,
-                {"performance_test": True},
-            )
+    @given(message=st.text(min_size=1, max_size=100))
+    @settings(max_examples=50)
+    def test_base_error_to_dict_always_contains_message(self, message: str) -> None:
+        payload = FlextExceptions.BaseError(message).to_dict()
+        tm.that(payload, keys=["message"])
+        tm.that(payload["message"], eq=message)
 
-        result = test_framework.execute_with_timeout(operation, timeout_seconds=1.0)
-        _ = assertion_helpers.assert_flext_result_success(
-            result,
-            "FlextExceptions performance test exceeded timeout",
-        )
-
-    def test_automated_exceptions_resource_management(self) -> None:
-        """Test resource management and cleanup for exceptions."""
-        instance = fixture_factory.create_test_exceptions_instance()
-        result = self._execute_exceptions_operation(instance, {"resource_test": True})
-        _ = assertion_helpers.assert_flext_result_success(
-            result,
-            "FlextExceptions resource test",
-        )
-        cleanup = getattr(instance, "cleanup", None)
-        if callable(cleanup):
-            cleanup_result = cleanup()
-            if isinstance(cleanup_result, r):
-                typed_cleanup = cast("r[t.Tests.object]", cleanup_result)
-                _ = assertion_helpers.assert_flext_result_success(
-                    typed_cleanup,
-                    "FlextExceptions cleanup failed",
-                )
-
-    def _execute_exceptions_operation(
+    @given(
+        message=st.text(min_size=1, max_size=80),
+        cid=st.text(min_size=1, max_size=24),
+    )
+    @settings(max_examples=50)
+    def test_all_exception_types_with_arbitrary_inputs(
         self,
-        instance: type[FlextExceptions],
-        input_data: Mapping[str, object],
-    ) -> r[t.Container]:
-        """Execute a test operation on exceptions instance.
+        message: str,
+        cid: str,
+    ) -> None:
+        errors = [
+            FlextExceptions.BaseError(message, correlation_id=cid),
+            FlextExceptions.ValidationError(message, correlation_id=cid),
+            FlextExceptions.ConfigurationError(message, correlation_id=cid),
+            FlextExceptions.ConnectionError(message, correlation_id=cid),
+            FlextExceptions.TimeoutError(message, correlation_id=cid),
+            FlextExceptions.AuthenticationError(message, correlation_id=cid),
+            FlextExceptions.AuthorizationError(message, correlation_id=cid),
+            FlextExceptions.NotFoundError(message, correlation_id=cid),
+            FlextExceptions.ConflictError(message, correlation_id=cid),
+            FlextExceptions.RateLimitError(message, correlation_id=cid),
+            FlextExceptions.CircuitBreakerError(message, correlation_id=cid),
+            FlextExceptions.TypeError(message, correlation_id=cid),
+            FlextExceptions.OperationError(message, correlation_id=cid),
+        ]
+        for err in errors:
+            payload = err.to_dict()
+            tm.that(payload["message"], eq=message)
+            tm.that(payload["correlation_id"], eq=cid)
 
-        This method should be customized based on the actual exceptions API.
-        For now, it provides a generic implementation that can be adapted.
-        """
-        try:
-            process = getattr(instance, "process", None)
-            if callable(process):
-                result = process(dict(input_data))
-                if isinstance(result, r):
-                    typed_result = cast("r[t.Tests.object]", result)
-                    if typed_result.is_success:
-                        return r[t.Container].ok(str(typed_result.value))
-                    return r[t.Container].fail(
-                        typed_result.error or "FlextExceptions process failed"
-                    )
-                return r[t.Container].ok(str(result))
-            execute = getattr(instance, "execute", None)
-            if callable(execute):
-                result = execute(dict(input_data))
-                if isinstance(result, r):
-                    typed_result = cast("r[t.Tests.object]", result)
-                    if typed_result.is_success:
-                        return r[t.Container].ok(str(typed_result.value))
-                    return r[t.Container].fail(
-                        typed_result.error or "FlextExceptions execute failed"
-                    )
-                return r[t.Container].ok(str(result))
-            handle = getattr(instance, "handle", None)
-            if callable(handle):
-                result = handle(dict(input_data))
-                if isinstance(result, r):
-                    typed_result = cast("r[t.Tests.object]", result)
-                    if typed_result.is_success:
-                        return r[t.Container].ok(str(typed_result.value))
-                    return r[t.Container].fail(
-                        typed_result.error or "FlextExceptions handle failed"
-                    )
-                return r[t.Container].ok(str(result))
-            return r[t.Container].ok(str(instance))
-        except Exception as e:
-            return r[t.Container].fail(f"FlextExceptions operation failed: {e}")
+    @pytest.mark.performance
+    def test_exception_creation_to_dict_benchmark(
+        self,
+        benchmark: Callable[..., object],
+    ) -> None:
+        def create_and_dump() -> dict[str, str | float | None]:
+            err = FlextExceptions.OperationError(
+                "bench",
+                operation="publish",
+                reason="transient",
+                correlation_id="bench-1",
+            )
+            return {
+                "message": err.message,
+                "error_code": err.error_code,
+                "correlation_id": err.correlation_id,
+                "timestamp": err.timestamp,
+            }
 
-    @pytest.fixture
-    def test_exceptions_instance(self) -> type[FlextExceptions]:
-        """Fixture for exceptions test instance."""
-        return fixture_factory.create_test_exceptions_instance()
+        _ = benchmark(create_and_dump)
+        payload = create_and_dump()
+        tm.that(payload, keys=["message", "error_code", "correlation_id"])
