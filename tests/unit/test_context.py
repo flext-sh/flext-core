@@ -30,8 +30,7 @@ import pytest
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import FlextContainer, FlextContext, m
-from flext_tests import FlextTestsUtilities, u
-from flext_tests import tm
+from flext_tests import FlextTestsUtilities, tm, u
 
 type SetGetInputValue = str | int | float | bool | list[int] | dict[str, str]
 type SetGetExpectedValue = str | int | float | bool
@@ -164,9 +163,9 @@ class TestFlextContext:
         context = test_context
         context.set("key1", "value1").value
         context.set("key2", "value2").value
-        tm.that(all(context.has(k), eq=True) for k in ["key1", "key2"])
+        tm.that(all(context.has(k) for k in ["key1", "key2"]), eq=True)
         context.clear()
-        tm.that(not any(context.has(k), eq=True) for k in ["key1", "key2"])
+        tm.that(not any(context.has(k) for k in ["key1", "key2"]), eq=True)
 
     def test_context_keys_values_items(self, test_context: FlextContext) -> None:
         """Test context keys, values, and items operations."""
@@ -398,9 +397,10 @@ class TestFlextContext:
         result = context.get(f"{value_name}_key")
         _ = u.Tests.Result.assert_success(result)
         actual = result.value
-        assert (
-            actual.model_dump() if isinstance(actual, m.Dict) else actual
-        ) == expected_value
+        tm.that(
+            actual.model_dump() if isinstance(actual, m.Dict) else actual,
+            eq=expected_value,
+        )
 
     def test_context_edge_case_duplicate_keys_overwrite(
         self,

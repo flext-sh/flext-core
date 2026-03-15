@@ -29,7 +29,7 @@ from pydantic import ValidationError, field_validator
 
 from flext_core import m
 from flext_core._models.domain_event import _ComparableConfigMap
-from flext_tests import t
+from flext_tests import t, tm
 
 
 class ModelScenarios:
@@ -49,8 +49,8 @@ class TestValues:
             currency: str
 
         money = Money(amount=100.0, currency="USD")
-        assert math.isclose(money.amount, 100.0)
-        assert money.currency == "USD"
+        tm.that(math.isclose(money.amount, 100.0), eq=True)
+        tm.that(money.currency, eq="USD")
 
     def test_value_object_immutability(self) -> None:
         """Test value object is immutable."""
@@ -77,7 +77,7 @@ class TestValues:
 
         color1 = Color(red=255, green=0, blue=0)
         color2 = Color(red=255, green=0, blue=0)
-        assert color1 == color2
+        tm.that(color1, eq=color2)
 
     def test_value_object_validation(self) -> None:
         """Test value object validation."""
@@ -96,7 +96,7 @@ class TestValues:
                 return v.lower()
 
         email = Email(address="USER@EXAMPLE.COM")
-        assert email.address == "user@example.com"
+        tm.that(email.address, eq="user@example.com")
         with pytest.raises(ValidationError):
             Email(address="notanemail")
 
@@ -122,7 +122,7 @@ class TestValues:
         isbn1 = ISBN(code="978-0-262-03384-8")
         isbn2 = ISBN(code="978-0-262-03384-8")
         isbn_set: set[ISBN] = {isbn1, isbn2}
-        assert len(isbn_set) == 1
+        tm.that(len(isbn_set), eq=1)
 
 
 class TestEntities:
@@ -138,10 +138,10 @@ class TestEntities:
             age: int
 
         person = Person(name="Alice", age=30, domain_events=[])
-        assert person.name == "Alice"
-        assert person.unique_id is not None
-        assert person.created_at is not None
-        assert person.updated_at is not None
+        tm.that(person.name, eq="Alice")
+        tm.that(person.unique_id, none=False)
+        tm.that(person.created_at, none=False)
+        tm.that(person.updated_at, none=False)
 
     def test_entity_identity_tracking(self) -> None:
         """Test entities are compared by identity."""
@@ -154,8 +154,8 @@ class TestEntities:
 
         account1 = Account(name="Checking", balance=100.0, domain_events=[])
         account2 = Account(name="Checking", balance=100.0, domain_events=[])
-        assert account1.unique_id != account2.unique_id
-        assert account1 != account2
+        tm.that(account1.unique_id, ne=account2.unique_id)
+        tm.that(account1, ne=account2)
 
     def test_entity_lifecycle_tracking(self) -> None:
         """Test entity creation and update timestamps."""
@@ -166,9 +166,9 @@ class TestEntities:
             title: str
 
         doc = Document(title="Test Doc", domain_events=[])
-        assert doc.created_at is not None
-        assert doc.updated_at is not None
-        assert doc.created_at <= doc.updated_at
+        tm.that(doc.created_at, none=False)
+        tm.that(doc.updated_at, none=False)
+        tm.that(doc.created_at <= doc.updated_at, eq=True)
 
     def test_entity_validation(self) -> None:
         """Test entity field validation."""
@@ -188,7 +188,7 @@ class TestEntities:
                 return v
 
         user = User(email="user@example.com", username="alice", domain_events=[])
-        assert user.username == "alice"
+        tm.that(user.username, eq="alice")
         with pytest.raises(ValidationError):
             User(email="user@example.com", username="ab", domain_events=[])
 
@@ -203,11 +203,14 @@ class TestEntities:
 
         product = Product(name="Widget", price=19.99, domain_events=[])
         product_dict = product.model_dump()
-        assert isinstance(product_dict, dict)
-        assert product_dict["name"] == "Widget"
-        assert math.isclose(product_dict["price"], 19.99)
-        assert all(
-            key in product_dict for key in ["unique_id", "created_at", "updated_at"]
+        tm.that(isinstance(product_dict, dict), eq=True)
+        tm.that(product_dict["name"], eq="Widget")
+        tm.that(math.isclose(product_dict["price"], 19.99), eq=True)
+        tm.that(
+            all(
+                key in product_dict for key in ["unique_id", "created_at", "updated_at"]
+            ),
+            eq=True,
         )
 
 
@@ -224,8 +227,8 @@ class TestAggregateRoots:
             status: str
 
         order = Order(order_number="ORD-001", status="pending", domain_events=[])
-        assert order.order_number == "ORD-001"
-        assert order.unique_id is not None
+        tm.that(order.order_number, eq="ORD-001")
+        tm.that(order.unique_id, none=False)
 
     def test_aggregate_root_invariants(self) -> None:
         """Test aggregate root enforces invariants."""
@@ -237,7 +240,7 @@ class TestAggregateRoots:
             currency: str
 
         account = Account(balance=1000.0, currency="USD", domain_events=[])
-        assert account.balance >= 0.0
+        tm.that(account.balance >= 0.0, eq=True)
 
     def test_aggregate_root_lifecycle(self) -> None:
         """Test aggregate root lifecycle."""
@@ -249,8 +252,8 @@ class TestAggregateRoots:
             status: str
 
         project = Project(name="New Project", status="planning", domain_events=[])
-        assert project.status == "planning"
-        assert project.created_at is not None
+        tm.that(project.status, eq="planning")
+        tm.that(project.created_at, none=False)
 
 
 class TestCommands:
@@ -268,8 +271,8 @@ class TestCommands:
         cmd = CreateUserCommand(
             email="user@example.com", username="alice", command_id="cmd-test-1"
         )
-        assert cmd.email == "user@example.com"
-        assert cmd.command_id is not None
+        tm.that(cmd.email, eq="user@example.com")
+        tm.that(cmd.command_id, none=False)
 
     def test_command_mutation_behavior(self) -> None:
         """Test command mutation behavior with validate_assignment."""
@@ -285,8 +288,8 @@ class TestCommands:
         )
         original_name = cmd.name
         cmd.name = "Bob"
-        assert cmd.name == "Bob"
-        assert cmd.name != original_name
+        tm.that(cmd.name, eq="Bob")
+        tm.that(cmd.name, ne=original_name)
 
     def test_command_validation(self) -> None:
         """Test command validation."""
@@ -308,7 +311,7 @@ class TestCommands:
         cmd = DepositCommand(
             account_id="ACC-001", amount=100.0, command_id="cmd-test-3"
         )
-        assert math.isclose(cmd.amount, 100.0)
+        tm.that(math.isclose(cmd.amount, 100.0), eq=True)
         with pytest.raises(ValidationError):
             DepositCommand(account_id="ACC-001", amount=-50.0, command_id="cmd-test-4")
 
@@ -344,9 +347,9 @@ class TestQueries:
             pagination=m.Pagination(),
             query_id="q-test-1",
         )
-        assert query.filters["user_id"] == "USER-001"
-        assert query.query_id is not None
-        assert query.query_type == "get_user"
+        tm.that(query.filters["user_id"], eq="USER-001")
+        tm.that(query.query_id, none=False)
+        tm.that(query.query_type, eq="get_user")
 
     def test_query_mutation_behavior(self) -> None:
         """Test query mutation behavior with validate_assignment."""
@@ -359,8 +362,8 @@ class TestQueries:
         )
         original_page = query.page
         query.page = 2
-        assert query.page == 2
-        assert query.page != original_page
+        tm.that(query.page, eq=2)
+        tm.that(query.page, ne=original_page)
 
     def test_query_with_filters(self) -> None:
         """Test query with filtering."""
@@ -372,10 +375,11 @@ class TestQueries:
             pagination=m.Pagination(),
             query_id="q-test-3",
         )
-        assert query.keyword == "laptop"
-        assert query.category == "electronics"
-        assert query.min_price is not None
-        assert math.isclose(query.min_price, 500.0)
+        tm.that(query.keyword, eq="laptop")
+        tm.that(query.category, eq="electronics")
+        tm.that(query.min_price, none=False)
+        if query.min_price is not None:
+            tm.that(math.isclose(query.min_price, 500.0), eq=True)
 
 
 class TestDomainEvents:
@@ -390,12 +394,12 @@ class TestDomainEvents:
                 root={"user_id": "USER-001", "email": "user@example.com"},
             ),
         )
-        assert event.event_type == "UserCreated"
-        assert event.aggregate_id == "USER-001"
-        assert event.data["user_id"] == "USER-001"
-        assert event.data["email"] == "user@example.com"
-        assert event.unique_id is not None
-        assert event.created_at is not None
+        tm.that(event.event_type, eq="UserCreated")
+        tm.that(event.aggregate_id, eq="USER-001")
+        tm.that(event.data["user_id"], eq="USER-001")
+        tm.that(event.data["email"], eq="user@example.com")
+        tm.that(event.unique_id, none=False)
+        tm.that(event.created_at, none=False)
 
     def test_domain_event_equality(self) -> None:
         """Test domain events can be compared and tracked."""
@@ -409,9 +413,9 @@ class TestDomainEvents:
             aggregate_id="ORD-001",
             data=_ComparableConfigMap(root={"tracking_number": "TRACK-123"}),
         )
-        assert event1.unique_id != event2.unique_id
-        assert event1.event_type == event2.event_type
-        assert event1.aggregate_id == event2.aggregate_id
+        tm.that(event1.unique_id, ne=event2.unique_id)
+        tm.that(event1.event_type, eq=event2.event_type)
+        tm.that(event1.aggregate_id, eq=event2.aggregate_id)
 
     def test_domain_event_timestamp(self) -> None:
         """Test domain events have timestamps."""
@@ -424,8 +428,8 @@ class TestDomainEvents:
             aggregate_id="ACC-001",
             data=_ComparableConfigMap(root={"field": "balance"}),
         )
-        assert event.created_at is not None
-        assert isinstance(event.created_at, datetime)
+        tm.that(event.created_at, none=False)
+        tm.that(isinstance(event.created_at, datetime), eq=True)
 
     def test_domain_event_causality(self) -> None:
         """Test domain events track causality via id and timestamps."""
@@ -438,8 +442,8 @@ class TestDomainEvents:
             aggregate_id="PAY-001",
             data=_ComparableConfigMap(root={"amount": 99.99}),
         )
-        assert event.unique_id is not None
-        assert event.created_at is not None
+        tm.that(event.unique_id, none=False)
+        tm.that(event.created_at, none=False)
 
 
 class TestMetadata:
@@ -448,7 +452,7 @@ class TestMetadata:
     def test_metadata_creation(self) -> None:
         """Test creating metadata."""
         metadata = m.Metadata(attributes={"user_id": "123", "operation": "create"})
-        assert metadata.attributes["user_id"] == "123"
+        tm.that(metadata.attributes["user_id"], eq="123")
 
     def test_metadata_with_various_types(self) -> None:
         """Test metadata with different attribute types."""
@@ -460,8 +464,8 @@ class TestMetadata:
                 "bool": True,
             },
         )
-        assert metadata.attributes["string"] == "value"
-        assert metadata.attributes["number"] == 42
+        tm.that(metadata.attributes["string"], eq="value")
+        tm.that(metadata.attributes["number"], eq=42)
 
 
 class TestModelValidation:
@@ -485,7 +489,7 @@ class TestModelValidation:
                 return v
 
         entity = ValidatedEntity(email="user@example.com", age=30, domain_events=[])
-        assert entity.age == 30
+        tm.that(entity.age, eq=30)
         with pytest.raises(ValidationError):
             ValidatedEntity(email="user@example.com", age=200, domain_events=[])
 
@@ -521,7 +525,7 @@ class TestModelValidation:
             bio="Developer",
             domain_events=[],
         )
-        assert profile.username == "alice"
+        tm.that(profile.username, eq="alice")
 
 
 class TestModelSerialization:
@@ -538,9 +542,9 @@ class TestModelSerialization:
 
         task = Task(title="Complete tests", completed=False, domain_events=[])
         dumped = task.model_dump()
-        assert dumped["title"] == "Complete tests"
-        assert dumped["completed"] is False
-        assert "unique_id" in dumped
+        tm.that(dumped["title"], eq="Complete tests")
+        tm.that(dumped["completed"], eq=False)
+        tm.that(dumped, has="unique_id")
 
     def test_command_serialization(self) -> None:
         """Test command serialization."""
@@ -559,8 +563,8 @@ class TestModelSerialization:
             command_id="cmd-test-5",
         )
         dumped = cmd.model_dump()
-        assert dumped["recipient"] == "user@example.com"
-        assert dumped["subject"] == "Test"
+        tm.that(dumped["recipient"], eq="user@example.com")
+        tm.that(dumped["subject"], eq="Test")
 
     def test_aggregate_root_serialization(self) -> None:
         """Test aggregate root serialization."""
@@ -580,8 +584,8 @@ class TestModelSerialization:
             domain_events=[],
         )
         dumped = cart.model_dump()
-        assert len(dumped["items"]) == 2
-        assert math.isclose(dumped["total"], 99.99)
+        tm.that(len(dumped["items"]), eq=2)
+        tm.that(math.isclose(dumped["total"], 99.99), eq=True)
 
 
 class TestModelIntegration:
@@ -602,9 +606,9 @@ class TestModelIntegration:
             k: dumped[k] for k in type(customer).model_fields if k in dumped
         }
         validated = Customer.model_validate(customer_dict)
-        assert validated is not None
-        assert validated.name == "John"
-        assert validated.email == "john@example.com"
+        tm.that(validated, none=False)
+        tm.that(validated.name, eq="John")
+        tm.that(validated.email, eq="john@example.com")
 
     def test_command_factory_pattern(self) -> None:
         """Test command creation as factories."""
@@ -618,7 +622,7 @@ class TestModelIntegration:
         cmd = RegisterUserCommand(
             email="user@example.com", password="secure123", command_id="cmd-test-6"
         )
-        assert cmd.email == "user@example.com"
+        tm.that(cmd.email, eq="user@example.com")
 
 
 __all__ = [

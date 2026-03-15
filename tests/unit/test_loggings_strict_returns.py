@@ -19,6 +19,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core import FlextLogger, r
+from flext_tests import tm
 
 
 class TestDebugReturnsResultBool:
@@ -28,17 +29,18 @@ class TestDebugReturnsResultBool:
         """Verify debug() returns r[bool] with is_success=True."""
         logger = FlextLogger.create_module_logger(__name__)
         result = logger.debug("test debug message")
-        assert isinstance(result, r), f"Expected r[bool], got {type(result)}"
-        assert result.is_success, "Expected debug() to return success result"
-        assert result.value is True, "Expected debug() result value to be True"
+        tm.that(isinstance(result, r), eq=True), f"Expected r[bool], got {type(result)}"
+        tm.ok(result)
+        tm.that(result.value, eq=True)
+        "Expected debug() result value to be True"
 
     def test_debug_with_kwargs_returns_result_bool(self) -> None:
         """Verify debug() with kwargs returns r[bool]."""
         logger = FlextLogger.create_module_logger(__name__)
         result = logger.debug("test message", user_id="123", action="login")
-        assert isinstance(result, r)
-        assert result.is_success
-        assert result.value is True
+        tm.that(isinstance(result, r), eq=True)
+        tm.ok(result)
+        tm.that(result.value, eq=True)
 
 
 class TestInfoReturnsResultBool:
@@ -48,17 +50,18 @@ class TestInfoReturnsResultBool:
         """Verify info() returns r[bool] with is_success=True."""
         logger = FlextLogger.create_module_logger(__name__)
         result = logger.info("test info message")
-        assert isinstance(result, r), f"Expected r[bool], got {type(result)}"
-        assert result.is_success, "Expected info() to return success result"
-        assert result.value is True, "Expected info() result value to be True"
+        tm.that(isinstance(result, r), eq=True), f"Expected r[bool], got {type(result)}"
+        tm.ok(result)
+        tm.that(result.value, eq=True)
+        "Expected info() result value to be True"
 
     def test_info_with_kwargs_returns_result_bool(self) -> None:
         """Verify info() with kwargs returns r[bool]."""
         logger = FlextLogger.create_module_logger(__name__)
         result = logger.info("test message", request_id="abc-123", status="ok")
-        assert isinstance(result, r)
-        assert result.is_success
-        assert result.value is True
+        tm.that(isinstance(result, r), eq=True)
+        tm.ok(result)
+        tm.that(result.value, eq=True)
 
 
 class TestWarningReturnsResultBool:
@@ -68,17 +71,18 @@ class TestWarningReturnsResultBool:
         """Verify warning() returns r[bool] with is_success=True."""
         logger = FlextLogger.create_module_logger(__name__)
         result = logger.warning("test warning message")
-        assert isinstance(result, r), f"Expected r[bool], got {type(result)}"
-        assert result.is_success, "Expected warning() to return success result"
-        assert result.value is True, "Expected warning() result value to be True"
+        tm.that(isinstance(result, r), eq=True), f"Expected r[bool], got {type(result)}"
+        tm.ok(result)
+        tm.that(result.value, eq=True)
+        "Expected warning() result value to be True"
 
     def test_warning_with_kwargs_returns_result_bool(self) -> None:
         """Verify warning() with kwargs returns r[bool]."""
         logger = FlextLogger.create_module_logger(__name__)
         result = logger.warning("test message", threshold=100, actual=150)
-        assert isinstance(result, r)
-        assert result.is_success
-        assert result.value is True
+        tm.that(isinstance(result, r), eq=True)
+        tm.ok(result)
+        tm.that(result.value, eq=True)
 
 
 class TestErrorReturnsResultBool:
@@ -88,17 +92,18 @@ class TestErrorReturnsResultBool:
         """Verify error() returns r[bool] with is_success=True."""
         logger = FlextLogger.create_module_logger(__name__)
         result = logger.error("test error message")
-        assert isinstance(result, r), f"Expected r[bool], got {type(result)}"
-        assert result.is_success, "Expected error() to return success result"
-        assert result.value is True, "Expected error() result value to be True"
+        tm.that(isinstance(result, r), eq=True), f"Expected r[bool], got {type(result)}"
+        tm.ok(result)
+        tm.that(result.value, eq=True)
+        "Expected error() result value to be True"
 
     def test_error_with_kwargs_returns_result_bool(self) -> None:
         """Verify error() with kwargs returns r[bool]."""
         logger = FlextLogger.create_module_logger(__name__)
         result = logger.error("test message", error_code="ERR_001", details="failed")
-        assert isinstance(result, r)
-        assert result.is_success
-        assert result.value is True
+        tm.that(isinstance(result, r), eq=True)
+        tm.ok(result)
+        tm.that(result.value, eq=True)
 
 
 class TestCriticalReturnsResultBool:
@@ -108,17 +113,18 @@ class TestCriticalReturnsResultBool:
         """Verify critical() returns r[bool] with is_success=True."""
         logger = FlextLogger.create_module_logger(__name__)
         result = logger.critical("test critical message")
-        assert isinstance(result, r), f"Expected r[bool], got {type(result)}"
-        assert result.is_success, "Expected critical() to return success result"
-        assert result.value is True, "Expected critical() result value to be True"
+        tm.that(isinstance(result, r), eq=True), f"Expected r[bool], got {type(result)}"
+        tm.ok(result)
+        tm.that(result.value, eq=True)
+        "Expected critical() result value to be True"
 
     def test_critical_with_kwargs_returns_result_bool(self) -> None:
         """Verify critical() with kwargs returns r[bool]."""
         logger = FlextLogger.create_module_logger(__name__)
         result = logger.critical("test message", severity="CRITICAL", action="shutdown")
-        assert isinstance(result, r)
-        assert result.is_success
-        assert result.value is True
+        tm.that(isinstance(result, r), eq=True)
+        tm.ok(result)
+        tm.that(result.value, eq=True)
 
 
 class TestExceptionReturnsResultBool:
@@ -128,17 +134,18 @@ class TestExceptionReturnsResultBool:
         """Verify exception() returns r[bool] with is_success=True."""
         logger = FlextLogger.create_module_logger(__name__)
         result = logger.error("test exception message")
-        assert isinstance(result, r), f"Expected r[bool], got {type(result)}"
-        assert result.is_success, "Expected exception() to return success result"
-        assert result.value is True, "Expected exception() result value to be True"
+        tm.that(isinstance(result, r), eq=True), f"Expected r[bool], got {type(result)}"
+        tm.ok(result)
+        tm.that(result.value, eq=True)
+        "Expected exception() result value to be True"
 
     def test_exception_with_kwargs_returns_result_bool(self) -> None:
         """Verify exception() with kwargs returns r[bool]."""
         logger = FlextLogger.create_module_logger(__name__)
         result = logger.error("test message", operation="sync", retry_count=3)
-        assert isinstance(result, r)
-        assert result.is_success
-        assert result.value is True
+        tm.that(isinstance(result, r), eq=True)
+        tm.ok(result)
+        tm.that(result.value, eq=True)
 
 
 class TestTraceReturnsResultBool:
@@ -148,17 +155,18 @@ class TestTraceReturnsResultBool:
         """Verify trace() returns r[bool] with is_success=True."""
         logger = FlextLogger.create_module_logger(__name__)
         result = logger.trace("test trace message")
-        assert isinstance(result, r), f"Expected r[bool], got {type(result)}"
-        assert result.is_success, "Expected trace() to return success result"
-        assert result.value is True, "Expected trace() result value to be True"
+        tm.that(isinstance(result, r), eq=True), f"Expected r[bool], got {type(result)}"
+        tm.ok(result)
+        tm.that(result.value, eq=True)
+        "Expected trace() result value to be True"
 
     def test_trace_with_kwargs_returns_result_bool(self) -> None:
         """Verify trace() with kwargs returns r[bool]."""
         logger = FlextLogger.create_module_logger(__name__)
         result = logger.trace("test message", depth=5, scope="operation")
-        assert isinstance(result, r)
-        assert result.is_success
-        assert result.value is True
+        tm.that(isinstance(result, r), eq=True)
+        tm.ok(result)
+        tm.that(result.value, eq=True)
 
 
 class TestLogReturnsResultBool:
@@ -168,9 +176,10 @@ class TestLogReturnsResultBool:
         """Verify log() returns r[bool] with is_success=True."""
         logger = FlextLogger.create_module_logger(__name__)
         result = logger.log("info", "test log message")
-        assert isinstance(result, r), f"Expected r[bool], got {type(result)}"
-        assert result.is_success, "Expected log() to return success result"
-        assert result.value is True, "Expected log() result value to be True"
+        tm.that(isinstance(result, r), eq=True), f"Expected r[bool], got {type(result)}"
+        tm.ok(result)
+        tm.that(result.value, eq=True)
+        "Expected log() result value to be True"
 
     def test_log_with_context_returns_result_bool(self) -> None:
         """Verify log() with context returns r[bool]."""
@@ -181,18 +190,21 @@ class TestLogReturnsResultBool:
             request_id="req-123",
             user="alice",
         )
-        assert isinstance(result, r)
-        assert result.is_success
-        assert result.value is True
+        tm.that(isinstance(result, r), eq=True)
+        tm.ok(result)
+        tm.that(result.value, eq=True)
 
     def test_log_with_different_levels_returns_result_bool(self) -> None:
         """Verify log() works with different log levels."""
         logger = FlextLogger.create_module_logger(__name__)
         for level in ["debug", "info", "warning", "error", "critical"]:
             result = logger.log(level, "test %s message", level)
-            assert isinstance(result, r), f"log({level}) should return r[bool]"
-            assert result.is_success, f"log({level}) should return success"
-            assert result.value is True, f"log({level}) result value should be True"
+            (
+                tm.that(isinstance(result, r), eq=True),
+                f"log({level}) should return r[bool]",
+            )
+            tm.ok(result), f"log({level}) should return success"
+            tm.that(result.value, eq=True), f"log({level}) result value should be True"
 
 
 class TestBackwardCompatDiscardReturnValue:
@@ -245,11 +257,11 @@ class TestProtocolComplianceStructlogLogger:
     def test_flext_logger_implements_structlog_logger_protocol(self) -> None:
         """Verify FlextLogger implements p.Log.StructlogLogger protocol."""
         logger = FlextLogger.create_module_logger(__name__)
-        assert hasattr(logger, "debug")
-        assert hasattr(logger, "info")
-        assert hasattr(logger, "warning")
-        assert hasattr(logger, "error")
-        assert hasattr(logger, "exception")
+        tm.that(hasattr(logger, "debug"), eq=True)
+        tm.that(hasattr(logger, "info"), eq=True)
+        tm.that(hasattr(logger, "warning"), eq=True)
+        tm.that(hasattr(logger, "error"), eq=True)
+        tm.that(hasattr(logger, "exception"), eq=True)
 
     def test_all_protocol_methods_return_result_bool(self) -> None:
         """Verify all protocol methods return r[bool]."""
@@ -269,28 +281,24 @@ class TestProtocolComplianceStructlogLogger:
                 "exception",
                 logger.exception(exception_message),
             ))
-        for method_name, result in protocol_calls:
-            assert result is not None, (
-                f"{method_name}() should return r[bool], not None"
-            )
-            assert isinstance(result, r), (
-                f"{method_name}() should return r[bool], got {type(result)}"
-            )
-            assert result.is_success, f"{method_name}() should return success result"
-            assert result.value is True, f"{method_name}() result value should be True"
+        for _method_name, result in protocol_calls:
+            tm.that(result is not None, eq=True)
+            tm.that(isinstance(result, r), eq=True)
+            tm.ok(result)
+            tm.that(result.value, eq=True)
 
     def test_protocol_method_signatures_match(self) -> None:
         """Verify method signatures match protocol definition."""
         logger = FlextLogger.create_module_logger(__name__)
         result = logger.debug("msg %s", "arg1", key="value")
-        assert isinstance(result, r)
+        tm.that(isinstance(result, r), eq=True)
         result = logger.info("msg %s", "arg1", key="value")
-        assert isinstance(result, r)
+        tm.that(isinstance(result, r), eq=True)
         result = logger.warning("msg %s", "arg1", key="value")
-        assert isinstance(result, r)
+        tm.that(isinstance(result, r), eq=True)
         result = logger.error("msg %s", "arg1", key="value")
-        assert isinstance(result, r)
+        tm.that(isinstance(result, r), eq=True)
         result = logger.critical("msg %s", "arg1", key="value")
-        assert isinstance(result, r)
+        tm.that(isinstance(result, r), eq=True)
         result = logger.error("msg %s", "arg1", key="value")
-        assert isinstance(result, r)
+        tm.that(isinstance(result, r), eq=True)

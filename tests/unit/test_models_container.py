@@ -22,8 +22,7 @@ import pytest
 from pydantic import BaseModel, ValidationError
 
 from flext_core import m, u
-from flext_tests import t
-from flext_tests import tm
+from flext_tests import t, tm
 
 _expected_validation_errors: tuple[type[Exception], ...] = (ValidationError, TypeError)
 
@@ -100,11 +99,11 @@ class TestFlextModelsContainer:
             """Check if value is dict-like."""
             return isinstance(value, Mapping)
 
-        assert is_dict_like({"key": "value"}) is True
+        tm.that(is_dict_like({"key": "value"}), eq=True)
         tm.that(is_dict_like({}), eq=True)
         tm.that(is_dict_like("not_dict"), eq=False)
         tm.that(is_dict_like(123), eq=False)
-        assert is_dict_like([1, 2, 3]) is False
+        tm.that(is_dict_like([1, 2, 3]), eq=False)
         tm.that(is_dict_like(None), eq=False)
 
     @pytest.mark.parametrize(
@@ -150,10 +149,10 @@ class TestFlextModelsContainer:
             tags=["test", "integration"],
         )
         tm.that(registration.name, eq="full_service")
-        assert registration.service == m.ConfigMap(root={"data": "value"})
+        tm.that(registration.service, eq=m.ConfigMap(root={"data": "value"}))
         tm.that(registration.metadata, eq=metadata)
         tm.that(registration.service_type, eq="TestService")
-        assert registration.tags == ["test", "integration"]
+        tm.that(registration.tags, eq=["test", "integration"])
 
     @pytest.mark.parametrize(
         ("metadata_value", "should_pass"),
@@ -212,7 +211,7 @@ class TestFlextModelsContainer:
             invocation_count=5,
         )
         tm.that(registration.name, eq="full_factory")
-        assert callable(registration.factory)
+        tm.that(callable(registration.factory), eq=True)
         tm.that(registration.metadata, eq=metadata)
         tm.that(registration.is_singleton, eq=True)
         tm.that(registration.cached_instance, eq="cached_value")
@@ -229,15 +228,21 @@ class TestFlextModelsContainer:
     ) -> None:
         """Test ContainerConfig creation with various configurations."""
         config = m.ContainerConfig.model_validate(config_dict)
-        assert config.enable_singleton is u.get(
-            config_dict,
-            "enable_singleton",
-            default=True,
+        tm.that(
+            config.enable_singleton,
+            eq=u.get(
+                config_dict,
+                "enable_singleton",
+                default=True,
+            ),
         )
-        assert config.enable_factory_caching is u.get(
-            config_dict,
-            "enable_factory_caching",
-            default=True,
+        tm.that(
+            config.enable_factory_caching,
+            eq=u.get(
+                config_dict,
+                "enable_factory_caching",
+                default=True,
+            ),
         )
         tm.that(
             config.max_services,
@@ -247,20 +252,29 @@ class TestFlextModelsContainer:
             config.max_factories,
             eq=u.get(config_dict, "max_factories", default=500),
         )
-        assert config.enable_auto_registration is u.get(
-            config_dict,
-            "enable_auto_registration",
-            default=False,
+        tm.that(
+            config.enable_auto_registration,
+            eq=u.get(
+                config_dict,
+                "enable_auto_registration",
+                default=False,
+            ),
         )
-        assert config.enable_lifecycle_hooks is u.get(
-            config_dict,
-            "enable_lifecycle_hooks",
-            default=True,
+        tm.that(
+            config.enable_lifecycle_hooks,
+            eq=u.get(
+                config_dict,
+                "enable_lifecycle_hooks",
+                default=True,
+            ),
         )
-        assert config.lazy_loading is u.get(
-            config_dict,
-            "lazy_loading",
-            default=True,
+        tm.that(
+            config.lazy_loading,
+            eq=u.get(
+                config_dict,
+                "lazy_loading",
+                default=True,
+            ),
         )
 
     def test_container_config_defaults(self) -> None:
@@ -302,7 +316,7 @@ class TestFlextModelsContainer:
         )
         tm.that(registration.metadata, none=False)
         metadata_dump = registration.metadata.model_dump()
-        assert metadata_dump.get("attributes", {}) == {}
+        tm.that(metadata_dump.get("attributes", {}), eq={})
 
     def test_factory_registration_metadata_none_handling(self) -> None:
         """Test FactoryRegistration handles None metadata correctly."""
@@ -317,7 +331,7 @@ class TestFlextModelsContainer:
         )
         tm.that(registration.metadata, none=False)
         metadata_dump = registration.metadata.model_dump()
-        assert metadata_dump.get("attributes", {}) == {}
+        tm.that(metadata_dump.get("attributes", {}), eq={})
 
 
 class TestFlextUtilitiesModelNormalizeToMetadata:
@@ -349,7 +363,7 @@ class TestFlextUtilitiesModelNormalizeToMetadata:
         """Test normalize_to_metadata with existing Metadata instance."""
         existing = m.Metadata(attributes={"existing": "value"})
         result = u.ensure_metadata(existing)
-        assert result is existing
+        tm.that(result is existing, eq=True)
         tm.that(result.attributes["existing"], eq="value")
 
     def test_normalize_to_metadata_nested_dict(self) -> None:
