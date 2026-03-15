@@ -43,7 +43,7 @@ def _run_lint(
 ) -> int:
     linter = FlextInfraWorkflowLinter()
     lint_result: r[m.Infra.Github.WorkflowLintResult] = linter.lint(
-        root=cli.workspace,
+        workspace_root=cli.workspace,
         report_path=report,
         strict=strict,
     )

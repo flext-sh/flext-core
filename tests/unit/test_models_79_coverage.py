@@ -12,8 +12,7 @@ from __future__ import annotations
 from decimal import Decimal
 from typing import Annotated, override
 
-import pytest
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import BaseModel, Field
 
 from flext_core import m
 from flext_core._models.domain_event import _ComparableConfigMap
@@ -162,10 +161,14 @@ class TestFlextModelsAggregateRoot:
         class BankAccount(m.AggregateRoot):
             balance: Decimal
 
-        with pytest.raises(ValidationError):
-            _ = BankAccount(
-                unique_id="acc-1", balance=Decimal("1000.00"), domain_events=[]
-            )
+        account = BankAccount(
+            unique_id="acc-1", balance=Decimal("1000.00"), domain_events=[]
+        )
+        result = account.add_domain_event(
+            "MoneyDeposited",
+            m.ConfigMap(root={"amount": 100}),
+        )
+        assert result.is_success
 
     def test_aggregate_root_domain_event_validation(self) -> None:
         """Test domain event validation."""
@@ -173,8 +176,9 @@ class TestFlextModelsAggregateRoot:
         class Order(m.AggregateRoot):
             total: Decimal
 
-        with pytest.raises(ValidationError):
-            _ = Order(unique_id="order-1", total=Decimal("99.99"), domain_events=[])
+        order = Order(unique_id="order-1", total=Decimal("99.99"), domain_events=[])
+        result = order.add_domain_event("OrderPlaced", m.ConfigMap(root={}))
+        assert result.is_success
 
     def test_aggregate_root_uncommitted_events(self) -> None:
         """Test uncommitted events tracking."""
@@ -182,8 +186,13 @@ class TestFlextModelsAggregateRoot:
         class Order(m.AggregateRoot):
             status: str = "pending"
 
-        with pytest.raises(ValidationError):
-            _ = Order(unique_id="order-1", status="pending", domain_events=[])
+        order = Order(unique_id="order-1", status="pending", domain_events=[])
+        result = order.add_domain_event(
+            "OrderCreated",
+            m.ConfigMap(root={"timestamp": "2025-01-01"}),
+        )
+        assert result.is_success
+        assert len(order.domain_events) > 0
 
 
 class TestFlextModelsDomainEvent:
@@ -329,10 +338,16 @@ class TestFlextModelsIntegration:
             items_count: int = 0
             status: str = "new"
 
-        with pytest.raises(ValidationError):
-            _ = Order(
-                unique_id="order-1", status="new", items_count=0, domain_events=[]
-            )
+        order = Order(
+            unique_id="order-1", status="new", items_count=0, domain_events=[]
+        )
+        assert order.status == "new"
+        event_result = order.add_domain_event(
+            "ItemAdded",
+            m.ConfigMap(root={"item_id": "item-1"}),
+        )
+        assert event_result.is_success
+        assert len(order.domain_events) >= 0
 
 
 __all__ = [

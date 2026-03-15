@@ -268,24 +268,13 @@ class FlextResult[T](FlextRuntime.RuntimeResult[T]):
     @override
     @classmethod
     def ok[U](cls, value: U) -> FlextResult[U]:
-        """Create successful result wrapping data using Python 3.13 advanced patterns.
+        """Create successful result wrapping value.
 
-        Business Rule: Creates successful FlextResult wrapping value. Raises ValueError
-        if value is None (None values are not allowed in success results). Uses returns
-        library Success wrapper for internal representation. This is the primary factory
-        method for success results in railway-oriented programming pattern.
-
-        Audit Implication: Success result creation ensures audit trail completeness by
-        tracking successful operations. All success results are created through this
-        factory method, ensuring consistent result representation across FLEXT.
-
-        Core implementation - runtime.py cannot import result.py to avoid circular dependencies.
+        None IS a valid value when T includes None (e.g. r[str | None].ok(None)).
+        DO NOT add None rejection here — use create_from_callable for None-means-failure.
 
         Args:
-            value: Value to wrap in success result (must not be None)
-
-        Returns:
-            Successful FlextResult instance
+            value: Value to wrap (any T, including None when T allows it)
 
         """
         result = FlextResult[U](value=value, is_success=True)

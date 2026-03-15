@@ -73,17 +73,20 @@ def test_sync_success_scenarios(
         tf.create_in(base_mk, "base.mk", tmp_path)
     if gitignore:
         tf.create_in(gitignore, ".gitignore", tmp_path)
-    tm.ok(svc.sync(project_root=tmp_path))
+    tm.ok(svc.sync(workspace_root=tmp_path))
     tm.that((tmp_path / "base.mk").exists(), eq=True)
 
 
 @pytest.mark.parametrize(
     ("project_root", "expected_error"),
-    [(None, "project_root is required"), (Path("/nonexistent/path"), "does not exist")],
+    [
+        (None, "workspace_root is required"),
+        (Path("/nonexistent/path"), "does not exist"),
+    ],
     ids=["missing-project-root", "project-root-not-found"],
 )
 def test_sync_root_validation(project_root: Path | None, expected_error: str) -> None:
-    tm.fail(_S().sync(project_root=project_root), has=expected_error)
+    tm.fail(_S().sync(workspace_root=project_root), has=expected_error)
 
 
 @pytest.mark.parametrize(
@@ -120,7 +123,7 @@ def test_sync_error_scenarios(
     expected_error: str,
 ) -> None:
     setup_fn(svc, monkeypatch)
-    tm.fail(svc.sync(project_root=tmp_path), has=expected_error)
+    tm.fail(svc.sync(workspace_root=tmp_path), has=expected_error)
 
 
 def test_gitignore_sync_failure(
@@ -136,7 +139,7 @@ def test_gitignore_sync_failure(
         "_ensure_gitignore_entries",
         _ensure,
     )
-    tm.fail(service.sync(project_root=tmp_path), has=".gitignore sync failed")
+    tm.fail(service.sync(workspace_root=tmp_path), has=".gitignore sync failed")
 
 
 def test_atomic_write_ok(tmp_path: Path) -> None:

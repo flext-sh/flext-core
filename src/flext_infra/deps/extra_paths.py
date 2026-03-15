@@ -268,7 +268,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = parser.parse_args(argv)
     cli = u.Infra.resolve(args)
-    manager = FlextInfraExtraPathsManager(root=cli.workspace)
+    manager = FlextInfraExtraPathsManager(workspace_root=cli.workspace)
     project_dirs = _resolve_project_dirs(cli)
     result = manager.sync_extra_paths(dry_run=cli.dry_run, project_dirs=project_dirs)
     if result.is_success:

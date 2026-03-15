@@ -270,29 +270,18 @@ class FlextTestsFiles(s[t.Tests.TestResultValue]):
                     )
                     if is_nested_sequence:
                         filename = f"{name}.csv"
-                kwargs_result = r[m.Tests.CreateKwargsParams].ok(
-                    m.Tests.CreateKwargsParams.model_validate(kwargs)
-                )
-                if kwargs_result.is_success:
-                    validated_kwargs: m.Tests.CreateKwargsParams = kwargs_result.value
-                else:
-                    default_result = r[m.Tests.CreateKwargsParams].ok(
-                        m.Tests.CreateKwargsParams(
-                            directory=None,
-                            fmt="auto",
-                            enc="utf-8",
-                            indent=2,
-                            delim=",",
-                            headers=None,
-                            readonly=False,
-                        )
+                try:
+                    validated_kwargs = m.Tests.CreateKwargsParams.model_validate(kwargs)
+                except (TypeError, ValueError, ValidationError):
+                    validated_kwargs = m.Tests.CreateKwargsParams(
+                        directory=None,
+                        fmt="auto",
+                        enc="utf-8",
+                        indent=2,
+                        delim=",",
+                        headers=None,
+                        readonly=False,
                     )
-                    if default_result.is_success:
-                        validated_kwargs = default_result.value
-                    else:
-                        raise ValueError(
-                            f"Failed to create default kwargs: {default_result.error}"
-                        )
                 path = manager.create(
                     manager._coerce_file_content(data),
                     filename,

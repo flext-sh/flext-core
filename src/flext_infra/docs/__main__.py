@@ -34,7 +34,7 @@ def _run_audit(
     """Execute documentation audit."""
     auditor = FlextInfraDocAuditor()
     result = auditor.audit(
-        root=cli.workspace,
+        workspace_root=cli.workspace,
         project=cli.project,
         projects=cli.projects,
         output_dir=output_dir,
@@ -51,7 +51,7 @@ def _run_fix(cli: u.Infra.CliArgs, *, output_dir: str = "") -> int:
     """Execute documentation fix."""
     fixer = FlextInfraDocFixer()
     result = fixer.fix(
-        root=cli.workspace,
+        workspace_root=cli.workspace,
         project=cli.project,
         projects=cli.projects,
         output_dir=output_dir,
@@ -66,7 +66,7 @@ def _run_build(cli: u.Infra.CliArgs, *, output_dir: str = "") -> int:
     """Execute documentation build."""
     builder = FlextInfraDocBuilder()
     result = builder.build(
-        root=cli.workspace,
+        workspace_root=cli.workspace,
         project=cli.project,
         projects=cli.projects,
         output_dir=output_dir,
@@ -81,7 +81,7 @@ def _run_generate(cli: u.Infra.CliArgs, *, output_dir: str = "") -> int:
     """Execute documentation generation."""
     generator = FlextInfraDocGenerator()
     result = generator.generate(
-        root=cli.workspace,
+        workspace_root=cli.workspace,
         project=cli.project,
         projects=cli.projects,
         output_dir=output_dir,
@@ -101,7 +101,7 @@ def _run_validate(
     """Execute documentation validation."""
     validator = FlextInfraDocValidator()
     result = validator.validate(
-        root=cli.workspace,
+        workspace_root=cli.workspace,
         project=cli.project,
         projects=cli.projects,
         output_dir=output_dir,

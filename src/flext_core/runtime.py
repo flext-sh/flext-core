@@ -1372,7 +1372,13 @@ class FlextRuntime:
 
         @property
         def value(self) -> T:
-            """Result value (available on success, never None)."""
+            """Result value — returns _payload directly on success.
+
+            None IS a valid payload when T includes None (e.g. r[str | None]).
+            DO NOT add None checks, asserts, or invariant guards here.
+            The only guard is is_success — if the result is a failure,
+            accessing .value raises RuntimeError.
+            """
             if not self.is_success:
                 msg = f"Cannot access value of failed result: {self.error}"
                 raise RuntimeError(msg)

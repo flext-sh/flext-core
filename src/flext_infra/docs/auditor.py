@@ -153,7 +153,7 @@ class FlextInfraDocAuditor:
             return r[list[m.Infra.Docs.DocsPhaseReport]].fail(
                 scopes_result.error or "scope error",
             )
-        default_budget, by_scope_budget = self.load_audit_budgets(root)
+        default_budget, by_scope_budget = self.load_audit_budgets(workspace_root)
         reports: list[m.Infra.Docs.DocsPhaseReport] = []
         for scope in scopes_result.value:
             report = self.audit_scope(
@@ -340,7 +340,7 @@ def main() -> int:
     cli = u.Infra.resolve(args)
     auditor = FlextInfraDocAuditor()
     result = auditor.audit(
-        root=cli.workspace,
+        workspace_root=cli.workspace,
         project=cli.project,
         projects=cli.projects,
         output_dir=args.output_dir,

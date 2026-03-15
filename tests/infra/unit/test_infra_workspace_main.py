@@ -55,23 +55,36 @@ class TestRunSync:
     @pytest.mark.parametrize(
         ("result", "expected"),
         [
-            (r[bool].ok(True), 0),
-            (r[bool].fail("Sync failed"), 1),
+            (
+                r[m.Infra.Workspace.SyncResult].ok(
+                    m.Infra.Workspace.SyncResult(
+                        files_changed=1,
+                        source=Path("."),
+                        target=Path("."),
+                    )
+                ),
+                0,
+            ),
+            (r[m.Infra.Workspace.SyncResult].fail("Sync failed"), 1),
         ],
     )
     def test_sync(
         self,
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
-        result: r[bool],
+        result: r[m.Infra.Workspace.SyncResult],
         expected: int,
     ) -> None:
         def _sync_stub(
             _self: FlextInfraSyncService,
-            project_root: Path,
-            canonical_root: Path | None,
-        ) -> r[bool]:
-            del _self, project_root, canonical_root
+            _source: str | None = None,
+            _target: str | None = None,
+            *,
+            workspace_root: Path | None = None,
+            config: m.Infra.Basemk.BaseMkConfig | None = None,
+            canonical_root: Path | None = None,
+        ) -> r[m.Infra.Workspace.SyncResult]:
+            del _self, _source, _target, workspace_root, config, canonical_root
             return result
 
         monkeypatch.setattr(FlextInfraSyncService, "sync", _sync_stub)
