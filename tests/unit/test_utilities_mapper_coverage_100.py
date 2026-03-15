@@ -21,7 +21,7 @@ from typing import Annotated, cast
 from pydantic import BaseModel, Field
 
 from flext_core import m, t as core_t, u
-from flext_tests import t
+from flext_tests import t, tm
 
 from ..test_utils import assertion_helpers
 from ._models import ComplexModel
@@ -152,7 +152,7 @@ class TestuMapperExtract:
         data = {"a": 1}
         result = u.extract(data, "b", required=True)
         _ = assertion_helpers.assert_flext_result_failure(result)
-        tm.that("not found", in_=str(result.error))
+        assert "not found" in str(result.error)
 
     def test_extract_array_index_error(self) -> None:
         """Test invalid array index."""
@@ -170,7 +170,7 @@ class TestuMapperExtract:
         tm.that(result.value, eq="defs")
         result_req = u.extract(data, "a.b", required=True)
         tm.fail(result_req)
-        tm.that("is None", in_=str(result_req.error))
+        assert "is None" in str(result_req.error)
 
 
 class TestuMapperAccessors:
@@ -292,7 +292,7 @@ class TestuMapperConversions:
                 res[key] = val.model_dump(mode="json")
             else:
                 res[key] = val
-        tm.that("obj", in_=res)
+        assert "obj" in res
         tm.that(res["obj"], eq={"name": "test", "value": 1})
 
     def test_convert_to_json_safe(self) -> None:

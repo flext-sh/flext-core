@@ -332,7 +332,7 @@ class TestuTypeChecker:
         tm.ok(signature)
         signature_value = signature.value
         tm.that(len(signature_value.parameters), eq=1)
-        tm.that("x", in_=signature_value.parameters)
+        assert "x" in signature_value.parameters
 
     def test_get_method_signature_non_callable(self) -> None:
         """Test _get_method_signature with non-callable."""
@@ -350,7 +350,7 @@ class TestuTypeChecker:
                 return message
 
         hints = u._get_type_hints_safe(TestClass.handle, TestClass)
-        tm.that("message", in_=hints)
+        assert "message" in hints
         message_type = hints.get("message")
         assert message_type is not None
         assert isinstance(message_type, type) and message_type.__name__ == "str"
