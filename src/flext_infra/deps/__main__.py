@@ -11,7 +11,6 @@ import sys
 from collections.abc import Mapping
 from types import MappingProxyType
 
-from flext_core import FlextRuntime
 from flext_infra import output, u
 
 _SUBCOMMAND_MODULES: Mapping[str, str] = MappingProxyType({
@@ -23,9 +22,8 @@ _SUBCOMMAND_MODULES: Mapping[str, str] = MappingProxyType({
 })
 
 
-def main() -> int:
+def _main_impl(_argv: list[str] | None = None) -> int:
     """Dispatch to the appropriate deps subcommand."""
-    FlextRuntime.ensure_structlog_configured()
     parser, _ = u.Infra.create_subcommand_parser(
         "flext-infra deps",
         "Dependency management services",
@@ -51,6 +49,11 @@ def main() -> int:
     module = importlib.import_module(_SUBCOMMAND_MODULES[subcommand])
     exit_code = module.main()
     return int(exit_code) if exit_code is not None else 0
+
+
+def main() -> int:
+    """Dispatch to the appropriate deps subcommand."""
+    return u.Infra.run_cli(_main_impl)
 
 
 if __name__ == "__main__":
