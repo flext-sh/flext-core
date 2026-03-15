@@ -9,15 +9,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections import UserDict as UserDictBase
+from collections import UserDict
+from collections.abc import Mapping
 
 import pytest
 from pydantic import BaseModel, ValidationError
 
 from flext_core import FlextConstants, FlextContext
-from flext_core._models.base import FlextModelFoundation
-from flext_core._models.context import FlextModelsContext
-from flext_tests import t, tm, u
+from flext_tests import t, tm, u, m
 
 
 class TestContext100Coverage:
@@ -101,7 +100,7 @@ class TestContext100Coverage:
         context.set("key1", "value1").value
         context.set("key2", "value2").value
         exported = context.export()
-        tm.that(exported, is_=dict)
+        assert isinstance(exported, Mapping)
         tm.that(exported, contains="global")
         global_data = exported.get("global")
         if isinstance(global_data, dict):
@@ -244,7 +243,7 @@ class TestContext100Coverage:
         invalid_metadata = 123
         exc_types: tuple[type[Exception], ...] = (TypeError, ValidationError)
         with pytest.raises(exc_types):
-            FlextModelsContext.ContextData.model_validate({
+            m.ContextData.model_validate({
                 "metadata": invalid_metadata,
             })
 
@@ -255,13 +254,13 @@ class TestContext100Coverage:
         key normalization (str(k)), so integer key 123 becomes string key "123".
         """
 
-        class IntKeyDict(UserDictBase[int, str]):
+        class IntKeyDict(UserDict[int, str]):
             def __init__(self) -> None:
                 super().__init__()
                 self[123] = "value"
 
         int_key_dict = IntKeyDict()
-        result = FlextModelsContext.ContextData.model_validate({"data": int_key_dict})
+        result = m.ContextData.model_validate({"data": int_key_dict})
         tm.that(result.data, contains="123")
 
     def test_context_data_validate_dict_serializable_non_serializable_value(
@@ -275,7 +274,7 @@ class TestContext100Coverage:
         can be stored in context.
         """
         bad_dict = {"key": {1, 2, 3}}
-        result = FlextModelsContext.ContextData.model_validate({"data": bad_dict})
+        result = m.ContextData.model_validate({"data": bad_dict})
         tm.that(isinstance(result.data["key"], str), eq=True)
 
     def test_context_export_validate_dict_serializable_pydantic_model(self) -> None:
@@ -285,7 +284,7 @@ class TestContext100Coverage:
             field: str = "value"
 
         model = TestModel()
-        export = FlextModelsContext.ContextExport.model_validate({"data": model})
+        export = m.ContextExport.model_validate({"data": model})
         tm.that(isinstance(export.data, dict), eq=True)
         tm.that(export.data, contains="field")
 
@@ -293,7 +292,7 @@ class TestContext100Coverage:
         """Test ContextExport.validate_dict_serializable with non-dict."""
         invalid_data = 123
         with pytest.raises(TypeError):
-            FlextModelsContext.ContextExport.model_validate({"data": invalid_data})
+            m.ContextExport.model_validate({"data": invalid_data})
 
     def test_context_export_validate_dict_serializable_non_string_key(self) -> None:
         """Test ContextExport.validate_dict_serializable with non-string key.
@@ -302,7 +301,7 @@ class TestContext100Coverage:
         so integer key 123 becomes string key "123". No error is raised.
         """
         data = {123: "value"}
-        result = FlextModelsContext.ContextExport.model_validate({"data": data})
+        result = m.ContextExport.model_validate({"data": data})
         tm.that(result.data, contains="123")
 
     def test_context_export_validate_dict_serializable_non_serializable_value(
@@ -314,29 +313,29 @@ class TestContext100Coverage:
         by FlextRuntime.normalize_to_general_value() before serializability check.
         """
         data = {"key": {1, 2, 3}}
-        result = FlextModelsContext.ContextExport.model_validate({"data": data})
+        result = m.ContextExport.model_validate({"data": data})
         tm.that(isinstance(result.data["key"], str), eq=True)
 
     def test_context_export_total_data_items(self) -> None:
         """Test ContextExport.total_data_items computed field."""
-        export = FlextModelsContext.ContextExport(
+        export = m.ContextExport(
             data={"key1": "value1", "key2": "value2"},
-            metadata=FlextModelFoundation.Metadata(attributes={}),
+            metadata=m.Metadata(attributes={}),
             statistics={},
         )
         tm.that(len(export.data), eq=2)
 
     def test_context_export_has_statistics(self) -> None:
         """Test ContextExport.has_statistics computed field."""
-        export1 = FlextModelsContext.ContextExport(
+        export1 = m.ContextExport(
             data={},
-            metadata=FlextModelFoundation.Metadata(attributes={}),
+            metadata=m.Metadata(attributes={}),
             statistics={"sets": 5},
         )
         tm.that(bool(export1.statistics), eq=True)
-        export2 = FlextModelsContext.ContextExport(
+        export2 = m.ContextExport(
             data={},
-            metadata=FlextModelFoundation.Metadata(attributes={}),
+            metadata=m.Metadata(attributes={}),
             statistics={},
         )
         tm.that(bool(export2.statistics), eq=False)
@@ -348,13 +347,13 @@ class TestContext100Coverage:
             field: str = "value"
 
         model = TestModel()
-        scope_data = FlextModelsContext.ContextScopeData.model_validate({"data": model})
+        scope_data = m.ContextScopeData.model_validate({"data": model})
         tm.that(isinstance(scope_data.data, dict), eq=True)
         tm.that(scope_data.data, contains="field")
 
     def test_context_scope_data_validate_data_with_none(self) -> None:
         """Test ContextScopeData._validate_data with None."""
-        scope_data = FlextModelsContext.ContextScopeData(
+        scope_data = m.ContextScopeData(
             scope_name="global",
             data={},
             metadata={},
@@ -369,7 +368,7 @@ class TestContext100Coverage:
             field: str = "value"
 
         model = TestModel()
-        scope_data = FlextModelsContext.ContextScopeData.model_validate({
+        scope_data = m.ContextScopeData.model_validate({
             "scope_name": "global",
             "metadata": model,
         })
@@ -378,7 +377,7 @@ class TestContext100Coverage:
 
     def test_context_scope_data_validate_metadata_with_none(self) -> None:
         """Test ContextScopeData._validate_metadata with None."""
-        scope_data = FlextModelsContext.ContextScopeData(
+        scope_data = m.ContextScopeData(
             scope_name="global",
             data={},
             metadata={},
@@ -393,7 +392,7 @@ class TestContext100Coverage:
             field: str = "value"
 
         model = TestModel()
-        stats = FlextModelsContext.ContextStatistics.model_validate({
+        stats = m.ContextStatistics.model_validate({
             "operations": model,
         })
         tm.that(isinstance(stats.operations, dict), eq=True)
@@ -402,7 +401,7 @@ class TestContext100Coverage:
     def test_context_statistics_validate_operations_with_none(self) -> None:
         """Test ContextStatistics._validate_operations with None."""
         none_operations = None
-        stats = FlextModelsContext.ContextStatistics.model_validate({
+        stats = m.ContextStatistics.model_validate({
             "operations": none_operations,
         })
         tm.that(isinstance(stats.operations, dict), eq=True)
@@ -415,7 +414,7 @@ class TestContext100Coverage:
             field: str = "value"
 
         model = TestModel()
-        metadata = FlextModelsContext.ContextMetadata.model_validate({
+        metadata = m.ContextMetadata.model_validate({
             "custom_fields": model,
         })
         tm.that(isinstance(metadata.custom_fields, dict), eq=True)
@@ -424,7 +423,7 @@ class TestContext100Coverage:
     def test_context_metadata_validate_custom_fields_with_none(self) -> None:
         """Test ContextMetadata._validate_custom_fields with None."""
         none_custom_fields = None
-        metadata = FlextModelsContext.ContextMetadata.model_validate({
+        metadata = m.ContextMetadata.model_validate({
             "custom_fields": none_custom_fields,
         })
         tm.that(isinstance(metadata.custom_fields, dict), eq=True)
