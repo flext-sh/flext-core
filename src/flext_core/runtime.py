@@ -67,7 +67,6 @@ from typing import (
     ClassVar,
     Self,
     TypeGuard,
-    cast,
     override,
 )
 
@@ -97,6 +96,20 @@ type RuntimeData = (
     | Sequence[t.NormalizedValue]
     | p.HasModelDump
 )
+
+
+class _Unset:
+    """Sentinel for unset payload — distinct from None.
+
+    Allows r[str | None] to carry None as a valid payload while
+    still distinguishing "no value set" from "value is None".
+    isinstance() narrowing lets Pyrefly resolve T | _Unset → T.
+    """
+
+    __slots__ = ()
+
+
+_UNSET = _Unset()
 
 
 class FlextRuntime:
@@ -1315,7 +1328,7 @@ class FlextRuntime:
         )
 
         is_success: Annotated[bool, Field(default=True)]
-        _payload: T | None = PrivateAttr(default=None)
+        _payload: T | _Unset = PrivateAttr(default_factory=_Unset)
         error: Annotated[str | None, Field(default=None)]
         error_code: Annotated[str | None, Field(default=None)]
         error_data: Annotated[
@@ -1376,16 +1389,17 @@ class FlextRuntime:
             """Result value — returns _payload directly on success.
 
             None IS a valid payload when T includes None (e.g. r[str | None]).
-            DO NOT add None checks, asserts, or invariant guards here.
             The only guard is is_success — if the result is a failure,
             accessing .value raises RuntimeError.
+            isinstance(_Unset) narrowing lets Pyrefly resolve T | _Unset → T.
             """
             if not self.is_success:
                 msg = f"Cannot access value of failed result: {self.error}"
                 raise RuntimeError(msg)
-            if self._payload is not None:
-                return self._payload
-            return cast("T", self._payload)
+            if isinstance(self._payload, _Unset):
+                msg = "Success result has no payload set"
+                raise TypeError(msg)
+            return self._payload
 
         @classmethod
         def fail[U](
@@ -1565,7 +1579,7 @@ class FlextRuntime:
 
         def tap(self, func: Callable[[T], None]) -> FlextRuntime.RuntimeResult[T]:
             """Apply side effect to success value, return unchanged."""
-            if self.is_success and self._payload is not None:
+            if self.is_success and not isinstance(self._payload, _Unset):
                 func(self._payload)
             return self
 
