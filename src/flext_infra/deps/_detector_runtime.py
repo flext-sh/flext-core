@@ -4,20 +4,14 @@ from __future__ import annotations
 
 import argparse
 import os
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from pathlib import Path
-from typing import Protocol
+from typing import Protocol, runtime_checkable
 
 from pydantic import TypeAdapter, ValidationError
 
 from flext_core import FlextLogger, r
-from flext_infra import (
-    c,
-    m,
-    t,
-    u,
-)
-from flext_infra.deps.detection import FlextInfraDependencyDetectionService
+from flext_infra import c, m, t, u
 
 
 class _WorkspaceReport(Protocol):
@@ -31,10 +25,97 @@ class _WorkspaceReport(Protocol):
         ...
 
 
+@runtime_checkable
+class PathsService(Protocol):
+    def workspace_root_from_file(self, file: str | Path) -> r[Path]: ...
+
+
+@runtime_checkable
+class ReportingService(Protocol):
+    def get_report_dir(self, workspace_root: Path, scope: str, verb: str) -> Path: ...
+
+
+@runtime_checkable
+class JsonService(Protocol):
+    def write_json(
+        self,
+        path: Path,
+        payload: dict[str, t.Infra.InfraValue],
+    ) -> r[bool]: ...
+
+
+@runtime_checkable
+class ProjectReportLike(Protocol):
+    def model_dump(self) -> dict[str, t.Infra.InfraValue]: ...
+
+
+@runtime_checkable
+class DepsService(Protocol):
+    def discover_project_paths(
+        self,
+        workspace_root: Path,
+        *,
+        projects_filter: list[str] | None = None,
+    ) -> r[list[Path]]: ...
+
+    def run_deptry(
+        self,
+        project_path: Path,
+        venv_bin: Path,
+    ) -> r[tuple[list[t.Infra.IssueMap], int]]: ...
+
+    def build_project_report(
+        self,
+        project_name: str,
+        deptry_issues: list[t.Infra.IssueMap],
+    ) -> ProjectReportLike: ...
+
+
+@runtime_checkable
+class TypingsDepsService(Protocol):
+    def load_dependency_limits(
+        self,
+        limits_path: Path | None = None,
+    ) -> Mapping[str, t.Infra.TomlValue]: ...
+
+    def get_required_typings(
+        self,
+        project_path: Path,
+        venv_bin: Path,
+        limits_path: Path | None = None,
+        *,
+        include_mypy: bool = True,
+    ) -> r[m.Infra.Deps.TypingsReport]: ...
+
+
+@runtime_checkable
+class PipCheckDepsService(Protocol):
+    def run_pip_check(
+        self,
+        workspace_root: Path,
+        venv_bin: Path,
+    ) -> r[tuple[list[str], int]]: ...
+
+
+@runtime_checkable
+class RunnerService(Protocol):
+    def run_raw(
+        self,
+        cmd: list[str],
+        cwd: Path | None = None,
+        timeout: int | None = None,
+        env: dict[str, str] | None = None,
+    ) -> r[m.Infra.Core.CommandOutput]: ...
+
+
 class _DetectorRuntime(Protocol):
     """Protocol for detector runtime service dependencies."""
 
-    deps: FlextInfraDependencyDetectionService
+    paths: PathsService
+    reporting: ReportingService
+    json: JsonService
+    deps: DepsService
+    runner: RunnerService
     log: FlextLogger
 
     @staticmethod
@@ -95,8 +176,13 @@ class FlextInfraDependencyDetectorRuntime:
             pip_check=None,
             dependency_limits=None,
         )
+        deps_service = detector.deps
+        typing_deps: TypingsDepsService | None = None
         if do_typings:
-            limits_data = detector.deps.load_dependency_limits(limits_path)
+            if not isinstance(deps_service, TypingsDepsService):
+                return r[int].fail("typing dependency detection service unavailable")
+            typing_deps = deps_service
+            limits_data = typing_deps.load_dependency_limits(limits_path)
             if limits_data:
                 python_cfg = limits_data.get(c.Infra.Toml.PYTHON)
                 python_version = (
@@ -113,18 +199,22 @@ class FlextInfraDependencyDetectorRuntime:
             project_name = project_path.name
             if not args.quiet:
                 detector.log.info("deps_deptry_running", project=project_name)
-            deptry_result = detector.deps.run_deptry(project_path, venv_bin)
+            deptry_result = deps_service.run_deptry(project_path, venv_bin)
             if deptry_result.is_failure:
                 return r[int].fail(deptry_result.error or "deptry run failed")
             issues, _ = deptry_result.value
-            project_payload = detector.deps.build_project_report(project_name, issues)
+            project_payload = deps_service.build_project_report(project_name, issues)
             projects_report[project_name] = project_payload.model_dump()
             if do_typings and (project_path / c.Infra.Paths.DEFAULT_SRC_DIR).is_dir():
+                if typing_deps is None:
+                    return r[int].fail(
+                        "typing dependency detection service unavailable"
+                    )
                 if not args.quiet:
                     detector.log.info(
                         "deps_typings_detect_running", project=project_name
                     )
-                typings_result = detector.deps.get_required_typings(
+                typings_result = typing_deps.get_required_typings(
                     project_path,
                     venv_bin,
                     limits_path=limits_path,
@@ -145,7 +235,7 @@ class FlextInfraDependencyDetectorRuntime:
                         "PATH": f"{venv_bin}:{os.environ.get('PATH', '')}",
                     }
                     for package in to_add:
-                        run = u.Infra.run_raw(
+                        run = detector.runner.run_raw(
                             [
                                 c.Infra.Cli.POETRY,
                                 "add",
@@ -173,9 +263,11 @@ class FlextInfraDependencyDetectorRuntime:
                                 )
         pip_ok = True
         if not args.no_pip_check:
+            if not isinstance(deps_service, PipCheckDepsService):
+                return r[int].fail("pip-check dependency detection service unavailable")
             if not args.quiet:
                 detector.log.info("deps_pip_check_running")
-            pip_result = detector.deps.run_pip_check(root, venv_bin)
+            pip_result = deps_service.run_pip_check(root, venv_bin)
             if pip_result.is_failure:
                 return r[int].fail(pip_result.error or "pip check failed")
             pip_lines, pip_exit = pip_result.value
@@ -188,7 +280,7 @@ class FlextInfraDependencyDetectorRuntime:
         if args.output:
             out_path = Path(args.output)
         elif cli.apply:
-            report_dir = u.Infra.get_report_dir(
+            report_dir = detector.reporting.get_report_dir(
                 root,
                 c.Infra.Toml.PROJECT,
                 c.Infra.Toml.DEPENDENCIES,
@@ -199,7 +291,7 @@ class FlextInfraDependencyDetectorRuntime:
                 return r[int].fail(f"failed to create report directory: {exc}")
             out_path = report_dir / "detect-runtime-dev-latest.json"
         if out_path is not None and not cli.dry_run:
-            write_result = u.Infra.write_json(out_path, report_payload)
+            write_result = detector.json.write_json(out_path, report_payload)
             if write_result.is_failure:
                 return r[int].fail(write_result.error or "failed to write report")
             if not args.quiet:

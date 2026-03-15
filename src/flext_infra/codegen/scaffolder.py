@@ -17,7 +17,6 @@ from pydantic import BaseModel
 from flext_core import r, s, t
 from flext_infra import (
     FlextInfraNamespaceValidator,
-    FlextInfraUtilitiesDiscovery,
     c,
     m,
     u,
@@ -63,8 +62,7 @@ class FlextInfraCodegenScaffolder(s):
             List of ScaffoldResult models, one per project.
 
         """
-        discovery = FlextInfraUtilitiesDiscovery()
-        projects_result = discovery.discover_projects(self._workspace_root)
+        projects_result = u.Infra.discover_projects(self._workspace_root)
         if not projects_result.is_success:
             return []
         results: list[m.Infra.Codegen.ScaffoldResult] = []

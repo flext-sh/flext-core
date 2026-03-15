@@ -13,8 +13,6 @@ from pydantic import JsonValue, TypeAdapter, ValidationError
 
 from flext_core import FlextLogger, r
 from flext_infra import (
-    FlextInfraUtilitiesSubprocess,
-    FlextInfraUtilitiesTomlParse,
     c,
     m,
     p,
@@ -30,9 +28,12 @@ class FlextInfraInternalDependencySyncService:
 
     def __init__(self) -> None:
         """Initialize the internal dependency sync service."""
-        self.runner: p.Infra.CommandRunner = FlextInfraUtilitiesSubprocess()
+        self.toml: p.Infra.TomlReader | None = None
 
-        self.toml: p.Infra.TomlReader = FlextInfraUtilitiesTomlParse()
+    def _read_plain(self, path: Path) -> r[t.Infra.TomlConfig]:
+        if self.toml is not None:
+            return self.toml.read_plain(path)
+        return u.Infra.read_plain(path)
 
     @staticmethod
     def ensure_symlink(target: Path, source: Path) -> r[bool]:
@@ -190,7 +191,7 @@ class FlextInfraInternalDependencySyncService:
         pyproject = project_root / c.Infra.Files.PYPROJECT_FILENAME
         if not pyproject.exists():
             return r[Mapping[str, Path]].ok({})
-        data_result = self.toml.read_plain(pyproject)
+        data_result = self._read_plain(pyproject)
         if data_result.is_failure:
             return r[Mapping[str, Path]].fail(
                 data_result.error or f"failed to read {pyproject}",
@@ -323,7 +324,7 @@ class FlextInfraInternalDependencySyncService:
 
     def parse_repo_map(self, path: Path) -> r[Mapping[str, m.Infra.Github.RepoUrls]]:
         """Parse flext-repo-map TOML into repository URL entries."""
-        data_result = self.toml.read_plain(path)
+        data_result = self._read_plain(path)
         if data_result.is_failure:
             return r[Mapping[str, m.Infra.Github.RepoUrls]].fail(
                 data_result.error or "failed to read repository map",
@@ -439,4 +440,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-__all__ = ["FlextInfraInternalDependencySyncService", "main", "shutil"]
+__all__ = ["FlextInfraInternalDependencySyncService", "shutil"]

@@ -44,7 +44,7 @@ class FlextInfraWorkflowSyncer:
         """Initialize the workflow syncer."""
         self._selector = selector
         self._json = json_io
-        self._templates = templates or FlextInfraUtilitiesTemplates()
+        self._templates = templates
 
     def render_template(self, template_path: Path) -> r[str]:
         """Read and render a workflow template with generated header.
@@ -60,9 +60,12 @@ class FlextInfraWorkflowSyncer:
             body = template_path.read_text(encoding=c.Infra.Encoding.DEFAULT)
         except OSError as exc:
             return r[str].fail(f"failed to read template: {exc}")
-        header = self._templates.GENERATED_SHELL_HEADER.format(
-            source="flext_infra.github.workflows",
+        header_template = (
+            self._templates.GENERATED_SHELL_HEADER
+            if self._templates is not None
+            else u.Infra.GENERATED_SHELL_HEADER
         )
+        header = header_template.format(source="flext_infra.github.workflows")
         if body.startswith(header):
             return r[str].ok(body)
         return r[str].ok(header + body)

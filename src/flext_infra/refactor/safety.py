@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import TypeAlias, overload
 
 from flext_core import r
-from flext_infra import FlextInfraUtilitiesSubprocess, c, m, p, u
+from flext_infra import c, m, p, u
 from flext_infra._utilities.safety import FlextInfraUtilitiesSafety
 
 RBool: TypeAlias = r[bool]
@@ -24,8 +24,7 @@ class FlextInfraRefactorSafetyManager:
         test_command: list[str] | None = None,
     ) -> None:
         """Initialize safety manager with runner, checkpoint path, and test command."""
-        effective_runner = runner or FlextInfraUtilitiesSubprocess()
-        self._runner: p.Infra.SafetyRunner = effective_runner
+        self._runner: p.Infra.SafetyRunner | None = runner
         self._checkpoint_path = checkpoint_path or Path(
             ".sisyphus/refactor/safety-checkpoint.json",
         )
@@ -37,6 +36,11 @@ class FlextInfraRefactorSafetyManager:
         ]
         self._emergency_stop_reason = ""
         self._last_workspace_root: Path | None = None
+
+    def _run_checked(self, cmd: list[str], cwd: Path) -> RBool:
+        if self._runner is not None:
+            return self._runner.run_checked(cmd, cwd=cwd)
+        return u.Infra.run_checked(cmd, cwd=cwd)
 
     def create_checkpoint(
         self,
@@ -136,11 +140,11 @@ class FlextInfraRefactorSafetyManager:
             "--collect-only",
             "-q",
         ]
-        ic = self._runner.run_checked(import_cmd, cwd=workspace_root)
+        ic = self._run_checked(import_cmd, workspace_root)
         if ic.is_failure:
             out3: RBool = r[bool].fail(ic.error or "import validation failed")
             return out3
-        tc = self._runner.run_checked(self._test_command, cwd=workspace_root)
+        tc = self._run_checked(self._test_command, workspace_root)
         if tc.is_failure:
             out4: RBool = r[bool].fail(tc.error or "test validation failed")
             return out4

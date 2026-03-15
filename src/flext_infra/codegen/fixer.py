@@ -25,7 +25,6 @@ from flext_infra import (
     FlextInfraNamespaceValidator,
     FlextInfraRefactorEngine,
     FlextInfraRefactorMigrateToClassMRO,
-    FlextInfraUtilitiesDiscovery,
     NamespaceEnforcementRewriter,
     c,
     m,
@@ -208,7 +207,10 @@ class FlextInfraCodegenFixer(s):
         files_modified: set[str],
     ) -> m.Infra.Refactor.MROMigrationReport:
         service = FlextInfraRefactorMigrateToClassMRO(workspace_root=project_path)
-        report = service.run(target="all", apply=True)
+        report: m.Infra.Refactor.MROMigrationReport = service.run(
+            target="all",
+            apply=True,
+        )
         files_modified.update(migration.file for migration in report.migrations)
         files_modified.update(rewrite.file for rewrite in report.rewrites)
         return report
@@ -425,8 +427,7 @@ class FlextInfraCodegenFixer(s):
             List of AutoFixResult models, one per project.
 
         """
-        discovery = FlextInfraUtilitiesDiscovery()
-        projects_result = discovery.discover_projects(self._workspace_root)
+        projects_result = u.Infra.discover_projects(self._workspace_root)
         if not projects_result.is_success:
             return []
         results: list[m.Infra.Codegen.AutoFixResult] = []

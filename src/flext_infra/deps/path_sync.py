@@ -16,6 +16,8 @@ from tomlkit.toml_document import TOMLDocument
 
 from flext_core import FlextLogger, r
 from flext_infra import (
+    FlextInfraUtilitiesDiscovery,
+    FlextInfraUtilitiesToml,
     c,
     m,
     u,
@@ -47,10 +49,30 @@ class FlextInfraDependencyPathSync:
     def __init__(self) -> None:
         """Initialize the dependency path sync service with TOML service."""
         self._root = self.ROOT
+        self._discovery = FlextInfraUtilitiesDiscovery()
+        self._toml = FlextInfraUtilitiesToml()
 
     def set_workspace_root(self, workspace_root: Path) -> None:
         """Configure workspace root for path resolution."""
         self._root = workspace_root
+
+    def _discover_projects(self) -> r[list[m.Infra.Workspace.ProjectInfo]]:
+        try:
+            return self._discovery.discover_projects(self._root)
+        except TypeError:
+            return FlextInfraUtilitiesDiscovery.discover_projects(self._root)
+
+    def _read_document(self, path: Path) -> r[TOMLDocument]:
+        try:
+            return self._toml.read_document(path)
+        except TypeError:
+            return FlextInfraUtilitiesToml.read_document(path)
+
+    def _write_document(self, path: Path, doc: TOMLDocument) -> r[bool]:
+        try:
+            return self._toml.write_document(path, doc)
+        except TypeError:
+            return FlextInfraUtilitiesToml.write_document(path, doc)
 
     @staticmethod
     def detect_mode(project_root: Path) -> str:
@@ -136,10 +158,12 @@ class FlextInfraDependencyPathSync:
                 marker = f" ;{marker_part}"
             dep_name = self._extract_requirement_name(requirement_part)
             if not dep_name or dep_name not in internal_names:
+                updated_deps.append(item)
                 continue
             if " @ " in requirement_part:
                 match = c.Infra.Deps.PEP621_PATH_DEP_RE.match(requirement_part)
                 if not match:
+                    updated_deps.append(item)
                     continue
                 raw_path = match.group("path").strip()
                 dep_name = self.extract_dep_name(raw_path)
@@ -204,7 +228,7 @@ class FlextInfraDependencyPathSync:
         dry_run: bool = False,
     ) -> r[list[str]]:
         """Rewrite PEP 621 and Poetry dependency paths."""
-        doc_result = u.Infra.read_document(pyproject_path)
+        doc_result = self._read_document(pyproject_path)
         if doc_result.is_failure:
             return r[list[str]].fail(doc_result.error or "failed to read TOML document")
         doc: TOMLDocument = doc_result.value
@@ -216,7 +240,7 @@ class FlextInfraDependencyPathSync:
         )
         changes += self._rewrite_poetry(doc, is_root=is_root, mode=mode)
         if changes and (not dry_run):
-            write_result = u.Infra.write_document(pyproject_path, doc)
+            write_result = self._write_document(pyproject_path, doc)
             if write_result.is_failure:
                 return r[list[str]].fail(write_result.error or "failed to write TOML")
         return r[list[str]].ok(changes)
@@ -236,7 +260,7 @@ class FlextInfraDependencyPathSync:
         root_pyproject = self._root / c.Infra.Files.PYPROJECT_FILENAME
 
         if root_pyproject.exists():
-            root_data_result = u.Infra.read_document(root_pyproject)
+            root_data_result = self._read_document(root_pyproject)
             if root_data_result.is_success:
                 root_data: TOMLDocument = root_data_result.value
                 root_project = self._table_get(root_data, c.Infra.Toml.PROJECT)
@@ -269,7 +293,7 @@ class FlextInfraDependencyPathSync:
                     output.info(change)
                 total_changes += len(changes)
 
-        discover_result = u.Infra.discover_projects(self._root)
+        discover_result = self._discover_projects()
         if discover_result.is_failure:
             discovery_error = discover_result.error or "sync_dep_paths_discovery_failed"
             self._log.error(
@@ -290,7 +314,7 @@ class FlextInfraDependencyPathSync:
             pyproject = project_dir / c.Infra.Files.PYPROJECT_FILENAME
             if not pyproject.exists():
                 continue
-            data_result = u.Infra.read_document(pyproject)
+            data_result = self._read_document(pyproject)
             if data_result.is_failure:
                 continue
             project_data: TOMLDocument = data_result.value
@@ -361,4 +385,4 @@ if __name__ == "__main__":
     sys.exit(main())
 
 
-__all__ = ["FlextInfraDependencyPathSync", "main"]
+__all__ = ["FlextInfraDependencyPathSync"]

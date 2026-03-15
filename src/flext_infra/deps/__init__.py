@@ -47,14 +47,21 @@ if TYPE_CHECKING:
         run_mypy_stub_hints,
         run_pip_check,
     )
-    from flext_infra.deps.detector import FlextInfraRuntimeDevDependencyDetector
+    from flext_infra.deps.detector import (
+        FlextInfraRuntimeDevDependencyDetector,
+        FlextInfraUtilitiesIo,
+        FlextInfraUtilitiesPaths,
+        FlextInfraUtilitiesReporting,
+        FlextInfraUtilitiesSubprocess,
+        main,
+    )
     from flext_infra.deps.extra_paths import FlextInfraExtraPathsManager
     from flext_infra.deps.internal_sync import (
         FlextInfraInternalDependencySyncService,
         shutil,
     )
     from flext_infra.deps.modernizer import FlextInfraPyprojectModernizer, u
-    from flext_infra.deps.path_sync import FlextInfraDependencyPathSync, main
+    from flext_infra.deps.path_sync import FlextInfraDependencyPathSync
     from flext_infra.deps.tool_config import FlextInfraDependencyToolConfig
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
@@ -130,6 +137,19 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "flext_infra.deps.detector",
         "FlextInfraRuntimeDevDependencyDetector",
     ),
+    "FlextInfraUtilitiesIo": ("flext_infra.deps.detector", "FlextInfraUtilitiesIo"),
+    "FlextInfraUtilitiesPaths": (
+        "flext_infra.deps.detector",
+        "FlextInfraUtilitiesPaths",
+    ),
+    "FlextInfraUtilitiesReporting": (
+        "flext_infra.deps.detector",
+        "FlextInfraUtilitiesReporting",
+    ),
+    "FlextInfraUtilitiesSubprocess": (
+        "flext_infra.deps.detector",
+        "FlextInfraUtilitiesSubprocess",
+    ),
     "InjectCommentsPhase": (
         "flext_infra.deps._phases.inject_comments",
         "InjectCommentsPhase",
@@ -144,7 +164,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     ),
     "get_required_typings": ("flext_infra.deps.detection", "get_required_typings"),
     "load_dependency_limits": ("flext_infra.deps.detection", "load_dependency_limits"),
-    "main": ("flext_infra.deps.path_sync", "main"),
+    "main": ("flext_infra.deps.detector", "main"),
     "module_to_types_package": (
         "flext_infra.deps.detection",
         "module_to_types_package",
@@ -176,6 +196,10 @@ __all__ = [
     "FlextInfraInternalDependencySyncService",
     "FlextInfraPyprojectModernizer",
     "FlextInfraRuntimeDevDependencyDetector",
+    "FlextInfraUtilitiesIo",
+    "FlextInfraUtilitiesPaths",
+    "FlextInfraUtilitiesReporting",
+    "FlextInfraUtilitiesSubprocess",
     "InjectCommentsPhase",
     "build_project_report",
     "classify_issues",

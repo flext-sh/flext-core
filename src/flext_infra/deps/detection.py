@@ -12,8 +12,10 @@ from pydantic import JsonValue, TypeAdapter, ValidationError
 from flext_core import FlextLogger, r
 from flext_infra import (
     FlextInfraUtilitiesPatterns,
+    FlextInfraUtilitiesSelection,
     c,
     m,
+    p,
     t,
     u,
 )
@@ -30,7 +32,35 @@ class FlextInfraDependencyDetectionService:
 
     def __init__(self) -> None:
         """Initialize the dependency detection service with selector, toml, and runner."""
-        pass
+        self.selector: FlextInfraUtilitiesSelection | None = None
+        self.toml: p.Infra.TomlReader | None = None
+        self.runner: p.Infra.CommandRunner | None = None
+
+    def _resolve_projects(
+        self,
+        workspace_root: Path,
+        names: list[str],
+    ) -> r[list[m.Infra.Workspace.ProjectInfo]]:
+        if self.selector is not None:
+            return self.selector.resolve_projects(workspace_root, names)
+        return u.Infra.resolve_projects(workspace_root, names)
+
+    def _read_plain(self, path: Path) -> r[t.Infra.TomlConfig]:
+        if self.toml is not None:
+            return self.toml.read_plain(path)
+        return u.Infra.read_plain(path)
+
+    def _run_raw(
+        self,
+        cmd: list[str],
+        *,
+        cwd: Path | None = None,
+        timeout: int | None = None,
+        env: dict[str, str] | None = None,
+    ) -> r[m.Infra.Core.CommandOutput]:
+        if self.runner is not None:
+            return self.runner.run_raw(cmd, cwd=cwd, timeout=timeout, env=env)
+        return u.Infra.run_raw(cmd, cwd=cwd, timeout=timeout, env=env)
 
     @staticmethod
     def to_infra_value(
@@ -57,25 +87,21 @@ class FlextInfraDependencyDetectionService:
                     return None
                 converted.append(converted_item)
             return converted
-        if isinstance(value, Mapping):
-            try:
-                mapping_value = TypeAdapter(
-                    dict[str, t.Infra.InfraValue]
-                ).validate_python(value)
-            except ValidationError:
+        try:
+            mapping_value = TypeAdapter(dict[str, t.Infra.InfraValue]).validate_python(
+                value
+            )
+        except ValidationError:
+            return None
+        converted_map: dict[str, t.Infra.InfraValue] = {}
+        for key, item in mapping_value.items():
+            converted_item = FlextInfraDependencyDetectionService.to_infra_value(item)
+            if converted_item is None and item is not None:
                 return None
-            converted_map: dict[str, t.Infra.InfraValue] = {}
-            for key, item in mapping_value.items():
-                converted_item = FlextInfraDependencyDetectionService.to_infra_value(
-                    item
-                )
-                if converted_item is None and item is not None:
-                    return None
-                if not isinstance(converted_item, (str, int, float, bool, type(None))):
-                    return None
-                converted_map[str(key)] = converted_item
-            return converted_map
-        return None
+            if not isinstance(converted_item, (str, int, float, bool, type(None))):
+                return None
+            converted_map[str(key)] = converted_item
+        return converted_map
 
     @staticmethod
     def _mapping_from_value(
@@ -203,7 +229,7 @@ class FlextInfraDependencyDetectionService:
         For full ProjectInfo metadata, use u.Infra.discover_projects().
         """
         names = projects_filter or []
-        result = u.Infra.resolve_projects(workspace_root, names)
+        result = self._resolve_projects(workspace_root, names)
         if result.is_failure:
             return r[list[Path]].fail(result.error or "project resolution failed")
         projects_info: list[m.Infra.Workspace.ProjectInfo] = result.value
@@ -217,7 +243,7 @@ class FlextInfraDependencyDetectionService:
     def get_current_typings_from_pyproject(self, project_path: Path) -> list[str]:
         """Extract currently declared typing packages from project pyproject.toml."""
         pyproject = project_path / c.Infra.Files.PYPROJECT_FILENAME
-        read_result = u.Infra.read_plain(pyproject)
+        read_result = self._read_plain(pyproject)
         if read_result.is_failure:
             return []
         data = self._to_toml_config(read_result.value)
@@ -327,7 +353,7 @@ class FlextInfraDependencyDetectionService:
     ) -> Mapping[str, t.Infra.TomlValue]:
         """Load dependency limits configuration from TOML file."""
         path = limits_path or Path(__file__).resolve().parent / "dependency_limits.toml"
-        result = u.Infra.read_plain(path)
+        result = self._read_plain(path)
         if result.is_failure:
             return {}
         limits: MutableMapping[str, t.Infra.TomlValue] = {}
@@ -393,7 +419,7 @@ class FlextInfraDependencyDetectionService:
         if extend_exclude:
             for excluded in extend_exclude:
                 cmd.extend(["--extend-exclude", excluded])
-        result = u.Infra.run_raw(
+        result = self._run_raw(
             cmd,
             cwd=project_path,
             timeout=c.Infra.Timeouts.MEDIUM,
@@ -457,7 +483,7 @@ class FlextInfraDependencyDetectionService:
             "VIRTUAL_ENV": str(venv_bin.parent),
             "PATH": f"{venv_bin}:{os.environ.get('PATH', '')}",
         }
-        result = u.Infra.run_raw(cmd, cwd=project_path, timeout=timeout, env=env)
+        result = self._run_raw(cmd, cwd=project_path, timeout=timeout, env=env)
         if result.is_failure:
             return r[tuple[list[str], list[str]]].fail(
                 result.error or "mypy execution failed",
@@ -486,7 +512,7 @@ class FlextInfraDependencyDetectionService:
         if not pip.exists():
             return r[tuple[list[str], int]].ok(([], 0))
         env = {**os.environ, "VIRTUAL_ENV": str(venv_bin.parent)}
-        result = u.Infra.run_raw(
+        result = self._run_raw(
             [str(pip), c.Infra.Verbs.CHECK],
             cwd=workspace_root,
             timeout=c.Infra.Timeouts.SHORT,

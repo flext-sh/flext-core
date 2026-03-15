@@ -24,7 +24,7 @@ from pathlib import Path
 from typing import ClassVar, override
 
 from flext_core import r, s
-from flext_infra import FlextInfraUtilitiesSubprocess, c, output, u
+from flext_infra import c, output, u
 
 # ---------------------------------------------------------------------------
 # Service class
@@ -523,8 +523,7 @@ class FlextInfraCodegenLazyInit(s[int]):
     def _run_ruff_fix(path: Path) -> None:
         """Run ``ruff --fix`` on the given file to auto-fix lint issues."""
         with contextlib.suppress(FileNotFoundError):
-            runner = FlextInfraUtilitiesSubprocess()
-            runner.run_checked([
+            u.Infra.run_checked([
                 c.Infra.Cli.RUFF,
                 c.Infra.Cli.RuffCmd.CHECK,
                 "--fix",

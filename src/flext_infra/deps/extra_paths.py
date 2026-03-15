@@ -142,10 +142,7 @@ class FlextInfraExtraPathsManager:
         doc_result = self.toml.read_document(pyproject_path)
         if doc_result.is_failure:
             return r[bool].fail(doc_result.error or f"failed to read {pyproject_path}")
-        doc_val = doc_result.value
-        if not isinstance(doc_val, TOMLDocument):
-            return r[bool].fail(f"unexpected type from TOML read: {pyproject_path}")
-        doc: TOMLDocument = doc_val
+        doc: TOMLDocument = doc_result.value
         dep_paths = self.get_dep_paths(doc, is_root=is_root)
         pyright_extra = (
             c.Infra.Deps.PYRIGHT_BASE_ROOT + dep_paths
@@ -272,8 +269,7 @@ def main(argv: list[str] | None = None) -> int:
     project_dirs = _resolve_project_dirs(cli)
     result = manager.sync_extra_paths(dry_run=cli.dry_run, project_dirs=project_dirs)
     if result.is_success:
-        exit_code = result.value
-        return exit_code if isinstance(exit_code, int) else 1
+        return result.value
     u.Infra.error(result.error or "sync failed")
     return 1
 
@@ -284,5 +280,4 @@ if __name__ == "__main__":
 
 __all__ = [
     "FlextInfraExtraPathsManager",
-    "main",
 ]
