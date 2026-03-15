@@ -9,7 +9,7 @@ import tomlkit
 from tomlkit.items import Table
 
 from flext_core import r
-from flext_infra import FlextInfraUtilitiesSubprocess, ProjectClassifier, c, p, u
+from flext_infra import ProjectClassifier, c, u
 from flext_infra.deps._phases import (
     ConsolidateGroupsPhase,
     EnsureCoverageConfigPhase,
@@ -35,7 +35,6 @@ class FlextInfraPyprojectModernizer:
     def __init__(self, workspace_root: Path | None = None) -> None:
         """Initialize pyproject modernizer."""
         self.root = workspace_root or self.ROOT
-        self._runner: p.Infra.CommandRunner = FlextInfraUtilitiesSubprocess()
         tool_config_result = FlextInfraDependencyToolConfig.load_tool_config()
         if tool_config_result.is_failure:
             msg = tool_config_result.error or "failed to load deps tool config"
@@ -154,7 +153,7 @@ class FlextInfraPyprojectModernizer:
             rendered, comment_changes = InjectCommentsPhase().apply(rendered)
             changes.extend(comment_changes)
         if changes and (not dry_run):
-            _ = path.write_text(rendered, encoding=c.Infra.Encoding.DEFAULT)
+            u.write_file(path, rendered, encoding=c.Infra.Encoding.DEFAULT)
         return changes
 
     def run(self, args: Namespace, cli: u.Infra.CliArgs) -> int:
@@ -200,7 +199,7 @@ class FlextInfraPyprojectModernizer:
         has_warning = False
         for path in files:
             project_dir = path.parent
-            result = self._runner.run_raw(
+            result = u.Infra.run_raw(
                 [c.Infra.Cli.POETRY, c.Infra.Cli.PoetryCmd.CHECK],
                 cwd=project_dir,
             )

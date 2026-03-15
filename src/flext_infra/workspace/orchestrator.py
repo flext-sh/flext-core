@@ -19,12 +19,10 @@ from pydantic import BaseModel
 
 from flext_core import FlextLogger, r, s, t
 from flext_infra import (
-    FlextInfraUtilitiesReporting,
-    FlextInfraUtilitiesSubprocess,
     c,
     m,
     output,
-    p,
+    u,
 )
 
 logger = FlextLogger.create_module_logger(__name__)
@@ -54,8 +52,6 @@ class FlextInfraOrchestratorService(s):
             wire_packages=None,
             wire_classes=None,
         )
-        self._runner: p.Infra.CommandRunner = FlextInfraUtilitiesSubprocess()
-        self._reporting: FlextInfraUtilitiesReporting = FlextInfraUtilitiesReporting()
 
     @override
     def execute(
@@ -164,7 +160,7 @@ class FlextInfraOrchestratorService(s):
             CommandOutput with log path in stdout, exit code, and timing.
 
         """
-        log_path = self._reporting.get_report_path(
+        log_path = u.Infra.get_report_path(
             Path.cwd(),
             c.Infra.ReportKeys.WORKSPACE,
             verb,
@@ -172,7 +168,7 @@ class FlextInfraOrchestratorService(s):
         )
         log_path.parent.mkdir(parents=True, exist_ok=True)
         started = time.monotonic()
-        proc_result = self._runner.run_to_file(
+        proc_result = u.Infra.run_to_file(
             [c.Infra.Cli.MAKE, "-C", project, verb, *make_args],
             log_path,
             env={"NO_COLOR": "1", **os.environ},

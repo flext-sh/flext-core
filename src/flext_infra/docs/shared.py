@@ -16,16 +16,7 @@ from pathlib import Path
 from pydantic import BaseModel, JsonValue
 
 from flext_core import r
-from flext_infra import (
-    FlextInfraUtilitiesDiscovery,
-    FlextInfraUtilitiesReporting,
-    c,
-    m,
-    u,
-)
-
-_discovery = FlextInfraUtilitiesDiscovery()
-_reporting = FlextInfraUtilitiesReporting()
+from flext_infra import c, m, u
 
 
 class FlextInfraDocsShared:
@@ -47,7 +38,7 @@ class FlextInfraDocsShared:
                     part.strip() for part in requested[0].split(" ") if part.strip()
                 ]
             return requested
-        result: r[list[m.Infra.Workspace.ProjectInfo]] = _discovery.discover_projects(
+        result: r[list[m.Infra.Workspace.ProjectInfo]] = u.Infra.discover_projects(
             workspace_root,
         )
         return result.fold(

@@ -12,8 +12,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from flext_core import FlextLogger, r
-from flext_infra import FlextInfraUtilitiesSubprocess, c, m, p, u
-from flext_infra.docs.shared import FlextInfraDocsShared
+from flext_infra import FlextInfraDocsShared, c, m, p, u
 
 logger = FlextLogger.create_module_logger(__name__)
 
@@ -27,7 +26,7 @@ class FlextInfraDocBuilder:
 
     def __init__(self) -> None:
         """Initialize the documentation builder."""
-        self._runner: p.Infra.CommandRunner = FlextInfraUtilitiesSubprocess()
+        self._runner: p.Infra.CommandRunner = u.Infra()
 
     @staticmethod
     def _write_reports(

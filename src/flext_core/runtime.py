@@ -1565,7 +1565,7 @@ class FlextRuntime:
 
         def tap(self, func: Callable[[T], None]) -> FlextRuntime.RuntimeResult[T]:
             """Apply side effect to success value, return unchanged."""
-            if self.is_success and not isinstance(self._payload, FlextRuntime._Unset):
+            if self.is_success and self._payload is not None:
                 func(self._payload)
             return self
 

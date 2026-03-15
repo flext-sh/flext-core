@@ -18,8 +18,6 @@ from tomlkit import items
 
 from flext_core import FlextLogger, r, s
 from flext_infra import (
-    FlextInfraUtilitiesDiscovery,
-    FlextInfraUtilitiesPaths,
     c,
     t,
     u,
@@ -47,8 +45,6 @@ class FlextInfraConfigFixer(s):
             wire_packages=None,
             wire_classes=None,
         )
-        self._path_resolver = FlextInfraUtilitiesPaths()
-        self._discovery = FlextInfraUtilitiesDiscovery()
         self._workspace_root = self._resolve_workspace_root(workspace_root)
 
     @staticmethod
@@ -79,7 +75,7 @@ class FlextInfraConfigFixer(s):
         project_paths: list[Path] | None = None,
     ) -> r[list[Path]]:
         """Find pyproject.toml files for selected projects."""
-        return self._discovery.find_all_pyproject_files(
+        return u.Infra.find_all_pyproject_files(
             self._workspace_root,
             project_paths=project_paths,
         )
@@ -288,7 +284,7 @@ class FlextInfraConfigFixer(s):
     def _resolve_workspace_root(self, workspace_root: Path | None) -> Path:
         if workspace_root is not None:
             return workspace_root.resolve()
-        result = self._path_resolver.workspace_root()
+        result = u.Infra.workspace_root()
         return result.value if result.is_success else Path.cwd().resolve()
 
 
