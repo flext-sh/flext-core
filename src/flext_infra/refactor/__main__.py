@@ -13,7 +13,7 @@ from .namespace_enforcer import FlextInfraNamespaceEnforcer
 from .pydantic_centralizer import FlextInfraRefactorPydanticCentralizer
 
 
-def main() -> int:
+def _main_inner(argv: list[str] | None = None) -> int:
     """Module-level CLI entry point."""
     parser, subs = u.Infra.create_subcommand_parser(
         "flext_infra refactor",
@@ -57,7 +57,7 @@ def main() -> int:
         help="Remove remaining BaseModel/TypedDict bases in non-allowed files",
     )
 
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     cli = u.Infra.resolve(args)
     command = str(args.command)
 
@@ -173,8 +173,7 @@ def _run_census(cli: u.Infra.CliArgs, *, family: str, json_output: Path | None) 
     target = u.Infra.build_mro_target(family)
     result = census.run(cli.workspace, target=target)
     if result.is_failure:
-        output.error(f"Census failed: {result.error}")
-        return 1
+        return u.Infra.exit_code(result, failure_msg="Census failed")
     report = result.value
     output.write(FlextInfraRefactorCensus.render_text(report))
     output.write("\n")
@@ -188,6 +187,11 @@ def _run_census(cli: u.Infra.CliArgs, *, family: str, json_output: Path | None) 
         report,
     )
     return 0
+
+
+def main(argv: list[str] | None = None) -> int:
+    """Wrapped CLI entry point with centralized error handling."""
+    return u.Infra.run_cli(_main_inner, argv)
 
 
 if __name__ == "__main__":
