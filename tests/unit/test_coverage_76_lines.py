@@ -77,17 +77,17 @@ class TestResultBasics:
     def test_exception_connection_error(self) -> None:
         """Test ConnectionError exception."""
         exc = FlextExceptions.ConnectionError("connection lost")
-        tm.that(exc, none=False)
+        tm.that(str(exc), has="connection lost")
 
     def test_exception_rate_limit_error(self) -> None:
         """Test RateLimitError exception."""
         exc = FlextExceptions.RateLimitError("rate limited")
-        tm.that(exc, none=False)
+        tm.that(str(exc), has="rate limited")
 
     def test_exception_circuit_breaker_error(self) -> None:
         """Test CircuitBreakerError exception."""
         exc = FlextExceptions.CircuitBreakerError("circuit open")
-        tm.that(exc, none=False)
+        tm.that(str(exc), has="circuit open")
 
 
 class TestResultTransformations:

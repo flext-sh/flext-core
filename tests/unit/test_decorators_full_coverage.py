@@ -12,7 +12,7 @@ import pytest
 from pydantic import BaseModel, Field
 
 from flext_core import FlextContainer, FlextContext, FlextLogger, c, d, e, m, r, t
-from flext_tests import t as test_t
+from flext_tests import t as test_t, tm
 
 
 class _FakeLogger:
@@ -50,8 +50,8 @@ def test_deprecated_wrapper_emits_warning_and_returns_value() -> None:
 
     with warnings.catch_warnings(record=True) as caught:
         warnings.simplefilter("always")
-        assert fn("ok") == "OK"
-    assert any(w.category is DeprecationWarning for w in caught)
+        tm.that(fn("ok"), eq="OK")
+    tm.that(any(w.category is DeprecationWarning for w in caught), eq=True)
 
 
 def test_inject_sets_missing_dependency_from_container(
@@ -72,7 +72,7 @@ def test_inject_sets_missing_dependency_from_container(
     def fn(*, dep: str = "fallback") -> str:
         return dep
 
-    assert fn() == "dep"
+    tm.that(fn(), eq="dep")
 
 
 def test_log_operation_track_perf_exception_adds_duration(
@@ -113,8 +113,8 @@ def test_log_operation_track_perf_exception_adds_duration(
     with pytest.raises(ValueError):
         fn()
     _message, kwargs = fake_logger.exception_calls[-1]
-    assert "duration_ms" in kwargs
-    assert "duration_seconds" in kwargs
+    tm.that("duration_ms" in kwargs, eq=True)
+    tm.that("duration_seconds" in kwargs, eq=True)
 
 
 def test_retry_unreachable_timeouterror_path(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -159,7 +159,7 @@ def test_resolve_logger_prefers_logger_attribute() -> None:
     def target() -> None:
         return None
 
-    assert d._resolve_logger((owner,), target) is logger
+    tm.that(d._resolve_logger((owner,), target) is logger, eq=True)
 
 
 def test_execute_retry_loop_covers_default_linear_and_never_ran(
@@ -192,8 +192,8 @@ def test_execute_retry_loop_covers_default_linear_and_never_ran(
         cast("FlextLogger", fake_logger),
         retry_config=cfg,
     )
-    assert isinstance(result_exc, Exception)
-    assert calls["n"] == 2
+    tm.that(isinstance(result_exc, Exception), eq=True)
+    tm.that(calls["n"], eq=2)
 
     def _fake_retry_config(**_kw: test_t.Tests.object) -> SimpleNamespace:
         return SimpleNamespace(
@@ -213,7 +213,7 @@ def test_execute_retry_loop_covers_default_linear_and_never_ran(
         cast("FlextLogger", fake_logger),
         retry_config=None,
     )
-    assert isinstance(result_none, RuntimeError)
+    tm.that(isinstance(result_none, RuntimeError), eq=True)
 
 
 def test_handle_retry_exhaustion_falsey_exception_reaches_timeout_error() -> None:
@@ -253,8 +253,8 @@ def test_bind_operation_context_without_ensure_correlation_and_bind_failure(
         function_name="fn",
         ensure_correlation=False,
     )
-    assert cid == "cid-existing"
-    assert fake_logger.warning_calls
+    tm.that(cid, eq="cid-existing")
+    tm.that(len(fake_logger.warning_calls) > 0, eq=True)
 
 
 def test_clear_operation_scope_and_handle_log_result_paths(
@@ -283,7 +283,7 @@ def test_clear_operation_scope_and_handle_log_result_paths(
         fallback_message="fallback2",
         kwargs=m.ConfigMap(root={"extra": "not-a-dict"}),
     )
-    assert fake_logger.warning_calls
+    tm.that(len(fake_logger.warning_calls) > 0, eq=True)
 
 
 def test_handle_log_result_without_fallback_logger_and_non_dict_like_extra(
@@ -314,7 +314,7 @@ def test_handle_log_result_without_fallback_logger_and_non_dict_like_extra(
         fallback_message="fallback",
         kwargs=m.ConfigMap(root={"extra": {"k": "v"}}),
     )
-    assert fake_logger.warning_calls
+    tm.that(len(fake_logger.warning_calls) > 0, eq=True)
 
 
 def test_timeout_covers_exception_timeout_branch() -> None:
@@ -359,10 +359,10 @@ def test_combined_with_and_without_railway_uses_injection(
     def fn_railway(*, dep: int = 0) -> int:
         return dep + 2
 
-    assert fn_standard() == 43
+    tm.that(fn_standard(), eq=43)
     result = fn_railway()
-    assert getattr(result, "is_success", False) is True
-    assert getattr(result, "value", None) == 44
+    tm.that(getattr(result, "is_success", False), eq=True)
+    tm.that(getattr(result, "value", None), eq=44)
 
 
 def test_with_correlation_with_context_track_operation_and_factory(
@@ -384,8 +384,8 @@ def test_with_correlation_with_context_track_operation_and_factory(
     def fn() -> str:
         return "ok"
 
-    assert fn() == "ok"
-    assert ensure_calls == [1]
+    tm.that(fn(), eq="ok")
+    tm.that(ensure_calls, eq=[1])
 
     def _resolve_logger(
         _args: tuple[object, ...],
@@ -422,7 +422,7 @@ def test_with_correlation_with_context_track_operation_and_factory(
     def with_ctx() -> str:
         return "ctx"
 
-    assert with_ctx() == "ctx"
+    tm.that(with_ctx(), eq="ctx")
     monkeypatch.setattr(
         "flext_core.decorators.FlextDecorators._bind_operation_context",
         _bind_operation_context,
@@ -436,13 +436,13 @@ def test_with_correlation_with_context_track_operation_and_factory(
     def tracked() -> str:
         return "done"
 
-    assert tracked() == "done"
+    tm.that(tracked(), eq="done")
 
     @d.factory(name="svc.factory", singleton=True, lazy=False)
     def build(_value: BaseModel) -> BaseModel:
         return m.ConfigMap(root={"v": 7})
 
-    assert hasattr(build, c.Discovery.FACTORY_ATTR)
+    tm.that(hasattr(build, c.Discovery.FACTORY_ATTR), eq=True)
 
 
 def test_track_performance_success_and_failure_paths(
@@ -484,7 +484,7 @@ def test_track_performance_success_and_failure_paths(
         msg = "boom"
         raise ValueError(msg)
 
-    assert ok_fn() == "ok"
+    tm.that(ok_fn(), eq="ok")
     with pytest.raises(ValueError):
         fail_fn()
 
@@ -495,7 +495,7 @@ def test_railway_and_retry_additional_paths(monkeypatch: pytest.MonkeyPatch) -> 
     def already_result() -> r[int]:
         return r[int].ok(1)
 
-    assert already_result().is_success
+    tm.ok(already_result())
 
     @d.railway(error_code=cast("str", 123))
     def fails() -> int:
@@ -503,7 +503,7 @@ def test_railway_and_retry_additional_paths(monkeypatch: pytest.MonkeyPatch) -> 
         raise RuntimeError(msg)
 
     fail_result: r[int] = fails()
-    assert fail_result.is_failure
+    tm.fail(fail_result)
     fake_logger = _FakeLogger()
 
     def _resolve_logger(
@@ -528,7 +528,7 @@ def test_railway_and_retry_additional_paths(monkeypatch: pytest.MonkeyPatch) -> 
     def retry_fn() -> str:
         return "ok"
 
-    assert retry_fn() == "done"
+    tm.that(retry_fn(), eq="done")
 
 
 def test_execute_retry_exponential_and_handle_exhaustion_raise_last_exception(
@@ -561,8 +561,8 @@ def test_execute_retry_exponential_and_handle_exhaustion_raise_last_exception(
         cast("FlextLogger", fake_logger),
         retry_config=cfg,
     )
-    assert isinstance(result, Exception)
-    assert calls["n"] == 2
+    tm.that(isinstance(result, Exception), eq=True)
+    tm.that(calls["n"], eq=2)
 
     def fn(*_args: t.Scalar, **_kwargs: t.Scalar) -> None:
         return None
@@ -583,7 +583,7 @@ def test_timeout_additional_success_and_reraise_timeout_paths() -> None:
     def quick() -> str:
         return "fast"
 
-    assert quick() == "fast"
+    tm.that(quick(), eq="fast")
 
     @d.timeout(timeout_seconds=1.0)
     def raises_timeout() -> None:

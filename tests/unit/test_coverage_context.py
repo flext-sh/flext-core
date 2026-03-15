@@ -5,7 +5,7 @@ from __future__ import annotations
 import time
 
 from flext_core import FlextContainer, FlextContext, m
-from flext_tests import FlextTestsUtilities, u
+from flext_tests import FlextTestsUtilities, u, tm
 
 from ..test_utils import assertion_helpers
 
@@ -16,8 +16,8 @@ class TestCorrelationDomain:
     def test_new_correlation_context(self) -> None:
         FlextTestsUtilities.Tests.ContextHelpers.clear_context()
         with FlextContext.Correlation.new_correlation() as correlation_id:
-            assert isinstance(correlation_id, str)
-            assert FlextContext.Correlation.get_correlation_id() == correlation_id
+            tm.that(isinstance(correlation_id, str), eq=True)
+            tm.that(FlextContext.Correlation.get_correlation_id(), eq=correlation_id)
 
     def test_new_correlation_with_explicit_id(self) -> None:
         FlextTestsUtilities.Tests.ContextHelpers.clear_context()
@@ -25,8 +25,8 @@ class TestCorrelationDomain:
         with FlextContext.Correlation.new_correlation(
             correlation_id=explicit_id,
         ) as correlation_id:
-            assert correlation_id == explicit_id
-            assert FlextContext.Correlation.get_correlation_id() == explicit_id
+            tm.that(correlation_id, eq=explicit_id)
+            tm.that(FlextContext.Correlation.get_correlation_id(), eq=explicit_id)
 
 
 class TestServiceDomain:
@@ -39,7 +39,7 @@ class TestServiceDomain:
         FlextContext.Service.register_service("test_service", test_service_obj)
         result = FlextContext.Service.get_service("test_service")
         _ = u.Tests.Result.assert_success(result)
-        assert result.value is test_service_obj
+        tm.that(result.value is test_service_obj, eq=True)
 
     def test_register_service(self) -> None:
         container = FlextContainer(_context=FlextContext())
@@ -61,36 +61,36 @@ class TestPerformanceDomain:
     def test_timed_operation_context(self) -> None:
         FlextTestsUtilities.Tests.ContextHelpers.clear_context()
         with FlextContext.Performance.timed_operation("database_query") as metadata:
-            assert "start_time" in metadata
-            assert "operation_name" in metadata
-            assert metadata["operation_name"] == "database_query"
+            tm.that("start_time" in metadata, eq=True)
+            tm.that("operation_name" in metadata, eq=True)
+            tm.that(metadata["operation_name"], eq="database_query")
             time.sleep(0.01)
             start_time = metadata.get("start_time")
-            assert start_time is not None
-            assert isinstance(start_time, str)
-        assert "end_time" in metadata
-        assert "duration_seconds" in metadata
+            tm.that(start_time is not None, eq=True)
+            tm.that(isinstance(start_time, str), eq=True)
+        tm.that("end_time" in metadata, eq=True)
+        tm.that("duration_seconds" in metadata, eq=True)
         duration_value = metadata["duration_seconds"]
-        assert isinstance(duration_value, float)
+        tm.that(isinstance(duration_value, float), eq=True)
         duration = duration_value
-        assert duration >= 0.01
-        assert duration < 0.1
+        tm.that(duration >= 0.01, eq=True)
+        tm.that(duration < 0.1, eq=True)
 
     def test_timed_operation_duration_calculation(self) -> None:
         FlextTestsUtilities.Tests.ContextHelpers.clear_context()
         expected_sleep = 0.05
         with FlextContext.Performance.timed_operation("slow_operation") as metadata:
             start_time = metadata.get("start_time")
-            assert start_time is not None
+            tm.that(start_time is not None, eq=True)
             time.sleep(expected_sleep)
         duration = metadata.get("duration_seconds", 0)
-        assert isinstance(duration, float)
-        assert duration >= expected_sleep * 0.8
-        assert duration < expected_sleep * 2
-        assert "start_time" in metadata
-        assert "end_time" in metadata
-        assert "operation_name" in metadata
-        assert metadata["operation_name"] == "slow_operation"
+        tm.that(isinstance(duration, float), eq=True)
+        tm.that(duration >= expected_sleep * 0.8, eq=True)
+        tm.that(duration < expected_sleep * 2, eq=True)
+        tm.that("start_time" in metadata, eq=True)
+        tm.that("end_time" in metadata, eq=True)
+        tm.that("operation_name" in metadata, eq=True)
+        tm.that(metadata["operation_name"], eq="slow_operation")
 
 
 class TestUtilitiesDomain:
@@ -99,14 +99,14 @@ class TestUtilitiesDomain:
     def test_ensure_correlation_id_creates_if_missing(self) -> None:
         FlextTestsUtilities.Tests.ContextHelpers.clear_context()
         correlation_id = FlextContext.Utilities.ensure_correlation_id()
-        assert isinstance(correlation_id, str)
+        tm.that(isinstance(correlation_id, str), eq=True)
 
     def test_ensure_correlation_id_uses_existing(self) -> None:
         FlextTestsUtilities.Tests.ContextHelpers.clear_context()
         existing_id = "existing_corr_789"
         FlextContext.Correlation.set_correlation_id(existing_id)
         correlation_id = FlextContext.Utilities.ensure_correlation_id()
-        assert correlation_id == existing_id
+        tm.that(correlation_id, eq=existing_id)
 
 
 class TestContextDataModel:
@@ -118,11 +118,11 @@ class TestContextDataModel:
         )
         context = FlextContext(initial_data=context_data)
         result1 = context.get("key1")
-        assert result1.is_success
-        assert result1.value == "value1"
+        tm.ok(result1)
+        tm.that(result1.value, eq="value1")
         result2 = context.get("key2")
-        assert result2.is_success
-        assert result2.value == "value2"
+        tm.ok(result2)
+        tm.that(result2.value, eq="value2")
 
 
 __all__ = [

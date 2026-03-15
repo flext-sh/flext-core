@@ -20,7 +20,7 @@ from pydantic import BaseModel
 import flext_core.runtime as runtime_module
 from flext_core import FlextRuntime, c, m, r, u
 from flext_core.runtime import RuntimeData
-from flext_tests import t
+from flext_tests import t, tm
 
 runtime_tests: ModuleType = import_module("tests.unit.test_runtime")
 runtime_cov_tests: ModuleType = import_module("tests.unit.test_runtime_coverage_100")
@@ -109,7 +109,7 @@ def test_async_log_writer_paths() -> None:
     writer.write("hello")
     writer.shutdown()
     writer.shutdown()
-    assert writer.stop_event.is_set()
+    tm.that(writer.stop_event.is_set(), eq=True)
 
     class EmptyQueue:
         def get(self, timeout: float = 0.1) -> str:
@@ -169,7 +169,7 @@ def test_async_log_writer_paths() -> None:
     broken.queue = cast("queue.Queue[str | None]", cast("object", SequenceQueue()))
     broken.stop_event = runtime_module.threading.Event()
     broken._worker()
-    assert "Error in async log writer\n" in failing.messages
+    tm.that(failing.messages, has="Error in async log writer\n")
 
     class EmptyThenSentinelQueue:
         def __init__(self) -> None:
@@ -238,10 +238,11 @@ def test_async_log_writer_shutdown_with_full_queue() -> None:
     thread = JoinRecorderThread()
     writer.thread = cast("runtime_module.threading.Thread", cast("object", thread))
     writer.shutdown()
-    assert writer.stop_event.is_set()
-    assert thread.join_timeout is not None
-    assert abs(thread.join_timeout - 2.0) < 1e-09
-    assert stream.flush_calls == 1
+    tm.that(writer.stop_event.is_set(), eq=True)
+    tm.that(thread.join_timeout is not None, eq=True)
+    if thread.join_timeout is not None:
+        tm.that(abs(thread.join_timeout - 2.0), lt=1e-09)
+    tm.that(stream.flush_calls, eq=1)
 
 
 def test_runtime_create_instance_failure_branch(
@@ -265,8 +266,8 @@ def test_runtime_create_instance_failure_branch(
 def test_normalization_edge_branches() -> None:
     cfg = m.ConfigMap(root={"a": 1})
     normalized_cfg = FlextRuntime.normalize_to_container(cfg)
-    assert isinstance(normalized_cfg, (m.ConfigMap, m.Dict))
-    assert normalized_cfg.root == {"a": 1}
+    tm.that(isinstance(normalized_cfg, (m.ConfigMap, m.Dict)), eq=True)
+    tm.that(getattr(normalized_cfg, "root", None), eq={"a": 1})
 
     class DictLike(Mapping[str, object]):
         @override
@@ -286,18 +287,20 @@ def test_normalization_edge_branches() -> None:
     normalized_dict_like = FlextRuntime.normalize_to_container(
         cast("RuntimeData", DictLike()),
     )
-    assert isinstance(normalized_dict_like, m.Dict)
-    assert normalized_dict_like.root == {"x": 1}
+    tm.that(isinstance(normalized_dict_like, m.Dict), eq=True)
+    tm.that(getattr(normalized_dict_like, "root", None), eq={"x": 1})
     metadata_cfg = FlextRuntime.normalize_to_metadata(cfg)
-    assert isinstance(metadata_cfg, str)
+    tm.that(isinstance(metadata_cfg, str), eq=True)
     metadata_dict_like = FlextRuntime.normalize_to_metadata(
         cast("RuntimeData", DictLike()),
     )
-    assert isinstance(metadata_dict_like, dict) and metadata_dict_like == {"x": 1}
+    tm.that(
+        isinstance(metadata_dict_like, dict) and metadata_dict_like == {"x": 1}, eq=True
+    )
     metadata_list = FlextRuntime.normalize_to_metadata(
         cast("RuntimeData", ["a", object()]),
     )
-    assert isinstance(metadata_list, list)
+    tm.that(isinstance(metadata_list, list), eq=True)
 
 
 def test_deprecated_normalize_to_general_value_warns() -> None:
@@ -308,7 +311,7 @@ def test_deprecated_normalize_to_general_value_warns() -> None:
         DeprecationWarning, match="normalize_to_general_value is deprecated"
     ):
         result = FlextRuntime.normalize_to_general_value("hello")
-    assert result == "hello"
+    tm.that(result, eq="hello")
 
 
 def test_deprecated_normalize_to_metadata_value_warns() -> None:
@@ -319,15 +322,15 @@ def test_deprecated_normalize_to_metadata_value_warns() -> None:
         DeprecationWarning, match="normalize_to_metadata_value is deprecated"
     ):
         result = FlextRuntime.normalize_to_metadata_value(42)
-    assert result is not None
+    tm.that(result is not None, eq=True)
 
 
 def test_get_logger_none_name_paths(monkeypatch: pytest.MonkeyPatch) -> None:
     logger_with_frame = FlextRuntime.get_logger()
-    assert logger_with_frame is not None
+    tm.that(logger_with_frame is not None, eq=True)
     monkeypatch.setattr(runtime_module.inspect, "currentframe", lambda: None)
     logger_no_frame = FlextRuntime.get_logger()
-    assert logger_no_frame is not None
+    tm.that(logger_no_frame is not None, eq=True)
 
 
 def test_dependency_registration_duplicate_guards() -> None:
@@ -437,8 +440,8 @@ def test_configure_structlog_edge_paths(monkeypatch: pytest.MonkeyPatch) -> None
 
     _ = Config  # referenced for pyright
     FlextRuntime.configure_structlog(config=None)
-    assert FlextRuntime.is_structlog_configured() is True
-    assert calls
+    tm.that(FlextRuntime.is_structlog_configured(), eq=True)
+    tm.that(calls, eq=True)
     FlextRuntime._structlog_configured = False
     calls.clear()
     fake_module._print_access = 0
@@ -461,7 +464,7 @@ def test_configure_structlog_edge_paths(monkeypatch: pytest.MonkeyPatch) -> None
 
     _ = ConfigNoAsync  # referenced for pyright
     FlextRuntime.configure_structlog(config=None)
-    assert FlextRuntime._structlog_configured
+    tm.that(FlextRuntime._structlog_configured, eq=True)
     FlextRuntime._structlog_configured = False
     calls.clear()
     fake_module._print_access = 0
@@ -477,7 +480,7 @@ def test_configure_structlog_edge_paths(monkeypatch: pytest.MonkeyPatch) -> None
 
     _ = ConfigAsyncFallback  # referenced for pyright
     FlextRuntime.configure_structlog(config=None)
-    assert FlextRuntime._structlog_configured
+    tm.that(FlextRuntime._structlog_configured, eq=True)
 
 
 def test_reconfigure_and_reset_state_paths() -> None:
@@ -496,9 +499,9 @@ def test_reconfigure_and_reset_state_paths() -> None:
     )
     FlextRuntime._structlog_configured = True
     FlextRuntime.reconfigure_structlog(log_level=logging.DEBUG, console_renderer=True)
-    assert dummy.called is True
+    tm.that(dummy.called, eq=True)
     FlextRuntime.reset_structlog_state_for_testing()
-    assert not FlextRuntime._structlog_configured
+    tm.that(FlextRuntime._structlog_configured, eq=False)
 
 
 def test_runtime_result_all_missed_branches() -> None:
@@ -527,38 +530,40 @@ def test_runtime_result_all_missed_branches() -> None:
         error_code="E1",
         error_data=m.ConfigMap(root={"x": 1}),
     )
-    assert success.is_success
-    assert success.unwrap_or(9) == 1
-    assert failure.unwrap_or(9) == 9
-    assert success.unwrap_or_else(lambda: 7) == 1
-    assert failure.unwrap_or_else(lambda: 7) == 7
+    tm.that(success.is_success, eq=True)
+    tm.that(success.unwrap_or(9), eq=1)
+    tm.that(failure.unwrap_or(9), eq=9)
+    tm.that(success.unwrap_or_else(lambda: 7), eq=1)
+    tm.that(failure.unwrap_or_else(lambda: 7), eq=7)
     with pytest.raises(RuntimeError, match="Cannot unwrap failed result"):
         failure.unwrap()
     mapped_ok = success.map(_plus_one)
-    assert mapped_ok.is_success and mapped_ok.value == 2
+    tm.that(mapped_ok.is_success and mapped_ok.value == 2, eq=True)
     mapped_error = success.map(_raise_bad)
-    assert mapped_error.is_failure
+    tm.that(mapped_error.is_failure, eq=True)
     mapped_failed = failure.map(int)
-    assert mapped_failed.is_failure
+    tm.that(mapped_failed.is_failure, eq=True)
     flat_mapped = success.flat_map(_ok_plus_one)
-    assert flat_mapped.value == 2
-    assert success.flat_map(_ok_plus_two).value == 3
-    assert success.fold(_error_to_int, _plus_one) == 2
-    assert failure.fold(_error_to_int, _plus_one) == 1
+    tm.that(flat_mapped.value, eq=2)
+    tm.that(success.flat_map(_ok_plus_two).value, eq=3)
+    tm.that(success.fold(_error_to_int, _plus_one), eq=2)
+    tm.that(failure.fold(_error_to_int, _plus_one), eq=1)
     tapped: list[int] = []
     success.tap(lambda x: tapped.append(x))
-    assert tapped == [1]
+    tm.that(tapped, eq=[1])
     errors: list[str] = []
     failure.tap_error(lambda err: errors.append(err))
-    assert errors == ["e"]
-    assert failure.map_error(lambda err: err.upper()).error == "E"
-    assert success.map_error(lambda err: err.upper()) is success
+    tm.that(errors, eq=["e"])
+    tm.that(failure.map_error(lambda err: err.upper()).error, eq="E")
+    tm.that(success.map_error(lambda err: err.upper()) is success, eq=True)
     filtered = success.filter(lambda value: value > 10)
-    assert filtered.is_failure
-    assert filtered.error == "Filter predicate failed"
-    assert failure.map_error(lambda err: f"{err}-alt").error == "e-alt"
-    assert failure.lash(lambda _err: FlextRuntime.RuntimeResult[int].ok(5)).value == 5
-    assert failure.recover(lambda _err: 7).value == 7
+    tm.that(filtered.is_failure, eq=True)
+    tm.that(filtered.error, eq="Filter predicate failed")
+    tm.that(failure.map_error(lambda err: f"{err}-alt").error, eq="e-alt")
+    tm.that(
+        failure.lash(lambda _err: FlextRuntime.RuntimeResult[int].ok(5)).value, eq=5
+    )
+    tm.that(failure.recover(lambda _err: 7).value, eq=7)
 
     class NoneValueResult(FlextRuntime.RuntimeResult[int | None]):
         @property
@@ -570,29 +575,39 @@ def test_runtime_result_all_missed_branches() -> None:
         is_success=True, error=None, error_code=None, error_data=None
     )
     flowed = none_success.flow_through(_ok_plus_one)
-    assert flowed is none_success
+    tm.that(flowed is none_success, eq=True)
 
     none_ok = FlextRuntime.RuntimeResult[int | None].ok(None)
-    assert none_ok.is_success
-    assert none_ok.value is None
+    tm.that(none_ok.is_success, eq=True)
+    tm.that(none_ok.value, none=True)
     none_error: FlextRuntime.RuntimeResult[int] = FlextRuntime.RuntimeResult[int].fail(
         None,
     )
-    assert none_error.error == ""
+    tm.that(none_error.error, eq="")
     broken = FlextRuntime.RuntimeResult[int](
         is_success=True, error=None, error_code=None, error_data=None
     )
-    assert broken.value is None
+    tm.that(broken.value, none=True)
 
 
 def test_model_support_and_hash_compare_paths() -> None:
     prefixed = FlextRuntime.generate_prefixed_id("item", length=8)
-    assert prefixed.startswith("item_") and len(prefixed.split("_", 1)[1]) == 8
-    assert (
-        FlextRuntime.compare_entities_by_id("a", cast("RuntimeData", object())) is False
+    tm.that(
+        prefixed.startswith("item_") and len(prefixed.split("_", 1)[1]) == 8, eq=True
     )
-    assert (
-        FlextRuntime.compare_entities_by_id(cast("RuntimeData", object()), 3) is False
+    tm.that(
+        (
+            FlextRuntime.compare_entities_by_id("a", cast("RuntimeData", object()))
+            is False
+        ),
+        eq=True,
+    )
+    tm.that(
+        (
+            FlextRuntime.compare_entities_by_id(cast("RuntimeData", object()), 3)
+            is False
+        ),
+        eq=True,
     )
 
     class A:
@@ -601,26 +616,35 @@ def test_model_support_and_hash_compare_paths() -> None:
     class B:
         unique_id: str = "1"
 
-    assert (
-        FlextRuntime.compare_entities_by_id(
-            cast("RuntimeData", A()),
-            cast("RuntimeData", B()),
-        )
-        is False
+    tm.that(
+        (
+            FlextRuntime.compare_entities_by_id(
+                cast("RuntimeData", A()),
+                cast("RuntimeData", B()),
+            )
+            is False
+        ),
+        eq=True,
     )
     obj = cast("RuntimeData", object())
-    assert FlextRuntime.hash_entity_by_id(obj) == hash(
-        id(obj),
+    tm.that(
+        FlextRuntime.hash_entity_by_id(obj),
+        eq=hash(
+            id(obj),
+        ),
     )
-    assert FlextRuntime.compare_value_objects_by_value("a", "a") is True
-    assert (
-        FlextRuntime.compare_value_objects_by_value(
-            cast("RuntimeData", object()),
-            1,
-        )
-        is False
+    tm.that(FlextRuntime.compare_value_objects_by_value("a", "a"), eq=True)
+    tm.that(
+        (
+            FlextRuntime.compare_value_objects_by_value(
+                cast("RuntimeData", object()),
+                1,
+            )
+            is False
+        ),
+        eq=True,
     )
-    assert FlextRuntime.compare_value_objects_by_value([1], [1]) is True
+    tm.that(FlextRuntime.compare_value_objects_by_value([1], [1]), eq=True)
 
     class C:
         @override
@@ -632,123 +656,144 @@ def test_model_support_and_hash_compare_paths() -> None:
         def __repr__(self) -> str:
             return "same"
 
-    assert (
-        FlextRuntime.compare_value_objects_by_value(
-            cast("RuntimeData", C()),
-            cast("RuntimeData", D()),
-        )
-        is False
+    tm.that(
+        (
+            FlextRuntime.compare_value_objects_by_value(
+                cast("RuntimeData", C()),
+                cast("RuntimeData", D()),
+            )
+            is False
+        ),
+        eq=True,
     )
-    assert (
-        FlextRuntime.compare_value_objects_by_value(
-            cast("RuntimeData", C()),
-            cast("RuntimeData", C()),
-        )
-        is True
+    tm.that(
+        (
+            FlextRuntime.compare_value_objects_by_value(
+                cast("RuntimeData", C()),
+                cast("RuntimeData", C()),
+            )
+            is True
+        ),
+        eq=True,
     )
-    assert isinstance(FlextRuntime.hash_value_object_by_value("x"), int)
-    assert isinstance(FlextRuntime.hash_value_object_by_value({"a": 1}), int)
-    assert isinstance(FlextRuntime.hash_value_object_by_value([1, 2]), int)
-    assert isinstance(
-        FlextRuntime.hash_value_object_by_value(MappingProxyType({"a": 1})),
-        int,
+    tm.that(isinstance(FlextRuntime.hash_value_object_by_value("x"), int), eq=True)
+    tm.that(isinstance(FlextRuntime.hash_value_object_by_value({"a": 1}), int), eq=True)
+    tm.that(isinstance(FlextRuntime.hash_value_object_by_value([1, 2]), int), eq=True)
+    tm.that(
+        isinstance(
+            FlextRuntime.hash_value_object_by_value(MappingProxyType({"a": 1})), int
+        ),
+        eq=True,
     )
-    assert isinstance(FlextRuntime.hash_value_object_by_value((1, 2)), int)
-    assert isinstance(FlextRuntime.hash_value_object_by_value(datetime.now(UTC)), int)
+    tm.that(isinstance(FlextRuntime.hash_value_object_by_value((1, 2)), int), eq=True)
+    tm.that(
+        isinstance(FlextRuntime.hash_value_object_by_value(datetime.now(UTC)), int),
+        eq=True,
+    )
 
     class Empty:
         pass
 
-    assert isinstance(FlextRuntime.Bootstrap.create_instance(Empty), Empty)
+    tm.that(isinstance(FlextRuntime.Bootstrap.create_instance(Empty), Empty), eq=True)
 
 
 def test_config_bridge_and_trace_context_and_http_validation() -> None:
     level = FlextRuntime.get_log_level_from_config()
-    assert isinstance(level, int)
+    tm.that(isinstance(level, int), eq=True)
     trace_from_scalar = FlextRuntime.ensure_trace_context(
         1,
         include_correlation_id=True,
         include_timestamp=True,
     )
-    assert {"trace_id", "span_id", "correlation_id", "timestamp"}.issubset(
-        trace_from_scalar,
+    tm.that(
+        {"trace_id", "span_id", "correlation_id", "timestamp"}.issubset(
+            trace_from_scalar,
+        ),
+        eq=True,
     )
 
     class TraceModel(BaseModel):
         key: str = "value"
 
     trace_from_model = FlextRuntime.ensure_trace_context(TraceModel())
-    assert trace_from_model["key"] == "value"
+    tm.that(trace_from_model["key"], eq="value")
 
     # ensure_trace_context catches RuntimeError internally for bad mappings
     bad_trace = FlextRuntime.ensure_trace_context({"broken": "x"})
-    assert "trace_id" in bad_trace  # graceful fallback
-    assert "span_id" in bad_trace
+    tm.that(bad_trace, has="trace_id")  # graceful fallback
+    tm.that(bad_trace, has="span_id")
     trace_from_mapping = FlextRuntime.ensure_trace_context(MappingProxyType({"a": "b"}))
-    assert "trace_id" in trace_from_mapping
+    tm.that(trace_from_mapping, has="trace_id")
     trace_from_other = FlextRuntime.ensure_trace_context("path")
-    assert "trace_id" in trace_from_other
+    tm.that(trace_from_other, has="trace_id")
     ok_statuses: list[int | str] = [200, "201"]
     ok_result = FlextRuntime.validate_http_status_codes(ok_statuses)
-    assert ok_result.is_success and ok_result.value == [200, 201]
+    tm.that(ok_result.is_success and ok_result.value == [200, 201], eq=True)
     bad_range = FlextRuntime.validate_http_status_codes([99])
-    assert bad_range.is_failure and "Invalid HTTP status code" in (
-        bad_range.error or ""
+    tm.that(
+        bad_range.is_failure and "Invalid HTTP status code" in (bad_range.error or ""),
+        eq=True,
     )
     invalid_statuses: list[int | str] = cast("list[int | str]", [object()])
     bad_type = FlextRuntime.validate_http_status_codes(invalid_statuses)
-    assert bad_type.is_failure and "Cannot convert to integer" in (bad_type.error or "")
+    tm.that(
+        bad_type.is_failure and "Cannot convert to integer" in (bad_type.error or ""),
+        eq=True,
+    )
     bad_value = FlextRuntime.validate_http_status_codes(["abc"])
-    assert bad_value.is_failure and "Cannot convert to integer" in (
-        bad_value.error or ""
+    tm.that(
+        bad_value.is_failure and "Cannot convert to integer" in (bad_value.error or ""),
+        eq=True,
     )
 
 
 def test_runtime_result_alias_compatibility() -> None:
     rr: FlextRuntime.RuntimeResult[int] = FlextRuntime.RuntimeResult[int].ok(10)
     wrapped: r[int] = r[int].ok(rr.value)
-    assert isinstance(wrapped, r)
+    tm.that(isinstance(wrapped, r), eq=True)
 
 
 def test_runtime_misc_remaining_paths(monkeypatch: pytest.MonkeyPatch) -> None:
     FlextRuntime._structlog_configured = False
     FlextRuntime.ensure_structlog_configured()
-    assert FlextRuntime.is_structlog_configured() is True
+    tm.that(FlextRuntime.is_structlog_configured(), eq=True)
 
     class BasicModel(BaseModel):
         value: int = 1
 
-    assert FlextRuntime.is_base_model(BasicModel()) is True
+    tm.that(FlextRuntime.is_base_model(BasicModel()), eq=True)
     normalized_mapping = FlextRuntime.normalize_to_container(
         MappingProxyType({"k": "v"}),
     )
-    assert isinstance(normalized_mapping, m.Dict)
-    assert normalized_mapping.root == {"k": "v"}
+    tm.that(isinstance(normalized_mapping, m.Dict), eq=True)
+    tm.that(getattr(normalized_mapping, "root", None), eq={"k": "v"})
     norm_list = FlextRuntime.normalize_to_container([1, "x"])
-    assert isinstance(norm_list, m.ObjectList)
-    assert list(norm_list.root) == [1, "x"]
+    tm.that(isinstance(norm_list, m.ObjectList), eq=True)
+    tm.that(list(getattr(norm_list, "root", [])), eq=[1, "x"])
     # Path is Container, returned as-is
-    assert FlextRuntime.normalize_to_container(Path("/tmp")) == Path("/tmp")
-    assert FlextRuntime.normalize_to_metadata(1) == 1
+    tm.that(FlextRuntime.normalize_to_container(Path("/tmp")), eq=Path("/tmp"))
+    tm.that(FlextRuntime.normalize_to_metadata(1), eq=1)
     metadata_mapping = FlextRuntime.normalize_to_metadata(MappingProxyType({"a": 1}))
-    assert isinstance(metadata_mapping, dict) and metadata_mapping == {"a": 1}
-    assert FlextRuntime.normalize_to_metadata(Path("/tmp")) == str(Path("/tmp"))
+    tm.that(
+        isinstance(metadata_mapping, dict) and metadata_mapping == {"a": 1}, eq=True
+    )
+    tm.that(FlextRuntime.normalize_to_metadata(Path("/tmp")), eq=str(Path("/tmp")))
 
     class Frame:
         f_back: types.FrameType | None = None
 
     monkeypatch.setattr(runtime_module.inspect, "currentframe", lambda: Frame())
-    assert FlextRuntime.get_logger(None) is not None
+    tm.that(FlextRuntime.get_logger(None) is not None, eq=True)
 
 
 def test_runtime_module_accessors_and_metadata() -> None:
     metadata_ref = FlextRuntime.Metadata
-    assert isinstance(metadata_ref, type)
+    tm.that(isinstance(metadata_ref, type), eq=True)
     metadata = metadata_ref()
-    assert metadata.version == "1.0.0"
-    assert FlextRuntime.structlog() is runtime_module.structlog
-    assert FlextRuntime.dependency_providers() is runtime_module.providers
-    assert FlextRuntime.dependency_containers() is runtime_module.containers
+    tm.that(metadata.version, eq="1.0.0")
+    tm.that(FlextRuntime.structlog() is runtime_module.structlog, eq=True)
+    tm.that(FlextRuntime.dependency_providers() is runtime_module.providers, eq=True)
+    tm.that(FlextRuntime.dependency_containers() is runtime_module.containers, eq=True)
 
 
 def test_configure_structlog_print_logger_factory_fallback(
@@ -833,7 +878,7 @@ def test_configure_structlog_print_logger_factory_fallback(
         },
     )()
     FlextRuntime.configure_structlog(config=cast("BaseModel", cfg))
-    assert module.print_calls >= 2
+    tm.that(module.print_calls >= 2, eq=True)
 
 
 def test_dependency_integration_and_wiring_paths() -> None:
@@ -842,7 +887,9 @@ def test_dependency_integration_and_wiring_paths() -> None:
             config=m.ConfigMap(root={"db": m.Dict(root={"dsn": "sqlite://"})}),
         )
     )
-    assert bridge is not None and services is not None and (resources is not None)
+    tm.that(
+        bridge is not None and services is not None and (resources is not None), eq=True
+    )
     di = FlextRuntime.DependencyIntegration.create_container(
         config=m.ConfigMap(root={"feature": m.Dict(root={"enabled": True})}),
         services={"svc": 1},
@@ -852,16 +899,16 @@ def test_dependency_integration_and_wiring_paths() -> None:
         wire_packages=["unused.package"],
         wire_classes=[FlextRuntime],
     )
-    assert getattr(getattr(di.config, "feature"), "enabled")() is True
-    assert di.svc() == 1
-    assert di.factory() == 2
-    assert di.resource() == {"ok": True}
+    tm.that(getattr(getattr(di.config, "feature"), "enabled")(), eq=True)
+    tm.that(di.svc(), eq=1)
+    tm.that(di.factory(), eq=2)
+    tm.that(di.resource(), eq={"ok": True})
     provider = runtime_module.providers.Configuration()
     FlextRuntime.DependencyIntegration.bind_configuration_provider(
         provider,
         m.ConfigMap(root={"api": m.Dict(root={"url": "x"})}),
     )
-    assert provider.api.url() == "x"
+    tm.that(provider.api.url(), eq="x")
 
 
 def test_runtime_result_remaining_paths() -> None:
@@ -881,27 +928,27 @@ def test_runtime_result_remaining_paths() -> None:
         error_code="E2",
         error_data=m.ConfigMap(root={"k": "v"}),
     )
-    assert failure.error_code == "E2"
-    assert failure.error_data is not None
-    assert success.value == 3
+    tm.that(failure.error_code, eq="E2")
+    tm.that(failure.error_data, none=False)
+    tm.that(success.value, eq=3)
     with pytest.raises(RuntimeError, match="Cannot access value of failed result"):
         _ = failure.value
-    assert success.unwrap() == 3
-    assert failure.flat_map(_ok_passthrough).is_failure
-    assert success.filter(lambda value: value > 0) is success
-    assert success.map_error(str) is success
-    assert success.lash(FlextRuntime.RuntimeResult.fail) is success
-    assert success.recover(lambda _e: 0) is success
+    tm.that(success.unwrap(), eq=3)
+    tm.that(failure.flat_map(_ok_passthrough).is_failure, eq=True)
+    tm.that(success.filter(lambda value: value > 0) is success, eq=True)
+    tm.that(success.map_error(str) is success, eq=True)
+    tm.that(success.lash(FlextRuntime.RuntimeResult.fail) is success, eq=True)
+    tm.that(success.recover(lambda _e: 0) is success, eq=True)
     chain_success = success.flow_through(_ok_inc, _ok_inc)
-    assert chain_success.is_success and chain_success.value == 5
+    tm.that(chain_success.is_success and chain_success.value == 5, eq=True)
     chain_failure = success.flow_through(_fail_boom, _ok_inc)
-    assert chain_failure.is_failure
-    assert success | 0 == 3
-    assert bool(success) is True
-    assert repr(success).startswith("r[T].ok(")
-    assert repr(failure).startswith("r[T].fail(")
+    tm.that(chain_failure.is_failure, eq=True)
+    tm.that(success | 0, eq=3)
+    tm.that(bool(success), eq=True)
+    tm.that(repr(success).startswith("r[T].ok("), eq=True)
+    tm.that(repr(failure).startswith("r[T].fail("), eq=True)
     with success as entered:
-        assert entered is success
+        tm.that(entered is success, eq=True)
 
 
 def test_runtime_integration_tracking_paths(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -948,7 +995,7 @@ def test_runtime_integration_tracking_paths(monkeypatch: pytest.MonkeyPatch) -> 
         service_version="1.0.0",
         enable_context_correlation=True,
     )
-    assert len(events) == 4
+    tm.that(len(events), eq=4)
 
 
 def test_model_helpers_remaining_paths() -> None:
@@ -962,21 +1009,24 @@ def test_model_helpers_remaining_paths() -> None:
 
     left = Entity("u-1")
     right = Entity("u-1")
-    assert (
-        FlextRuntime.compare_entities_by_id(
-            cast("RuntimeData", left),
-            cast("RuntimeData", right),
-        )
-        is True
+    tm.that(
+        (
+            FlextRuntime.compare_entities_by_id(
+                cast("RuntimeData", left),
+                cast("RuntimeData", right),
+            )
+            is True
+        ),
+        eq=True,
     )
-    assert isinstance(
-        FlextRuntime.hash_entity_by_id(cast("RuntimeData", left)),
-        int,
+    tm.that(
+        isinstance(FlextRuntime.hash_entity_by_id(cast("RuntimeData", left)), int),
+        eq=True,
     )
     vm_a = ValueModel(a=1)
     vm_b = ValueModel(a=1)
-    assert FlextRuntime.compare_value_objects_by_value(vm_a, vm_b) is True
-    assert isinstance(FlextRuntime.hash_value_object_by_value(vm_a), int)
+    tm.that(FlextRuntime.compare_value_objects_by_value(vm_a, vm_b), eq=True)
+    tm.that(isinstance(FlextRuntime.hash_value_object_by_value(vm_a), int), eq=True)
 
 
 def test_ensure_trace_context_dict_conversion_paths() -> None:
@@ -997,6 +1047,6 @@ def test_ensure_trace_context_dict_conversion_paths() -> None:
         "other": type("Sentinel", (), {}),
     }
     result = FlextRuntime.ensure_trace_context(cast("Mapping[str, t.Scalar]", payload))
-    assert result["str"] == "x"
-    assert result["int"] == "1"
-    assert "trace_id" in result and "span_id" in result
+    tm.that(result["str"], eq="x")
+    tm.that(result["int"], eq="1")
+    tm.that("trace_id" in result and "span_id" in result, eq=True)

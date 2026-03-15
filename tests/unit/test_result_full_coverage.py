@@ -9,7 +9,7 @@ from __future__ import annotations
 from typing import cast
 
 from flext_core import FlextRuntime, r
-from flext_tests import t
+from flext_tests import t, tm
 
 from ._models import _ErrorsModel, _PlainErrorModel, _TargetModel
 
@@ -22,36 +22,36 @@ class _ValidationLikeError(ValueError):
 def test_validation_like_error_structure() -> None:
     err = _ValidationLikeError("validation")
     details = err.errors()
-    assert details[0]["msg"] == "bad value"
+    tm.that(details[0]["msg"], eq="bad value")
 
 
 def test_type_guards_result() -> None:
     ok_res = FlextRuntime.RuntimeResult[t.Container].ok("ok")
     fail_res = FlextRuntime.RuntimeResult[t.Container].fail("x")
-    assert r.is_success_result(ok_res)
-    assert r.is_failure_result(fail_res)
+    tm.that(r.is_success_result(ok_res), eq=True)
+    tm.that(r.is_failure_result(fail_res), eq=True)
 
 
 def test_init_fallback_and_lazy_returns_result_property() -> None:
     fallback = r[int](value=9, is_success=True)
-    assert fallback.is_success
-    assert fallback.value == 9
+    tm.ok(fallback)
+    tm.that(fallback.value, eq=9)
     lazy_ok = r[int](value=5, is_success=True)
-    assert lazy_ok._result is None
+    tm.that(lazy_ok._result is None, eq=True)
     _ = lazy_ok._returns_result
     lazy_fail = r[int](error="nope", is_success=False)
-    assert lazy_fail._result is None
+    tm.that(lazy_fail._result is None, eq=True)
     _ = lazy_fail._returns_result
 
 
 def test_map_flat_map_and_then_paths() -> None:
     mapped_fail = r[int].ok(2).map(lambda _: (_ for _ in ()).throw(ValueError("m")))
-    assert mapped_fail.is_failure
-    assert mapped_fail.error == "m"
+    tm.fail(mapped_fail)
+    tm.that(mapped_fail.error, eq="m")
     runtime_ok = FlextRuntime.RuntimeResult[int].ok(20)
     flat_ok = r[int].ok(1).flat_map(lambda _: runtime_ok)
-    assert flat_ok.is_success
-    assert flat_ok.value == 20
+    tm.ok(flat_ok)
+    tm.that(flat_ok.value, eq=20)
     runtime_fail: FlextRuntime.RuntimeResult[int] = FlextRuntime.RuntimeResult[int](
         error="inner",
         is_success=False,
@@ -59,25 +59,25 @@ def test_map_flat_map_and_then_paths() -> None:
         error_data=None,
     )
     flat_fail = r[int].ok(1).flat_map(lambda _: runtime_fail)
-    assert flat_fail.is_failure
-    assert flat_fail.error == "inner"
+    tm.fail(flat_fail)
+    tm.that(flat_fail.error, eq="inner")
     and_then_ok = r[int].ok(3).flat_map(lambda v: r[str].ok(str(v)))
-    assert and_then_ok.is_success
-    assert and_then_ok.value == "3"
+    tm.ok(and_then_ok)
+    tm.that(and_then_ok.value, eq="3")
 
 
 def test_recover_tap_and_tap_error_paths() -> None:
-    assert r[int].ok(1).recover(lambda _e: 99).value == 1
+    tm.that(r[int].ok(1).recover(lambda _e: 99).value, eq=1)
     failed_for_recover: r[int] = cast("r[int]", r.fail("bad"))
     recovered: r[int] = failed_for_recover.recover(lambda _e: 42)
-    assert recovered.is_success
-    assert recovered.value == 42
+    tm.ok(recovered)
+    tm.that(recovered.value, eq=42)
     seen: list[int] = []
     _ = r[int].ok(7).tap(lambda v: seen.append(v))
-    assert seen == [7]
+    tm.that(seen, eq=[7])
     err_seen: list[str] = []
     _ = r[int].fail("boom").tap_error(lambda e: err_seen.append(e))
-    assert err_seen == ["boom"]
+    tm.that(err_seen, eq=["boom"])
 
 
 def test_from_validation_and_to_model_paths() -> None:
