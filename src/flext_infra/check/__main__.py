@@ -4,14 +4,13 @@ from __future__ import annotations
 
 import sys
 
-from flext_core import FlextRuntime
+from flext_infra import u
 from flext_infra.check.workspace_check import run_cli
 
 
 def main() -> int:
     """Execute the check CLI and return exit code."""
-    FlextRuntime.ensure_structlog_configured()
-    return run_cli()
+    return u.Infra.run_cli(run_cli)
 
 
 if __name__ == "__main__":
