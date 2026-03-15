@@ -7,8 +7,8 @@ from argparse import ArgumentParser
 from collections.abc import Mapping
 from pathlib import Path
 
-from flext_core import FlextRuntime, r
-from flext_infra import c, m, output, u
+from flext_core import r
+from flext_infra import c, m, u
 from flext_infra.github.linter import FlextInfraWorkflowLinter
 from flext_infra.github.pr import main as pr_main
 from flext_infra.github.pr_workspace import FlextInfraPrWorkspaceManager
@@ -29,8 +29,7 @@ def _run_workflows(
         report_path=report,
     )
     if result.is_failure:
-        output.error(result.error or "workflow sync failed")
-        return 1
+        return u.Infra.exit_code(result, failure_msg="workflow sync failed")
     for _op in result.value:
         pass
     return 0
@@ -49,8 +48,7 @@ def _run_lint(
         strict=strict,
     )
     if lint_result.is_failure:
-        output.error(lint_result.error or "lint failed")
-        return 1
+        return u.Infra.exit_code(lint_result, failure_msg="lint failed")
     _ = lint_result.value.status
     return 0
 
@@ -105,15 +103,15 @@ def _run_pr_workspace(
         pr_args=pr_args,
     )
     if orch_result.is_failure:
-        output.error(orch_result.error or "pr-workspace failed")
-        return 1
+        return u.Infra.exit_code(orch_result, failure_msg="pr-workspace failed")
     data = orch_result.value
     return 1 if data.fail else 0
 
 
-def main() -> int:
+def _main_impl(argv: list[str] | None = None) -> int:
     """Dispatch to the appropriate github subcommand."""
-    FlextRuntime.ensure_structlog_configured()
+    if argv is not None:
+        sys.argv = ["flext-infra github"] + argv
     parser, subs = u.Infra.create_subcommand_parser(
         "flext-infra github",
         "GitHub integration services",
@@ -192,6 +190,11 @@ def _configure_pr_workspace_parser(parser: ArgumentParser) -> None:
     _ = parser.add_argument("--pr-delete-branch", type=int, default=0)
     _ = parser.add_argument("--pr-checks-strict", type=int, default=0)
     _ = parser.add_argument("--pr-release-on-merge", type=int, default=1)
+
+
+def main() -> int:
+    """CLI entry point wrapped with centralized helpers."""
+    return u.Infra.run_cli(_main_impl)
 
 
 if __name__ == "__main__":
