@@ -16,8 +16,7 @@ from __future__ import annotations
 import sys
 from argparse import ArgumentParser
 
-from flext_core import FlextRuntime
-from flext_infra import c, output, u
+from flext_infra import c, u
 from flext_infra.docs.auditor import FlextInfraDocAuditor
 from flext_infra.docs.builder import FlextInfraDocBuilder
 from flext_infra.docs.fixer import FlextInfraDocFixer
@@ -43,8 +42,7 @@ def _run_audit(
         strict=strict,
     )
     if result.is_failure:
-        output.error(result.error or "audit failed")
-        return 1
+        return u.Infra.exit_code(result, failure_msg="audit failed")
     failures = sum(1 for report in result.value if not report.passed)
     return 1 if failures else 0
 
@@ -60,8 +58,7 @@ def _run_fix(cli: u.Infra.CliArgs, *, output_dir: str = "") -> int:
         apply=cli.apply,
     )
     if result.is_failure:
-        output.error(result.error or "fix failed")
-        return 1
+        return u.Infra.exit_code(result, failure_msg="fix failed")
     return 0
 
 
@@ -75,8 +72,7 @@ def _run_build(cli: u.Infra.CliArgs, *, output_dir: str = "") -> int:
         output_dir=output_dir,
     )
     if result.is_failure:
-        output.error(result.error or "build failed")
-        return 1
+        return u.Infra.exit_code(result, failure_msg="build failed")
     failures = sum(1 for report in result.value if report.result == c.Infra.Status.FAIL)
     return 1 if failures else 0
 
@@ -92,8 +88,7 @@ def _run_generate(cli: u.Infra.CliArgs, *, output_dir: str = "") -> int:
         apply=cli.apply,
     )
     if result.is_failure:
-        output.error(result.error or "generate failed")
-        return 1
+        return u.Infra.exit_code(result, failure_msg="generate failed")
     return 0
 
 
@@ -114,30 +109,28 @@ def _run_validate(
         apply=cli.apply,
     )
     if result.is_failure:
-        output.error(result.error or "validate failed")
-        return 1
+        return u.Infra.exit_code(result, failure_msg="validate failed")
     failures = sum(1 for report in result.value if report.result == c.Infra.Status.FAIL)
     return 1 if failures else 0
 
 
-def main() -> int:
+def _main_inner(argv: list[str] | None = None) -> int:
     """Run documentation services: audit, fix, build, generate, validate."""
-    FlextRuntime.ensure_structlog_configured()
-    parser_subs: tuple[ArgumentParser, dict[str, ArgumentParser]] = getattr(
-        u.Infra, "create_subcommand_parser"
-    )(
-        "flext-infra docs",
-        "Documentation management services",
-        subcommands={
-            "audit": "Audit documentation for broken links and forbidden terms",
-            "fix": "Fix documentation issues",
-            c.Infra.Directories.BUILD: "Build MkDocs sites",
-            "generate": "Generate project docs",
-            c.Infra.Verbs.VALIDATE: "Validate documentation",
-        },
-        include_apply=True,
-        include_project=True,
-        include_check=True,
+    parser_subs: tuple[ArgumentParser, dict[str, ArgumentParser]] = (
+        u.Infra.create_subcommand_parser(
+            "flext-infra docs",
+            "Documentation management services",
+            subcommands={
+                "audit": "Audit documentation for broken links and forbidden terms",
+                "fix": "Fix documentation issues",
+                c.Infra.Directories.BUILD: "Build MkDocs sites",
+                "generate": "Generate project docs",
+                c.Infra.Verbs.VALIDATE: "Validate documentation",
+            },
+            include_apply=True,
+            include_project=True,
+            include_check=True,
+        )
     )
     parser, subs = parser_subs
 
@@ -204,6 +197,11 @@ def main() -> int:
         )
     parser.print_help()
     return 1
+
+
+def main() -> int:
+    """Entry point for documentation CLI."""
+    return u.Infra.run_cli(_main_inner)
 
 
 if __name__ == "__main__":
