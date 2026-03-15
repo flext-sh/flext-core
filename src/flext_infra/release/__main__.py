@@ -133,7 +133,7 @@ def _main_impl(argv: list[str] | None = None) -> int:
         wire_classes=None,
     )
     result = service.run_release(
-        root=root,
+        workspace_root=root,
         version=version,
         tag=tag,
         phases=phases,

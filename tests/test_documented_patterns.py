@@ -424,7 +424,7 @@ class TestPattern4RailwayV2Property:
             .map(lambda response: response.message_id)
         )
         assert pipeline.is_success
-        message_id: str = pipeline.value
+        message_id: str = str(pipeline.value)
         assert message_id.startswith("msg-")
 
 
@@ -637,7 +637,7 @@ class TestAllPatternsIntegration:
             .map(lambda r: r.message_id)
         )
         assert email_result.is_success
-        message_id: str = email_result.value
+        message_id: str = str(email_result.value)
         assert message_id.startswith("msg-")
         calc_result: m.ConfigMap = _make(
             MultiOperationService, operation="double", value=10

@@ -428,7 +428,7 @@ class FlextInfraReleaseOrchestrator(s[bool]):
         selector = FlextInfraUtilitiesSelection()
         projects_result = selector.resolve_projects(workspace_root, project_names)
         if projects_result.is_success:
-            projects: list[m.Infra.Workspace.ProjectInfo] = projects_result.value  # type: ignore[assignment]
+            projects: list[m.Infra.Workspace.ProjectInfo] = projects_result.value
             for project in projects:
                 pyproject = project.path / c.Infra.Files.PYPROJECT_FILENAME
                 if pyproject.exists():

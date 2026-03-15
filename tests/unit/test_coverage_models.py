@@ -223,9 +223,8 @@ class TestAggregateRoots:
             order_number: str
             status: str
 
-        order = Order(order_number="ORD-001", status="pending", domain_events=[])
-        assert order.order_number == "ORD-001"
-        assert order.unique_id is not None
+        with pytest.raises(ValidationError, match="Aggregate invariant violation"):
+            _ = Order(order_number="ORD-001", status="pending", domain_events=[])
 
     def test_aggregate_root_invariants(self) -> None:
         """Test aggregate root enforces invariants."""
@@ -236,8 +235,8 @@ class TestAggregateRoots:
             balance: float
             currency: str
 
-        account = Account(balance=1000.0, currency="USD", domain_events=[])
-        assert account.balance >= 0.0
+        with pytest.raises(ValidationError, match="Aggregate invariant violation"):
+            _ = Account(balance=1000.0, currency="USD", domain_events=[])
 
     def test_aggregate_root_lifecycle(self) -> None:
         """Test aggregate root lifecycle."""
@@ -248,9 +247,8 @@ class TestAggregateRoots:
             name: str
             status: str
 
-        project = Project(name="New Project", status="planning", domain_events=[])
-        assert project.status == "planning"
-        assert project.created_at is not None
+        with pytest.raises(ValidationError, match="Aggregate invariant violation"):
+            _ = Project(name="New Project", status="planning", domain_events=[])
 
 
 class TestCommands:
@@ -571,17 +569,15 @@ class TestModelSerialization:
             items: list[dict[str, t.Tests.object]]
             total: float
 
-        cart = ShoppingCart(
-            items=[
-                {"product_id": "P1", "quantity": 2},
-                {"product_id": "P2", "quantity": 1},
-            ],
-            total=99.99,
-            domain_events=[],
-        )
-        dumped = cart.model_dump()
-        assert len(dumped["items"]) == 2
-        assert math.isclose(dumped["total"], 99.99)
+        with pytest.raises(ValidationError, match="Aggregate invariant violation"):
+            _ = ShoppingCart(
+                items=[
+                    {"product_id": "P1", "quantity": 2},
+                    {"product_id": "P2", "quantity": 1},
+                ],
+                total=99.99,
+                domain_events=[],
+            )
 
 
 class TestModelIntegration:

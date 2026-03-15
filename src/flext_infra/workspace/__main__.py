@@ -16,6 +16,7 @@ from pathlib import Path
 
 from flext_core import r
 from flext_infra import u
+from flext_infra.models import m
 from flext_infra.workspace.detector import FlextInfraWorkspaceDetector
 from flext_infra.workspace.migrator import FlextInfraProjectMigrator
 from flext_infra.workspace.orchestrator import FlextInfraOrchestratorService
@@ -55,7 +56,7 @@ def _run_orchestrate(
         make_args=make_args,
     )
     if result.is_success:
-        outputs = result.value
+        outputs: list[m.Infra.Core.CommandOutput] = result.value
         failures = [o for o in outputs if o.exit_code != 0]
         return max((o.exit_code for o in failures), default=0)
     return u.Infra.exit_code(result, failure_msg="orchestration failed")
@@ -67,7 +68,8 @@ def _run_migrate(cli: u.Infra.CliArgs) -> int:
     if result.is_failure:
         return u.Infra.exit_code(result, failure_msg="migration failed")
     failed_projects = 0
-    for migration in result.value:
+    migrations: list[m.Infra.Workspace.MigrationResult] = result.value
+    for migration in migrations:
         u.Infra.info(f"{migration.project}:")
         for change in migration.changes:
             u.Infra.info(f"  + {change}")
@@ -75,10 +77,10 @@ def _run_migrate(cli: u.Infra.CliArgs) -> int:
             u.Infra.warning(f"  ! {err}")
         if migration.errors:
             failed_projects += 1
-    total_changes = sum(len(m.changes) for m in result.value)
-    total_errors = sum(len(m.errors) for m in result.value)
+    total_changes = sum(len(mg.changes) for mg in migrations)
+    total_errors = sum(len(mg.errors) for mg in migrations)
     u.Infra.info(
-        f"Total: {total_changes} change(s), {total_errors} error(s) across {len(result.value)} project(s)",
+        f"Total: {total_changes} change(s), {total_errors} error(s) across {len(migrations)} project(s)",
     )
     if cli.dry_run:
         u.Infra.info("(dry-run — no files modified)")

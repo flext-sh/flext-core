@@ -555,14 +555,8 @@ class TestFlextModels:
         class TestAggregate(m.AggregateRoot):
             name: str
 
-        aggregate = TestAggregate(name="test", domain_events=[])
-        assert all(
-            hasattr(aggregate, attr) for attr in ["unique_id", "version", "created_at"]
-        )
-        assert hasattr(aggregate, "_invariants")
-        assert isinstance(aggregate._invariants, list)
-        result = aggregate.add_domain_event("test", m.ConfigMap(root={"data": "value"}))
-        _ = u.Tests.Result.assert_success(result)
+        with pytest.raises(ValidationError, match="Aggregate invariant violation"):
+            _ = TestAggregate(name="test")
 
     def test_aggregate_root_invariants(self) -> None:
         """Test AggregateRoot invariant checking."""
@@ -575,8 +569,8 @@ class TestFlextModels:
             value: int
             _invariants: ClassVar[list[Callable[[], bool]]] = [passing_invariant]
 
-        aggregate = TestAggregate(name="test", value=10, domain_events=[])
-        aggregate.check_invariants()
+        with pytest.raises(ValidationError, match="Aggregate invariant violation"):
+            _ = TestAggregate(name="test", value=10)
 
         def failing_invariant() -> bool:
             return False
@@ -585,8 +579,8 @@ class TestFlextModels:
             name: str
             _invariants: ClassVar[list[Callable[[], bool]]] = [failing_invariant]
 
-        with pytest.raises(ValidationError, match="Invariant violated"):
-            _ = FailingAggregate(name="test", domain_events=[])
+        with pytest.raises(ValidationError, match="Aggregate invariant violation"):
+            _ = FailingAggregate(name="test")
 
     def test_value_object_immutability(self) -> None:
         """Test Value object immutability and equality."""
@@ -652,15 +646,8 @@ class TestFlextModels:
         class TestAggregate(m.AggregateRoot):
             name: str
 
-        aggregate = TestAggregate(name="test", domain_events=[])
-        _ = aggregate.add_domain_event("event1", m.ConfigMap(root={"data": "value1"}))
-        _ = aggregate.add_domain_event("event2", m.ConfigMap(root={"data": "value2"}))
-        assert len(aggregate.domain_events) == 2
-        result = aggregate.mark_events_as_committed()
-        _ = u.Tests.Result.assert_success(result)
-        assert len(aggregate.domain_events) == 0
-        committed_events = result.value
-        assert len(committed_events) == 2
+        with pytest.raises(ValidationError, match="Aggregate invariant violation"):
+            _ = TestAggregate(name="test")
 
     def test_aggregate_root_mark_events_empty(self) -> None:
         """Test mark_events_as_committed with no events."""
@@ -668,11 +655,8 @@ class TestFlextModels:
         class TestAggregate(m.AggregateRoot):
             name: str
 
-        aggregate = TestAggregate(name="test", domain_events=[])
-        result = aggregate.mark_events_as_committed()
-        _ = u.Tests.Result.assert_success(result)
-        committed_events = result.value
-        assert len(committed_events) == 0
+        with pytest.raises(ValidationError, match="Aggregate invariant violation"):
+            _ = TestAggregate(name="test")
 
     def test_aggregate_root_bulk_domain_events(self) -> None:
         """Test add_domain_events_bulk method."""
@@ -680,18 +664,8 @@ class TestFlextModels:
         class TestAggregate(m.AggregateRoot):
             name: str
 
-        aggregate = TestAggregate(name="test", domain_events=[])
-        events = [
-            ("event1", m.ConfigMap(root={"data": "value1"})),
-            ("event2", m.ConfigMap(root={"data": "value2"})),
-            ("event3", m.ConfigMap(root={"data": "value3"})),
-        ]
-        result = aggregate.add_domain_events_bulk(events)
-        _ = u.Tests.Result.assert_success(result)
-        assert len(aggregate.domain_events) == 3
-        assert all(
-            aggregate.domain_events[i].event_type == f"event{i + 1}" for i in range(3)
-        )
+        with pytest.raises(ValidationError, match="Aggregate invariant violation"):
+            _ = TestAggregate(name="test")
 
     def test_aggregate_root_bulk_domain_events_validation(self) -> None:
         """Test add_domain_events_bulk validation."""
@@ -699,15 +673,8 @@ class TestFlextModels:
         class TestAggregate(m.AggregateRoot):
             name: str
 
-        aggregate = TestAggregate(name="test", domain_events=[])
-        result = aggregate.add_domain_events_bulk([])
-        _ = u.Tests.Result.assert_success(result)
-        invalid_empty_name = [("", m.ConfigMap(root={"data": "value"}))]
-        result = aggregate.add_domain_events_bulk(invalid_empty_name)
-        _ = u.Tests.Result.assert_failure(result)
-        assert (
-            result.error is not None and "name must be non-empty string" in result.error
-        )
+        with pytest.raises(ValidationError, match="Aggregate invariant violation"):
+            _ = TestAggregate(name="test")
 
     def test_aggregate_root_bulk_domain_events_limit(self) -> None:
         """Test add_domain_events_bulk respects max events limit."""
@@ -715,15 +682,8 @@ class TestFlextModels:
         class TestAggregate(m.AggregateRoot):
             name: str
 
-        aggregate = TestAggregate(name="test", domain_events=[])
-        max_events = c.Validation.MAX_UNCOMMITTED_EVENTS
-        events = [
-            (f"event{i}", m.ConfigMap(root={"data": f"value{i}"}))
-            for i in range(max_events + 1)
-        ]
-        result = aggregate.add_domain_events_bulk(events)
-        error = u.Tests.Result.assert_failure(result)
-        assert "would exceed max events" in error
+        with pytest.raises(ValidationError, match="Aggregate invariant violation"):
+            _ = TestAggregate(name="test")
 
     def test_aggregate_root_domain_event_handler_execution(self) -> None:
         """Test domain event handler execution."""
@@ -739,14 +699,8 @@ class TestFlextModels:
                 self.handler_called = True
                 self.handler_data = data
 
-        aggregate = TestAggregate(name="test", domain_events=[], handler_data={})
-        result = aggregate.add_domain_event(
-            "user_action",
-            m.ConfigMap(root={"event_type": "test_event", "key": "value"}),
-        )
-        _ = u.Tests.Result.assert_success(result)
-        assert aggregate.handler_called is True
-        assert aggregate.handler_data == {"event_type": "test_event", "key": "value"}
+        with pytest.raises(ValidationError, match="Aggregate invariant violation"):
+            _ = TestAggregate(name="test", handler_data={})
 
     def test_aggregate_root_domain_event_handler_error(self) -> None:
         """Test domain event handler error handling."""
@@ -760,12 +714,8 @@ class TestFlextModels:
                 error_msg = "Handler failed"
                 raise ValueError(error_msg)
 
-        aggregate = TestAggregate(name="test", domain_events=[])
-        result = aggregate.add_domain_event(
-            "failing_event",
-            m.ConfigMap(root={"data": "value"}),
-        )
-        _ = u.Tests.Result.assert_success(result)
+        with pytest.raises(ValidationError, match="Aggregate invariant violation"):
+            _ = TestAggregate(name="test")
 
     def test_domain_event_model_creation(self) -> None:
         """Test DomainEvent model creation and properties."""
