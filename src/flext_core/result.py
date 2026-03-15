@@ -390,7 +390,16 @@ class FlextResult[T](FlextRuntime.RuntimeResult[T]):
             try:
                 result = func(*args, **kwargs)
                 return FlextResult[U].ok(result)
-            except Exception as e:
+            except (
+                TypeError,
+                ValueError,
+                RuntimeError,
+                KeyError,
+                AttributeError,
+                OSError,
+                LookupError,
+                ArithmeticError,
+            ) as e:
                 logging.getLogger(__name__).debug(
                     "FlextResult.safe callable failed", exc_info=e
                 )

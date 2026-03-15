@@ -21,7 +21,7 @@ from pathlib import Path
 from types import MappingProxyType
 from typing import TypeGuard, TypeIs
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 
 from flext_core import m, p, r, t
 
@@ -1344,7 +1344,7 @@ class FlextUtilitiesGuards:
         try:
             validated = model_class.model_validate(data)
             return r[T].ok(validated)
-        except Exception as exc:
+        except (ValidationError, TypeError, ValueError) as exc:
             return r[T].fail(f"Validation failed: {exc}")
 
 

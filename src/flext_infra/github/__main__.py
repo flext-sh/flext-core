@@ -97,9 +97,7 @@ def _run_pr_workspace(
     manager = FlextInfraPrWorkspaceManager()
     orch_result = manager.orchestrate(
         workspace_root=cli.workspace,
-        projects=cli.project.split(",")
-        if cli.project
-        else (cli.projects.split(",") if cli.projects else None),
+        projects=cli.project_names(),
         include_root=include_root == 1,
         branch=branch,
         checkpoint=checkpoint == 1,

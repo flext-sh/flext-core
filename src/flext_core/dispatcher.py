@@ -268,7 +268,16 @@ class FlextDispatcher:
             if not u.is_container(raw_output):
                 return dispatch_result.fail("Handler returned non-container value")
             return dispatch_result.ok(raw_output)
-        except Exception as exc:
+        except (
+            TypeError,
+            ValueError,
+            RuntimeError,
+            KeyError,
+            AttributeError,
+            OSError,
+            LookupError,
+            ArithmeticError,
+        ) as exc:
             self._logger.exception("Handler execution failed", route=route_name)
             return dispatch_result.fail(
                 f"Handler execution failed: {exc}",

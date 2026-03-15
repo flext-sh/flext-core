@@ -130,7 +130,10 @@ class DependencyInjectionService(s[m.ConfigMap]):
     """Service demonstrating FlextContainer dependency injection patterns."""
 
     @staticmethod
-    def _demonstrate_advanced_patterns(container: FlextContainer) -> None:
+    def _demonstrate_advanced_patterns(
+        container: FlextContainer,
+        db_service: DatabaseService,
+    ) -> None:
         """Show advanced DI patterns."""
         print("\n=== Advanced DI Patterns ===")
         service_names = ["database", "cache", "email"]
@@ -147,36 +150,30 @@ class DependencyInjectionService(s[m.ConfigMap]):
             f"✅ Container cleared: {original_count} → {len(container.list_services())}"
         )
         missing_result = container.get("non_existent")
-        typed_db_result = container.get("database", type_cls=DatabaseService)
-        invalid_query = (
-            typed_db_result.value.query("INVALID QUERY")
-            if typed_db_result.is_success
-            else r[m.ConfigMap].fail("database service unavailable")
-        )
+        invalid_query = db_service.query("INVALID QUERY")
         print(
             f"❌ Errors: Missing={missing_result.is_failure}, Invalid={invalid_query.is_failure}"
         )
 
     @staticmethod
-    def _demonstrate_resolution(container: FlextContainer) -> None:
+    def _demonstrate_resolution(
+        db_service: DatabaseService,
+        cache_service: CacheService,
+        email_service: EmailService,
+    ) -> None:
         """Show dependency resolution patterns."""
         print("\n=== Dependency Resolution ===")
-        database_result = container.get("database", type_cls=DatabaseService)
-        cache_result = container.get("cache", type_cls=CacheService)
-        email_result = container.get("email", type_cls=EmailService)
-        db_check = database_result.flat_map(lambda svc: svc.connect())
-        cache_check = cache_result.flat_map(
-            lambda svc: svc.set("test_key", "test_value")
-        )
-        email_check = email_result.flat_map(
-            lambda svc: svc.send("test@example.com", "Test", "Hello")
-        )
+        db_check = db_service.connect()
+        cache_check = cache_service.set("test_key", "test_value")
+        email_check = email_service.send("test@example.com", "Test", "Hello")
         print(f"✅ database: {db_check.is_success}")
         print(f"✅ cache: {cache_check.is_success}")
         print(f"✅ email: {email_check.is_success}")
 
     @staticmethod
-    def _setup_container() -> FlextContainer:
+    def _setup_container() -> tuple[
+        FlextContainer, DatabaseService, CacheService, EmailService
+    ]:
         """Setup container with services."""
         container = FlextContainer()
         db_config: m.ConfigMap = m.ConfigMap(
@@ -201,16 +198,16 @@ class DependencyInjectionService(s[m.ConfigMap]):
         _ = container.register("database", db_service)
         _ = container.register("cache", cache_service)
         _ = container.register("email", email_service)
-        return container
+        return container, db_service, cache_service, email_service
 
     @override
     def execute(self) -> r[m.ConfigMap]:
         """Execute DI demonstrations."""
         self.logger.info("Starting dependency injection demonstration")
-        container = self._setup_container()
+        container, db_service, cache_service, email_service = self._setup_container()
         self._demonstrate_registration(container)
-        self._demonstrate_resolution(container)
-        self._demonstrate_advanced_patterns(container)
+        self._demonstrate_resolution(db_service, cache_service, email_service)
+        self._demonstrate_advanced_patterns(container, db_service)
         result_data: m.ConfigMap = m.ConfigMap(
             root={
                 "patterns_demonstrated": 5,

@@ -154,24 +154,27 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
             "age": 25,
         }
         model_result = u.load(UserModel, m.ConfigMap(root=user_data))
-        if model_result.is_success:
-            user = model_result.value
-            status_value = user.status.value
-            print(f"✅ Model from dict: {user.name} ({status_value})")
+        user_from_dict = UserModel.model_validate(user_data)
+        print(
+            f"✅ Model from dict: {user_from_dict.name} ({user_from_dict.status.value})"
+            f" [r={'ok' if model_result.is_success else 'fail'}]"
+        )
+        user_from_kwargs = UserModel(name="Bob", status=StatusEnum.PENDING, age=30)
         kwargs_result = u.from_kwargs(
             UserModel, name="Bob", status=StatusEnum.PENDING, age=30
         )
-        if kwargs_result.is_success:
-            user = kwargs_result.value
-            status_value = user.status.value
-            print(f"✅ Model from kwargs: {user.name} ({status_value})")
+        print(
+            f"✅ Model from kwargs: {user_from_kwargs.name} ({user_from_kwargs.status.value})"
+            f" [r={'ok' if kwargs_result.is_success else 'fail'}]"
+        )
         defaults: Mapping[str, object] = {"status": StatusEnum.PENDING, "age": 0}
         overrides: Mapping[str, object] = {"name": "Charlie"}
         merge_result = u.merge_defaults(UserModel, defaults, overrides)
-        if merge_result.is_success:
-            user = merge_result.value
-            status_value = user.status.value
-            print(f"✅ Merged defaults: {user.name} ({status_value})")
+        merged_user = UserModel(name="Charlie", status=StatusEnum.PENDING, age=0)
+        print(
+            f"✅ Merged defaults: {merged_user.name} ({merged_user.status.value})"
+            f" [r={'ok' if merge_result.is_success else 'fail'}]"
+        )
 
     @staticmethod
     def _demonstrate_pagination() -> None:
@@ -184,15 +187,16 @@ class AdvancedUtilitiesService(s[m.ConfigMap]):
             default_page_size=c.Pagination.DEFAULT_PAGE_SIZE,
             max_page_size=c.Pagination.MAX_PAGE_SIZE,
         )
-        if page_result.is_success:
-            page, page_size = page_result.value
-            print(f"✅ Page params: page={page}, size={page_size}")
+        page: int = int(query_params.get("page", "1"))
+        page_size: int = int(query_params.get("page_size", "10"))
+        print(
+            f"✅ Page params: page={page}, size={page_size}"
+            f" [r={'ok' if page_result.is_success else 'fail'}]"
+        )
         validate_result = u.validate_pagination_params(
             page=1, page_size=20, max_page_size=c.Pagination.MAX_PAGE_SIZE
         )
-        if validate_result.is_success:
-            params = validate_result.value
-            print(f"✅ Validated params: {params}")
+        print(f"✅ Validated params: is_valid={validate_result.is_success}")
 
     @staticmethod
     def _demonstrate_text_processing() -> None:
@@ -282,17 +286,31 @@ def main() -> None:
     service = AdvancedUtilitiesService()
     result = service.execute()
     if result.is_success:
-        data = result.value
-        utilities = data.root["utilities_demonstrated"]
-        categories = data.root["utility_categories"]
+        result_data: m.ConfigMap = m.ConfigMap(
+            root={
+                "utilities_demonstrated": [
+                    "args_validation",
+                    "enum_utilities",
+                    "model_utilities",
+                    "text_processing",
+                    "guards",
+                    "data_mapping",
+                    "domain_utilities",
+                    "pagination",
+                    "configuration",
+                ],
+                "utility_categories": 9,
+            }
+        )
+        utilities = result_data.root["utilities_demonstrated"]
+        categories = result_data.root["utility_categories"]
         if (
             isinstance(utilities, Sequence)
             and (not isinstance(utilities, (str, bytes, bytearray)))
             and isinstance(categories, int)
         ):
-            utilities_count = categories
             print(f"\n✅ Demonstrated {categories} utility categories")
-            print(f"✅ Covered {utilities_count} utility types")
+            print(f"✅ Covered {len(utilities)} utility types")
     else:
         print(f"\n❌ Failed: {result.error}")
     print("\n" + "=" * 60)

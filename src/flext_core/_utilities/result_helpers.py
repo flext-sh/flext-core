@@ -60,12 +60,10 @@ class ResultHelpers:
     ) -> r[T]:
         try:
             return r[T].ok(func())
-        except Exception as exc:
-            if isinstance(exc, catch):
-                if default is not None:
-                    return r[T].ok(default)
-                return r[T].fail(str(exc))
-            raise
+        except catch as exc:
+            if default is not None:
+                return r[T].ok(default)
+            return r[T].fail(str(exc))
 
     @staticmethod
     def val(result: p.Result[T], *, default: T | None = None) -> r[T]:

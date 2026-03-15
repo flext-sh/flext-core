@@ -255,21 +255,7 @@ class FlextInfraExtraPathsManager:
 def _resolve_project_dirs(
     cli: u.Infra.CliArgs,
 ) -> list[Path] | None:
-    projects_raw: list[str] = []
-    if cli.project:
-        projects_raw.append(cli.project)
-    if cli.projects:
-        projects_raw.extend(name.strip() for name in cli.projects.split(","))
-    projects = [name for name in projects_raw if name]
-    if not projects:
-        return None
-    resolved: list[Path] = []
-    for project in projects:
-        project_path = Path(project)
-        if not project_path.is_absolute():
-            project_path = cli.workspace / project_path
-        resolved.append(project_path)
-    return resolved
+    return cli.project_dirs()
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -284,9 +270,7 @@ def main(argv: list[str] | None = None) -> int:
     cli = u.Infra.resolve(args)
     manager = FlextInfraExtraPathsManager(root=cli.workspace)
     project_dirs = _resolve_project_dirs(cli)
-    result = manager.sync_extra_paths(
-        dry_run=(not cli.apply), project_dirs=project_dirs
-    )
+    result = manager.sync_extra_paths(dry_run=cli.dry_run, project_dirs=project_dirs)
     if result.is_success:
         exit_code = result.value
         return exit_code if isinstance(exit_code, int) else 1

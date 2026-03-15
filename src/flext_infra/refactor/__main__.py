@@ -95,7 +95,7 @@ def _run_centralize_pydantic(cli: u.Infra.CliArgs, *, normalize_remaining: bool)
     output.metrics(
         {
             "workspace": cli.workspace,
-            "mode": "apply" if cli.apply else "dry-run",
+            "mode": cli.mode_label,
         },
         summary,
     )
@@ -139,7 +139,7 @@ def _run_ultrawork_models(cli: u.Infra.CliArgs, *, normalize_remaining: bool) ->
     output.metrics(
         {
             "workspace": cli.workspace,
-            "mode": "apply" if cli.apply else "dry-run",
+            "mode": cli.mode_label,
         },
         centralize_summary,
         {

@@ -206,7 +206,7 @@ class FlextInfraDependencyDetectorRuntime:
             except OSError as exc:
                 return r[int].fail(f"failed to create report directory: {exc}")
             out_path = report_dir / "detect-runtime-dev-latest.json"
-        if out_path is not None and cli.apply:
+        if out_path is not None and not cli.dry_run:
             write_result = detector.json.write_json(out_path, report_payload)
             if write_result.is_failure:
                 return r[int].fail(write_result.error or "failed to write report")

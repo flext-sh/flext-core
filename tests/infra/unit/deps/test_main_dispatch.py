@@ -13,7 +13,7 @@ from types import ModuleType, SimpleNamespace
 import pytest
 
 from flext_infra.deps import __main__ as main_mod
-from flext_infra.deps.__main__ import _SUBCOMMANDS, main
+from flext_infra.deps.__main__ import _SUBCOMMAND_MODULES, main
 from flext_tests import tm
 from tests.infra.typings import t
 
@@ -49,7 +49,7 @@ def _patch_dispatch(
 
 
 class TestMainSubcommandDispatch:
-    @pytest.mark.parametrize("name", list(_SUBCOMMANDS.keys()))
+    @pytest.mark.parametrize("name", list(_SUBCOMMAND_MODULES.keys()))
     def test_dispatch_each_subcommand(
         self,
         monkeypatch: pytest.MonkeyPatch,

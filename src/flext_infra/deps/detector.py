@@ -82,11 +82,7 @@ class FlextInfraRuntimeDevDependencyDetector:
     @staticmethod
     def project_filter(cli: u.Infra.CliArgs) -> list[str] | None:
         """Extract project filter list from parsed CLI arguments."""
-        if cli.project:
-            return [cli.project]
-        if cli.projects:
-            return [name.strip() for name in cli.projects.split(",") if name.strip()]
-        return None
+        return cli.project_names()
 
     def run(
         self: FlextInfraRuntimeDevDependencyDetector,

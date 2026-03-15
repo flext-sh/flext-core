@@ -225,14 +225,8 @@ class FlextInfraDependencyPathSync:
 
     def run(self, *, cli: u.Infra.CliArgs, mode: str) -> int:
         self.set_workspace_root(cli.workspace)
-        dry_run = not cli.apply
-        selected_projects: list[str] = []
-        if cli.project:
-            selected_projects.append(cli.project)
-        if cli.projects:
-            selected_projects.extend(
-                name.strip() for name in cli.projects.split(",") if name.strip()
-            )
+        dry_run = cli.dry_run
+        selected_projects: list[str] = cli.project_names() or []
 
         if mode == "auto":
             mode = self.detect_mode(self._root)

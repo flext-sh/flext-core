@@ -93,12 +93,7 @@ class RegistryDispatcherService(s[m.ConfigMap]):
         dispatcher.register_handler(create_handler)
         command = CreateUserCommand(name="Alice", email="alice@example.com")
         dispatch_result = dispatcher.dispatch(command)
-        if dispatch_result.is_success:
-            event_value = dispatch_result.value
-            if isinstance(event_value, UserCreatedEvent):
-                print(f"✅ Command dispatched: {event_value.aggregate_id}")
-            else:
-                print("✅ Command dispatched successfully")
+        print(f"✅ Command dispatched: is_success={dispatch_result.is_success}")
 
     @staticmethod
     def _demonstrate_integration() -> None:
@@ -129,9 +124,7 @@ class RegistryDispatcherService(s[m.ConfigMap]):
         query: GetUserQuery = GetUserQuery(user_id="user-123")
         query_result = dispatcher.dispatch(query)
         if query_result.is_success:
-            user_data = query_result.value
-            if isinstance(user_data, m.ConfigMap):
-                print(f"✅ Query dispatched: {user_data.get('name')}")
+            print("✅ Query dispatched successfully")
 
     @staticmethod
     def _demonstrate_registry() -> None:
@@ -201,10 +194,7 @@ def main() -> None:
     service = RegistryDispatcherService()
     result = service.execute()
     if result.is_success:
-        data = result.value
-        patterns = data.root.get("patterns_demonstrated")
-        if isinstance(patterns, (list, tuple)):
-            print("\n✅ Demonstrated registry/dispatcher patterns")
+        print("\n✅ Demonstrated registry/dispatcher patterns")
     else:
         print(f"\n❌ Failed: {result.error}")
     print("\n" + "=" * 60)

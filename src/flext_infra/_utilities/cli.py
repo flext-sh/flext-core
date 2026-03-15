@@ -39,6 +39,28 @@ class FlextInfraUtilitiesCli:
         project: str | None = None
         projects: str | None = None
 
+        @property
+        def dry_run(self) -> bool:
+            return not self.apply
+
+        @property
+        def mode_label(self) -> str:
+            return "apply" if self.apply else "dry-run"
+
+        def project_names(self) -> list[str] | None:
+            names: list[str] = []
+            if self.project:
+                names.append(self.project)
+            if self.projects:
+                names.extend(p.strip() for p in self.projects.split(",") if p.strip())
+            return names or None
+
+        def project_dirs(self) -> list[Path] | None:
+            names = self.project_names()
+            if names is None:
+                return None
+            return [self.workspace / name for name in names]
+
     @staticmethod
     def _shared_flags_parser(
         *,

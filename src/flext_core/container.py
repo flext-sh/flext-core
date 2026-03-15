@@ -529,7 +529,7 @@ class FlextContainer(p.DI):
                     typed_resolved: T = resolved_for_check
                     return r[T].ok(typed_resolved)
                 return r[t.RegisterableService].ok(resolved)
-            except Exception as e:
+            except (TypeError, ValueError, RuntimeError, KeyError, AttributeError) as e:
                 return r[t.RegisterableService].fail(str(e))
         if name in self._resources:
             try:
@@ -551,7 +551,7 @@ class FlextContainer(p.DI):
                     typed_resource: T = resource_for_check
                     return r[T].ok(typed_resource)
                 return r[t.RegisterableService].ok(resolved)
-            except Exception as e:
+            except (TypeError, ValueError, RuntimeError, KeyError, AttributeError) as e:
                 return r[t.RegisterableService].fail(str(e))
         return r[t.RegisterableService].fail(f"Service '{name}' not found")
 
@@ -767,7 +767,7 @@ class FlextContainer(p.DI):
             setattr(self._di_bridge, name, provider)
             setattr(self._di_container, name, provider)
             return self
-        except Exception as e:
+        except (TypeError, ValueError, RuntimeError, AttributeError) as e:
             _ = e
             return self
 

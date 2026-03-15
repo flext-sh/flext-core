@@ -375,7 +375,7 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
                             bootstrap_wire_packages = current_packages
                         if options.wire_classes is not None:
                             bootstrap_wire_classes = options.wire_classes
-                except Exception as exc:
+                except (AttributeError, TypeError, RuntimeError, ValueError) as exc:
                     FlextLogger.create_module_logger(__name__).warning(
                         "Failed to load runtime bootstrap options",
                         exc_info=exc,

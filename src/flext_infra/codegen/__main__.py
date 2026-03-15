@@ -131,7 +131,7 @@ def _handle_census(cli: u.Infra.CliArgs) -> int:
 def _handle_scaffold(cli: u.Infra.CliArgs) -> int:
     """Handle the ``scaffold`` subcommand."""
     scaffolder = FlextInfraCodegenScaffolder(workspace_root=cli.workspace)
-    if not cli.apply:
+    if cli.dry_run:
         output.info("Dry-run mode: no files will be created")
     results = scaffolder.run()
     total_created = sum(len(res.files_created) for res in results)
@@ -149,9 +149,9 @@ def _handle_auto_fix(cli: u.Infra.CliArgs) -> int:
     """Handle the ``auto-fix`` subcommand."""
     fixer = FlextInfraCodegenFixer(
         workspace_root=cli.workspace,
-        dry_run=not cli.apply,
+        dry_run=cli.dry_run,
     )
-    if not cli.apply:
+    if cli.dry_run:
         output.info("Dry-run mode: no files will be modified")
     results = fixer.run()
     total_fixed = sum(len(res.violations_fixed) for res in results)
@@ -174,10 +174,10 @@ def _handle_pipeline(cli: u.Infra.CliArgs) -> int:
     reports_before = census.run()
     scaffolder = FlextInfraCodegenScaffolder(workspace_root=cli.workspace)
     scaffold_results = scaffolder.run()
-    fixer = FlextInfraCodegenFixer(workspace_root=cli.workspace, dry_run=not cli.apply)
+    fixer = FlextInfraCodegenFixer(workspace_root=cli.workspace, dry_run=cli.dry_run)
     fix_results = fixer.run()
     generator = FlextInfraCodegenLazyInit(workspace_root=cli.workspace)
-    generator.run(check_only=not cli.apply)
+    generator.run(check_only=cli.dry_run)
     reports_after = census.run()
     if cli.output_format == "json":
         _ = {

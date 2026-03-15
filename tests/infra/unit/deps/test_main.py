@@ -17,7 +17,7 @@ from types import ModuleType, SimpleNamespace
 import pytest
 
 from flext_infra.deps import __main__ as deps_main
-from flext_infra.deps.__main__ import _SUBCOMMANDS, main
+from flext_infra.deps.__main__ import _SUBCOMMAND_MODULES, main
 from flext_tests import tm
 from tests.infra.typings import t
 
@@ -55,7 +55,7 @@ def _patch_dispatch(
 class TestSubcommandMapping:
     """Test subcommand mapping completeness."""
 
-    EXPECTED_SUBCOMMANDS: dict[str, str] = {
+    EXPECTED_SUBCOMMAND_MODULES: dict[str, str] = {
         "detect": "flext_infra.deps.detector",
         "extra-paths": "flext_infra.deps.extra_paths",
         "internal-sync": "flext_infra.deps.internal_sync",
@@ -65,22 +65,22 @@ class TestSubcommandMapping:
 
     def test_subcommands_count(self) -> None:
         """Test correct number of subcommands."""
-        tm.that(len(_SUBCOMMANDS), eq=5)
+        tm.that(len(_SUBCOMMAND_MODULES), eq=5)
 
     @pytest.mark.parametrize(
         ("name", "module"),
-        list(EXPECTED_SUBCOMMANDS.items()),
-        ids=list(EXPECTED_SUBCOMMANDS.keys()),
+        list(EXPECTED_SUBCOMMAND_MODULES.items()),
+        ids=list(EXPECTED_SUBCOMMAND_MODULES.keys()),
     )
     def test_subcommand_mapping(self, name: str, module: str) -> None:
         """Test each subcommand maps to correct module."""
-        tm.that(name in _SUBCOMMANDS, eq=True, msg=f"Missing subcommand: {name}")
-        tm.that(_SUBCOMMANDS[name], eq=module)
+        tm.that(name in _SUBCOMMAND_MODULES, eq=True, msg=f"Missing subcommand: {name}")
+        tm.that(_SUBCOMMAND_MODULES[name], eq=module)
 
-    @pytest.mark.parametrize("name", list(EXPECTED_SUBCOMMANDS.keys()))
+    @pytest.mark.parametrize("name", list(EXPECTED_SUBCOMMAND_MODULES.keys()))
     def test_subcommand_module_importable(self, name: str) -> None:
         """Test each subcommand module can be imported."""
-        module = importlib.import_module(_SUBCOMMANDS[name])
+        module = importlib.import_module(_SUBCOMMAND_MODULES[name])
         tm.that(hasattr(module, "main"), eq=True, msg=f"{name} module has no main()")
 
 

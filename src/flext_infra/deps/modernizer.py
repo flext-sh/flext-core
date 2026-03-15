@@ -160,7 +160,7 @@ class FlextInfraPyprojectModernizer:
     def run(self, args: Namespace, cli: u.Infra.CliArgs) -> int:
         """Run pyproject modernization for the workspace."""
         check_mode = bool(args.audit or cli.check)
-        dry_run = bool((not cli.apply) or check_mode)
+        dry_run = bool(cli.dry_run or check_mode)
         files = self.find_pyproject_files()
         root_doc = u.Infra.read(self.root / c.Infra.Files.PYPROJECT_FILENAME)
         if root_doc is None:

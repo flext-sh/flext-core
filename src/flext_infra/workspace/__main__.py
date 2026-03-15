@@ -68,7 +68,7 @@ def _run_orchestrate(
 
 def _run_migrate(cli: u.Infra.CliArgs) -> int:
     service = FlextInfraProjectMigrator()
-    result = service.migrate(workspace_root=cli.workspace, dry_run=not cli.apply)
+    result = service.migrate(workspace_root=cli.workspace, dry_run=cli.dry_run)
     if result.is_failure:
         u.Infra.error(result.error or "migration failed")
         return 1
@@ -86,7 +86,7 @@ def _run_migrate(cli: u.Infra.CliArgs) -> int:
     u.Infra.info(
         f"Total: {total_changes} change(s), {total_errors} error(s) across {len(result.value)} project(s)",
     )
-    if not cli.apply:
+    if cli.dry_run:
         u.Infra.info("(dry-run — no files modified)")
     return 1 if failed_projects else 0
 
