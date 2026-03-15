@@ -14,8 +14,6 @@ from pathlib import Path
 
 from flext_core import FlextLogger, r
 from flext_infra import (
-    FlextInfraUtilitiesPatterns,
-    FlextInfraUtilitiesTemplates,
     c,
     m,
     u,
@@ -52,7 +50,7 @@ class FlextInfraDocGenerator:
                 return match.group(0)
             return label
 
-        return FlextInfraUtilitiesPatterns.MARKDOWN_LINK_RE.sub(replace, content)
+        return u.Infra.MARKDOWN_LINK_RE.sub(replace, content)
 
     @staticmethod
     def _write_if_needed(
@@ -114,9 +112,7 @@ class FlextInfraDocGenerator:
     def _build_toc(self, content: str) -> str:
         """Build a markdown TOC from level-2 and level-3 headings."""
         items: list[str] = []
-        for level, title in FlextInfraUtilitiesPatterns.HEADING_H2_H3_RE.findall(
-            content
-        ):
+        for level, title in u.Infra.HEADING_H2_H3_RE.findall(content):
             anchor = self._normalize_anchor(title)
             if not anchor:
                 continue
@@ -124,11 +120,7 @@ class FlextInfraDocGenerator:
             items.append(f"{indent}- [{title}](#{anchor})")
         if not items:
             items = ["- No sections found"]
-        return (
-            f"{FlextInfraUtilitiesTemplates.TOC_START}\n"
-            + "\n".join(items)
-            + f"\n{FlextInfraUtilitiesTemplates.TOC_END}"
-        )
+        return f"{u.Infra.TOC_START}\n" + "\n".join(items) + f"\n{u.Infra.TOC_END}"
 
     def _generate_project_guides(
         self,
@@ -337,10 +329,7 @@ class FlextInfraDocGenerator:
     def _update_toc(self, content: str) -> str:
         """Insert or replace TOC markers in markdown content."""
         toc = self._build_toc(content)
-        if (
-            FlextInfraUtilitiesTemplates.TOC_START in content
-            and FlextInfraUtilitiesTemplates.TOC_END in content
-        ):
+        if u.Infra.TOC_START in content and u.Infra.TOC_END in content:
             return re.sub(
                 r"<!-- TOC START -->.*?<!-- TOC END -->",
                 toc,

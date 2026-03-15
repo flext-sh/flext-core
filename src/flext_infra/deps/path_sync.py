@@ -16,8 +16,6 @@ from tomlkit.toml_document import TOMLDocument
 
 from flext_core import FlextLogger, r
 from flext_infra import (
-    FlextInfraUtilitiesDiscovery,
-    FlextInfraUtilitiesToml,
     c,
     m,
     u,
@@ -48,10 +46,10 @@ class FlextInfraDependencyPathSync:
 
     def __init__(self) -> None:
         """Initialize the dependency path sync service with TOML service."""
-        self._toml = FlextInfraUtilitiesToml()
         self._root = self.ROOT
 
     def set_workspace_root(self, workspace_root: Path) -> None:
+        """Configure workspace root for path resolution."""
         self._root = workspace_root
 
     @staticmethod
@@ -206,7 +204,7 @@ class FlextInfraDependencyPathSync:
         dry_run: bool = False,
     ) -> r[list[str]]:
         """Rewrite PEP 621 and Poetry dependency paths."""
-        doc_result = self._toml.read_document(pyproject_path)
+        doc_result = u.Infra.read_document(pyproject_path)
         if doc_result.is_failure:
             return r[list[str]].fail(doc_result.error or "failed to read TOML document")
         doc: TOMLDocument = doc_result.value
@@ -218,12 +216,13 @@ class FlextInfraDependencyPathSync:
         )
         changes += self._rewrite_poetry(doc, is_root=is_root, mode=mode)
         if changes and (not dry_run):
-            write_result = self._toml.write_document(pyproject_path, doc)
+            write_result = u.Infra.write_document(pyproject_path, doc)
             if write_result.is_failure:
                 return r[list[str]].fail(write_result.error or "failed to write TOML")
         return r[list[str]].ok(changes)
 
     def run(self, *, cli: u.Infra.CliArgs, mode: str) -> int:
+        """Execute path synchronization for the given CLI arguments."""
         self.set_workspace_root(cli.workspace)
         dry_run = cli.dry_run
         selected_projects: list[str] = cli.project_names() or []
@@ -237,7 +236,7 @@ class FlextInfraDependencyPathSync:
         root_pyproject = self._root / c.Infra.Files.PYPROJECT_FILENAME
 
         if root_pyproject.exists():
-            root_data_result = self._toml.read_document(root_pyproject)
+            root_data_result = u.Infra.read_document(root_pyproject)
             if root_data_result.is_success:
                 root_data: TOMLDocument = root_data_result.value
                 root_project = self._table_get(root_data, c.Infra.Toml.PROJECT)
@@ -270,7 +269,7 @@ class FlextInfraDependencyPathSync:
                     output.info(change)
                 total_changes += len(changes)
 
-        discover_result = FlextInfraUtilitiesDiscovery().discover_projects(self._root)
+        discover_result = u.Infra.discover_projects(self._root)
         if discover_result.is_failure:
             discovery_error = discover_result.error or "sync_dep_paths_discovery_failed"
             self._log.error(
@@ -291,7 +290,7 @@ class FlextInfraDependencyPathSync:
             pyproject = project_dir / c.Infra.Files.PYPROJECT_FILENAME
             if not pyproject.exists():
                 continue
-            data_result = self._toml.read_document(pyproject)
+            data_result = u.Infra.read_document(pyproject)
             if data_result.is_failure:
                 continue
             project_data: TOMLDocument = data_result.value

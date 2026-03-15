@@ -160,7 +160,7 @@ def _main_inner(argv: list[str] | None = None) -> int:
         default=f"{c.Infra.Reporting.REPORTS_DIR_NAME}/docs",
     )
 
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     cli = u.Infra.resolve(args)
 
     if not args.command:
