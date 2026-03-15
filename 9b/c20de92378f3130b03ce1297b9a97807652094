@@ -1,0 +1,36 @@
+tests/unit/test_result_coverage_100.py
+  81fd62cbe25a9394 487
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "9bc20de92378f3130b03ce1297b9a97807652094",
+  "prompts": {
+    "81fd62cbe25a9394": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_30d740794ffe0et1Zze18QBMW4",
+        "model": "anthropic/claude-haiku-4-5"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 1,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    },
+    "e97f921f4df8f80d": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_30d6ee938ffeoJ9OO842GUV112",
+        "model": "anthropic/claude-haiku-4-5"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 1,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    }
+  }
+}
