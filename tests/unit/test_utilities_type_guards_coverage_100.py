@@ -24,6 +24,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from flext_core import m, t, u
 from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core.runtime import RuntimeData
+from flext_tests import tm
 
 
 class TypeGuardScenario(BaseModel):
@@ -240,50 +241,50 @@ class TestuTypeGuardsNormalizeToMetadata:
     def test_normalize_dict_to_pydantic_model(self) -> None:
         test_dict: m.ConfigMap = m.ConfigMap(root={"key": "value", "num": 42})
         result = u.normalize_to_metadata(test_dict)
-        assert isinstance(result, str)
+        tm.that(result, is_=str)
 
     def test_normalize_list_to_pydantic_model(self) -> None:
         test_list = [1, 2, 3]
         result = u.normalize_to_metadata(test_list)
-        assert isinstance(result, list)
+        tm.that(result, is_=list)
 
     def test_normalize_dict_with_primitives(self) -> None:
         test_dict: m.ConfigMap = m.ConfigMap(root={"a": 1, "b": "test", "c": True})
         result = u.normalize_to_metadata(test_dict)
-        assert isinstance(result, str)
+        tm.that(result, is_=str)
 
     def test_normalize_dict_with_nested_dict(self) -> None:
         inner = m.ConfigMap(root={"nested": "value"})
         outer = m.ConfigMap(root={"key": inner})
         result = u.normalize_to_metadata(outer)
-        assert isinstance(result, str)
+        tm.that(result, is_=str)
 
     def test_normalize_dict_with_list_value(self) -> None:
         test_dict = {"key": [1, 2, 3]}
         result = u.normalize_to_metadata(test_dict)
-        assert isinstance(result, dict)
-        assert isinstance(result["key"], list)
+        tm.that(result, is_=dict)
+        tm.that(result["key"], is_=list)
 
     def test_normalize_dict_with_non_string_key(self) -> None:
         test_dict = {123: "value", "key": "test"}
         result = u.normalize_to_metadata(cast("RuntimeData", test_dict))
-        assert isinstance(result, dict)
-        assert "123" in result
+        tm.that(result, is_=dict)
+        tm.that(result, has="123")
 
     def test_normalize_list_with_primitives(self) -> None:
         test_list = ["a", 1, True]
         result = u.normalize_to_metadata(test_list)
-        assert isinstance(result, list)
+        tm.that(result, is_=list)
 
     def test_normalize_list_with_nested_list(self) -> None:
         test_list: list[t.NormalizedValue] = [[1, 2], [3, 4]]
         result = u.normalize_to_metadata(test_list)
-        assert isinstance(result, list)
+        tm.that(result, is_=list)
 
     def test_normalize_list_with_dict(self) -> None:
         test_list = [{"key": "value"}]
         result = u.normalize_to_metadata(test_list)
-        assert isinstance(result, list)
+        tm.that(result, is_=list)
 
     def test_normalize_list_with_complex_items(self) -> None:
         test_list: list[t.NormalizedValue] = [
@@ -294,12 +295,12 @@ class TestuTypeGuardsNormalizeToMetadata:
             [1, 2, 3],
         ]
         result = u.normalize_to_metadata(test_list)
-        assert isinstance(result, list)
+        tm.that(result, is_=list)
 
     def test_normalize_tuple_to_pydantic_model(self) -> None:
         test_tuple = (1, 2, 3)
         result = u.normalize_to_metadata(test_tuple)
-        assert isinstance(result, list)
+        tm.that(result, is_=list)
 
     def test_normalize_dict_with_complex_nested_structure(self) -> None:
         test_dict: dict[str, t.NormalizedValue] = {
@@ -310,7 +311,7 @@ class TestuTypeGuardsNormalizeToMetadata:
             "complex": {"a": [1, 2]},
         }
         result = u.normalize_to_metadata(test_dict)
-        assert isinstance(result, dict)
+        tm.that(result, is_=dict)
 
     def test_normalize_custom_object(self) -> None:
         """Test normalize_to_metadata: custom object -> str(obj)."""
@@ -322,14 +323,14 @@ class TestuTypeGuardsNormalizeToMetadata:
 
         obj = CustomObject()
         result = u.normalize_to_metadata(cast("RuntimeData", obj))
-        assert isinstance(result, str)
-        assert result == "custom_object"
+        tm.that(result, is_=str)
+        tm.that(result, eq="custom_object")
 
     def test_normalize_float_pi(self) -> None:
         """Test normalize_to_metadata: float math.pi -> float."""
         result = u.normalize_to_metadata(math.pi)
-        assert isinstance(result, float)
-        assert result == math.pi
+        tm.that(result, is_=float)
+        tm.that(result, eq=math.pi)
 
     def test_normalize_basemodel_passthrough(self) -> None:
         class SampleModel(BaseModel):
@@ -337,8 +338,8 @@ class TestuTypeGuardsNormalizeToMetadata:
 
         model = SampleModel()
         result = u.normalize_to_metadata(model)
-        assert isinstance(result, str)
-        assert "test" in result
+        tm.that(result, is_=str)
+        tm.that(result, has="test")
 
 
 __all__ = [
