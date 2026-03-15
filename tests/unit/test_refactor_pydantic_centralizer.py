@@ -24,7 +24,7 @@ def test_centralizer_converts_typed_dict_factory_to_model(tmp_path: Path) -> Non
 
     summary = FlextInfraRefactorPydanticCentralizer.centralize_workspace(
         tmp_path,
-        apply_changes=True,
+        apply=True,
         normalize_remaining=False,
     )
 
@@ -56,7 +56,7 @@ def test_centralizer_does_not_touch_settings_module(tmp_path: Path) -> None:
 
     summary = FlextInfraRefactorPydanticCentralizer.centralize_workspace(
         tmp_path,
-        apply_changes=True,
+        apply=True,
         normalize_remaining=True,
     )
 
@@ -80,7 +80,7 @@ def test_centralizer_moves_manual_type_aliases_to_models_file(tmp_path: Path) ->
 
     summary = FlextInfraRefactorPydanticCentralizer.centralize_workspace(
         tmp_path,
-        apply_changes=True,
+        apply=True,
         normalize_remaining=False,
     )
 
@@ -113,7 +113,7 @@ def test_centralizer_moves_dict_alias_in_typings_without_keyword_name(
 
     summary = FlextInfraRefactorPydanticCentralizer.centralize_workspace(
         tmp_path,
-        apply_changes=True,
+        apply=True,
         normalize_remaining=False,
     )
 

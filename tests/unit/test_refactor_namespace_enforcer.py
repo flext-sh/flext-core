@@ -28,7 +28,7 @@ def test_namespace_enforcer_creates_missing_facades_and_rewrites_imports(
     )
 
     report = FlextInfraNamespaceEnforcer(workspace_root=workspace).enforce(
-        apply_changes=True,
+        apply=True,
     )
 
     assert report.total_facades_missing == 0
@@ -63,7 +63,7 @@ def test_namespace_enforcer_detects_manual_typings_and_compat_aliases(
     )
 
     report = FlextInfraNamespaceEnforcer(workspace_root=workspace).enforce(
-        apply_changes=False,
+        apply=False,
     )
 
     assert report.total_manual_typing_violations >= 1
@@ -89,7 +89,7 @@ def test_namespace_enforcer_detects_manual_protocol_outside_canonical_files(
     )
 
     report = FlextInfraNamespaceEnforcer(workspace_root=workspace).enforce(
-        apply_changes=False,
+        apply=False,
     )
 
     assert report.total_manual_protocol_violations == 1
@@ -119,7 +119,7 @@ def test_namespace_enforcer_detects_internal_private_imports(tmp_path: Path) -> 
     )
 
     report = FlextInfraNamespaceEnforcer(workspace_root=workspace).enforce(
-        apply_changes=False,
+        apply=False,
     )
 
     assert report.total_internal_import_violations >= 1
@@ -147,7 +147,7 @@ def test_namespace_enforcer_apply_moves_manual_protocol_to_protocols_file(
     )
 
     report = FlextInfraNamespaceEnforcer(workspace_root=workspace).enforce(
-        apply_changes=True,
+        apply=True,
     )
 
     assert report.total_manual_protocol_violations == 0
@@ -188,7 +188,7 @@ def test_namespace_enforcer_detects_cyclic_imports_in_tests_directory(
     )
 
     report = FlextInfraNamespaceEnforcer(workspace_root=workspace).enforce(
-        apply_changes=False,
+        apply=False,
     )
 
     assert report.total_cyclic_imports >= 1
@@ -215,7 +215,7 @@ def test_namespace_enforcer_detects_missing_runtime_alias_outside_src(
     )
 
     report = FlextInfraNamespaceEnforcer(workspace_root=workspace).enforce(
-        apply_changes=False,
+        apply=False,
     )
 
     assert report.total_runtime_alias_violations >= 1
@@ -243,7 +243,7 @@ def test_namespace_enforcer_apply_keeps_script_shebang_when_adding_future(
     )
 
     _ = FlextInfraNamespaceEnforcer(workspace_root=workspace).enforce(
-        apply_changes=True,
+        apply=True,
     )
 
     rewritten_lines = script_file.read_text(encoding="utf-8").splitlines()
@@ -279,7 +279,7 @@ def test_namespace_enforcer_apply_inserts_future_after_single_line_module_docstr
     )
 
     _ = FlextInfraNamespaceEnforcer(workspace_root=workspace).enforce(
-        apply_changes=True,
+        apply=True,
     )
 
     rewritten_lines = target_file.read_text(encoding="utf-8").splitlines()
@@ -310,7 +310,7 @@ def test_namespace_enforcer_does_not_rewrite_indented_import_aliases(
     )
 
     _ = FlextInfraNamespaceEnforcer(workspace_root=workspace).enforce(
-        apply_changes=True,
+        apply=True,
     )
 
     service_source = service_file.read_text(encoding="utf-8")
@@ -344,7 +344,7 @@ def test_namespace_enforcer_does_not_rewrite_multiline_import_alias_blocks(
     )
 
     _ = FlextInfraNamespaceEnforcer(workspace_root=workspace).enforce(
-        apply_changes=True,
+        apply=True,
     )
 
     module_source = module_file.read_text(encoding="utf-8")

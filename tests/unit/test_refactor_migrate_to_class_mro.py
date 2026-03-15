@@ -34,7 +34,7 @@ def test_migrate_to_mro_moves_constant_and_rewrites_reference(tmp_path: Path) ->
     )
     report = FlextInfraRefactorMigrateToClassMRO(workspace_root=project_root).run(
         target="constants",
-        apply_changes=True,
+        apply=True,
     )
     constants_source = (src_pkg / "constants.py").read_text(encoding="utf-8")
     consumer_source = (src_pkg / "consumer.py").read_text(encoding="utf-8")
@@ -73,7 +73,7 @@ def test_migrate_to_mro_inlines_alias_constant_into_constants_class(
     )
     report = FlextInfraRefactorMigrateToClassMRO(workspace_root=project_root).run(
         target="constants",
-        apply_changes=True,
+        apply=True,
     )
     constants_source = (src_pkg / "constants.py").read_text(encoding="utf-8")
     consumer_source = (src_pkg / "consumer.py").read_text(encoding="utf-8")
@@ -108,7 +108,7 @@ def test_migrate_to_mro_normalizes_facade_alias_to_c(tmp_path: Path) -> None:
     )
     report = FlextInfraRefactorMigrateToClassMRO(workspace_root=project_root).run(
         target="constants",
-        apply_changes=True,
+        apply=True,
     )
     consumer_source = (src_pkg / "consumer.py").read_text(encoding="utf-8")
     assert report.errors == ()
@@ -123,7 +123,7 @@ def test_migrate_to_mro_rejects_unknown_target(tmp_path: Path) -> None:
     project_root.mkdir(parents=True)
     migrator = FlextInfraRefactorMigrateToClassMRO(workspace_root=project_root)
     with pytest.raises(ValueError, match="unsupported target"):
-        _ = migrator.run(target="unknown", apply_changes=False)
+        _ = migrator.run(target="unknown", apply=False)
 
 
 def test_migrate_typings_rewrites_references_with_t_alias(tmp_path: Path) -> None:
@@ -146,7 +146,7 @@ def test_migrate_typings_rewrites_references_with_t_alias(tmp_path: Path) -> Non
     )
     report = FlextInfraRefactorMigrateToClassMRO(workspace_root=project_root).run(
         target="typings",
-        apply_changes=True,
+        apply=True,
     )
     typings_source = (src_pkg / "typings.py").read_text(encoding="utf-8")
     consumer_source = (src_pkg / "consumer.py").read_text(encoding="utf-8")
@@ -183,7 +183,7 @@ def test_migrate_protocols_rewrites_references_with_p_alias(tmp_path: Path) -> N
     )
     report = FlextInfraRefactorMigrateToClassMRO(workspace_root=project_root).run(
         target="protocols",
-        apply_changes=True,
+        apply=True,
     )
     protocols_source = (src_pkg / "protocols.py").read_text(encoding="utf-8")
     consumer_source = (src_pkg / "consumer.py").read_text(encoding="utf-8")
@@ -294,7 +294,7 @@ def test_migrate_to_mro_moves_manual_uppercase_assignment(tmp_path: Path) -> Non
     )
     report = FlextInfraRefactorMigrateToClassMRO(workspace_root=project_root).run(
         target="constants",
-        apply_changes=True,
+        apply=True,
     )
     constants_source = (src_pkg / "constants.py").read_text(encoding="utf-8")
     consumer_source = (src_pkg / "consumer.py").read_text(encoding="utf-8")
