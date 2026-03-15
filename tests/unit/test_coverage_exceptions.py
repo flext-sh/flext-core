@@ -279,7 +279,7 @@ class TestExceptionIntegration:
         except FlextExceptions.ValidationError as e:
             result = r[bool].fail(f"Error in user creation: {e}")
             _ = assertion_helpers.assert_flext_result_failure(result)
-            assert result.error is not None and "Validation failed" in result.error
+            tm.that(result.error, ne=None) and "Validation failed" in result.error
 
 
 class TestExceptionEdgeCases:
@@ -393,9 +393,8 @@ class TestExceptionContext:
         original_msg = "Original error message with details"
         error = FlextExceptions.ValidationError(original_msg)
         result = r[bool].fail(str(error))
-        tm.that(result.error and (, none=False)
-            original_msg in result.error or "Original error" in result.error
-        )
+        tm.that(result.error, none=False)
+        assert original_msg in result.error or "Original error" in result.error
 
 
 class TestExceptionSerialization:
