@@ -23,7 +23,7 @@ import pytest
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import r
-from flext_tests import t, u
+from flext_tests import t, tm, u
 
 from ..test_utils import assertion_helpers
 
@@ -259,7 +259,7 @@ class TestFlextUtilitiesArgs:
                 scenario.input_value,
             )
             result = process(status_value)
-            assert result == scenario.expected_result
+            tm.that(result, eq=scenario.expected_result)
 
         def test_validated_decorator_invalid_enum(self) -> None:
             """Test validated decorator with invalid enum."""
@@ -291,7 +291,7 @@ class TestFlextUtilitiesArgs:
             expected = (
                 f"{values.NAME_JOHN}: {values.STATUS_ACTIVE} ({values.PRIORITY_HIGH})"
             )
-            assert result == expected
+            tm.that(result, eq=expected)
 
     class TestValidatedWithResult:
         """Tests for u.validated_with_result decorator."""
@@ -325,7 +325,7 @@ class TestFlextUtilitiesArgs:
             )
             result = process(valid_status)
             _ = assertion_helpers.assert_flext_result_success(result)
-            assert result.value == values.STATUS_ACTIVE
+            tm.that(result.value, eq=values.STATUS_ACTIVE)
 
         @staticmethod
         def test_validated_with_result_exception() -> None:
@@ -367,7 +367,7 @@ class TestFlextUtilitiesArgs:
                 _ = u.Tests.Result.assert_success(result)
                 parsed = result.value
                 if scenario.expected_status:
-                    assert parsed["status"] == scenario.expected_status
+                    tm.that(parsed["status"], eq=scenario.expected_status)
             else:
                 _ = u.Tests.Result.assert_failure(result)
 
@@ -392,9 +392,9 @@ class TestFlextUtilitiesArgs:
                 return True
 
             params = u.get_enum_params(process)
-            assert "status" in params
-            assert params["status"] == TestFlextUtilitiesArgs.StatusEnum
-            assert "name" not in params
+            tm.that(params, contains="status")
+            tm.that(params["status"], eq=TestFlextUtilitiesArgs.StatusEnum)
+            tm.that("name" in params, eq=False)
 
         @staticmethod
         def test_get_enum_params_multiple() -> None:
@@ -408,11 +408,11 @@ class TestFlextUtilitiesArgs:
                 return True
 
             params = u.get_enum_params(process)
-            assert "status" in params
-            assert "priority" in params
-            assert params["status"] == TestFlextUtilitiesArgs.StatusEnum
-            assert params["priority"] == TestFlextUtilitiesArgs.PriorityEnum
-            assert "name" not in params
+            tm.that(params, contains="status")
+            tm.that(params, contains="priority")
+            tm.that(params["status"], eq=TestFlextUtilitiesArgs.StatusEnum)
+            tm.that(params["priority"], eq=TestFlextUtilitiesArgs.PriorityEnum)
+            tm.that("name" in params, eq=False)
 
         @staticmethod
         def test_get_enum_params_annotated() -> None:
@@ -424,8 +424,8 @@ class TestFlextUtilitiesArgs:
                 return True
 
             params = u.get_enum_params(process)
-            assert "status" in params
-            assert params["status"] == TestFlextUtilitiesArgs.StatusEnum
+            tm.that(params, contains="status")
+            tm.that(params["status"], eq=TestFlextUtilitiesArgs.StatusEnum)
 
         @staticmethod
         def test_get_enum_params_union() -> None:
@@ -435,8 +435,8 @@ class TestFlextUtilitiesArgs:
                 return True
 
             params = u.get_enum_params(process)
-            assert "status" in params
-            assert params["status"] == TestFlextUtilitiesArgs.StatusEnum
+            tm.that(params, contains="status")
+            tm.that(params["status"], eq=TestFlextUtilitiesArgs.StatusEnum)
 
         @staticmethod
         def test_get_enum_params_no_enums() -> None:
@@ -446,7 +446,7 @@ class TestFlextUtilitiesArgs:
                 return True
 
             params = u.get_enum_params(process)
-            assert params == {}
+            tm.that(params, eq={})
 
         @staticmethod
         def test_get_enum_params_exception() -> None:
@@ -456,7 +456,7 @@ class TestFlextUtilitiesArgs:
                 __annotations__ = {"invalid": "NonExistentType"}
 
             params = u.get_enum_params(BadFunction)
-            assert params == {}
+            tm.that(params, eq={})
 
         @staticmethod
         def test_get_enum_params_nested_annotated() -> None:
@@ -471,8 +471,8 @@ class TestFlextUtilitiesArgs:
                 return True
 
             params = u.get_enum_params(process)
-            assert "status" in params
-            assert params["status"] == TestFlextUtilitiesArgs.StatusEnum
+            tm.that(params, contains="status")
+            tm.that(params["status"], eq=TestFlextUtilitiesArgs.StatusEnum)
 
         @staticmethod
         def test_get_enum_params_annotated_unwrap() -> None:
@@ -487,5 +487,5 @@ class TestFlextUtilitiesArgs:
                 return True
 
             params = u.get_enum_params(process)
-            assert "status" in params
-            assert params["status"] == TestFlextUtilitiesArgs.StatusEnum
+            tm.that(params, contains="status")
+            tm.that(params["status"], eq=TestFlextUtilitiesArgs.StatusEnum)

@@ -155,7 +155,7 @@ class TestuTypeGuardsIsStringNonEmpty:
     def test_is_string_non_empty(self, scenario: TypeGuardScenario) -> None:
         """Test is_string_non_empty with various string scenarios."""
         result = FlextUtilitiesGuards.is_string_non_empty(scenario.value)
-        assert result == scenario.expected_result
+        tm.that(result, eq=scenario.expected_result)
 
 
 class TestuTypeGuardsIsDictNonEmpty:
@@ -173,7 +173,7 @@ class TestuTypeGuardsIsDictNonEmpty:
         else:
             test_value = {}
         result = FlextUtilitiesGuards.is_dict_non_empty(test_value)
-        assert result == scenario.expected_result
+        tm.that(result, eq=scenario.expected_result)
 
 
 class TestuTypeGuardsIsListNonEmpty:
@@ -200,7 +200,7 @@ class TestuTypeGuardsIsListNonEmpty:
 
         assert FlextUtilitiesGuards.is_container(value)
         result = u.is_type(value, "list_non_empty")
-        assert result == scenario.expected_result
+        tm.that(result, eq=scenario.expected_result)
 
 
 class TestuTypeGuardsNormalizeToMetadata:
@@ -225,18 +225,15 @@ class TestuTypeGuardsNormalizeToMetadata:
         value = scenario.value
         assert FlextUtilitiesGuards.is_container(value)
         result = u.normalize_to_metadata(value)
-        assert isinstance(result, scenario.expected_type), (
-            f"{scenario.name}: expected {scenario.expected_type.__name__}, "
-            f"got {type(result).__name__}"
-        )
+        tm.that(result, is_=scenario.expected_type)
         if scenario.expected_value is not None:
-            assert result == scenario.expected_value
+            tm.that(result, eq=scenario.expected_value)
 
     def test_normalize_none_to_empty_string(self) -> None:
         """Test normalize_to_metadata: None -> empty string."""
         result = u.normalize_to_metadata(None)
-        assert isinstance(result, str)
-        assert result == ""
+        tm.that(result, is_=str)
+        tm.that(result, eq="")
 
     def test_normalize_dict_to_pydantic_model(self) -> None:
         test_dict: m.ConfigMap = m.ConfigMap(root={"key": "value", "num": 42})

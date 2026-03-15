@@ -55,7 +55,7 @@ class TestContext100Coverage:
         context1.set("key1", "value1").value
         merge_data: dict[str, t.NormalizedValue] = {"key2": "value2", "key3": "value3"}
         merged = context1.merge(merge_data)
-        assert isinstance(merged, FlextContext)
+        tm.that(merged, is_=FlextContext)
         result2 = merged.get("key2")
         result3 = merged.get("key3")
         _ = u.Tests.Result.assert_success(result2)
@@ -68,7 +68,7 @@ class TestContext100Coverage:
         context2 = FlextContext()
         context2.set("key2", "value2").value
         merged = context1.merge(context2)
-        assert isinstance(merged, FlextContext)
+        tm.that(merged, is_=FlextContext)
         result1 = merged.get("key1")
         result2 = merged.get("key2")
         _ = u.Tests.Result.assert_success(result1)
@@ -79,7 +79,7 @@ class TestContext100Coverage:
         context1 = FlextContext()
         context1.set("key1", "value1").value
         cloned = context1.clone()
-        assert isinstance(cloned, FlextContext)
+        tm.that(cloned, is_=FlextContext)
         result = cloned.get("key1")
         _ = u.Tests.Result.assert_success(result)
         tm.that(result.value, eq="value1")
@@ -101,7 +101,7 @@ class TestContext100Coverage:
         context.set("key1", "value1").value
         context.set("key2", "value2").value
         exported = context.export()
-        assert isinstance(exported, dict)
+        tm.that(exported, is_=dict)
         tm.that(exported, contains="global")
         global_data = exported.get("global")
         if isinstance(global_data, dict):
@@ -195,8 +195,8 @@ class TestContext100Coverage:
         context.set("key1", "value1").value
         context.set("key2", "value2").value
         items = context.items()
-        assert ("key1", "value1") in items
-        assert ("key2", "value2") in items
+        tm.that(items, contains=("key1", "value1"))
+        tm.that(items, contains=("key2", "value2"))
 
     def test_get_all_scopes_returns_dict(self) -> None:
         """Test get_all_scopes returns dictionary."""
@@ -204,8 +204,8 @@ class TestContext100Coverage:
         context.set("key1", "value1").value
         context.set("key2", "value2", scope="user").value
         all_scopes = context._get_all_scopes()
-        assert isinstance(all_scopes, dict)
-        assert FlextConstants.Context.SCOPE_GLOBAL in all_scopes
+        tm.that(isinstance(all_scopes, dict), eq=True)
+        tm.that(all_scopes, contains=FlextConstants.Context.SCOPE_GLOBAL)
         tm.that(all_scopes, contains="user")
 
     def test_export_after_clear(self) -> None:
@@ -214,14 +214,14 @@ class TestContext100Coverage:
         context.set("key1", "value1").value
         context.clear()
         exported = context.export()
-        assert isinstance(exported, dict)
+        tm.that(isinstance(exported, dict), eq=True)
 
     def test_merge_empty_dicts(self) -> None:
         """Test merge with empty dictionaries."""
         context1 = FlextContext()
         context2 = FlextContext()
         merged = context1.merge(context2)
-        assert isinstance(merged, FlextContext)
+        tm.that(isinstance(merged, FlextContext), eq=True)
 
     def test_remove_from_specific_scope_direct(self) -> None:
         """Test remove from specific scope using remove method."""
@@ -276,7 +276,7 @@ class TestContext100Coverage:
         """
         bad_dict = {"key": {1, 2, 3}}
         result = FlextModelsContext.ContextData.model_validate({"data": bad_dict})
-        assert isinstance(result.data["key"], str)
+        tm.that(isinstance(result.data["key"], str), eq=True)
 
     def test_context_export_validate_dict_serializable_pydantic_model(self) -> None:
         """Test ContextExport.validate_dict_serializable with Pydantic model."""
@@ -286,7 +286,7 @@ class TestContext100Coverage:
 
         model = TestModel()
         export = FlextModelsContext.ContextExport.model_validate({"data": model})
-        assert isinstance(export.data, dict)
+        tm.that(isinstance(export.data, dict), eq=True)
         tm.that(export.data, contains="field")
 
     def test_context_export_validate_dict_serializable_non_dict(self) -> None:
@@ -315,7 +315,7 @@ class TestContext100Coverage:
         """
         data = {"key": {1, 2, 3}}
         result = FlextModelsContext.ContextExport.model_validate({"data": data})
-        assert isinstance(result.data["key"], str)
+        tm.that(isinstance(result.data["key"], str), eq=True)
 
     def test_context_export_total_data_items(self) -> None:
         """Test ContextExport.total_data_items computed field."""
@@ -324,7 +324,7 @@ class TestContext100Coverage:
             metadata=FlextModelFoundation.Metadata(attributes={}),
             statistics={},
         )
-        assert len(export.data) == 2
+        tm.that(len(export.data), eq=2)
 
     def test_context_export_has_statistics(self) -> None:
         """Test ContextExport.has_statistics computed field."""
@@ -333,13 +333,13 @@ class TestContext100Coverage:
             metadata=FlextModelFoundation.Metadata(attributes={}),
             statistics={"sets": 5},
         )
-        assert bool(export1.statistics) is True
+        tm.that(bool(export1.statistics), eq=True)
         export2 = FlextModelsContext.ContextExport(
             data={},
             metadata=FlextModelFoundation.Metadata(attributes={}),
             statistics={},
         )
-        assert bool(export2.statistics) is False
+        tm.that(bool(export2.statistics), eq=False)
 
     def test_context_scope_data_validate_data_with_basemodel(self) -> None:
         """Test ContextScopeData._validate_data with BaseModel."""
@@ -349,7 +349,7 @@ class TestContext100Coverage:
 
         model = TestModel()
         scope_data = FlextModelsContext.ContextScopeData.model_validate({"data": model})
-        assert isinstance(scope_data.data, dict)
+        tm.that(isinstance(scope_data.data, dict), eq=True)
         tm.that(scope_data.data, contains="field")
 
     def test_context_scope_data_validate_data_with_none(self) -> None:
@@ -359,7 +359,7 @@ class TestContext100Coverage:
             data={},
             metadata={},
         )
-        assert isinstance(scope_data.data, dict)
+        tm.that(isinstance(scope_data.data, dict), eq=True)
         tm.that(scope_data.data, eq={})
 
     def test_context_scope_data_validate_metadata_with_basemodel(self) -> None:
@@ -373,7 +373,7 @@ class TestContext100Coverage:
             "scope_name": "global",
             "metadata": model,
         })
-        assert isinstance(scope_data.metadata, dict)
+        tm.that(isinstance(scope_data.metadata, dict), eq=True)
         tm.that(scope_data.metadata, contains="field")
 
     def test_context_scope_data_validate_metadata_with_none(self) -> None:
@@ -383,7 +383,7 @@ class TestContext100Coverage:
             data={},
             metadata={},
         )
-        assert isinstance(scope_data.metadata, dict)
+        tm.that(isinstance(scope_data.metadata, dict), eq=True)
         tm.that(scope_data.metadata, eq={})
 
     def test_context_statistics_validate_operations_with_basemodel(self) -> None:
@@ -396,7 +396,7 @@ class TestContext100Coverage:
         stats = FlextModelsContext.ContextStatistics.model_validate({
             "operations": model,
         })
-        assert isinstance(stats.operations, dict)
+        tm.that(isinstance(stats.operations, dict), eq=True)
         tm.that(stats.operations, contains="field")
 
     def test_context_statistics_validate_operations_with_none(self) -> None:
@@ -405,7 +405,7 @@ class TestContext100Coverage:
         stats = FlextModelsContext.ContextStatistics.model_validate({
             "operations": none_operations,
         })
-        assert isinstance(stats.operations, dict)
+        tm.that(isinstance(stats.operations, dict), eq=True)
         tm.that(stats.operations, eq={})
 
     def test_context_metadata_validate_custom_fields_with_basemodel(self) -> None:
@@ -418,7 +418,7 @@ class TestContext100Coverage:
         metadata = FlextModelsContext.ContextMetadata.model_validate({
             "custom_fields": model,
         })
-        assert isinstance(metadata.custom_fields, dict)
+        tm.that(isinstance(metadata.custom_fields, dict), eq=True)
         tm.that(metadata.custom_fields, contains="field")
 
     def test_context_metadata_validate_custom_fields_with_none(self) -> None:
@@ -427,5 +427,5 @@ class TestContext100Coverage:
         metadata = FlextModelsContext.ContextMetadata.model_validate({
             "custom_fields": none_custom_fields,
         })
-        assert isinstance(metadata.custom_fields, dict)
+        tm.that(isinstance(metadata.custom_fields, dict), eq=True)
         tm.that(metadata.custom_fields, eq={})

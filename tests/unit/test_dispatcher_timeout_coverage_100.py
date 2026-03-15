@@ -23,6 +23,7 @@ import pytest
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core._dispatcher.timeout import TimeoutEnforcer
+from flext_tests import tm
 
 
 class TimeoutEnforcerScenario(BaseModel):
@@ -108,11 +109,11 @@ class TestTimeoutEnforcerInitialization:
             use_timeout_executor=scenario.use_timeout_executor,
             executor_workers=scenario.executor_workers,
         )
-        assert enforcer.should_use_executor() == scenario.should_use_executor
-        assert enforcer.resolve_workers() == scenario.expected_workers
+        tm.that(enforcer.should_use_executor(), eq=scenario.should_use_executor)
+        tm.that(enforcer.resolve_workers(), eq=scenario.expected_workers)
         status = enforcer.get_executor_status()
-        assert status["executor_active"] is False
-        assert status["executor_workers"] == 0
+        tm.that(status["executor_active"], eq=False)
+        tm.that(status["executor_workers"], eq=0)
 
 
 class TestTimeoutEnforcerExecutorManagement:
@@ -121,10 +122,10 @@ class TestTimeoutEnforcerExecutorManagement:
     def test_ensure_executor_creates_on_demand(self) -> None:
         """Test ensure_executor creates executor on demand."""
         enforcer = TimeoutEnforcer(use_timeout_executor=True, executor_workers=3)
-        assert enforcer.get_executor_status()["executor_active"] is False
+        tm.that(enforcer.get_executor_status()["executor_active"], eq=False)
         executor = enforcer.ensure_executor()
         assert executor is not None
-        assert enforcer.get_executor_status()["executor_active"] is True
+        tm.that(enforcer.get_executor_status()["executor_active"], eq=True)
         executor2 = enforcer.ensure_executor()
         assert executor2 is executor
 
@@ -133,33 +134,33 @@ class TestTimeoutEnforcerExecutorManagement:
         enforcer = TimeoutEnforcer(use_timeout_executor=False, executor_workers=3)
         executor = enforcer.ensure_executor()
         assert executor is not None
-        assert enforcer.get_executor_status()["executor_active"] is True
+        tm.that(enforcer.get_executor_status()["executor_active"], eq=True)
 
     def test_reset_executor_clears_executor(self) -> None:
         """Test reset_executor clears the executor."""
         enforcer = TimeoutEnforcer(use_timeout_executor=True, executor_workers=2)
         enforcer.ensure_executor()
-        assert enforcer.get_executor_status()["executor_active"] is True
+        tm.that(enforcer.get_executor_status()["executor_active"], eq=True)
         enforcer.reset_executor()
-        assert enforcer.get_executor_status()["executor_active"] is False
+        tm.that(enforcer.get_executor_status()["executor_active"], eq=False)
         executor = enforcer.ensure_executor()
         assert executor is not None
-        assert enforcer.get_executor_status()["executor_active"] is True
+        tm.that(enforcer.get_executor_status()["executor_active"], eq=True)
 
     def test_get_executor_status_before_creation(self) -> None:
         """Test get_executor_status before executor creation."""
         enforcer = TimeoutEnforcer(use_timeout_executor=True, executor_workers=5)
         status = enforcer.get_executor_status()
-        assert status["executor_active"] is False
-        assert status["executor_workers"] == 0
+        tm.that(status["executor_active"], eq=False)
+        tm.that(status["executor_workers"], eq=0)
 
     def test_get_executor_status_after_creation(self) -> None:
         """Test get_executor_status after executor creation."""
         enforcer = TimeoutEnforcer(use_timeout_executor=True, executor_workers=7)
         enforcer.ensure_executor()
         status = enforcer.get_executor_status()
-        assert status["executor_active"] is True
-        assert status["executor_workers"] == 7
+        tm.that(status["executor_active"], eq=True)
+        tm.that(status["executor_workers"], eq=7)
 
     def test_get_executor_status_after_reset(self) -> None:
         """Test get_executor_status after reset."""
@@ -167,8 +168,8 @@ class TestTimeoutEnforcerExecutorManagement:
         enforcer.ensure_executor()
         enforcer.reset_executor()
         status = enforcer.get_executor_status()
-        assert status["executor_active"] is False
-        assert status["executor_workers"] == 0
+        tm.that(status["executor_active"], eq=False)
+        tm.that(status["executor_workers"], eq=0)
 
 
 class TestTimeoutEnforcerCleanup:
@@ -178,9 +179,9 @@ class TestTimeoutEnforcerCleanup:
         """Test cleanup with active executor."""
         enforcer = TimeoutEnforcer(use_timeout_executor=True, executor_workers=2)
         enforcer.ensure_executor()
-        assert enforcer.get_executor_status()["executor_active"] is True
+        tm.that(enforcer.get_executor_status()["executor_active"], eq=True)
         enforcer.cleanup()
-        assert enforcer.get_executor_status()["executor_active"] is False
+        tm.that(enforcer.get_executor_status()["executor_active"], eq=False)
         executor = enforcer.ensure_executor()
         assert executor is not None
 
@@ -188,7 +189,7 @@ class TestTimeoutEnforcerCleanup:
         """Test cleanup when no executor exists."""
         enforcer = TimeoutEnforcer(use_timeout_executor=True, executor_workers=3)
         enforcer.cleanup()
-        assert enforcer.get_executor_status()["executor_active"] is False
+        tm.that(enforcer.get_executor_status()["executor_active"], eq=False)
 
     def test_cleanup_multiple_times(self) -> None:
         """Test cleanup can be called multiple times safely."""
@@ -196,7 +197,7 @@ class TestTimeoutEnforcerCleanup:
         enforcer.ensure_executor()
         enforcer.cleanup()
         enforcer.cleanup()
-        assert enforcer.get_executor_status()["executor_active"] is False
+        tm.that(enforcer.get_executor_status()["executor_active"], eq=False)
 
     def test_cleanup_after_reset(self) -> None:
         """Test cleanup after reset."""
@@ -204,7 +205,7 @@ class TestTimeoutEnforcerCleanup:
         enforcer.ensure_executor()
         enforcer.reset_executor()
         enforcer.cleanup()
-        assert enforcer.get_executor_status()["executor_active"] is False
+        tm.that(enforcer.get_executor_status()["executor_active"], eq=False)
 
 
 class TestTimeoutEnforcerEdgeCases:
@@ -216,7 +217,7 @@ class TestTimeoutEnforcerEdgeCases:
         executor = enforcer.ensure_executor()
         assert executor is not None
         future = executor.submit(lambda: 42)
-        assert future.result() == 42
+        tm.that(future.result(), eq=42)
 
     def test_executor_submit_task(self) -> None:
         """Test executor can submit and execute tasks."""
@@ -228,7 +229,7 @@ class TestTimeoutEnforcerEdgeCases:
 
         futures: list[Future[int]] = [executor.submit(double, i) for i in range(5)]
         results: list[int] = [future.result() for future in futures]
-        assert results == [0, 2, 4, 6, 8]
+        tm.that(results, eq=[0, 2, 4, 6, 8])
 
     def test_executor_concurrent_execution(self) -> None:
         """Test executor handles concurrent execution."""
@@ -244,7 +245,7 @@ class TestTimeoutEnforcerEdgeCases:
         results = [f.result() for f in futures]
         elapsed = time.time() - start
         assert all(abs(r - 0.1) < 1e-09 for r in results)
-        assert elapsed < 0.5
+        tm.that(elapsed, lt=0.5)
 
 
 __all__ = [

@@ -13,7 +13,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from flext_core import r
-from flext_infra import FlextInfraUtilitiesIo, c, m, t
+from flext_infra import c, m, t, u
 
 
 class FlextInfraInventoryService:
@@ -22,10 +22,6 @@ class FlextInfraInventoryService:
     Scans the workspace for Python and Bash scripts and produces
     structured inventory, wiring, and external-candidate reports.
     """
-
-    def __init__(self) -> None:
-        """Initialize the inventory service."""
-        self._json = FlextInfraUtilitiesIo()
 
     def generate(
         self,
@@ -76,23 +72,19 @@ class FlextInfraInventoryService:
             external_path = (
                 reports_dir / "scripts-infra--json--external-scripts-candidates.json"
             )
-            write_result = self._json.write_json(
-                inventory_path, inventory, sort_keys=True
-            )
+            write_result = u.Infra.write_json(inventory_path, inventory, sort_keys=True)
             if write_result.is_failure:
                 return r[m.Infra.Core.InventoryReport].fail(
                     write_result.error or "write failed",
                 )
             written.append(str(inventory_path))
-            write_result = self._json.write_json(wiring_path, wiring, sort_keys=True)
+            write_result = u.Infra.write_json(wiring_path, wiring, sort_keys=True)
             if write_result.is_failure:
                 return r[m.Infra.Core.InventoryReport].fail(
                     write_result.error or "write failed",
                 )
             written.append(str(wiring_path))
-            write_result = self._json.write_json(
-                external_path, external, sort_keys=True
-            )
+            write_result = u.Infra.write_json(external_path, external, sort_keys=True)
             if write_result.is_failure:
                 return r[m.Infra.Core.InventoryReport].fail(
                     write_result.error or "write failed",

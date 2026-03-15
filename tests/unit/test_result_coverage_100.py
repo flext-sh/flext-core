@@ -27,6 +27,7 @@ import math
 import pytest
 
 from flext_core import m, r, t
+from flext_tests import tm
 
 
 class _ResultAssertions:
@@ -82,8 +83,9 @@ class TestrCoverage:
     def test_ok_accepts_none_value(self) -> None:
         """Test that ok(None) creates valid success."""
         result = r[t.GeneralValueType].ok(None)
-        assert result.is_success
-        assert result.value is None
+        tm.that(result, is_=r)
+        tm.ok(result)
+        tm.that(result.value, none=True)
 
     def test_fail_creates_failure_with_message(self) -> None:
         """Test creating failure results."""
@@ -94,14 +96,14 @@ class TestrCoverage:
         """Test creating failure with error code."""
         result: r[str] = r[str].fail("Error", error_code="TEST_CODE")
         _ResultAssertions.assert_failure(result)
-        assert result.error_code == "TEST_CODE"
+        tm.fail(result, code="TEST_CODE")
 
     def test_fail_with_error_data(self) -> None:
         """Test creating failure with error data."""
         error_data: m.ConfigMap = m.ConfigMap(root={"status": "failed", "count": 5})
         result: r[str] = r[str].fail("Error", error_data=error_data)
         _ResultAssertions.assert_failure(result)
-        assert result.error_data == error_data
+        tm.fail(result, data={"status": "failed", "count": 5})
 
     def test_value_property_on_success(self) -> None:
         """Test accessing value on success result."""
@@ -127,12 +129,12 @@ class TestrCoverage:
     def test_error_property_on_success_returns_none(self) -> None:
         """Test that error property returns None on success."""
         result = r[str].ok("test")
-        assert result.error is None
+        tm.that(result.error, none=True)
 
     def test_unwrap_success(self) -> None:
         """Test unwrap on success result."""
         result = r[str].ok("test")
-        assert result.value == "test"
+        tm.ok(result, eq="test")
 
     def test_unwrap_failure_raises(self) -> None:
         """Test that unwrap raises on failure."""
@@ -143,12 +145,12 @@ class TestrCoverage:
     def test_unwrap_or_success(self) -> None:
         """Test unwrap_or returns value on success."""
         result = r[str].ok("test")
-        assert result.unwrap_or("default") == "test"
+        tm.that(result.unwrap_or("default"), eq="test")
 
     def test_unwrap_or_failure(self) -> None:
         """Test unwrap_or returns default on failure."""
         result: r[str] = r[str].fail("error")
-        assert result.unwrap_or("default") == "default"
+        tm.that(result.unwrap_or("default"), eq="default")
 
     def test_map_success(self) -> None:
         """Test map operation on success."""
@@ -377,9 +379,7 @@ class TestrCoverage:
         results = [r[int].ok(1), r[int].fail("error1"), r[int].fail("error2")]
         combined = r[list[int]].accumulate_errors(*results)
         _ResultAssertions.assert_failure(combined)
-        assert combined.error is not None
-        assert "error1" in combined.error
-        assert "error2" in combined.error
+        tm.fail(combined, has=["error1", "error2"])
 
     def test_with_resource_success(self) -> None:
         """Test with_resource executes operation."""
@@ -440,7 +440,7 @@ class TestrCoverage:
         """Test context manager __enter__ returns self."""
         result = r[str].ok("test")
         with result as ctx:
-            tm.that(ctx, eq=result)
+            tm.that(ctx is result, eq=True)
 
     def test_context_manager_exit_success(self) -> None:
         """Test context manager __exit__ succeeds."""

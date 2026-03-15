@@ -12,6 +12,7 @@ from __future__ import annotations
 from typing import override
 
 from flext_core import r, s, t
+from flext_tests import tm
 
 
 class TestService(s[str]):
@@ -43,40 +44,40 @@ class TestService100Coverage:
         """Test validate_business_rules."""
         service = TestService()
         result = service.validate_business_rules()
-        assert result.is_success
+        tm.ok(result)
 
     def test_is_valid(self) -> None:
         """Test is_valid property."""
         service = TestService()
         is_valid = service.is_valid()
-        assert isinstance(is_valid, bool)
+        tm.that(is_valid, is_=bool)
 
     def test_get_service_info(self) -> None:
         """Test get_service_info."""
         service = TestService()
         info = service.get_service_info()
-        assert isinstance(info, dict)
-        assert len(info) > 0
+        tm.that(info, is_=dict)
+        tm.that(len(info), gt=0)
         assert "service_type" in info or "service_name" in info or "class_name" in info
 
     def test_execute_success(self) -> None:
         """Test execute method."""
         service = TestService()
         result = service.execute()
-        assert result.is_success
-        assert isinstance(result.value, str)
+        tm.ok(result)
+        tm.that(result.value, is_=str)
 
     def test_ok_method(self) -> None:
         """Test r.ok factory method (strict mode — no self.ok)."""
         result = r[str].ok("test")
-        assert result.is_success
-        assert result.value == "test"
+        tm.ok(result)
+        tm.ok(result, eq="test")
 
     def test_result_property(self) -> None:
         """Test result property."""
         service = TestService()
         result = service.result
-        assert isinstance(result, str)
+        tm.that(result, is_=str)
 
     def test_auto_execute_false(self) -> None:
         """Test auto_execute when False."""
@@ -90,4 +91,4 @@ class TestService100Coverage:
         """Test validate_business_rules can be overridden."""
         service = TestServiceWithValidation()
         result = service.validate_business_rules()
-        assert isinstance(result, r)
+        tm.that(result, is_=r)

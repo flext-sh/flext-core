@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from flext_infra.deps.detection import dm
+from flext_infra import dm
 from flext_tests import tm
 
 
