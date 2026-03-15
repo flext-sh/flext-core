@@ -23,6 +23,7 @@ from pydantic import BaseModel, ValidationError
 
 from flext_core import m, u
 from flext_tests import t
+from flext_tests import tm
 
 _expected_validation_errors: tuple[type[Exception], ...] = (ValidationError, TypeError)
 
@@ -100,11 +101,11 @@ class TestFlextModelsContainer:
             return isinstance(value, Mapping)
 
         assert is_dict_like({"key": "value"}) is True
-        assert is_dict_like({}) is True
-        assert is_dict_like("not_dict") is False
-        assert is_dict_like(123) is False
+        tm.that(is_dict_like({}), eq=True)
+        tm.that(is_dict_like("not_dict"), eq=False)
+        tm.that(is_dict_like(123), eq=False)
         assert is_dict_like([1, 2, 3]) is False
-        assert is_dict_like(None) is False
+        tm.that(is_dict_like(None), eq=False)
 
     @pytest.mark.parametrize(
         ("metadata_value", "should_pass"),
@@ -122,8 +123,8 @@ class TestFlextModelsContainer:
                 "test_value",
                 metadata_value,
             )
-            assert registration.metadata is not None
-            assert hasattr(registration.metadata, "attributes")
+            tm.that(registration.metadata, none=False)
+            tm.that(hasattr(registration.metadata, "attributes"), eq=True)
         else:
             with pytest.raises(_expected_validation_errors):
                 _service_reg_with_metadata("test_service", "test_value", metadata_value)
@@ -131,12 +132,12 @@ class TestFlextModelsContainer:
     def test_service_registration_defaults(self) -> None:
         """Test ServiceRegistration default values."""
         registration = m.ServiceRegistration(name="test", service="value")
-        assert registration.service_type is None
-        assert registration.tags == []
-        assert isinstance(registration.registration_time, datetime)
+        tm.that(registration.service_type, none=True)
+        tm.that(registration.tags, eq=[])
+        tm.that(isinstance(registration.registration_time, datetime), eq=True)
         registration.metadata = None
-        assert registration.metadata is not None
-        assert hasattr(registration.metadata, "attributes")
+        tm.that(registration.metadata, none=False)
+        tm.that(hasattr(registration.metadata, "attributes"), eq=True)
 
     def test_service_registration_with_all_fields(self) -> None:
         """Test ServiceRegistration with all fields populated."""
@@ -148,10 +149,10 @@ class TestFlextModelsContainer:
             service_type="TestService",
             tags=["test", "integration"],
         )
-        assert registration.name == "full_service"
+        tm.that(registration.name, eq="full_service")
         assert registration.service == m.ConfigMap(root={"data": "value"})
-        assert registration.metadata == metadata
-        assert registration.service_type == "TestService"
+        tm.that(registration.metadata, eq=metadata)
+        tm.that(registration.service_type, eq="TestService")
         assert registration.tags == ["test", "integration"]
 
     @pytest.mark.parametrize(
@@ -174,8 +175,8 @@ class TestFlextModelsContainer:
                 factory,
                 metadata_value,
             )
-            assert registration.metadata is not None
-            assert hasattr(registration.metadata, "attributes")
+            tm.that(registration.metadata, none=False)
+            tm.that(hasattr(registration.metadata, "attributes"), eq=True)
         else:
             with pytest.raises(_expected_validation_errors):
                 _factory_reg_with_metadata("test_factory", factory, metadata_value)
@@ -187,13 +188,13 @@ class TestFlextModelsContainer:
             return "value"
 
         registration = m.FactoryRegistration(name="test", factory=factory)
-        assert registration.is_singleton is False
-        assert registration.cached_instance is None
-        assert registration.invocation_count == 0
-        assert isinstance(registration.registration_time, datetime)
+        tm.that(registration.is_singleton, eq=False)
+        tm.that(registration.cached_instance, none=True)
+        tm.that(registration.invocation_count, eq=0)
+        tm.that(isinstance(registration.registration_time, datetime), eq=True)
         registration.metadata = None
-        assert registration.metadata is not None
-        assert hasattr(registration.metadata, "attributes")
+        tm.that(registration.metadata, none=False)
+        tm.that(hasattr(registration.metadata, "attributes"), eq=True)
 
     def test_factory_registration_with_all_fields(self) -> None:
         """Test FactoryRegistration with all fields populated."""
@@ -210,12 +211,12 @@ class TestFlextModelsContainer:
             cached_instance="cached_value",
             invocation_count=5,
         )
-        assert registration.name == "full_factory"
+        tm.that(registration.name, eq="full_factory")
         assert callable(registration.factory)
-        assert registration.metadata == metadata
-        assert registration.is_singleton is True
-        assert registration.cached_instance == "cached_value"
-        assert registration.invocation_count == 5
+        tm.that(registration.metadata, eq=metadata)
+        tm.that(registration.is_singleton, eq=True)
+        tm.that(registration.cached_instance, eq="cached_value")
+        tm.that(registration.invocation_count, eq=5)
 
     @pytest.mark.parametrize(
         "config_dict",
@@ -238,12 +239,11 @@ class TestFlextModelsContainer:
             "enable_factory_caching",
             default=True,
         )
-        assert config.max_services == u.get(
-            config_dict,
-            "max_services",
-            default=1000,
+        tm.that(
+            config.max_services,
+            eq=u.get(config_dict, "max_services", default=1000),
         )
-        assert config.max_factories == u.get(
+        tm.that(config.max_factories, eq=u.get()
             config_dict,
             "max_factories",
             default=500,
@@ -267,28 +267,28 @@ class TestFlextModelsContainer:
     def test_container_config_defaults(self) -> None:
         """Test ContainerConfig default values."""
         config = m.ContainerConfig()
-        assert config.enable_singleton is True
-        assert config.enable_factory_caching is True
-        assert config.max_services == 1000
-        assert config.max_factories == 500
-        assert config.enable_auto_registration is False
-        assert config.enable_lifecycle_hooks is True
-        assert config.lazy_loading is True
+        tm.that(config.enable_singleton, eq=True)
+        tm.that(config.enable_factory_caching, eq=True)
+        tm.that(config.max_services, eq=1000)
+        tm.that(config.max_factories, eq=500)
+        tm.that(config.enable_auto_registration, eq=False)
+        tm.that(config.enable_lifecycle_hooks, eq=True)
+        tm.that(config.lazy_loading, eq=True)
 
     def test_container_config_validation_limits(self) -> None:
         """Test ContainerConfig field validation limits."""
         config_min = m.ContainerConfig(max_services=1)
-        assert config_min.max_services == 1
+        tm.that(config_min.max_services, eq=1)
         config_max = m.ContainerConfig(max_services=10000)
-        assert config_max.max_services == 10000
+        tm.that(config_max.max_services, eq=10000)
         with pytest.raises(ValidationError):
             m.ContainerConfig(max_services=0)
         with pytest.raises(ValidationError):
             m.ContainerConfig(max_services=10001)
         config_fact_min = m.ContainerConfig(max_factories=1)
-        assert config_fact_min.max_factories == 1
+        tm.that(config_fact_min.max_factories, eq=1)
         config_fact_max = m.ContainerConfig(max_factories=5000)
-        assert config_fact_max.max_factories == 5000
+        tm.that(config_fact_max.max_factories, eq=5000)
         with pytest.raises(ValidationError):
             m.ContainerConfig(max_factories=0)
         with pytest.raises(ValidationError):
@@ -301,7 +301,7 @@ class TestFlextModelsContainer:
             service="value",
             metadata=None,
         )
-        assert registration.metadata is not None
+        tm.that(registration.metadata, none=False)
         metadata_dump = registration.metadata.model_dump()
         assert metadata_dump.get("attributes", {}) == {}
 
@@ -316,7 +316,7 @@ class TestFlextModelsContainer:
             factory=factory,
             metadata=None,
         )
-        assert registration.metadata is not None
+        tm.that(registration.metadata, none=False)
         metadata_dump = registration.metadata.model_dump()
         assert metadata_dump.get("attributes", {}) == {}
 
@@ -327,39 +327,39 @@ class TestFlextUtilitiesModelNormalizeToMetadata:
     def test_normalize_to_metadata_none(self) -> None:
         """Test normalize_to_metadata with None returns empty Metadata."""
         result = u.ensure_metadata(None)
-        assert hasattr(result, "attributes")
-        assert result.attributes == {}
+        tm.that(hasattr(result, "attributes"), eq=True)
+        tm.that(result.attributes, eq={})
 
     def test_normalize_to_metadata_empty_dict(self) -> None:
         """Test normalize_to_metadata with empty dict."""
         result = u.ensure_metadata(m.ConfigMap(root={}))
-        assert hasattr(result, "attributes")
-        assert result.attributes == {}
+        tm.that(hasattr(result, "attributes"), eq=True)
+        tm.that(result.attributes, eq={})
 
     def test_normalize_to_metadata_with_values(self) -> None:
         """Test normalize_to_metadata with dict containing values."""
         result = u.ensure_metadata(
             m.ConfigMap(root={"key1": "value1", "key2": 42, "key3": True}),
         )
-        assert hasattr(result, "attributes")
-        assert result.attributes["key1"] == "value1"
-        assert result.attributes["key2"] == 42
-        assert result.attributes["key3"] is True
+        tm.that(hasattr(result, "attributes"), eq=True)
+        tm.that(result.attributes["key1"], eq="value1")
+        tm.that(result.attributes["key2"], eq=42)
+        tm.that(result.attributes["key3"], eq=True)
 
     def test_normalize_to_metadata_existing_metadata(self) -> None:
         """Test normalize_to_metadata with existing Metadata instance."""
         existing = m.Metadata(attributes={"existing": "value"})
         result = u.ensure_metadata(existing)
         assert result is existing
-        assert result.attributes["existing"] == "value"
+        tm.that(result.attributes["existing"], eq="value")
 
     def test_normalize_to_metadata_nested_dict(self) -> None:
         """Test normalize_to_metadata with nested dict values."""
         result = u.ensure_metadata(
             m.ConfigMap(root={"nested": {"level1": {"level2": "value"}}}),
         )
-        assert hasattr(result, "attributes")
-        assert "nested" in result.attributes
+        tm.that(hasattr(result, "attributes"), eq=True)
+        tm.that(result.attributes, has="nested")
 
     def test_normalize_to_metadata_invalid_type(self) -> None:
         """Test normalize_to_metadata with invalid type raises TypeError."""
