@@ -1068,6 +1068,12 @@ class FlextInfraWorkspaceChecker(s):
 def build_parser() -> argparse.ArgumentParser:
     """Build the workspace check CLI parser."""
     parser = argparse.ArgumentParser(description="FLEXT check utilities")
+    _ = parser.add_argument(
+        "--workspace",
+        type=Path,
+        default=Path.cwd(),
+        help="Workspace root directory (default: cwd)",
+    )
     subparsers = parser.add_subparsers(dest="command")
     run_parser = subparsers.add_parser(c.Infra.Verbs.RUN, help="Run quality gates")
     _ = run_parser.add_argument("--gates", default=c.Infra.Gates.DEFAULT_CSV)
@@ -1092,7 +1098,7 @@ def run_cli(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
     if args.command == c.Infra.Verbs.RUN:
-        checker = FlextInfraWorkspaceChecker()
+        checker = FlextInfraWorkspaceChecker(workspace_root=args.workspace)
         gates = FlextInfraWorkspaceChecker.parse_gate_csv(args.gates)
         reports_dir = Path(args.reports_dir).expanduser()
         if not reports_dir.is_absolute():
