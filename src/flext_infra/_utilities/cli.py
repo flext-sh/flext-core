@@ -17,9 +17,10 @@ from pathlib import Path
 
 from pydantic import BaseModel
 
-from flext_core import r
+from flext_core import FlextRuntime, r
 from flext_core.models import FlextModels
 from flext_infra import t
+from flext_infra._utilities.discovery import FlextInfraUtilitiesDiscovery
 from flext_infra._utilities.output import output
 from flext_infra.models import FlextInfraModels as m
 
@@ -265,9 +266,6 @@ class FlextInfraUtilitiesCli:
         main_fn: Callable[[list[str] | None], int],
         argv: list[str] | None = None,
     ) -> int:
-        from flext_core import FlextRuntime
-        from flext_infra._utilities.output import output
-
         try:
             FlextRuntime.ensure_structlog_configured()
             return main_fn(argv)
@@ -289,8 +287,6 @@ class FlextInfraUtilitiesCli:
         *,
         failure_msg: str = "operation failed",
     ) -> int:
-        from flext_infra._utilities.output import output
-
         if result.is_success:
             return 0
         output.error(result.error or failure_msg)
@@ -382,7 +378,6 @@ class FlextInfraUtilitiesCli:
 
         """
         # Import here to avoid circular imports at module level
-        from flext_infra._utilities.discovery import FlextInfraUtilitiesDiscovery
 
         return FlextInfraUtilitiesDiscovery.discover_projects(workspace)
 

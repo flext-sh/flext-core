@@ -72,7 +72,7 @@ class FlextInfraMainCLI(s[int]):
         return r[int].ok(main_inner())
 
     @staticmethod
-    def _print_help() -> None:
+    def print_help() -> None:
         """Display available groups and their descriptions."""
         output.info("Usage: python -m flext_infra <group> [subcommand] [args...]")
         output.header("Groups")
@@ -84,16 +84,12 @@ def main_inner(argv: list[str] | None = None) -> int:
     """Dispatch to the appropriate group CLI."""
     args = argv if argv is not None else sys.argv
     if len(args) < c.Infra.MIN_ARGV or args[1] in {"-h", "--help"}:
-        FlextInfraMainCLI._print_help()
-        return (
-            0
-            if len(args) >= c.Infra.MIN_ARGV and args[1] in {"-h", "--help"}
-            else 1
-        )
+        FlextInfraMainCLI.print_help()
+        return 0 if len(args) >= c.Infra.MIN_ARGV and args[1] in {"-h", "--help"} else 1
     group = args[1]
     if group not in FlextInfraMainCLI.GROUPS:
         output.error(f"unknown group '{group}'")
-        FlextInfraMainCLI._print_help()
+        FlextInfraMainCLI.print_help()
         return 1
     sys.argv = [f"flext-infra {group}"] + args[2:]
     module = importlib.import_module(FlextInfraMainCLI.GROUPS[group])

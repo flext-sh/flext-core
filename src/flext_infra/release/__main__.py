@@ -15,8 +15,6 @@ import sys
 from pathlib import Path
 
 from flext_infra import c, output, u
-from flext_infra._utilities.paths import FlextInfraUtilitiesPaths
-from flext_infra._utilities.versioning import FlextInfraUtilitiesVersioning
 from flext_infra.release.orchestrator import FlextInfraReleaseOrchestrator
 
 
@@ -24,21 +22,20 @@ def _resolve_version(
     version_arg: str, bump_arg: str, interactive: int, root_path: Path
 ) -> str:
     """Determine the target release version based on arguments."""
-    versioning = FlextInfraUtilitiesVersioning()
     if version_arg:
         requested = str(version_arg)
-        parse_result = versioning.parse_semver(requested)
+        parse_result = u.Infra.parse_semver(requested)
         if parse_result.is_failure:
             msg = parse_result.error or "invalid version"
             raise RuntimeError(msg)
         return requested
-    current_result = versioning.current_workspace_version(root_path)
+    current_result = u.Infra.current_workspace_version(root_path)
     if current_result.is_failure:
         msg = current_result.error or "cannot read current version"
         raise RuntimeError(msg)
     current: str = str(current_result.value)
     if bump_arg:
-        bump_result = versioning.bump_version(current, bump_arg)
+        bump_result = u.Infra.bump_version(current, bump_arg)
         if bump_result.is_failure:
             msg = bump_result.error or "bump failed"
             raise RuntimeError(msg)
@@ -49,7 +46,7 @@ def _resolve_version(
     if bump not in {"major", "minor", "patch"}:
         msg = "invalid bump type"
         raise RuntimeError(msg)
-    bump_result = versioning.bump_version(current, bump)
+    bump_result = u.Infra.bump_version(current, bump)
     if bump_result.is_failure:
         msg = bump_result.error or "bump failed"
         raise RuntimeError(msg)
@@ -92,8 +89,7 @@ def _main_impl(argv: list[str] | None = None) -> int:
     _ = parser.add_argument("--projects", nargs="*", default=[])
     args = parser.parse_args(argv)
     cli = u.Infra.resolve(args)
-    resolver = FlextInfraUtilitiesPaths()
-    root_result = resolver.workspace_root(cli.workspace)
+    root_result = u.Infra.workspace_root(cli.workspace)
     if root_result.is_failure:
         return u.Infra.exit_code(root_result)
     root: Path = Path(str(root_result.value))

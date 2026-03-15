@@ -19,10 +19,10 @@ from tomlkit import items
 from flext_core import FlextLogger, r, s
 from flext_infra import (
     FlextInfraUtilitiesDiscovery,
-    FlextInfraUtilitiesIo,
     FlextInfraUtilitiesPaths,
     c,
     t,
+    u,
 )
 from flext_infra._utilities.output import output
 
@@ -54,7 +54,7 @@ class FlextInfraConfigFixer(s):
     @staticmethod
     def _to_array(items_list: list[str]) -> items.Array:
         items_infra: list[t.Infra.InfraValue] = list(items_list)
-        serialized_result = FlextInfraUtilitiesIo().serialize(items_infra)
+        serialized_result = u.Infra.serialize(items_infra)
         if serialized_result.is_failure:
             return tomlkit.array()
         inline_doc = tomlkit.parse(f"items = {serialized_result.value}\n")
@@ -86,14 +86,13 @@ class FlextInfraConfigFixer(s):
 
     def process_file(self, path: Path, *, dry_run: bool = False) -> r[list[str]]:
         """Process one pyproject.toml file and apply fixes."""
-        try:
-            text = path.read_text(encoding=c.Infra.Encoding.DEFAULT)
-            doc = tomlkit.parse(text)
-            doc_data = doc.unwrap()
-        except OSError as exc:
-            return r[list[str]].fail(f"failed to read {path}: {exc}")
-        except Exception as exc:
-            return r[list[str]].fail(f"failed to parse {path}: {exc}")
+        document_result = u.Infra.read_document(path)
+        if document_result.is_failure:
+            return r[list[str]].fail(
+                document_result.error or f"failed to read {path}",
+            )
+        doc = document_result.value
+        doc_data = doc.unwrap()
         tool_data = doc_data.get(c.Infra.Toml.TOOL)
         if not isinstance(tool_data, dict):
             return r[list[str]].ok([])
@@ -121,16 +120,16 @@ class FlextInfraConfigFixer(s):
             fixes = self._ensure_project_excludes_tk(pyrefly)
             all_fixes.extend(fixes)
         if all_fixes and (not dry_run):
-            try:
-                typed_tool_data[c.Infra.Toml.PYREFLY] = dict(pyrefly.items())
-                doc_data[c.Infra.Toml.TOOL] = typed_tool_data
-                new_doc = tomlkit.document()
-                for key, value in doc_data.items():
-                    new_doc[str(key)] = value
-                new_text = new_doc.as_string()
-                _ = path.write_text(new_text, encoding=c.Infra.Encoding.DEFAULT)
-            except OSError as exc:
-                return r[list[str]].fail(f"failed to write {path}: {exc}")
+            typed_tool_data[c.Infra.Toml.PYREFLY] = dict(pyrefly.items())
+            doc_data[c.Infra.Toml.TOOL] = typed_tool_data
+            new_doc = tomlkit.document()
+            for key, value in doc_data.items():
+                new_doc[str(key)] = value
+            write_result = u.Infra.write_document(path, new_doc)
+            if write_result.is_failure:
+                return r[list[str]].fail(
+                    write_result.error or f"failed to write {path}",
+                )
         return r[list[str]].ok(all_fixes)
 
     def run(

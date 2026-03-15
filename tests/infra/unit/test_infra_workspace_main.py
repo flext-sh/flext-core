@@ -59,8 +59,8 @@ class TestRunSync:
                 r[m.Infra.Workspace.SyncResult].ok(
                     m.Infra.Workspace.SyncResult(
                         files_changed=1,
-                        source=Path("."),
-                        target=Path("."),
+                        source=Path(),
+                        target=Path(),
                     )
                 ),
                 0,

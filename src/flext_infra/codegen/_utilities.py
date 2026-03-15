@@ -12,7 +12,6 @@ from __future__ import annotations
 import ast
 import operator
 import shutil
-import subprocess
 import sys
 from collections import defaultdict
 from collections.abc import Mapping, Sequence
@@ -1094,18 +1093,15 @@ class FlextInfraUtilitiesCodegen(FlextInfraCodegenTransforms):
         git_bin = shutil.which(c.Infra.Cli.GIT)
         if not git_bin:
             return []
-        try:
-            result = subprocess.run(
-                [git_bin, "-C", str(workspace_root), *args],
-                check=False,
-                text=True,
-                capture_output=True,
-            )
-        except OSError:
+        result = FlextInfraUtilitiesSubprocess().run_raw(
+            [git_bin, "-C", str(workspace_root), *args],
+        )
+        if result.is_failure:
             return []
-        if result.returncode != 0:
+        output = result.value
+        if output.exit_code != 0:
             return []
-        return [line.strip() for line in result.stdout.splitlines() if line.strip()]
+        return [line.strip() for line in output.stdout.splitlines() if line.strip()]
 
     @staticmethod
     def quality_gate_run_pyrefly_check(
@@ -1164,27 +1160,21 @@ class FlextInfraUtilitiesCodegen(FlextInfraCodegenTransforms):
         workspace_root: Path,
         cmd: list[str],
     ) -> dict[str, t.Infra.InfraValue]:
-        try:
-            result = subprocess.run(
-                cmd,
-                cwd=workspace_root,
-                check=False,
-                text=True,
-                capture_output=True,
-            )
-        except OSError as exc:
+        result = FlextInfraUtilitiesSubprocess().run_raw(cmd, cwd=workspace_root)
+        if result.is_failure:
             return {
                 "passed": False,
-                "detail": f"execution error: {exc}",
+                "detail": result.error or "execution error",
                 "exit_code": 127,
             }
-        output = (result.stderr or result.stdout or "").strip()
+        command_output = result.value
+        output = (command_output.stderr or command_output.stdout or "").strip()
         lines = [line for line in output.splitlines() if line.strip()]
         excerpt = " | ".join(lines[:5]) if lines else "ok"
         return {
-            "passed": result.returncode == 0,
+            "passed": command_output.exit_code == 0,
             "detail": excerpt,
-            "exit_code": result.returncode,
+            "exit_code": command_output.exit_code,
         }
 
     @staticmethod
@@ -1305,3 +1295,4 @@ class FlextInfraUtilitiesCodegen(FlextInfraCodegenTransforms):
 
 
 __all__ = ["FlextInfraUtilitiesCodegen"]
+from flext_infra._utilities.subprocess import FlextInfraUtilitiesSubprocess

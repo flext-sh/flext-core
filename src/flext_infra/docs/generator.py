@@ -105,7 +105,9 @@ class FlextInfraDocGenerator:
             )
         reports: list[m.Infra.Docs.DocsPhaseReport] = []
         for scope in scopes_result.value:
-            report = self._generate_scope(scope, apply=apply, workspace_root=root)
+            report = self._generate_scope(
+                scope, apply=apply, workspace_root=workspace_root
+            )
             reports.append(report)
         return r[list[m.Infra.Docs.DocsPhaseReport]].ok(reports)
 

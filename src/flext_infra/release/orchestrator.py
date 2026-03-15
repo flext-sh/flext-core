@@ -15,10 +15,6 @@ from typing import override
 
 from flext_core import FlextLogger, r, s
 from flext_infra import c, m, u
-from flext_infra._utilities.reporting import FlextInfraUtilitiesReporting
-from flext_infra._utilities.selection import FlextInfraUtilitiesSelection
-from flext_infra._utilities.subprocess import FlextInfraUtilitiesSubprocess
-from flext_infra._utilities.versioning import FlextInfraUtilitiesVersioning
 from flext_infra.release._reporting import FlextInfraReleaseReporting
 
 logger = FlextLogger.create_module_logger(__name__)
@@ -30,7 +26,7 @@ class FlextInfraReleaseOrchestrator(s[bool]):
     @staticmethod
     def _run_make(project_path: Path, verb: str) -> r[tuple[int, str]]:
         """Execute a make command for a project and return (exit_code, output)."""
-        result = FlextInfraUtilitiesSubprocess().run_raw([
+        result = u.Infra.run_raw([
             c.Infra.Cli.MAKE,
             "-C",
             str(project_path),
@@ -54,9 +50,8 @@ class FlextInfraReleaseOrchestrator(s[bool]):
         project_names: list[str],
     ) -> r[bool]:
         """Execute the build phase and write build-report.json."""
-        reporting = FlextInfraUtilitiesReporting()
         output_dir = (
-            reporting.get_report_dir(
+            u.Infra.get_report_dir(
                 workspace_root,
                 c.Infra.Toml.PROJECT,
                 c.Infra.ReportKeys.RELEASE,
@@ -122,9 +117,8 @@ class FlextInfraReleaseOrchestrator(s[bool]):
         push: bool = False,
     ) -> r[bool]:
         """Execute publish phase: notes, changelog, tag, optional push."""
-        reporting = FlextInfraUtilitiesReporting()
         notes_dir = (
-            reporting.get_report_dir(
+            u.Infra.get_report_dir(
                 workspace_root,
                 c.Infra.Toml.PROJECT,
                 c.Infra.ReportKeys.RELEASE,
@@ -166,7 +160,7 @@ class FlextInfraReleaseOrchestrator(s[bool]):
         if dry_run:
             self.logger.info("release_phase_validate", action="dry-run", status="ok")
             return r[bool].ok(True)
-        return FlextInfraUtilitiesSubprocess().run_checked(
+        return u.Infra.run_checked(
             [c.Infra.Cli.MAKE, c.Infra.Verbs.VALIDATE, "VALIDATE_SCOPE=workspace"],
             cwd=workspace_root,
         )
@@ -181,9 +175,8 @@ class FlextInfraReleaseOrchestrator(s[bool]):
         dev_suffix: bool = False,
     ) -> r[bool]:
         """Execute versioning phase across workspace and selected projects."""
-        versioning = FlextInfraUtilitiesVersioning()
         target = f"{version}-dev" if dev_suffix else version
-        parse_result = versioning.parse_semver(version)
+        parse_result = u.Infra.parse_semver(version)
         if parse_result.is_failure:
             return r[bool].fail(parse_result.error or "invalid version")
         files = self._version_files(workspace_root, project_names)
@@ -197,7 +190,7 @@ class FlextInfraReleaseOrchestrator(s[bool]):
                 continue
             changed += 1
             if not dry_run:
-                versioning.replace_project_version(path.parent, target)
+                u.Infra.replace_project_version(path.parent, target)
             self.logger.info(
                 "release_version_file_updated", path=str(path), target=target
             )
@@ -267,8 +260,7 @@ class FlextInfraReleaseOrchestrator(s[bool]):
     ) -> list[tuple[str, Path]]:
         """Resolve unique build targets from project names."""
         targets: list[tuple[str, Path]] = [(c.Infra.ReportKeys.ROOT, workspace_root)]
-        selector = FlextInfraUtilitiesSelection()
-        projects_result = selector.resolve_projects(workspace_root, project_names)
+        projects_result = u.Infra.resolve_projects(workspace_root, project_names)
         if projects_result.is_success:
             targets.extend((p.name, p.path) for p in projects_result.value)
         seen: set[str] = set()
@@ -288,8 +280,7 @@ class FlextInfraReleaseOrchestrator(s[bool]):
         bump: str,
     ) -> r[bool]:
         """Bump to the next development version."""
-        versioning = FlextInfraUtilitiesVersioning()
-        bump_result = versioning.bump_version(version, bump)
+        bump_result = u.Infra.bump_version(version, bump)
         if bump_result.is_failure:
             return r[bool].fail(bump_result.error or "bump failed")
         next_version = bump_result.value
@@ -316,8 +307,7 @@ class FlextInfraReleaseOrchestrator(s[bool]):
         result = u.Infra.git_checkout(workspace_root, branch, create=True)
         if result.is_failure:
             return result
-        selector = FlextInfraUtilitiesSelection()
-        projects_result = selector.resolve_projects(workspace_root, project_names)
+        projects_result = u.Infra.resolve_projects(workspace_root, project_names)
         if projects_result.is_success:
             for project in projects_result.value:
                 proj_result = u.Infra.git_checkout(project.path, branch, create=True)
@@ -383,11 +373,10 @@ class FlextInfraReleaseOrchestrator(s[bool]):
         previous: str = str(previous_result.value) if previous_result.is_success else ""
         changes_result = self._collect_changes(workspace_root, previous, tag)
         changes: str = str(changes_result.value) if changes_result.is_success else ""
-        selector = FlextInfraUtilitiesSelection()
-        projects_result = selector.resolve_projects(workspace_root, project_names)
-        project_list: list[m.Infra.Workspace.ProjectInfo] = []
-        if projects_result.is_success:
-            project_list = projects_result.value  # type: ignore[assignment]
+        projects_result = u.Infra.resolve_projects(workspace_root, project_names)
+        project_list: list[m.Infra.Workspace.ProjectInfo] = (
+            projects_result.value if projects_result.is_success else []
+        )
         return FlextInfraReleaseReporting.generate_notes(
             version,
             tag,
@@ -425,8 +414,7 @@ class FlextInfraReleaseOrchestrator(s[bool]):
     ) -> list[Path]:
         """Discover pyproject.toml files that need version updates."""
         files: list[Path] = [workspace_root / c.Infra.Files.PYPROJECT_FILENAME]
-        selector = FlextInfraUtilitiesSelection()
-        projects_result = selector.resolve_projects(workspace_root, project_names)
+        projects_result = u.Infra.resolve_projects(workspace_root, project_names)
         if projects_result.is_success:
             projects: list[m.Infra.Workspace.ProjectInfo] = projects_result.value
             for project in projects:

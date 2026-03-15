@@ -15,6 +15,7 @@ from collections.abc import Sequence
 from pathlib import Path
 
 from flext_infra import c
+from flext_infra._utilities.parsing import FlextInfraUtilitiesParsing
 
 
 class FlextInfraCodegenTransforms:
@@ -437,9 +438,8 @@ class FlextInfraCodegenTransforms:
             source = path.read_text(encoding=c.Infra.Encoding.DEFAULT)
         except (OSError, UnicodeDecodeError):
             return False
-        try:
-            tree = ast.parse(source)
-        except SyntaxError:
+        tree = FlextInfraUtilitiesParsing.parse_ast_from_source(source)
+        if tree is None:
             return False
         assignment: ast.Assign | None = None
         exports: list[str] = []

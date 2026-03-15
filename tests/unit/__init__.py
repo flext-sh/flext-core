@@ -87,20 +87,21 @@ if TYPE_CHECKING:
     )
     from tests.unit.test_automated_dispatcher import TestAutomatedFlextDispatcher
     from tests.unit.test_automated_exceptions import (
-        TestAutomatedFlextExceptions,
-        TestAutomatedFlextExceptions as e,
+        EXCEPTION_CLASSES,
+        TestAutomatedExceptions,
+        TestAutomatedExceptions as e,
     )
     from tests.unit.test_automated_handlers import (
         TestAutomatedFlextHandlers,
         TestAutomatedFlextHandlers as h,
     )
-    from tests.unit.test_automated_loggings import TestAutomatedFlextLoggings
+    from tests.unit.test_automated_loggings import TestAutomatedFlextLogger
     from tests.unit.test_automated_mixins import (
         TestAutomatedFlextMixins,
         TestAutomatedFlextMixins as x,
     )
     from tests.unit.test_automated_registry import TestAutomatedFlextRegistry
-    from tests.unit.test_automated_result import TestAutomatedr
+    from tests.unit.test_automated_result import TestAutomatedResult
     from tests.unit.test_automated_runtime import TestAutomatedFlextRuntime
     from tests.unit.test_automated_service import TestAutomatedFlextService
     from tests.unit.test_automated_settings import TestAutomatedFlextSettings
@@ -967,6 +968,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_utilities_type_checker_coverage_100",
         "DictHandler",
     ),
+    "EXCEPTION_CLASSES": ("tests.unit.test_automated_exceptions", "EXCEPTION_CLASSES"),
     "EchoHandler": ("tests.unit.test_dispatcher_minimal", "EchoHandler"),
     "EnumScenarios": ("tests.unit.test_enum_utilities_coverage_100", "EnumScenarios"),
     "EventHandler": ("tests.unit.test_dispatcher_full_coverage", "EventHandler"),
@@ -1083,6 +1085,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "TestAltPropagatesException",
     ),
     "TestAssertExists": ("tests.unit.flext_tests.test_files", "TestAssertExists"),
+    "TestAutomatedExceptions": (
+        "tests.unit.test_automated_exceptions",
+        "TestAutomatedExceptions",
+    ),
     "TestAutomatedFlextContainer": (
         "tests.unit.test_automated_container",
         "TestAutomatedFlextContainer",
@@ -1099,17 +1105,13 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_automated_dispatcher",
         "TestAutomatedFlextDispatcher",
     ),
-    "TestAutomatedFlextExceptions": (
-        "tests.unit.test_automated_exceptions",
-        "TestAutomatedFlextExceptions",
-    ),
     "TestAutomatedFlextHandlers": (
         "tests.unit.test_automated_handlers",
         "TestAutomatedFlextHandlers",
     ),
-    "TestAutomatedFlextLoggings": (
+    "TestAutomatedFlextLogger": (
         "tests.unit.test_automated_loggings",
-        "TestAutomatedFlextLoggings",
+        "TestAutomatedFlextLogger",
     ),
     "TestAutomatedFlextMixins": (
         "tests.unit.test_automated_mixins",
@@ -1135,7 +1137,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_automated_utilities",
         "TestAutomatedFlextUtilities",
     ),
-    "TestAutomatedr": ("tests.unit.test_automated_result", "TestAutomatedr"),
+    "TestAutomatedResult": ("tests.unit.test_automated_result", "TestAutomatedResult"),
     "TestBackwardCompatDiscardReturnValue": (
         "tests.unit.test_loggings_strict_returns",
         "TestBackwardCompatDiscardReturnValue",
@@ -1981,7 +1983,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     ),
     "d": ("tests.unit.test_automated_decorators", "TestAutomatedFlextDecorators"),
     "dispatcher": ("tests.unit.test_dispatcher_full_coverage", "dispatcher"),
-    "e": ("tests.unit.test_automated_exceptions", "TestAutomatedFlextExceptions"),
+    "e": ("tests.unit.test_automated_exceptions", "TestAutomatedExceptions"),
     "generators_module": (
         "tests.unit.test_utilities_generators_full_coverage",
         "generators_module",
@@ -3436,6 +3438,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
 }
 
 __all__ = [
+    "EXCEPTION_CLASSES",
     "AttrObject",
     "AutoCommand",
     "AutoDiscoveryHandler",
@@ -3497,20 +3500,20 @@ __all__ = [
     "TestAggregateRoots",
     "TestAltPropagatesException",
     "TestAssertExists",
+    "TestAutomatedExceptions",
     "TestAutomatedFlextContainer",
     "TestAutomatedFlextContext",
     "TestAutomatedFlextDecorators",
     "TestAutomatedFlextDispatcher",
-    "TestAutomatedFlextExceptions",
     "TestAutomatedFlextHandlers",
-    "TestAutomatedFlextLoggings",
+    "TestAutomatedFlextLogger",
     "TestAutomatedFlextMixins",
     "TestAutomatedFlextRegistry",
     "TestAutomatedFlextRuntime",
     "TestAutomatedFlextService",
     "TestAutomatedFlextSettings",
     "TestAutomatedFlextUtilities",
-    "TestAutomatedr",
+    "TestAutomatedResult",
     "TestBackwardCompatDiscardReturnValue",
     "TestBatchOperations",
     "TestCleanText",

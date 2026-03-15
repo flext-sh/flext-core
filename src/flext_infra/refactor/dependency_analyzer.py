@@ -1340,16 +1340,15 @@ class FlextInfraRefactorDependencyAnalyzerFacade:
                     ),
                 )
             return None
-        try:
-            tree = ast.parse(source)
-        except SyntaxError as exc:
+        tree = u.Infra.parse_ast_from_source(source)
+        if tree is None:
             if parse_failures is not None:
                 parse_failures.append(
                     nem.ParseFailureViolation.create(
                         file=str(file_path),
                         stage=stage,
-                        error_type=type(exc).__name__,
-                        detail=str(exc),
+                        error_type="SyntaxError",
+                        detail="invalid python source",
                     ),
                 )
             return None
