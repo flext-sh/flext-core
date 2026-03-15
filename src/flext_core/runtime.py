@@ -1445,13 +1445,7 @@ class FlextRuntime:
             Returns:
                 Successful RuntimeResult instance
 
-            Raises:
-                ValueError: If value is None
-
             """
-            if value is None:
-                msg = "Cannot create success result with None value"
-                raise ValueError(msg)
             instance = cls(
                 is_success=True,
                 error=None,
