@@ -14,6 +14,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import argparse
 import sys
 from pathlib import Path
 
@@ -37,21 +38,23 @@ def main(argv: list[str] | None = None) -> int:
         description="Code generation tools for workspace standardization",
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
+
     lazy_parser = subparsers.add_parser(
         "lazy-init",
         help="Generate/refresh PEP 562 lazy-import __init__.py files",
+    )
+    _ = lazy_parser.add_argument(
+        "--workspace",
+        type=Path,
+        default=Path.cwd(),
+        help="Workspace root directory (default: cwd)",
     )
     _ = lazy_parser.add_argument(
         "--check",
         action="store_true",
         help="Check mode — report unmapped exports without writing files",
     )
-    _ = lazy_parser.add_argument(
-        "--root",
-        type=Path,
-        default=Path.cwd(),
-        help="Workspace root directory (default: cwd)",
-    )
+
     census_parser = subparsers.add_parser(
         "census",
         help="Count namespace violations across workspace projects",
@@ -69,6 +72,7 @@ def main(argv: list[str] | None = None) -> int:
         dest="output_format",
         help="Output format (default: text)",
     )
+
     scaffold_parser = subparsers.add_parser(
         "scaffold",
         help="Generate missing base modules in src/ and tests/",
@@ -79,11 +83,18 @@ def main(argv: list[str] | None = None) -> int:
         default=Path.cwd(),
         help="Workspace root directory (default: cwd)",
     )
-    _ = scaffold_parser.add_argument(
+    scaffold_mode = scaffold_parser.add_mutually_exclusive_group(required=False)
+    _ = scaffold_mode.add_argument(
         "--dry-run",
         action="store_true",
         help="Report what would be created without writing files",
     )
+    _ = scaffold_mode.add_argument(
+        "--apply",
+        action="store_true",
+        help="Apply changes",
+    )
+
     fix_parser = subparsers.add_parser(
         "auto-fix",
         help="Auto-fix namespace violations (move Finals/TypeVars)",
@@ -94,17 +105,24 @@ def main(argv: list[str] | None = None) -> int:
         default=Path.cwd(),
         help="Workspace root directory (default: cwd)",
     )
-    _ = fix_parser.add_argument(
+    fix_mode = fix_parser.add_mutually_exclusive_group(required=False)
+    _ = fix_mode.add_argument(
         "--dry-run",
         action="store_true",
         help="Report what would be fixed without modifying files",
     )
+    _ = fix_mode.add_argument(
+        "--apply",
+        action="store_true",
+        help="Apply changes",
+    )
+
     py_typed_parser = subparsers.add_parser(
         "py-typed",
         help="Create/remove PEP 561 py.typed markers in package directories",
     )
     _ = py_typed_parser.add_argument(
-        "--root",
+        "--workspace",
         type=Path,
         default=Path.cwd(),
         help="Workspace root directory (default: cwd)",
@@ -114,6 +132,7 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Check mode — report changes without writing files",
     )
+
     pipeline_parser = subparsers.add_parser(
         "pipeline",
         help="Run full codegen pipeline: py-typed → census → scaffold → auto-fix → lazy-init → census",
@@ -124,10 +143,16 @@ def main(argv: list[str] | None = None) -> int:
         default=Path.cwd(),
         help="Workspace root directory (default: cwd)",
     )
-    _ = pipeline_parser.add_argument(
+    pipeline_mode = pipeline_parser.add_mutually_exclusive_group(required=False)
+    _ = pipeline_mode.add_argument(
         "--dry-run",
         action="store_true",
         help="Report changes without modifying files",
+    )
+    _ = pipeline_mode.add_argument(
+        "--apply",
+        action="store_true",
+        help="Apply changes",
     )
     _ = pipeline_parser.add_argument(
         "--format",
@@ -136,6 +161,7 @@ def main(argv: list[str] | None = None) -> int:
         dest="output_format",
         help="Output format (default: text)",
     )
+
     quality_parser = subparsers.add_parser(
         "constants-quality-gate",
         help="Run constants migration quality gate and before/after diff",
@@ -166,6 +192,7 @@ def main(argv: list[str] | None = None) -> int:
         dest="output_format",
         help="Output format (default: text)",
     )
+
     args = parser.parse_args(argv)
     if args.command == "lazy-init":
         return _handle_lazy_init(args)
@@ -186,8 +213,8 @@ def main(argv: list[str] | None = None) -> int:
 
 
 def _handle_lazy_init(args: argparse.Namespace) -> int:
-    root = args.root.resolve()
-    generator = FlextInfraCodegenLazyInit(workspace_root=root)
+    workspace = args.workspace.resolve()
+    generator = FlextInfraCodegenLazyInit(workspace_root=workspace)
     unmapped = generator.run(check_only=args.check)
     if args.check and unmapped > 0:
         output.warning(f"{unmapped} files have unmapped exports")
@@ -195,8 +222,8 @@ def _handle_lazy_init(args: argparse.Namespace) -> int:
 
 
 def _handle_py_typed(args: argparse.Namespace) -> int:
-    root = args.root.resolve()
-    service = FlextInfraCodegenPyTyped(workspace_root=root)
+    workspace = args.workspace.resolve()
+    service = FlextInfraCodegenPyTyped(workspace_root=workspace)
     service.run(check_only=args.check)
     return 0
 

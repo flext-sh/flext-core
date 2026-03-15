@@ -9,10 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import argparse
 import ast
-import shutil
-import tempfile
 from collections import Counter, defaultdict
 from collections.abc import Mapping, Sequence
 from pathlib import Path
@@ -53,75 +50,6 @@ class FlextInfraUtilitiesRefactor:
     def capture_output(cmd: Sequence[str]) -> r[str]:
         """Run *cmd* and return stripped stdout as ``r[str]``."""
         return FlextInfraUtilitiesSubprocess().capture(cmd)
-
-    @staticmethod
-    def copy_workspace_for_dry_run(workspace: Path) -> Path:
-        """Create an ephemeral deep-copy of a workspace for isolated dry-run analysis."""
-        temp_root = Path(tempfile.mkdtemp(prefix="flext-refactor-dryrun-"))
-        workspace_copy = temp_root / "workspace"
-
-        def _ignore(_dir: str, names: list[str]) -> set[str]:
-            ignored: set[str] = set()
-            for name in names:
-                if name in {
-                    ".git",
-                    ".beads",
-                    ".venv",
-                    ".mypy_cache",
-                    ".pytest_cache",
-                    ".ruff_cache",
-                    "__pycache__",
-                }:
-                    ignored.add(name)
-                    continue
-                if name.endswith(".sock"):
-                    ignored.add(name)
-            return ignored
-
-        _ = shutil.copytree(workspace, workspace_copy, ignore=_ignore)
-        source_venv_cfg = workspace / ".venv" / "pyvenv.cfg"
-        if source_venv_cfg.exists():
-            target_venv = workspace_copy / ".venv"
-            target_venv.mkdir(parents=True, exist_ok=True)
-            _ = shutil.copy2(source_venv_cfg, target_venv / "pyvenv.cfg")
-        return workspace_copy
-
-    @staticmethod
-    def create_refactor_parser(
-        prog: str, description: str, *, include_apply: bool = True
-    ) -> argparse.ArgumentParser:
-        """Create a standard argparse.ArgumentParser with common CLI flags."""
-        parser = argparse.ArgumentParser(prog=prog, description=description)
-        _ = parser.add_argument(
-            "--workspace",
-            type=Path,
-            default=Path.cwd(),
-            help="Workspace root directory (default: cwd)",
-        )
-        if include_apply:
-            mode = parser.add_mutually_exclusive_group(required=False)
-            _ = mode.add_argument(
-                "--dry-run", action="store_true", help="Plan/Scan only"
-            )
-            _ = mode.add_argument("--apply", action="store_true", help="Apply changes")
-            _ = parser.add_argument(
-                "--dry-run-copy-workspace",
-                action="store_true",
-                help="Run dry-run against a temporary full workspace copy",
-            )
-        return parser
-
-    @staticmethod
-    def resolve_workspace_args(args: argparse.Namespace) -> tuple[Path, bool]:
-        """Resolve workspace Path and apply_changes boolean honoring dry-run and workspace copy."""
-        workspace_path: Path = args.workspace.resolve()
-        apply_changes: bool = bool(getattr(args, "apply", False))
-        if getattr(args, "dry_run_copy_workspace", False):
-            workspace_path = FlextInfraUtilitiesRefactor.copy_workspace_for_dry_run(
-                workspace_path
-            )
-            apply_changes = False
-        return workspace_path, apply_changes
 
     @staticmethod
     def dotted_name(expr: cst.BaseExpression) -> str:
