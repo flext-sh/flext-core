@@ -392,9 +392,9 @@ class TestFlextUtilitiesArgs:
                 return True
 
             params = u.get_enum_params(process)
-            assert "status" in params
+            tm.that(params, has="status")
             tm.that(params["status"], eq=TestFlextUtilitiesArgs.StatusEnum)
-            assert "name" not in params
+            tm.that(params, lacks="name")
 
         @staticmethod
         def test_get_enum_params_multiple() -> None:
@@ -408,11 +408,11 @@ class TestFlextUtilitiesArgs:
                 return True
 
             params = u.get_enum_params(process)
-            assert "status" in params
-            assert "priority" in params
+            tm.that(params, has="status")
+            tm.that(params, has="priority")
             tm.that(params["status"], eq=TestFlextUtilitiesArgs.StatusEnum)
             tm.that(params["priority"], eq=TestFlextUtilitiesArgs.PriorityEnum)
-            assert "name" not in params
+            tm.that(params, lacks="name")
 
         @staticmethod
         def test_get_enum_params_annotated() -> None:
@@ -424,7 +424,7 @@ class TestFlextUtilitiesArgs:
                 return True
 
             params = u.get_enum_params(process)
-            assert "status" in params
+            tm.that(params, has="status")
             tm.that(params["status"], eq=TestFlextUtilitiesArgs.StatusEnum)
 
         @staticmethod
@@ -435,7 +435,7 @@ class TestFlextUtilitiesArgs:
                 return True
 
             params = u.get_enum_params(process)
-            assert "status" in params
+            tm.that(params, has="status")
             tm.that(params["status"], eq=TestFlextUtilitiesArgs.StatusEnum)
 
         @staticmethod
@@ -471,7 +471,7 @@ class TestFlextUtilitiesArgs:
                 return True
 
             params = u.get_enum_params(process)
-            assert "status" in params
+            tm.that(params, has="status")
             tm.that(params["status"], eq=TestFlextUtilitiesArgs.StatusEnum)
 
         @staticmethod
@@ -487,5 +487,5 @@ class TestFlextUtilitiesArgs:
                 return True
 
             params = u.get_enum_params(process)
-            assert "status" in params
+            tm.that(params, has="status")
             tm.that(params["status"], eq=TestFlextUtilitiesArgs.StatusEnum)

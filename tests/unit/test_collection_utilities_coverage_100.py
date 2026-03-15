@@ -242,7 +242,7 @@ class TestuCollectionParseSequence:
             _ = u.Tests.Result.assert_success(result)
             parsed = result.value
             tm.that(len(parsed), eq=scenario.expected_count)
-            assert isinstance(parsed, (list, tuple))
+            tm.that(parsed, is_=(list, tuple))
         else:
             _ = u.Tests.Result.assert_failure(result)
             error_msg = result.error
@@ -270,7 +270,7 @@ class TestuCollectionCoerceListValidator:
                 validator(cast("t.NormalizedValue", scenario.value))
             expected_error = scenario.expected_error
             assert expected_error is not None
-            assert isinstance(exc_info.value, (TypeError, ValueError))
+            tm.that(exc_info.value, is_=(TypeError, ValueError))
             tm.that(str(exc_info.value), has=expected_error)
 
 

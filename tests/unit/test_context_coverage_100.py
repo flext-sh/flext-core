@@ -195,8 +195,8 @@ class TestContext100Coverage:
         context.set("key2", "value2").value
         items = context.items()
         item_keys = [k for k, _v in items]
-        assert "key1" in item_keys
-        assert "key2" in item_keys
+        tm.that(item_keys, has="key1")
+        tm.that(item_keys, has="key2")
 
     def test_get_all_scopes_returns_dict(self) -> None:
         """Test get_all_scopes returns dictionary."""
