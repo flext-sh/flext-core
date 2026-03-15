@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Generator
+from pathlib import Path
 from time import perf_counter
 
 import pytest
@@ -10,7 +11,7 @@ from hypothesis import given, settings, strategies as st
 from pydantic_settings import BaseSettings
 
 from flext_core import FlextSettings, c
-from flext_tests import tb, tm, tt
+from flext_tests import FlextTestsFiles, m, tb, tf, tm, tt
 
 
 class TestAutomatedFlextSettings:
@@ -54,6 +55,44 @@ class TestAutomatedFlextSettings:
         FlextSettings.reset_for_testing()
         second = FlextSettings.get_global()
         tm.that(first is second, eq=False)
+
+    def test_create_and_read_config_file(self, tmp_path: Path) -> None:
+        files_cls: type[FlextTestsFiles] = tf
+        files = files_cls(base_dir=tmp_path)
+        config = m.ConfigMap(root={"app_name": "flext", "debug": True, "port": 8080})
+        config_path = files.create(config, "config.yaml", fmt="yaml")
+        tm.that(config_path.exists(), eq=True)
+        read_result = files.read(config_path, fmt="yaml")
+        tm.ok(read_result)
+        tm.that(isinstance(read_result.value, m.ConfigMap), eq=True)
+        if isinstance(read_result.value, m.ConfigMap):
+            tm.that(str(read_result.value.root.get("app_name")), eq="flext")
+
+    def test_create_and_read_json_config(self, tmp_path: Path) -> None:
+        files_cls: type[FlextTestsFiles] = tf
+        files = files_cls(base_dir=tmp_path)
+        payload = m.ConfigMap(
+            root={"name": "flext-core", "workers": 4, "enabled": True}
+        )
+        config_path = files.create(payload, "config.json", fmt="json")
+        tm.that(config_path.exists(), eq=True)
+        read_result = files.read(config_path, fmt="json")
+        tm.ok(read_result)
+        tm.that(isinstance(read_result.value, m.ConfigMap), eq=True)
+        if isinstance(read_result.value, m.ConfigMap):
+            workers = read_result.value.root.get("workers")
+            tm.that(workers, is_=int)
+            if isinstance(workers, int):
+                tm.that(workers, eq=4)
+
+    def test_compare_identical_files(self, tmp_path: Path) -> None:
+        files_cls: type[FlextTestsFiles] = tf
+        files = files_cls(base_dir=tmp_path)
+        first = files.create(m.ConfigMap(root={"x": 1}), "a.json", fmt="json")
+        second = files.create(m.ConfigMap(root={"x": 1}), "b.json", fmt="json")
+        result = files.compare(first, second)
+        tm.ok(result)
+        tm.that(result.value, eq=True)
 
     @given(
         pair=st.one_of(

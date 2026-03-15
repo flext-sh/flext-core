@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import shutil
 from collections.abc import Generator
 from time import perf_counter
 
@@ -9,7 +10,9 @@ import pytest
 from hypothesis import given, settings, strategies as st
 
 from flext_core import FlextContainer, FlextContext
-from flext_tests import tb, tm, tt
+from flext_tests import tb, tk, tm, tt
+
+_DOCKER_AVAILABLE = shutil.which("docker") is not None
 
 
 class TestAutomatedFlextContainer:
@@ -109,6 +112,13 @@ class TestAutomatedFlextContainer:
 
         _ = container.register(sanitized, dynamic_factory, kind="factory")
         tm.ok(container.get(sanitized), eq=sanitized)
+
+    @pytest.mark.skipif(not _DOCKER_AVAILABLE, reason="Docker not available")
+    @pytest.mark.integration
+    def test_docker_container_status(self) -> None:
+        docker = tk()
+        status = docker.get_container_status("nonexistent_container")
+        tm.fail(status, has="not found")
 
     @pytest.mark.performance
     def test_register_get_benchmark(self) -> None:
