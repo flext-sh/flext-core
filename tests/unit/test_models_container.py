@@ -243,10 +243,9 @@ class TestFlextModelsContainer:
             config.max_services,
             eq=u.get(config_dict, "max_services", default=1000),
         )
-        tm.that(config.max_factories, eq=u.get()
-            config_dict,
-            "max_factories",
-            default=500,
+        tm.that(
+            config.max_factories,
+            eq=u.get(config_dict, "max_factories", default=500),
         )
         assert config.enable_auto_registration is u.get(
             config_dict,
