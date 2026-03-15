@@ -287,13 +287,7 @@ class FlextResult[T](FlextRuntime.RuntimeResult[T]):
         Returns:
             Successful FlextResult instance
 
-        Raises:
-            ValueError: If value is None
-
         """
-        if value is None:
-            msg = "Cannot create success result with None value"
-            raise ValueError(msg)
         result = FlextResult[U](value=value, is_success=True)
         setattr(result, "_result", Success(value))
         return result

@@ -375,11 +375,7 @@ class FlextRegistry(s[bool]):
             r[_RegDetails]: Success result with registration details.
 
         """
-        handler_id = (
-            str(handler.handler_id)
-            if isinstance(handler, p.Handler)
-            else str(id(handler))
-        )
+        handler_id = str(getattr(handler, "handler_id", id(handler)))
         status_raw = getattr(handler, "status", "active")
         status = self._get_status(status_raw)
         handler_mode_raw = getattr(
