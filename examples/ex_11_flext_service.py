@@ -19,12 +19,12 @@ from flext_core import (
 )
 
 from ._models import (
-    _CommandBusStub,
-    _EntityStub,
-    _HandlerLike,
-    _Payload,
-    _ProcessorProtocolBad,
-    _ProcessorProtocolGood,
+    Ex11CommandBusStub as _CommandBusStub,
+    Ex11EntityStub as _EntityStub,
+    Ex11HandlerLike as _HandlerLike,
+    Ex11Payload as _Payload,
+    Ex11ProcessorProtocolBad as _ProcessorProtocolBad,
+    Ex11ProcessorProtocolGood as _ProcessorProtocolGood,
 )
 from .shared import Examples
 
@@ -140,8 +140,8 @@ class _ServiceLike:
     def context(self) -> p.Context:
         return self._inner.context
 
-    def execute(self) -> s.RuntimeResult:
-        return s.RuntimeResult.ok("service-like")
+    def execute(self) -> s.RuntimeResult[str]:
+        return s.RuntimeResult[str].ok("service-like")
 
     def validate_business_rules(self) -> s.RuntimeResult[bool]:
         return s.RuntimeResult[bool].ok(True)
@@ -294,12 +294,12 @@ class Ex11FlextService(Examples):
         self.check("ProtocolValidation.processor_ok", processor_ok.is_success)
         self.check("ProtocolValidation.processor_bad", processor_bad.error)
 
-        def _validator_len(data) -> r[bool]:
+        def _validator_len(data: str) -> r[bool]:
             if isinstance(data, str) and len(data) >= 3:
                 return r[bool].ok(True)
             return r[bool].fail("too-short")
 
-        def _validator_upper(data) -> r[bool]:
+        def _validator_upper(data: str) -> r[bool]:
             if isinstance(data, str) and data.isupper():
                 return r[bool].ok(True)
             return r[bool].fail("not-upper")

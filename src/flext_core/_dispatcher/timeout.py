@@ -14,11 +14,23 @@ from __future__ import annotations
 import concurrent.futures
 from collections.abc import Mapping
 
+from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
+
 from flext_core import c, t
 
 
-class TimeoutEnforcer:
+class TimeoutEnforcer(BaseModel):
     """Manage timeout enforcement and dispatcher thread-pool execution."""
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    use_timeout_executor: bool = Field(
+        description="Whether timeout executor is enabled"
+    )
+    executor_workers: int = Field(
+        description="Number of worker threads for timeout executor"
+    )
+    _executor: concurrent.futures.ThreadPoolExecutor | None = PrivateAttr(default=None)
 
     def __init__(self, *, use_timeout_executor: bool, executor_workers: int) -> None:
         """Initialize the timeout coordinator.
@@ -30,10 +42,15 @@ class TimeoutEnforcer:
                 executor is enabled
 
         """
-        super().__init__()
-        self._use_timeout_executor = use_timeout_executor
-        self._executor_workers = max(executor_workers, c.Reliability.RETRY_COUNT_MIN)
-        self._executor: concurrent.futures.ThreadPoolExecutor | None = None
+        super().__init__(
+            use_timeout_executor=use_timeout_executor,
+            executor_workers=executor_workers,
+        )
+
+    def model_post_init(self, __context: object) -> None:
+        self.executor_workers = max(
+            self.executor_workers, c.Reliability.RETRY_COUNT_MIN
+        )
 
     def cleanup(self) -> None:
         """Release executor resources used by dispatcher timeout handling."""
@@ -50,7 +67,7 @@ class TimeoutEnforcer:
         """
         if self._executor is None:
             self._executor = concurrent.futures.ThreadPoolExecutor(
-                max_workers=self._executor_workers,
+                max_workers=self.executor_workers,
                 thread_name_prefix=c.Dispatcher.THREAD_NAME_PREFIX,
             )
         return self._executor
@@ -64,7 +81,7 @@ class TimeoutEnforcer:
         """
         return {
             "executor_active": self._executor is not None,
-            "executor_workers": self._executor_workers if self._executor else 0,
+            "executor_workers": self.executor_workers if self._executor else 0,
         }
 
     def reset_executor(self) -> None:
@@ -78,7 +95,7 @@ class TimeoutEnforcer:
             int: Number of worker threads configured for the executor.
 
         """
-        return self._executor_workers
+        return self.executor_workers
 
     def should_use_executor(self) -> bool:
         """Return ``True`` when a dedicated timeout executor is enabled.
@@ -87,7 +104,7 @@ class TimeoutEnforcer:
             bool: True if timeout executor is enabled, False otherwise.
 
         """
-        return self._use_timeout_executor
+        return self.use_timeout_executor
 
 
 __all__ = ["TimeoutEnforcer"]
