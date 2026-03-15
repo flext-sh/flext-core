@@ -520,6 +520,7 @@ if TYPE_CHECKING:
         test_workspace_root_doc_construction,
     )
     from tests.infra.unit.deps.test_path_sync_helpers import (
+        extract_dep_name,
         test_extract_dep_name,
         test_extract_requirement_name,
         test_helpers_alias_is_reachable_helpers,
@@ -529,8 +530,6 @@ if TYPE_CHECKING:
         TestDetectMode,
         TestFlextInfraDependencyPathSync,
         TestPathSyncEdgeCases,
-        detect_mode,
-        extract_dep_name,
         test_detect_mode_with_nonexistent_path,
         test_detect_mode_with_path_object,
     )
@@ -2318,13 +2317,12 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "census": ("tests.infra.unit.codegen.census", "census"),
     "dedupe_specs": ("tests.infra.unit.deps.test_modernizer_helpers", "dedupe_specs"),
     "dep_name": ("tests.infra.unit.deps.test_modernizer_helpers", "dep_name"),
-    "detect_mode": ("tests.infra.unit.deps.test_path_sync_init", "detect_mode"),
     "detector": ("tests.infra.unit.test_infra_workspace_detector", "detector"),
     "doc": ("tests.infra.unit.deps.test_modernizer_helpers", "doc"),
     "engine": ("tests.infra.unit.test_infra_templates", "engine"),
     "ensure_table": ("tests.infra.unit.deps.test_modernizer_helpers", "ensure_table"),
     "extract_dep_name": (
-        "tests.infra.unit.deps.test_path_sync_init",
+        "tests.infra.unit.deps.test_path_sync_helpers",
         "extract_dep_name",
     ),
     "fixer": ("tests.infra.unit.codegen.autofix", "fixer"),
@@ -3747,7 +3745,6 @@ __all__ = [
     "census",
     "dedupe_specs",
     "dep_name",
-    "detect_mode",
     "detector",
     "doc",
     "engine",

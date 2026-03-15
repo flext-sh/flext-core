@@ -6,9 +6,8 @@ from pathlib import Path
 import pytest
 
 from flext_core import r
-from flext_infra import FlextInfraUtilitiesDiscovery, m
+from flext_infra import FlextInfraDependencyPathSync, FlextInfraUtilitiesDiscovery, m
 from flext_infra.deps import path_sync as path_sync_module
-from flext_infra.deps.path_sync import FlextInfraDependencyPathSync
 from flext_tests import tm
 
 

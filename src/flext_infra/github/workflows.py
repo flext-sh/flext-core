@@ -22,6 +22,7 @@ from flext_infra import (
     FlextInfraUtilitiesTemplates,
     c,
     m,
+    u,
 )
 
 SyncOperation: TypeAlias = m.Infra.Github.SyncOperation
@@ -41,8 +42,8 @@ class FlextInfraWorkflowSyncer:
         templates: FlextInfraUtilitiesTemplates | None = None,
     ) -> None:
         """Initialize the workflow syncer."""
-        self._selector = selector or FlextInfraUtilitiesSelection()
-        self._json = json_io or FlextInfraUtilitiesIo()
+        self._selector = selector
+        self._json = json_io
         self._templates = templates or FlextInfraUtilitiesTemplates()
 
     def render_template(self, template_path: Path) -> r[str]:
@@ -214,7 +215,10 @@ class FlextInfraWorkflowSyncer:
             return r[list[SyncOperation]].fail(
                 template_result.error or "template render failed",
             )
-        projects_result = self._selector.resolve_projects(workspace_root, [])
+        if self._selector is not None:
+            projects_result = self._selector.resolve_projects(workspace_root, [])
+        else:
+            projects_result = u.Infra.resolve_projects(workspace_root, [])
         if projects_result.is_failure:
             return r[list[SyncOperation]].fail(
                 projects_result.error or "project discovery failed",
@@ -260,7 +264,10 @@ class FlextInfraWorkflowSyncer:
             c.Infra.ReportKeys.SUMMARY: summary_dict,
             "operations": ops_list,
         }
-        self._json.write_json(report_path, payload, sort_keys=True)
+        if self._json is not None:
+            self._json.write_json(report_path, payload, sort_keys=True)
+        else:
+            u.Infra.write_json(report_path, payload, sort_keys=True)
 
 
 __all__ = ["FlextInfraWorkflowSyncer", "SyncOperation"]

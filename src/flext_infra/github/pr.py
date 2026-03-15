@@ -19,9 +19,9 @@ from pydantic import TypeAdapter, ValidationError
 
 from flext_core import r
 from flext_infra import (
-    FlextInfraUtilitiesSubprocess,
     FlextInfraUtilitiesVersioning,
     c,
+    m,
     output,
     p,
     t,
@@ -42,8 +42,30 @@ class FlextInfraPrManager:
         versioning: FlextInfraUtilitiesVersioning | None = None,
     ) -> None:
         """Initialize the PR manager."""
-        self._runner: p.Infra.CommandRunner = runner or FlextInfraUtilitiesSubprocess()
-        self._versioning = versioning or FlextInfraUtilitiesVersioning()
+        self._runner: p.Infra.CommandRunner | None = runner
+        self._versioning: FlextInfraUtilitiesVersioning | None = versioning
+
+    def _run(
+        self, command: list[str], repo_root: Path
+    ) -> r[m.Infra.Core.CommandOutput]:
+        if self._runner is not None:
+            return self._runner.run(command, cwd=repo_root)
+        return u.Infra.run(command, cwd=repo_root)
+
+    def _run_checked(self, command: list[str], repo_root: Path) -> r[bool]:
+        if self._runner is not None:
+            return self._runner.run_checked(command, cwd=repo_root)
+        return u.Infra.run_checked(command, cwd=repo_root)
+
+    def _capture(self, command: list[str], repo_root: Path) -> r[str]:
+        if self._runner is not None:
+            return self._runner.capture(command, cwd=repo_root)
+        return u.Infra.capture(command, cwd=repo_root)
+
+    def _release_tag_from_branch(self, head: str) -> r[str]:
+        if self._versioning is not None:
+            return self._versioning.release_tag_from_branch(head)
+        return u.Infra.release_tag_from_branch(head)
 
     def checks(
         self,
@@ -63,9 +85,9 @@ class FlextInfraPrManager:
             r with check status info.
 
         """
-        result = self._runner.run(
+        result = self._run(
             [c.Infra.Cli.GH, c.Infra.Cli.GhCmd.PR, c.Infra.Verbs.CHECKS, selector],
-            cwd=repo_root,
+            repo_root,
         )
         if result.is_success:
             return r[Mapping[str, t.Scalar]].ok({
@@ -88,9 +110,9 @@ class FlextInfraPrManager:
             r[bool] with True on success.
 
         """
-        return self._runner.run_checked(
+        return self._run_checked(
             [c.Infra.Cli.GH, c.Infra.Cli.GhCmd.PR, c.Infra.Verbs.CLOSE, selector],
-            cwd=repo_root,
+            repo_root,
         )
 
     def create(
@@ -146,7 +168,7 @@ class FlextInfraPrManager:
         ]
         if draft:
             command.append("--draft")
-        result: r[str] = self._runner.capture(command, cwd=repo_root)
+        result: r[str] = self._capture(command, repo_root)
         return result.fold(
             on_failure=lambda e: r[Mapping[str, t.Scalar]].fail(
                 e or "PR creation failed"
@@ -205,11 +227,11 @@ class FlextInfraPrManager:
             command.append("--auto")
         if delete_branch:
             command.append("--delete-branch")
-        result = self._runner.run(command, cwd=repo_root)
+        result = self._run(command, repo_root)
         if result.is_failure:
             stderr = result.error or ""
             if "not mergeable" in stderr:
-                update_result = self._runner.run(
+                update_result = self._run(
                     [
                         c.Infra.Cli.GH,
                         c.Infra.Cli.GhCmd.PR,
@@ -217,10 +239,10 @@ class FlextInfraPrManager:
                         selector,
                         "--rebase",
                     ],
-                    cwd=repo_root,
+                    repo_root,
                 )
                 if update_result.is_success:
-                    result = self._runner.run(command, cwd=repo_root)
+                    result = self._run(command, repo_root)
         if result.is_failure:
             return r[t.Infra.ContainerDict].fail(
                 result.error or "merge failed",
@@ -247,7 +269,7 @@ class FlextInfraPrManager:
             r with PR dict. Empty dict means no open PR found.
 
         """
-        result = self._runner.capture(
+        result = self._capture(
             [
                 c.Infra.Cli.GH,
                 c.Infra.Cli.GhCmd.PR,
@@ -261,7 +283,7 @@ class FlextInfraPrManager:
                 "--limit",
                 "1",
             ],
-            cwd=repo_root,
+            repo_root,
         )
         if result.is_failure:
             return r[Mapping[str, t.Scalar]].fail(result.error or "failed to list PRs")
@@ -335,9 +357,9 @@ class FlextInfraPrManager:
             r with command output.
 
         """
-        return self._runner.capture(
+        return self._capture(
             [c.Infra.Cli.GH, c.Infra.Cli.GhCmd.PR, c.Infra.Cli.GhCmd.VIEW, selector],
-            cwd=repo_root,
+            repo_root,
         )
 
     def _trigger_release_if_needed(
@@ -360,22 +382,22 @@ class FlextInfraPrManager:
             return r[Mapping[str, str]].ok({
                 c.Infra.ReportKeys.STATUS: "no-release-workflow",
             })
-        tag_result: r[str] = self._versioning.release_tag_from_branch(head)
+        tag_result: r[str] = self._release_tag_from_branch(head)
         if tag_result.is_failure:
             return r[Mapping[str, str]].ok({
                 c.Infra.ReportKeys.STATUS: "no-release-tag",
             })
         tag = tag_result.unwrap()
-        view_result = self._runner.run(
+        view_result = self._run(
             [c.Infra.Cli.GH, c.Infra.ReportKeys.RELEASE, c.Infra.Cli.GhCmd.VIEW, tag],
-            cwd=repo_root,
+            repo_root,
         )
         if view_result.is_success:
             return r[Mapping[str, str]].ok({
                 c.Infra.ReportKeys.STATUS: "release-exists",
                 c.Infra.ReportKeys.TAG: tag,
             })
-        dispatch_result = self._runner.run(
+        dispatch_result = self._run(
             [
                 c.Infra.Cli.GH,
                 c.Infra.Cli.GhCmd.WORKFLOW,
@@ -384,7 +406,7 @@ class FlextInfraPrManager:
                 "-f",
                 f"tag={tag}",
             ],
-            cwd=repo_root,
+            repo_root,
         )
         if dispatch_result.is_success:
             return r[Mapping[str, str]].ok({

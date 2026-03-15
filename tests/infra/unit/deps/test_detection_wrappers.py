@@ -5,14 +5,14 @@ from pathlib import Path
 import pytest
 
 from flext_core import r
-from flext_infra.deps import detection
-from flext_infra.deps.detection import (
+from flext_infra import (
     build_project_report,
     classify_issues,
     dm,
     load_dependency_limits,
     module_to_types_package,
 )
+from flext_infra.deps import detection
 from flext_tests import tm
 
 

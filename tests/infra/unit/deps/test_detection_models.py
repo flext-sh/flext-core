@@ -5,13 +5,11 @@ from collections.abc import Mapping
 from pathlib import Path
 from typing import cast
 
-from flext_infra import t
-from flext_infra.deps.detection import (
+from flext_infra import (
     FlextInfraDependencyDetectionService,
     dm,
+    t,
 )
-
-_to_infra_value = FlextInfraDependencyDetectionService.to_infra_value
 from flext_tests import tm
 
 
@@ -73,43 +71,66 @@ class TestFlextInfraDependencyDetectionService:
 
 class TestToInfraValue:
     def test_none_value(self) -> None:
-        assert _to_infra_value(None) is None
+        assert FlextInfraDependencyDetectionService.to_infra_value(None) is None
 
     def test_string_value(self) -> None:
-        assert _to_infra_value("hello") == "hello"
+        assert FlextInfraDependencyDetectionService.to_infra_value("hello") == "hello"
 
     def test_int_value(self) -> None:
-        assert _to_infra_value(42) == 42
+        assert FlextInfraDependencyDetectionService.to_infra_value(42) == 42
 
     def test_float_value(self) -> None:
-        assert _to_infra_value(math.pi) == math.pi
+        assert FlextInfraDependencyDetectionService.to_infra_value(math.pi) == math.pi
 
     def test_bool_value(self) -> None:
-        assert _to_infra_value(True) is True
+        assert FlextInfraDependencyDetectionService.to_infra_value(True) is True
 
     def test_list_of_valid_values(self) -> None:
-        assert _to_infra_value(["a", 1, True]) == ["a", 1, True]
+        assert FlextInfraDependencyDetectionService.to_infra_value(["a", 1, True]) == [
+            "a",
+            1,
+            True,
+        ]
 
     def test_list_with_unconvertible(self) -> None:
-        assert _to_infra_value(cast("t.Infra.InfraValue", [Path("/tmp")])) is None
+        assert (
+            FlextInfraDependencyDetectionService.to_infra_value(
+                cast("t.Infra.InfraValue", [Path("/tmp")])
+            )
+            is None
+        )
 
     def test_mapping_value(self) -> None:
-        result = _to_infra_value({"key": "value", "num": 42})
+        result = FlextInfraDependencyDetectionService.to_infra_value({
+            "key": "value",
+            "num": 42,
+        })
         assert isinstance(result, Mapping)
         assert result == {"key": "value", "num": 42}
 
     def test_mapping_with_unconvertible(self) -> None:
         assert (
-            _to_infra_value(cast("t.Infra.InfraValue", {"key": Path("/tmp")})) is None
+            FlextInfraDependencyDetectionService.to_infra_value(
+                cast("t.Infra.InfraValue", {"key": Path("/tmp")})
+            )
+            is None
         )
 
     def test_unsupported_type(self) -> None:
-        assert _to_infra_value(cast("t.Infra.InfraValue", Path("/tmp"))) is None
+        assert (
+            FlextInfraDependencyDetectionService.to_infra_value(
+                cast("t.Infra.InfraValue", Path("/tmp"))
+            )
+            is None
+        )
 
     def test_list_with_none_item(self) -> None:
-        assert _to_infra_value([None, "a"]) == [None, "a"]
+        assert FlextInfraDependencyDetectionService.to_infra_value([None, "a"]) == [
+            None,
+            "a",
+        ]
 
     def test_mapping_with_none_value(self) -> None:
-        result = _to_infra_value({"key": None})
+        result = FlextInfraDependencyDetectionService.to_infra_value({"key": None})
         assert isinstance(result, Mapping)
         assert result == {"key": None}

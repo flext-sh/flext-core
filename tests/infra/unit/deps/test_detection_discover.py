@@ -5,9 +5,9 @@ from pathlib import Path
 import pytest
 
 from flext_core import r
-from flext_infra.deps.detection import FlextInfraDependencyDetectionService
+from flext_infra import FlextInfraDependencyDetectionService
 from flext_tests import tm
-from tests.infra.models import m
+from tests.infra import m
 
 
 class _StubSelector:

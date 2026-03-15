@@ -18,7 +18,6 @@ from flext_core import r
 from flext_infra import (
     FlextInfraUtilitiesReporting,
     FlextInfraUtilitiesSelection,
-    FlextInfraUtilitiesSubprocess,
     c,
     m,
     p,
@@ -40,9 +39,9 @@ class FlextInfraPrWorkspaceManager:
         reporting: FlextInfraUtilitiesReporting | None = None,
     ) -> None:
         """Initialize the workspace PR manager."""
-        self._runner: p.Infra.CommandRunner = runner or FlextInfraUtilitiesSubprocess()
-        self._selector = selector or FlextInfraUtilitiesSelection()
-        self._reporting = reporting or FlextInfraUtilitiesReporting()
+        self._runner = runner
+        self._selector = selector
+        self._reporting = reporting
 
     @staticmethod
     def _build_root_command(repo_root: Path, pr_args: Mapping[str, str]) -> list[str]:
@@ -170,9 +169,12 @@ class FlextInfraPrWorkspaceManager:
             r with orchestration summary.
 
         """
-        projects_result: r[list[m.Infra.Workspace.ProjectInfo]] = (
-            self._selector.resolve_projects(workspace_root, projects or [])
-        )
+        if self._selector is not None:
+            projects_result: r[list[m.Infra.Workspace.ProjectInfo]] = (
+                self._selector.resolve_projects(workspace_root, projects or [])
+            )
+        else:
+            projects_result = u.Infra.resolve_projects(workspace_root, projects or [])
         if projects_result.is_failure:
             return r[m.Infra.Github.PrOrchestrationResult].fail(
                 projects_result.error or "project resolution failed",
@@ -237,11 +239,18 @@ class FlextInfraPrWorkspaceManager:
 
         """
         display = self._repo_display_name(repo_root, workspace_root)
-        report_dir = self._reporting.get_report_dir(
-            workspace_root,
-            c.Infra.ReportKeys.WORKSPACE,
-            c.Infra.Cli.GhCmd.PR,
-        )
+        if self._reporting is not None:
+            report_dir = self._reporting.get_report_dir(
+                workspace_root,
+                c.Infra.ReportKeys.WORKSPACE,
+                c.Infra.Cli.GhCmd.PR,
+            )
+        else:
+            report_dir = u.Infra.get_report_dir(
+                workspace_root,
+                c.Infra.ReportKeys.WORKSPACE,
+                c.Infra.Cli.GhCmd.PR,
+            )
         with contextlib.suppress(OSError):
             report_dir.mkdir(parents=True, exist_ok=True)
         log_path = report_dir / f"{display}.log"
@@ -250,7 +259,10 @@ class FlextInfraPrWorkspaceManager:
         else:
             command = self._build_subproject_command(repo_root, pr_args)
         started = time.monotonic()
-        to_file_result: r[int] = self._runner.run_to_file(command, log_path)
+        if self._runner is not None:
+            to_file_result: r[int] = self._runner.run_to_file(command, log_path)
+        else:
+            to_file_result = u.Infra.run_to_file(command, log_path)
         if to_file_result.is_failure:
             return r[m.Infra.Github.PrExecutionResult].fail(
                 to_file_result.error or "command execution error",

@@ -12,12 +12,8 @@ from pydantic import JsonValue, TypeAdapter, ValidationError
 from flext_core import FlextLogger, r
 from flext_infra import (
     FlextInfraUtilitiesPatterns,
-    FlextInfraUtilitiesSelection,
-    FlextInfraUtilitiesSubprocess,
-    FlextInfraUtilitiesTomlParse,
     c,
     m,
-    p,
     t,
     u,
 )
@@ -34,9 +30,7 @@ class FlextInfraDependencyDetectionService:
 
     def __init__(self) -> None:
         """Initialize the dependency detection service with selector, toml, and runner."""
-        self.selector = FlextInfraUtilitiesSelection()
-        self.toml: p.Infra.TomlReader = FlextInfraUtilitiesTomlParse()
-        self.runner: p.Infra.CommandRunner = FlextInfraUtilitiesSubprocess()
+        pass
 
     @staticmethod
     def to_infra_value(
@@ -209,7 +203,7 @@ class FlextInfraDependencyDetectionService:
         For full ProjectInfo metadata, use u.Infra.discover_projects().
         """
         names = projects_filter or []
-        result = self.selector.resolve_projects(workspace_root, names)
+        result = u.Infra.resolve_projects(workspace_root, names)
         if result.is_failure:
             return r[list[Path]].fail(result.error or "project resolution failed")
         projects_info: list[m.Infra.Workspace.ProjectInfo] = result.value
@@ -223,7 +217,7 @@ class FlextInfraDependencyDetectionService:
     def get_current_typings_from_pyproject(self, project_path: Path) -> list[str]:
         """Extract currently declared typing packages from project pyproject.toml."""
         pyproject = project_path / c.Infra.Files.PYPROJECT_FILENAME
-        read_result = self.toml.read_plain(pyproject)
+        read_result = u.Infra.read_plain(pyproject)
         if read_result.is_failure:
             return []
         data = self._to_toml_config(read_result.value)
@@ -333,7 +327,7 @@ class FlextInfraDependencyDetectionService:
     ) -> Mapping[str, t.Infra.TomlValue]:
         """Load dependency limits configuration from TOML file."""
         path = limits_path or Path(__file__).resolve().parent / "dependency_limits.toml"
-        result = self.toml.read_plain(path)
+        result = u.Infra.read_plain(path)
         if result.is_failure:
             return {}
         limits: MutableMapping[str, t.Infra.TomlValue] = {}
@@ -399,7 +393,7 @@ class FlextInfraDependencyDetectionService:
         if extend_exclude:
             for excluded in extend_exclude:
                 cmd.extend(["--extend-exclude", excluded])
-        result = self.runner.run_raw(
+        result = u.Infra.run_raw(
             cmd,
             cwd=project_path,
             timeout=c.Infra.Timeouts.MEDIUM,
@@ -463,7 +457,7 @@ class FlextInfraDependencyDetectionService:
             "VIRTUAL_ENV": str(venv_bin.parent),
             "PATH": f"{venv_bin}:{os.environ.get('PATH', '')}",
         }
-        result = self.runner.run_raw(cmd, cwd=project_path, timeout=timeout, env=env)
+        result = u.Infra.run_raw(cmd, cwd=project_path, timeout=timeout, env=env)
         if result.is_failure:
             return r[tuple[list[str], list[str]]].fail(
                 result.error or "mypy execution failed",
@@ -492,7 +486,7 @@ class FlextInfraDependencyDetectionService:
         if not pip.exists():
             return r[tuple[list[str], int]].ok(([], 0))
         env = {**os.environ, "VIRTUAL_ENV": str(venv_bin.parent)}
-        result = self.runner.run_raw(
+        result = u.Infra.run_raw(
             [str(pip), c.Infra.Verbs.CHECK],
             cwd=workspace_root,
             timeout=c.Infra.Timeouts.SHORT,

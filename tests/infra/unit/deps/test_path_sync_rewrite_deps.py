@@ -6,7 +6,6 @@ import pytest
 from tomlkit.toml_document import TOMLDocument
 
 from flext_core import r
-from flext_infra import FlextInfraUtilitiesToml
 from flext_infra.deps.path_sync import FlextInfraDependencyPathSync
 from flext_tests import tm
 
@@ -90,11 +89,10 @@ class TestRewriteDepPaths:
         )
 
         def fail_write(
-            _self: FlextInfraUtilitiesToml,
             _path: Path,
             _doc: TOMLDocument,
         ) -> r[bool]:
-            _ = _self, _path, _doc
+            _ = _path, _doc
             return r[bool].fail("write failed")
 
         monkeypatch.setattr(

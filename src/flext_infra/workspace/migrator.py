@@ -12,7 +12,7 @@ from tomlkit.items import Item, Table
 from tomlkit.toml_document import TOMLDocument
 
 from flext_core import r, s, t
-from flext_infra import FlextInfraUtilitiesDiscovery, c, m, p, u
+from flext_infra import c, m, p, u
 from flext_infra.basemk.generator import FlextInfraBaseMkGenerator
 
 _OBJECT_LIST_ADAPTER: TypeAdapter[list[JsonValue]] = TypeAdapter(list[JsonValue])
@@ -41,7 +41,7 @@ class FlextInfraProjectMigrator(s):
             wire_packages=None,
             wire_classes=None,
         )
-        self._discovery: p.Infra.Discovery = discovery or FlextInfraUtilitiesDiscovery()
+        self._discovery = discovery
         self._generator = generator or FlextInfraBaseMkGenerator()
 
     @staticmethod
@@ -147,7 +147,10 @@ class FlextInfraProjectMigrator(s):
             return r[list[m.Infra.Workspace.MigrationResult]].fail(
                 f"workspace root does not exist: {root}",
             )
-        discovered = self._discovery.discover_projects(root)
+        if self._discovery is not None:
+            discovered = self._discovery.discover_projects(root)
+        else:
+            discovered = u.Infra.discover_projects(root)
         if discovered.is_failure:
             return r[list[m.Infra.Workspace.MigrationResult]].fail(
                 discovered.error or "project discovery failed",
@@ -184,10 +187,7 @@ class FlextInfraProjectMigrator(s):
             return r[str].ok("")
         if not dry_run:
             try:
-                _ = target.write_text(
-                    generated_text,
-                    encoding=c.Infra.Encoding.DEFAULT,
-                )
+                u.write_file(target, generated_text, encoding=c.Infra.Encoding.DEFAULT)
             except OSError as exc:
                 return r[str].fail(f"base.mk update failed: {exc}")
         return r[str].ok(
@@ -235,7 +235,7 @@ class FlextInfraProjectMigrator(s):
         if not dry_run:
             body = "\n".join(next_lines).rstrip("\n") + "\n"
             try:
-                _ = gitignore_path.write_text(body, encoding=c.Infra.Encoding.DEFAULT)
+                u.write_file(gitignore_path, body, encoding=c.Infra.Encoding.DEFAULT)
             except OSError as exc:
                 return r[str].fail(f".gitignore update failed: {exc}")
         return r[str].ok(
@@ -266,7 +266,7 @@ class FlextInfraProjectMigrator(s):
             return r[str].ok("")
         if not dry_run:
             try:
-                _ = makefile_path.write_text(updated, encoding=c.Infra.Encoding.DEFAULT)
+                u.write_file(makefile_path, updated, encoding=c.Infra.Encoding.DEFAULT)
             except OSError as exc:
                 return r[str].fail(f"Makefile update failed: {exc}")
         return r[str].ok(

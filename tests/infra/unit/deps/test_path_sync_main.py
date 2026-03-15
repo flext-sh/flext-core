@@ -6,12 +6,11 @@ from pathlib import Path
 import pytest
 
 from flext_core import r
-from flext_infra import FlextInfraUtilitiesDiscovery
+from flext_infra import FlextInfraDependencyPathSync
 from flext_infra.deps import path_sync as path_sync_module
-from flext_infra.deps.path_sync import FlextInfraDependencyPathSync
 from flext_tests import tm
-from tests.infra.helpers import FlextInfraTestHelpers
-from tests.infra.models import m
+from tests import FlextInfraTestHelpers
+from tests.infra import m
 
 
 def _project(path: Path, name: str = "flext-core") -> m.Infra.Workspace.ProjectInfo:
@@ -97,7 +96,6 @@ class TestMain:
         )
 
         def _discover_fail(
-            _self: FlextInfraUtilitiesDiscovery,
             _root: Path,
         ) -> r[list[m.Infra.Workspace.ProjectInfo]]:
             return r[list[m.Infra.Workspace.ProjectInfo]].fail("discovery failed")
@@ -151,7 +149,6 @@ class TestMain:
         (project_dir / "pyproject.toml").write_text('[project]\nname = "flext-core"\n')
 
         def _discover_project(
-            _self: FlextInfraUtilitiesDiscovery,
             _root: Path,
         ) -> r[list[m.Infra.Workspace.ProjectInfo]]:
             return r[list[m.Infra.Workspace.ProjectInfo]].ok([_project(project_dir)])

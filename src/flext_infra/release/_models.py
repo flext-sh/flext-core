@@ -13,7 +13,7 @@ from flext_core import FlextModels
 class FlextInfraReleaseModels:
     """Models for release management."""
 
-    class _BuildRecord(FlextModels.ArbitraryTypesModel):
+    class BuildRecord(FlextModels.ArbitraryTypesModel):
         """Base model for build result data."""
 
         project: Annotated[str, Field(min_length=1, description="Project name")]
@@ -32,9 +32,6 @@ class FlextInfraReleaseModels:
         tag: Annotated[str, Field(min_length=1, description="Git tag for release")]
         bump_type: Annotated[str, Field(min_length=1, description="Release bump type")]
 
-    class BuildRecord(_BuildRecord):
-        """Single project build result entry."""
-
     class BuildReport(FlextModels.ArbitraryTypesModel):
         """Aggregated build report payload written to JSON."""
 
@@ -44,7 +41,7 @@ class FlextInfraReleaseModels:
             int, Field(ge=0, description="Total projects with non-zero exit")
         ]
         records: Annotated[
-            Sequence[FlextInfraReleaseModels._BuildRecord],
+            Sequence[FlextInfraReleaseModels.BuildRecord],
             Field(
                 default_factory=list,
                 description="Per-project build records",

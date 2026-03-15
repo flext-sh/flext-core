@@ -5,10 +5,9 @@ from pathlib import Path
 
 import pytest
 
-from flext_infra.deps.detection import FlextInfraDependencyDetectionService
+from flext_infra import FlextInfraDependencyDetectionService
 from flext_tests import tm
-from tests.infra.models import m
-from tests.infra.typings import t
+from tests.infra import m, t
 
 
 class _FakeResult:

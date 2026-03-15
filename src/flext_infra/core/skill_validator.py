@@ -17,13 +17,11 @@ from pydantic import JsonValue, TypeAdapter, ValidationError
 
 from flext_core import r
 from flext_infra import (
-    FlextInfraUtilitiesIo,
-    FlextInfraUtilitiesSubprocess,
-    FlextInfraUtilitiesToml,
     c,
     m,
     p,
     t,
+    u,
 )
 from flext_infra._utilities.yaml import FlextInfraUtilitiesYaml
 
@@ -37,9 +35,6 @@ class FlextInfraSkillValidator:
 
     def __init__(self) -> None:
         """Initialize the skill validator."""
-        self._json = FlextInfraUtilitiesIo()
-        self._runner: p.Infra.CommandRunner = FlextInfraUtilitiesSubprocess()
-        self._toml = FlextInfraUtilitiesToml()
         self._git_cache: MutableMapping[str, tuple[float, list[str]]] = {}
 
     @staticmethod
@@ -198,7 +193,7 @@ class FlextInfraSkillValidator:
                         skill_name,
                     )
                     if baseline_path.exists():
-                        bl_data_result = self._json.read_json(baseline_path)
+                        bl_data_result = u.Infra.read_json(baseline_path)
                         if bl_data_result.is_success:
                             bl_data = self._normalize_str_object_mapping(
                                 bl_data_result.value
@@ -261,7 +256,7 @@ class FlextInfraSkillValidator:
         for pat in exclude_globs:
             cmd.extend(["--globs", f"!{pat}"])
         cmd.append(str(project_path))
-        result_wrapper = self._runner.run_raw(
+        result_wrapper = u.Infra.run_raw(
             cmd,
             cwd=project_path,
             timeout=c.Infra.Timeouts.DEFAULT,
@@ -276,7 +271,7 @@ class FlextInfraSkillValidator:
             line = raw_line.strip()
             if not line:
                 continue
-            parsed_line_result = self._json.parse(line)
+            parsed_line_result = u.Infra.parse(line)
             if parsed_line_result.is_success:
                 count += 1
         return count
@@ -305,7 +300,7 @@ class FlextInfraSkillValidator:
         cmd.extend(["--workspace", str(project_path)])
         if bool(rule.get("pass_mode")):
             cmd.extend(["--mode", mode])
-        result_wrapper = self._runner.run_raw(
+        result_wrapper = u.Infra.run_raw(
             cmd,
             cwd=project_path,
             timeout=c.Infra.Timeouts.DEFAULT,
@@ -318,7 +313,7 @@ class FlextInfraSkillValidator:
             line = raw_line.strip()
             if not line:
                 continue
-            payload_result = self._json.parse(line)
+            payload_result = u.Infra.parse(line)
             if payload_result.is_success and isinstance(payload_result.value, dict):
                 payload = payload_result.value
                 maybe = payload.get("violation_count", payload.get("count", 0))

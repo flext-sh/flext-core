@@ -13,7 +13,7 @@ import shutil
 from pathlib import Path
 
 from flext_core import r
-from flext_infra import FlextInfraUtilitiesIo, FlextInfraUtilitiesSubprocess, m, p
+from flext_infra import FlextInfraUtilitiesIo, m, p, u
 
 
 class FlextInfraWorkflowLinter:
@@ -28,8 +28,8 @@ class FlextInfraWorkflowLinter:
         json_io: FlextInfraUtilitiesIo | None = None,
     ) -> None:
         """Initialize the workflow linter."""
-        self._runner: p.Infra.CommandRunner = runner or FlextInfraUtilitiesSubprocess()
-        self._json = json_io or FlextInfraUtilitiesIo()
+        self._runner = runner
+        self._json = json_io
 
     def lint(
         self,
@@ -56,9 +56,15 @@ class FlextInfraWorkflowLinter:
                 reason="actionlint not installed",
             )
             if report_path is not None:
-                self._json.write_json(report_path, payload_skipped, sort_keys=True)
+                if self._json is not None:
+                    self._json.write_json(report_path, payload_skipped, sort_keys=True)
+                else:
+                    u.Infra.write_json(report_path, payload_skipped, sort_keys=True)
             return r[m.Infra.Github.WorkflowLintResult].ok(payload_skipped)
-        result: r[m.Infra.Core.CommandOutput] = self._runner.run([actionlint], cwd=root)
+        if self._runner is not None:
+            result = self._runner.run([actionlint], cwd=root)
+        else:
+            result = u.Infra.run([actionlint], cwd=root)
         if result.is_success:
             output = result.value
             payload = m.Infra.Github.WorkflowLintResult(
@@ -74,7 +80,10 @@ class FlextInfraWorkflowLinter:
                 detail=result.error or "",
             )
         if report_path is not None:
-            self._json.write_json(report_path, payload, sort_keys=True)
+            if self._json is not None:
+                self._json.write_json(report_path, payload, sort_keys=True)
+            else:
+                u.Infra.write_json(report_path, payload, sort_keys=True)
         if payload.status == "fail" and strict:
             return r[m.Infra.Github.WorkflowLintResult].fail(
                 result.error or "actionlint found issues",

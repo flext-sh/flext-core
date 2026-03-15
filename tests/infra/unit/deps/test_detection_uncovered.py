@@ -6,11 +6,9 @@ from pathlib import Path
 import pytest
 
 from flext_core import r
-from flext_infra.deps.detection import FlextInfraDependencyDetectionService
+from flext_infra import FlextInfraDependencyDetectionService
 from flext_tests import tm
-
-from ...models import m
-from ...typings import t
+from tests.infra import m, t
 
 
 class _StubRunner:

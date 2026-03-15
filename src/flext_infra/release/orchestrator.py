@@ -140,7 +140,7 @@ class FlextInfraReleaseOrchestrator(s[bool]):
         if notes_result.is_failure:
             return notes_result
         if not dry_run:
-            changelog_result = self._update_changelog(
+            changelog_result = FlextInfraReleaseReporting.update_changelog(
                 workspace_root, version, tag, notes_path
             )
             if changelog_result.is_failure:
@@ -395,18 +395,6 @@ class FlextInfraReleaseOrchestrator(s[bool]):
         """Push branch and tag to remote origin."""
         return u.Infra.git_run_checked(
             ["push", "origin", "HEAD", tag], cwd=workspace_root
-        )
-
-    def _update_changelog(
-        self,
-        workspace_root: Path,
-        version: str,
-        tag: str,
-        notes_path: Path,
-    ) -> r[bool]:
-        """Update changelog and release notes files."""
-        return FlextInfraReleaseReporting.update_changelog(
-            workspace_root, version, tag, notes_path
         )
 
     def _version_files(
