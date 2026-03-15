@@ -1,10 +1,10 @@
 """CLI entry point for GitHub integration services.
 
 Usage:
-    python -m flext_infra github workflows --workspace-root PATH [--apply] [--prune] [--report PATH]
-    python -m flext_infra github lint --root PATH [--report PATH] [--strict]
+    python -m flext_infra github workflows --workspace PATH [--apply] [--prune] [--report PATH]
+    python -m flext_infra github lint --workspace PATH [--report PATH] [--strict]
     python -m flext_infra github pr --repo-root PATH --action ACTION [--base BRANCH] ...
-    python -m flext_infra github pr-workspace --workspace-root PATH [--pr-action ACTION] ...
+    python -m flext_infra github pr-workspace --workspace PATH [--pr-action ACTION] ...
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -12,13 +12,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import argparse
 import sys
 from collections.abc import Callable, Mapping
 from pathlib import Path
 
 from flext_core import FlextRuntime, r
-from flext_infra import c, m, output
+from flext_infra import c, m, output, u
 from flext_infra.github.linter import FlextInfraWorkflowLinter
 from flext_infra.github.pr import main as pr_main
 from flext_infra.github.pr_workspace import FlextInfraPrWorkspaceManager
@@ -28,16 +27,19 @@ _Handler = Callable[[list[str]], int]
 
 
 def _run_workflows(argv: list[str]) -> int:
-    parser = argparse.ArgumentParser(prog="flext-infra github workflows")
-    _ = parser.add_argument("--workspace-root", type=Path, required=True)
-    _ = parser.add_argument("--apply", action="store_true", default=False)
+    parser = u.Infra.create_parser(
+        prog="flext-infra github workflows",
+        description="Sync GitHub workflow files across workspace",
+        include_apply=True,
+    )
     _ = parser.add_argument("--prune", action="store_true", default=False)
     _ = parser.add_argument("--report", type=Path, default=None)
     args = parser.parse_args(argv)
+    cli = u.Infra.resolve(args)
     syncer = FlextInfraWorkflowSyncer()
     result: r[list[SyncOperation]] = syncer.sync_workspace(
-        workspace_root=args.workspace_root.resolve(),
-        apply=args.apply,
+        workspace_root=cli.workspace,
+        apply=cli.apply,
         prune=args.prune,
         report_path=args.report,
     )
@@ -50,14 +52,18 @@ def _run_workflows(argv: list[str]) -> int:
 
 
 def _run_lint(argv: list[str]) -> int:
-    parser = argparse.ArgumentParser(prog="flext-infra github lint")
-    _ = parser.add_argument("--root", type=Path, required=True)
+    parser = u.Infra.create_parser(
+        prog="flext-infra github lint",
+        description="Lint GitHub workflow files",
+        include_apply=False,
+    )
     _ = parser.add_argument("--report", type=Path, default=None)
     _ = parser.add_argument("--strict", action="store_true", default=False)
     args = parser.parse_args(argv)
+    cli = u.Infra.resolve(args)
     linter = FlextInfraWorkflowLinter()
     lint_result: r[m.Infra.Github.WorkflowLintResult] = linter.lint(
-        root=args.root.resolve(),
+        root=cli.workspace,
         report_path=args.report,
         strict=args.strict,
     )
@@ -74,9 +80,12 @@ def _run_pr(argv: list[str]) -> int:
 
 
 def _run_pr_workspace(argv: list[str]) -> int:
-    parser = argparse.ArgumentParser(prog="flext-infra github pr-workspace")
-    _ = parser.add_argument("--workspace-root", type=Path, required=True)
-    _ = parser.add_argument("--project", action="append", default=[])
+    parser = u.Infra.create_parser(
+        prog="flext-infra github pr-workspace",
+        description="Manage pull requests across workspace projects",
+        include_apply=False,
+        include_project=True,
+    )
     _ = parser.add_argument("--include-root", type=int, default=1)
     _ = parser.add_argument("--branch", default="")
     _ = parser.add_argument("--checkpoint", type=int, default=1)
@@ -94,6 +103,7 @@ def _run_pr_workspace(argv: list[str]) -> int:
     _ = parser.add_argument("--pr-checks-strict", type=int, default=0)
     _ = parser.add_argument("--pr-release-on-merge", type=int, default=1)
     args = parser.parse_args(argv)
+    cli = u.Infra.resolve(args)
     pr_args: Mapping[str, str] = {
         c.Infra.ReportKeys.ACTION: args.pr_action,
         "base": args.pr_base,
@@ -110,8 +120,10 @@ def _run_pr_workspace(argv: list[str]) -> int:
     }
     manager = FlextInfraPrWorkspaceManager()
     orch_result = manager.orchestrate(
-        workspace_root=args.workspace_root.resolve(),
-        projects=args.project or None,
+        workspace_root=cli.workspace,
+        projects=cli.project.split(",")
+        if cli.project
+        else (cli.projects.split(",") if cli.projects else None),
         include_root=args.include_root == 1,
         branch=args.branch,
         checkpoint=args.checkpoint == 1,
