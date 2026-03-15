@@ -1336,37 +1336,18 @@ class FlextUtilitiesGuards:
             return r[str].fail(f"{field_name} has invalid URI format")
         return r[str].ok(uri)
 
+    @staticmethod
+    def validate_pydantic_model[T: BaseModel](
+        model_class: type[T], data: Mapping[str, t.NormalizedValue]
+    ) -> r[T]:
+        """Validate data using Pydantic v2 model and return r[T]."""
+        try:
+            validated = model_class.model_validate(data)
+            return r[T].ok(validated)
+        except Exception as exc:
+            return r[T].fail(f"Validation failed: {exc}")
 
-def validate_pydantic_model[T: BaseModel](
-    model_class: type[T], data: Mapping[str, t.NormalizedValue]
-) -> r[T]:
-    """Validate data using Pydantic v2 model and return r.
 
-    This template function reduces boilerplate for validation + error handling
-    patterns across the FLEXT ecosystem.
-
-    Args:
-        model_class: Pydantic v2 BaseModel subclass to validate against
-        data: Dictionary of data to validate
-
-    Returns:
-        r containing validated model instance or error message
-
-    Example:
-        >>> from pydantic import BaseModel, Field
-        >>> class Config(BaseModel):
-        ...     name: str = Field(min_length=1)
-        ...     value: int = Field(ge=0)
-        >>> result = validate_pydantic_model(Config, {"name": "test", "value": 42})
-        >>> if result.is_success:
-        ...     config = result.value
-
-    """
-    try:
-        validated = model_class.model_validate(data)
-        return r[T].ok(validated)
-    except Exception as e:
-        return r[T].fail(f"Validation failed: {e}")
-
+validate_pydantic_model = FlextUtilitiesGuards.validate_pydantic_model
 
 __all__ = ["FlextUtilitiesGuards", "validate_pydantic_model"]

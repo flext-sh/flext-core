@@ -18,6 +18,12 @@ if TYPE_CHECKING:
     from flext_core.typings import t
 
 
+# INFRASTRUCTURE EXCEPTION: lazy_getattr and cleanup_submodule_namespace MUST remain
+# module-level functions. They are imported directly by all auto-generated __init__.py
+# files for PEP 562 lazy loading. Moving them into a class would break the lazy import
+# mechanism across the entire package hierarchy.
+
+
 def lazy_getattr(
     name: str,
     lazy_imports: Mapping[str, tuple[str, str]],

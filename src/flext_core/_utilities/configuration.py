@@ -54,33 +54,6 @@ from flext_core import FlextExceptions as e, FlextRuntime, T_Model, c, m, p, r, 
 from flext_core._models.containers import FlextModelsContainers
 
 
-def _duck_dump_get_parameter(
-    obj: p.HasModelDump | BaseModel | p.Base,
-    parameter: str,
-) -> tuple[bool, t.NormalizedValue | BaseModel]:
-    """Get parameter from duck-typed model_dump() result.
-
-    Instead of iterating the dump dict (which has Unknown types from getattr),
-    directly look up the parameter using subscript access.
-    """
-    model_dump_fn = getattr(obj, "model_dump", None)
-    if model_dump_fn is None or not callable(model_dump_fn):
-        return (False, None)
-    raw = model_dump_fn()
-    get_fn = getattr(raw, "get", None)
-    if get_fn is None or not callable(get_fn):
-        return (False, None)
-    sentinel = object()
-    val = get_fn(parameter, sentinel)
-    if val is sentinel:
-        return (False, None)
-    if val is None or isinstance(val, (str, int, float, bool, datetime, Path)):
-        return (True, val)
-    if isinstance(val, BaseModel):
-        return (True, val)
-    return (True, str(val))
-
-
 class FlextUtilitiesConfiguration:
     """Configuration utilities for parameter access and manipulation.
 
@@ -109,6 +82,33 @@ class FlextUtilitiesConfiguration:
        - HasModelFields: Pydantic models with model_fields class attribute
        - Duck typing fallback for model_dump method on non-protocol objects
     """
+
+    @staticmethod
+    def _duck_dump_get_parameter(
+        obj: p.HasModelDump | BaseModel | p.Base,
+        parameter: str,
+    ) -> tuple[bool, t.NormalizedValue | BaseModel]:
+        """Get parameter from duck-typed model_dump() result.
+
+        Instead of iterating the dump dict (which has Unknown types from getattr),
+        directly look up the parameter using subscript access.
+        """
+        model_dump_fn = getattr(obj, "model_dump", None)
+        if model_dump_fn is None or not callable(model_dump_fn):
+            return (False, None)
+        raw = model_dump_fn()
+        get_fn = getattr(raw, "get", None)
+        if get_fn is None or not callable(get_fn):
+            return (False, None)
+        sentinel = object()
+        val = get_fn(parameter, sentinel)
+        if val is sentinel:
+            return (False, None)
+        if val is None or isinstance(val, (str, int, float, bool, datetime, Path)):
+            return (True, val)
+        if isinstance(val, BaseModel):
+            return (True, val)
+        return (True, str(val))
 
     @staticmethod
     def _get_logger() -> p.Log.StructlogLogger:
@@ -257,7 +257,7 @@ class FlextUtilitiesConfiguration:
         parameter: str,
     ) -> tuple[bool, t.NormalizedValue | BaseModel]:
         try:
-            return _duck_dump_get_parameter(obj, parameter)
+            return FlextUtilitiesConfiguration._duck_dump_get_parameter(obj, parameter)
         except (AttributeError, TypeError, ValueError, RuntimeError):
             pass
         return FlextUtilitiesConfiguration._NOT_FOUND

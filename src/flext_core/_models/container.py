@@ -32,27 +32,27 @@ _MetadataInput = (
 )
 
 
-def _is_metadata_instance(
-    v: _MetadataInput,
-) -> TypeGuard[FlextModelFoundation.Metadata]:
-    return isinstance(v, FlextModelFoundation.Metadata)
-
-
-def _normalize_metadata(value: _MetadataInput) -> FlextModelFoundation.Metadata:
-    if value is None:
-        return FlextModelFoundation.Metadata.model_validate({"attributes": {}})
-    if _is_metadata_instance(value):
-        return value
-    if not isinstance(value, Mapping):
-        msg = f"metadata must be None, dict, or FlextModelFoundation.Metadata, got {value.__class__.__name__}"
-        raise TypeError(msg)
-    return FlextModelFoundation.Metadata.model_validate({
-        "attributes": dict(value.items())
-    })
-
-
 class FlextModelsContainer:
     """Container models namespace for DI and service registry."""
+
+    @staticmethod
+    def _is_metadata_instance(
+        v: _MetadataInput,
+    ) -> TypeGuard[FlextModelFoundation.Metadata]:
+        return isinstance(v, FlextModelFoundation.Metadata)
+
+    @staticmethod
+    def _normalize_metadata(value: _MetadataInput) -> FlextModelFoundation.Metadata:
+        if value is None:
+            return FlextModelFoundation.Metadata.model_validate({"attributes": {}})
+        if FlextModelsContainer._is_metadata_instance(value):
+            return value
+        if not isinstance(value, Mapping):
+            msg = f"metadata must be None, dict, or FlextModelFoundation.Metadata, got {value.__class__.__name__}"
+            raise TypeError(msg)
+        return FlextModelFoundation.Metadata.model_validate({
+            "attributes": dict(value.items())
+        })
 
     class ServiceRegistration(BaseModel):
         """Model for service registry entries.
@@ -110,7 +110,7 @@ class FlextModelsContainer:
         @classmethod
         def validate_metadata(cls, v: _MetadataInput) -> FlextModelFoundation.Metadata:
             """Validate and normalize metadata to Metadata (STRICT mode)."""
-            return _normalize_metadata(v)
+            return FlextModelsContainer._normalize_metadata(v)
 
         @field_validator("service", mode="before")
         @classmethod
@@ -214,7 +214,7 @@ class FlextModelsContainer:
         @classmethod
         def validate_metadata(cls, v: _MetadataInput) -> FlextModelFoundation.Metadata:
             """Validate and normalize metadata to Metadata (STRICT mode)."""
-            return _normalize_metadata(v)
+            return FlextModelsContainer._normalize_metadata(v)
 
     class ResourceRegistration(BaseModel):
         """Model for lifecycle-managed resource registrations.
@@ -258,7 +258,7 @@ class FlextModelsContainer:
         @classmethod
         def validate_metadata(cls, v: _MetadataInput) -> FlextModelFoundation.Metadata:
             """Normalize resource metadata to Metadata model."""
-            return _normalize_metadata(v)
+            return FlextModelsContainer._normalize_metadata(v)
 
     class ContainerConfig(BaseModel):
         """Model for container configuration.

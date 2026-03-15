@@ -29,46 +29,6 @@ from flext_core._models.containers import FlextModelsContainers
 from flext_core._models.entity import FlextModelsEntity
 from flext_core.runtime import FlextRuntime
 
-_V = FlextModelFoundation.Validators
-
-
-def _normalize_to_mapping(
-    v: t.NormalizedValue | BaseModel,
-) -> Mapping[str, t.NormalizedValue]:
-    if v is None:
-        out: dict[str, t.NormalizedValue] = {}
-        return out
-    if isinstance(v, Mapping):
-        validated = _V.dict_str_metadata_adapter().validate_python(v)
-        return dict(validated)
-    if isinstance(v, BaseModel):
-        return v.model_dump()
-    msg = f"Cannot normalize {type(v)} to Mapping"
-    raise ValueError(msg)
-
-
-def _normalize_metadata_before(
-    v: t.NormalizedValue | BaseModel | None,
-) -> t.NormalizedValue | BaseModel | None:
-    if v is None:
-        return None
-    if isinstance(v, FlextModelFoundation.Metadata):
-        return v
-    if isinstance(v, Mapping):
-        return FlextModelFoundation.Metadata.model_validate({
-            "attributes": _V.dict_str_metadata_adapter().validate_python(v)
-        })
-    return v
-
-
-def _normalize_statistics_before(
-    v: t.NormalizedValue | BaseModel,
-) -> Mapping[str, t.NormalizedValue]:
-    if v is None:
-        out: dict[str, t.NormalizedValue] = {}
-        return out
-    return _normalize_to_mapping(v)
-
 
 class FlextModelsContext:
     """Context management pattern container class.
@@ -77,6 +37,48 @@ class FlextModelsContext:
     All nested classes can be accessed via FlextModels.* (type aliases) or
     directly via FlextModelsContext.*
     """
+
+    @staticmethod
+    def _normalize_to_mapping(
+        v: t.NormalizedValue | BaseModel,
+    ) -> Mapping[str, t.NormalizedValue]:
+        if v is None:
+            out: dict[str, t.NormalizedValue] = {}
+            return out
+        if isinstance(v, Mapping):
+            validated = FlextModelFoundation.Validators.dict_str_metadata_adapter().validate_python(
+                v
+            )
+            return dict(validated)
+        if isinstance(v, BaseModel):
+            return v.model_dump()
+        msg = f"Cannot normalize {type(v)} to Mapping"
+        raise ValueError(msg)
+
+    @staticmethod
+    def _normalize_metadata_before(
+        v: t.NormalizedValue | BaseModel | None,
+    ) -> t.NormalizedValue | BaseModel | None:
+        if v is None:
+            return None
+        if isinstance(v, FlextModelFoundation.Metadata):
+            return v
+        if isinstance(v, Mapping):
+            return FlextModelFoundation.Metadata.model_validate({
+                "attributes": FlextModelFoundation.Validators.dict_str_metadata_adapter().validate_python(
+                    v
+                )
+            })
+        return v
+
+    @staticmethod
+    def _normalize_statistics_before(
+        v: t.NormalizedValue | BaseModel,
+    ) -> Mapping[str, t.NormalizedValue]:
+        if v is None:
+            out: dict[str, t.NormalizedValue] = {}
+            return out
+        return FlextModelsContext._normalize_to_mapping(v)
 
     class StructlogProxyToken(FlextModelsEntity.Value):
         """Token for resetting structlog context variables.
@@ -298,7 +300,7 @@ class FlextModelsContext:
         ] = Field(default_factory=FlextModelsContainers.Dict)
         metadata: Annotated[
             FlextModelFoundation.Metadata | FlextModelsContainers.Dict | None,
-            BeforeValidator(_normalize_metadata_before),
+            BeforeValidator(lambda v: FlextModelsContext._normalize_metadata_before(v)),
             Field(
                 default=None,
                 description="Context metadata (creation info, source, etc.)",
@@ -349,7 +351,7 @@ class FlextModelsContext:
                     }
                 return str(dumped_model)
             if isinstance(normalized, Mapping):
-                normalized_map = _V.dict_str_metadata_adapter().validate_python(
+                normalized_map = FlextModelFoundation.Validators.dict_str_metadata_adapter().validate_python(
                     normalized
                 )
                 return {
@@ -466,7 +468,7 @@ class FlextModelsContext:
         ]
         metadata: Annotated[
             FlextModelFoundation.Metadata | FlextModelsContainers.Dict | None,
-            BeforeValidator(_normalize_metadata_before),
+            BeforeValidator(lambda v: FlextModelsContext._normalize_metadata_before(v)),
             Field(
                 default=None,
                 description="Context metadata (creation info, source, etc.)",
@@ -474,7 +476,9 @@ class FlextModelsContext:
         ] = None
         statistics: Annotated[
             Mapping[str, t.NormalizedValue],
-            BeforeValidator(_normalize_statistics_before),
+            BeforeValidator(
+                lambda v: FlextModelsContext._normalize_statistics_before(v)
+            ),
             Field(
                 default_factory=dict,
                 description="Usage statistics (operation counts, timing info)",
@@ -568,12 +572,12 @@ class FlextModelsContext:
         ] = ""
         data: Annotated[
             Mapping[str, t.NormalizedValue | BaseModel],
-            BeforeValidator(_normalize_to_mapping),
+            BeforeValidator(lambda v: FlextModelsContext._normalize_to_mapping(v)),
             Field(default_factory=dict, description="Scope data"),
         ]
         metadata: Annotated[
             Mapping[str, t.NormalizedValue],
-            BeforeValidator(_normalize_to_mapping),
+            BeforeValidator(lambda v: FlextModelsContext._normalize_to_mapping(v)),
             Field(default_factory=dict, description="Scope metadata"),
         ]
 
@@ -623,7 +627,7 @@ class FlextModelsContext:
         ] = c.ZERO
         operations: Annotated[
             Mapping[str, t.NormalizedValue],
-            BeforeValidator(_normalize_to_mapping),
+            BeforeValidator(lambda v: FlextModelsContext._normalize_to_mapping(v)),
             Field(
                 default_factory=dict,
                 description="Additional metric counters and timing values grouped by metric key.",
@@ -705,7 +709,7 @@ class FlextModelsContext:
         ] = None
         custom_fields: Annotated[
             Mapping[str, t.NormalizedValue | BaseModel],
-            BeforeValidator(_normalize_to_mapping),
+            BeforeValidator(lambda v: FlextModelsContext._normalize_to_mapping(v)),
             Field(
                 default_factory=dict,
                 description="Custom metadata attributes for caller-specific tracing and context.",

@@ -35,18 +35,14 @@ from flext_core import c, t
 from flext_core._models.containers import FlextModelsContainers
 
 
-def _ensure_utc_datetime(v: datetime | None) -> datetime | None:
-    """Ensure datetime is UTC timezone."""
-    if v is not None and v.tzinfo is None:
-        return v.replace(tzinfo=UTC)
-    return v
-
-
-UTCDatetime = Annotated[datetime, AfterValidator(_ensure_utc_datetime)]
-
-
 class FlextModelFoundation:
     """Container for base model classes - Tier 0, 100% standalone."""
+
+    @staticmethod
+    def _ensure_utc_datetime(v: datetime | None) -> datetime | None:
+        if v is not None and v.tzinfo is None:
+            return v.replace(tzinfo=UTC)
+        return v
 
     class Validators:
         """Pydantic v2 validators - single namespace for all field validators."""
@@ -314,7 +310,7 @@ class FlextModelFoundation:
         @staticmethod
         def ensure_utc_datetime(v: datetime | None) -> datetime | None:
             """Ensure datetime is UTC timezone."""
-            return _ensure_utc_datetime(v)
+            return FlextModelFoundation._ensure_utc_datetime(v)
 
         @staticmethod
         def normalize_to_list(v: t.NormalizedValue | BaseModel) -> list[t.Container]:
@@ -732,7 +728,8 @@ class FlextModelFoundation:
             defer_build=True, arbitrary_types_allowed=True, validate_assignment=True
         )
         created_at: Annotated[
-            UTCDatetime,
+            datetime,
+            AfterValidator(lambda v: FlextModelFoundation._ensure_utc_datetime(v)),
             Field(
                 default_factory=lambda: datetime.now(UTC),
                 description="Creation timestamp (UTC)",
@@ -740,7 +737,8 @@ class FlextModelFoundation:
             ),
         ] = Field(default_factory=lambda: datetime.now(UTC))
         updated_at: Annotated[
-            UTCDatetime | None,
+            datetime | None,
+            AfterValidator(lambda v: FlextModelFoundation._ensure_utc_datetime(v)),
             Field(default=None, description="Last update timestamp (UTC)"),
         ] = None
 
