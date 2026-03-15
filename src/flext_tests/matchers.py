@@ -693,7 +693,7 @@ class FlextTestsMatchers:
 
     @staticmethod
     @contextmanager
-    def scope(**kwargs: t.Tests.object) -> Iterator[m.Tests.TestScope]:
+    def scope(**kwargs: t.Tests.object) -> Iterator[m.Tests.RuntimeScope]:
         """Enhanced isolated test execution scope.
 
         Uses Pydantic 2 model (ScopeParams) for parameter validation and computation.
@@ -761,7 +761,7 @@ class FlextTestsMatchers:
             context_map: dict[str, t.Tests.object] = {}
             if params.context:
                 context_map = {str(key): value for key, value in params.context.items()}
-            yield m.Tests.TestScope.model_validate({
+            yield m.Tests.RuntimeScope.model_validate({
                 "config": cfg,
                 "container": container_dict,
                 "context": context_map,
