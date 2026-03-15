@@ -1376,11 +1376,7 @@ class FlextRuntime:
             if not self.is_success:
                 msg = f"Cannot access value of failed result: {self.error}"
                 raise RuntimeError(msg)
-            payload = self._payload
-            if payload is None:
-                msg = "Invariant violation: success result has None payload"
-                raise RuntimeError(msg)
-            return payload
+            return self._payload
 
         @classmethod
         def fail[U](
