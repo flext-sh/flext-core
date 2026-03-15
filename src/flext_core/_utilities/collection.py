@@ -333,13 +333,13 @@ class FlextUtilitiesCollection:
         """Create validator that coerces dict values to bool."""
 
         def validator(data: t.NormalizedValue) -> Mapping[str, bool]:
-            try:
-                normalized_map = FlextUtilitiesCollection._V.dict_str_metadata_adapter().validate_python(
-                    data
-                )
-            except ValidationError as exc:
+            normalized_map_result = (
+                FlextUtilitiesCollection._validate_dict_str_metadata(data)
+            )
+            if normalized_map_result.is_failure:
                 msg = f"Expected mapping, got {data.__class__.__name__}"
-                raise TypeError(msg) from exc
+                raise TypeError(msg)
+            normalized_map = normalized_map_result.value
             normalized: dict[str, bool] = {}
             for key, val in normalized_map.items():
                 normalized[key] = FlextUtilitiesCollection._coerce_value_to_bool(val)
@@ -374,13 +374,13 @@ class FlextUtilitiesCollection:
         """Create validator that coerces dict values to float."""
 
         def validator(data: t.NormalizedValue) -> Mapping[str, float]:
-            try:
-                normalized_map = FlextUtilitiesCollection._V.dict_str_metadata_adapter().validate_python(
-                    data
-                )
-            except ValidationError as exc:
+            normalized_map_result = (
+                FlextUtilitiesCollection._validate_dict_str_metadata(data)
+            )
+            if normalized_map_result.is_failure:
                 msg = f"Expected mapping, got {data.__class__.__name__}"
-                raise TypeError(msg) from exc
+                raise TypeError(msg)
+            normalized_map = normalized_map_result.value
             normalized: dict[str, float] = {}
             for key, val in normalized_map.items():
                 normalized[key] = FlextUtilitiesCollection._coerce_value_to_float(val)
@@ -393,13 +393,13 @@ class FlextUtilitiesCollection:
         """Create validator that coerces dict values to int."""
 
         def validator(data: t.NormalizedValue) -> Mapping[str, int]:
-            try:
-                normalized_map = FlextUtilitiesCollection._V.dict_str_metadata_adapter().validate_python(
-                    data
-                )
-            except ValidationError as exc:
+            normalized_map_result = (
+                FlextUtilitiesCollection._validate_dict_str_metadata(data)
+            )
+            if normalized_map_result.is_failure:
                 msg = f"Expected mapping, got {data.__class__.__name__}"
-                raise TypeError(msg) from exc
+                raise TypeError(msg)
+            normalized_map = normalized_map_result.value
             normalized: dict[str, int] = {}
             for key, val in normalized_map.items():
                 normalized[key] = FlextUtilitiesCollection._coerce_value_to_int(val)
@@ -412,13 +412,13 @@ class FlextUtilitiesCollection:
         """Create validator that coerces dict values to str."""
 
         def validator(data: t.NormalizedValue) -> Mapping[str, str]:
-            try:
-                normalized_map = FlextUtilitiesCollection._V.dict_str_metadata_adapter().validate_python(
-                    data
-                )
-            except ValidationError as exc:
+            normalized_map_result = (
+                FlextUtilitiesCollection._validate_dict_str_metadata(data)
+            )
+            if normalized_map_result.is_failure:
                 msg = f"Expected mapping, got {data.__class__.__name__}"
-                raise TypeError(msg) from exc
+                raise TypeError(msg)
+            normalized_map = normalized_map_result.value
             normalized: dict[str, str] = {}
             for key, val in normalized_map.items():
                 normalized[key] = FlextUtilitiesCollection._coerce_value_to_str(val)
@@ -439,24 +439,24 @@ class FlextUtilitiesCollection:
         """
 
         def validator(data: t.NormalizedValue) -> dict[str, E]:
-            try:
-                normalized_map = FlextUtilitiesCollection._V.dict_str_metadata_adapter().validate_python(
-                    data
-                )
-            except ValidationError as exc:
+            normalized_map_result = (
+                FlextUtilitiesCollection._validate_dict_str_metadata(data)
+            )
+            if normalized_map_result.is_failure:
                 msg = f"Expected dict, got {data.__class__.__name__}"
-                raise TypeError(msg) from exc
+                raise TypeError(msg)
+            normalized_map = normalized_map_result.value
             result: dict[str, E] = {}
             for k, v_raw in normalized_map.items():
                 if isinstance(v_raw, enum_cls):
                     result[k] = v_raw
                 elif isinstance(v_raw, str):
-                    try:
-                        result[k] = enum_cls(v_raw)
-                    except ValueError:
+                    enum_result = r[E].ok(v_raw).map(enum_cls)
+                    if enum_result.is_failure:
                         enum_name = getattr(enum_cls, "__name__", "Enum")
                         msg = f"Invalid {enum_name} value: '{v_raw}'"
                         raise ValueError(msg) from None
+                    result[k] = enum_result.value
                 else:
                     msg = f"Expected str for enum conversion, got {v_raw.__class__.__name__}"
                     raise TypeError(msg)
@@ -538,24 +538,24 @@ class FlextUtilitiesCollection:
             if isinstance(data, str):
                 msg = f"Expected sequence, got {data.__class__.__name__}"
                 raise TypeError(msg)
-            try:
-                normalized_items = FlextUtilitiesCollection._V.list_container_adapter().validate_python(
-                    data
-                )
-            except ValidationError as exc:
+            normalized_items_result = FlextUtilitiesCollection._validate_list_container(
+                data
+            )
+            if normalized_items_result.is_failure:
                 msg = f"Expected sequence, got {data.__class__.__name__}"
-                raise TypeError(msg) from exc
+                raise TypeError(msg)
+            normalized_items = normalized_items_result.value
             result: list[E] = []
             for v_raw in normalized_items:
                 if isinstance(v_raw, enum_cls):
                     result.append(v_raw)
                 elif isinstance(v_raw, str):
-                    try:
-                        result.append(enum_cls(v_raw))
-                    except ValueError:
+                    enum_result = r[E].ok(v_raw).map(enum_cls)
+                    if enum_result.is_failure:
                         enum_name = getattr(enum_cls, "__name__", "Enum")
                         msg = f"Invalid {enum_name} value: '{v_raw}'"
                         raise ValueError(msg) from None
+                    result.append(enum_result.value)
                 else:
                     msg = f"Expected str for enum conversion, got {v_raw.__class__.__name__}"
                     raise TypeError(msg)

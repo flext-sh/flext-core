@@ -14,7 +14,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+<<<<<<< Updated upstream
 import json
+=======
+import argparse
+>>>>>>> Stashed changes
 import sys
 from pathlib import Path
 
@@ -49,9 +53,148 @@ def _main_inner(argv: list[str] | None) -> int:
         include_format=True,
         include_check=True,
     )
+<<<<<<< Updated upstream
     baseline_group = subs["constants-quality-gate"].add_mutually_exclusive_group(
         required=False,
     )
+=======
+    subparsers = parser.add_subparsers(dest="command", required=True)
+
+    lazy_parser = subparsers.add_parser(
+        "lazy-init",
+        help="Generate/refresh PEP 562 lazy-import __init__.py files",
+    )
+    _ = lazy_parser.add_argument(
+        "--workspace",
+        type=Path,
+        default=Path.cwd(),
+        help="Workspace root directory (default: cwd)",
+    )
+    _ = lazy_parser.add_argument(
+        "--check",
+        action="store_true",
+        help="Check mode — report unmapped exports without writing files",
+    )
+
+    census_parser = subparsers.add_parser(
+        "census",
+        help="Count namespace violations across workspace projects",
+    )
+    _ = census_parser.add_argument(
+        "--workspace",
+        type=Path,
+        default=Path.cwd(),
+        help="Workspace root directory (default: cwd)",
+    )
+    _ = census_parser.add_argument(
+        "--format",
+        choices=["json", "text"],
+        default="text",
+        dest="output_format",
+        help="Output format (default: text)",
+    )
+
+    scaffold_parser = subparsers.add_parser(
+        "scaffold",
+        help="Generate missing base modules in src/ and tests/",
+    )
+    _ = scaffold_parser.add_argument(
+        "--workspace",
+        type=Path,
+        default=Path.cwd(),
+        help="Workspace root directory (default: cwd)",
+    )
+    scaffold_mode = scaffold_parser.add_mutually_exclusive_group(required=False)
+    _ = scaffold_mode.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Report what would be created without writing files",
+    )
+    _ = scaffold_mode.add_argument(
+        "--apply",
+        action="store_true",
+        help="Apply changes",
+    )
+
+    fix_parser = subparsers.add_parser(
+        "auto-fix",
+        help="Auto-fix namespace violations (move Finals/TypeVars)",
+    )
+    _ = fix_parser.add_argument(
+        "--workspace",
+        type=Path,
+        default=Path.cwd(),
+        help="Workspace root directory (default: cwd)",
+    )
+    fix_mode = fix_parser.add_mutually_exclusive_group(required=False)
+    _ = fix_mode.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Report what would be fixed without modifying files",
+    )
+    _ = fix_mode.add_argument(
+        "--apply",
+        action="store_true",
+        help="Apply changes",
+    )
+
+    py_typed_parser = subparsers.add_parser(
+        "py-typed",
+        help="Create/remove PEP 561 py.typed markers in package directories",
+    )
+    _ = py_typed_parser.add_argument(
+        "--workspace",
+        type=Path,
+        default=Path.cwd(),
+        help="Workspace root directory (default: cwd)",
+    )
+    _ = py_typed_parser.add_argument(
+        "--check",
+        action="store_true",
+        help="Check mode — report changes without writing files",
+    )
+
+    pipeline_parser = subparsers.add_parser(
+        "pipeline",
+        help="Run full codegen pipeline: py-typed → census → scaffold → auto-fix → lazy-init → census",
+    )
+    _ = pipeline_parser.add_argument(
+        "--workspace",
+        type=Path,
+        default=Path.cwd(),
+        help="Workspace root directory (default: cwd)",
+    )
+    pipeline_mode = pipeline_parser.add_mutually_exclusive_group(required=False)
+    _ = pipeline_mode.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Report changes without modifying files",
+    )
+    _ = pipeline_mode.add_argument(
+        "--apply",
+        action="store_true",
+        help="Apply changes",
+    )
+    _ = pipeline_parser.add_argument(
+        "--format",
+        choices=["json", "text"],
+        default="text",
+        dest="output_format",
+        help="Output format (default: text)",
+    )
+
+    quality_parser = subparsers.add_parser(
+        "constants-quality-gate",
+        help="Run constants migration quality gate and before/after diff",
+    )
+    _ = quality_parser.add_argument(
+        "--workspace",
+        type=Path,
+        default=Path.cwd(),
+        help="Workspace root directory (default: cwd)",
+    )
+    baseline_group = quality_parser.add_mutually_exclusive_group(required=False)
+>>>>>>> Stashed changes
     _ = baseline_group.add_argument(
         "--before-report",
         type=Path,
@@ -64,6 +207,16 @@ def _main_inner(argv: list[str] | None) -> int:
         default=None,
         help="Path to baseline JSON payload for comparison",
     )
+<<<<<<< Updated upstream
+=======
+    _ = quality_parser.add_argument(
+        "--format",
+        choices=["json", "text"],
+        default="text",
+        dest="output_format",
+        help="Output format (default: text)",
+    )
+>>>>>>> Stashed changes
 
     args = parser.parse_args(argv)
     cli = u.Infra.resolve(args)
@@ -89,6 +242,7 @@ def _main_inner(argv: list[str] | None) -> int:
     return 1
 
 
+<<<<<<< Updated upstream
 def main(argv: list[str] | None = None) -> int:
     """Run codegen service CLI with centralized bootstrap."""
     return u.Infra.run_cli(_main_inner, argv)
@@ -98,13 +252,27 @@ def _handle_lazy_init(cli: u.Infra.CliArgs) -> int:
     generator = FlextInfraCodegenLazyInit(workspace_root=cli.workspace)
     unmapped = generator.run(check_only=cli.check)
     if cli.check and unmapped > 0:
+=======
+def _handle_lazy_init(args: argparse.Namespace) -> int:
+    workspace = args.workspace.resolve()
+    generator = FlextInfraCodegenLazyInit(workspace_root=workspace)
+    unmapped = generator.run(check_only=args.check)
+    if args.check and unmapped > 0:
+>>>>>>> Stashed changes
         output.warning(f"{unmapped} files have unmapped exports")
     return 0
 
 
+<<<<<<< Updated upstream
 def _handle_py_typed(cli: u.Infra.CliArgs) -> int:
     service = FlextInfraCodegenPyTyped(workspace_root=cli.workspace)
     service.run(check_only=cli.check)
+=======
+def _handle_py_typed(args: argparse.Namespace) -> int:
+    workspace = args.workspace.resolve()
+    service = FlextInfraCodegenPyTyped(workspace_root=workspace)
+    service.run(check_only=args.check)
+>>>>>>> Stashed changes
     return 0
 
 

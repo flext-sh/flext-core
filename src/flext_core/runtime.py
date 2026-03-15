@@ -588,7 +588,7 @@ class FlextRuntime:
             return True
         if candidate_name in {"str", "bytes", "bytearray", "memoryview", "dict"}:
             return False
-        candidate_mro = getattr(candidate, "__mro__", ())
+        candidate_mro = candidate.__mro__
         if any(getattr(base, "__name__", "") == "Sequence" for base in candidate_mro):
             return True
         required_members = ("__iter__", "__len__", "__getitem__", "count", "index")
@@ -783,8 +783,8 @@ class FlextRuntime:
     def safe_get_attribute(
         obj: RuntimeData | type | ModuleType,
         attr: str,
-        default: t.NormalizedValue | BaseModel | None = None,
-    ) -> t.NormalizedValue | BaseModel | None:
+        default: t.ModuleExport | None = None,
+    ) -> t.ModuleExport | None:
         """Safe attribute access without raising AttributeError.
 
         Business Rule: Accesses object attributes safely using getattr() with
@@ -805,7 +805,11 @@ class FlextRuntime:
             Attribute value or default
 
         """
-        return getattr(obj, attr) if hasattr(obj, attr) else default
+        try:
+            attr_value = object.__getattribute__(obj, attr)
+        except AttributeError:
+            return default
+        return attr_value
 
     @staticmethod
     def structlog() -> ModuleType:
@@ -1802,8 +1806,8 @@ class FlextRuntime:
         entity_a_type = type(entity_a)
         if not isinstance(entity_b, entity_a_type):
             return False
-        id_a = getattr(entity_a, id_attr) if hasattr(entity_a, id_attr) else None
-        id_b = getattr(entity_b, id_attr) if hasattr(entity_b, id_attr) else None
+        id_a = FlextRuntime.safe_get_attribute(entity_a, id_attr)
+        id_b = FlextRuntime.safe_get_attribute(entity_b, id_attr)
         return id_a is not None and id_a == id_b
 
     @staticmethod
@@ -1866,7 +1870,7 @@ class FlextRuntime:
         """Hash entity based on unique ID and type."""
         if FlextRuntime._is_scalar(entity):
             return hash(entity)
-        entity_id = getattr(entity, id_attr) if hasattr(entity, id_attr) else None
+        entity_id = FlextRuntime.safe_get_attribute(entity, id_attr)
         if entity_id is None:
             return hash(id(entity))
         return hash((entity.__class__.__name__, entity_id))
