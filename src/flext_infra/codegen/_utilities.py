@@ -1294,5 +1294,6 @@ class FlextInfraUtilitiesCodegen(FlextInfraCodegenTransforms):
         return result
 
 
-__all__ = ["FlextInfraUtilitiesCodegen"]
 from flext_infra._utilities.subprocess import FlextInfraUtilitiesSubprocess
+
+__all__ = ["FlextInfraUtilitiesCodegen"]

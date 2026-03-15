@@ -708,5 +708,6 @@ class FlextInfraUtilitiesRefactor:
         return tree
 
 
-__all__ = ["FlextInfraUtilitiesRefactor"]
 from flext_infra._utilities.subprocess import FlextInfraUtilitiesSubprocess
+
+__all__ = ["FlextInfraUtilitiesRefactor"]

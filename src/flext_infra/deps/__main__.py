@@ -37,8 +37,8 @@ def _main_impl(_argv: list[str] | None = None) -> int:
         include_apply=True,
         include_project=True,
     )
-    _min_deps_argv = 3
-    if len(sys.argv) < _min_deps_argv or sys.argv[1] in {"-h", "--help"}:
+    min_deps_argv = 3
+    if len(sys.argv) < min_deps_argv or sys.argv[1] in {"-h", "--help"}:
         parser.parse_args()
         return 0
     subcommand = sys.argv[1]
