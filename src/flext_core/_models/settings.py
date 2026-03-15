@@ -173,7 +173,7 @@ class FlextModelsConfig:
                 if isinstance(item, int):
                     codes_for_validation.append(item)
                 else:
-                    parsed_code = r[int].ok(0).map(lambda _: int(str(item)))
+                    parsed_code = r[int].ok(0).map(lambda _, i=item: int(str(i)))
                     if parsed_code.is_failure:
                         parse_error = parsed_code.error or "invalid status code"
                         msg = f"retry_on_status_codes item must be int or str: {parse_error}"
@@ -303,7 +303,7 @@ class FlextModelsConfig:
                     for err in exc.errors()
                 ]
                 msg = f"Batch validation failed: {'; '.join(item_errors)}"
-                raise ValueError(msg)
+                raise TypeError(msg)
             raise ValueError(batch_result.error or "Batch validation failed")
 
         @model_validator(mode="after")

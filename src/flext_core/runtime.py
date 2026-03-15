@@ -805,11 +805,10 @@ class FlextRuntime:
             Attribute value or default
 
         """
-        try:
-            attr_value = object.__getattribute__(obj, attr)
-        except AttributeError:
+        obj_vars = vars(obj) if hasattr(obj, "__dict__") else {}
+        if attr not in obj_vars:
             return default
-        return attr_value
+        return obj_vars[attr]
 
     @staticmethod
     def structlog() -> ModuleType:

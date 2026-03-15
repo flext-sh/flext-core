@@ -41,11 +41,11 @@ class UserProfile(BaseModel):
     unique_id: str = Field(description="Unique identifier for the user")
     status: c.Domain.Status = Field(description="Current status of the user")
 
-    def activate(self) -> r[None]:
+    def activate(self) -> r[bool]:
         """Railway pattern for business operations - no None returns."""
         if self.status == c.Domain.Status.ACTIVE:
-            return r[None].fail("Already active")
-        return r.ok(None)
+            return r[bool].fail("Already active")
+        return r[bool].ok(True)
 
 
 def validate_transform_user(data: m.ConfigMap) -> r[UserProfile]:
@@ -99,7 +99,7 @@ class UserService:
     def _activate_user(user: UserProfile) -> r[UserProfile]:
         """Activate user using domain business logic - railway pattern."""
 
-        def return_user(_: None) -> UserProfile:
+        def return_user(_: bool) -> UserProfile:
             """Return the user after activation."""
             return user
 
@@ -130,7 +130,7 @@ class UserService:
             return (
                 self
                 ._validate_data(user_data)
-                .flat_map(lambda _: self._validate_and_transform(user_data, _))
+                .flat_map(lambda _ok: self._validate_and_transform(user_data, _ok))
                 .map(self._log_success)
             )
 
@@ -217,12 +217,8 @@ def demonstrate_exceptions() -> None:
         field_str = str(field)
         value_str = str(value)
 
-        def format_error_after_validation(_: str) -> str:
-            """Format error message after validation."""
-            return format_error_message(field_str, value_str)
-
         return create_error_result(msg_str, field_str, value_str).map(
-            format_error_after_validation
+            lambda _val: format_error_message(field_str, value_str)
         )
 
     def process_exception(error: str) -> r[str]:
@@ -241,9 +237,9 @@ def identity_result(r_obj: r[str]) -> r[str]:
     return r_obj
 
 
-def ignore_and_return_none(_: UserProfile) -> r[None]:
-    """Ignore input and return None."""
-    return r.ok(None)
+def ignore_and_return_none(_: UserProfile) -> r[bool]:
+    """Ignore input and return success."""
+    return r[bool].ok(True)
 
 
 def identity(x: r[str]) -> r[str]:
@@ -283,7 +279,7 @@ def execute_service_operations(service: UserService, user_data: m.ConfigMap) -> 
 
 def execute_demonstrations(service: UserService, user_data: m.ConfigMap) -> None:
     """Execute utility demonstrations - SRP focused on side effect execution."""
-    _ = service.create_user(user_data).map(ignore_and_return_none)
+    _ = service.create_user(user_data).flat_map(ignore_and_return_none)
     demonstrate_utilities()
     demonstrate_exceptions()
 

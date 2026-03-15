@@ -34,9 +34,8 @@ class FactoryDecoratorsDiscovery:
         for name in dir(module):
             if name.startswith("_"):
                 continue
-            try:
-                candidate = object.__getattribute__(module, name)
-            except AttributeError:
+            candidate = vars(module).get(name)
+            if candidate is None:
                 continue
             if callable(candidate) and hasattr(candidate, c.Discovery.FACTORY_ATTR):
                 return True
@@ -66,15 +65,11 @@ class FactoryDecoratorsDiscovery:
         for name in dir(module):
             if name.startswith("_"):
                 continue
-            try:
-                func = object.__getattribute__(module, name)
-            except AttributeError:
+            func = vars(module).get(name)
+            if func is None:
                 continue
             if callable(func) and hasattr(func, c.Discovery.FACTORY_ATTR):
-                try:
-                    config_raw = object.__getattribute__(func, c.Discovery.FACTORY_ATTR)
-                except AttributeError:
-                    continue
+                config_raw = vars(func).get(c.Discovery.FACTORY_ATTR)
                 if not isinstance(config_raw, m.FactoryDecoratorConfig):
                     continue
                 config: m.FactoryDecoratorConfig = config_raw

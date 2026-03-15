@@ -10,7 +10,9 @@ from __future__ import annotations
 
 import warnings
 from collections.abc import Callable, Mapping, Sequence
+from datetime import datetime
 from functools import partial
+from pathlib import Path
 from typing import overload
 
 from pydantic import BaseModel
@@ -697,12 +699,31 @@ class FlextUtilitiesMapper:
         return None
 
     @staticmethod
-    def _try_get_attr(obj: object, attr_name: str) -> tuple[bool, object]:
-        try:
-            attr_value = object.__getattribute__(obj, attr_name)
-        except AttributeError:
+    def _try_get_attr(
+        obj: object, attr_name: str
+    ) -> tuple[bool, t.NormalizedValue | BaseModel]:
+        def _coerce_normalized(value: object) -> t.NormalizedValue:
+            if value is None or isinstance(
+                value, (str, int, float, bool, datetime, Path)
+            ):
+                return value
+            if isinstance(value, list):
+                return [_coerce_normalized(item) for item in value]
+            if isinstance(value, tuple):
+                return tuple(_coerce_normalized(item) for item in value)
+            if isinstance(value, Mapping):
+                return {
+                    str(key): _coerce_normalized(item) for key, item in value.items()
+                }
+            return str(value)
+
+        obj_vars = vars(obj) if hasattr(obj, "__dict__") else {}
+        if attr_name not in obj_vars:
             return (False, None)
-        return (True, attr_value)
+        attr_value = obj_vars[attr_name]
+        if isinstance(attr_value, BaseModel):
+            return (True, attr_value)
+        return (True, _coerce_normalized(attr_value))
 
     @staticmethod
     def _extract_get_value(
@@ -1628,7 +1649,7 @@ class FlextUtilitiesMapper:
             elif isinstance(data, Mapping):
                 current = FlextUtilitiesMapper.narrow_to_container(data)
             else:
-                current = data
+                current = str(data)
             found_none_prefix = "found_none:"
             for i, part in enumerate(parts):
                 if current is None:

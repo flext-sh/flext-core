@@ -13,12 +13,9 @@ from datetime import datetime
 from enum import StrEnum
 from typing import TypeGuard, overload
 
-from pydantic import ValidationError
-
 from flext_core import p, r, t
 from flext_core._models.base import FlextModelFoundation
 from flext_core._models.containers import FlextModelsContainers
-from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core.typings import R, T, U
 
 
@@ -106,6 +103,33 @@ class FlextUtilitiesCollection:
     def _coerce_value_to_str(value: t.NormalizedValue) -> str:
         """Coerce a value to string."""
         return str(value)
+
+    @staticmethod
+    def _normalize_unknown_value(value: object) -> t.NormalizedValue:
+        validated_result = r[t.Serializable].create_from_callable(
+            lambda: FlextUtilitiesCollection._V.serializable_adapter().validate_python(
+                value
+            )
+        )
+        if validated_result.is_failure:
+            return str(value)
+        validated = validated_result.value
+        if isinstance(validated, (str, int, float, bool, datetime)):
+            return validated
+        if isinstance(validated, list):
+            normalized_items: list[t.NormalizedValue] = [
+                FlextUtilitiesCollection._normalize_unknown_value(item)
+                for item in validated
+            ]
+            return normalized_items
+        if isinstance(validated, dict):
+            normalized_dict: dict[str, t.NormalizedValue] = {}
+            for dict_key, dict_value in validated.items():
+                normalized_dict[str(dict_key)] = (
+                    FlextUtilitiesCollection._normalize_unknown_value(dict_value)
+                )
+            return normalized_dict
+        return str(validated)
 
     @staticmethod
     def _normalize_mapping_items(
@@ -238,24 +262,27 @@ class FlextUtilitiesCollection:
                 continue
             result_raw = operation_result.value
             if isinstance(result_raw, r):
-                is_success = bool(getattr(result_raw, "is_success", False))
-                result_value = getattr(result_raw, "value", None)
-                result_error = getattr(result_raw, "error", None)
-                if is_success:
-                    if do_flatten and FlextUtilitiesGuards.is_object_list(result_value):
+                if result_raw.is_success:
+                    result_value = result_raw.value
+                    if do_flatten and isinstance(result_value, list):
                         for inner_item in result_value:
-                            if FlextUtilitiesGuards.is_container(inner_item):
-                                results.append(
-                                    FlextUtilitiesCollection._coerce_guard_value(
-                                        inner_item
-                                    )
+                            inner_obj: object = inner_item
+                            normalized_inner = (
+                                FlextUtilitiesCollection._normalize_unknown_value(
+                                    inner_obj
                                 )
-                            else:
-                                results.append(str(inner_item))
+                            )
+                            results.append(
+                                FlextUtilitiesCollection._coerce_guard_value(
+                                    normalized_inner
+                                )
+                            )
                         if progress is not None and processed % progress_interval == 0:
                             progress(processed, total)
                         continue
-                    value = FlextUtilitiesCollection._coerce_guard_value(result_value)
+                    value = FlextUtilitiesCollection._coerce_guard_value(
+                        FlextUtilitiesCollection._normalize_unknown_value(result_value)
+                    )
                     if do_flatten and FlextUtilitiesCollection._is_general_value_list(
                         value
                     ):
@@ -263,7 +290,7 @@ class FlextUtilitiesCollection:
                     else:
                         results.append(value)
                 else:
-                    error_msg = result_error or "Unknown error"
+                    error_msg = result_raw.error or "Unknown error"
                     if error_mode == "fail":
                         return r[FlextModelsContainers.BatchResultDict].fail(
                             f"Batch processing failed: {error_msg}"
@@ -276,20 +303,19 @@ class FlextUtilitiesCollection:
 
             if do_flatten and isinstance(result_raw, list):
                 for inner_item in result_raw:
-                    if FlextUtilitiesGuards.is_container(inner_item):
-                        results.append(
-                            FlextUtilitiesCollection._coerce_guard_value(inner_item)
-                        )
-                    else:
-                        results.append(str(inner_item))
+                    inner_obj: object = inner_item
+                    normalized_inner = (
+                        FlextUtilitiesCollection._normalize_unknown_value(inner_obj)
+                    )
+                    results.append(
+                        FlextUtilitiesCollection._coerce_guard_value(normalized_inner)
+                    )
                 if progress is not None and processed % progress_interval == 0:
                     progress(processed, total)
                 continue
-            direct_source: t.NormalizedValue
-            if isinstance(result_raw, (str, int, float, bool, datetime, list, dict)):
-                direct_source = result_raw
-            else:
-                direct_source = str(result_raw)
+            direct_source = FlextUtilitiesCollection._normalize_unknown_value(
+                result_raw
+            )
             direct_result = FlextUtilitiesCollection._coerce_guard_value(direct_source)
             if do_flatten and FlextUtilitiesCollection._is_general_value_list(
                 direct_result
@@ -891,52 +917,49 @@ class FlextUtilitiesCollection:
         - "filter_empty": Skip empty values (None, "", [], {}) from other
         - "filter_both": Same as filter_empty (alias)
         """
-        try:
-            if strategy in {"replace", "override"}:
-                result: dict[str, t.NormalizedValue] = dict(base)
-                result.update(other)
-                return r[dict[str, t.NormalizedValue]].ok(result)
-            if strategy == "filter_none":
-                result = dict(base)
-                for key, value in other.items():
-                    if value is not None:
-                        result[key] = value
-                return r[dict[str, t.NormalizedValue]].ok(result)
-            if strategy in {"filter_empty", "filter_both"}:
-                result = dict(base)
-                for key, value in other.items():
-                    if not FlextUtilitiesCollection._is_empty_value(value):
-                        result[key] = value
-                return r[dict[str, t.NormalizedValue]].ok(result)
-            if strategy == "append":
-                result = dict(base)
-                for key, value in other.items():
-                    current_val = result.get(key)
-                    if (
-                        current_val is not None
-                        and isinstance(current_val, list)
-                        and isinstance(value, list)
-                    ):
-                        result[key] = current_val + value
-                    else:
-                        result[key] = value
-                return r[dict[str, t.NormalizedValue]].ok(result)
-            if strategy == "deep":
-                result = base.copy()
-                for key, value in other.items():
-                    merge_result = FlextUtilitiesCollection._merge_deep_single_key(
-                        result, key, value
+        if strategy in {"replace", "override"}:
+            result: dict[str, t.NormalizedValue] = dict(base)
+            result.update(other)
+            return r[dict[str, t.NormalizedValue]].ok(result)
+        if strategy == "filter_none":
+            result = dict(base)
+            for key, value in other.items():
+                if value is not None:
+                    result[key] = value
+            return r[dict[str, t.NormalizedValue]].ok(result)
+        if strategy in {"filter_empty", "filter_both"}:
+            result = dict(base)
+            for key, value in other.items():
+                if not FlextUtilitiesCollection._is_empty_value(value):
+                    result[key] = value
+            return r[dict[str, t.NormalizedValue]].ok(result)
+        if strategy == "append":
+            result = dict(base)
+            for key, value in other.items():
+                current_val = result.get(key)
+                if (
+                    current_val is not None
+                    and isinstance(current_val, list)
+                    and isinstance(value, list)
+                ):
+                    result[key] = current_val + value
+                else:
+                    result[key] = value
+            return r[dict[str, t.NormalizedValue]].ok(result)
+        if strategy == "deep":
+            result = base.copy()
+            for key, value in other.items():
+                merge_result = FlextUtilitiesCollection._merge_deep_single_key(
+                    result, key, value
+                )
+                if merge_result.is_failure:
+                    return r[dict[str, t.NormalizedValue]].fail(
+                        merge_result.error or "Unknown error"
                     )
-                    if merge_result.is_failure:
-                        return r[dict[str, t.NormalizedValue]].fail(
-                            merge_result.error or "Unknown error"
-                        )
-                return r[dict[str, t.NormalizedValue]].ok(result)
-            return r[dict[str, t.NormalizedValue]].fail(
-                f"Unknown merge strategy: {strategy}"
-            )
-        except (TypeError, ValueError, KeyError, AttributeError) as e:
-            return r[dict[str, t.NormalizedValue]].fail(f"Merge failed: {e}")
+            return r[dict[str, t.NormalizedValue]].ok(result)
+        return r[dict[str, t.NormalizedValue]].fail(
+            f"Unknown merge strategy: {strategy}"
+        )
 
     @staticmethod
     def mul(*values: float) -> int | float:
@@ -975,47 +998,59 @@ class FlextUtilitiesCollection:
             # result.value == {"key": Status.ACTIVE}
 
         """
-        try:
-            result: dict[str, E] = {}
-            errors: list[str] = []
-            for key, value_raw in mapping.items():
-                try:
-                    result[key] = enum_cls(value_raw)
-                except (ValueError, TypeError) as e:
-                    errors.append(f"'{key}': {e}")
-            if errors:
-                enum_name = getattr(enum_cls, "__name__", "Enum")
-                return r[dict[str, E]].fail(
-                    f"Invalid {enum_name} values: {', '.join(errors)}"
-                )
-            return r[dict[str, E]].ok(result)
-        except (TypeError, ValueError, AttributeError, KeyError) as e:
-            return r[dict[str, E]].fail(f"Parse mapping failed: {e}")
+        result: dict[str, E] = {}
+        errors: list[str] = []
+        mapping_items_result = (
+            r[list[tuple[str, str | E]]].ok([]).map(lambda _: list(mapping.items()))
+        )
+        if mapping_items_result.is_failure:
+            return r[dict[str, E]].fail(
+                f"Parse mapping failed: {mapping_items_result.error}"
+            )
+        for key, value_raw in mapping_items_result.value:
+            enum_result = r[E].ok(value_raw).map(enum_cls)
+            if enum_result.is_failure:
+                errors.append(f"'{key}': {enum_result.error}")
+                continue
+            result[key] = enum_result.value
+        if errors:
+            enum_name = getattr(enum_cls, "__name__", "Enum")
+            return r[dict[str, E]].fail(
+                f"Invalid {enum_name} values: {', '.join(errors)}"
+            )
+        return r[dict[str, E]].ok(result)
 
     @staticmethod
     def parse_sequence(
         enum_cls: type[StrEnum], values: Sequence[str | StrEnum]
     ) -> r[tuple[StrEnum, ...]]:
         """Parse sequence of strings to tuple of StrEnum."""
-        try:
-            parsed: list[StrEnum] = []
-            errors: list[str] = []
-            for idx, val in enumerate(values):
-                if isinstance(val, enum_cls):
-                    parsed.append(val)
-                else:
-                    try:
-                        parsed.append(enum_cls(val))
-                    except ValueError:
-                        errors.append(f"[{idx}]: '{val}'")
-            if errors:
-                enum_name = getattr(enum_cls, "__name__", "Enum")
-                return r[tuple[StrEnum, ...]].fail(
-                    f"Invalid {enum_name} values: {', '.join(errors)}"
-                )
-            return r[tuple[StrEnum, ...]].ok(tuple(parsed))
-        except (TypeError, ValueError, AttributeError) as e:
-            return r[tuple[StrEnum, ...]].fail(f"Parse sequence failed: {e}")
+        parsed: list[StrEnum] = []
+        errors: list[str] = []
+        enumerate_result = (
+            r[list[tuple[int, str | StrEnum]]]
+            .ok([])
+            .map(lambda _: list(enumerate(values)))
+        )
+        if enumerate_result.is_failure:
+            return r[tuple[StrEnum, ...]].fail(
+                f"Parse sequence failed: {enumerate_result.error}"
+            )
+        for idx, val in enumerate_result.value:
+            if isinstance(val, enum_cls):
+                parsed.append(val)
+                continue
+            enum_result = r[StrEnum].ok(val).map(enum_cls)
+            if enum_result.is_failure:
+                errors.append(f"[{idx}]: '{val}'")
+                continue
+            parsed.append(enum_result.value)
+        if errors:
+            enum_name = getattr(enum_cls, "__name__", "Enum")
+            return r[tuple[StrEnum, ...]].fail(
+                f"Invalid {enum_name} values: {', '.join(errors)}"
+            )
+        return r[tuple[StrEnum, ...]].ok(tuple(parsed))
 
     @staticmethod
     def partition(
@@ -1072,22 +1107,18 @@ class FlextUtilitiesCollection:
         """
         _ = filter_keys
         _ = exclude_keys
-        try:
-            results: list[U] = []
-            for item in items:
-                item_typed: T = item
-                if predicate is not None and (not predicate(item_typed)):
+        results: list[U] = []
+        for item in items:
+            item_typed: T = item
+            if predicate is not None and (not predicate(item_typed)):
+                continue
+            process_result = r[T].ok(item_typed).map(processor)
+            if process_result.is_failure:
+                if on_error == "skip":
                     continue
-                try:
-                    result = processor(item)
-                    results.append(result)
-                except (TypeError, ValueError, RuntimeError, AttributeError, KeyError):
-                    if on_error == "skip":
-                        continue
-                    return r[list[U]].fail(f"Processing failed for item: {item}")
-            return r[list[U]].ok(results)
-        except (TypeError, ValueError, RuntimeError, AttributeError, KeyError) as e:
-            return r[list[U]].fail(f"Process failed: {e}")
+                return r[list[U]].fail(f"Processing failed for item: {item}")
+            results.append(process_result.value)
+        return r[list[U]].ok(results)
 
     @staticmethod
     def unique(

@@ -153,10 +153,10 @@ class FlextUtilitiesParser:
 
         """
         for attr in ("name", "id"):
-            try:
-                attr_value = object.__getattribute__(obj, attr)
-            except AttributeError:
+            obj_vars = vars(obj) if hasattr(obj, "__dict__") else {}
+            if attr not in obj_vars:
                 continue
+            attr_value = obj_vars[attr]
             if isinstance(attr_value, str):
                 return r[str].ok(attr_value)
         return r[str].fail("No key attribute found")
@@ -259,10 +259,10 @@ class FlextUtilitiesParser:
         default: t.NormalizedValue = None,
     ) -> t.NormalizedValue:
         """Get attribute safely (avoids circular import with u.get)."""
-        try:
-            attr_value = object.__getattribute__(obj, attr)
-        except AttributeError:
+        obj_vars = vars(obj) if hasattr(obj, "__dict__") else {}
+        if attr not in obj_vars:
             return default
+        attr_value = obj_vars[attr]
         return (
             attr_value
             if FlextUtilitiesGuards.is_container(attr_value)

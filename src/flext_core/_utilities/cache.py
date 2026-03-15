@@ -119,10 +119,10 @@ class FlextUtilitiesCache:
             cache_attributes = c.Utilities.CACHE_ATTRIBUTE_NAMES
             cleared_count = 0
             for attr_name in cache_attributes:
-                try:
-                    cache_attr = object.__getattribute__(obj, attr_name)
-                except AttributeError:
+                obj_vars = vars(obj) if hasattr(obj, "__dict__") else {}
+                if attr_name not in obj_vars:
                     continue
+                cache_attr = obj_vars[attr_name]
                 if cache_attr is not None:
                     if hasattr(cache_attr, "clear") and callable(cache_attr.clear):
                         _ = cache_attr.clear()

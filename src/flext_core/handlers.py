@@ -629,9 +629,8 @@ class FlextHandlers[MessageT_contra, ResultT](x):
 
             """
             for name in dir(target_class):
-                try:
-                    candidate = object.__getattribute__(target_class, name)
-                except AttributeError:
+                candidate = vars(target_class).get(name)
+                if candidate is None:
                     continue
                 if hasattr(candidate, c.Discovery.HANDLER_ATTR):
                     return True
@@ -659,9 +658,8 @@ class FlextHandlers[MessageT_contra, ResultT](x):
             for name in dir(module):
                 if name.startswith("_"):
                     continue
-                try:
-                    candidate = object.__getattribute__(module, name)
-                except AttributeError:
+                candidate = vars(module).get(name)
+                if candidate is None:
                     continue
                 if callable(candidate) and hasattr(candidate, c.Discovery.HANDLER_ATTR):
                     return True
@@ -690,17 +688,11 @@ class FlextHandlers[MessageT_contra, ResultT](x):
             """
             handlers: list[tuple[str, m.DecoratorConfig]] = []
             for name in dir(target_class):
-                try:
-                    method = object.__getattribute__(target_class, name)
-                except AttributeError:
+                method = vars(target_class).get(name)
+                if method is None:
                     continue
                 if hasattr(method, c.Discovery.HANDLER_ATTR):
-                    try:
-                        config_raw = object.__getattribute__(
-                            method, c.Discovery.HANDLER_ATTR
-                        )
-                    except AttributeError:
-                        continue
+                    config_raw = vars(method).get(c.Discovery.HANDLER_ATTR)
                     if not isinstance(config_raw, m.DecoratorConfig):
                         continue
                     config: m.DecoratorConfig = config_raw
@@ -738,9 +730,8 @@ class FlextHandlers[MessageT_contra, ResultT](x):
             for name in dir(module):
                 if name.startswith("_"):
                     continue
-                try:
-                    func = object.__getattribute__(module, name)
-                except AttributeError:
+                func = vars(module).get(name)
+                if func is None:
                     continue
                 if not u.is_handler_callable(func):
                     continue
@@ -748,10 +739,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
                     continue
                 if not callable(func):
                     continue
-                try:
-                    config_raw = object.__getattribute__(func, c.Discovery.HANDLER_ATTR)
-                except AttributeError:
-                    continue
+                config_raw = vars(func).get(c.Discovery.HANDLER_ATTR)
                 if not isinstance(config_raw, m.DecoratorConfig):
                     continue
                 config: m.DecoratorConfig = config_raw
