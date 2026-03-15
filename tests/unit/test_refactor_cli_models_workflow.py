@@ -6,6 +6,7 @@ from contextlib import redirect_stdout
 from io import StringIO
 from pathlib import Path
 
+from flext_infra import u
 from flext_infra.refactor import __main__ as refactor_main
 
 
@@ -23,14 +24,15 @@ def test_centralize_pydantic_cli_outputs_extended_metrics(tmp_path: Path) -> Non
         encoding="utf-8",
     )
     buffer = StringIO()
+    cli = u.Infra.CliArgs(
+        workspace=workspace,
+        apply=False,
+        output_format="json",
+    )
     with redirect_stdout(buffer):
         run_code = refactor_main._run_centralize_pydantic(
-            argv=[
-                "--workspace",
-                str(workspace),
-                "--dry-run",
-                "--normalize-remaining",
-            ],
+            cli,
+            normalize_remaining=True,
         )
     captured = buffer.getvalue()
     assert run_code == 0
@@ -61,14 +63,15 @@ def test_ultrawork_models_cli_runs_dry_run_copy(tmp_path: Path) -> None:
         encoding="utf-8",
     )
     buffer = StringIO()
+    cli = u.Infra.CliArgs(
+        workspace=workspace,
+        apply=False,
+        output_format="json",
+    )
     with redirect_stdout(buffer):
         run_code = refactor_main._run_ultrawork_models(
-            argv=[
-                "--workspace",
-                str(workspace),
-                "--dry-run",
-                "--normalize-remaining",
-            ],
+            cli,
+            normalize_remaining=True,
         )
     captured = buffer.getvalue()
     assert run_code == 0
@@ -100,13 +103,14 @@ def test_namespace_enforce_cli_fails_on_manual_protocol_violation(
         encoding="utf-8",
     )
     buffer = StringIO()
+    cli = u.Infra.CliArgs(
+        workspace=workspace,
+        apply=False,
+        output_format="json",
+    )
     with redirect_stdout(buffer):
         run_code = refactor_main._run_namespace_enforce(
-            argv=[
-                "--workspace",
-                str(workspace),
-                "--dry-run",
-            ],
+            cli,
         )
     captured = buffer.getvalue()
     assert run_code == 1

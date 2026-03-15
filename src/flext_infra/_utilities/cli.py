@@ -11,6 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from argparse import ArgumentParser, Namespace
+from collections.abc import Mapping
 from pathlib import Path
 
 from flext_core.models import FlextModels
@@ -37,6 +38,82 @@ class FlextInfraUtilitiesCli:
         check: bool = False
         project: str | None = None
         projects: str | None = None
+
+    @staticmethod
+    def _shared_flags_parser(
+        *,
+        include_apply: bool = True,
+        include_format: bool = False,
+        include_check: bool = False,
+        include_project: bool = False,
+    ) -> ArgumentParser:
+        base = ArgumentParser(add_help=False)
+        _ = base.add_argument(
+            "--workspace",
+            type=Path,
+            default=Path.cwd(),
+            help="Workspace root directory (default: cwd)",
+        )
+        if include_apply:
+            mode = base.add_mutually_exclusive_group(required=False)
+            _ = mode.add_argument(
+                "--dry-run", action="store_true", help="Plan/Scan only"
+            )
+            _ = mode.add_argument("--apply", action="store_true", help="Apply changes")
+        if include_format:
+            _ = base.add_argument(
+                "--format",
+                dest="output_format",
+                choices=["json", "text"],
+                default="text",
+                help="Output format (default: text)",
+            )
+        if include_check:
+            _ = base.add_argument(
+                "--check", action="store_true", help="Run in check mode"
+            )
+        if include_project:
+            _ = base.add_argument(
+                "--project",
+                type=str,
+                default=None,
+                help="Single project to process",
+            )
+            _ = base.add_argument(
+                "--projects",
+                type=str,
+                default=None,
+                help="Multiple projects (comma-separated or glob pattern)",
+            )
+        return base
+
+    @staticmethod
+    def create_subcommand_parser(
+        prog: str,
+        description: str,
+        *,
+        subcommands: Mapping[str, str],
+        include_apply: bool = True,
+        include_format: bool = False,
+        include_check: bool = False,
+        include_project: bool = False,
+    ) -> tuple[ArgumentParser, dict[str, ArgumentParser]]:
+        shared = FlextInfraUtilitiesCli._shared_flags_parser(
+            include_apply=include_apply,
+            include_format=include_format,
+            include_check=include_check,
+            include_project=include_project,
+        )
+        parser = ArgumentParser(prog=prog, description=description, parents=[shared])
+        subparsers = parser.add_subparsers(dest="command")
+        command_parsers: dict[str, ArgumentParser] = {}
+        for command, command_help in subcommands.items():
+            command_parsers[command] = subparsers.add_parser(
+                command,
+                help=command_help,
+                parents=[shared],
+            )
+        return parser, command_parsers
 
     @staticmethod
     def create_parser(
@@ -136,12 +213,11 @@ class FlextInfraUtilitiesCli:
         # Get check flag, defaulting to False
         check_flag = bool(getattr(args, "check", False))
 
-        # Get project selection flags
-        project = getattr(args, "project", None)
+        raw_project = getattr(args, "project", None)
+        project = raw_project if isinstance(raw_project, str) else None
+
         raw_projects = getattr(args, "projects", None)
-        projects = (
-            ",".join(raw_projects) if isinstance(raw_projects, list) else raw_projects
-        )
+        projects = raw_projects if isinstance(raw_projects, str) else None
 
         # Resolve workspace path
         workspace_path: Path = args.workspace.resolve()

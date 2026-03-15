@@ -42,7 +42,7 @@ class TestMainEdgeCases:
             "flext_infra.FlextInfraUtilitiesDiscovery.discover_projects",
             _discover_none,
         )
-        monkeypatch.setattr(sys, "argv", ["prog"])
+        monkeypatch.setattr(sys, "argv", ["prog", "--workspace", str(tmp_path)])
         tm.that(path_sync_module.main(), eq=0)
 
     def test_main_with_changes(
@@ -86,7 +86,7 @@ class TestMainEdgeCases:
         monkeypatch.setattr(
             FlextInfraDependencyPathSync, "rewrite_dep_paths", rewrite_stub
         )
-        monkeypatch.setattr(sys, "argv", ["prog"])
+        monkeypatch.setattr(sys, "argv", ["prog", "--workspace", str(tmp_path)])
         tm.that(path_sync_module.main(), eq=0)
 
     def test_main_root_project_name_extraction(
@@ -109,7 +109,7 @@ class TestMainEdgeCases:
             "flext_infra.FlextInfraUtilitiesDiscovery.discover_projects",
             _discover_none,
         )
-        monkeypatch.setattr(sys, "argv", ["prog"])
+        monkeypatch.setattr(sys, "argv", ["prog", "--workspace", str(tmp_path)])
         tm.that(path_sync_module.main(), eq=0)
 
     def test_main_project_name_extraction(
@@ -151,7 +151,7 @@ class TestMainEdgeCases:
         monkeypatch.setattr(
             FlextInfraDependencyPathSync, "rewrite_dep_paths", _rewrite_ok
         )
-        monkeypatch.setattr(sys, "argv", ["prog"])
+        monkeypatch.setattr(sys, "argv", ["prog", "--workspace", str(tmp_path)])
         tm.that(path_sync_module.main(), eq=0)
 
     def test_main_invalid_project_toml(
@@ -159,7 +159,7 @@ class TestMainEdgeCases:
     ) -> None:
         (tmp_path / "pyproject.toml").write_text("invalid toml [[[")
         monkeypatch.setattr(FlextInfraDependencyPathSync, "ROOT", tmp_path)
-        monkeypatch.setattr(sys, "argv", ["prog"])
+        monkeypatch.setattr(sys, "argv", ["prog", "--workspace", str(tmp_path)])
         tm.that(path_sync_module.main(), eq=1)
 
     def test_main_missing_root_pyproject(
@@ -179,7 +179,7 @@ class TestMainEdgeCases:
             "flext_infra.FlextInfraUtilitiesDiscovery.discover_projects",
             _discover_none,
         )
-        monkeypatch.setattr(sys, "argv", ["prog"])
+        monkeypatch.setattr(sys, "argv", ["prog", "--workspace", str(tmp_path)])
         tm.that(path_sync_module.main(), eq=0)
 
     def test_main_project_without_pyproject(
@@ -204,5 +204,5 @@ class TestMainEdgeCases:
             "flext_infra.FlextInfraUtilitiesDiscovery.discover_projects",
             _discover_project,
         )
-        monkeypatch.setattr(sys, "argv", ["prog"])
+        monkeypatch.setattr(sys, "argv", ["prog", "--workspace", str(tmp_path)])
         tm.that(path_sync_module.main(), eq=0)

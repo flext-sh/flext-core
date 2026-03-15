@@ -48,10 +48,7 @@ if TYPE_CHECKING:
         run_pip_check,
     )
     from flext_infra.deps.detector import FlextInfraRuntimeDevDependencyDetector
-    from flext_infra.deps.extra_paths import (
-        FlextInfraExtraPathsManager,
-        FlextInfraUtilitiesToml,
-    )
+    from flext_infra.deps.extra_paths import FlextInfraExtraPathsManager
     from flext_infra.deps.internal_sync import (
         FlextInfraInternalDependencySyncService,
         shutil,
@@ -133,10 +130,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "flext_infra.deps.detector",
         "FlextInfraRuntimeDevDependencyDetector",
     ),
-    "FlextInfraUtilitiesToml": (
-        "flext_infra.deps.extra_paths",
-        "FlextInfraUtilitiesToml",
-    ),
     "InjectCommentsPhase": (
         "flext_infra.deps._phases.inject_comments",
         "InjectCommentsPhase",
@@ -183,7 +176,6 @@ __all__ = [
     "FlextInfraInternalDependencySyncService",
     "FlextInfraPyprojectModernizer",
     "FlextInfraRuntimeDevDependencyDetector",
-    "FlextInfraUtilitiesToml",
     "InjectCommentsPhase",
     "build_project_report",
     "classify_issues",

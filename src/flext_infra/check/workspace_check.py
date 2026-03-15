@@ -25,6 +25,7 @@ from flext_infra import (
     output,
     p,
     t as t_infra,
+    u,
 )
 from flext_infra.check._constants import FlextInfraCheckConstants
 from flext_infra.check.fix_pyrefly_config import FlextInfraConfigFixer
@@ -1067,29 +1068,30 @@ class FlextInfraWorkspaceChecker(s):
 
 def build_parser() -> argparse.ArgumentParser:
     """Build the workspace check CLI parser."""
-    parser = argparse.ArgumentParser(description="FLEXT check utilities")
-    _ = parser.add_argument(
-        "--workspace",
-        type=Path,
-        default=Path.cwd(),
-        help="Workspace root directory (default: cwd)",
+    parser, subs = u.Infra.create_subcommand_parser(
+        "flext-infra check",
+        "FLEXT check utilities",
+        subcommands={
+            c.Infra.Verbs.RUN: "Run quality gates",
+            "fix-pyrefly-config": "Repair [tool.pyrefly] blocks",
+        },
+        include_apply=True,
     )
-    subparsers = parser.add_subparsers(dest="command")
-    run_parser = subparsers.add_parser(c.Infra.Verbs.RUN, help="Run quality gates")
-    _ = run_parser.add_argument("--gates", default=c.Infra.Gates.DEFAULT_CSV)
-    _ = run_parser.add_argument("--project", action="append", required=True)
-    _ = run_parser.add_argument(
+    _ = subs[c.Infra.Verbs.RUN].add_argument(
+        "--gates", default=c.Infra.Gates.DEFAULT_CSV
+    )
+    _ = subs[c.Infra.Verbs.RUN].add_argument(
+        "--project",
+        action="append",
+        required=True,
+    )
+    _ = subs[c.Infra.Verbs.RUN].add_argument(
         "--reports-dir",
         default=f"{c.Infra.Reporting.REPORTS_DIR_NAME}/check",
     )
-    _ = run_parser.add_argument("--fail-fast", action="store_true")
-    fix_parser = subparsers.add_parser(
-        "fix-pyrefly-config",
-        help="Repair [tool.pyrefly] blocks",
-    )
-    _ = fix_parser.add_argument("projects", nargs="*")
-    _ = fix_parser.add_argument("--dry-run", action="store_true")
-    _ = fix_parser.add_argument("--verbose", action="store_true")
+    _ = subs[c.Infra.Verbs.RUN].add_argument("--fail-fast", action="store_true")
+    _ = subs["fix-pyrefly-config"].add_argument("projects", nargs="*")
+    _ = subs["fix-pyrefly-config"].add_argument("--verbose", action="store_true")
     return parser
 
 
@@ -1097,8 +1099,9 @@ def run_cli(argv: list[str] | None = None) -> int:
     """Run the subcommand-based workspace check CLI."""
     parser = build_parser()
     args = parser.parse_args(argv)
+    cli = u.Infra.resolve(args)
     if args.command == c.Infra.Verbs.RUN:
-        checker = FlextInfraWorkspaceChecker(workspace_root=args.workspace)
+        checker = FlextInfraWorkspaceChecker(workspace_root=cli.workspace)
         gates = FlextInfraWorkspaceChecker.parse_gate_csv(args.gates)
         reports_dir = Path(args.reports_dir).expanduser()
         if not reports_dir.is_absolute():
@@ -1132,7 +1135,11 @@ def run_cli(argv: list[str] | None = None) -> int:
 
 def main(argv: list[str] | None = None) -> int:
     """Run the legacy workspace check CLI entrypoint."""
-    parser = argparse.ArgumentParser(description="FLEXT Workspace Check")
+    parser = u.Infra.create_parser(
+        "flext-infra check-workspace",
+        "FLEXT Workspace Check",
+        include_apply=False,
+    )
     _ = parser.add_argument("projects", nargs="*")
     _ = parser.add_argument("--gates", default=c.Infra.Gates.DEFAULT_CSV)
     _ = parser.add_argument(

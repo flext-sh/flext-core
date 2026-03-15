@@ -131,7 +131,16 @@ class TestFlextInfraRuntimeDevDependencyDetectorRunTypings:
         detector, calls = _setup_typings_detector(
             monkeypatch, tmp_path, ["types-requests"], run_result
         )
-        tm.ok(detector.run(["--typings", "--apply-typings", "--no-pip-check"]))
+        tm.ok(
+            detector.run([
+                "--workspace",
+                str(tmp_path),
+                "--typings",
+                "--apply-typings",
+                "--apply",
+                "--no-pip-check",
+            ])
+        )
         tm.that(len(calls), eq=1)
 
     def test_run_with_apply_typings_non_string_package(
@@ -146,7 +155,16 @@ class TestFlextInfraRuntimeDevDependencyDetectorRunTypings:
             ["types-requests", 123, None],
             run_result,
         )
-        tm.ok(detector.run(["--typings", "--apply-typings", "--no-pip-check"]))
+        tm.ok(
+            detector.run([
+                "--workspace",
+                str(tmp_path),
+                "--typings",
+                "--apply-typings",
+                "--apply",
+                "--no-pip-check",
+            ])
+        )
         tm.that(len(calls), eq=3)
 
     def test_run_with_apply_typings_poetry_add_failure(

@@ -112,7 +112,7 @@ def test_sync_extra_paths_sync_failure(
         ("project", ["extra_paths.py", "--project", "proj"], 0),
         (
             "multi",
-            ["extra_paths.py", "--project", "proj-a", "--project", "proj-b"],
+            ["extra_paths.py", "--projects", "proj-a,proj-b"],
             0,
         ),
         ("abs-project", ["prog", "--project", "project", "--dry-run"], 0),
@@ -143,6 +143,7 @@ def test_main_success_modes(
         project.mkdir()
         _ = _create_pyproject(project, pyright_content)
         argv = ["prog", "--project", str(project), "--dry-run"]
+    argv = [argv[0], "--workspace", str(tmp_path), *argv[1:]]
     monkeypatch.setattr(sys, "argv", argv)
     tm.that(main(), eq=expected_exit)
 

@@ -34,71 +34,25 @@ from flext_infra import (
 def main(argv: list[str] | None = None) -> int:
     """Run codegen service CLI."""
     FlextRuntime.ensure_structlog_configured()
-    parser = u.Infra.create_parser(
+    parser, subs = u.Infra.create_subcommand_parser(
         "flext-infra codegen",
         "Code generation tools for workspace standardization",
+        subcommands={
+            "lazy-init": "Generate/refresh PEP 562 lazy-import __init__.py files",
+            "census": "Count namespace violations across workspace projects",
+            "scaffold": "Generate missing base modules in src/ and tests/",
+            "auto-fix": "Auto-fix namespace violations (move Finals/TypeVars)",
+            "py-typed": "Create/remove PEP 561 py.typed markers",
+            "pipeline": "Run full codegen pipeline",
+            "constants-quality-gate": "Run constants migration quality gate",
+        },
         include_apply=True,
         include_format=True,
         include_check=True,
     )
-    shared_parser = u.Infra.create_parser(
-        "flext-infra codegen",
-        "Code generation tools for workspace standardization",
-        include_apply=True,
-        include_format=True,
-        include_check=True,
+    baseline_group = subs["constants-quality-gate"].add_mutually_exclusive_group(
+        required=False,
     )
-    subparsers = parser.add_subparsers(dest="command", required=True)
-
-    _ = subparsers.add_parser(
-        "lazy-init",
-        parents=[shared_parser],
-        add_help=False,
-        help="Generate/refresh PEP 562 lazy-import __init__.py files",
-    )
-
-    _ = subparsers.add_parser(
-        "census",
-        parents=[shared_parser],
-        add_help=False,
-        help="Count namespace violations across workspace projects",
-    )
-
-    _ = subparsers.add_parser(
-        "scaffold",
-        parents=[shared_parser],
-        add_help=False,
-        help="Generate missing base modules in src/ and tests/",
-    )
-
-    _ = subparsers.add_parser(
-        "auto-fix",
-        parents=[shared_parser],
-        add_help=False,
-        help="Auto-fix namespace violations (move Finals/TypeVars)",
-    )
-
-    _ = subparsers.add_parser(
-        "py-typed",
-        parents=[shared_parser],
-        add_help=False,
-        help="Create/remove PEP 561 py.typed markers in package directories",
-    )
-
-    _ = subparsers.add_parser(
-        "pipeline",
-        parents=[shared_parser],
-        add_help=False,
-        help="Run full codegen pipeline: py-typed → census → scaffold → auto-fix → lazy-init → census",
-    )
-
-    quality_parser = subparsers.add_parser(
-        "constants-quality-gate",
-        parents=[shared_parser],
-        add_help=False,
-        help="Run constants migration quality gate and before/after diff",
-    )
-    baseline_group = quality_parser.add_mutually_exclusive_group(required=False)
     _ = baseline_group.add_argument(
         "--before-report",
         type=Path,

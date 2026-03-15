@@ -15,68 +15,96 @@ from .pydantic_centralizer import FlextInfraRefactorPydanticCentralizer
 
 def main() -> int:
     """Module-level CLI entry point."""
-    argv = sys.argv[1:]
-    if len(argv) > 0 and argv[0] in {"centralize-pydantic", "centralize-models"}:
-        return _run_centralize_pydantic(argv=argv[1:])
-    if len(argv) > 0 and argv[0] in {"migrate-to-mro", "migrate-mro"}:
-        return _run_migrate_to_mro(argv=argv[1:])
-    if len(argv) > 0 and argv[0] in {"namespace-enforce", "enforce-namespaces"}:
-        return _run_namespace_enforce(argv=argv[1:])
-    if len(argv) > 0 and argv[0] in {"ultrawork-models", "ultrawork"}:
-        return _run_ultrawork_models(argv=argv[1:])
-    if len(argv) > 0 and argv[0] in {"census", "utilities-census"}:
-        return _run_census(argv=argv[1:])
-    output.error(
-        "Usage: python -m flext_infra.refactor "
-        "[centralize-pydantic|migrate-mro|namespace-enforce|ultrawork-models|census] ..."
-    )
-    return 2
-
-
-def _run_centralize_pydantic(*, argv: list[str]) -> int:
-    parser = u.Infra.create_parser(
-        prog="flext_infra refactor centralize-pydantic",
-        description="Centralize BaseModel/TypedDict/dict-like aliases into _models.py using AST rewrites",
+    parser, subs = u.Infra.create_subcommand_parser(
+        "flext_infra refactor",
+        "Refactor and modernization tools for flext workspace",
+        subcommands={
+            "centralize-pydantic": "Centralize BaseModel/TypedDict/dict-like aliases into _models.py",
+            "migrate-mro": "Migrate loose declarations into MRO facade classes",
+            "namespace-enforce": "Scan workspace for namespace governance violations",
+            "ultrawork-models": "Run full centralization + MRO + namespace workflow",
+            "census": "Run AST/CST census of MRO family method usage",
+        },
         include_apply=True,
     )
-    _ = parser.add_argument(
+    _ = subs["centralize-pydantic"].add_argument(
         "--normalize-remaining",
         action="store_true",
         help="Remove remaining BaseModel/TypedDict bases in non-allowed files",
     )
-    args = parser.parse_args(argv)
-    cli_args = u.Infra.resolve(args)
+    _ = subs["migrate-mro"].add_argument(
+        "--target",
+        choices=["constants", "typings", "protocols", "models", "utilities", "all"],
+        default="all",
+        help="Migration target scope",
+    )
+    _ = subs["census"].add_argument(
+        "--family",
+        type=str,
+        default="u",
+        choices=sorted({"c", "t", "p", "m", "u"}),
+        help="MRO family to census (default: u). Options: c, t, p, m, u",
+    )
+    _ = subs["census"].add_argument(
+        "--json-output",
+        type=Path,
+        default=None,
+        help="Path to write JSON report (optional)",
+    )
+    _ = subs["ultrawork-models"].add_argument(
+        "--normalize-remaining",
+        action="store_true",
+        help="Remove remaining BaseModel/TypedDict bases in non-allowed files",
+    )
+
+    args = parser.parse_args()
+    cli = u.Infra.resolve(args)
+    command = str(args.command)
+
+    if command == "centralize-pydantic":
+        return _run_centralize_pydantic(
+            cli,
+            normalize_remaining=bool(getattr(args, "normalize_remaining", False)),
+        )
+    if command == "migrate-mro":
+        return _run_migrate_to_mro(cli, target=str(getattr(args, "target", "all")))
+    if command == "namespace-enforce":
+        return _run_namespace_enforce(cli)
+    if command == "ultrawork-models":
+        return _run_ultrawork_models(
+            cli,
+            normalize_remaining=bool(getattr(args, "normalize_remaining", False)),
+        )
+    if command == "census":
+        return _run_census(
+            cli,
+            family=str(getattr(args, "family", "u")),
+            json_output=getattr(args, "json_output", None),
+        )
+
+    parser.print_help()
+    return 1
+
+
+def _run_centralize_pydantic(cli: u.Infra.CliArgs, *, normalize_remaining: bool) -> int:
     summary = FlextInfraRefactorPydanticCentralizer.centralize_workspace(
-        cli_args.workspace,
-        apply_changes=cli_args.apply,
-        normalize_remaining=bool(args.normalize_remaining),
+        cli.workspace,
+        apply_changes=cli.apply,
+        normalize_remaining=normalize_remaining,
     )
     output.metrics(
         {
-            "workspace": cli_args.workspace,
-            "mode": "apply" if cli_args.apply else "dry-run",
+            "workspace": cli.workspace,
+            "mode": "apply" if cli.apply else "dry-run",
         },
         summary,
     )
     return 0
 
 
-def _run_migrate_to_mro(*, argv: list[str]) -> int:
-    parser = u.Infra.create_parser(
-        prog="flext_infra refactor migrate-mro",
-        description="Migrate loose Final/TypeVar/TypeAlias declarations into MRO facade classes and rewrite references",
-        include_apply=True,
-    )
-    _ = parser.add_argument(
-        "--target",
-        choices=["constants", "typings", "protocols", "models", "utilities", "all"],
-        default="all",
-        help="Migration target scope",
-    )
-    args = parser.parse_args(argv)
-    cli_args = u.Infra.resolve(args)
-    service = FlextInfraRefactorMigrateToClassMRO(workspace_root=cli_args.workspace)
-    report = service.run(target=args.target, apply_changes=cli_args.apply)
+def _run_migrate_to_mro(cli: u.Infra.CliArgs, *, target: str) -> int:
+    service = FlextInfraRefactorMigrateToClassMRO(workspace_root=cli.workspace)
+    report = service.run(target=target, apply_changes=cli.apply)
     output.write(FlextInfraRefactorMigrateToClassMRO.render_text(report))
     if len(report.errors) > 0:
         for error in report.errors:
@@ -85,16 +113,9 @@ def _run_migrate_to_mro(*, argv: list[str]) -> int:
     return 0
 
 
-def _run_namespace_enforce(*, argv: list[str]) -> int:
-    parser = u.Infra.create_parser(
-        prog="flext_infra refactor namespace-enforce",
-        description="Scan workspace for namespace violations: missing facades, loose objects, import violations, cyclic imports",
-        include_apply=True,
-    )
-    args = parser.parse_args(argv)
-    cli_args = u.Infra.resolve(args)
-    enforcer = FlextInfraNamespaceEnforcer(workspace_root=cli_args.workspace)
-    report = enforcer.enforce(apply_changes=cli_args.apply)
+def _run_namespace_enforce(cli: u.Infra.CliArgs) -> int:
+    enforcer = FlextInfraNamespaceEnforcer(workspace_root=cli.workspace)
+    report = enforcer.enforce(apply_changes=cli.apply)
     sys.stdout.write(FlextInfraNamespaceEnforcer.render_text(report))
     sys.stdout.flush()
     if report.has_violations:
@@ -102,37 +123,23 @@ def _run_namespace_enforce(*, argv: list[str]) -> int:
     return 0
 
 
-def _run_ultrawork_models(*, argv: list[str]) -> int:
-    parser = u.Infra.create_parser(
-        prog="flext_infra refactor ultrawork-models",
-        description="Run full AST model centralization + MRO + namespace enforcement workflow",
-        include_apply=True,
-    )
-    _ = parser.add_argument(
-        "--normalize-remaining",
-        action="store_true",
-        help="Remove remaining BaseModel/TypedDict bases in non-allowed files",
-    )
-    args = parser.parse_args(argv)
-    cli_args = u.Infra.resolve(args)
+def _run_ultrawork_models(cli: u.Infra.CliArgs, *, normalize_remaining: bool) -> int:
     centralize_summary = FlextInfraRefactorPydanticCentralizer.centralize_workspace(
-        cli_args.workspace,
-        apply_changes=cli_args.apply,
-        normalize_remaining=bool(args.normalize_remaining),
+        cli.workspace,
+        apply_changes=cli.apply,
+        normalize_remaining=normalize_remaining,
     )
-    mro_report = FlextInfraRefactorMigrateToClassMRO(
-        workspace_root=cli_args.workspace
-    ).run(
+    mro_report = FlextInfraRefactorMigrateToClassMRO(workspace_root=cli.workspace).run(
         target="all",
-        apply_changes=cli_args.apply,
+        apply_changes=cli.apply,
     )
     namespace_report = FlextInfraNamespaceEnforcer(
-        workspace_root=cli_args.workspace,
-    ).enforce(apply_changes=cli_args.apply)
+        workspace_root=cli.workspace,
+    ).enforce(apply_changes=cli.apply)
     output.metrics(
         {
-            "workspace": cli_args.workspace,
-            "mode": "apply" if cli_args.apply else "dry-run",
+            "workspace": cli.workspace,
+            "mode": "apply" if cli.apply else "dry-run",
         },
         centralize_summary,
         {
@@ -160,44 +167,24 @@ def _run_ultrawork_models(*, argv: list[str]) -> int:
     return 0
 
 
-def _run_census(*, argv: list[str]) -> int:
-    parser = u.Infra.create_parser(
-        prog="flext_infra refactor census",
-        description="Run AST/CST census of MRO family method usage across workspace projects",
-        include_apply=False,
-    )
-    _ = parser.add_argument(
-        "--family",
-        type=str,
-        default="u",
-        choices=sorted({"c", "t", "p", "m", "u"}),
-        help="MRO family to census (default: u). Options: c, t, p, m, u",
-    )
-    _ = parser.add_argument(
-        "--json-output",
-        type=Path,
-        default=None,
-        help="Path to write JSON report (optional)",
-    )
-    args = parser.parse_args(argv)
-    cli_args = u.Infra.resolve(args)
+def _run_census(cli: u.Infra.CliArgs, *, family: str, json_output: Path | None) -> int:
     census = FlextInfraRefactorCensus()
 
-    target = u.Infra.build_mro_target(args.family)
-    result = census.run(cli_args.workspace, target=target)
+    target = u.Infra.build_mro_target(family)
+    result = census.run(cli.workspace, target=target)
     if result.is_failure:
         output.error(f"Census failed: {result.error}")
         return 1
     report = result.value
     output.write(FlextInfraRefactorCensus.render_text(report))
     output.write("\n")
-    if args.json_output:
-        json_path = Path(args.json_output).resolve()
+    if json_output:
+        json_path = Path(json_output).resolve()
         u.Infra.export_pydantic_json(report, json_path)
         output.info(f"JSON report exported to: {json_path}")
 
     output.metrics(
-        {"family": args.family, "workspace": cli_args.workspace},
+        {"family": family, "workspace": cli.workspace},
         report,
     )
     return 0

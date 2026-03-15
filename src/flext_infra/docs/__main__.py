@@ -13,6 +13,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from argparse import ArgumentParser
 import sys
 
 from flext_core import FlextRuntime
@@ -122,103 +123,56 @@ def _run_validate(
 def main() -> int:
     """Run documentation services: audit, fix, build, generate, validate."""
     FlextRuntime.ensure_structlog_configured()
-    parser = u.Infra.create_parser(
+    parser_subs: tuple[ArgumentParser, dict[str, ArgumentParser]] = getattr(
+        u.Infra, "create_subcommand_parser"
+    )(
         "flext-infra docs",
         "Documentation management services",
-        include_apply=False,
-    )
-    subparsers = parser.add_subparsers(dest="command", help="Available commands")
-
-    audit_base = u.Infra.create_parser(
-        "flext-infra docs audit",
-        "Audit documentation",
+        subcommands={
+            "audit": "Audit documentation for broken links and forbidden terms",
+            "fix": "Fix documentation issues",
+            c.Infra.Directories.BUILD: "Build MkDocs sites",
+            "generate": "Generate project docs",
+            c.Infra.Verbs.VALIDATE: "Validate documentation",
+        },
         include_apply=True,
         include_project=True,
         include_check=True,
     )
-    audit_parser = subparsers.add_parser(
-        "audit",
-        help="Audit documentation",
-        parents=[audit_base],
-        add_help=False,
-    )
-    _ = audit_parser.add_argument("--strict", action="store_true", help="Strict mode")
-    _ = audit_parser.add_argument(
+    parser, subs = parser_subs
+
+    _ = subs["audit"].add_argument("--strict", action="store_true", help="Strict mode")
+    _ = subs["audit"].add_argument(
         "--output-dir",
         default=f"{c.Infra.Reporting.REPORTS_DIR_NAME}/docs",
     )
 
-    fix_base = u.Infra.create_parser(
-        "flext-infra docs fix",
-        "Fix documentation issues",
-        include_apply=True,
-        include_project=True,
-    )
-    fix_parser = subparsers.add_parser(
-        "fix",
-        help="Fix documentation issues",
-        parents=[fix_base],
-        add_help=False,
-    )
-    _ = fix_parser.add_argument(
+    _ = subs["fix"].add_argument(
         "--output-dir",
         default=f"{c.Infra.Reporting.REPORTS_DIR_NAME}/docs",
     )
 
-    build_base = u.Infra.create_parser(
-        f"flext-infra docs {c.Infra.Directories.BUILD}",
-        "Build MkDocs sites",
-        include_apply=True,
-        include_project=True,
-    )
-    build_parser = subparsers.add_parser(
-        c.Infra.Directories.BUILD,
-        help="Build MkDocs sites",
-        parents=[build_base],
-        add_help=False,
-    )
-    _ = build_parser.add_argument(
+    _ = subs[c.Infra.Directories.BUILD].add_argument(
         "--output-dir",
         default=f"{c.Infra.Reporting.REPORTS_DIR_NAME}/docs",
     )
 
-    generate_base = u.Infra.create_parser(
-        "flext-infra docs generate",
-        "Generate project docs",
-        include_apply=True,
-        include_project=True,
-    )
-    gen_parser = subparsers.add_parser(
-        "generate",
-        help="Generate project docs",
-        parents=[generate_base],
-        add_help=False,
-    )
-    _ = gen_parser.add_argument(
+    _ = subs["generate"].add_argument(
         "--output-dir",
         default=f"{c.Infra.Reporting.REPORTS_DIR_NAME}/docs",
     )
 
-    validate_base = u.Infra.create_parser(
-        f"flext-infra docs {c.Infra.Verbs.VALIDATE}",
-        "Validate documentation",
-        include_apply=True,
-        include_project=True,
-        include_check=True,
-    )
-    val_parser = subparsers.add_parser(
-        c.Infra.Verbs.VALIDATE,
-        help="Validate documentation",
-        parents=[validate_base],
-        add_help=False,
-    )
-    _ = val_parser.add_argument(
+    _ = subs[c.Infra.Verbs.VALIDATE].add_argument(
         "--output-dir",
         default=f"{c.Infra.Reporting.REPORTS_DIR_NAME}/docs",
     )
 
     args = parser.parse_args()
     cli = u.Infra.resolve(args)
+
+    if not args.command:
+        parser.print_help()
+        return 1
 
     if args.command == "audit":
         return _run_audit(

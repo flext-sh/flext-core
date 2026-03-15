@@ -1,12 +1,5 @@
 """CLI entry point for dependency management services.
 
-Usage:
-    python -m flext_infra deps detect [-q] [--no-fail] [--typings]
-    python -m flext_infra deps internal-sync [--workspace PATH]
-    python -m flext_infra deps modernize [--skip-check] [--audit]
-    python -m flext_infra deps path-sync --mode MODE
-    python -m flext_infra deps extra-paths [--project ROOT]
-
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
@@ -19,9 +12,9 @@ from collections.abc import Mapping
 from types import MappingProxyType
 
 from flext_core import FlextRuntime
-from flext_infra import c, output
+from flext_infra import output, u
 
-_SUBCOMMANDS: Mapping[str, str] = MappingProxyType({
+_SUBCOMMAND_MODULES: Mapping[str, str] = MappingProxyType({
     "detect": "flext_infra.deps.detector",
     "extra-paths": "flext_infra.deps.extra_paths",
     "internal-sync": "flext_infra.deps.internal_sync",
@@ -33,23 +26,29 @@ _SUBCOMMANDS: Mapping[str, str] = MappingProxyType({
 def main() -> int:
     """Dispatch to the appropriate deps subcommand."""
     FlextRuntime.ensure_structlog_configured()
-    if len(sys.argv) < c.Infra.Deps.MIN_ARGV or sys.argv[1] in {"-h", "--help"}:
-        output.info("Usage: flext-infra deps <subcommand> [args...]")
-        output.info("Subcommands:")
-        for name in sorted(_SUBCOMMANDS):
-            output.info(f"  {name}")
-        return (
-            0
-            if len(sys.argv) >= c.Infra.Deps.MIN_ARGV
-            and sys.argv[1] in {"-h", "--help"}
-            else 1
-        )
+    parser, _ = u.Infra.create_subcommand_parser(
+        "flext-infra deps",
+        "Dependency management services",
+        subcommands={
+            "detect": "Detect runtime vs dev dependencies",
+            "extra-paths": "Synchronize pyright/mypy extraPaths",
+            "internal-sync": "Synchronize internal FLEXT dependencies",
+            "modernize": "Modernize workspace pyproject files",
+            "path-sync": "Rewrite internal FLEXT dependency paths",
+        },
+        include_apply=True,
+        include_project=True,
+    )
+    if len(sys.argv) < 3 or sys.argv[1] in {"-h", "--help"}:
+        parser.parse_args()
+        return 0
     subcommand = sys.argv[1]
-    if subcommand not in _SUBCOMMANDS:
+    if subcommand not in _SUBCOMMAND_MODULES:
         output.error(f"flext-infra deps: unknown subcommand '{subcommand}'")
+        parser.print_help()
         return 1
     sys.argv = [f"flext-infra deps {subcommand}"] + sys.argv[2:]
-    module = importlib.import_module(_SUBCOMMANDS[subcommand])
+    module = importlib.import_module(_SUBCOMMAND_MODULES[subcommand])
     exit_code = module.main()
     return int(exit_code) if exit_code is not None else 0
 

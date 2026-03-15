@@ -89,8 +89,8 @@ def test_sync_root_validation(project_root: Path | None, expected_error: str) ->
 @pytest.mark.parametrize(
     ("argv", "expected"),
     [
-        (["sync", "--project-root", "{tmp}"], 0),
-        (["sync", "--project-root", "/nonexistent/path"], 1),
+        (["sync", "--workspace", "{tmp}"], 0),
+        (["sync", "--workspace", "/nonexistent/path"], 1),
     ],
     ids=["cli-success", "cli-failure"],
 )

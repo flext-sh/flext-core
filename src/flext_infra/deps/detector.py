@@ -111,7 +111,8 @@ def main() -> int:
         if logger is not None and hasattr(logger, "error"):
             logger.error("deps_detector_failed", error=result.error or "unknown error")
         return 1
-    return result.value
+    exit_code = result.value
+    return exit_code if isinstance(exit_code, int) else 1
 
 
 if __name__ == "__main__":
