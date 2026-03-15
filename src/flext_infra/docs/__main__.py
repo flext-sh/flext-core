@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import argparse
 import sys
+from pathlib import Path
 
 from flext_core import FlextRuntime
 from flext_infra import c, output, u
@@ -91,16 +92,16 @@ def _run_generate(cli: u.Infra.CliArgs, args: argparse.Namespace) -> int:
     return 0
 
 
-def _run_validate(args: argparse.Namespace) -> int:
+def _run_validate(cli: u.Infra.CliArgs, args: argparse.Namespace) -> int:
     """Execute documentation validation."""
     validator = FlextInfraDocValidator()
     result = validator.validate(
-        root=Path(args.root).resolve(),
-        project=args.project,
-        projects=args.projects,
+        root=cli.workspace,
+        project=cli.project,
+        projects=cli.projects,
         output_dir=args.output_dir,
         check=args.check,
-        apply=args.apply,
+        apply=cli.apply,
     )
     if result.is_failure:
         output.error(result.error or "validate failed")
@@ -113,42 +114,83 @@ def main() -> int:
     """Run documentation services: audit, fix, build, generate, validate."""
     FlextRuntime.ensure_structlog_configured()
     parser = argparse.ArgumentParser(description="Documentation management services")
-    "Run documentation services: audit, fix, build, generate, validate."
-    parser = argparse.ArgumentParser(description="Documentation management services")
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
 
-    def _add_common_args(sub: argparse.ArgumentParser) -> None:
-        _ = sub.add_argument("--root", default=".")
-        _ = sub.add_argument("--project")
-        _ = sub.add_argument("--projects")
-        _ = sub.add_argument(
-            "--output-dir",
-            default=f"{c.Infra.Reporting.REPORTS_DIR_NAME}/docs",
-        )
-
     audit_parser = subparsers.add_parser("audit", help="Audit documentation")
-    _add_common_args(audit_parser)
+    _ = audit_parser.add_argument(
+        "--workspace", type=Path, default=Path.cwd(), help="Workspace root"
+    )
+    _ = audit_parser.add_argument("--project")
+    _ = audit_parser.add_argument("--projects")
+    _ = audit_parser.add_argument("--dry-run", action="store_true")
+    _ = audit_parser.add_argument("--apply", action="store_true")
     _ = audit_parser.add_argument("--check", default="all")
     _ = audit_parser.add_argument("--strict", type=int, default=1)
+    _ = audit_parser.add_argument(
+        "--output-dir",
+        default=f"{c.Infra.Reporting.REPORTS_DIR_NAME}/docs",
+    )
+
     fix_parser = subparsers.add_parser("fix", help="Fix documentation issues")
-    _add_common_args(fix_parser)
+    _ = fix_parser.add_argument(
+        "--workspace", type=Path, default=Path.cwd(), help="Workspace root"
+    )
+    _ = fix_parser.add_argument("--project")
+    _ = fix_parser.add_argument("--projects")
+    _ = fix_parser.add_argument("--dry-run", action="store_true")
     _ = fix_parser.add_argument("--apply", action="store_true")
+    _ = fix_parser.add_argument(
+        "--output-dir",
+        default=f"{c.Infra.Reporting.REPORTS_DIR_NAME}/docs",
+    )
+
     build_parser = subparsers.add_parser(
-        c.Infra.Directories.BUILD,
-        help="Build MkDocs sites",
+        c.Infra.Directories.BUILD, help="Build MkDocs sites"
     )
-    _add_common_args(build_parser)
+    _ = build_parser.add_argument(
+        "--workspace", type=Path, default=Path.cwd(), help="Workspace root"
+    )
+    _ = build_parser.add_argument("--project")
+    _ = build_parser.add_argument("--projects")
+    _ = build_parser.add_argument("--dry-run", action="store_true")
+    _ = build_parser.add_argument("--apply", action="store_true")
+    _ = build_parser.add_argument(
+        "--output-dir",
+        default=f"{c.Infra.Reporting.REPORTS_DIR_NAME}/docs",
+    )
+
     gen_parser = subparsers.add_parser("generate", help="Generate project docs")
-    _add_common_args(gen_parser)
-    _ = gen_parser.add_argument("--apply", action="store_true")
-    val_parser = subparsers.add_parser(
-        c.Infra.Verbs.VALIDATE,
-        help="Validate documentation",
+    _ = gen_parser.add_argument(
+        "--workspace", type=Path, default=Path.cwd(), help="Workspace root"
     )
-    _add_common_args(val_parser)
-    _ = val_parser.add_argument("--check", default="all")
+    _ = gen_parser.add_argument("--project")
+    _ = gen_parser.add_argument("--projects")
+    _ = gen_parser.add_argument("--dry-run", action="store_true")
+    _ = gen_parser.add_argument("--apply", action="store_true")
+    _ = gen_parser.add_argument(
+        "--output-dir",
+        default=f"{c.Infra.Reporting.REPORTS_DIR_NAME}/docs",
+    )
+
+    val_parser = subparsers.add_parser(
+        c.Infra.Verbs.VALIDATE, help="Validate documentation"
+    )
+    _ = val_parser.add_argument(
+        "--workspace", type=Path, default=Path.cwd(), help="Workspace root"
+    )
+    _ = val_parser.add_argument("--project")
+    _ = val_parser.add_argument("--projects")
+    _ = val_parser.add_argument("--dry-run", action="store_true")
     _ = val_parser.add_argument("--apply", action="store_true")
+    _ = val_parser.add_argument("--check", default="all")
+    _ = val_parser.add_argument(
+        "--output-dir",
+        default=f"{c.Infra.Reporting.REPORTS_DIR_NAME}/docs",
+    )
+
     args = parser.parse_args()
+    cli = u.Infra.resolve(args)
+
     handlers = {
         "audit": _run_audit,
         "fix": _run_fix,
@@ -158,7 +200,7 @@ def main() -> int:
     }
     handler = handlers.get(args.command)
     if handler:
-        return handler(args)
+        return handler(cli, args)
     parser.print_help()
     return 1
 
