@@ -219,13 +219,24 @@ def _check_has_lacks(
                 target_raw = _as_guard_input(value)
                 if isinstance(target_raw, RootModel):
                     target_raw = _as_guard_input(target_raw.model_dump())
-                if not isinstance(target_raw, (Mapping, str, list)):
+                if not isinstance(
+                    target_raw, (Mapping, str, list, tuple, set, frozenset)
+                ):
                     raise AssertionError(
                         msg
                         or c.Tests.Matcher.ERR_CONTAINS_FAILED.format(
                             container=value, item=item
                         )
                     )
+                if isinstance(target_raw, (set, frozenset, tuple)):
+                    if check_val not in target_raw:
+                        raise AssertionError(
+                            msg
+                            or c.Tests.Matcher.ERR_CONTAINS_FAILED.format(
+                                container=value, item=item
+                            )
+                        )
+                    continue
                 if isinstance(target_raw, str):
                     if str(check_val) not in target_raw:
                         raise AssertionError(
