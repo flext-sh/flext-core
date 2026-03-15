@@ -768,7 +768,7 @@ class TestuCollectionParseSequence:
             _ = assertion_helpers.assert_flext_result_failure(result)
             tm.that(result.error, none=False)
             if scenario.error_contains:
-                tm.that(scenario.error_contains, in_=result.error)
+                tm.that(result.error, has=scenario.error_contains)
 
     def test_parse_sequence_with_custom_enum(self) -> None:
         """Test parse_sequence with custom enum class."""
@@ -786,7 +786,7 @@ class TestuCollectionParseSequence:
         )
         _ = assertion_helpers.assert_flext_result_failure(result)
         tm.that(result.error, none=False)
-        tm.that("Invalid", in_=result.error)
+        tm.that(result.error, has="Invalid")
         assert "invalid1" in result.error or "invalid2" in result.error
 
 
@@ -856,7 +856,7 @@ class TestuCollectionParseMapping:
             _ = assertion_helpers.assert_flext_result_failure(result)
             tm.that(result.error, none=False)
             if scenario.error_contains:
-                tm.that(scenario.error_contains, in_=result.error)
+                tm.that(result.error, has=scenario.error_contains)
 
     def test_parse_mapping_with_custom_enum(self) -> None:
         """Test parse_mapping with custom enum class."""
@@ -879,7 +879,7 @@ class TestuCollectionParseMapping:
         )
         _ = assertion_helpers.assert_flext_result_failure(result)
         tm.that(result.error, none=False)
-        tm.that("Invalid", in_=result.error)
+        tm.that(result.error, has="Invalid")
         assert "invalid1" in result.error or "invalid2" in result.error
 
 
@@ -1021,7 +1021,7 @@ class TestuCollectionProcess:
         if scenario.expected_failure:
             _ = assertion_helpers.assert_flext_result_failure(result)
             if scenario.error_contains:
-                tm.that(scenario.error_contains, in_=str(result.error))
+                tm.that(str(result.error), has=scenario.error_contains)
         else:
             _ = assertion_helpers.assert_flext_result_success(result)
             assert result.value == scenario.expected_result
@@ -1085,7 +1085,7 @@ class TestuCollectionBatch:
         tm.that(data.total, eq=4)
         tm.that(data.success_count, eq=3)
         tm.that(len(data.errors), eq=1)
-        tm.that("Zero", in_=data.errors[0][1])
+        tm.that(data.errors[0][1], has="Zero")
 
     def test_batch_flatten(self) -> None:
         """Test batch with flattening."""
