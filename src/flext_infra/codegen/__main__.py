@@ -215,6 +215,9 @@ def main(argv: list[str] | None = None) -> int:
         help="Output format (default: text)",
     )
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
