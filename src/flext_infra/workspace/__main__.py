@@ -12,6 +12,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import sys
+from pathlib import Path
 
 from flext_core import FlextRuntime
 from flext_infra import u
@@ -31,10 +32,11 @@ def _run_detect(cli: u.Infra.CliArgs) -> int:
     return 1
 
 
-def _run_sync(cli: u.Infra.CliArgs, canonical_root) -> int:
+def _run_sync(cli: u.Infra.CliArgs, canonical_root: str | None) -> int:
     """Execute base.mk sync."""
-    service = FlextInfraSyncService(canonical_root=canonical_root)
-    result = service.sync(project_root=cli.workspace, canonical_root=canonical_root)
+    canonical_path = Path(canonical_root) if canonical_root else None
+    service = FlextInfraSyncService(canonical_root=canonical_path)
+    result = service.sync(project_root=cli.workspace, canonical_root=canonical_path)
     if result.is_success:
         return 0
     u.Infra.error(result.error or "sync failed")
@@ -42,7 +44,7 @@ def _run_sync(cli: u.Infra.CliArgs, canonical_root) -> int:
 
 
 def _run_orchestrate(
-    projects: list[str], verb: str, fail_fast: bool, make_args: list[str]
+    projects: list[str], verb: str, *, fail_fast: bool, make_args: list[str]
 ) -> int:
     """Execute multi-project orchestration."""
     projects = [p for p in projects if p]
@@ -154,13 +156,11 @@ def main(argv: list[str] | None = None) -> int:
         return _run_orchestrate(
             args.projects,
             args.verb,
-            args.fail_fast,
-            args.make_arg,
+            fail_fast=args.fail_fast,
+            make_args=args.make_arg,
         )
     if args.command == "migrate":
-        # For migrate, we need to handle dry_run from args since it's not in CliArgs
         dry_run = getattr(args, "dry_run", False)
-        # Create a modified cli with apply=False if dry_run is True
         if dry_run:
             cli = u.Infra.CliArgs(
                 workspace=cli.workspace,
