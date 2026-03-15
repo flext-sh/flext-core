@@ -63,7 +63,9 @@ class FlextUtilitiesContext:
 
         """
         cloned: T = runtime.__class__.__new__(runtime.__class__)
-        runtime_vars = vars(runtime) if hasattr(runtime, "__dict__") else {}
+        runtime_vars: dict[str, t.NormalizedValue] = (
+            vars(runtime) if hasattr(runtime, "__dict__") else {}
+        )
         if "_dispatcher" in runtime_vars:
             setattr(cloned, "_dispatcher", runtime_vars["_dispatcher"])
         if "_registry" in runtime_vars:

@@ -153,7 +153,9 @@ class FlextUtilitiesParser:
 
         """
         for attr in ("name", "id"):
-            obj_vars = vars(obj) if hasattr(obj, "__dict__") else {}
+            obj_vars: dict[str, t.NormalizedValue] = (
+                vars(obj) if hasattr(obj, "__dict__") else {}
+            )
             if attr not in obj_vars:
                 continue
             attr_value = obj_vars[attr]
@@ -259,7 +261,9 @@ class FlextUtilitiesParser:
         default: t.NormalizedValue = None,
     ) -> t.NormalizedValue:
         """Get attribute safely (avoids circular import with u.get)."""
-        obj_vars = vars(obj) if hasattr(obj, "__dict__") else {}
+        obj_vars: dict[str, t.NormalizedValue] = (
+            vars(obj) if hasattr(obj, "__dict__") else {}
+        )
         if attr not in obj_vars:
             return default
         attr_value = obj_vars[attr]

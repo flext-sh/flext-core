@@ -213,7 +213,9 @@ class FlextUtilitiesConfiguration:
             (True, value) if attribute exists, (False, None) if not
 
         """
-        obj_vars = vars(obj) if hasattr(obj, "__dict__") else {}
+        obj_vars: dict[str, t.NormalizedValue] = (
+            vars(obj) if hasattr(obj, "__dict__") else {}
+        )
         if parameter not in obj_vars:
             return FlextUtilitiesConfiguration._NOT_FOUND
         value = obj_vars[parameter]

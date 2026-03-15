@@ -161,7 +161,8 @@ class FlextUtilitiesModel:
         instance_result = r[M].create_from_callable(lambda: model_cls(**kwargs))
         if instance_result.is_failure:
             return r[M].fail(f"Model validation failed: {instance_result.error}")
-        return r[M].ok(instance_result.value)
+        validated: M = instance_result.value
+        return r[M].ok(validated)
 
     @staticmethod
     def load[T_Model: BaseModel](
@@ -190,7 +191,8 @@ class FlextUtilitiesModel:
         )
         if instance_result.is_failure:
             return r[T_Model].fail(f"Model validation failed: {instance_result.error}")
-        return r[T_Model].ok(instance_result.value)
+        validated: T_Model = instance_result.value
+        return r[T_Model].ok(validated)
 
     @staticmethod
     def merge_defaults[M: BaseModel](
@@ -218,7 +220,8 @@ class FlextUtilitiesModel:
         )
         if instance_result.is_failure:
             return r[M].fail(f"Model validation failed: {instance_result.error}")
-        return r[M].ok(instance_result.value)
+        validated: M = instance_result.value
+        return r[M].ok(validated)
 
     @staticmethod
     def ensure_metadata(
@@ -332,7 +335,8 @@ class FlextUtilitiesModel:
         )
         if updated_result.is_failure:
             return r[M].fail(f"Model update failed: {updated_result.error}")
-        return r[M].ok(updated_result.value)
+        validated: M = updated_result.value
+        return r[M].ok(validated)
 
     @staticmethod
     def to_config_map(

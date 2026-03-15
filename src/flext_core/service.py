@@ -406,7 +406,9 @@ class FlextService[
         )
         if validation_result.is_failure:
             exc = getattr(validation_result, "_exception", None)
-            self.logger.debug("Service business rule validation failed", exc_info=exc)
+            self.logger.debug(
+                "Service business rule validation failed", exc_info=bool(exc)
+            )
             return False
         return validation_result.value
 
