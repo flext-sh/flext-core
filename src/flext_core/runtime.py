@@ -67,6 +67,7 @@ from typing import (
     ClassVar,
     Self,
     TypeGuard,
+    cast,
     override,
 )
 
@@ -1382,7 +1383,7 @@ class FlextRuntime:
             if not self.is_success:
                 msg = f"Cannot access value of failed result: {self.error}"
                 raise RuntimeError(msg)
-            return self._payload
+            return cast("T", self._payload)
 
         @classmethod
         def fail[U](
