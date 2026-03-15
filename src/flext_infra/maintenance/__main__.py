@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import sys
 
-from flext_core import FlextRuntime
+from flext_core import r
 from flext_infra import u
 from flext_infra._utilities.output import output
 from flext_infra.maintenance.python_version import FlextInfraPythonVersionEnforcer
@@ -19,7 +19,6 @@ from flext_infra.maintenance.python_version import FlextInfraPythonVersionEnforc
 
 def main(argv: list[str] | None = None) -> int:
     """Run maintenance service CLI."""
-    FlextRuntime.ensure_structlog_configured()
     parser = u.Infra.create_parser(
         prog="maintenance",
         description="Enforce Python version constraints via pyproject.toml",
@@ -46,7 +45,7 @@ def main(argv: list[str] | None = None) -> int:
         wire_packages=None,
         wire_classes=None,
     )
-    result = service.execute(check_only=cli.check, verbose=args.verbose)
+    result: r[int] = service.execute(check_only=cli.check, verbose=args.verbose)
     if result.is_success:
         return result.unwrap()
     output.error(result.error or "maintenance failed")
@@ -54,4 +53,4 @@ def main(argv: list[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(u.Infra.run_cli(main))
