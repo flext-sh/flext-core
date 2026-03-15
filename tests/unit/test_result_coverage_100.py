@@ -79,10 +79,11 @@ class TestrCoverage:
         _ResultAssertions.assert_success(result)
         assert result.value == expected
 
-    def test_ok_rejects_none_value(self) -> None:
-        """Test that ok() rejects None values."""
-        with pytest.raises(ValueError, match="Cannot create success result with None"):
-            r[t.GeneralValueType].ok(None)
+    def test_ok_accepts_none_value(self) -> None:
+        """Test that ok(None) creates valid success."""
+        result = r[t.GeneralValueType].ok(None)
+        assert result.is_success
+        assert result.value is None
 
     def test_fail_creates_failure_with_message(self) -> None:
         """Test creating failure results."""

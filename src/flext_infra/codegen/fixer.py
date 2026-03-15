@@ -208,7 +208,7 @@ class FlextInfraCodegenFixer(s):
         files_modified: set[str],
     ) -> m.Infra.Refactor.MROMigrationReport:
         service = FlextInfraRefactorMigrateToClassMRO(workspace_root=project_path)
-        report = service.run(target="all", apply_changes=True)
+        report = service.run(target="all", apply=True)
         files_modified.update(migration.file for migration in report.migrations)
         files_modified.update(rewrite.file for rewrite in report.rewrites)
         return report

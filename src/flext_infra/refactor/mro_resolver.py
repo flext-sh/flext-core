@@ -608,7 +608,7 @@ class FlextInfraRefactorMROImportRewriter:
         workspace_root: Path,
         moved_index: dict[str, dict[str, str]],
         module_facade_aliases: dict[str, str],
-        apply_changes: bool,
+        apply: bool,
     ) -> list[m.Infra.Refactor.MRORewriteResult]:
         """Rewrite references across all project Python files."""
         results: list[m.Infra.Refactor.MRORewriteResult] = []
@@ -619,7 +619,7 @@ class FlextInfraRefactorMROImportRewriter:
                 file_path=file_path,
                 moved_index=moved_index,
                 module_facade_aliases=module_facade_aliases,
-                apply_changes=apply_changes,
+                apply=apply,
             )
             if rewritten is not None and rewritten.replacements > 0:
                 results.append(rewritten)
@@ -631,7 +631,7 @@ class FlextInfraRefactorMROImportRewriter:
         file_path: Path,
         moved_index: dict[str, dict[str, str]],
         module_facade_aliases: dict[str, str],
-        apply_changes: bool,
+        apply: bool,
     ) -> m.Infra.Refactor.MRORewriteResult | None:
         """Rewrite one file according to moved constant symbol mappings."""
         try:
@@ -767,7 +767,7 @@ class FlextInfraRefactorMROImportRewriter:
         if rewriter.replacements == 0 and len(imports_to_add) == 0:
             return None
         rendered = ast.unparse(ast.fix_missing_locations(rewritten))
-        if apply_changes and rendered != source:
+        if apply and rendered != source:
             _ = file_path.write_text(f"{rendered}\n", encoding=c.Infra.Encoding.DEFAULT)
         return m.Infra.Refactor.MRORewriteResult(
             file=str(file_path),

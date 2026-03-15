@@ -14,13 +14,9 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from flext_infra import (
-    FlextInfraUtilitiesPaths,
-    FlextInfraUtilitiesVersioning,
-    c,
-    output,
-    u,
-)
+from flext_infra import c, output, u
+from flext_infra._utilities.paths import FlextInfraUtilitiesPaths
+from flext_infra._utilities.versioning import FlextInfraUtilitiesVersioning
 from flext_infra.release.orchestrator import FlextInfraReleaseOrchestrator
 
 

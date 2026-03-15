@@ -106,9 +106,9 @@ class FlextInfraRefactorPydanticCentralizer:
         )
 
     @staticmethod
-    def _normalize_disallowed_bases(file_path: Path, *, apply_changes: bool) -> bool:
+    def _normalize_disallowed_bases(file_path: Path, *, apply: bool) -> bool:
         _ = file_path
-        _ = apply_changes
+        _ = apply
         return False
 
     @staticmethod
@@ -132,7 +132,7 @@ class FlextInfraRefactorPydanticCentralizer:
     def centralize_workspace(
         workspace_root: Path,
         *,
-        apply_changes: bool,
+        apply: bool,
         normalize_remaining: bool,
     ) -> dict[str, int]:
         """Centralize model contracts and normalize namespace scaffolds."""
@@ -193,7 +193,7 @@ class FlextInfraRefactorPydanticCentralizer:
                 continue
             apply_class_moves = class_moves
             apply_alias_moves = alias_moves
-            if apply_changes:
+            if apply:
                 apply_class_moves, apply_alias_moves = (
                     FlextInfraRefactorPydanticCentralizer._filter_moves_for_necessity(
                         class_moves,
@@ -241,7 +241,7 @@ class FlextInfraRefactorPydanticCentralizer:
             moved_classes += len(apply_class_moves)
             moved_aliases += len(apply_alias_moves)
             touched_files += 1
-            if apply_changes:
+            if apply:
                 if not FlextInfraRefactorPydanticCentralizer._can_apply_import_rewrite(
                     file_path,
                 ):
@@ -262,7 +262,7 @@ class FlextInfraRefactorPydanticCentralizer:
                 try:
                     changed = FlextInfraRefactorPydanticCentralizer._normalize_disallowed_bases(
                         file_path,
-                        apply_changes=apply_changes,
+                        apply=apply,
                     )
                 except (SyntaxError, UnicodeDecodeError, OSError):
                     continue

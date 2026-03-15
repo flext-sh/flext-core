@@ -381,10 +381,11 @@ class TestErrorOrPatternUnchanged:
 class TestOkNoneGuardStillRaises:
     """Test ok(None) still raises ValueError guard."""
 
-    def test_ok_none_guard_still_raises(self) -> None:
-        """Verify ok(None) raises ValueError (guard maintained)."""
-        with pytest.raises(ValueError, match="Cannot create success result with None"):
-            r[int].ok(None)
+    def test_ok_none_succeeds(self) -> None:
+        """Verify ok(None) creates valid success result."""
+        result = r[int | None].ok(None)
+        assert result.is_success
+        assert result.value is None
 
     def test_ok_with_valid_value_succeeds(self) -> None:
         """Verify ok() with valid value succeeds."""

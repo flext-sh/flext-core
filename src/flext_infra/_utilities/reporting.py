@@ -34,11 +34,11 @@ class FlextInfraUtilitiesReporting:
     """
 
     @staticmethod
-    def get_report_dir(root: Path | str, scope: str, verb: str) -> Path:
+    def get_report_dir(workspace_root: Path | str, scope: str, verb: str) -> Path:
         """Build a standardized report directory path (no I/O).
 
         Args:
-            root: Workspace or project root.
+            workspace_root: Workspace or project root.
             scope: ``"project"`` or ``"workspace"``.
             verb: Action verb (check, test, validate, docs, …).
 
@@ -46,7 +46,9 @@ class FlextInfraUtilitiesReporting:
             Absolute Path to the report directory.
 
         """
-        root_path = Path(root) if isinstance(root, str) else root
+        root_path = (
+            Path(workspace_root) if isinstance(workspace_root, str) else workspace_root
+        )
         base = root_path / c.Infra.Reporting.REPORTS_DIR_NAME
         if scope == c.Infra.ReportKeys.WORKSPACE:
             return (base / c.Infra.ReportKeys.WORKSPACE / verb).resolve()

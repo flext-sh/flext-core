@@ -25,7 +25,7 @@ class FlextInfraRefactorMigrateToClassMRO:
         self,
         *,
         target: str,
-        apply_changes: bool,
+        apply: bool,
     ) -> m.Infra.Refactor.MROMigrationReport:
         """Run scan, transform, rewrite, and validation phases."""
         normalized_target = self._normalize_target(target=target)
@@ -56,7 +56,7 @@ class FlextInfraRefactorMigrateToClassMRO:
             migrations.append(migration)
             moved_index[scan_result.module] = symbol_alias_map
             module_facade_aliases[scan_result.module] = scan_result.facade_alias
-            if apply_changes:
+            if apply:
                 Path(scan_result.file).write_text(
                     updated_source,
                     encoding=c.Infra.Encoding.DEFAULT,
@@ -65,7 +65,7 @@ class FlextInfraRefactorMigrateToClassMRO:
             workspace_root=self._workspace_root,
             moved_index=moved_index,
             module_facade_aliases=module_facade_aliases,
-            apply_changes=apply_changes,
+            apply=apply,
         )
         rewrites = tuple(rewrite_results)
         remaining_violations, mro_failures = (
@@ -77,7 +77,7 @@ class FlextInfraRefactorMigrateToClassMRO:
         return m.Infra.Refactor.MROMigrationReport(
             workspace=str(self._workspace_root),
             target=normalized_target,
-            dry_run=not apply_changes,
+            dry_run=not apply,
             files_scanned=files_scanned,
             files_with_candidates=len(scan_results),
             migrations=tuple(migrations),

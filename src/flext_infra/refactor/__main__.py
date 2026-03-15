@@ -89,7 +89,7 @@ def _main_inner(argv: list[str] | None = None) -> int:
 def _run_centralize_pydantic(cli: u.Infra.CliArgs, *, normalize_remaining: bool) -> int:
     summary = FlextInfraRefactorPydanticCentralizer.centralize_workspace(
         cli.workspace,
-        apply_changes=cli.apply,
+        apply=cli.apply,
         normalize_remaining=normalize_remaining,
     )
     output.metrics(
@@ -104,7 +104,7 @@ def _run_centralize_pydantic(cli: u.Infra.CliArgs, *, normalize_remaining: bool)
 
 def _run_migrate_to_mro(cli: u.Infra.CliArgs, *, target: str) -> int:
     service = FlextInfraRefactorMigrateToClassMRO(workspace_root=cli.workspace)
-    report = service.run(target=target, apply_changes=cli.apply)
+    report = service.run(target=target, apply=cli.apply)
     output.write(FlextInfraRefactorMigrateToClassMRO.render_text(report))
     if len(report.errors) > 0:
         for error in report.errors:
@@ -115,7 +115,7 @@ def _run_migrate_to_mro(cli: u.Infra.CliArgs, *, target: str) -> int:
 
 def _run_namespace_enforce(cli: u.Infra.CliArgs) -> int:
     enforcer = FlextInfraNamespaceEnforcer(workspace_root=cli.workspace)
-    report = enforcer.enforce(apply_changes=cli.apply)
+    report = enforcer.enforce(apply=cli.apply)
     sys.stdout.write(FlextInfraNamespaceEnforcer.render_text(report))
     sys.stdout.flush()
     if report.has_violations:
@@ -126,16 +126,16 @@ def _run_namespace_enforce(cli: u.Infra.CliArgs) -> int:
 def _run_ultrawork_models(cli: u.Infra.CliArgs, *, normalize_remaining: bool) -> int:
     centralize_summary = FlextInfraRefactorPydanticCentralizer.centralize_workspace(
         cli.workspace,
-        apply_changes=cli.apply,
+        apply=cli.apply,
         normalize_remaining=normalize_remaining,
     )
     mro_report = FlextInfraRefactorMigrateToClassMRO(workspace_root=cli.workspace).run(
         target="all",
-        apply_changes=cli.apply,
+        apply=cli.apply,
     )
     namespace_report = FlextInfraNamespaceEnforcer(
         workspace_root=cli.workspace,
-    ).enforce(apply_changes=cli.apply)
+    ).enforce(apply=cli.apply)
     output.metrics(
         {
             "workspace": cli.workspace,

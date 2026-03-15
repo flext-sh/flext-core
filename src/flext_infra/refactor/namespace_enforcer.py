@@ -26,7 +26,7 @@ class FlextInfraNamespaceEnforcer:
     def enforce(
         self,
         *,
-        apply_changes: bool = False,
+        apply: bool = False,
     ) -> nem.WorkspaceEnforcementReport:
         """Run namespace enforcement across all projects in the workspace."""
         project_roots = u.Infra.discover_project_roots(
@@ -50,7 +50,7 @@ class FlextInfraNamespaceEnforcer:
             report = self._enforce_project(
                 project_root=project_root,
                 project_name=project_name,
-                apply_changes=apply_changes,
+                apply=apply,
             )
             project_reports.append(report)
             total_missing += sum(1 for s in report.facade_statuses if not s.exists)
@@ -87,7 +87,7 @@ class FlextInfraNamespaceEnforcer:
         *,
         project_root: Path,
         project_name: str,
-        apply_changes: bool,
+        apply: bool,
     ) -> nem.ProjectEnforcementReport:
         parse_failures: list[nem.ParseFailureViolation] = []
         facade_statuses = FlextInfraRefactorDependencyAnalyzerFacade.NamespaceFacadeScanner.scan_project(
@@ -95,7 +95,7 @@ class FlextInfraNamespaceEnforcer:
             project_name=project_name,
             parse_failures=parse_failures,
         )
-        if apply_changes:
+        if apply:
             NamespaceEnforcementRewriter.ensure_missing_facades(
                 project_root=project_root,
                 project_name=project_name,
@@ -129,7 +129,7 @@ class FlextInfraNamespaceEnforcer:
                     parse_failures=parse_failures,
                 ),
             )
-        if apply_changes and len(import_violations) > 0:
+        if apply and len(import_violations) > 0:
             NamespaceEnforcementRewriter.rewrite_import_alias_violations(
                 py_files=py_files,
             )
@@ -162,7 +162,7 @@ class FlextInfraNamespaceEnforcer:
                     parse_failures=parse_failures,
                 ),
             )
-        if apply_changes and len(runtime_alias_violations) > 0:
+        if apply and len(runtime_alias_violations) > 0:
             NamespaceEnforcementRewriter.rewrite_runtime_alias_violations(
                 py_files=py_files,
             )
@@ -183,7 +183,7 @@ class FlextInfraNamespaceEnforcer:
                     parse_failures=parse_failures,
                 ),
             )
-        if apply_changes and len(future_violations) > 0:
+        if apply and len(future_violations) > 0:
             NamespaceEnforcementRewriter.rewrite_missing_future_annotations(
                 py_files=py_files,
             )
@@ -203,7 +203,7 @@ class FlextInfraNamespaceEnforcer:
                     parse_failures=parse_failures,
                 ),
             )
-        if apply_changes and len(manual_protocol_violations) > 0:
+        if apply and len(manual_protocol_violations) > 0:
             NamespaceEnforcementRewriter.rewrite_manual_protocol_violations(
                 project_root=project_root,
                 py_files=py_files,
@@ -225,7 +225,7 @@ class FlextInfraNamespaceEnforcer:
                     parse_failures=parse_failures,
                 ),
             )
-        if apply_changes and len(manual_typing_violations) > 0:
+        if apply and len(manual_typing_violations) > 0:
             NamespaceEnforcementRewriter.rewrite_manual_typing_alias_violations(
                 project_root=project_root,
                 violations=manual_typing_violations,
@@ -247,7 +247,7 @@ class FlextInfraNamespaceEnforcer:
                     parse_failures=parse_failures,
                 ),
             )
-        if apply_changes and len(compatibility_alias_violations) > 0:
+        if apply and len(compatibility_alias_violations) > 0:
             NamespaceEnforcementRewriter.rewrite_compatibility_alias_violations(
                 violations=compatibility_alias_violations,
                 parse_failures=parse_failures,

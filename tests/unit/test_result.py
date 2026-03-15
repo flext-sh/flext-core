@@ -649,13 +649,11 @@ class Testr:
         assert result.flow_through() is result
         assert result.value == 5
 
-    def test_ok_with_none_raises(self) -> None:
-        """Test ok() raises ValueError for None value."""
-        with pytest.raises(
-            ValueError,
-            match="Cannot create success result with None value",
-        ):
-            r[str].ok(None)
+    def test_ok_with_none_succeeds(self) -> None:
+        """Test ok(None) creates valid success result."""
+        result = r[str | None].ok(None)
+        assert result.is_success
+        assert result.value is None
 
     def test_flow_through_stops_on_failure(self) -> None:
         """Test flow_through stops when function returns failure."""

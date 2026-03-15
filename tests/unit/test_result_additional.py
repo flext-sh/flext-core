@@ -19,10 +19,11 @@ from flext_core import m, r
 from flext_tests import u
 
 
-def test_ok_raises_on_none() -> None:
-    """Ensure None successes are rejected."""
-    with pytest.raises(ValueError):
-        r[str].ok(None)
+def test_ok_accepts_none() -> None:
+    """None is a valid success value when T includes None."""
+    result = r[str | None].ok(None)
+    assert result.is_success
+    assert result.value is None
 
 
 def test_map_error_identity_and_transform() -> None:
