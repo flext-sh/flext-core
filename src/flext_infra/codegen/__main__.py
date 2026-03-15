@@ -214,6 +214,9 @@ def main(argv: list[str] | None = None) -> int:
         dest="output_format",
         help="Output format (default: text)",
     )
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 
     args = parser.parse_args(argv)
