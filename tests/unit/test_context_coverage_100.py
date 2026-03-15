@@ -16,7 +16,7 @@ import pytest
 from pydantic import BaseModel, ValidationError
 
 from flext_core import FlextConstants, FlextContext
-from flext_tests import t, tm, u, m
+from flext_tests import m, t, tm, u
 
 
 class TestContext100Coverage:
@@ -81,11 +81,11 @@ class TestContext100Coverage:
         tm.that(cloned, is_=FlextContext)
         result = cloned.get("key1")
         _ = u.Tests.Result.assert_success(result)
-        tm.that(result.value, eq="value1")
+        tm.that(str(result.value), eq="value1")
         context1.set("key1", "modified").value
         cloned_result = cloned.get("key1")
         _ = u.Tests.Result.assert_success(cloned_result)
-        tm.that(cloned_result.value, eq="value1")
+        tm.that(str(cloned_result.value), eq="value1")
 
     def test_validate_success(self) -> None:
         """Test validate with valid context."""
