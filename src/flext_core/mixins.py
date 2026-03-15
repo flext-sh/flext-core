@@ -207,13 +207,13 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
         self, operation_name: str
     ) -> Iterator[Mapping[str, t.NormalizedValue | BaseModel]]:
         """Track operation performance with timing and automatic context cleanup."""
-        stats_attr = f"_stats_{operation_name}"
-        stats: m.ConfigMap = (
-            getattr(self, stats_attr)
-            if hasattr(self, stats_attr)
-            else m.ConfigMap(
+        if not hasattr(self, "_operation_stats"):
+            self._operation_stats: dict[str, m.ConfigMap] = {}
+        stats: m.ConfigMap = self._operation_stats.get(
+            operation_name,
+            m.ConfigMap(
                 root={"operation_count": 0, "error_count": 0, "total_duration_ms": 0.0}
-            )
+            ),
         )
         op_count_raw = u.get(stats, "operation_count", default=0)
         stats["operation_count"] = (
@@ -285,7 +285,7 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
                     metrics_map["success_rate"] = stats["success_rate"]
                     if "avg_duration_ms" in stats:
                         metrics_map["avg_duration_ms"] = stats["avg_duration_ms"]
-                    setattr(self, stats_attr, stats)
+                    self._operation_stats[operation_name] = stats
         finally:
             FlextMixins._clear_operation_context()
 
@@ -655,7 +655,7 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
         """Runtime protocol compliance validation utilities."""
 
         @staticmethod
-        def is_command_bus(obj: p.Base | t.NormalizedValue | BaseModel) -> bool:
+        def is_command_bus(obj: p.Base | BaseModel) -> bool:
             """Check if *obj* satisfies ``p.CommandBus`` structurally."""
             return (
                 hasattr(obj, "dispatch")
@@ -667,7 +667,7 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
             )
 
         @staticmethod
-        def is_handler(obj: p.Base | t.NormalizedValue | BaseModel) -> bool:
+        def is_handler(obj: p.Base | BaseModel) -> bool:
             """Check if *obj* satisfies ``p.Handler`` structurally."""
             return (
                 hasattr(obj, "handle")
@@ -677,7 +677,7 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
             )
 
         @staticmethod
-        def is_service(obj: p.Base | t.NormalizedValue | BaseModel) -> bool:
+        def is_service(obj: p.Base | BaseModel) -> bool:
             """Check if *obj* satisfies ``p.Service`` structurally."""
             return (
                 hasattr(obj, "execute")
@@ -689,7 +689,7 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
 
         @staticmethod
         def validate_processor_protocol(
-            obj: p.Base | t.NormalizedValue | BaseModel,
+            obj: p.Base | BaseModel,
         ) -> r[bool]:
             """Validate *obj* has ``model_dump``, ``process``, and ``validate``."""
             required_methods = ["model_dump", "process", "validate"]
@@ -706,7 +706,7 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
 
         @staticmethod
         def validate_protocol_compliance(
-            obj: p.Base | t.NormalizedValue | BaseModel,
+            obj: p.Base | BaseModel,
             protocol_name: str,
         ) -> r[bool]:
             """Validate *obj* compliance with named protocol via duck-typing."""

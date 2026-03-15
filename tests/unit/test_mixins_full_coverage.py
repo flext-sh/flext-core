@@ -213,7 +213,7 @@ def test_mixins_runtime_bootstrap_and_track_paths(
     assert runtime_container.wired is not None
     with service.track("op") as metrics:
         cast("dict[str, t.Tests.object]", metrics)["duration_ms"] = 2.0
-    assert hasattr(service, "_stats_op")
+    assert hasattr(service, "_operation_stats") and "op" in service._operation_stats
     try:
         with service.track("op_fail"):
             msg = "boom"
