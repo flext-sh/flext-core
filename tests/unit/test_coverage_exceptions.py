@@ -22,7 +22,7 @@ import pytest
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import FlextConstants, FlextExceptions, c, r
-from flext_tests import t
+from flext_tests import t, tm
 
 from ..test_utils import assertion_helpers
 
@@ -234,11 +234,11 @@ class TestFlextExceptionsHierarchy:
             error = exception_ctor(scenario.message, **metadata_kwargs)
         else:
             error = scenario.exception_type(scenario.message)
-        assert scenario.message in str(error)
-        assert isinstance(error, Exception)
+        tm.that(str(error), has=scenario.message)
+        tm.that(isinstance(error, Exception), is_=True)
         for attr_name, expected_value in scenario.expected_attrs.items():
-            assert hasattr(error, attr_name)
-            assert getattr(error, attr_name) == expected_value
+            tm.that(hasattr(error, attr_name), is_=True)
+            tm.that(getattr(error, attr_name), eq=expected_value)
 
 
 class TestExceptionIntegration:
@@ -252,7 +252,7 @@ class TestExceptionIntegration:
         except FlextExceptions.ValidationError as e:
             result = r[bool].fail(str(e))
             _ = assertion_helpers.assert_flext_result_failure(result)
-            assert result.error is not None and "Test error" in result.error
+            tm.fail(result, has="Test error")
 
     def test_exception_in_railway_pattern(self) -> None:
         """Test exception handling in railway pattern."""
@@ -264,8 +264,8 @@ class TestExceptionIntegration:
                 return r[dict[str, t.Tests.object]].fail("Missing id")
             return r[dict[str, t.Tests.object]].ok(data)
 
-        assert validate_and_process({}).is_failure
-        assert validate_and_process({"id": "123"}).is_success
+        tm.fail(validate_and_process({}))
+        tm.ok(validate_and_process({"id": "123"}))
 
     def test_nested_exception_handling(self) -> None:
         """Test nested exception scenarios."""
@@ -302,9 +302,9 @@ class TestExceptionEdgeCases:
     ) -> None:
         """Test exception with various message formats."""
         error = FlextExceptions.ValidationError(message)
-        assert isinstance(error, Exception)
+        tm.that(isinstance(error, Exception), is_=True)
         if message:
-            assert message in str(error) or len(str(error)) > 9000
+            tm.that(message in str(error) or len(str(error)), gt=9000)
 
     def test_multiple_exceptions_in_sequence(self) -> None:
         """Test handling multiple exceptions."""
@@ -316,13 +316,13 @@ class TestExceptionEdgeCases:
                 raise FlextExceptions.ConfigurationError(f"Config error {i}")
             except Exception as e:
                 errors.append(str(e))
-        assert len(errors) == 5
-        assert any("Error" in e for e in errors)
+        tm.that(len(errors), eq=5)
+        tm.that(any("Error" in e for e in errors), eq=True)
 
     def test_exception_inheritance_chain(self) -> None:
         """Test exception inheritance chain."""
         error = FlextExceptions.ValidationError("Test")
-        assert isinstance(error, Exception)
+        tm.that(isinstance(error, Exception), is_=True)
 
 
 class TestExceptionProperties:
@@ -331,19 +331,19 @@ class TestExceptionProperties:
     def test_exception_string_representation(self) -> None:
         """Test string representation of exceptions."""
         error = FlextExceptions.ValidationError("Test message")
-        assert "Test message" in str(error)
+        tm.that(str(error), has="Test message")
 
     def test_exception_repr(self) -> None:
         """Test repr of exceptions."""
         error = FlextExceptions.ValidationError("Test")
         repr_str = repr(error)
-        assert "ValidationError" in repr_str or "Test" in repr_str
+        tm.that(repr_str or "Test" in repr_str, has="ValidationError")
 
     def test_exception_type_checking(self) -> None:
         """Test type checking for exceptions."""
         error = FlextExceptions.ValidationError("Test")
-        assert isinstance(error, FlextExceptions.ValidationError)
-        assert isinstance(error, Exception)
+        tm.that(isinstance(error, FlextExceptions.ValidationError), is_=True)
+        tm.that(isinstance(error, Exception), is_=True)
 
     def test_base_error_with_metadata(self) -> None:
         """Test BaseError with metadata."""
@@ -352,7 +352,7 @@ class TestExceptionProperties:
             resource_id="123",
             resource_type="User",
         )
-        assert "Resource not found" in str(error)
+        tm.that(str(error), has="Resource not found")
 
 
 class TestExceptionContext:
@@ -366,13 +366,13 @@ class TestExceptionContext:
             operation="create_user",
             timestamp=1234567890,
         )
-        assert "user_id" in error.metadata.attributes
-        assert error.metadata.attributes["user_id"] == "123"
+        tm.that(error.metadata.attributes, has="user_id")
+        tm.that(error.metadata.attributes["user_id"], eq="123")
 
     def test_exception_with_correlation_id(self) -> None:
         """Test exception with auto-generated correlation ID."""
         error = FlextExceptions.BaseError("Test error", auto_correlation=True)
-        assert error.correlation_id is not None
+        tm.that(error.correlation_id, none=False)
         assert error.correlation_id.startswith("exc_")
 
     def test_exception_chaining(self) -> None:
@@ -383,7 +383,7 @@ class TestExceptionContext:
             raise ValueError(error_msg)
         except ValueError as e:
             original = e
-        assert original is not None
+        tm.that(original, none=False)
         error = FlextExceptions.OperationError("Operation failed")
         error.__cause__ = original
         assert error.__cause__ is original
@@ -393,7 +393,7 @@ class TestExceptionContext:
         original_msg = "Original error message with details"
         error = FlextExceptions.ValidationError(original_msg)
         result = r[bool].fail(str(error))
-        assert result.error is not None and (
+        tm.that(result.error and (, none=False)
             original_msg in result.error or "Original error" in result.error
         )
 
@@ -409,15 +409,15 @@ class TestExceptionSerialization:
             value="not-valid",
         )
         error_dict = error.to_dict()
-        assert error_dict["error_type"] == "ValidationError"
-        assert error_dict["message"] == "Invalid email"
-        assert error_dict["error_code"] == c.Errors.VALIDATION_ERROR
+        tm.that(error_dict["error_type"], eq="ValidationError")
+        tm.that(error_dict["message"], eq="Invalid email")
+        tm.that(error_dict["error_code"], eq=c.Errors.VALIDATION_ERROR)
 
     def test_exception_dict_with_metadata(self) -> None:
         """Test exception dict includes metadata (flattened)."""
         error = FlextExceptions.OperationError("Operation failed", operation="INSERT")
         error_dict = error.to_dict()
-        assert error_dict["operation"] == "INSERT"
+        tm.that(error_dict["operation"], eq="INSERT")
 
 
 class TestExceptionFactory:
@@ -426,8 +426,8 @@ class TestExceptionFactory:
     def test_create_error_by_type(self) -> None:
         """Test creating exception by type name."""
         error = FlextExceptions.create("ValidationError", "Test validation error")
-        assert isinstance(error, FlextExceptions.ValidationError)
-        assert "Test validation error" in str(error)
+        tm.that(isinstance(error, FlextExceptions.ValidationError), is_=True)
+        tm.that(str(error), has="Test validation error")
 
     @pytest.mark.parametrize(
         ("message", "kwargs", "expected_type"),
@@ -449,7 +449,7 @@ class TestExceptionFactory:
             FlextExceptions.create,
         )
         error = create_error(message, **kwargs_typed)
-        assert isinstance(error, expected_type)
+        tm.that(isinstance(error, expected_type), is_=True)
 
 
 class TestExceptionMetrics:
@@ -462,20 +462,20 @@ class TestExceptionMetrics:
         FlextExceptions.record_exception(FlextExceptions.ValidationError)
         FlextExceptions.record_exception(FlextExceptions.ConfigurationError)
         metrics = FlextExceptions.get_metrics()
-        assert metrics["total_exceptions"] == 3
+        tm.that(metrics["total_exceptions"], eq=3)
         raw_counts = metrics.root.get("exception_counts")
         exception_counts = cast("dict[str, int]", raw_counts)
-        assert exception_counts.get("FlextExceptions.ValidationError") == 2
-        assert exception_counts.get("FlextExceptions.ConfigurationError") == 1
-        assert metrics["unique_exception_types"] == 2
+        tm.that(exception_counts.get("FlextExceptions.ValidationError"), eq=2)
+        tm.that(exception_counts.get("FlextExceptions.ConfigurationError"), eq=1)
+        tm.that(metrics["unique_exception_types"], eq=2)
 
     def test_clear_metrics(self) -> None:
         """Test clearing exception metrics."""
         FlextExceptions.clear_metrics()
         FlextExceptions.record_exception(FlextExceptions.ValidationError)
-        assert FlextExceptions.get_metrics()["total_exceptions"] == 1
+        tm.that(FlextExceptions.get_metrics()["total_exceptions"], eq=1)
         FlextExceptions.clear_metrics()
-        assert FlextExceptions.get_metrics()["total_exceptions"] == 0
+        tm.that(FlextExceptions.get_metrics()["total_exceptions"], eq=0)
 
 
 class TestExceptionLogging:
@@ -484,15 +484,15 @@ class TestExceptionLogging:
     def test_exception_string_with_correlation_id(self) -> None:
         """Test exception has correlation ID when auto_correlation=True."""
         error = FlextExceptions.BaseError("Test", auto_correlation=True)
-        assert error.correlation_id is not None
+        tm.that(error.correlation_id, none=False)
         assert error.correlation_id.startswith("exc_")
-        assert "Test" in str(error)
+        tm.that(str(error), has="Test")
 
     def test_exception_error_code_in_string(self) -> None:
         """Test error code is included in string representation."""
         error = FlextExceptions.ValidationError("Test message")
         error_str = str(error)
-        assert "VALIDATION_ERROR" in error_str or "Test message" in error_str
+        tm.that(error_str or "Test message" in error_str, has="VALIDATION_ERROR")
 
 
 class TestHierarchicalExceptionSystem:
@@ -508,9 +508,9 @@ class TestHierarchicalExceptionSystem:
     def test_failure_level_string_values(self) -> None:
         """Test FailureLevel enum string values."""
         failure_level = c.Exceptions.FailureLevel
-        assert failure_level.STRICT.value == "strict"
-        assert failure_level.WARN.value == "warn"
-        assert failure_level.PERMISSIVE.value == "permissive"
+        tm.that(failure_level.STRICT.value, eq="strict")
+        tm.that(failure_level.WARN.value, eq="warn")
+        tm.that(failure_level.PERMISSIVE.value, eq="permissive")
 
     def test_failure_level_comparison(self) -> None:
         """Test FailureLevel enum comparison."""
@@ -518,9 +518,9 @@ class TestHierarchicalExceptionSystem:
         strict_val: str = str(failure_level.STRICT.value)
         warn_val: str = str(failure_level.WARN.value)
         permissive_val: str = str(failure_level.PERMISSIVE.value)
-        assert strict_val != warn_val
-        assert warn_val != permissive_val
-        assert strict_val == str(failure_level.STRICT.value)
+        tm.that(strict_val, ne=warn_val)
+        tm.that(warn_val, ne=permissive_val)
+        tm.that(strict_val, eq=str(failure_level.STRICT.value))
 
 
 __all__ = [
