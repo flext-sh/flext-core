@@ -51,8 +51,8 @@ class FlextInfraDependencyPathSync:
         self._toml = FlextInfraUtilitiesToml()
         self._root = self.ROOT
 
-    def set_workspace_root(self, root: Path) -> None:
-        self._root = root
+    def set_workspace_root(self, workspace_root: Path) -> None:
+        self._root = workspace_root
 
     @staticmethod
     def detect_mode(project_root: Path) -> str:

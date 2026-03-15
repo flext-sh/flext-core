@@ -17,11 +17,9 @@ from types import ModuleType, SimpleNamespace
 import pytest
 
 from flext_infra.deps import __main__ as deps_main
-from flext_infra.deps.__main__ import _SUBCOMMAND_MODULES, main
+from flext_infra.deps.__main__ import _SUBCOMMAND_MODULES, _main_impl, main
 from flext_tests import tm
 from tests.infra.typings import t
-
-_NO_STRUCTLOG = SimpleNamespace(ensure_structlog_configured=lambda: None)
 
 
 def _fake_module(return_value: t.Infra.TomlValue = 0) -> ModuleType:
@@ -42,9 +40,8 @@ def _stub_import(mod: ModuleType) -> Callable[[str], ModuleType]:
 def _patch_dispatch(
     mp: pytest.MonkeyPatch, argv: list[str], ret: t.Infra.TomlValue = 0
 ) -> None:
-    """Patch sys.argv, FlextRuntime, and importlib for dispatch tests."""
+    """Patch sys.argv and importlib for dispatch tests."""
     mp.setattr(sys, "argv", argv)
-    mp.setattr(deps_main, "FlextRuntime", _NO_STRUCTLOG)
     mp.setattr(
         deps_main,
         "importlib",
@@ -90,9 +87,7 @@ class TestMainHelpAndErrors:
     def test_main_with_help_flag(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test main with -h flag returns 0."""
         monkeypatch.setattr(sys, "argv", ["prog", "-h"])
-        with pytest.raises(SystemExit) as exc:
-            _ = main()
-        tm.that(exc.value.code, eq=0)
+        tm.that(main(), eq=0)
 
     def test_main_with_no_arguments(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test main with no arguments returns 0 after help."""
@@ -103,11 +98,9 @@ class TestMainHelpAndErrors:
     def test_main_with_unknown_subcommand(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """Test main with unknown subcommand raises parser error."""
+        """Test main with unknown subcommand returns parser exit code."""
         monkeypatch.setattr(sys, "argv", ["prog", "unknown"])
-        with pytest.raises(SystemExit) as exc:
-            _ = main()
-        tm.that(exc.value.code, eq=2)
+        tm.that(main(), eq=2)
 
 
 class TestMainReturnValues:
@@ -130,7 +123,7 @@ class TestMainReturnValues:
         return_val: t.Infra.TomlValue,
         expected: int,
     ) -> None:
-        """Test main normalizes subcommand return values."""
+        """Test _main_impl normalizes subcommand return values."""
         _patch_dispatch(monkeypatch, ["prog", "detect", "--workspace", "."], return_val)
-        result = main()
+        result = _main_impl()
         tm.that(result, eq=expected)

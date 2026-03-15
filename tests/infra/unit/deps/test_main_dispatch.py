@@ -13,11 +13,9 @@ from types import ModuleType, SimpleNamespace
 import pytest
 
 from flext_infra.deps import __main__ as main_mod
-from flext_infra.deps.__main__ import _SUBCOMMAND_MODULES, main
+from flext_infra.deps.__main__ import _SUBCOMMAND_MODULES, _main_impl, main
 from flext_tests import tm
 from tests.infra.typings import t
-
-_NO_STRUCTLOG = SimpleNamespace(ensure_structlog_configured=lambda: None)
 
 
 def _fake_module(return_value: t.Infra.TomlValue = 0) -> ModuleType:
@@ -38,7 +36,6 @@ def _patch_dispatch(
     mp: pytest.MonkeyPatch, argv: list[str], ret: t.Infra.TomlValue = 0
 ) -> None:
     mp.setattr(sys, "argv", argv)
-    mp.setattr(main_mod, "FlextRuntime", _NO_STRUCTLOG)
     mp.setattr(
         main_mod,
         "importlib",
@@ -56,7 +53,7 @@ class TestMainSubcommandDispatch:
         name: str,
     ) -> None:
         _patch_dispatch(monkeypatch, ["prog", name, "--workspace", "."])
-        tm.that(main(), eq=0)
+        tm.that(_main_impl(), eq=0)
 
 
 class TestMainModuleImport:
@@ -75,7 +72,6 @@ class TestMainModuleImport:
         expected_module: str,
     ) -> None:
         monkeypatch.setattr(sys, "argv", ["prog", subcommand, "--workspace", "."])
-        monkeypatch.setattr(main_mod, "FlextRuntime", _NO_STRUCTLOG)
         imported: list[str] = []
         fake = _fake_module(0)
 
@@ -90,7 +86,7 @@ class TestMainModuleImport:
                 import_module=tracking_import,
             ),
         )
-        main()
+        _main_impl()
         tm.that(imported[0], eq=expected_module)
 
 
@@ -100,68 +96,35 @@ class TestMainSysArgvModification:
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         _patch_dispatch(monkeypatch, ["prog", "detect", "--arg1", "value1"])
-        main()
+        _main_impl()
         tm.that("detect" in sys.argv[0], eq=True)
 
     def test_passes_remaining_args(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _patch_dispatch(monkeypatch, ["prog", "detect", "-q", "--no-fail"])
-        main()
+        _main_impl()
         tm.that("-q" in sys.argv, eq=True)
         tm.that("--no-fail" in sys.argv, eq=True)
 
 
-class TestMainStructlogConfiguration:
-    def test_ensures_structlog_configured(
+class TestMainDelegation:
+    def test_main_delegates_to_run_cli(
         self,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        called: list[bool] = []
-        monkeypatch.setattr(sys, "argv", ["prog", "detect", "--workspace", "."])
-        monkeypatch.setattr(
-            main_mod,
-            "FlextRuntime",
-            SimpleNamespace(
-                ensure_structlog_configured=lambda: called.append(True),
-            ),
-        )
-        monkeypatch.setattr(
-            main_mod,
-            "importlib",
-            SimpleNamespace(
-                import_module=_stub_import(_fake_module(0)),
-            ),
-        )
-        main()
-        tm.that(len(called), eq=1)
+        received: list[Callable[[list[str] | None], int]] = []
 
-    def test_ensures_structlog_before_dispatch(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
-    ) -> None:
-        order: list[str] = []
-        monkeypatch.setattr(sys, "argv", ["prog", "detect", "--workspace", "."])
-        monkeypatch.setattr(
-            main_mod,
-            "FlextRuntime",
-            SimpleNamespace(
-                ensure_structlog_configured=lambda: order.append("ensure"),
-            ),
-        )
-
-        def tracking_import(name: str) -> ModuleType:
-            order.append("import")
-            return _fake_module(0)
+        def fake_run_cli(fn: Callable[[list[str] | None], int]) -> int:
+            received.append(fn)
+            return 0
 
         monkeypatch.setattr(
             main_mod,
-            "importlib",
-            SimpleNamespace(
-                import_module=tracking_import,
-            ),
+            "u",
+            SimpleNamespace(Infra=SimpleNamespace(run_cli=fake_run_cli)),
         )
-        main()
-        tm.that(order[0], eq="ensure")
-        tm.that(order[1], eq="import")
+        tm.that(main(), eq=0)
+        tm.that(len(received), eq=1)
+        tm.that(received[0] is main_mod._main_impl, eq=True)
 
 
 class TestMainExceptionHandling:
@@ -170,7 +133,6 @@ class TestMainExceptionHandling:
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         monkeypatch.setattr(sys, "argv", ["prog", "detect", "--workspace", "."])
-        monkeypatch.setattr(main_mod, "FlextRuntime", _NO_STRUCTLOG)
         error_mod = ModuleType("error_mod")
 
         def raise_error() -> int:
@@ -185,11 +147,10 @@ class TestMainExceptionHandling:
                 import_module=_stub_import(error_mod),
             ),
         )
-        with pytest.raises(RuntimeError, match="Test error"):
-            main()
+        tm.that(main(), eq=1)
 
 
 def test_string_zero_return_value(monkeypatch: pytest.MonkeyPatch) -> None:
     """Test string '0' return value normalization (edge case)."""
     _patch_dispatch(monkeypatch, ["prog", "detect", "--workspace", "."], "0")
-    tm.that(main(), eq=0)
+    tm.that(_main_impl(), eq=0)

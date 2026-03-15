@@ -43,13 +43,13 @@ class FlextInfraSkillValidator:
         self._git_cache: MutableMapping[str, tuple[float, list[str]]] = {}
 
     @staticmethod
-    def _render_template(root: Path, template: str, skill: str) -> Path:
+    def _render_template(workspace_root: Path, template: str, skill: str) -> Path:
         """Render a skill path template."""
         rendered = template.replace("{skill}", skill)
         candidate = Path(rendered)
         if candidate.is_absolute():
             return candidate
-        return (root / candidate).resolve()
+        return (workspace_root / candidate).resolve()
 
     @staticmethod
     def _safe_load_yaml(path: Path) -> Mapping[str, t.Infra.InfraValue]:

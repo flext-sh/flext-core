@@ -311,12 +311,12 @@ class FlextInfraNamespaceValidator:
                     )
         return violations
 
-    def _discover_files(self, root: Path, *, scan_tests: bool) -> list[Path]:
+    def _discover_files(self, workspace_root: Path, *, scan_tests: bool) -> list[Path]:
         """Walk ``src/`` (and optionally ``tests/``) for non-exempt .py files."""
         result: list[Path] = []
-        dirs_to_scan = [root / c.Infra.Paths.DEFAULT_SRC_DIR]
+        dirs_to_scan = [workspace_root / c.Infra.Paths.DEFAULT_SRC_DIR]
         if scan_tests:
-            dirs_to_scan.append(root / c.Infra.Directories.TESTS)
+            dirs_to_scan.append(workspace_root / c.Infra.Directories.TESTS)
         for base_dir in dirs_to_scan:
             if not base_dir.is_dir():
                 continue

@@ -23,7 +23,6 @@ from __future__ import annotations
 from collections.abc import Sized
 from typing import cast
 
-import pytest
 from pydantic import BaseModel, ValidationError
 
 from flext_core import m, r, t

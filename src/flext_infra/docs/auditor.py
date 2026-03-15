@@ -144,7 +144,7 @@ class FlextInfraDocAuditor:
 
         """
         scopes_result = FlextInfraDocsShared.build_scopes(
-            root=root,
+            workspace_root=root,
             project=project,
             projects=projects,
             output_dir=output_dir,

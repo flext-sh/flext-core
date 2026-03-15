@@ -76,7 +76,7 @@ class FlextInfraDocValidator:
         """
         scopes_result: r[list[m.Infra.Docs.FlextInfraDocScope]] = (
             FlextInfraDocsShared.build_scopes(
-                root=root,
+                workspace_root=root,
                 project=project,
                 projects=projects,
                 output_dir=output_dir,
@@ -92,11 +92,11 @@ class FlextInfraDocValidator:
             reports.append(report)
         return r[list[m.Infra.Docs.DocsPhaseReport]].ok(reports)
 
-    def _run_adr_skill_check(self, root: Path) -> tuple[int, list[str]]:
+    def _run_adr_skill_check(self, workspace_root: Path) -> tuple[int, list[str]]:
         """Run ADR skill check and return exit code with missing skill names."""
-        skills_root = root / ".claude/skills"
+        skills_root = workspace_root / ".claude/skills"
         required: list[str] = []
-        config = root / "docs/architecture/architecture_config.json"
+        config = workspace_root / "docs/architecture/architecture_config.json"
         if config.exists():
             payload_result = u.Infra.read_json(config)
             if payload_result.is_failure:

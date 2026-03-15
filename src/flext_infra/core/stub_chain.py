@@ -26,11 +26,11 @@ class FlextInfraStubSupplyChain:
         """Initialize the stub supply chain."""
         self._runner: p.Infra.CommandRunner = FlextInfraUtilitiesSubprocess()
 
-    def _discover_stub_projects(self, root: Path) -> list[Path]:
+    def _discover_stub_projects(self, workspace_root: Path) -> list[Path]:
         """Discover projects that should participate in stub checks."""
         _ = self
         projects: list[Path] = []
-        for entry in sorted(root.iterdir(), key=lambda v: v.name):
+        for entry in sorted(workspace_root.iterdir(), key=lambda v: v.name):
             if not entry.is_dir() or entry.name.startswith("."):
                 continue
             if (entry / c.Infra.Files.PYPROJECT_FILENAME).exists() and (
@@ -48,13 +48,13 @@ class FlextInfraStubSupplyChain:
             return True
         return root_mod == project_root
 
-    def _stub_exists(self, module_name: str, root: Path) -> bool:
+    def _stub_exists(self, module_name: str, workspace_root: Path) -> bool:
         """Check if a stub file exists for a module."""
         _ = self
         rel = module_name.replace(".", "/")
         for base in (
-            root / c.Infra.Directories.TYPINGS,
-            root / c.Infra.Directories.TYPINGS / "generated",
+            workspace_root / c.Infra.Directories.TYPINGS,
+            workspace_root / c.Infra.Directories.TYPINGS / "generated",
         ):
             candidates = [base / f"{rel}.pyi", base / rel / "__init__.pyi"]
             if any(c.exists() for c in candidates):

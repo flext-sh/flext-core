@@ -36,15 +36,15 @@ def _resolve_version(
     if current_result.is_failure:
         msg = current_result.error or "cannot read current version"
         raise RuntimeError(msg)
-    current = current_result.value
+    current: str = str(current_result.value)
     if bump_arg:
         bump_result = versioning.bump_version(current, bump_arg)
         if bump_result.is_failure:
             msg = bump_result.error or "bump failed"
             raise RuntimeError(msg)
-        return bump_result.value
+        return str(bump_result.value)
     if interactive != 1:
-        return current
+        return str(current)
     bump = input("bump> ").strip().lower()
     if bump not in {"major", "minor", "patch"}:
         msg = "invalid bump type"
@@ -53,7 +53,7 @@ def _resolve_version(
     if bump_result.is_failure:
         msg = bump_result.error or "bump failed"
         raise RuntimeError(msg)
-    return bump_result.value
+    return str(bump_result.value)
 
 
 def _resolve_tag(tag_arg: str, version: str) -> str:
@@ -96,7 +96,7 @@ def _main_impl(argv: list[str] | None = None) -> int:
     root_result = resolver.workspace_root(cli.workspace)
     if root_result.is_failure:
         return u.Infra.exit_code(root_result)
-    root = root_result.value
+    root: Path = Path(str(root_result.value))
     phases = (
         [
             c.Infra.Verbs.VALIDATE,
