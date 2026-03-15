@@ -16,7 +16,7 @@ from typing import Never, cast, overload, override
 import structlog
 
 from flext_core import FlextRuntime, p
-from flext_tests import t
+from flext_tests import t, tm
 
 
 class TestRuntimeDictLike:
@@ -38,7 +38,7 @@ class TestRuntimeDictLike:
 
         obj = BadDictLike()
         result = FlextRuntime.is_dict_like(cast("t.NormalizedValue", obj))
-        assert result is False
+        tm.that(result, eq=False)
 
     def test_is_dict_like_with_exception_on_items_typeerror(self) -> None:
         """Test is_dict_like when items() raises TypeError."""
@@ -56,13 +56,13 @@ class TestRuntimeDictLike:
 
         obj = BadDictLike()
         result = FlextRuntime.is_dict_like(cast("t.NormalizedValue", obj))
-        assert result is False
+        tm.that(result, eq=False)
 
     def test_is_dict_like_with_userdict(self) -> None:
         """Test is_dict_like with UserDict (dict-like object)."""
         user_dict = UserDict({"key": "value"})
         result = FlextRuntime.is_dict_like(user_dict)
-        assert result is True
+        tm.that(result, eq=True)
 
     def test_is_dict_like_with_missing_attributes(self) -> None:
         """Test is_dict_like with object missing required attributes."""
@@ -72,7 +72,7 @@ class TestRuntimeDictLike:
 
         obj = NotDictLike()
         result = FlextRuntime.is_dict_like(cast("t.NormalizedValue", obj))
-        assert result is False
+        tm.that(result, eq=False)
 
     def test_is_dict_like_with_missing_keys(self) -> None:
         """Test is_dict_like with object missing keys attribute."""
@@ -86,7 +86,7 @@ class TestRuntimeDictLike:
 
         obj = NotDictLike()
         result = FlextRuntime.is_dict_like(cast("t.NormalizedValue", obj))
-        assert result is False
+        tm.that(result, eq=False)
 
     def test_is_dict_like_with_missing_items(self) -> None:
         """Test is_dict_like with object missing items attribute."""
@@ -100,7 +100,7 @@ class TestRuntimeDictLike:
 
         obj = NotDictLike()
         result = FlextRuntime.is_dict_like(cast("t.NormalizedValue", obj))
-        assert result is False
+        tm.that(result, eq=False)
 
     def test_is_dict_like_with_missing_get(self) -> None:
         """Test is_dict_like with object missing get attribute."""
@@ -114,7 +114,7 @@ class TestRuntimeDictLike:
 
         obj = NotDictLike()
         result = FlextRuntime.is_dict_like(cast("t.NormalizedValue", obj))
-        assert result is False
+        tm.that(result, eq=False)
 
 
 class TestRuntimeTypeChecking:
@@ -138,11 +138,11 @@ class TestRuntimeTypeChecking:
         class NestedDict:
             __name__ = "NestedDict"
 
-        assert FlextRuntime.extract_generic_args(StringDict) == (str, str)
-        assert FlextRuntime.extract_generic_args(IntDict) == (str, int)
-        assert FlextRuntime.extract_generic_args(FloatDict) == (str, float)
-        assert FlextRuntime.extract_generic_args(BoolDict) == (str, bool)
-        assert FlextRuntime.extract_generic_args(NestedDict) == (str, dict)
+        tm.that(FlextRuntime.extract_generic_args(StringDict), eq=(str, str))
+        tm.that(FlextRuntime.extract_generic_args(IntDict), eq=(str, int))
+        tm.that(FlextRuntime.extract_generic_args(FloatDict), eq=(str, float))
+        tm.that(FlextRuntime.extract_generic_args(BoolDict), eq=(str, bool))
+        tm.that(FlextRuntime.extract_generic_args(NestedDict), eq=(str, dict))
 
     def test_is_sequence_type_with_type_mapping(self) -> None:
         """Test is_sequence_type with known type aliases."""
@@ -162,11 +162,11 @@ class TestRuntimeTypeChecking:
         class List:
             __name__ = "List"
 
-        assert FlextRuntime.is_sequence_type(StringList) is True
-        assert FlextRuntime.is_sequence_type(IntList) is True
-        assert FlextRuntime.is_sequence_type(FloatList) is True
-        assert FlextRuntime.is_sequence_type(BoolList) is True
-        assert FlextRuntime.is_sequence_type(List) is True
+        tm.that(FlextRuntime.is_sequence_type(StringList), eq=True)
+        tm.that(FlextRuntime.is_sequence_type(IntList), eq=True)
+        tm.that(FlextRuntime.is_sequence_type(FloatList), eq=True)
+        tm.that(FlextRuntime.is_sequence_type(BoolList), eq=True)
+        tm.that(FlextRuntime.is_sequence_type(List), eq=True)
 
     def test_level_based_context_filter_malformed_prefix(self) -> None:
         """Test level_based_context_filter with malformed prefix."""
@@ -189,25 +189,25 @@ class TestRuntimeTypeChecking:
     def test_enable_runtime_checking(self) -> None:
         """Test enable_runtime_checking method."""
         result = FlextRuntime.enable_runtime_checking()
-        assert result is True
+        tm.that(result, eq=True)
 
     def test_is_valid_json_exception_path(self) -> None:
         """Test is_valid_json when json.loads raises exception."""
         invalid_json = "{invalid json}"
         result = FlextRuntime.is_valid_json(invalid_json)
-        assert result is False
+        tm.that(result, eq=False)
 
     def test_is_valid_identifier_non_string(self) -> None:
         """Test is_valid_identifier with non-string types."""
-        assert not FlextRuntime.is_valid_identifier(123)
-        assert not FlextRuntime.is_valid_identifier(None)
+        tm.that(FlextRuntime.is_valid_identifier(123), eq=False)
+        tm.that(FlextRuntime.is_valid_identifier(None), eq=False)
 
     def test_extract_generic_args_with_typing_get_args(self) -> None:
         """Test extract_generic_args when typing.get_args returns values."""
         args = FlextRuntime.extract_generic_args(list[str])
-        assert args == (str,)
+        tm.that(args, eq=(str,))
         args = FlextRuntime.extract_generic_args(dict[str, int])
-        assert args == (str, int)
+        tm.that(args, eq=(str, int))
 
     def test_extract_generic_args_exception_path(self) -> None:
         """Test extract_generic_args exception handling."""
@@ -221,12 +221,12 @@ class TestRuntimeTypeChecking:
                 return super().__getattribute__(name)
 
         result = FlextRuntime.extract_generic_args(BadType)
-        assert result == ()
+        tm.that(result, eq=())
 
     def test_is_sequence_type_with_origin(self) -> None:
         """Test is_sequence_type with typing.get_origin returning Sequence."""
-        assert FlextRuntime.is_sequence_type(Sequence[str]) is True
-        assert FlextRuntime.is_sequence_type(Sequence[int]) is True
+        tm.that(FlextRuntime.is_sequence_type(Sequence[str]), eq=True)
+        tm.that(FlextRuntime.is_sequence_type(Sequence[int]), eq=True)
 
     def test_is_sequence_type_with_sequence_subclass(self) -> None:
         """Test is_sequence_type with type that is Sequence subclass."""
@@ -246,7 +246,7 @@ class TestRuntimeTypeChecking:
             def __len__(self) -> int:
                 return 0
 
-        assert FlextRuntime.is_sequence_type(MySequence) is True
+        tm.that(FlextRuntime.is_sequence_type(MySequence), eq=True)
 
     def test_is_sequence_type_exception_path(self) -> None:
         """Test is_sequence_type exception handling."""
@@ -260,7 +260,7 @@ class TestRuntimeTypeChecking:
                 return super().__getattribute__(name)
 
         result = FlextRuntime.is_sequence_type(BadType)
-        assert result is False
+        tm.that(result, eq=False)
 
     def test_level_based_context_filter_with_level_prefixed(self) -> None:
         """Test level_based_context_filter with properly formatted level prefix."""

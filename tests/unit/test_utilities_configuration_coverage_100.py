@@ -25,7 +25,7 @@ import pytest
 from pydantic import BaseModel, Field
 
 from flext_core import FlextExceptions, FlextRuntime, c, m, p, u
-from flext_tests import t
+from flext_tests import t, tm
 from tests.unit._models import (
     BadConfigForTest,
     ConfigModelForTest,
@@ -45,14 +45,14 @@ class _Assertions:
         msg: str = "",
     ) -> None:
         if eq is not None:
-            assert value == eq, msg
+            tm.that(value, eq=eq), msg
         if none is True:
-            assert value is None, msg
+            tm.that(value, eq=None), msg
         if none is False:
-            assert value is not None, msg
+            tm.that(value, none=False), msg
         if contains is not None:
             assert isinstance(value, str)
-            assert contains in value, msg
+            tm.that(value, has=contains), msg
 
 
 class _ResultAssertions:
@@ -60,16 +60,16 @@ class _ResultAssertions:
     def assert_success_with_value[T](
         result: FlextRuntime.RuntimeResult[T], expected: T
     ) -> None:
-        assert hasattr(result, "is_success") and getattr(result, "is_success")
-        assert getattr(result, "value") == expected
+        tm.that(getattr(result, "is_success"), eq=True)
+        tm.that(getattr(result, "value"), eq=expected)
 
     @staticmethod
     def assert_result_success[T](result: FlextRuntime.RuntimeResult[T]) -> None:
-        assert hasattr(result, "is_success") and getattr(result, "is_success")
+        tm.that(getattr(result, "is_success"), eq=True)
 
     @staticmethod
     def assert_result_failure[T](result: FlextRuntime.RuntimeResult[T]) -> None:
-        assert hasattr(result, "is_failure") and getattr(result, "is_failure")
+        tm.that(getattr(result, "is_failure"), eq=True)
 
     assert_success = assert_result_success
     assert_failure = assert_result_failure
@@ -345,9 +345,9 @@ class TestFlextUtilitiesConfiguration:
                     cast("p.HasModelDump", cast("object", config)),
                     TestConfigConstants.ParameterNames.MISSING.value,
                 )
-            assert TestConfigConstants.ErrorMessages.PARAMETER_NOT_DEFINED.format(
+            tm.that(str(exc_info.value), has=TestConfigConstants.ErrorMessages.PARAMETER_NOT_DEFINED.format(
                 TestConfigConstants.ParameterNames.MISSING.value,
-            ) in str(exc_info.value)
+            ))
 
         def test_from_pydantic_model_invalid_dump(self) -> None:
             """Test get_parameter handles invalid model_dump return."""
@@ -356,7 +356,7 @@ class TestFlextUtilitiesConfiguration:
                 config,
                 TestConfigConstants.ParameterNames.VALUE.value,
             )
-            assert result == "test"
+            tm.that(result, eq="test")
 
         @pytest.mark.parametrize(
             ("param_name", "expected_value"),
@@ -386,7 +386,7 @@ class TestFlextUtilitiesConfiguration:
                 cast("object", config),
             )
             result = u.get_parameter(config_cast, param_name)
-            assert result == expected_value
+            tm.that(result, eq=expected_value)
 
         def test_from_attribute_access_not_found(self) -> None:
             """Test get_parameter raises NotFoundError for missing attribute."""
@@ -402,9 +402,9 @@ class TestFlextUtilitiesConfiguration:
                     config_cast,
                     TestConfigConstants.ParameterNames.MISSING.value,
                 )
-            assert TestConfigConstants.ErrorMessages.PARAMETER_NOT_DEFINED.format(
+            tm.that(str(exc_info.value), has=TestConfigConstants.ErrorMessages.PARAMETER_NOT_DEFINED.format(
                 TestConfigConstants.ParameterNames.MISSING.value,
-            ) in str(exc_info.value)
+            ))
 
         @pytest.mark.parametrize(
             ("param_name", "expected_value"),
@@ -439,7 +439,7 @@ class TestFlextUtilitiesConfiguration:
             """Test get_parameter with boundary values."""
             config_dict = self._create_boundary_dict()
             result = u.get_parameter(config_dict, param_name)
-            assert result == expected_value
+            tm.that(result, eq=expected_value)
 
     class TestSetParameter:
         """Tests for set_parameter method."""
@@ -476,7 +476,7 @@ class TestFlextUtilitiesConfiguration:
                 cast("t.Scalar | m.ConfigMap", value),
             )
             if result:
-                assert getattr(config, param_name) == value
+                tm.that(getattr(config, param_name), eq=value)
             else:
                 assert getattr(config, param_name) != value
 
@@ -505,7 +505,7 @@ class TestFlextUtilitiesConfiguration:
                 param_name,
                 cast("t.Scalar | m.ConfigMap", value),
             )
-            assert result is False
+            tm.that(result, eq=False)
 
         def test_on_non_pydantic_object(self) -> None:
             """Test set_parameter on non-Pydantic object."""
@@ -519,8 +519,8 @@ class TestFlextUtilitiesConfiguration:
                 TestConfigConstants.ParameterNames.VALUE.value,
                 TestConfigConstants.TestValues.TEST_VALUE_UPDATED,
             )
-            assert result is True
-            assert config.value == TestConfigConstants.TestValues.TEST_VALUE_UPDATED
+            tm.that(result, eq=True)
+            tm.that(config.value, eq=TestConfigConstants.TestValues.TEST_VALUE_UPDATED)
 
         @pytest.mark.parametrize(
             ("param_name", "value"),
@@ -551,8 +551,8 @@ class TestFlextUtilitiesConfiguration:
                 param_name,
                 cast("t.Scalar | m.ConfigMap", value),
             )
-            assert result is True
-            assert getattr(config, param_name) == value
+            tm.that(result, eq=True)
+            tm.that(getattr(config, param_name), eq=value)
 
     class TestSingleton:
         """Tests for singleton methods."""
@@ -578,7 +578,7 @@ class TestFlextUtilitiesConfiguration:
         ) -> None:
             """Test get_singleton from singleton class."""
             result = u.get_singleton(SingletonClassForTest, param_name)
-            assert result == expected_value
+            tm.that(result, eq=expected_value)
 
         def test_get_singleton_not_found(self) -> None:
             """Test get_singleton raises NotFoundError for missing parameter."""
@@ -587,9 +587,9 @@ class TestFlextUtilitiesConfiguration:
                     SingletonClassForTest,
                     TestConfigConstants.ParameterNames.MISSING.value,
                 )
-            assert TestConfigConstants.ErrorMessages.PARAMETER_NOT_DEFINED.format(
+            tm.that(str(exc_info.value), has=TestConfigConstants.ErrorMessages.PARAMETER_NOT_DEFINED.format(
                 TestConfigConstants.ParameterNames.MISSING.value,
-            ) in str(exc_info.value)
+            ))
 
         def test_get_singleton_no_get_global(self) -> None:
             """Test get_singleton raises ValidationError for class without get_global."""
@@ -598,9 +598,9 @@ class TestFlextUtilitiesConfiguration:
                     SingletonWithoutGetGlobalForTest,
                     TestConfigConstants.ParameterNames.VALUE.value,
                 )
-            assert TestConfigConstants.ErrorMessages.DOES_NOT_HAVE_GET_GLOBAL in str(
+            tm.that(str(
                 exc_info.value,
-            )
+            ), has=TestConfigConstants.ErrorMessages.DOES_NOT_HAVE_GET_GLOBAL)
 
         def test_set_singleton_success(self) -> None:
             """Test set_singleton on singleton class."""
@@ -612,7 +612,7 @@ class TestFlextUtilitiesConfiguration:
                 TestConfigConstants.TestValues.TEST_TIMEOUT_LARGE,
             )
             _ResultAssertions.assert_success_with_value(result, True)
-            assert instance.timeout == TestConfigConstants.TestValues.TEST_TIMEOUT_LARGE
+            tm.that(instance.timeout, eq=TestConfigConstants.TestValues.TEST_TIMEOUT_LARGE)
             instance.timeout = original_timeout
 
         def test_set_singleton_no_get_global(self) -> None:
@@ -623,7 +623,7 @@ class TestFlextUtilitiesConfiguration:
                 "new_value",
             )
             _ResultAssertions.assert_failure(result)
-            assert result.error is not None
+            tm.that(result.error, none=False)
             assert (
                 TestConfigConstants.ErrorMessages.DOES_NOT_HAVE_GET_GLOBAL
                 in result.error
@@ -637,8 +637,8 @@ class TestFlextUtilitiesConfiguration:
                 TestConfigConstants.TestValues.TEST_NAME,
             )
             _ResultAssertions.assert_failure(result)
-            assert result.error is not None
-            assert TestConfigConstants.ErrorMessages.IS_NOT_CALLABLE in result.error
+            tm.that(result.error, none=False)
+            tm.that(result.error, has=TestConfigConstants.ErrorMessages.IS_NOT_CALLABLE)
 
         def test_set_singleton_no_has_model_dump(self) -> None:
             """Test set_singleton fails when instance doesn't implement HasModelDump."""
@@ -648,7 +648,7 @@ class TestFlextUtilitiesConfiguration:
                 TestConfigConstants.TestValues.TEST_NAME,
             )
             _ResultAssertions.assert_failure(result)
-            assert result.error is not None
+            tm.that(result.error, none=False)
             assert (
                 TestConfigConstants.ErrorMessages.DOES_NOT_IMPLEMENT_HAS_MODEL_DUMP
                 in result.error
@@ -663,7 +663,7 @@ class TestFlextUtilitiesConfiguration:
                 TestConfigConstants.TestValues.TEST_NAME,
             )
             _ResultAssertions.assert_failure(result)
-            assert result.error is not None
+            tm.that(result.error, none=False)
             assert (
                 TestConfigConstants.ErrorMessages.FAILED_TO_SET_PARAMETER.format(
                     TestConfigConstants.ParameterNames.MISSING.value,
@@ -749,8 +749,8 @@ class TestFlextUtilitiesConfiguration:
                 env_file=TestConfigConstants.SettingsConfig.ENV_FILE,
                 env_nested_delimiter=TestConfigConstants.SettingsConfig.ENV_NESTED_DELIMITER_CUSTOM,
             )
-            assert config["env_prefix"] == TestConfigConstants.SettingsConfig.ENV_PREFIX
-            assert config["env_file"] == TestConfigConstants.SettingsConfig.ENV_FILE
+            tm.that(config["env_prefix"], eq=TestConfigConstants.SettingsConfig.ENV_PREFIX)
+            tm.that(config["env_file"], eq=TestConfigConstants.SettingsConfig.ENV_FILE)
             assert (
                 config["env_nested_delimiter"]
                 == TestConfigConstants.SettingsConfig.ENV_NESTED_DELIMITER_CUSTOM
@@ -759,7 +759,7 @@ class TestFlextUtilitiesConfiguration:
                 config["case_sensitive"]
                 == TestConfigConstants.SettingsConfig.CASE_SENSITIVE
             )
-            assert config["extra"] == TestConfigConstants.SettingsConfig.EXTRA
+            tm.that(config["extra"], eq=TestConfigConstants.SettingsConfig.EXTRA)
             assert (
                 config["validate_default"]
                 == TestConfigConstants.SettingsConfig.VALIDATE_DEFAULT
@@ -808,8 +808,8 @@ class TestFlextUtilitiesConfiguration:
                 default_factory=OptionsModelForTest,
             )
             _ResultAssertions.assert_success(result)
-            assert result.value.format == expected_format
-            assert result.value.indent == expected_indent
+            tm.that(result.value.format, eq=expected_format)
+            tm.that(result.value.indent, eq=expected_indent)
 
         def test_explicit_with_overrides(self) -> None:
             """Test build_options_from_kwargs with explicit options and kwargs overrides."""
@@ -825,8 +825,8 @@ class TestFlextUtilitiesConfiguration:
                 sort_keys=TestConfigConstants.TestValues.TEST_SORT_KEYS_TRUE,
             )
             _ResultAssertions.assert_success(result)
-            assert result.value.format == TestConfigConstants.TestValues.TEST_FORMAT_XML
-            assert result.value.indent == TestConfigConstants.TestValues.TEST_INDENT_8
+            tm.that(result.value.format, eq=TestConfigConstants.TestValues.TEST_FORMAT_XML)
+            tm.that(result.value.indent, eq=TestConfigConstants.TestValues.TEST_INDENT_8)
             assert (
                 result.value.sort_keys
                 == TestConfigConstants.TestValues.TEST_SORT_KEYS_TRUE
@@ -846,7 +846,7 @@ class TestFlextUtilitiesConfiguration:
             assert (
                 result.value.format == TestConfigConstants.TestValues.TEST_FORMAT_YAML
             )
-            assert result.value.indent == TestConfigConstants.TestValues.TEST_INDENT_2
+            tm.that(result.value.indent, eq=TestConfigConstants.TestValues.TEST_INDENT_2)
 
         def test_default_with_overrides(self) -> None:
             """Test build_options_from_kwargs with default factory and kwargs overrides."""
@@ -861,7 +861,7 @@ class TestFlextUtilitiesConfiguration:
             assert (
                 result.value.format == TestConfigConstants.TestValues.TEST_FORMAT_TOML
             )
-            assert result.value.indent == TestConfigConstants.TestValues.TEST_INDENT_6
+            tm.that(result.value.indent, eq=TestConfigConstants.TestValues.TEST_INDENT_6)
 
         def test_no_kwargs(self) -> None:
             """Test build_options_from_kwargs with no kwargs."""
@@ -903,7 +903,7 @@ class TestFlextUtilitiesConfiguration:
                 value=TestConfigConstants.TestValues.TEST_VALUE_INVALID,
             )
             _ResultAssertions.assert_failure(result)
-            assert result.error is not None
+            tm.that(result.error, none=False)
             assert (
                 TestConfigConstants.ErrorMessages.FAILED_TO_BUILD.format(
                     "StrictOptions",
@@ -920,7 +920,7 @@ class TestFlextUtilitiesConfiguration:
                 value="new",
             )
             _ResultAssertions.assert_failure(result)
-            assert result.error is not None
+            tm.that(result.error, none=False)
             assert (
                 TestConfigConstants.ErrorMessages.UNEXPECTED_ERROR_BUILDING.format(
                     "FailingOptions",

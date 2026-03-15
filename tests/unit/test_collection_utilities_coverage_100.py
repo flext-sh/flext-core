@@ -22,7 +22,7 @@ import pytest
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import t
-from flext_tests import u
+from flext_tests import tm, u
 
 
 class Status(StrEnum):
@@ -241,13 +241,13 @@ class TestuCollectionParseSequence:
         if scenario.expected_success:
             _ = u.Tests.Result.assert_success(result)
             parsed = result.value
-            assert len(parsed) == scenario.expected_count
-            assert isinstance(parsed, tuple)
+            tm.that(len(parsed), eq=scenario.expected_count)
+            tm.that(parsed, is_=tuple)
         else:
             _ = u.Tests.Result.assert_failure(result)
             error_msg = result.error
             assert error_msg is not None and scenario.expected_error is not None
-            assert scenario.expected_error in error_msg
+            tm.that(error_msg, has=scenario.expected_error)
 
 
 class TestuCollectionCoerceListValidator:
@@ -263,15 +263,15 @@ class TestuCollectionCoerceListValidator:
         validator = u.coerce_list_validator(Status)
         if scenario.expected_success:
             result = validator(cast("t.NormalizedValue", scenario.value))
-            assert isinstance(result, list)
-            assert all(isinstance(item, Status) for item in result)
+            tm.that(result, is_=list)
+            tm.that(all(isinstance(item, Status) for item in result), eq=True)
         else:
             with pytest.raises(Exception) as exc_info:
                 validator(cast("t.NormalizedValue", scenario.value))
             expected_error = scenario.expected_error
             assert expected_error is not None
-            assert isinstance(exc_info.value, (TypeError, ValueError))
-            assert expected_error in str(exc_info.value)
+            tm.that(exc_info.value, is_=(TypeError, ValueError))
+            tm.that(str(exc_info.value), has=expected_error)
 
 
 class TestuCollectionParseMapping:
@@ -288,14 +288,14 @@ class TestuCollectionParseMapping:
         if scenario.expected_success:
             _ = u.Tests.Result.assert_success(result)
             parsed = result.value
-            assert len(parsed) == scenario.expected_count
-            assert isinstance(parsed, dict)
-            assert all(isinstance(v, Status) for v in parsed.values())
+            tm.that(len(parsed), eq=scenario.expected_count)
+            tm.that(parsed, is_=dict)
+            tm.that(all(isinstance(v, Status) for v in parsed.values()), eq=True)
         else:
             _ = u.Tests.Result.assert_failure(result)
             error_msg = result.error
             assert error_msg is not None and scenario.expected_error is not None
-            assert scenario.expected_error in error_msg
+            tm.that(error_msg, has=scenario.expected_error)
 
 
 class TestuCollectionCoerceDictValidator:
@@ -305,35 +305,35 @@ class TestuCollectionCoerceDictValidator:
         """Test coerce_dict_validator with valid string values."""
         validator = u.coerce_dict_validator(Status)
         result = validator({"user1": "active", "user2": "pending"})
-        assert isinstance(result, dict)
-        assert result["user1"] == Status.ACTIVE
-        assert result["user2"] == Status.PENDING
+        tm.that(result, is_=dict)
+        tm.that(result["user1"], eq=Status.ACTIVE)
+        tm.that(result["user2"], eq=Status.PENDING)
 
     def test_coerce_dict_validator_valid_enums(self) -> None:
         """Test coerce_dict_validator with valid enum values."""
         validator = u.coerce_dict_validator(Status)
         result = validator({"user1": Status.ACTIVE, "user2": Status.PENDING})
-        assert isinstance(result, dict)
-        assert result["user1"] == Status.ACTIVE
-        assert result["user2"] == Status.PENDING
+        tm.that(result, is_=dict)
+        tm.that(result["user1"], eq=Status.ACTIVE)
+        tm.that(result["user2"], eq=Status.PENDING)
 
     def test_coerce_dict_validator_invalid_not_dict(self) -> None:
         """Test coerce_dict_validator with non-dict value."""
         validator = u.coerce_dict_validator(Status)
         with pytest.raises(TypeError) as exc_info:
             validator("not a dict")
-        assert "Expected dict" in str(exc_info.value)
+        tm.that(str(exc_info.value), has="Expected dict")
 
     def test_coerce_dict_validator_invalid_string(self) -> None:
         """Test coerce_dict_validator with invalid string value."""
         validator = u.coerce_dict_validator(Status)
         with pytest.raises(ValueError) as exc_info:
             validator({"user1": "invalid"})
-        assert "Invalid Status" in str(exc_info.value)
+        tm.that(str(exc_info.value), has="Invalid Status")
 
     def test_coerce_dict_validator_invalid_type(self) -> None:
         """Test coerce_dict_validator with invalid type value."""
         validator = u.coerce_dict_validator(Status)
         with pytest.raises(TypeError) as exc_info:
             validator({"user1": 123})
-        assert "Expected str" in str(exc_info.value)
+        tm.that(str(exc_info.value), has="Expected str")
