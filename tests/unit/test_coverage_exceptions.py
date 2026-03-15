@@ -235,10 +235,10 @@ class TestFlextExceptionsHierarchy:
         else:
             error = scenario.exception_type(scenario.message)
         tm.that(str(error), has=scenario.message)
-        tm.that(isinstance(error, Exception), is_=True)
+        tm.that(isinstance(error, Exception), eq=True)
         for attr_name, expected_value in scenario.expected_attrs.items():
-            tm.that(hasattr(error, attr_name), is_=True)
-            tm.that(getattr(error, attr_name), eq=expected_value)
+            tm.that(hasattr(error, attr_name), eq=True)
+            tm.that(getattr(error, attr_name), eq=expected_value)  # type: ignore[arg-type]
 
 
 class TestExceptionIntegration:
@@ -302,9 +302,9 @@ class TestExceptionEdgeCases:
     ) -> None:
         """Test exception with various message formats."""
         error = FlextExceptions.ValidationError(message)
-        tm.that(isinstance(error, Exception), is_=True)
+        tm.that(isinstance(error, Exception), eq=True)
         if message:
-            tm.that(message in str(error) or len(str(error)), gt=9000)
+            tm.that(message in str(error) or len(str(error)) > 9000, eq=True)
 
     def test_multiple_exceptions_in_sequence(self) -> None:
         """Test handling multiple exceptions."""
@@ -322,7 +322,7 @@ class TestExceptionEdgeCases:
     def test_exception_inheritance_chain(self) -> None:
         """Test exception inheritance chain."""
         error = FlextExceptions.ValidationError("Test")
-        tm.that(isinstance(error, Exception), is_=True)
+        tm.that(isinstance(error, Exception), eq=True)
 
 
 class TestExceptionProperties:
@@ -342,8 +342,8 @@ class TestExceptionProperties:
     def test_exception_type_checking(self) -> None:
         """Test type checking for exceptions."""
         error = FlextExceptions.ValidationError("Test")
-        tm.that(isinstance(error, FlextExceptions.ValidationError), is_=True)
-        tm.that(isinstance(error, Exception), is_=True)
+        tm.that(isinstance(error, FlextExceptions.ValidationError), eq=True)
+        tm.that(isinstance(error, Exception), eq=True)
 
     def test_base_error_with_metadata(self) -> None:
         """Test BaseError with metadata."""
@@ -373,7 +373,7 @@ class TestExceptionContext:
         """Test exception with auto-generated correlation ID."""
         error = FlextExceptions.BaseError("Test error", auto_correlation=True)
         tm.that(error.correlation_id, none=False)
-        assert error.correlation_id.startswith("exc_")
+        tm.that(error.correlation_id, starts="exc_")
 
     def test_exception_chaining(self) -> None:
         """Test exception chaining with cause using Python's native chaining."""
@@ -386,7 +386,7 @@ class TestExceptionContext:
         tm.that(original, none=False)
         error = FlextExceptions.OperationError("Operation failed")
         error.__cause__ = original
-        assert error.__cause__ is original
+        tm.that(error.__cause__, eq=original)
 
     def test_exception_preservation(self) -> None:
         """Test that exception information is preserved."""
@@ -394,7 +394,7 @@ class TestExceptionContext:
         error = FlextExceptions.ValidationError(original_msg)
         result = r[bool].fail(str(error))
         tm.that(result.error, none=False)
-        assert original_msg in result.error or "Original error" in result.error
+        tm.fail(result, has=original_msg)
 
 
 class TestExceptionSerialization:
@@ -425,7 +425,7 @@ class TestExceptionFactory:
     def test_create_error_by_type(self) -> None:
         """Test creating exception by type name."""
         error = FlextExceptions.create("ValidationError", "Test validation error")
-        tm.that(isinstance(error, FlextExceptions.ValidationError), is_=True)
+        tm.that(isinstance(error, FlextExceptions.ValidationError), eq=True)
         tm.that(str(error), has="Test validation error")
 
     @pytest.mark.parametrize(
@@ -448,7 +448,7 @@ class TestExceptionFactory:
             FlextExceptions.create,
         )
         error = create_error(message, **kwargs_typed)
-        tm.that(isinstance(error, expected_type), is_=True)
+        tm.that(isinstance(error, expected_type), eq=True)
 
 
 class TestExceptionMetrics:
@@ -484,7 +484,7 @@ class TestExceptionLogging:
         """Test exception has correlation ID when auto_correlation=True."""
         error = FlextExceptions.BaseError("Test", auto_correlation=True)
         tm.that(error.correlation_id, none=False)
-        assert error.correlation_id.startswith("exc_")
+        tm.that(error.correlation_id, starts="exc_")
         tm.that(str(error), has="Test")
 
     def test_exception_error_code_in_string(self) -> None:
@@ -500,8 +500,12 @@ class TestHierarchicalExceptionSystem:
     def test_failure_level_enum_values(self) -> None:
         """Test FailureLevel enum has all required values."""
         failure_level = c.Exceptions.FailureLevel
-        assert all(
-            hasattr(failure_level, level) for level in ["STRICT", "WARN", "PERMISSIVE"]
+        tm.that(
+            all(
+                hasattr(failure_level, level)
+                for level in ["STRICT", "WARN", "PERMISSIVE"]
+            ),
+            eq=True,
         )
 
     def test_failure_level_string_values(self) -> None:
