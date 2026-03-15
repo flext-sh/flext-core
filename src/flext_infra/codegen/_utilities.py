@@ -23,6 +23,7 @@ from flext_infra import c, t
 from flext_infra._utilities.formatting import FlextInfraUtilitiesFormatting
 from flext_infra._utilities.iteration import FlextInfraUtilitiesIteration
 from flext_infra._utilities.parsing import FlextInfraUtilitiesParsing
+from flext_infra._utilities.subprocess import FlextInfraUtilitiesSubprocess
 from flext_infra.codegen._models import FlextInfraCodegenModels
 from flext_infra.codegen.census import FlextInfraCodegenCensus
 from flext_infra.codegen.transforms import FlextInfraCodegenTransforms
@@ -1293,7 +1294,5 @@ class FlextInfraUtilitiesCodegen(FlextInfraCodegenTransforms):
             )
         return result
 
-
-from flext_infra._utilities.subprocess import FlextInfraUtilitiesSubprocess
 
 __all__ = ["FlextInfraUtilitiesCodegen"]

@@ -21,6 +21,7 @@ from flext_core import r
 from flext_infra import c, m, t
 from flext_infra._utilities.io import FlextInfraUtilitiesIo
 from flext_infra._utilities.parsing import FlextInfraUtilitiesParsing
+from flext_infra._utilities.subprocess import FlextInfraUtilitiesSubprocess
 from flext_infra._utilities.yaml import FlextInfraUtilitiesYaml
 
 
@@ -707,7 +708,5 @@ class FlextInfraUtilitiesRefactor:
             tree.visit(visitor)
         return tree
 
-
-from flext_infra._utilities.subprocess import FlextInfraUtilitiesSubprocess
 
 __all__ = ["FlextInfraUtilitiesRefactor"]
