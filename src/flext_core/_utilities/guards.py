@@ -72,7 +72,14 @@ class FlextUtilitiesGuards:
         """Check if value is int."""
         return isinstance(value, int)
 
-    type _GuardInput = t.NormalizedValue | BaseModel
+    type _GuardInput = (
+        t.RegisterableService
+        | t.NormalizedValue
+        | p.Context
+        | p.ValidatorSpec
+        | tuple[type, ...]
+        | None
+    )
 
     @staticmethod
     def _is_list_or_tuple(
