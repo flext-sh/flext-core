@@ -8,12 +8,11 @@ from typing import override
 
 import tomlkit
 from pydantic import BaseModel, JsonValue, TypeAdapter
-from tomlkit.exceptions import ParseError
 from tomlkit.items import Item, Table
 from tomlkit.toml_document import TOMLDocument
 
 from flext_core import r, s, t
-from flext_infra import FlextInfraUtilitiesDiscovery, c, m, p
+from flext_infra import FlextInfraUtilitiesDiscovery, c, m, p, u
 from flext_infra.basemk.generator import FlextInfraBaseMkGenerator
 
 _OBJECT_LIST_ADAPTER: TypeAdapter[list[JsonValue]] = TypeAdapter(list[JsonValue])
@@ -54,8 +53,9 @@ class FlextInfraProjectMigrator(s):
         if result.is_failure:
             errors.append(result.error or "migration action failed")
             return
-        if result.value:
-            changes.append(result.value)
+        val: str = result.value
+        if val:
+            changes.append(val)
 
     @staticmethod
     def _ensure_table(document: tomlkit.TOMLDocument, key: str) -> Table:
@@ -152,7 +152,8 @@ class FlextInfraProjectMigrator(s):
             return r[list[m.Infra.Workspace.MigrationResult]].fail(
                 discovered.error or "project discovery failed",
             )
-        projects = list(discovered.value)
+        discovered_projects: list[m.Infra.Workspace.ProjectInfo] = discovered.value
+        projects = list(discovered_projects)
         workspace_project = self._workspace_root_project(root)
         if workspace_project is not None and all(
             existing.path != workspace_project.path for existing in projects
@@ -168,13 +169,14 @@ class FlextInfraProjectMigrator(s):
         generated = self._generator.generate()
         if generated.is_failure:
             return r[str].fail(generated.error or "base.mk generation failed")
+        generated_text: str = generated.value
         target = project_root / c.Infra.Files.BASE_MK
         current = (
             target.read_text(encoding=c.Infra.Encoding.DEFAULT)
             if target.exists()
             else ""
         )
-        if self._sha256_text(current) == self._sha256_text(generated.value):
+        if self._sha256_text(current) == self._sha256_text(generated_text):
             if dry_run:
                 return r[str].ok(
                     self._action_text("base.mk already up-to-date", dry_run=True),
@@ -183,7 +185,7 @@ class FlextInfraProjectMigrator(s):
         if not dry_run:
             try:
                 _ = target.write_text(
-                    generated.value,
+                    generated_text,
                     encoding=c.Infra.Encoding.DEFAULT,
                 )
             except OSError as exc:
@@ -334,12 +336,12 @@ class FlextInfraProjectMigrator(s):
                     ),
                 )
             return r[str].ok("")
-        try:
-            document = tomlkit.parse(
-                pyproject_path.read_text(encoding=c.Infra.Encoding.DEFAULT),
+        document_result = u.Infra.read_document(pyproject_path)
+        if document_result.is_failure:
+            return r[str].fail(
+                document_result.error or "pyproject parse failed",
             )
-        except (ParseError, OSError) as exc:
-            return r[str].fail(f"pyproject parse failed: {exc}")
+        document: tomlkit.TOMLDocument = document_result.value
         if self._has_flext_core_dependency(document):
             if dry_run:
                 return r[str].ok(
@@ -362,13 +364,11 @@ class FlextInfraProjectMigrator(s):
             dependencies.append(dependency_spec)
         project_table[c.Infra.Toml.DEPENDENCIES] = dependencies
         if not dry_run:
-            try:
-                _ = pyproject_path.write_text(
-                    document.as_string(),
-                    encoding=c.Infra.Encoding.DEFAULT,
+            write_result = u.Infra.write_document(pyproject_path, document)
+            if write_result.is_failure:
+                return r[str].fail(
+                    write_result.error or "pyproject update failed",
                 )
-            except OSError as exc:
-                return r[str].fail(f"pyproject update failed: {exc}")
         return r[str].ok(
             self._action_text(
                 "pyproject.toml adds flext-core dependency",
