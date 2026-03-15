@@ -195,7 +195,6 @@ if TYPE_CHECKING:
     )
     from tests.infra.unit.deps.test_modernizer_pytest import (
         TestEnsurePytestConfigPhase,
-        load_tool_config,
         test_ensure_pytest_config_phase_apply_markers,
         test_ensure_pytest_config_phase_apply_minversion,
         test_ensure_pytest_config_phase_apply_python_classes,
@@ -566,10 +565,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "extract_dep_name": (
         "tests.infra.unit.deps.test_path_sync_init",
         "extract_dep_name",
-    ),
-    "load_tool_config": (
-        "tests.infra.unit.deps.test_modernizer_pytest",
-        "load_tool_config",
     ),
     "m": (
         "tests.infra.unit.deps.test_detection_models",
@@ -953,7 +948,6 @@ __all__ = [
     "doc",
     "ensure_table",
     "extract_dep_name",
-    "load_tool_config",
     "m",
     "project_dev_groups",
     "pyright_content",

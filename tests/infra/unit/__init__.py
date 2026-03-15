@@ -510,7 +510,6 @@ if TYPE_CHECKING:
     )
     from tests.infra.unit.deps.test_modernizer_pytest import (
         TestEnsurePytestConfigPhase,
-        load_tool_config,
         test_ensure_pytest_config_phase_apply_markers,
         test_ensure_pytest_config_phase_apply_minversion,
         test_ensure_pytest_config_phase_apply_python_classes,
@@ -2332,10 +2331,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "gen": ("tests.infra.unit.docs.generator_internals", "gen"),
     "git_repo": ("tests.infra.unit.test_infra_git", "git_repo"),
     "is_external": ("tests.infra.unit.docs.auditor", "is_external"),
-    "load_tool_config": (
-        "tests.infra.unit.deps.test_modernizer_pytest",
-        "load_tool_config",
-    ),
     "m": ("tests.infra.unit._utilities.test_scanning", "TestScanModels"),
     "normalize_link": ("tests.infra.unit.docs.auditor", "normalize_link"),
     "orchestrator": (
@@ -3762,7 +3757,6 @@ __all__ = [
     "gen",
     "git_repo",
     "is_external",
-    "load_tool_config",
     "m",
     "normalize_link",
     "orchestrator",

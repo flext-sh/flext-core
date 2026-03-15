@@ -622,7 +622,6 @@ if TYPE_CHECKING:
     )
     from tests.infra.unit.deps.test_modernizer_pytest import (
         TestEnsurePytestConfigPhase,
-        load_tool_config,
         test_ensure_pytest_config_phase_apply_markers,
         test_ensure_pytest_config_phase_apply_minversion,
         test_ensure_pytest_config_phase_apply_python_classes,
@@ -2130,7 +2129,7 @@ if TYPE_CHECKING:
         TypeGuardsScenarios,
     )
     from tests.unit.test_version import TestFlextVersion
-    from tests.utilities import TestsFlextUtilities, u
+    from tests.utilities import FlextCoreTestsUtilities, u
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "AlgarOudMigConstants": (
@@ -2293,6 +2292,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "FlextCommandType",
     ),
     "FlextConsolidationContext": ("tests.conftest", "FlextConsolidationContext"),
+    "FlextCoreTestsUtilities": ("tests.utilities", "FlextCoreTestsUtilities"),
     "FlextInfraTestConstants": ("tests.infra.constants", "FlextInfraTestConstants"),
     "FlextInfraTestHelpers": ("tests.infra.helpers", "FlextInfraTestHelpers"),
     "FlextInfraTestModels": ("tests.infra.models", "FlextInfraTestModels"),
@@ -4663,7 +4663,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "TestsFlextTestsFactoriesRes",
     ),
     "TestsFlextTypes": ("tests.typings", "TestsFlextTypes"),
-    "TestsFlextUtilities": ("tests.utilities", "TestsFlextUtilities"),
     "Testu": ("tests.unit.test_utilities", "Testu"),
     "TestuCacheClearObjectCache": (
         "tests.unit.test_utilities_cache_coverage_100",
@@ -4995,10 +4994,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "invalid_port_numbers": ("tests.conftest", "invalid_port_numbers"),
     "invalid_uris": ("tests.conftest", "invalid_uris"),
     "is_external": ("tests.infra.unit.docs.auditor", "is_external"),
-    "load_tool_config": (
-        "tests.infra.unit.deps.test_modernizer_pytest",
-        "load_tool_config",
-    ),
     "m": ("tests.models", "m"),
     "make_result_logger": (
         "tests.integration.patterns.test_patterns_logging",
@@ -7536,6 +7531,7 @@ __all__ = [
     "FlextCommandId",
     "FlextCommandType",
     "FlextConsolidationContext",
+    "FlextCoreTestsUtilities",
     "FlextInfraTestConstants",
     "FlextInfraTestHelpers",
     "FlextInfraTestModels",
@@ -8271,7 +8267,6 @@ __all__ = [
     "TestsFlextTestsFactoriesModel",
     "TestsFlextTestsFactoriesRes",
     "TestsFlextTypes",
-    "TestsFlextUtilities",
     "Testu",
     "TestuCacheClearObjectCache",
     "TestuCacheGenerateCacheKey",
@@ -8405,7 +8400,6 @@ __all__ = [
     "invalid_port_numbers",
     "invalid_uris",
     "is_external",
-    "load_tool_config",
     "m",
     "make_result_logger",
     "mapper",
