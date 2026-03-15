@@ -22,6 +22,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import FlextRuntime, m
 from flext_core.runtime import RuntimeData
+from flext_tests import tm
 
 
 class _TestConfig(m.Config):
@@ -90,13 +91,13 @@ class TestFlextModelsCollectionsCategories:
     def test_categories_initialization(self) -> None:
         """Test Categories initialization."""
         categories: m.Categories = m.Categories(categories={})
-        assert categories.categories == {}
-        assert len(categories) == 0
+        tm.that(categories.categories, eq={})
+        tm.that(len(categories), eq=0)
 
     def test_categories_get_empty(self) -> None:
         """Test get with empty category."""
         categories: m.Categories = m.Categories(categories={})
-        assert categories.get("nonexistent") == []
+        tm.that(categories.get("nonexistent"), eq=[])
 
     @pytest.mark.parametrize(
         "scenario",
@@ -108,29 +109,29 @@ class TestFlextModelsCollectionsCategories:
         categories: m.Categories = m.Categories(categories={})
         if scenario.operation == "add":
             categories.add_entries(scenario.category, scenario.entries)
-            assert categories.get(scenario.category) == scenario.entries
+            tm.that(categories.get(scenario.category), eq=scenario.entries)
         elif scenario.operation == "set":
             categories.add_entries(scenario.category, ["existing"])
             categories.categories[scenario.category] = list(scenario.entries)
-            assert categories.get(scenario.category) == scenario.entries
+            tm.that(categories.get(scenario.category), eq=scenario.entries)
         elif scenario.operation == "remove":
             categories.add_entries(scenario.category, ["temp"])
             categories.remove_category(scenario.category)
-            assert scenario.category not in categories.categories
+            tm.that(scenario.category in categories.categories, eq=False)
 
     def test_categories_add_entries_existing_category(self) -> None:
         """Test add_entries with existing category."""
         categories: m.Categories = m.Categories(categories={})
         categories.add_entries("users", ["user1"])
         categories.add_entries("users", ["user2", "user3"])
-        assert categories.get("users") == ["user1", "user2", "user3"]
+        tm.that(categories.get("users"), eq=["user1", "user2", "user3"])
 
     def test_categories_has_category(self) -> None:
         """Test has_category via categories dict."""
         categories: m.Categories = m.Categories(categories={})
-        assert "users" not in categories.categories
+        tm.that("users" in categories.categories, eq=False)
         categories.add_entries("users", ["user1"])
-        assert categories.has_category("users")
+        tm.that(categories.has_category("users"), eq=True)
 
     def test_categories_remove_category_nonexistent(self) -> None:
         """Test remove_category with nonexistent category."""
@@ -143,15 +144,15 @@ class TestFlextModelsCollectionsCategories:
         categories.add_entries("users", ["user1"])
         categories.add_entries("groups", ["group1"])
         names = list(categories.category_names)
-        assert all(name in names for name in ["users", "groups"])
-        assert len(names) == 2
+        tm.that(all(name in names for name in ["users", "groups"]), eq=True)
+        tm.that(len(names), eq=2)
 
     def test_categories_total_entries(self) -> None:
         """Test total_entries computed field."""
         categories: m.Categories = m.Categories(categories={})
         categories.add_entries("users", ["user1", "user2"])
         categories.add_entries("groups", ["group1"])
-        assert categories.total_entries == 3
+        tm.that(categories.total_entries, eq=3)
 
     def test_categories_summary(self) -> None:
         """Test summary computed field."""
@@ -161,42 +162,42 @@ class TestFlextModelsCollectionsCategories:
         summary: dict[str, int] = {
             name: len(entries) for name, entries in categories.categories.items()
         }
-        assert summary["users"] == 2
-        assert summary["groups"] == 1
+        tm.that(summary["users"], eq=2)
+        tm.that(summary["groups"], eq=1)
 
     def test_categories_dict_like_operations(self) -> None:
         """Test dict-like operations."""
         categories: m.Categories = m.Categories(categories={})
         categories.add_entries("users", ["user1"])
-        assert ("users", ["user1"]) in categories.categories.items()
-        assert "users" in categories.categories
-        assert ["user1"] in categories.categories.values()
-        assert categories.categories["users"] == ["user1"]
+        tm.that(("users", ["user1"]) in categories.categories.items(), eq=True)
+        tm.that("users" in categories.categories, eq=True)
+        tm.that(["user1"] in categories.categories.values(), eq=True)
+        tm.that(categories.categories["users"], eq=["user1"])
         categories.categories["groups"] = ["group1"]
-        assert categories.get("groups") == ["group1"]
-        assert "users" in categories.categories
-        assert "nonexistent" not in categories.categories
-        assert len(categories.categories) == 2
+        tm.that(categories.get("groups"), eq=["group1"])
+        tm.that("users" in categories.categories, eq=True)
+        tm.that("nonexistent" in categories.categories, eq=False)
+        tm.that(len(categories.categories), eq=2)
 
     def test_categories_get_with_default(self) -> None:
         """Test get method with default."""
         categories: m.Categories = m.Categories(categories={})
-        assert categories.get("nonexistent", ["default"]) == ["default"]
-        assert categories.get("nonexistent") == []
+        tm.that(categories.get("nonexistent", ["default"]), eq=["default"])
+        tm.that(categories.get("nonexistent"), eq=[])
 
     def test_categories_model_validate(self) -> None:
         """Test Categories construction via model_validate."""
         data = {"categories": {"users": ["user1"], "groups": ["group1"]}}
         categories: m.Categories = m.Categories.model_validate(data)
-        assert categories.get("users") == ["user1"]
-        assert categories.get("groups") == ["group1"]
+        tm.that(categories.get("users"), eq=["user1"])
+        tm.that(categories.get("groups"), eq=["group1"])
 
     def test_categories_to_mapping(self) -> None:
         """Test to_mapping method."""
         categories: m.Categories = m.Categories(categories={})
         categories.add_entries("users", ["user1"])
         result = categories.to_mapping()
-        assert result == {"users": ["user1"]}
+        tm.that(result, eq={"users": ["user1"]})
 
 
 class TestFlextModelsCollectionsStatistics:
@@ -208,7 +209,7 @@ class TestFlextModelsCollectionsStatistics:
         class TestStats(m.Statistics):
             count: int = 0
 
-        assert TestStats.aggregate([]) == {}
+        tm.that(TestStats.aggregate([]), eq={})
 
     def test_statistics_aggregate_numbers(self) -> None:
         """Test aggregate with numeric values."""
@@ -219,8 +220,8 @@ class TestFlextModelsCollectionsStatistics:
         stats1 = TestStats(count=10)
         stats2 = TestStats(count=20)
         result = TestStats.aggregate([stats1, stats2])
-        assert FlextRuntime.is_dict_like(cast("RuntimeData", result))
-        assert result["count"] == 30
+        tm.that(FlextRuntime.is_dict_like(cast("RuntimeData", result)), eq=True)
+        tm.that(result["count"], eq=30)
 
     def test_statistics_aggregate_lists(self) -> None:
         """Test aggregate with list values."""
@@ -231,8 +232,8 @@ class TestFlextModelsCollectionsStatistics:
         stats1 = TestStats(items=["a", "b"])
         stats2 = TestStats(items=["c"])
         result = TestStats.aggregate([stats1, stats2])
-        assert FlextRuntime.is_dict_like(cast("RuntimeData", result))
-        assert result["items"] == ["a", "b", "c"]
+        tm.that(FlextRuntime.is_dict_like(cast("RuntimeData", result)), eq=True)
+        tm.that(result["items"], eq=["a", "b", "c"])
 
     def test_statistics_aggregate_mixed(self) -> None:
         """Test aggregate with mixed types."""
@@ -245,10 +246,10 @@ class TestFlextModelsCollectionsStatistics:
         stats1 = TestStats(count=10, items=["a"], name="first")
         stats2 = TestStats(count=20, items=["b"], name="second")
         result = TestStats.aggregate([stats1, stats2])
-        assert FlextRuntime.is_dict_like(cast("RuntimeData", result))
-        assert result["count"] == 30
-        assert result["items"] == ["a", "b"]
-        assert result["name"] == "second"
+        tm.that(FlextRuntime.is_dict_like(cast("RuntimeData", result)), eq=True)
+        tm.that(result["count"], eq=30)
+        tm.that(result["items"], eq=["a", "b"])
+        tm.that(result["name"], eq="second")
 
     def test_statistics_aggregate_none_values(self) -> None:
         """Test aggregate with None values."""
@@ -260,9 +261,9 @@ class TestFlextModelsCollectionsStatistics:
         stats1 = TestStats(count=10, name="first")
         stats2 = TestStats(count=None, name=None)
         result = TestStats.aggregate([stats1, stats2])
-        assert FlextRuntime.is_dict_like(cast("RuntimeData", result))
-        assert result["count"] == 10
-        assert result["name"] == "first"
+        tm.that(FlextRuntime.is_dict_like(cast("RuntimeData", result)), eq=True)
+        tm.that(result["count"], eq=10)
+        tm.that(result["name"], eq="first")
 
 
 class TestFlextModelsCollectionsSettings:
@@ -273,55 +274,55 @@ class TestFlextModelsCollectionsSettings:
         config1 = _TestConfig.model_validate({"timeout": 30, "retries": 3})
         config2 = _TestConfig.model_validate({"timeout": 60})
         merged: _TestConfig = config1.merge(config2)
-        assert merged.timeout == 60
-        assert merged.retries == 3
+        tm.that(merged.timeout, eq=60)
+        tm.that(merged.retries, eq=3)
 
     def test_config_from_dict(self) -> None:
         """Test from_mapping class method."""
         config_data = m.ConfigMap(root={"timeout": 60})
         config: _TestConfig = _TestConfig.from_mapping(config_data)
-        assert config.timeout == 60
+        tm.that(config.timeout, eq=60)
 
     def test_config_to_dict(self) -> None:
         """Test to_mapping method (to_dict was renamed to to_mapping)."""
         config = _TestConfig.model_validate({"timeout": 60})
         config_dict = config.to_mapping()
-        assert config_dict["timeout"] == 60
+        tm.that(config_dict["timeout"], eq=60)
 
     def test_config_with_updates(self) -> None:
         """Test with_updates method."""
         config = _TestConfig.model_validate({"timeout": 30, "retries": 3})
         updated: _TestConfig = config.with_updates(timeout=60)
-        assert updated.timeout == 60
-        assert updated.retries == 3
-        assert config.timeout == 30
+        tm.that(updated.timeout, eq=60)
+        tm.that(updated.retries, eq=3)
+        tm.that(config.timeout, eq=30)
 
     def test_config_diff(self) -> None:
         """Test diff method."""
         config1 = _TestConfig.model_validate({"timeout": 30, "retries": 3})
         config2 = _TestConfig.model_validate({"timeout": 60, "retries": 3})
         diff = config1.diff(config2)
-        assert "timeout" in diff
-        assert diff["timeout"] == (30, 60)
-        assert "retries" not in diff
+        tm.that("timeout" in diff, eq=True)
+        tm.that(diff["timeout"], eq=(30, 60))
+        tm.that("retries" in diff, eq=False)
 
     def test_config_diff_all_different(self) -> None:
         """Test diff with all fields different."""
         config1 = _TestConfig.model_validate({"timeout": 30, "retries": 3})
         config2 = _TestConfig.model_validate({"timeout": 60, "retries": 5})
         diff = config1.diff(config2)
-        assert len(diff) == 2
-        assert diff["timeout"] == (30, 60)
-        assert diff["retries"] == (3, 5)
+        tm.that(len(diff), eq=2)
+        tm.that(diff["timeout"], eq=(30, 60))
+        tm.that(diff["retries"], eq=(3, 5))
 
     def test_config_eq(self) -> None:
         """Test __eq__ method."""
         config1 = _TestConfig.model_validate({"timeout": 30})
         config2 = _TestConfig.model_validate({"timeout": 30})
         config3 = _TestConfig.model_validate({"timeout": 60})
-        assert config1 == config2
-        assert config1 != config3
-        assert config1 != "not a config"
+        tm.that(config1 == config2, eq=True)
+        tm.that(config1 != config3, eq=True)
+        tm.that(config1 != "not a config", eq=True)
 
 
 class TestFlextModelsCollectionsResults:
@@ -333,7 +334,7 @@ class TestFlextModelsCollectionsResults:
         class TestResult(m.Results):
             processed: int = 0
 
-        assert TestResult.aggregate([]) == {}
+        tm.that(TestResult.aggregate([]), eq={})
 
     def test_results_aggregate_numbers(self) -> None:
         """Test aggregate with numeric values."""
@@ -344,9 +345,9 @@ class TestFlextModelsCollectionsResults:
         result1 = TestResult(processed=10)
         result2 = TestResult(processed=20)
         aggregated_raw = TestResult.aggregate([result1, result2])
-        assert FlextRuntime.is_dict_like(cast("RuntimeData", aggregated_raw))
+        tm.that(FlextRuntime.is_dict_like(cast("RuntimeData", aggregated_raw)), eq=True)
         aggregated = aggregated_raw
-        assert aggregated["processed"] == 30
+        tm.that(aggregated["processed"], eq=30)
 
     def test_results_aggregate_lists(self) -> None:
         """Test aggregate with list values."""
@@ -357,9 +358,9 @@ class TestFlextModelsCollectionsResults:
         result1 = TestResult(errors=["error1"])
         result2 = TestResult(errors=["error2"])
         aggregated_raw = TestResult.aggregate([result1, result2])
-        assert FlextRuntime.is_dict_like(cast("RuntimeData", aggregated_raw))
+        tm.that(FlextRuntime.is_dict_like(cast("RuntimeData", aggregated_raw)), eq=True)
         aggregated = aggregated_raw
-        assert aggregated["errors"] == ["error1", "error2"]
+        tm.that(aggregated["errors"], eq=["error1", "error2"])
 
     def test_results_aggregate_dicts(self) -> None:
         """Test aggregate with dict values."""
@@ -370,9 +371,9 @@ class TestFlextModelsCollectionsResults:
         result1 = TestResult(metadata={"key1": "value1"})
         result2 = TestResult(metadata={"key2": "value2"})
         aggregated_raw = TestResult.aggregate([result1, result2])
-        assert FlextRuntime.is_dict_like(cast("RuntimeData", aggregated_raw))
+        tm.that(FlextRuntime.is_dict_like(cast("RuntimeData", aggregated_raw)), eq=True)
         aggregated = aggregated_raw
-        assert aggregated["metadata"] == {"key1": "value1", "key2": "value2"}
+        tm.that(aggregated["metadata"], eq={"key1": "value1", "key2": "value2"})
 
     def test_results_aggregate_mixed(self) -> None:
         """Test aggregate with mixed types."""
@@ -385,11 +386,11 @@ class TestFlextModelsCollectionsResults:
         result1 = TestResult(processed=10, errors=["a"], status="ok")
         result2 = TestResult(processed=20, errors=["b"], status="done")
         aggregated_raw = TestResult.aggregate([result1, result2])
-        assert FlextRuntime.is_dict_like(cast("RuntimeData", aggregated_raw))
+        tm.that(FlextRuntime.is_dict_like(cast("RuntimeData", aggregated_raw)), eq=True)
         aggregated = aggregated_raw
-        assert aggregated["processed"] == 30
-        assert aggregated["errors"] == ["a", "b"]
-        assert aggregated["status"] == "done"
+        tm.that(aggregated["processed"], eq=30)
+        tm.that(aggregated["errors"], eq=["a", "b"])
+        tm.that(aggregated["status"], eq="done")
 
     def test_results_aggregate_none_values(self) -> None:
         """Test aggregate with None values."""
@@ -401,10 +402,10 @@ class TestFlextModelsCollectionsResults:
         result1 = TestResult(processed=10, status="ok")
         result2 = TestResult(processed=None, status=None)
         aggregated_raw = TestResult.aggregate([result1, result2])
-        assert FlextRuntime.is_dict_like(cast("RuntimeData", aggregated_raw))
+        tm.that(FlextRuntime.is_dict_like(cast("RuntimeData", aggregated_raw)), eq=True)
         aggregated = aggregated_raw
-        assert aggregated["processed"] == 10
-        assert aggregated["status"] == "ok"
+        tm.that(aggregated["processed"], eq=10)
+        tm.that(aggregated["status"], eq="ok")
 
 
 class TestFlextModelsCollectionsOptions:
@@ -420,8 +421,8 @@ class TestFlextModelsCollectionsOptions:
         options1 = TestOptions(verbose=False, color=True)
         options2 = TestOptions(verbose=True)
         merged = options1.merge(options2)
-        assert merged.verbose is True
-        assert merged.color is True
+        tm.that(merged.verbose is True, eq=True)
+        tm.that(merged.color is True, eq=True)
 
     def test_options_merge_all_fields(self) -> None:
         """Test merge with all fields."""
@@ -433,8 +434,8 @@ class TestFlextModelsCollectionsOptions:
         options1 = TestOptions(verbose=False, color=True)
         options2 = TestOptions(verbose=True, color=False)
         merged = options1.merge(options2)
-        assert merged.verbose is True
-        assert merged.color is False
+        tm.that(merged.verbose is True, eq=True)
+        tm.that(merged.color is False, eq=True)
 
 
 __all__ = [
