@@ -484,7 +484,7 @@ class TestrCoverage:
         large_list = list(range(1000))
         result = r[list[int]].ok(large_list)
         _ResultAssertions.assert_success(result)
-        assert len(result.value) == 1000
+        tm.that(len(result.value), eq=1000)
 
     def test_complex_chaining_scenario(self) -> None:
         """Test complex chaining of operations."""
