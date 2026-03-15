@@ -16,7 +16,10 @@ from flext_core import c, m
 
 
 class FactoryDecoratorsDiscovery:
-    """Auto-discovery mechanism for factory decorators.
+    """Auto-discovery mechanism for factory decorators (namespace-only, no MRO base).
+
+    Governance: Pure namespace class with only @staticmethod members. No state,
+    no instantiation, no fields. BaseModel inheritance not required per §3.1.
 
     Scans modules and classes for functions decorated with @factory() and provides
     utilities for finding and analyzing factory configurations.

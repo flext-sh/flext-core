@@ -12,6 +12,12 @@ T = TypeVar("T")
 
 
 class ResultHelpers:
+    """Result composition helpers (namespace-only, no MRO base).
+
+    Governance: Pure namespace class with only @staticmethod members. No state,
+    no instantiation, no fields. BaseModel inheritance not required per §3.1.
+    """
+
     @staticmethod
     def any_(*values: t.NormalizedValue) -> bool:
         return any(bool(v) for v in values)
