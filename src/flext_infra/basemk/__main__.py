@@ -5,8 +5,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from flext_core import FlextRuntime
-from flext_infra import m, output, u
+from flext_infra import m, u
 from flext_infra.basemk.engine import FlextInfraBaseMkTemplateEngine
 from flext_infra.basemk.generator import FlextInfraBaseMkGenerator
 
@@ -19,9 +18,8 @@ def _build_config(project_name: str | None) -> m.Infra.Basemk.BaseMkConfig | Non
     )
 
 
-def main(argv: list[str] | None = None) -> int:
+def _main_impl(argv: list[str] | None = None) -> int:
     """Generate base.mk content from templates and write to file or stdout."""
-    FlextRuntime.ensure_structlog_configured()
     parser = u.Infra.create_parser(
         "basemk",
         "base.mk generation utilities",
@@ -55,17 +53,20 @@ def main(argv: list[str] | None = None) -> int:
     config = _build_config(args.project_name)
     generated_result = generator.generate(config)
     if generated_result.is_failure:
-        output.error(generated_result.error or "base.mk generation failed")
-        return 1
+        return u.Infra.exit_code(
+            generated_result, failure_msg="base.mk generation failed"
+        )
     write_result = generator.write(
         generated_result.value,
         output=args.output,
         stream=sys.stdout,
     )
-    if write_result.is_failure:
-        output.error(write_result.error or "base.mk write failed")
-        return 1
-    return 0
+    return u.Infra.exit_code(write_result, failure_msg="base.mk write failed")
+
+
+def main(argv: list[str] | None = None) -> int:
+    """Generate base.mk content from templates and write to file or stdout."""
+    return u.Infra.run_cli(_main_impl, argv)
 
 
 if __name__ == "__main__":
