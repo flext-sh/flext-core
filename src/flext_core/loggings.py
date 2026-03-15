@@ -700,12 +700,15 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         return {key: cls._to_scalar_value(value) for key, value in context.items()}
 
     @staticmethod
-    def _get_caller_source_path() -> str | None:
+    def _get_caller_source_path() -> r[str]:
         """Get source file path with line, class and method context."""
         try:
-            caller_frame = FlextLogger._get_calling_frame()
-            if not caller_frame:
-                return None
+            caller_frame_result = FlextLogger._get_calling_frame()
+            if caller_frame_result.is_failure:
+                return r[str].fail(
+                    caller_frame_result.error or "Unable to get calling frame"
+                )
+            caller_frame = caller_frame_result.unwrap()
             filename = caller_frame.f_code.co_filename
             file_path = FlextLogger._convert_to_relative_path(filename)
             line_number = caller_frame.f_lineno + 1
@@ -716,22 +719,26 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
                 source_parts.append(f"{class_name}.{method_name}")
             elif method_name and method_name != "<module>":
                 source_parts.append(method_name)
-            return " ".join(source_parts) if len(source_parts) > 1 else source_parts[0]
+            return r[str].ok(
+                " ".join(source_parts) if len(source_parts) > 1 else source_parts[0]
+            )
         except (AttributeError, RuntimeError, TypeError, ValueError) as exc:
             FlextLogger._report_internal_logging_failure("get_caller_source_path", exc)
-            return None
+            return r[str].fail(f"Failed to resolve caller source path: {exc}")
 
     @staticmethod
-    def _get_calling_frame() -> types.FrameType | None:
+    def _get_calling_frame() -> r[types.FrameType]:
         """Get the calling frame 4 levels up the stack."""
         frame = inspect.currentframe()
         if not frame:
-            return None
+            return r[types.FrameType].fail("Current frame is unavailable")
         for _ in range(4):
             frame = frame.f_back
             if not frame:
-                return None
-        return frame
+                return r[types.FrameType].fail(
+                    "Insufficient stack depth for caller frame"
+                )
+        return r[types.FrameType].ok(frame)
 
     @staticmethod
     def _report_internal_logging_failure(operation: str, exc: Exception) -> None:
@@ -1056,8 +1063,11 @@ class FlextLogger(FlextRuntime, p.Log.StructlogLogger):
         """
         try:
             formatted_message = FlextLogger._format_log_message(message, *args)
-            if "source" not in context and (
-                source_path := FlextLogger._get_caller_source_path()
+            source_path_result = FlextLogger._get_caller_source_path()
+            if (
+                "source" not in context
+                and source_path_result.is_success
+                and (source_path := source_path_result.unwrap())
             ):
                 context["source"] = source_path
             match _level:
