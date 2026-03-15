@@ -10,7 +10,7 @@ from typing import NoReturn, cast, override
 import pytest
 
 from flext_core import c, m, r, u
-from flext_tests import t
+from flext_tests import t, tm
 
 
 class _Color(StrEnum):
@@ -56,19 +56,19 @@ def test_find_mapping_no_match_and_merge_error_paths() -> None:
     assert r[int].ok(1).is_success
     assert isinstance(m.ConfigMap({"a": 1}), m.ConfigMap)
     not_found = u.find({"a": 1}, lambda value: value == 2)
-    assert not_found.is_failure
+    tm.fail(not_found)
     nested = u._merge_deep_single_key(
         cast("dict[str, t.NormalizedValue]", {"x": _BadCopyDict({"a": 1})}),
         "x",
         cast("t.NormalizedValue", {"b": 2}),
     )
-    assert nested.is_success
+    tm.ok(nested)
     deep = u.merge(
         cast("dict[str, t.NormalizedValue]", {"x": _BadCopyDict({"a": 1})}),
         cast("dict[str, t.NormalizedValue]", {"x": {"b": 2}}),
         strategy="deep",
     )
-    assert deep.is_success
+    tm.ok(deep)
     with pytest.raises(AttributeError, match="copy"):
         _ = u.merge(
             cast("dict[str, t.NormalizedValue]", None),
@@ -101,7 +101,7 @@ def test_batch_fail_collect_flatten_and_progress() -> None:
         _success_list,
         flatten=True,
     )
-    assert flattened.is_success
+    tm.ok(flattened)
     flat_value = flattened.value
     assert flat_value.results == [1, 2]
     collected = u.batch(
@@ -109,24 +109,24 @@ def test_batch_fail_collect_flatten_and_progress() -> None:
         _failure_result,
         on_error="collect",
     )
-    assert collected.is_success
+    tm.ok(collected)
     collected_value = collected.value
-    assert len(collected_value.errors) == 1
-    assert "err" in collected_value.errors[0][1]
+    tm.that(len(collected_value.errors), eq=1)
+    tm.that("err" in collected_value.errors[0][1], eq=True)
     failed = u.batch([1], _hard_failure, on_error="fail")
-    assert failed.is_failure
+    tm.fail(failed)
     failed_exc = u.batch(
         [1],
         _raise_value_error,
     )
-    assert failed_exc.is_failure
+    tm.fail(failed_exc)
     progress_calls: list[tuple[int, int]] = []
     ok = u.batch(
         [1, 2],
         _identity,
         progress=lambda processed, total: progress_calls.append((processed, total)),
     )
-    assert ok.is_success
+    tm.ok(ok)
     assert progress_calls[-1] == (2, 2)
 
 
@@ -137,12 +137,12 @@ def test_process_outer_exception_and_coercion_branches() -> None:
             lambda x: x,
         )
     value = u._coerce_value_to_float(1.5)
-    assert abs(value - 1.5) < 1e-9
+    tm.that(abs(value - 1.5) < 1e-9, eq=True)
     assert u._coerce_value_to_bool(True) is True
     enum_dict = u.coerce_dict_to_enum(_Color)({"a": _Color.RED})
     assert enum_dict["a"] is _Color.RED
     enum_list = u.coerce_list_to_enum(_Color)([_Color.BLUE])
-    assert enum_list == [_Color.BLUE]
+    tm.that(enum_list, eq=[_Color.BLUE])
     assert u.first([], default=9).value == 9
     assert u.last([], default=8).value == 8
 
@@ -152,7 +152,7 @@ def test_parse_mapping_outer_exception() -> None:
         _Color,
         cast("dict[str, str | _Color]", _BadMapping()),
     )
-    assert result.is_failure
+    tm.fail(result)
     assert result.error is not None and "Parse mapping failed" in result.error
 
 
@@ -170,12 +170,12 @@ def test_collection_batch_failure_error_capture_and_parse_sequence_outer_error()
         lambda _item: _FailureResult(),
         on_error="collect",
     )
-    assert collected.is_success
+    tm.ok(collected)
     collected_value = collected.value
     assert collected_value.errors == []
-    assert "_FailureResult object" in str(collected_value.results[0])
+    tm.that("_FailureResult object" in str(collected_value.results[0]), eq=True)
     failed = u.batch([1], lambda _item: _FailureResult(), on_error="fail")
-    assert failed.is_success
+    tm.ok(failed)
 
     class _ExplodingMeta(type):
         def __call__(cls, _value: str) -> NoReturn:
@@ -186,7 +186,7 @@ def test_collection_batch_failure_error_capture_and_parse_sequence_outer_error()
         pass
 
     parsed = u.parse_sequence(cast("type[_Color]", _ExplodingEnum), ["x"])
-    assert parsed.is_failure
+    tm.fail(parsed)
 
 
 def test_is_general_value_list_accepts_list_subclass() -> None:

@@ -28,7 +28,7 @@ import pytest
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import FlextExceptions, m, p, r, u
-from flext_tests import t
+from flext_tests import t, tm
 
 from ..test_utils import assertion_helpers
 from .contracts.text_contract import TextUtilityContract
@@ -222,8 +222,8 @@ class Testu(TextUtilityContract):
     def test_type_guard_string(self, case: UtilityTestCase) -> None:
         """Test string type guards."""
         result = u.is_type(case.input_data, "string_non_empty")
-        assert isinstance(result, bool)
-        assert result is case.should_succeed
+        tm.that(isinstance(result, bool), eq=True)
+        tm.that(result, eq=case.should_succeed)
 
     @pytest.mark.parametrize(
         "case",
@@ -236,8 +236,8 @@ class Testu(TextUtilityContract):
     def test_type_guard_dict(self, case: UtilityTestCase) -> None:
         """Test dict type guards."""
         result = u.is_type(case.input_data, "dict_non_empty")
-        assert isinstance(result, bool)
-        assert result is case.should_succeed
+        tm.that(isinstance(result, bool), eq=True)
+        tm.that(result, eq=case.should_succeed)
 
     @pytest.mark.parametrize(
         "case",
@@ -250,16 +250,16 @@ class Testu(TextUtilityContract):
     def test_type_guard_list(self, case: UtilityTestCase) -> None:
         """Test list type guards."""
         result = u.is_type(case.input_data, "list_non_empty")
-        assert isinstance(result, bool)
-        assert result is case.should_succeed
+        tm.that(isinstance(result, bool), eq=True)
+        tm.that(result, eq=case.should_succeed)
 
     def test_generate_id_uniqueness(self) -> None:
         """Test ID generation produces unique values."""
         id1 = u.generate()
         id2 = u.generate()
-        assert isinstance(id1, str)
-        assert len(id1) > 0
-        assert id1 != id2
+        tm.that(isinstance(id1, str), eq=True)
+        tm.that(len(id1), gt=0)
+        tm.that(id1, ne=id2)
 
     @pytest.mark.parametrize(
         ("method_name", "prefix"),
@@ -284,16 +284,16 @@ class Testu(TextUtilityContract):
             if method is None:
                 pytest.skip(f"Method {method_name} not available")
             result = method()
-        assert isinstance(result, str)
-        assert len(result) > 0
+        tm.that(isinstance(result, str), eq=True)
+        tm.that(len(result), gt=0)
         if prefix:
-            assert result.startswith(prefix)
+            tm.that(result.startswith(prefix), eq=True)
 
     def test_generate_short_id_length(self) -> None:
         """Test short ID generation with specific length."""
         short_id = u.generate("ulid", length=8)
-        assert isinstance(short_id, str)
-        assert len(short_id) == 8
+        tm.that(isinstance(short_id, str), eq=True)
+        tm.that(len(short_id), eq=8)
 
     @pytest.mark.parametrize(("raw", "expected"), TextUtilityContract.CLEAN_TEXT_CASES)
     def test_text_processor_clean(self, raw: str, expected: str) -> None:
@@ -304,8 +304,8 @@ class Testu(TextUtilityContract):
         """Test text truncation - returns r[str]."""
         result = u.truncate_text("hello world", max_length=8)
         _ = assertion_helpers.assert_flext_result_success(result)
-        assert len(result.value) <= 8
-        assert result.value.endswith("...")
+        tm.that(len(result.value), lte=8)
+        tm.that(result.value.endswith("..."), eq=True)
 
     @pytest.mark.parametrize(
         ("raw", "expected"),
@@ -339,27 +339,27 @@ class Testu(TextUtilityContract):
     ) -> None:
         """Test cache component normalization."""
         result = u.normalize_component(input_data)
-        assert isinstance(result, (dict, str, type(None), expected_type))
+        tm.that(isinstance(result, (dict, str, type(None), expected_type)), eq=True)
 
     def test_cache_sort_dict_keys(self) -> None:
         """Test dictionary key sorting."""
         data = {"z": 1, "a": 2, "m": 3}
         result = u.sort_dict_keys(data)
-        assert isinstance(result, dict)
+        tm.that(isinstance(result, dict), eq=True)
         keys = list(result.keys())
-        assert keys == sorted(keys)
+        tm.that(keys, eq=sorted(keys))
 
     def test_cache_generate_key(self) -> None:
         """Test cache key generation."""
         key1 = u.generate_cache_key(None, None)
-        assert isinstance(key1, str)
-        assert len(key1) > 0
+        tm.that(isinstance(key1, str), eq=True)
+        tm.that(len(key1), gt=0)
 
     def test_cache_generate_key_uniqueness(self) -> None:
         """Test cache keys are unique for different inputs."""
         key1 = u.generate_cache_key("arg1", kwarg1="value1")
         key2 = u.generate_cache_key("different")
-        assert key1 != key2
+        tm.that(key1, ne=key2)
 
     def test_cache_clear_object(self) -> None:
         """Test clearing object cache."""
@@ -399,7 +399,7 @@ class Testu(TextUtilityContract):
 
         result = u.with_timeout(quick_op, 5.0)
         _ = assertion_helpers.assert_flext_result_success(result)
-        assert result.value == "success"
+        tm.that(result.value, eq="success")
 
     def test_reliability_timeout_invalid(self) -> None:
         """Test timeout with invalid timeout value."""
@@ -418,7 +418,7 @@ class Testu(TextUtilityContract):
 
         result: r[str] = u.retry(op, max_attempts=3)
         _ = assertion_helpers.assert_flext_result_success(result)
-        assert result.value == "success"
+        tm.that(result.value, eq="success")
 
     def test_reliability_retry_eventual_success(self) -> None:
         """Test retry with eventual success."""
@@ -429,33 +429,33 @@ class Testu(TextUtilityContract):
             delay_seconds=0.01,
         )
         _ = assertion_helpers.assert_flext_result_success(result)
-        assert attempt_count[0] >= 2
+        tm.that(attempt_count[0], gte=2)
 
     def test_type_checker_object_accepts_all(self) -> None:
         """Test type checking with object (accepts all)."""
         accepted: tuple[t.MessageTypeSpecifier, ...] = (str,)
-        assert u.can_handle_message_type(accepted, str) is True
+        tm.that(u.can_handle_message_type(accepted, str), eq=True)
 
     def test_type_checker_specific_type_match(self) -> None:
         """Test type checking with matching specific type."""
         accepted = (str,)
-        assert u.can_handle_message_type(accepted, str) is True
+        tm.that(u.can_handle_message_type(accepted, str), eq=True)
 
     def test_type_checker_specific_type_mismatch(self) -> None:
         """Test type checking with mismatched specific type."""
         accepted = (str,)
-        assert u.can_handle_message_type(accepted, int) is False
+        tm.that(u.can_handle_message_type(accepted, int), eq=False)
 
     def test_type_checker_empty_accepted(self) -> None:
         """Test type checking with no accepted types."""
         accepted: tuple[t.MessageTypeSpecifier, ...] = ()
-        assert u.can_handle_message_type(accepted, str) is False
+        tm.that(u.can_handle_message_type(accepted, str), eq=False)
 
     def test_configuration_get_parameter(self) -> None:
         """Test parameter retrieval from config."""
         config = UtilityScenarios.create_mock_config(timeout=30)
         value = u.get_parameter(config, "timeout")
-        assert value == 30
+        tm.that(value, eq=30)
 
     def test_configuration_get_parameter_missing(self) -> None:
         """Test parameter retrieval for missing parameter."""
