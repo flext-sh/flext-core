@@ -138,11 +138,11 @@ class TestRuntimeTypeChecking:
         class NestedDict:
             __name__ = "NestedDict"
 
-        tm.that(FlextRuntime.extract_generic_args(StringDict), eq=(str, str))
-        tm.that(FlextRuntime.extract_generic_args(IntDict), eq=(str, int))
-        tm.that(FlextRuntime.extract_generic_args(FloatDict), eq=(str, float))
-        tm.that(FlextRuntime.extract_generic_args(BoolDict), eq=(str, bool))
-        tm.that(FlextRuntime.extract_generic_args(NestedDict), eq=(str, dict))
+        assert FlextRuntime.extract_generic_args(StringDict) == (str, str)
+        assert FlextRuntime.extract_generic_args(IntDict) == (str, int)
+        assert FlextRuntime.extract_generic_args(FloatDict) == (str, float)
+        assert FlextRuntime.extract_generic_args(BoolDict) == (str, bool)
+        assert FlextRuntime.extract_generic_args(NestedDict) == (str, dict)
 
     def test_is_sequence_type_with_type_mapping(self) -> None:
         """Test is_sequence_type with known type aliases."""
@@ -205,9 +205,9 @@ class TestRuntimeTypeChecking:
     def test_extract_generic_args_with_typing_get_args(self) -> None:
         """Test extract_generic_args when typing.get_args returns values."""
         args = FlextRuntime.extract_generic_args(list[str])
-        tm.that(args, eq=(str,))
+        assert args == (str,)
         args = FlextRuntime.extract_generic_args(dict[str, int])
-        tm.that(args, eq=(str, int))
+        assert args == (str, int)
 
     def test_extract_generic_args_exception_path(self) -> None:
         """Test extract_generic_args exception handling."""
@@ -221,7 +221,7 @@ class TestRuntimeTypeChecking:
                 return super().__getattribute__(name)
 
         result = FlextRuntime.extract_generic_args(BadType)
-        tm.that(result, eq=())
+        assert result == ()
 
     def test_is_sequence_type_with_origin(self) -> None:
         """Test is_sequence_type with typing.get_origin returning Sequence."""

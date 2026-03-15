@@ -392,9 +392,9 @@ class TestFlextUtilitiesArgs:
                 return True
 
             params = u.get_enum_params(process)
-            tm.that(params, contains="status")
+            assert "status" in params
             tm.that(params["status"], eq=TestFlextUtilitiesArgs.StatusEnum)
-            tm.that("name" in params, eq=False)
+            assert "name" not in params
 
         @staticmethod
         def test_get_enum_params_multiple() -> None:
@@ -408,11 +408,11 @@ class TestFlextUtilitiesArgs:
                 return True
 
             params = u.get_enum_params(process)
-            tm.that(params, contains="status")
-            tm.that(params, contains="priority")
+            assert "status" in params
+            assert "priority" in params
             tm.that(params["status"], eq=TestFlextUtilitiesArgs.StatusEnum)
             tm.that(params["priority"], eq=TestFlextUtilitiesArgs.PriorityEnum)
-            tm.that("name" in params, eq=False)
+            assert "name" not in params
 
         @staticmethod
         def test_get_enum_params_annotated() -> None:
@@ -424,7 +424,7 @@ class TestFlextUtilitiesArgs:
                 return True
 
             params = u.get_enum_params(process)
-            tm.that(params, contains="status")
+            assert "status" in params
             tm.that(params["status"], eq=TestFlextUtilitiesArgs.StatusEnum)
 
         @staticmethod
@@ -435,7 +435,7 @@ class TestFlextUtilitiesArgs:
                 return True
 
             params = u.get_enum_params(process)
-            tm.that(params, contains="status")
+            assert "status" in params
             tm.that(params["status"], eq=TestFlextUtilitiesArgs.StatusEnum)
 
         @staticmethod
@@ -471,7 +471,7 @@ class TestFlextUtilitiesArgs:
                 return True
 
             params = u.get_enum_params(process)
-            tm.that(params, contains="status")
+            assert "status" in params
             tm.that(params["status"], eq=TestFlextUtilitiesArgs.StatusEnum)
 
         @staticmethod
@@ -487,5 +487,5 @@ class TestFlextUtilitiesArgs:
                 return True
 
             params = u.get_enum_params(process)
-            tm.that(params, contains="status")
+            assert "status" in params
             tm.that(params["status"], eq=TestFlextUtilitiesArgs.StatusEnum)
