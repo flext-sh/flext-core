@@ -131,48 +131,33 @@ class FlextModelsCqrs:
         tag: ClassVar[Literal["query"]] = "query"
         _pagination_input_adapter: ClassVar[
             TypeAdapter[
-                FlextModelsCqrs.Pagination
-                | FlextModelsContainers.Dict
-                | Mapping[str, t.Scalar]
-                | None
+                BaseModel | FlextModelsContainers.Dict | Mapping[str, t.Scalar] | None
             ]
             | None
         ] = None
-        message_type: Annotated[
-            Literal["query"],
-            Field(
-                default="query",
-                frozen=True,
-                description="Message type discriminator",
-            ),
-        ] = "query"
-        filters: Annotated[
-            FlextModelsContainers.Dict,
-            Field(
-                default_factory=FlextModelsContainers.Dict,
-                description="Filter values that restrict which records are returned by the query.",
-                title="Query Filters",
-                examples=[{"status": "active", "tenant": "acme"}],
-            ),
-        ]
-        pagination: Annotated[
-            FlextModelsCqrs.Pagination | FlextModelsContainers.Dict,
-            Field(
-                default_factory=FlextModelsContainers.Dict,
-                description="Pagination settings controlling page number and page size for query results.",
-                title="Pagination",
-                examples=[{"page": 1, "size": 50}],
-            ),
-        ]
-        query_id: Annotated[
-            str,
-            Field(
-                default_factory=lambda: FlextRuntime.generate_prefixed_id("query"),
-                description="Unique query identifier used for tracing and cache correlation.",
-                title="Query Id",
-                examples=["query_01HZX7Q0P5N6M2"],
-            ),
-        ]
+        message_type: Literal["query"] = Field(
+            default="query",
+            frozen=True,
+            description="Message type discriminator",
+        )
+        filters: FlextModelsContainers.Dict = Field(
+            default_factory=FlextModelsContainers.Dict,
+            description="Filter values that restrict which records are returned by the query.",
+            title="Query Filters",
+            examples=[{"status": "active", "tenant": "acme"}],
+        )
+        pagination: BaseModel | FlextModelsContainers.Dict = Field(
+            default_factory=FlextModelsContainers.Dict,
+            description="Pagination settings controlling page number and page size for query results.",
+            title="Pagination",
+            examples=[{"page": 1, "size": 50}],
+        )
+        query_id: str = Field(
+            default_factory=lambda: FlextRuntime.generate_prefixed_id("query"),
+            description="Unique query identifier used for tracing and cache correlation.",
+            title="Query Id",
+            examples=["query_01HZX7Q0P5N6M2"],
+        )
         query_type: str | None = None
 
         @property
@@ -188,7 +173,7 @@ class FlextModelsCqrs:
         @classmethod
         def _resolve_pagination_class(
             cls: type[FlextModelsCqrs.Query],
-        ) -> type[FlextModelsCqrs.Pagination]:
+        ) -> type[BaseModel]:
             """Resolve correct Pagination class based on context."""
             if cls.__module__ != "flext_core.models" or "." not in cls.__qualname__:
                 return FlextModelsCqrs.Pagination
@@ -216,10 +201,7 @@ class FlextModelsCqrs:
         def _pagination_adapter(
             cls,
         ) -> TypeAdapter[
-            FlextModelsCqrs.Pagination
-            | FlextModelsContainers.Dict
-            | Mapping[str, t.Scalar]
-            | None
+            BaseModel | FlextModelsContainers.Dict | Mapping[str, t.Scalar] | None
         ]:
             if cls._pagination_input_adapter is None:
                 cls._pagination_input_adapter = TypeAdapter(
@@ -234,11 +216,8 @@ class FlextModelsCqrs:
         @classmethod
         def validate_pagination(
             cls,
-            v: FlextModelsCqrs.Pagination
-            | FlextModelsContainers.Dict
-            | Mapping[str, t.Scalar]
-            | None,
-        ) -> FlextModelsCqrs.Pagination:
+            v: BaseModel | FlextModelsContainers.Dict | Mapping[str, t.Scalar] | None,
+        ) -> BaseModel:
             """Convert pagination to Pagination instance."""
             pagination_cls = cls._resolve_pagination_class()
             parsed_input = cls._pagination_adapter().validate_python(v)
