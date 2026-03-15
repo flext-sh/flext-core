@@ -1,7 +1,7 @@
 """CLI entry point for maintenance services.
 
 Usage:
-    python -m flext_infra maintenance [--check] [--verbose]
+    python -m flext_infra maintenance [--workspace PATH] [--verbose]
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -9,10 +9,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import argparse
 import sys
 
 from flext_core import FlextRuntime
+from flext_infra import u
 from flext_infra._utilities.output import output
 from flext_infra.maintenance.python_version import FlextInfraPythonVersionEnforcer
 
@@ -20,13 +20,10 @@ from flext_infra.maintenance.python_version import FlextInfraPythonVersionEnforc
 def main(argv: list[str] | None = None) -> int:
     """Run maintenance service CLI."""
     FlextRuntime.ensure_structlog_configured()
-    parser = argparse.ArgumentParser(
+    parser = u.Infra.create_parser(
+        prog="maintenance",
         description="Enforce Python version constraints via pyproject.toml",
-    )
-    _ = parser.add_argument(
-        "--check",
-        action="store_true",
-        help="Check mode (no writes)",
+        include_check=True,
     )
     _ = parser.add_argument(
         "--verbose",
@@ -35,6 +32,7 @@ def main(argv: list[str] | None = None) -> int:
         help="Verbose output",
     )
     args = parser.parse_args(argv)
+    cli = u.Infra.resolve(args)
     service = FlextInfraPythonVersionEnforcer(
         config_type=None,
         config_overrides=None,
@@ -48,7 +46,7 @@ def main(argv: list[str] | None = None) -> int:
         wire_packages=None,
         wire_classes=None,
     )
-    result = service.execute(check_only=args.check, verbose=args.verbose)
+    result = service.execute(check_only=cli.check, verbose=args.verbose)
     if result.is_success:
         return result.unwrap()
     output.error(result.error or "maintenance failed")
