@@ -306,7 +306,7 @@ class FlextInfraWorkspaceChecker(s):
         )
         sarif_path = report_base / "check-report.sarif"
         sarif_payload = self.generate_sarif_report(results, resolved_gates)
-        json_write_result = self._json.write_json(sarif_path, sarif_payload)
+        json_write_result = u.Infra.write_json(sarif_path, sarif_payload)
         if json_write_result.is_failure:
             return r[list[m.Infra.Check.ProjectResult]].fail(
                 json_write_result.error or "failed to write sarif report",
@@ -562,7 +562,7 @@ class FlextInfraWorkspaceChecker(s):
         issues: list[m.Infra.Check.Issue] = []
         bandit_data: dict[str, t_infra.Infra.InfraValue] = {}
         try:
-            parsed = self._json.parse(result.stdout or "{}")
+            parsed = u.Infra.parse(result.stdout or "{}")
             if parsed.is_success and isinstance(parsed.value, Mapping):
                 bandit_data = self._to_mapping(parsed.value)
             raw_results: list[dict[str, t_infra.Infra.InfraValue]] = (
@@ -847,7 +847,7 @@ class FlextInfraWorkspaceChecker(s):
         if json_file.exists():
             try:
                 raw_text = json_file.read_text(encoding=c.Infra.Encoding.DEFAULT)
-                parsed = self._json.parse(raw_text)
+                parsed = u.Infra.parse(raw_text)
                 if parsed.is_success and isinstance(parsed.value, Mapping):
                     parsed_map = self._to_mapping(parsed.value)
                     error_items: list[dict[str, t_infra.Infra.InfraValue]] = (
@@ -914,7 +914,7 @@ class FlextInfraWorkspaceChecker(s):
             timeout=c.Infra.Timeouts.LONG,
         )
         issues: list[m.Infra.Check.Issue] = []
-        pyright_parse_result = self._json.parse(result.stdout or "{}")
+        pyright_parse_result = u.Infra.parse(result.stdout or "{}")
         pyright_data: dict[str, t_infra.Infra.InfraValue] = self._to_mapping(
             pyright_parse_result.value if pyright_parse_result.is_success else {},
         )
@@ -1026,7 +1026,7 @@ class FlextInfraWorkspaceChecker(s):
             project_dir,
         )
         issues: list[m.Infra.Check.Issue] = []
-        ruff_parse_result = self._json.parse(result.stdout or "[]")
+        ruff_parse_result = u.Infra.parse(result.stdout or "[]")
         ruff_data: t_infra.Infra.InfraValue = (
             ruff_parse_result.value if ruff_parse_result.is_success else []
         )

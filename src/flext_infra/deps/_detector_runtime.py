@@ -12,12 +12,8 @@ from pydantic import TypeAdapter, ValidationError
 
 from flext_core import FlextLogger, r
 from flext_infra import (
-    FlextInfraUtilitiesIo,
-    FlextInfraUtilitiesPaths,
-    FlextInfraUtilitiesReporting,
     c,
     m,
-    p,
     t,
     u,
 )
@@ -38,11 +34,7 @@ class _WorkspaceReport(Protocol):
 class _DetectorRuntime(Protocol):
     """Protocol for detector runtime service dependencies."""
 
-    paths: FlextInfraUtilitiesPaths
-    reporting: FlextInfraUtilitiesReporting
-    json: FlextInfraUtilitiesIo
     deps: FlextInfraDependencyDetectionService
-    runner: p.Infra.CommandRunner
     log: FlextLogger
 
     @staticmethod
@@ -153,7 +145,7 @@ class FlextInfraDependencyDetectorRuntime:
                         "PATH": f"{venv_bin}:{os.environ.get('PATH', '')}",
                     }
                     for package in to_add:
-                        run = detector.runner.run_raw(
+                        run = u.Infra.run_raw(
                             [
                                 c.Infra.Cli.POETRY,
                                 "add",
@@ -196,7 +188,7 @@ class FlextInfraDependencyDetectorRuntime:
         if args.output:
             out_path = Path(args.output)
         elif cli.apply:
-            report_dir = detector.reporting.get_report_dir(
+            report_dir = u.Infra.get_report_dir(
                 root,
                 c.Infra.Toml.PROJECT,
                 c.Infra.Toml.DEPENDENCIES,
@@ -207,7 +199,7 @@ class FlextInfraDependencyDetectorRuntime:
                 return r[int].fail(f"failed to create report directory: {exc}")
             out_path = report_dir / "detect-runtime-dev-latest.json"
         if out_path is not None and not cli.dry_run:
-            write_result = detector.json.write_json(out_path, report_payload)
+            write_result = u.Infra.write_json(out_path, report_payload)
             if write_result.is_failure:
                 return r[int].fail(write_result.error or "failed to write report")
             if not args.quiet:

@@ -7,12 +7,7 @@ from pathlib import Path
 
 from flext_core import FlextLogger, r
 from flext_infra import (
-    FlextInfraUtilitiesIo,
-    FlextInfraUtilitiesPaths,
-    FlextInfraUtilitiesReporting,
-    FlextInfraUtilitiesSubprocess,
     m,
-    p,
     u,
 )
 from flext_infra.deps._detector_runtime import FlextInfraDependencyDetectorRuntime
@@ -27,11 +22,7 @@ class FlextInfraRuntimeDevDependencyDetector:
     def __init__(self) -> None:
         """Initialize detector runtime services."""
         super().__init__()
-        self.paths = FlextInfraUtilitiesPaths()
-        self.reporting = FlextInfraUtilitiesReporting()
-        self.json = FlextInfraUtilitiesIo()
         self.deps = FlextInfraDependencyDetectionService()
-        self.runner: p.Infra.CommandRunner = FlextInfraUtilitiesSubprocess()
         self.log = self.log
 
     @staticmethod

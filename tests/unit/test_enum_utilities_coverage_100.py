@@ -356,7 +356,7 @@ class TestuEnumMetadata:
     def test_values(self) -> None:
         """Test values method."""
         values = u.values(Status)
-        tm.that(values, is_=frozenset)
+        tm.that(isinstance(values, frozenset), eq=True)
         tm.that(values, contains="active")
         tm.that(values, contains="pending")
         tm.that(values, contains="inactive")
@@ -364,7 +364,7 @@ class TestuEnumMetadata:
     def test_names(self) -> None:
         """Test names method."""
         names = u.names(Status)
-        tm.that(names, is_=frozenset)
+        tm.that(isinstance(names, frozenset), eq=True)
         tm.that(names, contains="ACTIVE")
         tm.that(names, contains="PENDING")
         tm.that(names, contains="INACTIVE")
@@ -372,7 +372,7 @@ class TestuEnumMetadata:
     def test_members(self) -> None:
         """Test members method."""
         members = u.members(Status)
-        tm.that(members, is_=frozenset)
+        tm.that(isinstance(members, frozenset), eq=True)
         tm.that(members, contains=Status.ACTIVE)
         tm.that(members, contains=Status.PENDING)
         tm.that(members, contains=Status.INACTIVE)

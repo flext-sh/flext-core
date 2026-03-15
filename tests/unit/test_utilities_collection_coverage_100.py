@@ -983,7 +983,7 @@ class TestuCollectionFilter:
             scenario.predicate,
             mapper=scenario.mapper,
         )
-        tm.that(result, eq=scenario.expected_result)
+        assert result == scenario.expected_result
 
 
 class TestuCollectionCount:
@@ -997,7 +997,7 @@ class TestuCollectionCount:
     def test_count(self, scenario: CountScenario) -> None:
         """Test count with various scenarios."""
         result = u.count(scenario.items, scenario.predicate)
-        tm.that(result, eq=scenario.expected_count)
+        assert result == scenario.expected_count
 
 
 class TestuCollectionProcess:
@@ -1024,7 +1024,7 @@ class TestuCollectionProcess:
                 tm.that(scenario.error_contains, in_=str(result.error))
         else:
             _ = assertion_helpers.assert_flext_result_success(result)
-            tm.that(result.value, eq=scenario.expected_result)
+            assert result.value == scenario.expected_result
 
 
 class TestuCollectionGroup:
@@ -1038,7 +1038,7 @@ class TestuCollectionGroup:
     def test_group(self, scenario: GroupScenario) -> None:
         """Test group with various scenarios."""
         result = u.group(scenario.items, scenario.key)
-        tm.that(result, eq=scenario.expected_result)
+        assert result == scenario.expected_result
 
 
 class TestuCollectionChunk:
@@ -1052,7 +1052,7 @@ class TestuCollectionChunk:
     def test_chunk(self, scenario: ChunkScenario) -> None:
         """Test chunk with various scenarios."""
         result = u.chunk(scenario.items, scenario.size)
-        tm.that(result, eq=scenario.expected_result)
+        assert result == scenario.expected_result
 
 
 class TestuCollectionBatch:

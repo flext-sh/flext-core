@@ -422,25 +422,25 @@ class TestrCoverage:
     def test_bool_failure_is_false(self) -> None:
         """Test that failure result is falsy."""
         result: r[str] = r[str].fail("error")
-        assert bool(result) is False
+        tm.that(bool(result), eq=False)
 
     def test_or_operator(self) -> None:
         """Test | operator for default values."""
         result: r[str] = r[str].fail("error")
         value = result | "default"
-        assert value == "default"
+        tm.that(value, eq="default")
 
     def test_or_operator_success(self) -> None:
         """Test | operator returns value on success."""
         result = r[str].ok("test")
         value = result | "default"
-        assert value == "test"
+        tm.that(value, eq="test")
 
     def test_context_manager_entry(self) -> None:
         """Test context manager __enter__ returns self."""
         result = r[str].ok("test")
         with result as ctx:
-            assert ctx is result
+            tm.that(ctx, eq=result)
 
     def test_context_manager_exit_success(self) -> None:
         """Test context manager __exit__ succeeds."""
@@ -457,12 +457,12 @@ class TestrCoverage:
     def test_repr_success(self) -> None:
         """Test __repr__ for success."""
         result = r[str].ok("test")
-        assert repr(result) == "r[T].ok('test')"
+        tm.that(repr(result), eq="r[T].ok('test')")
 
     def test_repr_failure(self) -> None:
         """Test __repr__ for failure."""
         result: r[str] = r[str].fail("error")
-        assert repr(result) == "r[T].fail('error')"
+        tm.that(repr(result), eq="r[T].fail('error')")
 
     def test_error_codes_metadata(self) -> None:
         """Test error code and error data metadata."""
@@ -472,8 +472,7 @@ class TestrCoverage:
             error_code="CODE_123",
             error_data=error_data,
         )
-        assert result.error_code == "CODE_123"
-        assert result.error_data == error_data
+        tm.fail(result, code="CODE_123", data={"details": "something"})
 
     def test_empty_string_vs_none_error(self) -> None:
         """Test empty string error vs None."""

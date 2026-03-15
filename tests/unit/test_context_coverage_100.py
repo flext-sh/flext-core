@@ -262,7 +262,7 @@ class TestContext100Coverage:
 
         int_key_dict = IntKeyDict()
         result = FlextModelsContext.ContextData.model_validate({"data": int_key_dict})
-        tm.that(result, contains="123").data
+        tm.that(result.data, contains="123")
 
     def test_context_data_validate_dict_serializable_non_serializable_value(
         self,
@@ -287,7 +287,7 @@ class TestContext100Coverage:
         model = TestModel()
         export = FlextModelsContext.ContextExport.model_validate({"data": model})
         assert isinstance(export.data, dict)
-        tm.that(export, contains="field").data
+        tm.that(export.data, contains="field")
 
     def test_context_export_validate_dict_serializable_non_dict(self) -> None:
         """Test ContextExport.validate_dict_serializable with non-dict."""
@@ -303,7 +303,7 @@ class TestContext100Coverage:
         """
         data = {123: "value"}
         result = FlextModelsContext.ContextExport.model_validate({"data": data})
-        tm.that(result, contains="123").data
+        tm.that(result.data, contains="123")
 
     def test_context_export_validate_dict_serializable_non_serializable_value(
         self,
@@ -350,7 +350,7 @@ class TestContext100Coverage:
         model = TestModel()
         scope_data = FlextModelsContext.ContextScopeData.model_validate({"data": model})
         assert isinstance(scope_data.data, dict)
-        tm.that(scope_data, contains="field").data
+        tm.that(scope_data.data, contains="field")
 
     def test_context_scope_data_validate_data_with_none(self) -> None:
         """Test ContextScopeData._validate_data with None."""
@@ -374,7 +374,7 @@ class TestContext100Coverage:
             "metadata": model,
         })
         assert isinstance(scope_data.metadata, dict)
-        tm.that(scope_data, contains="field").metadata
+        tm.that(scope_data.metadata, contains="field")
 
     def test_context_scope_data_validate_metadata_with_none(self) -> None:
         """Test ContextScopeData._validate_metadata with None."""
@@ -397,7 +397,7 @@ class TestContext100Coverage:
             "operations": model,
         })
         assert isinstance(stats.operations, dict)
-        tm.that(stats, contains="field").operations
+        tm.that(stats.operations, contains="field")
 
     def test_context_statistics_validate_operations_with_none(self) -> None:
         """Test ContextStatistics._validate_operations with None."""
@@ -419,7 +419,7 @@ class TestContext100Coverage:
             "custom_fields": model,
         })
         assert isinstance(metadata.custom_fields, dict)
-        tm.that(metadata, contains="field").custom_fields
+        tm.that(metadata.custom_fields, contains="field")
 
     def test_context_metadata_validate_custom_fields_with_none(self) -> None:
         """Test ContextMetadata._validate_custom_fields with None."""
