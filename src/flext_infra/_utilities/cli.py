@@ -60,6 +60,7 @@ class FlextInfraUtilitiesCli:
 
         Returns:
             Configured ArgumentParser instance.
+
         """
         parser = ArgumentParser(prog=prog, description=description)
 
@@ -124,6 +125,7 @@ class FlextInfraUtilitiesCli:
 
         Raises:
             ValidationError: If argument values fail Pydantic validation.
+
         """
         # Determine apply flag: True if --apply was set, False otherwise
         apply_flag = bool(getattr(args, "apply", False))

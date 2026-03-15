@@ -2,7 +2,7 @@
 
 Usage:
     python -m flext_infra deps detect [-q] [--no-fail] [--typings]
-    python -m flext_infra deps internal-sync --project-root PATH
+    python -m flext_infra deps internal-sync [--workspace PATH]
     python -m flext_infra deps modernize [--skip-check] [--audit]
     python -m flext_infra deps path-sync --mode MODE
     python -m flext_infra deps extra-paths [--project ROOT]

@@ -29,6 +29,7 @@ if TYPE_CHECKING:
         __version__,
         __version_info__,
     )
+    from flext_infra._utilities.cli import FlextInfraUtilitiesCli
     from flext_infra._utilities.discovery import FlextInfraUtilitiesDiscovery
     from flext_infra._utilities.formatting import FlextInfraUtilitiesFormatting
     from flext_infra._utilities.git import FlextInfraUtilitiesGit
@@ -644,6 +645,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     ),
     "FlextInfraTypes": ("flext_infra.typings", "FlextInfraTypes"),
     "FlextInfraUtilities": ("flext_infra.utilities", "FlextInfraUtilities"),
+    "FlextInfraUtilitiesCli": ("flext_infra._utilities.cli", "FlextInfraUtilitiesCli"),
     "FlextInfraUtilitiesDiscovery": (
         "flext_infra._utilities.discovery",
         "FlextInfraUtilitiesDiscovery",
@@ -940,6 +942,7 @@ __all__ = [
     "FlextInfraTextPatternScanner",
     "FlextInfraTypes",
     "FlextInfraUtilities",
+    "FlextInfraUtilitiesCli",
     "FlextInfraUtilitiesDiscovery",
     "FlextInfraUtilitiesFormatting",
     "FlextInfraUtilitiesGit",

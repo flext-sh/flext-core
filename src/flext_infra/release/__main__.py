@@ -1,9 +1,9 @@
 """CLI entry point for release orchestration.
 
 Usage:
-    python -m flext_infra release --phase validate --dry-run --root .
-    python -m flext_infra release --phase version --version 1.0.0 --root .
-    python -m flext_infra release --phase all --version 1.0.0 --root . --dry-run
+    python -m flext_infra release --phase validate --dry-run --workspace .
+    python -m flext_infra release --phase version --version 1.0.0 --workspace .
+    python -m flext_infra release --phase all --version 1.0.0 --workspace . --dry-run
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -11,9 +11,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import argparse
 import sys
-from pathlib import Path
 
 from flext_core import FlextRuntime
 from flext_infra import (
@@ -23,25 +21,6 @@ from flext_infra import (
     output,
 )
 from flext_infra.release.orchestrator import FlextInfraReleaseOrchestrator
-
-
-def _parse_args() -> argparse.Namespace:
-    """Parse command line arguments for the release runner."""
-    parser = argparse.ArgumentParser(description="Release orchestration")
-    _ = parser.add_argument("--root", type=Path, default=Path())
-    _ = parser.add_argument("--phase", default="all")
-    _ = parser.add_argument("--version", default="")
-    _ = parser.add_argument("--tag", default="")
-    _ = parser.add_argument("--bump", default="")
-    _ = parser.add_argument("--interactive", type=int, default=1)
-    _ = parser.add_argument("--push", action="store_true", default=False)
-    _ = parser.add_argument("--dry-run", action="store_true", default=False)
-    _ = parser.add_argument("--dev-suffix", action="store_true", default=False)
-    _ = parser.add_argument("--next-dev", action="store_true", default=False)
-    _ = parser.add_argument("--next-bump", default="minor")
-    _ = parser.add_argument("--create-branches", type=int, default=1)
-    _ = parser.add_argument("--projects", nargs="*", default=[])
-    return parser.parse_args()
 
 
 def _resolve_version(args: argparse.Namespace, root: Path) -> str:

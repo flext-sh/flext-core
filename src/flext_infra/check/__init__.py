@@ -28,7 +28,10 @@ if TYPE_CHECKING:
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "CheckIssue": ("flext_infra.check.services", "CheckIssue"),
     "FlextInfraConfigFixer": ("flext_infra.check.services", "FlextInfraConfigFixer"),
-    "FlextInfraWorkspaceChecker": ("flext_infra.check.workspace_check", "FlextInfraWorkspaceChecker"),
+    "FlextInfraWorkspaceChecker": (
+        "flext_infra.check.workspace_check",
+        "FlextInfraWorkspaceChecker",
+    ),
     "GateExecution": ("flext_infra.check.services", "GateExecution"),
     "ProjectResult": ("flext_infra.check.services", "ProjectResult"),
     "build_parser": ("flext_infra.check.workspace_check", "build_parser"),

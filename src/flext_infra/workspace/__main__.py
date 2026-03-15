@@ -1,8 +1,8 @@
 """CLI entry point for workspace utilities.
 
 Usage:
-    python -m flext_infra workspace detect [--project-root PATH]
-    python -m flext_infra workspace sync [--project-root PATH]
+    python -m flext_infra workspace detect [--workspace PATH]
+    python -m flext_infra workspace sync [--workspace PATH]
     python -m flext_infra workspace orchestrate --verb <verb> [--fail-fast] [projects...]
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -11,9 +11,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import argparse
 import sys
-from pathlib import Path
 
 from flext_core import FlextRuntime
 from flext_infra import u
@@ -23,40 +21,40 @@ from flext_infra.workspace.orchestrator import FlextInfraOrchestratorService
 from flext_infra.workspace.sync import FlextInfraSyncService
 
 
-def _run_detect(args: argparse.Namespace) -> int:
+def _run_detect(cli: u.Infra.CliArgs) -> int:
     """Execute workspace detection."""
     detector = FlextInfraWorkspaceDetector()
-    result = detector.detect(args.project_root)
+    result = detector.detect(cli.workspace)
     if result.is_success:
         return 0
     u.Infra.error(result.error or "detection failed")
     return 1
 
 
-def _run_sync(args: argparse.Namespace) -> int:
+def _run_sync(cli: u.Infra.CliArgs, canonical_root) -> int:
     """Execute base.mk sync."""
-    service = FlextInfraSyncService(canonical_root=args.canonical_root)
-    result = service.sync(
-        project_root=args.project_root, canonical_root=args.canonical_root
-    )
+    service = FlextInfraSyncService(canonical_root=canonical_root)
+    result = service.sync(project_root=cli.workspace, canonical_root=canonical_root)
     if result.is_success:
         return 0
     u.Infra.error(result.error or "sync failed")
     return 1
 
 
-def _run_orchestrate(args: argparse.Namespace) -> int:
+def _run_orchestrate(
+    projects: list[str], verb: str, fail_fast: bool, make_args: list[str]
+) -> int:
     """Execute multi-project orchestration."""
-    projects = [p for p in args.projects if p]
+    projects = [p for p in projects if p]
     if not projects:
         u.Infra.error("no projects specified")
         return 1
     service = FlextInfraOrchestratorService()
     result = service.orchestrate(
         projects=projects,
-        verb=args.verb,
-        fail_fast=args.fail_fast,
-        make_args=args.make_arg,
+        verb=verb,
+        fail_fast=fail_fast,
+        make_args=make_args,
     )
     if result.is_success:
         outputs = result.value
@@ -66,9 +64,9 @@ def _run_orchestrate(args: argparse.Namespace) -> int:
     return 1
 
 
-def _run_migrate(args: argparse.Namespace) -> int:
+def _run_migrate(cli: u.Infra.CliArgs) -> int:
     service = FlextInfraProjectMigrator()
-    result = service.migrate(workspace_root=args.workspace_root, dry_run=args.dry_run)
+    result = service.migrate(workspace_root=cli.workspace, dry_run=not cli.apply)
     if result.is_failure:
         u.Infra.error(result.error or "migration failed")
         return 1
@@ -86,7 +84,7 @@ def _run_migrate(args: argparse.Namespace) -> int:
     u.Infra.info(
         f"Total: {total_changes} change(s), {total_errors} error(s) across {len(result.value)} project(s)",
     )
-    if args.dry_run:
+    if not cli.apply:
         u.Infra.info("(dry-run — no files modified)")
     return 1 if failed_projects else 0
 
@@ -94,31 +92,25 @@ def _run_migrate(args: argparse.Namespace) -> int:
 def main(argv: list[str] | None = None) -> int:
     """Run workspace utilities: detect mode, sync base.mk, orchestrate projects."""
     FlextRuntime.ensure_structlog_configured()
-    parser = argparse.ArgumentParser(description="Workspace management utilities")
+    parser = u.Infra.create_parser(
+        "flext_infra workspace",
+        "Workspace management utilities",
+    )
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
-    detect_parser = subparsers.add_parser(
+
+    subparsers.add_parser(
         "detect",
         help="Detect workspace or standalone mode",
     )
-    _ = detect_parser.add_argument(
-        "--project-root",
-        required=True,
-        type=Path,
-        help="Path to the project directory",
-    )
+
     sync_parser = subparsers.add_parser("sync", help="Sync base.mk to project root")
     _ = sync_parser.add_argument(
-        "--project-root",
-        required=True,
-        type=Path,
-        help="Path to the project directory",
-    )
-    _ = sync_parser.add_argument(
         "--canonical-root",
-        type=Path,
+        type=str,
         default=None,
         help="Canonical workspace root",
     )
+
     orch_parser = subparsers.add_parser(
         "orchestrate",
         help="Run make verb across projects",
@@ -140,30 +132,45 @@ def main(argv: list[str] | None = None) -> int:
         nargs="*",
         help="Project directories to orchestrate",
     )
+
     migrate_parser = subparsers.add_parser(
         "migrate",
         help="Migrate workspace projects to flext_infra tooling",
-    )
-    _ = migrate_parser.add_argument(
-        "--workspace-root",
-        required=True,
-        type=Path,
-        help="Workspace root directory containing subprojects",
     )
     _ = migrate_parser.add_argument(
         "--dry-run",
         action="store_true",
         help="Preview migration changes without writing files",
     )
+
     args = parser.parse_args(argv)
+    cli = u.Infra.resolve(args)
+
     if args.command == "detect":
-        return _run_detect(args)
+        return _run_detect(cli)
     if args.command == "sync":
-        return _run_sync(args)
+        return _run_sync(cli, getattr(args, "canonical_root", None))
     if args.command == "orchestrate":
-        return _run_orchestrate(args)
+        return _run_orchestrate(
+            args.projects,
+            args.verb,
+            args.fail_fast,
+            args.make_arg,
+        )
     if args.command == "migrate":
-        return _run_migrate(args)
+        # For migrate, we need to handle dry_run from args since it's not in CliArgs
+        dry_run = getattr(args, "dry_run", False)
+        # Create a modified cli with apply=False if dry_run is True
+        if dry_run:
+            cli = u.Infra.CliArgs(
+                workspace=cli.workspace,
+                apply=False,
+                output_format=cli.output_format,
+                check=cli.check,
+                project=cli.project,
+                projects=cli.projects,
+            )
+        return _run_migrate(cli)
     parser.print_help()
     return 1
 

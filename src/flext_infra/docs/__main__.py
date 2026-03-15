@@ -1,11 +1,11 @@
 """CLI entry point for documentation services.
 
 Usage:
-    python -m flext_infra docs audit --root flext-core
-    python -m flext_infra docs fix --root flext-core --apply
-    python -m flext_infra docs build --root flext-core
-    python -m flext_infra docs generate --root flext-core --apply
-    python -m flext_infra docs validate --root flext-core
+    python -m flext_infra docs audit --workspace flext-core
+    python -m flext_infra docs fix --workspace flext-core --apply
+    python -m flext_infra docs build --workspace flext-core
+    python -m flext_infra docs generate --workspace flext-core --apply
+    python -m flext_infra docs validate --workspace flext-core
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -15,10 +15,9 @@ from __future__ import annotations
 
 import argparse
 import sys
-from pathlib import Path
 
 from flext_core import FlextRuntime
-from flext_infra import c, output
+from flext_infra import c, output, u
 from flext_infra.docs.auditor import FlextInfraDocAuditor
 from flext_infra.docs.builder import FlextInfraDocBuilder
 from flext_infra.docs.fixer import FlextInfraDocFixer
@@ -26,13 +25,13 @@ from flext_infra.docs.generator import FlextInfraDocGenerator
 from flext_infra.docs.validator import FlextInfraDocValidator
 
 
-def _run_audit(args: argparse.Namespace) -> int:
+def _run_audit(cli: u.Infra.CliArgs, args: argparse.Namespace) -> int:
     """Execute documentation audit."""
     auditor = FlextInfraDocAuditor()
     result = auditor.audit(
-        root=Path(args.root).resolve(),
-        project=args.project,
-        projects=args.projects,
+        root=cli.workspace,
+        project=cli.project,
+        projects=cli.projects,
         output_dir=args.output_dir,
         check=args.check,
         strict=bool(args.strict),
@@ -44,15 +43,15 @@ def _run_audit(args: argparse.Namespace) -> int:
     return 1 if failures else 0
 
 
-def _run_fix(args: argparse.Namespace) -> int:
+def _run_fix(cli: u.Infra.CliArgs, args: argparse.Namespace) -> int:
     """Execute documentation fix."""
     fixer = FlextInfraDocFixer()
     result = fixer.fix(
-        root=Path(args.root).resolve(),
-        project=args.project,
-        projects=args.projects,
+        root=cli.workspace,
+        project=cli.project,
+        projects=cli.projects,
         output_dir=args.output_dir,
-        apply=args.apply,
+        apply=cli.apply,
     )
     if result.is_failure:
         output.error(result.error or "fix failed")
@@ -60,13 +59,13 @@ def _run_fix(args: argparse.Namespace) -> int:
     return 0
 
 
-def _run_build(args: argparse.Namespace) -> int:
+def _run_build(cli: u.Infra.CliArgs, args: argparse.Namespace) -> int:
     """Execute documentation build."""
     builder = FlextInfraDocBuilder()
     result = builder.build(
-        root=Path(args.root).resolve(),
-        project=args.project,
-        projects=args.projects,
+        root=cli.workspace,
+        project=cli.project,
+        projects=cli.projects,
         output_dir=args.output_dir,
     )
     if result.is_failure:
@@ -76,15 +75,15 @@ def _run_build(args: argparse.Namespace) -> int:
     return 1 if failures else 0
 
 
-def _run_generate(args: argparse.Namespace) -> int:
+def _run_generate(cli: u.Infra.CliArgs, args: argparse.Namespace) -> int:
     """Execute documentation generation."""
     generator = FlextInfraDocGenerator()
     result = generator.generate(
-        root=Path(args.root).resolve(),
-        project=args.project,
-        projects=args.projects,
+        root=cli.workspace,
+        project=cli.project,
+        projects=cli.projects,
         output_dir=args.output_dir,
-        apply=args.apply,
+        apply=cli.apply,
     )
     if result.is_failure:
         output.error(result.error or "generate failed")

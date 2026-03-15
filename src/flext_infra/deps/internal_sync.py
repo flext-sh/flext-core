@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import argparse
 import configparser
 import os
 import re
@@ -418,12 +417,15 @@ class FlextInfraInternalDependencySyncService:
 
 def main() -> int:
     """Entry point for internal dependency synchronization CLI."""
-    parser = argparse.ArgumentParser()
-    _ = parser.add_argument("--project-root", type=Path, required=True)
+    parser = u.Infra.create_parser(
+        prog="flext-infra deps internal-sync",
+        description="Synchronize internal FLEXT dependencies via git clone or workspace symlinks",
+        include_apply=False,
+    )
     args = parser.parse_args()
-    project_root = args.project_root.resolve()
+    cli_args = u.Infra.resolve(args)
     service = FlextInfraInternalDependencySyncService()
-    result = service.sync(project_root)
+    result = service.sync(cli_args.workspace)
     if result.is_success:
         return result.value
     sync_error = result.error or "sync_internal_deps_failed"

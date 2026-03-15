@@ -1,11 +1,11 @@
 """CLI entry point for code generation services.
 
 Usage:
-    python -m flext_infra codegen lazy-init [--check] [--root PATH]
+    python -m flext_infra codegen lazy-init [--check] [--workspace PATH]
     python -m flext_infra codegen census [--workspace PATH] [--format json|text]
-    python -m flext_infra codegen scaffold [--workspace PATH] [--dry-run]
-    python -m flext_infra codegen auto-fix [--workspace PATH] [--dry-run]
-    python -m flext_infra codegen pipeline [--workspace PATH] [--dry-run] [--format json|text]
+    python -m flext_infra codegen scaffold [--workspace PATH] [--dry-run|--apply]
+    python -m flext_infra codegen auto-fix [--workspace PATH] [--dry-run|--apply]
+    python -m flext_infra codegen pipeline [--workspace PATH] [--dry-run|--apply] [--format json|text]
     python -m flext_infra codegen constants-quality-gate [--workspace PATH] [--before-report PATH | --baseline-file PATH] [--format json|text]
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -14,7 +14,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import argparse
 import sys
 from pathlib import Path
 

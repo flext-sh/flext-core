@@ -29,13 +29,31 @@ if TYPE_CHECKING:
     from flext_infra.codegen.transforms import FlextInfraCodegenTransforms
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
-    "FlextInfraCodegenCensus": ("flext_infra.codegen.census", "FlextInfraCodegenCensus"),
-    "FlextInfraCodegenConstantsQualityGate": ("flext_infra.codegen.constants_quality_gate", "FlextInfraCodegenConstantsQualityGate"),
+    "FlextInfraCodegenCensus": (
+        "flext_infra.codegen.census",
+        "FlextInfraCodegenCensus",
+    ),
+    "FlextInfraCodegenConstantsQualityGate": (
+        "flext_infra.codegen.constants_quality_gate",
+        "FlextInfraCodegenConstantsQualityGate",
+    ),
     "FlextInfraCodegenFixer": ("flext_infra.codegen.fixer", "FlextInfraCodegenFixer"),
-    "FlextInfraCodegenLazyInit": ("flext_infra.codegen.lazy_init", "FlextInfraCodegenLazyInit"),
-    "FlextInfraCodegenPyTyped": ("flext_infra.codegen.py_typed", "FlextInfraCodegenPyTyped"),
-    "FlextInfraCodegenScaffolder": ("flext_infra.codegen.scaffolder", "FlextInfraCodegenScaffolder"),
-    "FlextInfraCodegenTransforms": ("flext_infra.codegen.transforms", "FlextInfraCodegenTransforms"),
+    "FlextInfraCodegenLazyInit": (
+        "flext_infra.codegen.lazy_init",
+        "FlextInfraCodegenLazyInit",
+    ),
+    "FlextInfraCodegenPyTyped": (
+        "flext_infra.codegen.py_typed",
+        "FlextInfraCodegenPyTyped",
+    ),
+    "FlextInfraCodegenScaffolder": (
+        "flext_infra.codegen.scaffolder",
+        "FlextInfraCodegenScaffolder",
+    ),
+    "FlextInfraCodegenTransforms": (
+        "flext_infra.codegen.transforms",
+        "FlextInfraCodegenTransforms",
+    ),
 }
 
 __all__ = [

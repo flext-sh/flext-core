@@ -34,9 +34,10 @@ def main() -> int:
 
 
 def _run_centralize_pydantic(*, argv: list[str]) -> int:
-    parser = u.Infra.create_refactor_parser(
+    parser = u.Infra.create_parser(
         prog="flext_infra refactor centralize-pydantic",
         description="Centralize BaseModel/TypedDict/dict-like aliases into _models.py using AST rewrites",
+        include_apply=True,
     )
     _ = parser.add_argument(
         "--normalize-remaining",
@@ -44,23 +45,27 @@ def _run_centralize_pydantic(*, argv: list[str]) -> int:
         help="Remove remaining BaseModel/TypedDict bases in non-allowed files",
     )
     args = parser.parse_args(argv)
-    workspace_path, apply_changes = u.Infra.resolve_workspace_args(args)
+    cli_args = u.Infra.resolve(args)
     summary = FlextInfraRefactorPydanticCentralizer.centralize_workspace(
-        workspace_path,
-        apply_changes=apply_changes,
+        cli_args.workspace,
+        apply_changes=cli_args.apply,
         normalize_remaining=bool(args.normalize_remaining),
     )
     output.metrics(
-        {"workspace": workspace_path, "mode": "apply" if apply_changes else "dry-run"},
+        {
+            "workspace": cli_args.workspace,
+            "mode": "apply" if cli_args.apply else "dry-run",
+        },
         summary,
     )
     return 0
 
 
 def _run_migrate_to_mro(*, argv: list[str]) -> int:
-    parser = u.Infra.create_refactor_parser(
+    parser = u.Infra.create_parser(
         prog="flext_infra refactor migrate-mro",
         description="Migrate loose Final/TypeVar/TypeAlias declarations into MRO facade classes and rewrite references",
+        include_apply=True,
     )
     _ = parser.add_argument(
         "--target",
@@ -69,9 +74,9 @@ def _run_migrate_to_mro(*, argv: list[str]) -> int:
         help="Migration target scope",
     )
     args = parser.parse_args(argv)
-    workspace_path, apply_changes = u.Infra.resolve_workspace_args(args)
-    service = FlextInfraRefactorMigrateToClassMRO(workspace_root=workspace_path)
-    report = service.run(target=args.target, apply_changes=apply_changes)
+    cli_args = u.Infra.resolve(args)
+    service = FlextInfraRefactorMigrateToClassMRO(workspace_root=cli_args.workspace)
+    report = service.run(target=args.target, apply_changes=cli_args.apply)
     output.write(FlextInfraRefactorMigrateToClassMRO.render_text(report))
     if len(report.errors) > 0:
         for error in report.errors:
@@ -81,14 +86,15 @@ def _run_migrate_to_mro(*, argv: list[str]) -> int:
 
 
 def _run_namespace_enforce(*, argv: list[str]) -> int:
-    parser = u.Infra.create_refactor_parser(
+    parser = u.Infra.create_parser(
         prog="flext_infra refactor namespace-enforce",
         description="Scan workspace for namespace violations: missing facades, loose objects, import violations, cyclic imports",
+        include_apply=True,
     )
     args = parser.parse_args(argv)
-    workspace_path, apply_changes = u.Infra.resolve_workspace_args(args)
-    enforcer = FlextInfraNamespaceEnforcer(workspace_root=workspace_path)
-    report = enforcer.enforce(apply_changes=apply_changes)
+    cli_args = u.Infra.resolve(args)
+    enforcer = FlextInfraNamespaceEnforcer(workspace_root=cli_args.workspace)
+    report = enforcer.enforce(apply_changes=cli_args.apply)
     sys.stdout.write(FlextInfraNamespaceEnforcer.render_text(report))
     sys.stdout.flush()
     if report.has_violations:
@@ -97,9 +103,10 @@ def _run_namespace_enforce(*, argv: list[str]) -> int:
 
 
 def _run_ultrawork_models(*, argv: list[str]) -> int:
-    parser = u.Infra.create_refactor_parser(
+    parser = u.Infra.create_parser(
         prog="flext_infra refactor ultrawork-models",
         description="Run full AST model centralization + MRO + namespace enforcement workflow",
+        include_apply=True,
     )
     _ = parser.add_argument(
         "--normalize-remaining",
@@ -107,21 +114,26 @@ def _run_ultrawork_models(*, argv: list[str]) -> int:
         help="Remove remaining BaseModel/TypedDict bases in non-allowed files",
     )
     args = parser.parse_args(argv)
-    workspace_path, apply_changes = u.Infra.resolve_workspace_args(args)
+    cli_args = u.Infra.resolve(args)
     centralize_summary = FlextInfraRefactorPydanticCentralizer.centralize_workspace(
-        workspace_path,
-        apply_changes=apply_changes,
+        cli_args.workspace,
+        apply_changes=cli_args.apply,
         normalize_remaining=bool(args.normalize_remaining),
     )
-    mro_report = FlextInfraRefactorMigrateToClassMRO(workspace_root=workspace_path).run(
+    mro_report = FlextInfraRefactorMigrateToClassMRO(
+        workspace_root=cli_args.workspace
+    ).run(
         target="all",
-        apply_changes=apply_changes,
+        apply_changes=cli_args.apply,
     )
     namespace_report = FlextInfraNamespaceEnforcer(
-        workspace_root=workspace_path,
-    ).enforce(apply_changes=apply_changes)
+        workspace_root=cli_args.workspace,
+    ).enforce(apply_changes=cli_args.apply)
     output.metrics(
-        {"workspace": workspace_path, "mode": "apply" if apply_changes else "dry-run"},
+        {
+            "workspace": cli_args.workspace,
+            "mode": "apply" if cli_args.apply else "dry-run",
+        },
         centralize_summary,
         {
             "mro_remaining_violations": mro_report.remaining_violations,
@@ -149,7 +161,7 @@ def _run_ultrawork_models(*, argv: list[str]) -> int:
 
 
 def _run_census(*, argv: list[str]) -> int:
-    parser = u.Infra.create_refactor_parser(
+    parser = u.Infra.create_parser(
         prog="flext_infra refactor census",
         description="Run AST/CST census of MRO family method usage across workspace projects",
         include_apply=False,
@@ -168,11 +180,11 @@ def _run_census(*, argv: list[str]) -> int:
         help="Path to write JSON report (optional)",
     )
     args = parser.parse_args(argv)
-    workspace_path = args.workspace.resolve()
+    cli_args = u.Infra.resolve(args)
     census = FlextInfraRefactorCensus()
 
     target = u.Infra.build_mro_target(args.family)
-    result = census.run(workspace_path, target=target)
+    result = census.run(cli_args.workspace, target=target)
     if result.is_failure:
         output.error(f"Census failed: {result.error}")
         return 1
@@ -185,7 +197,7 @@ def _run_census(*, argv: list[str]) -> int:
         output.info(f"JSON report exported to: {json_path}")
 
     output.metrics(
-        {"family": args.family, "workspace": workspace_path},
+        {"family": args.family, "workspace": cli_args.workspace},
         report,
     )
     return 0
