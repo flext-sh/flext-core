@@ -123,7 +123,7 @@ class _ProtocolIntrospection:
         protocol_annotations: Mapping[str, type | str] = (
             protocol.__annotations__ if hasattr(protocol, "__annotations__") else {}
         )
-        raw_attrs = set(_ProtocolIntrospection._get_protocol_attrs(protocol))
+        raw_attrs = set(_ProtocolIntrospection.get_protocol_attrs(protocol))
         protocol_methods: set[str] = set()
         protocol_methods.update(raw_attrs)
         required_members: set[str] = set(protocol_annotations.keys())
@@ -248,7 +248,7 @@ class FlextProtocols:
     def _get_protocol_members(cls, protocol: type) -> frozenset[str]:
         if protocol not in cls._protocol_members_cache:
             cls._protocol_members_cache[protocol] = frozenset(
-                _ProtocolIntrospection._get_protocol_attrs(protocol)
+                _ProtocolIntrospection.get_protocol_attrs(protocol)
             )
         return cls._protocol_members_cache[protocol]
 
