@@ -12,6 +12,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import sys
+from pathlib import Path
 
 from flext_core import FlextRuntime
 from flext_infra import (
@@ -19,32 +20,35 @@ from flext_infra import (
     FlextInfraUtilitiesVersioning,
     c,
     output,
+    u,
 )
 from flext_infra.release.orchestrator import FlextInfraReleaseOrchestrator
 
 
-def _resolve_version(args: argparse.Namespace, root: Path) -> str:
+def _resolve_version(
+    version_arg: str, bump_arg: str, interactive: int, root_path: Path
+) -> str:
     """Determine the target release version based on arguments."""
     versioning = FlextInfraUtilitiesVersioning()
-    if args.version:
-        requested = str(args.version)
+    if version_arg:
+        requested = str(version_arg)
         parse_result = versioning.parse_semver(requested)
         if parse_result.is_failure:
             msg = parse_result.error or "invalid version"
             raise RuntimeError(msg)
         return requested
-    current_result = versioning.current_workspace_version(root)
+    current_result = versioning.current_workspace_version(root_path)
     if current_result.is_failure:
         msg = current_result.error or "cannot read current version"
         raise RuntimeError(msg)
     current = current_result.value
-    if args.bump:
-        bump_result = versioning.bump_version(current, args.bump)
+    if bump_arg:
+        bump_result = versioning.bump_version(current, bump_arg)
         if bump_result.is_failure:
             msg = bump_result.error or "bump failed"
             raise RuntimeError(msg)
         return bump_result.value
-    if args.interactive != 1:
+    if interactive != 1:
         return current
     bump = input("bump> ").strip().lower()
     if bump not in {"major", "minor", "patch"}:
@@ -57,10 +61,10 @@ def _resolve_version(args: argparse.Namespace, root: Path) -> str:
     return bump_result.value
 
 
-def _resolve_tag(args: argparse.Namespace, version: str) -> str:
+def _resolve_tag(tag_arg: str, version: str) -> str:
     """Determine the Git tag for the release."""
-    if args.tag:
-        requested = str(args.tag)
+    if tag_arg:
+        requested = str(tag_arg)
         if not requested.startswith("v"):
             msg = "tag must start with v"
             raise RuntimeError(msg)
@@ -71,9 +75,26 @@ def _resolve_tag(args: argparse.Namespace, version: str) -> str:
 def main() -> int:
     """Orchestrate the release process through configured phases."""
     FlextRuntime.ensure_structlog_configured()
-    args = _parse_args()
+    parser = u.Infra.create_parser(
+        prog="release",
+        description="Release orchestration",
+        include_apply=True,
+    )
+    _ = parser.add_argument("--phase", default="all")
+    _ = parser.add_argument("--version", default="")
+    _ = parser.add_argument("--tag", default="")
+    _ = parser.add_argument("--bump", default="")
+    _ = parser.add_argument("--interactive", type=int, default=1)
+    _ = parser.add_argument("--push", action="store_true", default=False)
+    _ = parser.add_argument("--dev-suffix", action="store_true", default=False)
+    _ = parser.add_argument("--next-dev", action="store_true", default=False)
+    _ = parser.add_argument("--next-bump", default="minor")
+    _ = parser.add_argument("--create-branches", type=int, default=1)
+    _ = parser.add_argument("--projects", nargs="*", default=[])
+    args = parser.parse_args()
+    cli = u.Infra.resolve(args)
     resolver = FlextInfraUtilitiesPaths()
-    root_result = resolver.workspace_root(args.root)
+    root_result = resolver.workspace_root(cli.workspace)
     if root_result.is_failure:
         output.error(root_result.error or "workspace root resolution failed")
         return 1
@@ -93,13 +114,13 @@ def main() -> int:
     )
     if needs_version:
         try:
-            version = _resolve_version(args, root)
+            version = _resolve_version(args.version, args.bump, args.interactive, root)
         except RuntimeError as exc:
             output.error(str(exc))
             return 1
     else:
         version = args.version or "0.0.0"
-    tag = _resolve_tag(args, version)
+    tag = _resolve_tag(args.tag, version)
     service = FlextInfraReleaseOrchestrator(
         config_type=None,
         config_overrides=None,
@@ -119,7 +140,7 @@ def main() -> int:
         tag=tag,
         phases=phases,
         project_names=args.projects or None,
-        dry_run=args.dry_run,
+        dry_run=cli.apply,
         push=args.push,
         dev_suffix=args.dev_suffix,
         create_branches=args.create_branches == 1,
