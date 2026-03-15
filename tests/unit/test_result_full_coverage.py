@@ -82,32 +82,32 @@ def test_recover_tap_and_tap_error_paths() -> None:
 
 def test_from_validation_and_to_model_paths() -> None:
     success_result = r[_TargetModel].from_validation({"value": 10}, _TargetModel)
-    assert success_result.is_success
-    assert success_result.value.value == 10
+    tm.ok(success_result)
+    tm.that(success_result.value.value, eq=10)
     err_result = r[_ErrorsModel].from_validation({"value": "x"}, _ErrorsModel)
-    assert err_result.is_failure
-    assert "Validation failed" in (err_result.error or "")
-    assert "bad value" in (err_result.error or "")
+    tm.fail(err_result)
+    tm.that("Validation failed" in (err_result.error or ""), eq=True)
+    tm.that("bad value" in (err_result.error or ""), eq=True)
     plain_result = r[_PlainErrorModel].from_validation({"value": "x"}, _PlainErrorModel)
-    assert plain_result.is_failure
-    assert "plain boom" in (plain_result.error or "")
+    tm.fail(plain_result)
+    tm.that("plain boom" in (plain_result.error or ""), eq=True)
     failure_to_model = r[dict[str, int]].fail("already failed").to_model(_TargetModel)
-    assert failure_to_model.is_failure
-    assert failure_to_model.error == "already failed"
+    tm.fail(failure_to_model)
+    tm.that(failure_to_model.error, eq="already failed")
     success_to_model = r[dict[str, int]].ok({"value": 9}).to_model(_TargetModel)
-    assert success_to_model.is_success
-    assert success_to_model.value.value == 9
+    tm.ok(success_to_model)
+    tm.that(success_to_model.value.value, eq=9)
     invalid_to_model = r[dict[str, str]].ok({"value": "bad"}).to_model(_TargetModel)
-    assert invalid_to_model.is_failure
-    assert "Model conversion failed" in (invalid_to_model.error or "")
+    tm.fail(invalid_to_model)
+    tm.that("Model conversion failed" in (invalid_to_model.error or ""), eq=True)
 
 
 def test_lash_runtime_result_paths() -> None:
     runtime_ok = FlextRuntime.RuntimeResult[int].ok(99)
     failed_for_lash: r[int] = cast("r[int]", r.fail("x"))
     lash_ok: r[int] = failed_for_lash.lash(lambda _e: runtime_ok)
-    assert lash_ok.is_success
-    assert lash_ok.value == 99
+    tm.ok(lash_ok)
+    tm.that(lash_ok.value, eq=99)
     runtime_fail: FlextRuntime.RuntimeResult[int] = FlextRuntime.RuntimeResult[int](
         error="recovery failed",
         is_success=False,
@@ -116,5 +116,5 @@ def test_lash_runtime_result_paths() -> None:
     )
     failed_for_lash_2: r[int] = cast("r[int]", r.fail("x"))
     lash_fail: r[int] = failed_for_lash_2.lash(lambda _e: runtime_fail)
-    assert lash_fail.is_failure
-    assert lash_fail.error == "recovery failed"
+    tm.fail(lash_fail)
+    tm.that(lash_fail.error, eq="recovery failed")
