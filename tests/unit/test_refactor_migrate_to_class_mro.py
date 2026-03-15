@@ -12,6 +12,7 @@ from flext_infra.refactor.migrate_to_class_mro import (
     FlextInfraRefactorMigrateToClassMRO,
 )
 from flext_infra.refactor.mro_resolver import FlextInfraRefactorMROMigrationScanner
+from flext_tests import tm
 
 
 def test_migrate_to_mro_moves_constant_and_rewrites_reference(tmp_path: Path) -> None:
@@ -38,17 +39,18 @@ def test_migrate_to_mro_moves_constant_and_rewrites_reference(tmp_path: Path) ->
     )
     constants_source = (src_pkg / "constants.py").read_text(encoding="utf-8")
     consumer_source = (src_pkg / "consumer.py").read_text(encoding="utf-8")
-    assert report.errors == ()
-    assert (
-        "VALUE: Final[int] = 42"
-        not in constants_source.split("class SampleConstants:")[0]
+    tm.that(report.errors, eq=())
+    tm.that(
+        "VALUE: Final[int] = 42" in constants_source.split("class SampleConstants:")[0],
+        eq=False,
     )
-    assert (
+    tm.that(
         "VALUE: Final[int] = 42"
-        in constants_source.split("class SampleConstants:", maxsplit=1)[1]
+        in constants_source.split("class SampleConstants:", maxsplit=1)[1],
+        eq=True,
     )
-    assert "from sample_pkg.constants import c" in consumer_source
-    assert "result = c.VALUE" in consumer_source
+    tm.that(consumer_source, has="from sample_pkg.constants import c")
+    tm.that(consumer_source, has="result = c.VALUE")
 
 
 def test_migrate_to_mro_inlines_alias_constant_into_constants_class(
@@ -77,15 +79,16 @@ def test_migrate_to_mro_inlines_alias_constant_into_constants_class(
     )
     constants_source = (src_pkg / "constants.py").read_text(encoding="utf-8")
     consumer_source = (src_pkg / "consumer.py").read_text(encoding="utf-8")
-    assert report.errors == ()
-    assert (
+    tm.that(report.errors, eq=())
+    tm.that(
         "_TIMEOUT: Final[int] = 30"
-        not in constants_source.split("class SampleConstants:", maxsplit=1)[0]
+        in constants_source.split("class SampleConstants:", maxsplit=1)[0],
+        eq=False,
     )
-    assert "TIMEOUT: Final[int] = 30" in constants_source
-    assert "TIMEOUT = _TIMEOUT" not in constants_source
-    assert "from sample_pkg.constants import c" in consumer_source
-    assert "value = c.TIMEOUT" in consumer_source
+    tm.that(constants_source, has="TIMEOUT: Final[int] = 30")
+    tm.that("TIMEOUT = _TIMEOUT" in constants_source, eq=False)
+    tm.that(consumer_source, has="from sample_pkg.constants import c")
+    tm.that(consumer_source, has="value = c.TIMEOUT")
 
 
 def test_migrate_to_mro_normalizes_facade_alias_to_c(tmp_path: Path) -> None:
@@ -111,11 +114,14 @@ def test_migrate_to_mro_normalizes_facade_alias_to_c(tmp_path: Path) -> None:
         apply=True,
     )
     consumer_source = (src_pkg / "consumer.py").read_text(encoding="utf-8")
-    assert report.errors == ()
-    assert "from sample_pkg.constants import VALUE" not in consumer_source
-    assert "from sample_pkg.constants import c as constants" not in consumer_source
-    assert "from sample_pkg.constants import c" in consumer_source
-    assert "result = c.VALUE" in consumer_source
+    tm.that(report.errors, eq=())
+    tm.that("from sample_pkg.constants import VALUE" in consumer_source, eq=False)
+    tm.that(
+        "from sample_pkg.constants import c as constants" in consumer_source,
+        eq=False,
+    )
+    tm.that(consumer_source, has="from sample_pkg.constants import c")
+    tm.that(consumer_source, has="result = c.VALUE")
 
 
 def test_migrate_to_mro_rejects_unknown_target(tmp_path: Path) -> None:
@@ -150,17 +156,19 @@ def test_migrate_typings_rewrites_references_with_t_alias(tmp_path: Path) -> Non
     )
     typings_source = (src_pkg / "typings.py").read_text(encoding="utf-8")
     consumer_source = (src_pkg / "consumer.py").read_text(encoding="utf-8")
-    assert report.errors == ()
-    assert (
+    tm.that(report.errors, eq=())
+    tm.that(
         "ValueType: TypeAlias = str | int"
-        not in typings_source.split("class SampleTypes:", maxsplit=1)[0]
+        in typings_source.split("class SampleTypes:", maxsplit=1)[0],
+        eq=False,
     )
-    assert (
+    tm.that(
         "ValueType: TypeAlias = str | int"
-        in typings_source.split("class SampleTypes:", maxsplit=1)[1]
+        in typings_source.split("class SampleTypes:", maxsplit=1)[1],
+        eq=True,
     )
-    assert "from sample_pkg.typings import t" in consumer_source
-    assert "value: t.ValueType = 1" in consumer_source
+    tm.that(consumer_source, has="from sample_pkg.typings import t")
+    tm.that(consumer_source, has="value: t.ValueType = 1")
 
 
 def test_migrate_protocols_rewrites_references_with_p_alias(tmp_path: Path) -> None:
@@ -187,17 +195,19 @@ def test_migrate_protocols_rewrites_references_with_p_alias(tmp_path: Path) -> N
     )
     protocols_source = (src_pkg / "protocols.py").read_text(encoding="utf-8")
     consumer_source = (src_pkg / "consumer.py").read_text(encoding="utf-8")
-    assert report.errors == ()
-    assert (
+    tm.that(report.errors, eq=())
+    tm.that(
         "class Greeter(Protocol):"
-        not in protocols_source.split("class SampleProtocols:", maxsplit=1)[0]
+        in protocols_source.split("class SampleProtocols:", maxsplit=1)[0],
+        eq=False,
     )
-    assert (
+    tm.that(
         "class Greeter(Protocol):"
-        in protocols_source.split("class SampleProtocols:", maxsplit=1)[1]
+        in protocols_source.split("class SampleProtocols:", maxsplit=1)[1],
+        eq=True,
     )
-    assert "from sample_pkg.protocols import p" in consumer_source
-    assert "def call_greet(protocol: p.Greeter) -> str:" in consumer_source
+    tm.that(consumer_source, has="from sample_pkg.protocols import p")
+    tm.that(consumer_source, has="def call_greet(protocol: p.Greeter) -> str:")
 
 
 def test_mro_scanner_includes_constants_variants_in_all_scopes(tmp_path: Path) -> None:
@@ -225,7 +235,7 @@ def test_mro_scanner_includes_constants_variants_in_all_scopes(tmp_path: Path) -
     scanned = FlextInfraRefactorMROMigrationScanner._iter_constants_files(
         project_root=project_root,
     )
-    assert set(scanned) == set(file_paths)
+    tm.that(set(scanned) == set(file_paths), eq=True)
 
 
 def test_refactor_utilities_iter_python_files_includes_examples_and_scripts(
@@ -251,8 +261,8 @@ def test_refactor_utilities_iter_python_files_includes_examples_and_scripts(
             "from __future__ import annotations\n", encoding="utf-8"
         )
     discovered = FlextInfraUtilitiesIteration.iter_python_files(workspace_root=tmp_path)
-    assert discovered.is_success
-    assert set(discovered.value) == set(expected_paths)
+    tm.ok(discovered)
+    tm.that(set(discovered.value) == set(expected_paths), eq=True)
 
 
 def test_discover_project_roots_without_nested_git_dirs(tmp_path: Path) -> None:
@@ -271,7 +281,7 @@ def test_discover_project_roots_without_nested_git_dirs(tmp_path: Path) -> None:
     discovered = FlextInfraUtilitiesDiscovery.discover_project_roots(
         workspace_root=workspace_root,
     )
-    assert discovered == [project_root]
+    tm.that(discovered, eq=[project_root])
 
 
 def test_migrate_to_mro_moves_manual_uppercase_assignment(tmp_path: Path) -> None:
@@ -298,10 +308,13 @@ def test_migrate_to_mro_moves_manual_uppercase_assignment(tmp_path: Path) -> Non
     )
     constants_source = (src_pkg / "constants.py").read_text(encoding="utf-8")
     consumer_source = (src_pkg / "consumer.py").read_text(encoding="utf-8")
-    assert report.errors == ()
-    assert "VALUE = 42" not in constants_source.split("class SampleConstants:")[0]
-    assert (
-        "VALUE = 42" in constants_source.split("class SampleConstants:", maxsplit=1)[1]
+    tm.that(report.errors, eq=())
+    tm.that(
+        "VALUE = 42" in constants_source.split("class SampleConstants:")[0], eq=False
     )
-    assert "from sample_pkg.constants import c" in consumer_source
-    assert "result = c.VALUE" in consumer_source
+    tm.that(
+        "VALUE = 42" in constants_source.split("class SampleConstants:", maxsplit=1)[1],
+        eq=True,
+    )
+    tm.that(consumer_source, has="from sample_pkg.constants import c")
+    tm.that(consumer_source, has="result = c.VALUE")

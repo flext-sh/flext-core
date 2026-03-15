@@ -7,6 +7,7 @@ from pathlib import Path
 from flext_infra.refactor.namespace_enforcer import (
     FlextInfraNamespaceEnforcer,
 )
+from flext_tests import tm
 
 
 def test_namespace_enforcer_creates_missing_facades_and_rewrites_imports(
@@ -31,17 +32,17 @@ def test_namespace_enforcer_creates_missing_facades_and_rewrites_imports(
         apply=True,
     )
 
-    assert report.total_facades_missing == 0
-    assert report.total_import_violations == 0
-    assert (pkg / "constants.py").exists()
-    assert (pkg / "typings.py").exists()
-    assert (pkg / "protocols.py").exists()
-    assert (pkg / "models.py").exists()
-    assert (pkg / "utilities.py").exists()
+    tm.that(report.total_facades_missing, eq=0)
+    tm.that(report.total_import_violations, eq=0)
+    tm.that((pkg / "constants.py").exists(), eq=True)
+    tm.that((pkg / "typings.py").exists(), eq=True)
+    tm.that((pkg / "protocols.py").exists(), eq=True)
+    tm.that((pkg / "models.py").exists(), eq=True)
+    tm.that((pkg / "utilities.py").exists(), eq=True)
 
     service_source = (pkg / "service.py").read_text(encoding="utf-8")
-    assert "from flext_core import c, m, r, t, u, p" in service_source
-    assert "from flext_infra import c, m, t, u, p" in service_source
+    tm.that(service_source, has="from flext_core import c, m, r, t, u, p")
+    tm.that(service_source, has="from flext_infra import c, m, t, u, p")
 
 
 def test_namespace_enforcer_detects_manual_typings_and_compat_aliases(
@@ -66,8 +67,8 @@ def test_namespace_enforcer_detects_manual_typings_and_compat_aliases(
         apply=False,
     )
 
-    assert report.total_manual_typing_violations >= 1
-    assert report.total_compatibility_alias_violations >= 1
+    tm.that(report.total_manual_typing_violations, gt=0)
+    tm.that(report.total_compatibility_alias_violations, gt=0)
 
 
 def test_namespace_enforcer_detects_manual_protocol_outside_canonical_files(
@@ -92,14 +93,14 @@ def test_namespace_enforcer_detects_manual_protocol_outside_canonical_files(
         apply=False,
     )
 
-    assert report.total_manual_protocol_violations == 1
+    tm.that(report.total_manual_protocol_violations, eq=1)
     project_report = report.projects[0]
     violations = project_report.manual_protocol_violations
-    assert len(violations) == 1
+    tm.that(len(violations), eq=1)
     violation = violations[0]
-    assert violation.name == "ServiceContract"
+    tm.that(violation.name, eq="ServiceContract")
     rendered = FlextInfraNamespaceEnforcer.render_text(report)
-    assert "Manual protocols: 1" in rendered
+    tm.that(rendered, has="Manual protocols: 1")
 
 
 def test_namespace_enforcer_detects_internal_private_imports(tmp_path: Path) -> None:
@@ -122,9 +123,9 @@ def test_namespace_enforcer_detects_internal_private_imports(tmp_path: Path) -> 
         apply=False,
     )
 
-    assert report.total_internal_import_violations >= 1
+    tm.that(report.total_internal_import_violations, gt=0)
     rendered = FlextInfraNamespaceEnforcer.render_text(report)
-    assert "Internal imports:" in rendered
+    tm.that(rendered, has="Internal imports:")
 
 
 def test_namespace_enforcer_apply_moves_manual_protocol_to_protocols_file(
@@ -150,16 +151,16 @@ def test_namespace_enforcer_apply_moves_manual_protocol_to_protocols_file(
         apply=True,
     )
 
-    assert report.total_manual_protocol_violations == 0
+    tm.that(report.total_manual_protocol_violations, eq=0)
     protocols_file = pkg / "protocols.py"
-    assert protocols_file.exists()
+    tm.that(protocols_file.exists(), eq=True)
 
     service_source = service_file.read_text(encoding="utf-8")
     protocols_source = protocols_file.read_text(encoding="utf-8")
-    assert "class ServiceContract(Protocol):" not in service_source
-    assert "class ServiceContract(Protocol):" in protocols_source
-    assert "from __future__ import annotations" in protocols_source
-    assert "from typing import Protocol" in protocols_source
+    tm.that("class ServiceContract(Protocol):" in service_source, eq=False)
+    tm.that(protocols_source, has="class ServiceContract(Protocol):")
+    tm.that(protocols_source, has="from __future__ import annotations")
+    tm.that(protocols_source, has="from typing import Protocol")
 
 
 def test_namespace_enforcer_detects_cyclic_imports_in_tests_directory(
@@ -191,7 +192,7 @@ def test_namespace_enforcer_detects_cyclic_imports_in_tests_directory(
         apply=False,
     )
 
-    assert report.total_cyclic_imports >= 1
+    tm.that(report.total_cyclic_imports, gt=0)
 
 
 def test_namespace_enforcer_detects_missing_runtime_alias_outside_src(
@@ -218,7 +219,7 @@ def test_namespace_enforcer_detects_missing_runtime_alias_outside_src(
         apply=False,
     )
 
-    assert report.total_runtime_alias_violations >= 1
+    tm.that(report.total_runtime_alias_violations, gt=0)
 
 
 def test_namespace_enforcer_apply_keeps_script_shebang_when_adding_future(
@@ -247,9 +248,9 @@ def test_namespace_enforcer_apply_keeps_script_shebang_when_adding_future(
     )
 
     rewritten_lines = script_file.read_text(encoding="utf-8").splitlines()
-    assert rewritten_lines[0] == "#!/usr/bin/env python3"
-    assert rewritten_lines[1] == "# -*- coding: utf-8 -*-"
-    assert "from __future__ import annotations" in rewritten_lines
+    tm.that(rewritten_lines[0], eq="#!/usr/bin/env python3")
+    tm.that(rewritten_lines[1], eq="# -*- coding: utf-8 -*-")
+    tm.that(rewritten_lines, has="from __future__ import annotations")
 
 
 def test_namespace_enforcer_apply_inserts_future_after_single_line_module_docstring(
@@ -283,8 +284,8 @@ def test_namespace_enforcer_apply_inserts_future_after_single_line_module_docstr
     )
 
     rewritten_lines = target_file.read_text(encoding="utf-8").splitlines()
-    assert rewritten_lines[0].startswith('"""Improved test base')
-    assert rewritten_lines[2] == "from __future__ import annotations"
+    tm.that(rewritten_lines[0].startswith('"""Improved test base'), eq=True)
+    tm.that(rewritten_lines[2], eq="from __future__ import annotations")
 
 
 def test_namespace_enforcer_does_not_rewrite_indented_import_aliases(
@@ -314,7 +315,7 @@ def test_namespace_enforcer_does_not_rewrite_indented_import_aliases(
     )
 
     service_source = service_file.read_text(encoding="utf-8")
-    assert "    from flext_core.constants import System" in service_source
+    tm.that(service_source, has="    from flext_core.constants import System")
 
 
 def test_namespace_enforcer_does_not_rewrite_multiline_import_alias_blocks(
@@ -348,5 +349,5 @@ def test_namespace_enforcer_does_not_rewrite_multiline_import_alias_blocks(
     )
 
     module_source = module_file.read_text(encoding="utf-8")
-    assert "from flext_infra._constants import (" in module_source
-    assert "FlextInfraCoreConstants" in module_source
+    tm.that(module_source, has="from flext_infra._constants import (")
+    tm.that(module_source, has="FlextInfraCoreConstants")

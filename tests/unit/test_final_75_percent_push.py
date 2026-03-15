@@ -20,6 +20,7 @@ import pytest
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import FlextContainer, FlextExceptions, r, u
+from flext_tests import tm
 
 
 class ResultOperationScenario(BaseModel):
@@ -164,14 +165,14 @@ class TestCoveragePush75Percent:
     def test_result_basic_ok(self) -> None:
         """Test basic r ok."""
         result = r[int].ok(42)
-        assert result.is_success
-        assert result.value == 42
+        tm.ok(result)
+        tm.that(result.value, eq=42)
 
     def test_result_basic_fail(self) -> None:
         """Test basic r fail."""
         result: r[int] = r[int].fail("error")
-        assert result.is_failure
-        assert result.error == "error"
+        tm.fail(result)
+        tm.fail(result, has="error")
 
     @pytest.mark.parametrize(
         "scenario",
@@ -200,26 +201,26 @@ class TestCoveragePush75Percent:
             elif op == "lash":
                 result = result.lash(lambda _: r[int].ok(99))
         if scenario.expected_success:
-            assert result.is_success
+            tm.ok(result)
             if scenario.expected_value is not None:
-                assert result.value == scenario.expected_value
+                tm.that(result.value, eq=scenario.expected_value)
         else:
-            assert result.is_failure
+            tm.fail(result)
 
     def test_container_basic(self) -> None:
         """Test basic container operations."""
         c = FlextContainer()
         result = c.register("test", "value")
-        assert result is c
+        tm.that(result is c, eq=True)
         r2 = c.get("test")
-        assert r2.is_success
-        assert r2.value == "value"
+        tm.ok(r2)
+        tm.that(bool(r2.value == "value"), eq=True)
 
     def test_container_not_found(self) -> None:
         """Test container get not found."""
         c = FlextContainer()
         result = c.get("nonexistent")
-        assert result.is_failure
+        tm.fail(result)
 
     def test_container_clear_all(self) -> None:
         """Test container clear_all."""
@@ -227,7 +228,7 @@ class TestCoveragePush75Percent:
         c.register("test", "value")
         c.clear_all()
         result = c.get("test")
-        assert result.is_failure
+        tm.fail(result)
 
     def test_container_unregister(self) -> None:
         """Test container unregister."""
@@ -235,15 +236,15 @@ class TestCoveragePush75Percent:
         c.register("test", "value")
         c.unregister("test")
         result = c.get("test")
-        assert result.is_failure
+        tm.fail(result)
 
     def test_container_register_multiple(self) -> None:
         """Test registering multiple services."""
         c = FlextContainer()
         c.register("svc1", "val1")
         c.register("svc2", "val2")
-        assert c.get("svc1").value == "val1"
-        assert c.get("svc2").value == "val2"
+        tm.that(bool(c.get("svc1").value == "val1"), eq=True)
+        tm.that(bool(c.get("svc2").value == "val2"), eq=True)
 
     @pytest.mark.parametrize(
         "scenario",
@@ -253,61 +254,61 @@ class TestCoveragePush75Percent:
     def test_exception_types(self, scenario: ExceptionTypeScenario) -> None:
         """Test exception types."""
         exc = scenario.exception_type(scenario.message)
-        assert isinstance(exc, Exception)
-        assert scenario.expected_in_str.upper() in str(exc).upper()
+        tm.that(exc.__class__ == scenario.exception_type, eq=True)
+        tm.that(str(exc).upper(), has=scenario.expected_in_str.upper())
 
     def test_utilities_id(self) -> None:
         """Test ID generation."""
         id1 = u.generate()
         id2 = u.generate()
-        assert id1 != id2
-        assert len(id1) == 36
+        tm.that(id1, ne=id2)
+        tm.that(len(id1), eq=36)
 
     def test_utilities_timestamp(self) -> None:
         """Test timestamp generation."""
         ts = u.generate_iso_timestamp()
-        assert isinstance(ts, str)
-        assert len(ts) > 0
+        tm.that(ts, none=False)
+        tm.that(len(ts), gt=0)
 
     def test_result_value_property(self) -> None:
         """Test result .value property."""
         result = r[str].ok("value")
-        assert result.value == "value"
+        tm.that(result.value, eq="value")
 
     def test_result_unwrap_or(self) -> None:
         """Test unwrap_or with default."""
         result: r[int] = r[int].fail("error")
-        assert result.unwrap_or(42) == 42
+        tm.that(result.unwrap_or(42), eq=42)
         r2 = r[int].ok(10)
-        assert r2.unwrap_or(42) == 10
+        tm.that(r2.unwrap_or(42), eq=10)
 
     def test_result_bool(self) -> None:
         """Test result as boolean."""
         success = r[int].ok(42)
-        assert bool(success) is True
+        tm.that(bool(success), eq=True)
         failure: r[int] = r[int].fail("error")
-        assert bool(failure) is False
+        tm.that(bool(failure), eq=False)
 
     def test_result_or_operator(self) -> None:
         """Test | operator for default."""
         result: r[int] = r[int].fail("error")
         defaulted = result | 42
-        assert defaulted == 42
+        tm.that(defaulted, eq=42)
 
     def test_result_repr(self) -> None:
         """Test result repr."""
         result = r[int].ok(42)
         repr_str = repr(result)
-        assert "r[T].ok" in repr_str
+        tm.that(repr_str, has="r[T].ok")
 
     def test_result_filter(self) -> None:
         """Test filter method."""
         result = r[int].ok(42)
         r2 = result.filter(lambda x: x > 0)
-        assert r2.is_success
-        assert r2.value == 42
+        tm.ok(r2)
+        tm.that(r2.value, eq=42)
         r3 = result.filter(lambda x: x > 100)
-        assert r3.is_failure
+        tm.fail(r3)
 
     def test_result_safe_factory(self) -> None:
         """Test safe factory method."""
@@ -317,10 +318,10 @@ class TestCoveragePush75Percent:
 
         divide_wrapped = r.safe(divide)
         result: r[int] = divide_wrapped(10, 2)
-        assert result.is_success
-        assert result.value == 5
+        tm.ok(result)
+        tm.that(result.value, eq=5)
         r2: r[int] = divide_wrapped(10, 0)
-        assert r2.is_failure
+        tm.fail(r2)
 
 
 __all__ = ["TestCoveragePush75Percent"]
