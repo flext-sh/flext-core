@@ -7,7 +7,7 @@ import time
 from flext_tests import FlextTestsUtilities, tm, u
 
 from flext_core import FlextContainer, FlextContext
-from tests.models import m
+from tests import m
 
 from ..test_utils import assertion_helpers
 

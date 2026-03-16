@@ -16,7 +16,7 @@ from flext_tests import tm
 from pydantic import BaseModel, Field
 
 from flext_core._models.domain_event import _ComparableConfigMap
-from tests.models import m
+from tests import m
 
 
 class CreateUserCommand(BaseModel):

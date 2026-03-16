@@ -14,7 +14,7 @@ import orjson
 from pydantic import BaseModel
 
 from flext_core import FlextRuntime, m, r, t
-from flext_core._models.base import FlextModelFoundation
+from flext_core._models import FlextModelFoundation
 
 
 class FlextUtilitiesModel:
@@ -161,8 +161,9 @@ class FlextUtilitiesModel:
         instance_result = r[M].create_from_callable(lambda: model_cls(**kwargs))
         if instance_result.is_failure:
             return r[M].fail(f"Model validation failed: {instance_result.error}")
-        validated: M = instance_result.value
-        return r[M].ok(validated)
+        instance = instance_result.value
+        assert isinstance(instance, model_cls)
+        return r[M].ok(instance)
 
     @staticmethod
     def load[T_Model: BaseModel](
@@ -191,8 +192,9 @@ class FlextUtilitiesModel:
         )
         if instance_result.is_failure:
             return r[T_Model].fail(f"Model validation failed: {instance_result.error}")
-        validated: T_Model = instance_result.value
-        return r[T_Model].ok(validated)
+        instance = instance_result.value
+        assert isinstance(instance, model_cls)
+        return r[T_Model].ok(instance)
 
     @staticmethod
     def merge_defaults[M: BaseModel](
@@ -220,8 +222,9 @@ class FlextUtilitiesModel:
         )
         if instance_result.is_failure:
             return r[M].fail(f"Model validation failed: {instance_result.error}")
-        validated: M = instance_result.value
-        return r[M].ok(validated)
+        instance = instance_result.value
+        assert isinstance(instance, model_cls)
+        return r[M].ok(instance)
 
     @staticmethod
     def ensure_metadata(
@@ -335,8 +338,9 @@ class FlextUtilitiesModel:
         )
         if updated_result.is_failure:
             return r[M].fail(f"Model update failed: {updated_result.error}")
-        validated: M = updated_result.value
-        return r[M].ok(validated)
+        updated = updated_result.value
+        assert isinstance(updated, instance.__class__)
+        return r[M].ok(updated)
 
     @staticmethod
     def to_config_map(

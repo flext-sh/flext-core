@@ -84,9 +84,8 @@ from structlog.processors import JSONRenderer, StackInfoRenderer, TimeStamper
 from structlog.stdlib import add_log_level
 
 from flext_core import T, c, p, t
-from flext_core._models.base import FlextModelFoundation
-from flext_core._models.containers import FlextModelsContainers
-from flext_core._utilities.deprecation import FlextUtilitiesDeprecation
+from flext_core._models import FlextModelFoundation, FlextModelsContainers
+from flext_core._utilities import FlextUtilitiesDeprecation
 
 type RuntimeAtomic = t.Container | BaseModel
 type RuntimeData = (

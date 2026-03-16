@@ -20,10 +20,7 @@ from pydantic import BaseModel
 
 import flext_core.runtime as runtime_module
 from flext_core import FlextRuntime, r
-from flext_core.runtime import RuntimeData
-from tests.constants import c
-from tests.models import m
-from tests.utilities import u
+from tests import c, m, u
 
 runtime_tests: ModuleType = import_module("tests.unit.test_runtime")
 runtime_cov_tests: ModuleType = import_module("tests.unit.test_runtime_coverage_100")
@@ -444,7 +441,7 @@ def test_configure_structlog_edge_paths(monkeypatch: pytest.MonkeyPatch) -> None
     _ = Config  # referenced for pyright
     FlextRuntime.configure_structlog(config=None)
     tm.that(FlextRuntime.is_structlog_configured(), eq=True)
-    tm.that(calls, eq=True)
+    tm.that(bool(calls), eq=True)
     FlextRuntime._structlog_configured = False
     calls.clear()
     fake_module._print_access = 0
@@ -600,14 +597,18 @@ def test_model_support_and_hash_compare_paths() -> None:
     )
     tm.that(
         (
-            FlextRuntime.compare_entities_by_id("a", cast("FlextRuntime.RuntimeData", object()))
+            FlextRuntime.compare_entities_by_id(
+                "a", cast("FlextRuntime.RuntimeData", object())
+            )
             is False
         ),
         eq=True,
     )
     tm.that(
         (
-            FlextRuntime.compare_entities_by_id(cast("FlextRuntime.RuntimeData", object()), 3)
+            FlextRuntime.compare_entities_by_id(
+                cast("FlextRuntime.RuntimeData", object()), 3
+            )
             is False
         ),
         eq=True,
@@ -1023,7 +1024,9 @@ def test_model_helpers_remaining_paths() -> None:
         eq=True,
     )
     tm.that(
-        isinstance(FlextRuntime.hash_entity_by_id(cast("FlextRuntime.RuntimeData", left)), int),
+        isinstance(
+            FlextRuntime.hash_entity_by_id(cast("FlextRuntime.RuntimeData", left)), int
+        ),
         eq=True,
     )
     vm_a = ValueModel(a=1)

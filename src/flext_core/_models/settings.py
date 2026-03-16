@@ -24,9 +24,11 @@ from pydantic import (
 )
 
 from flext_core import c, p, r, t
-from flext_core._models.base import FlextModelFoundation
-from flext_core._models.collections import FlextModelsCollections
-from flext_core._models.containers import FlextModelsContainers
+from flext_core._models import (
+    FlextModelFoundation,
+    FlextModelsCollections,
+    FlextModelsContainers,
+)
 from flext_core.runtime import FlextRuntime
 
 

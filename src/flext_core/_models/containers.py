@@ -23,7 +23,7 @@ from typing import Annotated, ClassVar, override
 
 from pydantic import BaseModel, ConfigDict, Field, RootModel
 
-from flext_core.typings import t
+from flext_core import t
 
 
 class FlextModelsContainers:

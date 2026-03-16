@@ -23,10 +23,7 @@ from flext_tests import tm
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core._utilities.guards import FlextUtilitiesGuards
-from flext_core.runtime import RuntimeData
-from tests.models import m
-from tests.typings import t
-from tests.utilities import u
+from tests import m, t, u
 
 
 class TypeGuardScenario(BaseModel):

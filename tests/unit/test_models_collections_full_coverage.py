@@ -13,9 +13,7 @@ from flext_tests import t
 from pydantic import Field
 
 from flext_core import r
-from tests.constants import c
-from tests.models import m
-from tests.utilities import u
+from tests import c, m, u
 
 
 class _Stats(m.Statistics):

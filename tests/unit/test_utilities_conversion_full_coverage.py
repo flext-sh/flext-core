@@ -7,9 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core import r
-from tests.constants import c
-from tests.models import m
-from tests.utilities import u
+from tests import c, m, u
 
 
 def test_conversion_string_and_join_paths() -> None:

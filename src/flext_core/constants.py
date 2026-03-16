@@ -685,7 +685,7 @@ class FlextConstants:
             """CQRS registration status enumeration.
 
             DRY Pattern:
-                Values match _Base.CommonStatus. These StrEnum values are the
+                Values match Cqrs.CommonStatus. These StrEnum values are the
                 single source of truth.
             """
 

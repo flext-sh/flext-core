@@ -91,7 +91,7 @@ if TYPE_CHECKING:
     from flext_core._utilities.pagination import FlextUtilitiesPagination
     from flext_core._utilities.parser import FlextUtilitiesParser
     from flext_core._utilities.reliability import FlextUtilitiesReliability
-    from flext_core._utilities.result_helpers import ResultHelpers
+    from flext_core._utilities.result_helpers import FlextUtilitiesResultHelpers
     from flext_core._utilities.text import FlextUtilitiesText
     from flext_core.constants import FlextConstants, c
     from flext_core.container import FlextContainer
@@ -110,7 +110,7 @@ if TYPE_CHECKING:
     from flext_core.service import FlextService, s
     from flext_core.settings import FlextSettings
     from flext_core.typings import FlextTypes, t
-    from flext_core.utilities import FlextUtilities, u, validate_pydantic_model
+    from flext_core.utilities import FlextUtilities, u
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "CircuitBreakerManager": (
@@ -202,11 +202,14 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "flext_core._utilities.reliability",
         "FlextUtilitiesReliability",
     ),
+    "FlextUtilitiesResultHelpers": (
+        "flext_core._utilities.result_helpers",
+        "FlextUtilitiesResultHelpers",
+    ),
     "FlextUtilitiesText": ("flext_core._utilities.text", "FlextUtilitiesText"),
     "Handle": ("flext_core.dispatcher", "Handle"),
     "Metadata": ("flext_core.exceptions", "Metadata"),
     "RateLimiterManager": ("flext_core._dispatcher.reliability", "RateLimiterManager"),
-    "ResultHelpers": ("flext_core._utilities.result_helpers", "ResultHelpers"),
     "RetryPolicy": ("flext_core._dispatcher.reliability", "RetryPolicy"),
     "TimeoutEnforcer": ("flext_core._dispatcher.timeout", "TimeoutEnforcer"),
     "__all__": ("flext_core.__version__", "__all__"),
@@ -232,7 +235,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "s": ("flext_core.service", "s"),
     "t": ("flext_core.typings", "t"),
     "u": ("flext_core.utilities", "u"),
-    "validate_pydantic_model": ("flext_core.utilities", "validate_pydantic_model"),
     "x": ("flext_core.mixins", "x"),
 }
 
@@ -292,6 +294,7 @@ __all__ = [
     "FlextUtilitiesPagination",
     "FlextUtilitiesParser",
     "FlextUtilitiesReliability",
+    "FlextUtilitiesResultHelpers",
     "FlextUtilitiesText",
     "Handle",
     "MessageT_contra",
@@ -299,7 +302,6 @@ __all__ = [
     "P",
     "R",
     "RateLimiterManager",
-    "ResultHelpers",
     "ResultT",
     "RetryPolicy",
     "T",
@@ -335,7 +337,6 @@ __all__ = [
     "s",
     "t",
     "u",
-    "validate_pydantic_model",
     "x",
 ]
 

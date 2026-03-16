@@ -29,7 +29,7 @@ from flext_tests import t, tm
 from pydantic import ValidationError, field_validator
 
 from flext_core._models.domain_event import _ComparableConfigMap
-from tests.models import m
+from tests import m
 
 
 class ModelScenarios:

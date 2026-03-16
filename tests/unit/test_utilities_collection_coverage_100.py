@@ -25,7 +25,6 @@ from flext_tests import t, tm, u
 from pydantic import BaseModel, ConfigDict, Field, SkipValidation
 
 from flext_core import FlextRuntime, r
-from tests.protocols import p
 
 from ..test_utils import assertion_helpers
 
@@ -960,7 +959,8 @@ class TestuCollectionFind:
     def test_find(self, scenario: FindScenario) -> None:
         """Test find with various scenarios."""
         result = u.find(
-            scenario.items, cast("p.Predicate[t.Tests.object]", scenario.predicate)
+            scenario.items,
+            cast("Callable[[t.Tests.object], bool]", scenario.predicate),
         )
         if scenario.expected_result is None:
             assert result.is_failure

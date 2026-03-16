@@ -1,5 +1,3 @@
-from tests.models import m
-
 """Tests for CQRS models full coverage."""
 
 from __future__ import annotations
@@ -9,6 +7,8 @@ from types import ModuleType
 
 import pytest
 from pydantic import TypeAdapter
+
+from tests import c, m
 
 
 def test_command_pagination_limit() -> None:
@@ -93,6 +93,3 @@ def test_flext_message_type_alias_adapter() -> None:
     parsed = adapter.validate_python({"message_type": "command", "command_type": "run"})
     assert type(parsed).__name__ == "CommandMessage"
     assert parsed.message_type == "command"
-
-
-from tests.constants import c

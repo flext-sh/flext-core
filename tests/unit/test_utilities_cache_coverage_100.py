@@ -24,8 +24,7 @@ import pytest
 from flext_tests import t, tm
 from pydantic import BaseModel, ConfigDict, Field
 
-from tests.typings import t
-from tests.utilities import u
+from tests import t, u
 
 from ..test_utils import assertion_helpers
 from ._models import CacheTestModel, NestedModel

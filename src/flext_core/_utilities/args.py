@@ -23,8 +23,8 @@ from typing import (
 
 from pydantic import BaseModel, ConfigDict, TypeAdapter, ValidationError, validate_call
 
-from flext_core import p, r, t
-from flext_core._models.base import FlextModelFoundation
+from flext_core import r, t
+from flext_core._models import FlextModelFoundation
 
 _ValidatedParams = ParamSpec("_ValidatedParams")
 _ValidatedReturn = TypeVar("_ValidatedReturn")
@@ -61,7 +61,7 @@ class FlextUtilitiesArgs:
             return r[type[StrEnum]].fail("Candidate is not a valid StrEnum type")
 
     @staticmethod
-    def get_enum_params(func: p.CallableWithHints) -> Mapping[str, type[StrEnum]]:
+    def get_enum_params(func: Callable[..., object]) -> Mapping[str, type[StrEnum]]:
         """Extract parameters that are StrEnum from function signature.
 
         Example:

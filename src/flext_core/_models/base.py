@@ -31,7 +31,7 @@ from pydantic import (
 )
 
 from flext_core import FlextConstants as c, t
-from flext_core._models.containers import FlextModelsContainers
+from flext_core._models import FlextModelsContainers
 
 
 class FlextModelFoundation:

@@ -13,9 +13,8 @@ from datetime import datetime
 from enum import StrEnum
 from typing import TypeGuard, overload
 
-from flext_core import p, r, t
-from flext_core._models.base import FlextModelFoundation
-from flext_core._models.containers import FlextModelsContainers
+from flext_core import r, t
+from flext_core._models import FlextModelFoundation, FlextModelsContainers
 from flext_core.typings import R, T, U
 
 
@@ -766,7 +765,7 @@ class FlextUtilitiesCollection:
 
     @staticmethod
     def find(
-        items: list[T] | tuple[T, ...] | dict[str, T], predicate: p.Predicate[T]
+        items: list[T] | tuple[T, ...] | dict[str, T], predicate: Callable[[T], bool]
     ) -> r[T]:
         """Find first item matching predicate with generic type support.
 
@@ -787,7 +786,7 @@ class FlextUtilitiesCollection:
     @staticmethod
     def first(
         items: Sequence[T],
-        predicate: p.Predicate[T] | None = None,
+        predicate: Callable[[T], bool] | None = None,
         default: T | None = None,
     ) -> r[T]:
         """Get first item (optionally matching predicate).
@@ -869,7 +868,7 @@ class FlextUtilitiesCollection:
     @staticmethod
     def last(
         items: Sequence[T],
-        predicate: p.Predicate[T] | None = None,
+        predicate: Callable[[T], bool] | None = None,
         default: T | None = None,
     ) -> r[T]:
         """Get last item (optionally matching predicate).
@@ -1091,7 +1090,7 @@ class FlextUtilitiesCollection:
 
     @staticmethod
     def partition(
-        items: Sequence[T], predicate: p.Predicate[T]
+        items: Sequence[T], predicate: Callable[[T], bool]
     ) -> tuple[list[T], list[T]]:
         """Split items by predicate: (matches, non-matches).
 

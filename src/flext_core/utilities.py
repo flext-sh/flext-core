@@ -32,9 +32,8 @@ from flext_core._utilities import (
     FlextUtilitiesPagination,
     FlextUtilitiesParser,
     FlextUtilitiesReliability,
+    FlextUtilitiesResultHelpers,
     FlextUtilitiesText,
-    ResultHelpers as FlextUtilitiesResultHelpers,
-    validate_pydantic_model,
 )
 
 
@@ -82,4 +81,4 @@ class FlextUtilities(
 
 
 u = FlextUtilities
-__all__ = ["FlextUtilities", "u", "validate_pydantic_model"]
+__all__ = ["FlextUtilities", "u"]

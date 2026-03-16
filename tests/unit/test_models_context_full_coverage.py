@@ -12,7 +12,7 @@ from pydantic import BaseModel
 
 from flext_core._models.base import FlextModelFoundation
 from flext_core._models.context import FlextModelsContext
-from tests.models import m
+from tests import m
 
 _normalize_statistics_before = FlextModelsContext._normalize_statistics_before
 _normalize_to_mapping = FlextModelsContext._normalize_to_mapping

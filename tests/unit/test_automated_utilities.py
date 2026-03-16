@@ -9,7 +9,7 @@ from flext_tests import tb, tm, tt
 from hypothesis import given, strategies as st
 
 from flext_core import FlextUtilities as u_cls
-from tests.typings import t
+from tests import t
 
 
 class TestAutomatedFlextUtilities:

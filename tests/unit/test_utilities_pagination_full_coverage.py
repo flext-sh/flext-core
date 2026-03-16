@@ -9,10 +9,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 
 from flext_core import r
-from tests.constants import c
-from tests.models import m
-from tests.typings import t
-from tests.utilities import u
+from tests import c, m, t, u
 
 
 def test_pagination_response_string_fallbacks() -> None:

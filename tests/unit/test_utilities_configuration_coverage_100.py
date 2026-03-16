@@ -26,16 +26,13 @@ from flext_tests import t, tm
 from pydantic import BaseModel, Field
 
 from flext_core import FlextExceptions, FlextRuntime
-from tests.constants import c
-from tests.models import m
-from tests.protocols import p
+from tests import c, m, p, u
 from tests.unit._models import (
     BadConfigForTest,
     ConfigModelForTest,
     InvalidModelForTest,
     SingletonClassForTest,
 )
-from tests.utilities import u
 
 
 class _Assertions:

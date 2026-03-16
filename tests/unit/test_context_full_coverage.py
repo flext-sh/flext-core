@@ -7,8 +7,7 @@ from flext_tests import t, tm
 from pydantic import BaseModel
 
 from flext_core import FlextContainer, FlextContext, r
-from tests.constants import c
-from tests.models import m
+from tests import c, m
 
 
 class _ContainerStub:

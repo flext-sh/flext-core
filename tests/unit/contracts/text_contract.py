@@ -58,4 +58,4 @@ class TextUtilityContract:
         assert u.format_app_id(raw) == expected
 
 
-from tests.utilities import u
+from tests import u

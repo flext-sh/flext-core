@@ -29,7 +29,7 @@ from pydantic import (
 )
 
 from flext_core import FlextConstants, P, R, ResultT, T, T_co, T_contra, U, e
-from tests.typings import t
+from tests import t
 
 
 class TypeVarCategory(StrEnum):

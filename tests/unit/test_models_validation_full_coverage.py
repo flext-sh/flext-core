@@ -24,10 +24,7 @@ from typing import cast
 
 from flext_core import r
 from flext_core._models.base import FlextModelFoundation
-from tests.constants import c
-from tests.models import m
-from tests.typings import t
-from tests.utilities import u
+from tests import c, m, t, u
 
 
 def test_strip_whitespace_trims_leading_trailing() -> None:

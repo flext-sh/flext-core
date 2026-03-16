@@ -12,8 +12,7 @@ from __future__ import annotations
 import types
 
 from flext_core._decorators.discovery import FactoryDecoratorsDiscovery
-from tests.constants import c
-from tests.models import m
+from tests import c, m
 
 
 class TestFactoryDecoratorsDiscoveryScanModule:

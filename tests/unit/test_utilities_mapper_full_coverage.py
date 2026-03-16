@@ -13,10 +13,7 @@ from flext_tests import t as test_t, tm
 from pydantic import BaseModel, Field
 
 from flext_core import r
-from tests.models import m
-from tests.protocols import p
-from tests.typings import t
-from tests.utilities import u
+from tests import m, p, t, u
 
 
 class _PortModel(BaseModel):
@@ -879,11 +876,11 @@ def test_small_mapper_convenience_methods(mapper: type[u]) -> None:
         "yes": EqualOnePredicate(),
     }
     found_callable = mapper.find_callable(
-        cast("Mapping[str, p.Predicate[int]]", predicates), 1
+        cast("Mapping[str, Callable[[int], bool]]", predicates), 1
     )
     tm.that(found_callable.is_success and found_callable.value == "yes", eq=True)
     not_found_callable = mapper.find_callable(
-        cast("Mapping[str, p.Predicate[int]]", {"no": _negative}), 1
+        cast("Mapping[str, Callable[[int], bool]]", {"no": _negative}), 1
     )
     tm.fail(not_found_callable)
 

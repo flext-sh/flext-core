@@ -13,7 +13,6 @@ if TYPE_CHECKING:
     from examples._models.ex00 import Ex00UserInput, Ex00UserProfile
     from examples._models.ex01 import (
         Ex01DemonstrationResult,
-        Ex01DemonstrationResult as r,
         Ex01InvalidPersonPayload,
         Ex01RunDemonstrationCommand,
         Ex01User,
@@ -22,7 +21,6 @@ if TYPE_CHECKING:
     from examples._models.ex02 import (
         Ex02CacheService,
         Ex02DatabaseService,
-        Ex02DatabaseService as s,
         Ex02EmailService,
         Ex02TestConfig,
     )
@@ -154,8 +152,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "ExConfigAppConfig": ("examples._models.exconfig", "ExConfigAppConfig"),
     "SharedHandle": ("examples._models.shared", "SharedHandle"),
     "SharedPerson": ("examples._models.shared", "SharedPerson"),
-    "r": ("examples._models.ex01", "Ex01DemonstrationResult"),
-    "s": ("examples._models.ex02", "Ex02DatabaseService"),
 }
 
 __all__ = [
@@ -220,8 +216,6 @@ __all__ = [
     "ExConfigAppConfig",
     "SharedHandle",
     "SharedPerson",
-    "r",
-    "s",
 ]
 
 

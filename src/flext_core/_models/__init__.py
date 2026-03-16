@@ -27,15 +27,12 @@ if TYPE_CHECKING:
     from flext_core._models.containers import FlextModelsContainers
     from flext_core._models.context import FlextModelsContext
     from flext_core._models.cqrs import FlextModelsCqrs
-    from flext_core._models.decorators import (
-        FlextModelsDecorators,
-        FlextModelsDecorators as d,
-    )
+    from flext_core._models.decorators import FlextModelsDecorators
     from flext_core._models.domain_event import FlextModelsDomainEvent
     from flext_core._models.entity import FlextModelsEntity
-    from flext_core._models.generic import FlextGenericModels, FlextGenericModels as m
+    from flext_core._models.generic import FlextGenericModels
     from flext_core._models.handler import FlextModelsHandler
-    from flext_core._models.service import FlextModelsService, FlextModelsService as s
+    from flext_core._models.service import FlextModelsService
     from flext_core._models.settings import FlextModelsConfig
     from flext_core.typings import FlextTypes
 
@@ -59,9 +56,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextModelsEntity": ("flext_core._models.entity", "FlextModelsEntity"),
     "FlextModelsHandler": ("flext_core._models.handler", "FlextModelsHandler"),
     "FlextModelsService": ("flext_core._models.service", "FlextModelsService"),
-    "d": ("flext_core._models.decorators", "FlextModelsDecorators"),
-    "m": ("flext_core._models.generic", "FlextGenericModels"),
-    "s": ("flext_core._models.service", "FlextModelsService"),
 }
 
 __all__ = [
@@ -78,9 +72,6 @@ __all__ = [
     "FlextModelsEntity",
     "FlextModelsHandler",
     "FlextModelsService",
-    "d",
-    "m",
-    "s",
 ]
 
 

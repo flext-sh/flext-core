@@ -14,7 +14,7 @@ from typing import override
 from flext_tests import tm
 
 from flext_core import r, s
-from tests.typings import t
+from tests import t
 
 
 class TestService(s[str]):

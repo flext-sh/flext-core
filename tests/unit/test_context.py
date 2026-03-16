@@ -31,7 +31,7 @@ from flext_tests import FlextTestsUtilities, tm, u
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import FlextContainer, FlextContext
-from tests.models import m
+from tests import m
 
 type SetGetInputValue = str | int | float | bool | list[int] | dict[str, str]
 type SetGetExpectedValue = str | int | float | bool

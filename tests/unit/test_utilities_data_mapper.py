@@ -17,9 +17,7 @@ from typing import cast, override
 from flext_tests import tm
 
 from flext_core import FlextTypes, FlextUtilities
-from tests.constants import (
-    TestsFlextConstants,
-)
+from tests import c
 from tests.test_utils import (
     assertion_helpers,
 )
@@ -30,7 +28,7 @@ class TestMapperMapDictKeys:
 
     def test_basic_key_mapping(self) -> None:
         """Test basic key mapping."""
-        mc = TestsFlextConstants.Mapper
+        mc = c.Mapper
         source_raw = {mc.OLD_KEY: mc.VALUE1, mc.FOO: mc.VALUE2}
         mapping = {mc.OLD_KEY: mc.NEW_KEY, mc.FOO: mc.BAR}
         result = FlextUtilities.map_dict_keys(source_raw, mapping)
@@ -39,7 +37,7 @@ class TestMapperMapDictKeys:
 
     def test_keep_unmapped_true(self) -> None:
         """Test keeping unmapped keys."""
-        mc = TestsFlextConstants.Mapper
+        mc = c.Mapper
         source_raw = {mc.OLD_KEY: mc.VALUE1, mc.UNMAPPED: mc.VALUE2}
         mapping = {mc.OLD_KEY: mc.NEW_KEY}
         result = FlextUtilities.map_dict_keys(
@@ -52,7 +50,7 @@ class TestMapperMapDictKeys:
 
     def test_keep_unmapped_false(self) -> None:
         """Test discarding unmapped keys."""
-        mc = TestsFlextConstants.Mapper
+        mc = c.Mapper
         source_raw = {mc.OLD_KEY: mc.VALUE1, mc.UNMAPPED: mc.VALUE2}
         mapping = {mc.OLD_KEY: mc.NEW_KEY}
         result = FlextUtilities.map_dict_keys(
@@ -85,7 +83,7 @@ class TestMapperBuildFlagsDict:
 
     def test_basic_flags_building(self) -> None:
         """Test basic flags dict building."""
-        mc = TestsFlextConstants.Mapper
+        mc = c.Mapper
         flags = [mc.FLAGS_READ, mc.FLAGS_WRITE]
         mapping = {
             mc.FLAGS_READ: mc.CAN_READ,
@@ -102,7 +100,7 @@ class TestMapperBuildFlagsDict:
 
     def test_custom_default_value(self) -> None:
         """Test custom default value for inactive flags."""
-        mc = TestsFlextConstants.Mapper
+        mc = c.Mapper
         flags = [mc.FLAGS_READ]
         mapping = {mc.FLAGS_READ: mc.CAN_READ, mc.FLAGS_WRITE: mc.CAN_WRITE}
         result = FlextUtilities.build_flags_dict(
@@ -137,7 +135,7 @@ class TestMapperCollectActiveKeys:
 
     def test_basic_active_keys(self) -> None:
         """Test collecting active keys."""
-        mc = TestsFlextConstants.Mapper
+        mc = c.Mapper
         source = {mc.FLAGS_READ: True, mc.FLAGS_WRITE: True, mc.FLAGS_DELETE: False}
         mapping = {mc.FLAGS_READ: "r", mc.FLAGS_WRITE: "w", mc.FLAGS_DELETE: "d"}
         result = FlextUtilities.collect_active_keys(source, mapping)
@@ -146,7 +144,7 @@ class TestMapperCollectActiveKeys:
 
     def test_none_active(self) -> None:
         """Test when no keys are active."""
-        mc = TestsFlextConstants.Mapper
+        mc = c.Mapper
         source = {mc.FLAGS_READ: False, mc.FLAGS_WRITE: False}
         mapping = {mc.FLAGS_READ: "r", mc.FLAGS_WRITE: "w"}
         result = FlextUtilities.collect_active_keys(source, mapping)
@@ -177,7 +175,7 @@ class TestMapperTransformValues:
 
     def test_basic_transform(self) -> None:
         """Test basic value transformation."""
-        mc = TestsFlextConstants.Mapper
+        mc = c.Mapper
         source_raw = {mc.A: mc.HELLO, mc.B: mc.WORLD}
         result = FlextUtilities.transform_values(
             source_raw,
@@ -187,7 +185,7 @@ class TestMapperTransformValues:
 
     def test_numeric_transform(self) -> None:
         """Test numeric value transformation."""
-        mc = TestsFlextConstants.Mapper
+        mc = c.Mapper
         source_raw = {mc.A: mc.NUM_1, mc.B: mc.NUM_2, mc.C: mc.NUM_3}
         result = FlextUtilities.transform_values(
             source_raw,
@@ -201,7 +199,7 @@ class TestMapperFilterDict:
 
     def test_basic_filter(self) -> None:
         """Test basic dict filtering."""
-        mc = TestsFlextConstants.Mapper
+        mc = c.Mapper
         source_raw = {mc.A: mc.NUM_1, mc.B: mc.NUM_2, mc.C: mc.NUM_3}
         result = FlextUtilities.filter_dict(
             source_raw,
@@ -215,14 +213,14 @@ class TestMapperInvertDict:
 
     def test_basic_invert(self) -> None:
         """Test basic dict inversion."""
-        mc = TestsFlextConstants.Mapper
+        mc = c.Mapper
         source = {mc.X: mc.Y, mc.A: mc.B}
         result = FlextUtilities.invert_dict(source)
         assert result == {mc.Y: mc.X, mc.B: mc.A}
 
     def test_collision_handling_last(self) -> None:
         """Test collision handling with 'last' strategy."""
-        mc = TestsFlextConstants.Mapper
+        mc = c.Mapper
         source = {mc.A: mc.B, mc.X: mc.B}
         result = FlextUtilities.invert_dict(source, handle_collisions="last")
         assert result == {mc.B: mc.X}

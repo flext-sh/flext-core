@@ -14,6 +14,8 @@ import re
 import pytest
 from hypothesis import given, strategies as st
 
+from tests.utilities import u
+
 from .contracts.text_contract import TextUtilityContract
 
 
@@ -99,6 +101,3 @@ class TestCleanText(TextUtilityContract):
         cleaned = u.clean_text(raw)
         assert re.search(r"\s{2,}", cleaned) is None
         assert cleaned == cleaned.strip()
-
-
-from tests.utilities import u

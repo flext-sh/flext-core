@@ -1867,7 +1867,9 @@ class FlextUtilitiesMapper:
         return {k: v for k, v in source.items() if predicate(k, v)}
 
     @staticmethod
-    def find_callable[T](callables: Mapping[str, p.Predicate[T]], value: T) -> r[str]:
+    def find_callable[T](
+        callables: Mapping[str, Callable[[T], bool]], value: T
+    ) -> r[str]:
         """Find first matching callable key from dict of predicates.
 
         Iterates through mapping of named predicates and returns the key of
@@ -1891,7 +1893,9 @@ class FlextUtilitiesMapper:
 
         """
 
-        def build_predicate_call(predicate_fn: p.Predicate[T]) -> Callable[[], bool]:
+        def build_predicate_call(
+            predicate_fn: Callable[[T], bool],
+        ) -> Callable[[], bool]:
 
             def _call_predicate() -> bool:
                 return predicate_fn(value)

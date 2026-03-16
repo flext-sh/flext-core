@@ -11,10 +11,7 @@ from typing import cast
 from pydantic import BaseModel
 
 from flext_core import r
-from tests.constants import c
-from tests.models import m
-from tests.typings import t
-from tests.utilities import u
+from tests import c, m, t, u
 
 from ._models import _BadCopyModel, _Cfg
 

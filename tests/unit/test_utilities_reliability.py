@@ -24,7 +24,7 @@ import pytest
 from flext_tests import u
 
 from flext_core import FlextRuntime, r
-from tests.typings import t
+from tests import t
 
 
 class TestFlextUtilitiesReliability:

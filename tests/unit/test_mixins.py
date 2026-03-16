@@ -30,7 +30,7 @@ from flext_tests import u
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import FlextContext, x
-from tests.models import m
+from tests import m
 
 
 class ServiceMixinScenarioType(StrEnum):

@@ -14,7 +14,7 @@ from typing import Literal, overload
 
 from pydantic import BaseModel, TypeAdapter, ValidationError
 
-from flext_core._models.base import FlextModelFoundation
+from flext_core._models import FlextModelFoundation
 from flext_core.result import r
 from flext_core.typings import t
 

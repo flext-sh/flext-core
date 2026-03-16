@@ -132,7 +132,8 @@ class FlextService[
             self._execution_result = self.execute()
         execution_result: r[TDomainResult] = self._execution_result
         if execution_result.is_success:
-            return execution_result.unwrap()
+            domain_result: TDomainResult = execution_result.unwrap()
+            return domain_result
         raise e.BaseError(execution_result.error or "Service execution failed")
 
     _context: p.Context | None = PrivateAttr(default=None)

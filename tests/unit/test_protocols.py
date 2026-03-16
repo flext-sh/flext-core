@@ -28,8 +28,7 @@ from flext_tests import tm, u
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import r
-from tests.models import m
-from tests.protocols import p
+from tests import m, p
 
 
 class ProtocolCategoryType(StrEnum):

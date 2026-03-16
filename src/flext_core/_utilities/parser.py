@@ -19,10 +19,8 @@ from typing import overload
 from pydantic import BaseModel, TypeAdapter, ValidationError
 
 from flext_core import FlextRuntime, c, m, p, r, t
-from flext_core._models.collections import FlextModelsCollections
-from flext_core._models.containers import FlextModelsContainers
-from flext_core._utilities.guards import FlextUtilitiesGuards
-from flext_core._utilities.model import FlextUtilitiesModel
+from flext_core._models import FlextModelsCollections, FlextModelsContainers
+from flext_core._utilities import FlextUtilitiesGuards, FlextUtilitiesModel
 
 
 class FlextUtilitiesParser:
@@ -430,32 +428,32 @@ class FlextUtilitiesParser:
         try:
             if target is int:
                 int_result = FlextUtilitiesParser._coerce_to_int(value)
-                return (
-                    r[t.Primitives].ok(int_result.value)
-                    if int_result.is_success
-                    else r[t.Primitives].fail(int_result.error)
-                )
+                if int_result.is_failure:
+                    return r[t.Primitives].fail(int_result.error)
+                int_val = int_result.value
+                assert isinstance(int_val, int)
+                return r[t.Primitives].ok(int_val)
             if target is float:
                 float_result = FlextUtilitiesParser._coerce_to_float(value)
-                return (
-                    r[t.Primitives].ok(float_result.value)
-                    if float_result.is_success
-                    else r[t.Primitives].fail(float_result.error)
-                )
+                if float_result.is_failure:
+                    return r[t.Primitives].fail(float_result.error)
+                float_val = float_result.value
+                assert isinstance(float_val, float)
+                return r[t.Primitives].ok(float_val)
             if target is str:
                 str_result = FlextUtilitiesParser._coerce_to_str(value)
-                return (
-                    r[t.Primitives].ok(str_result.value)
-                    if str_result.is_success
-                    else r[t.Primitives].fail(str_result.error)
-                )
+                if str_result.is_failure:
+                    return r[t.Primitives].fail(str_result.error)
+                str_val = str_result.value
+                assert isinstance(str_val, str)
+                return r[t.Primitives].ok(str_val)
             if target is bool:
                 bool_result = FlextUtilitiesParser._coerce_to_bool(value)
-                return (
-                    r[t.Primitives].ok(bool_result.value)
-                    if bool_result.is_success
-                    else r[t.Primitives].fail(bool_result.error)
-                )
+                if bool_result.is_failure:
+                    return r[t.Primitives].fail(bool_result.error)
+                bool_val = bool_result.value
+                assert isinstance(bool_val, bool)
+                return r[t.Primitives].ok(bool_val)
         except (ValueError, TypeError) as e:
             target_name = getattr(target, "__name__", "type")
             if (
@@ -1006,7 +1004,9 @@ class FlextUtilitiesParser:
                 return r[str].fail(
                     process_result.error or "Unknown error in pattern processing"
                 )
-            result_text, applied_patterns = process_result.value
+            proc_val = process_result.value
+            assert isinstance(proc_val, tuple)
+            result_text, applied_patterns = proc_val
             final_result = result_text.strip()
             self._parser_log.debug(
                 "Regex pipeline completed successfully",
@@ -1251,7 +1251,9 @@ class FlextUtilitiesParser:
             )
             if result.is_failure:
                 return result
-            components = result.value
+            components_val = result.value
+            assert isinstance(components_val, list)
+            components = components_val
             self._parser_log.debug(
                 "Delimited parsing completed successfully",
                 operation="parse_delimited",
@@ -1371,7 +1373,9 @@ class FlextUtilitiesParser:
                 return r[list[str]].fail(
                     split_result.error or "Unknown error in escape splitting"
                 )
-            components, escape_count = split_result.value
+            split_val = split_result.value
+            assert isinstance(split_val, tuple)
+            components, escape_count = split_val
             self._parser_log.debug(
                 "Escape-aware splitting completed successfully",
                 operation="split_on_char_with_escape",
@@ -1503,7 +1507,9 @@ class FlextUtilitiesParser:
                     pattern_result.error
                     or "Unknown error extracting pattern components"
                 )
-            pattern, replacement, flags = pattern_result.value
+            pattern_val = pattern_result.value
+            assert isinstance(pattern_val, tuple)
+            pattern, replacement, flags = pattern_val
             params_result = FlextUtilitiesModel.from_kwargs(
                 FlextModelsCollections.PatternApplicationParams,
                 text=result_text,
@@ -1517,12 +1523,16 @@ class FlextUtilitiesParser:
                 return r[tuple[str, int]].fail(
                     params_result.error or "Unknown error creating params"
                 )
-            apply_result = self._apply_single_pattern(params_result.value)
+            params_val = params_result.value
+            assert isinstance(params_val, m.PatternApplicationParams)
+            apply_result = self._apply_single_pattern(params_val)
             if apply_result.is_failure:
                 return r[tuple[str, int]].fail(
                     apply_result.error or "Unknown error applying pattern"
                 )
-            result_text = apply_result.value
+            result_text_val = apply_result.value
+            assert isinstance(result_text_val, str)
+            result_text = result_text_val
             applied_patterns += 1
         return r[tuple[str, int]].ok((result_text, applied_patterns))
 

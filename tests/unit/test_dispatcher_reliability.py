@@ -7,11 +7,11 @@ import time
 from flext_tests import tm
 
 from flext_core._dispatcher.reliability import (
-from tests.constants import c
     CircuitBreakerManager,
     RateLimiterManager,
     RetryPolicy,
 )
+from tests import c
 
 
 def test_circuit_breaker_transitions_and_metrics() -> None:

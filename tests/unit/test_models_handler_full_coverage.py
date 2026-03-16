@@ -5,9 +5,7 @@ from __future__ import annotations
 import pytest
 
 from flext_core import r
-from tests.constants import c
-from tests.models import m
-from tests.utilities import u
+from tests import c, m, u
 
 
 def test_models_handler_branches() -> None:

@@ -1380,6 +1380,4 @@ class FlextUtilitiesGuards:
             return r[T].fail(f"Validation failed: {exc}")
 
 
-validate_pydantic_model = FlextUtilitiesGuards.validate_pydantic_model
-
-__all__ = ["FlextUtilitiesGuards", "validate_pydantic_model"]
+__all__ = ["FlextUtilitiesGuards"]

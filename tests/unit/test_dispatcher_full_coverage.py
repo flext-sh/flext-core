@@ -8,9 +8,7 @@ import pytest
 
 from flext_core import FlextDispatcher, r
 from flext_core.dispatcher import _DispatchableHandler
-from tests.models import m
-from tests.protocols import p
-from tests.typings import t
+from tests import m, p, t
 
 
 def _force_handler(

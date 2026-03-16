@@ -7,9 +7,7 @@ from hypothesis import given, strategies as st
 from pydantic import BaseModel
 
 from flext_core import FlextHandlers, h
-from tests.constants import c
-from tests.models import m
-from tests.typings import t
+from tests import c, m, t
 
 
 class TestAutomatedFlextHandlers:

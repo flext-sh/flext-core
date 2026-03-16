@@ -22,9 +22,8 @@ from typing import TypeGuard
 from pydantic import ValidationError
 
 from flext_core import FlextRuntime, c, p, r, t
-from flext_core._models.base import FlextModelFoundation
-from flext_core._utilities.guards import FlextUtilitiesGuards
-from flext_core._utilities.mapper import FlextUtilitiesMapper
+from flext_core._models import FlextModelFoundation
+from flext_core._utilities import FlextUtilitiesGuards, FlextUtilitiesMapper
 
 
 class FlextUtilitiesReliability:

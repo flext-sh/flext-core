@@ -30,8 +30,7 @@ from flext_tests import FlextTestsUtilities, t, u
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import FlextRegistry, h, r
-from tests.constants import c
-from tests.models import m
+from tests import c, m
 
 
 class RegistryOperationType(StrEnum):

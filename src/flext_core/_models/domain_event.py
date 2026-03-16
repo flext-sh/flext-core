@@ -19,8 +19,6 @@ from pydantic import BaseModel, BeforeValidator, Field
 from flext_core import c, t
 from flext_core._models import FlextModelFoundation, FlextModelsContainers
 
-_V = FlextModelFoundation.Validators
-
 
 class _ComparableConfigMap(FlextModelsContainers.ConfigMap):
     """ConfigMap with equality support for domain event data."""
@@ -30,7 +28,9 @@ class _ComparableConfigMap(FlextModelsContainers.ConfigMap):
         if isinstance(other, dict):
             return self.root == other
         if isinstance(other, Mapping):
-            typed_other = _V.dict_str_metadata_adapter().validate_python(other)
+            typed_other = FlextModelFoundation.Validators.dict_str_metadata_adapter().validate_python(
+                other
+            )
             other_mapping = FlextModelsContainers.ConfigMap(
                 root={
                     key: FlextModelsDomainEvent.metadata_to_normalized(value)
@@ -100,7 +100,9 @@ class FlextModelsDomainEvent:
         if isinstance(value, FlextModelsContainers.ConfigMap):
             return _ComparableConfigMap(root=dict(value.items()))
         if isinstance(value, dict):
-            typed_value = _V.dict_str_metadata_adapter().validate_python(value)
+            typed_value = FlextModelFoundation.Validators.dict_str_metadata_adapter().validate_python(
+                value
+            )
             intermediate = FlextModelsContainers.ConfigMap(
                 root={
                     key: FlextModelsDomainEvent.metadata_to_normalized(item)
@@ -109,7 +111,9 @@ class FlextModelsDomainEvent:
             )
             return _ComparableConfigMap(root=intermediate.root)
         if isinstance(value, Mapping):
-            typed_mapping = _V.dict_str_metadata_adapter().validate_python(value)
+            typed_mapping = FlextModelFoundation.Validators.dict_str_metadata_adapter().validate_python(
+                value
+            )
             intermediate = FlextModelsContainers.ConfigMap(
                 root={
                     key: FlextModelsDomainEvent.metadata_to_normalized(item)

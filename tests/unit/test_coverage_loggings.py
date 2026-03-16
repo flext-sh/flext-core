@@ -21,7 +21,7 @@ from __future__ import annotations
 from flext_tests import tm
 
 from flext_core import FlextLogger, FlextSettings, r
-from tests.models import m
+from tests import m
 
 
 def make_result_logger(

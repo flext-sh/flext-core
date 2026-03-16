@@ -14,7 +14,7 @@ from pydantic import BaseModel
 from pydantic_settings import BaseSettings as _BaseSettings
 
 from flext_core import FlextContainer, FlextContext, FlextSettings, r
-from tests.models import m
+from tests import m
 
 _MonkeyPatch = pytest.MonkeyPatch
 

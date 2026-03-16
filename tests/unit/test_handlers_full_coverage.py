@@ -10,9 +10,7 @@ import pytest
 from pydantic import BaseModel
 
 from flext_core import FlextExceptions, FlextHandlers, h, r
-from tests.constants import c
-from tests.models import m
-from tests.typings import t
+from tests import c, m, t
 
 handlers_module = importlib.import_module("flext_core.handlers")
 

@@ -50,8 +50,8 @@ from pathlib import Path
 
 from pydantic import BaseModel
 
-from flext_core import FlextExceptions as e, FlextRuntime, T_Model, c, m, p, r, t
-from flext_core._models.containers import FlextModelsContainers
+from flext_core import FlextRuntime, T_Model, c, e, m, p, r, t
+from flext_core._models import FlextModelsContainers
 
 
 class FlextUtilitiesConfiguration:

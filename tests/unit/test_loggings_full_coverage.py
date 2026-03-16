@@ -11,10 +11,7 @@ import pytest
 from flext_tests import t, tm
 
 from flext_core import FlextLogger, FlextRuntime, FlextSettings, r
-from tests.constants import c
-from tests.models import m
-from tests.protocols import p
-from tests.utilities import u
+from tests import c, m, p, u
 
 
 class _FakeBindable:

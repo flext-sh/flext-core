@@ -22,8 +22,7 @@ from flext_tests import t as test_t, tm
 from flext_core import FlextRuntime, FlextUtilities
 from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core._utilities.mapper import FlextUtilitiesMapper
-from flext_core.runtime import RuntimeData
-from tests.models import m
+from tests import m
 
 pytestmark = [pytest.mark.unit]
 

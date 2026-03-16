@@ -30,16 +30,13 @@ if TYPE_CHECKING:
     from flext_core._utilities.enum import FlextUtilitiesEnum
     from flext_core._utilities.file_ops import FlextUtilitiesFileOps
     from flext_core._utilities.generators import FlextUtilitiesGenerators
-    from flext_core._utilities.guards import (
-        FlextUtilitiesGuards,
-        validate_pydantic_model,
-    )
+    from flext_core._utilities.guards import FlextUtilitiesGuards
     from flext_core._utilities.mapper import FlextUtilitiesMapper
     from flext_core._utilities.model import FlextUtilitiesModel
     from flext_core._utilities.pagination import FlextUtilitiesPagination
     from flext_core._utilities.parser import FlextUtilitiesParser
     from flext_core._utilities.reliability import FlextUtilitiesReliability
-    from flext_core._utilities.result_helpers import ResultHelpers
+    from flext_core._utilities.result_helpers import FlextUtilitiesResultHelpers
     from flext_core._utilities.text import FlextUtilitiesText
     from flext_core.typings import FlextTypes
 
@@ -86,12 +83,11 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "flext_core._utilities.reliability",
         "FlextUtilitiesReliability",
     ),
-    "FlextUtilitiesText": ("flext_core._utilities.text", "FlextUtilitiesText"),
-    "ResultHelpers": ("flext_core._utilities.result_helpers", "ResultHelpers"),
-    "validate_pydantic_model": (
-        "flext_core._utilities.guards",
-        "validate_pydantic_model",
+    "FlextUtilitiesResultHelpers": (
+        "flext_core._utilities.result_helpers",
+        "FlextUtilitiesResultHelpers",
     ),
+    "FlextUtilitiesText": ("flext_core._utilities.text", "FlextUtilitiesText"),
 }
 
 __all__ = [
@@ -113,9 +109,8 @@ __all__ = [
     "FlextUtilitiesPagination",
     "FlextUtilitiesParser",
     "FlextUtilitiesReliability",
+    "FlextUtilitiesResultHelpers",
     "FlextUtilitiesText",
-    "ResultHelpers",
-    "validate_pydantic_model",
 ]
 
 

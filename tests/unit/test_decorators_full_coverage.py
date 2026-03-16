@@ -13,9 +13,7 @@ from flext_tests import t as test_t, tm
 from pydantic import BaseModel, Field
 
 from flext_core import FlextContainer, FlextContext, FlextLogger, d, e, r
-from tests.constants import c
-from tests.models import m
-from tests.typings import t
+from tests import c, m, t
 
 
 class _FakeLogger:

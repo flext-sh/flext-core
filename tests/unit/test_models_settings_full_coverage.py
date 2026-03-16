@@ -12,10 +12,7 @@ import pytest
 
 from flext_core import r
 from flext_core._models.settings import FlextModelsConfig
-from tests.constants import c
-from tests.models import m
-from tests.typings import t
-from tests.utilities import u
+from tests import c, m, t, u
 
 
 def test_models_settings_branch_paths() -> None:

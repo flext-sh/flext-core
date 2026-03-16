@@ -21,9 +21,7 @@ from typing import Annotated, cast
 from flext_tests import t, tm
 from pydantic import BaseModel, Field
 
-from tests.models import m
-from tests.typings import t
-from tests.utilities import u
+from tests import m, t, u
 
 from ..test_utils import assertion_helpers
 from ._models import ComplexModel

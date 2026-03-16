@@ -17,8 +17,7 @@ from typing import ClassVar
 
 from pydantic import BaseModel
 
-from flext_core import t
-from flext_core.typings import P, R
+from flext_core import P, R, t
 
 
 class FlextUtilitiesDeprecation:

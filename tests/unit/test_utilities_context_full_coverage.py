@@ -15,8 +15,7 @@ from unittest.mock import MagicMock
 from flext_tests import t
 
 from flext_core import FlextContext
-from tests.models import m
-from tests.utilities import u
+from tests import m, u
 
 from ._models import _FakeConfig
 

@@ -16,7 +16,7 @@ from typing import ClassVar, Literal, TypeGuard, TypeIs, overload
 from pydantic import ValidationError
 
 from flext_core import r, t
-from flext_core._models.base import FlextModelFoundation
+from flext_core._models import FlextModelFoundation
 from flext_core.typings import EnumT
 
 

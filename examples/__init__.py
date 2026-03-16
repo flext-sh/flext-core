@@ -23,7 +23,6 @@ if TYPE_CHECKING:
     from examples._models.ex02 import (
         Ex02CacheService,
         Ex02DatabaseService,
-        Ex02DatabaseService as s,
         Ex02EmailService,
         Ex02TestConfig,
     )
@@ -104,7 +103,7 @@ if TYPE_CHECKING:
         Ex09FlextDecorators as d,
     )
     from examples.ex_10_flext_handlers import Ex10FlextHandlers, Ex10FlextHandlers as h
-    from examples.ex_11_flext_service import Ex11FlextService
+    from examples.ex_11_flext_service import Ex11FlextService, Ex11FlextService as s
     from examples.ex_12_flext_registry import Ex12FlextRegistry
     from examples.logging_config_once_pattern import (
         DatabaseService,
@@ -212,7 +211,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "m": ("examples.models", "FlextCoreExampleModels"),
     "main": ("examples.logging_config_once_pattern", "main"),
     "r": ("examples._models.ex01", "Ex01DemonstrationResult"),
-    "s": ("examples._models.ex02", "Ex02DatabaseService"),
+    "s": ("examples.ex_11_flext_service", "Ex11FlextService"),
     "x": ("examples.ex_05_flext_mixins", "Ex05FlextMixins"),
 }
 

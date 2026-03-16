@@ -10,7 +10,7 @@ from __future__ import annotations
 from flext_tests import tm
 
 from flext_core import FlextExceptions, r
-from tests.models import m
+from tests import m
 
 
 class TestResultBasics:

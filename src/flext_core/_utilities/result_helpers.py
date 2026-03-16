@@ -6,12 +6,12 @@ from typing import TypeVar
 from pydantic import BaseModel
 
 from flext_core import p, r, t
-from flext_core._utilities.guards import FlextUtilitiesGuards
+from flext_core._utilities import FlextUtilitiesGuards
 
 T = TypeVar("T")
 
 
-class ResultHelpers:
+class FlextUtilitiesResultHelpers:
     """Result composition helpers (namespace-only, no MRO base).
 
     Governance: Pure namespace class with only @staticmethod members. No state,
@@ -117,4 +117,4 @@ class ResultHelpers:
         return r[t.NormalizedValue | BaseModel].ok(value)
 
 
-__all__ = ["ResultHelpers"]
+__all__ = ["FlextUtilitiesResultHelpers"]

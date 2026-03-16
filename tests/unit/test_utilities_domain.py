@@ -27,8 +27,7 @@ import pytest
 from flext_tests import t, u
 from pydantic import BaseModel
 
-from tests.constants import c
-from tests.models import m
+from tests import c, m
 
 from ._models import InputPayloadMap, TestCaseMap
 

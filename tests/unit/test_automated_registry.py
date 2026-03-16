@@ -9,7 +9,7 @@ from flext_tests import tb, tm
 from hypothesis import given, settings, strategies as st
 
 from flext_core import FlextRegistry, r
-from tests.models import m
+from tests import m
 
 
 class _RegistryHandlerCallable:

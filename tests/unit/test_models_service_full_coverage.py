@@ -10,9 +10,7 @@ import pytest
 
 from flext_core import r
 from flext_core._models.service import FlextModelsService
-from tests.constants import c
-from tests.models import m
-from tests.utilities import u
+from tests import c, m, u
 
 
 def test_service_request_timeout_validator_branches() -> None:

@@ -27,7 +27,7 @@ from flext_core import (
     T,
     r,
 )
-from tests.constants import TestsFlextConstants
+from tests import c
 
 
 class TestsFlextServiceBase(FlextTestsServiceBase[T]):
@@ -210,7 +210,7 @@ class TestsFlextServiceBase(FlextTestsServiceBase[T]):
         @staticmethod
         def create_simple_handler(
             handler_id: str,
-            result_value: FlextTypes.Container = TestsFlextConstants.Strings.BASIC_WORD,
+            result_value: FlextTypes.Container = c.Strings.BASIC_WORD,
         ) -> FlextHandlers[FlextTypes.Container, FlextTypes.Container]:
             """Create a simple handler that always returns the same value.
 
@@ -240,7 +240,7 @@ class TestsFlextServiceBase(FlextTestsServiceBase[T]):
         @staticmethod
         def create_failing_handler(
             handler_id: str,
-            error_message: str = TestsFlextConstants.TestErrors.PROCESSING_ERROR,
+            error_message: str = c.TestErrors.PROCESSING_ERROR,
         ) -> FlextHandlers[FlextTypes.Container, FlextTypes.Container]:
             """Create a handler that always fails.
 
@@ -256,7 +256,7 @@ class TestsFlextServiceBase(FlextTestsServiceBase[T]):
                 msg = "Handler ID cannot be empty"
                 raise ValueError(msg)
             if not error_message:
-                error_message = TestsFlextConstants.TestErrors.PROCESSING_ERROR
+                error_message = c.TestErrors.PROCESSING_ERROR
 
             def always_fail(
                 _msg: FlextTypes.Container,

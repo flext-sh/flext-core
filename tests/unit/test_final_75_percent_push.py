@@ -21,7 +21,7 @@ from flext_tests import tm
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import FlextContainer, FlextExceptions, r
-from tests.utilities import u
+from tests import u
 
 
 class ResultOperationScenario(BaseModel):

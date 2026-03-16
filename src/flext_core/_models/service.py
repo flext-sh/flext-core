@@ -18,7 +18,7 @@ from pydantic import BaseModel, Field, model_validator
 from pydantic_settings import BaseSettings
 
 from flext_core import c, p, t
-from flext_core._models.base import FlextModelFoundation
+from flext_core._models import FlextModelFoundation
 
 
 class FlextModelsService:
