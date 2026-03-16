@@ -36,6 +36,10 @@ class FlextUtilitiesEnum:
     _V = m.Validators
 
     @staticmethod
+    def _is_strenum_class(value: object) -> TypeIs[type[StrEnum]]:
+        return isinstance(value, type) and issubclass(value, StrEnum)
+
+    @staticmethod
     def _coerce[E: StrEnum](enum_cls: type[E], value: str | E) -> E:
         """Coerce value to enum - for Pydantic validators (internal helper)."""
         if isinstance(value, enum_cls):
@@ -252,8 +256,10 @@ class FlextUtilitiesEnum:
             After refactoring completes, prefer explicit StrEnum class definitions.
 
         """
-        enum_cls: type[StrEnum] = StrEnum(name, values)  # type: ignore[assignment]  # StrEnum() functional API returns type[StrEnum] but typed as StrEnum
-        return enum_cls
+        enum_candidate = StrEnum(name, values)
+        if FlextUtilitiesEnum._is_strenum_class(enum_candidate):
+            return enum_candidate
+        raise TypeError("StrEnum factory did not return a StrEnum class")
 
     @overload
     @staticmethod

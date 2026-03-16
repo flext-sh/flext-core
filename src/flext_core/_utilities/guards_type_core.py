@@ -6,7 +6,7 @@ import warnings
 from collections.abc import Mapping, Sequence
 from datetime import datetime
 from pathlib import Path
-from typing import TypeIs
+from typing import TypeGuard, TypeIs
 
 from flext_core import t
 
@@ -61,7 +61,7 @@ class FlextUtilitiesGuardsTypeCore:
     @staticmethod
     def is_container(
         value: object,
-    ) -> TypeIs[str | int | float | bool | datetime | Path]:
+    ) -> TypeGuard[str | int | float | bool | datetime | Path]:
         if value is None or isinstance(value, (str, int, float, bool, datetime)):
             return True
         if FlextUtilitiesGuardsTypeCore._is_object_sequence(value):
