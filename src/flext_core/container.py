@@ -631,10 +631,8 @@ class FlextContainer(p.Container):
                         ov, (str, int, float, bool, datetime, Path, BaseModel)
                     ):
                         overrides_root[ok] = ov
-                    elif isinstance(ov, Sequence):
-                        overrides_root[ok] = list(ov)
                     else:
-                        overrides_root[ok] = str(ov)
+                        overrides_root[ok] = list(ov)
         user_overrides_map = t.ConfigMap(root=overrides_root)
         self._user_overrides = user_overrides_map
         config_instance: p.Settings = (

@@ -15,11 +15,9 @@ import contextvars
 import threading
 import time
 from collections.abc import Callable, Mapping
-from datetime import datetime
-from pathlib import Path
 from typing import TypeGuard
 
-from pydantic import ValidationError
+from pydantic import BaseModel, ValidationError
 
 from flext_core import FlextRuntime, c, m, p, r, t
 from flext_core._utilities import FlextUtilitiesGuards, FlextUtilitiesMapper
@@ -484,7 +482,14 @@ class FlextUtilitiesReliability:
                             )
                         continue
                     result_value = op_result.value
-                    current = result_value
+                    if isinstance(result_value, BaseModel):
+                        current = FlextUtilitiesMapper.narrow_to_container(
+                            result_value.model_dump(mode="python")
+                        )
+                    elif FlextUtilitiesGuards.is_container(result_value):
+                        current = result_value
+                    else:
+                        current = str(result_value)
                 else:
                     current = op_result
             except (

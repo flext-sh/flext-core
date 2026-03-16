@@ -13,6 +13,8 @@ from __future__ import annotations
 from collections.abc import Mapping
 from datetime import datetime
 
+from pydantic import BaseModel
+
 from flext_core import m, p, t
 
 
@@ -75,9 +77,13 @@ class FlextUtilitiesContext:
             setattr(cloned, "_context", cloned_context)
         if "_config" in runtime_vars:
             runtime_config = runtime_vars["_config"]
-            if config_overrides:
-                cloned_config = runtime_config.model_copy(update=config_overrides)
-                setattr(cloned, "_config", cloned_config)
+            if isinstance(config_overrides, t.ConfigMap):
+                override_values = dict(config_overrides.items())
+                if isinstance(runtime_config, BaseModel):
+                    cloned_config = runtime_config.model_copy(update=override_values)
+                    setattr(cloned, "_config", cloned_config)
+                else:
+                    setattr(cloned, "_config", runtime_config)
             else:
                 setattr(cloned, "_config", runtime_config)
         return cloned

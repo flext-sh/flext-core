@@ -132,8 +132,8 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
         ),
     ] = None
     initial_context: Annotated[
-        FlextContext | None,
-        Field(default=None, description="Initial FlextContext for the service scope."),
+        p.Context | None,
+        Field(default=None, description="Initial context for the service scope."),
     ] = None
 
     @staticmethod

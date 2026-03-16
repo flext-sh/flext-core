@@ -707,8 +707,16 @@ class FlextUtilitiesMapper:
 
         """
         if isinstance(current, Mapping):
-            if key_part in current:
-                raw_val = current[key_part]
+            current_mapping: dict[str, t.NormalizedValue] = {}
+            for map_key, map_value in current.items():
+                normalized_value: t.NormalizedValue = (
+                    map_value
+                    if FlextUtilitiesGuards.is_container(map_value)
+                    else str(map_value)
+                )
+                current_mapping[str(map_key)] = normalized_value
+            if key_part in current_mapping:
+                raw_val: t.NormalizedValue = current_mapping[key_part]
                 narrowed = FlextUtilitiesMapper.narrow_to_container(raw_val)
                 if narrowed is None:
                     return r[t.NormalizedValue].fail(f"found_none:{key_part}")

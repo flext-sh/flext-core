@@ -79,11 +79,11 @@ class FlextService[
         validate_assignment=True,
     )
     # --- Service Bootstrap Configuration ---
-    config_type: type[FlextSettings] | None = Field(default=None, exclude=True)
+    config_type: type[FlextSettings] | None = None
     config_overrides: dict[str, t.NormalizedValue] | None = Field(
         default=None, exclude=True
     )
-    initial_context: p.Context | None = Field(default=None, exclude=True)
+    initial_context: FlextContext | None = None
     subproject: str | None = Field(default=None, exclude=True)
     services: Mapping[str, t.RegisterableService] | None = Field(
         default=None, exclude=True

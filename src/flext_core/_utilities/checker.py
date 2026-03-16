@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import inspect
 from collections.abc import Callable, Mapping
-from typing import get_args, get_origin, get_type_hints
+from typing import TypeGuard, get_args, get_origin, get_type_hints
 
 from pydantic import BaseModel
 
@@ -26,6 +26,12 @@ class FlextUtilitiesChecker:
     Extracts type introspection and compatibility logic from h
     to simplify handler initialization and provide reusable type checking.
     """
+
+    @staticmethod
+    def _is_module_export_callable(
+        value: object,
+    ) -> TypeGuard[Callable[..., t.ModuleExport]]:
+        return callable(value)
 
     @property
     def logger(self) -> p.Logger:
@@ -171,14 +177,14 @@ class FlextUtilitiesChecker:
             r[t.MessageTypeSpecifier]: Success with message type or failure.
 
         """
-        if not hasattr(handler_class, c.Mixins.METHOD_HANDLE):
+        if not hasattr(handler_class, "handle"):
             return r[t.MessageTypeSpecifier].fail("Handler has no handle method")
         if c.Mixins.METHOD_HANDLE != "handle":
             return r[t.MessageTypeSpecifier].fail(
                 f"Unsupported handler method: {c.Mixins.METHOD_HANDLE}"
             )
-        handle_method_raw: t.ModuleExport = handler_class.handle
-        if not callable(handle_method_raw):
+        handle_method_raw: object = getattr(handler_class, "handle", None)
+        if not cls._is_module_export_callable(handle_method_raw):
             return r[t.MessageTypeSpecifier].fail(
                 "Handler handle attribute is not callable"
             )
