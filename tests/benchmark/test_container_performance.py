@@ -19,7 +19,7 @@ from collections.abc import Callable
 
 import pytest
 
-from flext_core import FlextContainer
+from flext_core import FlextContainer, p
 
 
 class PerformanceBenchmark:

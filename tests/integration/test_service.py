@@ -14,7 +14,7 @@ from typing import Annotated, override
 import pytest
 from pydantic import BaseModel, Field, PrivateAttr
 
-from flext_core import FlextContainer, FlextService, m, r
+from flext_core import FlextService, m, p, r
 
 from ..conftest import FunctionalExternalService
 from ..test_utils import assertion_helpers

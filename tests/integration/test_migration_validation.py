@@ -38,6 +38,7 @@ from flext_core import (
     FlextSettings,
     FlextTypes,
     FlextUtilities,
+    p,
     r,
 )
 
