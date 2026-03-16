@@ -70,10 +70,7 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
     """
 
     _runtime: m.ServiceRuntime | None = PrivateAttr(default=None)
-    _operation_stats: Annotated[
-        dict[str, t.ConfigMap],
-        PrivateAttr(default_factory=dict),
-    ]
+    _operation_stats: dict[str, t.ConfigMap] = PrivateAttr(default_factory=dict)
 
     _logger_cache: ClassVar[dict[str, FlextLogger]] = {}
     _cache_lock: ClassVar[threading.Lock] = threading.Lock()
