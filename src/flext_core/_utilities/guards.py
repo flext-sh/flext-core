@@ -40,6 +40,38 @@ class FlextUtilitiesGuards:
     - Metadata value normalization
     """
 
+    @staticmethod
+    def _is_bool(value: t.NormalizedValue) -> TypeGuard[bool]:
+        """Check if value is bool."""
+        return isinstance(value, bool)
+
+    @staticmethod
+    def _is_bytes(value: t.NormalizedValue) -> TypeGuard[bytes]:
+        """Check if value is bytes."""
+        return isinstance(value, bytes)
+
+    @staticmethod
+    def _is_callable_key_func(
+        func: t.NormalizedValue,
+    ) -> TypeGuard[Callable[[t.NormalizedValue], t.NormalizedValue]]:
+        """Check if value is callable and can be used as key function for sorted()."""
+        return callable(func)
+
+    @staticmethod
+    def _is_dict(value: t.NormalizedValue) -> TypeGuard[t.Dict]:
+        """Check if value is a dict-like mapping."""
+        return isinstance(value, dict)
+
+    @staticmethod
+    def _is_float(value: t.NormalizedValue) -> TypeGuard[float]:
+        """Check if value is float."""
+        return isinstance(value, float)
+
+    @staticmethod
+    def _is_int(value: t.NormalizedValue) -> TypeGuard[int]:
+        """Check if value is int."""
+        return isinstance(value, int)
+
     type _GuardInput = (
         t.RegisterableService
         | t.NormalizedValue
@@ -72,6 +104,49 @@ class FlextUtilitiesGuards:
     def is_object_tuple(
         value: FlextUtilitiesGuards._GuardInput,
     ) -> TypeGuard[tuple[t.NormalizedValue, ...]]:
+        return isinstance(value, tuple)
+
+    @staticmethod
+    def _is_none(value: t.NormalizedValue) -> TypeGuard[None]:
+        """Check if value is None."""
+        return value is None
+
+    @staticmethod
+    def _is_sequence(
+        value: t.NormalizedValue,
+    ) -> TypeGuard[Sequence[t.NormalizedValue]]:
+        """Check if value is Sequence of NormalizedValue."""
+        return isinstance(value, (list, tuple, range))
+
+    @staticmethod
+    def _is_sequence_not_str(
+        value: t.NormalizedValue,
+    ) -> TypeGuard[Sequence[t.NormalizedValue]]:
+        """Check if value is Sequence and not str."""
+        return isinstance(value, (list, tuple, range)) and (not isinstance(value, str))
+
+    @staticmethod
+    def _is_sequence_not_str_bytes(
+        value: t.NormalizedValue,
+    ) -> TypeGuard[Sequence[t.NormalizedValue]]:
+        """Check if value is Sequence and not str or bytes."""
+        return isinstance(value, (list, tuple, range)) and (
+            not isinstance(value, (str, bytes))
+        )
+
+    @staticmethod
+    def _is_sized(value: t.NormalizedValue) -> TypeGuard[Sized]:
+        """Check if value has __len__ (str, bytes, Sequence, Mapping)."""
+        return isinstance(value, Sized)
+
+    @staticmethod
+    def _is_str(value: t.NormalizedValue) -> TypeGuard[str]:
+        """Check if value is str."""
+        return isinstance(value, str)
+
+    @staticmethod
+    def _is_tuple(value: t.NormalizedValue) -> TypeGuard[tuple[t.NormalizedValue, ...]]:
+        """Check if value is tuple."""
         return isinstance(value, tuple)
 
     @staticmethod
@@ -514,43 +589,37 @@ class FlextUtilitiesGuards:
     def _run_string_type_check(type_name: str, value: t.NormalizedValue) -> bool:
         match type_name:
             case "str":
-                return bool(isinstance(value, str))
+                return bool(FlextUtilitiesGuards._is_str(value))
             case "dict":
-                return bool(isinstance(value, dict))
+                return bool(FlextUtilitiesGuards._is_dict(value))
             case "list":
                 return bool(FlextUtilitiesGuards.is_list(value))
             case "tuple":
-                return bool(isinstance(value, tuple))
+                return bool(FlextUtilitiesGuards._is_tuple(value))
             case "sequence":
-                return bool(isinstance(value, (list, tuple, range)))
+                return bool(FlextUtilitiesGuards._is_sequence(value))
             case "mapping":
                 return bool(FlextUtilitiesGuards._is_mapping(value))
             case "list_or_tuple":
                 return bool(FlextUtilitiesGuards._is_list_or_tuple(value))
             case "sequence_not_str":
-                return bool(
-                    isinstance(value, (list, tuple, range))
-                    and (not isinstance(value, str))
-                )
+                return bool(FlextUtilitiesGuards._is_sequence_not_str(value))
             case "sequence_not_str_bytes":
-                return bool(
-                    isinstance(value, (list, tuple, range))
-                    and (not isinstance(value, (str, bytes)))
-                )
+                return bool(FlextUtilitiesGuards._is_sequence_not_str_bytes(value))
             case "sized":
-                return bool(isinstance(value, Sized))
+                return bool(FlextUtilitiesGuards._is_sized(value))
             case "callable":
-                return bool(callable(value))
+                return bool(FlextUtilitiesGuards._is_callable_key_func(value))
             case "bytes":
-                return bool(isinstance(value, bytes))
+                return bool(FlextUtilitiesGuards._is_bytes(value))
             case "int":
-                return bool(isinstance(value, int))
+                return bool(FlextUtilitiesGuards._is_int(value))
             case "float":
-                return bool(isinstance(value, float))
+                return bool(FlextUtilitiesGuards._is_float(value))
             case "bool":
-                return bool(isinstance(value, bool))
+                return bool(FlextUtilitiesGuards._is_bool(value))
             case "none":
-                return bool(value is None)
+                return bool(FlextUtilitiesGuards._is_none(value))
             case "string_non_empty":
                 return bool(FlextUtilitiesGuards.is_string_non_empty(value))
             case "dict_non_empty":
@@ -927,7 +996,7 @@ class FlextUtilitiesGuards:
         """
         if items is None:
             return True
-        if isinstance(items, Sized):
+        if FlextUtilitiesGuards._is_sized(items):
             return len(items) == 0
         return not bool(items)
 

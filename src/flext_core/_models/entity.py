@@ -23,7 +23,6 @@ from flext_core._models import (
     FlextModelFoundation,
     FlextModelsDomainEvent,
 )
-from flext_core._utilities.domain import FlextUtilitiesDomain
 
 
 class FlextModelsEntity:
@@ -63,11 +62,11 @@ class FlextModelsEntity:
             """Identity-based equality for entities."""
             if not isinstance(other, BaseModel):
                 return NotImplemented
-            return FlextUtilitiesDomain.compare_entities_by_id(self, other)
+            return FlextRuntime.compare_entities_by_id(self, other)
 
         def __hash__(self) -> int:
             """Identity-based hash for entities."""
-            return FlextUtilitiesDomain.hash_entity_by_id(self)
+            return FlextRuntime.hash_entity_by_id(self)
 
         @computed_field
         @property
@@ -199,11 +198,11 @@ class FlextModelsEntity:
             """Compare by value."""
             if not isinstance(other, BaseModel):
                 return NotImplemented
-            return FlextUtilitiesDomain.compare_value_objects_by_value(self, other)
+            return FlextRuntime.compare_value_objects_by_value(self, other)
 
         def __hash__(self) -> int:
             """Hash based on values for use in sets/dicts."""
-            return FlextUtilitiesDomain.hash_value_object_by_value(self)
+            return FlextRuntime.hash_value_object_by_value(self)
 
     class AggregateRoot(Entity):
         """Base class for aggregate roots - consistency boundaries."""

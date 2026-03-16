@@ -11,7 +11,7 @@ from __future__ import annotations
 from collections.abc import Callable, Hashable, Mapping, Sequence
 from datetime import datetime
 from enum import StrEnum
-from typing import overload
+from typing import TypeGuard, overload
 
 from flext_core import R, T, U, m, r, t
 
@@ -134,11 +134,25 @@ class FlextUtilitiesCollection:
             return True
         if isinstance(value, str):
             return not value
-        if isinstance(value, list):
+        if FlextUtilitiesCollection._is_general_value_list(value):
             return len(value) == 0
-        if isinstance(value, dict):
+        if FlextUtilitiesCollection._is_general_value_dict(value):
             return len(value) == 0
         return False
+
+    @staticmethod
+    def _is_general_value_dict(
+        value: t.NormalizedValue,
+    ) -> TypeGuard[dict[str, t.NormalizedValue]]:
+        """Type guard to narrow dict to object dict."""
+        return isinstance(value, dict)
+
+    @staticmethod
+    def _is_general_value_list(
+        value: t.NormalizedValue,
+    ) -> TypeGuard[list[t.NormalizedValue]]:
+        """Type guard to narrow list to object list."""
+        return isinstance(value, list)
 
     @staticmethod
     def _merge_deep_single_key(
@@ -148,8 +162,8 @@ class FlextUtilitiesCollection:
         current_val = result.get(key)
         if (
             current_val is not None
-            and isinstance(current_val, dict)
-            and isinstance(value, dict)
+            and FlextUtilitiesCollection._is_general_value_dict(current_val)
+            and FlextUtilitiesCollection._is_general_value_dict(value)
         ):
             merged = FlextUtilitiesCollection.merge(current_val, value, strategy="deep")
             if merged.is_success:
@@ -218,11 +232,20 @@ class FlextUtilitiesCollection:
                 if isinstance(result_raw, r):
                     if result_raw.is_success:
                         result_value = result_raw.value
-                        if do_flatten and isinstance(result_value, list):
+                        if (
+                            do_flatten
+                            and FlextUtilitiesCollection._is_general_value_list(
+                                result_value
+                            )
+                        ):
                             for inner_item in result_value:
                                 if (
-                                    isinstance(inner_item, dict)
-                                    or isinstance(inner_item, list)
+                                    FlextUtilitiesCollection._is_general_value_dict(
+                                        inner_item
+                                    )
+                                    or FlextUtilitiesCollection._is_general_value_list(
+                                        inner_item
+                                    )
                                     or isinstance(
                                         inner_item, (str, int, float, bool, datetime)
                                     )
@@ -233,29 +256,28 @@ class FlextUtilitiesCollection:
                                         )
                                     )
                                 else:
-                                    inner_item_obj: object = inner_item
-                                    results.append(str(inner_item_obj))
+                                    results.append(str(inner_item))
                             continue
-                        if isinstance(result_value, dict):
-                            dict_value: dict[str, t.NormalizedValue] = result_value
-                            value = FlextUtilitiesCollection._coerce_guard_value(
-                                dict_value
+                        if (
+                            FlextUtilitiesCollection._is_general_value_dict(
+                                result_value
                             )
-                        elif isinstance(result_value, list):
-                            list_value: list[t.NormalizedValue] = result_value
-                            value = FlextUtilitiesCollection._coerce_guard_value(
-                                list_value
+                            or FlextUtilitiesCollection._is_general_value_list(
+                                result_value
                             )
-                        elif isinstance(
-                            result_value, (str, int, float, bool, datetime)
+                            or isinstance(
+                                result_value, (str, int, float, bool, datetime)
+                            )
                         ):
                             value = FlextUtilitiesCollection._coerce_guard_value(
                                 result_value
                             )
                         else:
-                            result_value_obj: object = result_value
-                            value = str(result_value_obj)
-                        if do_flatten and isinstance(value, list):
+                            value = str(result_value)
+                        if (
+                            do_flatten
+                            and FlextUtilitiesCollection._is_general_value_list(value)
+                        ):
                             results.extend(value)
                         else:
                             results.append(value)
@@ -269,12 +291,17 @@ class FlextUtilitiesCollection:
                             errors.append((processed - 1, str(error_msg)))
                     continue
                 try:
-                    if do_flatten and isinstance(result_raw, list):
-                        result_raw_list: list[t.NormalizedValue] = result_raw
-                        for inner_item in result_raw_list:
+                    if do_flatten and FlextUtilitiesCollection._is_general_value_list(
+                        result_raw
+                    ):
+                        for inner_item in result_raw:
                             if (
-                                isinstance(inner_item, dict)
-                                or isinstance(inner_item, list)
+                                FlextUtilitiesCollection._is_general_value_dict(
+                                    inner_item
+                                )
+                                or FlextUtilitiesCollection._is_general_value_list(
+                                    inner_item
+                                )
                                 or isinstance(
                                     inner_item, (str, int, float, bool, datetime)
                                 )
@@ -285,30 +312,23 @@ class FlextUtilitiesCollection:
                                     )
                                 )
                             else:
-                                inner_item_obj: object = inner_item
-                                results.append(str(inner_item_obj))
+                                results.append(str(inner_item))
                         continue
-                    if isinstance(result_raw, dict):
-                        result_raw_dict: dict[str, t.NormalizedValue] = result_raw
-                        direct_result = FlextUtilitiesCollection._coerce_guard_value(
-                            result_raw_dict
-                        )
-                    elif isinstance(result_raw, list):
-                        result_raw_list: list[t.NormalizedValue] = result_raw
-                        direct_result = FlextUtilitiesCollection._coerce_guard_value(
-                            result_raw_list
-                        )
-                    elif isinstance(result_raw, (str, int, float, bool, datetime)):
+                    if (
+                        FlextUtilitiesCollection._is_general_value_dict(result_raw)
+                        or FlextUtilitiesCollection._is_general_value_list(result_raw)
+                        or isinstance(result_raw, (str, int, float, bool, datetime))
+                    ):
                         direct_result = FlextUtilitiesCollection._coerce_guard_value(
                             result_raw
                         )
                     else:
-                        result_raw_obj: object = result_raw
-                        direct_result = str(result_raw_obj)
+                        direct_result = str(result_raw)
                 except (TypeError, ValueError):
-                    result_raw_obj: object = result_raw
-                    direct_result = str(result_raw_obj)
-                if do_flatten and isinstance(direct_result, list):
+                    direct_result = str(result_raw)
+                if do_flatten and FlextUtilitiesCollection._is_general_value_list(
+                    direct_result
+                ):
                     results.extend(direct_result)
                 else:
                     results.append(direct_result)
