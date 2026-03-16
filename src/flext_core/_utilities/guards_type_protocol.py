@@ -20,7 +20,7 @@ class FlextUtilitiesGuardsTypeProtocol:
     @staticmethod
     def is_handler_callable(
         value: t.NormalizedValue,
-    ) -> TypeIs[t.HandlerCallable]:
+    ) -> TypeGuard[t.HandlerCallable]:
         return callable(value)
 
     @staticmethod
@@ -42,7 +42,7 @@ class FlextUtilitiesGuardsTypeProtocol:
     @staticmethod
     def is_registerable(
         value: t.NormalizedValue,
-    ) -> TypeIs[t.RegisterableService]:
+    ) -> TypeGuard[t.RegisterableService]:
         return FlextUtilitiesGuardsTypeProtocol.is_registerable_service(value)
 
     @staticmethod
