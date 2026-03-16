@@ -19,7 +19,7 @@ from flext_core import FlextContainer, FlextContext, FlextSettings, r, t as core
 
 builtins.t = core_t
 
-from .helpers.scenarios import (
+from .helpers.scenarios import (  # noqa: E402 — must run after builtins.t assignment above
     ParserScenarios,
     ReliabilityScenarios,
     ValidationScenarios,

@@ -17,12 +17,6 @@ from flext_core._protocols import (
     FlextProtocolsResult,
     FlextProtocolsService,
 )
-from flext_core._protocols.metaclass import (
-    FlextProtocolsMetaclassUtilities,
-    ProtocolModel,
-    ProtocolModelMeta,
-    ProtocolSettings,
-)
 
 
 class FlextProtocols(
@@ -35,13 +29,8 @@ class FlextProtocols(
     FlextProtocolsHandler,
     FlextProtocolsMetrics,
     FlextProtocolsLogging,
-    FlextProtocolsMetaclassUtilities,
 ):
     """Runtime-checkable structural typing protocols for FLEXT framework."""
-
-    ProtocolModelMeta = ProtocolModelMeta
-    ProtocolModel = ProtocolModel
-    ProtocolSettings = ProtocolSettings
 
 
 p = FlextProtocols

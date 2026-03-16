@@ -10,38 +10,11 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
+# L0-OVERRIDE — inline lazy to avoid circular: _typings -> _utilities.lazy -> typings -> _typings
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-from flext_core._utilities.lazy import cleanup_submodule_namespace, lazy_getattr
-
-if TYPE_CHECKING:
-    from flext_core._typings.base import FlextTypingBase
-    from flext_core._typings.containers import FlextTypingContainers
-    from flext_core._typings.core import FlextTypesCore
-    from flext_core._typings.generics import (
-        TV,
-        EnumT,
-        MessageT_contra,
-        P,
-        R,
-        ResultT,
-        T,
-        T_co,
-        T_contra,
-        T_Model,
-        T_Namespace,
-        T_Settings,
-        TRuntime,
-        TV_co,
-        U,
-        ValidatedParams,
-        ValidatedReturn,
-    )
-    from flext_core._typings.services import FlextTypesServices
-    from flext_core._typings.validation import FlextTypesValidation
-    from flext_core.typings import FlextTypes
+import importlib
+import sys
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "EnumT": ("flext_core._typings.generics", "EnumT"),
@@ -97,14 +70,28 @@ __all__ = [
 ]
 
 
-def __getattr__(name: str) -> FlextTypes.ModuleExport:
-    """Lazy-load module attributes on first access (PEP 562)."""
-    return lazy_getattr(name, _LAZY_IMPORTS, globals(), __name__)
+def __getattr__(name: str) -> object:
+    if name in _LAZY_IMPORTS:
+        module_path, attr_name = _LAZY_IMPORTS[name]
+        module = importlib.import_module(module_path)
+        value = getattr(module, attr_name)
+        globals()[name] = value
+        return value
+    msg = f"module {__name__!r} has no attribute {name!r}"
+    raise AttributeError(msg)
 
 
 def __dir__() -> list[str]:
-    """Return list of available attributes for dir() and autocomplete."""
     return sorted(__all__)
 
 
-cleanup_submodule_namespace(__name__, _LAZY_IMPORTS)
+_current = sys.modules.get(__name__)
+if _current is not None:
+    _parts = __name__.split(".")
+    for _mod_path, _ in _LAZY_IMPORTS.values():
+        if _mod_path:
+            _mp = _mod_path.split(".")
+            if len(_mp) > len(_parts) and _mp[: len(_parts)] == _parts:
+                _sub = getattr(_current, _mp[len(_parts)], None)
+                if _sub is not None and isinstance(_sub, type(sys)):
+                    delattr(_current, _mp[len(_parts)])

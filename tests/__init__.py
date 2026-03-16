@@ -694,13 +694,6 @@ if TYPE_CHECKING:
     )
     from tests.unit.test_phase2_coverage_final import TestPhase2FinalCoveragePush
     from tests.unit.test_protocols import TestFlextProtocols
-    from tests.unit.test_protocols_full_coverage import (
-        test_check_implements_protocol_false_non_runtime_protocol,
-        test_implements_decorator_helper_methods_and_static_wrappers,
-        test_implements_decorator_validation_error_message,
-        test_protocol_model_and_settings_methods,
-        test_protocol_runtime_check,
-    )
     from tests.unit.test_refactor_cli_models_workflow import (
         test_centralize_pydantic_cli_outputs_extended_metrics,
         test_namespace_enforce_cli_fails_on_manual_protocol_violation,
@@ -2768,10 +2761,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_refactor_pydantic_centralizer",
         "test_centralizer_moves_manual_type_aliases_to_models_file",
     ),
-    "test_check_implements_protocol_false_non_runtime_protocol": (
-        "tests.unit.test_protocols_full_coverage",
-        "test_check_implements_protocol_false_non_runtime_protocol",
-    ),
     "test_checker_logger_and_safe_type_hints_fallback": (
         "tests.unit.test_utilities_checker_full_coverage",
         "test_checker_logger_and_safe_type_hints_fallback",
@@ -3282,14 +3271,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "tests.unit.test_models_base_full_coverage",
         "test_identifiable_unique_id_empty_rejected",
     ),
-    "test_implements_decorator_helper_methods_and_static_wrappers": (
-        "tests.unit.test_protocols_full_coverage",
-        "test_implements_decorator_helper_methods_and_static_wrappers",
-    ),
-    "test_implements_decorator_validation_error_message": (
-        "tests.unit.test_protocols_full_coverage",
-        "test_implements_decorator_validation_error_message",
-    ),
     "test_inactive_and_none_value_paths": (
         "tests.unit.test_context_full_coverage",
         "test_inactive_and_none_value_paths",
@@ -3721,14 +3702,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "test_protocol_and_simple_guard_helpers": (
         "tests.unit.test_utilities_guards_full_coverage",
         "test_protocol_and_simple_guard_helpers",
-    ),
-    "test_protocol_model_and_settings_methods": (
-        "tests.unit.test_protocols_full_coverage",
-        "test_protocol_model_and_settings_methods",
-    ),
-    "test_protocol_runtime_check": (
-        "tests.unit.test_protocols_full_coverage",
-        "test_protocol_runtime_check",
     ),
     "test_provide_property_paths": (
         "tests.unit.test_container_full_coverage",
@@ -4639,7 +4612,6 @@ __all__ = [
     "test_centralizer_does_not_touch_settings_module",
     "test_centralizer_moves_dict_alias_in_typings_without_keyword_name",
     "test_centralizer_moves_manual_type_aliases_to_models_file",
-    "test_check_implements_protocol_false_non_runtime_protocol",
     "test_checker_logger_and_safe_type_hints_fallback",
     "test_chk_exercises_missed_branches",
     "test_circuit_breaker_transitions_and_metrics",
@@ -4769,8 +4741,6 @@ __all__ = [
     "test_handler_type_literal_and_invalid",
     "test_helper_consolidation_is_prechecked",
     "test_identifiable_unique_id_empty_rejected",
-    "test_implements_decorator_helper_methods_and_static_wrappers",
-    "test_implements_decorator_validation_error_message",
     "test_inactive_and_none_value_paths",
     "test_init_fallback_and_lazy_returns_result_property",
     "test_initialize_di_components_error_paths",
@@ -4879,8 +4849,6 @@ __all__ = [
     "test_process_context_data_and_related_convenience",
     "test_process_outer_exception_and_coercion_branches",
     "test_protocol_and_simple_guard_helpers",
-    "test_protocol_model_and_settings_methods",
-    "test_protocol_runtime_check",
     "test_provide_property_paths",
     "test_publish_event_to_subscriber",
     "test_publish_no_subscribers_succeeds",

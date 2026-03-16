@@ -19,9 +19,10 @@ from typing import Annotated, ClassVar
 from pydantic import BaseModel, ConfigDict, Field, RootModel
 
 from flext_core import t
+from flext_core._typings.containers import FlextTypingContainers
 
 
-class FlextModelsContainers:
+class FlextModelsContainers(FlextTypingContainers):
     """Pydantic container models for the FLEXT type system.
 
     Provides RootModel-based dict and list containers for type-safe

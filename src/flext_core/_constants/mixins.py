@@ -41,7 +41,7 @@ class FlextConstantsMixins:
         STATE_HEALTHY: Final[str] = "healthy"
         STATE_DEGRADED: Final[str] = "degraded"
         STATE_UNHEALTHY: Final[str] = "unhealthy"
-        STATUS_PASS: Final[str] = "PASS"
+        STATUS_PASS: Final[str] = "PASS"  # noqa: S105 — health-check status label, not a credential
         STATUS_FAIL: Final[str] = "FAIL"
         STATUS_NO_TARGET: Final[str] = "NO_TARGET"
         STATUS_SKIP: Final[str] = "SKIP"
@@ -142,7 +142,7 @@ class FlextConstantsMixins:
         These constants ensure consistent test behavior and avoid magic strings.
         """
 
-        DEFAULT_PASSWORD: Final[str] = "test_password"
+        DEFAULT_PASSWORD: Final[str] = "test_password"  # noqa: S105 — test-only fixture constant, never used in production
         "Default password for test user authentication."
         NONEXISTENT_USERNAME: Final[str] = "nonexistent"
         "Username that should not exist in test scenarios."

@@ -44,7 +44,7 @@ class FlextConstantsBase:
 
         TYPE_MISMATCH: Final[str] = "Type mismatch"
         VALIDATION_FAILED: Final[str] = "Validation failed"
-        REDACTED_SECRET: Final[str] = "***REDACTED***"
+        REDACTED_SECRET: Final[str] = "***REDACTED***"  # noqa: S105 — display placeholder, not a real secret
 
     class Defaults:
         """Default values."""

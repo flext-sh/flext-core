@@ -77,14 +77,7 @@ if TYPE_CHECKING:
     from flext_core._protocols.context import FlextProtocolsContext
     from flext_core._protocols.di import FlextProtocolsDI
     from flext_core._protocols.handler import FlextProtocolsHandler
-    from flext_core._protocols.introspection import ProtocolIntrospection
     from flext_core._protocols.logging import FlextProtocolsLogging
-    from flext_core._protocols.metaclass import (
-        FlextProtocolsMetaclassUtilities,
-        ProtocolModel,
-        ProtocolModelMeta,
-        ProtocolSettings,
-    )
     from flext_core._protocols.metrics import FlextProtocolsMetrics
     from flext_core._protocols.result import FlextProtocolsResult
     from flext_core._protocols.service import FlextProtocolsService
@@ -220,10 +213,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextProtocolsDI": ("flext_core._protocols.di", "FlextProtocolsDI"),
     "FlextProtocolsHandler": ("flext_core._protocols.handler", "FlextProtocolsHandler"),
     "FlextProtocolsLogging": ("flext_core._protocols.logging", "FlextProtocolsLogging"),
-    "FlextProtocolsMetaclassUtilities": (
-        "flext_core._protocols.metaclass",
-        "FlextProtocolsMetaclassUtilities",
-    ),
     "FlextProtocolsMetrics": ("flext_core._protocols.metrics", "FlextProtocolsMetrics"),
     "FlextProtocolsResult": ("flext_core._protocols.result", "FlextProtocolsResult"),
     "FlextProtocolsService": ("flext_core._protocols.service", "FlextProtocolsService"),
@@ -293,13 +282,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "MessageT_contra": ("flext_core.typings", "MessageT_contra"),
     "Metadata": ("flext_core.exceptions", "Metadata"),
     "P": ("flext_core.typings", "P"),
-    "ProtocolIntrospection": (
-        "flext_core._protocols.introspection",
-        "ProtocolIntrospection",
-    ),
-    "ProtocolModel": ("flext_core._protocols.metaclass", "ProtocolModel"),
-    "ProtocolModelMeta": ("flext_core._protocols.metaclass", "ProtocolModelMeta"),
-    "ProtocolSettings": ("flext_core._protocols.metaclass", "ProtocolSettings"),
     "R": ("flext_core.typings", "R"),
     "RateLimiterManager": ("flext_core._dispatcher.reliability", "RateLimiterManager"),
     "ResultT": ("flext_core.typings", "ResultT"),
@@ -391,7 +373,6 @@ __all__ = [
     "FlextProtocolsDI",
     "FlextProtocolsHandler",
     "FlextProtocolsLogging",
-    "FlextProtocolsMetaclassUtilities",
     "FlextProtocolsMetrics",
     "FlextProtocolsResult",
     "FlextProtocolsService",
@@ -431,10 +412,6 @@ __all__ = [
     "MessageT_contra",
     "Metadata",
     "P",
-    "ProtocolIntrospection",
-    "ProtocolModel",
-    "ProtocolModelMeta",
-    "ProtocolSettings",
     "R",
     "RateLimiterManager",
     "ResultT",
