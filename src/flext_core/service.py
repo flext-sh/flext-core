@@ -83,7 +83,7 @@ class FlextService[
     config_overrides: dict[str, t.NormalizedValue] | None = Field(
         default=None, exclude=True
     )
-    initial_context: FlextContext | None = None
+    initial_context: p.Context | None = None
     subproject: str | None = Field(default=None, exclude=True)
     services: Mapping[str, t.RegisterableService] | None = Field(
         default=None, exclude=True

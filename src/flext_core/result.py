@@ -189,14 +189,14 @@ class FlextResult[T](FlextRuntime.RuntimeResult[T]):
 
     @classmethod
     @override
-    def fail[U](
-        cls,
+    def fail(
+        cls: type[FlextResult[T]],
         error: str | None,
         error_code: str | None = None,
         error_data: t.ResultErrorData | BaseModel | t.ConfigMap | None = None,
         *,
         exception: BaseException | None = None,
-    ) -> FlextResult[U]:
+    ) -> FlextResult[T]:
         """Create failed result with error message using Python 3.13 advanced patterns.
 
         Business Rule: Creates failed FlextResult with error message, optional error
@@ -222,7 +222,7 @@ class FlextResult[T](FlextRuntime.RuntimeResult[T]):
 
         """
         error_msg = error if error is not None else ""
-        result = FlextResult[U](
+        result = FlextResult[T](
             error_code=error_code,
             error_data=error_data,
             error=error_msg,

@@ -12,7 +12,7 @@ from __future__ import annotations
 import inspect
 import sys
 from collections.abc import Callable, Mapping, Sequence
-from typing import Annotated, ClassVar, Literal, Self, cast, override
+from typing import Annotated, ClassVar, Literal, Self, override
 
 from pydantic import BaseModel, Field, PrivateAttr, computed_field
 
@@ -185,7 +185,7 @@ class FlextRegistry(s[bool]):
         """Safe conversion to HandlerType."""
         result = u.parse_enum(c.Cqrs.HandlerType, str(value))
         if result.is_success:
-            v: c.Cqrs.HandlerType = cast("c.Cqrs.HandlerType", result.value)
+            v: c.Cqrs.HandlerType = result.value
             return v
         return c.Cqrs.HandlerType.COMMAND
 
@@ -193,7 +193,7 @@ class FlextRegistry(s[bool]):
         """Safe conversion to CommonStatus."""
         result = u.parse_enum(c.Cqrs.CommonStatus, str(value))
         if result.is_success:
-            v: c.Cqrs.CommonStatus = cast("c.Cqrs.CommonStatus", result.value)
+            v: c.Cqrs.CommonStatus = result.value
             return v
         return c.Cqrs.CommonStatus.ACTIVE
 
@@ -341,9 +341,7 @@ class FlextRegistry(s[bool]):
 
             reg_result = self.register_handler(handler)
             if reg_result.is_success:
-                details: m.RegistrationDetails = cast(
-                    "m.RegistrationDetails", reg_result.value
-                )
+                details: m.RegistrationDetails = reg_result.value
                 self._add_successful_registration(key, details, summary)
             else:
                 summary.errors.append(
@@ -414,9 +412,7 @@ class FlextRegistry(s[bool]):
             result = self.register_handler(handler)
             key = getattr(handler, "__name__", handler.__class__.__name__)
             if result.is_success:
-                registration_details: m.RegistrationDetails = cast(
-                    "m.RegistrationDetails", result.value
-                )
+                registration_details: m.RegistrationDetails = result.value
                 self._add_successful_registration(key, registration_details, summary)
             else:
                 summary.errors.append(

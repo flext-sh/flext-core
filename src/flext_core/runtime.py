@@ -1372,7 +1372,7 @@ class FlextRuntime:
 
         @classmethod
         def fail[U](
-            cls: type[FlextRuntime.RuntimeResult[U]],
+            cls,
             error: str | None,
             error_code: str | None = None,
             error_data: t.ResultErrorData | BaseModel | t.ConfigMap | None = None,
