@@ -541,7 +541,7 @@ class FlextModelsConfig:
             ),
         ] = True
         additional_processors: Annotated[
-            list[p.VariadicCallable[t.Container]],
+            list[Callable[..., t.Container]],
             Field(
                 default_factory=list,
                 description="Optional extra processors after standard FLEXT processors",
@@ -555,7 +555,7 @@ class FlextModelsConfig:
             ),
         ] = None
         logger_factory: Annotated[
-            p.VariadicCallable[p.Log.StructlogLogger] | None,
+            Callable[..., p.Log.StructlogLogger] | None,
             Field(
                 default=None,
                 description="Custom logger factory for structlog",
@@ -1122,7 +1122,7 @@ class FlextModelsConfig:
 
         model_config = ConfigDict(arbitrary_types_allowed=True)
         func: Annotated[
-            p.VariadicCallable[t.NormalizedValue | BaseModel],
+            Callable[..., t.NormalizedValue | BaseModel],
             Field(description="Function to execute"),
         ]
         args: Annotated[

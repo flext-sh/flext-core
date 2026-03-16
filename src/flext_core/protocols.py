@@ -20,7 +20,7 @@ from typing import (
     runtime_checkable,
 )
 
-from pydantic import BaseModel
+from pydantic import BaseModel, TypeAdapter, ValidationError
 from pydantic_settings import BaseSettings
 from structlog.typing import BindableLogger
 
@@ -40,13 +40,12 @@ class _ProtocolIntrospection:
 
     @staticmethod
     def get_protocol_attrs(protocol: type) -> tuple[str, ...]:
-        try:
-            raw_attrs_candidate = protocol.__protocol_attrs__
-        except AttributeError:
+        raw_attrs_candidate: object = getattr(protocol, "__protocol_attrs__", ())
+        if not isinstance(raw_attrs_candidate, Sequence):
             return ()
         try:
-            return tuple(raw_attrs_candidate)
-        except TypeError:
+            return TypeAdapter(tuple[str, ...]).validate_python(raw_attrs_candidate)
+        except ValidationError:
             return ()
 
     @classmethod
@@ -95,15 +94,12 @@ class _ProtocolIntrospection:
     @staticmethod
     def get_class_protocols(target_cls: type) -> tuple[type, ...]:
         """Get the protocols a class implements."""
-        iterable_protocols: Sequence[type]
-        try:
-            iterable_protocols = tuple(target_cls.__protocols__)
-        except (AttributeError, TypeError):
+        raw_protocols: object = getattr(target_cls, "__protocols__", ())
+        if not isinstance(raw_protocols, Sequence):
             return ()
         try:
-            typed_protocols = list(iterable_protocols)
-            return tuple(typed_protocols)
-        except TypeError:
+            return TypeAdapter(tuple[type, ...]).validate_python(raw_protocols)
+        except ValidationError:
             return ()
 
     @staticmethod
@@ -824,21 +820,6 @@ class FlextProtocols:
             ...
 
     @runtime_checkable
-    class Predicate[T](Protocol):
-        """Protocol for callable predicates that accept a value and return bool.
-
-        Used in validation utilities for filtering and conditional logic.
-        Supports any callable that accepts a value and returns bool.
-
-        Type Parameters:
-            T: The type of value the predicate evaluates.
-        """
-
-        def __call__(self, value: T) -> bool:
-            """Evaluate predicate on value."""
-            ...
-
-    @runtime_checkable
     class Handler[MessageT: Model, ResultT](Base, Protocol):
         """Command/Query handler interface (generic).
 
@@ -965,33 +946,6 @@ class FlextProtocols:
             ],
         ) -> FlextProtocols.Result[TResult]:
             """Process command."""
-            ...
-
-    @runtime_checkable
-    class Processor(Base, Protocol):
-        """Processor interface for data transformation pipelines.
-
-        Processors can be items with a process() method that takes data
-        and returns a result (which will be normalized to Result).
-        Accepts t.Container, BaseModel, or Result for processing.
-
-        The return type is flexible to support:
-        - Direct values (t.Container)
-        - BaseModel instances (Pydantic models)
-        - Result instances (structural typing)
-        - Objects with is_success/is_failure properties (r compatibility)
-        """
-
-        def process(
-            self,
-            data: FlextProtocols.Model | FlextProtocols.Result[FlextProtocols.Model],
-        ) -> FlextProtocols.Model | FlextProtocols.Result[FlextProtocols.Model]:
-            """Process data and return result.
-
-            Returns can be:
-            - BaseModel instance (Pydantic model)
-            - Result (structural typing compatible)
-            """
             ...
 
     @runtime_checkable
@@ -1178,19 +1132,6 @@ class FlextProtocols:
             ...
 
     @runtime_checkable
-    class VariadicCallable[T_co](Protocol):
-        """Protocol for variadic callables returning T_co.
-
-        Used for flexible function signatures that accept any arguments.
-        Accepts *args and **kwargs, making it suitable for services, handlers,
-        factories, and callbacks.
-        """
-
-        def __call__(self, *args: t.Container, **kwargs: t.Container) -> T_co:
-            """Call the function with any arguments, returning T_co."""
-            ...
-
-    @runtime_checkable
     class ValidatorSpec(Base, Protocol):
         """Protocol for validator specifications with operator composition.
 
@@ -1221,45 +1162,6 @@ class FlextProtocols:
             self, other: FlextProtocols.ValidatorSpec
         ) -> FlextProtocols.ValidatorSpec:
             """Compose with OR - at least one validator must pass."""
-            ...
-
-    @runtime_checkable
-    class Decorator[P, R](Base, Protocol):
-        """Protocol for decorator factory pattern.
-
-        Captures the factory pattern used by all FLEXT decorators:
-        1. Configuration phase: Accept config parameters
-        2. Decorator phase: Return a decorator function
-        3. Wrapper phase: Return a wrapper that executes with added behavior
-
-        All FLEXT decorators (@inject, @log_operation,
-        @railway, @retry, @timeout, @with_correlation, @combined) follow
-        this structural pattern.
-
-        Type Parameters:
-        - P: ParamSpec for function parameters
-        - R: Return type of wrapped function
-
-        Example:
-            @FlextDecorators.log_operation("my_op")
-            def my_function(x: int) -> str:
-                return str(x)
-
-            # Expands to:
-            # my_function = FlextDecorators.log_operation("my_op")(my_function)
-
-        """
-
-        def __call__(self, func: Callable[..., R]) -> Callable[..., R]:
-            """Apply decorator to function, returning wrapped callable.
-
-            Args:
-                func: The function to decorate
-
-            Returns:
-                Wrapped function with same signature and return type
-
-            """
             ...
 
     @runtime_checkable
@@ -1295,10 +1197,6 @@ class FlextProtocols:
         def to_ldif(self) -> str:
             """Convert to LDIF format."""
             ...
-
-    @runtime_checkable
-    class CallableWithHints(Base, Protocol):
-        """Protocol for callables that support type hints introspection."""
 
     type AccessibleData = (
         FlextModelsContainers.ConfigMap
