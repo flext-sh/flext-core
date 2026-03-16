@@ -15,6 +15,33 @@ from __future__ import annotations
 
 import importlib
 import sys
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from flext_core._typings.base import FlextTypingBase
+    from flext_core._typings.containers import FlextTypingContainers
+    from flext_core._typings.core import FlextTypesCore
+    from flext_core._typings.generics import (
+        TV,
+        EnumT,
+        MessageT_contra,
+        P,
+        R,
+        ResultT,
+        T,
+        T_co,
+        T_contra,
+        T_Model,
+        T_Namespace,
+        T_Settings,
+        TRuntime,
+        TV_co,
+        U,
+        ValidatedParams,
+        ValidatedReturn,
+    )
+    from flext_core._typings.services import FlextTypesServices
+    from flext_core._typings.validation import FlextTypesValidation
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "EnumT": ("flext_core._typings.generics", "EnumT"),
