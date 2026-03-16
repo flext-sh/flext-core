@@ -1,0 +1,37 @@
+src/flext_core/protocols.py
+  2ee2369b3cf9adbe 33
+  c0465f7dcafc19a4 368,376,465,580,713,957,1097,1200
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "5bd7e695c699e0f094ae839466b2291122509155",
+  "prompts": {
+    "2ee2369b3cf9adbe": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "opencode-transcript-ses_308a4140fffeEW5VmjnZNiWZBa-091e34b0-ca02-40ba-bce2-a383fae45454",
+        "model": "unknown"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 1,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    },
+    "c0465f7dcafc19a4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "opencode-transcript-ses_308a4140fffeEW5VmjnZNiWZBa-aa63fd66-3df6-4b95-9d3d-12ab8a551b98",
+        "model": "unknown"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 8,
+      "total_deletions": 8,
+      "accepted_lines": 8,
+      "overriden_lines": 0
+    }
+  }
+}
