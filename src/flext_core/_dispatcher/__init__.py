@@ -28,7 +28,10 @@ if TYPE_CHECKING:
     from flext_core.typings import FlextTypes
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
-    "CircuitBreakerManager": ("flext_core._dispatcher.reliability", "CircuitBreakerManager"),
+    "CircuitBreakerManager": (
+        "flext_core._dispatcher.reliability",
+        "CircuitBreakerManager",
+    ),
     "FlextModelsConfig": ("flext_core._dispatcher.config", "FlextModelsConfig"),
     "RateLimiterManager": ("flext_core._dispatcher.reliability", "RateLimiterManager"),
     "RetryPolicy": ("flext_core._dispatcher.reliability", "RetryPolicy"),

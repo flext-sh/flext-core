@@ -306,11 +306,8 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
     def _get_runtime(self) -> m.ServiceRuntime:
         """Return or create a runtime triple shared across mixin consumers."""
         runtime = self._runtime if hasattr(self, "_runtime") else None
-        match runtime:
-            case m.ServiceRuntime() as service_runtime:
-                return service_runtime
-            case _:
-                pass
+        if isinstance(runtime, m.ServiceRuntime):
+            return runtime
         config_type_raw = getattr(self, "config_type", None)
         config_cls_typed: type[FlextSettings]
 
@@ -323,10 +320,13 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
         bootstrap_wire_packages: Sequence[str] | None = None
         bootstrap_wire_classes: Sequence[type] | None = None
 
-        bootstrap_method = getattr(self, "_runtime_bootstrap_options", None)
-        if isinstance(bootstrap_method, Callable):
+        bootstrap_method_raw = getattr(self, "_runtime_bootstrap_options", None)
+        bootstrap_method: Callable[[], object] | None = (
+            bootstrap_method_raw if isinstance(bootstrap_method_raw, Callable) else None
+        )
+        if bootstrap_method is not None:
             try:
-                options_raw: object = bootstrap_method()
+                options_raw = bootstrap_method()
                 options: m.RuntimeBootstrapOptions | None = None
                 if isinstance(options_raw, m.RuntimeBootstrapOptions):
                     options = options_raw
@@ -601,7 +601,6 @@ class FlextMixins(m.ArbitraryTypesModel, FlextRuntime):
     class Validation:
         """Railway-oriented validation patterns with r composition."""
 
-        @staticmethod
         @staticmethod
         def validate_with_result[TValidation](
             data: TValidation,

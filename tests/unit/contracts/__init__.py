@@ -14,7 +14,10 @@ if TYPE_CHECKING:
     from tests.unit.contracts.text_contract import TextUtilityContract
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
-    "TextUtilityContract": ("tests.unit.contracts.text_contract", "TextUtilityContract"),
+    "TextUtilityContract": (
+        "tests.unit.contracts.text_contract",
+        "TextUtilityContract",
+    ),
 }
 
 __all__ = [
