@@ -31,7 +31,6 @@ if TYPE_CHECKING:
     from flext_core._utilities.file_ops import FlextUtilitiesFileOps
     from flext_core._utilities.generators import FlextUtilitiesGenerators
     from flext_core._utilities.guards import FlextUtilitiesGuards
-    from flext_core._utilities.guards_ensure import FlextUtilitiesGuardsEnsure
     from flext_core._utilities.guards_type import FlextUtilitiesGuardsType
     from flext_core._utilities.guards_validation import FlextUtilitiesGuardsValidation
     from flext_core._utilities.mapper import FlextUtilitiesMapper
