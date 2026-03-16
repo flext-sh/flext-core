@@ -14,7 +14,7 @@ import pytest
 from flext_core import r
 from flext_core._models.domain_event import _ComparableConfigMap as ComparableConfigMap
 from flext_core._models.entity import FlextModelsEntity
-from tests import c, m, u
+from tests import c, m, t, u
 
 
 def test_entity_comparable_map_and_bulk_validation_paths() -> None:

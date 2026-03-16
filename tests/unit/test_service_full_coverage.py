@@ -12,7 +12,7 @@ import pytest
 
 from flext_core import FlextContext, FlextService, FlextSettings, r
 from flext_core._models.service import FlextModelsService
-from tests import c, m, p, u
+from tests import c, m, p, t, u
 
 
 class _Svc(FlextService[bool]):

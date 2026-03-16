@@ -9,7 +9,7 @@ from __future__ import annotations
 from pydantic_settings import BaseSettings
 
 from flext_core import FlextSettings, r
-from tests import c, m, u
+from tests import c, m, t, u
 
 
 class _SubSettings(FlextSettings):

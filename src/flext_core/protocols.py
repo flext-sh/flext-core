@@ -17,13 +17,11 @@ from flext_core._protocols import (
     FlextProtocolsResult,
     FlextProtocolsService,
 )
-from flext_core._protocols.introspection import _ProtocolIntrospection
 from flext_core._protocols.metaclass import (
     FlextProtocolsMetaclassUtilities,
     ProtocolModel,
     ProtocolModelMeta,
     ProtocolSettings,
-    _CombinedModelMeta,
 )
 
 
@@ -44,8 +42,6 @@ class FlextProtocols(
     ProtocolModelMeta = ProtocolModelMeta
     ProtocolModel = ProtocolModel
     ProtocolSettings = ProtocolSettings
-    _CombinedModelMeta = _CombinedModelMeta
-    _ProtocolIntrospection = _ProtocolIntrospection
 
 
 p = FlextProtocols

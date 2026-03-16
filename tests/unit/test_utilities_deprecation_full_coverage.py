@@ -5,7 +5,7 @@ from __future__ import annotations
 import warnings
 
 from flext_core import r
-from tests import c, m, u
+from tests import c, m, t, u
 
 
 def test_deprecated_class_noop_init_branch() -> None:

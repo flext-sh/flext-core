@@ -6,29 +6,25 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Protocol, runtime_checkable
+from typing import Protocol, runtime_checkable
 
 from flext_core import t
 from flext_core._protocols.base import FlextProtocolsBase
-
-if TYPE_CHECKING:
-    from flext_core.protocols import FlextProtocols
-
-Base = FlextProtocolsBase.Base
+from flext_core._protocols.result import FlextProtocolsResult
 
 
 class FlextProtocolsMetrics:
     """Protocols for metrics tracking and execution context stacks."""
 
     @runtime_checkable
-    class MetricsTracker(Base, Protocol):
+    class MetricsTracker(FlextProtocolsBase.Base, Protocol):
         """Metrics tracking protocol for handler execution metrics.
 
         Reflects real implementations like FlextMixins.CQRS.MetricsTracker which
         tracks handler execution metrics (latency, success/failure counts, etc.).
         """
 
-        def get_metrics(self) -> FlextProtocols.Result[t.ConfigMap]:
+        def get_metrics(self) -> FlextProtocolsResult.Result[t.ConfigMap]:
             """Get current metrics dictionary.
 
             Returns:
@@ -39,7 +35,7 @@ class FlextProtocolsMetrics:
 
         def record_metric(
             self, name: str, value: t.Container
-        ) -> FlextProtocols.Result[bool]:
+        ) -> FlextProtocolsResult.Result[bool]:
             """Record a metric value.
 
             Args:
@@ -53,14 +49,14 @@ class FlextProtocolsMetrics:
             ...
 
     @runtime_checkable
-    class ContextStack(Base, Protocol):
+    class ContextStack(FlextProtocolsBase.Base, Protocol):
         """Execution context stack protocol for CQRS operations.
 
         Reflects real implementations like FlextMixins.CQRS.ContextStack which
         manages a stack of execution contexts for nested handler invocations.
         """
 
-        def current_context(self) -> FlextProtocols.Model | None:
+        def current_context(self) -> FlextProtocolsBase.Model | None:
             """Get current execution context without popping.
 
             Returns:
@@ -69,7 +65,7 @@ class FlextProtocolsMetrics:
             """
             ...
 
-        def pop_context(self) -> FlextProtocols.Result[FlextProtocols.Model]:
+        def pop_context(self) -> FlextProtocolsResult.Result[FlextProtocolsBase.Model]:
             """Pop execution context from the stack.
 
             Returns:
@@ -79,8 +75,8 @@ class FlextProtocolsMetrics:
             ...
 
         def push_context(
-            self, ctx: FlextProtocols.Model
-        ) -> FlextProtocols.Result[bool]:
+            self, ctx: FlextProtocolsBase.Model
+        ) -> FlextProtocolsResult.Result[bool]:
             """Push execution context onto the stack.
 
             Args:

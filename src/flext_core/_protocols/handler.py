@@ -11,21 +11,19 @@ from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 
 from flext_core import t
 from flext_core._protocols.base import FlextProtocolsBase
+from flext_core._protocols.result import FlextProtocolsResult
 
 if TYPE_CHECKING:
     from flext_core import r
-    from flext_core.protocols import FlextProtocols
-
-Base = FlextProtocolsBase.Base
-Model = FlextProtocolsBase.Model
-Routable = FlextProtocolsBase.Routable
 
 
 class FlextProtocolsHandler:
     """Protocols for CQRS handlers and message routing."""
 
     @runtime_checkable
-    class Handler[MessageT: Model, ResultT](Base, Protocol):
+    class Handler[MessageT: FlextProtocolsBase.Model, ResultT](
+        FlextProtocolsBase.Base, Protocol
+    ):
         """Command/Query handler interface (generic).
 
         Reflects real implementations like FlextHandlers which provide
@@ -53,27 +51,28 @@ class FlextProtocolsHandler:
             ...
 
     @runtime_checkable
-    class CommandBus(Base, Protocol):
+    class CommandBus(FlextProtocolsBase.Base, Protocol):
         """Command routing and execution protocol.
 
         Matches FlextDispatcher: strict handler registration and message dispatch.
         """
 
         def dispatch(
-            self, message: Routable
-        ) -> FlextProtocols.Result[FlextProtocols.Model]:
+            self, message: FlextProtocolsBase.Routable
+        ) -> FlextProtocolsResult.Result[FlextProtocolsBase.Model]:
             """Dispatch a CQRS message to its registered handler."""
             ...
 
         def publish(
-            self, event: Routable | Sequence[Routable]
-        ) -> FlextProtocols.Result[bool]:
+            self,
+            event: FlextProtocolsBase.Routable | Sequence[FlextProtocolsBase.Routable],
+        ) -> FlextProtocolsResult.Result[bool]:
             """Publish events to registered subscribers."""
             ...
 
         def register_handler(
             self, handler: t.HandlerLike, *, is_event: bool = False
-        ) -> FlextProtocols.Result[bool]:
+        ) -> FlextProtocolsResult.Result[bool]:
             """Register a handler with route auto-discovery.
 
             Handler must expose message_type, event_type, or can_handle
@@ -82,7 +81,9 @@ class FlextProtocolsHandler:
             ...
 
     @runtime_checkable
-    class Registry[MessageT: Model, ResultT](Base, Protocol):
+    class Registry[MessageT: FlextProtocolsBase.Model, ResultT](
+        FlextProtocolsBase.Base, Protocol
+    ):
         """Handler registry protocol for CQRS handler registration.
 
         Reflects real implementations like FlextRegistry which provides
@@ -93,7 +94,7 @@ class FlextProtocolsHandler:
         @classmethod
         def create(
             cls,
-            dispatcher: FlextProtocols.CommandBus | None = None,
+            dispatcher: FlextProtocolsHandler.CommandBus | None = None,
             *,
             auto_discover_handlers: bool = False,
         ) -> Self:
@@ -108,9 +109,9 @@ class FlextProtocolsHandler:
             self,
             bindings: Mapping[
                 t.MessageTypeSpecifier,
-                FlextProtocols.Handler[MessageT, ResultT],
+                FlextProtocolsHandler.Handler[MessageT, ResultT],
             ],
-        ) -> FlextProtocols.Result[FlextProtocols.Model]:
+        ) -> FlextProtocolsResult.Result[FlextProtocolsBase.Model]:
             """Register message-to-handler bindings.
 
             Reflects real implementations like FlextRegistry.register_bindings()
@@ -119,8 +120,8 @@ class FlextProtocolsHandler:
             ...
 
         def register_handler(
-            self, handler: FlextProtocols.Handler[MessageT, ResultT]
-        ) -> FlextProtocols.Result[FlextProtocols.Model]:
+            self, handler: FlextProtocolsHandler.Handler[MessageT, ResultT]
+        ) -> FlextProtocolsResult.Result[FlextProtocolsBase.Model]:
             """Register a handler instance.
 
             Reflects real implementations like FlextRegistry.register_handler()
@@ -130,8 +131,8 @@ class FlextProtocolsHandler:
 
         def register_handlers(
             self,
-            handlers: Sequence[FlextProtocols.Handler[MessageT, ResultT]],
-        ) -> FlextProtocols.Result[FlextProtocols.Model]:
+            handlers: Sequence[FlextProtocolsHandler.Handler[MessageT, ResultT]],
+        ) -> FlextProtocolsResult.Result[FlextProtocolsBase.Model]:
             """Register multiple handlers in batch.
 
             Reflects real implementations like FlextRegistry.register_handlers()
@@ -140,16 +141,16 @@ class FlextProtocolsHandler:
             ...
 
     @runtime_checkable
-    class Middleware(Base, Protocol):
+    class Middleware(FlextProtocolsBase.Base, Protocol):
         """Processing pipeline middleware."""
 
         def process[TResult](
             self,
-            command: FlextProtocols.Model,
+            command: FlextProtocolsBase.Model,
             next_handler: Callable[
-                [FlextProtocols.Model], FlextProtocols.Result[TResult]
+                [FlextProtocolsBase.Model], FlextProtocolsResult.Result[TResult]
             ],
-        ) -> FlextProtocols.Result[TResult]:
+        ) -> FlextProtocolsResult.Result[TResult]:
             """Process command."""
             ...
 

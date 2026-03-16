@@ -5,7 +5,7 @@ from time import perf_counter
 from flext_tests import tb, tm, tt
 
 from flext_core import FlextDispatcher, FlextHandlers, r
-from tests import m
+from tests import m, t
 
 
 class TestAutomatedFlextDispatcher:

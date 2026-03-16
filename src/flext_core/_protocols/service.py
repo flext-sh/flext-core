@@ -7,13 +7,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from typing import TYPE_CHECKING, Protocol, runtime_checkable
+from typing import Protocol, runtime_checkable
 
 from flext_core import t
 from flext_core._protocols.base import FlextProtocolsBase
-
-if TYPE_CHECKING:
-    from flext_core.protocols import FlextProtocols
+from flext_core._protocols.result import FlextProtocolsResult
 
 Base = FlextProtocolsBase.Base
 
@@ -30,7 +28,7 @@ class FlextProtocolsService:
         self-contained with their own configuration).
         """
 
-        def execute(self) -> FlextProtocols.Result[T]:
+        def execute(self) -> FlextProtocolsResult.Result[T]:
             """Execute domain service logic.
 
             Reflects real implementations like FlextService which don't
@@ -55,7 +53,7 @@ class FlextProtocolsService:
             """
             ...
 
-        def validate_business_rules(self) -> FlextProtocols.Result[bool]:
+        def validate_business_rules(self) -> FlextProtocolsResult.Result[bool]:
             """Validate business rules with extensible validation pipeline.
 
             Reflects real implementations like FlextService which perform
@@ -67,19 +65,19 @@ class FlextProtocolsService:
     class Repository[T](Base, Protocol):
         """Data access interface."""
 
-        def delete(self, entity_id: str) -> FlextProtocols.Result[bool]:
+        def delete(self, entity_id: str) -> FlextProtocolsResult.Result[bool]:
             """Delete entity."""
             ...
 
-        def find_all(self) -> FlextProtocols.Result[Sequence[T]]:
+        def find_all(self) -> FlextProtocolsResult.Result[Sequence[T]]:
             """Find all entities."""
             ...
 
-        def get_by_id(self, entity_id: str) -> FlextProtocols.Result[T]:
+        def get_by_id(self, entity_id: str) -> FlextProtocolsResult.Result[T]:
             """Get entity by ID."""
             ...
 
-        def save(self, entity: T) -> FlextProtocols.Result[T]:
+        def save(self, entity: T) -> FlextProtocolsResult.Result[T]:
             """Save entity."""
             ...
 

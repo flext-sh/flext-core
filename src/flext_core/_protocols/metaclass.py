@@ -17,14 +17,7 @@ from pydantic_settings import BaseSettings
 
 from flext_core import T, t
 from flext_core._protocols.base import FlextProtocolsBase
-from flext_core._protocols.introspection import (
-    _METACLASS_STRICT,
-    _ProtocolIntrospection,
-)
-
-if TYPE_CHECKING:
-    from flext_core.protocols import FlextProtocols
-
+from flext_core._protocols.introspection import METACLASS_STRICT, ProtocolIntrospection
 
 if TYPE_CHECKING:
 
@@ -79,16 +72,16 @@ class ProtocolModelMeta(_CombinedModelMeta):
             The newly created class with protocols validated.
 
         """
-        protocols, model_bases = _ProtocolIntrospection.partition_protocol_bases(bases)
+        protocols, model_bases = ProtocolIntrospection.partition_protocol_bases(bases)
         if not model_bases:
             model_bases = [BaseModel]
         built_cls: type = super().__new__(
             cls, name, tuple(model_bases), dict(namespace)
         )
         setattr(built_cls, "__protocols__", tuple(protocols))
-        if _METACLASS_STRICT:
+        if METACLASS_STRICT:
             for protocol in protocols:
-                FlextProtocolsBase._validate_protocol_compliance(
+                FlextProtocolsBase.validate_protocol_compliance(
                     built_cls, protocol, name
                 )
         return built_cls
@@ -119,7 +112,7 @@ class ProtocolModel(metaclass=ProtocolModelMeta):
             Tuple of protocol types.
 
         """
-        return _ProtocolIntrospection.get_class_protocols(cls)
+        return ProtocolIntrospection.get_class_protocols(cls)
 
     def implements_protocol(self, protocol: type) -> bool:
         """Check if this instance implements a protocol.
@@ -131,7 +124,7 @@ class ProtocolModel(metaclass=ProtocolModelMeta):
             True if this instance implements the protocol.
 
         """
-        return _ProtocolIntrospection.check_implements_protocol(self, protocol)
+        return ProtocolIntrospection.check_implements_protocol(self, protocol)
 
 
 class ProtocolSettings(BaseSettings, metaclass=ProtocolModelMeta):
@@ -156,7 +149,7 @@ class ProtocolSettings(BaseSettings, metaclass=ProtocolModelMeta):
             Tuple of protocol types.
 
         """
-        return _ProtocolIntrospection.get_class_protocols(cls)
+        return ProtocolIntrospection.get_class_protocols(cls)
 
     def implements_protocol(self, protocol: type) -> bool:
         """Check if this instance implements a protocol.
@@ -168,7 +161,7 @@ class ProtocolSettings(BaseSettings, metaclass=ProtocolModelMeta):
             True if this instance implements the protocol.
 
         """
-        return _ProtocolIntrospection.check_implements_protocol(self, protocol)
+        return ProtocolIntrospection.check_implements_protocol(self, protocol)
 
 
 class FlextProtocolsMetaclassUtilities:
@@ -176,7 +169,7 @@ class FlextProtocolsMetaclassUtilities:
 
     @staticmethod
     def check_implements_protocol(
-        instance: FlextProtocols.Base | t.Container,
+        instance: FlextProtocolsBase.Base | t.Container,
         protocol: type,
     ) -> bool:
         """Check if an instance's class implements a protocol.
@@ -189,7 +182,7 @@ class FlextProtocolsMetaclassUtilities:
             True if the instance implements the protocol.
 
         """
-        return FlextProtocolsBase._check_protocol_compliance(instance, protocol)
+        return FlextProtocolsBase.check_protocol_compliance(instance, protocol)
 
     @staticmethod
     def implements(*protocols: type) -> Callable[[type[T]], type[T]]:
@@ -224,21 +217,21 @@ class FlextProtocolsMetaclassUtilities:
         def decorator(cls: type[T]) -> type[T]:
             class_name = cls.__name__ if hasattr(cls, "__name__") else str(cls)
             for protocol in protocols:
-                FlextProtocolsBase._validate_protocol_compliance(
+                FlextProtocolsBase.validate_protocol_compliance(
                     cls, protocol, class_name
                 )
             setattr(cls, "__protocols__", tuple(protocols))
 
             def _instance_implements_protocol(
-                self: FlextProtocols.Base | t.Container,
+                self: FlextProtocolsBase.Base | t.Container,
                 protocol: type,
             ) -> bool:
-                return FlextProtocolsBase._check_protocol_compliance(self, protocol)
+                return FlextProtocolsBase.check_protocol_compliance(self, protocol)
 
             setattr(cls, "implements_protocol", _instance_implements_protocol)
 
             def _class_get_protocols(kls: type) -> tuple[type, ...]:
-                return _ProtocolIntrospection.get_class_protocols(kls)
+                return ProtocolIntrospection.get_class_protocols(kls)
 
             setattr(cls, "get_protocols", classmethod(_class_get_protocols))
             return cls
@@ -248,7 +241,7 @@ class FlextProtocolsMetaclassUtilities:
     @staticmethod
     def is_protocol(target_cls: type) -> bool:
         """Check if a class is a typing.Protocol."""
-        return _ProtocolIntrospection.is_protocol(target_cls)
+        return ProtocolIntrospection.is_protocol(target_cls)
 
     implements_protocol = check_implements_protocol
 

@@ -8,10 +8,10 @@ from enum import StrEnum
 from typing import NoReturn, cast, override
 
 import pytest
-from flext_tests import t, tm
+from flext_tests import tm
 
 from flext_core import r
-from tests import c, m, u
+from tests import c, m, t, u
 
 
 class _Color(StrEnum):

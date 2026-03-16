@@ -9,7 +9,7 @@ from __future__ import annotations
 from types import MappingProxyType
 
 from flext_core import e, r
-from tests import c, m, u
+from tests import c, m, t, u
 
 
 def test_base_error_normalize_metadata_merges_existing_metadata_model() -> None:

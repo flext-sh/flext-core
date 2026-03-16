@@ -17,7 +17,6 @@ from flext_core import t
 
 if TYPE_CHECKING:
     from flext_core import r
-    from flext_core.protocols import FlextProtocols
 
 
 class FlextProtocolsContext:
@@ -72,7 +71,7 @@ class FlextProtocolsContext:
 
         config_type: type[BaseSettings] | None
         config_overrides: Mapping[str, t.Scalar] | None
-        context: FlextProtocols.Context | None
+        context: FlextProtocolsContext.Context | None
         subproject: str | None
         services: Mapping[str, t.RegisterableService] | None
         factories: Mapping[str, t.FactoryCallable] | None

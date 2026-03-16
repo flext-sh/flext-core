@@ -12,7 +12,7 @@ from hypothesis import given, settings, strategies as st
 from pydantic_settings import BaseSettings
 
 from flext_core import FlextSettings
-from tests import c
+from tests import c, t
 
 
 class TestAutomatedFlextSettings:

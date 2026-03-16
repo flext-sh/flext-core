@@ -12,10 +12,10 @@ from typing import TYPE_CHECKING, ClassVar, Protocol, Self, runtime_checkable
 from pydantic import BaseModel
 
 from flext_core import t
-from flext_core._protocols.introspection import _ProtocolIntrospection
+from flext_core._protocols.introspection import ProtocolIntrospection
 
 if TYPE_CHECKING:
-    from flext_core.protocols import FlextProtocols
+    from flext_core._protocols.result import FlextProtocolsResult
 
 
 class FlextProtocolsBase:
@@ -63,7 +63,7 @@ class FlextProtocolsBase:
             """Validate object against model."""
             ...
 
-        def validate(self) -> FlextProtocols.Result[bool]:
+        def validate(self) -> FlextProtocolsResult.Result[bool]:
             """Validate model."""
             ...
 
@@ -94,7 +94,7 @@ class FlextProtocolsBase:
     def _get_protocol_members(cls, protocol: type) -> frozenset[str]:
         if protocol not in cls._protocol_members_cache:
             cls._protocol_members_cache[protocol] = frozenset(
-                _ProtocolIntrospection.get_protocol_attrs(protocol)
+                ProtocolIntrospection.get_protocol_attrs(protocol)
             )
         return cls._protocol_members_cache[protocol]
 
@@ -135,7 +135,7 @@ class FlextProtocolsBase:
     @classmethod
     def _check_protocol_compliance(
         cls,
-        instance: FlextProtocols.Base | t.Container,
+        instance: object,
         protocol: type,
     ) -> bool:
         target_cls = instance.__class__
@@ -150,7 +150,7 @@ class FlextProtocolsBase:
         if runtime_compliant:
             cls._compliance_results_cache[cache_key] = True
             return True
-        registered_protocols = _ProtocolIntrospection.get_class_protocols(target_cls)
+        registered_protocols = ProtocolIntrospection.get_class_protocols(target_cls)
         if protocol in registered_protocols:
             cls._compliance_results_cache[cache_key] = True
             return True
@@ -190,6 +190,25 @@ class FlextProtocolsBase:
             msg = f"Class '{class_name}' does not implement required members of protocol '{protocol_name}': {missing_str}"
             raise TypeError(msg)
         cls._compliance_results_cache[cache_key] = True
+
+    @classmethod
+    def check_protocol_compliance(
+        cls,
+        instance: object,
+        protocol: type,
+    ) -> bool:
+        """Public wrapper for protocol compliance checks."""
+        return cls._check_protocol_compliance(instance, protocol)
+
+    @classmethod
+    def validate_protocol_compliance(
+        cls,
+        target_cls: type,
+        protocol: type,
+        class_name: str,
+    ) -> None:
+        """Public wrapper for strict protocol validation."""
+        cls._validate_protocol_compliance(target_cls, protocol, class_name)
 
 
 __all__ = ["FlextProtocolsBase"]

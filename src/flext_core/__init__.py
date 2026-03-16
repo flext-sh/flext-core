@@ -77,6 +77,7 @@ if TYPE_CHECKING:
     from flext_core._protocols.context import FlextProtocolsContext
     from flext_core._protocols.di import FlextProtocolsDI
     from flext_core._protocols.handler import FlextProtocolsHandler
+    from flext_core._protocols.introspection import ProtocolIntrospection
     from flext_core._protocols.logging import FlextProtocolsLogging
     from flext_core._protocols.metaclass import (
         FlextProtocolsMetaclassUtilities,
@@ -292,6 +293,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "MessageT_contra": ("flext_core.typings", "MessageT_contra"),
     "Metadata": ("flext_core.exceptions", "Metadata"),
     "P": ("flext_core.typings", "P"),
+    "ProtocolIntrospection": (
+        "flext_core._protocols.introspection",
+        "ProtocolIntrospection",
+    ),
     "ProtocolModel": ("flext_core._protocols.metaclass", "ProtocolModel"),
     "ProtocolModelMeta": ("flext_core._protocols.metaclass", "ProtocolModelMeta"),
     "ProtocolSettings": ("flext_core._protocols.metaclass", "ProtocolSettings"),
@@ -426,6 +431,7 @@ __all__ = [
     "MessageT_contra",
     "Metadata",
     "P",
+    "ProtocolIntrospection",
     "ProtocolModel",
     "ProtocolModelMeta",
     "ProtocolSettings",

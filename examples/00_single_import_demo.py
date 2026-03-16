@@ -28,7 +28,7 @@ from itertools import starmap
 from pydantic import BaseModel, ConfigDict, Field
 from twisted.python.log import msg
 
-from flext_core import FlextContext, FlextLogger, c, e, r, u
+from flext_core import FlextContext, FlextLogger, c, e, r, t, u
 
 
 class UserProfile(BaseModel):

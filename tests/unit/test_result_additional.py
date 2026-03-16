@@ -13,9 +13,8 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import cast
 
-from flext_tests import u
-
 from flext_core import r
+from tests import t, u
 
 
 def test_ok_accepts_none() -> None:

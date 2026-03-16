@@ -3,12 +3,6 @@
 #
 """Internal module for FlextProtocols nested classes.
 
-This module contains extracted nested classes from FlextProtocols to improve
-maintainability.
-
-All classes are re-exported through FlextProtocols in protocols.py - users should
-NEVER import from this module directly.
-
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
@@ -27,6 +21,8 @@ if TYPE_CHECKING:
     from flext_core._protocols.handler import FlextProtocolsHandler
     from flext_core._protocols.introspection import (
         _METACLASS_STRICT,
+        METACLASS_STRICT,
+        ProtocolIntrospection,
         _ProtocolIntrospection,
     )
     from flext_core._protocols.logging import FlextProtocolsLogging
@@ -56,6 +52,11 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextProtocolsMetrics": ("flext_core._protocols.metrics", "FlextProtocolsMetrics"),
     "FlextProtocolsResult": ("flext_core._protocols.result", "FlextProtocolsResult"),
     "FlextProtocolsService": ("flext_core._protocols.service", "FlextProtocolsService"),
+    "METACLASS_STRICT": ("flext_core._protocols.introspection", "METACLASS_STRICT"),
+    "ProtocolIntrospection": (
+        "flext_core._protocols.introspection",
+        "ProtocolIntrospection",
+    ),
     "ProtocolModel": ("flext_core._protocols.metaclass", "ProtocolModel"),
     "ProtocolModelMeta": ("flext_core._protocols.metaclass", "ProtocolModelMeta"),
     "ProtocolSettings": ("flext_core._protocols.metaclass", "ProtocolSettings"),
@@ -68,6 +69,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
 }
 
 __all__ = [
+    "METACLASS_STRICT",
     "_METACLASS_STRICT",
     "FlextProtocolsBase",
     "FlextProtocolsConfig",
@@ -79,6 +81,7 @@ __all__ = [
     "FlextProtocolsMetrics",
     "FlextProtocolsResult",
     "FlextProtocolsService",
+    "ProtocolIntrospection",
     "ProtocolModel",
     "ProtocolModelMeta",
     "ProtocolSettings",

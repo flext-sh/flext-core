@@ -13,23 +13,25 @@ from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 from pydantic import BaseModel
 from structlog.typing import BindableLogger
 
-from flext_core import t
 from flext_core._protocols.base import FlextProtocolsBase
 from flext_core._protocols.config import FlextProtocolsConfig
 from flext_core._protocols.context import FlextProtocolsContext
 from flext_core._protocols.di import FlextProtocolsDI
 from flext_core._protocols.handler import FlextProtocolsHandler
+from flext_core._protocols.result import FlextProtocolsResult
 from flext_core._protocols.service import FlextProtocolsService
+from flext_core.typings import FlextTypes as t
 
 if TYPE_CHECKING:
     from flext_core import r
 
-Base = FlextProtocolsBase.Base
 Config = FlextProtocolsConfig.Config
 Context = FlextProtocolsContext.Context
 DI = FlextProtocolsDI.DI
 Service = FlextProtocolsService.Service
 CommandBus = FlextProtocolsHandler.CommandBus
+Result = FlextProtocolsResult.Result
+HasModelDump = FlextProtocolsResult.HasModelDump
 
 
 class FlextProtocolsLogging:
@@ -131,7 +133,7 @@ class FlextProtocolsLogging:
                 ...
 
     @runtime_checkable
-    class Connection(Base, Protocol):
+    class Connection(FlextProtocolsBase.Base, Protocol):
         """External system connection protocol."""
 
         def close_connection(self) -> None:
@@ -142,12 +144,12 @@ class FlextProtocolsLogging:
             """Get connection string."""
             ...
 
-        def test_connection(self) -> FlextProtocolsLogging.Result[bool]:
+        def test_connection(self) -> Result[bool]:
             """Test connection."""
             ...
 
     @runtime_checkable
-    class ValidatorSpec(Base, Protocol):
+    class ValidatorSpec(FlextProtocolsBase.Base, Protocol):
         """Protocol for validator specifications with operator composition.
 
         Validators implement __call__ to validate values and support composition
@@ -180,7 +182,7 @@ class FlextProtocolsLogging:
             ...
 
     @runtime_checkable
-    class Entry(Base, Protocol):
+    class Entry(FlextProtocolsBase.Base, Protocol):
         """Entry protocol (read-only)."""
 
         @property
@@ -218,8 +220,8 @@ class FlextProtocolsLogging:
         | Mapping[str, t.NormalizedValue | BaseModel]
         | t.NormalizedValue
         | BaseModel
-        | "FlextProtocols.HasModelDump"
-        | "FlextProtocols.ValidatorSpec"
+        | HasModelDump
+        | FlextProtocolsLogging.ValidatorSpec
     )
     type RegisterableService = (
         t.Container
@@ -231,7 +233,7 @@ class FlextProtocolsLogging:
         | Service[t.Container]
         | CommandBus
     )
-    type ServiceFactory = t.FactoryCallable
+    type ServiceFactory = Callable[..., RegisterableService]
     'Factory callable returning any registerable service type.\n\n    Broader than t.FactoryCallable (which returns RegisterableService).\n    Supports factories that create protocols like Log,             ..., Config, etc.\n\n    Usage:\n        def create_logger() -> FlextLogger:\n            return FlextLogger.create_module_logger("app")\n\n        container.register_factory("logger", create_logger)  # OK\n    '
 
 

@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Protocol, cast, override, runtime_checkable
 
-from flext_core import c, p, r, u
+from flext_core import c, p, r, t, u
 
 
 @runtime_checkable

@@ -8,7 +8,7 @@ import pytest
 from pydantic import ValidationError
 
 from flext_core import r
-from tests import c, m, u
+from tests import c, m, t, u
 
 from ._models import _BrokenDumpModel
 

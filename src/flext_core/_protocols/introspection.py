@@ -8,14 +8,8 @@ from __future__ import annotations
 
 import os
 from collections.abc import Mapping, Sequence
-from typing import TYPE_CHECKING
 
 from pydantic import TypeAdapter, ValidationError
-
-from flext_core import t
-
-if TYPE_CHECKING:
-    from flext_core.protocols import FlextProtocols
 
 
 class _ProtocolIntrospection:
@@ -34,7 +28,7 @@ class _ProtocolIntrospection:
     @classmethod
     def check_implements_protocol(
         cls,
-        instance: FlextProtocols.Base | t.Container,
+        instance: object,
         protocol: type,
     ) -> bool:
         """Check if an instance implements a protocol."""
@@ -135,6 +129,13 @@ class _ProtocolIntrospection:
 
 
 _METACLASS_STRICT: bool = os.environ.get("FLEXT_METACLASS_STRICT", "1") == "1"
+METACLASS_STRICT: bool = _METACLASS_STRICT
+ProtocolIntrospection = _ProtocolIntrospection
 
 
-__all__ = ["_METACLASS_STRICT", "_ProtocolIntrospection"]
+__all__ = [
+    "METACLASS_STRICT",
+    "_METACLASS_STRICT",
+    "ProtocolIntrospection",
+    "_ProtocolIntrospection",
+]

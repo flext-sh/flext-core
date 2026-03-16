@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core import r
-from tests import c, m, u
+from tests import c, m, t, u
 
 
 def test_container_resource_registration_metadata_normalized() -> None:

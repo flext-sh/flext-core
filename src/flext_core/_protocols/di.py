@@ -17,29 +17,25 @@ from flext_core._protocols.context import FlextProtocolsContext
 if TYPE_CHECKING:
     from flext_core import r
 
-Configurable = FlextProtocolsConfig.Configurable
-Config = FlextProtocolsConfig.Config
-Context = FlextProtocolsContext.Context
-
 
 class FlextProtocolsDI:
     """Protocols for DI container behavior."""
 
     @runtime_checkable
-    class DI(Configurable, Protocol):
+    class DI(FlextProtocolsConfig.Configurable, Protocol):
         """Dependency injection container protocol.
 
-        Extends Configurable to allow container configuration.
-        Implements configure() method from Configurable protocol.
+        Extends FlextProtocolsConfig.Configurable to allow container configuration.
+        Implements configure() method from FlextProtocolsConfig.Configurable protocol.
         """
 
         @property
-        def config(self) -> Config:
+        def config(self) -> FlextProtocolsConfig.Config:
             """Configuration bound to the container."""
             ...
 
         @property
-        def context(self) -> Context:
+        def context(self) -> FlextProtocolsContext.Context:
             """Execution context bound to the container."""
             ...
 
@@ -82,8 +78,8 @@ class FlextProtocolsDI:
         def scoped(
             self,
             *,
-            config: Config | None = None,
-            context: Context | None = None,
+            config: FlextProtocolsConfig.Config | None = None,
+            context: FlextProtocolsContext.Context | None = None,
             subproject: str | None = None,
             services: Mapping[str, t.RegisterableService] | None = None,
             factories: Mapping[str, t.FactoryCallable] | None = None,

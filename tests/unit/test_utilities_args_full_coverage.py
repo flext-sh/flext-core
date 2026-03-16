@@ -5,11 +5,10 @@ from __future__ import annotations
 from typing import Annotated, cast
 
 import pytest
-from flext_tests import t
 
 import flext_core._utilities.args as args_module
 from flext_core import r
-from tests import c, m, u
+from tests import c, m, t, u
 
 
 def _annotated_func(mode: Annotated[c.Cqrs.HandlerType, "meta"]) -> None:

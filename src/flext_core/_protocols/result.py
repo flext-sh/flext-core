@@ -8,19 +8,17 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
 from types import TracebackType
-from typing import Protocol, Self, override, runtime_checkable
+from typing import Protocol, override, runtime_checkable
 
-from flext_core import t
 from flext_core._protocols.base import FlextProtocolsBase
-
-Base = FlextProtocolsBase.Base
+from flext_core.typings import FlextTypes as t
 
 
 class FlextProtocolsResult:
     """Protocols for railway result contracts and model dump shape."""
 
     @runtime_checkable
-    class Result[T](Base, Protocol):
+    class Result[T](FlextProtocolsBase.Base, Protocol):
         """Result type interface for railway-oriented programming.
 
         Used extensively for all operations that can fail. Provides
@@ -55,7 +53,7 @@ class FlextProtocolsResult:
             """Boolean conversion based on success state."""
             ...
 
-        def __enter__(self) -> Self:
+        def __enter__(self) -> FlextProtocolsResult.Result[T]:
             """Context manager entry."""
             ...
 
@@ -103,7 +101,7 @@ class FlextProtocolsResult:
             ...
 
         @property
-        def result(self) -> Self:
+        def result(self) -> FlextProtocolsResult.Result[T]:
             """Access internal Result for advanced operations."""
             ...
 
@@ -137,7 +135,9 @@ class FlextProtocolsResult:
             """Map over sequence with configurable failure handling."""
             ...
 
-        def filter(self, predicate: Callable[[T], bool]) -> Self:
+        def filter(
+            self, predicate: Callable[[T], bool]
+        ) -> FlextProtocolsResult.Result[T]:
             """Filter success value using predicate.
 
             Returns self if predicate passes or result is failure,
@@ -157,7 +157,9 @@ class FlextProtocolsResult:
             """Chain multiple operations in a pipeline."""
             ...
 
-        def lash(self, func: Callable[[str], FlextProtocolsResult.Result[T]]) -> Self:
+        def lash(
+            self, func: Callable[[str], FlextProtocolsResult.Result[T]]
+        ) -> FlextProtocolsResult.Result[T]:
             """Apply recovery function on failure."""
             ...
 
@@ -165,7 +167,9 @@ class FlextProtocolsResult:
             """Transform success value using function."""
             ...
 
-        def map_error(self, func: Callable[[str], str]) -> Self:
+        def map_error(
+            self, func: Callable[[str], str]
+        ) -> FlextProtocolsResult.Result[T]:
             """Transform error message on failure.
 
             Returns self on success, new Result with transformed error on failure.
@@ -181,7 +185,7 @@ class FlextProtocolsResult:
             ...
 
     @runtime_checkable
-    class ResultLike[T_co](Base, Protocol):
+    class ResultLike[T_co](Protocol):
         """Result-like protocol for compatibility with r operations.
 
         Used for type compatibility when working with result-like items.
@@ -227,7 +231,7 @@ class FlextProtocolsResult:
             ...
 
     @runtime_checkable
-    class HasModelDump(Base, Protocol):
+    class HasModelDump(Protocol):
         """Protocol for items that can dump model data.
 
         Used for Pydantic model compatibility and serialization.

@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
-from flext_core import FlextUtilities, r
+from flext_core import FlextUtilities, r, t
 
 
 class TestUtilitiesCoverage:

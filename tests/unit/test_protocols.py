@@ -24,11 +24,11 @@ from enum import StrEnum
 from typing import Annotated, ClassVar
 
 import pytest
-from flext_tests import tm, u
+from flext_tests import tm
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import r
-from tests import p
+from tests import p, t, u
 
 
 class ProtocolCategoryType(StrEnum):

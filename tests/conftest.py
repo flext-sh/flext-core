@@ -6,6 +6,7 @@ type-system-architecture.md rules with real functionality testing.
 
 from __future__ import annotations
 
+import builtins
 import math
 import tempfile
 from collections.abc import Generator
@@ -14,12 +15,9 @@ from pathlib import Path
 import pytest
 from flext_tests import t
 
-from flext_core import (
-    FlextContainer,
-    FlextContext,
-    FlextSettings,
-    r,
-)
+from flext_core import FlextContainer, FlextContext, FlextSettings, r, t as core_t
+
+builtins.t = core_t
 
 from .helpers.scenarios import (
     ParserScenarios,

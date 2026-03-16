@@ -13,15 +13,12 @@ from flext_core import t
 from flext_core._protocols.base import FlextProtocolsBase
 from flext_core._protocols.result import FlextProtocolsResult
 
-Base = FlextProtocolsBase.Base
-HasModelDump = FlextProtocolsResult.HasModelDump
-
 
 class FlextProtocolsConfig:
     """Protocols for configurable components and settings."""
 
     @runtime_checkable
-    class Configurable(Base, Protocol):
+    class Configurable(FlextProtocolsBase.Base, Protocol):
         """Protocol for component configuration."""
 
         def configure(self, config: Mapping[str, t.Container] | None = None) -> Self:
@@ -29,7 +26,7 @@ class FlextProtocolsConfig:
             ...
 
     @runtime_checkable
-    class Config(HasModelDump, Base, Protocol):
+    class Config(FlextProtocolsResult.HasModelDump, FlextProtocolsBase.Base, Protocol):
         """Configuration protocol based on Pydantic BaseSettings pattern.
 
         Reflects real implementations like FlextSettings which uses Pydantic BaseSettings.

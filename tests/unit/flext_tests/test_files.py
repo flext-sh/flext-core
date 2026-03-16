@@ -14,7 +14,7 @@ from pathlib import Path
 
 import pytest
 import yaml
-from flext_tests import m, tf
+from flext_tests import m, t, tf
 from pydantic import BaseModel
 
 from flext_core import r
