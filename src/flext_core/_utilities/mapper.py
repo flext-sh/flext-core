@@ -1908,10 +1908,7 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def flat[T](
-        items: list[list[T] | tuple[T, ...]]
-        | list[list[T]]
-        | list[tuple[T, ...]]
-        | tuple[list[T], ...],
+        items: Sequence[Sequence[T]],
     ) -> list[T]:
         """Flatten nested lists (mnemonic: flat = flatten).
 
