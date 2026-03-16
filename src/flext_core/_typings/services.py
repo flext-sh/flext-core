@@ -55,7 +55,10 @@ class FlextTypesServices:
     )
     type MetadataAttributeValue = MetadataValue
     type MetadataInput = (
-        BaseModel | FlextTypingContainers.ConfigMap | Mapping[str, FlextTypingBase.Scalar] | None
+        BaseModel
+        | FlextTypingContainers.ConfigMap
+        | Mapping[str, FlextTypingBase.Scalar]
+        | None
     )
     type HandlerCallable = Callable[[BaseModel], BaseModel]
     type HandlerLike = Callable[..., BaseModel]

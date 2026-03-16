@@ -25,7 +25,13 @@ class FlextUtilitiesResultHelpers:
             return True
         if not FlextUtilitiesGuards.is_container(items):
             return True
-        return FlextUtilitiesGuards.empty(items)
+        if isinstance(items, str):
+            return not bool(items)
+        if isinstance(items, Mapping):
+            return len(items) == 0
+        if isinstance(items, Sequence):
+            return len(items) == 0
+        return False
 
     @staticmethod
     def ends(value: str, suffix: str, *suffixes: str) -> bool:

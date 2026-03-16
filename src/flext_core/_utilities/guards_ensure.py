@@ -10,16 +10,19 @@ from flext_core._utilities.guards_type import FlextUtilitiesGuardsType
 class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
     @staticmethod
     def _ensure_to_dict(
-        value: t.NormalizedValue | None, default: Mapping[str, t.NormalizedValue] | None
+        value: t.NormalizedValue | None,
+        default: Mapping[str, t.NormalizedValue] | None,
     ) -> Mapping[str, t.NormalizedValue]:
         if value is None:
             return default if default is not None else {}
         if isinstance(value, Mapping):
+            mapping_value: Mapping[str, t.NormalizedValue] = value
             normalized: dict[str, t.NormalizedValue] = {}
-            for key, item_value in value.items():
+            for key, item_value in mapping_value.items():
                 normalized[str(key)] = item_value
             return normalized
-        return {"value": value}
+        wrapped_dict: Mapping[str, t.NormalizedValue] = {"value": value}
+        return wrapped_dict
 
     @staticmethod
     def _ensure_to_list(
@@ -30,10 +33,11 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
             return default if default is not None else []
         if isinstance(value, list):
             return list(value)
-        return [value]
+        single_item_list: list[t.NormalizedValue] = [value]
+        return single_item_list
 
     @staticmethod
-    def _guard_check_condition[T: FlextUtilitiesGuardsType._GuardInput](
+    def _guard_check_condition[T: FlextUtilitiesGuardsEnsure._GuardInput](
         value: T,
         condition: type[T]
         | tuple[type[T], ...]
@@ -66,16 +70,18 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
                 return (
                     error_msg or f"{context_name} must be a valid configuration value"
                 )
+            typed_value: t.NormalizedValue = value
             return FlextUtilitiesGuardsEnsure._guard_check_validator(
-                value, condition, context_name, error_msg
+                typed_value, condition, context_name, error_msg
             )
         if isinstance(condition, str):
             if not FlextUtilitiesGuardsEnsure.is_container(value):
                 return (
                     error_msg or f"{context_name} must be a valid configuration value"
                 )
+            typed_value_s: t.NormalizedValue = value
             return FlextUtilitiesGuardsEnsure._guard_check_string_shortcut(
-                value, condition, context_name, error_msg
+                typed_value_s, condition, context_name, error_msg
             )
         if callable(condition):
             return FlextUtilitiesGuardsEnsure._guard_check_predicate(
@@ -85,8 +91,8 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
 
     @staticmethod
     def _guard_check_predicate(
-        value: FlextUtilitiesGuardsType._GuardInput,
-        condition: Callable[..., FlextUtilitiesGuardsType._GuardInput | bool],
+        value: FlextUtilitiesGuardsEnsure._GuardInput,
+        condition: Callable[..., FlextUtilitiesGuardsEnsure._GuardInput | bool],
         context_name: str,
         error_msg: str | None,
     ) -> str:
@@ -101,11 +107,9 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
                     return f"{context_name} failed {func_name} check"
                 return error_msg
         except (TypeError, ValueError, AttributeError, RuntimeError) as e:
-            return (
-                f"{context_name} guard check raised: {e}"
-                if error_msg is None
-                else error_msg
-            )
+            if error_msg is None:
+                return f"{context_name} guard check raised: {e}"
+            return error_msg
         return ""
 
     @staticmethod
@@ -117,11 +121,11 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
     ) -> str:
         shortcut_lower = condition.lower()
         if shortcut_lower == "non_empty":
-            if (
-                (isinstance(value, str) and bool(value))
-                or (isinstance(value, list) and len(value) > 0)
-                or (isinstance(value, dict) and len(value) > 0)
-            ):
+            if isinstance(value, str) and bool(value):
+                return ""
+            if isinstance(value, list) and len(value) > 0:
+                return ""
+            if isinstance(value, dict) and len(value) > 0:
                 return ""
             return error_msg or f"{context_name} must be non-empty"
         if shortcut_lower == "positive":
@@ -141,11 +145,9 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
                 return ""
             return error_msg or f"{context_name} must be non-negative number"
         if shortcut_lower == "dict":
-            return (
-                ""
-                if hasattr(value, "items") and (not isinstance(value, (str, bytes)))
-                else error_msg or f"{context_name} must be dict-like"
-            )
+            if hasattr(value, "items") and (not isinstance(value, (str, bytes))):
+                return ""
+            return error_msg or f"{context_name} must be dict-like"
         if shortcut_lower == "list":
             if (
                 hasattr(value, "__iter__")
@@ -155,29 +157,21 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
                 return ""
             return error_msg or f"{context_name} must be list-like"
         if shortcut_lower == "string":
-            return (
-                ""
-                if isinstance(value, str)
-                else error_msg or f"{context_name} must be string"
-            )
+            if isinstance(value, str):
+                return ""
+            return error_msg or f"{context_name} must be string"
         if shortcut_lower == "int":
-            return (
-                ""
-                if isinstance(value, int) and (not isinstance(value, bool))
-                else error_msg or f"{context_name} must be int"
-            )
+            if isinstance(value, int) and (not isinstance(value, bool)):
+                return ""
+            return error_msg or f"{context_name} must be int"
         if shortcut_lower == "float":
-            return (
-                ""
-                if isinstance(value, int | float) and (not isinstance(value, bool))
-                else error_msg or f"{context_name} must be float"
-            )
+            if isinstance(value, int | float) and (not isinstance(value, bool)):
+                return ""
+            return error_msg or f"{context_name} must be float"
         if shortcut_lower == "bool":
-            return (
-                ""
-                if isinstance(value, bool)
-                else error_msg or f"{context_name} must be bool"
-            )
+            if isinstance(value, bool):
+                return ""
+            return error_msg or f"{context_name} must be bool"
         return error_msg or f"{context_name} unknown guard shortcut: {condition}"
 
     @staticmethod
@@ -187,16 +181,17 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
         context_name: str,
         error_msg: str | None,
     ) -> str:
-        if isinstance(value, condition):
-            return ""
-        if error_msg is not None:
+        type_match = isinstance(value, condition)
+        if not type_match:
+            if error_msg is None:
+                type_name = (
+                    condition.__name__
+                    if isinstance(condition, type)
+                    else " | ".join(c.__name__ for c in condition)
+                )
+                return f"{context_name} must be {type_name}, got {value.__class__.__name__}"
             return error_msg
-        type_name = (
-            condition.__name__
-            if isinstance(condition, type)
-            else " | ".join(c.__name__ for c in condition)
-        )
-        return f"{context_name} must be {type_name}, got {value.__class__.__name__}"
+        return ""
 
     @staticmethod
     def _guard_check_validator(
@@ -207,24 +202,28 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
     ) -> str:
         if not FlextUtilitiesGuardsEnsure.is_container(value):
             return error_msg or f"{context_name} must be a valid configuration value"
-        if condition(value):
-            return ""
-        if error_msg is not None:
+        if not condition(value):
+            if error_msg is None:
+                desc = (
+                    getattr(condition, "description", "validation")
+                    if hasattr(condition, "description")
+                    else "validation"
+                )
+                return f"{context_name} failed {desc} check"
             return error_msg
-        desc = (
-            getattr(condition, "description", "validation")
-            if hasattr(condition, "description")
-            else "validation"
-        )
-        return f"{context_name} failed {desc} check"
+        return ""
 
     @staticmethod
     def _guard_handle_failure[T](
         error_message: str, *, return_value: bool, default: T | None
     ) -> r[T] | T:
         if return_value:
-            return default if default is not None else r[T].fail(error_message)
-        return r[T].ok(default) if default is not None else r[T].fail(error_message)
+            if default is not None:
+                return default
+            return r[T].fail(error_message)
+        if default is not None:
+            return r[T].ok(default)
+        return r[T].fail(error_message)
 
     @staticmethod
     def chk(
@@ -267,7 +266,8 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
         if isinstance(value, (int, float)):
             check_val = value
         elif isinstance(value, (str, bytes, list, tuple, dict, set, frozenset)):
-            check_val = len(value)
+            sized_value: Sized = value
+            check_val = len(sized_value)
         elif hasattr(value, "__len__"):
             try:
                 len_method = getattr(value, "__len__", None)
@@ -304,10 +304,11 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
                 return False
         elif contains is not None:
             if isinstance(value, (str, bytes, list, tuple, set, frozenset, dict)):
-                found = False
                 iterable_value: Iterable[t.NormalizedValue] = value
+                found = False
                 for item in iterable_value:
-                    if item == contains:
+                    item_value: t.NormalizedValue = item
+                    if item_value == contains:
                         found = True
                         break
                 if not found:
@@ -348,23 +349,31 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
         if target_type == "str_list":
             str_list_default: list[str] | None = None
             if isinstance(default, list):
-                str_list_default = [str(item) for item in default]
+                default_values: list[t.NormalizedValue] = default
+                str_list_default = [str(item) for item in default_values]
             if isinstance(value, Sequence) and (not isinstance(value, (str, bytes))):
-                return list(value)
+                seq_value: Sequence[t.NormalizedValue] = value
+                return list(seq_value)
             if value is None:
-                return list(str_list_default) if str_list_default else []
+                result_str_list: list[t.NormalizedValue] = (
+                    list(str_list_default) if str_list_default else []
+                )
+                return result_str_list
             return [value]
         if target_type == "dict":
-            dict_default = default if isinstance(default, Mapping) else None
+            dict_default: Mapping[str, t.NormalizedValue] | None = None
+            if isinstance(default, Mapping):
+                dict_default = default
             return FlextUtilitiesGuardsEnsure._ensure_to_dict(value, dict_default)
         if target_type == "auto" and isinstance(value, Mapping):
+            mapping_value: Mapping[str, t.NormalizedValue] = value
             normalized_auto: dict[str, t.NormalizedValue] = {}
-            for key, item_value in value.items():
+            for key, item_value in mapping_value.items():
                 normalized_auto[str(key)] = item_value
             return normalized_auto
-        list_default: list[t.NormalizedValue] | None = (
-            default if FlextUtilitiesGuardsEnsure.is_object_list(default) else None
-        )
+        list_default: list[t.NormalizedValue] | None = None
+        if FlextUtilitiesGuardsEnsure.is_object_list(default):
+            list_default = default
         return FlextUtilitiesGuardsEnsure._ensure_to_list(value, list_default)
 
     @staticmethod
@@ -390,14 +399,13 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
         try:
             if isinstance(validator, type):
                 if isinstance(value, validator):
-                    return (
-                        guarded_value
-                        if return_value
-                        and FlextUtilitiesGuardsEnsure.is_container(guarded_value)
-                        else str(guarded_value)
-                        if return_value
-                        else True
-                    )
+                    if return_value:
+                        return (
+                            guarded_value
+                            if FlextUtilitiesGuardsEnsure.is_container(guarded_value)
+                            else str(guarded_value)
+                        )
+                    return True
             elif FlextUtilitiesGuardsEnsure.is_object_tuple(validator):
                 tuple_types = tuple(
                     item for item in validator if isinstance(item, type)
@@ -405,33 +413,30 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
                 if len(tuple_types) == len(validator) and isinstance(
                     value, tuple_types
                 ):
-                    return (
-                        guarded_value
-                        if return_value
-                        and FlextUtilitiesGuardsEnsure.is_container(guarded_value)
-                        else str(guarded_value)
-                        if return_value
-                        else True
-                    )
+                    if return_value:
+                        return (
+                            guarded_value
+                            if FlextUtilitiesGuardsEnsure.is_container(guarded_value)
+                            else str(guarded_value)
+                        )
+                    return True
             elif callable(validator):
                 if validator(value):
+                    if return_value:
+                        return (
+                            guarded_value
+                            if FlextUtilitiesGuardsEnsure.is_container(guarded_value)
+                            else str(guarded_value)
+                        )
+                    return True
+            elif value:
+                if return_value:
                     return (
                         guarded_value
-                        if return_value
-                        and FlextUtilitiesGuardsEnsure.is_container(guarded_value)
+                        if FlextUtilitiesGuardsEnsure.is_container(guarded_value)
                         else str(guarded_value)
-                        if return_value
-                        else True
                     )
-            elif value:
-                return (
-                    guarded_value
-                    if return_value
-                    and FlextUtilitiesGuardsEnsure.is_container(guarded_value)
-                    else str(guarded_value)
-                    if return_value
-                    else True
-                )
+                return True
             if default is not None:
                 return (
                     default
@@ -457,7 +462,7 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
             )
 
     @staticmethod
-    def guard_result[T: FlextUtilitiesGuardsType._GuardInput](
+    def guard_result[T: FlextUtilitiesGuardsEnsure._GuardInput](
         value: T,
         *conditions: type[T]
         | tuple[type[T], ...]

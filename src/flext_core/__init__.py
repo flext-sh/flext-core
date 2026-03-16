@@ -78,6 +78,7 @@ if TYPE_CHECKING:
     from flext_core._protocols.di import FlextProtocolsDI
     from flext_core._protocols.handler import FlextProtocolsHandler
     from flext_core._protocols.logging import FlextProtocolsLogging
+    from flext_core._protocols.registry import FlextProtocolsRegistry
     from flext_core._protocols.result import FlextProtocolsResult
     from flext_core._protocols.service import FlextProtocolsService
     from flext_core._typings.base import FlextTypingBase
@@ -98,6 +99,9 @@ if TYPE_CHECKING:
     from flext_core._utilities.file_ops import FlextUtilitiesFileOps
     from flext_core._utilities.generators import FlextUtilitiesGenerators
     from flext_core._utilities.guards import FlextUtilitiesGuards
+    from flext_core._utilities.guards_ensure import FlextUtilitiesGuardsEnsure
+    from flext_core._utilities.guards_type import FlextUtilitiesGuardsType
+    from flext_core._utilities.guards_validation import FlextUtilitiesGuardsValidation
     from flext_core._utilities.mapper import FlextUtilitiesMapper
     from flext_core._utilities.model import FlextUtilitiesModel
     from flext_core._utilities.pagination import FlextUtilitiesPagination
@@ -210,6 +214,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextProtocolsDI": ("flext_core._protocols.di", "FlextProtocolsDI"),
     "FlextProtocolsHandler": ("flext_core._protocols.handler", "FlextProtocolsHandler"),
     "FlextProtocolsLogging": ("flext_core._protocols.logging", "FlextProtocolsLogging"),
+    "FlextProtocolsRegistry": (
+        "flext_core._protocols.registry",
+        "FlextProtocolsRegistry",
+    ),
     "FlextProtocolsResult": ("flext_core._protocols.result", "FlextProtocolsResult"),
     "FlextProtocolsService": ("flext_core._protocols.service", "FlextProtocolsService"),
     "FlextRegistry": ("flext_core.registry", "FlextRegistry"),
@@ -258,6 +266,18 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "FlextUtilitiesGenerators",
     ),
     "FlextUtilitiesGuards": ("flext_core._utilities.guards", "FlextUtilitiesGuards"),
+    "FlextUtilitiesGuardsEnsure": (
+        "flext_core._utilities.guards_ensure",
+        "FlextUtilitiesGuardsEnsure",
+    ),
+    "FlextUtilitiesGuardsType": (
+        "flext_core._utilities.guards_type",
+        "FlextUtilitiesGuardsType",
+    ),
+    "FlextUtilitiesGuardsValidation": (
+        "flext_core._utilities.guards_validation",
+        "FlextUtilitiesGuardsValidation",
+    ),
     "FlextUtilitiesMapper": ("flext_core._utilities.mapper", "FlextUtilitiesMapper"),
     "FlextUtilitiesModel": ("flext_core._utilities.model", "FlextUtilitiesModel"),
     "FlextUtilitiesPagination": (
@@ -366,6 +386,7 @@ __all__ = [
     "FlextProtocolsDI",
     "FlextProtocolsHandler",
     "FlextProtocolsLogging",
+    "FlextProtocolsRegistry",
     "FlextProtocolsResult",
     "FlextProtocolsService",
     "FlextRegistry",
@@ -393,6 +414,9 @@ __all__ = [
     "FlextUtilitiesFileOps",
     "FlextUtilitiesGenerators",
     "FlextUtilitiesGuards",
+    "FlextUtilitiesGuardsEnsure",
+    "FlextUtilitiesGuardsType",
+    "FlextUtilitiesGuardsValidation",
     "FlextUtilitiesMapper",
     "FlextUtilitiesModel",
     "FlextUtilitiesPagination",

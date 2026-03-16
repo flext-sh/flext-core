@@ -304,12 +304,9 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
             if isinstance(value, BaseModel)
             else value
         )
-        guarded_value = u.guard(
-            value_for_guard,
-            (str, int, float, bool, list, dict, t.ConfigMap),
-            return_value=True,
-        )
-        if isinstance(guarded_value, r):
+        if not isinstance(
+            value_for_guard, (str, int, float, bool, list, dict, t.ConfigMap)
+        ):
             return r[bool].fail("Value must be serializable")
         return r[bool].ok(value=True)
 

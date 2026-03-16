@@ -60,9 +60,7 @@ class FlextModelsCollections:
             for v in non_none:
                 if isinstance(v, Mapping):
                     for key, val in v.items():
-                        if isinstance(val, (str, int, float, bool, datetime)):
-                            merged[str(key)] = val
-                        elif isinstance(val, list):
+                        if isinstance(val, (str, int, float, bool, datetime, list)):
                             merged[str(key)] = val
             return merged
 

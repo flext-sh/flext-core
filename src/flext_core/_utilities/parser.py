@@ -497,8 +497,7 @@ class FlextUtilitiesParser:
         if isinstance(text, str | bytes):
             text_length_result = r[int].create_from_callable(lambda: len(text))
             if text_length_result.is_success:
-                len_ = text_length_result.value
-                return len_
+                return text_length_result.value
             return "unknown"
         text_adapter: TypeAdapter[str | bytes] = TypeAdapter(str | bytes)
         try:
@@ -507,8 +506,7 @@ class FlextUtilitiesParser:
             return "unknown"
         text_length_result = r[int].create_from_callable(lambda: len(text_value))
         if text_length_result.is_success:
-            len_ = text_length_result.value
-            return len_
+            return text_length_result.value
         return "unknown"
 
     @staticmethod

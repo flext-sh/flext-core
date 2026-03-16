@@ -692,9 +692,10 @@ class FlextUtilitiesMapper:
 
     @staticmethod
     def _extract_get_value(
-        current: object
-        | t.NormalizedValue
+        current: t.NormalizedValue
         | BaseModel
+        | p.HasModelDump
+        | p.ValidatorSpec
         | Mapping[str, t.NormalizedValue],
         key_part: str,
     ) -> r[t.NormalizedValue]:
@@ -707,20 +708,15 @@ class FlextUtilitiesMapper:
 
         """
         if isinstance(current, Mapping):
-            current_mapping: dict[str, t.NormalizedValue] = {}
-            for map_key, map_value in current.items():
-                normalized_value: t.NormalizedValue = (
-                    map_value
-                    if FlextUtilitiesGuards.is_container(map_value)
-                    else str(map_value)
-                )
-                current_mapping[str(map_key)] = normalized_value
-            if key_part in current_mapping:
-                raw_val: t.NormalizedValue = current_mapping[key_part]
-                narrowed = FlextUtilitiesMapper.narrow_to_container(raw_val)
-                if narrowed is None:
+            mapping_obj: Mapping[str, object] = current
+            if key_part in mapping_obj:
+                raw_obj: object = mapping_obj[key_part]
+                if raw_obj is None:
                     return r[t.NormalizedValue].fail(f"found_none:{key_part}")
-                return r[t.NormalizedValue].ok(narrowed)
+                if FlextUtilitiesGuards.is_container(raw_obj):
+                    narrowed = FlextUtilitiesMapper.narrow_to_container(raw_obj)
+                    return r[t.NormalizedValue].ok(narrowed)
+                return r[t.NormalizedValue].ok(str(raw_obj))
             return r[t.NormalizedValue].fail(f"Key '{key_part}' not found in Mapping")
         if hasattr(current, key_part):
             attr_val = getattr(current, key_part)

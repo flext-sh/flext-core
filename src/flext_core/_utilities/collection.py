@@ -224,12 +224,9 @@ class FlextUtilitiesCollection:
                         )
                         if do_flatten and isinstance(result_value, list):
                             for inner_item in result_value:
-                                if (
-                                    isinstance(inner_item, dict)
-                                    or isinstance(inner_item, list)
-                                    or isinstance(
-                                        inner_item, (str, int, float, bool, datetime)
-                                    )
+                                if isinstance(
+                                    inner_item,
+                                    (dict, list, str, int, float, bool, datetime),
                                 ):
                                     results.append(
                                         FlextUtilitiesCollection._coerce_guard_value(
@@ -279,12 +276,9 @@ class FlextUtilitiesCollection:
                     if do_flatten and isinstance(normalized_result_raw, list):
                         result_raw_flat: list[t.Serializable] = normalized_result_raw
                         for inner_item in result_raw_flat:
-                            if (
-                                isinstance(inner_item, dict)
-                                or isinstance(inner_item, list)
-                                or isinstance(
-                                    inner_item, (str, int, float, bool, datetime)
-                                )
+                            if isinstance(
+                                inner_item,
+                                (dict, list, str, int, float, bool, datetime),
                             ):
                                 results.append(
                                     FlextUtilitiesCollection._coerce_guard_value(

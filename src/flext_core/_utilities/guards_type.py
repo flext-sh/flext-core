@@ -92,10 +92,7 @@ class FlextUtilitiesGuardsType:
 
     @staticmethod
     def _all_container_sequence(value: Sequence[object]) -> bool:
-        for item in value:
-            if not FlextUtilitiesGuardsType.is_container(item):
-                return False
-        return True
+        return all(FlextUtilitiesGuardsType.is_container(item) for item in value)
 
     @staticmethod
     def _all_container_mapping_values(value: Mapping[str, object]) -> bool:
@@ -402,6 +399,12 @@ class FlextUtilitiesGuardsType:
         return FlextUtilitiesGuardsType.is_object_tuple(value) and all(
             isinstance(item, type) for item in value
         )
+
+    @staticmethod
+    def is_type_tuple(
+        value: FlextUtilitiesGuardsType._GuardInput,
+    ) -> TypeGuard[tuple[type, ...]]:
+        return FlextUtilitiesGuardsType._is_type_tuple(value)
 
     @staticmethod
     def has(obj: t.NormalizedValue, key: str) -> bool:
