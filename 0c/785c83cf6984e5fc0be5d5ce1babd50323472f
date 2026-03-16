@@ -1,0 +1,38 @@
+pyproject.toml
+  02f9417c07a5e15c 127
+tests/unit/test_automated_settings.py
+  e78bcaba9ed14069 15
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "0c785c83cf6984e5fc0be5d5ce1babd50323472f",
+  "prompts": {
+    "02f9417c07a5e15c": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_30921f659ffeFFbreclXr7kH0B",
+        "model": "anthropic/claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 3,
+      "total_deletions": 11,
+      "accepted_lines": 2,
+      "overriden_lines": 0
+    },
+    "e78bcaba9ed14069": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_30ed83fa2ffeXIlYwDPQXZFSnb",
+        "model": "anthropic/claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 3,
+      "total_deletions": 2,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    }
+  }
+}
