@@ -923,9 +923,15 @@ class FlextDecorators:
     ) -> None:
         """Ensure FlextLogger call results are handled for diagnostics."""
         if result.is_failure:
-            if not isinstance(logger, FlextLogger):
+            fallback_logger: p.Logger | None = None
+            if isinstance(logger, FlextLogger):
+                fallback_logger = logger.logger
+            elif hasattr(logger, "logger"):
+                candidate_logger = getattr(logger, "logger")
+                if isinstance(candidate_logger, p.Logger):
+                    fallback_logger = candidate_logger
+            if fallback_logger is None:
                 return
-            fallback_logger = logger.logger
             fallback_kwargs = t.ConfigMap(root=kwargs.root)
             warning_context: dict[str, t.Container | Exception] = {}
             for key, value in fallback_kwargs.root.items():
@@ -962,7 +968,7 @@ class FlextDecorators:
         last_exception: Exception,
         func: Callable[..., R],
         attempts: int,
-        error_code: str | None,
+        _error_code: str | None,
         logger: p.Logger,
     ) -> None:
         """Handle retry exhaustion and raise appropriate exception."""
@@ -973,17 +979,7 @@ class FlextDecorators:
             error=str(last_exception),
             error_type=last_exception.__class__.__name__,
         )
-        if last_exception:
-            raise last_exception
-        retry_error_code = error_code if error_code is not None else "OPERATION_TIMEOUT"
-        timeout_message = f"Operation {func.__name__} failed after {attempts} attempts"
-        raise e.TimeoutError(
-            timeout_message,
-            error_code=retry_error_code,
-            operation=func.__name__,
-            attempts=attempts,
-            original_error=str(last_exception),
-        )
+        raise last_exception
 
     @staticmethod
     def _has_flext_logger(
