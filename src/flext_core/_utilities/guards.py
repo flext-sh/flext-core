@@ -43,24 +43,12 @@ class FlextUtilitiesGuards:
     type _GuardInput = (
         t.RegisterableService
         | t.NormalizedValue
+        | BaseModel
         | p.Context
         | p.ValidatorSpec
         | tuple[type, ...]
         | None
     )
-
-    @staticmethod
-    def _is_list_or_tuple(
-        value: FlextUtilitiesGuards._GuardInput,
-    ) -> TypeGuard[list[t.NormalizedValue] | tuple[t.NormalizedValue, ...]]:
-        """Check if value is list or tuple."""
-        return isinstance(value, (list, tuple))
-
-    @staticmethod
-    def _is_mapping(
-        value: FlextUtilitiesGuards._GuardInput,
-    ) -> TypeGuard[Mapping[str, t.NormalizedValue]]:
-        return isinstance(value, Mapping)
 
     @staticmethod
     def is_object_list(
@@ -94,7 +82,7 @@ class FlextUtilitiesGuards:
             return True
         if isinstance(value, (str, int, float, bool, datetime)):
             return True
-        if FlextUtilitiesGuards._is_list_or_tuple(value):
+        if isinstance(value, (list, tuple)):
             sequence_value: Sequence[t.NormalizedValue] = value
             for item in sequence_value:
                 if not (
@@ -102,7 +90,7 @@ class FlextUtilitiesGuards:
                 ):
                     return False
             return True
-        if FlextUtilitiesGuards._is_mapping(value):
+        if isinstance(value, Mapping):
             for v in value.values():
                 if not (v is None or isinstance(v, (str, int, float, bool, datetime))):
                     return False
@@ -133,17 +121,13 @@ class FlextUtilitiesGuards:
         """
         if isinstance(value, t.Dict):
             candidate: Mapping[str, t.NormalizedValue | BaseModel] = value.root
-            for item_key, item_value in candidate.items():
-                if not isinstance(item_key, str):
-                    return False
+            for item_value in candidate.values():
                 if not FlextUtilitiesGuards.is_container(item_value):
                     return False
             return True
-        if not FlextUtilitiesGuards._is_mapping(value):
+        if not isinstance(value, Mapping):
             return False
-        for mk, mv in value.items():
-            if not isinstance(mk, str):
-                return False
+        for mv in value.values():
             if not FlextUtilitiesGuards.is_container(mv):
                 return False
         return True
@@ -178,9 +162,7 @@ class FlextUtilitiesGuards:
             candidate = value
         else:
             return False
-        for item_key, item_value in candidate.items():
-            if not isinstance(item_key, str):
-                return False
+        for item_value in candidate.values():
             if not FlextUtilitiesGuards.is_container(item_value):
                 return False
         return True
@@ -195,19 +177,19 @@ class FlextUtilitiesGuards:
     @staticmethod
     def is_dict_non_empty(value: t.NormalizedValue) -> bool:
         """Check if value is a non-empty dictionary using duck typing."""
-        return FlextUtilitiesGuards._is_mapping(value) and bool(value)
+        return isinstance(value, Mapping) and bool(value)
 
     @staticmethod
     def is_flexible_value(value: t.NormalizedValue) -> TypeIs[t.NormalizedValue]:
         if value is None or FlextUtilitiesGuards.is_scalar(value):
             return True
-        if FlextUtilitiesGuards._is_list_or_tuple(value):
+        if isinstance(value, (list, tuple)):
             sequence_value: Sequence[t.NormalizedValue] = value
             for item in sequence_value:
                 if item is not None and (not FlextUtilitiesGuards.is_scalar(item)):
                     return False
             return True
-        if FlextUtilitiesGuards._is_mapping(value):
+        if isinstance(value, Mapping):
             for item in value.values():
                 if item is not None and (not FlextUtilitiesGuards.is_scalar(item)):
                     return False
@@ -235,11 +217,9 @@ class FlextUtilitiesGuards:
         """
         if value is None or isinstance(value, (str, int, float, bool, datetime)):
             return True
-        if value is True or value is False:
-            return True
-        if FlextUtilitiesGuards._is_list_or_tuple(value):
+        if isinstance(value, (list, tuple)):
             return all(FlextUtilitiesGuards.is_container(item) for item in value)
-        if FlextUtilitiesGuards._is_mapping(value):
+        if isinstance(value, Mapping):
             return all(FlextUtilitiesGuards.is_container(v) for v in value.values())
         return isinstance(value, Path)
 
@@ -968,7 +948,7 @@ class FlextUtilitiesGuards:
             return [value]
         if target_type == "dict":
             dict_default: Mapping[str, t.NormalizedValue] | None = None
-            if FlextUtilitiesGuards._is_mapping(default):
+            if isinstance(default, Mapping):
                 dict_default = default
             return FlextUtilitiesGuards._ensure_to_dict(value, dict_default)
         if target_type == "auto" and isinstance(value, Mapping):
@@ -997,9 +977,9 @@ class FlextUtilitiesGuards:
             r[t.ConfigMap] containing mapping on success, failure otherwise
 
         """
-        if FlextUtilitiesGuards._is_mapping(
+        if isinstance(value, Mapping) and FlextUtilitiesGuards.is_configuration_mapping(
             value
-        ) and FlextUtilitiesGuards.is_configuration_mapping(value):
+        ):
             return r[t.ConfigMap].ok(value)
         return r[t.ConfigMap].fail("Value is not a configuration mapping")
 
