@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
 from enum import StrEnum
-from typing import ClassVar, Literal, TypeGuard, TypeIs, overload
+from typing import ClassVar, Literal, TypeIs, overload
 
 from pydantic import ValidationError
 
@@ -24,7 +24,7 @@ class FlextUtilitiesEnum:
 
     PHILOSOPHY:
     ──────────
-    - TypeGuard for narrowing that works in if/else
+    - TypeIs for narrowing that works in if/else
     - Generic methods that accept ANY StrEnum
     - Caching for performance in frequent validations
     - Direct integration with Pydantic BeforeValidator
@@ -47,7 +47,7 @@ class FlextUtilitiesEnum:
         return enum_cls(value)
 
     @staticmethod
-    def _is_member_by_name[E: StrEnum](name: str, enum_cls: type[E]) -> TypeGuard[E]:
+    def _is_member_by_name[E: StrEnum](name: str, enum_cls: type[E]) -> TypeIs[E]:
         """Check membership by name (internal helper)."""
         return name in enum_cls.__members__
 
@@ -373,8 +373,8 @@ class FlextUtilitiesEnum:
         return tuple(member.value for member in enum_class.__members__.values())
 
     @staticmethod
-    def is_member[E: StrEnum](enum_cls: type[E], value: t.Scalar | E) -> TypeGuard[E]:
-        """Generic TypeGuard for any StrEnum.
+    def is_member[E: StrEnum](enum_cls: type[E], value: t.Scalar | E) -> TypeIs[E]:
+        """Generic TypeIs for any StrEnum.
 
         Example:
              if FlextUtilitiesEnum.is_member(Status, value):
@@ -393,7 +393,7 @@ class FlextUtilitiesEnum:
     def is_subset[E: StrEnum](
         enum_cls: type[E], valid_members: frozenset[E], value: t.Scalar | E
     ) -> bool:
-        """TypeGuard for subset of a StrEnum.
+        """TypeIs for subset of a StrEnum.
 
         Example:
              ACTIVE_STATES = frozenset({Status.ACTIVE, Status.PENDING})
