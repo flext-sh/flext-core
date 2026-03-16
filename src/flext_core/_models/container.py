@@ -22,22 +22,18 @@ from pydantic import BaseModel, ConfigDict, Field, SkipValidation, field_validat
 from flext_core import FlextRuntime, c, t
 from flext_core._models import FlextModelFoundation
 
-_MetadataInput = (
-    FlextModelFoundation.Metadata | t.ConfigMap | Mapping[str, t.Scalar] | None
-)
-
 
 class FlextModelsContainer:
     """Container models namespace for DI and service registry."""
 
     @staticmethod
     def _is_metadata_instance(
-        v: _MetadataInput,
+        v: t.MetadataInput,
     ) -> TypeGuard[FlextModelFoundation.Metadata]:
         return isinstance(v, FlextModelFoundation.Metadata)
 
     @staticmethod
-    def _normalize_metadata(value: _MetadataInput) -> FlextModelFoundation.Metadata:
+    def _normalize_metadata(value: t.MetadataInput) -> FlextModelFoundation.Metadata:
         if value is None:
             return FlextModelFoundation.Metadata.model_validate({"attributes": {}})
         if FlextModelsContainer._is_metadata_instance(value):
@@ -103,7 +99,7 @@ class FlextModelsContainer:
 
         @field_validator("metadata", mode="before")
         @classmethod
-        def validate_metadata(cls, v: _MetadataInput) -> FlextModelFoundation.Metadata:
+        def validate_metadata(cls, v: t.MetadataInput) -> FlextModelFoundation.Metadata:
             """Validate and normalize metadata to Metadata (STRICT mode)."""
             return FlextModelsContainer._normalize_metadata(v)
 
@@ -203,7 +199,7 @@ class FlextModelsContainer:
 
         @field_validator("metadata", mode="before")
         @classmethod
-        def validate_metadata(cls, v: _MetadataInput) -> FlextModelFoundation.Metadata:
+        def validate_metadata(cls, v: t.MetadataInput) -> FlextModelFoundation.Metadata:
             """Validate and normalize metadata to Metadata (STRICT mode)."""
             return FlextModelsContainer._normalize_metadata(v)
 
@@ -247,7 +243,7 @@ class FlextModelsContainer:
 
         @field_validator("metadata", mode="before")
         @classmethod
-        def validate_metadata(cls, v: _MetadataInput) -> FlextModelFoundation.Metadata:
+        def validate_metadata(cls, v: t.MetadataInput) -> FlextModelFoundation.Metadata:
             """Normalize resource metadata to Metadata model."""
             return FlextModelsContainer._normalize_metadata(v)
 

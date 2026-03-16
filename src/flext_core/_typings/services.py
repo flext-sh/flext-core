@@ -13,6 +13,7 @@ from typing import Protocol, runtime_checkable
 from pydantic import BaseModel
 
 from flext_core._typings.base import FlextTypingBase
+from flext_core._typings.containers import FlextTypingContainers
 
 
 class FlextTypesServices:
@@ -53,6 +54,9 @@ class FlextTypesServices:
         | Sequence[FlextTypingBase.Scalar]
     )
     type MetadataAttributeValue = MetadataValue
+    type MetadataInput = (
+        BaseModel | FlextTypingContainers.ConfigMap | Mapping[str, FlextTypingBase.Scalar] | None
+    )
     type HandlerCallable = Callable[[BaseModel], BaseModel]
     type HandlerLike = Callable[..., BaseModel]
     type RegistrablePlugin = (

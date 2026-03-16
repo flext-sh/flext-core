@@ -8,7 +8,7 @@ Tests p functionality including:
 - Domain protocols (Repository, Service)
 - Infrastructure protocols (Configurable)
 - Application protocols (Handler)
-- Commands/Extensions protocols (CommandBus, Middleware)
+- Commands/Extensions protocols (Dispatcher, Middleware)
 - Protocol implementations and runtime checking
 
 Uses Python 3.13 patterns, FlextTestsUtilities, FlextConstants,
@@ -93,7 +93,7 @@ class ProtocolScenarios:
         ),
         ProtocolDefinitionScenario(
             name="command_bus_protocol",
-            protocol_name="CommandBus",
+            protocol_name="Dispatcher",
             category=ProtocolCategoryType.COMMANDS,
         ),
         ProtocolDefinitionScenario(
@@ -131,7 +131,7 @@ class ProtocolScenarios:
         ProtocolAvailabilityScenario(
             name="all_commands_protocols_available",
             category=ProtocolCategoryType.COMMANDS,
-            protocol_names=["CommandBus", "Middleware"],
+            protocol_names=["Dispatcher", "Middleware"],
         ),
         ProtocolAvailabilityScenario(
             name="all_extensions_protocols_available",
