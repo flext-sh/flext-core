@@ -1,0 +1,68 @@
+tests/unit/test_protocols.py
+  b1464e85c62dc49c 119
+examples/12_utilities_comprehensive.py
+  db706e64c0370220 246
+src/flext_core/_protocols/handler.py
+  d35bb5e63cc779bf 12-13,29,31,33-43,45-46,49-55,57-67,73-74,79,85-86,96
+src/flext_core/dispatcher.py
+  d35bb5e63cc779bf 25-27,157,159,161
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "a54927fdc8d95ccf785b95947e174fd0b79d8b3c",
+  "prompts": {
+    "31b5333c7b35d119": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "opencode-transcript-ses_308030929ffe5BCyerdS6SjVPF-7ad31af8-421e-4ebb-9af6-c297c5d19228",
+        "model": "unknown"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 1,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    },
+    "b1464e85c62dc49c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "opencode-transcript-ses_308030929ffe5BCyerdS6SjVPF-4ca113bf-2628-4f90-adbe-80eb84f8d68f",
+        "model": "unknown"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 1,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    },
+    "d35bb5e63cc779bf": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_308778b78ffeJvszdVgr4agyHf",
+        "model": "anthropic/claude-opus-4-6"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 53,
+      "total_deletions": 93,
+      "accepted_lines": 47,
+      "overriden_lines": 0
+    },
+    "db706e64c0370220": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_3091847d5ffeTCLuKwyQLDE3l2",
+        "model": "kimi-for-coding/k2p5"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 1,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    }
+  }
+}
