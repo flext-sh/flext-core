@@ -373,8 +373,8 @@ class FlextUtilitiesEnum:
         return tuple(member.value for member in enum_class.__members__.values())
 
     @staticmethod
-    def is_member[E: StrEnum](enum_cls: type[E], value: t.Scalar | E) -> TypeIs[E]:
-        """Generic TypeIs for any StrEnum.
+    def is_member[E: StrEnum](enum_cls: type[E], value: t.Scalar | E) -> bool:
+        """Generic membership check for any StrEnum.
 
         Example:
              if FlextUtilitiesEnum.is_member(Status, value):

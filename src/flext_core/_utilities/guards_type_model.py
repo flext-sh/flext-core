@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from datetime import datetime
-from typing import TypeGuard, TypeIs
+from typing import TypeIs
 
 from pydantic import BaseModel
 
@@ -67,7 +67,7 @@ class FlextUtilitiesGuardsTypeModel:
     @staticmethod
     def is_configuration_mapping(
         value: Mapping[str, t.NormalizedValue] | t.ConfigMap | t.Dict,
-    ) -> TypeGuard[t.ConfigMap]:
+    ) -> TypeIs[t.ConfigMap]:
         candidate: Mapping[str, t.NormalizedValue | BaseModel] = (
             value.root if isinstance(value, (t.ConfigMap, t.Dict)) else value
         )
@@ -77,7 +77,7 @@ class FlextUtilitiesGuardsTypeModel:
         return True
 
     @staticmethod
-    def is_pydantic_model(value: t.NormalizedValue) -> TypeGuard[p.HasModelDump]:
+    def is_pydantic_model(value: t.NormalizedValue) -> TypeIs[p.HasModelDump]:
         return (
             isinstance(value, BaseModel)
             and hasattr(value, "model_dump")
