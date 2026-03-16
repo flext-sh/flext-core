@@ -103,10 +103,10 @@ if TYPE_CHECKING:
         Ex09FlextDecorators as d,
     )
     from examples.ex_10_flext_handlers import Ex10FlextHandlers, Ex10FlextHandlers as h
-    from examples.ex_11_flext_service import Ex11FlextService, Ex11FlextService as s
     from examples.ex_12_flext_registry import Ex12FlextRegistry
     from examples.logging_config_once_pattern import (
         DatabaseService,
+        DatabaseService as s,
         MigrationService,
         main,
     )
@@ -183,7 +183,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "Ex10ServiceStub": ("examples._models.ex10", "Ex10ServiceStub"),
     "Ex11CommandBusStub": ("examples._models.ex11", "Ex11CommandBusStub"),
     "Ex11EntityStub": ("examples._models.ex11", "Ex11EntityStub"),
-    "Ex11FlextService": ("examples.ex_11_flext_service", "Ex11FlextService"),
     "Ex11HandlerLike": ("examples._models.ex11", "Ex11HandlerLike"),
     "Ex11HandlerLikeService": ("examples._models.ex11", "Ex11HandlerLikeService"),
     "Ex11Payload": ("examples._models.ex11", "Ex11Payload"),
@@ -211,7 +210,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "m": ("examples.models", "FlextCoreExampleModels"),
     "main": ("examples.logging_config_once_pattern", "main"),
     "r": ("examples._models.ex01", "Ex01DemonstrationResult"),
-    "s": ("examples.ex_11_flext_service", "Ex11FlextService"),
+    "s": ("examples.logging_config_once_pattern", "DatabaseService"),
     "x": ("examples.ex_05_flext_mixins", "Ex05FlextMixins"),
 }
 
@@ -275,7 +274,6 @@ __all__ = [
     "Ex10ServiceStub",
     "Ex11CommandBusStub",
     "Ex11EntityStub",
-    "Ex11FlextService",
     "Ex11HandlerLike",
     "Ex11HandlerLikeService",
     "Ex11Payload",

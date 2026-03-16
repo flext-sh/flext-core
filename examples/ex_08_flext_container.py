@@ -7,7 +7,7 @@ from collections.abc import Mapping
 from types import ModuleType
 from typing import override
 
-from flext_core import FlextContainer, FlextContext, FlextRuntime, c, r, u
+from flext_core import FlextContainer, FlextContext, FlextRuntime, c, r, t, u
 
 from .shared import Examples
 

@@ -20,7 +20,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from typing import override
 
-from flext_core import FlextContainer, FlextSettings, c, m, r, s, u
+from flext_core import FlextContainer, FlextSettings, c, m, r, s, t, u
 
 
 class DatabaseService(m.ArbitraryTypesModel):

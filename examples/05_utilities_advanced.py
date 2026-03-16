@@ -26,7 +26,7 @@ from typing import override
 
 from pydantic import Field
 
-from flext_core import c, m, r, s, u
+from flext_core import c, m, r, s, t, u
 
 
 class StatusEnum(StrEnum):

@@ -32,6 +32,7 @@ from flext_core import (
     m,
     r,
     s,
+    t,
 )
 
 from ..test_utils import assertion_helpers

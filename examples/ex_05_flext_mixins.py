@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping
 from typing import override
 
-from flext_core import FlextRuntime, FlextSettings, c, m, r, x
+from flext_core import FlextRuntime, FlextSettings, c, m, r, t, x
 
 from .shared import Examples
 

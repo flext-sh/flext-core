@@ -23,7 +23,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import override
 
-from flext_core import FlextConstants, FlextService, c, m, r, u
+from flext_core import FlextConstants, FlextService, c, m, r, t, u
 
 TEST_DATA: t.ConfigMap = t.ConfigMap(
     root={

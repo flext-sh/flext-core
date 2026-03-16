@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_core import FlextExceptions, c, e, m, r
+from flext_core import FlextExceptions, c, e, m, r, t
 
 from .shared import Examples
 

@@ -8,7 +8,7 @@ from typing import ClassVar, cast, override
 
 from pydantic import BaseModel
 
-from flext_core import FlextHandlers, c, e, h, m, r
+from flext_core import FlextHandlers, c, e, h, m, r, t
 
 from ._models import Ex10CommandBusStub, Ex10ProtocolHandler, Ex10ServiceStub
 from .shared import Examples

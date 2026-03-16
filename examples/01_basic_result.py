@@ -22,7 +22,7 @@ from collections.abc import Callable, Sequence
 from datetime import UTC, datetime
 from typing import override
 
-from flext_core import c, e, m, r, s, u
+from flext_core import c, e, m, r, s, t, u
 
 
 class User(m.Entity):

@@ -23,7 +23,7 @@ from typing import override
 
 from pydantic import Field
 
-from flext_core import (
+from flext_core import (, t
     FlextContainer,
     FlextContext,
     FlextDecorators,

@@ -6,7 +6,7 @@ from typing import override
 
 from pydantic import BaseModel
 
-from flext_core import FlextDispatcher, FlextHandlers, FlextRegistry, c, m, r
+from flext_core import FlextDispatcher, FlextHandlers, FlextRegistry, c, m, r, t
 
 from .shared import Examples
 

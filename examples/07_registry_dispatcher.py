@@ -20,7 +20,7 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_core import FlextDispatcher, FlextRegistry, c, h, m, r, s, u
+from flext_core import FlextDispatcher, FlextRegistry, c, h, m, r, s, t, u
 
 
 class CreateUserCommand(m.Command):

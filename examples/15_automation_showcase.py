@@ -23,7 +23,7 @@ from typing import override
 
 from pydantic import PrivateAttr
 
-from flext_core import FlextContext, FlextRuntime, c, r, s, u
+from flext_core import FlextContext, FlextRuntime, c, r, s, t, u
 
 
 class UserService(s[t.ConfigMap]):

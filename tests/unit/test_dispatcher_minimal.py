@@ -8,7 +8,7 @@ Tests the strict FlextDispatcher API:
 
 from __future__ import annotations
 
-from flext_core import FlextDispatcher, r
+from flext_core import FlextDispatcher, r, t
 from tests import c, m
 
 

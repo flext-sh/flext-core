@@ -9,7 +9,6 @@ from __future__ import annotations
 from typing import Annotated, cast
 
 import pytest
-from flext_tests import t
 from pydantic import Field
 
 from flext_core import r

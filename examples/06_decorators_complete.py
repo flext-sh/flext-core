@@ -21,7 +21,7 @@ from __future__ import annotations
 import time
 from typing import override
 
-from flext_core import FlextContainer, FlextDecorators, c, r, s
+from flext_core import FlextContainer, FlextDecorators, c, r, s, t
 
 
 class DecoratorsService(s[t.ConfigMap]):
