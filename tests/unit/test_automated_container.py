@@ -7,10 +7,10 @@ from collections.abc import Generator
 from time import perf_counter
 
 import pytest
+from flext_tests import tb, tk, tm, tt
 from hypothesis import given, settings, strategies as st
 
 from flext_core import FlextContainer, FlextContext
-from flext_tests import tb, tk, tm, tt
 
 _DOCKER_AVAILABLE = shutil.which("docker") is not None
 

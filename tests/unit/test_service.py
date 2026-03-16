@@ -25,10 +25,10 @@ from enum import StrEnum
 from typing import Annotated, ClassVar, override
 
 import pytest
+from flext_tests import FlextTestsUtilities, u
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import m, r, s, t
-from flext_tests import FlextTestsUtilities, u
 
 
 class ServiceScenarioType(StrEnum):

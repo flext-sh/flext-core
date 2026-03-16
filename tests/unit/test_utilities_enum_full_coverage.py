@@ -7,9 +7,9 @@ from enum import StrEnum
 from typing import cast, override
 
 import pytest
+from flext_tests import tm
 
 from flext_core import u
-from flext_tests import tm
 
 
 class Status(StrEnum):

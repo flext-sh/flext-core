@@ -18,10 +18,10 @@ import math
 from typing import Annotated, ClassVar, override
 
 import pytest
+from flext_tests import FlextTestsUtilities, t, u
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import FlextExceptions, c, h, m, r, x
-from flext_tests import FlextTestsUtilities, t, u
 
 from ..test_utils import assertion_helpers
 

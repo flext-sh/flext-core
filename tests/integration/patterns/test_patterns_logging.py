@@ -11,9 +11,9 @@ import logging
 import time
 
 import pytest
+from flext_tests import t
 
 from flext_core import FlextLogger, r
-from flext_tests import t
 
 EXPECTED_BULK_SIZE = 2
 

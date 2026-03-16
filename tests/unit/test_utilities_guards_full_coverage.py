@@ -8,19 +8,20 @@ from datetime import UTC, datetime
 from typing import cast
 
 import pytest
+from flext_tests import tm
 from pydantic import BaseModel
 
-from flext_core import c, m, r, t, u
-from flext_tests import t as test_t
+from flext_core import r
+from tests import c, m, t, u
 
 from ._models import _Model
 
 
 def _is_type_obj(
-    value: test_t.Tests.object, type_spec: str | type | tuple[type, ...]
+    value: t.Tests.object, type_spec: str | type | tuple[type, ...]
 ) -> bool:
     """Call is_type with arbitrary object for negative-case testing."""
-    fn: Callable[[test_t.Tests.object, str | type | tuple[type, ...]], bool] = getattr(
+    fn: Callable[[t.Tests.object, str | type | tuple[type, ...]], bool] = getattr(
         u,
         "is_type",
     )
@@ -59,29 +60,34 @@ def _return_false(_value: str) -> bool:
 
 
 def test_aliases_are_available() -> None:
-    assert u is not None
-    assert c is not None
-    assert m is not None
-    assert t is not None
+    tm.that(u is not None, eq=True)
+    tm.that(c is not None, eq=True)
+    tm.that(m is not None, eq=True)
+    tm.that(t is not None, eq=True)
 
 
 def test_is_container_negative_paths_and_callable() -> None:
-    assert callable(_sample_handler) or u.is_container(
-        cast("t.NormalizedValue", _sample_handler)
+    tm.that(
+        callable(_sample_handler)
+        or u.is_container(cast("t.NormalizedValue", _sample_handler)),
+        eq=True,
     )
-    assert u.is_container([1, "x", None])
-    assert u.is_container({"k": 1})
-    assert not u.is_container(cast("t.NormalizedValue", [{"x"}]))
-    assert u.is_container(cast("t.NormalizedValue", {1: "x"}))
-    assert not u.is_container(cast("t.NormalizedValue", {"x": {1}}))
+    tm.that(u.is_container([1, "x", None]), eq=True)
+    tm.that(u.is_container({"k": 1}), eq=True)
+    tm.that(not u.is_container(cast("t.NormalizedValue", [{"x"}])), eq=True)
+    tm.that(u.is_container(cast("t.NormalizedValue", {1: "x"})), eq=True)
+    tm.that(not u.is_container(cast("t.NormalizedValue", {"x": {1}})), eq=True)
 
 
 def test_is_handler_type_branches() -> None:
-    assert u.is_handler_type({"a": 1})
-    assert u.is_handler_type(
-        cast("t.NormalizedValue", _Model.model_validate({"value": 1}))
+    tm.that(u.is_handler_type({"a": 1}), eq=True)
+    tm.that(
+        u.is_handler_type(
+            cast("t.NormalizedValue", _Model.model_validate({"value": 1}))
+        ),
+        eq=True,
     )
-    assert u.is_handler_type(cast("t.NormalizedValue", _sample_handler))
+    tm.that(u.is_handler_type(cast("t.NormalizedValue", _sample_handler)), eq=True)
 
     class _BaseModelSubclass:
         value: str = "ok"
@@ -92,132 +98,141 @@ def test_is_handler_type_branches() -> None:
         def handle(self, _value: t.NormalizedValue) -> None:
             return None
 
-    assert u.is_handler_type(cast("t.NormalizedValue", _BaseModelSubclass))
-    assert u.is_handler_type(cast("t.NormalizedValue", _DuckHandler()))
+    tm.that(u.is_handler_type(cast("t.NormalizedValue", _BaseModelSubclass)), eq=True)
+    tm.that(u.is_handler_type(cast("t.NormalizedValue", _DuckHandler())), eq=True)
 
 
 def test_non_empty_and_normalize_branches() -> None:
-    assert u.is_string_non_empty("x")
-    assert u.is_type("x", "string_non_empty")
-    assert u.is_dict_non_empty({"k": "v"})
-    assert u.is_list_non_empty([1])
-    assert u.normalize_to_metadata("x") == "x"
+    tm.that(u.is_string_non_empty("x"), eq=True)
+    tm.that(u.is_type("x", "string_non_empty"), eq=True)
+    tm.that(u.is_dict_non_empty({"k": "v"}), eq=True)
+    tm.that(u.is_list_non_empty([1]), eq=True)
+    tm.that(u.normalize_to_metadata("x") == "x", eq=True)
     dict_scalar_out = u.normalize_to_metadata({"k": 1})
-    assert dict_scalar_out == {"k": 1}
+    tm.that(dict_scalar_out == {"k": 1}, eq=True)
     dict_complex_out = u.normalize_to_metadata(
         cast("t.NormalizedValue", {"k": object()})
     )
-    assert isinstance(dict_complex_out, dict) and "k" in dict_complex_out
+    tm.that(isinstance(dict_complex_out, dict) and "k" in dict_complex_out, eq=True)
     list_out = u.normalize_to_metadata(cast("t.NormalizedValue", [1, object()]))
-    assert isinstance(list_out, list)
-    assert list_out[0] == 1
-    assert isinstance(list_out[1], str)
-    assert isinstance(
-        u.normalize_to_metadata(cast("t.NormalizedValue", {1, 2})),
-        str,
+    tm.that(isinstance(list_out, list), eq=True)
+    tm.that(list_out[0] == 1, eq=True)
+    tm.that(isinstance(list_out[1], str), eq=True)
+    tm.that(
+        isinstance(
+            u.normalize_to_metadata(cast("t.NormalizedValue", {1, 2})),
+            str,
+        ),
+        eq=True,
     )
 
 
 def test_configuration_mapping_and_dict_negative_branches() -> None:
     bad_value_mapping = cast("m.ConfigMap", {"k": {1}})
     bad_value_dict = cast("m.Dict", {"k": {1}})
-    assert not u.is_configuration_mapping(bad_value_mapping)
-    assert not u.is_configuration_dict(bad_value_dict)
-    assert u.is_configuration_dict({"k": 1})
+    tm.that(not u.is_configuration_mapping(bad_value_mapping), eq=True)
+    tm.that(not u.is_configuration_dict(bad_value_dict), eq=True)
+    tm.that(u.is_configuration_dict({"k": 1}), eq=True)
 
 
 def test_is_flexible_value_covers_all_branches() -> None:
-    assert u.is_flexible_value(None)
-    assert u.is_flexible_value(1)
-    assert u.is_flexible_value(datetime.now(UTC))
-    assert u.is_flexible_value(["a", 1, None, datetime.now(UTC)])
-    assert not u.is_flexible_value(["a", {"no": "nested"}])
-    assert _is_flexible_value_obj({1: "bad_key"})
-    assert not u.is_flexible_value({"k": {"nested": "bad"}})
-    assert u.is_flexible_value({"k": "v"})
+    tm.that(u.is_flexible_value(None), eq=True)
+    tm.that(u.is_flexible_value(1), eq=True)
+    tm.that(u.is_flexible_value(datetime.now(UTC)), eq=True)
+    tm.that(u.is_flexible_value(["a", 1, None, datetime.now(UTC)]), eq=True)
+    tm.that(not u.is_flexible_value(["a", {"no": "nested"}]), eq=True)
+    tm.that(_is_flexible_value_obj({1: "bad_key"}), eq=True)
+    tm.that(not u.is_flexible_value({"k": {"nested": "bad"}}), eq=True)
+    tm.that(u.is_flexible_value({"k": "v"}), eq=True)
     empty_set: set[int] = set()
-    assert not _is_flexible_value_obj(empty_set)
+    tm.that(not _is_flexible_value_obj(empty_set), eq=True)
 
 
 def test_protocol_and_simple_guard_helpers() -> None:
-    plain_obj: test_t.Tests.object = cast("test_t.Tests.object", object())
-    assert not _is_type_obj(plain_obj, "config")
-    assert not _is_type_obj(plain_obj, "container")
-    assert not _is_type_obj(plain_obj, "command_bus")
-    assert not _is_type_obj(plain_obj, "handler")
-    assert not _is_type_obj(cast("test_t.Tests.object", _LoggerLike()), "logger")
-    assert _is_type_obj(cast("test_t.Tests.object", r[int].ok(1)), "result")
-    assert not _is_type_obj(plain_obj, "service")
-    assert not _is_type_obj(plain_obj, "middleware")
-    assert u.is_handler_callable(cast("t.NormalizedValue", _sample_handler))
-    assert u.is_mapping({"k": "v"})
+    plain_obj: t.Tests.object = cast("t.Tests.object", object())
+    tm.that(not _is_type_obj(plain_obj, "config"), eq=True)
+    tm.that(not _is_type_obj(plain_obj, "container"), eq=True)
+    tm.that(not _is_type_obj(plain_obj, "command_bus"), eq=True)
+    tm.that(not _is_type_obj(plain_obj, "handler"), eq=True)
+    tm.that(not _is_type_obj(cast("t.Tests.object", _LoggerLike()), "logger"), eq=True)
+    tm.that(_is_type_obj(cast("t.Tests.object", r[int].ok(1)), "result"), eq=True)
+    tm.that(not _is_type_obj(plain_obj, "service"), eq=True)
+    tm.that(not _is_type_obj(plain_obj, "middleware"), eq=True)
+    tm.that(u.is_handler_callable(cast("t.NormalizedValue", _sample_handler)), eq=True)
+    tm.that(u.is_mapping({"k": "v"}), eq=True)
 
     def _identity(value: t.NormalizedValue) -> t.NormalizedValue:
         return value
 
-    assert _is_type_obj(cast("test_t.Tests.object", _identity), "callable")
-    assert u.is_type(3, "int")
-    assert u.is_type([1, 2], "list_or_tuple")
-    assert u.is_type("abc", "sized")
-    assert u.is_type(1.5, "float")
-    assert u.is_type(True, "bool")
-    assert u.is_type(None, "none")
-    assert u.is_type((1, 2), "tuple")
-    assert u.is_type(cast("t.NormalizedValue", b"a"), "bytes")
-    assert u.is_type("abc", "str")
-    assert u.is_type({"k": "v"}, "dict")
-    assert u.is_type([1], "list")
-    assert u.is_type((1,), "sequence")
-    assert u.is_type({"k": 1}, "mapping")
-    assert u.is_type([1], "sequence_not_str")
-    assert u.is_type([1], "sequence_not_str_bytes")
-    assert u.is_pydantic_model(
-        cast("t.NormalizedValue", _Model.model_validate({"value": 1}))
+    tm.that(_is_type_obj(cast("t.Tests.object", _identity), "callable"), eq=True)
+    tm.that(u.is_type(3, "int"), eq=True)
+    tm.that(u.is_type([1, 2], "list_or_tuple"), eq=True)
+    tm.that(u.is_type("abc", "sized"), eq=True)
+    tm.that(u.is_type(1.5, "float"), eq=True)
+    tm.that(u.is_type(True, "bool"), eq=True)
+    tm.that(u.is_type(None, "none"), eq=True)
+    tm.that(u.is_type((1, 2), "tuple"), eq=True)
+    tm.that(u.is_type(cast("t.NormalizedValue", b"a"), "bytes"), eq=True)
+    tm.that(u.is_type("abc", "str"), eq=True)
+    tm.that(u.is_type({"k": "v"}, "dict"), eq=True)
+    tm.that(u.is_type([1], "list"), eq=True)
+    tm.that(u.is_type((1,), "sequence"), eq=True)
+    tm.that(u.is_type({"k": 1}, "mapping"), eq=True)
+    tm.that(u.is_type([1], "sequence_not_str"), eq=True)
+    tm.that(u.is_type([1], "sequence_not_str_bytes"), eq=True)
+    tm.that(
+        u.is_pydantic_model(
+            cast("t.NormalizedValue", _Model.model_validate({"value": 1}))
+        ),
+        eq=True,
     )
 
 
 def test_is_type_non_empty_unknown_and_tuple_and_fallback() -> None:
     value_set: set[int] = set()
-    assert not _is_type_obj(cast("test_t.Tests.object", value_set), "string_non_empty")
-    assert not u.is_type("x", "unknown_type_name")
-    assert u.is_type(3, (int, float))
-    assert u.is_type("x", str)
+    tm.that(
+        not _is_type_obj(cast("t.Tests.object", value_set), "string_non_empty"),
+        eq=True,
+    )
+    tm.that(not u.is_type("x", "unknown_type_name"), eq=True)
+    tm.that(u.is_type(3, (int, float)), eq=True)
+    tm.that(u.is_type("x", str), eq=True)
     invalid_spec = cast("str | type | tuple[type, ...]", cast("object", 123))
-    assert not u.is_type("x", invalid_spec)
+    tm.that(not u.is_type("x", invalid_spec), eq=True)
 
 
 def test_is_type_protocol_fallback_branches(monkeypatch: pytest.MonkeyPatch) -> None:
     """Test that is_type returns False for non-protocol objects against protocol types."""
-    plain_obj: test_t.Tests.object = cast("test_t.Tests.object", object())
-    assert not _is_type_obj(plain_obj, "config")
-    assert not _is_type_obj(plain_obj, "context")
-    assert not _is_type_obj(plain_obj, "handler")
-    assert not _is_type_obj(plain_obj, "service")
-    assert not _is_type_obj(plain_obj, "middleware")
-    assert not _is_type_obj(plain_obj, "result")
-    assert not _is_type_obj(plain_obj, "command_bus")
-    assert not _is_type_obj(plain_obj, "logger")
+    plain_obj: t.Tests.object = cast("t.Tests.object", object())
+    tm.that(not _is_type_obj(plain_obj, "config"), eq=True)
+    tm.that(not _is_type_obj(plain_obj, "context"), eq=True)
+    tm.that(not _is_type_obj(plain_obj, "handler"), eq=True)
+    tm.that(not _is_type_obj(plain_obj, "service"), eq=True)
+    tm.that(not _is_type_obj(plain_obj, "middleware"), eq=True)
+    tm.that(not _is_type_obj(plain_obj, "result"), eq=True)
+    tm.that(not _is_type_obj(plain_obj, "command_bus"), eq=True)
+    tm.that(not _is_type_obj(plain_obj, "logger"), eq=True)
 
 
 def test_extract_mapping_or_none_branches() -> None:
     mapping_result = u.extract_mapping_or_none({"k": "v"})
-    assert mapping_result.is_success
-    assert mapping_result.value == {"k": "v"}
+    tm.that(mapping_result.is_success, eq=True)
+    tm.that(mapping_result.value == {"k": "v"}, eq=True)
     mapping_non_str_keys = u.extract_mapping_or_none(
         cast("t.NormalizedValue", {1: "v"})
     )
-    assert mapping_non_str_keys.is_failure
-    assert u.extract_mapping_or_none([1, 2, 3]).is_failure
+    tm.that(mapping_non_str_keys.is_failure, eq=True)
+    tm.that(u.extract_mapping_or_none([1, 2, 3]).is_failure, eq=True)
 
 
 def test_guard_in_has_empty_none_helpers() -> None:
-    assert not _return_false("x")
-    assert u.guard("x", str)
-    assert u.guard("x", validator=str, return_value=True) == "x"
-    assert u.guard("x", validator=(str, int), return_value=True) == "x"
-    assert u.guard("x", str, return_value=True) == "x"
-    assert u.guard("x", validator=None, return_value=False)
-    assert u.guard("x", validator=None, return_value=True) == "x"
+    tm.that(not _return_false("x"), eq=True)
+    tm.that(u.guard("x", str), eq=True)
+    tm.that(u.guard("x", validator=str, return_value=True) == "x", eq=True)
+    tm.that(u.guard("x", validator=(str, int), return_value=True) == "x", eq=True)
+    tm.that(u.guard("x", str, return_value=True) == "x", eq=True)
+    tm.that(u.guard("x", validator=None, return_value=False), eq=True)
+    tm.that(u.guard("x", validator=None, return_value=True) == "x", eq=True)
 
     def _always_false(_v: t.NormalizedValue) -> bool:
         return False
@@ -227,42 +242,42 @@ def test_guard_in_has_empty_none_helpers() -> None:
         msg = "test error"
         raise TypeError(msg)
 
-    assert u.guard("x", validator=_always_false, default="d") == "d"
-    assert u.guard("x", validator=_raise_error, default="d") == "d"
+    tm.that(u.guard("x", validator=_always_false, default="d") == "d", eq=True)
+    tm.that(u.guard("x", validator=_raise_error, default="d") == "d", eq=True)
     failure_result = u.guard("x", validator=_always_false, return_value=True)
-    assert isinstance(failure_result, r)
-    assert failure_result.is_failure
-    assert u.in_("a", ["a", "b"])
-    assert not u.in_([], ("a", "b"))
-    assert not u.in_("a", 42)
-    assert u.has({"k": 1}, "k")
-    assert u.has({"key": "value"}, "key")
-    assert u.empty(None)
-    assert u.empty(())
-    assert not u.empty([1])
-    assert u.empty(0)
-    assert u.none_(None, None)
-    assert not u.none_(None, "x")
+    tm.that(isinstance(failure_result, r), eq=True)
+    tm.that(failure_result.is_failure, eq=True)
+    tm.that(u.in_("a", ["a", "b"]), eq=True)
+    tm.that(not u.in_([], ("a", "b")), eq=True)
+    tm.that(not u.in_("a", 42), eq=True)
+    tm.that(u.has({"k": 1}, "k"), eq=True)
+    tm.that(u.has({"key": "value"}, "key"), eq=True)
+    tm.that(u.empty(None), eq=True)
+    tm.that(u.empty(()), eq=True)
+    tm.that(not u.empty([1]), eq=True)
+    tm.that(u.empty(0), eq=True)
+    tm.that(u.none_(None, None), eq=True)
+    tm.that(not u.none_(None, "x"), eq=True)
 
 
 def test_chk_exercises_missed_branches() -> None:
-    assert not u.chk(1, none=True)
-    assert not u.chk(None, none=False)
-    assert not u.chk("a", is_=int)
+    tm.that(not u.chk(1, none=True), eq=True)
+    tm.that(not u.chk(None, none=False), eq=True)
+    tm.that(not u.chk("a", is_=int), eq=True)
     with pytest.raises(TypeError):
         u.chk("a", is_=list[int])
     with pytest.raises(TypeError):
         u.chk("a", not_=list[int])
-    assert not u.chk("a", not_=str)
-    assert not u.chk(1, eq=2)
-    assert not u.chk(1, ne=1)
-    assert not u.chk(1, in_=[2, 3])
+    tm.that(not u.chk("a", not_=str), eq=True)
+    tm.that(not u.chk(1, eq=2), eq=True)
+    tm.that(not u.chk(1, ne=1), eq=True)
+    tm.that(not u.chk(1, in_=[2, 3]), eq=True)
 
 
 def test_guards_bool_shortcut_and_issubclass_typeerror(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    assert u.is_container(True)
+    tm.that(u.is_container(True), eq=True)
 
     class _SomeType:
         pass
@@ -279,34 +294,32 @@ def test_guards_bool_shortcut_and_issubclass_typeerror(
         return original_issubclass(cls, classinfo)
 
     monkeypatch.setattr(builtins, "issubclass", _fake_issubclass)
-    assert not _is_type_obj(cast("test_t.Tests.object", _SomeType), "handler")
-    assert not u.chk(1, not_in=[1, 2])
-    assert not u.chk(1, gt=1)
-    assert not u.chk(1, gte=2)
-    assert not u.chk(1, lt=1)
-    assert not u.chk(2, lte=1)
-    assert not u.chk(1, empty=True)
-    assert not u.chk("", empty=False)
-    assert not u.chk("abc", starts="z")
-    assert not u.chk("abc", ends="z")
-    assert not u.chk("abc", match="\\d+")
-    assert not u.chk("abc", contains="z")
-    assert not u.chk({"k": "v"}, contains="x")
-    assert not u.chk(["k"], contains="x")
-    assert not u.chk("abc", contains="x")
-    assert u.chk("abc", contains=1)
-    assert u.chk("abc", gte=3, lte=3)
-    assert u.chk("", empty=True)
+    tm.that(not _is_type_obj(cast("t.Tests.object", _SomeType), "handler"), eq=True)
+    tm.that(not u.chk(1, not_in=[1, 2]), eq=True)
+    tm.that(not u.chk(1, gt=1), eq=True)
+    tm.that(not u.chk(1, gte=2), eq=True)
+    tm.that(not u.chk(1, lt=1), eq=True)
+    tm.that(not u.chk(2, lte=1), eq=True)
+    tm.that(not u.chk(1, empty=True), eq=True)
+    tm.that(not u.chk("", empty=False), eq=True)
+    tm.that(not u.chk("abc", starts="z"), eq=True)
+    tm.that(not u.chk("abc", ends="z"), eq=True)
+    tm.that(not u.chk("abc", match="\\d+"), eq=True)
+    tm.that(not u.chk("abc", contains="z"), eq=True)
+    tm.that(not u.chk({"k": "v"}, contains="x"), eq=True)
+    tm.that(not u.chk(["k"], contains="x"), eq=True)
+    tm.that(not u.chk("abc", contains="x"), eq=True)
+    tm.that(u.chk("abc", contains=1), eq=True)
+    tm.that(u.chk("abc", gte=3, lte=3), eq=True)
+    tm.that(u.chk("", empty=True), eq=True)
 
 
 def test_guard_instance_attribute_access_warnings() -> None:
     guards = u()
     method = guards.is_type
-    assert callable(method)
-    private_method = cast(
-        "Callable[..., test_t.Tests.object]", getattr(guards, "_is_str")
-    )
-    assert callable(private_method)
+    tm.that(callable(method), eq=True)
+    private_method = cast("Callable[..., t.Tests.object]", getattr(guards, "_is_str"))
+    tm.that(callable(private_method), eq=True)
 
 
 def test_guards_handler_type_issubclass_typeerror_branch_direct() -> None:
@@ -326,7 +339,10 @@ def test_guards_handler_type_issubclass_typeerror_branch_direct() -> None:
 
     setattr(builtins, "issubclass", _explode)
     try:
-        assert not _is_type_obj(cast("test_t.Tests.object", _Candidate), "handler")
+        tm.that(
+            not _is_type_obj(cast("t.Tests.object", _Candidate), "handler"),
+            eq=True,
+        )
     finally:
         setattr(builtins, "issubclass", original_issubclass)
 
@@ -345,7 +361,7 @@ def test_guards_bool_identity_branch_via_isinstance_fallback(
         return original_isinstance(obj, classinfo)
 
     monkeypatch.setattr(builtins, "isinstance", _patched_isinstance)
-    assert u.is_container(True)
+    tm.that(u.is_container(True), eq=True)
 
 
 def test_guards_issubclass_typeerror_when_class_not_treated_as_callable(
@@ -373,7 +389,7 @@ def test_guards_issubclass_typeerror_when_class_not_treated_as_callable(
 
     monkeypatch.setattr(builtins, "callable", _patched_callable)
     monkeypatch.setattr(builtins, "issubclass", _patched_issubclass)
-    assert not _is_type_obj(cast("test_t.Tests.object", _Candidate), "handler")
+    tm.that(not _is_type_obj(cast("t.Tests.object", _Candidate), "handler"), eq=True)
 
 
 def test_guards_issubclass_success_when_callable_is_patched(
@@ -390,4 +406,7 @@ def test_guards_issubclass_success_when_callable_is_patched(
         return original_callable(value)
 
     monkeypatch.setattr(builtins, "callable", _patched_callable)
-    assert _is_type_obj(cast("test_t.Tests.object", _ModelSub), "handler") is False
+    tm.that(
+        _is_type_obj(cast("t.Tests.object", _ModelSub), "handler") is False,
+        eq=True,
+    )

@@ -18,11 +18,11 @@ from collections.abc import Callable
 from enum import StrEnum
 from typing import Annotated, override
 
+from flext_infra import FlextInfraModels
+from flext_tests import FlextTestsModels
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import FlextModels, t
-from flext_infra import FlextInfraModels
-from flext_tests import FlextTestsModels
 
 
 class TestsFlextModels(FlextTestsModels, FlextInfraModels):

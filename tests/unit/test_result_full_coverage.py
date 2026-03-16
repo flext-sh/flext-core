@@ -8,8 +8,9 @@ from __future__ import annotations
 
 from typing import cast
 
-from flext_core import FlextRuntime, r
 from flext_tests import t, tm
+
+from flext_core import FlextRuntime, r
 
 from ._models import _ErrorsModel, _PlainErrorModel, _TargetModel
 

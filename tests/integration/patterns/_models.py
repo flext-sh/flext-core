@@ -4,9 +4,8 @@ from __future__ import annotations
 
 from collections.abc import ItemsView, Mapping, ValuesView
 
-from pydantic import RootModel
-
 from flext_tests import t
+from pydantic import RootModel
 
 
 class _StringDictModel(RootModel[dict[str, str]]):

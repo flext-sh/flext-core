@@ -14,8 +14,9 @@ from collections import UserDict, UserList
 from collections.abc import ItemsView, Iterator, Mapping
 from typing import cast, override
 
-from flext_core import FlextTypes, FlextUtilities
 from flext_tests import tm
+
+from flext_core import FlextTypes, FlextUtilities
 from tests.constants import (
     TestsFlextConstants,
 )

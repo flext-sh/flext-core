@@ -19,6 +19,7 @@ from __future__ import annotations
 
 from typing import override
 
+from flext_tests import t
 from pydantic import BaseModel as PydanticBaseModel, PrivateAttr
 
 from flext_core import (
@@ -39,7 +40,6 @@ from flext_core import (
     FlextUtilities,
     r,
 )
-from flext_tests import t
 
 
 class TestMigrationScenario1:

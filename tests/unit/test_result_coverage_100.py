@@ -25,9 +25,9 @@ from __future__ import annotations
 import math
 
 import pytest
+from flext_tests import tm
 
 from flext_core import m, r, t
-from flext_tests import tm
 
 
 class _ResultAssertions:

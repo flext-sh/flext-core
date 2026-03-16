@@ -9,10 +9,10 @@ from __future__ import annotations
 from typing import Annotated, cast
 
 import pytest
+from flext_tests import t
 from pydantic import Field
 
 from flext_core import c, m, r, u
-from flext_tests import t
 
 
 class _Stats(m.Statistics):

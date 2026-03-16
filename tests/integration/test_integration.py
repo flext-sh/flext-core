@@ -30,9 +30,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
+from flext_tests import t
 
 from flext_core import FlextContainer, __version__, r, u
-from flext_tests import t
 from tests.test_utils import assertion_helpers
 
 from ..conftest import FunctionalExternalService

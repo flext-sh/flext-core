@@ -5,9 +5,8 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Annotated, ClassVar, Never, TypeAlias, override
 
-from pydantic import BaseModel, ConfigDict, Field
-
 from flext_tests import t
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class _ValidationLikeError(Exception):

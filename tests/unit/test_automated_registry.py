@@ -5,10 +5,10 @@ from __future__ import annotations
 from collections.abc import Callable
 
 import pytest
+from flext_tests import tb, tm
 from hypothesis import given, settings, strategies as st
 
 from flext_core import FlextRegistry, m, r
-from flext_tests import tb, tm
 
 
 class _RegistryHandlerCallable:

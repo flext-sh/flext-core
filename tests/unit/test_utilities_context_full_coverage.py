@@ -12,8 +12,9 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from unittest.mock import MagicMock
 
-from flext_core import FlextContext, m, u
 from flext_tests import t
+
+from flext_core import FlextContext, m, u
 
 from ._models import _FakeConfig
 

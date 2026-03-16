@@ -17,9 +17,10 @@ from collections import UserDict, UserList
 from collections.abc import Callable, Iterator
 from typing import Never, override
 
-from flext_core import r
 from flext_infra import FlextInfraUtilities
 from flext_tests import FlextTestsUtilities, t
+
+from flext_core import r
 
 from .test_utils import assertion_helpers
 

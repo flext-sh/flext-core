@@ -16,11 +16,11 @@ from __future__ import annotations
 from enum import StrEnum
 from typing import Annotated, Final, Literal
 
+from flext_infra import FlextInfraConstants
+from flext_tests import FlextTestsConstants
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import m
-from flext_infra import FlextInfraConstants
-from flext_tests import FlextTestsConstants
 
 
 class TestsFlextConstants(FlextTestsConstants, FlextInfraConstants):

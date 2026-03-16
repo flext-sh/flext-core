@@ -19,10 +19,10 @@ from datetime import datetime
 from typing import ClassVar
 
 import pytest
+from flext_tests import t, tm
 from pydantic import BaseModel, ValidationError
 
 from flext_core import m, u
-from flext_tests import t, tm
 
 _expected_validation_errors: tuple[type[Exception], ...] = (ValidationError, TypeError)
 

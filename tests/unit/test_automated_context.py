@@ -5,10 +5,10 @@ from __future__ import annotations
 from time import perf_counter
 
 import pytest
+from flext_tests import tb, tm, tt
 from hypothesis import given, settings, strategies as st
 
 from flext_core import FlextContext
-from flext_tests import tb, tm, tt
 
 
 class TestAutomatedFlextContext:

@@ -19,9 +19,10 @@ from __future__ import annotations
 
 from typing import override
 
+from flext_tests import u
+
 from flext_core import FlextContainer, FlextContext, FlextService, FlextSettings, r
 from flext_core._models.service import FlextModelsService
-from flext_tests import u
 
 
 class ConcreteTestService(FlextService[bool]):

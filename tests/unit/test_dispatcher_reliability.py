@@ -4,13 +4,14 @@ from __future__ import annotations
 
 import time
 
+from flext_tests import tm
+
 from flext_core import c
 from flext_core._dispatcher.reliability import (
     CircuitBreakerManager,
     RateLimiterManager,
     RetryPolicy,
 )
-from flext_tests import tm
 
 
 def test_circuit_breaker_transitions_and_metrics() -> None:

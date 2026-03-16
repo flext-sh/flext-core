@@ -20,10 +20,10 @@ from enum import StrEnum
 from typing import Annotated, Final
 
 import pytest
+from flext_tests import t, tm, u
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import r
-from flext_tests import t, tm, u
 
 from ..test_utils import assertion_helpers
 

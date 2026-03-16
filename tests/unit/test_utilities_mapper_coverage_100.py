@@ -18,10 +18,10 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Annotated, cast
 
+from flext_tests import t, tm
 from pydantic import BaseModel, Field
 
 from flext_core import m, t as core_t, u
-from flext_tests import t, tm
 
 from ..test_utils import assertion_helpers
 from ._models import ComplexModel

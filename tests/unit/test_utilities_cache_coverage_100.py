@@ -21,10 +21,10 @@ from collections.abc import Sequence
 from typing import Annotated, ClassVar, cast, override
 
 import pytest
+from flext_tests import t, tm
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import t as core_t, u
-from flext_tests import t, tm
 
 from ..test_utils import assertion_helpers
 from ._models import CacheTestModel, NestedModel

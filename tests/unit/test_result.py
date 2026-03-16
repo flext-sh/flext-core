@@ -24,10 +24,10 @@ from enum import StrEnum
 from typing import Annotated, ClassVar
 
 import pytest
+from flext_tests import t, tm, u
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import c, m, r
-from flext_tests import t, u
 
 from ..test_utils import assertion_helpers
 
@@ -217,7 +217,8 @@ class Testr:
         op_type = scenario.operation_type
         value = scenario.value
         is_success = scenario.is_success_expected
-        assert isinstance(value, str)
+        if not isinstance(value, str):
+            pytest.fail("Expected string scenario value")
         if op_type == ResultOperationType.CREATION_SUCCESS:
             creation_result: r[str] = u.Tests.GenericHelpers.create_result_from_value(
                 value,
@@ -235,8 +236,8 @@ class Testr:
                 failure_raw = u.Tests.Result.create_failure_result(str(value))
                 unwrap_result = failure_raw
             default = "default"
-            assert unwrap_result.unwrap_or(default) == (
-                value if is_success else default
+            tm.that(
+                unwrap_result.unwrap_or(default), eq=(value if is_success else default)
             )
         elif op_type == ResultOperationType.MAP:
             map_result: r[str] = r[str].fail(str(value))
@@ -280,7 +281,7 @@ class Testr:
                 failure_raw = u.Tests.Result.create_failure_result(str(value))
                 result_or = failure_raw
             default = "default"
-            assert result_or | default == (value if is_success else default)
+            tm.that(result_or | default, eq=(value if is_success else default))
 
     @pytest.mark.parametrize(
         "scenario",
@@ -293,22 +294,26 @@ class Testr:
         value = scenario.value
         is_success = scenario.is_success_expected
         if op_type == ResultOperationType.UNWRAP:
-            assert isinstance(value, int)
+            if not isinstance(value, int):
+                pytest.fail("Expected integer scenario value")
             result = r[int].ok(value)
-            assert result.value == value
+            tm.that(result.value, eq=value)
         elif op_type == ResultOperationType.MAP:
-            assert isinstance(value, int)
+            if not isinstance(value, int):
+                pytest.fail("Expected integer scenario value")
             result = r[int].ok(value)
             mapped = result.map(lambda x: x * 2)
             u.Tests.Result.assert_success_with_value(mapped, value * 2)
         elif op_type == ResultOperationType.FLAT_MAP:
-            assert isinstance(value, int)
+            if not isinstance(value, int):
+                pytest.fail("Expected integer scenario value")
             result = r[int].ok(value)
             flat_mapped = result.flat_map(lambda x: r[str].ok(f"value_{x}"))
             expected = f"value_{value}"
             u.Tests.Result.assert_success_with_value(flat_mapped, expected)
         elif op_type == ResultOperationType.FILTER:
-            assert isinstance(value, int)
+            if not isinstance(value, int):
+                pytest.fail("Expected integer scenario value")
             result = r[int].ok(value)
             filtered = result.filter(lambda x: x > 5)
             if is_success:
@@ -316,7 +321,8 @@ class Testr:
             else:
                 _ = u.Tests.Result.assert_failure(filtered)
         elif op_type == ResultOperationType.RAILWAY_COMPOSITION:
-            assert isinstance(value, int)
+            if not isinstance(value, int):
+                pytest.fail("Expected integer scenario value")
             res1 = r[int].ok(value)
             res2 = res1.map(lambda v: v * 2)
             res3 = res2.map(lambda v: f"result_{v}")
@@ -343,7 +349,7 @@ class Testr:
                 if scenario.value
                 else u.Tests.Result.create_failure_result(c.Errors.GENERIC_ERROR)
             )
-            assert bool(result) is scenario.value
+            tm.that(bool(result), eq=bool(scenario.value))
 
     def test_result_chain_validation_real_behavior(self) -> None:
         """Test result chain validation with real behavior patterns.
@@ -404,15 +410,15 @@ class Testr:
             failure_errors,
             error_codes=error_codes,
         )
-        assert len(cases) == 5
+        tm.that(len(cases), eq=5)
         for i, (result, is_success, _value, error) in enumerate(cases[:3]):
-            assert is_success is True
+            tm.that(is_success, eq=True)
             u.Tests.Result.assert_success_with_value(result, success_values[i])
-            assert error is None
+            tm.that(error, none=True)
         for i, (result, is_success, _value, error) in enumerate(cases[3:]):
-            assert is_success is False
+            tm.that(is_success, eq=False)
             _ = u.Tests.Result.assert_failure(result)
-            assert error == failure_errors[i]
+            tm.that(error, eq=failure_errors[i])
 
     def test_result_none_handling_limits(self) -> None:
         """Test None handling limits using generic helper."""
@@ -438,36 +444,36 @@ class Testr:
         divide_wrapped = r.safe(divide)
         result: r[int] = divide_wrapped(10, 2)
         _ = assertion_helpers.assert_flext_result_success(result)
-        assert result.value == 5
+        tm.that(result.value, eq=5)
         result_fail: r[int] = divide_wrapped(10, 0)
-        assert result_fail.is_failure
+        tm.fail(result_fail)
 
     def test_map_error(self) -> None:
         """Test map_error transforms error message."""
         result: r[str] = r[str].fail("original error")
         transformed = result.map_error(lambda e: f"PREFIX: {e}")
-        assert transformed.is_failure
-        assert transformed.error == "PREFIX: original error"
+        tm.fail(transformed)
+        tm.that(transformed.error, eq="PREFIX: original error")
         success = r[str].ok("value")
         unchanged = success.map_error(lambda e: f"PREFIX: {e}")
-        assert unchanged.is_success
-        assert unchanged.value == "value"
+        tm.ok(unchanged)
+        tm.that(unchanged.value, eq="value")
 
     def test_filter_success(self) -> None:
         """Test filter with success result."""
         result = r[int].ok(10)
         filtered = result.filter(lambda x: x > 5)
-        assert filtered.is_success
-        assert filtered.value == 10
+        tm.ok(filtered)
+        tm.that(filtered.value, eq=10)
         filtered_fail = result.filter(lambda x: x > 20)
-        assert filtered_fail.is_failure
+        tm.fail(filtered_fail)
 
     def test_filter_failure(self) -> None:
         """Test filter with failure result returns unchanged."""
         result: r[int] = r[int].fail("error")
         filtered = result.filter(lambda x: x > 5)
-        assert filtered.is_failure
-        assert filtered.error == "error"
+        tm.fail(filtered)
+        tm.that(filtered.error, eq="error")
 
     def test_flow_through(self) -> None:
         """Test flow_through chains multiple operations."""
@@ -480,8 +486,8 @@ class Testr:
 
         result = r[int].ok(5)
         final = result.flow_through(add_one, multiply_two)
-        assert final.is_success
-        assert final.value == 12
+        tm.ok(final)
+        tm.that(final.value, eq=12)
 
     def test_flow_through_failure(self) -> None:
         """Test flow_through stops on first failure."""
@@ -497,15 +503,15 @@ class Testr:
 
         result = r[int].ok(5)
         final = result.flow_through(add_one, fail_op, multiply_two)
-        assert final.is_failure
-        assert final.error == "error"
+        tm.fail(final)
+        tm.that(final.error, eq="error")
 
     def test_traverse_success(self) -> None:
         """Test traverse maps over sequence successfully."""
         items = [1, 2, 3]
         result = r.traverse(items, lambda x: r[int].ok(x * 2))
         _ = assertion_helpers.assert_flext_result_success(result)
-        assert result.value == [2, 4, 6]
+        tm.that(result.value, eq=[2, 4, 6])
 
     def test_traverse_failure(self) -> None:
         """Test traverse fails fast on first failure."""
@@ -515,23 +521,23 @@ class Testr:
             lambda x: r[int].fail("error") if x == 2 else r[int].ok(x),
         )
         _ = assertion_helpers.assert_flext_result_failure(result)
-        assert result.error == "error"
+        tm.that(result.error, eq="error")
 
     def test_accumulate_errors_all_success(self) -> None:
         """Test accumulate_errors with all successes."""
         results = [r[int].ok(1), r[int].ok(2), r[int].ok(3)]
         accumulated = r.accumulate_errors(*results)
-        assert accumulated.is_success
-        assert accumulated.value == [1, 2, 3]
+        tm.ok(accumulated)
+        tm.that(accumulated.value, eq=[1, 2, 3])
 
     def test_accumulate_errors_with_failures(self) -> None:
         """Test accumulate_errors collects all errors."""
         results = [r[int].ok(1), r[int].fail("error1"), r[int].fail("error2")]
         accumulated = r.accumulate_errors(*results)
-        assert accumulated.is_failure
-        assert accumulated.error is not None
-        assert "error1" in str(accumulated.error)
-        assert "error2" in str(accumulated.error)
+        tm.fail(accumulated)
+        tm.that(accumulated.error, none=False)
+        tm.that(str(accumulated.error), has="error1")
+        tm.that(str(accumulated.error), has="error2")
 
     def test_traverse_fail_fast_true(self) -> None:
         """Test traverse with fail_fast=True (default) stops on first failure."""
@@ -542,7 +548,7 @@ class Testr:
             fail_fast=True,
         )
         _ = assertion_helpers.assert_flext_result_failure(result)
-        assert result.error == "error"
+        tm.that(result.error, eq="error")
 
     def test_traverse_fail_fast_false(self) -> None:
         """Test traverse with fail_fast=False collects all errors."""
@@ -553,9 +559,9 @@ class Testr:
             fail_fast=False,
         )
         _ = assertion_helpers.assert_flext_result_failure(result)
-        assert result.error is not None
-        assert "error_2" in str(result.error)
-        assert "error_3" in str(result.error)
+        tm.that(result.error, none=False)
+        tm.that(str(result.error), has="error_2")
+        tm.that(str(result.error), has="error_3")
 
     def test_with_resource(self) -> None:
         """Test with_resource manages resource lifecycle."""
@@ -576,30 +582,30 @@ class Testr:
 
         result: r[str] = r[str].with_resource(factory, op, cleanup)
         _ = assertion_helpers.assert_flext_result_success(result)
-        assert result.value == "success"
-        assert len(resource_created) == 1
-        assert len(resource_cleaned) == 1
+        tm.that(result.value, eq="success")
+        tm.that(len(resource_created), eq=1)
+        tm.that(len(resource_cleaned), eq=1)
 
     def test_context_manager(self) -> None:
         """Test context manager protocol."""
         result = r[str].ok("value")
         with result as ctx_result:
-            assert ctx_result is result
-            assert ctx_result.value == "value"
+            tm.that(ctx_result is result, eq=True)
+            tm.that(ctx_result.value, eq="value")
 
     def test_repr_success(self) -> None:
         """Test __repr__ for success result."""
         result = r[str].ok("test")
         repr_str = repr(result)
-        assert "r[T].ok" in repr_str
-        assert "test" in repr_str
+        tm.that(repr_str, has="r[T].ok")
+        tm.that(repr_str, has="test")
 
     def test_repr_failure(self) -> None:
         """Test __repr__ for failure result."""
         result: r[str] = r[str].fail("error")
         repr_str = repr(result)
-        assert "r[T].fail" in repr_str
-        assert "error" in repr_str
+        tm.that(repr_str, has="r[T].fail")
+        tm.that(repr_str, has="error")
 
     def test_value_property_failure(self) -> None:
         """Test value property raises RuntimeError on failure."""
@@ -610,22 +616,22 @@ class Testr:
     def test_error_property_success(self) -> None:
         """Test error property returns None for success."""
         result = r[str].ok("test")
-        assert result.error is None
+        tm.that(result.error, none=True)
 
     def test_error_code_property(self) -> None:
         """Test error_code property."""
         result: r[str] = r[str].fail("error", error_code="TEST_ERROR")
-        assert result.error_code == "TEST_ERROR"
+        tm.that(result.error_code, eq="TEST_ERROR")
         success = r[str].ok("test")
-        assert success.error_code is None
+        tm.that(success.error_code, none=True)
 
     def test_error_data_property(self) -> None:
         """Test error_data property."""
         error_data = m.ConfigMap(root={"key": "value"})
         result: r[str] = r[str].fail("error", error_data=error_data)
-        assert result.error_data == error_data
+        tm.that(result.error_data, eq=error_data)
         success = r[str].ok("test")
-        assert success.error_data is None
+        tm.that(success.error_data, none=True)
 
     def test_unwrap_failure(self) -> None:
         """Test unwrap raises RuntimeError on failure."""
@@ -641,19 +647,19 @@ class Testr:
             return r[str].fail("flat_map failed")
 
         bound = result.flat_map(failing_func)
-        assert bound.is_failure
+        tm.fail(bound)
 
     def test_flow_through_empty(self) -> None:
         """Test flow_through with no functions."""
         result = r[int].ok(5)
-        assert result.flow_through() is result
-        assert result.value == 5
+        tm.that(result.flow_through() is result, eq=True)
+        tm.that(result.value, eq=5)
 
     def test_ok_with_none_succeeds(self) -> None:
         """Test ok(None) creates valid success result."""
         result = r[str | None].ok(None)
-        assert result.is_success
-        assert result.value is None
+        tm.that(result.is_success, eq=True)
+        tm.that(result.value, none=True)
 
     def test_flow_through_stops_on_failure(self) -> None:
         """Test flow_through stops when function returns failure."""
@@ -669,8 +675,8 @@ class Testr:
 
         result = r[int].ok(5)
         final = result.flow_through(add_one, fail_op, never_called)
-        assert final.is_failure
-        assert final.error == "stopped"
+        tm.fail(final)
+        tm.that(final.error, eq="stopped")
 
     def test_create_from_callable_success(self) -> None:
         """Test create_from_callable with successful callable."""
@@ -680,7 +686,7 @@ class Testr:
 
         result = r.create_from_callable(func)
         _ = assertion_helpers.assert_flext_result_success(result)
-        assert result.value == "success"
+        tm.that(result.value, eq="success")
 
     def test_create_from_callable_none(self) -> None:
         """Test create_from_callable with callable returning None."""
@@ -691,8 +697,8 @@ class Testr:
         result = r.create_from_callable(func)
         _ = assertion_helpers.assert_flext_result_failure(result)
         error_msg = result.error
-        assert error_msg is not None
-        assert "Callable returned None" in error_msg
+        tm.that(error_msg, none=False)
+        tm.that(error_msg, has="Callable returned None")
 
     def test_create_from_callable_exception(self) -> None:
         """Test create_from_callable handles exceptions."""
@@ -704,32 +710,32 @@ class Testr:
         result = r.create_from_callable(func)
         _ = assertion_helpers.assert_flext_result_failure(result)
         error_msg = result.error
-        assert error_msg is not None
-        assert "Callable failed" in error_msg
+        tm.that(error_msg, none=False)
+        tm.that(error_msg, has="Callable failed")
 
     def test_map_or_success_without_func(self) -> None:
         """Test map_or returns value on success when func is None."""
         result: r[str] = r[str].ok("hello")
         value = result.map_or(None)
-        assert value == "hello"
+        tm.that(value, eq="hello")
 
     def test_map_or_failure_without_func(self) -> None:
         """Test map_or returns default on failure when func is None."""
         result: r[str] = r[str].fail("error")
         value = result.map_or("default")
-        assert value == "default"
+        tm.that(value, eq="default")
 
     def test_map_or_success_with_func(self) -> None:
         """Test map_or applies func on success."""
         result: r[str] = r[str].ok("hello")
         length = result.map_or(0, len)
-        assert length == 5
+        tm.that(length, eq=5)
 
     def test_map_or_failure_with_func(self) -> None:
         """Test map_or returns default on failure even with func."""
         result: r[str] = r[str].fail("error")
         length = result.map_or(0, len)
-        assert length == 0
+        tm.that(length, eq=0)
 
     def test_fold_success(self) -> None:
         """Test fold applies on_success function."""
@@ -738,7 +744,7 @@ class Testr:
             on_success=lambda v: f"Got: {v}",
             on_failure=lambda e: f"Error: {e}",
         )
-        assert message == "Got: hello"
+        tm.that(message, eq="Got: hello")
 
     def test_fold_failure(self) -> None:
         """Test fold applies on_failure function."""
@@ -747,7 +753,7 @@ class Testr:
             on_success=lambda v: f"Got: {v}",
             on_failure=lambda e: f"Error: {e}",
         )
-        assert message == "Error: something broke"
+        tm.that(message, eq="Error: something broke")
 
     def test_fold_different_return_types(self) -> None:
         """Test fold can return different types than input."""
@@ -756,7 +762,7 @@ class Testr:
             on_success=lambda v: {"status": 200, "data": v},
             on_failure=lambda e: {"status": 400, "error": e},
         )
-        assert response == {"status": 200, "data": "hello"}
+        tm.that(response, eq={"status": 200, "data": "hello"})
 
 
 __all__ = ["Testr"]

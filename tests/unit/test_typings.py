@@ -19,6 +19,7 @@ from enum import StrEnum
 from typing import Annotated, ClassVar, ParamSpec, TypeVar, cast
 
 import pytest
+from flext_tests import t as test_t, tm
 from pydantic import (
     BaseModel,
     ConfigDict,
@@ -28,7 +29,6 @@ from pydantic import (
 )
 
 from flext_core import FlextConstants, P, R, ResultT, T, T_co, T_contra, U, e, t
-from flext_tests import t as test_t, tm
 
 
 class TypeVarCategory(StrEnum):

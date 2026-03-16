@@ -26,10 +26,10 @@ from collections.abc import Callable
 from typing import Annotated, ClassVar, cast
 
 import pytest
+from flext_tests import c, m, t, tm, u
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import FlextContainer, r
-from flext_tests import c, m, t, tm, u
 
 
 class ServiceScenario(BaseModel):

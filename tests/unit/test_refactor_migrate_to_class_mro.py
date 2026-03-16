@@ -5,7 +5,6 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-
 from flext_infra._utilities.discovery import FlextInfraUtilitiesDiscovery
 from flext_infra._utilities.iteration import FlextInfraUtilitiesIteration
 from flext_infra.refactor.migrate_to_class_mro import (

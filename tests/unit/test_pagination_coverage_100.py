@@ -18,9 +18,8 @@ from __future__ import annotations
 from typing import Annotated, ClassVar
 
 import pytest
-from pydantic import BaseModel, ConfigDict, Field
-
 from flext_tests import tm, u
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class ExtractPageParamsScenario(BaseModel):

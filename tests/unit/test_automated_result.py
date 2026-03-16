@@ -6,10 +6,10 @@ import math
 from collections.abc import Callable
 
 import pytest
+from flext_tests import tm, tt
 from hypothesis import given, settings, strategies as st
 
 from flext_core import r
-from flext_tests import tm, tt
 
 type SampleValue = str | int | float | bool | None
 

@@ -26,10 +26,10 @@ from enum import StrEnum
 from typing import Annotated, ClassVar
 
 import pytest
+from flext_tests import u
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import FlextContext, m, x
-from flext_tests import u
 
 
 class ServiceMixinScenarioType(StrEnum):

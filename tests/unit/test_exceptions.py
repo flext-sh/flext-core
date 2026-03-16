@@ -26,10 +26,10 @@ from enum import StrEnum
 from typing import Annotated, ClassVar, cast, override
 
 import pytest
+from flext_tests import t, tm, u
 from pydantic import ConfigDict, Field
 
 from flext_core import FlextConstants, FlextRuntime, c, e, m
-from flext_tests import t, u
 
 
 class ExceptionScenarioType(StrEnum):
@@ -388,24 +388,24 @@ class Teste:
         """Test base exception creation and behavior."""
         if scenario.scenario_type == ExceptionScenarioType.BASE_ERROR:
             error = e.BaseError("Test error")
-            assert error.message == "Test error"
-            assert error.error_code == c.Errors.UNKNOWN_ERROR
-            assert error.correlation_id is None
-            assert isinstance(error.metadata.attributes, dict)
+            tm.that(error.message, eq="Test error")
+            tm.that(error.error_code, eq=c.Errors.UNKNOWN_ERROR)
+            tm.that(error.correlation_id is None, eq=True)
+            tm.that(isinstance(error.metadata.attributes, dict), eq=True)
         elif scenario.scenario_type == ExceptionScenarioType.WITH_CODE:
             error = e.BaseError("Test error", error_code="TEST_001")
-            assert error.error_code == "TEST_001"
-            assert str(error) == "[TEST_001] Test error"
+            tm.that(error.error_code, eq="TEST_001")
+            tm.that(str(error), eq="[TEST_001] Test error")
         elif scenario.scenario_type == ExceptionScenarioType.WITH_CORRELATION:
             error = e.BaseError("Test error", correlation_id="corr-123")
-            assert error.correlation_id == "corr-123"
+            tm.that(error.correlation_id, eq="corr-123")
         elif scenario.scenario_type == ExceptionScenarioType.WITH_METADATA:
             metadata = {"field": "email", "value": "invalid"}
             error = e.BaseError("Test error", metadata=metadata)
-            assert error.metadata.attributes["field"] == "email"
+            tm.that(error.metadata.attributes["field"], eq="email")
         elif scenario.scenario_type == ExceptionScenarioType.WITH_EXTRA_KWARGS:
             error = e.BaseError("Test error", field="email", value="invalid")
-            assert error.metadata.attributes["field"] == "email"
+            tm.that(error.metadata.attributes["field"], eq="email")
         elif scenario.scenario_type == ExceptionScenarioType.TO_DICT:
             error = e.BaseError(
                 "Test error",
@@ -414,14 +414,14 @@ class Teste:
                 field="email",
             )
             error_dict = error.to_dict()
-            assert error_dict["error_type"] == "BaseError"
-            assert error_dict["message"] == "Test error"
-            assert error_dict["error_code"] == "TEST_001"
+            tm.that(error_dict["error_type"], eq="BaseError")
+            tm.that(error_dict["message"], eq="Test error")
+            tm.that(error_dict["error_code"], eq="TEST_001")
         elif scenario.scenario_type == ExceptionScenarioType.STRING_REPRESENTATION:
             error1 = e.BaseError("Test error")
-            assert str(error1) == "[UNKNOWN_ERROR] Test error"
+            tm.that(str(error1), eq="[UNKNOWN_ERROR] Test error")
             error2 = e.BaseError("Test error", error_code="TEST_001")
-            assert str(error2) == "[TEST_001] Test error"
+            tm.that(str(error2), eq="[TEST_001] Test error")
 
     @pytest.mark.parametrize(
         "scenario",
@@ -430,23 +430,26 @@ class Teste:
     )
     def test_specific_exception_types(self, scenario: ExceptionScenario) -> None:
         """Test specific exception type instantiation."""
-        assert scenario.exception_type is not None
+        tm.that(scenario.exception_type, none=False)
         if scenario.exception_type == e.ValidationError:
             error: e.BaseError = e.ValidationError(
                 "Invalid email",
                 field="email",
                 error_code="VAL_EMAIL",
             )
-            assert error.message == "Invalid email"
-            assert error.error_code == "VAL_EMAIL"
+            tm.that(error.message, eq="Invalid email")
+            tm.that(error.error_code, eq="VAL_EMAIL")
         elif scenario.exception_type == e.ConfigurationError:
             config_error: e.ConfigurationError = e.ConfigurationError(
                 "Missing config",
                 config_key="database.host",
             )
-            assert (
-                config_error.message == "Missing config"
-                and config_error.config_key == "database.host"
+            tm.that(
+                (
+                    config_error.message == "Missing config"
+                    and config_error.config_key == "database.host"
+                ),
+                eq=True,
             )
         elif scenario.exception_type == e.ConnectionError:
             conn_error: e.ConnectionError = e.ConnectionError(
@@ -454,9 +457,12 @@ class Teste:
                 host=FlextConstants.Network.LOCALHOST,
                 port=5432,
             )
-            assert (
-                conn_error.message == "Connection failed"
-                and conn_error.host == FlextConstants.Network.LOCALHOST
+            tm.that(
+                (
+                    conn_error.message == "Connection failed"
+                    and conn_error.host == FlextConstants.Network.LOCALHOST
+                ),
+                eq=True,
             )
         elif scenario.exception_type == e.TimeoutError:
             timeout_error: e.TimeoutError = e.TimeoutError(
@@ -464,10 +470,13 @@ class Teste:
                 timeout_seconds=30.0,
                 operation="database_query",
             )
-            assert (
-                timeout_error.message == "Operation timeout"
-                and timeout_error.timeout_seconds is not None
-                and (abs(timeout_error.timeout_seconds - 30.0) < 1e-9)
+            tm.that(
+                (
+                    timeout_error.message == "Operation timeout"
+                    and timeout_error.timeout_seconds is not None
+                    and (abs(timeout_error.timeout_seconds - 30.0) < 1e-9)
+                ),
+                eq=True,
             )
         elif scenario.exception_type == e.AuthenticationError:
             auth_error: e.AuthenticationError = e.AuthenticationError(
@@ -475,9 +484,12 @@ class Teste:
                 user_id="testuser",
                 auth_method="password",
             )
-            assert (
-                auth_error.message == "Invalid credentials"
-                and auth_error.user_id == "testuser"
+            tm.that(
+                (
+                    auth_error.message == "Invalid credentials"
+                    and auth_error.user_id == "testuser"
+                ),
+                eq=True,
             )
         elif scenario.exception_type == e.AuthorizationError:
             authz_error: e.AuthorizationError = e.AuthorizationError(
@@ -486,9 +498,12 @@ class Teste:
                 resource="REDACTED_LDAP_BIND_PASSWORD_panel",
                 permission="read",
             )
-            assert (
-                authz_error.message == "Access denied"
-                and authz_error.user_id == "user123"
+            tm.that(
+                (
+                    authz_error.message == "Access denied"
+                    and authz_error.user_id == "user123"
+                ),
+                eq=True,
             )
         elif scenario.exception_type == e.NotFoundError:
             not_found_error: e.NotFoundError = e.NotFoundError(
@@ -496,9 +511,12 @@ class Teste:
                 resource_type="User",
                 resource_id="123",
             )
-            assert (
-                not_found_error.message == "Resource not found"
-                and not_found_error.resource_type == "User"
+            tm.that(
+                (
+                    not_found_error.message == "Resource not found"
+                    and not_found_error.resource_type == "User"
+                ),
+                eq=True,
             )
         elif scenario.exception_type == e.ConflictError:
             conflict_error: e.ConflictError = e.ConflictError(
@@ -506,9 +524,12 @@ class Teste:
                 resource_id="user_123",
                 conflict_reason="duplicate_email",
             )
-            assert (
-                conflict_error.message == "Resource conflict"
-                and conflict_error.resource_id == "user_123"
+            tm.that(
+                (
+                    conflict_error.message == "Resource conflict"
+                    and conflict_error.resource_id == "user_123"
+                ),
+                eq=True,
             )
         elif scenario.exception_type == e.RateLimitError:
             rate_limit_error: e.RateLimitError = e.RateLimitError(
@@ -516,9 +537,12 @@ class Teste:
                 limit=100,
                 window_seconds=60,
             )
-            assert (
-                rate_limit_error.message == "Rate limit exceeded"
-                and rate_limit_error.limit == 100
+            tm.that(
+                (
+                    rate_limit_error.message == "Rate limit exceeded"
+                    and rate_limit_error.limit == 100
+                ),
+                eq=True,
             )
         elif scenario.exception_type == e.CircuitBreakerError:
             circuit_error: e.CircuitBreakerError = e.CircuitBreakerError(
@@ -526,9 +550,12 @@ class Teste:
                 service_name="payment_service",
                 failure_count=5,
             )
-            assert (
-                circuit_error.message == "Circuit breaker open"
-                and circuit_error.service_name == "payment_service"
+            tm.that(
+                (
+                    circuit_error.message == "Circuit breaker open"
+                    and circuit_error.service_name == "payment_service"
+                ),
+                eq=True,
             )
         elif scenario.exception_type == e.TypeError:
             type_error: e.TypeError = e.TypeError(
@@ -536,8 +563,12 @@ class Teste:
                 expected_type=str,
                 actual_type=int,
             )
-            assert (
-                type_error.message == "Invalid type" and type_error.expected_type is str
+            tm.that(
+                (
+                    type_error.message == "Invalid type"
+                    and type_error.expected_type is str
+                ),
+                eq=True,
             )
         elif scenario.exception_type == e.OperationError:
             op_error: e.OperationError = e.OperationError(
@@ -545,9 +576,12 @@ class Teste:
                 operation="backup",
                 reason="disk_full",
             )
-            assert (
-                op_error.message == "Operation failed"
-                and op_error.operation == "backup"
+            tm.that(
+                (
+                    op_error.message == "Operation failed"
+                    and op_error.operation == "backup"
+                ),
+                eq=True,
             )
 
     @pytest.mark.parametrize(
@@ -558,10 +592,12 @@ class Teste:
     def test_factory_methods(self, scenario: ExceptionScenario) -> None:
         """Test exception factory methods."""
         if scenario.scenario_type == ExceptionScenarioType.FACTORY_METHOD:
-            assert scenario.error_factory_type is not None
+            tm.that(scenario.error_factory_type, none=False)
+            if scenario.error_factory_type is None:
+                pytest.fail("scenario.error_factory_type must be set")
             error = e.create(scenario.error_factory_type, "Test error")
-            assert type(error).__name__ == scenario.error_factory_type
-            assert error.message == "Test error"
+            tm.that(type(error).__name__, eq=scenario.error_factory_type)
+            tm.that(error.message, eq="Test error")
         elif scenario.scenario_type == ExceptionScenarioType.FACTORY_INVALID:
             with pytest.raises(ValueError, match="Unknown error type"):
                 e.create("InvalidError", "Test error")
@@ -569,16 +605,18 @@ class Teste:
             error_msg = "Test error"
             with pytest.raises(e.ValidationError) as exc_info:
                 raise e.ValidationError(error_msg, error_code="TEST_001")
-            assert exc_info.value.message == error_msg
-            assert exc_info.value.error_code == "TEST_001"
+            tm.that(exc_info.value.message, eq=error_msg)
+            tm.that(exc_info.value.error_code, eq="TEST_001")
         elif scenario.scenario_type == ExceptionScenarioType.EXCEPTION_CHAINING:
             operation_error_msg = "Operation failed"
             with pytest.raises(e.OperationError) as exc_op_info:
                 raise e.OperationError(operation_error_msg) from e.ConfigurationError(
                     "Config error",
                 )
-            assert exc_op_info.value.__cause__ is not None
-            assert isinstance(exc_op_info.value.__cause__, e.ConfigurationError)
+            tm.that(exc_op_info.value.__cause__ is not None, eq=True)
+            tm.that(
+                isinstance(exc_op_info.value.__cause__, e.ConfigurationError), eq=True
+            )
 
     @pytest.mark.parametrize(
         "scenario",
@@ -588,45 +626,48 @@ class Teste:
     def test_exception_type_scenarios(self, scenario: ExceptionTypeScenario) -> None:
         """Test comprehensive exception type instantiation."""
         exc = scenario.exception_class(f"{scenario.scenario_type} error")
-        assert f"{scenario.scenario_type} error" in str(exc)
+        tm.that(str(exc), has=f"{scenario.scenario_type} error")
         exc = scenario.exception_class(
             f"{scenario.scenario_type} error",
             error_code=f"{scenario.scenario_type.upper()}_ERROR",
         )
-        assert exc.error_code == f"{scenario.scenario_type.upper()}_ERROR"
+        tm.that(exc.error_code, eq=f"{scenario.scenario_type.upper()}_ERROR")
         exc = scenario.exception_class(
             f"{scenario.scenario_type} error",
             metadata={"test": "data"},
         )
-        assert "test" in exc.metadata.attributes
-        assert exc.metadata.attributes["test"] == "data"
+        tm.that(exc.metadata.attributes, has="test")
+        tm.that(exc.metadata.attributes["test"], eq="data")
 
     def test_exception_class_hierarchy(self) -> None:
         """Test exception class inheritance hierarchy."""
-        assert all(
-            issubclass(cls, e.BaseError)
-            for cls in [
-                e.ValidationError,
-                e.NotFoundError,
-                e.AuthenticationError,
-                e.TimeoutError,
-            ]
+        tm.that(
+            all(
+                issubclass(cls, e.BaseError)
+                for cls in [
+                    e.ValidationError,
+                    e.NotFoundError,
+                    e.AuthenticationError,
+                    e.TimeoutError,
+                ]
+            ),
+            eq=True,
         )
-        assert issubclass(e.BaseError, Exception)
+        tm.that(issubclass(e.BaseError, Exception), eq=True)
 
     def test_timestamp_generation(self) -> None:
         """Test that timestamp is automatically generated."""
         before = time.time()
         error = e.BaseError("Test error")
         after = time.time()
-        assert before <= error.timestamp <= after
+        tm.that(before <= error.timestamp <= after, eq=True)
 
     def test_metadata_merge_with_kwargs(self) -> None:
         """Test that metadata and kwargs are properly merged."""
         metadata = {"existing": "value"}
         error = e.BaseError("Test error", metadata=metadata, new_field="new_value")
-        assert error.metadata.attributes["existing"] == "value"
-        assert error.metadata.attributes["new_field"] == "new_value"
+        tm.that(error.metadata.attributes["existing"], eq="value")
+        tm.that(error.metadata.attributes["new_field"], eq="new_value")
 
     def test_exception_repr(self) -> None:
         """Test repr() for all exception types."""
@@ -647,7 +688,7 @@ class Teste:
         ]
         for exc in exceptions_to_test:
             repr_str = repr(exc)
-            assert repr_str is not None and len(repr_str) > 0
+            tm.that(repr_str is not None and len(repr_str) > 0, eq=True)
 
     def test_exception_serialization(self) -> None:
         """Test exception serialization to dict."""
@@ -663,8 +704,8 @@ class Teste:
         )
         if hasattr(exc, "to_dict"):
             result = exc.to_dict()
-            assert isinstance(result, dict)
-            assert "error_code" in result or "message" in result
+            tm.that(isinstance(result, dict), eq=True)
+            tm.that("error_code" in result or "message" in result, eq=True)
 
     def test_base_error_str_without_code(self) -> None:
         """Test __str__ without error code - tests line 118.
@@ -675,18 +716,18 @@ class Teste:
         """
         error = e.BaseError("Test message")
         error.error_code = ""
-        assert str(error) == "Test message"
+        tm.that(str(error), eq="Test message")
 
     def test_base_error_str_with_code(self) -> None:
         """Test __str__ with error code - tests line 117."""
         error = e.BaseError("Test message", error_code="TEST_ERROR")
-        assert str(error) == "[TEST_ERROR] Test message"
+        tm.that(str(error), eq="[TEST_ERROR] Test message")
 
     def test_normalize_metadata_fallback(self) -> None:
         """Test _normalize_metadata fallback path - tests line 219."""
         result = e.BaseError._normalize_metadata(12345, {})
-        assert hasattr(result, "attributes")
-        assert result.attributes
+        tm.that(hasattr(result, "attributes"), eq=True)
+        tm.that(len(result.attributes), gt=0)
 
     def test_normalize_metadata_with_merged_kwargs(self) -> None:
         """Test _normalize_metadata with merged_kwargs - tests lines 211-212."""
@@ -694,9 +735,9 @@ class Teste:
         merged_kwargs = {"key2": "value2"}
         merged_kwargs_cast = cast("dict[str, t.MetadataAttributeValue]", merged_kwargs)
         result = e.BaseError._normalize_metadata(metadata, merged_kwargs_cast)
-        assert hasattr(result, "attributes")
-        assert result.attributes["key1"] == "value1"
-        assert result.attributes["key2"] == "value2"
+        tm.that(hasattr(result, "attributes"), eq=True)
+        tm.that(result.attributes["key1"], eq="value1")
+        tm.that(result.attributes["key2"], eq="value2")
 
     def test_validation_error_with_context(self) -> None:
         """Test ValidationError with context - tests lines 243-244."""
@@ -709,9 +750,9 @@ class Teste:
             field="test_field",
             context=context,
         )
-        assert error.metadata is not None
-        assert "key1" in error.metadata.attributes
-        assert "key2" in error.metadata.attributes
+        tm.that(error.metadata, none=False)
+        tm.that(error.metadata.attributes, has="key1")
+        tm.that(error.metadata.attributes, has="key2")
 
     @pytest.mark.parametrize(
         ("error_class", "msg", "context_key"),
@@ -732,8 +773,8 @@ class Teste:
         """Test exception classes with context metadata."""
         context = {context_key: "value1"}
         error = error_class(msg, context=context)
-        assert error.metadata is not None
-        assert context_key in error.metadata.attributes
+        tm.that(error.metadata, none=False)
+        tm.that(error.metadata.attributes, has=context_key)
 
     def test_not_found_error_with_context(self) -> None:
         """Test NotFoundError with context - tests lines 518-547."""
@@ -753,9 +794,9 @@ class Teste:
             resource_id="123",
             context=context,
         )
-        assert error.metadata is not None
-        assert "key1" in error.metadata.attributes
-        assert "correlation_id" not in error.metadata.attributes
+        tm.that(error.metadata, none=False)
+        tm.that(error.metadata.attributes, has="key1")
+        tm.that(error.metadata.attributes, lacks="correlation_id")
 
     def test_conflict_error_with_context(self) -> None:
         """Test ConflictError with context - tests line 624."""
@@ -766,8 +807,8 @@ class Teste:
             resource_id="123",
             context=context,
         )
-        assert error.metadata is not None
-        assert "key1" in error.metadata.attributes
+        tm.that(error.metadata, none=False)
+        tm.that(error.metadata.attributes, has="key1")
 
     def test_conflict_error_build_context(self) -> None:
         """Test ConflictError with context - tests line 624."""
@@ -778,8 +819,8 @@ class Teste:
             resource_id="123",
             context=context,
         )
-        assert error.metadata is not None
-        assert "key1" in error.metadata.attributes
+        tm.that(error.metadata, none=False)
+        tm.that(error.metadata.attributes, has="key1")
 
     def test_conflict_error_build_context_with_extra_kwargs(self) -> None:
         """Test ConflictError with extra_kwargs - tests line 625."""
@@ -789,8 +830,8 @@ class Teste:
             resource_type="User",
             resource_id="123",
         )
-        assert error.metadata is not None
-        assert "custom" in error.metadata.attributes
+        tm.that(error.metadata, none=False)
+        tm.that(error.metadata.attributes, has="custom")
 
     def test_rate_limit_error_with_context(self) -> None:
         """Test RateLimitError with context - tests line 624."""
@@ -801,8 +842,8 @@ class Teste:
             window_seconds=60,
             context=context,
         )
-        assert error.metadata is not None
-        assert "key1" in error.metadata.attributes
+        tm.that(error.metadata, none=False)
+        tm.that(error.metadata.attributes, has="key1")
 
     def test_circuit_breaker_error_with_context(self) -> None:
         """Test CircuitBreakerError with context - tests line 659."""
@@ -812,8 +853,8 @@ class Teste:
             service="test_service",
             context=context,
         )
-        assert error.metadata is not None
-        assert "key1" in error.metadata.attributes
+        tm.that(error.metadata, none=False)
+        tm.that(error.metadata.attributes, has="key1")
 
     def test_type_error_with_context(self) -> None:
         """Test TypeError with context - tests line 701."""
@@ -824,8 +865,8 @@ class Teste:
             actual_type=int,
             context=context,
         )
-        assert error.metadata is not None
-        assert "key1" in error.metadata.attributes
+        tm.that(error.metadata, none=False)
+        tm.that(error.metadata.attributes, has="key1")
 
     def test_operation_error_with_context(self) -> None:
         """Test OperationError with context - tests lines 757-761."""
@@ -835,8 +876,8 @@ class Teste:
             operation="test_op",
             context=context,
         )
-        assert error.metadata is not None
-        assert "key1" in error.metadata.attributes
+        tm.that(error.metadata, none=False)
+        tm.that(error.metadata.attributes, has="key1")
 
     def test_operation_error_with_context_and_reason(self) -> None:
         """Test OperationError with context and reason - tests lines 870-872, 875, 878."""
@@ -848,10 +889,10 @@ class Teste:
             context=context,
             custom_key="custom_value",
         )
-        assert error.metadata is not None
-        assert "key1" in error.metadata.attributes
-        assert "reason" in error.metadata.attributes
-        assert "custom_key" in error.metadata.attributes
+        tm.that(error.metadata, none=False)
+        tm.that(error.metadata.attributes, has="key1")
+        tm.that(error.metadata.attributes, has="reason")
+        tm.that(error.metadata.attributes, has="custom_key")
 
     def test_type_error_normalize_type(self) -> None:
         """Test TypeError._normalize_type."""
@@ -864,8 +905,8 @@ class Teste:
             extra_kwargs,
             "expected_type",
         )
-        assert result is str
-        assert "expected_type" not in extra_kwargs
+        tm.that(result is str, eq=True)
+        tm.that(extra_kwargs, lacks="expected_type")
         extra_kwargs_type_raw = {"expected_type": "int"}
         extra_kwargs_type: dict[str, t.Container] = dict(extra_kwargs_type_raw)
         result = e.TypeError._normalize_type(
@@ -874,16 +915,16 @@ class Teste:
             extra_kwargs_type,
             "expected_type",
         )
-        assert result is int
-        assert "expected_type" not in extra_kwargs_type
+        tm.that(result is int, eq=True)
+        tm.that(extra_kwargs_type, lacks="expected_type")
         result = e.TypeError._normalize_type("str", type_map, {}, "expected_type")
-        assert result is str
+        tm.that(result is str, eq=True)
         result = e.TypeError._normalize_type(str, type_map, {}, "expected_type")
-        assert result is str
+        tm.that(result is str, eq=True)
         result = e.TypeError._normalize_type(None, type_map, {}, "expected_type")
-        assert result is None
+        tm.that(result is None, eq=True)
         result = e.TypeError._normalize_type("float", type_map, {}, "expected_type")
-        assert result is None
+        tm.that(result is None, eq=True)
 
     def test_type_error_build_type_context(self) -> None:
         """Test TypeError._build_type_context."""
@@ -894,48 +935,48 @@ class Teste:
             context,
             {"custom": "value"},
         )
-        assert "key1" in type_context
-        assert "expected_type" in type_context
-        assert type_context["expected_type"] == "str"
-        assert "actual_type" in type_context
-        assert type_context["actual_type"] == "int"
-        assert "custom" in type_context
+        tm.that(type_context, has="key1")
+        tm.that(type_context, has="expected_type")
+        tm.that(type_context["expected_type"], eq="str")
+        tm.that(type_context, has="actual_type")
+        tm.that(type_context["actual_type"], eq="int")
+        tm.that(type_context, has="custom")
 
     def test_type_error_build_type_context_none_types(self) -> None:
         """Test TypeError._build_type_context with None types."""
         type_context = e.TypeError._build_type_context(None, None, None, {})
-        assert "expected_type" not in type_context
-        assert "actual_type" not in type_context
+        tm.that(type_context, lacks="expected_type")
+        tm.that(type_context, lacks="actual_type")
 
     def test_type_error_build_type_context_with_type_objects(self) -> None:
         """Test TypeError._build_type_context with type objects."""
         type_context = e.TypeError._build_type_context(str, int, None, {})
-        assert type_context["expected_type"] == "str"
-        assert type_context["actual_type"] == "int"
+        tm.that(type_context["expected_type"], eq="str")
+        tm.that(type_context["actual_type"], eq="int")
 
     def test_type_error_build_type_context_with_string_types(self) -> None:
         """Test TypeError._build_type_context with string types."""
         type_context = e.TypeError._build_type_context("str", "int", None, {})
-        assert type_context["expected_type"] == "str"
-        assert type_context["actual_type"] == "int"
+        tm.that(type_context["expected_type"], eq="str")
+        tm.that(type_context["actual_type"], eq="int")
 
     def test_type_error_build_type_context_with_context(self) -> None:
         """Test TypeError._build_type_context with context."""
         context = {"key1": "value1"}
         type_context = e.TypeError._build_type_context(None, None, context, {})
-        assert "key1" in type_context
-        assert "expected_type" not in type_context
-        assert "actual_type" not in type_context
+        tm.that(type_context, has="key1")
+        tm.that(type_context, lacks="expected_type")
+        tm.that(type_context, lacks="actual_type")
 
     def test_type_error_build_type_context_expected_type_string(self) -> None:
         """Test TypeError._build_type_context with string expected_type."""
         type_context = e.TypeError._build_type_context("custom_type", None, None, {})
-        assert type_context["expected_type"] == "custom_type"
+        tm.that(type_context["expected_type"], eq="custom_type")
 
     def test_type_error_build_type_context_actual_type_string(self) -> None:
         """Test TypeError._build_type_context with string actual_type."""
         type_context = e.TypeError._build_type_context(None, "custom_type", None, {})
-        assert type_context["actual_type"] == "custom_type"
+        tm.that(type_context["actual_type"], eq="custom_type")
 
     def test_type_error_build_type_context_with_extra_kwargs(self) -> None:
         """Test TypeError._build_type_context with extra_kwargs."""
@@ -945,9 +986,9 @@ class Teste:
             None,
             {"custom": "value"},
         )
-        assert "expected_type" not in type_context
-        assert "actual_type" not in type_context
-        assert type_context["custom"] == "value"
+        tm.that(type_context, lacks="expected_type")
+        tm.that(type_context, lacks="actual_type")
+        tm.that(type_context["custom"], eq="value")
 
     def test_create_error_with_invalid_type(self) -> None:
         """Test create_error with invalid error type - tests lines 1031-1032."""
@@ -957,59 +998,59 @@ class Teste:
     def test_create_with_invalid_type(self) -> None:
         """Test create with invalid error type - tests line 1346."""
         error = e.create("message", invalid_key="value")
-        assert isinstance(error, e.BaseError)
-        assert error.message == "message"
+        tm.that(isinstance(error, e.BaseError), eq=True)
+        tm.that(error.message, eq="message")
 
     def test_create_error_factory_methods(self) -> None:
         """Test create_error factory methods - tests lines 1014-1033."""
         error = e.create("ValidationError", "Test message")
-        assert isinstance(error, e.ValidationError)
-        assert error.message == "Test message"
+        tm.that(isinstance(error, e.ValidationError), eq=True)
+        tm.that(error.message, eq="Test message")
         error = e.create("ConfigurationError", "Config error")
-        assert isinstance(error, e.ConfigurationError)
+        tm.that(isinstance(error, e.ConfigurationError), eq=True)
         error = e.create("ConnectionError", "Conn error")
-        assert isinstance(error, e.ConnectionError)
+        tm.that(isinstance(error, e.ConnectionError), eq=True)
         error = e.create("TimeoutError", "Timeout error")
-        assert isinstance(error, e.TimeoutError)
+        tm.that(isinstance(error, e.TimeoutError), eq=True)
         error = e.create("AuthenticationError", "Auth error")
-        assert isinstance(error, e.AuthenticationError)
+        tm.that(isinstance(error, e.AuthenticationError), eq=True)
         error = e.create("AuthorizationError", "Authz error")
-        assert isinstance(error, e.AuthorizationError)
+        tm.that(isinstance(error, e.AuthorizationError), eq=True)
         error = e.create("NotFoundError", "Not found error")
-        assert isinstance(error, e.NotFoundError)
+        tm.that(isinstance(error, e.NotFoundError), eq=True)
         error = e.create("ConflictError", "Conflict error")
-        assert isinstance(error, e.ConflictError)
+        tm.that(isinstance(error, e.ConflictError), eq=True)
         error = e.create("RateLimitError", "Rate limit error")
-        assert isinstance(error, e.RateLimitError)
+        tm.that(isinstance(error, e.RateLimitError), eq=True)
         error = e.create("CircuitBreakerError", "Circuit error")
-        assert isinstance(error, e.CircuitBreakerError)
+        tm.that(isinstance(error, e.CircuitBreakerError), eq=True)
         error = e.create("TypeError", "Type error")
-        assert isinstance(error, e.TypeError)
+        tm.that(isinstance(error, e.TypeError), eq=True)
         error = e.create("OperationError", "Operation error")
-        assert isinstance(error, e.OperationError)
+        tm.that(isinstance(error, e.OperationError), eq=True)
         error = e.create("AttributeError", "Attribute error")
-        assert isinstance(error, e.AttributeAccessError)
+        tm.that(isinstance(error, e.AttributeAccessError), eq=True)
 
     def test_create_factory_methods(self) -> None:
         """Test create factory methods - tests lines 1368-1379."""
         error = e.create("Test message", field="test_field")
-        assert isinstance(error, e.ValidationError)
+        tm.that(isinstance(error, e.ValidationError), eq=True)
         error = e.create("Config error", config_key="test_key")
-        assert isinstance(error, e.ConfigurationError)
+        tm.that(isinstance(error, e.ConfigurationError), eq=True)
         error = e.create("Conn error", host=FlextConstants.Network.LOCALHOST)
-        assert isinstance(error, e.ConnectionError)
+        tm.that(isinstance(error, e.ConnectionError), eq=True)
         error = e.create("Timeout error", timeout_seconds=30.0)
-        assert isinstance(error, e.TimeoutError)
+        tm.that(isinstance(error, e.TimeoutError), eq=True)
         error = e.create("Auth error", user_id="user1", auth_method="password")
-        assert isinstance(error, e.AuthenticationError)
+        tm.that(isinstance(error, e.AuthenticationError), eq=True)
         error = e.create("Authz error", user_id="user1", permission="read")
-        assert isinstance(error, e.AuthorizationError)
+        tm.that(isinstance(error, e.AuthorizationError), eq=True)
         error = e.create("Not found error", resource_type="User", resource_id="123")
-        assert isinstance(error, e.NotFoundError)
+        tm.that(isinstance(error, e.NotFoundError), eq=True)
         error = e.create("Operation error", operation="test_op")
-        assert isinstance(error, e.OperationError)
+        tm.that(isinstance(error, e.OperationError), eq=True)
         error = e.create("Attribute error", attribute_name="test_attr")
-        assert isinstance(error, e.AttributeAccessError)
+        tm.that(isinstance(error, e.AttributeAccessError), eq=True)
 
     def test_create_with_metadata_dict(self) -> None:
         """Test create with metadata as dict - tests lines 1372-1375."""
@@ -1018,9 +1059,9 @@ class Teste:
             field="test_field",
             metadata={"key1": "value1"},
         )
-        assert isinstance(error, e.ValidationError)
-        assert error.metadata is not None
-        assert "key1" in error.metadata.attributes
+        tm.that(isinstance(error, e.ValidationError), eq=True)
+        tm.that(error.metadata, none=False)
+        tm.that(error.metadata.attributes, has="key1")
 
     def test_create_with_metadata_metadata_object(self) -> None:
         """Test create with metadata as Metadata object - tests lines 1369-1371."""
@@ -1030,8 +1071,8 @@ class Teste:
             field="test_field",
             metadata=cast("t.MetadataAttributeValue", cast("object", metadata_obj)),
         )
-        assert isinstance(error, e.ValidationError)
-        assert error.metadata is not None
+        tm.that(isinstance(error, e.ValidationError), eq=True)
+        tm.that(error.metadata, none=False)
 
     def test_create_with_dict_like_metadata_basic(self) -> None:
         """Test create with dict-like metadata - tests lines 1376-1379."""
@@ -1065,9 +1106,9 @@ class Teste:
             field="test_field",
             metadata=cast("t.MetadataAttributeValue", dict_like_converted),
         )
-        assert isinstance(error, e.ValidationError)
-        assert error.metadata is not None
-        assert "key1" in error.metadata.attributes
+        tm.that(isinstance(error, e.ValidationError), eq=True)
+        tm.that(error.metadata, none=False)
+        tm.that(error.metadata.attributes, has="key1")
 
     def test_create_with_correlation_id(self) -> None:
         """Test create with correlation_id - tests lines 1365-1366."""
@@ -1076,8 +1117,8 @@ class Teste:
             field="test_field",
             correlation_id="test-correlation-id",
         )
-        assert isinstance(error, e.ValidationError)
-        assert error.correlation_id == "test-correlation-id"
+        tm.that(isinstance(error, e.ValidationError), eq=True)
+        tm.that(error.correlation_id, eq="test-correlation-id")
 
     def test_create_error_by_type_with_error_code(self) -> None:
         """Test _create_error_by_type with error_code - tests lines 1322-1323."""
@@ -1087,8 +1128,8 @@ class Teste:
             error_code="CUSTOM_ERROR",
             context=None,
         )
-        assert isinstance(error, e.ValidationError)
-        assert error.error_code == "CUSTOM_ERROR"
+        tm.that(isinstance(error, e.ValidationError), eq=True)
+        tm.that(error.error_code, eq="CUSTOM_ERROR")
 
     def test_create_error_by_type_with_context(self) -> None:
         """Test _create_error_by_type with context - tests lines 1320-1321."""
@@ -1099,9 +1140,9 @@ class Teste:
             error_code=None,
             context=context,
         )
-        assert isinstance(error, e.ValidationError)
-        assert error.metadata is not None
-        assert "key1" in error.metadata.attributes
+        tm.that(isinstance(error, e.ValidationError), eq=True)
+        tm.that(error.metadata, none=False)
+        tm.that(error.metadata.attributes, has="key1")
 
     def test_create_error_by_type_base_error(self) -> None:
         """Test _create_error_by_type returns BaseError for None type - tests lines 1346-1350."""
@@ -1111,8 +1152,8 @@ class Teste:
             error_code=None,
             context=None,
         )
-        assert isinstance(error, e.BaseError)
-        assert error.message == "Test message"
+        tm.that(isinstance(error, e.BaseError), eq=True)
+        tm.that(error.message, eq="Test message")
 
     def test_create_error_by_type_invalid_type(self) -> None:
         """Test _create_error_by_type with invalid type - tests line 1346."""
@@ -1122,8 +1163,8 @@ class Teste:
             error_code=None,
             context=None,
         )
-        assert isinstance(error, e.BaseError)
-        assert error.message == "Test message"
+        tm.that(isinstance(error, e.BaseError), eq=True)
+        tm.that(error.message, eq="Test message")
 
     def test_attribute_access_error_with_extra_kwargs(self) -> None:
         """Test AttributeAccessError with extra_kwargs - tests line 918."""
@@ -1132,8 +1173,8 @@ class Teste:
             attribute_name="test_attr",
             custom_key="custom_value",
         )
-        assert error.metadata is not None
-        assert "custom_key" in error.metadata.attributes
+        tm.that(error.metadata, none=False)
+        tm.that(error.metadata.attributes, has="custom_key")
 
     def test_prepare_kwargs(self) -> None:
         """Test prepare_exception_kwargs - tests lines 945-970."""
@@ -1156,18 +1197,18 @@ class Teste:
         }
         result = e.prepare_exception_kwargs(kwargs, specific_params)
         corr_id, metadata, auto_log, auto_corr, _config, extra = result
-        assert corr_id == "test-id"
-        assert metadata is not None
-        assert auto_log is True
-        assert auto_corr is True
-        assert "field" in extra
-        assert extra["field"] == "test_field"
-        assert "custom" in extra
-        assert "correlation_id" not in extra
-        assert "metadata" not in extra
-        assert "auto_log" not in extra
-        assert "auto_correlation" not in extra
-        assert "config" not in extra
+        tm.that(corr_id, eq="test-id")
+        tm.that(metadata, none=False)
+        tm.that(auto_log, eq=True)
+        tm.that(auto_corr, eq=True)
+        tm.that(extra, has="field")
+        tm.that(extra["field"], eq="test_field")
+        tm.that(extra, has="custom")
+        tm.that(extra, lacks="correlation_id")
+        tm.that(extra, lacks="metadata")
+        tm.that(extra, lacks="auto_log")
+        tm.that(extra, lacks="auto_correlation")
+        tm.that(extra, lacks="config")
 
     def test_prepare_kwargs_with_empty_specific_params(self) -> None:
         """Test prepare_exception_kwargs with empty specific_params - tests line 945."""
@@ -1177,8 +1218,8 @@ class Teste:
         }
         result = e.prepare_exception_kwargs(kwargs, {})
         _corr_id, _metadata, _auto_log, _auto_corr, _config, extra = result
-        assert "field" in extra
-        assert extra["field"] == "test_field"
+        tm.that(extra, has="field")
+        tm.that(extra["field"], eq="test_field")
 
     def test_prepare_kwargs_setdefault_behavior(self) -> None:
         """Test prepare_exception_kwargs setdefault behavior - tests line 948."""
@@ -1190,8 +1231,8 @@ class Teste:
         kwargs: dict[str, t.MetadataValue] = {}
         result = e.prepare_exception_kwargs(kwargs, specific_params)
         _corr_id, _metadata, _auto_log, _auto_corr, _config, extra = result
-        assert "field" in extra
-        assert extra["field"] == "test_field"
+        tm.that(extra, has="field")
+        tm.that(extra["field"], eq="test_field")
 
     def test_prepare_kwargs_with_specific_params_none(self) -> None:
         """Test prepare_exception_kwargs with None in specific_params - tests lines 947-948."""
@@ -1206,7 +1247,7 @@ class Teste:
         }
         result = e.prepare_exception_kwargs(kwargs, specific_params)
         _corr_id, _metadata, _auto_log, _auto_corr, _config, extra = result
-        assert extra["field"] == "test_field"
+        tm.that(extra["field"], eq="test_field")
 
     def test_prepare_exception_kwargs_with_non_string_correlation_id(self) -> None:
         """Test prepare_exception_kwargs with non-string correlation_id - tests lines 961-966."""
@@ -1214,25 +1255,25 @@ class Teste:
         kwargs_cast = cast("dict[str, t.MetadataAttributeValue]", kwargs)
         result = e.prepare_exception_kwargs(kwargs_cast, None)
         corr_id, _metadata, _auto_log, _auto_corr, _config, _extra = result
-        assert corr_id is None
+        tm.that(corr_id is None, eq=True)
 
     def test_prepare_exception_kwargs_return_tuple(self) -> None:
         """Test prepare_exception_kwargs returns correct tuple - tests lines 967-970."""
         kwargs = {"field": "test"}
         kwargs_cast = cast("dict[str, t.MetadataAttributeValue]", kwargs)
         result = e.prepare_exception_kwargs(kwargs_cast, None)
-        assert len(result) == 6
+        tm.that(len(result), eq=6)
         corr_id, metadata, auto_log, auto_corr, _metadata_val, extra = result
-        assert corr_id is None or isinstance(corr_id, str)
-        assert metadata is None or isinstance(metadata, (m.Metadata, dict))
-        assert isinstance(auto_log, bool)
-        assert isinstance(auto_corr, bool)
-        assert isinstance(extra, dict)
+        tm.that(corr_id is None or isinstance(corr_id, str), eq=True)
+        tm.that(metadata is None or isinstance(metadata, (m.Metadata, dict)), eq=True)
+        tm.that(isinstance(auto_log, bool), eq=True)
+        tm.that(isinstance(auto_corr, bool), eq=True)
+        tm.that(isinstance(extra, dict), eq=True)
 
     def test_create_error_with_context(self) -> None:
         """Test create_error with context parameter - tests lines 1086-1087."""
         error = e.create("ValidationError", "Test message")
-        assert isinstance(error, e.ValidationError)
+        tm.that(isinstance(error, e.ValidationError), eq=True)
 
     def test_create_with_dict_like_metadata_normalization(self) -> None:
         """Test create normalizes dict-like metadata values - tests lines 1376-1379."""
@@ -1274,10 +1315,10 @@ class Teste:
             field="test_field",
             metadata=cast("t.MetadataAttributeValue", dict_like_converted),
         )
-        assert isinstance(error, e.ValidationError)
-        assert error.metadata is not None
-        assert "key1" in error.metadata.attributes
-        assert "key2" in error.metadata.attributes
+        tm.that(isinstance(error, e.ValidationError), eq=True)
+        tm.that(error.metadata, none=False)
+        tm.that(error.metadata.attributes, has="key1")
+        tm.that(error.metadata.attributes, has="key2")
 
     def test_create_with_dict_like_metadata_items_iteration(self) -> None:
         """Test create iterates dict-like metadata items - tests lines 1378-1379."""
@@ -1312,10 +1353,10 @@ class Teste:
             field="test_field",
             metadata=cast("t.MetadataAttributeValue", dict_like_converted),
         )
-        assert isinstance(error, e.ValidationError)
-        assert error.metadata is not None
-        assert "key1" in error.metadata.attributes
-        assert "key2" in error.metadata.attributes
+        tm.that(isinstance(error, e.ValidationError), eq=True)
+        tm.that(error.metadata, none=False)
+        tm.that(error.metadata.attributes, has="key1")
+        tm.that(error.metadata.attributes, has="key2")
 
     def test_create_with_dict_like_metadata_normalize_values(self) -> None:
         """Test create normalizes dict-like metadata values - tests line 1379."""
@@ -1355,9 +1396,9 @@ class Teste:
             field="test_field",
             metadata=cast("t.MetadataAttributeValue", dict_like_converted),
         )
-        assert isinstance(error, e.ValidationError)
-        assert error.metadata is not None
-        assert "key1" in error.metadata.attributes
+        tm.that(isinstance(error, e.ValidationError), eq=True)
+        tm.that(error.metadata, none=False)
+        tm.that(error.metadata.attributes, has="key1")
 
     def test_create_error_instance(self) -> None:
         """Test create_error instance method (__call__) - tests lines 1453-1456."""
@@ -1367,10 +1408,10 @@ class Teste:
             error_code="TEST_ERROR",
             field="test_field",
         )
-        assert isinstance(error, e.ValidationError)
-        assert error.error_code == "TEST_ERROR"
-        assert error.metadata is not None
-        assert "field" in error.metadata.attributes
+        tm.that(isinstance(error, e.ValidationError), eq=True)
+        tm.that(error.error_code, eq="TEST_ERROR")
+        tm.that(error.metadata, none=False)
+        tm.that(error.metadata.attributes, has="field")
 
     def test_create_error_instance_normalizes_kwargs(self) -> None:
         """Test create_error instance method normalizes kwargs - tests lines 1453-1456."""
@@ -1382,11 +1423,11 @@ class Teste:
             value=123,
             custom_obj=cast("t.MetadataAttributeValue", str(object())),
         )
-        assert isinstance(error, e.ValidationError)
-        assert error.metadata is not None
-        assert "field" in error.metadata.attributes
-        assert "value" in error.metadata.attributes
-        assert "custom_obj" in error.metadata.attributes
+        tm.that(isinstance(error, e.ValidationError), eq=True)
+        tm.that(error.metadata, none=False)
+        tm.that(error.metadata.attributes, has="field")
+        tm.that(error.metadata.attributes, has="value")
+        tm.that(error.metadata.attributes, has="custom_obj")
 
     def test_create_error_instance_normalizes_all_kwargs(self) -> None:
         """Test create_error instance method normalizes all kwargs - tests lines 1454-1455."""
@@ -1399,13 +1440,13 @@ class Teste:
             value3=True,
             value4="none",
         )
-        assert isinstance(error, e.ValidationError)
-        assert error.metadata is not None
-        assert "field" in error.metadata.attributes
-        assert "value1" in error.metadata.attributes
-        assert "value2" in error.metadata.attributes
-        assert "value3" in error.metadata.attributes
-        assert "value4" in error.metadata.attributes
+        tm.that(isinstance(error, e.ValidationError), eq=True)
+        tm.that(error.metadata, none=False)
+        tm.that(error.metadata.attributes, has="field")
+        tm.that(error.metadata.attributes, has="value1")
+        tm.that(error.metadata.attributes, has="value2")
+        tm.that(error.metadata.attributes, has="value3")
+        tm.that(error.metadata.attributes, has="value4")
 
     def test_create_error_instance_normalize_loop(self) -> None:
         """Test create_error instance method normalization loop - tests lines 1454-1455."""
@@ -1416,35 +1457,35 @@ class Teste:
             lst=[1, 2, 3],
             dct={"key": "value"},
         )
-        assert isinstance(error, e.BaseError)
-        assert error.metadata is not None
-        assert "obj" in error.metadata.attributes
-        assert "lst" in error.metadata.attributes
-        assert "dct" in error.metadata.attributes
+        tm.that(isinstance(error, e.BaseError), eq=True)
+        tm.that(error.metadata, none=False)
+        tm.that(error.metadata.attributes, has="obj")
+        tm.that(error.metadata.attributes, has="lst")
+        tm.that(error.metadata.attributes, has="dct")
 
     def test_determine_error_type(self) -> None:
         """Test _determine_error_type - tests lines 1105-1308."""
         error_type = e._determine_error_type({"field": "test"})
-        assert error_type == "validation"
+        tm.that(error_type, eq="validation")
         error_type = e._determine_error_type({"config_key": "test"})
-        assert error_type == "configuration"
+        tm.that(error_type, eq="configuration")
         error_type = e._determine_error_type({"host": FlextConstants.Network.LOCALHOST})
-        assert error_type == "connection"
+        tm.that(error_type, eq="connection")
         error_type = e._determine_error_type({"timeout_seconds": 30.0})
-        assert error_type == "timeout"
+        tm.that(error_type, eq="timeout")
         error_type = e._determine_error_type({
             "user_id": "user1",
             "auth_method": "password",
         })
-        assert error_type == "authentication"
+        tm.that(error_type, eq="authentication")
         error_type = e._determine_error_type({"user_id": "user1", "permission": "read"})
-        assert error_type == "authorization"
+        tm.that(error_type, eq="authorization")
         error_type = e._determine_error_type({"resource_id": "123"})
-        assert error_type == "not_found"
+        tm.that(error_type, eq="not_found")
         error_type = e._determine_error_type({"attribute_name": "test"})
-        assert error_type == "attribute_access"
+        tm.that(error_type, eq="attribute_access")
         error_type = e._determine_error_type({"unknown": "value"})
-        assert error_type is None
+        tm.that(error_type is None, eq=True)
 
     def test_determine_error_type_with_conflict(self) -> None:
         """Test _determine_error_type with conflict pattern - tests line 585."""
@@ -1452,7 +1493,7 @@ class Teste:
             "resource_type": "User",
             "resource_id": "123",
         })
-        assert error_type == "not_found"
+        tm.that(error_type, eq="not_found")
 
     def test_extract_common_kwargs(self) -> None:
         """Test extract_common_kwargs - tests lines 999-1008."""
@@ -1463,8 +1504,8 @@ class Teste:
         }
         kwargs_cast = cast("dict[str, t.MetadataAttributeValue]", kwargs)
         corr_id, metadata = e.extract_common_kwargs(kwargs_cast)
-        assert corr_id == "test-id"
-        assert isinstance(metadata, m.Metadata)
+        tm.that(corr_id, eq="test-id")
+        tm.that(isinstance(metadata, m.Metadata), eq=True)
         kwargs_dict_raw = {
             "correlation_id": "test-id",
             "metadata": {"key": "value"},
@@ -1480,8 +1521,8 @@ class Teste:
             for k, v in kwargs_dict_raw.items()
         }
         corr_id_dict, metadata_dict = e.extract_common_kwargs(kwargs_dict)
-        assert corr_id_dict == "test-id"
-        assert isinstance(metadata_dict, dict)
+        tm.that(corr_id_dict, eq="test-id")
+        tm.that(isinstance(metadata_dict, dict), eq=True)
 
         class DictLike(Mapping[str, object]):
             @override
@@ -1517,9 +1558,9 @@ class Teste:
             else:
                 kwargs_dict_like[k] = cast("t.MetadataAttributeValue", v)
         corr_id_dl, metadata_dl = e.extract_common_kwargs(kwargs_dict_like)
-        assert corr_id_dl == "test-id"
-        assert isinstance(metadata_dl, dict)
-        assert "key" in metadata_dl
+        tm.that(corr_id_dl, eq="test-id")
+        tm.that(isinstance(metadata_dl, dict), eq=True)
+        tm.that(metadata_dl, has="key")
 
     def test_extract_common_kwargs_metadata_protocol_like(self) -> None:
 
@@ -1533,10 +1574,10 @@ class Teste:
         }
         kwargs_cast = cast("Mapping[str, t.MetadataValue]", kwargs)
         corr_id, metadata = e.extract_common_kwargs(kwargs_cast)
-        assert corr_id == "test-id"
-        assert metadata is not None
+        tm.that(corr_id, eq="test-id")
+        tm.that(metadata, none=False)
         attrs = getattr(metadata, "attributes", {})
-        assert attrs.get("source") == "protocol"
+        tm.that(attrs.get("source"), eq="protocol")
 
 
 __all__ = ["Teste"]

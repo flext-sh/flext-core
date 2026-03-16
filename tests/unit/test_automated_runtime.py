@@ -6,11 +6,11 @@ from pathlib import Path
 from time import perf_counter
 
 import pytest
+from flext_tests import tb, tm, tt
 from hypothesis import given, strategies as st
 from pydantic import BaseModel
 
 from flext_core import FlextRuntime
-from flext_tests import tb, tm, tt
 
 
 class TestAutomatedFlextRuntime:

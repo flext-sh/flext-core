@@ -21,10 +21,10 @@ from enum import StrEnum
 from typing import Annotated, ClassVar, cast
 
 import pytest
+from flext_tests import t, tm, u
 from pydantic import BaseModel, ConfigDict, Field, SkipValidation
 
 from flext_core import FlextRuntime, p, r
-from flext_tests import t, tm, u
 
 from ..test_utils import assertion_helpers
 

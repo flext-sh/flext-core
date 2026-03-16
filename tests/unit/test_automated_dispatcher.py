@@ -2,8 +2,9 @@ from __future__ import annotations
 
 from time import perf_counter
 
-from flext_core import FlextDispatcher, FlextHandlers, m, r
 from flext_tests import tb, tm, tt
+
+from flext_core import FlextDispatcher, FlextHandlers, m, r
 
 
 class TestAutomatedFlextDispatcher:

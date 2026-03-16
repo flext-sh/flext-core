@@ -11,8 +11,9 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_core import r, s, t
 from flext_tests import tm
+
+from flext_core import r, s, t
 
 
 class TestService(s[str]):

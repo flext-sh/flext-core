@@ -27,6 +27,7 @@ from enum import StrEnum
 from typing import Annotated, ClassVar
 
 import pytest
+from flext_tests import u
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import (
@@ -36,7 +37,6 @@ from flext_core import (
     FlextLogger,
     r,
 )
-from flext_tests import u
 
 
 class DecoratorOperationType(StrEnum):

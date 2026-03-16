@@ -23,10 +23,10 @@ from typing import Annotated
 
 import pytest
 import yaml
+from flext_tests import t
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import FlextConstants, FlextContainer, FlextLogger, FlextSettings
-from flext_tests import t
 
 
 class ConfigTestCase(BaseModel):

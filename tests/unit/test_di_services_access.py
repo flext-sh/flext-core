@@ -21,6 +21,8 @@ from __future__ import annotations
 from types import ModuleType
 from typing import override
 
+from flext_tests import tm, u
+
 from flext_core import (
     FlextContainer,
     FlextContext,
@@ -32,7 +34,6 @@ from flext_core import (
     s,
 )
 from flext_core._models.service import FlextModelsService
-from flext_tests import tm, u
 from tests.test_utils import assertion_helpers
 
 

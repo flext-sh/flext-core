@@ -24,9 +24,9 @@ from collections.abc import Callable, Sequence
 from typing import ClassVar, cast
 
 import pytest
+from flext_tests import t, u
 
 from flext_core import FlextSettings, c, m, r
-from flext_tests import t, u
 
 from .contracts.text_contract import TextUtilityContract
 

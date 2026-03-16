@@ -7,10 +7,10 @@ from types import SimpleNamespace
 from typing import cast, override
 
 import pytest
+from flext_tests import t, tm
 from pydantic import BaseModel
 
 from flext_core import FlextLogger, FlextMixins, c, m, p, r, u, x
-from flext_tests import t, tm
 
 from ._models import _SvcModel
 

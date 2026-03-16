@@ -4,10 +4,10 @@ from collections.abc import Mapping
 from time import perf_counter
 from typing import override
 
+from flext_tests import tb, tm, tt
 from hypothesis import given, strategies as st
 
 from flext_core import FlextContainer, FlextContext, FlextSettings, r, s
-from flext_tests import tb, tm, tt
 
 
 class _SuccessService(s[str]):

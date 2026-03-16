@@ -23,12 +23,12 @@ from pathlib import Path
 from typing import TypeGuard
 
 import pytest
+from flext_tests import t as tt
+from flext_tests.typings import _Testobject
 from hypothesis import HealthCheck, given, settings, strategies as st
 from pydantic import BaseModel
 
 from flext_core import FlextTypes, FlextUtilities, P, R, t
-from flext_tests import t as tt
-from flext_tests.typings import _Testobject
 
 from ._models import (
     FixtureCaseDict,

@@ -5,10 +5,10 @@ from __future__ import annotations
 from collections.abc import Callable
 
 import pytest
+from flext_tests import tm, tt
 from hypothesis import given, settings, strategies as st
 
 from flext_core import FlextExceptions
-from flext_tests import tm, tt
 
 EXCEPTION_CLASSES: tuple[type[FlextExceptions.BaseError], ...] = (
     FlextExceptions.BaseError,

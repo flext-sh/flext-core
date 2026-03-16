@@ -26,10 +26,10 @@ from enum import StrEnum
 from typing import Annotated, ClassVar, cast, override
 
 import pytest
+from flext_tests import FlextTestsUtilities, t, u
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import FlextRegistry, c, h, m, r
-from flext_tests import FlextTestsUtilities, t, u
 
 
 class RegistryOperationType(StrEnum):

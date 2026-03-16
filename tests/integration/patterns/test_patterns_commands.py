@@ -9,10 +9,10 @@ from __future__ import annotations
 
 from typing import Annotated, cast, override
 
+from flext_tests import t
 from pydantic import Field
 
 from flext_core import FlextConstants, FlextHandlers, FlextModels, r
-from flext_tests import t
 
 from ...models import m
 

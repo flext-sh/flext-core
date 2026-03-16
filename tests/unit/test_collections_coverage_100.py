@@ -18,11 +18,11 @@ from __future__ import annotations
 from typing import Annotated, ClassVar, cast
 
 import pytest
+from flext_tests import tm
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import FlextRuntime, m
 from flext_core.runtime import RuntimeData
-from flext_tests import tm
 
 
 class _TestConfig(m.Config):

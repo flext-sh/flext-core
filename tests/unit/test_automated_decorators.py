@@ -6,10 +6,10 @@ import time
 from collections.abc import Callable
 
 import pytest
+from flext_tests import tb, tm, tt
 from hypothesis import given, settings, strategies as st
 
 from flext_core import FlextDecorators, e
-from flext_tests import tb, tm, tt
 
 
 class TestAutomatedFlextDecorators:

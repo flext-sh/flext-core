@@ -2,11 +2,11 @@ from __future__ import annotations
 
 import time
 
+from flext_tests import tb, tm, tt
 from hypothesis import given, strategies as st
 from pydantic import BaseModel
 
 from flext_core import FlextHandlers, c, h, m, t
-from flext_tests import tb, tm, tt
 
 
 class TestAutomatedFlextHandlers:

@@ -27,10 +27,10 @@ import time
 from typing import Annotated, ClassVar
 
 import pytest
+from flext_tests import FlextTestsUtilities, tm, u
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import FlextContainer, FlextContext, m
-from flext_tests import FlextTestsUtilities, tm, u
 
 type SetGetInputValue = str | int | float | bool | list[int] | dict[str, str]
 type SetGetExpectedValue = str | int | float | bool

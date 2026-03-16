@@ -19,12 +19,12 @@ import math
 from typing import Annotated, ClassVar, cast, override
 
 import pytest
+from flext_tests import tm
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import m, t, u
 from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core.runtime import RuntimeData
-from flext_tests import tm
 
 
 class TypeGuardScenario(BaseModel):

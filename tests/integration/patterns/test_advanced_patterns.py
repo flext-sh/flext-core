@@ -17,9 +17,9 @@ from collections.abc import Callable
 from typing import cast
 
 import pytest
+from flext_tests import t
 
 from flext_core import r, t as core_t, u
-from flext_tests import t
 
 from ...models import m
 

@@ -14,9 +14,9 @@ from collections.abc import Mapping, Sequence
 from typing import Never, cast, overload, override
 
 import structlog
+from flext_tests import t, tm
 
 from flext_core import FlextRuntime, p
-from flext_tests import t, tm
 
 
 class TestRuntimeDictLike:

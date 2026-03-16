@@ -10,9 +10,9 @@ from __future__ import annotations
 from typing import cast
 
 import pytest
+from flext_tests import c, m, t, tm
 
 from flext_core import r
-from flext_tests import c, m, t, tm
 
 
 def _is_string(value: t.Tests.Testobject) -> bool:

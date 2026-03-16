@@ -20,10 +20,10 @@ from concurrent.futures import Future
 from typing import Annotated, ClassVar
 
 import pytest
+from flext_tests import tm
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core._dispatcher.timeout import TimeoutEnforcer
-from flext_tests import tm
 
 
 class TimeoutEnforcerScenario(BaseModel):

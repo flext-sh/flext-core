@@ -6,10 +6,10 @@ from collections.abc import Callable
 from typing import override
 
 import pytest
+from flext_tests import tb, tm, tt
 from hypothesis import given, settings, strategies as st
 
 from flext_core import FlextMixins, r, s
-from flext_tests import tb, tm, tt
 
 
 class _MixinTestService(s[str]):

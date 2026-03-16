@@ -8,9 +8,9 @@ from pathlib import Path
 from typing import ClassVar, cast, override
 
 import pytest
+from flext_tests import t, tm
 
 from flext_core import FlextLogger, FlextRuntime, FlextSettings, c, m, p, r, u
-from flext_tests import t, tm
 
 
 class _FakeBindable:

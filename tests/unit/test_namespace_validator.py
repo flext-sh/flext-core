@@ -7,6 +7,7 @@ from pathlib import Path
 
 from flext_infra import m
 from flext_infra.core.namespace_validator import FlextInfraNamespaceValidator
+from flext_tests import tm
 
 _FIXTURES_DIR = Path(__file__).parent.parent / "fixtures" / "namespace_validator"
 
@@ -40,9 +41,9 @@ class TestFlextInfraNamespaceValidator:
             module_name="models.py",
         )
         result = validator.validate(root)
-        assert result.is_success
-        assert result.value.passed
-        assert result.value.violations == []
+        tm.that(result.is_success, eq=True)
+        tm.that(result.value.passed, eq=True)
+        tm.that(result.value.violations == [], eq=True)
 
     def test_rule0_multiple_classes_detected(self, tmp_path: Path) -> None:
         validator = FlextInfraNamespaceValidator()
@@ -52,9 +53,12 @@ class TestFlextInfraNamespaceValidator:
             module_name="models.py",
         )
         result = validator.validate(root)
-        assert result.is_success
-        assert not result.value.passed
-        assert any("Multiple outer classes found" in v for v in result.value.violations)
+        tm.that(result.is_success, eq=True)
+        tm.that(not result.value.passed, eq=True)
+        tm.that(
+            any("Multiple outer classes found" in v for v in result.value.violations),
+            eq=True,
+        )
 
     def test_rule0_no_class_detected(self, tmp_path: Path) -> None:
         validator = FlextInfraNamespaceValidator()
@@ -64,9 +68,11 @@ class TestFlextInfraNamespaceValidator:
             module_name="models.py",
         )
         result = validator.validate(root)
-        assert result.is_success
-        assert not result.value.passed
-        assert any("No outer class found" in v for v in result.value.violations)
+        tm.that(result.is_success, eq=True)
+        tm.that(not result.value.passed, eq=True)
+        tm.that(
+            any("No outer class found" in v for v in result.value.violations), eq=True
+        )
 
     def test_rule0_wrong_prefix_detected(self, tmp_path: Path) -> None:
         validator = FlextInfraNamespaceValidator()
@@ -76,11 +82,14 @@ class TestFlextInfraNamespaceValidator:
             module_name="constants.py",
         )
         result = validator.validate(root)
-        assert result.is_success
-        assert not result.value.passed
-        assert any(
-            "does not start with prefix 'FlextTest'" in v
-            for v in result.value.violations
+        tm.that(result.is_success, eq=True)
+        tm.that(not result.value.passed, eq=True)
+        tm.that(
+            any(
+                "does not start with prefix 'FlextTest'" in v
+                for v in result.value.violations
+            ),
+            eq=True,
         )
 
     def test_rule0_loose_items_detected(self, tmp_path: Path) -> None:
@@ -91,11 +100,14 @@ class TestFlextInfraNamespaceValidator:
             module_name="models.py",
         )
         result = validator.validate(root)
-        assert result.is_success
-        assert not result.value.passed
-        assert any(
-            "Disallowed top-level statement: FunctionDef" in v
-            for v in result.value.violations
+        tm.that(result.is_success, eq=True)
+        tm.that(not result.value.passed, eq=True)
+        tm.that(
+            any(
+                "Disallowed top-level statement: FunctionDef" in v
+                for v in result.value.violations
+            ),
+            eq=True,
         )
 
     def test_rule1_valid_constants_passes(self, tmp_path: Path) -> None:
@@ -107,8 +119,8 @@ class TestFlextInfraNamespaceValidator:
             module_name="constants.py",
         )
         result = validator.validate(root)
-        assert result.is_success
-        assert result.value.passed
+        tm.that(result.is_success, eq=True)
+        tm.that(result.value.passed, eq=True)
 
     def test_rule1_loose_constant_detected(self, tmp_path: Path) -> None:
         validator = FlextInfraNamespaceValidator()
@@ -118,9 +130,11 @@ class TestFlextInfraNamespaceValidator:
             module_name="models.py",
         )
         result = validator.validate(root)
-        assert result.is_success
-        assert not result.value.passed
-        assert any("Loose Final constant" in v for v in result.value.violations)
+        tm.that(result.is_success, eq=True)
+        tm.that(not result.value.passed, eq=True)
+        tm.that(
+            any("Loose Final constant" in v for v in result.value.violations), eq=True
+        )
 
     def test_rule1_loose_enum_detected(self, tmp_path: Path) -> None:
         validator = FlextInfraNamespaceValidator()
@@ -130,9 +144,12 @@ class TestFlextInfraNamespaceValidator:
             module_name="models.py",
         )
         result = validator.validate(root)
-        assert result.is_success
-        assert not result.value.passed
-        assert any("Multiple outer classes found" in v for v in result.value.violations)
+        tm.that(result.is_success, eq=True)
+        tm.that(not result.value.passed, eq=True)
+        tm.that(
+            any("Multiple outer classes found" in v for v in result.value.violations),
+            eq=True,
+        )
 
     def test_rule1_method_in_constants_detected(self, tmp_path: Path) -> None:
         validator = FlextInfraNamespaceValidator()
@@ -142,11 +159,14 @@ class TestFlextInfraNamespaceValidator:
             module_name="constants.py",
         )
         result = validator.validate(root)
-        assert result.is_success
-        assert not result.value.passed
-        assert any(
-            "Method 'create_name' found in Constants class" in v
-            for v in result.value.violations
+        tm.that(result.is_success, eq=True)
+        tm.that(not result.value.passed, eq=True)
+        tm.that(
+            any(
+                "Method 'create_name' found in Constants class" in v
+                for v in result.value.violations
+            ),
+            eq=True,
         )
 
     def test_rule1_magic_number_detected(self, tmp_path: Path) -> None:
@@ -157,9 +177,12 @@ class TestFlextInfraNamespaceValidator:
             module_name="models.py",
         )
         result = validator.validate(root)
-        assert result.is_success
-        assert not result.value.passed
-        assert any("Loose collection constant" in v for v in result.value.violations)
+        tm.that(result.is_success, eq=True)
+        tm.that(not result.value.passed, eq=True)
+        tm.that(
+            any("Loose collection constant" in v for v in result.value.violations),
+            eq=True,
+        )
 
     def test_rule2_valid_types_passes(self, tmp_path: Path) -> None:
         validator = FlextInfraNamespaceValidator()
@@ -170,8 +193,8 @@ class TestFlextInfraNamespaceValidator:
             module_name="typings.py",
         )
         result = validator.validate(root)
-        assert result.is_success
-        assert result.value.passed
+        tm.that(result.is_success, eq=True)
+        tm.that(result.value.passed, eq=True)
 
     def test_rule2_typevar_in_class_detected(self, tmp_path: Path) -> None:
         validator = FlextInfraNamespaceValidator()
@@ -181,10 +204,11 @@ class TestFlextInfraNamespaceValidator:
             module_name="typings.py",
         )
         result = validator.validate(root)
-        assert result.is_success
-        assert not result.value.passed
-        assert any(
-            "must inherit from a Types base" in v for v in result.value.violations
+        tm.that(result.is_success, eq=True)
+        tm.that(not result.value.passed, eq=True)
+        tm.that(
+            any("must inherit from a Types base" in v for v in result.value.violations),
+            eq=True,
         )
 
     def test_rule2_typevar_wrong_module_detected(self, tmp_path: Path) -> None:
@@ -195,10 +219,14 @@ class TestFlextInfraNamespaceValidator:
             module_name="models.py",
         )
         result = validator.validate(root)
-        assert result.is_success
-        assert not result.value.passed
-        assert any(
-            "TypeVar 'T' belongs in typings.py" in v for v in result.value.violations
+        tm.that(result.is_success, eq=True)
+        tm.that(not result.value.passed, eq=True)
+        tm.that(
+            any(
+                "TypeVar 'T' belongs in typings.py" in v
+                for v in result.value.violations
+            ),
+            eq=True,
         )
 
     def test_rule2_composite_type_loose_detected(self, tmp_path: Path) -> None:
@@ -209,11 +237,14 @@ class TestFlextInfraNamespaceValidator:
             module_name="models.py",
         )
         result = validator.validate(root)
-        assert result.is_success
-        assert not result.value.passed
-        assert any(
-            "TypeAlias 'LooseTypeAlias' belongs in typings.py" in v
-            for v in result.value.violations
+        tm.that(result.is_success, eq=True)
+        tm.that(not result.value.passed, eq=True)
+        tm.that(
+            any(
+                "TypeAlias 'LooseTypeAlias' belongs in typings.py" in v
+                for v in result.value.violations
+            ),
+            eq=True,
         )
 
     def test_rule2_protocol_in_types_detected(self, tmp_path: Path) -> None:
@@ -224,10 +255,14 @@ class TestFlextInfraNamespaceValidator:
             module_name="typings.py",
         )
         result = validator.validate(root)
-        assert result.is_success
-        assert not result.value.passed
-        assert any(
-            "Inner class 'ProtocolInsideTypes'" in v for v in result.value.violations
+        tm.that(result.is_success, eq=True)
+        tm.that(not result.value.passed, eq=True)
+        tm.that(
+            any(
+                "Inner class 'ProtocolInsideTypes'" in v
+                for v in result.value.violations
+            ),
+            eq=True,
         )
 
     def test_exempt_files_skipped(self, tmp_path: Path) -> None:
@@ -248,10 +283,10 @@ class TestFlextInfraNamespaceValidator:
             encoding="utf-8",
         )
         result = validator.validate(project_root)
-        assert result.is_success
-        assert result.value.passed
-        assert result.value.violations == []
-        assert "0 files checked" in result.value.summary
+        tm.that(result.is_success, eq=True)
+        tm.that(result.value.passed, eq=True)
+        tm.that(result.value.violations == [], eq=True)
+        tm.that("0 files checked" in result.value.summary, eq=True)
 
     def test_validate_returns_report(self, tmp_path: Path) -> None:
         validator = FlextInfraNamespaceValidator()
@@ -261,9 +296,9 @@ class TestFlextInfraNamespaceValidator:
             module_name="constants.py",
         )
         result = validator.validate(root)
-        assert result.is_success
-        assert isinstance(result.value, m.Infra.Core.ValidationReport)
-        assert "files checked" in result.value.summary
+        tm.that(result.is_success, eq=True)
+        tm.that(isinstance(result.value, m.Infra.Core.ValidationReport), eq=True)
+        tm.that("files checked" in result.value.summary, eq=True)
 
     def test_violation_message_format(self, tmp_path: Path) -> None:
         validator = FlextInfraNamespaceValidator()
@@ -273,7 +308,10 @@ class TestFlextInfraNamespaceValidator:
             module_name="models.py",
         )
         result = validator.validate(root)
-        assert result.is_success
-        assert result.value.violations
+        tm.that(result.is_success, eq=True)
+        tm.that(len(result.value.violations), gt=0)
         first = result.value.violations[0]
-        assert re.search(r"^\[NS-\d{3}-\d{3}\] .+\.py:\d+ — .+$", first) is not None
+        tm.that(
+            re.search(r"^\[NS-\d{3}-\d{3}\] .+\.py:\d+ — .+$", first) is not None,
+            eq=True,
+        )

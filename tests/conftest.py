@@ -12,6 +12,7 @@ from collections.abc import Generator
 from pathlib import Path
 
 import pytest
+from flext_tests import t
 
 from flext_core import (
     FlextContainer,
@@ -19,7 +20,6 @@ from flext_core import (
     FlextSettings,
     r,
 )
-from flext_tests import t
 
 from .helpers.scenarios import (
     ParserScenarios,

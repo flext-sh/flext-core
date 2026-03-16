@@ -122,14 +122,12 @@ optional-dependencies.dev = [
   "vulture>=2.13",
 ]
 urls = {Documentation = "https://github.com/flext-sh/flext-core/blob/main/README.md", Homepage = "https://github.com/flext-sh/flext-core", Repository = "https://github.com/flext-sh/flext-core"}
-scripts = {"flext-basemk" = "flext_infra.basemk:main", "flext-check" = "flext_infra.check:main", "flext-modernize" = "flext_infra.deps.modernizer:main", "flext-sync" = "flext_infra.workspace.sync:main", "flext-validate" = "flext_infra.core:main"}
 
-# [CUSTOM] poetry - flext-core ships three namespace packages
+
+# [CUSTOM] poetry - flext-core ships only the core package
 [tool.poetry]
 packages = [
   {include = "flext_core", from = "src"},
-  {include = "flext_infra", from = "src"},
-  {include = "flext_tests", from = "src"},
 ]
 
 # [MANAGED] deptry
@@ -138,13 +136,11 @@ packages = [
 [tool.deptry]
 known_first_party = [
   "flext_core",
-  "flext_infra",
-  "flext_tests",
 ]
 pep621_dev_dependency_groups = [ "dev" ]
 
 [tool.bandit]
-exclude_dirs = [ "src/flext_tests", "tests" ]
+exclude_dirs = [ "tests" ]
 severity = "MEDIUM"
 skips = [ "B101" ]
 targets = [ "src" ]
@@ -308,8 +304,6 @@ select = [
 [tool.ruff.lint.isort]
 known-first-party = [
   "flext_core",
-  "flext_infra",
-  "flext_tests",
 ]
 
 # [MANAGED] pyright
@@ -349,8 +343,6 @@ split-on-trailing-comma = true
   "T201",
   "TID252",
 ]
-"src/flext_infra/codegen/_utilities.py" = ["E402"]
-"src/flext_infra/refactor/_utilities.py" = ["E402"]
 "**/*exceptions*" = [
   "A001",
   "S105",

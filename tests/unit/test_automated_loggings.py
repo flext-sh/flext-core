@@ -4,10 +4,10 @@ from __future__ import annotations
 
 from time import perf_counter
 
+from flext_tests import tb, tm, tt
 from hypothesis import given, strategies as st
 
 from flext_core import FlextLogger, FlextRuntime
-from flext_tests import tb, tm, tt
 
 
 class TestAutomatedFlextLogger:

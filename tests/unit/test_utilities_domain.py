@@ -24,9 +24,9 @@ from collections.abc import Mapping
 from typing import cast
 
 import pytest
+from flext_tests import t, u
 from pydantic import BaseModel
 
-from flext_tests import t, u
 from tests.constants import c
 from tests.models import m
 

@@ -13,10 +13,10 @@ from __future__ import annotations
 import time
 
 import pytest
+from flext_tests import t
 from pydantic import BaseModel
 
 from flext_core import FlextConstants, m, r
-from flext_tests import t
 from tests.test_utils import assertion_helpers
 
 

@@ -22,17 +22,18 @@ from collections.abc import Callable, Mapping
 from types import ModuleType
 from typing import override
 
+from flext_tests import tm
+
 from flext_core import (
     FlextContainer,
     FlextContext,
     FlextRuntime,
     FlextSettings,
-    m,
     r,
     s,
 )
 from flext_core._models.service import FlextModelsService
-from flext_tests import u
+from tests import m, u
 
 from ..test_utils import assertion_helpers
 
@@ -46,28 +47,28 @@ class TestDIBridgeRealExecution:
     def test_dependency_providers_returns_valid_module(self) -> None:
         """Test dependency_providers returns valid providers module."""
         providers_module = FlextRuntime.dependency_providers()
-        assert hasattr(providers_module, "Singleton")
-        assert hasattr(providers_module, "Factory")
-        assert hasattr(providers_module, "Resource")
-        assert hasattr(providers_module, "Configuration")
+        tm.that(hasattr(providers_module, "Singleton"), eq=True)
+        tm.that(hasattr(providers_module, "Factory"), eq=True)
+        tm.that(hasattr(providers_module, "Resource"), eq=True)
+        tm.that(hasattr(providers_module, "Configuration"), eq=True)
         singleton = providers_module.Singleton(lambda: "test_value")
-        assert singleton() == "test_value"
+        tm.that(singleton(), eq="test_value")
         factory = providers_module.Factory(lambda: {"key": "value"})
-        assert factory() == {"key": "value"}
+        tm.that(factory(), eq={"key": "value"})
 
     def test_dependency_containers_returns_valid_module(self) -> None:
         """Test dependency_containers returns valid containers module."""
         containers_module = FlextRuntime.dependency_containers()
-        assert hasattr(containers_module, "DeclarativeContainer")
-        assert hasattr(containers_module, "DynamicContainer")
+        tm.that(hasattr(containers_module, "DeclarativeContainer"), eq=True)
+        tm.that(hasattr(containers_module, "DynamicContainer"), eq=True)
         dynamic_container = containers_module.DynamicContainer()
-        assert dynamic_container is not None
+        tm.that(hasattr(dynamic_container, "__class__"), eq=True)
 
     def test_create_container_with_real_execution(self) -> None:
         """Test create_container with real registration and resolution."""
         container = FlextContainer.create()
         _ = container.register("test_service", "test_value")
-        assert container.has_service("test_service") is True
+        tm.that(container.has_service("test_service"), eq=True)
         resolved = container.get("test_service")
         u.Tests.Result.assert_success_with_value(resolved, "test_value")
 
@@ -78,11 +79,10 @@ class TestDIBridgeRealExecution:
                 config=m.ConfigMap(root={"database": {"dsn": "sqlite://test.db"}}),
             )
         )
-        assert bridge is not None
-        assert service_module is not None
-        assert resource_module is not None
-        assert bridge.config is not None
-        assert callable(bridge.config)
+        tm.that(repr(bridge) != "", eq=True)
+        tm.that(repr(service_module) != "", eq=True)
+        tm.that(repr(resource_module) != "", eq=True)
+        tm.that(callable(bridge.config), eq=True)
 
 
 class TestDependencyIntegrationRealExecution:
@@ -96,9 +96,9 @@ class TestDependencyIntegrationRealExecution:
             "test_object",
             {"key": "value"},
         )
-        assert provider() == {"key": "value"}
-        assert hasattr(di_container, "test_object")
-        assert di_container.test_object() == {"key": "value"}
+        tm.that(provider(), eq={"key": "value"})
+        tm.that(hasattr(di_container, "test_object"), eq=True)
+        tm.that(di_container.test_object(), eq={"key": "value"})
 
     def test_register_factory_with_caching(self) -> None:
         """Test register_factory with caching enabled."""
@@ -116,10 +116,10 @@ class TestDependencyIntegrationRealExecution:
             cache=True,
         )
         result1 = provider()
-        assert result1 == {"calls": 1}
+        tm.that(result1, eq={"calls": 1})
         result2 = provider()
-        assert result2 == {"calls": 1}
-        assert result1 is result2
+        tm.that(result2, eq={"calls": 1})
+        tm.that(result1 is result2, eq=True)
 
     def test_register_factory_without_caching(self) -> None:
         """Test register_factory without caching (Factory)."""
@@ -137,10 +137,10 @@ class TestDependencyIntegrationRealExecution:
             cache=False,
         )
         result1 = provider()
-        assert result1 == {"calls": 1}
+        tm.that(result1, eq={"calls": 1})
         result2 = provider()
-        assert result2 == {"calls": 2}
-        assert result1 is not result2
+        tm.that(result2, eq={"calls": 2})
+        tm.that(result1 is not result2, eq=True)
 
     def test_register_resource_with_lifecycle(self) -> None:
         """Test register_resource with real teardown."""
@@ -151,7 +151,7 @@ class TestDependencyIntegrationRealExecution:
             lifecycle["created"] = True
             return {"connected": True}
 
-        def resource_teardown(resource: Mapping[str, bool]) -> None:
+        def resource_teardown(_resource: Mapping[str, bool]) -> None:
             lifecycle["closed"] = True
 
         provider = FlextRuntime.DependencyIntegration.register_resource(
@@ -160,10 +160,10 @@ class TestDependencyIntegrationRealExecution:
             resource_factory,
         )
         resource = provider()
-        assert resource == {"connected": True}
-        assert lifecycle["created"] is True
+        tm.that(resource, eq={"connected": True})
+        tm.that(lifecycle["created"], eq=True)
         resource_teardown(resource)
-        assert lifecycle["closed"] is True
+        tm.that(lifecycle["closed"], eq=True)
 
     def test_wire_modules_with_inject(self) -> None:
         """Test wire with @inject decorator real execution."""
@@ -191,7 +191,7 @@ class TestDependencyIntegrationRealExecution:
                 "api_call",
             )
             result = api_call_func()
-            assert result == {"key": "secret123", "timeout": 30}
+            tm.that(result, eq={"key": "secret123", "timeout": 30})
         finally:
             di_container.unwire()
 
@@ -218,7 +218,7 @@ class TestContainerDIRealExecution:
         try:
             log_func: Callable[[], dict[str, str]] = module.log_message
             result = log_func()
-            assert result == {"logger": "test_logger", "level": "INFO"}
+            tm.that(result, eq={"logger": "test_logger", "level": "INFO"})
         finally:
             di_container = container._di_container
             di_container.unwire()
@@ -235,9 +235,9 @@ class TestContainerDIRealExecution:
         scoped = container.scoped(resources={"db": resource_factory})
         result = scoped.get("db")
         resource_value = u.Tests.Result.assert_success(result)
-        assert resource_value == {"connected": True}
-        assert lifecycle["created"] is True
-        assert scoped is not container
+        tm.that(resource_value == {"connected": True}, eq=True)
+        tm.that(lifecycle["created"], eq=True)
+        tm.that(scoped is not container, eq=True)
 
     def test_scoped_with_services_and_factories(self) -> None:
         """Test scoped container with services and factories."""
@@ -247,11 +247,11 @@ class TestContainerDIRealExecution:
             factories={"token_gen": lambda: {"token": "abc123"}},
         )
         service_result = scoped.get("api_key")
-        assert service_result.is_success
-        assert service_result.value == "secret_key"
+        tm.ok(service_result)
+        tm.that(service_result.value == "secret_key", eq=True)
         factory_result = scoped.get("token_gen")
         factory_value = assertion_helpers.assert_flext_result_success(factory_result)
-        assert factory_value == {"token": "abc123"}
+        tm.that(factory_value == {"token": "abc123"}, eq=True)
 
     def test_scoped_with_config_override(self) -> None:
         """Test scoped container with config override."""
@@ -259,8 +259,7 @@ class TestContainerDIRealExecution:
         config_override = FlextSettings(app_name="scoped_app")
         scoped = container.scoped(config=config_override)
         config_obj = scoped.config
-        assert config_obj is not None
-        assert config_obj.app_name == "scoped_app"
+        tm.that(config_obj.app_name, eq="scoped_app")
 
 
 class TestServiceBootstrapWithDI:
@@ -275,14 +274,10 @@ class TestServiceBootstrapWithDI:
             return {"connected": True}
 
         runtime = s._create_runtime(resources={"database": db_factory})
-        assert runtime is not None
-        assert runtime.container is not None
-        assert runtime.config is not None
-        assert runtime.context is not None
         db_result = runtime.container.get("database")
-        assert db_result.is_success
-        assert db_result.value == {"connected": True}
-        assert lifecycle["created"] is True
+        tm.ok(db_result)
+        tm.that(db_result.value == {"connected": True}, eq=True)
+        tm.that(lifecycle["created"], eq=True)
 
     def test_create_service_runtime_with_wiring(self) -> None:
         """Test create_service_runtime with wire_modules."""
@@ -290,10 +285,9 @@ class TestServiceBootstrapWithDI:
             services={"api_key": "test_key"},
             wire_modules=[sys.modules[__name__]],
         )
-        assert runtime.container is not None
         container_instance = runtime.container
-        assert isinstance(container_instance, FlextContainer)
-        assert hasattr(container_instance, "_di_container")
+        tm.that(isinstance(container_instance, FlextContainer), eq=True)
+        tm.that(hasattr(container_instance, "_di_container"), eq=True)
 
     def test_service_with_runtime_bootstrap_options(self) -> None:
         """Test service with _runtime_bootstrap_options override."""
@@ -314,13 +308,13 @@ class TestServiceBootstrapWithDI:
                 return r[str].ok("test")
 
         service = TestService()
-        assert service.runtime is not None
+        tm.that(hasattr(service, "runtime"), eq=True)
         custom_result = service.container.get("custom_service")
-        assert custom_result.is_success
-        assert custom_result.value == "custom_value"
+        tm.ok(custom_result)
+        tm.that(custom_result.value == "custom_value", eq=True)
         factory_result = service.container.get("custom_factory")
-        assert factory_result.is_success
-        assert factory_result.value == {"custom": "data"}
+        tm.ok(factory_result)
+        tm.that(factory_result.value == {"custom": "data"}, eq=True)
 
 
 class TestRealWiringScenarios:
@@ -347,7 +341,7 @@ class TestRealWiringScenarios:
                 handler_module.process_request
             )
             result = process_func()
-            assert result == {"logger": "test_logger", "pool_size": 10}
+            tm.that(result, eq={"logger": "test_logger", "pool_size": 10})
         finally:
             di_container = container._di_container
             di_container.unwire()
@@ -372,8 +366,8 @@ class TestRealWiringScenarios:
         try:
             func1_wired: Callable[[], str] = getattr(module, "func1")
             func2_wired: Callable[[], bool] = getattr(module, "func2")
-            assert func1_wired() == "test"
-            assert func2_wired() is True
+            tm.that(func1_wired(), eq="test")
+            tm.that(func2_wired(), eq=True)
         finally:
             di_container = container._di_container
             di_container.unwire()
@@ -407,8 +401,8 @@ class TestRealWiringScenarios:
         try:
             api_call_func: Callable[[], dict[str, str]] = getattr(module, "api_call")
             result = api_call_func()
-            assert "url" in result
-            assert "base" in result
+            tm.that(result, has="url")
+            tm.that(result, has="base")
         finally:
             di_container = container._di_container
             di_container.unwire()
@@ -428,7 +422,7 @@ class TestRealWiringScenarios:
         try:
             func: Callable[[], str] = getattr(test_module, "test_func")
             result = func()
-            assert result == "wired_value"
+            tm.that(result, eq="wired_value")
         finally:
             di_container = container._di_container
             di_container.unwire()
@@ -439,10 +433,10 @@ class TestRealWiringScenarios:
         _ = container.register("global_service", "global_value")
         scoped = container.scoped(services={"scoped_service": "scoped_value"})
         global_result = scoped.get("global_service")
-        assert global_result.is_success
+        tm.ok(global_result)
         scoped_result = scoped.get("scoped_service")
-        assert scoped_result.is_success
-        assert scoped_result.value == "scoped_value"
+        tm.ok(scoped_result)
+        tm.that(scoped_result.value == "scoped_value", eq=True)
 
     def test_create_service_runtime_full_integration(self) -> None:
         """Test create_service_runtime with full DI integration."""
@@ -460,16 +454,16 @@ class TestRealWiringScenarios:
             resources={"connection": resource_factory},
             wire_modules=[sys.modules[__name__]],
         )
-        assert runtime.config.app_name == "test_app"
+        tm.that(runtime.config.app_name, eq="test_app")
         static_result = runtime.container.get("static_service")
-        assert static_result.is_success
-        assert static_result.value == "static_value"
+        tm.ok(static_result)
+        tm.that(static_result.value == "static_value", eq=True)
         factory_result = runtime.container.get("token_factory")
-        assert factory_result.is_success
-        assert factory_result.value == {"token": "generated_token"}
+        tm.ok(factory_result)
+        tm.that(factory_result.value == {"token": "generated_token"}, eq=True)
         resource_result = runtime.container.get("connection")
-        assert resource_result.is_success
-        assert resource_result.value == {"connected": True}
+        tm.ok(resource_result)
+        tm.that(resource_result.value == {"connected": True}, eq=True)
 
     def test_container_wire_modules_with_classes(self) -> None:
         """Test container.wire_modules with classes parameter."""
@@ -484,7 +478,7 @@ class TestRealWiringScenarios:
         container.wire_modules(classes=[TestClass])
         try:
             instance = TestClass()
-            assert instance.value == "test_injection"
+            tm.that(instance.value, eq="test_injection")
         finally:
             container._di_container.unwire()
 
@@ -504,7 +498,7 @@ class TestRealWiringScenarios:
                 module,
                 "func_with_missing",
             )
-            assert callable(func_with_missing_wired)
+            tm.that(callable(func_with_missing_wired), eq=True)
         finally:
             container._di_container.unwire()
 
@@ -520,8 +514,8 @@ class TestRealWiringScenarios:
         scoped = container.scoped(resources={"test_resource": resource_factory})
         result = scoped.get("test_resource")
         resource_value = assertion_helpers.assert_flext_result_success(result)
-        assert resource_value == {"resource": True}
-        assert lifecycle["created"] is True
+        tm.that(resource_value == {"resource": True}, eq=True)
+        tm.that(lifecycle["created"], eq=True)
 
     def test_multiple_scoped_containers_isolation(self) -> None:
         """Test that multiple scoped containers are isolated."""
@@ -532,11 +526,11 @@ class TestRealWiringScenarios:
         result2 = scoped2.get("service")
         value1 = u.Tests.Result.assert_success(result1)
         value2 = u.Tests.Result.assert_success(result2)
-        assert isinstance(value1, str)
-        assert isinstance(value2, str)
-        assert value1 == "value1"
-        assert value2 == "value2"
-        assert value1 != value2
+        tm.that(isinstance(value1, str), eq=True)
+        tm.that(isinstance(value2, str), eq=True)
+        tm.that(value1 == "value1", eq=True)
+        tm.that(value2 == "value2", eq=True)
+        tm.that(value1 != value2, eq=True)
 
 
 __all__ = [

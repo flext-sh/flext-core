@@ -16,8 +16,6 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-
-from flext_core import r
 from flext_infra import u
 from flext_infra._utilities.output import output
 from flext_infra.basemk import FlextInfraBaseMkGenerator, FlextInfraBaseMkTemplateEngine
@@ -25,6 +23,8 @@ from flext_infra.workspace import (
     FlextInfraOrchestratorService,
     FlextInfraWorkspaceDetector,
 )
+
+from flext_core import r
 
 pytestmark = [pytest.mark.integration]
 

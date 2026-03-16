@@ -23,6 +23,7 @@ from __future__ import annotations
 from collections.abc import Sized
 from typing import cast
 
+from flext_tests import tm
 from pydantic import BaseModel, ValidationError
 
 from flext_core import m, r, t
@@ -35,12 +36,12 @@ class TestFailNoExceptionBackwardCompat:
         """Verify fail() works without exception parameter (backward compat)."""
         error_msg = "Operation failed"
         result: r[int] = r[int].fail(error_msg)
-        assert result.is_failure
-        assert result.error == error_msg
-        assert result.exception is None
+        tm.that(result.is_failure, eq=True)
+        tm.that(result.error == error_msg, eq=True)
+        tm.that(result.exception is None, eq=True)
         result_as_obj = result
-        assert hasattr(result_as_obj, "is_success")
-        assert hasattr(result_as_obj, "is_failure")
+        tm.that(hasattr(result_as_obj, "is_success"), eq=True)
+        tm.that(hasattr(result_as_obj, "is_failure"), eq=True)
 
 
 class TestFailWithException:
@@ -51,10 +52,10 @@ class TestFailWithException:
         error_msg = "Division by zero"
         exc = ZeroDivisionError("cannot divide by zero")
         result: r[float] = r[float].fail(error_msg, exception=exc)
-        assert result.is_failure
-        assert result.error == error_msg
-        assert result.exception is exc
-        assert isinstance(result.exception, ZeroDivisionError)
+        tm.that(result.is_failure, eq=True)
+        tm.that(result.error == error_msg, eq=True)
+        tm.that(result.exception is exc, eq=True)
+        tm.that(isinstance(result.exception, ZeroDivisionError), eq=True)
 
     def test_fail_with_exception_and_error_code(self) -> None:
         """Verify fail() carries exception with error_code."""
@@ -62,10 +63,10 @@ class TestFailWithException:
         error_code = "INVALID_INPUT"
         exc = ValueError("expected integer")
         result: r[str] = r[str].fail(error_msg, error_code=error_code, exception=exc)
-        assert result.is_failure
-        assert result.error == error_msg
-        assert result.error_code == error_code
-        assert result.exception is exc
+        tm.that(result.is_failure, eq=True)
+        tm.that(result.error == error_msg, eq=True)
+        tm.that(result.error_code == error_code, eq=True)
+        tm.that(result.exception is exc, eq=True)
 
     def test_fail_with_exception_and_error_data(self) -> None:
         """Verify fail() carries exception with error_data."""
@@ -80,20 +81,24 @@ class TestFailWithException:
             error_data=error_data,
             exception=exc,
         )
-        assert result.is_failure
-        assert result.error == error_msg
-        assert result.error_data == m.ConfigMap(
-            root=cast("dict[str, t.NormalizedValue | BaseModel]", error_data)
+        tm.that(result.is_failure, eq=True)
+        tm.that(result.error == error_msg, eq=True)
+        tm.that(
+            result.error_data
+            == m.ConfigMap(
+                root=cast("dict[str, t.NormalizedValue | BaseModel]", error_data)
+            ),
+            eq=True,
         )
-        assert result.exception is exc
+        tm.that(result.exception is exc, eq=True)
 
     def test_fail_with_none_error_and_exception(self) -> None:
         """Verify fail() converts None error to empty string, carries exception."""
         exc = RuntimeError("something went wrong")
         result: r[int] = r[int].fail(None, exception=exc)
-        assert result.is_failure
-        assert result.error == ""
-        assert result.exception is exc
+        tm.that(result.is_failure, eq=True)
+        tm.that(result.error == "", eq=True)
+        tm.that(result.exception is exc, eq=True)
 
 
 class TestSafeCarriesException:
@@ -107,10 +112,13 @@ class TestSafeCarriesException:
             return a / b
 
         result: r[float] = divide(10, 0)
-        assert result.is_failure
-        assert result.error is not None and "division by zero" in result.error.lower()
-        assert result.exception is not None
-        assert isinstance(result.exception, ZeroDivisionError)
+        tm.that(result.is_failure, eq=True)
+        tm.that(
+            result.error is not None and "division by zero" in result.error.lower(),
+            eq=True,
+        )
+        tm.that(result.exception is not None, eq=True)
+        tm.that(isinstance(result.exception, ZeroDivisionError), eq=True)
 
     def test_safe_no_exception_on_success(self) -> None:
         """Verify @safe decorator returns success without exception."""
@@ -120,9 +128,9 @@ class TestSafeCarriesException:
             return a + b
 
         result: r[int] = add(5, 3)
-        assert result.is_success
-        assert result.value == 8
-        assert result.exception is None
+        tm.that(result.is_success, eq=True)
+        tm.that(result.value == 8, eq=True)
+        tm.that(result.exception is None, eq=True)
 
     def test_safe_captures_value_error(self) -> None:
         """Verify @safe captures ValueError."""
@@ -134,9 +142,9 @@ class TestSafeCarriesException:
             return int(s)
 
         result: r[int] = parse_int("abc")
-        assert result.is_failure
-        assert result.exception is not None
-        assert isinstance(result.exception, ValueError)
+        tm.that(result.is_failure, eq=True)
+        tm.that(result.exception is not None, eq=True)
+        tm.that(isinstance(result.exception, ValueError), eq=True)
 
     def test_safe_captures_type_error(self) -> None:
         """Verify @safe captures TypeError."""
@@ -153,9 +161,9 @@ class TestSafeCarriesException:
             return len(obj)
 
         result: r[int] = get_length(_BrokenSized())
-        assert result.is_failure
-        assert result.exception is not None
-        assert isinstance(result.exception, TypeError)
+        tm.that(result.is_failure, eq=True)
+        tm.that(result.exception is not None, eq=True)
+        tm.that(isinstance(result.exception, TypeError), eq=True)
 
 
 class TestCreateFromCallableCarriesException:
@@ -169,10 +177,12 @@ class TestCreateFromCallableCarriesException:
             raise RuntimeError(msg)
 
         result: r[int] = r[int].create_from_callable(risky_operation)
-        assert result.is_failure
-        assert result.error is not None and "operation failed" in result.error
-        assert result.exception is not None
-        assert isinstance(result.exception, RuntimeError)
+        tm.that(result.is_failure, eq=True)
+        tm.that(
+            result.error is not None and "operation failed" in result.error, eq=True
+        )
+        tm.that(result.exception is not None, eq=True)
+        tm.that(isinstance(result.exception, RuntimeError), eq=True)
 
     def test_create_from_callable_success_no_exception(self) -> None:
         """Verify create_from_callable() returns success without exception."""
@@ -181,9 +191,9 @@ class TestCreateFromCallableCarriesException:
             return "success"
 
         result: r[str] = r[str].create_from_callable(safe_operation)
-        assert result.is_success
-        assert result.value == "success"
-        assert result.exception is None
+        tm.that(result.is_success, eq=True)
+        tm.that(result.value == "success", eq=True)
+        tm.that(result.exception is None, eq=True)
 
     def test_create_from_callable_with_error_code(self) -> None:
         """Verify create_from_callable() carries error_code."""
@@ -196,9 +206,9 @@ class TestCreateFromCallableCarriesException:
             failing_operation,
             error_code="INVALID_VALUE",
         )
-        assert result.is_failure
-        assert result.error_code == "INVALID_VALUE"
-        assert result.exception is not None
+        tm.that(result.is_failure, eq=True)
+        tm.that(result.error_code == "INVALID_VALUE", eq=True)
+        tm.that(result.exception is not None, eq=True)
 
 
 class TestMapPropagatesException:
@@ -209,24 +219,24 @@ class TestMapPropagatesException:
         exc = ValueError("original error")
         result: r[int] = r[int].fail("error", exception=exc)
         mapped: r[int] = result.map(lambda x: x * 2)
-        assert mapped.is_failure
-        assert mapped.exception is exc
+        tm.that(mapped.is_failure, eq=True)
+        tm.that(mapped.exception is exc, eq=True)
 
     def test_map_success_no_exception(self) -> None:
         """Verify map() on success has no exception."""
         result: r[int] = r[int].ok(5)
         mapped: r[int] = result.map(lambda x: x * 2)
-        assert mapped.is_success
-        assert mapped.value == 10
-        assert mapped.exception is None
+        tm.that(mapped.is_success, eq=True)
+        tm.that(mapped.value == 10, eq=True)
+        tm.that(mapped.exception is None, eq=True)
 
     def test_map_chain_preserves_exception(self) -> None:
         """Verify exception preserved through map chain."""
         exc = RuntimeError("chain error")
         result: r[int] = r[int].fail("error", exception=exc)
         mapped: r[int] = result.map(lambda x: x + 1).map(lambda x: x * 2)
-        assert mapped.is_failure
-        assert mapped.exception is exc
+        tm.that(mapped.is_failure, eq=True)
+        tm.that(mapped.exception is exc, eq=True)
 
 
 class TestFlatMapPropagatesException:
@@ -237,16 +247,16 @@ class TestFlatMapPropagatesException:
         exc = TypeError("type error")
         result: r[int] = r[int].fail("error", exception=exc)
         flat_mapped: r[str] = result.flat_map(lambda x: r[str].ok(str(x)))
-        assert flat_mapped.is_failure
-        assert flat_mapped.exception is exc
+        tm.that(flat_mapped.is_failure, eq=True)
+        tm.that(flat_mapped.exception is exc, eq=True)
 
     def test_flat_map_success_no_exception(self) -> None:
         """Verify flat_map() on success has no exception."""
         result: r[int] = r[int].ok(5)
         flat_mapped: r[str] = result.flat_map(lambda x: r[str].ok(str(x)))
-        assert flat_mapped.is_success
-        assert flat_mapped.value == "5"
-        assert flat_mapped.exception is None
+        tm.that(flat_mapped.is_success, eq=True)
+        tm.that(flat_mapped.value == "5", eq=True)
+        tm.that(flat_mapped.exception is None, eq=True)
 
     def test_flat_map_chain_preserves_exception(self) -> None:
         """Verify exception preserved through flat_map chain."""
@@ -255,8 +265,8 @@ class TestFlatMapPropagatesException:
         flat_mapped: r[str] = result.flat_map(lambda x: r[int].ok(x + 1)).flat_map(
             lambda x: r[str].ok(str(x)),
         )
-        assert flat_mapped.is_failure
-        assert flat_mapped.exception is exc
+        tm.that(flat_mapped.is_failure, eq=True)
+        tm.that(flat_mapped.exception is exc, eq=True)
 
 
 class TestAltPropagatesException:
@@ -267,17 +277,17 @@ class TestAltPropagatesException:
         exc = ValueError("original")
         result: r[int] = r[int].fail("error", exception=exc)
         altered: r[int] = result.map_error(lambda e: f"transformed: {e}")
-        assert altered.is_failure
-        assert altered.exception is exc
-        assert altered.error is not None and "transformed" in altered.error
+        tm.that(altered.is_failure, eq=True)
+        tm.that(altered.exception is exc, eq=True)
+        tm.that(altered.error is not None and "transformed" in altered.error, eq=True)
 
     def test_alt_success_no_exception(self) -> None:
         """Verify alt() on success has no exception."""
         result: r[int] = r[int].ok(42)
         altered: r[int] = result.map_error(lambda e: f"error: {e}")
-        assert altered.is_success
-        assert altered.value == 42
-        assert altered.exception is None
+        tm.that(altered.is_success, eq=True)
+        tm.that(altered.value == 42, eq=True)
+        tm.that(altered.exception is None, eq=True)
 
 
 class TestLashPropagatesException:
@@ -288,8 +298,8 @@ class TestLashPropagatesException:
         exc = RuntimeError("recovery needed")
         result: r[int] = r[int].fail("error", exception=exc)
         recovered = result.lash(lambda e: r[int].ok(0))
-        assert recovered.is_success
-        assert recovered.value == 0
+        tm.that(recovered.is_success, eq=True)
+        tm.that(recovered.value == 0, eq=True)
 
     def test_lash_preserves_exception_on_recovery_failure(self) -> None:
         """Verify lash() preserves exception when recovery also fails."""
@@ -299,8 +309,8 @@ class TestLashPropagatesException:
         recovered: r[int] = result.lash(
             lambda e: r[int].fail(f"recovery failed: {e}", exception=recovery_exc),
         )
-        assert recovered.is_failure
-        assert recovered.exception is recovery_exc
+        tm.that(recovered.is_failure, eq=True)
+        tm.that(recovered.exception is recovery_exc, eq=True)
 
 
 class TestTraversePropagatesException:
@@ -317,8 +327,8 @@ class TestTraversePropagatesException:
             return r[int].ok(x * 2)
 
         result = r[int].traverse(items, process_with_failure, fail_fast=True)
-        assert result.is_failure
-        assert result.exception is exc
+        tm.that(result.is_failure, eq=True)
+        tm.that(result.exception is exc, eq=True)
 
     def test_traverse_accumulate_preserves_exceptions(self) -> None:
         """Verify traverse() with fail_fast=False accumulates error messages."""
@@ -334,9 +344,9 @@ class TestTraversePropagatesException:
             return r[int].ok(x * 2)
 
         result = r[int].traverse(items, process_with_failures, fail_fast=False)
-        assert result.is_failure
-        assert result.error is not None
-        assert "error 1" in result.error and "error 2" in result.error
+        tm.that(result.is_failure, eq=True)
+        tm.that(result.error is not None, eq=True)
+        tm.that("error 1" in result.error and "error 2" in result.error, eq=True)
 
 
 class TestFromValidationCarriesException:
@@ -351,9 +361,9 @@ class TestFromValidationCarriesException:
 
         invalid_data = {"name": "Alice", "age": "not_an_int"}
         result = r[User].from_validation(invalid_data, User)
-        assert result.is_failure
-        assert result.exception is not None
-        assert isinstance(result.exception, ValidationError)
+        tm.that(result.is_failure, eq=True)
+        tm.that(result.exception is not None, eq=True)
+        tm.that(isinstance(result.exception, ValidationError), eq=True)
 
 
 class TestErrorOrPatternUnchanged:
@@ -365,16 +375,16 @@ class TestErrorOrPatternUnchanged:
         result_failure: r[int] = r[int].fail("error message")
         error_success = result_success.error or "fallback"
         error_failure = result_failure.error or "fallback"
-        assert error_success == "fallback"
-        assert error_failure == "error message"
+        tm.that(error_success == "fallback", eq=True)
+        tm.that(error_failure == "error message", eq=True)
 
     def test_error_or_pattern_with_exception(self) -> None:
         """Verify .error or pattern works with exception carrying."""
         exc = RuntimeError("runtime error")
         result: r[int] = r[int].fail("error", exception=exc)
         error_msg = result.error or "fallback"
-        assert error_msg == "error"
-        assert result.exception is exc
+        tm.that(error_msg == "error", eq=True)
+        tm.that(result.exception is exc, eq=True)
 
 
 class TestOkNoneGuardStillRaises:
@@ -383,16 +393,16 @@ class TestOkNoneGuardStillRaises:
     def test_ok_none_succeeds(self) -> None:
         """Verify ok(None) creates valid success result."""
         result = r[int | None].ok(None)
-        assert result.is_success
-        assert result.value is None
+        tm.that(result.is_success, eq=True)
+        tm.that(result.value is None, eq=True)
 
     def test_ok_with_valid_value_succeeds(self) -> None:
         """Verify ok() with valid value succeeds."""
         value = 42
         result: r[int] = r[int].ok(value)
-        assert result.is_success
-        assert result.value == 42
-        assert result.exception is None
+        tm.that(result.is_success, eq=True)
+        tm.that(result.value == 42, eq=True)
+        tm.that(result.exception is None, eq=True)
 
 
 class TestMonadicOperationsUnchanged:
@@ -407,9 +417,9 @@ class TestMonadicOperationsUnchanged:
             .flat_map(lambda x: r[int].ok(x + 1))
             .filter(lambda x: x > 5)
         )
-        assert final.is_success
-        assert final.value == 11
-        assert final.exception is None
+        tm.that(final.is_success, eq=True)
+        tm.that(final.value == 11, eq=True)
+        tm.that(final.exception is None, eq=True)
 
     def test_monadic_chain_with_exception_in_middle(self) -> None:
         """Verify exception propagates through monadic chain."""
@@ -421,16 +431,16 @@ class TestMonadicOperationsUnchanged:
             .flat_map(lambda x: r[int].fail("error", exception=exc))
             .map(lambda x: x + 1)
         )
-        assert final.is_failure
-        assert final.exception is exc
+        tm.that(final.is_failure, eq=True)
+        tm.that(final.exception is exc, eq=True)
 
     def test_recover_with_exception(self) -> None:
         """Verify recover() works with exception carrying."""
         exc = RuntimeError("recovery needed")
         result: r[int] = r[int].fail("error", exception=exc)
         recovered: r[int] = result.recover(lambda e: 0)
-        assert recovered.is_success
-        assert recovered.value == 0
+        tm.that(recovered.is_success, eq=True)
+        tm.that(recovered.value == 0, eq=True)
 
     def test_fold_with_exception(self) -> None:
         """Verify fold() works with exception carrying."""
@@ -440,7 +450,7 @@ class TestMonadicOperationsUnchanged:
             on_failure=lambda e: f"failed: {e}",
             on_success=lambda v: f"success: {v}",
         )
-        assert folded == "failed: error"
+        tm.that(folded == "failed: error", eq=True)
 
     def test_tap_with_exception(self) -> None:
         """Verify tap() works with exception carrying."""
@@ -453,9 +463,9 @@ class TestMonadicOperationsUnchanged:
             side_effect_called = True
 
         tapped: r[int] = result.tap(side_effect)
-        assert tapped.is_failure
-        assert not side_effect_called
-        assert tapped.exception is exc
+        tm.that(tapped.is_failure, eq=True)
+        tm.that(not side_effect_called, eq=True)
+        tm.that(tapped.exception is exc, eq=True)
 
     def test_tap_error_with_exception(self) -> None:
         """Verify tap_error() works with exception carrying."""
@@ -468,9 +478,9 @@ class TestMonadicOperationsUnchanged:
             side_effect_called = True
 
         tapped: r[int] = result.tap_error(side_effect)
-        assert tapped.is_failure
-        assert side_effect_called
-        assert tapped.exception is exc
+        tm.that(tapped.is_failure, eq=True)
+        tm.that(side_effect_called, eq=True)
+        tm.that(tapped.exception is exc, eq=True)
 
 
 class TestExceptionPropertyAccess:
@@ -480,23 +490,23 @@ class TestExceptionPropertyAccess:
         """Verify exception property is None on success."""
         result: r[int] = r[int].ok(42)
         exc = result.exception
-        assert exc is None
+        tm.that(exc is None, eq=True)
 
     def test_exception_property_set_on_failure(self) -> None:
         """Verify exception property is set on failure."""
         exc = RuntimeError("test error")
         result: r[int] = r[int].fail("error", exception=exc)
         retrieved_exc = result.exception
-        assert retrieved_exc is exc
-        assert isinstance(retrieved_exc, RuntimeError)
+        tm.that(retrieved_exc is exc, eq=True)
+        tm.that(isinstance(retrieved_exc, RuntimeError), eq=True)
 
     def test_exception_property_type_check(self) -> None:
         """Verify exception property type is BaseException | None."""
         exc = ValueError("value error")
         result: r[int] = r[int].fail("error", exception=exc)
         retrieved_exc = result.exception
-        assert isinstance(retrieved_exc, BaseException)
-        assert isinstance(retrieved_exc, ValueError)
+        tm.that(isinstance(retrieved_exc, BaseException), eq=True)
+        tm.that(isinstance(retrieved_exc, ValueError), eq=True)
 
     def test_exception_property_multiple_exception_types(self) -> None:
         """Verify exception property works with different exception types."""
@@ -509,5 +519,5 @@ class TestExceptionPropertyAccess:
         ]
         for exc in exceptions:
             result: r[int] = r[int].fail("error", exception=exc)
-            assert result.exception is exc
-            assert isinstance(result.exception, type(exc))
+            tm.that(result.exception is exc, eq=True)
+            tm.that(isinstance(result.exception, type(exc)), eq=True)

@@ -21,9 +21,9 @@ from enum import StrEnum
 from typing import Final
 
 import pytest
+from flext_tests import u
 
 from flext_core import FlextRuntime, r, t
-from flext_tests import u
 
 
 class TestFlextUtilitiesReliability:

@@ -29,6 +29,7 @@ from typing import Annotated, ClassVar, cast
 import pytest
 import structlog
 from dependency_injector import containers, providers
+from flext_tests import t, tm
 from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core import (
@@ -43,7 +44,6 @@ from flext_core import (
     s,
 )
 from flext_core.runtime import RuntimeData
-from flext_tests import t
 
 
 class RuntimeOperationType(StrEnum):
@@ -586,9 +586,9 @@ class TestFlextRuntime:
         test_case.test_input may be None or various types, so we cast to object
         for type compatibility while preserving runtime behavior.
         """
-        assert not isinstance(test_case.test_input, type)
+        tm.that(not isinstance(test_case.test_input, type), eq=True)
         result = FlextRuntime.is_dict_like(cast("RuntimeData", test_case.test_input))
-        assert result == test_case.expected_result
+        tm.that(result == test_case.expected_result, eq=True)
 
     @pytest.mark.parametrize(
         "test_case",
@@ -602,9 +602,9 @@ class TestFlextRuntime:
         test_case.test_input may be None or various types, so we cast to object
         for type compatibility while preserving runtime behavior.
         """
-        assert not isinstance(test_case.test_input, type)
+        tm.that(not isinstance(test_case.test_input, type), eq=True)
         result = FlextRuntime.is_list_like(cast("RuntimeData", test_case.test_input))
-        assert result == test_case.expected_result
+        tm.that(result == test_case.expected_result, eq=True)
 
     @pytest.mark.parametrize(
         "test_case",
@@ -617,9 +617,9 @@ class TestFlextRuntime:
         Business Rule: None is a valid test input - validates that is_valid_json
         correctly returns False for None values.
         """
-        assert not isinstance(test_case.test_input, type)
+        tm.that(not isinstance(test_case.test_input, type), eq=True)
         result = FlextRuntime.is_valid_json(cast("RuntimeData", test_case.test_input))
-        assert result == test_case.expected_result
+        tm.that(result == test_case.expected_result, eq=True)
 
     @pytest.mark.parametrize(
         "test_case",
@@ -632,11 +632,11 @@ class TestFlextRuntime:
         Business Rule: None is a valid test input - validates that is_valid_identifier
         correctly returns False for None values.
         """
-        assert not isinstance(test_case.test_input, type)
+        tm.that(not isinstance(test_case.test_input, type), eq=True)
         result = FlextRuntime.is_valid_identifier(
             cast("RuntimeData", test_case.test_input)
         )
-        assert result == test_case.expected_result
+        tm.that(result == test_case.expected_result, eq=True)
 
     @pytest.mark.parametrize(
         "test_case",
@@ -651,7 +651,7 @@ class TestFlextRuntime:
                 attr = "value"
 
             result = FlextRuntime.safe_get_attribute(TestObj, "attr")
-            assert result == "value"
+            tm.that(result == "value", eq=True)
         elif (
             test_case.operation
             == RuntimeOperationType.SAFE_GET_ATTRIBUTE_MISSING_DEFAULT
@@ -665,7 +665,7 @@ class TestFlextRuntime:
                 "missing",
                 "default",
             )
-            assert result == "default"
+            tm.that(result == "default", eq=True)
         elif (
             test_case.operation
             == RuntimeOperationType.SAFE_GET_ATTRIBUTE_MISSING_NO_DEFAULT
@@ -675,7 +675,7 @@ class TestFlextRuntime:
                 pass
 
             result = FlextRuntime.safe_get_attribute(TestObjNoDefault, "missing")
-            assert result is None
+            tm.that(result is None, eq=True)
 
     @pytest.mark.parametrize(
         "test_case",
@@ -691,7 +691,7 @@ class TestFlextRuntime:
         """
         test_input_typed = cast("t.TypeHintSpecifier", test_case.test_input)
         args = FlextRuntime.extract_generic_args(test_input_typed)
-        assert args == test_case.expected_result
+        tm.that(args == test_case.expected_result, eq=True)
 
     @pytest.mark.parametrize(
         "test_case",
@@ -707,7 +707,7 @@ class TestFlextRuntime:
         """
         test_input_typed = cast("t.TypeHintSpecifier", test_case.test_input)
         result = FlextRuntime.is_sequence_type(test_input_typed)
-        assert result == test_case.expected_result
+        tm.that(result == test_case.expected_result, eq=True)
 
     @pytest.mark.parametrize(
         "test_case",
@@ -718,16 +718,21 @@ class TestFlextRuntime:
         """Test external library access."""
         if test_case.operation == RuntimeOperationType.STRUCTLOG_MODULE:
             module = FlextRuntime.structlog()
-            assert module is structlog
-            assert all(hasattr(module, attr) for attr in ["get_logger", "configure"])
+            tm.that(module is structlog, eq=True)
+            tm.that(
+                all(hasattr(module, attr) for attr in ["get_logger", "configure"]),
+                eq=True,
+            )
         elif test_case.operation == RuntimeOperationType.DEPENDENCY_PROVIDERS_MODULE:
             module = FlextRuntime.dependency_providers()
-            assert module is providers
-            assert all(hasattr(module, attr) for attr in ["Singleton", "Factory"])
+            tm.that(module is providers, eq=True)
+            tm.that(
+                all(hasattr(module, attr) for attr in ["Singleton", "Factory"]), eq=True
+            )
         elif test_case.operation == RuntimeOperationType.DEPENDENCY_CONTAINERS_MODULE:
             module = FlextRuntime.dependency_containers()
-            assert module is containers
-            assert hasattr(module, "DeclarativeContainer")
+            tm.that(module is containers, eq=True)
+            tm.that(hasattr(module, "DeclarativeContainer"), eq=True)
         elif (
             test_case.operation == RuntimeOperationType.DEPENDENCY_WIRING_CONFIGURATION
         ):
@@ -736,12 +741,12 @@ class TestFlextRuntime:
                 di_container,
                 m.ConfigMap(root={"database": {"dsn": "sqlite://"}}),
             )
-            assert isinstance(config_provider, providers.Configuration)
+            tm.that(isinstance(config_provider, providers.Configuration), eq=True)
             config = di_container.config
             database_config = getattr(config, "database", None)
-            assert database_config is not None
+            tm.that(database_config is not None, eq=True)
             dsn_value = database_config.dsn()
-            assert dsn_value == "sqlite://"
+            tm.that(dsn_value == "sqlite://", eq=True)
             module = ModuleType("di_config_module")
 
             @FlextRuntime.DependencyIntegration.inject
@@ -756,9 +761,9 @@ class TestFlextRuntime:
             di_container.wire(modules=[module])
             try:
                 read_func = cast("Callable[[], str]", getattr(module, "read_config"))
-                assert callable(read_func)
+                tm.that(callable(read_func), eq=True)
                 result = read_func()
-                assert result == "sqlite://"
+                tm.that(result == "sqlite://", eq=True)
             finally:
                 di_container.unwire()
         elif test_case.operation == RuntimeOperationType.DEPENDENCY_WIRING_FACTORIES:
@@ -773,9 +778,9 @@ class TestFlextRuntime:
                 "static_value",
                 42,
             )
-            assert isinstance(factory_provider, providers.Singleton)
-            assert factory_provider() == {"token": "abc123"}
-            assert object_provider() == 42
+            tm.that(isinstance(factory_provider, providers.Singleton), eq=True)
+            tm.that(factory_provider() == {"token": "abc123"}, eq=True)
+            tm.that(object_provider() == 42, eq=True)
             module = ModuleType("di_factory_module")
 
             @FlextRuntime.DependencyIntegration.inject
@@ -796,10 +801,10 @@ class TestFlextRuntime:
                     "Callable[[], tuple[dict[str, str], int]]",
                     getattr(module, "consume"),
                 )
-                assert callable(consume_factory_func)
+                tm.that(callable(consume_factory_func), eq=True)
                 tokens, value = consume_factory_func()
-                assert tokens == {"token": "abc123"}
-                assert value == 42
+                tm.that(tokens == {"token": "abc123"}, eq=True)
+                tm.that(value == 42, eq=True)
             finally:
                 di_container.unwire()
         elif test_case.operation == RuntimeOperationType.DEPENDENCY_WIRING_AUTOMATION:
@@ -842,16 +847,16 @@ class TestFlextRuntime:
                     "Callable[[], tuple[int, dict[str, int], bool, dict[str, bool]]]",
                     getattr(module, "consume"),
                 )
-                assert callable(consume_automation_func)
+                tm.that(callable(consume_automation_func), eq=True)
                 first_static, first_token, config_enabled, resource_value = (
                     consume_automation_func()
                 )
                 second_static, second_token, _, _ = consume_automation_func()
-                assert first_static == second_static == 7
-                assert config_enabled is True
-                assert resource_value == {"connected": True}
-                assert first_token["token"] == 1
-                assert second_token["token"] == 2
+                tm.that(first_static == second_static == 7, eq=True)
+                tm.that(config_enabled is True, eq=True)
+                tm.that(resource_value == {"connected": True}, eq=True)
+                tm.that(first_token["token"] == 1, eq=True)
+                tm.that(second_token["token"] == 2, eq=True)
             finally:
                 di_container.unwire()
         elif test_case.operation == RuntimeOperationType.SERVICE_RUNTIME_AUTOMATION:
@@ -889,14 +894,14 @@ class TestFlextRuntime:
                     "Callable[[], tuple[bool, dict[str, int], dict[str, bool]]]",
                     getattr(module, "consume"),
                 )
-                assert callable(consume_service_func)
+                tm.that(callable(consume_service_func), eq=True)
                 feature_flag, first_token, resource = consume_service_func()
                 _, second_token, _ = consume_service_func()
-                assert runtime.config.app_name == "runtime-service"
-                assert feature_flag is True
-                assert resource == {"connected": True}
-                assert first_token["count"] == 1
-                assert second_token["count"] == 2
+                tm.that(runtime.config.app_name == "runtime-service", eq=True)
+                tm.that(feature_flag is True, eq=True)
+                tm.that(resource == {"connected": True}, eq=True)
+                tm.that(first_token["count"] == 1, eq=True)
+                tm.that(second_token["count"] == 2, eq=True)
             finally:
                 container = cast("FlextContainer", runtime.container)
                 container._di_bridge.unwire()
@@ -922,19 +927,21 @@ class TestFlextRuntime:
             )
             runtime_first = component._get_runtime()
             runtime_second = component._get_runtime()
-            assert runtime_first is runtime_second
-            assert component.config.app_name == "runtime-aware"
-            assert component.context is runtime_first.context
+            tm.that(runtime_first is runtime_second, eq=True)
+            tm.that(component.config.app_name == "runtime-aware", eq=True)
+            tm.that(component.context is runtime_first.context, eq=True)
             service_result: r[t.RegisterableService] = component.container.get(
                 "preseed"
             )
-            assert service_result.is_success
-            assert service_result.value == m.ConfigMap(root={"enabled": True})
+            tm.that(service_result.is_success, eq=True)
+            tm.that(
+                service_result.value == m.ConfigMap(root={"enabled": True}), eq=True
+            )
             factory_result: r[t.RegisterableService] = component.container.get(
                 "counter"
             )
-            assert factory_result.is_success
-            assert factory_result.value == {"count": 1}
+            tm.that(factory_result.is_success, eq=True)
+            tm.that(factory_result.value == {"count": 1}, eq=True)
 
     @pytest.mark.parametrize(
         "test_case",
@@ -947,19 +954,19 @@ class TestFlextRuntime:
             RuntimeScenarios.reset_structlog_config()
         if test_case.operation == RuntimeOperationType.CONFIGURE_STRUCTLOG_DEFAULTS:
             FlextRuntime.configure_structlog()
-            assert FlextRuntime._structlog_configured is True
+            tm.that(FlextRuntime._structlog_configured is True, eq=True)
         elif (
             test_case.operation
             == RuntimeOperationType.CONFIGURE_STRUCTLOG_CUSTOM_LOG_LEVEL
         ):
             FlextRuntime.configure_structlog(log_level=logging.DEBUG)
-            assert FlextRuntime._structlog_configured is True
+            tm.that(FlextRuntime._structlog_configured is True, eq=True)
         elif (
             test_case.operation
             == RuntimeOperationType.CONFIGURE_STRUCTLOG_JSON_RENDERER
         ):
             FlextRuntime.configure_structlog(console_renderer=False)
-            assert FlextRuntime._structlog_configured is True
+            tm.that(FlextRuntime._structlog_configured is True, eq=True)
         elif (
             test_case.operation
             == RuntimeOperationType.CONFIGURE_STRUCTLOG_ADDITIONAL_PROCESSORS
@@ -975,11 +982,11 @@ class TestFlextRuntime:
 
             _ = custom_processor
             FlextRuntime.configure_structlog(additional_processors=["custom_processor"])
-            assert FlextRuntime._structlog_configured is True
+            tm.that(FlextRuntime._structlog_configured is True, eq=True)
         elif test_case.operation == RuntimeOperationType.CONFIGURE_STRUCTLOG_IDEMPOTENT:
             FlextRuntime.configure_structlog()
             FlextRuntime.configure_structlog()
-            assert FlextRuntime._structlog_configured is True
+            tm.that(FlextRuntime._structlog_configured is True, eq=True)
 
     @pytest.mark.parametrize(
         "test_case",
@@ -989,18 +996,20 @@ class TestFlextRuntime:
     def test_runtime_integration(self, test_case: RuntimeTestCase) -> None:
         """Test FlextRuntime integration scenarios."""
         if test_case.operation == RuntimeOperationType.INTEGRATION_CONSTANTS_PATTERNS:
-            assert hasattr(c.Platform, "PATTERN_PHONE_NUMBER")
-            assert FlextRuntime.is_valid_json('{"phone": "+5511987654321"}')
+            tm.that(hasattr(c.Platform, "PATTERN_PHONE_NUMBER"), eq=True)
+            tm.that(FlextRuntime.is_valid_json('{"phone": "+5511987654321"}'), eq=True)
         elif test_case.operation == RuntimeOperationType.INTEGRATION_LAYER_HIERARCHY:
-            assert c is not None and FlextRuntime is not None
-            assert c.Platform.PATTERN_EMAIL is not None
+            tm.that(c is not None and FlextRuntime is not None, eq=True)
+            tm.that(c.Platform.PATTERN_EMAIL is not None, eq=True)
         elif (
             test_case.operation == RuntimeOperationType.TRACK_SERVICE_RESOLUTION_SUCCESS
         ):
             FlextRuntime.configure_structlog()
             correlation_id = FlextContext.Utilities.ensure_correlation_id()
             FlextRuntime.Integration.track_service_resolution("database", resolved=True)
-            assert FlextContext.Correlation.get_correlation_id() == correlation_id
+            tm.that(
+                FlextContext.Correlation.get_correlation_id() == correlation_id, eq=True
+            )
         elif (
             test_case.operation == RuntimeOperationType.TRACK_SERVICE_RESOLUTION_FAILURE
         ):
@@ -1011,7 +1020,9 @@ class TestFlextRuntime:
                 resolved=False,
                 error_message="Connection refused",
             )
-            assert FlextContext.Correlation.get_correlation_id() == correlation_id
+            tm.that(
+                FlextContext.Correlation.get_correlation_id() == correlation_id, eq=True
+            )
         elif (
             test_case.operation
             == RuntimeOperationType.TRACK_DOMAIN_EVENT_WITH_AGGREGATE
@@ -1023,7 +1034,9 @@ class TestFlextRuntime:
                 aggregate_id="user-123",
                 event_data=m.ConfigMap(root={"email": "test@example.com"}),
             )
-            assert FlextContext.Correlation.get_correlation_id() == correlation_id
+            tm.that(
+                FlextContext.Correlation.get_correlation_id() == correlation_id, eq=True
+            )
         elif (
             test_case.operation
             == RuntimeOperationType.TRACK_DOMAIN_EVENT_WITHOUT_AGGREGATE
@@ -1034,7 +1047,9 @@ class TestFlextRuntime:
                 "SystemInitialized",
                 event_data=m.ConfigMap(root={"timestamp": "2025-01-01T00:00:00Z"}),
             )
-            assert FlextContext.Correlation.get_correlation_id() == correlation_id
+            tm.that(
+                FlextContext.Correlation.get_correlation_id() == correlation_id, eq=True
+            )
         elif (
             test_case.operation
             == RuntimeOperationType.SETUP_SERVICE_INFRASTRUCTURE_FULL
@@ -1045,9 +1060,9 @@ class TestFlextRuntime:
                 service_version="1.0.0",
                 enable_context_correlation=True,
             )
-            assert FlextContext.Variables.ServiceName.get() == "test-service"
-            assert FlextContext.Variables.ServiceVersion.get() == "1.0.0"
-            assert FlextContext.Correlation.get_correlation_id() is not None
+            tm.that(FlextContext.Variables.ServiceName.get() == "test-service", eq=True)
+            tm.that(FlextContext.Variables.ServiceVersion.get() == "1.0.0", eq=True)
+            tm.that(FlextContext.Correlation.get_correlation_id() is not None, eq=True)
         elif (
             test_case.operation
             == RuntimeOperationType.SETUP_SERVICE_INFRASTRUCTURE_MINIMAL
@@ -1057,8 +1072,10 @@ class TestFlextRuntime:
                 service_name="minimal-service",
                 enable_context_correlation=True,
             )
-            assert FlextContext.Variables.ServiceName.get() == "minimal-service"
-            assert FlextContext.Correlation.get_correlation_id() is not None
+            tm.that(
+                FlextContext.Variables.ServiceName.get() == "minimal-service", eq=True
+            )
+            tm.that(FlextContext.Correlation.get_correlation_id() is not None, eq=True)
         elif (
             test_case.operation
             == RuntimeOperationType.SETUP_SERVICE_WITHOUT_CORRELATION
@@ -1070,8 +1087,11 @@ class TestFlextRuntime:
                 service_version="2.0.0",
                 enable_context_correlation=False,
             )
-            assert FlextContext.Variables.ServiceName.get() == "no-correlation-service"
-            assert FlextContext.Correlation.get_correlation_id() is None
+            tm.that(
+                FlextContext.Variables.ServiceName.get() == "no-correlation-service",
+                eq=True,
+            )
+            tm.that(FlextContext.Correlation.get_correlation_id() is None, eq=True)
 
 
 __all__ = ["TestFlextRuntime"]

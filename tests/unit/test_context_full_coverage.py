@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 import pytest
+from flext_tests import t, tm
 from pydantic import BaseModel
 
 from flext_core import FlextContainer, FlextContext, c, m, r
-from flext_tests import t, tm
 
 
 class _ContainerStub:

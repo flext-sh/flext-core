@@ -22,10 +22,10 @@ from enum import StrEnum
 from typing import Annotated, ClassVar, cast
 
 import pytest
+from flext_tests import t, tm
 from pydantic import BaseModel, Field
 
 from flext_core import FlextExceptions, FlextRuntime, c, m, p, u
-from flext_tests import t, tm
 from tests.unit._models import (
     BadConfigForTest,
     ConfigModelForTest,

@@ -9,10 +9,10 @@ from types import SimpleNamespace
 from typing import Annotated, cast
 
 import pytest
+from flext_tests import t as test_t, tm
 from pydantic import BaseModel, Field
 
 from flext_core import FlextContainer, FlextContext, FlextLogger, c, d, e, m, r, t
-from flext_tests import t as test_t, tm
 
 
 class _FakeLogger:
