@@ -167,7 +167,8 @@ class FlextRegistry(s[bool]):
 
     @staticmethod
     def _narrow_value(
-        value: t.NormalizedValue
+        value: object
+        | t.NormalizedValue
         | t.RegisterableService
         | t.RegistrablePlugin
         | BaseModel

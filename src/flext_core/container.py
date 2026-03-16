@@ -793,16 +793,19 @@ class FlextContainer(p.Container):
             _ = self.register("context", self._context)
         if not self.has_service("command_bus"):
             dispatcher = FlextDispatcher()
+            service_candidate: object = dispatcher
+            if not u.is_registerable_service(service_candidate):
+                return
             dispatcher_name = "command_bus"
             registration = m.ServiceRegistration(
                 name=dispatcher_name,
-                service=dispatcher,
-                service_type=type(dispatcher).__name__,
+                service=service_candidate,
+                service_type=type(service_candidate).__name__,
             )
             self._services[dispatcher_name] = registration
             if not hasattr(self._di_services, dispatcher_name):
                 provider = FlextRuntime.DependencyIntegration.register_object(
-                    self._di_services, dispatcher_name, dispatcher
+                    self._di_services, dispatcher_name, service_candidate
                 )
                 setattr(self._di_bridge, dispatcher_name, provider)
                 setattr(self._di_container, dispatcher_name, provider)
