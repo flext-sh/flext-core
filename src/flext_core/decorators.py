@@ -923,9 +923,9 @@ class FlextDecorators:
     ) -> None:
         """Ensure FlextLogger call results are handled for diagnostics."""
         if result.is_failure:
-            fallback_logger = logger.logger if hasattr(logger, "logger") else None
-            if fallback_logger is None or not hasattr(fallback_logger, "warning"):
+            if not isinstance(logger, FlextLogger):
                 return
+            fallback_logger = logger.logger
             fallback_kwargs = t.ConfigMap(root=kwargs.root)
             warning_context: dict[str, t.Container | Exception] = {}
             for key, value in fallback_kwargs.root.items():
@@ -955,7 +955,7 @@ class FlextDecorators:
                     warning_context[str(key)] = str(value)
             warning_context["log_error"] = result.error or ""
             warning_context["log_error_code"] = result.error_code or ""
-            _ = fallback_logger.warning(fallback_message, **warning_context)
+            fallback_logger.warning(fallback_message, **warning_context)
 
     @staticmethod
     def _handle_retry_exhaustion(
@@ -995,9 +995,7 @@ class FlextDecorators:
         return isinstance(logger_value, p.Logger)
 
     @staticmethod
-    def _resolve_logger(
-        args: tuple[t.NormalizedValue | BaseModel, ...], func: Callable[P, R]
-    ) -> p.Logger:
+    def _resolve_logger(args: tuple[object, ...], func: Callable[P, R]) -> p.Logger:
         """Resolve logger from first argument or create module logger.
 
         Returns:
