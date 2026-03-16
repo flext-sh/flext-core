@@ -20,8 +20,7 @@ from typing import Annotated, TypeGuard
 from pydantic import BaseModel, ConfigDict, Field, SkipValidation, field_validator
 
 from flext_core import c, t
-from flext_core._models import FlextModelFoundation
-from flext_core._models import FlextModelsContainers
+from flext_core._models import FlextModelFoundation, FlextModelsContainers
 from flext_core.runtime import FlextRuntime
 
 _MetadataInput = (

@@ -344,7 +344,7 @@ class FlextRegistry(s[bool]):
 
             reg_result = self.register_handler(handler)
             if reg_result.is_success:
-                details = reg_result.value
+                details = cast("m.RegistrationDetails", reg_result.value)
                 self._add_successful_registration(key, details, summary)
             else:
                 summary.errors.append(
@@ -415,7 +415,7 @@ class FlextRegistry(s[bool]):
             result = self.register_handler(handler)
             key = getattr(handler, "__name__", handler.__class__.__name__)
             if result.is_success:
-                registration_details = result.value
+                registration_details = cast("m.RegistrationDetails", result.value)
                 self._add_successful_registration(key, registration_details, summary)
             else:
                 summary.errors.append(
