@@ -13,7 +13,6 @@ from flext_core._protocols import (
     FlextProtocolsDI,
     FlextProtocolsHandler,
     FlextProtocolsLogging,
-    FlextProtocolsMetrics,
     FlextProtocolsResult,
     FlextProtocolsService,
 )
@@ -27,7 +26,6 @@ class FlextProtocols(
     FlextProtocolsDI,
     FlextProtocolsService,
     FlextProtocolsHandler,
-    FlextProtocolsMetrics,
     FlextProtocolsLogging,
 ):
     """Runtime-checkable structural typing protocols for FLEXT framework."""

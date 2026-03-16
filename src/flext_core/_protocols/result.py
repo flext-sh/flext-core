@@ -241,18 +241,5 @@ class FlextProtocolsResult:
             """Dump model data to dictionary."""
             ...
 
-    @runtime_checkable
-    class HasModelFields(HasModelDump, Protocol):
-        """Protocol for items with model fields.
-
-        Extends HasModelDump with model fields access.
-        Used for Pydantic model introspection.
-        """
-
-        @property
-        def model_fields(self) -> Mapping[str, t.Scalar]:
-            """Model fields mapping."""
-            ...
-
 
 __all__ = ["FlextProtocolsResult"]

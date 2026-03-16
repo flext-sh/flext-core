@@ -78,7 +78,6 @@ if TYPE_CHECKING:
     from flext_core._protocols.di import FlextProtocolsDI
     from flext_core._protocols.handler import FlextProtocolsHandler
     from flext_core._protocols.logging import FlextProtocolsLogging
-    from flext_core._protocols.metrics import FlextProtocolsMetrics
     from flext_core._protocols.result import FlextProtocolsResult
     from flext_core._protocols.service import FlextProtocolsService
     from flext_core._typings.base import FlextTypingBase
@@ -213,7 +212,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FlextProtocolsDI": ("flext_core._protocols.di", "FlextProtocolsDI"),
     "FlextProtocolsHandler": ("flext_core._protocols.handler", "FlextProtocolsHandler"),
     "FlextProtocolsLogging": ("flext_core._protocols.logging", "FlextProtocolsLogging"),
-    "FlextProtocolsMetrics": ("flext_core._protocols.metrics", "FlextProtocolsMetrics"),
     "FlextProtocolsResult": ("flext_core._protocols.result", "FlextProtocolsResult"),
     "FlextProtocolsService": ("flext_core._protocols.service", "FlextProtocolsService"),
     "FlextRegistry": ("flext_core.registry", "FlextRegistry"),
@@ -373,7 +371,6 @@ __all__ = [
     "FlextProtocolsDI",
     "FlextProtocolsHandler",
     "FlextProtocolsLogging",
-    "FlextProtocolsMetrics",
     "FlextProtocolsResult",
     "FlextProtocolsService",
     "FlextRegistry",

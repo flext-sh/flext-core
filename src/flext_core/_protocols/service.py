@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping
 from typing import Protocol, runtime_checkable
 
 from flext_core import t
@@ -59,26 +59,6 @@ class FlextProtocolsService:
             Reflects real implementations like FlextService which perform
             business rule validation without external command parameters.
             """
-            ...
-
-    @runtime_checkable
-    class Repository[T](Base, Protocol):
-        """Data access interface."""
-
-        def delete(self, entity_id: str) -> FlextProtocolsResult.Result[bool]:
-            """Delete entity."""
-            ...
-
-        def find_all(self) -> FlextProtocolsResult.Result[Sequence[T]]:
-            """Find all entities."""
-            ...
-
-        def get_by_id(self, entity_id: str) -> FlextProtocolsResult.Result[T]:
-            """Get entity by ID."""
-            ...
-
-        def save(self, entity: T) -> FlextProtocolsResult.Result[T]:
-            """Save entity."""
             ...
 
 

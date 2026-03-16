@@ -6,8 +6,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, Sequence
-from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
+from collections.abc import Callable, Sequence
+from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 from flext_core import t
 from flext_core._protocols.base import FlextProtocolsBase
@@ -77,66 +77,6 @@ class FlextProtocolsHandler:
 
             Handler must expose message_type, event_type, or can_handle
             for route resolution.
-            """
-            ...
-
-    @runtime_checkable
-    class Registry[MessageT: FlextProtocolsBase.Model, ResultT](
-        FlextProtocolsBase.Base, Protocol
-    ):
-        """Handler registry protocol for CQRS handler registration.
-
-        Reflects real implementations like FlextRegistry which provides
-        handler registration, batch operations, and idempotent tracking
-        for CQRS handlers.
-        """
-
-        @classmethod
-        def create(
-            cls,
-            dispatcher: FlextProtocolsHandler.CommandBus | None = None,
-            *,
-            auto_discover_handlers: bool = False,
-        ) -> Self:
-            """Factory method to create a registry instance.
-
-            Reflects real implementations like FlextRegistry.create()
-            which provides zero-config handler registration with auto-discovery.
-            """
-            ...
-
-        def register_bindings(
-            self,
-            bindings: Mapping[
-                t.MessageTypeSpecifier,
-                FlextProtocolsHandler.Handler[MessageT, ResultT],
-            ],
-        ) -> FlextProtocolsResult.Result[FlextProtocolsBase.Model]:
-            """Register message-to-handler bindings.
-
-            Reflects real implementations like FlextRegistry.register_bindings()
-            which maps message types to handlers.
-            """
-            ...
-
-        def register_handler(
-            self, handler: FlextProtocolsHandler.Handler[MessageT, ResultT]
-        ) -> FlextProtocolsResult.Result[FlextProtocolsBase.Model]:
-            """Register a handler instance.
-
-            Reflects real implementations like FlextRegistry.register_handler()
-            which registers handlers with idempotent tracking.
-            """
-            ...
-
-        def register_handlers(
-            self,
-            handlers: Sequence[FlextProtocolsHandler.Handler[MessageT, ResultT]],
-        ) -> FlextProtocolsResult.Result[FlextProtocolsBase.Model]:
-            """Register multiple handlers in batch.
-
-            Reflects real implementations like FlextRegistry.register_handlers()
-            which provides batch registration with summary reporting.
             """
             ...
 

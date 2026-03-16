@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Mapping, Sequence
 from datetime import datetime
 from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 
@@ -223,18 +223,6 @@ class FlextProtocolsLogging:
         | HasModelDump
         | FlextProtocolsLogging.ValidatorSpec
     )
-    type RegisterableService = (
-        t.Container
-        | BindableLogger
-        | Callable[..., t.Container]
-        | Config
-        | Context
-        | DI
-        | Service[t.Container]
-        | CommandBus
-    )
-    type ServiceFactory = Callable[..., RegisterableService]
-    'Factory callable returning any registerable service type.\n\n    Broader than t.FactoryCallable (which returns RegisterableService).\n    Supports factories that create protocols like Log,             ..., Config, etc.\n\n    Usage:\n        def create_logger() -> FlextLogger:\n            return FlextLogger.create_module_logger("app")\n\n        container.register_factory("logger", create_logger)  # OK\n    '
 
 
 __all__ = ["FlextProtocolsLogging"]
