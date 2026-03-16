@@ -14,7 +14,7 @@ from typing import Annotated, ClassVar
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import m
+from tests import m
 
 
 class ValidationScenario(BaseModel):

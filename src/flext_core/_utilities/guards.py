@@ -23,10 +23,7 @@ from typing import TypeGuard, TypeIs
 
 from pydantic import BaseModel, ValidationError
 
-from flext_core.models import m
-from flext_core.protocols import p
-from flext_core.result import r
-from flext_core.typings import t
+from flext_core import m, p, r, t
 
 
 class FlextUtilitiesGuards:

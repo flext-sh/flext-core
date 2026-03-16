@@ -19,7 +19,6 @@ from typing import overload
 from pydantic import BaseModel, TypeAdapter, ValidationError
 
 from flext_core import FlextRuntime, c, m, p, r, t
-from flext_core._models import FlextModelsCollections, FlextModelsContainers
 from flext_core._utilities import FlextUtilitiesGuards, FlextUtilitiesModel
 
 
@@ -798,7 +797,7 @@ class FlextUtilitiesParser:
         to_set: bool = False,
     ) -> list[str] | set[str] | dict[str, str]:
         """Normalize list/dict (builder: norm().list())."""
-        if isinstance(items, FlextModelsContainers.ConfigMap):
+        if isinstance(items, m.ConfigMap):
             dict_items: Mapping[str, t.NormalizedValue | BaseModel] = items.root
             if filter_truthy:
                 dict_items = {k: v for k, v in dict_items.items() if v}
@@ -1184,7 +1183,7 @@ class FlextUtilitiesParser:
         text: str,
         delimiter: str,
         *,
-        options: FlextModelsCollections.ParseOptions | None = None,
+        options: m.ParseOptions | None = None,
     ) -> r[list[str]]:
         """Parse delimited string into list of components.
 
@@ -1199,10 +1198,8 @@ class FlextUtilitiesParser:
             r with list of parsed components or error
 
         Example:
-            >>> from flext_core._models.collections import FlextModelsCollections
-            >>> opts = FlextModelsCollections.ParseOptions(
-            ...     strip=True, remove_empty=True
-            ... )
+            >>> from flext_core._models.collections import m
+            >>> opts = m.ParseOptions(strip=True, remove_empty=True)
             >>> parser = FlextUtilitiesParser()
             >>> result = parser.parse_delimited(
             ...     "cn=REDACTED_LDAP_BIND_PASSWORD, ou=users, dc=example, dc=com",
@@ -1214,9 +1211,7 @@ class FlextUtilitiesParser:
 
         """
         text_len = self._get_safe_text_length(text)
-        parse_opts = (
-            options if options is not None else FlextModelsCollections.ParseOptions()
-        )
+        parse_opts = options if options is not None else m.ParseOptions()
         strip = parse_opts.strip
         remove_empty = parse_opts.remove_empty
         validator = parse_opts.validator
@@ -1319,9 +1314,7 @@ class FlextUtilitiesParser:
             return r[list[str]].ok([""])
         return self._execute_escape_splitting(text, split_char, escape_char)
 
-    def _apply_single_pattern(
-        self, params: FlextModelsCollections.PatternApplicationParams
-    ) -> r[str]:
+    def _apply_single_pattern(self, params: m.PatternApplicationParams) -> r[str]:
         """Apply a single regex pattern to text."""
         self._parser_log.debug(
             "Applying regex pattern",
@@ -1520,7 +1513,7 @@ class FlextUtilitiesParser:
             assert isinstance(pattern_val, tuple)
             pattern, replacement, flags = pattern_val
             params_result = FlextUtilitiesModel.from_kwargs(
-                FlextModelsCollections.PatternApplicationParams,
+                m.PatternApplicationParams,
                 text=result_text,
                 pattern=pattern,
                 replacement=replacement,

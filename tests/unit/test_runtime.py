@@ -35,13 +35,13 @@ from pydantic import BaseModel, ConfigDict, Field
 from flext_core import (
     FlextContainer,
     FlextContext,
-    FlextMixins,
     FlextRuntime,
     c,
     m,
     p,
     r,
     s,
+    x,
 )
 
 
@@ -586,9 +586,7 @@ class TestFlextRuntime:
         for type compatibility while preserving runtime behavior.
         """
         tm.that(not isinstance(test_case.test_input, type), eq=True)
-        result = FlextRuntime.is_dict_like(
-            cast("FlextRuntime.RuntimeData", test_case.test_input)
-        )
+        result = FlextRuntime.is_dict_like(cast("t.RuntimeData", test_case.test_input))
         tm.that(result == test_case.expected_result, eq=True)
 
     @pytest.mark.parametrize(
@@ -604,9 +602,7 @@ class TestFlextRuntime:
         for type compatibility while preserving runtime behavior.
         """
         tm.that(not isinstance(test_case.test_input, type), eq=True)
-        result = FlextRuntime.is_list_like(
-            cast("FlextRuntime.RuntimeData", test_case.test_input)
-        )
+        result = FlextRuntime.is_list_like(cast("t.RuntimeData", test_case.test_input))
         tm.that(result == test_case.expected_result, eq=True)
 
     @pytest.mark.parametrize(
@@ -621,9 +617,7 @@ class TestFlextRuntime:
         correctly returns False for None values.
         """
         tm.that(not isinstance(test_case.test_input, type), eq=True)
-        result = FlextRuntime.is_valid_json(
-            cast("FlextRuntime.RuntimeData", test_case.test_input)
-        )
+        result = FlextRuntime.is_valid_json(cast("t.RuntimeData", test_case.test_input))
         tm.that(result == test_case.expected_result, eq=True)
 
     @pytest.mark.parametrize(
@@ -639,7 +633,7 @@ class TestFlextRuntime:
         """
         tm.that(not isinstance(test_case.test_input, type), eq=True)
         result = FlextRuntime.is_valid_identifier(
-            cast("FlextRuntime.RuntimeData", test_case.test_input)
+            cast("t.RuntimeData", test_case.test_input)
         )
         tm.that(result == test_case.expected_result, eq=True)
 
@@ -913,7 +907,7 @@ class TestFlextRuntime:
                 container._di_bridge.unwire()
         elif test_case.operation == RuntimeOperationType.MIXINS_RUNTIME_AUTOMATION:
 
-            class RuntimeAwareComponent(FlextMixins):
+            class RuntimeAwareComponent(x):
                 @classmethod
                 def _runtime_bootstrap_options(cls) -> m.RuntimeBootstrapOptions:
 

@@ -87,16 +87,6 @@ from flext_core import T, c, p, t
 from flext_core._models import FlextModelFoundation, FlextModelsContainers
 from flext_core._utilities import FlextUtilitiesDeprecation
 
-type RuntimeAtomic = t.Container | BaseModel
-type RuntimeData = (
-    t.NormalizedValue
-    | t.MetadataValue
-    | t.ContainerValue
-    | Mapping[str, t.NormalizedValue | BaseModel]
-    | Sequence[t.NormalizedValue]
-    | p.HasModelDump
-)
-
 
 class FlextRuntime:
     """Expose structlog, DI providers, and validation helpers to higher layers.
@@ -378,7 +368,7 @@ class FlextRuntime:
             return FlextRuntime.create_instance(class_type)
 
     @staticmethod
-    def _is_scalar(value: RuntimeData) -> TypeGuard[t.Scalar]:
+    def _is_scalar(value: t.RuntimeData) -> TypeGuard[t.Scalar]:
         """Check if value is a scalar type accepted by t.Scalar."""
         return isinstance(value, t.SCALAR_TYPES)
 
@@ -470,7 +460,7 @@ class FlextRuntime:
         return logger
 
     @staticmethod
-    def is_base_model(obj: RuntimeData) -> TypeGuard[BaseModel]:
+    def is_base_model(obj: t.RuntimeData) -> TypeGuard[BaseModel]:
         """Type guard to narrow object to BaseModel.
 
         This allows isinstance checks to narrow types for FlextRuntime methods
@@ -483,7 +473,7 @@ class FlextRuntime:
                 return False
 
     @staticmethod
-    def _has_dict_protocol(obj: RuntimeData) -> bool:
+    def _has_dict_protocol(obj: t.RuntimeData) -> bool:
         if not (hasattr(obj, "keys") and hasattr(obj, "items") and hasattr(obj, "get")):
             return False
         try:
@@ -497,7 +487,7 @@ class FlextRuntime:
 
     @staticmethod
     def is_dict_like(
-        value: RuntimeData,
+        value: t.RuntimeData,
     ) -> TypeGuard[FlextModelsContainers.ConfigMap | Mapping[str, t.NormalizedValue]]:
         """Type guard to check if value is dict-like.
 
@@ -524,7 +514,7 @@ class FlextRuntime:
 
     @staticmethod
     def is_list_like(
-        value: RuntimeData,
+        value: t.RuntimeData,
     ) -> TypeGuard[Sequence[t.NormalizedValue]]:
         """Type guard to check if value is list-like."""
         return isinstance(value, (list, tuple)) and not isinstance(value, (str, bytes))
@@ -595,12 +585,12 @@ class FlextRuntime:
         return all(hasattr(candidate, member) for member in required_members)
 
     @staticmethod
-    def is_valid_identifier(value: RuntimeData) -> TypeGuard[str]:
+    def is_valid_identifier(value: t.RuntimeData) -> TypeGuard[str]:
         """Type guard to check if value is a valid Python identifier."""
         return isinstance(value, str) and value.isidentifier()
 
     @staticmethod
-    def is_valid_json(value: RuntimeData) -> TypeGuard[str]:
+    def is_valid_json(value: t.RuntimeData) -> TypeGuard[str]:
         """Type guard to check if value is valid JSON string.
 
         Business Rule: Validates JSON strings using Pydantic v2 TypeAdapter for parsing.
@@ -630,13 +620,13 @@ class FlextRuntime:
 
     @staticmethod
     def _is_structlog_processor(
-        value: RuntimeData,
+        value: t.RuntimeData,
     ) -> TypeGuard[structlog.types.Processor]:
         return callable(value)
 
     @staticmethod
     def normalize_to_container(
-        val: RuntimeData,
+        val: t.RuntimeData,
     ) -> t.Container | BaseModel:
         """Normalize any value to t.Container | BaseModel.
 
@@ -696,7 +686,7 @@ class FlextRuntime:
         return str(val)
 
     @staticmethod
-    def normalize_to_general_value(val: RuntimeData) -> t.Container | BaseModel:
+    def normalize_to_general_value(val: t.RuntimeData) -> t.Container | BaseModel:
         """Deprecated alias; use normalize_to_container."""
         warnings.warn(
             "normalize_to_general_value is deprecated; use normalize_to_container. "
@@ -707,7 +697,7 @@ class FlextRuntime:
         return FlextRuntime.normalize_to_container(val)
 
     @staticmethod
-    def _normalize_to_metadata_scalar(val: RuntimeData) -> str | int | float | bool:
+    def _normalize_to_metadata_scalar(val: t.RuntimeData) -> str | int | float | bool:
         if val is None:
             return ""
         if isinstance(val, (str, int, float, bool)):
@@ -722,7 +712,7 @@ class FlextRuntime:
 
     @staticmethod
     def normalize_to_metadata(
-        val: RuntimeData,
+        val: t.RuntimeData,
     ) -> t.MetadataValue:
         """Normalize input into metadata-compatible scalar, list, or mapping values."""
         if val is None:
@@ -769,7 +759,7 @@ class FlextRuntime:
         return str(val)
 
     @staticmethod
-    def normalize_to_metadata_value(val: RuntimeData) -> t.MetadataValue:
+    def normalize_to_metadata_value(val: t.RuntimeData) -> t.MetadataValue:
         """Deprecated alias; use normalize_to_metadata."""
         warnings.warn(
             "normalize_to_metadata_value is deprecated; use normalize_to_metadata. "
@@ -781,7 +771,7 @@ class FlextRuntime:
 
     @staticmethod
     def safe_get_attribute(
-        obj: RuntimeData | type | ModuleType,
+        obj: t.RuntimeData | type | ModuleType,
         attr: str,
         default: t.NormalizedValue | BaseModel | None = None,
     ) -> t.NormalizedValue | BaseModel | None:
@@ -1779,8 +1769,8 @@ class FlextRuntime:
 
     @staticmethod
     def compare_entities_by_id(
-        entity_a: RuntimeData,
-        entity_b: RuntimeData,
+        entity_a: t.RuntimeData,
+        entity_b: t.RuntimeData,
         id_attr: str = "unique_id",
     ) -> bool:
         """Compare two entities by unique ID attribute."""
@@ -1806,7 +1796,9 @@ class FlextRuntime:
         return id_a is not None and id_a == id_b
 
     @staticmethod
-    def compare_value_objects_by_value(obj_a: RuntimeData, obj_b: RuntimeData) -> bool:
+    def compare_value_objects_by_value(
+        obj_a: t.RuntimeData, obj_b: t.RuntimeData
+    ) -> bool:
         """Compare value objects by their values (all attributes)."""
         if FlextRuntime._is_scalar(obj_a):
             return obj_a == obj_b
@@ -1861,7 +1853,7 @@ class FlextRuntime:
         )
 
     @staticmethod
-    def hash_entity_by_id(entity: RuntimeData, id_attr: str = "unique_id") -> int:
+    def hash_entity_by_id(entity: t.RuntimeData, id_attr: str = "unique_id") -> int:
         """Hash entity based on unique ID and type."""
         if FlextRuntime._is_scalar(entity):
             return hash(entity)
@@ -1871,7 +1863,7 @@ class FlextRuntime:
         return hash((entity.__class__.__name__, entity_id))
 
     @staticmethod
-    def hash_value_object_by_value(obj: RuntimeData) -> int:
+    def hash_value_object_by_value(obj: t.RuntimeData) -> int:
         """Hash value object based on all attribute values."""
         if FlextRuntime._is_scalar(obj):
             return hash(obj)

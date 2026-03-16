@@ -21,15 +21,14 @@ from typing import TypeGuard
 
 from pydantic import ValidationError
 
-from flext_core import FlextRuntime, c, p, r, t
-from flext_core._models import FlextModelFoundation
+from flext_core import FlextRuntime, c, m, p, r, t
 from flext_core._utilities import FlextUtilitiesGuards, FlextUtilitiesMapper
 
 
 class FlextUtilitiesReliability:
     """Reliability patterns for resilient, dispatcher-safe operations."""
 
-    _V = FlextModelFoundation.Validators
+    _V = m.Validators
 
     @property
     def logger(self) -> p.Log.StructlogLogger:

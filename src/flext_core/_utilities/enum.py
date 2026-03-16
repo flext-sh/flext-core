@@ -15,8 +15,7 @@ from typing import ClassVar, Literal, TypeGuard, TypeIs, overload
 
 from pydantic import ValidationError
 
-from flext_core import r, t
-from flext_core._models import FlextModelFoundation
+from flext_core import m, r, t
 from flext_core.typings import EnumT
 
 
@@ -34,7 +33,7 @@ class FlextUtilitiesEnum:
     _values_cache: ClassVar[dict[type[StrEnum], frozenset[str]]] = {}
     _names_cache: ClassVar[dict[type[StrEnum], frozenset[str]]] = {}
     _members_cache: ClassVar[dict[type[StrEnum], frozenset[StrEnum]]] = {}
-    _V = FlextModelFoundation.Validators
+    _V = m.Validators
 
     @staticmethod
     def _coerce[E: StrEnum](enum_cls: type[E], value: str | E) -> E:

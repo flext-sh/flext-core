@@ -16,6 +16,7 @@ from pathlib import Path
 from re import Pattern
 from types import ModuleType
 from typing import (
+    TYPE_CHECKING,
     Annotated,
     ParamSpec,
     Protocol,
@@ -26,12 +27,17 @@ from typing import (
 from pydantic import BaseModel, ConfigDict, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+if TYPE_CHECKING:
+    from flext_core import p
+
 EnumT = TypeVar("EnumT", bound=StrEnum)
 MessageT_contra = TypeVar("MessageT_contra", contravariant=True)
 P = ParamSpec("P")
 R = TypeVar("R")
 ResultT = TypeVar("ResultT")
 T = TypeVar("T")
+ValidatedParams = ParamSpec("ValidatedParams")
+ValidatedReturn = TypeVar("ValidatedReturn")
 T_co = TypeVar("T_co", covariant=True)
 T_contra = TypeVar("T_contra", contravariant=True)
 T_Model = TypeVar("T_Model", bound=BaseModel)
@@ -179,6 +185,16 @@ class FlextTypes:
     type StrictValue = Scalar | ConfigurationMapping | list[Container] | None
     type PaginationMeta = dict[str, int | bool]
 
+    type RuntimeAtomic = t.Container | BaseModel
+    type RuntimeData = (
+        NormalizedValue
+        | MetadataValue
+        | ContainerValue
+        | Mapping[str, NormalizedValue | BaseModel]
+        | Sequence[NormalizedValue]
+        | p.HasModelDump
+    )
+
     class Validation:
         """Validation type aliases with Pydantic constraints."""
 
@@ -215,5 +231,7 @@ __all__ = [
     "T_co",
     "T_contra",
     "U",
+    "ValidatedParams",
+    "ValidatedReturn",
     "t",
 ]

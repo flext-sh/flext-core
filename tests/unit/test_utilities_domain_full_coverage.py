@@ -15,7 +15,6 @@ from typing import Annotated, cast, override
 
 from pydantic import BaseModel, Field
 
-from flext_core.runtime import FlextRuntime
 from tests import u
 
 from ._models import _FrozenEntity, _SampleEntity
@@ -81,7 +80,7 @@ class TestValidateValueImmutable:
         obj = PlainObj()
         assert (
             u.validate_value_object_immutable(
-                cast("FlextRuntime.RuntimeData", obj),
+                cast("t.RuntimeData", obj),
             )
             is False
         )
@@ -125,13 +124,13 @@ def test_validate_value_object_immutable_exception_and_no_setattr_branch() -> No
 
     assert (
         u.validate_value_object_immutable(
-            cast("FlextRuntime.RuntimeData", _BrokenConfig()),
+            cast("t.RuntimeData", _BrokenConfig()),
         )
         is False
     )
     assert (
         u.validate_value_object_immutable(
-            cast("FlextRuntime.RuntimeData", _NoSetattrVisible()),
+            cast("t.RuntimeData", _NoSetattrVisible()),
         )
         is False
     )

@@ -12,11 +12,8 @@ from __future__ import annotations
 import importlib
 import sys
 from collections.abc import Mapping
-from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from flext_core.typings import t
-
+from flext_core.typings import t
 
 # INFRASTRUCTURE EXCEPTION: lazy_getattr and cleanup_submodule_namespace MUST remain
 # module-level functions. They are imported directly by all auto-generated __init__.py

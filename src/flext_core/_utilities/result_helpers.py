@@ -1,14 +1,11 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
-from typing import TypeVar
 
 from pydantic import BaseModel
 
-from flext_core import p, r, t
+from flext_core import T, p, r, t
 from flext_core._utilities import FlextUtilitiesGuards
-
-T = TypeVar("T")
 
 
 class FlextUtilitiesResultHelpers:
@@ -84,7 +81,9 @@ class FlextUtilitiesResultHelpers:
 
     @staticmethod
     def vals(
-        items: Mapping[str, T] | r[Mapping[str, T]], *, default: list[T] | None = None
+        items: Mapping[str, T] | r[Mapping[str, T]],
+        *,
+        default: list[T] | None = None,
     ) -> r[list[T]]:
         if isinstance(items, r):
             if items.is_failure:

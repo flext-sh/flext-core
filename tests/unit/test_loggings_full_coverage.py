@@ -10,8 +10,8 @@ from typing import ClassVar, cast, override
 import pytest
 from flext_tests import t, tm
 
-from flext_core import FlextLogger, FlextRuntime, FlextSettings, r
-from tests import c, m, p, u
+import flext_core.loggings as loggings_module
+from flext_core import FlextLogger, FlextRuntime, FlextSettings, c, m, p, r
 
 
 class _FakeBindable:
@@ -146,7 +146,7 @@ def test_loggings_bind_clear_level_error_paths(monkeypatch: pytest.MonkeyPatch) 
         msg = "merge boom"
         raise RuntimeError(msg)
 
-    monkeypatch.setattr(u, "merge", _raise_merge)
+    monkeypatch.setattr(loggings_module.u, "merge", _raise_merge)
     failed_bind = FlextLogger.bind_context("request", x="y")
     tm.fail(failed_bind)
     FlextLogger._scoped_contexts["request"] = {"k": "v"}

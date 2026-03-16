@@ -11,7 +11,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core import FlextRuntime, c, p, t
-from flext_core.runtime import RuntimeData
 
 
 class FlextUtilitiesDomain:
@@ -24,15 +23,15 @@ class FlextUtilitiesDomain:
 
     @staticmethod
     def same_type(
-        obj_a: RuntimeData,
-        obj_b: RuntimeData,
+        obj_a: t.RuntimeData,
+        obj_b: t.RuntimeData,
     ) -> bool:
         return isinstance(obj_a, type(obj_b))
 
     @staticmethod
     def compare_entities_by_id(
-        entity_a: RuntimeData,
-        entity_b: RuntimeData,
+        entity_a: t.RuntimeData,
+        entity_b: t.RuntimeData,
         id_attr: str = c.Mixins.FIELD_ID,
     ) -> bool:
         """Compare two entities by their unique ID attribute.
@@ -62,8 +61,8 @@ class FlextUtilitiesDomain:
 
     @staticmethod
     def compare_value_objects_by_value(
-        obj_a: RuntimeData,
-        obj_b: RuntimeData,
+        obj_a: t.RuntimeData,
+        obj_b: t.RuntimeData,
     ) -> bool:
         """Compare two value objects by their values (all attributes).
 
@@ -91,7 +90,9 @@ class FlextUtilitiesDomain:
             return repr(obj_a) == repr(obj_b)
 
     @staticmethod
-    def hash_entity_by_id(entity: RuntimeData, id_attr: str = c.Mixins.FIELD_ID) -> int:
+    def hash_entity_by_id(
+        entity: t.RuntimeData, id_attr: str = c.Mixins.FIELD_ID
+    ) -> int:
         """Generate hash for entity based on unique ID and type.
 
         Generic hashing for DDD entities - uses identity (ID + type), not value.
@@ -114,7 +115,7 @@ class FlextUtilitiesDomain:
         return hash((entity.__class__.__name__, entity_id))
 
     @staticmethod
-    def hash_value_object_by_value(obj: RuntimeData) -> int:
+    def hash_value_object_by_value(obj: t.RuntimeData) -> int:
         """Generate hash for value object based on all attribute values.
 
         Generic hashing for DDD Value Objects - uses values, not identity.
@@ -145,7 +146,7 @@ class FlextUtilitiesDomain:
 
     @staticmethod
     def validate_entity_has_id(
-        entity: RuntimeData, id_attr: str = c.Mixins.FIELD_ID
+        entity: t.RuntimeData, id_attr: str = c.Mixins.FIELD_ID
     ) -> bool:
         """Validate that entity has a non-None unique ID.
 
@@ -162,7 +163,7 @@ class FlextUtilitiesDomain:
 
     @staticmethod
     def validate_value_object_immutable(
-        obj: RuntimeData,
+        obj: t.RuntimeData,
     ) -> bool:
         """Check if value object appears to be immutable (frozen).
 

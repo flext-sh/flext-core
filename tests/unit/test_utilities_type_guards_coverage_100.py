@@ -22,7 +22,6 @@ import pytest
 from flext_tests import tm
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import FlextRuntime
 from flext_core._utilities.guards import FlextUtilitiesGuards
 from tests import m, t, u
 
@@ -264,7 +263,7 @@ class TestuTypeGuardsNormalizeToMetadata:
 
     def test_normalize_dict_with_non_string_key(self) -> None:
         test_dict = {123: "value", "key": "test"}
-        result = u.normalize_to_metadata(cast("FlextRuntime.RuntimeData", test_dict))
+        result = u.normalize_to_metadata(cast("t.RuntimeData", test_dict))
         tm.that(result, is_=dict)
         tm.that(result, has="123")
 
@@ -319,7 +318,7 @@ class TestuTypeGuardsNormalizeToMetadata:
                 return "custom_object"
 
         obj = CustomObject()
-        result = u.normalize_to_metadata(cast("FlextRuntime.RuntimeData", obj))
+        result = u.normalize_to_metadata(cast("t.RuntimeData", obj))
         tm.that(result, is_=str)
         tm.that(result, eq="custom_object")
 

@@ -1,4 +1,4 @@
-"""Tests for FlextService runtime bootstrap patterns.
+"""Tests for s runtime bootstrap patterns.
 
 Module: flext_core.service
 Scope: Runtime bootstrap options, service runtime creation, auto-initialization
@@ -21,18 +21,17 @@ from typing import override
 
 from flext_tests import u
 
-from flext_core import FlextContainer, FlextContext, FlextService, FlextSettings, r
-from flext_core._models.service import FlextModelsService
+from flext_core import FlextContainer, FlextContext, FlextSettings, m, r, s
 
 
-class ConcreteTestService(FlextService[bool]):
+class ConcreteTestService(s[bool]):
     """Concrete service for testing bootstrap patterns."""
 
     @classmethod
     @override
-    def _runtime_bootstrap_options(cls) -> FlextModelsService.RuntimeBootstrapOptions:
+    def _runtime_bootstrap_options(cls) -> m.RuntimeBootstrapOptions:
         """Return bootstrap options for this service."""
-        return FlextModelsService.RuntimeBootstrapOptions(
+        return m.RuntimeBootstrapOptions(
             config_overrides={"app_name": "test_app"},
             subproject="test",
         )

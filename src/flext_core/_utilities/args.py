@@ -14,8 +14,6 @@ from functools import wraps
 from types import UnionType
 from typing import (
     Annotated,
-    ParamSpec,
-    TypeVar,
     get_args,
     get_origin,
     get_type_hints,
@@ -23,11 +21,7 @@ from typing import (
 
 from pydantic import BaseModel, ConfigDict, TypeAdapter, ValidationError, validate_call
 
-from flext_core import r, t
-from flext_core._models import FlextModelFoundation
-
-_ValidatedParams = ParamSpec("_ValidatedParams")
-_ValidatedReturn = TypeVar("_ValidatedReturn")
+from flext_core import ValidatedParams, ValidatedReturn, m, r, t
 
 
 class FlextUtilitiesArgs:
@@ -48,7 +42,7 @@ class FlextUtilitiesArgs:
 
     """
 
-    _V = FlextModelFoundation.Validators
+    _V = m.Validators
 
     @staticmethod
     def _validate_enum_type(candidate: type[Enum] | str) -> r[type[StrEnum]]:
@@ -132,8 +126,8 @@ class FlextUtilitiesArgs:
 
     @staticmethod
     def validated(
-        func: Callable[_ValidatedParams, _ValidatedReturn],
-    ) -> Callable[_ValidatedParams, _ValidatedReturn]:
+        func: Callable[ValidatedParams, ValidatedReturn],
+    ) -> Callable[ValidatedParams, ValidatedReturn]:
         """Decorator that uses @validate_call from Pydantic internally.
 
         ADVANTAGE:

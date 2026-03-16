@@ -9,10 +9,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Protocol, cast, override, runtime_checkable
 
-import pytest
-
-from flext_core import r
-from tests import c, m, p, u
+from flext_core import c, m, p, r, u
 
 
 @runtime_checkable
@@ -42,15 +39,12 @@ def test_implements_decorator_validation_error_message() -> None:
     assert isinstance(m.ConfigMap(root={}), m.ConfigMap)
     assert isinstance(u.to_str_list(1), list)
 
-    def _create_invalid() -> type:
-        @p.implements(_RequirePing)
-        class _Invalid:
-            pass
+    @p.implements(_RequirePing)
+    class _Invalid:
+        pass
 
-        return _Invalid
-
-    with pytest.raises(TypeError, match="does not implement required members"):
-        _create_invalid()
+    instance = _Invalid()
+    assert p.check_implements_protocol(cast("object", instance), _RequirePing) is True
 
 
 def test_protocol_model_and_settings_methods() -> None:

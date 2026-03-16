@@ -44,8 +44,7 @@ from collections.abc import Mapping
 
 from pydantic import BaseModel
 
-from flext_core import FlextRuntime, c, p, r, t
-from flext_core._models import FlextModelFoundation
+from flext_core import FlextRuntime, c, m, p, r, t
 
 
 class FlextUtilitiesCache:
@@ -70,8 +69,6 @@ class FlextUtilitiesCache:
        - Other methods are pure functions (no side effects)
        - No exceptions propagated to callers
     """
-
-    _V = FlextModelFoundation.Validators
 
     @property
     def logger(self) -> p.Log.StructlogLogger:
@@ -173,10 +170,8 @@ class FlextUtilitiesCache:
         command_type: type,
     ) -> str:
         if isinstance(command, Mapping):
-            command_map = (
-                FlextUtilitiesCache._V.dict_str_metadata_adapter().validate_python(
-                    command
-                )
+            command_map = m.Validators.dict_str_metadata_adapter().validate_python(
+                command
             )
             sorted_data = FlextUtilitiesCache.sort_dict_keys(command_map)
             return f"{command_type.__name__}_{hash(str(sorted_data))}"
@@ -294,9 +289,7 @@ class FlextUtilitiesCache:
         if isinstance(data, BaseModel):
             return FlextUtilitiesCache.sort_dict_keys(data.model_dump())
         if isinstance(data, Mapping):
-            data_map = FlextUtilitiesCache._V.sortable_dict_adapter().validate_python(
-                data
-            )
+            data_map = m.Validators.sortable_dict_adapter().validate_python(data)
             result: dict[str, t.NormalizedValue] = {}
             for k in sorted(data_map.keys(), key=FlextUtilitiesCache.sort_key):
                 value = data_map[k]

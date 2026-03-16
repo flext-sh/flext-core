@@ -285,20 +285,20 @@ def test_normalization_edge_branches() -> None:
             return iter(["x"])
 
     normalized_dict_like = FlextRuntime.normalize_to_container(
-        cast("FlextRuntime.RuntimeData", DictLike()),
+        cast("t.RuntimeData", DictLike()),
     )
     tm.that(isinstance(normalized_dict_like, m.Dict), eq=True)
     tm.that(getattr(normalized_dict_like, "root", None), eq={"x": 1})
     metadata_cfg = FlextRuntime.normalize_to_metadata(cfg)
     tm.that(isinstance(metadata_cfg, str), eq=True)
     metadata_dict_like = FlextRuntime.normalize_to_metadata(
-        cast("FlextRuntime.RuntimeData", DictLike()),
+        cast("t.RuntimeData", DictLike()),
     )
     tm.that(
         isinstance(metadata_dict_like, dict) and metadata_dict_like == {"x": 1}, eq=True
     )
     metadata_list = FlextRuntime.normalize_to_metadata(
-        cast("FlextRuntime.RuntimeData", ["a", object()]),
+        cast("t.RuntimeData", ["a", object()]),
     )
     tm.that(isinstance(metadata_list, list), eq=True)
 
@@ -597,18 +597,14 @@ def test_model_support_and_hash_compare_paths() -> None:
     )
     tm.that(
         (
-            FlextRuntime.compare_entities_by_id(
-                "a", cast("FlextRuntime.RuntimeData", object())
-            )
+            FlextRuntime.compare_entities_by_id("a", cast("t.RuntimeData", object()))
             is False
         ),
         eq=True,
     )
     tm.that(
         (
-            FlextRuntime.compare_entities_by_id(
-                cast("FlextRuntime.RuntimeData", object()), 3
-            )
+            FlextRuntime.compare_entities_by_id(cast("t.RuntimeData", object()), 3)
             is False
         ),
         eq=True,
@@ -623,14 +619,14 @@ def test_model_support_and_hash_compare_paths() -> None:
     tm.that(
         (
             FlextRuntime.compare_entities_by_id(
-                cast("FlextRuntime.RuntimeData", A()),
-                cast("FlextRuntime.RuntimeData", B()),
+                cast("t.RuntimeData", A()),
+                cast("t.RuntimeData", B()),
             )
             is False
         ),
         eq=True,
     )
-    obj = cast("FlextRuntime.RuntimeData", object())
+    obj = cast("t.RuntimeData", object())
     tm.that(
         FlextRuntime.hash_entity_by_id(obj),
         eq=hash(
@@ -641,7 +637,7 @@ def test_model_support_and_hash_compare_paths() -> None:
     tm.that(
         (
             FlextRuntime.compare_value_objects_by_value(
-                cast("FlextRuntime.RuntimeData", object()),
+                cast("t.RuntimeData", object()),
                 1,
             )
             is False
@@ -663,8 +659,8 @@ def test_model_support_and_hash_compare_paths() -> None:
     tm.that(
         (
             FlextRuntime.compare_value_objects_by_value(
-                cast("FlextRuntime.RuntimeData", C()),
-                cast("FlextRuntime.RuntimeData", D()),
+                cast("t.RuntimeData", C()),
+                cast("t.RuntimeData", D()),
             )
             is False
         ),
@@ -673,8 +669,8 @@ def test_model_support_and_hash_compare_paths() -> None:
     tm.that(
         (
             FlextRuntime.compare_value_objects_by_value(
-                cast("FlextRuntime.RuntimeData", C()),
-                cast("FlextRuntime.RuntimeData", C()),
+                cast("t.RuntimeData", C()),
+                cast("t.RuntimeData", C()),
             )
             is True
         ),
@@ -1016,17 +1012,15 @@ def test_model_helpers_remaining_paths() -> None:
     tm.that(
         (
             FlextRuntime.compare_entities_by_id(
-                cast("FlextRuntime.RuntimeData", left),
-                cast("FlextRuntime.RuntimeData", right),
+                cast("t.RuntimeData", left),
+                cast("t.RuntimeData", right),
             )
             is True
         ),
         eq=True,
     )
     tm.that(
-        isinstance(
-            FlextRuntime.hash_entity_by_id(cast("FlextRuntime.RuntimeData", left)), int
-        ),
+        isinstance(FlextRuntime.hash_entity_by_id(cast("t.RuntimeData", left)), int),
         eq=True,
     )
     vm_a = ValueModel(a=1)

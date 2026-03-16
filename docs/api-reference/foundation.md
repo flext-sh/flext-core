@@ -57,7 +57,7 @@ Common type variables, aliases, and CQRS markers used throughout the codebase.
 ```python
 from flext_core import t
 
-T = t.T
+T = T
 U = t.U
 TCommand = t.TCommand
 TQuery = t.TQuery

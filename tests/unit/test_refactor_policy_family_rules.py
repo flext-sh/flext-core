@@ -4,18 +4,12 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from flext_infra.refactor.rules import class_reconstructor
 from flext_infra.refactor.rules.class_reconstructor import PreCheckGate
 
 
 def _policy_path() -> Path:
-    return (
-        Path(__file__).resolve().parents[2]
-        / "src"
-        / "flext_infra"
-        / "refactor"
-        / "rules"
-        / "class-policy-v2.yml"
-    )
+    return Path(class_reconstructor.__file__).with_name("class-policy-v2.yml")
 
 
 def test_models_family_blocks_utilities_target() -> None:

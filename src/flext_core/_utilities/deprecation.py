@@ -55,7 +55,7 @@ class FlextUtilitiesDeprecation:
         """Emit deprecation warning for overly polymorphic inputs.
 
         Use at system boundaries where broad union types (NormalizedValue,
-        RuntimeData, RegisterableService) accept inputs that should migrate
+        t.RuntimeData, RegisterableService) accept inputs that should migrate
         to narrower types (Container, Scalar, ConfigMap).
 
         Args:

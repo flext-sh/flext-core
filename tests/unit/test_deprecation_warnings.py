@@ -69,10 +69,10 @@ class TestRuntimeDeprecatedNormalizeMethods:
             with warnings.catch_warnings(record=True):
                 warnings.simplefilter("always")
                 deprecated_result = FlextRuntime.normalize_to_general_value(
-                    cast("FlextRuntime.RuntimeData", val),
+                    cast("t.RuntimeData", val),
                 )
             strict_result = FlextRuntime.normalize_to_container(
-                cast("FlextRuntime.RuntimeData", val),
+                cast("t.RuntimeData", val),
             )
             tm.that(type(deprecated_result), eq=type(strict_result))
 
@@ -174,7 +174,7 @@ class TestStrictContainerNormalization:
     def test_normalize_to_container_unknown_becomes_str(self) -> None:
         """Unknown objects are converted to string representation."""
         result = FlextRuntime.normalize_to_container(
-            cast("FlextRuntime.RuntimeData", object()),
+            cast("t.RuntimeData", object()),
         )
         tm.that(isinstance(result, str), eq=True)
 

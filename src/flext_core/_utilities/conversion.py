@@ -14,9 +14,7 @@ from typing import Literal, overload
 
 from pydantic import BaseModel, TypeAdapter, ValidationError
 
-from flext_core._models import FlextModelFoundation
-from flext_core.result import r
-from flext_core.typings import t
+from flext_core import m, r, t
 
 
 class FlextUtilitiesConversion:
@@ -32,7 +30,7 @@ class FlextUtilitiesConversion:
     - Reuses base types from flext_core and constants from flext_core.constants
     """
 
-    _V = FlextModelFoundation.Validators
+    _V = m.Validators
 
     @overload
     @staticmethod

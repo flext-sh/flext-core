@@ -13,22 +13,16 @@ from datetime import datetime
 from enum import StrEnum
 from typing import TypeGuard, overload
 
-from flext_core import r, t
-from flext_core._models import FlextModelFoundation, FlextModelsContainers
-from flext_core.typings import R, T, U
+from flext_core import R, T, U, m, r, t
 
 
 class FlextUtilitiesCollection:
     """Utilities for collection operations with full generic type support."""
 
-    _V = FlextModelFoundation.Validators
-
     @staticmethod
     def _coerce_guard_value(value: t.NormalizedValue) -> t.NormalizedValue:
         validated_result = r[t.Serializable].create_from_callable(
-            lambda: FlextUtilitiesCollection._V.serializable_adapter().validate_python(
-                value
-            )
+            lambda: m.Validators.serializable_adapter().validate_python(value)
         )
         if validated_result.is_failure:
             return str(value)
@@ -58,21 +52,13 @@ class FlextUtilitiesCollection:
         data: t.NormalizedValue,
     ) -> r[dict[str, t.NormalizedValue]]:
         return r[dict[str, t.NormalizedValue]].create_from_callable(
-            lambda: (
-                FlextUtilitiesCollection._V.dict_str_metadata_adapter().validate_python(
-                    data
-                )
-            )
+            lambda: m.Validators.dict_str_metadata_adapter().validate_python(data)
         )
 
     @staticmethod
     def _validate_list_container(data: t.NormalizedValue) -> r[list[t.Container]]:
         return r[list[t.Container]].create_from_callable(
-            lambda: (
-                FlextUtilitiesCollection._V.list_container_adapter().validate_python(
-                    data
-                )
-            )
+            lambda: m.Validators.list_container_adapter().validate_python(data)
         )
 
     @staticmethod
@@ -106,9 +92,7 @@ class FlextUtilitiesCollection:
     @staticmethod
     def _normalize_unknown_value(value: object) -> t.NormalizedValue:
         validated_result = r[t.Serializable].create_from_callable(
-            lambda: FlextUtilitiesCollection._V.serializable_adapter().validate_python(
-                value
-            )
+            lambda: m.Validators.serializable_adapter().validate_python(value)
         )
         if validated_result.is_failure:
             return str(value)
@@ -134,18 +118,14 @@ class FlextUtilitiesCollection:
     def _normalize_mapping_items(
         data: t.NormalizedValue,
     ) -> list[tuple[str, t.NormalizedValue]]:
-        normalized_mapping = (
-            FlextUtilitiesCollection._V.dict_str_metadata_adapter().validate_python(
-                data
-            )
+        normalized_mapping = m.Validators.dict_str_metadata_adapter().validate_python(
+            data
         )
         return list(normalized_mapping.items())
 
     @staticmethod
     def _normalize_sequence_items(data: t.NormalizedValue) -> list[t.Container]:
-        return FlextUtilitiesCollection._V.list_container_adapter().validate_python(
-            data
-        )
+        return m.Validators.list_container_adapter().validate_python(data)
 
     @staticmethod
     def _is_empty_value(value: t.NormalizedValue) -> bool:
@@ -219,7 +199,7 @@ class FlextUtilitiesCollection:
         progress_interval: int = 1,
         pre_validate: Callable[[T], bool] | None = None,
         flatten: bool = False,
-    ) -> r[FlextModelsContainers.BatchResultDict]:
+    ) -> r[m.BatchResultDict]:
         """Process items in batches with progress tracking.
 
         Args:
@@ -304,7 +284,7 @@ class FlextUtilitiesCollection:
                     else:
                         error_msg = result_raw.error or "Unknown error"
                         if error_mode == "fail":
-                            return r[FlextModelsContainers.BatchResultDict].fail(
+                            return r[m.BatchResultDict].fail(
                                 f"Batch processing failed: {error_msg}"
                             )
                         if error_mode == "collect":
@@ -354,21 +334,19 @@ class FlextUtilitiesCollection:
                     results.append(direct_result)
             except (TypeError, ValueError, RuntimeError, AttributeError, KeyError) as e:
                 if error_mode == "fail":
-                    return r[FlextModelsContainers.BatchResultDict].fail(
-                        f"Batch processing failed: {e}"
-                    )
+                    return r[m.BatchResultDict].fail(f"Batch processing failed: {e}")
                 if error_mode == "collect":
                     errors.append((processed - 1, str(e)))
             if progress is not None and processed % progress_interval == 0:
                 progress(processed, total)
-        result_dict = FlextModelsContainers.BatchResultDict(
+        result_dict = m.BatchResultDict(
             results=FlextUtilitiesCollection._to_batch_scalars(results),
             total=total,
             success_count=len(results),
             error_count=len(errors),
             errors=errors,
         )
-        return r[FlextModelsContainers.BatchResultDict].ok(result_dict)
+        return r[m.BatchResultDict].ok(result_dict)
 
     @staticmethod
     def chunk(items: Sequence[T], size: int) -> list[list[T]]:
