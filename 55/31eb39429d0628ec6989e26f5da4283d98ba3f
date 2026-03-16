@@ -1,0 +1,23 @@
+src/flext_core/_models/base.py
+  910bb7b4ce669667 33
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "5531eb39429d0628ec6989e26f5da4283d98ba3f",
+  "prompts": {
+    "910bb7b4ce669667": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "opencode-transcript-ses_308a4140fffeEW5VmjnZNiWZBa-b3f6be0d-bb54-4ca1-a0b2-b3151e82e758",
+        "model": "unknown"
+      },
+      "human_author": "FLEXT Bot <team@flext.sh>",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 1,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    }
+  }
+}
