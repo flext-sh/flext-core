@@ -14,6 +14,7 @@ import functools
 import warnings
 from collections.abc import Callable
 from typing import ClassVar
+from warnings import deprecated as _stdlib_deprecated
 
 from pydantic import BaseModel
 
@@ -79,105 +80,74 @@ class FlextUtilitiesDeprecation:
         version: str | None = None,
         reason: str | None = None,
     ) -> Callable[[Callable[P, R]], Callable[P, R]]:
-        """Mark function as deprecated.
+        has_replacement = replacement is not None
+        has_version = version is not None
+        has_reason = reason is not None
 
-        Args:
-            replacement: Name of replacement function/class.
-            version: Version when deprecation was introduced.
-            reason: Reason for deprecation.
-
-        Returns:
-            Decorator that wraps function with deprecation warning.
-
-        Example:
-            >>> @FlextUtilitiesDeprecation.deprecated(
-            ...     replacement="new_function",
-            ...     version="2.0.0",
-            ...     reason="Use new_function instead"
-            ... )
-            >>> def old_function(): ...
-
-        """
-
-        def decorator(func: Callable[P, R]) -> Callable[P, R]:
-
-            @functools.wraps(func)
-            def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
-                message_parts = [f"{func.__name__} is deprecated"]
-                if version:
-                    message_parts.append(f"since version {version}")
-                if replacement:
-                    message_parts.append(f"Use {replacement} instead")
-                if reason:
-                    message_parts.append(f"Reason: {reason}")
-                warnings.warn(
-                    ". ".join(message_parts), DeprecationWarning, stacklevel=2
-                )
-                return func(*args, **kwargs)
-
-            return wrapper
-
-        return decorator
+        if has_replacement and has_version and has_reason:
+            return _stdlib_deprecated(
+                "This callable is deprecated. It has a replacement and deprecation reason.",
+                category=DeprecationWarning,
+            )
+        if has_replacement and has_version:
+            return _stdlib_deprecated(
+                "This callable is deprecated and has a replacement.",
+                category=DeprecationWarning,
+            )
+        if has_replacement and has_reason:
+            return _stdlib_deprecated(
+                "This callable is deprecated. Use the replacement callable.",
+                category=DeprecationWarning,
+            )
+        if has_version and has_reason:
+            return _stdlib_deprecated(
+                "This callable is deprecated with deprecation metadata.",
+                category=DeprecationWarning,
+            )
+        if has_replacement:
+            return _stdlib_deprecated(
+                "This callable is deprecated. Use the replacement callable.",
+                category=DeprecationWarning,
+            )
+        if has_version:
+            return _stdlib_deprecated(
+                "This callable is deprecated.",
+                category=DeprecationWarning,
+            )
+        if has_reason:
+            return _stdlib_deprecated(
+                "This callable is deprecated.",
+                category=DeprecationWarning,
+            )
+        return _stdlib_deprecated(
+            "This callable is deprecated.", category=DeprecationWarning
+        )
 
     @staticmethod
     def deprecated_class[TClass: type](
         replacement: str | None = None, version: str | None = None
     ) -> Callable[[TClass], TClass]:
-        """Mark class as deprecated.
+        has_replacement = replacement is not None
+        has_version = version is not None
 
-        Args:
-            replacement: Name of replacement class.
-            version: Version when deprecation was introduced.
-
-        Returns:
-            Class decorator that warns when class is instantiated.
-
-        Example:
-            >>> @FlextUtilitiesDeprecation.deprecated_class(
-            ...     replacement="NewClass",
-            ...     version="2.0.0"
-            ... )
-            >>> class OldClass: ...
-
-        """
-
-        def decorator(cls: TClass) -> TClass:
-            original_init = getattr(cls, "__init__", None)
-            if original_init is None:
-
-                def noop_init(
-                    self: TClass,
-                    *args: t.NormalizedValue,
-                    **kwargs: t.Scalar,
-                ) -> None:
-                    pass
-
-                original_init = noop_init
-
-            @functools.wraps(original_init)
-            def new_init(
-                self: TClass,
-                *args: t.NormalizedValue,
-                **kwargs: t.Scalar,
-            ) -> None:
-                cls_name = getattr(cls, "__name__", cls.__class__.__name__)
-                message_parts = [f"{cls_name} is deprecated"]
-                if version:
-                    message_parts.append(f"since version {version}")
-                if replacement:
-                    message_parts.append(f"Use {replacement} instead")
-                warnings.warn(
-                    ". ".join(message_parts), DeprecationWarning, stacklevel=2
-                )
-                init_func = original_init
-                if init_func is not None:
-                    _ = init_func(self, *args, **kwargs)
-
-            init_attr = "__init__"
-            setattr(cls, init_attr, new_init)
-            return cls
-
-        return decorator
+        if has_replacement and has_version:
+            return _stdlib_deprecated(
+                "This class is deprecated and has a replacement.",
+                category=DeprecationWarning,
+            )
+        if has_replacement:
+            return _stdlib_deprecated(
+                "This class is deprecated. Use the replacement class.",
+                category=DeprecationWarning,
+            )
+        if has_version:
+            return _stdlib_deprecated(
+                "This class is deprecated.",
+                category=DeprecationWarning,
+            )
+        return _stdlib_deprecated(
+            "This class is deprecated.", category=DeprecationWarning
+        )
 
     @staticmethod
     def deprecated_parameter(

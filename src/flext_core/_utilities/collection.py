@@ -8,9 +8,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import math
+from collections import defaultdict
 from collections.abc import Callable, Hashable, Mapping, Sequence
 from datetime import datetime
 from enum import StrEnum
+from itertools import batched, chain
 from typing import overload
 
 from flext_core import R, T, U, m, r, t
@@ -347,9 +350,11 @@ class FlextUtilitiesCollection:
             # [[record1, ..., record100], [record101, ...], ...]
 
         """
-        if size <= 0:
-            return [list(items)]
-        return [list(items[i : i + size]) for i in range(0, len(items), size)]
+        return (
+            [list(batch) for batch in batched(items, size)]
+            if size > 0
+            else [list(items)]
+        )
 
     @staticmethod
     def coerce_dict_to_bool() -> Callable[[t.NormalizedValue], Mapping[str, bool]]:
@@ -789,10 +794,7 @@ class FlextUtilitiesCollection:
             # [1, 2, 3, 4, 5]
 
         """
-        result: list[T] = []
-        for seq in items:
-            result.extend(seq)
-        return result
+        return list(chain.from_iterable(items))
 
     @staticmethod
     def group(items: Sequence[T], key_func: Callable[[T], U]) -> dict[U, list[T]]:
@@ -818,13 +820,10 @@ class FlextUtilitiesCollection:
             # {"active": [User1, User2], "inactive": [User3]}
 
         """
-        result: dict[U, list[T]] = {}
+        result: defaultdict[U, list[T]] = defaultdict(list)
         for item in items:
-            key = key_func(item)
-            if key not in result:
-                result[key] = []
-            result[key].append(item)
-        return result
+            result[key_func(item)].append(item)
+        return dict(result)
 
     @staticmethod
     def last(
@@ -972,10 +971,7 @@ class FlextUtilitiesCollection:
             total = u.mul(price, quantity, tax_rate)
 
         """
-        result: int | float = 1
-        for v in values:
-            result *= v
-        return result
+        return math.prod(values) if values else 1
 
     @staticmethod
     def parse_mapping[E: StrEnum](
@@ -1134,10 +1130,12 @@ class FlextUtilitiesCollection:
             unique_emails = u.unique(users, lambda u: u.email.lower())
 
         """
+        if key_func is None:
+            return list(dict.fromkeys(items))
         seen: set[Hashable] = set()
         result: list[T] = []
         for item in items:
-            key = key_func(item) if key_func else item
+            key = key_func(item)
             if key not in seen:
                 seen.add(key)
                 result.append(item)

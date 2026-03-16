@@ -44,10 +44,14 @@ class FlextProtocolsDI:
             ...
 
         @overload
-        def get[T: object](self, name: str, *, type_cls: type[T]) -> r[T]: ...
+        def get[T: t.RegisterableService](
+            self, name: str, *, type_cls: type[T]
+        ) -> r[T]: ...
 
         @overload
-        def get(self, name: str, *, type_cls: None = None) -> r[object]: ...
+        def get(
+            self, name: str, *, type_cls: None = None
+        ) -> r[t.RegisterableService]: ...
 
         def get_config(self) -> t.ConfigMap:
             """Return the merged configuration exposed by this container."""
@@ -64,7 +68,7 @@ class FlextProtocolsDI:
         def register(
             self,
             name: str,
-            impl: object,
+            impl: t.RegisterableService,
             *,
             kind: str = "service",
         ) -> Self:
@@ -77,9 +81,9 @@ class FlextProtocolsDI:
             config: FlextProtocolsConfig.Settings | None = None,
             context: FlextProtocolsContext.Context | None = None,
             subproject: str | None = None,
-            services: Mapping[str, object] | None = None,
-            factories: Mapping[str, Callable[..., object]] | None = None,
-            resources: Mapping[str, Callable[..., object]] | None = None,
+            services: Mapping[str, t.RegisterableService] | None = None,
+            factories: Mapping[str, Callable[..., t.RegisterableService]] | None = None,
+            resources: Mapping[str, Callable[..., t.RegisterableService]] | None = None,
         ) -> Self:
             """Create an isolated container scope with optional overrides."""
             ...

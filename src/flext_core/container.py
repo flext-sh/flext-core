@@ -459,15 +459,17 @@ class FlextContainer(p.Container):
         return FlextLogger.create_module_logger(module_name or "flext_core")
 
     @overload
-    def get[T: object](self, name: str, *, type_cls: type[T]) -> r[T]: ...
+    def get[T: t.RegisterableService](
+        self, name: str, *, type_cls: type[T]
+    ) -> r[T]: ...
 
     @overload
-    def get(self, name: str, *, type_cls: None = None) -> r[object]: ...
+    def get(self, name: str, *, type_cls: None = None) -> r[t.RegisterableService]: ...
 
     @override
-    def get[T: object](
+    def get[T: t.RegisterableService](
         self, name: str, *, type_cls: type[T] | None = None
-    ) -> r[T] | r[object]:
+    ) -> r[T] | r[t.RegisterableService]:
         """Resolve a registered service or factory by name.
 
         Returns the resolved service as RegisterableService or, when ``type_cls`` is
@@ -498,7 +500,7 @@ class FlextContainer(p.Container):
                     )
                 typed_service: T = service_for_check
                 return r[T].ok(typed_service)
-            return r[object].ok(service)
+            return r[t.RegisterableService].ok(service)
         if name in self._factories:
             try:
                 factory_registration = self._factories[name]
@@ -512,9 +514,9 @@ class FlextContainer(p.Container):
                         return r[T].fail(f"Factory '{name}' returned wrong type")
                     typed_resolved: T = resolved_for_check
                     return r[T].ok(typed_resolved)
-                return r[object].ok(resolved)
+                return r[t.RegisterableService].ok(resolved)
             except (TypeError, ValueError, RuntimeError, KeyError, AttributeError) as e:
-                return r[object].fail(str(e))
+                return r[t.RegisterableService].fail(str(e))
         if name in self._resources:
             try:
                 resource_registration = self._resources[name]
@@ -523,7 +525,7 @@ class FlextContainer(p.Container):
                 )
                 resolved = resource_callable()
                 if not u.is_registerable_service(resolved):
-                    return r[object].fail(
+                    return r[t.RegisterableService].fail(
                         f"Resource '{name}' returned unsupported runtime type"
                     )
                 if type_cls is not None:
@@ -532,10 +534,10 @@ class FlextContainer(p.Container):
                         return r[T].fail(f"Resource '{name}' returned wrong type")
                     typed_resource: T = resource_for_check
                     return r[T].ok(typed_resource)
-                return r[object].ok(resolved)
+                return r[t.RegisterableService].ok(resolved)
             except (TypeError, ValueError, RuntimeError, KeyError, AttributeError) as e:
-                return r[object].fail(str(e))
-        return r[object].fail(f"Service '{name}' not found")
+                return r[t.RegisterableService].fail(str(e))
+        return r[t.RegisterableService].fail(f"Service '{name}' not found")
 
     @override
     def get_config(self) -> t.ConfigMap:
