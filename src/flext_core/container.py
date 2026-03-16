@@ -442,7 +442,7 @@ class FlextContainer(p.DI):
         self.sync_config_to_di()
         return self
 
-    def create_module_logger(self, module_name: str | None = None) -> FlextLogger:
+    def create_module_logger(self, module_name: str | None = None) -> p.StructlogLogger:
         """Create a FlextLogger instance for the specified module.
 
         This method provides direct access to FlextLogger without going through

@@ -299,7 +299,11 @@ class FlextService[
         This method is called by :meth:`_create_initial_runtime` which uses
         :meth:`_runtime_bootstrap_options` to get the configuration options.
         """
-        config_cls = config_type or FlextSettings
+        config_cls: type[FlextSettings] = (
+            config_type
+            if isinstance(config_type, type) and issubclass(config_type, FlextSettings)
+            else FlextSettings
+        )
         runtime_config = config_cls.model_validate(config_overrides or {})
         runtime_context_input = (
             context if context is not None else FlextContext.create()

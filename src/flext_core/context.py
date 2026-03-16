@@ -38,7 +38,7 @@ class FlextContext(m.ArbitraryTypesModel, FlextRuntime):
     - Serialization helpers for propagating context via headers or payloads
     """
 
-    _logger: ClassVar[FlextLogger] = FlextLogger(__name__)
+    _logger: ClassVar[p.StructlogLogger] = FlextLogger(__name__)
 
     @staticmethod
     def _to_normalized(value: t.NormalizedValue | BaseModel) -> t.NormalizedValue:
