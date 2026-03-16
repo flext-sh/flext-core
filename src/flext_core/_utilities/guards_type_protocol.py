@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from pathlib import Path
-from typing import TypeIs
+from typing import TypeGuard, TypeIs
 
 from pydantic import BaseModel
 
@@ -26,7 +26,7 @@ class FlextUtilitiesGuardsTypeProtocol:
     @staticmethod
     def is_handler_type(
         value: t.NormalizedValue | t.HandlerCallable,
-    ) -> TypeIs[t.HandlerLike]:
+    ) -> TypeGuard[t.HandlerLike]:
         return (
             callable(value)
             or isinstance(value, Mapping)
@@ -66,7 +66,7 @@ class FlextUtilitiesGuardsTypeProtocol:
     @staticmethod
     def is_registerable_service(
         value: object,
-    ) -> TypeIs[t.RegisterableService]:
+    ) -> TypeGuard[t.RegisterableService]:
         return (
             value is None
             or isinstance(value, (str, int, float, bool, BaseModel, Path, Mapping))

@@ -77,7 +77,7 @@ class FlextUtilitiesGuardsTypeModel:
         return True
 
     @staticmethod
-    def is_pydantic_model(value: t.NormalizedValue) -> TypeIs[p.HasModelDump]:
+    def is_pydantic_model(value: t.NormalizedValue) -> TypeGuard[p.HasModelDump]:
         return (
             isinstance(value, BaseModel)
             and hasattr(value, "model_dump")

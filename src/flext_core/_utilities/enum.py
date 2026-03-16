@@ -256,7 +256,11 @@ class FlextUtilitiesEnum:
             After refactoring completes, prefer explicit StrEnum class definitions.
 
         """
-        return StrEnum(name, values)
+        enum_type = type(name, (StrEnum,), dict(values))
+        if not isinstance(enum_type, type) or not issubclass(enum_type, StrEnum):
+            error_msg = "StrEnum factory did not return StrEnum type"
+            raise TypeError(error_msg)
+        return enum_type
 
     @overload
     @staticmethod
