@@ -21,13 +21,13 @@ class FlextUtilitiesGuardsTypeModel:
 
     @staticmethod
     def is_object_list(
-        value: FlextUtilitiesGuardsTypeCore._GuardInput,
+        value: object,
     ) -> TypeGuard[list[t.NormalizedValue]]:
         return isinstance(value, list)
 
     @staticmethod
     def is_object_tuple(
-        value: FlextUtilitiesGuardsTypeCore._GuardInput,
+        value: object,
     ) -> TypeGuard[tuple[t.NormalizedValue, ...]]:
         return isinstance(value, tuple)
 
@@ -53,7 +53,7 @@ class FlextUtilitiesGuardsTypeModel:
 
     @staticmethod
     def is_configuration_dict(
-        value: FlextUtilitiesGuardsTypeCore._GuardInput,
+        value: object,
     ) -> TypeGuard[t.Dict]:
         if isinstance(value, t.Dict):
             for item_value in value.root.values():
@@ -62,7 +62,7 @@ class FlextUtilitiesGuardsTypeModel:
             return True
         return FlextUtilitiesGuardsTypeModel._is_object_mapping(
             value
-        ) and FlextUtilitiesGuardsTypeCore._all_container_mapping_values(value)
+        ) and FlextUtilitiesGuardsTypeCore.all_container_mapping_values(value)
 
     @staticmethod
     def is_configuration_mapping(

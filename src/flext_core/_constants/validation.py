@@ -112,3 +112,26 @@ class FlextConstantsValidation:
             VALUE_ERROR = "value_error"
             RUNTIME_ERROR = "runtime_error"
             SYSTEM_ERROR = "system_error"
+
+    class Guards:
+        STRING_METHOD_MAP: frozenset[str] = frozenset({
+            "str",
+            "dict",
+            "list",
+            "tuple",
+            "sequence",
+            "mapping",
+            "list_or_tuple",
+            "sequence_not_str",
+            "sequence_not_str_bytes",
+            "sized",
+            "callable",
+            "bytes",
+            "int",
+            "float",
+            "bool",
+            "none",
+            "string_non_empty",
+            "dict_non_empty",
+            "list_non_empty",
+        })

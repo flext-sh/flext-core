@@ -8,36 +8,24 @@ from datetime import datetime
 from pathlib import Path
 from typing import TypeGuard, TypeIs
 
-from pydantic import BaseModel
-
-from flext_core import p, t
+from flext_core import t
 
 
 class FlextUtilitiesGuardsTypeCore:
-    type _GuardInput = (
-        t.Scalar
-        | Path
-        | list[t.NormalizedValue]
-        | Mapping[str, t.NormalizedValue | BaseModel]
-        | tuple[object, ...]
-        | BaseModel
-        | p.ResultLike[t.Container | BaseModel]
-        | t.ConfigMap
-        | p.HasModelDump
-        | p.ValidatorSpec
-        | t.RegistrablePlugin
-        | p.Logger
-        | t.FactoryCallable
-        | p.Settings
-        | p.Context
-        | t.RegisterableService
-        | object
-        | None
-    )
+    @staticmethod
+    def _is_object_sequence(value: object) -> TypeGuard[Sequence[object]]:
+        return isinstance(value, (list, tuple))
+
+    @staticmethod
+    def _is_object_mapping(value: object) -> TypeGuard[Mapping[str, object]]:
+        return isinstance(value, Mapping)
 
     @staticmethod
     def _all_container_sequence(value: Sequence[object]) -> bool:
-        return all(FlextUtilitiesGuardsTypeCore.is_container(item) for item in value)
+        for sequence_item in value:
+            if not FlextUtilitiesGuardsTypeCore.is_container(sequence_item):
+                return False
+        return True
 
     @staticmethod
     def _all_container_mapping_values(value: Mapping[str, object]) -> bool:
@@ -45,6 +33,10 @@ class FlextUtilitiesGuardsTypeCore:
             if not FlextUtilitiesGuardsTypeCore.is_container(mapped_value):
                 return False
         return True
+
+    @staticmethod
+    def all_container_mapping_values(value: Mapping[str, object]) -> bool:
+        return FlextUtilitiesGuardsTypeCore._all_container_mapping_values(value)
 
     @staticmethod
     def is_dict_non_empty(value: t.NormalizedValue) -> bool:
@@ -72,19 +64,10 @@ class FlextUtilitiesGuardsTypeCore:
     ) -> TypeGuard[str | int | float | bool | datetime | Path]:
         if value is None or isinstance(value, (str, int, float, bool, datetime)):
             return True
-        if isinstance(value, list):
-            sequence_value: list[object] = [item for item in value]
-            return FlextUtilitiesGuardsTypeCore._all_container_sequence(sequence_value)
-        if isinstance(value, tuple):
-            tuple_as_list: list[object] = [item for item in value]
-            return FlextUtilitiesGuardsTypeCore._all_container_sequence(tuple_as_list)
-        if isinstance(value, Mapping):
-            mapping_value: dict[str, object] = {
-                str(map_key): map_value for map_key, map_value in value.items()
-            }
-            return FlextUtilitiesGuardsTypeCore._all_container_mapping_values(
-                mapping_value
-            )
+        if FlextUtilitiesGuardsTypeCore._is_object_sequence(value):
+            return FlextUtilitiesGuardsTypeCore._all_container_sequence(value)
+        if FlextUtilitiesGuardsTypeCore._is_object_mapping(value):
+            return FlextUtilitiesGuardsTypeCore._all_container_mapping_values(value)
         return isinstance(value, Path)
 
     @staticmethod
@@ -110,19 +93,19 @@ class FlextUtilitiesGuardsTypeCore:
 
     @staticmethod
     def is_mapping(
-        value: FlextUtilitiesGuardsTypeCore._GuardInput,
+        value: object,
     ) -> TypeGuard[Mapping[str, t.NormalizedValue]]:
         return isinstance(value, Mapping)
 
     @staticmethod
     def is_primitive(
-        value: FlextUtilitiesGuardsTypeCore._GuardInput,
+        value: object,
     ) -> TypeGuard[t.Primitives]:
         return isinstance(value, (str, int, float, bool))
 
     @staticmethod
     def is_scalar(
-        value: FlextUtilitiesGuardsTypeCore._GuardInput,
+        value: object,
     ) -> TypeGuard[t.Scalar]:
         return isinstance(value, (str, int, float, bool, datetime))
 
@@ -131,9 +114,7 @@ class FlextUtilitiesGuardsTypeCore:
         return isinstance(value, str) and bool(value.strip())
 
     @staticmethod
-    def is_instance_of[T](
-        value: FlextUtilitiesGuardsTypeCore._GuardInput, type_cls: type[T]
-    ) -> TypeGuard[T]:
+    def is_instance_of[T](value: object, type_cls: type[T]) -> TypeGuard[T]:
         return isinstance(value, getattr(type_cls, "__origin__", None) or type_cls)
 
     @staticmethod

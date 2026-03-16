@@ -9,6 +9,12 @@ from flext_core._utilities.guards_type import FlextUtilitiesGuardsType
 
 class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
     @staticmethod
+    def _is_general_value_list(
+        value: t.NormalizedValue,
+    ) -> bool:
+        return value.__class__ is list
+
+    @staticmethod
     def _ensure_to_dict(
         value: t.NormalizedValue | None,
         default: Mapping[str, t.NormalizedValue] | None,
@@ -37,7 +43,7 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
         return single_item_list
 
     @staticmethod
-    def _guard_check_condition[T: FlextUtilitiesGuardsEnsure._GuardInput](
+    def _guard_check_condition[T: t.GuardInput](
         value: T,
         condition: type[T]
         | tuple[type[T], ...]
@@ -91,8 +97,8 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
 
     @staticmethod
     def _guard_check_predicate(
-        value: FlextUtilitiesGuardsEnsure._GuardInput,
-        condition: Callable[..., FlextUtilitiesGuardsEnsure._GuardInput | bool],
+        value: t.GuardInput,
+        condition: Callable[..., t.GuardInput | bool],
         context_name: str,
         error_msg: str | None,
     ) -> str:
@@ -462,7 +468,7 @@ class FlextUtilitiesGuardsEnsure(FlextUtilitiesGuardsType):
             )
 
     @staticmethod
-    def guard_result[T: FlextUtilitiesGuardsEnsure._GuardInput](
+    def guard_result[T: t.GuardInput](
         value: T,
         *conditions: type[T]
         | tuple[type[T], ...]

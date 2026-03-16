@@ -7,6 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
+from pathlib import Path
 from types import ModuleType
 from typing import Protocol, runtime_checkable
 
@@ -99,3 +100,14 @@ class FlextTypesServices:
         | None
     )
     type PaginationMeta = dict[str, int | bool]
+
+    type GuardInput = (
+        FlextTypingBase.Scalar
+        | Path
+        | list[FlextTypingBase.NormalizedValue]
+        | Mapping[str, FlextTypingBase.NormalizedValue | BaseModel]
+        | tuple[object, ...]
+        | BaseModel
+        | FlextTypingContainers.ConfigMap
+        | RegisterableService
+    )

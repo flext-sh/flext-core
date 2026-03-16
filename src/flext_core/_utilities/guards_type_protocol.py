@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
+from pathlib import Path
 from types import MappingProxyType
 from typing import TypeGuard
 
 from pydantic import BaseModel
 
-from flext_core import p, t
+from flext_core import c, p, t
 from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
 
 
@@ -35,39 +36,18 @@ class FlextUtilitiesGuardsTypeProtocol:
         p.Service: "service",
         p.Middleware: "middleware",
     })
-    _STRING_METHOD_MAP: frozenset[str] = frozenset({
-        "str",
-        "dict",
-        "list",
-        "tuple",
-        "sequence",
-        "mapping",
-        "list_or_tuple",
-        "sequence_not_str",
-        "sequence_not_str_bytes",
-        "sized",
-        "callable",
-        "bytes",
-        "int",
-        "float",
-        "bool",
-        "none",
-        "string_non_empty",
-        "dict_non_empty",
-        "list_non_empty",
-    })
 
     @staticmethod
     def is_context(
-        value: FlextUtilitiesGuardsTypeCore._GuardInput,
+        value: object,
     ) -> TypeGuard[p.Context]:
         return isinstance(value, p.Context)
 
     @staticmethod
     def is_handler_callable(
         value: t.NormalizedValue,
-    ) -> TypeGuard[p.HandlerCallable[t.NormalizedValue, t.NormalizedValue]]:
-        return isinstance(value, p.Handler)
+    ) -> TypeGuard[t.HandlerCallable]:
+        return callable(value)
 
     @staticmethod
     def is_handler_type(
@@ -88,30 +68,30 @@ class FlextUtilitiesGuardsTypeProtocol:
     @staticmethod
     def is_registerable(
         value: t.NormalizedValue,
-    ) -> TypeGuard[p.RegisterableService[t.NormalizedValue]]:
-        return isinstance(value, p.RegisterableService)
+    ) -> TypeGuard[t.RegisterableService]:
+        return FlextUtilitiesGuardsTypeProtocol.is_registerable_service(value)
 
     @staticmethod
     def is_factory(
-        value: FlextUtilitiesGuardsTypeCore._GuardInput,
-    ) -> TypeGuard[p.FactoryCallable]:
-        return isinstance(value, p.FactoryCallable)
+        value: object,
+    ) -> TypeGuard[t.FactoryCallable]:
+        return callable(value)
 
     @staticmethod
     def is_resource(
-        value: FlextUtilitiesGuardsTypeCore._GuardInput,
-    ) -> TypeGuard[p.ResourceFactory]:
-        return isinstance(value, p.ResourceFactory)
+        value: object,
+    ) -> TypeGuard[t.ResourceCallable]:
+        return callable(value)
 
     @staticmethod
     def is_result_like(
-        value: FlextUtilitiesGuardsTypeCore._GuardInput,
+        value: object,
     ) -> TypeGuard[p.ResultLike[t.Container | BaseModel]]:
         return isinstance(value, p.ResultLike)
 
     @staticmethod
     def is_registerable_service(
-        value: FlextUtilitiesGuardsTypeCore._GuardInput,
+        value: object,
     ) -> TypeGuard[t.RegisterableService]:
         return (
             value is None
@@ -187,15 +167,13 @@ class FlextUtilitiesGuardsTypeProtocol:
 
     @staticmethod
     def _is_type_tuple(
-        value: FlextUtilitiesGuardsTypeCore._GuardInput,
+        value: t.GuardInput,
     ) -> TypeGuard[tuple[type, ...]]:
-        return isinstance(value, tuple) and all(
-            isinstance(item, type) for item in value
-        )
+        return isinstance(value, tuple)
 
     @staticmethod
     def is_type_tuple(
-        value: FlextUtilitiesGuardsTypeCore._GuardInput,
+        value: t.GuardInput,
     ) -> TypeGuard[tuple[type, ...]]:
         return FlextUtilitiesGuardsTypeProtocol._is_type_tuple(value)
 
@@ -210,7 +188,7 @@ class FlextUtilitiesGuardsTypeProtocol:
                 return FlextUtilitiesGuardsTypeProtocol._check_protocol(
                     value, type_name
                 )
-            if type_name in FlextUtilitiesGuardsTypeProtocol._STRING_METHOD_MAP:
+            if type_name in c.Guards.STRING_METHOD_MAP:
                 if type_name in {
                     "string_non_empty",
                     "dict_non_empty",
