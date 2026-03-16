@@ -344,12 +344,10 @@ class FlextModelsContext:
                 }
             if isinstance(normalized, BaseModel):
                 dumped_model = normalized.model_dump()
-                if isinstance(dumped_model, Mapping):
-                    return {
-                        str(key): cls.normalize_to_serializable_value(item_value)
-                        for key, item_value in dumped_model.items()
-                    }
-                return str(dumped_model)
+                return {
+                    str(key): cls.normalize_to_serializable_value(item_value)
+                    for key, item_value in dumped_model.items()
+                }
             if isinstance(normalized, Mapping):
                 normalized_map = FlextModelFoundation.Validators.dict_str_metadata_adapter().validate_python(
                     normalized

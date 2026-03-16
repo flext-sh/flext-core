@@ -190,7 +190,7 @@ class FlextResult[T](FlextRuntime.RuntimeResult[T]):
     @classmethod
     @override
     def fail[U](
-        cls: type[FlextResult[U]],
+        cls,
         error: str | None,
         error_code: str | None = None,
         error_data: t.ResultErrorData | BaseModel | t.ConfigMap | None = None,

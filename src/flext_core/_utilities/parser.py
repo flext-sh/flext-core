@@ -199,8 +199,6 @@ class FlextUtilitiesParser:
         if str_result.is_failure:
             return r[str].fail(str_result.error or "String conversion failed")
         str_repr = str_result.value
-        if not isinstance(str_repr, str):
-            return r[str].fail(f"Expected str, got {type(str_repr).__name__}")
         obj_class_name: str = type(obj).__name__
         if str_repr and str_repr != f"<{obj_class_name} object>":
             return r[str].ok(str_repr)
@@ -432,10 +430,6 @@ class FlextUtilitiesParser:
                 if int_result.is_failure:
                     return r[t.Primitives].fail(int_result.error)
                 int_val = int_result.value
-                if not isinstance(int_val, int):
-                    return r[t.Primitives].fail(
-                        f"Expected int, got {type(int_val).__name__}"
-                    )
                 return r[t.Primitives].ok(int_val)
             if target is float:
                 float_result = FlextUtilitiesParser._coerce_to_float(value)
@@ -452,20 +446,12 @@ class FlextUtilitiesParser:
                 if str_result.is_failure:
                     return r[t.Primitives].fail(str_result.error)
                 str_val = str_result.value
-                if not isinstance(str_val, str):
-                    return r[t.Primitives].fail(
-                        f"Expected str, got {type(str_val).__name__}"
-                    )
                 return r[t.Primitives].ok(str_val)
             if target is bool:
                 bool_result = FlextUtilitiesParser._coerce_to_bool(value)
                 if bool_result.is_failure:
                     return r[t.Primitives].fail(bool_result.error)
                 bool_val = bool_result.value
-                if not isinstance(bool_val, bool):
-                    return r[t.Primitives].fail(
-                        f"Expected bool, got {type(bool_val).__name__}"
-                    )
                 return r[t.Primitives].ok(bool_val)
         except (ValueError, TypeError) as e:
             target_name = getattr(target, "__name__", "type")
@@ -512,8 +498,6 @@ class FlextUtilitiesParser:
             text_length_result = r[int].create_from_callable(lambda: len(text))
             if text_length_result.is_success:
                 len_ = text_length_result.value
-                if not isinstance(len_, int):
-                    return "unknown"
                 return len_
             return "unknown"
         text_adapter: TypeAdapter[str | bytes] = TypeAdapter(str | bytes)
@@ -524,8 +508,6 @@ class FlextUtilitiesParser:
         text_length_result = r[int].create_from_callable(lambda: len(text_value))
         if text_length_result.is_success:
             len_ = text_length_result.value
-            if not isinstance(len_, int):
-                return "unknown"
             return len_
         return "unknown"
 
@@ -1024,8 +1006,6 @@ class FlextUtilitiesParser:
                     process_result.error or "Unknown error in pattern processing"
                 )
             proc_val = process_result.value
-            if not isinstance(proc_val, tuple):
-                return r[str].fail(f"Expected tuple, got {type(proc_val).__name__}")
             result_text, applied_patterns = proc_val
             final_result = result_text.strip()
             self._parser_log.debug(
@@ -1112,12 +1092,12 @@ class FlextUtilitiesParser:
             key = mapping_key.unwrap_or(obj_type_name)
         elif (attr_key := self._extract_key_from_attributes(obj)).is_success:
             ak = attr_key.value
-            key = ak if isinstance(ak, str) else obj_type_name
+            key = ak
         elif hasattr(obj, "__class__"):
             key = type(obj).__name__
         elif (str_key := self._extract_key_from_str_conversion(obj)).is_success:
             sk = str_key.value
-            key = sk if isinstance(sk, str) else obj_type_name
+            key = sk
         else:
             key = type(obj).__name__
         return key
@@ -1270,10 +1250,6 @@ class FlextUtilitiesParser:
             if result.is_failure:
                 return result
             components_val = result.value
-            if not isinstance(components_val, list):
-                return r[list[str]].fail(
-                    f"Expected list, got {type(components_val).__name__}"
-                )
             components = components_val
             self._parser_log.debug(
                 "Delimited parsing completed successfully",
@@ -1393,10 +1369,6 @@ class FlextUtilitiesParser:
                     split_result.error or "Unknown error in escape splitting"
                 )
             split_val = split_result.value
-            if not isinstance(split_val, tuple):
-                return r[list[str]].fail(
-                    f"Expected tuple, got {type(split_val).__name__}"
-                )
             components, escape_count = split_val
             self._parser_log.debug(
                 "Escape-aware splitting completed successfully",
@@ -1530,10 +1502,6 @@ class FlextUtilitiesParser:
                     or "Unknown error extracting pattern components"
                 )
             pattern_val = pattern_result.value
-            if not isinstance(pattern_val, tuple):
-                return r[tuple[str, int]].fail(
-                    f"Expected tuple, got {type(pattern_val).__name__}"
-                )
             pattern, replacement, flags = pattern_val
             params_result = FlextUtilitiesModel.from_kwargs(
                 m.PatternApplicationParams,
@@ -1549,20 +1517,12 @@ class FlextUtilitiesParser:
                     params_result.error or "Unknown error creating params"
                 )
             params_val = params_result.value
-            if not isinstance(params_val, m.PatternApplicationParams):
-                return r[tuple[str, int]].fail(
-                    f"Expected PatternApplicationParams, got {type(params_val).__name__}"
-                )
             apply_result = self._apply_single_pattern(params_val)
             if apply_result.is_failure:
                 return r[tuple[str, int]].fail(
                     apply_result.error or "Unknown error applying pattern"
                 )
             result_text_val = apply_result.value
-            if not isinstance(result_text_val, str):
-                return r[tuple[str, int]].fail(
-                    f"Expected str, got {type(result_text_val).__name__}"
-                )
             result_text = result_text_val
             applied_patterns += 1
         return r[tuple[str, int]].ok((result_text, applied_patterns))

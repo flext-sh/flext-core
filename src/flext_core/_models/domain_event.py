@@ -58,13 +58,13 @@ class FlextModelsDomainEvent:
     ) -> t.NormalizedValue:
         if item is None:
             return None
+        if isinstance(item, bool):
+            return item
         if isinstance(item, str):
             return item
         if isinstance(item, int):
             return item
         if isinstance(item, float):
-            return item
-        if isinstance(item, bool):
             return item
         if isinstance(item, datetime):
             return item

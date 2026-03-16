@@ -727,7 +727,7 @@ class FlextUtilitiesMapper:
             model_dump_attr = current.model_dump
             if callable(model_dump_attr):
                 model_dict = model_dump_attr()
-                if isinstance(model_dict, Mapping) and key_part in model_dict:
+                if key_part in model_dict:
                     val = FlextUtilitiesMapper.narrow_to_container(model_dict[key_part])
                     if val is None:
                         return r[t.NormalizedValue].fail(f"found_none:{key_part}")

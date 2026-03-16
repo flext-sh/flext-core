@@ -188,8 +188,7 @@ class FlextModelsEntity:
         @override
         def model_post_init(self, __context: object, /) -> None:
             """Post-initialization hook to set updated_at timestamp."""
-            if self.updated_at is None:
-                self.updated_at = FlextUtilitiesGenerators.generate_datetime_utc()
+            self.updated_at = FlextUtilitiesGenerators.generate_datetime_utc()
 
     class Value(FlextModelFoundation.FrozenStrictModel):
         """Base class for value objects - immutable and compared by value."""

@@ -48,11 +48,7 @@ class FlextModelsCollections:
             combined: list[t.Scalar] = []
             for v in non_none:
                 if isinstance(v, list):
-                    combined.extend(
-                        item
-                        for item in v
-                        if isinstance(item, (str, int, float, bool, datetime))
-                    )
+                    combined.extend(v)
             return combined
 
         @classmethod
@@ -67,11 +63,7 @@ class FlextModelsCollections:
                         if isinstance(val, (str, int, float, bool, datetime)):
                             merged[str(key)] = val
                         elif isinstance(val, list):
-                            merged[str(key)] = [
-                                item
-                                for item in val
-                                if isinstance(item, (str, int, float, bool, datetime))
-                            ]
+                            merged[str(key)] = val
             return merged
 
         @classmethod

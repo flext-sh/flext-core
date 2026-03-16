@@ -41,14 +41,47 @@ class FlextUtilitiesGuards:
     """
 
     type _GuardInput = (
-        t.RegisterableService
-        | t.NormalizedValue
+        t.Scalar
+        | Path
+        | list[t.NormalizedValue]
+        | Mapping[str, t.NormalizedValue | BaseModel]
+        | tuple[object, ...]
         | BaseModel
-        | p.Context
+        | p.ResultLike[t.Container | BaseModel]
+        | t.ConfigMap
+        | p.HasModelDump
         | p.ValidatorSpec
-        | tuple[type, ...]
+        | t.RegistrablePlugin
+        | p.Logger
+        | t.FactoryCallable
+        | p.Settings
+        | p.Context
+        | t.RegisterableService
+        | object
         | None
     )
+
+    @staticmethod
+    def _is_object_mapping(value: object) -> TypeGuard[Mapping[str, object]]:
+        return isinstance(value, Mapping)
+
+    @staticmethod
+    def _is_object_sequence(value: object) -> TypeGuard[Sequence[object]]:
+        return isinstance(value, (list, tuple))
+
+    @staticmethod
+    def _all_container_sequence(value: Sequence[object]) -> bool:
+        for item in value:
+            if not FlextUtilitiesGuards.is_container(item):
+                return False
+        return True
+
+    @staticmethod
+    def _all_container_mapping_values(value: Mapping[str, object]) -> bool:
+        for mapped_value in value.values():
+            if not FlextUtilitiesGuards.is_container(mapped_value):
+                return False
+        return True
 
     @staticmethod
     def is_object_list(
@@ -125,12 +158,9 @@ class FlextUtilitiesGuards:
                 if not FlextUtilitiesGuards.is_container(item_value):
                     return False
             return True
-        if not isinstance(value, Mapping):
+        if not FlextUtilitiesGuards._is_object_mapping(value):
             return False
-        for mv in value.values():
-            if not FlextUtilitiesGuards.is_container(mv):
-                return False
-        return True
+        return FlextUtilitiesGuards._all_container_mapping_values(value)
 
     @staticmethod
     def is_configuration_mapping(
@@ -158,10 +188,8 @@ class FlextUtilitiesGuards:
         """
         if isinstance(value, (t.ConfigMap, t.Dict)):
             candidate: Mapping[str, t.NormalizedValue | BaseModel] = value.root
-        elif isinstance(value, Mapping):
-            candidate = value
         else:
-            return False
+            candidate = value
         for item_value in candidate.values():
             if not FlextUtilitiesGuards.is_container(item_value):
                 return False
@@ -198,7 +226,7 @@ class FlextUtilitiesGuards:
 
     @staticmethod
     def is_container(
-        value: FlextUtilitiesGuards._GuardInput,
+        value: object,
     ) -> TypeGuard[str | int | float | bool | datetime | Path]:
         """Check if value is a valid Container type.
 
@@ -217,10 +245,10 @@ class FlextUtilitiesGuards:
         """
         if value is None or isinstance(value, (str, int, float, bool, datetime)):
             return True
-        if isinstance(value, (list, tuple)):
-            return all(FlextUtilitiesGuards.is_container(item) for item in value)
-        if isinstance(value, Mapping):
-            return all(FlextUtilitiesGuards.is_container(v) for v in value.values())
+        if FlextUtilitiesGuards._is_object_sequence(value):
+            return FlextUtilitiesGuards._all_container_sequence(value)
+        if FlextUtilitiesGuards._is_object_mapping(value):
+            return FlextUtilitiesGuards._all_container_mapping_values(value)
         return isinstance(value, Path)
 
     @staticmethod

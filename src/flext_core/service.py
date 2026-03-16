@@ -79,11 +79,11 @@ class FlextService[
         validate_assignment=True,
     )
     # --- Service Bootstrap Configuration ---
-    config_type: type[p.Settings] | None = Field(default=None, exclude=True)
+    config_type: type[FlextSettings] | None = Field(default=None, exclude=True)
     config_overrides: dict[str, t.NormalizedValue] | None = Field(
         default=None, exclude=True
     )
-    initial_context: p.Context | None = Field(default=None, exclude=True)
+    initial_context: FlextContext | None = Field(default=None, exclude=True)
     subproject: str | None = Field(default=None, exclude=True)
     services: Mapping[str, t.RegisterableService] | None = Field(
         default=None, exclude=True
@@ -120,12 +120,7 @@ class FlextService[
             self.__class__.__name__, runtime.config.version
         ):
             pass
-        if not isinstance(runtime.context, p.Context):
-            msg = "Expected FlextContext"
-            raise TypeError(msg)
-        if not isinstance(runtime.config, p.Settings):
-            msg = "Expected FlextSettings"
-            raise TypeError(msg)
+
         self._context = runtime.context
         self._config = runtime.config
         self._container = runtime.container
@@ -184,11 +179,7 @@ class FlextService[
     @property
     def settings(self) -> p.Settings:
         """Return service config narrowed to FlextSettings."""
-        config = self.config
-        if isinstance(config, p.Settings):
-            return config
-        msg = "Service config is not FlextSettings"
-        raise TypeError(msg)
+        return self.config
 
     @classmethod
     def _runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions | None:
@@ -202,11 +193,7 @@ class FlextService[
             bootstrap_opts.config_type if bootstrap_opts is not None else None
         )
         config_type_val: type[p.Settings] | None
-        if (
-            config_type_raw is not None
-            and isinstance(config_type_raw, type)
-            and issubclass(config_type_raw, FlextSettings)
-        ):
+        if config_type_raw is not None and issubclass(config_type_raw, FlextSettings):
             config_type_val = config_type_raw
         else:
             config_type_val = config_type
@@ -418,7 +405,7 @@ class FlextService[
             )
             return False
         v = validation_result.value
-        return v if isinstance(v, bool) else False
+        return v
 
     def validate_business_rules(self) -> r[bool]:
         """Validate business rules with extensible validation pipeline.

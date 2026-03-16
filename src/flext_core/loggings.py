@@ -193,9 +193,8 @@ class FlextLogger(FlextRuntime, p.Logger):
             )
             merged_value = merge_result.unwrap_or(current_context_obj)
             merged_context: dict[str, t.Container] = {}
-            if isinstance(merged_value, dict):
-                for key, value in merged_value.items():
-                    merged_context[str(key)] = cls._to_container_value(value)
+            for key, value in merged_value.items():
+                merged_context[str(key)] = cls._to_container_value(value)
             cls._scoped_contexts[scope] = merged_context
             FlextRuntime.structlog().contextvars.bind_contextvars(**context)
             return r[bool].ok(value=True)

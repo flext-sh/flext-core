@@ -284,11 +284,7 @@ class FlextUtilitiesModel:
                     for nested_key, nested_value in nested_mapping.items():
                         if isinstance(nested_value, BaseModel):
                             dumped_nested = nested_value.model_dump()
-                            plain_mapping[str(nested_key)] = (
-                                dumped_nested
-                                if isinstance(dumped_nested, dict)
-                                else str(dumped_nested)
-                            )
+                            plain_mapping[str(nested_key)] = dumped_nested
                         else:
                             plain_mapping[str(nested_key)] = nested_value
                     # Bridge-level: orjson used for non-model dict serialization at infrastructure boundary
