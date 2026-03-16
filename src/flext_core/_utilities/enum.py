@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
 from enum import StrEnum
-from typing import ClassVar, Literal, TypeGuard, TypeIs, cast, overload
+from typing import ClassVar, Literal, TypeIs, overload
 
 from pydantic import ValidationError
 
@@ -252,7 +252,8 @@ class FlextUtilitiesEnum:
             After refactoring completes, prefer explicit StrEnum class definitions.
 
         """
-        return cast(type[StrEnum], StrEnum(name, values))
+        enum_cls: type[StrEnum] = StrEnum(name, values)  # type: ignore[assignment]  # StrEnum() functional API returns type[StrEnum] but typed as StrEnum
+        return enum_cls
 
     @overload
     @staticmethod
